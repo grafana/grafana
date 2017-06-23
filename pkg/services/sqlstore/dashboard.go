@@ -71,6 +71,11 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			}
 		}
 
+		err = setHasAcl(sess, dash)
+		if err != nil {
+			return err
+		}
+
 		parentVersion := dash.Version
 		affectedRows := int64(0)
 
@@ -80,9 +85,9 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			dash.Data.Set("version", dash.Version)
 			affectedRows, err = sess.Insert(dash)
 		} else {
-			dash.Version += 1
+			dash.Version++
 			dash.Data.Set("version", dash.Version)
-			affectedRows, err = sess.MustCols("folder_id").Id(dash.Id).Update(dash)
+			affectedRows, err = sess.MustCols("folder_id", "has_acl").Id(dash.Id).Update(dash)
 		}
 
 		if err != nil {
@@ -111,7 +116,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			return m.ErrDashboardNotFound
 		}
 
-		// delete existing tabs
+		// delete existing tags
 		_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
 		if err != nil {
 			return err
@@ -126,11 +131,35 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 				}
 			}
 		}
-
 		cmd.Result = dash
 
 		return err
 	})
+}
+
+func setHasAcl(sess *DBSession, dash *m.Dashboard) error {
+	// check if parent has acl
+	if dash.FolderId > 0 {
+		var parent m.Dashboard
+		if hasParent, err := sess.Where("folder_id=?", dash.FolderId).Get(&parent); err != nil {
+			return err
+		} else if hasParent && parent.HasAcl {
+			dash.HasAcl = true
+		}
+	}
+
+	// check if dash has its own acl
+	if dash.Id > 0 {
+		if res, err := sess.Query("SELECT 1 from dashboard_acl WHERE dashboard_id =?", dash.Id); err != nil {
+			return err
+		} else {
+			if len(res) > 0 {
+				dash.HasAcl = true
+			}
+		}
+	}
+
+	return nil
 }
 
 func GetDashboard(query *m.GetDashboardQuery) error {

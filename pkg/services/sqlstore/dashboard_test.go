@@ -11,24 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func insertTestDashboard(title string, orgId int64, folderId int64, isFolder bool, tags ...interface{}) *m.Dashboard {
-	cmd := m.SaveDashboardCommand{
-		OrgId:    orgId,
-		FolderId: folderId,
-		IsFolder: isFolder,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-			"id":    nil,
-			"title": title,
-			"tags":  tags,
-		}),
-	}
-
-	err := SaveDashboard(&cmd)
-	So(err, ShouldBeNil)
-
-	return cmd.Result
-}
-
 func TestDashboardDataAccess(t *testing.T) {
 
 	Convey("Testing DB", t, func() {
@@ -388,7 +370,97 @@ func TestDashboardDataAccess(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("Given two dashboard folders with one dashboard each and one dashboard in the root folder", func() {
+			folder1 := insertTestDashboard("1 test dash folder", 1, 0, true, "prod")
+			folder2 := insertTestDashboard("2 test dash folder", 1, 0, true, "prod")
+			dashInRoot := insertTestDashboard("test dash 67", 1, 0, false, "prod")
+			childDash1 := insertTestDashboard("child dash 1", 1, folder1.Id, false, "prod")
+			childDash2 := insertTestDashboard("child dash 2", 1, folder2.Id, false, "prod")
+
+			currentUser := createUser("viewer", "Viewer", false)
+
+			Convey("and acl is set for one dashboard folder", func() {
+				var otherUser int64 = 999
+				updateTestDashboardWithAcl(folder1.Id, otherUser, m.PERMISSION_EDIT)
+
+				Convey("and a dashboard is moved from folder without acl to the folder with an acl", func() {
+					movedDash := moveDashboard(1, childDash2.Data, folder1.Id)
+					So(movedDash.HasAcl, ShouldBeTrue)
+
+					Convey("should not return folder with acl or its children", func() {
+						query := &search.FindPersistedDashboardsQuery{
+							SignedInUser: &m.SignedInUser{UserId: currentUser.Id, OrgId: 1},
+							OrgId:        1,
+							DashboardIds: []int64{folder1.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
+						}
+						err := SearchDashboards(query)
+						So(err, ShouldBeNil)
+						So(len(query.Result), ShouldEqual, 1)
+						So(query.Result[0].Id, ShouldEqual, dashInRoot.Id)
+					})
+				})
+
+				Convey("and a dashboard is moved from folder with acl to the folder without an acl", func() {
+					movedDash := moveDashboard(1, childDash1.Data, folder2.Id)
+					So(movedDash.HasAcl, ShouldBeFalse)
+
+					Convey("should return folder without acl and its children", func() {
+						query := &search.FindPersistedDashboardsQuery{
+							SignedInUser: &m.SignedInUser{UserId: currentUser.Id, OrgId: 1},
+							OrgId:        1,
+							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
+						}
+						err := SearchDashboards(query)
+						So(err, ShouldBeNil)
+						So(len(query.Result), ShouldEqual, 4)
+						So(query.Result[0].Id, ShouldEqual, folder2.Id)
+						So(query.Result[1].Id, ShouldEqual, childDash1.Id)
+						So(query.Result[2].Id, ShouldEqual, childDash2.Id)
+						So(query.Result[3].Id, ShouldEqual, dashInRoot.Id)
+					})
+				})
+
+				Convey("and a dashboard with an acl is moved to the folder without an acl", func() {
+					updateTestDashboardWithAcl(childDash1.Id, otherUser, m.PERMISSION_EDIT)
+					movedDash := moveDashboard(1, childDash1.Data, folder2.Id)
+					So(movedDash.HasAcl, ShouldBeTrue)
+
+					Convey("should return folder without acl but not the dashboard with acl", func() {
+						query := &search.FindPersistedDashboardsQuery{
+							SignedInUser: &m.SignedInUser{UserId: currentUser.Id, OrgId: 1},
+							OrgId:        1,
+							DashboardIds: []int64{folder2.Id, childDash1.Id, childDash2.Id, dashInRoot.Id},
+						}
+						err := SearchDashboards(query)
+						So(err, ShouldBeNil)
+						So(len(query.Result), ShouldEqual, 3)
+						So(query.Result[0].Id, ShouldEqual, folder2.Id)
+						So(query.Result[1].Id, ShouldEqual, childDash2.Id)
+						So(query.Result[2].Id, ShouldEqual, dashInRoot.Id)
+					})
+				})
+			})
+		})
 	})
+}
+
+func insertTestDashboard(title string, orgId int64, folderId int64, isFolder bool, tags ...interface{}) *m.Dashboard {
+	cmd := m.SaveDashboardCommand{
+		OrgId:    orgId,
+		FolderId: folderId,
+		IsFolder: isFolder,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"id":    nil,
+			"title": title,
+			"tags":  tags,
+		}),
+	}
+
+	err := SaveDashboard(&cmd)
+	So(err, ShouldBeNil)
+
+	return cmd.Result
 }
 
 func createUser(name string, role string, isAdmin bool) m.User {
@@ -423,4 +495,18 @@ func updateTestDashboardWithAcl(dashId int64, userId int64, permissions m.Permis
 func removeAcl(aclId int64) {
 	err := RemoveDashboardAcl(&m.RemoveDashboardAclCommand{AclId: aclId, OrgId: 1})
 	So(err, ShouldBeNil)
+}
+
+func moveDashboard(orgId int64, dashboard *simplejson.Json, newFolderId int64) *m.Dashboard {
+	cmd := m.SaveDashboardCommand{
+		OrgId:     orgId,
+		FolderId:  newFolderId,
+		Dashboard: dashboard,
+		Overwrite: true,
+	}
+
+	err := SaveDashboard(&cmd)
+	So(err, ShouldBeNil)
+
+	return cmd.Result
 }
