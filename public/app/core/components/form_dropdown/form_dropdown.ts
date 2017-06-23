@@ -30,6 +30,7 @@ export class FormDropdownCtrl {
   optionCache: any;
   lookupText: boolean;
 
+  /** @ngInject **/
   constructor(private $scope, $element, private $sce, private templateSrv, private $q) {
     this.inputElement = $element.find('input').first();
     this.linkElement = $element.find('a').first();
