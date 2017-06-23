@@ -90,7 +90,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     resolve: loadOrgBundle,
   })
   .when('/org/user-groups/edit/:id', {
-    templateUrl: 'public/app/features/org/partials/edit_user_group.html',
+    templateUrl: 'public/app/features/org/partials/user_group_details.html',
     controller : 'UserGroupDetailsCtrl',
     controllerAs: 'ctrl',
     resolve: loadOrgBundle,
