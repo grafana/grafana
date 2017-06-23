@@ -183,6 +183,7 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 	values := make([]interface{}, len(types))
 
 	for i, stype := range types {
+		e.log.Info("type", "type", stype)
 		switch stype.DatabaseTypeName() {
 		case mysql.FieldTypeNameTiny:
 			values[i] = new(int8)
@@ -209,7 +210,7 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 		case mysql.FieldTypeNameDateTime:
 			values[i] = new(time.Time)
 		case mysql.FieldTypeNameTime:
-			values[i] = new(time.Duration)
+			values[i] = new(string)
 		case mysql.FieldTypeNameYear:
 			values[i] = new(int16)
 		case mysql.FieldTypeNameNULL:
