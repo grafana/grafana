@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -159,22 +160,49 @@ type DashboardSearchProjection struct {
 }
 
 func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
+	limit := query.Limit
+	if limit == 0 {
+		limit = 1000
+	}
+
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
-	sql.WriteString(`SELECT
-					  dashboard.id,
-					  dashboard.title,
-					  dashboard.slug,
-					  dashboard_tag.term,
-            dashboard.is_folder,
-            dashboard.folder_id,
-			      f.slug as folder_slug,
-			      f.title as folder_title
-					FROM dashboard
-					LEFT OUTER JOIN dashboard f on f.id = dashboard.folder_id
-					LEFT OUTER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id`)
+	sql.WriteString(`
+	SELECT
+		dashboard.id,
+		dashboard.title,
+		dashboard.slug,
+		dashboard_tag.term,
+		dashboard.is_folder,
+		dashboard.folder_id,
+		folder.slug as folder_slug,
+		folder.title as folder_title
+	FROM (
+		SELECT
+			dashboard.id FROM dashboard
+			LEFT OUTER JOIN dashboard_tag ON dashboard_tag.dashboard_id = dashboard.id
+	`)
 
+	// add tags filter
+	if len(query.Tags) > 0 {
+		sql.WriteString(` WHERE dashboard_tag.term IN (?` + strings.Repeat(",?", len(query.Tags)-1) + `)`)
+		for _, tag := range query.Tags {
+			params = append(params, tag)
+		}
+	}
+
+	// this ends the inner select (tag filtered part)
+	sql.WriteString(`
+		  GROUP BY dashboard.id HAVING COUNT(dashboard.id) >= ?
+		  ORDER BY dashboard.title ASC LIMIT ?) as ids`)
+	params = append(params, len(query.Tags))
+	params = append(params, limit)
+
+	sql.WriteString(`
+		INNER JOIN dashboard on ids.id = dashboard.id
+		LEFT OUTER JOIN dashboard folder on folder.id = dashboard.folder_id
+		LEFT OUTER JOIN dashboard_tag on dashboard.id = dashboard_tag.dashboard_id`)
 	if query.IsStarred {
 		sql.WriteString(" INNER JOIN star on star.dashboard_id = dashboard.id")
 	}
@@ -188,16 +216,10 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 	}
 
 	if len(query.DashboardIds) > 0 {
-		sql.WriteString(" AND (")
-		for i, dashboardId := range query.DashboardIds {
-			if i != 0 {
-				sql.WriteString(" OR")
-			}
-
-			sql.WriteString(" dashboard.id = ?")
+		sql.WriteString(` AND dashboard.id IN (?` + strings.Repeat(",?", len(query.DashboardIds)-1) + `)`)
+		for _, dashboardId := range query.DashboardIds {
 			params = append(params, dashboardId)
 		}
-		sql.WriteString(")")
 	}
 
 	if query.SignedInUser.OrgRole != m.ROLE_ADMIN {

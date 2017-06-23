@@ -1,43 +1,17 @@
 package search
 
 import (
-	"log"
-	"path/filepath"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
-
-var jsonDashIndex *JsonDashIndex
 
 func Init() {
 	bus.AddHandler("search", searchHandler)
-
-	jsonIndexCfg, _ := setting.Cfg.GetSection("dashboards.json")
-
-	if jsonIndexCfg == nil {
-		log.Fatal("Config section missing: dashboards.json")
-		return
-	}
-
-	jsonIndexEnabled := jsonIndexCfg.Key("enabled").MustBool(false)
-
-	if jsonIndexEnabled {
-		jsonFilesPath := jsonIndexCfg.Key("path").String()
-		if !filepath.IsAbs(jsonFilesPath) {
-			jsonFilesPath = filepath.Join(setting.HomePath, jsonFilesPath)
-		}
-
-		jsonDashIndex = NewJsonDashIndex(jsonFilesPath)
-		go jsonDashIndex.updateLoop()
-	}
 }
 
 func searchHandler(query *Query) error {
-	hits := make(HitList, 0)
-
 	dashQuery := FindPersistedDashboardsQuery{
 		Title:        query.Title,
 		SignedInUser: query.SignedInUser,
@@ -45,34 +19,16 @@ func searchHandler(query *Query) error {
 		DashboardIds: query.DashboardIds,
 		Type:         query.Type,
 		FolderId:     query.FolderId,
-		Mode:         query.Mode,
+		Tags:         query.Tags,
+		Limit:        query.Limit,
 	}
 
 	if err := bus.Dispatch(&dashQuery); err != nil {
 		return err
 	}
 
+	hits := make(HitList, 0)
 	hits = append(hits, dashQuery.Result...)
-
-	if jsonDashIndex != nil {
-		jsonHits, err := jsonDashIndex.Search(query)
-		if err != nil {
-			return err
-		}
-
-		hits = append(hits, jsonHits...)
-	}
-
-	// filter out results with tag filter
-	if len(query.Tags) > 0 {
-		filtered := HitList{}
-		for _, hit := range hits {
-			if hasRequiredTags(query.Tags, hit.Tags) {
-				filtered = append(filtered, hit)
-			}
-		}
-		hits = filtered
-	}
 
 	// sort main result array
 	sort.Sort(hits)
@@ -95,25 +51,6 @@ func searchHandler(query *Query) error {
 	return nil
 }
 
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}
-
-func hasRequiredTags(queryTags, hitTags []string) bool {
-	for _, queryTag := range queryTags {
-		if !stringInSlice(queryTag, hitTags) {
-			return false
-		}
-	}
-
-	return true
-}
-
 func setIsStarredFlagOnSearchResults(userId int64, hits []*Hit) error {
 	query := m.GetUserStarsQuery{UserId: userId}
 	if err := bus.Dispatch(&query); err != nil {
@@ -127,11 +64,4 @@ func setIsStarredFlagOnSearchResults(userId int64, hits []*Hit) error {
 	}
 
 	return nil
-}
-
-func GetDashboardFromJsonIndex(filename string) *m.Dashboard {
-	if jsonDashIndex == nil {
-		return nil
-	}
-	return jsonDashIndex.GetDashboard(filename)
 }

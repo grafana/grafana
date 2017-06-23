@@ -6,11 +6,9 @@ import "github.com/grafana/grafana/pkg/models"
 type HitType string
 
 const (
-	DashHitDB       HitType = "dash-db"
-	DashHitHome     HitType = "dash-home"
-	DashHitJson     HitType = "dash-json"
-	DashHitScripted HitType = "dash-scripted"
-	DashHitFolder   HitType = "dash-folder"
+	DashHitDB     HitType = "dash-db"
+	DashHitHome   HitType = "dash-home"
+	DashHitFolder HitType = "dash-folder"
 )
 
 type Hit struct {
@@ -51,7 +49,6 @@ type Query struct {
 	Type         string
 	DashboardIds []int64
 	FolderId     int64
-	Mode         string
 
 	Result HitList
 }
@@ -64,7 +61,8 @@ type FindPersistedDashboardsQuery struct {
 	DashboardIds []int64
 	Type         string
 	FolderId     int64
-	Mode         string
+	Tags         []string
+	Limit        int
 
 	Result HitList
 }

@@ -11,9 +11,7 @@ import (
 func TestSearch(t *testing.T) {
 
 	Convey("Given search query", t, func() {
-		jsonDashIndex = NewJsonDashIndex("../../../public/dashboards/")
 		query := Query{Limit: 2000, SignedInUser: &m.SignedInUser{IsGrafanaAdmin: true}}
-
 		bus.AddHandler("test", func(query *FindPersistedDashboardsQuery) error {
 			query.Result = HitList{
 				&Hit{Id: 16, Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},
@@ -54,17 +52,5 @@ func TestSearch(t *testing.T) {
 			})
 		})
 
-		Convey("That filters by tag", func() {
-			query.Tags = []string{"BB", "AA"}
-			err := searchHandler(&query)
-			So(err, ShouldBeNil)
-
-			Convey("should return correct results", func() {
-				So(len(query.Result), ShouldEqual, 3)
-				So(query.Result[0].Title, ShouldEqual, "BBAA")
-				So(query.Result[2].Title, ShouldEqual, "CCAA")
-			})
-
-		})
 	})
 }
