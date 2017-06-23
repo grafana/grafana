@@ -4,7 +4,7 @@
 	</h2>
 
 	<ul class="gf-tabs">
-		<li class="gf-tabs-item" ng-repeat="tab in ::['General', 'Rows', 'Links', 'Time picker']">
+		<li class="gf-tabs-item" ng-repeat="tab in ::['General', 'Links', 'Time picker']">
 			<a class="gf-tabs-link" ng-click="editor.index = $index" ng-class="{active: editor.index === $index}">
 				{{::tab}}
 			</a>
@@ -38,13 +38,6 @@
 				</bootstrap-tagsinput>
 			</div>
 
-			<div class="gf-form">
-				<label class="gf-form-label width-7">Timezone</label>
-				<div class="gf-form-select-wrapper">
-					<select ng-model="dashboard.timezone" class='gf-form-input' ng-options="f.value as f.text for f in [{value: '', text: 'Default'}, {value: 'browser', text: 'Local browser time'},{value: 'utc', text: 'UTC'}]" ng-change="timezoneChanged()"></select>
-				</div>
-			</div>
-
       <folder-picker ng-if="!dashboardMeta.isFolder"
 										 initial-title="dashboardMeta.folderTitle"
 										 on-change="onFolderChange($folder)"
@@ -53,8 +46,14 @@
 		</div>
 
     <div class="section">
-      <h5 class="section-heading">Toggles</h5>
+      <h5 class="section-heading">Options</h5>
       <div class="gf-form-group">
+        <div class="gf-form">
+          <label class="gf-form-label width-11">Timezone</label>
+          <div class="gf-form-select-wrapper">
+            <select ng-model="dashboard.timezone" class='gf-form-input' ng-options="f.value as f.text for f in [{value: '', text: 'Default'}, {value: 'browser', text: 'Local browser time'},{value: 'utc', text: 'UTC'}]" ng-change="timezoneChanged()"></select>
+          </div>
+        </div>
         <gf-form-switch class="gf-form"
                         label="Editable"
                         tooltip="Uncheck, then save and reload to disable all dashboard editing"

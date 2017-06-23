@@ -30,15 +30,17 @@ export class SearchCtrl {
   closeSearch() {
     this.isOpen = this.ignoreClose;
     this.openCompleted = false;
+    this.contextSrv.isSearching = this.isOpen;
   }
 
   openSearch(evt, payload) {
     if (this.isOpen) {
-      this.isOpen = false;
+      this.closeSearch();
       return;
     }
 
     this.isOpen = true;
+    this.contextSrv.isSearching = true;
     this.giveSearchFocus = 0;
     this.selectedIndex = -1;
     this.results = [];
