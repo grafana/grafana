@@ -39,22 +39,30 @@
       </tr>
     </table>
 
-    <form name="addPermission" class="gf-form-group">
-      <h6 class="muted">Add Permission For</h6>
-      <div class="gf-form-inline">
-        <div class="gf-form">
-          <div class="gf-form-select-wrapper">
-            <select class="gf-form-input gf-size-auto" ng-model="ctrl.newType" ng-options="p.value as p.text for p in ctrl.aclTypes"  ng-change="ctrl.typeChanged()"></select>
+    <div class="gf-form-inline">
+      <form name="addPermission" class="gf-form-group">
+        <h6 class="muted">Add Permission For</h6>
+        <div class="gf-form-inline">
+          <div class="gf-form">
+            <div class="gf-form-select-wrapper">
+              <select class="gf-form-input gf-size-auto" ng-model="ctrl.newType" ng-options="p.value as p.text for p in ctrl.aclTypes"  ng-change="ctrl.typeChanged()"></select>
+            </div>
+          </div>
+          <div class="gf-form" ng-show="ctrl.newType === 'User'">
+            <user-picker user-picked="ctrl.userPicked($user)"></user-picker>
+          </div>
+          <div class="gf-form" ng-show="ctrl.newType === 'Group'">
+            <user-group-picker user-group-picked="ctrl.groupPicked($group)"></user-group-picker>
           </div>
         </div>
-        <div class="gf-form" ng-show="ctrl.newType === 'User'">
-          <user-picker user-picked="ctrl.userPicked($user)"></user-picker>
-        </div>
-        <div class="gf-form" ng-show="ctrl.newType === 'Group'">
-          <user-group-picker user-group-picked="ctrl.groupPicked($group)"></user-group-picker>
-        </div>
+      </form>
+      <div class="gf-form width-17">
+        <span ng-if="ctrl.error" class="text-error p-l-1">
+          <i class="fa fa-warning"></i>
+          {{ctrl.error}}
+        </span>
       </div>
-    </form>
+    </div>
 
     <div class="gf-form-button-row text-center">
       <button type="button" class="btn btn-danger" ng-disabled="!ctrl.canUpdate" ng-click="ctrl.update()">
@@ -62,9 +70,8 @@
       </button>
       <a class="btn-text" ng-click="ctrl.dismiss();">Close</a>
     </div>
-
-    </div>
   </div>
+</div>
 
   <!-- <br> -->
   <!-- <br> -->

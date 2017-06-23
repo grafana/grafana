@@ -22,6 +22,8 @@ export class AclCtrl {
   dismiss: () => void;
   newType: string;
   canUpdate: boolean;
+  error: string;
+  readonly duplicateError = 'This permission exists already.';
 
   /** @ngInject */
   constructor(private backendSrv, private dashboardSrv, private $sce, private $scope) {
@@ -111,12 +113,34 @@ export class AclCtrl {
   }
 
   addNewItem(item) {
+    if (!this.isValid(item)) {
+      return;
+    }
+    this.error = '';
+
     item.dashboardId = this.dashboard.id;
 
     this.items.push(this.prepareViewModel(item));
     this.sortItems();
 
     this.canUpdate = true;
+  }
+
+  isValid(item) {
+    const dupe = _.find(this.items, (it) => { return this.isDuplicate(it, item); });
+
+    if (dupe) {
+      this.error = this.duplicateError;
+      return false;
+    }
+
+    return true;
+  }
+
+  isDuplicate(origItem, newItem) {
+    return (origItem.role && newItem.role && origItem.role === newItem.role) ||
+    (origItem.userId && newItem.userId && origItem.userId === newItem.userId) ||
+    (origItem.userGroupId && newItem.userGroupId && origItem.userGroupId === newItem.userGroupId);
   }
 
   userPicked(user) {

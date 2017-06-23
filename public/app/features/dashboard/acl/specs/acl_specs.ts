@@ -77,4 +77,74 @@ describe('AclCtrl', () => {
       expect(backendSrv.post.getCall(0).args[1].items[3].permission).to.eql(1);
     });
   });
+
+  describe('when duplicate role permissions are added', () => {
+    beforeEach(() => {
+      backendSrv.get.reset();
+      backendSrv.post.reset();
+      ctx.ctrl.items = [];
+
+      ctx.ctrl.newType = 'Editor';
+      ctx.ctrl.typeChanged();
+
+      ctx.ctrl.newType = 'Editor';
+      ctx.ctrl.typeChanged();
+    });
+
+    it('should throw a validation error', () => {
+      expect(ctx.ctrl.error).to.eql(ctx.ctrl.duplicateError);
+    });
+
+    it('should not add the duplicate permission', () => {
+      expect(ctx.ctrl.items.length).to.eql(1);
+    });
+  });
+
+  describe('when duplicate user permissions are added', () => {
+    beforeEach(() => {
+      backendSrv.get.reset();
+      backendSrv.post.reset();
+      ctx.ctrl.items = [];
+
+      const userItem = {
+        id: 2,
+        login: 'user2',
+      };
+
+      ctx.ctrl.userPicked(userItem);
+      ctx.ctrl.userPicked(userItem);
+    });
+
+    it('should throw a validation error', () => {
+      expect(ctx.ctrl.error).to.eql(ctx.ctrl.duplicateError);
+    });
+
+    it('should not add the duplicate permission', () => {
+      expect(ctx.ctrl.items.length).to.eql(1);
+    });
+  });
+
+  describe('when duplicate user group permissions are added', () => {
+    beforeEach(() => {
+      backendSrv.get.reset();
+      backendSrv.post.reset();
+      ctx.ctrl.items = [];
+
+     const userGroupItem = {
+        id: 2,
+        name: 'ug1',
+      };
+
+      ctx.ctrl.groupPicked(userGroupItem);
+      ctx.ctrl.groupPicked(userGroupItem);
+    });
+
+    it('should throw a validation error', () => {
+      expect(ctx.ctrl.error).to.eql(ctx.ctrl.duplicateError);
+    });
+
+    it('should not add the duplicate permission', () => {
+      expect(ctx.ctrl.items.length).to.eql(1);
+    });
+  });
 });
