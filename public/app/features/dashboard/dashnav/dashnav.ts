@@ -140,8 +140,8 @@ export class DashNavCtrl {
       var newWindow = window.open(uri);
     }
 
-    onFolderChange(parentId) {
-      this.dashboard.parentId = parentId;
+    onFolderChange(folderId) {
+      this.dashboard.folderId = folderId;
     }
 }
 

@@ -129,7 +129,7 @@ export class DashboardCtrl {
       };
 
       $scope.onFolderChange = function(folder) {
-        $scope.dashboard.parentId = folder.id;
+        $scope.dashboard.folderId = folder.id;
         $scope.dashboard.meta.folderId = folder.id;
         $scope.dashboard.meta.folderTitle= folder.title;
       };

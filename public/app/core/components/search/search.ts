@@ -106,17 +106,49 @@ export class SearchCtrl {
     this.currentSearchId = this.currentSearchId + 1;
     var localSearchId = this.currentSearchId;
 
-    return this.backendSrv.search(this.query).then((results) => {
+    return this.backendSrv.search(this.query).then(results => {
       if (localSearchId < this.currentSearchId) { return; }
 
-      this.results = _.map(results, function(dash) {
-        dash.url = 'dashboard/' + dash.uri;
-        return dash;
+      let byId = _.groupBy(results, 'id');
+      let byFolderId = _.groupBy(results, 'folderId');
+      let finalList = [];
+
+      // add missing parent folders
+      _.each(results, (hit, index) => {
+        if (hit.folderId && !byId[hit.folderId]) {
+          const folder = {
+            id: hit.folderId,
+            uri: `db/${hit.folderSlug}`,
+            title: hit.folderTitle,
+            type: 'dash-folder'
+          };
+          byId[hit.folderId] = folder;
+          results.splice(index, 0, folder);
+        }
       });
 
-      if (this.queryHasNoFilters()) {
-        this.results.unshift({ title: 'Home', url: config.appSubUrl + '/', type: 'dash-home' });
+      // group by folder
+      for (let hit of results) {
+        if (hit.folderId) {
+          hit.type = "dash-child";
+        } else {
+          finalList.push(hit);
+        }
+
+        hit.url = 'dashboard/' + hit.uri;
+
+        if (hit.type === 'dash-folder') {
+          if (!byFolderId[hit.id]) {
+            continue;
+          }
+
+          for (let child of byFolderId[hit.id]) {
+            finalList.push(child);
+          }
+        }
       }
+
+      this.results = finalList;
     });
   }
 

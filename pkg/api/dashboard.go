@@ -88,13 +88,13 @@ func GetDashboard(c *middleware.Context) Response {
 		Version:     dash.Version,
 		HasAcl:      dash.HasAcl,
 		IsFolder:    dash.IsFolder,
-		FolderId:    dash.ParentId,
+		FolderId:    dash.FolderId,
 		FolderTitle: "Root",
 	}
 
 	// lookup folder title
-	if dash.ParentId > 0 {
-		query := m.GetDashboardQuery{Id: dash.ParentId, OrgId: c.OrgId}
+	if dash.FolderId > 0 {
+		query := m.GetDashboardQuery{Id: dash.FolderId, OrgId: c.OrgId}
 		if err := bus.Dispatch(&query); err != nil {
 			return ApiError(500, "Dashboard folder could not be read", err)
 		}
@@ -170,7 +170,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		return dashboardGuardianResponse(err)
 	}
 
-	if dash.IsFolder && dash.ParentId > 0 {
+	if dash.IsFolder && dash.FolderId > 0 {
 		return ApiError(400, m.ErrDashboardFolderCannotHaveParent.Error(), nil)
 	}
 

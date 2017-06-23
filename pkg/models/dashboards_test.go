@@ -44,11 +44,11 @@ func TestDashboardModel(t *testing.T) {
 		json := simplejson.New()
 		json.Set("title", "test dash")
 
-		cmd := &SaveDashboardCommand{Dashboard: json, ParentId: 1}
+		cmd := &SaveDashboardCommand{Dashboard: json, FolderId: 1}
 		dash := cmd.GetDashboardModel()
 
-		Convey("Should set ParentId", func() {
-			So(dash.ParentId, ShouldEqual, 1)
+		Convey("Should set FolderId", func() {
+			So(dash.FolderId, ShouldEqual, 1)
 		})
 	})
 }

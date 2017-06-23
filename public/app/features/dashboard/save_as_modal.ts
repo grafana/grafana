@@ -73,7 +73,7 @@ export class SaveDashboardAsModalCtrl {
   }
 
   onFolderChange(folder) {
-    this.clone.parentId = folder.id;
+    this.clone.folderId = folder.id;
   }
 }
 

@@ -11,10 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func insertTestDashboard(title string, orgId int64, parentId int64, isFolder bool, tags ...interface{}) *m.Dashboard {
+func insertTestDashboard(title string, orgId int64, folderId int64, isFolder bool, tags ...interface{}) *m.Dashboard {
 	cmd := m.SaveDashboardCommand{
 		OrgId:    orgId,
-		ParentId: parentId,
+		FolderId: folderId,
 		IsFolder: isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
@@ -45,13 +45,13 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(savedDash.Slug, ShouldEqual, "test-dash-23")
 				So(savedDash.Id, ShouldNotEqual, 0)
 				So(savedDash.IsFolder, ShouldBeFalse)
-				So(savedDash.ParentId, ShouldBeGreaterThan, 0)
+				So(savedDash.FolderId, ShouldBeGreaterThan, 0)
 
 				So(savedFolder.Title, ShouldEqual, "1 test dash folder")
 				So(savedFolder.Slug, ShouldEqual, "1-test-dash-folder")
 				So(savedFolder.Id, ShouldNotEqual, 0)
 				So(savedFolder.IsFolder, ShouldBeTrue)
-				So(savedFolder.ParentId, ShouldEqual, 0)
+				So(savedFolder.FolderId, ShouldEqual, 0)
 			})
 
 			Convey("Should be able to get dashboard", func() {
@@ -112,26 +112,6 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			})
 
-			Convey("Should be able to search for dashboard and return in folder hierarchy", func() {
-				query := search.FindPersistedDashboardsQuery{
-					Title:        "test dash 23",
-					OrgId:        1,
-					Mode:         "tree",
-					SignedInUser: &m.SignedInUser{OrgId: 1},
-				}
-
-				err := SearchDashboards(&query)
-				So(err, ShouldBeNil)
-
-				So(len(query.Result), ShouldEqual, 1)
-				hit := query.Result[0].Dashboards[0]
-
-				So(len(hit.Tags), ShouldEqual, 2)
-				So(hit.Type, ShouldEqual, search.DashHitDB)
-				So(hit.ParentId, ShouldBeGreaterThan, 0)
-
-			})
-
 			Convey("Should be able to search for dashboard folder", func() {
 				query := search.FindPersistedDashboardsQuery{
 					Title:        "1 test dash folder",
@@ -150,7 +130,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			Convey("Should be able to search for a dashboard folder's children", func() {
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
-					ParentId:     savedFolder.Id,
+					FolderId:     savedFolder.Id,
 					SignedInUser: &m.SignedInUser{OrgId: 1},
 				}
 
@@ -166,19 +146,18 @@ func TestDashboardDataAccess(t *testing.T) {
 				Convey("should be able to find two dashboards by id", func() {
 					query := search.FindPersistedDashboardsQuery{
 						DashboardIds: []int64{2, 3},
-						Mode:         "tree",
 						SignedInUser: &m.SignedInUser{OrgId: 1},
 					}
 
 					err := SearchDashboards(&query)
 					So(err, ShouldBeNil)
 
-					So(len(query.Result[0].Dashboards), ShouldEqual, 2)
+					So(len(query.Result), ShouldEqual, 2)
 
-					hit := query.Result[0].Dashboards[0]
+					hit := query.Result[0]
 					So(len(hit.Tags), ShouldEqual, 2)
 
-					hit2 := query.Result[0].Dashboards[1]
+					hit2 := query.Result[1]
 					So(len(hit2.Tags), ShouldEqual, 1)
 				})
 
@@ -208,30 +187,30 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			})
 
-			Convey("Should be able to update dashboard and remove parentId", func() {
+			Convey("Should be able to update dashboard and remove folderId", func() {
 				cmd := m.SaveDashboardCommand{
 					OrgId: 1,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"id":    1,
-						"title": "parentId",
+						"title": "folderId",
 						"tags":  []interface{}{},
 					}),
 					Overwrite: true,
-					ParentId:  2,
+					FolderId:  2,
 				}
 
 				err := SaveDashboard(&cmd)
 				So(err, ShouldBeNil)
-				So(cmd.Result.ParentId, ShouldEqual, 2)
+				So(cmd.Result.FolderId, ShouldEqual, 2)
 
 				cmd = m.SaveDashboardCommand{
 					OrgId: 1,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"id":    1,
-						"title": "parentId",
+						"title": "folderId",
 						"tags":  []interface{}{},
 					}),
-					ParentId:  0,
+					FolderId:  0,
 					Overwrite: true,
 				}
 
@@ -245,7 +224,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 				err = GetDashboard(&query)
 				So(err, ShouldBeNil)
-				So(query.Result.ParentId, ShouldEqual, 0)
+				So(query.Result.FolderId, ShouldEqual, 0)
 			})
 
 			Convey("Should be able to delete a dashboard folder and its children", func() {
@@ -255,7 +234,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
-					ParentId:     savedFolder.Id,
+					FolderId:     savedFolder.Id,
 					SignedInUser: &m.SignedInUser{},
 				}
 

@@ -137,9 +137,9 @@ func addDashboardMigration(mg *Migrator) {
 		{Name: "term", Type: DB_NVarchar, Length: 50, Nullable: false},
 	}))
 
-	// add column to store parent_id for dashboard folder structure
-	mg.AddMigration("Add column parent_id in dashboard", NewAddColumnMigration(dashboardV2, &Column{
-		Name: "parent_id", Type: DB_BigInt, Nullable: true,
+	// add column to store folder_id for dashboard folder structure
+	mg.AddMigration("Add column folder_id in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "folder_id", Type: DB_BigInt, Nullable: true,
 	}))
 
 	mg.AddMigration("Add column isFolder in dashboard", NewAddColumnMigration(dashboardV2, &Column{

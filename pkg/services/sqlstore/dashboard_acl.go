@@ -40,7 +40,7 @@ func UpdateDashboardAcl(cmd *m.UpdateDashboardAclCommand) error {
 
 		// Update dashboard HasAcl flag
 		dashboard := m.Dashboard{HasAcl: true}
-		if _, err := sess.Cols("has_acl").Where("id=? OR parent_id=?", cmd.DashboardId, cmd.DashboardId).Update(&dashboard); err != nil {
+		if _, err := sess.Cols("has_acl").Where("id=? OR folder_id=?", cmd.DashboardId, cmd.DashboardId).Update(&dashboard); err != nil {
 			return err
 		}
 		return nil
@@ -105,7 +105,7 @@ func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 			HasAcl: true,
 		}
 
-		if _, err := sess.Cols("has_acl").Where("id=? OR parent_id=?", cmd.DashboardId, cmd.DashboardId).Update(&dashboard); err != nil {
+		if _, err := sess.Cols("has_acl").Where("id=? OR folder_id=?", cmd.DashboardId, cmd.DashboardId).Update(&dashboard); err != nil {
 			return err
 		}
 
@@ -129,7 +129,7 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 	dashboardFilter := fmt.Sprintf(`IN (
     SELECT %d
     UNION
-    SELECT parent_id from dashboard where id = %d
+    SELECT folder_id from dashboard where id = %d
   )`, query.DashboardId, query.DashboardId)
 
 	rawSQL := `

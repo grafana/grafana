@@ -14,14 +14,15 @@ const (
 )
 
 type Hit struct {
-	Id         int64    `json:"id"`
-	Title      string   `json:"title"`
-	Uri        string   `json:"uri"`
-	Type       HitType  `json:"type"`
-	Tags       []string `json:"tags"`
-	IsStarred  bool     `json:"isStarred"`
-	ParentId   int64    `json:"parentId"`
-	Dashboards []Hit    `json:"dashboards"`
+	Id          int64    `json:"id"`
+	Title       string   `json:"title"`
+	Uri         string   `json:"uri"`
+	Type        HitType  `json:"type"`
+	Tags        []string `json:"tags"`
+	IsStarred   bool     `json:"isStarred"`
+	FolderId    int64    `json:"folderId,omitempty"`
+	FolderTitle string   `json:"folderTitle,omitempty"`
+	FolderSlug  string   `json:"folderSlug,omitempty"`
 }
 
 type HitList []*Hit
@@ -62,7 +63,7 @@ type FindPersistedDashboardsQuery struct {
 	IsStarred    bool
 	DashboardIds []int64
 	Type         string
-	ParentId     int64
+	FolderId     int64
 	Mode         string
 
 	Result HitList

@@ -20,9 +20,7 @@ func TestSearch(t *testing.T) {
 				&Hit{Id: 10, Title: "AABB", Type: "dash-db", Tags: []string{"CC", "AA"}},
 				&Hit{Id: 15, Title: "BBAA", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
 				&Hit{Id: 25, Title: "bbAAa", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
-				&Hit{Id: 17, Title: "FOLDER", Type: "dash-folder", Dashboards: []Hit{
-					{Id: 18, Title: "ZZAA", Tags: []string{"ZZ"}},
-				}},
+				&Hit{Id: 17, Title: "FOLDER", Type: "dash-folder"},
 			}
 			return nil
 		})

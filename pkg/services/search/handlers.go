@@ -44,7 +44,7 @@ func searchHandler(query *Query) error {
 		IsStarred:    query.IsStarred,
 		DashboardIds: query.DashboardIds,
 		Type:         query.Type,
-		ParentId:     query.FolderId,
+		FolderId:     query.FolderId,
 		Mode:         query.Mode,
 	}
 

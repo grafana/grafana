@@ -22,7 +22,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 	Convey("Given a dashboard with a parent folder which does not have an acl", t, func() {
 		fakeDash := m.NewDashboard("Child dash")
 		fakeDash.Id = 1
-		fakeDash.ParentId = 1
+		fakeDash.FolderId = 1
 		fakeDash.HasAcl = false
 
 		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
@@ -50,7 +50,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 		cmd := m.SaveDashboardCommand{
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
-				"parentId": fakeDash.ParentId,
+				"folderId": fakeDash.FolderId,
 				"title":    fakeDash.Title,
 				"id":       fakeDash.Id,
 			}),
@@ -163,10 +163,10 @@ func TestDashboardApiEndpoint(t *testing.T) {
 					return nil
 				})
 				invalidCmd := m.SaveDashboardCommand{
-					ParentId: fakeDash.ParentId,
+					FolderId: fakeDash.FolderId,
 					IsFolder: true,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"parentId": fakeDash.ParentId,
+						"folderId": fakeDash.FolderId,
 						"title":    fakeDash.Title,
 					}),
 				}
@@ -183,7 +183,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 	Convey("Given a dashboard with a parent folder which has an acl", t, func() {
 		fakeDash := m.NewDashboard("Child dash")
 		fakeDash.Id = 1
-		fakeDash.ParentId = 1
+		fakeDash.FolderId = 1
 		fakeDash.HasAcl = true
 
 		aclMockResp := []*m.DashboardAclInfoDTO{
@@ -210,10 +210,10 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		})
 
 		cmd := m.SaveDashboardCommand{
-			ParentId: fakeDash.ParentId,
+			FolderId: fakeDash.FolderId,
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
 				"id":       fakeDash.Id,
-				"parentId": fakeDash.ParentId,
+				"folderId": fakeDash.FolderId,
 				"title":    fakeDash.Title,
 			}),
 		}

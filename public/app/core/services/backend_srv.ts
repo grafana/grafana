@@ -211,7 +211,7 @@ export class BackendSrv {
 
     return this.post('/api/dashboards/db/', {
       dashboard: dash,
-      parentId: dash.parentId,
+      folderId: dash.folderId,
       overwrite: options.overwrite === true,
       message: options.message || '',
     });

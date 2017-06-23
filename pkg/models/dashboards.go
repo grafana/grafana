@@ -48,7 +48,7 @@ type Dashboard struct {
 
 	UpdatedBy int64
 	CreatedBy int64
-	ParentId  int64
+	FolderId  int64
 	IsFolder  bool
 	HasAcl    bool
 
@@ -116,7 +116,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.OrgId = cmd.OrgId
 	dash.PluginId = cmd.PluginId
 	dash.IsFolder = cmd.IsFolder
-	dash.ParentId = cmd.ParentId
+	dash.FolderId = cmd.FolderId
 	dash.UpdateSlug()
 	return dash
 }
@@ -144,7 +144,7 @@ type SaveDashboardCommand struct {
 	OrgId        int64            `json:"-"`
 	RestoredFrom int              `json:"-"`
 	PluginId     string           `json:"-"`
-	ParentId     int64            `json:"parentId"`
+	FolderId     int64            `json:"folderId"`
 	IsFolder     bool             `json:"isFolder"`
 
 	Result *Dashboard
