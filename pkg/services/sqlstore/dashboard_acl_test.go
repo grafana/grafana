@@ -25,6 +25,22 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				So(err, ShouldEqual, m.ErrDashboardAclInfoMissing)
 			})
 
+			Convey("Given dashboard folder with default permissions", func() {
+				Convey("When reading dashboard acl should include acl for parent folder", func() {
+					query := m.GetDashboardAclInfoListQuery{DashboardId: childDash.Id, OrgId: 1}
+
+					err := GetDashboardAclInfoList(&query)
+					So(err, ShouldBeNil)
+
+					So(len(query.Result), ShouldEqual, 2)
+					defaultPermissionsId := -1
+					So(query.Result[0].DashboardId, ShouldEqual, defaultPermissionsId)
+					So(*query.Result[0].Role, ShouldEqual, m.ROLE_VIEWER)
+					So(query.Result[1].DashboardId, ShouldEqual, defaultPermissionsId)
+					So(*query.Result[1].Role, ShouldEqual, m.ROLE_EDITOR)
+				})
+			})
+
 			Convey("Given dashboard folder permission", func() {
 				err := SetDashboardAcl(&m.SetDashboardAclCommand{
 					OrgId:       1,
@@ -63,6 +79,31 @@ func TestDashboardAclDataAccess(t *testing.T) {
 						So(query.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
 						So(query.Result[1].DashboardId, ShouldEqual, childDash.Id)
 					})
+				})
+			})
+
+			Convey("Given child dashboard permission in folder with no permissions", func() {
+				err := SetDashboardAcl(&m.SetDashboardAclCommand{
+					OrgId:       1,
+					UserId:      currentUser.Id,
+					DashboardId: childDash.Id,
+					Permission:  m.PERMISSION_EDIT,
+				})
+				So(err, ShouldBeNil)
+
+				Convey("When reading dashboard acl should include default acl for parent folder and the child acl", func() {
+					query := m.GetDashboardAclInfoListQuery{OrgId: 1, DashboardId: childDash.Id}
+
+					err := GetDashboardAclInfoList(&query)
+					So(err, ShouldBeNil)
+
+					defaultPermissionsId := -1
+					So(len(query.Result), ShouldEqual, 3)
+					So(query.Result[0].DashboardId, ShouldEqual, defaultPermissionsId)
+					So(*query.Result[0].Role, ShouldEqual, m.ROLE_VIEWER)
+					So(query.Result[1].DashboardId, ShouldEqual, defaultPermissionsId)
+					So(*query.Result[1].Role, ShouldEqual, m.ROLE_EDITOR)
+					So(query.Result[2].DashboardId, ShouldEqual, childDash.Id)
 				})
 			})
 

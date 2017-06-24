@@ -50,7 +50,7 @@ export class AclCtrl {
   }
 
   prepareViewModel(item: DashboardAcl): DashboardAcl {
-    item.inherited = this.dashboard.id !== item.dashboardId;
+    item.inherited = !this.dashboard.meta.isFolder && this.dashboard.id !== item.dashboardId;
     item.sortRank = 0;
 
     if (item.userId > 0) {
@@ -138,6 +138,10 @@ export class AclCtrl {
   }
 
   isDuplicate(origItem, newItem) {
+    if (origItem.inherited) {
+      return false;
+    }
+
     return (origItem.role && newItem.role && origItem.role === newItem.role) ||
     (origItem.userId && newItem.userId && origItem.userId === newItem.userId) ||
     (origItem.userGroupId && newItem.userGroupId && origItem.userGroupId === newItem.userGroupId);

@@ -9,7 +9,7 @@ describe('AclCtrl', () => {
   };
 
   const dashboardSrv = {
-    getCurrent: sinon.stub().returns({id: 1})
+    getCurrent: sinon.stub().returns({id: 1, meta: { isFolder: false }})
   };
 
   beforeEach(angularMocks.module('grafana.core'));
@@ -130,7 +130,7 @@ describe('AclCtrl', () => {
       backendSrv.post.reset();
       ctx.ctrl.items = [];
 
-     const userGroupItem = {
+      const userGroupItem = {
         id: 2,
         name: 'ug1',
       };
@@ -145,6 +145,36 @@ describe('AclCtrl', () => {
 
     it('should not add the duplicate permission', () => {
       expect(ctx.ctrl.items.length).to.eql(1);
+    });
+  });
+
+  describe('when one inherited and one not inherited user group permission are added', () => {
+    beforeEach(() => {
+      backendSrv.get.reset();
+      backendSrv.post.reset();
+      ctx.ctrl.items = [];
+
+      const inheritedUserGroupItem = {
+        id: 2,
+        name: 'ug1',
+        dashboardId: -1
+      };
+
+      ctx.ctrl.items.push(inheritedUserGroupItem);
+
+      const userGroupItem = {
+        id: 2,
+        name: 'ug1',
+      };
+      ctx.ctrl.groupPicked(userGroupItem);
+    });
+
+    it('should not throw a validation error', () => {
+      expect(ctx.ctrl.error).to.eql('');
+    });
+
+    it('should add both permissions', () => {
+      expect(ctx.ctrl.items.length).to.eql(2);
     });
   });
 });
