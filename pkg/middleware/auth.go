@@ -58,29 +58,31 @@ func notAuthorized(c *Context) {
 
 func RoleAuth(roles ...m.RoleType) macaron.Handler {
 	return func(c *Context) {
-		ok := false
-		for _, role := range roles {
-			if role == c.OrgRole {
-				ok = true
-				break
-			}
-		}
-		if !ok {
-			accessForbidden(c)
-		}
+		return
+		//ok := false
+		//for _, role := range roles {
+		//	if role == c.OrgRole {
+		//		ok = true
+		//		break
+		//	}
+		//}
+		//if !ok {
+		//	accessForbidden(c)
+		//}
 	}
 }
 
 func Auth(options *AuthOptions) macaron.Handler {
 	return func(c *Context) {
-		if !c.IsSignedIn && options.ReqSignedIn && !c.AllowAnonymous {
-			notAuthorized(c)
-			return
-		}
-
-		if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
-			accessForbidden(c)
-			return
-		}
+		return
+		//if !c.IsSignedIn && options.ReqSignedIn && !c.AllowAnonymous {
+		//	notAuthorized(c)
+		//	return
+		//}
+		//
+		//if !c.IsGrafanaAdmin && options.ReqGrafanaAdmin {
+		//	accessForbidden(c)
+		//	return
+		//}
 	}
 }

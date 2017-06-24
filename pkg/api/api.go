@@ -1,12 +1,80 @@
 package api
 
 import (
+	"github.com/casbin/casbin"
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 )
+
+// Init Casbin auth rules for http routes
+func initRouteAuthRules(e *casbin.Enforcer) {
+	// rules for Grafana admin.
+	e.AddPolicy("is_not", "grafana_admin", "/admin*", "*", "deny")
+	e.AddPolicy("is_not", "grafana_admin", "/users*", "*", "deny")
+
+	e.AddPolicy("is", "org_viewer", "/api/orgs", "POST", "allow")
+	e.AddPolicy("is_not", "grafana_admin", "/api/orgs*", "*", "deny")
+
+	e.AddPolicy("is_not", "grafana_admin", "/api/tsdb/testdata/gensql", "GET", "deny")
+	e.AddPolicy("is_not", "grafana_admin", "/api/users*", "*", "deny")
+	e.AddPolicy("is_not", "grafana_admin", "/api/admin*", "*", "deny")
+
+	// rules for organization editor.
+	e.AddPolicy("is_not", "org_editor", "/api/snapshots-delete/:key", "GET", "deny")
+	e.AddPolicy("is_not", "org_editor", "/api/dashboards/id/:dashboardId/restore", "POST", "deny")
+	e.AddPolicy("is_not", "org_editor", "/api/dashboards/db", "POST", "deny")
+
+	e.AddPolicy("is", "org_viewer", "/api/playlists/*", "GET", "allow")
+	e.AddPolicy("is_not", "org_editor", "/api/playlists/*", "*", "deny")
+
+	e.AddPolicy("is_not", "org_editor", "/api/alerts/:alertId/pause", "POST", "deny")
+
+	e.AddPolicy("is", "org_viewer", "/api/alert-notifications", "GET", "allow")
+	e.AddPolicy("is_not", "org_editor", "/api/alert-notifications/*", "*", "deny")
+
+	e.AddPolicy("is_not", "org_editor", "/api/annotations/", "POST", "deny")
+
+	// rules for organization admin.
+	e.AddPolicy("is", "org_viewer", "/api/org/", "GET", "allow")
+	e.AddPolicy("is", "org_viewer", "/api/org/quotas", "GET", "allow")
+	e.AddPolicy("is_not", "org_admin", "/api/org/*", "*", "deny")
+
+	e.AddPolicy("is_not", "org_admin", "/api/auth/keys/*", "*", "deny")
+
+	e.AddPolicy("is", "org_viewer", "/api/datasources/id/:name", "GET", "allow")
+	e.AddPolicy("is", "org_viewer", "/api/datasources/proxy/*", "*", "allow")
+	e.AddPolicy("is_not", "org_admin", "/api/datasources/*", "*", "deny")
+
+	e.AddPolicy("is_not", "org_admin", "/api/plugins/:pluginId/dashboards/", "GET", "deny")
+	e.AddPolicy("is_not", "org_admin", "/api/plugins/:pluginId/settings", "POST", "deny")
+
+	// rules for anonymous user.
+	e.AddPolicy("is", "guest", "/login*", "*", "allow")
+	e.AddPolicy("is", "guest", "/logout*", "*", "allow")
+	e.AddPolicy("is", "guest", "/invite/*", "*", "allow")
+	e.AddPolicy("is", "guest", "/signup", "*", "allow")
+	e.AddPolicy("is", "guest", "/user/password/*", "*", "allow")
+	e.AddPolicy("is", "guest", "/dashboard/snapshot/*", "GET", "allow")
+	e.AddPolicy("is", "guest", "/api/login/ping", "*", "allow")
+	e.AddPolicy("is", "guest", "/api/user/signup*", "*", "allow")
+	e.AddPolicy("is", "guest", "/api/user/invite*", "*", "allow")
+	e.AddPolicy("is", "guest", "/api/user/password/*", "*", "allow")
+	e.AddPolicy("is", "guest", "/api/snapshot*", "*", "allow")
+	e.AddPolicy("is", "guest", "/avatar/*", "*", "allow")
+	e.AddPolicy("is", "guest", "/ws", "*", "allow")
+
+	// rules for organization viewer.
+	e.AddPolicy("is", "org_viewer", "/*", "*", "allow")
+
+	// RBAC role inheritance relationship.
+	e.AddGroupingPolicy("grafana_admin", "org_admin")
+	e.AddGroupingPolicy("org_admin", "org_editor")
+	e.AddGroupingPolicy("org_editor", "org_viewer")
+	e.AddGroupingPolicy("org_viewer", "guest")
+}
 
 // Register adds http routes
 func (hs *HttpServer) registerRoutes() {
@@ -17,6 +85,10 @@ func (hs *HttpServer) registerRoutes() {
 	reqOrgAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
 	quota := middleware.Quota
 	bind := binding.Bind
+
+	e := casbin.NewEnforcer("conf/policy/authz_model.conf")
+	initRouteAuthRules(e)
+	r.Use(middleware.Authorizer(e))
 
 	// automatically set HEAD for every GET
 	r.SetAutoHead(true)
