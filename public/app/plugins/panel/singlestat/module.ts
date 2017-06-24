@@ -409,6 +409,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       return result;
     }
 
+    function getThresholdValue(value){
+      var decimalInfo = ctrl.getDecimalsForValue(value);
+      var formatFunc = kbn.valueFormats[panel.format];
+
+      return formatFunc(value, decimalInfo.decimals, decimalInfo.scaledDecimals).replace(/\D/g,'');
+    }
+
     function addGauge() {
       var width = elem.width();
       var height = elem.height();
@@ -472,7 +479,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
               label: {
                 show: panel.gauge.thresholdLabels,
                 margin: 8,
-                font: { size: 18 }
+                font: { size: 18 },
+                formatter: function(value) { return getThresholdValue(value); },
               },
               show: panel.gauge.thresholdMarkers,
               width: thresholdMarkersWidth,
