@@ -42,6 +42,7 @@ func GetUserByLoginOrEmail(c *middleware.Context) Response {
 	}
 	user := query.Result
 	result := m.UserProfileDTO{
+		Id:             user.Id,
 		Name:           user.Name,
 		Email:          user.Email,
 		Login:          user.Login,
