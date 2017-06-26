@@ -131,7 +131,9 @@ export default function link(scope, elem, attrs, ctrl) {
     tick_interval = tickStep(y_min, y_max, ticks);
     ticks = Math.ceil((y_max - y_min) / tick_interval);
 
+    let decimalsAuto = getPrecision(tick_interval);
     let decimals = panel.yAxis.decimals === null ? getPrecision(tick_interval) : panel.yAxis.decimals;
+    let scaledDecimals = getScaledDecimals(decimals, tick_interval);
 
     // Set default Y min and max if no data
     if (_.isEmpty(data.buckets)) {
@@ -153,7 +155,7 @@ export default function link(scope, elem, attrs, ctrl) {
 
     let yAxis = d3.axisLeft(yScale)
       .ticks(ticks)
-      .tickFormat(tickValueFormatter(decimals))
+      .tickFormat(tickValueFormatter(decimals, scaledDecimals))
       .tickSizeInner(0 - width)
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
@@ -293,10 +295,14 @@ export default function link(scope, elem, attrs, ctrl) {
     return tickValues;
   }
 
-  function tickValueFormatter(decimals) {
+  function getScaledDecimals(decimals, tick_size) {
+    return decimals - Math.floor(Math.log(tick_size) / Math.LN10);
+  }
+
+  function tickValueFormatter(decimals, scaledDecimals = null) {
     let format = panel.yAxis.format;
     return function(value) {
-      return kbn.valueFormats[format](value, decimals);
+      return kbn.valueFormats[format](value, decimals, scaledDecimals);
     };
   }
 
