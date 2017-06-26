@@ -12,17 +12,10 @@ function (angular, _) {
 
     $scope.init = function() {
       $scope.installManual = false;
-      $scope.hostNum = contextSrv.hostNum;
       $scope.orgId = contextSrv.user.orgId;
       $scope.alertServer = backendSrv.alertDUrl;
       $scope.token = backendSrv.getToken();
       $scope.system = _.find(contextSrv.systemsMap,{Id:contextSrv.user.systemId}).SystemsName;
-      if(contextSrv.hostNum) {
-        $scope.installed = true;
-        $scope.appEvent('alert-success', ['您已安装机器探针', "请继续安装机器探针,或安装服务探针"]);
-      } else {
-        contextSrv.sidemenu = false;
-      }
       backendSrv.get('/api/static/hosts').then(function(result) {
         $scope.platform = result.hosts;
       });
@@ -31,6 +24,17 @@ function (angular, _) {
         var url = document.createElement('a');
         url.href = ds.url;
         $scope.metricsServer = url.hostname;
+      });
+
+      backendSrv.getHostsNum().then(function (response) {
+        contextSrv.hostNum = response;
+        $scope.hostNum = response;
+        if(contextSrv.hostNum) {
+          $scope.installed = true;
+          $scope.appEvent('alert-success', ['您已安装机器探针', "请继续安装机器探针,或安装服务探针"]);
+        } else {
+          contextSrv.sidemenu = false;
+        }
       });
       $scope.inter = $interval($scope.getHosts,5000,120);
 
@@ -49,13 +53,8 @@ function (angular, _) {
         $interval.cancel($scope.inter);
         $scope.installed = true;
       } else {
-        backendSrv.alertD({
-          method: "get",
-          url: "/summary",
-          params: {metrics:"collector.summary"},
-          headers: {'Content-Type': 'text/plain'},
-        }).then(function (response) {
-          $scope.hostNum = response.data.length;
+        backendSrv.getHostsNum().then(function (response) {
+          $scope.hostNum = response;
         });
       }
     };
