@@ -48,7 +48,7 @@
         <tbody>
             <tr ng-repeat="knows in knowledge" style="background:#fff;">
                 <td>{{knows.symptom}}</td>
-                <td>{{knows.solution}}</td>
+                <td ng-bind-html="knows.solution"></td>
             </tr>
         </tbody>
     </table>

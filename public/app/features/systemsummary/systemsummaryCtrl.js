@@ -1,10 +1,9 @@
 define([
   'angular',
   'lodash',
-  'app/core/utils/datemath',
   'app/core/config',
 ],
-  function (angular, _, dateMath, config) {
+  function (angular, _, config) {
     'use strict';
 
     var module = angular.module('grafana.controllers');
@@ -142,9 +141,7 @@ define([
           }
         }, $scope);
 
-        datasourceSrv.get("opentsdb").then(function (datasource) {
-          $scope.datasource = datasource;
-        }).then(function () {
+        $timeout(function() {
           $scope.getAlertStatus();
           $scope.getServices();
           $scope.getHostSummary();
@@ -260,29 +257,18 @@ define([
             "downsample": "10m-sum",
           }];
 
-          $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-10m', false).valueOf(), null).then(function (response) {
-            if (_.isEmpty(response.data)) {
-              throw Error;
+          datasourceSrv.getServiceStatus(queries, 'now-10m').then(function(response) {
+            if(response.status > 0) {
+              $scope.panleJson[2].status.warn[1]++;
+            } else {
+              $scope.panleJson[2].status.success[1]++;
             }
-            _.each(response.data, function (metricData) {
-              if (_.isObject(metricData)) {
-                if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
-                  $scope.panleJson[2].status.warn[1]++;
-                } else {
-                  $scope.panleJson[2].status.success[1]++;
-                }
-              }
-
-              var targets = _.cloneDeep(panelMeta.panels[0].targets[0]);
-              targets.metric = key + '.state';
-              targets.aggregator = queries[0].aggregator;
-              targets.downsample = queries[0].downsample;
-              targets.downsampleAggregator = 'sum';
-              $scope.dashboard.rows[2].panels[0].targets.push(targets);
-            });
-          }).catch(function () {
-            //nothing to do;
-            //$scope.serviceList.push({"host": "尚未配置在任何主机上", "alias": alias[key], "state": "尚未工作"});
+            var targets = _.cloneDeep(panelMeta.panels[0].targets[0]);
+            targets.metric = key + '.state';
+            targets.aggregator = queries[0].aggregator;
+            targets.downsample = queries[0].downsample;
+            targets.downsampleAggregator = 'sum';
+            $scope.dashboard.rows[2].panels[0].targets.push(targets);
           });
         });
       };
@@ -317,20 +303,13 @@ define([
               "tags": { "host": metric.tag.host }
             }];
 
-            $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1m', false).valueOf(), null).then(function (response) {
-              if (_.isEmpty(response.data)) {
-                throw Error;
+            datasourceSrv.getServiceStatus(queries, 'now-1m').then(function(response) {
+              if(response.status > 0) {
+                $scope.panleJson[3].status.warn[1]++;
+              } else {
+                $scope.panleJson[3].status.success[1]++;
               }
-              _.each(response.data, function (metricData) {
-                if (_.isObject(metricData)) {
-                  if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
-                    $scope.panleJson[3].status.warn[1]++;
-                  } else {
-                    $scope.panleJson[3].status.success[1]++;
-                  }
-                }
-              });
-            }).catch(function () {
+            },function(err) {
               $scope.panleJson[3].status.danger[1]++;
             });
 
@@ -389,17 +368,15 @@ define([
             "aggregator": "avg",
           }];
 
-          $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now', false).valueOf(), dateMath.parse('now+1d', false).valueOf()).then(function (response) {
-            for (var i in response.data[0].dps) {
-              var data = response.data[0].dps[i];
-            }
+          datasourceSrv.getServiceStatus(queries, 'now', 'now+1d').then(function(response) {
+            var data = response.status;
             if (item[1] === 'cpu.usr.prediction') {
               data = data.toFixed(2) + '%';
             } else {
               data = (data / Math.pow(1024, 3)).toFixed(2) + 'GB';
             }
             $scope.panleJson[6].panels[index].tip += data;
-          }).catch(function (e) {
+          },function(err) {
             $scope.panleJson[6].panels[index].tip = '暂无预测信息';
           });
         });

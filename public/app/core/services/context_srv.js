@@ -10,7 +10,7 @@ function (angular, _, coreModule, store, config) {
 
   coreModule.service('contextSrv', function($rootScope, $timeout) {
     var self = this;
-    this.hostsNum = 0;
+    this.hostNum = 0;
 
     function User() {
       if (window.grafanaBootData.user) {

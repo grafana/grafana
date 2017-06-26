@@ -1,9 +1,8 @@
 define([
     'angular',
     'lodash',
-    'app/core/utils/datemath'
   ],
-  function (angular, _, dateMath) {
+  function (angular, _) {
     'use strict';
 
     var module = angular.module('grafana.controllers');
@@ -15,15 +14,7 @@ define([
           $scope.systems = system;
           $scope.summarySelect.system = system[0].Id;
         }).then(function () {
-          _.each(datasourceSrv.getAll(), function (ds) {
-            if (ds.type === 'opentsdb') {
-              datasourceSrv.get(ds.name).then(function (datasource) {
-                $scope.datasource = datasource;
-              }).then(function () {
-                $scope.changeSelect();
-              });
-            }
-          });
+          $scope.changeSelect();
         });
 
       };
@@ -72,23 +63,15 @@ define([
               "tags": {"host": metric.tag.host}
             }];
 
-            $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1m', false).valueOf(), null).then(function (response) {
-              if (_.isEmpty(response.data)) {
-                throw Error;
+            datasourceSrv.getServiceStatus(queries, 'now-1m').then(function(response) {
+              if(response.status > 0) {
+                metric.state = "异常";
+              } else {
+                metric.state = "正常";
               }
-              _.each(response.data, function (metricData) {
-                if (_.isObject(metricData)) {
-                  if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
-                    metric.state = "异常";
-                  } else {
-                    metric.state = "正常";
-                  }
-                }
-              });
-            }).catch(function () {
+            },function(err) {
               metric.state = "尚未工作";
             });
-
           });
         })
       };
