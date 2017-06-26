@@ -32,7 +32,11 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       options.targets = this.expandTemplateVariable(options.targets, options.scopedVars, templateSrv);
 
       var queries = _.filter(options.targets, function (item) {
-        return item.hide !== true || !item.namespace || !item.metricName || _.isEmpty(item.statistics);
+        return item.hide !== true &&
+          !!item.region &&
+          !!item.namespace &&
+          !!item.metricName &&
+          !_.isEmpty(item.statistics);
       }).map(function (item) {
         item.region = templateSrv.replace(item.region, options.scopedVars);
         item.namespace = templateSrv.replace(item.namespace, options.scopedVars);
