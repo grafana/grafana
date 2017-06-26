@@ -130,6 +130,7 @@ export class TableRenderer {
   renderCell(columnIndex, value, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
     var style = '';
+    var cellClass = '';
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';
       this.colorState.cell = null;
@@ -153,7 +154,11 @@ export class TableRenderer {
       this.table.columns[columnIndex].hidden = false;
     }
 
-    return '<td' + style + '>' + value + widthHack + '</td>';
+    if (this.table.columns[columnIndex].style.preserveFormat) {
+      cellClass = ' class="table-panel-cell-pre" ';
+    }
+
+    return '<td' + cellClass + style + '>' + value + widthHack + '</td>';
   }
 
   render(page) {

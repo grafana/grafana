@@ -46,6 +46,9 @@
       <div ng-if="style.type === 'string'">
         <gf-form-switch class="gf-form" label-class="width-8" ng-if="style.type === 'string'" label="Sanitize HTML" checked="style.sanitize" change="editor.render()"></gf-form-switch>
       </div>
+      <div ng-if="style.type === 'string'">
+        <gf-form-switch class="gf-form" label-class="width-12" ng-if="style.type === 'string'" label="Preserve Formatting" checked="style.preserveFormat" change="editor.render()"></gf-form-switch>
+      </div>
 
       <div ng-if="style.type === 'number'">
         <div class="gf-form">
