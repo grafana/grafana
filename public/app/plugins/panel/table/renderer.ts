@@ -156,7 +156,7 @@ export class TableRenderer {
 
     var columnStyle = this.table.columns[columnIndex].style;
     if (columnStyle && columnStyle.preserveFormat) {
-      cellClass = 'class="table-panel-cell-pre" ';
+      cellClass = ' class="table-panel-cell-pre" ';
     }
 
     return '<td' + cellClass + style + '>' + value + widthHack + '</td>';
