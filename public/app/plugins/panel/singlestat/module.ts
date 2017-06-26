@@ -413,7 +413,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       var decimalInfo = ctrl.getDecimalsForValue(value);
       var formatFunc = kbn.valueFormats[panel.format];
 
-      return formatFunc(value, decimalInfo.decimals, decimalInfo.scaledDecimals).replace(/\D/g,'');
+      return formatFunc(value, decimalInfo.decimals, decimalInfo.scaledDecimals);
     }
 
     function addGauge() {
