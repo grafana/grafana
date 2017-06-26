@@ -156,8 +156,9 @@ function (angular, moment, _) {
         }];
         datasourceSrv.getServiceStatus(queries, 'now-2m').then(function(response) {
           alertData.curr = Math.floor(response.status * 1000) / 1000;
-        },function(err) {
-          alertData.curr = "没有数据";
+          if(isNaN(alertData.curr)) {
+            throw Error;
+          }
         }).catch(function (err) {
           alertData.curr = "没有数据";
         });
