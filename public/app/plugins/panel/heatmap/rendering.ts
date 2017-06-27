@@ -132,7 +132,7 @@ export default function link(scope, elem, attrs, ctrl) {
     ticks = Math.ceil((y_max - y_min) / tick_interval);
 
     let decimalsAuto = getPrecision(tick_interval);
-    let decimals = panel.yAxis.decimals === null ? getPrecision(tick_interval) : panel.yAxis.decimals;
+    let decimals = panel.yAxis.decimals === null ? decimalsAuto : panel.yAxis.decimals;
     let scaledDecimals = getScaledDecimals(decimals, tick_interval);
 
     // Set default Y min and max if no data
@@ -215,7 +215,10 @@ export default function link(scope, elem, attrs, ctrl) {
 
     let domain = yScale.domain();
     let tick_values = logScaleTickValues(domain, log_base);
-    let decimals = panel.yAxis.decimals;
+
+    let decimalsAuto = getPrecision(y_min);
+    let decimals = panel.yAxis.decimals || decimalsAuto;
+    let scaledDecimals = decimals - 2;
 
     data.yAxis = {
       min: y_min,
@@ -225,7 +228,7 @@ export default function link(scope, elem, attrs, ctrl) {
 
     let yAxis = d3.axisLeft(yScale)
       .tickValues(tick_values)
-      .tickFormat(tickValueFormatter(decimals))
+      .tickFormat(tickValueFormatter(decimals, scaledDecimals))
       .tickSizeInner(0 - width)
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
