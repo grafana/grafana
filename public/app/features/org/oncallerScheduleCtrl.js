@@ -135,6 +135,11 @@ function (moment, $, angular, _, uiCalendarConfig) {
     }
 
     function eventClick(date, jsEvent, view) {
+      var today = new Date();
+      if(date.end.valueOf() < today.valueOf()) {
+        $scope.appEvent('alert-warning', ['抱歉','不可以修改历史数据']);
+        return;
+      };
       $scope.showEditForm = true;
       $scope.overwrite = true;
       $scope.startTime = formatTime(date.start);
@@ -253,7 +258,9 @@ function (moment, $, angular, _, uiCalendarConfig) {
       }
     }
 
-    $scope.reviewSchedule = function() {
+    $scope.reviewSchedule = function(time, range) {
+      $scope.changeTime = time || $scope.changeTime;
+      $scope.range = range || $scope.range;
       $scope.clearReview();
       var oncallerLength = $scope.oncallerList.length;
       if(oncallerLength) {
