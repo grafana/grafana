@@ -1,0 +1,112 @@
+{
+  "alertd": [
+    {
+      "id": "2.1.6664466c-763a-42de-a30f-1541798a2857",
+      "org": "2",
+      "service": "1",
+      "name": "zookeeper待处理的请求太多",
+      "description": "待处理的请求在队列里. 队列的长度大于10即表示zookeeper处理太慢",
+      "hash": 482979460,
+      "creationTime": 1483600899927,
+      "modificationTime": 1483660021820,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "zk_outstanding_requests",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 10,
+          "durarionMinutes": 5
+        },
+        "warn": {
+          "threshold": 8,
+          "durarionMinutes": 3
+        }
+      }
+    },
+    {
+      "id": "2.1.dc731f7e-38a3-4bde-a434-91fb5c267be0",
+      "org": "2",
+      "service": "1",
+      "name": "zookeeper是否运行",
+      "description": "zk_server_state=100(停止); -1(状态未知); 0,1,2(正常)",
+      "hash": 1757727325,
+      "creationTime": 1483569120741,
+      "modificationTime": 1483569120741,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "zk_server_state",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 99,
+          "durarionMinutes": 5
+        },
+        "warn": {
+          "threshold": 3,
+          "durarionMinutes": 2
+        }
+      }
+    },
+    {
+      "id": "2.1.ee66268a-f15e-4501-bdc7-818426505fce",
+      "org": "2",
+      "service": "1",
+      "name": "zookeeper响应时间过慢",
+      "description": "响应时间不能大于10倍tick time",
+      "hash": -1918309971,
+      "creationTime": 1483600762472,
+      "modificationTime": 1483600762472,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "zk_max_latency",
+              "aggregator": "P99",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 400,
+          "durarionMinutes": 5
+        },
+        "warn": {
+          "threshold": 200,
+          "durarionMinutes": 5
+        }
+      }
+    }
+  ]
+}

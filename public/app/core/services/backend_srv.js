@@ -230,5 +230,16 @@ function (angular, _, coreModule, config) {
         headers: {'Content-Type': 'application/json;'},
       });
     }
+
+    this.getHostsNum = function () {
+      return this.alertD({
+        method: "get",
+        url: "/summary",
+        params: {metrics:"collector.summary"},
+        headers: {'Content-Type': 'text/plain'},
+      }).then(function (response) {
+        return response.data.length;
+      });
+    };
   });
 });
