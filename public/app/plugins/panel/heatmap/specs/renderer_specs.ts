@@ -204,7 +204,7 @@ describe('grafanaHeatmap', function () {
 
     it('should draw correct Y axis', function () {
       var yTicks = getTicks(ctx.element, ".axis-y");
-      expect(yTicks).to.eql(['1', '32', '1 K']);
+      expect(yTicks).to.eql(['1', '32', '1.0 K']);
     });
   });
 
@@ -221,7 +221,7 @@ describe('grafanaHeatmap', function () {
 
     it('should draw correct Y axis', function () {
       var yTicks = getTicks(ctx.element, ".axis-y");
-      expect(yTicks).to.eql(['1', '1 K', '1 Mil']);
+      expect(yTicks).to.eql(['1', '1 K', '1.0 Mil']);
     });
   });
 
@@ -247,7 +247,7 @@ describe('grafanaHeatmap', function () {
 
     it('should draw correct Y axis', function () {
       var yTicks = getTicks(ctx.element, ".axis-y");
-      expect(yTicks).to.eql(['0 ns', '17 min', '33 min', '50 min', '1 hour']);
+      expect(yTicks).to.eql(['0 ns', '17 min', '33 min', '50 min', '1.11 hour']);
     });
   });
 
