@@ -312,10 +312,13 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
               let histMax = _.max(_.map(data, s => s.stats.max));
               let ticks = panel.xaxis.buckets || panelWidth / 50;
               bucketSize = tickStep(histMin, histMax, ticks);
-              let histogram = convertValuesToHistogram(values, bucketSize);
 
+              let normalize = panel.xaxis.histogramValue === 'percent';
+              let histogram = convertValuesToHistogram(values, bucketSize, normalize);
+
+              let seriesLabel = panel.xaxis.histogramValue || "count";
               data[0].data = histogram;
-              data[0].alias = data[0].label = data[0].id = "count";
+              data[0].alias = data[0].label = data[0].id = seriesLabel;
               data = [data[0]];
 
               options.series.bars.barWidth = bucketSize * 0.8;
