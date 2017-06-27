@@ -64,6 +64,7 @@
 
     <div class="pull-right installed">
       <button ng-click="nextEvent('skip')" class="btn" ng-if="installed">跳过</button>
+      <button ng-click="nextEvent('import')" class="btn" ng-disabled="!installed" ng-class="{'btn-success':installed}">导入报警规则</button>
       <button ng-click="nextEvent('next')" class="btn" ng-disabled="!installed" ng-class="{'btn-primary':installed}">下一步</button>
     </div>
   </div>

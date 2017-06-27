@@ -24,6 +24,8 @@ function (angular, _, noUiSlider) {
     };
 
     $scope.init = function() {
+      if (_.isUndefined($scope.correlationThreshold))
+        return;
       $scope.manualMetrics = [];
       datasourceSrv.get('opentsdb').then(function (datasource) {
         $scope.datasource = datasource;

@@ -221,5 +221,16 @@ function (angular, _, coreModule, config) {
         return hosts;
       }).then(callback);
     };
+
+    this.getHostsNum = function () {
+      return this.alertD({
+        method: "get",
+        url: "/summary",
+        params: {metrics:"collector.summary"},
+        headers: {'Content-Type': 'text/plain'},
+      }).then(function (response) {
+        return response.data.length;
+      });
+    };
   });
 });

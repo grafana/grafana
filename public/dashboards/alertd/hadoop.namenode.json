@@ -1,0 +1,76 @@
+{
+  "alertd": [
+    {
+      "id": "2.1.38c8b96a-ba4f-4d4f-99ec-6f8f2006e400",
+      "org": "2",
+      "service": "1",
+      "name": "Hadoop系统有不可用Block",
+      "description": "MissingBlock表示有部分数据丢失, NameNode已经无法恢复(除非有datanode被下线维修了). 这比CorruptedBlock还严重.",
+      "hash": -860959901,
+      "creationTime": 1483659442276,
+      "modificationTime": 1483660005975,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "hadoop.namenode.fsnamesystem.MissingBlocks",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 1,
+          "durarionMinutes": 10
+        },
+        "warn": {
+          "threshold": 1,
+          "durarionMinutes": 5
+        }
+      }
+    },
+    {
+      "id": "2.1.4767ca4e-e71c-4034-b8eb-683d432e7234",
+      "org": "2",
+      "service": "1",
+      "name": "Hadoop失去的datanode数量过多",
+      "description": "DataNode一般掉线10分钟后会标识为死亡。一般系统能容忍少数的datanode死亡，但是管理员需要尽量保持死亡数为0.",
+      "hash": -1569431972,
+      "creationTime": 1483659977705,
+      "modificationTime": 1483659995262,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "hadoop.namenode.fsnamesystemstate.NumDeadDataNodes",
+              "aggregator": null,
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 5,
+          "durarionMinutes": 10
+        },
+        "warn": {
+          "threshold": 1,
+          "durarionMinutes": 5
+        }
+      }
+    }
+  ]
+}
