@@ -427,7 +427,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           ticks = _.map(data[0].data, point => point[0]);
 
           // Expand ticks for pretty view
-          min = Math.max(0, _.min(ticks) - bucketSize);
+          min = _.min(ticks) - bucketSize;
           max = _.max(ticks) + bucketSize;
 
           ticks = [];
