@@ -35,6 +35,4 @@ But we suggest that you store the session in redis/memcache since it makes it ea
 
 ## Alerting
 
-Currently alerting does not support high availability. But this is something that we will be working on in the future. 
-
-
+Currently alerting supports a limited form of high availability. Since v4.2.0 of Grafana, alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but no duplicate alert notifications are sent due to the deduping logic. Proper load balancing of alerts will be introduced in the future. 
