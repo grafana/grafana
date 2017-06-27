@@ -73,7 +73,7 @@ func TestLoadingSettings(t *testing.T) {
 			So(Domain, ShouldEqual, "test2")
 		})
 
-		Convey("Defaults can be overriden in specified config file", func() {
+		Convey("Defaults can be overridden in specified config file", func() {
 			NewConfigContext(&CommandLineArgs{
 				HomePath: "../../",
 				Config:   filepath.Join(HomePath, "tests/config-files/override.ini"),
@@ -103,7 +103,7 @@ func TestLoadingSettings(t *testing.T) {
 			So(DataPath, ShouldEqual, "/tmp/env_override")
 		})
 
-		Convey("instance_name default to hostname even if hostname env is emtpy", func() {
+		Convey("instance_name default to hostname even if hostname env is empty", func() {
 			NewConfigContext(&CommandLineArgs{
 				HomePath: "../../",
 			})

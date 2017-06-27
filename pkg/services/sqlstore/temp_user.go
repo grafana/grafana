@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -16,7 +15,7 @@ func init() {
 }
 
 func UpdateTempUserStatus(cmd *m.UpdateTempUserStatusCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "UPDATE temp_user SET status=? WHERE code=?"
 		_, err := sess.Exec(rawSql, string(cmd.Status), cmd.Code)
 		return err
@@ -24,7 +23,7 @@ func UpdateTempUserStatus(cmd *m.UpdateTempUserStatusCommand) error {
 }
 
 func CreateTempUser(cmd *m.CreateTempUserCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		// create user
 		user := &m.TempUser{

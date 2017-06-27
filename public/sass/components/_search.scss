@@ -1,14 +1,21 @@
+.search-backdrop {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  top: $navbarHeight;
+  z-index: $zindex-modal-backdrop;
+  background-color: $black;
+  @include opacity(70);
+}
+
 .search-container {
-  left: 72px;
-  top: 39px;
-  margin: 16px 0 0 2px;
-  z-index: 1000;
-  position: absolute;
-  width: 700px;
-  box-shadow: $search-shadow;
-  padding: 10px;
-  background-color: $panel-bg;
-  border: $panel-border;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: ($zindex-modal-backdrop + 10);
+  position: fixed;
 
   .label-tag {
     margin-left: 6px;
@@ -19,31 +26,62 @@
 
 // Search
 .search-field-wrapper {
-  padding-bottom: 10px;
+  width: 100%;
+  display: flex;
+  background-color: $navbarButtonBackground;
+
   input {
-    width: 100%;
-    padding: 8px 8px;
-    height: 100%;
+    max-width: 653px;
+    //padding: 0.5rem 1.5rem 0.5rem 0;
+    padding: 1rem 1rem 0.75rem 1rem;
+    height: 51px;
+    line-height: 51px;
     box-sizing: border-box;
+    outline: none;
+    background: $side-menu-bg;
+    background-color: $navbarButtonBackground;
+    flex-grow: 10;
   }
-  button {
-    margin: 0 4px 0 0;
-  }
-  > span {
-    display: block;
-    overflow: hidden;
+}
+
+.search-field-spacer {
+  flex-grow: 1;
+}
+
+.search-switches {
+  flex-grow: 1;
+  padding: 1rem 1rem 0.75rem 1rem;
+  white-space: nowrap;
+}
+
+.search-field-icon {
+  font-size: $font-size-lg;
+  padding: 1rem 1rem 0.75rem 1.5rem;
+}
+
+.search-dropdown {
+  display: flex;
+  flex-direction: column;
+  max-width: 1100px;
+  visibility: none;
+  opacity: 0;
+  height: 100%;
+
+  &--fade-in {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity 0.3s;
   }
 }
 
 .search-results-container {
-  height: 450px;
+  height: 90%;
   overflow: auto;
   display: block;
   line-height: 28px;
-
-  .search-item:hover, .search-item.selected {
-    background-color: $grafanaListHighlight;
-  }
+  padding: $spacer;
+  background: $panel-bg;
+  flex-grow: 10;
 
   .selected {
     .search-result-tag {
@@ -71,8 +109,10 @@
     word-wrap: break-word;
     display: block;
     padding: 3px 10px;
-    background-color: $grafanaListBackground;
+    white-space: nowrap;
+    background-color: $tight-form-bg;
     margin-bottom: 4px;
+    @include left-brand-border();
 
     .search-result-icon::before {
       content: "\f009";
@@ -80,6 +120,12 @@
 
     &.search-item-dash-home .search-result-icon::before {
       content: "\f015";
+    }
+
+    &:hover,
+    &.selected {
+      background-color: $tight-form-func-bg;
+      @include left-brand-border-gradient();
     }
   }
 
@@ -93,17 +139,17 @@
   }
 }
 
-.search-switches {
-  position: absolute;
-  top: 19px;
-  right: 21px;
-}
 
 .search-button-row {
-  padding-top: 20px;
+  padding: $spacer*2;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-around;
+  height: 30%;
 
   button, a {
-    margin-right: 10px;
+    margin-bottom: $spacer;
   }
 
   .search-button-row-explore-link {
@@ -120,3 +166,18 @@
   }
 }
 
+@include media-breakpoint-up(lg) {
+  .search-dropdown {
+    flex-direction: row;
+  }
+  .search-button-row {
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+}
+
+@include media-breakpoint-up(md) {
+  .search-container {
+    left: 78px;
+  }
+}

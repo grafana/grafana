@@ -303,3 +303,46 @@ $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .1)
 // footer
 $footer-link-color:   $gray-3;
 $footer-link-hover:   $dark-5;
+
+// collapse box
+$collapse-box-body-border: $gray-4;
+$collapse-box-body-error-border: $red;
+
+// json explorer
+$json-explorer-default-color: black;
+$json-explorer-string-color: green;
+$json-explorer-number-color: blue;
+$json-explorer-boolean-color: red;
+$json-explorer-null-color: #855A00;
+$json-explorer-undefined-color: rgb(202, 11, 105);
+$json-explorer-function-color: #FF20ED;
+$json-explorer-rotate-time: 100ms;
+$json-explorer-toggler-opacity: 0.6;
+$json-explorer-toggler-color: #45376F;
+$json-explorer-bracket-color: blue;
+$json-explorer-key-color: #00008B;
+$json-explorer-url-color: blue;
+
+// Changelog and diff
+// -------------------------
+$diff-label-bg:         $gray-5;
+$diff-label-fg:         $gray-2;
+
+$diff-switch-bg:        $gray-7;
+$diff-switch-disabled:  $gray-5;
+
+$diff-arrow-color:      $dark-3;
+$diff-group-bg:         $gray-7;
+
+$diff-json-bg:          $gray-5;
+$diff-json-fg:          $gray-2;
+
+$diff-json-added:       lighten(desaturate($green, 30%), 10%);
+$diff-json-deleted:     desaturate($red, 35%);
+
+$diff-json-old:       #5a372a;
+$diff-json-new:       #664e33;
+
+$diff-json-changed-fg:  $gray-6;
+$diff-json-changed-num: $gray-4;
+$diff-json-icon:        $gray-4;

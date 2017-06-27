@@ -57,7 +57,12 @@ export class AnnotationsSrv {
       };
 
     }).catch(err => {
-      this.$rootScope.appEvent('alert-error', ['Annotations failed', (err.message || err)]);
+      if (!err.message && err.data && err.data.message) {
+        err.message = err.data.message;
+      }
+      this.$rootScope.appEvent('alert-error', ['Annotation Query Failed', (err.message || err)]);
+
+      return [];
     });
   }
 
@@ -65,7 +70,7 @@ export class AnnotationsSrv {
     var panel = options.panel;
     var dashboard = options.dashboard;
 
-    if (panel && panel.alert) {
+    if (dashboard.id && panel && panel.alert) {
       return this.backendSrv.get('/api/annotations', {
         from: options.range.from.valueOf(),
         to: options.range.to.valueOf(),
@@ -73,6 +78,8 @@ export class AnnotationsSrv {
         panelId: panel.id,
         dashboardId: dashboard.id,
       }).then(results => {
+        // this built in annotation source name `panel-alert` is used in annotation tooltip
+        // to know that this annotation is from panel alert
         return this.translateQueryResult({iconColor: '#AA0000', name: 'panel-alert'}, results);
       });
     }

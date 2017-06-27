@@ -92,9 +92,10 @@ The Elasticsearch data source supports two types of queries you can use in the *
 Query | Description
 ------------ | -------------
 *{"find": "fields", "type": "keyword"} | Returns a list of field names with the index type `keyword`.
-*{"find": "terms", "field": "@hostname"}* |  Returns a list of values for a field using term aggregation. Query will user current dashboard time range as time range for query.
+*{"find": "terms", "field": "@hostname", "size": 1000}* |  Returns a list of values for a field using term aggregation. Query will user current dashboard time range as time range for query.
 *{"find": "terms", "field": "@hostname", "query": '<lucene query>'}* | Returns a list of values for a field using term aggregation & and a specified lucene query filter. Query will use current dashboard time range as time range for query.
 
+There is a default size limit of 500 on terms queries. Set the size property in your query to set a custom limit.
 You can use other variables inside the query. Example query definition for a variable named `$host`.
 
 ```

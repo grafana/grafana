@@ -12,7 +12,7 @@ func init() {
 	bus.AddHandler("sql", InsertSqlTestData)
 }
 
-func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, sess *session) error {
+func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, sess *DBSession) error {
 
 	timeWalker := time.Now().UTC().Add(time.Hour * -200)
 	now := time.Now().UTC()
@@ -45,7 +45,7 @@ func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, s
 }
 
 func InsertSqlTestData(cmd *m.InsertSqlTestDataCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var err error
 
 		sqlog.Info("SQL TestData: Clearing previous test data")

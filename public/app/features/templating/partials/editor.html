@@ -93,10 +93,7 @@
     <form ng-if="mode === 'edit' || mode === 'new'" name="ctrl.form">
       <h5 class="section-heading">Variable</h5>
       <div class="gf-form-group">
-        <div class="gf-form" ng-show="ctrl.form.name.$error.pattern">
-          <span class="gf-form-error">Template names cannot begin with '__' that's reserved for Grafanas global variables</span>
-        </div>
-        <div class="gf-form-inline">
+				<div class="gf-form-inline">
           <div class="gf-form max-width-19">
             <span class="gf-form-label width-6">Name</span>
             <input type="text" class="gf-form-input" name="name" placeholder="name" ng-model='current.name' required ng-pattern="namePattern"></input>
@@ -113,6 +110,11 @@
             </div>
           </div>
         </div>
+
+				<div class="gf-form" ng-show="ctrl.form.name.$error.pattern">
+          <span class="gf-form-label gf-form-label--error">Template names cannot begin with '__' that's reserved for Grafanas global variables</span>
+        </div>
+
         <div class="gf-form-inline">
           <div class="gf-form max-width-19">
             <span class="gf-form-label width-6">Label</span>

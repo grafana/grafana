@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
@@ -143,4 +144,30 @@ func GenerateSqlTestData(c *middleware.Context) Response {
 	}
 
 	return Json(200, &util.DynMap{"message": "OK"})
+}
+
+// GET /api/tsdb/testdata/random-walk
+func GetTestDataRandomWalk(c *middleware.Context) Response {
+	from := c.Query("from")
+	to := c.Query("to")
+	intervalMs := c.QueryInt64("intervalMs")
+
+	timeRange := tsdb.NewTimeRange(from, to)
+	request := &tsdb.Request{TimeRange: timeRange}
+
+	request.Queries = append(request.Queries, &tsdb.Query{
+		RefId:      "A",
+		IntervalMs: intervalMs,
+		Model: simplejson.NewFromAny(&util.DynMap{
+			"scenario": "random_walk",
+		}),
+		DataSource: &models.DataSource{Type: "grafana-testdata-datasource"},
+	})
+
+	resp, err := tsdb.HandleRequest(context.Background(), request)
+	if err != nil {
+		return ApiError(500, "Metric request error", err)
+	}
+
+	return Json(200, &resp)
 }

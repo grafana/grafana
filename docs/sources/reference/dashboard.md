@@ -65,7 +65,7 @@ Each field in the dashboard JSON is explained below with its usage:
 | **timezone** | timezone of dashboard, i.e. `utc` or `browser` |
 | **editable** | whether a dashboard is editable or not |
 | **hideControls** | whether row controls on the left in green are hidden or not |
-| **graphTooltip** | TODO |
+| **graphTooltip** | 0 for no shared crosshair or tooltip (default), 1 for shared crosshair, 2 for shared crosshair AND shared tooltip |
 | **rows** | row metadata, see [rows section](#rows) for details |
 | **time** | time range for dashboard, i.e. last 6 hours, last 7 days, etc |
 | **timepicker** | timepicker metadata, see [timepicker section](#timepicker) for details |

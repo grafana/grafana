@@ -73,7 +73,7 @@ func (m *MySqlMacroEngine) EvaluateMacro(name string, args []string) (string, er
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s > FROM_UNIXTIME(%d) AND %s < FROM_UNIXTIME(%d)", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("%s >= FROM_UNIXTIME(%d) AND %s <= FROM_UNIXTIME(%d)", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
 	default:
 		return "", fmt.Errorf("Unknown macro %v", name)
 	}

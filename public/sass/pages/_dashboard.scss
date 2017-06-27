@@ -256,3 +256,11 @@ div.flot-text {
   }
 }
 
+.dash-edit-view {
+  opacity: 0;
+
+  &--open{
+    opacity: 1;
+    transition: opacity 200ms ease-in-out;
+  }
+}

@@ -56,3 +56,9 @@ $easing: cubic-bezier(0, 0, 0.265, 1.00);
     max-width: none;
   }
 }
+
+.drop-element.drop-popover--annotation {
+  .drop-content {
+    padding: 0;
+  }
+}

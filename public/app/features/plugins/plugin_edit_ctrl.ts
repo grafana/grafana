@@ -13,17 +13,22 @@ export class PluginEditCtrl {
   includedDatasources: any;
   tabIndex: number;
   tabs: any;
+  navModel: any;
   hasDashboards: any;
   preUpdateHook: () => any;
   postUpdateHook: () => any;
 
   /** @ngInject */
-  constructor(private $scope,
-              private $rootScope,
-              private backendSrv,
-              private $routeParams,
-              private $sce,
-              private $http) {
+  constructor(
+    private $scope,
+    private $rootScope,
+    private backendSrv,
+    private $routeParams,
+    private $sce,
+    private $http,
+    private navModelSrv,
+  ) {
+    this.navModel = navModelSrv.getPluginsNav();
     this.model = {};
     this.pluginId = $routeParams.pluginId;
     this.tabIndex = 0;
@@ -31,7 +36,7 @@ export class PluginEditCtrl {
 
     this.preUpdateHook = () => Promise.resolve();
     this.postUpdateHook = () => Promise.resolve();
-   }
+  }
 
   init() {
     return this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(result => {

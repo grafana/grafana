@@ -52,6 +52,68 @@ export class MysqlDatasource {
     }).then(this.processQueryResult.bind(this));
   }
 
+  annotationQuery(options) {
+    if (!options.annotation.rawQuery) {
+      return this.$q.reject({message: 'Query missing in annotation definition'});
+    }
+
+    const query = {
+      refId: options.annotation.name,
+      datasourceId: this.id,
+      rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
+      format: 'table',
+    };
+
+    return this.backendSrv.datasourceRequest({
+      url: '/api/tsdb/query',
+      method: 'POST',
+      data: {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries: [query],
+      }
+    }).then(this.transformAnnotationResponse.bind(this, options));
+  }
+
+  transformAnnotationResponse(options, data) {
+    const table = data.data.results[options.annotation.name].tables[0];
+
+    let timeColumnIndex = -1;
+    let titleColumnIndex = -1;
+    let textColumnIndex = -1;
+    let tagsColumnIndex = -1;
+
+    for (let i = 0; i < table.columns.length; i++) {
+      if (table.columns[i].text === 'time_sec') {
+        timeColumnIndex = i;
+      } else if (table.columns[i].text === 'title') {
+        titleColumnIndex = i;
+      } else if (table.columns[i].text === 'text') {
+        textColumnIndex = i;
+      } else if (table.columns[i].text === 'tags') {
+        tagsColumnIndex = i;
+      }
+    }
+
+    if (timeColumnIndex === -1) {
+      return this.$q.reject({message: 'Missing mandatory time column (with time_sec column alias) in annotation query.'});
+    }
+
+    const list = [];
+    for (let i = 0; i < table.rows.length; i++) {
+      const row = table.rows[i];
+      list.push({
+        annotation: options.annotation,
+        time: Math.floor(row[timeColumnIndex]) * 1000,
+        title: row[titleColumnIndex],
+        text: row[textColumnIndex],
+        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : []
+      });
+    }
+
+    return list;
+  }
+
   testDatasource() {
     return this.backendSrv.datasourceRequest({
       url: '/api/tsdb/query',

@@ -223,6 +223,13 @@ func (hs *HttpServer) registerRoutes() {
 		// Dashboard
 		r.Group("/dashboards", func() {
 			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
+
+			r.Get("/id/:dashboardId/versions", wrap(GetDashboardVersions))
+			r.Get("/id/:dashboardId/versions/:id", wrap(GetDashboardVersion))
+			r.Post("/id/:dashboardId/restore", reqEditorRole, bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
+
+			r.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), wrap(CalculateDashboardDiff))
+
 			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
 			r.Get("/file/:file", GetDashboardFromJsonFile)
 			r.Get("/home", wrap(GetHomeDashboard))
@@ -253,6 +260,7 @@ func (hs *HttpServer) registerRoutes() {
 		r.Post("/tsdb/query", bind(dtos.MetricRequest{}), wrap(QueryMetrics))
 		r.Get("/tsdb/testdata/scenarios", wrap(GetTestDataScenarios))
 		r.Get("/tsdb/testdata/gensql", reqGrafanaAdmin, wrap(GenerateSqlTestData))
+		r.Get("/tsdb/testdata/random-walk", wrap(GetTestDataRandomWalk))
 
 		// metrics
 		r.Get("/metrics", wrap(GetInternalMetrics))
@@ -277,6 +285,7 @@ func (hs *HttpServer) registerRoutes() {
 		}, reqEditorRole)
 
 		r.Get("/annotations", wrap(GetAnnotations))
+		r.Post("/annotations/mass-delete", reqOrgAdmin, bind(dtos.DeleteAnnotationsCmd{}), wrap(DeleteAnnotations))
 
 		r.Group("/annotations", func() {
 			r.Post("/", bind(dtos.PostAnnotationsCmd{}), wrap(PostAnnotation))

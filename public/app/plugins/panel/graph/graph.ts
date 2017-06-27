@@ -145,14 +145,14 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         }
 
         // add left axis labels
-        if (panel.yaxes[0].label) {
+        if (panel.yaxes[0].label && panel.yaxes[0].show) {
           var yaxisLabel = $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>")
           .text(panel.yaxes[0].label)
           .appendTo(elem);
         }
 
         // add right axis labels
-        if (panel.yaxes[1].label) {
+        if (panel.yaxes[1].label && panel.yaxes[1].show) {
           var rightLabel = $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>")
           .text(panel.yaxes[1].label)
           .appendTo(elem);
@@ -172,8 +172,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         for (var i = 0; i < yaxis.length; i++) {
           var axis = yaxis[i];
           var panelOptions = panel.yaxes[i];
-          axis.options.max = panelOptions.max;
-          axis.options.min = panelOptions.min;
+          axis.options.max = axis.options.max !== null ? axis.options.max : panelOptions.max;
+          axis.options.min = axis.options.min !== null ? axis.options.min : panelOptions.min;
         }
       }
 
@@ -505,6 +505,9 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         if (axis.logBase === 1) {
           return;
         }
+
+        const minSetToZero = axis.min === 0;
+
         if (axis.min < Number.MIN_VALUE) {
           axis.min = null;
         }
@@ -554,12 +557,47 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           return;
         }
 
-        axis.ticks = [];
-        var nextTick;
-        for (nextTick = min; nextTick <= max; nextTick *= axis.logBase) {
-          axis.ticks.push(nextTick);
+        if (Number.isFinite(min) && Number.isFinite(max)) {
+          if (minSetToZero) {
+            axis.min = 0.1;
+            min = 1;
+          }
+
+          axis.ticks = generateTicksForLogScaleYAxis(min, max, axis.logBase);
+          if (minSetToZero) {
+            axis.ticks.unshift(0.1);
+          }
+          if (axis.ticks[axis.ticks.length - 1] > axis.max) {
+            axis.max = axis.ticks[axis.ticks.length - 1];
+          }
+          axis.tickDecimals = decimalPlaces(min);
+        } else {
+          axis.ticks = [1, 2];
+          delete axis.min;
+          delete axis.max;
         }
-        axis.tickDecimals = decimalPlaces(min);
+      }
+
+      function generateTicksForLogScaleYAxis(min, max, logBase) {
+        let ticks = [];
+
+        var nextTick;
+        for (nextTick = min; nextTick <= max; nextTick *= logBase) {
+          ticks.push(nextTick);
+        }
+
+        const maxNumTicks = Math.ceil(ctrl.height/25);
+        const numTicks = ticks.length;
+        if (numTicks > maxNumTicks) {
+          const factor = Math.ceil(numTicks/maxNumTicks) * logBase;
+          ticks = [];
+
+          for (nextTick = min; nextTick <= (max * factor); nextTick *= factor) {
+            ticks.push(nextTick);
+          }
+        }
+
+        return ticks;
       }
 
       function decimalPlaces(num) {

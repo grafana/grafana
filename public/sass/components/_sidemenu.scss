@@ -8,8 +8,8 @@
   left: 0;
   width: $side-menu-width;
   background-color: rgba($side-menu-bg,$side-menu-opacity);
-  z-index: 101;
-  transform: translate3d(0, -100%, 0);
+  z-index: 1000;
+  opacity: 0;
   visibility: hidden;
 
   a:focus {
@@ -20,8 +20,9 @@
 .sidemenu-open {
   .sidemenu-wrapper {
     visibility: visible;
-    transform: translate3d(0, 0, 0);
-    transition: all 0.2s;
+    //transform: translate3d(0, 0, 0);
+    opacity: 1;
+    transition: opacity 0.3s;
   }
 }
 
@@ -36,7 +37,7 @@
     margin-left: $side-menu-width;
   }
   .search-container {
-    left: auto;
+    left: $side-menu-width;
   }
 }
 

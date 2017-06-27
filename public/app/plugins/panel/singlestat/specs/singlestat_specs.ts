@@ -65,7 +65,7 @@ describe('SingleStatCtrl', function() {
       expect(ctx.data.valueRounded).to.be(0);
     });
 
-    it('should set formatted falue', function() {
+    it('should set formatted value', function() {
       expect(ctx.data.valueFormatted).to.be('test.cpu1');
     });
   });
@@ -82,7 +82,7 @@ describe('SingleStatCtrl', function() {
       expect(ctx.data.valueRounded).to.be(100);
     });
 
-    it('should set formatted falue', function() {
+    it('should set formatted value', function() {
       expect(ctx.data.valueFormatted).to.be('100');
     });
   });
@@ -252,6 +252,18 @@ describe('SingleStatCtrl', function() {
 
       it('Should replace value with text NOT OK', function() {
         expect(ctx.data.valueFormatted).to.be('ignore1');
+      });
+    });
+
+    singleStatScenario('When value is zero', function(ctx) {
+      ctx.setup(function() {
+        ctx.data = tableData;
+        ctx.data[0].rows[0] = [1492759673649, 'ignore1', 0, 'ignore2'];
+        ctx.ctrl.panel.tableColumn = 'mean';
+      });
+
+      it('Should return zero', function() {
+        expect(ctx.data.value).to.be(0);
       });
     });
   });
