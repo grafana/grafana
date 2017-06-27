@@ -6,8 +6,8 @@
 </topnav>
 
 <div class="page-container">
-  <h2>告警值班列表</h2>
-  <div class="row-fluid">
+  <h2>告警值班列表<i class="fa fa-plus-square-o icon-schedule" ng-click="showScheduling = !showScheduling"></i></h2>
+  <div class="row-fluid" ng-if="showScheduling">
     <div class="oncaller oncaller-default span4">
       <div class="oncaller-heading">
         <h4 class="oncaller-title"><i></i>值班人员</h4>
@@ -22,7 +22,7 @@
 
     <div class="oncaller oncaller-default span8">
       <div class="oncaller-heading">
-        <h4 class="oncaller-title"><i></i>排班周期</h4>
+        <h4 class="oncaller-title"><i class="fa fa-calendar icon-schedule"></i>排班周期</h4>
       </div>
       <div class="oncaller-body">
         <form class="row-fluid">
@@ -84,15 +84,15 @@
         </div>
         <div class="item">
             <label class="label">开始</label>
-            <input type="text" class="input-large" ng-model="startTime"  ng-disabled="true">
+            <input type="text" class="input-large" ng-model="startTime">
         </div>
         <div class="item">
             <label class="label">结束</label>
-            <input type="text" class="input-large" ng-model="endTime" ng-disabled="true">
+            <input type="text" class="input-large" ng-model="endTime">
         </div>
         <div class="item center">
             <button ng-click="closeEdit();" class="btn">取消</button>
-            <button ng-click="addSchedule(oncallerSelcted,startTime,endTime)" class="btn btn-primary">修改</button>
+            <button ng-click="updateSchedule(oncallerSelcted, startTime, endTime)" class="btn btn-primary">修改</button>
         </div>
     </form>
     
