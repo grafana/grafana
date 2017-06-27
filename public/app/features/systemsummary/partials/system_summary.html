@@ -40,7 +40,15 @@
                             </ul>
                             <div class="clearfix"></div>
                             <panel-loader type="panel.type" class="panel-margin summary-panel"></panel-loader>
-                            <p ng-if="panleJson[row_name].panels[name].tip"><i class="fa fa-info-circle" style="padding:0 10px;"></i>{{panleJson[row_name].panels[name].tip}}</p>
+                            <p ng-if="panleJson[row_name].panels[name].tip"><i class="fa fa-info-circle" style="padding:0 10px;"></i>
+                                预计未来 
+                                <select style="width:66px;"
+                                        ng-model="panleJson[row_name].panels[name].selectedOption"
+                                        ng-change="changePre(panleJson[row_name].panels[name].selectedOption)"
+                                        ng-options="tip.time for tip in panleJson[row_name].panels[name].tips">
+                                </select>
+                                {{panleJson[row_name].panels[name].tip + panleJson[row_name].panels[name].selectedOption.data}}
+                            </p>
                         </div>
                     </div>
                         <div class="clearfix"></div>

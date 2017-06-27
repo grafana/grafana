@@ -121,7 +121,7 @@ define([
         { fullwidth: false, header: '机器连接状态', title: '历史机器连接状态', status: { success: ['正常机器', 0], warn: ['异常机器', 0], danger: ['尚未工作', 0] }, href: $scope.getUrl('/summary') },
         { fullwidth: true, header: '各线程TopN使用情况', title: '', panels: [{ title: '各线程CPU占用情况(百分比)TopN' }, { title: '各线程内存占用情况(百分比)TopN' },] },
         { fullwidth: true, header: '健康指数趋势', title: '历史健康指数趋势' },
-        { fullwidth: true, header: '智能分析预测', title: '', panels: [{ title: '磁盘剩余空间', tip: '预计未来1天后，磁盘剩余空间约为' }, { title: 'CPU使用情况(百分比)', tip: '预计未来1天后，cpu使用情况约为' }, { title: '内存使用情况', tip: '预计未来1天后，内存使用约为' },] },
+        { fullwidth: true, header: '智能分析预测', title: '', panels: [{ title: '磁盘剩余空间', tip: '磁盘剩余空间约为', tips: [], selectedOption: {}}, { title: 'CPU使用情况(百分比)', tip: 'cpu使用情况约为', tips: [], selectedOption: {}}, { title: '内存使用情况', tip: '内存使用约为', tips:[], selectedOption: {}}] },
       ];
 
       $scope.init = function () {
@@ -383,24 +383,29 @@ define([
       $scope.getPrediction = function (panels) {
         var prediction = [['df.bytes.free', 'df.bytes.free.prediction'], ['cpu.usr', 'cpu.usr.prediction'], ['proc.meminfo.active', 'proc.meminfo.active.prediction']];
         _.each(prediction, function (item, index) {
-          var queries = [{
-            "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + item[1],
-            "downsample": "1d-avg",
-            "aggregator": "avg",
-          }];
 
-          $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now', false).valueOf(), dateMath.parse('now+1d', false).valueOf()).then(function (response) {
-            for (var i in response.data[0].dps) {
-              var data = response.data[0].dps[i];
+          var panel = $scope.panleJson[6].panels[index];
+
+          var params = {
+            metric: contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + item[0],
+          }
+
+          backendSrv.getPrediction(params).then(function(response) {
+            var num = 0;
+            var times = ['1天后','1周后','1月后','1季度后','半年后'];
+            var data = response.data;
+            for(var i in data) {
+              var pre = {time: '', data: ''};
+              pre.time = times[num];
+              if(item[0] === 'cpu.usr') {
+                pre.data = data[i].toFixed(2) + '%';
+              } else {
+                pre.data = (data[i] / Math.pow(1024, 3)).toFixed(2) + 'GB'
+              }
+              panel.tips.push(pre);
+              num++;
             }
-            if (item[1] === 'cpu.usr.prediction') {
-              data = data.toFixed(2) + '%';
-            } else {
-              data = (data / Math.pow(1024, 3)).toFixed(2) + 'GB';
-            }
-            $scope.panleJson[6].panels[index].tip += data;
-          }).catch(function (e) {
-            $scope.panleJson[6].panels[index].tip = '暂无预测信息';
+            panel.selectedOption = panel.tips[0];
           });
         });
 
@@ -480,6 +485,13 @@ define([
         cpuTopN.targets[0].metric = 'cpu.topN';
         memoryTopN.targets[0].metric = 'mem.topN';
       };
+
+      $scope.changePre = function (selectedOption) {
+        var selected = _.findIndex($scope.panleJson[6].panels[0].tips,{time: selectedOption.time});
+        _.each($scope.panleJson[6].panels, function(panel, index) {
+          panel.selectedOption = panel.tips[selected];
+        });
+      }
 
       $timeout(function () {
         $scope.init();
