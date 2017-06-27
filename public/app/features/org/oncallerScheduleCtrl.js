@@ -258,9 +258,11 @@ function (moment, $, angular, _, uiCalendarConfig) {
       }
     }
 
-    $scope.reviewSchedule = function(time, range) {
+    $scope.reviewSchedule = function(time, range, start, end) {
       $scope.changeTime = time || $scope.changeTime;
       $scope.range = range || $scope.range;
+      $scope.zonesStart = start || $scope.zonesStart;
+      $scope.zonesEnd = end || $scope.zonesEnd;
       $scope.clearReview();
       var oncallerLength = $scope.oncallerList.length;
       if(oncallerLength) {
