@@ -97,7 +97,7 @@ export class HeatmapTooltip {
       // legend and tooltip gets one more decimal precision
       // than graph legend ticks
       let decimals = (this.panelCtrl.decimals || -1) + 1;
-      valueFormatter = this.valueFormatter(this.panel.tooltipDecimals, this.panelCtrl.scaledDecimals + 2);
+      valueFormatter = this.valueFormatter(decimals, this.panelCtrl.scaledDecimals + 2);
     }
 
     let tooltipHtml = `<div class="graph-tooltip-time">${time}</div>
