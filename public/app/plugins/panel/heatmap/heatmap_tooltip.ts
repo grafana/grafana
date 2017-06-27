@@ -15,6 +15,7 @@ export class HeatmapTooltip {
   tooltip: any;
   scope: any;
   dashboard: any;
+  panelCtrl: any;
   panel: any;
   heatmapPanel: any;
   mouseOverBucket: boolean;
@@ -23,6 +24,7 @@ export class HeatmapTooltip {
   constructor(elem, scope) {
     this.scope = scope;
     this.dashboard = scope.ctrl.dashboard;
+    this.panelCtrl = scope.ctrl;
     this.panel = scope.ctrl.panel;
     this.heatmapPanel = elem;
     this.mouseOverBucket = false;
@@ -85,8 +87,10 @@ export class HeatmapTooltip {
 
     let tooltipTimeFormat = 'YYYY-MM-DD HH:mm:ss';
     let time = this.dashboard.formatDate(xData.x, tooltipTimeFormat);
-    let decimals = this.panel.tooltipDecimals || 5;
-    let valueFormatter = this.valueFormatter(decimals);
+
+    let decimals = this.panel.tooltipDecimals || this.panelCtrl.decimals;
+    let scaledDecimals = decimals - 2;
+    let valueFormatter = this.valueFormatter(decimals, scaledDecimals);
 
     let tooltipHtml = `<div class="graph-tooltip-time">${time}</div>
       <div class="heatmap-histogram"></div>`;
@@ -220,13 +224,13 @@ export class HeatmapTooltip {
       .style("top", top + "px");
   }
 
-  valueFormatter(decimals) {
+  valueFormatter(decimals, scaledDecimals = null) {
     let format = this.panel.yAxis.format;
     return function(value) {
       if (_.isInteger(value)) {
         decimals = 0;
       }
-      return kbn.valueFormats[format](value, decimals);
+      return kbn.valueFormats[format](value, decimals, scaledDecimals);
     };
   }
 }

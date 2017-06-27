@@ -5,7 +5,7 @@ import $ from 'jquery';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import {appEvents, contextSrv} from 'app/core/core';
-import {tickStep} from 'app/core/utils/ticks';
+import {tickStep, getScaledDecimals} from 'app/core/utils/ticks';
 import d3 from 'd3';
 import {HeatmapTooltip} from './heatmap_tooltip';
 import {convertToCards, mergeZeroBuckets} from './heatmap_data_converter';
@@ -134,6 +134,8 @@ export default function link(scope, elem, attrs, ctrl) {
     let decimalsAuto = getPrecision(tick_interval);
     let decimals = panel.yAxis.decimals === null ? decimalsAuto : panel.yAxis.decimals;
     let scaledDecimals = getScaledDecimals(decimals, tick_interval);
+    ctrl.decimals = decimals;
+    ctrl.scaledDecimals = scaledDecimals;
 
     // Set default Y min and max if no data
     if (_.isEmpty(data.buckets)) {
@@ -218,7 +220,10 @@ export default function link(scope, elem, attrs, ctrl) {
 
     let decimalsAuto = getPrecision(y_min);
     let decimals = panel.yAxis.decimals || decimalsAuto;
+    // TODO: calculate scaledDecimals for log scales using tick size (as in jquery.flot.js)
     let scaledDecimals = decimals - 2;
+    ctrl.decimals = decimals;
+    ctrl.scaledDecimals = scaledDecimals;
 
     data.yAxis = {
       min: y_min,
@@ -296,10 +301,6 @@ export default function link(scope, elem, attrs, ctrl) {
     }
 
     return tickValues;
-  }
-
-  function getScaledDecimals(decimals, tick_size) {
-    return decimals - Math.floor(Math.log(tick_size) / Math.LN10);
   }
 
   function tickValueFormatter(decimals, scaledDecimals = null) {
