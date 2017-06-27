@@ -89,7 +89,7 @@ export class HeatmapTooltip {
     let time = this.dashboard.formatDate(xData.x, tooltipTimeFormat);
 
     let decimals = this.panel.tooltipDecimals || this.panelCtrl.decimals;
-    let scaledDecimals = decimals - 2;
+    let scaledDecimals = this.panel.tooltipDecimals ? decimals - 2 : this.panelCtrl.scaledDecimals;
     let valueFormatter = this.valueFormatter(decimals, scaledDecimals);
 
     let tooltipHtml = `<div class="graph-tooltip-time">${time}</div>
