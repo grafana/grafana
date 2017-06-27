@@ -373,6 +373,9 @@ define([
             var num = 0;
             var times = ['1天后','1周后','1月后','1季度后','半年后'];
             var data = response.data;
+            if(_.isEmpty(data)) {
+              throw Error;
+            }
             for(var i in data) {
               var pre = {time: '', data: ''};
               pre.time = times[num];
@@ -385,6 +388,8 @@ define([
               num++;
             }
             panel.selectedOption = panel.tips[0];
+          }).catch(function(err) {
+            panel.tip = '暂无预测数据';
           });
         });
 
