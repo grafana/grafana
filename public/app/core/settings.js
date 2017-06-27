@@ -7,7 +7,7 @@ function (_) {
   return function Settings (options) {
     var defaults = {
       datasources                   : {},
-      window_title_prefix           : 'Grafana - ',
+      window_title_prefix           : 'Cloudwiz - ',
       panels                        : {
         'graph':      { path: 'app/panels/graph',      name: 'Graph' },
         'table':      { path: 'app/panels/table',      name: 'Table' },
