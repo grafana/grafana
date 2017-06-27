@@ -88,9 +88,17 @@ export class HeatmapTooltip {
     let tooltipTimeFormat = 'YYYY-MM-DD HH:mm:ss';
     let time = this.dashboard.formatDate(xData.x, tooltipTimeFormat);
 
-    let decimals = this.panel.tooltipDecimals || this.panelCtrl.decimals;
-    let scaledDecimals = this.panel.tooltipDecimals ? decimals - 2 : this.panelCtrl.scaledDecimals;
-    let valueFormatter = this.valueFormatter(decimals, scaledDecimals);
+    // Decimals override. Code from panel/graph/graph.ts
+    let valueFormatter;
+    if (_.isNumber(this.panel.tooltipDecimals)) {
+      valueFormatter = this.valueFormatter(this.panel.tooltipDecimals, null);
+    } else {
+      // auto decimals
+      // legend and tooltip gets one more decimal precision
+      // than graph legend ticks
+      let decimals = (this.panelCtrl.decimals || -1) + 1;
+      valueFormatter = this.valueFormatter(this.panel.tooltipDecimals, this.panelCtrl.scaledDecimals + 2);
+    }
 
     let tooltipHtml = `<div class="graph-tooltip-time">${time}</div>
       <div class="heatmap-histogram"></div>`;
@@ -227,9 +235,6 @@ export class HeatmapTooltip {
   valueFormatter(decimals, scaledDecimals = null) {
     let format = this.panel.yAxis.format;
     return function(value) {
-      if (_.isInteger(value)) {
-        decimals = 0;
-      }
       return kbn.valueFormats[format](value, decimals, scaledDecimals);
     };
   }
