@@ -25,3 +25,7 @@ export function tickStep(start: number, stop: number, count: number): number {
 
   return stop < start ? -step1 : step1;
 }
+
+export function getScaledDecimals(decimals, tick_size) {
+  return decimals - Math.floor(Math.log(tick_size) / Math.LN10);
+}
