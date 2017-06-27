@@ -38,9 +38,12 @@ export function convertValuesToHistogram(values: number[], bucketSize: number): 
     }
   }
 
-  return _.map(histogram, (count, bound) => {
+  let histogam_series = _.map(histogram, (count, bound) => {
     return [Number(bound), count];
   });
+
+  // Sort by Y axis values
+  return _.sortBy(histogam_series, point => point[0]);
 }
 
 function getBucketBound(value: number, bucketSize: number): number {
