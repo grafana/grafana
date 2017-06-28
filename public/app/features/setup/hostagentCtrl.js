@@ -11,6 +11,7 @@ function (angular, _) {
   module.controller('HostAgentCtrl', function ($scope, backendSrv, datasourceSrv, contextSrv, $interval, $location, $controller, $q) {
 
     $scope.init = function() {
+      $scope.type = '安装';
       $scope.installManual = false;
       $scope.orgId = contextSrv.user.orgId;
       $scope.alertServer = backendSrv.alertDUrl;
@@ -124,6 +125,17 @@ function (angular, _) {
         $scope.importAlert(alertDefs);
       } else {
         $scope.appEvent('alert-warning', ['暂无报警规则', '请联系管理员']);
+      }
+    };
+
+    $scope.updateType = function(type) {
+      $scope.type = type;
+      if(type == '更新') {
+        $scope.updateAuto = ' /dev/stdin -update';
+        $scope.updateSelf = ' -update';
+      } else {
+        $scope.updateAuto = '';
+        $scope.updateSelf = '';
       }
     };
 
