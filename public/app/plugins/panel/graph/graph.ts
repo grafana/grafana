@@ -312,10 +312,13 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
               let histMax = _.max(_.map(data, s => s.stats.max));
               let ticks = panel.xaxis.buckets || panelWidth / 50;
               bucketSize = tickStep(histMin, histMax, ticks);
-              let histogram = convertValuesToHistogram(values, bucketSize);
 
+              let normalize = panel.xaxis.histogramValue === 'percent';
+              let histogram = convertValuesToHistogram(values, bucketSize, normalize);
+
+              let seriesLabel = panel.xaxis.histogramValue || "count";
               data[0].data = histogram;
-              data[0].alias = data[0].label = data[0].id = "count";
+              data[0].alias = data[0].label = data[0].id = seriesLabel;
               data = [data[0]];
 
               options.series.bars.barWidth = bucketSize * 0.8;
@@ -422,21 +425,32 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
 
       function addXHistogramAxis(options, bucketSize) {
         let ticks, min, max;
+        let defaultTicks = panelWidth / 50;
 
         if (data.length && bucketSize) {
           ticks = _.map(data[0].data, point => point[0]);
+          min = _.min(ticks);
+          max = _.max(ticks);
+
+          // Adjust tick step
+          let tickStep = bucketSize;
+          let ticks_num = Math.floor((max - min) / tickStep);
+          while (ticks_num > defaultTicks) {
+            tickStep = tickStep * 2;
+            ticks_num = Math.ceil((max - min) / tickStep);
+          }
 
           // Expand ticks for pretty view
-          min = Math.max(0, _.min(ticks) - bucketSize);
-          max = _.max(ticks) + bucketSize;
+          min = Math.floor(min / tickStep) * tickStep;
+          max = Math.ceil(max / tickStep) * tickStep;
 
           ticks = [];
-          for (let i = min; i <= max; i += bucketSize) {
+          for (let i = min; i <= max; i += tickStep) {
             ticks.push(i);
           }
         } else {
           // Set defaults if no data
-          ticks = panelWidth / 100;
+          ticks = defaultTicks / 2;
           min = 0;
           max = 1;
         }
@@ -450,6 +464,9 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           label: "Histogram",
           ticks: ticks
         };
+
+        // Use 'short' format for histogram values
+        configureAxisMode(options.xaxis, 'short');
       }
 
       function addXTableAxis(options) {

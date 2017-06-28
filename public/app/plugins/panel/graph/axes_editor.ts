@@ -10,6 +10,7 @@ export class AxesEditorCtrl {
   xAxisModes: any;
   xAxisStatOptions: any;
   xNameSegment: any;
+  histogramValues: any;
 
   /** @ngInject **/
   constructor(private $scope, private $q) {
@@ -32,6 +33,11 @@ export class AxesEditorCtrl {
       'Series': 'series',
       'Histogram': 'histogram'
       // 'Data field': 'field',
+    };
+
+    this.histogramValues = {
+      'Percent': 'percent',
+      'Count': 'count'
     };
 
     this.xAxisStatOptions =  [
