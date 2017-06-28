@@ -17,17 +17,19 @@
     <img src="/img/chooseHost.png" alt=""/>
   </div>
   <div ng-if="selected">
-    <h3>您将在【{{system}}】下安装 【{{selected.host}}】探针</h3>
+    <h3>您将在【{{system}}】下{{type}}【{{selected.host}}】探针</h3>
 
-    <h4>1. 安装部署</h4>
-    <h5>* 您可以选择一键安装</h5>
+    <h5>您也可以选择<span class="btn-update" ng-click="updateType('安装')">安装</span>或<span class="btn-update" ng-click="updateType('更新')">更新</span>探针</h5>
+
+    <h4>1. {{type}}部署</h4>
+    <h5>* 您可以选择一键{{type}}</h5>
     <ul class="tight-form last">
       <li style="word-break: break-all">
-        sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} AGENT_URL=https://download.cloudwiz.cn/agent bash -c "$(curl -kL https://download.cloudwiz.cn/agent/deploy_agent.sh)"
+        sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} AGENT_URL=https://download.cloudwiz.cn/agent bash -c "$(curl -kL https://download.cloudwiz.cn/agent/deploy_agent.sh)"{{updateAuto}}
       </li>
     </ul>
     
-    <h5 style="cursor: pointer;" ng-click="installManual = !installManual">* 如果您希望手动安装,请点击这里<i style="margin-left:10px;" ng-class="{true:'fa fa-hand-o-down',false:'fa fa-hand-o-left'}[installManual]"></i></h5>
+    <h5 style="cursor: pointer;" ng-click="installManual = !installManual">* 如果您希望手动{{type}},请点击这里<i style="margin-left:10px;" ng-class="{true:'fa fa-hand-o-down',false:'fa fa-hand-o-left'}[installManual]"></i></h5>
     <ul ng-if="installManual" style="list-style:lower-roman;">
       <li>
         <p style="word-break: break-all">创建文件安装目录</p>
@@ -52,7 +54,7 @@
       <li>
         <p style="word-break: break-all">部署探针</p>
         <div class="tight-form last">
-          <p style="word-break: break-all">sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} ./deploy_agent.sh</p>
+          <p style="word-break: break-all">sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} ./deploy_agent.sh{{updateSelf}}</p>
         </div>
       </li>
     </ul>
