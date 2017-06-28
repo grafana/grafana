@@ -3,7 +3,6 @@
     {
       "host": "Debian",
       "icon": "iconfont fa-debian",
-      "deploy": "sudo ORG_TOKEN= CLIENT_ID=2 METRIC_SERVER_HOST=192.168.1.204 ALERTD_SERVER=http://192.168.1.205:5001 AGENT_URL=https://download.cloudwiz.cn/agent bash -c '$(curl -L https://download.cloudwiz.cn/agent/deploy_agent.sh)'",
       "info": "",
       "version": "暂无要求",
       "addr": "Debian"
@@ -11,15 +10,13 @@
     {
       "host": "Ubuntu",
       "icon": "iconfont fa-ubuntu",
-      "deploy": "sudo ORG_TOKEN= CLIENT_ID=2 METRIC_SERVER_HOST=192.168.1.204 ALERTD_SERVER=http://192.168.1.205:5001 AGENT_URL=https://download.cloudwiz.cn/agent bash -c '$(curl -L https://download.cloudwiz.cn/agent/deploy_agent.sh)'",
       "info": "",
       "version": "> 14.04",
-      "addr": "Debian"
+      "addr": "Ubuntu"
     },
     {
       "host": "CentOS/RedHat",
       "icon": "iconfont fa-centos",
-      "deploy": "sudo ORG_TOKEN= CLIENT_ID=2 METRIC_SERVER_HOST=192.168.1.204 ALERTD_SERVER=http://192.168.1.205:5001 AGENT_URL=https://download.cloudwiz.cn/agent bash -c '$(curl -L https://download.cloudwiz.cn/agent/deploy_agent.sh)'",
       "info": "",
       "version": "> 6.4",
       "addr": "RedHat"
@@ -27,7 +24,6 @@
     {
       "host": "Fedora",
       "icon": "iconfont fa-Fedora",
-      "deploy": "sudo ORG_TOKEN= CLIENT_ID=2 METRIC_SERVER_HOST=192.168.1.204 ALERTD_SERVER=http://192.168.1.205:5001 AGENT_URL=https://download.cloudwiz.cn/agent bash -c '$(curl -L https://download.cloudwiz.cn/agent/deploy_agent.sh)'",
       "info": "",
       "version": "暂无要求",
       "addr": "RedHat"
