@@ -137,7 +137,6 @@ function (angular, _, noUiSlider) {
           }
         }
       }, $scope);
-      $scope.submenuEnabled = true;
     };
 
     $scope.flushResult = function () {

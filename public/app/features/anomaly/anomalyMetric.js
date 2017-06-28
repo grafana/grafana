@@ -130,7 +130,6 @@ define([
               }
             }
           }, $scope);
-          $scope.submenuEnabled = true;
         };
 
         $scope.changeSelect = function (anomalyItem) {
