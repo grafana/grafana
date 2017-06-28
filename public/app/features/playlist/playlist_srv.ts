@@ -3,6 +3,7 @@
 import angular from 'angular';
 import coreModule from '../../core/core_module';
 import kbn from 'app/core/utils/kbn';
+import appEvents from 'app/core/app_events';
 
 class PlaylistSrv {
   private cancelPromise: any;
@@ -14,7 +15,13 @@ class PlaylistSrv {
   public isPlaying: boolean;
 
   /** @ngInject */
-  constructor(private $rootScope: any, private $location: any, private $timeout: any, private backendSrv: any) { }
+  constructor(
+    private $rootScope: any,
+    private $location: any,
+    private $timeout: any,
+    private backendSrv: any,
+    private $routeParams: any
+    ) { }
 
   next() {
     this.$timeout.cancel(this.cancelPromise);
@@ -22,14 +29,32 @@ class PlaylistSrv {
     var playedAllDashboards = this.index > this.dashboards.length - 1;
 
     if (playedAllDashboards) {
-      window.location.href = this.startUrl;
-    } else {
-      var dash = this.dashboards[this.index];
-      this.$location.url('dashboard/' + dash.uri);
-
-      this.index++;
-      this.cancelPromise = this.$timeout(() => this.next(), this.interval);
+      window.location.href = this.getUrlWithKioskMode();
+      return;
     }
+
+    var dash = this.dashboards[this.index];
+    this.$location.url('dashboard/' + dash.uri);
+
+    this.index++;
+    this.cancelPromise = this.$timeout(() => this.next(), this.interval);
+  }
+
+  getUrlWithKioskMode() {
+    const inKioskMode = document.body.classList.contains('page-kiosk-mode');
+
+    // check if should add kiosk query param
+    if (inKioskMode && this.startUrl.indexOf('kiosk') === -1) {
+      return this.startUrl + '?kiosk=true';
+    }
+
+    // check if should remove kiosk query param
+    if (!inKioskMode) {
+      return this.startUrl.split("?")[0];
+    }
+
+    // already has kiosk query param, just return startUrl
+    return this.startUrl;
   }
 
   prev() {
@@ -44,6 +69,10 @@ class PlaylistSrv {
     this.index = 0;
     this.playlistId = playlistId;
     this.isPlaying = true;
+
+    if (this.$routeParams.kiosk) {
+      appEvents.emit('toggle-kiosk-mode');
+    }
 
     this.backendSrv.get(`/api/playlists/${playlistId}`).then(playlist => {
       this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then(dashboards => {
