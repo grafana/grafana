@@ -222,6 +222,15 @@ function (angular, _, coreModule, config) {
       }).then(callback);
     };
 
+    this.getPrediction = function(params) {
+      return self.alertD({
+        method: "get",
+        url: "/anomaly/prediction",
+        params: params,
+        headers: {'Content-Type': 'application/json;'},
+      });
+    }
+
     this.getHostsNum = function () {
       return this.alertD({
         method: "get",
