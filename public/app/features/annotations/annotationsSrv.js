@@ -22,12 +22,11 @@ define([
       list = [];
     };
 
-    this.getAnnotations = function(dashboard) {
-      if (!_.isNull(dashboard.manualAnnotation)) {
-        return $q.when(dashboard.manualAnnotation);
-      }
-
+    this.getAnnotations = function (dashboard) {
       if (dashboard.annotations.list.length === 0) {
+        if (!_.isNull(dashboard.manualAnnotation)) {
+          return $q.when(dashboard.manualAnnotation);
+        }
         return $q.when(null);
       }
 
@@ -51,7 +50,10 @@ define([
       });
 
       promiseCached = $q.all(promises)
-        .then(function() {
+        .then(function () {
+          if (!_.isNull(dashboard.manualAnnotation)) {
+            list.push(dashboard.manualAnnotation[0]);
+          }
           return list;
         });
 

@@ -111,9 +111,26 @@ define([
                 height: '250px',
                 panels: panels
               }],
-              time: {from: "now-1d", to: "now"}
+              time: {from: "now-1d", to: "now"},
+              annotations: {
+                list: [
+                  {
+                    datasource: "opentsdb",
+                    enable: false,
+                    iconColor: "#C0C6BE",
+                    iconSize: 13,
+                    lineColor: "rgba(88, 110, 195, 0.86)",
+                    name: "服务启动时间",
+                    query: "*",
+                    showLine: true,
+                    textField: "123",
+                    timeField: ""
+                  }
+                ]
+              }
             }
           }, $scope);
+          $scope.submenuEnabled = true;
         };
 
         $scope.changeSelect = function (anomalyItem) {

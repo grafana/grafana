@@ -63,6 +63,38 @@ function (angular, _, dateMath) {
       });
     };
 
+    OpenTSDBDatasource.prototype.annotationQuery = function (options) {
+      var annotation = options.annotation;
+      var start = convertToTSDBTime(options.rangeRaw.from, false);
+      var end = convertToTSDBTime(options.rangeRaw.to, true);
+      var queries = [{
+        "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + "service.startAtSec",
+        "aggregator": "sum",
+        "downsample": "1m-avg",
+        "tags": {
+          "host": "*",
+          "service": "*"
+        }
+      }];
+
+      return this.performTimeSeriesQuery(queries, start, end).then(function (response) {
+        var list = [];
+        _.each(response.data, function (result) {
+          _.each(result.dps, function (key, value) {
+            var event = {
+              annotation: annotation,
+              time: key * 1000,
+              title: "服务启动时间",
+              tags: result.tags.host + "," + result.tags.service,
+              text: ""
+            };
+            list.push(event);
+          });
+        });
+        return list;
+      });
+    };
+
     OpenTSDBDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
       var reqBody = {
         start: start,

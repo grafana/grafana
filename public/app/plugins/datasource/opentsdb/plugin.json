@@ -12,5 +12,6 @@
   },
 
   "metrics": true,
+  "annotations": true,
   "defaultMatchFormat": "pipe"
 }

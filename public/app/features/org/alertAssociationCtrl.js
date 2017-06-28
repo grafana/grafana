@@ -118,9 +118,26 @@ function (angular, _, noUiSlider) {
           id: metrics,
           rows: [$scope.getRowPanelMeta(host, metrics)],
           time: {from: "now-6h", to: "now"},
-          manualAnnotation: alertMgrSrv.annotations
+          manualAnnotation: alertMgrSrv.annotations,
+          annotations: {
+            list: [
+              {
+                datasource: "opentsdb",
+                enable: false,
+                iconColor: "#C0C6BE",
+                iconSize: 13,
+                lineColor: "rgba(88, 110, 195, 0.86)",
+                name: "服务启动时间",
+                query: "*",
+                showLine: true,
+                textField: "123",
+                timeField: ""
+              }
+            ]
+          }
         }
       }, $scope);
+      $scope.submenuEnabled = true;
     };
 
     $scope.flushResult = function () {
