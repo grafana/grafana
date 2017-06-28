@@ -173,7 +173,12 @@ function (moment, $, angular, _, uiCalendarConfig) {
           _.each(roleEvents, function(oncaller, start) {
             oncaller.start = formatTime(new Date(parseInt(start)*1000));
             oncaller.title = oncaller.name+$scope[role].type;
-            oncaller.color = colors[_.find($scope.oncallerDefList, {id: oncaller.id}).user][0];
+            var oncallerDef = _.find($scope.oncallerDefList, {id: oncaller.id});
+            if(oncallerDef) {
+              oncaller.color = colors[oncallerDef.user][0];
+            } else {
+              oncaller.color = '#ccc';
+            }
             oncaller.className = [];
             oncaller.className.push(role);
             oncaller.end = formatTime(end);
