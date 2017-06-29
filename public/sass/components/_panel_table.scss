@@ -76,6 +76,15 @@
     &.table-panel-cell-pre {
       white-space: pre;
     }
+
+    .table-panel-cell-link {
+      height: 100%;
+      width: 100%;
+    }
+
+    &.cell-highlighted:hover {
+      background-color: $tight-form-func-bg;
+    }
   }
 }
 

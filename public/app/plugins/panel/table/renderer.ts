@@ -8,7 +8,7 @@ export class TableRenderer {
   formatters: any[];
   colorState: any;
 
-  constructor(private panel, private table, private isUtc, private sanitize) {
+  constructor(private panel, private table, private isUtc, private sanitize, private templateSrv) {
     this.initColumns();
   }
 
@@ -159,7 +159,27 @@ export class TableRenderer {
       cellClass = ' class="table-panel-cell-pre" ';
     }
 
-    return '<td' + cellClass + style + '>' + value + widthHack + '</td>';
+    var columnHtml = value + widthHack;
+
+    if (columnStyle.link) {
+      // Render cell as link
+      var scopedVars = {
+        cell_value: {value: value}
+      };
+
+      var cellLink = this.templateSrv.replace(columnStyle.linkUrl, scopedVars);
+      var cellTarget = columnStyle.linkTargetBlank ? '_blank' : '_blank';
+      columnHtml = `
+        <a href="${cellLink}" target="${cellTarget}">
+          <div class="table-panel-cell-link">
+          ${columnHtml}
+          </div>
+        </a>
+      `;
+    }
+
+    columnHtml = '<td' + cellClass + style + '>' + columnHtml + '</td>';
+    return columnHtml;
   }
 
   render(page) {
