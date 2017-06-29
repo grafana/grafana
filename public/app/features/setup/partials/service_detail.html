@@ -23,29 +23,33 @@
         <p>请确定您的服务开放权限</p>
       </li>-->
       <li>
-        <p>检查配置文件设置(一般无需修改)</p>
+        <p>检查安装、配置文件(一般无需修改)</p>
         <div class="tight-form last">
-          <p style="word-break: break-all" ng-repeat="deploy in detail.deploy track by $index">{{deploy}}</p>
+          <p style="word-break: break-all" ng-repeat="deploy in detail.deploy track by $index" ng-bind-html="deploy"></p>
         </div>
       </li>
       <li>
         <p>启动服务探针</p>
         <p style="word-break: break-all">展示所有的探针列表和是否使用的状态.</p>
         <div class="tight-form last">
-          <p style="word-break: break-all">$ ./opt/cloudwiz-agent/agent/collector_mgr.py  list </p>
+          <p style="word-break: break-all">$ /opt/cloudwiz-agent/agent/collector_mgr.py  list </p>
         </div>
         <p style="word-break: break-all">通过下面命令来关闭我们不需要的探针.</p>
         <div class="tight-form last">
-          <p style="word-break: break-all">$ ./opt/cloudwiz-agent/agent/collector_mgr.py  disable <探针名字> </p>
+          <p style="word-break: break-all">$ /opt/cloudwiz-agent/agent/collector_mgr.py  disable <探针名字> </p>
         </div>
         <p style="word-break: break-all">通过下面命令来开启我们需要的探针. </p>
         <div class="tight-form last">
-          <p style="word-break: break-all">$ ./opt/cloudwiz-agent/agent/collector_mgr.py   enable  <探针名字> </p>
+          <p style="word-break: break-all">$ /opt/cloudwiz-agent/agent/collector_mgr.py   enable  <探针名字> </p>
         </div>
       </li>
     </ul>
 
-    <button class="btn btn-primary pull-right">安装</button>
+    <button class="btn btn-primary pull-right" ng-click="install(detail.template)">{{installBtn}}</button>
+    <button class="btn pull-right" style="margin-right: 10px;"
+            ng-class="{false:'btn-success'}[detail.status == -1]" 
+            ng-disabled="detail.status == -1" 
+            ng-click="importAlerts(detail.id)">导入报警规则</button>
   </div>
   <div class="service-tab service-review" ng-class="{'active': review}">
     <h3 ng-if="!detail.img" style="text-align: center; line-height: 200px;">暂无预览信息</h3>
