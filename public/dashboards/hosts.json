@@ -544,6 +544,35 @@
       ],
       "status": -1,
       "template": "nginx"
+    },
+    {
+      "id": "postgresql",
+      "name": "Postgresql",
+      "icon": "iconfont fa-postgresql",
+      "img": "",
+      "info": "PostgreSQL 是一个自由的对象-关系数据库服务器(数据库管理系统)，它在灵活的 BSD-风格许可证下发行。",
+      "deploy": [
+        "安装依赖:",
+        "<p class='code-block'> 1. 下载安装包: https://download.cloudwiz.cn/package/psycopg2-2.7.1.tar.gz</p></p>",
+        "<p class='code-block'> 2. 解压安装包到 /tmp 下 $ tar -zvxf psycopg2-2.7.1.tar.gz /tmp</p>",
+        "<p class='code-block'> 3. $ cd /tmp/psycopg2-2.7.1</p>",
+        "<p class='code-block'> 4. 请确认是否设置 postgresql 的运行环境</p>",
+        "<p class='code-block indent2'> 4.1 运行 $ which pg_config</p>",
+        "<p class='code-block indent2'> 4.2 如果没有,请配置. 如: $ export PATH=/usr/pgsql-9.6/bin:$PATH</p>",
+        "<p class='code-block'> 5. 运行 $ /opt/cloudwiz-agent/altenv/bin/python setup.py install --prefix=\"/opt/cloudwiz-agent/altenv\"</p>",
+        "<p class='code-block'> 6. 如果看到\"Finished processing dependencies for psycopg2==2.7.1\" 即安装成功</p>",
+        "<p class='code-block'> 7. 如有其它问题,请联系管理员</p>",
+        "创建用户:",
+        "<p class='code-block'> 1. 我们的探针需要用户给我们设置一个专门能够收集数据的账号(只读)</p>",
+        "<p class='code-block'> 2. 进去psql运行</p>",
+        "<p class='code-block'> 3. create user cloudwiz_user with password 'cloudwiz_pass';</p>",
+        "<p class='code-block'> 4. grant SELECT ON pg_stat_database to cloudwiz_user;</p>",
+        "<p class='code-block'> 5. 检查是否能够访问 psql -h localhost -U cloudwiz_user postgres -c \"select * from pg_stat_database LIMIT(1);\"</p>",
+        "<p class='code-block'> 6. 如果出现任何问题,请联系管理员</p>"
+      ],
+      "metrics": [],
+      "status": -1,
+      "template": "postgresql"
     }
   ]
 }
