@@ -11,6 +11,7 @@ function (angular, _, coreModule) {
       var includeAnomaly = "/anomaly/include";
       var mainHealthList = "/healthsummary";
       var metricsType = "/metrictype";
+      var anomalyHistory = "/anomaly";
       this.anomalyMetricsData = [];
       var _this = this;
       this.load = function () {
@@ -121,5 +122,20 @@ function (angular, _, coreModule) {
         });
         return $q.all(metricsTypeQueries);
       };
+
+      this.loadHistory = function(options) {
+        return backendSrv.alertD({
+          method: "get",
+          params: {
+            from: options.from,
+            to: options.to
+          },
+          url: anomalyHistory
+        }).then(function onSuccess(response) {
+          return response.data;
+        }, function onFailed(response) {
+          return response;
+        });
+      }
     });
   });

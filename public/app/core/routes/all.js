@@ -128,6 +128,10 @@ define([
         templateUrl: 'app/features/anomaly/partials/anomaly.html',
         controller : 'AnomalyCtrl',
       })
+      .when('/anomaly/history', {
+        templateUrl: 'app/features/anomaly/partials/anomalyHistory.html',
+        controller : 'AnomalyHistory',
+      })
       .when('/anomaly/:clusterId', {
         templateUrl: 'app/features/anomaly/partials/anomalyMetric.html',
         controller : 'AnomalyMetric',
