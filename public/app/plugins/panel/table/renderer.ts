@@ -168,7 +168,7 @@ export class TableRenderer {
       };
 
       var cellLink = this.templateSrv.replace(columnStyle.linkUrl, scopedVars);
-      var cellTarget = columnStyle.linkTargetBlank ? '_blank' : '_blank';
+      var cellTarget = columnStyle.linkTargetBlank ? '_blank' : '';
       columnHtml = `
         <a href="${cellLink}" target="${cellTarget}">
           <div class="table-panel-cell-link">
