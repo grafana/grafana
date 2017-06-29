@@ -1,4 +1,7 @@
-{
+{ 
+  "title": "总览",
+  "id": "name",
+  "time": { "from": "now-7d", "to": "now" },
   "rows": [
     {
       "collapse": false,

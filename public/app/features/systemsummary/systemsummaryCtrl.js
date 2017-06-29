@@ -21,23 +21,16 @@ define([
         }
 
         backendSrv.get('/api/static/template/system').then(function(response) {
+          $scope.dashboard = response;
+          $scope.getServices();
+          $scope.getAlertStatus();
+          $scope.getHostSummary();
+          $scope.getHealth();
+          $scope.getPrediction();
           $scope.initDashboard({
             meta: { canStar: false, canShare: false, canEdit: false, canSave: false },
-            dashboard: {
-              title: "总览",
-              id: "name",
-              rows: response.rows,
-              time: { from: "now-7d", to: "now" }
-            }
+            dashboard: $scope.dashboard
           }, $scope);
-
-          $timeout(function() {
-            $scope.getAlertStatus();
-            $scope.getServices();
-            $scope.getHostSummary();
-            $scope.getHealth();
-            $scope.getPrediction();
-          });
         });
 
       };
@@ -69,7 +62,7 @@ define([
       $scope.getServices = function () {
         var panel = $scope.dashboard.rows[2].panels[0];
         panel.href = $scope.getUrl('/service');
-        panel.status = { success: ['正常节点', 0], warn: ['异常节点', 0], danger: ['严重', 0] };
+        panel.status = { success: ['正常服务', 0], warn: ['异常服务', 0], danger: ['严重', 0] };
         _.each(Object.keys(_.allServies()), function (key) {
           var queries = [{
             "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + key + ".state",
@@ -87,9 +80,8 @@ define([
               "aggregator": "sum",
               "currentTagKey": "",
               "currentTagValue": "",
-              "downsample": "10m-sum",
               "downsampleAggregator": "sum",
-              "downsampleInterval": "5h",
+              "downsampleInterval": "10m",
               "errors": {},
               "hide": false,
               "isCounter": false,
@@ -194,8 +186,6 @@ define([
         });
       }
 
-      $timeout(function () {
-        $scope.init();
-      });
+      $scope.init();
     });
   });
