@@ -100,10 +100,17 @@ export default function link(scope, elem, attrs, ctrl) {
 
     let ticks = chartWidth / DEFAULT_X_TICK_SIZE_PX;
     let grafanaTimeFormatter = grafanaTimeFormat(ticks, timeRange.from, timeRange.to);
+    let timeFormat;
+    let dashboardTimeZone = ctrl.dashboard.getTimezone();
+    if (dashboardTimeZone === 'utc') {
+      timeFormat = d3.utcFormat(grafanaTimeFormatter);
+    } else {
+      timeFormat = d3.timeFormat(grafanaTimeFormatter);
+    }
 
     let xAxis = d3.axisBottom(xScale)
       .ticks(ticks)
-      .tickFormat(d3.timeFormat(grafanaTimeFormatter))
+      .tickFormat(timeFormat)
       .tickPadding(X_AXIS_TICK_PADDING)
       .tickSize(chartHeight);
 
