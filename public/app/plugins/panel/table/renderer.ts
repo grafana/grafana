@@ -161,7 +161,7 @@ export class TableRenderer {
 
     var columnHtml = value + widthHack;
 
-    if (columnStyle.link) {
+    if (columnStyle && columnStyle.link) {
       // Render cell as link
       var scopedVars = {
         cell_value: {value: value}
