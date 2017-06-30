@@ -138,11 +138,6 @@ define([
         templateUrl: 'app/features/decompose/partials/compose.html',
         controller : 'DecomposeMetricCtrl'
       })
-      .when('/newcomer', {
-        templateUrl: 'app/features/org/partials/newcomer.html',
-        controller : 'NewComerCtrl',
-        resolve: loadOrgBundle,
-      })
       .when('/org', {
         templateUrl: 'app/features/org/partials/orgDetails.html',
         controller : 'OrgDetailsCtrl',
