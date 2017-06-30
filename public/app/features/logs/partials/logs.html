@@ -10,6 +10,7 @@
         </li>
     </ul>
 </topnav>
+<div dash-editor-view class="time-picker"></div>
 
 <div class="page-container" style="background:#fff;">
     <form>
@@ -47,6 +48,11 @@
                 </div>
                 <tabset>
                     <tab heading="{{panel.title}}" ng-repeat="(name, panel) in row.panels track by panel.id" ng-if="panel.tab != graph">
+                        <li ng-repeat="(index, obj) in panel.regularResult.regularities" ng-if="panel.regularResult.regularities.length">
+                            <span ng-repeat="(name,value) in obj">
+                                {{name}}: {{value}}
+                            </span>
+                        </li>
                         <div class="btn-group btn-log-compare" ng-if="name == 2">
                             <button class="dropdown-toggle" data-toggle="dropdown">
                                 <span class="caret"></span>
@@ -57,7 +63,7 @@
                                 <li ng-click="showInputModal()">自定义</li>
                             </ul>
                         </div>
-                        <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+                        <panel-loader type="panel.type" class="panel-margin log-panel"></panel-loader>
                     </tab>
                 </tabset>
                 <div class="clearfix"></div>

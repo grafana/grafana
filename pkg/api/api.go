@@ -191,7 +191,15 @@ func Register(r *macaron.Macaron) {
 
 		// metrics
 		r.Get("/metrics/test", GetTestMetrics)
-		r.Get("/static/:name", GetStaticFile)
+
+		r.Group("/static", func() {
+			//dashboard
+			r.Get("/:name", GetStaticFile)
+			//template
+			r.Get("/template/:name",GetDashboardTemplate)
+			//alertdef
+			r.Get("/alertd/:name",GetAlertDef)
+		})
 	}, reqSignedIn)
 
 	// admin api

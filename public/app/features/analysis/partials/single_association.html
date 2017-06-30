@@ -47,7 +47,7 @@
         </div>
         <button type="submit" class="btn btn-primary" ng-click="analysis()"><i class="fa fa-search"/>开始分析</button>
     </form>
-    <div ng-if="isAssociation">
+    <div ng-if="dashboard">
         <h2>调整相关性分析参数</h2>
         <table class="grafana-options-table">
             <tr>
@@ -63,7 +63,7 @@
             </tr>
         </table>
     </div>
-    <p ng-if="!isAssociation && status">关联性分析结果尚未计算完成,请选择其他指标进行查询</p>
+    <p ng-if="!isAssociation && status">没有关联结果？调整下阈值试试吧。还是没有？请点击右侧按钮试试。<button class="btn btn-small btn-primary" ng-click="flushResult()">刷新结果</button></p>
     <div class="main-view-container">
         <div class="grafana-row" ng-controller="RowCtrl"
             ng-repeat="(row_name, row) in dashboard.rows" row-height>

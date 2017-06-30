@@ -131,6 +131,9 @@ function (angular, _, $, kbn, dateMath, rangeUtil) {
           scope.panel.snapshotData = results;
         }
 
+        if (results.regularities) {
+          scope.panel.regularResult = results;
+        }
         return results;
       });
     };

@@ -69,7 +69,7 @@
 	   	</a>
 		</li>
 		<li ng-repeat="item in submenu" ng-class="{'dropdown': item.thdmenu}">
-			<a href="{{item.href}}" ng-if="item.href"  class="sidemenu-item">
+			<a href="{{item.href}}" ng-if="item.href"  class="sidemenu-item" target="{{item.target}}">
 				<span class="sidemenu-item-text">{{item.text}}</span>
 			</a>
 			<a ng-click="item.click(item)" ng-if="!item.href" class="sidemenu-item" data-toggle="{{item.dropdown}}">

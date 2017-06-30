@@ -11,8 +11,8 @@
             </tr>
             <tr ng-repeat="report in reports">
                 <td>{{$index + 1}}</td>
-                <td width="50%"><a class="report-item" href="{{report.reportUrl}}" target="_blank">{{report.reportName}}</a></td>
-                <td><a class="report-item" href="{{report.reportUrl}}" target="_blank">预览/下载</a></td>
+                <td width="50%"><a class="report-item" href="https://download.cloudwiz.cn/report/{{report.reportUrl}}" target="_blank">{{report.reportName}}</a></td>
+                <td><a class="report-item" href="https://download.cloudwiz.cn/report/{{report.reportUrl}}" target="_blank">预览/下载</a></td>
             </tr>
         </tbody>
         <p ng-if="!reports.length">您暂时没有任何健康报告</p>

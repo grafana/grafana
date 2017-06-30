@@ -69,7 +69,8 @@ func addDashboardMigration(mg *Migrator) {
 		Indices: []*Index{
 			{Cols: []string{"org_id"}},
      // {Cols: []string{"service_id"}},
-			{Cols: []string{"org_id", "slug"}, Type: UniqueIndex},
+			//should remove unique index manually
+			//{Cols: []string{"org_id", "slug"}, Type: UniqueIndex},
 		},
 	}
 

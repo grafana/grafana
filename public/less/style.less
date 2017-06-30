@@ -45,6 +45,26 @@ body{
     }
 }
 
-.table-panel-table td:first-child{
+.log-panel .table-panel-table td:first-child{
     width: 100px;
+}
+
+.time-picker{
+    position: absolute;
+    right: 0;
+    z-index: 1;
+}
+
+.code-block {
+    word-break: break-all;
+    text-indent: 20px;
+    &.bold{
+        font-weight:bold;
+    }
+    &.indent2{
+        text-indent: 40px;
+    }
+    &.indent4{
+        text-indent: 60px;
+    }
 }

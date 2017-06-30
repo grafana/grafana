@@ -1,15 +1,14 @@
 define([
   'angular',
   'lodash',
-  'app/core/utils/datemath',
   'app/core/config',
 ],
-  function (angular, _, dateMath, config) {
+  function (angular, _, config) {
     'use strict';
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('SystemsummaryCtrl', function ($scope, $location, backendSrv, contextSrv, datasourceSrv, alertMgrSrv, healthSrv) {
+    module.controller('SystemsummaryCtrl', function ($scope, $location, backendSrv, contextSrv, datasourceSrv, alertMgrSrv, healthSrv, $timeout) {
       $scope.getUrl = function(url) {
         return config.appSubUrl + url;
       };
@@ -121,7 +120,7 @@ define([
         { fullwidth: false, header: '机器连接状态', title: '历史机器连接状态', status: { success: ['正常机器', 0], warn: ['异常机器', 0], danger: ['尚未工作', 0] }, href: $scope.getUrl('/summary') },
         { fullwidth: true, header: '各线程TopN使用情况', title: '', panels: [{ title: '各线程CPU占用情况(百分比)TopN' }, { title: '各线程内存占用情况(百分比)TopN' },] },
         { fullwidth: true, header: '健康指数趋势', title: '历史健康指数趋势' },
-        { fullwidth: true, header: '智能分析预测', title: '', panels: [{ title: '磁盘剩余空间', tip: '预计未来1天后，磁盘剩余空间约为' }, { title: 'CPU使用情况(百分比)', tip: '预计未来1天后，cpu使用情况约为' }, { title: '内存使用情况', tip: '预计未来1天后，内存使用约为' },] },
+        { fullwidth: true, header: '智能分析预测', title: '', panels: [{ title: '磁盘剩余空间', tip: '磁盘剩余空间约为', tips: [], selectedOption: {}}, { title: 'CPU使用情况(百分比)', tip: 'cpu使用情况约为', tips: [], selectedOption: {}}, { title: '内存使用情况', tip: '内存使用约为', tips:[], selectedOption: {}}] },
       ];
 
       $scope.init = function () {
@@ -142,9 +141,7 @@ define([
           }
         }, $scope);
 
-        datasourceSrv.get("opentsdb").then(function (datasource) {
-          $scope.datasource = datasource;
-        }).then(function () {
+        $timeout(function() {
           $scope.getAlertStatus();
           $scope.getServices();
           $scope.getHostSummary();
@@ -184,6 +181,7 @@ define([
         $scope.initHostSummary(hostRow.panels[0]);
         $scope.initTopN(topNRow.panels);
         $scope.initHealth(healthRow.panels[0]);
+        $scope.initPrediction(predictionRow.panels);
         return panelRow;
       };
 
@@ -259,29 +257,18 @@ define([
             "downsample": "10m-sum",
           }];
 
-          $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-10m', false).valueOf(), null).then(function (response) {
-            if (_.isEmpty(response.data)) {
-              throw Error;
+          datasourceSrv.getServiceStatus(queries, 'now-10m').then(function(response) {
+            if(response.status > 0) {
+              $scope.panleJson[2].status.warn[1]++;
+            } else {
+              $scope.panleJson[2].status.success[1]++;
             }
-            _.each(response.data, function (metricData) {
-              if (_.isObject(metricData)) {
-                if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
-                  $scope.panleJson[2].status.warn[1]++;
-                } else {
-                  $scope.panleJson[2].status.success[1]++;
-                }
-              }
-
-              var targets = _.cloneDeep(panelMeta.panels[0].targets[0]);
-              targets.metric = key + '.state';
-              targets.aggregator = queries[0].aggregator;
-              targets.downsample = queries[0].downsample;
-              targets.downsampleAggregator = 'sum';
-              $scope.dashboard.rows[2].panels[0].targets.push(targets);
-            });
-          }).catch(function () {
-            //nothing to do;
-            //$scope.serviceList.push({"host": "尚未配置在任何主机上", "alias": alias[key], "state": "尚未工作"});
+            var targets = _.cloneDeep(panelMeta.panels[0].targets[0]);
+            targets.metric = key + '.state';
+            targets.aggregator = queries[0].aggregator;
+            targets.downsample = queries[0].downsample;
+            targets.downsampleAggregator = 'sum';
+            $scope.dashboard.rows[2].panels[0].targets.push(targets);
           });
         });
       };
@@ -316,20 +303,13 @@ define([
               "tags": { "host": metric.tag.host }
             }];
 
-            $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1m', false).valueOf(), null).then(function (response) {
-              if (_.isEmpty(response.data)) {
-                throw Error;
+            datasourceSrv.getServiceStatus(queries, 'now-1m').then(function(response) {
+              if(response.status > 0) {
+                $scope.panleJson[3].status.warn[1]++;
+              } else {
+                $scope.panleJson[3].status.success[1]++;
               }
-              _.each(response.data, function (metricData) {
-                if (_.isObject(metricData)) {
-                  if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
-                    $scope.panleJson[3].status.warn[1]++;
-                  } else {
-                    $scope.panleJson[3].status.success[1]++;
-                  }
-                }
-              });
-            }).catch(function () {
+            },function(err) {
               $scope.panleJson[3].status.danger[1]++;
             });
 
@@ -358,7 +338,7 @@ define([
         });
       };
 
-      $scope.getPrediction = function (panels) {
+      $scope.initPrediction = function (panels) {
         var prediction = [['df.bytes.free', 'df.bytes.free.prediction'], ['cpu.usr', 'cpu.usr.prediction'], ['proc.meminfo.active', 'proc.meminfo.active.prediction']];
         _.each(panels, function (panel, index) {
           panel.targets = [];
@@ -373,29 +353,43 @@ define([
           panel.seriesOverrides = [{ "alias": prediction[index][1], "color": "#DEDAF7", "zindex": -2 }];
           panel.y_formats = ['bytes', 'bytes'];
           panel.timeForward = "1d";
+          panel.legend = {};
           panel.legend.show = false;
         });
         panels[1].y_formats = ['percent', 'percent'];
+      };
 
+      $scope.getPrediction = function (panels) {
+        var prediction = [['df.bytes.free', 'df.bytes.free.prediction'], ['cpu.usr', 'cpu.usr.prediction'], ['proc.meminfo.active', 'proc.meminfo.active.prediction']];
         _.each(prediction, function (item, index) {
-          var queries = [{
-            "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + item[1],
-            "downsample": "1d-avg",
-            "aggregator": "avg",
-          }];
 
-          $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now', false).valueOf(), dateMath.parse('now+1d', false).valueOf()).then(function (response) {
-            for (var i in response.data[0].dps) {
-              var data = response.data[0].dps[i];
+          var panel = $scope.panleJson[6].panels[index];
+
+          var params = {
+            metric: contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + item[0],
+          }
+
+          backendSrv.getPrediction(params).then(function(response) {
+            var num = 0;
+            var times = ['1天后','1周后','1月后','1季度后','半年后'];
+            var data = response.data;
+            if(_.isEmpty(data)) {
+              throw Error;
             }
-            if (item[1] === 'cpu.usr.prediction') {
-              data = data.toFixed(2) + '%';
-            } else {
-              data = (data / Math.pow(1024, 3)).toFixed(2) + 'GB';
+            for(var i in data) {
+              var pre = {time: '', data: ''};
+              pre.time = times[num];
+              if(item[0] === 'cpu.usr') {
+                pre.data = data[i].toFixed(2) + '%';
+              } else {
+                pre.data = (data[i] / Math.pow(1024, 3)).toFixed(2) + 'GB'
+              }
+              panel.tips.push(pre);
+              num++;
             }
-            $scope.panleJson[6].panels[index].tip += data;
-          }).catch(function (e) {
-            $scope.panleJson[6].panels[index].tip = '暂无预测信息';
+            panel.selectedOption = panel.tips[0];
+          }).catch(function(err) {
+            panel.tip = '暂无预测数据';
           });
         });
 
@@ -473,11 +467,18 @@ define([
         });
 
         cpuTopN.targets[0].metric = 'cpu.topN';
-
         memoryTopN.targets[0].metric = 'mem.topN';
-
       };
 
-      $scope.init();
+      $scope.changePre = function (selectedOption) {
+        var selected = _.findIndex($scope.panleJson[6].panels[0].tips,{time: selectedOption.time});
+        _.each($scope.panleJson[6].panels, function(panel, index) {
+          panel.selectedOption = panel.tips[selected];
+        });
+      }
+
+      $timeout(function () {
+        $scope.init();
+      });
     });
   });

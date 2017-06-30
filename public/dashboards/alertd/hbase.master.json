@@ -1,0 +1,76 @@
+{
+  "alertd": [
+    {
+      "id": "2.1.03182259-ca6d-43d7-8e19-4b28563afe68",
+      "org": "2",
+      "service": "1",
+      "name": "Hbase Regions transition的时间太长",
+      "description": "有些regions transition的时间超过threshold（60秒default）。",
+      "hash": 2137001943,
+      "creationTime": 1483665215510,
+      "modificationTime": 1483665215510,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "hbase.master.assignmentmanger.ritCountOverThreshold",
+              "aggregator": null,
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 1,
+          "durarionMinutes": 20
+        },
+        "warn": {
+          "threshold": 1,
+          "durarionMinutes": 10
+        }
+      }
+    },
+    {
+      "id": "2.1.3c948bf9-a9e6-426b-a6a4-3488d5eec1e2",
+      "org": "2",
+      "service": "1",
+      "name": "Hbase不服务的Regionserver数量过高",
+      "description": "Hbase不服务的Regionserver数量过高",
+      "hash": -2133710982,
+      "creationTime": 1483663830156,
+      "modificationTime": 1483663830156,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "hbase.master.server.numDeadRegionServers",
+              "aggregator": "SUM",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 5,
+          "durarionMinutes": 5
+        },
+        "warn": {
+          "threshold": 2,
+          "durarionMinutes": 5
+        }
+      }
+    }
+  ]
+}

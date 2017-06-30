@@ -55,7 +55,12 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 		if sameTitleExists {
 			// another dashboard with same name
 			if dash.Id != sameTitle.Id {
-				if dash.Data["system"] == sameTitle.Data["system"] {
+				dashSysId, err1 :=typeSwitch(dash.Data)
+				sameSysId, err :=typeSwitch(sameTitle.Data)
+				if err1 !=nil || err !=nil{
+					return err
+				}
+				if dashSysId == sameSysId  {
 					if cmd.Overwrite {
 						dash.Id = sameTitle.Id
 					} else {

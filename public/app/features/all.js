@@ -24,4 +24,5 @@ define([
   './setup/hostagentCtrl',
   './setup/serviceagentCtrl',
   './setup/servicedetailCtrl',
+  './setup/filebeatCtrl',
 ], function () {});

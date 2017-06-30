@@ -24,32 +24,38 @@ function (angular, _, noUiSlider) {
     };
 
     $scope.init = function() {
-      if ($scope.dashboard) {
+      if (_.isUndefined($scope.correlationThreshold))
         return;
-      }
       $scope.manualMetrics = [];
       datasourceSrv.get('opentsdb').then(function (datasource) {
         $scope.datasource = datasource;
       });
       alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
         var correlationOfAlertMap = response.data;
-        for (var host in correlationOfAlertMap) {
-          //TODO only support one host
-          var correlatedMetrics = correlationOfAlertMap[host];
-          $scope.correlatedMetrics = correlatedMetrics;
-        }
-      }).finally(function() {
-        if (!_.isEmpty($scope.correlatedMetrics)) {
+        if (!_.isEmpty(correlationOfAlertMap)) {
           $scope.isAssociation = true;
+          for (var host in correlationOfAlertMap) {
+            //TODO only support one host
+            var correlatedMetrics = correlationOfAlertMap[host];
+            $scope.correlatedMetrics = correlatedMetrics;
+          }
           for (var m in $scope.correlatedMetrics) {
             if(_.isEqual(m, alertMetric)){
               delete $scope.correlatedMetrics[m];
             }
           }
         } else {
-          $scope.isAssociation = false;
+          $scope.removeAllQuery();
         }
-        $scope.createAlertMetricsGraph(_.getMetricName(alertMetric), alertHost);
+      }).finally(function() {
+        if(!$scope.dashboard) {
+          $scope.createAlertMetricsGraph(_.getMetricName(alertMetric), alertHost);
+        } else {
+          var metric = _.getMetricName(alertMetric)
+          $scope.dashboard.rows[0].panels[0].title = metric;
+          $scope.dashboard.rows[0].panels[0].targets[0].metric = metric;
+          $scope.$broadcast('refresh');
+        }
       });
     };
 
@@ -112,19 +118,39 @@ function (angular, _, noUiSlider) {
           id: metrics,
           rows: [$scope.getRowPanelMeta(host, metrics)],
           time: {from: "now-6h", to: "now"},
-          manualAnnotation: alertMgrSrv.annotations
+          manualAnnotation: alertMgrSrv.annotations,
+          annotations: {
+            list: [
+              {
+                datasource: "opentsdb",
+                enable: false,
+                iconColor: "#C0C6BE",
+                iconSize: 13,
+                lineColor: "rgba(88, 110, 195, 0.86)",
+                name: "服务启动时间",
+                query: "*",
+                showLine: true,
+                textField: "123",
+                timeField: ""
+              }
+            ]
+          }
         }
       }, $scope);
     };
 
     $scope.flushResult = function () {
-      alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
-        if (!_.isEmpty(response.data)) {
-          $scope.init();
-        } else {
-          $scope.appEvent('alert-warning', ['抱歉', '运算还在进行']);
-        }
-      });
+      $scope.appEvent('alert-warning', ['请稍后', '关联性分析将于5分钟之后计算完成,先去别处逛逛吧']);
+      $timeout(function() {
+        alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
+          if (!_.isEmpty(response.data)) {
+            $scope.init();
+            $scope.appEvent('alert-success', ['关联性分析计算完成', '请在关联性分析中查看metric:"'+alertMetric+'" host:"'+alertHost+'" 的关联结果']);
+          } else {
+            $scope.appEvent('alert-warning', ['关联性分析暂无计算结果', alertMetric + '暂无相关指标']);
+          }
+        });
+      }, 30000);
     };
 
     $scope.createAssociatedMetricGraphPanel = function(associatedMetrics) {
@@ -226,6 +252,20 @@ function (angular, _, noUiSlider) {
     $scope.isManualMetric = function (metricName) {
       return _.indexOf($scope.manualMetrics, metricName) > -1 ? true : false;
     };
+
+    $scope.removeAllQuery = function() {
+      $scope.isAssociation = false;
+      $scope.correlatedMetrics = {};
+      var metric = _.getMetricName(alertMetric);
+      _.each($scope.dashboard.rows[0].panels[0].targets, function (target) {
+        if(target.metric == metric){
+          target.hide = false;
+        } else {
+          target.hide = true;
+        }
+      });
+    };
+
     $scope.init();
   });
 

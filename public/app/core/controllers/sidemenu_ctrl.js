@@ -119,11 +119,11 @@ function (angular, _, $, coreModule, config) {
         click: $scope.updateSubmenu
       });
 
-      // $scope.mainLinks.push({
-      //   text: "轮值",
-      //   icon: "fa fa-fw fa-calendar",
-      //   href: $scope.getUrl("/oncallerschedule"),
-      // });
+      $scope.mainLinks.push({
+        text: "运维轮班",
+        icon: "fa fa-fw fa-calendar",
+        href: $scope.getUrl("/oncallerschedule"),
+      });
 
       $scope.mainLinks.push({
         text: "安装指南",
@@ -136,6 +136,10 @@ function (angular, _, $, coreModule, config) {
           {
             text: '安装服务',
             href: $scope.getUrl("/setting/service"),
+          },
+          {
+            text: '配置日志服务',
+            href: $scope.getUrl("/setting/filebeat"),
           },
         ],
         click: $scope.updateSubmenu
@@ -303,8 +307,20 @@ function (angular, _, $, coreModule, config) {
       $scope.systemSection = false;
       $scope.mainLinks = [];
       $scope.dashboardTitle = "";
-      if(contextSrv.user.systemId == 0 && contextSrv.user.orgId && contextSrv.isSignedIn) {
+      if(!contextSrv.isSignedIn) {
+        $location.url("/login");
+        return;
+      }
+      if(!contextSrv.systemsMap.length) {
         $location.url("/newcomer");
+        return ;
+      }
+      if(contextSrv.user.systemId == 0 && contextSrv.user.orgId) {
+        $location.url("/newcomer");
+        return ;
+      }
+      if (!isCurrentSystemInSysmtes(contextSrv.user.systemId)) {
+        $location.url("/systems");
         return ;
       }
       var currentPath = $location.path();
@@ -312,10 +328,18 @@ function (angular, _, $, coreModule, config) {
         $scope.setupAdminNav();
       } else if(currentPath.indexOf('/dashboard/db/') == 0){
         contextSrv.dashboardLink = currentPath;
+      } else if(currentPath.indexOf('/login') == 0){
+        return;
       }
       $scope.setupMainNav();
     };
 
+    function isCurrentSystemInSysmtes(currId) {
+      if (backendSrv.getSystemById(currId) == '') {
+        return false;
+      }
+      return true;
+    }
     $scope.updateSubmenu = function(menu) {
       if(menu.submenu){
         $scope.submenu = menu.submenu;
