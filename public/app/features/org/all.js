@@ -2,9 +2,7 @@ define([
   './alertsCtrl',
   './alertEditCtrl',
   './alertStatusCtrl',
-  './alertAssociationCtrl',
-  './oncallersCtrl',
-  './oncallerEditCtrl',
+  './alertAssociationCtrl',,
   './datasourcesCtrl',
   './datasourceEditCtrl',
   './orgUsersCtrl',
@@ -15,6 +13,4 @@ define([
   './alertHistoryCtrl',
   './importAlertsCtrl',
   './snoozeCtrl',
-  './oncallerScheduleCtrl',
-  './newComerCtrl',
 ], function () {});
