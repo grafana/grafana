@@ -31,5 +31,9 @@ function (angular, coreModule) {
           $scope.systems = system;
         });
       };
+
+      $scope.newSystem = function() {
+        $location.url('/org');
+      };
     });
   });

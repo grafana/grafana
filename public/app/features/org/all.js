@@ -16,5 +16,4 @@ define([
   './importAlertsCtrl',
   './snoozeCtrl',
   './oncallerScheduleCtrl',
-  './newComerCtrl',
 ], function () {});

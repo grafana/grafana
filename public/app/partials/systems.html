@@ -1,6 +1,8 @@
 <div ng-include="'app/partials/login_header.html'"></div>
 <div ng-controller="SystemCtrl" ng-init="init_system_choice()" class="system-container">
   <h3>{{contextSrv.user.orgName}}管理员 欢迎您！请选择系统进入>></h3>
+
+    <div class="system-list" ng-if="!systems.length" ng-click="newSystem()"><h4>您尚未拥有系统,请点击这里添加系统</h4></div>
     <system-panel ng-repeat="sys in systems" ng-if="sys.OrgId == contextSrv.user.orgId" sys="{{sys.Id}}" ng-click="enter(sys.Id)">
       <div class="system-list">
         <div ng-if="hostList.length">
