@@ -312,11 +312,11 @@ function (angular, _, $, coreModule, config) {
         return;
       }
       if(!contextSrv.systemsMap.length) {
-        $location.url("/newcomer");
+        $location.url("/systems");
         return ;
       }
       if(contextSrv.user.systemId == 0 && contextSrv.user.orgId) {
-        $location.url("/newcomer");
+        $location.url("/systems");
         return ;
       }
       if (!isCurrentSystemInSysmtes(contextSrv.user.systemId)) {
