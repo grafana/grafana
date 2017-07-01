@@ -20,23 +20,23 @@ define([
           return;
         }
 
-        backendSrv.get('/api/static/template/system').then(function(response) {
-          $scope.dashboard = response;
-          $scope.getServices();
+        backendSrv.get('/api/static/template/system').then(function (response) {
+          $scope._dashboard = response;
+          $scope.getServices().finally(function () {
+            $scope.initDashboard({
+              meta: { canStar: false, canShare: false, canEdit: false, canSave: false },
+              dashboard: $scope._dashboard
+            }, $scope);
+          });
           $scope.getAlertStatus();
           $scope.getHostSummary();
           $scope.getHealth();
           $scope.getPrediction();
-          $scope.initDashboard({
-            meta: { canStar: false, canShare: false, canEdit: false, canSave: false },
-            dashboard: $scope.dashboard
-          }, $scope);
         });
-
       };
 
       $scope.getAlertStatus = function () {
-        var panel = $scope.dashboard.rows[0].panels[0];
+        var panel = $scope._dashboard.rows[0].panels[0];
         panel.href = $scope.getUrl('/alerts/status');
         panel.status = {
           success: ['', ''],
@@ -60,9 +60,10 @@ define([
       };
 
       $scope.getServices = function () {
-        var panel = $scope.dashboard.rows[2].panels[0];
+        var panel = $scope._dashboard.rows[2].panels[0];
         panel.href = $scope.getUrl('/service');
         panel.status = { success: ['正常服务', 0], warn: ['异常服务', 0], danger: ['严重', 0] };
+        var promiseList = [];
         _.each(Object.keys(_.allServies()), function (key) {
           var queries = [{
             "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + key + ".state",
@@ -70,8 +71,8 @@ define([
             "downsample": "10m-sum",
           }];
 
-          datasourceSrv.getServiceStatus(queries, 'now-10m').then(function(response) {
-            if(response.status > 0) {
+          var q = datasourceSrv.getServiceStatus(queries, 'now-10m').then(function (response) {
+            if (response.status > 0) {
               panel.status.warn[1]++;
             } else {
               panel.status.success[1]++;
@@ -89,12 +90,18 @@ define([
               "shouldComputeRate": false,
             };
             panel.targets.push(targets);
+          }).finally(function () {
+            var d = $q.defer();
+            d.resolve();
+            return d.promise;
           });
+          promiseList.push(q);
         });
+        return $q.all(promiseList)
       };
 
       $scope.getHostSummary = function () {
-        var panel = $scope.dashboard.rows[3].panels[0];
+        var panel = $scope._dashboard.rows[3].panels[0];
         panel.href = $scope.getUrl('/summary');
         panel.status = { success: ['正常机器', 0], warn: ['异常机器', 0], danger: ['尚未工作', 0] };
         $scope.summaryList = [];
@@ -129,7 +136,7 @@ define([
       };
 
       $scope.getHealth = function () {
-        var panel = $scope.dashboard.rows[1].panels[0];
+        var panel = $scope._dashboard.rows[1].panels[0];
         panel.href = $scope.getUrl('/anomaly');
         panel.status = { success: ['指标数量', 0], warn: ['异常指标', 0], danger: ['严重', 0] };
         healthSrv.load().then(function (data) {
@@ -147,7 +154,7 @@ define([
       };
 
       $scope.getPrediction = function () {
-        var panels = $scope.dashboard.rows[6].panels;
+        var panels = $scope._dashboard.rows[6].panels;
         _.each(panels, function (panel, index) {
           var params = {
             metric: contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + panel.targets[0].metric,
@@ -179,12 +186,12 @@ define([
       };
 
       $scope.changePre = function (selectedOption) {
-        var panels = $scope.dashboard.rows[6].panels;
+        var panels = $scope._dashboard.rows[6].panels;
         var selected = _.findIndex(panels[0].tips,{time: selectedOption.time});
         _.each(panels, function(panel, index) {
           panel.selectedOption = panel.tips[selected];
         });
-      }
+      };
 
       $scope.init();
     });
