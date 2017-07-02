@@ -171,13 +171,13 @@ parent = "http_api"
 
 ## Add a new user to the actual organisation
 
-`POST /api/org/users`
+`POST /api/org/invites`
 
 Adds a global user to the actual organisation.
 
 **Example Request**:
 
-    POST /api/org/users HTTP/1.1
+    POST /api/org/invites HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -193,7 +193,7 @@ Adds a global user to the actual organisation.
     HTTP/1.1 200
     Content-Type: application/json
 
-    {"message":"User added to organization"}
+    {"message":"Created invite for user"}
 
 ## Updates the given user
 
@@ -315,11 +315,11 @@ Update Organisation, fields *Adress 1*, *Adress 2*, *City* are not implemented y
 
 ## Add User in Organisation
 
-`POST /api/orgs/:orgId/users`
+`POST /api/orgs/:orgId/invites`
 
 **Example Request**:
 
-    POST /api/orgs/1/users HTTP/1.1
+    POST /api/orgs/1/invites HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -334,7 +334,7 @@ Update Organisation, fields *Adress 1*, *Adress 2*, *City* are not implemented y
     HTTP/1.1 200
     Content-Type: application/json
 
-    {"message":"User added to organization"}
+    {"message":"Created invite for user"}
 
 ## Update Users in Organisation
 
