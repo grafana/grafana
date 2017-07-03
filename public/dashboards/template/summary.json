@@ -491,7 +491,7 @@
               }
             }
           ],
-          "title": "各线程CPU占用情况(百分比)TopN",
+          "title": "各进程CPU占用情况(百分比)TopN",
           "timefrom": "2m",
           "tooltip": {
             "shared": true,
@@ -588,7 +588,7 @@
               }
             }
           ],
-          "title": "各线程内存占用情况(百分比)TopN",
+          "title": "各进程内存占用情况(百分比)TopN",
           "timefrom": "2m",
           "tooltip": {
             "shared": true,
@@ -606,7 +606,7 @@
         }
       ],
       "showTitle": false,
-      "title": "各线程TopN使用情况",
+      "title": "各进程TopN使用情况",
       "fullwidth": true
     },
     {

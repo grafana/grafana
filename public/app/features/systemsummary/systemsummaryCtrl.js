@@ -20,7 +20,7 @@ define([
           return;
         }
 
-        backendSrv.get('/api/static/template/system').then(function (response) {
+        backendSrv.get('/api/static/template/summary').then(function (response) {
           $scope._dashboard = response;
           $scope.getServices().finally(function () {
             $scope.initDashboard({
