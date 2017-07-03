@@ -68,10 +68,10 @@ define([
           var queries = [{
             "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + key + ".state",
             "aggregator": "sum",
-            "downsample": "10m-sum",
+            "downsample": "5m-sum",
           }];
 
-          var q = datasourceSrv.getServiceStatus(queries, 'now-10m').then(function (response) {
+          var q = datasourceSrv.getServiceStatus(queries, 'now-5m').then(function (response) {
             if (response.status > 0) {
               panel.status.warn[1]++;
             } else {
@@ -82,7 +82,7 @@ define([
               "currentTagKey": "",
               "currentTagValue": "",
               "downsampleAggregator": "sum",
-              "downsampleInterval": "10m",
+              "downsampleInterval": "5m",
               "errors": {},
               "hide": false,
               "isCounter": false,

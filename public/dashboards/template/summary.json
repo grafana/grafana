@@ -240,8 +240,10 @@
           "lines": true,
           "linewidth": 2,
           "nullPointMode": "connected",
+          "pageSize": 6,
           "percentage": false,
           "renderer": "flot",
+          "scroll": false,
           "seriesOverrides": [],
           "sort": {
             "col": 1,
@@ -275,8 +277,8 @@
             }
           ],
           "targets": [],
-          "title": "历史服务状态",
-          "timefrom": "5m",
+          "title": "当前服务状态",
+          "timeFrom": "5m",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -290,8 +292,7 @@
             "short"
           ],
           "transparent": true,
-          "legend": false,
-          "hideTimeOverride": true
+          "legend": false
         }
       ],
       "showTitle": false,
@@ -328,8 +329,10 @@
           "lines": true,
           "linewidth": 2,
           "nullPointMode": "connected",
+          "pageSize": 6,
           "percentage": false,
           "renderer": "flot",
+          "scroll": false,
           "seriesOverrides": [],
           "sort": {
             "col": 1,
@@ -382,7 +385,8 @@
               }
             }
           ],
-          "title": "历史机器连接状态",
+          "title": "当前机器连接状态",
+          "timeFrom": "5m",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -396,8 +400,7 @@
             "short"
           ],
           "transparent": true,
-          "legend": false,
-          "hideTimeOverride": true
+          "legend": false
         }
       ],
       "showTitle": false,
@@ -439,8 +442,10 @@
           "lines": false,
           "linewidth": 2,
           "nullPointMode": "connected",
+          "pageSize": 6,
           "percentage": false,
           "renderer": "flot",
+          "scroll": false,
           "seriesOverrides": [],
           "sort": {
             "col": 2,
@@ -492,7 +497,7 @@
             }
           ],
           "title": "各进程CPU占用情况(百分比)TopN",
-          "timefrom": "2m",
+          "timeFrom": "5m",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
@@ -536,8 +541,10 @@
           "lines": false,
           "linewidth": 2,
           "nullPointMode": "connected",
+          "pageSize": 6,          
           "percentage": false,
           "renderer": "flot",
+          "scroll": false,          
           "seriesOverrides": [],
           "sort": {
             "col": 2,
@@ -589,7 +596,7 @@
             }
           ],
           "title": "各进程内存占用情况(百分比)TopN",
-          "timefrom": "2m",
+          "timeFrom": "5m",
           "tooltip": {
             "shared": true,
             "value_type": "cumulative"
