@@ -19,6 +19,7 @@ class PanelMeta {
     this.addMenuItem('放大', 'fa-plus', 'updateColumnSpan(1); dismiss();', 'menuItemShow' , 'Editor');
     this.addMenuItem('缩小', 'fa-minus', 'updateColumnSpan(-1); dismiss();', 'menuItemShow', 'Editor');
     this.addMenuItem('删除', 'fa-trash-o', 'removePanel(panel); dismiss();', 'menuItemShow', 'Editor');
+    this.addMenuItem('分享', 'fa-external-link', 'sharePanel(); dismiss();', 'menuItemShow', 'Editor');    
     this.addMenuItem('信息', 'fa-question-circle', 'isShowInfo($event); dismiss();', 'menuItemShow && helpInfo.info');
     this.addMenuItem('关联性分析', 'fa-line-chart', 'associateLink(); dismiss();', 'associateMenu');
     this.addMenuItem('编辑', 'fa-pencil', 'editPanel(); dismiss();', 'true', 'Editor');
