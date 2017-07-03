@@ -365,6 +365,11 @@ function (angular, _, $, coreModule, config) {
     };
 
     $scope.init = function() {
+      var systemId = parseInt($location.search().systemId);
+      if(systemId && systemId!== contextSrv.user.systemId){
+        backendSrv.updateSystemId(systemId);
+        backendSrv.post("/api/system/pick",{SystemId: systemId})
+      }
       $scope.hideSubmenu();
       $scope.updateMenu();
       $scope.$on('$routeChangeSuccess', $scope.hideSubmenu);
