@@ -10,6 +10,7 @@ define([
     $locationProvider.html5Mode(true);
     $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|data|chrome-extension):/);
     var loadOrgBundle = new BundleLoader.BundleLoader('app/features/org/all');
+    var loadOncallerBundle = new BundleLoader.BundleLoader('app/features/oncaller/all');
 
     $routeProvider
       .when('/', {
@@ -105,28 +106,32 @@ define([
         resolve: loadOrgBundle,
       })
       .when('/oncallerschedule', {
-        templateUrl: 'app/features/org/partials/oncallerSchedule.html',
+        templateUrl: 'app/features/oncaller/partials/oncallerSchedule.html',
         controller : 'OnCallerScheduleCtrl',
-        resolve: loadOrgBundle,
+        resolve: loadOncallerBundle,
       })
       .when('/oncallers', {
-        templateUrl: 'app/features/org/partials/oncallers.html',
+        templateUrl: 'app/features/oncaller/partials/oncallers.html',
         controller : 'OnCallersCtrl',
-        resolve: loadOrgBundle,
+        resolve: loadOncallerBundle,
       })
       .when('/oncallers/edit/:id', {
-        templateUrl: 'app/features/org/partials/oncallerEdit.html',
+        templateUrl: 'app/features/oncaller/partials/oncallerEdit.html',
         controller : 'OnCallerEditCtrl',
-        resolve: loadOrgBundle,
+        resolve: loadOncallerBundle,
       })
       .when('/oncallers/new', {
-        templateUrl: 'app/features/org/partials/oncallerEdit.html',
+        templateUrl: 'app/features/oncaller/partials/oncallerEdit.html',
         controller : 'OnCallerEditCtrl',
-        resolve: loadOrgBundle,
+        resolve: loadOncallerBundle,
       })
       .when('/anomaly', {
         templateUrl: 'app/features/anomaly/partials/anomaly.html',
         controller : 'AnomalyCtrl',
+      })
+      .when('/anomaly/history', {
+        templateUrl: 'app/features/anomaly/partials/anomalyHistory.html',
+        controller : 'AnomalyHistory',
       })
       .when('/anomaly/:clusterId', {
         templateUrl: 'app/features/anomaly/partials/anomalyMetric.html',
@@ -136,11 +141,6 @@ define([
       .when('/decompose', {
         templateUrl: 'app/features/decompose/partials/compose.html',
         controller : 'DecomposeMetricCtrl'
-      })
-      .when('/newcomer', {
-        templateUrl: 'app/features/org/partials/newcomer.html',
-        controller : 'NewComerCtrl',
-        resolve: loadOrgBundle,
       })
       .when('/org', {
         templateUrl: 'app/features/org/partials/orgDetails.html',

@@ -59,7 +59,8 @@ function () {
       "tomcat": "Tomcat",
       "opentsdb": "OpenTSDB",
       "mongo3": "MongoDB 3.x",
-      "nginx": "Nginx"
+      "nginx": "Nginx",
+      "postgresql": "Postgresql"
     };
   };
 

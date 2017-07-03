@@ -1,10 +1,10 @@
 
 @font-face {font-family: "iconfont";
-  src: url('../fonts/iconfont.eot?t=1496309192385'); /* IE9*/
-  src: url('../fonts/iconfont.eot?t=1496309192385#iefix') format('embedded-opentype'), /* IE6-IE8 */
-  url('../fonts/iconfont.woff?t=1496309192385') format('woff'), /* chrome, firefox */
-  url('../fonts/iconfont.ttf?t=1496309192385') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
-  url('../fonts/iconfont.svg?t=1496309192385#iconfont') format('svg'); /* iOS 4.1- */
+  src: url('../fonts/iconfont.eot?t=1498730711554'); /* IE9*/
+  src: url('../fonts/iconfont.eot?t=1498730711554#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url('../fonts/iconfont.woff?t=1498730711554') format('woff'), /* chrome, firefox */
+  url('../fonts/iconfont.ttf?t=1498730711554') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+  url('../fonts/iconfont.svg?t=1498730711554#iconfont') format('svg'); /* iOS 4.1- */
 }
 
 .iconfont {
@@ -18,6 +18,8 @@
 .fa-macos:before { content: "\e600"; }
 
 .fa-linux:before { content: "\e726"; }
+
+.fa-postgresql:before { content: "\e64c"; }
 
 .fa-clound:before { content: "\e60a"; }
 
@@ -56,6 +58,8 @@
 .fa-Fedora:before { content: "\e655"; }
 
 .fa-docker:before { content: "\e71e"; }
+
+.fa-redis:before { content: "\e629"; }
 
 .fa-tomcat:before { content: "\e62b"; }
 

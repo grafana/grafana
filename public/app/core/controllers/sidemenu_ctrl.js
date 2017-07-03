@@ -120,7 +120,7 @@ function (angular, _, $, coreModule, config) {
       });
 
       $scope.mainLinks.push({
-        text: "轮值",
+        text: "运维轮班",
         icon: "fa fa-fw fa-calendar",
         href: $scope.getUrl("/oncallerschedule"),
       });
@@ -312,11 +312,11 @@ function (angular, _, $, coreModule, config) {
         return;
       }
       if(!contextSrv.systemsMap.length) {
-        $location.url("/newcomer");
+        $location.url("/systems");
         return ;
       }
       if(contextSrv.user.systemId == 0 && contextSrv.user.orgId) {
-        $location.url("/newcomer");
+        $location.url("/systems");
         return ;
       }
       if (!isCurrentSystemInSysmtes(contextSrv.user.systemId)) {
