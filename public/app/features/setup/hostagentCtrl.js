@@ -37,7 +37,7 @@ function (angular, _) {
           contextSrv.sidemenu = false;
         }
       });
-      $scope.inter = $interval($scope.getHosts,5000,120);
+      $scope.inter = $interval($scope.getHosts,5000);
 
       $controller('ImportAlertsCtrl',{$scope: $scope});
     };
