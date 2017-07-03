@@ -1,4 +1,5 @@
 define([
   './anomalyCtrl',
-  './anomalyMetric'
+  './anomalyMetric',
+  './anomalyHistory',
 ], function () {});
