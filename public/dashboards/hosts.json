@@ -523,8 +523,7 @@
         "host = localhost",
         "port = 80",
         "is_enable_https =  #是否启用https",
-        "uri = /nginx_status   #默认是访问http://localhost:80/",
-        "nginx_status如有需要自行修改."
+        "uri = /nginx_status   #默认是访问http://localhost:80/nginx_status 如有需要自行修改."
       ],
       "metrics": [
         {
