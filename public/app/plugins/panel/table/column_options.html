@@ -27,6 +27,7 @@
         <label class="gf-form-label width-13">Column Header</label>
         <input type="text" class="gf-form-input width-13" ng-model="style.alias" ng-change="editor.render()" ng-model-onblur placeholder="Override header label">
       </div>
+      <gf-form-switch class="gf-form" label-class="width-13" label="Link" checked="style.link" change="editor.render()"></gf-form-switch>
     </div>
 
     <div class="section gf-form-group">
@@ -89,6 +90,20 @@
           <a class="pointer" ng-click="editor.invertColorOrder($index)">Invert</a>
         </div>
       </div>
+    </div>
+
+    <div class="section gf-form-group" ng-if="style.link">
+      <h5 class="section-heading">Link</h5>
+      <div class="gf-form">
+        <label class="gf-form-label width-9">Url</label>
+        <input type="text" class="gf-form-input width-20" ng-model="style.linkUrl" bs-tooltip="'Use variable to link to ceil value'" ng-blur="editor.render()" ng-model-onblur data-placement="right">
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-9">Title</label>
+        <input type="text" class="gf-form-input width-20" ng-model="style.linkTitle" bs-tooltip="'Use variable to link to ceil value'" ng-blur="editor.render()" ng-model-onblur data-placement="right">
+      </div>
+      <gf-form-switch class="gf-form" label-class="width-9" label="Open in new tab" checked="style.linkTargetBlank"></gf-form-switch>
+      <gf-form-switch class="gf-form" label-class="width-9" label="Highlight cell" checked="style.linkHighlightCell"></gf-form-switch>
     </div>
 
     <div class="clearfix"></div>

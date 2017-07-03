@@ -8,7 +8,7 @@ export class TableRenderer {
   formatters: any[];
   colorState: any;
 
-  constructor(private panel, private table, private isUtc, private sanitize) {
+  constructor(private panel, private table, private isUtc, private sanitize, private templateSrv) {
     this.initColumns();
   }
 
@@ -130,6 +130,7 @@ export class TableRenderer {
   renderCell(columnIndex, value, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
     var style = '';
+    var cellClasses = [];
     var cellClass = '';
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';
@@ -156,10 +157,40 @@ export class TableRenderer {
 
     var columnStyle = this.table.columns[columnIndex].style;
     if (columnStyle && columnStyle.preserveFormat) {
-      cellClass = ' class="table-panel-cell-pre" ';
+      cellClasses.push("table-panel-cell-pre");
     }
 
-    return '<td' + cellClass + style + '>' + value + widthHack + '</td>';
+    var columnHtml = value + widthHack;
+
+    if (columnStyle && columnStyle.link) {
+      // Render cell as link
+      var scopedVars = {
+        cell_value: {value: value}
+      };
+
+      var cellLink = this.templateSrv.replace(columnStyle.linkUrl, scopedVars);
+      var cellTarget = columnStyle.linkTargetBlank ? '_blank' : '';
+
+      cellClasses.push("table-panel-cell-link");
+      if (columnStyle.linkHighlightCell) {
+        cellClasses.push("cell-highlighted");
+      }
+
+      columnHtml = `
+        <a href="${cellLink}" target="${cellTarget}">
+          <div class="table-panel-cell-link-container">
+          ${columnHtml}
+          </div>
+        </a>
+      `;
+    }
+
+    if (cellClasses.length) {
+      cellClass = ' class="' + cellClasses.join(' ') + '"';
+    }
+
+    columnHtml = '<td' + cellClass + style + '>' + columnHtml + '</td>';
+    return columnHtml;
   }
 
   render(page) {
