@@ -263,10 +263,10 @@ export default class InfluxDatasource {
     var fromIsAbsolute = from[from.length-1] === 'ms';
 
     if (until === 'now()' && !fromIsAbsolute) {
-      return 'time > ' + from;
+      return 'time >= ' + from;
     }
 
-    return 'time > ' + from + ' and time < ' + until;
+    return 'time >= ' + from + ' and time <= ' + until;
   }
 
   getInfluxTime(date, roundUp) {
@@ -287,4 +287,3 @@ export default class InfluxDatasource {
     return date.valueOf() + 'ms';
   }
 }
-
