@@ -82,7 +82,7 @@ define([
               "currentTagKey": "",
               "currentTagValue": "",
               "downsampleAggregator": "sum",
-              "downsampleInterval": "5m",
+              "downsampleInterval": "1m",
               "errors": {},
               "hide": false,
               "isCounter": false,
