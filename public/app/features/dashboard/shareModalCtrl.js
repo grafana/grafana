@@ -9,7 +9,7 @@ function (angular, _, require, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv, linkSrv) {
+  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv, linkSrv, contextSrv) {
 
     $scope.options = { forCurrent: true, includeTemplateVars: true, theme: 'current' };
     $scope.editor = { index: 0 };
@@ -42,6 +42,7 @@ function (angular, _, require, config) {
       }
 
       var params = angular.copy($location.search());
+      params.systemId = contextSrv.user.systemId;
 
       var range = timeSrv.timeRange();
       params.from = range.from.valueOf();
