@@ -29,12 +29,12 @@ Upon clicking the button, you'll be brought to the diff view. By default, you'll
 
 If you want to view the diff of the raw JSON that represents your dashboard, you can do that as well by clicking the "JSON Diff" tab on the left.
 
-If you want to restore to the version you're diffing against, you can do so by clicking the "Restore to version <x>" button in the top right.
+If you want to restore to the version you are diffing against, you can do so by clicking the "Restore to version <x>" button in the top right.
 
-## Restoring to a previouslty saved dashboard version
+## Restoring to a previously saved dashboard version
 
-If you need to restore to a previosuly saved dashboard version, you can do so by either clicking the "Restore" button on the right of a row in the dashboard version list, or by clicking the "Restore to version <x>" button appearing in the diff view. Clicking the button will bring up the following popup prompting you to confirm the restoration.
+If you need to restore to a previously saved dashboard version, you can do so by either clicking the "Restore" button on the right of a row in the dashboard version list, or by clicking the "Restore to version <x>" button appearing in the diff view. Clicking the button will bring up the following popup prompting you to confirm the restoration.
 
 <img class="no-shadow" src="/img/docs/v4/dashboard_versions_restore.png">
 
-After restoring to a previous version, a new version will be created containing the same exact data as the previous version, only with a different version number. This is indicated in the "Notes column" for the row in the new dashboard version. This is done simply to ensure your previous dashboard versions aren't affected by the change.
+After restoring to a previous version, a new version will be created containing the same exact data as the previous version, only with a different version number. This is indicated in the "Notes column" for the row in the new dashboard version. This is done simply to ensure your previous dashboard versions are not affected by the change.
