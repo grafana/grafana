@@ -163,7 +163,7 @@ For example, when the time range is 1 hour and the graph is full screen, then th
 
 In the InfluxDB data source, the legacy variable `$interval` is the same variable. `$__interval` should be used instead.
 
-The InfluxDB and Elasticsearch data sources have `Group by time interval` fields that are used as the minimum limit for the `$__interval` variable.
+The InfluxDB and Elasticsearch data sources have `Group by time interval` fields that are used to hard code the interval or to set the minimum limit for the `$__interval` variable (by using the `>` syntax -> `>10m`).
 
 ### The $__interval_ms Variable
 
