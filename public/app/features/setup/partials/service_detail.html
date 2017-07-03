@@ -18,10 +18,8 @@
   <div class="service-tab service-conf" ng-class="{'active': conf}">
 
     <h3>配置步骤</h3>
+    <p class="code-block" ng-repeat="msg in detail.msg">{{msg}}</p>
     <ul>
-      <!--<li>
-        <p>请确定您的服务开放权限</p>
-      </li>-->
       <li>
         <p>检查安装、配置文件(一般无需修改)</p>
         <div class="tight-form last">

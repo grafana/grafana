@@ -514,10 +514,16 @@
       "icon": "iconfont fa-image-icon_nginx",
       "img": "img/service_nginx.png",
       "info": "Nginx是一款轻量级的Web 服务器/反向代理服务器及电子邮件（IMAP/POP3）代理服务器，并在一个BSD-like 协议下发行。",
+      "msg": [
+        "nginx 探针的实现主要是依赖 nginx_status api 接口, 可以nginx 配置来实现.",
+        "访问 http://localhost:80/nginx_status 即可测试"
+      ],
       "deploy": [
         "路径：/opt/cloudwiz-agent/agent/collectors/conf/nginx.conf",
-        "Host: localhost",
-        "Port: 80"
+        "host = localhost",
+        "port = 80",
+        "is_enable_https =  #是否启用https",
+        "uri = /nginx_status   #默认是访问http://localhost:80/nginx_status 如有需要自行修改."
       ],
       "metrics": [
         {
