@@ -19,7 +19,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   dataRaw: any;
   table: any;
   renderer: any;
-  compile: any;
 
   panelDefaults = {
     targets: [{}],
@@ -51,9 +50,8 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, templateSrv, private annotationsSrv, private $sanitize, $compile) {
+  constructor($scope, $injector, templateSrv, private annotationsSrv, private $sanitize) {
     super($scope, $injector);
-    this.compile = $compile;
     this.pageIndex = 0;
 
     if (this.panel.styles === void 0) {
@@ -233,23 +231,15 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       }
 
       function openDrop() {
-        var offset = attrs.offset || '0 0';
-        var position = attrs.position || 'bottom left';
-        var classes = 'drop-help drop-hide-out-of-bounds drop-wide';
-        var openOn = 'hover';
         var popover = $(elem).attr('link-popover');
         if (popover && isHover && !drop) {
           var content = `<div>${popover}</div>`;
-
           drop = new Drop({
             target: $(elem)[0],
             content: content,
-            position: position,
-            classes: classes,
+            position: 'bottom left',
+            classes: 'drop-help drop-hide-out-of-bounds drop-wide',
             tetherOptions: {
-              offset: offset,
-              attachment: 'top left',
-              targetAttachment: 'bottom left',
               constraints: [
                 {
                   to: 'window',
