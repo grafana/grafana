@@ -26,7 +26,7 @@ export function getSeriesValues(data: any): number[] {
  * @param values
  * @param bucketSize
  */
-export function convertValuesToHistogram(values: number[], bucketSize: number, normalize = false): any[] {
+export function convertValuesToHistogram(values: number[], bucketSize: number): any[] {
   let histogram = {};
 
   for (let i = 0; i < values.length; i++) {
@@ -38,16 +38,9 @@ export function convertValuesToHistogram(values: number[], bucketSize: number, n
     }
   }
 
-  let histogam_series = _.map(histogram, (count, bound) => {
-    if (normalize && values.length) {
-      return [Number(bound), count / values.length];
-    }
-
+  return _.map(histogram, (count, bound) => {
     return [Number(bound), count];
   });
-
-  // Sort by Y axis values
-  return _.sortBy(histogam_series, point => point[0]);
 }
 
 function getBucketBound(value: number, bucketSize: number): number {
