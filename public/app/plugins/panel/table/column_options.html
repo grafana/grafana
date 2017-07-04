@@ -96,11 +96,27 @@
       <h5 class="section-heading">Link</h5>
       <div class="gf-form">
         <label class="gf-form-label width-9">Url</label>
-        <input type="text" class="gf-form-input width-20" ng-model="style.linkUrl" bs-tooltip="'Use variable to link to ceil value'" ng-blur="editor.render()" ng-model-onblur data-placement="right">
+        <input type="text" class="gf-form-input width-29" ng-model="style.linkUrl" ng-blur="editor.render()" ng-model-onblur data-placement="right">
+        <info-popover mode="right-absolute">
+          <p>Specify an URL (relative or absolute)</p>
+          <span>
+            Use special variables to specify cell values: <br>
+            <em>$__cell</em> refers to current cell value <br>
+            <em>$__cell_n</em> refers to Nth column value in current row. Column indexes are started from 0. For instance,
+              <em>$__cell_1</em> refers to second column's value.
+          </span>
+        </info-popover>
       </div>
       <div class="gf-form">
         <label class="gf-form-label width-9">Title</label>
-        <input type="text" class="gf-form-input width-20" ng-model="style.linkTitle" bs-tooltip="'Use variable to link to ceil value'" ng-blur="editor.render()" ng-model-onblur data-placement="right">
+        <input type="text" class="gf-form-input width-29" ng-model="style.linkTitle" ng-blur="editor.render()" ng-model-onblur data-placement="right">
+        <info-popover mode="right-absolute">
+          <p>Specify text for link popover.</p>
+          <span>
+            This title appears when user hovers pointer over the cell with link.
+            Use the same variables as for URL.
+          </span>
+        </info-popover>
       </div>
       <gf-form-switch class="gf-form" label-class="width-9" label="Open in new tab" checked="style.linkTargetBlank"></gf-form-switch>
     </div>
