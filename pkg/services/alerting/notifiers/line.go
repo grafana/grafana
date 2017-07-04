@@ -75,12 +75,17 @@ func (this *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 	body := fmt.Sprintf("%s - %s\n%s", evalContext.Rule.Name, ruleUrl, evalContext.Rule.Message)
 	form.Add("message", body)
 
+	if evalContext.ImagePublicUrl != "" {
+		form.Add("imageThumbnail", evalContext.ImagePublicUrl)
+		form.Add("imageFullsize", evalContext.ImagePublicUrl)
+	}
+
 	cmd := &m.SendWebhookSync{
 		Url:        lineNotifyUrl,
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
 			"Authorization": fmt.Sprintf("Bearer %s", this.Token),
-			"Content-Type":  "application/x-www-form-urlencoded",
+			"Content-Type":  "application/x-www-form-urlencoded;charset=UTF-8",
 		},
 		Body: form.Encode(),
 	}
