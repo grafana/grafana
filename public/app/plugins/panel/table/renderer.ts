@@ -182,10 +182,6 @@ export class TableRenderer {
       var cellTarget = columnStyle.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push("table-panel-cell-link");
-      if (columnStyle.linkHighlightCell) {
-        cellClasses.push("cell-highlighted");
-      }
-
       columnHtml = `
         <a href="${cellLink}" target="${cellTarget}">
           <div class="table-panel-cell-link-container">
