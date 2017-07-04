@@ -179,12 +179,13 @@ export class TableRenderer {
       scopedVars['__cell'] = { value: value };
 
       var cellLink = this.templateSrv.replace(columnStyle.linkUrl, scopedVars);
+      var cellLinkTitle = this.templateSrv.replace(columnStyle.linkTitle, scopedVars);
       var cellTarget = columnStyle.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push("table-panel-cell-link");
       columnHtml = `
         <a href="${cellLink}" target="${cellTarget}">
-          <div class="table-panel-cell-link-container">
+          <div class="table-panel-cell-link-container" link-popover="${cellLinkTitle}">
           ${columnHtml}
           </div>
         </a>

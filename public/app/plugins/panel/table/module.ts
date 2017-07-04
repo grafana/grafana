@@ -18,6 +18,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   dataRaw: any;
   table: any;
   renderer: any;
+  compile: any;
 
   panelDefaults = {
     targets: [{}],
@@ -49,8 +50,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, templateSrv, private annotationsSrv, private $sanitize) {
+  constructor($scope, $injector, templateSrv, private annotationsSrv, private $sanitize, $compile) {
     super($scope, $injector);
+    this.compile = $compile;
     this.pageIndex = 0;
 
     if (this.panel.styles === void 0) {
@@ -215,6 +217,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       appendPaginationControls(footerElem);
 
       rootElem.css({'max-height': panel.scroll ? getTableHeight() : '' });
+
+      // Compile table elem in order to make internal directives working
+      ctrl.compile(tbodyElem)(ctrl.$scope);
     }
 
     elem.on('click', '.table-panel-page-link', switchPage);
