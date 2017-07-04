@@ -17,6 +17,10 @@ Pull Request: [#8472](https://github.com/grafana/grafana/pull/8472)
 
 * **Elasticsearch**: Add option for result set size in raw_document [#3426](https://github.com/grafana/grafana/issues/3426) [#8527](https://github.com/grafana/grafana/pull/8527), thx [@mk-dhia](github.com/mk-dhia)
 
+## Bug Fixes
+
+* **Graph**: Bug fix for negative values in histogram mode [#8628](https://github.com/grafana/grafana/issues/8628)
+
 # 4.3.2 (2017-05-31)
 
 ## Bug fixes
