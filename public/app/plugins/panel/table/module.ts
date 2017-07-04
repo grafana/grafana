@@ -237,6 +237,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
           drop = new Drop({
             target: $(elem)[0],
             content: content,
+            openOn: null,
             position: 'bottom left',
             classes: 'drop-help drop-hide-out-of-bounds drop-wide',
             tetherOptions: {
