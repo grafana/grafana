@@ -1,4 +1,10 @@
-# 4.4.0 (unreleased)
+# 4.4.1 (2017-07-05)
+
+## Bug Fixes
+
+* **Migrations**: migration fails where dashboard.created_by is null [#8783](https://github.com/grafana/grafana/issues/8783)
+
+# 4.4.0 (2017-07-04)
 
 ## New Features
 **Dashboard History**: View dashboard version history, compare any two versions (summary & json diffs), restore to old version. This big feature
