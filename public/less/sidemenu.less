@@ -217,3 +217,34 @@
   font-size: 20px;
 }
 
+@media (max-height: 800px) {
+  @sidemenu-width: 50px;
+
+  .sidemenu-wrapper{
+    width: @sidemenu-width;
+    .icon-circle i{
+      left: 0px;
+    }
+  }
+
+  .sidemenu-main, .sidemenu-small{
+    & > li > .sidemenu-item{
+      text-align: center!important;
+      & > .sidemenu-item-text{
+        display: none;
+      }
+    }
+  }
+
+  .sidemenu-open .main-view{
+    padding-left: @sidemenu-width;
+  }
+
+  .submenu{
+    left: @sidemenu-width;
+  }
+
+  .tab-container.active{
+    margin-left: 250px!important;
+  }
+}
