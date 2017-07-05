@@ -123,11 +123,22 @@ export class TableRenderer {
     };
   }
 
+  renderRowVariables(rowIndex) {
+    let scopedVars = {};
+    let cell_variable;
+    let row = this.table.rows[rowIndex];
+    for (let i = 0; i < row.length; i++) {
+      cell_variable = `__cell_${i}`;
+      scopedVars[cell_variable] = { value: row[i] };
+    }
+    return scopedVars;
+  }
+
   formatColumnValue(colIndex, value) {
     return this.formatters[colIndex] ? this.formatters[colIndex](value) : value;
   }
 
-  renderCell(columnIndex, value, addWidthHack = false) {
+  renderCell(columnIndex, rowIndex, value, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
     var style = '';
     var cellClasses = [];
@@ -164,21 +175,17 @@ export class TableRenderer {
 
     if (columnStyle && columnStyle.link) {
       // Render cell as link
-      var scopedVars = {
-        cell_value: {value: value}
-      };
+      var scopedVars = this.renderRowVariables(rowIndex);
+      scopedVars['__cell'] = { value: value };
 
       var cellLink = this.templateSrv.replace(columnStyle.linkUrl, scopedVars);
+      var cellLinkTitle = this.templateSrv.replace(columnStyle.linkTitle, scopedVars);
       var cellTarget = columnStyle.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push("table-panel-cell-link");
-      if (columnStyle.linkHighlightCell) {
-        cellClasses.push("cell-highlighted");
-      }
-
       columnHtml = `
         <a href="${cellLink}" target="${cellTarget}">
-          <div class="table-panel-cell-link-container">
+          <div class="table-panel-cell-link-container" link-popover="${cellLinkTitle}">
           ${columnHtml}
           </div>
         </a>
@@ -204,7 +211,7 @@ export class TableRenderer {
       let cellHtml = '';
       let rowStyle = '';
       for (var i = 0; i < this.table.columns.length; i++) {
-        cellHtml += this.renderCell(i, row[i], y === startPos);
+        cellHtml += this.renderCell(i, y, row[i], y === startPos);
       }
 
       if (this.colorState.row) {

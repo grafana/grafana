@@ -10,6 +10,7 @@ import {transformDataToTable} from './transformers';
 import {tablePanelEditor} from './editor';
 import {columnOptionsTab} from './column_options';
 import {TableRenderer} from './renderer';
+import Drop from 'tether-drop';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -215,6 +216,51 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       appendPaginationControls(footerElem);
 
       rootElem.css({'max-height': panel.scroll ? getTableHeight() : '' });
+
+      // Add link info popover to cells with links
+      _.each(tbodyElem.find('.table-panel-cell-link-container'), addLinkInfoDrop);
+    }
+
+    function addLinkInfoDrop(elem) {
+      var drop, isHover;
+      $(elem).hover(onMouseenter, onMouseleave);
+
+      function onMouseenter() {
+        isHover = true;
+        setTimeout(openDrop, 400);
+      }
+
+      function openDrop() {
+        var popover = $(elem).attr('link-popover');
+        if (popover && isHover && !drop) {
+          var content = `<div>${popover}</div>`;
+          drop = new Drop({
+            target: $(elem)[0],
+            content: content,
+            openOn: null,
+            position: 'bottom left',
+            classes: 'drop-help drop-hide-out-of-bounds drop-wide',
+            tetherOptions: {
+              constraints: [
+                {
+                  to: 'window',
+                  attachment: 'together',
+                  pin: true
+                }
+              ],
+            }
+          });
+          drop.open();
+        }
+      }
+
+      function onMouseleave() {
+        isHover = false;
+        if (drop) {
+          drop.destroy();
+          drop = null;
+        }
+      }
     }
 
     elem.on('click', '.table-panel-page-link', switchPage);
