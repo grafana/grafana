@@ -27,7 +27,7 @@
         <label class="gf-form-label width-13">Column Header</label>
         <input type="text" class="gf-form-input width-13" ng-model="style.alias" ng-change="editor.render()" ng-model-onblur placeholder="Override header label">
       </div>
-      <gf-form-switch class="gf-form" label-class="width-13" label="Link" checked="style.link" change="editor.render()"></gf-form-switch>
+      <gf-form-switch class="gf-form" label-class="width-13" label="Render value as link" checked="style.link" change="editor.render()"></gf-form-switch>
     </div>
 
     <div class="section gf-form-group">
@@ -108,10 +108,10 @@
         </info-popover>
       </div>
       <div class="gf-form">
-        <label class="gf-form-label width-9">Title</label>
-        <input type="text" class="gf-form-input width-29" ng-model="style.linkTitle" ng-blur="editor.render()" ng-model-onblur data-placement="right">
+        <label class="gf-form-label width-9">Tooltip</label>
+        <input type="text" class="gf-form-input width-29" ng-model="style.linkTooltip" ng-blur="editor.render()" ng-model-onblur data-placement="right">
         <info-popover mode="right-absolute">
-          <p>Specify text for link popover.</p>
+          <p>Specify text for link tooltip.</p>
           <span>
             This title appears when user hovers pointer over the cell with link.
             Use the same variables as for URL.

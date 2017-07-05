@@ -216,52 +216,12 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       appendPaginationControls(footerElem);
 
       rootElem.css({'max-height': panel.scroll ? getTableHeight() : '' });
-
-      // Add link info popover to cells with links
-      _.each(tbodyElem.find('.table-panel-cell-link-container'), addLinkInfoDrop);
     }
 
-    function addLinkInfoDrop(elem) {
-      var drop, isHover;
-      $(elem).hover(onMouseenter, onMouseleave);
-
-      function onMouseenter() {
-        isHover = true;
-        setTimeout(openDrop, 400);
-      }
-
-      function openDrop() {
-        var popover = $(elem).attr('link-popover');
-        if (popover && isHover && !drop) {
-          var content = `<div>${popover}</div>`;
-          drop = new Drop({
-            target: $(elem)[0],
-            content: content,
-            openOn: null,
-            position: 'bottom left',
-            classes: 'drop-help drop-hide-out-of-bounds drop-wide',
-            tetherOptions: {
-              constraints: [
-                {
-                  to: 'window',
-                  attachment: 'together',
-                  pin: true
-                }
-              ],
-            }
-          });
-          drop.open();
-        }
-      }
-
-      function onMouseleave() {
-        isHover = false;
-        if (drop) {
-          drop.destroy();
-          drop = null;
-        }
-      }
-    }
+    // hook up link tooltips
+    elem.tooltip({
+      selector: '[data-link-tooltip]'
+    });
 
     elem.on('click', '.table-panel-page-link', switchPage);
 
