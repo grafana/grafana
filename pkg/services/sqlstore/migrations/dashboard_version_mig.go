@@ -50,7 +50,7 @@ SELECT
 	dashboard.version,
 	dashboard.version,
 	dashboard.updated,
-	dashboard.updated_by,
+	COALESCE(dashboard.updated_by, -1),
 	'',
 	dashboard.data
 FROM dashboard;`
