@@ -53,11 +53,11 @@ define([
           var queries = [{
             "metric": contextSrv.user.orgId + "." + $scope.summarySelect.system + "." + key + ".state",
             "aggregator": "sum",
-            "downsample": "1h-sum",
+            "downsample": "1s-sum",
             "tags": {"host": $scope.summarySelect.currentTagValue}
           }];
 
-          datasourceSrv.getServiceStatus(queries, 'now-1h').then(function(response) {
+          datasourceSrv.getServiceStatus(queries, 'now-5m').then(function(response) {
             var metric = {};
             metric.host = response.host;
             metric.alias = alias[key];
