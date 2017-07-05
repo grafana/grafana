@@ -59,7 +59,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       name: null,
       values: [],
       buckets: null,
-      histogramValue: 'percent'
+      histogramValue: 'count'
     },
     // show/hide lines
     lines         : true,
