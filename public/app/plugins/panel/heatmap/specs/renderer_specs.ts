@@ -153,11 +153,11 @@ describe('grafanaHeatmap', function () {
     it('should draw correct X axis', function () {
       var xTicks = getTicks(ctx.element, ".axis-x");
       let expectedTicks = [
-        formatLocalTime("01 Mar 2017 10:00:00"),
-        formatLocalTime("01 Mar 2017 10:15:00"),
-        formatLocalTime("01 Mar 2017 10:30:00"),
-        formatLocalTime("01 Mar 2017 10:45:00"),
-        formatLocalTime("01 Mar 2017 11:00:00")
+        formatTime("01 Mar 2017 10:00:00"),
+        formatTime("01 Mar 2017 10:15:00"),
+        formatTime("01 Mar 2017 10:30:00"),
+        formatTime("01 Mar 2017 10:45:00"),
+        formatTime("01 Mar 2017 11:00:00")
       ];
       expect(xTicks).to.eql(expectedTicks);
     });
@@ -261,7 +261,7 @@ function getTicks(element, axisSelector) {
     }).get();
 }
 
-function formatLocalTime(timeStr) {
+function formatTime(timeStr) {
   let format = "HH:mm";
-  return moment.utc(timeStr, 'DD MMM YYYY HH:mm:ss').local().format(format);
+  return moment.utc(timeStr, 'DD MMM YYYY HH:mm:ss').format(format);
 }

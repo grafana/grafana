@@ -12,6 +12,7 @@ func init() {
 	bus.AddHandler("sql", GetTempUsersQuery)
 	bus.AddHandler("sql", UpdateTempUserStatus)
 	bus.AddHandler("sql", GetTempUserByCode)
+	bus.AddHandler("sql", UpdateTempUserWithEmailSent)
 }
 
 func UpdateTempUserStatus(cmd *m.UpdateTempUserStatusCommand) error {
@@ -35,6 +36,7 @@ func CreateTempUser(cmd *m.CreateTempUserCommand) error {
 			Status:          cmd.Status,
 			RemoteAddr:      cmd.RemoteAddr,
 			InvitedByUserId: cmd.InvitedByUserId,
+			EmailSentOn:     time.Now(),
 			Created:         time.Now(),
 			Updated:         time.Now(),
 		}
@@ -45,6 +47,19 @@ func CreateTempUser(cmd *m.CreateTempUserCommand) error {
 
 		cmd.Result = user
 		return nil
+	})
+}
+
+func UpdateTempUserWithEmailSent(cmd *m.UpdateTempUserWithEmailSentCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		user := &m.TempUser{
+			EmailSent:   true,
+			EmailSentOn: time.Now(),
+		}
+
+		_, err := sess.Where("code = ?", cmd.Code).Cols("email_sent", "email_sent_on").Update(user)
+
+		return err
 	})
 }
 

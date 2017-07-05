@@ -88,7 +88,7 @@ export class AlertNotificationEditCtrl {
 
     this.backendSrv.post(`/api/alert-notifications/test`, payload)
     .then(res => {
-      appEvents.emit('alert-succes', ['Test notification sent', '']);
+      appEvents.emit('alert-success', ['Test notification sent', '']);
     });
   }
 }

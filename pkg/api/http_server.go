@@ -171,6 +171,8 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 		m.Use(middleware.ValidateHostHeader(setting.Domain))
 	}
 
+	m.Use(middleware.AddDefaultResponseHeaders())
+
 	return m
 }
 
