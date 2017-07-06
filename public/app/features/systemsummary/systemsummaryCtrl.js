@@ -117,7 +117,7 @@ define([
             var queries = [{
               "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + ".collector.state",
               "aggregator": "sum",
-              "downsample": "1m-sum",
+              "downsample": "1s-sum",
               "tags": { "host": metric.tag.host }
             }];
 
