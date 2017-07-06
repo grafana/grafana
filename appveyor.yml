@@ -32,6 +32,7 @@ build_script:
   - grunt release
   - go run build.go sha-dist
   - cp dist/* .
+  - go test -v ./pkg/...
 
 artifacts:
   - path: grafana-*windows-*.*

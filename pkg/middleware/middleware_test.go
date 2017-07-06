@@ -30,6 +30,18 @@ func TestMiddlewareContext(t *testing.T) {
 			So(sc.resp.Code, ShouldEqual, 200)
 		})
 
+		middlewareScenario("middleware should add Cache-Control header for GET requests to API", func(sc *scenarioContext) {
+			sc.fakeReq("GET", "/api/search").exec()
+			So(sc.resp.Header().Get("Cache-Control"), ShouldEqual, "no-cache")
+			So(sc.resp.Header().Get("Pragma"), ShouldEqual, "no-cache")
+			So(sc.resp.Header().Get("Expires"), ShouldEqual, "-1")
+		})
+
+		middlewareScenario("middleware should not add Cache-Control header to for non-API GET requests", func(sc *scenarioContext) {
+			sc.fakeReq("GET", "/").exec()
+			So(sc.resp.Header().Get("Cache-Control"), ShouldBeEmpty)
+		})
+
 		middlewareScenario("Non api request should init session", func(sc *scenarioContext) {
 			sc.fakeReq("GET", "/").exec()
 			So(sc.resp.Header().Get("Set-Cookie"), ShouldContainSubstring, "grafana_sess")
@@ -327,6 +339,7 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 		startSessionGC = func() {}
 		sc.m.Use(Sessioner(&session.Options{}))
 		sc.m.Use(OrgRedirect())
+		sc.m.Use(AddDefaultResponseHeaders())
 
 		sc.defaultHandler = func(c *Context) {
 			sc.context = c

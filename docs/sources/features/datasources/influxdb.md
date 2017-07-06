@@ -88,8 +88,8 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 - $m = replaced with measurement name
 - $measurement = replaced with measurement name
 - $col = replaced with column name
-- $tag_hostname = replaced with the value of the hostname tag
-- You can also use [[tag_hostname]] pattern replacement syntax
+- $tag_exampletag = replaced with the value of the `exampletag` tag. To use your tag as an alias in the ALIAS BY field then the tag must be used to group by in the query.
+- You can also use [[tag_hostname]] pattern replacement syntax. For example, in the ALIAS BY field using this text `Host: [[tag_hostname]]` would substitute in the `hostname` tag value for each legend value and an example legend value would be: `Host: server1`.
 
 ### Table query / raw data
 

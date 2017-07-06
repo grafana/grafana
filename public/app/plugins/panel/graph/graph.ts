@@ -145,14 +145,14 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         }
 
         // add left axis labels
-        if (panel.yaxes[0].label) {
+        if (panel.yaxes[0].label && panel.yaxes[0].show) {
           var yaxisLabel = $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>")
           .text(panel.yaxes[0].label)
           .appendTo(elem);
         }
 
         // add right axis labels
-        if (panel.yaxes[1].label) {
+        if (panel.yaxes[1].label && panel.yaxes[1].show) {
           var rightLabel = $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>")
           .text(panel.yaxes[1].label)
           .appendTo(elem);
@@ -422,21 +422,32 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
 
       function addXHistogramAxis(options, bucketSize) {
         let ticks, min, max;
+        let defaultTicks = panelWidth / 50;
 
         if (data.length && bucketSize) {
           ticks = _.map(data[0].data, point => point[0]);
+          min = _.min(ticks);
+          max = _.max(ticks);
+
+          // Adjust tick step
+          let tickStep = bucketSize;
+          let ticks_num = Math.floor((max - min) / tickStep);
+          while (ticks_num > defaultTicks) {
+            tickStep = tickStep * 2;
+            ticks_num = Math.ceil((max - min) / tickStep);
+          }
 
           // Expand ticks for pretty view
-          min = Math.max(0, _.min(ticks) - bucketSize);
-          max = _.max(ticks) + bucketSize;
+          min = Math.floor(min / tickStep) * tickStep;
+          max = Math.ceil(max / tickStep) * tickStep;
 
           ticks = [];
-          for (let i = min; i <= max; i += bucketSize) {
+          for (let i = min; i <= max; i += tickStep) {
             ticks.push(i);
           }
         } else {
           // Set defaults if no data
-          ticks = panelWidth / 100;
+          ticks = defaultTicks / 2;
           min = 0;
           max = 1;
         }
@@ -450,6 +461,9 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           label: "Histogram",
           ticks: ticks
         };
+
+        // Use 'short' format for histogram values
+        configureAxisMode(options.xaxis, 'short');
       }
 
       function addXTableAxis(options) {

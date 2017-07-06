@@ -1,7 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import _ from 'lodash';
-//import {coreModule} from 'app/core/core';
 import {DashboardModel} from '../dashboard/model';
 
 export class MetricsTabCtrl {
@@ -32,7 +31,6 @@ export class MetricsTabCtrl {
     }
 
     this.addQueryDropdown = {text: 'Add Query', value: null, fake: true};
-
     // update next ref id
     this.panelCtrl.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
   }
@@ -80,4 +78,3 @@ export function metricsTabDirective() {
   };
 }
 
-//coreModule.directive('metricsTab', metricsTabDirective);

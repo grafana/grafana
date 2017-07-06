@@ -33,27 +33,30 @@
       <h5 class="section-heading">Type</h5>
 
       <div class="gf-form">
-        <label class="gf-form-label width-8">Type</label>
+        <label class="gf-form-label width-11">Type</label>
         <div class="gf-form-select-wrapper width-10">
           <select class="gf-form-input" ng-model="style.type" ng-options="c.value as c.text for c in editor.columnTypes" ng-change="editor.render()"></select>
         </div>
       </div>
       <div class="gf-form"  ng-if="style.type === 'date'">
-        <label class="gf-form-label width-8">Date Format</label>
+        <label class="gf-form-label width-11">Date Format</label>
         <metric-segment-model property="style.dateFormat" options="editor.dateFormats" on-change="editor.render()" custom="true"></metric-segment-model>
       </div>
 
       <div ng-if="style.type === 'string'">
-        <gf-form-switch class="gf-form" label-class="width-8" ng-if="style.type === 'string'" label="Sanitize HTML" checked="style.sanitize" change="editor.render()"></gf-form-switch>
+        <gf-form-switch class="gf-form" label-class="width-11" ng-if="style.type === 'string'" label="Sanitize HTML" checked="style.sanitize" change="editor.render()"></gf-form-switch>
+      </div>
+      <div ng-if="style.type === 'string'">
+        <gf-form-switch class="gf-form" label-class="width-11" ng-if="style.type === 'string'" label="Preserve Formatting" checked="style.preserveFormat" change="editor.render()"></gf-form-switch>
       </div>
 
       <div ng-if="style.type === 'number'">
         <div class="gf-form">
-          <label class="gf-form-label width-8">Unit</label>
+          <label class="gf-form-label width-11">Unit</label>
           <div class="gf-form-dropdown-typeahead width-10" ng-model="style.unit" dropdown-typeahead2="editor.unitFormats" dropdown-typeahead-on-select="editor.setUnitFormat(style, $subItem)"></div>
         </div>
         <div class="gf-form">
-          <label class="gf-form-label width-8">Decimals</label>
+          <label class="gf-form-label width-11">Decimals</label>
           <input type="number" class="gf-form-input width-4" data-placement="right" ng-model="style.decimals" ng-change="editor.render()" ng-model-onblur>
         </div>
       </div>

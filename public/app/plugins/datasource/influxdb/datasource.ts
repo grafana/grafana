@@ -211,8 +211,8 @@ export default class InfluxDatasource {
     var params: any = {};
 
     if (this.username) {
-      params.username =  this.username;
-      params.password =  this.password;
+      params.u =  this.username;
+      params.u =  this.password;
     }
 
     if (options && options.database) {

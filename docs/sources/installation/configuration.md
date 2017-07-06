@@ -203,6 +203,12 @@ For MySQL, use either `true`, `false`, or `skip-verify`.
 
 (MySQL only) The common name field of the certificate used by the `mysql` server. Not necessary if `ssl_mode` is set to `skip-verify`.
 
+### max_idle_conn
+The maximum number of connections in the idle connection pool.
+
+### max_open_conn 
+The maximum number of open connections to the database.
+
 <hr />
 
 ## [security]

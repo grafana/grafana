@@ -112,6 +112,8 @@ Grafana also supports the following Notification Channels:
 
 - LINE
 
+- DingDing
+
 # Enable images in notifications {#external-image-store}
 
 Grafana can render the panel associated with the alert rule and include that in the notification. Most Notification Channels require that this image be publicly accessable (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
