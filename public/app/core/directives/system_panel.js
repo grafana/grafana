@@ -41,10 +41,10 @@ define([
               var queries = [{
                 "metric": contextSrv.user.orgId + "." + system + "." + key + ".state",
                 "aggregator": "sum",
-                "downsample": "10m-sum",
+                "downsample": "1s-sum",
               }];
 
-              var time = 'now-10m';
+              var time = 'now-5m';
 
               datasourceSrv.getServiceStatus(queries, time).then(function(response) {
                 if(response.status) {

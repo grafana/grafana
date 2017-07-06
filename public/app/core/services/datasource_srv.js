@@ -100,6 +100,9 @@ function (angular, _, coreModule, config, dateMath) {
             host = metricData.tags.host;
             if (_.isObject(metricData)) {
               status = metricData.dps[Object.keys(metricData.dps)[0]];
+              if(typeof(status) != "number") {
+                throw Error;
+              }
             }
           });
           return {name: service, status: status, host: host};

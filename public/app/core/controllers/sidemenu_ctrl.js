@@ -323,6 +323,10 @@ function (angular, _, $, coreModule, config) {
       $scope.systemSection = false;
       $scope.mainLinks = [];
       $scope.dashboardTitle = "";
+      var currentPath = $location.path();
+      if(currentPath.indexOf('/dashboard/snapshot') == 0) {
+        return;
+      }
       if(!contextSrv.isSignedIn) {
         $location.url("/login");
         return;
@@ -339,7 +343,6 @@ function (angular, _, $, coreModule, config) {
         $location.url("/systems");
         return ;
       }
-      var currentPath = $location.path();
       if (currentPath.indexOf('/admin') === 0) {
         $scope.setupAdminNav();
       } else if(currentPath.indexOf('/dashboard/db/') == 0){

@@ -94,23 +94,27 @@ function (angular, _) {
       var tmp = ["iostat","machine"];
       var promiseArr = [];
       _.each(tmp,function(template, i) {
-        backendSrv.get('/api/static/template/'+template).then(function(result) {
+        var p = backendSrv.get('/api/static/template/'+template).then(function(result) {
           result.system = contextSrv.user.systemId;
           result.id = null;
-          backendSrv.saveDashboard(result, options).then(function(data) {
-            var p = backendSrv.post("/api/dashboards/system", {DashId: data.id.toString(), SystemId: result.system}).then(function() {
-              return i;
-            });
-            promiseArr.push(i);
-            return p;
-          }).catch(function(err) {
-            $scope.appEvent('alert-warning', [template + '已存在']);
+          return backendSrv.saveDashboard(result, options).then(function(data) {
+            backendSrv.post("/api/dashboards/system", {DashId: data.id.toString(), SystemId: result.system});
+            return 1;
+          }, function(err) {
+            $scope.appEvent('alert-warning', ['"'+err.config.data.dashboard.originalTitle + '"已存在']);
+            return -1;
           });
         });
+        promiseArr.push(p);
       });
 
       $q.all(promiseArr).then(function(valuse) {
-        $scope.appEvent('alert-success', ['机器探针部署成功', '共导入' + valuse.length + '个模板']);
+        var success = _.filter(valuse,function(data) {
+          return data > 0;
+        });
+        if(success.length) {
+          $scope.appEvent('alert-success', ['机器探针部署成功', '共导入' + success.length + '个模板']);
+        }
       });
     };
 
