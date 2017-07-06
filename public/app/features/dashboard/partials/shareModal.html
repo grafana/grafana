@@ -114,20 +114,19 @@
 
 		<div class="share-snapshot-header" ng-if="step === 1">
 			<p class="share-snapshot-info-text">
-				A snapshot is an instant way to share an interactive dashboard publicly.
-				When created, we <strong>strip sensitive data</strong> like queries (metric, template and annotation) and panel links,
-				leaving only the visible metric data and series names embedded into your dashboard.
+				快照是一种分享仪表盘的有效方式.
+				当快照被创建时, 我们会 <strong>去除敏感数据</strong>,比如说像指标、模板、注释以及面板链接,
+				仅剩下嵌入到您的仪表盘中可见的指标和一系列名称。
 			</p>
 			<p class="share-snapshot-info-text">
-				Keep in mind, your <strong>snapshot can be viewed by anyone</strong> that has the link and can reach the URL.
-				Share wisely.
+				请注意, 您的快照可以被所有 <strong>获取到链接</strong>的人查看.
+				请谨慎分享.
 			</p>
 		</div>
 
 		<div class="share-snapshot-header" ng-if="step === 3">
 			<p class="share-snapshot-info-text">
-				The snapshot has now been deleted. If it you have already accessed it once, It might take up to an hour before it is removed from
-				browser caches or CDN caches.
+				快照已经被删除. 如果您已经将其生成并分享,它将在一个小时后从浏览器或CDN缓存中被移除。
 			</p>
 		</div>
 
@@ -172,13 +171,9 @@
 		<div ng-if="step === 1">
 			<button class="btn btn-success btn-large" ng-click="createSnapshot()" ng-disabled="loading">
 				<i class="fa fa-save"></i>
-				本地快照
+				生成快照
 			</button>
 
-			<button class="btn btn-primary btn-large" ng-click="createSnapshot(true)" ng-disabled="loading">
-				<i class="fa fa-cloud-upload"></i>
-				发布到 snapshot.raintank.io
-			</button>
 		</div>
 
 		<div class="pull-right" ng-if="step === 2" style="padding: 5px">
