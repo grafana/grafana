@@ -33,6 +33,8 @@ func TestMiddlewareContext(t *testing.T) {
 		middlewareScenario("middleware should add Cache-Control header for GET requests to API", func(sc *scenarioContext) {
 			sc.fakeReq("GET", "/api/search").exec()
 			So(sc.resp.Header().Get("Cache-Control"), ShouldEqual, "no-cache")
+			So(sc.resp.Header().Get("Pragma"), ShouldEqual, "no-cache")
+			So(sc.resp.Header().Get("Expires"), ShouldEqual, "-1")
 		})
 
 		middlewareScenario("middleware should not add Cache-Control header to for non-API GET requests", func(sc *scenarioContext) {
