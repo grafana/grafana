@@ -145,6 +145,22 @@ function (angular, _, $, coreModule, config) {
         click: $scope.updateSubmenu
       });
 
+      $scope.mainLinks.push({
+        text: "配置管理",
+        icon: "fa fa-fw fa-cubes",
+        submenu: [
+          {
+            text: '设备列表',
+            href: $scope.getUrl("/cmdb/hostlist")
+          },
+          {
+            text: '设置',
+            href: $scope.getUrl("/cmdb/setup")
+          }
+        ],
+        click: $scope.updateSubmenu
+      });
+
       $scope.setupSettingMenu();
     };
 

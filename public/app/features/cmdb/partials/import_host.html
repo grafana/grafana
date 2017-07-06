@@ -1,0 +1,16 @@
+<form class="scheduleForm cmdb-form">
+  <div class="item">
+    <h4 class="center">导入设备列表</h4>
+  </div>
+  <div class="item">
+    <label for="hostupload" class="label cmdb-label">请上传列表</label>
+    <input type="file" id="hostupload" class="input-large" host-upload/><br>
+  </div>
+  <div class="item">
+    <p>不知道文件格式?<a href="" style="color: blue;">请下载模板</a>。</p>
+  </div>
+  <div class="item center" style="border-top: 2px solid #eee;">
+    <button ng-click="dismiss();" class="btn">取消</button>
+    <button ng-click="importHosts();dismiss();" class="btn btn-primary">添加</button>
+  </div>
+</form>

@@ -1,0 +1,34 @@
+<topnav section="配置管理库" icon="fa fa-fw fa-cubes">
+    <ul class="nav">
+        <li class="active" ><a href="/cmdb/hostlist">设备列表</a></li>
+    </ul>
+</topnav>
+<div class="page-container">
+    <h2>设备列表<i class="fa fa-plus-square-o icon-schedule" ng-click="importList()"></i></h2>
+    <form class="form-search cmdb-search">
+        <i class="fa fa-search"></i>
+        <input type="text" class="input-medium search-query" placeholder="搜索设备列表" ng-model="searchHost">
+    </form>
+    <table class="table table-hover cmdb-table">
+        <tr>
+            <th>序号</th>
+            <th>ID</th>
+            <th>名称</th>
+            <th>IP</th>
+            <th>创建时间</th>
+            <th>最近通信</th>
+        </tr>
+    </table>
+    <div class="cmdb-container">
+        <table class="table table-hover table-striped cmdb-table">
+            <tr ng-repeat="host in hosts| filter: searchHost" ng-click="getDetail(host)">
+                <td class="main-color">{{$index+1}}</td>
+                <td class="main-color">{{host.id}}</td>
+                <td class="main-color">{{host.name}}</td>
+                <td>{{host.ip}}</td>
+                <td>{{host.createTime}}</td>
+                <td>{{host.chatTime}}</td>
+            </tr>
+        </table>
+    </div>
+</div>

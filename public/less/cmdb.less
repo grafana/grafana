@@ -1,0 +1,53 @@
+@tableBackgroundAccent: rgb(244,246,249);
+@tableBackgroundHover: rgba(21,137,238,0.2)!important;
+
+.cmdb-container{
+  height: 75vh;
+  overflow: scroll;
+}
+
+.cmdb-table{
+  margin-bottom: 0px;
+  border-bottom: 1px solid #ccc;
+  tbody {
+    tr > th {
+      color: rgb(84,105,141);
+    }
+    tr > td {
+      cursor: pointer;
+      &.main-color{
+        color: rgb(0,112,210);
+      }
+    }
+  }
+}
+
+.cmdb-search{
+  i{
+    color: rgb(25,165,228);
+    position: absolute;
+    left: 10px;
+    top: 8px;
+  }
+  input{
+    padding-left: 30px;
+  }
+  position: absolute;
+  right: 20px;
+  top: 30px;
+}
+
+.modal.cmdb-import-host{
+  height: 0;
+  top: 10%;
+}
+
+.cmdb-form{
+  width: 500px;
+  & > .item {
+    text-align: center;
+    & > label {
+      margin: -6px 30px 0px;
+    }
+  }
+}

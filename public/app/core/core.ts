@@ -22,6 +22,8 @@
 ///<amd-dependency path="./jquery_extended" />
 ///<amd-dependency path="./partials" />
 
+///<amd-dependency path="./directives/host_upload" />
+
 export * from './directives/array_join'
 export * from './directives/give_focus'
 export * from './filters/filters'

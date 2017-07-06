@@ -1,0 +1,31 @@
+<topnav section="配置管理库" icon="fa fa-fw fa-cubes">
+    <ul class="nav">
+        <li class="active"><a href="/cmdb/setup">设置</a></li>
+    </ul>
+</topnav>
+
+<div class="page-container">
+  <h2>设置</h2>
+  <ul>
+    <li>
+      <h4>下载Cloudwiz公钥,并将其加入到所有待管理的主机上</h4>
+      <p>id_rsa.pub <a href="">下载</a></p>
+      <div class="tight-form last">
+        <p style="word-break: break-all">scp id_rsa.pub <用户名>@<主机地址>:~/</p>
+      </div>
+      <p>在待管理主机上运行</p>
+      <div class="tight-form last">
+        <p style="word-break: break-all">cat id_rsa.pub >> .ssh/authorized_keys</p>
+      </div>
+    </li>
+    <li>
+      <h4>上传待管理主机列表</h4>
+      <p><a href="">host.txt 模板下载</a></p>
+      <p><input type="file" id="hostupload" host-upload/> <button>上传</button></p>
+    </li>
+    <li>
+      <h4>设置完成,Cloudwiz将自动开始扫描主机</h4>
+      <p>您可以在"设备列表"中查看结果,<a href="/cmdb/hostlist">点此前往</a></p>
+    </li>
+  </ul>
+</div>

@@ -11,6 +11,7 @@ define([
     $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|data|chrome-extension):/);
     var loadOrgBundle = new BundleLoader.BundleLoader('app/features/org/all');
     var loadOncallerBundle = new BundleLoader.BundleLoader('app/features/oncaller/all');
+    var loadCMDBBundle = new BundleLoader.BundleLoader('app/features/cmdb/all');
 
     $routeProvider
       .when('/', {
@@ -277,6 +278,21 @@ define([
       .when('/setting/filebeat', {
         templateUrl: 'app/features/setup/partials/filebeat.html',
         controller : 'FilebeatCtrl',
+      })
+      .when('/cmdb/hostlist', {
+        templateUrl: 'app/features/cmdb/partials/host_list.html',
+        controller : 'HostListCtrl',
+        resolve: loadCMDBBundle
+      })
+      .when('/cmdb/hostlist/hostdetail', {
+        templateUrl: 'app/features/cmdb/partials/host_detail.html',
+        controller : 'HostDetailCtrl',
+        resolve: loadCMDBBundle
+      })
+      .when('/cmdb/setup', {
+        templateUrl: 'app/features/cmdb/partials/cmdb_setup.html',
+        controller : 'CMDBSetupCtrl',
+        resolve: loadCMDBBundle
       })
       .otherwise({
         templateUrl: 'app/partials/error.html',

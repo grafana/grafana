@@ -1,0 +1,90 @@
+<topnav section="配置管理库" icon="fa fa-fw fa-cubes">
+    <ul class="nav">
+        <li><a href="/cmdb/hostlist">设备列表</a></li>
+        <li class="active" ><a href="/cmdb/hostlist/{{hostId}}">设备详情</a></li>
+    </ul>
+</topnav>
+<div class="page-container">
+    <h2>{{detail.baseMsg.name}}</h2>
+    <ul>
+        <li>
+            <ul>
+                <li><span>ID</span><span>{{detail.baseMsg.id}}</span></li>
+                <li><span>名称</span><span>{{detail.baseMsg.name}}</span></li>
+                <li><span>类型</span><span>{{detail.baseMsg.type}}</span></li>
+                <li><span>状态</span><span>{{detail.baseMsg.status}}</span></li>
+                <li><span>加入时间</span><span>{{detail.baseMsg.createTime}}</span></li>
+                <li><span>更新时间</span><span>{{detail.baseMsg.chatTime}}</span></li>
+            </ul>
+        </li>
+        <li>
+            <ul>
+                <li><span>生产厂商</span><span>{{detail.config.manufactures}}</span></li>
+                <li><span>产品名称</span><span>{{detail.config.name}}</span></li>
+                <li><span>序列号</span><span>{{detail.config.serial}}</span></li>
+                <li><span>UUID</span><span>{{detail.config.uuid}}</span></li>
+                <li><span>内存</span><span>{{detail.config.mem}}</span></li>
+                <li><span>虚拟机</span><span>{{detail.config.vm}}</span></li>
+                <li><span>虚拟技术</span><span>{{detail.config.vmtec}}</span></li>
+            </ul>
+        </li>
+        <li>
+            <table>
+                <tr>
+                    <th>设备名</th>
+                    <th>挂载点</th>
+                    <th>容量</th>
+                </tr>
+                <tr ng-repeat="memory in detail.memory">
+                    <td>{{memory.name}}</td>
+                    <td>{{memory.node}}</td>
+                    <td>{{memory.capacity}}</td>
+                </tr>
+            </table>
+        </li>
+        <li>
+            <ul>
+                <li><span>名称</span><span>{{detail.os.name}}</span></li>
+                <li><span>类型</span><span>{{detail.os.type}}</span></li>
+                <li><span>版本</span><span>{{detail.os.version}}</span></li>
+                <li><span>架构</span><span>{{detail.os.framework}}</span></li>
+            </ul>
+        </li>
+        <li>
+            <ul>
+                <li><span>FQDN</span><span>{{detail.netconfig.fqdn}}</span></li>
+                <li>
+                    <table>
+                        <tr>
+                            <th>网络接口</th>
+                            <th>IP地址</th>
+                            <th>MAC地址</th>
+                        </tr>
+                        <tr ng-repeat="net in detail.netconfig.net">
+                            <td>{{net.interface}}</td>
+                            <td>{{net.ip}}</td>
+                            <td>{{net.mac}}</td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <table>
+                <tr>
+                    <th>服务名称</th>
+                    <th>版本</th>
+                </tr>
+                <tr ng-repeat="service in detail.services">
+                    <td>{{service.name}}</td>
+                    <td>{{service.version}}</td>
+                </tr>
+            </table>
+        </li>
+        <li>
+            <ul>
+                <li ng-repeat="remark in detail.remarks">{{remark}}</li>
+            </ul>
+        </li>
+    </ul>
+</div>
