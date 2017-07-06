@@ -101,7 +101,7 @@ function (angular, _) {
             backendSrv.post("/api/dashboards/system", {DashId: data.id.toString(), SystemId: result.system});
             return 1;
           }, function(err) {
-            $scope.appEvent('alert-warning', [template + '已存在']);
+            $scope.appEvent('alert-warning', ['"'+err.config.data.dashboard.originalTitle + '"已存在']);
             return -1;
           });
         });
