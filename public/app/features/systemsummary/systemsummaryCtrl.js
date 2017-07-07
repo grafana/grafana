@@ -69,14 +69,21 @@ define([
             "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + key + ".state",
             "aggregator": "sum",
             "downsample": "1s-sum",
+            "tags":{"host":"*"}
           }];
 
           var q = datasourceSrv.getStatus(queries, 'now-5m').then(function (response) {
             _.each(response, function(service) {
-              if (response.status > 0) {
-                panel.status.warn[1]++;
-              } else {
-                panel.status.success[1]++;
+              if (_.isObject(service)) {
+                var status = service.dps[_.last(Object.keys(service.dps))];
+                if(typeof(status) != "number") {
+                  throw Error;
+                }
+                if(status > 0) {
+                  panel.status.warn[1]++;
+                } else {
+                  panel.status.success[1]++;
+                }
               }
             });
             var targets = {

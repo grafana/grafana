@@ -42,6 +42,7 @@ define([
                 "metric": contextSrv.user.orgId + "." + system + "." + key + ".state",
                 "aggregator": "sum",
                 "downsample": "1s-sum",
+                "tags":{"host":"*"}
               }];
 
               var time = 'now-5m';
@@ -49,7 +50,7 @@ define([
               datasourceSrv.getStatus(queries, time).then(function(response) {
                 _.each(response, function (service) {
                   if (_.isObject(service)) {
-                    var status = service.dps[Object.keys(service.dps)[0]];
+                    var status = service.dps[_.last(Object.keys(service.dps))];
                     if(typeof(status) != "number") {
                       throw Error;
                     }
