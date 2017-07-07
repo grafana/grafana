@@ -12,8 +12,8 @@
             <ul>
                 <li><span>ID</span><span>{{detail.id}}</span></li>
                 <li><span>名称</span><span>{{detail.hostname}}</span></li>
-                <li><span>类型</span><span>{{detail.type}}</span></li>
                 <li><span>加入时间</span><span>{{detail.createdAt | date:'yyyy-MM-dd HH-mm:ss'}}</span></li>
+                <li><span>域</span><span>{{detail.domain}}</span></li>
                 <li><span>FQDN</span><span>{{detail.fqdn}}</span></li>
             </ul>
         </li>
@@ -77,11 +77,13 @@
                 <li>
                     <table class="table">
                         <tr>
+                            <th>名称</th>
                             <th>IP地址</th>
                             <th>MAC地址</th>
                             <th>带宽</th>
                         </tr>
                         <tr ng-repeat="interface in detail.interfaces">
+                            <td>{{interface.name}}</td>
                             <td>{{interface.ip}}</td>
                             <td>{{interface.mac}}</td>
                             <td>{{interface.speed}}</td>
