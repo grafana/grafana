@@ -96,6 +96,21 @@ function (angular, _, coreModule, config, dateMath) {
           if (_.isEmpty(response.data)) {
             throw Error;
           }
+          return response.data;
+        });
+      });
+    }
+
+    this.getHostStatus = function(query, startTime, endTime) {
+      var end = endTime ? dateMath.parse(endTime, false).valueOf() : null;
+      return this.get('opentsdb').then(function(datasource) {
+        var service = _.getMetricName(query[0].metric);
+        return datasource.performTimeSeriesQuery(query, dateMath.parse(startTime, false).valueOf(), end).then(function(response) {
+          var status = null;
+          var host = null;
+          if (_.isEmpty(response.data)) {
+            throw Error;
+          }
           _.each(response.data, function (metricData) {
             host = metricData.tags.host;
             if (_.isObject(metricData)) {

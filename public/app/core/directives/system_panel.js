@@ -47,12 +47,19 @@ define([
               var time = 'now-5m';
 
               datasourceSrv.getServiceStatus(queries, time).then(function(response) {
-                if(response.status) {
-                  scope.seriesStatus.unnormal++;
-                } else {
-                  scope.seriesStatus.normal++;
-                }
-                scope.servies.push(response);
+                _.each(response, function (service) {
+                  if (_.isObject(service)) {
+                    var status = service.dps[Object.keys(service.dps)[0]];
+                    if(typeof(status) != "number") {
+                      throw Error;
+                    }
+                    if(status > 0) {
+                      scope.seriesStatus.unnormal++;
+                    } else {
+                      scope.seriesStatus.normal++;
+                    }
+                  }
+                });
               });
             });
           };
@@ -101,10 +108,10 @@ define([
                 var queries = [{
                   "metric": contextSrv.user.orgId + "." + system + ".collector.state",
                   "aggregator": "sum",
-                  "downsample": "1m-sum",
+                  "downsample": "1s-sum",
                   "tags": {"host": summary.tag.host}
                 }];
-                datasourceSrv.getServiceStatus(queries, 'now-1m').then(function(response) {
+                datasourceSrv.getHostStatus(queries, 'now-1m').then(function(response) {
                   if(response.status > 0) {
                     host.status = 1;
                     scope.hostStatus.unnormal++;
