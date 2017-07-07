@@ -19,6 +19,7 @@ import (
 	"github.com/go-xorm/xorm"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/wangy1931/grafana/pkg/components/simplejson"
 )
 
 type MySQLConfig struct {
@@ -128,10 +129,10 @@ func AddDatasourceFromConfig() {
 			Url:       setting.ElkSource.ElkSourceUrlRoot,
 			IsDefault: false,
 			Database:  "[$_token-logstash-]YYYY.MM.DD",
-			JsonData:  map[string]interface{}{
+			JsonData:  simplejson.NewFromAny(map[string]interface{}{
 				"interval"  : "Daily",
 				"timeField" : "@timestamp",
-			},
+			}),
 		}); err != nil {
 			log.Fatal(3, "Could not add default datasource for OrgId 1 from config: %v", err)
 			return
@@ -169,10 +170,10 @@ func AddDatasourceForOrg(orgId int64) (err error) {
 		Url:       setting.ElkSource.ElkSourceUrlRoot,
 		IsDefault: false,
 		Database:  "[$_token-logstash-]YYYY.MM.DD",
-		JsonData:  map[string]interface{}{
+		JsonData:  simplejson.NewFromAny(map[string]interface{}{
 			"interval"  : "Daily",
 			"timeField" : "@timestamp",
-		},
+		}),
 	}); err != nil {
 		log.Error(3, "Could not add default datasource from config: %v", err)
 		return err

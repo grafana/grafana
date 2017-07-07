@@ -145,7 +145,7 @@ func Register(r *macaron.Macaron) {
 			r.Put("/system", bind(dtos.UpdateSystems{}), wrap(UpdateSystems))
 			r.Post("/system", bind(m.AddSystemsCommand{}), wrap(AddNewSystems))
 			r.Get("/system", wrap(GetSystemsForCurrentOrg))
-		}, regOrgAdmin)
+		}, reqOrgAdmin)
 
 		// create new org
 		r.Post("/orgs", quota("org"), bind(m.CreateOrgCommand{}), wrap(CreateOrg))

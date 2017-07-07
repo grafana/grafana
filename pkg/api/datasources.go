@@ -6,14 +6,12 @@ import (
 	"github.com/wangy1931/grafana/pkg/api/dtos"
 	"github.com/wangy1931/grafana/pkg/bus"
 	"github.com/wangy1931/grafana/pkg/plugins"
-	//"github.com/wangy1931/grafana/pkg/log"
 	"github.com/wangy1931/grafana/pkg/middleware"
 	m "github.com/wangy1931/grafana/pkg/models"
 	"github.com/wangy1931/grafana/pkg/util"
 )
 
 func GetDataSources(c *middleware.Context) {
-    log.Info("DataSource Url: %v", setting.DataSource.DataSourceUrlRoot)
 
 	query := m.GetDataSourcesQuery{OrgId: c.OrgId}
 

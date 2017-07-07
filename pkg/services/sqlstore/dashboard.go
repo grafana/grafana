@@ -9,8 +9,7 @@ import (
 	"github.com/wangy1931/grafana/pkg/metrics"
 	m "github.com/wangy1931/grafana/pkg/models"
 	"github.com/wangy1931/grafana/pkg/services/search"
-	"strconv"
-	"errors"
+	"github.com/wangy1931/grafana/pkg/components/simplejson"
 )
 
 func init() {
@@ -118,16 +117,13 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 		return err
 	}
 
-	dashboard.Data.Set("id", dashboard.Id)
-	query.Result = &dashboard
-	query.Result = new(m.Dashboard)
 	for _, dash := range dashboards {
 		sysId, err := typeSwitch(dash.Data)
 		if err !=nil {
 			continue
 		}
 		if sysId == query.SystemId {
-			dash.Data["id"] = dash.Id
+			dash.Data.Set("id", dash.Id)
 			query.Result = dash
 		}
 	}
@@ -135,19 +131,8 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 	return nil
 }
 
-func typeSwitch(dash map[string]interface{}) (int64, error) {
-	switch system := dash["system"].(type) {
-	default:
-		return 0, errors.New("can't resolve the systemId type")
-	case string:
-		sysId, err := strconv.ParseInt(system, 10, 64)
-		if err != nil {
-			return 0, err
-		}
-		return sysId, nil
-	case float64:
-		return int64(system), nil
-	}
+func typeSwitch(dash *simplejson.Json) (int64, error) {
+	return dash.Get("system").MustInt64(), nil
 }
 
 type DashboardSearchProjection struct {

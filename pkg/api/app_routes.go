@@ -3,12 +3,12 @@ package api
 import (
 	"gopkg.in/macaron.v1"
 
-	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/wangy1931/grafana/pkg/api/pluginproxy"
+	"github.com/wangy1931/grafana/pkg/log"
+	"github.com/wangy1931/grafana/pkg/middleware"
+	m "github.com/wangy1931/grafana/pkg/models"
+	"github.com/wangy1931/grafana/pkg/plugins"
+	"github.com/wangy1931/grafana/pkg/util"
 )
 
 func InitAppPluginRoutes(r *macaron.Macaron) {

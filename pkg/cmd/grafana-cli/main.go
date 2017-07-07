@@ -6,8 +6,8 @@ import (
 	"runtime"
 
 	"github.com/codegangsta/cli"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"github.com/wangy1931/grafana/pkg/cmd/grafana-cli/commands"
+	"github.com/wangy1931/grafana/pkg/cmd/grafana-cli/log"
 )
 
 var version = "master"

@@ -1,6 +1,6 @@
 package dtos
 
-import "github.com/grafana/grafana/pkg/plugins"
+import "github.com/wangy1931/grafana/pkg/plugins"
 
 type PluginSetting struct {
 	Name          string                      `json:"name"`

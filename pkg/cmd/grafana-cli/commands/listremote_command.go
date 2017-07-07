@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
-	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	"github.com/wangy1931/grafana/pkg/cmd/grafana-cli/log"
+	s "github.com/wangy1931/grafana/pkg/cmd/grafana-cli/services"
 )
 
 func listremoteCommand(c CommandLine) error {

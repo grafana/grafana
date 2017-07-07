@@ -7,8 +7,8 @@ import (
 	"path"
 
 	"github.com/franela/goreq"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
-	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	"github.com/wangy1931/grafana/pkg/cmd/grafana-cli/log"
+	m "github.com/wangy1931/grafana/pkg/cmd/grafana-cli/models"
 )
 
 var IoHelper m.IoUtil = IoUtilImp{}

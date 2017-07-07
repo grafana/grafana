@@ -3,7 +3,7 @@ package commands
 import (
 	"testing"
 
-	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	m "github.com/wangy1931/grafana/pkg/cmd/grafana-cli/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

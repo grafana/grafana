@@ -22,8 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/wangy1931/grafana/pkg/log"
+	"github.com/wangy1931/grafana/pkg/setting"
 )
 
 var gravatarSource string

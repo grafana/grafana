@@ -2,7 +2,7 @@ package commands
 
 import (
 	"github.com/codegangsta/cli"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"github.com/wangy1931/grafana/pkg/cmd/grafana-cli/log"
 	"os"
 )
 
