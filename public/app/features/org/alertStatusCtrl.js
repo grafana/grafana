@@ -154,7 +154,7 @@ function (angular, moment, _) {
           "downsample": "1m-avg",
           "tags": {"host": alertData.status.monitoredEntity}
         }];
-        datasourceSrv.getServiceStatus(queries, 'now-2m').then(function(response) {
+        datasourceSrv.getHostStatus(queries, 'now-2m').then(function(response) {
           alertData.curr = Math.floor(response.status * 1000) / 1000;
           if(isNaN(alertData.curr)) {
             throw Error;

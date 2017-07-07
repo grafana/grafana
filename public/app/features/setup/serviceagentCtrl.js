@@ -21,7 +21,7 @@ function (angular, _) {
           "downsample": "10m-sum",
         }];
         var time = 'now-10m';
-        datasourceSrv.getServiceStatus(query, time).then(function(res) {
+        datasourceSrv.getHostStatus(query, time).then(function(res) {
           if(res.status > 0) {
             $scope.services[index].status = NO_DATA;
           } else {
@@ -34,7 +34,7 @@ function (angular, _) {
     $scope.getService = function() {
       backendSrv.get('/api/static/hosts').then(function(result) {
         $scope.services = result.service;
-        $scope.getServiceStatus(result.service);
+        $scope.getHostStatus(result.service);
       });
     };
 

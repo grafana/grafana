@@ -63,7 +63,7 @@ define([
               "tags": {"host": metric.tag.host}
             }];
 
-            datasourceSrv.getServiceStatus(queries, 'now-5m').then(function(response) {
+            datasourceSrv.getHostStatus(queries, 'now-5m').then(function(response) {
               if(response.status > 0) {
                 metric.state = "异常";
               } else {

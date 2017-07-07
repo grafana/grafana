@@ -71,12 +71,14 @@ define([
             "downsample": "1s-sum",
           }];
 
-          var q = datasourceSrv.getServiceStatus(queries, 'now-5m').then(function (response) {
-            if (response.status > 0) {
-              panel.status.warn[1]++;
-            } else {
-              panel.status.success[1]++;
-            }
+          var q = datasourceSrv.getStatus(queries, 'now-5m').then(function (response) {
+            _.each(response, function(service) {
+              if (response.status > 0) {
+                panel.status.warn[1]++;
+              } else {
+                panel.status.success[1]++;
+              }
+            });
             var targets = {
               "aggregator": "sum",
               "currentTagKey": "",
@@ -88,6 +90,9 @@ define([
               "isCounter": false,
               "metric": key + '.state',
               "shouldComputeRate": false,
+              "tags":{
+                "host":"*"
+              }
             };
             panel.targets.push(targets);
           }).finally(function () {
@@ -121,7 +126,7 @@ define([
               "tags": { "host": metric.tag.host }
             }];
 
-            datasourceSrv.getServiceStatus(queries, 'now-1m').then(function(response) {
+            datasourceSrv.getHostStatus(queries, 'now-1m').then(function(response) {
               if(response.status > 0) {
                 panel.status.warn[1]++;
               } else {
