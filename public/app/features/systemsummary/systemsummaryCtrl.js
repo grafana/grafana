@@ -71,7 +71,7 @@ define([
             "downsample": "1s-sum",
           }];
 
-          var q = datasourceSrv.getServiceStatus(queries, 'now-5m').then(function (response) {
+          var q = datasourceSrv.getStatus(queries, 'now-5m').then(function (response) {
             _.each(response, function(service) {
               if (response.status > 0) {
                 panel.status.warn[1]++;

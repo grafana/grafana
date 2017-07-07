@@ -57,7 +57,7 @@ define([
             "tags": {"host": $scope.summarySelect.currentTagValue}
           }];
 
-          datasourceSrv.getServiceStatus(queries, 'now-5m').then(function(response) {
+          datasourceSrv.getStatus(queries, 'now-5m').then(function(response) {
             _.each(response, function(service) {
               var metric = {};
               metric.host = service.tags.host;

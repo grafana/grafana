@@ -46,7 +46,7 @@ define([
 
               var time = 'now-5m';
 
-              datasourceSrv.getServiceStatus(queries, time).then(function(response) {
+              datasourceSrv.getStatus(queries, time).then(function(response) {
                 _.each(response, function (service) {
                   if (_.isObject(service)) {
                     var status = service.dps[Object.keys(service.dps)[0]];
@@ -58,6 +58,9 @@ define([
                     } else {
                       scope.seriesStatus.normal++;
                     }
+                    service.status = status;
+                    service.name = serviesMap[key];
+                    scope.servies.push(service);
                   }
                 });
               });
