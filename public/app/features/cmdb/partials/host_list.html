@@ -11,23 +11,23 @@
     </form>
     <table class="table table-hover cmdb-table">
         <tr>
-            <th>序号</th>
-            <th>ID</th>
-            <th>名称</th>
-            <th>IP</th>
+            <th style="width: 50px;">序号</th>
+            <th style="width: 70px;">ID</th>
+            <th style="width: 100px;">名称</th>
+            <th style="width: 200px;">IP</th>
+            <th style="width: 100px;">虚拟机</th>
             <th>创建时间</th>
-            <th>最近通信</th>
         </tr>
     </table>
     <div class="cmdb-container">
         <table class="table table-hover table-striped cmdb-table">
             <tr ng-repeat="host in hosts| filter: searchHost" ng-click="getDetail(host)">
-                <td class="main-color">{{$index+1}}</td>
-                <td class="main-color">{{host.id}}</td>
-                <td class="main-color">{{host.name}}</td>
-                <td>{{host.ip}}</td>
-                <td>{{host.createTime}}</td>
-                <td>{{host.chatTime}}</td>
+                <td style="width: 50px;" class="main-color">{{$index+1}}</td>
+                <td style="width: 70px;" class="main-color">{{host.id}}</td>
+                <td style="width: 100px;" class="main-color">{{host.hostname}}</td>
+                <td style="width: 200px;">{{host.defaultIp}}</td>
+                <td style="width: 100px;">{{host.isVirtual}}</td>
+                <td>{{host.createdAt | date:'yyyy-MM-dd HH:mm:ss'}}</td>
             </tr>
         </table>
     </div>

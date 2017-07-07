@@ -5,85 +5,89 @@
     </ul>
 </topnav>
 <div class="page-container">
-    <h2>{{detail.baseMsg.name}}</h2>
+    <h2>{{detail.hostname}}</h2>
     <ul>
         <li>
+            <h4>基本信息</h4>
             <ul>
-                <li><span>ID</span><span>{{detail.baseMsg.id}}</span></li>
-                <li><span>名称</span><span>{{detail.baseMsg.name}}</span></li>
-                <li><span>类型</span><span>{{detail.baseMsg.type}}</span></li>
-                <li><span>状态</span><span>{{detail.baseMsg.status}}</span></li>
-                <li><span>加入时间</span><span>{{detail.baseMsg.createTime}}</span></li>
-                <li><span>更新时间</span><span>{{detail.baseMsg.chatTime}}</span></li>
+                <li><span>ID</span><span>{{detail.id}}</span></li>
+                <li><span>名称</span><span>{{detail.hostname}}</span></li>
+                <li><span>类型</span><span>{{detail.type}}</span></li>
+                <li><span>加入时间</span><span>{{detail.createdAt | date:'yyyy-MM-dd HH-mm:ss'}}</span></li>
+                <li><span>FQDN</span><span>{{detail.fqdn}}</span></li>
             </ul>
         </li>
         <li>
+            <h4>硬件配置</h4>
             <ul>
-                <li><span>生产厂商</span><span>{{detail.config.manufactures}}</span></li>
-                <li><span>产品名称</span><span>{{detail.config.name}}</span></li>
-                <li><span>序列号</span><span>{{detail.config.serial}}</span></li>
-                <li><span>UUID</span><span>{{detail.config.uuid}}</span></li>
-                <li><span>内存</span><span>{{detail.config.mem}}</span></li>
-                <li><span>虚拟机</span><span>{{detail.config.vm}}</span></li>
-                <li><span>虚拟技术</span><span>{{detail.config.vmtec}}</span></li>
+                <li><span>生产厂商</span><span>{{detail.systemVendor}}</span></li>
+                <li><span>产品名称</span><span>{{detail.productName}}</span></li>
+                <li><span>产品型号</span><span>{{detail.productVersion}}</span></li>
+                <li><span>序列号</span><span>{{detail.productSerial}}</span></li>
+                <li><span>UUID</span><span>{{detail.productUuid}}</span></li>
+                <li><span>内存</span><span>{{detail.totalMemory}}</span></li>
+                <li><span>虚拟机</span><span>{{detail.isVirtual}}</span></li>
+                <li><span>架构</span><span>{{detail.architecture}}</span></li>
+                <li><span>CPU</span>
+                <table class="table">
+                    <tr>
+                        <th>cpu型号</th>
+                        <th>个数</th>
+                    </tr>
+                    <tr ng-repeat="(cpu, num) in cpuCount">
+                        <td>{{cpu}}</td>
+                        <td>{{num}}</td>
+                    </tr>
+                </table>
+                </li>
             </ul>
         </li>
         <li>
-            <table>
-                <tr>
-                    <th>设备名</th>
-                    <th>挂载点</th>
-                    <th>容量</th>
-                </tr>
-                <tr ng-repeat="memory in detail.memory">
-                    <td>{{memory.name}}</td>
-                    <td>{{memory.node}}</td>
-                    <td>{{memory.capacity}}</td>
-                </tr>
-            </table>
-        </li>
-        <li>
+            <h4>存储</h4>
             <ul>
-                <li><span>名称</span><span>{{detail.os.name}}</span></li>
-                <li><span>类型</span><span>{{detail.os.type}}</span></li>
-                <li><span>版本</span><span>{{detail.os.version}}</span></li>
-                <li><span>架构</span><span>{{detail.os.framework}}</span></li>
-            </ul>
-        </li>
-        <li>
-            <ul>
-                <li><span>FQDN</span><span>{{detail.netconfig.fqdn}}</span></li>
                 <li>
-                    <table>
+                    <table class="table">
                         <tr>
-                            <th>网络接口</th>
-                            <th>IP地址</th>
-                            <th>MAC地址</th>
+                            <th>生产厂商</th>
+                            <th>产品型号</th>
+                            <th>主控制器</th>
+                            <th>容量</th>
                         </tr>
-                        <tr ng-repeat="net in detail.netconfig.net">
-                            <td>{{net.interface}}</td>
-                            <td>{{net.ip}}</td>
-                            <td>{{net.mac}}</td>
+                        <tr ng-repeat="device in detail.devices">
+                            <td>{{device.vendor}}</td>
+                            <td>{{device.model}}</td>
+                            <td>{{device.host}}</td>
+                            <td>{{device.size}}</td>
                         </tr>
                     </table>
                 </li>
             </ul>
         </li>
         <li>
-            <table>
-                <tr>
-                    <th>服务名称</th>
-                    <th>版本</th>
-                </tr>
-                <tr ng-repeat="service in detail.services">
-                    <td>{{service.name}}</td>
-                    <td>{{service.version}}</td>
-                </tr>
-            </table>
+            <h4>操作系统</h4>
+            <ul>
+                <li><span>名称</span><span>{{detail.osName}}</span></li>
+                <li><span>类型</span><span>{{detail.osFamily}}</span></li>
+                <li><span>版本</span><span>{{detail.osVersion}}</span></li>
+            </ul>
         </li>
         <li>
+            <h4>网络配置</h4>
             <ul>
-                <li ng-repeat="remark in detail.remarks">{{remark}}</li>
+                <li>
+                    <table class="table">
+                        <tr>
+                            <th>IP地址</th>
+                            <th>MAC地址</th>
+                            <th>带宽</th>
+                        </tr>
+                        <tr ng-repeat="interface in detail.interfaces">
+                            <td>{{interface.ip}}</td>
+                            <td>{{interface.mac}}</td>
+                            <td>{{interface.speed}}</td>
+                        </tr>
+                    </table>
+                </li>
             </ul>
         </li>
     </ul>
