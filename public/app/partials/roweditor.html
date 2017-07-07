@@ -1,64 +1,47 @@
-
-<div class="gf-box-header">
-	<div class="gf-box-title">
-		<i class="fa fa-th-list"></i>
+<div class="tabbed-view-header">
+	<h2 class="tabbed-view-title">
 		行设置
-	</div>
+	</h2>
 
-	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-		<div ng-repeat="tab in ['General']" data-title="{{tab}}">
-		</div>
-	</div>
-
-	<button class="gf-box-header-close-btn" ng-click="dismiss();">
+	<button class="tabbed-view-close-btn" ng-click="dismiss();">
 		<i class="fa fa-remove"></i>
 	</button>
 </div>
 
-<div class="gf-box-body">
+<div class="tabbed-view-body">
+	<div class="row">
+		<div class="col-md-8">
+			<div class="page-heading">
+				<h5>行详细</h5>
+			</div>
+			<div class="gf-form-group">
+				<div class="gf-form-inline">
 
-	<div class="editor-row">
-		<div class="section">
-			<h5>Row details</h5>
-			<div class="tight-form last">
-				<ul class="tight-form-list">
-					<li class="tight-form-item">
-						标题
-					</li>
-					<li>
-						<input type="text" class="input-xlarge tight-form-input" ng-model='row.title'></input>
-					</li>
-					<li class="tight-form-item">
-						高
-					</li>
-					<li>
-						<input type="text" class="input-small tight-form-input" ng-model='row.height'></input>
-					</li>
-					<li class="tight-form-item last">
-						<label class="checkbox-label" for="row.showTitle">Show Title</label>
-						<input class="cr1" id="row.showTitle" type="checkbox" ng-model="row.showTitle" ng-checked="row.showTitle">
-						<label for="row.showTitle" class="cr1"></label>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
+					<div class="gf-form">
+						<span class="gf-form-label width-6">标题</span>
+						<input type="text" class="gf-form-input max-width-14" ng-model='row.title'></input>
+					</div>
+					<div class="gf-form">
+						<span class="gf-form-label width-6">高</span>
+						<input type="text" class="gf-form-input max-width-8" ng-model='row.height'></input>
+						<editor-checkbox text="Show Title" model="row.showTitle"></editor-checkbox>
+					</div>
+				</div>
 			</div>
 		</div>
-		<div class="section">
-			<h5>模板选项</h5>
-			<div class="tight-form last">
-				<ul class="tight-form-list">
-					<li class="tight-form-item">
-						重复行
-					</li>
-					<li>
-						<select class="input-small tight-form-input last" ng-model="row.repeat" ng-options="f.name as f.name for f in dashboard.templating.list">
+		<div class="col-md-4">
+			<div class="page-heading">
+				<h5>模板选项</h5>
+			</div>
+			<div class="gf-form-group">
+				<div class="gf-form">
+					<span class="gf-form-label">重复行</span>
+					<div class="gf-form-select-wrapper max-width-10">
+						<select class="gf-form-input" ng-model="row.repeat" ng-options="f.name as f.name for f in dashboard.templating.list">
 							<option value=""></option>
-						</select>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
+					</div>
+				</div>
 			</div>
 		</div>
 	</div>
-
 </div>

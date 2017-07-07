@@ -1,10 +1,12 @@
 package api
 
 import (
+	"strconv"
+
 	"github.com/wangy1931/grafana/pkg/bus"
 	"github.com/wangy1931/grafana/pkg/middleware"
 	"github.com/wangy1931/grafana/pkg/services/search"
-   m "github.com/wangy1931/grafana/pkg/models"
+	m "github.com/wangy1931/grafana/pkg/models"
 )
 
 func Search(c *middleware.Context) {
@@ -17,13 +19,22 @@ func Search(c *middleware.Context) {
 		limit = 1000
 	}
 
+	dbids := make([]int, 0)
+	for _, id := range c.QueryStrings("dashboardIds") {
+		dashboardId, err := strconv.Atoi(id)
+		if err == nil {
+			dbids = append(dbids, dashboardId)
+		}
+	}
+
 	searchQuery := search.Query{
-		Title:     query,
-		Tags:      tags,
-		UserId:    c.UserId,
-		Limit:     limit,
-		IsStarred: starred == "true",
-		OrgId:     c.OrgId,
+		Title:        query,
+		Tags:         tags,
+		UserId:       c.UserId,
+		Limit:        limit,
+		IsStarred:    starred == "true",
+		OrgId:        c.OrgId,
+		DashboardIds: dbids,
 	}
 
 	err := bus.Dispatch(&searchQuery)

@@ -1,3 +1,7 @@
+// Copyright 2015 The Xorm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package xorm
 
 import (
@@ -892,8 +896,8 @@ func (db *postgres) DropIndexSql(tableName string, index *core.Index) string {
 	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
 }
 
-func (db *postgres) IsColumnExist(tableName string, col *core.Column) (bool, error) {
-	args := []interface{}{tableName, col.Name}
+func (db *postgres) IsColumnExist(tableName, colName string) (bool, error) {
+	args := []interface{}{tableName, colName}
 	query := "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = $1" +
 		" AND column_name = $2"
 	rows, err := db.DB().Query(query, args...)
@@ -909,7 +913,8 @@ func (db *postgres) IsColumnExist(tableName string, col *core.Column) (bool, err
 }
 
 func (db *postgres) GetColumns(tableName string) ([]string, map[string]*core.Column, error) {
-	args := []interface{}{tableName}
+	pgSchema := "public"
+	args := []interface{}{tableName,pgSchema}
 	s := `SELECT column_name, column_default, is_nullable, data_type, character_maximum_length, numeric_precision, numeric_precision_radix ,
     CASE WHEN p.contype = 'p' THEN true ELSE false END AS primarykey,
     CASE WHEN p.contype = 'u' THEN true ELSE false END AS uniquekey
@@ -920,7 +925,7 @@ FROM pg_attribute f
     LEFT JOIN pg_constraint p ON p.conrelid = c.oid AND f.attnum = ANY (p.conkey)
     LEFT JOIN pg_class AS g ON p.confrelid = g.oid
     LEFT JOIN INFORMATION_SCHEMA.COLUMNS s ON s.column_name=f.attname AND c.relname=s.table_name
-WHERE c.relkind = 'r'::char AND c.relname = $1 AND f.attnum > 0 ORDER BY f.attnum;`
+WHERE c.relkind = 'r'::char AND c.relname = $1 AND s.table_schema = $2 AND f.attnum > 0 ORDER BY f.attnum;`
 
 	rows, err := db.DB().Query(s, args...)
 	if db.Logger != nil {

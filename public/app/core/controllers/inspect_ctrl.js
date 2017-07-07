@@ -7,7 +7,7 @@ define([
 function (angular, _, $, coreModule) {
   'use strict';
 
-  coreModule.controller('InspectCtrl', function($scope) {
+  coreModule.default.controller('InspectCtrl', function($scope) {
     var model = $scope.inspector;
 
     function getParametersFromQueryString(queryString) {

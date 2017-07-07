@@ -8,6 +8,8 @@
 
     <title>CloudWiz</title>
 
+		<link href='[[.AppSubUrl]]/public/css/fonts.min.css' rel='stylesheet' type='text/css'>
+
 		[[if .User.LightTheme]]
 		  <link rel="stylesheet" href="[[.AppSubUrl]]/public/css/grafana.light.min.css">
 		[[else]]
@@ -17,17 +19,13 @@
     <link rel="icon" type="image/png" href="[[.AppSubUrl]]/public/img/fav32.png">
 		<base href="[[.AppSubUrl]]/" />
 
-		<!-- build:js [[.AppSubUrl]]/public/app/app.js -->
-    <script src="[[.AppSubUrl]]/public/vendor/requirejs/require.js"></script>
-    <script src="[[.AppSubUrl]]/public/app/require_config.js"></script>
-    <!-- endbuild -->
-  </head>
+	</head>
 
-	<body ng-cloak ng-controller="GrafanaCtrl" ng-class="{'sidemenu-open': contextSrv.sidemenu}">
-		<div class="sidemenu-canvas">
+	<body ng-cloak>
+		<grafana-app class="grafana-app">
 
-			<aside class="sidemenu-wrapper" ng-if="contextSrv.sidemenu">
-				<div ng-include="'app/partials/sidemenu.html'"></div>
+			<aside class="sidemenu-wrapper">
+				<sidemenu ng-if="contextSrv.sidemenu"></sidemenu>
 			</aside>
 
 			<div class="page-alert-list">
@@ -41,9 +39,7 @@
 			</div>
 
 			<div ng-view class="main-view"></div>
-
-		</div>
-
+		</grafana-app>
   </body>
 
 	<script>
@@ -51,15 +47,19 @@
 			user:[[.User]],
 			settings: [[.Settings]],
 			systems: [[.Systems]]
+			mainNavLinks: [[.MainNavLinks]]
 		};
-
-    require(['app/app'], function (app) {
-	    app.boot();
-    })
 	</script>
 
+	<!-- build:js [[.AppSubUrl]]/public/app/boot.js -->
+	<script src="[[.AppSubUrl]]/public/vendor/npm/es6-shim/es6-shim.js"></script>
+	<script src="[[.AppSubUrl]]/public/vendor/npm/systemjs/dist/system.src.js"></script>
+	<script src="[[.AppSubUrl]]/public/app/system.conf.js"></script>
+	<script src="[[.AppSubUrl]]/public/app/boot.js"></script>
+	<!-- endbuild -->
+
 	[[if .GoogleAnalyticsId]]
-		<script>
+	<script>
 		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
 		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
 		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -82,7 +82,7 @@
 			}];
 		</script>
 		<!-- Google Tag Manager -->
-		<noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-K2MJ65" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+		<noscript><iframe src="//www.googletagmanager.com/ns.html?id=[[.GoogleTagManagerId]]" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 		<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 			j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 		})(window,document,'script','dataLayer','[[.GoogleTagManagerId]]');</script>

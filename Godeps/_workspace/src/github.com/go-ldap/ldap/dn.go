@@ -47,17 +47,17 @@ package ldap
 
 import (
 	"bytes"
+	enchex "encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
-	enchex "encoding/hex"
 
 	ber "gopkg.in/asn1-ber.v1"
 )
 
 type AttributeTypeAndValue struct {
-	Type       string
-	Value      string
+	Type  string
+	Value string
 }
 
 type RelativeDN struct {
@@ -71,7 +71,7 @@ type DN struct {
 func ParseDN(str string) (*DN, error) {
 	dn := new(DN)
 	dn.RDNs = make([]*RelativeDN, 0)
-	rdn := new (RelativeDN)
+	rdn := new(RelativeDN)
 	rdn.Attributes = make([]*AttributeTypeAndValue, 0)
 	buffer := bytes.Buffer{}
 	attribute := new(AttributeTypeAndValue)
@@ -115,7 +115,7 @@ func ParseDN(str string) (*DN, error) {
 				index := strings.IndexAny(str[i:], ",+")
 				data := str
 				if index > 0 {
-				  data = str[i:i+index]
+					data = str[i : i+index]
 				} else {
 					data = str[i:]
 				}
@@ -126,7 +126,7 @@ func ParseDN(str string) (*DN, error) {
 				}
 				packet := ber.DecodePacket(raw_ber)
 				buffer.WriteString(packet.Data.String())
-				i += len(data)-1
+				i += len(data) - 1
 			}
 		} else if char == ',' || char == '+' {
 			// We're done with this RDN or value, push it

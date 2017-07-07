@@ -25,7 +25,7 @@ Name | Description
 ------------ | -------------
 Name | The data source name, important that this is the same as in Grafana v1.x if you plan to import old dashboards.
 Default | Default data source means that it will be pre-selected for new panels.
-Url | The http protocol, ip and port of you graphite-web or graphite-api install.
+Url | The http protocol, ip and port of your graphite-web or graphite-api install.
 Access | Proxy = access via Grafana backend, Direct = access directory from browser.
 
 

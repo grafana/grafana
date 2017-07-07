@@ -1,28 +1,28 @@
-///<amd-dependency path="app/plugins/datasource/cloudwatch/datasource" />
-///<amd-dependency path="test/specs/helpers" name="helpers" />
 
+import "../datasource";
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
-
-declare var helpers: any;
+import moment from 'moment';
+import helpers from 'test/specs/helpers';
+import {CloudWatchDatasource} from "../datasource";
 
 describe('CloudWatchDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
+  var instanceSettings = {
+    jsonData: {defaultRegion: 'us-east-1', access: 'proxy'},
+  };
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(angularMocks.module('grafana.controllers'));
-
   beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
-  beforeEach(ctx.createService('CloudWatchDatasource'));
 
-  beforeEach(function() {
-    ctx.ds = new ctx.service({
-      jsonData: {
-        defaultRegion: 'us-east-1',
-        access: 'proxy'
-      }
-    });
-  });
+  beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
+    ctx.$q = $q;
+    ctx.$httpBackend =  $httpBackend;
+    ctx.$rootScope = $rootScope;
+    ctx.ds = $injector.instantiate(CloudWatchDatasource, {instanceSettings: instanceSettings});
+    $httpBackend.when('GET', /\.html$/).respond('');
+  }));
 
   describe('When performing CloudWatch query', function() {
     var requestParams;
@@ -188,5 +188,4 @@ describe('CloudWatchDatasource', function() {
       expect(scenario.request.data.action).to.be('ListMetrics');
     });
   });
-
 });

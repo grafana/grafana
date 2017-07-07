@@ -1,51 +1,30 @@
-<topnav title="Organization" icon="fa fa-fw fa-users" subnav="true">
-	<ul class="nav">
-		<li class="active"><a href="org/new">新建公司</a></li>
-	</ul>
-</topnav>
+<navbar title="Organization" icon="icon-gf icon-gf-users">
+</navbar>
 
-<div class="page-container">
-	<div class="page">
+<div class="page-container" ng-form="playlistEditForm">
+	<div class="page-header">
+		<h1>新增公司</h1>
+	</div>
 
-		<h2 style="margin-top: 30px;">新增公司</h2>
+	<p class="playlist-description">Each organization contains their own dashboards, data sources and configuration, and cannot be shared between orgs. While users may belong to more than one, mutiple organization are most frequently used in multi-tenant deployments. </p>
 
-		<form name="form">
-			<div class="tight-form-container">
-        <div class="tight-form">
-          <ul class="tight-form-list">
-            <li class="tight-form-item" style="width: 100px;">
-              <strong>公司名称</strong>
-            </li>
-            <li>
-              <input type="text" ng-model="newOrg.name" required class="input-xxlarge tight-form-input last" placeholder="公司名称">
-            </li>
-            <div class="clearfix"></div>
-          </ul>
+	<div class="gf-form-group">
+		<div class="gf-form">
+			<span class="gf-form-label width-10">公司名称</span>
+			<input type="text" ng-model="newOrg.name" required class="gf-form-input max-width-21" placeholder="organization name">
+		</div>
+
+        <br>
+        <div class="gf-form" ng-repeat="system in newSystems">
+            <span class="gf-form-label width-10">系统名称</span>
+            <input type="text" ng-model="system.name" required class="input-xxlarge tight-form-input last" placeholder="如:办公自动化系统">
         </div>
-
-        <h3 style="margin-top: 30px;">子系统</h3>
-        <div class="tight-form" ng-repeat="system in newSystems">
-          <ul class="tight-form-list">
-            <li class="tight-form-item" style="width: 100px;">
-              <strong>系统名称</strong>
-            </li>
-            <li>
-              <input type="text" ng-model="system.name" required class="input-xxlarge tight-form-input last" placeholder="如:办公自动化系统">
-            </li>
-
-            <div class="clearfix"></div>
-          </ul>
+        <div style="text-align: left; margin-top: 6px;">
+            <a ng-click="addSystem()">+ 增加子系统</a>
         </div>
-			</div>
-
-      <div style="text-align: left; margin-top: 6px;">
-        <a ng-click="addSystem()">+ 增加子系统</a>
-      </div>
-
-			<br>
-			<button class="btn btn-success pull-right" ng-click="createOrg()">Create</button>
-		</form>
-
+		<br>
+		<div class="gf-form-buttons-row">
+			<button class="btn btn-success" ng-click="createOrg()">新增</button>
+		</div>
 	</div>
 </div>
-

@@ -1,83 +1,42 @@
-<div class="tight-form">
-	<ul class="tight-form-list pull-right">
-		<li class="tight-form-item small" ng-show="target.datasource">
-			<em>{{target.datasource}}</em>
-		</li>
-		<li class="tight-form-item">
-			<div class="dropdown">
-				<a class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
-					<i class="fa fa-bars"></i>
-				</a>
-				<ul class="dropdown-menu pull-right" role="menu">
-					<li role="menuitem"><a tabindex="1" ng-click="toggleQueryMode()">切换到编辑模式</a></li>
-					<li role="menuitem"><a tabindex="1" ng-click="duplicateDataQuery(target)">复制</a></li>
-					<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index-1)">上移</a></li>
-					<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index+1)">下移</a></li>
-				</ul>
-			</div>
-		</li>
-		<li class="tight-form-item last">
-			<a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
-				<i class="fa fa-remove"></i>
-			</a>
-		</li>
-	</ul>
+<query-editor-row ctrl="ctrl">
+	<li class="tight-form-item query-keyword" style="width: 100px">
+		指标
+	</li>
+	<li>
+		<input type="text" class="input-large tight-form-input" ng-model="ctrl.target.metric"
+		spellcheck='false' bs-typeahead="ctrl.suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100
+		ng-blur="ctrl.targetBlur()">
+		</input>
+		<a bs-tooltip="ctrl.errors.metric" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.metric">
+			<i class="fa fa-warning"></i>
+		</a>
+	</li>
+	<li class="tight-form-item query-keyword">
+		聚合
+	</li>
+	<li>
+		<select ng-model="ctrl.target.aggregator" class="tight-form-input input-small"
+			ng-options="agg for agg in ctrl.aggregators"
+			ng-change="ctrl.targetBlur()">
+		</select>
+		<a bs-tooltip="ctrl.errors.aggregator" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.aggregator">
+			<i class="fa fa-warning"></i>
+		</a>
+	</li>
 
-	<ul class="tight-form-list">
-		<li class="tight-form-item" style="min-width: 15px; text-align: center">
-			{{target.refId}}
-		</li>
-		<li>
-			<a  class="tight-form-item"
-				ng-click="target.hide = !target.hide; get_data();"
-				role="menuitem">
-				<i class="fa fa-eye"></i>
-			</a>
-		</li>
-	</ul>
-
-	<ul class="tight-form-list" role="menu">
-		<li class="tight-form-item query-keyword" style="width: 100px">
-			指标
-		</li>
-		<li>
-			<input type="text" class="input-large tight-form-input" ng-model="target.metric"
-			spellcheck='false' bs-typeahead="suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100
-			ng-blur="targetBlur()">
-			</input>
-			<a bs-tooltip="target.errors.metric" style="color: rgb(229, 189, 28)" ng-show="target.errors.metric">
-				<i class="fa fa-warning"></i>
-			</a>
-		</li>
-		<li class="tight-form-item query-keyword">
-			聚合
-		</li>
-		<li>
-			<select ng-model="target.aggregator" class="tight-form-input input-small"
-				ng-options="agg for agg in aggregators"
-				ng-change="targetBlur()">
-			</select>
-			<a bs-tooltip="target.errors.aggregator" style="color: rgb(229, 189, 28)" ng-show="target.errors.aggregator">
-				<i class="fa fa-warning"></i>
-			</a>
-		</li>
-
-		<li class="tight-form-item query-keyword">
-			别名:
-			<tip>Use patterns like $tag_tagname to replace part of the alias for a tag value</tip>
-		</li>
-		<li>
-			<input type="text" class="tight-form-input input-large"
-			ng-model="target.alias"
-			spellcheck='false'
-			placeholder="series alias"
-			data-min-length=0 data-items=100
-			ng-blur="targetBlur()"></input>
-		</li>
-	</ul>
-
-	<div class="clearfix"></div>
-</div>
+	<li class="tight-form-item query-keyword">
+		别名:
+		<tip>Use patterns like $tag_tagname to replace part of the alias for a tag value</tip>
+	</li>
+	<li>
+		<input type="text" class="tight-form-input input-large"
+		ng-model="ctrl.target.alias"
+		spellcheck='false'
+		placeholder="series alias"
+		data-min-length=0 data-items=100
+		ng-blur="ctrl.targetBlur()"></input>
+	</li>
+</query-editor-row>
 
 <div class="tight-form">
 	<ul class="tight-form-list" role="menu">
@@ -87,9 +46,9 @@
 
 		<li>
 			<input type="text" class="input-large tight-form-input"
-			ng-model="target.downsampleInterval"
+			ng-model="ctrl.target.downsampleInterval"
 			ng-model-onblur
-			ng-change="targetBlur()"
+			ng-change="ctrl.targetBlur()"
 			placeholder="interval (empty = auto)"></input>
 		</li>
 
@@ -98,59 +57,133 @@
 		</li>
 
 		<li>
-			<select ng-model="target.downsampleAggregator" class="tight-form-input input-small"
-				ng-options="agg for agg in aggregators"
-				ng-change="targetBlur()">
+			<select ng-model="ctrl.target.downsampleAggregator" class="tight-form-input input-small"
+				ng-options="agg for agg in ctrl.aggregators"
+				ng-change="ctrl.targetBlur()">
+			</select>
+		</li>
+
+		<li class="tight-form-item query-keyword" style="width: 59px" ng-if="ctrl.tsdbVersion == 2">
+			Fill
+		</li>
+
+		<li ng-if="ctrl.tsdbVersion == 2">
+			<select ng-model="ctrl.target.downsampleFillPolicy" class="tight-form-input input-small"
+				ng-options="agg for agg in ctrl.fillPolicies"
+				ng-change="ctrl.targetBlur()">
 			</select>
 		</li>
 
 		<li class="tight-form-item query-keyword">
-			取消降低采样 <editor-checkbox text="" model="target.disableDownsampling" change="targetBlur()"></editor-checkbox>
+			取消降低采样 <editor-checkbox text="" model="ctrl.target.disableDownsampling" change="ctrl.targetBlur()"></editor-checkbox>
 		</li>
 
 	</ul>
 	<div class="clearfix"></div>
+</div>
+
+<div class="tight-form" ng-if="ctrl.tsdbVersion == 2">
+  <ul class="tight-form-list" role="menu">
+    <li class="tight-form-item tight-form-align query-keyword" style="width: 100px">
+      Filters
+      <tip ng-if="ctrl.tsdbVersion == 2">Filters does not work with tags, either of the two will work but not both.</tip>
+    </li>
+    <li ng-repeat="fil in ctrl.target.filters track by $index" class="tight-form-item">
+      {{fil.tagk}}&nbsp;=&nbsp;{{fil.type}}&#40;{{fil.filter}}&#41;&nbsp;&#44&nbsp;groupBy&nbsp;=&nbsp;{{fil.groupBy}}
+      <a ng-click="ctrl.editFilter(fil, $index)">
+        <i class="fa fa-pencil"></i>
+      </a>
+      <a ng-click="ctrl.removeFilter($index)">
+        <i class="fa fa-remove"></i>
+      </a>
+    </li>
+    <li class="tight-form-item query-keyword" ng-hide="ctrl.addFilterMode">
+      <a ng-click="ctrl.addFilter()">
+        <i class="fa fa-plus"></i>
+      </a>
+    </li>
+
+    <li class="query-keyword" ng-show="ctrl.addFilterMode">
+      <input type="text" class="input-small tight-form-input" spellcheck='false'
+      bs-typeahead="ctrl.suggestTagKeys" data-min-length=0 data-items=100
+      ng-model="ctrl.target.currentFilterKey" placeholder="key"></input>
+
+      Type <select ng-model="ctrl.target.currentFilterType"
+      class="tight-form-input input-small"
+      ng-options="filType for filType in ctrl.filterTypes">
+      </select>
+
+      <input type="text" class="input-small tight-form-input"
+      spellcheck='false' bs-typeahead="ctrl.suggestTagValues"
+      data-min-length=0 data-items=100 ng-model="ctrl.target.currentFilterValue" placeholder="filter">
+      </input>
+
+      groupBy <editor-checkbox text="" model="ctrl.target.currentFilterGroupBy"></editor-checkbox>
+
+      <a bs-tooltip="ctrl.errors.filters"
+        style="color: rgb(229, 189, 28)"
+        ng-show="ctrl.errors.filters">
+        <i class="fa fa-warning"></i>
+      </a>
+
+      <a ng-click="ctrl.addFilter()" ng-hide="ctrl.errors.filters">
+        add filter
+      </a>
+      <a ng-click="ctrl.closeAddFilterMode()">
+        <i class="fa fa-remove"></i>
+      </a>
+
+    </li>
+  </ul>
+  <div class="clearfix"></div>
 </div>
 
 <div class="tight-form">
 	<ul class="tight-form-list" role="menu">
 		<li class="tight-form-item tight-form-align query-keyword" style="width: 100px">
 			标签
+      <tip ng-if="ctrl.tsdbVersion == 2">Please use filters, tags are deprecated in opentsdb 2.2</tip>
 		</li>
-		<li ng-repeat="(key, value) in target.tags track by $index" class="tight-form-item">
-			  {{key}}&nbsp;=&nbsp;{{value}}
-			<a ng-click="editTag(key, value)">
-        <i class="fa fa-pencil"></i>
-      </a>
-      <a ng-click="removeTag(key)">
+		<li ng-repeat="(key, value) in ctrl.target.tags track by $index" class="tight-form-item">
+			{{key}}&nbsp;=&nbsp;{{value}}
+			<a ng-click="ctrl.editTag(key, value)">
+				<i class="fa fa-pencil"></i>
+			</a>
+			<a ng-click="ctrl.removeTag(key)">
 				<i class="fa fa-remove"></i>
 			</a>
 		</li>
 
-		<li class="tight-form-item query-keyword" ng-hide="addTagMode">
-			<a ng-click="addTag()">
+		<li class="tight-form-item query-keyword" ng-hide="ctrl.addTagMode">
+			<a ng-click="ctrl.addTag()">
 				<i class="fa fa-plus"></i>
 			</a>
 		</li>
 
-		<li ng-show="addTagMode">
+		<li ng-show="ctrl.addTagMode">
 			<input type="text" class="input-small tight-form-input" spellcheck='false'
-			bs-typeahead="suggestTagKeys" data-min-length=0 data-items=100
-			ng-model="target.currentTagKey" placeholder="key"></input>
+			bs-typeahead="ctrl.suggestTagKeys" data-min-length=0 data-items=100
+			ng-model="ctrl.target.currentTagKey" placeholder="key"></input>
 
 			<input type="text" class="input-small tight-form-input"
-			spellcheck='false' bs-typeahead="suggestTagValues"
-			data-min-length=0 data-items=100 ng-model="target.currentTagValue" placeholder="value">
+			spellcheck='false' bs-typeahead="ctrl.suggestTagValues"
+			data-min-length=0 data-items=100 ng-model="ctrl.target.currentTagValue" placeholder="value">
 			</input>
-			<a ng-click="addTag()">
+
+      <a bs-tooltip="ctrl.errors.tags"
+        style="color: rgb(229, 189, 28)"
+        ng-show="ctrl.errors.tags">
+        <i class="fa fa-warning"></i>
+      </a>
+
+			<a ng-click="ctrl.addTag()" ng-hide="ctrl.errors.tags">
 				添加标签
 			</a>
-			<a bs-tooltip="target.errors.tags"
-				style="color: rgb(229, 189, 28)"
-				ng-show="target.errors.tags">
-				<i class="fa fa-warning"></i>
-			</a>
-		</li>
+      <a ng-click="ctrl.closeAddTagMode()">
+        <i class="fa fa-remove"></i>
+      </a>
+
+    </li>
 	</ul>
 	<div class="clearfix"></div>
 </div>
@@ -158,31 +191,31 @@
 <div class="tight-form">
 	<ul class="tight-form-list" role="menu">
 		<li class="tight-form-item tight-form-align query-keyword" style="width: 100px">
-			比率 <editor-checkbox text="" model="target.shouldComputeRate" change="targetBlur()"></editor-checkbox>
+			Rate <editor-checkbox text="" model="ctrl.target.shouldComputeRate" change="ctrl.targetBlur()"></editor-checkbox>
 		</li>
 
-		<li class="tight-form-item query-keyword" ng-hide="!target.shouldComputeRate">
-			计数器 <editor-checkbox text="" model="target.isCounter" change="targetBlur()"></editor-checkbox>
+		<li class="tight-form-item query-keyword" ng-hide="!ctrl.target.shouldComputeRate">
+			Counter <editor-checkbox text="" model="ctrl.target.isCounter" change="ctrl.targetBlur()"></editor-checkbox>
 		</li>
 
-		<li class="tight-form-item query-keyword" ng-hide="!target.isCounter || !target.shouldComputeRate">
+		<li class="tight-form-item query-keyword" ng-hide="!ctrl.target.isCounter || !ctrl.target.shouldComputeRate">
 			计数器最大值:
 		</li>
 
-		<li ng-hide="!target.isCounter || !target.shouldComputeRate">
-			<input type="text" class="tight-form-input input-small" ng-disabled="!target.shouldComputeRate"
-			ng-model="target.counterMax" spellcheck='false'
+		<li ng-hide="!ctrl.target.isCounter || !ctrl.target.shouldComputeRate">
+			<input type="text" class="tight-form-input input-small" ng-disabled="!ctrl.target.shouldComputeRate"
+			ng-model="ctrl.target.counterMax" spellcheck='false'
 			placeholder="max value" ng-model-onblur
-			ng-blur="targetBlur()"></input>
+			ng-blur="ctrl.targetBlur()"></input>
 		</li>
-		<li class="tight-form-item query-keyword" ng-hide="!target.isCounter || !target.shouldComputeRate">
+		<li class="tight-form-item query-keyword" ng-hide="!ctrl.target.isCounter || !ctrl.target.shouldComputeRate">
 			重置数值:
 		</li>
-		<li ng-hide="!target.isCounter || !target.shouldComputeRate">
-			<input type="text" class="tight-form-input input-small" ng-disabled="!target.shouldComputeRate"
-			ng-model="target.counterResetValue" spellcheck='false'
+		<li ng-hide="!ctrl.target.isCounter || !ctrl.target.shouldComputeRate">
+			<input type="text" class="tight-form-input input-small" ng-disabled="!ctrl.target.shouldComputeRate"
+			ng-model="ctrl.target.counterResetValue" spellcheck='false'
 			placeholder="reset value" ng-model-onblur
-			ng-blur="targetBlur()"></input>
+			ng-blur="ctrl.targetBlur()"></input>
 		</li>
 	</ul>
 

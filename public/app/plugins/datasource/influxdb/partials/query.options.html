@@ -1,52 +1,46 @@
 <section class="grafana-metric-options">
-	<div class="tight-form">
-		<ul class="tight-form-list">
-			<li class="tight-form-item tight-form-item-icon">
-				<i class="fa fa-wrench"></i>
-			</li>
-			<li class="tight-form-item">
-				 Group by time interval
-			</li>
-			<li>
-				<input type="text" class="input-medium tight-form-input" ng-model="panel.interval" ng-blur="get_data();"
+	<div class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form">
+				<span class="gf-form-label"><i class="fa fa-wrench"></i></span>
+				<span class="gf-form-label width-11">Group by time interval</span>
+				<input type="text" class="gf-form-input" ng-model="ctrl.panelCtrl.panel.interval" ng-blur="ctrl.panelCtrl.refresh();"
 				spellcheck='false' placeholder="example: >10s">
-			</li>
-			<li class="tight-form-item">
-				<i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >60s'" data-placement="right"></i>
-			</li>
-		</ul>
-		<div class="clearfix"></div>
-	</div>
-
-	<div class="tight-form last">
-		<ul class="tight-form-list">
-			<li class="tight-form-item tight-form-item-icon">
-				<i class="fa fa-info-circle"></i>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					alias patterns
-				</a>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="toggleEditorHelp(2)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					stacking &amp; and fill
-				</a>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					group by time
-				</a>
-			</li>
-		</ul>
-		<div class="clearfix"></div>
+				<span class="gf-form-label"><i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >60s'" data-placement="right"></i></span>
+			</div>
+		</div>
+		<div class="gf-form-inline">
+			<div class="gf-form">
+				<!--span class="gf-form-label">
+					<i class="fa fa-info-circle"></i>
+				</span-->
+				<span class="gf-form-label width-10">
+					<a ng-click="ctrl.panelCtrl.toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+						<i class="fa fa-info-circle"></i>
+						&nbsp;alias patterns
+					</a>
+				</span>
+				<span class="gf-form-label width-10">
+					<a ng-click="ctrl.panelCtrl.toggleEditorHelp(2)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					<i class="fa fa-info-circle"></i>
+						&nbsp;stacking &amp; and fill
+					</a>
+				</span>
+				<span class="gf-form-label width-10">
+					<a ng-click="ctrl.panelCtrl.toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					<i class="fa fa-info-circle"></i>
+						&nbsp;group by time
+					</a>
+				</span>
+			</div>
+		</div>
 	</div>
 </section>
 
 <div class="editor-row">
 	<div class="pull-left" style="margin-top: 30px;">
 
-		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 1">
+		<div class="grafana-info-box span6" ng-if="ctrl.panelCtrl.editorHelpIndex === 1">
 			<h5>Alias patterns</h5>
 			<ul>
 				<li>$m = replaced with measurement name</li>
@@ -58,7 +52,7 @@
 			</ul>
 		</div>
 
-		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 2">
+		<div class="grafana-info-box span6" ng-if="ctrl.panelCtrl.editorHelpIndex === 2">
 			<h5>Stacking and fill</h5>
 			<ul>
 				<li>When stacking is enabled it important that points align</li>
@@ -69,7 +63,7 @@
 			</ul>
 		</div>
 
-		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 3">
+		<div class="grafana-info-box span6" ng-if="ctrl.panelCtrl.editorHelpIndex === 3">
 			<h5>Group by time</h5>
 			<ul>
 				<li>Group by time is important, otherwise the query could return many thousands of datapoints that will slow down Grafana</li>
@@ -80,8 +74,6 @@
 				<li>Example: &gt;60s if you write metrics to InfluxDB every 60 seconds</li>
 			</ul>
 		</div>
-
-
 	</div>
 </div>
 

@@ -1,39 +1,37 @@
-page_title: About Grafana
-page_description: Introduction to Grafana.
-page_keywords: grafana, introduction, documentation, about
+---
+page_title: Grafana Installation
+page_description: Install guide for Grafana.
+page_keywords: grafana, installation, documentation
+---
 
-# About Grafana
+# Installation
 
-Grafana is a leading open source application for visualizing large-scale measurement data.
+Grafana is easily installed via a Debian/Ubuntu package (.deb), via
+Redhat/Centos package (.rpm) or manually via a tarball that contains all
+required files and binaries. If you can't find a package or binary for
+your platform, you might be able to build one yourself. Read the [build
+from source](../project/building_from_source) instructions for more
+information.
 
-It provides a powerful and elegant way to create, share, and explore data and dashboards from your disparate metric databases, either with your team or the world.
+## Platforms
+- [Installing on Debian / Ubuntu](installation/debian.md)
+- [Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)](installation/rpm.md)
+- [Installing on Mac OS X](installation/mac.md)
+- [Installing on Windows](installation/windows.md)
+- [Installing on Docker](installation/docker.md)
+- [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)](installation/provisioning.md)
+- [Nightly Builds](http://grafana.org/download/builds.html)
 
-Grafana is most commonly used for Internet infrastructure and application analytics, but many use it in other domains including industrial sensors, home automation, weather, and process control.
+## Configuration
 
-Grafana features pluggable panels and data sources allowing easy extensibility. There is currently rich support for [Graphite](http://graphite.readthedocs.org/en/latest/), [InfluxDB](http://influxdb.org) and [OpenTSDB](http://opentsdb.net). There is also experimental support for [KairosDB](https://github.com/kairosdb/kairosdb), [Prometheus](http://prometheus.io/), and SQL is on the roadmap. Grafana has a variety of panels, including a fully featured graph panel with rich visualization options.
+The back-end web server has a number of configuration options. Go the
+[Configuration](/installation/configuration) page for details on all
+those options.
 
-Version 2.0 was released in April 2015: Grafana now ships with its own backend server that brings [many changes and features](../guides/whats-new-in-v2/).    
-Version 2.1 was released in July 2015 and added [even more features and enhancements](../guides/whats-new-in-v2-1/).
+## Data sources guides
 
-## Community Resources, Feedback, and Support
+- [Graphite](datasources/graphite.md)
+- [Elasticsearch](datasources/elasticsearch.md)
+- [InfluxDB](datasources/influxdb.md)
+- [OpenTSDB](datasources/opentsdb.md)
 
-Thousands of organizations large and small rely on Grafana, and we have a vibrant and active community that constantly inspires us.
-
-Please don't hesitate to [open a new issue on Github](https://github.com/grafana/grafana/issues) with your suggestions, ideas, and bug reports.
-
-Most of the new features and improvements that go into Grafana come from our users. We greatly value your feedback and suggestions; we consider them paramount to making the product better!
-
-If you have any trouble with Grafana, whether you can't get it set up or you just want clarification on a feature, there are a number of ways to get help:
-
-- [Troubleshooting guide](/installation/troubleshooting/)
-- \#grafana IRC channel on the freenode network (chat.freenode.net)
-- Search closed and open [issues on GitHub](https://github.com/grafana/grafana/issues)
-- [Mailing list](https://groups.io/org/groupsio/grafana)
-
-## Commercial Support
-
-[raintank](http://www.raintank.io), the company behind Grafana, will be launching a SaaS Grafana-based platform later this year that will also include commercial support for all your existing Grafana installations. Please sign up for [early access at raintank](http://www.raintank.io) for more information.
-
-## License
-
-By utilizing this software, you agree to the terms of the included license. Grafana is licensed under the Apache 2.0 agreement. See [LICENSE](https://github.com/grafana/grafana/blob/master/LICENSE.md) for the full license terms.

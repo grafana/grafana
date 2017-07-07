@@ -1,17 +1,20 @@
 {
-  "pluginType": "datasource",
+  "type": "datasource",
   "name": "OpenTSDB",
-
-  "type": "opentsdb",
-  "serviceName": "OpenTSDBDatasource",
-
-  "module": "app/plugins/datasource/opentsdb/datasource",
-
-  "partials": {
-    "config": "app/plugins/datasource/opentsdb/partials/config.html"
-  },
+  "id": "opentsdb",
 
   "metrics": true,
+  "defaultMatchFormat": "pipe",
   "annotations": true,
-  "defaultMatchFormat": "pipe"
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+    },
+    "logos": {
+      "small": "img/opentsdb_logo.png",
+      "large": "img/opentsdb_logo.png"
+    }
+  }
 }

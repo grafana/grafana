@@ -1,0 +1,68 @@
+//
+// Alerts
+// --------------------------------------------------
+
+
+// Base styles
+// -------------------------
+
+.alert {
+  padding: 8px 35px 13px 14px;
+  margin-bottom: $line-height-base;
+  text-shadow: 0 1px 0 rgba(255,255,255,.5);
+  background-color: $state-warning-bg;
+  position: relative;
+  color: $white;
+  text-shadow: 0 1px 0 rgba(0,0,0,.5);
+  border-radius: 2px;
+}
+
+// Alternate styles
+// -------------------------
+
+.alert-success {
+  background-color: $successBackground;
+}
+
+.alert-danger,
+.alert-error {
+  background-color: $errorBackground;
+}
+.alert-info {
+  background-color: $infoBackground;
+}
+.alert-warning {
+  background-color: $state-warning-bg;
+}
+
+.page-alert-list {
+  z-index: 8000;
+  min-width: 300px;
+  max-width: 300px;
+  position: fixed;
+  right: 20px;
+  top: 56px;
+}
+
+.alert-close {
+  position: absolute;
+  top: -4px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  background: $white;
+  border-radius: 50%;
+  border: none;
+  font-size: 1.1rem;
+  color: $dark-4;
+  .fa {
+    position: relative;
+    top: -2px;
+  }
+}
+
+.alert-title {
+  font-weight: $font-weight-semi-bold;
+  padding-bottom: 2px;
+}

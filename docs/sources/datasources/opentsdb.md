@@ -23,9 +23,13 @@ Name | The data source name, important that this is the same as in Grafana v1.x 
 Default | Default data source means that it will be pre-selected for new panels.
 Url | The http protocol, ip and port of you opentsdb server (default port is usually 4242)
 Access | Proxy = access via Grafana backend, Direct = access directory from browser.
+Version | Version = opentsdb version, either <=2.1 or 2.2
+Resolution | Metrics from opentsdb may have datapoints with either second or millisecond resolution.
 
 ## Query editor
-Open a graph in edit mode by click the title.
+Open a graph in edit mode by click the title. Query editor will differ if the datasource has version <=2.1 or = 2.2. In the former version, only tags can be used to query opentsdb. But in the latter version, filters as well as tags can be used to query opentsdb. Fill Policy is also introduced in opentsdb 2.2.
+
+  > Note: While using Opentsdb 2.2 datasource, make sure you use either Filters or Tags as they are mutually exclusive. If used together, might give you weird results.
 
 ![](/img/v2/opentsdb_query_editor.png)
 

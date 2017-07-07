@@ -1,87 +1,96 @@
-<topnav title="公司" icon="fa fa-fw fa-users" subnav="true">
-	<ul class="nav">
-		<li class="active"><a href="org/users">用户</a></li>
-	</ul>
-</topnav>
+<navbar icon="icon-gf icon-gf-users" title="公司成员" title-url="org/users">
+</navbar>
 
-<div class="page-container" style="background: transparent; border: 0;">
-	<div class="page-wide">
+<div class="page-container">
+	<div class="page-header">
+		<h1>公司成员</h1>
 
-		<h2>公司成员</h2>
+		<div class="page-header-tabs">
+			<button class="btn btn-success" ng-click="ctrl.openInviteModal()">
+				<i class="fa fa-plus"></i>
+				增加 或 邀请
+			</button>
 
-		<button class="btn btn-success pull-right" ng-click="openInviteModal()">
-			<i class="fa fa-plus"></i>
-			增加 或 邀请
-		</button>
+			<ul class="gf-tabs">
+				<li class="gf-tabs-item">
+					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 0" ng-class="{active: ctrl.editor.index === 0}">
+						账号 ({{ctrl.users.length}})
+					</a>
+				</li>
+				<li class="gf-tabs-item">
+					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 1" ng-class="{active: ctrl.editor.index === 1}">
+						等待邀请 ({{ctrl.pendingInvites.length}})
+					</a>
+				</li>
+			</ul>
+		</div>
+	</div>
 
-		<br>
+	<div ng-if="ctrl.editor.index === 0" class="tab-content">
+		<table class="filter-table form-inline">
+			<thead>
+				<tr>
+					<th>账号</th>
+					<th>邮箱</th>
+					<th>角色</th>
+					<th style="width: 34px;"></th>
+				</tr>
+			</thead>
+			<tr ng-repeat="user in ctrl.users">
+				<td>{{user.login}}</td>
+				<td><span class="ellipsis">{{user.email}}</span></td>
+				<td>
+					<select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="ctrl.updateOrgUser(user)">
+					</select>
+				</td>
+				<td>
+					<a ng-click="ctrl.removeUser(user)" class="btn btn-danger btn-mini">
+						<i class="fa fa-remove"></i>
+					</a>
+				</td>
+			</tr>
+		</table>
+	</div>
 
-		<tabset>
-			<tab heading="Users ({{users.length}})">
-				<table class="filter-table form-inline">
-					<thead>
-						<tr>
-							<th>账号</th>
-							<th>邮箱</th>
-							<th>角色</th>
-							<th></th>						</tr>
-					</thead>
-					<tr ng-repeat="user in users" ng-if="user.userId!=1">
-						<td>{{user.login}}</td>
-						<td><span class="ellipsis">{{user.email}}</span></td>
-						<td>
-							<select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(user)">
-							</select>
-						</td>
-						<td>
-							<a ng-click="removeUser(user)" class="btn btn-danger btn-mini">
-								<i class="fa fa-remove"></i>
-							</a>
-						</td>
-					</tr>
-				</table>
-			</tab>
-			<tab heading="等待邀请 ({{pendingInvites.length}})">
-				<table class="filter-table form-inline">
-					<thead>
-						<tr>
-							<th>Email</th>
-							<th>Name</th>
-							<th></th>
-						</tr>
-					</thead>
-					<tbody ng-repeat="invite in pendingInvites">
-						<tr ng-click="invite.expanded = !invite.expanded" ng-class="{'expanded': invite.expanded}">
-							<td>{{invite.email}}</td>
-							<td>{{invite.name}}</td>
-							<td class="text-right">
-								<button class="btn btn-inverse btn-mini " data-clipboard-text="{{invite.url}}" clipboard-button ng-click="copyInviteToClipboard($event)">
-									<i class="fa fa-clipboard"></i> 复制 邀请
-								</button>
-								&nbsp;
-								<button class="btn btn-inverse btn-mini">
-									详细
-									<i ng-show="!invite.expanded" class="fa fa-caret-right"></i>
-									<i ng-show="invite.expanded" class="fa fa-caret-down"></i>
-								</button>
-							</td>
-						</tr>
-						<tr ng-show="invite.expanded">
-							<td colspan="3">
-								<a href="{{invite.url}}">{{invite.url}}</a><br><br>
-								&nbsp;
-								<button class="btn btn-inverse btn-mini" ng-click="revokeInvite(invite, $event)">
-									<i class="fa fa-remove" style="color: red"></i> 撤销邀请
-								</button>
-								<span style="padding-left: 15px">
-									邀请时间: <em> {{invite.createdOn | date: 'shortDate'}} by {{invite.invitedBy}} </em>
-								</span>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-			</tab>
-		</tabset>
+	<div ng-if="ctrl.editor.index === 1" >
+		<table class="filter-table form-inline">
+			<thead>
+				<tr>
+					<th>Email</th>
+					<th>Name</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody ng-repeat="invite in ctrl.pendingInvites">
+				<tr ng-click="invite.expanded = !invite.expanded" ng-class="{'expanded': invite.expanded}">
+					<td>{{invite.email}}</td>
+					<td>{{invite.name}}</td>
+					<td class="text-right">
+						<button class="btn btn-inverse btn-mini " data-clipboard-text="{{invite.url}}" clipboard-button ng-click="ctrl.copyInviteToClipboard($event)">
+							<i class="fa fa-clipboard"></i> 复制 邀请
+						</button>
+						&nbsp;
+						<button class="btn btn-inverse btn-mini">
+							详细
+							<i ng-show="!invite.expanded" class="fa fa-caret-right"></i>
+							<i ng-show="invite.expanded" class="fa fa-caret-down"></i>
+						</button>
+					</td>
+				</tr>
+				<tr ng-show="invite.expanded">
+					<td colspan="3">
+						<a href="{{invite.url}}">{{invite.url}}</a><br><br>
+						&nbsp;
+						<button class="btn btn-inverse btn-mini" ng-click="ctrl.revokeInvite(invite, $event)">
+							<i class="fa fa-remove" style="color: red"></i> 撤销邀请
+						</button>
+						<span style="padding-left: 15px">
+							邀请时间: <em> {{invite.createdOn | date: 'shortDate'}} by {{invite.invitedBy}} </em>
+						</span>
+					</td>
+				</tr>
+			</tbody>
+		</table>
 
 	</div>
 </div>

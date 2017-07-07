@@ -45,50 +45,99 @@ define([
       });
     });
 
-    describe('render variable to string values', function() {
+    describe('replace can pass multi / all format', function() {
+      beforeEach(function() {
+        _templateSrv.init([{name: 'test', current: {value: ['value1', 'value2'] }}]);
+      });
+
+      it('should replace $test with globbed value', function() {
+        var target = _templateSrv.replace('this.$test.filters', {}, 'glob');
+        expect(target).to.be('this.{value1,value2}.filters');
+      });
+
+      it('should replace $test with piped value', function() {
+        var target = _templateSrv.replace('this=$test', {}, 'pipe');
+        expect(target).to.be('this=value1|value2');
+      });
+
+      it('should replace $test with piped value', function() {
+        var target = _templateSrv.replace('this=$test', {}, 'pipe');
+        expect(target).to.be('this=value1|value2');
+      });
+    });
+
+    describe('variable with all option', function() {
+      beforeEach(function() {
+        _templateSrv.init([{
+          name: 'test',
+          current: {value: '$__all' },
+          options: [
+            {value: '$__all'}, {value: 'value1'}, {value: 'value2'}
+          ]
+        }]);
+      });
+
+      it('should replace $test with formatted all value', function() {
+        var target = _templateSrv.replace('this.$test.filters', {}, 'glob');
+        expect(target).to.be('this.{value1,value2}.filters');
+      });
+    });
+
+    describe('variable with all option and custom value', function() {
+      beforeEach(function() {
+        _templateSrv.init([{
+          name: 'test',
+          current: {value: '$__all' },
+          allValue: '*',
+          options: [
+            {value: 'value1'}, {value: 'value2'}
+          ]
+        }]);
+      });
+
+      it('should replace $test with formatted all value', function() {
+        var target = _templateSrv.replace('this.$test.filters', {}, 'glob');
+        expect(target).to.be('this.*.filters');
+      });
+    });
+
+    describe('lucene format', function() {
+      it('should properly escape $test with lucene escape sequences', function() {
+        _templateSrv.init([{name: 'test', current: {value: 'value/4' }}]);
+        var target = _templateSrv.replace('this:$test', {}, 'lucene');
+        expect(target).to.be("this:value\\\/4");
+      });
+    });
+
+    describe('format variable to string values', function() {
       it('single value should return value', function() {
-        var result = _templateSrv.renderVariableValue({current: {value: 'test'}});
+        var result = _templateSrv.formatValue('test');
         expect(result).to.be('test');
       });
 
       it('multi value and glob format should render glob string', function() {
-        var result = _templateSrv.renderVariableValue({
-          multiFormat: 'glob',
-          current: {
-            value: ['test','test2'],
-          }
-        });
+        var result = _templateSrv.formatValue(['test','test2'], 'glob');
         expect(result).to.be('{test,test2}');
       });
 
       it('multi value and lucene should render as lucene expr', function() {
-        var result = _templateSrv.renderVariableValue({
-          multiFormat: 'lucene',
-          current: {
-            value: ['test','test2'],
-          }
-        });
-        expect(result).to.be('(\\\"test\\\" OR \\\"test2\\\")');
+        var result = _templateSrv.formatValue(['test','test2'], 'lucene');
+        expect(result).to.be('("test" OR "test2")');
       });
 
       it('multi value and regex format should render regex string', function() {
-        var result = _templateSrv.renderVariableValue({
-          multiFormat: 'regex values',
-          current: {
-            value: ['test','test2'],
-          }
-        });
-        expect(result).to.be('(test|test2)');
+        var result = _templateSrv.formatValue(['test.','test2'], 'regex');
+        expect(result).to.be('test\\.|test2');
       });
 
       it('multi value and pipe should render pipe string', function() {
-        var result = _templateSrv.renderVariableValue({
-          multiFormat: 'pipe',
-          current: {
-            value: ['test','test2'],
-          }
-        });
+        var result = _templateSrv.formatValue(['test','test2'], 'pipe');
         expect(result).to.be('test|test2');
+      });
+
+      it('slash should be properly escaped in regex format', function() {
+         var result = _templateSrv.formatValue('Gi3/14', 'regex');
+         expect(result).to.be('Gi3\\/14');
       });
 
     });
@@ -193,7 +242,6 @@ define([
         expect(target).to.be('Server: All, period: 13m');
       });
     });
-
 
   });
 

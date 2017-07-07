@@ -8,63 +8,47 @@ define([
 function (angular, _, coreModule, store, config) {
   'use strict';
 
-  coreModule.service('contextSrv', function($rootScope, $timeout) {
+  coreModule.default.service('contextSrv', function() {
     var self = this;
-    this.hostNum = 0;
+    
 
     function User() {
-      if (window.grafanaBootData.user) {
-        _.extend(this, window.grafanaBootData.user);
+      if (config.bootData.user) {
+        _.extend(this, config.bootData.user);
       }
     }
-
-    // events
-    $rootScope.$on('toggle-sidemenu', function() {
-      self.toggleSideMenu();
-    });
 
     this.hasRole = function(role) {
       return this.user.orgRole === role;
     };
 
-    this.setSideMenuState = function(state) {
-      this.sidemenu = state;
-      store.set('grafana.sidemenu', state);
+    this.setPinnedState = function(val) {
+      this.pinned = val;
+      store.set('grafana.sidemenu.pinned', val);
     };
 
     this.toggleSideMenu = function() {
-      this.setSideMenuState(!this.sidemenu);
-
-      $timeout(function() {
-        $rootScope.$broadcast("render");
-      }, 50);
+      this.sidemenu = !this.sidemenu;
+      if (!this.sidemenu) {
+        this.setPinnedState(false);
+      }
     };
 
-    this.getSidemenuDefault = function() {
-      return this.hasRole('Admin');
-    };
+    this.pinned = store.getBool('grafana.sidemenu.pinned', false);
+    if (this.pinned) {
+      this.sidemenu = true;
+    }
 
     this.version = config.buildInfo.version;
     this.lightTheme = false;
     this.user = new User();
     this.isSignedIn = this.user.isSignedIn;
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;
-    this.sidemenu = store.getBool('grafana.sidemenu', this.getSidemenuDefault());
-
-    if (this.isSignedIn && !store.exists('grafana.sidemenu')) {
-      // If the sidemenu has never been set before, set it to false.
-      // This will result in this.sidemenu and the localStorage grafana.sidemenu
-      // to be out of sync if the user has an admin role.  But this is
-      // intentional and results in the user seeing the sidemenu only on
-      // their first login.
-      store.set('grafana.sidemenu', false);
-    }
-
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
     this.isOrgAdmin = this.hasRole('Admin');
     this.system = 0;
     this.dashboardLink = "";
     this.systemsMap = window.grafanaBootData.systems;
-
+    this.hostNum = 0;
   });
 });

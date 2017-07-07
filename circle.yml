@@ -12,6 +12,8 @@ dependencies:
     - mkdir -p ${GOPATH}/src/${ORG_PATH}
     - ln -s ~/grafana ${GOPATH}/src/${ORG_PATH}
     - go get github.com/tools/godep
+    - rm -rf node_modules
+    - npm install -g npm
     - npm install
 
 test:
@@ -25,3 +27,10 @@ test:
      # js tests
      - ./node_modules/grunt-cli/bin/grunt test
      - npm run coveralls
+
+deployment:
+  master:
+    branch: master
+    owner: grafana
+    commands: 
+      - ./trigger_grafana_packer.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN}

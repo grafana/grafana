@@ -1,21 +1,26 @@
 <div class="modal-body">
-
-	<a class="modal-close" ng-click="dismiss();">
-		<i class="fa fa-remove"></i>
-	</a>
-
-	<div class="confirm-modal-icon">
+	<div class="modal-header">
+		<h2 class="modal-header-title">
 		<i class="fa fa-exclamation"></i>
+			<span class="p-l-1">尚未保存</span>
+		</h2>
+
+		<a class="modal-header-close" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</a>
 	</div>
 
-	<div class="confirm-modal-title">
-		您的操作尚未保存
-	</div>
+	<div class="modal-content text-center">
 
-	<div class="confirm-modal-buttons">
-		<button type="button" class="btn btn-inverse" ng-click="dismiss()">取消</button>
-		<button type="button" class="btn btn-danger" ng-click="ignore();dismiss()">忽略</button>
-		<button type="button" class="btn btn-success" ng-click="save();dismiss();">保存</button>
+		<div class="confirm-modal-text">
+			您的操作尚未保存
+		</div>
+
+		<div class="confirm-modal-buttons">
+			<button type="button" class="btn btn-inverse" ng-click="dismiss()">取消</button>
+			<button type="button" class="btn btn-danger" ng-click="ignore();dismiss()">忽略</button>
+			<button type="button" class="btn btn-success" ng-click="save();dismiss();">保存</button>
+		</div>
 	</div>
 
 </div>

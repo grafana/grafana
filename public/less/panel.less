@@ -1,35 +1,95 @@
-.panel {
-  display: inline-block;
-  float: left;
-  vertical-align: top;
-  position: relative;
-}
+//TODO update
+//// Help info
+//.help-info{
+//  position: absolute;
+//  top: 0;
+//  right: 0;
+//  width: 0;
+//  height: 0;
+//  background:rgba(229, 232, 235, 0.94);
+//
+//  font-weight: bold;
+//  font-size: 16px;
+//  line-height: 30px;
+//
+//  z-index: 99;
+//
+//  padding: 0 10%;
+//  .box-sizing(border-box);
+//
+//  .transition(all 0.2s linear);
+//
+//  overflow: hidden;
+//
+//  &>div{
+//    h2{
+//      text-align: center;
+//    }
+//    position: relative;
+//    top: 30%;
+//    height: 70%;
+//    transform: translateY(-25%);
+//  }
+//
+//  &.active{
+//    width: 100%;
+//    height: 100%;
+//    overflow: auto;
+//  }
+//
+//}
+//
+//.panel-associatoin {
+//  max-height: 500px;
+//  overflow: hidden;
+//  display: block;
+//  float: none;
+//  .grafana-options-table{
+//    max-height: 200px;
+//    overflow-y: scroll;
+//  }
+//  .span3 {
+//    width: 30%;
+//  }
+//}
+//
+//.panel-right-menu {
+//  margin-right: 11px;
+//  position: absolute;
+//  top: 0;
+//  right: 0;
+//}
+//.panel-right-menu-item {
+//  margin-right: 5px;
+//  cursor: pointer;
+//}
 
-.panel-margin {
-  margin: 5px;
-  display: block;
-}
+//.panel-help {
+//  color: @white;
+//  position: absolute;
+//  right: 0;
+//  padding: 0px 17px 6px 5px;
+//  top: 0;
+//  z-index: 10;
+//  i {
+//    position: relative;
+//    top: -2px;
+//    left: 9px;
+//  }
+//}
+//
+//.panel-help-arrow {
+//  width: 0;
+//  height: 0;
+//  position: absolute;
+//  border-left: 31px solid transparent;
+//  border-right: 30px solid transparent;
+//  border-bottom: 27px solid @grafanaPanelBackground;
+//  right: 0;
+//  bottom: 0;
+//}
 
-.panel-container {
-  background-color: @grafanaPanelBackground;
-  position: relative;
-  border: @grafanaPanelBorder;
-  &:hover {
-    .panel-actions {
-      display: block;
-    }
-  }
-
-  &.panel-transparent {
-    background-color: transparent;
-    border: none;
-  }
-}
-
-.panel-content {
-  padding: 0px 10px 5px 10px;
-}
-
+/*
 .panel-title-container {
   min-height: 15px;
   padding-top: 4px;
@@ -37,238 +97,18 @@
   width: 100%;
   position: relative;
 }
-
 .panel-title {
   border: 0px;
   font-weight: bold;
   cursor: auto;
   margin: 0 auto;
-}
+}*/
 
-.panel-links-btn {
-  margin-left: 10px;
-  display: none;
-}
-
-.panel-loading {
-  position:absolute;
-  top: -3px;
-  right: 0px;
-  z-index: 800;
-}
-
-.panel-header {
-  text-align: center;
-}
-
-.panel-error {
-  color: @white;
-  position: absolute;
-  left: 0;
-  padding: 0px 17px 6px 5px;
-  top: 0;
-  z-index: 10;
-  i {
-    position: relative;
-    top: -2px;
-  }
-}
-
-.panel-error-arrow {
-  width: 0;
-  height: 0;
-  position: absolute;
-  border-left: 31px solid transparent;
-  border-right: 30px solid transparent;
-  border-bottom: 27px solid @grafanaPanelBackground;
-  left: 0;
-  bottom: 0;
-}
-
-.panel-help {
-  color: @white;
-  position: absolute;
-  right: 0;
-  padding: 0px 17px 6px 5px;
-  top: 0;
-  z-index: 10;
-  i {
-    position: relative;
-    top: -2px;
-    left: 9px;
-  }
-}
-
-.panel-help-arrow {
-  width: 0;
-  height: 0;
-  position: absolute;
-  border-left: 31px solid transparent;
-  border-right: 30px solid transparent;
-  border-bottom: 27px solid @grafanaPanelBackground;
-  right: 0;
-  bottom: 0;
-}
-
-.panel-fullscreen {
-  margin: 5px 20px;
-  .panel-title-container {
-    padding: 8px;
-  }
-}
-
-.panel-full-edit {
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-.panel-menu {
-  z-index: 500;
-  position: absolute;
-  background: @grafanaTargetFuncBackground;
-  border: 1px solid black;
-
-  .panel-menu-row {
-    white-space: nowrap;
-    border-bottom: 1px solid black;
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-
-  .panel-menu-link, .panel-menu-icon {
-    padding: 5px 10px;
-  }
-
-  .panel-menu-link {
-    display: inline-block;
-    border-right: 1px solid black;
-    &:last-child {
-      border: none;
-    }
-  }
-
-  .dropdown-menu {
-    text-align: left;
-  }
-}
-
-.panel-highlight  {
-  .box-shadow(~"inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236, 0.8)");
-}
-
-.on-drag-hover {
-  .panel-container {
-    .box-shadow(~"inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236, 0.8)");
-  }
-}
-
-.panel-drop-zone {
-  display: none;
-  .panel-container {
-    border: 1px solid @grayDark;
-  }
-}
-
-.panel-ghost{
-  width: 100%;
-  .panel-container {
-    border: none;
-    background: transparent;
-  }
-  .panel-ghost-list {
-    margin: 10px 0 10px 20px;
-  }
-
-  button {
-    text-align: left;
-    min-width: 135px;
-    .fa {
-      position: relative;
-      left: -5px;
-    }
-  }
-}
-
+/*
 .panel-time-info {
   font-weight: bold;
   margin-right: 15px;
   color: @blue;
   font-size: 85%;
   position: absolute;
-}
-
-.resize-panel-handle {
-  cursor: se-resize;
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 15px;
-  height: 15px;
-  display: block;
-}
-
-// Help info
-.help-info{
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 0;
-    height: 0;
-    background:rgba(229, 232, 235, 0.94);
-
-    font-weight: bold;
-    font-size: 16px;
-    line-height: 30px;
-
-    z-index: 99;
-
-    padding: 0 10%;
-    .box-sizing(border-box);
-
-    .transition(all 0.2s linear);
-
-    overflow: hidden;
-
-    &>div{
-      h2{
-        text-align: center;
-      }
-      position: relative;
-      top: 30%;
-      height: 70%;
-      transform: translateY(-25%);
-    }
-
-    &.active{
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-    }
-
-}
-
-.panel-associatoin {
-  max-height: 500px;
-  overflow: hidden;
-  display: block;
-  float: none;
-  .grafana-options-table{
-    max-height: 200px;
-    overflow-y: scroll;
-  }
-  .span3 {
-    width: 30%;
-  }
-}
-
-.panel-right-menu {
-  margin-right: 11px;
-  position: absolute;
-  top: 0;
-  right: 0;
-}
-.panel-right-menu-item {
-  margin-right: 5px;
-  cursor: pointer;
-}
+}*/

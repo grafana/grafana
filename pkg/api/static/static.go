@@ -24,7 +24,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Unknwon/macaron"
+	"gopkg.in/macaron.v1"
 )
 
 var Root string

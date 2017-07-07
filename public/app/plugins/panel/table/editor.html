@@ -1,0 +1,168 @@
+<div class="editor-row">
+	<div class="section">
+		<h5>数据格式</h5>
+		<div class="tight-form-container">
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 140px">
+						转换成表数据
+					</li>
+					<li>
+						<select class="input-large tight-form-input"
+							ng-model="editor.panel.transform"
+							ng-options="k as v.description for (k, v) in editor.transformers"
+							ng-change="editor.transformChanged()"></select>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item" style="width: 140px">
+						列
+					</li>
+					<li class="tight-form-item" ng-repeat="column in editor.panel.columns">
+						<i class="pointer fa fa-remove" ng-click="editor.removeColumn(column)"></i>
+						<span>
+							{{column.text}}
+						</span>
+					</li>
+					<li>
+						<metric-segment segment="editor.addColumnSegment" get-options="editor.getColumnOptions()" on-change="editor.addColumn()"></metric-segment>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+
+	<div class="section">
+		<h5>表格展示</h5>
+		<div class="tight-form-container">
+			<div class="tight-form">
+				<ul class="tight-form-list">
+					<li class="tight-form-item">
+            分页大小
+					</li>
+					<li>
+						<input type="number" class="input-small tight-form-input" placeholder="100"
+						empty-to-null ng-model="editor.panel.pageSize" ng-change="editor.render()" ng-model-onblur>
+					</li>
+					<li class="tight-form-item">
+						<editor-checkbox text="滚动条" model="editor.panel.scroll" change="editor.render()"></editor-checkbox>
+					</li>
+					<li class="tight-form-item">
+            字体大小
+					</li>
+					<li>
+						<select class="input-small tight-form-input" ng-model="editor.panel.fontSize" ng-options="f for f in editor.fontSizes" ng-change="editor.render()"></select>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="editor-row" style="margin-top: 20px">
+	<h5>自定义列样式</h5>
+
+	<div class="tight-form-container">
+		<div ng-repeat="style in editor.panel.styles">
+			<div class="tight-form">
+				<ul class="tight-form-list pull-right">
+					<li class="tight-form-item last">
+						<i class="fa fa-remove pointer" ng-click="editor.removeColumnStyle(style)"></i>
+					</li>
+				</ul>
+
+				<ul class="tight-form-list">
+					<li class="tight-form-item">
+						Name or regex
+					</li>
+					<li>
+						<input type="text" ng-model="style.pattern" bs-typeahead="editor.getColumnNames" ng-blur="editor.render()" data-min-length=0 data-items=100 class="input-medium tight-form-input">
+					</li>
+					<li class="tight-form-item" style="width: 86px">
+            类型
+					</li>
+					<li>
+						<select class="input-small tight-form-input"
+							ng-model="style.type"
+							ng-options="c.value as c.text for c in editor.columnTypes"
+							ng-change="editor.render()"
+							style="width: 150px"
+							></select>
+					</li>
+				</ul>
+				<ul class="tight-form-list" ng-if="style.type === 'date'">
+					<li class="tight-form-item">
+						Format
+					</li>
+					<li>
+						<metric-segment-model property="style.dateFormat" options="editor.dateFormats" on-change="editor.render()" custom="true"></metric-segment-model>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form" ng-if="style.type === 'number'">
+				<ul class="tight-form-list">
+					<li class="tight-form-item text-right" style="width: 93px">
+						填充范围
+					</li>
+					<li>
+						<select class="input-small tight-form-input"
+							ng-model="style.colorMode"
+							ng-options="c.value as c.text for c in editor.colorModes"
+							ng-change="editor.render()"
+							style="width: 150px"
+							></select>
+					</li>
+					<li class="tight-form-item">
+						阈值<tip>根据逗号分隔</tip>
+					</li>
+					<li>
+						<input type="text" class="input-small tight-form-input" style="width: 150px" ng-model="style.thresholds" ng-blur="editor.render()" placeholder="50,80" array-join></input>
+					</li>
+					<li class="tight-form-item" style="width: 60px">
+						颜色
+					</li>
+					<li class="tight-form-item">
+						<spectrum-picker ng-model="style.colors[0]" ng-change="editor.render()" ></spectrum-picker>
+						<spectrum-picker ng-model="style.colors[1]" ng-change="editor.render()" ></spectrum-picker>
+						<spectrum-picker ng-model="style.colors[2]" ng-change="editor.render()" ></spectrum-picker>
+					</li>
+					<li class="tight-form-item last">
+						<a class="pointer" ng-click="editor.invertColorOrder($index)">invert order</a>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+			<div class="tight-form" ng-if="style.type === 'number'">
+				<ul class="tight-form-list">
+					<li class="tight-form-item text-right" style="width: 93px">
+						单位
+					</li>
+					<li class="dropdown" style="width: 150px"
+						ng-model="style.unit"
+						dropdown-typeahead="editor.unitFormats"
+						dropdown-typeahead-on-select="editor.setUnitFormat(style, $subItem)">
+					</li>
+					<li class="tight-form-item" style="width: 86px">
+						小数点位数
+					</li>
+					<li style="width: 105px">
+						<input type="number" class="input-mini tight-form-input" ng-model="style.decimals" ng-change="render()" ng-model-onblur>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
+
+		</div>
+	</div>
+
+	<button class="btn btn-inverse" style="margin-top: 20px" ng-click="editor.addColumnStyle()">
+		新增列样式
+	</button>
+</div>
+

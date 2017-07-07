@@ -5,7 +5,7 @@ define([
 function(angular, coreModule) {
   'use strict';
 
-  coreModule.service('googleAnalyticsSrv', function($rootScope, $location) {
+  coreModule.default.service('googleAnalyticsSrv', function($rootScope, $location) {
     var first = true;
 
     this.init = function() {

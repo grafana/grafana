@@ -3,7 +3,7 @@ module.exports = function(config) {
     build: {
       expand: true,
       cwd: '<%= genDir %>',
-      src: '**/*.css',
+      src: ['css/*.css', 'vendor/css/*.css'],
       dest: '<%= genDir %>'
     }
   };

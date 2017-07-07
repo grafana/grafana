@@ -55,6 +55,7 @@ func sendUsageStats() {
 	metrics["stats.dashboards.count"] = statsQuery.Result.DashboardCount
 	metrics["stats.users.count"] = statsQuery.Result.UserCount
 	metrics["stats.orgs.count"] = statsQuery.Result.OrgCount
+	metrics["stats.playlist.count"] = statsQuery.Result.PlaylistCount
 
 	dsStats := m.GetDataSourceStatsQuery{}
 	if err := bus.Dispatch(&dsStats); err != nil {

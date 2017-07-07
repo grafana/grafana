@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gosimple/slug"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 // Typed errors
@@ -33,15 +34,18 @@ type Dashboard struct {
 	Created time.Time
 	Updated time.Time
 
+	UpdatedBy int64
+	CreatedBy int64
+
 	Title string
-	Data  map[string]interface{}
+	Data  *simplejson.Json
 }
 
 // NewDashboard creates a new dashboard
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
-	dash.Data = make(map[string]interface{})
-	dash.Data["title"] = title
+	dash.Data = simplejson.New()
+	dash.Data.Set("title", title)
 	dash.Title = title
 	dash.Created = time.Now()
 	dash.Updated = time.Now()
@@ -51,34 +55,24 @@ func NewDashboard(title string) *Dashboard {
 
 // GetTags turns the tags in data json into go string array
 func (dash *Dashboard) GetTags() []string {
-	jsonTags := dash.Data["tags"]
-	if jsonTags == nil || jsonTags == "" {
-		return []string{}
-	}
-
-	arr := jsonTags.([]interface{})
-	b := make([]string, len(arr))
-	for i := range arr {
-		b[i] = arr[i].(string)
-	}
-	return b
+	return dash.Data.Get("tags").MustStringArray()
 }
 
-func NewDashboardFromJson(data map[string]interface{}) *Dashboard {
+func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 	dash := &Dashboard{}
 	dash.Data = data
-	dash.Title = dash.Data["title"].(string)
+	dash.Title = dash.Data.Get("title").MustString()
 	dash.UpdateSlug()
 
-	if dash.Data["id"] != nil {
-		dash.Id = int64(dash.Data["id"].(float64))
+	if id, err := dash.Data.Get("id").Float64(); err == nil {
+		dash.Id = int64(id)
 
-		if dash.Data["version"] != nil {
-			dash.Version = int(dash.Data["version"].(float64))
+		if version, err := dash.Data.Get("version").Float64(); err == nil {
+			dash.Version = int(version)
 			dash.Updated = time.Now()
 		}
 	} else {
-		dash.Data["version"] = 0
+		dash.Data.Set("version", 0)
 		dash.Created = time.Now()
 		dash.Updated = time.Now()
 	}
@@ -89,19 +83,25 @@ func NewDashboardFromJson(data map[string]interface{}) *Dashboard {
 // GetDashboardModel turns the command into the savable model
 func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash := NewDashboardFromJson(cmd.Dashboard)
+
+	if dash.Data.Get("version").MustInt(0) == 0 {
+		dash.CreatedBy = cmd.UserId
+	}
+
+	dash.UpdatedBy = cmd.UserId
 	dash.OrgId = cmd.OrgId
 	dash.UpdateSlug()
 	return dash
 }
 
 // GetString a
-func (dash *Dashboard) GetString(prop string) string {
-	return dash.Data[prop].(string)
+func (dash *Dashboard) GetString(prop string, defaultValue string) string {
+	return dash.Data.Get(prop).MustString(defaultValue)
 }
 
 // UpdateSlug updates the slug
 func (dash *Dashboard) UpdateSlug() {
-	title := strings.ToLower(dash.Data["title"].(string))
+	title := strings.ToLower(dash.Data.Get("title").MustString())
 	dash.Slug = slug.Make(title)
 }
 
@@ -110,9 +110,10 @@ func (dash *Dashboard) UpdateSlug() {
 //
 
 type SaveDashboardCommand struct {
-	Dashboard map[string]interface{} `json:"dashboard" binding:"Required"`
-	Overwrite bool                   `json:"overwrite"`
-	OrgId     int64                  `json:"-"`
+	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
+	UserId    int64            `json:"userId"`
+	OrgId     int64            `json:"-"`
+	Overwrite bool             `json:"overwrite"`
 
 	Result *Dashboard
 }
@@ -142,4 +143,9 @@ type DashboardTagCloudItem struct {
 type GetDashboardTagsQuery struct {
 	OrgId  int64
 	Result []*DashboardTagCloudItem
+}
+
+type GetDashboardsQuery struct {
+	DashboardIds []int64
+	Result       *[]Dashboard
 }

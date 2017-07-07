@@ -1,90 +1,76 @@
 <div class="editor-row">
-	<h5>链接和导航</h5>
+	<h5 class="section-heading">Links and Dash Navigation</h5>
 
-	<div ng-repeat="link in dashboard.links" style="margin-top: 10px;">
-		<div class="tight-form">
-			<ul class="tight-form-list pull-right">
-				<li class="tight-form-item">
-					<i ng-click="moveLink($index, -1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i>
-					<i ng-click="moveLink($index, 1)" ng-hide="$last" class="pointer fa fa-fw fa-arrow-down"></i>
-				</li>
-				<li class="tight-form-item last">
-					<i class="fa fa-remove pointer" ng-click="deleteLink($index)"></i>
-				</li>
-			</ul>
+	<div ng-repeat="link in dashboard.links">
 
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 20px">
-					<i class="fa fa-fw fa-unlink"></i>
-				</li>
+		<div class="gf-form-group">
+			<div class="gf-form-inline">
+				<div class="gf-form">
+					<span class="gf-form-label width-6">Type</span>
+					<div class="gf-form-select-wrapper width-10">
+						<select class="gf-form-input" ng-model="link.type" ng-options="f for f in ['dashboards','link']" ng-change="updated()"></select>
+					</div>
+				</div>
 
-				<li class="tight-form-item">类型</li>
-				<li>
-					<select class="input-medium tight-form-input" style="width: 150px;" ng-model="link.type" ng-options="f for f in ['dashboards','link']" ng-change="updated()"></select>
-				</li>
+				<div class="gf-form" ng-show="link.type === 'dashboards'">
+					<span class="gf-form-label">With tags</span>
+					<bootstrap-tagsinput ng-model="link.tags" tagclass="label label-tag" placeholder="add tags"></bootstrap-tagsinput>
+				</div>
 
-				<li class="tight-form-item" ng-show="link.type === 'dashboards'">标签</li>
-				<li ng-show="link.type === 'dashboards'">
-					<bootstrap-tagsinput ng-model="link.tags" tagclass="label label-tag" placeholder="加入标签">
-					</bootstrap-tagsinput>
-				</li>
-				<li class="tight-form-item" ng-show="link.type === 'dashboards'">
-					<editor-checkbox text="下拉显示" model="link.asDropdown" change="updated()"></editor-checkbox>
-				</li>
-				<li class="tight-form-item" ng-show="link.type === 'dashboards' && link.asDropdown">
-					标题
-				</li>
-				<li ng-show="link.type === 'dashboards' && link.asDropdown">
-					<input type="text" ng-model="link.title" class="input-medium tight-form-input" ng-model-onblur ng-change="updated()">
-				</li>
-				<li class="tight-form-item" ng-show="link.type === 'link'" style="width: 51px">Url</li>
-				<li ng-show="link.type === 'link'">
-					<input type="text" ng-model="link.url" class="input-xlarge tight-form-input" style="width: 302px;" ng-model-onblur ng-change="updated()">
-				</li>
-				<li class="tight-form-item" ng-show="link.type === 'link'">
+				<div class="gf-form" ng-show="link.type === 'dashboards'">
+					<editor-checkbox text="As dropdown" model="link.asDropdown" change="updated()"></editor-checkbox>
+				</div>
+
+				<div class="gf-form max-width-30" ng-show="link.type === 'link'">
+					<li class="gf-form-label width-6">Url</li>
+					<input type="text" ng-model="link.url" class="gf-form-input" ng-model-onblur ng-change="updated()">
+				</div>
+
+				<div class="gf-form">
+					<button class="btn btn-inverse btn-mini" ng-click="moveLink($index, -1)" ng-hide="$first"><i class="fa fa-arrow-up"></i></button>
+				</div>
+				<div class="gf-form">
+					<button class="btn btn-inverse btn-mini" ng-click="moveLink($index, 1)" ng-hide="$last"><i class="fa fa-arrow-down"></i></button>
+				</div>
+				<div class="gf-form">
+					<button class="btn btn-inverse btn-mini" ng-click="deleteLink($index)"><i class="fa fa-trash" ></i></button>
+				</div>
+			</div>
+
+			<div class="gf-form" ng-show="link.type === 'dashboards' && link.asDropdown">
+				<span class="gf-form-label width-6">标题</span>
+				<input type="text" ng-model="link.title" class="gf-form-input max-width-25" ng-model-onblur ng-change="updated()">
+			</div>
+
+			<div class="gf-form-inline" ng-show="link.type === 'link'">
+				<div class="gf-form">
+					<span class="gf-form-label width-6">标题</span>
+					<input type="text" ng-model="link.title" class="gf-form-input max-width-10" ng-model-onblur ng-change="updated()">
+				</div>
+
+				<div class="gf-form">
+					<span class="gf-form-label width-6">Tooltip</span>
+					<input type="text" ng-model="link.tooltip" class="gf-form-input max-width-10" placeholder="Open dashboard" ng-model-onblur ng-change="updated()">
+				</div>
+
+				<div class="gf-form">
+					<span class="gf-form-label width-6">图表</span>
+					<div class="gf-form-select-wrapper max-width-10">
+						<select class="gf-form-input" ng-model="link.icon" ng-options="k as k for (k, v) in iconMap" ng-change="updated()"></select>
+					</div>
+				</div>
+			</div>
+
+			<div class="gf-form-inline">
+				<div class="gf-form">
+					<span class="gf-form-label width-6">Include</span>
+					<editor-checkbox text="Time range" model="link.keepTime" change="updated()"></editor-checkbox>
+					<editor-checkbox text="Variable values" model="link.includeVars" change="updated()"></editor-checkbox>
 					<editor-checkbox text="Open in new tab " model="link.targetBlank" change="updated()"></editor-checkbox>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-		<div class="tight-form" ng-if="link.type === 'link'">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 20px">
-					<i class="fa fa-fw fa-unlink invisible"></i>
-				</li>
-				<li class="tight-form-item" ng-show="link.type === 'link'" style="width: 31px">Title</li>
-				<li ng-show="link.type === 'link'">
-					<input type="text" ng-model="link.title" class="input-medium tight-form-input" ng-model-onblur ng-change="updated()">
-				</li>
-				<li class="tight-form-item" ng-show="link.type === 'link'" style="width: 51px">Tooltip</li>
-				<li ng-show="link.type === 'link'">
-					<input type="text" ng-model="link.tooltip" class="input-medium tight-form-input" style="width: 151px" placeholder="Open dashboard" ng-model-onblur ng-change="updated()">
-				</li>
-				<li class="tight-form-item" ng-show="link.type === 'link'">Icon</li>
-				<li ng-show="link.type === 'link'">
-					<select class="input-medium tight-form-input" style="width: 110px;" ng-model="link.icon" ng-options="k as k for (k, v) in iconMap" ng-change="updated()"></select>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 20px">
-					<i class="fa fa-fw fa-unlink invisible"></i>
-				</li>
-				<li class="tight-form-item">
-					<editor-checkbox text="和当前时间范围保持一致" model="link.keepTime" change="updated()"></editor-checkbox>
-				</li>
-				<li class="tight-form-item">
-					<editor-checkbox text="添加当前变量值" model="link.includeVars" change="updated()"></editor-checkbox>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
-<div class="editor-row">
-	<br>
-	<button class="btn btn-inverse" ng-click="addLink()"><i class="fa fa-plus"></i> 增加链接</button>
-</div>
 
+<button class="btn btn-inverse" ng-click="addLink()"><i class="fa fa-plus"></i> Add link</button>

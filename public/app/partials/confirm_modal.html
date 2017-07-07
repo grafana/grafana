@@ -1,23 +1,30 @@
 <div class="modal-body">
+	<div class="modal-header">
+		<h2 class="modal-header-title">
+			<i class="fa {{icon}}"></i>
+			<span class="p-l-1">
+				{{title}}
+			</span>
+		</h2>
 
-	<a class="modal-close" ng-click="dismiss();">
-		<i class="fa fa-remove"></i>
-	</a>
-
-	<div class="confirm-modal-icon">
-		<i class="fa {{icon}}"></i>
+		<a class="modal-header-close" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</a>
 	</div>
 
-	<div class="confirm-modal-title">
-		{{title}}
-	</div>
+	<div class="modal-content text-center">
 
-	<div class="modal-tagline" ng-bind-html="text">
-	</div>
+		<div class="confirm-modal-text">
+			{{text}}
+			<div class="confirm-modal-text2" ng-show="text2">
+				{{text2}}
+			</div>
+		</div>
 
-	<div class="confirm-modal-buttons">
-		<button type="button" class="btn btn-inverse" ng-click="dismiss()">{{noText}}</button>
-		<button type="button" class="btn btn-danger" ng-click="onConfirm();dismiss();">{{yesText}}</button>
+		<div class="confirm-modal-buttons">
+			<button type="button" class="btn btn-inverse" ng-click="dismiss()">{{noText}}</button>
+			<button type="button" class="btn btn-danger" ng-click="onConfirm();dismiss();">{{yesText}}</button>
+		</div>
 	</div>
 
 </div>

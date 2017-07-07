@@ -20,7 +20,7 @@ migrate to Grafana 2.0.
 ## Adding Data sources
 
 The `config.js` file has been deprecated. Data sources are now managed via
-the UI or [HTTP API](../reference/http_api.md). Manage your
+the UI or [HTTP API](../http_api/overview.md). Manage your
 organizations data sources by clicking on the `Data Sources` menu on the
 side menu (which can be toggled via the Grafana icon in the upper left
 of your browser).

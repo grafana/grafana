@@ -6,7 +6,7 @@ define([
 function (angular, _, coreModule) {
   'use strict';
 
-  coreModule.service('uiSegmentSrv', function($sce, templateSrv) {
+  coreModule.default.service('uiSegmentSrv', function($sce, templateSrv) {
     var self = this;
 
     function MetricSegment(options) {

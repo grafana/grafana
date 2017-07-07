@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Unknwon/macaron"
+	"gopkg.in/macaron.v1"
 
 	"github.com/wangy1931/grafana/pkg/bus"
 	"github.com/wangy1931/grafana/pkg/components/apikeygen"
@@ -259,4 +259,8 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 	}
 
 	ctx.JSON(status, resp)
+}
+
+func (ctx *Context) HasUserRole(role m.RoleType) bool {
+	return ctx.OrgRole.Includes(role)
 }

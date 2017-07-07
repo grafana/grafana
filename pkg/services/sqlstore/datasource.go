@@ -79,6 +79,7 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			BasicAuth:         cmd.BasicAuth,
 			BasicAuthUser:     cmd.BasicAuthUser,
 			BasicAuthPassword: cmd.BasicAuthPassword,
+			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
 			Created:           time.Now(),
 			Updated:           time.Now(),

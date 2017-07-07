@@ -19,18 +19,20 @@ import (
 
 // Various errors the driver might return. Can change between driver versions.
 var (
-	ErrInvalidConn = errors.New("Invalid Connection")
-	ErrMalformPkt  = errors.New("Malformed Packet")
-	ErrNoTLS       = errors.New("TLS encryption requested but server does not support TLS")
-	ErrOldPassword = errors.New("This server only supports the insecure old password authentication. If you still want to use it, please add 'allowOldPasswords=1' to your DSN. See also https://github.com/go-sql-driver/mysql/wiki/old_passwords")
-	ErrOldProtocol = errors.New("MySQL-Server does not support required Protocol 41+")
-	ErrPktSync     = errors.New("Commands out of sync. You can't run this command now")
-	ErrPktSyncMul  = errors.New("Commands out of sync. Did you run multiple statements at once?")
-	ErrPktTooLarge = errors.New("Packet for query is too large. You can change this value on the server by adjusting the 'max_allowed_packet' variable.")
-	ErrBusyBuffer  = errors.New("Busy buffer")
+	ErrInvalidConn       = errors.New("invalid connection")
+	ErrMalformPkt        = errors.New("malformed packet")
+	ErrNoTLS             = errors.New("TLS requested but server does not support TLS")
+	ErrOldPassword       = errors.New("this user requires old password authentication. If you still want to use it, please add 'allowOldPasswords=1' to your DSN. See also https://github.com/go-sql-driver/mysql/wiki/old_passwords")
+	ErrCleartextPassword = errors.New("this user requires clear text authentication. If you still want to use it, please add 'allowCleartextPasswords=1' to your DSN")
+	ErrUnknownPlugin     = errors.New("this authentication plugin is not supported")
+	ErrOldProtocol       = errors.New("MySQL server does not support required protocol 41+")
+	ErrPktSync           = errors.New("commands out of sync. You can't run this command now")
+	ErrPktSyncMul        = errors.New("commands out of sync. Did you run multiple statements at once?")
+	ErrPktTooLarge       = errors.New("packet for query is too large. Try adjusting the 'max_allowed_packet' variable on the server")
+	ErrBusyBuffer        = errors.New("busy buffer")
 )
 
-var errLog Logger = log.New(os.Stderr, "[MySQL] ", log.Ldate|log.Ltime|log.Lshortfile)
+var errLog = Logger(log.New(os.Stderr, "[mysql] ", log.Ldate|log.Ltime|log.Lshortfile))
 
 // Logger is used to log critical error messages.
 type Logger interface {

@@ -1,103 +1,99 @@
 <div ng-controller="AnnotationsEditorCtrl" ng-init="init()">
-
-	<div class="gf-box-header">
-		<div class="gf-box-title">
-			<i class="fa fa-bolt"></i>
+	<div class="tabbed-view-header">
+		<h2 class="tabbed-view-title">
 			标注
-		</div>
+		</h2>
 
-		<div class="tabs">
-			<ul class="nav nav-tabs">
-				<li ng-class="{active: mode === 'list'}">
-					<a ng-click="mode = 'list';">
-						列表
-					</a>
-				</li>
+		<ul class="gf-tabs">
+			<li class="gf-tabs-item" >
+				<a class="gf-tabs-link" ng-click="mode = 'list';" ng-class="{active: mode === 'list'}">
+					列表
+				</a>
+			</li>
+			<li class="gf-tabs-item" ng-show="mode === 'edit'">
+				<a class="gf-tabs-link" ng-class="{active: mode === 'edit'}">
+					{{currentAnnotation.name}}
+				</a>
+			</li>
+			<li class="gf-tabs-item" ng-show="mode === 'new'">
+				<span class="active gf-tabs-link">新建</span>
+			</li>
+		</ul>
 
-				<li ng-class="{active: mode === 'edit'}" ng-show="mode === 'edit'">
-					<a>
-						{{currentAnnotation.name}}
-					</a>
-				</li>
-
-				<li ng-class="{active: mode === 'new'}">
-					<a ng-click="mode = 'new';">
-						<i class="fa fa-plus"></i>
-						新建
-					</a>
-				</li>
-			</ul>
-		</div>
-
-		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+		<button class="tabbed-view-close-btn" ng-click="dismiss();">
 			<i class="fa fa-remove"></i>
 		</button>
 	</div>
 
-	<div class="gf-box-body">
-
+	<div class="tabbed-view-body">
 		<div class="editor-row row" ng-if="mode === 'list'">
-			<div class="span6">
-				<div ng-if="annotations.length === 0">
-					<em>您尚未创建任何标注</em>
-				</div>
-				<table class="grafana-options-table">
-					<tr ng-repeat="annotation in annotations">
-						<td style="width:90%">
-							<i class="fa fa-bolt"></i> &nbsp;
-							{{annotation.name}}
-						</td>
-						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
-						<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
+			<div ng-if="annotations.length === 0">
+				<em>您尚未创建任何标注</em>
+			</div>
+			<table class="grafana-options-table">
+				<tr ng-repeat="annotation in annotations">
+					<td style="width:90%">
+						<i class="fa fa-bolt" style="color:{{annotation.iconColor}}"></i> &nbsp;
+						{{annotation.name}}
+					</td>
+					<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
+					<td style="width: 1%"><i ng-click="_.move(annotations,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
 
-						<td style="width: 1%" class="nobg">
-							<a ng-click="edit(annotation)" class="btn btn-inverse btn-mini">
-								<i class="fa fa-edit"></i>
-								编辑
-							</a>
-						</td>
-						<td style="width: 1%" class="nobg">
-							<a ng-click="removeAnnotation(annotation)" class="btn btn-danger btn-mini">
-								<i class="fa fa-remove"></i>
-							</a>
-						</td>
-					</tr>
-				</table>
+					<td style="width: 1%">
+						<a ng-click="edit(annotation)" class="btn btn-inverse btn-mini">
+							<i class="fa fa-edit"></i>
+							编辑
+						</a>
+					</td>
+					<td style="width: 1%">
+						<a ng-click="removeAnnotation(annotation)" class="btn btn-danger btn-mini">
+							<i class="fa fa-remove"></i>
+						</a>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<div class="gf-form" ng-show="mode === 'list'">
+			<div class="gf-form-button-row">
+				<a type="button" class="btn gf-form-button btn-success" ng-click="mode = 'new';"><i class="fa fa-plus" ></i>&nbsp;&nbsp;New</a>
 			</div>
 		</div>
 
-		<div ng-if="mode === 'edit' || mode === 'new'">
-			<div class="editor-row">
-				<div class="editor-option">
-					<label class="small">标注名</label>
-					<input type="text" class="input-medium" ng-model='currentAnnotation.name' placeholder="name"></input>
-				</div>
-				<div class="editor-option">
-					<label class="small">数据源</label>
-					<select ng-model="currentAnnotation.datasource" ng-options="f.name as f.name for f in datasources" ng-change="datasourceChanged()"></select>
-				</div>
-				<div class="editor-option text-center">
-					<label class="small">图标颜色</label>
-					<spectrum-picker ng-model="currentAnnotation.iconColor"></spectrum-picker>
-				</div>
-				<div class="editor-option">
-					<label class="small">图标大小</label>
-					<select class="input-mini" ng-model="currentAnnotation.iconSize" ng-options="f for f in [7,8,9,10,13,15,17,20,25,30]"></select>
-				</div>
-				<editor-opt-bool text="Grid line" model="currentAnnotation.showLine"></editor-opt-bool>
-				<div class="editor-option text-center">
-					<label class="small">标注线颜色</label>
-					<spectrum-picker ng-model="currentAnnotation.lineColor"></spectrum-picker>
+		<div class="annotations-basic-settings" ng-if="mode === 'edit' || mode === 'new'">
+			<div class="gf-form-group">
+				<div class="gf-form-inline">
+					<div class="gf-form gf-size-max-xxl">
+						<span class="gf-form-label">标注名</span>
+						<input type="text" class="gf-form-input" ng-model='currentAnnotation.name' placeholder="name"></input>
+					</div>
+					<div class="gf-form">
+						<span class="gf-form-label max-width-10">数据源</span>
+						<div class="gf-form-select-wrapper">
+							<select class="gf-form-input gf-size-auto" ng-model="currentAnnotation.datasource" ng-options="f.name as f.name for f in datasources" ng-change="datasourceChanged()"></select>
+						</div>
+					</div>
+					<div class="gf-form">
+						<label class="gf-form-label">
+							<span>颜色</span>
+						</label>
+						<spectrum-picker class="gf-form-input" ng-model="currentAnnotation.iconColor"></spectrum-picker>
+					</div>
 				</div>
 			</div>
 
-			<datasource-editor-view datasource="currentAnnotation.datasource" name="annotations-query-editor"></datasource-editor-view>
+			<rebuild-on-change property="currentDatasource">
+				<plugin-component type="annotations-query-ctrl">
+				</plugin-component>
+			</rebuild-on-change>
 
-			<br>
-			<button ng-show="mode === 'new'" type="button" class="btn btn-success" ng-click="add()">Add</button>
-			<button ng-show="mode === 'edit'" type="button" class="btn btn-success pull-left" ng-click="update();">Update</button>
-			<br>
-			<br>
+			<div class="gf-form">
+				<div class="gf-form-button-row p-y-0">
+					<button ng-show="mode === 'new'" type="button" class="btn gf-form-button btn-success" ng-click="add()">Add</button>
+					<button ng-show="mode === 'edit'" type="button" class="btn btn-success pull-left" ng-click="update()">Update</button>
+				</div>
+			</div>
 		</div>
+
 	</div>
 </div>

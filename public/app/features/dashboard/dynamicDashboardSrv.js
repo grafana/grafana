@@ -31,15 +31,15 @@ function (angular, _) {
       var i, j, row, panel;
       for (i = 0; i < this.dashboard.rows.length; i++) {
         row = this.dashboard.rows[i];
-
         // handle row repeats
         if (row.repeat) {
-          this.repeatRow(row);
+          this.repeatRow(row, i);
         }
         // clean up old left overs
         else if (row.repeatRowId && row.repeatIteration !== this.iteration) {
           this.dashboard.rows.splice(i, 1);
           i = i - 1;
+          continue;
         }
 
         // repeat panels
@@ -52,19 +52,21 @@ function (angular, _) {
           else if (panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
             row.panels = _.without(row.panels, panel);
             j = j - 1;
+          } else if (!_.isEmpty(panel.scopedVars) && panel.repeatIteration !== this.iteration) {
+            panel.scopedVars = {};
           }
         }
       }
     };
 
     // returns a new row clone or reuses a clone from previous iteration
-    this.getRowClone = function(sourceRow, index) {
-      if (index === 0) {
+    this.getRowClone = function(sourceRow, repeatIndex, sourceRowIndex) {
+      if (repeatIndex === 0) {
         return sourceRow;
       }
 
       var i, panel, row, copy;
-      var sourceRowId = _.indexOf(this.dashboard.rows, sourceRow) + 1;
+      var sourceRowId = sourceRowIndex + 1;
 
       // look for row to reuse
       for (i = 0; i < this.dashboard.rows.length; i++) {
@@ -77,7 +79,7 @@ function (angular, _) {
 
       if (!copy) {
         copy = angular.copy(sourceRow);
-        this.dashboard.rows.push(copy);
+        this.dashboard.rows.splice(sourceRowIndex + repeatIndex, 0, copy);
 
         // set new panel ids
         for (i = 0; i < copy.panels.length; i++) {
@@ -92,8 +94,8 @@ function (angular, _) {
       return copy;
     };
 
-    // returns a new panel clone or reuses a clone from previous iteration
-    this.repeatRow = function(row) {
+    // returns a new row clone or reuses a clone from previous iteration
+    this.repeatRow = function(row, rowIndex) {
       var variables = this.dashboard.templating.list;
       var variable = _.findWhere(variables, {name: row.repeat});
       if (!variable) {
@@ -108,7 +110,7 @@ function (angular, _) {
       }
 
       _.each(selected, function(option, index) {
-        copy = self.getRowClone(row, index);
+        copy = self.getRowClone(row, index, rowIndex);
         copy.scopedVars = {};
         copy.scopedVars[variable.name] = option;
 
@@ -116,8 +118,9 @@ function (angular, _) {
           panel = copy.panels[i];
           panel.scopedVars = {};
           panel.scopedVars[variable.name] = option;
+          panel.repeatIteration = this.iteration;
         }
-      });
+      }, this);
     };
 
     this.getPanelClone = function(sourcePanel, row, index) {

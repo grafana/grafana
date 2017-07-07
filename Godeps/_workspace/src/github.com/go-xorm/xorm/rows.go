@@ -1,3 +1,7 @@
+// Copyright 2015 The Xorm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package xorm
 
 import (
@@ -41,7 +45,7 @@ func newRows(session *Session, bean interface{}) (*Rows, error) {
 		sqlStr = filter.Do(sqlStr, session.Engine.dialect, rows.session.Statement.RefTable)
 	}
 
-	rows.session.Engine.logSQL(sqlStr, args)
+	rows.session.saveLastSQL(sqlStr, args)
 	var err error
 	rows.stmt, err = rows.session.DB().Prepare(sqlStr)
 	if err != nil {

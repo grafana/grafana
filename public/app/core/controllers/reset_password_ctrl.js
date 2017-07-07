@@ -5,7 +5,7 @@ define([
 function (angular, coreModule) {
   'use strict';
 
-  coreModule.controller('ResetPasswordCtrl', function($scope, contextSrv, backendSrv, $location) {
+  coreModule.default.controller('ResetPasswordCtrl', function($scope, contextSrv, backendSrv, $location) {
     contextSrv.sidemenu = false;
     $scope.formModel = {};
     $scope.mode = 'send';

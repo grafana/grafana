@@ -6,7 +6,7 @@ define([
 function (angular, coreModule, config) {
   'use strict';
 
-  coreModule.controller('LoginCtrl', function($scope, backendSrv, contextSrv, $location) {
+  coreModule.default.controller('LoginCtrl', function($scope, backendSrv, contextSrv, $location) {
     $scope.formModel = {
       user: '',
       email: '',
@@ -17,6 +17,7 @@ function (angular, coreModule, config) {
 
     $scope.googleAuthEnabled = config.googleAuthEnabled;
     $scope.githubAuthEnabled = config.githubAuthEnabled;
+    $scope.oauthEnabled = config.githubAuthEnabled || config.googleAuthEnabled;
     $scope.disableUserSignUp = config.disableUserSignUp;
     $scope.loginHint     = config.loginHint;
 
@@ -90,7 +91,5 @@ function (angular, coreModule, config) {
     };
 
     $scope.init();
-
   });
-
 });

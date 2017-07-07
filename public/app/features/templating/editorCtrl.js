@@ -12,14 +12,25 @@ function (angular, _) {
     var replacementDefaults = {
       type: 'query',
       datasource: null,
-      refresh: false,
+      refresh: 0,
       name: '',
+      hide: 0,
       options: [],
       includeAll: false,
-      allFormat: 'glob',
       multi: false,
-      multiFormat: 'glob',
     };
+
+    $scope.refreshOptions = [
+      {value: 0, text: "Never"},
+      {value: 1, text: "On Dashboard Load"},
+      {value: 2, text: "On Time Range Change"},
+    ];
+
+    $scope.hideOptions = [
+      {value: 0, text: ""},
+      {value: 1, text: "Label"},
+      {value: 2, text: "Variable"},
+    ];
 
     $scope.init = function() {
       $scope.mode = 'list';

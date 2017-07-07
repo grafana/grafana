@@ -20,22 +20,22 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Unknwon/macaron"
 	"github.com/wangy1931/grafana/pkg/log"
 	"github.com/wangy1931/grafana/pkg/setting"
+	"gopkg.in/macaron.v1"
 )
 
 func Logger() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		start := time.Now()
 
-		rw := res.(macaron.ResponseWriter)
-		c.Next()
-
 		uname := c.GetCookie(setting.CookieUserName)
 		if len(uname) == 0 {
 			uname = "-"
 		}
+
+		rw := res.(macaron.ResponseWriter)
+		c.Next()
 
 		content := fmt.Sprintf("Completed %s %s \"%s %s %s\" %v %s %d bytes in %dus", c.RemoteAddr(), uname, req.Method, req.URL.Path, req.Proto, rw.Status(), http.StatusText(rw.Status()), rw.Size(), time.Since(start)/time.Microsecond)
 

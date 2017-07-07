@@ -142,7 +142,11 @@ function (angular, $, _, moment) {
     };
 
     p.isSubmenuFeaturesEnabled = function() {
-      return this.templating.list.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
+      var visableTemplates = _.filter(this.templating.list, function(template) {
+        return template.hideVariable === undefined || template.hideVariable === false;
+      });
+
+      return visableTemplates.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
     };
 
     p.getPanelInfoById = function(panelId) {
@@ -179,6 +183,23 @@ function (angular, $, _, moment) {
       return newPanel;
     };
 
+    p.formatDate = function(date, format) {
+      date = moment.isMoment(date) ? date : moment(date);
+      format = format || 'YYYY-MM-DD HH:mm:ss';
+
+      return this.timezone === 'browser' ?
+        moment(date).format(format) :
+        moment.utc(date).format(format);
+    };
+
+    p.getRelativeTime = function(date) {
+      date = moment.isMoment(date) ? date : moment(date);
+
+      return this.timezone === 'browser' ?
+        moment(date).fromNow() :
+        moment.utc(date).fromNow();
+    };
+
     p.getNextQueryLetter = function(panel) {
       var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -189,51 +210,13 @@ function (angular, $, _, moment) {
       });
     };
 
-    p.addDataQueryTo = function(panel, datasource) {
-      var target = {
-        refId: this.getNextQueryLetter(panel)
-      };
-
-      if (datasource) {
-        target.datasource = datasource.name;
-      }
-
-      panel.targets.push(target);
-    };
-
-    p.removeDataQuery = function (panel, query) {
-      panel.targets = _.without(panel.targets, query);
-    };
-
-    p.duplicateDataQuery = function(panel, query) {
-      var clone = angular.copy(query);
-      clone.refId = this.getNextQueryLetter(panel);
-      panel.targets.push(clone);
-    };
-
-    p.moveDataQuery = function(panel, fromIndex, toIndex) {
-      _.move(panel.targets, fromIndex, toIndex);
-    };
-
-    p.formatDate = function(date, format) {
-      if (!moment.isMoment(date)) {
-        date = moment(date);
-      }
-
-      format = format || 'YYYY-MM-DD HH:mm:ss';
-
-      return this.timezone === 'browser' ?
-        moment(date).format(format) :
-        moment.utc(date).format(format);
-    };
-
     p._updateSchema = function(old) {
       var i, j, k;
       var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.schemaVersion = 8;
+      this.schemaVersion = 12;
 
-      if (oldVersion === 8) {
+      if (oldVersion === this.schemaVersion) {
         return;
       }
 
@@ -384,6 +367,97 @@ function (angular, $, _, moment) {
               }
             }
           });
+        });
+      }
+
+      // schema version 9 changes
+      if (oldVersion < 9) {
+        // move aliasYAxis changes
+        panelUpgrades.push(function(panel) {
+          if (panel.type !== 'singlestat' && panel.thresholds !== "") { return; }
+
+          if (panel.thresholds) {
+            var k = panel.thresholds.split(",");
+
+            if (k.length >= 3) {
+              k.shift();
+              panel.thresholds = k.join(",");
+            }
+          }
+        });
+      }
+
+      // schema version 10 changes
+      if (oldVersion < 10) {
+        // move aliasYAxis changes
+        panelUpgrades.push(function(panel) {
+          if (panel.type !== 'table') { return; }
+
+          _.each(panel.styles, function(style) {
+            if (style.thresholds && style.thresholds.length >= 3) {
+              var k = style.thresholds;
+              k.shift();
+              style.thresholds = k;
+            }
+          });
+        });
+      }
+
+      if (oldVersion < 12) {
+        // update template variables
+        _.each(this.templating.list, function(templateVariable) {
+          if (templateVariable.refresh) { templateVariable.refresh = 1; }
+          if (!templateVariable.refresh) { templateVariable.refresh = 0; }
+          if (templateVariable.hideVariable) {
+            templateVariable.hide = 2;
+          } else if (templateVariable.hideLabel) {
+            templateVariable.hide = 1;
+          } else {
+            templateVariable.hide = 0;
+          }
+        });
+      }
+
+      if (oldVersion < 12) {
+        // update graph yaxes changes
+        panelUpgrades.push(function(panel) {
+          if (panel.type !== 'graph') { return; }
+          if (!panel.yaxes) {
+            panel.yaxes = [
+              {
+                show: panel['y-axis'],
+                min: panel.grid.leftMin,
+                max: panel.grid.leftMax,
+                logBase: panel.grid.leftLogBase,
+                format: panel.y_formats[0],
+                label: panel.leftYAxisLabel,
+              },
+              {
+                show: panel['y-axis'],
+                min: panel.grid.rightMin,
+                max: panel.grid.rightMax,
+                logBase: panel.grid.rightLogBase,
+                format: panel.y_formats[1],
+                label: panel.rightYAxisLabel,
+              }
+            ];
+
+            panel.xaxis = {
+              show: panel['x-axis'],
+            };
+
+            delete panel.grid.leftMin;
+            delete panel.grid.leftMax;
+            delete panel.grid.leftLogBase;
+            delete panel.grid.rightMin;
+            delete panel.grid.rightMax;
+            delete panel.grid.rightLogBase;
+            delete panel.y_formats;
+            delete panel.leftYAxisLabel;
+            delete panel.rightYAxisLabel;
+            delete panel['y-axis'];
+            delete panel['x-axis'];
+          }
         });
       }
 

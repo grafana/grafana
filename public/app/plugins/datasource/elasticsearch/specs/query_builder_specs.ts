@@ -1,8 +1,6 @@
-///<amd-dependency path="../query_builder" name="ElasticQueryBuilder"/>
 
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
-
-declare var ElasticQueryBuilder: any;
+import ElasticQueryBuilder from '../query_builder';
 
 describe('ElasticQueryBuilder', function() {
   var builder;

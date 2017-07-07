@@ -1,3 +1,7 @@
+// Copyright 2015 The Xorm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package xorm
 
 // Executed before an object is initially persisted to the database
@@ -17,6 +21,10 @@ type BeforeDeleteProcessor interface {
 
 type BeforeSetProcessor interface {
 	BeforeSet(string, Cell)
+}
+
+type AfterSetProcessor interface {
+	AfterSet(string, Cell)
 }
 
 // !nashtsai! TODO enable BeforeValidateProcessor when xorm start to support validations

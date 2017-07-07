@@ -1,9 +1,11 @@
-package ldap
+package ldap_test
 
 import (
 	"crypto/tls"
 	"fmt"
 	"testing"
+
+	"gopkg.in/ldap.v2"
 )
 
 var ldapServer = "ldap.itd.umich.edu"
@@ -21,7 +23,7 @@ var attributes = []string{
 
 func TestDial(t *testing.T) {
 	fmt.Printf("TestDial: starting...\n")
-	l, err := Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
+	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -32,7 +34,7 @@ func TestDial(t *testing.T) {
 
 func TestDialTLS(t *testing.T) {
 	fmt.Printf("TestDialTLS: starting...\n")
-	l, err := DialTLS("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapTLSPort), &tls.Config{InsecureSkipVerify: true})
+	l, err := ldap.DialTLS("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapTLSPort), &tls.Config{InsecureSkipVerify: true})
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -43,7 +45,7 @@ func TestDialTLS(t *testing.T) {
 
 func TestStartTLS(t *testing.T) {
 	fmt.Printf("TestStartTLS: starting...\n")
-	l, err := Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
+	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -58,16 +60,16 @@ func TestStartTLS(t *testing.T) {
 
 func TestSearch(t *testing.T) {
 	fmt.Printf("TestSearch: starting...\n")
-	l, err := Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
+	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
 	if err != nil {
 		t.Errorf(err.Error())
 		return
 	}
 	defer l.Close()
 
-	searchRequest := NewSearchRequest(
+	searchRequest := ldap.NewSearchRequest(
 		baseDN,
-		ScopeWholeSubtree, DerefAlways, 0, 0, false,
+		ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, false,
 		filter[0],
 		attributes,
 		nil)
@@ -83,16 +85,16 @@ func TestSearch(t *testing.T) {
 
 func TestSearchStartTLS(t *testing.T) {
 	fmt.Printf("TestSearchStartTLS: starting...\n")
-	l, err := Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
+	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
 	if err != nil {
 		t.Errorf(err.Error())
 		return
 	}
 	defer l.Close()
 
-	searchRequest := NewSearchRequest(
+	searchRequest := ldap.NewSearchRequest(
 		baseDN,
-		ScopeWholeSubtree, DerefAlways, 0, 0, false,
+		ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, false,
 		filter[0],
 		attributes,
 		nil)
@@ -123,7 +125,7 @@ func TestSearchStartTLS(t *testing.T) {
 
 func TestSearchWithPaging(t *testing.T) {
 	fmt.Printf("TestSearchWithPaging: starting...\n")
-	l, err := Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
+	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
 	if err != nil {
 		t.Errorf(err.Error())
 		return
@@ -136,9 +138,9 @@ func TestSearchWithPaging(t *testing.T) {
 		return
 	}
 
-	searchRequest := NewSearchRequest(
+	searchRequest := ldap.NewSearchRequest(
 		baseDN,
-		ScopeWholeSubtree, DerefAlways, 0, 0, false,
+		ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, false,
 		filter[2],
 		attributes,
 		nil)
@@ -149,12 +151,38 @@ func TestSearchWithPaging(t *testing.T) {
 	}
 
 	fmt.Printf("TestSearchWithPaging: %s -> num of entries = %d\n", searchRequest.Filter, len(sr.Entries))
+
+	searchRequest = ldap.NewSearchRequest(
+		baseDN,
+		ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, false,
+		filter[2],
+		attributes,
+		[]ldap.Control{ldap.NewControlPaging(5)})
+	sr, err = l.SearchWithPaging(searchRequest, 5)
+	if err != nil {
+		t.Errorf(err.Error())
+		return
+	}
+
+	fmt.Printf("TestSearchWithPaging: %s -> num of entries = %d\n", searchRequest.Filter, len(sr.Entries))
+
+	searchRequest = ldap.NewSearchRequest(
+		baseDN,
+		ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, false,
+		filter[2],
+		attributes,
+		[]ldap.Control{ldap.NewControlPaging(500)})
+	sr, err = l.SearchWithPaging(searchRequest, 5)
+	if err == nil {
+		t.Errorf("expected an error when paging size in control in search request doesn't match size given in call, got none")
+		return
+	}
 }
 
-func searchGoroutine(t *testing.T, l *Conn, results chan *SearchResult, i int) {
-	searchRequest := NewSearchRequest(
+func searchGoroutine(t *testing.T, l *ldap.Conn, results chan *ldap.SearchResult, i int) {
+	searchRequest := ldap.NewSearchRequest(
 		baseDN,
-		ScopeWholeSubtree, DerefAlways, 0, 0, false,
+		ldap.ScopeWholeSubtree, ldap.DerefAlways, 0, 0, false,
 		filter[i],
 		attributes,
 		nil)
@@ -169,17 +197,17 @@ func searchGoroutine(t *testing.T, l *Conn, results chan *SearchResult, i int) {
 
 func testMultiGoroutineSearch(t *testing.T, TLS bool, startTLS bool) {
 	fmt.Printf("TestMultiGoroutineSearch: starting...\n")
-	var l *Conn
+	var l *ldap.Conn
 	var err error
 	if TLS {
-		l, err = DialTLS("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapTLSPort), &tls.Config{InsecureSkipVerify: true})
+		l, err = ldap.DialTLS("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapTLSPort), &tls.Config{InsecureSkipVerify: true})
 		if err != nil {
 			t.Errorf(err.Error())
 			return
 		}
 		defer l.Close()
 	} else {
-		l, err = Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
+		l, err = ldap.Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
 		if err != nil {
 			t.Errorf(err.Error())
 			return
@@ -195,9 +223,9 @@ func testMultiGoroutineSearch(t *testing.T, TLS bool, startTLS bool) {
 		}
 	}
 
-	results := make([]chan *SearchResult, len(filter))
+	results := make([]chan *ldap.SearchResult, len(filter))
 	for i := range filter {
-		results[i] = make(chan *SearchResult)
+		results[i] = make(chan *ldap.SearchResult)
 		go searchGoroutine(t, l, results[i], i)
 	}
 	for i := range filter {
@@ -217,17 +245,17 @@ func TestMultiGoroutineSearch(t *testing.T) {
 }
 
 func TestEscapeFilter(t *testing.T) {
-	if got, want := EscapeFilter("a\x00b(c)d*e\\f"), `a\00b\28c\29d\2ae\5cf`; got != want {
+	if got, want := ldap.EscapeFilter("a\x00b(c)d*e\\f"), `a\00b\28c\29d\2ae\5cf`; got != want {
 		t.Errorf("Got %s, expected %s", want, got)
 	}
-	if got, want := EscapeFilter("Lučić"), `Lu\c4\8di\c4\87`; got != want {
+	if got, want := ldap.EscapeFilter("Lučić"), `Lu\c4\8di\c4\87`; got != want {
 		t.Errorf("Got %s, expected %s", want, got)
 	}
 }
 
 func TestCompare(t *testing.T) {
 	fmt.Printf("TestCompare: starting...\n")
-	l, err := Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
+	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", ldapServer, ldapPort))
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -243,5 +271,5 @@ func TestCompare(t *testing.T) {
 		return
 	}
 
-	fmt.Printf("TestCompare: -> num of entries = %d\n", sr)
+	fmt.Printf("TestCompare: -> %v\n", sr)
 }

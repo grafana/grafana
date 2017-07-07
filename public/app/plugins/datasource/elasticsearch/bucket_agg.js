@@ -8,6 +8,20 @@ function (angular, _, queryDef) {
 
   var module = angular.module('grafana.directives');
 
+  module.directive('elasticBucketAgg', function() {
+    return {
+      templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/bucket_agg.html',
+      controller: 'ElasticBucketAggCtrl',
+      restrict: 'E',
+      scope: {
+        target: "=",
+        index: "=",
+        onChange: "&",
+        getFields: "&",
+      }
+    };
+  });
+
   module.controller('ElasticBucketAggCtrl', function($scope, uiSegmentSrv, $q, $rootScope) {
     var bucketAggs = $scope.target.bucketAggs;
 
@@ -95,7 +109,18 @@ function (angular, _, queryDef) {
           settings.min_doc_count = settings.min_doc_count || 0;
           $scope.agg.field = $scope.target.timeField;
           settingsLinkText = 'Interval: ' + settings.interval;
-          settingsLinkText += ', Min Doc Count: ' + settings.min_doc_count;
+
+          if (settings.min_doc_count > 0) {
+            settingsLinkText += ', Min Doc Count: ' + settings.min_doc_count;
+          }
+
+          if (settings.trimEdges === undefined || settings.trimEdges < 0) {
+            settings.trimEdges = 0;
+          }
+
+          if (settings.trimEdges && settings.trimEdges > 0) {
+            settingsLinkText += ', Trim edges: ' + settings.trimEdges;
+          }
         }
       }
 

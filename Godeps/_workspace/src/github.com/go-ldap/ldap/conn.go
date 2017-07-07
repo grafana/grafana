@@ -8,11 +8,12 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"gopkg.in/asn1-ber.v1"
 	"log"
 	"net"
 	"sync"
 	"time"
+
+	"gopkg.in/asn1-ber.v1"
 )
 
 const (
@@ -52,6 +53,8 @@ type Conn struct {
 	outstandingRequests uint
 	messageMutex        sync.Mutex
 }
+
+var _ Client = &Conn{}
 
 // DefaultTimeout is a package-level variable that sets the timeout value
 // used for the Dial and DialTLS methods.
@@ -176,7 +179,7 @@ func (l *Conn) StartTLS(config *tls.Config) error {
 		ber.PrintPacket(packet)
 	}
 
-	if packet.Children[1].Children[0].Value.(int64) == 0 {
+	if resultCode, message := getLDAPResultCode(packet); resultCode == LDAPResultSuccess {
 		conn := tls.Client(l.conn, config)
 
 		if err := conn.Handshake(); err != nil {
@@ -186,6 +189,8 @@ func (l *Conn) StartTLS(config *tls.Config) error {
 
 		l.isTLS = true
 		l.conn = conn
+	} else {
+		return NewError(resultCode, fmt.Errorf("ldap: cannot StartTLS (%s)", message))
 	}
 	go l.reader()
 

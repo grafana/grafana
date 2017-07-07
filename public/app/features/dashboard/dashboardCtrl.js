@@ -2,8 +2,9 @@ define([
   'angular',
   'jquery',
   'app/core/config',
+  'moment',
 ],
-function (angular, $, config) {
+function (angular, $, config, moment) {
   "use strict";
 
   var module = angular.module('grafana.controllers');
@@ -22,7 +23,6 @@ function (angular, $, config) {
       $timeout) {
 
     $scope.editor = { index: 0 };
-    $scope.topNavPartial = 'app/features/dashboard/partials/dashboardTopNav.html';
     $scope.panels = config.panels;
 
     var resizeEventTimeout;
@@ -57,7 +57,6 @@ function (angular, $, config) {
 
         dashboardKeybindings.shortcuts($scope);
 
-        $scope.updateTopNavPartial();
         $scope.updateSubmenuVisibility();
         $scope.setWindowTitleAndTheme();
 
@@ -66,12 +65,6 @@ function (angular, $, config) {
         if (err.data && err.data.message) { err.message = err.data.message; }
         $scope.appEvent("alert-error", ['仪表盘初始化失败', '模板不能被正常的初始化: ' + err.message]);
       });
-    };
-
-    $scope.updateTopNavPartial = function() {
-      if ($scope.dashboard.meta.isSnapshot) {
-        $scope.topNavPartial = 'app/features/dashboard/partials/snapshotTopNav.html';
-      }
     };
 
     $scope.updateSubmenuVisibility = function() {
@@ -105,19 +98,11 @@ function (angular, $, config) {
       };
     };
 
-    $scope.panelEditorPath = function(type) {
-      return 'app/' + config.panels[type].path + '/editor.html';
-    };
-
-    $scope.pulldownEditorPath = function(type) {
-      return 'app/panels/'+type+'/editor.html';
-    };
-
     $scope.showJsonEditor = function(evt, options) {
       var editScope = $rootScope.$new();
       editScope.object = options.object;
       editScope.updateHandler = options.updateHandler;
-      $scope.appEvent('show-dash-editor', { src: 'app/partials/edit_json.html', scope: editScope });
+      $scope.appEvent('show-dash-editor', { src: 'public/app/partials/edit_json.html', scope: editScope });
     };
 
     $scope.onDrop = function(panelId, row, dropTarget) {
@@ -147,6 +132,10 @@ function (angular, $, config) {
       $scope.$on('$destroy', function() {
         angular.element(window).unbind('resize');
       });
+    };
+
+    $scope.formatDate = function(date) {
+      return moment(date).format('MMM Do YYYY, h:mm:ss a');
     };
 
   });

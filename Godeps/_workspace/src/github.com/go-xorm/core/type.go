@@ -53,6 +53,10 @@ func (s *SQLType) IsNumeric() bool {
 	return s.IsType(NUMERIC_TYPE)
 }
 
+func (s *SQLType) IsJson() bool {
+	return s.Name == Json
+}
+
 var (
 	Bit       = "BIT"
 	TinyInt   = "TINYINT"
@@ -101,6 +105,8 @@ var (
 	Serial    = "SERIAL"
 	BigSerial = "BIGSERIAL"
 
+	Json = "JSON"
+
 	SqlTypes = map[string]int{
 		Bit:       NUMERIC_TYPE,
 		TinyInt:   NUMERIC_TYPE,
@@ -112,6 +118,7 @@ var (
 
 		Enum: TEXT_TYPE,
 		Set:  TEXT_TYPE,
+		Json: TEXT_TYPE,
 
 		Char:       TEXT_TYPE,
 		Varchar:    TEXT_TYPE,
@@ -229,7 +236,6 @@ var (
 )
 
 func Type2SQLType(t reflect.Type) (st SQLType) {
-
 	switch k := t.Kind(); k {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
 		st = SQLType{Int, 0, 0}
@@ -252,7 +258,7 @@ func Type2SQLType(t reflect.Type) (st SQLType) {
 	case reflect.String:
 		st = SQLType{Varchar, 255, 0}
 	case reflect.Struct:
-		if t.ConvertibleTo(reflect.TypeOf(c_TIME_DEFAULT)) {
+		if t.ConvertibleTo(TimeType) {
 			st = SQLType{DateTime, 0, 0}
 		} else {
 			// TODO need to handle association struct

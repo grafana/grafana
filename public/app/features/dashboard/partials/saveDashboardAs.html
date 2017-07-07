@@ -1,25 +1,26 @@
-<div class="modal-body gf-box gf-box-no-margin" ng-controller="SaveDashboardAsCtrl" ng-init="init();">
-	<div class="gf-box-header">
-		<div class="gf-box-title">
+<div class="modal-body" ng-controller="SaveDashboardAsCtrl" ng-init="init();">
+	<div class="modal-header">
+		<h2 class="modal-header-title">
 			<i class="fa fa-copy"></i>
-			保存为...
-		</div>
+			<span class="p-l-1">保存为...</span>
+		</h2>
 
-		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+		<a class="modal-header-close" ng-click="dismiss();">
 			<i class="fa fa-remove"></i>
-		</button>
+		</a>
 	</div>
 
-	<div class="gf-box-body">
-		<div class="text-center">
-			<h4>新的标题</h4>
+	<div class="modal-content">
+		<div class="p-t-2">
+			<div class="gf-form">
+				<label class="gf-form-label">新的标题</label>
+				<input type="text" class="gf-form-input" ng-model="clone.title" give-focus="true" ng-keydown="keyDown($event)">
+			</div>
+		</div>
 
-			<input type="text" class="input input-fluid" ng-model="clone.title" give-focus="true" ng-keydown="keyDown($event)">
-			<br>
-			<br>
-
-			<button class="btn btn-inverse" ng-click="dismiss();">取消</button>
-			<button class="btn btn-success" ng-click="saveClone();">保存</button>
+		<div class="gf-form-button-row text-center">
+			<a class="btn btn-success" ng-click="saveClone();">保存</a>
+			<a class="btn-text" ng-click="dismiss();">取消</a>
 		</div>
 	</div>
 </div>

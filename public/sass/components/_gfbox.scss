@@ -1,0 +1,69 @@
+.gf-box {
+  margin: 10px 5px;
+  background-color: $page-bg;
+  position: relative;
+  border: 1px solid $tight-form-func-bg;
+}
+
+.gf-box-no-margin {
+  margin: 0;
+}
+
+.gf-box-header-close-btn {
+  float: right;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+  border: none;
+  padding: 8px;
+  i {
+    font-size: 120%;
+  }
+  color: $text-color;
+  &:hover {
+    color: $white;
+  }
+}
+
+.gf-box-header-save-btn {
+  padding: 7px 0;
+  float: right;
+  color: $gray-2;
+  font-style: italic;
+}
+
+.gf-box-body {
+  padding: 20px;
+  min-height: 150px;
+}
+
+.gf-box-footer {
+  overflow: hidden;
+}
+
+.gf-box-header {
+  border-bottom: 1px solid $tight-form-func-bg;
+  overflow: hidden;
+  background-color: $tight-form-bg;
+  .tabs {
+    float: left;
+  }
+  .nav {
+    margin: 0;
+  }
+}
+
+.gf-box-title {
+  padding-right: 20px;
+  padding-left: 10px;
+  float: left;
+  color: $link-color;
+  font-size: 18px;
+  font-weight: normal;
+  line-height: 38px;
+  margin: 0;
+  .fa {
+    padding: 0 8px 0 5px;
+    color: $text-color;
+  }
+}

@@ -8,7 +8,7 @@
 
 package mysql
 
-const defaultCollation byte = 33 // utf8_general_ci
+const defaultCollation = "utf8_general_ci"
 
 // A list of available collations mapped to the internal ID.
 // To update this map use the following MySQL query:
@@ -233,4 +233,18 @@ var collations = map[string]byte{
 	"utf8mb4_croatian_ci":      245,
 	"utf8mb4_unicode_520_ci":   246,
 	"utf8mb4_vietnamese_ci":    247,
+}
+
+// A blacklist of collations which is unsafe to interpolate parameters.
+// These multibyte encodings may contains 0x5c (`\`) in their trailing bytes.
+var unsafeCollations = map[string]bool{
+	"big5_chinese_ci":   true,
+	"sjis_japanese_ci":  true,
+	"gbk_chinese_ci":    true,
+	"big5_bin":          true,
+	"gb2312_bin":        true,
+	"gbk_bin":           true,
+	"sjis_bin":          true,
+	"cp932_japanese_ci": true,
+	"cp932_bin":         true,
 }

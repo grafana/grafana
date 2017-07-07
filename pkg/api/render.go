@@ -31,6 +31,7 @@ func RenderToPng(c *middleware.Context) {
 		Width:     queryReader.Get("width", "800"),
 		Height:    queryReader.Get("height", "400"),
 		SessionId: c.Session.ID(),
+		Timeout:   queryReader.Get("timeout", "15"),
 	}
 
 	renderOpts.Url = setting.ToAbsUrl(renderOpts.Url)

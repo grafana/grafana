@@ -1,55 +1,50 @@
-<topnav icon="fa fa-fw fa-users" title="公司" subnav="true">
-	<ul class="nav">
-		<li class="active"><a href="org/apikeys">API Keys</a></li>
-	</ul>
-</topnav>
+<navbar icon="icon-gf icon-gf-users" title="公司" title-url="org">
+</navbar>
 
-<div class="page-container" style="background: transparent; border: 0;">
-	<div class="page-wide">
-		<h2>
-			API Keys(当前org 下的token)
-		</h2>
-
-		<form name="addTokenrForm" class="form-inline tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 100px">
-					新增 key
-				</li>
-				<li>
-					<input type="text" class="input-xlarge tight-form-input" ng-model='token.name' placeholder="姓名"></input>
-				</li>
-				<li class="tight-form-item">
-					角色
-				</li>
-				<li>
-					<select class="input-small tight-form-input" ng-model="token.role" ng-options="r for r in roleTypes"></select>
-				</li>
-				<li style="float: right">
-					<button class="btn btn-success tight-form-btn" ng-click="addToken()">新增</button>
-				</li>
-				<div class="clearfix"></div>
-			</ul>
-		</form>
-
-		<table class="filter-table">
-			<thead>
-				<tr>
-					<th>系统id</th>
-					<th>Token</th>
-					<th style="width: 34px;"></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-repeat="t in tokens">
-					<td>{{t.name}}</td>
-					<td>{{t.key}}</td>
-					<td>
-						<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
-							<i class="fa fa-remove"></i>
-						</a>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+<div class="page-container">
+	<div class="page-header">
+		<h1>API Keys(当前org 下的token)</h1>
 	</div>
+
+	<h3 class="page-heading">新增</h3>
+	<form name="addTokenForm" class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-21">
+				<span class="gf-form-label">新增 key</span>
+				<input type="text" class="gf-form-input" ng-model='token.name' placeholder="Name"></input>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label">角色</span>
+				<select class="gf-form-input gf-size-auto" ng-model="token.role" ng-options="r for r in roleTypes"></select>
+			</div>
+			<div class="gf-form">
+				<button class="btn gf-form-btn btn-success" ng-click="addToken()">新增</button>
+			</div>
+		</div>
+	</form>
+
+	<h3 class="page-heading">Existing Keys</h3>
+	<table class="filter-table">
+		<thead>
+			<tr>
+				<th>系统id</th>
+				<th>Token</th>
+				<th style="width: 34px;"></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="t in tokens">
+				<td>{{t.name}}</td>
+				<td>{{t.key}}</td>
+				<td>
+					<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
+						<i class="fa fa-remove"></i>
+					</a>
+				</td>
+			</tr>
+		</tbody>
+	</table>
 </div>
+
+
+

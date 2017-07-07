@@ -9,7 +9,7 @@ page_keywords: grafana, table, panel, documentation
 <img src="/img/v2/table-panel.png">
 
 The new table panel is very flexible, supporting both multiple modes for time series as well as for
-table, annotation and raw JSON data. It also provides date formating and value formating and coloring options.
+table, annotation and raw JSON data. It also provides date formatting and value formatting and coloring options.
 
 To view table panels in action and test different configurations with sample data, check out the [Table Panel Showcase in the Grafana Playground](http://play.grafana.org/dashboard/db/table-panel-showcase).
 
@@ -17,11 +17,11 @@ To view table panels in action and test different configurations with sample dat
 
 The table panel has many ways to manipulate your data for optimal presentation.
 
-<img class="no-shadow" src="/img/v2/table-config.png">
+<img class="no-shadow" src="/img/v2/table-config2.png">
 
 1. `Data`: Control how your query is transformed into a table.
 2. `Table Display`: Table display options.
-3. `Column Styles`: Column value formating and display options.
+3. `Column Styles`: Column value formatting and display options.
 
 ## Data to Table
 
@@ -33,19 +33,19 @@ you want in the table. Only applicable for some transforms.
 
 ### Time series to rows
 
-<img src="/img/v2/table_ts_to_rows.png">
+<img src="/img/v2/table_ts_to_rows2.png">
 
 In the most simple mode you can turn time series to rows. This means you get a `Time`, `Metric` and a `Value` column. Where `Metric` is the name of the time series.
 
 ### Time series to columns
 
-![](/img/v2/table_ts_to_columns.png)
+![](/img/v2/table_ts_to_columns2.png)
 
 This transform allows you to take multiple time series and group them by time. Which will result in the primary column being `Time` and a column for each time series.
 
 ### Time series aggregations
 
-![](/img/v2/table_ts_to_aggregations.png)
+![](/img/v2/table_ts_to_aggregations2.png)
 This table transformation will lay out your table into rows by metric, allowing columns of `Avg`, `Min`, `Max`, `Total`, `Current` and `Count`. More than one column can be added.
 
 ### Annotations

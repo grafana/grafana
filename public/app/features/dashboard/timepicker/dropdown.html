@@ -1,24 +1,34 @@
 <div class="row pull-right">
-	<div class="gf-timepicker-absolute-section">
+	<form name="timeForm" class="gf-timepicker-absolute-section">
 		<h3>时间区间</h3>
+
 		<label class="small">始:</label>
-		<div class="input-prepend">
-			<input type="text" class="input-large" ng-model="ctrl.timeRaw.from" input-datetime>
-			<button class="btn btn-primary" type="button" ng-click="openFromPicker=!openFromPicker">
-				<i class="fa fa-calendar"></i>
-			</button>
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-28">
+				<input type="text" class="gf-form-input input-large" ng-model="ctrl.timeRaw.from" input-datetime>
+			</div>
+			<div class="gf-form">
+				<button class="btn gf-form-btn btn-primary" type="button" ng-click="openFromPicker=!openFromPicker">
+					<i class="fa fa-calendar"></i>
+				</button>
+			</div>
 		</div>
 
 		<div ng-if="openFromPicker">
 			<datepicker ng-model="ctrl.absolute.fromJs" class="gf-timepicker-component" show-weeks="false" ng-change="ctrl.absoluteFromChanged()"></datepicker>
 		</div>
 
-		<label class="small">至:</label>
-		<div class="input-prepend">
-			<input type="text" class="input-large" ng-model="ctrl.timeRaw.to" input-datetime>
-			<button class="btn btn-primary" type="button" ng-click="openToPicker=!openToPicker">
-				<i class="fa fa-calendar"></i>
-			</button>
+
+		<label class="small">至</label>
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-28">
+				<input type="text" class="gf-form-input input-large" ng-model="ctrl.timeRaw.to" input-datetime>
+			</div>
+			<div class="gf-form">
+				<button class="btn gf-form-btn btn-primary" type="button" ng-click="openToPicker=!openToPicker">
+					<i class="fa fa-calendar"></i>
+				</button>
+			</div>
 		</div>
 
 		<div ng-if="openToPicker">
@@ -26,13 +36,16 @@
 		</div>
 
 		<label class="small">刷新频率:</label>
-		<select ng-model="ctrl.refresh.value" class='input-medium' ng-options="f.value as f.text for f in ctrl.refresh.options">
-		</select>
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-28">
+				<select ng-model="ctrl.refresh.value" class="gf-form-input input-medium" ng-options="f.value as f.text for f in ctrl.refresh.options"></select>
+			</div>
+			<div class="gf-form">
+				<button type="submit" class="btn gf-form-btn btn-secondary" ng-click="ctrl.applyCustom();" ng-disabled="!timeForm.$valid">应用</button>
+			</div>
+		</div>
 
-		<button class="btn btn-inverse gf-timepicker-btn-apply" type="button" ng-click="ctrl.applyCustom()">
-			应用
-		</button>
-	</div>
+	</form>
 
 	<div class="gf-timepicker-relative-section">
 		<h3>快速选择</h3>

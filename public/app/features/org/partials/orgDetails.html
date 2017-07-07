@@ -1,136 +1,104 @@
-<topnav icon="fa fa-fw fa-users" title="公司" subnav="true">
-	<ul class="nav">
-		<li class="active"><a href="org">信息</a></li>
-	</ul>
-</topnav>
+<navbar icon="icon-gf icon-gf-users" title="公司" title-url="org">
+</navbar>
 
 <div class="page-container">
-	<div class="page">
+	<div class="page-header">
+		<h1>公司</h1>
+	</div>
 
-		<h2>公司</h2>
+	<h3 class="page-heading">信息</h3>
+	<form name="orgForm" class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-6">公司名称</span>
+				<input class="gf-form-input" type="text" required ng-model="org.name">
+			</div>
+			<div class="gf-form">
+				<button type="submit" class="btn gf-form-btn btn-success" ng-click="update()">更新</button>
+			</div>
+		</div>
+	</form>
 
-		<div class="tight-form-section">
-			<h5>信息</h5>
 
-			<form name="orgForm">
-				<div class="tight-form last">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							公司名称
-						</li>
-						<li>
-							<input type="text" required ng-model="org.name" class="tight-form-input last" style="width: 475px">
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
+	<h3 class="page-heading">公司地址</h3>
 
-				<br>
-				<button type="submit" class="pull-right btn btn-success" ng-click="update()">更新</button>
-			</form>
+	<form name="addressForm" class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-7">地址 1</span>
+				<input class="gf-form-input" type="text" ng-model="address.address1">
+			</div>
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-7">地址 2</span>
+				<input class="gf-form-input" type="text" ng-model="address.address2">
+			</div>
 		</div>
 
-		<div class="tight-form-section">
-			<h5>公司地址</h5>
-
-			<form name="addressForm">
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							地址 1
-						</li>
-						<li>
-							<input type="text" ng-model="address.address1" class="tight-form-input" style="width:193px">
-						</li>
-						<li class="tight-form-item" style="width: 75px">
-							地址 2
-						</li>
-						<li>
-							<input type="text" ng-model="address.address2" class="tight-form-input last" style="width:193px">
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							城市
-						</li>
-						<li>
-							<input type="text" ng-model="address.city" class="tight-form-input" style="width: 193px">
-						</li>
-						<li class="tight-form-item" style="width: 75px">
-              邮政编码
-            </li>
-						<li>
-							<input type="text" ng-model="address.zipCode" class="input-medium tight-form-input last" style="width: 193px">
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="tight-form last">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							省
-						</li>
-						<li>
-							<input type="text" ng-model="address.state" class="tight-form-input" style="width: 193px">
-						</li>
-						<li class="tight-form-item" style="width: 75px">
-							国家
-						</li>
-						<li>
-							<input type="text" ng-model="address.country" class="tight-form-input last" style="width: 193px">
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-
-				<br>
-				<button type="submit" class="pull-right btn btn-success" ng-click="updateAddress()">更新</button>
-
-			</form>
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-7">城市</span>
+				<input class="gf-form-input" type="text" ng-model="address.city">
+			</div>
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-7">邮政编码</span>
+				<input class="gf-form-input" type="text" ng-model="address.zipCode">
+			</div>
 		</div>
 
-        <div class="tight-form-section">
-          <h5>子系统</h5>
-          <form name="addOrgForm">
-            <div class="tight-form">
-              <ul class="tight-form-list">
-                <li class="tight-form-item" style="width:100px">
-                  新增子系统
-                </li>
-                <li>
-                  <input type="text" ng-model="newSystemName" required class="itight-form-input last" placeholder="如:办公自动化系统">
-                </li>
-                <li style="float: right">
-                  <button class="btn btn-success" ng-click="addSystem()"><i class="fa fa-plus-square"></i></button>
-                </li>
-                <div class="clearfix"></div>
-              </ul>
-            </div>
-          </form>
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-7">省</span>
+				<input class="gf-form-input" type="text" ng-model="address.state">
+			</div>
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-7">国家</span>
+				<input class="gf-form-input" type="text" ng-model="address.country">
+			</div>
+		</div>
 
-          <div  class="tight-form-section" ng-if="!systems.length">
-            <h4>没有子系统,请手动加入</h4>
-          </div>
-          <form name="orgForm" ng-if="systems.length > 0">
-            <div class="tight-form last" ng-repeat="system in systems">
-              <ul class="tight-form-list">
-                <li class="tight-form-item" style="width: 100px">
-                  子系统名称
-                </li>
-                <li>
-                  <input type="text" required ng-model="system.SystemsName" class="tight-form-input last" style="width: 475px">
-                </li>
-              </ul>
-              <div class="clearfix"></div>
-            </div>
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="updateAddress()">更新</button>
+		</div>
+	</form>
 
-            <br>
-            <button type="submit" class="pull-right btn btn-success" ng-click="updateSystems()">更新</button>
-          </form>
-        </div>
+	<h3 class="page-heading">子系统</h3>
+	<form name="addOrgForm" class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-28">
+				<span class="gf-form-label width-6">新增子系统</span>
+				<input type="text" ng-model="newSystemName" required class="itight-form-input last" placeholder="如:办公自动化系统">
+			</div>
+			<div class="gf-form">
+				<button type="submit" class="btn gf-form-btn btn-success" ng-click="addSystem()"><i class="fa fa-plus-square"></i></button>
+			</div>
+		</div>
+	</form>
+
+	<div class="gf-form-inline" ng-if="!systems.length">
+		<h4>没有子系统,请手动加入</h4>
+	</div>
+	<form name="addOrgForm" class="gf-form-group" ng-if="systems.length > 0">
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-28" ng-repeat="system in systems">
+				<span class="gf-form-label width-6">子系统名称</span>
+				<input type="text" required ng-model="system.SystemsName" class="tight-form-input last" style="width: 475px">
+			</div>
+			<div class="gf-form">
+				<button type="submit" class="btn gf-form-btn btn-success" ng-click="updateSystems()">更新</button>
+			</div>
+		</div>
+	</form>
+
+
+	<h3 class="page-heading">Admin Pages</h3>
+	<div class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form">
+				<a href="org/users" class="btn gf-form-btn btn-inverse">Users &amp; Roles</a>
+			</div>
+			<div class="gf-form">
+			<a href="org/apikeys" class="btn gf-form-btn btn-inverse">API Keys</a>
+		</div>
 	</div>
 </div>
 

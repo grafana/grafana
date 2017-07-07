@@ -1,11 +1,11 @@
 define([
+  './org_users_ctrl',
   './alertsCtrl',
   './alertEditCtrl',
   './alertStatusCtrl',
   './alertAssociationCtrl',,
   './datasourcesCtrl',
   './datasourceEditCtrl',
-  './orgUsersCtrl',
   './newOrgCtrl',
   './userInviteCtrl',
   './orgApiKeysCtrl',

@@ -1,46 +1,49 @@
-<topnav icon="fa fa-fw fa-user" title="全体成员" subnav="true">
-	<ul class="nav">
-		<li class="active"><a href="admin/users">列表</a></li>
-		<li><a href="admin/users/create">新建用户</a></li>
-	</ul>
-</topnav>
+<navbar icon="fa fa-fw fa-cogs" title="Admin" title-url="admin">
+	<a href="admin/users" class="navbar-page-btn">
+		<i class="icon-gf icon-gf-users"></i>
+		用户
+	</a>
+</navbar>
 
-<div class="page-container" style="background: transparent; border: 0;">
-	<div class="page-wide">
-		<h2>
-			用户
-		</h2>
+<div class="page-container">
+	<div class="page-header">
+		<h1>用户</h1>
 
-    <table class="filter-table form-inline">
-			<thead>
-				<tr>
-					<th>Id</th>
-					<th>姓名</th>
-					<th>账号</th>
-					<th>邮箱</th>
-					<th style="white-space: nowrap">是否管理员</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-repeat="user in users">
-					<td>{{user.id}}</td>
-					<td>{{user.name}}</td>
-					<td>{{user.login}}</td>
-					<td>{{user.email}}</td>
-					<td>{{user.isAdmin}}</td>
-					<td class="text-right">
-						<a href="admin/users/edit/{{user.id}}" class="btn btn-inverse btn-small">
-							<i class="fa fa-edit"></i>
-							编辑
-						</a>
-						&nbsp;&nbsp;
-						<a ng-click="deleteUser(user)" class="btn btn-danger btn-small">
-							<i class="fa fa-remove"></i>
-						</a>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+		<a class="btn btn-success" href="admin/users/create">
+			<i class="fa fa-plus"></i>
+			新增用户
+		</a>
 	</div>
+
+	<table class="filter-table form-inline">
+		<thead>
+			<tr>
+				<th>Id</th>
+				<th>姓名</th>
+				<th>账号</th>
+				<th>邮箱</th>
+				<th style="white-space: nowrap">是否管理员</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr ng-repeat="user in users">
+				<td>{{user.id}}</td>
+				<td>{{user.name}}</td>
+				<td>{{user.login}}</td>
+				<td>{{user.email}}</td>
+				<td>{{user.isAdmin}}</td>
+				<td class="text-right">
+					<a href="admin/users/edit/{{user.id}}" class="btn btn-inverse btn-small">
+						<i class="fa fa-edit"></i>
+						编辑
+					</a>
+					&nbsp;&nbsp;
+					<a ng-click="deleteUser(user)" class="btn btn-danger btn-small">
+						<i class="fa fa-remove"></i>
+					</a>
+				</td>
+			</tr>
+		</tbody>
+	</table>
 </div>

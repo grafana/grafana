@@ -25,9 +25,10 @@ google_analytics: ['UA-47280256-1', 'grafana.org']
 pages:
 
 # Introduction:
-- ['index.md', 'Project', 'About Grafana']
-- ['project/cla.md', 'Project', 'Contributor License Agreement']
+# - ['index.md', 'Project', 'About Grafana']
+# - ['project/cla.md', 'Project', 'Contributor License Agreement']
 
+- ['index.md', '**HIDDEN**']
 - ['installation/index.md', 'Installation', 'Installation']
 - ['installation/debian.md', 'Installation', 'Installing on Debian / Ubuntu']
 - ['installation/rpm.md', 'Installation', 'Installing on RPM-based Linux']
@@ -64,7 +65,6 @@ pages:
 - ['reference/playlist.md', 'Reference', 'Playlist']
 - ['reference/export_import.md', 'Reference', 'Import & Export']
 - ['reference/admin.md', 'Reference', 'Administration']
-- ['reference/http_api.md', 'Reference', 'HTTP API']
 - ['reference/keyboard_shortcuts.md', 'Reference', 'Keyboard Shortcuts']
 
 - ['datasources/overview.md', 'Data Sources', 'Overview']
@@ -75,6 +75,23 @@ pages:
 - ['datasources/opentsdb.md', 'Data Sources', 'OpenTSDB']
 - ['datasources/kairosdb.md', 'Data Sources', 'KairosDB']
 - ['datasources/prometheus.md', 'Data Sources', 'Prometheus']
+
+- ['http_api/overview.md', 'API', 'Overview']
+- ['http_api/auth.md', 'API', 'Authentication API']
+- ['http_api/dashboard.md', 'API', 'Dashboard API']
+- ['http_api/data_source.md', 'API', 'Data Source API']
+- ['http_api/org.md', 'API', 'Organisation API']
+- ['http_api/user.md', 'API', 'User API']
+- ['http_api/admin.md', 'API', 'Admin API']
+- ['http_api/snapshot.md', 'API', 'Snapshot API']
+- ['http_api/other.md', 'API', 'Other API']
+
+- ['plugins/index.md', 'Plugins', 'Overview']
+- ['plugins/installation.md', 'Plugins', 'Installation']
+- ['plugins/development.md', 'Plugins', 'Development']
+- ['plugins/apps.md', 'Plugins', 'Apps']
+- ['plugins/datasources.md', 'Plugins', 'Datasources']
+- ['plugins/panels.md', 'Plugins', 'Panels']
 
 - ['tutorials/index.md', 'Tutorials', 'Tutorials']
 - ['tutorials/hubot_howto.md', 'Tutorials', 'How To integrate Hubot and Grafana']

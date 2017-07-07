@@ -5,10 +5,10 @@ define([
 function (angular, coreModule) {
   'use strict';
 
-  coreModule.controller('JsonEditorCtrl', function($scope) {
+  coreModule.default.controller('JsonEditorCtrl', function($scope) {
 
     $scope.json = angular.toJson($scope.object, true);
-    $scope.canUpdate = $scope.updateHandler !== void 0;
+    $scope.canUpdate = $scope.updateHandler !== void 0 && $scope.contextSrv.isEditor;
 
     $scope.update = function () {
       var newObject = angular.fromJson($scope.json);

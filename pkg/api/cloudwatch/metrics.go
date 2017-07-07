@@ -3,13 +3,28 @@ package cloudwatch
 import (
 	"encoding/json"
 	"sort"
+	"strings"
+	"sync"
+	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/wangy1931/grafana/pkg/middleware"
 	"github.com/wangy1931/grafana/pkg/util"
 )
 
 var metricsMap map[string][]string
 var dimensionsMap map[string][]string
+
+type CustomMetricsCache struct {
+	Expire time.Time
+	Cache  []string
+}
+
+var customMetricsMetricsMap map[string]map[string]map[string]*CustomMetricsCache
+var customMetricsDimensionsMap map[string]map[string]map[string]*CustomMetricsCache
 
 func init() {
 	metricsMap = map[string][]string{
@@ -40,13 +55,15 @@ func init() {
 			"S3BytesWritten", "S3BytesRead", "HDFSUtilization", "HDFSBytesRead", "HDFSBytesWritten", "MissingBlocks", "CorruptBlocks", "TotalLoad", "MemoryTotalMB", "MemoryReservedMB", "MemoryAvailableMB", "MemoryAllocatedMB", "PendingDeletionBlocks", "UnderReplicatedBlocks", "DfsPendingReplicationBlocks", "CapacityRemainingGB",
 			"HbaseBackupFailed", "MostRecentBackupDuration", "TimeSinceLastSuccessfulBackup"},
 		"AWS/ES":       {"ClusterStatus.green", "ClusterStatus.yellow", "ClusterStatus.red", "Nodes", "SearchableDocuments", "DeletedDocuments", "CPUUtilization", "FreeStorageSpace", "JVMMemoryPressure", "AutomatedSnapshotFailure", "MasterCPUUtilization", "MasterFreeStorageSpace", "MasterJVMMemoryPressure", "ReadLatency", "WriteLatency", "ReadThroughput", "WriteThroughput", "DiskQueueLength", "ReadIOPS", "WriteIOPS"},
+		"AWS/Events":   {"Invocations", "FailedInvocations", "TriggeredRules", "MatchedEvents", "ThrottledRules"},
 		"AWS/Kinesis":  {"PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Success", "PutRecords.Bytes", "PutRecords.Latency", "PutRecords.Records", "PutRecords.Success", "IncomingBytes", "IncomingRecords", "GetRecords.Bytes", "GetRecords.IteratorAgeMilliseconds", "GetRecords.Latency", "GetRecords.Success"},
 		"AWS/Lambda":   {"Invocations", "Errors", "Duration", "Throttles"},
+		"AWS/Logs":     {"IncomingBytes", "IncomingLogEvents", "ForwardedBytes", "ForwardedLogEvents", "DeliveryErrors", "DeliveryThrottling"},
 		"AWS/ML":       {"PredictCount", "PredictFailureCount"},
 		"AWS/OpsWorks": {"cpu_idle", "cpu_nice", "cpu_system", "cpu_user", "cpu_waitio", "load_1", "load_5", "load_15", "memory_buffers", "memory_cached", "memory_free", "memory_swap", "memory_total", "memory_used", "procs"},
 		"AWS/Redshift": {"CPUUtilization", "DatabaseConnections", "HealthStatus", "MaintenanceMode", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "PercentageDiskSpaceUsed", "ReadIOPS", "ReadLatency", "ReadThroughput", "WriteIOPS", "WriteLatency", "WriteThroughput"},
 		"AWS/RDS":      {"BinLogDiskUsage", "CPUUtilization", "CPUCreditUsage", "CPUCreditBalance", "DatabaseConnections", "DiskQueueDepth", "FreeableMemory", "FreeStorageSpace", "ReplicaLag", "SwapUsage", "ReadIOPS", "WriteIOPS", "ReadLatency", "WriteLatency", "ReadThroughput", "WriteThroughput", "NetworkReceiveThroughput", "NetworkTransmitThroughput"},
-		"AWS/Route53":  {"HealthCheckStatus", "HealthCheckPercentageHealthy"},
+		"AWS/Route53":  {"HealthCheckStatus", "HealthCheckPercentageHealthy", "ConnectionTime", "SSLHandshakeTime", "TimeToFirstByte"},
 		"AWS/SNS":      {"NumberOfMessagesPublished", "PublishSize", "NumberOfNotificationsDelivered", "NumberOfNotificationsFailed"},
 		"AWS/SQS":      {"NumberOfMessagesSent", "SentMessageSize", "NumberOfMessagesReceived", "NumberOfEmptyReceives", "NumberOfMessagesDeleted", "ApproximateNumberOfMessagesDelayed", "ApproximateNumberOfMessagesVisible", "ApproximateNumberOfMessagesNotVisible"},
 		"AWS/S3":       {"BucketSizeBytes", "NumberOfObjects"},
@@ -70,8 +87,10 @@ func init() {
 		"AWS/ELB":              {"LoadBalancerName", "AvailabilityZone"},
 		"AWS/ElasticMapReduce": {"ClusterId", "JobFlowId", "JobId"},
 		"AWS/ES":               {},
+		"AWS/Events":           {"RuleName"},
 		"AWS/Kinesis":          {"StreamName"},
 		"AWS/Lambda":           {"FunctionName"},
+		"AWS/Logs":             {"LogGroupName", "DestinationType", "FilterName"},
 		"AWS/ML":               {"MLModelId", "RequestMode"},
 		"AWS/OpsWorks":         {"StackId", "LayerId", "InstanceId"},
 		"AWS/Redshift":         {"NodeID", "ClusterIdentifier"},
@@ -85,13 +104,16 @@ func init() {
 		"AWS/WAF":              {"Rule", "WebACL"},
 		"AWS/WorkSpaces":       {"DirectoryId", "WorkspaceId"},
 	}
+
+	customMetricsMetricsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
+	customMetricsDimensionsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
 }
 
 // Whenever this list is updated, frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func handleGetRegions(req *cwRequest, c *middleware.Context) {
 	regions := []string{
-		"ap-northeast-1", "ap-southeast-1", "ap-southeast-2", "cn-north-1",
+		"ap-northeast-1", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "cn-north-1",
 		"eu-central-1", "eu-west-1", "sa-east-1", "us-east-1", "us-west-1", "us-west-2",
 	}
 
@@ -108,6 +130,14 @@ func handleGetNamespaces(req *cwRequest, c *middleware.Context) {
 	for key := range metricsMap {
 		keys = append(keys, key)
 	}
+
+	customNamespaces := req.DataSource.JsonData.Get("customMetricsNamespaces").MustString()
+	if customNamespaces != "" {
+		for _, key := range strings.Split(customNamespaces, ",") {
+			keys = append(keys, key)
+		}
+	}
+
 	sort.Sort(sort.StringSlice(keys))
 
 	result := []interface{}{}
@@ -127,10 +157,19 @@ func handleGetMetrics(req *cwRequest, c *middleware.Context) {
 
 	json.Unmarshal(req.Body, reqParam)
 
-	namespaceMetrics, exists := metricsMap[reqParam.Parameters.Namespace]
-	if !exists {
-		c.JsonApiErr(404, "Unable to find namespace "+reqParam.Parameters.Namespace, nil)
-		return
+	var namespaceMetrics []string
+	if !isCustomMetrics(reqParam.Parameters.Namespace) {
+		var exists bool
+		if namespaceMetrics, exists = metricsMap[reqParam.Parameters.Namespace]; !exists {
+			c.JsonApiErr(404, "Unable to find namespace "+reqParam.Parameters.Namespace, nil)
+			return
+		}
+	} else {
+		var err error
+		if namespaceMetrics, err = getMetricsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, getAllMetrics); err != nil {
+			c.JsonApiErr(500, "Unable to call AWS API", err)
+			return
+		}
 	}
 	sort.Sort(sort.StringSlice(namespaceMetrics))
 
@@ -151,10 +190,19 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 
 	json.Unmarshal(req.Body, reqParam)
 
-	dimensionValues, exists := dimensionsMap[reqParam.Parameters.Namespace]
-	if !exists {
-		c.JsonApiErr(404, "Unable to find dimension "+reqParam.Parameters.Namespace, nil)
-		return
+	var dimensionValues []string
+	if !isCustomMetrics(reqParam.Parameters.Namespace) {
+		var exists bool
+		if dimensionValues, exists = dimensionsMap[reqParam.Parameters.Namespace]; !exists {
+			c.JsonApiErr(404, "Unable to find dimension "+reqParam.Parameters.Namespace, nil)
+			return
+		}
+	} else {
+		var err error
+		if dimensionValues, err = getDimensionsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, getAllMetrics); err != nil {
+			c.JsonApiErr(500, "Unable to call AWS API", err)
+			return
+		}
 	}
 	sort.Sort(sort.StringSlice(dimensionValues))
 
@@ -164,4 +212,123 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 	}
 
 	c.JSON(200, result)
+}
+
+func getAllMetrics(region string, namespace string, database string) (cloudwatch.ListMetricsOutput, error) {
+	cfg := &aws.Config{
+		Region:      aws.String(region),
+		Credentials: getCredentials(database),
+	}
+
+	svc := cloudwatch.New(session.New(cfg), cfg)
+
+	params := &cloudwatch.ListMetricsInput{
+		Namespace: aws.String(namespace),
+	}
+
+	var resp cloudwatch.ListMetricsOutput
+	err := svc.ListMetricsPages(params,
+		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
+			for _, metric := range metrics {
+				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))
+			}
+			return !lastPage
+		})
+	if err != nil {
+		return resp, err
+	}
+
+	return resp, nil
+}
+
+var metricsCacheLock sync.Mutex
+
+func getMetricsForCustomMetrics(region string, namespace string, database string, getAllMetrics func(string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+	result, err := getAllMetrics(region, namespace, database)
+	if err != nil {
+		return []string{}, err
+	}
+
+	metricsCacheLock.Lock()
+	defer metricsCacheLock.Unlock()
+
+	if _, ok := customMetricsMetricsMap[database]; !ok {
+		customMetricsMetricsMap[database] = make(map[string]map[string]*CustomMetricsCache)
+	}
+	if _, ok := customMetricsMetricsMap[database][region]; !ok {
+		customMetricsMetricsMap[database][region] = make(map[string]*CustomMetricsCache)
+	}
+	if _, ok := customMetricsMetricsMap[database][region][namespace]; !ok {
+		customMetricsMetricsMap[database][region][namespace] = &CustomMetricsCache{}
+		customMetricsMetricsMap[database][region][namespace].Cache = make([]string, 0)
+	}
+
+	if customMetricsMetricsMap[database][region][namespace].Expire.After(time.Now()) {
+		return customMetricsMetricsMap[database][region][namespace].Cache, nil
+	}
+	customMetricsMetricsMap[database][region][namespace].Cache = make([]string, 0)
+	customMetricsMetricsMap[database][region][namespace].Expire = time.Now().Add(5 * time.Minute)
+
+	for _, metric := range result.Metrics {
+		if isDuplicate(customMetricsMetricsMap[database][region][namespace].Cache, *metric.MetricName) {
+			continue
+		}
+		customMetricsMetricsMap[database][region][namespace].Cache = append(customMetricsMetricsMap[database][region][namespace].Cache, *metric.MetricName)
+	}
+
+	return customMetricsMetricsMap[database][region][namespace].Cache, nil
+}
+
+var dimensionsCacheLock sync.Mutex
+
+func getDimensionsForCustomMetrics(region string, namespace string, database string, getAllMetrics func(string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+	result, err := getAllMetrics(region, namespace, database)
+	if err != nil {
+		return []string{}, err
+	}
+
+	dimensionsCacheLock.Lock()
+	defer dimensionsCacheLock.Unlock()
+
+	if _, ok := customMetricsDimensionsMap[database]; !ok {
+		customMetricsDimensionsMap[database] = make(map[string]map[string]*CustomMetricsCache)
+	}
+	if _, ok := customMetricsDimensionsMap[database][region]; !ok {
+		customMetricsDimensionsMap[database][region] = make(map[string]*CustomMetricsCache)
+	}
+	if _, ok := customMetricsDimensionsMap[database][region][namespace]; !ok {
+		customMetricsDimensionsMap[database][region][namespace] = &CustomMetricsCache{}
+		customMetricsDimensionsMap[database][region][namespace].Cache = make([]string, 0)
+	}
+
+	if customMetricsDimensionsMap[database][region][namespace].Expire.After(time.Now()) {
+		return customMetricsDimensionsMap[database][region][namespace].Cache, nil
+	}
+	customMetricsDimensionsMap[database][region][namespace].Cache = make([]string, 0)
+	customMetricsDimensionsMap[database][region][namespace].Expire = time.Now().Add(5 * time.Minute)
+
+	for _, metric := range result.Metrics {
+		for _, dimension := range metric.Dimensions {
+			if isDuplicate(customMetricsDimensionsMap[database][region][namespace].Cache, *dimension.Name) {
+				continue
+			}
+			customMetricsDimensionsMap[database][region][namespace].Cache = append(customMetricsDimensionsMap[database][region][namespace].Cache, *dimension.Name)
+		}
+	}
+
+	return customMetricsDimensionsMap[database][region][namespace].Cache, nil
+}
+
+func isDuplicate(nameList []string, target string) bool {
+	for _, name := range nameList {
+		if name == target {
+			return true
+		}
+	}
+	return false
+}
+
+func isCustomMetrics(namespace string) bool {
+	return strings.Index(namespace, "AWS/") != 0
 }

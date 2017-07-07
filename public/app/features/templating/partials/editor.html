@@ -1,326 +1,233 @@
 <div ng-controller="TemplateEditorCtrl" ng-init="init()">
-	<div class="gf-box-header">
-		<div class="gf-box-title">
-			<i class="fa fa-code"></i>
+	<div class="tabbed-view-header">
+		<h2 class="tabbed-view-title">
 			Templating
-		</div>
+		</h2>
 
-		<div class="tabs">
-			<ul class="nav nav-tabs">
-				<li ng-class="{active: mode === 'list'}">
-					<a ng-click="mode = 'list';">
-						模板变量
-					</a>
-				</li>
+		<ul class="gf-tabs">
+			<li class="gf-tabs-item" >
+				<a class="gf-tabs-link" ng-click="mode = 'list';" ng-class="{active: mode === 'list'}">
+					模板变量
+				</a>
+			</li>
+			<li class="gf-tabs-item" ng-show="mode === 'edit'">
+				<a class="gf-tabs-link" ng-class="{active: mode === 'edit'}">
+					编辑
+				</a>
+			</li>
+			<li class="gf-tabs-item" ng-show="mode === 'new'">
+				<span class="active gf-tabs-link">新增</span>
+			</li>
+		</ul>
 
-				<li ng-class="{active: mode === 'edit'}" ng-show="mode === 'edit'">
-					<a>
-						{{current.name}}
-					</a>
-				</li>
-
-				<li ng-class="{active: mode === 'new'}">
-					<a ng-click="mode = 'new';">
-						<i class="fa fa-plus"></i>
-						新增
-					</a>
-				</li>
-			</ul>
-		</div>
-
-		<button class="gf-box-header-close-btn" ng-click="dismiss();dashboard.refresh();">
+		<button class="tabbed-view-close-btn" ng-click="dismiss();dashboard.refresh();">
 			<i class="fa fa-remove"></i>
 		</button>
-
 	</div>
 
-	<div class="gf-box-body">
+	<div class="tabbed-view-body">
 
 		<div ng-if="mode === 'list'">
+			<div ng-if="variables.length === 0">
+				<em>没有任何模板定义</em>
+			</div>
+			<table class="grafana-options-table">
+				<tr ng-repeat="variable in variables">
+					<td style="width: 1%">
+						<span class="template-variable">
+							${{variable.name}}
+						</span>
+					</td>
+					<td class="max-width" style="max-width: 200px;">
+						{{variable.query}}
+					</td>
 
-			<div class="editor-row row">
-				<div style="max-width: 1024px">
-					<div ng-if="variables.length === 0">
-						<em>没有任何模板定义</em>
-					</div>
-					<table class="grafana-options-table">
-						<tr ng-repeat="variable in variables">
-							<td style="width: 1%">
-								<span class="template-variable">
-									${{variable.name}}
-								</span>
-							</td>
-							<td class="max-width" style="max-width: 200px;">
-								{{variable.query}}
-							</td>
-							<td style="width: 1%">
-								<a ng-click="edit(variable)" class="btn btn-inverse btn-small">
-									<i class="fa fa-edit"></i>
-									编辑
-								</a>
-							</td>
-              <td style="width: 1%">
-                <a ng-click="duplicate(variable)" class="btn btn-inverse btn-small">
-                  复制
-                </a>
-              </td>
-							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
-							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
-							<td style="width: 1%">
-								<a ng-click="removeVariable(variable)" class="btn btn-danger btn-small">
-									<i class="fa fa-remove"></i>
-								</a>
-							</td>
-						</tr>
-					</table>
-				</div>
+					<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
+					<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
+					<td style="width: 1%">
+            <a ng-click="duplicate(variable)" class="btn btn-inverse btn-mini">
+				复制
+            </a>
+          </td>
+					<td style="width: 1%">
+						<a ng-click="edit(variable)" class="btn btn-inverse btn-mini">
+							<i class="fa fa-edit"></i>
+							编辑
+						</a>
+					</td>
+					<td style="width: 1%">
+						<a ng-click="removeVariable(variable)" class="btn btn-danger btn-mini">
+							<i class="fa fa-remove"></i>
+						</a>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<div class="gf-form" ng-show="mode === 'list'">
+			<div class="gf-form-button-row">
+				<a type="button" class="btn gf-form-button btn-success" ng-click="mode = 'new';"><i class="fa fa-plus" ></i>&nbsp;&nbsp;新增</a>
 			</div>
 		</div>
 
 		<div ng-if="mode === 'edit' || mode === 'new'">
-			<div class="editor-row">
-				<div class="tight-form-section">
-					<h5>变量</h5>
-					<div class="tight-form last">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 100px">
-								名称
-							</li>
-							<li>
-								<input type="text" class="input-large tight-form-input" placeholder="name" ng-model='current.name'></input>
-							</li>
-							<li class="tight-form-item">
-								类型
-							</li>
-							<li>
-								<select class="input-small tight-form-input" ng-model="current.type" ng-options="f for f in ['query', 'interval', 'custom']" ng-change="typeChanged()"></select>
-							</li>
-							<li class="tight-form-item" ng-show="current.type === 'query'">
-								数据源
-							</li>
-							<li ng-show="current.type === 'query'">
-								<select class="input input-medium tight-form-input last" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"></select>
-							</li>
-						</ul>
-						<div class="clearfix"></div>
+			<h5 class="section-heading">变量</h5>
+			<div class="gf-form-group">
+				<div class="gf-form-inline">
+					<div class="gf-form max-width-19">
+						<span class="gf-form-label width-7">名称</span>
+						<input type="text" class="gf-form-input max-width-12" placeholder="name" ng-model='current.name'></input>
+					</div>
+					<div class="gf-form">
+						<span class="gf-form-label width-4">类型</span>
+						<div class="gf-form-select-wrapper">
+							<select class="gf-form-input width-7" ng-model="current.type" ng-options="f for f in ['query', 'interval', 'custom']" ng-change="typeChanged()"></select>
+						</div>
+					</div>
+					<div class="gf-form max-width-19">
+						<span class="gf-form-label width-7" ng-show="current.type === 'query'">数据源</span>
+						<div class="gf-form-select-wrapper max-width-12" ng-show="current.type === 'query'">
+							<select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"></select>
+						</div>
+					</div>
+				</div>
+				<div class="gf-form-inline">
+					<div class="gf-form max-width-19">
+						<span class="gf-form-label width-7">Label</span>
+						<input type="text" class="gf-form-input max-width-12" ng-model='current.label' placeholder="optional display name"></input>
+					</div>
+					<div class="gf-form">
+						<span class="gf-form-label width-4">Hide</span>
+            <div class="gf-form-select-wrapper">
+							<select class="gf-form-input width-7" ng-model="current.hide" ng-options="f.value as f.text for f in hideOptions"></select>
+						</div>
+					</div>
+				</div>
+
+			</div>
+
+			<h5 class="section-heading">变量值选项</h5>
+			<div ng-show="current.type === 'interval'" class="gf-form-group">
+				<div class="gf-form">
+					<span class="gf-form-label width-9">Values</span>
+					<input type="text" class="gf-form-input" placeholder="name" ng-model='current.query' placeholder="1m,10m,1h,6h,1d,7d" ng-model-onblur ng-change="runQuery()"></input>
+				</div>
+				<div class="gf-form">
+					<span class="gf-form-label width-9">Auto option</span>
+					<editor-checkbox text="Enable" model="current.auto" change="runQuery()"></editor-checkbox>
+				</div>
+				<div class="gf-form-inline">
+					<div class="gf-form">
+						<span class="gf-form-label width-9" ng-show="current.auto">
+							自动步长时间 <tip>How many times should the current time range be divided to calculate the value</tip>
+						</span>
+						<div class="gf-form-select-wrapper max-width-10" ng-show="current.auto">
+							<select class="gf-form-input" ng-model="current.auto_count" ng-options="f for f in [2,3,4,5,10,20,30,40,50,100,200,300,400,500]" ng-change="runQuery()"></select>
+						</div>
+					</div>
+					<div class="gf-form">
+						<span class="gf-form-label" ng-show="current.auto">
+							Min interval <tip>The calculated value will not go below this threshold</tip>
+						</span>
+						<input type="text" class="gf-form-input max-width-10" ng-show="current.auto" ng-model="current.auto_min" ng-change="runQuery()" placeholder="10s"></input>
 					</div>
 				</div>
 			</div>
 
-			<div class="editor-row">
-				<div class="tight-form-section">
-					<h5>变量值选项</h5>
-
-					<div ng-show="current.type === 'interval'">
-						<div class="tight-form">
-							<ul class="tight-form-list">
-								<li class="tight-form-item" style="width: 160px">
-									Values
-								</li>
-								<li>
-									<input type="text" style="width: 345px" class="input-xxlarge tight-form-input last" placeholder="name" ng-model='current.query' placeholder="1m,10m,1h,6h,1d,7d" ng-model-onblur ng-change="runQuery()"></input>
-								</li>
-							</ul>
-							<div class="clearfix"></div>
-						</div>
-						<div class="tight-form last">
-							<ul class="tight-form-list">
-								<li class="tight-form-item" style="width: 160px">
-									<editor-checkbox text="包含自动间隔时间" model="current.auto" change="runQuery()"></editor-checkbox>
-								</li>
-								<li class="tight-form-item" ng-show="current.auto">
-									自动步长时间 <tip>How many steps, roughly, the interval is rounded and will not always match this count<tip>
-								</li>
-								<li>
-									<select class="input-mini tight-form-input last" ng-model="current.auto_count" ng-options="f for f in [3,5,10,30,50,100,200]" ng-change="runQuery()"></select>
-								</li>
-							</ul>
-							<div class="clearfix"></div>
-						</div>
-					</div>
-
-					<div ng-show="current.type === 'custom'">
-						<div class="tight-form last">
-							<ul class="tight-form-list">
-								<li class="tight-form-item" style="width: 180px">
-									值(通过逗号分开)
-								</li>
-								<li>
-									<input type="text" class="input tight-form-input last" style="width: 325px;" ng-model='current.query' ng-blur="runQuery()" placeholder="1, 10, 20, myvalue"></input>
-								</li>
-							</ul>
-							<div class="clearfix"></div>
-						</div>
-            <div class="tight-form">
-              <ul class="tight-form-list">
-                <li class="tight-form-item" style="width: 100px;">
-                  <editor-checkbox text="All value" model="current.includeAll" change="runQuery()"></editor-checkbox>
-                </li>
-                <li ng-show="current.includeAll">
-                  <input type="text" class="input-xlarge tight-form-input" style="width:364px" ng-model='current.options[0].value'></input>
-                </li>
-                <li class="tight-form-item" ng-show="current.includeAll">
-                  All format
-                </li>
-                <li ng-show="current.includeAll">
-                  <select class="input-medium tight-form-input last" ng-model="current.allFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'wildcard', 'regex wildcard', 'regex values', 'lucene', 'pipe']"></select>
-                </li>
-              </ul>
-              <div class="clearfix"></div>
-            </div>
-					</div>
-
-					<div ng-show="current.type === 'query'">
-
-						<div class="tight-form">
-							<ul class="tight-form-list">
-								<li class="tight-form-item" style="width: 100px">
-									查询语句
-								</li>
-								<li>
-									<input type="text" style="width: 588px" class="input-xxlarge tight-form-input last" ng-model='current.query' placeholder="metric name or tags query" ng-model-onblur ng-change="runQuery()"></input>
-								</li>
-							</ul>
-							<div class="clearfix"></div>
-						</div>
-						<div class="tight-form">
-							<ul class="tight-form-list">
-								<li class="tight-form-item" style="width: 100px;">
-									正则匹配
-									<tip>Optional, if you want to extract part of a series name or metric node segment</tip>
-								</li>
-								<li>
-									<input type="text" style="width: 588px" class="input tight-form-input last" ng-model='current.regex' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()"></input>
-								</li>
-							</ul>
-							<div class="clearfix"></div>
-						</div>
-
-						<div class="tight-form">
-							<ul class="tight-form-list">
-								<li class="tight-form-item" style="width: 100px;">
-									<editor-checkbox text="所有值" model="current.includeAll" change="runQuery()"></editor-checkbox>
-								</li>
-								<li ng-show="current.includeAll">
-									<input type="text" class="input-xlarge tight-form-input" style="width:364px" ng-model='current.options[0].value'></input>
-								</li>
-								<li class="tight-form-item" ng-show="current.includeAll">
-									所有格式化
-								</li>
-								<li ng-show="current.includeAll">
-									<select class="input-medium tight-form-input last" ng-model="current.allFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'wildcard', 'regex wildcard', 'regex values', 'lucene', 'pipe']"></select>
-								</li>
-							</ul>
-							<div class="clearfix"></div>
-						</div>
-
-						<div class="tight-form last">
-							<ul class="tight-form-list">
-								<li class="tight-form-item last">
-									<editor-checkbox text="加载时自动更新" model="current.refresh"></editor-checkbox>
-									<tip>Check if you want values to be updated on dashboard load, will slow down dashboard load time</tip>
-								</li>
-							</ul>
-							<div class="clearfix"></div>
-						</div>
-					</div>
+			<div ng-show="current.type === 'custom'" class="gf-form-group">
+				<div class="gf-form">
+					<span class="gf-form-label width-13">Values seperated by comma</span>
+					<input type="text" class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder="1, 10, 20, myvalue"></input>
 				</div>
 			</div>
 
-			<div class="editor-row">
-				<div class="tight-form-section" ng-hide="current.type === 'interval'">
-					<h5>多选 <tip>Enables multiple values to be selected at the same time</tip></h5>
-					<div class="tight-form last">
-						<ul class="tight-form-list">
-							<li class="tight-form-item last" style="width: 100px;">
-								<editor-checkbox text="激活" model="current.multi" change="runQuery()"></editor-checkbox>
-							</li>
-							<li class="tight-form-item" ng-show="current.multi">
-								多选格式
-							</li>
-							<li ng-show="current.multi">
-								<select class="input-medium tight-form-input last" ng-model="current.multiFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'regex values', 'lucene', 'pipe']"></select>
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
+			<div ng-show="current.type === 'query'" class="gf-form-group">
+				<div class="gf-form">
+					<span class="gf-form-label width-7">Query</span>
+					<input type="text" class="gf-form-input" ng-model='current.query' placeholder="metric name or tags query" ng-model-onblur ng-change="runQuery()"></input>
+					<!-- <info&#45;popover position="bottom center" wide="true"> -->
+					<!-- 	Example queries: -->
+					<!-- 	<ul> -->
+					<!-- 		<li> -->
+					<!-- 			<code>SHOW TAG VALUES WITH KEY = "hostname"</code> -->
+					<!-- 		</li> -->
+					<!-- 		<li> -->
+					<!-- 			<code>SHOW TAG VALUES WITH KEY = "hostname"</code> -->
+					<!-- 		</li> -->
+					<!-- 		<li> -->
+					<!-- 			<code>SHOW TAG VALUES WITH KEY = "hostname"</code> -->
+					<!-- 		</li> -->
+					<!-- 		<li> -->
+					<!-- 			<a href="http://docs.grafana.org" target="_blank">Templating docs</a> -->
+					<!-- 		</li> -->
+					<!-- 	</ul> -->
+					<!-- </info&#45;popover> -->
 				</div>
-
-				<div class="tight-form-section">
-					<h5>展示选项</h5>
-					<div class="tight-form last">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 100px">
-								变量标签
-							</li>
-							<li>
-								<input type="text" class="input-medium tight-form-input" ng-model='current.label' placeholder=""></input>
-							</li>
-							<li class="tight-form-item last">
-								<editor-checkbox text="隐藏标签" model="current.hideLabel" change="runQuery()"></editor-checkbox>
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
+				<div class="gf-form">
+					<span class="gf-form-label width-7">
+						Regex
+						<tip>Optional, if you want to extract part of a series name or metric node segment</tip>
+					</span>
+					<input type="text" class="gf-form-input" ng-model='current.regex' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()"></input>
+				</div>
+				<div class="gf-form">
+					<span class="gf-form-label width-7">Refresh</span>
+					<select class="gf-form-input max-width-14" ng-model="current.refresh" ng-options="f.value as f.text for f in refreshOptions"></select>
+					<tip>When to update the values of this variable, will slow down dashboard load / time change</tip>
 				</div>
 			</div>
 
-			<div class="editor-row" ng-if="current.type === 'query'">
-				<div class="tight-form-section">
-					<h5>值 /标识 (Experimental feature)</h5>
-					<div class="tight-form last" ng-if="current.useTags">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 135px">
-								标识查询
-							</li>
-							<li>
-								<input type="text" style="width: 588px" class="input-xxlarge tight-form-input last" ng-model='current.tagsQuery' placeholder="metric name or tags query" ng-model-onblur></input>
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-					<div class="tight-form" ng-if="current.useTags">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 135px;">
-								标识值的查询
-							</li>
-							<li>
-								<input type="text" style="width: 588px" class="input tight-form-input last" ng-model='current.tagValuesQuery' placeholder="apps.$tag.*" ng-model-onblur></input>
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-					<div class="tight-form">
-						<ul class="tight-form-list">
-							<li class="tight-form-item last">
-								<editor-checkbox text="激活" model="current.useTags" change="runQuery()"></editor-checkbox>
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
+			<div class="section gf-form-group" >
+				<h5 class="section-heading">选择方式</h5>
+        <gf-form-switch class="gf-form"
+                        label="Multi-value"
+                        label-class="width-10"
+                        tooltip="Enables multiple values to be selected at the same time"
+                        checked="current.multi"
+                        on-change="runQuery()">
+        </gf-form-switch>
+        <gf-form-switch class="gf-form"
+                        label="Include All option"
+                        label-class="width-10"
+                        checked="current.includeAll"
+                        on-change="runQuery()">
+        </gf-form-switch>
+
+				<div class="gf-form" ng-if="current.includeAll">
+					<span class="gf-form-label width-10">Custom all value</span>
+					<input type="text" class="gf-form-input max-width-15" ng-model='current.allValue' placeholder="blank = auto"></input>
 				</div>
 			</div>
 
-			<div class="editor-row">
-				<div class="tight-form-section">
-					<h5>值预览 最多20个</h5>
-					<div class="tight-form last">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" ng-repeat="option in current.options | limitTo: 20">
-								{{option.text}}
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
+			<div class="gf-form-group" ng-if="current.type === 'query'">
+				<h5>值 /标识 (Experimental feature)</h5>
+				<div class="gf-form">
+					<editor-checkbox text="Enable" model="current.useTags" change="runQuery()"></editor-checkbox>
+				</div>
+				<div class="gf-form last" ng-if="current.useTags">
+					<span class="gf-form-label width-10">标识值的查询</span>
+					<input type="text" class="gf-form-input" ng-model='current.tagsQuery' placeholder="metric name or tags query" ng-model-onblur></input>
+				</div>
+				<div class="gf-form" ng-if="current.useTags">
+					<li class="gf-form-label width-10">Tag values query</li>
+					<input type="text" class="gf-form-input" ng-model='current.tagValuesQuery' placeholder="apps.$tag.*" ng-model-onblur></input>
+				</div>
+			</div>
+
+			<div class="gf-form-group">
+				<h5>值预览 最多20个</h5>
+				<div class="gf-form">
+					<span class="gf-form-label" ng-repeat="option in current.options | limitTo: 20">
+						{{option.text}}
+					</span>
 				</div>
 			</div>
 		</div>
 
-		<div class="editor-row" style="margin-top: 20px">
+		<div class="gf-form-button-row p-y-0">
 			<button type="button" class="btn btn-success" ng-show="mode === 'edit'" ng-click="update();">更新</button>
 			<button type="button" class="btn btn-success" ng-show="mode === 'new'" ng-click="add();">添加</button>
 		</div>
-
 	</div>
 </div>
 

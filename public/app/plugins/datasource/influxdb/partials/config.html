@@ -1,35 +1,33 @@
-<div ng-include="httpConfigPartialSrc"></div>
-<br>
+<datasource-http-settings current="ctrl.current">
+</datasource-http-settings>
 
-<h5>InfluxDB Details</h5>
+<h3 class="page-heading">InfluxDB Details</h3>
 
-<div class="tight-form">
-	<ul class="tight-form-list">
-		<li class="tight-form-item" style="width: 80px">
-			Database
-		</li>
-		<li>
-			<input type="text" class="tight-form-input input-large" ng-model='current.database' placeholder="" required></input>
-		</li>
-	</ul>
-	<div class="clearfix"></div>
-</div>
-<div class="tight-form last">
-	<ul class="tight-form-list">
-		<li class="tight-form-item" style="width: 80px">
-			User
-		</li>
-		<li>
-			<input type="text" class="tight-form-input input-large" ng-model='current.user' placeholder="" required></input>
-		</li>
-		<li class="tight-form-item">
-			Password
-		</li>
-		<li>
-			<input type="password" class="tight-form-input input-large" ng-model='current.password' placeholder="" required></input>
-		</li>
-	</ul>
-	<div class="clearfix"></div>
+<div class="gf-form-group">
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-7">Database</span>
+			<input type="text" class="gf-form-input" ng-model='ctrl.current.database' placeholder="" required></input>
+		</div>
+	</div>
+
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-15">
+			<span class="gf-form-label width-7">User</span>
+			<input type="text" class="gf-form-input" ng-model='ctrl.current.user' placeholder="" required></input>
+		</div>
+		<div class="gf-form max-width-15">
+			<span class="gf-form-label width-7">Password</span>
+			<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder="" required></input>
+		</div>
+	</div>
 </div>
 
-
+<div class="gf-form-group">
+	<div class="gf-form max-width-21">
+		<span class="gf-form-label">Default group by time</span>
+		<input type="text" class="gf-form-input width-6" ng-model="ctrl.current.jsonData.timeInterval"
+		spellcheck='false' placeholder="example: >10s"></input>
+		<i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >10s'" data-placement="right"></i>
+	</div>
+</div>

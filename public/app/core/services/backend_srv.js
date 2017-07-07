@@ -7,7 +7,7 @@ define([
 function (angular, _, coreModule, config) {
   'use strict';
 
-  coreModule.service('backendSrv', function($http, alertSrv, $timeout,contextSrv, $q) {
+  coreModule.default.service('backendSrv', function($http, alertSrv, $timeout, contextSrv, $q) {
     var self = this;
     this.alertDUrl;
     this.tokens = null;
@@ -107,10 +107,17 @@ function (angular, _, coreModule, config) {
           });
         }
 
-        // // for Prometheus
-        // if (!err.data.message && _.isString(err.data.error)) {
-        //   err.data.message = err.data.error;
-        // }
+        //populate error obj on Internal Error
+        if (_.isString(err.data) && err.status === 500) {
+          err.data = {
+            error: err.statusText
+          };
+        }
+
+        // for Prometheus
+        if (!err.data.message && _.isString(err.data.error)) {
+          err.data.message = err.data.error;
+        }
 
         throw err;
       });

@@ -29,6 +29,11 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	datasources := make(map[string]interface{})
 	var defaultDatasource string
 
+	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, ds := range orgDataSources {
 		url := ds.Url
 
@@ -42,7 +47,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			"url":  url,
 		}
 
-		meta, exists := plugins.DataSources[ds.Type]
+		meta, exists := enabledPlugins.DataSources[ds.Type]
 		if !exists {
 			log.Error(3, "Could not find plugin definition for data source: %v", ds.Type)
 			continue
@@ -54,7 +59,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			defaultDatasource = ds.Name
 		}
 
-		if len(ds.JsonData) > 0 {
+		if len(ds.JsonData.MustMap()) > 0 {
 			dsMap["jsonData"] = ds.JsonData
 		}
 
@@ -84,6 +89,10 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			dsMap["index"] = ds.Database
 		}
 
+		if ds.Type == m.DS_INFLUXDB {
+			dsMap["database"] = ds.Database
+		}
+
 		if ds.Type == m.DS_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
 			dsMap["directUrl"] = ds.Url
@@ -109,11 +118,24 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		defaultDatasource = "-- Grafana --"
 	}
 
+	panels := map[string]interface{}{}
+	for _, panel := range enabledPlugins.Panels {
+		panels[panel.Id] = map[string]interface{}{
+			"module":  panel.Module,
+			"baseUrl": panel.BaseUrl,
+			"name":    panel.Name,
+			"id":      panel.Id,
+			"info":    panel.Info,
+		}
+	}
+
 	jsonObj := map[string]interface{}{
 		"defaultDatasource": defaultDatasource,
 		"datasources":       datasources,
+		"panels":            panels,
 		"appSubUrl":         setting.AppSubUrl,
 		"allowOrgCreate":    (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		"authProxyEnabled":  setting.AuthProxyEnabled,
 		"buildInfo": map[string]interface{}{
 			"version":    setting.BuildVersion,
 			"commit":     setting.BuildCommit,

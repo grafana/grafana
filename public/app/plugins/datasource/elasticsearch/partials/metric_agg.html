@@ -39,6 +39,18 @@
 
 <div class="tight-form" ng-if="showOptions">
 	<div class="tight-form-inner-box tight-form-container">
+		<div class="tight-form" ng-if="agg.type === 'derivative'">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 75px;">
+					Unit
+				</li>
+				<li>
+					<input type="text" class="input-medium tight-form-input last" ng-model="agg.settings.unit" ng-blur="onChangeInternal()" spellcheck='false'>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+
 		<div class="tight-form" ng-if="agg.type === 'moving_avg'">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 75px;">

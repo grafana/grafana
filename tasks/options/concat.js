@@ -4,36 +4,44 @@ module.exports = function(config) {
   return {
     cssDark: {
       src: [
-        '<%= genDir %>/vendor/css/normalize.min.css',
         '<%= genDir %>/vendor/css/timepicker.css',
         '<%= genDir %>/vendor/css/spectrum.css',
-        '<%= genDir %>/css/bootstrap.dark.min.css',
-        '<%= genDir %>/css/bootstrap-responsive.min.css',
-        '<%= genDir %>/vendor/css/font-awesome.min.css',
-        '<%= genDir %>/vendor/css/iconfont.css',
+        '<%= genDir %>/css/grafana.dark.css',
+        '<%= genDir %>/vendor/css/font-awesome.min.css'
       ],
       dest: '<%= genDir %>/css/grafana.dark.min.css'
     },
+
     cssLight: {
       src: [
-        '<%= genDir %>/vendor/css/normalize.min.css',
         '<%= genDir %>/vendor/css/timepicker.css',
         '<%= genDir %>/vendor/css/spectrum.css',
-        '<%= genDir %>/vendor/css/nouislider.min.css',
-        '<%= genDir %>/css/bootstrap.light.min.css',
-        '<%= genDir %>/css/bootstrap-responsive.min.css',
+        '<%= genDir %>/css/grafana.light.css',
         '<%= genDir %>/vendor/css/font-awesome.min.css',
+        '<%= genDir %>/vendor/css/nouislider.min.css',
+        '<%= genDir %>/css/bootstrap-responsive.min.css',
         '<%= genDir %>/vendor/css/iconfont.css',
       ],
       dest: '<%= genDir %>/css/grafana.light.min.css'
     },
     js: {
       src: [
-        '<%= tempDir %>/vendor/requirejs/require.js',
-        '<%= tempDir %>/app/require_config.js',
-        '<%= tempDir %>/app/app.js',
+        '<%= genDir %>/vendor/npm/es6-shim/es6-shim.js',
+        '<%= genDir %>/vendor/npm/es6-promise/dist/es6-promise.js',
+        '<%= genDir %>/vendor/npm/systemjs/dist/system-polyfills.js',
+        '<%= genDir %>/vendor/npm/systemjs/dist/system.js',
+        '<%= genDir %>/app/system.conf.js',
+        '<%= genDir %>/app/boot.js',
       ],
-      dest: '<%= genDir %>/app/app.js'
+      dest: '<%= genDir %>/app/boot.js'
+    },
+
+    bundle_and_boot: {
+      src: [
+        '<%= genDir %>/app/app_bundle.js',
+        '<%= genDir %>/app/boot.js',
+      ],
+      dest: '<%= genDir %>/app/boot.js'
     },
   };
 };

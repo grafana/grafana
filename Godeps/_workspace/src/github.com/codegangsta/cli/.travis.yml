@@ -1,0 +1,19 @@
+language: go
+sudo: false
+
+go:
+- 1.0.3
+- 1.1.2
+- 1.2.2
+- 1.3.3
+- 1.4.2
+- 1.5.1
+- tip
+
+matrix:
+  allow_failures:
+    - go: tip
+
+script:
+- go vet ./...
+- go test -v ./...

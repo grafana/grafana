@@ -1,9 +1,11 @@
 define([
   './panellinks/module',
   './dashlinks/module',
-  './annotations/annotationsSrv',
+  './annotations/annotations_srv',
   './templating/templateSrv',
   './dashboard/all',
+  './playlist/all',
+  './snapshot/all',
   './panel/all',
   './anomaly/all',
   './profile/profileCtrl',
@@ -25,4 +27,5 @@ define([
   './setup/serviceagentCtrl',
   './setup/servicedetailCtrl',
   './setup/filebeatCtrl',
+  './styleguide/styleguide',
 ], function () {});

@@ -34,7 +34,7 @@ Default Region | Used in query editor to set region (can be changed on per query
 Currently all access to CloudWatch is done server side by the Grafana backend using the official AWS SDK. If you grafana
 server is running on AWS you can use IAM Roles and authentication will be handled automatically.
 
-Checkout AWS docs on [IAM Roles]](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
+Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html)
 
 ### AWS credentials file
 
@@ -64,8 +64,32 @@ Name | Description
 `metrics(namespace)` | Returns a list of metrics in the namespace.
 `dimension_keys(namespace)` | Returns a list of dimension keys in the namespace.
 `dimension_values(region, namespace, metric, dimension_key)` | Returns a list of dimension values matching the specified `region`, `namespace`, `metric` and `dimension_key`.
+`ebs_volume_ids(region, instance_id)` | Returns a list of volume id matching the specified `region`, `instance_id`.
+`ec2_instance_attribute(region, attribute_name, filters)` | Returns a list of attribute matching the specified `region`, `attribute_name`, `filters`.
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
+
+## Example templated Queries
+
+Example dimension queries which will return list of resources for individual AWS Services:
+
+Service | Query
+------- | -----
+EBS | `dimension_values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)`
+ElastiCache | `dimension_values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)`
+RedShift | `dimension_values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)`
+RDS | `dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)`
+S3 | `dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)`
+
+## ec2_instance_attribute JSON filters
+
+The `ec2_instance_attribute` query take `filters` in JSON format.
+You can specify [pre-defined filters of ec2:DescribeInstances](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html).
+Specify like `{ filter_name1: [ filter_value1 ], filter_name2: [ filter_value2 ] }`
+
+Example `ec2_instance_attribute()` query
+
+    ec2_instance_attribute(us-east-1, InstanceId, { "tag:Environment": [ "production" ] })
 
 ![](/img/v2/cloudwatch_templating.png)
 

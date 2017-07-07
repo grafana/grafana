@@ -80,13 +80,13 @@ the latest master builds [here](http://grafana.org/download/builds)
 
 ### Get Code
 
-```
+```bash
 go get github.com/grafana/grafana
 ```
 
 ### Building the backend
 Replace X.Y.Z by actual version number.
-```
+```bash
 cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup            (only needed once to install godep)
 godep restore                    (will pull down all golang lib dependencies in your current GOPATH)
@@ -98,7 +98,7 @@ go run build.go build
 To build less to css for the frontend you will need a recent version of of node (v0.12.0),
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
-```
+```bash
 npm install
 npm install -g grunt-cli
 grunt
@@ -106,13 +106,13 @@ grunt
 
 ### Recompile backend on source change
 To rebuild on source change (requires that you executed godep restore)
-```
+```bash
 go get github.com/Unknwon/bra
 bra run
 ```
 
 ### Running
-```
+```bash
 ./bin/grafana-server
 ```
 

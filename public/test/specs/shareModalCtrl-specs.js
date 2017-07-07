@@ -38,7 +38,7 @@ define([
 
         ctx.scope.init();
         var base = 'http://dashboards.grafana.com/render/dashboard-solo/db/my-dash';
-        var params = '?from=1000&to=2000&panelId=22&fullscreen&width=1000&height=500';
+        var params = '?from=1000&to=2000&panelId=22&width=1000&height=500';
         expect(ctx.scope.imageUrl).to.be(base + params);
       });
 

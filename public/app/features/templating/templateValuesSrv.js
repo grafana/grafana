@@ -13,11 +13,25 @@ function (angular, _, kbn) {
 
     function getNoneOption() { return { text: 'None', value: '', isNone: true }; }
 
-    $rootScope.onAppEvent('time-range-changed', function()  {
-      var variable = _.findWhere(self.variables, { type: 'interval' });
-      if (variable) {
-        self.updateAutoInterval(variable);
+    // update time variant variables
+    $rootScope.onAppEvent('refresh', function() {
+
+      // look for interval variables
+      var intervalVariable = _.findWhere(self.variables, { type: 'interval' });
+      if (intervalVariable) {
+        self.updateAutoInterval(intervalVariable);
       }
+
+      // update variables with refresh === 2
+      var promises = self.variables
+        .filter(function(variable) {
+          return variable.refresh === 2;
+        }).map(function(variable) {
+          return self.updateOptions(variable);
+        });
+
+      return $q.all(promises);
+
     }, $rootScope);
 
     this.init = function(dashboard) {
@@ -27,29 +41,71 @@ function (angular, _, kbn) {
       var queryParams = $location.search();
       var promises = [];
 
+      // use promises to delay processing variables that
+      // depend on other variables.
+      this.variableLock = {};
+      _.forEach(this.variables, function(variable) {
+        self.variableLock[variable.name] = $q.defer();
+      });
+
       for (var i = 0; i < this.variables.length; i++) {
         var variable = this.variables[i];
-        var urlValue = queryParams['var-' + variable.name];
-        if (urlValue !== void 0) {
-          promises.push(this.setVariableFromUrl(variable, urlValue));
-        }
-        else if (variable.refresh) {
-          promises.push(this.updateOptions(variable));
-        }
-        else if (variable.type === 'interval') {
-          this.updateAutoInterval(variable);
-        }
+        promises.push(this.processVariable(variable, queryParams));
       }
 
       return $q.all(promises);
     };
 
-    this.setVariableFromUrl = function(variable, urlValue) {
-      var option = _.findWhere(variable.options, { text: urlValue });
-      option = option || { text: urlValue, value: urlValue };
+    this.processVariable = function(variable, queryParams) {
+      var dependencies = [];
+      var lock = self.variableLock[variable.name];
 
-      this.updateAutoInterval(variable);
-      return this.setVariableValue(variable, option);
+      // determine our dependencies.
+      if (variable.type === "query") {
+        _.forEach(this.variables, function(v) {
+          if (templateSrv.containsVariable(variable.query, v.name)) {
+            dependencies.push(self.variableLock[v.name].promise);
+          }
+        });
+      }
+
+      return $q.all(dependencies).then(function() {
+        var urlValue = queryParams['var-' + variable.name];
+        if (urlValue !== void 0) {
+          return self.setVariableFromUrl(variable, urlValue).then(lock.resolve);
+        }
+        else if (variable.refresh === 1 || variable.refresh === 2) {
+          return self.updateOptions(variable).then(function() {
+            if (_.isEmpty(variable.current) && variable.options.length) {
+              console.log("setting current for %s", variable.name);
+              self.setVariableValue(variable, variable.options[0]);
+            }
+            lock.resolve();
+          });
+        }
+        else if (variable.type === 'interval') {
+          self.updateAutoInterval(variable);
+          lock.resolve();
+        } else {
+          lock.resolve();
+        }
+      });
+    };
+
+    this.setVariableFromUrl = function(variable, urlValue) {
+      var promise = $q.when(true);
+
+      if (variable.refresh) {
+        promise = this.updateOptions(variable);
+      }
+
+      return promise.then(function() {
+        var option = _.findWhere(variable.options, { text: urlValue });
+        option = option || { text: urlValue, value: urlValue };
+
+        self.updateAutoInterval(variable);
+        return self.setVariableValue(variable, option, true);
+      });
     };
 
     this.updateAutoInterval = function(variable) {
@@ -60,11 +116,11 @@ function (angular, _, kbn) {
         variable.options.unshift({ text: 'auto', value: '$__auto_interval' });
       }
 
-      var interval = kbn.calculateInterval(timeSrv.timeRange(), variable.auto_count);
+      var interval = kbn.calculateInterval(timeSrv.timeRange(), variable.auto_count, (variable.auto_min ? ">"+variable.auto_min : null));
       templateSrv.setGrafanaVariable('$__auto_interval', interval);
     };
 
-    this.setVariableValue = function(variable, option) {
+    this.setVariableValue = function(variable, option, initPhase) {
       variable.current = angular.copy(option);
 
       if (_.isArray(variable.current.value)) {
@@ -72,8 +128,14 @@ function (angular, _, kbn) {
       }
 
       self.selectOptionsForCurrentValue(variable);
-
       templateSrv.updateTemplateData();
+
+      // on first load, variable loading is ordered to ensure
+      // that parents are updated before children.
+      if (initPhase) {
+        return $q.when();
+      }
+
       return self.updateOptionsInChildVariables(variable);
     };
 
@@ -108,7 +170,6 @@ function (angular, _, kbn) {
       if (variable.type === 'custom' && variable.includeAll) {
         self.addAllOption(variable);
       }
-
     };
 
     this.updateOptions = function(variable) {
@@ -146,7 +207,7 @@ function (angular, _, kbn) {
     this.validateVariableSelectionState = function(variable) {
       if (!variable.current) {
         if (!variable.options.length) { return; }
-        return self.setVariableValue(variable, variable.options[0]);
+        return self.setVariableValue(variable, variable.options[0], true);
       }
 
       if (_.isArray(variable.current.value)) {
@@ -154,7 +215,7 @@ function (angular, _, kbn) {
       } else {
         var currentOption = _.findWhere(variable.options, { text: variable.current.text });
         if (currentOption) {
-          return self.setVariableValue(variable, currentOption);
+          return self.setVariableValue(variable, currentOption, true);
         } else {
           if (!variable.options.length) { return; }
           return self.setVariableValue(variable, variable.options[0]);
@@ -226,60 +287,17 @@ function (angular, _, kbn) {
 
       return _.map(_.keys(options).sort(), function(key) {
         var option = { text: key, value: key };
-
-        // check if values need to be regex escaped
-        if (self.shouldRegexEscape(variable)) {
-          option.value = self.regexEscape(option.value);
-        }
-
         return option;
       });
     };
 
-    this.shouldRegexEscape = function(variable) {
-      return (variable.includeAll || variable.multi) && variable.allFormat.indexOf('regex') !== -1;
-    };
-
-    this.regexEscape = function(value) {
-      return value.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
-    };
-
     this.addAllOption = function(variable) {
-      var allValue = '';
-      switch(variable.allFormat) {
-        case 'wildcard': {
-          allValue = '*';
-          break;
-        }
-        case 'regex wildcard': {
-          allValue = '.*';
-          break;
-        }
-        case 'lucene': {
-          var quotedValues = _.map(variable.options, function(val) {
-            return '\\\"' + val.text + '\\\"';
-          });
-          allValue = '(' + quotedValues.join(' OR ') + ')';
-          break;
-        }
-        case 'regex values': {
-          allValue = '(' + _.map(variable.options, function(option) {
-            return self.regexEscape(option.text);
-          }).join('|') + ')';
-          break;
-        }
-        case 'pipe': {
-          allValue = _.pluck(variable.options, 'text').join('|');
-          break;
-        }
-        default: {
-          allValue = '{';
-          allValue += _.pluck(variable.options, 'text').join(',');
-          allValue += '}';
-        }
+      if (variable.allValue) {
+        variable.options.unshift({text: 'All', value: variable.allValue});
+        return;
       }
 
-      variable.options.unshift({text: 'All', value: allValue});
+      variable.options.unshift({text: 'All', value: "$__all"});
     };
 
   });

@@ -14,7 +14,7 @@ function (angular, _, $) {
                           ' class="input-mini tight-form-func-param"></input>';
       return {
         restrict: 'E',
-        templateUrl: 'app/plugins/datasource/influxdb/partials/query_part.html',
+        templateUrl: 'public/app/plugins/datasource/influxdb/partials/query_part.html',
         scope: {
           part: "=",
           removeAction: "&",

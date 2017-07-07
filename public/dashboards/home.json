@@ -1,43 +1,101 @@
 {
-  "title": "主页",
+  "id": null,
+  "title": "Home",
+  "originalTitle": "Home",
   "tags": [],
   "style": "dark",
   "timezone": "browser",
-  "editable": false,
+  "editable": true,
   "hideControls": true,
+  "sharedCrosshair": false,
   "rows": [
     {
-      "height": "610px",
+      "collapse": false,
+      "editable": true,
+      "height": "90px",
       "panels": [
         {
-          "id": 3,
-          "span": 6,
-          "type": "dashlist",
-          "mode": "search",
-          "title": "智能仪表盘"
-        },
+          "content": "<div class=\"text-center dashboard-header\">\n  <span>Home Dashboard</span>\n</div>",
+          "editable": true,
+          "id": 1,
+          "mode": "html",
+          "span": 12,
+          "style": {},
+          "title": "",
+          "transparent": true,
+          "type": "text",
+          "links": []
+        }
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "510px",
+      "panels": [
         {
           "id": 2,
-          "span": 6,
-          "type": "dashlist",
+          "limit": 10,
           "mode": "starred",
-          "title": "已收藏的仪表盘"
+          "query": "",
+          "span": 6,
+          "tags": [],
+          "title": "Starred dashboards",
+          "type": "dashlist"
+        },
+        {
+          "id": 3,
+          "limit": 10,
+          "mode": "recently viewed",
+          "query": "",
+          "span": 6,
+          "tags": [],
+          "title": "Recently viewed dashboards",
+          "type": "dashlist"
         }
-      ]
-    }
-  ],
-  "nav": [
-    {
-      "type": "timepicker",
-      "enable": false
+      ],
+      "title": "Row"
     }
   ],
   "time": {
     "from": "now-6h",
     "to": "now"
   },
+  "timepicker": {
+    "enable": false,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ],
+    "type": "timepicker"
+  },
   "templating": {
     "list": []
   },
-  "version": 5
+  "annotations": {
+    "list": []
+  },
+  "schemaVersion": 9,
+  "version": 5,
+  "links": []
 }

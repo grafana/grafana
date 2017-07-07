@@ -6,82 +6,51 @@
 
 	<div class="login-box">
 
+		<div class="login-box-logo">
+			<img class="logo-icon" src="public/img/grafana_icon.svg"></img><br>
+			<i class="icon-gf icon-gf-grafana_wordmark"></i>
+		</div>
+
     <div class="invite-box">
 		<h3>
 			您好 {{greeting}}.
 		</h3>
 
-		<div class="modal-tagline">
-			<em>{{invitedBy}}</em> 向您发出了邀请, 加入 <span class="highlight-word">{{contextSrv.user.orgName}}</span></br>请您补全以下用户信息并进入系统:
-		</div>
+			<div class="modal-tagline p-b-2">
+				<em>{{invitedBy}}</em> 向您发出了邀请, 加入 <span class="highlight-word">{{contextSrv.user.orgName}}</span></br>Please complete the following to accept your invitation and continue:
+			</div>
 
-      <form name="inviteForm" class="login-form">
-				<div class="tight-form-container">
-					<div class="tight-form">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 128px">
-								邮件
-							</li>
-							<li>
-								<input type="email" name="email" class="tight-form-input last" required ng-model='formModel.email' placeholder="Email" style="width: 253px">
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-					<div class="tight-form">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 128px">
-								姓名
-							</li>
-							<li>
-								<input type="text" name="name" class="tight-form-input last" ng-model='formModel.name' placeholder="Name (optional)" style="width: 253px">
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-					<div class="tight-form">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 128px">
-								账号
-							</li>
-							<li>
-								<input type="text" name="username" class="tight-form-input last" required ng-model='formModel.username' placeholder="Username" style="width: 253px">
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-
-					<div class="tight-form">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 128px">
-								密码
-							</li>
-							<li>
-								<input type="password" name="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 253px" placeholder="password">
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
+			<form name="inviteForm" class="login-form gf-form-group">
+				<div class="gf-form">
+					<span class="gf-form-label width-7">邮件</span>
+					<input type="email" name="email" class="gf-form-input max-width-21" required ng-model='formModel.email' placeholder="Email">
+				</div>
+				<div class="gf-form">
+					<span class="gf-form-label width-7">姓名</span>
+					<input type="text" name="name" class="gf-form-input max-width-21" ng-model='formModel.name' placeholder="Name (optional)">
+				</div>
+				<div class="gf-form">
+					<span class="gf-form-label width-7">账号</span>
+					<input type="text" name="username" class="gf-form-input max-width-21" required ng-model='formModel.username' placeholder="Username">
+				</div>
+				<div class="gf-form">
+					<span class="gf-form-label width-7">密码</span>
+					<input type="password" name="password" class="gf-form-input max-width-21" required ng-model="formModel.password" id="inputPassword" placeholder="password">
 				</div>
 
-				<div style="margin-left: 147px; width: 254px;">
+				<div style="margin-left: 7.5rem; width: 254px;">
 					<password-strength password="formModel.password"></password-strength>
 				</div>
 
-				<div class="login-submit-button-row">
-					<button type="submit" class="btn" ng-click="submit();" ng-class="{'btn-inverse': !inviteForm.$valid, 'btn-primary': inviteForm.$valid}">
+				<div class="gf-form-button-row">
+					<button type="submit" class="btn btn-inverse" ng-click="submit();" ng-class="{'btn-inverse': !inviteForm.$valid, 'btn-primary': inviteForm.$valid}">
 						Continue
 					</button>
 				</div>
 			</form>
 
-			<div class="clearfix"></div>
 		</div>
-
+		<div ng-include="'app/partials/login_footer.html'"></div>
 	</div>
-
-	<div ng-include="'app/partials/login_footer.html'"></div>
-
-</div>
 
 

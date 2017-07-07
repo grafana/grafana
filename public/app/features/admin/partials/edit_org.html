@@ -1,60 +1,47 @@
-<topnav icon="fa fa-fw fa-user" title="全体成员" subnav="true">
-	<ul class="nav">
-		<li><a href="admin/orgs">列表</a></li>
-		<li class="active"><a href="admin/orgs/edit/{{org.id}}">公司编辑</a></li>
-	</ul>
-</topnav>
+<navbar icon="fa fa-fw fa-cogs" title="全体成员" title-url="admin">
+	<a href="admin/orgs" class="navbar-page-btn">
+		<i class="icon-gf icon-gf-users"></i>
+		公司
+	</a>
+</navbar>
 
 <div class="page-container">
-	<div class="page">
-		<h2>
-			公司详细信息
-		</h2>
-
-		<form name="orgDetailsForm">
-			<div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							名称
-						</li>
-						<li>
-							<input type="text" required ng-model="org.name" class="input-xxlarge tight-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-			</div>
-
-			<br>
-			<button type="submit" class="pull-right btn btn-success" ng-click="update()" ng-show="!createMode">Update</button>
-		</form>
-
-		<h3>
-			公司成员
-		</h3>
-
-		<table class="grafana-options-table form-inline">
-			<tr>
-				<th>账 号</th>
-				<th>邮 箱</th>
-				<th>角 色</th>
-				<th></th>
-			</tr>
-			<tr ng-repeat="orgUser in orgUsers">
-				<td>{{orgUser.login}}</td>
-				<td>{{orgUser.email}}</td>
-				<td>
-					<select type="text" ng-model="orgUser.role" class="input-small" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(orgUser)">
-					</select>
-				</td>
-				<td style="width: 1%">
-					<a ng-click="removeOrgUser(orgUser)" class="btn btn-danger btn-mini">
-						<i class="fa fa-remove"></i>
-					</a>
-				</td>
-			</tr>
-		</table>
-
+	<div class="page-header">
+		<h1>公司编辑</h1>
 	</div>
+
+	<form name="orgDetailsForm" class="gf-form-group">
+		<div class="gf-form">
+			<span class="gf-form-label width-10">名称</span>
+			<input type="text" required ng-model="org.name" class="gf-form-input max-width-14" >
+		</div>
+
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="update()" ng-show="!createMode">更新</button>
+		</div>
+	</form>
+
+	<h3 class="page-heading">公司成员</h3>
+
+	<table class="grafana-options-table">
+		<tr>
+			<th>账 号</th>
+			<th>邮 箱</th>
+			<th>角 色</th>
+			<th></th>
+		</tr>
+		<tr ng-repeat="orgUser in orgUsers">
+			<td>{{orgUser.login}}</td>
+			<td>{{orgUser.email}}</td>
+			<td>
+				<select type="text" ng-model="orgUser.role" class="gf-form-input max-width-8" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(orgUser)">
+				</select>
+			</td>
+			<td style="width: 1%">
+				<a ng-click="removeOrgUser(orgUser)" class="btn btn-danger btn-mini">
+					<i class="fa fa-remove"></i>
+				</a>
+			</td>
+		</tr>
+	</table>
 </div>

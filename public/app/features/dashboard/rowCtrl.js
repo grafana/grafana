@@ -32,11 +32,6 @@ function (angular, _, config) {
 
     $scope.toggleRow = function(row) {
       row.collapse = row.collapse ? false : true;
-      if (!row.collapse) {
-        $timeout(function() {
-          $scope.$broadcast('render');
-        });
-      }
     };
 
     $scope.addPanel = function(panel) {
@@ -44,13 +39,30 @@ function (angular, _, config) {
     };
 
     $scope.deleteRow = function() {
+      function delete_row() {
+        $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
+      }
+
+      if (!$scope.row.panels.length) {
+        delete_row();
+        return;
+      }
+
       $scope.appEvent('confirm-modal', {
-        title: '您是否想删除整行?',
+        title: 'Delete',
+        text: '您是否想删除整行',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {
-          $scope.dashboard.rows = _.without($scope.dashboard.rows, $scope.row);
+          delete_row();
         }
+      });
+    };
+
+    $scope.editRow = function() {
+      $scope.appEvent('show-dash-editor', {
+        src: 'public/app/partials/roweditor.html',
+        scope: $scope.$new()
       });
     };
 
@@ -107,34 +119,6 @@ function (angular, _, config) {
     $scope.setHeight = function(height) {
       $scope.row.height = height;
       $scope.$broadcast('render');
-    };
-
-    $scope.removePanel = function(panel) {
-      $scope.appEvent('confirm-modal', {
-        title: '您是否想移除这个面板?',
-        icon: 'fa-trash',
-        yesText: 'Delete',
-        onConfirm: function() {
-          $scope.row.panels = _.without($scope.row.panels, panel);
-        }
-      });
-    };
-
-    $scope.updatePanelSpan = function(panel, span) {
-      panel.span = Math.min(Math.max(Math.floor(panel.span + span), 1), 12);
-    };
-
-    $scope.replacePanel = function(newPanel, oldPanel) {
-      var row = $scope.row;
-      var index = _.indexOf(row.panels, oldPanel);
-      row.panels.splice(index, 1);
-
-      // adding it back needs to be done in next digest
-      $timeout(function() {
-        newPanel.id = oldPanel.id;
-        newPanel.span = oldPanel.span;
-        row.panels.splice(index, 0, newPanel);
-      });
     };
 
     $scope.init();

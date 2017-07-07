@@ -1,48 +1,15 @@
 <div class="editor-row">
-	<div class="section">
-		<div>
-			<!-- <div class="tight&#45;form"> -->
-			<!-- 	<ul class="tight&#45;form&#45;list"> -->
-			<!-- 		<li class="tight&#45;form&#45;item" style="width: 118px"> -->
-			<!-- 			Relative times -->
-			<!-- 		</li> -->
-			<!-- 		<li> -->
-			<!-- 			<input type="text" class="input&#45;xlarge tight&#45;form&#45;input last" style="width: 450px" ng&#45;model="ctrl.panel.time_options" array&#45;join> -->
-			<!-- 		</li> -->
-			<!-- 	</ul> -->
-			<!-- 	<div class="clearfix"></div> -->
-			<!-- </div> -->
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 118px">
-						自动刷新
-					</li>
-					<li>
-						<input type="text" class="input-xlarge tight-form-input last" style="width: 450px" ng-model="ctrl.panel.refresh_intervals" array-join>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
-
-			<div class="tight-form last">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 118px">
-            延迟时间
-					</li>
-					<li class="tight-form-item">
-						now-
-					</li>
-					<li>
-						<input type="text" class="input-mini tight-form-input last"
-						ng-model="ctrl.panel.nowDelay" placeholder="0m"
-						valid-time-span
-						bs-tooltip="'Enter 1m to ignore the last minute (because it can contain incomplete metrics)'"
-						data-placement="right">
-					</li>
-
-				</ul>
-				<div class="clearfix"></div>
-			</div>
-		</div>
+<div class="gf-form-group">
+	<div class="gf-form">
+		<span class="gf-form-label width-10">自动刷新</span>
+		<input type="text" class="gf-form-input max-width-25" ng-model="ctrl.panel.refresh_intervals" array-join>
+	</div>
+	<div class="gf-form">
+		<span class="gf-form-label width-10">延迟时间</span>
+		<input type="text" class="gf-form-input max-width-25"
+				ng-model="ctrl.panel.nowDelay" placeholder="0m"
+				valid-time-span
+				bs-tooltip="'Enter 1m to ignore the last minute (because it can contain incomplete metrics)'"
+				data-placement="right">
 	</div>
 </div>

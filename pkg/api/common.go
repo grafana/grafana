@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/Unknwon/macaron"
 	"github.com/wangy1931/grafana/pkg/log"
 	"github.com/wangy1931/grafana/pkg/metrics"
 	"github.com/wangy1931/grafana/pkg/middleware"
 	"github.com/wangy1931/grafana/pkg/setting"
+	"gopkg.in/macaron.v1"
 )
 
 var (

@@ -110,7 +110,7 @@ function (_, TableModel) {
   };
 
   p.getTable = function() {
-    var table = new TableModel();
+    var table = new TableModel.default();
     var self = this;
     var i, j;
 
@@ -133,14 +133,18 @@ function (_, TableModel) {
       if (series.values) {
         for (i = 0; i < series.values.length; i++) {
           var values = series.values[i];
+          var reordered = [values[0]];
           if (series.tags) {
             for (var key in series.tags) {
               if (series.tags.hasOwnProperty(key)) {
-                values.splice(1, 0, series.tags[key]);
+                reordered.push(series.tags[key]);
               }
             }
           }
-          table.rows.push(values);
+          for (j = 1; j < values.length; j++) {
+            reordered.push(values[j]);
+          }
+          table.rows.push(reordered);
         }
       }
     });

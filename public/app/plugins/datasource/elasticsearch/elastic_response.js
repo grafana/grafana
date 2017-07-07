@@ -82,7 +82,11 @@ function (_, queryDef) {
 
             value = bucket[metric.id];
             if (value !== undefined) {
-              newSeries.datapoints.push([value.value, bucket.key]);
+              if (value.normalized_value) {
+                newSeries.datapoints.push([value.normalized_value, bucket.key]);
+              } else {
+                newSeries.datapoints.push([value.value, bucket.key]);
+              }
             }
 
           }
@@ -265,13 +269,44 @@ function (_, queryDef) {
     seriesList.push(series);
   };
 
+  ElasticResponse.prototype.trimDatapoints = function(aggregations, target) {
+    var histogram = _.findWhere(target.bucketAggs, { type: 'date_histogram'});
+
+    var shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.trimEdges;
+    if (shouldDropFirstAndLast) {
+      var trim = histogram.settings.trimEdges;
+      for(var prop in aggregations) {
+        var points = aggregations[prop];
+        if (points.datapoints.length > trim * 2) {
+          points.datapoints = points.datapoints.slice(trim, points.datapoints.length - trim);
+        }
+      }
+    }
+  };
+
+  ElasticResponse.prototype.getErrorFromElasticResponse = function(response, err) {
+    var result = {};
+    result.data = JSON.stringify(err, null, 4);
+    if (err.root_cause && err.root_cause.length > 0 && err.root_cause[0].reason) {
+      result.message = err.root_cause[0].reason;
+    } else {
+      result.message = err.reason || 'Unkown elatic error response';
+    }
+
+    if (response.$$config) {
+      result.config = response.$$config;
+    }
+
+    return result;
+  };
+
   ElasticResponse.prototype.getTimeSeries = function() {
     var seriesList = [];
 
     for (var i = 0; i < this.response.responses.length; i++) {
       var response = this.response.responses[i];
       if (response.error) {
-        throw { message: response.error };
+        throw this.getErrorFromElasticResponse(this.response, response.error);
       }
 
       if (response.hits && response.hits.hits.length > 0) {
@@ -285,6 +320,7 @@ function (_, queryDef) {
         var docs = [];
 
         this.processBuckets(aggregations, target, tmpSeriesList, docs, {}, 0);
+        this.trimDatapoints(tmpSeriesList, target);
         this.nameSeries(tmpSeriesList, target);
 
         for (var y = 0; y < tmpSeriesList.length; y++) {

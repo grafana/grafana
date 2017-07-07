@@ -6,7 +6,7 @@ define([
 function (angular, coreModule) {
   'use strict';
 
-  coreModule.directive('spectrumPicker', function() {
+  coreModule.default.directive('spectrumPicker', function() {
     return {
       restrict: 'E',
       require: 'ngModel',

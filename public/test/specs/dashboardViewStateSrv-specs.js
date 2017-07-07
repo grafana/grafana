@@ -9,7 +9,8 @@ define([
     beforeEach(module('grafana.services'));
 
     beforeEach(inject(function(dashboardViewStateSrv, $location, $rootScope) {
-      $rootScope.onAppEvent = function(){};
+      $rootScope.onAppEvent = function() {};
+      $rootScope.dashboard = {meta: {}};
       viewState = dashboardViewStateSrv.create($rootScope);
       location = $location;
     }));
@@ -19,7 +20,7 @@ define([
         var updateState = { fullscreen: true, edit: true, panelId: 1 };
         viewState.update(updateState);
         expect(location.search()).to.eql(updateState);
-        expect(viewState.fullscreen).to.be(true);
+        expect(viewState.dashboard.meta.fullscreen).to.be(true);
         expect(viewState.state.fullscreen).to.be(true);
       });
     });
@@ -29,7 +30,7 @@ define([
         viewState.update({fullscreen: true, panelId: 1, edit: true});
         viewState.update({fullscreen: false});
         expect(location.search()).to.eql({});
-        expect(viewState.fullscreen).to.be(false);
+        expect(viewState.dashboard.meta.fullscreen).to.be(false);
         expect(viewState.state.fullscreen).to.be(null);
       });
     });

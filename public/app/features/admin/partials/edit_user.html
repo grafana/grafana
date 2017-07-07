@@ -1,152 +1,97 @@
-<topnav icon="fa fa-fw fa-user" title="全体成员" subnav="true">
-	<ul class="nav">
-		<li><a href="admin/users">用户</a></li>
-		<li><a href="admin/users/create">新建用户</a></li>
-		<li class="active"><a href="admin/users/edit/{{user_id}}">用户编辑</a></li>
-	</ul>
-</topnav>
+<navbar icon="fa fa-fw fa-cogs" title="管理员" title-url="admin">
+	<a href="admin/users" class="navbar-page-btn">
+		<i class="icon-gf icon-gf-users"></i>
+		用户
+	</a>
+</navbar>
 
 <div class="page-container">
-	<div class="page">
-		<h2>
-			账号编辑
-		</h2>
+	<div class="page-header">
+		<h1>账号编辑</h1>
+	</div>
 
-		<form name="userForm">
-			<div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							名称
-						</li>
-						<li>
-							<input type="text" required ng-model="user.name" class="input-xxlarge tight-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							邮箱
-						</li>
-						<li>
-							<input type="email" ng-model="user.email" class="input-xxlarge tight-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							账号
-						</li>
-						<li>
-							<input type="text" ng-model="user.login" class="input-xxlarge tight-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
+	<form name="userForm" class="gf-form-group">
+			<div class="gf-form">
+				<span class="gf-form-label width-10">名称</span>
+				<input type="text" required ng-model="user.name" class="gf-form-input max-width-25" >
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-10">邮箱</span>
+				<input type="email" ng-model="user.email" class="gf-form-input max-width-25" >
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-10">账号</span>
+				<input type="text" ng-model="user.login" class="gf-form-input max-width-25" >
 			</div>
 
-			<br>
-			<button type="submit" class="pull-right btn btn-success" ng-click="update()" ng-show="!createMode">Update</button>
-		</form>
-
-		<h3>
-			修改密码
-		</h3>
-
-		<form name="passwordForm">
-			<div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 100px">
-							New password
-						</li>
-						<li>
-							<input type="password" required ng-minlength="4" ng-model="password" class="input-xxlarge tight-form-input last">
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
+			<div class="gf-form-button-row">
+				<button type="submit" class="btn btn-success" ng-click="update()" ng-show="!createMode">Update</button>
 			</div>
+	</form>
 
-			<br>
-			<button type="submit" class="pull-right btn btn-success" ng-click="setPassword()">Update</button>
-		</form>
+	<h3 class="page-heading">修改密码</h3>
 
-		<h3>
-			权限
-		</h3>
-
-		<div>
-			<div class="tight-form last">
-				<ul class="tight-form-list">
-					<li class="tight-form-item last">
-						Admin&nbsp;
-						<input class="cr1" id="permissions.isGrafanaAdmin" type="checkbox"
-						ng-model="permissions.isGrafanaAdmin" ng-checked="permissions.isGrafanaAdmin">
-						<label for="permissions.isGrafanaAdmin" class="cr1"></label>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
-			<br>
-			<button type="submit" class="pull-right btn btn-success" ng-click="updatePermissions()">Update</button>
-			<br>
+	<form name="passwordForm" class="gf-form-group">
+		<div class="gf-form">
+				<span class="gf-form-label width-10">New password</span>
+				<input type="password" required ng-minlength="4" ng-model="password" class="gf-form-input max-width-25">
 		</div>
 
-		<h3>
-			公司
-		</h3>
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="setPassword()">Update</button>
+		</div>
+	</form>
 
-		<form name="addOrgForm">
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 160px">
-						新增公司
-					</li>
-					<li>
-						<input type="text" ng-model="newOrg.name" bs-typeahead="searchOrgs"
-									required class="input-xlarge tight-form-input" placeholder="organization name">
-					</li>
-					<li class="tight-form-item">
-						角色
-					</li>
-					<li>
-						<select type="text" ng-model="newOrg.role" class="input-small tight-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']">
-						</select>
-					</li>
-					<li>
-						<button class="btn btn-success tight-form-btn" ng-click="addOrgUser()">Add</button>
-					</li>
-					<div class="clearfix"></div>
-				</ul>
+	<h3 class="page-heading">权限</h3>
+
+	<form name="passwordForm" class="gf-form-group">
+		<div class="gf-form" >
+			<editor-checkbox text="Grafana Admin" model="permissions.isGrafanaAdmin" style="line-height: 1.5rem;"></editor-checkbox>
+		</div>
+
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="updatePermissions()">更新</button>
+		</div>
+	</form>
+
+	<h3 class="page-heading">公司</h3>
+
+	<form name="addOrgForm" class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form">
+				<span class="gf-form-label width-12">新增公司</span>
+				<input type="text" ng-model="newOrg.name" bs-typeahead="searchOrgs"	required class="gf-form-input max-width-20" placeholder="organization name">
 			</div>
-		</form>
+			<div class="gf-form">
+				<span class="gf-form-label">角色</span>
+				<select type="text" ng-model="newOrg.role" class="gf-form-input width-10" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']"></select>
+			</div>
+			<div class="gf-form">
+				<button class="btn btn-success gf-form-btn" ng-click="addOrgUser()">增加</button>
+			</div>
+		</div>
+	</form>
 
-		<table class="grafana-options-table form-inline">
-			<tr>
-				<th>姓名</th>
-				<th>角色</th>
-				<th></th>
-			</tr>
-			<tr ng-repeat="org in orgs">
-				<td>
-					{{org.name}} <span class="label label-info" ng-show="org.orgId === user.orgId">Current</span>
-				</td>
-				<td>
-					<select type="text" ng-model="org.role" class="input-small" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(org)">
-					</select>
-				</td>
-				<td style="width: 1%">
-					<a ng-click="removeOrgUser(org)" class="btn btn-danger btn-mini">
-						<i class="fa fa-remove"></i>
-					</a>
-				</td>
-			</tr>
-		</table>
+	<table class="grafana-options-table">
+		<tr>
+			<th>姓名</th>
+			<th>角色</th>
+			<th></th>
+		</tr>
+		<tr ng-repeat="org in orgs">
+			<td>
+				{{org.name}} <span class="label label-info" ng-show="org.orgId === user.orgId">Current</span>
+			</td>
+			<td>
+				<select type="text" ng-model="org.role" class="gf-form-input max-width-12" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(org)">
+				</select>
+			</td>
+			<td style="width: 1%">
+				<a ng-click="removeOrgUser(org)" class="btn btn-danger btn-mini">
+					<i class="fa fa-remove"></i>
+				</a>
+			</td>
+		</tr>
+	</table>
 
-	</div>
 </div>

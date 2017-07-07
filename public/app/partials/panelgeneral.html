@@ -1,62 +1,36 @@
-<div class="editor-row">
-  <div class="section">
-    <h5>常规选项</h5>
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item">
-					标题
-				</li>
-				<li>
-					<input type="text" class="input-xlarge tight-form-input" ng-model='panel.title'></input>
-				</li>
-				<li class="tight-form-item">
-					跨度
-				</li>
-				<li>
-					<select class="input-mini tight-form-input" ng-model="panel.span" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select>
-				</li>
-				<li class="tight-form-item">
-					高
-				</li>
-				<li>
-					<input type="text" class="input-small tight-form-input" ng-model='panel.height'></input>
-				</li>
-				<li class="tight-form-item">
-					<label class="checkbox-label" for="panel.transparent">透明</label>
-					<input class="cr1" id="panel.transparent" type="checkbox" ng-model="panel.transparent" ng-checked="panel.transparent">
-					<label for="panel.transparent" class="cr1"></label>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
+<div class="gf-form-group">
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-21">
+			<span class="gf-form-label width-8">标题</span>
+			<input type="text" class="gf-form-input" ng-model='ctrl.panel.title'></input>
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label width-6">跨度</span>
+			<select class="gf-form-input gf-size-auto" ng-model="ctrl.panel.span" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select>
+		</div>
+		<div class="gf-form max-width-26">
+			<span class="gf-form-label width-8">高</span>
+			<input type="text" class="gf-form-input max-width-6" ng-model='ctrl.panel.height' placeholder="100px"></input>
+			<editor-checkbox text="Transparent" model="ctrl.panel.transparent"></editor-checkbox>
 		</div>
 	</div>
-	<div class="section">
-		<h5>模板选项</h5>
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item">
-					重复模块
-				</li>
-				<li>
-					<select class="input-small tight-form-input last" ng-model="panel.repeat" ng-options="f.name as f.name for f in dashboard.templating.list">
-						<option value=""></option>
-					</select>
-				</li>
-				<li class="tight-form-item">
-					最小跨度
-				</li>
-				<li>
-					<select class="input-small tight-form-input last" ng-model="panel.minSpan" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10,11,12]">
-						<option value=""></option>
-					</select>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
+
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-21">
+			<span class="gf-form-label width-8">重复模块</span>
+			<select class="gf-form-input" ng-model="ctrl.panel.repeat" ng-options="f.name as f.name for f in ctrl.dashboard.templating.list">
+				<option value=""></option>
+			</select>
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label width-6">最小跨度</span>
+			<select class="gf-form-input" ng-model="ctrl.panel.minSpan" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10,11,12]">
+				<option value=""></option>
+			</select>
 		</div>
 	</div>
 </div>
 
-<panel-links-editor panel="panel"></panel-links-editor>
-<panel-info-editor panel="panel"></panel-info-editor>
+<panel-links-editor panel="ctrl.panel"></panel-links-editor>
 
 

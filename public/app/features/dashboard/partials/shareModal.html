@@ -1,21 +1,24 @@
-<div class="modal-body gf-box gf-box-no-margin" ng-controller="ShareModalCtrl" ng-init="init()">
-	<div class="gf-box-header">
-		<div class="gf-box-title">
-			<i class="fa fa-share"></i>
+<div class="modal-body" ng-controller="ShareModalCtrl" ng-init="init()">
+
+	<div class="modal-header">
+		<h2 class="modal-header-title">
 			{{modalTitle}}
-		</div>
+		</h2>
 
-		<div ng-model="editor.index" bs-tabs>
-			<div ng-repeat="tab in tabs" data-title="{{tab.title}}">
-			</div>
-		</div>
+		<ul class="gf-tabs">
+			<li class="gf-tabs-item" ng-repeat="tab in tabs">
+				<a class="gf-tabs-link" ng-click="editor.index = $index" ng-class="{active: editor.index === $index}">
+					{{::tab.title}}
+				</a>
+			</li>
+		</ul>
 
-		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+		<a class="modal-header-close" ng-click="dismiss();">
 			<i class="fa fa-remove"></i>
-		</button>
+		</a>
 	</div>
 
-	<div class="gf-box-body" ng-repeat="tab in tabs" ng-if="editor.index == $index">
+	<div class="modal-content" ng-repeat="tab in tabs" ng-if="editor.index == $index">
 		<div ng-include src="tab.src" class="share-modal-body"></div>
 	</div>
 
@@ -34,53 +37,32 @@
 
 	<div ng-include src="'shareLinkOptions.html'"></div>
 
-	<div class="gf-form">
-		<div class="gf-form-row">
-			<span class="gf-fluid-input">
-				<textarea rows="5" data-share-panel-url class="input" ng-model='iframeHtml'></textarea>
-			</span>
+	<div class="gf-form-group position-center">
+		<div class="gf-form width-30" >
+			<textarea rows="5" data-share-panel-url class="gf-form-input width-30" ng-model='iframeHtml'></textarea>
 		</div>
-		<button class="btn btn-inverse" data-clipboard-text="{{iframeHtml}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
+	</div>
+	<div class="gf-form-group">
+		<div class="gf-form position-center">
+			<button class="btn btn-inverse" data-clipboard-text="{{iframeHtml}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
+		</div>
 	</div>
 </script>
 
 <script type="text/ng-template" id="shareLinkOptions.html">
-	<div class="editor-row" style="margin: 11px 20px 33px 20px">
-		<div class="section">
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 170px;">
-						<label class="checkbox-label" for="options.forCurrent">当前时间范围</label>
-					</li>
-					<li class="tight-form-item last">
-						<input class="cr1" id="options.forCurrent" type="checkbox" ng-model="options.forCurrent" ng-checked="options.forCurrent" ng-change="buildUrl()">
-						<label for="options.forCurrent" class="cr1"></label>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 170px">
-						<label class="checkbox-label" for="options.includeTemplateVars">包含模板参数</label>
-					</li>
-					<li class="tight-form-item last">
-						<input class="cr1" id="options.includeTemplateVars" type="checkbox" ng-model="options.includeTemplateVars" ng-checked="options.includeTemplateVars" ng-change="buildUrl()">
-						<label for="options.includeTemplateVars" class="cr1"></label>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
-			</div>
-			<div class="tight-form">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 170px">
-						主题
-					</li>
-					<li>
-						<select class="input-small tight-form-input last" style="width: 211px" ng-model="options.theme" ng-options="f as f for f in ['current', 'dark', 'light']" ng-change="buildUrl()"></select>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
+	<div class="gf-form-group position-center">
+		<div class="gf-form">
+			<span class="gf-form-label width-5">当前时间范围</span>
+			<editor-checkbox text="Current time range" model="options.forCurrent" change="buildUrl()"></editor-checkbox>
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label width-5">包含模板参数</span>
+			<editor-checkbox text="Template variables" model="options.includeTemplateVars" change="buildUrl()"></editor-checkbox>
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label width-5">主题</span>
+			<div class="gf-form-select-wrapper max-width-10">
+				<select class="gf-form-input" ng-model="options.theme" ng-options="f as f for f in ['current', 'dark', 'light']" ng-change="buildUrl()"></select>
 			</div>
 		</div>
 	</div>
@@ -88,28 +70,31 @@
 
 <script type="text/ng-template" id="shareLink.html">
 	<div class="share-modal-big-icon">
-		<i class="fa fa-external-link"></i>
+		<i class="fa fa-link"></i>
 	</div>
 
 	<div ng-include src="'shareLinkOptions.html'"></div>
-	<div class="gf-form">
-		<div class="gf-form-row">
-			<button class="btn btn-inverse pull-right" data-clipboard-text="{{shareUrl}}" clipboard-button><i class="fa fa-clipboard"></i> 复制</button>
-			<span class="gf-fluid-input">
-				<input type="text" data-share-panel-url class="input" ng-model='shareUrl'></input>
-			</span>
+	<div class="gf-form-group position-center">
+		<div class="gf-form-inline">
+
+			<div class="gf-form width-30">
+				<input type="text" data-share-panel-url class="gf-form-input" ng-model="shareUrl"></input>
+			</div>
+			<div class="gf-form pull-right">
+				<button class="btn btn-inverse pull-right" data-clipboard-text="{{shareUrl}}" clipboard-button><i class="fa fa-clipboard"></i> 复制</button>
+			</div>
 		</div>
-		<div class="editor-row" style="margin-top: 5px;" ng-show="modeSharePanel">
-			<a href="{{imageUrl}}" target="_blank"><i class="fa fa-camera"></i> 直接链接渲染图片</a>
-		</div>
+	</div>
+	<div class="gf-form position-center" ng-show="modeSharePanel">
+		<a href="{{imageUrl}}" target="_blank"><i class="fa fa-camera"></i> 直接链接渲染图片</a>
 	</div>
 </script>
 
 <script type="text/ng-template" id="shareSnapshot.html">
-	<div class="ng-cloak" ng-cloak ng-controller="ShareSnapshotCtrl">
+	<div class="ng-cloak" ng-cloak ng-controller="ShareSnapshotCtrl" ng-init="init()">
 		<div class="share-modal-big-icon">
 			<i ng-if="loading" class="fa fa-spinner fa-spin"></i>
-			<i ng-if="!loading" class="gf-icon gf-icon-snap-multi"></i>
+			<i ng-if="!loading" class="icon-gf icon-gf-snapshot"></i>
 		</div>
 
 		<div class="share-snapshot-header" ng-if="step === 1">
@@ -131,29 +116,15 @@
 			</p>
 		</div>
 
-		<div class="editor-row share-modal-options" style="">
-			<div class="section" ng-if="step === 1">
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 110px;">
-							快照名称
-						</li>
-						<li>
-							<input type="text" ng-model="snapshot.name" class="input-large tight-form-input last" >
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 110px">
-							有效期
-						</li>
-						<li>
-							<select class="input-small tight-form-input last" style="width: 211px" ng-model="snapshot.expires" ng-options="f.value as f.text for f in expireOptions"></select>
-						</li>
-					</ul>
-					<div class="clearfix"></div>
+		<div class="gf-form-group share-modal-options position-center">
+			<div class="gf-form" ng-if="step === 1">
+				<span class="gf-form-label width-12">快照名称</span>
+				<input type="text" ng-model="snapshot.name" class="gf-form-input max-width-15" >
+			</div>
+			<div class="gf-form" ng-if="step === 1">
+				<span class="gf-form-label width-12">有效期</span>
+				<div class="gf-form-select-wrapper max-width-15">
+					<select class="gf-form-input" ng-model="snapshot.expires" ng-options="f.value as f.text for f in expireOptions"></select>
 				</div>
 			</div>
 
@@ -169,21 +140,21 @@
 			</div>
 		</div>
 
-		<div ng-if="step === 1">
+		<div ng-if="step === 1" class="gf-form-buttons-row">
 			<button class="btn btn-success btn-large" ng-click="createSnapshot()" ng-disabled="loading">
 				<i class="fa fa-save"></i>
 				本地快照
 			</button>
-
-			<button class="btn btn-primary btn-large" ng-click="createSnapshot(true)" ng-disabled="loading">
+			<button class="btn btn-primary btn-large" ng-if="externalEnabled" ng-click="createSnapshot(true)" ng-disabled="loading">
 				<i class="fa fa-cloud-upload"></i>
-				发布到 snapshot.raintank.io
+				{{sharingButtonText}}
 			</button>
 		</div>
 
 		<div class="pull-right" ng-if="step === 2" style="padding: 5px">
 			你是否出现失误? <a class="pointer" ng-click="deleteSnapshot()" target="_blank">删除快照.</a>
 		</div>
-
 	</div>
+
+</div>
 </script>

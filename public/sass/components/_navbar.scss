@@ -1,0 +1,162 @@
+
+.navbar {
+  display: block;
+  overflow: visible;
+  position: relative;
+  z-index: 110;
+}
+
+.navbar-inner {
+  min-height: $navbarHeight;
+  padding-right: $spacer;
+  background-color: $navbarBackground;
+  border-bottom: $navbarBorder;
+  @include clearfix();
+}
+
+.navbar .nav {
+  position: relative;
+  left: 0;
+  float: left;
+}
+
+.navbar .nav.pull-right {
+  float: right; // redeclare due to specificity
+  margin-right: 0; // remove margin on float right nav
+}
+
+.navbar .nav > li {
+  float: left;
+}
+
+// Links
+.navbar .nav > li > a {
+  float: none;
+  padding: 17px 13px 13px;
+  color: $navbarLinkColor;
+  text-decoration: none;
+
+  .fa { font-size: 115%; }
+}
+
+// Hover/focus
+.navbar .nav > li > a:focus,
+.navbar .nav > li > a:hover {
+  background-color: $navbarLinkBackgroundHover; // "transparent" is default to differentiate :hover/:focus from .active
+  color: $navbarLinkColorHover;
+  text-decoration: none;
+}
+
+// Active nav items
+.navbar .nav > .active > a,
+.navbar .nav > .active > a:hover,
+.navbar .nav > .active > a:focus {
+  color: $navbarLinkColorActive;
+  text-decoration: none;
+  background-color: $navbarLinkBackgroundActive;
+}
+
+.navbar-brand-btn {
+  display: block;
+  position: relative;
+  float: left;
+  margin: 0;
+  border-right: 1px solid $tight-form-border;
+  background-color: $navbarButtonBackground;
+  padding: 0.4rem 1.0rem 0.4rem 1rem;
+
+  .fa-caret-down {
+    font-size: 70%;
+  }
+  .fa-chevron-left{
+    display: none;
+  }
+
+  &:hover {
+    background: $navbarButtonBackgroundHighlight;
+  }
+
+  img {
+    width: 30px;
+    position: relative;
+    top: -1px;
+  }
+
+  .navbar-brand-btn-background {
+    display: inline-block;
+    border: 1px solid $body-bg;
+    padding: 4px;
+    border-radius: 50%;
+    background: $iconContainerBackground;
+    width: 40px;
+    height: 40px;
+  }
+
+  .icon-gf-grafana_wordmark {
+    font-size: 21px;
+    position: relative;
+    top: 4px;
+    padding-left: 5px;
+    display: none;
+  }
+}
+
+.navbar-page-btn {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  float: left;
+  display: block;
+  margin: 0;
+  font-size: 1.4em;
+  border-right: 1px solid $tight-form-border;
+  color: darken($link-color, 5%);
+  background-color: $navbarButtonBackground;
+  font-size: $font-size-lg;
+  padding: 1rem 1rem 0.7rem 1rem;
+
+  &:hover {
+    background: $navbarButtonBackgroundHighlight;
+    color: $link-color;
+  }
+
+  .fa-caret-down {
+    font-size: 60%;
+    padding-left: 0.2rem;
+  }
+
+  .icon-gf {
+    position: relative;
+    top: 2px;
+    font-size: 20px;
+    line-height: 8px;
+  }
+
+  > img {
+    max-width: 27px;
+    max-height: 27px;
+  }
+}
+
+.sidemenu-pinned {
+  .navbar-brand-btn {
+    background-color: $page-bg;
+    width: $side-menu-width;
+
+    .icon-gf-grafana_wordmark  {
+      display: inline-block;
+    }
+
+    .fa-caret-down {
+      display: none;
+    }
+
+    &:hover .fa-chevron-left {
+      display: inline-block;
+      color: $text-color-weak;
+      position: relative;
+      left: 1.3rem;
+    }
+  }
+}
+

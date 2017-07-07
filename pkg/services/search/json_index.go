@@ -1,12 +1,12 @@
 package search
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/wangy1931/grafana/pkg/components/simplejson"
 	"github.com/wangy1931/grafana/pkg/log"
 	m "github.com/wangy1931/grafana/pkg/models"
 )
@@ -120,10 +120,8 @@ func loadDashboardFromFile(filename string) (*JsonDashIndexItem, error) {
 	}
 	defer reader.Close()
 
-	jsonParser := json.NewDecoder(reader)
-	var data map[string]interface{}
-
-	if err := jsonParser.Decode(&data); err != nil {
+	data, err := simplejson.NewFromReader(reader)
+	if err != nil {
 		return nil, err
 	}
 

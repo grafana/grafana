@@ -127,7 +127,7 @@ define([
     it('10m 1600 resolution', function() {
       var range = { from: dateMath.parse('now-10m'), to: dateMath.parse('now') };
       var str = kbn.calculateInterval(range, 1600, null);
-      expect(str).to.be('100ms');
+      expect(str).to.be('500ms');
     });
 
     it('fixed user interval', function() {
@@ -145,7 +145,7 @@ define([
     it('large time range and user low limit', function() {
       var range = { from: dateMath.parse('now-14d'), to: dateMath.parse('now') };
       var str = kbn.calculateInterval(range, 1000, '>10s');
-      expect(str).to.be('30m');
+      expect(str).to.be('20m');
     });
   });
 });

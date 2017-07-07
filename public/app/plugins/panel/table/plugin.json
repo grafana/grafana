@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Table",
+  "id": "table",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+},
+    "logos": {
+      "small": "img/icn-table-panel.svg",
+      "large": "img/icn-table-panel.svg"
+    }
+  }
+}
+

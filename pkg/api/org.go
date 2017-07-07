@@ -21,6 +21,33 @@ func GetOrgById(c *middleware.Context) Response {
 	return getOrgHelper(c.ParamsInt64(":orgId"))
 }
 
+// Get /api/orgs/name/:name
+func GetOrgByName(c *middleware.Context) Response {
+	query := m.GetOrgByNameQuery{Name: c.Params(":name")}
+	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrOrgNotFound {
+			return ApiError(404, "Organization not found", err)
+		}
+
+		return ApiError(500, "Failed to get organization", err)
+	}
+	org := query.Result
+	result := m.OrgDetailsDTO{
+		Id:   org.Id,
+		Name: org.Name,
+		Address: m.Address{
+			Address1: org.Address1,
+			Address2: org.Address2,
+			City:     org.City,
+			ZipCode:  org.ZipCode,
+			State:    org.State,
+			Country:  org.Country,
+		},
+	}
+
+	return Json(200, &result)
+}
+
 func getOrgHelper(orgId int64) Response {
 	query := m.GetOrgByIdQuery{Id: orgId}
 
@@ -59,7 +86,7 @@ func CreateOrg(c *middleware.Context, cmd m.CreateOrgCommand) Response {
 	cmd.UserId = c.UserId
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrOrgNameTaken {
-			return ApiError(400, "Organization name taken", err)
+			return ApiError(409, "Organization name taken", err)
 		}
 		return ApiError(500, "Failed to create organization", err)
 	}

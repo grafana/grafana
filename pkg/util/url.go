@@ -27,6 +27,11 @@ func (r *UrlQueryReader) Get(name string, def string) string {
 func JoinUrlFragments(a, b string) string {
 	aslash := strings.HasSuffix(a, "/")
 	bslash := strings.HasPrefix(b, "/")
+
+	if len(b) == 0 {
+		return a
+	}
+
 	switch {
 	case aslash && bslash:
 		return a + b[1:]
