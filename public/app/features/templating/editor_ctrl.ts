@@ -77,7 +77,7 @@ export class VariableEditorCtrl {
         return false;
       }
 
-      if ($scope.current.type === 'query' && $scope.current.query.match(new RegExp('\\$' + $scope.current.name))) {
+      if ($scope.current.type === 'query' && $scope.current.query.match(new RegExp('\\$' + $scope.current.name + '(/| |$)'))) {
         $scope.appEvent('alert-warning', ['Validation', 'Query cannot contain a reference to itself. Variable: $'  + $scope.current.name]);
         return false;
       }
