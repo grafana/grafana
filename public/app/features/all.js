@@ -11,7 +11,6 @@ define([
   './profile/profileCtrl',
   './profile/changePasswordCtrl',
   './profile/selectOrgCtrl',
-  './admin/all',
   './decompose/all',
   './logs/all',
   './analysis/all',

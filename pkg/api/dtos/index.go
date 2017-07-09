@@ -2,6 +2,7 @@ package dtos
 
 type IndexViewData struct {
 	User               *CurrentUser
+	Systems		   interface{}
 	Settings           map[string]interface{}
 	AppUrl             string
 	AppSubUrl          string

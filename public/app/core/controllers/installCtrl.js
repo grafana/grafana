@@ -6,7 +6,7 @@ define([
 function (angular, _,coreModule) {
     'use strict';
 
-    coreModule.controller('InstallCtrl', function ($scope, backendSrv, datasourceSrv, contextSrv) {
+    coreModule.default.controller('InstallCtrl', function ($scope, backendSrv, datasourceSrv, contextSrv) {
       $scope.installSelect = {
         system: 0,
         service: ""

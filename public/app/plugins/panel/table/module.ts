@@ -4,6 +4,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
 import moment from 'moment';
+import 'highlight';
 import * as FileExport from 'app/core/utils/file_export';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 import {transformDataToTable} from './transformers';
@@ -202,6 +203,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       appendPaginationControls(footerElem);
 
       rootElem.css({'max-height': panel.scroll ? getTableHeight() : '' });
+      panelElem._highlight(scope.panel.targets[0].query);
     }
 
     elem.on('click', '.table-panel-page-link', switchPage);

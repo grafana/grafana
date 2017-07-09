@@ -4,7 +4,7 @@ define([
 ],
 function (angular,coreModule) {
   'use strict';
-  coreModule.service('integrateSrv',function () {
+  coreModule.default.service('integrateSrv',function () {
     return {
         options : {}
     }

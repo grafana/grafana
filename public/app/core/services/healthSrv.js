@@ -5,7 +5,7 @@ define([
 ],
 function (angular, _, coreModule) {
     'use strict';
-    coreModule.service('healthSrv', function ($http, backendSrv, $location, $q) {
+    coreModule.default.service('healthSrv', function ($http, backendSrv, $location, $q) {
       var anomalyListUrl = "/anomaly?by_groups=true";
       var excludeAnomaly = "/anomaly/exclude";
       var includeAnomaly = "/anomaly/include";

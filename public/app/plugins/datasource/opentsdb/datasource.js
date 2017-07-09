@@ -8,7 +8,7 @@ function (angular, _, dateMath) {
   'use strict';
 
   /** @ngInject */
-  function OpenTsDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+  function OpenTsDatasource(instanceSettings, $q, backendSrv, templateSrv, contextSrv) {
     this.type = 'opentsdb';
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
@@ -20,7 +20,6 @@ function (angular, _, dateMath) {
     this.supportMetrics = true;
     this.tagKeys = {};
     this.prefix = contextSrv.user.orgId + "." + contextSrv.user.systemId + ".";
-    
     // Called once per panel (graph)
     this.query = function(options) {
       this.prefix = contextSrv.user.orgId + "." + contextSrv.user.systemId + ".";
@@ -105,7 +104,6 @@ function (angular, _, dateMath) {
 
       }.bind(this));
     };
-    
     this.annotationQuery2 = function (options) {
       var annotation = options.annotation;
       var start = convertToTSDBTime(options.rangeRaw.from, false);

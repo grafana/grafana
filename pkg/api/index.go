@@ -51,9 +51,8 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 
 	//TODO must support Multi-tenant
-	//TOD update
-	//systems, err := GetCurrentUserSystemFromIndex(c)
-	//c.Data["Systems"] = systems
+	systems, err := GetCurrentUserSystemFromIndex(c)
+	data.Systems = systems
 
 	dashboardChildNavs := []*dtos.NavLink{
 		{Text: "Home", Url: setting.AppSubUrl + "/"},

@@ -10,7 +10,7 @@ import coreModule from 'app/core/core_module';
 export class GrafanaCtrl {
 
   /** @ngInject */
-  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv, $location, healthSrv) {
+  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv, $location, healthSrv, backendSrv) {
 
     $scope.init = function() {
       $scope.contextSrv = contextSrv;
@@ -37,7 +37,7 @@ export class GrafanaCtrl {
       dashboardData.dashboard.system = contextSrv.user.systemId;
       healthSrv.transformMetricType(dashboardData.dashboard).then(function () {
         $controller('DashboardCtrl', {$scope: viewScope}).init(dashboardData);
-        contextSrv.user.systemId = dashboardData.dashboard.system || 0
+        contextSrv.user.systemId = dashboardData.dashboard.system || 0;
       });
     };
 

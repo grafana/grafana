@@ -5,7 +5,7 @@ define([
 function (angular, coreModule) {
     'use strict';
 
-    coreModule.controller('SystemCtrl', function ($scope, backendSrv, $location) {
+    coreModule.default.controller('SystemCtrl', function ($scope, backendSrv, $location) {
 
       $scope.dashboardSetting = {title: "新的仪表盘", system: null};
       $scope.init = function () {

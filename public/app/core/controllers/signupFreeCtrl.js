@@ -5,7 +5,7 @@ define([
 function (angular, coreModule) {
     'use strict';
 
-    coreModule.controller('SignupFreeCtrl', function ($scope, $location, backendSrv, contextSrv) {
+    coreModule.default.controller('SignupFreeCtrl', function ($scope, $location, backendSrv, contextSrv) {
       $scope.formModel = {};
       contextSrv.sidemenu = false;
       $scope.init = function () {

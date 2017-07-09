@@ -5,7 +5,7 @@ define([
 ],
 function (angular, _, coreModule) {
   'use strict';
-  coreModule.service('oncallerMgrSrv', function($http, alertSrv, backendSrv, contextSrv) {
+  coreModule.default.service('oncallerMgrSrv', function($http, alertSrv, backendSrv, contextSrv) {
     this.oncallerDefMap = {};
     var self = this;
     var oncallerUrl = "/oncaller/definition";

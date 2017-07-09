@@ -1,86 +1,22 @@
-<div class="login-container container">
+<div class="login-content">
+	<div ng-include="'public/app/partials/login_header.html'"></div>
+	<section class="login-inner-content">
+		<form name="loginForm" class="login-form login-content-form">
+			<label>登录名：</label>
+			<input type="text" name="username" required ng-model="formModel.user" placeholder="邮箱／用户名" />
 
-	<div class="login-box">
-
-		<div class="login-box-logo">
-			<img class="logo-icon" src="public/img/grafana_icon.svg"></img><br>
-			<i class="icon-gf icon-gf-grafana_wordmark"></i>
-		</div>
-
-    <div class="login-inner-box">
-			<div class="login-tab-header">
-				<button class="btn-login-tab" ng-click="loginMode = true;" ng-class="{active: loginMode}">
-					Log in
-				</button>
-				<button class="btn-login-tab" ng-click="loginMode = false;" ng-class="{active: !loginMode}" ng-show="!disableUserSignUp">
-					Sign up
-				</button>
-			</div>
-
-      <form name="loginForm" class="login-form gf-form-group">
-				<div class="gf-form" ng-if="loginMode">
-					<span class="gf-form-label width-7">User</span>
-					<input type="text" name="username" class="gf-form-input max-width-14" required ng-model='formModel.user' placeholder={{loginHint}}>
-				</div>
-				<div class="gf-form" ng-if="loginMode">
-					<span class="gf-form-label width-7">Password</span>
-					<input type="password" name="password" class="gf-form-input max-width-14" required ng-model="formModel.password" id="inputPassword" placeholder="password">
-				</div>
-
-				<div class="gf-form" ng-if="!loginMode">
-						<span class="gf-form-label width-7">Email</span>
-						<input type="email" class="gf-form-input max-width-14" required ng-model='formModel.email' placeholder="email">
-				</div>
-
-				<div class="gf-form-button-row">
-					<button type="submit" class="btn btn-large p-x-3" ng-click="submit();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
-						{{submitBtnText}}
-					</button>
-				</div>
-			</form>
-
-			<div ng-if="loginMode">
-				<div class="text-center login-divider" ng-if="oauthEnabled">
-					<div class="login-divider-line">
-						<span class="login-divider-text">
-							Or login with
-						</span>
-					</div>
-				</div>
-
-				<div class="clearfix"></div>
-
-				<div class="login-oauth text-center" ng-if="oauthEnabled">
-					<a class="btn btn-large btn-google" href="login/google" target="_self" ng-if="googleAuthEnabled">
-						<i class="fa fa-google"></i>
-						with Google
-					</a>
-					<a class="btn btn-large btn-github" href="login/github" target="_self" ng-if="githubAuthEnabled">
-						<i class="fa fa-github"></i>
-						with Github
-					</a>
-				</div>
-			</div>
-
+			<label>密码：<a href="user/password/send-reset-email" class="pull-right" tabindex="-1">忘记密码？</a></label>
 			<div class="clearfix"></div>
+			<input type="password" name="password" required ng-model="formModel.password" id="inputPassword" />
 
-			<div class="text-center password-recovery">
-				<div class="text-center">
-					<a href="user/password/send-reset-email">
-						Forgot your password?
-					</a>
-				</div>
+			<div class="btn-login-box">
+				<button type="submit" class="btn-link-login btn-login" ng-click="submit();">登录</button>
 			</div>
-		</div>
 
-		<div class="row" style="margin-top: 50px">
-			<div class="version-footer text-center small">
-				Grafana version: {{buildInfo.version}}, commit: {{buildInfo.commit}},
-				build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}
-			</div>
-		</div>
-	</div>
+			<span class="help-block go-register">还没有用户名？<a href="signupfree" class="btn-link-login">免费注册</a></span>
 
+		</form>
+	</section>
+
+	<div ng-include="'public/app/partials/login_footer.html'"></div>
 </div>
-
-

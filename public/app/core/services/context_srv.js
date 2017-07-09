@@ -9,9 +9,6 @@ function (angular, _, coreModule, store, config) {
   'use strict';
 
   coreModule.default.service('contextSrv', function() {
-    var self = this;
-    
-
     function User() {
       if (config.bootData.user) {
         _.extend(this, config.bootData.user);

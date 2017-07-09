@@ -33,27 +33,28 @@
   white-space: nowrap;
 }
 
-.grafana-list-item {
-  display: block;
-  min-width: 1100px;
-  padding: 1px 10px;
-  line-height: 34px;
-  background-color: $tight-form-bg;
-  margin-bottom: 4px;
-  cursor: pointer;
-  &>span{
-    .text-overflow();
-    display: inline-block;
-    width: 95px;
-    &.hitstory-time{
-      width: 140px;
-    }
-    &.hitstory-type{
-      width: 80px;
-    }
-  }
-
-  &.active{
-    background: #ccc;
-  }
-}
+//TODO update
+//.grafana-list-item {
+//  display: block;
+//  min-width: 1100px;
+//  padding: 1px 10px;
+//  line-height: 34px;
+//  background-color: $tight-form-bg;
+//  margin-bottom: 4px;
+//  cursor: pointer;
+//  &>span {
+//    .text-overflow();
+//    display: inline-block;
+//    width: 95px;
+//    &.hitstory-time {
+//      width: 140px;
+//    }
+//    &.hitstory-type{
+//      width: 80px;
+//    }
+//  }
+//
+//  &.active {
+//    background: #ccc;
+//  }
+//}
