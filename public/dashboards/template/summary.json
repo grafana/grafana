@@ -273,7 +273,19 @@
                 "2"
               ],
               "type": "number",
-              "unit": "short"
+              "unit": "short",
+              "valueMaps": [
+                { 
+                  "value": "0",
+                  "op": "=",
+                  "text": "正常"
+                },
+                { 
+                  "value": "1",
+                  "op": "=",
+                  "text": "异常"
+                }
+              ]
             }
           ],
           "targets": [],
