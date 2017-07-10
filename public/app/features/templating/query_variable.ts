@@ -89,7 +89,7 @@ export class QueryVariable implements Variable {
 
   updateTags(datasource) {
     if (this.useTags) {
-      return datasource.metricFindQuery({query: this.tagsQuery, rangeRaw: this.timeSrv.time}).then(results => {
+      return datasource.metricFindQuery({query: this.tagsQuery, rangeRaw: this.timeSrv.timeRange()}).then(results => {
         this.tags = [];
         for (var i = 0; i < results.length; i++) {
           this.tags.push(results[i].text);
@@ -106,7 +106,7 @@ export class QueryVariable implements Variable {
   getValuesForTag(tagKey) {
     return this.datasourceSrv.get(this.datasource).then(datasource => {
       var query = this.tagValuesQuery.replace('$tag', tagKey);
-      return datasource.metricFindQuery({query: query, rangeRaw: this.timeSrv.time}).then(function (results) {
+      return datasource.metricFindQuery({query: query, rangeRaw: this.timeSrv.timeRange()}).then(function (results) {
         return _.map(results, function(value) {
           return value.text;
         });
@@ -115,7 +115,7 @@ export class QueryVariable implements Variable {
   }
 
   updateOptionsFromMetricFindQuery(datasource) {
-    return datasource.metricFindQuery({query: this.query, rangeRaw: this.timeSrv.time}).then(results => {
+    return datasource.metricFindQuery({query: this.query, rangeRaw: this.timeSrv.timeRange()}).then(results => {
       this.options = this.metricNamesToVariableValues(results);
       if (this.includeAll) {
         this.addAllOption();

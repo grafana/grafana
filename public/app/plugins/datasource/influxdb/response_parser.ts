@@ -18,13 +18,13 @@ export default class ResponseParser {
     var res = {};
     _.each(influxResults.series, serie => {
       _.each(serie.values, value => {
-        if (_.isArray(value)) {
-            if (influxdb11format || isSelectQuery) {
-              addUnique(res, value[1] || value[0]);
-            } else {
-              addUnique(res, value[0]);
-            }
+      if (_.isArray(value)) {
+        if (influxdb11format || isSelectQuery) {
+          addUnique(res, value[1] || value[0]);
         } else {
+          addUnique(res, value[0]);
+        }
+      } else {
           addUnique(res, value);
         }
       });
