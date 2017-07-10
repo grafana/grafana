@@ -579,6 +579,26 @@
       "metrics": [],
       "status": -1,
       "template": "postgresql"
+    },{
+      "id": "redis",
+      "name": "Redis",
+      "icon": "iconfont fa-redis",
+      "img": "",
+      "info": "redis是一个开源的、使用C语言编写的、支持网络交互的、可基于内存也可持久化的Key-Value数据库。",
+      "deploy": [
+        "路径：/opt/cloudwiz-agent/agent/collectors/conf/redisdb.conf",
+        "#是否开启collector",
+        "enabled = False",
+        "#收集redis metrics频率 单位s",
+        "interval = 30",
+        "#redis地址",
+        "host = 127.0.0.1",
+        "#redis port",
+        "port = 6379"
+      ],
+      "metrics": [],
+      "status": -1,
+      "template": "redis"
     }
   ]
 }
