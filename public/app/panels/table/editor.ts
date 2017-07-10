@@ -32,6 +32,7 @@ export class TablePanelEditorCtrl {
       {text: 'MM/DD/YY h:mm:ss a', value: 'MM/DD/YY h:mm:ss a'},
       {text: 'MMMM D, YYYY LT',  value: 'MMMM D, YYYY LT'},
     ];
+    $scope.operatorModes = ['=', '>', '<'];
 
     $scope.addColumnSegment = uiSegmentSrv.newPlusButton();
 
@@ -83,6 +84,9 @@ export class TablePanelEditorCtrl {
         pattern: '/.*/',
         dateFormat: 'YYYY-MM-DD HH:mm:ss',
         thresholds: [],
+        valueMaps: [
+          { value: '', op: '=', text: '' }
+        ],
       };
 
       $scope.panel.styles.push(angular.copy(columnStyleDefaults));
@@ -107,6 +111,16 @@ export class TablePanelEditorCtrl {
       ref[0] = ref[2];
       ref[2] = copy;
       $scope.render();
+    };
+
+    $scope.removeValueMap = function (style, map) {
+      var index = _.indexOf($scope.panel.styles, style);
+      $scope.panel.styles[index].valueMaps = _.without($scope.panel.styles[index].valueMaps, map);
+      $scope.render();
+    };
+
+    $scope.addValueMap = function(index) {
+      $scope.panel.styles[index].valueMaps.push({ value: '', op: '=', text: '' });
     };
 
   }
