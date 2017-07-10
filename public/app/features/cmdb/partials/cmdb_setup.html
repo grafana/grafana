@@ -6,26 +6,24 @@
 
 <div class="page-container">
   <h2>设置</h2>
-  <ul>
+  <ul class="cmdb-ul">
     <li>
-      <h4>下载Cloudwiz公钥,并将其加入到所有待管理的主机上</h4>
-      <p>id_rsa.pub <a href="">下载</a></p>
+      <h5>1. 下载Cloudwiz公钥,并将其加入到所有待管理的主机上</h5>
+      <p class="cmdb-key"><i class="fa fa-key"></i>id_rsa.pub <a href="" class="btn btn-primary">下载</a></p>
       <div class="tight-form last">
         <p style="word-break: break-all">scp id_rsa.pub <用户名>@<主机地址>:~/</p>
-      </div>
-      <p>在待管理主机上运行</p>
-      <div class="tight-form last">
+        <br>
+        <p>在待管理主机上运行</p>
         <p style="word-break: break-all">cat id_rsa.pub >> .ssh/authorized_keys</p>
       </div>
     </li>
     <li>
-      <h4>上传待管理主机列表</h4>
-      <p><a href="">host.txt 模板下载</a></p>
-      <p><input type="file" id="hostupload" host-upload/> <button>上传</button></p>
+      <h5>2. 上传待管理主机列表</h5>
+      <p><span ng-click="uploadHosts();" class="btn-upload"><input type="file" id="hostupload" host-upload/>上传文件</span></p>
+      <p><i class="fa fa-file cmdb-icon"></i>host.json<span ng-click="getHost()" class="cmdb-icon">模板下载</span></p>
     </li>
     <li>
-      <h4>设置完成,Cloudwiz将自动开始扫描主机</h4>
-      <p>您可以在"设备列表"中查看结果,<a href="/cmdb/hostlist">点此前往</a></p>
+      <h5>3. 设置完成,Cloudwiz将自动开始扫描主机,您可以在"设备列表"中查看结果,<a href="/cmdb/hostlist">点此前往<i class="fa fa-arrow-right cmdb-icon"></i></a></h5>
     </li>
   </ul>
 </div>

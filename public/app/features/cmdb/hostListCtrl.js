@@ -21,7 +21,6 @@ define([
           };
         });
       });
-
     };
 
     $scope.getDetail = function(host) {
@@ -40,6 +39,13 @@ define([
 
     $scope.importHosts = function() {
       console.log('importHosts');
+    };
+
+    $scope.refreshList = function() {
+      console.log('refresh');
+      // backendSrv.alertD({url:''}).then(function() {
+
+      // });
     };
 
     $scope.init();

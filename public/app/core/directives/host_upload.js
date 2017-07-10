@@ -4,7 +4,7 @@ define([
 function (coreModule) {
   'use strict';
 
-  coreModule.directive('hostUpload', function(alertSrv) {
+  coreModule.directive('hostUpload', function(alertSrv, backendSrv) {
     return {
       restrict: 'A',
       link: function(scope) {
@@ -15,9 +15,14 @@ function (coreModule) {
               scope.$apply(function() {
                 try {
                   window.cmdbHosts = e.target.result;
-                  console.log(cmdbHosts);
+                  var param = JSON.parse(window.cmdbHosts);
+                  if(param.hosts && _.isArray(param.hosts)) {
+                    backendSrv.uploadHostList(param);
+                  } else {
+                    var err = {message: "文件格式错误"}
+                    throw err;
+                  }
                 } catch (err) {
-                  console.log(err);
                   scope.appEvent('alert-error', [err.message]);
                   return;
                 }

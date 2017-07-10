@@ -4,7 +4,9 @@
     </ul>
 </topnav>
 <div class="page-container">
-    <h2>设备列表<i class="fa fa-plus-square-o icon-schedule" ng-click="importList()"></i></h2>
+    <h2>设备列表<i class="fa fa-plus-square-o cmdb-icon" ng-click="importList()"></i>
+        <i class="fa fa-refresh cmdb-icon" ng-click="refreshList()"></i>
+    </h2>
     <form class="form-search cmdb-search">
         <i class="fa fa-search"></i>
         <input type="text" class="input-medium search-query" placeholder="搜索设备列表" ng-model="searchHost">

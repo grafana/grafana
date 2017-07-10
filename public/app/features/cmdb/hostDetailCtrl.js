@@ -11,7 +11,7 @@ define([
       var id = $location.search().id;
       backendSrv.alertD({url:'/cmdb/host?id='+id}).then(function(response) {
         $scope.detail = response.data;
-        $scope.cpuCount = _.countBy($scope.detail.cpu);
+        $scope.cpuCount = _.countBy(response.data.cpu);
       });
     };
 
