@@ -1,0 +1,96 @@
+<topnav section="配置管理库" icon="fa fa-fw fa-cubes">
+    <ul class="nav">
+        <li><a href="/cmdb/hostlist">设备列表</a></li>
+        <li class="active" ><a href="/cmdb/hostlist/{{hostId}}">设备详情</a></li>
+    </ul>
+</topnav>
+<div class="page-container">
+    <h2>{{detail.hostname}}</h2>
+    <ul class="cmdb-ul">
+        <li>
+            <h4>基本信息</h4>
+            <ul class="cmdb-detail">
+                <li><span>ID</span><span>{{detail.id}}</span></li>
+                <li><span>名称</span><span>{{detail.hostname}}</span></li>
+                <li><span>加入时间</span><span>{{detail.createdAt | date:'yyyy-MM-dd HH:mm:ss'}}</span></li>
+                <li><span>域</span><span>{{detail.domain}}</span></li>
+                <li><span>FQDN</span><span>{{detail.fqdn}}</span></li>
+            </ul>
+        </li>
+        <li>
+            <h4>硬件配置</h4>
+            <ul class="cmdb-detail">
+                <li><span>生产厂商</span><span>{{detail.systemVendor}}</span></li>
+                <li><span>产品名称</span><span>{{detail.productName}}</span></li>
+                <li><span>产品型号</span><span>{{detail.productVersion}}</span></li>
+                <li><span>序列号</span><span>{{detail.productSerial}}</span></li>
+                <li><span>UUID</span><span>{{detail.productUuid}}</span></li>
+                <li><span>内存</span><span>{{detail.totalMemory}}</span></li>
+                <li><span>虚拟机</span><span>{{detail.isVirtual}}</span></li>
+                <li><span>架构</span><span>{{detail.architecture}}</span></li>
+                <li><span>CPU</span>
+                <table class="table">
+                    <tr>
+                        <th>cpu型号</th>
+                        <th>个数</th>
+                    </tr>
+                    <tr ng-repeat="(cpu, num) in cpuCount">
+                        <td>{{cpu}}</td>
+                        <td>{{num}}</td>
+                    </tr>
+                </table>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h4>存储</h4>
+            <ul class="cmdb-detail">
+                <li>
+                    <table class="table">
+                        <tr>
+                            <th>生产厂商</th>
+                            <th>产品型号</th>
+                            <th>主控制器</th>
+                            <th>容量</th>
+                        </tr>
+                        <tr ng-repeat="device in detail.devices">
+                            <td>{{device.vendor}}</td>
+                            <td>{{device.model}}</td>
+                            <td>{{device.host}}</td>
+                            <td>{{device.size}}</td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <h4>操作系统</h4>
+            <ul class="cmdb-detail">
+                <li><span>名称</span><span>{{detail.osName}}</span></li>
+                <li><span>类型</span><span>{{detail.osFamily}}</span></li>
+                <li><span>版本</span><span>{{detail.osVersion}}</span></li>
+            </ul>
+        </li>
+        <li class="last">
+            <h4>网络配置</h4>
+            <ul class="cmdb-detail">
+                <li>
+                    <table class="table">
+                        <tr>
+                            <th>名称</th>
+                            <th>IP地址</th>
+                            <th>MAC地址</th>
+                            <th>带宽</th>
+                        </tr>
+                        <tr ng-repeat="interface in detail.interfaces">
+                            <td>{{interface.name}}</td>
+                            <td>{{interface.ip}}</td>
+                            <td>{{interface.mac}}</td>
+                            <td>{{interface.speed}}</td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
