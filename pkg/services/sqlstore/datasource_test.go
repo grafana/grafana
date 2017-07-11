@@ -16,6 +16,8 @@ func InitTestDB(t *testing.T) {
 	//x, err := xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, sqlutil.TestDB_Mysql.ConnStr)
 	//x, err := xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, sqlutil.TestDB_Postgres.ConnStr)
 
+	// x.ShowSQL()
+
 	if err != nil {
 		t.Fatalf("Failed to init in memory sqllite3 db %v", err)
 	}
