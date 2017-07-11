@@ -103,7 +103,7 @@ function (angular, _, coreModule, config, dateMath) {
         var service = _.getMetricName(query[0].metric);
         var status = null;
         var host = null;
-        _.each(response.data, function (metricData) {
+        _.each(response, function (metricData) {
           host = metricData.tags.host;
           if (_.isObject(metricData)) {
             status = metricData.dps[Object.keys(metricData.dps)[0]];
