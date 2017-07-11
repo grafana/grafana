@@ -60,7 +60,8 @@ function () {
       "opentsdb": "OpenTSDB",
       "mongo3": "MongoDB 3.x",
       "nginx": "Nginx",
-      "postgresql": "Postgresql"
+      "postgresql": "Postgresql",
+      "redis": "Redis"
     };
   };
 

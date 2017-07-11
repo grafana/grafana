@@ -18,10 +18,10 @@ function (angular, _) {
         var query = [{
           "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + service.id + ".state",
           "aggregator": "sum",
-          "downsample": "10m-sum",
+          "downsample": "1s-sum",
         }];
-        var time = 'now-10m';
-        datasourceSrv.getServiceStatus(query, time).then(function(res) {
+        var time = 'now-5m';
+        datasourceSrv.getHostStatus(query, time).then(function(res) {
           if(res.status > 0) {
             $scope.services[index].status = NO_DATA;
           } else {
