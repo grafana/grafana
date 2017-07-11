@@ -92,6 +92,26 @@ Example json body:
 
 - **state** - The possible values for alert state are: `ok`, `paused`, `alerting`, `pending`, `no_data`.
 
+### DingDing/DingTalk
+
+[Instructions in Chinese](https://open-doc.dingtalk.com/docs/doc.htm?spm=a219a.7629140.0.0.p2lr6t&treeId=257&articleId=105733&docType=1).
+
+In DingTalk PC Client:
+
+1. Click "more" icon on left bottom of the panel.
+
+2. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
+
+3. In the  "Robot Manage" panel, select "customised: customised robot with Webhook".
+
+4. In the next new panel named "robot detail", click "Add" button.
+
+5. In "Add Robot" panel, input a nickname for the robot and select a "message group" which the robot will join in. click "next".
+
+6. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the grafana Dingtalk setting page and then click "finish".
+
+Dingtalk supports the following "message type": `text`, `link` and `markdown`. Only the `text` message type is supported.
+
 ### Other Supported Notification Channels
 
 Grafana also supports the following Notification Channels:
@@ -111,8 +131,6 @@ Grafana also supports the following Notification Channels:
 - Telegram
 
 - LINE
-
-- DingDing
 
 # Enable images in notifications {#external-image-store}
 
