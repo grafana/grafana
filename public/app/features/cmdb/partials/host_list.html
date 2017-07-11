@@ -6,7 +6,7 @@
 <div class="page-container">
     <h2>设备列表
         <a class="btn btn-primary btn-cmdb" style="margin-left: 12px;" ng-click="importList()">添加设备</a>
-        <a class="btn btn-success btn-cmdb" style="margin-left: 12px;" ng-click="refreshList()">刷新</a>
+        <a class="btn btn-success btn-cmdb" style="margin-left: 12px;" ng-click="refreshList()" ng-bind-html="refreshTxt"></a>
     </h2>
     <form class="form-search cmdb-search">
         <i class="fa fa-search"></i>
