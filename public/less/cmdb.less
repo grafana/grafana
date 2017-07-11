@@ -14,9 +14,11 @@
       color: rgb(84,105,141);
     }
     tr > td {
-      cursor: pointer;
       &.main-color{
         color: rgb(0,112,210);
+      }
+      & > a {
+        margin-right: 5px;
       }
     }
   }
@@ -47,38 +49,59 @@
   & > .item {
     text-align: center;
     & > label {
-      margin: -6px 30px 0px;
+      font-size: 14px;
+      margin: -5px 30px 0px;
     }
+  }
+  & > .upload-form{
+    padding: 30px 0;
+  }
+
+  & > .center {
+    border-top: 2px solid #eee;
+    padding: 15px 0;
   }
 }
 
 .cmdb-ul{
   list-style: none;
   font-weight: bold;
+
+  & > li {
+    border-bottom: 1px solid #ccc;
+    margin-top: 36px;
+
+    &.last{
+      border: none;
+    }
+  }
+}
+
+&.cmdb-detail{
+  list-style: none;
+  font-weight: normal;
+
   .tight-form{
     border-radius: 5px;
     background: white;
     padding: 20px;
   }
 
-  &.cmdb-detail{
-    font-weight: normal;
-    & > li {
-      margin: 10px 0;
-      & > span {
-        &:nth-child(1){
-          display: inline-block;
-          width: 100px;
-          color: #999;
-        }
+  & > li {
+    margin: 10px 0;
+    & > span {
+      &:nth-child(1){
+        display: inline-block;
+        width: 100px;
+        font-weight: bold;
       }
     }
+  }
 
-    .table{
-      border-bottom: 1px solid #ddd;
-      th {
-        background: #f6f8fa;
-      }
+  .table{
+    border-bottom: 1px solid #ddd;
+    th {
+      background: #f6f8fa;
     }
   }
 }
@@ -94,18 +117,19 @@
 .btn-upload{
   position: relative;
   display: inline-block;
-  background: @btn-cmdb-color;
-  border-radius: 4px;
-  padding: 4px 12px;
-  overflow: hidden;
-  color: white;
-  line-height: 20px;
+  cursor: pointer;  
   &>input{
     position: absolute;
-    font-size: 100px;
     right: 0;
     top: 0;
     opacity: 0;
+  }
+  & > span {
+    display: inline-block;
+    width: 180px;
+    padding: 2px 5px;
+    background: white;
+    border: 1px solid skyblue;
     cursor: pointer;
   }
 }
@@ -114,6 +138,14 @@
   color: @btn-cmdb-color;
   margin: 0 5px;
   cursor: pointer;
+}
+
+.cmdb-icon-text {
+  margin-right: 12px;
+}
+
+.btn-cmdb{
+  padding: 3px 12px;  
 }
 
 .cmdb-color{

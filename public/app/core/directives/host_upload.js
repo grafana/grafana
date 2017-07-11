@@ -1,10 +1,11 @@
 define([
   '../core_module',
+  'lodash',
 ],
-function (coreModule) {
+function (coreModule, _) {
   'use strict';
 
-  coreModule.directive('hostUpload', function(alertSrv, backendSrv) {
+  coreModule.directive('hostUpload', function(alertSrv) {
     return {
       restrict: 'A',
       link: function(scope) {
@@ -14,11 +15,9 @@ function (coreModule) {
             return function(e) {
               scope.$apply(function() {
                 try {
-                  window.cmdbHosts = e.target.result;
-                  var param = JSON.parse(window.cmdbHosts);
-                  if(param.hosts && _.isArray(param.hosts)) {
-                    backendSrv.uploadHostList(param);
-                  } else {
+                  var param = JSON.parse(e.target.result);
+                  window.cmdbHosts = _.cloneDeep(param);
+                  if(!(param.hosts && _.isArray(param.hosts))) {
                     var err = {message: "文件格式错误"}
                     throw err;
                   }

@@ -1,14 +1,17 @@
 define([
   'angular',
-  'lodash'
+  'lodash',
+  './cmdbSetupCtrl',
 ], function(angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('HostListCtrl', function ($scope, backendSrv, $location) {
+  module.controller('HostListCtrl', function ($scope, backendSrv, $location, $controller) {
     $scope.init = function() {
       $scope.searchHost = '';
+      $scope.order = "'hostname'";
+      $scope.desc = false;
       backendSrv.alertD({url:'/cmdb/host'}).then(function(result) {
         $scope.hosts = result.data;
         _.map($scope.hosts, function(host) {
@@ -28,8 +31,11 @@ define([
     };
 
     $scope.importList = function() {
+      $controller('CMDBSetupCtrl',{$scope: $scope});
       var newScope = $scope.$new();
       newScope.importHosts = $scope.importHosts;
+      newScope.getHost = $scope.getHost;
+      newScope.fileChanged = $scope.fileChanged;
       $scope.appEvent('show-modal', {
         src: 'app/features/cmdb/partials/import_host.html',
         modalClass: 'cmdb-import-host',
@@ -37,15 +43,13 @@ define([
       });
     };
 
-    $scope.importHosts = function() {
-      console.log('importHosts');
+    $scope.refreshList = function() {
+      backendSrv.alertD({url:'/cmdb/scan', method: 'post'});
     };
 
-    $scope.refreshList = function() {
-      console.log('refresh');
-      // backendSrv.alertD({url:''}).then(function() {
-
-      // });
+    $scope.orderBy = function(order) {
+      $scope.order = "'"+ order +"'";
+      $scope.desc = !$scope.desc;
     };
 
     $scope.init();

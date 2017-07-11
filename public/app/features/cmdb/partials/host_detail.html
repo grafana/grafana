@@ -9,17 +9,17 @@
     <ul class="cmdb-ul">
         <li>
             <h4>基本信息</h4>
-            <ul class="cmdb-ul cmdb-detail">
+            <ul class="cmdb-detail">
                 <li><span>ID</span><span>{{detail.id}}</span></li>
                 <li><span>名称</span><span>{{detail.hostname}}</span></li>
-                <li><span>加入时间</span><span>{{detail.createdAt | date:'yyyy-MM-dd HH-mm:ss'}}</span></li>
+                <li><span>加入时间</span><span>{{detail.createdAt | date:'yyyy-MM-dd HH:mm:ss'}}</span></li>
                 <li><span>域</span><span>{{detail.domain}}</span></li>
                 <li><span>FQDN</span><span>{{detail.fqdn}}</span></li>
             </ul>
         </li>
         <li>
             <h4>硬件配置</h4>
-            <ul class="cmdb-ul cmdb-detail">
+            <ul class="cmdb-detail">
                 <li><span>生产厂商</span><span>{{detail.systemVendor}}</span></li>
                 <li><span>产品名称</span><span>{{detail.productName}}</span></li>
                 <li><span>产品型号</span><span>{{detail.productVersion}}</span></li>
@@ -44,7 +44,7 @@
         </li>
         <li>
             <h4>存储</h4>
-            <ul class="cmdb-ul cmdb-detail">
+            <ul class="cmdb-detail">
                 <li>
                     <table class="table">
                         <tr>
@@ -65,15 +65,15 @@
         </li>
         <li>
             <h4>操作系统</h4>
-            <ul class="cmdb-ul cmdb-detail">
+            <ul class="cmdb-detail">
                 <li><span>名称</span><span>{{detail.osName}}</span></li>
                 <li><span>类型</span><span>{{detail.osFamily}}</span></li>
                 <li><span>版本</span><span>{{detail.osVersion}}</span></li>
             </ul>
         </li>
-        <li>
+        <li class="last">
             <h4>网络配置</h4>
-            <ul class="cmdb-ul cmdb-detail">
+            <ul class="cmdb-detail">
                 <li>
                     <table class="table">
                         <tr>
