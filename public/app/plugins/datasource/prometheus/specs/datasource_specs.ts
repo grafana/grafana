@@ -165,19 +165,30 @@ describe('PrometheusDatasource', function() {
       status: "success",
       data: {
         resultType: "matrix",
-        result: [{
-          metric: {"__name__": "test", job: "testjob"},
-          values: [[1443454528, "3846"]]
-        }]
+        result: [
+          {
+            metric: {"__name__": "test", job: "testjob"},
+            values: [[1443454528, "3846"]]
+          },
+          {
+            metric: {"__name__": "test", instance: "localhost:8080", job: "otherjob"},
+            values: [[1443454529, "3847"]]
+          },
+        ]
       }
     };
     it('should return table model', function() {
       var table = ctx.ds.transformMetricDataToTable(response.data.result);
       expect(table.type).to.be('table');
-      expect(table.rows).to.eql([ [ 1443454528000, 'test', 'testjob', 3846 ] ]);
+      expect(table.rows).to.eql(
+        [
+          [ 1443454528000, 'test', '', 'testjob', 3846],
+          [ 1443454529000, 'test', 'localhost:8080', "otherjob", 3847],
+        ]);
       expect(table.columns).to.eql(
         [ { text: 'Time', type: 'time' },
           { text: '__name__' },
+          { text: 'instance' },
           { text: 'job' },
           { text: 'Value' }
         ]

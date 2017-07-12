@@ -275,32 +275,46 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return { target: metricLabel, datapoints: dps };
   };
 
-  this.transformMetricDataToTable = function(series) {
+  this.transformMetricDataToTable = function(md) {
     var table = new TableModel();
-    var self = this;
     var i, j;
+    var metricLabels = {};
 
-    if (series.length === 0) {
+    if (md.length === 0) {
       return table;
     }
 
-    _.each(series, function(series, seriesIndex) {
-      if (seriesIndex === 0) {
-        table.columns.push({text: 'Time', type: 'time'});
-        _.each(_.keys(series.metric), function(key) {
-          table.columns.push({text: key});
-        });
-        table.columns.push({text: 'Value'});
+    // Collect all labels across all metrics
+    _.each(md, function(series) {
+      for (var label in series.metric) {
+        if (!metricLabels.hasOwnProperty(label)) {
+          metricLabels[label] = 1;
+        }
       }
+    });
 
+    // Sort metric labels, create columns for them and record their index
+    var sortedLabels = _.keys(metricLabels).sort();
+    table.columns.push({text: 'Time', type: 'time'});
+    _.each(sortedLabels, function(label, labelIndex) {
+      metricLabels[label] = labelIndex + 1;
+      table.columns.push({text: label});
+    });
+    table.columns.push({text: 'Value'});
+
+    // Populate rows, set value to empty string when label not present.
+    _.each(md, function(series) {
       if (series.values) {
         for (i = 0; i < series.values.length; i++) {
           var values = series.values[i];
-          var reordered = [values[0] * 1000];
+          var reordered: any = [values[0] * 1000];
           if (series.metric) {
-            for (var key in series.metric) {
-              if (series.metric.hasOwnProperty(key)) {
-                reordered.push(series.metric[key]);
+            for (j = 0; j < sortedLabels.length; j++) {
+              var label = sortedLabels[j];
+              if (series.metric.hasOwnProperty(label)) {
+                reordered.push(series.metric[label]);
+              } else {
+                reordered.push('');
               }
             }
           }
