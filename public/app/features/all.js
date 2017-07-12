@@ -25,4 +25,5 @@ define([
   './setup/serviceagentCtrl',
   './setup/servicedetailCtrl',
   './setup/filebeatCtrl',
+  './systemoverview/systemoverviewCtrl',
 ], function () {});

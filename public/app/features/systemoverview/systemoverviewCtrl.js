@@ -30,13 +30,21 @@ define([
           });
           $scope.getAlertStatus();
           $scope.getHostSummary();
-          $scope.getHealth();
+          $scope.getAnomaly();
           $scope.getPrediction();
+          $scope.getHealth();
         });
       };
 
-      $scope.getAlertStatus = function () {
+      $scope.getHealth = function () {
         var panel = $scope._dashboard.rows[0].panels[0];
+        panel.hideGraphState = true;
+      };
+
+      // 报警情况
+      $scope.getAlertStatus = function () {
+        var panel = $scope._dashboard.rows[1].panels[0];
+        panel.hideGraphState = true;
         panel.href = $scope.getUrl('/alerts/status');
         panel.status = {
           success: ['', ''],
@@ -59,12 +67,36 @@ define([
         });
       };
 
-      $scope.getServices = function () {
+      // 智能检测异常指标 & 健康指数
+      $scope.getAnomaly = function () {
         var panel = $scope._dashboard.rows[2].panels[0];
+        panel.hideGraphState = true;
+        panel.href = $scope.getUrl('/anomaly');
+        panel.status = { success: ['指标数量', 0], warn: ['异常指标', 0], danger: ['严重', 0] };
+        healthSrv.load().then(function (data) {
+          // 健康指数
+          $scope.applicationHealth = Math.floor(data.health);
+          $scope.leveal = _.getLeveal($scope.applicationHealth);
+          $scope.summary = data;
+          if (data.numAnomalyMetrics) {
+            panel.status.success[1] = data.numMetrics;
+            panel.status.warn[1] = data.numAnomalyMetrics;
+          } else {
+            panel.status.success[0] = '';
+            panel.status.success[1] = '系统正常';
+          }
+        });
+      };
+
+      // 服务状态
+      $scope.getServices = function () {
+        var panel = $scope._dashboard.rows[3].panels[0];
         panel.href = $scope.getUrl('/service');
         panel.status = { success: ['正常服务', 0], warn: ['异常服务', 0], danger: ['严重', 0] };
+        panel.allServices = [];
         var promiseList = [];
-        _.each(Object.keys(_.allServies()), function (key) {
+        var allServicesMap = _.allServies();
+        _.each(Object.keys(allServicesMap), function (key) {
           var queries = [{
             "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + key + ".state",
             "aggregator": "sum",
@@ -73,6 +105,7 @@ define([
           }];
 
           var q = datasourceSrv.getStatus(queries, 'now-5m').then(function (response) {
+            var serviceStatus = 0;
             _.each(response, function(service) {
               if (_.isObject(service)) {
                 var status = service.dps[_.last(Object.keys(service.dps))];
@@ -81,11 +114,14 @@ define([
                 }
                 if(status > 0) {
                   panel.status.warn[1]++;
+                  serviceStatus++;
                 } else {
                   panel.status.success[1]++;
                 }
               }
             });
+            console.log(key, serviceStatus);
+            panel.allServices.push({ "name": allServicesMap[key], "status": serviceStatus });
             var targets = {
               "aggregator": "sum",
               "currentTagKey": "",
@@ -112,8 +148,9 @@ define([
         return $q.all(promiseList)
       };
 
+      // 机器连接状态
       $scope.getHostSummary = function () {
-        var panel = $scope._dashboard.rows[3].panels[0];
+        var panel = $scope._dashboard.rows[4].panels[0];
         panel.href = $scope.getUrl('/summary');
         panel.status = { success: ['正常机器', 0], warn: ['异常机器', 0], danger: ['尚未工作', 0] };
         $scope.summaryList = [];
@@ -132,7 +169,6 @@ define([
               "downsample": "1s-sum",
               "tags": { "host": metric.tag.host }
             }];
-
             datasourceSrv.getHostStatus(queries, 'now-1m').then(function(response) {
               if(response.status > 0) {
                 panel.status.warn[1]++;
@@ -142,29 +178,11 @@ define([
             },function(err) {
               panel.status.danger[1]++;
             });
-
           });
         })
       };
 
-      $scope.getHealth = function () {
-        var panel = $scope._dashboard.rows[1].panels[0];
-        panel.href = $scope.getUrl('/anomaly');
-        panel.status = { success: ['指标数量', 0], warn: ['异常指标', 0], danger: ['严重', 0] };
-        healthSrv.load().then(function (data) {
-          $scope.applicationHealth = Math.floor(data.health);
-          $scope.leveal = _.getLeveal($scope.applicationHealth);
-          $scope.summary = data;
-          if (data.numAnomalyMetrics) {
-            panel.status.success[1] = data.numMetrics;
-            panel.status.warn[1] = data.numAnomalyMetrics;
-          } else {
-            panel.status.success[0] = '';
-            panel.status.success[1] = '系统正常';
-          }
-        });
-      };
-
+      // 智能分析预测
       $scope.getPrediction = function () {
         var panels = $scope._dashboard.rows[6].panels;
         _.each(panels, function (panel, index) {
@@ -196,7 +214,8 @@ define([
           });
         });
       };
-
+      
+      // 智能分析预测 切换周期
       $scope.changePre = function (selectedOption) {
         var panels = $scope._dashboard.rows[6].panels;
         var selected = _.findIndex(panels[0].tips,{time: selectedOption.time});

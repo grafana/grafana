@@ -17,9 +17,27 @@
     }
   }
   
-  .ovweview-panel {
-   border: 1px solid #ddd;
+  // .overview-panel {
+  //   border: 1px solid #ddd;
+  // }
+  .btn-item {
+    float: left;
+    padding: 5px 10px;
+    margin-right: 20px;
+    width: 10%;
+    span{
+      font-size: 20px;
+      font-weight: bold;
+    }
   }
+
+  button {
+    border: none;
+    &.btn-item {
+      width: inherit;
+    }
+  }
+
 }
  
  
@@ -45,13 +63,3 @@
   list-style: none;
 }
 
-.btn-item{
-  float: left;
-  padding: 5px;
-  width: 20%;
-  margin-right: 20px;
-  span{
-    font-size: 20px;
-    font-weight: bold;
-  }
-}
