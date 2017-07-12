@@ -405,6 +405,10 @@ define([
         $scope.showKnows = type;
       };
 
+      $scope.hideGuide = function() {
+        $scope.showSearchGuide = false;
+      };
+
       $scope.init = function () {
         $scope.showKnows = false;
         $scope.query = "*";
