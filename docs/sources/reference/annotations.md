@@ -17,7 +17,7 @@ you can get title, tags, and text information for the event.
 
 ## Queries
 
-Annotatation events are fetched via annotation queries. To add a new annotation query to a dashboard
+Annotation events are fetched via annotation queries. To add a new annotation query to a dashboard
 open the dashboard settings menu, then select `Annotations`. This will open the dashboard annotations
 settings view. To create a new annotation query hit the `New` button.
 
