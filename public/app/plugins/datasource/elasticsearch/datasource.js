@@ -331,6 +331,9 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     this.metricFindQuery = function(query) {
       query = angular.fromJson(query);
       query.query = templateSrv.replace(query.query || '*', {}, 'lucene');
+      if ('field' in query) {
+        query.field = templateSrv.replace(query.field, {}, 'lucene');
+      }
 
       if (!query) {
         return $q.when([]);
