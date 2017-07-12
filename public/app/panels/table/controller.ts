@@ -65,6 +65,7 @@ export class TablePanelCtrl {
         delete $scope.panel.fields;
       }
       // 修正接口“数值转换”的数据
+      !$scope.panel.styles && ($scope.panel.styles = []);
       for (var i = 0; i < $scope.panel.styles.length; i++) {
         $scope.panel.styles[i].valueMaps === void 0 && ($scope.panel.styles[i].valueMaps = [{ value: '', op: '=', text: '' }]);
       }
