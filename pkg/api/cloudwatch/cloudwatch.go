@@ -166,7 +166,7 @@ func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
 				SecretAccessKey: dsInfo.SecretKey,
 			}},
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
-			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
+			remoteCredProvider(sess),
 		})
 
 	credentialCacheLock.Lock()
