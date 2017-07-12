@@ -57,11 +57,9 @@
                 </div>
                 <tabset>
                     <tab heading="{{panel.title}}" ng-repeat="(name, panel) in row.panels track by panel.id" ng-if="panel.tab != graph">
-                        <li ng-repeat="(index, obj) in panel.regularResult.regularities" ng-if="panel.regularResult.regularities.length">
-                            <span ng-repeat="(name,value) in obj">
-                                {{name}}: {{value}}
-                            </span>
-                        </li>
+                        <ul ng-if="panel.regularResult.data[0].total">
+                            <li>该时间区域内共有 <strong>{{panel.regularResult.data[0].total}}</strong> 条日志，当前显示前 {{panel.regularResult.data[0].datapoints.length}} 条。放大时间区域，以查看更细日志数据。</li>
+                        </ul>
                         <div class="btn-group btn-log-compare" ng-if="name == 2">
                             <button class="dropdown-toggle" data-toggle="dropdown">
                                 <span class="caret"></span>
