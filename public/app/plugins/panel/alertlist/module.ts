@@ -125,7 +125,7 @@ class AlertListPanel extends PanelCtrl {
       .then(res => {
         this.currentAlerts = this.sortResult(_.map(res, al => {
           al.stateModel = alertDef.getStateDisplayModel(al.state);
-          al.newStateDateAgo = moment(al.newStateDate).fromNow().replace(" ago", "");
+          al.newStateDateAgo = moment(al.newStateDate).locale('en').fromNow(true);
           return al;
         }));
       });
