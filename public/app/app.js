@@ -16,7 +16,7 @@ define([
 function (angular, $, _, appLevelRequire) {
   "use strict";
 
-  var app = angular.module('grafana', []);
+  var app = angular.module('grafana', ['mgcrea.ngStrap']);
   var register_fns = {};
   var preBootModules = [];
 
@@ -51,7 +51,7 @@ function (angular, $, _, appLevelRequire) {
     'grafana.core',
     'ngRoute',
     'ngSanitize',
-    '$strap.directives',
+    //'$strap.directives',
     'ang-drag-drop',
     'grafana',
     'pasvaz.bindonce',
