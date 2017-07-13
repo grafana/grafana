@@ -103,6 +103,8 @@ function (angular, _) {
         $scope.alertDef.alertDetails.hostQuery.expression = ">";
         $scope.alertDef.alertDetails.hostQuery.metricQueries = [{"aggregator": "AVG","metric":""}];
         $scope.alertDef.alertDetails.tags = null;
+        $scope.alertDef.alertDetails.crit = {durarionMinutes: '', threshold: ''};
+        $scope.alertDef.alertDetails.warn = {durarionMinutes: '', threshold: ''};
       } else {
         $scope.setTarget(panelMeta,$scope.alertDef);
         $scope.setCritThreshold(panelMeta,$scope.alertDef);
@@ -179,24 +181,28 @@ function (angular, _) {
     };
 
     $scope.saveChanges = function() {
-      var milliseconds = (new Date).getTime();
-      if ($scope.isNew) {
-        //if it is new, we need to fill in some hard-coded value for now.
-        $scope.alertDef.creationTime = milliseconds;
-        $scope.alertDef.modificationTime = milliseconds;
-      } else {
-        $scope.alertDef.modificationTime = milliseconds;
-      }
-      $scope.alertDef.org = contextSrv.user.orgId;
-      $scope.alertDef.service = contextSrv.user.systemId;
-      $scope.getTags($scope.target.tags, $scope.alertDef.alertDetails);
-      $scope.alertDef.alertDetails.hosts = $scope.alertDef.alertDetails.hosts ? $scope.alertDef.alertDetails.hosts.split(',') : null;
+      if($scope.checkStatus.checkForm) {
+        var milliseconds = (new Date).getTime();
+        if ($scope.isNew) {
+          //if it is new, we need to fill in some hard-coded value for now.
+          $scope.alertDef.creationTime = milliseconds;
+          $scope.alertDef.modificationTime = milliseconds;
+        } else {
+          $scope.alertDef.modificationTime = milliseconds;
+        }
+        $scope.alertDef.org = contextSrv.user.orgId;
+        $scope.alertDef.service = contextSrv.user.systemId;
+        $scope.getTags($scope.target.tags, $scope.alertDef.alertDetails);
+        $scope.alertDef.alertDetails.hosts = $scope.alertDef.alertDetails.hosts ? $scope.alertDef.alertDetails.hosts.split(',') : null;
 
-      alertMgrSrv.save($scope.alertDef).then(function onSuccess() {
-        $location.path("alerts");
-      }, function onFailed(response) {
-        alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 10000);
-      });
+        alertMgrSrv.save($scope.alertDef).then(function onSuccess() {
+          $location.path("alerts");
+        }, function onFailed(response) {
+          alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 10000);
+        });
+      } else {
+        alertSrv.set("信息不完整或信息格式错误", '请检查报警信息', 'warning', 10000);
+      };
     };
 
     $scope.getTags = function(tags, detail) {
@@ -225,6 +231,7 @@ function (angular, _) {
     $scope.checkName = function() {
       if($scope.checkStatus.name === $scope.alertDef.name) {
         $scope.checkStatus.checkName = false;
+        $scope.checkForm();
         return;
       } else {
         alertMgrSrv.checkName($scope.alertDef.name).then(function(response) {
@@ -232,9 +239,46 @@ function (angular, _) {
           if($scope.checkStatus.checkName){
             alertSrv.set("已存在该报警", "请修改报警名称", "error", 5000);
           }
+          $scope.checkForm();
         });
       }
     }
+
+    $scope.checkForm = function() {
+      var checkNull = [];
+      checkNull.push($scope.checkStatus.checkName);
+      // $scope.alertDef.description ! empty
+      checkNull.push(_.isEmpty($scope.alertDef.description) || _.isNull($scope.alertDef.description));
+      var alertDetails = $scope.alertDef.alertDetails;
+      // alertDetails.hostQuery.metricQueries[0].metric ! empty
+      checkNull.push(_.isEmpty(alertDetails.hostQuery.metricQueries[0].metric) || _.isNull(alertDetails.hostQuery.metricQueries[0].metric));
+      // alertDetails.hostQuery.metricQueries[0].aggregator ! empty
+      checkNull.push(_.isEmpty(alertDetails.hostQuery.metricQueries[0].aggregator) || _.isNull(alertDetails.hostQuery.metricQueries[0].aggregator));
+
+      // alertDetails.hostQuery.expression ! empty
+      var expression = alertDetails.hostQuery.expression;
+      checkNull.push(_.isEmpty(expression) || _.isNull(expression));
+
+      // alertDetails.crit.durarionMinutes >= 1
+      checkNull.push(_.isUndefined(alertDetails.crit.durarionMinutes) || Number(alertDetails.crit.durarionMinutes)  < 1);
+
+      if(expression == "?") {
+        alertDetails.crit.threshold = 0;
+        alertDetails.warn.threshold = 0;
+      };
+
+      // alertDetails.crit.threshold ! empty
+      checkNull.push(!_.isNumber(alertDetails.crit.threshold));
+      // alertDetails.warn.threshold ! empty
+      checkNull.push(!_.isNumber(alertDetails.warn.threshold));
+
+      // alertDetails.warn.durarionMinutes >= 1
+      checkNull.push(_.isUndefined(alertDetails.warn.durarionMinutes) || Number(alertDetails.warn.durarionMinutes) < 1);
+
+      $scope.checkStatus.checkForm = _.every(checkNull, function(item) {
+        return !item;
+      });
+    };
 
     $scope.init();
   });
