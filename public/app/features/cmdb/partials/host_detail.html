@@ -5,7 +5,12 @@
     </ul>
 </topnav>
 <div class="page-container">
-    <h2>{{detail.hostname}}</h2>
+    <h2 class="dropdown" style="color: #2962ff;">
+        <span class="dropdown-toggle pointer" data-toggle="dropdown">{{detail.hostname}} <i class="fa fa-caret-down"></i></span>
+        <ul class="dropdown-menu">
+            <li ng-repeat="host in list"><a href="/cmdb/hostlist/hostdetail?id={{host.id}}">{{host.hostname}}</a></li>
+        </ul>
+    </h2>
     <ul class="cmdb-ul">
         <li>
             <h4>基本信息</h4>
