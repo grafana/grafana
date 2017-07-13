@@ -68,7 +68,7 @@
           <ul class="tidy-form-list">
             <li class="tidy-form-item"><h4>报警名称</h4></li>
             <li><input type="text" class="input-xlarge tidy-form-input last"
-                            ng-model="alertDef.name" ng-blur="checkName()" placeholder="报警规则名称" required>
+                            ng-model="alertDef.name" ng-blur="checkName();" placeholder="报警规则名称" required>
             </li>
           </ul>
           <div class="clearfix"></div>
@@ -76,7 +76,7 @@
         <div class="tidy-form-box pull-left" style="margin: 0 20px;">
           <ul class="tidy-form-list">
             <li class="tidy-form-item"><h4>报警描述</h4></li>
-            <li><input type="text" class="input-xlarge tidy-form-input last"
+            <li><input type="text" class="input-xlarge tidy-form-input last" ng-blur="checkForm();"
                             ng-model="alertDef.description" placeholder="报警规则描述信息" required>
             </li>
           </ul>
@@ -104,7 +104,7 @@
             </li>
             <li>
               <input type="text" class="tidy-form-input input-xlarge"
-                    ng-blur="refreshPreview();"
+                    ng-blur="refreshPreview();checkForm();"
                     ng-model='alertDef.alertDetails.hostQuery.metricQueries[0].metric'
                     spellcheck='false'
                     bs-typeahead="suggestMetrics"
@@ -115,7 +115,7 @@
             </li>
             <li>
               <select class="input-medium tidy-form-input last"
-                      ng-change="refreshPreview()"
+                      ng-change="refreshPreview();checkForm();"
                       ng-model="alertDef.alertDetails.hostQuery.metricQueries[0].aggregator"
                       ng-options="f for f in ['AVG', 'MIN', 'MAX', 'SUM', 'P99', 'P999']">
               </select>
@@ -132,6 +132,7 @@
             <li>
               <select class="input-medium tidy-form-input last" style="width: 40px; margin: 0 5px; text-align: center;"
                       ng-model="alertDef.alertDetails.hostQuery.expression"
+                      ng-change="checkForm();"
                       ng-options="f for f in ['>', '<', '?']">
               </select>
             </li>
@@ -139,18 +140,18 @@
               阈值
             </li>
             <li>
-              <input type="text" class="tidy-form-input input-medium" style="width: 139px"
+              <input type="number" class="tidy-form-input input-medium" style="width: 139px"
                     ng-model='alertDef.alertDetails.crit.threshold' 
-                    ng-blur="addThreshold(1)"
+                    ng-blur="addThreshold(1);checkForm();"
                     placeholder="critical threshold" required ng-readonly="alertDef.alertDetails.hostQuery.expression==='?'"/>
             </li>
             <li class="tidy-form-item">
               并且持续时间达
             </li>
             <li>
-              <input type="number" min="0" class="tidy-form-input last" style="width: 30px;"
+              <input type="number" min="1" class="tidy-form-input last" style="width: 30px;"
                     ng-model='alertDef.alertDetails.crit.durarionMinutes' 
-                    ng-blur="refreshPreview();" required />
+                    ng-blur="checkForm();" required />
             </li>
             <li>分钟，则触发紧急报警</li>
           </ul>
@@ -168,16 +169,17 @@
             </li>
             </li>
             <li>
-              <input type="text" class="tidy-form-input input-medium" style="width: 139px"
+              <input type="number" class="tidy-form-input input-medium" style="width: 139px"
                     ng-model='alertDef.alertDetails.warn.threshold' 
-                    ng-blur="addThreshold(0)"
+                    ng-blur="addThreshold(0);checkForm();"
                     placeholder="warn threshold" required ng-readonly="alertDef.alertDetails.hostQuery.expression==='?'"/>
             </li>
             <li class="tidy-form-item">
               并且持续时间达
             </li>
             <li>
-              <input type="number" min="0" class="tidy-form-input last" style="width: 30px;"
+              <input type="number" min="1" class="tidy-form-input last" style="width: 30px;"
+                    ng-blur="checkForm();"
                     ng-model='alertDef.alertDetails.warn.durarionMinutes' required />
             </li>
             <li>分钟，则触发警告</li>
@@ -270,8 +272,8 @@
       
 
       <div class="pull-right" style="margin-top: 35px">
-        <button type="submit" class="btn" ng-class="{'btn-success':!checkStatus.checkName}" ng-disabled="checkStatus.checkName" ng-show="isNew" ng-click="saveChanges()">增加</button>
-        <button type="submit" class="btn" ng-class="{'btn-success':!checkStatus.checkName}" ng-disabled="checkStatus.checkName" ng-show="!isNew" ng-click="saveChanges()">保存</button>
+        <button type="submit" class="btn" ng-class="{'btn-success':checkStatus.checkForm}" ng-show="isNew" ng-click="saveChanges()">增加</button>
+        <button type="submit" class="btn" ng-class="{'btn-success':checkStatus.checkForm}" ng-show="!isNew" ng-click="saveChanges()">保存</button>
         <a class="btn btn-inverse" href="alerts">取消</a>
       </div>
       <br>
