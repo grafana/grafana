@@ -137,7 +137,7 @@ export class TableRenderer {
       widthHack = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].text + '</div>';
     }
 
-    return '<td' + style + '>' + value + widthHack + '</td>';
+    return '<td title="' + value + '"' + style + '>' + '<div>' + value + '</div>' + widthHack + '</td>';
   }
 
   render(page) {
