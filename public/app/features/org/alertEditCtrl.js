@@ -104,12 +104,16 @@ function (angular, _) {
         $scope.alertDef.alertDetails.hostQuery.metricQueries = [{"aggregator": "AVG","metric":""}];
         $scope.alertDef.alertDetails.tags = null;
       } else {
-        $scope.setTarget(panelMeta,$scope.alertDef);
-        $scope.setCritThreshold(panelMeta,$scope.alertDef);
-        $scope.setWarnThreshold(panelMeta,$scope.alertDef);
-        $scope.checkStatus.name = $scope.alertDef.name;
-        $scope.checkStatus.checkName = false;
-        $scope.alertDef.alertDetails.hosts = $scope.alertDef.alertDetails.hosts ? $scope.alertDef.alertDetails.hosts.toString() : null;
+        try {
+          $scope.setTarget(panelMeta,$scope.alertDef);
+          $scope.setCritThreshold(panelMeta,$scope.alertDef);
+          $scope.setWarnThreshold(panelMeta,$scope.alertDef);
+          $scope.checkStatus.name = $scope.alertDef.name;
+          $scope.checkStatus.checkName = false;
+          $scope.alertDef.alertDetails.hosts = $scope.alertDef.alertDetails.hosts ? $scope.alertDef.alertDetails.hosts.toString() : null;
+        } catch (err) {
+          //nothing to do
+        }
       }
       $scope.orgName = contextSrv.user.orgName;
       $scope.serviceName = backendSrv.getSystemById(contextSrv.user.systemId);
