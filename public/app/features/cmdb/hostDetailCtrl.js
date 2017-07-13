@@ -9,6 +9,9 @@ define([
   module.controller('HostDetailCtrl', function ($scope, backendSrv, $location) {
     $scope.init = function() {
       var id = $location.search().id;
+      backendSrv.alertD({url:'/cmdb/host'}).then(function(response) {
+        $scope.list = response.data;
+      });
       backendSrv.alertD({url:'/cmdb/host?id='+id}).then(function(response) {
         $scope.detail = response.data;
         $scope.cpuCount = _.countBy(response.data.cpu);
