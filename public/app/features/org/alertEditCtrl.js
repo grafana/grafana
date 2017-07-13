@@ -104,16 +104,12 @@ function (angular, _) {
         $scope.alertDef.alertDetails.hostQuery.metricQueries = [{"aggregator": "AVG","metric":""}];
         $scope.alertDef.alertDetails.tags = null;
       } else {
-        try {
-          $scope.setTarget(panelMeta,$scope.alertDef);
-          $scope.setCritThreshold(panelMeta,$scope.alertDef);
-          $scope.setWarnThreshold(panelMeta,$scope.alertDef);
-          $scope.checkStatus.name = $scope.alertDef.name;
-          $scope.checkStatus.checkName = false;
-          $scope.alertDef.alertDetails.hosts = $scope.alertDef.alertDetails.hosts ? $scope.alertDef.alertDetails.hosts.toString() : null;
-        } catch (err) {
-          //nothing to do
-        }
+        $scope.setTarget(panelMeta,$scope.alertDef);
+        $scope.setCritThreshold(panelMeta,$scope.alertDef);
+        $scope.setWarnThreshold(panelMeta,$scope.alertDef);
+        $scope.checkStatus.name = $scope.alertDef.name;
+        $scope.checkStatus.checkName = false;
+        $scope.alertDef.alertDetails.hosts = $scope.alertDef.alertDetails.hosts ? $scope.alertDef.alertDetails.hosts.toString() : null;
       }
       $scope.orgName = contextSrv.user.orgName;
       $scope.serviceName = backendSrv.getSystemById(contextSrv.user.systemId);
@@ -152,7 +148,9 @@ function (angular, _) {
     };
 
     $scope.setTarget = function(panel,detail) {
-      panel.panels[0].targets[0].aggregator = detail.alertDetails.hostQuery.metricQueries[0].aggregator.toLowerCase();
+      if(detail.alertDetails.hostQuery.metricQueries[0].aggregator) {
+        panel.panels[0].targets[0].aggregator = detail.alertDetails.hostQuery.metricQueries[0].aggregator.toLowerCase();
+      };
       panel.panels[0].targets[0].metric = detail.alertDetails.hostQuery.metricQueries[0].metric;
       var tags = detail.alertDetails.tags;
       _.each(tags, function(tag) {
@@ -169,11 +167,15 @@ function (angular, _) {
     };
 
     $scope.setCritThreshold = function (panel,detail) {
-      panel.panels[0].grid.threshold1 = Number(detail.alertDetails.crit.threshold);
+      if(detail.alertDetails.crit.threshold) {
+        panel.panels[0].grid.threshold1 = Number(detail.alertDetails.crit.threshold);
+      };
     };
 
     $scope.setWarnThreshold = function (panel,detail) {
-      panel.panels[0].grid.threshold2 = Number(detail.alertDetails.warn.threshold);
+      if(detail.alertDetails.warn.threshold) {
+        panel.panels[0].grid.threshold2 = Number(detail.alertDetails.warn.threshold);
+      };
     };
 
     $scope.saveChanges = function() {
