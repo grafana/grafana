@@ -7,8 +7,8 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
   module.controller('ServiceAgentCtrl', function ($scope, backendSrv, datasourceSrv, contextSrv) {
-    const NO_DATA = 2;
-    const GET_DATA = 0;
+    var NO_DATA = 2;
+    var GET_DATA = 0;
     $scope.init = function() {
       $scope.getService();
     };

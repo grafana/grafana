@@ -133,7 +133,7 @@ define([
               "tags": { "host": metric.tag.host }
             }];
 
-            datasourceSrv.getHostStatus(queries, 'now-1m').then(function(response) {
+            datasourceSrv.getHostStatus(queries, 'now-5m').then(function(response) {
               if(response.status > 0) {
                 panel.status.warn[1]++;
               } else {
