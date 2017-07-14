@@ -70,7 +70,7 @@ define([
               "aggregator": "avg",
               "downsampleAggregator": "avg",
               "metric": "",
-              "downsampleInterval": "5m",
+              "downsampleInterval": "15m",
               "tags": {"host":""}
             },
             {
@@ -78,7 +78,7 @@ define([
               "aggregator": "avg",
               "downsampleAggregator": "avg",
               "metric": "",
-              "downsampleInterval": "5m",
+              "downsampleInterval": "",
               "tags": {"host":""}
             }],
             "aliasColors": {},
@@ -158,7 +158,10 @@ define([
         targets[1].metric = anomaly.metric+".anomaly";
         targets[1].tags.host = anomaly.host;
         $scope.dashboard.rows[0].panels[0].seriesOverrides[0].alias = anomaly.metric+".anomaly{host="+ anomaly.host + "}";
-        $scope.$broadcast('refresh');
+        $scope.dashboard.rows[0].panels[0].title = anomaly.metric + "异常点"
+        healthSrv.transformMetricType($scope.dashboard).then(function () {
+          $scope.$broadcast('refresh');
+        });
       };
 
       $scope.init();
