@@ -75,7 +75,7 @@
                             <ul class="btn-list-status clearfix" ng-if="panel.allServices">
                                 <li ng-repeat="(name, service) in panel.allServices">
                                     <!-- data-template-url="/app/features/systemoverview/partials/system_service_status.html"  -->
-                                    <button type="button" class="btn-item system-status system-status-{{ service.status==0 ? 'success' : 'warning' }}" data-template-url="/app/features/systemoverview/partials/system_service_status.html" data-auto-close="1" data-placement="bottom" bs-popover>{{service.name}}</button>
+                                    <button type="button" class="btn-item system-status system-status-{{ service.state==0 ? 'success' : 'warning' }}" data-template-url="/app/features/systemoverview/partials/system_service_status.html" data-auto-close="1" data-placement="bottom" bs-popover>{{service.name}}</button>
                                 </li>
                             </ul>
                             <div class="clearfix"></div>
