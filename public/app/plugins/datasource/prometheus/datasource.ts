@@ -205,11 +205,11 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
           return _.includes(tagKeys, k);
         }).value();
 
-        _.each(series.values, function(value) {
+        for (let value of series.values) {
           if (value[1] === '1') {
             var event = {
               annotation: annotation,
-              time: Math.floor(value[0]) * 1000,
+              time: Math.floor(parseFloat(value[0])) * 1000,
               title: self.renderTemplate(titleFormat, series.metric),
               tags: tags,
               text: self.renderTemplate(textFormat, series.metric)
@@ -217,7 +217,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
             eventList.push(event);
           }
-        });
+        }
       });
 
       return eventList;
@@ -253,22 +253,22 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
     var stepMs = parseInt(options.step) * 1000;
     var baseTimestamp = start * 1000;
-    _.each(md.values, function(value) {
+    for (let value of md.values) {
       var dp_value = parseFloat(value[1]);
       if (_.isNaN(dp_value)) {
         dp_value = null;
       }
 
-      var timestamp = value[0] * 1000;
-      for (var t = baseTimestamp; t < timestamp; t += stepMs) {
+      var timestamp = parseFloat(value[0]) * 1000;
+      for (let t = baseTimestamp; t < timestamp; t += stepMs) {
         dps.push([null, t]);
       }
       baseTimestamp = timestamp + stepMs;
       dps.push([dp_value, timestamp]);
-    });
+    }
 
     var endTimestamp = end * 1000;
-    for (var t = baseTimestamp; t <= endTimestamp; t += stepMs) {
+    for (let t = baseTimestamp; t <= endTimestamp; t += stepMs) {
       dps.push([null, t]);
     }
 
