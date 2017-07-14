@@ -114,9 +114,6 @@ function (angular, _, coreModule) {
                 } else if (types[key] == "increment") {
                   targets[key].shouldComputeRate = false;
                   targets[key].downsampleAggregator = "sum";
-                } else {
-                  targets[key].shouldComputeRate = false;
-                  targets[key].downsampleAggregator = "avg";
                 }
               });
             });
