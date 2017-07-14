@@ -61,7 +61,8 @@ function () {
       "mongo3": "MongoDB 3.x",
       "nginx": "Nginx",
       "postgresql": "Postgresql",
-      "redis": "Redis"
+      "redis": "Redis",
+      "rabbitmq": "RabbitMQ"
     };
   };
 
