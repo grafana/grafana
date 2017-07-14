@@ -111,6 +111,7 @@ function (angular, _) {
         $scope.setWarnThreshold(panelMeta,$scope.alertDef);
         $scope.checkStatus.name = $scope.alertDef.name;
         $scope.checkStatus.checkName = false;
+        $scope.checkForm();
         $scope.alertDef.alertDetails.hosts = $scope.alertDef.alertDetails.hosts ? $scope.alertDef.alertDetails.hosts.toString() : null;
       }
       $scope.orgName = contextSrv.user.orgName;
