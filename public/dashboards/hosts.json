@@ -618,7 +618,9 @@
         "# localhost可改为RabbitMQ的host地址",
         "rabbitmq_api_url = http://localhost:15672/api/",
         "rabbitmq_user = guest",
-        "rabbitmq_pass = guest"
+        "rabbitmq_pass = guest",
+        "#queues = 'queue1'",
+        "#nodes = 'node1','node2'"
       ],
       "metrics": [
         {
