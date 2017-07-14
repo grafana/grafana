@@ -57,7 +57,7 @@ define([
               "span": 12,
               "styles": [
                 {
-                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss,sss",
                   "pattern": "@timestamp",
                   "type": "date"
                 },
@@ -136,7 +136,7 @@ define([
               "span": 12,
               "styles": [
                 {
-                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss,sss",
                   "pattern": "@timestamp",
                   "type": "date"
                 },
@@ -190,6 +190,10 @@ define([
                   "value": "count"
                 },
                 {
+                  "text": "change",
+                  "value": "change"
+                },
+                {
                   "text": "message",
                   "value": "message"
                 }
@@ -216,7 +220,7 @@ define([
               "span": 12,
               "styles": [
                 {
-                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss,sss",
                   "pattern": "Time",
                   "type": "date"
                 }
@@ -352,7 +356,6 @@ define([
                 "short",
                 "short"
               ],
-              "interval": "30m",
               "links": [],
               "helpInfo": {
                 "info": false,
@@ -399,6 +402,10 @@ define([
 
       $scope.isShowKnows = function(type) {
         $scope.showKnows = type;
+      };
+
+      $scope.hideGuide = function() {
+        $scope.showSearchGuide = false;
       };
 
       $scope.init = function () {

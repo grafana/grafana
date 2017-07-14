@@ -29,6 +29,7 @@ function (angular, moment, _, $, kbn, dateMath) {
       }
 
       if (type === 'snapshot') {
+        contextSrv.toggleSideMenu()
         return backendSrv.get('/api/snapshots/' + $routeParams.slug).catch(function() {
           return {meta:{isSnapshot: true, canSave: false, canEdit: false}, dashboard: {title: 'Snapshot not found'}};
         });

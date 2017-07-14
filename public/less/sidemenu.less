@@ -80,7 +80,7 @@
 
 .sidemenu-top-btn {
   display: block;
-  padding: 8px 0 4px 10px;
+  padding: 8px 0px 10px;
   text-align: center;
   img {
     border-radius: 50%;
@@ -104,7 +104,6 @@
   i {
     opacity: .7;
     position: relative;
-    left: 7px;
     top: 5px;
     font-size: 150%;
   }
@@ -127,7 +126,6 @@
   }
 
   .sidemenu-item-text {
-    padding-left: 11px;
     transition: color 100ms ease-out;
 
     &.no-icon {
@@ -217,3 +215,34 @@
   font-size: 20px;
 }
 
+@media (max-height: 800px) {
+  @sidemenu-width: 50px;
+
+  .sidemenu-wrapper{
+    width: @sidemenu-width;
+    .icon-circle i{
+      left: 0px;
+    }
+  }
+
+  .sidemenu-main, .sidemenu-small{
+    & > li > .sidemenu-item{
+      text-align: center!important;
+      & > .sidemenu-item-text{
+        display: none;
+      }
+    }
+  }
+
+  .sidemenu-open .main-view{
+    padding-left: @sidemenu-width;
+  }
+
+  .submenu{
+    left: @sidemenu-width;
+  }
+
+  .tab-container.active{
+    margin-left: 250px!important;
+  }
+}

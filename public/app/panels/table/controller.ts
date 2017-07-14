@@ -34,6 +34,9 @@ export class TablePanelCtrl {
           type: 'date',
           pattern: 'Time',
           dateFormat: 'YYYY-MM-DD HH:mm:ss',
+          valueMaps: [
+            { value: '', op: '=', text: '' }
+          ],
         },
         {
           unit: 'short',
@@ -43,6 +46,9 @@ export class TablePanelCtrl {
           colorMode: null,
           pattern: '/.*/',
           thresholds: [],
+          valueMaps: [
+            { value: '', op: '=', text: '' }
+          ],
         }
       ],
       columns: [],
@@ -57,6 +63,11 @@ export class TablePanelCtrl {
         $scope.panel.columns = $scope.panel.fields;
         delete $scope.panel.columns;
         delete $scope.panel.fields;
+      }
+      // 修正接口“数值转换”的数据
+      !$scope.panel.styles && ($scope.panel.styles = []);
+      for (var i = 0; i < $scope.panel.styles.length; i++) {
+        $scope.panel.styles[i].valueMaps === void 0 && ($scope.panel.styles[i].valueMaps = [{ value: '', op: '=', text: '' }]);
       }
 
       _.defaults($scope.panel, panelDefaults);

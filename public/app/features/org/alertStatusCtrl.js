@@ -148,13 +148,18 @@ function (angular, moment, _) {
 
     $scope.getCurrent = function () {
       _.each($scope.alertRows, function (alertData) {
+        var tags = {};
+        _.each(alertData.definition.alertDetails.tags, function(tag) {
+          tags[tag.name] = tag.value;
+        });
+        tags.host = alertData.status.monitoredEntity;
         var queries = [{
           "metric": alertData.metric,
           "aggregator": alertData.definition.alertDetails.hostQuery.metricQueries[0].aggregator.toLowerCase(),
           "downsample": "1m-avg",
-          "tags": {"host": alertData.status.monitoredEntity}
+          "tags": tags
         }];
-        datasourceSrv.getServiceStatus(queries, 'now-2m').then(function(response) {
+        datasourceSrv.getHostStatus(queries, 'now-2m').then(function(response) {
           alertData.curr = Math.floor(response.status * 1000) / 1000;
           if(isNaN(alertData.curr)) {
             throw Error;

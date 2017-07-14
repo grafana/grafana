@@ -44,7 +44,7 @@ function (angular, _) {
         "downsample": "10m-sum",
       }];
 
-      datasourceSrv.getServiceStatus(queries, 'now-10m').then(function(response) {
+      datasourceSrv.getHostStatus(queries, 'now-10m').then(function(response) {
         $scope.saveDashboard();
         $scope.detail.status = response.status > 0 ? NO_DATA : GET_DATA;
       },function(err) {

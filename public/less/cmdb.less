@@ -1,0 +1,158 @@
+@tableBackgroundAccent: rgb(244,246,249);
+@tableBackgroundHover: rgba(21,137,238,0.2)!important;
+@btn-cmdb-color: rgb(25,165,228);
+.cmdb-container{
+  height: 65vh;
+  overflow: scroll;
+}
+
+.cmdb-table{
+  margin-bottom: 0px;
+  border-bottom: 1px solid #ccc;
+  tbody {
+    tr > th {
+      color: rgb(84,105,141);
+    }
+    tr > td {
+      &.main-color{
+        color: rgb(0,112,210);
+      }
+      & > a {
+        margin-right: 5px;
+      }
+    }
+  }
+}
+
+.cmdb-search{
+  i{
+    color: rgb(25,165,228);
+    position: absolute;
+    left: 10px;
+    top: 8px;
+  }
+  input{
+    padding-left: 30px;
+  }
+  position: absolute;
+  right: 20px;
+  top: 30px;
+}
+
+.modal.cmdb-import-host{
+  height: 0;
+  top: 10%;
+}
+
+.cmdb-form{
+  width: 500px;
+  & > .item {
+    text-align: center;
+    & > label {
+      font-size: 14px;
+      margin: -5px 30px 0px;
+    }
+  }
+  & > .upload-form{
+    padding: 30px 0;
+  }
+
+  & > .center {
+    border-top: 2px solid #eee;
+    padding: 15px 0;
+  }
+}
+
+.cmdb-ul{
+  list-style: none;
+  font-weight: bold;
+
+  & > li {
+    border-bottom: 1px solid #ccc;
+    margin-top: 36px;
+
+    &.last{
+      border: none;
+    }
+  }
+}
+
+&.cmdb-detail{
+  list-style: none;
+  font-weight: normal;
+
+  .tight-form{
+    border-radius: 5px;
+    background: white;
+    padding: 20px;
+  }
+
+  & > li {
+    margin: 10px 0;
+    & > span {
+      &:nth-child(1){
+        display: inline-block;
+        width: 100px;
+        font-weight: bold;
+      }
+    }
+  }
+
+  .table{
+    border-bottom: 1px solid #ddd;
+    th {
+      background: #f6f8fa;
+    }
+  }
+}
+
+.cmdb-key{
+  color: @btn-cmdb-color;
+  .fa-key{
+    color: rgb(239,199,94);
+    margin: 0 10px;
+  }
+}
+
+.btn-upload{
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  &>input{
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    width: 190px;
+  }
+  & > span {
+    display: inline-block;
+    width: 180px;
+    padding: 2px 5px;
+    background: white;
+    border: 1px solid skyblue;
+    cursor: pointer;
+  }
+}
+
+.cmdb-icon{
+  color: @btn-cmdb-color;
+  margin: 0 5px;
+  cursor: pointer;
+}
+
+.cmdb-icon-text {
+  margin-right: 12px;
+}
+
+.btn-cmdb{
+  padding: 3px 12px;  
+}
+
+.cmdb-color{
+  color: @btn-cmdb-color;
+}
+
+.dropdown-menu{
+  font-size: 16px;
+}

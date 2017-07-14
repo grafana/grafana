@@ -145,6 +145,24 @@ function (angular, _, $, coreModule, config) {
         click: $scope.updateSubmenu
       });
 
+      if(contextSrv.user.orgId == 2) {
+        $scope.mainLinks.push({
+          text: "配置管理",
+          icon: "fa fa-fw fa-cubes",
+          submenu: [
+            {
+              text: '设备列表',
+              href: $scope.getUrl("/cmdb/hostlist")
+            },
+            {
+              text: '设置',
+              href: $scope.getUrl("/cmdb/setup")
+            }
+          ],
+          click: $scope.updateSubmenu
+        });
+      }
+
       $scope.setupSettingMenu();
     };
 
@@ -307,6 +325,10 @@ function (angular, _, $, coreModule, config) {
       $scope.systemSection = false;
       $scope.mainLinks = [];
       $scope.dashboardTitle = "";
+      var currentPath = $location.path();
+      if(currentPath.indexOf('/dashboard/snapshot') == 0) {
+        return;
+      }
       if(!contextSrv.isSignedIn) {
         $location.url("/login");
         return;
@@ -323,7 +345,6 @@ function (angular, _, $, coreModule, config) {
         $location.url("/systems");
         return ;
       }
-      var currentPath = $location.path();
       if (currentPath.indexOf('/admin') === 0) {
         $scope.setupAdminNav();
       } else if(currentPath.indexOf('/dashboard/db/') == 0){
