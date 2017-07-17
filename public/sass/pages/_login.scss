@@ -1,68 +1,25 @@
-.login-container {
-  background-position: left;
-  background-size: 60%;
-  background-repeat: no-repeat;
-  min-width: 100%;
-  margin-left: 0;
-  margin-top: -26px; /* BAD HACK - experiement to see how it looks */
-  padding-top: $spacer * 5; /* BAD HACK - experiement to see how it looks */
-}
-
-.login-form {
-  display: inline-block;
-  max-width: 24rem;
-}
-
-.login-box {
-  max-width: 700px;
-  margin: 0 auto; /* was $spacer * 2 auto 0 auto; */
-}
-
-.login-box-logo {
+// invite page
+//TODO update
+.invite-box {
   text-align: center;
-  margin-bottom: $spacer * 2;
-  img {
-    width: 6rem;
-  }
-  .icon-gf-grafana_wordmark {
-    color: $link-color;
-    position: relative;
-    top: -4.5rem;
-    font-size: 2.5rem;
-    text-shadow: 3px 3px 5px black;
-  }
-}
+  border: 1px solid #e2e2e2;
+  background-color: #f9f9f9;
+  position: fixed;
+  max-width: 800px;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  top: 20%;
+  //TODO update
 
-.login-inner-box {
-  background: $panel-bg;
-  text-align: center;
-}
-
-.login-tab-header {
-  background: $tight-form-bg;
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
-.btn-login-tab {
-  background: transparent;
-  border: none;
-  font-size: 15px;
-  padding: 10px 10px;
-
-  &.active {
-    background: darken($tight-form-bg, 5%);
-    color: $white;
+  h3 {
+    margin-top: 30px;
   }
 
-  &:focus {
-    outline: 0;
+  .modal-tagline {
+    font-size: 16px;
   }
-
-  font-weight: bold;
-  display: inline-block;
-  width: 170px;
-  color: $text-color;
 }
 
 .password-strength {
@@ -71,125 +28,229 @@
   overflow: visible;
   white-space: nowrap;
   padding-top: 3px;
-  color: darken($text-color, 20%);
-  border-top: 3px solid $red;
-  &.password-strength-ok {
-    width: 40%;
-    border-top: 3px solid lighten($yellow, 10%);
-  }
+  color: #222;
+  border-top: 3px solid #ff4136;
+
   &.password-strength-good {
     width: 100%;
-    border-top: 3px solid lighten($green, 10%);
+    border-top: 3px solid #3dd441;
   }
+
+  &.password-strength-ok {
+    width: 40%;
+    border-top: 3px solid #ffa04e;
+  }
+}
+
+// common page
+.login-box {
+  width: 700px;
+  margin: 100px auto 0;
+}
+
+.login-box-logo {
+  text-align: center;
+  padding-bottom: 50px;
+}
+
+.login-inner-box {
+  background: #f9f9f9;
+}
+
+.login-tab-header {
+  background: #efefef;
+  text-align: center;
+}
+
+.btn-login-tab {
+  background: transparent;
+  border: 0;
+  font-size: 15px;
+  padding: 10px;
+  font-weight: 700;
+  display: inline-block;
+  width: 170px;
+  color: #555;
+}
+
+.login-box .login-form {
+  width: 50%;
+  float: left;
+  margin-left: 25%;
+  margin-right: 25%;
+  padding-top: 25px;
 }
 
 .login-submit-button-row {
   text-align: center;
-  margin-top: 30px;
+  margin-top: 40px;
+
   button {
-    padding: 14px 23px;
-    font-size: 16px;
-    font-weight: bold;
+    padding: 9px 7px;
+    font-size: 14px;
+    font-weight: 700;
     min-width: 150px;
     display: inline-block;
-    border: 1px solid lighten($btn-inverse-bg, 10%);
+    border: 1px solid #fff;
   }
 }
 
-.login-oauth {
-  margin-bottom: 15px;
 
-  .btn {
-    margin: 5px;
+// login page
+.login-content{
+  min-height: 700px;
+  overflow: hidden;
+  font-weight: bold;
+}
+
+.btn-link-login,.btn-link-login:link,.btn-link-login:active,.btn-link-login:visited,.btn-link-login:hover{
+  color: $white;
+  text-align: center;
+  background: rgb(43,175,250);
+  text-decoration: none;
+}
+
+.sign-header{
+  width: 100%;
+  height: 82px;
+  background: $white;
+  overflow: hidden;
+  border-bottom: 1px solid rgb(151,151,151);
+  .btn-link-login{
+    font-size: 22px;
+    line-height: 53px;
+    width: 175px;
+    height: 53px;
+    border-radius: 8px;
+    margin-right: 84px;
   }
-
-  .btn-google {
-    background: #dd4b39;
-    color: white;
+  a{
+    margin-top: 16px;
   }
-
-  .btn-github {
-    background: #555;
-    color: white;
+  img{
+    margin: 0px 19px 14px 29px;
+    width: 48px;
+  }
+  span{
+    display: inline-block;
+    height: 100%;
+    font-size: 36px;
+    font-weight: bold;
+    color: rgb(57,57,58);
   }
 }
 
-.password-recovery {
-  background: $tight-form-bg;
-  margin-top: 10px;
-  padding: 10px;
-  a {
-    color: $gray-2;
-  }
-}
-
-.login-divider {
-  float: left;
-  width: 50%;
-  margin: 5px 25% 25px 25%;
-
-  .login-divider-line {
-    width: 100%;
-    height: 10px;
-    border-bottom: 1px solid $gray-1;
-
-    .login-divider-text {
-      background-color: $dark-3;
-      color: $gray-2;
-      padding: 0 10px;
-    }
-  }
-}
-
-.signup-page-background {
-  position: fixed;
-  top: 0;
+.login-inner-content{
+  position: absolute;
   left: 0;
   right: 0;
+  top: 0;
   bottom: 0;
-  height: 100%;
-  width: 100%;
-  background-image: url(../img/background_tease.jpg);
-  opacity: 0.3;
-  z-index: -1;
+  margin: auto;
 }
 
-.invite-box {
-  text-align: center;
-  border: 1px solid $tight-form-func-bg;
-	background-color: $panel-bg;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
+.login-content-form{
 
-  .tight-form {
-    text-align: left;
+  &>label{
+    font-size: 24px;
+    line-height: 36px;
+    margin-bottom: 5px;
   }
-
-  h3 {
-    margin-top: 30px;
-  }
-
-  .modal-close {
-    float: right;
-    font-size: 140%;
-    padding: 10px;
-  }
-
-  .modal-tagline {
+  &>input{
     font-size: 16px;
+    width: 100%;
+    height: 42px;
+    border-radius: 5px;
+    border: 2px solid rgba(202,195,195,0.5);
+    box-shadow: 0 0 2px rgba(202,195,195,0.5);
+    -moz-box-shadow: 0 0 2px rgba(202,195,195,0.5);
+    -webkit-box-shadow: 0 0 2px rgba(202,195,195,0.5);
+  }
+  .pull-right{
+    font-size: 20px;
+    color: rgb(165,203,242);
+    margin-right: 9px;
+    margin-top: 10px;
   }
 }
 
-@include media-breakpoint-up(md) {
-  .login-box-logo {
-    img {
-      width: 125px;
-    }
-    .icon-gf-grafana_wordmark {
-      top: -5px;
-      font-size: 3rem;
-    }
+.btn-login-box{
+  text-align: center;
+  margin-top: 25px;
+}
+.btn-login{
+  margin: 0 auto;
+  font-size: 30px;
+  width: 260px;
+  height: 63px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+}
+
+.go-register{
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 42px;
+  margin-bottom: 143px;
+  height: 48px;
+  line-height: 48px;
+  color: rgb(145,148,154);
+  a{
+    text-align: center;
+    line-height: 48px;
+    display: inline-block;
+    width: 160px;
+    border-radius: 8px;
   }
 }
 
+.sign-footer{
+  width: 100%;
+  position: absolute;
+  bottom: 19px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: rgb(74,74,74);
+}
+
+/* 电脑的分辨率 */
+@media (min-width: 768px){
+  .login-inner-content{
+    width: 468px;
+    height: 300px;
+  }
+}
+/* 横向放置的手机和竖向放置的平板之间的分辨率 */
+@media (max-width: 767px) {
+  .sign-header{
+    text-align: center;
+    img{
+      margin-left: 0;
+    }
+    .pull-left{
+      float: none;
+      line-height: 75px;
+    }
+    .pull-right{
+      display: none;
+    }
+  }
+
+  .login-inner-content{
+    width: 80%;
+    height: 50%;
+  }
+}
+
+.contact-us{
+  .btn-inverse{
+    display: none;
+  }
+  .modal-tagline{
+    font-size: 28px!important;
+    line-height: 36px;
+  }
+}
