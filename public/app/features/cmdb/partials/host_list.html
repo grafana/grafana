@@ -16,10 +16,10 @@
         <tr>
             <th style="width: 50px;">序号</th>
             <th style="width: 70px;">ID</th>
-            <th ng-click="orderBy('hostname')" class="pointer" style="width: 100px;">名称<i class="fa fa-sort"></i></th>
-            <th style="width: 200px;">IP</th>
-            <th style="width: 100px;">虚拟机</th>
-            <th style="width: 100px;">操作系统</th>
+            <th ng-click="orderBy('hostname')" class="pointer" style="width: 150px;">名称<i class="fa fa-sort"></i></th>
+            <th style="width: 150px;">IP</th>
+            <th style="width: 50px;">虚拟机</th>
+            <th style="width: 200px;">操作系统</th>
             <th ng-click="orderBy('createdAt')" class="pointer" style="width: 240px;">创建时间<i class="fa fa-sort"></i></th>
             <th>操作</th>
         </tr>
@@ -29,10 +29,10 @@
             <tr ng-repeat="host in hosts| filter: searchHost | orderBy: order : desc">
                 <td style="width: 50px;" class="main-color">{{$index+1}}</td>
                 <td style="width: 70px;" class="main-color">{{host.id}}</td>
-                <td style="width: 100px;" class="main-color">{{host.hostname}}</td>
-                <td style="width: 200px;">{{host.defaultIp}}</td>
-                <td style="width: 100px;">{{host.isVirtual}}</td>
-                <td style="width: 100px;">{{host.osName}}</td>
+                <td style="width: 150px;" class="main-color"><p class="text-overflow" style="width: 150px;">{{host.hostname}}</p></td>
+                <td style="width: 150px;">{{host.defaultIp}}</td>
+                <td style="width: 50px;">{{host.isVirtual}}</td>
+                <td style="width: 200px;"><p class="text-overflow" style="width: 200px;">{{host.osName}}</p></td>
                 <td style="width: 240px;">{{host.createdAt | date:'yyyy-MM-dd HH:mm:ss'}}</td>
                 <td>
                     <a href=""><span class="cmdb-icon-text" bs-tooltip="'敬请期待'" data-placement="top">编辑</span></a>

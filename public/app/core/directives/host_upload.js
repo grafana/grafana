@@ -17,9 +17,11 @@ function (coreModule, _) {
                 try {
                   var param = JSON.parse(e.target.result);
                   window.cmdbHosts = _.cloneDeep(param);
-                  if(!(param.hosts && _.isArray(param.hosts))) {
-                    var err = {message: "文件格式错误"}
-                    throw err;
+                  for(var os in param) {
+                    if(!(param[os].hosts && _.isArray(param[os].hosts))) {
+                      var err = {message: "文件格式错误"}
+                      throw err;
+                    }
                   }
                 } catch (err) {
                   scope.appEvent('alert-error', [err.message]);
