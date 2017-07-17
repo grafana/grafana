@@ -13,6 +13,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   var loadOrgBundle = new BundleLoader('app/features/org/all');
   var loadPluginsBundle = new BundleLoader('app/features/plugins/all');
   var loadAdminBundle = new BundleLoader('app/features/admin/admin');
+  var loadOncallerBundle = new BundleLoader('app/features/oncaller/all');
 
   $routeProvider
   .when('/', {
@@ -192,6 +193,150 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controller: 'StyleGuideCtrl',
     controllerAs: 'ctrl',
     templateUrl: 'public/app/features/styleguide/styleguide.html',
+  })
+  .when('/', {
+    templateUrl: 'public/app/features/systemsummary/partials/system_summary.html',
+    controller : 'SystemsummaryCtrl',
+    reloadOnSearch: false,
+    pageClass: 'page-dashboard',
+  })
+  .when('/systems', {
+    templateUrl: 'public/app/partials/systems.html',
+    reloadOnSearch: false,
+  })
+  .when('/summary', {
+    templateUrl: 'public/app/features/summary/partials/summary.html',
+    controller: 'SummaryCtrl',
+    reloadOnSearch: false,
+  })
+  .when('/service', {
+    templateUrl: 'public/app/features/summary/partials/service.html',
+    controller: 'ServiceCtrl',
+    reloadOnSearch: false,
+  })
+  .when('/alerts', {
+    templateUrl: 'public/app/features/org/partials/alerts.html',
+    controller : 'AlertsCtrl',
+    resolve: loadOrgBundle,
+  })
+  .when('/alerts/edit/:id', {
+    templateUrl: 'app/features/org/partials/alertEdit.html',
+    controller : 'AlertEditCtrl',
+    resolve: loadOrgBundle,
+  })
+  .when('/alerts/new', {
+    templateUrl: 'public/app/features/org/partials/alertEdit.html',
+    controller : 'AlertEditCtrl',
+    resolve: loadOrgBundle,
+  })
+  .when('/alerts/status', {
+    templateUrl: 'public/app/features/org/partials/alertStatus.html',
+    controller : 'AlertStatusCtrl',
+    resolve: loadOrgBundle,
+  })
+  .when('/alerts/history', {
+    templateUrl: 'public/app/features/org/partials/alertHistory.html',
+    controller : 'AlertHistoryCtrl',
+    resolve: loadOrgBundle,
+  })
+  .when('/alerts/association/:host/:distance/:metric*', {
+    templateUrl: 'public/app/features/org/partials/alertAssociation.html',
+    controller : 'AlertAssociationCtrl',
+    resolve: loadOrgBundle,
+  })
+  .when('/oncallerschedule', {
+    templateUrl: 'public/app/features/oncaller/partials/oncallerSchedule.html',
+    controller : 'OnCallerScheduleCtrl',
+    resolve: loadOncallerBundle,
+  })
+  .when('/oncallers', {
+    templateUrl: 'public/app/features/oncaller/partials/oncallers.html',
+    controller : 'OnCallersCtrl',
+    resolve: loadOncallerBundle,
+  })
+  .when('/oncallers/edit/:id', {
+    templateUrl: 'public/app/features/oncaller/partials/oncallerEdit.html',
+    controller : 'OnCallerEditCtrl',
+    resolve: loadOncallerBundle,
+  })
+  .when('/oncallers/new', {
+    templateUrl: 'public/app/features/oncaller/partials/oncallerEdit.html',
+    controller : 'OnCallerEditCtrl',
+    resolve: loadOncallerBundle,
+  })
+  .when('/anomaly', {
+    templateUrl: 'public/app/features/anomaly/partials/anomaly.html',
+    controller : 'AnomalyCtrl',
+  })
+  .when('/anomaly/history', {
+    templateUrl: 'public/app/features/anomaly/partials/anomalyHistory.html',
+    controller : 'AnomalyHistory',
+  })
+  .when('/anomaly/:clusterId', {
+    templateUrl: 'public/app/features/anomaly/partials/anomalyMetric.html',
+    controller : 'AnomalyMetric',
+    reloadOnSearch: true
+  })
+  .when('/decompose', {
+    templateUrl: 'public/app/features/decompose/partials/compose.html',
+    controller : 'DecomposeMetricCtrl'
+  })
+  .when('/signupfree', {
+    templateUrl: 'public/app/partials/signup.html',
+    controller : 'SignupFreeCtrl',
+  })
+  .when('/logs', {
+    templateUrl: 'public/app/features/logs/partials/logs.html',
+    controller : 'LogsCtrl',
+  })
+  .when('/analysis', {
+    templateUrl: 'public/app/features/analysis/partials/analysis.html',
+    controller : 'AnalysisCtrl',
+  })
+  .when('/association', {
+    templateUrl: 'public/app/features/analysis/partials/single_association.html',
+    controller : 'SingleAssociationCtrl',
+  })
+  .when('/knowledgebase', {
+    templateUrl: 'public/app/features/analysis/partials/knowledge_base.html',
+    controller : 'KnowledgeBaseCtrl',
+  })
+  .when('/install', {
+    templateUrl: 'public/app/partials/install.html',
+    controller : 'AnalysisCtrl',
+  })
+  .when('/health', {
+    templateUrl: 'public/app/features/health/partials/systemHealth.html',
+    controller: 'SystemHealthCtrl',
+  })
+  .when('/customer', {
+    templateUrl: 'public/app/features/summary/partials/customer.html',
+    controller: 'CustomerCtrl',
+  })
+  .when('/report', {
+    templateUrl: 'public/app/features/report/partials/report.html',
+    controller: 'ReportCtrl',
+    reloadOnSearch: false,
+  })
+  .when('/cluster', {
+    templateUrl: 'public/app/features/cluster/partials/cluster.html',
+    controller: 'ClusterCtrl',
+  })
+  .when('/integrate', {
+    templateUrl: 'public/app/features/analysis/partials/logIntegrate.html',
+    controller : 'LogIntegrateCtrl',
+  })
+  .when('/setting/agent', {
+    templateUrl: 'public/app/features/setup/partials/host_agent.html',
+    controller : 'HostAgentCtrl',
+  })
+  .when('/setting/service', {
+    templateUrl: 'public/app/features/setup/partials/service_agent.html',
+    controller : 'ServiceAgentCtrl',
+  })
+  .when('/setting/filebeat', {
+    templateUrl: 'public/app/features/setup/partials/filebeat.html',
+    controller : 'FilebeatCtrl',
   })
   .otherwise({
     templateUrl: 'public/app/partials/error.html',
