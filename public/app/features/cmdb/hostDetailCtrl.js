@@ -24,7 +24,11 @@ define([
       if(_.isObject(obj)) {
         for(var i in obj) {
           if(!_.isNumber(obj[i]) && (_.isNull(obj[i]) || _.isEmpty(obj[i]))){
-            obj[i] = '暂无信息';
+            if(i == 'memory') {
+              obj[i] = null;
+            } else {
+              obj[i] = '暂无信息';
+            }
           };
           if(_.isObject(obj[i])) {
             obj[i] = initDetail(obj[i]);

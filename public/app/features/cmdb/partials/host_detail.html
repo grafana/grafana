@@ -32,7 +32,7 @@
                 <li><span>UUID</span><span>{{detail.productUuid}}</span></li>
                 <li>
                     <span>内存</span><span>{{detail.totalMemory}} <span ng-if="detail.totalMemory!= '暂无信息'">MB</span></span>
-                    <li ng-if="detail.memory.length">
+                    <li ng-if="detail.memory">
                         <table class="table">
                             <tr>
                                 <th>生产厂商</th>
