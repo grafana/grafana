@@ -375,7 +375,11 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       }
 
       function translateFillOption(fill) {
-        return fill === 0 ? 0.001 : fill/10;
+        if (panel.percentage && panel.stack) {
+          return fill === 0 ? 0.001 : fill/10;
+        } else {
+          return fill/10;
+        }
       }
 
       function shouldDelayDraw(panel) {
