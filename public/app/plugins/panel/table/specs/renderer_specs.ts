@@ -1,5 +1,6 @@
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
+import _ from 'lodash';
 import TableModel from 'app/core/table_model';
 import {TableRenderer} from '../renderer';
 
@@ -14,6 +15,10 @@ describe('when rendering table', () => {
       {text: 'String'},
       {text: 'United', unit: 'bps'},
       {text: 'Sanitized'},
+      {text: 'Link'},
+    ];
+    table.rows = [
+      [1388556366666, 1230, 40, undefined, "", "", "my.host.com", "host1"]
     ];
 
     var panel = {
@@ -55,6 +60,14 @@ describe('when rendering table', () => {
           pattern: 'Sanitized',
           type: 'string',
           sanitize: true,
+        },
+        {
+          pattern: 'Link',
+          type: 'string',
+          link: true,
+          linkUrl: "/dashboard?param=$__cell&param_1=$__cell_1&param_2=$__cell_2",
+          linkTooltip: "$__cell $__cell_1 $__cell_6",
+          linkTargetBlank: true
         }
       ]
     };
@@ -64,7 +77,13 @@ describe('when rendering table', () => {
     };
 
     var templateSrv = {
-      replace: function(value) {
+      replace: function(value, scopedVars) {
+        if (scopedVars) {
+          // For testing variables replacement in link
+          _.each(scopedVars, function(val, key) {
+            value = value.replace('$' + key, val.value);
+          });
+        }
         return value;
       }
     };
@@ -152,7 +171,22 @@ describe('when rendering table', () => {
     it('Colored column title should be Colored', () => {
       expect(table.columns[2].title).to.be('Colored');
     });
+
+    it('link should render as', () => {
+      var html = renderer.renderCell(7, 0, 'host1');
+      var expectedHtml = `
+        <td class="table-panel-cell-link">
+          <a href="/dashboard?param=host1&param_1=1230&param_2=40"
+            target="_blank" data-link-tooltip data-original-title="host1 1230 my.host.com" data-placement="right">
+            host1
+          </a>
+        </td>
+      `;
+      expect(normalize(html)).to.be(normalize(expectedHtml));
+    });
   });
 });
 
-
+function normalize(str) {
+  return str.replace(/\s+/gm, ' ').trim();
+}
