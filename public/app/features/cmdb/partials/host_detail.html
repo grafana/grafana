@@ -6,8 +6,8 @@
 </topnav>
 <div class="page-container">
     <h2 class="dropdown" style="color: #2962ff;">
-        <span class="dropdown-toggle pointer" data-toggle="dropdown">{{detail.hostname}} <i class="fa fa-caret-down"></i></span>
-        <ul class="dropdown-menu">
+        <span class="dropdown-toggle pointer" data-toggle="dropdown">{{detail.hostname}} <i class="fa fa-caret-down" ng-if="list.length > 1"></i></span>
+        <ul class="dropdown-menu" ng-if="list.length > 1">
             <li ng-repeat="host in list"><a href="/cmdb/hostlist/hostdetail?id={{host.id}}">{{host.hostname}}</a></li>
         </ul>
     </h2>
@@ -32,17 +32,17 @@
                 <li><span>UUID</span><span>{{detail.productUuid}}</span></li>
                 <li>
                     <span>内存</span><span>{{detail.totalMemory}} <span ng-if="detail.totalMemory!= '暂无信息'">MB</span></span>
-                    <li ng-if="false">
+                    <li ng-if="detail.memory.length">
                         <table class="table">
                             <tr>
                                 <th>生产厂商</th>
                                 <th>产品型号</th>
                                 <th>容量</th>
                             </tr>
-                            <tr ng-repeat="device in detail.devices">
-                                <td>{{device.vendor}}</td>
-                                <td>{{device.model}}</td>
-                                <td>{{device.size}} <span ng-if="device.size != '暂无信息'">MB</span></td>
+                            <tr ng-repeat="memory in detail.memory">
+                                <td>{{memory.vendor}}</td>
+                                <td>{{memory.model}}</td>
+                                <td>{{memory.size}} <span ng-if="memory.size != '暂无信息'">MB</span></td>
                             </tr>
                         </table>
                     </li>
