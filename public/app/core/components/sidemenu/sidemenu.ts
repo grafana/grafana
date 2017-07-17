@@ -21,14 +21,130 @@ export class SideMenuCtrl {
     this.showSignout = this.contextSrv.isSignedIn && !config['authProxyEnabled'];
 
     this.mainLinks = config.bootData.mainNavLinks;
-    this.openUserDropdown();
+    this.mainLinks.push({
+      text: "系统总览",
+      icon: "fa fa-fw fa-home",
+      children: [
+        {
+          text: '关键指标',
+          url: this.getUrl("/")
+        },
+        {
+          text: '服务状态',
+          url: this.getUrl("/service")
+        },
+        {
+          text: '机器连接状态',
+          url: this.getUrl("/summary")
+        },
+      ],
+    });
 
+    this.mainLinks.push({
+      text: "日志查看",
+      icon: "fa fa-fw fa-file-text-o",
+      children: [
+        {
+          text: '全文查询',
+          url: this.getUrl("/logs")
+        },
+        {
+          text: '聚合查询',
+          url: this.getUrl("/logs")
+        },
+        {
+          text: '日志对比',
+          url: this.getUrl("/logs")
+        },
+      ]
+    });
+
+    this.mainLinks.push({
+      text: "智能检测",
+      icon: "fa fa-fw fa-stethoscope",
+      children: [
+        {
+          text: '报警规则检测',
+          dropdown: 'dropdown',
+          children: [
+            {
+              text: '当前报警',
+              url: this.getUrl('/alerts/status'),
+            },
+            {
+              text: '历史报警',
+              url: this.getUrl('/alerts/history'),
+            },
+            {
+              text: '所有规则',
+              url: this.getUrl('/alerts'),
+            },
+            {
+              text: '新建规则',
+              url: this.getUrl('/alerts/new'),
+            }
+          ]
+        },
+        {
+          text: '自动异常检测',
+          url: this.getUrl("/anomaly"),
+        }
+      ]
+    });
+
+    this.mainLinks.push({
+      text: "智能分析",
+      icon: "fa fa-fw fa-bar-chart",
+      children: [
+        {
+          text: '关联性分析',
+          url: this.getUrl("/association"),
+        },
+        {
+          text: '运维知识',
+          url: this.getUrl("/knowledgebase"),
+        },
+        {
+          text: '故障溯源',
+        },
+        {
+          text: '健康报告',
+          url: this.getUrl('/report'),
+        },
+      ]
+    });
+
+    this.mainLinks.push({
+      text: "运维轮班",
+      icon: "fa fa-fw fa-calendar",
+      url: this.getUrl("/oncallerschedule"),
+    });
+
+    this.mainLinks.push({
+      text: "安装指南",
+      icon: "fa fa-fw fa-cloud-download",
+      children: [
+        {
+          text: '安装探针',
+          url: this.getUrl("/setting/agent"),
+        },
+        {
+          text: '安装服务',
+          url: this.getUrl("/setting/service"),
+        },
+        {
+          text: '配置日志服务',
+          url: this.getUrl("/setting/filebeat"),
+        },
+      ]
+    });
+
+    this.openUserDropdown();
     this.$scope.$on('$routeChangeSuccess', () => {
       if (!this.contextSrv.pinned) {
         this.contextSrv.sidemenu = false;
       }
     });
-
   }
 
  getUrl(url) {
