@@ -199,6 +199,8 @@ export class AlertTabCtrl {
       type: 'query',
       query: {params: ['A', '5m', 'now']},
       reducer: {type: 'avg', params: []},
+      subordinateQuery: {params: ['A', '5m', 'now']},
+      subordinateReducer: {type: 'avg', params: []},
       evaluator: {type: 'gt', params: [null]},
       operator: {type: 'and'},
     };
@@ -256,6 +258,8 @@ export class AlertTabCtrl {
 
     cm.queryPart = new QueryPart(source.query, alertDef.alertQueryDef);
     cm.reducerPart = alertDef.createReducerPart(source.reducer);
+    cm.subordinateQueryPart = new QueryPart(source.subordinateQuery, alertDef.alertQueryDef);
+    cm.subordinateReducerPart = alertDef.createReducerPart(source.subordinateReducer);
     cm.evaluator = source.evaluator;
     cm.operator = source.operator;
 
@@ -294,6 +298,46 @@ export class AlertTabCtrl {
         var result = [];
         for (var type of alertDef.reducerTypes) {
           if (type.value !== conditionModel.source.reducer.type) {
+            result.push(type);
+          }
+        }
+        return this.$q.when(result);
+      }
+    }
+  }
+
+  handleSubordinateQueryPartEvent(conditionModel, evt) {
+    switch (evt.name) {
+      case "action-remove-part": {
+        break;
+      }
+      case "get-part-actions": {
+        return this.$q.when([]);
+      }
+      case "part-param-changed": {
+        this.validateModel();
+      }
+      case "get-param-options": {
+        var result = this.panel.targets.map(target => {
+          return this.uiSegmentSrv.newSegment({ value: target.refId });
+        });
+
+        return this.$q.when(result);
+      }
+    }
+  }
+
+  handleSubordinateReducerPartEvent(conditionModel, evt) {
+    switch (evt.name) {
+      case "action": {
+        conditionModel.source.subordinateReducer.type = evt.action.value;
+        conditionModel.evaluator.params[1] = alertDef.createReducerPart(conditionModel.source.subordinateReducer);
+        break;
+      }
+      case "get-part-actions": {
+        var result = [];
+        for (var type of alertDef.reducerTypes) {
+          if (type.value !== conditionModel.source.subordinateReducer.type) {
             result.push(type);
           }
         }
@@ -347,13 +391,20 @@ export class AlertTabCtrl {
     // ensure params array is correct length
     switch (evaluator.type) {
       case "lt":
-        case "gt": {
+      case "gt": {
         evaluator.params = [evaluator.params[0]];
         break;
       }
       case "within_range":
         case "outside_range": {
         evaluator.params = [evaluator.params[0], evaluator.params[1]];
+        break;
+      }
+      case "above_metric":
+      case "below_metric": {
+        if (evaluator.params.length !== 3) {
+          evaluator.params = [1.0, {params: ['A', '5m', 'now']}, {type: 'avg', params: []}];
+        }
         break;
       }
       case "no_value": {

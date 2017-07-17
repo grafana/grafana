@@ -29,8 +29,10 @@ var alertStateSortScore = {
 };
 
 var evalFunctions = [
-  {text: 'IS ABOVE', value: 'gt'},
-  {text: 'IS BELOW', value: 'lt'},
+  {text: 'IS ABOVE THRESHOLD', value: 'gt'},
+  {text: 'IS BELOW THRESHOLD', value: 'lt'},
+  {text: 'IS ABOVE', value: 'above_metric'},
+  {text: 'IS BELOW', value: 'below_metric'},
   {text: 'IS OUTSIDE RANGE', value: 'outside_range'},
   {text: 'IS WITHIN RANGE', value: 'within_range'},
   {text: 'HAS NO VALUE' , value: 'no_value'}

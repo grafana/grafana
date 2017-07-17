@@ -53,6 +53,12 @@
 					<div class="gf-form">
 						<metric-segment-model property="conditionModel.evaluator.type" options="ctrl.evalFunctions" custom="false" css-class="query-keyword" on-change="ctrl.evaluatorTypeChanged(conditionModel.evaluator)"></metric-segment-model>
 						<input class="gf-form-input max-width-9" type="number" step="any" ng-hide="conditionModel.evaluator.params.length === 0" ng-model="conditionModel.evaluator.params[0]" ng-change="ctrl.evaluatorParamsChanged()"></input>
+            <span class="gf-form-label query-keyword" ng-show="conditionModel.evaluator.params.length === 3">X</span>
+            <query-part-editor class="gf-form-label query-part width-6" ng-show="conditionModel.evaluator.params.length === 3" part="conditionModel.subordinateReducerPart" handle-event="ctrl.handleSubordinateReducerPartEvent(conditionModel, $event)">
+            </query-part-editor>
+            <span class="gf-form-label query-keyword" ng-show="conditionModel.evaluator.params.length === 3">OF</span>
+            <query-part-editor class="gf-form-label query-part" ng-show="conditionModel.evaluator.params.length === 3" part="conditionModel.subordinateQueryPart" handle-event="ctrl.handleSubordinateQueryPartEvent(conditionModel, $event)" >
+            </query-part-editor>
             <label class="gf-form-label query-keyword" ng-show="conditionModel.evaluator.params.length === 2">TO</label>
             <input class="gf-form-input max-width-9" type="number" step="any" ng-if="conditionModel.evaluator.params.length === 2" ng-model="conditionModel.evaluator.params[1]" ng-change="ctrl.evaluatorParamsChanged()"></input>
 					</div>
