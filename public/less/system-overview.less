@@ -8,7 +8,13 @@
   .health-panel {
     padding-left: 10px;
     & > div {
-      height: 60px;
+      display: inline-block;
+    }
+    & > div:first-child {
+      width: 118px;
+    }
+    & > .progress {
+      width: 70%;
     }
     em {
       font-size: 60px;
@@ -39,11 +45,17 @@
     }
   }
 
+  // angular-strap popover override
   .popover {
     outline: none;
     .popover-title {
       color: #555;
     }
+  }
+
+  // angular-strap modal override
+  .center {
+    padding: 10px 0 0 0;
   }
 
 }

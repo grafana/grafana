@@ -38,7 +38,6 @@ define([
 
       $scope.getHealth = function () {
         var panel = $scope._dashboard.rows[0].panels[0];
-        panel.hideGraphState = true;
       };
 
       // 报警情况
@@ -46,7 +45,6 @@ define([
         var panel = $scope._dashboard.rows[1].panels[0];
         panel.status = { success: ['', ''], warn: ['警告', 0], danger: ['严重', 0] };
         panel.href = $scope.getUrl('/alerts/status');
-        panel.hideGraphState = true;
 
         alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
           if (response.data.length) {
@@ -64,11 +62,11 @@ define([
         var panel = $scope._dashboard.rows[2].panels[0];
         panel.status = { success: ['指标数量', 0], warn: ['异常指标', 0], danger: ['严重', 0] };
         panel.href = $scope.getUrl('/anomaly');
-        panel.hideGraphState = true;
 
         healthSrv.load().then(function (data) {
           $scope.applicationHealth = Math.floor(data.health);
           $scope.leveal  = _.getLeveal($scope.applicationHealth);
+          $scope.healthProgressState = $scope.applicationHealth > 75 ? 'success' : ($scope.applicationHealth > 50 ? 'warning' : 'danger');
           $scope.summary = data;
 
           if (data.numAnomalyMetrics) {
@@ -159,6 +157,7 @@ define([
         panel.href = $scope.getUrl('/summary');
 
         $scope.summaryList = [];
+        $scope.workingHosts = [];
 
         backendSrv.alertD({
           method : "get",
@@ -180,10 +179,22 @@ define([
             
             datasourceSrv.getHostStatus(queries, 'now-1m').then(function(response) {
               response.status > 0 ? panel.status.warn[1]++ : panel.status.success[1]++;
+              $scope.workingHosts.push({ "host": response.host });
             }, function(err) {
               panel.status.danger[1]++;
             });
           });
+        })
+        .then(function () {
+          // console.log(response);
+          // var predictionPanels = $scope._dashboard.rows[6].panels;
+          // _.each($scope.workingHosts, function (host) {
+          //   _.each(predictionPanels, function (predictionPanel, index) {
+          //     var queries = [{
+          //       "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + predictionPanel.targets[0].metric
+          //     }]
+          //   })
+          // })
         })
       };
 
@@ -192,6 +203,7 @@ define([
         var panels = $scope._dashboard.rows[6].panels;
         
         _.each(panels, function (panel, index) {
+          // panel.targets.tags = { "host" : "*" }
           var params = {
             metric: contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + panel.targets[0].metric,
           };

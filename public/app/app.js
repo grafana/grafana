@@ -7,6 +7,7 @@ define([
   'angular-route',
   'angular-sanitize',
   'angular-strap',
+  'angular-strap.tpl',
   'angular-dragdrop',
   'angular-ui',
   'bindonce',

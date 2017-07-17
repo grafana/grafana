@@ -22,15 +22,17 @@
                         <div ng-repeat="(name, panel) in row.panels" class="panel" ui-draggable="!dashboardViewState.fullscreen"
                             drag="panel.id" ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
                             <div class="health-panel">
-                                <div>
+                                <div data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_overview_modal.html" style="cursor: pointer;">
                                     <em>{{applicationHealth}}</em>
                                     <span>{{leveal}}</span>
+                                </div>
+                                <div class="progress progress-striped">
+                                    <div class="bar bar-{{healthProgressState}}" style="width: {{applicationHealth}}%;"></div>
                                 </div>
                                 <br>
                                 <p>自动检测到所有<strong> {{ summary.numMetrics }} </strong>个指标中: 告警指标 <strong>{{ summary.numAlertsTriggered }} </strong>个  异常指标<strong> {{ summary.numAnomalyMetrics }} </strong>个 <tip>健康值=(告警指标个数/定义规则总数)*50% + (异常指标/所有指标) * 50%</tip></p>
                             </div>
                             <div class="clearfix"></div>
-                            <panel-loader type="panel.type" class="panel-margin overview-panel" ng-hide="panel.hideGraphState"></panel-loader>
                         </div>
                     </div>
 
@@ -38,13 +40,12 @@
                         <div ng-repeat="(name, panel) in row.panels" class="panel" ui-draggable="!dashboardViewState.fullscreen"
                             drag="panel.id" ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
                             <ul class="btn-list-status clearfix" ng-if="panel.status">
-                                <li class="btn-item" style="width:70px;">报警情况:</li>
+                                <li class="btn-item" style="width:70px; cursor:pointer;" data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_overview_modal.html">报警情况:</li>
                                 <li ng-if="panel.status.danger[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-danger">{{panel.status.danger[0]}} <span>{{panel.status.danger[1]}}</span></a></li>
                                 <li ng-if="panel.status.warn[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-warning">{{panel.status.warn[0]}} <span>{{panel.status.warn[1]}}</span></a></li>
                                 <li ng-if="panel.status.success[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-success">{{panel.status.success[0]}} <span>{{panel.status.success[1]}}</span></a></li>
                             </ul>
                             <div class="clearfix"></div>
-                            <panel-loader type="panel.type" class="panel-margin overview-panel" ng-hide="panel.hideGraphState"></panel-loader>
                         </div>
                     </div>
 
@@ -52,13 +53,12 @@
                         <div ng-repeat="(name, panel) in row.panels" class="panel" ui-draggable="!dashboardViewState.fullscreen"
                             drag="panel.id" ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
                             <ul class="btn-list-status clearfix" ng-if="panel.status">
-                                <li class="btn-item" style="width:70px;">智能检测异常指标:</li>
+                                <li class="btn-item" style="width:70px; cursor:pointer;"  data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_overview_modal.html">智能检测异常指标:</li>
                                 <li ng-if="panel.status.danger[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-danger">{{panel.status.danger[0]}} <span>{{panel.status.danger[1]}}</span></a></li>
                                 <li ng-if="panel.status.warn[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-warning">{{panel.status.warn[0]}} <span>{{panel.status.warn[1]}}</span></a></li>
                                 <li ng-if="panel.status.success[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-success">{{panel.status.success[0]}} <span>{{panel.status.success[1]}}</span></a></li>
                             </ul>
                             <div class="clearfix"></div>
-                            <panel-loader type="panel.type" class="panel-margin overview-panel" ng-hide="panel.hideGraphState"></panel-loader>
                         </div>
                     </div>
 
@@ -74,12 +74,11 @@
                             </ul>
                             <ul class="btn-list-status clearfix" ng-if="panel.allServices">
                                 <li ng-repeat="(name, service) in panel.allServices">
-                                    <!-- data-template-url="/app/features/systemoverview/partials/system_service_status.html"  -->
                                     <button type="button" class="btn-item system-status system-status-{{ service.state==0 ? 'success' : 'warning' }}" data-template-url="/app/features/systemoverview/partials/system_service_status.html" data-auto-close="1" data-placement="bottom" bs-popover>{{service.name}}</button>
                                 </li>
                             </ul>
                             <div class="clearfix"></div>
-                            <panel-loader type="panel.type" class="panel-margin overview-panel" ng-hide="panel.hideGraphState"></panel-loader>
+                            <panel-loader type="panel.type" class="panel-margin overview-panel"></panel-loader>
                         </div>
                     </div>
 
@@ -94,7 +93,7 @@
                                 <li ng-if="panel.status.success[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-success">{{panel.status.success[0]}} <span>{{panel.status.success[1]}}</span></a></li>
                             </ul>
                             <div class="clearfix"></div>
-                            <panel-loader type="panel.type" class="panel-margin overview-panel" ng-hide="panel.hideGraphState"></panel-loader>
+                            <panel-loader type="panel.type" class="panel-margin overview-panel"></panel-loader>
                         </div>
                     </div>
 
@@ -103,7 +102,7 @@
                         <div ng-repeat="(name, panel) in row.panels" class="panel" ui-draggable="!dashboardViewState.fullscreen"
                             drag="panel.id" ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
                             <div class="clearfix"></div>
-                            <panel-loader type="panel.type" class="panel-margin overview-panel" ng-hide="panel.hideGraphState"></panel-loader>
+                            <panel-loader type="panel.type" class="panel-margin overview-panel"></panel-loader>
                         </div>
                     </div>
 
@@ -112,7 +111,7 @@
                         <div ng-repeat="(name, panel) in row.panels" class="panel" ui-draggable="!dashboardViewState.fullscreen"
                             drag="panel.id" ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
                             <div class="clearfix"></div>
-                            <panel-loader type="panel.type" class="panel-margin overview-panel" ng-hide="panel.hideGraphState"></panel-loader>
+                            <panel-loader type="panel.type" class="panel-margin overview-panel"></panel-loader>
                             <p ng-if="panel.tip">
                                 <i class="fa fa-info-circle" style="padding: 0 10px;"></i>
                                 <span ng-if="panel.tips.length">预计未来</span>
