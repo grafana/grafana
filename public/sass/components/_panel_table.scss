@@ -76,6 +76,21 @@
     &.table-panel-cell-pre {
       white-space: pre;
     }
+
+    &.table-panel-cell-link {
+      // Expand internal div to cell size (make all cell clickable)
+      padding: 0;
+
+      a {
+        padding: 0.45em 0 0.45em 1.1em;
+        height: 100%;
+        width: 100%;
+      }
+    }
+
+    &.cell-highlighted:hover {
+      background-color: $tight-form-func-bg;
+    }
   }
 }
 

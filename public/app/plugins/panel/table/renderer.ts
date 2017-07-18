@@ -8,7 +8,7 @@ export class TableRenderer {
   formatters: any[];
   colorState: any;
 
-  constructor(private panel, private table, private isUtc, private sanitize) {
+  constructor(private panel, private table, private isUtc, private sanitize, private templateSrv) {
     this.initColumns();
   }
 
@@ -123,13 +123,25 @@ export class TableRenderer {
     };
   }
 
+  renderRowVariables(rowIndex) {
+    let scopedVars = {};
+    let cell_variable;
+    let row = this.table.rows[rowIndex];
+    for (let i = 0; i < row.length; i++) {
+      cell_variable = `__cell_${i}`;
+      scopedVars[cell_variable] = { value: row[i] };
+    }
+    return scopedVars;
+  }
+
   formatColumnValue(colIndex, value) {
     return this.formatters[colIndex] ? this.formatters[colIndex](value) : value;
   }
 
-  renderCell(columnIndex, value, addWidthHack = false) {
+  renderCell(columnIndex, rowIndex, value, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
     var style = '';
+    var cellClasses = [];
     var cellClass = '';
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';
@@ -156,10 +168,34 @@ export class TableRenderer {
 
     var columnStyle = this.table.columns[columnIndex].style;
     if (columnStyle && columnStyle.preserveFormat) {
-      cellClass = ' class="table-panel-cell-pre" ';
+      cellClasses.push("table-panel-cell-pre");
     }
 
-    return '<td' + cellClass + style + '>' + value + widthHack + '</td>';
+    var columnHtml = value + widthHack;
+
+    if (columnStyle && columnStyle.link) {
+      // Render cell as link
+      var scopedVars = this.renderRowVariables(rowIndex);
+      scopedVars['__cell'] = { value: value };
+
+      var cellLink = this.templateSrv.replace(columnStyle.linkUrl, scopedVars);
+      var cellLinkTooltip = this.templateSrv.replace(columnStyle.linkTooltip, scopedVars);
+      var cellTarget = columnStyle.linkTargetBlank ? '_blank' : '';
+
+      cellClasses.push("table-panel-cell-link");
+      columnHtml = `
+        <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right">
+          ${columnHtml}
+        </a>
+      `;
+    }
+
+    if (cellClasses.length) {
+      cellClass = ' class="' + cellClasses.join(' ') + '"';
+    }
+
+    columnHtml = '<td' + cellClass + style + '>' + columnHtml + '</td>';
+    return columnHtml;
   }
 
   render(page) {
@@ -173,7 +209,7 @@ export class TableRenderer {
       let cellHtml = '';
       let rowStyle = '';
       for (var i = 0; i < this.table.columns.length; i++) {
-        cellHtml += this.renderCell(i, row[i], y === startPos);
+        cellHtml += this.renderCell(i, y, row[i], y === startPos);
       }
 
       if (this.colorState.row) {
