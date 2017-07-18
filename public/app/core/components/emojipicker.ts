@@ -8,6 +8,7 @@ import twemoji from 'twemoji';
 import emojiDef from './emoji/emoji_def';
 
 const DEFAULT_ICON = '1f494'; // Broken heart
+let CP_SEPARATOR = emojiDef.CP_SEPARATOR;
 
 let buttonTemplate = `
 <span class="gf-form-input width-3">
@@ -96,8 +97,8 @@ function buildEmoji(codepoint, size?) {
   let utfCode;
 
   // handle double-sized codepoints like 1f1f7-1f1fa
-  if (codepoint.indexOf('-') !== -1) {
-    let codepoints = codepoint.split('-');
+  if (codepoint.indexOf(CP_SEPARATOR) !== -1) {
+    let codepoints = codepoint.split(CP_SEPARATOR);
     utfCode = _.map(codepoints, twemoji.convert.fromCodePoint).join('');
   } else {
     utfCode = twemoji.convert.fromCodePoint(codepoint);
