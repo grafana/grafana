@@ -306,7 +306,7 @@ func evalEnvVarExpression(value string) string {
 		envVar = strings.TrimSuffix(envVar, "}")
 		envValue := os.Getenv(envVar)
 
-		// if env variable is hostname and it is emtpy use os.Hostname as default
+		// if env variable is hostname and it is empty use os.Hostname as default
 		if envVar == "HOSTNAME" && envValue == "" {
 			envValue, _ = os.Hostname()
 		}
@@ -635,14 +635,14 @@ func LogConfigurationInfo() {
 
 	if len(appliedCommandLineProperties) > 0 {
 		for _, prop := range appliedCommandLineProperties {
-			logger.Info("Config overriden from command line", "arg", prop)
+			logger.Info("Config overridden from command line", "arg", prop)
 		}
 	}
 
 	if len(appliedEnvOverrides) > 0 {
 		text.WriteString("\tEnvironment variables used:\n")
 		for _, prop := range appliedEnvOverrides {
-			logger.Info("Config overriden from Environment variable", "var", prop)
+			logger.Info("Config overridden from Environment variable", "var", prop)
 		}
 	}
 

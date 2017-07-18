@@ -1,5 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
+import angular from 'angular';
 import config from 'app/core/config';
 import $ from 'jquery';
 import _ from 'lodash';
@@ -10,6 +11,7 @@ import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
 
 import {Subject} from 'vendor/npm/rxjs/Subject';
+import {metricsTabDirective} from './metrics_tab';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -32,6 +34,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   dataStream: any;
   dataSubscription: any;
   dataList: any;
+  nextRefId: string;
 
   constructor($scope, $injector) {
     super($scope, $injector);
@@ -61,7 +64,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   private onInitMetricsPanelEditMode() {
-    this.addEditorTab('Metrics', 'public/app/partials/metrics.html');
+    this.addEditorTab('Metrics', metricsTabDirective);
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
   }
 
@@ -256,7 +259,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       result = {data: []};
     }
 
-    return this.events.emit('data-received', result.data);
+    this.events.emit('data-received', result.data);
   }
 
   handleDataStream(stream) {
@@ -305,6 +308,25 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasourceName = datasource.name;
     this.datasource = null;
     this.refresh();
+  }
+
+  addQuery(target) {
+    target.refId = this.dashboard.getNextQueryLetter(this.panel);
+
+    this.panel.targets.push(target);
+    this.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
+  }
+
+  removeQuery(target) {
+    var index = _.indexOf(this.panel.targets, target);
+    this.panel.targets.splice(index, 1);
+    this.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
+    this.refresh();
+  }
+
+  moveQuery(target, direction) {
+    var index = _.indexOf(this.panel.targets, target);
+    _.move(this.panel.targets, index, index + direction);
   }
 }
 

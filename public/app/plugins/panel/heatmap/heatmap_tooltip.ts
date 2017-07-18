@@ -15,6 +15,7 @@ export class HeatmapTooltip {
   tooltip: any;
   scope: any;
   dashboard: any;
+  panelCtrl: any;
   panel: any;
   heatmapPanel: any;
   mouseOverBucket: boolean;
@@ -23,6 +24,7 @@ export class HeatmapTooltip {
   constructor(elem, scope) {
     this.scope = scope;
     this.dashboard = scope.ctrl.dashboard;
+    this.panelCtrl = scope.ctrl;
     this.panel = scope.ctrl.panel;
     this.heatmapPanel = elem;
     this.mouseOverBucket = false;
@@ -85,8 +87,18 @@ export class HeatmapTooltip {
 
     let tooltipTimeFormat = 'YYYY-MM-DD HH:mm:ss';
     let time = this.dashboard.formatDate(xData.x, tooltipTimeFormat);
-    let decimals = this.panel.tooltipDecimals || 5;
-    let valueFormatter = this.valueFormatter(decimals);
+
+    // Decimals override. Code from panel/graph/graph.ts
+    let valueFormatter;
+    if (_.isNumber(this.panel.tooltipDecimals)) {
+      valueFormatter = this.valueFormatter(this.panel.tooltipDecimals, null);
+    } else {
+      // auto decimals
+      // legend and tooltip gets one more decimal precision
+      // than graph legend ticks
+      let decimals = (this.panelCtrl.decimals || -1) + 1;
+      valueFormatter = this.valueFormatter(decimals, this.panelCtrl.scaledDecimals + 2);
+    }
 
     let tooltipHtml = `<div class="graph-tooltip-time">${time}</div>
       <div class="heatmap-histogram"></div>`;
@@ -172,9 +184,11 @@ export class HeatmapTooltip {
     }
     barWidth = Math.max(barWidth, 1);
 
+    // Normalize histogram Y axis
+    let histogramDomain = _.reduce(_.map(histogramData, d => d[1]), (sum, val) => sum + val, 0);
     let histYScale = d3.scaleLinear()
-    .domain([0, _.max(_.map(histogramData, d => d[1]))])
-    .range([0, HISTOGRAM_HEIGHT]);
+      .domain([0, histogramDomain])
+      .range([0, HISTOGRAM_HEIGHT]);
 
     let histogram = this.tooltip.select(".heatmap-histogram")
     .append("svg")
@@ -218,13 +232,10 @@ export class HeatmapTooltip {
       .style("top", top + "px");
   }
 
-  valueFormatter(decimals) {
+  valueFormatter(decimals, scaledDecimals = null) {
     let format = this.panel.yAxis.format;
     return function(value) {
-      if (_.isInteger(value)) {
-        decimals = 0;
-      }
-      return kbn.valueFormats[format](value, decimals);
+      return kbn.valueFormats[format](value, decimals, scaledDecimals);
     };
   }
 }

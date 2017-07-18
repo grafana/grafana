@@ -163,6 +163,7 @@ type SignedInUser struct {
 }
 
 type UserProfileDTO struct {
+	Id             int64  `json:"id"`
 	Email          string `json:"email"`
 	Name           string `json:"name"`
 	Login          string `json:"login"`

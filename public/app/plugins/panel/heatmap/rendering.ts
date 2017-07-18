@@ -5,7 +5,7 @@ import $ from 'jquery';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import {appEvents, contextSrv} from 'app/core/core';
-import {tickStep} from 'app/core/utils/ticks';
+import {tickStep, getScaledDecimals, getFlotTickSize} from 'app/core/utils/ticks';
 import d3 from 'd3';
 import {HeatmapTooltip} from './heatmap_tooltip';
 import {convertToCards, mergeZeroBuckets} from './heatmap_data_converter';
@@ -100,10 +100,17 @@ export default function link(scope, elem, attrs, ctrl) {
 
     let ticks = chartWidth / DEFAULT_X_TICK_SIZE_PX;
     let grafanaTimeFormatter = grafanaTimeFormat(ticks, timeRange.from, timeRange.to);
+    let timeFormat;
+    let dashboardTimeZone = ctrl.dashboard.getTimezone();
+    if (dashboardTimeZone === 'utc') {
+      timeFormat = d3.utcFormat(grafanaTimeFormatter);
+    } else {
+      timeFormat = d3.timeFormat(grafanaTimeFormatter);
+    }
 
     let xAxis = d3.axisBottom(xScale)
       .ticks(ticks)
-      .tickFormat(d3.timeFormat(grafanaTimeFormatter))
+      .tickFormat(timeFormat)
       .tickPadding(X_AXIS_TICK_PADDING)
       .tickSize(chartHeight);
 
@@ -131,7 +138,13 @@ export default function link(scope, elem, attrs, ctrl) {
     tick_interval = tickStep(y_min, y_max, ticks);
     ticks = Math.ceil((y_max - y_min) / tick_interval);
 
-    let decimals = panel.yAxis.decimals === null ? getPrecision(tick_interval) : panel.yAxis.decimals;
+    let decimalsAuto = getPrecision(tick_interval);
+    let decimals = panel.yAxis.decimals === null ? decimalsAuto : panel.yAxis.decimals;
+    // Calculate scaledDecimals for log scales using tick size (as in jquery.flot.js)
+    let flot_tick_size = getFlotTickSize(y_min, y_max, ticks, decimalsAuto);
+    let scaledDecimals = getScaledDecimals(decimals, flot_tick_size);
+    ctrl.decimals = decimals;
+    ctrl.scaledDecimals = scaledDecimals;
 
     // Set default Y min and max if no data
     if (_.isEmpty(data.buckets)) {
@@ -153,7 +166,7 @@ export default function link(scope, elem, attrs, ctrl) {
 
     let yAxis = d3.axisLeft(yScale)
       .ticks(ticks)
-      .tickFormat(tickValueFormatter(decimals))
+      .tickFormat(tickValueFormatter(decimals, scaledDecimals))
       .tickSizeInner(0 - width)
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
@@ -213,7 +226,15 @@ export default function link(scope, elem, attrs, ctrl) {
 
     let domain = yScale.domain();
     let tick_values = logScaleTickValues(domain, log_base);
-    let decimals = panel.yAxis.decimals;
+
+    let decimalsAuto = getPrecision(y_min);
+    let decimals = panel.yAxis.decimals || decimalsAuto;
+
+    // Calculate scaledDecimals for log scales using tick size (as in jquery.flot.js)
+    let flot_tick_size = getFlotTickSize(y_min, y_max, tick_values.length, decimalsAuto);
+    let scaledDecimals = getScaledDecimals(decimals, flot_tick_size);
+    ctrl.decimals = decimals;
+    ctrl.scaledDecimals = scaledDecimals;
 
     data.yAxis = {
       min: y_min,
@@ -223,7 +244,7 @@ export default function link(scope, elem, attrs, ctrl) {
 
     let yAxis = d3.axisLeft(yScale)
       .tickValues(tick_values)
-      .tickFormat(tickValueFormatter(decimals))
+      .tickFormat(tickValueFormatter(decimals, scaledDecimals))
       .tickSizeInner(0 - width)
       .tickSizeOuter(0)
       .tickPadding(Y_AXIS_TICK_PADDING);
@@ -293,10 +314,10 @@ export default function link(scope, elem, attrs, ctrl) {
     return tickValues;
   }
 
-  function tickValueFormatter(decimals) {
+  function tickValueFormatter(decimals, scaledDecimals = null) {
     let format = panel.yAxis.format;
     return function(value) {
-      return kbn.valueFormats[format](value, decimals);
+      return kbn.valueFormats[format](value, decimals, scaledDecimals);
     };
   }
 

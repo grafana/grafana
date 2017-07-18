@@ -7,11 +7,12 @@ function (angular, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ChangePasswordCtrl', function($scope, backendSrv, $location) {
+  module.controller('ChangePasswordCtrl', function($scope, backendSrv, $location, navModelSrv) {
 
     $scope.command = {};
     $scope.authProxyEnabled = config.authProxyEnabled;
     $scope.ldapEnabled = config.ldapEnabled;
+    $scope.navModel = navModelSrv.getProfileNav();
 
     $scope.changePassword = function() {
       if (!$scope.userForm.$valid) { return; }

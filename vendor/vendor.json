@@ -459,6 +459,12 @@
 			"revisionTime": "2016-09-17T18:44:01Z"
 		},
 		{
+			"checksumSHA1": "iWCtyR1TkJ22Bi/ygzfKDvOQdQY=",
+			"path": "github.com/sergi/go-diff/diffmatchpatch",
+			"revision": "24e2351369ec4949b2ed0dc5c477afdd4c4034e8",
+			"revisionTime": "2017-01-18T13:12:30Z"
+		},
+		{
 			"checksumSHA1": "6AYg4fjEvFuAVN3wHakGApjhZAM=",
 			"path": "github.com/smartystreets/assertions",
 			"revision": "2063fd1cc7c975db70502811a34b06ad034ccdf2",
@@ -501,6 +507,24 @@
 			"revisionTime": "2017-04-18T16:44:36Z"
 		},
 		{
+			"checksumSHA1": "r7o16T0WQ/XSe2mlQuioMi8gxbw=",
+			"path": "github.com/yudai/gojsondiff",
+			"revision": "9209d1532c51cabe0439993586a71c207b09a0ac",
+			"revisionTime": "2017-02-27T22:09:00Z"
+		},
+		{
+			"checksumSHA1": "7/V6fDOOfkmSHQahCK+J5G4Y1uk=",
+			"path": "github.com/yudai/gojsondiff/formatter",
+			"revision": "9209d1532c51cabe0439993586a71c207b09a0ac",
+			"revisionTime": "2017-02-27T22:09:00Z"
+		},
+		{
+			"checksumSHA1": "OCkp7qxxdxjpoM3T6Q3CTiMP5kM=",
+			"path": "github.com/yudai/golcs",
+			"revision": "d1c525dea8ce39ea9a783d33cf08932305373f2c",
+			"revisionTime": "2015-04-05T16:34:35Z"
+		},
+		{
 			"checksumSHA1": "WHc3uByvGaMcnSoI21fhzYgbOgg=",
 			"path": "golang.org/x/net/context/ctxhttp",
 			"revision": "71a035914f99bb58fe82eac0f1289f10963d876c",
@@ -517,6 +541,18 @@
 			"path": "golang.org/x/net/html/atom",
 			"revision": "4971afdc2f162e82d185353533d3cf16188a9f4e",
 			"revisionTime": "2016-11-15T21:05:04Z"
+		},
+		{
+			"checksumSHA1": "SjCoL7KD7qBmgSuqGTCAuUhigDk=",
+			"path": "golang.org/x/oauth2",
+			"revision": "f047394b6d14284165300fd82dad67edb3a4d7f6",
+			"revisionTime": "2017-05-17T17:14:19Z"
+		},
+		{
+			"checksumSHA1": "Umx4Fmn5FyXJyUVzKWhnQdvFNkc=",
+			"path": "golang.org/x/oauth2/internal",
+			"revision": "f047394b6d14284165300fd82dad67edb3a4d7f6",
+			"revisionTime": "2017-05-17T17:14:19Z"
 		},
 		{
 			"checksumSHA1": "S0DP7Pn7sZUmXc55IzZnNvERu6s=",

@@ -4,6 +4,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
+import appEvents from 'app/core/app_events';
 
 export class BackendSrv {
   inFlightRequests = {};
@@ -150,7 +151,10 @@ export class BackendSrv {
       }
     }
 
-    return this.$http(options).catch(err => {
+    return this.$http(options).then(response => {
+      appEvents.emit('ds-request-response', response);
+      return response;
+    }).catch(err => {
       if (err.status === this.HTTP_REQUEST_CANCELLED) {
         throw {err, cancelled: true};
       }
@@ -166,7 +170,7 @@ export class BackendSrv {
         });
       }
 
-      //populate error obj on Internal Error
+      // populate error obj on Internal Error
       if (_.isString(err.data) && err.status === 500) {
         err.data = {
           error: err.statusText,
@@ -175,11 +179,13 @@ export class BackendSrv {
       }
 
       // for Prometheus
-      if (!err.data.message && _.isString(err.data.error)) {
+      if (err.data && !err.data.message && _.isString(err.data.error)) {
         err.data.message = err.data.error;
       }
 
+      appEvents.emit('ds-request-error', err);
       throw err;
+
     }).finally(() => {
       // clean up
       if (options.requestId) {
@@ -202,7 +208,12 @@ export class BackendSrv {
 
   saveDashboard(dash, options) {
     options = (options || {});
-    return this.post('/api/dashboards/db/', {dashboard: dash, overwrite: options.overwrite === true});
+
+    return this.post('/api/dashboards/db/', {
+      dashboard: dash,
+      overwrite: options.overwrite === true,
+      message: options.message || '',
+    });
   }
 }
 

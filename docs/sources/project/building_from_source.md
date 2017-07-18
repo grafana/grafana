@@ -15,12 +15,19 @@ dev environment. Grafana ships with its own required backend server; also comple
 
 - [Go 1.8.1](https://golang.org/dl/)
 - [NodeJS LTS](https://nodejs.org/download/)
+- [Git](https://git-scm.com/downloads)
 
 ## Get Code
-Create a directory for the project and set your path accordingly. Then download and install Grafana into your $GOPATH directory
+Create a directory for the project and set your path accordingly (or use the [default Go workspace directory](https://golang.org/doc/code.html#GOPATH)). Then download and install Grafana into your $GOPATH directory:
+
 ```
 export GOPATH=`pwd`
 go get github.com/grafana/grafana
+```
+
+On Windows use setx instead of export and then restart your command prompt:
+```
+setx GOPATH %cd% 
 ```
 
 You may see an error such as: `package github.com/grafana/grafana: no buildable Go source files`. This is just a warning, and you can proceed with the directions.
@@ -35,6 +42,12 @@ go run build.go build              # (or 'go build ./pkg/cmd/grafana-server')
 #### Building on Windows
 The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on windows you need
 to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
+
+[node-gyp](https://github.com/nodejs/node-gyp#installation) is the Node.js native addon build tool and it requires extra dependencies to be installed on Windows. In a command prompt which is run as administrator, run: 
+
+```
+npm --add-python-to-path='true' --debug install --global windows-build-tools
+```
 
 ## Build the Front-end Assets
 
@@ -54,6 +67,8 @@ To rebuild on source change
 go get github.com/Unknwon/bra
 bra run
 ```
+
+If the `bra run` command does not work, make sure that the bin directory in your Go workspace directory is in the path. $GOPATH/bin (or %GOPATH%\bin in Windows) is in your path.
 
 ## Running Grafana Locally
 You can run a local instance of Grafana by running:
@@ -94,3 +109,24 @@ Learn more about Grafana config options in the [Configuration section](/installa
 
 ## Create a pull requests
 Please contribute to the Grafana project and submit a pull request! Build new features, write or update documentation, fix bugs and generally make Grafana even more awesome.
+
+## Troubleshooting
+
+**Problem**: PhantomJS or node-sass errors when running grunt
+
+**Solution**: delete the node_modules directory. Install [node-gyp](https://github.com/nodejs/node-gyp#installation) properly for your platform. Then run `yarn install --pure-lockfile` again.
+<br><br>
+
+**Problem**: When running `bra run` for the first time you get an error that it is not a recognized command.
+
+**Solution**: Add the bin directory in your Go workspace directory to the path. Per default this is `$HOME/go/bin` on Linux and `%USERPROFILE%\go\bin` on Windows or `$GOPATH/bin` (`%GOPATH%\bin` on Windows) if you have set your own workspace directory. 
+<br><br>
+
+**Problem**: When executing a `go get` command on Windows and you get an error about the git repository not existing.
+
+**Solution**: `go get` requires Git. If you run `go get` without Git then it will create an empty directory in your Go workspace for the library you are trying to get. Even after installing Git, you will get a similar error. To fix this, delete the empty directory (for example: if you tried to run `go get github.com/Unknwon/bra` then delete `%USERPROFILE%\go\src\github.com\Unknwon\bra`) and run the `go get` command again.
+<br><br>
+
+**Problem**: On Windows, getting errors about a tool not being installed even though you just installed that tool.
+
+**Solution**: It is usually because it got added to the path and you have to restart your command prompt to use it.

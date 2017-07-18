@@ -109,8 +109,8 @@ function (queryDef) {
     return filterObj;
   };
 
-  ElasticQueryBuilder.prototype.documentQuery = function(query) {
-    query.size = 500;
+  ElasticQueryBuilder.prototype.documentQuery = function(query, size) {
+    query.size = size;
     query.sort = {};
     query.sort[this.timeField] = {order: 'desc', unmapped_type: 'boolean'};
 
@@ -193,10 +193,12 @@ function (queryDef) {
     // handle document query
     if (target.bucketAggs.length === 0) {
       metric = target.metrics[0];
-      if (metric && metric.type !== 'raw_document') {
+      if (!metric || metric.type !== 'raw_document') {
         throw {message: 'Invalid query'};
       }
-      return this.documentQuery(query, target);
+
+      var size = (metric.settings && metric.settings.size) || 500;
+      return this.documentQuery(query, size);
     }
 
     nestedAggs = query;

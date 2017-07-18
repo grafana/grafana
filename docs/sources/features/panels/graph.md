@@ -67,6 +67,20 @@ The ``Left Y`` and ``Right Y`` can be customized using:
 
 Axes can also be hidden by unchecking the appropriate box from `Show Axis`.
 
+### X-Axis Mode
+
+There are three options:
+
+- The default option is `Time` and means the x-axis represents time and that the data is grouped by time (for example, by hour or by minute).
+
+- The `Series` option means that the data is grouped by series and not by time. The y-axis still represents the value.
+
+    <img src="/img/docs/v4/x_axis_mode_series.png" class="no-shadow">
+
+- The `Histogram` option converts the graph into a histogram. A Histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range. Histograms and buckets are described in more detail [here](http://docs.grafana.org/features/panels/heatmap/#histograms-and-buckets).
+
+    <img src="/img/docs/v43/heatmap_histogram.png" class="no-shadow">
+
 ### Legend
 
 The legend hand be hidden by checking the ``Show`` checkbox.  If it's shown, it can be

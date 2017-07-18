@@ -34,7 +34,6 @@ export class TimePickerCtrl {
     $rootScope.onAppEvent('shift-time-backward', () => this.move(-1), $scope);
     $rootScope.onAppEvent('refresh', () => this.init(), $scope);
     $rootScope.onAppEvent('dash-editor-hidden', () => this.isOpen = false, $scope);
-
     this.init();
   }
 
@@ -57,6 +56,7 @@ export class TimePickerCtrl {
       if (moment.isMoment(timeRaw.to)) {
         timeRaw.to.local();
       }
+      this.isUtc = false;
     } else {
       this.isUtc = true;
     }
@@ -114,7 +114,7 @@ export class TimePickerCtrl {
     this.refresh.options.unshift({text: 'off'});
 
     this.$rootScope.appEvent('show-dash-editor', {
-      src: 'public/app/features/dashboard/timepicker/dropdown.html',
+      editview: 'timepicker',
       scope: this.$scope,
       cssClass: 'gf-timepicker-dropdown',
     });

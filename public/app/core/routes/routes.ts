@@ -103,11 +103,13 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/admin', {
     templateUrl: 'public/app/features/admin/partials/admin_home.html',
     controller : 'AdminHomeCtrl',
+    controllerAs: 'ctrl',
     resolve: loadAdminBundle,
   })
   .when('/admin/settings', {
     templateUrl: 'public/app/features/admin/partials/settings.html',
     controller : 'AdminSettingsCtrl',
+    controllerAs: 'ctrl',
     resolve: loadAdminBundle,
   })
   .when('/admin/users', {
@@ -129,11 +131,13 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/admin/orgs', {
     templateUrl: 'public/app/features/admin/partials/orgs.html',
     controller : 'AdminListOrgsCtrl',
+    controllerAs: 'ctrl',
     resolve: loadAdminBundle,
   })
   .when('/admin/orgs/edit/:id', {
     templateUrl: 'public/app/features/admin/partials/edit_org.html',
     controller : 'AdminEditOrgCtrl',
+    controllerAs: 'ctrl',
     resolve: loadAdminBundle,
   })
   .when('/admin/stats', {

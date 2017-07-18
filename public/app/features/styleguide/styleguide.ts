@@ -12,9 +12,11 @@ class StyleGuideCtrl {
   icons: any = [];
   page: any;
   pages = ['colors', 'buttons', 'icons', 'plugins'];
+  navModel: any;
 
   /** @ngInject **/
-  constructor(private $http, private $routeParams, private $location, private backendSrv) {
+  constructor(private $http, private $routeParams, private $location, private backendSrv, navModelSrv) {
+    this.navModel = navModelSrv.getAdminNav();
     this.theme = config.bootData.user.lightTheme ? 'light': 'dark';
     this.page = {};
 

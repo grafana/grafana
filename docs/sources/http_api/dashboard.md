@@ -46,6 +46,7 @@ JSON Body schema:
 
 - **dashboard** – The complete dashboard model, id = null to create a new dashboard
 - **overwrite** – Set to true if you want to overwrite existing dashboard with newer version or with same dashboard title.
+- **message** - Set a commit message for the version history.
 
 **Example Response**:
 

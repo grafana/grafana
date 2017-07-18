@@ -41,6 +41,7 @@
   }
 
   &.disabled,
+  &[disabled],
   &:disabled {
     cursor: $cursor-disabled;
     opacity: .65;
@@ -117,6 +118,17 @@
 }
 .btn-outline-danger {
   @include button-outline-variant($btn-danger-bg);
+}
+.btn-outline-disabled {
+  @include button-outline-variant($gray-1);
+  @include box-shadow(none);
+  cursor: default;
+
+  &:hover, &:active, &:active:hover, &:focus {
+    color: $gray-1;
+    background-color: transparent;
+        border-color: $gray-1;
+  }
 }
 
 
