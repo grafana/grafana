@@ -21,7 +21,7 @@ import {ThresholdManager} from './threshold_manager';
 import {EventManager} from 'app/features/annotations/all';
 import {convertValuesToHistogram, getSeriesValues} from './histogram';
 
-coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
+coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv, contextSrv) {
   return {
     restrict: 'A',
     template: '',
@@ -656,8 +656,13 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         return "%H:%M";
       }
 
+      // Show event editor only for users with at least Editor role
+      function userIsEventEditor() {
+        return contextSrv.isEditor;
+      }
+
       elem.bind("plotselected", function (event, ranges) {
-        if (ranges.ctrlKey || ranges.metaKey)  {
+        if ((ranges.ctrlKey || ranges.metaKey) && userIsEventEditor()) {
           scope.$apply(() => {
             eventManager.updateTime(ranges.xaxis);
           });
@@ -672,7 +677,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       });
 
       elem.bind("plotclick", function (event, pos, item) {
-        if (pos.ctrlKey || pos.metaKey || eventManager.event)  {
+        if ((pos.ctrlKey || pos.metaKey || eventManager.event) && userIsEventEditor()) {
           // Skip if range selected (added in "plotselected" event handler)
           let isRangeSelection = pos.x !== pos.x1;
           if (!isRangeSelection) {
@@ -684,10 +689,11 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       });
 
       elem.bind("editevent", (e, annotationEvent, elem) => {
-        let marker = elem.find(":first");
-        marker = $(plot.getPlaceholder()).find(marker);
-        //console.log("editevent triggered", annotationEvent, elem, marker);
-        eventManager.editEvent(annotationEvent);
+        if (userIsEventEditor()) {
+          let marker = elem.find(":first");
+          marker = $(plot.getPlaceholder()).find(marker);
+          eventManager.editEvent(annotationEvent);
+        }
       });
 
       scope.$on('$destroy', function() {

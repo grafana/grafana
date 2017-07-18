@@ -8,7 +8,7 @@ import alertDef from '../alerting/alert_def';
 import { EventManager } from 'app/features/annotations/all';
 
 /** @ngInject **/
-export function annotationTooltipDirective($sanitize, dashboardSrv, popoverSrv, $compile) {
+export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, popoverSrv, $compile) {
 
   function sanitizeString(str) {
     try {
@@ -47,7 +47,9 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, popoverSrv, 
           <span class="graph-annotation-time">${dashboard.formatDate(event.min)}</span>
       `;
 
-      if (event.type === 'event') {
+      // Show edit icon only for users with at least Editor role
+      var userIsEventEditor = contextSrv.isEditor;
+      if (event.type === 'event' && userIsEventEditor) {
         tooltip += `
           <span class="pointer graph-annotation-edit-icon" ng-click="onEdit()">
             <i class="fa fa-pencil-square"></i>
