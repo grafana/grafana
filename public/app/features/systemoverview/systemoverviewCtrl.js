@@ -105,9 +105,6 @@ define([
               if (_.isObject(service)) {
                 var status = service.dps[_.last(Object.keys(service.dps))];
                 
-                if (typeof(status) != "number") {
-                  throw Error;
-                }
                 if (status > 0) {
                   panel.status.warn[1]++;
                   serviceState++;
@@ -115,31 +112,19 @@ define([
                   panel.status.success[1]++;
                 }
 
-                serviceHosts.push(service.tags.host);
+                serviceHosts.push({
+                  "name": service.tags.host,
+                  "state": status > 0 ? "异常" : "正常"
+                });
               }
             });
 
-            console.log(key, serviceState);
             panel.allServices.push({
               "name" : allServicesMap[key],
               "state": serviceState,
               "hosts": serviceHosts
             });
-            
-            var targets = {
-              "aggregator": "sum",
-              "currentTagKey": "",
-              "currentTagValue": "",
-              "downsampleAggregator": "sum",
-              "downsampleInterval"  : "1m",
-              "shouldComputeRate"   : false,
-              "isCounter": false,
-              "errors"   : {},
-              "hide"     : false,
-              "metric"   : key + '.state',
-              "tags"     : { "host" : "*" }
-            };
-            panel.targets.push(targets);
+            console.log(key, panel.allServices);
           }).finally(function () {
             var d = $q.defer();
             d.resolve();
@@ -157,7 +142,8 @@ define([
         panel.href = $scope.getUrl('/summary');
 
         $scope.summaryList = [];
-        $scope.workingHosts = [];
+        $scope.hostsResource = {};
+        $scope.hostPanels = [];
 
         backendSrv.alertD({
           method : "get",
@@ -167,43 +153,85 @@ define([
         })
         .then(function (response) {
           $scope.summaryList = response.data;
+          _.each($scope.summaryList, function (metric) {
+            $scope.hostsResource[metric.tag.host] = {};
+            $scope.hostsResource[metric.tag.host]["host"] = metric.tag.host;
+          });
         })
         .then(function () {
-          _.each($scope.summaryList, function (metric) {
-            var queries = [{
-              "metric"    : contextSrv.user.orgId + "." + contextSrv.user.systemId + ".collector.state",
-              "aggregator": "sum",
-              "downsample": "1s-sum",
-              "tags"      : { "host" : metric.tag.host }
-            }];
-            
-            datasourceSrv.getHostStatus(queries, 'now-1m').then(function(response) {
-              response.status > 0 ? panel.status.warn[1]++ : panel.status.success[1]++;
-              $scope.workingHosts.push({ "host": response.host });
-            }, function(err) {
-              panel.status.danger[1]++;
+          var queries = [{
+            "metric"    : contextSrv.user.orgId + "." + contextSrv.user.systemId + ".collector.state",
+            "aggregator": "sum",
+            "downsample": "1s-sum",
+            "tags"      : { "host" : "*" }
+          }];
+          
+          datasourceSrv.getHostResource(queries, 'now-1m').then(function (response) {
+            _.each(response, function (metric) {
+              $scope.hostsResource[metric.host]["status"] = metric.value;
             });
           });
         })
         .then(function () {
-          // console.log(response);
-          // var predictionPanels = $scope._dashboard.rows[6].panels;
-          // _.each($scope.workingHosts, function (host) {
-          //   _.each(predictionPanels, function (predictionPanel, index) {
-          //     var queries = [{
-          //       "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + predictionPanel.targets[0].metric
-          //     }]
-          //   })
-          // })
+          var queries = [{
+            "metric"    : contextSrv.user.orgId + "." + contextSrv.user.systemId + ".cpu.usr",
+            "aggregator": "avg",
+            "downsample": "1h-avg",
+            "tags"      : { "host" : "*" }
+          }];
+
+          datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
+            _.each(response, function (metric) {
+              $scope.hostsResource[metric.host]["cpu"] = metric.value;
+            });
+          });
+        })
+        .then(function () {
+          var queries = [{
+            "metric"    : contextSrv.user.orgId + "." + contextSrv.user.systemId + ".df.bytes.free",
+            "aggregator": "avg",
+            "downsample": "1h-avg",
+            "tags"      : { "host" : "*" }
+          }];
+
+          datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
+            _.each(response, function (metric) {
+              $scope.hostsResource[metric.host]["disk"] = metric.value;
+            });
+          });
+        })
+        .then(function () {
+          var queries = [{
+            "metric"    : contextSrv.user.orgId + "." + contextSrv.user.systemId + ".proc.meminfo.active",
+            "aggregator": "avg",
+            "downsample": "1h-avg",
+            "tags"      : { "host" : "*" }
+          }];
+
+          datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
+            _.each(response, function (metric) {
+              $scope.hostsResource[metric.host]["mem"] = metric.value;
+            });
+          });
+        })
+        .finally(function () {
+          console.log("panel");
+          _.each(Object.keys($scope.hostsResource), function (host) {
+            $scope.hostsResource[host]["body"] = {};
+            $scope.hostPanels.push($scope.hostsResource[host]);
+            // if (typeof($scope.hostsResource[host]["status"]) == "number") {
+              
+            // }
+          });
         })
       };
 
       // 智能分析预测
       $scope.getPrediction = function () {
-        var panels = $scope._dashboard.rows[6].panels;
+        var panels = $scope._dashboard.rows[5].panels;
         
         _.each(panels, function (panel, index) {
-          // panel.targets.tags = { "host" : "*" }
+          panel.targets.tags = { "host" : "centos25" }
           var params = {
             metric: contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + panel.targets[0].metric,
           };
@@ -236,13 +264,38 @@ define([
       
       // 智能分析预测 切换周期
       $scope.changePre = function (selectedOption) {
-        var panels   = $scope._dashboard.rows[6].panels;
+        var panels   = $scope._dashboard.rows[5].panels;
         var selected = _.findIndex(panels[0].tips, { time: selectedOption.time });
 
         _.each(panels, function (panel, index) {
           panel.selectedOption = panel.tips[selected];
         });
       };
+
+      $scope.showPrediction = function (i) {
+        console.log(i);
+        $scope.hostPanels.activePanel = i;
+
+        var panels = $scope._dashboard.rows[6].panels;
+        _.each(panels, function (panel, index) {
+          var metric = panel.targets[0].metric;
+          var queries = [{
+            "metric"    : contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + metric,
+            "aggregator": "p99",
+            "downsample": "1m-avg",
+            "tags"      : { "host": $scope.hostPanels[i].host, "pid_cmd": "*" }
+          }];
+
+          datasourceSrv.getHostResource(queries, 'now-5m').then(function (response) {
+            var topN = metric.slice(0, metric.indexOf("."));
+            $scope.hostPanels[i].body[topN] = response;
+          });
+        });
+      }
+
+      $scope.test = function () {
+        $scope._dashboard.rows[3].panels[0].allServices[0].hosts = $scope.hostPanels[7];
+      }
 
       $scope.init();
     });

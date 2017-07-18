@@ -18,6 +18,7 @@
               "value": "current"
             }
           ],
+          "height": "260px",
           "datasource": null,
           "editable": true,
           "error": false,
@@ -112,6 +113,7 @@
             "critical": "#E24D42",
             "warning": "#F9934E"
           },
+          "height": "260px",
           "bars": true,
           "datasource": null,
           "editable": true,
@@ -216,6 +218,7 @@
           "aliasColors": {
             "test_health": "#EAB839"
           },
+          "height": "260px",
           "bars": true,
           "columns": [
             {
@@ -312,7 +315,7 @@
     {
       "collapse": false,
       "editable": false,
-      "height": "260px",
+      "height": "100px",
       "panels": [
         {
           "aliasColors": {
@@ -516,215 +519,6 @@
       ],
       "showTitle": false,
       "title": "机器连接状态",
-      "fullwidth": true
-    },
-    {
-      "collapse": false,
-      "editable": false,
-      "height": "260px",
-      "panels": [
-        {
-          "aliasColors": {
-            "test_health": "#EAB839"
-          },
-          "columns": [
-            {
-              "text": "Max",
-              "value": "max"
-            },
-            {
-              "text": "Current",
-              "value": "current"
-            }
-          ],
-          "datasource": null,
-          "editable": true,
-          "error": false,
-          "fill": 0,
-          "grid": {
-            "threshold1": "",
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": "",
-            "threshold2Color": "rgba(234, 112, 112, 0.22)",
-            "thresholdLine": true
-          },
-          "id": "01",
-          "legend": false,
-          "lines": false,
-          "linewidth": 2,
-          "nullPointMode": "connected",
-          "pageSize": 6,
-          "percentage": false,
-          "renderer": "flot",
-          "scroll": false,
-          "seriesOverrides": [],
-          "sort": {
-            "col": 2,
-            "desc": true
-          },
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "styles": [
-            {
-              "colorMode": "cell",
-              "colors": [
-                "rgba(115, 180, 140, 0.76)",
-                "rgba(237, 129, 40, 0.52)",
-                "rgba(246, 0, 0, 0.54)"
-              ],
-              "decimals": 0,
-              "pattern": "Current",
-              "thresholds": [
-                "0",
-                "30",
-                "70"
-              ],
-              "type": "number",
-              "unit": "percent"
-            },
-            {
-              "colorMode": "cell",
-              "decimals": 0,
-              "pattern": "Max",
-              "type": "number",
-              "unit": "percent"
-            }
-          ],
-          "targets": [
-            {
-              "aggregator": "p99",
-              "alias": "HOST: $tag_host PID: $tag_pid_cmd",
-              "currentTagKey": "",
-              "currentTagValue": "",
-              "downsampleAggregator": "avg",
-              "downsampleInterval": "1m",
-              "errors": {},
-              "metric": "cpu.topN",
-              "tags": {
-                "host": "*",
-                "pid_cmd": "*"
-              }
-            }
-          ],
-          "title": "各进程CPU占用情况(百分比)TopN",
-          "timeFrom": "5m",
-          "tooltip": {
-            "shared": true,
-            "value_type": "cumulative"
-          },
-          "transform": "timeseries_aggregations",
-          "transparent": true,
-          "type": "table",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "short",
-            "short"
-          ]
-        },
-        {
-          "aliasColors": {
-            "test_health": "#EAB839"
-          },
-          "columns": [
-            {
-              "text": "Max",
-              "value": "max"
-            },
-            {
-              "text": "Current",
-              "value": "current"
-            }
-          ],
-          "datasource": null,
-          "editable": true,
-          "error": false,
-          "fill": 0,
-          "grid": {
-            "threshold1": "",
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": "",
-            "threshold2Color": "rgba(234, 112, 112, 0.22)",
-            "thresholdLine": true
-          },
-          "id": "01",
-          "lines": false,
-          "linewidth": 2,
-          "nullPointMode": "connected",
-          "pageSize": 6,          
-          "percentage": false,
-          "renderer": "flot",
-          "scroll": false,          
-          "seriesOverrides": [],
-          "sort": {
-            "col": 2,
-            "desc": true
-          },
-          "span": 6,
-          "stack": false,
-          "steppedLine": false,
-          "styles": [
-            {
-              "colorMode": "cell",
-              "colors": [
-                "rgba(115, 180, 140, 0.76)",
-                "rgba(237, 129, 40, 0.52)",
-                "rgba(246, 0, 0, 0.54)"
-              ],
-              "decimals": 0,
-              "pattern": "Current",
-              "thresholds": [
-                "0",
-                "30",
-                "70"
-              ],
-              "type": "number",
-              "unit": "percent"
-            },
-            {
-              "colorMode": "cell",
-              "decimals": 0,
-              "pattern": "Max",
-              "type": "number",
-              "unit": "percent"
-            }
-          ],
-          "targets": [
-            {
-              "aggregator": "p99",
-              "alias": "HOST: $tag_host PID: $tag_pid_cmd",
-              "currentTagKey": "",
-              "currentTagValue": "",
-              "downsampleAggregator": "avg",
-              "downsampleInterval": "1m",
-              "errors": {},
-              "metric": "mem.topN",
-              "tags": {
-                "host": "*",
-                "pid_cmd": "*"
-              }
-            }
-          ],
-          "title": "各进程内存占用情况(百分比)TopN",
-          "timeFrom": "5m",
-          "tooltip": {
-            "shared": true,
-            "value_type": "cumulative"
-          },
-          "transform": "timeseries_aggregations",
-          "transparent": true,
-          "type": "table",
-          "x-axis": true,
-          "y-axis": true,
-          "y_formats": [
-            "short",
-            "short"
-          ]
-        }
-      ],
-      "showTitle": false,
-      "title": "各进程TopN使用情况",
       "fullwidth": true
     },
     {
@@ -1078,6 +872,215 @@
       ],
       "showTitle": false,
       "title": "智能分析预测",
+      "fullwidth": true
+    },
+    {
+      "collapse": false,
+      "editable": false,
+      "height": "260px",
+      "panels": [
+        {
+          "aliasColors": {
+            "test_health": "#EAB839"
+          },
+          "columns": [
+            {
+              "text": "Max",
+              "value": "max"
+            },
+            {
+              "text": "Current",
+              "value": "current"
+            }
+          ],
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "threshold1": "",
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": "",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)",
+            "thresholdLine": true
+          },
+          "id": "01",
+          "legend": false,
+          "lines": false,
+          "linewidth": 2,
+          "nullPointMode": "connected",
+          "pageSize": 6,
+          "percentage": false,
+          "renderer": "flot",
+          "scroll": false,
+          "seriesOverrides": [],
+          "sort": {
+            "col": 2,
+            "desc": true
+          },
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "styles": [
+            {
+              "colorMode": "cell",
+              "colors": [
+                "rgba(115, 180, 140, 0.76)",
+                "rgba(237, 129, 40, 0.52)",
+                "rgba(246, 0, 0, 0.54)"
+              ],
+              "decimals": 0,
+              "pattern": "Current",
+              "thresholds": [
+                "0",
+                "30",
+                "70"
+              ],
+              "type": "number",
+              "unit": "percent"
+            },
+            {
+              "colorMode": "cell",
+              "decimals": 0,
+              "pattern": "Max",
+              "type": "number",
+              "unit": "percent"
+            }
+          ],
+          "targets": [
+            {
+              "aggregator": "p99",
+              "alias": "HOST: $tag_host PID: $tag_pid_cmd",
+              "currentTagKey": "",
+              "currentTagValue": "",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "1m",
+              "errors": {},
+              "metric": "cpu.topN",
+              "tags": {
+                "host": "*",
+                "pid_cmd": "*"
+              }
+            }
+          ],
+          "title": "各进程CPU占用情况(百分比)TopN",
+          "timeFrom": "5m",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "transform": "timeseries_aggregations",
+          "transparent": true,
+          "type": "table",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {
+            "test_health": "#EAB839"
+          },
+          "columns": [
+            {
+              "text": "Max",
+              "value": "max"
+            },
+            {
+              "text": "Current",
+              "value": "current"
+            }
+          ],
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {
+            "threshold1": "",
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": "",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)",
+            "thresholdLine": true
+          },
+          "id": "01",
+          "lines": false,
+          "linewidth": 2,
+          "nullPointMode": "connected",
+          "pageSize": 6,          
+          "percentage": false,
+          "renderer": "flot",
+          "scroll": false,          
+          "seriesOverrides": [],
+          "sort": {
+            "col": 2,
+            "desc": true
+          },
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "styles": [
+            {
+              "colorMode": "cell",
+              "colors": [
+                "rgba(115, 180, 140, 0.76)",
+                "rgba(237, 129, 40, 0.52)",
+                "rgba(246, 0, 0, 0.54)"
+              ],
+              "decimals": 0,
+              "pattern": "Current",
+              "thresholds": [
+                "0",
+                "30",
+                "70"
+              ],
+              "type": "number",
+              "unit": "percent"
+            },
+            {
+              "colorMode": "cell",
+              "decimals": 0,
+              "pattern": "Max",
+              "type": "number",
+              "unit": "percent"
+            }
+          ],
+          "targets": [
+            {
+              "aggregator": "p99",
+              "alias": "HOST: $tag_host PID: $tag_pid_cmd",
+              "currentTagKey": "",
+              "currentTagValue": "",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "1m",
+              "errors": {},
+              "metric": "mem.topN",
+              "tags": {
+                "host": "*",
+                "pid_cmd": "*"
+              }
+            }
+          ],
+          "title": "各进程内存占用情况(百分比)TopN",
+          "timeFrom": "5m",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "transform": "timeseries_aggregations",
+          "transparent": true,
+          "type": "table",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "showTitle": false,
+      "title": "各进程TopN使用情况",
       "fullwidth": true
     }
   ]

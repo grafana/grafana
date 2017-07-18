@@ -14,16 +14,18 @@ function (angular, coreModule) {
     this.showModal = function(e, options) {
       var modal = $modal({
         modalClass: options.modalClass,
-        template: options.src,
+        templateUrl: options.src,
         persist: false,
         show: false,
         scope: options.scope,
-        keyboard: false
+        keyboard: false,
+        placement: "center"
       });
 
-      $q.when(modal).then(function(modalEl) {
-        modalEl.modal('show');
-      });
+      modal.$promise.then(modal.show);
+
+      // $q.when(modal).then(modal.show);
+
     };
 
   });

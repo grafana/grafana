@@ -5,14 +5,15 @@
 			Inspector
 		</div>
 
-		<div ng-model="editor.index" bs-tabs>
-			<div ng-repeat="tab in ['Request', 'Response', 'JS Error']" data-title="{{tab}}">
-			</div>
-		</div>
-
 		<button class="gf-box-header-close-btn" ng-click="dismiss();">
 			<i class="fa fa-remove"></i>
 		</button>
+
+		<div ng-model="editor.index" bs-tabs>
+			<div ng-repeat="tab in ['Request', 'Response', 'JS Error']" data-title="{{tab}}" bs-pane>
+			</div>
+		</div>
+
 	</div>
 
 	<div class="gf-box-body">

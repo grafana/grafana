@@ -1,7 +1,9 @@
 <div class="popover" tabindex="-1">
   <div class="arrow"></div>
-  <h3 class="popover-title" ng-bind="service.name"></h3>
+  <h3 class="popover-title">该服务所有节点：</h3>
   <div class="popover-content">
-    <span ng-repeat="host in service.hosts">{{host}}</span>
+    <ul>
+      <li ng-repeat="host in service.hosts">{{ host.name }} : {{ host.state }}</li>
+    </ul>
   </div>
 </div>

@@ -232,6 +232,7 @@ function transformDataToTable(data, panel) {
   }
 
   transformer.transform(data, panel, model);
+  if (panel.title === "当前机器连接状态") { console.log(data, panel, model); }
   return model;
 }
 

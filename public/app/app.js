@@ -4,10 +4,15 @@ define([
   'lodash',
   'require',
   'bootstrap',
+  'bootstrap-table',
   'angular-route',
   'angular-sanitize',
   'angular-strap',
   'angular-strap.tpl',
+  // 'angular-animate',
+  // 'angular-aria',
+  // 'angular-material',
+  // 'md-data-table',
   'angular-dragdrop',
   'angular-ui',
   'bindonce',
@@ -17,6 +22,7 @@ define([
 function (angular, $, _, appLevelRequire) {
   "use strict";
 
+  // 'ngMaterial', 'md.data.table'
   var app = angular.module('grafana', ['mgcrea.ngStrap']);
   var register_fns = {};
   var preBootModules = [];
