@@ -1,3 +1,15 @@
+# 5.0.0 (unreleased)
+
+## New Features
+
+* **Table panel**: Render cell values as links that can use url that uses variables from current table row. [#3754](https://github.com/grafana/grafana/issues/3754)
+
+# 4.4.2 (unreleased) 
+
+## Bug Fixes
+
+* **Forms(TextArea)**: Bug fix for no scroll in text areas [#8797](https://github.com/grafana/grafana/issues/8797)
+
 # 4.4.1 (2017-07-05)
 
 ## Bug Fixes
