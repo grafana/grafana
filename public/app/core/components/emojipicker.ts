@@ -62,7 +62,12 @@ coreModule.directive('gfEmojiPicker', function ($timeout) {
 
     function filterIcon() {
       let icons = _.filter(scope.icons, icon => {
-        return icon.attr("title").indexOf(scope.iconFilter) !== -1;
+        let title = icon.attr("title");
+        if (title) {
+          return title.indexOf(scope.iconFilter) !== -1;
+        } else {
+          return false;
+        }
       });
 
       let container = elem.find(".icon-container");
@@ -88,7 +93,16 @@ function attributesCallback(rawText, iconId) {
 }
 
 function buildEmoji(codepoint, size?) {
-  let utfCode = twemoji.convert.fromCodePoint(codepoint);
+  let utfCode;
+
+  // handle double-sized codepoints like 1f1f7-1f1fa
+  if (codepoint.indexOf('-') !== -1) {
+    let codepoints = codepoint.split('-');
+    utfCode = _.map(codepoints, twemoji.convert.fromCodePoint).join('');
+  } else {
+    utfCode = twemoji.convert.fromCodePoint(codepoint);
+  }
+
   let emoji = twemoji.parse(utfCode, {
     folder: 'svg',
     ext: '.svg',
