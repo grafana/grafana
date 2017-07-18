@@ -14,6 +14,7 @@ function (angular, _) {
       $scope.type = '安装';
       $scope.installManual = false;
       $scope.orgId = contextSrv.user.orgId;
+      $scope.systemId = contextSrv.user.systemId;
       $scope.alertServer = backendSrv.alertDUrl;
       $scope.token = backendSrv.getToken();
       $scope.system = _.find(contextSrv.systemsMap,{Id:contextSrv.user.systemId}).SystemsName;

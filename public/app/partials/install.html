@@ -39,7 +39,7 @@
 
     <h3>安装命令</h3>
     <div class="tight-form last" ng-if="installSelect.system != 0">
-        <p style="word-break: break-all">sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} AGENT_URL=https://download.cloudwiz.cn/agent bash -c "$(curl -L https://download.cloudwiz.cn/agent/deploy_agent.sh)"</p>
+        <p style="word-break: break-all">sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}}  SYSTEM_ID={{systemId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} AGENT_URL=https://download.cloudwiz.cn/agent bash -c "$(curl -L https://download.cloudwiz.cn/agent/deploy_agent.sh)"</p>
     </div>
   </div>
 </div>
