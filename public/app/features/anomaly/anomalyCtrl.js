@@ -7,7 +7,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('AnomalyCtrl', function ($scope, healthSrv, backendSrv, contextSrv, $controller, $rootScope, $location) {
+    module.controller('AnomalyCtrl', function ($scope, healthSrv, backendSrv, contextSrv, $controller, $rootScope) {
       $scope.init = function () {
         $scope.system = backendSrv.getSystemById(contextSrv.user.systemId);
         healthSrv.load().then(function (data) {
