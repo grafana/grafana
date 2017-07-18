@@ -105,6 +105,10 @@ export class DashboardCtrl {
         $scope.dashboard.addEmptyRow();
       };
 
+      $scope.focusPanel = function(evt, panel) {
+        $scope.dashboard.setPanelFocus(panel.id);
+      };
+
       $scope.showJsonEditor = function(evt, options) {
         var editScope = $rootScope.$new();
         editScope.object = options.object;
@@ -132,6 +136,7 @@ export class DashboardCtrl {
     init(dashboard) {
       this.$scope.onAppEvent('show-json-editor', this.$scope.showJsonEditor);
       this.$scope.onAppEvent('template-variable-value-updated', this.$scope.templateVariableUpdated);
+      this.$scope.onAppEvent('panel-added', this.$scope.focusPanel);
       this.$scope.setupDashboard(dashboard);
       this.$scope.registerWindowResizeEvent();
     }
