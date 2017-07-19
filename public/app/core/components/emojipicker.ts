@@ -44,9 +44,8 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
 
     addCategories(elem);
     addIcons(elem, emojiDefs);
-    // console.log(elem[0].innerHTML);
 
-    // Convert code points into emoji images and add it to popover
+    // Convert code points into emoji images and add it into popover
     function addIcons(elem, emojiDefs) {
       let container = elem.find(".icon-container");
       _.each(emojiDefs, emoji => {
@@ -64,6 +63,7 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
       container.find('.gf-event-icon').on('click', onEmojiSelect);
     }
 
+    // Insert <div> container for each emoji category
     function addCategories(elem) {
       let container = elem.find(".icon-container");
       let emojinav = elem.find("#emojinav");
@@ -74,17 +74,20 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
           </li>`
         ));
 
-        let category_container = $(`<div id="${category}" ng-show="currentCategory === '${category}'"></div>`);
+        let category_container = $(`
+          <div id="${category}" ng-show="currentCategory === '${category}' || !currentCategory"></div>
+        `);
         // Compile new DOM elem to make ng-show worked
         $compile(category_container)(scope);
         container.append(category_container);
       });
       emojinav.find('li:first').addClass('active');
 
+      // switch category
       emojinav.on('show', e => {
         scope.$apply(() => {
+          // use href attr (#name => name)
           scope.currentCategory = e.target.hash.slice(1);
-          console.log('tab show', scope.currentCategory);
         });
       });
     }
