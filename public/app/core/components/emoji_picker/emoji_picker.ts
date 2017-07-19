@@ -64,18 +64,24 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
     scope.filterIcon = filterIcon;
     scope.categories = emojiDef.categories;
     scope.currentCategory = scope.categories[0];
+    scope.prevCategory = scope.currentCategory;
     scope.icons = [];
 
     addCategories(elem);
     addIcons(elem);
 
-    // Convert code points into emoji images and add it into popover
+    // Convert pre-built image elements into DOM element and push it into popover
     function addIcons(elem) {
       let container = elem.find(".icon-container");
       _.each(buildedImagesCategories, (categoryElements, category) => {
         let categoryContainer = container.find(`#${category}`);
-        _.each(categoryElements, emojiElem => {
-          emojiElem = $(emojiElem);
+        _.each(categoryElements, (emojiElem, index) => {
+          // When text elem converted into DOM, image is loading. To avoid double compilation and image loading,
+          // replace text elem in buildedImagesCategories by real DOM elem after compilation.
+          if (_.isString(emojiElem)) {
+            emojiElem = $(emojiElem);
+            buildedImagesCategories[category][index] = emojiElem;
+          }
           categoryContainer.append(emojiElem);
           scope.icons.push(emojiElem);
         });
@@ -95,7 +101,7 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
         ));
 
         let category_container = $(`
-          <div id="${category}" ng-show="currentCategory === '${category}' || !currentCategory"></div>
+          <div id="${category}" ng-show="currentCategory === '${category}'"></div>
         `);
         // Compile new DOM elem to make ng-show worked
         $compile(category_container)(scope);
@@ -107,6 +113,7 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
       emojinav.on('show', e => {
         scope.$apply(() => {
           // use href attr (#name => name)
+          scope.prevCategory = scope.currentCategory;
           scope.currentCategory = e.target.hash.slice(1);
         });
       });
@@ -118,19 +125,38 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
     }
 
     function filterIcon() {
-      let icons = _.filter(scope.icons, icon => {
-        let title = icon.attr("title");
-        if (title) {
-          return title.indexOf(scope.iconFilter) !== -1;
-        } else {
-          return false;
-        }
-      });
-
       let container = elem.find(".icon-container");
-      container.empty();
-      container.append(icons);
-      container.find('.gf-event-icon').on('click', onEmojiSelect);
+      if (scope.iconFilter.length === 0) {
+        container.find('#founded-emoji').remove();
+        scope.currentCategory = scope.prevCategory;
+        return;
+      } else {
+        let icons = _.filter(scope.icons, icon => {
+          let title = icon.attr("title");
+          if (title) {
+            return title.indexOf(scope.iconFilter) !== -1;
+          } else {
+            return false;
+          }
+        });
+
+        if (scope.currentCategory) {
+          scope.prevCategory = scope.currentCategory;
+        }
+        scope.currentCategory = null;
+
+        let findContainerElm = $('<div id="founded-emoji"></div>');
+        let findContainer = container.find('#founded-emoji');
+        if (findContainer.length === 0) {
+          container.append(findContainerElm);
+          findContainer = findContainerElm;
+        }
+        findContainer.empty();
+        // clone elements to prevent moving and erasing then
+        icons = _.map(icons, icon => icon.clone());
+        findContainer.append(icons);
+        findContainer.find('.gf-event-icon').on('click', onEmojiSelect);
+      }
     }
   }
 
