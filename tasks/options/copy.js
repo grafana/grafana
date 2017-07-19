@@ -35,6 +35,7 @@ module.exports = function(config) {
         'virtual-scroll/**/*',
         'mousetrap/**/*',
         'twemoji/2/twemoji.amd*',
+        'twemoji/2/svg/*.svg',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }
