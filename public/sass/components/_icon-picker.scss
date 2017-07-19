@@ -1,6 +1,6 @@
 .gf-icon-picker {
   width: 400px;
-  max-height: 450px;
+  height: 450px;
 
   .icon-filter {
     padding-bottom: 10px;
@@ -13,8 +13,8 @@
     overflow: auto;
 
     .gf-event-icon {
-      margin: 3px;
-      height: 20px;
+      margin: 0.4rem;
+      height: 1.5rem;
     }
   }
 }
