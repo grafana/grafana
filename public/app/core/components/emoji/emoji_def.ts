@@ -879,10 +879,13 @@ const emojiDef = [
 ];
 
 let emojiMap = _.mapValues(_.keyBy(emojiDef, 'codepoint'), em => em.name);
-let emojiCodePoints = _.map(emojiDef, 'codepoint');
+let codePoints = _.map(emojiDef, 'codepoint');
+let categories = _.uniq(_.map(emojiDef, 'category'));
 
 export default {
-  CP_SEPARATOR: CP_SEPARATOR,
-  emojiMap: emojiMap,
-  codePoints: emojiCodePoints
+  CP_SEPARATOR,
+  emojiDef,
+  emojiMap,
+  codePoints,
+  categories
 };

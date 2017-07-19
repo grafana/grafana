@@ -26,35 +26,67 @@ let pickerTemplate = `
       ng-model="iconFilter" ng-change="filterIcon()"
       class="gf-form-input max-width-20" placeholder="Find icon by name">
   </div>
+  <ul class="nav nav-tabs" id="emojinav">
+  </ul>
   <div class="icon-container"></div>
 </div>
 `;
 
 let codePoints = emojiDef.codePoints;
+let emojiDefs = emojiDef.emojiDef;
 
-coreModule.directive('gfEmojiPicker', function ($timeout) {
+coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
   function link(scope, elem, attrs) {
     scope.filterIcon = filterIcon;
+    scope.categories = emojiDef.categories;
+    scope.currentCategory = scope.categories[0];
     scope.icons = [];
 
-    addIcons(elem, codePoints);
+    addCategories(elem);
+    addIcons(elem, emojiDefs);
+    // console.log(elem[0].innerHTML);
 
     // Convert code points into emoji images and add it to popover
-    function addIcons(elem, codePoints) {
-      _.each(codePoints, codepoint => {
-        let emoji;
-        try {
-          emoji = buildEmoji(codepoint);
-        } catch (error) {
-          console.log("Error while converting code point", codepoint);
-        }
-
-        scope.icons.push(emoji);
-        return emoji;
-      });
+    function addIcons(elem, emojiDefs) {
       let container = elem.find(".icon-container");
-      container.append(scope.icons);
+      _.each(emojiDefs, emoji => {
+        let emojiElem;
+        try {
+          emojiElem = buildEmoji(emoji.codepoint);
+        } catch (error) {
+          console.log(`Error while converting code point ${emoji.codepoint} ${emoji.name}`);
+        }
+        container.find(`#${emoji.category}`).append(emojiElem);
+
+        scope.icons.push(emojiElem);
+        return emojiElem;
+      });
       container.find('.gf-event-icon').on('click', onEmojiSelect);
+    }
+
+    function addCategories(elem) {
+      let container = elem.find(".icon-container");
+      let emojinav = elem.find("#emojinav");
+      _.each(emojiDef.categories, category => {
+        let emoji_tab = emojinav.append($(`
+          <li class="gf-tabs-item-emoji">
+            <a href="#${category }" data-toggle="tab">${category}</a>
+          </li>`
+        ));
+
+        let category_container = $(`<div id="${category}" ng-show="currentCategory === '${category}'"></div>`);
+        // Compile new DOM elem to make ng-show worked
+        $compile(category_container)(scope);
+        container.append(category_container);
+      });
+      emojinav.find('li:first').addClass('active');
+
+      emojinav.on('show', e => {
+        scope.$apply(() => {
+          scope.currentCategory = e.target.hash.slice(1);
+          console.log('tab show', scope.currentCategory);
+        });
+      });
     }
 
     function onEmojiSelect(event) {
