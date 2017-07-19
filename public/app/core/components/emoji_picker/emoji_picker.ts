@@ -35,6 +35,30 @@ let pickerTemplate = `
 let codePoints = emojiDef.codePoints;
 let emojiDefs = emojiDef.emojiDef;
 
+// Pre-build emoji images elements, grouped by categories.
+// Building thousands of elements takes a time, so better to do it one time at application start.
+let buildedImagesCategories = buildEmojiByCategories(emojiDefs);
+
+function buildEmojiByCategories(emojiDefs) {
+  let builded = {};
+
+  _.each(emojiDef.categories, category => {
+    builded[category] = [];
+  });
+
+  let emojiElem;
+  _.each(emojiDefs, emoji => {
+    try {
+      emojiElem = buildEmoji(emoji.codepoint);
+    } catch (error) {
+      console.log(`Error while converting code point ${emoji.codepoint} ${emoji.name}`);
+    }
+    builded[emoji.category].push(emojiElem);
+  });
+
+  return builded;
+}
+
 coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
   function link(scope, elem, attrs) {
     scope.filterIcon = filterIcon;
@@ -43,22 +67,18 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
     scope.icons = [];
 
     addCategories(elem);
-    addIcons(elem, emojiDefs);
+    addIcons(elem);
 
     // Convert code points into emoji images and add it into popover
-    function addIcons(elem, emojiDefs) {
+    function addIcons(elem) {
       let container = elem.find(".icon-container");
-      _.each(emojiDefs, emoji => {
-        let emojiElem;
-        try {
-          emojiElem = buildEmoji(emoji.codepoint);
-        } catch (error) {
-          console.log(`Error while converting code point ${emoji.codepoint} ${emoji.name}`);
-        }
-        container.find(`#${emoji.category}`).append(emojiElem);
-
-        scope.icons.push(emojiElem);
-        return emojiElem;
+      _.each(buildedImagesCategories, (categoryElements, category) => {
+        let categoryContainer = container.find(`#${category}`);
+        _.each(categoryElements, emojiElem => {
+          emojiElem = $(emojiElem);
+          categoryContainer.append(emojiElem);
+          scope.icons.push(emojiElem);
+        });
       });
       container.find('.gf-event-icon').on('click', onEmojiSelect);
     }
@@ -129,7 +149,7 @@ function attributesCallback(rawText, iconId) {
   };
 }
 
-function buildEmoji(codepoint, size?) {
+function buildEmoji(codepoint) {
   let utfCode;
 
   // handle double-sized codepoints like 1f1f7-1f1fa
@@ -148,12 +168,6 @@ function buildEmoji(codepoint, size?) {
     className: 'emoji gf-event-icon'
   });
 
-  emoji = $(emoji);
-  if (size) {
-    emoji = $(emoji).css({
-      height: size
-    });
-  }
   return emoji;
 }
 
