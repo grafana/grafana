@@ -1,11 +1,11 @@
-///<reference path="../../headers/common.d.ts" />
+///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import Drop from 'tether-drop';
 import twemoji from 'twemoji';
-import emojiDef from './emoji/emoji_def';
+import emojiDef from './emoji_def';
 
 const DEFAULT_ICON = '1f494'; // Broken heart
 const TWEMOJI_BASE = '/public/vendor/npm/twemoji/2/';

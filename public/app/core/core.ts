@@ -19,7 +19,7 @@ import "./directives/diff-view";
 import './jquery_extended';
 import './partials';
 import './components/jsontree/jsontree';
-import './components/emojipicker';
+import './components/emoji_picker/emoji_picker';
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';
