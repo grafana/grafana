@@ -5,16 +5,16 @@ define([
 function (angular, coreModule) {
   'use strict';
 
-  coreModule.service('utilSrv', function($rootScope, $modal, $q) {
+  coreModule.service('utilSrv', function($rootScope, $_modal, $q) {
 
     this.init = function() {
       $rootScope.onAppEvent('show-modal', this.showModal, $rootScope);
     };
 
     this.showModal = function(e, options) {
-      var modal = $modal({
+      var modal = $_modal({
         modalClass: options.modalClass,
-        templateUrl: options.src,
+        template: options.src,
         persist: false,
         show: false,
         scope: options.scope,
@@ -22,10 +22,9 @@ function (angular, coreModule) {
         placement: "center"
       });
 
-      modal.$promise.then(modal.show);
-
-      // $q.when(modal).then(modal.show);
-
+      $q.when(modal).then(function(modalEl) {
+        modalEl.modal('show');
+      });
     };
 
   });

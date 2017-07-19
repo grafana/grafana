@@ -13,6 +13,22 @@ define([
         return config.appSubUrl + url;
       };
 
+      $scope.filterNotNumber = function (value) {
+        return typeof(value.status) == 'number';
+      };
+
+      $scope.percentFormatter = function (value) {
+        return value && (value.toFixed(2) + '%');
+      }
+
+      $scope.gbFormatter = function (value) {
+        return value && ((value / Math.pow(1024, 3)).toFixed(2) + 'GB');
+      }
+
+      $scope.statusFormatter = function (value) {
+        return value > 0 ? '异常' : '正常';
+      }
+
       $scope.init = function () {
         if (contextSrv.user.systemId == 0 && contextSrv.user.orgId) {
           $location.url("/systems");
@@ -31,13 +47,18 @@ define([
           $scope.getAlertStatus();
           $scope.getHostSummary();
           $scope.getAnomaly();
-          $scope.getPrediction();
-          $scope.getHealth();
+          // $q.all([
+          //   $scope.getServices, 
+          //   $scope.getAlertStatus, 
+          //   $scope.getHostSummary, 
+          //   $scope.getAnomaly
+          // ]).then(function () {
+          //   $scope.initDashboard({
+          //     meta     : { canStar: false, canShare: false, canEdit: false, canSave: false },
+          //     dashboard: $scope._dashboard
+          //   });
+          // });
         });
-      };
-
-      $scope.getHealth = function () {
-        var panel = $scope._dashboard.rows[0].panels[0];
       };
 
       // 报警情况
@@ -124,7 +145,6 @@ define([
               "state": serviceState,
               "hosts": serviceHosts
             });
-            console.log(key, panel.allServices);
           }).finally(function () {
             var d = $q.defer();
             d.resolve();
@@ -144,6 +164,8 @@ define([
         $scope.summaryList = [];
         $scope.hostsResource = {};
         $scope.hostPanels = [];
+
+        var promiseList = [];
 
         backendSrv.alertD({
           method : "get",
@@ -166,11 +188,12 @@ define([
             "tags"      : { "host" : "*" }
           }];
           
-          datasourceSrv.getHostResource(queries, 'now-1m').then(function (response) {
+          var q = datasourceSrv.getHostResource(queries, 'now-1m').then(function (response) {
             _.each(response, function (metric) {
               $scope.hostsResource[metric.host]["status"] = metric.value;
             });
           });
+          promiseList.push(q);
         })
         .then(function () {
           var queries = [{
@@ -180,11 +203,12 @@ define([
             "tags"      : { "host" : "*" }
           }];
 
-          datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
+          var q = datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
             _.each(response, function (metric) {
-              $scope.hostsResource[metric.host]["cpu"] = metric.value;
+              $scope.hostsResource[metric.host]["cpu"] = $scope.percentFormatter(metric.value);
             });
           });
+          promiseList.push(q);
         })
         .then(function () {
           var queries = [{
@@ -194,11 +218,12 @@ define([
             "tags"      : { "host" : "*" }
           }];
 
-          datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
+          var q = datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
             _.each(response, function (metric) {
-              $scope.hostsResource[metric.host]["disk"] = metric.value;
+              $scope.hostsResource[metric.host]["disk"] = $scope.gbFormatter(metric.value);
             });
           });
+          promiseList.push(q);
         })
         .then(function () {
           var queries = [{
@@ -208,30 +233,41 @@ define([
             "tags"      : { "host" : "*" }
           }];
 
-          datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
+          var q = datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
             _.each(response, function (metric) {
-              $scope.hostsResource[metric.host]["mem"] = metric.value;
+              $scope.hostsResource[metric.host]["mem"] = $scope.gbFormatter(metric.value);
+            });
+          });
+          promiseList.push(q);
+        })
+        .finally(function () {
+          $q.all(promiseList).then(function () {
+            _.each(Object.keys($scope.hostsResource), function (host) {
+              // $scope.hostsResource[host]["body"] = {};
+              $scope.hostPanels.push($scope.hostsResource[host]);
             });
           });
         })
-        .finally(function () {
-          console.log("panel");
-          _.each(Object.keys($scope.hostsResource), function (host) {
-            $scope.hostsResource[host]["body"] = {};
-            $scope.hostPanels.push($scope.hostsResource[host]);
-            // if (typeof($scope.hostsResource[host]["status"]) == "number") {
-              
-            // }
-          });
-        })
+      };
+      
+      
+      // 智能分析预测 切换周期
+      $scope.changePre = function (selectedOption) {
+        var panels   = $scope._dashboard.rows[5].panels;
+        var selected = _.findIndex(panels[0].tips, { time: selectedOption.time });
+
+        _.each(panels, function (panel, index) {
+          panel.selectedOption = panel.tips[selected];
+        });
       };
 
-      // 智能分析预测
-      $scope.getPrediction = function () {
-        var panels = $scope._dashboard.rows[5].panels;
-        
-        _.each(panels, function (panel, index) {
-          panel.targets.tags = { "host" : "centos25" }
+      $scope.showPrediction = function (i, hostname) {
+        console.log(i, hostname);
+
+        // 智能分析预测
+        $scope.panels = $scope._dashboard.rows[5].panels;
+        _.each($scope.panels, function (panel, index) {
+          panel.targets.tags = { "host" : hostname }
           var params = {
             metric: contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + panel.targets[0].metric,
           };
@@ -248,10 +284,9 @@ define([
             for (var i in data) {
               var pre  = {
                 time: times[num],
-                data: index === 1 ? (data[i].toFixed(2) + '%') : ((data[i] / Math.pow(1024, 3)).toFixed(2) + 'GB')
+                data: index === 1 ? $scope.percentFormatter(data[i]) : $scope.gbFormatter(data[i])
               };
               panel.tips.push(pre);
-
               num++;
             }
 
@@ -260,22 +295,11 @@ define([
             panel.tip = '暂无预测数据';
           });
         });
-      };
-      
-      // 智能分析预测 切换周期
-      $scope.changePre = function (selectedOption) {
-        var panels   = $scope._dashboard.rows[5].panels;
-        var selected = _.findIndex(panels[0].tips, { time: selectedOption.time });
 
-        _.each(panels, function (panel, index) {
-          panel.selectedOption = panel.tips[selected];
-        });
-      };
-
-      $scope.showPrediction = function (i) {
-        console.log(i);
-        $scope.hostPanels.activePanel = i;
-
+        // topN
+        $scope.hostTopN = [];
+        var temp = {};
+        var promiseList = [];
         var panels = $scope._dashboard.rows[6].panels;
         _.each(panels, function (panel, index) {
           var metric = panel.targets[0].metric;
@@ -283,18 +307,35 @@ define([
             "metric"    : contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + metric,
             "aggregator": "p99",
             "downsample": "1m-avg",
-            "tags"      : { "host": $scope.hostPanels[i].host, "pid_cmd": "*" }
+            "tags"      : { "host": hostname, "pid_cmd": "*" }
           }];
 
-          datasourceSrv.getHostResource(queries, 'now-5m').then(function (response) {
+          var q = datasourceSrv.getHostResource(queries, 'now-1h').then(function (response) {
             var topN = metric.slice(0, metric.indexOf("."));
-            $scope.hostPanels[i].body[topN] = response;
+            temp[topN] = (response);
+          }).finally(function () {
+            var d = $q.defer();
+            d.resolve();
+            return d.promise;
           });
+          promiseList.push(q);
         });
-      }
+        $q.all(promiseList).then(function (rr) {
+          var tt = {};
+          temp = temp.cpu.concat(temp.mem);
 
-      $scope.test = function () {
-        $scope._dashboard.rows[3].panels[0].allServices[0].hosts = $scope.hostPanels[7];
+          _.each(temp, function (v) {
+            if (!tt[v.tags.pid_cmd]) { tt[v.tags.pid_cmd] = {}; }
+            tt[v.tags.pid_cmd]["pid"] = "HOST: " + v.tags.host + "&nbsp;&nbsp;&nbsp;&nbsp;PID: " + v.tags.pid_cmd;
+            tt[v.tags.pid_cmd]["host"] = v.tags.host;
+            /cpu/.test(v.name) && (tt[v.tags.pid_cmd]["cpu"] = $scope.percentFormatter(v.value));
+            /mem/.test(v.name) && (tt[v.tags.pid_cmd]["mem"] = $scope.percentFormatter(v.value));
+          });
+          _.each(Object.keys(tt), function (v) {
+            $scope.hostTopN.push(tt[v]);
+          });
+          $scope.$broadcast('toggle-panel');
+        });
       }
 
       $scope.init();

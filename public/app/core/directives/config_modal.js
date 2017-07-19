@@ -6,7 +6,7 @@ define([
 function (_, $, coreModule) {
   'use strict';
 
-  coreModule.directive('configModal', function($modal, $q, $timeout) {
+  coreModule.directive('configModal', function($_modal, $q, $timeout) {
     return {
       restrict: 'A',
       link: function(scope, elem, attrs) {
@@ -20,7 +20,7 @@ function (_, $, coreModule) {
             return;
           }
 
-          var panelModal = $modal({
+          var panelModal = $_modal({
             template: partial,
             persist: false,
             show: false,

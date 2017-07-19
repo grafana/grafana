@@ -14,7 +14,7 @@ angular.module('$strap', [
   '$strap.config'
 ]);
 'use strict';
-angular.module('$strap.directives').factory('$modal', [
+angular.module('$strap.directives').factory('$_modal', [
   '$rootScope',
   '$compile',
   '$http',
@@ -38,7 +38,7 @@ angular.module('$strap.directives').factory('$modal', [
           $timeout(function () {
             $compile($modal)(scope);
           });
-          scope.$modal = function (name) {
+          scope.$_modal = function (name) {
             $modal.modal(name);
           };
           angular.forEach([
@@ -80,7 +80,7 @@ angular.module('$strap.directives').factory('$modal', [
   }
 ])
 'use strict';
-angular.module('$strap.directives').directive('bsTabs', [
+angular.module('$strap.directives').directive('bsTabsOld', [
   '$parse',
   '$compile',
   '$timeout',
@@ -96,7 +96,7 @@ angular.module('$strap.directives').directive('bsTabs', [
       transclude: true,
       compile: function compile(tElement, tAttrs, transclude) {
         return function postLink(scope, iElement, iAttrs, controller) {
-          var getter = $parse(iAttrs.bsTabs), setter = getter.assign, value = getter(scope);
+          var getter = $parse(iAttrs.bsTabsOld), setter = getter.assign, value = getter(scope);
           scope.panes = [];
           var $tabs = iElement.find('ul.nav-tabs');
           var $panes = iElement.find('div.tab-content');
@@ -150,7 +150,7 @@ angular.module('$strap.directives').directive('bsTabs', [
   }
 ]);
 'use strict';
-angular.module('$strap.directives').directive('bsTooltip', [
+angular.module('$strap.directives').directive('bsTooltipOld', [
   '$parse',
   '$compile',
   function ($parse, $compile) {
@@ -158,8 +158,8 @@ angular.module('$strap.directives').directive('bsTooltip', [
       restrict: 'A',
       scope: true,
       link: function postLink(scope, element, attrs, ctrl) {
-        var getter = $parse(attrs.bsTooltip), setter = getter.assign, value = getter(scope);
-        scope.$watch(attrs.bsTooltip, function (newValue, oldValue) {
+        var getter = $parse(attrs.bsTooltipOld), setter = getter.assign, value = getter(scope);
+        scope.$watch(attrs.bsTooltipOld, function (newValue, oldValue) {
           if (newValue !== oldValue) {
             value = newValue;
           }
@@ -203,15 +203,15 @@ angular.module('$strap.directives').directive('bsTooltip', [
   }
 ]);
 'use strict';
-angular.module('$strap.directives').directive('bsTypeahead', [
+angular.module('$strap.directives').directive('bsTypeaheadOld', [
   '$parse',
   function ($parse) {
     return {
       restrict: 'A',
       require: '?ngModel',
       link: function postLink(scope, element, attrs, controller) {
-        var getter = $parse(attrs.bsTypeahead), setter = getter.assign, value = getter(scope);
-        scope.$watch(attrs.bsTypeahead, function (newValue, oldValue) {
+        var getter = $parse(attrs.bsTypeaheadOld), setter = getter.assign, value = getter(scope);
+        scope.$watch(attrs.bsTypeaheadOld, function (newValue, oldValue) {
           if (newValue !== oldValue) {
             value = newValue;
           }
@@ -260,7 +260,7 @@ angular.module('$strap.directives').directive('bsTypeahead', [
   }
 ]);
 'use strict';
-angular.module('$strap.directives').directive('bsPopover', [
+angular.module('$strap.directives').directive('bsPopoverOld', [
   '$parse',
   '$compile',
   '$http',
@@ -279,8 +279,8 @@ angular.module('$strap.directives').directive('bsPopover', [
       restrict: 'A',
       scope: true,
       link: function postLink(scope, element, attr, ctrl) {
-        console.log(element, $parse(attr.bsPopover), $parse("popover"));
-        var getter = $parse(attr.bsPopover), setter = getter.assign, value = getter(scope), options = {};
+        console.log(element, $parse(attr.bsPopoverOld), $parse("popover"));
+        var getter = $parse(attr.bsPopoverOld), setter = getter.assign, value = getter(scope), options = {};
         if (angular.isObject(value)) {
           options = value;
         }

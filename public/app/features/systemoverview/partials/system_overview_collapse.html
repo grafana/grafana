@@ -1,23 +1,13 @@
-<div class="panel-group" ng-model="hostPanels.activePanel" role="tablist" aria-multiselectable="true" bs-collapse>
-  <div class="panel panel-default" ng-repeat="host in hostPanels">
-    <div class="panel-heading" role="tab">
-      <h4 class="panel-title">
-        <!--<a bs-collapse-toggle>
-          {{ host.title }}
-        </a>-->
-        <tr bs-collapse-toggle>
-          <td>{{ host.name }}</td>
-          <td>{{ host.status }}</td>
-          <td>{{ host.cpu }}</td>
-          <td>{{ host.mem }}</td>
-          <td>{{ host.disk }}</td>
-        </tr>
-      </h4>
-    </div>
-    <div class="panel-collapse" role="tabpanel" bs-collapse-target>
-      <div class="panel-body">
-        {{ host.body }}
-      </div>
-    </div>
-  </div>
-</div>
+
+<!--<panel-loader type="panel.type" class="panel-margin overview-panel"></panel-loader>-->
+
+<table class="table" id="pidTable" data-sort-name="pid" data-sort-order="desc">
+  <thead>
+    <tr>
+      <th data-field="pid" data-sortable="true">进程</th>
+      <th data-field="status">状态</th>
+      <th data-field="cpu" data-sortable="true">CPU</th>
+      <th data-field="mem">MEM</th>
+    </tr>
+  </thead>
+</table>

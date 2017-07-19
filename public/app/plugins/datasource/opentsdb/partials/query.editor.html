@@ -42,7 +42,7 @@
 		</li>
 		<li>
 			<input type="text" class="input-large tight-form-input" ng-model="target.metric"
-			spellcheck='false' placeholder="metric name" data-min-length=0 data-items=100
+			spellcheck='false' bs-typeahead-old="suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100
 			ng-blur="targetBlur()">
 			</input>
 			<a bs-tooltip="target.errors.metric" style="color: rgb(229, 189, 28)" ng-show="target.errors.metric">
@@ -135,11 +135,11 @@
 
 		<li ng-show="addTagMode">
 			<input type="text" class="input-small tight-form-input" spellcheck='false'
-			 data-min-length=0 data-items=100
+			 bs-typeahead-old="suggestMetrics" data-min-length=0 data-items=100
 			ng-model="target.currentTagKey" placeholder="key"></input>
 
 			<input type="text" class="input-small tight-form-input"
-			spellcheck='false' 
+			spellcheck='false' bs-typeahead-old="suggestMetrics" 
 			data-min-length=0 data-items=100 ng-model="target.currentTagValue" placeholder="value">
 			</input>
 			<a ng-click="addTag()">

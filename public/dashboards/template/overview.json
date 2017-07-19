@@ -536,6 +536,7 @@
               "value": "current"
             }
           ],
+          "height": "160px",
           "datasource": null,
           "editable": true,
           "error": false,
@@ -549,7 +550,7 @@
           },
           "hideTimeOverride": true,
           "id": "01",
-          "legend": false,
+          "legend": true,
           "lines": true,
           "linewidth": 2,
           "nullPointMode": "connected",
@@ -630,8 +631,8 @@
           "transform": "timeseries_aggregations",
           "transparent": true,
           "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
+          "x-axis": false,
+          "y-axis": false,
           "y_formats": [
             "short",
             "short"
@@ -649,6 +650,7 @@
               "value": "current"
             }
           ],
+          "height": "160px",
           "datasource": null,
           "editable": true,
           "error": false,
@@ -663,7 +665,7 @@
           "hideTimeOverride": true,
           "id": "02",
           "legend": {
-            "show": false
+            "show": true
           },
           "lines": true,
           "linewidth": 2,
@@ -745,8 +747,8 @@
           "transform": "timeseries_aggregations",
           "transparent": true,
           "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
+          "x-axis": false,
+          "y-axis": false,
           "y_formats": [
             "short",
             "short"
@@ -764,6 +766,7 @@
               "value": "current"
             }
           ],
+          "height": "160px",
           "datasource": null,
           "editable": true,
           "error": false,
@@ -778,7 +781,7 @@
           "hideTimeOverride": true,
           "id": "03",
           "legend": {
-            "show": false
+            "show": true
           },
           "lines": true,
           "linewidth": 2,
@@ -860,8 +863,8 @@
           "transform": "timeseries_aggregations",
           "transparent": true,
           "type": "graph",
-          "x-axis": true,
-          "y-axis": true,
+          "x-axis": false,
+          "y-axis": false,
           "y_formats": [
             "short",
             "short"

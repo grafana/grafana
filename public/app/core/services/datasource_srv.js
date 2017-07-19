@@ -130,7 +130,7 @@ function (angular, _, coreModule, config, dateMath) {
             value = metricData.dps[time];
             // if (typeof(value) != "number") { throw Error; }
           }
-          result.push({ name: service, value: value, host: host, time: time });
+          result.push({ name: service, value: value, host: host, time: time, tags: metricData.tags });
         });
         return result;
       });
