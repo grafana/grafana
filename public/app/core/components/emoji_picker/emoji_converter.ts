@@ -15,7 +15,8 @@ const DEFAULT_EMOJI_CLASS = 'emoji gf-event-icon';
  * @param className class (or classes) attribute for each generated image.
  */
 export function buildEmojiElem(codepoint, className = DEFAULT_EMOJI_CLASS) {
-  let utfCode;
+  let utfCode,
+      emoji;
 
   // handle double-sized codepoints like 1f1f7-1f1fa
   if (codepoint.indexOf(CP_SEPARATOR) !== -1) {
@@ -25,13 +26,18 @@ export function buildEmojiElem(codepoint, className = DEFAULT_EMOJI_CLASS) {
     utfCode = twemoji.convert.fromCodePoint(codepoint);
   }
 
-  let emoji = twemoji.parse(utfCode, {
-    base: TWEMOJI_BASE,
-    folder: 'svg',
-    ext: '.svg',
-    attributes: attributesCallback,
-    className: className
-  });
+  try {
+    emoji = twemoji.parse(utfCode, {
+      base: TWEMOJI_BASE,
+      folder: 'svg',
+      ext: '.svg',
+      attributes: attributesCallback,
+      className: className
+    });
+  } catch (error) {
+    console.log(`Error while converting code point '${codepoint}' to emoji`);
+    return;
+  }
 
   return emoji;
 }
