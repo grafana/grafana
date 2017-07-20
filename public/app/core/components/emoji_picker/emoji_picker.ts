@@ -9,27 +9,33 @@ import emojiDef from './emoji_def';
 
 const DEFAULT_ICON = '1f494'; // Broken heart
 const TWEMOJI_BASE = '/public/vendor/npm/twemoji/2/';
-const CP_SEPARATOR = emojiDef.CP_SEPARATOR;
+const CP_SEPARATOR = emojiDef.CP_SEPARATOR; // Separator for double-sized codepoints like 1f1f7-1f1fa
 
-let buttonTemplate = `
-<span class="gf-form-input width-3">
-  <a class="pointer gf-icon-picker-button" ng-click="ctrl.openEmojiPicker($event)">
-    <i class="gf-event-icon fa fa-smile-o"></i>
-  </a>
-</span>
-`;
+/*
+ * gfEmojiPicker directive
+ * Additional directive for gfIconPicker. Provides emoji picker with filter by description.
+ * Takes emoji from definition object:
+ *   [
+ *     {'name': 'smile', 'codepoint': '1f604', 'category': 'people'},
+ *     ...
+ *   ]
+ * Uses twemoji (Twitter Emoji) library for converting Unicode emoji into SVG image.
+ *
+ * Example:
+ * <gf-emoji-picker></gf-emoji-picker>
+ */
 
 let pickerTemplate = `
-<div class="gf-icon-picker">
-  <div class="gf-form icon-filter">
-    <input type="text"
-      ng-model="iconFilter" ng-change="filterIcon()"
-      class="gf-form-input max-width-20" placeholder="Find icon by name">
+  <div class="gf-icon-picker">
+    <div class="gf-form icon-filter">
+      <input type="text" class="gf-form-input max-width-20" placeholder="Find icon by name"
+        ng-model="iconFilter" ng-change="filterIcon()">
+    </div>
+    <ul class="nav nav-tabs" id="emojinav"></ul>
+    <div class="icon-container">
+      <div id="emoji-find-container"></div>
+    </div>
   </div>
-  <ul class="nav nav-tabs" id="emojinav">
-  </ul>
-  <div class="icon-container"></div>
-</div>
 `;
 
 let codePoints = emojiDef.codePoints;
@@ -38,26 +44,6 @@ let emojiDefs = emojiDef.emojiDef;
 // Pre-build emoji images elements, grouped by categories.
 // Building thousands of elements takes a time, so better to do it one time at application start.
 let buildedImagesCategories = buildEmojiByCategories(emojiDefs);
-
-function buildEmojiByCategories(emojiDefs) {
-  let builded = {};
-
-  _.each(emojiDef.categories, category => {
-    builded[category] = [];
-  });
-
-  let emojiElem;
-  _.each(emojiDefs, emoji => {
-    try {
-      emojiElem = buildEmoji(emoji.codepoint);
-    } catch (error) {
-      console.log(`Error while converting code point ${emoji.codepoint} ${emoji.name}`);
-    }
-    builded[emoji.category].push(emojiElem);
-  });
-
-  return builded;
-}
 
 coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
   function link(scope, elem, attrs) {
@@ -68,13 +54,14 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
     scope.icons = [];
 
     addCategories(elem);
-    addIcons(elem);
+    fillIcons(elem);
 
-    // Convert pre-built image elements into DOM element and push it into popover
-    function addIcons(elem) {
+    // Convert pre-built image elements into DOM elements and push it into popover
+    function fillIcons(elem) {
       let container = elem.find(".icon-container");
       _.each(buildedImagesCategories, (categoryElements, category) => {
         let categoryContainer = container.find(`#${category}`);
+
         _.each(categoryElements, (emojiElem, index) => {
           // When text elem converted into DOM, image is loading. To avoid double compilation and image loading,
           // replace text elem in buildedImagesCategories by real DOM elem after compilation.
@@ -82,18 +69,21 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
             emojiElem = $(emojiElem);
             buildedImagesCategories[category][index] = emojiElem;
           }
+
+          emojiElem.on('click', onEmojiSelect);
           categoryContainer.append(emojiElem);
           scope.icons.push(emojiElem);
         });
       });
-      container.find('.gf-event-icon').on('click', onEmojiSelect);
     }
 
-    // Insert <div> container for each emoji category
+    // Insert <div> container and nav tab for each emoji category
     function addCategories(elem) {
       let container = elem.find(".icon-container");
       let emojinav = elem.find("#emojinav");
+
       _.each(emojiDef.categories, category => {
+        // Add tab to nav for each category
         let emoji_tab = emojinav.append($(`
           <li class="gf-tabs-item-emoji">
             <a href="#${category }" data-toggle="tab">${category}</a>
@@ -109,12 +99,11 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
       });
       emojinav.find('li:first').addClass('active');
 
-      // switch category
+      // switch category by click on tab
       emojinav.on('show', e => {
         scope.$apply(() => {
           // use href attr (#name => name)
-          scope.prevCategory = scope.currentCategory;
-          scope.currentCategory = e.target.hash.slice(1);
+          setCategory(e.target.hash.slice(1));
         });
       });
     }
@@ -126,9 +115,10 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
 
     function filterIcon() {
       let container = elem.find(".icon-container");
+      let findContainer = container.find('#emoji-find-container');
       if (scope.iconFilter.length === 0) {
-        container.find('#founded-emoji').remove();
-        scope.currentCategory = scope.prevCategory;
+        restoreCategory();
+        findContainer.empty();
         return;
       } else {
         let icons = _.filter(scope.icons, icon => {
@@ -140,23 +130,25 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
           }
         });
 
-        if (scope.currentCategory) {
-          scope.prevCategory = scope.currentCategory;
-        }
-        scope.currentCategory = null;
-
-        let findContainerElm = $('<div id="founded-emoji"></div>');
-        let findContainer = container.find('#founded-emoji');
-        if (findContainer.length === 0) {
-          container.append(findContainerElm);
-          findContainer = findContainerElm;
-        }
+        setCategory(null);
         findContainer.empty();
-        // clone elements to prevent moving and erasing then
+        // clone elements to prevent them from moving and erasing.
         icons = _.map(icons, icon => icon.clone());
         findContainer.append(icons);
+        // Attach event handlers to cloned elements
         findContainer.find('.gf-event-icon').on('click', onEmojiSelect);
       }
+    }
+
+    function setCategory(category) {
+      if (category !== scope.currentCategory) {
+        scope.prevCategory = scope.currentCategory;
+        scope.currentCategory = category;
+      }
+    }
+
+    function restoreCategory() {
+      scope.currentCategory = scope.prevCategory;
     }
   }
 
@@ -167,15 +159,30 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
   };
 });
 
-function attributesCallback(rawText, iconId) {
-  let codepoint = twemoji.convert.toCodePoint(rawText);
-  return {
-    title: emojiDef.emojiMap[codepoint],
-    codepoint: codepoint
-  };
+// Convert all given emojis into HTML elements and group it by categories
+function buildEmojiByCategories(emojiDefs) {
+  let builded = {};
+
+  _.each(emojiDef.categories, category => {
+    builded[category] = [];
+  });
+
+  let emojiElem;
+  _.each(emojiDefs, emoji => {
+    try {
+      emojiElem = buildEmojiElem(emoji.codepoint);
+    } catch (error) {
+      console.log(`Error while converting code point ${emoji.codepoint} ${emoji.name}`);
+    }
+    builded[emoji.category].push(emojiElem);
+  });
+
+  return builded;
 }
 
-function buildEmoji(codepoint) {
+// Convert code point into HTML element
+// 1f1f7 => <img src=".../1f1f7.svg" ...>
+function buildEmojiElem(codepoint) {
   let utfCode;
 
   // handle double-sized codepoints like 1f1f7-1f1fa
@@ -196,6 +203,32 @@ function buildEmoji(codepoint) {
 
   return emoji;
 }
+
+// Build attrs for emoji HTML element
+function attributesCallback(rawText, iconId) {
+  let codepoint = twemoji.convert.toCodePoint(rawText);
+  return {
+    title: emojiDef.emojiMap[codepoint],
+    codepoint: codepoint
+  };
+}
+
+/*
+ * gfIconPicker directive
+ * Opens emoji picker by click on icon.
+ * icon: HEX code point of emoji
+ *
+ * Example:
+ * <gf-icon-picker icon="1f494"></gf-icon-picker>
+ */
+
+let buttonTemplate = `
+  <span class="gf-form-input width-3">
+    <a class="pointer gf-icon-picker-button" ng-click="ctrl.openEmojiPicker($event)">
+      <i class="gf-event-icon fa fa-smile-o"></i>
+    </a>
+  </span>
+`;
 
 export class IconPickerCtrl {
   iconDrop: any;
@@ -248,7 +281,7 @@ export class IconPickerCtrl {
       this.$scope.$apply(() => {
         this.$scope.ctrl.icon = codepoint;
 
-        let emoji = buildEmoji(codepoint);
+        let emoji = buildEmojiElem(codepoint);
         el.replaceWith(emoji);
 
         this.iconDrop.close();
@@ -279,7 +312,7 @@ export function iconPicker() {
     },
     link: function (scope, elem, attrs)  {
       let codepoint = scope.ctrl.icon || DEFAULT_ICON;
-      let emoji = buildEmoji(codepoint);
+      let emoji = buildEmojiElem(codepoint);
       elem.find('.gf-event-icon').replaceWith(emoji);
     }
   };
