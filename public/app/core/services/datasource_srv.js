@@ -116,6 +116,26 @@ function (angular, _, coreModule, config, dateMath) {
       });
     }
 
+    this.getHostResource = function (query, startTime, endTime) {
+      return this.getStatus(query, startTime, endTime).then(function (response) {
+        var service = _.getMetricName(query[0].metric);
+        var value = null;
+        var host = null;
+        var time = null;
+        var result = [];
+        _.each(response, function (metricData) {
+          host = metricData.tags.host;
+          if (_.isObject(metricData)) {
+            time = _.last(Object.keys(metricData.dps));
+            value = metricData.dps[time];
+            // if (typeof(value) != "number") { throw Error; }
+          }
+          result.push({ name: service, value: value, host: host, time: time, tags: metricData.tags });
+        });
+        return result;
+      });
+    }
+
     this.init();
   });
 });

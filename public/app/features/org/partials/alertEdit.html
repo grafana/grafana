@@ -107,7 +107,7 @@
                     ng-blur="refreshPreview();checkForm();"
                     ng-model='alertDef.alertDetails.hostQuery.metricQueries[0].metric'
                     spellcheck='false'
-                    bs-typeahead="suggestMetrics"
+                    bs-typeahead-old="suggestMetrics"
                     placeholder="metric name" required />
             </li>
             <li class="tidy-form-item" style="margin:0 20px;">
@@ -218,11 +218,11 @@
 
             <li ng-show="addTagMode">
               <input type="text" class="input-small tidy-form-input" spellcheck='false'
-              bs-typeahead="suggestTagKeys" data-min-length=0 data-items=100
+              bs-typeahead-old="suggestTagKeys" data-min-length=0 data-items=100
               ng-model="target.currentTagKey" placeholder="key"></input>
 
               <input type="text" class="input-small tidy-form-input"
-              spellcheck='false' bs-typeahead="suggestTagValues"
+              spellcheck='false' bs-typeahead-old="suggestTagValues"
               data-min-length=0 data-items=100 ng-model="target.currentTagValue" placeholder="value">
               </input>
               <a ng-click="addTag()">

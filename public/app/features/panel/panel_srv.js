@@ -190,7 +190,7 @@ function (angular, _, config) {
 
       // Post init phase
       $scope.fullscreen = false;
-      $scope.editor = { index: 1 };
+      $scope.editor = { index: "指标" };
 
       $scope.dashboardViewState.registerPanel($scope);
       $scope.datasources = datasourceSrv.getMetricSources();
@@ -216,6 +216,7 @@ function (angular, _, config) {
           $scope.appEvent('alert-warning', ['日志分析跳转失败', '可能缺少指标名']);
         }
       };
+
     };
   });
 

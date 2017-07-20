@@ -4,14 +4,15 @@
 		设置
 	</div>
 
-	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-		<div ng-repeat="tab in ['概要', '行设置', '链接', '时间选择']" data-title="{{tab}}">
-		</div>
-	</div>
-
 	<button class="gf-box-header-close-btn" ng-click="dismiss();">
 		<i class="fa fa-remove"></i>
 	</button>
+
+	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
+		<div ng-repeat="tab in ['概要', '行设置', '链接', '时间选择']" data-title="{{tab}}" bs-pane>
+		</div>
+	</div>
+	
 </div>
 
 <div class="gf-box-body" style="padding-bottom: 50px;">

@@ -13,6 +13,8 @@ require.config({
     'angular-sanitize':       'vendor/angular-sanitize/angular-sanitize',
     'angular-dragdrop':       'vendor/angular-native-dragdrop/draganddrop',
     'angular-strap':          'vendor/angular-other/angular-strap',
+    'angular-strap.tpl':      'vendor/angular-other/angular-strap.tpl',
+    'angular-strap-old':      'vendor/angular-other/angular-strap-old',
     'angular-ui':             'vendor/angular-ui/ui-bootstrap-tpls',
     timepicker:               'vendor/angular-other/timepicker',
     datepicker:               'vendor/angular-other/datepicker',
@@ -42,6 +44,7 @@ require.config({
     'fullcalendar':           'vendor/fullcalendar/dist/fullcalendar.min',
     'ui.calendar':            'vendor/angular-ui-calendar/src/calendar',
     'zh-cn':                  'vendor/fullcalendar/dist/zh-cn',
+    'bootstrap-table':        'vendor/angular-other/bootstrap-table'
   },
 
   shim: {
@@ -89,7 +92,10 @@ require.config({
     'angular-ui':           ['angular'],
     'angular-route':        ['angular'],
     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
+    'angular-strap.tpl':    ['angular-strap'],
+    'angular-strap-old':    ['angular', 'bootstrap','timepicker', 'datepicker'],
     'bindonce':             ['angular'],
+    'bootstrap-table':      ['jquery', 'bootstrap'],
 
     timepicker:             ['jquery', 'bootstrap'],
     datepicker:             ['jquery', 'bootstrap'],

@@ -26,7 +26,7 @@
 
 					<li class="tight-form-item" ng-show="link.type === 'dashboard'" style="width: 35px;">仪表盘</li>
 					<li ng-show="link.type === 'dashboard'">
-						<input type="text" ng-model="link.dashboard" bs-typeahead="searchDashboards" class="input-large tight-form-input" ng-blur="dashboardChanged(link)">
+						<input type="text" ng-model="link.dashboard" bs-typeahead-old="searchDashboards" class="input-large tight-form-input" ng-blur="dashboardChanged(link)">
 					</li>
 
 					<li class="tight-form-item" ng-show="link.type === 'absolute'" style="width: 35px;">Url</li>

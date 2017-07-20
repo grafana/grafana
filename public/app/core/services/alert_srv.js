@@ -6,7 +6,7 @@ define([
 function (angular, _, coreModule) {
   'use strict';
 
-  coreModule.service('alertSrv', function($timeout, $sce, $rootScope, $modal, $q) {
+  coreModule.service('alertSrv', function($timeout, $sce, $rootScope, $_modal, $q) {
     var self = this;
 
     this.init = function() {
@@ -67,7 +67,7 @@ function (angular, _, coreModule) {
       scope.yesText = payload.yesText || "Yes";
       scope.noText = payload.noText || "Cancel";
 
-      var confirmModal = $modal({
+      var confirmModal = $_modal({
         template: './app/partials/confirm_modal.html',
         persist: false,
         modalClass: 'modal-no-header confirm-modal '+payload.modalClass,
