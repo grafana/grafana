@@ -84,9 +84,10 @@ coreModule.directive('gfEmojiPicker', function ($timeout, $compile) {
 
       _.each(emojiDef.categories, category => {
         // Add tab to nav for each category
+        let categoryTabName = _.capitalize(category);
         let emoji_tab = emojinav.append($(`
           <li class="gf-tabs-item-emoji">
-            <a href="#${category }" data-toggle="tab">${category}</a>
+            <a href="#${category}" data-toggle="tab">${categoryTabName}</a>
           </li>`
         ));
 
