@@ -194,7 +194,6 @@ define([
 
           var q = datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
             _.each(response, function (metric) {
-              console.log($scope.percentFormatter(metric.value) ? 1 : 0);
               $scope.hostsResource[metric.host]["cpu"] = $scope.percentFormatter(metric.value);
             });
           });
@@ -271,7 +270,7 @@ define([
                 time: times[num],
                 data: index === 1 ? $scope.percentFormatter(data[i]) : $scope.gbFormatter(data[i])
               };
-              panel.tips.push(pre);
+              panel.tips[num] = pre;
               num++;
             }
 

@@ -57,6 +57,9 @@
 					<li>
 						<select class="input-small tight-form-input" ng-model="panel.fontSize" ng-options="f for f in fontSizes" ng-change="render()"></select>
 					</li>
+					<li class="tight-form-item">
+						<editor-checkbox text="固定行高" model="panel.rowHeight" change="render()"></editor-checkbox>
+					</li>
 				</ul>
 				<div class="clearfix"></div>
 			</div>

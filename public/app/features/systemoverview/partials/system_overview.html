@@ -23,7 +23,7 @@
                             drag="panel.id" ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
                             <div class="health-panel">
                                 <div data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_overview_modal.html" style="cursor: pointer;">
-                                    <em>{{applicationHealth}}</em>
+                                    <em bs-tooltip="'点击查看历史指数'">{{applicationHealth}}</em>
                                     <span>{{leveal}}</span>
                                 </div>
                                 <div class="progress progress-striped">
@@ -40,7 +40,9 @@
                         <div ng-repeat="(name, panel) in row.panels" class="panel" ui-draggable="!dashboardViewState.fullscreen"
                             drag="panel.id" ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
                             <ul class="btn-list-status clearfix" ng-if="panel.status">
-                                <li class="btn-item" style="width:70px; cursor:pointer;" data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_overview_modal.html">报警情况:</li>
+                                <li class="btn-item" style="width:70px; cursor:pointer;" data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_overview_modal.html">
+                                    <strong bs-tooltip="'点击查看历史情况'">报警情况:</strong>
+                                </li>
                                 <li ng-if="panel.status.danger[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-danger">{{panel.status.danger[0]}} <span>{{panel.status.danger[1]}}</span></a></li>
                                 <li ng-if="panel.status.warn[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-warning">{{panel.status.warn[0]}} <span>{{panel.status.warn[1]}}</span></a></li>
                                 <li ng-if="panel.status.success[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-success">{{panel.status.success[0]}} <span>{{panel.status.success[1]}}</span></a></li>
@@ -53,7 +55,9 @@
                         <div ng-repeat="(name, panel) in row.panels" class="panel" ui-draggable="!dashboardViewState.fullscreen"
                             drag="panel.id" ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
                             <ul class="btn-list-status clearfix" ng-if="panel.status">
-                                <li class="btn-item" style="width:70px; cursor:pointer;"  data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_overview_modal.html">智能检测异常指标:</li>
+                                <li class="btn-item" style="width:70px; cursor:pointer;"  data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_overview_modal.html">
+                                    <strong bs-tooltip="'点击查看历史情况'">智能检测异常指标:</strong>
+                                </li>
                                 <li ng-if="panel.status.danger[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-danger">{{panel.status.danger[0]}} <span>{{panel.status.danger[1]}}</span></a></li>
                                 <li ng-if="panel.status.warn[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-warning">{{panel.status.warn[0]}} <span>{{panel.status.warn[1]}}</span></a></li>
                                 <li ng-if="panel.status.success[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-success">{{panel.status.success[0]}} <span>{{panel.status.success[1]}}</span></a></li>
@@ -90,7 +94,8 @@
                             <tbody>
                                 <tr ng-repeat="host in hostPanels | filter : filterNotNumber" ng-click="showPrediction($index, host.host)">
                                     <td>{{ host.host }}</td>
-                                    <td>{{ host.status }}</td>
+                                    <td ng-if="host.status == 0">正常</td>
+                                    <td ng-if="host.status > 0">异常</td>
                                     <td>{{ host.cpu }}</td>
                                     <td>{{ host.mem }}</td>
                                     <td>{{ host.disk }}</td>

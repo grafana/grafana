@@ -18,7 +18,7 @@ define([
                           '</p>' +
                           '<panel-loader type="panel.type" class="panel-margin overview-panel"></panel-loader>' +
                           '</div>';
-      var topNTpl = '<table class="table table-no-bordered" id="pidTable" data-sort-name="mem" data-sort-order="desc" data-pagination="true" data-row-style="rowStyle">'+
+      var topNTpl = '<table class="table table-no-bordered" id="pidTable" data-sort-name="mem" data-sort-order="desc" data-pagination="true" data-row-style="rowStyle" data-undefined-text="Not TopN">'+
                     '<thead><tr><th data-field="pid" data-sortable="true">TopN 进程</th><th data-field="cpu" data-sortable="true">CPU</th><th data-field="mem" data-sortable="true">MEM</th></tr></thead>'+
                     '</table>';
       var template = predictionTpl + topNTpl;
