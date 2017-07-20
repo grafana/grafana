@@ -1,0 +1,9 @@
+<div class="popover" tabindex="-1">
+  <div class="arrow"></div>
+  <h3 class="popover-title">该服务在所有机器上状态：</h3>
+  <div class="popover-content">
+    <ul>
+      <li ng-repeat="host in service.hosts">{{ host.name }} : {{ host.state }}</li>
+    </ul>
+  </div>
+</div>

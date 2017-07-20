@@ -87,6 +87,7 @@ export class TablePanelEditorCtrl {
         valueMaps: [
           { value: '', op: '=', text: '' }
         ],
+        rowHeight: ''
       };
 
       $scope.panel.styles.push(angular.copy(columnStyleDefaults));

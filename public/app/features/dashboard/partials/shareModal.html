@@ -5,14 +5,15 @@
 			{{modalTitle}}
 		</div>
 
-		<div ng-model="editor.index" bs-tabs>
-			<div ng-repeat="tab in tabs" data-title="{{tab.title}}">
-			</div>
-		</div>
-
 		<button class="gf-box-header-close-btn" ng-click="dismiss();">
 			<i class="fa fa-remove"></i>
 		</button>
+
+		<div ng-model="editor.index" bs-tabs>
+			<div ng-repeat="tab in tabs" data-title="{{tab.title}}" bs-pane>
+			</div>
+		</div>
+
 	</div>
 
 	<div class="gf-box-body" ng-repeat="tab in tabs" ng-if="editor.index == $index">

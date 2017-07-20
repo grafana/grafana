@@ -4,9 +4,13 @@ define([
   'lodash',
   'require',
   'bootstrap',
+  'bootstrap-table',
   'angular-route',
   'angular-sanitize',
   'angular-strap',
+  'angular-strap.tpl',
+  // 兼容
+  'angular-strap-old',
   'angular-dragdrop',
   'angular-ui',
   'bindonce',
@@ -18,7 +22,6 @@ define([
 function (angular, $, _, appLevelRequire) {
   "use strict";
 
-  // 'ngMaterial', 'md.data.table'
   var app = angular.module('grafana', ['mgcrea.ngStrap', '$jsPlumb']);
   var register_fns = {};
   var preBootModules = [];

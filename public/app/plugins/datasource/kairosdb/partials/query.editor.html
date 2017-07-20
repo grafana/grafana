@@ -38,7 +38,7 @@
 			<input type="text" class="input-large tight-form-input"
 			ng-model="target.metric"
 			spellcheck="false"
-			bs-typeahead="suggestMetrics"
+			bs-typeahead-old="suggestMetrics"
 			placeholder="metric name"
 			data-min-length=0 data-items=100
 			ng-blur="targetBlur()">
@@ -87,7 +87,7 @@
 			<input type="text"
 			class="input-small tight-form-input"
 			spellcheck='false'
-			bs-typeahead="suggestTagKeys"
+			bs-typeahead-old="suggestTagKeys"
 			ng-change="validateFilterTag()"
 			data-min-length=0 data-items=100
 			ng-model="target.currentTagKey"
@@ -97,7 +97,7 @@
 			<input type="text"
 			class="input-small tight-form-input"
 			spellcheck='false'
-			bs-typeahead="suggestTagValues"
+			bs-typeahead-old="suggestTagValues"
 			ng-change="validateFilterTag()"
 			data-min-length=0 data-items=100
 			ng-model="target.currentTagValue"
@@ -162,7 +162,7 @@
 			<input type="text"
 			class="input-small tight-form-input"
 			spellcheck='false'
-			bs-typeahead="suggestTagKeys"
+			bs-typeahead-old="suggestTagKeys"
 			ng-change = "validateGroupBy()"
 			data-min-length=0 data-items=100
 			ng-model="target.groupBy.tagKey"

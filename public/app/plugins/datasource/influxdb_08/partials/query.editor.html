@@ -53,7 +53,7 @@
 			class="tight-form-input span8"
 			ng-model="target.series"
 			spellcheck='false'
-			bs-typeahead="listSeries"
+			bs-typeahead-old="listSeries"
 			match-all="true"
 			min-length="3"
 			placeholder="series name"
@@ -134,7 +134,7 @@
 
 		<li>
 			<input type="text" class="input-small tight-form-input" ng-model="target.groupby_field" bs-tooltip="'Add a group by column or leave blank'"
-			placeholder="column" spellcheck="false" bs-typeahead="listColumns" data-min-length=0 ng-blur="get_data()">
+			placeholder="column" spellcheck="false" bs-typeahead-old="listColumns" data-min-length=0 ng-blur="get_data()">
 		</li>
 
 		<li class="dropdown">

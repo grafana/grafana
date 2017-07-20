@@ -36,7 +36,7 @@ export class TablePanelCtrl {
           dateFormat: 'YYYY-MM-DD HH:mm:ss',
           valueMaps: [
             { value: '', op: '=', text: '' }
-          ],
+          ]
         },
         {
           unit: 'short',
@@ -48,12 +48,13 @@ export class TablePanelCtrl {
           thresholds: [],
           valueMaps: [
             { value: '', op: '=', text: '' }
-          ],
+          ]
         }
       ],
       columns: [],
       scroll: true,
       fontSize: '100%',
+      rowHeight: false,
       sort: {col: 0, desc: true},
     };
 

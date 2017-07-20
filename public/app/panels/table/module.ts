@@ -76,6 +76,7 @@ export function tablePanel() {
         var tbodyElem = elem.find('tbody');
         var footerElem = elem.find('.table-panel-footer');
 
+        panel.rowHeight && tbodyElem.addClass('fix-table-row-height');
         appendTableRows(tbodyElem);
 
         container.css({'font-size': panel.fontSize});
