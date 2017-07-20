@@ -309,8 +309,6 @@ define([
           var tt = {};
           temp = temp.cpu.concat(temp.mem);
 
-          console.log(temp)
-
           _.each(temp, function (v) {
             if (!tt[v.tags.pid_cmd]) { tt[v.tags.pid_cmd] = {}; }
             tt[v.tags.pid_cmd]["pid"] = "HOST: " + v.tags.host + "&nbsp;&nbsp;&nbsp;&nbsp;PID: " + v.tags.pid_cmd;
