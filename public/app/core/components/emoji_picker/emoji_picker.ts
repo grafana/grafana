@@ -6,12 +6,11 @@ import coreModule from 'app/core/core_module';
 import Drop from 'tether-drop';
 import twemoji from 'twemoji';
 import emojiDef from './emoji_def';
+import emojiConverter from './emoji_converter';
 
-const DEFAULT_ICON = '1f494'; // Broken heart
-const TWEMOJI_BASE = '/public/vendor/npm/twemoji/2/';
-const CP_SEPARATOR = emojiDef.CP_SEPARATOR; // Separator for double-sized codepoints like 1f1f7-1f1fa
+const DEFAULT_PICKER_ICON = '1f494'; // Broken heart
 
-/*
+/**
  * gfEmojiPicker directive
  * Additional directive for gfIconPicker. Provides emoji picker with filter by description.
  * Takes emoji from definition object:
@@ -171,7 +170,7 @@ function buildEmojiByCategories(emojiDefs) {
   let emojiElem;
   _.each(emojiDefs, emoji => {
     try {
-      emojiElem = buildEmojiElem(emoji.codepoint);
+      emojiElem = emojiConverter.buildEmojiElem(emoji.codepoint);
     } catch (error) {
       console.log(`Error while converting code point ${emoji.codepoint} ${emoji.name}`);
     }
@@ -181,40 +180,7 @@ function buildEmojiByCategories(emojiDefs) {
   return builded;
 }
 
-// Convert code point into HTML element
-// 1f1f7 => <img src=".../1f1f7.svg" ...>
-function buildEmojiElem(codepoint) {
-  let utfCode;
-
-  // handle double-sized codepoints like 1f1f7-1f1fa
-  if (codepoint.indexOf(CP_SEPARATOR) !== -1) {
-    let codepoints = codepoint.split(CP_SEPARATOR);
-    utfCode = _.map(codepoints, twemoji.convert.fromCodePoint).join('');
-  } else {
-    utfCode = twemoji.convert.fromCodePoint(codepoint);
-  }
-
-  let emoji = twemoji.parse(utfCode, {
-    base: TWEMOJI_BASE,
-    folder: 'svg',
-    ext: '.svg',
-    attributes: attributesCallback,
-    className: 'emoji gf-event-icon'
-  });
-
-  return emoji;
-}
-
-// Build attrs for emoji HTML element
-function attributesCallback(rawText, iconId) {
-  let codepoint = twemoji.convert.toCodePoint(rawText);
-  return {
-    title: emojiDef.emojiMap[codepoint],
-    codepoint: codepoint
-  };
-}
-
-/*
+/**
  * gfIconPicker directive
  * Opens emoji picker by click on icon.
  * icon: HEX code point of emoji
@@ -238,7 +204,7 @@ export class IconPickerCtrl {
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private $timeout, private $compile) {
-    this.icon = this.icon || DEFAULT_ICON;
+    this.icon = this.icon || DEFAULT_PICKER_ICON;
     this.iconDrop = null;
   }
 
@@ -282,7 +248,7 @@ export class IconPickerCtrl {
       this.$scope.$apply(() => {
         this.$scope.ctrl.icon = codepoint;
 
-        let emoji = buildEmojiElem(codepoint);
+        let emoji = emojiConverter.buildEmojiElem(codepoint);
         el.replaceWith(emoji);
 
         this.iconDrop.close();
@@ -312,8 +278,8 @@ export function iconPicker() {
       icon: "="
     },
     link: function (scope, elem, attrs)  {
-      let codepoint = scope.ctrl.icon || DEFAULT_ICON;
-      let emoji = buildEmojiElem(codepoint);
+      let codepoint = scope.ctrl.icon || DEFAULT_PICKER_ICON;
+      let emoji = emojiConverter.buildEmojiElem(codepoint);
       elem.find('.gf-event-icon').replaceWith(emoji);
     }
   };
