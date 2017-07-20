@@ -15,8 +15,6 @@ require.config({
     'angular-strap':          'vendor/angular-other/angular-strap',
     'angular-strap.tpl':      'vendor/angular-other/angular-strap.tpl',
     'angular-strap-old':      'vendor/angular-other/angular-strap-old',
-    // 'angular-animate':        'vendor/angular-other/angular-animate',
-    // 'angular-aria':           'vendor/angular-other/angular-aria',
     'angular-ui':             'vendor/angular-ui/ui-bootstrap-tpls',
     timepicker:               'vendor/angular-other/timepicker',
     datepicker:               'vendor/angular-other/datepicker',
@@ -96,8 +94,6 @@ require.config({
     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
     'angular-strap.tpl':    ['angular-strap'],
     'angular-strap-old':    ['angular', 'bootstrap','timepicker', 'datepicker'],
-    // 'angular-animate':      ['angular'],
-    // 'angular-aria':         ['angular'],
     'bindonce':             ['angular'],
     'bootstrap-table':      ['jquery', 'bootstrap'],
 

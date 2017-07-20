@@ -299,11 +299,6 @@ define([
         controller : 'CMDBSetupCtrl',
         resolve: loadCMDBBundle
       })
-      .when('/service_dep', {
-        templateUrl: 'app/features/service/partials/service_dep.html',
-        controller : 'ServiceDepCtrl',
-        reloadOnSearch: false,
-      })
       .otherwise({
         templateUrl: 'app/partials/error.html',
         controller: 'ErrorCtrl'
