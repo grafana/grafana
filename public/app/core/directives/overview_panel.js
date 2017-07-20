@@ -1,9 +1,7 @@
 define([
     'jquery',
     'lodash',
-    '../core_module',
-    'jquery.flot',
-    'jquery.flot.pie',
+    '../core_module'
   ],
   function ($, _, coreModule) {
     'use strict';
@@ -20,8 +18,8 @@ define([
                           '</p>' +
                           '<panel-loader type="panel.type" class="panel-margin overview-panel"></panel-loader>' +
                           '</div>';
-      var topNTpl = '<table class="table" id="pidTable" data-sort-name="pid" data-sort-order="desc" data-pagination="true">'+
-                    '<thead><tr><th data-field="pid" data-sortable="true">进程</th><th data-field="cpu" data-sortable="true">CPU</th><th data-field="mem" data-sortable="true">MEM</th></tr></thead>'+
+      var topNTpl = '<table class="table table-no-bordered" id="pidTable" data-sort-name="pid" data-sort-order="desc" data-pagination="true" data-row-style="rowStyle">'+
+                    '<thead><tr><th data-field="pid" data-sortable="true">TopN 进程</th><th data-field="cpu" data-sortable="true" data-cell-style="cellStyle">CPU</th><th data-field="mem" data-sortable="true" data-cell-style="cellStyle">MEM</th></tr></thead>'+
                     '</table>';
       var template = predictionTpl + topNTpl;
       // var template = '<div ng-include="' + path + '"></div>'
@@ -30,24 +28,30 @@ define([
         restrict: 'EA',
         // template: template,
         link: function (scope, elem, attr) {
-          scope.init = function () {
-            // 
-          };
-          // var getter = $parse(attr.sys), system = getter(scope);
-          // contextSrv.user.systemId = system;
-
+          
           scope.$on('toggle-panel', function() {
-            // console.log(scope.hostTopN);
-
             var $template = $(template);
             elem.html($template);
 
             $compile(elem.contents())(scope);
             $('#pidTable').bootstrapTable({
-              data: scope.hostTopN
+              data: scope.hostTopN,
+              rowStyle: function (row, index) {
+                if (row.pid.length > 130) {
+                  return {
+                    classes: 'table-row-height-fix'
+                  }
+                }
+                return {};
+              },
+              cellStyle: function (value, row, index) {
+                value = parseFloat(value);
+                console.log(value);
+                return {
+                  classes: value > 70 ? 'bg-success' : (value > 30 ? 'bg-warn' : 'bg-danger')
+                }
+              }
             });
-            //render();
-            // scope.panelRenderingComplete();
           });
 
         }

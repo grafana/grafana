@@ -47,17 +47,6 @@ define([
           $scope.getAlertStatus();
           $scope.getHostSummary();
           $scope.getAnomaly();
-          // $q.all([
-          //   $scope.getServices, 
-          //   $scope.getAlertStatus, 
-          //   $scope.getHostSummary, 
-          //   $scope.getAnomaly
-          // ]).then(function () {
-          //   $scope.initDashboard({
-          //     meta     : { canStar: false, canShare: false, canEdit: false, canSave: false },
-          //     dashboard: $scope._dashboard
-          //   });
-          // });
         });
       };
 
@@ -205,6 +194,7 @@ define([
 
           var q = datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
             _.each(response, function (metric) {
+              console.log($scope.percentFormatter(metric.value) ? 1 : 0);
               $scope.hostsResource[metric.host]["cpu"] = $scope.percentFormatter(metric.value);
             });
           });
@@ -250,7 +240,6 @@ define([
         })
       };
       
-      
       // 智能分析预测 切换周期
       $scope.changePre = function (selectedOption) {
         var panels   = $scope._dashboard.rows[5].panels;
@@ -262,8 +251,6 @@ define([
       };
 
       $scope.showPrediction = function (i, hostname) {
-        console.log(i, hostname);
-
         // 智能分析预测
         $scope.panels = $scope._dashboard.rows[5].panels;
         _.each($scope.panels, function (panel, index) {
@@ -277,9 +264,7 @@ define([
             var num   = 0;
             var data  = response.data;
             
-            if (_.isEmpty(data)) {
-              throw Error;
-            }
+            if (_.isEmpty(data)) { throw Error; }
 
             for (var i in data) {
               var pre  = {
@@ -320,9 +305,11 @@ define([
           });
           promiseList.push(q);
         });
-        $q.all(promiseList).then(function (rr) {
+        $q.all(promiseList).then(function () {
           var tt = {};
           temp = temp.cpu.concat(temp.mem);
+
+          console.log(temp)
 
           _.each(temp, function (v) {
             if (!tt[v.tags.pid_cmd]) { tt[v.tags.pid_cmd] = {}; }
@@ -335,6 +322,9 @@ define([
             $scope.hostTopN.push(tt[v]);
           });
           $scope.$broadcast('toggle-panel');
+        }, function (err) {
+          $scope.$broadcast('toggle-panel');
+          $scope.hostTopN = [];
         });
       }
 

@@ -68,7 +68,7 @@
                             drag="panel.id" ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
                             <ul class="btn-list-status clearfix" ng-if="panel.allServices">
                                 <li ng-repeat="(name, service) in panel.allServices">
-                                    <button type="button" class="btn-item system-status system-status-{{ service.state==0 ? 'success' : 'warning' }}" data-template-url="/app/features/systemoverview/partials/system_service_status.html" data-auto-close="1" data-placement="bottom" bs-popover>{{service.name}}</button>
+                                    <button type="button" class="btn-item system-status system-status-{{ service.state==0 ? 'success' : 'warning' }}" data-template-url="/app/features/systemoverview/partials/system_service_status.html" data-auto-close="1" data-placement="bottom" data-trigger="hover" bs-popover>{{service.name}}</button>
                                 </li>
                             </ul>
                             <div class="clearfix"></div>
@@ -77,13 +77,15 @@
 
                     <div class="panels-wrapper" ng-if="!row.collapse && row.title == '机器连接状态'">
                         <h3>{{row.title}}</h3>
-                        <table class="table">
+                        <table class="table table-bordered table-hover">
                             <thead>
-                                <th>机器</th>
-                                <th>状态</th>
-                                <th>CPU</th>
-                                <th>内存</th>
-                                <th>磁盘剩余空间</th>
+                                <tr>
+                                    <th>工作机器</th>
+                                    <th>工作状态</th>
+                                    <th>CPU 使用率</th>
+                                    <th>内存使用</th>
+                                    <th>磁盘剩余空间</th>
+                                </tr>
                             </thead>
                             <tbody>
                                 <tr ng-repeat="host in hostPanels | filter : filterNotNumber" ng-click="showPrediction($index, host.host)">
