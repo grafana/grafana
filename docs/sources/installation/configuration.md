@@ -560,9 +560,6 @@ The full path to a directory containing your json dashboards.
 ## [smtp]
 Email server settings.
 
-### enabled
-defaults to false
-
 ### host
 defaults to localhost:25
 
