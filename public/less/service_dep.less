@@ -1,0 +1,325 @@
+.jtk-node {
+    background-color: #3E7E9C;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    position: absolute;
+    z-index: 11;
+    overflow: hidden;
+    min-width:80px;
+    min-height:30px;
+    width: auto;
+}
+
+.jtk-node .name {
+    background-color: #3E7E9C;
+    color: #f7ebca;
+    cursor: move;
+    font-size: 13px;
+    line-height: 24px;
+    padding: 6px;
+    text-align: center;
+}
+
+.jtk-node .name span {
+    cursor:pointer;
+}
+
+.jtk-group {
+    border:2px solid cadetblue;
+    z-index: 10;
+    width:250px;
+    height:250px;
+}
+
+.group-title {
+    margin:0;
+    width:100%;
+    height:40px;
+    line-height:40px;
+    background-color:cadetblue;
+    color:white;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    text-indent:7px;
+}
+
+.group-title button {
+    position:absolute;
+    right:5px;
+    top:10px;
+    cursor:pointer;
+    line-height: 1;
+    color: black;
+}
+
+.group-title button:after {
+    content:"-";
+}
+
+.jtk-group {
+    background-color: paleturquoise;
+}
+
+.jtk-group.jtk-group-collapsed {
+    height:40px;
+}
+
+.jtk-group.jtk-group-collapsed .group-title button:after {
+    content:"+";
+}
+
+.jtk-group [jtk-group-content] {
+    height:210px;
+}
+
+.jtk-group.jtk-group-collapsed [jtk-group-content] {
+    display:none;
+}
+
+.jtk-connector {
+    z-index:12;
+}
+
+
+
+.jtk-bootstrap {
+  min-height:100vh;
+  display:flex;
+  flex-direction: column;  
+}
+
+.jtk-bootstrap .jtk-page-container {
+    display:flex;
+    width:100vw;
+    justify-content: center;
+    flex:1;
+  }
+
+  .jtk-bootstrap .jtk-container {
+    width: 60%;
+    max-width:800px;
+  }
+
+  .jtk-bootstrap-wide .jtk-container {
+      width: 80%;
+      max-width:1187px;
+  }
+
+.jtk-demo-main {    
+    position: relative;
+}
+
+.jtk-demo-main .description {
+    font-size: 13px;
+    margin-top: 25px;
+    padding: 13px;
+    margin-bottom: 22px;
+    background-color: #f4f5ef;
+}
+
+.jtk-demo-main .description li {
+    list-style-type: disc !important;
+}
+
+.jtk-demo-canvas {    
+    height:550px;
+    max-height:700px;
+    border:1px solid #CCC;
+    background-color:white;
+    display: flex;
+}
+
+.canvas-wide {
+    margin-left:0;
+}
+
+.miniview {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    z-index: 100;
+}
+
+
+.jtk-demo-dataset {
+    text-align: left;
+    max-height: 600px;
+    overflow: auto;
+}
+
+.demo-title {
+    float:left;
+    font-size:18px;
+}
+
+.controls {
+    top: 25px;
+    color: #FFF;
+    margin-right: 10px;
+    position: absolute;
+    left: 25px;
+    z-index: 1;
+}
+
+.controls i {
+    background-color: #3E7E9C;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 0;
+    padding: 4px;
+}
+
+li {
+    list-style-type: none;
+}
+
+/* ------------------------ node palette -------------------- */
+
+.sidebar {
+    margin:0;
+    padding:0;
+    padding-top: 7px;
+    padding-right: 10px;
+    width:150px;
+    float:left;
+    text-align:center;
+    height: 550px;
+    background-color: #84acb3;
+}
+
+.sidebar ul li {
+    background-color: #234b5e;
+    border-radius: 11px;
+    color: #f7ebca;
+    cursor: move;
+    margin-bottom: 10px;
+    margin-left: 6px;
+    padding: 8px;
+    width:128px;
+}
+
+.sidebar ul {
+    width:100%;
+    padding:0;
+    margin: 0 0 10px 0;
+}
+
+.sidebar ul li:hover {
+    background-color: #577a8b;
+}
+
+.sidebar i {
+    float:left;
+}
+
+@media (max-width: 600px) {
+    .sidebar {
+        float:none;
+        height: 55px;
+        width: 100%;
+        padding-top:0;
+    }
+
+    .sidebar ul li {
+        display:inline-block;
+        margin-top: 7px;
+        width:67px;
+    }
+    .jtk-demo-canvas {
+        margin-left: 0;
+        margin-top:10px;
+        height:364px;
+    }
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+/* --- jsPlumb setup ---------------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------------------------------- */
+
+.jtk-connector {
+    z-index:9;
+}
+
+.jtk-endpoint {
+    z-index:12;
+    opacity:0.8;
+    cursor:pointer;
+}
+
+.jtk-overlay {
+    background-color: white;
+    color: #434343;
+    font-weight: 400;
+    padding: 4px;
+    z-index:10;
+
+}
+
+.jtk-overlay.jtk-hover {
+    color: #434343;
+}
+
+path {
+    cursor:pointer;
+}
+
+.delete {
+    padding: 2px;
+    cursor: pointer;
+    float: left;
+    font-size: 10px;
+    line-height: 20px;
+}
+
+.add, .edit {
+    cursor: pointer;
+    float:right;
+    font-size: 10px;
+    line-height: 20px;
+    margin-right:2px;
+    padding: 2px;
+}
+
+.edit:hover {
+    color: #ff8000;
+}
+
+.selected-mode {
+    color:#E4F013;
+}
+
+.connect {
+    width:10px;
+    height:10px;
+    background-color:#f76258;
+    position:absolute;
+    bottom: 13px;
+    right: 5px;
+}
+
+/* header styles */
+
+// .demo-links {
+//     position: fixed;
+//     right: 0;
+//     top: 57px;
+//     font-size: 11px;
+//     background-color: white;
+//     opacity: 0.8;
+//     padding-right: 10px;
+//     padding-left: 5px;
+//     text-transform: uppercase;
+//     z-index:100001;
+// }
+
+// .demo-links div {
+//     display:inline;
+//     margin-right:7px;
+//     margin-left:7px;
+// }
+
+.demo-links i {
+    padding:4px;
+}

@@ -1,0 +1,91 @@
+<topnav section="创建服务依赖" icon="fa fa-fw fa-home"></topnav>
+
+<div class="page-container" style="padding-left:20px;">
+  <!--<jsplumb-toolkit surface-id="mySurface" jtk-id="myToolkit" params="ToolkitParams" renderParams="RenderParams">
+
+    You can put content in here.
+
+  </jsplumb-toolkit>-->
+
+<div class="jtk-demo-main" id="jtk-demo-groups" ng-controller="ServiceDepCtrl as ServiceDepCtrl">
+
+            <div class="sidebar node-palette" jsplumb-palette selector="li" surface-id="demoSurface" type-extractor="ServiceDepCtrl.typeExtractor">
+                <ul ng-repeat="obj in draggableTypes">
+                    <li jtk-node-type="{{ obj.type }}" title="Drag to add new" jtk-group="{{ obj.group }}">
+                        {{obj.label}}
+                    </li>
+                </ul>
+            </div>
+
+        <div class="jtk-demo-canvas">
+<!---->
+            <jsplumb-toolkit params="ServiceDepCtrl.toolkitParams"
+                             init="ServiceDepCtrl.init"
+                             render-params="ServiceDepCtrl.renderParams"
+                             jtk-id="demoToolkit"
+                             surface-id="demoSurface"
+                             style="width:100%;height:100%;position:relative;margin:0">
+
+                <!-- controls -->
+                <div class="controls">
+                    <i class="fa fa-arrows selected-mode" mode="pan" title="Pan Mode"></i>
+                    <i class="fa fa-pencil" mode="select" title="Select Mode"></i>
+                    <i class="fa fa-home" reset title="Zoom To Fit"></i>
+                </div>
+
+                <!-- miniview -->
+                <jsplumb-miniview surface-id="demoSurface" class="miniview"></jsplumb-miniview>
+
+            </jsplumb-toolkit>
+
+        </div>
+
+
+            <div class="description">
+                <p>
+                    This is a demonstration of the Groups functionality, using Angular.
+                </p>
+                <ul>
+                    <li>Drag new Nodes/Groups from the palette on the left onto the workspace. You can drag Nodes directly into
+                    Groups.</li>
+                    <li>Collapse/Expand Groups with the -/+ buttons</li>
+                    <li>Drag existing Nodes into Groups to add them.</li>
+                    <li>Click the 'Pencil' icon to enter 'select' mode, then select several nodes. Click the canvas to exit.</li>
+                    <li>Click the 'Home' icon to zoom out and see all the nodes.</li>
+                </ul>
+            </div>
+
+            <div class="jtk-demo-dataset"></div>
+
+
+        <script type="text/ng-template" id="node_template.tpl">
+            <div>
+                <div class="name">
+                    <div class="delete" title="Click to delete" ng-click="remove(node)">
+                        <i class="fa fa-times"></i>
+                    </div>
+                    <span>{{node.name}}</span>
+                </div>
+                <div class="connect"></div>
+            </div>
+            <jtk-source filter=".connect"></jtk-source>
+            <jtk-target></jtk-target>
+        </script>
+
+        <script type="text/ng-template" id="group_template.tpl">
+            <div>
+                <div class="group-title">
+                    {{group.title}}
+                    <button class="expand" ng-click="toggleGroup(group)"></button>
+                </div>
+                <div jtk-group-content="true"></div>
+            </div>
+        </script>
+
+        </div>
+
+
+
+
+
+</div>

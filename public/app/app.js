@@ -12,11 +12,14 @@ define([
   'bindonce',
   'app/core/core',
   'ui.calendar',
+  'jsPlumbToolkit',
+  'jsPlumbToolkit-angular'
 ],
 function (angular, $, _, appLevelRequire) {
   "use strict";
 
-  var app = angular.module('grafana', []);
+  // 'ngMaterial', 'md.data.table'
+  var app = angular.module('grafana', ['mgcrea.ngStrap', '$jsPlumb']);
   var register_fns = {};
   var preBootModules = [];
 
