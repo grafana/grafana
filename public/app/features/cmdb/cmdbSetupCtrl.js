@@ -10,9 +10,18 @@ define([
     $scope.getHost = function() {
       backendSrv.alertD({url: '/cmdb/setting'}).then(function (response) {
         var data = response.data || {};
+        var linux = data.linux || {};
+        var windows = data.windows || {};
         var file = {
-          hosts: data.hosts || ["请在此输入IP地址"],
-          remoteUser : data.remoteUser || "root"
+          linux: {
+            hosts: linux.hosts || ["请在此输入IP地址"],
+            remoteUser : linux.remoteUser || "root"
+          },
+          windows: {
+            hosts: windows.hosts || ["请在此输入IP地址"],
+            remoteUser : windows.remoteUser || "Administrator",
+            password: windows.password || "请输入密码"
+          }
         };
         var blob = new Blob([angular.toJson(file, true)], { type: "application/json;charset=utf-8" });
         window.saveAs(blob, 'host-' + new Date().getTime());

@@ -607,6 +607,46 @@
       "metrics": [],
       "status": -1,
       "template": "redis"
+    },{
+      "id": "rabbitmq",
+      "name": "RabbitMQ",
+      "icon": "iconfont fa-rabbitmq",
+      "img": "",
+      "info": "RabbitMQ是流行的开源消息队列系统，用erlang语言开发。RabbitMQ是AMQP（高级消息队列协议）的标准实现。",
+      "deploy": [
+        "路径：/opt/cloudwiz-agent/agent/collectors/conf/rabbit_mq.conf",
+        "# localhost可改为RabbitMQ的host地址",
+        "rabbitmq_api_url = http://localhost:15672/api/",
+        "rabbitmq_user = guest",
+        "rabbitmq_pass = guest",
+        "#queues = 'queue1'",
+        "#nodes = 'node1','node2'"
+      ],
+      "metrics": [
+        {
+          "name": "rabbitmq.node.fd_used",
+          "define": "已使用的File Descriptors",
+          "unit": "short",
+          "type": "number",
+          "alert": ""
+        },
+        {
+          "name": "rabbitmq.node.mem_used",
+          "define": "占用内存大小",
+          "unit": "short",
+          "type": "number",
+          "alert": ""
+        },
+        {
+          "name": "rabbitmq.node.run_queue",
+          "define": "等待运行的Erlang进程平均数量",
+          "unit": "short",
+          "type": "number",
+          "alert": ""
+        }
+      ],
+      "status": -1,
+      "template": "rabbitmq"
     }
   ]
 }

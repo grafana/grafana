@@ -92,7 +92,8 @@ define([
                     }
                   ],
                   "refId": "A",
-                  "timeField": "@timestamp"
+                  "timeField": "@timestamp",
+                  "size": 500
                 }
               ],
               "tab": 1,
@@ -172,6 +173,7 @@ define([
                   ],
                   "refId": "A",
                   "timeField": "@timestamp",
+                  "size": 500
                 }
               ],
               "title": "聚合数据",
@@ -244,6 +246,7 @@ define([
                   "query": "",
                   "refId": "A",
                   "timeField": "@timestamp",
+                  "size": 500
                 },
                 {
                   "bucketAggs": [],
@@ -261,6 +264,7 @@ define([
                   "refId": "B",
                   "timeField": "@timestamp",
                   "timeShift": "-1d",
+                  "size": 500
                 }
               ],
               "tab": 3,
@@ -408,9 +412,23 @@ define([
         $scope.showSearchGuide = false;
       };
 
+      $scope.getLogSize = function(size) {
+        var panels = $scope.dashboard.rows[0].panels;
+        var target = $scope.dashboard.rows[0].panels[0].targets[0];
+        if (panels[0].targets[0].size == size) {
+          return;
+        };
+        panels[0].targets[0].size = size;
+        panels[1].targets[0].size = size;
+        panels[2].targets[0].size = size;
+        panels[2].targets[1].size = size;
+        $rootScope.$broadcast('refresh');
+      };
+
       $scope.init = function () {
         $scope.showKnows = false;
         $scope.query = "*";
+        $scope.size = 500;
         //log table
         panelMetas[0].panels[0].targets[0].query = $scope.query;
         //clustering

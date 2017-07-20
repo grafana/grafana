@@ -8,9 +8,9 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
   module.controller('ServiceDetailCtrl', function ($scope, backendSrv, datasourceSrv, contextSrv, $controller) {
-    const NO_DATA = 2;
-    const GET_DATA = 0;
-    const NO_SERVER = -1;
+    var NO_DATA = 2;
+    var GET_DATA = 0;
+    var NO_SERVER = -1;
 
     $scope.init = function() {
       $scope.changeTab('conf');

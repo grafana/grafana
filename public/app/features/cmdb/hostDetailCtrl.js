@@ -9,6 +9,9 @@ define([
   module.controller('HostDetailCtrl', function ($scope, backendSrv, $location) {
     $scope.init = function() {
       var id = $location.search().id;
+      backendSrv.alertD({url:'/cmdb/host'}).then(function(response) {
+        $scope.list = response.data;
+      });
       backendSrv.alertD({url:'/cmdb/host?id='+id}).then(function(response) {
         $scope.detail = response.data;
         $scope.cpuCount = _.countBy(response.data.cpu);
@@ -21,7 +24,11 @@ define([
       if(_.isObject(obj)) {
         for(var i in obj) {
           if(!_.isNumber(obj[i]) && (_.isNull(obj[i]) || _.isEmpty(obj[i]))){
-            obj[i] = '暂无信息';
+            if(i == 'memory') {
+              obj[i] = null;
+            } else {
+              obj[i] = '暂无信息';
+            }
           };
           if(_.isObject(obj[i])) {
             obj[i] = initDetail(obj[i]);

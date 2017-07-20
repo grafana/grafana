@@ -19,7 +19,7 @@ define([
                           '<panel-loader type="panel.type" class="panel-margin overview-panel"></panel-loader>' +
                           '</div>';
       var topNTpl = '<table class="table table-no-bordered" id="pidTable" data-sort-name="pid" data-sort-order="desc" data-pagination="true" data-row-style="rowStyle">'+
-                    '<thead><tr><th data-field="pid" data-sortable="true">TopN 进程</th><th data-field="cpu" data-sortable="true" data-cell-style="cellStyle">CPU</th><th data-field="mem" data-sortable="true" data-cell-style="cellStyle">MEM</th></tr></thead>'+
+                    '<thead><tr><th data-field="pid" data-sortable="true">TopN 进程</th><th data-field="cpu" data-sortable="true">CPU</th><th data-field="mem" data-sortable="true">MEM</th></tr></thead>'+
                     '</table>';
       var template = predictionTpl + topNTpl;
       // var template = '<div ng-include="' + path + '"></div>'
@@ -43,13 +43,6 @@ define([
                   }
                 }
                 return {};
-              },
-              cellStyle: function (value, row, index) {
-                value = parseFloat(value);
-                console.log(value);
-                return {
-                  classes: value > 70 ? 'bg-success' : (value > 30 ? 'bg-warn' : 'bg-danger')
-                }
               }
             });
           });

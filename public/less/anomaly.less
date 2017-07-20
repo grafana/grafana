@@ -1,0 +1,63 @@
+.anomaly-container {
+  margin-top: 100px;
+  position: relative;
+}
+
+.cluster-item {
+  margin-top: 40px;
+  border: 1px solid #e1dddd;
+  box-shadow: 0 0 4px #d3d2d2;
+  a:focus {
+    text-decoration: none;
+  }
+
+  h4 {
+    margin: 0;
+    text-align: center;
+    background: #f4f4f4;
+    span {
+      i.btn {
+        border-radius: 0px;
+        height: 40px;
+        line-height: 40px;
+      }
+      em, .fa-file-text-o{
+        font-style: normal;
+        color: #36bdfa;
+      }
+    }
+    .pull-right {
+      margin: 10px;
+    }
+    strong {
+      font-weight: normal;
+      color: green;
+      line-height: 50px;
+    }
+  }
+
+  .table {
+    margin: 0;
+    tbody {
+      tr:hover {
+        background: white;
+        box-shadow: 0 0 4px rgba(54,189,250,0.62) inset;
+      }
+      tr:hover > th,
+      tr:hover > td {
+        background-color: transparent;
+      }
+      .fa-bell-slash-o {
+        margin-right: 20px;
+      }
+    }
+  }
+
+  &.anomaly-danger {
+    border-color: red;
+    box-shadow: 0px 0px 4px red;
+    h4 strong {
+      color: red;
+    }
+  }
+}

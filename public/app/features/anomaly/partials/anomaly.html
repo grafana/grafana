@@ -10,62 +10,75 @@
     <h2>自动异常探测 <span style="font-size: 17px">{{system}}<tip>点击图上聚类的点, 能够快速筛选出所需的内容</tip></span></h2>
     <p>自动检测到所有<strong>{{ summary.numMetrics }}</strong>个指标中: 计算扫描了数据点有 <strong>{{ summary.numDataPoints }}</strong>个  异常指标 <strong>{{ summary.numAnomalyMetrics }}</strong>个  异常点总共有 <strong>{{ summary.numAnomaliesInCache }}</strong>个 <tip>通过全局扫描,并根据历史记录来自动检测异常点信息</tip></p>
     <p>异常指标聚类结果反映在点图上, 点与点之间的距离能够反映异常集合间的相似程度</p>
-
+    
     <div ng-if="!(summary.metricHostClusters.elements.length || summary.metricHostNotClustered.elements.length)">
       <em>系统一切正常</em>
     </div>
-    <div class="cluster-container pull-left" style="position:relative; width:45%;">
-      <div id="cluster" style="width:100%; height:500px;"></div>
-      <div id="overview" style="width:40%; height:125px; position:absolute; bottom:0px; right:0px;"></div>
+    <div class="cluster-container" style="position:absolute; width:300px; top: 0px; right: 0px;">
+      <div id="cluster" style="width: 300px; height: 240px;"></div>
     </div>
-    <div class=" pull-right" style="width:50%; max-height:500px; overflow:auto;" ng-if="summary.metricHostClusters.elements.length || summary.metricHostNotClustered.elements.length">
-      <table class="grafana-options-table">
-        <tr>
-          <td><strong>指标名称</strong></td>
-          <td><strong>异常指数</strong></td>
-          <td><strong>操作</strong></td>
-        </tr>
-        <tr ng-repeat="cluster in metricHostClusters" ng-if="cluster.health != 100">
-          <td style="max-width: 230px;">
-            <p ng-if="cluster.index != clustersLength - 1" class="max-width" title="{{_.getMetricName(cluster.elements[0].metric)}}"><i class="fa fa-bell"></i> &nbsp; {{_.getMetricName(cluster.elements[0].metric)}} 等{{cluster.numElements}}个</p>
-            <p ng-if="cluster.index == clustersLength - 1" class="max-width"><i class="fa fa-bell"></i> &nbsp; 尚未被分类的异常点{{cluster.numElements}}个</p>
-          </td>
-          <td style="width: 300px; padding: 20px 50px 0px 10px;">
-            <div class="progress progress-striped active">
-              <div class="bar bar-success" style="width:{{cluster.health}}%; position:relative;">
-                <span style="position: absolute;display: block;width: 200px;color:whitesmoke; ">健康指数:{{cluster.health}} %</span>
+
+    <tabset class="anomaly-container" ng-if="summary.metricHostClusters.elements.length || summary.metricHostNotClustered.elements.length">
+      <tab heading="聚合分析">
+        <div>
+          <div class="accordion cluster-list" id="accordion2">
+            <div class="accordion-group cluster-item" ng-repeat="cluster in metricHostClusters | orderBy: 'health'" ng-if="cluster.elements.length" ng-class="{true: 'anomaly-danger'}[cluster.health <= 25]">
+              <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#{{$index}}" ng-click="selectCluster($index);">
+                  <h4>
+                    <span class="pull-left">
+                      <i class="fa btn btn-primary" ng-class="{true: 'fa-minus', false: 'fa-plus'}[$index == selected]"></i>
+                      <i class="fa fa-file-text-o"></i>
+                      健康值: 
+                      <em>{{cluster.health}}%</em>
+                    </span>
+                    <strong ng-if="cluster.health > 25">以下指标虽存在异常, 但异常点是临时的, 一般不影响系统性能</strong>
+                    <strong ng-if="cluster.health <= 25">请关注以下持续异常指标</strong>
+                    <a href="/anomaly/{{cluster.index}}" class="btn btn-primary pull-right">进入</a>
+                    <div class="clearfix"></div>
+                  </h4>
+                </a>
               </div>
-              <div class="bar bar-danger" style="width:{{100-cluster.health}}%;"></div>
+              <div id="{{$index}}" class="accordion-body collapse" ng-class="{true: 'in'}[$index == 0]">
+                <div class="accordion-inner">
+                  <table class="table table-hover table-striped">
+                    <tr ng-repeat="element in cluster.elements">
+                      <td><p class="text-overflow" bs-tooltip="'{{_.getMetricName(element.metric)}}'" data-placement="bottom">{{_.getMetricName(element.metric)}}</p></td>
+                      <td><p class="text-overflow" style="width: 100px;">{{element.host}}</p></td>
+                      <td>{{element.health}}%</td>
+                      <td style="text-align: right;"><a ng-click="exclude(element);dismiss();"><i bs-tooltip="'暂缓报警'" data-placement="bottom" class="fa fa-bell-slash-o pointer"></i></a></td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
             </div>
-          </td>
-          <td>
-            <a href="/anomaly/{{cluster.index}}" class="btn btn-inverse btn-mini" >
-              <i class="fa fa-edit"></i>
-              进入
-            </a>
-          </td>
-        </tr>
-      </table>
-    </div>
+          </div>
+        </div>
 
-    <div class="clearfix"></div>
-    <div ng-if="excludeMetricLength">
-      <h3>暂缓异常报警指标</h3>
-      <p>共有{{excludeMetricLength}}个指标不参与健康值计算
-        <tip>剔除噪声值,减少对健康值的影响</tip>
-      </p>
-      <table class="grafana-options-table">
-        <tr ng-repeat="anomalyDef in excludeMetricsData | limitTo : 4">
-          <td>{{_.getMetricName(anomalyDef.metric)}}  主机名: {{anomalyDef.host}}</td>
-        </tr>
-      </table>
-      <a ng-click="changeExcludeMetrics()" class="btn btn-inverse btn-mini">
-        <i class="fa fa-pencil-square-o"></i>
-        修改
-      </a>
-    </div>
-
+        <div class="clearfix"></div>
+      </tab>
+      <tab heading="暂缓报警">
+        <div>
+          <h3>暂缓异常报警指标</h3>
+          <p>共有{{excludeMetricsData.length}}个指标不参与健康值计算
+            <tip>剔除噪声值,减少对健康值的影响</tip>
+          </p>
+          <table class="table" ng-if="excludeMetricsData.length">
+            <tr>
+              <th>指标名称</th>
+              <th>主机名</th>
+              <th>健康值</th>
+              <th>修改</th>
+            </tr>
+            <tr ng-repeat="anomalyDef in excludeMetricsData">
+              <td>{{_.getMetricName(anomalyDef.metric)}}</td>
+              <td>{{anomalyDef.host}}</td>
+              <td>{{anomalyDef.health}}</td>
+              <td><a ng-click="include(anomalyDef);" class="btn btn-primary">参与计算</a></td>
+            </tr>
+          </table>
+        </div>
+      </tab>
+    </tabset>
   </div>
-
 </div>
-
