@@ -14,7 +14,7 @@ const DEFAULT_EMOJI_CLASS = 'emoji gf-event-icon';
  * @param codepoint HEX code point, for example 1f1f7, 1f1f7-1f1fa
  * @param className class (or classes) attribute for each generated image.
  */
-function buildEmojiElem(codepoint, className = DEFAULT_EMOJI_CLASS) {
+export function buildEmojiElem(codepoint, className = DEFAULT_EMOJI_CLASS) {
   let utfCode;
 
   // handle double-sized codepoints like 1f1f7-1f1fa

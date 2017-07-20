@@ -3,9 +3,9 @@ define([
   'lodash',
   'angular',
   'tether-drop',
-  'twemoji'
+  'app/core/components/emoji_picker/emoji_converter'
 ],
-function ($, _, angular, Drop, twemoji) {
+function ($, _, angular, Drop, emojiConverter) {
   'use strict';
 
   function createAnnotationToolip(element, event, plot) {
@@ -278,23 +278,13 @@ function ($, _, angular, Drop, twemoji) {
       if (markerShow) {
         var marker;
         if (icon) {
-          var iconElem;
-
-          if (isEmoji(icon)) {
-            var utfEmoji = twemoji.convert.fromCodePoint(icon);
-            iconElem = twemoji.parse(utfEmoji, {
-              folder: 'svg',
-              ext: '.svg'
-            });
-            iconElem = $(iconElem).css({
-              "position": "absolute",
-              // Adjust icon position only to show tooltip in the center of marker
-              "left": -0.6 + "rem",
-              "height": 1 + "rem"
-            });
-          } else {
-            iconElem = $('<i class="fa ' + icon + '"></i>');
-          }
+          var iconElem = emojiConverter.buildEmojiElem(icon);
+          iconElem = $(iconElem).css({
+            "position": "absolute",
+            // Adjust icon position only to show tooltip in the center of marker
+            "left": -0.6 + "rem",
+            "height": 1 + "rem"
+          });
 
           marker = $('<div class="events_marker"></div>').css({
             "position": "absolute",
@@ -307,16 +297,6 @@ function ($, _, angular, Drop, twemoji) {
 
           marker.append(iconElem);
           marker.appendTo(line);
-
-          if (isFAIcon(icon)) {
-            // Adjust fa icon position based on real element width
-            iconElem = marker.find(iconElem);
-            var iconWidth = iconElem.width();
-            iconElem.css({
-              "position": "absolute",
-              "left": Math.round(-iconWidth / 2 - lineWidth / 2) + "px"
-            });
-          }
         } else {
           marker = $('<div class="events_marker"></div>').css({
             "position": "absolute",
@@ -585,14 +565,4 @@ function ($, _, angular, Drop, twemoji) {
     name: "events",
     version: "0.2.5"
   });
-
-  function isFAIcon(icon) {
-    var faPattern = /^fa-.*/;
-    return faPattern.test(icon);
-  }
-
-  function isEmoji(icon) {
-    return !isFAIcon(icon);
-  }
-
 });
