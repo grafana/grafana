@@ -452,6 +452,12 @@
 			"revisionTime": "2016-11-25T23:48:19Z"
 		},
 		{
+			"checksumSHA1": "rJab1YdNhQooDiBWNnt7TLWPyBU=",
+			"path": "github.com/pkg/errors",
+			"revision": "c605e284fe17294bda444b34710735b29d1a9d90",
+			"revisionTime": "2017-05-05T04:36:39Z"
+		},
+		{
 			"checksumSHA1": "SMUvX2B8eoFd9wnPofwBKlN6btE=",
 			"path": "github.com/prometheus/client_golang/api/prometheus",
 			"revision": "5636dc67ae776adf5590da7349e70fbb9559972d",
@@ -673,6 +679,18 @@
 			"checksumSHA1": "V5PhF6cvjkH+CfL/05HVjM3xnjk=",
 			"path": "qiniupkg.com/x/url.v7",
 			"revision": ""
+		},
+		{
+			"checksumSHA1": "zoNLwFuvZ5OPzUu1FwDApA/hesw=",
+			"path": "gopkg.in/olivere/elastic.v3",
+			"revision": "5a75b7d18bca7420e68338600e8c9f611435f911",
+			"revisionTime": "2017-06-16T12:19:52Z"
+		},
+		{
+			"checksumSHA1": "HerU6W2GzUoeRGYjNyAW0VBvLfs=",
+			"path": "gopkg.in/olivere/elastic.v5",
+			"revision": "f5030c016b49a6fb0e1958bc765562246c0a912c",
+			"revisionTime": "2017-07-19T12:17:08Z"
 		}
 	],
 	"rootPath": "github.com/grafana/grafana"
