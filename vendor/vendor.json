@@ -447,6 +447,12 @@
 			"revisionTime": "2016-11-25T23:48:19Z"
 		},
 		{
+			"checksumSHA1": "rJab1YdNhQooDiBWNnt7TLWPyBU=",
+			"path": "github.com/pkg/errors",
+			"revision": "c605e284fe17294bda444b34710735b29d1a9d90",
+			"revisionTime": "2017-05-05T04:36:39Z"
+		},
+		{
 			"checksumSHA1": "SMUvX2B8eoFd9wnPofwBKlN6btE=",
 			"path": "github.com/prometheus/client_golang/api/prometheus",
 			"revision": "5636dc67ae776adf5590da7349e70fbb9559972d",
@@ -501,12 +507,6 @@
 			"revisionTime": "2016-08-23T18:01:44Z"
 		},
 		{
-			"checksumSHA1": "1MGpGDQqnUoRpv7VEcQrXOBydXE=",
-			"path": "golang.org/x/crypto/pbkdf2",
-			"revision": "3543873453996aaab2fc6b3928a35fc5ca2b5afb",
-			"revisionTime": "2017-04-18T16:44:36Z"
-		},
-		{
 			"checksumSHA1": "r7o16T0WQ/XSe2mlQuioMi8gxbw=",
 			"path": "github.com/yudai/gojsondiff",
 			"revision": "9209d1532c51cabe0439993586a71c207b09a0ac",
@@ -523,6 +523,12 @@
 			"path": "github.com/yudai/golcs",
 			"revision": "d1c525dea8ce39ea9a783d33cf08932305373f2c",
 			"revisionTime": "2015-04-05T16:34:35Z"
+		},
+		{
+			"checksumSHA1": "1MGpGDQqnUoRpv7VEcQrXOBydXE=",
+			"path": "golang.org/x/crypto/pbkdf2",
+			"revision": "3543873453996aaab2fc6b3928a35fc5ca2b5afb",
+			"revisionTime": "2017-04-18T16:44:36Z"
 		},
 		{
 			"checksumSHA1": "WHc3uByvGaMcnSoI21fhzYgbOgg=",
@@ -577,6 +583,18 @@
 			"path": "gopkg.in/macaron.v1",
 			"revision": "a325110f8b392bce3e5cdeb8c44bf98078ada3be",
 			"revisionTime": "2017-02-13T09:12:08Z"
+		},
+		{
+			"checksumSHA1": "zoNLwFuvZ5OPzUu1FwDApA/hesw=",
+			"path": "gopkg.in/olivere/elastic.v3",
+			"revision": "5a75b7d18bca7420e68338600e8c9f611435f911",
+			"revisionTime": "2017-06-16T12:19:52Z"
+		},
+		{
+			"checksumSHA1": "HerU6W2GzUoeRGYjNyAW0VBvLfs=",
+			"path": "gopkg.in/olivere/elastic.v5",
+			"revision": "f5030c016b49a6fb0e1958bc765562246c0a912c",
+			"revisionTime": "2017-07-19T12:17:08Z"
 		}
 	],
 	"rootPath": "github.com/grafana/grafana"
