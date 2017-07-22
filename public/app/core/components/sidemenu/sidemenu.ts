@@ -12,6 +12,8 @@ export class SideMenuCtrl {
   mainLinks: any;
   orgMenu: any;
   appSubUrl: string;
+  bottomLinks: any;
+  submenu: any;
 
   /** @ngInject */
   constructor(private $scope, private $location, private contextSrv, private backendSrv, private $element) {
@@ -19,8 +21,9 @@ export class SideMenuCtrl {
     this.user = contextSrv.user;
     this.appSubUrl = config.appSubUrl;
     this.showSignout = this.contextSrv.isSignedIn && !config['authProxyEnabled'];
-
-    this.mainLinks = config.bootData.mainNavLinks;
+    this.mainLinks = [];
+    this.bottomLinks = [];
+    this.contextSrv.setPinnedState(true);
     this.mainLinks.push({
       text: "系统总览",
       icon: "fa fa-fw fa-home",
@@ -38,6 +41,12 @@ export class SideMenuCtrl {
           url: this.getUrl("/summary")
         },
       ],
+    });
+
+    this.mainLinks.push({
+      text: "指标浏览",
+      icon: "fa fa-fw fa-sliders",
+      click: $scope.loadDashboardList
     });
 
     this.mainLinks.push({
@@ -139,7 +148,25 @@ export class SideMenuCtrl {
       ]
     });
 
-    this.openUserDropdown();
+    this.bottomLinks.push({
+      text: this.user.name,
+      icon: "fa fa-fw fa-user",
+      url: this.getUrl('/profile')
+    });
+
+    this.bottomLinks.push({
+      text: "信息管理",
+      icon: "fa fa-fw fa-cogs",
+      children: this.getMsgManagementMenu(),
+    });
+
+    this.bottomLinks.push({
+      text: contextSrv.user.orgName,
+      icon: "fa fa-fw fa-random",
+      children: this.getOrgsMenu(),
+    });
+
+    // this.openUserDropdown();
     this.$scope.$on('$routeChangeSuccess', () => {
       if (!this.contextSrv.pinned) {
         this.contextSrv.sidemenu = false;
@@ -151,59 +178,103 @@ export class SideMenuCtrl {
    return config.appSubUrl + url;
  }
 
- openUserDropdown() {
-   this.orgMenu = [
-     {section: 'You', cssClass: 'dropdown-menu-title'},
-     {text: 'Profile', url: this.getUrl('/profile')},
-   ];
-
-   if (this.isSignedIn) {
-     this.orgMenu.push({text: "Sign out", url: this.getUrl("/logout"), target: "_self"});
-   }
-
-   if (this.contextSrv.hasRole('Admin')) {
-     this.orgMenu.push({section: this.user.orgName, cssClass: 'dropdown-menu-title'});
-     this.orgMenu.push({
-       text: "Preferences",
-       url: this.getUrl("/org"),
-     });
-     this.orgMenu.push({
-       text: "Users",
-       url: this.getUrl("/org/users"),
-     });
-     this.orgMenu.push({
-       text: "API Keys",
-       url: this.getUrl("/org/apikeys"),
-     });
-   }
-
-   this.orgMenu.push({cssClass: "divider"});
-
-   this.backendSrv.get('/api/user/orgs').then(orgs => {
-     orgs.forEach(org => {
-       if (org.orgId === this.contextSrv.user.orgId) {
-         return;
-       }
-
-       this.orgMenu.push({
-         text: "Switch to " + org.name,
-         icon: "fa fa-fw fa-random",
-         click: () => {
-           this.switchOrg(org.orgId);
-         }
-       });
-     });
-
-     if (config.allowOrgCreate) {
-       this.orgMenu.push({text: "New organization", icon: "fa fa-fw fa-plus", url: this.getUrl('/org/new')});
-     }
-   });
- }
-
  switchOrg(orgId) {
    this.backendSrv.post('/api/user/using/' + orgId).then(() => {
      window.location.href = `${config.appSubUrl}/`;
    });
+ };
+
+ getMsgManagementMenu() {
+    var msgManagementMenu = config.bootData.mainNavLinks;
+    if (config.allowOrgCreate) {
+      msgManagementMenu.push({
+        text: "新建公司",
+        icon: "fa fa-fw fa-plus",
+        href: this.getUrl('/org/new')
+      });
+    }
+
+    if (this.contextSrv.hasRole('Admin')) {
+      msgManagementMenu.push({
+        text: "公司信息设置",
+        href: this.getUrl("/org"),
+      });
+      msgManagementMenu.push({
+        text: "用户管理",
+        href: this.getUrl("/org/users"),
+      });
+      if (this.contextSrv.isGrafanaAdmin) {
+        msgManagementMenu.push({
+          text: "密钥管理",
+          href: this.getUrl("/org/apikeys"),
+        });
+      }
+    }
+
+    if (this.contextSrv.isGrafanaAdmin) {
+      msgManagementMenu.push({
+        text: "后台管理",
+        dropdown: 'dropdown',
+        thdmenu: [
+          {
+            text: "System info",
+            icon: "fa fa-fw fa-info",
+            href: this.getUrl("/admin/settings"),
+          },
+          {
+            text: "全体成员",
+            icon: "fa fa-fw fa-user",
+            href: this.getUrl("/admin/users"),
+          },
+          {
+            text: "所有公司",
+            icon: "fa fa-fw fa-users",
+            href: this.getUrl("/admin/orgs"),
+          }
+        ]
+      });
+      msgManagementMenu.push({
+        text: "申请用户",
+        icon: "fa fa-fw fa-users",
+        href: this.getUrl("/customer"),
+      });
+      msgManagementMenu.push({
+        text: "数据库",
+        icon: "fa fa-fw fa-database",
+        href: this.getUrl("/datasources"),
+      });
+    }
+
+    msgManagementMenu.push({
+      text: "帮助文档",
+      href: "http://cloudwiz.cn/document/",
+      target: '_blank'
+    });
+    return msgManagementMenu;
+ };
+
+ getOrgsMenu() {
+  this.backendSrv.get('/api/user/orgs').then(orgs => {
+    orgs.forEach(org => {
+      if (org.orgId === this.contextSrv.user.orgId) {
+        return;
+      }
+
+      this.orgMenu.push({
+        text: org.name,
+        icon: "fa fa-fw fa-random",
+        click: () => {
+          this.switchOrg(org.orgId);
+        }
+      });
+    });
+
+    if (config.allowOrgCreate) {
+      this.orgMenu.push({text: "New organization", icon: "fa fa-fw fa-plus", url: this.getUrl('/org/new')});
+    }
+   });
+  console.log(this.orgMenu);
+  return this.orgMenu;
  };
 }
 
@@ -226,6 +297,10 @@ export function sideMenuDirective() {
           parent.append(menu);
         }, 100);
       });
+
+      scope.updateSubmenu = function(menu) {
+        scope.submenu = menu;
+      };
 
       scope.$on("$destory", function() {
         elem.off('click.dropdown');

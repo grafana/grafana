@@ -3,17 +3,18 @@
 }
 
 .sidemenu-wrapper {
-  position: absolute;
-  top: 52px;
+  position: fixed;
+  top: 51px;
   left: 0;
   width: $side-menu-width;
-  background-color: rgba($side-menu-bg,$side-menu-opacity);
+  background-color: #222;
   z-index: 101;
   transform: translate3d(0, -100%, 0);
   visibility: hidden;
 
-  a:focus {
+  a:hover, a:focus {
     text-decoration: none;
+    color: $gray-7;
   }
 }
 
@@ -27,7 +28,7 @@
 
 .sidemenu-pinned {
   .sidemenu-wrapper {
-    min-height: calc(100% - 54px);
+    min-height: calc(100% - 52px);
   }
   .dashboard-container {
     padding-left: $side-menu-width + 0.5rem;
@@ -47,12 +48,9 @@
 
   > li {
     position: relative;
-    @include left-brand-border();
-
     &.active,
     &:hover {
-      background-color: $side-menu-item-hover-bg;
-      @include left-brand-border-gradient();
+      background-color: #2ab2e4;
 
       .dropdown-menu {
         display: block;
@@ -65,6 +63,51 @@
         @include animation('dropdown-anim 150ms ease-in-out 100ms forwards');
         z-index: -9999;
       }
+    }
+  }
+
+  &.sidemenu-small {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    .sidemenu-main-link {
+      font-size: 12px;
+    }
+    .icon-circle {
+      margin-left: -15px;
+    }
+  }
+  &.sidemenu-small > li > .sidemenu-item > span, 
+  &.submenu > li > .sidemenu-item > span {
+    float: left;
+  }
+
+  &.submenu {
+    width: 150px;
+    background: #999;
+    position: absolute;
+    left: $side-menu-width;
+    top: -52px;
+    bottom: 0px;
+    &.scroll-y{
+      overflow-y: auto;
+    }
+    .sidemenu-item {
+      padding: 7px 10px;
+      text-align: left;
+    }
+
+    li{
+      margin: 0;
+    }
+
+    .sidemenu-item-text {
+      height: 40px;
+      display: inline-block;
+      vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin: 0px;
     }
   }
 }
@@ -81,24 +124,25 @@
 }
 
 .sidemenu-main-link {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .sidemenu-item-text {
-  width: 110px;
-  display: inline-block;
-  vertical-align: middle;
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .icon-circle {
   width: 40px;
   height: 40px;
-  display: inline-block;
+  display: block;
+  margin: 0 auto -10px;
   i {
-    color: $link-color;
+    color: $gray-7;
     opacity: .7;
     position: relative;
     left: 7px;
@@ -112,16 +156,11 @@
 }
 
 .sidemenu-item {
-  color: $link-color;
-  line-height: 47px;
+  color: $gray-7;
+  line-height: 40px;
   padding: 0px 10px 0px 10px;
   display: block;
   border-left: 1px solid transparent;
-
-
-  .sidemenu-item-text {
-    padding-left: 11px;
-  }
 
   img {
     border-radius: 50%;

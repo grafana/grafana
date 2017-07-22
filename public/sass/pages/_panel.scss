@@ -1,0 +1,114 @@
+//TODO update
+// Help info
+.help-info{
+ position: absolute;
+ top: 0;
+ right: 0;
+ width: 0;
+ height: 0;
+ background:rgba(229, 232, 235, 0.94);
+
+ font-weight: bold;
+ font-size: 16px;
+ line-height: 30px;
+
+ z-index: 99;
+
+ padding: 0 10%;
+//  .box-sizing(border-box);
+
+//  .transition(all 0.2s linear);
+
+ overflow: hidden;
+
+ &>div{
+   h2{
+     text-align: center;
+   }
+   position: relative;
+   top: 30%;
+   height: 70%;
+   transform: translateY(-25%);
+ }
+
+ &.active{
+   width: 100%;
+   height: 100%;
+   overflow: auto;
+ }
+
+}
+
+.panel-associatoin {
+ max-height: 500px;
+ overflow: hidden;
+ display: block;
+ float: none;
+ .grafana-options-table{
+   max-height: 200px;
+   overflow-y: scroll;
+ }
+ .span3 {
+   width: 30%;
+ }
+}
+
+.panel-right-menu {
+ margin-right: 11px;
+ position: absolute;
+ top: 0;
+ right: 0;
+}
+.panel-right-menu-item {
+ margin-right: 5px;
+ cursor: pointer;
+}
+
+.panel-help {
+ color: $white;
+ position: absolute;
+ right: 0;
+ padding: 0px 17px 6px 5px;
+ top: 0;
+ z-index: 10;
+ i {
+   position: relative;
+   top: -2px;
+   left: 9px;
+ }
+}
+
+.panel-help-arrow {
+ width: 0;
+ height: 0;
+ position: absolute;
+ border-left: 31px solid transparent;
+ border-right: 30px solid transparent;
+ border-bottom: 27px solid #ccc;
+ right: 0;
+ bottom: 0;
+}
+
+
+.panel-title-container {
+  min-height: 15px;
+  padding-top: 4px;
+  cursor: auto;
+  width: 100%;
+  position: relative;
+}
+.panel-title {
+  border: 0px;
+  font-weight: bold;
+  cursor: auto;
+  margin: 0 auto;
+}
+
+
+.panel-time-info {
+  font-weight: bold;
+  margin-right: 15px;
+  color: $blue;
+  font-size: 85%;
+  position: absolute;
+}

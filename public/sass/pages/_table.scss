@@ -1,0 +1,44 @@
+.main-view-container.fixed-top {
+    margin-top: 50px;
+}
+
+.table-container {
+    border: 1px solid #ddd;
+    background: $grafanaPanelBackground;
+    margin-left: 5px;
+    table {
+        width: 100%;
+    }
+    &.fixed-top {
+        position: fixed;
+        top: 0px;
+        z-index: 100;
+    }
+}
+
+.table-head {
+    th {
+        color: #2ab2e4;
+    }
+}
+
+.table-body {
+    text-align: center;
+    max-height: 150px;
+    overflow-y: auto;
+    tr:nth-child(2n+1) {
+        background: #e4e4e4;
+    }
+}
+
+.table-foot {
+    margin: 5px;
+}
+
+.text-overflow {
+    width: 600px;
+    margin: 0px;
+    // .text-overflow();
+}
+
+.highlight { background-color: yellow }
