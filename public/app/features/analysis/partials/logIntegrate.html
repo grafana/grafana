@@ -1,15 +1,15 @@
-<topnav title="整合分析" icon="fa fa-fw fa-line-chart" subnav="true">
-  <ul class="nav pull-right">
-				<li ng-show="true" class="back-to-dashboard-link">
-					<a  onclick="javascript:history.go(-1)">
-						返回到仪表盘
-					</a>
-				</li>
-				<li ng-if="dashboard">
-					<gf-time-picker dashboard="dashboard"></gf-time-picker>
-				</li>
-			</ul>
-</topnav>
+<navbar icon="fa fa-fw fa-search" title="整合页面">
+    <ul class="nav pull-right">
+        <li ng-show="dashboard.meta.fullscreen" class="dashnav-back-to-dashboard">
+            <a ng-click="exitFullscreen()">
+                返回到仪表盘
+            </a>
+        </li>
+        <li ng-if="dashboard">
+            <gf-time-picker dashboard="dashboard"></gf-time-picker>
+        </li>
+    </ul>
+</navbar>
 <div dash-editor-view class="time-picker"></div>
 
 <form>
@@ -38,7 +38,7 @@
 
       <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel" ui-draggable="!dashboardViewState.fullscreen" drag="panel.id"
             ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
-          <panel-loader ng-if="panel.type != 'table'" type="panel.type" class="panel-margin"></panel-loader>
+          <plugin-component ng-if="panel.type != 'table'" type="panel.type" class="panel-margin"></plugin-component>
       </div>
       <tabset>
         <tab heading="{{panel.title}}" ng-repeat="(name, panel) in row.panels track by panel.id" ng-if="panel.tab != graph">
@@ -52,17 +52,9 @@
                     <li ng-click="showInputModal()">自定义</li>
                 </ul>
             </div>
-            <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+            <plugin-component type="panel.type" class="panel-margin"></plugin-component>
         </tab>
       </tabset>
-
-      <div panel-drop-zone class="panel panel-drop-zone" ui-on-drop="onDrop($data, row)" data-drop="true">
-        <div class="panel-container" style="background: transparent">
-          <div style="text-align: center">
-            <em>点击这里(drop here)</em>
-          </div>
-        </div>
-      </div>
 
       <div class="clearfix"></div>
     </div>

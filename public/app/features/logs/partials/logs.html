@@ -1,7 +1,7 @@
-<topnav title="日志管理" icon="fa fa-fw fa-search" subnav="true">
+<navbar icon="fa fa-fw fa-search" title="日志管理">
     <ul class="nav pull-right">
-        <li ng-show="true" class="back-to-dashboard-link">
-            <a onclick="javascript:history.go(-1)">
+        <li ng-show="dashboard.meta.fullscreen" class="dashnav-back-to-dashboard">
+            <a ng-click="exitFullscreen()">
                 返回到仪表盘
             </a>
         </li>
@@ -9,16 +9,20 @@
             <gf-time-picker dashboard="dashboard"></gf-time-picker>
         </li>
     </ul>
-</topnav>
+</navbar>
+
 <div dash-editor-view class="time-picker"></div>
 
-<div class="page-container" style="background:#fff;">
-    <form>
+<div class="page-container">
+    <div class="page-header">
+        <h1>日志全文搜索</h1>
+    </div>
+
+    <form class="gf-form-group">
         <div class="">
-            <h2>日志全文搜索</h2>
-            <div class="tidy-form">
-                <ul class="tidy-form-list" style="overflow: inherit">
-                    <li class="tidy-form-item" style="width: 100px">
+            <div class="gf-form">
+                <ul class="gf-form-list" style="overflow: inherit">
+                    <li class="gf-form-item" style="width: 100px">
                         关键词
                     </li>
                     <li>
@@ -34,9 +38,8 @@
             </div>
         </div>
     </form>
-    <div class="grafana-row" ng-controller="RowCtrl"
-        ng-repeat="(row_name, row) in dashboard.rows" row-height>
 
+    <div class="grafana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.rows" row-height>
         <div class="row-control">
             <div class="panels-wrapper" ng-if="!row.collapse">
                 <div class="row-text pointer" ng-click="toggleRow(row)" ng-if="row.showTitle"
@@ -44,7 +47,7 @@
                 </div>
 
                 <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel"  ng-if="panel.tab == graph" panel-width>
-                    <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+                    <plugin-component type="panel" class="panel-margin"></plugin-component>
                 </div>
                 <tabset>
                     <tab heading="{{panel.title}}" ng-repeat="(name, panel) in row.panels track by panel.id" ng-if="panel.tab != graph">
@@ -63,7 +66,7 @@
                                 <li ng-click="showInputModal()">自定义</li>
                             </ul>
                         </div>
-                        <panel-loader type="panel.type" class="panel-margin log-panel"></panel-loader>
+                        <plugin-component type="panel" class="panel-margin log-panel"></plugin-component>
                     </tab>
                 </tabset>
                 <div class="clearfix"></div>
