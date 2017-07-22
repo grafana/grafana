@@ -1,6 +1,6 @@
 <ul class="sidemenu">
 	<li ng-repeat="item in ::ctrl.mainLinks" class="dropdown">
-		<a href="{{::item.url}}" class="sidemenu-item sidemenu-main-link" target="{{::item.target}}" ng-click="updateSubmenu(item)">
+		<a class="sidemenu-item sidemenu-main-link" target="{{::item.target}}" ng-click="updateSubmenu(item)">
 			<span class="icon-circle sidemenu-icon">
 				<i class="{{::item.icon}}" ng-show="::item.icon"></i>
 			</span>
@@ -11,7 +11,7 @@
 
 <ul class="sidemenu sidemenu-small">
 	<li ng-repeat="item in ::ctrl.bottomLinks" class="dropdown clearfix">
-		<a href="{{::item.url}}" class="sidemenu-item sidemenu-main-link" target="{{::item.target}}" ng-click="updateSubmenu(item)">
+		<a class="sidemenu-item sidemenu-main-link" target="{{::item.target}}" ng-click="updateSubmenu(item)">
 			<span class="icon-circle sidemenu-icon">
 				<i class="{{::item.icon}}" ng-show="::item.icon"></i>
 			</span>
@@ -34,17 +34,25 @@
 	</li>
 
 </ul>
-<ul class="sidemenu submenu" ng-if="true" ng-class="{true: 'scroll-y'}[true]">
+<ul class="sidemenu submenu" ng-if="showSubmenu" ng-class="{true: 'scroll-y'}[submenu.text === '指标浏览']">
 	<li>
 		<a class="sidemenu-item clearfix" style="background:#222; height: 52px;" ng-click="hideSubmenu()">
 			<span class="icon-circle sidemenu-icon"><i class="{{submenu.icon}}"></i></span>
 			<span class="sidemenu-item-text">{{submenu.text}}</span>
 		</a>
 	</li>
-	<li ng-repeat="item in submenu.children">
-		<a href="{{item.url}}" class="sidemenu-item clearfix">
+	<li ng-repeat="item in submenu.children" class="dropdown">
+		<a href="{{item.url}}" class="sidemenu-item clearfix" class="dropdown-toggle" data-toggle="{{item.dropdown}}">
 			<span class="sidemenu-item-text">{{item.text}}</span>
+			<i class="fa fa-fw fa-angle-right pull-right" style="line-height: 40px;" ng-if="item.children"></i>
 		</a>
+		<ul class="dropdown-menu sidmenu-dropdown-menu" role="menu" aria-labelledby="dLabel" ng-if="item.children">
+			<li ng-repeat="menuItem in item.children">
+				<a href="{{menuItem.url}}">
+					{{menuItem.text}}
+				</a>
+			</li>
+		</ul>
 	</li>
 </ul>
-
+<div ng-click="hideSubmenu()" ng-show="showSubmenu" class="sidemenu-cover"></div>

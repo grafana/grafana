@@ -46,7 +46,7 @@ export class SideMenuCtrl {
     this.mainLinks.push({
       text: "指标浏览",
       icon: "fa fa-fw fa-sliders",
-      click: $scope.loadDashboardList
+      click: this.loadDashboardList
     });
 
     this.mainLinks.push({
@@ -148,6 +148,23 @@ export class SideMenuCtrl {
       ]
     });
 
+    if (this.contextSrv.user.orgId === 2) {
+      this.mainLinks.push({
+        text: "配置管理",
+        icon: "fa fa-fw fa-cubes",
+        children: [
+          {
+            text: '设备列表',
+            url: this.getUrl("/cmdb/hostlist")
+          },
+          {
+            text: '设置',
+            url: this.getUrl("/cmdb/setup")
+          }
+        ]
+      });
+    }
+
     this.bottomLinks.push({
       text: this.user.name,
       icon: "fa fa-fw fa-user",
@@ -163,119 +180,152 @@ export class SideMenuCtrl {
     this.bottomLinks.push({
       text: contextSrv.user.orgName,
       icon: "fa fa-fw fa-random",
-      children: this.getOrgsMenu(),
+      click: this.getOrgsMenu,
     });
 
     // this.openUserDropdown();
     this.$scope.$on('$routeChangeSuccess', () => {
-      if (!this.contextSrv.pinned) {
-        this.contextSrv.sidemenu = false;
-      }
+      $scope.showSubmenu = false;
     });
+
+    $scope.updateSubmenu = (item) => {
+      if (item.url) {
+        $scope.showSubmenu = false;
+        $location.url(item.url);
+        return;
+      }
+      if (item.click) {
+        var _self = this;
+        item.click(item, _self);
+      } else {
+        $scope.submenu = item;
+      }
+      $scope.showSubmenu = true;
+    };
+
+    $scope.hideSubmenu = () => {
+      $scope.showSubmenu = false;
+    };
   }
 
- getUrl(url) {
-   return config.appSubUrl + url;
- }
+  getUrl(url) {
+    return config.appSubUrl + url;
+  }
 
- switchOrg(orgId) {
-   this.backendSrv.post('/api/user/using/' + orgId).then(() => {
-     window.location.href = `${config.appSubUrl}/`;
-   });
- };
+  switchOrg(orgId) {
+    this.backendSrv.post('/api/user/using/' + orgId).then(() => {
+      window.location.href = `${config.appSubUrl}/`;
+    });
+  };
 
- getMsgManagementMenu() {
-    var msgManagementMenu = config.bootData.mainNavLinks;
+  getMsgManagementMenu() {
+    var item = [];
+    item = config.bootData.mainNavLinks;
     if (config.allowOrgCreate) {
-      msgManagementMenu.push({
+      item.push({
         text: "新建公司",
         icon: "fa fa-fw fa-plus",
-        href: this.getUrl('/org/new')
+        url: this.getUrl('/org/new')
       });
     }
 
     if (this.contextSrv.hasRole('Admin')) {
-      msgManagementMenu.push({
+      item.push({
         text: "公司信息设置",
-        href: this.getUrl("/org"),
+        url: this.getUrl("/org"),
       });
-      msgManagementMenu.push({
+      item.push({
         text: "用户管理",
-        href: this.getUrl("/org/users"),
+        url: this.getUrl("/org/users"),
       });
       if (this.contextSrv.isGrafanaAdmin) {
-        msgManagementMenu.push({
+        item.push({
           text: "密钥管理",
-          href: this.getUrl("/org/apikeys"),
+          url: this.getUrl("/org/apikeys"),
         });
       }
     }
 
     if (this.contextSrv.isGrafanaAdmin) {
-      msgManagementMenu.push({
+      item.push({
         text: "后台管理",
         dropdown: 'dropdown',
         thdmenu: [
           {
             text: "System info",
             icon: "fa fa-fw fa-info",
-            href: this.getUrl("/admin/settings"),
+            url: this.getUrl("/admin/settings"),
           },
           {
             text: "全体成员",
             icon: "fa fa-fw fa-user",
-            href: this.getUrl("/admin/users"),
+            url: this.getUrl("/admin/users"),
           },
           {
             text: "所有公司",
             icon: "fa fa-fw fa-users",
-            href: this.getUrl("/admin/orgs"),
+            url: this.getUrl("/admin/orgs"),
           }
         ]
       });
-      msgManagementMenu.push({
+      item.push({
         text: "申请用户",
         icon: "fa fa-fw fa-users",
-        href: this.getUrl("/customer"),
-      });
-      msgManagementMenu.push({
-        text: "数据库",
-        icon: "fa fa-fw fa-database",
-        href: this.getUrl("/datasources"),
+        url: this.getUrl("/customer"),
       });
     }
 
-    msgManagementMenu.push({
+    item.push({
       text: "帮助文档",
-      href: "http://cloudwiz.cn/document/",
+      url: "http://cloudwiz.cn/document/",
       target: '_blank'
     });
-    return msgManagementMenu;
- };
 
- getOrgsMenu() {
-  this.backendSrv.get('/api/user/orgs').then(orgs => {
-    orgs.forEach(org => {
-      if (org.orgId === this.contextSrv.user.orgId) {
-        return;
+    return item;
+  };
+
+  getOrgsMenu(item, _self) {
+    _self.backendSrv.get('/api/user/orgs').then(orgs => {
+      item.children = [];
+      orgs.forEach(org => {
+        if (org.orgId === _self.contextSrv.user.orgId) {
+          return;
+        }
+
+        item.children.push({
+          text: org.name,
+          icon: "fa fa-fw fa-random",
+          click: () => {
+            _self.switchOrg(org.orgId);
+          }
+        });
+      });
+
+      if (config.allowOrgCreate) {
+        item.children.push({text: "New organization", icon: "fa fa-fw fa-plus", url: _self.getUrl('/org/new')});
       }
 
-      this.orgMenu.push({
-        text: org.name,
-        icon: "fa fa-fw fa-random",
-        click: () => {
-          this.switchOrg(org.orgId);
-        }
-      });
+      _self.$scope.submenu = item;
     });
+  };
 
-    if (config.allowOrgCreate) {
-      this.orgMenu.push({text: "New organization", icon: "fa fa-fw fa-plus", url: this.getUrl('/org/new')});
-    }
-   });
-  console.log(this.orgMenu);
-  return this.orgMenu;
- };
+  loadDashboardList(item, _self) {
+    var submenu = [];
+    _self.backendSrv.search({query: "", starred: "false"}).then(function (result) {
+      submenu.push({
+        text: "+新建",
+        click: _self.newDashboard,
+      });
+      _.each(result, function (dash) {
+        submenu.push({
+          text: dash.title,
+          href: _self.getUrl("dashboard/"+dash.uri),
+        });
+      });
+      item.children = submenu;
+      _self.$scope.submenu = item;
+    });
+  }
 }
 
 export function sideMenuDirective() {
@@ -297,10 +347,6 @@ export function sideMenuDirective() {
           parent.append(menu);
         }, 100);
       });
-
-      scope.updateSubmenu = function(menu) {
-        scope.submenu = menu;
-      };
 
       scope.$on("$destory", function() {
         elem.off('click.dropdown');

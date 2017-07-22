@@ -265,3 +265,18 @@
   display: block;
 }
 
+.sidemenu-cover {
+  position: fixed;
+  left: $side-menu-width + 10.5rem;
+  right: 0px;
+  bottom: 0px;
+  top: -52px;
+  width: 100rem;
+  z-index: -2;
+}
+
+.sidmenu-dropdown-menu {
+  z-index: -1!important;
+  left: 10.5rem!important;
+  background: white!important;
+}
