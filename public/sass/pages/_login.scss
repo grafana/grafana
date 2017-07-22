@@ -177,6 +177,7 @@
 .btn-login-box{
   text-align: center;
   margin-top: 25px;
+  margin: 25px auto 40px;
 }
 .btn-login{
   margin: 0 auto;
@@ -192,11 +193,11 @@
   font-size: 24px;
   font-weight: bold;
   text-align: center;
-  margin-top: 42px;
   margin-bottom: 143px;
   height: 48px;
   line-height: 48px;
   color: rgb(145,148,154);
+  display: block;
   a{
     text-align: center;
     line-height: 48px;

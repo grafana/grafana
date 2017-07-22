@@ -3,7 +3,6 @@
   display: block;
   overflow: visible;
   position: relative;
-  z-index: 110;
 }
 
 .navbar-inner {
@@ -61,7 +60,6 @@
   position: relative;
   float: left;
   margin: 0;
-  border-right: 1px solid $tight-form-border;
   background-color: $navbarButtonBackground;
   padding: 0.4rem 1.0rem 0.4rem 1rem;
 
@@ -140,8 +138,9 @@
 
 .sidemenu-pinned {
   .navbar-brand-btn {
-    background-color: $page-bg;
+    background-color: #222;
     width: $side-menu-width;
+    text-align: center;
 
     .icon-gf-grafana_wordmark  {
       display: inline-block;
@@ -149,13 +148,6 @@
 
     .fa-caret-down {
       display: none;
-    }
-
-    &:hover .fa-chevron-left {
-      display: inline-block;
-      color: $text-color-weak;
-      position: relative;
-      left: 1.3rem;
     }
   }
 }

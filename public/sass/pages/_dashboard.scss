@@ -1,6 +1,8 @@
 .dashboard-container {
   padding: $dashboard-padding;
   width: 100%;
+  height: 100vh;
+  overflow: scroll;
 }
 
 .page-dashboard {

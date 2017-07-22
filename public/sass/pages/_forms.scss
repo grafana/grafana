@@ -1,0 +1,123 @@
+// 新增的.
+.tidy-form {
+  h4 {
+    margin: 5px 20px 5px 0px;
+  }
+  background: $white;
+  &>fieldset {
+    margin: 20px;
+    padding-left: 20px;
+  }
+  .tidy-form-box {
+    padding-top: 20px;
+  }
+  .tidy-form-list {
+    list-style: none;
+    overflow: hidden;
+    margin: 0px;
+    &>li {
+      float: left;
+      line-height: 30px;
+      min-width: 60px;
+    }
+  }
+  .tidy-form-tags{
+    margin-right: 10px;
+    border: 1px solid #999;
+    border-radius: 5px;
+    padding: 0 10px;
+  }
+}
+
+.knowledge-form-label{
+  width: 100px;
+  text-align: left;
+}
+
+.expoler-form{
+  width: 50%;
+  height: 80%;
+  padding: 20px;
+  border: 1px solid;
+  background: $white;
+  position: fixed;
+  top: 10%;
+  right: 0px;
+  min-height: 500px;
+}
+.expoler-list{
+  list-style: none;
+  height: 90%;
+  overflow: auto;
+
+  &>li{
+    border-bottom: 1px solid #ccc;
+    margin: 20px 0px;
+    cursor: pointer;
+    // h5.text-overflow{
+    //   .text-overflow();
+    // }
+    // p.text-overflow{
+    //   .text-overflow();
+    // }
+  }
+}
+.expoler-close{
+  cursor: pointer;
+}
+
+.scheduleEditBox{
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+  background: rgba(222,222,222,0.8)
+}
+.scheduleForm{
+  width: 350px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  transform: translateY(60%);
+  &>.item{
+    &>label{
+      width: 50px;
+      height: 25px;
+      line-height: 25px;
+      background: none;
+      color: black;
+      margin-top: -6px;
+      margin-left: 20px;
+      vertical-align: middle;
+    }
+  }
+  .gf-timepicker-component{
+    position: absolute;
+    background: #fff;
+    left: 80px;
+    padding: 20px;
+    border: 1px solid;
+  }
+  h4{
+    height: 40px;
+    line-height: 40px;
+    color: white;
+    margin: 0;
+    margin-bottom: 10px;
+    background: rgb(35,172,245);
+  }
+  &>.oncaller-list{
+    height: 200px;
+    overflow: scroll;
+  }
+}
+
+.center{
+  text-align: center;
+  padding: 10px 0;
+  &>.btn{
+    width: 100px;
+  }
+}
