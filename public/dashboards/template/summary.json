@@ -26,7 +26,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)",
             "thresholdLine": false
           },
-          "id": 2,
+          "id": 1,
           "legend": {
             "show": true,
             "alignAsTable": true,
@@ -135,7 +135,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)",
             "thresholdLine": true
           },
-          "id": 2,
+          "id": 1,
           "lines": false,
           "linewidth": 2,
           "nullPointMode": "connected",
@@ -236,7 +236,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)",
             "thresholdLine": true
           },
-          "id": 2,
+          "id": 3,
           "lines": true,
           "linewidth": 2,
           "nullPointMode": "connected",
@@ -325,7 +325,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)",
             "thresholdLine": true
           },
-          "id": 2,
+          "id": 4,
           "lines": true,
           "linewidth": 2,
           "nullPointMode": "connected",
@@ -437,7 +437,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)",
             "thresholdLine": true
           },
-          "id": "01",
+          "id": 5,
           "legend": false,
           "lines": false,
           "linewidth": 2,
@@ -537,7 +537,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)",
             "thresholdLine": true
           },
-          "id": "01",
+          "id": 7,
           "lines": false,
           "linewidth": 2,
           "nullPointMode": "connected",
@@ -642,7 +642,7 @@
             "threshold2Color": "rgba(234, 112, 112, 0.22)",
             "thresholdLine": true
           },
-          "id": 2,
+          "id": 8,
           "lines": true,
           "linewidth": 2,
           "nullPointMode": "connected",
@@ -742,7 +742,7 @@
             "thresholdLine": true
           },
           "hideTimeOverride": true,
-          "id": "01",
+          "id": 9,
           "legend": false,
           "lines": true,
           "linewidth": 2,
@@ -855,7 +855,7 @@
             "thresholdLine": true
           },
           "hideTimeOverride": true,
-          "id": "02",
+          "id": 10,
           "legend": {
             "show": false
           },
@@ -970,7 +970,7 @@
             "thresholdLine": true
           },
           "hideTimeOverride": true,
-          "id": "03",
+          "id": 11,
           "legend": {
             "show": false
           },
