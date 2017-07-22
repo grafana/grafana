@@ -13,68 +13,6 @@
 
         <div class="grafana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.rows" row-height>
             <div class="row-control">
-                <div class="row-control-inner">
-                    <div class="row-close" ng-show="row.collapse" data-placement="bottom" >
-                        <div class="row-close-buttons">
-							<span class="row-button" ng-click="toggleRow(row)">
-								<i bs-tooltip="'Expand row'" data-placement="right" class="fa fa-caret-left pointer" ></i>
-							</span>
-                        </div>
-                        <div class="row-text pointer" ng-click="toggleRow(row)" ng-bind="row.title | interpolateTemplateVars:this"></div>
-                    </div>
-                    <div class="row-open" ng-show="!row.collapse">
-                        <div class='row-tab dropdown' ng-show="dashboardMeta.canEdit" ng-hide="dashboard.meta.fullscreen">
-							<span class="row-tab-button dropdown-toggle" data-toggle="dropdown">
-								<i class="fa fa-bars"></i>
-							</span>
-                            <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="drop1">
-                                <li>
-                                    <a ng-click="toggleRow(row)">合并行</a>
-                                </li>
-                                <li class="dropdown-submenu">
-                                    <a href="javascript:void(0);">添加模块</a>
-                                    <ul class="dropdown-menu">
-                                        <li bindonce ng-repeat="(key, value) in panels">
-                                            <a ng-click="addPanelDefault(key)" bo-text="value.name"></a>
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li class="dropdown-submenu">
-                                    <a href="javascript:void(0);">设置高度</a>
-                                    <ul class="dropdown-menu">
-                                        <li><a ng-click="setHeight('25px')">25 px</a></li>
-                                        <li><a ng-click="setHeight('100px')">100 px</a></li>
-                                        <li><a ng-click="setHeight('150px')">150 px</a></li>
-                                        <li><a ng-click="setHeight('200px')">200 px</a></li>
-                                        <li><a ng-click="setHeight('250px')">250 px</a></li>
-                                        <li><a ng-click="setHeight('300px')">300 px</a></li>
-                                        <li><a ng-click="setHeight('350px')">350 px</a></li>
-                                        <li><a ng-click="setHeight('450px')">450 px</a></li>
-                                        <li><a ng-click="setHeight('500px')">500 px</a></li>
-                                        <li><a ng-click="setHeight('600px')">600 px</a></li>
-                                        <li><a ng-click="setHeight('700px')">700 px</a></li>
-                                    </ul>
-                                </li>
-                                <li class="dropdown-submenu">
-                                    <a href="javascript:void(0);">移动</a>
-                                    <ul class="dropdown-menu">
-                                        <li><a ng-click="moveRow('up')">上移</a></li>
-                                        <li><a ng-click="moveRow('down')">下移</a></li>
-                                        <li><a ng-click="moveRow('top')">置顶</a></li>
-                                        <li><a ng-click="moveRow('bottom')">置底</a></li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    <a ng-click="editRow()">行编辑</a>
-                                </li>
-                                <li>
-                                    <a ng-click="deleteRow()">删除整行</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="panels-wrapper" ng-if="!row.collapse">
                     <div class="row-close-buttons" ng-if="row.showTitle">
 						<span class="row-button bgPrimary" ng-click="toggleRow(row)">
