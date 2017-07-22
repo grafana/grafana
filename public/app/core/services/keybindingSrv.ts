@@ -161,6 +161,11 @@ export class KeybindingSrv {
       }
     });
 
+    // add row
+    this.bind('r n', () => {
+      dashboard.addEmptyRow();
+    });
+
     // delete row
     this.bind('r r', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
