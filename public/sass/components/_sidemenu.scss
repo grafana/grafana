@@ -318,11 +318,20 @@
   }
 
   .icon-circle {
-    float: none!important;
     margin: 0 auto!important;
+  }
+
+  .sidemenu-small .icon-circle {
+    float: none!important;
   }
 
   .sidemenu-item {
     padding: 0px;
+  }
+}
+
+@media (max-height: 520px) {
+  .sidemenu-small {
+    display: none;
   }
 }
