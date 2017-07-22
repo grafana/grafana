@@ -46,7 +46,7 @@
 			<span class="sidemenu-item-text">{{item.text}}</span>
 			<i class="fa fa-fw fa-angle-right pull-right" style="line-height: 40px;" ng-if="item.children"></i>
 		</a>
-		<ul class="dropdown-menu sidmenu-dropdown-menu" role="menu" aria-labelledby="dLabel" ng-if="item.children">
+		<ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" ng-if="item.children">
 			<li ng-repeat="menuItem in item.children">
 				<a href="{{menuItem.url}}">
 					{{menuItem.text}}

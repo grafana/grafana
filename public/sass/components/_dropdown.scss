@@ -90,8 +90,8 @@
 .dropdown-submenu:hover > a,
 .dropdown-submenu:focus > a {
   text-decoration: none;
-  color: white;
-  background-color: #24ade0;
+  color: $dropdownLinkColorHover;
+  background-color: $dropdownLinkBackgroundHover;
 }
 
 // Active state
