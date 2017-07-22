@@ -42,7 +42,7 @@
 		</a>
 	</li>
 	<li ng-repeat="item in submenu.children" class="dropdown">
-		<a href="{{item.url}}" class="sidemenu-item clearfix" class="dropdown-toggle" data-toggle="{{item.dropdown}}">
+		<a ng-click="updateThdmenu(item);" class="sidemenu-item clearfix" class="dropdown-toggle" data-toggle="{{item.dropdown}}">
 			<span class="sidemenu-item-text">{{item.text}}</span>
 			<i class="fa fa-fw fa-angle-right pull-right" style="line-height: 40px;" ng-if="item.children"></i>
 		</a>

@@ -16,7 +16,7 @@ export class SideMenuCtrl {
   submenu: any;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private contextSrv, private backendSrv, private $element) {
+  constructor($rootScope, private $scope, private $location, private contextSrv, private backendSrv, private $element) {
     this.isSignedIn = contextSrv.isSignedIn;
     this.user = contextSrv.user;
     this.appSubUrl = config.appSubUrl;
@@ -24,6 +24,7 @@ export class SideMenuCtrl {
     this.mainLinks = [];
     this.bottomLinks = [];
     this.contextSrv.setPinnedState(true);
+    var _self = this;
     this.mainLinks.push({
       text: "系统总览",
       icon: "fa fa-fw fa-home",
@@ -195,7 +196,6 @@ export class SideMenuCtrl {
         return;
       }
       if (item.click) {
-        var _self = this;
         item.click(item, _self);
       } else {
         $scope.submenu = item;
@@ -205,6 +205,30 @@ export class SideMenuCtrl {
 
     $scope.hideSubmenu = () => {
       $scope.showSubmenu = false;
+    };
+
+    $scope.updateThdmenu = (item) => {
+      $scope.showSubmenu = false;
+      if (item.url) {
+        if (item.target === '_blank') {
+          window.open(item.url);
+        } else {
+          $location.url(item.url);
+        }
+        return;
+      }
+      if (item.click) {
+        item.click();
+      }
+      if (item.text === '故障溯源') {
+        $rootScope.appEvent('confirm-modal', {
+          title: '',
+          text: '功能暂未开放，敬请期待',
+          icon: 'fa-bell',
+          yesText: '确定',
+          modalClass : 'contact-us',
+        });
+      }
     };
   }
 
@@ -281,6 +305,8 @@ export class SideMenuCtrl {
       target: '_blank'
     });
 
+    _.uniq(item);
+
     return item;
   };
 
@@ -319,13 +345,13 @@ export class SideMenuCtrl {
       _.each(result, function (dash) {
         submenu.push({
           text: dash.title,
-          href: _self.getUrl("dashboard/"+dash.uri),
+          url: _self.getUrl("dashboard/"+dash.uri),
         });
       });
       item.children = submenu;
       _self.$scope.submenu = item;
     });
-  }
+  };
 }
 
 export function sideMenuDirective() {
