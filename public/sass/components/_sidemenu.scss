@@ -9,7 +9,7 @@
   width: $side-menu-width;
   background-color: #222;
   z-index: 101;
-  transform: translate3d(0, -100%, 0);
+  transform: translate3d(-100%, 0, 0);
   visibility: hidden;
 
   a:hover, a:focus {
@@ -58,10 +58,16 @@
         top: 0px;
         // important to overlap it otherwise it can be hidden
         // again by the mouse getting outside the hover space
-        left: $side-menu-width - 0.2rem;
-        background-color: rgba($side-menu-bg,$side-menu-opacity);
+        left: 10.5rem;
+        color: $dropdownLinkColorHover;
+        background-color: white;
         @include animation('dropdown-anim 150ms ease-in-out 100ms forwards');
-        z-index: -9999;
+        z-index: -1;
+
+        > li > a:hover {
+          color: white;
+          background: #24ade0;
+        }
       }
     }
   }
@@ -265,3 +271,67 @@
   display: block;
 }
 
+.sidemenu-cover {
+  position: fixed;
+  left: $side-menu-width + 10.5rem;
+  right: 0px;
+  bottom: 0px;
+  top: -52px;
+  width: 100rem;
+  z-index: -2;
+}
+
+@media (max-height: 800px) {
+  $side-menu-width: 3.5rem;
+  .sidemenu-pinned .navbar-brand-btn {
+    width: $side-menu-width!important;
+    padding: 0.4rem 0;
+  }
+
+  .sidemenu-wrapper {
+    width: $side-menu-width;
+  }
+
+  .sidemenu-pinned {
+    .dashboard-container {
+      padding-left: $side-menu-width + 0.5rem;
+    }
+    .page-container {
+      margin-left: $side-menu-width;
+    }
+  }
+
+  .sidemenu > li > .dropdown-menu {
+    left: 11rem;
+  }
+
+  .sidemenu.submenu {
+    left: $side-menu-width;
+  }
+
+  .sidemenu-cover {
+    left: $side-menu-width + 10.5rem;
+  }
+
+  .sidemenu-item-text {
+    display: none;
+  }
+
+  .icon-circle {
+    margin: 0 auto!important;
+  }
+
+  .sidemenu-small .icon-circle {
+    float: none!important;
+  }
+
+  .sidemenu-item {
+    padding: 0px;
+  }
+}
+
+@media (max-height: 520px) {
+  .sidemenu-small {
+    display: none;
+  }
+}
