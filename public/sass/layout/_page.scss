@@ -10,7 +10,7 @@
 .page-container {
   background-color: $page-bg;
   padding: ($spacer * 2) ($spacer * 4);
-  max-width: 1060px;
+  // max-width: 1060px;
   min-height: calc(100% - 54px);
   padding-bottom: $spacer * 5;
   background-image: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%)

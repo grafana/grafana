@@ -200,3 +200,9 @@
   color: skyblue;
   cursor: pointer;
 }
+
+@media (max-height: 800px) {
+  .tab-container.active {
+    margin-left: 250px!important;
+  }
+}
