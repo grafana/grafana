@@ -1,12 +1,14 @@
-<topnav title="报警管理" icon="fa fa-fw fa-bell" subnav="true">
-  <ul class="nav">
+
+<navbar icon="fa fa-fw fa-bell" title="报警管理">
+	<ul class="nav">
     <li><a href="alerts/status">总览</a></li>
     <li><a href="alerts/history">历史报警</a></li>
-    <li ng-class="{active: isNew}"><a href="alerts/new">新建报警规则</a></li>
-    <li class="active" ng-show="!isNew"><a href="alerts/edit/{{current.name}}">编辑</a></li>
+    <li class="active"><a href="alerts/new">新建报警规则</a></li>
+    <!--<li ng-class="{active: isNew}"><a href="alerts/new">新建报警规则</a></li>-->
+    <!--<li class="active" ng-show="!isNew"><a href="alerts/edit/{{current.name}}">编辑</a></li>-->
     <li><a href="alerts">报警规则</a></li>
   </ul>
-</topnav>
+</navbar>
 
 <div class="page-container">
     <h2 ng-show="isNew">新建报警规则</h2>
@@ -42,7 +44,7 @@
               <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel"
                   ui-draggable="!dashboardViewState.fullscreen" drag="panel.id"
                   ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
-                <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+                <plugin-component type="panel" class="panel-margin"></plugin-component>
               </div>
 
               <div class="clearfix"></div>

@@ -43,7 +43,7 @@ function (angular, _) {
       detailScope.datasource = $scope.datasource;
       detailScope.detail = detail;
       $scope.appEvent('show-modal', {
-        src: 'app/features/setup/partials/service_detail.html',
+        src: 'public/app/features/setup/partials/service_detail.html',
         modalClass: 'modal-no-header invite-modal',
         scope: detailScope,
       });

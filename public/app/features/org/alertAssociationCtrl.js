@@ -232,7 +232,7 @@ function (angular, _, noUiSlider) {
       newScope.addManualMetric = $scope.addManualMetric;
       $scope.suggestTagHost = backendSrv.suggestTagHost;
       $scope.appEvent('show-modal', {
-        src: './app/partials/manual_association.html',
+        src: 'public/app/partials/manual_association.html',
         modalClass: 'modal-no-header confirm-modal',
         scope: newScope
       });

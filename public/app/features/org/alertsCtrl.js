@@ -41,7 +41,7 @@ function (angular) {
     $scope.importAlerts = function () {
       var modalScope = $scope.$new();
       $scope.appEvent('show-modal', {
-        src: './app/partials/import_alerts.html',
+        src: 'public/app/partials/import_alerts.html',
         modalClass: 'modal-no-header confirm-modal',
         scope: modalScope
       });
