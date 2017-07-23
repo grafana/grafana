@@ -2,10 +2,8 @@ define([
     'angular',
     'lodash',
     'app/app',
-    'sigma',
-    'sigma-edge',
   ],
-  function (angular, _, app, sigma) {
+  function (angular, _, app) {
     'use strict';
 
     var module = angular.module('grafana.controllers');
@@ -19,11 +17,20 @@ define([
         }).then(function (response) {
           var errorServices = response.error;
           var normalServices = response.normal;
-          $scope.services = Object.keys(errorServices).concat(Object.keys(normalServices));
+          var services = Object.keys(errorServices).concat(Object.keys(normalServices));
+          var serviceIconMap = _.serviceIconMap();
+          _.each(services, function (service) {
+            $scope.services.push({
+              label: service,
+              type : "node",
+              icon : serviceIconMap[service]
+            });
+          });
         });
       };
 
       $scope.createServiceDependency = function (graph) {
+        graph = window.ctrl.exportData;
         backendSrv.alertD({
           method: "post",
           url: "/cmdb/service/depend",
@@ -53,6 +60,8 @@ define([
           }
         });
       };
+
+      $scope.readInstalledService();
 
     });
   }

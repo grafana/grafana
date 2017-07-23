@@ -26,4 +26,6 @@ define([
   './setup/servicedetailCtrl',
   './setup/filebeatCtrl',
   './systemoverview/systemoverviewCtrl',
+  './service/serviceDepCtrl',
+  './service/buildDependCtrl'
 ], function () {});

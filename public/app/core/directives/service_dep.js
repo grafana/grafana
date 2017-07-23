@@ -9,15 +9,15 @@ define([
     coreModule.directive('node', function(jsPlumbFactory) {
       return jsPlumbFactory.node({
         templateUrl: "node_template.tpl",
-        inherit:["remove"]
+        inherit:["remove", "edit"]
       });
     });
 
-    coreModule.directive('group', function(jsPlumbFactory) {
-      return jsPlumbFactory.group({
-        templateUrl: "group_template.tpl",
-        inherit:["remove", "toggleGroup"]
-      });
-    });
+    // coreModule.directive('group', function(jsPlumbFactory) {
+    //   return jsPlumbFactory.group({
+    //     templateUrl: "group_template.tpl",
+    //     inherit:["remove", "toggleGroup"]
+    //   });
+    // });
   }
 );

@@ -294,6 +294,10 @@ define([
         controller : 'CMDBSetupCtrl',
         resolve: loadCMDBBundle
       })
+      .when('/service_dependency', {
+        templateUrl: 'app/features/service/partials/service_dep.html',
+        controller : 'BuildDependCtrl'
+      })
       .otherwise({
         templateUrl: 'app/partials/error.html',
         controller: 'ErrorCtrl'

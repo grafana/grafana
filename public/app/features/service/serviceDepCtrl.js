@@ -34,30 +34,30 @@ define([
           toolkit = window.toolkit = scope.toolkit;
           console.log('init');
 
+          var data = {};
+          // mock data
+          // {
+          //     "nodes": [
+          //         { "id": "window1", "name": "1", "left": 10, "top": 20 },
+          //         { "id": "window2", "name": "2", "left": 140, "top": 50 },
+          //         { "id": "window3", "name": "3", "left": 450, "top": 50 },
+          //         { "id": "window4", "name": "4", "left": 110, "top": 370 },
+          //         { "id": "window5", "name": "5", "left": 140, "top": 150 },
+          //         { "id": "window6", "name": "6", "left": 50, "top": 50 },
+          //         { "id": "window7", "name": "7", "left": 50, "top": 450 }
+          //     ],
+          //     "edges": [
+          //         { "source": "window1", "target": "window3" },
+          //         { "source": "window1", "target": "window4" },
+          //         { "source": "window3", "target": "window5" },
+          //         { "source": "window5", "target": "window2" },
+          //         { "source": "window4", "target": "window6" },
+          //         { "source": "window6", "target": "window2" }
+          //     ]
+          // }
+
           toolkit.load({
-              data : {
-                  "groups":[
-                      {"id":"one", "title":"Group 1", "left":100, top:50 },
-                      {"id":"two", "title":"Group 2", "left":450, top:250, type:"constrained"  }
-                  ],
-                  "nodes": [
-                      { "id": "window1", "name": "1", "left": 10, "top": 20, group:"one" },
-                      { "id": "window2", "name": "2", "left": 140, "top": 50, group:"one" },
-                      { "id": "window3", "name": "3", "left": 450, "top": 50 },
-                      { "id": "window4", "name": "4", "left": 110, "top": 370 },
-                      { "id": "window5", "name": "5", "left": 140, "top": 150, group:"one" },
-                      { "id": "window6", "name": "6", "left": 50, "top": 50, group:"two" },
-                      { "id": "window7", "name": "7", "left": 50, "top": 450 }
-                  ],
-                  "edges": [
-                      { "source": "window1", "target": "window3" },
-                      { "source": "window1", "target": "window4" },
-                      { "source": "window3", "target": "window5" },
-                      { "source": "window5", "target": "window2" },
-                      { "source": "window4", "target": "window6" },
-                      { "source": "window6", "target": "window2" }
-                  ]
-              }
+            data : data
           });
 
           surface = jsPlumbService.getSurface("demoSurface");
@@ -90,28 +90,40 @@ define([
           return el.getAttribute("jtk-node-type");
       };
 
+      this.dataGenerator = function (type, dragElement, dropInfo) {
+        var $dragElement = $(dragElement);
+        return {
+          name: $dragElement.text(),
+          id: $dragElement.attr('data-node-id')
+        };
+      }
+
       $scope.draggableTypes = [
-          {label: "Node", type: "node"},
-          {label: "Group", type: "group", group:true }
+          {label: "Node1", type: "node"},
+          {label: "Node2", type: "node"},
+          {label: "Node3", type: "node"},
+          {label: "Node4", type: "node"},
+          {label: "Node5", type: "node"},
+        //   {label: "Group", type: "group", group:true }
       ];
 
       $scope.remove = function (obj) {
           toolkit.removeNode(obj);
       };
 
-      $scope.toggleGroup = function(group) {
-          surface.toggleGroup(group);
-      };
+      // $scope.toggleGroup = function(group) {
+      //     surface.toggleGroup(group);
+      // };
 
       this.toolkitParams = {
-          groupFactory:function(type, data, callback) {
-              data.title = "Group " + (toolkit.getGroupCount() + 1);
-              callback(data);
-          },
-          nodeFactory:function(type, data, callback) {
-              data.name = (toolkit.getNodeCount() + 1);
-              callback(data);
-          }
+          // groupFactory:function(type, data, callback) {
+          //     data.title = "Group " + (toolkit.getGroupCount() + 1);
+          //     callback(data);
+          // },
+          // nodeFactory:function(type, data, callback) {
+          //     data.name = (toolkit.getNodeCount() + 1);
+          //     callback(data);
+          // }
       };
 
       this.renderParams = {
@@ -119,20 +131,6 @@ define([
               nodes: {
                   "default": {
                       template: "node"
-                  }
-              },
-              groups:{
-                  "default":{
-                      template:"group",
-                      endpoint:"Blank",
-                      anchor:"Continuous",
-                      revert:false,
-                      orphan:true,
-                      constrain:false
-                  },
-                  constrained:{
-                      parent:"default",
-                      constrain:true
                   }
               }
           },
@@ -178,7 +176,8 @@ define([
 
       var datasetContainer = document.querySelector(".jtk-demo-dataset");
       var _updateDataset = function () {
-          datasetContainer.innerHTML = _syntaxHighlight(JSON.stringify(toolkit.exportData(), null, 4));
+        ctrl.exportData = toolkit.exportData();
+        datasetContainer.innerHTML = _syntaxHighlight(JSON.stringify(toolkit.exportData(), null, 4));
       };
 
     });
