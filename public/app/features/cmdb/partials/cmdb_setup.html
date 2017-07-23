@@ -1,0 +1,36 @@
+<navbar icon="fa fa-fw fa-cubes" title="配置管理库" title-url="cmdb/hostlist">
+  <a href="/cmdb/setup" class="navbar-page-btn">
+		<i class="fa fa-cog"></i>
+    设置
+	</a>
+</navbar>
+
+<div class="page-container">
+  <h2>设置</h2>
+  <ul class="cmdb-detail">
+    <li>
+      <h5>1. 下载Cloudwiz公钥,并将其加入到所有待管理的主机上</h5>
+      <p class="cmdb-key"><i class="fa fa-key"></i>id_rsa.pub <a href="https://download.cloudwiz.cn/package/id_rsa.pub" download class="btn btn-primary btn-cmdb">下载</a></p>
+      <div class="tight-form last">
+        <p style="word-break: break-all">scp id_rsa.pub <用户名>@<主机地址>:~/</p>
+        <br>
+        <p>在待管理主机上运行</p>
+        <p style="word-break: break-all">cat id_rsa.pub >> .ssh/authorized_keys</p>
+      </div>
+    </li>
+    <li>
+      <h5>2. 上传待管理主机列表</h5>
+      <p class="btn-upload">
+        <input type="file" id="hostupload" onchange="angular.element(this).scope().fileChanged(this)" host-upload/>
+        <span ng-if="fileName">{{fileName}}</span>
+        <span ng-if="!fileName">请点击这里选择文件</span>
+        <a ng-click="importHosts();" class="btn btn-primary btn-cmdb">上传文件</a>
+      </p>
+      <p ng-click="getHost()"><i class="fa fa-file cmdb-icon"></i>host.json<span class="cmdb-icon">模板下载</span></p>
+      <p><i class="fa fa-exclamation-circle"></i>注意,上传文件将覆盖您之前所有设备信息,请修改下载的模板后上传</p>
+    </li>
+    <li>
+      <h5>3. 设置完成,Cloudwiz将自动开始扫描主机,您可以在"设备列表"中查看结果,<a href="/cmdb/hostlist">点此前往<i class="fa fa-arrow-right cmdb-icon"></i></a></h5>
+    </li>
+  </ul>
+</div>

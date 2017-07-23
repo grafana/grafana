@@ -20,6 +20,7 @@ import "./directives/rebuild_on_change";
 import "./directives/give_focus";
 import './jquery_extended';
 import './partials';
+import "./directives/host_upload";
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';

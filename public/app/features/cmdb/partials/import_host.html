@@ -1,0 +1,20 @@
+<form class="scheduleForm cmdb-form">
+  <div class="item">
+    <h4 class="center">导入设备列表</h4>
+  </div>
+  <div class="item upload-form">
+    <label for="hostupload" class="label cmdb-label">请上传列表</label>
+    <span class="btn-upload">
+      <input type="file" id="hostupload" class="input-large" onchange="angular.element(this).scope().fileChanged(this)" host-upload/>
+      <span ng-if="fileName">{{fileName}}</span>
+      <span ng-if="!fileName">请选择文件</span>
+    </span>
+  </div>
+  <div class="item">
+    <p>请先下载已有列表信息<a ng-click="getHost();" style="color: blue;">host.json</a>。</p>
+  </div>
+  <div class="item center">
+    <button ng-click="dismiss();" class="btn">取消</button>
+    <button ng-click="importHosts();dismiss();" class="btn btn-primary">添加</button>
+  </div>
+</form>

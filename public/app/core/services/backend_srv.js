@@ -248,5 +248,14 @@ function (angular, _, coreModule, config) {
         return response.data.length;
       });
     };
+
+    this.uploadHostList = function(params) {
+      return this.alertD({
+        method: "post",
+        url: "/cmdb/setting",
+        data: angular.toJson(params),
+        headers: {'Content-Type': 'application/json;'},
+      });
+    };
   });
 });

@@ -14,6 +14,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   var loadPluginsBundle = new BundleLoader('app/features/plugins/all');
   var loadAdminBundle = new BundleLoader('app/features/admin/admin');
   var loadOncallerBundle = new BundleLoader('app/features/oncaller/all');
+  var loadCMDBBundle = new BundleLoader('app/features/cmdb/all');
 
   $routeProvider
   .when('/', {
@@ -337,6 +338,18 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/setting/filebeat', {
     templateUrl: 'public/app/features/setup/partials/filebeat.html',
     controller : 'FilebeatCtrl',
+  })
+  .when('/cmdb/hostlist', {
+    templateUrl: 'public/app/features/cmdb/partials/host_list.html',
+    controller : 'HostListCtrl',
+  })
+  .when('/cmdb/hostlist/hostdetail', {
+    templateUrl: 'public/app/features/cmdb/partials/host_detail.html',
+    controller : 'HostDetailCtrl',
+  })
+  .when('/cmdb/setup', {
+    templateUrl: 'public/app/features/cmdb/partials/cmdb_setup.html',
+    controller : 'CMDBSetupCtrl',
   })
   .otherwise({
     templateUrl: 'public/app/partials/error.html',

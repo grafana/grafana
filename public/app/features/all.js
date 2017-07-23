@@ -27,4 +27,5 @@ define([
   './setup/servicedetailCtrl',
   './setup/filebeatCtrl',
   './styleguide/styleguide',
+  './cmdb/all',
 ], function () {});
