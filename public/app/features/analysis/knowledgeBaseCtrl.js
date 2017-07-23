@@ -49,7 +49,7 @@ define([
 
       $scope.newKnows = function () {
         $scope.appEvent('show-modal', {
-          src: 'app/features/analysis/partials/new_knowledge.html',
+          src: 'public/app/features/analysis/partials/new_knowledge.html',
           modalClass: 'modal-no-header invite-modal',
           scope: $scope.$new(),
         });

@@ -376,7 +376,7 @@ define([
         newScope.logCompare = $scope.logCompare;
         newScope.shift = "-1d";
         $scope.appEvent('show-modal', {
-          src: './app/features/logs/partials/input_time_shift.html',
+          src: 'public/app/features/logs/partials/input_time_shift.html',
           modalClass: 'modal-no-header confirm-modal',
           scope: newScope
         });
