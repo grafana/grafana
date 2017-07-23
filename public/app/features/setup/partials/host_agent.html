@@ -1,6 +1,8 @@
 <navbar icon="fa fa-fw fa-cloud-download" title="安装指南">
 	<ul class="nav">
     <li class="active"><a href="/setting/agent">安装探针</a></li>
+    <li><a href="/setting/service">安装服务</a></li>
+    <li><a href="/setting/filebeat">日志收集配置</a></li>
   </ul>
 </navbar>
 
@@ -15,7 +17,7 @@
 <div class="page-container tab-container" ng-class="{'active':contextSrv.sidemenu}">
   <a ng-click="nextEvent('back')" class="pull-right">返回</a>
   <div ng-if="!selected">
-    <img src="/img/chooseHost.png" alt=""/>
+    <img src="/public/img/chooseHost.png" alt=""/>
   </div>
   <div ng-if="selected">
     <h3>您将在【{{system}}】下{{type}}【{{selected.host}}】探针</h3>

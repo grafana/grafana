@@ -13,14 +13,15 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
   'use strict';
 
   /** @ngInject */
-  function ElasticDatasource(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
+  function ElasticDatasource(instanceSettings, $q, backendSrv, templateSrv, timeSrv, contextSrv) {
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.url = instanceSettings.url;
+    this.index = instanceSettings.index;
     this.name = instanceSettings.name;
+    var tokenTemplate ={};
     tokenTemplate['_token'] = {value: MD5(backendSrv.getToken())};
-    datasource.index = templateSrv.replace(datasource.index, tokenTemplate);
-    this.index = datasource.index;
+    this.index = templateSrv.replace(this.index, tokenTemplate);
     this.timeField = instanceSettings.jsonData.timeField;
     this.esVersion = instanceSettings.jsonData.esVersion;
     this.indexPattern = new IndexPattern(instanceSettings.index, instanceSettings.jsonData.interval);

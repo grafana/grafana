@@ -82,7 +82,7 @@ function (angular, moment, _) {
       newScope.alertData = alertDetail;
       newScope.closeAlert = $scope.closeAlert;
       $scope.appEvent('show-modal', {
-        src: './app/partials/handle_alert.html',
+        src: 'public/app/partials/handle_alert.html',
         modalClass: 'modal-no-header confirm-modal',
         scope: newScope
       });
@@ -133,7 +133,7 @@ function (angular, moment, _) {
       var newScope = $scope.$new();
       newScope.alertDetails = alertDetails;
       $scope.appEvent('show-modal', {
-        src: './app/partials/snooze_alert.html',
+        src: 'public/app/partials/snooze_alert.html',
         modalClass: 'modal-no-header confirm-modal',
         scope: newScope
       });

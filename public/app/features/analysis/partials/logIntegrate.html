@@ -38,7 +38,7 @@
 
       <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel" ui-draggable="!dashboardViewState.fullscreen" drag="panel.id"
             ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
-          <plugin-component ng-if="panel.type != 'table'" type="panel.type" class="panel-margin"></plugin-component>
+          <plugin-component ng-if="type != 'table'" type="panel" class="panel-margin"></plugin-component>
       </div>
       <tabset>
         <tab heading="{{panel.title}}" ng-repeat="(name, panel) in row.panels track by panel.id" ng-if="panel.tab != graph">
@@ -52,7 +52,7 @@
                     <li ng-click="showInputModal()">自定义</li>
                 </ul>
             </div>
-            <plugin-component type="panel.type" class="panel-margin"></plugin-component>
+            <plugin-component type="panel" class="panel-margin"></plugin-component>
         </tab>
       </tabset>
 

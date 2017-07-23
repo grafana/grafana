@@ -1,15 +1,11 @@
-<topnav title="关联性分析" icon="fa fa-fw fa-signal" subnav="true">
-  <ul class="nav pull-right">
-    <li ng-show="true" class="back-to-dashboard-link">
-      <a  onclick="javascript:history.go(-1)">
-        返回到仪表盘
-      </a>
-    </li>
-    <li ng-if="dashboard">
-      <gf-time-picker dashboard="dashboard"></gf-time-picker>
-    </li>
+<navbar icon="fa fa-fw fa-bell" title="报警管理">
+	<ul class="nav">
+    <li><a href="alerts/status">总览</a></li>
+    <li><a href="alerts/history">历史报警</a></li>
+    <li><a href="alerts/new">新建报警规则</a></li>
+    <li><a href="alerts">报警规则</a></li>
   </ul>
-</topnav>
+</navbar>
 <div>
   <div ng-if="!isAssociation">
     <h3 align="center">关联性分析结果尚未计算完成 <btn class="btn btn-small btn-primary" ng-click="flushResult()">刷新结果</btn></h3>
@@ -57,7 +53,7 @@
           <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel"
                ui-draggable="!dashboardViewState.fullscreen" drag="panel.id"
                ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
-            <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+            <plugin-component type="panel" class="panel-margin"></plugin-component>
           </div>
 
           <div ng-if="isAssociation" class="page-container panel panel-associatoin" style="padding: 20px 20px 20px 20px;">

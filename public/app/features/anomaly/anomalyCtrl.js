@@ -28,7 +28,7 @@ define([
 
       $scope.changeExcludeMetrics = function () {
         $scope.appEvent('show-modal', {
-          src: './app/partials/exclude_metrics.html',
+          src: 'public/app/partials/exclude_metrics.html',
           modalClass: 'modal-no-header confirm-modal',
           scope: $scope.$new(),
         });
