@@ -2,14 +2,14 @@
 
 <div class="page-container" style="padding-left:20px;">
 
-    <div class="jtk-demo-main">
+    <div class="jtk-demo-main" style="width:50%; float:left;">
 
         <div class="jtk-demo-canvas">
             <jsplumb-toolkit init="init"
                              render-params="renderParams"
                              jtk-id="demoToolkit"
                              surface-id="demoSurface"
-                             style="width:50%;height:100%;position:relative;margin:0">
+                             style="width:100%;height:100%;position:relative;margin:0">
             </jsplumb-toolkit>
         </div>
 
@@ -26,7 +26,7 @@
 
     </div>
 
-    <div>
+    <div class="service-status-panel">
       <div class="accordion host-list" id="accordion2">
             <div class="accordion-group host-item" ng-repeat="host in service.hosts" ng-if="service.hosts.length">
               <div class="accordion-heading">
@@ -46,12 +46,14 @@
               <div id="{{$index}}" class="accordion-body collapse" ng-class="{true: 'in'}[$index == 0]">
                 <div class="accordion-inner">
                   <ul>
-                    <li ng-repeat="itemType in service.healthItemType" ng-click="selecthealthItemType(itemType)">{{itemType}}</li>
+                    <li ng-repeat="itemType in service.healthItemType" ng-click="selectHealthItemType(itemType.itemType)" class="status-{{itemType.itemTypeStatus | lowercase}}">{{itemType.name}}</li>
                   </ul>
+                  <p>详细指标：</p>
+                  <p>该服务中共有 {{service.metrics.length}} 个指标</p>
                   <table class="table table-hover table-striped">
                     <tr ng-repeat="metric in service.metrics">
-                      <td><p class="text-overflow">{{metric.name}}</p></td>
-                      <td>{{metric.anomalyHealth}}%</td>
+                      <td><p class="text-overflow">{{metric.metricName}}</p></td>
+                      <td>{{metric.metricStatus}}分</td>
                     </tr>
                   </table>
                 </div>
@@ -59,5 +61,7 @@
             </div>
           </div>
     </div>
+
+    <div class="clearfix"></div>
 
 </div>
