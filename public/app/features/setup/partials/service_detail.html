@@ -1,7 +1,8 @@
-<div  class="modal-body" ng-controller="ServiceDetailCtrl" style="padding:20px;">
-  <a class="modal-close" ng-click="dismiss();">
+<div  class="modal-body" ng-controller="ServiceDetailCtrl" style="padding:20px; background: white;">
+  <a class="modal-close pull-right" ng-click="dismiss();">
     <i class="fa fa-remove"></i>
   </a>
+  <div class="clearfix"></div>
   <dl class="service-header">
     <dt class="pull-left">
       <i class="{{detail.icon}}"></i>
@@ -51,7 +52,7 @@
   </div>
   <div class="service-tab service-review" ng-class="{'active': review}">
     <h3 ng-if="!detail.img" style="text-align: center; line-height: 200px;">暂无预览信息</h3>
-    <img ng-if="detail.img" src="{{detail.img}}" alt="">
+    <a href="public/{{detail.img}}" target="_blank"><img style="width: 100%; height: 100%;" ng-if="detail.img" src="public/{{detail.img}}" alt=""></a>
   </div>
   <div class="service-tab service-metrics" ng-class="{'active': metrics}">
     <table class="metrics-table">
