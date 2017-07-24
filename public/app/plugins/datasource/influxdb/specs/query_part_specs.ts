@@ -5,7 +5,7 @@ import queryPart from '../query_part';
 
 describe('InfluxQueryPart', () => {
 
-  describe('series with mesurement only', () => {
+  describe('series with measurement only', () => {
     it('should handle nested function parts', () => {
       var part = queryPart.create({
         type: 'derivative',
@@ -25,7 +25,7 @@ describe('InfluxQueryPart', () => {
       expect(part.render('value')).to.be('spread(value)');
     });
 
-    it('should handle suffirx parts', () => {
+    it('should handle suffix parts', () => {
       var part = queryPart.create({
         type: 'math',
         params: ['/ 100'],
