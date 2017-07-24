@@ -8,7 +8,7 @@ define([
   function ($, _, coreModule) {
     'use strict';
 
-    coreModule.directive('systemPanel', function ($parse, alertMgrSrv, healthSrv, datasourceSrv, contextSrv, backendSrv, $location, $q) {
+    coreModule.default.directive('systemPanel', function ($parse, alertMgrSrv, healthSrv, datasourceSrv, contextSrv, backendSrv, $location, $q) {
       return {
         restrict: 'E',
         link: function (scope, elem, attr) {
