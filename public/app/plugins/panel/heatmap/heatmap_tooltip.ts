@@ -185,7 +185,8 @@ export class HeatmapTooltip {
     if (this.panel.yAxis.logBase === 1) {
       barWidth = Math.floor(HISTOGRAM_WIDTH / (max - min) * yBucketSize * 0.9);
     } else {
-      barWidth = Math.floor(HISTOGRAM_WIDTH / ticks / yBucketSize * 0.9);
+      let barNumberFactor = yBucketSize ? yBucketSize : 1;
+      barWidth = Math.floor(HISTOGRAM_WIDTH / ticks / barNumberFactor * 0.9);
     }
     barWidth = Math.max(barWidth, 1);
 
