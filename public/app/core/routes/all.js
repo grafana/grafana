@@ -38,6 +38,11 @@ define([
         controller: 'ServiceCtrl',
         reloadOnSearch: false,
       })
+      .when('/service_v2', {
+        templateUrl: 'app/features/service/partials/service.html',
+        controller: 'ServiceStatusCtrl',
+        reloadOnSearch: false,
+      })
       .when('/dashboard/:type/:slug', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'LoadDashboardCtrl',

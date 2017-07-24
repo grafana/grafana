@@ -532,6 +532,9 @@
                             });
                         }
                     });
+                    $scope.$on("draggableNodeLoaded", function () {
+                        $scope.droppablesHandler.refresh();
+                    });
                 }
             }
         }]);

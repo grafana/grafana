@@ -1,0 +1,63 @@
+<topnav section="服务状态" icon="fa fa-fw fa-cubes"></topnav>
+
+<div class="page-container" style="padding-left:20px;">
+
+    <div class="jtk-demo-main">
+
+        <div class="jtk-demo-canvas">
+            <jsplumb-toolkit init="init"
+                             render-params="renderParams"
+                             jtk-id="demoToolkit"
+                             surface-id="demoSurface"
+                             style="width:50%;height:100%;position:relative;margin:0">
+            </jsplumb-toolkit>
+        </div>
+
+        <script type="text/ng-template" id="node_template.tpl">
+            <div>
+                <div class="name">
+                    <i class="{{node.icon}}"></i>
+                    <span>{{node.name}}</span>
+                </div>
+            </div>
+            <jtk-source filter=".connect"></jtk-source>
+            <jtk-target></jtk-target>
+        </script>
+
+    </div>
+
+    <div>
+      <div class="accordion host-list" id="accordion2">
+            <div class="accordion-group host-item" ng-repeat="host in service.hosts" ng-if="service.hosts.length">
+              <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#{{$index}}" ng-click="selectHost($index, host.hostName);">
+                  <h4>
+                    <span class="pull-left">
+                      <i class="fa btn btn-primary" ng-class="{true: 'fa-minus', false: 'fa-plus'}[$index == selected]"></i>
+                      <i class="fa fa-file-text-o"></i>
+                      机器名: 
+                      <em>{{host.hostName}}</em>
+                    </span>
+                    <strong class="pull-right">{{host.healthStatusType}}</strong>
+                    <div class="clearfix"></div>
+                  </h4>
+                </a>
+              </div>
+              <div id="{{$index}}" class="accordion-body collapse" ng-class="{true: 'in'}[$index == 0]">
+                <div class="accordion-inner">
+                  <ul>
+                    <li ng-repeat="itemType in service.healthItemType" ng-click="selecthealthItemType(itemType)">{{itemType}}</li>
+                  </ul>
+                  <table class="table table-hover table-striped">
+                    <tr ng-repeat="metric in service.metrics">
+                      <td><p class="text-overflow">{{metric.name}}</p></td>
+                      <td>{{metric.anomalyHealth}}%</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+    </div>
+
+</div>

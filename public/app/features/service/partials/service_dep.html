@@ -7,7 +7,7 @@
 
   </jsplumb-toolkit>-->
 
-<div class="jtk-demo-main" id="jtk-demo" ng-controller="ServiceDepCtrl as ServiceDepCtrl">
+    <div class="jtk-demo-main" id="jtk-demo" ng-controller="ServiceDepCtrl as ServiceDepCtrl">
 
         <div class="sidebar node-palette" jsplumb-palette selector="li" surface-id="demoSurface" 
             type-extractor="ServiceDepCtrl.typeExtractor" generator="ServiceDepCtrl.dataGenerator">
@@ -19,7 +19,7 @@
         </div>
 
         <div class="jtk-demo-canvas">
-<!---->
+
             <jsplumb-toolkit params="ServiceDepCtrl.toolkitParams"
                              init="ServiceDepCtrl.init"
                              render-params="ServiceDepCtrl.renderParams"
@@ -41,18 +41,14 @@
 
         </div>
 
-        <div>
-            <button ng-click="createServiceDependency();">保存</button>
+        <div style="padding-top: 10px;">
+            <button class="btn btn-primary" ng-click="save();">保存</button>
         </div>
 
         <div class="description">
-            <p>
-                This is a demonstration of the Groups functionality, using Angular.
-            </p>
+            <p>Usage:</p>
             <ul>
-                <li>Drag new Nodes/Groups from the palette on the left onto the workspace. You can drag Nodes directly into
-                Groups.</li>
-                <li>Collapse/Expand Groups with the -/+ buttons</li>
+                <li>Drag new Nodes from the palette on the left onto the workspace.</li>
                 <li>Drag existing Nodes into Groups to add them.</li>
                 <li>Click the 'Pencil' icon to enter 'select' mode, then select several nodes. Click the canvas to exit.</li>
                 <li>Click the 'Home' icon to zoom out and see all the nodes.</li>
@@ -61,14 +57,13 @@
 
         <div class="jtk-demo-dataset"></div>
 
-
         <script type="text/ng-template" id="node_template.tpl">
             <div>
                 <div class="name">
                     <div class="delete" title="Click to delete" ng-click="remove(node)">
                         <i class="fa fa-times"></i>
                     </div>
-                    <i class=""></i>
+                    <i class="{{node.icon}}"></i>
                     <span>{{node.name}}</span>
                 </div>
                 <div class="connect"></div>
@@ -77,10 +72,6 @@
             <jtk-target></jtk-target>
         </script>
 
-        </div>
-
-
-
-
+    </div>
 
 </div>

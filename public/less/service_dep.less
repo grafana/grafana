@@ -6,83 +6,32 @@
     position: absolute;
     z-index: 11;
     overflow: hidden;
-    min-width:100px;
+    min-width:200px;
     min-height:30px;
     width: auto;
 }
 
 .jtk-node .name {
-    background-color: #3E7E9C;
-    color: #f7ebca;
+    background-color: #f4f5ef;
+    color: #555;
+    border: 1px solid #32b2e1;
     cursor: move;
     font-size: 13px;
     line-height: 24px;
     padding: 6px;
     text-align: center;
+    .iconfont {
+        font-size: 22px;
+    }
 }
 
 .jtk-node .name span {
     cursor:pointer;
 }
 
-.jtk-group {
-    border:2px solid cadetblue;
-    z-index: 10;
-    width:250px;
-    height:250px;
-}
-
-.group-title {
-    margin:0;
-    width:100%;
-    height:40px;
-    line-height:40px;
-    background-color:cadetblue;
-    color:white;
-    font-size: 13px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    text-indent:7px;
-}
-
-.group-title button {
-    position:absolute;
-    right:5px;
-    top:10px;
-    cursor:pointer;
-    line-height: 1;
-    color: black;
-}
-
-.group-title button:after {
-    content:"-";
-}
-
-.jtk-group {
-    background-color: paleturquoise;
-}
-
-.jtk-group.jtk-group-collapsed {
-    height:40px;
-}
-
-.jtk-group.jtk-group-collapsed .group-title button:after {
-    content:"+";
-}
-
-.jtk-group [jtk-group-content] {
-    height:210px;
-}
-
-.jtk-group.jtk-group-collapsed [jtk-group-content] {
-    display:none;
-}
-
 .jtk-connector {
     z-index:12;
 }
-
-
 
 .jtk-bootstrap {
   min-height:100vh;
@@ -124,7 +73,7 @@
 }
 
 .jtk-demo-canvas {    
-    height:550px;
+    height:555px;
     max-height:700px;
     border:1px solid #CCC;
     background-color:white;
@@ -186,18 +135,19 @@ li {
     float:left;
     text-align:center;
     height: 550px;
-    background-color: #84acb3;
+    background-color: #f3f7fa;
 }
 
 .sidebar ul li {
-    background-color: #234b5e;
+    background-color: #fff;
     border-radius: 11px;
-    color: #f7ebca;
+    color: #555;
     cursor: move;
     margin-bottom: 10px;
     margin-left: 6px;
     padding: 8px;
     width:128px;
+    border: 1px solid #555;
 }
 
 .sidebar ul {
@@ -207,7 +157,7 @@ li {
 }
 
 .sidebar ul li:hover {
-    background-color: #577a8b;
+    border: 1px solid #1ca6d9;
 }
 
 .sidebar i {
@@ -297,29 +247,4 @@ path {
     position:absolute;
     bottom: 13px;
     right: 5px;
-}
-
-/* header styles */
-
-// .demo-links {
-//     position: fixed;
-//     right: 0;
-//     top: 57px;
-//     font-size: 11px;
-//     background-color: white;
-//     opacity: 0.8;
-//     padding-right: 10px;
-//     padding-left: 5px;
-//     text-transform: uppercase;
-//     z-index:100001;
-// }
-
-// .demo-links div {
-//     display:inline;
-//     margin-right:7px;
-//     margin-left:7px;
-// }
-
-.demo-links i {
-    padding:4px;
 }
