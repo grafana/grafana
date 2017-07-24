@@ -58,4 +58,10 @@ FROM dashboard;`
 		Sqlite(rawSQL).
 		Postgres(rawSQL).
 		Mysql(rawSQL))
+
+	// change column type of dashboard_version.data
+	mg.AddMigration("alter dashboard_version.data to mediumtext v1", new(RawSqlMigration).
+		Sqlite("SELECT 0 WHERE 0;").
+		Postgres("SELECT 0;").
+		Mysql("ALTER TABLE dashboard_version MODIFY data MEDIUMTEXT;"))
 }
