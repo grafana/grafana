@@ -55,12 +55,8 @@ $criticalBackground: rgb(224,76,65);
 .system-item-pie{
   width: 150px;
   height: 150px;
-  margin: -20px auto;
+  margin: -36px auto 0px;
 
-  #pieLabel0.pieLabel {
-    top: 82px!important;
-    left: 57px!important;
-  }
   .pieLabel div {
       font-size: 18px!important;
       margin-top: -20px;
@@ -128,7 +124,7 @@ $criticalBackground: rgb(224,76,65);
 }
 
 .system-status-box{
-  margin: 20px 0px;
+  margin: -10px 0px 10px;
   &>span{
     margin: 5px;
   }
@@ -157,7 +153,7 @@ $criticalBackground: rgb(224,76,65);
   color: $white;
   display: flex;
   padding: 10px 0px;
-  height: 65px;
+  height: 112px;
   overflow: hidden;
   span{
     width: 90%;

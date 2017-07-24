@@ -184,6 +184,12 @@ export class SideMenuCtrl {
       click: this.getOrgsMenu,
     });
 
+    this.bottomLinks.push({
+      text: contextSrv.systemsMap[_.findIndex(contextSrv.systemsMap,{'Id': contextSrv.user.systemId})].SystemsName,
+      icon: "fa fa-fw fa-sitemap",
+      url: this.getUrl('/systems')
+    });
+
     // this.openUserDropdown();
     this.$scope.$on('$routeChangeSuccess', () => {
       $scope.showSubmenu = false;
@@ -238,7 +244,7 @@ export class SideMenuCtrl {
 
   switchOrg(orgId) {
     this.backendSrv.post('/api/user/using/' + orgId).then(() => {
-      window.location.href = `${config.appSubUrl}/`;
+      window.location.href = this.getUrl('/systems');
     });
   };
 
