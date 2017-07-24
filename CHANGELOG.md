@@ -13,6 +13,11 @@
 * **InfluxDB**: Wrong username/password parameter name when using direct access, fixes [#8789](https://github.com/grafana/grafana/issues/8789)
 * **Forms(TextArea)**: Bug fix for no scroll in text areas [#8797](https://github.com/grafana/grafana/issues/8797)
 
+## Changes
+
+* **Settings(defaults)**: allow_sign_up default changed from true to false [#8743](https://github.com/grafana/grafana/issues/8743)
+* **Settings(defaults)**: allow_org_create default changed from true to false
+
 # 4.4.1 (2017-07-05)
 
 ## Bug Fixes
