@@ -206,7 +206,7 @@ For MySQL, use either `true`, `false`, or `skip-verify`.
 ### max_idle_conn
 The maximum number of connections in the idle connection pool.
 
-### max_open_conn 
+### max_open_conn
 The maximum number of open connections to the database.
 
 <hr />
@@ -246,13 +246,13 @@ Define a white list of allowed ips/domains to use in data sources. Format: `ip_o
 ### allow_sign_up
 
 Set to `false` to prohibit users from being able to sign up / create
-user accounts. Defaults to `true`.  The admin user can still create
+user accounts. Defaults to `false`.  The admin user can still create
 users from the [Grafana Admin Pages](../../reference/admin)
 
 ### allow_org_create
 
 Set to `false` to prohibit users from creating new organizations.
-Defaults to `true`.
+Defaults to `false`.
 
 ### auto_assign_org
 
