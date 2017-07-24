@@ -95,10 +95,8 @@ define([
         panel.status = { success: ['正常服务', 0], warn: ['异常服务', 0], danger: ['严重', 0] };
         panel.href = $scope.getUrl('/service');
         panel.allServices = [];
-
         var allServicesMap = _.allServies();
         var promiseList = [];
-
         _.each(Object.keys(allServicesMap), function (key) {
           var queries = [{
             "metric"    : contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + key + ".state",
@@ -110,18 +108,15 @@ define([
           var q = datasourceSrv.getStatus(queries, 'now-5m').then(function (response) {
             var serviceState = 0;
             var serviceHosts = [];
-            
             _.each(response, function(service) {
               if (_.isObject(service)) {
                 var status = service.dps[_.last(Object.keys(service.dps))];
-                
                 if (status > 0) {
                   panel.status.warn[1]++;
                   serviceState++;
                 } else {
                   panel.status.success[1]++;
                 }
-
                 serviceHosts.push({
                   "name": service.tags.host,
                   "state": status > 0 ? "异常" : "正常"
@@ -153,7 +148,6 @@ define([
         $scope.summaryList = [];
         $scope.hostsResource = {};
         $scope.hostPanels = [];
-
         var promiseList = [];
 
         backendSrv.alertD({
@@ -176,7 +170,6 @@ define([
             "downsample": "1s-sum",
             "tags"      : { "host" : "*" }
           }];
-          
           var q = datasourceSrv.getHostResource(queries, 'now-1m').then(function (response) {
             _.each(response, function (metric) {
               $scope.hostsResource[metric.host]["status"] = metric.value;
@@ -238,7 +231,6 @@ define([
           });
         })
       };
-      
       // 智能分析预测 切换周期
       $scope.changePre = function (selectedOption) {
         var panels   = $scope._dashboard.rows[5].panels;
@@ -259,10 +251,9 @@ define([
           };
 
           backendSrv.getPrediction(params).then(function (response) {
-            var times = [ '1天后', '1周后', '1月后', '1季度后', '半年后' ];
+            var times = ['1天后', '1周后', '1月后', '1季度后', '半年后'];
             var num   = 0;
             var data  = response.data;
-            
             if (_.isEmpty(data)) { throw Error; }
 
             for (var i in data) {
