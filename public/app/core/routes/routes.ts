@@ -221,7 +221,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     resolve: loadOrgBundle,
   })
   .when('/alerts/edit/:id', {
-    templateUrl: 'app/features/org/partials/alertEdit.html',
+    templateUrl: 'public/app/features/org/partials/alertEdit.html',
     controller : 'AlertEditCtrl',
     resolve: loadOrgBundle,
   })
