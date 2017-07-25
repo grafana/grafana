@@ -34,7 +34,10 @@
       "jquery.flot.stackpercent": "vendor/flot/jquery.flot.stackpercent",
       "jquery.flot.time": "vendor/flot/jquery.flot.time",
       "jquery.flot.crosshair": "vendor/flot/jquery.flot.crosshair",
-      "jquery.flot.fillbelow": "vendor/flot/jquery.flot.fillbelow"
+      "jquery.flot.fillbelow": "vendor/flot/jquery.flot.fillbelow",
+      'fullcalendar':             'vendor/fullcalendar/dist/fullcalendar.min',
+      'ui.calendar':              'vendor/angular-ui-calendar/src/calendar',
+      'zh-cn':                    'vendor/fullcalendar/dist/zh-cn',
     },
 
     packages: {

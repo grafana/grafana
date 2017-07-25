@@ -19,7 +19,7 @@ module.exports = function(config) {
         '<%= genDir %>/css/grafana.light.css',
         '<%= genDir %>/vendor/css/font-awesome.min.css',
         '<%= genDir %>/vendor/css/nouislider.min.css',
-        '<%= genDir %>/css/bootstrap-responsive.min.css',
+        '<%= genDir %>/vendor/css/bootstrap-responsive.min.css',
         '<%= genDir %>/vendor/css/iconfont.css',
       ],
       dest: '<%= genDir %>/css/grafana.light.min.css'
