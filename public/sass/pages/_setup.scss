@@ -201,3 +201,9 @@ $tab-list-width: 14.5rem;
   color: skyblue;
   cursor: pointer;
 }
+
+@media (max-height: 800px) {
+  .tab-container.active {
+    margin-left: 250px!important;
+  }
+}

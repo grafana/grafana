@@ -22,6 +22,7 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
     var tokenTemplate ={};
     tokenTemplate['_token'] = {value: MD5(backendSrv.getToken())};
     this.index = templateSrv.replace(this.index, tokenTemplate);
+    instanceSettings.index = this.index;
     this.timeField = instanceSettings.jsonData.timeField;
     this.esVersion = instanceSettings.jsonData.esVersion;
     this.indexPattern = new IndexPattern(instanceSettings.index, instanceSettings.jsonData.interval);

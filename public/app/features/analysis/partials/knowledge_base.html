@@ -1,15 +1,11 @@
-<topnav title="运维知识库" icon="fa fa-fw fa-book" subnav="true">
-    <ul class="nav pull-right">
-        <li ng-show="true" class="back-to-dashboard-link">
-            <a onclick="javascript:history.go(-1)">
-                返回到仪表盘
-            </a>
-        </li>
+
+<navbar icon="fa fa-fw fa-book" title="运维知识库">
+	<ul class="nav pull-right">
         <li ng-if="dashboard">
             <gf-time-picker dashboard="dashboard"></gf-time-picker>
         </li>
     </ul>
-</topnav>
+</navbar>
 
 <div class="page-container" style="background:#fff;">
     <form>

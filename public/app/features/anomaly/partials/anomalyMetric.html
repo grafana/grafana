@@ -1,14 +1,20 @@
-<topnav title="健康管理" icon="fa fa-fw fa-stethoscope" subnav="true">
-  <ul class="nav">
-    <li><a href="anomaly">列表</a></li>
-    <li class="active"><a>指标</a></li>
-  </ul>
-  <ul class="nav pull-right">
-    <li ng-if="dashboard">
-      <gf-time-picker dashboard="dashboard"></gf-time-picker>
-    </li>
-  </ul>
-</topnav>
+<navbar icon="fa fa-fw fa-stethoscope" title="健康管理">
+    <ul class="nav">
+      <li><a href="anomaly">列表</a></li>
+      <li class="active"><a>指标</a></li>
+    </ul>
+    <ul class="nav pull-right">
+        <li ng-show="dashboard.meta.fullscreen" class="dashnav-back-to-dashboard">
+            <a ng-click="exitFullscreen()">
+                返回到仪表盘
+            </a>
+        </li>
+        <li ng-if="dashboard">
+            <gf-time-picker dashboard="dashboard"></gf-time-picker>
+        </li>
+    </ul>
+</navbar>
+
 
 <div class="main-view-container" ng-class="{'fixed-top':toTop}">
   <div class="table-container" ng-class="{'fixed-top':toTop}">
