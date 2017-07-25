@@ -1,13 +1,8 @@
 <topnav section="创建服务依赖" icon="fa fa-fw fa-home"></topnav>
 
 <div class="page-container" style="padding-left:20px;">
-  <!--<jsplumb-toolkit surface-id="mySurface" jtk-id="myToolkit" params="ToolkitParams" renderParams="RenderParams">
 
-    You can put content in here.
-
-  </jsplumb-toolkit>-->
-
-    <div class="jtk-demo-main" id="jtk-demo" ng-controller="ServiceDepCtrl as ServiceDepCtrl">
+    <div class="build-service-depend" id="jtk-demo" ng-controller="ServiceDepCtrl as ServiceDepCtrl">
 
         <div class="sidebar node-palette" jsplumb-palette selector="li" surface-id="demoSurface" 
             type-extractor="ServiceDepCtrl.typeExtractor" generator="ServiceDepCtrl.dataGenerator">
@@ -60,10 +55,10 @@
         <script type="text/ng-template" id="node_template.tpl">
             <div>
                 <div class="name">
+                    <i class="{{node.icon}} service-icon"></i>
                     <div class="delete" title="Click to delete" ng-click="remove(node)">
                         <i class="fa fa-times"></i>
                     </div>
-                    <i class="{{node.icon}}"></i>
                     <span>{{node.name}}</span>
                 </div>
                 <div class="connect"></div>

@@ -12,7 +12,7 @@ define([
 
       this.readInstalledService = function () {
         return backendSrv.alertD({
-          url: "/cmdb/service/status"
+          url: "/cmdb/service"
         });
       };
 
@@ -54,7 +54,7 @@ define([
       
       this.readMetricStatus = function (service, host) {
         return backendSrv.alertD({
-          url: "/service/status?service=" + service + "&host=" + host
+          url: "/service/status?service=" + service
         });
       };
 

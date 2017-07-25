@@ -14,15 +14,13 @@ define([
       // load palette data
       $scope.draggableTypes = [];
       serviceDepSrv.readInstalledService().then(function (response) {
-        var errorServices = response.data.error;
-        var normalServices = response.data.normal;
-        var services = Object.keys(errorServices).concat(Object.keys(normalServices));
+        var services = response.data;
         var serviceIconMap = _.serviceIconMap();
         _.each(services, function (service) {
           $scope.draggableTypes.push({
-            label: service,
+            label: service.name,
             type : "node",
-            icon : serviceIconMap[service]
+            icon : serviceIconMap[service.name]
           });
         });
       });

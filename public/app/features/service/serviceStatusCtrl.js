@@ -8,6 +8,12 @@ define([
 
     var module = angular.module('grafana.controllers');
 
+    module.filter('formatItemType', function () {
+      return function (text) {
+        return text.replace('Host', '').replace('Service', '');
+      }
+    });
+
     module.controller('ServiceStatusCtrl', function ($scope, $timeout, $q, serviceDepSrv, jsPlumbService) {
       var toolkit = jsPlumbService.getToolkit("demoToolkit");
       var surface = jsPlumbService.getSurface("demoSurface");
@@ -41,72 +47,90 @@ define([
         
         service = $(node.el).attr("data-jtk-node-id");
         
-        $scope.service.hosts = [];
-        // $scope.service.healthItemType = [];
-        $scope.service.metrics = [];
+        $scope.service = {};
+        $scope.metrics = {};
         
-        serviceDepSrv.readHostStatus(service).then(function (response) {
-          var hosts = [];
-          var items = [];
-          $scope.service.hosts = [];
-
-          if (!_.isNull(response.data)) {
-            response = response.data;
-            hosts = Object.keys(response.hostStatusMap);
-
-            _.each(hosts, function (host) {
-              var hostInfo = response.hostStatusMap[host];
-              var healthItemType = [];
-              
-              serviceDepSrv.readMetricStatus(service, host).then(function (resp) {
-                if (!_.isNull(resp.data)) {
-                  resp = resp.data;
-                  items = Object.keys(resp.hostStatusMap[host].itemStatusMap);
-                  $scope.itemStatusMap = resp.hostStatusMap[host].itemStatusMap;
-                  // $scope.service.healthItemType = [];
-
-                  _.each(items, function (item) {
-                    var itemInfo = resp.hostStatusMap[host].itemStatusMap[item];
-                    // $scope.service.healthItemType.push({
-                    healthItemType.push({
-                      itemType: itemInfo.type,
-                      name: itemInfo.type.replace('Host', '').replace('Service', ''),
-                      itemTypeStatus: itemInfo.healthStatusType
-                    });
-                  });
-                }
-              });
-
-              $scope.service.hosts.push({
-                hostName: hostInfo.hostName,
-                hostStatus: hostInfo.healthStatusType,
-                itemType: healthItemType
-              });
-            });
-          }
+        serviceDepSrv.readMetricStatus(service).then(function (response) {
+          $scope.service = response.data;
         });
+        
+        // serviceDepSrv.readHostStatus(service).then(function (response) {
+        //   var hosts = [];
+        //   var items = [];
+        //   $scope.service.hosts = [];
+
+        //   if (!_.isNull(response.data)) {
+        //     response = response.data;
+        //     hosts = Object.keys(response.hostStatusMap);
+
+        //     _.each(hosts, function (host) {
+        //       var hostInfo = response.hostStatusMap[host];
+        //       var healthItemType = [];
+              
+        //       serviceDepSrv.readMetricStatus(service, host).then(function (resp) {
+        //         if (!_.isNull(resp.data)) {
+        //           resp = resp.data;
+        //           items = Object.keys(resp.hostStatusMap[host].itemStatusMap);
+        //           $scope.itemStatusMap = resp.hostStatusMap[host].itemStatusMap;
+        //           // $scope.service.healthItemType = [];
+
+        //           _.each(items, function (item) {
+        //             var itemInfo = resp.hostStatusMap[host].itemStatusMap[item];
+        //             // $scope.service.healthItemType.push({
+        //             healthItemType.push({
+        //               itemType: itemInfo.type,
+        //               name: itemInfo.type.replace('Host', '').replace('Service', ''),
+        //               itemTypeStatus: itemInfo.healthStatusType,
+        //               metrics: itemInfo.metricStatusMap
+        //             });
+        //           });
+        //         }
+        //       });
+
+        //       $scope.service.hosts.push({
+        //         hostName: hostInfo.hostName,
+        //         hostStatus: hostInfo.healthStatusType,
+        //         itemType: healthItemType
+        //       });
+        //     });
+        //   }
+        // });
       };
 
       $scope.selectHost = function(index, host) {
         $scope.selected = ($scope.selected == index) ? -1 : index;
       };
 
-      $scope.selectHealthItemType = function (itemType) {
-        var metrics = Object.keys($scope.itemStatusMap[itemType].metricStatusMap || {});
-        $scope.service.metrics = [];
+      $scope.selectHealthItemType = function (host, item) {
+        // $scope.metrics = $scope.service.hostStatusMap[host].itemStatusMap[item].metricStatusMap;
+        var metrics = $scope.service.hostStatusMap[host].itemStatusMap[item].metricStatusMap;
+        var metric = [];
+        for (name in metrics) {
+          metric.push({
+            name: name,
+            anomalyHealth: metrics.anomalyHealth
+          })
+        }
+        $scope.metric = metric;
         
-        _.each(metrics, function (metric) {
-          var metricInfo = $scope.itemStatusMap[itemType].metricStatusMap[metric];
-          $scope.service.metrics.push({
-            metricName: metric,
-            metricStatus: metricInfo.anomalyHealth
-          });
-        });
+        // var metrics = Object.keys($scope.itemStatusMap[itemType].metricStatusMap || {});
+        // $scope.service.metrics = [];
+        
+        // _.each(metrics, function (metric) {
+        //   var metricInfo = $scope.itemStatusMap[itemType].metricStatusMap[metric];
+        //   $scope.service.metrics.push({
+        //     metricName: metric,
+        //     metricStatus: metricInfo.anomalyHealth
+        //   });
+        // });
 
+        $scope.$broadcast('load-table');
+        
         // $("#metricStatus").bootstrapTable({
         //   data: $scope.service.metrics
         // });
-        $("#metricStatus").bootstrapTable('load', $scope.service.metrics);
+        // var data = $scope.service.metrics
+        // $("#metricStatus").bootstrapTable('load', data);
       };
 
       $scope.renderParams = {

@@ -26,6 +26,7 @@
 ///<amd-dependency path="./directives/host_upload" />
 
 ///<amd-dependency path="./directives/service_dep" />
+///<amd-dependency path="./directives/table_loader" />
 
 export * from './directives/array_join'
 export * from './directives/give_focus'
