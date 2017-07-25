@@ -1,9 +1,14 @@
+$tab-list-width: 14.5rem;
+.setup-container {
+  margin: 0;
+  padding: 0;
+}
+
 .tab-list{
   position: fixed;
   list-style: none;
-  width: 14.5rem;
+  width: $tab-list-width;
   height: 100%;
-  margin-left: $side-menu-width;
   background: rgb(243,247,250);
   border: solid 1px #ddd;
   &>li{
@@ -26,19 +31,15 @@
 
 .tab-container{
   position: fixed;
-  left: 0;
-  right: 0;
-  height: 100%;
   margin: 0px;
-  margin-left: $side-menu-width + 14.5rem;
+  margin-left: $tab-list-width;
+  height: 100%;
+  padding: 40px;
   background: #fff;
   box-shadow: -5px 5px 5px 0px #ccc;
   overflow: scroll;
   .tight-form{
     padding: 10px;
-  }
-  &.active{
-    margin-left: 300px;
   }
   .label{
     background: none;

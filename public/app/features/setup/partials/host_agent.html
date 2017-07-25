@@ -4,73 +4,75 @@
 	</a>
 </navbar>
 
-<ul class="tab-list pull-left">
-  <li>请选择操作系统:</li>
-  <li ng-repeat="item in platform" ng-click="changeSelect(item)" ng-class="{'active':item.host == selected.host}">
-    <i class="{{item.icon}}"></i>
-    {{item.host}}
-  </li>
-</ul>
-<div class="page-container tab-container" ng-class="{'active':contextSrv.sidemenu}">
-  <a ng-click="nextEvent('back')" class="pull-right">返回</a>
-  <div ng-if="!selected">
-    <img src="public/img/chooseHost.png" alt=""/>
-  </div>
-  <div ng-if="selected">
-    <h3>您将在【{{system}}】下{{type}}【{{selected.host}}】探针</h3>
-
-    <h5>您也可以选择<span class="btn-update" ng-click="updateType('安装')">安装</span>或<span class="btn-update" ng-click="updateType('更新')">更新</span>探针</h5>
-
-    <h4>1. {{type}}部署</h4>
-    <h5>* 您可以选择一键{{type}}</h5>
-    <ul class="tight-form last">
-      <li style="word-break: break-all">
-        sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} AGENT_URL=https://download.cloudwiz.cn/agent bash -c "$(curl -kL https://download.cloudwiz.cn/agent/deploy_agent.sh)"{{updateAuto}}
-      </li>
-    </ul>
-    
-    <h5 style="cursor: pointer;" ng-click="installManual = !installManual">* 如果您希望手动{{type}},请点击这里<i style="margin-left:10px;" ng-class="{true:'fa fa-hand-o-down',false:'fa fa-hand-o-left'}[installManual]"></i></h5>
-    <ul ng-if="installManual" style="list-style:lower-roman;">
-      <li>
-        <p style="word-break: break-all">创建文件安装目录</p>
-        <div class="tight-form last">
-          <p style="word-break: break-all">/tmp/publish/{{selected.addr}}/</p>
-        </div>
-      </li>
-      <li>
-        <p style="word-break: break-all">下载相关文件</p>
-        <div class="tight-form last">
-          <p style="word-break: break-all">wget https://download.cloudwiz.cn/agent/deploy_agent.sh</p>
-          <p style="word-break: break-all">wget https://download.cloudwiz.cn/agent/{{selected.addr}}/agent.tar.gz</p>
-          <p style="word-break: break-all">wget https://download.cloudwiz.cn/agent/{{selected.addr}}/agent.tar.gz.md5</p>
-        </div>
-      </li>
-      <li>
-        <p style="word-break: break-all">修改文件权限</p>
-        <div class="tight-form last">
-          <p style="word-break: break-all">chmod +x deploy_agent.sh</p>
-        </div>
-      </li>
-      <li>
-        <p style="word-break: break-all">部署探针</p>
-        <div class="tight-form last">
-          <p style="word-break: break-all">sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} ./deploy_agent.sh{{updateSelf}}</p>
-        </div>
-      </li>
-    </ul>
-
-    <h4>2. 启动探针</h4>
-    <ul class="tight-form last">
-      <li style="word-break: break-all">sudo /etc/init.d/cloudwiz-agent start</li>
-    </ul>
-
-    <div class="pull-right installed">
-      <button ng-click="nextEvent('skip')" class="btn" ng-if="installed">跳过</button>
-      <button ng-click="nextEvent('import')" class="btn" ng-disabled="!installed" ng-class="{'btn-success':installed}">导入报警规则</button>
-      <button ng-click="createTemp()" class="btn" ng-disabled="!installed" ng-class="{'btn-success':installed}">导入模板</button>
-      <button ng-click="nextEvent('next')" class="btn" ng-disabled="!installed" ng-class="{'btn-primary':installed}">下一步</button>
+<div class="page-container setup-container">
+  <ul class="tab-list pull-left">
+    <li>请选择操作系统:</li>
+    <li ng-repeat="item in platform" ng-click="changeSelect(item)" ng-class="{'active':item.host == selected.host}">
+      <i class="{{item.icon}}"></i>
+      {{item.host}}
+    </li>
+  </ul>
+  <div class="tab-container">
+    <a ng-click="nextEvent('back')" class="pull-right">返回</a>
+    <div ng-if="!selected" style="height: 100%; overflow: hidden;">
+      <img src="public/img/chooseHost.png" alt=""/>
     </div>
-  </div>
+    <div ng-if="selected">
+      <h3>您将在【{{system}}】下{{type}}【{{selected.host}}】探针</h3>
 
+      <h5>您也可以选择<span class="btn-update" ng-click="updateType('安装')">安装</span>或<span class="btn-update" ng-click="updateType('更新')">更新</span>探针</h5>
+
+      <h4>1. {{type}}部署</h4>
+      <h5>* 您可以选择一键{{type}}</h5>
+      <ul class="tight-form last">
+        <li style="word-break: break-all">
+          sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} AGENT_URL=https://download.cloudwiz.cn/agent bash -c "$(curl -kL https://download.cloudwiz.cn/agent/deploy_agent.sh)"{{updateAuto}}
+        </li>
+      </ul>
+      
+      <h5 style="cursor: pointer;" ng-click="installManual = !installManual">* 如果您希望手动{{type}},请点击这里<i style="margin-left:10px;" ng-class="{true:'fa fa-hand-o-down',false:'fa fa-hand-o-left'}[installManual]"></i></h5>
+      <ul ng-if="installManual" style="list-style:lower-roman;">
+        <li>
+          <p style="word-break: break-all">创建文件安装目录</p>
+          <div class="tight-form last">
+            <p style="word-break: break-all">/tmp/publish/{{selected.addr}}/</p>
+          </div>
+        </li>
+        <li>
+          <p style="word-break: break-all">下载相关文件</p>
+          <div class="tight-form last">
+            <p style="word-break: break-all">wget https://download.cloudwiz.cn/agent/deploy_agent.sh</p>
+            <p style="word-break: break-all">wget https://download.cloudwiz.cn/agent/{{selected.addr}}/agent.tar.gz</p>
+            <p style="word-break: break-all">wget https://download.cloudwiz.cn/agent/{{selected.addr}}/agent.tar.gz.md5</p>
+          </div>
+        </li>
+        <li>
+          <p style="word-break: break-all">修改文件权限</p>
+          <div class="tight-form last">
+            <p style="word-break: break-all">chmod +x deploy_agent.sh</p>
+          </div>
+        </li>
+        <li>
+          <p style="word-break: break-all">部署探针</p>
+          <div class="tight-form last">
+            <p style="word-break: break-all">sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} ./deploy_agent.sh{{updateSelf}}</p>
+          </div>
+        </li>
+      </ul>
+
+      <h4>2. 启动探针</h4>
+      <ul class="tight-form last">
+        <li style="word-break: break-all">sudo /etc/init.d/cloudwiz-agent start</li>
+      </ul>
+
+      <div class="pull-right installed">
+        <button ng-click="nextEvent('skip')" class="btn" ng-if="installed">跳过</button>
+        <button ng-click="nextEvent('import')" class="btn" ng-disabled="!installed" ng-class="{'btn-success':installed}">导入报警规则</button>
+        <button ng-click="createTemp()" class="btn" ng-disabled="!installed" ng-class="{'btn-success':installed}">导入模板</button>
+        <button ng-click="nextEvent('next')" class="btn" ng-disabled="!installed" ng-class="{'btn-primary':installed}">下一步</button>
+      </div>
+    </div>
+
+  </div>
 </div>
 
