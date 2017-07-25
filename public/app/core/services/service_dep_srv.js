@@ -42,12 +42,7 @@ define([
 
       this.readServiceStatus = function (service) {
         return backendSrv.alertD({
-          method: "POST",
-          url   : "/service/status",
-          data  : {
-            service: service,
-            hostStatusIncluded: false
-          }
+          url: "/service/status?hostStatusIncluded=false&service=" + service
         });
       };
 

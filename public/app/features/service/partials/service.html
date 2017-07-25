@@ -1,9 +1,8 @@
 <topnav section="服务状态" icon="fa fa-fw fa-cubes"></topnav>
 
-<div class="page-container" style="padding-left:20px;">
+<div class="page-container service-status" style="padding-left:20px;">
 
-    <div class="jtk-demo-main" style="width:50%; float:left;">
-
+    <div class="jtk-demo-main service-status-canvas" style="width:50%; float:left;">
         <div class="jtk-demo-canvas">
             <jsplumb-toolkit init="init"
                              render-params="renderParams"
@@ -12,49 +11,52 @@
                              style="width:100%;height:100%;position:relative;margin:0">
             </jsplumb-toolkit>
         </div>
-
         <script type="text/ng-template" id="node_template.tpl">
             <div>
                 <div class="name">
-                    <i class="{{node.icon}}"></i>
+                    <i class="{{node.icon}} status-{{node.status | lowercase}}"></i>
                     <span>{{node.name}}</span>
                 </div>
             </div>
             <jtk-source filter=".connect"></jtk-source>
             <jtk-target></jtk-target>
         </script>
-
     </div>
 
     <div class="service-status-panel">
-      <div class="accordion host-list" id="accordion2">
+        <div class="host-head" ng-if="service.hosts.length">
+          <span class="pull-left">机器名称</span>
+          <span class="pull-right">机器状态</span>
+          <div class="clearfix"></div>
+        </div>
+        <div class="accordion host-list" id="accordion2">
             <div class="accordion-group host-item" ng-repeat="host in service.hosts" ng-if="service.hosts.length">
               <div class="accordion-heading">
                 <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#{{$index}}" ng-click="selectHost($index, host.hostName);">
                   <h4>
                     <span class="pull-left">
                       <i class="fa btn btn-primary" ng-class="{true: 'fa-minus', false: 'fa-plus'}[$index == selected]"></i>
-                      <i class="fa fa-file-text-o"></i>
-                      机器名: 
-                      <em>{{host.hostName}}</em>
+                      <span>{{host.hostName}}</span>
                     </span>
-                    <strong class="pull-right">{{host.healthStatusType}}</strong>
+                    <span class="pull-right"><em class="host-status status-{{host.hostStatus | lowercase}}"> </em></span>
                     <div class="clearfix"></div>
                   </h4>
                 </a>
               </div>
-              <div id="{{$index}}" class="accordion-body collapse" ng-class="{true: 'in'}[$index == 0]">
+              <div id="{{$index}}" class="accordion-body collapse">
                 <div class="accordion-inner">
-                  <ul>
-                    <li ng-repeat="itemType in service.healthItemType" ng-click="selectHealthItemType(itemType.itemType)" class="status-{{itemType.itemTypeStatus | lowercase}}">{{itemType.name}}</li>
+                  <ul class="item-type">
+                    <li ng-repeat="item in host.itemType" ng-click="selectHealthItemType(item.itemType)" class="status-{{item.itemTypeStatus | lowercase}}">{{item.name}}</li>
                   </ul>
                   <p>详细指标：</p>
                   <p>该服务中共有 {{service.metrics.length}} 个指标</p>
-                  <table class="table table-hover table-striped">
-                    <tr ng-repeat="metric in service.metrics">
-                      <td><p class="text-overflow">{{metric.metricName}}</p></td>
-                      <td>{{metric.metricStatus}}分</td>
-                    </tr>
+                  <table class="table table-hover table-striped" id="metricStatus" data-pagination="true" data-page-size="5">
+                    <thead>
+                      <tr>
+                        <th data-field="metricName" data-sortable="true">指标</th>
+                        <th data-field="metricStatus" data-sortable="true">分数</th>
+                      </tr>
+                    </thead>
                   </table>
                 </div>
               </div>

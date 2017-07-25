@@ -8,7 +8,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('ServiceStatusCtrl', function ($scope, $timeout, serviceDepSrv, jsPlumbService) {
+    module.controller('ServiceStatusCtrl', function ($scope, $timeout, $q, serviceDepSrv, jsPlumbService) {
       var toolkit = jsPlumbService.getToolkit("demoToolkit");
       var surface = jsPlumbService.getSurface("demoSurface");
       var service = '';
@@ -17,46 +17,70 @@ define([
 
       $scope.init = function (scope, element, attrs) {
         toolkit = window.toolkit = scope.toolkit;
+
         serviceDepSrv.readServiceDependency().then(function (response) {
           if (!_.isNull(response.data)) {
-            var dependencies = angular.fromJson(_.last(response.data).attributes[0].value);
-            $scope.updateId = _.last(response.data).id;
-            $scope.graphId = _.last(response.data).attributes[0].id;
-            toolkit.load({ data: JSON.parse(dependencies) });
+            var dependencies = JSON.parse(angular.fromJson(_.last(response.data).attributes[0].value));
+            
+            $scope.updateId  = _.last(response.data).id;
+            $scope.graphId   = _.last(response.data).attributes[0].id;
+            
+            _.each(dependencies.nodes, function (node) {
+              serviceDepSrv.readServiceStatus(node.id).then(function (resp) {
+                node.status = resp.data.healthStatusType;
+              });
+            });
+            
+            toolkit.load({ data: dependencies });
           }
         });
       };
 
       $scope.nodeClickHandler = function (node) {
+        $(node.el).addClass("active").siblings().removeClass("active");
+        
         service = $(node.el).attr("data-jtk-node-id");
+        
+        $scope.service.hosts = [];
+        // $scope.service.healthItemType = [];
+        $scope.service.metrics = [];
+        
         serviceDepSrv.readHostStatus(service).then(function (response) {
           var hosts = [];
+          var items = [];
           $scope.service.hosts = [];
+
           if (!_.isNull(response.data)) {
             response = response.data;
             hosts = Object.keys(response.hostStatusMap);
+
             _.each(hosts, function (host) {
               var hostInfo = response.hostStatusMap[host];
-              $scope.service.hosts.push({
-                hostName: hostInfo.hostName,
-                healthStatusType: hostInfo.itemStatusMap.ServiceState.healthStatusType
-              });
+              var healthItemType = [];
               
+              serviceDepSrv.readMetricStatus(service, host).then(function (resp) {
+                if (!_.isNull(resp.data)) {
+                  resp = resp.data;
+                  items = Object.keys(resp.hostStatusMap[host].itemStatusMap);
+                  $scope.itemStatusMap = resp.hostStatusMap[host].itemStatusMap;
+                  // $scope.service.healthItemType = [];
 
-              serviceDepSrv.readMetricStatus(service, host).then(function (response) {
-                if (!_.isNull(response.data)) {
-                  response = response.data;
-                  $scope.itemStatusMap = response.hostStatusMap[host].itemStatusMap;
-                  $scope.service.healthItemType = [];
-                  _.each(Object.keys($scope.itemStatusMap), function (itemType) {
-                    var healthItemTypeInfo = response.hostStatusMap[host].itemStatusMap[itemType];
-                    $scope.service.healthItemType.push({
-                      itemType: healthItemTypeInfo.type,
-                      name: healthItemTypeInfo.type.replace('Host', '').replace('Service', ''),
-                      itemTypeStatus: healthItemTypeInfo.healthStatusType
+                  _.each(items, function (item) {
+                    var itemInfo = resp.hostStatusMap[host].itemStatusMap[item];
+                    // $scope.service.healthItemType.push({
+                    healthItemType.push({
+                      itemType: itemInfo.type,
+                      name: itemInfo.type.replace('Host', '').replace('Service', ''),
+                      itemTypeStatus: itemInfo.healthStatusType
                     });
                   });
                 }
+              });
+
+              $scope.service.hosts.push({
+                hostName: hostInfo.hostName,
+                hostStatus: hostInfo.healthStatusType,
+                itemType: healthItemType
               });
             });
           }
@@ -70,6 +94,7 @@ define([
       $scope.selectHealthItemType = function (itemType) {
         var metrics = Object.keys($scope.itemStatusMap[itemType].metricStatusMap || {});
         $scope.service.metrics = [];
+        
         _.each(metrics, function (metric) {
           var metricInfo = $scope.itemStatusMap[itemType].metricStatusMap[metric];
           $scope.service.metrics.push({
@@ -77,6 +102,11 @@ define([
             metricStatus: metricInfo.anomalyHealth
           });
         });
+
+        // $("#metricStatus").bootstrapTable({
+        //   data: $scope.service.metrics
+        // });
+        $("#metricStatus").bootstrapTable('load', $scope.service.metrics);
       };
 
       $scope.renderParams = {
