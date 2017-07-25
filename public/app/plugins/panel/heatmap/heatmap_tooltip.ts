@@ -170,7 +170,7 @@ export class HeatmapTooltip {
     let yBucketSize = this.scope.ctrl.data.yBucketSize;
     let {min, max, ticks} = this.scope.ctrl.data.yAxis;
     let histogramData = _.map(xBucket.buckets, bucket => {
-      return [bucket.y, bucket.values.length];
+      return [bucket.bounds.bottom, bucket.values.length];
     });
     histogramData = _.filter(histogramData, d => {
       return d[0] >= min && d[0] <= max;
