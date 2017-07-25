@@ -294,6 +294,16 @@ define([
         controller : 'CMDBSetupCtrl',
         resolve: loadCMDBBundle
       })
+      .when('/cmdb/servicelist', {
+        templateUrl: 'app/features/cmdb/partials/service_list.html',
+        controller : 'ServiceListCtrl',
+        resolve: loadCMDBBundle
+      })
+      .when('/cmdb/servicelist/servicedetail', {
+        templateUrl: 'app/features/cmdb/partials/service_detail.html',
+        controller : 'ServiceDetailCtrl',
+        resolve: loadCMDBBundle
+      })
       .otherwise({
         templateUrl: 'app/partials/error.html',
         controller: 'ErrorCtrl'

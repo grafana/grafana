@@ -1,0 +1,37 @@
+<topnav section="配置管理库" icon="fa fa-fw fa-cubes">
+    <ul class="nav">
+        <li class="active" ><a href="/cmdb/servicelist">服务列表</a></li>
+    </ul>
+</topnav>
+<div class="page-container">
+    <h2>服务列表</h2>
+    <form class="form-search cmdb-search">
+        <i class="fa fa-search"></i>
+        <input type="text" class="input-medium search-query" placeholder="搜索服务列表" ng-model="searchService">
+    </form>
+    <div class="cmdb-container">
+        <table class="table table-hover table-striped cmdb-table">
+            <tr>
+                <th>序号</th>
+                <th>ID</th>
+                <th ng-click="orderBy('name')" class="pointer">名称<i class="fa fa-sort"></i></th>
+                <th>Key</th>
+                <th ng-click="orderBy('createdAt')" class="pointer">创建时间<i class="fa fa-sort"></i></th>
+                <th>操作</th>
+            </tr>
+            <tr ng-repeat="service in services| filter: searchService | orderBy: order : desc">
+                <td class="main-color">{{$index+1}}</td>
+                <td class="main-color">{{service.id}}</td>
+                <td class="main-color">{{service.name}}</td>
+                <td>{{service.key}}</td>
+                <td>{{service.createdAt | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+                <td>
+                    <a href=""><span class="cmdb-icon-text" bs-tooltip="'敬请期待'" data-placement="top">编辑</span></a>
+                    <a href="/cmdb/servicelist/servicedetail?id={{service.id}}">
+                        <span class="cmdb-icon-text">详情</span>
+                    </a>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
