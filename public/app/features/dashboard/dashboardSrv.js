@@ -9,7 +9,7 @@ function (angular, $, _, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function()  {
+  module.factory('dashboardSrv', function(alertSrv)  {
 
     function DashboardModel (data, meta) {
       if (!data) {
@@ -429,7 +429,7 @@ function (angular, $, _, moment) {
                 min: panel.grid.leftMin,
                 max: panel.grid.leftMax,
                 logBase: panel.grid.leftLogBase,
-                format: panel.y_formats[0],
+                // format: panel.y_formats[0],
                 label: panel.leftYAxisLabel,
               },
               {
@@ -437,7 +437,7 @@ function (angular, $, _, moment) {
                 min: panel.grid.rightMin,
                 max: panel.grid.rightMax,
                 logBase: panel.grid.rightLogBase,
-                format: panel.y_formats[1],
+                // format: panel.y_formats[1],
                 label: panel.rightYAxisLabel,
               }
             ];
