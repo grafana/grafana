@@ -210,7 +210,7 @@ export default function link(scope, elem, attrs, ctrl) {
     let log_base = panel.yAxis.logBase;
     let {y_min, y_max} = adjustLogRange(data.heatmapStats.minLog, data.heatmapStats.max, log_base);
 
-    y_min = panel.yAxis.min !== null ? adjustLogMin(panel.yAxis.min, log_base) : y_min;
+    y_min = panel.yAxis.min && panel.yAxis.min !== '0' ? adjustLogMin(panel.yAxis.min, log_base) : y_min;
     y_max = panel.yAxis.max !== null ? adjustLogMax(panel.yAxis.max, log_base) : y_max;
 
     // Set default Y min and max if no data
