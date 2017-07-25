@@ -77,7 +77,7 @@ function (angular, $, _, moment) {
       if (!data.list) { data.list = []; }
       return data;
     };
-
+    
     p.getNextPanelId = function() {
       var i, j, row, panel, max = 0;
       for (i = 0; i < this.rows.length; i++) {
@@ -429,7 +429,7 @@ function (angular, $, _, moment) {
                 min: panel.grid.leftMin,
                 max: panel.grid.leftMax,
                 logBase: panel.grid.leftLogBase,
-                // format: panel.y_formats[0],
+                format: panel.y_formats[0],
                 label: panel.leftYAxisLabel,
               },
               {
@@ -437,7 +437,7 @@ function (angular, $, _, moment) {
                 min: panel.grid.rightMin,
                 max: panel.grid.rightMax,
                 logBase: panel.grid.rightLogBase,
-                // format: panel.y_formats[1],
+                format: panel.y_formats[1],
                 label: panel.rightYAxisLabel,
               }
             ];

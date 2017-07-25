@@ -81,7 +81,7 @@ function (angular, _, noUiSlider) {
                 tags: {host: hostTag}
               }
             ],
-            'y-axis': false,         
+            'y-axis': false,
             'yaxes': [
                 {
                     'label': null,
