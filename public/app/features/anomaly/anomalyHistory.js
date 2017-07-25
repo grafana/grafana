@@ -128,9 +128,7 @@ define([
       $scope.loadHistory = function(time) {
         var from = Date.parse(moment().subtract(time.num, time.type))/1000;
         var to = Date.parse(moment())/1000;
-        debugger
         return healthSrv.loadHistory({from: from, to: to}).then(function(response) {
-          debugger
           $scope.anomalyHistory = [];
           _.each(response.secAtHostToMetrics, function(metrics, timeHost) {
             var time = timeHost.substr(0,10);
