@@ -2,7 +2,10 @@
 
 <div class="page-container" style="padding-left:20px;">
     <div class="overview-list" style="box-sizing:border-box;">
-        <div class="main-view-container preview-panel">
+        <div class="main-view-container">
+
+            <div class="health-panel view-panel"></div>
+            <div class="service-panel view-panel"></div>
 
             <div class="grafana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.rows | limitTo: dashboard.rows.length-2" row-height ng-class="{'summary-item':!row.fullwidth}">
                 <div class="row-control">
