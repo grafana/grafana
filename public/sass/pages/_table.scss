@@ -1,24 +1,29 @@
-.main-view-container.fixed-top {
-    margin-top: 50px;
-}
-
 .table-container {
     border: 1px solid #ddd;
-    background: $grafanaPanelBackground;
-    margin-left: 5px;
+    background: white;
+    width: 100%;
+    position: fixed;
+    top: 52px;
+    z-index: 1;
+    left: 0px;
     table {
         width: 100%;
     }
-    &.fixed-top {
-        position: fixed;
-        top: 0px;
-        z-index: 100;
+
+    .text-overflow {
+        width: 600px;
+        margin: 0px;
+        float: left;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 }
 
 .table-head {
     th {
         color: #2ab2e4;
+        text-align: center;
     }
 }
 
@@ -33,12 +38,6 @@
 
 .table-foot {
     margin: 5px;
-}
-
-.text-overflow {
-    width: 600px;
-    margin: 0px;
-    // .text-overflow();
 }
 
 .highlight { background-color: yellow }

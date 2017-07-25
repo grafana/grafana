@@ -77,7 +77,7 @@ function (angular, $, _, moment) {
       if (!data.list) { data.list = []; }
       return data;
     };
-    
+
     p.getNextPanelId = function() {
       var i, j, row, panel, max = 0;
       for (i = 0; i < this.rows.length; i++) {
