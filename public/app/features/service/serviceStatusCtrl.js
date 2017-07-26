@@ -1,9 +1,8 @@
 define([
     'angular',
     'lodash',
-    'app/app',
   ],
-  function (angular, _, app) {
+  function (angular, _) {
     'use strict';
 
     var module = angular.module('grafana.controllers');
@@ -11,7 +10,7 @@ define([
     module.filter('formatItemType', function () {
       return function (text) {
         return text.replace('Host', '').replace('Service', '');
-      }
+      };
     });
 
     module.controller('ServiceStatusCtrl', function ($scope, $timeout, $q, $templateCache, serviceDepSrv, jsPlumbService) {
@@ -24,7 +23,7 @@ define([
       window.ctrl = this;
       $scope.service = {};
 
-      $scope.init = function (scope, element, attrs) {
+      $scope.init = function (scope) {
         toolkit = scope.toolkit;
 
         serviceDepSrv.readServiceDependency().then(function (response) {
@@ -36,7 +35,7 @@ define([
                 node.status = resp.data.healthStatusType;
               });
             });
-            
+
             // toolkit.clear();
             toolkit.load({ data: dependencies });
           }
@@ -45,19 +44,19 @@ define([
 
       $scope.nodeClickHandler = function (node) {
         $(node.el).addClass("active").siblings().removeClass("active");
-        
+
         var serviceId = node.node.data.id;  // $(node.el).attr("data-jtk-node-id");
         var serviceName = node.node.data.name;
-        
+
         $scope.service = {};
         $scope.metrics = {};
-        
+
         serviceDepSrv.readMetricStatus(serviceId, serviceName).then(function (response) {
           $scope.service = response.data;
         });
       };
 
-      $scope.selectHost = function(index, host) {
+      $scope.selectHost = function(index) {
         // hack
         $scope.metric = [];
         $scope.$broadcast('load-table');
@@ -70,7 +69,7 @@ define([
         var metric = [];
         var alertLevel = "";
 
-        for (name in metrics) {
+        for (var name in metrics) {
           switch (metrics[name].alertLevel) {
             case "CRITICAL":
               alertLevel = "严重";
@@ -114,11 +113,11 @@ define([
         jsPlumb: {
           Anchor: "Continuous",
           Endpoint: "Blank",
-          Connector: [ "StateMachine", { cssClass: "connectorClass", hoverClass: "connectorHoverClass" } ],
+          Connector: ["StateMachine", { cssClass: "connectorClass", hoverClass: "connectorHoverClass" }],
           PaintStyle: { strokeWidth: 1, stroke: '#32b2e1' },
           HoverPaintStyle: { stroke: "orange" },
           Overlays: [
-            [ "Arrow", { fill: "#09098e", width: 10, length: 10, location: 1 } ]
+            ["Arrow", { fill: "#09098e", width: 10, length: 10, location: 1 }]
           ]
         },
         lassoFilter: ".controls, .controls *, .miniview, .miniview *",
@@ -130,4 +129,4 @@ define([
 
     });
   }
-)
+);

@@ -2,13 +2,11 @@ define([
   'angular',
   'lodash',
   '../core_module',
-  'app/core/config',
 ],
-  function (angular, _, coreModule, config) {
+  function (angular, _, coreModule) {
     'use strict';
 
-    coreModule.service('serviceDepSrv', function($http, alertSrv, $timeout,backendSrv, $q) {
-      var self = this;
+    coreModule.service('serviceDepSrv', function($http, alertSrv, $timeout,backendSrv) {
 
       this.readInstalledService = function () {
         return backendSrv.alertD({
@@ -51,8 +49,8 @@ define([
           url: "/service/status?healthItemType=ServiceState&service=" + serviceName + "&serviceId=" + serviceId
         });
       };
-      
-      this.readMetricStatus = function (serviceId, serviceName, host) {
+
+      this.readMetricStatus = function (serviceId, serviceName) {
         return backendSrv.alertD({
           url: "/service/status?service=" + serviceName + "&serviceId=" + serviceId
         });
@@ -60,4 +58,4 @@ define([
 
     });
   }
-)
+);

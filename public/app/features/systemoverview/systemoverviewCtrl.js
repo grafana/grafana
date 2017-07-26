@@ -8,7 +8,9 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('SystemOverviewCtrl', function ($scope, $location, backendSrv, contextSrv, datasourceSrv, alertMgrSrv, healthSrv, $timeout, $q) {
+    module.controller('SystemOverviewCtrl', function ($scope, $location, $q,
+      backendSrv, contextSrv, datasourceSrv, alertMgrSrv, healthSrv) {
+
       $scope.getUrl = function(url) {
         return config.appSubUrl + url;
       };
@@ -19,15 +21,15 @@ define([
 
       $scope.percentFormatter = function (value) {
         return value && (value.toFixed(2) + '%');
-      }
+      };
 
       $scope.gbFormatter = function (value) {
         return value && ((value / Math.pow(1024, 3)).toFixed(2) + 'GB');
-      }
+      };
 
       $scope.statusFormatter = function (value) {
         return value > 0 ? '异常' : '正常';
-      }
+      };
 
       $scope.init = function () {
         if (contextSrv.user.systemId == 0 && contextSrv.user.orgId) {
@@ -110,11 +112,11 @@ define([
           var q = datasourceSrv.getStatus(queries, 'now-5m').then(function (response) {
             var serviceState = 0;
             var serviceHosts = [];
-            
+
             _.each(response, function(service) {
               if (_.isObject(service)) {
                 var status = service.dps[_.last(Object.keys(service.dps))];
-                
+
                 if (status > 0) {
                   panel.status.warn[1]++;
                   serviceState++;
@@ -176,7 +178,7 @@ define([
             "downsample": "1s-sum",
             "tags"      : { "host" : "*" }
           }];
-          
+
           var q = datasourceSrv.getHostResource(queries, 'now-1m').then(function (response) {
             _.each(response, function (metric) {
               $scope.hostsResource[metric.host]["status"] = metric.value;
@@ -236,15 +238,15 @@ define([
               $scope.hostPanels.push($scope.hostsResource[host]);
             });
           });
-        })
+        });
       };
-      
+
       // 智能分析预测 切换周期
       $scope.changePre = function (selectedOption) {
         var panels   = $scope._dashboard.rows[5].panels;
         var selected = _.findIndex(panels[0].tips, { time: selectedOption.time });
 
-        _.each(panels, function (panel, index) {
+        _.each(panels, function (panel) {
           panel.selectedOption = panel.tips[selected];
         });
       };
@@ -253,16 +255,16 @@ define([
         // 智能分析预测
         $scope.panels = $scope._dashboard.rows[5].panels;
         _.each($scope.panels, function (panel, index) {
-          panel.targets.tags = { "host" : hostname }
+          panel.targets.tags = { "host" : hostname };
           var params = {
             metric: contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + panel.targets[0].metric,
           };
 
           backendSrv.getPrediction(params).then(function (response) {
-            var times = [ '1天后', '1周后', '1月后', '1季度后', '半年后' ];
+            var times = ['1天后', '1周后', '1月后', '1季度后', '半年后'];
             var num   = 0;
             var data  = response.data;
-            
+
             if (_.isEmpty(data)) { throw Error; }
 
             for (var i in data) {
@@ -275,7 +277,7 @@ define([
             }
 
             panel.selectedOption = panel.tips[0];
-          }).catch(function (err) {
+          }).catch(function () {
             panel.tip = '暂无预测数据';
           });
         });
@@ -285,7 +287,7 @@ define([
         var temp = {};
         var promiseList = [];
         var panels = $scope._dashboard.rows[6].panels;
-        _.each(panels, function (panel, index) {
+        _.each(panels, function (panel) {
           var metric = panel.targets[0].metric;
           var queries = [{
             "metric"    : contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + metric,
@@ -319,11 +321,11 @@ define([
             $scope.hostTopN.push(tt[v]);
           });
           $scope.$broadcast('toggle-panel');
-        }, function (err) {
+        }, function () {
           $scope.$broadcast('toggle-panel');
           $scope.hostTopN = [];
         });
-      }
+      };
 
       $scope.init();
     });

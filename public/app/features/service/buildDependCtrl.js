@@ -21,7 +21,7 @@ define([
       serviceDepSrv.readInstalledService().then(function (response) {
         var services = response.data;
         var serviceIconMap = _.serviceIconMap();
-        
+
         _.each(services, function (service) {
           $scope.draggableTypes.push({
             id   : service.id,
@@ -33,7 +33,12 @@ define([
         });
       });
 
-      $scope.init = function(scope, element, attrs) {
+      // update data set
+      var _updateDataset = function () {
+        ctrl.exportData = toolkit.exportData();
+      };
+
+      $scope.init = function(scope, element) {
         toolkit = scope.toolkit;
         var surface = jsPlumbService.getSurface("serviceDepSurface");
 
@@ -41,7 +46,7 @@ define([
           var dependencies = {};
           if (!_.isNull(response.data)) {
             dependencies = angular.fromJson(_.last(response.data).attributes[0].value);
-            
+
             $scope.updateId  = _.last(response.data).id;
             $scope.graphId   = _.last(response.data).attributes[0].id;
           }
@@ -69,7 +74,7 @@ define([
           toolkit.clearSelection();
           surface.zoomToFit();
         });
-        
+
         // refresh palette data
         $timeout(function() {
           $scope.$broadcast("draggableNodeLoaded");
@@ -90,11 +95,11 @@ define([
         jsPlumb: {
           Anchor: "Continuous",
           Endpoint: "Blank",
-          Connector: [ "StateMachine", { cssClass: "connectorClass", hoverClass: "connectorHoverClass" } ],
+          Connector: ["StateMachine", { cssClass: "connectorClass", hoverClass: "connectorHoverClass" }],
           PaintStyle: { strokeWidth: 1, stroke: '#32b2e1' },
           HoverPaintStyle: { stroke: "orange" },
           Overlays: [
-            [ "Arrow", { fill: "#09098e", width: 10, length: 10, location: 1 } ]
+            ["Arrow", { fill: "#09098e", width: 10, length: 10, location: 1 }]
           ]
         },
         lassoFilter: ".controls, .controls *, .miniview, .miniview *",
@@ -125,7 +130,7 @@ define([
         return el.getAttribute("jtk-node-type");
       };
 
-      $scope.dataGenerator = function (type, dragElement, dropInfo) {
+      $scope.dataGenerator = function (type, dragElement) {
         var $dragElement = $(dragElement);
         var serviceIconMap = _.serviceIconMap();
         var serviceName = $dragElement.attr('data-node-key');
@@ -135,11 +140,6 @@ define([
           icon: serviceIconMap[serviceName]
         };
       }
-
-      // update data set
-      var _updateDataset = function () {
-        ctrl.exportData = toolkit.exportData();
-      };
 
     });
   }
