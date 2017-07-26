@@ -15,7 +15,6 @@
                 <th>序号</th>
                 <th>ID</th>
                 <th ng-click="orderBy('name')" class="pointer">名称<i class="fa fa-sort"></i></th>
-                <th>Key</th>
                 <th ng-click="orderBy('createdAt')" class="pointer">创建时间<i class="fa fa-sort"></i></th>
                 <th>操作</th>
             </tr>
@@ -23,7 +22,6 @@
                 <td class="main-color">{{$index+1}}</td>
                 <td class="main-color">{{service.id}}</td>
                 <td class="main-color">{{service.name}}</td>
-                <td>{{service.key}}</td>
                 <td>{{service.createdAt | date:'yyyy-MM-dd HH:mm:ss'}}</td>
                 <td>
                     <a href=""><span class="cmdb-icon-text" bs-tooltip="'敬请期待'" data-placement="top">编辑</span></a>

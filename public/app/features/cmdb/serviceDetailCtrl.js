@@ -10,10 +10,10 @@ define([
     $scope.init = function() {
       var id = $location.search().id;
       backendSrv.alertD({url:'/cmdb/service'}).then(function(response) {
-        $scope.list = response.data.services;
+        $scope.list = response.data;
       });
       backendSrv.alertD({url:'/cmdb/service?id='+id}).then(function(response) {
-        $scope.detail = response.data.detail;
+        $scope.detail = response.data;
         $scope.detail = initDetail($scope.detail);
         _.map($scope.detail.hosts, function(host) {
           if(host.isVirtual) {

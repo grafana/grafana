@@ -14,8 +14,7 @@ define([
       $scope.desc = false;
       $scope.refreshTxt = '刷新';
       backendSrv.alertD({url:'/cmdb/service'}).then(function(result) {
-        console.log(result);
-        $scope.services = result.data.services;
+        $scope.services = result.data;
       });
     };
 
