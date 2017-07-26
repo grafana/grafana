@@ -2,7 +2,6 @@
    width: 50%;
    display: inline-block;
    box-sizing: border-box;
-   border: 2px solid #f9f9f9;
  }
 
  .summary-panel{
@@ -27,4 +26,26 @@
     font-size: 20px;
     font-weight: bold;
   }
+}
+
+.summary-row {
+  height: 420px;
+  padding: 20px;
+  background: white;
+  overflow: hidden;
+  overflow-y: scroll;
+  margin-bottom: 10px;
+  border-right: 5px solid #f9f9f9;
+  &:nth-child(10){
+    height: 460px;
+    overflow: hidden;
+  }
+  .panel-margin {
+    border: 1px solid #ccc;
+    margin-top: 10px;
+  }
+}
+
+.summary-container {
+  background: #f9f9f9;
 }
