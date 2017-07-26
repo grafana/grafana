@@ -16,6 +16,7 @@ define([
       serviceDepSrv.readInstalledService().then(function (response) {
         var services = response.data;
         var serviceIconMap = _.serviceIconMap();
+        
         _.each(services, function (service) {
           $scope.draggableTypes.push({
             label: service.name,

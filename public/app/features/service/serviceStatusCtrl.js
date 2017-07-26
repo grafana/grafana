@@ -64,7 +64,6 @@ define([
       };
 
       $scope.selectHealthItemType = function (host, item) {
-        // $scope.metrics = $scope.service.hostStatusMap[host].itemStatusMap[item].metricStatusMap;
         var metrics = $scope.service.hostStatusMap[host].itemStatusMap[item].metricStatusMap;
         var metric = [];
 
