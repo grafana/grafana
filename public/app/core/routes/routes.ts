@@ -14,7 +14,6 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   var loadPluginsBundle = new BundleLoader('app/features/plugins/all');
   var loadAdminBundle = new BundleLoader('app/features/admin/admin');
   var loadOncallerBundle = new BundleLoader('app/features/oncaller/all');
-  var loadCMDBBundle = new BundleLoader('app/features/cmdb/all');
 
   $routeProvider
   .when('/', {
