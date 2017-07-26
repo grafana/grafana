@@ -23,8 +23,9 @@
         </script>
     </div>
 
-    <div class="service-status-panel">
-        <div class="host-head" ng-if="service.hostStatusMap">
+    <div class="service-status-panel" ng-if="service.hostStatusMap">
+        <h4>当前服务：{{service.name}}</h4>
+        <div class="host-head">
           <span class="pull-left">机器名称</span>
           <span class="pull-right">机器状态</span>
           <div class="clearfix"></div>

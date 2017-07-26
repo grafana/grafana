@@ -26,7 +26,7 @@ define([
 
         serviceDepSrv.readServiceDependency().then(function (response) {
           if (!_.isNull(response.data)) {
-            var dependencies = JSON.parse(angular.fromJson(_.last(response.data).attributes[0].value));
+            var dependencies = angular.fromJson(_.last(response.data).attributes[0].value);
 
             _.each(dependencies.nodes, function (node) {
               serviceDepSrv.readServiceStatus(node.id).then(function (resp) {
