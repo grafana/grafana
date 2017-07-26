@@ -54,7 +54,7 @@ function (angular, _, dateMath) {
       });
 
       options.targets = _.filter(options.targets, function(query) {
-        return query.hide != true;
+        return query.hide !== true;
       });
 
       return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
