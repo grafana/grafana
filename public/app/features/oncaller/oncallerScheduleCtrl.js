@@ -4,6 +4,7 @@ define([
   'angular',
   'lodash',
   'ui.calendar',
+  'fullcalendar',
   'zh-cn',
 ],
 function (moment, $, angular, _, uiCalendarConfig) {
@@ -24,6 +25,7 @@ function (moment, $, angular, _, uiCalendarConfig) {
         color/textColor: color, <<  控制展示颜色,可由前端设置,每个人员一个颜色
       }
     */
+    window.moment = moment;
     var colors = {
       user0:['#89c4f4','#43a1ed'],
       user1:['#ffd990','#ffbf43'],
