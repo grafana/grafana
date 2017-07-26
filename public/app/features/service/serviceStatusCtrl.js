@@ -45,7 +45,7 @@ define([
       $scope.nodeClickHandler = function (node) {
         $(node.el).addClass("active").siblings().removeClass("active");
 
-        var serviceId = node.node.data.id;  // $(node.el).attr("data-jtk-node-id");
+        var serviceId = node.node.data.id;
         var serviceName = node.node.data.name;
 
         $scope.service = {};
@@ -56,12 +56,14 @@ define([
         });
       };
 
-      $scope.selectHost = function(index) {
+      $scope.selectHost = function(index, host) {
         // hack
         $scope.metric = [];
         $scope.$broadcast('load-table');
 
         $scope.selected = ($scope.selected == index) ? -1 : index;
+
+        $scope.selectHealthItemType(host, 'ServiceKPI');
       };
 
       $scope.selectHealthItemType = function (host, item) {

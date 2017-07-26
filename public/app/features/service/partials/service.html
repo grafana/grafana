@@ -48,9 +48,14 @@
                   <ul class="item-type">
                     <li ng-repeat="(name, item) in host.itemStatusMap" ng-click="selectHealthItemType(host.hostName, item.type)" class="status-{{item.healthStatusType | lowercase}}">{{item.type | formatItemType}}</li>
                   </ul>
-                  <p>{{currentItem}} 详细指标：</p>
-                  <p ng-if="currentItem == 'ServiceState'">该服务进程运行正常...</p>
-                  <table-loader key={{host.hostName}}></table-loader>
+                  <div ng-if="host.healthStatusType !== 'GREY'">
+                    <p>{{currentItem}} 详细指标：</p>
+                    <p ng-if="currentItem == 'ServiceState'">该服务进程运行正常...</p>
+                    <table-loader key={{host.hostName}}></table-loader>
+                  </div>
+                  <div ng-if="host.healthStatusType === 'GREY'">
+                    <p>探针没有收集到数据 或 机器没有正常工作</p>
+                  </div>
                 </div>
               </div>
             </div>

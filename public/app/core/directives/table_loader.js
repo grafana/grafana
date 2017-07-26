@@ -28,7 +28,6 @@ define([
             elem.html($template);
             $compile(elem.contents())(scope);
 
-            // data-row-style="rowStyle"
             $(".table-hack").bootstrapTable({
               data: scope.metric,
               rowStyle: function (row) {
