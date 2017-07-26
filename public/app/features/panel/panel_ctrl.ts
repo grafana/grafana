@@ -108,12 +108,12 @@ export class PanelCtrl {
 
   getMenu() {
     let menu = [];
-    menu.push({text: 'View', click: 'ctrl.viewPanel(); dismiss();'});
-    menu.push({text: 'Edit', click: 'ctrl.editPanel(); dismiss();', role: 'Editor'});
+    menu.push({text: 'View', click: 'ctrl.viewPanel(); dismiss();', icon: 'fa-plus'});
+    menu.push({text: 'Edit', click: 'ctrl.editPanel(); dismiss();', role: 'Editor', icon:'fa-pencil'});
     if (!this.fullscreen) { //  duplication is not supported in fullscreen mode
-      menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
+      menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor', icon:'fa-pencil' });
     }
-    menu.push({text: 'Share', click: 'ctrl.sharePanel(); dismiss();'});
+    menu.push({text: 'Share', click: 'ctrl.sharePanel(); dismiss();', icon:'fa-pencil'});
     return menu;
   }
 

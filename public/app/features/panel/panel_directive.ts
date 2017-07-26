@@ -17,7 +17,6 @@ var panelTemplate = `
       <span class="panel-loading" ng-show="ctrl.loading">
         <i class="fa fa-spinner fa-spin"></i>
       </span>
-
       <div class="panel-title-container drag-handle" panel-menu></div>
     </div>
 
@@ -25,6 +24,12 @@ var panelTemplate = `
       <ng-transclude></ng-transclude>
     </div>
     <panel-resizer></panel-resizer>
+    <div class="help-info" ng-class="{true:'active'}[helpShow]" ng-if="helpInfo.info" ng-mouseleave="isShowInfo($event)">
+      <div>
+        <h2>{{helpInfo.title}}</h2>
+        <div ng-bind-html="helpInfo.context"></div>
+      </div>
+    </div>
   </div>
 
   <div class="panel-full-edit" ng-if="ctrl.editMode">
