@@ -95,7 +95,7 @@ define([
         $scope.init = function () {
           var panels = [];
           $scope.selections = [];
-          $scope.anomalyList = healthSrv.anomalyMetricsData[clusterId].elements;
+          $scope.anomalyList = _.find(healthSrv.anomalyMetricsData,{index: Number(clusterId)}).elements;
           $scope.removeAll();
           panels.push(setPanelMetaHost(_.cloneDeep(panelMeta), $scope.anomalyList[0].metric, $scope.anomalyList[0].host));
           $scope.anomalyList[0].checked = true;
