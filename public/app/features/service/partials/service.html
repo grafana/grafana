@@ -49,6 +49,7 @@
                     <li ng-repeat="(name, item) in host.itemStatusMap" ng-click="selectHealthItemType(host.hostName, item.type)" class="status-{{item.healthStatusType | lowercase}}">{{item.type | formatItemType}}</li>
                   </ul>
                   <p>{{currentItem}} 详细指标：</p>
+                  <p ng-if="currentItem == 'ServiceState'">该服务进程运行正常...</p>
                   <table-loader key={{host.hostName}}></table-loader>
                 </div>
               </div>

@@ -462,43 +462,46 @@
 
     BootstrapTable.LOCALES = {};
 
-    BootstrapTable.LOCALES['en-US'] = BootstrapTable.LOCALES.en = {
+    BootstrapTable.LOCALES['zh-CN'] = BootstrapTable.LOCALES.zh = {
         formatLoadingMessage: function () {
-            return 'Loading, please wait...';
+            return '正在努力地加载数据中，请稍候……';
         },
         formatRecordsPerPage: function (pageNumber) {
-            return sprintf('%s rows per page', pageNumber);
+            return '每页显示 ' + pageNumber + ' 条记录';
         },
         formatShowingRows: function (pageFrom, pageTo, totalRows) {
-            return sprintf('Showing %s to %s of %s rows', pageFrom, pageTo, totalRows);
-        },
-        formatDetailPagination: function (totalRows) {
-            return sprintf('Showing %s rows', totalRows);
+            return '显示第 ' + pageFrom + ' 到第 ' + pageTo + ' 条记录，总共 ' + totalRows + ' 条记录';
         },
         formatSearch: function () {
-            return 'Search';
+            return '搜索';
         },
         formatNoMatches: function () {
-            return 'No matching records found';
+            return '没有找到匹配的记录';
         },
         formatPaginationSwitch: function () {
-            return 'Hide/Show pagination';
+            return '隐藏/显示分页';
         },
         formatRefresh: function () {
-            return 'Refresh';
+            return '刷新';
         },
         formatToggle: function () {
-            return 'Toggle';
+            return '切换';
         },
         formatColumns: function () {
-            return 'Columns';
+            return '列';
         },
         formatAllRows: function () {
-            return 'All';
+            return '全部';
+        },
+        formatExport: function () {
+            return '导出数据';
+        },
+        formatClearFilters: function () {
+            return '清空过滤';
         }
     };
 
-    $.extend(BootstrapTable.DEFAULTS, BootstrapTable.LOCALES['en-US']);
+    $.extend(BootstrapTable.DEFAULTS, BootstrapTable.LOCALES['zh-CN']);
 
     BootstrapTable.COLUMN_DEFAULTS = {
         radio: false,

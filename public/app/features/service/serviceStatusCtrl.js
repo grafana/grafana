@@ -68,11 +68,25 @@ define([
       $scope.selectHealthItemType = function (host, item) {
         var metrics = $scope.service.hostStatusMap[host].itemStatusMap[item].metricStatusMap;
         var metric = [];
+        var alertLevel = "";
 
         for (name in metrics) {
+          switch (metrics[name].alertLevel) {
+            case "CRITICAL":
+              alertLevel = "严重";
+              break;
+            case "WARNING":
+              alertLevel = "警告";
+              break;
+            default:
+              alertLevel = "正常";
+              break;
+          }
           metric.push({
             name: name,
-            anomalyHealth: metrics[name].anomalyHealth
+            alertRuleSet: metrics[name].alertRuleSet ? "有" : "无",
+            alertLevel: alertLevel,
+            anomalyHealth: metrics[name].health
           });
         }
 

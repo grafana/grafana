@@ -8,7 +8,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('BuildDependCtrl', function ($scope, $timeout, serviceDepSrv, jsPlumbService) {
+    module.controller('BuildDependCtrl', function ($scope, $timeout, alertSrv, serviceDepSrv, jsPlumbService) {
       var toolkit = jsPlumbService.getToolkit("serviceDepToolkit");
       window.ctrl = this;
 
