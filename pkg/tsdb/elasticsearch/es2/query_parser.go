@@ -12,17 +12,6 @@ import (
 
 const (
 	epochMillis = "epoch_millis"
-
-	// common used key
-	metricKey   = "metrics"
-	settingsKey = "settings"
-	fieldKey    = "field"
-	unitKey     = "unit"
-	alphaKey    = "alpha"
-	betaKey     = "beta"
-	gammaKey    = "gamma"
-	scriptKey   = "script"
-	inlineKey   = "inline"
 )
 
 var InstanceESQueryParser = &ESQueryParser{}
@@ -45,14 +34,14 @@ func (parser *ESQueryParser) SearchRequest(timeRange *tsdb.TimeRange, model *sim
 	queryFilter := elastic.NewQueryStringQuery(qs)
 
 	// Aggregation
-	metrics, err := model.Get(metricKey).Array()
+	metrics, err := model.Get(models.MetricKey).Array()
 	if err != nil {
 		return
 	}
 	dhAgg := elastic.NewDateHistogramAggregation().MinDocCount(0).Field(dsInfo.TimeField).Interval(dsInfo.TimeInterval).ExtendedBounds(start, end).Format(epochMillis)
 	for _, a := range metrics {
 		metric := simplejson.NewFromAny(a)
-		id, err := metric.Get("id").String()
+		id, err := metric.Get(models.IdKey).String()
 		if err != nil {
 			continue
 		}
@@ -72,7 +61,7 @@ func (parser *ESQueryParser) SearchRequest(timeRange *tsdb.TimeRange, model *sim
 }
 
 func parseMetric(metric *simplejson.Json) (elastic.Aggregation, error) {
-	t, err := metric.Get("type").String()
+	t, err := metric.Get(models.TypeKey).String()
 	if err != nil {
 		return nil, err
 	}
@@ -85,25 +74,25 @@ func parseMetric(metric *simplejson.Json) (elastic.Aggregation, error) {
 
 func GetMetricParser(t string) MetricParser {
 	switch t {
-	case models.AggTypeCount:
+	case models.MetricTypeCount:
 		return instanceCountMetricParser
-	case models.AggTypeAvg:
+	case models.MetricTypeAvg:
 		return instanceAvgMetricParser
-	case models.AggTypeSum:
+	case models.MetricTypeSum:
 		return instanceSumMetricParser
-	case models.AggTypeMax:
+	case models.MetricTypeMax:
 		return instanceMaxMetricParser
-	case models.AggTypeMin:
+	case models.MetricTypeMin:
 		return instanceMinMetricParser
-	case models.AggTypeExtendedStats:
+	case models.MetricTypeExtendedStats:
 		return instanceStatsMetricParser
-	case models.AggTypePercentiles:
+	case models.MetricTypePercentiles:
 		return instancePercentileMetricParser
-	case models.AggTypeCardinality:
+	case models.MetricTypeCardinality:
 		return instanceCardinalityMetricParser
-	case models.AggTypeMovAvg:
+	case models.MetricTypeMovAvg:
 		return instanceMovingAvgMetricParser
-	case models.AggTypeDerivative:
+	case models.MetricTypeDerivative:
 		return instanceDerivativeMetricParser
 	default:
 		return nil
@@ -143,95 +132,95 @@ func (parser *countMetricParser) Parse(metric *simplejson.Json) (agg elastic.Agg
 }
 
 func (parser *avgMetricParser) Parse(metric *simplejson.Json) (elastic.Aggregation, error) {
-	field, err := metric.Get(fieldKey).String()
+	field, err := metric.Get(models.FieldKey).String()
 	if err != nil {
 		return nil, err
 	}
 	agg := elastic.NewAvgAggregation().Field(field)
-	script, err := metric.Get(settingsKey).Get(scriptKey).Get(inlineKey).String()
+	script, err := metric.Get(models.SettingsKey).Get(models.ScriptKey).Get(models.InlineKey).String()
 	if len(script) > 0 {
 		agg = agg.Script(elastic.NewScriptInline(script))
 	}
 	// cannot deal with missing for now
-	//m, err := metric.Get(settingsKey).Get("missing").String()
+	//m, err := metric.Get(models.SettingsKey).Get("missing").String()
 
 	return agg, nil
 }
 
 func (parser *sumMetricParser) Parse(metric *simplejson.Json) (elastic.Aggregation, error) {
-	field, err := metric.Get(fieldKey).String()
+	field, err := metric.Get(models.FieldKey).String()
 	if err != nil {
 		return nil, err
 	}
 	agg := elastic.NewSumAggregation().Field(field)
-	script, err := metric.Get(settingsKey).Get(scriptKey).Get(inlineKey).String()
+	script, err := metric.Get(models.SettingsKey).Get(models.ScriptKey).Get(models.InlineKey).String()
 	if len(script) > 0 {
 		agg = agg.Script(elastic.NewScriptInline(script))
 	}
 	// cannot deal with missing for now
-	//m, err := metric.Get(settingsKey).Get("missing").String()
+	//m, err := metric.Get(models.SettingsKey).Get("missing").String()
 
 	return agg, nil
 }
 
 func (parser *maxMetricParser) Parse(metric *simplejson.Json) (elastic.Aggregation, error) {
-	field, err := metric.Get(fieldKey).String()
+	field, err := metric.Get(models.FieldKey).String()
 	if err != nil {
 		return nil, err
 	}
 	agg := elastic.NewMaxAggregation().Field(field)
-	script, err := metric.Get(settingsKey).Get(scriptKey).Get(inlineKey).String()
+	script, err := metric.Get(models.SettingsKey).Get(models.ScriptKey).Get(models.InlineKey).String()
 	if len(script) > 0 {
 		agg = agg.Script(elastic.NewScriptInline(script))
 	}
 	// cannot deal with missing for now
-	//m, err := metric.Get(settingsKey).Get("missing").String()
+	//m, err := metric.Get(models.SettingsKey).Get("missing").String()
 	return agg, nil
 }
 
 func (parser *minMetricParser) Parse(metric *simplejson.Json) (elastic.Aggregation, error) {
-	field, err := metric.Get(fieldKey).String()
+	field, err := metric.Get(models.FieldKey).String()
 	if err != nil {
 		return nil, err
 	}
 	agg := elastic.NewMinAggregation().Field(field)
-	script, err := metric.Get(settingsKey).Get(scriptKey).Get(inlineKey).String()
+	script, err := metric.Get(models.SettingsKey).Get(models.ScriptKey).Get(models.InlineKey).String()
 	if len(script) > 0 {
 		agg = agg.Script(elastic.NewScriptInline(script))
 	}
 	// cannot deal with missing for now
-	//m, err := metric.Get(settingsKey).Get("missing").String()
+	//m, err := metric.Get(models.SettingsKey).Get("missing").String()
 	return agg, nil
 }
 
 func (parser *statsMetricParser) Parse(metric *simplejson.Json) (elastic.Aggregation, error) {
-	field, err := metric.Get(fieldKey).String()
+	field, err := metric.Get(models.FieldKey).String()
 	if err != nil {
 		return nil, err
 	}
 	agg := elastic.NewExtendedStatsAggregation().Field(field)
-	script, err := metric.Get(settingsKey).Get(scriptKey).Get(inlineKey).String()
+	script, err := metric.Get(models.SettingsKey).Get(models.ScriptKey).Get(models.InlineKey).String()
 	if len(script) > 0 {
 		agg = agg.Script(elastic.NewScriptInline(script))
 	}
 	// cannot deal with sigma for now
-	// sigma, err := metric.Get(settingsKey).Get("sigma").String()
+	// sigma, err := metric.Get(models.SettingsKey).Get("sigma").String()
 	// cannot deal with missing for now
-	// m, err := metric.Get(settingsKey).Get("missing").String()
+	// m, err := metric.Get(models.SettingsKey).Get("missing").String()
 	return agg, nil
 }
 
 func (parser *percentileMetricParser) Parse(metric *simplejson.Json) (elastic.Aggregation, error) {
-	field, err := metric.Get(fieldKey).String()
+	field, err := metric.Get(models.FieldKey).String()
 	if err != nil {
 		return nil, err
 	}
 	agg := elastic.NewPercentilesAggregation().Field(field)
-	script, err := metric.Get(settingsKey).Get(scriptKey).Get(inlineKey).String()
+	script, err := metric.Get(models.SettingsKey).Get(models.ScriptKey).Get(models.InlineKey).String()
 	if len(script) > 0 {
 		agg = agg.Script(elastic.NewScriptInline(script))
 	}
-	percents, err := metric.Get(settingsKey).Get("percents").Array()
+	percents, err := metric.Get(models.SettingsKey).Get("percents").Array()
 	percentiles := []float64{}
 	for _, p := range percents {
 		percent, err := simplejson.NewFromAny(p).Float64()
@@ -244,12 +233,12 @@ func (parser *percentileMetricParser) Parse(metric *simplejson.Json) (elastic.Ag
 		agg = agg.Percentiles(percentiles...)
 	}
 	// cannot deal with missing for now
-	//m, err := metric.Get(settingsKey).Get("missing").String()
+	//m, err := metric.Get(models.SettingsKey).Get("missing").String()
 	return agg, nil
 }
 
 func (parser *cardinalityMetricParser) Parse(metric *simplejson.Json) (elastic.Aggregation, error) {
-	field, err := metric.Get(fieldKey).String()
+	field, err := metric.Get(models.FieldKey).String()
 	if err != nil {
 		return nil, err
 	}
@@ -258,12 +247,12 @@ func (parser *cardinalityMetricParser) Parse(metric *simplejson.Json) (elastic.A
 	if len(script) > 0 {
 		agg = agg.Script(elastic.NewScriptInline(script))
 	}
-	pt, err := metric.Get(settingsKey).Get("precision_threshold").Int64()
+	pt, err := metric.Get(models.SettingsKey).Get("precision_threshold").Int64()
 	if err == nil {
 		agg = agg.PrecisionThreshold(pt)
 	}
 	// cannot deal with missing for now
-	//m, err := metric.Get(settingsKey).Get("missing").String()
+	//m, err := metric.Get(models.SettingsKey).Get("missing").String()
 	return agg, nil
 }
 
@@ -280,7 +269,7 @@ func (parser *movingAvgMetricParser) Parse(metric *simplejson.Json) (ret elastic
 	if err != nil {
 		return nil, err
 	}
-	settings := metric.Get(settingsKey)
+	settings := metric.Get(models.SettingsKey)
 	modelType, err := settings.Get("model").String()
 	var model elastic.MovAvgModel
 	if err != nil {
@@ -323,7 +312,7 @@ func movAvgLinearModel(settings *simplejson.Json) elastic.MovAvgModel {
 
 func movAvgEWMAModel(settings *simplejson.Json) elastic.MovAvgModel {
 	model := elastic.NewEWMAMovAvgModel()
-	val, err := settings.Get(settingsKey).Get(alphaKey).Float64()
+	val, err := settings.Get(models.SettingsKey).Get(models.AlphaKey).Float64()
 	if err == nil {
 		model.Alpha(val)
 	}
@@ -332,11 +321,11 @@ func movAvgEWMAModel(settings *simplejson.Json) elastic.MovAvgModel {
 
 func movAvgHoltModel(settings *simplejson.Json) elastic.MovAvgModel {
 	model := elastic.NewHoltLinearMovAvgModel()
-	alpha, err := settings.Get(settingsKey).Get(alphaKey).Float64()
+	alpha, err := settings.Get(models.SettingsKey).Get(models.AlphaKey).Float64()
 	if err == nil {
 		model.Alpha(alpha)
 	}
-	beta, err := settings.Get(settingsKey).Get(betaKey).Float64()
+	beta, err := settings.Get(models.SettingsKey).Get(models.BetaKey).Float64()
 	if err == nil {
 		model.Beta(beta)
 	}
@@ -345,23 +334,23 @@ func movAvgHoltModel(settings *simplejson.Json) elastic.MovAvgModel {
 
 func movAvgHoltWintersModel(settings *simplejson.Json) elastic.MovAvgModel {
 	model := elastic.NewHoltWintersMovAvgModel()
-	alpha, err := settings.Get(settingsKey).Get(alphaKey).Float64()
+	alpha, err := settings.Get(models.SettingsKey).Get(models.AlphaKey).Float64()
 	if err == nil {
 		model.Alpha(alpha)
 	}
-	beta, err := settings.Get(settingsKey).Get(betaKey).Float64()
+	beta, err := settings.Get(models.SettingsKey).Get(models.BetaKey).Float64()
 	if err == nil {
 		model.Beta(beta)
 	}
-	gamma, err := settings.Get(settingsKey).Get(gammaKey).Float64()
+	gamma, err := settings.Get(models.SettingsKey).Get(models.GammaKey).Float64()
 	if err == nil {
 		model.Gamma(gamma)
 	}
-	period, err := settings.Get(settingsKey).Get("period").Int()
+	period, err := settings.Get(models.SettingsKey).Get("period").Int()
 	if err == nil {
 		model.Period(period)
 	}
-	pad, err := settings.Get(settingsKey).Get("pad").Bool()
+	pad, err := settings.Get(models.SettingsKey).Get("pad").Bool()
 	if err == nil {
 		model.Pad(pad)
 	}
@@ -369,12 +358,12 @@ func movAvgHoltWintersModel(settings *simplejson.Json) elastic.MovAvgModel {
 }
 
 func (parser *derivativeMetricParser) Parse(metric *simplejson.Json) (elastic.Aggregation, error) {
-	field, err := metric.Get(fieldKey).String()
+	field, err := metric.Get(models.FieldKey).String()
 	if err != nil {
 		return nil, err
 	}
 	agg := elastic.NewDerivativeAggregation().BucketsPath(field)
-	unit, err := metric.Get(settingsKey).Get(unitKey).String()
+	unit, err := metric.Get(models.SettingsKey).Get(models.UnitKey).String()
 	if len(unit) > 0 {
 		agg = agg.Unit(unit)
 	}

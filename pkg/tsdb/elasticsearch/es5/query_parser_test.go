@@ -12,7 +12,7 @@ import (
 )
 
 func TestCountMetricParser_Parse(t *testing.T) {
-	p := GetMetricParser(models.AggTypeCount)
+	p := GetMetricParser(models.MetricTypeCount)
 	parser, succ := p.(*countMetricParser)
 	if !succ {
 		t.Error("type error")
@@ -29,7 +29,7 @@ func TestCountMetricParser_Parse(t *testing.T) {
 }
 
 func TestAvgMetricParser_Parse(t *testing.T) {
-	p := GetMetricParser(models.AggTypeAvg)
+	p := GetMetricParser(models.MetricTypeAvg)
 	parser, succ := p.(*avgMetricParser)
 	if !succ {
 		t.Error("type error")
@@ -61,7 +61,7 @@ func TestAvgMetricParser_Parse(t *testing.T) {
 }
 
 func TestSumMetricParser_Parse(t *testing.T) {
-	p := GetMetricParser(models.AggTypeSum)
+	p := GetMetricParser(models.MetricTypeSum)
 	parser, succ := p.(*sumMetricParser)
 	if !succ {
 		t.Error("type error")
@@ -93,7 +93,7 @@ func TestSumMetricParser_Parse(t *testing.T) {
 }
 
 func TestMinMetricParser_Parse(t *testing.T) {
-	p := GetMetricParser(models.AggTypeMin)
+	p := GetMetricParser(models.MetricTypeMin)
 	parser, succ := p.(*minMetricParser)
 	if !succ {
 		t.Error("type error")
@@ -125,7 +125,7 @@ func TestMinMetricParser_Parse(t *testing.T) {
 }
 
 func TestMaxMetricParser_Parse(t *testing.T) {
-	p := GetMetricParser(models.AggTypeMax)
+	p := GetMetricParser(models.MetricTypeMax)
 	parser, succ := p.(*maxMetricParser)
 	if !succ {
 		t.Error("type error")
@@ -157,7 +157,7 @@ func TestMaxMetricParser_Parse(t *testing.T) {
 }
 
 func TestStatsMetricParser_Parse(t *testing.T) {
-	p := GetMetricParser(models.AggTypeExtendedStats)
+	p := GetMetricParser(models.MetricTypeExtendedStats)
 	parser, succ := p.(*statsMetricParser)
 	if !succ {
 		t.Error("type error")
@@ -191,7 +191,7 @@ func TestStatsMetricParser_Parse(t *testing.T) {
 }
 
 func TestPercentilesMetricParser_Parse(t *testing.T) {
-	p := GetMetricParser(models.AggTypePercentiles)
+	p := GetMetricParser(models.MetricTypePercentiles)
 	parser, succ := p.(*percentileMetricParser)
 	if !succ {
 		t.Error("type error")
@@ -224,7 +224,7 @@ func TestPercentilesMetricParser_Parse(t *testing.T) {
 }
 
 func TestCardinalityMetricParser_Parse(t *testing.T) {
-	p := GetMetricParser(models.AggTypeCardinality)
+	p := GetMetricParser(models.MetricTypeCardinality)
 	parser, succ := p.(*cardinalityMetricParser)
 	if !succ {
 		t.Error("type error")
@@ -257,7 +257,7 @@ func TestCardinalityMetricParser_Parse(t *testing.T) {
 }
 
 func TestMovAggMetricParser_Parse(t *testing.T) {
-	p := GetMetricParser(models.AggTypeMovAvg)
+	p := GetMetricParser(models.MetricTypeMovAvg)
 	parser, succ := p.(*movingAvgMetricParser)
 	if !succ {
 		t.Error("type error")
@@ -374,7 +374,7 @@ func TestMovAggMetricParser_Parse(t *testing.T) {
 }
 
 func TestDerivativeMetricParser_Parse(t *testing.T) {
-	p := GetMetricParser(models.AggTypeDerivative)
+	p := GetMetricParser(models.MetricTypeDerivative)
 	parser, succ := p.(*derivativeMetricParser)
 	if !succ {
 		t.Error("type error")

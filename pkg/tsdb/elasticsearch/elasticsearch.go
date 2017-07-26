@@ -39,7 +39,7 @@ func init() {
 func (e *ESExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, query *tsdb.QueryContext) *tsdb.BatchResult {
 	if e.Version == 2 {
 		return es2.Execute(e.ESDataSource, ctx, queries, query)
-	} else {
+	} else if e.Version == 5 {
 		return es5.Execute(e.ESDataSource, ctx, queries, query)
 	}
 	result := &tsdb.BatchResult{

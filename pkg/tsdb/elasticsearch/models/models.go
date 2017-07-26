@@ -30,16 +30,37 @@ const (
 	ESDefaultTime         = "@timestamp"
 	ESDefaultTimeInterval = "10s"
 
-	AggTypeCount         = "count"
-	AggTypeAvg           = "avg"
-	AggTypeSum           = "sum"
-	AggTypeMax           = "max"
-	AggTypeMin           = "min"
-	AggTypeExtendedStats = "extended_stats"
-	AggTypePercentiles   = "percentiles"
-	AggTypeCardinality   = "cardinality"
-	AggTypeMovAvg        = "moving_avg"
-	AggTypeDerivative    = "derivative"
+	AggTypeTerms         = "terms"
+	AggTypeFilters       = "filters"
+	AggTypeGeoHashGrid   = "geo_hash_grid"
+	AggTypeHistogram     = "histogram"
+	AggTypeDateHistogram = "date_histogram"
+
+	MetricTypeCount         = "count"
+	MetricTypeAvg           = "avg"
+	MetricTypeSum           = "sum"
+	MetricTypeMax           = "max"
+	MetricTypeMin           = "min"
+	MetricTypeExtendedStats = "extended_stats"
+	MetricTypePercentiles   = "percentiles"
+	MetricTypeCardinality   = "cardinality"
+	MetricTypeMovAvg        = "moving_avg"
+	MetricTypeDerivative    = "derivative"
+
+	epochMillis = "epoch_millis"
+
+	// common used key
+	MetricKey   = "metrics"
+	SettingsKey = "settings"
+	FieldKey    = "field"
+	UnitKey     = "unit"
+	AlphaKey    = "alpha"
+	BetaKey     = "beta"
+	GammaKey    = "gamma"
+	ScriptKey   = "script"
+	InlineKey   = "inline"
+	TypeKey     = "type"
+	IdKey       = "id"
 )
 
 var (

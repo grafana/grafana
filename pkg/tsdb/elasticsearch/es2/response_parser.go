@@ -26,7 +26,7 @@ func (p *ESResponseParser) Parse(query *tsdb.Query, resp *elastic.MultiSearchRes
 		return nil, errors.New("not DateHistogram")
 	}
 
-	metrics, err := query.Model.Get(metricKey).Array()
+	metrics, err := query.Model.Get(models.MetricKey).Array()
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ var (
 
 func parseMetricResponse(metric *simplejson.Json, buckets []*elastic.AggregationBucketHistogramItem) tsdb.TimeSeriesSlice {
 	id, _ := metric.Get("id").String()
-	t, _ := metric.Get("type").String()
+	t, _ := metric.Get(models.TypeKey).String()
 	parser := GetMetricResponseParser(t)
 	if parser != nil {
 		return parser.Parse(id, t, buckets)
@@ -64,25 +64,25 @@ func parseMetricResponse(metric *simplejson.Json, buckets []*elastic.Aggregation
 
 func GetMetricResponseParser(t string) ResponseMetricParser {
 	switch t {
-	case models.AggTypeCount:
+	case models.MetricTypeCount:
 		return instanceCountResponseMetricParser
-	case models.AggTypeAvg:
+	case models.MetricTypeAvg:
 		return instanceAvgResponseMetricParser
-	case models.AggTypeSum:
+	case models.MetricTypeSum:
 		return instanceSumResponseMetricParser
-	case models.AggTypeMax:
+	case models.MetricTypeMax:
 		return instanceMaxResponseMetricParser
-	case models.AggTypeMin:
+	case models.MetricTypeMin:
 		return instanceMinResponseMetricParser
-	case models.AggTypeExtendedStats:
+	case models.MetricTypeExtendedStats:
 		return instanceStatsResponseMetricParser
-	case models.AggTypePercentiles:
+	case models.MetricTypePercentiles:
 		return instancePercentileResponseMetricParser
-	case models.AggTypeCardinality:
+	case models.MetricTypeCardinality:
 		return instanceCardinalityResponseMetricParser
-	case models.AggTypeMovAvg:
+	case models.MetricTypeMovAvg:
 		return instanceMovingAvgResponseMetricParser
-	case models.AggTypeDerivative:
+	case models.MetricTypeDerivative:
 		return instanceDerivativeResponseMetricParser
 	default:
 		return nil

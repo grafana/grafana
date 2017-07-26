@@ -18,7 +18,7 @@ func TestCountResponseMetricParser_Parse(t *testing.T) {
 		`"key":1501068600000,"doc_count":0}]}},"timed_out":false,"terminated_early":false,"_shards":` +
 		`{"failed":0,"successful":4,"total":4}}]}`
 	id := "2"
-	aggType := models.AggTypeCount
+	aggType := models.MetricTypeCount
 	ms := &elastic.MultiSearchResult{}
 	err := json.Unmarshal([]byte(data), ms)
 	if err != nil {
@@ -41,7 +41,7 @@ func TestAvgResponseMetricParser_Parse(t *testing.T) {
 		`{"value":21.1563462642928}},{"key_as_string":"1501070760000","key":1501070760000,"doc_count":3548,"1":{"value":` +
 		`17.328635851183765}}]}},"timed_out":false,"terminated_early":false,"_shards":{"failed":0,"successful":4,"total":4}}]}`
 	id := "2"
-	aggType := models.AggTypeAvg
+	aggType := models.MetricTypeAvg
 	ms := &elastic.MultiSearchResult{}
 	err := json.Unmarshal([]byte(data), ms)
 	if err != nil {
@@ -64,7 +64,7 @@ func TestSumResponseMetricParser_Parse(t *testing.T) {
 		`7470610.0}},{"key_as_string":"1501071840000","key":1501071840000,"doc_count":0,"1":{"value":0.0}}]}},"timed_out":` +
 		`false,"terminated_early":false,"_shards":{"failed":0,"successful":4,"total":4}}]}`
 	id := "2"
-	aggType := models.AggTypeSum
+	aggType := models.MetricTypeSum
 	ms := &elastic.MultiSearchResult{}
 	err := json.Unmarshal([]byte(data), ms)
 	if err != nil {
@@ -87,7 +87,7 @@ func TestMaxResponseMetricParser_Parse(t *testing.T) {
 		`{"key_as_string":"1501071960000","key":1501071960000,"doc_count":6653,"1":{"value":12930.0}}]}},"timed_out":false,` +
 		`"terminated_early":false,"_shards":{"failed":0,"successful":4,"total":4}}]}`
 	id := "2"
-	aggType := models.AggTypeMax
+	aggType := models.MetricTypeMax
 	ms := &elastic.MultiSearchResult{}
 	err := json.Unmarshal([]byte(data), ms)
 	if err != nil {
@@ -110,7 +110,7 @@ func TestMinResponseMetricParser_Parse(t *testing.T) {
 		`{"key_as_string":"1501071960000","key":1501071960000,"doc_count":6653,"1":{"value":12930.0}}]}},"timed_out":false,` +
 		`"terminated_early":false,"_shards":{"failed":0,"successful":4,"total":4}}]}`
 	id := "2"
-	aggType := models.AggTypeMin
+	aggType := models.MetricTypeMin
 	ms := &elastic.MultiSearchResult{}
 	err := json.Unmarshal([]byte(data), ms)
 	if err != nil {
@@ -139,7 +139,7 @@ func TestStatsResponseMetricParser_Parse(t *testing.T) {
 		`"variance":null,"std_deviation":null,"std_deviation_bounds":{"upper":null,"lower":null}}}]}},"timed_out":false,` +
 		`"terminated_early":false,"_shards":{"failed":0,"successful":4,"total":4}}]}`
 	id := "2"
-	aggType := models.AggTypeExtendedStats
+	aggType := models.MetricTypeExtendedStats
 	ms := &elastic.MultiSearchResult{}
 	err := json.Unmarshal([]byte(data), ms)
 	if err != nil {
@@ -164,7 +164,7 @@ func TestPercentilesResponseMetricParser_Parse(t *testing.T) {
 		`"doc_count":0,"1":{"values":{"25.0":"NaN","50.0":"NaN"}}}]}},"timed_out":false,"terminated_early":false,` +
 		`"_shards":{"failed":0,"successful":4,"total":4}}]}`
 	id := "2"
-	aggType := models.AggTypePercentiles
+	aggType := models.MetricTypePercentiles
 	ms := &elastic.MultiSearchResult{}
 	err := json.Unmarshal([]byte(data), ms)
 	if err != nil {
@@ -188,7 +188,7 @@ func TestCardinalityResponseMetricParser_Parse(t *testing.T) {
 		`"1501073220000","key":1501073220000,"doc_count":27498,"1":{"value":34}}]}},"timed_out":false,"terminated_early":` +
 		`false,"_shards":{"failed":0,"successful":4,"total":4}}]}`
 	id := "2"
-	aggType := models.AggTypeCardinality
+	aggType := models.MetricTypeCardinality
 	ms := &elastic.MultiSearchResult{}
 	err := json.Unmarshal([]byte(data), ms)
 	if err != nil {
@@ -214,7 +214,7 @@ func TestMovAvgResponseMetricParser_Parse(t *testing.T) {
 		`"doc_count":386,"3":{"value":22.121761658031087},"1":{"value":19.251550587969852}}]}},"timed_out":false,` +
 		`"terminated_early":false,"_shards":{"failed":0,"successful":4,"total":4}}]}`
 	id := "2"
-	aggType := models.AggTypeMovAvg
+	aggType := models.MetricTypeMovAvg
 	ms := &elastic.MultiSearchResult{}
 	err := json.Unmarshal([]byte(data), ms)
 	if err != nil {
@@ -240,7 +240,7 @@ func TestDerivativeResponseMetricParser_Parse(t *testing.T) {
 		`1501073700000,"doc_count":0,"3":{"value":null},"1":{"value":null}}]}},"timed_out":false,"terminated_early":` +
 		`false,"_shards":{"failed":0,"successful":4,"total":4}}]}`
 	id := "2"
-	aggType := models.AggTypeDerivative
+	aggType := models.MetricTypeDerivative
 	ms := &elastic.MultiSearchResult{}
 	err := json.Unmarshal([]byte(data), ms)
 	if err != nil {
