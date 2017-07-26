@@ -27,10 +27,7 @@ define([
         serviceDepSrv.readServiceDependency().then(function (response) {
           if (!_.isNull(response.data)) {
             var dependencies = JSON.parse(angular.fromJson(_.last(response.data).attributes[0].value));
-            
-            $scope.updateId  = _.last(response.data).id;
-            $scope.graphId   = _.last(response.data).attributes[0].id;
-            
+
             _.each(dependencies.nodes, function (node) {
               serviceDepSrv.readServiceStatus(node.id).then(function (resp) {
                 node.status = resp.data.healthStatusType;

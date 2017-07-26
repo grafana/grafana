@@ -20,7 +20,7 @@ define([
         return backendSrv.alertD({
           method: "post",
           url: "/cmdb/service/depend",
-          data: angular.toJson(graph),
+          data: graph,
           headers: {'Content-Type': 'text/plain'}
         });
       };
@@ -29,7 +29,7 @@ define([
         return backendSrv.alertD({
           method: "PUT",
           url: "/cmdb/service/depend?id=" + updateId + "&aid=" + graphId,
-          data: angular.toJson(graph),
+          data: graph,
           headers: {'Content-Type': 'text/plain'}
         });
       };
