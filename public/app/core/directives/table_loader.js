@@ -7,8 +7,8 @@ define([
     'use strict';
 
     coreModule.directive('tableLoader', function ($parse, $compile, $timeout, alertMgrSrv, healthSrv, datasourceSrv, contextSrv, backendSrv, $location, $q) {
-      var template = '<table class="table table-hover table-striped table-hack" id="tableLoader-{{key}}" data-pagination="true" data-page-size="5">'+
-                     '<thead><tr><th data-field="name" data-sortable="true">指标</th><th data-field="anomalyHealth" data-sortable="true">健康值</th></tr></thead>'+
+      var template = '<table class="table table-hover table-striped table-hack" id="tableLoader-{{key}}" data-pagination="true" data-page-size="5" data-sort-name="anomalyHealth">'+
+                     '<thead><tr><th data-field="name" data-sortable="true">指标</th><th data-field="anomalyHealth" data-sortable="true" data-cell-style="cellStyle">健康值</th></tr></thead>'+
                      '</table>';
 
       return {
@@ -24,7 +24,15 @@ define([
 
             // $('#tableLoader-' + scope.currentHost).bootstrapTable({
             $(".table-hack").bootstrapTable({
-              data: scope.metric
+              data: scope.metric,
+              cellStyle: function (value, row, index) {
+                if (parseFloat(value) < 100) {
+                  return {
+                    css: { "background-color": rgba(237,129,40,0.52) }
+                  }
+                }
+                return {};
+              }
             });
           });
 

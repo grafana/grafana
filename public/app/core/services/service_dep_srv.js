@@ -40,21 +40,21 @@ define([
         });
       };
 
-      this.readServiceStatus = function (service) {
+      this.readServiceStatus = function (serviceId, serviceName) {
         return backendSrv.alertD({
-          url: "/service/status?hostStatusIncluded=false&service=" + service
+          url: "/service/status?hostStatusIncluded=false&service=" + serviceName + "&serviceId=" + serviceId
         });
       };
 
-      this.readHostStatus = function (service) {
+      this.readHostStatus = function (serviceId, serviceName) {
         return backendSrv.alertD({
-          url: "/service/status?healthItemType=ServiceState&service=" + service
+          url: "/service/status?healthItemType=ServiceState&service=" + serviceName + "&serviceId=" + serviceId
         });
       };
       
-      this.readMetricStatus = function (service, host) {
+      this.readMetricStatus = function (serviceId, serviceName, host) {
         return backendSrv.alertD({
-          url: "/service/status?service=" + service
+          url: "/service/status?service=" + serviceName + "&serviceId=" + serviceId
         });
       };
 

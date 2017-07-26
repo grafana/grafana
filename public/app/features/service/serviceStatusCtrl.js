@@ -14,26 +14,30 @@ define([
       }
     });
 
-    module.controller('ServiceStatusCtrl', function ($scope, $timeout, $q, serviceDepSrv, jsPlumbService) {
-      var toolkit = jsPlumbService.getToolkit("demoToolkit");
-      var surface = jsPlumbService.getSurface("demoSurface");
-      var service = '';
+    module.controller('ServiceStatusCtrl', function ($scope, $timeout, $q, $templateCache, serviceDepSrv, jsPlumbService) {
+      var toolkit = jsPlumbService.getToolkit("serviceToolkit");
 
+      $scope.$on('$destroy', function () {
+        toolkit.clear();
+      });
+
+      window.ctrl = this;
       $scope.service = {};
 
       $scope.init = function (scope, element, attrs) {
-        toolkit = window.toolkit = scope.toolkit;
+        toolkit = scope.toolkit;
 
         serviceDepSrv.readServiceDependency().then(function (response) {
           if (!_.isNull(response.data)) {
             var dependencies = angular.fromJson(_.last(response.data).attributes[0].value);
 
             _.each(dependencies.nodes, function (node) {
-              serviceDepSrv.readServiceStatus(node.id).then(function (resp) {
+              serviceDepSrv.readServiceStatus(node.id, node.name).then(function (resp) {
                 node.status = resp.data.healthStatusType;
               });
             });
             
+            // toolkit.clear();
             toolkit.load({ data: dependencies });
           }
         });
@@ -42,12 +46,13 @@ define([
       $scope.nodeClickHandler = function (node) {
         $(node.el).addClass("active").siblings().removeClass("active");
         
-        service = $(node.el).attr("data-jtk-node-id");
+        var serviceId = node.node.data.id;  // $(node.el).attr("data-jtk-node-id");
+        var serviceName = node.node.data.name;
         
         $scope.service = {};
         $scope.metrics = {};
         
-        serviceDepSrv.readMetricStatus(service).then(function (response) {
+        serviceDepSrv.readMetricStatus(serviceId, serviceName).then(function (response) {
           $scope.service = response.data;
         });
       };

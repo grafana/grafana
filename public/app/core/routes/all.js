@@ -41,7 +41,7 @@ define([
       .when('/service_v2', {
         templateUrl: 'app/features/service/partials/service.html',
         controller: 'ServiceStatusCtrl',
-        reloadOnSearch: false,
+        reloadOnSearch: true,
       })
       .when('/dashboard/:type/:slug', {
         templateUrl: 'app/partials/dashboard.html',
@@ -301,7 +301,8 @@ define([
       })
       .when('/service_dependency', {
         templateUrl: 'app/features/service/partials/service_dep.html',
-        controller : 'BuildDependCtrl'
+        controller : 'BuildDependCtrl',
+        reloadOnSearch: true
       })
       .otherwise({
         templateUrl: 'app/partials/error.html',
