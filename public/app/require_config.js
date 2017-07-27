@@ -44,7 +44,9 @@ require.config({
     'fullcalendar':           'vendor/fullcalendar/dist/fullcalendar.min',
     'ui.calendar':            'vendor/angular-ui-calendar/src/calendar',
     'zh-cn':                  'vendor/fullcalendar/dist/zh-cn',
-    'bootstrap-table':        'vendor/angular-other/bootstrap-table'
+    'bootstrap-table':        'vendor/angular-other/bootstrap-table',
+    'jsPlumbToolkit':         'vendor/jsPlumb/jsPlumbToolkit',
+    'jsPlumbToolkit-angular': 'vendor/jsPlumb/jsPlumbToolkit-angular'
   },
 
   shim: {
@@ -103,5 +105,7 @@ require.config({
     'bootstrap-tagsinput':          ['jquery'],
     'ui.calendar':          ['jquery','fullcalendar', 'angular'],
     'zh-cn':                ['jquery','moment', 'fullcalendar'],
+    'jsPlumbToolkit':       ['jquery'],
+    'jsPlumbToolkit-angular':['angular', 'jsPlumbToolkit']
   },
 });

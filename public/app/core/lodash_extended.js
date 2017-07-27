@@ -80,5 +80,27 @@ function () {
       return "差";
     }
   };
+
+  _.serviceIconMap = function () {
+    return {
+      "hadoop.datanode": "iconfont fa-hadoop29",
+      "hadoop.namenode": "iconfont fa-icon",
+      "hbase.master": "iconfont fa-hbase",
+      "hbase.regionserver": "iconfont fa-hbase",
+      "kafka": "iconfont fa-kafka",
+      "mysql": "iconfont fa-mysql",
+      "spark": "iconfont fa-spark1",
+      "storm": "iconfont fa-ApacheStorm",
+      "yarn": "iconfont fa-zanwutu",
+      "zookeeper": "iconfont fa-zookeeper",
+      "tomcat": "iconfont fa-tomcat",
+      "opentsdb": "iconfont fa-zanwutu",
+      "mongo3": "iconfont fa-mongo-db1",
+      "nginx": "iconfont fa-image-icon_nginx",
+      "postgresql": "iconfont fa-postgresql",
+      "redis": "iconfont fa-redis",
+      "rabbitmq": "iconfont fa-rabbitmq"
+    };
+  }
   return _;
 });
