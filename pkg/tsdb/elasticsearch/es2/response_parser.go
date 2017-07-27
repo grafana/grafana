@@ -1,6 +1,8 @@
 package es2
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -21,22 +23,183 @@ func (p *ESResponseParser) Parse(query *tsdb.Query, resp *elastic.MultiSearchRes
 		return nil, errors.New("no response")
 	}
 	r := resp.Responses[0]
-	dh, success := r.Aggregations.DateHistogram(query.RefId)
-	if !success {
-		return nil, errors.New("not DateHistogram")
-	}
 
 	metrics, err := query.Model.Get(models.MetricKey).Array()
 	if err != nil {
 		return nil, err
 	}
 
-	for _, m := range metrics {
-		metric := simplejson.NewFromAny(m)
-		result.Series = append(result.Series, parseMetricResponse(metric, dh.Buckets)...)
+	allBuckets := parseAggregations(query, r)
+
+	for key, buckets := range allBuckets {
+		for _, m := range metrics {
+			metric := simplejson.NewFromAny(m)
+			result.Series = append(result.Series, parseMetricResponse(key, metric, buckets)...)
+		}
 	}
 
 	return result, nil
+}
+
+type BucketList []*Bucket
+
+type Bucket struct {
+	elastic.Aggregations
+
+	Key         int64
+	KeyAsString string
+	DocCount    int64
+}
+
+func parseAggregations(query *tsdb.Query, resp *elastic.SearchResult) map[string]BucketList {
+	bucketAggs := query.Model.Get(models.BucketAggsKey).MustArray()
+	lastResult := map[string]BucketList{}
+	lastResult[""] = BucketList{
+		&Bucket{
+			Aggregations: resp.Aggregations,
+		}}
+	for _, bagg := range bucketAggs {
+		baggJson := simplejson.NewFromAny(bagg)
+		t, err := baggJson.Get(models.TypeKey).String()
+		if err != nil {
+			continue
+		}
+		id, err := baggJson.Get(models.IdKey).String()
+		if err != nil {
+			continue
+		}
+		switch t {
+		case models.AggTypeTerms:
+			lastResult = parseTermsAggregations(id, lastResult)
+		case models.AggTypeFilters:
+			lastResult = parseFiltersAggregations(id, lastResult)
+		case models.AggTypeHistogram:
+			lastResult = parseHistogramAggregations(id, lastResult)
+		case models.AggTypeGeoHashGrid:
+			lastResult = parseGeoHashGridAggregations(id, lastResult)
+		case models.AggTypeDateHistogram:
+			lastResult = parseDateHistogramAggregations(id, lastResult)
+		}
+	}
+	result := map[string]BucketList{}
+	for _, buckets := range lastResult {
+		for _, b := range buckets {
+			_, succ := result[b.KeyAsString]
+			if !succ {
+				result[b.KeyAsString] = BucketList{}
+			}
+			result[b.KeyAsString] = append(result[b.KeyAsString], b)
+		}
+	}
+	return result
+
+}
+func parseGeoHashGridAggregations(id string, lastResult map[string]BucketList) map[string]BucketList {
+	currResult := map[string]BucketList{}
+	for _, aggs := range lastResult {
+		for _, agg := range aggs {
+			parentName := agg.KeyAsString
+			terms, succ := agg.GeoHash(id)
+			if !succ {
+				continue
+			}
+			for _, bucket := range terms.Buckets {
+				childKey := fmt.Sprintf("%v", bucket.Key)
+				currResult[id] = append(currResult[id], &Bucket{
+					KeyAsString:  parentName + " " + childKey,
+					Aggregations: bucket.Aggregations,
+					DocCount:     bucket.DocCount,
+				})
+			}
+		}
+	}
+	return currResult
+}
+
+func parseTermsAggregations(id string, lastResult map[string]BucketList) map[string]BucketList {
+	currResult := map[string]BucketList{}
+	for _, aggs := range lastResult {
+		for _, agg := range aggs {
+			parentName := agg.KeyAsString
+			terms, succ := agg.Terms(id)
+			if !succ {
+				continue
+			}
+			for _, bucket := range terms.Buckets {
+				childKey := fmt.Sprintf("%v", bucket.Key)
+				currResult[id] = append(currResult[id], &Bucket{
+					KeyAsString:  parentName + " " + childKey,
+					Aggregations: bucket.Aggregations,
+					DocCount:     bucket.DocCount,
+				})
+			}
+		}
+	}
+	return currResult
+}
+
+func parseHistogramAggregations(id string, lastResult map[string]BucketList) map[string]BucketList {
+	currResult := map[string]BucketList{}
+	for _, aggs := range lastResult {
+		for _, agg := range aggs {
+			parentName := agg.KeyAsString
+			terms, succ := agg.Histogram(id)
+			if !succ {
+				continue
+			}
+			for _, bucket := range terms.Buckets {
+				childKey := fmt.Sprintf("%v", bucket.Key)
+				currResult[id] = append(currResult[id], &Bucket{
+					KeyAsString:  parentName + " " + childKey,
+					Aggregations: bucket.Aggregations,
+					DocCount:     bucket.DocCount,
+				})
+			}
+		}
+	}
+	return currResult
+}
+
+func parseFiltersAggregations(id string, lastResult map[string]BucketList) map[string]BucketList {
+	currResult := map[string]BucketList{}
+	for _, aggs := range lastResult {
+		for _, agg := range aggs {
+			parentName := agg.KeyAsString
+			terms, succ := agg.Filters(id)
+			if !succ {
+				continue
+			}
+			for childKey, bucket := range terms.NamedBuckets {
+				currResult[id] = append(currResult[id], &Bucket{
+					KeyAsString:  parentName + " " + childKey,
+					Aggregations: bucket.Aggregations,
+					DocCount:     bucket.DocCount,
+				})
+			}
+		}
+	}
+	return currResult
+}
+
+func parseDateHistogramAggregations(id string, lastResult map[string]BucketList) map[string]BucketList {
+	currResult := map[string]BucketList{}
+	for _, aggs := range lastResult {
+		for _, agg := range aggs {
+			parentName := agg.KeyAsString
+			terms, succ := agg.DateHistogram(id)
+			if !succ {
+				continue
+			}
+			for _, bucket := range terms.Buckets {
+				currResult[id] = append(currResult[id], &Bucket{
+					KeyAsString:  parentName,
+					Aggregations: bucket.Aggregations,
+					DocCount:     bucket.DocCount,
+				})
+			}
+		}
+	}
+	return currResult
 }
 
 var (
@@ -52,12 +215,18 @@ var (
 	instanceDerivativeResponseMetricParser  = &derivativeResponseMetricParser{}
 )
 
-func parseMetricResponse(metric *simplejson.Json, buckets []*elastic.AggregationBucketHistogramItem) tsdb.TimeSeriesSlice {
-	id, _ := metric.Get("id").String()
+func parseMetricResponse(name string, metric *simplejson.Json, buckets BucketList) tsdb.TimeSeriesSlice {
+	id, _ := metric.Get(models.IdKey).String()
 	t, _ := metric.Get(models.TypeKey).String()
+	field := metric.Get(models.FieldKey).MustString("")
 	parser := GetMetricResponseParser(t)
 	if parser != nil {
-		return parser.Parse(id, t, buckets)
+		return parser.Parse(&metricInfo{
+			id:         id,
+			field:      field,
+			metricType: t,
+			extendName: name,
+		}, buckets)
 	}
 	return tsdb.TimeSeriesSlice{}
 }
@@ -89,8 +258,15 @@ func GetMetricResponseParser(t string) ResponseMetricParser {
 	}
 }
 
+type metricInfo struct {
+	id         string
+	metricType string
+	field      string
+	extendName string
+}
+
 type ResponseMetricParser interface {
-	Parse(id, metricType string, buckets []*elastic.AggregationBucketHistogramItem) tsdb.TimeSeriesSlice
+	Parse(info *metricInfo, buckets BucketList) tsdb.TimeSeriesSlice
 }
 
 type countResponseMetricParser struct{}
@@ -104,73 +280,73 @@ type cardinalityResponseMetricParser struct{}
 type movingAvgResponseMetricParser struct{}
 type derivativeResponseMetricParser struct{}
 
-func (parser *countResponseMetricParser) Parse(id, metricType string, buckets []*elastic.AggregationBucketHistogramItem) tsdb.TimeSeriesSlice {
+func (parser *countResponseMetricParser) Parse(info *metricInfo, buckets BucketList) tsdb.TimeSeriesSlice {
 	points := tsdb.NewTimeSeriesPointsFromArgs()
 	for _, b := range buckets {
 		timeMillis := b.Key
 		value := b.DocCount
 		points = append(points, tsdb.NewTimePoint(null.FloatFrom(float64(value)), float64(timeMillis)))
 	}
-	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(metricType+id, points)}
+	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(fmt.Sprintf("%s: %s %s %s", info.id, info.metricType, info.field, info.extendName), points)}
 }
 
-func (parser *avgResponseMetricParser) Parse(id, metricType string, buckets []*elastic.AggregationBucketHistogramItem) tsdb.TimeSeriesSlice {
+func (parser *avgResponseMetricParser) Parse(info *metricInfo, buckets BucketList) tsdb.TimeSeriesSlice {
 	points := tsdb.NewTimeSeriesPointsFromArgs()
 	for _, b := range buckets {
 		timeMillis := b.Key
-		metric, success := b.Avg(id)
+		metric, success := b.Avg(info.id)
 		if !success {
 			continue
 		}
 		val := metric.Value
 		points = append(points, tsdb.NewTimePoint(null.FloatFromPtr(val), float64(timeMillis)))
 	}
-	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(metricType+id, points)}
+	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(fmt.Sprintf("%s: %s %s %s", info.id, info.metricType, info.field, info.extendName), points)}
 }
 
-func (parser *sumResponseMetricParser) Parse(id, metricType string, buckets []*elastic.AggregationBucketHistogramItem) tsdb.TimeSeriesSlice {
+func (parser *sumResponseMetricParser) Parse(info *metricInfo, buckets BucketList) tsdb.TimeSeriesSlice {
 	points := tsdb.NewTimeSeriesPointsFromArgs()
 	for _, b := range buckets {
 		timeMillis := b.Key
-		metric, success := b.Sum(id)
+		metric, success := b.Sum(info.id)
 		if !success {
 			continue
 		}
 		val := metric.Value
 		points = append(points, tsdb.NewTimePoint(null.FloatFromPtr(val), float64(timeMillis)))
 	}
-	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(metricType+id, points)}
+	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(fmt.Sprintf("%s: %s %s %s", info.id, info.metricType, info.field, info.extendName), points)}
 }
 
-func (parser *maxResponseMetricParser) Parse(id, metricType string, buckets []*elastic.AggregationBucketHistogramItem) tsdb.TimeSeriesSlice {
+func (parser *maxResponseMetricParser) Parse(info *metricInfo, buckets BucketList) tsdb.TimeSeriesSlice {
 	points := tsdb.NewTimeSeriesPointsFromArgs()
 	for _, b := range buckets {
 		timeMillis := b.Key
-		metric, success := b.Max(id)
+		metric, success := b.Max(info.id)
 		if !success {
 			continue
 		}
 		val := metric.Value
 		points = append(points, tsdb.NewTimePoint(null.FloatFromPtr(val), float64(timeMillis)))
 	}
-	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(metricType+id, points)}
+	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(fmt.Sprintf("%s: %s %s %s", info.id, info.metricType, info.field, info.extendName), points)}
 }
 
-func (parser *minResponseMetricParser) Parse(id, metricType string, buckets []*elastic.AggregationBucketHistogramItem) tsdb.TimeSeriesSlice {
+func (parser *minResponseMetricParser) Parse(info *metricInfo, buckets BucketList) tsdb.TimeSeriesSlice {
 	points := tsdb.NewTimeSeriesPointsFromArgs()
 	for _, b := range buckets {
 		timeMillis := b.Key
-		metric, success := b.Min(id)
+		metric, success := b.Min(info.id)
 		if !success {
 			continue
 		}
 		val := metric.Value
 		points = append(points, tsdb.NewTimePoint(null.FloatFromPtr(val), float64(timeMillis)))
 	}
-	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(metricType+id, points)}
+	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(fmt.Sprintf("%s: %s %s %s", info.id, info.metricType, info.field, info.extendName), points)}
 }
 
-func (parser *statsResponseMetricParser) Parse(id, metricType string, buckets []*elastic.AggregationBucketHistogramItem) tsdb.TimeSeriesSlice {
+func (parser *statsResponseMetricParser) Parse(info *metricInfo, buckets BucketList) tsdb.TimeSeriesSlice {
 	minPoints := tsdb.NewTimeSeriesPointsFromArgs()
 	maxPoints := tsdb.NewTimeSeriesPointsFromArgs()
 	sumPoints := tsdb.NewTimeSeriesPointsFromArgs()
@@ -182,7 +358,7 @@ func (parser *statsResponseMetricParser) Parse(id, metricType string, buckets []
 	//stdDevLowerPoints := tsdb.NewTimeSeriesPointsFromArgs()
 	for _, b := range buckets {
 		timeMillis := b.Key
-		metric, success := b.ExtendedStats(id)
+		metric, success := b.ExtendedStats(info.id)
 		if !success {
 			continue
 		}
@@ -194,20 +370,20 @@ func (parser *statsResponseMetricParser) Parse(id, metricType string, buckets []
 		stdDevPoints = append(stdDevPoints, tsdb.NewTimePoint(null.FloatFromPtr(metric.StdDeviation), float64(timeMillis)))
 	}
 	return tsdb.TimeSeriesSlice{
-		tsdb.NewTimeSeries(metricType+id+": min", minPoints),
-		tsdb.NewTimeSeries(metricType+id+": max", maxPoints),
-		tsdb.NewTimeSeries(metricType+id+": sum", sumPoints),
-		tsdb.NewTimeSeries(metricType+id+": avg", avgPoints),
-		tsdb.NewTimeSeries(metricType+id+": cnt", cntPoints),
-		tsdb.NewTimeSeries(metricType+id+": stdDev", stdDevPoints),
+		tsdb.NewTimeSeries(fmt.Sprintf("%s: %s %s %s", info.id, info.metricType, info.field, info.extendName)+": min", minPoints),
+		tsdb.NewTimeSeries(fmt.Sprintf("%s: %s %s %s", info.id, info.metricType, info.field, info.extendName)+": max", maxPoints),
+		tsdb.NewTimeSeries(fmt.Sprintf("%s: %s %s %s", info.id, info.metricType, info.field, info.extendName)+": sum", sumPoints),
+		tsdb.NewTimeSeries(fmt.Sprintf("%s: %s %s %s", info.id, info.metricType, info.field, info.extendName)+": avg", avgPoints),
+		tsdb.NewTimeSeries(fmt.Sprintf("%s: %s %s %s", info.id, info.metricType, info.field, info.extendName)+": cnt", cntPoints),
+		tsdb.NewTimeSeries(fmt.Sprintf("%s: %s %s %s", info.id, info.metricType, info.field, info.extendName)+": stdDev", stdDevPoints),
 	}
 }
 
-func (parser *percentileResponseMetricParser) Parse(id, metricType string, buckets []*elastic.AggregationBucketHistogramItem) tsdb.TimeSeriesSlice {
+func (parser *percentileResponseMetricParser) Parse(info *metricInfo, buckets BucketList) tsdb.TimeSeriesSlice {
 	smap := map[string]tsdb.TimeSeriesPoints{}
 	for _, b := range buckets {
 		timeMillis := b.Key
-		metric, success := b.Percentiles(id)
+		metric, success := b.Percentiles(info.id)
 		if !success {
 			continue
 		}
@@ -221,49 +397,49 @@ func (parser *percentileResponseMetricParser) Parse(id, metricType string, bucke
 	}
 	result := tsdb.TimeSeriesSlice{}
 	for k, points := range smap {
-		result = append(result, tsdb.NewTimeSeries(metricType+id+":"+k, points))
+		result = append(result, tsdb.NewTimeSeries(fmt.Sprintf("%s: %s(%s) %s %s", info.id, info.metricType, k, info.field, info.extendName), points))
 	}
 	return result
 }
 
-func (parser *cardinalityResponseMetricParser) Parse(id, metricType string, buckets []*elastic.AggregationBucketHistogramItem) tsdb.TimeSeriesSlice {
+func (parser *cardinalityResponseMetricParser) Parse(info *metricInfo, buckets BucketList) tsdb.TimeSeriesSlice {
 	points := tsdb.NewTimeSeriesPointsFromArgs()
 	for _, b := range buckets {
 		timeMillis := b.Key
-		metric, success := b.Cardinality(id)
+		metric, success := b.Cardinality(info.id)
 		if !success {
 			continue
 		}
 		val := metric.Value
 		points = append(points, tsdb.NewTimePoint(null.FloatFromPtr(val), float64(timeMillis)))
 	}
-	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(metricType+id, points)}
+	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(fmt.Sprintf("%s: %s %s %s", info.id, info.metricType, info.field, info.extendName), points)}
 }
 
-func (parser *derivativeResponseMetricParser) Parse(id, metricType string, buckets []*elastic.AggregationBucketHistogramItem) tsdb.TimeSeriesSlice {
+func (parser *derivativeResponseMetricParser) Parse(info *metricInfo, buckets BucketList) tsdb.TimeSeriesSlice {
 	points := tsdb.NewTimeSeriesPointsFromArgs()
 	for _, b := range buckets {
 		timeMillis := b.Key
-		metric, success := b.Derivative(id)
+		metric, success := b.Derivative(info.id)
 		if !success {
 			continue
 		}
 		val := metric.Value
 		points = append(points, tsdb.NewTimePoint(null.FloatFromPtr(val), float64(timeMillis)))
 	}
-	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(metricType+id, points)}
+	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(fmt.Sprintf("%s: %s %s %s", info.id, info.metricType, info.field, info.extendName), points)}
 }
 
-func (parser *movingAvgResponseMetricParser) Parse(id, metricType string, buckets []*elastic.AggregationBucketHistogramItem) tsdb.TimeSeriesSlice {
+func (parser *movingAvgResponseMetricParser) Parse(info *metricInfo, buckets BucketList) tsdb.TimeSeriesSlice {
 	points := tsdb.NewTimeSeriesPointsFromArgs()
 	for _, b := range buckets {
 		timeMillis := b.Key
-		metric, success := b.MovAvg(id)
+		metric, success := b.MovAvg(info.id)
 		if !success {
 			continue
 		}
 		val := metric.Value
 		points = append(points, tsdb.NewTimePoint(null.FloatFromPtr(val), float64(timeMillis)))
 	}
-	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(metricType+id, points)}
+	return tsdb.TimeSeriesSlice{tsdb.NewTimeSeries(fmt.Sprintf("%s: %s %s %s", info.id, info.metricType, info.field, info.extendName), points)}
 }

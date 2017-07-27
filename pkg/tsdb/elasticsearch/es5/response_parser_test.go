@@ -29,7 +29,22 @@ func TestCountResponseMetricParser_Parse(t *testing.T) {
 	if !succ {
 		t.Error("not date histogram")
 	}
-	ss := parser.Parse("3", aggType, dhAgg.Buckets)
+	bl := BucketList{}
+	for _, b := range dhAgg.Buckets {
+		bl = append(bl, &Bucket{
+			Aggregations: b.Aggregations,
+			KeyAsString:  *b.KeyAsString,
+			Key:          b.Key,
+			DocCount:     b.DocCount,
+		})
+	}
+	m := &metricInfo{
+		id:         "3",
+		metricType: aggType,
+		field:      "",
+		extendName: "",
+	}
+	ss := parser.Parse(m, bl)
 	assert.Equal(t, len(ss), 1)
 	assert.Equal(t, len(ss[0].Points), 3)
 }
@@ -52,7 +67,23 @@ func TestAvgResponseMetricParser_Parse(t *testing.T) {
 	if !succ {
 		t.Error("not date histogram")
 	}
-	ss := parser.Parse("1", aggType, dhAgg.Buckets)
+	bl := BucketList{}
+	for _, b := range dhAgg.Buckets {
+		bl = append(bl, &Bucket{
+			Aggregations: b.Aggregations,
+			KeyAsString:  *b.KeyAsString,
+			Key:          b.Key,
+			DocCount:     b.DocCount,
+		})
+	}
+	m := &metricInfo{
+		id:         "1",
+		metricType: aggType,
+		field:      "",
+		extendName: "",
+	}
+
+	ss := parser.Parse(m, bl)
 	assert.Equal(t, len(ss), 1)
 	assert.Equal(t, len(ss[0].Points), 3)
 }
@@ -75,7 +106,23 @@ func TestSumResponseMetricParser_Parse(t *testing.T) {
 	if !succ {
 		t.Error("not date histogram")
 	}
-	ss := parser.Parse("1", aggType, dhAgg.Buckets)
+	bl := BucketList{}
+	for _, b := range dhAgg.Buckets {
+		bl = append(bl, &Bucket{
+			Aggregations: b.Aggregations,
+			KeyAsString:  *b.KeyAsString,
+			Key:          b.Key,
+			DocCount:     b.DocCount,
+		})
+	}
+	m := &metricInfo{
+		id:         "1",
+		metricType: aggType,
+		field:      "",
+		extendName: "",
+	}
+
+	ss := parser.Parse(m, bl)
 	assert.Equal(t, len(ss), 1)
 	assert.Equal(t, len(ss[0].Points), 3)
 }
@@ -98,7 +145,23 @@ func TestMaxResponseMetricParser_Parse(t *testing.T) {
 	if !succ {
 		t.Error("not date histogram")
 	}
-	ss := parser.Parse("1", aggType, dhAgg.Buckets)
+	bl := BucketList{}
+	for _, b := range dhAgg.Buckets {
+		bl = append(bl, &Bucket{
+			Aggregations: b.Aggregations,
+			KeyAsString:  *b.KeyAsString,
+			Key:          b.Key,
+			DocCount:     b.DocCount,
+		})
+	}
+	m := &metricInfo{
+		id:         "1",
+		metricType: aggType,
+		field:      "",
+		extendName: "",
+	}
+
+	ss := parser.Parse(m, bl)
 	assert.Equal(t, len(ss), 1)
 	assert.Equal(t, len(ss[0].Points), 3)
 }
@@ -121,7 +184,23 @@ func TestMinResponseMetricParser_Parse(t *testing.T) {
 	if !succ {
 		t.Error("not date histogram")
 	}
-	ss := parser.Parse("1", aggType, dhAgg.Buckets)
+	bl := BucketList{}
+	for _, b := range dhAgg.Buckets {
+		bl = append(bl, &Bucket{
+			Aggregations: b.Aggregations,
+			KeyAsString:  *b.KeyAsString,
+			Key:          b.Key,
+			DocCount:     b.DocCount,
+		})
+	}
+	m := &metricInfo{
+		id:         "1",
+		metricType: aggType,
+		field:      "",
+		extendName: "",
+	}
+
+	ss := parser.Parse(m, bl)
 	assert.Equal(t, len(ss), 1)
 	assert.Equal(t, len(ss[0].Points), 3)
 }
@@ -150,7 +229,23 @@ func TestStatsResponseMetricParser_Parse(t *testing.T) {
 	if !succ {
 		t.Error("not date histogram")
 	}
-	ss := parser.Parse("1", aggType, dhAgg.Buckets)
+	bl := BucketList{}
+	for _, b := range dhAgg.Buckets {
+		bl = append(bl, &Bucket{
+			Aggregations: b.Aggregations,
+			KeyAsString:  *b.KeyAsString,
+			Key:          b.Key,
+			DocCount:     b.DocCount,
+		})
+	}
+	m := &metricInfo{
+		id:         "1",
+		metricType: aggType,
+		field:      "",
+		extendName: "",
+	}
+
+	ss := parser.Parse(m, bl)
 	// max, min, count, avg, sum, std_deviation
 	assert.Equal(t, len(ss), 6)
 	assert.Equal(t, len(ss[0].Points), 3)
@@ -175,7 +270,23 @@ func TestPercentilesResponseMetricParser_Parse(t *testing.T) {
 	if !succ {
 		t.Error("not date histogram")
 	}
-	ss := parser.Parse("1", aggType, dhAgg.Buckets)
+	bl := BucketList{}
+	for _, b := range dhAgg.Buckets {
+		bl = append(bl, &Bucket{
+			Aggregations: b.Aggregations,
+			KeyAsString:  *b.KeyAsString,
+			Key:          b.Key,
+			DocCount:     b.DocCount,
+		})
+	}
+	m := &metricInfo{
+		id:         "1",
+		metricType: aggType,
+		field:      "",
+		extendName: "",
+	}
+
+	ss := parser.Parse(m, bl)
 	// max, min, count, avg, sum, std_deviation
 	assert.Equal(t, len(ss), 2)
 	assert.Equal(t, len(ss[0].Points), 3)
@@ -199,7 +310,23 @@ func TestCardinalityResponseMetricParser_Parse(t *testing.T) {
 	if !succ {
 		t.Error("not date histogram")
 	}
-	ss := parser.Parse("1", aggType, dhAgg.Buckets)
+	bl := BucketList{}
+	for _, b := range dhAgg.Buckets {
+		bl = append(bl, &Bucket{
+			Aggregations: b.Aggregations,
+			KeyAsString:  *b.KeyAsString,
+			Key:          b.Key,
+			DocCount:     b.DocCount,
+		})
+	}
+	m := &metricInfo{
+		id:         "1",
+		metricType: aggType,
+		field:      "",
+		extendName: "",
+	}
+
+	ss := parser.Parse(m, bl)
 	// max, min, count, avg, sum, std_deviation
 	assert.Equal(t, len(ss), 1)
 	assert.Equal(t, len(ss[0].Points), 3)
@@ -225,7 +352,23 @@ func TestMovAvgResponseMetricParser_Parse(t *testing.T) {
 	if !succ {
 		t.Error("not date histogram")
 	}
-	ss := parser.Parse("1", aggType, dhAgg.Buckets)
+	bl := BucketList{}
+	for _, b := range dhAgg.Buckets {
+		bl = append(bl, &Bucket{
+			Aggregations: b.Aggregations,
+			KeyAsString:  *b.KeyAsString,
+			Key:          b.Key,
+			DocCount:     b.DocCount,
+		})
+	}
+	m := &metricInfo{
+		id:         "1",
+		metricType: aggType,
+		field:      "",
+		extendName: "",
+	}
+
+	ss := parser.Parse(m, bl)
 	// max, min, count, avg, sum, std_deviation
 	assert.Equal(t, len(ss), 1)
 	assert.Equal(t, len(ss[0].Points), 2)
@@ -251,7 +394,23 @@ func TestDerivativeResponseMetricParser_Parse(t *testing.T) {
 	if !succ {
 		t.Error("not date histogram")
 	}
-	ss := parser.Parse("1", aggType, dhAgg.Buckets)
+	bl := BucketList{}
+	for _, b := range dhAgg.Buckets {
+		bl = append(bl, &Bucket{
+			Aggregations: b.Aggregations,
+			KeyAsString:  *b.KeyAsString,
+			Key:          b.Key,
+			DocCount:     b.DocCount,
+		})
+	}
+	m := &metricInfo{
+		id:         "1",
+		metricType: aggType,
+		field:      "",
+		extendName: "",
+	}
+
+	ss := parser.Parse(m, bl)
 	// max, min, count, avg, sum, std_deviation
 	assert.Equal(t, len(ss), 1)
 	assert.Equal(t, len(ss[0].Points), 2)
