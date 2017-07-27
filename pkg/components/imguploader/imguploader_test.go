@@ -100,6 +100,10 @@ func TestImageUploaderFactory(t *testing.T) {
 		Convey("Qiniu uploader", func() {
 			var err error
 
+			setting.NewConfigContext(&setting.CommandLineArgs{
+				HomePath: "../../../",
+			})
+
 			setting.ImageUploadProvider = "qiniu"
 
 			webdavSec, err := setting.Cfg.GetSection("external_image_storage.qiniu")

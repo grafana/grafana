@@ -1,12 +1,10 @@
 package imguploader
 
 import (
-	"fmt"
-
-	"net/http"
-
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
@@ -58,8 +56,7 @@ func (u *QiniuUploader) Upload(imageDiskPath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Upload to Qiniu failed: %v", err)
 	}
-	if u.domain != "" {
-	} else {
+	if u.domain == "" {
 		resp, err := u.getUrlClient.Get(fmt.Sprintf("http://api.qiniu.com/v6/domain/list?tbl=%v", u.bucket))
 		if err != nil {
 			return "", err
