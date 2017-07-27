@@ -309,16 +309,6 @@ export class SideMenuCtrl {
         icon: "icon-gf icon-gf-dashboard",
         url: this.getUrl("/datasources")
       });
-      item.push({
-        text: "plugins",
-        icon: "icon-gf icon-gf-apps",
-        url: this.getUrl("/plugins")
-      });
-      item.push({
-        text: "主题查看",
-        icon: "fa fa-fw fa-adjust",
-        url: this.getUrl("/styleguide")
-      });
     }
 
     item.push({
