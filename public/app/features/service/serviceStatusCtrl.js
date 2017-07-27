@@ -13,14 +13,13 @@ define([
       };
     });
 
-    module.controller('ServiceStatusCtrl', function ($scope, $timeout, $q, $templateCache, serviceDepSrv, jsPlumbService) {
+    module.controller('ServiceStatusCtrl', function ($scope, $timeout, $q, $location, serviceDepSrv, jsPlumbService, alertSrv) {
       var toolkit = jsPlumbService.getToolkit("serviceToolkit");
 
       $scope.$on('$destroy', function () {
         toolkit.clear();
       });
 
-      window.ctrl = this;
       $scope.service = {};
 
       $scope.init = function (scope) {
@@ -36,8 +35,12 @@ define([
               });
             });
 
-            // toolkit.clear();
             toolkit.load({ data: dependencies });
+          } else {
+            alertSrv.set("抱歉", "您还没有创建服务依赖关系, 即将跳转至创建页面", "error", 2000);
+            $timeout(function () {
+              $location.url("/service_dependency");
+            }, 2000);
           }
         });
       };

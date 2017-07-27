@@ -33,11 +33,6 @@ define([
         });
       });
 
-      // update data set
-      var _updateDataset = function () {
-        ctrl.exportData = toolkit.exportData();
-      };
-
       $scope.init = function(scope, element) {
         toolkit = scope.toolkit;
         var surface = jsPlumbService.getSurface("serviceDepSurface");
@@ -53,9 +48,6 @@ define([
 
           toolkit.load({ data: dependencies });
         });
-
-        // any operation that caused a data update (and would have caused an autosave), fires a dataUpdated event.
-        toolkit.bind("dataUpdated", _updateDataset);
 
         var controls = element[0].querySelector(".controls");
         // listener for mode change on renderer.
@@ -110,7 +102,7 @@ define([
       };
 
       $scope.save = function () {
-        var graph = angular.toJson(window.ctrl.exportData);
+        var graph = angular.toJson(toolkit.exportData());
         if ($scope.updateId & $scope.graphId) {
           serviceDepSrv.updateServiceDependency(graph, $scope.updateId, $scope.graphId).then(function () {
             alertSrv.set("更新成功", "", "success", 4000);
