@@ -14,6 +14,8 @@ export class SideMenuCtrl {
   appSubUrl: string;
   bottomLinks: any;
   submenu: any;
+  $rootScope: any;
+  configMenu: any;
 
   /** @ngInject */
   constructor($rootScope, private $scope, private $location, private contextSrv, private backendSrv, private $element) {
@@ -24,6 +26,9 @@ export class SideMenuCtrl {
     this.mainLinks = [];
     this.bottomLinks = [];
     this.contextSrv.setPinnedState(true);
+    this.$rootScope = $rootScope;
+    this.configMenu = config.bootData.mainNavLinks;
+    console.log(this.configMenu);
     var _self = this;
     this.mainLinks.push({
       text: "系统总览",
@@ -116,6 +121,7 @@ export class SideMenuCtrl {
         },
         {
           text: '故障溯源',
+          click: this.getSource
         },
         {
           text: '健康报告',
@@ -175,7 +181,7 @@ export class SideMenuCtrl {
     this.bottomLinks.push({
       text: "信息管理",
       icon: "fa fa-fw fa-cogs",
-      children: this.getMsgManagementMenu(),
+      children: this.getMsgManagementMenu(_self),
     });
 
     this.bottomLinks.push({
@@ -224,16 +230,7 @@ export class SideMenuCtrl {
         return;
       }
       if (item.click) {
-        item.click();
-      }
-      if (item.text === '故障溯源') {
-        $rootScope.appEvent('confirm-modal', {
-          title: '',
-          text: '功能暂未开放，敬请期待',
-          icon: 'fa-bell',
-          yesText: '确定',
-          modalClass : 'contact-us',
-        });
+        item.click(_self);
       }
     };
   }
@@ -248,9 +245,8 @@ export class SideMenuCtrl {
     });
   };
 
-  getMsgManagementMenu() {
+  getMsgManagementMenu(_self) {
     var item = [];
-    item = config.bootData.mainNavLinks;
     if (config.allowOrgCreate) {
       item.push({
         text: "新建公司",
@@ -280,11 +276,16 @@ export class SideMenuCtrl {
       item.push({
         text: "后台管理",
         dropdown: 'dropdown',
-        thdmenu: [
+        children: [
           {
-            text: "System info",
+            text: "系统信息",
             icon: "fa fa-fw fa-info",
             url: this.getUrl("/admin/settings"),
+          },
+          {
+            text: "系统状态",
+            icon: "fa fa-fw fa-info",
+            url: this.getUrl("/admin/stats"),
           },
           {
             text: "全体成员",
@@ -303,6 +304,21 @@ export class SideMenuCtrl {
         icon: "fa fa-fw fa-users",
         url: this.getUrl("/customer"),
       });
+      item.push({
+        text: "数据源",
+        icon: "icon-gf icon-gf-dashboard",
+        url: this.getUrl("/datasources")
+      });
+      item.push({
+        text: "plugins",
+        icon: "icon-gf icon-gf-apps",
+        url: this.getUrl("/plugins")
+      });
+      item.push({
+        text: "主题查看",
+        icon: "fa fa-fw fa-adjust",
+        url: this.getUrl("/styleguide")
+      });
     }
 
     item.push({
@@ -310,8 +326,6 @@ export class SideMenuCtrl {
       url: "http://cloudwiz.cn/document/",
       target: '_blank'
     });
-
-    _.uniq(item);
 
     return item;
   };
@@ -327,7 +341,7 @@ export class SideMenuCtrl {
         item.children.push({
           text: org.name,
           icon: "fa fa-fw fa-random",
-          click: () => {
+          click: (_self) => {
             _self.switchOrg(org.orgId);
           }
         });
@@ -346,7 +360,11 @@ export class SideMenuCtrl {
     _self.backendSrv.search({query: "", starred: "false"}).then(function (result) {
       submenu.push({
         text: "+新建",
-        click: _self.newDashboard,
+        url: "/dashboard/new",
+      });
+      submenu.push({
+        text: "导入",
+        url: "/import/dashboard",
       });
       _.each(result, function (dash) {
         submenu.push({
@@ -356,6 +374,17 @@ export class SideMenuCtrl {
       });
       item.children = submenu;
       _self.$scope.submenu = item;
+    });
+  };
+
+  getSource(_self) {
+    _self.$rootScope.appEvent('confirm-modal', {
+      title: '故障溯源',
+      text: '功能暂未开放，敬请期待',
+      icon: 'fa-bell',
+      yesText: '确定',
+      noText: '关闭',
+      modalClass : 'contact-us',
     });
   };
 }
