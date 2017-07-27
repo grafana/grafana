@@ -145,10 +145,10 @@ export class PanelCtrl {
   getExtendedMenu() {
     var actions = [];
     if (!this.fullscreen) { //  duplication is not supported in fullscreen mode
-      actions.push({ text: '复制', click: 'ctrl.duplicate(); dismiss();'});
+      actions.push({ text: '复制', click: 'ctrl.duplicate(); dismiss();', role: 'Editor'});
     }
     actions.push({text: '查看', click: 'ctrl.viewPanel(); dismiss();', icon: 'icon-eye-open'});
-    actions.push({text: '查看 JSON', click: 'ctrl.editPanelJson(); dismiss();'});
+    actions.push({text: '查看 JSON', click: 'ctrl.editPanelJson(); dismiss();', role: 'Editor'});
     this.events.emit('init-panel-actions', actions);
     return actions;
   }
