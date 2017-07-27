@@ -112,14 +112,34 @@ export class PanelCtrl {
 
   getMenu() {
     let menu = [];
-    menu.push({text: '放大', click: 'ctrl.updateColumnSpan(1); dismiss();', icon: 'fa-plus', hover: 'hover-show pull-left'});
-    menu.push({text: '缩小', click: 'ctrl.updateColumnSpan(-1); dismiss();', icon: 'fa-minus', hover: 'hover-show pull-left'});
+    menu.push({text: '放大', click: 'ctrl.updateColumnSpan(1); dismiss();', role: 'Editor', icon: 'fa-plus', hover: 'hover-show pull-left'});
+    menu.push({text: '缩小', click: 'ctrl.updateColumnSpan(-1); dismiss();', role: 'Editor',  icon: 'fa-minus', hover: 'hover-show pull-left'});
     menu.push({text: '删除', click: 'ctrl.removePanel(); dismiss();', role: 'Editor', icon: 'fa-trash-o', hover: 'hover-show  pull-left'});
-    menu.push({text: '分享', click: 'ctrl.sharePanel(); dismiss();', icon:'fa-external-link'});
+    menu.push({text: '分享', click: 'ctrl.sharePanel(); dismiss();', role: 'Editor', icon:'fa-external-link'});
     menu.push({text: '编辑', click: 'ctrl.editPanel(); dismiss();', role: 'Editor', icon:'fa-pencil'});
-    menu.push({text: '关联性分析', click: 'ctrl.associateLink(); dismiss();', icon:'fa-line-chart'});
-    menu.push({text: '整合分析', click: 'ctrl.toIntegrate(); dismiss();', icon:'fa-book'});
+    if (this.checkMenu('associate')) {
+      menu.push({text: '关联性分析', click: 'ctrl.associateLink(); dismiss();', icon:'fa-line-chart'});
+    }
+    if(this.checkMenu('integrate')) {
+      menu.push({text: '整合分析', click: 'ctrl.toIntegrate(); dismiss();', icon:'fa-book'});
+    }
     return menu;
+  }
+
+  checkMenu(menu) {
+    var pathname = window.location.pathname;
+    var show = false;
+    var isGraph = this.panel.type === 'graph';
+    var isLine = this.panel.lines;
+    switch (menu) {
+      case 'associate':
+        show = (/^\/anomaly/.test(pathname) || (/^\/integrate/.test(pathname)));
+        break;
+      case 'integrate':
+        show = !(/^\/integrate/.test(pathname));
+        break;
+    }
+    return show && isGraph && isLine;
   }
 
   getExtendedMenu() {
