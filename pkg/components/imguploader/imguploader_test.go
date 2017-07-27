@@ -96,5 +96,26 @@ func TestImageUploaderFactory(t *testing.T) {
 			So(original.username, ShouldEqual, "username")
 			So(original.password, ShouldEqual, "password")
 		})
+
+		Convey("Qiniu uploader", func() {
+			var err error
+
+			setting.ImageUploadProvider = "qiniu"
+
+			webdavSec, err := setting.Cfg.GetSection("external_image_storage.qiniu")
+			webdavSec.NewKey("bucket_name", "bucket_name")
+			webdavSec.NewKey("access_key", "access_key")
+			webdavSec.NewKey("secret_key", "secret_key")
+
+			uploader, err := NewImageUploader()
+
+			So(err, ShouldBeNil)
+			original, ok := uploader.(*QiniuUploader)
+
+			So(ok, ShouldBeTrue)
+			So(original.bucket, ShouldEqual, "bucket_name")
+			So(original.accessKey, ShouldEqual, "access_key")
+			So(original.secretKey, ShouldEqual, "secret_key")
+		})
 	})
 }
