@@ -288,3 +288,13 @@ div.flot-text {
     padding: 1.2rem .5rem .4rem .5rem;
   }
 }
+// cloudwiz start
+.panel {
+  .hover-show {
+    display: none;
+  }
+  &:hover .hover-show {
+    display: inline;
+  }
+}
+// cloudwiz end

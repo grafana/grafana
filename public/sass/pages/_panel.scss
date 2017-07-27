@@ -54,6 +54,7 @@
 }
 
 .panel-right-menu {
+ position: absolute;
  margin-right: 11px;
  top: 0;
  right: 0;
@@ -103,11 +104,13 @@
   margin: 0 auto;
 }
 
-
+// cloudwiz start
 .panel-time-info {
-  font-weight: bold;
-  margin-right: 15px;
-  color: $blue;
-  font-size: 85%;
-  position: absolute;
+  float: none;
+  position: static;
 }
+
+.pull-right > .dropdown-menu {
+  text-align: left;
+}
+// cloudwiz end

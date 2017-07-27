@@ -31,16 +31,18 @@ function (angular, $, _, Tether) {
       }
 
       function createMenuTemplate(ctrl) {
-        debugger
+        // debugger
         var template = '<div class="panel-right-menu" ng-show="!panelMeta.loading">';
         _.each(ctrl.getMenu(), function (item) {
           if (item.role === 'Editor' && !ctrl.dashboard.meta.canEdit) {
             return;
           }
-          template += '<span class="panel-right-menu-item"';
-          // if (item.show) {
-          //   template += ' ng-if="' + item.show + '"';
-          // }
+          template += '<span class="';
+          var className = 'panel-right-menu-item';
+          if (item.hover) {
+            className += ' ' + item.hover;
+          }
+          template += className + '"';
           template += ' ng-click="' + item.click + '" bs-tooltip="' + "'" + item.text + "'" + '">';
           template += '<i class="fa ' + item.icon + '"></i>';
           template += '</span>';

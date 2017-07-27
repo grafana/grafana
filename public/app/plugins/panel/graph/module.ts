@@ -138,9 +138,9 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitPanelActions(actions) {
-    actions.push({text: 'Export CSV (series as rows)', click: 'ctrl.exportCsv()'});
-    actions.push({text: 'Export CSV (series as columns)', click: 'ctrl.exportCsvColumns()'});
-    actions.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
+    actions.push({text: '导出 CSV (series as rows)', click: 'ctrl.exportCsv()'});
+    actions.push({text: '导出 CSV (series as columns)', click: 'ctrl.exportCsvColumns()'});
+    actions.push({text: '隐藏图例', click: 'ctrl.toggleLegend()'});
   }
 
   setUnitFormat(axis, subItem) {
