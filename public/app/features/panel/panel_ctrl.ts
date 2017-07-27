@@ -112,10 +112,10 @@ export class PanelCtrl {
 
   getMenu() {
     let menu = [];
-    menu.push({text: '放大', click: 'ctrl.updateColumnSpan(1); dismiss();', icon: 'fa-plus', hover: 'hover-show'});
-    menu.push({text: '缩小', click: 'ctrl.updateColumnSpan(-1); dismiss();', icon: 'fa-minus', hover: 'hover-show'});
-    menu.push({text: '删除', click: 'ctrl.removePanel(); dismiss();', role: 'Editor', icon: 'fa-trash-o', hover: 'hover-show'});
-    menu.push({text: '分享', click: 'ctrl.sharePanel(); dismiss();', icon:'fa-external-link', hover: 'hover-show'});
+    menu.push({text: '放大', click: 'ctrl.updateColumnSpan(1); dismiss();', icon: 'fa-plus', hover: 'hover-show pull-left'});
+    menu.push({text: '缩小', click: 'ctrl.updateColumnSpan(-1); dismiss();', icon: 'fa-minus', hover: 'hover-show pull-left'});
+    menu.push({text: '删除', click: 'ctrl.removePanel(); dismiss();', role: 'Editor', icon: 'fa-trash-o', hover: 'hover-show  pull-left'});
+    menu.push({text: '分享', click: 'ctrl.sharePanel(); dismiss();', icon:'fa-external-link'});
     menu.push({text: '编辑', click: 'ctrl.editPanel(); dismiss();', role: 'Editor', icon:'fa-pencil'});
     menu.push({text: '关联性分析', click: 'ctrl.associateLink(); dismiss();', icon:'fa-line-chart'});
     menu.push({text: '整合分析', click: 'ctrl.toIntegrate(); dismiss();', icon:'fa-book'});
