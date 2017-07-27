@@ -30,11 +30,15 @@ export class PanelCtrl {
   height: any;
   containerHeight: any;
   events: Emitter;
+  contextSrv: any;
+  integrateSrv: any;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
+    this.contextSrv = $injector.get('contextSrv');
+    this.integrateSrv = $injector.get('integrateSrv');
     this.editorTabIndex = 0;
     this.events = new Emitter();
 
@@ -108,17 +112,43 @@ export class PanelCtrl {
 
   getMenu() {
     let menu = [];
-    menu.push({text: 'View', click: 'ctrl.viewPanel(); dismiss();'});
-    menu.push({text: 'Edit', click: 'ctrl.editPanel(); dismiss();', role: 'Editor'});
-    if (!this.fullscreen) { //  duplication is not supported in fullscreen mode
-      menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
+    menu.push({text: '放大', click: 'ctrl.updateColumnSpan(1); dismiss();', role: 'Editor', icon: 'fa-plus', hover: 'hover-show pull-left'});
+    menu.push({text: '缩小', click: 'ctrl.updateColumnSpan(-1); dismiss();', role: 'Editor',  icon: 'fa-minus', hover: 'hover-show pull-left'});
+    menu.push({text: '删除', click: 'ctrl.removePanel(); dismiss();', role: 'Editor', icon: 'fa-trash-o', hover: 'hover-show  pull-left'});
+    menu.push({text: '分享', click: 'ctrl.sharePanel(); dismiss();', role: 'Editor', icon:'fa-external-link'});
+    menu.push({text: '编辑', click: 'ctrl.editPanel(); dismiss();', role: 'Editor', icon:'fa-pencil'});
+    if (this.checkMenu('associate')) {
+      menu.push({text: '关联性分析', click: 'ctrl.associateLink(); dismiss();', icon:'fa-line-chart'});
     }
-    menu.push({text: 'Share', click: 'ctrl.sharePanel(); dismiss();'});
+    if(this.checkMenu('integrate')) {
+      menu.push({text: '整合分析', click: 'ctrl.toIntegrate(); dismiss();', icon:'fa-book'});
+    }
     return menu;
   }
 
+  checkMenu(menu) {
+    var pathname = window.location.pathname;
+    var show = false;
+    var isGraph = this.panel.type === 'graph';
+    var isLine = this.panel.lines;
+    switch (menu) {
+      case 'associate':
+        show = (/^\/anomaly/.test(pathname) || (/^\/integrate/.test(pathname)));
+        break;
+      case 'integrate':
+        show = !(/^\/integrate/.test(pathname));
+        break;
+    }
+    return show && isGraph && isLine;
+  }
+
   getExtendedMenu() {
-    var actions = [{text: 'Panel JSON', click: 'ctrl.editPanelJson(); dismiss();'}];
+    var actions = [];
+    if (!this.fullscreen) { //  duplication is not supported in fullscreen mode
+      actions.push({ text: '复制', click: 'ctrl.duplicate(); dismiss();', role: 'Editor'});
+    }
+    actions.push({text: '查看', click: 'ctrl.viewPanel(); dismiss();', icon: 'icon-eye-open'});
+    actions.push({text: '查看 JSON', click: 'ctrl.editPanelJson(); dismiss();', role: 'Editor'});
     this.events.emit('init-panel-actions', actions);
     return actions;
   }
@@ -174,10 +204,11 @@ export class PanelCtrl {
 
   removePanel() {
     this.publishAppEvent('confirm-modal', {
-      title: 'Remove Panel',
-      text: 'Are you sure you want to remove this panel?',
+      title: '移除面板',
+      text: '您是否想移除这个面板？',
       icon: 'fa-trash',
-      yesText: 'Remove',
+      yesText: '删除',
+      noText: '取消',
       onConfirm: () => {
         this.row.panels = _.without(this.row.panels, this.panel);
       }
@@ -225,5 +256,36 @@ export class PanelCtrl {
       src: 'public/app/partials/inspector.html',
       scope: modalScope
     });
+  }
+
+  associateLink() {
+    try {
+      var host = this.panel.targets[0].tags.host;
+      var metric = this.panel.targets[0].metric;
+      if (host && metric) {
+        var link = '/alerts/association/' + host + '/100/' + this.contextSrv.user.orgId + '.' + this.contextSrv.user.systemId + '.' + metric;
+        window.location.href = link;
+      }
+    } catch (err) {
+      var reg = /\'(.*?)\'/g;
+      var msg = "图表中缺少" + err.toString().match(reg)[0] + "配置";
+      this.publishAppEvent('alert-warning', ['参数缺失', msg]);
+    }
+  }
+
+  toIntegrate() {
+    try{
+      this.integrateSrv.options.targets = _.cloneDeep(this.panel.targets);
+      this.integrateSrv.options.title = this.panel.title;
+      if (!this.panel.targets[0].metric) {
+        this.integrateSrv.options.targets[0].metric = "*";
+      }
+      if (!_.isNull(this.panel.targets[0].tags)) {
+        this.integrateSrv.options.targets[0].tags = {host: "*"};
+      }
+      window.location.href = "/integrate";
+    }catch(e){
+      this.publishAppEvent('alert-warning', ['日志分析跳转失败', '可能缺少指标名']);
+    }
   }
 }
