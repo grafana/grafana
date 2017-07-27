@@ -27,12 +27,14 @@ const (
 	IndexMonthly   = "Monthly"
 	IndexYearly    = "Yearly"
 
-	ESDefaultTime         = "@timestamp"
-	ESDefaultTimeInterval = "10s"
+	ESDefaultTime                 = "@timestamp"
+	ESDefaultTimeInterval         = "10s"
+	ESDefaultHistogramInterval    = 1000
+	ESDefaultGeoHashGridPrecision = 3
 
 	AggTypeTerms         = "terms"
 	AggTypeFilters       = "filters"
-	AggTypeGeoHashGrid   = "geo_hash_grid"
+	AggTypeGeoHashGrid   = "geohash_grid"
 	AggTypeHistogram     = "histogram"
 	AggTypeDateHistogram = "date_histogram"
 
@@ -47,20 +49,27 @@ const (
 	MetricTypeMovAvg        = "moving_avg"
 	MetricTypeDerivative    = "derivative"
 
-	epochMillis = "epoch_millis"
-
 	// common used key
-	MetricKey   = "metrics"
-	SettingsKey = "settings"
-	FieldKey    = "field"
-	UnitKey     = "unit"
-	AlphaKey    = "alpha"
-	BetaKey     = "beta"
-	GammaKey    = "gamma"
-	ScriptKey   = "script"
-	InlineKey   = "inline"
-	TypeKey     = "type"
-	IdKey       = "id"
+	BucketAggsKey  = "bucketAggs"
+	MetricKey      = "metrics"
+	IntervalKey    = "interval"
+	MinDocCountKey = "min_doc_count"
+	SettingsKey    = "settings"
+	FieldKey       = "field"
+	UnitKey        = "unit"
+	AlphaKey       = "alpha"
+	BetaKey        = "beta"
+	GammaKey       = "gamma"
+	ScriptKey      = "script"
+	InlineKey      = "inline"
+	TypeKey        = "type"
+	IdKey          = "id"
+	FiltersKey     = "filters"
+	QueryKey       = "query"
+	LabelKey       = "label"
+	PrecisionKey   = "precision"
+
+	AutoInterval = "auto"
 )
 
 var (

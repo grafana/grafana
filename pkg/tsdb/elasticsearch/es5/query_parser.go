@@ -19,10 +19,6 @@ var InstanceESQueryParser = &ESQueryParser{}
 type ESQueryParser struct{}
 
 func (parser *ESQueryParser) SearchRequest(timeRange *tsdb.TimeRange, model *simplejson.Json, dsInfo *models.ESDataSource) (sr *elastic.SearchRequest, err error) {
-	aggId, err := model.Get("refId").String()
-	if err != nil {
-		return
-	}
 	// Filter
 	start := strconv.FormatInt(timeRange.GetFromAsMsEpoch(), 10)
 	end := strconv.FormatInt(timeRange.GetToAsMsEpoch(), 10)
@@ -33,12 +29,12 @@ func (parser *ESQueryParser) SearchRequest(timeRange *tsdb.TimeRange, model *sim
 	}
 	queryFilter := elastic.NewQueryStringQuery(qs)
 
-	// Aggregation
+	// Metrics
 	metrics, err := model.Get(models.MetricKey).Array()
 	if err != nil {
 		return
 	}
-	dhAgg := elastic.NewDateHistogramAggregation().MinDocCount(0).Field(dsInfo.TimeField).Interval(dsInfo.TimeInterval).ExtendedBounds(start, end).Format(epochMillis)
+	metricAggs := map[string]elastic.Aggregation{}
 	for _, a := range metrics {
 		metric := simplejson.NewFromAny(a)
 		id, err := metric.Get(models.IdKey).String()
@@ -50,14 +46,158 @@ func (parser *ESQueryParser) SearchRequest(timeRange *tsdb.TimeRange, model *sim
 			continue
 		}
 		if agg != nil {
-			dhAgg = dhAgg.SubAggregation(id, agg)
+			metricAggs[id] = agg
 		}
 	}
 
-	src := elastic.NewSearchSource().Size(0).Query(timeFilter).Query(queryFilter).Aggregation(aggId, dhAgg)
+	// Aggregation
+	bucketAggs := model.Get(models.BucketAggsKey)
+	aggId, agg := parseAgg(timeRange, bucketAggs, metricAggs)
+
+	src := elastic.NewSearchSource().Size(0).Query(elastic.NewBoolQuery().Must(timeFilter, queryFilter)).Aggregation(aggId, agg)
 	sr = elastic.NewSearchRequest().SearchTypeQueryThenFetch().SearchSource(src)
 
 	return
+}
+
+func parseAgg(timeRange *tsdb.TimeRange, bucketAggs *simplejson.Json, metricAggs map[string]elastic.Aggregation) (aggId string, aggregation elastic.Aggregation) {
+	baggs, err := bucketAggs.Array()
+	if err != nil {
+		return "", nil
+	}
+	start := strconv.FormatInt(timeRange.GetFromAsMsEpoch(), 10)
+	end := strconv.FormatInt(timeRange.GetToAsMsEpoch(), 10)
+
+	var subAggregation map[string]elastic.Aggregation = metricAggs
+	size := len(baggs)
+	for i := 0; i < size; i++ {
+		bagg := simplejson.NewFromAny(baggs[size-i-1])
+		t, err := bagg.Get(models.TypeKey).String()
+		if err != nil {
+			continue
+		}
+		aggId, err = bagg.Get(models.IdKey).String()
+		if err != nil {
+			continue
+		}
+		switch t {
+		case models.AggTypeTerms:
+			currAgg := wrapTermsAgg(bagg, subAggregation)
+			subAggregation = replaceSubAggregation(aggId, currAgg, subAggregation)
+		case models.AggTypeFilters:
+			currAgg := wrapFiltersAgg(bagg, subAggregation)
+			subAggregation = replaceSubAggregation(aggId, currAgg, subAggregation)
+		case models.AggTypeHistogram:
+			currAgg := wrapHistogramAgg(bagg, subAggregation)
+			subAggregation = replaceSubAggregation(aggId, currAgg, subAggregation)
+		case models.AggTypeGeoHashGrid:
+			currAgg := wrapGeoHashGridAgg(bagg, subAggregation)
+			subAggregation = replaceSubAggregation(aggId, currAgg, subAggregation)
+		case models.AggTypeDateHistogram:
+			currAgg := wrapDateHistogramAgg(bagg, subAggregation, start, end)
+			subAggregation = replaceSubAggregation(aggId, currAgg, subAggregation)
+		default:
+			continue
+		}
+	}
+	return aggId, subAggregation[aggId]
+}
+
+func replaceSubAggregation(aggId string, agg elastic.Aggregation, oldSubAggregation map[string]elastic.Aggregation) (newSubAggregation map[string]elastic.Aggregation) {
+	newSubAggregation = map[string]elastic.Aggregation{}
+	if agg != nil {
+		newSubAggregation[aggId] = agg
+		return
+	}
+	return oldSubAggregation
+}
+
+func wrapGeoHashGridAgg(bagg *simplejson.Json, lastAgg map[string]elastic.Aggregation) *elastic.GeoHashGridAggregation {
+	field, err := bagg.Get(models.FieldKey).String()
+	if err != nil {
+		return nil
+	}
+	interval := bagg.Get(models.SettingsKey).Get(models.PrecisionKey).MustInt(models.ESDefaultGeoHashGridPrecision)
+
+	currAggregation := elastic.NewGeoHashGridAggregation().Field(field).Precision(interval)
+	for aggId, agg := range lastAgg {
+		currAggregation = currAggregation.SubAggregation(aggId, agg)
+	}
+	return currAggregation
+}
+
+func wrapHistogramAgg(bagg *simplejson.Json, lastAgg map[string]elastic.Aggregation) *elastic.HistogramAggregation {
+	field, err := bagg.Get(models.FieldKey).String()
+	if err != nil {
+		return nil
+	}
+	interval := bagg.Get(models.SettingsKey).Get(models.IntervalKey).MustFloat64(models.ESDefaultHistogramInterval)
+	minDocCount := bagg.Get(models.SettingsKey).Get(models.MinDocCountKey).MustInt64()
+
+	currAggregation := elastic.NewHistogramAggregation().MinDocCount(minDocCount).Field(field).Interval(interval)
+	for aggId, agg := range lastAgg {
+		currAggregation = currAggregation.SubAggregation(aggId, agg)
+	}
+	return currAggregation
+}
+
+func wrapFiltersAgg(bagg *simplejson.Json, lastAgg map[string]elastic.Aggregation) *elastic.FiltersAggregation {
+	fs, err := bagg.Get(models.SettingsKey).Get(models.FiltersKey).Array()
+	if err != nil {
+		return nil
+	}
+	currAggregation := elastic.NewFiltersAggregation()
+	for _, f := range fs {
+		fJson := simplejson.NewFromAny(f)
+		qs, err := fJson.Get(models.QueryKey).String()
+		if err != nil {
+			continue
+		}
+		label, _ := fJson.Get(models.LabelKey).String()
+		if len(label) <= 0 {
+			label = qs
+		}
+		query := elastic.NewQueryStringQuery(qs)
+		currAggregation = currAggregation.FilterWithName(label, query)
+	}
+	for aggId, agg := range lastAgg {
+		currAggregation = currAggregation.SubAggregation(aggId, agg)
+	}
+	return currAggregation
+
+}
+
+func wrapTermsAgg(bagg *simplejson.Json, lastAgg map[string]elastic.Aggregation) *elastic.TermsAggregation {
+	field, err := bagg.Get(models.FieldKey).String()
+	if err != nil {
+		return nil
+	}
+	minDocCount := bagg.Get(models.SettingsKey).Get(models.MinDocCountKey).MustInt()
+
+	currAggregation := elastic.NewTermsAggregation().MinDocCount(minDocCount).Field(field)
+	for aggId, agg := range lastAgg {
+		currAggregation = currAggregation.SubAggregation(aggId, agg)
+	}
+	return currAggregation
+}
+
+func wrapDateHistogramAgg(bagg *simplejson.Json, lastAgg map[string]elastic.Aggregation, start, end string) *elastic.DateHistogramAggregation {
+	field, err := bagg.Get(models.FieldKey).String()
+	if err != nil {
+		return nil
+	}
+	interval := bagg.Get(models.SettingsKey).Get(models.IntervalKey).MustString(models.ESDefaultTimeInterval)
+	if interval == models.AutoInterval {
+		interval = models.ESDefaultTimeInterval
+	}
+	minDocCount := bagg.Get(models.SettingsKey).Get(models.MinDocCountKey).MustInt64()
+
+	currAggregation := elastic.NewDateHistogramAggregation().MinDocCount(minDocCount).Field(field).Interval(interval).
+		ExtendedBounds(start, end).Format(epochMillis)
+	for aggId, agg := range lastAgg {
+		currAggregation = currAggregation.SubAggregation(aggId, agg)
+	}
+	return currAggregation
 }
 
 func parseMetric(metric *simplejson.Json) (elastic.Aggregation, error) {
