@@ -46,6 +46,7 @@
 .login-box {
   width: 700px;
   margin: 100px auto 0;
+  background: #f9f9f9;
 }
 
 .login-box-logo {
@@ -75,10 +76,10 @@
 
 .login-box .login-form {
   width: 50%;
-  float: left;
   margin-left: 25%;
   margin-right: 25%;
   padding-top: 25px;
+  text-align: center;
 }
 
 .login-submit-button-row {
