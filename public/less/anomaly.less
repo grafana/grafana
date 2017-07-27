@@ -1,5 +1,5 @@
 .anomaly-container {
-  margin-top: 100px;
+  margin-top: 40px;
   position: relative;
 }
 
@@ -16,6 +16,8 @@
     text-align: center;
     background: #f4f4f4;
     span {
+      line-height: 48px;
+      margin-right: 12px;
       i.btn {
         border-radius: 0px;
         height: 40px;
@@ -24,15 +26,11 @@
       em, .fa-file-text-o{
         font-style: normal;
         color: #36bdfa;
+        margin: 0 5px;
       }
     }
     .pull-right {
       margin: 10px;
-    }
-    strong {
-      font-weight: normal;
-      color: green;
-      line-height: 50px;
     }
   }
 
@@ -60,4 +58,41 @@
       color: red;
     }
   }
+}
+
+.anomaly-header {
+  display: flex;
+  justify-content: space-between;
+  & > div {
+    width: 33.33%;
+    & > strong {
+      font-size: 36px;
+      line-height: 66px;
+      & > span {
+        font-size: 18px;
+        margin: 0 6px;
+      }
+    }
+    & > p {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      & > span {
+        margin: 0 6px;
+      }
+      &.anomaly-des {
+        font-size: 24px;
+        margin-bottom: 30px;
+        line-height: 30px;
+      }
+    }
+  }
+}
+
+.danger-color {
+  color: #e04c41!important;
+}
+
+.anomaly-color {
+  color: #ffc53a!important;
 }

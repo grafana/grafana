@@ -469,6 +469,7 @@
           "pageSize": 6,
           "percentage": false,
           "renderer": "flot",
+          "rowHeight": true,
           "scroll": false,
           "seriesOverrides": [],
           "sort": {
@@ -568,6 +569,7 @@
           "pageSize": 6,          
           "percentage": false,
           "renderer": "flot",
+          "rowHeight": true,
           "scroll": false,          
           "seriesOverrides": [],
           "sort": {

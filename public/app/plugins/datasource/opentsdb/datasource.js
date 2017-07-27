@@ -117,7 +117,12 @@ function (angular, _, dateMath) {
 
     OpenTSDBDatasource.prototype._performSuggestQuery = function(query, type) {
       return this._get('/api/suggest', {type: type, q: query, max: 1000}).then(function(result) {
-        return result.data;
+        if(result.data.length < 13) {
+          return result.data;
+        }
+        return _.filter(result.data, function(suggest) {
+          return _.excludeMetricSuffix(suggest);
+        });;
       });
     };
 

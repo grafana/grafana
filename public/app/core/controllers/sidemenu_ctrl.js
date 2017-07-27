@@ -402,7 +402,20 @@ function (angular, _, $, coreModule, config) {
       $scope.hideSubmenu();
       $scope.updateMenu();
       $scope.$on('$routeChangeSuccess', $scope.hideSubmenu);
+      onresize();
     };
+
+    var onresize = function (event) {
+      if($(window).height() > 800) {
+        $scope.showTooltip = false;
+      } else {
+        $scope.showTooltip = true;
+      };
+      if(event) {
+        $scope.$apply();
+      }
+    };
+    window.onresize = onresize;
   });
 
 });

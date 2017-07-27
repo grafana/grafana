@@ -35,7 +35,6 @@ define([
           scope.$on('toggle-panel', function() {
             var $template = $(template);
             elem.html($template);
-
             $compile(elem.contents())(scope);
             $('#pidTable').bootstrapTable({
               data: scope.hostTopN,
@@ -49,7 +48,6 @@ define([
               }
             });
           });
-
         }
       };
     });

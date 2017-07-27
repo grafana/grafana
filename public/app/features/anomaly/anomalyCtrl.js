@@ -17,10 +17,19 @@ define([
           $scope.metricHostClusters = healthSrv.aggregateHealths(data.metricHostClusters);
           $scope.clustersLength = $scope.metricHostClusters.length;
           healthSrv.anomalyMetricsData = $scope.metricHostClusters;
-          $scope.excludeMetricsData = healthSrv.floor(data.metricHostExcluded.elements);
-          _.remove($scope.metricHostClusters, function(cluster) {
-            return cluster.health > 85;
+          $scope.summary.dangerMetricNum = 0;
+          _.each($scope.metricHostClusters, function(cluster) {
+            cluster.counter = _.countBy(cluster.elements, function(element) {
+              if(element.health <= 25) {
+                return 'unhealth';
+              } else {
+                return 'health';
+              }
+            });
+            cluster.counter.unhealth = cluster.counter.unhealth || 0;
+            $scope.summary.dangerMetricNum += cluster.counter.unhealth;
           });
+          $scope.excludeMetricsData = healthSrv.floor(data.metricHostExcluded.elements);
           $controller('ClusterCtrl', {$scope: $scope}).init();
         });
         $scope.selected = 0;

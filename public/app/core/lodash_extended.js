@@ -41,7 +41,7 @@ function () {
   };
 
   _.excludeMetricSuffix = function (metricName) {
-    return !(/(anomaly|prediction.max|prediction.min|prediction.min.LB.percent|.seasonal|.trend|.noise|.prediction)$/.test(metricName));
+    return !(/(anomaly|prediction.max|prediction.min|.LB.percent|.seasonal|.trend|.noise|.prediction|.health|.system.health|.LB|.periodMinutes)$/.test(metricName));
   };
 
   _.allServies = function () {
