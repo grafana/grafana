@@ -1,0 +1,98 @@
+.service-status-canvas {
+  .jtk-node {
+    background-color: transparent;
+  }
+  .jtk-node.active .name {
+    .iconfont {
+      height: 60px;
+      width: 60px;
+      line-height: 60px;
+      border: 3px solid rgba(210, 235, 250, 0.7);
+    }
+  }
+  .name {
+    border: none;
+    background-color: transparent;
+    .iconfont {
+      display: block;
+      font-size: 40px;
+      margin: 0 auto;
+      height: 50px;
+      width: 50px;
+      line-height: 50px;
+      color: #fff;
+      border: 3px solid transparent;
+      border-radius: 50%;
+      transition: all .2s ease-in-out;
+    }
+  }
+}
+
+.service-status-panel {
+  width: 48%;
+  float: right;
+  height: 555px;
+  max-height: 700px;
+
+  .host-head {
+    span {
+      text-align: center;
+      font-weight: bold;
+    }
+    .pull-left {
+      margin-left: 34px;
+    }
+  }
+  
+  .host-item {
+    .item-type li {
+      width: 50px;
+      height: 50px;
+      line-height: 50px;
+      vertical-align: middle;
+      text-align: center;
+      border-radius: 50%;
+      margin-right: 30px;
+      display: inline-block;
+      position: relative;
+      &:not(:last-child):after {
+        content: '';
+        border: 1px solid #bbbbbb;
+        width: 28px;
+        display: inline-block;
+        position: absolute;
+        left: 50px;
+        top: 25px;
+      }
+    }
+    .btn {
+      padding: 5px 6px;
+    }
+  }
+
+  .accordion-toggle {
+    .host-status {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      margin-right: 24px;
+    }
+  }
+}
+
+.status-green {
+  background-color: #3db779 !important;
+}
+
+.status-yellow {
+  background-color: #ffc53a !important;
+}
+
+.status-red {
+  background-color: #e04c41 !important;
+}
+
+.status-grey {
+  background-color: rgba(216, 221, 230, 0.86) !important;
+}

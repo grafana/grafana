@@ -1,10 +1,10 @@
 {
   "browser": true,
-
+  "jquery": true,
   "bitwise":false,
   "curly": true,
   "eqnull": true,
-  "globalstrict": true,
+  "globalstrict": false,
   "devel": true,
   "eqeqeq": true,
   "forin": false,

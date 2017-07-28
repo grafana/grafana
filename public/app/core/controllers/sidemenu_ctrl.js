@@ -32,6 +32,14 @@ function (angular, _, $, coreModule, config) {
             text: '机器连接状态',
             href: $scope.getUrl("/summary")
           },
+          {
+            text: '服务依赖状态',
+            href: $scope.getUrl("/service_v2")
+          },
+          {
+            text: '创建服务依赖',
+            href: $scope.getUrl("/service_dependency")
+          },
         ],
       });
 
