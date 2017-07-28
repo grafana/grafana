@@ -448,8 +448,7 @@ define([
         $rootScope.$broadcast('refresh');
       };
 
-      $scope.init = function () {
-        var param = integrateSrv.getOptions();
+      $scope.init = function (param) {
         param.targets = param.targets.filter(function (metrics) {
           return _.excludeMetricSuffix(metrics.metric);
         });
@@ -495,7 +494,6 @@ define([
         }
         return prefix;
       }
-
-      $scope.init();
+      $scope.init(integrateSrv.options);
     });
   });

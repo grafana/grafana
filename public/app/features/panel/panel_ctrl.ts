@@ -22,6 +22,7 @@ export class PanelCtrl {
   $scope: any;
   $injector: any;
   $timeout: any;
+  $_location: any;
   fullscreen: boolean;
   inspector: any;
   editModeInitiated: boolean;
@@ -36,6 +37,7 @@ export class PanelCtrl {
   constructor($scope, $injector) {
     this.$injector = $injector;
     this.$scope = $scope;
+    this.$_location = $injector.get('$location');
     this.$timeout = $injector.get('$timeout');
     this.contextSrv = $injector.get('contextSrv');
     this.integrateSrv = $injector.get('integrateSrv');
@@ -264,7 +266,7 @@ export class PanelCtrl {
       var metric = this.panel.targets[0].metric;
       if (host && metric) {
         var link = '/alerts/association/' + host + '/100/' + this.contextSrv.user.orgId + '.' + this.contextSrv.user.systemId + '.' + metric;
-        window.location.href = link;
+       this.$_location.url(link);
       }
     } catch (err) {
       var reg = /\'(.*?)\'/g;
@@ -283,7 +285,7 @@ export class PanelCtrl {
       if (!_.isNull(this.panel.targets[0].tags)) {
         this.integrateSrv.options.targets[0].tags = {host: "*"};
       }
-      window.location.href = "/integrate";
+      this.$_location.url('/integrate');
     }catch(e){
       this.publishAppEvent('alert-warning', ['日志分析跳转失败', '可能缺少指标名']);
     }

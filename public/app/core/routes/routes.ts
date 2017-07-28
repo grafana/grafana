@@ -325,6 +325,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/integrate', {
     templateUrl: 'public/app/features/analysis/partials/logIntegrate.html',
     controller : 'LogIntegrateCtrl',
+    reloadOnSearch: false,
   })
   .when('/setting/agent', {
     templateUrl: 'public/app/features/setup/partials/host_agent.html',
