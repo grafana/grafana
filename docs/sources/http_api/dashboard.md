@@ -269,9 +269,3 @@ Status Codes:
         "isStarred":false
       }
     ]
-
-        "email":"admin@mygraf.com",
-        "login":"admin",
-        "role":"Admin"
-      }
-    ]
