@@ -17,10 +17,22 @@ define([
           $scope.metricHostClusters = healthSrv.aggregateHealths(data.metricHostClusters);
           $scope.clustersLength = $scope.metricHostClusters.length;
           healthSrv.anomalyMetricsData = $scope.metricHostClusters;
+          $scope.summary.dangerMetricNum = 0;
+          _.each($scope.metricHostClusters, function(cluster) {
+            cluster.counter = _.countBy(cluster.elements, function(element) {
+              if(element.health <= 25) {
+                return 'unhealth';
+              } else {
+                return 'health';
+              }
+            });
+            cluster.counter.unhealth = cluster.counter.unhealth || 0;
+            $scope.summary.dangerMetricNum += cluster.counter.unhealth;
+          });
           $scope.excludeMetricsData = healthSrv.floor(data.metricHostExcluded.elements);
-          $scope.excludeMetricLength = _.size($scope.excludeMetricsData);
           $controller('ClusterCtrl', {$scope: $scope}).init();
         });
+        $scope.selected = 0;
       };
       $scope.reload = function() {
         $scope.init();
@@ -39,6 +51,30 @@ define([
           $scope.metricHostClusters = [healthSrv.anomalyMetricsData[index.seriesIndex]];
         });
       });
+
+      $scope.exclude = function(anomaly) {
+        _.each($scope.metricHostClusters, function(cluster) {
+          _.remove(cluster.elements, function(element) {
+            return _.isEqual(anomaly, element);
+          });
+        });
+        healthSrv.exclude(anomaly.metric, anomaly.host);
+        $scope.excludeMetricsData.push(anomaly);
+      };
+
+      $scope.include = function (anomalyDef) {
+        healthSrv.include(anomalyDef.metric, anomalyDef.host).then(function () {
+          $scope.reload();
+        });
+      };
+
+      $scope.selectCluster = function(index) {
+        if($scope.selected == index) {
+          $scope.selected = -1;
+        } else {
+          $scope.selected = index;
+        }
+      };
 
       $scope.init();
     });

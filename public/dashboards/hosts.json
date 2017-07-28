@@ -558,17 +558,25 @@
       "img": "",
       "info": "PostgreSQL 是一个自由的对象-关系数据库服务器(数据库管理系统)，它在灵活的 BSD-风格许可证下发行。",
       "deploy": [
-        "安装依赖:",
-        "<p class='code-block'> 1. 下载安装包: https://download.cloudwiz.cn/package/psycopg2-2.7.1.tar.gz</p></p>",
-        "<p class='code-block'> 2. 解压安装包到 /tmp 下 $ tar -zvxf psycopg2-2.7.1.tar.gz /tmp</p>",
-        "<p class='code-block'> 3. $ cd /tmp/psycopg2-2.7.1</p>",
-        "<p class='code-block'> 4. 请确认是否设置 postgresql 的运行环境</p>",
-        "<p class='code-block indent2'> 4.1 运行 $ which pg_config</p>",
-        "<p class='code-block indent2'> 4.2 如果没有,请配置. 如: $ export PATH=/usr/pgsql-9.6/bin:$PATH</p>",
-        "<p class='code-block'> 5. 运行 $ /opt/cloudwiz-agent/altenv/bin/python setup.py install --prefix=\"/opt/cloudwiz-agent/altenv\"</p>",
-        "<p class='code-block'> 6. 如果看到\"Finished processing dependencies for psycopg2==2.7.1\" 即安装成功</p>",
-        "<p class='code-block'> 7. 如有其它问题,请联系管理员</p>",
-        "创建用户:",
+        "下载依赖包:",
+        "<p class='code-block'> wget https://download.cloudwiz.cn/package/psycopg2-2.6.1.tar.gz</p>",
+        "<p class='code-block'> wget https://download.cloudwiz.cn/package/libpq-dev.tar.gz</p>",
+        "安装模块包和依赖包:",
+        "<p class='code-block'> 1. 将安装包放到 /tmp 目录下,并解压</p>",
+        "<p class='code-block'> 2. 进入libpq解压包</p>",
+        "<p class='code-block indent2'> $ cd /tmp/libpq-dev</p>",
+        "<p class='code-block'> 3. 安装依赖</p>",
+        "<p class='code-block indent2'> $ rpm -ivh /tmp/libpq-dev/*.rpm</p>",
+        "<p class='code-block'> 4. 检查是否配置好环境变量</p>",
+        "<p class='code-block indent2'> $ which pg_config</p>",
+        "<p class='code-block indent2'> 若没有,请配置环境变量.如: </p>",
+        "<p class='code-block indent2'> $ export PATH=/usr/pgsql-9.3/bin:$PATH</p>",
+        "<p class='code-block'> 5. 安装模块包</p>",
+        "<p class='code-block indent2'> $ cd /tmp/psycopg2-2.6.1</p>",
+        "<p class='code-block indent2'> #执行 </p>",
+        "<p class='code-block indent2'> $ /opt/cloudwiz-agent/altenv/bin/python setup.py install --prefix=\"/opt/cloudwiz-agent/altenv\"</p>",
+        "<p class='code-block'> 6. 若没有出现任何error,则证明成功安装</p>",
+        "加入用户:",
         "<p class='code-block'> 1. 我们的探针需要用户给我们设置一个专门能够收集数据的账号(只读)</p>",
         "<p class='code-block'> 2. 进去psql运行</p>",
         "<p class='code-block'> 3. create user cloudwiz_user with password 'cloudwiz_pass';</p>",
@@ -579,6 +587,66 @@
       "metrics": [],
       "status": -1,
       "template": "postgresql"
+    },{
+      "id": "redis",
+      "name": "Redis",
+      "icon": "iconfont fa-redis",
+      "img": "",
+      "info": "redis是一个开源的、使用C语言编写的、支持网络交互的、可基于内存也可持久化的Key-Value数据库。",
+      "deploy": [
+        "路径：/opt/cloudwiz-agent/agent/collectors/conf/redisdb.conf",
+        "#是否开启collector",
+        "enabled = False",
+        "#收集redis metrics频率 单位s",
+        "interval = 30",
+        "#redis地址",
+        "host = 127.0.0.1",
+        "#redis port",
+        "port = 6379"
+      ],
+      "metrics": [],
+      "status": -1,
+      "template": "redis"
+    },{
+      "id": "rabbitmq",
+      "name": "RabbitMQ",
+      "icon": "iconfont fa-rabbitmq",
+      "img": "",
+      "info": "RabbitMQ是流行的开源消息队列系统，用erlang语言开发。RabbitMQ是AMQP（高级消息队列协议）的标准实现。",
+      "deploy": [
+        "路径：/opt/cloudwiz-agent/agent/collectors/conf/rabbit_mq.conf",
+        "# localhost可改为RabbitMQ的host地址",
+        "rabbitmq_api_url = http://localhost:15672/api/",
+        "rabbitmq_user = guest",
+        "rabbitmq_pass = guest",
+        "#queues = 'queue1'",
+        "#nodes = 'node1','node2'"
+      ],
+      "metrics": [
+        {
+          "name": "rabbitmq.node.fd_used",
+          "define": "已使用的File Descriptors",
+          "unit": "short",
+          "type": "number",
+          "alert": ""
+        },
+        {
+          "name": "rabbitmq.node.mem_used",
+          "define": "占用内存大小",
+          "unit": "short",
+          "type": "number",
+          "alert": ""
+        },
+        {
+          "name": "rabbitmq.node.run_queue",
+          "define": "等待运行的Erlang进程平均数量",
+          "unit": "short",
+          "type": "number",
+          "alert": ""
+        }
+      ],
+      "status": -1,
+      "template": "rabbitmq"
     }
   ]
 }

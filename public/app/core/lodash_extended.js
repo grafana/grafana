@@ -41,7 +41,7 @@ function () {
   };
 
   _.excludeMetricSuffix = function (metricName) {
-    return !(/(anomaly|prediction.max|prediction.min|prediction.min.LB.percent|.seasonal|.trend|.noise|.prediction)$/.test(metricName));
+    return !(/(anomaly|prediction.max|prediction.min|.LB.percent|.seasonal|.trend|.noise|.prediction|.health|.system.health|.LB|.periodMinutes)$/.test(metricName));
   };
 
   _.allServies = function () {
@@ -60,7 +60,9 @@ function () {
       "opentsdb": "OpenTSDB",
       "mongo3": "MongoDB 3.x",
       "nginx": "Nginx",
-      "postgresql": "Postgresql"
+      "postgresql": "Postgresql",
+      "redis": "Redis",
+      "rabbitmq": "RabbitMQ"
     };
   };
 
@@ -78,5 +80,27 @@ function () {
       return "差";
     }
   };
+
+  _.serviceIconMap = function () {
+    return {
+      "hadoop.datanode": "iconfont fa-hadoop29",
+      "hadoop.namenode": "iconfont fa-icon",
+      "hbase.master": "iconfont fa-hbase",
+      "hbase.regionserver": "iconfont fa-hbase",
+      "kafka": "iconfont fa-kafka",
+      "mysql": "iconfont fa-mysql",
+      "spark": "iconfont fa-spark1",
+      "storm": "iconfont fa-ApacheStorm",
+      "yarn": "iconfont fa-zanwutu",
+      "zookeeper": "iconfont fa-zookeeper",
+      "tomcat": "iconfont fa-tomcat",
+      "opentsdb": "iconfont fa-zanwutu",
+      "mongo3": "iconfont fa-mongo-db1",
+      "nginx": "iconfont fa-image-icon_nginx",
+      "postgresql": "iconfont fa-postgresql",
+      "redis": "iconfont fa-redis",
+      "rabbitmq": "iconfont fa-rabbitmq"
+    };
+  }
   return _;
 });

@@ -19,19 +19,38 @@
     </div>
 
     <form class="gf-form-group tidy-form">
-        <div class="">
+        <div>
             <div class="gf-form">
                 <ul class="gf-form-list tidy-form-list" style="overflow: inherit">
-                    <li class="gf-form-item" style="width: 100px">
-                        关键词
+                    <li ng-click="showSearchGuide = !showSearchGuide" class="gf-form-item" style="width: 100px">
+                        关键词<tip>点击显示搜索指南</tip>
                     </li>
                     <li>
                         <input placeholder="支持AND, OR, 空格表示OR" type="text" class="input-xlarge tidy-form-input last"
                                ng-model="query" required="">
                     </li>
+                    <li class="tidy-form-item" style="width: 100px; margin-left:30px;">
+                        日志显示数量
+                    </li>
+                    <li class="tidy-form-item">
+                        <select class="input-small tidy-form-input last"
+                          ng-model="size"
+                          ng-change="getLogSize(size);"
+                          ng-options="f for f in [500,1000,2000,3000,5000]">
+                        </select>
+                    </li>
                     <li>
                         <button type="submit" class="btn btn-primary" ng-click="reQuery()" style="margin:0 20px;"><i class="fa fa-search"/>查找</button>
                         <button class="btn btn-primary btn-success" ng-click="isShowKnows(true)">查询知识库</button>
+                    </li>
+                    <li class="search-guide" ng-if="showSearchGuide">
+                        <i class="fa fa-times pull-right pointer" ng-click="hideGuide();"></i>
+                        <p>1、展示所有日志: *</p>
+                        <p>2、展示特定host日志: host: host_name ("host_name"改为需要查询的host名称)</p>
+                        <p>3、联合查询-AND: host:host_name AND Exception (查询"host_name"的"Exception"日志)</p>
+                        <p>4、联合查询-NOT: NOT host:host_name (排除"host_name"相关的日志)</p>
+                        <p>5、联合查询-OR: host:host1 OR host:host2 (查询"host1"和"host2"相关的日志)</p>
+                        <p>6、正则匹配: message:"[正则表达式]"</p>
                     </li>
                 </ul>
                 <div class="clearfix"></div>
@@ -51,11 +70,9 @@
                 </div>
                 <tabset>
                     <tab heading="{{panel.title}}" ng-repeat="(name, panel) in row.panels track by panel.id" ng-if="panel.tab != graph">
-                        <li ng-repeat="(index, obj) in panel.regularResult.regularities" ng-if="panel.regularResult.regularities.length">
-                            <span ng-repeat="(name,value) in obj">
-                                {{name}}: {{value}}
-                            </span>
-                        </li>
+                        <ul ng-if="panel.regularResult.data[0].total">
+                            <li style="color: #F9934E;">该时间区域内共有 <strong>{{panel.regularResult.data[0].total}}</strong> 条日志，当前显示前 {{panel.regularResult.data[0].datapoints.length}} 条。放大时间区域，以查看更细日志数据。</li>
+                        </ul>
                         <div class="btn-group btn-log-compare" ng-if="name == 2">
                             <button class="dropdown-toggle" data-toggle="dropdown">
                                 <span class="caret"></span>

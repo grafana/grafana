@@ -162,11 +162,11 @@
 
 		<li ng-show="ctrl.addTagMode">
 			<input type="text" class="input-small tight-form-input" spellcheck='false'
-			bs-typeahead="ctrl.suggestTagKeys" data-min-length=0 data-items=100
+			bs-typeahead-old="ctrl.suggestTagKeys" data-min-length=0 data-items=100
 			ng-model="ctrl.target.currentTagKey" placeholder="key"></input>
 
 			<input type="text" class="input-small tight-form-input"
-			spellcheck='false' bs-typeahead="ctrl.suggestTagValues"
+			spellcheck='false' bs-typeahead-old="ctrl.suggestTagValues"
 			data-min-length=0 data-items=100 ng-model="ctrl.target.currentTagValue" placeholder="value">
 			</input>
 

@@ -20,8 +20,13 @@ import "./directives/rebuild_on_change";
 import "./directives/give_focus";
 import './jquery_extended';
 import './partials';
+
+//Cloudwiz 
 import "./directives/host_upload";
 import "./directives/system_panel";
+import "./directives/overview_panel";
+import "./directives/service_dep";
+import "./directives/table_loader";
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';

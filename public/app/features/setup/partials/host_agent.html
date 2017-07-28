@@ -26,10 +26,10 @@
       <h5>* 您可以选择一键{{type}}</h5>
       <ul class="tight-form last">
         <li style="word-break: break-all">
-          sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} AGENT_URL=https://download.cloudwiz.cn/agent bash -c "$(curl -kL https://download.cloudwiz.cn/agent/deploy_agent.sh)"{{updateAuto}}
+          sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} SYSTEM_ID={{systemId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} AGENT_URL=https://download.cloudwiz.cn/agent bash -c "$(curl -kL https://download.cloudwiz.cn/agent/deploy_agent.sh)"{{updateAuto}}
         </li>
       </ul>
-      
+
       <h5 style="cursor: pointer;" ng-click="installManual = !installManual">* 如果您希望手动{{type}},请点击这里<i style="margin-left:10px;" ng-class="{true:'fa fa-hand-o-down',false:'fa fa-hand-o-left'}[installManual]"></i></h5>
       <ul ng-if="installManual" style="list-style:lower-roman;">
         <li>

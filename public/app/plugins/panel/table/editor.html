@@ -57,6 +57,9 @@
 					<li>
 						<select class="input-small tight-form-input" ng-model="editor.panel.fontSize" ng-options="f for f in editor.fontSizes" ng-change="editor.render()"></select>
 					</li>
+					<li class="tight-form-item">
+						<editor-checkbox text="固定行高" model="panel.rowHeight" change="editor.render()"></editor-checkbox>
+					</li>
 				</ul>
 				<div class="clearfix"></div>
 			</div>
@@ -81,7 +84,7 @@
 						Name or regex
 					</li>
 					<li>
-						<input type="text" ng-model="style.pattern" bs-typeahead="editor.getColumnNames" ng-blur="editor.render()" data-min-length=0 data-items=100 class="input-medium tight-form-input">
+						<input type="text" ng-model="style.pattern" bs-typeahead-old="editor.getColumnNames" ng-blur="editor.render()" data-min-length=0 data-items=100 class="input-medium tight-form-input">
 					</li>
 					<li class="tight-form-item" style="width: 86px">
             类型
@@ -152,12 +155,40 @@
 						小数点位数
 					</li>
 					<li style="width: 105px">
-						<input type="number" class="input-mini tight-form-input" ng-model="style.decimals" ng-change="render()" ng-model-onblur>
+						<input type="number" class="input-mini tight-form-input" ng-model="style.decimals" ng-change="editor.render()" ng-model-onblur>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
 			</div>
-
+			<div class="tight-form" ng-if="style.type === 'number'">
+				<ul class="tight-form-list">
+					<li class="tight-form-item text-right" style="width: 93px">
+						数值转换
+					</li>
+					<li class="tight-form-item"  ng-repeat-start="map in style.valueMaps">
+					  <i class="fa fa-remove pointer" ng-click="editor.removeValueMap(style, map)"></i>
+				  </li>
+					<li>
+						<input type="text" ng-model="map.value" placeholder="value" class="input-mini tight-form-input" ng-blur="editor.render()">
+					</li>
+					<li>
+						<!--<i class="fa fa-arrow-right"></i>-->
+						<select class="input-small tight-form-input"
+							ng-model="map.op"
+							ng-options="op for op in operatorModes"
+							ng-change="editor.render()"></select>
+					</li>
+					<li ng-repeat-end>
+						<input type="text" placeholder="text" ng-model="map.text" class="input-mini tight-form-input" ng-blur="editor.render()">
+					</li>
+					<li>
+						<a class="pointer tight-form-item last" ng-click="editor.addValueMap($index);">
+							<i class="fa fa-plus"></i>
+						</a>
+					</li>
+				</ul>
+				<div class="clearfix"></div>
+			</div>
 		</div>
 	</div>
 

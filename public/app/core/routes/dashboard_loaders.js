@@ -41,7 +41,9 @@ function (coreModule) {
       dashboard: {
         title: newTitle,
         system: newSystem,
-        rows: [{ height: '250px', panels:[] }]
+        rows: [{ height: '250px', panels:[] }],
+        time: {from: "now-6h", to: "now"},
+        refresh: "30s",
       },
     }, $scope);
   });

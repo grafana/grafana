@@ -1,0 +1,69 @@
+<topnav section="创建服务依赖" icon="fa fa-fw fa-home"></topnav>
+
+<div class="page-container" style="padding-left:20px;">
+
+    <div class="build-service-depend">
+
+        <div class="sidebar node-palette" jsplumb-palette selector="li" surface-id="serviceDepSurface" 
+            type-extractor="typeExtractor" generator="dataGenerator">
+            <ul ng-repeat="obj in draggableTypes" >
+                <li jtk-node-type="{{ obj.type }}" title="Drag to add new" data-node-id="{{obj.id}}" data-node-key="{{obj.key}}">
+                    {{obj.label}}
+                </li>
+            </ul>
+        </div>
+
+        <div class="jtk-demo-canvas">
+
+            <jsplumb-toolkit init="init"
+                             render-params="renderParams"
+                             jtk-id="serviceDepToolkit"
+                             surface-id="serviceDepSurface"
+                             style="width:100%;height:100%;position:relative;margin:0">
+
+                <!-- controls -->
+                <div class="controls">
+                    <i class="fa fa-arrows selected-mode" mode="pan" title="Pan Mode"></i>
+                    <i class="fa fa-pencil" mode="select" title="Select Mode"></i>
+                    <i class="fa fa-home" reset title="Zoom To Fit"></i>
+                </div>
+
+                <!-- miniview -->
+                <jsplumb-miniview surface-id="demoSurface" class="miniview"></jsplumb-miniview>
+
+            </jsplumb-toolkit>
+
+        </div>
+
+        <div style="padding-top: 10px;">
+            <button class="btn btn-primary" ng-click="save();">保存</button>
+        </div>
+
+        <div class="description">
+            <p>Usage:</p>
+            <ul>
+                <li>Drag new Nodes from the palette on the left onto the workspace.</li>
+                <li>Drag existing Nodes into Groups to add them.</li>
+                <li>Click the 'Pencil' icon to enter 'select' mode, then select several nodes. Click the canvas to exit.</li>
+                <li>Click the 'Home' icon to zoom out and see all the nodes.</li>
+            </ul>
+        </div>
+
+        <script type="text/ng-template" id="node_template.tpl">
+            <div>
+                <div class="name">
+                    <i class="{{node.icon}} service-icon"></i>
+                    <div class="delete" title="Click to delete" ng-click="remove(node)">
+                        <i class="fa fa-times"></i>
+                    </div>
+                    <span>{{node.name}}</span>
+                </div>
+                <div class="connect"></div>
+            </div>
+            <jtk-source filter=".connect"></jtk-source>
+            <jtk-target></jtk-target>
+        </script>
+
+    </div>
+
+</div>

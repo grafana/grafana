@@ -1,114 +1,115 @@
-<navbar icon="fa fa-fw fa-cubes" title="配置管理库" title-url="cmdb/hostlist">
-  <a href="/cmdb/hostlist/hostdetail?id={{hostId}}" class="navbar-page-btn">
-    设备详情
-	</a>
-</navbar>
-<div class="page-container">
-  <h2 class="dropdown" style="color: #2962ff;">
-    <span class="dropdown-toggle pointer" data-toggle="dropdown">{{detail.hostname}} <i class="fa fa-caret-down" ng-if="list.length > 1"></i></span>
-    <ul class="dropdown-menu" ng-if="list.length > 1">
-      <li ng-repeat="host in list"><a href="/cmdb/hostlist/hostdetail?id={{host.id}}">{{host.hostname}}</a></li>
+<topnav section="配置管理库" icon="fa fa-fw fa-cubes">
+    <ul class="nav">
+        <li><a href="/cmdb/hostlist">设备列表</a></li>
+        <li class="active" ><a href="/cmdb/hostlist/{{hostId}}">设备详情</a></li>
     </ul>
-  </h2>
-  <ul class="cmdb-ul">
-    <li>
-      <h4>基本信息</h4>
-      <ul class="cmdb-detail">
-        <li><span>ID</span><span>{{detail.id}}</span></li>
-        <li><span>名称</span><span>{{detail.hostname}}</span></li>
-        <li><span>加入时间</span><span>{{detail.createdAt | date:'yyyy-MM-dd HH:mm:ss'}}</span></li>
-        <li><span>域</span><span>{{detail.domain}}</span></li>
-        <li><span>FQDN</span><span>{{detail.fqdn}}</span></li>
-      </ul>
-    </li>
-    <li>
-      <h4>硬件配置</h4>
-      <ul class="cmdb-detail">
-        <li><span>生产厂商</span><span>{{detail.systemVendor}}</span></li>
-        <li><span>产品名称</span><span>{{detail.productName}}</span></li>
-        <li><span>产品型号</span><span>{{detail.productVersion}}</span></li>
-        <li><span>序列号</span><span>{{detail.productSerial}}</span></li>
-        <li><span>UUID</span><span>{{detail.productUuid}}</span></li>
+</topnav>
+<div class="page-container">
+    <h2 class="dropdown" style="color: #2962ff;">
+        <span class="dropdown-toggle pointer" data-toggle="dropdown">{{detail.hostname}} <i class="fa fa-caret-down" ng-if="list.length > 1"></i></span>
+        <ul class="dropdown-menu" ng-if="list.length > 1">
+            <li ng-repeat="host in list"><a href="/cmdb/hostlist/hostdetail?id={{host.id}}">{{host.hostname}}</a></li>
+        </ul>
+    </h2>
+    <ul class="cmdb-ul">
         <li>
-          <span>内存</span><span>{{detail.totalMemory}} <span ng-if="detail.totalMemory!= '暂无信息'">MB</span></span>
-          <li ng-if="detail.memory">
-            <table class="filter-table form-inline">
-              <tr>
-                <th>生产厂商</th>
-                <th>产品型号</th>
-                <th>容量</th>
-              </tr>
-              <tr ng-repeat="memory in detail.memory">
-                <td>{{memory.vendor}}</td>
-                <td>{{memory.model}}</td>
-                <td>{{memory.size}} <span ng-if="memory.size != '暂无信息'">MB</span></td>
-              </tr>
-            </table>
-          </li>
+            <h4>基本信息</h4>
+            <ul class="cmdb-detail">
+                <li><span>ID</span><span>{{detail.id}}</span></li>
+                <li><span>名称</span><span>{{detail.hostname}}</span></li>
+                <li><span>加入时间</span><span>{{detail.createdAt | date:'yyyy-MM-dd HH:mm:ss'}}</span></li>
+                <li><span>域</span><span>{{detail.domain}}</span></li>
+                <li><span>FQDN</span><span>{{detail.fqdn}}</span></li>
+            </ul>
         </li>
-        <li><span>虚拟机</span><span>{{detail.isVirtual}}</span></li>
-        <li><span>架构</span><span>{{detail.architecture}}</span></li>
-        <li><span>CPU</span>
-        <table  class="filter-table form-inline">
-          <tr>
-            <th>cpu型号</th>
-            <th>个数</th>
-          </tr>
-          <tr ng-repeat="(cpu, num) in cpuCount">
-            <td>{{cpu}}</td>
-            <td>{{num}}</td>
-          </tr>
-        </table>
-        </li>
-      </ul>
-    </li>
-    <li>
-      <h4>存储</h4>
-      <ul class="cmdb-detail">
         <li>
-          <table class="filter-table form-inline">
-            <tr>
-              <th>生产厂商</th>
-              <th>产品型号</th>
-              <th>容量</th>
-            </tr>
-            <tr ng-repeat="device in detail.devices">
-              <td>{{device.vendor}}</td>
-              <td>{{device.model}}</td>
-              <td>{{device.size}}</td>
-            </tr>
-          </table>
+            <h4>硬件配置</h4>
+            <ul class="cmdb-detail">
+                <li><span>生产厂商</span><span>{{detail.systemVendor}}</span></li>
+                <li><span>产品名称</span><span>{{detail.productName}}</span></li>
+                <li><span>产品型号</span><span>{{detail.productVersion}}</span></li>
+                <li><span>序列号</span><span>{{detail.productSerial}}</span></li>
+                <li><span>UUID</span><span>{{detail.productUuid}}</span></li>
+                <li>
+                    <span>内存</span><span>{{detail.totalMemory}} <span ng-if="detail.totalMemory!= '暂无信息'">MB</span></span>
+                    <li ng-if="detail.memory">
+                        <table class="table">
+                            <tr>
+                                <th>生产厂商</th>
+                                <th>产品型号</th>
+                                <th>容量</th>
+                            </tr>
+                            <tr ng-repeat="memory in detail.memory">
+                                <td>{{memory.vendor}}</td>
+                                <td>{{memory.model}}</td>
+                                <td>{{memory.size}} <span ng-if="memory.size != '暂无信息'">MB</span></td>
+                            </tr>
+                        </table>
+                    </li>
+                </li>
+                <li><span>虚拟机</span><span>{{detail.isVirtual}}</span></li>
+                <li><span>架构</span><span>{{detail.architecture}}</span></li>
+                <li><span>CPU</span>
+                <table class="table">
+                    <tr>
+                        <th>cpu型号</th>
+                        <th>个数</th>
+                    </tr>
+                    <tr ng-repeat="(cpu, num) in cpuCount">
+                        <td>{{cpu}}</td>
+                        <td>{{num}}</td>
+                    </tr>
+                </table>
+                </li>
+            </ul>
         </li>
-      </ul>
-    </li>
-    <li>
-      <h4>操作系统</h4>
-      <ul class="cmdb-detail">
-        <li><span>名称</span><span>{{detail.osName}}</span></li>
-        <li><span>类型</span><span>{{detail.osFamily}}</span></li>
-        <li><span>版本</span><span>{{detail.osVersion}}</span></li>
-      </ul>
-    </li>
-    <li class="last">
-      <h4>网络配置</h4>
-      <ul class="cmdb-detail">
         <li>
-          <table class="filter-table form-inline">
-            <tr>
-              <th>名称</th>
-              <th>IP地址</th>
-              <th>MAC地址</th>
-              <th>带宽</th>
-            </tr>
-            <tr ng-repeat="interface in detail.interfaces">
-              <td>{{interface.name}}</td>
-              <td>{{interface.ip}}</td>
-              <td>{{interface.mac}}</td>
-              <td>{{interface.speed}} <span ng-if="interface.speed != '暂无信息'">Mb</span></td>
-            </tr>
-          </table>
+            <h4>存储</h4>
+            <ul class="cmdb-detail">
+                <li>
+                    <table class="table">
+                        <tr>
+                            <th>生产厂商</th>
+                            <th>产品型号</th>
+                            <th>容量</th>
+                        </tr>
+                        <tr ng-repeat="device in detail.devices">
+                            <td>{{device.vendor}}</td>
+                            <td>{{device.model}}</td>
+                            <td>{{device.size}}</td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
         </li>
-      </ul>
-    </li>
-  </ul>
+        <li>
+            <h4>操作系统</h4>
+            <ul class="cmdb-detail">
+                <li><span>名称</span><span>{{detail.osName}}</span></li>
+                <li><span>类型</span><span>{{detail.osFamily}}</span></li>
+                <li><span>版本</span><span>{{detail.osVersion}}</span></li>
+            </ul>
+        </li>
+        <li class="last">
+            <h4>网络配置</h4>
+            <ul class="cmdb-detail">
+                <li>
+                    <table class="table">
+                        <tr>
+                            <th>名称</th>
+                            <th>IP地址</th>
+                            <th>MAC地址</th>
+                            <th>带宽</th>
+                        </tr>
+                        <tr ng-repeat="interface in detail.interfaces">
+                            <td>{{interface.name}}</td>
+                            <td>{{interface.ip}}</td>
+                            <td>{{interface.mac}}</td>
+                            <td>{{interface.speed}} <span ng-if="interface.speed != '暂无信息'">Mb</span></td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </li>
+    </ul>
 </div>

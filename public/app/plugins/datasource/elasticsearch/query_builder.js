@@ -89,7 +89,7 @@ function (queryDef) {
   };
 
   ElasticQueryBuilder.prototype.documentQuery = function(query) {
-    query.size = 500;
+    query.size = query.size || 500;
     query.sort = {};
     query.sort[this.timeField] = {order: 'desc', unmapped_type: 'boolean'};
     query.fields = ["*", "_source"];
@@ -107,7 +107,7 @@ function (queryDef) {
 
     var i, nestedAggs, metric;
     var query = {
-      "size": 0,
+      "size": target.size || 0,
       "query": {
         "filtered": {
           "query": {

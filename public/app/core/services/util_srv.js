@@ -5,20 +5,21 @@ define([
 function (angular, coreModule) {
   'use strict';
 
-  coreModule.default.service('utilSrv', function($rootScope, $modal, $q) {
+  coreModule.default.service('utilSrv', function($rootScope, $_modal, $q) {
 
     this.init = function() {
       $rootScope.onAppEvent('show-modal', this.showModal, $rootScope);
     };
 
     this.showModal = function(e, options) {
-      var modal = $modal({
+      var modal = $_modal({
         modalClass: options.modalClass,
         template: options.src,
         persist: false,
         show: false,
         scope: options.scope,
-        keyboard: false
+        keyboard: false,
+        placement: "center"
       });
 
       $q.when(modal).then(function(modalEl) {

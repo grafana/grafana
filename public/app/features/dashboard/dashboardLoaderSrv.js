@@ -35,6 +35,7 @@ function (angular, moment, _, $, kbn, dateMath, impressionStore) {
       if (type === 'script') {
         promise = this._loadScriptedDashboard(slug);
       } else if (type === 'snapshot') {
+        contextSrv.toggleSideMenu();
         promise = backendSrv.get('/api/snapshots/' + $routeParams.slug)
           .catch(function() {
             return self._dashboardLoadFailed("Snapshot not found", true);

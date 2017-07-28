@@ -24,7 +24,7 @@
                     <input type="text" class="tidy-form-input input-xlarge"
                            ng-model='targetObj.metric'
                            spellcheck='false'
-                           bs-typeahead="suggestMetrics"
+                           bs-typeahead-old="suggestMetrics"
                            placeholder="需要分析的指标" required/>
                 </li>
             </ul>
@@ -38,7 +38,7 @@
                 <li>
                     <input type="text" class="input-medium tidy-form-input ng-pristine ng-untouched ng-valid"
                            spellcheck="false"
-                           bs-typeahead="suggestTagHost"
+                           bs-typeahead-old="suggestTagHost"
                            data-min-length="0" data-items="100" ng-model="targetObj.host" placeholder="请键入主机名"
                            data-provide="typeahead">
                 </li>

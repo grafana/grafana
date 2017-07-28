@@ -53,20 +53,28 @@ define([
           var queries = [{
             "metric": contextSrv.user.orgId + "." + $scope.summarySelect.system + "." + key + ".state",
             "aggregator": "sum",
-            "downsample": "1h-sum",
+            "downsample": "1s-sum",
             "tags": {"host": $scope.summarySelect.currentTagValue}
           }];
 
-          datasourceSrv.getServiceStatus(queries, 'now-1h').then(function(response) {
-            var metric = {};
-            metric.host = response.host;
-            metric.alias = alias[key];
-            if (response.status > 0) {
-              metric.state = "异常";
-            } else {
-              metric.state = "正常";
-            }
-            $scope.serviceList.push(metric);
+          datasourceSrv.getStatus(queries, 'now-5m').then(function(response) {
+            _.each(response, function(service) {
+              var metric = {};
+              metric.host = service.tags.host;
+              metric.alias = alias[key];
+              if (_.isObject(service)) {
+                var status = service.dps[Object.keys(service.dps)[0]];
+                if(typeof(status) != "number") {
+                  throw Error;
+                }
+                if (status > 0) {
+                  metric.state = "异常";
+                } else {
+                  metric.state = "正常";
+                }
+              }
+              $scope.serviceList.push(metric);
+            });
           });
         });
       };

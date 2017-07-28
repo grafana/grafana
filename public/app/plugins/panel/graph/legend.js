@@ -195,6 +195,13 @@ function (angular, _, $) {
 
             var topPadding = 6;
             $container.css("height", maxHeight - topPadding);
+            // Cloudwiz udpate something wrong in it 
+            // var topPadding = 15;
+            // var tbodyElem = $('<tbody></tbody>');
+            // // tbodyElem.css("max-height", maxHeight - topPadding);
+            // tbodyElem.append(tableHeaderElem);
+            // tbodyElem.append(seriesElements);
+            // $container.append(tbodyElem);
           } else {
             $container.css("height", "");
           }

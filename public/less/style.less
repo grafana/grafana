@@ -67,4 +67,44 @@ body{
     &.indent4{
         text-indent: 60px;
     }
+    &.indent6{
+        text-indent: 80px;
+    }
+    &.indent8{
+        text-indent: 100px;
+    }
+}
+
+.search-guide{
+    position: absolute;
+    top: 135px;
+    z-index: 1;
+    background: white;
+    border: 1px solid;
+    border-radius: 8px;
+    padding: 10px;
+
+    &:before{
+        content: "";
+        border-bottom: 20px solid;
+        border-left: 15px solid transparent;
+        border-right: 15px solid transparent;
+        position: absolute;
+        top: -20px;
+        left: 160px;
+    }
+
+    &:after{
+        content: "";
+        border-bottom: 19px solid white;
+        border-left: 14px solid transparent;
+        border-right: 14px solid transparent;
+        position: absolute;
+        top: -19px;
+        left: 161px;
+    }
+
+    & > i{
+        z-index: 1;
+    }
 }

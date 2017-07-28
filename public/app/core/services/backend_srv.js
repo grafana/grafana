@@ -161,9 +161,14 @@ function (angular, _, coreModule, config) {
     };
 
     this.updateTokens = function () {
-      return this.get('/api/auth/keys').then(function (tokens) {
+      var updateToken = this.get('/api/auth/keys').then(function (tokens) {
         self.tokens = tokens;
       });
+      var initCustomizedSource = this.get('/api/customized_sources').then(function (result) {
+        self.alertDUrl = result.alert;
+        contextSrv.elkUrl = result.elk;
+      });
+      return $q.all([updateToken, initCustomizedSource]);
     };
 
     this.updateSystemId = function(id) {
@@ -185,15 +190,23 @@ function (angular, _, coreModule, config) {
       if (_.isEmpty(options.params)) {
         options.params = {};
       }
-      options.url = self.alertDUrl + options.url;
-      options.params.token = this.getToken();
-      if (_.isEmpty(options.params.token)) {
-        alertSrv.set("错误,无法获取TOKEN", "请联系service@cloudwiz.cn", "warning", 4000);
-        var d = $q.defer();
-        d.resolve({});
-        return d.promise;
+      if (self.tokens) {
+        options.url = self.alertDUrl + options.url;
+        options.params.token = this.getToken();
+        return this.datasourceRequest(options);
       }
-      return this.datasourceRequest(options);
+      return self.updateTokens().then(function () {
+        options.url = self.alertDUrl + options.url;
+        options.params.token = self.getToken();
+      }).then(function () {
+        if (_.isEmpty(options.params.token)) {
+          alertSrv.set("错误,无法获取TOKEN", "请联系service@cloudwiz.cn", "warning", 4000);
+          var d = $q.defer();
+          d.resolve({});
+          return d.promise;
+        }
+        return self.datasourceRequest(options);
+      });
     };
 
     this.logCluster = function (options) {

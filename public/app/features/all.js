@@ -28,4 +28,6 @@ define([
   './setup/filebeatCtrl',
   './styleguide/styleguide',
   './cmdb/all',
+  './systemoverview/systemoverviewCtrl',
+  './service/all'
 ], function () {});

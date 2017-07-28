@@ -7,7 +7,7 @@ function(angular, $) {
 
   var module = angular.module('grafana.services');
 
-  module.service('dashboardKeybindings', function($rootScope, keyboardManager, $modal, $q) {
+  module.service('dashboardKeybindings', function($rootScope, keyboardManager, $_modal, $q) {
 
     this.shortcuts = function(scope) {
 
@@ -20,7 +20,7 @@ function(angular, $) {
         if (helpModalScope) { return; }
 
         helpModalScope = $rootScope.$new();
-        var helpModal = $modal({
+        var helpModal = $_modal({
           template: 'public/app/partials/help_modal.html',
           persist: false,
           show: false,

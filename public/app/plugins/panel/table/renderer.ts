@@ -68,7 +68,29 @@ export class TableRenderer {
           this.colorState[style.colorMode] = this.getColorForValue(v, style);
         }
 
-        return valueFormater(v, style.decimals, null);
+        // check value to text mappings
+        let dataValue = valueFormater(v, style.decimals, null);
+        for (var i = 0; i < style.valueMaps.length; i++) {
+          var map = style.valueMaps[i];
+          switch (map.op) {
+            case '>' : 
+              if (parseFloat(dataValue) > parseFloat(map.value)) {
+                return map.text;
+              }
+              break;
+            case '<' : 
+              if (parseFloat(dataValue) < parseFloat(map.value)) {
+                return map.text;
+              }
+              break;
+            default  :
+              if (parseFloat(dataValue) === parseFloat(map.value)) {
+                return map.text;
+              }
+          }
+        }
+
+        return dataValue;
       };
     }
 
@@ -114,7 +136,7 @@ export class TableRenderer {
       widthHack = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].text + '</div>';
     }
 
-    return '<td' + style + '>' + value + widthHack + '</td>';
+    return '<td title="' + value + '"' + style + '>' + '<div>' + value + '</div>' + widthHack + '</td>';
   }
 
   render(page) {

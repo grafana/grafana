@@ -59,7 +59,7 @@ export class TimePickerCtrl {
 
     this.rangeString = rangeUtil.describeTimeRange(timeRaw);
     this.absolute = {fromJs: time.from.toDate(), toJs: time.to.toDate()};
-    this.tooltip = this.dashboard.formatDate(time.from) + ' <br>to<br>';
+    this.tooltip = this.dashboard.formatDate(time.from) + ' 至 ';
     this.tooltip += this.dashboard.formatDate(time.to);
 
     // do not update time raw when dropdown is open

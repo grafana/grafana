@@ -1,10 +1,10 @@
 
 @font-face {font-family: "iconfont";
-  src: url('../fonts/iconfont.eot?t=1498730711554'); /* IE9*/
-  src: url('../fonts/iconfont.eot?t=1498730711554#iefix') format('embedded-opentype'), /* IE6-IE8 */
-  url('../fonts/iconfont.woff?t=1498730711554') format('woff'), /* chrome, firefox */
-  url('../fonts/iconfont.ttf?t=1498730711554') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
-  url('../fonts/iconfont.svg?t=1498730711554#iconfont') format('svg'); /* iOS 4.1- */
+  src: url('../fonts/iconfont.eot?t=1500021787070'); /* IE9*/
+  src: url('../fonts/iconfont.eot?t=1500021787070#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url('../fonts/iconfont.woff?t=1500021787070') format('woff'), /* chrome, firefox */
+  url('../fonts/iconfont.ttf?t=1500021787070') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+  url('../fonts/iconfont.svg?t=1500021787070#iconfont') format('svg'); /* iOS 4.1- */
 }
 
 .iconfont {
@@ -22,6 +22,8 @@
 .fa-postgresql:before { content: "\e64c"; }
 
 .fa-clound:before { content: "\e60a"; }
+
+.fa-rabbitmq:before { content: "\e6ea"; }
 
 .fa-zookeeper:before { content: "\e6f0"; }
 

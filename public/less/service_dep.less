@@ -1,0 +1,258 @@
+.jtk-node {
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    position: absolute;
+    z-index: 11;
+    overflow: hidden;
+    min-width:150px;
+    min-height:30px;
+    width: auto;
+}
+
+.jtk-node .name {
+    color: #555;
+    cursor: move;
+    font-size: 13px;
+    line-height: 24px;
+    padding: 6px;
+    text-align: center;
+    .iconfont {
+        font-size: 22px;
+    }
+}
+
+.jtk-node .name span {
+    cursor:pointer;
+    font-weight: bold;
+}
+
+.jtk-connector {
+    z-index:12;
+}
+
+.jtk-bootstrap {
+  min-height:100vh;
+  display:flex;
+  flex-direction: column;  
+}
+
+.jtk-bootstrap .jtk-page-container {
+    display:flex;
+    width:100vw;
+    justify-content: center;
+    flex:1;
+  }
+
+  .jtk-bootstrap .jtk-container {
+    width: 60%;
+    max-width:800px;
+  }
+
+  .jtk-bootstrap-wide .jtk-container {
+      width: 80%;
+      max-width:1187px;
+  }
+
+.build-service-depend {    
+    position: relative;
+    .service-icon {
+        display: block;
+        font-size:40px;
+        height: 50px;
+        width: 50px;
+        line-height: 50px;
+        margin: 0 auto;
+        border: 1px solid #555;
+        border-radius: 50%;
+    }
+}
+
+.build-service-depend .description {
+    font-size: 13px;
+    margin-top: 25px;
+    padding: 13px;
+    margin-bottom: 22px;
+    background-color: #f4f5ef;
+}
+
+.build-service-depend .description li {
+    list-style-type: disc !important;
+}
+
+.jtk-demo-canvas {    
+    height:555px;
+    max-height:700px;
+    border:1px solid #CCC;
+    background-color:white;
+    display: flex;
+}
+
+.canvas-wide {
+    margin-left:0;
+}
+
+.miniview {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    z-index: 100;
+}
+
+
+.jtk-demo-dataset {
+    text-align: left;
+    max-height: 600px;
+    overflow: auto;
+}
+
+.demo-title {
+    float:left;
+    font-size:18px;
+}
+
+.controls {
+    top: 25px;
+    color: #FFF;
+    margin-right: 10px;
+    position: absolute;
+    left: 25px;
+    z-index: 1;
+}
+
+.controls i {
+    background-color: #3E7E9C;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 0;
+    padding: 4px;
+}
+
+li {
+    list-style-type: none;
+}
+
+/* ------------------------ node palette -------------------- */
+
+.sidebar {
+    margin:0;
+    padding:0;
+    padding-top: 7px;
+    padding-right: 10px;
+    width:150px;
+    float:left;
+    text-align:center;
+    height: 550px;
+    background-color: #f3f7fa;
+}
+
+.sidebar ul li {
+    background-color: #fff;
+    border-radius: 11px;
+    color: #555;
+    cursor: move;
+    margin-bottom: 10px;
+    margin-left: 6px;
+    padding: 8px;
+    width:128px;
+    border: 1px solid #555;
+}
+
+.sidebar ul {
+    width:100%;
+    padding:0;
+    margin: 0 0 10px 0;
+}
+
+.sidebar ul li:hover {
+    border: 1px solid #1ca6d9;
+}
+
+.sidebar i {
+    float:left;
+}
+
+@media (max-width: 600px) {
+    .sidebar {
+        float:none;
+        height: 55px;
+        width: 100%;
+        padding-top:0;
+    }
+
+    .sidebar ul li {
+        display:inline-block;
+        margin-top: 7px;
+        width:67px;
+    }
+    .jtk-demo-canvas {
+        margin-left: 0;
+        margin-top:10px;
+        height:364px;
+    }
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+/* --- jsPlumb setup ---------------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------------------------------- */
+
+.jtk-connector {
+    z-index:9;
+}
+
+.jtk-endpoint {
+    z-index:12;
+    opacity:0.8;
+    cursor:pointer;
+}
+
+.jtk-overlay {
+    background-color: white;
+    color: #434343;
+    font-weight: 400;
+    padding: 4px;
+    z-index:10;
+
+}
+
+.jtk-overlay.jtk-hover {
+    color: #434343;
+}
+
+path {
+    cursor:pointer;
+}
+
+.delete {
+    padding: 2px;
+    cursor: pointer;
+    float: left;
+    font-size: 10px;
+    line-height: 20px;
+}
+
+.add, .edit {
+    cursor: pointer;
+    float:right;
+    font-size: 10px;
+    line-height: 20px;
+    margin-right:2px;
+    padding: 2px;
+}
+
+.edit:hover {
+    color: #ff8000;
+}
+
+.selected-mode {
+    color:#E4F013;
+}
+
+.connect {
+    width:10px;
+    height:10px;
+    background-color:#f76258;
+    position:absolute;
+    bottom: 13px;
+    right: 5px;
+}

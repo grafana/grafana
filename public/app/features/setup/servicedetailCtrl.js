@@ -8,9 +8,9 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
   module.controller('ServiceDetailCtrl', function ($scope, backendSrv, datasourceSrv, contextSrv, $controller) {
-    const NO_DATA = 2;
-    const GET_DATA = 0;
-    const NO_SERVER = -1;
+    var NO_DATA = 2;
+    var GET_DATA = 0;
+    var NO_SERVER = -1;
 
     $scope.init = function() {
       $scope.changeTab('conf');
@@ -44,7 +44,7 @@ function (angular, _) {
         "downsample": "10m-sum",
       }];
 
-      datasourceSrv.getServiceStatus(queries, 'now-10m').then(function(response) {
+      datasourceSrv.getHostStatus(queries, 'now-10m').then(function(response) {
         $scope.saveDashboard();
         $scope.detail.status = response.status > 0 ? NO_DATA : GET_DATA;
       },function(err) {

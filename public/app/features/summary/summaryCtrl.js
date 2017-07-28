@@ -59,11 +59,11 @@ define([
             var queries = [{
               "metric": contextSrv.user.orgId + "." + $scope.summarySelect.system + ".collector.state",
               "aggregator": "sum",
-              "downsample": "1m-sum",
+              "downsample": "1s-sum",
               "tags": {"host": metric.tag.host}
             }];
 
-            datasourceSrv.getServiceStatus(queries, 'now-1m').then(function(response) {
+            datasourceSrv.getHostStatus(queries, 'now-5m').then(function(response) {
               if(response.status > 0) {
                 metric.state = "异常";
               } else {

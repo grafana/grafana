@@ -273,7 +273,19 @@
                 "2"
               ],
               "type": "number",
-              "unit": "short"
+              "unit": "short",
+              "valueMaps": [
+                { 
+                  "value": "0",
+                  "op": "=",
+                  "text": "正常"
+                },
+                { 
+                  "value": "0",
+                  "op": ">",
+                  "text": "异常"
+                }
+              ]
             }
           ],
           "targets": [],
@@ -362,7 +374,19 @@
                 "2"
               ],
               "type": "number",
-              "unit": "short"
+              "unit": "short",
+              "valueMaps": [
+                { 
+                  "value": "0",
+                  "op": "=",
+                  "text": "正常"
+                },
+                { 
+                  "value": "0",
+                  "op": ">",
+                  "text": "异常"
+                }
+              ]
             }
           ],
           "targets": [
@@ -445,6 +469,7 @@
           "pageSize": 6,
           "percentage": false,
           "renderer": "flot",
+          "rowHeight": true,
           "scroll": false,
           "seriesOverrides": [],
           "sort": {
@@ -544,6 +569,7 @@
           "pageSize": 6,          
           "percentage": false,
           "renderer": "flot",
+          "rowHeight": true,
           "scroll": false,          
           "seriesOverrides": [],
           "sort": {

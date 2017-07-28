@@ -72,6 +72,7 @@
     &:last-child {
       border-right: none;
     }
+
   }
 }
 
@@ -98,4 +99,9 @@
   visibility: hidden;
   height: 0px;
   line-height: 0px;
+}
+
+.fix-table-row-height td > div:first-child {
+  height: 20px;
+  overflow: hidden;
 }
