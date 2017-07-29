@@ -7,25 +7,35 @@ import (
   "github.com/grafana/grafana/pkg/util"
   "os"
   "io"
+  "google.golang.org/api/option"
 )
 
 type GCSUploader struct {
   bucket string
   public bool
+  acctJson string
   log    log.Logger
 }
 
-func NewGCSUploader(bucket string, public bool) *GCSUploader {
+func NewGCSUploader(bucket, acctJson string, public bool) *GCSUploader {
   return &GCSUploader{
     bucket: bucket,
     public: public,
+    acctJson: acctJson,
     log:    log.New("gcsuploader"),
   }
 }
 
 func (g *GCSUploader) Upload(imageDiskPath string) (string, error) {
   ctx := context.Background()
-  client, err := storage.NewClient(ctx)
+  var client *storage.Client
+  var err error
+  if g.acctJson != "" {
+    client, err = storage.NewClient(ctx, option.WithServiceAccountFile(g.acctJson))
+  } else {
+    client, err = storage.NewClient(ctx)
+
+  }
   if err != nil {
     return "", err
   }

@@ -117,6 +117,7 @@ func TestImageUploaderFactory(t *testing.T) {
         So(ok, ShouldBeTrue)
         So(original.bucket, ShouldEqual, "publicbucket")
         So(original.public, ShouldBeTrue)
+        So(original.acctJson, ShouldBeBlank)
       })
 
       Convey("private bucket config", func() {
@@ -132,8 +133,25 @@ func TestImageUploaderFactory(t *testing.T) {
         So(ok, ShouldBeTrue)
         So(original.bucket, ShouldEqual, "privatebucket")
         So(original.public, ShouldBeFalse)
+        So(original.acctJson, ShouldBeBlank)
       })
 
+      Convey("public bucket with json config", func() {
+        gcsSec, err := setting.Cfg.GetSection("external_image_storage.gcs")
+        gcsSec.NewKey("bucket", "pubauthbucket")
+        gcsSec.NewKey("public", "true")
+        gcsSec.NewKey("account_json", "account.json")
+
+        uploader, err := NewImageUploader()
+
+        So(err, ShouldBeNil)
+        original, ok := uploader.(*GCSUploader)
+
+        So(ok, ShouldBeTrue)
+        So(original.bucket, ShouldEqual, "pubauthbucket")
+        So(original.public, ShouldBeTrue)
+        So(original.acctJson, ShouldEqual, "account.json")
+      })
     })
 	})
 }

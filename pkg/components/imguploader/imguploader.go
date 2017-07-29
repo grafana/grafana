@@ -59,11 +59,12 @@ func NewImageUploader() (ImageUploader, error) {
     }
     bucket := gcsSec.Key("bucket").String()
     public := gcsSec.Key("public").MustBool(true)
+    acctJson := gcsSec.Key("account_json").String()
     if err != nil {
       return nil, err
     }
 
-    return NewGCSUploader(bucket, public), nil
+    return NewGCSUploader(bucket, acctJson, public), nil
 	}
 
 	return NopImageUploader{}, nil
