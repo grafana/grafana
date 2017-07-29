@@ -639,7 +639,7 @@ Time to live for snapshots.
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
-You can choose between (s3, webdav). If left empty Grafana will ignore the upload action.
+You can choose between (s3, webdav, gcs). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
 
@@ -670,6 +670,18 @@ basic auth username
 
 ### password
 basic auth password
+
+## [external_image_storage.gcs]
+
+### bucket
+GCS Bucket Name to store images in (required)
+
+### public
+store image with Public Read ACL (default: true)
+
+### account_json
+If not using GOOGLE_APPLICATION_CREDENTIALS environment variable for location of IAM credentials
+the actual file location can be specified here.
 
 ## [alerting]
 
