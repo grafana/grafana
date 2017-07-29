@@ -1,23 +1,23 @@
 package imguploader
 
 import (
-  "testing"
+	"testing"
 
-  "github.com/grafana/grafana/pkg/setting"
-  . "github.com/smartystreets/goconvey/convey"
+	"github.com/grafana/grafana/pkg/setting"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestUploadToGCS(t *testing.T) {
-  SkipConvey("[Integration test] for external_image_store.gcs", t, func() {
-    setting.NewConfigContext(&setting.CommandLineArgs{
-      HomePath: "../../../",
-    })
+	SkipConvey("[Integration test] for external_image_store.gcs", t, func() {
+		setting.NewConfigContext(&setting.CommandLineArgs{
+			HomePath: "../../../",
+		})
 
-    GCSUploader, _ := NewImageUploader()
+		GCSUploader, _ := NewImageUploader()
 
-    path, err := GCSUploader.Upload("../../../public/img/logo_transparent_400x.png")
+		path, err := GCSUploader.Upload("../../../public/img/logo_transparent_400x.png")
 
-    So(err, ShouldBeNil)
-    So(path, ShouldNotEqual, "")
-  })
+		So(err, ShouldBeNil)
+		So(path, ShouldNotEqual, "")
+	})
 }
