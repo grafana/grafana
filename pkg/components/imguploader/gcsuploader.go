@@ -1,13 +1,14 @@
 package imguploader
 
 import (
+	"io"
+	"os"
+
 	"cloud.google.com/go/storage"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
-	"io"
-	"os"
 )
 
 type GCSUploader struct {
