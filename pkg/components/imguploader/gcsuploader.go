@@ -44,8 +44,6 @@ func (g *GCSUploader) Upload(imageDiskPath string) (string, error) {
   key := util.GetRandomString(30) + ".png"
 
   log.Debug("Uploading image to GCS", "bucket = ", g.bucket, "key = ", key)
-  bucket := client.Bucket(g.bucket)
-  obj := bucket.Object(key)
 
   file, err := os.Open(imageDiskPath)
 
@@ -53,22 +51,19 @@ func (g *GCSUploader) Upload(imageDiskPath string) (string, error) {
     return "", err
   }
 
-  // if flagged to be public, set it. otherwise it'll inherit the bucket ACL
+  wc := client.Bucket(g.bucket).Object(key).NewWriter(ctx)
+  wc.ContentType = "image/png"
   if g.public {
-    if err := obj.ACL().Set(ctx, storage.AllUsers, storage.RoleReader); err != nil {
-      return "", err
-    }
+    wc.ACL = []storage.ACLRule{{storage.AllUsers, storage.RoleReader}}
   }
 
-  w := obj.NewWriter(ctx)
-
-  _, err = io.Copy(w, file)
+  _, err = io.Copy(wc, file)
 
   if err != nil {
     return "", err
   }
 
-  if err = w.Close(); err != nil {
+  if err = wc.Close(); err != nil {
     return "", err
   }
 
