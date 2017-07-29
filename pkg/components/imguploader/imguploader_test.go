@@ -96,5 +96,44 @@ func TestImageUploaderFactory(t *testing.T) {
 			So(original.username, ShouldEqual, "username")
 			So(original.password, ShouldEqual, "password")
 		})
+
+    Convey("GCS Uploader Config", func() {
+
+      setting.NewConfigContext(&setting.CommandLineArgs{
+        HomePath: "../../../",
+      })
+
+      setting.ImageUploadProvider = "gcs"
+
+      Convey("public bucket config", func() {
+        gcsSec, err := setting.Cfg.GetSection("external_image_storage.gcs")
+        gcsSec.NewKey("bucket", "publicbucket")
+
+        uploader, err := NewImageUploader()
+
+        So(err, ShouldBeNil)
+        original, ok := uploader.(*GCSUploader)
+
+        So(ok, ShouldBeTrue)
+        So(original.bucket, ShouldEqual, "publicbucket")
+        So(original.public, ShouldBeTrue)
+      })
+
+      Convey("private bucket config", func() {
+        gcsSec, err := setting.Cfg.GetSection("external_image_storage.gcs")
+        gcsSec.NewKey("bucket", "privatebucket")
+        gcsSec.NewKey("public", "false")
+
+        uploader, err := NewImageUploader()
+
+        So(err, ShouldBeNil)
+        original, ok := uploader.(*GCSUploader)
+
+        So(ok, ShouldBeTrue)
+        So(original.bucket, ShouldEqual, "privatebucket")
+        So(original.public, ShouldBeFalse)
+      })
+
+    })
 	})
 }
