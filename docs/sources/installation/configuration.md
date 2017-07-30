@@ -731,7 +731,7 @@ Time to live for snapshots.
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
-You can choose between (s3, webdav, gcs). If left empty Grafana will ignore the upload action.
+You can choose between (s3, webdav, gcs, azure_blob). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
 
@@ -785,6 +785,17 @@ Bucket Name on Google Cloud Storage.
 
 ### path
 Optional extra path inside bucket
+
+## [external_image_storage.azure_blob]
+
+### account_name
+Storage account name
+
+### account_key
+Storage account key
+
+### container_name
+Container name where to store "Blob" images with random names. Creating the blob container beforehand is required. Only public containers are supported.
 
 ## [alerting]
 

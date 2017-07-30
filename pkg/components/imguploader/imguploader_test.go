@@ -119,5 +119,29 @@ func TestImageUploaderFactory(t *testing.T) {
 			So(original.keyFile, ShouldEqual, "/etc/secrets/project-79a52befa3f6.json")
 			So(original.bucket, ShouldEqual, "project-grafana-east")
 		})
+
+		Convey("AzureBlobUploader config", func() {
+			setting.NewConfigContext(&setting.CommandLineArgs{
+				HomePath: "../../../",
+			})
+			setting.ImageUploadProvider = "azure_blob"
+
+			Convey("with container name", func() {
+				azureBlobSec, err := setting.Cfg.GetSection("external_image_storage.azure_blob")
+				azureBlobSec.NewKey("account_name", "account_name")
+				azureBlobSec.NewKey("account_key", "account_key")
+				azureBlobSec.NewKey("container_name", "container_name")
+
+				uploader, err := NewImageUploader()
+
+				So(err, ShouldBeNil)
+				original, ok := uploader.(*AzureBlobUploader)
+
+				So(ok, ShouldBeTrue)
+				So(original.account_name, ShouldEqual, "account_name")
+				So(original.account_key, ShouldEqual, "account_key")
+				So(original.container_name, ShouldEqual, "container_name")
+			})
+		})
 	})
 }
