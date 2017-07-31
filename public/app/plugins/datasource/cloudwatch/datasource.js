@@ -80,9 +80,12 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       var period;
       var range = end - start;
 
-      var daySec = 60 * 60 * 24;
+      var hourSec = 60 * 60;
+      var daySec = hourSec * 24;
       var periodUnit = 60;
-      if (now - start > (daySec * 15)) { // until 63 days ago
+      if ((now - start > (hourSec * 3)) && query.namespace !== 'AWS/EC2') { // until 15 days ago
+        periodUnit = period = 60;
+      } else if (now - start > (daySec * 15)) { // until 63 days ago
         periodUnit = period = 60 * 5;
       } else if (now - start > (daySec * 63)) { // until 455 days ago
         periodUnit = period = 60 * 60;
@@ -90,13 +93,15 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
         periodUnit = period = 60 * 60;
       } else if (!target.period) {
         period = (query.namespace === 'AWS/EC2') ? 300 : 60;
-      } else if (/^\d+$/.test(target.period)) {
-        period = parseInt(target.period, 10);
       } else {
-        period = kbn.interval_to_seconds(templateSrv.replace(target.period, options.scopedVars));
+        if (/^\d+$/.test(target.period)) {
+          period = parseInt(target.period, 10);
+        } else {
+          period = kbn.interval_to_seconds(templateSrv.replace(target.period, options.scopedVars));
+        }
       }
-      if (period < 60) {
-        period = 60;
+      if (period < 1) {
+        period = 1;
       }
       if (range / period >= 1440) {
         period = Math.ceil(range / 1440 / periodUnit) * periodUnit;
