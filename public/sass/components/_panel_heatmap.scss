@@ -46,3 +46,40 @@
     stroke-width: 1;
   }
 }
+
+.heatmap-legend-wrapper {
+  @include clearfix();
+  margin: 0 $spacer;
+  padding-top: 10px;
+
+  svg {
+    width: 100%;
+    max-width: 300px;
+    height: 38px;
+    float: left;
+    white-space: nowrap;
+    padding-left: 10px;
+  }
+
+  .heatmap-legend-values {
+    display: inline-block;
+  }
+
+  .axis .tick {
+    text {
+      fill: $text-color;
+      color: $text-color;
+      font-size: $font-size-sm;
+    }
+
+    line {
+      opacity: 0.4;
+      stroke: $text-color-weak;
+    }
+
+    .domain {
+      opacity: 0.4;
+      stroke: $text-color-weak;
+    }
+  }
+}
