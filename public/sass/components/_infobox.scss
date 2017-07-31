@@ -5,21 +5,26 @@
   top: -13px;
   left: -8px;
   font-size: 20px;
-  color: $blue;
+  color: $text-color;
 }
 
 .grafana-info-box {
   position: relative;
-  background: $card-background;
+  background: $info-box-background;
   box-shadow: $card-shadow;
   padding: 1rem;
   border-radius: 4px;
+  margin-bottom: $spacer;
 
   h5 {
     margin-bottom: $spacer;
   }
   ul {
     padding-left: $spacer;
+  }
+
+  a {
+    @extend .external-link;
   }
 }
 
