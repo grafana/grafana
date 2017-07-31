@@ -26,9 +26,9 @@ export class SideMenuCtrl {
     this.mainLinks = [];
     this.bottomLinks = [];
     this.contextSrv.setPinnedState(true);
+    this.contextSrv.sidemenu = true;
     this.$rootScope = $rootScope;
     this.configMenu = config.bootData.mainNavLinks;
-    console.log(this.configMenu);
     var _self = this;
     this.mainLinks.push({
       text: "系统总览",
@@ -204,7 +204,6 @@ export class SideMenuCtrl {
       url: this.getUrl('/systems')
     });
 
-    // this.openUserDropdown();
     this.$scope.$on('$routeChangeSuccess', () => {
       $scope.showSubmenu = false;
     });
@@ -247,8 +246,9 @@ export class SideMenuCtrl {
     return config.appSubUrl + url;
   }
 
-  switchOrg(orgId) {
+  switchOrg(orgId, _self) {
     this.backendSrv.post('/api/user/using/' + orgId).then(() => {
+      _self.contextSrv.sidemenu = false;
       window.location.href = this.getUrl('/systems');
     });
   };
@@ -340,13 +340,13 @@ export class SideMenuCtrl {
           text: org.name,
           icon: "fa fa-fw fa-random",
           click: (_self) => {
-            _self.switchOrg(org.orgId);
+            _self.switchOrg(org.orgId, _self);
           }
         });
       });
 
       if (config.allowOrgCreate) {
-        item.children.push({text: "New organization", icon: "fa fa-fw fa-plus", url: _self.getUrl('/org/new')});
+        item.children.push({text: "新建公司", icon: "fa fa-fw fa-plus", url: _self.getUrl('/org/new')});
       }
 
       _self.$scope.submenu = item;
@@ -358,7 +358,7 @@ export class SideMenuCtrl {
     _self.backendSrv.search({query: "", starred: "false"}).then(function (result) {
       submenu.push({
         text: "+新建",
-        url: "/dashboard/new",
+        click: _self.newDashboard,
       });
       submenu.push({
         text: "导入",
@@ -372,6 +372,13 @@ export class SideMenuCtrl {
       });
       item.children = submenu;
       _self.$scope.submenu = item;
+    });
+  };
+
+  newDashboard(_self) {
+    _self.$rootScope.appEvent('show-modal', {
+      src: 'public/app/partials/select_system.html',
+      scope: _self.$scope.$new(),
     });
   };
 

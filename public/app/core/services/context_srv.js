@@ -26,9 +26,7 @@ function (angular, _, coreModule, store, config) {
 
     this.toggleSideMenu = function() {
       this.sidemenu = !this.sidemenu;
-      if (!this.sidemenu) {
-        this.setPinnedState(false);
-      }
+      this.setPinnedState(true);
     };
 
     this.pinned = store.getBool('grafana.sidemenu.pinned', false);

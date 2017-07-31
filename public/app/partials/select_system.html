@@ -28,9 +28,7 @@
             子系统
           </li>
           <li>
-            <select ng-model="dashboardSetting.system" class="input-large tight-form-input" required>
-              <option ng-repeat="system in systems" value="{{system.Id}}">{{system.SystemsName}}</option>
-            </select>
+            <input ng-model="system.SystemsName" type="text" required disabled class="input-large tight-form-input">
           </li>
         </ul>
         <div class="clearfix"></div>
