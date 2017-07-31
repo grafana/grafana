@@ -385,9 +385,11 @@ export default function link(scope, elem, attrs, ctrl) {
     }
 
     let cardsData = convertToCards(data.buckets);
-    let maxValue = d3.max(cardsData, card => card.count);
+    let maxValueAuto = d3.max(cardsData, card => card.count);
+    let maxValue = panel.color.max || maxValueAuto;
+    let minValue = panel.color.min || 0;
 
-    colorScale = getColorScale(maxValue);
+    colorScale = getColorScale(maxValue, minValue);
     setOpacityScale(maxValue);
     setCardSize();
 
@@ -434,14 +436,14 @@ export default function link(scope, elem, attrs, ctrl) {
     .style("stroke-width", 0);
   }
 
-  function getColorScale(maxValue) {
+  function getColorScale(maxValue, minValue = 0) {
     let colorScheme = _.find(ctrl.colorSchemes, {value: panel.color.colorScheme});
     let colorInterpolator = d3[colorScheme.value];
     let colorScaleInverted = colorScheme.invert === 'always' ||
       (colorScheme.invert === 'dark' && !contextSrv.user.lightTheme);
 
-    let start = colorScaleInverted ? maxValue : 0;
-    let end = colorScaleInverted ? 0 : maxValue;
+    let start = colorScaleInverted ? maxValue : minValue;
+    let end = colorScaleInverted ? minValue : maxValue;
 
     return d3.scaleSequential(colorInterpolator).domain([start, end]);
   }
