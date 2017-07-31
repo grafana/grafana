@@ -33,6 +33,8 @@ type ShapeRef struct {
 	Deprecated       bool `json:"deprecated"`
 
 	OrigShapeName string `json:"-"`
+
+	GenerateGetter bool
 }
 
 // ErrorInfo represents the error block of a shape's structure
@@ -145,6 +147,14 @@ func (s *Shape) GoTypeWithPkgName() string {
 	return goType(s, true)
 }
 
+func (s *Shape) GoTypeWithPkgNameElem() string {
+	t := goType(s, true)
+	if strings.HasPrefix(t, "*") {
+		return t[1:]
+	}
+	return t
+}
+
 // GenAccessors returns if the shape's reference should have setters generated.
 func (s *ShapeRef) UseIndirection() bool {
 	switch s.Shape.Type {
@@ -244,11 +254,11 @@ func goType(s *Shape, withPkgName bool) string {
 		}
 		return "*" + s.ShapeName
 	case "map":
-		return "map[string]" + s.ValueRef.GoType()
+		return "map[string]" + goType(s.ValueRef.Shape, withPkgName)
 	case "jsonvalue":
 		return "aws.JSONValue"
 	case "list":
-		return "[]" + s.MemberRef.GoType()
+		return "[]" + goType(s.MemberRef.Shape, withPkgName)
 	case "boolean":
 		return "*bool"
 	case "string", "character":
@@ -392,16 +402,18 @@ func (ref *ShapeRef) GoTags(toplevel bool, isRequired bool) string {
 		if ref.Shape.Payload != "" {
 			tags = append(tags, ShapeTag{"payload", ref.Shape.Payload})
 		}
-		if ref.XMLNamespace.Prefix != "" {
-			tags = append(tags, ShapeTag{"xmlPrefix", ref.XMLNamespace.Prefix})
-		} else if ref.Shape.XMLNamespace.Prefix != "" {
-			tags = append(tags, ShapeTag{"xmlPrefix", ref.Shape.XMLNamespace.Prefix})
-		}
-		if ref.XMLNamespace.URI != "" {
-			tags = append(tags, ShapeTag{"xmlURI", ref.XMLNamespace.URI})
-		} else if ref.Shape.XMLNamespace.URI != "" {
-			tags = append(tags, ShapeTag{"xmlURI", ref.Shape.XMLNamespace.URI})
-		}
+	}
+
+	if ref.XMLNamespace.Prefix != "" {
+		tags = append(tags, ShapeTag{"xmlPrefix", ref.XMLNamespace.Prefix})
+	} else if ref.Shape.XMLNamespace.Prefix != "" {
+		tags = append(tags, ShapeTag{"xmlPrefix", ref.Shape.XMLNamespace.Prefix})
+	}
+
+	if ref.XMLNamespace.URI != "" {
+		tags = append(tags, ShapeTag{"xmlURI", ref.XMLNamespace.URI})
+	} else if ref.Shape.XMLNamespace.URI != "" {
+		tags = append(tags, ShapeTag{"xmlURI", ref.Shape.XMLNamespace.URI})
 	}
 
 	if ref.IdempotencyToken || ref.Shape.IdempotencyToken {
@@ -521,12 +533,21 @@ type {{ .ShapeName }} struct {
 
 	{{ range $_, $name := $context.MemberNames -}}
 		{{ $elem := index $context.MemberRefs $name -}}
+		{{ $isBlob := $context.WillRefBeBase64Encoded $name -}}
 		{{ $isRequired := $context.IsRequired $name -}}
 		{{ $doc := $elem.Docstring -}}
 
-		{{ $doc }}
-		{{ if $isRequired -}}
+		{{ if $doc -}}
+			{{ $doc }}
+		{{ end -}}
+		{{ if $isBlob -}}
 			{{ if $doc -}}
+				//
+			{{ end -}}
+			// {{ $name }} is automatically base64 encoded/decoded by the SDK.
+		{{ end -}}
+		{{ if $isRequired -}}
+			{{ if or $doc $isBlob -}}
 				//
 			{{ end -}}
 			// {{ $name }} is a required field
@@ -560,6 +581,19 @@ func (s *{{ $builderShapeName }}) Set{{ $name }}(v {{ $context.GoStructValueType
 	{{ end -}}
 	return s
 }
+
+{{ if $elem.GenerateGetter -}}
+func (s *{{ $builderShapeName }}) get{{ $name }}() (v {{ $context.GoStructValueType $name $elem }}) {
+	{{ if $elem.UseIndirection -}}
+		if s.{{ $name }} == nil {
+			return v
+		}
+		return *s.{{ $name }}
+	{{ else -}}
+		return s.{{ $name }}
+	{{ end -}}
+}
+{{- end }}
 
 {{ end }}
 {{ end }}
@@ -633,4 +667,18 @@ func (s *Shape) removeRef(ref *ShapeRef) {
 			break
 		}
 	}
+}
+
+func (s *Shape) WillRefBeBase64Encoded(refName string) bool {
+	payloadRefName := s.Payload
+	if payloadRefName == refName {
+		return false
+	}
+
+	ref, ok := s.MemberRefs[refName]
+	if !ok {
+		panic(fmt.Sprintf("shape %s does not contain %q refName", s.ShapeName, refName))
+	}
+
+	return ref.Shape.Type == "blob"
 }

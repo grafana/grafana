@@ -11,10 +11,12 @@ import (
 	"github.com/aws/aws-sdk-go/private/protocol/restxml"
 )
 
-// S3 is a client for Amazon S3.
-// The service client's operations are safe to be used concurrently.
-// It is not safe to mutate any of the client's properties though.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/s3-2006-03-01
+// S3 provides the API operation methods for making requests to
+// Amazon Simple Storage Service. See this package's package overview docs
+// for details on the service.
+//
+// S3 methods are safe to use concurrently. It is not safe to
+// modify mutate any of the struct's properties though.
 type S3 struct {
 	*client.Client
 }
