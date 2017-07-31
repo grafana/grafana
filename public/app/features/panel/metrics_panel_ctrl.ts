@@ -25,7 +25,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   templateSrv: any;
   timing: any;
   range: any;
-  rangeRaw: any;
   interval: any;
   intervalMs: any;
   resolution: any;
@@ -137,7 +136,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   updateTimeRange(datasource?) {
     this.datasource = datasource || this.datasource;
     this.range = this.timeSrv.timeRange();
-    this.rangeRaw = this.range.raw;
 
     this.applyPanelTimeOverrides();
 
@@ -179,13 +177,13 @@ class MetricsPanelCtrl extends PanelCtrl {
         return;
       }
 
-      if (_.isString(this.rangeRaw.from)) {
+      if (_.isString(this.range.raw.from)) {
         var timeFromDate = dateMath.parse(timeFromInfo.from);
         this.timeInfo = timeFromInfo.display;
-        this.rangeRaw.from = timeFromInfo.from;
-        this.rangeRaw.to = timeFromInfo.to;
         this.range.from = timeFromDate;
         this.range.to = dateMath.parse(timeFromInfo.to);
+        this.range.raw.from = timeFromInfo.from;
+        this.range.raw.to = timeFromInfo.to;
       }
     }
 
@@ -201,8 +199,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       this.timeInfo += ' timeshift ' + timeShift;
       this.range.from = dateMath.parseDateMath(timeShift, this.range.from, false);
       this.range.to = dateMath.parseDateMath(timeShift, this.range.to, true);
-
-      this.rangeRaw = this.range;
+      this.range.raw = {from: this.range.from, to: this.range.to};
     }
 
     if (this.panel.hideTimeOverride) {
@@ -227,7 +224,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     var metricsQuery = {
       panelId: this.panel.id,
       range: this.range,
-      rangeRaw: this.rangeRaw,
+      rangeRaw: this.range.raw,
       interval: this.interval,
       intervalMs: this.intervalMs,
       targets: this.panel.targets,

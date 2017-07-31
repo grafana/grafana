@@ -160,17 +160,26 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     return date.unix();
   };
 
-  this.metricFindQuery = function(query) {
-    var interpolated;
-    try {
-      interpolated = encodeURIComponent(templateSrv.replace(query));
-    } catch (err) {
-      return $q.reject(err);
+  this.metricFindQuery = function(query, options) {
+    let interpolatedQuery = templateSrv.replace(query);
+
+    let httpOptions: any =  {
+      method: 'GET',
+      url: '/metrics/find',
+      params: {
+        query: interpolatedQuery
+      },
+      // for cancellations
+      requestId: options.requestId,
+    };
+
+    if (options && options.range) {
+      httpOptions.params.from = this.translateTime(options.range.raw.from, false);
+      httpOptions.params.until = this.translateTime(options.range.raw.to, true);
     }
 
-    return this.doGraphiteRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })
-    .then(function(results) {
-      return _.map(results.data, function(metric) {
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      return _.map(results.data, metric => {
         return {
           text: metric.text,
           expandable: metric.expandable ? true : false
