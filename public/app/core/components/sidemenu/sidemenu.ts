@@ -350,7 +350,7 @@ export class SideMenuCtrl {
     _self.backendSrv.search({query: "", starred: "false"}).then(function (result) {
       submenu.push({
         text: "+新建",
-        url: "/dashboard/new",
+        click: _self.newDashboard,
       });
       submenu.push({
         text: "导入",
@@ -364,6 +364,13 @@ export class SideMenuCtrl {
       });
       item.children = submenu;
       _self.$scope.submenu = item;
+    });
+  };
+
+  newDashboard(_self) {
+    _self.$rootScope.appEvent('show-modal', {
+      src: 'public/app/partials/select_system.html',
+      scope: _self.$scope.$new(),
     });
   };
 

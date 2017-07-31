@@ -1,20 +1,21 @@
 define([
     'angular',
     '../core_module',
+    'lodash',
 ],
-function (angular, coreModule) {
+function (angular, coreModule, _) {
     'use strict';
 
-    coreModule.default.controller('SystemCtrl', function ($scope, backendSrv, $location) {
+    coreModule.default.controller('SystemCtrl', function ($scope, backendSrv, $location, contextSrv) {
 
-      $scope.dashboardSetting = {title: "新的仪表盘", system: null};
+      $scope.dashboardSetting = {title: "新的仪表盘", system: contextSrv.user.systemId};
       $scope.init = function () {
         $scope.getCurrentUserSystem();
       };
 
       $scope.getCurrentUserSystem = function () {
         backendSrv.get("/api/user/system").then(function (system) {
-          $scope.systems = system;
+          $scope.system = _.find(system, {Id: contextSrv.user.systemId});
         })
       };
 
