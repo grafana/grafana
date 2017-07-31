@@ -1,5 +1,5 @@
 <ul class="sidemenu">
-	<li ng-repeat="item in ::ctrl.mainLinks" class="dropdown">
+	<li ng-repeat="item in ::ctrl.mainLinks" class="dropdown" bs-tooltip="'{{::item.text}}'" data-placement="right" data-container="body" bs-enabled="showTooltip">
 		<a class="sidemenu-item sidemenu-main-link" target="{{::item.target}}" ng-click="updateSubmenu(item)">
 			<span class="icon-circle sidemenu-icon">
 				<i class="{{::item.icon}}" ng-show="::item.icon"></i>
@@ -10,7 +10,7 @@
 </ul>
 
 <ul class="sidemenu sidemenu-small">
-	<li ng-repeat="item in ::ctrl.bottomLinks" class="dropdown clearfix">
+	<li ng-repeat="item in ::ctrl.bottomLinks" class="dropdown clearfix" bs-tooltip="'{{::item.text}}'" data-placement="right" data-container="body" bs-enabled="showTooltip">
 		<a class="sidemenu-item sidemenu-main-link" target="{{::item.target}}" ng-click="updateSubmenu(item)">
 			<span class="icon-circle sidemenu-icon">
 				<i class="{{::item.icon}}" ng-show="::item.icon"></i>
@@ -19,14 +19,14 @@
 		</a>
 	</li>
 
-	<li ng-show="::!ctrl.isSignedIn">
+	<li ng-show="::!ctrl.isSignedIn" bs-tooltip="'登录'" data-placement="right" data-container="body" bs-enabled="showTooltip">
 		<a href="login" class="sidemenu-item" target="_self">
 			<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-in"></i></span>
 			<span class="sidemenu-item-text">登录</span>
 		</a>
 	</li>
 
-	<li ng-show="::ctrl.isSignedIn">
+	<li ng-show="::ctrl.isSignedIn" bs-tooltip="'登出'" data-placement="right" data-container="body" bs-enabled="showTooltip">
 		<a href="logout" class="sidemenu-item" target="_self">
 			<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-out"></i></span>
 			<span class="sidemenu-item-text">登出</span>

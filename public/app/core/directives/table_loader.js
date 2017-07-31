@@ -22,7 +22,7 @@ define([
         // template: template,
         link: function (scope, elem, attr) {
           scope.key = attr.key;
-          
+
           scope.$on('load-table', function() {
             var $template = $(template);
             elem.html($template);

@@ -29,11 +29,10 @@
 }
 
 .summary-row {
-  height: 420px;
+  height: 400px;
   padding: 20px;
   background: white;
   overflow: hidden;
-  overflow-y: scroll;
   margin-bottom: 10px;
   border-right: 5px solid #f9f9f9;
   &:nth-child(10){

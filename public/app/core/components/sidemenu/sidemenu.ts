@@ -417,6 +417,19 @@ export function sideMenuDirective() {
       scope.$on("$destory", function() {
         elem.off('click.dropdown');
       });
+
+      var onresize = function (event) {
+        if($(window).height() > 800) {
+          scope.showTooltip = false;
+        } else {
+          scope.showTooltip = true;
+        };
+        if(event) {
+          scope.$apply();
+        }
+      };
+      onresize(false);
+      window.onresize = onresize;
     }
   };
 }
