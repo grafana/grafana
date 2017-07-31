@@ -219,12 +219,12 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
 
       var metricNameQuery = query.match(/^metrics\(([^\)]+?)(,\s?([^,]+?))?\)/);
       if (metricNameQuery) {
-        return this.getMetrics(metricNameQuery[1], metricNameQuery[3]);
+        return this.getMetrics(templateSrv.replace(metricNameQuery[1]), templateSrv.replace(metricNameQuery[3]));
       }
 
       var dimensionKeysQuery = query.match(/^dimension_keys\(([^\)]+?)(,\s?([^,]+?))?\)/);
       if (dimensionKeysQuery) {
-        return this.getDimensionKeys(dimensionKeysQuery[1], dimensionKeysQuery[3]);
+        return this.getDimensionKeys(templateSrv.replace(dimensionKeysQuery[1]), templateSrv.replace(dimensionKeysQuery[3]));
       }
 
       var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
