@@ -46,7 +46,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
         query.statistics = target.statistics;
 
         var now = Math.round(Date.now() / 1000);
-        var period = this._getPeriod(target, query, options, start, end, now);
+        var period = this.getPeriod(target, query, options, start, end, now);
         target.period = period;
         query.period = period;
 
@@ -76,7 +76,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       });
     };
 
-    this._getPeriod = function(target, query, options, start, end, now) {
+    this.getPeriod = function(target, query, options, start, end, now) {
       var period;
       var range = end - start;
 
