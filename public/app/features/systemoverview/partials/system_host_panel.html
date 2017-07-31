@@ -1,0 +1,33 @@
+<div class="accordion host-list" id="accordion2">
+    <div class="accordion-group host-item" ng-repeat="host in hostPanel.hosts">
+        <div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#{{$index}}" ng-click="selectHost($index, host.host);">
+            <h5>
+                <span class="pull-left">
+                    <i class="fa btn btn-primary" ng-class="{true: 'fa-minus', false: 'fa-plus'}[$index == selected]"></i>
+                </span>
+                <span>{{host.host}}</span>
+                <span>{{host.status}}</span>
+                <span>{{host.cpu}}</span>
+                <span>{{host.mem}}</span>
+                <span>{{host.disk}}</span>
+                <div class="clearfix"></div>
+            </h5>
+            </a>
+        </div>
+        <div id="{{$index}}" class="accordion-body collapse">
+            <div class="accordion-inner">
+                <div class="predictions">
+                    <div class="prediction-item" ng-repeat="(type, prediction) in predictionPanel">
+                        <h4>
+                            {{prediction.title}}
+                            <select ng-if="prediction.tips.length" ng-model="prediction.selectedOption" ng-change="changePre(type, prediction.selectedOption)" ng-options="tip.time for tip in prediction.tips">
+                        </h4>
+                        <div class="prediction-item-pie prediction-item-{{type}}"></div>
+                    </div>
+                </div>
+                <table-loader key={{host.hostName}} template="/app/features/systemoverview/partials/system_host_table.html"></table-loader>
+            </div>
+        </div>
+    </div>
+</div>

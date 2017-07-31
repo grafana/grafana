@@ -8,15 +8,17 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('SystemOverviewCtrl', function ($scope, $location, $q,
-      backendSrv, contextSrv, datasourceSrv, alertMgrSrv, healthSrv) {
+    module.controller('SystemOverviewCtrl', function ($scope, $location, $q, backendSrv, alertSrv,
+      contextSrv, datasourceSrv, alertMgrSrv, healthSrv, serviceDepSrv, jsPlumbService) {
+
+      var toolkit = jsPlumbService.getToolkit("serviceToolkit");
+
+      $scope.$on('$destroy', function () {
+        toolkit.clear();
+      });
 
       $scope.getUrl = function(url) {
         return config.appSubUrl + url;
-      };
-
-      $scope.filterNotNumber = function (value) {
-        return typeof(value.status) == 'number';
       };
 
       $scope.percentFormatter = function (value) {
@@ -31,7 +33,34 @@ define([
         return value > 0 ? '异常' : '正常';
       };
 
+      var setPie = function(element, pieData) {
+        $.plot(element, pieData, {
+          series: {
+            pie: {
+              innerRadius: 0.5,
+              show: true,
+              label: {
+                show: true,
+                radius: 1/4,
+              }
+            }
+          },
+          legend: {
+            show: false
+          },
+          colors: ['#3DB779','#FE9805','#BB1144']
+        });
+      };
+
       $scope.init = function () {
+        $scope.healthPanel = {};
+        $scope.alertPanel  = {};
+        $scope.exceptionPanel = {};
+        $scope.anomalyPanel   = {};
+        $scope.servicePanel   = {};
+        $scope.hostPanel      = {};
+        $scope.predictionPanel = {};
+
         if (contextSrv.user.systemId == 0 && contextSrv.user.orgId) {
           $location.url("/systems");
           contextSrv.sidmenu = false;
@@ -40,118 +69,136 @@ define([
 
         backendSrv.get('/api/static/template/overview').then(function (response) {
           $scope._dashboard = response;
-          $scope.getServices().finally(function () {
-            $scope.initDashboard({
-              meta     : { canStar: false, canShare: false, canEdit: false, canSave: false },
-              dashboard: $scope._dashboard
-            }, $scope);
-          });
+          // $scope.getServices().finally(function () {
+            
+          // });
           $scope.getAlertStatus();
           $scope.getHostSummary();
           $scope.getAnomaly();
+        }).then(function () {
+          $scope.initDashboard({
+            meta     : { canStar: false, canShare: false, canEdit: false, canSave: false },
+            dashboard: $scope._dashboard
+          }, $scope);
         });
       };
 
       // 报警情况
       $scope.getAlertStatus = function () {
-        var panel = $scope._dashboard.rows[1].panels[0];
-        panel.status = { success: ['', ''], warn: ['警告', 0], danger: ['严重', 0] };
-        panel.href = $scope.getUrl('/alerts/status');
+        var alertPanel = $scope._dashboard.rows[1].panels[0];
+        $scope.alertPanel.status = [
+          { type: 'success', text: '系统正常', count: 0 },
+          { type: 'warning', text: '警告', count: 0 },
+          { type: 'danger', text: '严重', count: 0 }
+        ]
+        $scope.alertPanel.href = $scope.getUrl('/alerts/status');
 
         alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
           if (response.data.length) {
             for (var i = 0; i < response.data.length; i++) {
-              response.data[i].status.level === "CRITICAL" ? panel.status.danger[1]++ : panel.status.warn[1]++;
+              response.data[i].status.level === "CRITICAL" ? $scope.alertPanel.status[2].count++ : $scope.alertPanel.status[1].count++;
             }
           } else {
-            panel.status.success[1] = '系统正常';
+            $scope.alertPanel.status[0].count = 1;
           }
         });
       };
 
       // 智能检测异常指标 & 健康指数
       $scope.getAnomaly = function () {
-        var panel = $scope._dashboard.rows[2].panels[0];
-        panel.status = { success: ['指标数量', 0], warn: ['异常指标', 0], danger: ['严重', 0] };
-        panel.href = $scope.getUrl('/anomaly');
+        var healthPanel  = $scope._dashboard.rows[0].panels[0];
+        var anomalyPanel = $scope._dashboard.rows[2].panels[0];
+
+        $scope.anomalyPanel.status = [
+          { type: 'success', text: '指标数量', count: 0 },
+          { type: 'warning', text: '异常指标', count: 0 },
+          { type: 'danger', text: '严重', count: 0 }
+        ];
+        $scope.anomalyPanel.href = $scope.getUrl('/anomaly');
 
         healthSrv.load().then(function (data) {
-          $scope.applicationHealth = Math.floor(data.health);
-          $scope.leveal  = _.getLeveal($scope.applicationHealth);
-          $scope.healthProgressState = $scope.applicationHealth > 75 ? 'success' : ($scope.applicationHealth > 50 ? 'warning' : 'danger');
+          var healthScore = Math.floor(data.health);
+          $scope.healthPanel.score = healthScore;
+          $scope.healthPanel.level  = _.getLeveal(healthScore);
+          $scope.healthPanel.progressState = healthScore > 75 ? 'success' : (healthScore > 50 ? 'warning' : 'danger');
           $scope.summary = data;
 
+          setPie('.health-pie', [{ label: "", data: healthScore }]);
+
           if (data.numAnomalyMetrics) {
-            panel.status.success[1] = data.numMetrics;
-            panel.status.warn[1]    = data.numAnomalyMetrics;
+            $scope.anomalyPanel.status[0].count = data.numMetrics;
+            $scope.anomalyPanel.status[1].count = data.numAnomalyMetrics;
           } else {
-            panel.status.success[0] = '';
-            panel.status.success[1] = '系统正常';
+            $scope.anomalyPanel.status[0].text  = '系统正常';
+            $scope.anomalyPanel.status[0].count = 1;
           }
         });
       };
 
       // 服务状态
-      $scope.getServices = function () {
-        var panel = $scope._dashboard.rows[3].panels[0];
-        panel.status = { success: ['正常服务', 0], warn: ['异常服务', 0], danger: ['严重', 0] };
-        panel.href = $scope.getUrl('/service');
-        panel.allServices = [];
-        var allServicesMap = _.allServies();
-        var promiseList = [];
-        _.each(Object.keys(allServicesMap), function (key) {
-          var queries = [{
-            "metric"    : contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + key + ".state",
-            "aggregator": "sum",
-            "downsample": "1s-sum",
-            "tags"      : { "host" : "*" }
-          }];
+      $scope.getServices = function (scope) {
+        // var panel = $scope._dashboard.rows[3].panels[0];
+        
+        toolkit = scope.toolkit;
 
-          var q = datasourceSrv.getStatus(queries, 'now-5m').then(function (response) {
-            var serviceState = 0;
-            var serviceHosts = [];
+        serviceDepSrv.readServiceDependency().then(function (response) {
+          if (!_.isNull(response.data)) {
+            var dependencies = angular.fromJson(_.last(response.data).attributes[0].value);
 
-            _.each(response, function(service) {
-              if (_.isObject(service)) {
-                var status = service.dps[_.last(Object.keys(service.dps))];
-
-                if (status > 0) {
-                  panel.status.warn[1]++;
-                  serviceState++;
-                } else {
-                  panel.status.success[1]++;
-                }
-                serviceHosts.push({
-                  "name": service.tags.host,
-                  "state": status > 0 ? "异常" : "正常"
-                });
-              }
+            _.each(dependencies.nodes, function (node) {
+              serviceDepSrv.readServiceStatus(node.id, node.name).then(function (resp) {
+                node.status = resp.data.healthStatusType;
+              });
             });
 
-            panel.allServices.push({
-              "name" : allServicesMap[key],
-              "state": serviceState,
-              "hosts": serviceHosts
-            });
-          }).finally(function () {
-            var d = $q.defer();
-            d.resolve();
-            return d.promise;
-          });
-          promiseList.push(q);
+            toolkit.load({ data: dependencies });
+          } else {
+            alertSrv.set("抱歉", "您还没有创建服务依赖关系, 建议您先创建", "error", 2000);
+          }
         });
-        return $q.all(promiseList);
+      };
+
+      $scope.nodeClickHandler = function (node) {
+        $(node.el).addClass("active").siblings().removeClass("active");
+
+        $scope.hostPanel = {};
+
+        var serviceId = node.node.data.id;
+        var serviceName = node.node.data.name;
+        var serviceStatus = node.node.data.status;
+        var hosts = [];
+
+        $scope.hostPanel.currentService = {
+          id: serviceId,
+          name: serviceName,
+          status: serviceStatus
+        };
+
+        serviceDepSrv.readHostStatus(serviceId, serviceName).then(function (response) {
+          hosts = Object.keys(response.data.hostStatusMap);
+        }).then(function () {
+          $scope.hostPanel.hosts = [];
+
+          _.each(hosts, function (host) {
+            $scope.hostPanel.hosts.push(_.findWhere($scope.hostPanels, { host: host }))
+          });
+
+          $scope.$broadcast("toggle-panel");
+        });
+      };
+
+      $scope.selectHost = function (index, host) {
+        $scope.showPrediction(index, host);
       };
 
       // 机器连接状态
       $scope.getHostSummary = function () {
-        var panel = $scope._dashboard.rows[4].panels[0];
-        panel.status = { success: ['正常机器', 0], warn: ['异常机器', 0], danger: ['尚未工作', 0] };
-        panel.href = $scope.getUrl('/summary');
+        var hostPanel = $scope._dashboard.rows[4].panels[0];
+        
+        $scope.hostPanel.href = $scope.getUrl('/summary');
 
         $scope.summaryList = [];
-        $scope.hostsResource = {};
-        $scope.hostPanels = [];
+        var hostsResource = {};
         var promiseList = [];
 
         backendSrv.alertD({
@@ -163,8 +210,8 @@ define([
         .then(function (response) {
           $scope.summaryList = response.data;
           _.each($scope.summaryList, function (metric) {
-            $scope.hostsResource[metric.tag.host] = {};
-            $scope.hostsResource[metric.tag.host]["host"] = metric.tag.host;
+            hostsResource[metric.tag.host] = {};
+            hostsResource[metric.tag.host]["host"] = metric.tag.host;
           });
         })
         .then(function () {
@@ -176,7 +223,7 @@ define([
           }];
           var q = datasourceSrv.getHostResource(queries, 'now-1m').then(function (response) {
             _.each(response, function (metric) {
-              $scope.hostsResource[metric.host]["status"] = metric.value;
+              hostsResource[metric.host]["status"] = metric.value;
             });
           });
           promiseList.push(q);
@@ -191,7 +238,7 @@ define([
 
           var q = datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
             _.each(response, function (metric) {
-              $scope.hostsResource[metric.host]["cpu"] = $scope.percentFormatter(metric.value);
+              hostsResource[metric.host]["cpu"] = $scope.percentFormatter(metric.value);
             });
           });
           promiseList.push(q);
@@ -206,7 +253,7 @@ define([
 
           var q = datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
             _.each(response, function (metric) {
-              $scope.hostsResource[metric.host]["disk"] = $scope.gbFormatter(metric.value);
+              hostsResource[metric.host]["disk"] = $scope.gbFormatter(metric.value);
             });
           });
           promiseList.push(q);
@@ -221,20 +268,18 @@ define([
 
           var q = datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
             _.each(response, function (metric) {
-              $scope.hostsResource[metric.host]["mem"] = $scope.gbFormatter(metric.value);
+              hostsResource[metric.host]["mem"] = $scope.gbFormatter(metric.value);
             });
           });
           promiseList.push(q);
         })
         .finally(function () {
           $q.all(promiseList).then(function () {
-            _.each(Object.keys($scope.hostsResource), function (host) {
-              // $scope.hostsResource[host]["body"] = {};
-              $scope.hostPanels.push($scope.hostsResource[host]);
-            });
+            $scope.hostPanels = _.values(hostsResource);
           });
         });
       };
+
       // 智能分析预测 切换周期
       $scope.changePre = function (selectedOption) {
         var panels   = $scope._dashboard.rows[5].panels;
@@ -247,11 +292,17 @@ define([
 
       $scope.showPrediction = function (i, hostname) {
         // 智能分析预测
+        var titleMap = {
+          disk: '磁盘剩余空间(%)',
+          cpu : 'CPU使用情况(%)',
+          mem : '内存使用情况(%)'
+        };
         $scope.panels = $scope._dashboard.rows[5].panels;
         _.each($scope.panels, function (panel, index) {
-          panel.targets.tags = { "host" : hostname };
+          panel.targets.tags = { "host": hostname };
           var params = {
             metric: contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + panel.targets[0].metric,
+            tags  : { "host": hostname }
           };
 
           backendSrv.getPrediction(params).then(function (response) {
@@ -260,16 +311,27 @@ define([
             var data  = response.data;
             if (_.isEmpty(data)) { throw Error; }
 
+            var type = /cpu/.test(panel.targets[0].metric) ? 'cpu' : (/mem/.test(panel.targets[0].metric) ? 'mem' : 'disk');
+            $scope.predictionPanel[type] = {};
+            $scope.predictionPanel[type].tips = [];
+            $scope.predictionPanel[type].title = titleMap[type];
+
             for (var i in data) {
               var pre  = {
                 time: times[num],
                 data: index === 1 ? $scope.percentFormatter(data[i]) : $scope.gbFormatter(data[i])
               };
-              panel.tips[num] = pre;
+              $scope.predictionPanel[type].tips[num] = pre;
               num++;
             }
 
-            panel.selectedOption = panel.tips[0];
+            console.log($scope.predictionPanel);
+            var pieData = [
+              { label: "", data: $scope.predictionPanel[type].tips[0] }
+            ];
+            setPie('.prediction-item-'+type, pieData);
+
+            $scope.predictionPanel[type]['selectedOption'] = $scope.predictionPanel[type].tips[0];
           }).catch(function () {
             panel.tip = '暂无预测数据';
           });
@@ -313,12 +375,59 @@ define([
           _.each(Object.keys(tt), function (v) {
             $scope.hostTopN.push(tt[v]);
           });
-          $scope.$broadcast('toggle-panel');
+          $scope.bsTableData = $scope.hostTopN;
+          console.log($scope.hostTopN.length);
+          $scope.$broadcast('load-table');
         }, function () {
-          $scope.$broadcast('toggle-panel');
+          // $scope.$broadcast('toggle-panel');
           $scope.hostTopN = [];
         });
       };
+
+      $scope.renderParams = {
+        view : {
+          nodes: {
+            "default": {
+              template: "node",
+              events  : {
+                click: $scope.nodeClickHandler
+              }
+            }
+          }
+        },
+        layout:{
+          type: "Absolute"
+        },
+        jsPlumb: {
+          Anchor: "Continuous",
+          Endpoint: "Blank",
+          Connector: ["StateMachine", { cssClass: "connectorClass", hoverClass: "connectorHoverClass" }],
+          PaintStyle: { strokeWidth: 1, stroke: '#32b2e1' },
+          HoverPaintStyle: { stroke: "orange" },
+          Overlays: [
+            ["Arrow", { fill: "#09098e", width: 10, length: 10, location: 1 }]
+          ]
+        },
+        lassoFilter: ".controls, .controls *, .miniview, .miniview *",
+        dragOptions: {
+          filter: ".delete *"
+        },
+        consumeRightClick: false,
+        enablePanButtons: false,
+        enableWheelZoom: false
+      };
+
+      $scope.bsTableOptions = {
+        pagination: true,
+        pageSize  : 5,
+        sortName  : 'mem',
+        th        : [
+          { filed: 'topN', text: 'TopN进程', sortable: true },
+          { filed: 'cpu', text: 'CPU', sortable: true },
+          { filed: 'mem', text: 'MEM', sortable: true }
+        ]
+      };
+      
 
       $scope.init();
     });
