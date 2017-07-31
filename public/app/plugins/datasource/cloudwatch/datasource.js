@@ -84,11 +84,15 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       var daySec = hourSec * 24;
       var periodUnit = 60;
       if (!target.period) {
-        if ((now - start > (hourSec * 3)) && query.namespace !== 'AWS/EC2') { // until 15 days ago
-          periodUnit = period = 60;
-        } else if (now - start > (daySec * 15)) { // until 63 days ago
+        if (now - start <= (daySec * 15)) { // until 15 days ago
+          if (query.namespace === 'AWS/EC2') {
+            periodUnit = period = 300;
+          } else {
+            periodUnit = period = 60;
+          }
+        } else if (now - start <= (daySec * 63)) { // until 63 days ago
           periodUnit = period = 60 * 5;
-        } else if (now - start > (daySec * 63)) { // until 455 days ago
+        } else if (now - start <= (daySec * 455)) { // until 455 days ago
           periodUnit = period = 60 * 60;
         } else { // over 455 days, should return error, but try to long period
           periodUnit = period = 60 * 60;
