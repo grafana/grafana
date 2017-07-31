@@ -15,6 +15,8 @@ System.config({
     'angular-sanitize':         'vendor/angular-sanitize/angular-sanitize.js',
     "angular-ui":               "vendor/angular-ui/ui-bootstrap-tpls.js",
     "angular-strap":            "vendor/angular-other/angular-strap.js",
+    "angular-strap.tpl":        "vendor/angular-other/angular-strap.tpl",
+    "angular-strap-old":        "vendor/angular-other/angular-strap-old",
     "angular-dragdrop":         "vendor/angular-native-dragdrop/draganddrop.js",
     "angular-bindonce":         "vendor/angular-bindonce/bindonce.js",
     "spectrum":                 "vendor/spectrum.js",
@@ -28,11 +30,15 @@ System.config({
     "jquery.flot.crosshair":    "vendor/flot/jquery.flot.crosshair",
     "jquery.flot.fillbelow":    "vendor/flot/jquery.flot.fillbelow",
     'jquery.flot.fillbetween':  'vendor/flot/jquery.flot.fillbetween',
+
     "highlight":                'vendor/angular-other/highlight',
     "slider":                   'vendor/angular-other/nouislider.min',
     'fullcalendar':             'vendor/fullcalendar/dist/fullcalendar.min',
     'ui.calendar':              'vendor/angular-ui-calendar/src/calendar',
     'zh-cn':                    'vendor/fullcalendar/dist/zh-cn',
+    'bootstrap-table':          'vendor/angular-other/bootstrap-table',
+    'jsPlumbToolkit':           'vendor/jsPlumb/jsPlumbToolkit',
+    'jsPlumbToolkit-angular':   'vendor/jsPlumb/jsPlumbToolkit-angular'
   },
 
   packages: {

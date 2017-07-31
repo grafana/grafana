@@ -19,6 +19,7 @@ export class TablePanelEditorCtrl {
   fontSizes: any;
   dateFormats: any;
   addColumnSegment: any;
+  operatorModes: any;
   unitFormats: any;
   getColumnNames: any;
 
@@ -47,6 +48,7 @@ export class TablePanelEditorCtrl {
       {text: 'MMMM D, YYYY LT',  value: 'MMMM D, YYYY LT'},
     ];
 
+    this.operatorModes = ['=', '>', '<'];
     this.addColumnSegment = uiSegmentSrv.newPlusButton();
 
     // this is used from bs-typeahead and needs to be instance bound
@@ -112,6 +114,10 @@ export class TablePanelEditorCtrl {
       pattern: '/.*/',
       dateFormat: 'YYYY-MM-DD HH:mm:ss',
       thresholds: [],
+      valueMaps: [
+        { value: '', op: '=', text: '' }
+      ],
+      rowHeight: '',
     };
 
     this.panel.styles.push(angular.copy(columnStyleDefaults));
@@ -128,6 +134,16 @@ export class TablePanelEditorCtrl {
     ref[2] = copy;
     this.panelCtrl.render();
   }
+
+  removeValueMap(style, map) {
+    var index = _.indexOf(this.panel.styles, style);
+    this.panel.styles[index].valueMaps = _.without(this.panel.styles[index].valueMaps, map);
+    this.render();
+  };
+
+  addValueMap(index) {
+    this.panel.styles[index].valueMaps.push({ value: '', op: '=', text: '' });
+  };
 }
 
 /** @ngInject */

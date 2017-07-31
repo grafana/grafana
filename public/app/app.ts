@@ -11,6 +11,13 @@ import 'angular-bindonce';
 import 'angular-ui';
 import 'ui.calendar';
 
+import 'bootstrap-table';
+import 'angular-strap.tpl';
+import 'angular-strap-old';
+
+import 'jsPlumbToolkit';
+import 'jsPlumbToolkit-angular';
+
 import $ from 'jquery';
 import angular from 'angular';
 import config from 'app/core/config';
@@ -39,7 +46,7 @@ export class GrafanaApp {
   }
 
   init() {
-    var app = angular.module('grafana', []);
+    var app = angular.module('grafana', ['mgcrea.ngStrap', '$jsPlumb']);
     app.constant('grafanaVersion', "@grafanaVersion@");
 
     app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) => {

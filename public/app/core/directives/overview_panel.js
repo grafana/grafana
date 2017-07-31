@@ -6,7 +6,7 @@ define([
   function ($, _, coreModule) {
     'use strict';
 
-    coreModule.directive('overviewPanel', function ($parse, $compile) {
+    coreModule.default.directive('overviewPanel', function ($parse, $compile) {
       // var path = "'" + "/app/features/systemoverview/partials/system_overview_collapse.html" + "'";
       var predictionTpl = '<div ng-repeat="(name, panel) in panels" class="panel" panel-width>' +
                           '<p ng-if="panel.tip">' +

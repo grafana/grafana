@@ -46,6 +46,14 @@ export class SideMenuCtrl {
           text: '机器连接状态',
           url: this.getUrl("/summary")
         },
+        {
+          text: '服务依赖状态',
+          href: this.getUrl("/service_v2")
+        },
+        {
+          text: '创建服务依赖',
+          href: this.getUrl("/service_dependency")
+        },
       ],
     });
 

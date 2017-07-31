@@ -6,7 +6,7 @@ define([
   function ($, _, coreModule) {
     'use strict';
 
-    coreModule.directive('tableLoader', function ($compile) {
+    coreModule.default.directive('tableLoader', function ($compile) {
       var template = '<table class="table table-striped table-hack" '+
                      'data-pagination="true" data-page-size="5" data-sort-name="anomalyHealth" data-row-style="{{rowStyle}}">'+
                      '<thead><tr>'+

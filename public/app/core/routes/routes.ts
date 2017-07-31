@@ -14,6 +14,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   var loadPluginsBundle = new BundleLoader('app/features/plugins/all');
   var loadAdminBundle = new BundleLoader('app/features/admin/admin');
   var loadOncallerBundle = new BundleLoader('app/features/oncaller/all');
+  var loadCMDBBundle = new BundleLoader('app/features/cmdb/all');
 
   $routeProvider
   .when('/', {
@@ -350,6 +351,31 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/cmdb/setup', {
     templateUrl: 'public/app/features/cmdb/partials/cmdb_setup.html',
     controller : 'CMDBSetupCtrl',
+  })
+  .when('/service_v2', {
+    templateUrl: 'public/app/features/service/partials/service.html',
+    controller: 'ServiceStatusCtrl',
+    reloadOnSearch: true,
+  })
+  .when('/cmdb/hostlist', {
+    templateUrl: 'public/app/features/cmdb/partials/host_list.html',
+    controller : 'HostListCtrl',
+    resolve: loadCMDBBundle
+  })
+  .when('/cmdb/hostlist/hostdetail', {
+    templateUrl: 'public/app/features/cmdb/partials/host_detail.html',
+    controller : 'HostDetailCtrl',
+    resolve: loadCMDBBundle
+  })
+  .when('/cmdb/setup', {
+    templateUrl: 'public/app/features/cmdb/partials/cmdb_setup.html',
+    controller : 'CMDBSetupCtrl',
+    resolve: loadCMDBBundle
+  })
+  .when('/service_dependency', {
+    templateUrl: 'public/app/features/service/partials/service_dep.html',
+    controller : 'BuildDependCtrl',
+    reloadOnSearch: true
   })
   .otherwise({
     templateUrl: 'public/app/partials/error.html',

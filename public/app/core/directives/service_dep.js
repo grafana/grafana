@@ -6,7 +6,7 @@ define([
   function ($, _, coreModule) {
     'use strict';
 
-    coreModule.directive('node', function(jsPlumbFactory) {
+    coreModule.default.directive('node', function(jsPlumbFactory) {
       return jsPlumbFactory.node({
         templateUrl: "node_template.tpl",
         inherit:["remove", "edit"]

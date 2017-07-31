@@ -21,6 +21,9 @@ var panelDefaults = {
       type: 'date',
       pattern: 'Time',
       dateFormat: 'YYYY-MM-DD HH:mm:ss',
+      valueMaps: [
+        { value: '', op: '=', text: '' }
+      ]
     },
     {
       unit: 'short',
@@ -30,11 +33,15 @@ var panelDefaults = {
       colorMode: null,
       pattern: '/.*/',
       thresholds: [],
+      valueMaps: [
+        { value: '', op: '=', text: '' }
+      ]
     }
   ],
   columns: [],
   scroll: true,
   fontSize: '100%',
+  rowHeight: false,
   sort: {col: 0, desc: true},
 };
 
@@ -55,6 +62,12 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       this.panel.columns = this.panel.fields;
       delete this.panel.columns;
       delete this.panel.fields;
+    }
+
+    !this.panel.styles && (this.panel.styles = []);
+    // 修正接口“数值转换”的数据
+    for (var i = 0; i < this.panel.styles.length; i++) {
+      this.panel.styles[i].valueMaps === void 0 && (this.panel.styles[i].valueMaps = [{ value: '', op: '=', text: '' }]);
     }
 
     _.defaults(this.panel, panelDefaults);
@@ -199,6 +212,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       elem.css({'font-size': panel.fontSize});
       panelElem.addClass('table-panel-wrapper');
 
+      panel.rowHeight && tbodyElem.addClass('fix-table-row-height');
       appendTableRows(tbodyElem);
       appendPaginationControls(footerElem);
 

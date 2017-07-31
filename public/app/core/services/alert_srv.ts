@@ -10,7 +10,7 @@ export class AlertSrv {
   list: any[];
 
   /** @ngInject */
-  constructor(private $timeout, private $sce, private $rootScope, private $modal) {
+  constructor(private $timeout, private $sce, private $rootScope, private $_modal) {
     this.list = [];
   }
 
@@ -81,7 +81,7 @@ export class AlertSrv {
     scope.yesText = payload.yesText || "Yes";
     scope.noText = payload.noText || "Cancel";
 
-    var confirmModal = this.$modal({
+    var confirmModal = this.$_modal({
       template: 'public/app/partials/confirm_modal.html',
       persist: false,
       modalClass: 'confirm-modal',

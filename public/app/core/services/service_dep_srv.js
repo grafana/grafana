@@ -6,7 +6,7 @@ define([
   function (angular, _, coreModule) {
     'use strict';
 
-    coreModule.service('serviceDepSrv', function($http, alertSrv, $timeout,backendSrv) {
+    coreModule.default.service('serviceDepSrv', function($http, alertSrv, $timeout,backendSrv) {
 
       this.readInstalledService = function () {
         return backendSrv.alertD({
