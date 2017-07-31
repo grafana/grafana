@@ -167,3 +167,17 @@
     display: inline-block;
   }
 }
+
+// cloudwiz start
+.modal-body {
+  text-align: center;
+  background: white;
+  & > .modal-close {
+    margin: 10px;
+    float: right;
+  }
+  & > h3 {
+    margin-top: 30px;
+  }
+}
+// cloudwiz end
