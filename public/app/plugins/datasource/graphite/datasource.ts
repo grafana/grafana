@@ -160,7 +160,8 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     return date.unix();
   };
 
-  this.metricFindQuery = function(query, options) {
+  this.metricFindQuery = function(query, optionalOptions) {
+    let options = optionalOptions || {};
     let interpolatedQuery = templateSrv.replace(query);
 
     let httpOptions: any =  {
