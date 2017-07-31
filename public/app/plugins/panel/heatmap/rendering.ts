@@ -706,77 +706,10 @@ export default function link(scope, elem, attrs, ctrl) {
     }
   }
 
-  function drawColorLegend() {
-    d3.select("#heatmap-color-legend").selectAll("rect").remove();
-
-    let legend = d3.select("#heatmap-color-legend");
-    let legendWidth = Math.floor($(d3.select("#heatmap-color-legend").node()).outerWidth());
-    let legendHeight = d3.select("#heatmap-color-legend").attr("height");
-
-    let legendColorScale = getColorScale(legendWidth);
-
-    let rangeStep = 2;
-    let valuesRange = d3.range(0, legendWidth, rangeStep);
-    var legendRects = legend.selectAll(".heatmap-color-legend-rect").data(valuesRange);
-
-    legendRects.enter().append("rect")
-    .attr("x", d => d)
-    .attr("y", 0)
-    .attr("width", rangeStep + 1) // Overlap rectangles to prevent gaps
-    .attr("height", legendHeight)
-    .attr("stroke-width", 0)
-    .attr("fill", d => {
-      return legendColorScale(d);
-    });
-  }
-
-  function drawOpacityLegend() {
-    d3.select("#heatmap-opacity-legend").selectAll("rect").remove();
-
-    let legend = d3.select("#heatmap-opacity-legend");
-    let legendWidth = Math.floor($(d3.select("#heatmap-opacity-legend").node()).outerWidth());
-    let legendHeight = d3.select("#heatmap-opacity-legend").attr("height");
-
-    let legendOpacityScale;
-    if (panel.color.colorScale === 'linear') {
-      legendOpacityScale = d3.scaleLinear()
-      .domain([0, legendWidth])
-      .range([0, 1]);
-    } else if (panel.color.colorScale === 'sqrt') {
-      legendOpacityScale = d3.scalePow().exponent(panel.color.exponent)
-      .domain([0, legendWidth])
-      .range([0, 1]);
-    }
-
-    let rangeStep = 1;
-    let valuesRange = d3.range(0, legendWidth, rangeStep);
-    var legendRects = legend.selectAll(".heatmap-opacity-legend-rect").data(valuesRange);
-
-    legendRects.enter().append("rect")
-    .attr("x", d => d)
-    .attr("y", 0)
-    .attr("width", rangeStep)
-    .attr("height", legendHeight)
-    .attr("stroke-width", 0)
-    .attr("fill", panel.color.cardColor)
-    .style("opacity", d => {
-      return legendOpacityScale(d);
-    });
-  }
-
   function render() {
     data = ctrl.data;
     panel = ctrl.panel;
     timeRange = ctrl.range;
-
-    // Draw only if color editor is opened
-    if (!d3.select("#heatmap-color-legend").empty()) {
-      drawColorLegend();
-    }
-
-    if (!d3.select("#heatmap-opacity-legend").empty()) {
-      drawOpacityLegend();
-    }
 
     if (!setElementHeight() || !data) {
       return;

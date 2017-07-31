@@ -25,9 +25,6 @@
         <label class="gf-form-label width-9">Exponent</label>
         <input type="number" class="gf-form-input width-8" placeholder="auto" data-placement="right" bs-tooltip="''" ng-model="ctrl.panel.color.exponent" ng-change="ctrl.refresh()" ng-model-onblur>
       </div>
-      <div class="gf-form">
-        <svg id="heatmap-opacity-legend" width="19em" height="2em"></svg>
-      </div>
     </div>
 
     <div ng-show="ctrl.panel.color.mode === 'spectrum'">
@@ -37,9 +34,10 @@
           <select class="input-small gf-form-input" ng-model="ctrl.panel.color.colorScheme" ng-options="s.value as s.name for s in ctrl.colorSchemes" ng-change="ctrl.render()"></select>
         </div>
       </div>
-      <div class="gf-form">
-        <svg id="heatmap-color-legend" width="19em" height="2em"></svg>
-      </div>
+    </div>
+
+    <div class="gf-form">
+      <color-legend></color-legend>
     </div>
   </div>
 
