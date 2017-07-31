@@ -17,7 +17,7 @@ define([
             contextSrv.hostNum = scope.hostList.length;
             backendSrv.post("/api/system/pick",{SystemId: systemId});
             if(contextSrv.hostNum) {
-              scope.appEvent("toggle-sidemenu");
+              contextSrv.toggleSideMenu();
               $location.url("/");
             } else {
               $location.url("/setting/agent");
