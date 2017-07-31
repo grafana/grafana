@@ -2,7 +2,11 @@
 
 ## New Features
 
-* **Table panel**: Render cell values as links that can use url that uses variables from current table row. [#3754](https://github.com/grafana/grafana/issues/3754)
+* **Table panel**: Render cell values as links that can use url that uses variables from current table row. [#8846](https://github.com/grafana/grafana/issues/8846) thx [@skwashd](https://github.com/skwashd)
+
+## Enhancements
+
+* **GitHub OAuth**: Support for GitHub organizations with 100+ teams. [#3754](https://github.com/grafana/grafana/issues/3754)
 
 # 4.4.2 (unreleased) 
 
