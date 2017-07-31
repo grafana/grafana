@@ -192,7 +192,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
 
         // hide search
         if (body.find('.search-container').length > 0) {
-          if (target.parents('.search-container').length === 0) {
+          if (target.parents('.search-results-container').length === 0) {
             scope.$apply(function() {
               scope.appEvent('hide-dash-search');
             });
