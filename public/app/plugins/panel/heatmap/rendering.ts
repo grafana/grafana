@@ -8,7 +8,7 @@ import {appEvents, contextSrv} from 'app/core/core';
 import {tickStep, getScaledDecimals, getFlotTickSize} from 'app/core/utils/ticks';
 import d3 from 'd3';
 import {HeatmapTooltip} from './heatmap_tooltip';
-import {convertToCards, mergeZeroBuckets} from './heatmap_data_converter';
+import {mergeZeroBuckets} from './heatmap_data_converter';
 
 let MIN_CARD_SIZE = 1,
     CARD_PADDING = 1,
@@ -384,8 +384,8 @@ export default function link(scope, elem, attrs, ctrl) {
       data.buckets = mergeZeroBuckets(data.buckets, _.min(tick_values));
     }
 
-    let cardsData = convertToCards(data.buckets);
-    let maxValueAuto = d3.max(cardsData, card => card.count);
+    let cardsData = data.cards;
+    let maxValueAuto = data.cardStats.max;
     let maxValue = panel.color.max || maxValueAuto;
     let minValue = panel.color.min || 0;
 

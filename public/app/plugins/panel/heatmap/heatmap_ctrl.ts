@@ -7,7 +7,7 @@ import TimeSeries from 'app/core/time_series';
 import {axesEditor} from './axes_editor';
 import {heatmapDisplayEditor} from './display_editor';
 import rendering from './rendering';
-import { convertToHeatMap, elasticHistogramToHeatmap, calculateBucketSize, getMinLog} from './heatmap_data_converter';
+import {convertToHeatMap, convertToCards, elasticHistogramToHeatmap, calculateBucketSize, getMinLog} from './heatmap_data_converter';
 
 let X_BUCKET_NUMBER_DEFAULT = 30;
 let Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -188,11 +188,21 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       yBucketSize = 1;
     }
 
+    let cardsData = convertToCards(bucketsData);
+    let maxCardsValue = _.max(_.map(cardsData, 'count'));
+    let minCardsValue = _.min(_.map(cardsData, 'count'));
+    let cardStats = {
+      max: maxCardsValue,
+      min: minCardsValue
+    };
+
     this.data = {
       buckets: bucketsData,
       heatmapStats: heatmapStats,
       xBucketSize: xBucketSize,
-      yBucketSize: yBucketSize
+      yBucketSize: yBucketSize,
+      cards: cardsData,
+      cardStats: cardStats
     };
   }
 
