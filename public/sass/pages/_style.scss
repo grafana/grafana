@@ -21,9 +21,13 @@ body{
     overflow-x: scroll;
 }
 
+.tab-content {
+    position: relative;
+}
+
 .btn-log-compare{
     position: absolute;
-    right: 60px;
+    right: 50px;
     z-index: 1;
     &>button{
         background: none;
