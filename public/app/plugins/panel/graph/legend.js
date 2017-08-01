@@ -194,7 +194,7 @@ function (angular, _, $) {
             }
 
             var topPadding = 6;
-            $container.css("height", maxHeight - topPadding);
+            $container.css("max-height", maxHeight - topPadding);
             // Cloudwiz udpate something wrong in it
             // var topPadding = 15;
             // var tbodyElem = $('<tbody></tbody>');
@@ -203,7 +203,7 @@ function (angular, _, $) {
             // tbodyElem.append(seriesElements);
             // $container.append(tbodyElem);
           } else {
-            $container.css("height", "");
+            $container.css("max-height", "");
           }
         }
       }
