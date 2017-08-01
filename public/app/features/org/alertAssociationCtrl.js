@@ -54,6 +54,7 @@ function (angular, _, noUiSlider) {
           var metric = _.getMetricName(alertMetric)
           $scope.dashboard.rows[0].panels[0].title = metric;
           $scope.dashboard.rows[0].panels[0].targets[0].metric = metric;
+          $scope.dashboard.rows[0].panels[0].targets[0].tags.host = alertHost;
           $scope.$broadcast('refresh');
         }
       });
