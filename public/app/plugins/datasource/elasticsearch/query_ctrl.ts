@@ -31,11 +31,11 @@ export class ElasticQueryCtrl extends QueryCtrl {
 
   queryUpdated() {
     var newJson = angular.toJson(this.datasource.queryBuilder.build(this.target), true);
-    if (newJson !== this.rawQueryOld) {
-      this.rawQueryOld = newJson;
+    if (this.rawQueryOld && newJson !== this.rawQueryOld) {
       this.refresh();
     }
 
+    this.rawQueryOld = newJson;
     this.$rootScope.appEvent('elastic-query-updated');
   }
 

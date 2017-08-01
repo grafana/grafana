@@ -58,12 +58,12 @@ func (s *SocialGrafanaCom) UserInfo(client *http.Client) (*BasicUserInfo, error)
 		Orgs  []OrgRecord `json:"orgs"`
 	}
 
-	body, err := HttpGet(client, s.url+"/api/oauth2/user")
+	response, err := HttpGet(client, s.url+"/api/oauth2/user")
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
-	err = json.Unmarshal(body, &data)
+	err = json.Unmarshal(response.Body, &data)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}

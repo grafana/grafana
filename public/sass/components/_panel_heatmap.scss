@@ -18,6 +18,15 @@
       stroke: $text-color-weak;
     }
   }
+
+  // This hack prevents mouseenter/mouseleave events get fired too often
+  svg {
+    pointer-events: none;
+
+    rect {
+      pointer-events: visiblePainted;
+    }
+  }
 }
 
 .heatmap-tooltip {

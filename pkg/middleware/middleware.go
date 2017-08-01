@@ -245,3 +245,13 @@ func (ctx *Context) HasHelpFlag(flag m.HelpFlags1) bool {
 func (ctx *Context) TimeRequest(timer metrics.Timer) {
 	ctx.Data["perfmon.timer"] = timer
 }
+
+func AddDefaultResponseHeaders() macaron.Handler {
+	return func(ctx *Context) {
+		if ctx.IsApiRequest() && ctx.Req.Method == "GET" {
+			ctx.Resp.Header().Add("Cache-Control", "no-cache")
+			ctx.Resp.Header().Add("Pragma", "no-cache")
+			ctx.Resp.Header().Add("Expires", "-1")
+		}
+	}
+}

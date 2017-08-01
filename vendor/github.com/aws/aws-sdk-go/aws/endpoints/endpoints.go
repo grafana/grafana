@@ -124,6 +124,49 @@ type EnumPartitions interface {
 	Partitions() []Partition
 }
 
+// RegionsForService returns a map of regions for the partition and service.
+// If either the partition or service does not exist false will be returned
+// as the second parameter.
+//
+// This example shows how  to get the regions for DynamoDB in the AWS partition.
+//    rs, exists := endpoints.RegionsForService(endpoints.DefaultPartitions(), endpoints.AwsPartitionID, endpoints.DynamodbServiceID)
+//
+// This is equivalent to using the partition directly.
+//    rs := endpoints.AwsPartition().Services()[endpoints.DynamodbServiceID].Regions()
+func RegionsForService(ps []Partition, partitionID, serviceID string) (map[string]Region, bool) {
+	for _, p := range ps {
+		if p.ID() != partitionID {
+			continue
+		}
+		if _, ok := p.p.Services[serviceID]; !ok {
+			break
+		}
+
+		s := Service{
+			id: serviceID,
+			p:  p.p,
+		}
+		return s.Regions(), true
+	}
+
+	return map[string]Region{}, false
+}
+
+// PartitionForRegion returns the first partition which includes the region
+// passed in. This includes both known regions and regions which match
+// a pattern supported by the partition which may include regions that are
+// not explicitly known by the partition. Use the Regions method of the
+// returned Partition if explicit support is needed.
+func PartitionForRegion(ps []Partition, regionID string) (Partition, bool) {
+	for _, p := range ps {
+		if _, ok := p.p.Regions[regionID]; ok || p.p.RegionRegex.MatchString(regionID) {
+			return p, true
+		}
+	}
+
+	return Partition{}, false
+}
+
 // A Partition provides the ability to enumerate the partition's regions
 // and services.
 type Partition struct {
@@ -132,7 +175,7 @@ type Partition struct {
 }
 
 // ID returns the identifier of the partition.
-func (p *Partition) ID() string { return p.id }
+func (p Partition) ID() string { return p.id }
 
 // EndpointFor attempts to resolve the endpoint based on service and region.
 // See Options for information on configuring how the endpoint is resolved.
@@ -155,13 +198,13 @@ func (p *Partition) ID() string { return p.id }
 // Errors that can be returned.
 //   * UnknownServiceError
 //   * UnknownEndpointError
-func (p *Partition) EndpointFor(service, region string, opts ...func(*Options)) (ResolvedEndpoint, error) {
+func (p Partition) EndpointFor(service, region string, opts ...func(*Options)) (ResolvedEndpoint, error) {
 	return p.p.EndpointFor(service, region, opts...)
 }
 
 // Regions returns a map of Regions indexed by their ID. This is useful for
 // enumerating over the regions in a partition.
-func (p *Partition) Regions() map[string]Region {
+func (p Partition) Regions() map[string]Region {
 	rs := map[string]Region{}
 	for id := range p.p.Regions {
 		rs[id] = Region{
@@ -175,7 +218,7 @@ func (p *Partition) Regions() map[string]Region {
 
 // Services returns a map of Service indexed by their ID. This is useful for
 // enumerating over the services in a partition.
-func (p *Partition) Services() map[string]Service {
+func (p Partition) Services() map[string]Service {
 	ss := map[string]Service{}
 	for id := range p.p.Services {
 		ss[id] = Service{
@@ -195,16 +238,16 @@ type Region struct {
 }
 
 // ID returns the region's identifier.
-func (r *Region) ID() string { return r.id }
+func (r Region) ID() string { return r.id }
 
 // ResolveEndpoint resolves an endpoint from the context of the region given
 // a service. See Partition.EndpointFor for usage and errors that can be returned.
-func (r *Region) ResolveEndpoint(service string, opts ...func(*Options)) (ResolvedEndpoint, error) {
+func (r Region) ResolveEndpoint(service string, opts ...func(*Options)) (ResolvedEndpoint, error) {
 	return r.p.EndpointFor(service, r.id, opts...)
 }
 
 // Services returns a list of all services that are known to be in this region.
-func (r *Region) Services() map[string]Service {
+func (r Region) Services() map[string]Service {
 	ss := map[string]Service{}
 	for id, s := range r.p.Services {
 		if _, ok := s.Endpoints[r.id]; ok {
@@ -226,17 +269,38 @@ type Service struct {
 }
 
 // ID returns the identifier for the service.
-func (s *Service) ID() string { return s.id }
+func (s Service) ID() string { return s.id }
 
 // ResolveEndpoint resolves an endpoint from the context of a service given
 // a region. See Partition.EndpointFor for usage and errors that can be returned.
-func (s *Service) ResolveEndpoint(region string, opts ...func(*Options)) (ResolvedEndpoint, error) {
+func (s Service) ResolveEndpoint(region string, opts ...func(*Options)) (ResolvedEndpoint, error) {
 	return s.p.EndpointFor(s.id, region, opts...)
+}
+
+// Regions returns a map of Regions that the service is present in.
+//
+// A region is the AWS region the service exists in. Whereas a Endpoint is
+// an URL that can be resolved to a instance of a service.
+func (s Service) Regions() map[string]Region {
+	rs := map[string]Region{}
+	for id := range s.p.Services[s.id].Endpoints {
+		if _, ok := s.p.Regions[id]; ok {
+			rs[id] = Region{
+				id: id,
+				p:  s.p,
+			}
+		}
+	}
+
+	return rs
 }
 
 // Endpoints returns a map of Endpoints indexed by their ID for all known
 // endpoints for a service.
-func (s *Service) Endpoints() map[string]Endpoint {
+//
+// A region is the AWS region the service exists in. Whereas a Endpoint is
+// an URL that can be resolved to a instance of a service.
+func (s Service) Endpoints() map[string]Endpoint {
 	es := map[string]Endpoint{}
 	for id := range s.p.Services[s.id].Endpoints {
 		es[id] = Endpoint{
@@ -259,15 +323,15 @@ type Endpoint struct {
 }
 
 // ID returns the identifier for an endpoint.
-func (e *Endpoint) ID() string { return e.id }
+func (e Endpoint) ID() string { return e.id }
 
 // ServiceID returns the identifier the endpoint belongs to.
-func (e *Endpoint) ServiceID() string { return e.serviceID }
+func (e Endpoint) ServiceID() string { return e.serviceID }
 
 // ResolveEndpoint resolves an endpoint from the context of a service and
 // region the endpoint represents. See Partition.EndpointFor for usage and
 // errors that can be returned.
-func (e *Endpoint) ResolveEndpoint(opts ...func(*Options)) (ResolvedEndpoint, error) {
+func (e Endpoint) ResolveEndpoint(opts ...func(*Options)) (ResolvedEndpoint, error) {
 	return e.p.EndpointFor(e.serviceID, e.id, opts...)
 }
 
@@ -299,28 +363,6 @@ type EndpointNotFoundError struct {
 	Service   string
 	Region    string
 }
-
-//// NewEndpointNotFoundError builds and returns NewEndpointNotFoundError.
-//func NewEndpointNotFoundError(p, s, r string) EndpointNotFoundError {
-//	return EndpointNotFoundError{
-//		awsError:  awserr.New("EndpointNotFoundError", "unable to find endpoint", nil),
-//		Partition: p,
-//		Service:   s,
-//		Region:    r,
-//	}
-//}
-//
-//// Error returns string representation of the error.
-//func (e EndpointNotFoundError) Error() string {
-//	extra := fmt.Sprintf("partition: %q, service: %q, region: %q",
-//		e.Partition, e.Service, e.Region)
-//	return awserr.SprintError(e.Code(), e.Message(), extra, e.OrigErr())
-//}
-//
-//// String returns the string representation of the error.
-//func (e EndpointNotFoundError) String() string {
-//	return e.Error()
-//}
 
 // A UnknownServiceError is returned when the service does not resolve to an
 // endpoint. Includes a list of all known services for the partition. Returned

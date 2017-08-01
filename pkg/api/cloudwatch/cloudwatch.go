@@ -39,6 +39,7 @@ type cwRequest struct {
 type datasourceInfo struct {
 	Profile       string
 	Region        string
+	AuthType      string
 	AssumeRoleArn string
 	Namespace     string
 
@@ -47,6 +48,7 @@ type datasourceInfo struct {
 }
 
 func (req *cwRequest) GetDatasourceInfo() *datasourceInfo {
+	authType := req.DataSource.JsonData.Get("authType").MustString()
 	assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	accessKey := ""
 	secretKey := ""
@@ -61,6 +63,7 @@ func (req *cwRequest) GetDatasourceInfo() *datasourceInfo {
 	}
 
 	return &datasourceInfo{
+		AuthType:      authType,
 		AssumeRoleArn: assumeRoleArn,
 		Region:        req.Region,
 		Profile:       req.DataSource.Database,
@@ -110,7 +113,7 @@ func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
 	sessionToken := ""
 	var expiration *time.Time
 	expiration = nil
-	if strings.Index(dsInfo.AssumeRoleArn, "arn:aws:iam:") == 0 {
+	if dsInfo.AuthType == "arn" && strings.Index(dsInfo.AssumeRoleArn, "arn:aws:iam:") == 0 {
 		params := &sts.AssumeRoleInput{
 			RoleArn:         aws.String(dsInfo.AssumeRoleArn),
 			RoleSessionName: aws.String("GrafanaSession"),
@@ -166,7 +169,7 @@ func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
 				SecretAccessKey: dsInfo.SecretKey,
 			}},
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
-			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
+			remoteCredProvider(sess),
 		})
 
 	credentialCacheLock.Lock()

@@ -27,33 +27,37 @@
         <label class="gf-form-label width-13">Column Header</label>
         <input type="text" class="gf-form-input width-13" ng-model="style.alias" ng-change="editor.render()" ng-model-onblur placeholder="Override header label">
       </div>
+      <gf-form-switch class="gf-form" label-class="width-13" label="Render value as link" checked="style.link" change="editor.render()"></gf-form-switch>
     </div>
 
     <div class="section gf-form-group">
       <h5 class="section-heading">Type</h5>
 
       <div class="gf-form">
-        <label class="gf-form-label width-8">Type</label>
+        <label class="gf-form-label width-11">Type</label>
         <div class="gf-form-select-wrapper width-10">
           <select class="gf-form-input" ng-model="style.type" ng-options="c.value as c.text for c in editor.columnTypes" ng-change="editor.render()"></select>
         </div>
       </div>
       <div class="gf-form"  ng-if="style.type === 'date'">
-        <label class="gf-form-label width-8">Date Format</label>
+        <label class="gf-form-label width-11">Date Format</label>
         <metric-segment-model property="style.dateFormat" options="editor.dateFormats" on-change="editor.render()" custom="true"></metric-segment-model>
       </div>
 
       <div ng-if="style.type === 'string'">
-        <gf-form-switch class="gf-form" label-class="width-8" ng-if="style.type === 'string'" label="Sanitize HTML" checked="style.sanitize" change="editor.render()"></gf-form-switch>
+        <gf-form-switch class="gf-form" label-class="width-11" ng-if="style.type === 'string'" label="Sanitize HTML" checked="style.sanitize" change="editor.render()"></gf-form-switch>
+      </div>
+      <div ng-if="style.type === 'string'">
+        <gf-form-switch class="gf-form" label-class="width-11" ng-if="style.type === 'string'" label="Preserve Formatting" checked="style.preserveFormat" change="editor.render()"></gf-form-switch>
       </div>
 
       <div ng-if="style.type === 'number'">
         <div class="gf-form">
-          <label class="gf-form-label width-8">Unit</label>
+          <label class="gf-form-label width-11">Unit</label>
           <div class="gf-form-dropdown-typeahead width-10" ng-model="style.unit" dropdown-typeahead2="editor.unitFormats" dropdown-typeahead-on-select="editor.setUnitFormat(style, $subItem)"></div>
         </div>
         <div class="gf-form">
-          <label class="gf-form-label width-8">Decimals</label>
+          <label class="gf-form-label width-11">Decimals</label>
           <input type="number" class="gf-form-input width-4" data-placement="right" ng-model="style.decimals" ng-change="editor.render()" ng-model-onblur>
         </div>
       </div>
@@ -86,6 +90,35 @@
           <a class="pointer" ng-click="editor.invertColorOrder($index)">Invert</a>
         </div>
       </div>
+    </div>
+
+    <div class="section gf-form-group" ng-if="style.link">
+      <h5 class="section-heading">Link</h5>
+      <div class="gf-form">
+        <label class="gf-form-label width-9">Url</label>
+        <input type="text" class="gf-form-input width-29" ng-model="style.linkUrl" ng-blur="editor.render()" ng-model-onblur data-placement="right">
+        <info-popover mode="right-absolute">
+          <p>Specify an URL (relative or absolute)</p>
+          <span>
+            Use special variables to specify cell values: <br>
+            <em>$__cell</em> refers to current cell value <br>
+            <em>$__cell_n</em> refers to Nth column value in current row. Column indexes are started from 0. For instance,
+              <em>$__cell_1</em> refers to second column's value.
+          </span>
+        </info-popover>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-9">Tooltip</label>
+        <input type="text" class="gf-form-input width-29" ng-model="style.linkTooltip" ng-blur="editor.render()" ng-model-onblur data-placement="right">
+        <info-popover mode="right-absolute">
+          <p>Specify text for link tooltip.</p>
+          <span>
+            This title appears when user hovers pointer over the cell with link.
+            Use the same variables as for URL.
+          </span>
+        </info-popover>
+      </div>
+      <gf-form-switch class="gf-form" label-class="width-9" label="Open in new tab" checked="style.linkTargetBlank"></gf-form-switch>
     </div>
 
     <div class="clearfix"></div>

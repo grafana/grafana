@@ -248,7 +248,7 @@ describe('ElasticDatasource', function() {
   });
 
   describe('When issuing metricFind query on es5.x', function() {
-    var requestOptions, parts, header, body;
+    var requestOptions, parts, header, body, results;
 
     beforeEach(function() {
       createDatasource({url: 'http://es.com', index: 'test', jsonData: {esVersion: '5'}});
@@ -256,18 +256,41 @@ describe('ElasticDatasource', function() {
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
         return ctx.$q.when({
-            data: {
-                responses: [{aggregations: {"1": [{buckets: {text: 'test', value: '1'}}]}}]
-            }
+          data: {
+            responses: [
+              {
+                aggregations: {
+                  "1": {
+                    buckets: [
+                      {doc_count: 1, key: 'test'},
+                      {doc_count: 2, key: 'test2', key_as_string: 'test2_as_string'},
+                    ]
+                  }
+                }
+              }
+            ]
+          }
         });
       };
 
-      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}');
+      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}').then(res => {
+        results = res;
+      });
+
       ctx.$rootScope.$apply();
 
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
       body = angular.fromJson(parts[1]);
+    });
+
+    it('should get results', function() {
+      expect(results.length).to.eql(2);
+    });
+
+    it('should use key or key_as_string', function() {
+      expect(results[0].text).to.eql('test');
+      expect(results[1].text).to.eql('test2_as_string');
     });
 
     it('should not set search type to count', function() {

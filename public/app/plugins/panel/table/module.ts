@@ -10,6 +10,7 @@ import {transformDataToTable} from './transformers';
 import {tablePanelEditor} from './editor';
 import {columnOptionsTab} from './column_options';
 import {TableRenderer} from './renderer';
+import Drop from 'tether-drop';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -49,7 +50,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private annotationsSrv, private $sanitize) {
+  constructor($scope, $injector, templateSrv, private annotationsSrv, private $sanitize) {
     super($scope, $injector);
     this.pageIndex = 0;
 
@@ -123,7 +124,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.table = transformDataToTable(this.dataRaw, this.panel);
     this.table.sort(this.panel.sort);
 
-    this.renderer = new TableRenderer(this.panel, this.table, this.dashboard.isTimezoneUtc(), this.$sanitize);
+    this.renderer = new TableRenderer(this.panel, this.table, this.dashboard.isTimezoneUtc(), this.$sanitize, this.templateSrv);
 
     return super.render(this.table);
   }
@@ -216,6 +217,11 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
       rootElem.css({'max-height': panel.scroll ? getTableHeight() : '' });
     }
+
+    // hook up link tooltips
+    elem.tooltip({
+      selector: '[data-link-tooltip]'
+    });
 
     elem.on('click', '.table-panel-page-link', switchPage);
 

@@ -1,7 +1,7 @@
 <query-editor-row query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
 	<div class="gf-form-inline">
 		<div class="gf-form gf-form--grow">
-			<textarea rows="3" class="gf-form-input" ng-model="ctrl.target.expr" spellcheck="false" placeholder="query expression" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.refreshMetricData()"></textarea>
+			<textarea rows="3" class="gf-form-input" ng-model="ctrl.target.expr" spellcheck="false" placeholder="query expression" data-min-length=0 data-items=100 give-focus="ctrl.target.refId == 'A'" ng-model-onblur ng-change="ctrl.refreshMetricData()"></textarea>
 		</div>
 	</div>
 

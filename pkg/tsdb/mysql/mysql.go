@@ -183,6 +183,7 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 	values := make([]interface{}, len(types))
 
 	for i, stype := range types {
+		e.log.Info("type", "type", stype)
 		switch stype.DatabaseTypeName() {
 		case mysql.FieldTypeNameTiny:
 			values[i] = new(int8)
@@ -209,7 +210,7 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 		case mysql.FieldTypeNameDateTime:
 			values[i] = new(time.Time)
 		case mysql.FieldTypeNameTime:
-			values[i] = new(time.Duration)
+			values[i] = new(string)
 		case mysql.FieldTypeNameYear:
 			values[i] = new(int16)
 		case mysql.FieldTypeNameNULL:
@@ -306,6 +307,9 @@ func (s *stringStringScan) Update(rows *sql.Rows) error {
 	if err := rows.Scan(s.rowPtrs...); err != nil {
 		return err
 	}
+
+	s.time = null.FloatFromPtr(nil)
+	s.value = null.FloatFromPtr(nil)
 
 	for i := 0; i < s.columnCount; i++ {
 		if rb, ok := s.rowPtrs[i].(*sql.RawBytes); ok {

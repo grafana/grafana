@@ -103,6 +103,7 @@ $gf-form-margin: 0.25rem;
   padding: $input-padding-y $input-padding-x;
   margin-right: $gf-form-margin;
   font-size: $font-size-base;
+  margin-right: $gf-form-margin;
   line-height: $input-line-height;
   color: $input-color;
   background-color: $input-bg;
@@ -112,6 +113,14 @@ $gf-form-margin: 0.25rem;
   @include border-radius($input-border-radius-sm);
   @include box-shadow($input-box-shadow);
   transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  // text areas should be scrollable
+  @at-root textarea#{&} {
+    overflow: auto;
+  }
 
   // Unstyle the caret on `<select>`s in IE10+.
   &::-ms-expand {
