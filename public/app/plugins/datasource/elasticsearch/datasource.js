@@ -358,11 +358,11 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
       target.change = "新增";
     } else if (target.count0 > 0 && target.count1 > 0 && target.count0 >= target.count1) {
       var num = ((Math.abs(target.count0 - target.count1) / target.count1)*100).toFixed();
-      target.count = "出现次数:" + target.count0 + "<br>同比增长" + num + "%";
+      target.count = "出现次数:" + target.count0 + "\n同比增长" + num + "%";
       target.change = "增加";
     } else if (target.count0 > 0 && target.count1 > 0 && target.count0 < target.count1) {
       var num = ((Math.abs(target.count0 - target.count1) / target.count0)*100).toFixed();
-      target.count = "出现次数:" + target.count0 + "<br>同比减少" + num + "%";
+      target.count = "出现次数:" + target.count0 + "\n同比减少" + num + "%";
       target.change = "减少";
     } else {
       target.count = "0";

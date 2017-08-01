@@ -86,6 +86,7 @@ function (angular, coreModule, config) {
         text: '请致电：17070866703 <br/>邮 件：service@cloudwiz.cn',
         icon: 'fa-bell',
         yesText: '确定',
+        noText: '关闭',
         modalClass : 'contact-us',
       });
     };
