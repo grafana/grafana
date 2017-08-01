@@ -13,6 +13,7 @@ function (angular, $, config) {
       restrict: 'E',
       link: function(scope, elem, attr) {
         var getter = $parse(attr.type), panelType = getter(scope);
+        console.log(panelType);
         var panelPath = config.panels[panelType].path;
 
         scope.require([panelPath + "/module"], function () {

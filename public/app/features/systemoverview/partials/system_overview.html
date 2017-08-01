@@ -6,17 +6,25 @@
 
             <div class="summary-panel view-panel">
                 <div class="health-panel panels-wrapper">
-                    <h3 data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_overview_modal.html" style="cursor: pointer;">健康指数趋势</h3>
-                    <div>
-                        {{healthPanel.score}}{{healthPanel.level}}
-                        <tip>健康值=(告警指标个数/定义规则总数)*50% + (异常指标/所有指标) * 50%</tip>
+                    <h3 data-placement="center" bs-modal="modal"
+                        data-template-url="/app/features/systemoverview/partials/system_overview_modal.html"
+                        style="cursor: pointer;">
+                        健康指数趋势<tip>健康值=(告警指标个数/定义规则总数)*50% + (异常指标/所有指标) * 50%</tip>
+                    </h3>
+                    <div style="position: absolute; bottom: 25%; left: 40%; font-weight: bold;">
+                        <span style="font-size: 38px;">{{healthPanel.score}}</span>
+                        <span style="font-size: 20px;">{{healthPanel.level}}</span>
                     </div>
                     <div class="health-pie"></div>
                 </div>
                 <div class="health-panel">
                     <div class="alert-panel">
                         <div class="panels-wrapper">
-                            <h3 data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_overview_modal.html" style="cursor: pointer;">报警情况</h3>
+                            <h3 data-placement="center" bs-modal="modal"
+                                data-template-url="/app/features/systemoverview/partials/system_overview_modal.html"
+                                style="cursor: pointer;">
+                                报警情况
+                            </h3>
                             <div>
                                 <li ng-repeat="alert in alertPanel.status" ng-if="alert.count!=0">
                                     <a href="{{alertPanel.href}}">{{alert.text}} <span class="status-{{alert.type}}">{{alert.count}}</span></a>
@@ -26,15 +34,19 @@
                         <div class="panels-wrapper">
                             <h3>系统异常情况</h3>
                             <div>
-                                <!-- TODO: waiting for api -->
-                                <li ng-repeat="alert in alertPanel.status" ng-if="alert.count!=0">
-                                    <a href="{{alertPanel.href}}">{{alert.text}} <span class="status-{{alert.type}}">{{alert.count}}</span></a>
+                                <li ng-repeat="except in exceptionPanel.status" ng-if="except.count!=0">
+                                    <a href="javascript:;">{{except.text}} <strong class=""> &gt;{{except.threadhold}}</strong></a>
+                                    <a href="javascript:;">进程: <span class="status-{{except.type}}">{{except.count}}</span></a>
                                 </li>
                             </div>
                         </div>
                     </div>
                     <div class="anomaly-panel panels-wrapper">
-                        <h3 data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_overview_modal.html" style="cursor: pointer;">智能检测异常指标</h3>
+                        <h3 data-placement="center" bs-modal="modal"
+                            data-template-url="/app/features/systemoverview/partials/system_overview_modal.html"
+                            style="cursor: pointer;">
+                            智能检测异常指标
+                        </h3>
                         <div>
                             <li ng-repeat="anomaly in anomalyPanel.status" ng-if="anomaly.count!=0">
                                 <a href="{{anomalyPanel.href}}">{{anomaly.text}} <span class="status-{{anomaly.type}}">{{anomaly.count}}</span></a>
@@ -51,8 +63,8 @@
                         <span><em class="bg-success"></em>正常</span>
                         <span><em class="bg-warn"></em>告警</span>
                         <span><em class="bg-danger"></em>严重</span>
+                        <span><em class="bg-down"></em>没有运行</span>
                     </div>
-                    
                 </div>
                 <div class="service-dependency">
                     <div class="jtk-demo-canvas jtk-canvas">
@@ -73,13 +85,24 @@
                         <jtk-target></jtk-target>
                     </script>
                 </div>
-                <div class="host-panel panels-wrapper" ng-if="hostPanel.currentService.name">
+                <div class="host-panel panels-wrapper" >
                     <h3>机器连接状态</h3>
+                    <tip>点击上图某个服务，查看服务详情</tip>
                     <div class="mention">
-                        <button type="button" class="btn-item system-status system-status-{{ service.state==0 ? 'success' : 'warning' }}">{{hostPanel.currentService.name}}</button>
+                        <button type="button" ng-if="hostPanel.currentService.name"
+                            class="btn-item system-status system-status-{{ service.state==0 ? 'success' : 'warning' }}">
+                            {{hostPanel.currentService.name}}
+                        </button>
                     </div>
                 </div>
-                <div class="table host-panel-table">
+                <div class="table host-panel-table" ng-if="hostPanel.currentService.name">
+                    <ul>
+                        <li>机器名</li>
+                        <li>机器连接状态</li>
+                        <li>CPU 使用率</li>
+                        <li>内存使用</li>
+                        <li>磁盘剩余空间</li>
+                    </ul>
                     <overview-panel></overview-panel>
                 </div>
             </div>
