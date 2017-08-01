@@ -57,13 +57,13 @@ export class OpenTsQueryCtrl extends QueryCtrl {
       this.target.downsampleFillValue = NaN;
     }
 
-  	if (!this.target.expFillPolicy){
-    	this.target.expFillPolicy = 'none';
-  	}
-  	
-  	if (!this.target.expFillValue){
-    	this.target.expFillValue = NaN;
-  	}
+    if (!this.target.expFillPolicy){
+        this.target.expFillPolicy = 'none';
+    }
+
+    if (!this.target.expFillValue){
+        this.target.expFillValue = NaN;
+    }
 
     if (!this.target.join) {
       this.target.join = {
