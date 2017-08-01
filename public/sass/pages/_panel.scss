@@ -50,6 +50,11 @@
  }
  .span3 {
    width: 30%;
+   display: flex;
+   & > input {
+     margin-top: 5px;
+     margin-right: 5px;
+   }
  }
 }
 
