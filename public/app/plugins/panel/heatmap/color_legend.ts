@@ -52,7 +52,8 @@ module.directive('heatmapLegend', function() {
       });
 
       function render() {
-        if (!_.isEmpty(ctrl.data)) {
+        clearLegend(elem);
+        if (!_.isEmpty(ctrl.data) && !_.isEmpty(ctrl.data.cards)) {
           let legendElem = $(elem).find('svg');
           let legendWidth = Math.floor(legendElem.outerWidth());
 
@@ -131,6 +132,10 @@ function drawOpacityLegend(elem, options, rangeFrom, rangeTo, maxValue, minValue
 }
 
 function drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minValue, legendWidth) {
+  if (legendWidth <= 0) {
+    return;
+  }
+
   let legendElem = $(elem).find('svg');
   let legend = d3.select(legendElem.get(0));
 
@@ -142,11 +147,11 @@ function drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minVal
   let ticks = buildLegendTicks(0, rangeTo, maxValue, minValue);
   let xAxis = d3.axisBottom(legendValueScale)
     .tickValues(ticks)
-    .tickSize(3);
+    .tickSize(2);
 
-  let legendElemHeight = legendElem.height();
-  let posY = legendElemHeight - 23;
-  let posX = getSvgElemX(legendElem.find(":first-child"));
+  let colorRect = legendElem.find(":first-child");
+  let posY = colorRect.height() + 2;
+  let posX = getSvgElemX(colorRect);
   d3.select(legendElem.get(0)).append("g")
     .attr("class", "axis")
     .attr("transform", "translate(" + posX + "," + posY + ")")
@@ -257,7 +262,7 @@ function getSvgElemX(elem) {
 function buildLegendTicks(rangeFrom, rangeTo, maxValue, minValue) {
   let range = rangeTo - rangeFrom;
   let tickStepSize = tickStep(rangeFrom, rangeTo, 3);
-  let ticksNum = Math.floor(range / tickStepSize);
+  let ticksNum = Math.round(range / tickStepSize);
   let ticks = [];
 
   for (let i = 0; i < ticksNum; i++) {
