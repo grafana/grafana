@@ -183,7 +183,18 @@ class MetricsPanelCtrl extends PanelCtrl {
     };
 
     this.setTimeQueryStart();
-    return datasource.query(metricsQuery);
+    return datasource.query(metricsQuery).then((results) => {
+      this.setTimeQueryEnd();
+
+        if (this.dashboard.snapshot) {
+          this.panel.snapshotData = results;
+        }
+
+        if (results.regularities) {
+          this.panel.regularResult = results;
+        }
+        return results;
+    });
   }
 
   handleQueryResult(result) {
