@@ -42,7 +42,7 @@ describe('OpenTsQueryCtrl', function() {
     });
 
     it('fill policy options should be initialized', function() {
-      expect(ctx.ctrl.fillPolicies.length).to.be(4);
+      expect(ctx.ctrl.fillPolicies.length).to.be(5);
     });
 
   });
