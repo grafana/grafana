@@ -11,8 +11,7 @@ import TimeSeries from 'app/core/time_series2';
 import moment from 'moment';
 import { Emitter } from 'app/core/core';
 import rendering from '../rendering';
-import { convertToHeatMap } from '../heatmap_data_converter';
-// import d3 from 'd3';
+import {convertToHeatMap, convertToCards} from '../heatmap_data_converter';
 
 describe('grafanaHeatmap', function () {
 
@@ -115,8 +114,15 @@ describe('grafanaHeatmap', function () {
           let bucketsData = convertToHeatMap(ctx.series, ctx.data.yBucketSize, ctx.data.xBucketSize, logBase);
           ctx.data.buckets = bucketsData;
 
-          // console.log("bucketsData", bucketsData);
-          // console.log("series", ctrl.panel.yAxis.logBase, ctx.series.length);
+          let cardsData = convertToCards(bucketsData);
+          let maxCardsValue = _.max(_.map(cardsData, 'count'));
+          let minCardsValue = _.min(_.map(cardsData, 'count'));
+          let cardStats = {
+            max: maxCardsValue,
+            min: minCardsValue
+          };
+          ctx.data.cards = cardsData;
+          ctx.data.cardStats = cardStats;
 
           let elemHtml = `
           <div class="heatmap-wrapper">
