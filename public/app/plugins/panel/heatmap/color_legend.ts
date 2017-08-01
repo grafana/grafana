@@ -46,7 +46,12 @@ module.directive('heatmapLegend', function() {
       let ctrl = scope.ctrl;
       let panel = scope.ctrl.panel;
 
+      render();
       ctrl.events.on('render', function() {
+        render();
+      });
+
+      function render() {
         if (!_.isEmpty(ctrl.data)) {
           let legendElem = $(elem).find('svg');
           let legendWidth = Math.floor(legendElem.outerWidth());
@@ -66,7 +71,7 @@ module.directive('heatmapLegend', function() {
             drawOpacityLegend(elem, colorOptions, rangeFrom, rangeTo, maxValue, minValue);
           }
         }
-      });
+      }
     }
   };
 });
@@ -241,7 +246,12 @@ function getOpacityScale(options, maxValue, minValue = 0) {
 }
 
 function getSvgElemX(elem) {
-  return elem.get(0).x.baseVal.value;
+  let svgElem = elem.get(0);
+  if (svgElem && svgElem.x && svgElem.x.baseVal) {
+    return elem.get(0).x.baseVal.value;
+  } else {
+    return 0;
+  }
 }
 
 function buildLegendTicks(rangeFrom, rangeTo, maxValue, minValue) {

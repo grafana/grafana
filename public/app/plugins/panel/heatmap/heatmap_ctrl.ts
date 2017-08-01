@@ -26,6 +26,9 @@ let panelDefaults = {
     exponent: 0.5,
     colorScheme: 'interpolateOranges',
   },
+  legend: {
+    show: false
+  },
   dataFormat: 'timeseries',
   xAxis: {
     show: true,
