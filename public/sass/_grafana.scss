@@ -70,8 +70,11 @@
 @import "components/tabbed_view";
 
 // bootstrap
+@import "bootstrap/variables";
 @import "bootstrap/component-animations";
 @import "bootstrap/accordion";
+@import "bootstrap/pagination";
+@import "bootstrap/tables";
 
 // PAGES
 @import "pages/login";
