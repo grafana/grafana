@@ -48,11 +48,11 @@ export class SideMenuCtrl {
         },
         {
           text: '服务依赖状态',
-          href: this.getUrl("/service_v2")
+          url: this.getUrl("/service_v2")
         },
         {
           text: '创建服务依赖',
-          href: this.getUrl("/service_dependency")
+          url: this.getUrl("/service_dependency")
         },
       ],
     });

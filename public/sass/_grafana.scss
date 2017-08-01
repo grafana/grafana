@@ -69,6 +69,10 @@
 @import "components/query_editor";
 @import "components/tabbed_view";
 
+// bootstrap
+@import "bootstrap/component-animations";
+@import "bootstrap/accordion";
+
 // PAGES
 @import "pages/login";
 @import "pages/dashboard";
@@ -90,6 +94,10 @@
 @import "pages/systems";
 @import "pages/cmdb";
 @import "pages/table";
+@import "pages/anomaly";
+@import "pages/jsplumb";
+@import "pages/service_dep";
+@import "pages/service";
 
 
 @import "old_responsive";

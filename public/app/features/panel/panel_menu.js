@@ -43,7 +43,7 @@ function (angular, $, _, Tether) {
             className += ' ' + item.hover;
           }
           template += className + '"';
-          template += ' ng-click="' + item.click + '" bs-tooltip="' + "'" + item.text + "'" + '">';
+          template += ' ng-click="' + item.click + '" bs-tooltip="' + "'" + item.text + "'" + '" data-container="body">';
           template += '<i class="fa ' + item.icon + '"></i>';
           template += '</span>';
         });
