@@ -25,16 +25,26 @@ function (angular, _, dateMath) {
       var start = convertToTSDBTime(options.rangeRaw.from, false);
       var end = convertToTSDBTime(options.rangeRaw.to, true);
       var qs = [];
+      var exps = [];
 
       _.each(options.targets, function(target) {
-        if (!target.metric) { return; }
-        qs.push(convertTargetToQuery(target, options, this.tsdbVersion));
-      }.bind(this));
+        if (!target.metric && !target.exp) { return; }
+        if (target.queryType === 'metric') {
+          qs.push(convertTargetToQuery(target, options));
+        } else if (target.queryType === 'exp') {
+          exps.push(target);
+        }
+      });
 
       var queries = _.compact(qs);
+      var expressions;
+
+      if(exps.length > 0) {
+        expressions = convertTargetsToExpression(exps, options);
+      }
 
       // No valid targets, return the empty result to save a round trip.
-      if (_.isEmpty(queries)) {
+      if (_.isEmpty(queries) && _.isEmpty(expressions)){
         var d = $q.defer();
         d.resolve({ data: [] });
         return d.promise;
@@ -53,23 +63,42 @@ function (angular, _, dateMath) {
         }
       });
 
-      options.targets = _.filter(options.targets, function(query) {
-        return query.hide !== true;
-      });
+      var result = {};
+      result.data = [];
+      var queriesPromise;
+      var expressionsPromise;
 
-      return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
-        var metricToTargetMapping = mapMetricsToTargets(response.data, options, this.tsdbVersion);
-        var result = _.map(response.data, function(metricData, index) {
-          index = metricToTargetMapping[index];
-          if (index === -1) {
-            index = 0;
-          }
-          this._saveTagKeys(metricData);
-
-          return transformMetricData(metricData, groupByTags, options.targets[index], options, this.tsdbResolution);
+      if (queries.length > 0) {
+        queriesPromise = this.performTimeSeriesQuery(queries, start, end).then(function(response) {
+          var metricToTargetMapping = mapMetricsToTargets(response.data, options, this.tsdbVersion);
+          return _.map(response.data, function(metricData, index) {
+            index = metricToTargetMapping[index];
+            if (index === -1) {
+              index = 0;
+            }
+            this._saveTagKeys(metricData);
+            return transformMetricData(metricData, groupByTags, options.targets[index], options, this.tsdbResolution);
+          }.bind(this));
         }.bind(this));
-        return { data: result };
-      }.bind(this));
+      }
+
+      if(expressions && expressions.outputs.length > 0) {
+        expressionsPromise = this.performTimeSeriesExpressionQuery(expressions, start, end).then(function (response) {
+          return _.map(response.data.outputs, function(metricData) {
+            return transformExpressionsData(metricData, _.find(options.targets, {refId: metricData.id.toUpperCase()}), options);
+          }.bind(this));
+        }.bind(this));
+      }
+
+      return $q.all([queriesPromise, expressionsPromise]).then(function(data) {
+        if (data[0] && data[0].length > 0) {
+          result.data = result.data.concat(data[0]);
+        }
+        if (data[1] && data[1].length > 0) {
+          result.data = _.flatten(result.data.concat(data[1]));
+        }
+        return result;
+      });
     };
 
     this.annotationQuery = function(options) {
@@ -149,6 +178,28 @@ function (angular, _, dateMath) {
       var options = {
         method: 'POST',
         url: this.url + '/api/query',
+        data: reqBody
+      };
+
+      this._addCredentialOptions(options);
+      return backendSrv.datasourceRequest(options);
+    };
+
+    this.performTimeSeriesExpressionQuery = function(expressions, start, end) {
+      var reqBody = expressions;
+      reqBody.time = {
+        start: start,
+        aggregator: 'sum'
+      };
+
+      // Relative queries (e.g. last hour) don't include an end time
+      if (end) {
+        reqBody.time.end = end;
+      }
+
+      var options = {
+        method: 'POST',
+        url: this.url + '/api/query/exp',
         data: reqBody
       };
 
@@ -370,6 +421,54 @@ function (angular, _, dateMath) {
       return label;
     }
 
+    function transformExpressionsData(md, target, options) {
+      var outputData = [];
+      if(md.meta.length > 0) {
+        _.forEach(md.meta, function(meta) {
+          if(meta.index === 0) {
+            return;
+          }
+
+          var metricLabel = createExpressionLabel(meta, target, options);
+          var dps = [];
+
+          _.each(md.dps, function(point) {
+            dps.push([point[meta.index], point[0]]);
+          });
+
+          outputData.push({
+            target: metricLabel,
+            datapoints: dps
+          });
+        });
+      }
+      return outputData;
+    }
+
+    function createExpressionLabel(meta, target, options) {
+      if(target.alias) {
+        var scopedVars = _.clone(options.scopedVars || {});
+        _.each(meta.commonTags, function(tagV, tagK) {
+          scopedVars['tag_' + tagK] = {
+            value: tagV
+          };
+        });
+        return templateSrv.replace(target.alias, scopedVars);
+      }
+
+      var label = meta.metrics.join(', ');
+      var tagData = [];
+
+      if(_.size(meta.commonTags) > 0) {
+        _.each(meta.commonTags, function(tagV, tagK) {
+          tagData.push(tagK + '=' + tagV);
+        });
+        label += '{' + tagData.join(', ') + '}';
+      }
+
+      return label;
+    }
+
     function convertTargetToQuery(target, options, tsdbVersion) {
       if (!target.metric || target.hide) {
         return null;
@@ -439,6 +538,111 @@ function (angular, _, dateMath) {
       }
 
       return query;
+    }
+
+    function convertTargetsToExpression(targetExps, options) {
+      var expressions = [];
+      var outputs = [];
+      var metricIds = []; // metric refIds used in expressions
+
+      _.each(_.filter(targetExps, { queryType: 'exp' }), function (target) {
+        if (!target.exp) {
+          return;
+        }
+
+        metricIds.push.apply(metricIds, target.exp.toLowerCase().match(/[a-zA-Z]+/g));
+
+        //create and push expressions
+        var expression = {
+          id: target.refId.toLowerCase(),
+          expr: target.exp.toLowerCase()
+        };
+
+        if (target.shouldJoin) {
+          expression.join = {
+            operator: target.join.operator,
+            useQueryTags: target.join.useQueryTags,
+            includeAggTags: target.join.includeAggTags
+          };
+        }
+
+        if (target.expFillPolicy !== 'none') {
+          var fillPolicy = {
+            policy: target.expFillPolicy
+          };
+
+          if (target.expFillPolicy === 'scalar') {
+            fillPolicy.value = target.expFillValue;
+          }
+
+          expression.fillPolicy = fillPolicy;
+        }
+
+        expressions.push(expression);
+
+        if (!target.hide) {
+          outputs.push({
+            id: target.refId.toLowerCase(),
+            alias: target.refId
+          });
+        }
+      });
+
+      //create metrics and filters to be used in expressions
+      var expOptions = createExpressionOptions(options.targets, _.uniq(metricIds));
+
+      return {
+        filters: expOptions.filters,
+        metrics: expOptions.metrics,
+        expressions: expressions,
+        outputs: outputs
+      };
+    }
+
+    function createExpressionOptions (targets, metricIds){
+      var filterId = 1;
+      var metrics = [];
+      var filters = [];
+
+      _.each(targets, function(target)
+      {
+        if (!target.metric || !_.includes(metricIds, target.refId.toLowerCase())) {
+          return;
+        }
+
+        var metric = {
+          id: target.refId.toLowerCase(),
+          metric: target.metric,
+          aggregator: target.aggregator
+        };
+
+        if (target.downsampleFillPolicy !== 'none') {
+          var fillPolicy = {
+            policy: target.downsampleFillPolicy
+          };
+
+          if (target.downsampleFillPolicy === 'scalar') {
+            fillPolicy.value = target.downsampleFillValue;
+          }
+          metric.fillPolicy = fillPolicy;
+        }
+
+        if (target.filters.length > 0) {
+          filters.push({
+            id: 'f' + filterId,
+            tags: target.filters
+          });
+          metric.filter = 'f' + filterId;
+          filterId++;
+        }
+
+        metrics.push(metric);
+      });
+
+      return {
+        metrics: metrics,
+        filters: filters
+      };
     }
 
     function mapMetricsToTargets(metrics, options, tsdbVersion) {

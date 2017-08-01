@@ -9,11 +9,14 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   aggregators: any;
   fillPolicies: any;
   filterTypes: any;
+  queryTypes: any;
   tsdbVersion: any;
   aggregator: any;
   downsampleInterval: any;
   downsampleAggregator: any;
   downsampleFillPolicy: any;
+  downsampleFillValue: any;
+  joinOperators: any;
   errors: any;
   suggestMetrics: any;
   suggestTagKeys: any;
@@ -27,10 +30,16 @@ export class OpenTsQueryCtrl extends QueryCtrl {
 
     this.errors = this.validateTarget();
     this.aggregators = ['avg', 'sum', 'min', 'max', 'dev', 'zimsum', 'mimmin', 'mimmax'];
-    this.fillPolicies = ['none', 'nan', 'null', 'zero'];
+    this.fillPolicies = ['none', 'nan', 'null', 'zero', 'scalar'];
     this.filterTypes = ['wildcard','iliteral_or','not_iliteral_or','not_literal_or','iwildcard','literal_or','regexp'];
+    this.joinOperators = ['union', 'intersection'];
+    this.queryTypes = ['metric','exp'];
 
     this.tsdbVersion = this.datasource.tsdbVersion;
+
+    if (!this.target.queryType) {
+      this.target.queryType = 'metric';
+    }
 
     if (!this.target.aggregator) {
       this.target.aggregator = 'sum';
@@ -42,6 +51,26 @@ export class OpenTsQueryCtrl extends QueryCtrl {
 
     if (!this.target.downsampleFillPolicy) {
       this.target.downsampleFillPolicy = 'none';
+    }
+
+    if (!this.target.downsampleFillValue) {
+      this.target.downsampleFillValue = NaN;
+    }
+
+  	if (!this.target.expFillPolicy){
+    	this.target.expFillPolicy = 'none';
+  	}
+  	
+  	if (!this.target.expFillValue){
+    	this.target.expFillValue = NaN;
+  	}
+
+    if (!this.target.join) {
+      this.target.join = {
+        operator: 'union',
+        useQueryTags: false,
+        includeAggTags: true
+      };
     }
 
     this.datasource.getAggregators().then((aggs) => {
@@ -209,5 +238,65 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     }
 
     return errs;
+  }
+
+  getCollapsedText() {
+    var text = '';
+    if (this.target.queryType === 'metric' && this.target.metric) {
+      text = 'Metric: ' + this.target.aggregator + ':';
+      if (this.target.shouldComputeRate) {
+        text += 'rate';
+        if (this.target.isCounter) {
+          text += '{dropcounter';
+          if (this.target.counterMax && this.target.counterMax.length) {
+            text += ',' + parseInt(this.target.counterMax);
+          }
+          if (this.target.counterResetValue && this.target.counterResetValue.length) {
+            text += ',' + parseInt(this.target.counterResetValue);
+          }
+          text += '}';
+        }
+        text += ':';
+      }
+      if (!this.target.disableDownsampling && this.target.downsampleInterval.length) {
+        text += this.target.downsampleInterval + '-' + this.target.downsampleAggregator + '-' + this.target.downsampleFillPolicy + ':';
+      }
+      text += this.target.metric;
+      if (_.size(this.target.tags) > 0) {
+        var tags = [];
+        _.each(this.target.tags, function(tagV, tagK) {
+          tags.push(tagK + '=' + tagV);
+        });
+        if (tags.length >0) {
+          text += '{' + tags.join(',') + '}';
+        }
+      } else if (_.size(this.target.filters) > 0){
+        var nonGroupFilters = [];
+        var groupFilters = [];
+
+        //get filters with groupBy true
+        _.each(_.filter(this.target.filters, function(f) {return f.groupBy;}), function(filter) {
+          groupFilters.push(filter.tagk + '=' + filter.type + '(' + filter.filter + ')');
+        });
+
+        //get filters with groupBy false
+        _.each(_.filter(this.target.filters, function(f) {return !f.groupBy;}), function(filter) {
+          nonGroupFilters.push(filter.tagk + '=' + filter.type + '(' + filter.filter + ')');
+        });
+
+        if (groupFilters.length > 0 || nonGroupFilters.length > 0) {
+          text += '{' + groupFilters.join(',') + '}';
+        }
+
+        if (nonGroupFilters.length > 0) {
+          text += '{' + nonGroupFilters.join(',') + '}';
+        }
+      }
+    } else if (this.target.queryType === 'exp' && this.target.exp) {
+      text += 'Expression: ' + this.target.exp;
+    } else {
+      text = 'No metric or expression';
+    }
+    return text;
   }
 }
