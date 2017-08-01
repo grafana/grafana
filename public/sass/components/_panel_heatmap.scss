@@ -49,9 +49,8 @@
 
 .heatmap-selection {
   stroke-width: 1;
-  opacity: 0.3;
-  fill: #828282;
-  stroke: darken($red,15%);
+  fill: rgba(102, 102, 102, 0.4);
+  stroke: rgba(102, 102, 102, 0.8);
 }
 
 .heatmap-legend-wrapper {
