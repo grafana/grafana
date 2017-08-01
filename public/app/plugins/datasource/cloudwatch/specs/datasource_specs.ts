@@ -349,4 +349,39 @@ describe('CloudWatchDatasource', function() {
       expect(actual).to.be(expected);
     }
   });
+
+  describeMetricFindQuery('ec2_instance_attribute(us-east-1, Tags.Name, { "tag:team": [ "sysops" ] })', scenario => {
+    scenario.setup(() => {
+      scenario.requestResponse = {
+        Reservations: [
+          {
+            Instances: [
+              {
+                Tags: [
+                  { Key: 'InstanceId', Value: 'i-123456' },
+                  { Key: 'Name', Value: 'Sysops Dev Server' },
+                  { Key: 'env', Value: 'dev' },
+                  { Key: 'team', Value: 'sysops' }
+                ]
+              },
+              {
+                Tags: [
+                  { Key: 'InstanceId', Value: 'i-789012' },
+                  { Key: 'Name', Value: 'Sysops Staging Server' },
+                  { Key: 'env', Value: 'staging' },
+                  { Key: 'team', Value: 'sysops' }
+                ]
+              }
+            ]
+          }
+        ]
+      };
+    });
+
+    it('should return the "Name" tag for each instance', function() {
+      expect(scenario.result[0].text).to.be('Sysops Dev Server');
+      expect(scenario.result[1].text).to.be('Sysops Staging Server');
+    });
+  });
+
 });

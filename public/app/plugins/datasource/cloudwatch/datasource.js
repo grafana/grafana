@@ -269,7 +269,17 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
         return this.performEC2DescribeInstances(region, filters, null).then(function(result) {
           var attributes = _.chain(result.Reservations)
           .map(function(reservations) {
-            return _.map(reservations.Instances, targetAttributeName);
+            return _.map(reservations.Instances, function(instance) {
+              var tags = {};
+              _.each(instance.Tags, function(tag) {
+                tags[tag.Key] = tag.Value;
+              });
+              instance.Tags = tags;
+              return instance;
+            });
+          })
+          .map(function(instances) {
+            return _.map(instances, targetAttributeName);
           })
           .flatten().uniq().sortBy().value();
           return transformSuggestData(attributes);
