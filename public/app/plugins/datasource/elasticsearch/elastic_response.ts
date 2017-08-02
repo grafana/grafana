@@ -2,6 +2,7 @@
 
 import  _ from 'lodash';
 import queryDef from "./query_def";
+import TableModel from 'app/core/table_model';
 
 export function ElasticResponse(targets, response) {
   this.targets = targets;
@@ -95,21 +96,35 @@ ElasticResponse.prototype.processMetrics = function(esAgg, target, seriesList, p
   }
 };
 
-ElasticResponse.prototype.processAggregationDocs = function(esAgg, aggDef, target, docs, props) {
-  var metric, y, i, bucket, metricName, doc;
+ElasticResponse.prototype.processAggregationDocs = function(esAgg, aggDef, target, table, props) {
+  // add columns
+  if (table.columns.length === 0) {
+    for (let propKey of _.keys(props)) {
+      table.addColumn({text: propKey});
+    }
+    table.addColumn({text: aggDef.field});
+  }
 
-  for (i = 0; i < esAgg.buckets.length; i++) {
-    bucket = esAgg.buckets[i];
-    doc = _.defaults({}, props);
-    doc[aggDef.field] = bucket.key;
+  // helper func to add values to value array
+  let addMetricValue = (values, metricName, value) => {
+    table.addColumn({text: metricName});
+    values.push(value);
+  };
 
-    for (y = 0; y < target.metrics.length; y++) {
-      metric = target.metrics[y];
+  for (let bucket of esAgg.buckets) {
+    let values = [];
 
+    for (let propValues of _.values(props)) {
+      values.push(propValues);
+    }
+
+    // add bucket key (value)
+    values.push(bucket.key);
+
+    for (let metric of target.metrics) {
       switch (metric.type) {
         case "count": {
-          metricName = this._getMetricName(metric.type);
-          doc[metricName] = bucket.doc_count;
+          addMetricValue(values, this._getMetricName(metric.type), bucket.doc_count);
           break;
         }
         case 'extended_stats': {
@@ -123,33 +138,32 @@ ElasticResponse.prototype.processAggregationDocs = function(esAgg, aggDef, targe
             stats.std_deviation_bounds_upper = stats.std_deviation_bounds.upper;
             stats.std_deviation_bounds_lower = stats.std_deviation_bounds.lower;
 
-            metricName = this._getMetricName(statName);
-            doc[metricName] = stats[statName];
+            addMetricValue(values, this._getMetricName(statName), stats[statName]);
           }
           break;
         }
         default:  {
-          metricName = this._getMetricName(metric.type);
-          var otherMetrics = _.filter(target.metrics, {type: metric.type});
+          let metricName = this._getMetricName(metric.type);
+          let otherMetrics = _.filter(target.metrics, {type: metric.type});
 
           // if more of the same metric type include field field name in property
           if (otherMetrics.length > 1) {
             metricName += ' ' + metric.field;
           }
 
-          doc[metricName] = bucket[metric.id].value;
+          addMetricValue(values, metricName, bucket[metric.id].value);
           break;
         }
       }
     }
 
-    docs.push(doc);
+    table.rows.push(values);
   }
 };
 
 // This is quite complex
 // neeed to recurise down the nested buckets to build series
-ElasticResponse.prototype.processBuckets = function(aggs, target, seriesList, docs, props, depth) {
+ElasticResponse.prototype.processBuckets = function(aggs, target, seriesList, table, props, depth) {
   var bucket, aggDef, esAgg, aggId;
   var maxDepth = target.bucketAggs.length-1;
 
@@ -165,7 +179,7 @@ ElasticResponse.prototype.processBuckets = function(aggs, target, seriesList, do
       if (aggDef.type === 'date_histogram')  {
         this.processMetrics(esAgg, target, seriesList, props);
       } else {
-        this.processAggregationDocs(esAgg, aggDef, target, docs, props);
+        this.processAggregationDocs(esAgg, aggDef, target, table, props);
       }
     } else {
       for (var nameIndex in esAgg.buckets) {
@@ -179,7 +193,7 @@ ElasticResponse.prototype.processBuckets = function(aggs, target, seriesList, do
         if (bucket.key_as_string) {
           props[aggDef.field] = bucket.key_as_string;
         }
-        this.processBuckets(bucket, target, seriesList, docs, props, depth+1);
+        this.processBuckets(bucket, target, seriesList, table, props, depth+1);
       }
     }
   }
@@ -325,9 +339,9 @@ ElasticResponse.prototype.getTimeSeries = function() {
       var aggregations = response.aggregations;
       var target = this.targets[i];
       var tmpSeriesList = [];
-      var docs = [];
+      var table = new TableModel();
 
-      this.processBuckets(aggregations, target, tmpSeriesList, docs, {}, 0);
+      this.processBuckets(aggregations, target, tmpSeriesList, table, {}, 0);
       this.trimDatapoints(tmpSeriesList, target);
       this.nameSeries(tmpSeriesList, target);
 
@@ -335,8 +349,8 @@ ElasticResponse.prototype.getTimeSeries = function() {
         seriesList.push(tmpSeriesList[y]);
       }
 
-      if (seriesList.length === 0 && docs.length > 0) {
-        seriesList.push({target: 'docs', type: 'docs', datapoints: docs});
+      if (table.rows.length > 0) {
+        seriesList.push(table);
       }
     }
   }
