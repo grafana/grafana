@@ -3,7 +3,8 @@
 import _ from 'lodash';
 import { describe, beforeEach, it, sinon, expect, angularMocks } from '../../../../../test/lib/common';
 import TimeSeries from 'app/core/time_series2';
-import { convertToHeatMap, elasticHistogramToHeatmap, calculateBucketSize, isHeatmapDataEqual } from '../heatmap_data_converter';
+import {convertToHeatMap, convertToCards, elasticHistogramToHeatmap,
+        calculateBucketSize, isHeatmapDataEqual} from '../heatmap_data_converter';
 
 describe('isHeatmapDataEqual', () => {
   let ctx: any = {};
@@ -241,6 +242,47 @@ describe('ES Histogram converter', () => {
       let heatmap = elasticHistogramToHeatmap(ctx.series);
       expect(heatmap).to.eql(expectedHeatmap);
     });
+  });
+});
+
+describe('convertToCards', () => {
+  let buckets = {};
+
+  beforeEach(() => {
+    buckets = {
+      '1422774000000': {
+        x: 1422774000000,
+        buckets: {
+          '1': { y: 1, values: [1], count: 1, bounds: {} },
+          '2': { y: 2, values: [2], count: 1, bounds: {} }
+        }
+      },
+      '1422774060000': {
+        x: 1422774060000,
+        buckets: {
+          '2': { y: 2, values: [2, 3], count: 2, bounds: {} }
+        }
+      },
+    };
+  });
+
+  it('should build proper cards data', () => {
+    let expectedCards = [
+      {x: 1422774000000, y: 1, count: 1, values: [1], yBounds: {}},
+      {x: 1422774000000, y: 2, count: 1, values: [2], yBounds: {}},
+      {x: 1422774060000, y: 2, count: 2, values: [2, 3], yBounds: {}}
+    ];
+    let {cards, cardStats} = convertToCards(buckets);
+    expect(cards).to.eql(expectedCards);
+  });
+
+  it('should build proper cards stats', () => {
+    let expectedStats = {
+      min: 1,
+      max: 2
+    };
+    let {cards, cardStats} = convertToCards(buckets);
+    expect(cardStats).to.eql(expectedStats);
   });
 });
 
