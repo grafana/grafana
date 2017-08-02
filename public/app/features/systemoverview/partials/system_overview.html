@@ -30,7 +30,7 @@
                         <div class="panels-wrapper">
                             <h3>系统异常情况</h3>
                             <div>
-                                <li ng-repeat="except in exceptionPanel.status" ng-if="except.count!=0" 
+                                <li ng-repeat="except in exceptionPanel.status"
                                     data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_anomaly_modal.html">
                                     <a href="javascript:;">{{except.text}} <strong class=""> &gt;{{except.threadhold}}</strong></a>
                                     <a href="javascript:;">进程: <span class="status-{{except.type}}">{{except.count}}</span></a>
