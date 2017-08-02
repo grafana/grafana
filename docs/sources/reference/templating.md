@@ -177,6 +177,10 @@ This is used in the WHERE clause for the InfluxDB data source. Grafana adds it a
 
 The `$__timeFilter` is used in the MySQL data source.
 
+### The $__name Variable
+
+This variable is only available in the Singlestat panel and can be used in the prefix or suffix fields on the Options tab. The variable will be replaced with the series name or alias.
+
 ## Repeating Panels
 
 Template variables can be very useful to dynamically change your queries across a whole dashboard. If you want
