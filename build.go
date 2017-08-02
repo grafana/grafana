@@ -73,7 +73,7 @@ func main() {
 			grunt("test")
 
 		case "package":
-			grunt("release", " --force")
+			grunt("release", "--force")
 			//createLinuxPackages()
 
 		case "pkg-rpm":
