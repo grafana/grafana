@@ -166,7 +166,7 @@ function (moment, $, angular, _, uiCalendarConfig) {
 
       $scope.curInterval = {start: view.start._d, end: view.end._d};
 
-      loadSchedule(view.start._d, view.end._d)
+      loadSchedule(view.start._d, view.end._d);
     }
 
     function loadSchedule(start, end) {
@@ -247,7 +247,7 @@ function (moment, $, angular, _, uiCalendarConfig) {
 
     $scope.chooseOncallers = function(oncaller) {
       $scope.oncallerSelcted = oncaller;
-    }
+    };
 
     $scope.deleteOncaller = function(oncallerSelcted) {
       _.pull($scope.oncallerList,oncallerSelcted);

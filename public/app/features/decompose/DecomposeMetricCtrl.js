@@ -7,7 +7,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('DecomposeMetricCtrl', function ($scope, $timeout, contextSrv) {
+    module.controller('DecomposeMetricCtrl', function ($scope, $timeout) {
       $scope.init = function () {
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: true, canSave: false},

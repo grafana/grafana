@@ -73,7 +73,7 @@ define([
               metric.state = "尚未工作";
             });
           });
-        })
+        });
       };
 
       $scope.cleanup = function () {
