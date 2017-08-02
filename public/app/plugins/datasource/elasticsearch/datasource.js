@@ -272,10 +272,17 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
             var subObj = obj[key];
 
             // Check mapping field for nested fields
-            if (subObj.hasOwnProperty('properties')) {
+            if (_.isObject(subObj.properties)) {
               fieldNameParts.push(key);
               getFieldsRecursively(subObj.properties);
-            } else {
+            }
+
+            if (_.isObject(subObj.fields)) {
+              fieldNameParts.push(key);
+              getFieldsRecursively(subObj.fields);
+            }
+
+            if (_.isString(subObj.type)) {
               var fieldName = fieldNameParts.concat(key).join('.');
 
               // Hide meta-fields and check field type
