@@ -50,8 +50,8 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   private onInitMetricsPanelEditMode() {
-    this.addEditorTab('Metrics', 'public/app/partials/metrics.html');
-    this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
+    this.addEditorTab('指标', 'public/app/partials/metrics.html');
+    this.addEditorTab('时间区间', 'public/app/features/panel/partials/panelTime.html');
     this.datasources = this.datasourceSrv.getMetricSources();
   }
 

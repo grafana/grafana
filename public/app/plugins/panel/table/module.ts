@@ -80,7 +80,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   onInitEditMode() {
-    this.addEditorTab('Options', tablePanelEditor, 2);
+    this.addEditorTab('显示效果', tablePanelEditor, 2);
   }
 
   onInitPanelActions(actions) {

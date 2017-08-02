@@ -123,9 +123,9 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitEditMode() {
-    this.addEditorTab('Axes', 'public/app/plugins/panel/graph/tab_axes.html', 2);
-    this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
-    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
+    this.addEditorTab('坐标', 'public/app/plugins/panel/graph/tab_axes.html', 2);
+    this.addEditorTab('图例', 'public/app/plugins/panel/graph/tab_legend.html', 3);
+    this.addEditorTab('显示效果', 'public/app/plugins/panel/graph/tab_display.html', 4);
 
     this.logScales = {
       'linear': 1,

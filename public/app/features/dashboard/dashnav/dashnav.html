@@ -6,7 +6,7 @@
 	<i class="fa fa-caret-down"></i>
 </a>
 
-<a class="pointer navbar-page-btn" ng-if="::dashboardMeta.isSnapshot" bs-tooltip="titleTooltip" data-placement="bottom" ng-click="openSearch()">
+<a class="pointer navbar-page-btn" ng-if="::dashboardMeta.isSnapshot" data-container="body" bs-tooltip="titleTooltip" data-placement="bottom" ng-click="openSearch()">
 	<i class="icon-gf icon-gf-snapshot"></i>
 	<span>
 		{{dashboard.title}}
@@ -21,34 +21,34 @@
 		</a>
 	</li>
 	<li ng-show="::dashboardMeta.canShare" class="dropdown">
-		<a class="pointer" ng-click="hideTooltip($event)" bs-tooltip="'Share dashboard'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-share-square-o"></i></a>
+		<a class="pointer" ng-click="hideTooltip($event)" data-container="body" bs-tooltip="'分享一下'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-share-square-o"></i></a>
 		<ul class="dropdown-menu">
 			<li>
 				<a class="pointer" ng-click="shareDashboard(0)">
-					<i class="fa fa-link"></i> Link to Dashboard
+					<i class="fa fa-link"></i> 链接分享
 				</a>
 			</li>
 			<li>
 				<a class="pointer" ng-click="shareDashboard(1)">
-					<i class="icon-gf icon-gf-snapshot"></i>Snapshot sharing
+					<i class="icon-gf icon-gf-snapshot"></i>快照分享
 				</a>
 			</li>
 		</ul>
 	</li>
 	<li ng-show="::dashboardMeta.canSave">
-		<a ng-click="saveDashboard()" bs-tooltip="'Save dashboard'" data-placement="bottom"><i class="fa fa-save"></i></a>
+		<a ng-click="saveDashboard()" data-container="body" bs-tooltip="'保存仪表盘'" data-placement="bottom"><i class="fa fa-save"></i></a>
 	</li>
 	<li ng-if="::showSettingsMenu" class="dropdown">
-		<a class="pointer" ng-click="hideTooltip($event)" bs-tooltip="'Manage dashboard'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
+		<a class="pointer" ng-click="hideTooltip($event)" data-container="body" bs-tooltip="'仪表盘管理'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
 		<ul class="dropdown-menu">
-			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('settings');">Settings</a></li>
-			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('annotations');">Annotations</a></li>
-			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('templating');">Templating</a></li>
-			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="exportDashboard();">Export</a></li>
-			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="editJson();">View JSON</a></li>
-			<li ng-if="contextSrv.isEditor && !dashboard.editable"><a class="pointer" ng-click="makeEditable();">Make Editable</a></li>
-			<li ng-if="contextSrv.isEditor"><a class="pointer" ng-click="saveDashboardAs();">Save As...</a></li>
-			<li ng-if="dashboardMeta.canSave"><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
+			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('settings');">设置</a></li>
+			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('annotations');">标注</a></li>
+			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('templating');">模板</a></li>
+			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="exportDashboard();">导出</a></li>
+			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="editJson();">查看 JSON</a></li>
+			<li ng-if="contextSrv.isEditor && !dashboard.editable"><a class="pointer" ng-click="makeEditable();">可编辑</a></li>
+			<li ng-if="contextSrv.isEditor"><a class="pointer" ng-click="saveDashboardAs();">保存为</a></li>
+			<li ng-if="dashboardMeta.canSave"><a class="pointer" ng-click="deleteDashboard();">删除仪表盘</a></li>
 		</ul>
 	</li>
 </ul>
@@ -68,7 +68,7 @@
 <ul class="nav pull-right">
 	<li ng-show="dashboard.meta.fullscreen" class="dashnav-back-to-dashboard">
 		<a ng-click="exitFullscreen()">
-			Back to dashboard
+			返回仪表盘
 		</a>
 	</li>
 	<li ng-if="dashboard">

@@ -1,7 +1,7 @@
 <div class="search-container" ng-if="ctrl.isOpen">
 	<div class="search-field-wrapper">
 		<span style="position: relative;">
-			<input  type="text" placeholder="Find dashboards by name" give-focus="ctrl.giveSearchFocus" tabindex="1"
+			<input  type="text" placeholder="输入关键词搜索您想要的仪表盘" give-focus="ctrl.giveSearchFocus" tabindex="1"
 			ng-keydown="ctrl.keyDown($event)" ng-model="ctrl.query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.search()" />
 		</span>
 		<div class="search-switches">
@@ -42,7 +42,7 @@
 	</div>
 
 	<div class="search-results-container" ng-if="!ctrl.tagsMode">
-		<h6 ng-hide="ctrl.results.length">No dashboards matching your query were found.</h6>
+		<h6 ng-hide="ctrl.results.length">无法找到仪表盘</h6>
 
 		<a class="search-item pointer search-item-{{row.type}}" bindonce ng-repeat="row in ctrl.results"
 			ng-class="{'selected': $index === ctrl.selectedIndex}" ng-href="{{row.url}}">
@@ -64,11 +64,11 @@
 	<div class="search-button-row">
 		<button class="btn btn-inverse pull-left" ng-click="ctrl.newDashboard()" ng-show="ctrl.contextSrv.isEditor">
 			<i class="fa fa-plus"></i>
-			New
+			新建
 		</button>
 		<a class="btn btn-inverse pull-left" href="import/dashboard" ng-show="ctrl.contextSrv.isEditor">
 			<i class="fa fa-download"></i>
-			Import
+			导入
 		</a>
 		<div class="clearfix"></div>
 	</div>
