@@ -4,7 +4,7 @@
 	</li>
 	<li>
 		<input type="text" class="input-large tight-form-input" ng-model="ctrl.target.metric"
-		spellcheck='false' bs-typeahead="ctrl.suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100
+		spellcheck='false' bs-typeahead-old="ctrl.suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100
 		ng-blur="ctrl.targetBlur()">
 		</input>
 		<a bs-tooltip="ctrl.errors.metric" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.metric">

@@ -64,7 +64,9 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     };
 
     this.suggestTagKeys = (query, callback) => {
-      this.datasource.suggestTagKeys(this.target.metric).then(callback);
+      this.datasource.metricFindQuery('suggest_tagk(' + query + ')')
+      .then(this.getTextValues)
+      .then(callback);
     };
 
     this.suggestTagValues = (query, callback) => {
