@@ -100,9 +100,9 @@ ElasticResponse.prototype.processAggregationDocs = function(esAgg, aggDef, targe
   // add columns
   if (table.columns.length === 0) {
     for (let propKey of _.keys(props)) {
-      table.addColumn({text: propKey});
+      table.addColumn({text: propKey, filterable: true});
     }
-    table.addColumn({text: aggDef.field});
+    table.addColumn({text: aggDef.field, filterable: true});
   }
 
   // helper func to add values to value array
@@ -265,7 +265,7 @@ ElasticResponse.prototype.nameSeries = function(seriesList, target) {
 };
 
 ElasticResponse.prototype.processHits = function(hits, seriesList) {
-  var series = {target: 'docs', type: 'docs', datapoints: [], total: hits.total};
+  var series = {target: 'docs', type: 'docs', datapoints: [], total: hits.total, filterable: true};
   var propName, hit, doc, i;
 
   for (i = 0; i < hits.hits.length; i++) {

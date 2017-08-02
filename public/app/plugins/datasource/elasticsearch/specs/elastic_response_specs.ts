@@ -389,7 +389,7 @@ describe('ElasticResponse', function() {
 
     it('should return table with byte and count', function() {
       expect(result.data[0].rows.length).to.be(3);
-      expect(result.data[0].columns).to.eql([{text: 'bytes'}, {text: 'Count'}]);
+      expect(result.data[0].columns).to.eql([{text: 'bytes', filterable: true}, {text: 'Count'}]);
     });
   });
 
