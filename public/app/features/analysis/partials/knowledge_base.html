@@ -1,13 +1,8 @@
 
 <navbar icon="fa fa-fw fa-book" title="运维知识库">
-	<ul class="nav pull-right">
-        <li ng-if="dashboard">
-            <gf-time-picker dashboard="dashboard"></gf-time-picker>
-        </li>
-    </ul>
 </navbar>
 
-<div class="page-container" style="background:#fff;">
+<div class="page-container">
     <form>
         <div class="">
             <h2>运维知识库搜索</h2>
@@ -34,18 +29,10 @@
             <br>
         </div>
     </form>
-    <table class="filter-table ng-scope" ng-if="knowledge.length" style="background:#fff;">
-        <thead>
-            <tr style="background:#fff;">
-                <th>现象</th>
-                <th>解决方案</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr ng-repeat="knows in knowledge" style="background:#fff;">
-                <td>{{knows.symptom}}</td>
-                <td ng-bind-html="knows.solution"></td>
-            </tr>
-        </tbody>
-    </table>
+    <ul class="expoler-list" style="height: 85%;" ng-if="knowledge.length">
+        <li ng-repeat="(index,knows) in knowledge" ng-click="textOverflow(index)">
+            <h5 ng-class="{'text-overflow': !fullText[index]}">{{knows.symptom}}</h5>
+            <p ng-class="{'text-overflow': !fullText[index]}" ng-bind-html="knows.solution"></p>
+        </li>
+    </ul>
 </div>
