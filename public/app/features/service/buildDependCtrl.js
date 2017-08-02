@@ -1,7 +1,8 @@
 define([
     'angular',
     'lodash',
-    'app/app',
+    'jsPlumbToolkit',
+    'jsPlumbToolkit-angular',
   ],
   function (angular, _) {
     'use strict';
