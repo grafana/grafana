@@ -169,6 +169,11 @@
   }
 
   .host-panel {
+    & > em {
+      line-height: 60px;
+      margin-left: 20px;
+      color: #32B2E1;
+    }
     .mention {
       button {
         margin: 16px 30px;
@@ -189,7 +194,7 @@
       margin: 0;
       background-color: rgba(15, 171, 248, 0.6);
       li {
-        width: 20%;
+        width: 15%;
         height: 36px;
         line-height: 36px;
         text-align: center;
@@ -206,7 +211,6 @@
       }
     }
     .accordion-heading {
-      // padding: 0 50px 0 25px;
       ul {
         margin: 0;
         display: flex;
@@ -215,7 +219,7 @@
         li {
           height: 40px;
           line-height: 40px;
-          width: 20%;
+          width: 15%;
           text-align: center;
           &:first-child {
             position: absolute;
@@ -315,7 +319,7 @@
     border: none;
     outline: none;
     &.btn-item {
-      width: inherit;
+      width: initial;
     }
   }
 
@@ -332,36 +336,31 @@
     padding: 10px 0 0 0;
   }
 
-  // collapse rewrite
-  // .collapse.in {
-  //   height: auto !important;
-  // }
-
   .status-success {
     color: #3DB779;
   }
-
   .status-warning {
     color: #FE9805;
   }
-
   .status-danger {
     color: #BB1144;
+  }
+
+  .bg-success, .status-green {
+    background-color: #3DB779;
+  }
+  .bg-warn, .status-yellow {
+    background-color: #FE9805;
+  }
+  .bg-danger, .status-red {
+    background-color: #BB1144;
+  }
+  .bg-down, .status-grey {
+    background-color: #DBE1EA;
   }
 }
 
 
-.bg-success {
-  background-color: #3DB779;
-}
-.bg-warn {
-  background-color: #FE9805;
-}
-.bg-danger {
-  background-color: #BB1144;
-}
-.bg-down {
-  background-color: #DBE1EA;
-}
+
  
  

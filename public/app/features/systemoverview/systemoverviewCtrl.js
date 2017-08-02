@@ -21,6 +21,11 @@ define([
         return config.appSubUrl + url;
       };
 
+      $scope.filterEmpty = function (value) {
+        if (!value) { return false };
+        return value.status ? true : false;
+      };
+
       $scope.percentFormatter = function (value) {
         return value && (value.toFixed(2) + '%');
       };
@@ -30,7 +35,12 @@ define([
       };
 
       $scope.statusFormatter = function (value) {
-        return value > 0 ? '异常' : '正常';
+        if (_.isNumber(value)) {
+          return value === 0 ? '正常' : '异常';
+        }
+        if (_.isString(value)) {
+          return value === 'GREEN' ? '正常' : (value === 'YELLOW' ? '告警' : (value === 'RED' ? '严重' : '异常')); 
+        }
       };
 
       var setPie = function (element, pieData, colors, innerRadius) {
@@ -65,9 +75,9 @@ define([
         backendSrv.get('/api/static/template/overview').then(function (response) {
           $scope._dashboard = response;
           $scope.getAlertStatus();
-          $scope.getHostSummary();
           $scope.getAnomaly();
           $scope.getSystemAnomaly();
+          $scope.getHostSummary();
         }).then(function () {
           $scope.initDashboard({
             meta     : { canStar: false, canShare: false, canEdit: false, canSave: false },
@@ -78,7 +88,6 @@ define([
 
       // 报警情况
       $scope.getAlertStatus = function () {
-        // var alertPanel = $scope._dashboard.rows[1].panels[0];
         $scope.alertPanel.status = [
           { type: 'success', text: '系统正常', count: 0 },
           { type: 'warning', text: '警告: ', count: 0 },
@@ -101,31 +110,28 @@ define([
       // 系统异常情况 anomaly
       $scope.getSystemAnomaly = function () {
         $scope.exceptionPanel.status = [
-          { type: 'danger', text: 'CPU: ', count: 0, threadhold: '80%' },
-          { type: 'danger', text: 'Memory: ', count: 0, threadhold: '80%' }
+          { type: 'danger', text: 'CPU: ', count: 0, threadhold: '80%', message: '' },
+          { type: 'danger', text: 'Memory: ', count: 0, threadhold: '80%', message: '' }
         ];
 
         backendSrv.alertD({
           method: "get",
-          url: "/summary/topn?" + "threadhold=80"
+          url: "/summary/topn?" + "threshold=80"
         }).then(function (response) {
           response = response.data;
           if (response.mem.count) {
             $scope.exceptionPanel.status[1].count = response.mem.count;
-            $scope.exceptionPanel.memTopList = response.mem.topList;
+            $scope.exceptionPanel.status[1].message = response.mem.topList;
           }
           if (response.cpu.count) {
             $scope.exceptionPanel.status[0].count = response.cpu.count;
-            $scope.exceptionPanel.cpuTopList = response.cpu.topList;
+            $scope.exceptionPanel.status[0].message = response.cpu.topList;
           }
         });
       };
 
       // 智能检测异常指标 & 健康指数
       $scope.getAnomaly = function () {
-        // var healthPanel  = $scope._dashboard.rows[0].panels[0];
-        // var anomalyPanel = $scope._dashboard.rows[2].panels[0];
-
         $scope.anomalyPanel.status = [
           { type: 'danger', text: '严重: ', count: 0 },
           { type: 'warning', text: '异常指标: ', count: 0 },
@@ -156,6 +162,8 @@ define([
 
       // 服务状态
       $scope.getServices = function (scope) {
+        $scope.hostsResource = {};
+
         toolkit = scope.toolkit;
         $scope.servicePanel.href = $scope.getUrl('/service_v2');
 
@@ -164,8 +172,22 @@ define([
             var dependencies = angular.fromJson(_.last(response.data).attributes[0].value);
 
             _.each(dependencies.nodes, function (node) {
-              serviceDepSrv.readServiceStatus(node.id, node.name).then(function (resp) {
+              serviceDepSrv.readServiceStatus(node.id, node.name)
+              .then(function (resp) {
                 node.status = resp.data.healthStatusType;
+
+                return resp;
+              })
+              .then(function (resp) {
+                $scope.hostsResource[node.name] = {};
+
+                _.forIn(resp.data.hostStatusMap, function (item, key) {
+                  !$scope.hostsResource[node.name][key] && ($scope.hostsResource[node.name][key] = {
+                    "host"  : item.hostName,
+                    "status": item.healthStatusType,
+                    "statusText": $scope.statusFormatter(item.healthStatusType)
+                  });
+                });
               });
             });
 
@@ -179,12 +201,12 @@ define([
       $scope.nodeClickHandler = function (node) {
         $(node.el).addClass("active").siblings().removeClass("active");
 
-        $scope.hostPanel = {};
-
         var serviceId = node.node.data.id;
         var serviceName = node.node.data.name;
         var serviceStatus = node.node.data.status;
         var hosts = [];
+
+        $scope.hostPanel = {};
 
         $scope.hostPanel.currentService = {
           id: serviceId,
@@ -263,7 +285,7 @@ define([
 
           var q = datasourceSrv.getHostResource(queries, 'now-1m').then(function (response) {
             _.each(response, function (metric) {
-              hostsResource[metric.host]["status"] = metric.value;
+              hostsResource[metric.host]["status"] = $scope.statusFormatter(metric.value);
             });
           });
           promiseList.push(q);
