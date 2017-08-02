@@ -191,20 +191,14 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       yBucketSize = 1;
     }
 
-    let cardsData = convertToCards(bucketsData);
-    let maxCardsValue = _.max(_.map(cardsData, 'count'));
-    let minCardsValue = _.min(_.map(cardsData, 'count'));
-    let cardStats = {
-      max: maxCardsValue,
-      min: minCardsValue
-    };
+    let {cards, cardStats} = convertToCards(bucketsData);
 
     this.data = {
       buckets: bucketsData,
       heatmapStats: heatmapStats,
       xBucketSize: xBucketSize,
       yBucketSize: yBucketSize,
-      cards: cardsData,
+      cards: cards,
       cardStats: cardStats
     };
   }

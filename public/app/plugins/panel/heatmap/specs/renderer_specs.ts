@@ -114,14 +114,8 @@ describe('grafanaHeatmap', function () {
           let bucketsData = convertToHeatMap(ctx.series, ctx.data.yBucketSize, ctx.data.xBucketSize, logBase);
           ctx.data.buckets = bucketsData;
 
-          let cardsData = convertToCards(bucketsData);
-          let maxCardsValue = _.max(_.map(cardsData, 'count'));
-          let minCardsValue = _.min(_.map(cardsData, 'count'));
-          let cardStats = {
-            max: maxCardsValue,
-            min: minCardsValue
-          };
-          ctx.data.cards = cardsData;
+          let {cards, cardStats} = convertToCards(bucketsData);
+          ctx.data.cards = cards;
           ctx.data.cardStats = cardStats;
 
           let elemHtml = `
