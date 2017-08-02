@@ -51,7 +51,7 @@ define([
                 _.each(response, function (service) {
                   if (_.isObject(service)) {
                     var status = service.dps[_.last(Object.keys(service.dps))];
-                    if(typeof(status) != "number") {
+                    if(typeof(status) !== "number") {
                       throw Error;
                     }
                     if(status > 0) {
@@ -175,7 +175,7 @@ define([
                 alertRulesNum = result[1],
                 alertStatus = result[2],
                 getService = result[3];
-            if(typeof(hostNum) == "undefined"){
+            if(typeof(hostNum) === "undefined"){
               getPlatform();
             } else {
               getService();

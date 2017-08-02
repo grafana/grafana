@@ -35,7 +35,7 @@ define([
         var params =  {
           q: $scope.q
         }
-        if ($scope.service != "*") {
+        if ($scope.service !== "*") {
           params.service = $scope.service;
         }
         backendSrv.knowledge({

@@ -25,7 +25,7 @@
                     <h3 style="padding-left:10px;">{{row.title}}</h3>
                     <div ng-repeat="panel in row.panels track by panel.id" class="panel" ui-draggable="!dashboard.meta.fullscreen" drag="panel.id"
                          ui-on-drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
-                        <div style="padding-left: 10px;" ng-if="row.title == '健康指数趋势'">
+                        <div style="padding-left: 10px;" ng-if="row.title === '健康指数趋势'">
                             <div style="height: 60px">
                                 <em style="font-size: 60px;line-height:66px;font-style: normal">{{applicationHealth}}</em>
                                 <span>{{leveal}}</span>
@@ -35,8 +35,8 @@
                         </div>
                         <ul class="btn-list-status" ng-if="panel.status">
                             <li class="btn-item" style="width:70px;">当前状态:</li>
-                            <li ng-if="panel.status.danger[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-danger">{{panel.status.danger[0]}} <span>{{panel.status.danger[1]}}</span></a></li>
-                            <li ng-if="panel.status.warn[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-warning">{{panel.status.warn[0]}} <span>{{panel.status.warn[1]}}</span></a></li>
+                            <li ng-if="panel.status.danger[1]!==0"><a href="{{panel.href}}" class="btn-item system-status system-status-danger">{{panel.status.danger[0]}} <span>{{panel.status.danger[1]}}</span></a></li>
+                            <li ng-if="panel.status.warn[1]!==0"><a href="{{panel.href}}" class="btn-item system-status system-status-warning">{{panel.status.warn[0]}} <span>{{panel.status.warn[1]}}</span></a></li>
                             <li ng-if="panel.status.success[1]!=0"><a href="{{panel.href}}" class="btn-item system-status system-status-success">{{panel.status.success[0]}} <span>{{panel.status.success[1]}}</span></a></li>
                         </ul>
                         <div class="clearfix"></div>

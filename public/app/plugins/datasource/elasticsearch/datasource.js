@@ -350,10 +350,10 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
   }
 
   function compare(target) {
-    if (target.count0 == 0 && target.count1 > 0) {
+    if (target.count0 === 0 && target.count1 > 0) {
       target.count = "消失日志:" + target.count1;
       target.change = "消失";
-    } else if (target.count0 > 0 && target.count1 == 0) {
+    } else if (target.count0 > 0 && target.count1 === 0) {
       target.count = "新增日志:" + target.count0;
       target.change = "新增";
     } else if (target.count0 > 0 && target.count1 > 0 && target.count0 >= target.count1) {

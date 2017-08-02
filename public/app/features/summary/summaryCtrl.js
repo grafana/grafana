@@ -83,15 +83,15 @@ define([
 
       $scope.changeSelect = function () {
         var query = {};
-        if ($scope.summarySelect.system == 0 || $scope.summarySelect.services == ""){
+        if ($scope.summarySelect.system === 0 || $scope.summarySelect.services === ""){
           $scope.warningScript = "请选择子系统";
           return;
         }
         $scope.warningScript = "抱歉, 没有任何数据返回";
-        if ($scope.summarySelect.services == "collect") {
+        if ($scope.summarySelect.services === "collect") {
           query['metrics'] = "collector.summary";
           $scope.getSummary(query);
-        } else if ($scope.summarySelect.services == "config") {
+        } else if ($scope.summarySelect.services === "config") {
           query['metrics'] = "collector.service";
           $scope.getSummary(query);
         }

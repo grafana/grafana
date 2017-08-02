@@ -38,12 +38,12 @@
 
 
         <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel" ui-draggable="!dashboardViewState.fullscreen" drag="panel.id"
-                ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width   ng-if="panel.tab == graph">
-            <plugin-component ng-if="type != 'table'" type="panel" class="panel-margin"></plugin-component>
+                ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width   ng-if="panel.tab === graph">
+            <plugin-component ng-if="type !== 'table'" type="panel" class="panel-margin"></plugin-component>
         </div>
         <tabset>
-            <tab heading="{{panel.title}}" ng-repeat="(name, panel) in row.panels track by panel.id" ng-if="panel.tab != graph">
-                <div class="btn-group btn-log-compare" ng-if="name == 2">
+            <tab heading="{{panel.title}}" ng-repeat="(name, panel) in row.panels track by panel.id" ng-if="panel.tab !== graph">
+                <div class="btn-group btn-log-compare" ng-if="name === 2">
                     <button class="dropdown-toggle" data-toggle="dropdown">
                         <span class="caret"></span>
                     </button>

@@ -14,7 +14,7 @@ define([
       };
 
       $scope.init = function () {
-        if (contextSrv.user.systemId == 0 && contextSrv.user.orgId) {
+        if (contextSrv.user.systemId === 0 && contextSrv.user.orgId) {
           $location.url("/systems");
           contextSrv.sidmenu = false;
           return;
@@ -76,7 +76,7 @@ define([
             _.each(response, function(service) {
               if (_.isObject(service)) {
                 var status = service.dps[_.last(Object.keys(service.dps))];
-                if(typeof(status) != "number") {
+                if(typeof(status) !== "number") {
                   throw Error;
                 }
                 if(status > 0) {

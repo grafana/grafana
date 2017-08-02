@@ -463,7 +463,7 @@ define([
           target.metric = target.metric + ".LB.percent"
         });
         var type = metricPrefix2Type(param.targets[0].metric.split(".")[0]);
-        var host = param.targets[0].tags.host == "*" ? "*" : param.targets[0].tags.host;  // *  or 'centos24'
+        var host = param.targets[0].tags.host === "*" ? "*" : param.targets[0].tags.host;  // *  or 'centos24'
 
         $scope.query = "type:"+type+" AND host:"+host;
         panelMetas[2].panels[0].targets[0].query = $scope.query;

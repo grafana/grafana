@@ -30,7 +30,7 @@ define([
 
     $scope.importHosts = function() {
       backendSrv.uploadHostList(cmdbHosts).then(function(response) {
-        if(response.status == 200) {
+        if(response.status === 200) {
           $scope.appEvent('alert-success', ['上传成功']);
         }
       });

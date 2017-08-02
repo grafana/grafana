@@ -7,7 +7,7 @@
 <div class="page-container setup-container">
   <ul class="tab-list pull-left">
     <li>请选择操作系统:</li>
-    <li ng-repeat="item in platform" ng-click="changeSelect(item)" ng-class="{'active':item.host == selected.host}">
+    <li ng-repeat="item in platform" ng-click="changeSelect(item)" ng-class="{'active':item.host === selected.host}">
       <i class="{{item.icon}}"></i>
       {{item.host}}
     </li>

@@ -19,7 +19,7 @@ function (coreModule, _) {
                   window.cmdbHosts = _.cloneDeep(param);
                   for(var os in param) {
                     if(!(param[os].hosts && _.isArray(param[os].hosts))) {
-                      var err = {message: "文件格式错误"}
+                      var err = {message: "文件格式错误"};
                       throw err;
                     }
                   }

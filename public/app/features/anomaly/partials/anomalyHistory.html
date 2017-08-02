@@ -42,7 +42,7 @@
         <span style="width: 100px;"><strong>机器名称</strong></span>
         <span style="width: 300px;"><strong>指标名称</strong></span>
       </div>
-      <div class="grafana-list-item" ng-repeat="anomaly in anomalyHistory | filter: anomalyKey" ng-click="getDetail(anomaly);" ng-class="{true: 'active'}[$index == selectedAnomaly]">
+      <div class="grafana-list-item" ng-repeat="anomaly in anomalyHistory | filter: anomalyKey" ng-click="getDetail(anomaly);" ng-class="{true: 'active'}[$index === selectedAnomaly]">
         <span style="width: 200px;">{{anomaly.time | date: 'yyyy-MM-dd HH:mm:ss'}}</span>
         <span style="width: 100px;">{{anomaly.host}}</span>
         <span style="width: 300px;">{{anomaly.metric}}</span>

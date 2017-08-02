@@ -35,7 +35,7 @@
                 <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#{{$index}}" ng-click="selectHost($index, host.hostName);">
                   <h4>
                     <span class="pull-left">
-                      <i class="fa btn btn-primary" ng-class="{true: 'fa-minus', false: 'fa-plus'}[$index == selected]"></i>
+                      <i class="fa btn btn-primary" ng-class="{true: 'fa-minus', false: 'fa-plus'}[$index === selected]"></i>
                       <span>{{host.hostName}}</span>
                     </span>
                     <span class="pull-right"><em class="host-status status-{{host.healthStatusType | lowercase}}"> </em></span>
@@ -50,7 +50,7 @@
                   </ul>
                   <div ng-if="host.healthStatusType !== 'GREY'">
                     <p>{{currentItem}} 重要指标：</p>
-                    <p ng-if="currentItem == 'ServiceState'">该服务进程运行正常...</p>
+                    <p ng-if="currentItem === 'ServiceState'">该服务进程运行正常...</p>
                     <table-loader key={{host.hostName}}></table-loader>
                   </div>
                   <div ng-if="host.healthStatusType === 'GREY'">

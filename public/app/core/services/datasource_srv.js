@@ -118,7 +118,7 @@ function (angular, _, coreModule, config, dateMath) {
           host = metricData.tags.host;
           if (_.isObject(metricData)) {
             status = metricData.dps[Object.keys(metricData.dps)[0]];
-            if(typeof(status) != "number") {
+            if(typeof(status) !== "number") {
               throw Error;
             }
           }
@@ -139,7 +139,7 @@ function (angular, _, coreModule, config, dateMath) {
           if (_.isObject(metricData)) {
             time = _.last(Object.keys(metricData.dps));
             value = metricData.dps[time];
-            // if (typeof(value) != "number") { throw Error; }
+            // if (typeof(value) !== "number") { throw Error; }
           }
           result.push({ name: service, value: value, host: host, time: time, tags: metricData.tags });
         });

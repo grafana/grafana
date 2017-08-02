@@ -102,7 +102,7 @@
       </div>
       <div class="item oncaller-list">
         <p ng-repeat="oncaller in oncallerDefList" ng-click="chooseOncallers(oncaller)" 
-        class="{{oncaller.user}} on-duty on-duty-form" ng-class="{true:'active',false:''}[oncallerSelcted.id == oncaller.id]">
+        class="{{oncaller.user}} on-duty on-duty-form" ng-class="{true:'active',false:''}[oncallerSelcted.id === oncaller.id]">
           <span class="user-span pull-left">{{oncaller.name|limitTo:1|uppercase}}</span>
           {{oncaller.name}}
         </p>

@@ -17,7 +17,7 @@
 </div>
 
 <div class="tabbed-view-body">
-	<div ng-if="editor.index == 0">
+	<div ng-if="editor.index === 0">
 
 		<div class="gf-form-group section">
       <h5 class="section-heading">仪表盘 信息</h5>
@@ -41,7 +41,7 @@
 				<label class="gf-form-label width-7">子系统</label>
 				<div class="gf-form-select-wrapper" ng-controller="SystemCtrl" ng-init="init()">
 					<select ng-model="dashboard.system" class="input tight-form-input">
-						<option ng-repeat="system in systems" value="{{system.Id}}" ng-selected="dashboard.system == system.Id">{{system.SystemsName}}</option>
+						<option ng-repeat="system in systems" value="{{system.Id}}" ng-selected="dashboard.system === system.Id">{{system.SystemsName}}</option>
 					</select>
 				</div>
 			</div>
@@ -72,7 +72,7 @@
     </div>
   </div>
 
-  <div ng-if="editor.index == 1">
+  <div ng-if="editor.index === 1">
     <h5 class="section-heading">行设置</h5>
 
     <div class="gf-form-group">
@@ -98,15 +98,15 @@
     </div>
   </div>
 
-  <div ng-if="editor.index == 2">
+  <div ng-if="editor.index === 2">
     <dash-links-editor></dash-links-editor>
   </div>
 
-  <div ng-if="editor.index == 3">
+  <div ng-if="editor.index === 3">
     <gf-time-picker-settings dashboard="dashboard"></gf-time-picker-settings>
   </div>
 
-  <div ng-if="editor.index == 4">
+  <div ng-if="editor.index === 4">
     <h5 class="section-heading">Dashboard info</h5>
     <div class="gf-form-group">
       <div class="gf-form">

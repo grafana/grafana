@@ -65,7 +65,7 @@
                     ng-bind="row.title | interpolateTemplateVars:this">
                 </div>
 
-                <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel"  ng-if="panel.tab == graph" panel-width>
+                <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel"  ng-if="panel.tab === graph" panel-width>
                     <plugin-component type="panel" class="panel-margin"></plugin-component>
                 </div>
                 <tabset>
@@ -73,7 +73,7 @@
                         <ul ng-if="panel.regularResult.data[0].total">
                             <li style="color: #F9934E;">该时间区域内共有 <strong>{{panel.regularResult.data[0].total}}</strong> 条日志，当前显示前 {{panel.regularResult.data[0].datapoints.length}} 条。放大时间区域，以查看更细日志数据。</li>
                         </ul>
-                        <div class="btn-group btn-log-compare" ng-if="name == 2">
+                        <div class="btn-group btn-log-compare" ng-if="name === 2">
                             <button class="dropdown-toggle" data-toggle="dropdown">
                                 <span class="caret"></span>
                             </button>

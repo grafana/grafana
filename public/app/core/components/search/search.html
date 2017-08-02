@@ -45,7 +45,7 @@
 		<h6 ng-hide="ctrl.results.length">No dashboards matching your query were found.</h6>
 
 		<a class="search-item pointer search-item-{{row.type}}" bindonce ng-repeat="row in ctrl.results"
-			ng-class="{'selected': $index == ctrl.selectedIndex}" ng-href="{{row.url}}">
+			ng-class="{'selected': $index === ctrl.selectedIndex}" ng-href="{{row.url}}">
 
 			<span class="search-result-tags">
 				<span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name="tag"  class="label label-tag">

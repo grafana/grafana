@@ -136,7 +136,7 @@ define([
           if(anomalyItem) {
             var metricName = setMetricName(_.getMetricName(anomalyItem.metric), anomalyItem.host);
             var index = $scope.selections.indexOf(metricName);
-            if(index == -1){
+            if(index === -1){
               $scope.addPanel(anomalyItem);
             } else{
               $scope.selections.splice(index,1);
@@ -160,7 +160,7 @@ define([
 
         $scope.removePanel = function(metricName) {
           $scope.dashboard.rows[0].panels.forEach(function(panel, id) {
-            if(panel.title.indexOf(metricName)==0){
+            if(panel.title.indexOf(metricName)===0){
               $scope.dashboard.rows[0].panels.splice(id,1);
               return;
             }
@@ -178,7 +178,7 @@ define([
         };
 
         $scope.changeAll = function() {
-          if ($scope.anomalyList.length == $scope.selections.length) {
+          if ($scope.anomalyList.length === $scope.selections.length) {
             $scope.removeAll();
           } else {
             for (var i in $scope.anomalyList) {
@@ -226,7 +226,7 @@ define([
           healthSrv.exclude(anomalyItem.metric, anomalyItem.host);
           $scope.anomalyList.splice(index,1);
           var id = $scope.selections.indexOf(metricName);
-          if(id != -1) {
+          if(id !== -1) {
             $scope.removePanel(metricName);
             $scope.selections.splice(id,1);
           }

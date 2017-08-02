@@ -108,10 +108,10 @@ function (angular, _, coreModule) {
             var q = _this.getMetricsType(Object.keys(targets)).then(function onSuccess(response) {
               var types = response.data;
               _.each(Object.keys(targets), function (key) {
-                if (types[key] == "counter") {
+                if (types[key] === "counter") {
                   targets[key].shouldComputeRate = true;
                   targets[key].downsampleAggregator = "max";
-                } else if (types[key] == "increment") {
+                } else if (types[key] === "increment") {
                   targets[key].shouldComputeRate = false;
                   targets[key].downsampleAggregator = "sum";
                 }

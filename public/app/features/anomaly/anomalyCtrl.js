@@ -69,7 +69,7 @@ define([
       };
 
       $scope.selectCluster = function(index) {
-        if($scope.selected == index) {
+        if($scope.selected === index) {
           $scope.selected = -1;
         } else {
           $scope.selected = index;

@@ -64,7 +64,7 @@ define([
               metric.alias = alias[key];
               if (_.isObject(service)) {
                 var status = service.dps[Object.keys(service.dps)[0]];
-                if(typeof(status) != "number") {
+                if(typeof(status) !== "number") {
                   throw Error;
                 }
                 if (status > 0) {
@@ -86,10 +86,10 @@ define([
 
       $scope.changeSelect = function () {
         $scope.cleanup();
-        if ($scope.summarySelect.system == 0) {
+        if ($scope.summarySelect.system === 0) {
           $scope.warningScript = "请选择子系统";
           return;
-        } else if ($scope.summarySelect.currentTagValue == "") {
+        } else if ($scope.summarySelect.currentTagValue === "") {
           $scope.warningScript = "请填写主机名";
           return;
         }

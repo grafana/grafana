@@ -203,10 +203,10 @@ function (moment, $, angular, _, uiCalendarConfig) {
       oncallerSelcted.title = oncallerSelcted.name + $scope[role].type;
       oncallerSelcted.end = end;
       oncallerSelcted.start = start;
-      if(role == 'primary' || role == 'secondary') {
+      if(role === 'primary' || role === 'secondary') {
         updateSchedule($scope.role.key, oncallerSelcted);
         var index = _.findIndex($scope[role].events, {start: start});
-        if(index == -1){
+        if(index === -1){
           $scope.clearReview();
           $timeout(function() {
             loadSchedule($scope.curInterval.start, $scope.curInterval.end);
@@ -226,7 +226,7 @@ function (moment, $, angular, _, uiCalendarConfig) {
     }
 
     $scope.showOncallers = function() {
-      if($scope.oncallerList.length == $scope.oncallerDefList.length) {
+      if($scope.oncallerList.length === $scope.oncallerDefList.length) {
         $scope.appEvent('alert-warning', ['您已添加所有值班人员']);
       } else {
         $scope.showEditForm = true;
@@ -236,7 +236,7 @@ function (moment, $, angular, _, uiCalendarConfig) {
 
     $scope.addOncallers = function() {
       var index = _.findIndex($scope.oncallerList,$scope.oncallerSelcted);
-      if(index == -1){
+      if(index === -1){
         $scope.oncallerList.push($scope.oncallerSelcted);
         $scope.closeEdit();
         $scope.reviewSchedule();

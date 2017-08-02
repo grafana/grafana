@@ -50,7 +50,7 @@ define([
           });
         });
         $q.all(promiseArr).then(function (values) {
-          if (values.length == alertDefs.length) {
+          if (values.length === alertDefs.length) {
             $scope.init();
             $scope.dismiss();
             $scope.appEvent('alert-success', ['导入成功', '共导入' + alertDefs.length + '个报警设置']);

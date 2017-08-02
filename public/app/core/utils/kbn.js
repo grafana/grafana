@@ -230,7 +230,7 @@ function($, _) {
 
     // If tickDecimals was specified, ensure that we have exactly that
     // much precision; otherwise default to the value's own precision.
-    if (decimals != null) {
+    if (decimals !== null) {
       var decimalPos = formatted.indexOf(".");
       var precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
       if (precision < decimals) {

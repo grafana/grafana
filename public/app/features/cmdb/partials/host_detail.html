@@ -31,7 +31,7 @@
                 <li><span>序列号</span><span>{{detail.productSerial}}</span></li>
                 <li><span>UUID</span><span>{{detail.productUuid}}</span></li>
                 <li>
-                    <span>内存</span><span>{{detail.totalMemory}} <span ng-if="detail.totalMemory!= '暂无信息'">MB</span></span>
+                    <span>内存</span><span>{{detail.totalMemory}} <span ng-if="detail.totalMemory!== '暂无信息'">MB</span></span>
                     <li ng-if="detail.memory">
                         <table class="table">
                             <tr>
@@ -42,7 +42,7 @@
                             <tr ng-repeat="memory in detail.memory">
                                 <td>{{memory.vendor}}</td>
                                 <td>{{memory.model}}</td>
-                                <td>{{memory.size}} <span ng-if="memory.size != '暂无信息'">MB</span></td>
+                                <td>{{memory.size}} <span ng-if="memory.size !== '暂无信息'">MB</span></td>
                             </tr>
                         </table>
                     </li>
@@ -105,7 +105,7 @@
                             <td>{{interface.name}}</td>
                             <td>{{interface.ip}}</td>
                             <td>{{interface.mac}}</td>
-                            <td>{{interface.speed}} <span ng-if="interface.speed != '暂无信息'">Mb</span></td>
+                            <td>{{interface.speed}} <span ng-if="interface.speed !== '暂无信息'">Mb</span></td>
                         </tr>
                     </table>
                 </li>

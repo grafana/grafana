@@ -16,7 +16,7 @@ function (angular, coreModule, _) {
       $scope.getCurrentUserSystem = function () {
         backendSrv.get("/api/user/system").then(function (system) {
           $scope.system = _.find(system, {Id: contextSrv.user.systemId});
-        })
+        });
       };
 
       $scope.addSystem = function () {

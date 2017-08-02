@@ -46,8 +46,8 @@
 
     <button class="btn btn-primary pull-right" ng-click="install(detail.template)">{{installBtn}}</button>
     <button class="btn pull-right" style="margin-right: 10px;"
-            ng-class="{false:'btn-success'}[detail.status == -1]" 
-            ng-disabled="detail.status == -1" 
+            ng-class="{false:'btn-success'}[detail.status === -1]" 
+            ng-disabled="detail.status === -1" 
             ng-click="importAlerts(detail.id)">导入报警规则</button>
   </div>
   <div class="service-tab service-review" ng-class="{'active': review}">

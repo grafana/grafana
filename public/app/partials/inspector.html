@@ -19,7 +19,7 @@
 
 	<div class="modal-content">
 
-		<div ng-if="editor.index == 0">
+		<div ng-if="editor.index === 0">
 			<h5 class="section-heading">Request details</h5>
 			<table class="filter-table gf-form-group">
 				<tr>
@@ -53,14 +53,14 @@
 			</table>
 		</div>
 
-		<div ng-if="editor.index == 1">
+		<div ng-if="editor.index === 1">
 			<h5 ng-show="message">{{message}}</h5>
  			<pre class="small">
 {{response}}
 			</pre>
 		</div>
 
-		<div ng-if="editor.index == 2">
+		<div ng-if="editor.index === 2">
 
 			<label>Message:</label>
 <pre>

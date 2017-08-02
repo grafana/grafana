@@ -64,7 +64,7 @@ define([
         $scope.metric = [];
         $scope.$broadcast('load-table');
 
-        $scope.selected = ($scope.selected == index) ? -1 : index;
+        $scope.selected = ($scope.selected === index) ? -1 : index;
 
         $scope.selectHealthItemType(host, 'ServiceKPI');
       };

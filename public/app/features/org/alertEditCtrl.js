@@ -263,7 +263,7 @@ function (angular, _) {
       // alertDetails.crit.durarionMinutes >= 1
       checkNull.push(_.isUndefined(alertDetails.crit.durarionMinutes) || Number(alertDetails.crit.durarionMinutes)  < 1);
 
-      if(expression == "?") {
+      if(expression === "?") {
         alertDetails.crit.threshold = 0;
         alertDetails.warn.threshold = 0;
       };

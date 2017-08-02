@@ -11,7 +11,7 @@
         </li>
         <li>
           <select ng-model="summarySelect.services" class="input-small tight-form-input" ng-change="cleanup()">
-            <option ng-selected="$index == 0" ng-repeat="(key, value) in services" value="{{key}}">{{value}}</option>
+            <option ng-selected="$index === 0" ng-repeat="(key, value) in services" value="{{key}}">{{value}}</option>
           </select>
         </li>
       </ul>
@@ -21,7 +21,7 @@
         </li>
         <li ng-controller="SystemCtrl" ng-init="init()">                                         `
           <select ng-model="summarySelect.system" class="input-small tight-form-input" ng-change="cleanup()">
-            <option ng-selected="$index == 0" ng-repeat="sys in systems" value="{{sys.Id}}">{{sys.SystemsName}}</option>
+            <option ng-selected="$index === 0" ng-repeat="sys in systems" value="{{sys.Id}}">{{sys.SystemsName}}</option>
           </select>
         </li>
       </ul>
@@ -41,7 +41,7 @@
         <th ng-repeat="(key,value) in tableHeader[summarySelect.services]">{{key}}</th>
       </tr>
 
-      <tbody ng-repeat="summary in summaryList" ng-if="summarySelect.services != 'service'">
+      <tbody ng-repeat="summary in summaryList" ng-if="summarySelect.services !== 'service'">
       <tr ng-repeat="content in summary.content">
         <td>{{summary.tag.host}}</td>
         <td>{{summary.state}}</td>

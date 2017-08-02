@@ -14,7 +14,7 @@ function (angular, _) {
 
     $scope.init = function() {
       $scope.changeTab('conf');
-      if($scope.detail.status == NO_SERVER) {
+      if($scope.detail.status === NO_SERVER) {
         $scope.installBtn = "安装并导入模板";
       } else {
         $scope.installBtn = "导入模板";

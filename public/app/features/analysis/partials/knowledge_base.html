@@ -15,7 +15,7 @@
                     <li class="tidy-form-item" style="margin-left:30px;"><h4>类型</h4></li>
                     <li>
                         <select class="input-small tidy-form-input" ng-model="service" required>
-                            <option ng-repeat="s in services" value="{{s}}" ng-selected="service == s">{{s}}</option>
+                            <option ng-repeat="s in services" value="{{s}}" ng-selected="service === s">{{s}}</option>
                         </select>
                     </li>
                     <li>

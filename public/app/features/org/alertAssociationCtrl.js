@@ -206,7 +206,7 @@ function (angular, _, noUiSlider) {
 
       _.each($scope.dashboard.rows[0].panels[0].targets, function (target) {
         if (target.metric === _.getMetricName(metricName)) {
-          if (metricNameMap[metricName][0] == target.tags.host) {
+          if (metricNameMap[metricName][0] === target.tags.host) {
             isHidden = false;
             target.hide = !target.hide;
           } else {
@@ -260,7 +260,7 @@ function (angular, _, noUiSlider) {
     $scope.addManualMetric = function (target) {
       target.metric = contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + target.metric;
       if (_.indexOf(_.keys($scope.correlatedMetrics),target.metric) > -1) {
-        if($scope.correlatedMetrics[target.metric][0] == target.host)
+        if($scope.correlatedMetrics[target.metric][0] === target.host)
           return;
       }
       $scope.correlatedMetrics[target.metric] = [target.host];
@@ -278,7 +278,7 @@ function (angular, _, noUiSlider) {
       var metric = _.getMetricName(alertMetric);
       if($scope.dashboard) {
         _.each($scope.dashboard.rows[0].panels[0].targets, function (target) {
-          if(target.metric == metric){
+          if(target.metric === metric){
             target.hide = false;
           } else {
             target.hide = true;

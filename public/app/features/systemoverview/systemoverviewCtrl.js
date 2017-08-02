@@ -16,7 +16,7 @@ define([
       };
 
       $scope.filterNotNumber = function (value) {
-        return typeof(value.status) == 'number';
+        return typeof(value.status) === 'number';
       };
 
       $scope.percentFormatter = function (value) {
@@ -32,7 +32,7 @@ define([
       };
 
       $scope.init = function () {
-        if (contextSrv.user.systemId == 0 && contextSrv.user.orgId) {
+        if (contextSrv.user.systemId === 0 && contextSrv.user.orgId) {
           $location.url("/systems");
           contextSrv.sidmenu = false;
           return;

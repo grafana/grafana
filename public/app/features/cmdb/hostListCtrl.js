@@ -18,7 +18,7 @@ define([
         _.map($scope.hosts, function(host) {
           if(host.isVirtual) {
             return host.isVirtual = '是';
-          } else if(host.isVirtual == false) {
+          } else if(host.isVirtual === false) {
             return host.isVirtual = '否';
           } else {
             return host.isVirtual = '未知';
@@ -47,7 +47,7 @@ define([
     $scope.refreshList = function() {
       $scope.refreshTxt = '<i class="fa fa-spinner"></i>';
       backendSrv.alertD({url:'/cmdb/scan', method: 'post'}).then(function(response) {
-        if(response.status == 200) {
+        if(response.status === 200) {
           $scope.appEvent('alert-success', ['扫描成功','请刷新查看列表']);
           $scope.refreshTxt = '刷新';
         }
