@@ -6,7 +6,7 @@ define([
   module.controller('CustomerCtrl', function ($scope, backendSrv) {
     $scope.init = function () {
       backendSrv.get("/api/admin/customer").then(function (data) {
-        $scope.customers = data
+        $scope.customers = data;
       });
     };
     $scope.init();

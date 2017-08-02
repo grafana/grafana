@@ -1,7 +1,6 @@
 define([
   'angular',
-  'lodash'
-], function(angular, _) {
+], function(angular) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -9,7 +8,7 @@ define([
   module.controller('FilebeatCtrl', function($scope, backendSrv) {
     $scope.init = function() {
       $scope.token = backendSrv.getToken();
-    }
+    };
 
     $scope.init();
   });

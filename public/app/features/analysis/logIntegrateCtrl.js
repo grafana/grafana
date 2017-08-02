@@ -456,11 +456,11 @@ define([
         panelMetas[0].panels[0].title = param.title;
         panelMetas[1].panels[0].targets = _.cloneDeep(param.targets);
         _.each(panelMetas[1].panels[0].targets, function (target) {
-          target.metric = target.metric + ".seasonal"
+          target.metric = target.metric + ".seasonal";
         });
         panelMetas[1].panels[1].targets = _.cloneDeep(param.targets);
         _.each(panelMetas[1].panels[1].targets, function (target) {
-          target.metric = target.metric + ".LB.percent"
+          target.metric = target.metric + ".LB.percent";
         });
         var type = metricPrefix2Type(param.targets[0].metric.split(".")[0]);
         var host = param.targets[0].tags.host === "*" ? "*" : param.targets[0].tags.host;  // *  or 'centos24'
@@ -485,12 +485,12 @@ define([
 
       function metricPrefix2Type(prefix) {
         if (_.isNull(prefix)) {
-          return "*"
+          return "*";
         }
         if (/(iostat|cpu|df|net|proc)/.test(prefix)) {
-          return "system"
+          return "system";
         }else if (/(ssh_failed)/.test(prefix)) {
-          return "security"
+          return "security";
         }
         return prefix;
       }

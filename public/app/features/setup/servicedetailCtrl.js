@@ -1,9 +1,8 @@
 define([
   'angular',
-  'lodash',
   'app/features/org/importAlertsCtrl'
 ],
-function (angular, _) {
+function (angular) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -18,7 +17,7 @@ function (angular, _) {
         $scope.installBtn = "安装并导入模板";
       } else {
         $scope.installBtn = "导入模板";
-      };
+      }
 
       $controller('ImportAlertsCtrl',{$scope: $scope});
     };

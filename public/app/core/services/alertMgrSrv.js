@@ -131,7 +131,7 @@ function (angular, _, coreModule) {
         params: {
           name: ruleName,
         }
-      })
+      });
     };
   });
 });

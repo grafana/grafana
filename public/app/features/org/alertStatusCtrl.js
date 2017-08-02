@@ -108,7 +108,6 @@ function (angular, moment, _) {
       };
       var alert = alertDetails;
       var details = alert.definition.alertDetails;
-      var history = alert.history;
       var host = alert.status.monitoredEntity;
       var anno_create = alert.status.creationTime;
       var start_anno = _.cloneDeep(annotation_tpl);

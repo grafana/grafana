@@ -68,7 +68,7 @@ function (angular, _, coreModule) {
       };
 
       this.getMetricType = function (metric) {
-        return this.getMetricsType([metric])
+        return this.getMetricsType([metric]);
       };
 
       this.getMetricsType = function (metrics) {
@@ -77,7 +77,7 @@ function (angular, _, coreModule) {
           params: {
             names: metrics.join()
           }
-        })
+        });
       };
 
       this.floor = function (metrics) {
@@ -136,6 +136,6 @@ function (angular, _, coreModule) {
         }, function onFailed(response) {
           return response;
         });
-      }
+      };
     });
   });

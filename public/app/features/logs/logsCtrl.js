@@ -414,10 +414,9 @@ define([
 
       $scope.getLogSize = function(size) {
         var panels = $scope.dashboard.rows[0].panels;
-        var target = $scope.dashboard.rows[0].panels[0].targets[0];
         if (panels[0].targets[0].size === size) {
           return;
-        };
+        }
         panels[0].targets[0].size = size;
         panels[1].targets[0].size = size;
         panels[2].targets[0].size = size;

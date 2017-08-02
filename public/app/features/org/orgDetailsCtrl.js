@@ -28,7 +28,7 @@ define([
         }
         var data = {name: $scope.org.name};
         backendSrv.put('/api/org', data).then(function () {
-          $scope.getOrgInfo
+          $scope.getOrgInfo;
         });
       };
 

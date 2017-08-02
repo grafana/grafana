@@ -107,7 +107,7 @@ function (angular, _, coreModule, config, dateMath) {
           return response.data;
         });
       });
-    }
+    };
 
     this.getHostStatus = function(query, startTime, endTime) {
       return this.getStatus(query, startTime, endTime).then(function (response) {
@@ -125,7 +125,7 @@ function (angular, _, coreModule, config, dateMath) {
         });
         return {name: service, status: status, host: host};
       });
-    }
+    };
 
     this.getHostResource = function (query, startTime, endTime) {
       return this.getStatus(query, startTime, endTime).then(function (response) {
@@ -145,7 +145,7 @@ function (angular, _, coreModule, config, dateMath) {
         });
         return result;
       });
-    }
+    };
 
     this.init();
   });

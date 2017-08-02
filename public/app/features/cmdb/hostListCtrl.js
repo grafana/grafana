@@ -22,7 +22,7 @@ define([
             return host.isVirtual = '否';
           } else {
             return host.isVirtual = '未知';
-          };
+          }
         });
       });
     };

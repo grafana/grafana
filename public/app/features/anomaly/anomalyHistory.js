@@ -147,7 +147,7 @@ define([
           if($scope.dashboard) {
             $scope.dashboard.time.from = $scope.anomalyTimeSelected.from;
             $scope.getDetail($scope.anomalyHistory[0]);
-          };
+          }
           return $scope.anomalyHistory[0];
         });
       };

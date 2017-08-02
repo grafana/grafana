@@ -20,10 +20,9 @@ function (angular) {
 
     $scope.deleteUser = function(user) {
       $scope.appEvent('confirm-modal', {
-        title: '删除',
         title: '您想删除' + user.login + ' 用户吗?',
         icon: 'fa-trash',
-        yesText: 'Delete',
+        yesText: '删除',
         onConfirm: function() {
           backendSrv.delete('/api/admin/users/' + user.id).then(function() {
             $scope.getUsers();

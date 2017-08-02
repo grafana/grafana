@@ -57,7 +57,7 @@ function (angular, $, _, Tether) {
           }
           template += '<li><a class="pointer"';
           if (item.click) { template += ' ng-click="'+ item.click +'"'; }
-          template += '>' + item.text + '</a></li>'
+          template += '>' + item.text + '</a></li>';
         });
         template += '</ul>';
         template += '</div>';
@@ -116,64 +116,7 @@ function (angular, $, _, Tether) {
             }
           }
 
-          var showMenu = function(e) {
-            // if menu item is clicked and menu was just removed from dom ignore this event
-            if (!$.contains(document, e.target)) {
-              return;
-            }
-
-            if ($menu) {
-              dismiss();
-              return;
-            }
-
-            var menuTemplate;
-            if ($(e.target).hasClass('fa-external-link')) {
-              menuTemplate = createExternalLinkMenu(ctrl);
-            } else {
-              menuTemplate = createMenuTemplate(ctrl);
-            }
-
-            $menu = $(menuTemplate);
-            $menu.mouseleave(function() {
-              dismiss(1000);
-            });
-
-            menuScope = $scope.$new();
-            menuScope.extendedMenu = getExtendedMenu(ctrl);
-            menuScope.dismiss = function() {
-              dismiss(null, true);
-            };
-
-            $(".panel-container").removeClass('panel-highlight');
-            $panelContainer.toggleClass('panel-highlight');
-
-            $('.panel-menu').remove();
-
-            elem.append($menu);
-
-            $scope.$apply(function() {
-              $compile($menu.contents())(menuScope);
-
-              teather = new Tether({
-                element: $menu,
-                target: $panelContainer,
-                attachment: 'bottom center',
-                targetAttachment: 'top center',
-                constraints: [
-                  {
-                    to: 'window',
-                    attachment: 'together',
-                    pin: true
-                  }
-                ]
-              });
-            });
-
-            dismiss(2200);
-          };
           elem.append(createMenuTemplate(ctrl));
-          //elem.click(showMenu);
           $compile(elem.contents())($scope);
         }
       };

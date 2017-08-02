@@ -25,7 +25,6 @@
   "sub": true,
   "unused": true,
   "maxdepth": 6,
-  "maxlen": 140,
 
   "globals": {
     "System": true,

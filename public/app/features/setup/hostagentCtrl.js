@@ -50,7 +50,7 @@ function (angular, _) {
           contextSrv.hostNum = $scope.hostNum;
           $interval.cancel($scope.inter);
           $scope.createTemp();
-        };
+        }
         contextSrv.hostNum = $scope.hostNum;
         $interval.cancel($scope.inter);
         $scope.installed = true;
@@ -94,7 +94,7 @@ function (angular, _) {
       // 添加模板
       var tmp = ["iostat","machine"];
       var promiseArr = [];
-      _.each(tmp,function(template, i) {
+      _.each(tmp,function(template) {
         var p = backendSrv.get('/api/static/template/'+template).then(function(result) {
           result.system = contextSrv.user.systemId;
           result.id = null;

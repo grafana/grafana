@@ -101,6 +101,6 @@ function () {
       "redis": "iconfont fa-redis",
       "rabbitmq": "iconfont fa-rabbitmq"
     };
-  }
+  };
   return _;
 });

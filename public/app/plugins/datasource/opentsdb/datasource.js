@@ -121,7 +121,7 @@ function (angular, _, dateMath) {
       return this.performTimeSeriesQuery(queries, start, end).then(function (response) {
         var list = [];
         _.each(response.data, function (result) {
-          _.each(result.dps, function (key, value) {
+          _.each(result.dps, function (key) {
             var event = {
               annotation: annotation,
               time: key * 1000,
@@ -194,7 +194,7 @@ function (angular, _, dateMath) {
         }
         return _.filter(result.data, function(suggest) {
           return _.excludeMetricSuffix(suggest);
-        });;
+        });
       });
     };
 

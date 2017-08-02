@@ -1,8 +1,7 @@
 define([
     'angular',
-    'lodash',
   ],
-  function (angular, _, dateMath) {
+  function (angular) {
     'use strict';
 
     var module = angular.module('grafana.controllers');

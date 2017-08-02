@@ -8,7 +8,7 @@
     "indent": [true, "spaces"],
     "label-position": true,
     "label-undefined": true,
-    "max-line-length": [true, 140],
+    "max-line-length": [false, 140],
     "member-access": false,
     "no-arg": true,
     "no-bitwise": true,
@@ -42,7 +42,7 @@
       "check-else"
     ],
     "radix": false,
-    "semicolon": true,
+    "semicolon": false,
     "triple-equals": [true, "allow-null-check"],
     "typedef-whitespace": [true, {
       "call-signature": "nospace",

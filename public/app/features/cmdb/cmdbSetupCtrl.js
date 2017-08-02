@@ -1,12 +1,11 @@
 define([
   'angular',
-  'lodash'
-], function(angular, _) {
+], function(angular) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('CMDBSetupCtrl', function ($scope, backendSrv, $location) {
+  module.controller('CMDBSetupCtrl', function ($scope, backendSrv) {
     $scope.getHost = function() {
       backendSrv.alertD({url: '/cmdb/setting'}).then(function (response) {
         var data = response.data || {};
@@ -39,6 +38,6 @@ define([
     $scope.fileChanged = function(ele) {
       $scope.fileName = ele.files[0].name;
       $scope.$apply();
-    }
+    };
   });
 });

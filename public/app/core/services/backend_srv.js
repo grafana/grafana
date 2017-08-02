@@ -157,7 +157,7 @@ function (angular, _, coreModule, config) {
       var getSystems = this.get("/api/user/system").then(function (systems) {
         contextSrv.systemsMap = systems;
       });
-      return $q.all([getTokens, getSystems])
+      return $q.all([getTokens, getSystems]);
     };
 
     this.updateTokens = function () {
@@ -249,7 +249,7 @@ function (angular, _, coreModule, config) {
         params: params,
         headers: {'Content-Type': 'application/json;'},
       });
-    }
+    };
 
     this.getHostsNum = function () {
       return this.alertD({

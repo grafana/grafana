@@ -29,14 +29,14 @@ define([
             } else {
               obj[i] = '暂无信息';
             }
-          };
+          }
           if(_.isObject(obj[i])) {
             obj[i] = initDetail(obj[i]);
           }
         }
       }
       return obj;
-    }
+    };
 
     $scope.init();
   });

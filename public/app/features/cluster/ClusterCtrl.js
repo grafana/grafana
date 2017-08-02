@@ -80,7 +80,7 @@ define([
         $cluster.bind("plothover", function (event, pos, item) {
           if (!item) {
             $tooltip.detach();
-            return
+            return;
           }
           var cluster = metrics[item.seriesIndex];
           var health = cluster.health ? "健康指数:" + cluster.health : "";
@@ -90,9 +90,9 @@ define([
         $cluster.bind("plotclick", function (event, pos, item) {
           if (!item) {
             $tooltip.detach();
-            return
+            return;
           }
-          $rootScope.appEvent("anomaly-select", {seriesIndex: item.seriesIndex})
+          $rootScope.appEvent("anomaly-select", {seriesIndex: item.seriesIndex});
         });
 
         $cluster.mouseleave(function () {
@@ -112,11 +112,11 @@ define([
               symbol: drawSymbol,
               fill: false,
               radius: function (numElements) {
-                return (numElements > 20 ? 20 : numElements)
+                return (numElements > 20 ? 20 : numElements);
               }(item.numElements)
             }
-          }
-        })
+          };
+        });
       }
 
       function drawSymbol(ctx, x, y, radius, shadow) {

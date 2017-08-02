@@ -76,7 +76,6 @@ define([
           var getAlertStatus = alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
             var critical = 0;
             var warn = 0;
-            var pieData = [];
             for (var i = 0; i < response.data.length; i++) {
               var alertDetail = response.data[i];
               if (alertDetail.status.level === "CRITICAL") {
@@ -123,7 +122,7 @@ define([
                     host.status = 0;
                     scope.hostStatus.normal++;
                   }
-                },function(err) {
+                },function() {
                   scope.hostStatus.unnormal++;
                   host.status = 1;
                 });
@@ -135,7 +134,7 @@ define([
               d.resolve();
               return d.promise;
             }
-          }, function(err) {
+          }, function() {
             getPlatform();
           });
 
@@ -194,7 +193,7 @@ define([
               ];
               setPie('sys_annomaly', system, annomalyPieData);
             }
-          },function(res) {
+          },function() {
             getPlatform();
           });
 

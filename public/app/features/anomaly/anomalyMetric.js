@@ -6,7 +6,7 @@ define([
     'use strict';
 
     var module = angular.module('grafana.controllers');
-    module.controller('AnomalyMetric', function ($scope, healthSrv, $routeParams, $timeout, contextSrv) {
+    module.controller('AnomalyMetric', function ($scope, healthSrv, $routeParams, $timeout) {
         var clusterId = $routeParams.clusterId;
         var panelMeta = {
           title: '指标健康异常状况',
@@ -233,19 +233,6 @@ define([
         };
 
         $scope.init();
-
-        $(window).scroll(function (event) {
-          if(window.scrollY>=60){
-            $scope.$apply(function() {
-              $scope.toTop = true;
-            });
-            $('.table-container').width($('.main-view-container').width()-10);
-          }else{
-            $scope.$apply(function() {
-              $scope.toTop = false;
-            });
-          }
-        });
       }
     );
   });

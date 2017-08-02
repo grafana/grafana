@@ -7,6 +7,6 @@ function (angular,coreModule) {
   coreModule.default.service('integrateSrv',function () {
     return {
         options : {}
-    }
+    };
   });
 });

@@ -73,12 +73,12 @@ export class TableRenderer {
         for (var i = 0; i < style.valueMaps.length; i++) {
           var map = style.valueMaps[i];
           switch (map.op) {
-            case '>' : 
+            case '>' :
               if (parseFloat(dataValue) > parseFloat(map.value)) {
                 return map.text;
               }
               break;
-            case '<' : 
+            case '<' :
               if (parseFloat(dataValue) < parseFloat(map.value)) {
                 return map.text;
               }

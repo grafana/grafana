@@ -79,7 +79,7 @@ function (moment, $, angular, _, uiCalendarConfig) {
       for(var i=0; i<24; i++){
         var t = i<10 ? '0'+i : i;
         $scope.changeTimeList.push({key: i, value: t + ':00:00'});
-      };
+      }
       // 默认8点换班
       $scope.changeTime = $scope.changeTimeList[8];
       /* config object uiConfig defined after the event */
@@ -141,14 +141,14 @@ function (moment, $, angular, _, uiCalendarConfig) {
       if(date.end.valueOf() < today.valueOf()) {
         $scope.appEvent('alert-warning', ['抱歉','不可以修改历史数据']);
         return;
-      };
+      }
       $scope.showEditForm = true;
       $scope.overwrite = true;
       $scope.startTime = formatTime(date.start);
       $scope.endTime = formatTime(date.end);
       $scope.role = _.find($scope.roles,{key: date.className[0]});
       $scope.oncallerSelcted = _.find($scope.oncallerDefList, {id: date.id});
-    };
+    }
 
     function viewRender(view, element) {
       $scope.clearReview();
@@ -167,7 +167,7 @@ function (moment, $, angular, _, uiCalendarConfig) {
       $scope.curInterval = {start: view.start._d, end: view.end._d};
 
       loadSchedule(view.start._d, view.end._d)
-    };
+    }
 
     function loadSchedule(start, end) {
       oncallerMgrSrv.loadSchedule(getTimeSec(start), getTimeSec(end)).then(function onSuccess(response) {
@@ -192,11 +192,11 @@ function (moment, $, angular, _, uiCalendarConfig) {
 
     function eventMouseover(event, jsEvent, view) {
       this.style.backgroundColor = '#eee';
-    };
+    }
 
     function eventMouseout(event, jsEvent, view) {
       this.style.backgroundColor = event.color;
-    };
+    }
 
     $scope.updateSchedule = function(oncallerSelcted, start, end) {
       var role = $scope.role.key;
@@ -215,15 +215,15 @@ function (moment, $, angular, _, uiCalendarConfig) {
           $scope[role].events[index].title = oncallerSelcted.title;
           $scope[role].events[index].color = colors[_.find($scope.oncallerDefList, {id: oncallerSelcted.id}).user][0];
         }
-      };
+      }
       $scope.closeEdit();
-    }
+    };
 
     $scope.closeEdit = function() {
       $scope.showEditForm = false;
       $scope.overwrite = false;
       $scope.addoncaller = false;
-    }
+    };
 
     $scope.showOncallers = function() {
       if($scope.oncallerList.length === $scope.oncallerDefList.length) {
@@ -263,7 +263,7 @@ function (moment, $, angular, _, uiCalendarConfig) {
         $scope.primaryReview.events.pop();
         $scope.secondaryReview.events.pop();
       }
-    }
+    };
 
     $scope.reviewSchedule = function(time, range, start, end) {
       $scope.changeTime = time || $scope.changeTime;
@@ -299,10 +299,10 @@ function (moment, $, angular, _, uiCalendarConfig) {
             end: formatTime(end),
             id: sec.id,
             color: sec.color,
-          }
+          };
           addEvent(oncallerSec, 'secondaryReview');
         }
-      };
+      }
     };
 
     $scope.saveSchedule = function() {
@@ -313,7 +313,7 @@ function (moment, $, angular, _, uiCalendarConfig) {
         updateSchedule('secondary', secondaryReview);
         addEvent(primaryReview, 'primary');
         addEvent(secondaryReview, 'secondary');
-      };
+      }
       $scope.showScheduling = false;
     };
 

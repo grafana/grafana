@@ -1,8 +1,7 @@
 define([
     'angular',
-    'lodash'
   ],
-  function (angular, _) {
+  function (angular) {
     'use strict';
 
     var module = angular.module('grafana.controllers');
@@ -34,7 +33,7 @@ define([
         $scope.showCreatForm = false;
         var params =  {
           q: $scope.q
-        }
+        };
         if ($scope.service !== "*") {
           params.service = $scope.service;
         }

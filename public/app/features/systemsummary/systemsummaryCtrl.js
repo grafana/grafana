@@ -109,7 +109,7 @@ define([
           });
           promiseList.push(q);
         });
-        return $q.all(promiseList)
+        return $q.all(promiseList);
       };
 
       $scope.getHostSummary = function () {
@@ -144,7 +144,7 @@ define([
             });
 
           });
-        })
+        });
       };
 
       $scope.getHealth = function () {
@@ -170,7 +170,7 @@ define([
         _.each(panels, function (panel, index) {
           var params = {
             metric: contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + panel.targets[0].metric,
-          }
+          };
 
           backendSrv.getPrediction(params).then(function(response) {
             var num = 0;
@@ -185,7 +185,7 @@ define([
               if(index === 1) {
                 pre.data = data[i].toFixed(2) + '%';
               } else {
-                pre.data = (data[i] / Math.pow(1024, 3)).toFixed(2) + 'GB'
+                pre.data = (data[i] / Math.pow(1024, 3)).toFixed(2) + 'GB';
               }
               panel.tips.push(pre);
               num++;
@@ -200,7 +200,7 @@ define([
       $scope.changePre = function (selectedOption) {
         var panels = $scope._dashboard.rows[6].panels;
         var selected = _.findIndex(panels[0].tips,{time: selectedOption.time});
-        _.each(panels, function(panel, index) {
+        _.each(panels, function(panel) {
           panel.selectedOption = panel.tips[selected];
         });
       };

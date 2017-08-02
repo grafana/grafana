@@ -419,12 +419,12 @@ export function sideMenuDirective() {
       });
 
       var onresize = function (event) {
-        if($(window).height() > 800) {
+        if ($(window).height() > 800) {
           scope.showTooltip = false;
         } else {
           scope.showTooltip = true;
         };
-        if(event) {
+        if (event) {
           scope.$apply();
         }
       };
