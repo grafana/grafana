@@ -10,7 +10,7 @@ var template = `
   <span class="panel-title-text drag-handle">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>
   <span class="panel-menu-container dropdown">
     <span class="fa fa-caret-down panel-menu-toggle" data-toggle="dropdown"></span>
-    <ul class="dropdown-menu panel-menu" role="menu">
+    <ul class="dropdown-menu dropdown-menu--menu panel-menu" role="menu">
       <li>
         <a ng-click="ctrl.addDataQuery(datasource);">
           <i class="fa fa-cog"></i> Edit <span class="dropdown-menu-item-shortcut">e</span>
@@ -45,7 +45,7 @@ function renderMenuItem(item, ctrl) {
   if (item.href) { html += ` href="${item.href}"`; }
 
   html += `><i class="${item.icon}"></i>`;
-  html += `<span>${item.text}</span>`;
+  html += `<span class="dropdown-item-text">${item.text}</span>`;
 
   if (item.shortcut) {
     html += `<span class="dropdown-menu-item-shortcut">${item.shortcut}</span>`;
@@ -54,7 +54,7 @@ function renderMenuItem(item, ctrl) {
   html += `</a>`;
 
   if (item.submenu) {
-    html += '<ul class="dropdown-menu panel-menu">';
+    html += '<ul class="dropdown-menu dropdown-menu--menu panel-menu">';
     for (let subitem of item.submenu) {
       html += renderMenuItem(subitem, ctrl);
     }

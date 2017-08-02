@@ -21,7 +21,10 @@ $gf-form-margin: 0.25rem;
 .gf-form-disabled {
   color: $text-color-weak;
 
-  .query-keyword,
+  .gf-form-select-wrapper::after {
+    color: $text-color-weak;
+  }
+
   a,
   .gf-form-input {
     color: $text-color-weak;
@@ -101,7 +104,6 @@ $gf-form-margin: 0.25rem;
   display: block;
   width: 100%;
   padding: $input-padding-y $input-padding-x;
-  margin-right: $gf-form-margin;
   font-size: $font-size-base;
   margin-right: $gf-form-margin;
   line-height: $input-line-height;
@@ -161,10 +163,11 @@ $gf-form-margin: 0.25rem;
 
     &::after {
       position: absolute;
-      top: 35%;
-      right: $input-padding-x;
+      top: 36%;
+      right: 11px;
+      font-size: 11px;
       background-color: transparent;
-      color: $input-color;
+      color: $text-color;
       font: normal normal normal $font-size-sm/1 FontAwesome;
       content: '\f0d7';
       pointer-events: none;
@@ -185,7 +188,6 @@ $gf-form-margin: 0.25rem;
 .gf-form-select-wrapper {
   margin-right: $gf-form-margin;
   position: relative;
-  background-color: $input-bg;
 
   select.gf-form-input {
     text-indent: .01px;
@@ -208,13 +210,14 @@ $gf-form-margin: 0.25rem;
 
   &::after {
     position: absolute;
-    top: 35%;
-    right: $input-padding-x/2;
+    top: 36%;
+    right: 11px;
     background-color: transparent;
-    color: $input-color;
+    color: $text-color;
     font: normal normal normal $font-size-sm/1 FontAwesome;
     content: '\f0d7';
     pointer-events: none;
+    font-size: 11px;
   }
 
   &--has-help-icon {

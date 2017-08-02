@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -70,6 +71,11 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			}
 		}
 
+		err = setHasAcl(sess, dash)
+		if err != nil {
+			return err
+		}
+
 		parentVersion := dash.Version
 		affectedRows := int64(0)
 
@@ -79,9 +85,9 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			dash.Data.Set("version", dash.Version)
 			affectedRows, err = sess.Insert(dash)
 		} else {
-			dash.Version += 1
+			dash.Version++
 			dash.Data.Set("version", dash.Version)
-			affectedRows, err = sess.Id(dash.Id).Update(dash)
+			affectedRows, err = sess.MustCols("folder_id", "has_acl").Id(dash.Id).Update(dash)
 		}
 
 		if err != nil {
@@ -110,7 +116,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			return m.ErrDashboardNotFound
 		}
 
-		// delete existing tabs
+		// delete existing tags
 		_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
 		if err != nil {
 			return err
@@ -125,11 +131,35 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 				}
 			}
 		}
-
 		cmd.Result = dash
 
 		return err
 	})
+}
+
+func setHasAcl(sess *DBSession, dash *m.Dashboard) error {
+	// check if parent has acl
+	if dash.FolderId > 0 {
+		var parent m.Dashboard
+		if hasParent, err := sess.Where("folder_id=?", dash.FolderId).Get(&parent); err != nil {
+			return err
+		} else if hasParent && parent.HasAcl {
+			dash.HasAcl = true
+		}
+	}
+
+	// check if dash has its own acl
+	if dash.Id > 0 {
+		if res, err := sess.Query("SELECT 1 from dashboard_acl WHERE dashboard_id =?", dash.Id); err != nil {
+			return err
+		} else {
+			if len(res) > 0 {
+				dash.HasAcl = true
+			}
+		}
+	}
+
+	return nil
 }
 
 func GetDashboard(query *m.GetDashboardQuery) error {
@@ -148,53 +178,112 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 }
 
 type DashboardSearchProjection struct {
-	Id    int64
-	Title string
-	Slug  string
-	Term  string
+	Id          int64
+	Title       string
+	Slug        string
+	Term        string
+	IsFolder    bool
+	FolderId    int64
+	FolderSlug  string
+	FolderTitle string
 }
 
-func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
+func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
+	limit := query.Limit
+	if limit == 0 {
+		limit = 1000
+	}
+
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
-	sql.WriteString(`SELECT
-					  dashboard.id,
-					  dashboard.title,
-					  dashboard.slug,
-					  dashboard_tag.term
-					FROM dashboard
-					LEFT OUTER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id`)
+	sql.WriteString(`
+	SELECT
+		dashboard.id,
+		dashboard.title,
+		dashboard.slug,
+		dashboard_tag.term,
+		dashboard.is_folder,
+		dashboard.folder_id,
+		folder.slug as folder_slug,
+		folder.title as folder_title
+	FROM (
+		SELECT
+			dashboard.id FROM dashboard
+			LEFT OUTER JOIN dashboard_tag ON dashboard_tag.dashboard_id = dashboard.id
+	`)
 
+	// add tags filter
+	if len(query.Tags) > 0 {
+		sql.WriteString(` WHERE dashboard_tag.term IN (?` + strings.Repeat(",?", len(query.Tags)-1) + `)`)
+		for _, tag := range query.Tags {
+			params = append(params, tag)
+		}
+	}
+
+	// this ends the inner select (tag filtered part)
+	sql.WriteString(`
+		  GROUP BY dashboard.id HAVING COUNT(dashboard.id) >= ?
+		  ORDER BY dashboard.title ASC LIMIT ?) as ids`)
+	params = append(params, len(query.Tags))
+	params = append(params, limit)
+
+	sql.WriteString(`
+		INNER JOIN dashboard on ids.id = dashboard.id
+		LEFT OUTER JOIN dashboard folder on folder.id = dashboard.folder_id
+		LEFT OUTER JOIN dashboard_tag on dashboard.id = dashboard_tag.dashboard_id`)
 	if query.IsStarred {
 		sql.WriteString(" INNER JOIN star on star.dashboard_id = dashboard.id")
 	}
 
 	sql.WriteString(` WHERE dashboard.org_id=?`)
-
-	params = append(params, query.OrgId)
+	params = append(params, query.SignedInUser.OrgId)
 
 	if query.IsStarred {
 		sql.WriteString(` AND star.user_id=?`)
-		params = append(params, query.UserId)
+		params = append(params, query.SignedInUser.UserId)
 	}
 
 	if len(query.DashboardIds) > 0 {
-		sql.WriteString(" AND (")
-		for i, dashboardId := range query.DashboardIds {
-			if i != 0 {
-				sql.WriteString(" OR")
-			}
-
-			sql.WriteString(" dashboard.id = ?")
+		sql.WriteString(` AND dashboard.id IN (?` + strings.Repeat(",?", len(query.DashboardIds)-1) + `)`)
+		for _, dashboardId := range query.DashboardIds {
 			params = append(params, dashboardId)
 		}
-		sql.WriteString(")")
+	}
+
+	if query.SignedInUser.OrgRole != m.ROLE_ADMIN {
+		allowedDashboardsSubQuery := ` AND (dashboard.has_acl = 0 OR dashboard.id in (
+		SELECT distinct d.id AS DashboardId
+			FROM dashboard AS d
+	      LEFT JOIN dashboard_acl as da on d.folder_id = da.dashboard_id or d.id = da.dashboard_id
+	      LEFT JOIN user_group_member as ugm on ugm.user_group_id =  da.user_group_id
+	      LEFT JOIN org_user ou on ou.role = da.role
+			WHERE
+			  d.has_acl = 1 and
+				(da.user_id = ? or ugm.user_id = ? or ou.id is not null)
+			  and d.org_id = ?
+			  ))`
+
+		sql.WriteString(allowedDashboardsSubQuery)
+		params = append(params, query.SignedInUser.UserId, query.SignedInUser.UserId, query.SignedInUser.OrgId)
 	}
 
 	if len(query.Title) > 0 {
 		sql.WriteString(" AND dashboard.title " + dialect.LikeStr() + " ?")
 		params = append(params, "%"+query.Title+"%")
+	}
+
+	if len(query.Type) > 0 && query.Type == "dash-folder" {
+		sql.WriteString(" AND dashboard.is_folder = 1")
+	}
+
+	if len(query.Type) > 0 && query.Type == "dash-db" {
+		sql.WriteString(" AND dashboard.is_folder = 0")
+	}
+
+	if query.FolderId > 0 {
+		sql.WriteString(" AND dashboard.folder_id = ?")
+		params = append(params, query.FolderId)
 	}
 
 	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 1000"))
@@ -203,9 +292,35 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 
 	err := x.Sql(sql.String(), params...).Find(&res)
 	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
+	res, err := findDashboards(query)
+	if err != nil {
 		return err
 	}
 
+	makeQueryResult(query, res)
+
+	return nil
+}
+
+func getHitType(item DashboardSearchProjection) search.HitType {
+	var hitType search.HitType
+	if item.IsFolder {
+		hitType = search.DashHitFolder
+	} else {
+		hitType = search.DashHitDB
+	}
+
+	return hitType
+}
+
+func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []DashboardSearchProjection) {
 	query.Result = make([]*search.Hit, 0)
 	hits := make(map[int64]*search.Hit)
 
@@ -213,11 +328,14 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		hit, exists := hits[item.Id]
 		if !exists {
 			hit = &search.Hit{
-				Id:    item.Id,
-				Title: item.Title,
-				Uri:   "db/" + item.Slug,
-				Type:  search.DashHitDB,
-				Tags:  []string{},
+				Id:          item.Id,
+				Title:       item.Title,
+				Uri:         "db/" + item.Slug,
+				Type:        getHitType(item),
+				FolderId:    item.FolderId,
+				FolderTitle: item.FolderTitle,
+				FolderSlug:  item.FolderSlug,
+				Tags:        []string{},
 			}
 			query.Result = append(query.Result, hit)
 			hits[item.Id] = hit
@@ -226,8 +344,6 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 			hit.Tags = append(hit.Tags, item.Term)
 		}
 	}
-
-	return err
 }
 
 func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
@@ -247,7 +363,7 @@ func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
 
 func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		dashboard := m.Dashboard{Slug: cmd.Slug, OrgId: cmd.OrgId}
+		dashboard := m.Dashboard{Id: cmd.Id, OrgId: cmd.OrgId}
 		has, err := sess.Get(&dashboard)
 		if err != nil {
 			return err
@@ -261,6 +377,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			"DELETE FROM dashboard WHERE id = ?",
 			"DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?",
 			"DELETE FROM dashboard_version WHERE dashboard_id = ?",
+			"DELETE FROM dashboard WHERE folder_id = ?",
 		}
 
 		for _, sql := range deletes {

@@ -58,6 +58,7 @@
   background-color: $dropdownBackground;
   border: 1px solid #ccc; // Fallback for IE7-8
   border: 1px solid $dropdownBorder;
+  text-align: left;
 
   // Aligns the dropdown menu to right
   &.pull-right {
@@ -76,7 +77,7 @@
   // Links within the dropdown menu
   > li {
     > a {
-      display: flex;
+      display: block;
       padding: 3px 20px 3px 15px;
       clear: both;
       font-weight: normal;
@@ -85,12 +86,46 @@
       white-space: nowrap;
 
       i {
-        padding-right: 5px;
+        display: inline-block;
+        margin-right: 10px;
         color: $link-color-disabled;
+        position: relative;
+        top: 3px;
+      }
+    }
+  }
+
+  &--navbar {
+    top: 100%;
+    min-width: 100%;
+  }
+
+  &--menu,
+  &--navbar,
+  &--sidemenu {
+    background: $menu-dropdown-bg;
+    box-shadow: $menu-dropdown-shadow;
+    margin-top: 0px;
+    border: none;
+
+    > li > a {
+      display: flex;
+      padding: 5px 10px;
+      border-left: 2px solid transparent;
+
+      &:hover {
+        @include left-brand-border-gradient();
+        color: $link-hover-color;
+        background: $menu-dropdown-hover-bg !important;
       }
     }
   }
 }
+
+.dropdown-item-text {
+  flex-grow: 1;
+}
+
 
 // Hover/Focus state
 // -----------
@@ -218,10 +253,10 @@
   height: 0;
   border-color: transparent;
   border-style: solid;
-  border-width: 4px 0 4px 4px;
+  border-width: 5px 0 5px 5px;
   border-left-color: $text-color-weak;
-  margin-top: 4px;
-  margin-right: -10px;
+  margin-top: 5px;
+  margin-right: -4px;
 }
 .dropdown-submenu:hover > a::after {
   border-left-color: $dropdownLinkColorHover;
@@ -256,18 +291,11 @@
   margin-top: 2px; // give it some space to breathe
 }
 
-.dropdown-menu-item-with-shortcut {
-  min-width: 40px;
-  a {
-    min-width: 12rem;
-  }
-}
-
 .dropdown-menu-item-shortcut {
   display: block;
-  float: right;
+  margin-left: $spacer;
   color: $text-muted;
-  min-width: 30px;
+  min-width: 47px;
 
   &::before {
     font-family: FontAwesome;
@@ -275,5 +303,24 @@
     display: inline-block;
     text-align: center;
     content: "\f11c";
+  }
+}
+
+.dropdown-menu.dropdown-menu--new {
+  li a {
+    padding: $spacer/2 $spacer;
+    border-left: 2px solid $side-menu-bg;
+    background: $side-menu-bg;
+
+    i {
+      display: inline-block;
+      padding-right: 21px;
+    }
+
+    &:hover {
+      @include left-brand-border-gradient();
+      color: $link-hover-color;
+      background: $input-label-bg;
+    }
   }
 }

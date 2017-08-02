@@ -113,14 +113,8 @@ export class DashboardSrv {
   }
 
   showSaveAsModal() {
-    var newScope = this.$rootScope.$new();
-    newScope.clone = this.dash.getSaveModelClone();
-    newScope.clone.editable = true;
-    newScope.clone.hideControls = false;
-
     this.$rootScope.appEvent('show-modal', {
       templateHtml: '<save-dashboard-as-modal dismiss="dismiss()"></save-dashboard-as-modal>',
-      scope: newScope,
       modalClass: 'modal--narrow'
     });
   }
@@ -128,7 +122,6 @@ export class DashboardSrv {
   showSaveModal() {
     this.$rootScope.appEvent('show-modal', {
       templateHtml: '<save-dashboard-modal dismiss="dismiss()"></save-dashboard-modal>',
-      scope: this.$rootScope.$new(),
       modalClass: 'modal--narrow'
     });
   }

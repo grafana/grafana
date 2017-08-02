@@ -101,29 +101,8 @@ div.flot-text {
 }
 
 .panel-menu {
-  border: none;
-  text-align: left;
-  background: $side-menu-bg;
-  box-shadow: $search-shadow;
   top: 25px;
   left: -100px;
-
-  li a {
-    color: $dropdown-link-color;
-    font-size: $font-size-sm;
-    padding: $spacer/2 $spacer;
-    border-left: 2px solid $side-menu-bg;
-    i {
-      display: inline-block;
-      padding-right: $spacer/2;
-    }
-
-    &:hover {
-      @include left-brand-border-gradient();
-      color: $link-color;
-      background: $input-label-bg;
-    }
-  }
 }
 
 .panel-info-corner-inner {

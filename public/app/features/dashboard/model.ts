@@ -36,6 +36,7 @@ export class DashboardModel {
   meta: any;
   events: any;
   editMode: boolean;
+  folderId: number;
 
   constructor(data, meta?) {
     if (!data) {
@@ -64,6 +65,7 @@ export class DashboardModel {
     this.version = data.version || 0;
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
+    this.folderId = data.folderId || null;
 
     this.rows = [];
     if (data.rows) {

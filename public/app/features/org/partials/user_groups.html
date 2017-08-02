@@ -1,0 +1,61 @@
+<navbar model="ctrl.navModel"></navbar>
+
+<div class="page-container">
+	<div class="page-header">
+		<h1>User Groups</h1>
+
+    <a class="btn btn-success" ng-click="ctrl.openUserGroupModal()">
+      <i class="fa fa-plus"></i>
+      Create User Group
+    </a>
+  </div>
+    <div class="gf-form pull-right width-15 gf-form-group">
+      <span style="position: relative;">
+        <input type="text" class="gf-form-input" placeholder="Find User Group by name" tabindex="1" give-focus="true"
+          ng-model="ctrl.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.get()" />
+      </span>
+    </div>
+  <div class="admin-list-table">
+    <table class="filter-table form-inline" ng-show="ctrl.userGroups.length > 0">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Name</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="userGroup in ctrl.userGroups">
+          <td>{{userGroup.id}}</td>
+          <td>{{userGroup.name}}</td>
+          <td class="text-right">
+            <a href="org/user-groups/edit/{{userGroup.id}}" class="btn btn-inverse btn-small">
+              <i class="fa fa-edit"></i>
+              Edit
+            </a>
+            &nbsp;&nbsp;
+            <a ng-click="ctrl.deleteUserGroup(userGroup)" class="btn btn-danger btn-small">
+              <i class="fa fa-remove"></i>
+            </a>
+          </td>
+        </tr>
+      </tbody>
+
+    </table>
+  </div>
+
+  <div class="admin-list-paging" ng-if="ctrl.showPaging">
+    <ol>
+      <li ng-repeat="page in ctrl.pages">
+        <button
+          class="btn btn-small"
+          ng-class="{'btn-secondary': page.current, 'btn-inverse': !page.current}"
+          ng-click="ctrl.navigateToPage(page)">{{page.page}}</button>
+      </li>
+    </ol>
+  </div>
+
+  <em class="muted" ng-hide="ctrl.userGroups.length > 0">
+    No User Groups found.
+  </em>
+</div>

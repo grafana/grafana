@@ -14,14 +14,16 @@ func Search(c *middleware.Context) {
 	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")
 	limit := c.QueryInt("limit")
+	dashboardType := c.Query("type")
+	folderId := c.QueryInt64("folderId")
 
 	if limit == 0 {
 		limit = 1000
 	}
 
-	dbids := make([]int, 0)
+	dbids := make([]int64, 0)
 	for _, id := range c.QueryStrings("dashboardIds") {
-		dashboardId, err := strconv.Atoi(id)
+		dashboardId, err := strconv.ParseInt(id, 10, 64)
 		if err == nil {
 			dbids = append(dbids, dashboardId)
 		}
@@ -30,11 +32,13 @@ func Search(c *middleware.Context) {
 	searchQuery := search.Query{
 		Title:        query,
 		Tags:         tags,
-		UserId:       c.UserId,
+		SignedInUser: c.SignedInUser,
 		Limit:        limit,
 		IsStarred:    starred == "true",
 		OrgId:        c.OrgId,
 		DashboardIds: dbids,
+		Type:         dashboardType,
+		FolderId:     folderId,
 	}
 
 	err := bus.Dispatch(&searchQuery)

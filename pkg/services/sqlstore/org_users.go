@@ -80,10 +80,17 @@ func GetOrgUsers(query *m.GetOrgUsersQuery) error {
 
 func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "DELETE FROM org_user WHERE org_id=? and user_id=?"
-		_, err := sess.Exec(rawSql, cmd.OrgId, cmd.UserId)
-		if err != nil {
-			return err
+		deletes := []string{
+			"DELETE FROM org_user WHERE org_id=? and user_id=?",
+			"DELETE FROM dashboard_acl WHERE org_id=? and user_id = ?",
+			"DELETE FROM user_group_member WHERE org_id=? and user_id = ?",
+		}
+
+		for _, sql := range deletes {
+			_, err := sess.Exec(sql, cmd.OrgId, cmd.UserId)
+			if err != nil {
+				return err
+			}
 		}
 
 		return validateOneAdminLeftInOrg(cmd.OrgId, sess)

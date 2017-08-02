@@ -33,14 +33,15 @@ func initContextWithRenderAuth(ctx *Context) bool {
 
 type renderContextFunc func(key string) (string, error)
 
-func AddRenderAuthKey(orgId int64) string {
+func AddRenderAuthKey(orgId int64, userId int64, orgRole m.RoleType) string {
 	renderKeysLock.Lock()
 
 	key := util.GetRandomString(32)
 
 	renderKeys[key] = &m.SignedInUser{
 		OrgId:   orgId,
-		OrgRole: m.ROLE_VIEWER,
+		OrgRole: orgRole,
+		UserId:  userId,
 	}
 
 	renderKeysLock.Unlock()

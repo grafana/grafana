@@ -211,8 +211,62 @@ export class BackendSrv {
 
     return this.post('/api/dashboards/db/', {
       dashboard: dash,
+      folderId: dash.folderId,
       overwrite: options.overwrite === true,
       message: options.message || '',
+    });
+  }
+
+  createDashboardFolder(name) {
+    const dash = {
+      title: name,
+      editable: true,
+      hideControls: true,
+      rows: [
+        {
+          panels: [
+            {
+              folderId: 0,
+              headings: false,
+              limit: 1000,
+              links: [],
+              query: '',
+              recent: false,
+              search: true,
+              span: 4,
+              starred: false,
+              tags: [],
+              title: 'Dashboards in this folder',
+              type: 'dashlist'
+            },
+            {
+              onlyAlertsOnDashboard: true,
+              span: 4,
+              title: 'Alerts in this folder',
+              type: 'alertlist'
+            },
+            {
+              span: 4,
+              title: 'Permissions for this folder',
+              type: 'permissionlist',
+              folderId: 0
+            }
+          ],
+          showTitle: true,
+          title: name,
+          titleSize: 'h1'
+        }
+      ]
+    };
+
+    return this.post('/api/dashboards/db/', {dashboard: dash, isFolder: true, overwrite: false})
+    .then(res => {
+      return this.getDashboard('db', res.slug);
+    })
+    .then(res => {
+      res.dashboard.rows[0].panels[0].folderId = res.dashboard.id;
+      res.dashboard.rows[0].panels[2].folderId = res.dashboard.id;
+      return this.saveDashboard(res.dashboard, {overwrite: false});
     });
   }
 }

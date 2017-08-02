@@ -162,6 +162,14 @@ type SignedInUser struct {
 	HelpFlags1     HelpFlags1
 }
 
+func (user *SignedInUser) HasRole(role RoleType) bool {
+	if user.IsGrafanaAdmin {
+		return true
+	}
+
+	return user.OrgRole.Includes(role)
+}
+
 type UserProfileDTO struct {
 	Id             int64  `json:"id"`
 	Email          string `json:"email"`

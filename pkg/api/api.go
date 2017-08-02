@@ -132,6 +132,18 @@ func (hs *HttpServer) registerRoutes() {
 			r.Post("/:id/using/:orgId", wrap(UpdateUserActiveOrg))
 		}, reqGrafanaAdmin)
 
+		// user group (admin permission required)
+		r.Group("/user-groups", func() {
+			r.Get("/:userGroupId", wrap(GetUserGroupById))
+			r.Get("/search", wrap(SearchUserGroups))
+			r.Post("/", quota("user-groups"), bind(m.CreateUserGroupCommand{}), wrap(CreateUserGroup))
+			r.Put("/:userGroupId", bind(m.UpdateUserGroupCommand{}), wrap(UpdateUserGroup))
+			r.Delete("/:userGroupId", wrap(DeleteUserGroupById))
+			r.Get("/:userGroupId/members", wrap(GetUserGroupMembers))
+			r.Post("/:userGroupId/members", quota("user-groups"), bind(m.AddUserGroupMemberCommand{}), wrap(AddUserGroupMember))
+			r.Delete("/:userGroupId/members/:userId", wrap(RemoveUserGroupMember))
+		}, reqOrgAdmin)
+
 		// org information available to all users.
 		r.Group("/org", func() {
 			r.Get("/", wrap(GetOrgCurrent))
@@ -222,19 +234,25 @@ func (hs *HttpServer) registerRoutes() {
 
 		// Dashboard
 		r.Group("/dashboards", func() {
-			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
-
-			r.Get("/id/:dashboardId/versions", wrap(GetDashboardVersions))
-			r.Get("/id/:dashboardId/versions/:id", wrap(GetDashboardVersion))
-			r.Post("/id/:dashboardId/restore", reqEditorRole, bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
+			r.Combo("/db/:slug").Get(wrap(GetDashboard)).Delete(wrap(DeleteDashboard))
+			r.Post("/db", bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
 
 			r.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), wrap(CalculateDashboardDiff))
-
-			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
-			r.Get("/file/:file", GetDashboardFromJsonFile)
 			r.Get("/home", wrap(GetHomeDashboard))
 			r.Get("/tags", GetDashboardTags)
 			r.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
+
+			r.Group("/id/:dashboardId", func() {
+				r.Get("/versions", wrap(GetDashboardVersions))
+				r.Get("/versions/:id", wrap(GetDashboardVersion))
+				r.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
+
+				r.Group("/acl", func() {
+					r.Get("/", wrap(GetDashboardAclList))
+					r.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateDashboardAcl))
+					r.Delete("/:aclId", wrap(DeleteDashboardAcl))
+				})
+			}, reqSignedIn)
 		})
 
 		// Dashboard snapshots
