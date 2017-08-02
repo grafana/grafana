@@ -6,9 +6,7 @@
 
             <div class="summary-panel view-panel">
                 <div class="health-panel panels-wrapper">
-                    <h3 data-placement="center" bs-modal="modal"
-                        data-template-url="/app/features/systemoverview/partials/system_overview_modal.html"
-                        style="cursor: pointer;">
+                    <h3 ng-click="showModal(0)" style="cursor: pointer;" bs-tooltip="'点击查看历史指数'">
                         健康指数趋势<tip>健康值=(告警指标个数/定义规则总数)*50% + (异常指标/所有指标) * 50%</tip>
                     </h3>
                     <div style="position: absolute; bottom: 25%; left: 40%; font-weight: bold;">
@@ -20,9 +18,7 @@
                 <div class="health-panel">
                     <div class="alert-panel">
                         <div class="panels-wrapper">
-                            <h3 data-placement="center" bs-modal="modal"
-                                data-template-url="/app/features/systemoverview/partials/system_overview_modal.html"
-                                style="cursor: pointer;">
+                            <h3 ng-click="showModal(1)" style="cursor: pointer;" bs-tooltip="'点击查看历史报警'">
                                 报警情况
                             </h3>
                             <div>
@@ -42,9 +38,7 @@
                         </div>
                     </div>
                     <div class="anomaly-panel panels-wrapper">
-                        <h3 data-placement="center" bs-modal="modal"
-                            data-template-url="/app/features/systemoverview/partials/system_overview_modal.html"
-                            style="cursor: pointer;">
+                        <h3 ng-click="showModal(2)" style="cursor: pointer;" bs-tooltip="'点击查看历史情况'">
                             智能检测异常指标
                         </h3>
                         <div>

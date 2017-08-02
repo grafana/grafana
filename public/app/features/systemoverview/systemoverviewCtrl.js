@@ -8,7 +8,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('SystemOverviewCtrl', function ($scope, $location, $q, backendSrv, alertSrv,
+    module.controller('SystemOverviewCtrl', function ($scope, $location, $q, $modal, backendSrv, alertSrv,
       contextSrv, datasourceSrv, alertMgrSrv, healthSrv, serviceDepSrv, jsPlumbService) {
 
       var toolkit = jsPlumbService.getToolkit("serviceToolkit");
@@ -54,6 +54,7 @@ define([
         $scope.hostPanel      = {};
         $scope.predictionPanel = {};
         $scope.panels = {};
+        $scope.panel  = {};
 
         if (contextSrv.user.systemId == 0 && contextSrv.user.orgId) {
           $location.url("/systems");
@@ -418,8 +419,8 @@ define([
             tt[v.tags.pid_cmd]["pid"] = "HOST: " + v.tags.host + "&nbsp;&nbsp;&nbsp;&nbsp;PID: " + v.tags.pid_cmd;
             tt[v.tags.pid_cmd]["host"] = v.tags.host;
 
-            /cpu/.test(v.name) && (tt[v.tags.pid_cmd]["cpu"] = $scope.percentFormatter(v.value));
-            /mem/.test(v.name) && (tt[v.tags.pid_cmd]["mem"] = $scope.percentFormatter(v.value));
+            /cpu/.test(v.name) && (tt[v.tags.pid_cmd]["cpu"] = parseFloat(v.value) || 0);
+            /mem/.test(v.name) && (tt[v.tags.pid_cmd]["mem"] = parseFloat(v.value) || 0);
           });
 
           _.each(Object.keys(tt), function (v) {
@@ -430,6 +431,20 @@ define([
         }, function () {
           hostTopN = [];
         });
+      };
+
+      // 弹窗 查看历史情况
+      $scope.showModal = function (index) {
+        $scope.row = $scope._dashboard.rows[index];
+        $scope.panel = $scope._dashboard.rows[index].panels[0];
+
+        var healthModal = $modal({
+          scope: $scope,
+          templateUrl: '/app/features/systemoverview/partials/system_overview_modal.html',
+          show: false
+        });
+
+        healthModal.$promise.then(healthModal.show);
       };
 
       $scope.renderParams = {
