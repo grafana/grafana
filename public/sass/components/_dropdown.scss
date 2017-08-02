@@ -76,7 +76,7 @@
   // Links within the dropdown menu
   > li {
     > a {
-      display: block;
+      display: flex;
       padding: 3px 20px 3px 15px;
       clear: both;
       font-weight: normal;
@@ -257,6 +257,7 @@
 }
 
 .dropdown-menu-item-with-shortcut {
+  min-width: 40px;
   a {
     min-width: 12rem;
   }
@@ -266,6 +267,7 @@
   display: block;
   float: right;
   color: $text-muted;
+  min-width: 30px;
 
   &::before {
     font-family: FontAwesome;

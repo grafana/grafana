@@ -140,12 +140,18 @@ export class PanelCtrl {
 
   getMenu() {
     let menu = [];
-    menu.push({text: 'View', click: 'ctrl.viewPanel(); dismiss();'});
-    menu.push({text: 'Edit', click: 'ctrl.editPanel(); dismiss();', role: 'Editor'});
-    if (!this.fullscreen) { //  duplication is not supported in fullscreen mode
-      menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
+    menu.push({text: 'View', click: 'ctrl.viewPanel();', icon: "fa fa-fw fa-eye", shortcut: "v"});
+    menu.push({text: 'Edit', click: 'ctrl.editPanel();', role: 'Editor', icon: "fa fa-fw fa-edit", shortcut: "e"});
+    menu.push({text: 'Share', click: 'ctrl.sharePanel();', icon: "fa fa-fw fa-share", shortcut: "p s"});
+
+    let extendedMenu = this.getExtendedMenu();
+    menu.push({text: 'Actions', click: 'ctrl.removePanel();', icon: "fa fa-fw fa-cube", submenu: extendedMenu});
+
+    if (!this.fullscreen) {
+      menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor', icon: "fa fa-fw fa-copy" });
     }
-    menu.push({text: 'Share', click: 'ctrl.sharePanel(); dismiss();'});
+
+    menu.push({text: 'Remove', click: 'ctrl.removePanel();', icon: "fa fa-fw fa-trash", shortcut: "p r"});
     return menu;
   }
 

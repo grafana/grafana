@@ -16,8 +16,6 @@ var template = `
           <i class="fa fa-cog"></i> Edit <span class="dropdown-menu-item-shortcut">e</span>
         </a>
       </li>
-      <li><a ng-click="ctrl.addDataQuery(datasource);"><i class="fa fa-eye"></i> View</a></li>
-      <li><a ng-click="ctrl.addDataQuery(datasource);"><i class="fa fa-share-square-o"></i> Share</a></li>
       <li class="dropdown-submenu">
         <a ng-click="ctrl.addDataQuery(datasource);"><i class="fa fa-cube"></i> Actions</a>
         <ul class="dropdown-menu panel-menu">
@@ -33,15 +31,73 @@ var template = `
   <span class="panel-time-info" ng-show="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>
 </span>`;
 
+function renderMenuItem(item, ctrl) {
+  let html = '';
+  let listItemClass = '';
+
+  if (item.submenu) {
+    listItemClass = 'dropdown-submenu';
+  }
+
+  html += `<li class="${listItemClass}"><a `;
+
+  if (item.click) { html += ` ng-click="${item.click}"`; }
+  if (item.href) { html += ` href="${item.href}"`; }
+
+  html += `><i class="${item.icon}"></i>`;
+  html += `<span>${item.text}</span>`;
+
+  if (item.shortcut) {
+    html += `<span class="dropdown-menu-item-shortcut">${item.shortcut}</span>`;
+  }
+
+  html += `</a>`;
+
+  if (item.submenu) {
+    html += '<ul class="dropdown-menu panel-menu">';
+    for (let subitem of item.submenu) {
+      html += renderMenuItem(subitem, ctrl);
+    }
+    html += '</ul>';
+  }
+
+  html += `</li>`;
+  return html;
+}
+
+function createMenuTemplate(ctrl) {
+  let html = '';
+
+  for (let item of ctrl.getMenu()) {
+    html += renderMenuItem(item, ctrl);
+  }
+
+  return html;
+}
+
 /** @ngInject **/
-function panelHeader() {
+function panelHeader($compile) {
   return {
     restrict: 'E',
     template: template,
     link: function(scope, elem, attrs) {
 
+      let menuElem = elem.find('.panel-menu');
+      let menuScope;
+
       elem.click(function(evt) {
         const targetClass = evt.target.className;
+
+        // remove existing scope
+        if (menuScope) {
+          menuScope.$destroy();
+        }
+
+        menuScope = scope.$new();
+        let menuHtml = createMenuTemplate(scope.ctrl);
+        console.log(menuHtml);
+        menuElem.html(menuHtml);
+        $compile(menuElem)(menuScope);
 
         if (targetClass === 'panel-title-text drag-handle' || targetClass === 'panel-title drag-handle') {
           evt.stopPropagation();
