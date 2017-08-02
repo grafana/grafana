@@ -73,7 +73,7 @@ func main() {
 			grunt("test")
 
 		case "package":
-			grunt("release", fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration))
+			grunt("release", " --force", fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration))
 			//createLinuxPackages()
 
 		case "pkg-rpm":
