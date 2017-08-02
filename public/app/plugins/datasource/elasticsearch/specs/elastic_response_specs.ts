@@ -1,6 +1,6 @@
 
 import {describe, beforeEach, it, expect} from 'test/lib/common';
-import ElasticResponse from '../elastic_response';
+import {ElasticResponse} from '../elastic_response';
 
 describe('ElasticResponse', function() {
   var targets;
