@@ -242,7 +242,16 @@ function (angular, _, coreModule, config) {
         params: params,
         headers: {'Content-Type': 'application/json;'},
       });
-    }
+    };
+
+    this.getPredictionPercentage = function (params) {
+      return self.alertD({
+        method: "get",
+        url   : "/anomaly/prediction/usages",
+        params: params,
+        headers: {'Content-Type': 'application/json;'}
+      });
+    };
 
     this.getHostsNum = function () {
       return this.alertD({
