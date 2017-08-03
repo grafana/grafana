@@ -159,7 +159,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onDataSnapshotLoad(snapshotData) {
     this.annotationsPromise = this.annotationsSrv.getAnnotations(this.dashboard);
-    this.onDataReceived(snapshotData.data);
+    this.onDataReceived(snapshotData);
   }
 
   onDataError(err) {

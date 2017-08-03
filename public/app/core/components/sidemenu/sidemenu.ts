@@ -30,6 +30,50 @@ export class SideMenuCtrl {
     this.$rootScope = $rootScope;
     this.configMenu = config.bootData.mainNavLinks;
     var _self = this;
+    this.updateMenu.bind(this)();
+    if (this.contextSrv.isSignedIn) {
+      this.getMenus.bind(this)();
+    }
+
+    this.$scope.$on('$routeChangeSuccess', () => {
+      $scope.showSubmenu = false;
+    });
+
+    $scope.updateSubmenu = (item) => {
+      if (item.url) {
+        $scope.showSubmenu = false;
+        $location.url(item.url);
+        return;
+      }
+      if (item.click) {
+        item.click(item, _self);
+      } else {
+        $scope.submenu = item;
+      }
+      $scope.showSubmenu = true;
+    };
+
+    $scope.hideSubmenu = () => {
+      $scope.showSubmenu = false;
+    };
+
+    $scope.updateThdmenu = (item) => {
+      $scope.showSubmenu = false;
+      if (item.url) {
+        if (item.target === '_blank') {
+          window.open(item.url);
+        } else {
+          $location.url(item.url);
+        }
+        return;
+      }
+      if (item.click) {
+        item.click(_self);
+      }
+    };
+  }
+
+  getMenus() {
     this.mainLinks.push({
       text: "系统总览",
       icon: "fa fa-fw fa-home",
@@ -189,62 +233,26 @@ export class SideMenuCtrl {
     this.bottomLinks.push({
       text: "信息管理",
       icon: "fa fa-fw fa-cogs",
-      children: this.getMsgManagementMenu(_self),
+      children: this.getMsgManagementMenu.bind(this),
     });
 
     this.bottomLinks.push({
-      text: contextSrv.user.orgName,
+      text: this.contextSrv.user.orgName,
       icon: "fa fa-fw fa-random",
       click: this.getOrgsMenu,
     });
 
     this.bottomLinks.push({
-      text: contextSrv.systemsMap[_.findIndex(contextSrv.systemsMap,{'Id': contextSrv.user.systemId})].SystemsName,
+      text: this.contextSrv.systemsMap[_.findIndex(this.contextSrv.systemsMap,{'Id': this.contextSrv.user.systemId})].SystemsName,
       icon: "fa fa-fw fa-sitemap",
       url: this.getUrl('/systems')
     });
 
-    this.$scope.$on('$routeChangeSuccess', () => {
-      $scope.showSubmenu = false;
-    });
-
-    $scope.updateSubmenu = (item) => {
-      if (item.url) {
-        $scope.showSubmenu = false;
-        $location.url(item.url);
-        return;
-      }
-      if (item.click) {
-        item.click(item, _self);
-      } else {
-        $scope.submenu = item;
-      }
-      $scope.showSubmenu = true;
-    };
-
-    $scope.hideSubmenu = () => {
-      $scope.showSubmenu = false;
-    };
-
-    $scope.updateThdmenu = (item) => {
-      $scope.showSubmenu = false;
-      if (item.url) {
-        if (item.target === '_blank') {
-          window.open(item.url);
-        } else {
-          $location.url(item.url);
-        }
-        return;
-      }
-      if (item.click) {
-        item.click(_self);
-      }
-    };
-  }
+  };
 
   getUrl(url) {
     return config.appSubUrl + url;
-  }
+  };
 
   switchOrg(orgId, _self) {
     this.backendSrv.post('/api/user/using/' + orgId).then(() => {
@@ -253,7 +261,7 @@ export class SideMenuCtrl {
     });
   };
 
-  getMsgManagementMenu(_self) {
+  getMsgManagementMenu() {
     var item = [];
     if (config.allowOrgCreate) {
       item.push({
@@ -392,6 +400,44 @@ export class SideMenuCtrl {
       modalClass : 'contact-us',
     });
   };
+
+  updateMenu() {
+    var currentPath = this.$location.path();
+    if (currentPath.indexOf('/dashboard/snapshot') === 0) {
+      return;
+    }
+    if (!this.contextSrv.isSignedIn) {
+      this.$location.url("/login");
+      return;
+    }
+    if (!this.contextSrv.systemsMap.length) {
+      this.$location.url("/systems");
+      return;
+    }
+    if (this.contextSrv.user.systemId === 0 && this.contextSrv.user.orgId) {
+      this.$location.url("/systems");
+      return;
+    }
+    if (!this.isCurrentSystemInSysmtes.bind(this)) {
+      this.$location.url("/systems");
+      return;
+    }
+    if (currentPath.indexOf('/admin') === 0) {
+      return;
+    } else if (currentPath.indexOf('/dashboard/db/') === 0) {
+      this.contextSrv.dashboardLink = currentPath;
+    } else if (currentPath.indexOf('/login') === 0) {
+      return;
+    }
+  };
+
+  isCurrentSystemInSysmtes() {
+    var currId = this.contextSrv.user.systemId;
+    if (this.backendSrv.getSystemById(currId) === '') {
+      return false;
+    }
+    return true;
+  }
 }
 
 export function sideMenuDirective() {

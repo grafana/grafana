@@ -101,7 +101,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   onDataSnapshotLoad(data) {
-    this.onDataReceived(data.data);
+    this.onDataReceived(data);
   }
 
   onDataError(err) {
@@ -217,7 +217,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       appendPaginationControls(footerElem);
 
       rootElem.css({'max-height': panel.scroll ? getTableHeight() : '' });
-      panelElem._highlight(panel.targets[0].query);
+      if (panel.targets.length) {
+        panelElem._highlight(panel.targets[0].query);
+      }
     }
 
     elem.on('click', '.table-panel-page-link', switchPage);

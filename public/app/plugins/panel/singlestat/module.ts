@@ -72,7 +72,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   onDataSnapshotLoad(snapshotData) {
-    this.onDataReceived(snapshotData.data);
+    this.onDataReceived(snapshotData);
   }
 
   onDataError(err) {
