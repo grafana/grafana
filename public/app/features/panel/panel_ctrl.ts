@@ -150,11 +150,11 @@ export class PanelCtrl {
     }
 
     menu.push({divider: true});
-    menu.push({text: 'Remove', click: 'ctrl.removePanel();', role: 'Editor', icon: "fa fa-fw fa-trash", shortcut: "p r"});
-    menu.push({divider: true, role: 'Editor'});
-
     let extendedMenu = this.getExtendedMenu();
     menu.push({text: 'More ...', click: 'ctrl.removePanel();', icon: "fa fa-fw fa-cube", submenu: extendedMenu});
+
+    menu.push({divider: true, role: 'Editor'});
+    menu.push({text: 'Remove', click: 'ctrl.removePanel();', role: 'Editor', icon: "fa fa-fw fa-trash", shortcut: "p r"});
     return menu;
   }
 
