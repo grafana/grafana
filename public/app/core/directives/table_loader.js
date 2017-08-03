@@ -16,7 +16,7 @@ define([
           var template = $http.get(templateUrl, { cache: true }).then(function (res) {
             return res.data;
           });
-          
+
           scope.$on('load-table', function() {
             template.then(function (response) {
               var $template = $(response);
@@ -27,7 +27,7 @@ define([
               $(".table-hack").bootstrapTable({
                 data: scope.bsTableData,
               });
-            });    
+            });
           });
 
         }

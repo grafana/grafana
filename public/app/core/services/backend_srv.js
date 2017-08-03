@@ -184,12 +184,14 @@ function (angular, _, coreModule, config) {
         options.params = {};
       }
       if (self.tokens) {
-        options.url = self.alertDUrl + options.url;
+        options.url = 'http://192.168.1.102:5001' + options.url;
+        // options.url = self.alertDUrl + options.url;
         options.params.token = this.getToken();
         return this.datasourceRequest(options);
       }
       return self.updateTokens().then(function () {
-        options.url = self.alertDUrl + options.url;
+        options.url = 'http://192.168.1.102:5001' + options.url;
+        // options.url = self.alertDUrl + options.url;
         options.params.token = self.getToken();
       }).then(function () {
         if (_.isEmpty(options.params.token)) {
@@ -242,7 +244,16 @@ function (angular, _, coreModule, config) {
         params: params,
         headers: {'Content-Type': 'application/json;'},
       });
-    }
+    };
+
+    this.getPredictionPercentage = function (params) {
+      return self.alertD({
+        method: "get",
+        url   : "/anomaly/prediction/usages",
+        params: params,
+        headers: {'Content-Type': 'application/json;'}
+      });
+    };
 
     this.getHostsNum = function () {
       return this.alertD({

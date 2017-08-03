@@ -39,7 +39,7 @@ define([
           return value === 0 ? '正常' : '异常';
         }
         if (_.isString(value)) {
-          return value === 'GREEN' ? '正常' : (value === 'YELLOW' ? '告警' : (value === 'RED' ? '严重' : '异常')); 
+          return value === 'GREEN' ? '正常' : (value === 'YELLOW' ? '告警' : (value === 'RED' ? '严重' : '异常'));
         }
       };
 
@@ -110,8 +110,8 @@ define([
       // 系统异常情况 anomaly
       $scope.getSystemAnomaly = function () {
         $scope.exceptionPanel.status = [
-          { type: 'danger', text: 'CPU: ', count: 0, threadhold: '80%', message: '' },
-          { type: 'danger', text: 'Memory: ', count: 0, threadhold: '80%', message: '' }
+          { type: 'success', text: 'CPU: ', count: 0, threadhold: '80%', message: '' },
+          { type: 'success', text: 'Memory: ', count: 0, threadhold: '80%', message: '' }
         ];
 
         backendSrv.alertD({
@@ -119,14 +119,13 @@ define([
           url: "/summary/topn?" + "threshold=80"
         }).then(function (response) {
           response = response.data;
-          if (response.mem.count) {
-            $scope.exceptionPanel.status[1].count = response.mem.count;
-            $scope.exceptionPanel.status[1].message = response.mem.topList;
-          }
-          if (response.cpu.count) {
-            $scope.exceptionPanel.status[0].count = response.cpu.count;
-            $scope.exceptionPanel.status[0].message = response.cpu.topList;
-          }
+          _.each(['cpu', 'mem'], function (key, i) {
+            if (response[key].count) {
+              $scope.exceptionPanel.status[i].type = 'danger';
+              $scope.exceptionPanel.status[i].count = response[key].count;
+              $scope.exceptionPanel.status[i].message = response[key].topList;
+            }
+          });
         });
       };
 
@@ -242,6 +241,9 @@ define([
           var score = parseFloat(item.tips[0].data);
           var colors = score > 75 ? ['#BB1144'] : (score > 50 ? ['#FE9805'] : ['#3DB779']);
 
+          // disk 是剩余率
+          key === 'disk' && (colors = score > 75 ? ['#3DB779'] : (score > 50 ? ['#FE9805'] : ['#BB1144']));
+
           setPie('.prediction-item-' + host + key, [
             { label: "", data: score },
             { label: "", data: 100 - score }
@@ -254,7 +256,7 @@ define([
       // 机器连接状态
       $scope.getHostSummary = function () {
         var hostPanel = $scope._dashboard.rows[4].panels[0];
-        
+
         $scope.hostPanel.href = $scope.getUrl('/summary');
 
         $scope.summaryList = [];
@@ -375,7 +377,7 @@ define([
             host  : hostname
           };
 
-          backendSrv.getPrediction(params).then(function (response) {
+          backendSrv.getPredictionPercentage(params).then(function (response) {
             var times = ['1天后', '1周后', '1月后', '3月后', '6月后'];
             var num   = 0;
             var data  = response.data;
@@ -390,7 +392,7 @@ define([
             for (var i in data) {
               var pre  = {
                 time: times[num],
-                data: index === 1 ? $scope.percentFormatter(data[i]) : $scope.gbFormatter(data[i])
+                data: $scope.percentFormatter(data[i])
               };
 
               predictionPanel[type].tips[num] = pre;
@@ -408,7 +410,7 @@ define([
         var hostTopN = [];
         var temp = {};
         var promiseList = [];
-        
+
         var topPanels = $scope._dashboard.rows[6].panels;
         _.each(topPanels, function (panel) {
           var metric = panel.targets[0].metric;
@@ -437,7 +439,7 @@ define([
 
           _.each(temp, function (v) {
             if (!tt[v.tags.pid_cmd]) { tt[v.tags.pid_cmd] = {}; }
-            
+
             tt[v.tags.pid_cmd]["pid"] = "HOST: " + v.tags.host + "&nbsp;&nbsp;&nbsp;&nbsp;PID: " + v.tags.pid_cmd;
             tt[v.tags.pid_cmd]["host"] = v.tags.host;
 
