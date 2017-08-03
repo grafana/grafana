@@ -233,7 +233,7 @@ export class SideMenuCtrl {
     this.bottomLinks.push({
       text: "信息管理",
       icon: "fa fa-fw fa-cogs",
-      children: this.getMsgManagementMenu.bind(this),
+      children: this.getMsgManagementMenu.bind(this)(),
     });
 
     this.bottomLinks.push({
