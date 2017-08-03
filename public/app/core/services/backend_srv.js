@@ -184,14 +184,12 @@ function (angular, _, coreModule, config) {
         options.params = {};
       }
       if (self.tokens) {
-        options.url = 'http://192.168.1.102:5001' + options.url;
-        // options.url = self.alertDUrl + options.url;
+        options.url = self.alertDUrl + options.url;
         options.params.token = this.getToken();
         return this.datasourceRequest(options);
       }
       return self.updateTokens().then(function () {
-        options.url = 'http://192.168.1.102:5001' + options.url;
-        // options.url = self.alertDUrl + options.url;
+        options.url = self.alertDUrl + options.url;
         options.params.token = self.getToken();
       }).then(function () {
         if (_.isEmpty(options.params.token)) {
