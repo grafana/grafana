@@ -33,7 +33,6 @@ type CurrentUser struct {
 	OrgRole        m.RoleType `json:"orgRole"`
 	IsGrafanaAdmin bool       `json:"isGrafanaAdmin"`
 	GravatarUrl    string     `json:"gravatarUrl"`
-	SystemId       int64      `json:"systemId"`
 }
 
 type DashboardMeta struct {
@@ -56,6 +55,10 @@ type DashboardMeta struct {
 type DashboardFullWithMeta struct {
 	Meta      DashboardMeta    `json:"meta"`
 	Dashboard *simplejson.Json `json:"dashboard"`
+}
+
+type DashboardRedirect struct {
+	RedirectUri string `json:"redirectUri"`
 }
 
 type DataSource struct {

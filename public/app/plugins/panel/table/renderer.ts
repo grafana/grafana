@@ -8,7 +8,7 @@ export class TableRenderer {
   formaters: any[];
   colorState: any;
 
-  constructor(private panel, private table, private timezone) {
+  constructor(private panel, private table, private isUtc) {
     this.formaters = [];
     this.colorState = {};
   }
@@ -45,7 +45,7 @@ export class TableRenderer {
       return v => {
         if (_.isArray(v)) { v = v[0]; }
         var date = moment(v);
-        if (this.timezone === 'utc') {
+        if (this.isUtc) {
           date = date.utc();
         }
         return date.format(style.dateFormat);

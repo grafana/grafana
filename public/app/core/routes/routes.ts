@@ -90,16 +90,20 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     resolve: loadOrgBundle,
   })
   .when('/profile', {
-    templateUrl: 'public/app/features/profile/partials/profile.html',
+    templateUrl: 'public/app/features/org/partials/profile.html',
     controller : 'ProfileCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadOrgBundle,
   })
   .when('/profile/password', {
-    templateUrl: 'public/app/features/profile/partials/password.html',
+    templateUrl: 'public/app/features/org/partials/change_password.html',
     controller : 'ChangePasswordCtrl',
+    resolve: loadOrgBundle,
   })
   .when('/profile/select-org', {
-    templateUrl: 'public/app/features/profile/partials/select_org.html',
+    templateUrl: 'public/app/features/org/partials/select_org.html',
     controller : 'SelectOrgCtrl',
+    resolve: loadOrgBundle,
   })
   // ADMIN
   .when('/admin', {

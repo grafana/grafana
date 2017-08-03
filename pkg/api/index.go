@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/wangy1931/grafana/pkg/api/dtos"
+	"github.com/wangy1931/grafana/pkg/bus"
 	"github.com/wangy1931/grafana/pkg/middleware"
 	m "github.com/wangy1931/grafana/pkg/models"
 	"github.com/wangy1931/grafana/pkg/plugins"
@@ -14,6 +15,12 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		return nil, err
 	}
 
+	prefsQuery := m.GetPreferencesWithDefaultsQuery{OrgId: c.OrgId, UserId: c.UserId}
+	if err := bus.Dispatch(&prefsQuery); err != nil {
+		return nil, err
+	}
+	prefs := prefsQuery.Result
+
 	var data = dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:             c.UserId,
@@ -21,13 +28,14 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Login:          c.Login,
 			Email:          c.Email,
 			Name:           c.Name,
-			LightTheme:     c.Theme != "drak",
 			OrgId:          c.OrgId,
 			OrgName:        c.OrgName,
 			OrgRole:        c.OrgRole,
 			GravatarUrl:    dtos.GetGravatarUrl(c.Email),
 			IsGrafanaAdmin: c.IsGrafanaAdmin,
 			SystemId: 	c.SystemId,
+			LightTheme:     prefs.Theme != "drak",
+			Timezone:       prefs.Timezone,
 		},
 		Settings:           settings,
 		AppUrl:             setting.AppUrl,

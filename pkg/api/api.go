@@ -69,6 +69,7 @@ func Register(r *macaron.Macaron) {
 
 	// authed views
 	r.Get("/profile/", reqSignedIn, Index)
+	r.Get("/profile/password", reqSignedIn, Index)
 	r.Get("/org/", reqSignedIn, Index)
 	r.Get("/org/new", reqSignedIn, Index)
 	r.Get("/datasources/", reqSignedIn, Index)
@@ -143,11 +144,16 @@ func Register(r *macaron.Macaron) {
 			r.Put("/", bind(m.UpdateUserCommand{}), wrap(UpdateSignedInUser))
 			r.Post("/using/:id", wrap(UserSetUsingOrg))
 			r.Get("/orgs", wrap(GetSignedInUserOrgList))
+
 			r.Post("/stars/dashboard/:id", wrap(StarDashboard))
 			r.Delete("/stars/dashboard/:id", wrap(UnstarDashboard))
+
 			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), wrap(ChangeUserPassword))
 			r.Get("/quotas", wrap(GetUserQuotas))
       r.Get("/system",wrap(GetCurrentUserSystem))
+
+			r.Get("/preferences", wrap(GetUserPreferences))
+			r.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), wrap(UpdateUserPreferences))
 		})
 
 		r.Group("/system", func() {
@@ -185,6 +191,9 @@ func Register(r *macaron.Macaron) {
 			r.Put("/system", bind(dtos.UpdateSystems{}), wrap(UpdateSystems))
 			r.Post("/system", bind(m.AddSystemsCommand{}), wrap(AddNewSystems))
 			r.Get("/system", wrap(GetSystemsForCurrentOrg))
+			// prefs
+			r.Get("/preferences", wrap(GetOrgPreferences))
+			r.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), wrap(UpdateOrgPreferences))
 		}, reqOrgAdmin)
 
 		// create new org
@@ -220,6 +229,11 @@ func Register(r *macaron.Macaron) {
 			r.Post("/", quota("api_key"), bind(m.AddApiKeyCommand{}), wrap(AddApiKey))
 			r.Delete("/:id", wrap(DeleteApiKey))
 		}, reqOrgAdmin)
+
+		// Preferences
+		r.Group("/preferences", func() {
+			r.Post("/set-home-dash", bind(m.SavePreferencesCommand{}), wrap(SetHomeDashboard))
+		})
 
 		// Data sources
 		r.Group("/datasources", func() {

@@ -274,7 +274,6 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 	                u.email        as email,
 	                u.login        as login,
 									u.name         as name,
-									u.theme        as theme,
 	                org.name       as org_name,
 	                org_user.role  as org_role,
 	                org.id         as org_id

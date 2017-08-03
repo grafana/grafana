@@ -74,6 +74,10 @@
   float: left;
   white-space: nowrap;
   padding-left: 10px;
+
+  &--right-y {
+    float: right;
+  }
 }
 
 .graph-legend-value {
@@ -93,10 +97,17 @@
     display: table-row;
     float: none;
     padding-left: 0;
-    &.pull-right {
+    &--right-y {
       float: none;
+
+      .graph-legend-alias:after {
+        content: '(right-y)';
+        padding: 0 5px;
+        color: $text-color-weak;
+      }
     }
   }
+
 
   td, .graph-legend-alias, .graph-legend-icon, .graph-legend-value {
     float: none;

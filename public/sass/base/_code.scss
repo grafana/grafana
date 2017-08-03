@@ -11,28 +11,28 @@ pre {
   background-color: $code-tag-bg;
   color: $text-color;
   border: 1px solid darken($code-tag-bg, 15%);
-  padding: 2px;
+  padding: 10px;
+  border-radius: 4px;
 }
 
 // Inline code
 code {
-  color: #d14;
-  background-color: #f7f7f9;
-  border: 1px solid #e1e1e8;
+  color: $text-color;
+  background-color: $code-tag-bg;
+  border: 1px solid darken($code-tag-bg, 15%);
   white-space: nowrap;
 }
 
 // Blocks of code
 pre {
   display: block;
-  margin: 0 0 $line-height-base / 2;
-  font-size: $font-size-base - 1; // 14px to 13px
+  margin: 0 0 $line-height-base;
   line-height: $line-height-base;
   word-break: break-all;
   word-wrap: break-word;
   white-space: pre;
   white-space: pre-wrap;
-  background-color: #f5f5f5;
+  background-color: $code-tag-bg;
 
   // Make prettyprint styles more spaced out for readability
   &.prettyprint {

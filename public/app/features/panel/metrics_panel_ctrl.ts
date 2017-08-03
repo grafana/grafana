@@ -165,6 +165,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   issueQueries(datasource) {
     this.updateTimeRange();
+    this.datasource = datasource;
 
     if (!this.panel.targets || this.panel.targets.length === 0) {
       return this.$q.when([]);
@@ -262,7 +263,6 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   addDataQuery(datasource) {
     var target = {
-      datasource: datasource ? datasource.name : undefined
     };
     this.panel.targets.push(target);
   }

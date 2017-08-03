@@ -9,7 +9,7 @@ function (angular, $, _, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function(alertSrv)  {
+  module.factory('dashboardSrv', function(contextSrv, alertSrv)  {
 
     function DashboardModel (data, meta) {
       if (!data) {
@@ -27,7 +27,7 @@ function (angular, $, _, moment) {
       this.originalTitle = this.title;
       this.tags = data.tags || [];
       this.style = data.style || "dark";
-      this.timezone = data.timezone || 'browser';
+      this.timezone = data.timezone || '';
       this.editable = data.editable !== false;
       this.hideControls = data.hideControls || false;
       this.sharedCrosshair = data.sharedCrosshair || false;
@@ -208,6 +208,14 @@ function (angular, $, _, moment) {
           return other.refId !== refId;
         });
       });
+    };
+
+    p.isTimezoneUtc = function() {
+      return this.getTimezone() === 'utc';
+    };
+
+    p.getTimezone = function() {
+      return this.timezone ? this.timezone : contextSrv.user.timezone;
     };
 
     p._updateSchema = function(old) {

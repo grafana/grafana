@@ -1,4 +1,19 @@
-# 3.0.0 (unrelased master branch)
+# 3.0.0-beta2 (unreleased)
+
+### New Features (introduces since 3.0-beta1)
+* **Preferences**: Set home dashboard on user and org level, closes [#1678](https://github.com/grafana/grafana/issues/1678)
+* **Preferences**: Set timezone on user and org level, closes [#3214](https://github.com/grafana/grafana/issues/3214), [#1200](https://github.com/grafana/grafana/issues/1200)
+* **Preferences**: Set theme on user and org level, closes [#3214](https://github.com/grafana/grafana/issues/3214), [#1917](https://github.com/grafana/grafana/issues/1917)
+
+### Bug fixes
+* **Dashboard**: Fixed dashboard panel layout for mobile devices, fixes [#4529](https://github.com/grafana/grafana/issues/4529)
+* **Table Panel**: Fixed issue with table panel sort, fixes [#4532](https://github.com/grafana/grafana/issues/4532)
+* **Page Load Crash**: A Datasource with null jsonData would make Grafana fail to load page, fixes [#4536](https://github.com/grafana/grafana/issues/4536)
+* **Metrics tab**: Fix for missing datasource name in datasource selector, fixes [#4540](https://github.com/grafana/grafana/issues/4540)
+* **Graph**: Fix legend in table mode with series on right-y axis, fixes [#4551](https://github.com/grafana/grafana/issues/4551), [#1145](https://github.com/grafana/grafana/issues/1145)
+* **Password**: Password reset link/page did not work, fixes [#4542](https://github.com/grafana/grafana/issues/4542)
+
+# 3.0.0-beta1 (2016-03-31)
 
 ### New Features
 * **Playlists**: Playlists can now be persisted and started from urls, closes [#3655](https://github.com/grafana/grafana/issues/3655)
