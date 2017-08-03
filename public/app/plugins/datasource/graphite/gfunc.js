@@ -659,6 +659,18 @@ function (_, $) {
     defaultParams: [0, 'search', 'replace']
   });
 
+  ////////////////////
+  // Graphite 1.0.x //
+  ////////////////////
+
+  addFuncDef({
+    name: 'aggregateLine',
+    category: categories.Combine,
+    params: [{ name: "func", type: "select", options: ['sum', 'avg', 'min', 'max', 'last']}],
+    defaultParams: ['avg'],
+    version: '1.0'
+  });
+
   _.each(categories, function(funcList, catName) {
     categories[catName] = _.sortBy(funcList, 'name');
   });

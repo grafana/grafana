@@ -20,11 +20,13 @@ function (angular, _, $, gfunc) {
 
       return {
         link: function($scope, elem) {
-          var categories = gfunc.getCategories();
-          var allFunctions = getAllFunctionNames(categories);
           var ctrl = $scope.ctrl;
+          var graphiteVersion = ctrl.datasource.graphiteVersion;
 
-          $scope.functionMenu = createFunctionDropDownMenu(categories);
+          var categories = gfunc.getCategories();
+          var allFunctions = getAllFunctionNames(categories, graphiteVersion);
+
+          $scope.functionMenu = createFunctionDropDownMenu(categories, graphiteVersion);
 
           var $input = $(inputTemplate);
           var $button = $(buttonTemplate);
@@ -83,26 +85,43 @@ function (angular, _, $, gfunc) {
       };
     });
 
-  function getAllFunctionNames(categories) {
+  function getAllFunctionNames(categories, graphiteVersion) {
     return _.reduce(categories, function(list, category) {
       _.each(category, function(func) {
-        list.push(func.name);
+        if (isVersionRelatedFunction(func, graphiteVersion)) {
+          list.push(func.name);
+        }
       });
       return list;
     }, []);
   }
 
-  function createFunctionDropDownMenu(categories) {
+  function createFunctionDropDownMenu(categories, graphiteVersion) {
     return _.map(categories, function(list, category) {
+      var versionRelatedList = _.filter(list, function(func) {
+        return isVersionRelatedFunction(func, graphiteVersion);
+      });
+      var submenu = _.map(versionRelatedList, function(value) {
+        return {
+          text: value.name,
+          click: "ctrl.addFunction('" + value.name + "')",
+        };
+      });
+
       return {
         text: category,
-        submenu: _.map(list, function(value) {
-          return {
-            text: value.name,
-            click: "ctrl.addFunction('" + value.name + "')",
-          };
-        })
+        submenu: submenu
       };
     });
+  }
+
+  function isVersionRelatedFunction(func, graphiteVersion) {
+    return isVersionGreaterOrEqual(graphiteVersion, func.version) || !func.version;
+  }
+
+  function isVersionGreaterOrEqual(a, b) {
+    var a_num = Number(a);
+    var b_num = Number(b);
+    return a_num >= b_num;
   }
 });
