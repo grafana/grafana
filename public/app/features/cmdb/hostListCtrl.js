@@ -12,7 +12,7 @@ define([
       $scope.searchHost = '';
       $scope.order = "'hostname'";
       $scope.desc = false;
-      $scope.refreshTxt = '刷新';
+      $scope.refreshTxt = '扫描';
       backendSrv.alertD({url:'/cmdb/host'}).then(function(result) {
         $scope.hosts = result.data;
         _.map($scope.hosts, function(host) {
@@ -49,10 +49,10 @@ define([
       backendSrv.alertD({url:'/cmdb/scan', method: 'post'}).then(function(response) {
         if(response.status == 200) {
           $scope.appEvent('alert-success', ['扫描成功','请刷新查看列表']);
-          $scope.refreshTxt = '刷新';
+          $scope.refreshTxt = '扫描';
         }
       }, function(err) {
-        $scope.refreshTxt = '刷新';
+        $scope.refreshTxt = '扫描';
       });
     };
 
