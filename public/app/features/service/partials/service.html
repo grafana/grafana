@@ -1,0 +1,67 @@
+<topnav section="服务依赖状态" icon="fa fa-fw fa-cubes"></topnav>
+
+<div class="page-container service-status" style="padding-left:20px;">
+<!--surface-id="serviceSurface"-->
+    <div class="service-status-canvas" style="width:50%; float:left;">
+        <div class="jtk-demo-canvas">
+            <jsplumb-toolkit init="init"
+                             render-params="renderParams"
+                             jtk-id="serviceToolkit"
+                             style="width:100%;height:100%;position:relative;margin:0">
+            </jsplumb-toolkit>
+        </div>
+        <script type="text/ng-template" id="node_template.tpl">
+            <div>
+                <div class="name">
+                    <i class="{{node.icon}} status-{{node.status | lowercase}}"></i>
+                    <span>{{node.name}}</span>
+                </div>
+            </div>
+            <jtk-source filter=".connect"></jtk-source>
+            <jtk-target></jtk-target>
+        </script>
+    </div>
+
+    <div class="service-status-panel" ng-if="service.hostStatusMap">
+        <h4>当前服务：{{service.name}}</h4>
+        <div class="host-head">
+          <span class="pull-left">机器名称</span>
+          <span class="pull-right">机器状态</span>
+          <div class="clearfix"></div>
+        </div>
+        <div class="accordion host-list" id="accordion2">
+            <div class="accordion-group host-item" ng-repeat="(name, host) in service.hostStatusMap">
+              <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#{{$index}}" ng-click="selectHost($index, host.hostName);">
+                  <h4>
+                    <span class="pull-left">
+                      <i class="fa btn btn-primary" ng-class="{true: 'fa-minus', false: 'fa-plus'}[$index == selected]"></i>
+                      <span>{{host.hostName}}</span>
+                    </span>
+                    <span class="pull-right"><em class="host-status status-{{host.healthStatusType | lowercase}}"> </em></span>
+                    <div class="clearfix"></div>
+                  </h4>
+                </a>
+              </div>
+              <div id="{{$index}}" class="accordion-body collapse">
+                <div class="accordion-inner">
+                  <ul class="item-type">
+                    <li ng-repeat="(name, item) in host.itemStatusMap" ng-click="selectHealthItemType(host.hostName, item.type)" class="status-{{item.healthStatusType | lowercase}}">{{item.type | formatItemType}}</li>
+                  </ul>
+                  <div ng-if="host.healthStatusType !== 'GREY'">
+                    <p>{{currentItem}} 重要指标：</p>
+                    <p ng-if="currentItem == 'ServiceState'">该服务进程运行正常...</p>
+                    <table-loader key={{host.hostName}}></table-loader>
+                  </div>
+                  <div ng-if="host.healthStatusType === 'GREY'">
+                    <p>探针没有收集到数据 或 机器没有正常工作</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+    </div>
+
+    <div class="clearfix"></div>
+
+</div>

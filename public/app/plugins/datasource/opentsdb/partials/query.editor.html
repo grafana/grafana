@@ -135,11 +135,11 @@
 
 		<li ng-show="addTagMode">
 			<input type="text" class="input-small tight-form-input" spellcheck='false'
-			 bs-typeahead-old="suggestMetrics" data-min-length=0 data-items=100
+			 bs-typeahead-old="suggestTagKeys" data-min-length=0 data-items=100
 			ng-model="target.currentTagKey" placeholder="key"></input>
 
 			<input type="text" class="input-small tight-form-input"
-			spellcheck='false' bs-typeahead-old="suggestMetrics" 
+			spellcheck='false' bs-typeahead-old="suggestTagValues" 
 			data-min-length=0 data-items=100 ng-model="target.currentTagValue" placeholder="value">
 			</input>
 			<a ng-click="addTag()">

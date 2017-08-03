@@ -38,6 +38,11 @@ define([
         controller: 'ServiceCtrl',
         reloadOnSearch: false,
       })
+      .when('/service_v2', {
+        templateUrl: 'app/features/service/partials/service.html',
+        controller: 'ServiceStatusCtrl',
+        reloadOnSearch: true,
+      })
       .when('/dashboard/:type/:slug', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'LoadDashboardCtrl',
@@ -303,6 +308,11 @@ define([
         templateUrl: 'app/features/cmdb/partials/service_detail.html',
         controller : 'ServiceDetailCtrl',
         resolve: loadCMDBBundle
+      })
+      .when('/service_dependency', {
+        templateUrl: 'app/features/service/partials/service_dep.html',
+        controller : 'BuildDependCtrl',
+        reloadOnSearch: true
       })
       .otherwise({
         templateUrl: 'app/partials/error.html',

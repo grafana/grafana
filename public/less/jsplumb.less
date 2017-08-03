@@ -1,0 +1,624 @@
+/* 
+    Default styles for jsPlumb Toolkit
+
+    Copyright 2017 https://jsplumbtoolkit.com
+*/
+
+/* --------------------------------------------------------------------------------------------- */
+/* --- SURFACE WIDGET -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
+
+/*
+    Assigned to every Node managed by an instance of the Toolkit. They are required to be positioned absolute, to
+    enable dragging to work properly.
+*/
+.jtk-node {
+    position: absolute;
+}
+
+/*
+    Assigned to every Group managed by an instance of the Toolkit. They are required to be positioned absolute, to
+    enable dragging to work properly. We set overflow:visible on Group elements too, as a drag outside of the bounds
+    is automatically reverted anyway, and without overflow:visible you cannot drag a node to some other element. You can
+    also drag a node out of the element's viewport and if you drop it you can never get it back.
+*/
+.jtk-group {
+    position: absolute;
+    overflow: visible;
+}
+
+/*
+
+    This is the attribute used to mark which part of a Group DOM element should contain the child Nodes. We mark it
+    as having `position:relative` so that the absolute positioned Nodes are drawn correctly.
+*/
+[jtk-group-content] {
+    position:relative;
+}
+
+/*
+    This style was created in response to this Chrome bug:
+    http://stackoverflow.com/questions/13758215/artifacts-when-css-scaled-in-chrome
+
+    Basically it's about how sometimes there can be artefacts left on screen when the user drags an element. It seems
+    the issue has been fixed in more recent versions of Chrome, but the style is left here in case you come across
+    the problem.
+*/
+.jtk-node.jtk-drag {
+    /*-webkit-backface-visibility: hidden;*/
+}
+
+/*
+    Assigned to an element that is the `Container` in a `render` call.
+    Elements that are acting as Surface widgets should have overflow:hidden set to prevent libs from
+    scrolling them during drag (we don't want scrollbars; we have an infinite canvas). Position is set to
+    `relative` as this is the parent for nodes, which are positioned absolute (and for absolute positioning
+    to work, you need to ensure the parent node has `position:relative`). This style also sets some default
+    values for the cursor - using a `grab` cursor where supported.
+*/
+.jtk-surface {
+    overflow: hidden !important;
+    position: relative;
+    cursor: move;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+
+    /*
+        For IE10+. As discussed on this page:
+
+        https://msdn.microsoft.com/en-us/library/ie/jj583807(v=vs.85).aspx
+
+        Microsoft have very helpfully implemented default behaviours for a bunch of touch events and
+        then consumed the events so you don't have to be bothered by them. They've "done a lot of research"
+        about this stuff and put together a really great default experience for everyone in the entire world.
+    */
+    touch-action:none;
+
+    /*
+        Another Chrome issue that appears to have been fixed in later versions
+        http://stackoverflow.com/questions/15464055/css-transition-effect-makes-image-blurry-moves-image-1px-in-chrome
+    */
+    /*
+    -webkit-backface-visibility: hidden;
+    -webkit-transform: translateZ(0) scale(1.0, 1.0);
+    */
+}
+
+/*
+    Assigned to the surface when it is being panned. The default is to change the cursor (in browsers that support
+    a `grabbing` cursor), and to disable text selection.
+*/
+.jtk-surface-panning {
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/*
+    The work area in a surface renderer.
+*/
+.jtk-surface-canvas {
+    overflow: visible !important;
+}
+
+/*
+    For IE10+. Discussed above in the .jtk-surface styles. This one is specific to elements that are configured
+    to be droppable on a Surface via its `registerDroppableNodes` method.
+*/
+.jtk-surface-droppable-node {
+    touch-action:none;
+}
+
+/*
+    Assigned to a Surface widget when panning is disabled (and therefore the app is relying on scrollbars when the content overflows).
+*/
+.jtk-surface-nopan {
+    overflow: scroll !important;
+    cursor:default;
+}
+
+/*
+Assigned to tile images in a tiled background
+*/
+.jtk-surface-tile {
+    border:none;
+    outline:none;
+    margin:0;
+    -webkit-transition: opacity .3s ease .15s;
+    -moz-transition: opacity .3s ease .15s;
+    -o-transition: opacity .3s ease .15s;
+    -ms-transition: opacity .3s ease .15s;
+    transition: opacity .3s ease .15s;
+}
+
+/*
+    Assigned to the element used for node select with the mouse ("lasso").
+*/
+.jtk-lasso {
+    border: 2px solid rgb(49, 119, 184);
+    background-color: WhiteSmoke;
+    opacity: 0.5;
+    display: none;
+    z-index: 20000;
+    position: absolute;
+}
+
+/*
+    This class is added to the document body on lasso drag start and removed at the end of lasso dragging. Its purpose
+    is to switch off text selection on all elements while the user is dragging the lasso.
+*/
+.jtk-lasso-select-defeat * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/**
+    Added to the lasso mask when it is operating in 'inverted' mode, ie. the excluded parts of the UI are covered, rather
+    than the normal mode in which the selected parts of the UI are covered.
+*/
+.jtk-lasso-mask {
+    position:fixed;
+    z-index:20000;
+    display:none;
+    opacity:0.5;
+    background-color: #07234E;
+    top:0;
+    bottom:0;
+    left:0;
+    right:0;
+}
+
+/*
+    Assigned to some element that has been selected (either via lasso or programmatically).
+*/
+.jtk-surface-selected-element {
+    border: 2px dashed #f76258 !important;
+}
+
+/*
+    Assigned to all pan buttons in a surface widget.
+*/
+.jtk-surface-pan {
+    background-color: Azure;
+    opacity: 0.4;
+    text-align: center;
+    cursor: pointer;
+    z-index: 2;
+    -webkit-transition: background-color 0.15s ease-in;
+    -moz-transition: background-color 0.15s ease-in;
+    -o-transition: background-color 0.15s ease-in;
+    transition: background-color 0.15s ease-in;
+}
+
+/*
+    Specific styles for the top and bottom pan buttons.
+    Top/bottom are 100% width and 20px high by default
+*/
+.jtk-surface-pan-top, .jtk-surface-pan-bottom {
+    width: 100%;
+    height: 20px;
+}
+
+/*
+    Hover styles for all pan buttons.
+    On hover, change color, background color, font weight and opacity.
+*/
+.jtk-surface-pan-top:hover, .jtk-surface-pan-bottom:hover, .jtk-surface-pan-left:hover, .jtk-surface-pan-right:hover {
+    opacity: 0.6;
+    background-color: rgb(49, 119, 184);
+    color: white;
+    font-weight: bold;
+}
+
+/*
+    Specific styles for the left and right pan buttons.
+    Left/right pan buttons are 100% height and 20px wide
+*/
+.jtk-surface-pan-left, .jtk-surface-pan-right {
+    width: 20px;
+    height: 100%;
+    line-height: 40;
+}
+
+
+/*
+    Assigned to a pan button when the user is pressing it.
+*/
+.jtk-surface-pan-active, .jtk-surface-pan-active:hover {
+    background-color: #f76258;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+/* --- MINIVIEW WIDGET ------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------------------------- */
+
+/*
+    Assigned to an element that is acting as a Miniview.
+    As with Surface, Miniview elements should have overflow:hidden set to prevent
+    libs from scrolling them during drag. This style also provides a default width/height for a miniview,
+    which you may wish to override.
+*/
+.jtk-miniview {
+    overflow: hidden !important;
+    width: 125px;
+    height: 125px;
+    position: relative;
+    background-color: #B2C9CD;
+    border: 1px solid #E2E6CD;
+    border-radius: 4px;
+    opacity: 0.8;
+}
+
+/* 
+    Assigned to the element that shows the size of the related viewport in a Miniview widget, and which can be dragged to
+    move the surface.
+*/
+.jtk-miniview-panner {
+    border: 5px dotted WhiteSmoke;
+    opacity: 0.4;
+    background-color: rgb(79, 111, 126);
+    cursor: move;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}
+
+/*
+    Assigned to the miniview's panner when it is being dragged.
+*/
+.jtk-miniview-panning {
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+}
+
+/*
+    Added to all elements displayed in a miniview.
+*/
+.jtk-miniview-element {
+    background-color: rgb(96, 122, 134);
+    position: absolute;
+}
+
+/*
+    Added to Group elements displayed in a miniview
+*/
+.jtk-miniview-group-element {
+    background: transparent;
+    border: 2px solid rgb(96,122,134);
+}
+
+/*
+    Assigned to the collapse/expand miniview button
+*/
+.jtk-miniview-collapse {
+    color: whiteSmoke;
+    position: absolute;
+    font-size: 18px;
+    top: -1px;
+    right: 3px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/*
+    The '-' symbol when the miniview is expanded
+*/
+.jtk-miniview-collapse:before {
+    content: "\2012";
+}
+
+/*
+    Assigned to the miniview element when it is collapsed.
+*/
+.jtk-miniview-collapsed {
+    background-color: #449ea6;
+    border-radius: 4px;
+    height: 22px;
+    margin-right: 0;
+    padding: 4px;
+    width: 21px;
+}
+
+/*
+    Hide all children of the miniview (except the expand button) when it is collapsed so you don't see anything
+    poking through under the + icon.
+*/
+.jtk-miniview-collapsed .jtk-miniview-element, .jtk-miniview-collapsed .jtk-miniview-panner {
+    visibility: hidden;
+}
+
+/*
+    The '+' symbol when the miniview is collapsed.
+*/
+.jtk-miniview-collapsed .jtk-miniview-collapse:before {
+    content: "+";
+}
+
+/*
+    Hover state for the collapse/expand icon.
+*/
+.jtk-miniview-collapse:hover {
+    color: #E4F013;
+}
+
+/* ------------------------------------------------------------------------------------------- */
+/* --- DIALOGS --------------------------------------------------------------------------------*/
+/* ------------------------------------------------------------------------------------------- */
+
+/*
+    This is the element that acts as the dialog underlay - the modal "mask". Note the high z-index default
+    set here (and note also the overlay style below has a z-index with a value higher by one).
+*/
+.jtk-dialog-underlay {
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    position: fixed;
+    z-index: 100000;
+    opacity: 0.8;
+    background-color: #CCC;
+    display: none;
+}
+
+/*
+    This is the element that acts as the parent for dialog content.
+*/
+.jtk-dialog-overlay {
+    position: fixed;
+    z-index: 100001;
+    display: none;
+    background-color: white;
+    font-family: "Open Sans", sans-serif;
+    padding: 7px;
+    box-shadow: 0 0 5px gray;
+    overflow: hidden;
+}
+
+.jtk-dialog-overlay-x {
+    max-height:0;
+    transition: max-height 0.5s ease-in;
+    -moz-transition: max-height 0.5s ease-in;
+    -ms-transition: max-height 0.5s ease-in;
+    -o-transition: max-height 0.5s ease-in;
+    -webkit-transition: max-height 0.5s ease-in;
+}
+
+.jtk-dialog-overlay-y {
+    max-width:0;
+    transition: max-width 0.5s ease-in;
+    -moz-transition: max-width 0.5s ease-in;
+    -ms-transition: max-width 0.5s ease-in;
+    -o-transition: max-width 0.5s ease-in;
+    -webkit-transition: max-width 0.5s ease-in;
+}
+
+.jtk-dialog-overlay-top {
+    top:20px;
+}
+
+.jtk-dialog-overlay-bottom {
+    bottom:20px;
+}
+
+.jtk-dialog-overlay-left {
+    left:20px;
+}
+
+.jtk-dialog-overlay-right {
+    right:20px;
+}
+
+.jtk-dialog-overlay-x.jtk-dialog-overlay-visible {
+    max-height:1000px;
+}
+
+.jtk-dialog-overlay-y.jtk-dialog-overlay-visible {
+    max-width:1000px;
+}
+
+/*
+    The element containing buttons in a dialog.
+*/
+.jtk-dialog-buttons {
+    text-align: right;
+    margin-top: 5px;
+}
+
+/*
+    An individual button in a dialog.
+*/
+.jtk-dialog-button {
+    border: none;
+    cursor: pointer;
+    margin-right: 5px;
+    min-width: 56px;
+    background-color: white;
+    outline: 1px solid #ccc;
+}
+
+/*
+    Hover style for an individual button in a dialog.
+*/
+.jtk-dialog-button:hover {
+    color: white;
+    background-color: #234b5e;
+}
+
+/*
+    The titlebar of a dialog.
+*/
+.jtk-dialog-title {
+    text-align: left;
+    font-size: 14px;
+    margin-bottom: 9px;
+}
+
+.jtk-dialog-content {
+    font-size:12px;
+    text-align:left;
+    min-width:250px;
+    margin: 0 14px;
+}
+
+.jtk-dialog-content ul {
+    width:100%;
+    padding-left:0;
+}
+
+.jtk-dialog-content label {
+    cursor: pointer;
+    font-weight: inherit;
+}
+
+.jtk-dialog-overlay input, .jtk-dialog-overlay textarea {
+    background-color: #FFF;
+    border: 1px solid #CCC;
+    color: #333;
+    font-size: 14px;
+    font-style: normal;
+    outline: none;
+    padding: 6px 4px;
+    margin-right: 6px;
+}
+
+.jtk-dialog-overlay input:focus, .jtk-dialog-overlay textarea:focus {
+    background-color: #cbeae1;
+    border: 1px solid #83b8a8;
+    color: #333;
+    font-size: 14px;
+    font-style: normal;
+    outline: none;
+}
+
+/* -------------------------------------------------------------------------------------------- */
+/* --- DRAWING TOOLS -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------------------------- */
+
+/*
+    Assigned to the element that is drawn around some other element when a drawing operation is taking place.
+*/
+.jtk-draw-skeleton {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    outline: 2px solid #84acb3;
+    opacity: 0.8;
+}
+
+/*
+    Assigned to every handle (top left, top right, bottom left, bottom right, center) in a draw skeleton.
+*/
+.jtk-draw-handle {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    background-color: #84acb3;
+}
+
+/*
+    Assigned to the top left handle in a draw skeleton
+*/
+.jtk-draw-handle-tl {
+    left: 0;
+    top: 0;
+    cursor: nw-resize;
+}
+
+/*
+    Assigned to the top right handle in a draw skeleton
+*/
+.jtk-draw-handle-tr {
+    right: 0;
+    top: 0;
+    cursor: ne-resize;
+}
+
+/*
+    Assigned to the bottom left handle in a draw skeleton
+*/
+.jtk-draw-handle-bl {
+    left: 0;
+    bottom: 0;
+    cursor: sw-resize;
+}
+
+/*
+    Assigned to the bottom right handle in a draw skeleton
+*/
+.jtk-draw-handle-br {
+    bottom: 0;
+    right: 0;
+    cursor: se-resize;
+}
+
+/*
+    Assigned to the center handle in a draw skeleton (the handle by which the element may be dragged). This is
+    not visible by defaut; enable if you need it.
+*/
+.jtk-draw-drag {
+    display:none;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    margin-left: -10px;
+    margin-top: -10px;
+    width: 20px;
+    height: 20px;
+    background-color: #84acb3;
+    cursor: move;
+}
+
+/*
+    This class is added to the document body on drag resize start and removed at the end of resizing. Its purpose
+    is to switch off text selection on all elements while the user is resizing an element.
+*/
+.jtk-drag-select-defeat * {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.jtk-bezier-handle {
+    width:15px;
+    height:15px;
+    border-radius:50%;
+    background-color:darkcyan;
+    cursor:move;
+    z-index:10;
+}
+
+.jtk-bezier-handle-secondary {
+    cursor:default;
+    background-color:lightgreen;
+}
+
+.jtk-bezier-handle-secondary-source {
+    background-color: lavenderblush;
+}
+
+.jtk-bezier-guideline {
+    position:absolute;
+}
+
+.jtk-bezier-guideline path {
+    stroke:darkcyan;
+    stroke-linewidth:3;
+}
+
+.jtk-connection-edit path {
+    stroke-dasharray:2 2;
+}
