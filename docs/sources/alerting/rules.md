@@ -32,9 +32,7 @@ of core Grafana. Only some data soures are supported right now. They include `Gr
 
 ### Clustering
 
-We have not implemented clustering yet. So if you run multiple instances of grafana-server
-you have to make sure [execute_alerts]({{< relref "installation/configuration.md#alerting" >}})
-is true on only one instance or otherwise you will get duplicated notifications.
+Currently alerting supports a limited form of high availability. Since v4.2.0 of Grafana, alert notifications are deduped when running multiple servers. This means all alerts are executed on every server but no duplicate alert notifications are sent due to the deduping logic. Proper load balancing of alerts will be introduced in the future.
 
 <div class="clearfix"></div>
 
