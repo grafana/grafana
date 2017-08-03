@@ -6,8 +6,9 @@
 
             <div class="summary-panel view-panel">
                 <div class="health-panel panels-wrapper">
-                    <h3 ng-click="showModal(0)" style="cursor: pointer;" bs-tooltip="'点击查看历史指数'">
-                        健康指数趋势<tip>健康值=(告警指标个数/定义规则总数)*50% + (异常指标/所有指标) * 50%</tip>
+                    <h3>
+                        <a href="javascript:;" ng-click="showModal(0)" bs-tooltip="'点击查看历史指数'">健康指数趋势</a>
+                        <tip>健康值=(告警指标个数/定义规则总数)*50% + (异常指标/所有指标) * 50%</tip>
                     </h3>
                     <div style="position: absolute; bottom: 25%; left: 40%; font-weight: bold;">
                         <span style="font-size: 38px;">{{healthPanel.score}}</span>
@@ -53,7 +54,9 @@
 
             <div class="detail-panel view-panel">
                 <div class="service-panel panels-wrapper">
-                    <h3>服务状态</h3>
+                    <h3>
+                        <a href="{{servicePanel.href}}">服务状态</a>
+                    </h3>
                     <div class="mention center">
                         <span><em class="bg-success"></em>正常</span>
                         <span><em class="bg-warn"></em>告警</span>
@@ -81,7 +84,9 @@
                     </script>
                 </div>
                 <div class="host-panel panels-wrapper" >
-                    <h3>机器连接状态</h3>
+                    <h3>
+                        <a href="{{hostPanel.href}}">机器状态</a>
+                    </h3>
                     <em ng-if="!hostPanel.currentService.name">点击上图某个服务，查看服务详情</em>
                     <div class="mention">
                         <button type="button" ng-if="hostPanel.currentService.name"
