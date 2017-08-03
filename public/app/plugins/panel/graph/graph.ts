@@ -588,7 +588,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           if (axis.ticks[axis.ticks.length - 1] > axis.max) {
             axis.max = axis.ticks[axis.ticks.length - 1];
           }
-          axis.tickDecimals = decimalPlaces(min);
         } else {
           axis.ticks = [1, 2];
           delete axis.min;
