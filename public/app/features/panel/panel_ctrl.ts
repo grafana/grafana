@@ -145,7 +145,7 @@ export class PanelCtrl {
     menu.push({text: 'Share', click: 'ctrl.sharePanel();', icon: "fa fa-fw fa-share", shortcut: "p s"});
 
     let extendedMenu = this.getExtendedMenu();
-    menu.push({text: 'Actions', click: 'ctrl.removePanel();', icon: "fa fa-fw fa-cube", submenu: extendedMenu});
+    menu.push({text: 'More ...', click: 'ctrl.removePanel();', icon: "fa fa-fw fa-cube", submenu: extendedMenu});
 
     if (!this.fullscreen) {
       menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor', icon: "fa fa-fw fa-copy" });

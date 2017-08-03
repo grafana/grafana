@@ -41,7 +41,6 @@ div.flot-text {
 .panel-container {
   background-color: $panel-bg;
   position: relative;
-  border: $panel-border;
 
   &.panel-transparent {
     background-color: transparent;
@@ -55,7 +54,6 @@ div.flot-text {
 
 .panel-title-container {
   min-height: 9px;
-  padding: 2px 0;
   cursor: move;
   word-wrap: break-word;
   display: block;
@@ -67,6 +65,15 @@ div.flot-text {
   position: relative;
   width: 100%;
   display: block;
+  padding-bottom: 2px;
+}
+
+.panel-title-text {
+  cursor: pointer;
+
+  &:hover {
+    color: $link-hover-color;
+  }
 }
 
 .panel-menu-container {
@@ -77,6 +84,17 @@ div.flot-text {
   color: $text-color-weak;
   cursor: pointer;
   padding: 3px 5px;
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 0;
+  top: 0;
+
+  &:hover {
+    color: $link-hover-color;
+  }
 }
 
 .panel-loading {
@@ -84,19 +102,16 @@ div.flot-text {
   top: -3px;
   right: 0px;
   z-index: 800;
+  font-size: $font-size-sm;
+  color: $text-color-weak;
 }
 
 .panel-header {
   text-align: center;
 
   &:hover {
-    background: $panel-header-hover-bg;
-
-    .panel-menu-toggle {
-      color: $text-color;
-      background: $panel-header-menu-hover-bg;
-    }
-
+    transition: background-color 0.1s ease-in-out;
+    background-color: $panel-header-hover-bg;
   }
 }
 
@@ -178,9 +193,19 @@ div.flot-text {
   box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236,10.8)
 }
 
-// .panel-hover-highlight  {
-//   box-shadow: inset 0 1px 1px rgba(0,0,0,0.025), 0 0 1px rgba(82,168,236,0.5)
-// }
+.panel-hover-highlight  {
+  .panel-menu-toggle {
+    visibility: visible;
+    transition: opacity 0.1s ease-in 0.2s;
+    opacity: 1;
+  }
+
+  .resize-panel-handle {
+    visibility: visible;
+    transition: opacity 0.1s ease-in 0.2s;
+    opacity: 1;
+  }
+}
 
 .on-drag-hover {
   .panel-container {
@@ -190,6 +215,7 @@ div.flot-text {
 
 .panel-drop-zone {
   display: none;
+
   .panel-container {
     border: $panel-border;
     display: flex;
@@ -227,7 +253,8 @@ div.flot-text {
   right: 0;
   width: 15px;
   height: 15px;
-  display: block;
+  visibility: hidden;
+  opacity: 0;
   color: $text-color-faint;
 
   &:before {

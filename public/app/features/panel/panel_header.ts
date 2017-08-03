@@ -103,11 +103,6 @@ function panelHeader($compile) {
           evt.stopPropagation();
           elem.find('[data-toggle=dropdown]').dropdown('toggle');
         }
-
-        // var toggleAttribute = evt.getAttribute('data-toggle');
-        // if (!toggleAttribute) {
-        //   elem.find('[data-toggle=dropdown]').click();
-        // }
       });
     }
   };
