@@ -6,6 +6,7 @@ import angular from 'angular';
 import $ from 'jquery';
 import {profiler} from 'app/core/profiler';
 import Remarkable from 'remarkable';
+import {contextSrv} from 'app/core/core';
 
 const TITLE_HEIGHT = 25;
 const EMPTY_TITLE_HEIGHT = 9;
@@ -144,14 +145,16 @@ export class PanelCtrl {
     menu.push({text: 'Edit', click: 'ctrl.editPanel();', role: 'Editor', icon: "fa fa-fw fa-edit", shortcut: "e"});
     menu.push({text: 'Share', click: 'ctrl.sharePanel();', icon: "fa fa-fw fa-share", shortcut: "p s"});
 
-    let extendedMenu = this.getExtendedMenu();
-    menu.push({text: 'More ...', click: 'ctrl.removePanel();', icon: "fa fa-fw fa-cube", submenu: extendedMenu});
-
     if (!this.fullscreen) {
       menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor', icon: "fa fa-fw fa-copy" });
     }
 
-    menu.push({text: 'Remove', click: 'ctrl.removePanel();', icon: "fa fa-fw fa-trash", shortcut: "p r"});
+    menu.push({divider: true});
+    menu.push({text: 'Remove', click: 'ctrl.removePanel();', role: 'Editor', icon: "fa fa-fw fa-trash", shortcut: "p r"});
+    menu.push({divider: true, role: 'Editor'});
+
+    let extendedMenu = this.getExtendedMenu();
+    menu.push({text: 'More ...', click: 'ctrl.removePanel();', icon: "fa fa-fw fa-cube", submenu: extendedMenu});
     return menu;
   }
 

@@ -77,7 +77,9 @@ div.flot-text {
 }
 
 .panel-menu-container {
-  margin-left: 6px;
+  width: 1px;
+  height: 19px;
+  display: inline-block;
 }
 
 .panel-menu-toggle {
@@ -89,8 +91,8 @@ div.flot-text {
   position: absolute;
   width: 16px;
   height: 16px;
-  left: 0;
-  top: 0;
+  left: 1px;
+  top: 4px;
 
   &:hover {
     color: $link-hover-color;

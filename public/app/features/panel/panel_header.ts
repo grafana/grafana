@@ -35,6 +35,10 @@ function renderMenuItem(item, ctrl) {
   let html = '';
   let listItemClass = '';
 
+  if (item.divider) {
+    return '<li class="divider"></li>';
+  }
+
   if (item.submenu) {
     listItemClass = 'dropdown-submenu';
   }
