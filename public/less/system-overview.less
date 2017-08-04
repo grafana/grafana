@@ -235,7 +235,6 @@
     .accordion-body {
       // bootstrap-table override
       .bootstrap-table {
-        width: 80%;
         margin: 28px auto;
       }
       .fixed-table-container {
@@ -276,8 +275,6 @@
     .predictions {
       display: flex;
       flex-direction: row;
-      width: 80%;
-      margin: 0 auto;
       .prediction-item {
         width: 33%;
         position: relative;
@@ -288,7 +285,7 @@
           font-weight: bold;
           position: absolute;
           bottom: 25%;
-          left: 40%;
+          left: 43%;
           font-size: 16px;
         }
       }
@@ -299,6 +296,33 @@
       }
       select {
         width: 76px;
+      }
+    }
+
+    .tab-panel {
+      width: 80%;
+      margin: 0 auto;
+      [data-toggle="tab"] + i {
+        position: absolute;
+        top: 0;
+        visibility: visible;
+      }
+      .hidden {
+        visibility: hidden;
+      }
+    }
+
+    .kpi-pane {
+      .item-type li {
+        width: 50px;
+        height: 50px;
+        line-height: 50px;
+        vertical-align: middle;
+        text-align: center;
+        border-radius: 50%;
+        margin-right: 30px;
+        display: inline-block;
+        position: relative;
       }
     }
 
@@ -336,13 +360,13 @@
     padding: 10px 0 0 0;
   }
 
-  .status-success {
+  .status-success, .status-green-color {
     color: #3DB779;
   }
-  .status-warning {
+  .status-warnin, .status-yellow-color {
     color: #FE9805;
   }
-  .status-danger {
+  .status-danger, .status-red-color {
     color: #BB1144;
   }
 

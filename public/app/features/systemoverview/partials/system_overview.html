@@ -10,7 +10,7 @@
                         <a href="javascript:;" ng-click="showModal(0)" bs-tooltip="'点击查看历史指数'">健康指数趋势</a>
                         <tip>健康值=(告警指标个数/定义规则总数)*50% + (异常指标/所有指标) * 50%</tip>
                     </h3>
-                    <div style="position: absolute; bottom: 25%; left: 40%; font-weight: bold;">
+                    <div style="position: absolute; bottom: 35%; left: 43%; font-weight: bold;">
                         <span style="font-size: 38px;">{{healthPanel.score}}</span>
                         <span style="font-size: 20px;">{{healthPanel.level}}</span>
                     </div>
@@ -52,6 +52,7 @@
                 </div>
             </div>
 
+
             <div class="detail-panel view-panel">
                 <div class="service-panel panels-wrapper">
                     <h3>
@@ -83,6 +84,7 @@
                         <jtk-target></jtk-target>
                     </script>
                 </div>
+
                 <div class="host-panel panels-wrapper" >
                     <h3>
                         <a href="{{hostPanel.href}}">机器状态</a>
@@ -99,14 +101,15 @@
                     <ul>
                         <li>机器名</li>
                         <li>服务运行状态</li>
-                        <li>机器连接状态</li>
+                        <li>机器在线状态</li>
                         <li>CPU 使用率</li>
                         <li>内存使用</li>
                         <li>磁盘剩余空间</li>
                     </ul>
-                    <overview-panel></overview-panel>
+                    <overview-panel template="/app/features/systemoverview/partials/system_host_panel.html"></overview-panel>
                 </div>
             </div>
+
             <div class="clearfix"></div>
 
         </div>

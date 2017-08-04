@@ -1085,6 +1085,92 @@
       "showTitle": false,
       "title": "各进程TopN使用情况",
       "fullwidth": true
+    },
+    {
+      "collapse": false,
+      "editable": false,
+      "height": "260px",
+      "panels": [
+        {
+          "title": "指标健康异常状况",
+          "type": "graph",
+          "fill": 0,
+          "height": "250px",
+          "linewidth": 2,
+          "tooltip": {
+            "shared": true
+          },
+          "targets": [
+            {
+              "aggregator": "avg",
+              "metric": "",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "15m",
+              "tags": { "host": "" }
+            },
+            {
+              "aggregator": "avg",
+              "metric": "",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "15m",
+              "tags": { "host": "" }
+            },
+            {
+              "aggregator": "avg",
+              "metric": "",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "15m",
+              "tags": { "host": "" }
+            },
+            {
+              "aggregator": "avg",
+              "metric": "",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "15m",
+              "tags": { "host": "" }
+            }
+          ],
+          "seriesOverrides": [
+            {
+              "alias": "",
+              "color": "#BF1B00",
+              "lines": false,
+              "pointradius": 3,
+              "points": true,
+              "legend": false
+            },
+            {
+              "alias": "",
+              "color": "#DEDAF7",
+              "zindex": "-1",
+              "legend": false
+            },
+            {
+              "alias": "",
+              "color": "#DEDAF7",
+              "zindex": "-1",
+              "legend": false
+            }
+          ],
+          "legend": {
+            "avg": true,
+            "min": true,
+            "max": true,
+            "current": true,
+            "total": true,
+            "show": true,
+            "values": true
+          },
+          "grid": {},
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "showTitle": false,
+      "title": "",
+      "fullwidth": true
     }
   ]
 }

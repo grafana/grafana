@@ -1765,7 +1765,7 @@
                 item[that.header.stateField] = value === true || (value && value.checked);
             } else {
                 value = typeof value === 'undefined' || value === null ?
-                    that.options.undefinedText : ('<div title="'+value+'">'+value+'</div>');
+                    that.options.undefinedText : ('<div>'+value+'</div>');
 
                 text = that.options.cardView ? ['<div class="card-view">',
                     that.options.showHeader ? sprintf('<span class="title" %s>%s</span>', style,

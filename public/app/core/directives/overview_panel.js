@@ -6,13 +6,23 @@ define([
   function ($, _, coreModule) {
     'use strict';
 
-    coreModule.directive('overviewPanel', function ($parse, $compile) {
+    coreModule.directive('overviewPanel', function ($parse, $compile, $http) {
       return {
         restrict: 'EA',
-        templateUrl: '/app/features/systemoverview/partials/system_host_panel.html',
-        link: function (scope, elem) {
-          scope.$on('toggle-panel', function() {
-            $compile(elem.contents())(scope);
+        link: function (scope, elem, attr) {
+          var templateUrl = attr.template;
+
+          var template = $http.get(templateUrl, { cache: true }).then(function (res) {
+            return res.data;
+          });
+
+          scope.$on('toggle-panel', function(e, args) {
+            template.then(function (response) {
+              var $template = $(response);
+              elem.html($template);
+
+              $compile(elem.contents())(scope);
+            });
           });
         }
       };

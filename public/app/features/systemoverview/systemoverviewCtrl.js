@@ -8,6 +8,12 @@ define([
 
     var module = angular.module('grafana.controllers');
 
+    module.filter('formatItemType', function () {
+      return function (text) {
+        return text.replace('Host', '').replace('Service', '');
+      };
+    });
+
     module.controller('SystemOverviewCtrl', function ($scope, $location, $q, $modal, backendSrv, alertSrv,
       contextSrv, datasourceSrv, alertMgrSrv, healthSrv, serviceDepSrv, jsPlumbService) {
 
@@ -226,13 +232,28 @@ define([
             $scope.showPrediction(0, host);
           });
 
-          $scope.$broadcast("toggle-panel");
+          $scope.$broadcast("toggle-panel", { target: 'host' });
+        });
+
+        $scope.service = {};
+        $scope.metrics = {};
+
+        serviceDepSrv.readMetricStatus(serviceId, serviceName).then(function (response) {
+          $scope.service = response.data;
         });
       };
 
       $scope.selectHost = function (index, host) {
         $scope.selected = ($scope.selected == index) ? -1 : index;
+        $scope.showHost(host);
+      };
 
+      $scope.showKPI = function (host) {
+        _.extend(_.find($scope.hostPanels, { host: host }), $scope.service.hostStatusMap[host]);
+        $scope.selectHealthItemType(host, 'ServiceKPI');
+      };
+
+      $scope.showHost = function (host) {
         $scope.bsTableData = $scope.panels[host].topNPanel;
         $scope.$broadcast('load-table');
 
@@ -251,6 +272,38 @@ define([
 
           $scope.predictionPanel[key].selected = $scope.percentFormatter(score);
         });
+      };
+
+      $scope.selectHealthItemType = function (host, item) {
+        var metrics = $scope.service.hostStatusMap[host].itemStatusMap[item].metricStatusMap;
+        var metric = [];
+        var alertLevel = "";
+
+        for (var name in metrics) {
+          switch (metrics[name].alertLevel) {
+            case "CRITICAL":
+              alertLevel = "严重";
+              break;
+            case "WARNING":
+              alertLevel = "警告";
+              break;
+            default:
+              alertLevel = "正常";
+              break;
+          }
+          metric.push({
+            name: name,
+            alertRuleSet: metrics[name].alertRuleSet ? "有" : "无",
+            alertLevel: alertLevel,
+            anomalyHealth: metrics[name].health
+          });
+        }
+
+        $scope.currentHost = host;
+        $scope.currentItem = item;
+        $scope.bsTableData = metric;
+
+        $scope.$broadcast('load-table');
       };
 
       // 机器连接状态

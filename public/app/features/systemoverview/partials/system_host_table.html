@@ -7,7 +7,7 @@
        data-row-style="rowStyle">
     <thead>
         <tr>
-            <th data-field="pid" data-sortable="true">TopN进程</th>
+            <th data-field="pid" data-sortable="true" data-formatter="tooltipFormat">TopN进程</th>
             <th data-field="cpu" data-sortable="true" data-formatter="percentFormatter">CPU </th>
             <th data-field="mem" data-sortable="true" data-formatter="percentFormatter">MEM </th>
         </tr>
@@ -16,6 +16,9 @@
 <script>
     function percentFormatter(value) {
         return value && (value.toFixed(2) + '%');
+    }
+    function tooltipFormat(value, row, index) {
+        return '<span title="' + value + '">' + value + '</span>';
     }
     function rowStyle() {
         return {

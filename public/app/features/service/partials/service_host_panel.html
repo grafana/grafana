@@ -1,0 +1,38 @@
+<div class="" ng-if="service.hostStatusMap">
+                                <div class="host-head">
+                                    <span class="pull-left">机器名称</span>
+                                    <span class="pull-right">机器状态</span>
+                                    <div class="clearfix"></div>
+                                </div>
+                                <div class="accordion host-list" id="accordion2">
+                                    <div class="accordion-group host-item" ng-repeat="(name, host) in service.hostStatusMap">
+                                        <div class="accordion-heading">
+                                            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#{{$index}}" ng-click="selectHostKPI($index, host.hostName);">
+                                            <h4>
+                                                <span class="pull-left">
+                                                <i class="fa btn btn-primary" ng-class="{true: 'fa-minus', false: 'fa-plus'}[$index == kpiselected]"></i>
+                                                <span>{{host.hostName}}</span>
+                                                </span>
+                                                <span class="pull-right"><em class="host-status status-{{host.healthStatusType | lowercase}}"> </em></span>
+                                                <div class="clearfix"></div>
+                                            </h4>
+                                            </a>
+                                        </div>
+                                        <div id="{{$index}}" class="accordion-body collapse">
+                                            <div class="accordion-inner">
+                                                <ul class="item-type">
+                                                    <li ng-repeat="(name, item) in host.itemStatusMap" ng-click="selectHealthItemType(host.hostName, item.type)" class="status-{{item.healthStatusType | lowercase}}">{{item.type | formatItemType}}</li>
+                                                </ul>
+                                                <div ng-if="host.healthStatusType !== 'GREY'">
+                                                    <p>{{currentItem}} 重要指标：</p>
+                                                    <p ng-if="currentItem == 'ServiceState'">该服务进程运行正常...</p>
+                                                    <table-loader key={{host.hostName}} template="/app/features/service/partials/service_host_table.html"></table-loader>
+                                                </div>
+                                                <div ng-if="host.healthStatusType === 'GREY'">
+                                                    <p>探针没有收集到数据 或 机器没有正常工作</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
