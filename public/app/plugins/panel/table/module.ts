@@ -91,9 +91,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.pageIndex = 0;
 
     if (this.panel.transform === 'annotations') {
+      this.setTimeQueryStart();
       return this.annotationsSrv.getAnnotations(this.dashboard).then(annotations => {
-        this.dataRaw = annotations;
-        this.render();
+        return {data: annotations};
       });
     }
 
@@ -236,6 +236,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       if (data) {
         renderPanel();
       }
+      ctrl.renderingCompleted();
     });
   }
 }

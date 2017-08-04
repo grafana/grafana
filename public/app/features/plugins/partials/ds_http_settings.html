@@ -5,16 +5,16 @@
 
 	<div class="gf-form">
 		<span class="gf-form-label width-7">Url</span>
-		<input class="gf-form-input max-width-21" type="text" ng-model='current.url' placeholder="http://my.server.com:8080" ng-pattern="/^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/" required></input>
+		<input class="gf-form-input max-width-21" type="text" ng-model='current.url' placeholder="for example: http://localhost:8081" ng-pattern="/^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/" required></input>
 
 		<info-popover>
-			<p>Specify a complete HTTP url (http://your_server:8080)</p>
+			<p>Specify a complete HTTP url (for example http://your_server:8080)</p>
 			<span ng-show="current.access === 'direct'">
-				Your access method is <code>Direct</code>, this means the url
+				Your access method is <em>Direct</em>, this means the url
 				needs to be accessable from the browser.
 			</span>
 			<span ng-show="current.access === 'proxy'">
-				Your access method is currently <code>Proxy</code>, this means the url
+				Your access method is currently <em>Proxy</em>, this means the url
 				needs to be accessable from the grafana backend.
 			</span>
 		</info-popover>

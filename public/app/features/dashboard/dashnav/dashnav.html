@@ -48,7 +48,6 @@
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="editJson();">查看 JSON</a></li>
 			<li ng-if="contextSrv.isEditor && !dashboard.editable"><a class="pointer" ng-click="makeEditable();">可编辑</a></li>
 			<li ng-if="contextSrv.isEditor"><a class="pointer" ng-click="saveDashboardAs();">保存为</a></li>
-			<li ng-if="dashboard.id"><a class="pointer" ng-click="saveDashboardAsHome();">Set As Home</a></li>
 			<li ng-if="dashboardMeta.canSave"><a class="pointer" ng-click="deleteDashboard();">删除仪表盘</a></li>
 		</ul>
 	</li>

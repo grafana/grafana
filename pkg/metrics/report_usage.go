@@ -10,6 +10,7 @@ import (
 	"github.com/wangy1931/grafana/pkg/bus"
 	"github.com/wangy1931/grafana/pkg/log"
 	m "github.com/wangy1931/grafana/pkg/models"
+	"github.com/wangy1931/grafana/pkg/plugins"
 	"github.com/wangy1931/grafana/pkg/setting"
 )
 
@@ -56,6 +57,9 @@ func sendUsageStats() {
 	metrics["stats.users.count"] = statsQuery.Result.UserCount
 	metrics["stats.orgs.count"] = statsQuery.Result.OrgCount
 	metrics["stats.playlist.count"] = statsQuery.Result.PlaylistCount
+	metrics["stats.plugins.apps.count"] = len(plugins.Apps)
+	metrics["stats.plugins.panels.count"] = len(plugins.Panels)
+	metrics["stats.plugins.datasources.count"] = len(plugins.DataSources)
 
 	dsStats := m.GetDataSourceStatsQuery{}
 	if err := bus.Dispatch(&dsStats); err != nil {

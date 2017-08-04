@@ -60,6 +60,9 @@ define([
         template: '<gf-color-picker></gf-color-picker>',
         model: {
           colorSelected: $scope.colorSelected,
+        },
+        onClose: function() {
+          $scope.ctrl.render();
         }
       });
     };

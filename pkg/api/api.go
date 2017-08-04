@@ -70,6 +70,7 @@ func Register(r *macaron.Macaron) {
 	// authed views
 	r.Get("/profile/", reqSignedIn, Index)
 	r.Get("/profile/password", reqSignedIn, Index)
+	r.Get("/profile/switch-org/:id", reqSignedIn, ChangeActiveOrgAndRedirectToHome)
 	r.Get("/org/", reqSignedIn, Index)
 	r.Get("/org/new", reqSignedIn, Index)
 	r.Get("/datasources/", reqSignedIn, Index)
@@ -321,6 +322,9 @@ func Register(r *macaron.Macaron) {
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, RenderToPng)
+
+	// grafana.net proxy
+	r.Any("/api/gnet/*", reqSignedIn, ProxyGnetRequest)
 
 	// Gravatar service.
 	avt := avatar.CacheServer()

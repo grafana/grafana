@@ -23,6 +23,16 @@ code {
   white-space: nowrap;
 }
 
+code.code--small {
+  font-size: $font-size-xs;
+  padding: 5px;
+  margin: 0 2px;
+}
+
+p.code--line {
+  line-height: 1.8;
+}
+
 // Blocks of code
 pre {
   display: block;
@@ -49,4 +59,3 @@ pre {
     border: 0;
   }
 }
-

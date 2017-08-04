@@ -159,8 +159,10 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }
 
         function processOffsetHook(plot, gridMargin) {
-          if (panel.yaxis) { gridMargin.left = 20; }
-          if (panel.rightYAxisLabel) { gridMargin.right = 20; }
+          var left = panel.yaxes[0];
+          var right = panel.yaxes[1];
+          if (left.show && left.label) { gridMargin.left = 20; }
+          if (right.show && right.label) { gridMargin.right = 20; }
         }
 
         // Function for rendering panel

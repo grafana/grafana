@@ -82,6 +82,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.loading = true;
 
     // load datasource service
+    this.setTimeQueryStart();
     this.datasourceSrv.get(this.panel.datasource)
     .then(this.issueQueries.bind(this))
     .then(this.handleQueryResult.bind(this))
@@ -262,8 +263,12 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   addDataQuery(datasource) {
-    var target = {
-    };
+    var target: any = {};
+
+    if (datasource) {
+      target.datasource = datasource.name;
+    }
+
     this.panel.targets.push(target);
   }
 }

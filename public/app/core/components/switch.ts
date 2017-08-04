@@ -21,17 +21,14 @@ export class SwitchCtrl {
   id: any;
 
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope, private $timeout) {
     this.show = true;
     this.id = $scope.$id;
   }
 
   internalOnChange() {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        this.onChange();
-        resolve();
-      });
+    return this.$timeout(() => {
+      return this.onChange();
     });
   }
 

@@ -120,6 +120,7 @@ func RemoveGitBuildFromName(pluginName, filename string) string {
 }
 
 var retryCount = 0
+var permissionsDeniedMessage = "Could not create %s. Permission denied. Make sure you have write access to plugindir"
 
 func downloadFile(pluginName, filePath, url string) (err error) {
 	defer func() {
@@ -153,16 +154,16 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 		newFile := path.Join(filePath, RemoveGitBuildFromName(pluginName, zf.Name))
 
 		if zf.FileInfo().IsDir() {
-			os.Mkdir(newFile, 0777)
+			err := os.Mkdir(newFile, 0777)
+			if PermissionsError(err) {
+				return fmt.Errorf(permissionsDeniedMessage, newFile)
+			}
 		} else {
 			dst, err := os.Create(newFile)
-			if err != nil {
-				if strings.Contains(err.Error(), "permission denied") {
-					return fmt.Errorf(
-						"Could not create file %s. permission deined. Make sure you have write access to plugindir",
-						newFile)
-				}
+			if PermissionsError(err) {
+				return fmt.Errorf(permissionsDeniedMessage, newFile)
 			}
+
 			defer dst.Close()
 			src, err := zf.Open()
 			if err != nil {
@@ -175,4 +176,8 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 	}
 
 	return nil
+}
+
+func PermissionsError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "permission denied")
 }

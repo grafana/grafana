@@ -430,6 +430,8 @@ function (angular, $, _, moment) {
         // update graph yaxes changes
         panelUpgrades.push(function(panel) {
           if (panel.type !== 'graph') { return; }
+          if (!panel.grid) { return; }
+
           if (!panel.yaxes) {
             panel.yaxes = [
               {

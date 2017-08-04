@@ -2,7 +2,6 @@
 // Tooltips
 // --------------------------------------------------
 
-
 // Base class
 .tooltip {
   position: absolute;
@@ -37,6 +36,7 @@
   border-color: transparent;
   border-style: solid;
 }
+
 .tooltip {
   &.top .tooltip-arrow {
     bottom: 0;
@@ -86,13 +86,6 @@
   a {
     color: $tooltipLinkColor;
   }
-}
-
-.grafana-tooltip hr {
- padding: 2px;
- color: #c8c8c8;
- margin: 0px;
- border-bottom: 0px solid #c8c8c8;
 }
 
 .grafana-tip {

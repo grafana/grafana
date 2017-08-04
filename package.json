@@ -10,7 +10,6 @@
     "url": "http://github.com/wangy1931/grafana.git"
   },
   "devDependencies": {
-    "angular2": "2.0.0-beta.12",
     "zone.js": "^0.6.6",
     "autoprefixer": "^6.3.3",
     "es6-promise": "^3.0.2",
@@ -54,7 +53,7 @@
     "mocha": "2.3.4",
     "phantomjs-prebuilt": "^2.1.3",
     "reflect-metadata": "0.1.2",
-    "rxjs": "5.0.0-beta.2",
+    "rxjs": "5.0.0-beta.4",
     "sass-lint": "^1.5.0",
     "systemjs": "0.19.24"
   },
@@ -68,6 +67,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "eventemitter3": "^1.2.0",
     "grunt-jscs": "~1.5.x",
     "grunt-sass-lint": "^0.1.0",
     "grunt-sync": "^0.4.1",

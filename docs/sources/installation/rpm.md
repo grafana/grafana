@@ -11,7 +11,7 @@ page_keywords: grafana, installation, centos, fedora, opensuse, redhat, guide
 Description | Download
 ------------ | -------------
 Stable .RPM for CentOS / Fedora / OpenSuse / Redhat Linux | [grafana-2.6.0-1.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-2.6.0-1.x86_64.rpm)
-Beta .RPM for CentOS / Fedor / OpenSuse / Redhat Linux | [grafana-3.0.0-beta11459429091.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-3.0.0-beta11459429091.x86_64.rpm)
+Beta .RPM for CentOS / Fedor / OpenSuse / Redhat Linux | [grafana-3.0.0-beta31460467884.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-3.0.0-beta31460467884§.x86_64.rpm)
 
 ## Install Stable Release from package file
 
@@ -34,18 +34,18 @@ Or install manually using `rpm`.
 
 You can install Grafana using Yum directly.
 
-    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-3.0.0-beta11459429091.x86_64.rpm
+    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-3.0.0-beta31460467884.x86_64.rpm
 
 Or install manually using `rpm`.
 
 #### On CentOS / Fedora / Redhat:
 
     $ sudo yum install initscripts fontconfig
-    $ sudo rpm -Uvh grafana-3.0.0-beta11459429091.x86_64.rpm
+    $ sudo rpm -Uvh grafana-3.0.0-beta31460467884.x86_64.rpm
 
 #### On OpenSuse:
 
-    $ sudo rpm -i --nodeps grafana-3.0.0-beta11459429091.x86_64.rpm
+    $ sudo rpm -i --nodeps grafana-3.0.0-beta31460467884.x86_64.rpm
 
 
 ## Install via YUM Repository

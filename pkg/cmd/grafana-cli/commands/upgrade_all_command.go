@@ -51,7 +51,7 @@ func upgradeAllCommand(c CommandLine) error {
 	}
 
 	for _, p := range pluginsToUpgrade {
-		log.Infof("Upgrading %v \n", p.Id)
+		log.Infof("Updating %v \n", p.Id)
 
 		s.RemoveInstalledPlugin(pluginsDir, p.Id)
 		InstallPlugin(p.Id, "", c)
