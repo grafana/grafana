@@ -210,10 +210,12 @@ export default class InfluxDatasource {
     var currentUrl = self.urls.shift();
     self.urls.push(currentUrl);
 
-    var params: any = {
-      u: self.username,
-      p: self.password,
-    };
+    var params: any = {};
+
+    if (self.username) {
+      params.u =  self.username;
+      params.p =  self.password;
+    }
 
     if (self.database) {
       params.db = self.database;

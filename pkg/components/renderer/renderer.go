@@ -1,6 +1,7 @@
 package renderer
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -28,6 +29,7 @@ type RenderOpts struct {
 	Timezone string
 }
 
+var ErrTimeout = errors.New("Timeout error. You can set timeout in seconds with &timeout url parameter")
 var rendererLog log.Logger = log.New("png-renderer")
 
 func isoTimeOffsetToPosixTz(isoOffset string) string {
@@ -75,6 +77,11 @@ func RenderToPng(params *RenderOpts) (string, error) {
 	renderKey := middleware.AddRenderAuthKey(params.OrgId)
 	defer middleware.RemoveRenderAuthKey(renderKey)
 
+	timeout, err := strconv.Atoi(params.Timeout)
+	if err != nil {
+		timeout = 15
+	}
+
 	cmdArgs := []string{
 		"--ignore-ssl-errors=true",
 		"--web-security=false",
@@ -84,6 +91,7 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		"height=" + params.Height,
 		"png=" + pngPath,
 		"domain=" + localDomain,
+		"timeout=" + strconv.Itoa(timeout),
 		"renderKey=" + renderKey,
 	}
 
@@ -117,17 +125,12 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		close(done)
 	}()
 
-	timeout, err := strconv.Atoi(params.Timeout)
-	if err != nil {
-		timeout = 15
-	}
-
 	select {
 	case <-time.After(time.Duration(timeout) * time.Second):
 		if err := cmd.Process.Kill(); err != nil {
 			rendererLog.Error("failed to kill", "error", err)
 		}
-		return "", fmt.Errorf("PhantomRenderer::renderToPng timeout (>%vs)", timeout)
+		return "", ErrTimeout
 	case <-done:
 	}
 

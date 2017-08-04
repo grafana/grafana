@@ -9,12 +9,11 @@ awsconfig
 /public/vendor/npm
 /tmp
 vendor/phantomjs/phantomjs
+vendor/phantomjs/phantomjs.exe
 
 docs/AWS_S3_BUCKET
 docs/GIT_BRANCH
-docs/VERSION
 docs/GITCOMMIT
-docs/changed-files
 docs/changed-files
 
 # locally required config files
@@ -40,3 +39,5 @@ profile.cov
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /examples/*/dist
+/packaging/**/*.rpm
+/packaging/**/*.deb

@@ -25,7 +25,6 @@ function ($, angular, coreModule) {
         function hideEditorPane(hideToShowOtherView) {
           if (editorScope) {
             editorScope.dismiss(hideToShowOtherView);
-            scope.appEvent('dash-editor-hidden');
           }
         }
 
@@ -35,7 +34,7 @@ function ($, angular, coreModule) {
             options.html = editViewMap[options.editview].html;
           }
 
-          if (lastEditView === options.editview) {
+          if (lastEditView && lastEditView === options.editview) {
             hideEditorPane(false);
             return;
           }
@@ -61,7 +60,15 @@ function ($, angular, coreModule) {
               var urlParams = $location.search();
               if (options.editview === urlParams.editview) {
                 delete urlParams.editview;
-                $location.search(urlParams);
+
+                // even though we always are in apply phase here
+                // some angular bug is causing location search updates to
+                // not happen always so this is a hack fix or that
+                setTimeout(function() {
+                  $rootScope.$apply(function() {
+                    $location.search(urlParams);
+                  });
+                });
               }
             }
           };

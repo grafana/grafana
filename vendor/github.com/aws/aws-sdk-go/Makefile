@@ -5,7 +5,8 @@ LINTIGNORESTUTTER='service/[^/]+/(api|service)\.go:.+(and that stutters)'
 LINTIGNOREINFLECT='service/[^/]+/(api|errors|service)\.go:.+(method|const) .+ should be '
 LINTIGNOREINFLECTS3UPLOAD='service/s3/s3manager/upload\.go:.+struct field SSEKMSKeyId should be '
 LINTIGNOREDEPS='vendor/.+\.go'
-UNIT_TEST_TAGS="example codegen"
+LINTIGNOREPKGCOMMENT='service/[^/]+/doc_custom.go:.+package comment should be of the form'
+UNIT_TEST_TAGS="example codegen awsinclude"
 
 SDK_WITH_VENDOR_PKGS=$(shell go list -tags ${UNIT_TEST_TAGS} ./... | grep -v "/vendor/src")
 SDK_ONLY_PKGS=$(shell go list ./... | grep -v "/vendor/")
@@ -63,6 +64,9 @@ integration: get-deps-tests integ-custom smoke-tests performance
 
 integ-custom:
 	go test -tags "integration" ./awstesting/integration/customizations/...
+
+cleanup-integ:
+	go run -tags "integration" ./awstesting/cmd/bucket_cleanup/main.go "aws-sdk-go-integration"
 
 smoke-tests: get-deps-tests
 	gucumber -go-tags "integration" ./awstesting/integration/smoke
@@ -123,7 +127,7 @@ verify: get-deps-verify lint vet
 lint:
 	@echo "go lint SDK and vendor packages"
 	@lint=`if [ \( -z "${SDK_GO_1_4}" \) -a \( -z "${SDK_GO_1_5}" \) ]; then  golint ./...; else echo "skipping golint"; fi`; \
-	lint=`echo "$$lint" | grep -E -v -e ${LINTIGNOREDOT} -e ${LINTIGNOREDOC} -e ${LINTIGNORECONST} -e ${LINTIGNORESTUTTER} -e ${LINTIGNOREINFLECT} -e ${LINTIGNOREDEPS} -e ${LINTIGNOREINFLECTS3UPLOAD}`; \
+	lint=`echo "$$lint" | grep -E -v -e ${LINTIGNOREDOT} -e ${LINTIGNOREDOC} -e ${LINTIGNORECONST} -e ${LINTIGNORESTUTTER} -e ${LINTIGNOREINFLECT} -e ${LINTIGNOREDEPS} -e ${LINTIGNOREINFLECTS3UPLOAD} -e ${LINTIGNOREPKGCOMMENT}`; \
 	echo "$$lint"; \
 	if [ "$$lint" != "" ] && [ "$$lint" != "skipping golint" ]; then exit 1; fi
 
@@ -149,6 +153,7 @@ get-deps-tests:
 	go get github.com/stretchr/testify
 	go get github.com/smartystreets/goconvey
 	go get golang.org/x/net/html
+	go get golang.org/x/net/http2
 
 get-deps-verify:
 	@echo "go get SDK verification utilities"

@@ -2,10 +2,9 @@ define(['angular',
   'lodash',
   'jquery',
   'moment',
-  'require',
   'app/core/config',
 ],
-function (angular, _, $, moment, require, config) {
+function (angular, _, $, moment, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -89,20 +88,10 @@ function (angular, _, $, moment, require, config) {
       $scope.imageUrl += '&tz=UTC' + encodeURIComponent(moment().format("Z"));
     };
 
-  });
-
-  module.directive('clipboardButton',function() {
-    return function(scope, elem) {
-      require(['vendor/clipboard/dist/clipboard'], function(Clipboard) {
-        scope.clipboard = new Clipboard(elem[0]);
-      });
-
-      scope.$on('$destroy', function() {
-        if (scope.clipboard) {
-          scope.clipboard.destroy();
-        }
-      });
+    $scope.getShareUrl = function() {
+      return $scope.shareUrl;
     };
+
   });
 
 });

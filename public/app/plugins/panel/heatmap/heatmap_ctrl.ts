@@ -95,6 +95,8 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   series: any;
   timeSrv: any;
   dataWarning: any;
+  decimals: number;
+  scaledDecimals: number;
 
   /** @ngInject */
   constructor($scope, $injector, private $rootScope, timeSrv) {

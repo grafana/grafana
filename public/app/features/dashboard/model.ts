@@ -256,9 +256,9 @@ export class DashboardModel {
   formatDate(date, format?) {
     date = moment.isMoment(date) ? date : moment(date);
     format = format || 'YYYY-MM-DD HH:mm:ss';
-    this.timezone = this.getTimezone();
+    let timezone = this.getTimezone();
 
-    return this.timezone === 'browser' ?
+    return timezone === 'browser' ?
       moment(date).format(format) :
       moment.utc(date).format(format);
   }

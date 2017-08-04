@@ -29,8 +29,7 @@ const  template = `
 						ng-model="ctrl.message"
 						ng-model-options="{allowInvalid: true}"
 						ng-maxlength="this.max"
-						autocomplete="off"
-						required />
+						autocomplete="off" />
 					<small class="gf-form-hint-text muted" ng-cloak>
 						<span ng-class="{'text-error': ctrl.saveForm.message.$invalid && ctrl.saveForm.message.$dirty }">
 							{{ctrl.message.length || 0}}

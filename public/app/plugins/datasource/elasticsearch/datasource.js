@@ -323,23 +323,27 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
         var buckets = res.responses[0].aggregations["1"].buckets;
         return _.map(buckets, function(bucket) {
-          return {text: bucket.key, value: bucket.key};
+          return {
+            text: bucket.key_as_string || bucket.key,
+            value: bucket.key
+          };
         });
       });
     };
 
     this.metricFindQuery = function(query) {
       query = angular.fromJson(query);
-      query.query = templateSrv.replace(query.query || '*', {}, 'lucene');
-
       if (!query) {
         return $q.when([]);
       }
 
       if (query.find === 'fields') {
+        query.field = templateSrv.replace(query.field, {}, 'lucene');
         return this.getFields(query);
       }
+
       if (query.find === 'terms') {
+        query.query = templateSrv.replace(query.query || '*', {}, 'lucene');
         return this.getTerms(query);
       }
     };

@@ -77,4 +77,3 @@ declare module 'gridstack' {
   var gridstack: any;
   export default gridstack;
 }
-

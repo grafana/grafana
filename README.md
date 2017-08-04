@@ -18,6 +18,7 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 - [What's New in Grafana 4.1](http://docs.grafana.org/guides/whats-new-in-v4-1/)
 - [What's New in Grafana 4.2](http://docs.grafana.org/guides/whats-new-in-v4-2/)
 - [What's New in Grafana 4.3](http://docs.grafana.org/guides/whats-new-in-v4-3/)
+- [What's New in Grafana 4.4](http://docs.grafana.org/guides/whats-new-in-v4-4/)
 
 ## Features
 
