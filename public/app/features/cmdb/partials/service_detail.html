@@ -25,14 +25,14 @@
             <ul class="cmdb-detail" ng-if="detail.hosts.length">
                 <table class="table">
                     <tr>
-                        <th>机器名称</th>
+                        <th ng-click="orderBy('hostname')" class="pointer">机器名称<i class="fa fa-sort"></i></th>
                         <th>IP</th>
                         <th>虚拟机</th>
                         <th>操作系统</th>
-                        <th>创建时间</th>
+                        <th ng-click="orderBy('createdAt')" class="pointer">创建时间<i class="fa fa-sort"></i></th>
                         <th>操作</th>
                     </tr>
-                    <tr ng-repeat="host in detail.hosts">
+                    <tr ng-repeat="host in detail.hosts | orderBy: order : desc">
                         <td>{{host.hostname}}</td>
                         <td>{{host.defaultIp}}</td>
                         <td>{{host.isVirtual}}</td>

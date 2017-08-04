@@ -8,6 +8,8 @@ define([
 
   module.controller('ServiceDetailCtrl', function ($scope, backendSrv, $location, $q) {
     $scope.init = function() {
+      $scope.order = "'hostname'";
+      $scope.desc = false;
       $scope.serviceId = parseInt($location.search().id);
       backendSrv.alertD({url:'/cmdb/service'}).then(function(response) {
         $scope.list = response.data;
@@ -99,6 +101,11 @@ define([
         });
       });
     }
+
+    $scope.orderBy = function(order) {
+      $scope.order = "'"+ order +"'";
+      $scope.desc = !$scope.desc;
+    };
 
     $scope.init();
   });
