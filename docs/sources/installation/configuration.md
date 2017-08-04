@@ -639,7 +639,7 @@ Time to live for snapshots.
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
-You can choose between (s3, webdav). If left empty Grafana will ignore the upload action.
+You can choose between (s3, webdav, gcp). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
 
@@ -670,6 +670,16 @@ basic auth username
 
 ### password
 basic auth password
+
+## [external_image_storage.gcp]
+
+### key_file
+Path to JSON key file associated with a Google service account to authenticate and authorize.
+Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
+
+### bucket name
+
+Bucket Name on Google Cloud Storage. 
 
 ## [alerting]
 
