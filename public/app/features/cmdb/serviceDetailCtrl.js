@@ -15,24 +15,6 @@ define([
       getServiceDetail();
     };
 
-    var initDetail = function(obj) {
-      if(_.isObject(obj)) {
-        for(var i in obj) {
-          if(!_.isNumber(obj[i]) && (_.isNull(obj[i]) || _.isEmpty(obj[i]))){
-            if(i === 'memory' || i === 'hosts') {
-              obj[i] = null;
-            } else {
-              obj[i] = '暂无信息';
-            }
-          };
-          if(_.isObject(obj[i])) {
-            obj[i] = initDetail(obj[i]);
-          }
-        }
-      }
-      return obj;
-    }
-
     $scope.deleteHost = function(relationshipId) {
       $scope.appEvent('confirm-modal', {
         title: '删除',
@@ -105,8 +87,7 @@ define([
 
     var getServiceDetail = function() {
       backendSrv.alertD({url:'/cmdb/service?id='+$scope.serviceId}).then(function(response) {
-        $scope.detail = response.data;
-        $scope.detail = initDetail($scope.detail);
+        $scope.detail = _.cmdbInitObj(response.data);
         _.map($scope.detail.hosts, function(host) {
           if(host.isVirtual) {
             return host.isVirtual = '是';
