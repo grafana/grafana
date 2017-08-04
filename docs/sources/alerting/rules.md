@@ -27,7 +27,7 @@ and the conditions that need to be met for the alert to change state and trigger
 ## Execution
 
 The alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
-of core Grafana. Only some data soures are supported right now. They include `Graphite`, `Prometheus`,
+of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`,
 `InfluxDB` and `OpenTSDB`.
 
 ### Clustering
@@ -59,8 +59,8 @@ specify a query letter, time range and an aggregation function.
 avg() OF query(A, 5m, now) IS BELOW 14
 ```
 
-- `avg()` Controls how the values for **each** serie should be reduced to a value that can be compared against the threshold. Click on the function to change it to another aggregation function.
-- `query(A, 5m, now)`  The letter defines what query to execute from the **Metrics** tab. The second two parameters defines the time range, `5m, now` means 5 minutes from now to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes from now to 2 minutes from now. This is useful if you want to ignore the last 2 minutes of data.
+- `avg()` Controls how the values for **each** series should be reduced to a value that can be compared against the threshold. Click on the function to change it to another aggregation function.
+- `query(A, 5m, now)`  The letter defines what query to execute from the **Metrics** tab. The second two parameters define the time range, `5m, now` means 5 minutes from now to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes from now to 2 minutes from now. This is useful if you want to ignore the last 2 minutes of data.
 - `IS BELOW 14`  Defines the type of threshold and the threshold value.  You can click on `IS BELOW` to change the type of threshold.
 
 The query used in an alert rule cannot contain any template variables. Currently we only support `AND` and `OR` operators between conditions and they are executed serially.
@@ -74,7 +74,7 @@ of another alert in your conditions, and `Time Of Day`.
 #### Multiple Series
 
 If a query returns multiple series then the aggregation function and threshold check will be evaluated for each series.
-What Grafana does not do currently is track alert rule state **per series**. This has implications that is exemplified
+What Grafana does not do currently is track alert rule state **per series**. This has implications that are detailed
 in the scenario below.
 
 - Alert condition with query that returns 2 series: **server1** and **server2**
@@ -89,8 +89,7 @@ we plan to track state **per series** in a future release.
 
 ### No Data / Null values
 
-Below you condition you can configure how the rule evaluation engine should handle queries that return no data or only null valued
-data.
+Below your conditions you can configure how the rule evaluation engine should handle queries that return no data or only null values.
 
 No Data Option | Description
 ------------ | -------------
@@ -100,23 +99,23 @@ Keep Last State | Keep the current alert rule state, what ever it is.
 
 ### Execution errors or timeouts
 
-The last option is how to handle execution or timeout errors.
+The last option tells how to handle execution or timeout errors.
 
 Error or timeout option | Description
 ------------ | -------------
 Alerting | Set alert rule state to `Alerting`
 Keep Last State | Keep the current alert rule state, what ever it is.
 
-If you an unreliable time series store that where queries sometime timeout or fail randomly you can set this option
-t `Keep Last State` to basically ignore them.
+If you have an unreliable time series store from which queries sometime timeout or fail randomly you can set this option
+to `Keep Last State` in order to basically ignore them.
 
 ## Notifications
 
 In alert tab you can also specify alert rule notifications along with a detailed messsage about the alert rule.
-The message can contain anything, information about how you might solve the issue, link to runbook etc.
+The message can contain anything, information about how you might solve the issue, link to runbook, etc.
 
 The actual notifications are configured and shared between multiple alerts. Read the
-[Notifications]({{< relref "notifications.md" >}}) guide for how to configure and setup notifications.
+[notifications]({{< relref "notifications.md" >}}) guide for how to configure and setup notifications.
 
 ## Alert State History & Annotations
 
@@ -129,7 +128,7 @@ submenu in the alert tab to view & clear state history.
 {{< imgbox max-width="40%" img="/img/docs/v4/alert_test_rule.png" caption="Test Rule" >}}
 
 First level of troubleshooting you can do is hit the **Test Rule** button. You will get result back that you can expand
-to the point where you can see the raw data that was returned form your query.
+to the point where you can see the raw data that was returned from your query.
 
 Further troubleshooting can also be done by inspecting the grafana-server log. If it's not an error or for some reason
 the log does not say anything you can enable debug logging for some relevant components. This is done
