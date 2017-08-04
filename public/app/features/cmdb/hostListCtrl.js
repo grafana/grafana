@@ -38,6 +38,7 @@ define([
       newScope.importHosts = $scope.importHosts;
       newScope.getHost = $scope.getHost;
       newScope.fileChanged = $scope.fileChanged;
+      newScope.type = 'host';
       $scope.appEvent('show-modal', {
         src: 'app/features/cmdb/partials/import_host.html',
         modalClass: 'cmdb-import-host',

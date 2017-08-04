@@ -27,6 +27,20 @@ define([
       $scope.desc = !$scope.desc;
     };
 
+    $scope.importList = function() {
+      $controller('CMDBSetupCtrl',{$scope: $scope});
+      var newScope = $scope.$new();
+      newScope.importHosts = $scope.importHosts;
+      newScope.getHost = $scope.getService;
+      newScope.fileChanged = $scope.fileChanged;
+      newScope.type = 'service';
+      $scope.appEvent('show-modal', {
+        src: 'app/features/cmdb/partials/import_host.html',
+        modalClass: 'cmdb-import-host',
+        scope: newScope,
+      });
+    };
+
     $scope.init();
   });
 });

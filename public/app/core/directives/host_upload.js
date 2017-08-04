@@ -14,19 +14,8 @@ function (coreModule, _) {
           var readerOnload = function() {
             return function(e) {
               scope.$apply(function() {
-                try {
-                  var param = JSON.parse(e.target.result);
-                  window.cmdbHosts = _.cloneDeep(param);
-                  for(var os in param) {
-                    if(!(param[os].hosts && _.isArray(param[os].hosts))) {
-                      var err = {message: "文件格式错误"}
-                      throw err;
-                    }
-                  }
-                } catch (err) {
-                  scope.appEvent('alert-error', [err.message]);
-                  return;
-                }
+                var param = JSON.parse(e.target.result);
+                window.cmdbHosts = _.cloneDeep(param);
               });
             };
           };
