@@ -67,7 +67,18 @@ define([
         var data = response.data;
         var text = _.without(_.keys(data[0]), 'orgId', 'sysId', 'services').toString() + '\n';
         _.each(data, function(item) {
-          text += initData(item);
+          delete item['orgId'];
+          delete item['services'];
+          delete item['sysId'];
+          item.createdAt = moment.unix(item.createdAt/1000).format();
+          item.cpu = item.cpu.join(";");
+          item.interfaces = initArray(item.interfaces);
+          item.devices = initArray(item.devices);
+          item.memory = initArray(item.memory);
+          for(var i in item) {
+            text += item[i];
+            text += ',';
+          }
           text += '\n'
         });
         var blob = new Blob([text], { type: "text/csv;charset=utf-8" });
@@ -75,35 +86,14 @@ define([
       });
     };
 
-    var initData = function(obj) {
+    var initArray = function(item) {
       var text = '';
-      if (_.isObject(obj)) {
+      _.each(item,function(obj) {
         delete obj['orgId'];
-        delete obj['services'];
         delete obj['sysId'];
-      }
-      if(obj.createdAt) {
         obj.createdAt = moment.unix(obj.createdAt/1000).format();
-      }
-      for(var i in obj) {
-        if(i === 'cpu') {
-          text += obj[i].join(';');
-          text += ',';
-        } else if(_.isArray(obj[i])) {
-          text += initData(obj[i]);
-          text += ',';
-        } else if(_.isObject(obj[i])) {
-          delete obj[i]['orgId'];
-          delete obj[i]['sysId'];
-          if(obj[i].createdAt) {
-            obj[i].createdAt = moment.unix(obj[i].createdAt/1000).format();
-          }
-          text += JSON.stringify(obj[i]).replace(/,/g,';');
-        } else {
-          text += obj[i];
-          text += ',';
-        }
-      }
+        text += JSON.stringify(obj).replace(/,/g,';');
+      });
       return text;
     };
 
