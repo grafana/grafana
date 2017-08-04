@@ -21,8 +21,8 @@
             </ul>
         </li>
         <li>
-            <h4>部署机器列表</h4>
-            <ul class="cmdb-detail">
+            <h4><span ng-if="detail.hosts.length">部署机器列表</span><a class="btn btn-primary btn-outline-primary" ng-click="showHost()">添加机器</a></h4>
+            <ul class="cmdb-detail" ng-if="detail.hosts.length">
                 <table class="table">
                     <tr>
                         <th>机器名称</th>
@@ -41,6 +41,9 @@
                         <td>
                             <a href="/cmdb/hostlist/hostdetail?id={{host.id}}">
                                 <span class="cmdb-icon-text">详情</span>
+                            </a>
+                            <a ng-click="deleteHost(host.relationshipId)">
+                                <span class="cmdb-icon-text">删除</span>
                             </a>
                         </td>
                     </tr>

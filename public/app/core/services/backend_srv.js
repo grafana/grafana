@@ -263,5 +263,14 @@ function (angular, _, coreModule, config) {
         headers: {'Content-Type': 'application/json;'},
       });
     };
+
+    this.editServiceHost = function(params) {
+      return this.alertD({
+        method: "post",
+        url: "/cmdb/relationship/overwrite",
+        data: angular.toJson(params),
+        headers: {'Content-Type': 'application/json;'},
+      });
+    };
   });
 });
