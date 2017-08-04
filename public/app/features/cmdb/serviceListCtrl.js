@@ -30,7 +30,7 @@ define([
     $scope.importList = function() {
       $controller('CMDBSetupCtrl',{$scope: $scope});
       var newScope = $scope.$new();
-      newScope.importHosts = $scope.importHosts;
+      newScope.importHosts = $scope.importService;
       newScope.getHost = $scope.getService;
       newScope.fileChanged = $scope.fileChanged;
       newScope.type = 'service';
