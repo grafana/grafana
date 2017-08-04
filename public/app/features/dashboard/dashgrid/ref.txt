@@ -1,3 +1,22 @@
+Skip to content
+This repository
+Search
+Pull requests
+Issues
+Marketplace
+Gist
+ @torkelo
+ Sign out
+ Unwatch 946
+  Unstar 17,021
+ Fork 2,862 grafana/grafana
+ Code  Issues 1,079  Pull requests 46  Projects 1  Wiki  Settings Insights
+Branch: gridstack Find file Copy pathgrafana/public/app/core/components/dashgrid/dashgrid.ts
+a6bbcb8  on Jun 13
+@torkelo torkelo ux: gridstack poc
+1 contributor
+RawBlameHistory
+213 lines (181 sloc)  5.45 KB
 ///<reference path="../../../headers/common.d.ts" />
 
 import $ from 'jquery';
@@ -15,7 +34,6 @@ const template = `
       on-drag-stop="ctrl.onDragStop(event, ui)"
       on-resize-start="ctrl.onResizeStart(event, ui)"
       on-resize-stop="ctrl.onResizeStop(event, ui)">
-
       <div gridstack-item ng-repeat="panel in ctrl.panels"
           class="grid-stack-item"
           gs-item-id="panel.id"
@@ -210,3 +228,5 @@ coreModule.directive('gridstackItem', ['$timeout', function($timeout) {
 }]);
 
 coreModule.directive('dashGrid', dashGrid);
+Contact GitHub API Training Shop Blog About
+© 2017 GitHub, Inc. Terms Privacy Security Status Help

@@ -6,6 +6,7 @@ import angular from 'angular';
 import $ from 'jquery';
 import {profiler} from 'app/core/profiler';
 import Remarkable from 'remarkable';
+import {CELL_HEIGHT, CELL_VMARGIN} from '../dashboard/model';
 
 const TITLE_HEIGHT = 25;
 const EMPTY_TITLE_HEIGHT = 9;
@@ -171,8 +172,10 @@ export class PanelCtrl {
     //     this.containerHeight = parseInt(this.containerHeight.replace('px', ''), 10);
     //   }
     // }
-    const rowSpan = this.panel.height || 4;
-    this.containerHeight = rowSpan * 60 + ((rowSpan-1) * 20);
+    if (this.panel.id === 4) {
+      console.log(this.panel.id, this.panel.height);
+    }
+    this.containerHeight = this.panel.height * CELL_HEIGHT + ((this.panel.height-1) * CELL_VMARGIN);
     this.height = this.containerHeight - (PANEL_BORDER + PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
   }
 

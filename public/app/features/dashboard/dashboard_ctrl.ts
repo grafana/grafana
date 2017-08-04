@@ -113,10 +113,10 @@ export class DashboardCtrl {
       };
 
       $scope.registerWindowResizeEvent = function() {
-        angular.element(window).bind('resize', function() {
-          $timeout.cancel(resizeEventTimeout);
-          resizeEventTimeout = $timeout(function() { $scope.$broadcast('render'); }, 200);
-        });
+        // angular.element(window).bind('resize', function() {
+        //   $timeout.cancel(resizeEventTimeout);
+        //   resizeEventTimeout = $timeout(function() { $scope.$broadcast('render'); }, 200);
+        // });
 
         $scope.$on('$destroy', function() {
           angular.element(window).unbind('resize');

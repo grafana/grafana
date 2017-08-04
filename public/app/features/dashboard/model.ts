@@ -10,6 +10,17 @@ import {Emitter, contextSrv, appEvents} from 'app/core/core';
 import {DashboardRow} from './row/row_model';
 import sortByKeys from 'app/core/utils/sort_by_keys';
 
+export interface Panel {
+  id: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export const CELL_HEIGHT = 60;
+export const CELL_VMARGIN = 15;
+
 export class DashboardModel {
   id: any;
   title: any;
@@ -36,6 +47,7 @@ export class DashboardModel {
   meta: any;
   events: any;
   editMode: boolean;
+  panels: Panel[];
 
   constructor(data, meta?) {
     if (!data) {
@@ -64,6 +76,7 @@ export class DashboardModel {
     this.version = data.version || 0;
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
+    this.panels = data.panels || [];
 
     this.rows = [];
     if (data.rows) {
@@ -155,13 +168,9 @@ export class DashboardModel {
   }
 
   getPanelById(id) {
-    for (var i = 0; i < this.rows.length; i++) {
-      var row = this.rows[i];
-      for (var j = 0; j < row.panels.length; j++) {
-        var panel = row.panels[j];
-        if (panel.id === id) {
-          return panel;
-        }
+    for (let panel of this.panels) {
+      if (panel.id === id) {
+        return panel;
       }
     }
     return null;
@@ -303,7 +312,7 @@ export class DashboardModel {
     var i, j, k;
     var oldVersion = this.schemaVersion;
     var panelUpgrades = [];
-    this.schemaVersion = 14;
+    this.schemaVersion = 15;
 
     if (oldVersion === this.schemaVersion) {
       return;
@@ -612,6 +621,11 @@ export class DashboardModel {
         this.graphTooltip = old.sharedCrosshair ? 1 : 0;
       }
 
+      if (oldVersion < 15) {
+        this.upgradeToGridLayout();
+        console.log(this.panels);
+      }
+
       if (panelUpgrades.length === 0) {
         return;
       }
@@ -623,6 +637,34 @@ export class DashboardModel {
             panelUpgrades[k].call(this, row.panels[j]);
           }
         }
+      }
+    }
+
+    upgradeToGridLayout() {
+      let yPos = 0;
+
+      for (let row of this.rows) {
+        let xPos = 0;
+        let height: any = row.height;
+
+        if (_.isString(height)) {
+          height = parseInt(height.replace('px', ''), 10);
+        }
+
+        height = Math.ceil(height / CELL_HEIGHT);
+
+        for (let panel of row.panels) {
+          panel.x = xPos;
+          panel.y = yPos;
+          panel.width = panel.span;
+          panel.height = height;
+
+          xPos += panel.width;
+
+          this.panels.push(panel);
+        }
+
+        yPos += height;
       }
     }
 }

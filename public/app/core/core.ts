@@ -46,7 +46,6 @@ import {contextSrv} from './services/context_srv';
 import {KeybindingSrv} from './services/keybindingSrv';
 import {helpModal} from './components/help/help';
 import {NavModelSrv, NavModel} from './nav_model_srv';
-import {dashGrid} from './components/dashgrid/dashgrid';
 
 export {
   arrayJoin,
@@ -72,5 +71,4 @@ export {
   helpModal,
   NavModelSrv,
   NavModel,
-  dashGrid,
 };

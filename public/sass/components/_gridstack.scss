@@ -1,4 +1,4 @@
-:root .grid-stack-item > .ui-resizable-handle {
+.grid-stack-item > .ui-resizable-handle {
   filter: none;
 }
 
@@ -19,8 +19,8 @@
   margin: 0;
   position: absolute;
   top: 0;
-  left: 10px;
-  right: 10px;
+  left: 5px;
+  right: 5px;
   bottom: 0;
   width: auto;
   z-index: 0 !important;
@@ -37,8 +37,8 @@
   margin: 0;
   position: absolute;
   top: 0;
-  left: 10px;
-  right: 10px;
+  left: 7px;
+  right: 7px;
   bottom: 0;
   width: auto;
   z-index: 0 !important;
@@ -92,8 +92,8 @@
 
 .grid-stack > .grid-stack-item > .ui-resizable-nw {
   cursor: nw-resize;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   left: 10px;
   top: 0;
 }
@@ -108,8 +108,8 @@
 
 .grid-stack > .grid-stack-item > .ui-resizable-ne {
   cursor: ne-resize;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   right: 10px;
   top: 0;
 }
@@ -124,8 +124,8 @@
 
 .grid-stack > .grid-stack-item > .ui-resizable-se {
   cursor: se-resize;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   right: 10px;
   bottom: 0;
 }
@@ -140,8 +140,8 @@
 
 .grid-stack > .grid-stack-item > .ui-resizable-sw {
   cursor: sw-resize;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   left: 10px;
   bottom: 0;
 }
