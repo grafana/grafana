@@ -22,11 +22,10 @@ function (angular, _, $, gfunc) {
         link: function($scope, elem) {
           var ctrl = $scope.ctrl;
           var graphiteVersion = ctrl.datasource.graphiteVersion;
+          var categories = gfunc.getCategories(graphiteVersion);
+          var allFunctions = getAllFunctionNames(categories);
 
-          var categories = gfunc.getCategories();
-          var allFunctions = getAllFunctionNames(categories, graphiteVersion);
-
-          $scope.functionMenu = createFunctionDropDownMenu(categories, graphiteVersion);
+          $scope.functionMenu = createFunctionDropDownMenu(categories);
 
           var $input = $(inputTemplate);
           var $button = $(buttonTemplate);
@@ -85,23 +84,18 @@ function (angular, _, $, gfunc) {
       };
     });
 
-  function getAllFunctionNames(categories, graphiteVersion) {
+  function getAllFunctionNames(categories) {
     return _.reduce(categories, function(list, category) {
       _.each(category, function(func) {
-        if (isVersionRelatedFunction(func, graphiteVersion)) {
-          list.push(func.name);
-        }
+        list.push(func.name);
       });
       return list;
     }, []);
   }
 
-  function createFunctionDropDownMenu(categories, graphiteVersion) {
+  function createFunctionDropDownMenu(categories) {
     return _.map(categories, function(list, category) {
-      var versionRelatedList = _.filter(list, function(func) {
-        return isVersionRelatedFunction(func, graphiteVersion);
-      });
-      var submenu = _.map(versionRelatedList, function(value) {
+      var submenu = _.map(list, function(value) {
         return {
           text: value.name,
           click: "ctrl.addFunction('" + value.name + "')",
@@ -113,15 +107,5 @@ function (angular, _, $, gfunc) {
         submenu: submenu
       };
     });
-  }
-
-  function isVersionRelatedFunction(func, graphiteVersion) {
-    return isVersionGreaterOrEqual(graphiteVersion, func.version) || !func.version;
-  }
-
-  function isVersionGreaterOrEqual(a, b) {
-    var a_num = Number(a);
-    var b_num = Number(b);
-    return a_num >= b_num;
   }
 });

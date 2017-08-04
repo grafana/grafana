@@ -749,6 +749,16 @@ function (_, $) {
     this.text = text;
   };
 
+  function isVersionRelatedFunction(func, graphiteVersion) {
+    return isVersionGreaterOrEqual(graphiteVersion, func.version) || !func.version;
+  }
+
+  function isVersionGreaterOrEqual(a, b) {
+    var a_num = Number(a);
+    var b_num = Number(b);
+    return a_num >= b_num;
+  }
+
   return {
     createFuncInstance: function(funcDef, options) {
       if (_.isString(funcDef)) {
@@ -764,8 +774,18 @@ function (_, $) {
       return index[name];
     },
 
-    getCategories: function() {
-      return categories;
+    getCategories: function(graphiteVersion) {
+      var filteredCategories = {};
+      _.each(categories, function(functions, category) {
+        var filteredFuncs = _.filter(functions, function(func) {
+          return isVersionRelatedFunction(func, graphiteVersion);
+        });
+        if (filteredFuncs.length) {
+          filteredCategories[category] = filteredFuncs;
+        }
+      });
+
+      return filteredCategories;
     }
   };
 
