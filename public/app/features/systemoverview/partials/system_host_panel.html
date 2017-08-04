@@ -1,0 +1,55 @@
+<div class="accordion host-list" id="accordion2">
+    <div class="accordion-group host-item" ng-repeat="host in hostPanel.hosts | filter: filterEmpty">
+        <div class="accordion-heading">
+            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#{{$index}}" ng-click="selectHost($index, host.host);">
+                <ul>
+                    <li class="pull-left">
+                        <i class="fa btn btn-primary" ng-class="{true: 'fa-minus', false: 'fa-plus'}[$index == selected]"></i>
+                    </li>
+                    <li>{{host.host}}</li>
+                    <li>
+                        <button type="button" style="margin: 8px 54px; padding: 2px 10px;"
+                            class="btn-item system-status status-{{ hostsResource[hostPanel.currentService.name][host.host].status | lowercase }}">
+                            {{hostsResource[hostPanel.currentService.name][host.host].statusText}}
+                        </button>
+                    </li>
+                    <li>{{host.status}}</li>
+                    <li>{{host.cpu}}</li>
+                    <li>{{host.mem}}</li>
+                    <li>{{host.disk}}</li>
+                </ul>
+            </a>
+        </div>
+        <div id="{{$index}}" class="accordion-body collapse">
+            <div class="accordion-inner">
+                <div class="predictions">
+                    <div class="prediction-item">
+                        <h4>
+                            {{predictionPanel.disk.title}}
+                            <select ng-model="predictionPanel.disk.selectedOption" ng-change="changePre(host.host, 'disk', predictionPanel.disk.selectedOption)" ng-options="tip.time for tip in predictionPanel.disk.tips"></select>
+                        </h4>
+                        <div class="prediction-item-pie prediction-item-{{host.host}}disk"></div>
+                        <em>{{predictionPanel.disk.selected}}</em>
+                    </div>
+                    <div class="prediction-item">
+                        <h4>
+                            {{predictionPanel.cpu.title}}
+                            <select ng-model="predictionPanel.cpu.selectedOption" ng-change="changePre(host.host, 'cpu', predictionPanel.cpu.selectedOption)" ng-options="tip.time for tip in predictionPanel.cpu.tips"></select>
+                        </h4>
+                        <div class="prediction-item-pie prediction-item-{{host.host}}cpu"></div>
+                        <em>{{predictionPanel.cpu.selected}}</em>
+                    </div>
+                    <div class="prediction-item">
+                        <h4>
+                            {{predictionPanel.mem.title}}
+                            <select ng-model="predictionPanel.mem.selectedOption" ng-change="changePre(host.host, 'mem', predictionPanel.mem.selectedOption)" ng-options="tip.time for tip in predictionPanel.mem.tips"></select>
+                        </h4>
+                        <div class="prediction-item-pie prediction-item-{{host.host}}mem"></div>
+                        <em>{{predictionPanel.mem.selected}}</em>
+                    </div>
+                </div>
+                <table-loader key={{host.hostName}} template="/app/features/systemoverview/partials/system_host_table.html"></table-loader>
+            </div>
+        </div>
+    </div>
+</div>

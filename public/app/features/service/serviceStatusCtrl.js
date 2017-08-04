@@ -61,7 +61,7 @@ define([
 
       $scope.selectHost = function(index, host) {
         // hack
-        $scope.metric = [];
+        $scope.bsTableData = [];
         $scope.$broadcast('load-table');
 
         $scope.selected = ($scope.selected == index) ? -1 : index;
@@ -96,7 +96,7 @@ define([
 
         $scope.currentHost = host;
         $scope.currentItem = item;
-        $scope.metric = metric;
+        $scope.bsTableData = metric;
 
         $scope.$broadcast('load-table');
       };

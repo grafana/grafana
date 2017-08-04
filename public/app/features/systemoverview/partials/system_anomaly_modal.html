@@ -1,0 +1,20 @@
+
+<div class="modal" tabindex="-1" role="dialog" aria-hidden="true" style="max-height:550px; overflow: scroll;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" ng-if="except.message.length">
+          异常进程
+        </h4>
+        <h4 class="modal-title" ng-if="!except.message.length">
+          系统状况正常，没有异常进程
+        </h4>
+      </div>
+      <div class="modal-body" style="background-color: #fff;">
+        <ul>
+          <li ng-repeat="msg in except.message" style="width:100%; text-align:left;">{{msg}}<hr/></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
