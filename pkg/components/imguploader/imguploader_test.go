@@ -97,7 +97,7 @@ func TestImageUploaderFactory(t *testing.T) {
 			So(original.password, ShouldEqual, "password")
 		})
 
-    Convey("GCP uploader", func() {
+		Convey("GCP uploader", func() {
 			var err error
 
 			setting.NewConfigContext(&setting.CommandLineArgs{
