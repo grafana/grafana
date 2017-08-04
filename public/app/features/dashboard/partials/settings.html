@@ -4,7 +4,7 @@
 	</h2>
 
 	<ul class="gf-tabs">
-		<li class="gf-tabs-item" ng-repeat="tab in ::['General', 'Rows', 'Links', 'Time picker', 'Metadata']">
+		<li class="gf-tabs-item" ng-repeat="tab in ::['General', 'Links', 'Time picker']">
 			<a class="gf-tabs-link" ng-click="editor.index = $index" ng-class="{active: editor.index === $index}">
 				{{::tab}}
 			</a>
@@ -38,17 +38,22 @@
 				</bootstrap-tagsinput>
 			</div>
 
-			<div class="gf-form">
-				<label class="gf-form-label width-7">Timezone</label>
-				<div class="gf-form-select-wrapper">
-					<select ng-model="dashboard.timezone" class='gf-form-input' ng-options="f.value as f.text for f in [{value: '', text: 'Default'}, {value: 'browser', text: 'Local browser time'},{value: 'utc', text: 'UTC'}]" ng-change="timezoneChanged()"></select>
-				</div>
-			</div>
+      <folder-picker ng-if="!dashboardMeta.isFolder"
+										 initial-title="dashboardMeta.folderTitle"
+										 on-change="onFolderChange($folder)"
+										 label-class="width-7">
+			</folder-picker>
 		</div>
 
     <div class="section">
-      <h5 class="section-heading">Toggles</h5>
+      <h5 class="section-heading">Options</h5>
       <div class="gf-form-group">
+        <div class="gf-form">
+          <label class="gf-form-label width-11">Timezone</label>
+          <div class="gf-form-select-wrapper">
+            <select ng-model="dashboard.timezone" class='gf-form-input' ng-options="f.value as f.text for f in [{value: '', text: 'Default'}, {value: 'browser', text: 'Local browser time'},{value: 'utc', text: 'UTC'}]" ng-change="timezoneChanged()"></select>
+          </div>
+        </div>
         <gf-form-switch class="gf-form"
                         label="Editable"
                         tooltip="Uncheck, then save and reload to disable all dashboard editing"
@@ -116,28 +121,7 @@
 	</div>
 
 	<div ng-if="editor.index == 4">
-		<h5 class="section-heading">Dashboard info</h5>
-		<div class="gf-form-group">
-			<div class="gf-form">
-				<span class="gf-form-label width-10">Last updated at:</span>
-				<span class="gf-form-label width-18">{{dashboard.formatDate(dashboardMeta.updated)}}</span>
-			</div>
-			<div class="gf-form">
-				<span class="gf-form-label width-10">Last updated by:</span>
-				<span class="gf-form-label width-18">{{dashboardMeta.updatedBy}}&nbsp;</span>
-			</div>
-			<div class="gf-form">
-				<span class="gf-form-label width-10">Created at:</span>
-				<span class="gf-form-label width-18">{{dashboard.formatDate(dashboardMeta.created)}}&nbsp;</span>
-			</div>
-			<div class="gf-form">
-				<span class="gf-form-label width-10">Created by:</span>
-				<span class="gf-form-label width-18">{{dashboardMeta.createdBy}}&nbsp;</span>
-			</div>
-			<div class="gf-form">
-				<span class="gf-form-label width-10">Current version:</span>
-				<span class="gf-form-label width-18">{{dashboardMeta.version}}&nbsp;</span>
-			</div>
-		</div>
+		<acl-settings dashboard="dashboard"></acl-settings>
 	</div>
+
 </div>

@@ -48,6 +48,7 @@ export class DashboardModel {
   events: any;
   editMode: boolean;
   panels: Panel[];
+  folderId: number;
 
   constructor(data, meta?) {
     if (!data) {
@@ -77,6 +78,7 @@ export class DashboardModel {
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
     this.panels = data.panels || [];
+    this.folderId = data.folderId || null;
 
     this.rows = [];
     if (data.rows) {

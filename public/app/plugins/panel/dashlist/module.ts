@@ -19,6 +19,7 @@ class DashListCtrl extends PanelCtrl {
     search: false,
     starred: true,
     headings: true,
+    folderId: 0,
   };
 
   /** @ngInject */
@@ -87,6 +88,7 @@ class DashListCtrl extends PanelCtrl {
       limit: this.panel.limit,
       query: this.panel.query,
       tag: this.panel.tags,
+      folderId: this.panel.folderId
     };
 
     return this.backendSrv.search(params).then(result => {
@@ -122,6 +124,11 @@ class DashListCtrl extends PanelCtrl {
         return el !== undefined;
       });
     });
+  }
+
+  onFolderChange(folder: any) {
+    this.panel.folderId = folder.id;
+    this.refresh();
   }
 }
 

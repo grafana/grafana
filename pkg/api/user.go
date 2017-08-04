@@ -219,7 +219,7 @@ func SearchUsers(c *middleware.Context) Response {
 	return Json(200, query.Result.Users)
 }
 
-// GET /api/search
+// GET /api/users/search
 func SearchUsersWithPaging(c *middleware.Context) Response {
 	query, err := searchUser(c)
 	if err != nil {

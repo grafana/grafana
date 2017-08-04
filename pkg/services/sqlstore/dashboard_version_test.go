@@ -28,7 +28,7 @@ func TestGetDashboardVersion(t *testing.T) {
 		InitTestDB(t)
 
 		Convey("Get a Dashboard ID and version ID", func() {
-			savedDash := insertTestDashboard("test dash 26", 1, "diff")
+			savedDash := insertTestDashboard("test dash 26", 1, 0, false, "diff")
 
 			query := m.GetDashboardVersionQuery{
 				DashboardId: savedDash.Id,
@@ -69,7 +69,7 @@ func TestGetDashboardVersion(t *testing.T) {
 func TestGetDashboardVersions(t *testing.T) {
 	Convey("Testing dashboard versions retrieval", t, func() {
 		InitTestDB(t)
-		savedDash := insertTestDashboard("test dash 43", 1, "diff-all")
+		savedDash := insertTestDashboard("test dash 43", 1, 0, false, "diff-all")
 
 		Convey("Get all versions for a given Dashboard ID", func() {
 			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}

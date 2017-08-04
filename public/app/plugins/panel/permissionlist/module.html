@@ -1,0 +1,30 @@
+<section class="card-section card-list-layout-list">
+    <ol class="card-list">
+      <li class="card-item-wrapper" ng-repeat="permission in ctrl.userPermissions">
+        <div class="card-item card-item--alert">
+          <div class="card-item-header">
+            <div class="card-item-sub-name">{{permission.permissionName}}</div>
+          </div>
+          <div class="card-item-body">
+            <div class="card-item-details">
+              <div class="card-item-notice">{{permission.userLogin}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </li>
+    <li class="card-item-wrapper" ng-repeat="permission in ctrl.userGroupPermissions">
+        <div class="card-item card-item--alert">
+          <div class="card-item-header">
+            <div class="card-item-sub-name">{{permission.permissionName}}</div>
+          </div>
+          <div class="card-item-body">
+            <div class="card-item-details">
+              <div class="card-item-notice">{{permission.userGroup}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </li>
+  </ol>
+</section>

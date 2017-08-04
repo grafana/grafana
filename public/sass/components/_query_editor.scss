@@ -3,6 +3,12 @@
   color: $blue;
 }
 
+.gf-form-disabled {
+  .query-keyword {
+    color: darken($blue, 20%);
+  }
+}
+
 .query-segment-key {
   //border-right: none;
   //padding-right: 1px;

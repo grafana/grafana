@@ -96,6 +96,7 @@ export class NavModelSrv {
         {title: 'Preferences', active: subPage === 0, url: 'org', icon: 'fa fa-fw fa-cog'},
         {title: 'Org Users', active: subPage === 1, url: 'org/users', icon: 'fa fa-fw fa-users'},
         {title: 'API Keys', active: subPage === 2, url: 'org/apikeys', icon: 'fa fa-fw fa-key'},
+        {title: 'Org User Groups', active: subPage === 3, url: 'org/user-groups', icon: 'fa fa-fw fa-users'},
       ]
     };
   }
@@ -167,6 +168,14 @@ export class NavModelSrv {
         clickHandler: () => dashNavCtrl.openEditView('annotations')
       });
 
+      if (dashboard.meta.canAdmin) {
+        menu.push({
+          title: 'Permissions...',
+          icon: 'fa fa-fw fa-lock',
+          clickHandler: () => dashNavCtrl.openEditView('permissions')
+        });
+      }
+
       if (!dashboard.meta.isHome) {
         menu.push({
           title: 'Version history',
@@ -196,9 +205,9 @@ export class NavModelSrv {
       clickHandler: () => dashNavCtrl.showHelpModal()
     });
 
-    if (this.contextSrv.isEditor) {
+    if (this.contextSrv.isEditor && !dashboard.meta.isFolder) {
       menu.push({
-        title: 'Save As ...',
+        title: 'Save As...',
         icon: 'fa fa-fw fa-save',
         clickHandler: () => dashNavCtrl.saveDashboardAs()
       });

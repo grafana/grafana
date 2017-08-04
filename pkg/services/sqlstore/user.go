@@ -396,6 +396,10 @@ func DeleteUser(cmd *m.DeleteUserCommand) error {
 		deletes := []string{
 			"DELETE FROM star WHERE user_id = ?",
 			"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
+			"DELETE FROM org_user WHERE user_id = ?",
+			"DELETE FROM dashboard_acl WHERE user_id = ?",
+			"DELETE FROM preferences WHERE user_id = ?",
+			"DELETE FROM user_group_member WHERE user_id = ?",
 		}
 
 		for _, sql := range deletes {

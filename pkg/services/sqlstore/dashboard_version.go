@@ -32,6 +32,10 @@ func GetDashboardVersion(query *m.GetDashboardVersionQuery) error {
 
 // GetDashboardVersions gets all dashboard versions for the given dashboard ID.
 func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
+	if query.Limit == 0 {
+		query.Limit = 1000
+	}
+
 	err := x.Table("dashboard_version").
 		Select(`dashboard_version.id,
 				dashboard_version.dashboard_id,

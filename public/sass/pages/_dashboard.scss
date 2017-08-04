@@ -41,7 +41,6 @@ div.flot-text {
 .panel-container {
   background-color: $panel-bg;
   position: relative;
-  border: $panel-border;
 
   &.panel-transparent {
     background-color: transparent;
@@ -55,18 +54,49 @@ div.flot-text {
 
 .panel-title-container {
   min-height: 9px;
-  padding-top: 4px;
-  cursor: pointer;
+  cursor: move;
   word-wrap: break-word;
+  display: block;
 }
 
 .panel-title {
   border: 0px;
   font-weight: $font-weight-semi-bold;
   position: relative;
-  cursor: pointer;
   width: 100%;
   display: block;
+  padding-bottom: 2px;
+}
+
+.panel-title-text {
+  cursor: pointer;
+
+  &:hover {
+    color: $link-hover-color;
+  }
+}
+
+.panel-menu-container {
+  width: 1px;
+  height: 19px;
+  display: inline-block;
+}
+
+.panel-menu-toggle {
+  color: $text-color-weak;
+  cursor: pointer;
+  padding: 3px 5px;
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 1px;
+  top: 4px;
+
+  &:hover {
+    color: $link-hover-color;
+  }
 }
 
 .panel-loading {
@@ -74,12 +104,23 @@ div.flot-text {
   top: -3px;
   right: 0px;
   z-index: 800;
+  font-size: $font-size-sm;
+  color: $text-color-weak;
 }
 
 .panel-header {
   text-align: center;
+
+  &:hover {
+    transition: background-color 0.1s ease-in-out;
+    background-color: $panel-header-hover-bg;
+  }
 }
 
+.panel-menu {
+  top: 25px;
+  left: -100px;
+}
 
 .panel-info-corner-inner {
   width: 0;
@@ -150,44 +191,23 @@ div.flot-text {
   margin-bottom: 20px;
 }
 
-.panel-menu {
-  z-index: 500;
-  position: absolute;
-  background: $tight-form-func-bg;
-  border: $panel-menu-border;
-
-  .panel-menu-row {
-    white-space: nowrap;
-    border-bottom: $panel-menu-border;
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-
-  .panel-menu-link, .panel-menu-icon {
-    padding: 5px 10px;
-  }
-
-  .panel-menu-link {
-    display: inline-block;
-    border-right: $panel-menu-border;
-    &:last-child {
-      border: none;
-    }
-  }
-
-  .dropdown-menu {
-    text-align: left;
-  }
-}
-
 .panel-highlight  {
   box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236,10.8)
 }
 
-// .panel-hover-highlight  {
-//   box-shadow: inset 0 1px 1px rgba(0,0,0,0.025), 0 0 1px rgba(82,168,236,0.5)
-// }
+.panel-hover-highlight  {
+  .panel-menu-toggle {
+    visibility: visible;
+    transition: opacity 0.1s ease-in 0.2s;
+    opacity: 1;
+  }
+
+  .resize-panel-handle {
+    visibility: visible;
+    transition: opacity 0.1s ease-in 0.2s;
+    opacity: 1;
+  }
+}
 
 .on-drag-hover {
   .panel-container {
@@ -197,6 +217,7 @@ div.flot-text {
 
 .panel-drop-zone {
   display: none;
+
   .panel-container {
     border: $panel-border;
     display: flex;
@@ -234,7 +255,8 @@ div.flot-text {
   right: 0;
   width: 15px;
   height: 15px;
-  display: block;
+  visibility: hidden;
+  opacity: 0;
   color: $text-color-faint;
 
   &:before {

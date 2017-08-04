@@ -84,16 +84,23 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		data.User.LightTheme = true
 	}
 
-	dashboardChildNavs := []*dtos.NavLink{
-		{Text: "Home", Url: setting.AppSubUrl + "/"},
-		{Text: "Playlists", Url: setting.AppSubUrl + "/playlists"},
-		{Text: "Snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots"},
+	if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
+		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+			Text: "New",
+			Icon: "fa fa-fw fa-plus",
+			Url:  "",
+			Children: []*dtos.NavLink{
+				{Text: "Dashboard", Icon: "fa fa-fw fa-plus", Url: setting.AppSubUrl + "/dashboard/new"},
+				{Text: "Folder", Icon: "fa fa-fw fa-plus", Url: setting.AppSubUrl + "/dashboard/new/?editview=new-folder"},
+				{Text: "Import", Icon: "fa fa-fw fa-plus", Url: setting.AppSubUrl + "/dashboard/new/?editview=import"},
+			},
+		})
 	}
 
-	if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Divider: true})
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "New", Icon: "fa fa-plus", Url: setting.AppSubUrl + "/dashboard/new"})
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "Import", Icon: "fa fa-download", Url: setting.AppSubUrl + "/dashboard/new/?editview=import"})
+	dashboardChildNavs := []*dtos.NavLink{
+		{Text: "Home", Url: setting.AppSubUrl + "/", Icon: "fa fa-fw fa-home"},
+		{Text: "Playlists", Url: setting.AppSubUrl + "/playlists", Icon: "fa fa-fw fa-film"},
+		{Text: "Snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "icon-gf icon-gf-snapshot"},
 	}
 
 	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
@@ -105,8 +112,8 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	if setting.AlertingEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR) {
 		alertChildNavs := []*dtos.NavLink{
-			{Text: "Alert List", Url: setting.AppSubUrl + "/alerting/list"},
-			{Text: "Notification channels", Url: setting.AppSubUrl + "/alerting/notifications"},
+			{Text: "Alert List", Url: setting.AppSubUrl + "/alerting/list", Icon: "fa fa-fw fa-list-ul"},
+			{Text: "Notification channels", Url: setting.AppSubUrl + "/alerting/notifications", Icon: "fa fa-fw fa-bell-o"},
 		}
 
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
@@ -122,12 +129,20 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Text: "Data Sources",
 			Icon: "icon-gf icon-gf-datasources",
 			Url:  setting.AppSubUrl + "/datasources",
+			Children: []*dtos.NavLink{
+				{Text: "List", Url: setting.AppSubUrl + "/datasources", Icon: "icon-gf icon-gf-datasources"},
+				{Text: "New", Url: setting.AppSubUrl + "/datasources", Icon: "fa fa-fw fa-plus"},
+			},
 		})
-
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 			Text: "Plugins",
 			Icon: "icon-gf icon-gf-apps",
 			Url:  setting.AppSubUrl + "/plugins",
+			Children: []*dtos.NavLink{
+				{Text: "Panels", Url: setting.AppSubUrl + "/plugins?type=panel", Icon: "fa fa-fw fa-stop"},
+				{Text: "Data sources", Url: setting.AppSubUrl + "/plugins?type=datasource", Icon: "icon-gf icon-gf-datasources"},
+				{Text: "Apps", Url: setting.AppSubUrl + "/plugins?type=app", Icon: "icon-gf icon-gf-apps"},
+			},
 		})
 	}
 

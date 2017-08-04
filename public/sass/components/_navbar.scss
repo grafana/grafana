@@ -60,10 +60,9 @@
   position: relative;
   float: left;
   margin: 0;
-  border-right: 1px solid $tight-form-border;
-  background-color: $navbarButtonBackground;
+  background-color: $side-menu-bg;
   padding: 0.4rem 1.0rem 0.4rem 1rem;
-  min-height:: $navbarHeight;
+  min-height: $navbarHeight;
 
   .fa-caret-down {
     font-size: 70%;
@@ -102,24 +101,23 @@
   }
 }
 
+.navbar-page-btn-wrapper {
+  float: left;
+  &:hover {
+    background: $navbarButtonBackgroundHighlight;
+  }
+}
+
 .navbar-page-btn {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
-  float: left;
   display: block;
   margin: 0;
-  font-size: 1.4rem;
-  border-right: 1px solid $tight-form-border;
   color: darken($link-color, 5%);
-  background-color: $navbarButtonBackground;
   font-size: $font-size-lg;
   padding: 1rem 1rem 0.75rem 1rem;
   min-height:: $navbarHeight;
-
-  &:hover, &.active {
-    background: $navbarButtonBackgroundHighlight;
-  }
 
   .fa-caret-down {
     font-size: 60%;
@@ -131,6 +129,7 @@
     top: 2px;
     font-size: 20px;
     line-height: 8px;
+    margin-right: 0.5rem;
   }
 
   > img {
@@ -146,50 +145,6 @@
 .navbar-page-btn-wrapper {
   display: inline-block;
   position: relative;
-}
-
-.dropdown-menu.dropdown-menu--navbar {
-  top: 100%;
-  min-width: 100%;
-  margin-top: 0px;
-
-  li a {
-    padding: $spacer/2 $spacer;
-    border-left: 2px solid $side-menu-bg;
-    background: $side-menu-bg;
-
-    i {
-      display: inline-block;
-      padding-right: 21px;
-    }
-
-    &:hover {
-      @include left-brand-border-gradient();
-      color: $link-hover-color;
-      background: $input-label-bg;
-    }
-  }
-}
-
-.sidemenu-pinned {
-  .navbar-brand-btn {
-    width: $side-menu-width;
-
-    .icon-gf-grafana_wordmark  {
-      display: inline-block;
-    }
-
-    .fa-caret-down {
-      display: none;
-    }
-
-    &:hover .fa-chevron-left {
-      display: inline-block;
-      color: $text-color-weak;
-      position: relative;
-      left: 1.3rem;
-    }
-  }
 }
 
 .navbar-section-wrapper {

@@ -19,7 +19,7 @@ export class SideMenuCtrl {
   maxShownOrgs: number;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private contextSrv, private backendSrv, private $element) {
+  constructor(private $scope, private $rootScope, private $location, private contextSrv, private backendSrv, private $element) {
     this.isSignedIn = contextSrv.isSignedIn;
     this.user = contextSrv.user;
     this.appSubUrl = config.appSubUrl;
@@ -44,6 +44,10 @@ export class SideMenuCtrl {
    return config.appSubUrl + url;
  }
 
+ search() {
+   this.$rootScope.appEvent('show-dash-search');
+ }
+
  openUserDropdown() {
    this.orgMenu = [
      {section: 'You', cssClass: 'dropdown-menu-title'},
@@ -63,6 +67,10 @@ export class SideMenuCtrl {
      this.orgMenu.push({
        text: "Users",
        url: this.getUrl("/org/users")
+     });
+     this.orgMenu.push({
+       text: "User Groups",
+       url: this.getUrl("/org/user-groups")
      });
      this.orgMenu.push({
        text: "API Keys",

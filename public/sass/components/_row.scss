@@ -141,16 +141,16 @@ $dash-row-menu-animation-speed: 0.20s;
 .dash-row-menu {
   list-style: none;
   flex-grow: 1;
-  box-shadow: $search-shadow;
-  background: $side-menu-bg;
+  box-shadow: $menu-dropdown-shadow;
+  background: $menu-dropdown-bg;
 
   li a {
     display: block;
     white-space: nowrap;
-    color: $text-muted;
+    color: $dropdownLinkColor;
     font-size: $font-size-sm;
     padding: $spacer/2 $spacer;
-    border-left: 2px solid $side-menu-bg;
+    border-left: 2px solid $menu-dropdown-bg;
     i {
       display: inline-block;
       padding-right: $spacer/2;
@@ -167,7 +167,7 @@ $dash-row-menu-animation-speed: 0.20s;
 .dash-row-menu-grip {
   text-align: center;
   font-size: 130%;
-  color: $text-color-faint;
+  color: $text-color-weak;
   opacity: 1;
   transition: $dash-row-menu-animation-speed ease-out 0.5s;
   width: 1rem;

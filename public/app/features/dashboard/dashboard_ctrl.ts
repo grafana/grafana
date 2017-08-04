@@ -127,6 +127,12 @@ export class DashboardCtrl {
       $scope.timezoneChanged = function() {
         $rootScope.$broadcast("refresh");
       };
+
+      $scope.onFolderChange = function(folder) {
+        $scope.dashboard.folderId = folder.id;
+        $scope.dashboard.meta.folderId = folder.id;
+        $scope.dashboard.meta.folderTitle= folder.title;
+      };
     }
 
     init(dashboard) {

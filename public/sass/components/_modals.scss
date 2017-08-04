@@ -47,7 +47,6 @@
 }
 
 .modal-header-title {
-  font-style: italic;
   font-size: $font-size-h3;
   float: left;
   padding-top: $spacer * 0.75;
@@ -62,7 +61,6 @@
 // Body (where all modal content resides)
 .modal-body {
   position: relative;
-  overflow-y: auto;
 }
 
 .modal-content {
