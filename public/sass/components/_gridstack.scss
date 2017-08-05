@@ -23,7 +23,6 @@
   right: 5px;
   bottom: 0;
   width: auto;
-  z-index: 0 !important;
   text-align: center;
 }
 
@@ -41,8 +40,6 @@
   right: 7px;
   bottom: 0;
   width: auto;
-  overflow-x: hidden;
-  overflow-y: auto;
 }
 
 .grid-stack > .grid-stack-item > .ui-resizable-handle {

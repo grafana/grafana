@@ -656,14 +656,19 @@ export class DashboardModel {
         height = Math.ceil(height / CELL_HEIGHT);
 
         for (let panel of row.panels) {
+          // should wrap to next row?
+          if (xPos + panel.span >= 12) {
+            yPos += height;
+          }
+
           panel.x = xPos;
           panel.y = yPos;
           panel.width = panel.span;
           panel.height = height;
 
-          xPos += panel.width;
-
           this.panels.push(panel);
+
+          xPos += panel.width;
         }
 
         yPos += height;
