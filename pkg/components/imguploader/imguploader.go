@@ -52,16 +52,16 @@ func NewImageUploader() (ImageUploader, error) {
 		password := webdavSec.Key("password").String()
 
 		return NewWebdavImageUploader(url, username, password, public_url)
-	case "gcp":
-		gcpsec, err := setting.Cfg.GetSection("external_image_storage.gcp")
+	case "gcs":
+		gcssec, err := setting.Cfg.GetSection("external_image_storage.gcs")
 		if err != nil {
 			return nil, err
 		}
 
-		keyFile := gcpsec.Key("key_file").MustString("")
-		bucketName := gcpsec.Key("bucket").MustString("")
+		keyFile := gcssec.Key("key_file").MustString("")
+		bucketName := gcssec.Key("bucket").MustString("")
 
-		return NewGCPUploader(keyFile, bucketName), nil
+		return NewGCSUploader(keyFile, bucketName), nil
 	}
 
 	return NopImageUploader{}, nil
