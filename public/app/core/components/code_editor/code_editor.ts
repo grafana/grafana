@@ -1,6 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-// import angular from 'angular';
 import coreModule from 'app/core/core_module';
 import ace from 'ace';
 
@@ -16,30 +15,33 @@ function fixModuleUrl(moduleType, name) {
   ace.config.setModuleUrl(aceModeName, ACE_SRC_BASE + componentName);
 }
 
-fixModuleUrl("theme", "solarized_dark");
 fixModuleUrl("ext", "language_tools");
 
 let editorTemplate = `<div></div>`;
 
 function link(scope, elem, attrs) {
+  // Options
+  let langMode = attrs.mode || 'text';
+  let theme = "solarized_dark";
+
   let aceElem = elem.get(0);
   let codeEditor = ace.edit(aceElem);
   let editorSession = codeEditor.getSession();
 
-  codeEditor.setTheme("ace/theme/solarized_dark");
   codeEditor.setHighlightActiveLine(false);
   codeEditor.setShowPrintMargin(false);
   // disable depreacation warning
   codeEditor.$blockScrolling = Infinity;
-  setLangMode();
+  codeEditor.setAutoScrollEditorIntoView(true);
+  setThemeMode(theme);
+  setLangMode(langMode);
 
   codeEditor.setValue(scope.content);
   codeEditor.clearSelection();
 
   elem.addClass("gf-code-editor");
   let textarea = elem.find("textarea");
-  textarea.addClass('gf-form-input width-25');
-  textarea.attr("rows", "4");
+  textarea.addClass('gf-form-input');
 
   editorSession.on('change', (e) => {
     scope.$apply(() => {
@@ -48,8 +50,7 @@ function link(scope, elem, attrs) {
     });
   });
 
-  function setLangMode() {
-    let lang = attrs.mode || 'text';
+  function setLangMode(lang) {
     let aceModeName = `ace/mode/${lang}`;
     fixModuleUrl("mode", lang);
     fixModuleUrl("snippets", lang);
@@ -61,6 +62,12 @@ function link(scope, elem, attrs) {
         enableSnippets: true
       });
     });
+  }
+
+  function setThemeMode(theme) {
+    fixModuleUrl("theme", theme);
+    let aceThemeName = `ace/theme/${theme}`;
+    codeEditor.setTheme(aceThemeName);
   }
 }
 
