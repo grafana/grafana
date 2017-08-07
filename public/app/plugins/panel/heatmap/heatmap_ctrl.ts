@@ -47,7 +47,8 @@ let panelDefaults = {
     show: true,
     showHistogram: false
   },
-  highlightCards: true
+  highlightCards: true,
+  showNoDataMessageSettings: true
 };
 
 let colorModes = ['opacity', 'spectrum'];
@@ -206,15 +207,15 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
     if (datapointsCount === 0) {
       this.dataWarning = {
-        title: 'No data points',
-        tip: 'No datapoints returned from data query'
+        title: () => this.panel.showNoDataMessage ? this.panel.noDataLabel : "",
+        tip: () => this.panel.showNoDataMessage ? this.panel.noDataTip : ""
       };
     } else {
       for (let series of this.series) {
         if (series.isOutsideRange) {
           this.dataWarning = {
-            title: 'Data points outside time range',
-            tip: 'Can be caused by timezone mismatch or missing time filter in query',
+            title: () => 'Data points outside time range',
+            tip: () => 'Can be caused by timezone mismatch or missing time filter in query',
           };
           break;
         }

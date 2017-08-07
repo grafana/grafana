@@ -2,7 +2,7 @@
 	<div class="heatmap-canvas-wrapper">
 
 		<div class="datapoints-warning" ng-if="ctrl.dataWarning">
-			<span class="small" bs-tooltip="ctrl.dataWarning.tip">{{ctrl.dataWarning.title}}</span>
+			<span class="small" bs-tooltip="ctrl.dataWarning.tip()">{{ctrl.dataWarning.title()}}</span>
 		</div>
 
 		<div class="heatmap-panel" ng-dblclick="ctrl.zoomOut()"></div>

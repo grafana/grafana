@@ -47,4 +47,18 @@
   <plugin-component type="query-options-ctrl">
   </plugin-component>
 </rebuild-on-change>
+
+<div ng-if="ctrl.panel.showNoDataMessageSettings" class="section gf-form-group">
+  <h5 class="section-heading">No data points message</h5>
+  <gf-form-switch class="gf-form" label-class="width-6" label="Show" checked="ctrl.showNoDataMessage"
+                  on-change="ctrl.setShowNoDataMessage()"></gf-form-switch>
+  <div class="gf-form">
+    <label class="gf-form-label width-6">Message</label>
+    <input type="text" class="gf-form-input width-16" ng-model="ctrl.noDataLabel" ng-change="ctrl.setNoDataMessage()"/>
+  </div>
+  <div class="gf-form">
+    <label class="gf-form-label width-6">Tooltip</label>
+    <input type="text" class="gf-form-input width-16" ng-model="ctrl.noDataTip" ng-change="ctrl.setNoDataTip()"/>
+  </div>
+</div>
 </div>

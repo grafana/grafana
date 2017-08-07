@@ -1,4 +1,3 @@
-
 <div class="table-panel-container">
 	<div class="table-panel-header-bg" ng-show="ctrl.table.rows.length"></div>
 	<div class="table-panel-scroll" ng-show="ctrl.table.rows.length">
@@ -22,9 +21,9 @@
 	</div>
 </div>
 <div class="datapoints-warning" ng-show="ctrl.table.rows.length===0">
-	<span class="small" >
-		No data to show <tip>Nothing returned by data query</tip>
-	</span>
+	<span ng-if="ctrl.panel.showNoDataMessage" class="small" bs-tooltip="ctrl.panel.noDataTip">
+    {{ctrl.panel.noDataLabel}}
+  </span>
 </div>
 <div class="table-panel-footer">
 </div>

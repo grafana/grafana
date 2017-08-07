@@ -14,6 +14,10 @@ export class MetricsTabCtrl {
   panelDsValue: any;
   addQueryDropdown: any;
 
+  showNoDataMessage: boolean;
+  noDataLabel: string;
+  noDataTip: string;
+
   /** @ngInject */
   constructor($scope, private uiSegmentSrv, private datasourceSrv) {
     this.panelCtrl = $scope.ctrl;
@@ -23,6 +27,10 @@ export class MetricsTabCtrl {
     this.dashboard = this.panelCtrl.dashboard;
     this.datasources = datasourceSrv.getMetricSources();
     this.panelDsValue = this.panelCtrl.panel.datasource || null;
+
+    this.showNoDataMessage = this.panelCtrl.panel.showNoDataMessage;
+    this.noDataLabel = this.panelCtrl.panel.noDataLabel;
+    this.noDataTip = this.panelCtrl.panel.noDataTip;
 
     for (let ds of this.datasources) {
       if (ds.value === this.panelDsValue) {
@@ -50,6 +58,18 @@ export class MetricsTabCtrl {
 
     this.current = option.datasource;
     this.panelCtrl.setDatasource(option.datasource);
+  }
+
+  setShowNoDataMessage(option) {
+    this.panel.showNoDataMessage = this.showNoDataMessage;
+  }
+
+  setNoDataMessage(option) {
+    this.panel.noDataLabel = this.noDataLabel;
+  }
+
+  setNoDataTip(option) {
+    this.panel.noDataTip = this.noDataTip;
   }
 
   addMixedQuery(option) {
