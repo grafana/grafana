@@ -18,6 +18,7 @@ function link(scope, elem, attrs) {
   codeEditor.setTheme("ace/theme/solarized_dark");
   codeEditor.setHighlightActiveLine(false);
   codeEditor.setShowPrintMargin(false);
+  codeEditor.$blockScrolling = Infinity;
 
   codeEditor.setValue(scope.content);
   codeEditor.clearSelection();
