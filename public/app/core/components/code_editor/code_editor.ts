@@ -4,8 +4,15 @@
 import coreModule from 'app/core/core_module';
 import ace from 'ace';
 
+const ACE_SRC_BASE = "public/vendor/npm/ace-builds/src-noconflict/";
+
 // Trick for loading additional modules
-ace.config.setModuleUrl("ace/theme/solarized_dark", "public/vendor/npm/ace-builds/src-noconflict/theme-solarized_dark.js");
+function fixModuleUrl(moduleType, name) {
+  let aceModeName = `ace/${moduleType}/${name}`;
+  ace.config.setModuleUrl(aceModeName, ACE_SRC_BASE + `${moduleType}-${name}.js`);
+}
+
+fixModuleUrl("theme", "solarized_dark");
 
 let editorTemplate = `
   <div class="gf-code-editor"></div>
@@ -19,6 +26,7 @@ function link(scope, elem, attrs) {
   codeEditor.setHighlightActiveLine(false);
   codeEditor.setShowPrintMargin(false);
   codeEditor.$blockScrolling = Infinity;
+  setLangMode();
 
   codeEditor.setValue(scope.content);
   codeEditor.clearSelection();
@@ -35,6 +43,12 @@ function link(scope, elem, attrs) {
     });
   });
 
+  function setLangMode() {
+    let lang = attrs.mode || 'text';
+    let aceModeName = `ace/mode/${lang}`;
+    fixModuleUrl("mode", lang);
+    editorSession.setMode(aceModeName);
+  }
 }
 
 export function codeEditorDirective() {
