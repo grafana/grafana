@@ -18,6 +18,7 @@
 ## Bug Fixes
 
 * **Search**: Fix for issue that casued search view to hide  when you clicked starred or tags filters, fixes [#8981](https://github.com/grafana/grafana/issues/8981)
+* **Modals**: ESC key now closes modal again, fixes [#8981](https://github.com/grafana/grafana/issues/8988), thx [@j-white](https://github.com/j-white)
 
 # 4.4.2 (2017-08-01)
 
