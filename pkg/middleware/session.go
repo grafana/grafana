@@ -103,6 +103,8 @@ type SessionStore interface {
 	Destory(*Context) error
 	// init
 	Start(*Context) error
+	// RegenerateId regenerates the session id
+	RegenerateId(*Context) error
 }
 
 type SessionWrapper struct {
@@ -113,6 +115,12 @@ type SessionWrapper struct {
 func (s *SessionWrapper) Start(c *Context) error {
 	var err error
 	s.session, err = s.manager.Start(c.Context)
+	return err
+}
+
+func (s *SessionWrapper) RegenerateId(c *Context) error {
+	var err error
+	s.session, err = s.manager.RegenerateId(c.Context)
 	return err
 }
 

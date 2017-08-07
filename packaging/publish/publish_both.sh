@@ -18,3 +18,5 @@ package_cloud push grafana/testing/el/7 grafana-${version}-1.x86_64.rpm
 
 package_cloud push grafana/stable/el/7 grafana-${version}-1.x86_64.rpm
 package_cloud push grafana/stable/el/6 grafana-${version}-1.x86_64.rpm
+
+rm grafana*.{deb,rpm}
