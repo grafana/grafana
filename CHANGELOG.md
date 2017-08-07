@@ -11,7 +11,7 @@
 
 ## Changes
 
-* **InfluxDB**: Change time range filter for absolute time ranges to be inclusive instead of exclusive [#8319(https://github.com/grafana/grafana/issues/8319, thx [@Oxydros](https://github.com/Oxydros)
+* **InfluxDB**: Change time range filter for absolute time ranges to be inclusive instead of exclusive [#8319](https://github.com/grafana/grafana/issues/8319), thx [@Oxydros](https://github.com/Oxydros)
 
 # 4.4.3 (unreleased)
 
