@@ -39,7 +39,7 @@ func (u *GCSUploader) Upload(imageDiskPath string) (string, error) {
 
 	log.Debug("Creating JWT conf")
 
-	conf, err := google.JWTConfigFromJSON(data, "https://www.googleapis.com/auth/devstorage.full_control")
+	conf, err := google.JWTConfigFromJSON(data, "https://www.googleapis.com/auth/devstorage.read_write")
 	if err != nil {
 		return "", err
 	}
