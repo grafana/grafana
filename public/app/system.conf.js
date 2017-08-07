@@ -67,5 +67,11 @@ System.config({
       deps: ['jquery'],
       exports: 'angular',
     },
+    'vendor/jsPlumb/jsPlumbToolkit.js': {
+      build: false
+    },
+    'vendor/jsPlumb/jsPlumbToolkit-angular.js': {
+      build: false
+    }
   }
 });

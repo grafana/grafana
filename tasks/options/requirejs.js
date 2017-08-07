@@ -21,10 +21,6 @@ module.exports = function(config,grunt) {
       normalizeDirDefines: 'all',
       inlineText: true,
       skipPragmas: true,
-      paths: {
-        "jsPlumbToolkit": "empty:",
-        "jsPlumbToolkit-angular": "empty:",
-      },
 
       done: function (done, output) {
         var duplicates = require('rjs-build-analysis').duplicates(output);
