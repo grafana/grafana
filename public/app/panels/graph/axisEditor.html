@@ -15,13 +15,13 @@
 					dropdown-typeahead-on-select="setUnitFormat(0, $subItem)">
 				</li>
 				<li class="tight-form-item">
-					&nbsp;&nbsp; 最大网格
+					&nbsp;&nbsp; 规模
 				</li>
 				<li>
 					<select class="input-small tight-form-input" style="width: 113px" ng-model="panel.grid.leftLogBase" ng-options="v as k for (k, v) in logScales" ng-change="render()"></select>
 				</li>
 				<li class="tight-form-item">
-					Min
+					标签
 				</li>
 				<li>
 					<input type="text" class="input-small tight-form-input last"
@@ -36,7 +36,7 @@
 					<i class="fa fa-remove invisible"></i>
 				</li>
 				<li class="tight-form-item">
-					规模
+					Y-Max
 				</li>
 				<li>
 					<input type="number" class="input-small tight-form-input" placeholder="auto"
@@ -44,7 +44,7 @@
 					ng-change="render()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
-					标签
+					Y-min
 				</li>
 				<li>
 					<input type="number" class="input-small tight-form-input" placeholder="auto" style="width: 113px;"
@@ -68,13 +68,13 @@
 					dropdown-typeahead-on-select="setUnitFormat(1, $subItem)">
 				</li>
 				<li class="tight-form-item">
-					&nbsp;&nbsp; 最大网格
+					&nbsp;&nbsp; 规模
 				</li>
 				<li>
 					<select class="input-small tight-form-input" style="width: 113px" ng-model="panel.grid.rightLogBase" ng-options="v as k for (k, v) in logScales" ng-change="render()"></select>
 				</li>
 				<li class="tight-form-item">
-					最小网格
+					标签
 				</li>
 				<li>
 					<input type="text" class="input-small tight-form-input last"
@@ -89,7 +89,7 @@
 					<i class="fa fa-remove invisible"></i>
 				</li>
 				<li class="tight-form-item">
-					规模
+					Y-Max
 				</li>
 				<li>
 					<input type="number" class="input-small tight-form-input" placeholder="auto"
@@ -97,7 +97,7 @@
 					ng-change="render()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
-					标签
+					Y-Min
 				</li>
 				<li>
 					<input type="number" class="input-small tight-form-input" placeholder="auto" style="width: 113px;"
