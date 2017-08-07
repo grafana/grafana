@@ -106,6 +106,10 @@ func (s *mockSession) Destory(c *Context) error {
 	return nil
 }
 
+func (s *mockSession) RegenerateId(c *Context) error {
+	return nil
+}
+
 type mockLdapAuthenticator struct {
 	syncSignedInUserCalled bool
 }
