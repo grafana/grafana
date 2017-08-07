@@ -7,8 +7,8 @@ import (
 	"net/http/httputil"
 	"time"
 
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/wangy1931/grafana/pkg/middleware"
+	"github.com/wangy1931/grafana/pkg/util"
 )
 
 var gNetProxyTransport = &http.Transport{
