@@ -54,7 +54,7 @@ export class ContextSrv {
     this.isOrgAdmin = this.hasRole('Admin');
     this.system = 0;
     this.dashboardLink = "";
-    this.systemsMap = (<any>window).grafanaBootData.systems;
+    this.systemsMap = config.bootData.systems;
     this.hostNum = 0;
   }
 
