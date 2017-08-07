@@ -30,3 +30,4 @@ import './orgDetailsCtrl';
 import './alertHistoryCtrl';
 import './importAlertsCtrl';
 import './snoozeCtrl';
+import './profile_ctrl';

@@ -1,7 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import config from 'app/core/config';
-import {coreModule} from 'app/core/core';
+import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 
 export class ProfileCtrl {
