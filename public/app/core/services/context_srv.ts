@@ -26,6 +26,11 @@ export class ContextSrv {
   isEditor: any;
   sidemenu: any;
   lightTheme: any;
+  isOrgAdmin: any;
+  dashboardLink: any;
+  systemsMap: any;
+  hostNum: any;
+  system: any;
 
   constructor() {
     this.pinned = store.getBool('grafana.sidemenu.pinned', false);
@@ -46,6 +51,11 @@ export class ContextSrv {
     this.isSignedIn = this.user.isSignedIn;
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
+    this.isOrgAdmin = this.hasRole('Admin');
+    this.system = 0;
+    this.dashboardLink = "";
+    this.systemsMap = (<any>window).grafanaBootData.systems;
+    this.hostNum = 0;
   }
 
   hasRole(role) {
@@ -59,9 +69,7 @@ export class ContextSrv {
 
   toggleSideMenu() {
     this.sidemenu = !this.sidemenu;
-    if (!this.sidemenu) {
-      this.setPinnedState(false);
-    }
+    this.setPinnedState(true);
   }
 }
 
