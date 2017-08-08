@@ -1,9 +1,26 @@
+/**
+ * codeEditor directive based on Ace code editor
+ * https://github.com/ajaxorg/ace
+ *
+ * Basic usage:
+ * <code-editor content="ctrl.target.query" data-mode="sql" data-show-gutter></code-editor>
+ *
+ * Some Ace editor options available via data-* attributes:
+ * data-lang-mode   - Language mode (text, sql, javascript, etc.). Default is 'text'.
+ * data-theme       - Editor theme (eg 'solarized_dark').
+ * data-max-lines   - Max editor height in lines. Editor grows automatically from 1 to maxLines.
+ * data-show-gutter - Show gutter (contains line numbers and additional info).
+ */
+
 ///<reference path="../../../headers/common.d.ts" />
 
 import coreModule from 'app/core/core_module';
 import ace from 'ace';
 
 const ACE_SRC_BASE = "public/vendor/npm/ace-builds/src-noconflict/";
+const DEFAULT_THEME = "solarized_dark";
+const DEFAULT_MODE = "text";
+const DEFAULT_MAX_LINES = 10;
 
 // Trick for loading additional modules
 function fixModuleUrl(moduleType, name) {
@@ -21,8 +38,10 @@ let editorTemplate = `<div></div>`;
 
 function link(scope, elem, attrs) {
   // Options
-  let langMode = attrs.mode || 'text';
-  let theme = "solarized_dark";
+  let langMode = attrs.mode || DEFAULT_MODE;
+  let maxLines = attrs.maxLines || DEFAULT_MAX_LINES;
+  let showGutter = attrs.showGutter !== undefined;
+  let theme = attrs.theme || DEFAULT_THEME;
 
   // Initialize editor
   let aceElem = elem.get(0);
@@ -30,8 +49,8 @@ function link(scope, elem, attrs) {
   let editorSession = codeEditor.getSession();
 
   let editorOptions = {
-    maxLines: 10,
-    showGutter: false,
+    maxLines: maxLines,
+    showGutter: showGutter,
     highlightActiveLine: false,
     showPrintMargin: false,
     autoScrollEditorIntoView: true // this is needed if editor is inside scrollable page
