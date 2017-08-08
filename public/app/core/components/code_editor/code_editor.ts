@@ -23,7 +23,7 @@
  */
 
 ///<reference path="../../../headers/common.d.ts" />
-
+import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import ace from 'ace';
 
@@ -33,14 +33,23 @@ const DEFAULT_MODE = "text";
 const DEFAULT_MAX_LINES = 10;
 const DEFAULT_TAB_SIZE = 2;
 
+const GRAFANA_MODULES = ['mode-prometheus', 'snippets-prometheus'];
+const GRAFANA_MODULE_BASE = "public/app/core/components/code_editor/";
+
 // Trick for loading additional modules
 function fixModuleUrl(moduleType, name) {
+  let baseUrl = ACE_SRC_BASE;
   let aceModeName = `ace/${moduleType}/${name}`;
-  let componentName = `${moduleType}-${name}.js`;
+  let moduleName = `${moduleType}-${name}`;
+  let componentName = `${moduleName}.js`;
+
+  if (_.includes(GRAFANA_MODULES, moduleName)) {
+    baseUrl = GRAFANA_MODULE_BASE;
+  }
   if (moduleType === 'snippets') {
     componentName = `${moduleType}/${name}.js`;
   }
-  ace.config.setModuleUrl(aceModeName, ACE_SRC_BASE + componentName);
+  ace.config.setModuleUrl(aceModeName, baseUrl + componentName);
 }
 
 fixModuleUrl("ext", "language_tools");
