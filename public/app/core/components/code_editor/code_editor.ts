@@ -3,13 +3,22 @@
  * https://github.com/ajaxorg/ace
  *
  * Basic usage:
- * <code-editor content="ctrl.target.query" data-mode="sql" data-show-gutter></code-editor>
+ * <code-editor content="ctrl.target.query" on-change="ctrl.panelCtrl.refresh()"
+ *  data-mode="sql" data-show-gutter>
+ * </code-editor>
+ *
+ * Params:
+ * content:  Editor content.
+ * onChange: Function called on content change (invoked on editor blur, ctrl+enter, not on every change).
  *
  * Some Ace editor options available via data-* attributes:
  * data-lang-mode   - Language mode (text, sql, javascript, etc.). Default is 'text'.
  * data-theme       - Editor theme (eg 'solarized_dark').
  * data-max-lines   - Max editor height in lines. Editor grows automatically from 1 to maxLines.
  * data-show-gutter - Show gutter (contains line numbers and additional info).
+ *
+ * Keybindings:
+ * Ctrl-Enter (Command-Enter): run onChange() function
  */
 
 ///<reference path="../../../headers/common.d.ts" />
@@ -65,20 +74,42 @@ function link(scope, elem, attrs) {
   codeEditor.renderer.setPadding(10);
   setThemeMode(theme);
   setLangMode(langMode);
-
-  codeEditor.setValue(scope.content);
-  codeEditor.clearSelection();
+  setEditorContent(scope.content);
 
   // Add classes
   elem.addClass("gf-code-editor");
   let textarea = elem.find("textarea");
   textarea.addClass('gf-form-input');
 
+  // Event handlers
   editorSession.on('change', (e) => {
     scope.$apply(() => {
       let newValue = codeEditor.getValue();
       scope.content = newValue;
     });
+  });
+
+  // Sync with outer scope - update editor content if model has been changed from outside of directive.
+  scope.$watch('content', (newValue, oldValue) => {
+    let editorValue = codeEditor.getValue();
+    if (newValue !== editorValue && newValue !== oldValue) {
+      scope.$$postDigest(function() {
+        setEditorContent(newValue);
+      });
+    }
+  });
+
+  codeEditor.on('blur', () => {
+    scope.onChange();
+  });
+
+  // Keybindings
+  codeEditor.commands.addCommand({
+    name: 'executeQuery',
+    bindKey: {win: 'Ctrl-Enter', mac: 'Command-Enter'},
+    exec: () => {
+      scope.onChange();
+    }
   });
 
   function setLangMode(lang) {
@@ -100,6 +131,11 @@ function link(scope, elem, attrs) {
     let aceThemeName = `ace/theme/${theme}`;
     codeEditor.setTheme(aceThemeName);
   }
+
+  function setEditorContent(value) {
+    codeEditor.setValue(value);
+    codeEditor.clearSelection();
+  }
 }
 
 export function codeEditorDirective() {
@@ -107,7 +143,8 @@ export function codeEditorDirective() {
     restrict: 'E',
     template: editorTemplate,
     scope: {
-      content: "="
+      content: "=",
+      onChange: "&"
     },
     link: link
   };
