@@ -187,7 +187,7 @@ function($, _) {
       });
     });
     var blob = new Blob([text], { type: "text/csv;charset=utf-8" });
-    window.saveAs(blob, 'grafana_data_export.csv');
+    window.saveAs(blob, 'cloudwiz_data_export.csv');
   };
 
   kbn.stringToJsRegex = function(str) {
