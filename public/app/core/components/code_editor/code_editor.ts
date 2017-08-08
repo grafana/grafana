@@ -16,6 +16,7 @@
  * data-theme       - Editor theme (eg 'solarized_dark').
  * data-max-lines   - Max editor height in lines. Editor grows automatically from 1 to maxLines.
  * data-show-gutter - Show gutter (contains line numbers and additional info).
+ * data-tab-size    - Tab size, default is 2.
  *
  * Keybindings:
  * Ctrl-Enter (Command-Enter): run onChange() function
@@ -30,6 +31,7 @@ const ACE_SRC_BASE = "public/vendor/npm/ace-builds/src-noconflict/";
 const DEFAULT_THEME = "solarized_dark";
 const DEFAULT_MODE = "text";
 const DEFAULT_MAX_LINES = 10;
+const DEFAULT_TAB_SIZE = 2;
 
 // Trick for loading additional modules
 function fixModuleUrl(moduleType, name) {
@@ -51,6 +53,7 @@ function link(scope, elem, attrs) {
   let maxLines = attrs.maxLines || DEFAULT_MAX_LINES;
   let showGutter = attrs.showGutter !== undefined;
   let theme = attrs.theme || DEFAULT_THEME;
+  let tabSize = attrs.tabSize || DEFAULT_TAB_SIZE;
 
   // Initialize editor
   let aceElem = elem.get(0);
@@ -60,6 +63,7 @@ function link(scope, elem, attrs) {
   let editorOptions = {
     maxLines: maxLines,
     showGutter: showGutter,
+    tabSize: tabSize,
     highlightActiveLine: false,
     showPrintMargin: false,
     autoScrollEditorIntoView: true // this is needed if editor is inside scrollable page
