@@ -35,12 +35,14 @@ class PluginListCtrl extends PanelCtrl {
     this.addEditorTab('Options', 'public/app/plugins/panel/pluginlist/editor.html');
   }
 
-  gotoPlugin(plugin) {
-    this.$location.path(`plugins/${plugin.id}/edit`);
+  gotoPlugin(plugin, evt) {
+    if (evt) { evt.stopPropagation(); }
+    this.$location.url(`plugins/${plugin.id}/edit`);
   }
 
   updateAvailable(plugin, $event) {
     $event.stopPropagation();
+    $event.preventDefault();
 
     var modalScope = this.$scope.$new(true);
     modalScope.plugin = plugin;

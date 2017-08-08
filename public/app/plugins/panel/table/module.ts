@@ -74,7 +74,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
+    this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
   }
@@ -98,10 +98,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     return super.issueQueries(datasource);
-  }
-
-  onDataSnapshotLoad(data) {
-    this.onDataReceived(data);
   }
 
   onDataError(err) {

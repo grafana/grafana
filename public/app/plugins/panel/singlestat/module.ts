@@ -56,7 +56,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
+    this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
   }
 
@@ -69,10 +69,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   setUnitFormat(subItem) {
     this.panel.format = subItem.value;
     this.render();
-  }
-
-  onDataSnapshotLoad(snapshotData) {
-    this.onDataReceived(snapshotData);
   }
 
   onDataError(err) {

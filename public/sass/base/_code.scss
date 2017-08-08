@@ -10,7 +10,7 @@ pre {
   font-size: $font-size-base - 2;
   background-color: $code-tag-bg;
   color: $text-color;
-  border: 1px solid darken($code-tag-bg, 15%);
+  border: 1px solid $code-tag-border;
   padding: 10px;
   border-radius: 4px;
 }

@@ -65,7 +65,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       var data = this.panel.snapshotData;
       // backward compatability
       if (!_.isArray(data)) {
-        data = data;
+        data = data.data;
       }
 
       this.events.emit('data-snapshot-load', data);
