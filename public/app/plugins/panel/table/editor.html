@@ -17,8 +17,16 @@
 					<span>{{column.text}}</span>
 				</label>
 			</div>
-			<div class="gf-form">
+			<div class="gf-form" ng-show="editor.canSetColumns">
 				<metric-segment segment="editor.addColumnSegment" get-options="editor.getColumnOptions()" on-change="editor.addColumn()"></metric-segment>
+			</div>
+			<div class="gf-form" ng-hide="editor.canSetColumns">
+				<label class="gf-form-label">
+					Auto
+					<info-popover mode="right-normal" ng-if="editor.columnsHelpMessage">
+						{{editor.columnsHelpMessage}}
+					</info-popover>
+				</label>
 			</div>
 		</div>
 	</div>

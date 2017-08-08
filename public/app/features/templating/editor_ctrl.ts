@@ -55,9 +55,8 @@ export class VariableEditorCtrl {
 
     $scope.add = function() {
       if ($scope.isValid()) {
-        $scope.variables.push($scope.current);
+        variableSrv.addVariable($scope.current);
         $scope.update();
-        $scope.dashboard.updateSubmenuVisibility();
       }
     };
 
@@ -114,9 +113,8 @@ export class VariableEditorCtrl {
     $scope.duplicate = function(variable) {
       var clone = _.cloneDeep(variable.getSaveModel());
       $scope.current = variableSrv.createVariableFromModel(clone);
-      $scope.variables.push($scope.current);
       $scope.current.name = 'copy_of_'+variable.name;
-      $scope.dashboard.updateSubmenuVisibility();
+      $scope.variableSrv.addVariable($scope.current);
     };
 
     $scope.update = function() {
@@ -150,9 +148,7 @@ export class VariableEditorCtrl {
     };
 
     $scope.removeVariable = function(variable) {
-      var index = _.indexOf($scope.variables, variable);
-      $scope.variables.splice(index, 1);
-      $scope.dashboard.updateSubmenuVisibility();
+      variableSrv.removeVariable(variable);
     };
   }
 }
