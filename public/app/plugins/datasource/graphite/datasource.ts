@@ -176,8 +176,8 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     };
 
     if (options && options.range) {
-      httpOptions.params.from = this.translateTime(options.range.raw.from, false);
-      httpOptions.params.until = this.translateTime(options.range.raw.to, true);
+      httpOptions.params.from = this.translateTime(options.range.from, false);
+      httpOptions.params.until = this.translateTime(options.range.to, true);
     }
 
     return this.doGraphiteRequest(httpOptions).then(results => {
