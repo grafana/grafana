@@ -149,7 +149,10 @@ export class SearchCtrl {
   };
 
   newDashboard() {
-    this.$location.url('dashboard/new');
+    this.$rootScope.appEvent('show-modal', {
+      src: 'public/app/partials/select_system.html',
+      scope: this.$scope.$new(),
+    });
   };
 }
 
