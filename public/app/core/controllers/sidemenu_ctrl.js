@@ -163,6 +163,10 @@ function (angular, _, $, coreModule, config) {
               href: $scope.getUrl("/cmdb/hostlist")
             },
             {
+              text: '服务列表',
+              href: $scope.getUrl("/cmdb/servicelist")
+            },
+            {
               text: '设置',
               href: $scope.getUrl("/cmdb/setup")
             }

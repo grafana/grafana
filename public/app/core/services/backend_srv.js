@@ -264,10 +264,19 @@ function (angular, _, coreModule, config) {
       });
     };
 
-    this.uploadHostList = function(params) {
+    this.uploadHostList = function(params, url) {
       return this.alertD({
         method: "post",
-        url: "/cmdb/setting",
+        url: url,
+        data: angular.toJson(params),
+        headers: {'Content-Type': 'application/json;'},
+      });
+    };
+
+    this.editServiceHost = function(params) {
+      return this.alertD({
+        method: "post",
+        url: "/cmdb/relationship/overwrite",
         data: angular.toJson(params),
         headers: {'Content-Type': 'application/json;'},
       });
