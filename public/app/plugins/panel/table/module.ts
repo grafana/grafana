@@ -11,41 +11,6 @@ import {transformDataToTable} from './transformers';
 import {tablePanelEditor} from './editor';
 import {TableRenderer} from './renderer';
 
-// TODO UPDATE
-// var panelDefaults = {
-//   targets: [{}],
-//   transform: 'timeseries_to_columns',
-//   pageSize: null,
-//   showHeader: true,
-//   styles: [
-//     {
-//       type: 'date',
-//       pattern: 'Time',
-//       dateFormat: 'YYYY-MM-DD HH:mm:ss',
-//       valueMaps: [
-//         { value: '', op: '=', text: '' }
-//       ]
-//     },
-//     {
-//       unit: 'short',
-//       type: 'number',
-//       decimals: 2,
-//       colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-//       colorMode: null,
-//       pattern: '/.*/',
-//       thresholds: [],
-//       valueMaps: [
-//         { value: '', op: '=', text: '' }
-//       ]
-//     }
-//   ],
-//   columns: [],
-//   scroll: true,
-//   fontSize: '100%',
-//   rowHeight: false,
-//   sort: {col: 0, desc: true},
-// };
-
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
@@ -63,6 +28,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         type: 'date',
         pattern: 'Time',
         dateFormat: 'YYYY-MM-DD HH:mm:ss',
+        valueMaps: [
+          { value: '', op: '=', text: '' }
+        ]
       },
       {
         unit: 'short',
@@ -72,11 +40,15 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         colorMode: null,
         pattern: '/.*/',
         thresholds: [],
+        valueMaps: [
+          { value: '', op: '=', text: '' }
+        ]
       }
     ],
     columns: [],
     scroll: true,
     fontSize: '100%',
+    rowHeight: false,
     sort: {col: 0, desc: true},
   };
 
@@ -93,13 +65,11 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     // TODO UPDATE 
-    // !this.panel.styles && (this.panel.styles = []);
-    // // 修正接口“数值转换”的数据
-    // for (var i = 0; i < this.panel.styles.length; i++) {
-    //   this.panel.styles[i].valueMaps === void 0 && (this.panel.styles[i].valueMaps = [{ value: '', op: '=', text: '' }]);
-    // }
-
-    // _.defaults(this.panel, panelDefaults);
+    !this.panel.styles && (this.panel.styles = []);
+    // 修正接口“数值转换”的数据
+    for (var i = 0; i < this.panel.styles.length; i++) {
+      this.panel.styles[i].valueMaps === void 0 && (this.panel.styles[i].valueMaps = [{ value: '', op: '=', text: '' }]);
+    }
 
     _.defaults(this.panel, this.panelDefaults);
 

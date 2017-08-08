@@ -226,19 +226,19 @@
 	<div class="gf-form-inline">
 		<div class="gf-form max-width-25">
 			<label class="gf-form-label query-keyword width-8">
-				Metric
+				指标
 				<label class="gf-form-label" bs-tooltip="ctrl.errors.metric" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.metric">
 					<i class="fa fa-warning"></i>
 				</label>
 			</label>
 			<input type="text" class="gf-form-input" ng-model="ctrl.target.metric"
-						 spellcheck='false' bs-typeahead="ctrl.suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100
+						 spellcheck='false' bs-typeahead-old="ctrl.suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100
 						ng-blur="ctrl.targetBlur()">
 			</input>
 		</div>
 		<div class="gf-form">
 			<label class="gf-form-label query-keyword">
-				Aggregator
+				聚合
 				<a bs-tooltip="ctrl.errors.aggregator" style="color: rgb(229, 189, 28)" ng-show="ctrl.errors.aggregator">
 					<i class="fa fa-warning"></i>
 				</a>
@@ -252,7 +252,7 @@
 		</div>
 			<div class="gf-form max-width-20">
 				<label class="gf-form-label query-keyword width-6">
-					Alias:
+					别名:
 					<info-popover mode="right-normal">
 						Use patterns like $tag_tagname to replace part of the alias for a tag value
 					</info-popover>
@@ -272,7 +272,7 @@
 
 	<div class="gf-form-inline">
 		<div class="gf-form max-width-25">
-			<label class="gf-form-label query-keyword width-8">Down sample</label>
+			<label class="gf-form-label query-keyword width-8">降低采样</label>
 			<input type="text" class="gf-form-input"
 						 ng-model="ctrl.target.downsampleInterval"
 						 ng-model-onblur
@@ -284,7 +284,7 @@
 		</div>
 
 		<div class="gf-form">
-			<label class="gf-form-label query-keyword">Aggregator</label>
+			<label class="gf-form-label query-keyword">聚合</label>
 			<div class="gf-form-select-wrapper">
 				<select ng-model="ctrl.target.downsampleAggregator" class="gf-form-input"
 								ng-options="agg for agg in ctrl.aggregators"
@@ -343,7 +343,7 @@
 		<div class="gf-form-inline" ng-show="ctrl.addFilterMode">
 			<div class="gf-form">
 				<input type="text" class="gf-form-input" spellcheck='false'
-						 bs-typeahead="ctrl.suggestTagKeys" data-min-length=0 data-items=100
+						 bs-typeahead-old="ctrl.suggestTagKeys" data-min-length=0 data-items=100
              ng-model="ctrl.target.currentFilterKey" placeholder="key">
 				</input>
 			</div>
@@ -357,7 +357,7 @@
 			</div>
 
 			<div class="gf-form">
-				<input type="text" class="gf-form-input" spellcheck='false' bs-typeahead="ctrl.suggestTagValues" data-min-length=0 data-items=100 ng-model="ctrl.target.currentFilterValue" placeholder="filter">
+				<input type="text" class="gf-form-input" spellcheck='false' bs-typeahead-old="ctrl.suggestTagValues" data-min-length=0 data-items=100 ng-model="ctrl.target.currentFilterValue" placeholder="filter">
 				</input>
 			</div>
 
@@ -389,7 +389,7 @@
 	<div class="gf-form-inline">
 		<div class="gf-form">
 			<label class="gf-form-label query-keyword width-8">
-				Tags
+				标签
 				<info-popover mode="right-normal" ng-if="ctrl.tsdbVersion == 2">
 					Please use filters, tags are deprecated in opentsdb 2.2
 				</info-popover>
@@ -417,12 +417,12 @@
 		<div class="gf-form" ng-show="ctrl.addTagMode">
 			<input type="text"
 						 class="gf-form-input" spellcheck='false'
-						 bs-typeahead="ctrl.suggestTagKeys" data-min-length=0 data-items=100
+						 bs-typeahead-old="ctrl.suggestTagKeys" data-min-length=0 data-items=100
 					   ng-model="ctrl.target.currentTagKey" placeholder="key">
 			</input>
 
 			<input type="text" class="gf-form-input"
-						 spellcheck='false' bs-typeahead="ctrl.suggestTagValues"
+						 spellcheck='false' bs-typeahead-old="ctrl.suggestTagValues"
 						 data-min-length=0 data-items=100 ng-model="ctrl.target.currentTagValue" placeholder="value">
 			</input>
 
@@ -432,7 +432,7 @@
 				</a>
 			</label>
 			<label class="gf-form-label" >
-				<a ng-click="ctrl.addTag()" ng-hide="ctrl.errors.tags">add tag</a>
+				<a ng-click="ctrl.addTag()" ng-hide="ctrl.errors.tags">添加标签</a>
 				<a ng-click="ctrl.closeAddTagMode()"><i class="fa fa-remove"></i></a>
 			</label>
 		</div>
@@ -452,7 +452,7 @@
 
 
 		<div class="gf-form" ng-hide="!ctrl.target.isCounter || !ctrl.target.shouldComputeRate">
-			<label class="gf-form-label">Counter Max</label>
+			<label class="gf-form-label">计数器最大值</label>
 			<input type="text" class="gf-form-input"
 					 	 ng-disabled="!ctrl.target.shouldComputeRate"
 						 ng-model="ctrl.target.counterMax" spellcheck='false'
@@ -460,7 +460,7 @@
 						 ng-blur="ctrl.targetBlur()">
 			</input>
 
-			<label class="gf-form-label">Reset Value</label>
+			<label class="gf-form-label">重置数值</label>
 			<input type="text" class="tight-form-input input-small"
 					   ng-disabled="!ctrl.target.shouldComputeRate"
 						 ng-model="ctrl.target.counterResetValue" spellcheck='false'
