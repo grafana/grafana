@@ -7,6 +7,12 @@
 			"revision": ""
 		},
 		{
+			"checksumSHA1": "HUIPHSprvfPdJ5cvbLIo0siif1A=",
+			"path": "github.com/Knetic/govaluate",
+			"revision": "91facc4ae520fef82c9aee6b6ae720d9ae789131",
+			"revisionTime": "2017-06-21T16:20:16Z"
+		},
+		{
 			"checksumSHA1": "7HXb3cry6luicWeJM9Uxwzfo9Rs=",
 			"path": "github.com/Unknwon/com",
 			"revision": "0db4a625e949e956314d7d1adea9bf82384cc10c",
@@ -365,6 +371,42 @@
 			"versionExact": "v1.10.18"
 		},
 		{
+			"checksumSHA1": "aGXG62K62txTeE3SOQCVK4nMXPY=",
+			"path": "github.com/casbin/casbin",
+			"revision": "ba0bef4c9fe5f37c90fa46eb54c2d2028bd1bca5",
+			"revisionTime": "2017-06-24T01:55:05Z"
+		},
+		{
+			"checksumSHA1": "w3TgToFy2locBDtoxe730zTuLTI=",
+			"path": "github.com/casbin/casbin/config",
+			"revision": "ba0bef4c9fe5f37c90fa46eb54c2d2028bd1bca5",
+			"revisionTime": "2017-06-24T01:55:05Z"
+		},
+		{
+			"checksumSHA1": "9u6BRF7ZCtsWolMGpsfhsBWSA5g=",
+			"path": "github.com/casbin/casbin/model",
+			"revision": "ba0bef4c9fe5f37c90fa46eb54c2d2028bd1bca5",
+			"revisionTime": "2017-06-24T01:55:05Z"
+		},
+		{
+			"checksumSHA1": "+0+ZDOOjhHA/Wr0VJ1GLkSUCiCI=",
+			"path": "github.com/casbin/casbin/persist",
+			"revision": "ba0bef4c9fe5f37c90fa46eb54c2d2028bd1bca5",
+			"revisionTime": "2017-06-24T01:55:05Z"
+		},
+		{
+			"checksumSHA1": "fG39jhUcP7IQEHnktxydCPMwDLg=",
+			"path": "github.com/casbin/casbin/rbac",
+			"revision": "ba0bef4c9fe5f37c90fa46eb54c2d2028bd1bca5",
+			"revisionTime": "2017-06-24T01:55:05Z"
+		},
+		{
+			"checksumSHA1": "Luf5UCU9jDANHTqtEk8MBny2+2E=",
+			"path": "github.com/casbin/casbin/util",
+			"revision": "ba0bef4c9fe5f37c90fa46eb54c2d2028bd1bca5",
+			"revisionTime": "2017-06-24T01:55:05Z"
+		},
+		{
 			"checksumSHA1": "cVyhKIRI2gQrgpn5qrBeAqErmWM=",
 			"path": "github.com/go-ini/ini",
 			"revision": "6e4869b434bd001f6983749881c7ead3545887d8",
@@ -447,6 +489,12 @@
 			"path": "github.com/klauspost/crc32",
 			"revision": "1bab8b35b6bb565f92cbc97939610af9369f942a",
 			"revisionTime": "2017-02-10T14:05:23Z"
+		},
+		{
+			"checksumSHA1": "JmiABfMhpW4CgY7EzK+BAecMxI0=",
+			"path": "github.com/kr/pty",
+			"revision": "2c10821df3c3cf905230d078702dfbe9404c9b23",
+			"revisionTime": "2017-03-07T14:53:09Z"
 		},
 		{
 			"checksumSHA1": "8z32QKTSDusa4QQyunKE4kyYXZ8=",
