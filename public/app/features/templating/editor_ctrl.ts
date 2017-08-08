@@ -35,14 +35,6 @@ export class VariableEditorCtrl {
     $scope.init = function() {
       $scope.mode = 'list';
 
-      $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
-        return !ds.meta.mixed && ds.value !== null;
-      });
-
-      $scope.datasourceTypes = _($scope.datasources).uniqBy('meta.id').map(function(ds) {
-        return {text: ds.meta.name, value: ds.meta.id};
-      }).value();
-
       $scope.variables = variableSrv.variables;
       $scope.reset();
 
@@ -130,6 +122,15 @@ export class VariableEditorCtrl {
     $scope.reset = function() {
       $scope.currentIsNew = true;
       $scope.current = variableSrv.createVariableFromModel({type: 'query'});
+
+      // this is done here in case a new data source type variable was added
+      $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
+        return !ds.meta.mixed && ds.value !== null;
+      });
+
+      $scope.datasourceTypes = _($scope.datasources).uniqBy('meta.id').map(function(ds) {
+        return {text: ds.meta.name, value: ds.meta.id};
+      }).value();
     };
 
     $scope.typeChanged = function() {
