@@ -158,13 +158,35 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
-	sql.WriteString(`SELECT
-					  dashboard.id,
-					  dashboard.title,
-					  dashboard.slug,
-					  dashboard_tag.term
-					FROM dashboard
-					LEFT OUTER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id`)
+	if len(query.Tags) > 0 {
+		sql.WriteString(`SELECT dashboard.id, dashboard.title, dashboard.slug, dashboard_tag.term
+							FROM
+							( SELECT dashboard.id
+							FROM dashboard
+							INNER JOIN dashboard_tag
+							ON dashboard_tag.dashboard_id = dashboard.id
+							WHERE dashboard_tag.term IN (`)
+		for i, tag := range query.Tags {
+			if i != 0 {
+				sql.WriteString(",")
+			}
+			sql.WriteString(" ?")
+			params = append(params, tag)
+		}
+		sql.WriteString(`) GROUP BY dashboard.id HAVING COUNT(dashboard.id) >= ?) as ids
+							INNER JOIN dashboard on ids.id = dashboard.id
+              INNER JOIN dashboard_tag on dashboard.id = dashboard_tag.dashboard_id
+              `)
+		params = append(params, len(query.Tags))
+	} else {
+		sql.WriteString(`SELECT
+							dashboard.id,
+							dashboard.title,
+							dashboard.slug,
+							dashboard_tag.term
+						FROM dashboard
+						LEFT OUTER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id`)
+	}
 
 	if query.IsStarred {
 		sql.WriteString(" INNER JOIN star on star.dashboard_id = dashboard.id")
@@ -198,6 +220,7 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 	}
 
 	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 1000"))
+	fmt.Println(sql.String())
 
 	var res []DashboardSearchProjection
 
@@ -232,7 +255,7 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 
 func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
 	sql := `SELECT
-					  COUNT(*) as count,
+						COUNT(*) as count,
 						term
 					FROM dashboard
 					INNER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id

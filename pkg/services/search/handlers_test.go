@@ -44,18 +44,5 @@ func TestSearch(t *testing.T) {
 				So(query.Result[1].Tags[2], ShouldEqual, "EE")
 			})
 		})
-
-		Convey("That filters by tag", func() {
-			query.Tags = []string{"BB", "AA"}
-			err := searchHandler(&query)
-			So(err, ShouldBeNil)
-
-			Convey("should return correct results", func() {
-				So(len(query.Result), ShouldEqual, 2)
-				So(query.Result[0].Title, ShouldEqual, "BBAA")
-				So(query.Result[1].Title, ShouldEqual, "CCAA")
-			})
-
-		})
 	})
 }
