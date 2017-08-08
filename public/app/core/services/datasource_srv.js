@@ -67,7 +67,7 @@ function (angular, _, coreModule, config, dateMath) {
     };
 
     this.getAnnotationSources = function() {
-      return _.reduce(config.datasources, function(memo, key, value) {
+      return _.reduce(config.datasources, function(memo, value) {
 
         if (value.meta && value.meta.annotations) {
           memo.push(value);

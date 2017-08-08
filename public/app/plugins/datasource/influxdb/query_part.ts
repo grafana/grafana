@@ -240,6 +240,24 @@ QueryPartDef.register({
 });
 
 QueryPartDef.register({
+  type: 'difference',
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
+  type: 'moving_average',
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [{ name: "window", type: "number", options: [5, 10, 20, 30, 40]}],
+  defaultParams: [10],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
   type: 'stddev',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
