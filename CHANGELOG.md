@@ -14,6 +14,12 @@
 
 * **InfluxDB**: Change time range filter for absolute time ranges to be inclusive instead of exclusive [#8319](https://github.com/grafana/grafana/issues/8319), thx [@Oxydros](https://github.com/Oxydros)
 
+# 4.4.4 (unreleased)
+
+## Bug Fixes
+
+* **MySQL/Postgres**: Fix for max_idle_conn option default which was wrongly set to zero which does not mean unlimited but means zero, which in practice kind of disables connection pooling, which is not good. Fixes [#8513](https://github.com/grafana/grafana/issues/8513)
+
 # 4.4.3 (2017-08-07)
 
 ## Bug Fixes
