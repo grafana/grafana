@@ -11,3 +11,48 @@
     font-size: 1rem;
   }
 }
+
+.ace_editor.ace_autocomplete {
+  // Ace editor adds <style> tag at the end of <head>, after grafana.css, so !important
+  // is used for overriding styles with the same CSS specificity.
+  background-color: $dropdownBackground !important;
+  color: $dropdownLinkColor !important;
+  border: 1px solid $dropdownBorder !important;
+
+  font-family: monospace;
+  font-size: 1rem;
+
+  .ace_scroller {
+    .ace_selected, .ace_active-line, .ace_line-hover {
+      color: $dropdownLinkColorHover;
+      background-color: $dropdownLinkBackgroundHover !important;
+    }
+
+    .ace_line-hover {
+      border-color: transparent;
+    }
+
+    .ace_completion-highlight {
+      color: $yellow;
+    }
+
+    .ace_rightAlignedText {
+      color: $text-muted;
+      z-index: 0;
+    }
+  }
+}
+
+.ace_tooltip.ace_doc-tooltip {
+  background-color: $dropdownBackground;
+  background-image: none;
+  color: $dropdownLinkColor;
+  border: 1px solid $dropdownBorder;
+
+  font-family: monospace;
+  font-size: 1rem;
+
+  hr {
+    background-color: $dropdownDividerBottom;
+  }
+}
