@@ -46,7 +46,8 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     columns: [],
     scroll: true,
     fontSize: '100%',
-    sort: {col: 0, desc: true},
+    showNoDataMessageSettings: true,
+    sort: {col: 0, desc: true}
   };
 
   /** @ngInject */

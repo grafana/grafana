@@ -112,6 +112,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     // other style overrides
     seriesOverrides: [],
     thresholds: [],
+    showNoDataMessageSettings: true,
   };
 
   /** @ngInject */
@@ -189,16 +190,16 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     if (datapointsCount === 0) {
       this.dataWarning = {
-        title: 'No data points',
-        tip: 'No datapoints returned from data query'
+        title: () => this.panel.showNoDataMessage ? this.panel.noDataLabel : "",
+        tip: () => this.panel.showNoDataMessage ? this.panel.noDataTip : ""
       };
     } else {
 
       for (let series of this.seriesList) {
         if (series.isOutsideRange) {
           this.dataWarning = {
-            title: 'Data points outside time range',
-            tip: 'Can be caused by timezone mismatch or missing time filter in query',
+            title: () => 'Data points outside time range',
+            tip: () => 'Can be caused by timezone mismatch or missing time filter in query',
           };
           break;
         }

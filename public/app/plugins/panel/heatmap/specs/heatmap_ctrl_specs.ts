@@ -35,7 +35,7 @@ describe('HeatmapCtrl', function() {
     });
 
     it('should set datapointsOutside', function() {
-      expect(ctx.ctrl.dataWarning.title).to.be('Data points outside time range');
+      expect(ctx.ctrl.dataWarning.title()).to.be('Data points outside time range');
     });
   });
 
@@ -69,7 +69,7 @@ describe('HeatmapCtrl', function() {
     });
 
     it('should set datapointsCount warning', function() {
-      expect(ctx.ctrl.dataWarning.title).to.be('No data points');
+      expect(ctx.ctrl.dataWarning.title()).to.be('No data points');
     });
   });
 

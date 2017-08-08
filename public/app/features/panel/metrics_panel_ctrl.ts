@@ -35,6 +35,12 @@ class MetricsPanelCtrl extends PanelCtrl {
   dataList: any;
   nextRefId: string;
 
+  metricPanelDefaults = {
+    showNoDataMessage: true,
+    noDataLabel: 'No data points',
+    noDataTip: 'Nothing returned by data query'
+  };
+
   constructor($scope, $injector) {
     super($scope, $injector);
 
@@ -45,6 +51,8 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.timeSrv = $injector.get('timeSrv');
     this.templateSrv = $injector.get('templateSrv');
     this.scope = $scope;
+
+    _.defaults(this.panel, this.metricPanelDefaults);
 
     if (!this.panel.targets) {
       this.panel.targets = [{}];

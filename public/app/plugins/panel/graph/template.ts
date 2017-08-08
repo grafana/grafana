@@ -3,7 +3,7 @@ var template = `
   <div class="graph-canvas-wrapper">
 
     <div class="datapoints-warning" ng-if="ctrl.dataWarning">
-      <span class="small" bs-tooltip="ctrl.dataWarning.tip">{{ctrl.dataWarning.title}}</span>
+      <span class="small" bs-tooltip="ctrl.dataWarning.tip()">{{ctrl.dataWarning.title()}}</span>
     </div>
 
     <div grafana-graph class="histogram-chart" ng-dblclick="ctrl.zoomOut()">
