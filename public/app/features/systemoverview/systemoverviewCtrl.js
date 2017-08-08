@@ -61,6 +61,32 @@ define([
         });
       };
 
+      // copy from anomalyMetic.js
+      // 有改动
+      function setPanelMetaHost(panelDef, metric, hostname) {
+        var alias = metric + ".anomaly{host=" + hostname + "}";
+        var panel = panelDef;
+        panel.title = metric + "{host=" + hostname + "}" + "指标异常情况";
+        panel.targets[0].metric = metric;
+        panel.targets[0].tags.host = hostname;
+        panel.targets[1].metric = metric + ".anomaly";
+        panel.targets[1].tags.host = hostname;
+        panel.targets[2].metric = metric + ".prediction.min";
+        panel.targets[2].tags.host = hostname;
+        panel.targets[3].metric = metric + ".prediction.max";
+        panel.targets[3].tags.host = hostname;
+
+        panel.seriesOverrides[0].alias = alias;
+        panel.seriesOverrides[1].alias = metric + ".prediction.min{host=" + hostname + "}";
+        panel.seriesOverrides[1].fill  = 0;
+        panel.seriesOverrides[1].linewidth  = 0;
+        panel.seriesOverrides[2].alias = metric + ".prediction.max{host=" + hostname + "}";
+        panel.seriesOverrides[2].fillBelowTo = metric + ".prediction.min{host=" + hostname + "}";
+        panel.seriesOverrides[2].linewidth  = 0;
+        panel.seriesOverrides[2].fill = 5;
+        return panelDef;
+      }
+
       $scope.init = function () {
         $scope.healthPanel = {};
         $scope.alertPanel  = {};
@@ -512,9 +538,13 @@ define([
       };
 
       // 弹窗 查看历史情况
-      $scope.showModal = function (index) {
+      $scope.showModal = function (index, metric, host) {
         $scope.row = $scope._dashboard.rows[index];
         $scope.panel = $scope._dashboard.rows[index].panels[0];
+
+        if (index === 7) {
+          $scope.panel = setPanelMetaHost(_.cloneDeep($scope.panel), metric, host);
+        }
 
         var healthModal = $modal({
           scope: $scope,
