@@ -234,7 +234,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       };
 
       ctrl.variableSrv.setAdhocFilter(options);
-      console.log('clicked', options);
     }
 
     elem.on('click', '.table-panel-page-link', switchPage);
