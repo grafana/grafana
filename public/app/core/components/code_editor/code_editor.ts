@@ -24,21 +24,33 @@ function link(scope, elem, attrs) {
   let langMode = attrs.mode || 'text';
   let theme = "solarized_dark";
 
+  // Initialize editor
   let aceElem = elem.get(0);
   let codeEditor = ace.edit(aceElem);
   let editorSession = codeEditor.getSession();
 
-  codeEditor.setHighlightActiveLine(false);
-  codeEditor.setShowPrintMargin(false);
+  let editorOptions = {
+    maxLines: 10,
+    showGutter: false,
+    highlightActiveLine: false,
+    showPrintMargin: false,
+    autoScrollEditorIntoView: true // this is needed if editor is inside scrollable page
+  };
+
+  // Set options
+  codeEditor.setOptions(editorOptions);
   // disable depreacation warning
   codeEditor.$blockScrolling = Infinity;
-  codeEditor.setAutoScrollEditorIntoView(true);
+  // Padding hacks
+  codeEditor.renderer.setScrollMargin(10, 10);
+  codeEditor.renderer.setPadding(10);
   setThemeMode(theme);
   setLangMode(langMode);
 
   codeEditor.setValue(scope.content);
   codeEditor.clearSelection();
 
+  // Add classes
   elem.addClass("gf-code-editor");
   let textarea = elem.find("textarea");
   textarea.addClass('gf-form-input');
