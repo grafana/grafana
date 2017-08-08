@@ -6,7 +6,7 @@
                     <li class="pull-left">
                         <i class="fa btn btn-primary" ng-class="{true: 'fa-minus', false: 'fa-plus'}[$index == selected]"></i>
                     </li>
-                    <li>{{host.host}}</li>
+                    <li style="overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">{{host.host}}</li>
                     <li>
                         <button type="button" style="margin: 8px 54px; padding: 2px 10px;"
                             class="btn-item system-status status-{{ hostsResource[hostPanel.currentService.name][host.host].status | lowercase }}">

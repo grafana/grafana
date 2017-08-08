@@ -219,7 +219,8 @@ define([
           $scope.hostPanel.hosts = [];
 
           _.each(hosts, function (host) {
-            $scope.hostPanel.hosts.push(_.findWhere($scope.hostPanels, { host: host }))
+            var tmp = _.findWhere($scope.hostPanels, { host: host }) || { host: host };
+            $scope.hostPanel.hosts.push(tmp);
           });
         }).then(function () {
           _.each(hosts, function (host) {
