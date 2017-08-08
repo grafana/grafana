@@ -61,13 +61,14 @@ button.close {
 .hide {
   display: none;
 }
+
 .show {
   display: block;
 }
 
 // Visibility
 .invisible {
-  visibility: hidden;
+  visibility: hidden !important;
 }
 
 // For Affix plugin

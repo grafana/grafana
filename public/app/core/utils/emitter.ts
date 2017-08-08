@@ -23,7 +23,7 @@ export class Emitter {
     this.emitter.on(name, handler);
 
     if (scope) {
-      scope.$on('$destroy', function() {
+      scope.$on('$destroy', () => {
         this.emitter.off(name, handler);
       });
     }

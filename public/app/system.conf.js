@@ -41,6 +41,8 @@ System.config({
 
     "angular-strap.tpl":        "vendor/angular-other/angular-strap.tpl",
     "angular-strap-old":        "vendor/angular-other/angular-strap-old",
+
+    "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge"
   },
 
   packages: {

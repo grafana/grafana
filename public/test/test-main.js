@@ -39,6 +39,7 @@
       'fullcalendar':             'vendor/fullcalendar/dist/fullcalendar.min',
       'ui.calendar':              'vendor/angular-ui-calendar/src/calendar',
       'zh-cn':                    'vendor/fullcalendar/dist/zh-cn',
+      "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge"
     },
 
     packages: {

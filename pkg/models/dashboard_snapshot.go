@@ -45,7 +45,7 @@ type DashboardSnapshotDTO struct {
 
 type CreateDashboardSnapshotCommand struct {
 	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
-	Name      string           `json:"name" binding:"Required"`
+	Name      string           `json:"name"`
 	Expires   int64            `json:"expires"`
 
 	// these are passed when storing an external snapshot ref

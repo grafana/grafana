@@ -11,39 +11,40 @@ import {transformDataToTable} from './transformers';
 import {tablePanelEditor} from './editor';
 import {TableRenderer} from './renderer';
 
-var panelDefaults = {
-  targets: [{}],
-  transform: 'timeseries_to_columns',
-  pageSize: null,
-  showHeader: true,
-  styles: [
-    {
-      type: 'date',
-      pattern: 'Time',
-      dateFormat: 'YYYY-MM-DD HH:mm:ss',
-      valueMaps: [
-        { value: '', op: '=', text: '' }
-      ]
-    },
-    {
-      unit: 'short',
-      type: 'number',
-      decimals: 2,
-      colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-      colorMode: null,
-      pattern: '/.*/',
-      thresholds: [],
-      valueMaps: [
-        { value: '', op: '=', text: '' }
-      ]
-    }
-  ],
-  columns: [],
-  scroll: true,
-  fontSize: '100%',
-  rowHeight: false,
-  sort: {col: 0, desc: true},
-};
+// TODO UPDATE
+// var panelDefaults = {
+//   targets: [{}],
+//   transform: 'timeseries_to_columns',
+//   pageSize: null,
+//   showHeader: true,
+//   styles: [
+//     {
+//       type: 'date',
+//       pattern: 'Time',
+//       dateFormat: 'YYYY-MM-DD HH:mm:ss',
+//       valueMaps: [
+//         { value: '', op: '=', text: '' }
+//       ]
+//     },
+//     {
+//       unit: 'short',
+//       type: 'number',
+//       decimals: 2,
+//       colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+//       colorMode: null,
+//       pattern: '/.*/',
+//       thresholds: [],
+//       valueMaps: [
+//         { value: '', op: '=', text: '' }
+//       ]
+//     }
+//   ],
+//   columns: [],
+//   scroll: true,
+//   fontSize: '100%',
+//   rowHeight: false,
+//   sort: {col: 0, desc: true},
+// };
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -51,6 +52,33 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   pageIndex: number;
   dataRaw: any;
   table: any;
+
+  panelDefaults = {
+    targets: [{}],
+    transform: 'timeseries_to_columns',
+    pageSize: null,
+    showHeader: true,
+    styles: [
+      {
+        type: 'date',
+        pattern: 'Time',
+        dateFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      {
+        unit: 'short',
+        type: 'number',
+        decimals: 2,
+        colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+        colorMode: null,
+        pattern: '/.*/',
+        thresholds: [],
+      }
+    ],
+    columns: [],
+    scroll: true,
+    fontSize: '100%',
+    sort: {col: 0, desc: true},
+  };
 
   /** @ngInject */
   constructor($scope, $injector, private annotationsSrv) {
@@ -64,13 +92,16 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       delete this.panel.fields;
     }
 
-    !this.panel.styles && (this.panel.styles = []);
-    // 修正接口“数值转换”的数据
-    for (var i = 0; i < this.panel.styles.length; i++) {
-      this.panel.styles[i].valueMaps === void 0 && (this.panel.styles[i].valueMaps = [{ value: '', op: '=', text: '' }]);
-    }
+    // TODO UPDATE 
+    // !this.panel.styles && (this.panel.styles = []);
+    // // 修正接口“数值转换”的数据
+    // for (var i = 0; i < this.panel.styles.length; i++) {
+    //   this.panel.styles[i].valueMaps === void 0 && (this.panel.styles[i].valueMaps = [{ value: '', op: '=', text: '' }]);
+    // }
 
-    _.defaults(this.panel, panelDefaults);
+    // _.defaults(this.panel, panelDefaults);
+
+    _.defaults(this.panel, this.panelDefaults);
 
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
@@ -134,6 +165,11 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   toggleColumnSort(col, colIndex) {
+    // remove sort flag from current column
+    if (this.table.columns[this.panel.sort.col]) {
+      this.table.columns[this.panel.sort.col].sort = false;
+    }
+
     if (this.panel.sort.col === colIndex) {
       if (this.panel.sort.desc) {
         this.panel.sort.desc = false;

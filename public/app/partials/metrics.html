@@ -1,4 +1,5 @@
-<div class="editor-row">
+<!-- TODO UPDATE
+	<div class="editor-row">
 
 	<div class="tight-form-container">
 		<div ng-repeat="target in ctrl.panel.targets" ng-class="{'tight-form-disabled': target.hide}">
@@ -33,24 +34,23 @@
 	<rebuild-on-change property="ctrl.panel.datasource" show-null="true">
 		<plugin-component type="query-options-ctrl">
 		</plugin-component>
-	</rebuild-on-change>
+	</rebuild-on-change> -->
 
+<div class="query-editor-rows gf-form-group">
+  <div ng-repeat="target in ctrl.panel.targets" ng-class="{'gf-form-disabled': target.hide}">
+    <rebuild-on-change property="ctrl.panel.datasource || target.datasource" show-null="true">
+      <plugin-component type="query-ctrl">
+      </plugin-component>
+    </rebuild-on-change>
+  </div>
 </div>
 
-<div class="editor-row">
+<metrics-ds-selector panel-ctrl="ctrl"></metrics-ds-selector>
 
-	<div class="pull-right dropdown" style="margin-right: 10px;">
-		<button class="btn btn-inverse dropdown-toggle" data-toggle="dropdown" bs-tooltip="'Datasource'">
-			<i class="fa fa-database"></i>&nbsp;
-			{{ctrl.datasource.name}} &nbsp; <span class="caret"></span>
-		</button>
-
-		<ul class="dropdown-menu" role="menu">
-			<li ng-repeat="datasource in ctrl.datasources" role="menuitem">
-				<a ng-click="ctrl.setDatasource(datasource);">{{datasource.name}}</a>
-			</li>
-		</ul>
-	</div>
-
-	<div class="clearfix"></div>
+<div class="gf-form-group">
+  <rebuild-on-change property="ctrl.panel.datasource" show-null="true">
+    <plugin-component type="query-options-ctrl">
+    </plugin-component>
+  </rebuild-on-change>
 </div>
+

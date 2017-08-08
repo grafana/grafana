@@ -25,6 +25,19 @@ module.exports = function(grunt) {
     'typescript:build'
   ]);
 
-  grunt.registerTask('test', ['default', 'karma:test']);
+  grunt.registerTask('test', ['default', 'karma:test', 'no-only-tests']);
 
+  grunt.registerTask('no-only-tests', function() {
+    var files = grunt.file.expand('public/**/*_specs\.ts', 'public/**/*_specs\.js');
+
+    files.forEach(function(spec) {
+      var rows = grunt.file.read(spec).split('\n');
+      rows.forEach(function(row) {
+        if (row.indexOf('.only(') > 0) {
+          grunt.log.errorlns(row);
+          grunt.fail.warn('found only statement in test: ' + spec)
+        }
+      });
+    });
+  });
 };

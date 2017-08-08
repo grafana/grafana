@@ -46,7 +46,6 @@ export class ContextSrv {
     }
 
     this.version = config.buildInfo.version;
-    this.lightTheme = false;
     this.user = new User();
     this.isSignedIn = this.user.isSignedIn;
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;

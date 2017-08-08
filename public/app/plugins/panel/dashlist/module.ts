@@ -5,27 +5,26 @@ import config from 'app/core/config';
 import {PanelCtrl} from 'app/plugins/sdk';
 import {impressions} from 'app/features/dashboard/impression_store';
 
- // Set and populate defaults
-var panelDefaults = {
-  query: '',
-  limit: 10,
-  tags: [],
-  recent: false,
-  search: false,
-  starred: true,
-  headings: true,
-};
-
 class DashListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
 
   groups: any[];
   modes: any[];
 
+  panelDefaults = {
+    query: '',
+    limit: 10,
+    tags: [],
+    recent: false,
+    search: false,
+    starred: true,
+    headings: true,
+  };
+
   /** @ngInject */
   constructor($scope, $injector, private backendSrv) {
     super($scope, $injector);
-    _.defaults(this.panel, panelDefaults);
+    _.defaults(this.panel, this.panelDefaults);
 
     if (this.panel.tag) {
       this.panel.tags = [this.panel.tag];

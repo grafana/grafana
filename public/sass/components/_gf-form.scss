@@ -6,9 +6,24 @@ $gf-form-margin: 0.25rem;
   flex-direction: row;
   align-items: center;
   text-align: left;
+  position: relative;
 
-  .cr1 {
-    margin-left: 8px;
+  &--offset-1 {
+    margin-left: $spacer;
+  }
+
+  &--grow {
+    flex-grow: 1;
+  }
+}
+
+.gf-form-disabled {
+  color: $text-color-weak;
+
+  .query-keyword,
+  a,
+  .gf-form-input {
+    color: $text-color-weak;
   }
 }
 
@@ -21,10 +36,6 @@ $gf-form-margin: 0.25rem;
   flex-direction: row;
   flex-wrap: wrap;
   align-content: flex-start;
-
-  .gf-form-flex {
-    flex-grow: 1;
-  }
 }
 
 .gf-form-button-row {
@@ -47,6 +58,12 @@ $gf-form-margin: 0.25rem;
 
   border: $input-btn-border-width solid transparent;
   @include border-radius($label-border-radius-sm);
+
+
+  &--grow {
+    flex-grow: 1;
+    min-height: 2.70rem;
+  }
 }
 
 .gf-form-checkbox {
@@ -106,6 +123,21 @@ $gf-form-margin: 0.25rem;
   }
 
   &.gf-size-auto { width: auto; }
+
+  &--dropdown {
+    padding-right: $input-padding-x*2;
+
+    &:after {
+      position: absolute;
+      top: 35%;
+      right: $input-padding-x/2;
+      background-color: transparent;
+      color: $input-color;
+      font: normal normal normal $font-size-sm/1 FontAwesome;
+      content: '\f0d7';
+      pointer-events: none;
+    }
+  }
 }
 
 .gf-form-select-wrapper {
@@ -138,6 +170,12 @@ $gf-form-margin: 0.25rem;
     content: '\f0d7';
     pointer-events: none;
   }
+
+  &--has-help-icon {
+    &:after {
+      right: $input-padding-x*3;
+    }
+  }
 }
 
 .gf-form--v-stretch {
@@ -145,9 +183,11 @@ $gf-form-margin: 0.25rem;
 }
 
 .gf-form-btn {
-  margin-right: $gf-form-margin;
   padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
   line-height: $input-line-height;
+  font-size: $font-size-sm;
+
   flex-shrink: 0;
   flex-grow: 0;
 }
@@ -181,4 +221,24 @@ $gf-form-margin: 0.25rem;
     content: '\f0d7';
     pointer-events: none;
   }
+}
+
+.gf-form-help-icon {
+  flex-grow: 0;
+  padding-left: $spacer;
+  color: $text-color-weak;
+
+  &--right-absolute {
+    position: absolute;
+    right: $spacer;
+    top: 8px;
+  }
+
+  &--right-normal {
+    float: right;
+  }
+}
+
+select.gf-form-input ~ .gf-form-help-icon {
+  right: 10px;
 }

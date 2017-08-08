@@ -98,9 +98,7 @@ export class DataSourceEditCtrl {
 
       this.datasourceSrv.get(this.current.name).then(datasource => {
         if (!datasource.testDatasource) {
-          this.testing.message = 'Data source does not support test connection feature.';
-          this.testing.status = 'warning';
-          this.testing.title = 'Unknown';
+          delete this.testing;
           return;
         }
 
@@ -118,7 +116,9 @@ export class DataSourceEditCtrl {
           }
         });
       }).finally(() => {
-        this.testing.done = true;
+        if (this.testing) {
+          this.testing.done = true;
+        }
       });
     }
 

@@ -11,26 +11,21 @@ pre {
   background-color: $code-tag-bg;
   color: $text-color;
   border: 1px solid $code-tag-border;
-  padding: 10px;
   border-radius: 4px;
 }
 
 // Inline code
 code {
   color: $text-color;
-  background-color: $code-tag-bg;
-  border: 1px solid darken($code-tag-bg, 15%);
   white-space: nowrap;
+  padding: 2px 5px;
+  margin: 0 2px;
 }
 
 code.code--small {
   font-size: $font-size-xs;
-  padding: 5px;
+  padding: 0.2rem;
   margin: 0 2px;
-}
-
-p.code--line {
-  line-height: 1.8;
 }
 
 // Blocks of code
@@ -43,6 +38,7 @@ pre {
   white-space: pre;
   white-space: pre-wrap;
   background-color: $code-tag-bg;
+  padding: 10px;
 
   // Make prettyprint styles more spaced out for readability
   &.prettyprint {

@@ -26,7 +26,10 @@
 				<input type="text" class="gf-form-input width-25" ng-model='dashboard.title'></input>
 			</div>
 			<div class="gf-form">
-				<label class="gf-form-label width-7">标签<tip>Press enter to a add tag</tip></label>
+				<label class="gf-form-label width-7">
+          标签
+          <info-popover mode="right-normal">Press enter to a add tag</info-popover>
+        </label>
 				<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
 				</bootstrap-tagsinput>
 			</div>
@@ -54,19 +57,19 @@
                         label="编辑"
                         tooltip="Uncheck, then save and reload to disable all dashboard editing"
                         checked="dashboard.editable"
-                        label-class="width-10">
+                        label-class="width-11">
         </gf-form-switch>
         <gf-form-switch class="gf-form"
                         label="隐藏操作栏"
                         tooltip="Hide row controls. Shortcut: CTRL+H"
                         checked="dashboard.hideControls"
-                        label-class="width-10">
+                        label-class="width-11">
         </gf-form-switch>
         <gf-form-switch class="gf-form"
                         label="Shared Crosshair"
                         tooltip="Shared Crosshair line on all graphs. Shortcut: CTRL+O"
                         checked="dashboard.sharedCrosshair"
-                        label-class="width-10">
+                        label-class="width-11">
         </gf-form-switch>
       </div>
     </div>

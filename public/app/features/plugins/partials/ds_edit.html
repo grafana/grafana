@@ -31,18 +31,18 @@
 					<div class="gf-form">
 						<span class="gf-form-label width-7">Name</span>
 						<input class="gf-form-input max-width-21" type="text" ng-model="ctrl.current.name" placeholder="My data source name" required>
+						<info-popover offset="0px -135px" mode="right-absolute">
+							The name is used when you select the data source in panels.
+							The <em>Default</em> data source is preselected in new
+							panels.
+						</info-popover>
 					</div>
-					<info-popover offset="0px -130px">
-						The name is used when you select the data source in panels.
-						The <em>Default</em> data source is preselected in new
-						panels.
-					</info-popover>
 					<gf-form-switch class="gf-form" label="Default" checked="ctrl.current.isDefault" switch-class="max-width-6"></gf-form-switch>
 				</div>
 
 				<div class="gf-form">
 					<span class="gf-form-label width-7">Type</span>
-					<div class="gf-form-select-wrapper max-width-21">
+					<div class="gf-form-select-wrapper max-width-23">
 						<select class="gf-form-input" ng-model="ctrl.current.type" ng-options="v.id as v.name for v in ctrl.types" ng-change="ctrl.typeChanged()"></select>
 					</div>
 				</div>
@@ -53,7 +53,7 @@
 			</plugin-component>
 			</rebuild-on-change>
 
-			<div ng-if="ctrl.testing" style="margin-top: 25px">
+			<div ng-if="ctrl.testing" class="gf-form-group">
 				<h5 ng-show="!ctrl.testing.done">Testing.... <i class="fa fa-spiner fa-spin"></i></h5>
 				<div class="alert-{{ctrl.testing.status}} alert">
 					<div class="alert-title">{{ctrl.testing.title}}</div>

@@ -1,21 +1,27 @@
-<query-editor-row ctrl="ctrl">
+<query-editor-row query-ctrl="ctrl" has-text-edit-mode="true">
 
-	<li class="tight-form-flex-wrapper" ng-show="ctrl.target.textEditor">
-		<input type="text" class="tight-form-clear-input" style="width: 100%;" ng-model="ctrl.target.target" give-focus="ctrl.target.textEditor" spellcheck='false' ng-model-onblur ng-change="ctrl.targetTextChanged()"></input>
-	</li>
+	<div class="gf-form" ng-show="ctrl.target.textEditor">
+		<input type="text" class="gf-form-input" ng-model="ctrl.target.target" spellcheck="false" ng-blur="ctrl.refresh()"></input>
+	</div>
 
-	<li ng-hide-start="ctrl.target.textEditor"></li>
+  <div ng-hide="ctrl.target.textEditor">
+		<div class="gf-form-inline">
+      <div ng-repeat="segment in ctrl.segments" role="menuitem" class="gf-form">
+        <metric-segment segment="segment" get-options="ctrl.getAltSegments($index)" on-change="ctrl.segmentValueChanged(segment, $index)"></metric-segment>
+      </div>
 
-	<li ng-repeat="segment in ctrl.segments" role="menuitem">
-		<metric-segment segment="segment" get-options="ctrl.getAltSegments($index)" on-change="ctrl.segmentValueChanged(segment, $index)"></metric-segment>
-	</li>
-	<li ng-repeat="func in ctrl.functions">
-		<span graphite-func-editor class="tight-form-item tight-form-func">
-		</span>
-	</li>
-	<li class="dropdown" graphite-add-func>
-	</li>
+      <div ng-repeat="func in ctrl.functions" class="gf-form">
+        <span graphite-func-editor class="gf-form-label query-part"></span>
+      </div>
 
-	<li ng-hide-end></li>
+      <div class="gf-form dropdown">
+        <span graphite-add-func></span>
+      </div>
+
+      <div class="gf-form gf-form--grow">
+				<div class="gf-form-label gf-form-label--grow"></div>
+			</div>
+    </div>
+  </div>
 
 </query-editor-row>

@@ -24,7 +24,7 @@ describe("Emitter", () => {
       expect(sub2Called).to.be(true);
     });
 
-    it.only('should handle errors', () => {
+    it('should handle errors', () => {
       var events = new Emitter();
       var sub1Called = 0;
       var sub2Called = 0;

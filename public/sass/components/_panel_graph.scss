@@ -85,7 +85,8 @@
 }
 
 .graph-legend-table {
-  overflow-y: scroll;
+  overflow-y: auto;
+  overflow-x: hidden;
 
   tbody {
     display: block;

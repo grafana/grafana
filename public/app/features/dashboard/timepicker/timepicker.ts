@@ -92,7 +92,7 @@ export class TimePickerCtrl {
   move(direction) {
     var range = this.timeSrv.timeRange();
 
-    var timespan = (range.to.valueOf() - range.from.valueOf());
+    var timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
     var to, from;
     if (direction === -1) {
       to = range.to.valueOf() - timespan;

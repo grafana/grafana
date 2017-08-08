@@ -99,6 +99,11 @@ define([
         var target = _templateSrv.replace('this.$test.filters', {}, 'glob');
         expect(target).to.be('this.*.filters');
       });
+
+      it('should not escape custom all value', function() {
+        var target = _templateSrv.replace('this.$test', {}, 'regex');
+        expect(target).to.be('this.*');
+      });
     });
 
     describe('lucene format', function() {
@@ -127,7 +132,7 @@ define([
 
       it('multi value and regex format should render regex string', function() {
         var result = _templateSrv.formatValue(['test.','test2'], 'regex');
-        expect(result).to.be('test\\.|test2');
+        expect(result).to.be('(test\\.|test2)');
       });
 
       it('multi value and pipe should render pipe string', function() {

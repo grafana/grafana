@@ -4,20 +4,20 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import {PanelCtrl} from '../../../features/panel/panel_ctrl';
 
-// Set and populate defaults
-var panelDefaults = {
-};
-
 class PluginListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
 
   pluginList: any[];
   viewModel: any;
 
+  // Set and populate defaults
+  panelDefaults = {
+  };
+
   /** @ngInject */
   constructor($scope, $injector, private backendSrv, private $location) {
     super($scope, $injector);
-    _.defaults(this.panel, panelDefaults);
+    _.defaults(this.panel, this.panelDefaults);
 
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.pluginList = [];

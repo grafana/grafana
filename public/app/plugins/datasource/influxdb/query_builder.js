@@ -25,8 +25,8 @@ function (_) {
       }
     }
 
-    // quote value unless regex
-    if (operator !== '=~' && operator !== '!~') {
+    // quote value unless regex or number
+    if (operator !== '=~' && operator !== '!~' && isNaN(+value)) {
       value = "'" + value + "'";
     }
 
