@@ -6,6 +6,12 @@
 	</div>
 
 	<div class="gf-form-inline">
+		<div class="gf-form gf-form--grow">
+			<code-editor content="ctrl.target.expr" on-change="ctrl.refreshMetricData()"></code-editor>
+		</div>
+	</div>
+
+	<div class="gf-form-inline">
 		<div class="gf-form max-width-26">
 			<label class="gf-form-label width-8">Legend format</label>
 			<input type="text" class="gf-form-input" ng-model="ctrl.target.legendFormat"
