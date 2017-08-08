@@ -304,7 +304,7 @@
 		</div>
 
 		<gf-form-switch class="gf-form"
-										label="Disable downsampling"
+										label="取消降低采样"
 										checked="ctrl.target.disableDownsampling"
 										on-change="ctrl.targetBlur()">
 		</gf-form-switch>
@@ -443,7 +443,7 @@
 	</div>
 
 	<div class="gf-form-inline">
-		<gf-form-switch class="gf-form" label="Rate" label-class="width-8 query-keyword" checked="ctrl.target.shouldComputeRate" on-change="ctrl.targetBlur()">
+		<gf-form-switch class="gf-form" label="比率" label-class="width-8 query-keyword" checked="ctrl.target.shouldComputeRate" on-change="ctrl.targetBlur()">
 		</gf-form-switch>
 
 		<gf-form-switch ng-hide="!ctrl.target.shouldComputeRate"
