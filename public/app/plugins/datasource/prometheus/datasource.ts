@@ -157,7 +157,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
     var interpolated;
     try {
-      interpolated = templateSrv.replace(expr);
+      interpolated = templateSrv.replace(expr, {}, interpolateQueryExpr);
     } catch (err) {
       return $q.reject(err);
     }

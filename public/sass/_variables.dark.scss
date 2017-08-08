@@ -27,7 +27,7 @@ $white:            #fff;
 // -------------------------
 $blue:                  #33B5E5;
 $blue-dark:             #005f81;
-$green:                 #669900;
+$green:                 #609000;
 $red:                   #CC3900;
 $yellow:                #ECBB13;
 $pink:                  #FF4444;
@@ -252,12 +252,12 @@ $popover-help-color:      $text-color;
 
 // Tooltips and popovers
 // -------------------------
-$tooltipColor:            $text-color;
-$tooltipBackground:       $dark-5;
+$tooltipColor:            $popover-help-color;
+$tooltipBackground:       $popover-help-bg;
 $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
 $tooltipLinkColor:        $link-color;
-$graph-tooltip-bg:        $dark-5;
+$graph-tooltip-bg:        $dark-4;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';

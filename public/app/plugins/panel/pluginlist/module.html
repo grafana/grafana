@@ -10,7 +10,7 @@
 						<span class="pluginlist-title">{{plugin.name}}</span>
 						<span class="pluginlist-version">v{{plugin.info.version}}</span>
 				</a>
-				<a class="pluginlist-message pluginlist-message--update" ng-show="plugin.hasUpdate" ng-click="ctrl.updateAvailable(plugin, $event)" bs-tooltip="plugin.latestVersion">
+				<a class="pluginlist-message pluginlist-message--update" ng-show="plugin.hasUpdate" ng-click="ctrl.updateAvailable(plugin, $event)" bs-tooltip="'New version: ' + plugin.latestVersion">
 					Update available!
 				</a>
 				<span class="pluginlist-message pluginlist-message--enable" ng-show="!plugin.enabled && !plugin.hasUpdate">
@@ -22,7 +22,7 @@
 			</div>
 		</div>
 		<div class="pluginlist-item" ng-show="category.list.length === 0">
-			<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="http://grafana/net/plugins/">
+			<a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="http://grafana.net/plugins/">
 				<span class="pluginlist-none-installed">No additional panels installed. <span class="pluginlist-emphasis">Browse Grafana.net</span></span>
 			</a>
 		</div>

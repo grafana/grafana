@@ -43,6 +43,7 @@ export default class TimeSeries {
   fillBetween: any;
   transform: any;
   flotpairs: any;
+  unit: any;
 
   constructor(opts) {
     this.datapoints = opts.datapoints;
@@ -53,6 +54,7 @@ export default class TimeSeries {
     this.valueFormater = kbn.valueFormats.none;
     this.stats = {};
     this.legend = true;
+    this.unit = opts.unit;
   }
 
   applySeriesOverrides(overrides) {

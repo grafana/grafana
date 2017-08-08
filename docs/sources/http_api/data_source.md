@@ -207,35 +207,6 @@ page_keywords: grafana, admin, http, api, documentation, datasource
 
     {"message":"Data source deleted"}
 
-## Available data source types
-
-`GET /api/datasources/plugins`
-
-**Example Request**:
-
-    GET /api/datasources/plugins HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
-**Example Response**:
-
-    HTTP/1.1 200
-    Content-Type: application/json
-
-    {
-      "grafana":{
-        "metrics":true,"module":"plugins/datasource/grafana/datasource",
-        "name":"Grafana (for testing)",
-        "partials":{
-          "query":"app/plugins/datasource/grafana/partials/query.editor.html"
-        },
-        "pluginType":"datasource",
-        "serviceName":"GrafanaDatasource",
-        "type":"grafana"
-      }
-    }
-
 ## Data source proxy calls
 
 `GET /api/datasources/proxy/:datasourceId/*`

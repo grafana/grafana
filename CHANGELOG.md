@@ -1,7 +1,14 @@
-# 3.0.0-beta3 (unreleased)
+# 3.0.0-beta4 (unreleased)
+
+### Bug fixes
+* **Home dashboard**: Fixed issue with permission denied error on home dashboard, fixes [#4686](https://github.com/grafana/grafana/issues/4686)
+* **Templating**: Fixed issue templating variables that use regex extraction, fixes [#4672](https://github.com/grafana/grafana/issues/4672)
+
+# 3.0.0-beta3 (2016-04-12)
 
 ### Enhancements
 * **InfluxDB**: Changed multi query encoding to work with InfluxDB 0.11 & 0.12, closes [#4533](https://github.com/grafana/grafana/issues/4533)
+* **Timepicker**: Add arrows and shortcuts for moving back and forth in current dashboard, closes [#119](https://github.com/grafana/grafana/issues/119)
 
 ### Bug fixes
 * **Postgres**: Fixed page render crash when using postgres, fixes [#4558](https://github.com/grafana/grafana/issues/4558)

@@ -277,8 +277,8 @@ $popover-help-color:      $gray-6;
 
 // Tooltips and popovers
 // -------------------------
-$tooltipColor:            $white;
-$tooltipBackground:       $black;
+$tooltipColor:            $popover-help-color;
+$tooltipBackground:       $popover-help-bg;
 $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
 $tooltipLinkColor:        $link-color;
