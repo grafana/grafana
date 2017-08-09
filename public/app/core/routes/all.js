@@ -12,6 +12,7 @@ define([
     var loadOrgBundle = new BundleLoader.BundleLoader('app/features/org/all');
     var loadOncallerBundle = new BundleLoader.BundleLoader('app/features/oncaller/all');
     var loadCMDBBundle = new BundleLoader.BundleLoader('app/features/cmdb/all');
+    var loadSetupBundle = new BundleLoader.BundleLoader('app/features/setup/all');
 
     $routeProvider
       .when('/', {
@@ -275,14 +276,17 @@ define([
       .when('/setting/agent', {
         templateUrl: 'app/features/setup/partials/host_agent.html',
         controller : 'HostAgentCtrl',
+        resolve: loadSetupBundle,
       })
       .when('/setting/service', {
         templateUrl: 'app/features/setup/partials/service_agent.html',
         controller : 'ServiceAgentCtrl',
+        resolve: loadSetupBundle,
       })
       .when('/setting/filebeat', {
         templateUrl: 'app/features/setup/partials/filebeat.html',
         controller : 'FilebeatCtrl',
+        resolve: loadSetupBundle,
       })
       .when('/cmdb/hostlist', {
         templateUrl: 'app/features/cmdb/partials/host_list.html',

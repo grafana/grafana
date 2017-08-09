@@ -21,10 +21,6 @@ define([
   './cluster/ClusterCtrl',
   './panelinfo/panelInfoEditCtrl',
   './systemsummary/systemsummaryCtrl',
-  './setup/hostagentCtrl',
-  './setup/serviceagentCtrl',
-  './setup/servicedetailCtrl',
-  './setup/filebeatCtrl',
   './systemoverview/systemoverviewCtrl',
   './service/all'
 ], function () {});
