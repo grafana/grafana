@@ -103,9 +103,11 @@ type GetOrgUsersQuery struct {
 // Projections and DTOs
 
 type OrgUserDTO struct {
-	OrgId  int64  `json:"orgId"`
-	UserId int64  `json:"userId"`
-	Email  string `json:"email"`
-	Login  string `json:"login"`
-	Role   string `json:"role"`
+	OrgId         int64     `json:"orgId"`
+	UserId        int64     `json:"userId"`
+	Email         string    `json:"email"`
+	Login         string    `json:"login"`
+	Role          string    `json:"role"`
+	LastSeenAt    time.Time `json:"lastSeenAt"`
+	LastSeenAtAge string    `json:"lastSeenAtAge"`
 }

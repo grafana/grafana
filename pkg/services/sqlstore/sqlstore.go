@@ -53,7 +53,7 @@ func EnsureAdminUser() {
 		return
 	}
 
-	if statsQuery.Result.UserCount > 0 {
+	if statsQuery.Result.Users > 0 {
 		return
 	}
 
