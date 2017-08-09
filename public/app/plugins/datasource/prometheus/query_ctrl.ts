@@ -37,26 +37,16 @@ class PrometheusQueryCtrl extends QueryCtrl {
       {text: 'Table', value: 'table'},
     ];
 
-    $scope.$on('typeahead-updated', () => {
-      this.$scope.$apply(() => {
-        this.target.expr += this.target.metric;
-        this.metric = '';
-        this.refreshMetricData();
+    this.updateLink();
+  }
+
+  getCompletions(query) {
+    console.log(query);
+    return this.datasource.performSuggestQuery(query).then(res => {
+      return res.map(item => {
+        return {word: item, type: 'metric'};
       });
     });
-
-    // called from typeahead so need this
-    // here in order to ensure this ref
-    this.suggestMetrics = (query, callback) => {
-      console.log(this);
-      this.datasource.performSuggestQuery(query).then(callback);
-    };
-
-    this.getMetricsAutocomplete = (query) => {
-      return this.datasource.performSuggestQuery(query);
-    };
-
-    this.updateLink();
   }
 
   getDefaultFormat() {

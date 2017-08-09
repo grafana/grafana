@@ -126,17 +126,16 @@ function link(scope, elem, attrs) {
   });
 
   let extCompleter = {
-    getCompletions: getExtCompletions
+    getCompletions: getCompletions
   };
 
-  function getExtCompletions(editor, session, pos, prefix, callback) {
-    scope.getMetrics(prefix).then(results => {
-      let wordList = results;
-      callback(null, wordList.map(word => {
+  function getCompletions(editor, session, pos, prefix, callback) {
+    scope.getCompletions({$query: prefix}).then(results => {
+      callback(null, results.map(hit => {
         return {
-          caption: word,
-          value: word,
-          meta: "metric"
+          caption: hit.word,
+          value: hit.word,
+          meta: hit.type
         };
       }));
     });
@@ -176,7 +175,7 @@ export function codeEditorDirective() {
     scope: {
       content: "=",
       onChange: "&",
-      getMetrics: "="
+      getCompletions: "&"
     },
     link: link
   };
