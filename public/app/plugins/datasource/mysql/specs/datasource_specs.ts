@@ -76,4 +76,42 @@ describe('MySQLDatasource', function() {
     });
   });
 
+  describe('When performing metricFindQuery', function() {
+    let results;
+    const query = 'select * from atable';
+    const response = {
+      results: {
+        tempvar: {
+          meta: {
+            rowCount: 3
+          },
+          refId: 'tempvar',
+          tables: [
+            {
+              columns: [{text: 'time_sec'}, {text: 'title'}, {text: 'text'}],
+              rows: [
+                ['aTitle', 'some text'],
+                ['aTitle2', 'some text2'],
+                ['aTitle3', 'some text3']
+              ]
+            }
+          ]
+        }
+      }
+    };
+
+    beforeEach(function() {
+      ctx.backendSrv.datasourceRequest = function(options) {
+        return ctx.$q.when({data: response, status: 200});
+      };
+      ctx.ds.metricFindQuery(query).then(function(data) { results = data; });
+      ctx.$rootScope.$apply();
+    });
+
+    it('should return list of all column values', function() {
+      expect(results.length).to.be(6);
+      expect(results[0].text).to.be('aTitle');
+      expect(results[5].text).to.be('some text3');
+    });
+  });
 });

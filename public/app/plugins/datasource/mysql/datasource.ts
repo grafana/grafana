@@ -14,11 +14,11 @@ export class MysqlDatasource {
 
   interpolateVariable(value) {
     if (typeof value === 'string') {
-      return '\"' + value + '\"';
+      return '\'' + value + '\'';
     }
 
     var quotedValues = _.map(value, function(val) {
-      return '\"' + val + '\"';
+      return '\'' + val + '\'';
     });
     return  quotedValues.join(',');
   }
@@ -112,6 +112,48 @@ export class MysqlDatasource {
     }
 
     return list;
+  }
+
+  metricFindQuery(query, optionalOptions) {
+    let refId = 'tempvar';
+    if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
+      refId = optionalOptions.variable.name;
+    }
+
+    const interpolatedQuery = {
+      refId: refId,
+      datasourceId: this.id,
+      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      format: 'table',
+    };
+
+    return this.backendSrv.datasourceRequest({
+      url: '/api/tsdb/query',
+      method: 'POST',
+      data: {
+        queries: [interpolatedQuery],
+      }
+    })
+    .then(this.transformFindQueryResponse.bind(this, refId));
+  }
+
+  transformFindQueryResponse(refId, results) {
+    if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) { return []; }
+
+    const rows = results.data.results[refId].tables[0].rows;
+    const res = [];
+    for (let i = 0; i < rows.length; i++) {
+      for (let j = 0; j < rows[i].length; j++) {
+        const value = rows[i][j];
+        if ( res.indexOf( value ) === -1 ) {
+          res.push(value);
+        }
+      }
+    }
+
+    return _.map(res, value => {
+      return { text: value};
+    });
   }
 
   testDatasource() {
