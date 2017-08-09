@@ -125,6 +125,23 @@ function link(scope, elem, attrs) {
     }
   });
 
+  let extCompleter = {
+    getCompletions: getExtCompletions
+  };
+
+  function getExtCompletions(editor, session, pos, prefix, callback) {
+    scope.getMetrics(prefix).then(results => {
+      let wordList = results;
+      callback(null, wordList.map(word => {
+        return {
+          caption: word,
+          value: word,
+          meta: "metric"
+        };
+      }));
+    });
+  }
+
   function setLangMode(lang) {
     let aceModeName = `ace/mode/${lang}`;
     fixModuleUrl("mode", lang);
@@ -136,6 +153,7 @@ function link(scope, elem, attrs) {
         enableLiveAutocompletion: true,
         enableSnippets: true
       });
+      codeEditor.completers.push(extCompleter);
     });
   }
 
@@ -157,7 +175,8 @@ export function codeEditorDirective() {
     template: editorTemplate,
     scope: {
       content: "=",
-      onChange: "&"
+      onChange: "&",
+      getMetrics: "="
     },
     link: link
   };

@@ -15,6 +15,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
   formats: any;
   oldTarget: any;
   suggestMetrics: any;
+  getMetricsAutocomplete: any;
   linkToPrometheus: any;
 
   /** @ngInject */
@@ -49,6 +50,10 @@ class PrometheusQueryCtrl extends QueryCtrl {
     this.suggestMetrics = (query, callback) => {
       console.log(this);
       this.datasource.performSuggestQuery(query).then(callback);
+    };
+
+    this.getMetricsAutocomplete = (query) => {
+      return this.datasource.performSuggestQuery(query);
     };
 
     this.updateLink();
