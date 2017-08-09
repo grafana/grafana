@@ -21,11 +21,16 @@
                                         <div id="{{$index}}" class="accordion-body collapse">
                                             <div class="accordion-inner">
                                                 <ul class="item-type">
-                                                    <li ng-repeat="(name, item) in host.itemStatusMap" ng-click="selectHealthItemType(host.hostName, item.type)" class="status-{{item.healthStatusType | lowercase}}">{{item.type | formatItemType}}</li>
+                                                    <li ng-repeat="(name, item) in host.itemStatusMap"
+                                                        ng-click="selectHealthItemType(host.hostName, item.type)"
+                                                        class="status-{{item.healthStatusType | lowercase}}"
+                                                        style="color: #fff;"
+                                                        bs-tooltip="'{{item.type}}'">
+                                                        {{item.type | formatItemType | uppercase}}
+                                                    </li>
                                                 </ul>
                                                 <div ng-if="host.healthStatusType !== 'GREY'">
                                                     <p>{{currentItem}} 重要指标：</p>
-                                                    <p ng-if="currentItem == 'ServiceState'">该服务进程运行正常...</p>
                                                     <table-loader key={{host.hostName}} template="/app/features/service/partials/service_host_table.html"></table-loader>
                                                 </div>
                                                 <div ng-if="host.healthStatusType === 'GREY'">

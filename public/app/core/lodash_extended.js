@@ -1,7 +1,8 @@
 define([
+  'jquery',
   'lodash-src'
 ],
-function () {
+function ($) {
   'use strict';
 
   var _ = window._;
@@ -120,6 +121,17 @@ function () {
     }
     return obj;
   };
+
+  _.readMetricHelpMessage = function () {
+    $.ajax({
+      url: "/api/static/kpi",
+      method: "get",
+      success: function (response) {
+        _.metricHelpMessage = response;
+      }
+    });
+  };
+  _.readMetricHelpMessage();
 
   return _;
 });

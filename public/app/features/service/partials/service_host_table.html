@@ -23,7 +23,8 @@
     return {};
   }
   function tooltipFormat(value, row, index) {
-    return '<span title="' + value + '">' + value + '</span>';
+    var message = _.metricHelpMessage[value] ? _.metricHelpMessage[value].definition : value;
+    return '<span title="' + message + '">' + value + '</span>';
   }
   function alertsLinkFormat(value, row, index) {
     return '<a href="/alerts/status">' + value + '</a>';

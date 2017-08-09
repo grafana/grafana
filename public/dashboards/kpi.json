@@ -1,0 +1,732 @@
+{
+  "cpu.irq": {
+    "name": "cpu.irq",
+    "definition": "处理硬件中断时间",
+    "isKpi": true
+  },
+  "cpu.nice": {
+    "name": "cpu.nice",
+    "definition": "处理低优先级进程的CPU时间",
+    "isKpi": true
+  },
+  "cpu.sys": {
+    "name": "cpu.sys",
+    "definition": "内核时间",
+    "isKpi": true
+  },
+  "cpu.usr": {
+    "name": "cpu.usr",
+    "definition": "用户进程时间",
+    "isKpi": true
+  },
+  "df.bytes.total": {
+    "name": "df.bytes.total",
+    "definition": "存储系统的大小",
+    "isKpi": true
+  },
+  "df.bytes.used": {
+    "name": "df.bytes.used",
+    "definition": "被使用的大小",
+    "isKpi": true
+  },
+  "df.bytes.percentused": {
+    "name": "df.bytes.percentused",
+    "definition": "磁盘使用率",
+    "isKpi": true
+  },
+  "df.bytes.free": {
+    "name": "df.bytes.free",
+    "definition": "磁盘可以使用的大小",
+    "isKpi": true
+  },
+  "iostat.avgqu-sz": {
+    "name": "iostat.avgqu-sz",
+    "definition": "是平均请求队列的长度。毫无疑问，队列长度越短越好",
+    "isKpi": true
+  },
+  "iostat.await": {
+    "name": "iostat.await",
+    "definition":	"每一个IO请求的处理的平均时间（单位是微秒毫秒）。这里可以理解为IO的响应时间，一般地系统IO响应时间应该低于5ms，如果大于10ms就比较大了。这个时间包括了队列时间和服务时间，也就是说，一般情况下，await大于svctm，它们的差值越小，则说明队列时间越短，反之差值越大，队列时间越长，说明系统出了问题。",
+    "isKpi": true
+  },
+  "iostat.bytes_per_s":	{
+    "name": "iostat.bytes_per_s",
+    "definition": "平均每秒读写字节数",
+    "isKpi": true
+  },
+  "iostat.r/s": {
+    "name": "iostat.r/s",
+    "definition":	"每秒完成的读 I/O 设备次数",
+    "isKpi": true
+  },
+  "iostat.r_await": {
+    "name": "iostat.r_await",
+    "definition": "读的IO请求的处理的平均时间",
+    "isKpi": true
+  },
+  "iostat.w_await": {
+    "name": "iostat.w_await",
+    "definition": "写的IO请求的处理的平均时间",
+    "isKpi": true
+  },
+  "iostat.rkB/s":	{
+    "name": "iostat.rkB/s",
+    "definition": "每秒读K字节数。是 rsect/s 的一半因为每扇区大小为512字节",
+    "isKpi": true
+  },
+  "iostat.svctm": {
+    "name": "iostat.svctm",
+    "definition": "表示平均每次设备I/O操作的服务时间（以毫秒为单位）。如果svctm的值与await很接近，表示几乎没有I/O等待，磁盘性能很好，如果await的值远高于svctm的值，则表示I/O队列等待太长，系统上运行的应用程序将变慢",
+    "isKpi": true
+  },
+  "iostat.w/s": {
+    "name": "iostat.w/s",
+    "definition":	"每秒完成的写I/O设备次数",
+    "isKpi": true
+  },
+  "iostat.wkB/s": {
+    "name": "iostat.wkB/s",
+    "definition": "每秒写K字节数。是 rsect/s 的一半因为每扇区大小为512字节",
+    "isKpi": true
+  },
+  "iostat.wrqm/s": {
+    "name": "iostat.wrqm/s",
+    "definition":	"每秒进行 merge 的写操作数目",
+    "isKpi": true
+  },
+  "iostat.percentage_util": {
+    "name": "iostat.percentage_util",
+    "definition":	"在统计时间内所有处理IO时间除以总共统计时间。例如如果统计间隔1秒该 设备有0.8秒在处理IO而0.2秒闲置那么该设备的%util = 0.8/1 = 80%所以该参数暗示了设备的繁忙程度。一般地如果该参数是100%表示设备已经接近满负荷运行了当然如果是多磁盘即使%util是100%因 为磁盘的并发能力所以磁盘使用未必就到了瓶颈",
+    "isKpi": true
+  },
+  "net.sockstat.memory": {
+    "name": "net.sockstat.memory",
+    "definition": "分配给该socket类型的内存大小",
+    "isKpi": true
+  },
+  "net.sockstat.num_orphans": {
+    "name": "net.sockstat.num_orphans",
+    "definition": "孤儿sockets数量",
+    "isKpi": true
+  },
+  "net.sockstat.num_sockets": {
+    "name": "net.sockstat.num_sockets",
+    "definition": "sockets分配的数量，仅TCP",
+    "isKpi": true
+  },
+  "net.stat.tcp.abort": {
+    "name": "net.stat.tcp.abort",
+    "definition": "内核中止连接数量",
+    "isKpi": true
+  },
+  "net.stat.udp.datagrams": {
+    "name": "net.stat.udp.datagrams",
+    "definition": "接收的数据包",
+    "isKpi": true
+  },
+  "net.stat.udp.errors": {
+    "name": "net.stat.udp.errors",
+    "definition": "接收错误数",
+    "isKpi": true
+  },
+  "proc.loadavg.15min": {
+    "name": "proc.loadavg.15min",
+    "definition":	"15分钟内的平均进程数",
+    "isKpi": true
+  },
+  "proc.meminfo.active": {
+    "name": "proc.meminfo.active",
+    "definition": "活跃使用中的高速缓冲存储器页面文件大小",
+    "isKpi": true
+  },
+  "proc.meminfo.dirty": {
+    "name": "proc.meminfo.dirty",
+    "definition": "等待被写回到磁盘的内存大小",
+    "isKpi": true
+  },
+  "proc.meminfo.memavailable": {
+    "name": "proc.meminfo.memavailable",
+    "definition": "An estimate of how much memory is available for starting new applications, without swapping. Calculated from MemFree, SReclaimable, the size of the file LRU lists, and the low watermarks in each zone. The estimate takes into account that the system needs some page cache to function well, and that not all reclaimable slab will be reclaimable, due to items being in use. The impact of those factors will vary from system to system.",
+    "isKpi": true
+  },
+  "proc.meminfo.swapfree": {
+    "name": "proc.meminfo.swapfree",
+    "definition": "空闲交换空间",
+    "isKpi": true
+  },
+  "proc.net.dropped.in": {
+    "name": "proc.net.dropped.in",
+    "definition": "The total number of packets dropped by the device driver.",
+    "isKpi": true
+  },
+  "proc.net.dropped.out": {
+    "name": "proc.net.dropped.out",
+    "definition": "The total number of packets dropped by the device driver.",
+    "isKpi": true
+  },
+  "proc.net.errs.in": {
+    "name": "proc.net.errs.in",
+    "definition": "The total number of receive errors detected by the device driver.",
+    "isKpi": true
+  },
+  "proc.net.errs.out": {
+    "name": "proc.net.errs.out",
+    "definition": "The total number of transmit errors detected by the device driver.",
+    "isKpi": true
+  },
+  "proc.net.packets.in": {
+    "name": "proc.net.packets.in",
+    "definition": "The total number of packets of data received by the interface",
+    "isKpi": true
+  },
+  "proc.net.packets.out": {
+    "name": "proc.net.packets.out",
+    "definition": "The total number of packets of data transmitted by the interface",
+    "isKpi": true
+  },
+  "tomcat.jsp.jspCount": {
+    "name": "tomcat.jsp.jspCount",
+    "definition": "The number of JSPs per second that have been loaded in the web module",
+    "isKpi": true
+  },
+  "tomcat.jsp.jspQueueLength": {
+    "name": "tomcat.jsp.jspQueueLength",
+    "definition": "The length of the JSP queue (if enabled via maxLoadedJsps)",
+    "isKpi": true
+  },
+  "tomcat.requests.errorCount": {
+    "name": "tomcat.requests.errorCount",
+    "definition": "The number of errors per second on all request processors",
+    "isKpi": true
+  },
+  "tomcat.requests.maxTime": {
+    "name": "tomcat.requests.maxTime",
+    "definition": "The longest request processing time (in milliseconds)",
+    "isKpi": true
+  },
+  "tomcat.requests.processingTime": {
+    "name": "tomcat.requests.processingTime",
+    "definition": "The sum of request processing times across all requests handled by the request processors (in milliseconds) per second",
+    "isKpi": true
+  },
+  "tomcat.requests.requestCount": {
+    "name": "tomcat.requests.requestCount",
+    "definition": "The number of requests per second across all request processors",
+    "isKpi": true
+  },
+  "tomcat.servlet.errorCount": {
+    "name": "tomcat.servlet.errorCount",
+    "definition": "The number of errors per second on all request processors",
+    "isKpi": true
+  },
+  "tomcat.servlet.processingTime": {
+    "name": "tomcat.servlet.processingTime",
+    "definition": "The sum of request processing times across all requests handled by the request processors (in milliseconds) per second",
+    "isKpi": true
+  },
+  "tomcat.servlet.requestCount": {
+    "name": "tomcat.servlet.requestCount",
+    "definition": "The number of requests received by the servlet per second",
+    "isKpi": true
+  },
+  "hadoop.namenode.fsnamesystem.CapacityRemaining": {
+    "name": "hadoop.namenode.fsnamesystem.CapacityRemaining",
+    "definition": "HDFS文件系统剩余的容量",
+    "isKpi": true
+  },
+  "hadoop.namenode.fsnamesystem.CorruptBlocks": {
+    "name": "hadoop.namenode.fsnamesystem.CorruptBlocks",
+    "definition": "已损坏的block数量",
+    "isKpi": true
+  },
+  "hadoop.namenode.fsnamesystem.MissingBlocks": {
+    "name": "hadoop.namenode.fsnamesystem.MissingBlocks",
+    "definition": "丢失的block数量",
+    "isKpi": true
+  },
+  "hadoop.namenode.fsnamesystemstate.NumLiveDataNodes": {
+    "name": "hadoop.namenode.fsnamesystemstate.NumLiveDataNodes",
+    "definition": "存活datanode个数",
+    "isKpi": true
+  },
+  "hadoop.namenode.fsnamesystemstate.NumDeadDataNodes": {
+    "name": "hadoop.namenode.fsnamesystemstate.NumDeadDataNodes",
+    "definition": "死亡datanode个数",
+    "isKpi": true
+  },
+  "hadoop.namenode.fsnamesystemstate.UnderReplicatedBlocks": {
+    "name": "hadoop.namenode.fsnamesystemstate.UnderReplicatedBlocks",
+    "definition": "副本个数不够的block",
+    "isKpi": true
+  },
+  "hadoop.namenode.fsnamesystemstate.NumStaleDataNodes": {
+    "name": "hadoop.namenode.fsnamesystemstate.NumStaleDataNodes",
+    "definition": "超时的datanode个数(心跳通信3秒不回复)",
+    "isKpi": true
+  },
+  "hadoop.datanode.fsdatasetstate-null.Remaining": {
+    "name": "hadoop.datanode.fsdatasetstate-null.Remaining",
+    "definition": "datanode 文件系统剩余的容量",
+    "isKpi": true
+  },
+  "hadoop.datanode.activity.VolumeFailures": {
+    "name": "hadoop.datanode.activity.VolumeFailures",
+    "definition": "单个磁盘簇出错导致服务异常的次数",
+    "isKpi": true
+  },
+  "hadoop.datanode.activity.ReadBlockOpAvgTime": {
+    "name": "hadoop.datanode.activity.ReadBlockOpAvgTime",
+    "definition": "读操作平均花费时间",
+    "isKpi": true
+  },
+  "hadoop.datanode.activity.WriteBlockOpAvgTime": {
+    "name": "hadoop.datanode.activity.WriteBlockOpAvgTime",
+    "definition": "写操作平均花费时间",
+    "isKpi": true
+  },
+  "hbase.master.server.numRegionServers": {
+    "name": "hbase.master.server.numRegionServers",
+    "definition": "regionserver 存活数量",
+    "isKpi": true
+  },
+  "hbase.master.server.numDeadRegionServers": {
+    "name": "hbase.master.server.numDeadRegionServers",
+    "definition": "regionserver 不存活数量",
+    "isKpi": true
+  },
+  "hbase.master.jvmmetrics.GcTimeMillis": {
+    "name": "hbase.master.jvmmetrics.GcTimeMillis",
+    "definition": "GC操作时间",
+    "isKpi": true
+  },
+  "hbase.regionserver.server.slowAppendCount": {
+    "name": "hbase.regionserver.server.slowAppendCount",
+    "definition": "Append操作延迟超过阈值的次数",
+    "isKpi": true
+  },
+  "hbase.regionserver.server.slowDeleteCount": {
+    "name": "hbase.regionserver.server.slowDeleteCount",
+    "definition": "Delete操作延迟超过阈值的次数",
+    "isKpi": true
+  },
+  "hbase.regionserver.server.slowGetCount": {
+    "name": "hbase.regionserver.server.slowGetCount",
+    "definition": "Get操作延迟超过阈值的次数",
+    "isKpi": true
+  },
+  "hbase.regionserver.server.slowIncrementCount": {
+    "name": "hbase.regionserver.server.slowIncrementCount",
+    "definition": "Increment操作延迟超过阈值的次数",
+    "isKpi": true
+  },
+  "hbase.regionserver.server.slowPutCount": {
+    "name": "hbase.regionserver.server.slowPutCount",
+    "definition": "Put操作延迟超过阈值的次数",
+    "isKpi": true
+  },
+  "hbase.regionserver.jvmmetrics.GcTimeMillis": {
+    "name": "hbase.regionserver.jvmmetrics.GcTimeMillis",
+    "definition": "GC操作时间",
+    "isKpi": true
+  },
+  "kafka.bytesrate.BytesInPerSec.FifteenMinuteRate": {
+    "name": "kafka.bytesrate.BytesInPerSec.FifteenMinuteRate",
+    "definition": "Aggregate incoming byte rate in fifteen minute",
+    "isKpi": true
+  },
+  "kafka.bytesrate.BytesOutPerSec.FifteenMinuteRate": {
+    "name": "kafka.bytesrate.BytesOutPerSec.FifteenMinuteRate",
+    "definition": "Aggregate coutcoming byte rate in fifteen minute",
+    "isKpi": true
+  },
+  "kafka.controller.ActiveControllerCount": {
+    "name": "kafka.controller.ActiveControllerCount",
+    "definition": "Number of active controllers in cluster",
+    "isKpi": true
+  },
+  "kafka.controller.OfflinePartitionsCount": {
+    "name": "kafka.controller.OfflinePartitionsCount",
+    "definition": "Number of offline partitions",
+    "isKpi": true
+  },
+  "kafka.leaderelection.MeanRate": {
+    "name": "kafka.leaderelection.MeanRate",
+    "definition": "Mean leader election rate",
+    "isKpi": true
+  },
+  "kafka.server.expand.MeanRate": {
+    "name": "kafka.server.expand.MeanRate",
+    "definition": "Mean rate at which the pool of in-sync replicas expands",
+    "isKpi": true
+  },
+  "kafka.server.shrink.MeanRate": {
+    "name": "kafka.server.shrink.MeanRate",
+    "definition": "Mean rate at which the pool of in-sync replicas shrinks",
+    "isKpi": true
+  },
+  "kafka.unclean_leaderelection.MeanRate": {
+    "name": "kafka.unclean_leaderelection.MeanRate",
+    "definition": "Number of `unclean` elections per second",
+    "isKpi": true
+  },
+  "mysql.innodb.locks.os_waits": {
+    "name": "mysql.innodb.locks.os_waits",
+    "definition": "线程放弃spin wait尝试，直接进入sleep状态的次数",
+    "isKpi": true
+  },
+  "mysql.innodb.locks.spin_waits": {
+    "name": "mysql.innodb.locks.spin_waits",
+    "definition": "线程尝试获取spin锁而不可得的次数，也就是 spin-wait 的次数",
+    "isKpi": true
+  },
+  "mysql.max_used_connections": {
+    "name": "mysql.max_used_connections",
+    "definition": "同时使用的连接的最大数目",
+    "isKpi": true
+  },
+  "mysql.open_tables": {
+    "name": "mysql.open_tables",
+    "definition": "已经打开的表的数量",
+    "isKpi": true
+  },
+  "mysql.queries": {
+    "name": "mysql.queries",
+    "definition": "The number of statements executed by the server. This variable includes statements executed within stored programs, unlike the Questions variable. It does not count COM_PING or COM_STATISTICS commands.",
+    "isKpi": true
+  },
+  "mysql.questions": {
+    "name": "mysql.questions",
+    "definition": "The number of statements executed by the server. This includes only statements sent to the server by clients and not statements executed within stored programs, unlike the Queries variable. This variable does not count COM_PING, COM_STATISTICS, COM_STMT_PREPARE, COM_STMT_CLOSE, or COM_STMT_RESET commands.",
+    "isKpi": true
+  },
+  "mysql.slow_queries": {
+    "name": "mysql.slow_queries",
+    "definition": "Number of queries that took more than long_query_time seconds to execute. Slow queries generate excessive disk reads, memory and CPU usage. Check slow_query_log to find them",
+    "isKpi": true
+  },
+  "mysql.threads_connected": {
+    "name": "mysql.threads_connected",
+    "definition": "Number of clients currently connected. If none or too high, something is wrong",
+    "isKpi": true
+  },
+  "mysql.uptime": {
+    "name": "mysql.uptime",
+    "definition": "Seconds since the server was started. We can use this to detect respawns.",
+    "isKpi": true
+  },
+  "yarn.metrics.activeNodes": {
+    "name": "yarn.metrics.activeNodes",
+    "definition": "The number of active nodes",
+    "isKpi": true
+  },
+  "yarn.metrics.allocatedMB": {
+    "name": "yarn.metrics.allocatedMB",
+    "definition": "The amount of memory allocated in MB. If this is closed to totalMB, it is bad",
+    "isKpi": true
+  },
+  "yarn.metrics.appsFailed": {
+    "name": "yarn.metrics.appsFailed",
+    "definition": "The number of applications failed",
+    "isKpi": true
+  },
+  "yarn.metrics.lostNodes": {
+    "name": "yarn.metrics.lostNodes",
+    "definition": "The number of lost nodes",
+    "isKpi": true
+  },
+  "yarn.metrics.rebootedNodes": {
+    "name": "yarn.metrics.rebootedNodes",
+    "definition": "The number of nodes rebooted",
+    "isKpi": true
+  },
+  "yarn.metrics.unhealthyNodes": {
+    "name": "yarn.metrics.unhealthyNodes",
+    "definition": "The number of unhealthy nodes",
+    "isKpi": true
+  },
+  "yarn.nodes.usedMemoryMB": {
+    "name": "yarn.nodes.usedMemoryMB",
+    "definition": "The total amount of memory currently used on the node (in MB)",
+    "isKpi": true
+  },
+  "mapreduce.job.failedMapAttempts": {
+    "name": "mapreduce.job.failedMapAttempts",
+    "definition": "Number of failed map attempts",
+    "isKpi": true
+  },
+  "mapreduce.job.failedReduceAttempts": {
+    "name": "mapreduce.job.failedReduceAttempts",
+    "definition": "Number of failed reduce attempts",
+    "isKpi": true
+  },
+  "mapreduce.job.mapsTotal": {
+    "name": "mapreduce.job.mapsTotal",
+    "definition": "Total number of maps",
+    "isKpi": true
+  },
+  "mapreduce.job.reducesTotal": {
+    "name": "mapreduce.job.reducesTotal",
+    "definition": "Number of reduces",
+    "isKpi": true
+  },
+  "mapreduce.job.successfulMapAttempts": {
+    "name": "mapreduce.job.successfulMapAttempts",
+    "definition": "Number of successful map attempts",
+    "isKpi": true
+  },
+  "mapreduce.job.successfulReduceAttempts": {
+    "name": "mapreduce.job.successfulReduceAttempts",
+    "definition": "Number of successful reduce attempts",
+    "isKpi": true
+  },
+  "spark.executor.activeTasks": {
+    "name": "spark.executor.activeTasks",
+    "definition": "Number of active tasks in the application",
+    "isKpi": true
+  },
+  "spark.executor.failedTasks": {
+    "name": "spark.executor.failedTasks",
+    "definition": "Number of faied tasks in the driver",
+    "isKpi": true
+  },
+  "spark.executor.totalDuration": {
+    "name": "spark.executor.totalDuration",
+    "definition": "Fraction of time (ms/s) spent by the driver",
+    "isKpi": true
+  },
+  "spark.executor.totalTasks": {
+    "name": "spark.executor.totalTasks",
+    "definition": "Number of total tasks in the driver",
+    "isKpi": true
+  },
+  "spark.job.numFailedStages": {
+    "name": "spark.job.numFailedStages",
+    "definition": "Number of failed stages in the application",
+    "isKpi": true
+  },
+  "spark.job.numFailedTasks": {
+    "name": "spark.job.numFailedTasks",
+    "definition": "Number of failed tasks in the application's stages",
+    "isKpi": true
+  },
+  "spark.rdd.diskUsed": {
+    "name": "spark.rdd.diskUsed",
+    "definition": "Amount of disk space used by persisted RDDs in the application",
+    "isKpi": true
+  },
+  "spark.rdd.memoryUsed": {
+    "name": "spark.rdd.memoryUsed",
+    "definition": "Amount of memory used in the application's persisted RDDs",
+    "isKpi": true
+  },
+  "spark.rdd.numPartitions": {
+    "name": "spark.rdd.numPartitions",
+    "definition": "Number of persisted RDD partitions in the application",
+    "isKpi": true
+  },
+  "spark.stage.numActiveTasks": {
+    "name": "spark.stage.numActiveTasks",
+    "definition": "Number of active tasks in the application's stages",
+    "isKpi": true
+  },
+  "spark.stage.numFailedTasks": {
+    "name": "spark.stage.numFailedTasks",
+    "definition": "Number of failed tasks in the application's stages",
+    "isKpi": true
+  },
+  "storm.cluster.executorsTotal": {
+    "name": "storm.cluster.executorsTotal",
+    "definition": "Total number of executors",
+    "isKpi": true
+  },
+  "storm.cluster.slotsUsed": {
+    "name": "storm.cluster.slotsUsed",
+    "definition": "Number of worker slots used",
+    "isKpi": true
+  },
+  "storm.cluster.tasksTotal": {
+    "name": "storm.cluster.tasksTotal",
+    "definition": "Total tasks",
+    "isKpi": true
+  },
+  "storm.supervisor.slotsUsed": {
+    "name": "storm.supervisor.slotsUsed",
+    "definition": "Number of worker slots used on this supervisor",
+    "isKpi": true
+  },
+  "storm.supervisor.usedCpu": {
+    "name": "storm.supervisor.usedCpu",
+    "definition": "Used CPU capacity on this supervisor",
+    "isKpi": true
+  },
+  "storm.supervisor.usedMem": {
+    "name": "storm.supervisor.usedMem",
+    "definition": "Used memory capacity on this supervisor",
+    "isKpi": true
+  },
+  "zk_avg_latency": {
+    "name": "zk_avg_latency",
+    "definition": "zookeeper响应一个客户端请求的平均时间",
+    "isKpi": true
+  },
+  "zk_num_alive_connections": {
+    "name": "zk_num_alive_connections",
+    "definition": "连接到Zookeeper的客户端数量",
+    "isKpi": true
+  },
+  "zk_open_file_descriptor_count": {
+    "name": "zk_open_file_descriptor_count",
+    "definition": "zookeeper 打开文件数量",
+    "isKpi": true
+  },
+  "zk_outstanding_requests": {
+    "name": "zk_outstanding_requests",
+    "definition": "zookeeper排队请求的数量",
+    "isKpi": true
+  },
+  "mongo.asserts.regular": {
+    "name": "mongo.asserts.regular",
+    "definition": "有规律的asserts出现的次数",
+    "isKpi": true
+  },
+  "mongo.extra_info.page_faults": {
+    "name": "mongo.extra_info.page_faults",
+    "definition": "页故障总数",
+    "isKpi": true
+  },
+  "mongo.mem.resident": {
+    "name": "mongo.mem.resident",
+    "definition": "数据库使用内存大小",
+    "isKpi": true
+  },
+  "mongo.metrics.cursor.timedOut": {
+    "name": "mongo.metrics.cursor.timedOut",
+    "definition": "已超时的游标总数",
+    "isKpi": true
+  },
+  "mongo.network.numRequests": {
+    "name": "mongo.network.numRequests",
+    "definition": "服务器已收到的不同请求的总数",
+    "isKpi": true
+  },
+  "nginx.active_connections": {
+    "name": "nginx.active_connections",
+    "definition": "",
+    "isKpi": true
+  },
+  "nginx.number_requests_reading": {
+    "name": "nginx.number_requests_reading",
+    "definition": "",
+    "isKpi": true
+  },
+  "nginx.number_requests_waiting": {
+    "name": "nginx.number_requests_waiting",
+    "definition": "",
+    "isKpi": true
+  },
+  "nginx.number_requests_writing": {
+    "name": "nginx.number_requests_writing",
+    "definition": "",
+    "isKpi": true
+  },
+  "redis.clients.blocked": {
+    "name": "redis.clients.blocked",
+    "definition": "The number of connections waiting on a blocking call",
+    "isKpi": true
+  },
+  "redis.info.latency_ms": {
+    "name": "redis.info.latency_ms",
+    "definition": "The latency of the redis INFO command",
+    "isKpi": true
+  },
+  "redis.mem.used": {
+    "name": "rredis.mem.used",
+    "definition": "Amount of memory allocated by Redis",
+    "isKpi": true
+  },
+  "redis.net.clients": {
+    "name": "redis.net.clients",
+    "definition": "The number of connected clients (excluding slaves)",
+    "isKpi": true
+  },
+  "redis.rdb.changes_since_last": {
+    "name": "redis.rdb.changes_since_last",
+    "definition": "The number of changes since the last background save",
+    "isKpi": true
+  },
+  "redis.slowlog.micros.avg": {
+    "name": "redis.slowlog.micros.avg",
+    "definition": "The average duration of queries reported in the slow log",
+    "isKpi": true
+  },
+  "redis.stats.keyspace_hits": {
+    "name": "redis.stats.keyspace_hits",
+    "definition": "The total number of successful lookups in the db",
+    "isKpi": true
+  },
+  "docker.blkio_stats.precpu_stats.cpu_usage": {
+    "name": "docker.blkio_stats.precpu_stats.cpu_usage",
+    "definition": "",
+    "isKpi": true
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks",
+    "definition": "",
+    "isKpi": true
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks.preread.memory_stats": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks.preread.memory_stats",
+    "definition": "",
+    "isKpi": true
+  },
+  "docker.number_containers_running": {
+    "name": "docker.number_containers_running",
+    "definition": "",
+    "isKpi": true
+  },
+  "rabbitmq.node.mem_used": {
+    "name": "rabbitmq.node.mem_used",
+    "definition": "占用内存大小",
+    "isKpi": true
+  },
+  "rabbitmq.queue.consumer_utilisation": {
+    "name": "rabbitmq.queue.consumer_utilisation",
+    "definition": "队列用户中可接收消息的时间比例",
+    "isKpi": true
+  },
+  "rabbitmq.queue.memory": {
+    "name": "rabbitmq.queue.memory",
+    "definition": "队列所使用内存",
+    "isKpi": true
+  },
+  "rabbitmq.queue.messages.rate": {
+    "name": "rabbitmq.queue.messages.rate",
+    "definition": "队列内每秒总message数",
+    "isKpi": true
+  },
+  "rabbitmq.connections": {
+    "name": "rabbitmq.connections",
+    "definition": "当前vhost连接数",
+    "isKpi": true
+  },
+  "postgresql.connections": {
+    "name": "postgresql.connections",
+    "definition": "该database的活跃连接数",
+    "isKpi": true
+  },
+  "postgresql.database_size": {
+    "name": "postgresql.database_size",
+    "definition": "该database所占用的硬盘空间",
+    "isKpi": true
+  },
+  "postgresql.deadlocks": {
+    "name": "postgresql.deadlocks",
+    "definition": "该database中检测到的死锁",
+    "isKpi": true
+  },
+  "postgresql.percent_usage_connections": {
+    "name": "postgresql.percent_usage_connections",
+    "definition": "",
+    "isKpi": true
+  }
+}
