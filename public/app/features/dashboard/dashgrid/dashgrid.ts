@@ -53,10 +53,8 @@ export class GridCtrl {
       panel.y = item.y;
       panel.width = item.width;
       panel.height = item.height;
-      console.log('update panel', panel.id, panel.height);
     }
     this.$rootScope.$broadcast('render');
-    console.log('broadcast render');
   }
 
   bindItem(element) {
@@ -77,7 +75,6 @@ export function dashGrid($timeout) {
     },
     link: function(scope, elem, attrs, ctrl) {
       $timeout(function() {
-        console.log(elem.html());
         ctrl.init();
       });
     }
@@ -85,7 +82,7 @@ export function dashGrid($timeout) {
 }
 
 /** @ngInject **/
-export function dashGridItem($timeout) {
+export function dashGridItem($timeout, $rootScope) {
   return {
     restrict: "E",
     scope: {
@@ -103,6 +100,21 @@ export function dashGridItem($timeout) {
         'data-gs-width': panel.width,
         'data-gs-height': panel.height,
       });
+
+      $rootScope.onAppEvent('panel-fullscreen-exit', (evt, payload) => {
+        if (panel.id !== payload.panelId) {
+          return;
+        }
+        element.removeClass('panel-fullscreen');
+      }, scope);
+
+      $rootScope.onAppEvent('panel-fullscreen-enter', (evt, payload) => {
+        if (panel.id !== payload.panelId) {
+          return;
+        }
+        element.addClass('panel-fullscreen');
+      }, scope);
+
 
       //var item = element.data('_gridstack_node');
       //console.log('link item', item);

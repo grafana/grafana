@@ -20,7 +20,7 @@ var panelTemplate = `
         <i class="fa fa-spinner fa-spin"></i>
       </span>
 
-      <panel-header class="panel-title-container drag-handle" panel-ctrl="ctrl"></panel-header>
+      <panel-header class="panel-title-container" panel-ctrl="ctrl"></panel-header>
     </div>
 
     <div class="panel-content">
@@ -133,14 +133,6 @@ module.directive('grafanaPanel', function($rootScope, $document) {
           lastAlertState = null;
         }
       });
-
-      var lastFullscreen;
-      $rootScope.onAppEvent('panel-change-view', function(evt, payload) {
-        if (lastFullscreen !== ctrl.fullscreen) {
-          elem.toggleClass('panel-fullscreen', ctrl.fullscreen ? true : false);
-          lastFullscreen = ctrl.fullscreen;
-        }
-      }, scope);
 
       function updatePanelCornerInfo() {
         var cornerMode = ctrl.getInfoMode();

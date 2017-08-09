@@ -15,7 +15,8 @@
 }
 
 .grid-stack .grid-stack-placeholder > .placeholder-content {
-  border: 1px dashed lightgray;
+  background: $input-label-bg;
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236,10.8);
   margin: 0;
   position: absolute;
   top: 0;
@@ -41,8 +42,6 @@
   right: 7px;
   bottom: 0;
   width: auto;
-  overflow-x: hidden;
-  overflow-y: auto;
 }
 
 .grid-stack > .grid-stack-item > .ui-resizable-handle {
@@ -89,68 +88,12 @@
   transform: rotate(-45deg);
 }
 
-.grid-stack > .grid-stack-item > .ui-resizable-nw {
-  cursor: nw-resize;
-  width: 16px;
-  height: 16px;
-  left: 10px;
-  top: 0;
-}
-
-.grid-stack > .grid-stack-item > .ui-resizable-n {
-  cursor: n-resize;
-  height: 10px;
-  top: 0;
-  left: 25px;
-  right: 25px;
-}
-
-.grid-stack > .grid-stack-item > .ui-resizable-ne {
-  cursor: ne-resize;
-  width: 16px;
-  height: 16px;
-  right: 10px;
-  top: 0;
-}
-
-.grid-stack > .grid-stack-item > .ui-resizable-e {
-  cursor: e-resize;
-  width: 10px;
-  right: 10px;
-  top: 15px;
-  bottom: 15px;
-}
-
 .grid-stack > .grid-stack-item > .ui-resizable-se {
   cursor: se-resize;
   width: 16px;
   height: 16px;
   right: 10px;
   bottom: 0;
-}
-
-.grid-stack > .grid-stack-item > .ui-resizable-s {
-  cursor: s-resize;
-  height: 10px;
-  left: 25px;
-  bottom: 0;
-  right: 25px;
-}
-
-.grid-stack > .grid-stack-item > .ui-resizable-sw {
-  cursor: sw-resize;
-  width: 16px;
-  height: 16px;
-  left: 10px;
-  bottom: 0;
-}
-
-.grid-stack > .grid-stack-item > .ui-resizable-w {
-  cursor: w-resize;
-  width: 10px;
-  left: 10px;
-  top: 15px;
-  bottom: 15px;
 }
 
 .grid-stack > .grid-stack-item.ui-draggable-dragging > .ui-resizable-handle {

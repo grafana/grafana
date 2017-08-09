@@ -35,7 +35,6 @@ div.flot-text {
 
 .panel-margin {
   margin: 0 0.4rem 0.8rem 0.4rem;
-  //display: block;
 }
 
 .panel-container {
@@ -234,6 +233,15 @@ div.flot-text {
   .panel-drop-zone {
     display: none !important;
   }
+
+  .grid-stack > .grid-stack-item  {
+    position: unset;
+    display: none;
+  }
+
+  .panel-fullscreen {
+    display: block !important;
+  }
 }
 
 .panel-time-info {
@@ -243,7 +251,7 @@ div.flot-text {
   color: $blue;
   font-size: 85%;
   position: absolute;
-  top: 0;
+  top: 4px;
   right: 0;
 }
 

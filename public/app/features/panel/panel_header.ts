@@ -5,9 +5,9 @@ import angular from 'angular';
 import {coreModule} from 'app/core/core';
 
 var template = `
-<span class="panel-title drag-handle">
+<span class="panel-title">
   <span class="icon-gf panel-alert-icon"></span>
-  <span class="panel-title-text drag-handle">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>
+  <span class="panel-title-text">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>
   <span class="panel-menu-container dropdown">
     <span class="fa fa-caret-down panel-menu-toggle" data-toggle="dropdown"></span>
     <ul class="dropdown-menu dropdown-menu--menu panel-menu" role="menu">
@@ -92,6 +92,12 @@ function panelHeader($compile) {
       elem.click(function(evt) {
         const targetClass = evt.target.className;
 
+        console.log(elem.closest('.ui-draggable-dragging'));
+        // ignore click if we are dragging
+        if (elem.closest('.ui-draggable-dragging').length > 0) {
+          return;
+        }
+
         // remove existing scope
         if (menuScope) {
           menuScope.$destroy();
@@ -99,11 +105,10 @@ function panelHeader($compile) {
 
         menuScope = scope.$new();
         let menuHtml = createMenuTemplate(scope.ctrl);
-        console.log(menuHtml);
         menuElem.html(menuHtml);
         $compile(menuElem)(menuScope);
 
-        if (targetClass === 'panel-title-text drag-handle' || targetClass === 'panel-title drag-handle') {
+        if (targetClass === 'panel-title-text' || targetClass === 'panel-title') {
           evt.stopPropagation();
           elem.find('[data-toggle=dropdown]').dropdown('toggle');
         }
