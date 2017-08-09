@@ -214,12 +214,8 @@ export class KeybindingSrv {
       if (popups.length > 0) {
         return;
       }
-      // close modals
-      var modalData = $(".modal").data();
-      if (modalData && modalData.$scope && modalData.$scope.dismiss) {
-        modalData.$scope.dismiss();
-      }
 
+      scope.appEvent('hide-modal');
       scope.appEvent('hide-dash-editor');
       scope.appEvent('panel-change-view', {fullscreen: false, edit: false});
     });

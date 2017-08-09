@@ -52,12 +52,16 @@ export class SaveDashboardAsModalCtrl {
     this.clone.hideControls = false;
     this.folderTitle = dashboard.meta.folderTitle || 'Root';
 
-    // remove alerts
-    this.clone.rows.forEach(row => {
-      row.panels.forEach(panel => {
-        delete panel.alert;
+    // remove alerts if source dashboard is already persisted
+    // do not want to create alert dupes
+    if (dashboard.id > 0) {
+      this.clone.rows.forEach(row => {
+        row.panels.forEach(panel => {
+          delete panel.thresholds;
+          delete panel.alert;
+        });
       });
-    });
+    }
 
     delete this.clone.autoUpdate;
   }

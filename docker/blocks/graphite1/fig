@@ -1,0 +1,16 @@
+graphite:
+  build: blocks/graphite1
+  ports:
+    - "8080:80"
+    - "2003:2003"
+  volumes:
+    - /etc/localtime:/etc/localtime:ro
+    - /etc/timezone:/etc/timezone:ro
+
+fake-graphite-data:
+  image: grafana/fake-data-gen
+  net: bridge
+  environment:
+    FD_DATASOURCE: graphite
+    FD_PORT: 2003
+

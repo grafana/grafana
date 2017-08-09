@@ -1,9 +1,6 @@
 import {GraphiteDatasource} from './datasource';
 import {GraphiteQueryCtrl} from './query_ctrl';
-
-class GraphiteConfigCtrl {
-  static templateUrl = 'partials/config.html';
-}
+import {GraphiteConfigCtrl} from './config_ctrl';
 
 class GraphiteQueryOptionsCtrl {
   static templateUrl = 'partials/query.options.html';

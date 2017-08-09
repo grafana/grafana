@@ -143,6 +143,7 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 		c.SetSuperSecureCookie(user.Rands+user.Password, setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
 	}
 
+	c.Session.RegenerateId(c)
 	c.Session.Set(middleware.SESS_KEY_USERID, user.Id)
 }
 
