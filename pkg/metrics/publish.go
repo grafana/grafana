@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"runtime"
 	"strings"
 	"time"
 
@@ -86,6 +87,8 @@ func sendUsageStats() {
 	report := map[string]interface{}{
 		"version": version,
 		"metrics": metrics,
+		"os":      runtime.GOOS,
+		"arch":    runtime.GOARCH,
 	}
 
 	statsQuery := m.GetSystemStatsQuery{}
