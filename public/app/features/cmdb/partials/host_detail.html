@@ -63,7 +63,7 @@
                 </li>
             </ul>
         </li>
-        <li>
+        <li ng-if="detail.devices">
             <h4>存储</h4>
             <ul class="cmdb-detail">
                 <li>
@@ -90,7 +90,7 @@
                 <li><span>版本</span><span>{{detail.osVersion}}</span></li>
             </ul>
         </li>
-        <li class="last">
+        <li ng-if="detail.interfaces">
             <h4>网络配置</h4>
             <ul class="cmdb-detail">
                 <li>
@@ -106,6 +106,29 @@
                             <td>{{interface.ip}}</td>
                             <td>{{interface.mac}}</td>
                             <td>{{interface.speed}} <span ng-if="interface.speed != '暂无信息'">Mb</span></td>
+                        </tr>
+                    </table>
+                </li>
+            </ul>
+        </li>
+        <li class="last" ng-if="detail.services">
+            <h4>部署服务</h4>
+            <ul class="cmdb-detail">
+                <li>
+                    <table class="table">
+                        <tr>
+                            <th>名称</th>
+                            <th>创建时间</th>
+                            <th></th>
+                        </tr>
+                        <tr ng-repeat="service in detail.services">
+                            <td>{{service.name}}</td>
+                            <td>{{service.createdAt | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+                            <td>
+                                <a href="/cmdb/servicelist/servicedetail?id={{service.id}}">
+                                    <span class="cmdb-icon-text">详情</span>
+                                </a>
+                            </td>
                         </tr>
                     </table>
                 </li>
