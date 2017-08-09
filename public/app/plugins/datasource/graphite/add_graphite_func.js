@@ -20,9 +20,10 @@ function (angular, _, $, gfunc) {
 
       return {
         link: function($scope, elem) {
-          var categories = gfunc.getCategories();
-          var allFunctions = getAllFunctionNames(categories);
           var ctrl = $scope.ctrl;
+          var graphiteVersion = ctrl.datasource.graphiteVersion;
+          var categories = gfunc.getCategories(graphiteVersion);
+          var allFunctions = getAllFunctionNames(categories);
 
           $scope.functionMenu = createFunctionDropDownMenu(categories);
 
@@ -94,14 +95,16 @@ function (angular, _, $, gfunc) {
 
   function createFunctionDropDownMenu(categories) {
     return _.map(categories, function(list, category) {
+      var submenu = _.map(list, function(value) {
+        return {
+          text: value.name,
+          click: "ctrl.addFunction('" + value.name + "')",
+        };
+      });
+
       return {
         text: category,
-        submenu: _.map(list, function(value) {
-          return {
-            text: value.name,
-            click: "ctrl.addFunction('" + value.name + "')",
-          };
-        })
+        submenu: submenu
       };
     });
   }

@@ -129,6 +129,10 @@ function (angular, _, coreModule, config) {
         }
 
         var first = variable.current.value;
+        if (first === 'default') {
+          first = config.defaultDatasource;
+        }
+
         var ds = config.datasources[first];
 
         if (ds) {

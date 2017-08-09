@@ -185,8 +185,16 @@ transformers['json'] = {
   },
   transform: function(data, panel, model) {
     var i, y, z;
-    for (i = 0; i < panel.columns.length; i++) {
-      model.columns.push({text: panel.columns[i].text});
+
+    for (let column of panel.columns) {
+      var tableCol: any = {text: column.text};
+
+      // if filterable data then set columns to filterable
+      if (data.length > 0 && data[0].filterable) {
+        tableCol.filterable = true;
+      }
+
+      model.columns.push(tableCol);
     }
 
     if (model.columns.length === 0) {

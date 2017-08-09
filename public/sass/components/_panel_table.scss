@@ -91,7 +91,21 @@
     &.cell-highlighted:hover {
       background-color: $tight-form-func-bg;
     }
+
+    &:hover {
+      .table-panel-filter-link {
+        visibility: visible;
+      }
+    }
   }
+}
+
+.table-panel-filter-link {
+  visibility: hidden;
+  color: $text-color-weak;
+  float: right;
+  display: block;
+  padding: 0 5px;
 }
 
 .table-panel-header-bg {

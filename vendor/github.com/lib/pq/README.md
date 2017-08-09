@@ -1,6 +1,6 @@
 # pq - A pure Go postgres driver for Go's database/sql package
 
-[![Build Status](https://travis-ci.org/lib/pq.png?branch=master)](https://travis-ci.org/lib/pq)
+[![Build Status](https://travis-ci.org/lib/pq.svg?branch=master)](https://travis-ci.org/lib/pq)
 
 ## Install
 
@@ -20,11 +20,11 @@ variables.
 
 Example:
 
-	PGHOST=/var/run/postgresql go test github.com/lib/pq
+	PGHOST=/run/postgresql go test github.com/lib/pq
 
 Optionally, a benchmark suite can be run as part of the tests:
 
-	PGHOST=/var/run/postgresql go test -bench .
+	PGHOST=/run/postgresql go test -bench .
 
 ## Features
 
@@ -38,6 +38,7 @@ Optionally, a benchmark suite can be run as part of the tests:
 * Many libpq compatible environment variables
 * Unix socket support
 * Notifications: `LISTEN`/`NOTIFY`
+* pgpass support
 
 ## Future / Things you can help with
 
@@ -57,13 +58,17 @@ code still exists in here.
 * Brad Fitzpatrick (bradfitz)
 * Charlie Melbye (cmelbye)
 * Chris Bandy (cbandy)
+* Chris Gilling (cgilling)
 * Chris Walsh (cwds)
 * Dan Sosedoff (sosedoff)
 * Daniel Farina (fdr)
 * Eric Chlebek (echlebek)
+* Eric Garrido (minusnine)
+* Eric Urban (hydrogen18)
 * Everyone at The Go Team
 * Evan Shaw (edsrzf)
 * Ewan Chou (coocood)
+* Fazal Majid (fazalmajid)
 * Federico Romero (federomero)
 * Fumin (fumin)
 * Gary Burd (garyburd)
@@ -80,7 +85,7 @@ code still exists in here.
 * Keith Rarick (kr)
 * Kir Shatrov (kirs)
 * Lann Martin (lann)
-* Maciek Sakrejda (deafbybeheading)
+* Maciek Sakrejda (uhoh-itsmaciek)
 * Marc Brinkmann (mbr)
 * Marko Tiikkaja (johto)
 * Matt Newberry (MattNewberry)
@@ -94,5 +99,7 @@ code still exists in here.
 * Ryan Smith (ryandotsmith)
 * Samuel Stauffer (samuel)
 * Timothée Peignier (cyberdelia)
+* Travis Cline (tmc)
 * TruongSinh Tran-Nguyen (truongsinh)
+* Yaismel Miranda (ympons)
 * notedit (notedit)

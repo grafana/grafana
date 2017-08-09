@@ -41,6 +41,10 @@
         <tr>
           <th>Login</th>
           <th>Email</th>
+					<th>
+						Seen
+						<tip>Time since user was seen using Grafana</tip>
+					</th>
           <th>Role</th>
           <th style="width: 34px;"></th>
         </tr>
@@ -48,6 +52,7 @@
       <tr ng-repeat="user in ctrl.users">
         <td>{{user.login}}</td>
         <td><span class="ellipsis">{{user.email}}</span></td>
+				<td>{{user.lastSeenAtAge}}</td>
         <td>
           <select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="ctrl.updateOrgUser(user)">
           </select>
