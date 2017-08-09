@@ -12,7 +12,7 @@
       "title": "Home Dashboard",
       "collapse": false,
       "editable": true,
-      "height": "25px",
+      "height": 150,
       "panels": [
         {
           "content": "<div class=\"text-center dashboard-header\">\n  <span>Home Dashboard</span>\n</div>",
