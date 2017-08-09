@@ -1,14 +1,7 @@
 <query-editor-row query-ctrl="ctrl" can-collapse="false">
-  <div class="gf-form-inline">
-		<div class="gf-form gf-form--grow">
-			<textarea rows="5" class="gf-form-input" ng-model="ctrl.target.rawSql" spellcheck="false" placeholder="query expression" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.panelCtrl.refresh()"></textarea>
-		</div>
-	</div>
-
 	<div class="gf-form-inline">
 		<div class="gf-form gf-form--grow">
-			<code-editor content="ctrl.target.rawSql" on-change="ctrl.panelCtrl.refresh()"
-				data-mode="sql">
+			<code-editor content="ctrl.target.rawSql" on-change="ctrl.panelCtrl.refresh()" data-mode="sql">
 			</code-editor>
 		</div>
 	</div>
