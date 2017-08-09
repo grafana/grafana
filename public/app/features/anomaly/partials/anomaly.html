@@ -9,7 +9,7 @@
   <div class="page" style="max-width: 100%">
     <h2>自动异常探测 <span style="font-size: 17px">{{system}}<tip>点击图上聚类的点, 能够快速筛选出所需的内容</tip></span></h2>
     <div class="anomaly-header">
-      <div>
+      <!-- <div>
         <strong>{{ summary.numAnomalyMetrics }}<span>个</span></strong>
         <p class="anomaly-des">异常指标被检测到</p>
         <p>自动检测指标总数:<span>{{ summary.numMetrics }}</span></p>
@@ -21,9 +21,24 @@
         <p class="anomaly-des" class="danger-color">指标持续异常,请关注</p>
         <p class="anomaly-color" style="font-size: 22px;"><span>{{ summary.numAnomalyMetrics - summary.dangerMetricNum}}</span>个</p>
         <p>指标临时异常,一般不影响系统性能</p>
+      </div> -->
+      <div class="system-item">
+        <div id="anomaly-pie" style="width: 150px; height: 150px;"></div>
+        <div class="system-item-legend">
+            <dl class="small-dl">
+                <dt><span class="system-label system-label-danger">持续异常</span></dt>
+                <dd class="system-legend system-legend-danger">{{summary.dangerMetricNum}}</dd>
+            </dl>
+            <dl class="small-dl">
+                <dt><span class="system-label system-label-warning">临时异常</span></dt>
+                <dd class="system-legend system-legend-warning">{{summary.numAnomalyMetrics - summary.dangerMetricNum}}</dd>
+            </dl>
+        </div>
+        <div class="clearfix"></div>
       </div>
       <div id="cluster" style="width: 300px; height: 240px;"></div>
     </div>
+
     
     <div ng-if="!(summary.metricHostClusters.elements.length || summary.metricHostNotClustered.elements.length)">
       <em>系统一切正常</em>
