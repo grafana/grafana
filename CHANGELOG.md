@@ -1,11 +1,16 @@
-# 3.0.0-beta7 (unreleased)
+# 3.0.0 Stable (2016-05-11)
+
+* **Templating**: Fixed issue with new data source variable not persisting current selected value, fixes [#4934](https://github.com/grafana/grafana/issues/4934)
+
+# 3.0.0-beta7 (2016-05-02)
 
 ### Bug fixes
 * **Dashboard title**: Fixed max dashboard title width (media query) for large screens,  fixes [#4859](https://github.com/grafana/grafana/issues/4859)
 * **Annotations**: Fixed issue with entering annotation edit view, fixes [#4857](https://github.com/grafana/grafana/issues/4857)
 * **Remove query**: Fixed issue with removing query for data sources without collapsable query editors, fixes [#4856](https://github.com/grafana/grafana/issues/4856)
-* **Graphite PNG*: Fixed issue graphite png rendering option, fixes [#4864](https://github.com/grafana/grafana/issues/4864)
+* **Graphite PNG**: Fixed issue graphite png rendering option, fixes [#4864](https://github.com/grafana/grafana/issues/4864)
 * **InfluxDB**: Fixed issue missing plus group by iconn, fixes [#4862](https://github.com/grafana/grafana/issues/4862)
+* **Graph**: Fixes missing line mode for thresholds, fixes [#4902](https://github.com/grafana/grafana/pull/4902)
 
 ### Enhancements
 * **InfluxDB**: Added new functions moving_average and difference to query editor, closes [#4698](https://github.com/grafana/grafana/issues/4698)

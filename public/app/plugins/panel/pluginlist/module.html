@@ -4,7 +4,7 @@
       {{category.header}}
     </h6>
     <div class="pluginlist-item" ng-repeat="plugin in category.list">
-      <a class="pluginlist-link pluginlist-link-{{plugin.state}} pointer" href="plugins/{{plugin.id}}/edit">
+      <a class="pluginlist-link pluginlist-link-{{plugin.state}} pointer" href="{{plugin.defaultNavUrl}}">
         <span>
           <img ng-src="{{plugin.info.logos.small}}" class="pluginlist-image">
           <span class="pluginlist-title">{{plugin.name}}</span>
@@ -23,7 +23,7 @@
     </div>
     <div class="pluginlist-item" ng-show="category.list.length === 0">
       <a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="https://grafana.net/plugins">
-        <span class="pluginlist-none-installed">No additional panels installed. <span class="pluginlist-emphasis">Browse Grafana.net</span></span>
+        <span class="pluginlist-none-installed">None installed. <span class="pluginlist-emphasis">Browse Grafana.net</span></span>
       </a>
     </div>
   </div>

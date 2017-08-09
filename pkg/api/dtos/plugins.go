@@ -29,6 +29,7 @@ type PluginListItem struct {
 	Info          *plugins.PluginInfo `json:"info"`
 	LatestVersion string              `json:"latestVersion"`
 	HasUpdate     bool                `json:"hasUpdate"`
+	DefaultNavUrl string              `json:"defaultNavUrl"`
 }
 
 type PluginList []PluginListItem

@@ -82,7 +82,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   onDataError(err) {
-    this.onDataReceived({data: []});
+    this.onDataReceived([]);
   }
 
   onDataReceived(dataList) {
@@ -91,11 +91,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var data: any = {};
     this.setValues(data);
 
-    data.thresholds = this.panel.thresholds.split(',').map(function(strVale) {
-      return Number(strVale.trim());
-    });
-
-    data.colorMap = this.panel.colors;
     this.data = data;
     this.render();
   }
@@ -325,9 +320,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         ? 'rgb(230,230,230)'
         : 'rgb(38,38,38)';
 
-
+      var fontScale = parseInt(panel.valueFontSize) / 100;
       var dimension = Math.min(width, height);
-      var fontSize = Math.min(dimension/4, 100);
+      var fontSize = Math.min(dimension/5, 100) * fontScale;
       var gaugeWidth = Math.min(dimension/6, 60);
       var thresholdMarkersWidth = gaugeWidth/5;
 
@@ -373,15 +368,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       };
 
       $.plot(plotCanvas, [plotSeries], options);
-    }
-
-    function getGaugeFontSize() {
-      if (panel.valueFontSize) {
-        var num = parseInt(panel.valueFontSize.substring(0, panel.valueFontSize.length - 1));
-        return (30 * (num / 100)) + 15;
-      } else {
-        return 30;
-      }
     }
 
     function addSparkline() {
@@ -445,8 +431,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function render() {
       if (!ctrl.data) { return; }
-      ctrl.setValues(ctrl.data);
       data = ctrl.data;
+
+      // get thresholds
+      data.thresholds = panel.thresholds.split(',').map(function(strVale) {
+        return Number(strVale.trim());
+      });
+      data.colorMap = panel.colors;
+
       setElementHeight();
 
       var body = panel.gauge.show ? '' : getBigValueHtml();

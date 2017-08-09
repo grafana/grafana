@@ -8,6 +8,7 @@ import (
 	"github.com/wangy1931/grafana/pkg/middleware"
 	m "github.com/wangy1931/grafana/pkg/models"
 	"github.com/wangy1931/grafana/pkg/plugins"
+	"github.com/wangy1931/grafana/pkg/setting"
 )
 
 func GetPluginList(c *middleware.Context) Response {
@@ -46,11 +47,16 @@ func GetPluginList(c *middleware.Context) Response {
 			Info:          &pluginDef.Info,
 			LatestVersion: pluginDef.GrafanaNetVersion,
 			HasUpdate:     pluginDef.GrafanaNetHasUpdate,
+			DefaultNavUrl: pluginDef.DefaultNavUrl,
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
 			listItem.Enabled = pluginSetting.Enabled
 			listItem.Pinned = pluginSetting.Pinned
+		}
+
+		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
+			listItem.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + listItem.Id + "/edit"
 		}
 
 		// filter out disabled

@@ -8,23 +8,16 @@
 
 	<p class="playlist-description">Each organization contains their own dashboards, data sources and configuration, and cannot be shared between orgs. While users may belong to more than one, mutiple organization are most frequently used in multi-tenant deployments. </p>
 
-	<div class="gf-form-group">
-		<div class="gf-form">
-			<span class="gf-form-label width-10">公司名称</span>
-			<input type="text" ng-model="newOrg.name" required class="gf-form-input max-width-21" placeholder="organization name">
+	<form>
+		<div class="gf-form-group">
+			<div class="gf-form">
+				<span class="gf-form-label width-10">公司名称</span>
+				<input type="text" ng-model="newOrg.name" required class="gf-form-input max-width-21" placeholder="organization name">
+			</div>
+			<br>
+			<div class="gf-form-buttons-row">
+				<button type="submit" class="btn btn-success" ng-click="createOrg()">新增</button>
+			</div>
 		</div>
-
-        <br>
-        <div class="gf-form" ng-repeat="system in newSystems">
-            <span class="gf-form-label width-10">系统名称</span>
-            <input type="text" ng-model="system.name" required class="input-xxlarge tight-form-input last" placeholder="如:办公自动化系统">
-        </div>
-        <div style="text-align: left; margin-top: 6px;">
-            <a ng-click="addSystem()">+ 增加子系统</a>
-        </div>
-		<br>
-		<div class="gf-form-buttons-row">
-			<button class="btn btn-success" ng-click="createOrg()">新增</button>
-		</div>
-	</div>
+	</form>
 </div>

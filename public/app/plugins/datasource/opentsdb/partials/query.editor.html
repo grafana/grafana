@@ -304,7 +304,12 @@
 		</div>
 
 		<gf-form-switch class="gf-form"
+<<<<<<< HEAD
 										label="取消降低采样"
+=======
+										label="Disable downsampling"
+                    label-class="query-keyword"
+>>>>>>> v3.0.1
 										checked="ctrl.target.disableDownsampling"
 										on-change="ctrl.targetBlur()">
 		</gf-form-switch>
@@ -349,7 +354,7 @@
 			</div>
 
 			<div class="gf-form">
-				<label class="gf-form-label">Type</label>
+				<label class="gf-form-label query-keyword">Type</label>
 				<div class="gf-form-select-wrapper">
 					<select ng-model="ctrl.target.currentFilterType" class="gf-form-input" ng-options="filType for filType in ctrl.filterTypes">
 					</select>
@@ -361,7 +366,11 @@
 				</input>
 			</div>
 
-			<gf-form-switch class="gf-form" label="Group by" checked="ctrl.target.currentFilterGroupBy" on-change="ctrl.targetBlur()">
+      <gf-form-switch class="gf-form"
+                    label="Group by" 
+                    label-class="query-keyword"
+                    checked="ctrl.target.currentFilterGroupBy"
+                    on-change="ctrl.targetBlur()">
 			</gf-form-switch>
 
 			<div class="gf-form" ng-show="ctrl.addFilterMode">
@@ -370,7 +379,6 @@
 						<i class="fa fa-warning"></i>
 					</a>
 				</label>
-
 				<label class="gf-form-label">
 					<a ng-click="ctrl.addFilter()" ng-hide="ctrl.errors.filters">add filter</a>
 					<a ng-click="ctrl.closeAddFilterMode()">
@@ -447,12 +455,12 @@
 		</gf-form-switch>
 
 		<gf-form-switch ng-hide="!ctrl.target.shouldComputeRate"
-										class="gf-form" label="Counter" checked="ctrl.target.isCounter" on-change="ctrl.targetBlur()">
+										class="gf-form" label="Counter" label-class="query-keyword" checked="ctrl.target.isCounter" on-change="ctrl.targetBlur()">
 		</gf-form-switch>
 
 
 		<div class="gf-form" ng-hide="!ctrl.target.isCounter || !ctrl.target.shouldComputeRate">
-			<label class="gf-form-label">计数器最大值</label>
+			<label class="gf-form-label query-keyword">计数器最大值</label>
 			<input type="text" class="gf-form-input"
 					 	 ng-disabled="!ctrl.target.shouldComputeRate"
 						 ng-model="ctrl.target.counterMax" spellcheck='false'
@@ -460,7 +468,7 @@
 						 ng-blur="ctrl.targetBlur()">
 			</input>
 
-			<label class="gf-form-label">重置数值</label>
+			<label class="gf-form-label query-keyword">重置数值</label>
 			<input type="text" class="tight-form-input input-small"
 					   ng-disabled="!ctrl.target.shouldComputeRate"
 						 ng-model="ctrl.target.counterResetValue" spellcheck='false'

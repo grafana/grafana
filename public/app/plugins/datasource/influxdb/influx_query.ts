@@ -152,7 +152,7 @@ export default class InfluxQuery {
       if (interpolate) {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
-      if (isNaN(+value)) {
+      if (operator !== '>' && operator !== '<') {
         value = "'" + value.replace('\\', '\\\\') + "'";
       }
     } else if (interpolate){

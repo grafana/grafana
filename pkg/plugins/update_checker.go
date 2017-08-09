@@ -91,14 +91,14 @@ func checkForUpdates() {
 
 	resp2, err := client.Get("https://raw.githubusercontent.com/grafana/grafana/master/latest.json")
 	if err != nil {
-		log.Trace("Failed to get lates.json repo from github: %v", err.Error())
+		log.Trace("Failed to get latest.json repo from github: %v", err.Error())
 		return
 	}
 
 	defer resp2.Body.Close()
 	body, err = ioutil.ReadAll(resp2.Body)
 	if err != nil {
-		log.Trace("Update check failed, reading response from github.net, %v", err.Error())
+		log.Trace("Update check failed, reading response from github.com, %v", err.Error())
 		return
 	}
 

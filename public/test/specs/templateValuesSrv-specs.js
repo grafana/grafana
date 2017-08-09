@@ -166,7 +166,7 @@ define([
 
     describeUpdateVariable('update custom variable', function(scenario) {
       scenario.setup(function() {
-        scenario.variable = { type: 'custom', query: 'hej, hop, asd', name: 'test'};
+        scenario.variable = {type: 'custom', query: 'hej, hop, asd', name: 'test'};
       });
 
       it('should update options array', function() {
@@ -286,7 +286,13 @@ define([
 
     describeUpdateVariable('datasource variable with regex filter', function(scenario) {
       scenario.setup(function() {
-        scenario.variable = {type: 'datasource', query: 'graphite', name: 'test', current: {}, regex: '/pee$/' };
+        scenario.variable = {
+          type: 'datasource',
+          query: 'graphite',
+          name: 'test',
+          current: {value: 'backend4_pee', text: 'backend4_pee'},
+          regex: '/pee$/'
+        };
         scenario.metricSources = [
           {name: 'backend1', meta: {id: 'influx'}},
           {name: 'backend2_pee', meta: {id: 'graphite'}},
@@ -299,6 +305,10 @@ define([
         expect(scenario.variable.options.length).to.be(2);
         expect(scenario.variable.options[0].value).to.be('backend2_pee');
         expect(scenario.variable.options[1].value).to.be('backend4_pee');
+      });
+
+      it('should keep current value if available', function() {
+        expect(scenario.variable.current.value).to.be('backend4_pee');
       });
     });
 
