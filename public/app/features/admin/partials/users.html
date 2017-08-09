@@ -25,7 +25,11 @@
           <th>Name</th>
           <th>Login</th>
           <th>Email</th>
-          <th style="white-space: nowrap">Grafana Admin</th>
+          <th>
+						Seen
+						<tip>Time since user was seen using Grafana</tip>
+					</th>
+          <th></th>
           <th></th>
         </tr>
       </thead>
@@ -35,7 +39,12 @@
           <td>{{user.name}}</td>
           <td>{{user.login}}</td>
           <td>{{user.email}}</td>
-          <td>{{user.isAdmin}}</td>
+          <td>
+						{{user.lastSeenAtAge}}
+					</td>
+          <td>
+						<i class="fa fa-shield" ng-show="user.isAdmin" bs-tooltip="'Grafana Admin'"></i>
+					</td>
           <td class="text-right">
             <a href="admin/users/edit/{{user.id}}" class="btn btn-inverse btn-small">
               <i class="fa fa-edit"></i>
