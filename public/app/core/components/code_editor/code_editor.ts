@@ -28,12 +28,12 @@ import coreModule from 'app/core/core_module';
 import ace from 'ace';
 
 const ACE_SRC_BASE = "public/vendor/npm/ace-builds/src-noconflict/";
-const DEFAULT_THEME = "solarized_dark";
+const DEFAULT_THEME = "grafana-dark";
 const DEFAULT_MODE = "text";
 const DEFAULT_MAX_LINES = 10;
 const DEFAULT_TAB_SIZE = 2;
 
-const GRAFANA_MODULES = ['mode-prometheus', 'snippets-prometheus'];
+const GRAFANA_MODULES = ['mode-prometheus', 'snippets-prometheus', 'theme-grafana-dark'];
 const GRAFANA_MODULE_BASE = "public/app/core/components/code_editor/";
 
 // Trick for loading additional modules
@@ -46,9 +46,11 @@ function fixModuleUrl(moduleType, name) {
   if (_.includes(GRAFANA_MODULES, moduleName)) {
     baseUrl = GRAFANA_MODULE_BASE;
   }
+
   if (moduleType === 'snippets') {
     componentName = `${moduleType}/${name}.js`;
   }
+
   ace.config.setModuleUrl(aceModeName, baseUrl + componentName);
 }
 
@@ -83,8 +85,9 @@ function link(scope, elem, attrs) {
   // disable depreacation warning
   codeEditor.$blockScrolling = Infinity;
   // Padding hacks
-  codeEditor.renderer.setScrollMargin(10, 10);
+  codeEditor.renderer.setScrollMargin(15, 15);
   codeEditor.renderer.setPadding(10);
+
   setThemeMode(theme);
   setLangMode(langMode);
   setEditorContent(scope.content);
@@ -158,8 +161,7 @@ function link(scope, elem, attrs) {
 
   function setThemeMode(theme) {
     fixModuleUrl("theme", theme);
-    let aceThemeName = `ace/theme/${theme}`;
-    codeEditor.setTheme(aceThemeName);
+    codeEditor.setTheme(`ace/theme/${theme}`);
   }
 
   function setEditorContent(value) {

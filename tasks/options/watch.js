@@ -21,7 +21,10 @@ module.exports = function(config, grunt) {
       return;
     }
 
-    gaze(config.srcDir + '/**/*', function(err, watcher) {
+    gaze([
+      config.srcDir + '/app/**/*',
+      config.srcDir + '/sass/**/*',
+    ], function(err, watcher) {
 
       console.log('Gaze watchers setup');
 
