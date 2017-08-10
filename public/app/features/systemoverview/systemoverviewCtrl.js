@@ -284,10 +284,10 @@ define([
         });
 
         // 拿 servicekpi metric 的 message, 储存在 _.metricHelpMessage 中
-        var service = serviceName.split(".")[0];
-        _.each([service, 'mem', 'io', 'nw', 'cpu'], function (item) {
-          backendSrv.readMetricHelpMessage(item);
-        });
+        // var service = serviceName.split(".")[0];
+        // _.each([service, 'mem', 'io', 'nw', 'cpu'], function (item) {
+        //   backendSrv.readMetricHelpMessage(item);
+        // });
       };
 
       $scope.selectHost = function (index, host) {
@@ -345,6 +345,7 @@ define([
 
         $scope.currentHost = host;
         $scope.currentItem = item;
+        $scope.currentItemStatus = $scope.service.hostStatusMap[host].itemStatusMap[item].healthStatusType;
         $scope.bsTableData = metric;
 
         $scope.$broadcast('load-table');

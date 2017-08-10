@@ -63,7 +63,8 @@ function ($) {
       "nginx": "Nginx",
       "postgresql": "Postgresql",
       "redis": "Redis",
-      "rabbitmq": "RabbitMQ"
+      "rabbitmq": "RabbitMQ",
+      "iis": "IIS"
     };
   };
 

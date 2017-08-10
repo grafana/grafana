@@ -30,7 +30,11 @@
                                                     </li>
                                                 </ul>
                                                 <div ng-if="host.healthStatusType !== 'GREY'">
-                                                    <p>{{currentItem}} 重要指标：</p>
+                                                    <p ng-if="currentItem!=='ServiceState'">{{currentItem}} 重要指标：</p>
+                                                    <p ng-if="currentItem=='ServiceState'">
+                                                        <span ng-if="currentItemStatus=='GREEN'">服务线程正常运行</span>
+                                                        <span ng-if="currentItemStatus!=='GREEN'">服务线程中断</span>
+                                                    </p>
                                                     <table-loader key={{host.hostName}} template="/app/features/service/partials/service_host_table.html"></table-loader>
                                                 </div>
                                                 <div ng-if="host.healthStatusType === 'GREY'">
