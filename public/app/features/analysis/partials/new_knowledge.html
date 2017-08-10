@@ -21,7 +21,16 @@
                             <h4>现象</h4>
                         </li>
                         <li>
-                            <textarea type="text" class="input-xxlarge" style="resize: vertical;" required ng-model="knowledge.symptom"></textarea>
+                            <ng-quill-editor 
+                                ng-model="knowledge.symptom" 
+                                theme="snow"
+                                class="kb-editor"
+                                placeholder="override default placeholder" 
+                                on-editor-created="editorCreated(editor)" 
+                                on-content-changed="contentChanged(editor, html, text)" 
+                                on-selection-changed="selectionChanged(editor, range, oldRange, source)">
+                            </ng-quill-editor>
+                            <!-- <textarea type="text" class="input-xxlarge" style="resize: vertical;" required ng-model="knowledge.symptom"></textarea> -->
                         </li>
                         <div class="clearfix"></div>
                     </ul>
@@ -30,7 +39,16 @@
                             <h4>解决方案</h4>
                         </li>
                         <li>
-                            <textarea ng-model="knowledge.solution" style="height:100px; resize:vertical;" class="input-xxlarge" required></textarea>
+                            <ng-quill-editor 
+                                ng-model="knowledge.solution" 
+                                theme="snow"
+                                class="kb-editor"
+                                placeholder="override default placeholder" 
+                                on-editor-created="editorCreated(editor)" 
+                                on-content-changed="contentChanged(editor, html, text)" 
+                                on-selection-changed="selectionChanged(editor, range, oldRange, source)">
+                            </ng-quill-editor>
+                            <!-- <textarea ng-model="knowledge.solution" style="height:100px; resize:vertical;" class="input-xxlarge" required></textarea> -->
                         </li>
                         <div class="clearfix"></div>
                     </ul>

@@ -1,8 +1,9 @@
 define([
     'angular',
-    'lodash'
+    'lodash',
+    'ng-quill'
   ],
-  function (angular, _) {
+  function (angular, _, ngQuill) {
     'use strict';
 
     var module = angular.module('grafana.controllers');
@@ -32,6 +33,18 @@ define([
         $scope.dismiss();
 
       };
+
+      $scope.title = 'Quill works you really works????'
+      $scope.readOnly = false
+      $scope.editorCreated = function (editor) {
+        console.log(editor)
+      }
+      $scope.contentChanged = function (editor, html, text, delta, oldDelta, source) {
+        console.log('editor: ', editor, 'html: ', html, 'text:', text, 'delta: ', delta, 'oldDelta:', oldDelta, 'source:', source)
+      }
+      $scope.selectionChanged = function (editor, range, oldRange, source) {
+        console.log('editor: ', editor, 'range: ', range, 'oldRange:', oldRange, 'source:', source)
+      }
 
     });
   });

@@ -38,18 +38,16 @@
             <br>
         </div>
     </form>
-    <table class="filter-table ng-scope" ng-if="knowledge.length" style="background:#fff;">
-        <thead>
-            <tr style="background:#fff;">
-                <th>现象</th>
-                <th>解决方案</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr ng-repeat="knows in knowledge" style="background:#fff;">
-                <td>{{knows.symptom}}</td>
-                <td ng-bind-html="knows.solution"></td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="accordion" id="kb-list" ng-if="knowledge.length">
+        <div class="accordion-group" ng-repeat="knows in knowledge">
+            <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#kb-list" href="#{{knows.id}}">
+                    {{knows.symptom}}
+                </a>
+            </div>
+            <div id="{{knows.id}}" class="accordion-body collapse">
+                <div class="accordion-inner" ng-bind-html="knows.solution"></div>
+            </div>
+        </div>
+    </div>
 </div>
