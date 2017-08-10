@@ -10,7 +10,7 @@ import 'gridstack.jquery-ui';
 
 const template = `
 <div class="grid-stack">
-  <dash-grid-item ng-repeat="panel in ctrl.panels"
+  <dash-grid-item ng-repeat="panel in ctrl.row.panels track by panel.id"
                   class="grid-stack-item"
                   grid-ctrl="ctrl"
                   panel="panel">
@@ -22,6 +22,7 @@ const template = `
 
 export class GridCtrl {
   options: any;
+  row: any;
   dashboard: any;
   panels: any;
   gridstack: any;
@@ -29,7 +30,6 @@ export class GridCtrl {
 
   /** @ngInject */
   constructor(private $rootScope, private $element, private $timeout) {
-    this.panels = this.dashboard.panels;
   }
 
   init() {
@@ -39,14 +39,48 @@ export class GridCtrl {
       animate: true,
       cellHeight: CELL_HEIGHT,
       verticalMargin: CELL_VMARGIN,
+      acceptWidgets: '.grid-stack-item',
+      handle: '.panel-header'
     }).data('gridstack');
 
+    this.gridElem.on('added', (e, items) => {
+      for (let item of items) {
+        this.onGridStackItemAdded(item);
+      }
+    });
+
+    this.gridElem.on('removed', (e, items) => {
+      for (let item of items) {
+        this.onGridStackItemRemoved(item);
+      }
+    });
+
     this.gridElem.on('change', (e, items) => {
-      this.$timeout(() => this.itemsChanged(items), 50);
+      this.$timeout(() => this.onGridStackItemsChanged(items), 50);
     });
   }
 
-  itemsChanged(items) {
+  onGridStackItemAdded(item) {
+    console.log('item added', item);
+    if (this.dashboard.tempPanel) {
+      //this.gridstack.removeWidget(item.el, false);
+
+      this.$timeout(() => {
+        this.row.panels.push(this.dashboard.tempPanel);
+      });
+    }
+  }
+
+  onGridStackItemRemoved(item) {
+    console.log('item removed', item.id);
+    let panel = this.dashboard.getPanelById(parseInt(item.id));
+    this.dashboard.tempPanel = panel;
+    this.$timeout(() => {
+      this.row.removePanel(panel, false);
+    });
+  }
+
+  onGridStackItemsChanged(items) {
     for (let item of items) {
       var panel = this.dashboard.getPanelById(parseInt(item.id));
       panel.x = item.x;
@@ -63,7 +97,8 @@ export class GridCtrl {
     }
   }
 
-  removeItem(element) {
+  itemScopeDestroyed(element) {
+    console.log('itemScopeDestroyed');
     if (this.gridstack) {
       this.gridstack.removeWidget(element, false);
     }
@@ -84,7 +119,8 @@ export function dashGrid($timeout) {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      dashboard: "="
+      row: "=",
+      dashboard: "=",
     },
     link: function(scope, elem, attrs, ctrl) {
       $timeout(function() {
@@ -133,7 +169,7 @@ export function dashGridItem($timeout, $rootScope) {
       }, scope);
 
       scope.$on('$destroy', () => {
-        gridCtrl.removeItem(element);
+        gridCtrl.itemScopeDestroyed(element);
       });
 
       //   scope.onItemRemoved({item: item});

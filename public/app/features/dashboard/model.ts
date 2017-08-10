@@ -47,7 +47,6 @@ export class DashboardModel {
   meta: any;
   events: any;
   editMode: boolean;
-  panels: Panel[];
   folderId: number;
 
   constructor(data, meta?) {
@@ -77,18 +76,17 @@ export class DashboardModel {
     this.version = data.version || 0;
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
-    this.panels = data.panels || [];
     this.folderId = data.folderId || null;
-
     this.rows = [];
+
     if (data.rows) {
       for (let row of data.rows) {
         this.rows.push(new DashboardRow(row));
       }
     }
 
-    this.updateSchema(data);
     this.initMeta(meta);
+    this.updateSchema(data);
   }
 
   private initMeta(meta) {
@@ -170,9 +168,13 @@ export class DashboardModel {
   }
 
   getPanelById(id) {
-    for (let panel of this.panels) {
-      if (panel.id === id) {
-        return panel;
+    for (var i = 0; i < this.rows.length; i++) {
+      var row = this.rows[i];
+      for (var j = 0; j < row.panels.length; j++) {
+        var panel = row.panels[j];
+        if (panel.id === id) {
+          return panel;
+        }
       }
     }
     return null;
@@ -300,34 +302,6 @@ export class DashboardModel {
         return other.refId !== refId;
       });
     });
-  }
-
-  removePanel(panel, ask?) {
-    // confirm deletion
-    if (ask !== false) {
-      var text2, confirmText;
-      if (panel.alert) {
-        text2 = "Panel includes an alert rule, removing panel will also remove alert rule";
-        confirmText = "YES";
-      }
-
-      appEvents.emit('confirm-modal', {
-        title: 'Remove Panel',
-        text: 'Are you sure you want to remove this panel?',
-        text2: text2,
-        icon: 'fa-trash',
-        confirmText: confirmText,
-        yesText: 'Remove',
-        onConfirm: () => {
-          this.removePanel(panel, false);
-        }
-      });
-      return;
-    }
-
-    var index = _.indexOf(this.panels, panel);
-    this.panels.splice(index, 1);
-    this.events.emit('panel-removed', panel);
   }
 
   isTimezoneUtc() {
@@ -671,6 +645,7 @@ export class DashboardModel {
 
     upgradeToGridLayout() {
       let yPos = 0;
+      let firstRow = this.rows[0];
 
       for (let row of this.rows) {
         let xPos = 0;
@@ -693,12 +668,23 @@ export class DashboardModel {
           panel.width = panel.span;
           panel.height = height;
 
-          this.panels.push(panel);
+          delete panel.span;
 
           xPos += panel.width;
         }
 
-        yPos += height;
+        if (!this.meta.keepRows) {
+          yPos += height;
+
+          // add to first row
+          if (row !== firstRow) {
+            firstRow.panels = firstRow.panels.concat(row.panels);
+          }
+        }
+      }
+
+      if (!this.meta.keepRows) {
+        this.rows = [firstRow];
       }
     }
 }
