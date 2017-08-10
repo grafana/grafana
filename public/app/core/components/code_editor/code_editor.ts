@@ -8,15 +8,19 @@
  * </code-editor>
  *
  * Params:
- * content:  Editor content.
- * onChange: Function called on content change (invoked on editor blur, ctrl+enter, not on every change).
+ * content:      Editor content.
+ * onChange:     Function called on content change (invoked on editor blur, ctrl+enter, not on every change).
+ * getCompleter: Function returned external completer. Completer is an object implemented getCompletions() method,
+ *               see Prometheus Data Source implementation for details.
  *
  * Some Ace editor options available via data-* attributes:
- * data-lang-mode   - Language mode (text, sql, javascript, etc.). Default is 'text'.
- * data-theme       - Editor theme (eg 'solarized_dark').
- * data-max-lines   - Max editor height in lines. Editor grows automatically from 1 to maxLines.
- * data-show-gutter - Show gutter (contains line numbers and additional info).
- * data-tab-size    - Tab size, default is 2.
+ * data-lang-mode          - Language mode (text, sql, javascript, etc.). Default is 'text'.
+ * data-theme              - Editor theme (eg 'solarized_dark').
+ * data-max-lines          - Max editor height in lines. Editor grows automatically from 1 to maxLines.
+ * data-show-gutter        - Show gutter (contains line numbers and additional info).
+ * data-tab-size           - Tab size, default is 2.
+ * data-behaviours-enabled - Specifies whether to use behaviors or not. "Behaviors" in this case is the auto-pairing of
+ *                           special characters, like quotation marks, parenthesis, or brackets.
  *
  * Keybindings:
  * Ctrl-Enter (Command-Enter): run onChange() function
@@ -32,6 +36,7 @@ const DEFAULT_THEME = "grafana-dark";
 const DEFAULT_MODE = "text";
 const DEFAULT_MAX_LINES = 10;
 const DEFAULT_TAB_SIZE = 2;
+const DEFAULT_BEHAVIOURS = true;
 
 const GRAFANA_MODULES = ['mode-prometheus', 'snippets-prometheus', 'theme-grafana-dark'];
 const GRAFANA_MODULE_BASE = "public/app/core/components/code_editor/";
@@ -67,6 +72,7 @@ function link(scope, elem, attrs) {
   let showGutter = attrs.showGutter !== undefined;
   let theme = attrs.theme || DEFAULT_THEME;
   let tabSize = attrs.tabSize || DEFAULT_TAB_SIZE;
+  let behavioursEnabled = attrs.behavioursEnabled ? attrs.behavioursEnabled === 'true' : DEFAULT_BEHAVIOURS;
 
   // Initialize editor
   let aceElem = elem.get(0);
@@ -77,6 +83,7 @@ function link(scope, elem, attrs) {
     maxLines: maxLines,
     showGutter: showGutter,
     tabSize: tabSize,
+    behavioursEnabled: behavioursEnabled,
     highlightActiveLine: false,
     showPrintMargin: false,
     autoScrollEditorIntoView: true // this is needed if editor is inside scrollable page
@@ -147,8 +154,6 @@ function link(scope, elem, attrs) {
         codeEditor.completers.push(scope.getCompleter());
       }
     });
-
-    codeEditor.setBehavioursEnabled(true);
   }
 
   function setThemeMode(theme) {
