@@ -6,6 +6,7 @@ import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
 import {QueryCtrl} from 'app/plugins/sdk';
+import {PromCompleter} from './completer';
 
 class PrometheusQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -40,13 +41,14 @@ class PrometheusQueryCtrl extends QueryCtrl {
     this.updateLink();
   }
 
-  getCompletions(query) {
-    console.log(query);
-    return this.datasource.performSuggestQuery(query).then(res => {
-      return res.map(item => {
-        return {word: item, type: 'metric'};
-      });
-    });
+  getCompleter(query) {
+    return new PromCompleter(this.datasource);
+    // console.log('getquery);
+    // return this.datasource.performSuggestQuery(query).then(res => {
+    //   return res.map(item => {
+    //     return {word: item, type: 'metric'};
+    //   });
+    // });
   }
 
   getDefaultFormat() {

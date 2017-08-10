@@ -37,7 +37,7 @@ const GRAFANA_MODULES = ['mode-prometheus', 'snippets-prometheus', 'theme-grafan
 const GRAFANA_MODULE_BASE = "public/app/core/components/code_editor/";
 
 // Trick for loading additional modules
-function fixModuleUrl(moduleType, name) {
+function setModuleUrl(moduleType, name) {
   let baseUrl = ACE_SRC_BASE;
   let aceModeName = `ace/${moduleType}/${name}`;
   let moduleName = `${moduleType}-${name}`;
@@ -54,7 +54,7 @@ function fixModuleUrl(moduleType, name) {
   ace.config.setModuleUrl(aceModeName, baseUrl + componentName);
 }
 
-fixModuleUrl("ext", "language_tools");
+setModuleUrl("ext", "language_tools");
 
 let editorTemplate = `<div></div>`;
 
@@ -129,38 +129,42 @@ function link(scope, elem, attrs) {
   });
 
   let extCompleter = {
-    getCompletions: getCompletions
+    identifierRegexps: [/[\[\]a-zA-Z_0-9=]/],
+    getCompletions: function (editor, session, pos, prefix, callback) {
+      console.log(pos);
+      scope.getCompletions({$query: prefix}).then(results => {
+        callback(null, results.map(hit => {
+          return {
+            caption: hit.word,
+            value: hit.word,
+            meta: hit.type
+          };
+        }));
+      });
+    },
   };
-
-  function getCompletions(editor, session, pos, prefix, callback) {
-    scope.getCompletions({$query: prefix}).then(results => {
-      callback(null, results.map(hit => {
-        return {
-          caption: hit.word,
-          value: hit.word,
-          meta: hit.type
-        };
-      }));
-    });
-  }
 
   function setLangMode(lang) {
     let aceModeName = `ace/mode/${lang}`;
-    fixModuleUrl("mode", lang);
-    fixModuleUrl("snippets", lang);
+    setModuleUrl("mode", lang);
+    setModuleUrl("snippets", lang);
     editorSession.setMode(aceModeName);
+
     ace.config.loadModule("ace/ext/language_tools", (language_tools) => {
       codeEditor.setOptions({
         enableBasicAutocompletion: true,
         enableLiveAutocompletion: true,
         enableSnippets: true
       });
-      codeEditor.completers.push(extCompleter);
+
+      if (scope.getCompleter) {
+        codeEditor.completers.push(scope.getCompleter());
+      }
     });
   }
 
   function setThemeMode(theme) {
-    fixModuleUrl("theme", theme);
+    setModuleUrl("theme", theme);
     codeEditor.setTheme(`ace/theme/${theme}`);
   }
 
@@ -177,7 +181,7 @@ export function codeEditorDirective() {
     scope: {
       content: "=",
       onChange: "&",
-      getCompletions: "&"
+      getCompleter: "&"
     },
     link: link
   };
