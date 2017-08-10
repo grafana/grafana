@@ -20,13 +20,7 @@ div.flot-text {
 }
 
 .panel {
-  //display: inline-block;
-  //float: left;
-
   &--solo {
-    .resize-panel-handle {
-      display: none;
-    }
     .panel-container {
       border: none;
     }
@@ -249,26 +243,6 @@ div.flot-text {
   position: absolute;
   top: 4px;
   right: 0;
-}
-
-.resize-panel-handle {
-  cursor: nwse-resize;
-  position: absolute;
-  font-size: 10px;
-  bottom: 0;
-  right: 0;
-  width: 15px;
-  height: 15px;
-  visibility: hidden;
-  opacity: 0;
-  color: $text-color-faint;
-
-  &:before {
-    left: initial;
-    right: -1px;
-    bottom: 0px;
-    position: absolute;
-  }
 }
 
 .dashboard-header {
