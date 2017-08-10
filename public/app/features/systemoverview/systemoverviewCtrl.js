@@ -382,7 +382,7 @@ define([
             "tags"      : { "host" : "*" }
           }];
 
-          var q = datasourceSrv.getHostResource(queries, 'now-1m').then(function (response) {
+          var q = datasourceSrv.getHostResource(queries, 'now-5m').then(function (response) {
             _.each(response, function (metric) {
               hostsResource[metric.host]["status"] = $scope.statusFormatter(metric.value);
             });
@@ -478,17 +478,17 @@ define([
             host  : hostname
           };
 
+          var type = /cpu/.test(panel.targets[0].metric) ? 'cpu' : (/mem/.test(panel.targets[0].metric) ? 'mem' : 'disk');
+          predictionPanel[type] = {};
+          predictionPanel[type].tips = [];
+          predictionPanel[type].title = titleMap[type];
+
           backendSrv.getPredictionPercentage(params).then(function (response) {
             var times = ['1天后', '1周后', '1月后', '3月后', '6月后'];
             var num   = 0;
             var data  = response.data;
 
             if (_.isEmpty(data)) { throw Error; }
-
-            var type = /cpu/.test(panel.targets[0].metric) ? 'cpu' : (/mem/.test(panel.targets[0].metric) ? 'mem' : 'disk');
-            predictionPanel[type] = {};
-            predictionPanel[type].tips = [];
-            predictionPanel[type].title = titleMap[type];
 
             for (var i in data) {
               var score = type === 'disk' ? 100 - data[i] : data[i];  // reponse disk 是剩余率, show disk 需要使用率
