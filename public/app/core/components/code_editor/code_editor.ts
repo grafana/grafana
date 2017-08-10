@@ -55,6 +55,8 @@ function setModuleUrl(moduleType, name) {
 }
 
 setModuleUrl("ext", "language_tools");
+setModuleUrl("mode", "text");
+setModuleUrl("snippets", "text");
 
 let editorTemplate = `<div></div>`;
 
