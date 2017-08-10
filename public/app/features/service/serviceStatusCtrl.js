@@ -13,7 +13,9 @@ define([
       };
     });
 
-    module.controller('ServiceStatusCtrl', function ($scope, $timeout, $q, $location, serviceDepSrv, jsPlumbService, alertSrv) {
+    module.controller('ServiceStatusCtrl', function ($scope, $timeout, $q, $location,
+      serviceDepSrv, jsPlumbService, alertSrv, backendSrv) {
+
       var toolkit = jsPlumbService.getToolkit("serviceToolkit");
 
       $scope.$on('$destroy', function () {
@@ -56,6 +58,12 @@ define([
 
         serviceDepSrv.readMetricStatus(serviceId, serviceName).then(function (response) {
           $scope.service = response.data;
+        });
+
+        // var service = 
+        !_.metricMessage[serviceName] && backendSrv.get('/api/static/metric/' + serviceName).then(function(result) {
+          _.metricMessage[serviceName] = result;
+          _.extend(_.metricHelpMessage, result);
         });
       };
 

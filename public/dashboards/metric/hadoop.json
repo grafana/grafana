@@ -1,0 +1,542 @@
+{
+  "hadoop.namenode.fsnamesystem.CapacityRemaining": {
+    "name": "hadoop.namenode.fsnamesystem.CapacityRemaining",
+    "definition": "HDFS文件系统剩余的容量",
+    "type": "number",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hadoop.namenode.fsnamesystem.CorruptBlocks": {
+    "name": "hadoop.namenode.fsnamesystem.CorruptBlocks",
+    "definition": "已损坏的block数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hadoop.namenode.fsnamesystem.MissingBlocks": {
+    "name": "hadoop.namenode.fsnamesystem.MissingBlocks",
+    "definition": "丢失的block数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hadoop.namenode.fsnamesystemstate.NumLiveDataNodes": {
+    "name": "hadoop.namenode.fsnamesystemstate.NumLiveDataNodes",
+    "definition": "存活datanode个数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hadoop.namenode.fsnamesystemstate.NumDeadDataNodes": {
+    "name": "hadoop.namenode.fsnamesystemstate.NumDeadDataNodes",
+    "definition": "死亡datanode个数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hadoop.namenode.fsnamesystemstate.UnderReplicatedBlocks": {
+    "name": "hadoop.namenode.fsnamesystemstate.UnderReplicatedBlocks",
+    "definition": "副本个数不够的block",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hadoop.namenode.fsnamesystemstate.NumStaleDataNodes": {
+    "name": "hadoop.namenode.fsnamesystemstate.NumStaleDataNodes",
+    "definition": "超时的datanode个数(心跳通信3秒不回复)",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hadoop.datanode.fsdatasetstate-null.Remaining": {
+    "name": "hadoop.datanode.fsdatasetstate-null.Remaining",
+    "definition": "datanode 文件系统剩余的容量",
+    "type": "number",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hadoop.datanode.activity.VolumeFailures": {
+    "name": "hadoop.datanode.activity.VolumeFailures",
+    "definition": "单个磁盘簇出错导致服务异常的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hadoop.datanode.activity.ReadBlockOpAvgTime": {
+    "name": "hadoop.datanode.activity.ReadBlockOpAvgTime",
+    "definition": "读操作平均花费时间",
+    "type": "counter",
+    "unit": "nano second",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hadoop.datanode.activity.WriteBlockOpAvgTime": {
+    "name": "hadoop.datanode.activity.WriteBlockOpAvgTime",
+    "definition": "写操作平均花费时间",
+    "type": "counter",
+    "unit": "nano second",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hadoop.namenode.fsnamesystem.CapacityRemainingGB": {
+    "name": "hadoop.namenode.fsnamesystem.CapacityRemainingGB",
+    "definition": "HDFS文件系统剩余的容量(单位GB)",
+    "type": "number",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.fsnamesystem.CapacityTotal": {
+    "name": "hadoop.namenode.fsnamesystem.CapacityTotal",
+    "definition": "HDFS文件系统总体容量",
+    "type": "number",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.fsnamesystem.CapacityTotalGB": {
+    "name": "hadoop.namenode.fsnamesystem.CapacityTotalGB",
+    "definition": "HDFS文件系统总体容量(单位GB)",
+    "type": "number",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.fsnamesystem.CapacityUsed": {
+    "name": "hadoop.namenode.fsnamesystem.CapacityUsed",
+    "definition": "HDFS文件系统已使用的容量",
+    "type": "number",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.fsnamesystem.CapacityUsedGB": {
+    "name": "hadoop.namenode.fsnamesystem.CapacityUsedGB",
+    "definition": "HDFS文件系统已使用的容量(单位GB)",
+    "type": "number",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.fsnamesystemstate.FilesTotal": {
+    "name": "hadoop.namenode.fsnamesystemstate.FilesTotal",
+    "definition": "文件总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.fsnamesystemstate.TotalLoad": {
+    "name": "hadoop.namenode.fsnamesystemstate.TotalLoad",
+    "definition": "标识所有DataNodes上的文件访问次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.jvmmetrics.GcCount": {
+    "name": "hadoop.namenode.jvmmetrics.GcCount",
+    "definition": "JVM进行GC的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.jvmmetrics.GcTimeMillis": {
+    "name": "hadoop.namenode.jvmmetrics.GcTimeMillis",
+    "definition": "GC花费的时间单位为微秒",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.jvmmetrics.LogError": {
+    "name": "hadoop.namenode.jvmmetrics.LogError",
+    "definition": "GC Log中输出ERROR的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.jvmmetrics.LogFatal": {
+    "name": "hadoop.namenode.jvmmetrics.LogFatal",
+    "definition": "GC Log中输出FATAL的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.jvmmetrics.LogInfo": {
+    "name": "hadoop.namenode.jvmmetrics.LogInfo",
+    "definition": "GC Log中输出INFO的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.jvmmetrics.LogWarn": {
+    "name": "hadoop.namenode.jvmmetrics.LogWarn",
+    "definition": "GC Log中输出WARN的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.jvmmetrics.MemHeapMaxM": {
+    "name": "hadoop.namenode.jvmmetrics.MemHeapMaxM",
+    "definition": "JVM分配的堆大小",
+    "type": "number",
+    "unit": "megabytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.jvmmetrics.MemHeapUsedM": {
+    "name": "hadoop.namenode.jvmmetrics.MemHeapUsedM",
+    "definition": "JVM已经使用的堆大小",
+    "type": "number",
+    "unit": "megabytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.jvmmetrics.ThreadsBlocked": {
+    "name": "hadoop.namenode.jvmmetrics.ThreadsBlocked",
+    "definition": "处于BLOCKED状态线程数量",
+    "type": "number",
+    "unit": "megabytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.jvmmetrics.ThreadsNew": {
+    "name": "hadoop.namenode.jvmmetrics.ThreadsNew",
+    "definition": "处于NEW状态线程数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.jvmmetrics.ThreadsRunnable": {
+    "name": "hadoop.namenode.jvmmetrics.ThreadsRunnable",
+    "definition": "处于RUNNABLE状态线程数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.namenodeactivity.BlockReportNumOps": {
+    "name": "hadoop.namenode.namenodeactivity.BlockReportNumOps",
+    "definition": "block report的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.namenodeactivity.AddBlockOps": {
+    "name": "hadoop.namenode.namenodeactivity.AddBlockOps",
+    "definition": "写入block次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.namenodeactivity.DeleteFileOps": {
+    "name": "hadoop.namenode.namenodeactivity.DeleteFileOps",
+    "definition": "删除文件次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.namenode.namenodeactivity.CreateFileOps": {
+    "name": "hadoop.namenode.namenodeactivity.CreateFileOps",
+    "definition": "创建文件次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.BlocksRead": {
+    "name": "hadoop.datanode.activity.BlocksRead",
+    "definition": "从硬盘读块的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.BlocksWritten": {
+    "name": "hadoop.datanode.activity.BlocksWritten",
+    "definition": "从硬盘写块的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.BytesRead": {
+    "name": "hadoop.datanode.activity.BytesRead",
+    "definition": "从硬盘读块的字节数",
+    "type": "counter",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.BytesWritten": {
+    "name": "hadoop.datanode.activity.BytesWritten",
+    "definition": "从硬盘写块的字节数",
+    "type": "counter",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.BlocksRemoved": {
+    "name": "hadoop.datanode.activity.BlocksRemoved",
+    "definition": "删除块操作的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.BlocksReplicated": {
+    "name": "hadoop.datanode.activity.BlocksReplicated",
+    "definition": "备份块操作的个数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.CopyBlockOpNumOps": {
+    "name": "hadoop.datanode.activity.CopyBlockOpNumOps",
+    "definition": "复制块操作的个数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.HeartbeatsNumOps": {
+    "name": "hadoop.datanode.activity.HeartbeatsNumOps",
+    "definition": "向namenode汇报的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.ReadsFromLocalClient": {
+    "name": "hadoop.datanode.activity.ReadsFromLocalClient",
+    "definition": "本地读取的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.ReadsFromRemoteClient": {
+    "name": "hadoop.datanode.activity.ReadsFromRemoteClient",
+    "definition": "远程读取的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.WritesFromLocalClient": {
+    "name": "hadoop.datanode.activity.WritesFromLocalClient",
+    "definition": "写本地的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.WritesFromRemoteClient": {
+    "name": "hadoop.datanode.activity.WritesFromRemoteClient",
+    "definition": "写远程的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.FlushNanosNumOps": {
+    "name": "hadoop.datanode.activity.FlushNanosNumOps",
+    "definition": "文件系统flush次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.FlushNanosAvgTime": {
+    "name": "hadoop.datanode.activity.FlushNanosAvgTime",
+    "definition": "文件系统flush平均花费时间",
+    "type": "counter",
+    "unit": "nano second",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.SendDataPacketBlockedOnNetworkNanosAvgTime": {
+    "name": "hadoop.datanode.activity.SendDataPacketBlockedOnNetworkNanosAvgTime",
+    "definition": "网络上发送块平均时间",
+    "type": "counter",
+    "unit": "nano second",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.activity.SendDataPacketTransferNanosAvgTime": {
+    "name": "hadoop.datanode.activity.SendDataPacketTransferNanosAvgTime",
+    "definition": "网络上发送包平均时间",
+    "type": "counter",
+    "unit": "nano second",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.jvmmetrics.GcCount": {
+    "name": "hadoop.datanode.jvmmetrics.GcCount",
+    "definition": "JVM进行GC的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.jvmmetrics.GcTimeMillis": {
+    "name": "hadoop.datanode.jvmmetrics.GcTimeMillis",
+    "definition": "GC花费的时间单位为微秒",
+    "type": "counter",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.jvmmetrics.LogError": {
+    "name": "hadoop.datanode.jvmmetrics.LogError",
+    "definition": "GC Log中输出ERROR的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.jvmmetrics.LogFatal": {
+    "name": "hadoop.datanode.jvmmetrics.LogFatal",
+    "definition": "GC Log中输出FATAL的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.jvmmetrics.LogInfo": {
+    "name": "hadoop.datanode.jvmmetrics.LogInfo",
+    "definition": "GC Log中输出INFO的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.jvmmetrics.LogWarn": {
+    "name": "hadoop.datanode.jvmmetrics.LogWarn",
+    "definition": "GC Log中输出WARN的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.jvmmetrics.MemHeapMaxM": {
+    "name": "hadoop.datanode.jvmmetrics.MemHeapMaxM",
+    "definition": "JVM分配的堆大小",
+    "type": "number",
+    "unit": "megabytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.jvmmetrics.MemHeapUsedM": {
+    "name": "hadoop.datanode.jvmmetrics.MemHeapUsedM",
+    "definition": "JVM已经使用的堆大小",
+    "type": "number",
+    "unit": "megabytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.jvmmetrics.ThreadsBlocked": {
+    "name": "hadoop.datanode.jvmmetrics.ThreadsBlocked",
+    "definition": "处于BLOCKED状态线程数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.jvmmetrics.ThreadsNew": {
+    "name": "hadoop.datanode.jvmmetrics.ThreadsNew",
+    "definition": "处于NEW状态线程数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hadoop.datanode.jvmmetrics.ThreadsRunnable": {
+    "name": "hadoop.datanode.jvmmetrics.ThreadsRunnable",
+    "definition": "处于RUNNABLE状态线程数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

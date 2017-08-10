@@ -1,0 +1,668 @@
+{
+  "proc.loadavg.15min": {
+    "name": "proc.loadavg.15min",
+    "definition":	"15分钟内的平均进程数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.meminfo.active": {
+    "name": "proc.meminfo.active",
+    "definition": "活跃使用中的高速缓冲存储器页面文件大小",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.meminfo.dirty": {
+    "name": "proc.meminfo.dirty",
+    "definition": "等待被写回到磁盘的内存大小",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.meminfo.memavailable": {
+    "name": "proc.meminfo.memavailable",
+    "definition": "An estimate of how much memory is available for starting new applications, without swapping. Calculated from MemFree, SReclaimable, the size of the file LRU lists, and the low watermarks in each zone. The estimate takes into account that the system needs some page cache to function well, and that not all reclaimable slab will be reclaimable, due to items being in use. The impact of those factors will vary from system to system.",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.meminfo.swapfree": {
+    "name": "proc.meminfo.swapfree",
+    "definition": "空闲交换空间",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.net.dropped.in": {
+    "name": "proc.net.dropped.in",
+    "definition": "The total number of packets dropped by the device driver.",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.net.dropped.out": {
+    "name": "proc.net.dropped.out",
+    "definition": "The total number of packets dropped by the device driver.",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.net.errs.in": {
+    "name": "proc.net.errs.in",
+    "definition": "The total number of receive errors detected by the device driver.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.net.errs.out": {
+    "name": "proc.net.errs.out",
+    "definition": "The total number of transmit errors detected by the device driver.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.net.packets.in": {
+    "name": "proc.net.packets.in",
+    "definition": "The total number of packets of data received by the interface",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.net.packets.out": {
+    "name": "proc.net.packets.out",
+    "definition": "The total number of packets of data transmitted by the interface",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.interrupts": {
+    "name": "proc.interrupts",
+    "definition": "the number of interrupts",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.kernel.entropy_avail": {
+    "name": "proc.kernel.entropy_avail",
+    "definition": "存储了熵池现在的大小",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.loadavg.1min": {
+    "name": "proc.loadavg.1min",
+    "definition": "1分钟内的平均进程数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.loadavg.5min": {
+    "name": "proc.loadavg.5min",
+    "definition": "5分钟内的平均进程数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.loadavg.runnable": {
+    "name": "proc.loadavg.runnable",
+    "definition": "正在运行的进程数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.loadavg.total_threads": {
+    "name": "proc.loadavg.total_threads",
+    "definition": "进程总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.anonhugepages": {
+    "name": "proc.meminfo.anonhugepages",
+    "definition": "未映射的大页面的大小",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.anonpages": {
+    "name": "proc.meminfo.anonpages",
+    "definition": "未映射的页的大小",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.bounce": {
+    "name": "proc.meminfo.bounce",
+    "definition": "退回",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.buffers": {
+    "name": "proc.meminfo.buffers",
+    "definition": "给文件的缓冲大小",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.cached": {
+    "name": "proc.meminfo.cached",
+    "definition": "高速缓冲存储器使用的大小",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.commitlimit": {
+    "name": "proc.meminfo.commitlimit",
+    "definition": "指当前可以分配给程序使用的虚拟内存",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.committed_as": {
+    "name": "proc.meminfo.committed_as",
+    "definition": "指当前已分配给程序使用的总虚拟内存",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.directmap1g": {
+    "name": "proc.meminfo.directmap1g",
+    "definition": "The amount of memory being mapped to hugepages (1G in size)",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.directmap2m": {
+    "name": "proc.meminfo.directmap2m",
+    "definition": "The amount of memory being mapped to hugepages (2MB in size)",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.directmap4k": {
+    "name": "proc.meminfo.directmap4k",
+    "definition": "The amount of memory being mapped to standard 4k pages",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.hardwarecorrupted": {
+    "name": "proc.meminfo.hardwarecorrupted",
+    "definition": "show the amount of memory in `poisoned pages`",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.hugepagesize": {
+    "name": "proc.meminfo.hugepagesize",
+    "definition": "大页面的分配",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.inactive": {
+    "name": "proc.meminfo.inactive",
+    "definition": "不经常使用的高速缓冲存储器页面文件大小",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.kernelstack": {
+    "name": "proc.meminfo.kernelstack",
+    "definition": "The memory the kernel stack uses. This is not reclaimable.",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.mapped": {
+    "name": "proc.meminfo.mapped",
+    "definition": "设备和文件映射的大小",
+    "type": "kbdata",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.memfree": {
+    "name": "proc.meminfo.memfree",
+    "definition": "空闲内存",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.memtotal": {
+    "name": "proc.meminfo.memtotal",
+    "definition": "总内存",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.mlocked": {
+    "name": "proc.meminfo.mlocked",
+    "definition": "Pages locked to memory using the mlock() system call. Mlocked pages are also Unevictable.",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.nfs_unstable": {
+    "name": "proc.meminfo.nfs_unstable",
+    "definition": "不稳定页表的大小",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.pagetables": {
+    "name": "proc.meminfo.pagetables",
+    "definition": "管理内存分页的索引表的大小",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.shmem": {
+    "name": "proc.meminfo.shmem",
+    "definition": "Total used shared memory (shared between several processes, thus including RAM disks, SYS-V-IPC and BSD like SHMEM)",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.slab": {
+    "name": "proc.meminfo.slab",
+    "definition": "内核数据结构缓存的大小，可减少申请和释放内存带来的消耗",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.sreclaimable": {
+    "name": "proc.meminfo.sreclaimable",
+    "definition": "可收回slab的大小",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.sunreclaim": {
+    "name": "proc.meminfo.sunreclaim",
+    "definition": "不可收回的slab的大小",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.swapcached": {
+    "name": "proc.meminfo.swapcached",
+    "definition": "被高速缓冲存储用的交换空间大小",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.swaptotal": {
+    "name": "proc.meminfo.swaptotal",
+    "definition": "交换空间总大小",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.unevictable": {
+    "name": "proc.meminfo.unevictable",
+    "definition": "Unevictable pages can't be swapped out for a variety of reasons",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.vmallocchunk": {
+    "name": "proc.meminfo.vmallocchunk",
+    "definition": "largest contigious block of vmalloc area which is free",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.vmalloctotal": {
+    "name": "proc.meminfo.vmalloctotal",
+    "definition": "可以vmalloc虚拟内存大小",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.vmallocused": {
+    "name": "proc.meminfo.vmallocused",
+    "definition": "已经被使用的虚拟内存大小",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.writeback": {
+    "name": "proc.meminfo.writeback",
+    "definition": "正在被写回到磁盘的内存大小",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.meminfo.writebacktmp": {
+    "name": "proc.meminfo.writebacktmp",
+    "definition": "Memory used by FUSE for temporary writeback buffers",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.softirqs": {
+    "name": "proc.softirqs",
+    "definition": "the number of software interrupt",
+    "type": "data",
+    "unit": "kByte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.net.carrier.errs.out": {
+    "name": "proc.net.carrier.errs.out",
+    "definition": "The number of carrier losses detected by the device driver",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.net.collisions.out": {
+    "name": "proc.net.collisions.out",
+    "definition": "The number of collisions detected on the interface",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.net.compressed.in": {
+    "name": "proc.net.compressed.in",
+    "definition": "The number of compressed packets received by the device driver.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.net.compressed.out": {
+    "name": "proc.net.compressed.out",
+    "definition": "The number of compressed packets transmitted by the device driver.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.net.fifo.errs.in": {
+    "name": "proc.net.fifo.errs.in",
+    "definition": "The number of FIFO buffer errors",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.net.fifo.errs.out": {
+    "name": "proc.net.fifo.errs.out",
+    "definition": "The number of FIFO buffer errors",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.net.frame.errs.in": {
+    "name": "proc.net.frame.errs.in",
+    "definition": "The number of packet framing errors",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.net.multicast.in": {
+    "name": "proc.net.multicast.in",
+    "definition": "The number of packet framing errors",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.net.tcp": {
+    "name": "proc.net.tcp",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.stat.intr": {
+    "name": "proc.stat.intr",
+    "definition": "自系统启动以来，发生的所有的中断的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.stat.processes": {
+    "name": "proc.stat.processes",
+    "definition": "自系统启动以来所创建的任务的个数目",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.stat.procs_blocked": {
+    "name": "proc.stat.procs_blocked",
+    "definition": "当前被阻塞的任务的数目",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.uptime.now": {
+    "name": "proc.uptime.now",
+    "definition": "系统空闲的时间",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.uptime.total": {
+    "name": "proc.uptime.total",
+    "definition": "系统启动到现在的时间",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.vmstat.pgfault": {
+    "name": "proc.vmstat.pgfault",
+    "definition": "Number of minor page faults (since the last boot)",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.vmstat.pgmajfault": {
+    "name": "proc.vmstat.pgmajfault",
+    "definition": "Number of major page faults (since the last boot):",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.vmstat.pgpgin": {
+    "name": "proc.vmstat.pgpgin",
+    "definition": "Number of pageins",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.vmstat.pgpgout": {
+    "name": "proc.vmstat.pgpgout",
+    "definition": "Number of pageouts",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.vmstat.pswpin": {
+    "name": "proc.vmstat.pswpin",
+    "definition": "Number of swapins",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.vmstat.pswpout": {
+    "name": "proc.vmstat.pswpout",
+    "definition": "Number of swapouts ",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "sys.numa.allocation": {
+    "name": "sys.numa.allocation",
+    "definition": "Number of pages allocated locally or remotely for processes executing on this node",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "sys.numa.foreign_allocs": {
+    "name": "sys.numa.foreign_allocs",
+    "definition": "Number of pages this node allocated because the preferred node didn't have a free page to accommodate the request.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "sys.numa.interleave": {
+    "name": "sys.numa.interleave",
+    "definition": "Number of pages allocated successfully by the interleave strategy",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "sys.numa.zoneallocs": {
+    "name": "sys.numa.zoneallocs",
+    "definition": "Number of pages allocated from the preferred node or not",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

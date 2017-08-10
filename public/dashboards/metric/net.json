@@ -1,0 +1,191 @@
+{
+  "net.sockstat.ipfragqueues": {
+    "name": "net.sockstat.ipfragqueues",
+    "definition": "等待重新组装的IP流数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.sockstat.num_timewait": {
+    "name": "net.sockstat.num_timewait",
+    "definition": "TCP sockets当前处在TIME_WAIT状态数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.sockstat.sockets_inuse": {
+    "name": "net.sockstat.sockets_inuse",
+    "definition": "套接字使用的数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.stat.tcp.abort.failed": {
+    "name": "net.stat.tcp.abort.failed",
+    "definition": "内核中止失败数量，因为没有足够内存来复位",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.stat.tcp.congestion.recovery": {
+    "name": "net.stat.tcp.congestion.recovery",
+    "definition": "内存检测到假重传，能部分回收或全部CWND数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.stat.tcp.delayedack": {
+    "name": "net.stat.tcp.delayedack",
+    "definition": "发送不同类型的延迟确认数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.stat.tcp.failed_accept": {
+    "name": "net.stat.tcp.failed_accept",
+    "definition": "Number of times a connection had to be dropped after the 3WHS",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.stat.tcp.invalid_sack": {
+    "name": "net.stat.tcp.invalid_sack",
+    "definition": "无效的SACK数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.stat.tcp.memory.pressure": {
+    "name": "net.stat.tcp.memory.pressure",
+    "definition": "进入 memory pressure 的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.stat.tcp.memory.prune": {
+    "name": "net.stat.tcp.memory.prune",
+    "definition": "因内存不足放弃接收数据的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.stat.tcp.packetloss.recovery": {
+    "name": "net.stat.tcp.packetloss.recovery",
+    "definition": "丢失恢复的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.stat.tcp.receive.queue.full": {
+    "name": "net.stat.tcp.receive.queue.full",
+    "definition": "因套接字接收队列慢导致被丢弃接收到的数据包数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.stat.tcp.reording": {
+    "name": "net.stat.tcp.reording",
+    "definition": "检测到重新排序的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.stat.tcp.retransmit": {
+    "name": "net.stat.tcp.retransmit",
+    "definition": "重传次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.stat.tcp.syncookies": {
+    "name": "net.stat.tcp.syncookies",
+    "definition": "SYN cookies数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "net.sockstat.memory": {
+    "name": "net.sockstat.memory",
+    "definition": "分配给该socket类型的内存大小",
+    "type": "data",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "net.sockstat.num_orphans": {
+    "name": "net.sockstat.num_orphans",
+    "definition": "孤儿sockets数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "net.sockstat.num_sockets": {
+    "name": "net.sockstat.num_sockets",
+    "definition": "sockets分配的数量，仅TCP",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "net.stat.tcp.abort": {
+    "name": "net.stat.tcp.abort",
+    "definition": "内核中止连接数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "net.stat.udp.datagrams": {
+    "name": "net.stat.udp.datagrams",
+    "definition": "接收的数据包",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "net.stat.udp.errors": {
+    "name": "net.stat.udp.errors",
+    "definition": "接收错误数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  }
+}

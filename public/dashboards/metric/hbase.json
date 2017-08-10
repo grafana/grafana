@@ -1,0 +1,470 @@
+{
+  "hbase.master.server.numRegionServers": {
+    "name": "hbase.master.server.numRegionServers",
+    "definition": "regionserver 存活数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hbase.master.server.numDeadRegionServers": {
+    "name": "hbase.master.server.numDeadRegionServers",
+    "definition": "regionserver 不存活数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hbase.master.jvmmetrics.GcTimeMillis": {
+    "name": "hbase.master.jvmmetrics.GcTimeMillis",
+    "definition": "GC操作时间",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hbase.regionserver.server.slowAppendCount": {
+    "name": "hbase.regionserver.server.slowAppendCount",
+    "definition": "Append操作延迟超过阈值的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hbase.regionserver.server.slowDeleteCount": {
+    "name": "hbase.regionserver.server.slowDeleteCount",
+    "definition": "Delete操作延迟超过阈值的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hbase.regionserver.server.slowGetCount": {
+    "name": "hbase.regionserver.server.slowGetCount",
+    "definition": "Get操作延迟超过阈值的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hbase.regionserver.server.slowIncrementCount": {
+    "name": "hbase.regionserver.server.slowIncrementCount",
+    "definition": "Increment操作延迟超过阈值的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hbase.regionserver.server.slowPutCount": {
+    "name": "hbase.regionserver.server.slowPutCount",
+    "definition": "Put操作延迟超过阈值的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hbase.regionserver.jvmmetrics.GcTimeMillis": {
+    "name": "hbase.regionserver.jvmmetrics.GcTimeMillis",
+    "definition": "GC操作时间",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "hbase.master.ipc.numOpenConnections": {
+    "name": "hbase.master.ipc.numOpenConnections",
+    "definition": "与master 连接数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.ipc.receivedBytes": {
+    "name": "hbase.master.ipc.receivedBytes",
+    "definition": "master 接收数据量",
+    "type": "counter",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.ipc.sentBytes": {
+    "name": "hbase.master.ipc.sentBytes",
+    "definition": "master 发送数据量",
+    "type": "counter",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.server.clusterRequests": {
+    "name": "hbase.master.server.clusterRequests",
+    "definition": "集群向master 发送的请求数量",
+    "type": "counter",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.server.averageLoad": {
+    "name": "hbase.master.server.averageLoad",
+    "definition": "master 平均负荷",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.ipc.QueueCallTime_num_ops": {
+    "name": "hbase.master.ipc.QueueCallTime_num_ops",
+    "definition": "响应时间",
+    "type": "counter",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.ipc.ProcessCallTime_num_ops": {
+    "name": "hbase.master.ipc.ProcessCallTime_num_ops",
+    "definition": "处理时间",
+    "type": "counter",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.assignmentmanger.ritCountOverThreshold": {
+    "name": "hbase.master.assignmentmanger.ritCountOverThreshold",
+    "definition": "region 执行 transition 操作超过预设时间默认值60秒",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.assignmentmanger.ritOldestAge": {
+    "name": "hbase.master.assignmentmanger.ritOldestAge",
+    "definition": "region 执行transition操作最长的时间",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.Memory.HeapMemoryUsage.used": {
+    "name": "hbase.master.Memory.HeapMemoryUsage.used",
+    "definition": "master heap已使用内存大小",
+    "type": "data",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.Memory.HeapMemoryUsage.max": {
+    "name": "hbase.master.Memory.HeapMemoryUsage.max",
+    "definition": "master heap规定最大大小",
+    "type": "data",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.jvmmetrics.GcTimeMillisParNew": {
+    "name": "hbase.master.jvmmetrics.GcTimeMillisParNew",
+    "definition": "ParNew GC 操作时间",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.jvmmetrics.GcTimeMillisConcurrentMarkSweep": {
+    "name": "hbase.master.jvmmetrics.GcTimeMillisConcurrentMarkSweep",
+    "definition": "CMS GC 操作时间",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.jvmmetrics.GcCount": {
+    "name": "hbase.master.jvmmetrics.GcCount",
+    "definition": "GC操作次数",
+    "type": "count",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.jvmmetrics.GcCountConcurrentMarkSweep": {
+    "name": "hbase.master.jvmmetrics.GcCountConcurrentMarkSweep",
+    "definition": "CMS GC 操作次数",
+    "type": "count",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.jvmmetrics.GcCountParNew": {
+    "name": "hbase.master.jvmmetrics.GcCountParNew",
+    "definition": "ParNew GC 操作次数",
+    "type": "count",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.jvmmetrics.LogError": {
+    "name": "hbase.master.jvmmetrics.LogError",
+    "definition": "jvm 发生崩溃 产生ERROR 的日志数量",
+    "type": "count",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.vmstat.pswpin": {
+    "name": "proc.vmstat.pswpin",
+    "definition": "从磁盘swap 数据到内存大小",
+    "type": "number",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "proc.vmstat.pswpout": {
+    "name": "proc.vmstat.pswpout",
+    "definition": "从内存swap 数据到磁盘中",
+    "type": "number",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.server.regionCount": {
+    "name": "hbase.regionserver.server.regionCount",
+    "definition": "region 的总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.server.readRequestCount": {
+    "name": "hbase.regionserver.server.readRequestCount",
+    "definition": "regionserver读请求的数量",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.server.writeRequestCount": {
+    "name": "hbase.regionserver.server.writeRequestCount",
+    "definition": "regionserver写请求的数量",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.server.totalRequestCount": {
+    "name": "hbase.regionserver.server.totalRequestCount",
+    "definition": "regionserver 所有请求的数量",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.regions.storeFileCount": {
+    "name": "hbase.regionserver.regions.storeFileCount",
+    "definition": "storeFile 的总个数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.ipc.numOpenConnections": {
+    "name": "hbase.regionserver.ipc.numOpenConnections",
+    "definition": "连接regionserver 的rpc 数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.ipc.numActiveHandler": {
+    "name": "hbase.regionserver.ipc.numActiveHandler",
+    "definition": "RegionServer处理的IO请求线程数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.regions.storeFileSize": {
+    "name": "hbase.regionserver.regions.storeFileSize",
+    "definition": "storeFile 的总数量",
+    "type": "data",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.server.hlogFileCount": {
+    "name": "hbase.regionserver.server.hlogFileCount",
+    "definition": "hlog 的总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.server.hlogFileSize": {
+    "name": "hbase.regionserver.server.hlogFileSize",
+    "definition": "hlog 总大小",
+    "type": "data",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.server.blockCacheExpressHitPercent": {
+    "name": "hbase.regionserver.server.blockCacheExpressHitPercent",
+    "definition": "缓存的命中率",
+    "type": "number",
+    "unit": "percent",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.server.blockCacheHitCount": {
+    "name": "hbase.regionserver.server.blockCacheHitCount",
+    "definition": "命中缓存的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.server.blockCacheMissCount": {
+    "name": "hbase.regionserver.server.blockCacheMissCount",
+    "definition": "缓存不命中的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.server.percentFilesLocal": {
+    "name": "hbase.regionserver.server.percentFilesLocal",
+    "definition": "能够从本地datanode 中读取数据的百分比",
+    "type": "number",
+    "unit": "percent",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.server.<Append/Delete/Get/Increment/Put>_num_ops": {
+    "name": "hbase.regionserver.server.<Append/Delete/Get/Increment/Put>_num_ops",
+    "definition": "执行某个操作的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.Memory.HeapMemoryUsage.used": {
+    "name": "hbase.regionserver.Memory.HeapMemoryUsage.used",
+    "definition": "regionserver heap已使用内存大小",
+    "type": "data",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.Memory.HeapMemoryUsage.max": {
+    "name": "hbase.regionserver.Memory.HeapMemoryUsage.max",
+    "definition": "regionserver heap规定最大大小",
+    "type": "data",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.jvmmetrics.GcTimeMillisParNew": {
+    "name": "hbase.regionserver.jvmmetrics.GcTimeMillisParNew",
+    "definition": "ParNew GC 操作时间",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.jvmmetrics.GcTimeMillisConcurrentMarkSweep": {
+    "name": "hbase.regionserver.jvmmetrics.GcTimeMillisConcurrentMarkSweep",
+    "definition": "CMS GC 操作时间",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.jvmmetrics.GcCount": {
+    "name": "hbase.regionserver.jvmmetrics.GcCount",
+    "definition": "GC操作次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.jvmmetrics.GcCountConcurrentMarkSweep": {
+    "name": "hbase.regionserver.jvmmetrics.GcCountConcurrentMarkSweep",
+    "definition": "CMS GC 操作次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.jvmmetrics.GcCountParNew": {
+    "name": "hbase.regionserver.jvmmetrics.GcCountParNew",
+    "definition": "ParNew GC 操作次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.regionserver.jvmmetrics.LogError": {
+    "name": "hbase.regionserver.jvmmetrics.LogError",
+    "definition": "jvm 发生崩溃 产生ERROR 的日志数量",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "hbase.master.jvmmetrics.LogFatal": {
+    "name": "hbase.master.jvmmetrics.LogFatal",
+    "definition": "jvm 发生崩溃 产生Fatal 的日志数量",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

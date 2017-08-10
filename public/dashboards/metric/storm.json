@@ -1,0 +1,236 @@
+{
+  "storm.cluster.executorsTotal": {
+    "name": "storm.cluster.executorsTotal",
+    "definition": "Total number of executors",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "storm.cluster.slotsUsed": {
+    "name": "storm.cluster.slotsUsed",
+    "definition": "Number of worker slots used",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "storm.cluster.tasksTotal": {
+    "name": "storm.cluster.tasksTotal",
+    "definition": "Total tasks",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "storm.supervisor.slotsUsed": {
+    "name": "storm.supervisor.slotsUsed",
+    "definition": "Number of worker slots used on this supervisor",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "storm.supervisor.usedCpu": {
+    "name": "storm.supervisor.usedCpu",
+    "definition": "Used CPU capacity on this supervisor",
+    "type": "data",
+    "unit": "double",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "storm.supervisor.usedMem": {
+    "name": "storm.supervisor.usedMem",
+    "definition": "Used memory capacity on this supervisor",
+    "type": "data",
+    "unit": "double",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "storm.cluster.slotsFree": {
+    "name": "storm.cluster.slotsFree",
+    "definition": "Number of worker slots available",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.cluster.slotsTotal": {
+    "name": "storm.cluster.slotsTotal",
+    "definition": "Total number of available worker slots",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.cluster.supervisors": {
+    "name": "storm.cluster.supervisors",
+    "definition": "Number of supervisors running",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.supervisor.slotsTotal": {
+    "name": "storm.supervisor.slotsTotal",
+    "definition": "Total number of available worker slots for this supervisor",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.supervisor.totalCpu": {
+    "name": "storm.supervisor.totalCpu",
+    "definition": "Total CPU capacity on this supervisor",
+    "type": "const",
+    "unit": "double",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.supervisor.totalMem": {
+    "name": "storm.supervisor.totalMem",
+    "definition": "Total memory capacity on this supervisor",
+    "type": "const",
+    "unit": "double",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.supervisor.uptimeSeconds": {
+    "name": "storm.supervisor.uptimeSeconds",
+    "definition": "Shows how long the supervisor is running in seconds",
+    "type": "time",
+    "unit": "second",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.topology.assignedCpu": {
+    "name": "storm.topology.assignedCpu",
+    "definition": "Assigned CPU by Scheduler (%)",
+    "type": "number",
+    "unit": "double",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.topology.assignedMemOffHeap": {
+    "name": "storm.topology.assignedMemOffHeap",
+    "definition": "Assigned Off-Heap Memory by Scheduler (MB)",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.topology.assignedMemOnHeap": {
+    "name": "storm.topology.assignedMemOnHeap",
+    "definition": "Assigned On-Heap Memory by Scheduler (MB)",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.topology.assignedTotalMem": {
+    "name": "storm.topology.assignedTotalMem",
+    "definition": "Assigned Total Memory by Scheduler (MB)",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.topology.executorsTotal": {
+    "name": "storm.topology.executorsTotal",
+    "definition": "Number of executors used for this topology",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.topology.replicationCount": {
+    "name": "storm.topology.replicationCount",
+    "definition": "Number of nimbus hosts on which this topology code is replicated",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.topology.requestedCpu": {
+    "name": "storm.topology.requestedCpu",
+    "definition": "Requested CPU by User (%)",
+    "type": "number",
+    "unit": "double",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.topology.requestedMemOffHeap": {
+    "name": "storm.topology.requestedMemOffHeap",
+    "definition": "Requested Off-Heap Memory by User (MB)",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.topology.requestedMemOnHeap": {
+    "name": "storm.topology.requestedMemOnHeap",
+    "definition": "Requested On-Heap Memory by User (MB)",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.topology.requestedTotalMem": {
+    "name": "storm.topology.requestedTotalMem",
+    "definition": "Requested Total Memory by User (MB)",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.topology.tasksTotal": {
+    "name": "storm.topology.tasksTotal",
+    "definition": "Total number of tasks for this topology",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.topology.uptimeSeconds": {
+    "name": "storm.topology.uptimeSeconds",
+    "definition": "Shows how long the topology is running in seconds",
+    "type": "time",
+    "unit": "second",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "storm.topology.workersTotal": {
+    "name": "storm.topology.workersTotal",
+    "definition": "Number of workers used for this topology",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

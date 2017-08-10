@@ -1,0 +1,42 @@
+{
+  "cpu.idle": {
+    "name": "cpu.irq",
+    "definition": "CPU除去等待磁盘IO操作外的因为任何原因而空闲的时间闲置时间",
+    "type": "number",
+    "unit": "0-100%",
+    "recommend": "",
+    "isKpi": false
+  },
+  "cpu.irq": {
+    "name": "cpu.irq",
+    "definition": "处理硬件中断时间",
+    "type": "number",
+    "unit": "0-100%",
+    "recommend": "",
+    "isKpi": true
+  },
+  "cpu.nice": {
+    "name": "cpu.nice",
+    "definition": "处理低优先级进程的CPU时间",
+    "type": "number",
+    "unit": "0-100%",
+    "recommend": "",
+    "isKpi": true
+  },
+  "cpu.sys": {
+    "name": "cpu.sys",
+    "definition": "内核时间",
+    "type": "number",
+    "unit": "0-100%",
+    "recommend": "",
+    "isKpi": true
+  },
+  "cpu.usr": {
+    "name": "cpu.usr",
+    "definition": "用户进程时间",
+    "type": "number",
+    "unit": "0-100%",
+    "recommend": "",
+    "isKpi": true
+  }
+}

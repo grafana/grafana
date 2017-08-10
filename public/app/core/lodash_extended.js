@@ -131,7 +131,9 @@ function ($) {
       }
     });
   };
-  _.readMetricHelpMessage();
+  // _.readMetricHelpMessage();
+  _.metricHelpMessage = {};
+  _.metricMessage = {};
 
   return _;
 });

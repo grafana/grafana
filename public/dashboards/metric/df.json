@@ -1,0 +1,66 @@
+{
+  "df.bytes.total": {
+    "name": "df.bytes.total",
+    "definition": "存储系统的大小",
+    "type": "constant",
+    "unit": "bytes",
+    "recommend": "",
+    "isKpi": true
+  },
+  "df.bytes.used": {
+    "name": "df.bytes.used",
+    "definition": "被使用的大小",
+    "type": "number",
+    "unit": "bytes",
+    "recommend": "",
+    "isKpi": true
+  },
+  "df.bytes.percentused": {
+    "name": "df.bytes.percentused",
+    "definition": "磁盘使用率",
+    "type": "number",
+    "unit": "%",
+    "recommend": "",
+    "isKpi": true
+  },
+  "df.bytes.free": {
+    "name": "df.bytes.free",
+    "definition": "磁盘可以使用的大小",
+    "type": "number",
+    "unit": "bytes",
+    "recommend": "",
+    "isKpi": true
+  },
+  "df.inodes.total": {
+    "name": "df.inodes.total",
+    "definition": "number of inodes",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": false
+  },
+  "df.inodes.used": {
+    "name": "df.inodes.used",
+    "definition": "number of inodes",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": false
+  },
+  "df.inodes.percentused": {
+    "name": "df.inodes.percentused",
+    "definition": "percentage of inodes used",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": false
+  },
+  "df.inodes.free": {
+    "name": "df.inodes.free",
+    "definition": "number of inodes",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": false
+  }
+}

@@ -1,0 +1,385 @@
+{
+  "spark.executor.activeTasks": {
+    "name": "spark.executor.activeTasks",
+    "definition": "Number of active tasks in the application",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "spark.executor.failedTasks": {
+    "name": "spark.executor.failedTasks",
+    "definition": "Number of faied tasks in the driver",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "spark.executor.totalDuration": {
+    "name": "spark.executor.totalDuration",
+    "definition": "Fraction of time (ms/s) spent by the driver",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "spark.executor.totalTasks": {
+    "name": "spark.executor.totalTasks",
+    "definition": "Number of total tasks in the driver",
+    "isKpi": true
+  },
+  "spark.job.numFailedStages": {
+    "name": "spark.job.numFailedStages",
+    "definition": "Number of failed stages in the application",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "spark.job.numFailedTasks": {
+    "name": "spark.job.numFailedTasks",
+    "definition": "Number of failed tasks in the application's stages",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "spark.rdd.diskUsed": {
+    "name": "spark.rdd.diskUsed",
+    "definition": "Amount of disk space used by persisted RDDs in the application",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "spark.rdd.memoryUsed": {
+    "name": "spark.rdd.memoryUsed",
+    "definition": "Amount of memory used in the application's persisted RDDs",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "spark.rdd.numPartitions": {
+    "name": "spark.rdd.numPartitions",
+    "definition": "Number of persisted RDD partitions in the application",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "spark.stage.numActiveTasks": {
+    "name": "spark.stage.numActiveTasks",
+    "definition": "Number of active tasks in the application's stages",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "spark.stage.numFailedTasks": {
+    "name": "spark.stage.numFailedTasks",
+    "definition": "Number of failed tasks in the application's stages",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "spark.executor.completedTasks": {
+    "name": "spark.executor.completedTasks",
+    "definition": "Number of complete tasks in the application's stages",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.executor.count": {
+    "name": "spark.executor.count",
+    "definition": "Number of executor",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.executor.diskUsed": {
+    "name": "spark.executor.diskUsed",
+    "definition": "Amount of disk used in the driver",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.executor.maxMemory": {
+    "name": "spark.executor.maxMemory",
+    "definition": "Maximum memory used in the driver",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.executor.memoryUsed": {
+    "name": "spark.executor.memoryUsed",
+    "definition": "Amount of memory to use per executor process",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.executor.rddBlocks": {
+    "name": "spark.executor.rddBlocks",
+    "definition": "Number of RDD blocks in the driver",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.executor.totalInputBytes": {
+    "name": "spark.executor.totalInputBytes",
+    "definition": "Number of input bytes in the driver",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.executor.totalShuffleRead": {
+    "name": "spark.executor.totalShuffleRead",
+    "definition": "Number of bytes read during a shuffle in the driver",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.executor.totalShuffleWrite": {
+    "name": "spark.executor.totalShuffleWrite",
+    "definition": "Number of shuffled bytes in the driver",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.job.count": {
+    "name": "spark.job.count",
+    "definition": "Number of job",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.job.numActiveStages": {
+    "name": "spark.job.numActiveStages",
+    "definition": "Number of active stages in the application",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.job.numActiveTasks": {
+    "name": "spark.job.numActiveTasks",
+    "definition": "Number of active tasks in the application's stages",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.job.numCompletedStages": {
+    "name": "spark.job.numCompletedStages",
+    "definition": "Number of completed stages in the application",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.job.numCompletedTasks": {
+    "name": "spark.job.numCompletedTasks",
+    "definition": "Number of complete tasks in the application's stages",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.job.numSkippedStages": {
+    "name": "spark.job.numSkippedStages",
+    "definition": "Number of skipped stages in the application",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.job.numSkippedTasks": {
+    "name": "spark.job.numSkippedTasks",
+    "definition": "Number of skipped tasks in the application",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.job.numTasks": {
+    "name": "spark.job.numTasks",
+    "definition": "Number of tasks in the application",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.rdd.count": {
+    "name": "spark.rdd.count",
+    "definition": "Number of red",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.rdd.numCachedPartitions": {
+    "name": "spark.rdd.numCachedPartitions",
+    "definition": "Number of in-memory cached RDD partitions in the application",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.stage.count": {
+    "name": "spark.stage.count",
+    "definition": "Number ofstage",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.stage.diskBytesSpilled": {
+    "name": "spark.stage.diskBytesSpilled",
+    "definition": "Max size on disk of the spilled bytes in the application's stages",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.stage.executorRunTime": {
+    "name": "spark.stage.executorRunTime",
+    "definition": "Fraction of time (ms/s) spent by the executor in the application's stages",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.stage.inputBytes": {
+    "name": "spark.stage.inputBytes",
+    "definition": "Input bytes in the application's stages",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.stage.inputRecords": {
+    "name": "spark.stage.inputRecords",
+    "definition": "Input records in the application's stages",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.stage.memoryBytesSpilled": {
+    "name": "spark.stage.memoryBytesSpilled",
+    "definition": "Number of bytes spilled to disk in the application's stages",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.stage.numCompleteTasks": {
+    "name": "spark.stage.numCompleteTasks",
+    "definition": "Number of complete tasks in the application's stages",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.stage.outputBytes": {
+    "name": "spark.stage.outputBytes",
+    "definition": "Output bytes in the application's stages",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.stage.outputRecords": {
+    "name": "spark.stage.outputRecords",
+    "definition": "Output records in the application's stages",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.stage.shuffleReadBytes": {
+    "name": "spark.stage.shuffleReadBytes",
+    "definition": "Number of bytes read during a shuffle in the application's stages",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.stage.shuffleReadRecords": {
+    "name": "spark.stage.shuffleReadRecords",
+    "definition": "Number of records read during a shuffle in the application's stages",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.stage.shuffleWriteBytes": {
+    "name": "spark.stage.shuffleWriteBytes",
+    "definition": "Number of shuffled bytes in the application's stages",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "spark.stage.shuffleWriteRecords": {
+    "name": "spark.stage.shuffleWriteRecords",
+    "definition": "Number of shuffled records in the application's stages",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}
