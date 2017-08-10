@@ -289,9 +289,6 @@ define([
           var score = parseFloat(item.tips[0].data);
           var colors = score > 75 ? ['#BB1144'] : (score > 50 ? ['#FE9805'] : ['#3DB779']);
 
-          // disk 是剩余率
-          key === 'disk' && (colors = score > 75 ? ['#3DB779'] : (score > 50 ? ['#FE9805'] : ['#BB1144']));
-
           setPie('.prediction-item-' + host + key, [
             { label: "", data: score },
             { label: "", data: 100 - score }
@@ -444,7 +441,7 @@ define([
         $scope.panels[hostname] = {};
 
         var titleMap = {
-          disk: '磁盘剩余空间(%)',
+          disk: '磁盘占用空间(%)',
           cpu : 'CPU使用情况(%)',
           mem : '内存使用情况(%)'
         };
@@ -470,9 +467,10 @@ define([
             predictionPanel[type].title = titleMap[type];
 
             for (var i in data) {
+              var score = type === 'disk' ? 100 - data[i] : data[i];  // reponse disk 是剩余率, show disk 需要使用率
               var pre  = {
                 time: times[num],
-                data: $scope.percentFormatter(data[i])
+                data: $scope.percentFormatter(score)
               };
 
               predictionPanel[type].tips[num] = pre;
