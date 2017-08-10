@@ -217,7 +217,7 @@ export class PanelCtrl {
   }
 
   removePanel() {
-    this.row.removePanel(this.panel);
+    this.dashboard.removePanel(this.panel);
   }
 
   editPanelJson() {

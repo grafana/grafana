@@ -60,6 +60,10 @@ export class GridCtrl {
   bindItem(element) {
     this.gridstack.makeWidget(element);
   }
+
+  removeItem(element) {
+    this.gridstack.removeWidget(element, false);
+  }
 }
 
 /** @ngInject **/
@@ -114,6 +118,13 @@ export function dashGridItem($timeout, $rootScope) {
         }
         element.addClass('panel-fullscreen');
       }, scope);
+
+      scope.$on('$destroy', () => {
+        gridCtrl.removeItem(element);
+      });
+
+      //   scope.onItemRemoved({item: item});
+      //   ctrl.removeItem(element);
 
 
       //var item = element.data('_gridstack_node');

@@ -92,12 +92,6 @@ function panelHeader($compile) {
       elem.click(function(evt) {
         const targetClass = evt.target.className;
 
-        console.log(elem.closest('.ui-draggable-dragging'));
-        // ignore click if we are dragging
-        if (elem.closest('.ui-draggable-dragging').length > 0) {
-          return;
-        }
-
         // remove existing scope
         if (menuScope) {
           menuScope.$destroy();
