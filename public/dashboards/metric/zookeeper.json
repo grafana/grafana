@@ -1,0 +1,110 @@
+{
+  "zk_avg_latency": {
+    "name": "zk_avg_latency",
+    "definition": "zookeeper响应一个客户端请求的平均时间",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "zk_num_alive_connections": {
+    "name": "zk_num_alive_connections",
+    "definition": "连接到Zookeeper的客户端数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "zk_open_file_descriptor_count": {
+    "name": "zk_open_file_descriptor_count",
+    "definition": "zookeeper 打开文件数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "zk_outstanding_requests": {
+    "name": "zk_outstanding_requests",
+    "definition": "zookeeper排队请求的数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "zk_approximate_data_size": {
+    "name": "zk_approximate_data_size",
+    "definition": "所有znodes的大致内存消耗",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "zk_ephemerals_count": {
+    "name": "zk_ephemerals_count",
+    "definition": "临时节点数量",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "zk_max_latency": {
+    "name": "zk_max_latency",
+    "definition": "响应一个客户端请求的最大时间",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "zk_min_latency": {
+    "name": "zk_min_latency",
+    "definition": "响应一个客户端请求的最小时间",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "zk_packets_received": {
+    "name": "zk_packets_received",
+    "definition": "接收到客户端请求的包数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "zk_packets_sent": {
+    "name": "zk_packets_sent",
+    "definition": "发送给客户单的包数量，主要是响应和通知",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "zk_watch_count": {
+    "name": "zk_watch_count",
+    "definition": "watches的数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "zk_znode_count": {
+    "name": "zk_znode_count",
+    "definition": "znodes的数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

@@ -1,7 +1,8 @@
 define([
+  'jquery',
   'lodash-src'
 ],
-function () {
+function ($) {
   'use strict';
 
   var _ = window._;
@@ -120,6 +121,9 @@ function () {
     }
     return obj;
   };
+
+  _.metricHelpMessage = {};
+  _.metricMessage = {};
 
   return _;
 });

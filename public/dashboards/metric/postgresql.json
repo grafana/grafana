@@ -1,0 +1,443 @@
+{
+  "postgresql.connections": {
+    "name": "postgresql.connections",
+    "definition": "该database的活跃连接数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "postgresql.database_size": {
+    "name": "postgresql.database_size",
+    "definition": "该database所占用的硬盘空间",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "postgresql.deadlocks": {
+    "name": "postgresql.deadlocks",
+    "definition": "该database中检测到的死锁",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "postgresql.percent_usage_connections": {
+    "name": "postgresql.percent_usage_connections",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "postgresql.commits": {
+    "name": "postgresql.commits",
+    "definition": "该database中已提交的事务",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.rollbacks": {
+    "name": "postgresql.rollbacks",
+    "definition": "该database中已回滚的事务",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.disk_read": {
+    "name": "postgresql.disk_read",
+    "definition": "该database中所读磁盘区块数量",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.buffer_hit": {
+    "name": "postgresql.buffer_hit",
+    "definition": "访问缓存次数",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.rows_returned": {
+    "name": "postgresql.rows_returned",
+    "definition": "该database中query返回的行数",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.rows_fetched": {
+    "name": "postgresql.rows_fetched",
+    "definition": "该database中query获取的行数",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.rows_inserted": {
+    "name": "postgresql.rows_inserted",
+    "definition": "该database中query插入的行数",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.rows_updated": {
+    "name": "postgresql.rows_updated",
+    "definition": "该database中query插入的行数",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.rows_deleted": {
+    "name": "postgresql.rows_deleted",
+    "definition": "该database中query删除的行数",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.temp_bytes": {
+    "name": "postgresql.temp_bytes",
+    "definition": "该database临时文件数量",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.temp_files": {
+    "name": "postgresql.temp_files",
+    "definition": "请求的检查点数量",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.bgwriter.checkpoints_timed": {
+    "name": "postgresql.bgwriter.checkpoints_timed",
+    "definition": "检查点时缓存写入数量",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.bgwriter.checkpoints_requested": {
+    "name": "postgresql.bgwriter.checkpoints_requested",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.bgwriter.buffers_checkpoint": {
+    "name": "postgresql.bgwriter.buffers_checkpoint",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.bgwriter.buffers_clean": {
+    "name": "postgresql.bgwriter.buffers_clean",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.bgwriter.maxwritten_clean": {
+    "name": "postgresql.bgwriter.maxwritten_clean",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.bgwriter.buffers_backend": {
+    "name": "postgresql.bgwriter.buffers_backend",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.bgwriter.buffers_alloc": {
+    "name": "postgresql.bgwriter.buffers_alloc",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.bgwriter.buffers_backend_fsync": {
+    "name": "postgresql.bgwriter.buffers_backend_fsync",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.bgwriter.write_time": {
+    "name": "postgresql.bgwriter.write_time",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.bgwriter.sync_time": {
+    "name": "postgresql.bgwriter.sync_time",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.locks": {
+    "name": "postgresql.locks",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.seq_scans": {
+    "name": "postgresql.seq_scans",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.seq_rows_read": {
+    "name": "postgresql.seq_rows_read",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.index_scans": {
+    "name": "postgresql.index_scans",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.index_rows_fetched": {
+    "name": "postgresql.index_rows_fetched",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.rows_hot_updated": {
+    "name": "postgresql.rows_hot_updated",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.live_rows": {
+    "name": "postgresql.live_rows",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.dead_rows": {
+    "name": "postgresql.dead_rows",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.index_rows_read": {
+    "name": "postgresql.index_rows_read",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.table_size": {
+    "name": "postgresql.table_size",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.index_size": {
+    "name": "postgresql.index_size",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.total_size": {
+    "name": "postgresql.total_size",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.table.count": {
+    "name": "postgresql.table.count",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.max_connections": {
+    "name": "postgresql.max_connections",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.replication_delay": {
+    "name": "postgresql.replication_delay",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgres.replication_delay_bytes": {
+    "name": "postgres.replication_delay_bytes",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.heap_blocks_read": {
+    "name": "postgresql.heap_blocks_read",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.heap_blocks_hit": {
+    "name": "postgresql.heap_blocks_hit",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.index_blocks_read": {
+    "name": "postgresql.index_blocks_read",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.index_blocks_hit": {
+    "name": "postgresql.index_blocks_hit",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.toast_blocks_read": {
+    "name": "postgresql.toast_blocks_read",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.toast_blocks_hit": {
+    "name": "postgresql.toast_blocks_hit",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.toast_index_blocks_read": {
+    "name": "postgresql.toast_index_blocks_read",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "postgresql.toast_index_blocks_hit": {
+    "name": "postgresql.toast_index_blocks_hit",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

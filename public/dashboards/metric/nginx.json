@@ -1,0 +1,74 @@
+{
+  "nginx.active_connections": {
+    "name": "nginx.active_connections",
+    "definition": "",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "nginx.number_requests_reading": {
+    "name": "nginx.number_requests_reading",
+    "definition": "",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "nginx.number_requests_waiting": {
+    "name": "nginx.number_requests_waiting",
+    "definition": "",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "nginx.number_requests_writing": {
+    "name": "nginx.number_requests_writing",
+    "definition": "",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "nginx.exception": {
+    "name": "nginx.exception",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "nginx.total_accepted_connections": {
+    "name": "nginx.total_accepted_connections",
+    "definition": "",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "nginx.total_handled_connections": {
+    "name": "nginx.total_handled_connections",
+    "definition": "",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "nginx.total_number_handled_requests": {
+    "name": "nginx.total_number_handled_requests",
+    "definition": "",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

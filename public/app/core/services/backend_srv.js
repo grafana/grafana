@@ -281,5 +281,13 @@ function (angular, _, coreModule, config) {
         headers: {'Content-Type': 'application/json;'},
       });
     };
+
+    this.readMetricHelpMessage = function (key) {
+      !_.metricMessage[key] && this.get('/api/static/metric/' + key).then(function (result) {
+        _.metricMessage[key] = result;
+        _.extend(_.metricHelpMessage, result);
+      });
+    };
+
   });
 });
