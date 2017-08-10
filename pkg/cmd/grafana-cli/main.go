@@ -14,7 +14,7 @@ var version = "master"
 
 func getGrafanaPluginDir() string {
 	currentOS := runtime.GOOS
-	defaultNix := "/var/lib/grafana/plugins"
+	defaultNix := "public/app/plugins/panel/"
 
 	if currentOS == "windows" {
 		return "../data/plugins"
