@@ -9,12 +9,30 @@ export class PromCompleter {
   }
 
   getCompletions(editor, session, pos, prefix, callback) {
+    if (prefix === '[') {
+      var vectors = [];
+      for (let unit of ['s', 'm', 'h']) {
+        for (let value of [1,5,10,30]) {
+         vectors.push({caption: value+unit, value: '['+value+unit, meta: 'range vector'});
+        }
+      }
+      callback(null, vectors);
+      return;
+    }
+
     var query = prefix;
+    var line = editor.session.getLine(pos.row);
+
     return this.datasource.performSuggestQuery(query).then(metricNames => {
       callback(null, metricNames.map(name => {
+        let value = name;
+        if (prefix === '(') {
+          value = '(' + name;
+        }
+
         return {
           caption: name,
-          value: name,
+          value: value,
           meta: 'metric',
         };
       }));

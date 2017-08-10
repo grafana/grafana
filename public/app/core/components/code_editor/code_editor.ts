@@ -128,22 +128,6 @@ function link(scope, elem, attrs) {
     }
   });
 
-  let extCompleter = {
-    identifierRegexps: [/[\[\]a-zA-Z_0-9=]/],
-    getCompletions: function (editor, session, pos, prefix, callback) {
-      console.log(pos);
-      scope.getCompletions({$query: prefix}).then(results => {
-        callback(null, results.map(hit => {
-          return {
-            caption: hit.word,
-            value: hit.word,
-            meta: hit.type
-          };
-        }));
-      });
-    },
-  };
-
   function setLangMode(lang) {
     let aceModeName = `ace/mode/${lang}`;
     setModuleUrl("mode", lang);
@@ -161,6 +145,8 @@ function link(scope, elem, attrs) {
         codeEditor.completers.push(scope.getCompleter());
       }
     });
+
+    codeEditor.setBehavioursEnabled(true);
   }
 
   function setThemeMode(theme) {
