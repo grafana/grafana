@@ -23,7 +23,6 @@
     return {};
   }
   function tooltipFormat(value, row, index) {
-    console.log(_.metricHelpMessage[value])
     var message = _.metricHelpMessage[value] ? _.metricHelpMessage[value].definition : value;
     return '<span data-toggle="tooltip" title="' + message + '">' + value + '</span>';
   }

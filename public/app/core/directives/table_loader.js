@@ -32,6 +32,10 @@ define([
                   }
                 }
               });
+              $('.table-hack').tooltip({
+                selector: '[data-toggle="tooltip"]',
+                container: 'body'
+              });
             });
           });
 

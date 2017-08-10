@@ -187,5 +187,59 @@
     "recommend": "",
     "alert": "",
     "isKpi": true
+  },
+  "proc.net.dropped.in": {
+    "name": "proc.net.dropped.in",
+    "definition": "The total number of packets dropped by the device driver.",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.net.dropped.out": {
+    "name": "proc.net.dropped.out",
+    "definition": "The total number of packets dropped by the device driver.",
+    "type": "data",
+    "unit": "byte",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.net.errs.in": {
+    "name": "proc.net.errs.in",
+    "definition": "The total number of receive errors detected by the device driver.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.net.errs.out": {
+    "name": "proc.net.errs.out",
+    "definition": "The total number of transmit errors detected by the device driver.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.net.packets.in": {
+    "name": "proc.net.packets.in",
+    "definition": "The total number of packets of data received by the interface",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "proc.net.packets.out": {
+    "name": "proc.net.packets.out",
+    "definition": "The total number of packets of data transmitted by the interface",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
   }
 }

@@ -122,16 +122,6 @@ function ($) {
     return obj;
   };
 
-  _.readMetricHelpMessage = function () {
-    $.ajax({
-      url: "/api/static/kpi",
-      method: "get",
-      success: function (response) {
-        _.metricHelpMessage = response;
-      }
-    });
-  };
-  // _.readMetricHelpMessage();
   _.metricHelpMessage = {};
   _.metricMessage = {};
 

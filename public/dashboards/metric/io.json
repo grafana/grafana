@@ -1,0 +1,162 @@
+{
+  "df.bytes.total": {
+    "name": "df.bytes.total",
+    "definition": "存储系统的大小",
+    "type": "constant",
+    "unit": "bytes",
+    "recommend": "",
+    "isKpi": true
+  },
+  "df.bytes.used": {
+    "name": "df.bytes.used",
+    "definition": "被使用的大小",
+    "type": "number",
+    "unit": "bytes",
+    "recommend": "",
+    "isKpi": true
+  },
+  "df.bytes.percentused": {
+    "name": "df.bytes.percentused",
+    "definition": "磁盘使用率",
+    "type": "number",
+    "unit": "%",
+    "recommend": "",
+    "isKpi": true
+  },
+  "df.bytes.free": {
+    "name": "df.bytes.free",
+    "definition": "磁盘可以使用的大小",
+    "type": "number",
+    "unit": "bytes",
+    "recommend": "",
+    "isKpi": true
+  },
+  "df.inodes.total": {
+    "name": "df.inodes.total",
+    "definition": "number of inodes",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": false
+  },
+  "df.inodes.used": {
+    "name": "df.inodes.used",
+    "definition": "number of inodes",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": false
+  },
+  "df.inodes.percentused": {
+    "name": "df.inodes.percentused",
+    "definition": "percentage of inodes used",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": false
+  },
+  "df.inodes.free": {
+    "name": "df.inodes.free",
+    "definition": "number of inodes",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": false
+  },
+  "iostat.avgqu-sz": {
+    "name": "iostat.avgqu-sz",
+    "definition": "是平均请求队列的长度。毫无疑问，队列长度越短越好",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": true
+  },
+  "iostat.await": {
+    "name": "iostat.await",
+    "definition":	"每一个IO请求的处理的平均时间（单位是微秒毫秒）。这里可以理解为IO的响应时间，一般地系统IO响应时间应该低于5ms，如果大于10ms就比较大了。这个时间包括了队列时间和服务时间，也就是说，一般情况下，await大于svctm，它们的差值越小，则说明队列时间越短，反之差值越大，队列时间越长，说明系统出了问题。",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": true
+  },
+  "iostat.bytes_per_s":	{
+    "name": "iostat.bytes_per_s",
+    "definition": "平均每秒读写字节数",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": true
+  },
+  "iostat.r/s": {
+    "name": "iostat.r/s",
+    "definition":	"每秒完成的读 I/O 设备次数",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": true
+  },
+  "iostat.r_await": {
+    "name": "iostat.r_await",
+    "definition": "读的IO请求的处理的平均时间",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": true
+  },
+  "iostat.w_await": {
+    "name": "iostat.w_await",
+    "definition": "写的IO请求的处理的平均时间",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": true
+  },
+  "iostat.rkB/s":	{
+    "name": "iostat.rkB/s",
+    "definition": "每秒读K字节数。是 rsect/s 的一半因为每扇区大小为512字节",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": true
+  },
+  "iostat.svctm": {
+    "name": "iostat.svctm",
+    "definition": "表示平均每次设备I/O操作的服务时间（以毫秒为单位）。如果svctm的值与await很接近，表示几乎没有I/O等待，磁盘性能很好，如果await的值远高于svctm的值，则表示I/O队列等待太长，系统上运行的应用程序将变慢",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": true
+  },
+  "iostat.w/s": {
+    "name": "iostat.w/s",
+    "definition":	"每秒完成的写I/O设备次数",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": true
+  },
+  "iostat.wkB/s": {
+    "name": "iostat.wkB/s",
+    "definition": "每秒写K字节数。是 rsect/s 的一半因为每扇区大小为512字节",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": true
+  },
+  "iostat.wrqm/s": {
+    "name": "iostat.wrqm/s",
+    "definition":	"每秒进行 merge 的写操作数目",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": true
+  },
+  "iostat.percentage_util": {
+    "name": "iostat.percentage_util",
+    "definition":	"在统计时间内所有处理IO时间除以总共统计时间。例如如果统计间隔1秒该 设备有0.8秒在处理IO而0.2秒闲置那么该设备的%util = 0.8/1 = 80%所以该参数暗示了设备的繁忙程度。一般地如果该参数是100%表示设备已经接近满负荷运行了当然如果是多磁盘即使%util是100%因 为磁盘的并发能力所以磁盘使用未必就到了瓶颈",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "isKpi": true
+  }
+}

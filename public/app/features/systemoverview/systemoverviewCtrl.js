@@ -14,6 +14,20 @@ define([
       };
     });
 
+    module.filter('translateItemType', function () {
+      return function (text) {
+        var map = {
+          "mem": "内存",
+          "io" : "磁盘",
+          "nw" : "网络",
+          "cpu": "CPU",
+          "kpi": "服务 KPI",
+          "state": "服务状态"
+        };
+        return map[text.toLowerCase()];
+      };
+    });
+
     module.controller('SystemOverviewCtrl', function ($scope, $location, $q, $modal, backendSrv, alertSrv,
       contextSrv, datasourceSrv, alertMgrSrv, healthSrv, serviceDepSrv, jsPlumbService) {
 
@@ -267,6 +281,12 @@ define([
 
         serviceDepSrv.readMetricStatus(serviceId, serviceName).then(function (response) {
           $scope.service = response.data;
+        });
+
+        // 拿 servicekpi metric 的 message, 储存在 _.metricHelpMessage 中
+        var service = serviceName.split(".")[0];
+        _.each([service, 'mem', 'io', 'nw', 'cpu'], function (item) {
+          backendSrv.readMetricHelpMessage(item);
         });
       };
 

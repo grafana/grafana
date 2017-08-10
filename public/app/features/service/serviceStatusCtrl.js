@@ -60,10 +60,10 @@ define([
           $scope.service = response.data;
         });
 
-        // var service = 
-        !_.metricMessage[serviceName] && backendSrv.get('/api/static/metric/' + serviceName).then(function(result) {
-          _.metricMessage[serviceName] = result;
-          _.extend(_.metricHelpMessage, result);
+        // 拿 servicekpi metric 的 message, 储存在 _.metricHelpMessage 中
+        var service = serviceName.split(".")[0];
+        _.each([service, 'mem', 'io', 'nw', 'cpu'], function (item) {
+          backendSrv.readMetricHelpMessage(item);
         });
       };
 

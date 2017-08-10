@@ -25,7 +25,7 @@
                                                         ng-click="selectHealthItemType(host.hostName, item.type)"
                                                         class="status-{{item.healthStatusType | lowercase}}"
                                                         style="color: #fff;"
-                                                        bs-tooltip="'{{item.type}}'">
+                                                        bs-tooltip="'{{item.type | formatItemType | translateItemType}}'">
                                                         {{item.type | formatItemType | uppercase}}
                                                     </li>
                                                 </ul>

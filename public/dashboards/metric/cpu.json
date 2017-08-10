@@ -38,5 +38,14 @@
     "unit": "0-100%",
     "recommend": "",
     "isKpi": true
+  },
+  "proc.loadavg.15min": {
+    "name": "proc.loadavg.15min",
+    "definition":	"15分钟内的平均进程数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
   }
 }
