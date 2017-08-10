@@ -653,7 +653,6 @@ export class DashboardModel {
 
       if (oldVersion < 15) {
         this.upgradeToGridLayout();
-        console.log(this.panels);
       }
 
       if (panelUpgrades.length === 0) {

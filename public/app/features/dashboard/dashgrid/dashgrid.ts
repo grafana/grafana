@@ -58,11 +58,20 @@ export class GridCtrl {
   }
 
   bindItem(element) {
-    this.gridstack.makeWidget(element);
+    if (this.gridstack) {
+      this.gridstack.makeWidget(element);
+    }
   }
 
   removeItem(element) {
-    this.gridstack.removeWidget(element, false);
+    if (this.gridstack) {
+      this.gridstack.removeWidget(element, false);
+    }
+  }
+
+  destroy() {
+    this.gridstack.destroy();
+    this.gridstack = null;
   }
 }
 
@@ -80,6 +89,10 @@ export function dashGrid($timeout) {
     link: function(scope, elem, attrs, ctrl) {
       $timeout(function() {
         ctrl.init();
+      });
+
+      scope.$on('$destroy', () => {
+        ctrl.destroy();
       });
     }
   };
