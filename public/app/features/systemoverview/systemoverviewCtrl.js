@@ -415,7 +415,11 @@ define([
           promiseList.push(q);
         })
         .finally(function () {
-          $q.all(promiseList).then(function () {
+          $q.all(promiseList)
+          .then(function () {
+            $scope.hostPanels = _.values(hostsResource);
+          })
+          .catch(function () {
             $scope.hostPanels = _.values(hostsResource);
           });
         });
