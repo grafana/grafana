@@ -32,7 +32,7 @@ define([
                   }
                 }
               });
-              $('.table-hack').tooltip({
+              $('body').tooltip({
                 selector: '[data-toggle="tooltip"]',
                 container: 'body'
               });
