@@ -8,7 +8,7 @@ require.config({
 
     text:                     'vendor/requirejs-text/text',
     moment:                   'vendor/moment',
-    angular:                  'vendor/angular/angular',
+    angular:                  'vendor/angular/angular-1.5',
     'angular-route':          'vendor/angular-route/angular-route',
     'angular-sanitize':       'vendor/angular-sanitize/angular-sanitize',
     'angular-dragdrop':       'vendor/angular-native-dragdrop/draganddrop',
@@ -46,7 +46,10 @@ require.config({
     'zh-cn':                  'vendor/fullcalendar/dist/zh-cn',
     'bootstrap-table':        'vendor/angular-other/bootstrap-table',
     'jsPlumbToolkit':         'vendor/jsPlumb/jsPlumbToolkit',
-    'jsPlumbToolkit-angular': 'vendor/jsPlumb/jsPlumbToolkit-angular'
+    'jsPlumbToolkit-angular': 'vendor/jsPlumb/jsPlumbToolkit-angular',
+
+    'quill':                  'vendor/quill/quill.min',
+    'ng-quill':               'vendor/quill/ng-quill',
   },
 
   shim: {
@@ -106,6 +109,7 @@ require.config({
     'ui.calendar':          ['jquery','fullcalendar', 'angular'],
     'zh-cn':                ['jquery','moment', 'fullcalendar'],
     'jsPlumbToolkit':       ['jquery'],
-    'jsPlumbToolkit-angular':['angular', 'jsPlumbToolkit']
+    'jsPlumbToolkit-angular':['angular', 'jsPlumbToolkit'],
+    'ng-quill':             ['angular', 'quill']
   },
 });

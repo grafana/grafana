@@ -11,6 +11,8 @@ module.exports = function(config) {
         '<%= genDir %>/css/bootstrap-responsive.min.css',
         '<%= genDir %>/vendor/css/font-awesome.min.css',
         '<%= genDir %>/vendor/css/iconfont.css',
+        '<%= genDir %>/vendor/css/quill.snow.css',
+        '<%= genDir %>/vendor/css/quill.bubble.css',
       ],
       dest: '<%= genDir %>/css/grafana.dark.min.css'
     },
@@ -24,6 +26,8 @@ module.exports = function(config) {
         '<%= genDir %>/css/bootstrap-responsive.min.css',
         '<%= genDir %>/vendor/css/font-awesome.min.css',
         '<%= genDir %>/vendor/css/iconfont.css',
+        '<%= genDir %>/vendor/css/quill.snow.css',
+        '<%= genDir %>/vendor/css/quill.bubble.css',
       ],
       dest: '<%= genDir %>/css/grafana.light.min.css'
     },
