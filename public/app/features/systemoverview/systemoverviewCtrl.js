@@ -400,6 +400,7 @@ define([
 
           var q = datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
             _.each(response, function (metric) {
+              if (!hostsResource[metric.host]) { return; }
               hostsResource[metric.host]["cpu"] = $scope.percentFormatter(metric.value);
             });
           });
@@ -415,6 +416,7 @@ define([
 
           var q = datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
             _.each(response, function (metric) {
+              if (!hostsResource[metric.host]) { return; }
               hostsResource[metric.host]["disk"] = $scope.gbFormatter(metric.value);
             });
           });
@@ -430,6 +432,7 @@ define([
 
           var q = datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
             _.each(response, function (metric) {
+              if (!hostsResource[metric.host]) { return; }
               hostsResource[metric.host]["mem"] = $scope.gbFormatter(metric.value);
             });
           });
