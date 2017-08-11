@@ -40,5 +40,9 @@ function ($, angular, _) {
     };
   })();
 
+  $.escapeSelector = function (selector) {
+    return selector.replace(/(:|\.|\[|\]|,|=|@)/g, "\\$1");
+  };
+
   return $;
 });

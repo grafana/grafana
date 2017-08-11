@@ -48,6 +48,7 @@ define([
       };
 
       $scope.nodeClickHandler = function (node) {
+        $scope.selected = -1;
         $(node.el).addClass("active").siblings().removeClass("active");
 
         var serviceId = node.node.data.id;
