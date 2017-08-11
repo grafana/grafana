@@ -33,6 +33,7 @@ function (angular, _) {
         $scope.hostNum = response;
         if(contextSrv.hostNum) {
           $scope.installed = true;
+          $scope.hostDashboard = false;
           $scope.appEvent('alert-success', ['您已安装机器探针', "请继续安装机器探针,或安装服务探针"]);
         } else {
           contextSrv.sidemenu = false;
@@ -92,6 +93,7 @@ function (angular, _) {
 
     $scope.createTemp = function(options) {
       // 添加模板
+      $scope.hostDashboard = true;
       var tmp = ["iostat","machine"];
       var promiseArr = [];
       _.each(tmp,function(template, i) {
