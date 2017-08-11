@@ -37,6 +37,8 @@
     return '<a href="' + link + '">' + value + '</a>';
   }
   function healthLinkFormat(value, row, index) {
+    value = parseInt(value);
+    value = value === 100 ? value : (value < 26 ? value + " (临时异常)" : value + " (持续异常)");
     return '<a href="javascript:;" ng-click="showModal(0)" >' + value + '</a>';
   }
 </script>
