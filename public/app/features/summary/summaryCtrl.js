@@ -10,13 +10,9 @@ define([
     module.controller('SummaryCtrl', function ($scope, backendSrv, contextSrv, datasourceSrv) {
       $scope.init = function () {
         $scope.datasource = null;
-        backendSrv.get("/api/user/system").then(function (system) {
-          $scope.systems = system;
-          $scope.summarySelect.system = system[0].Id;
-        }).then(function () {
-          $scope.changeSelect();
-        });
-
+        $scope.summarySelect.system = contextSrv.user.systemId;
+        $scope.summarySelect.SystemsName = _.find(contextSrv.systemsMap,{Id:$scope.summarySelect.system}).SystemsName;
+        $scope.changeSelect();
       };
 
       if (contextSrv.isGrafanaAdmin) {
@@ -87,7 +83,6 @@ define([
           $scope.warningScript = "请选择子系统";
           return;
         }
-        contextSrv.user.systemId = $scope.summarySelect.system;
         $scope.warningScript = "抱歉, 没有任何数据返回";
         if ($scope.summarySelect.services == "collect") {
           query['metrics'] = "collector.summary";
