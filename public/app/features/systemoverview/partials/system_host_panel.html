@@ -6,9 +6,9 @@
                     <li class="pull-left">
                         <i class="fa btn btn-primary" ng-class="{true: 'fa-minus', false: 'fa-plus'}[$index == selected]"></i>
                     </li>
-                    <li style="overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">{{host.host}}</li>
+                    <li style="padding-left: 5%; text-align: left;" class="text-overflow">{{host.host}}</li>
                     <li>
-                        <button type="button" style="margin: 8px 54px; padding: 2px 10px;"
+                        <button type="button" style="margin: 8px 0; padding: 2px 10px; position:relative; left: 50%; transform: translateX(-50%);"
                             class="btn-item system-status status-{{ hostsResource[hostPanel.currentService.name][host.host].status | lowercase }}">
                             {{hostsResource[hostPanel.currentService.name][host.host].statusText}}
                         </button>

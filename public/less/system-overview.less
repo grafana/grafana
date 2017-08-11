@@ -222,6 +222,7 @@
           line-height: 40px;
           width: 15%;
           text-align: center;
+          box-sizing: border-box;
           &:first-child {
             position: absolute;
             left: -4%;
@@ -385,7 +386,11 @@
   }
 }
 
-
+.text-overflow {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 
  
  

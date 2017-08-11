@@ -48,6 +48,7 @@ define([
       };
 
       $scope.nodeClickHandler = function (node) {
+        $scope.selected = -1;
         $(node.el).addClass("active").siblings().removeClass("active");
 
         var serviceId = node.node.data.id;
@@ -61,10 +62,10 @@ define([
         });
 
         // 拿 servicekpi metric 的 message, 储存在 _.metricHelpMessage 中
-        // var service = serviceName.split(".")[0];
-        // _.each([service, 'mem', 'io', 'nw', 'cpu'], function (item) {
-        //   backendSrv.readMetricHelpMessage(item);
-        // });
+        var service = serviceName.split(".")[0];
+        _.each([service, 'mem', 'io', 'nw', 'cpu'], function (item) {
+          backendSrv.readMetricHelpMessage(item);
+        });
       };
 
       $scope.selectHost = function(index, host) {

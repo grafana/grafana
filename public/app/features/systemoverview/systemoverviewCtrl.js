@@ -59,7 +59,7 @@ define([
           return value === 0 ? '正常' : '异常';
         }
         if (_.isString(value)) {
-          return value === 'GREEN' ? '正常' : (value === 'YELLOW' ? '告警' : (value === 'RED' ? '严重' : '异常'));
+          return value === 'GREEN' ? '正常' : (value === 'YELLOW' ? '警告' : (value === 'RED' ? '严重' : '异常'));
         }
       };
 
@@ -244,6 +244,7 @@ define([
       };
 
       $scope.nodeClickHandler = function (node) {
+        $scope.selected = -1;
         $(node.el).addClass("active").siblings().removeClass("active");
 
         var serviceId = node.node.data.id;
@@ -265,6 +266,7 @@ define([
           $scope.hostPanel.hosts = [];
 
           _.each(hosts, function (host) {
+            !_.findWhere($scope.hostPanels, { host: host }) && $scope.hostPanels.push({ host: host });
             var tmp = _.findWhere($scope.hostPanels, { host: host }) || { host: host };
             $scope.hostPanel.hosts.push(tmp);
           });
@@ -284,14 +286,15 @@ define([
         });
 
         // 拿 servicekpi metric 的 message, 储存在 _.metricHelpMessage 中
-        // var service = serviceName.split(".")[0];
-        // _.each([service, 'mem', 'io', 'nw', 'cpu'], function (item) {
-        //   backendSrv.readMetricHelpMessage(item);
-        // });
+        var service = serviceName.split(".")[0];
+        _.each([service, 'mem', 'io', 'nw', 'cpu'], function (item) {
+          backendSrv.readMetricHelpMessage(item);
+        });
       };
 
       $scope.selectHost = function (index, host) {
         $scope.selected = ($scope.selected == index) ? -1 : index;
+        $('[href="#tab-' + host + '-1"]').tab('show');
         $scope.showHost(host);
       };
 
@@ -306,6 +309,12 @@ define([
 
         $scope.predictionPanel = $scope.panels[host].predictionPanel;
         _.forIn($scope.predictionPanel, function (item, key) {
+          // when prediction api returns {}
+          if (item.errTip) {
+            $('.prediction-item-' + $.escapeSelector(host + key)).html(item.errTip);
+            return;
+          }
+
           var score = parseFloat(item.tips[0].data);
           var colors = score > 75 ? ['#BB1144'] : (score > 50 ? ['#FE9805'] : ['#3DB779']);
 
@@ -508,7 +517,8 @@ define([
             predictionPanel[type]['selectedOption'] = predictionPanel[type].tips[0];
             $scope.panels[hostname]['predictionPanel'] = predictionPanel;
           }).catch(function () {
-            panel.tip = '暂无预测数据';
+            predictionPanel[type].errTip = '暂无预测数据';
+            $scope.panels[hostname]['predictionPanel'] = predictionPanel;
           });
         });
 
