@@ -300,7 +300,7 @@ define([
       .when('/integrate', {
         templateUrl: 'app/features/analysis/partials/logIntegrate.html',
         controller : 'LogIntegrateCtrl',
-        resolve: loadServiceBundle,
+        resolve: loadAnalysisBundle,
       })
       .when('/setting/agent', {
         templateUrl: 'app/features/setup/partials/host_agent.html',
