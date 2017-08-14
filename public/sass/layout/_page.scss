@@ -7,15 +7,20 @@
 
 .main-view {
   flex-grow: 1;
+  background: linear-gradient(180deg,#282020 0,#1e0f05);
 }
 
 .page-container {
   @extend .container;
-  background-color: $page-bg;
-  padding: ($spacer * 2) ($spacer * 4);
+
+  padding: $spacer;
   min-height: calc(100% - 54px);
   padding-bottom: $spacer * 5;
-  background-image: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%)
+}
+
+.page-header-inner {
+  @include brand-bottom-border();
+  @include clearfix();
 }
 
 .page-body {
@@ -38,21 +43,20 @@
 }
 
 .page-header {
-  padding: $spacer 0 0 0;
-  margin-bottom: 2rem;
-  @include brand-bottom-border();
-  @include clearfix();
+  padding: 2rem 0 1rem 0;
 
   h1 {
+    font-size: $font-size-h2;
     flex-grow: 1;
     display: inline-block;
     margin-bottom: $spacer*1.5;
   }
 
-  button, a {
-    float: right;
-    margin-left: $spacer;
-  }
+}
+
+.page-header__cta {
+  float: right;
+  margin-left: $spacer;
 }
 
 .page-heading {
@@ -90,3 +94,16 @@
 .page-sidebar-section {
   margin-bottom: $spacer*2;
 }
+
+.page-breadcrumb {
+  display: flex;
+  margin-bottom: $spacer;
+}
+
+.page-breadcrumb__item {
+  a {
+    color: $text-color-weak;
+  }
+  padding-right: $spacer;
+}
+
