@@ -1,26 +1,26 @@
-<div class="page-nav container">
+<div class="page-nav">
+  <div class="container">
+    <div class="page-breadcrumb">
+      <div class="page-breadcrumb__item dropdown" ng-repeat="item in ctrl.model.items">
+        <a class="pointer" ng-href="{{::item.url}}" data-toggle="dropdown" ng-if="::item.items">
+          {{::item.title}}
+          <i class="page-breadcrumb__caret fa fa-caret-down"></i>
+        </a>
 
-  <div class="page-breadcrumb">
-    <div class="page-breadcrumb__item dropdown" ng-repeat="item in ctrl.model.items">
-      <a class="pointer" ng-href="{{::item.url}}" data-toggle="dropdown" ng-if="::item.items">
-        {{::item.title}}
-        <i class="page-breadcrumb__caret fa fa-caret-down"></i>
-      </a>
+        <a class="pointer" ng-href="{{::item.url}}" ng-if="::!item.items">
+          {{::item.title}}
+        </a>
 
-      <a class="pointer" ng-href="{{::item.url}}" ng-if="::!item.items">
-        {{::item.title}}
-      </a>
-
-      <ul class="dropdown-menu dropdown-menu--navbar">
-        <li ng-repeat="subItem in ::item.items">
-          <a class="pointer" ng-href="{{::subItem.url}}" ng-click="ctrl.navItemClicked(subItem, $event)">
-            {{::subItem.title}}
-          </a>
-        </li>
-      </ul>
+        <ul class="dropdown-menu dropdown-menu--navbar">
+          <li ng-repeat="subItem in ::item.items">
+            <a class="pointer" ng-href="{{::subItem.url}}" ng-click="ctrl.navItemClicked(subItem, $event)">
+              {{::subItem.title}}
+            </a>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
 </div>
-
 
 <dashboard-search></dashboard-search>

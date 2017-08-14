@@ -57,19 +57,13 @@
 
 .navbar-brand-btn {
   display: block;
-  position: relative;
-  float: left;
-  margin: 0;
+  margin-bottom: 3rem;
   background-color: $side-menu-bg;
   padding: 0.4rem 1.0rem 0.4rem 1rem;
   min-height: $navbarHeight;
 
   .fa-caret-down {
     font-size: 70%;
-  }
-
-  .fa-chevron-left{
-    display: none;
   }
 
   &:hover {

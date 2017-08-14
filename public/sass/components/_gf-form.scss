@@ -53,6 +53,7 @@ $gf-form-margin: 0.25rem;
   padding: $input-padding-y $input-padding-x;
   margin-right: $gf-form-margin;
   flex-shrink: 0;
+  font-weight: $font-weight-semi-bold;
 
   background-color: $input-label-bg;
   display: block;

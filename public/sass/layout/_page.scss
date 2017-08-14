@@ -1,21 +1,29 @@
 .grafana-app {
-  height: 100%;
   display: flex;
   align-items: stretch;
+  position: absolute;
   width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
 }
 
 .main-view {
+  position: relative;
   flex-grow: 1;
-  background: linear-gradient(180deg,#282020 0,#1e0f05);
+  background: inear-gradient(180deg, #1b1d25 0, #210d0d);
 }
 
 .page-container {
   @extend .container;
+  padding: $spacer $spacer $spacer $spacer*3;
+}
 
-  padding: $spacer;
-  min-height: calc(100% - 54px);
-  padding-bottom: $spacer * 5;
+.scroll-canvas {
+  position: absolute;
+  width: 100%;
+  height: calc(100% - 54px);
+  overflow: scroll;
 }
 
 .page-header-inner {
@@ -96,15 +104,20 @@
   margin-bottom: $spacer*2;
 }
 
+$breadcrumb-hover-hl: #111;
+$page-nav-bg: black;
+
+// .page-nav {
+//   background: $page-nav-bg;
+// }
+
 .page-breadcrumb {
   display: flex;
-  margin-bottom: $spacer;
+  padding: 0 $spacer;
 }
 
-$breadcrumb-hover-hl: #111;
-
 .page-breadcrumb__item {
-  background: black;
+  background: $page-nav-bg;
 
   > a {
     color: $text-color-weak;
@@ -124,7 +137,7 @@ $breadcrumb-hover-hl: #111;
       border-right-width: 0;
       border-left-width: 41px;
       z-index: 2;
-      border-left-color: black;
+      border-left-color: $page-nav-bg;
     }
   }
 
