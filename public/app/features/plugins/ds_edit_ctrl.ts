@@ -44,7 +44,6 @@ export class DataSourceEditCtrl {
   ) {
 
     this.navModel = navModelSrv.getDatasourceNav(0);
-    this.isNew = true;
     this.datasources = [];
     this.tabIndex = 0;
 
@@ -58,6 +57,7 @@ export class DataSourceEditCtrl {
   }
 
   initNewDatasourceModel() {
+    this.isNew = true;
     this.current = angular.copy(defaults);
 
     // We are coming from getting started

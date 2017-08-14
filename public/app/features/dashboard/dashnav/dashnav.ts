@@ -144,6 +144,17 @@ export class DashNavCtrl {
     onFolderChange(folderId) {
       this.dashboard.folderId = folderId;
     }
+
+    showSearch() {
+      this.$rootScope.appEvent('show-dash-search');
+    }
+
+    navItemClicked(navItem, evt) {
+      if (navItem.clickHandler) {
+        navItem.clickHandler();
+        evt.preventDefault();
+      }
+    }
 }
 
 export function dashNavDirective() {

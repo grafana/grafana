@@ -37,14 +37,19 @@ export class NavModelSrv {
 
   getDatasourceNav(subPage) {
     return {
-      section: {
-        title: 'Data Sources',
-        url: 'datasources',
-        icon: 'icon-gf icon-gf-datasources'
-      },
-      menu: [
-        {title: 'List view', active: subPage === 0, url: 'datasources', icon: 'fa fa-list-ul'},
-        {title: 'Add data source', active: subPage === 1, url: 'datasources/new', icon: 'fa fa-plus'},
+      items: [
+        {
+          title: 'Configuration',
+          items: [
+            {title: 'Data sources', active: subPage === 0, url: 'datasources',  icon: 'fa fa-database'},
+            {title: 'Users',        active: subPage === 0, url: 'users',        icon: 'fa fa-fw fa-users'},
+            {title: 'Plugins',      active: subPage === 0, url: 'plugins',      icon: 'icon-gf icon-gf-apps'},
+          ]
+        },
+        {
+          title: 'Data sources',
+          url: 'datasources',
+        }
       ]
     };
   }

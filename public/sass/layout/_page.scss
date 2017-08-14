@@ -19,8 +19,6 @@
 }
 
 .page-header-inner {
-  @include brand-bottom-border();
-  @include clearfix();
 }
 
 .page-body {
@@ -43,7 +41,10 @@
 }
 
 .page-header {
-  padding: 2rem 0 1rem 0;
+  padding: $spacer 0 0 0;
+  margin-bottom: 2rem;
+  @include brand-bottom-border();
+  @include clearfix();
 
   h1 {
     font-size: $font-size-h2;
@@ -101,9 +102,43 @@
 }
 
 .page-breadcrumb__item {
-  a {
+  > a {
     color: $text-color-weak;
+    display: block;
+    padding: 0.6rem 3rem 0.6rem 1rem;;
   }
-  padding-right: $spacer;
+
+  &:hover a {
+    .page-breadcrumb__caret {
+      opacity: 1;
+    }
+  }
+
+  background: black;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 100%;
+    content: '';
+    height: 0;
+    width: 0;
+    border: 24px solid transparent;
+    border-right-width: 0;
+    border-left-width: 20px;
+    transform: translateX(4px);
+    border-left-color: #ffffff;
+  }
+}
+
+.page-breadcrumb__caret {
+  opacity: 0;
+  position: absolute;
+  display: block;
+  width: 16px;
+  height: 16px;
+  right: 20px;
+  top: 14px;
 }
 

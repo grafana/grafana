@@ -1,31 +1,27 @@
-<div class="navbar-inner">
+<div class="page-nav container">
 
-	<div ng-if="::!ctrl.hasMenu">
-		<a href="{{::ctrl.section.url}}" class="navbar-page-btn">
-      <i class="{{::ctrl.section.icon}}" ng-show="::ctrl.section.icon"></i>
-      <img ng-src="{{::ctrl.section.iconUrl}}" ng-show="::ctrl.section.iconUrl"></i>
-      {{::ctrl.section.title}}
-    </a>
-	</div>
+  <div class="page-breadcrumb">
+    <div class="page-breadcrumb__item dropdown" ng-repeat="item in ::ctrl.model.items">
+      <a class="pointer" ng-href="{{::item.url}}" data-toggle="dropdown" ng-if="::item.items">
+        {{::item.title}}
+        <i class="page-breadcrumb__caret fa fa-caret-down"></i>
+      </a>
 
-  <div class="dropdown navbar-page-btn-wrapper"  ng-if="::ctrl.hasMenu">
-    <a href="{{::ctrl.section.url}}" class="navbar-page-btn" data-toggle="dropdown">
-      <i class="{{::ctrl.section.icon}}" ng-show="::ctrl.section.icon"></i>
-      <img ng-src="{{::ctrl.section.iconUrl}}" ng-show="::ctrl.section.iconUrl"></i>
-      {{::ctrl.section.title}}
-      <i class="fa fa-caret-down"></i>
-    </a>
-    <ul class="dropdown-menu dropdown-menu--navbar">
-      <li ng-repeat="navItem in ::ctrl.model.menu">
-        <a class="pointer" ng-href="{{::navItem.url}}" ng-click="ctrl.navItemClicked(navItem, $event)">
-          <i class="{{::navItem.icon}}" ng-show="::navItem.icon"></i>
-          {{::navItem.title}}
-        </a>
-      </li>
-    </ul>
+      <a class="pointer" ng-href="{{::item.url}}" ng-if="::!item.items">
+        {{::item.title}}
+      </a>
+
+      <ul class="dropdown-menu dropdown-menu--navbar">
+        <li ng-repeat="subItem in ::item.items">
+          <a class="pointer" ng-href="{{::subItem.url}}" ng-click="ctrl.navItemClicked(subItem, $event)">
+            <i class="{{::subItem.icon}}" ng-show="::subItem.icon"></i>
+            {{::subItem.title}}
+          </a>
+        </li>
+      </ul>
+    </div>
   </div>
-
-  <div ng-transclude></div>
 </div>
+
 
 <dashboard-search></dashboard-search>

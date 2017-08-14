@@ -1,23 +1,10 @@
-<div class="page-header container">
-  <div class="page-header-inner">
-    <div class="page-breadcrumb">
-      <div class="page-breadcrumb__item">
-        <a class="pointer">
-          Configuration <i class="fa fa-caret-down"></i>
-        </a>
-      </div>
-      <!-- <div class="page&#45;breadcrumb__item">/</div> -->
-      <div class="page-breadcrumb__item">
-        <a class="pointer">
-          Data sources
-        </a>
-      </div>
-    </div>
+<navbar model="ctrl.navModel"></navbar>
 
+<div class="page-container">
+  <div class="page-header">
     <h1>
       <i class="icon-gf icon-gf-datasources"></i>
-      <span ng-show="ctrl.isNew">Add data source</span>
-      <span ng-hide="ctrl.isNew">Settings</span>
+      Settings <span ng-show="ctrl.isNew" class="muted">(new)</span>
     </h1>
 
     <a class="page-header__cta btn btn-success" href="datasources/new" ng-show="ctrl.isNew">
@@ -40,9 +27,7 @@
       </ul>
     </div>
   </div>
-</div>
 
-<div class="page-container">
 
   <div ng-if="ctrl.tabIndex === 0" class="tab-content">
 
