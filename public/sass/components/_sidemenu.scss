@@ -1,44 +1,13 @@
-.sidemenu-canvas {
-  position: relative;
-}
 
 .sidemenu-wrapper {
-  position: absolute;
-  top: 52px;
-  left: 0;
-  //border-top: 1px solid $tight-form-border;
+  display: flex;
+  flex-direction: column;
   width: $side-menu-width;
   background-color: $side-menu-bg;
-  z-index: 1000;
-  opacity: 0;
-  visibility: hidden;
+  z-index: 1;
 
   a:focus {
     text-decoration: none;
-  }
-}
-
-.sidemenu-open {
-  .sidemenu-wrapper {
-    visibility: visible;
-    //transform: translate3d(0, 0, 0);
-    opacity: 1;
-    transition: opacity 0.3s;
-  }
-}
-
-.sidemenu-pinned {
-  .sidemenu-wrapper {
-    min-height: calc(100% - 54px);
-  }
-  .dashboard-container {
-    padding-left: $side-menu-width + 8px;
-  }
-  .page-container {
-    margin-left: $side-menu-width;
-  }
-  .search-container {
-    left: $side-menu-width;
   }
 }
 
