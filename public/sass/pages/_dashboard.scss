@@ -70,6 +70,7 @@ div.flot-text {
 
 .panel-title-text {
   cursor: pointer;
+  font-weight: $font-weight-semi-bold;
 
   &:hover {
     color: $link-hover-color;
