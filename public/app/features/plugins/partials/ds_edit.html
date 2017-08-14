@@ -4,7 +4,8 @@
   <div class="page-header">
     <h1>
       <i class="icon-gf icon-gf-datasources"></i>
-      Settings <span ng-show="ctrl.isNew" class="muted">(new)</span>
+      <span ng-show="ctrl.isNew">New data source</span>
+			<span ng-hide="ctrl.isNew">{{ctrl.current.name}}</span>
     </h1>
 
     <a class="page-header__cta btn btn-success" href="datasources/new" ng-show="ctrl.isNew">
