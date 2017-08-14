@@ -15,8 +15,7 @@ export class DataSourcesCtrl {
     private $http,
     private backendSrv,
     private datasourceSrv,
-    private navModelSrv
-  ) {
+    private navModelSrv) {
 
     this.navModel = this.navModelSrv.getDatasourceNav(0);
 
