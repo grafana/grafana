@@ -140,9 +140,12 @@ export class TableRenderer {
 
   renderCell(columnIndex, rowIndex, value, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
+
+    var column = this.table.columns[columnIndex];
     var style = '';
     var cellClasses = [];
     var cellClass = '';
+
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';
       this.colorState.cell = null;
@@ -154,40 +157,52 @@ export class TableRenderer {
     // because of the fixed table headers css only solution
     // there is an issue if header cell is wider the cell
     // this hack adds header content to cell (not visible)
-    var widthHack = '';
+    var columnHtml = '';
     if (addWidthHack) {
-      widthHack = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].title + '</div>';
+      columnHtml = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].title + '</div>';
     }
 
     if (value === undefined) {
       style = ' style="display:none;"';
-      this.table.columns[columnIndex].hidden = true;
+      column.hidden = true;
     } else {
-      this.table.columns[columnIndex].hidden = false;
+      column.hidden = false;
     }
 
-    var columnStyle = this.table.columns[columnIndex].style;
-    if (columnStyle && columnStyle.preserveFormat) {
+    if (column.style && column.style.preserveFormat) {
       cellClasses.push("table-panel-cell-pre");
     }
 
-    var columnHtml = value + widthHack;
-
-    if (columnStyle && columnStyle.link) {
+    if (column.style && column.style.link) {
       // Render cell as link
       var scopedVars = this.renderRowVariables(rowIndex);
       scopedVars['__cell'] = { value: value };
 
-      var cellLink = this.templateSrv.replace(columnStyle.linkUrl, scopedVars);
-      var cellLinkTooltip = this.templateSrv.replace(columnStyle.linkTooltip, scopedVars);
-      var cellTarget = columnStyle.linkTargetBlank ? '_blank' : '';
+      var cellLink = this.templateSrv.replace(column.style.linkUrl, scopedVars);
+      var cellLinkTooltip = this.templateSrv.replace(column.style.linkTooltip, scopedVars);
+      var cellTarget = column.style.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push("table-panel-cell-link");
-      columnHtml = `
+      columnHtml += `
         <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right">
-          ${columnHtml}
+          ${value}
         </a>
       `;
+    } else {
+      columnHtml += value;
+    }
+
+    if (column.filterable) {
+      cellClasses.push("table-panel-cell-filterable");
+      columnHtml += `
+        <a class="table-panel-filter-link" data-link-tooltip data-original-title="Filter out value" data-placement="bottom"
+           data-row="${rowIndex}" data-column="${columnIndex}" data-operator="!=">
+          <i class="fa fa-search-minus"></i>
+        </a>
+        <a class="table-panel-filter-link" data-link-tooltip data-original-title="Filter for value" data-placement="bottom"
+           data-row="${rowIndex}" data-column="${columnIndex}" data-operator="=">
+          <i class="fa fa-search-plus"></i>
+        </a>`;
     }
 
     if (cellClasses.length) {

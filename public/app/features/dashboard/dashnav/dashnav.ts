@@ -135,9 +135,10 @@ export class DashNavCtrl {
 
     viewJson() {
       var clone = this.dashboard.getSaveModelClone();
-      var html = angular.toJson(clone, true);
-      var uri = "data:application/json;charset=utf-8," + encodeURIComponent(html);
-      var newWindow = window.open(uri);
+
+      this.$rootScope.appEvent('show-json-editor', {
+        object: clone,
+      });
     }
 
     onFolderChange(folderId) {

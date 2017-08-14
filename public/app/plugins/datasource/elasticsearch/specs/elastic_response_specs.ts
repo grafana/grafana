@@ -1,6 +1,6 @@
 
 import {describe, beforeEach, it, expect} from 'test/lib/common';
-import ElasticResponse from '../elastic_response';
+import {ElasticResponse} from '../elastic_response';
 
 describe('ElasticResponse', function() {
   var targets;
@@ -387,10 +387,9 @@ describe('ElasticResponse', function() {
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
 
-    it('should return docs with byte and count', function() {
-      expect(result.data[0].datapoints.length).to.be(3);
-      expect(result.data[0].datapoints[0].Count).to.be(1);
-      expect(result.data[0].datapoints[0].bytes).to.be(1000);
+    it('should return table with byte and count', function() {
+      expect(result.data[0].rows.length).to.be(3);
+      expect(result.data[0].columns).to.eql([{text: 'bytes', filterable: true}, {text: 'Count'}]);
     });
   });
 
@@ -530,14 +529,14 @@ describe('ElasticResponse', function() {
 
     it('should return table', function() {
       expect(result.data.length).to.be(1);
-      expect(result.data[0].type).to.be('docs');
-      expect(result.data[0].datapoints.length).to.be(2);
-      expect(result.data[0].datapoints[0].host).to.be("server-1");
-      expect(result.data[0].datapoints[0].Average).to.be(1000);
-      expect(result.data[0].datapoints[0].Count).to.be(369);
+      expect(result.data[0].type).to.be('table');
+      expect(result.data[0].rows.length).to.be(2);
+      expect(result.data[0].rows[0][0]).to.be("server-1");
+      expect(result.data[0].rows[0][1]).to.be(1000);
+      expect(result.data[0].rows[0][2]).to.be(369);
 
-      expect(result.data[0].datapoints[1].host).to.be("server-2");
-      expect(result.data[0].datapoints[1].Average).to.be(2000);
+      expect(result.data[0].rows[1][0]).to.be("server-2");
+      expect(result.data[0].rows[1][1]).to.be(2000);
     });
   });
 
@@ -573,10 +572,9 @@ describe('ElasticResponse', function() {
     });
 
     it('should include field in metric name', function() {
-      expect(result.data[0].type).to.be('docs');
-      expect(result.data[0].datapoints[0].Average).to.be(undefined);
-      expect(result.data[0].datapoints[0]['Average test']).to.be(1000);
-      expect(result.data[0].datapoints[0]['Average test2']).to.be(3000);
+      expect(result.data[0].type).to.be('table');
+      expect(result.data[0].rows[0][1]).to.be(1000);
+      expect(result.data[0].rows[0][2]).to.be(3000);
     });
   });
 

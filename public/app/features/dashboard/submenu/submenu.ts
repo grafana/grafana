@@ -22,19 +22,12 @@ export class SubmenuCtrl {
   }
 
   variableUpdated(variable) {
-    this.variableSrv.variableUpdated(variable).then(() => {
-      this.$rootScope.$emit('template-variable-value-updated');
-      this.$rootScope.$broadcast('refresh');
-    });
+    this.variableSrv.variableUpdated(variable, true);
   }
 
   openEditView(editview) {
     var search = _.extend(this.$location.search(), {editview: editview});
     this.$location.search(search);
-  }
-
-  exitBuildMode() {
-    this.dashboard.toggleEditMode();
   }
 }
 

@@ -20,9 +20,9 @@ parent = "http_api"
     GET /api/users HTTP/1.1
     Accept: application/json
     Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+    Authorization: Basic YWRtaW46YWRtaW4=
 
-Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`.
+Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
 
@@ -55,9 +55,11 @@ Default value for the `perpage` parameter is `1000` and for the `page` parameter
     GET /api/users/search?perpage=10&page=1&query=mygraf HTTP/1.1
     Accept: application/json
     Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+    Authorization: Basic YWRtaW46YWRtaW4=
 
 Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. The `totalCount` field in the response can be used for pagination of the user list E.g. if `totalCount` is equal to 100 users and the `perpage` parameter is set to 10 then there are 10 pages of users. The `query` parameter is optional and it will return results where the query value is contained in one of the `name`, `login` or `email` fields. Query values with spaces need to be url encoded e.g. `query=Jane%20Doe`.
+
+Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
 
@@ -94,7 +96,9 @@ Default value for the `perpage` parameter is `1000` and for the `page` parameter
     GET /api/users/1 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+    Authorization: Basic YWRtaW46YWRtaW4=
+
+Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
 
@@ -126,7 +130,9 @@ Default value for the `perpage` parameter is `1000` and for the `page` parameter
     GET /api/users/lookup?loginOrEmail=admin HTTP/1.1
     Accept: application/json
     Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+    Authorization: Basic YWRtaW46YWRtaW4=
+
+Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
 
@@ -152,7 +158,7 @@ Default value for the `perpage` parameter is `1000` and for the `page` parameter
     PUT /api/users/2 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+    Authorization: Basic YWRtaW46YWRtaW4=
 
     {
       "email":"user@mygraf.com",
@@ -160,6 +166,8 @@ Default value for the `perpage` parameter is `1000` and for the `page` parameter
       "login":"user",
       "theme":"light"
     }
+
+Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
 
@@ -178,7 +186,9 @@ Default value for the `perpage` parameter is `1000` and for the `page` parameter
     GET /api/users/1/orgs HTTP/1.1
     Accept: application/json
     Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+    Authorization: Basic YWRtaW46YWRtaW4=
+
+Requires basic authentication and that the authenticated user is a Grafana Admin.
 
 **Example Response**:
 
@@ -246,11 +256,29 @@ Changes the password for the user
 
     {"message":"User password changed"}
 
-## Switch user context
+## Switch user context for a specified user
 
-`POST /api/user/using/:organisationId`
+`POST /api/users/:userId/using/:organizationId`
 
-Switch user context to the given organisation.
+Switch user context to the given organization. Requires basic authentication and that the authenticated user is a Grafana Admin.
+
+**Example Request**:
+
+    POST /api/users/7/using/2 HTTP/1.1
+    Authorization: Basic YWRtaW46YWRtaW4=
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    {"message":"Active organization changed"}
+
+## Switch user context for signed in user
+
+`POST /api/user/using/:organizationId`
+
+Switch user context to the given organization.
 
 **Example Request**:
 

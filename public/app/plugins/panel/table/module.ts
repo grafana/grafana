@@ -50,8 +50,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, templateSrv, private annotationsSrv, private $sanitize) {
+  constructor($scope, $injector, templateSrv, private annotationsSrv, private $sanitize, private variableSrv) {
     super($scope, $injector);
+
     this.pageIndex = 0;
 
     if (this.panel.styles === void 0) {
@@ -223,10 +224,24 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       selector: '[data-link-tooltip]'
     });
 
+    function addFilterClicked(e) {
+      let filterData = $(e.currentTarget).data();
+      var options = {
+        datasource: panel.datasource,
+        key: data.columns[filterData.column].text,
+        value: data.rows[filterData.row][filterData.column],
+        operator: filterData.operator,
+      };
+
+      ctrl.variableSrv.setAdhocFilter(options);
+    }
+
     elem.on('click', '.table-panel-page-link', switchPage);
+    elem.on('click', '.table-panel-filter-link', addFilterClicked);
 
     var unbindDestroy = scope.$on('$destroy', function() {
       elem.off('click', '.table-panel-page-link');
+      elem.off('click', '.table-panel-filter-link');
       unbindDestroy();
     });
 

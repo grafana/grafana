@@ -22,6 +22,7 @@ func init() {
 	bus.AddHandler("sql", GetUserByLogin)
 	bus.AddHandler("sql", GetUserByEmail)
 	bus.AddHandler("sql", SetUsingOrg)
+	bus.AddHandler("sql", UpdateUserLastSeenAt)
 	bus.AddHandler("sql", GetUserProfile)
 	bus.AddHandler("sql", GetSignedInUser)
 	bus.AddHandler("sql", SearchUsers)
@@ -260,6 +261,24 @@ func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
 	})
 }
 
+func UpdateUserLastSeenAt(cmd *m.UpdateUserLastSeenAtCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		if cmd.UserId <= 0 {
+		}
+
+		user := m.User{
+			Id:         cmd.UserId,
+			LastSeenAt: time.Now(),
+		}
+
+		if _, err := sess.Id(cmd.UserId).Update(&user); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 func SetUsingOrg(cmd *m.SetUsingOrgCommand) error {
 	getOrgsForUserCmd := &m.GetUserOrgListQuery{UserId: cmd.UserId}
 	GetUserOrgList(getOrgsForUserCmd)
@@ -324,15 +343,16 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 	}
 
 	var rawSql = `SELECT
-		u.id           as user_id,
-		u.is_admin     as is_grafana_admin,
-		u.email        as email,
-		u.login        as login,
-		u.name         as name,
-		u.help_flags1  as help_flags1,
-		org.name       as org_name,
-		org_user.role  as org_role,
-		org.id         as org_id
+		u.id             as user_id,
+		u.is_admin       as is_grafana_admin,
+		u.email          as email,
+		u.login          as login,
+		u.name           as name,
+		u.help_flags1    as help_flags1,
+		u.last_seen_at   as last_seen_at,
+		org.name         as org_name,
+		org_user.role    as org_role,
+		org.id           as org_id
 		FROM ` + dialect.Quote("user") + ` as u
 		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
 		LEFT OUTER JOIN org on org.id = org_user.org_id `
@@ -367,27 +387,49 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 	query.Result = m.SearchUserQueryResult{
 		Users: make([]*m.UserSearchHitDTO, 0),
 	}
+
 	queryWithWildcards := "%" + query.Query + "%"
 
+	whereConditions := make([]string, 0)
+	whereParams := make([]interface{}, 0)
 	sess := x.Table("user")
-	if query.Query != "" {
-		sess.Where("email LIKE ? OR name LIKE ? OR login like ?", queryWithWildcards, queryWithWildcards, queryWithWildcards)
+
+	if query.OrgId > 0 {
+		whereConditions = append(whereConditions, "org_id = ?")
+		whereParams = append(whereParams, query.OrgId)
 	}
+
+	if query.Query != "" {
+		whereConditions = append(whereConditions, "(email LIKE ? OR name LIKE ? OR login like ?)")
+		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+	}
+
+	if len(whereConditions) > 0 {
+		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+	}
+
 	offset := query.Limit * (query.Page - 1)
 	sess.Limit(query.Limit, offset)
-	sess.Cols("id", "email", "name", "login", "is_admin")
+	sess.Cols("id", "email", "name", "login", "is_admin", "last_seen_at")
 	if err := sess.Find(&query.Result.Users); err != nil {
 		return err
 	}
 
+	// get total
 	user := m.User{}
-
 	countSess := x.Table("user")
-	if query.Query != "" {
-		countSess.Where("email LIKE ? OR name LIKE ? OR login like ?", queryWithWildcards, queryWithWildcards, queryWithWildcards)
+
+	if len(whereConditions) > 0 {
+		countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 	}
+
 	count, err := countSess.Count(&user)
 	query.Result.TotalCount = count
+
+	for _, user := range query.Result.Users {
+		user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
+	}
+
 	return err
 }
 

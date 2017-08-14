@@ -43,7 +43,6 @@ var pidFile = flag.String("pidfile", "", "path to pid file")
 var exitChan = make(chan int)
 
 func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func main() {

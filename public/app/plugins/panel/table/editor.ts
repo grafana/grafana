@@ -16,6 +16,8 @@ export class TablePanelEditorCtrl {
   fontSizes: any;
   addColumnSegment: any;
   getColumnNames: any;
+  canSetColumns: boolean;
+  columnsHelpMessage: string;
 
   /** @ngInject */
   constructor($scope, private $q, private uiSegmentSrv) {
@@ -24,8 +26,27 @@ export class TablePanelEditorCtrl {
     this.panel = this.panelCtrl.panel;
     this.transformers = transformers;
     this.fontSizes = ['80%', '90%', '100%', '110%', '120%', '130%', '150%', '160%', '180%', '200%', '220%', '250%'];
-
     this.addColumnSegment = uiSegmentSrv.newPlusButton();
+    this.updateTransformHints();
+  }
+
+  updateTransformHints() {
+    this.canSetColumns = false;
+    this.columnsHelpMessage = '';
+
+    switch (this.panel.transform) {
+      case "timeseries_aggregations": {
+        this.canSetColumns = true;
+        break;
+      }
+      case "json": {
+        this.canSetColumns = true;
+        break;
+      }
+      case "table": {
+        this.columnsHelpMessage = "Columns and their order are determined by the data query";
+      }
+    }
   }
 
   getColumnOptions() {
@@ -57,6 +78,7 @@ export class TablePanelEditorCtrl {
       this.panel.columns.push({text: 'Avg', value: 'avg'});
     }
 
+    this.updateTransformHints();
     this.render();
   }
 

@@ -498,6 +498,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           logBase: panel.yaxes[0].logBase || 1,
           min: panel.yaxes[0].min ? _.toNumber(panel.yaxes[0].min) : null,
           max: panel.yaxes[0].max ? _.toNumber(panel.yaxes[0].max) : null,
+          tickDecimals: panel.yaxes[0].decimals
         };
 
         options.yaxes.push(defaults);
@@ -510,6 +511,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           secondY.position = 'right';
           secondY.min = panel.yaxes[1].min ? _.toNumber(panel.yaxes[1].min) : null;
           secondY.max = panel.yaxes[1].max ? _.toNumber(panel.yaxes[1].max) : null;
+          secondY.tickDecimals = panel.yaxes[1].decimals !== null ? _.toNumber(panel.yaxes[1].decimals): null;
           options.yaxes.push(secondY);
 
           applyLogScale(options.yaxes[1], data);
@@ -588,7 +590,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           if (axis.ticks[axis.ticks.length - 1] > axis.max) {
             axis.max = axis.ticks[axis.ticks.length - 1];
           }
-          axis.tickDecimals = decimalPlaces(min);
         } else {
           axis.ticks = [1, 2];
           delete axis.min;
