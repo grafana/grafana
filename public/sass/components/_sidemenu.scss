@@ -52,15 +52,15 @@
 }
 
 .icon-circle {
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
   display: inline-block;
   i {
     color: $link-color;
     opacity: .7;
     position: relative;
     left: 7px;
-    font-size: 150%;
+    font-size: 130%;
   }
 
   .fa {
@@ -79,7 +79,7 @@
 
 .sidemenu-item {
   color: $link-color;
-  line-height: 47px;
+  line-height: 42px;
   padding: 0px 10px 0px 10px;
   display: block;
   position: relative;
