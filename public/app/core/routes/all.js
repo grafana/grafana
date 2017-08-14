@@ -13,6 +13,15 @@ define([
     var loadOncallerBundle = new BundleLoader.BundleLoader('app/features/oncaller/all');
     var loadCMDBBundle = new BundleLoader.BundleLoader('app/features/cmdb/all');
     var loadSetupBundle = new BundleLoader.BundleLoader('app/features/setup/all');
+    var loadSummaryBundle = new BundleLoader.BundleLoader('app/features/summary/all');
+    var loadAnomalyBundle = new BundleLoader.BundleLoader('app/features/anomaly/all');
+    var loadProfileBundle = new BundleLoader.BundleLoader('app/features/profile/all');
+    var loadAdminBundle = new BundleLoader.BundleLoader('app/features/admin/all');
+    var loadServiceBundle = new BundleLoader.BundleLoader('app/features/service/all');
+    var loadHealthBundle = new BundleLoader.BundleLoader('app/features/health/all');
+    var loadAnalysisBundle = new BundleLoader.BundleLoader('app/features/analysis/all');
+    var loadLogsBundle = new BundleLoader.BundleLoader('app/features/logs/all');
+    var loadReportBundle = new BundleLoader.BundleLoader('app/features/report/reportCtrl');
 
     $routeProvider
       .when('/', {
@@ -33,16 +42,19 @@ define([
         templateUrl: 'app/features/summary/partials/summary.html',
         controller: 'SummaryCtrl',
         reloadOnSearch: false,
+        resolve: loadSummaryBundle,
       })
       .when('/service', {
         templateUrl: 'app/features/summary/partials/service.html',
         controller: 'ServiceCtrl',
         reloadOnSearch: false,
+        resolve: loadSummaryBundle,
       })
       .when('/service_v2', {
         templateUrl: 'app/features/service/partials/service.html',
         controller: 'ServiceStatusCtrl',
         reloadOnSearch: true,
+        resolve: loadServiceBundle,
       })
       .when('/dashboard/:type/:slug', {
         templateUrl: 'app/partials/dashboard.html',
@@ -135,15 +147,18 @@ define([
       .when('/anomaly', {
         templateUrl: 'app/features/anomaly/partials/anomaly.html',
         controller : 'AnomalyCtrl',
+        resolve: loadAnomalyBundle,
       })
       .when('/anomaly/history', {
         templateUrl: 'app/features/anomaly/partials/anomalyHistory.html',
         controller : 'AnomalyHistory',
+        resolve: loadAnomalyBundle,
       })
       .when('/anomaly/:clusterId', {
         templateUrl: 'app/features/anomaly/partials/anomalyMetric.html',
         controller : 'AnomalyMetric',
-        reloadOnSearch: true
+        reloadOnSearch: true,
+        resolve: loadAnomalyBundle,
       })
       .when('/decompose', {
         templateUrl: 'app/features/decompose/partials/compose.html',
@@ -172,38 +187,47 @@ define([
       .when('/profile', {
         templateUrl: 'app/features/profile/partials/profile.html',
         controller : 'ProfileCtrl',
+        resolve: loadProfileBundle,
       })
       .when('/profile/password', {
         templateUrl: 'app/features/profile/partials/password.html',
         controller : 'ChangePasswordCtrl',
+        resolve: loadProfileBundle,
       })
       .when('/profile/select-org', {
         templateUrl: 'app/features/profile/partials/select_org.html',
         controller : 'SelectOrgCtrl',
+        resolve: loadProfileBundle,
       })
       .when('/admin/settings', {
         templateUrl: 'app/features/admin/partials/settings.html',
         controller : 'AdminSettingsCtrl',
+        resolve: loadAdminBundle,
       })
       .when('/admin/users', {
         templateUrl: 'app/features/admin/partials/users.html',
         controller : 'AdminListUsersCtrl',
+        resolve: loadAdminBundle,
       })
       .when('/admin/users/create', {
         templateUrl: 'app/features/admin/partials/new_user.html',
         controller : 'AdminEditUserCtrl',
+        resolve: loadAdminBundle,
       })
       .when('/admin/users/edit/:id', {
         templateUrl: 'app/features/admin/partials/edit_user.html',
         controller : 'AdminEditUserCtrl',
+        resolve: loadAdminBundle,
       })
       .when('/admin/orgs', {
         templateUrl: 'app/features/admin/partials/orgs.html',
         controller : 'AdminListOrgsCtrl',
+        resolve: loadAdminBundle,
       })
       .when('/admin/orgs/edit/:id', {
         templateUrl: 'app/features/admin/partials/edit_org.html',
         controller : 'AdminEditOrgCtrl',
+        resolve: loadAdminBundle,
       })
       .when('/login', {
         templateUrl: 'app/partials/login.html',
@@ -235,43 +259,48 @@ define([
       .when('/logs', {
         templateUrl: 'app/features/logs/partials/logs.html',
         controller : 'LogsCtrl',
+        resolve: loadLogsBundle,
       })
       .when('/analysis', {
         templateUrl: 'app/features/analysis/partials/analysis.html',
         controller : 'AnalysisCtrl',
+        resolve: loadAnalysisBundle,
       })
       .when('/association', {
         templateUrl: 'app/features/analysis/partials/single_association.html',
         controller : 'SingleAssociationCtrl',
+        resolve: loadAnalysisBundle,
       })
       .when('/knowledgebase', {
-        templateUrl: 'app/features/analysis/partials/knowledge_base.html',
+        templateUrl: 'app/features/logs/partials/knowledge_base.html',
         controller : 'KnowledgeBaseCtrl',
+        resolve: loadLogsBundle,
       })
       .when('/install', {
         templateUrl: 'app/partials/install.html',
         controller : 'AnalysisCtrl',
+        resolve: loadAnalysisBundle,
       })
       .when('/health', {
         templateUrl: 'app/features/health/partials/systemHealth.html',
         controller: 'SystemHealthCtrl',
+        resolve: loadHealthBundle,
       })
       .when('/customer', {
         templateUrl: 'app/features/summary/partials/customer.html',
         controller: 'CustomerCtrl',
+        resolve: loadSummaryBundle,
       })
       .when('/report', {
         templateUrl: 'app/features/report/partials/report.html',
         controller: 'ReportCtrl',
         reloadOnSearch: false,
-      })
-      .when('/cluster', {
-        templateUrl: 'app/features/cluster/partials/cluster.html',
-        controller: 'ClusterCtrl',
+        resolve: loadReportBundle
       })
       .when('/integrate', {
         templateUrl: 'app/features/analysis/partials/logIntegrate.html',
         controller : 'LogIntegrateCtrl',
+        resolve: loadAnalysisBundle,
       })
       .when('/setting/agent', {
         templateUrl: 'app/features/setup/partials/host_agent.html',
@@ -316,7 +345,8 @@ define([
       .when('/service_dependency', {
         templateUrl: 'app/features/service/partials/service_dep.html',
         controller : 'BuildDependCtrl',
-        reloadOnSearch: true
+        reloadOnSearch: true,
+        resolve: loadServiceBundle,
       })
       .otherwise({
         templateUrl: 'app/partials/error.html',

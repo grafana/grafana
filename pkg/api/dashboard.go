@@ -229,3 +229,21 @@ func GetAlertDef(c *middleware.Context) {
 
 	c.JSON(200, &dat)
 }
+
+func GetMetricHelpFile(c *middleware.Context) {
+	var dat map[string]interface{}
+	name := c.Params(":name")
+	filePath := path.Join(setting.StaticRootPath, "dashboards/metric/" + name + ".json")
+	file, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		c.JsonApiErr(500, "File isn't exist", err)
+		return
+	}
+
+	if err := json.Unmarshal([]byte(file), &dat); err != nil {
+		c.JsonApiErr(500, "Can't parse the file into json", err)
+		return
+	}
+
+	c.JSON(200, &dat)
+}

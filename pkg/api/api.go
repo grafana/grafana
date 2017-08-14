@@ -199,6 +199,8 @@ func Register(r *macaron.Macaron) {
 			r.Get("/template/:name",GetDashboardTemplate)
 			//alertdef
 			r.Get("/alertd/:name",GetAlertDef)
+			// metric help message
+			r.Get("/metric/:name", GetMetricHelpFile)
 		})
 	}, reqSignedIn)
 

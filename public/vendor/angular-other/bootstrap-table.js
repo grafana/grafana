@@ -658,7 +658,7 @@
                 column.push($.extend({}, {
                     title: $(this).html(),
                     'class': $(this).attr('class'),
-                    titleTooltip: $(this).attr('title'),
+                    titleTooltip: $(this).data('title-tooltip'),  // $(this).attr('title'),
                     rowspan: $(this).attr('rowspan') ? +$(this).attr('rowspan') : undefined,
                     colspan: $(this).attr('colspan') ? +$(this).attr('colspan') : undefined
                 }, $(this).data()));
@@ -814,6 +814,8 @@
                     sprintf(' rowspan="%s"', column.rowspan),
                     sprintf(' colspan="%s"', column.colspan),
                     sprintf(' data-field="%s"', column.field),
+                    column.titleTooltip && 
+                        sprintf(' data-toggle="tooltip" data-container="body" title="%s"', column.titleTooltip),
                     '>');
 
                 html.push(sprintf('<div class="th-inner %s">', that.options.sortable && column.sortable ?

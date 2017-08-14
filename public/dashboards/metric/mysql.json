@@ -1,0 +1,578 @@
+{
+  "mysql.innodb.locks.os_waits": {
+    "name": "mysql.innodb.locks.os_waits",
+    "definition": "线程放弃spin wait尝试，直接进入sleep状态的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mysql.innodb.locks.spin_waits": {
+    "name": "mysql.innodb.locks.spin_waits",
+    "definition": "线程尝试获取spin锁而不可得的次数，也就是 spin-wait 的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mysql.max_used_connections": {
+    "name": "mysql.max_used_connections",
+    "definition": "同时使用的连接的最大数目",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mysql.open_tables": {
+    "name": "mysql.open_tables",
+    "definition": "已经打开的表的数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mysql.queries": {
+    "name": "mysql.queries",
+    "definition": "The number of statements executed by the server. This variable includes statements executed within stored programs, unlike the Questions variable. It does not count COM_PING or COM_STATISTICS commands.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mysql.questions": {
+    "name": "mysql.questions",
+    "definition": "The number of statements executed by the server. This includes only statements sent to the server by clients and not statements executed within stored programs, unlike the Queries variable. This variable does not count COM_PING, COM_STATISTICS, COM_STMT_PREPARE, COM_STMT_CLOSE, or COM_STMT_RESET commands.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mysql.slow_queries": {
+    "name": "mysql.slow_queries",
+    "definition": "Number of queries that took more than long_query_time seconds to execute. Slow queries generate excessive disk reads, memory and CPU usage. Check slow_query_log to find them",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mysql.threads_connected": {
+    "name": "mysql.threads_connected",
+    "definition": "Number of clients currently connected. If none or too high, something is wrong",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mysql.uptime": {
+    "name": "mysql.uptime",
+    "definition": "Seconds since the server was started. We can use this to detect respawns.",
+    "type": "time",
+    "unit": "second",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mysql.connection_states": {
+    "name": "mysql.connection_states",
+    "definition": "The number of connection attempts (successful or not) to the MySQL server",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.innodb.history_list_length": {
+    "name": "mysql.innodb.history_list_length",
+    "definition": "历史记录的长度，即位于innodb数据文件的撤销空间里的页面的数目",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.innodb.ibuf.free_list_len": {
+    "name": "mysql.innodb.ibuf.free_list_len",
+    "definition": "表示ibuf树的空闲链表长度",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.innodb.ibuf.seg_size": {
+    "name": "mysql.innodb.ibuf.seg_size",
+    "definition": "包含ibuf header页和ibuf tree的segment的Page数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.innodb.ibuf.size": {
+    "name": "mysql.innodb.ibuf.size",
+    "definition": "表示Ibuf 索引树的page数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.innodb.locks.rounds": {
+    "name": "mysql.innodb.locks.rounds",
+    "definition": "线程进入spin wait循环的次数，也就是检查mutex锁的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.innodb.opened_read_views": {
+    "name": "mysql.innodb.opened_read_views",
+    "definition": "显示只读视图的数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.innodb.queries_queued": {
+    "name": "mysql.innodb.queries_queued",
+    "definition": "有多少个正在查询操作个数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.last_query_partial_plans": {
+    "name": "mysql.last_query_partial_plans",
+    "definition": "有多少个正在查询操作个数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.locks.os_waits": {
+    "name": "mysql.locks.os_waits",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.locks.rounds": {
+    "name": "mysql.locks.rounds",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.locks.spin_waits": {
+    "name": "mysql.locks.spin_waits",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.open_table_definitions": {
+    "name": "mysql.open_table_definitions",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.not_flushed_delayed_rows": {
+    "name": "mysql.not_flushed_delayed_rows",
+    "definition": "在INSERT DELAY队列中等待写入的行的数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.open_files": {
+    "name": "mysql.open_files",
+    "definition": "打开文件的数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.open_streams": {
+    "name": "mysql.open_streams",
+    "definition": "打开流的数量(主要用于日志记载)",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_accounts_lost": {
+    "name": "mysql.performance_schema_accounts_lost",
+    "definition": "The number of times a row could not be added to the accounts table because it was full.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_cond_classes_lost": {
+    "name": "mysql.performance_schema_cond_classes_lost",
+    "definition": "How many condition instruments could not be loaded",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_cond_instances_lost": {
+    "name": "mysql.performance_schema_cond_instances_lost",
+    "definition": "How many condition instrument instances could not be created",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_digest_lost": {
+    "name": "mysql.performance_schema_digest_lost",
+    "definition": "The number of digest instances that could not be instrumented in theevents_statements_summary_by_digest table. This can be nonzero if the value ofperformance_schema_digests_size is too small",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_file_classes_lost": {
+    "name": "mysql.performance_schema_file_classes_lost",
+    "definition": "How many file instruments could not be loaded",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_file_handles_lost": {
+    "name": "mysql.performance_schema_file_handles_lost",
+    "definition": "How many file instrument instances could not be opened",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_file_instances_lost": {
+    "name": "mysql.performance_schema_file_instances_lost",
+    "definition": "How many file instrument instances could not be created",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_hosts_lost": {
+    "name": "mysql.performance_schema_hosts_lost",
+    "definition": "The number of times a row could not be added to the hosts table because it was full",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_locker_lost": {
+    "name": "mysql.performance_schema_locker_lost",
+    "definition": "How many events are “lost” or not recorded, due to the following conditions: Events are recursive. The depth of the nested events stack is greater than the limit imposed by the implementation. Events recorded by the Performance Schema are not recursive, so this variable should always be 0.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_mutex_classes_lost": {
+    "name": "mysql.performance_schema_mutex_classes_lost",
+    "definition": "The number of times a memory instrument could not be loaded",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_mutex_instances_lost": {
+    "name": "mysql.performance_schema_mutex_instances_lost",
+    "definition": "How many mutex instrument instances could not be created",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_rwlock_classes_lost": {
+    "name": "mysql.performance_schema_rwlock_classes_lost",
+    "definition": "How many rwlock instruments could not be loaded",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_rwlock_instances_lost": {
+    "name": "mysql.performance_schema_rwlock_instances_lost",
+    "definition": "How many rwlock instrument instances could not be created",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_session_connect_attrs_lost": {
+    "name": "mysql.performance_schema_session_connect_attrs_lost",
+    "definition": "The number of connections for which connection attribute truncation has occurred.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_socket_classes_lost": {
+    "name": "mysql.performance_schema_socket_classes_lost",
+    "definition": "How many socket instruments could not be loaded",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_socket_instances_lost": {
+    "name": "mysql.performance_schema_socket_instances_lost",
+    "definition": "How many socket instrument instances could not be created",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_stage_classes_lost": {
+    "name": "mysql.performance_schema_stage_classes_lost",
+    "definition": "How many stage instruments could not be loaded",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_statement_classes_lost": {
+    "name": "mysql.performance_schema_statement_classes_lost",
+    "definition": "How many statement instruments could not be loaded",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_table_handles_lost": {
+    "name": "mysql.performance_schema_table_handles_lost",
+    "definition": "How many table instrument instances could not be opened",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_table_instances_lost": {
+    "name": "mysql.performance_schema_table_instances_lost",
+    "definition": "How many table instrument instances could not be created",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_thread_classes_lost": {
+    "name": "mysql.performance_schema_thread_classes_lost",
+    "definition": "How many thread instruments could not be loaded",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_thread_instances_lost": {
+    "name": "mysql.performance_schema_thread_instances_lost",
+    "definition": "The number of thread instances that could not be instrumented in the threads table",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.performance_schema_users_lost": {
+    "name": "mysql.performance_schema_users_lost",
+    "definition": "The number of times a row could not be added to the users table because it was full",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.prepared_stmt_count": {
+    "name": "mysql.prepared_stmt_count",
+    "definition": "The current number of prepared statements.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.qcache_free_blocks": {
+    "name": "mysql.qcache_free_blocks",
+    "definition": "Query Cache 中目前还有多少剩余的blocks。如果该值显示较大，则说明Query Cache 中的内存碎片较多了，可能需要寻找合适的机会进行整理。",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.qcache_free_memory": {
+    "name": "mysql.qcache_free_memory",
+    "definition": "Query Cache 中目前剩余的内存大小。通过这个参数我们可以较为准确的观察出当前系统中的Query Cache 内存大小是否足够，是需要增加还是过多了；",
+    "type": "data",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.qcache_hits": {
+    "name": "mysql.qcache_hits",
+    "definition": "多少次命中。通过这个参数我们可以查看到Query Cache 的基本效果；",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.qcache_inserts": {
+    "name": "mysql.qcache_inserts",
+    "definition": "多少次未命中然后插入。通过“Qcache_hits”和“Qcache_inserts”两个参数我们就可以算出Query Cache 的命中率了：",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.qcache_lowmem_prunes": {
+    "name": "mysql.qcache_lowmem_prunes",
+    "definition": "多少条Query 因为内存不足而被清除出Query Cache。通过“Qcache_lowmem_prunes”和“Qcache_free_memory”相互结合，能够更清楚的了解到我们系统中Query Cache 的内存大小是否真的足够，是否非常频繁的出现因为内存不足而有Query 被换出",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.qcache_not_cached": {
+    "name": "mysql.qcache_not_cached",
+    "definition": "因为query_cache_type 的设置或者不能被cache 的Query 的数量；",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.qcache_queries_in_cache": {
+    "name": "mysql.qcache_queries_in_cache",
+    "definition": "当前Query Cache 中cache 的Query 数量；",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.qcache_total_blocks": {
+    "name": "mysql.qcache_total_blocks",
+    "definition": "当前Query Cache 中的block 数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.select_full_join": {
+    "name": "mysql.select_full_join",
+    "definition": "Number of full joins needed to answer queries. If too high, improve your indexing or database schema",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.select_full_range_join": {
+    "name": "mysql.select_full_range_join",
+    "definition": "The number of joins that used a range search on a reference table",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.select_range": {
+    "name": "mysql.select_range",
+    "definition": "The number of joins that used ranges on the first table. This is normally not a critical issue even if the value is quite large",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.select_range_check": {
+    "name": "mysql.select_range_check",
+    "definition": "The number of joins without keys that check for key usage after each row. If this is not 0, you should carefully check the indexes of your tables",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.select_scan": {
+    "name": "mysql.select_scan",
+    "definition": "The number of joins that did a full scan of the first table",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.slave_open_temp_tables": {
+    "name": "mysql.slave_open_temp_tables",
+    "definition": "The number of temporary tables that the slave SQL thread currently has open. ",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mysql.slow_launch_threads": {
+    "name": "mysql.slow_launch_threads",
+    "definition": "The number of threads that have taken more than slow_launch_time seconds to create",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

@@ -3,19 +3,9 @@
 </topnav>
 <div class="page-container">
   <div class="page">
-    <h2>服务状态</h2>
+    <h2>{{summarySelect.SystemsName}} 服务状态</h2>
     <h4>快速查看当前节点的运行情况</h4>
     <div class="tight-form last">
-      <ul class="tight-form-list">
-        <li class="tight-form-item" style="width: 50px">
-          子系统
-        </li>
-        <li>
-          <select ng-model="summarySelect.system" class="input-small tight-form-input" ng-change="cleanup()">
-            <option ng-selected="$index == 0" ng-repeat="sys in systems" value="{{sys.Id}}">{{sys.SystemsName}}</option>
-          </select>
-        </li>
-      </ul>
       <ul class="tight-form-list">
         <li class="tight-form-item">
           主机名

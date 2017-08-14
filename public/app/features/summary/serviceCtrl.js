@@ -10,7 +10,8 @@ define([
     module.controller('ServiceCtrl', function ($scope, backendSrv, contextSrv, datasourceSrv) {
       $scope.init = function () {
         $scope.systems = contextSrv.systemsMap;
-        $scope.summarySelect.system = $scope.systems[0].Id;
+        $scope.summarySelect.system = contextSrv.user.systemId;
+        $scope.summarySelect.SystemsName = _.find(contextSrv.systemsMap,{Id:$scope.summarySelect.system}).SystemsName;
         $scope.getServices();
         $scope.suggestTagHost = backendSrv.suggestTagHost;
       };

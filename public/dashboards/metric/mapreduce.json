@@ -1,0 +1,218 @@
+{
+  "mapreduce.job.failedMapAttempts": {
+    "name": "mapreduce.job.failedMapAttempts",
+    "definition": "Number of failed map attempts",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mapreduce.job.failedReduceAttempts": {
+    "name": "mapreduce.job.failedReduceAttempts",
+    "definition": "Number of failed reduce attempts",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mapreduce.job.mapsTotal": {
+    "name": "mapreduce.job.mapsTotal",
+    "definition": "Total number of maps",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mapreduce.job.reducesTotal": {
+    "name": "mapreduce.job.reducesTotal",
+    "definition": "Number of reduces",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mapreduce.job.successfulMapAttempts": {
+    "name": "mapreduce.job.successfulMapAttempts",
+    "definition": "Number of successful map attempts",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mapreduce.job.successfulReduceAttempts": {
+    "name": "mapreduce.job.successfulReduceAttempts",
+    "definition": "Number of successful reduce attempts",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mapreduce.job.counter.mapCounterValue": {
+    "name": "mapreduce.job.counter.mapCounterValue",
+    "definition": "Counter value of map tasks",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.counter.reduceCounterValue": {
+    "name": "mapreduce.job.counter.reduceCounterValue",
+    "definition": "Counter value of reduce tasks",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.counter.totalCounterValue": {
+    "name": "mapreduce.job.counter.totalCounterValue",
+    "definition": "Counter value of all tasks",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.elapsedTime": {
+    "name": "mapreduce.job.elapsedTime",
+    "definition": "elapsed time since the application started",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.killedMapAttempts": {
+    "name": "mapreduce.job.killedMapAttempts",
+    "definition": "Number of killed map attempts",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.killedReduceAttempts": {
+    "name": "mapreduce.job.killedReduceAttempts",
+    "definition": "Number of killed reduce attempts",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.map.task.progress": {
+    "name": "mapreduce.job.map.task.progress",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.mapsCompleted": {
+    "name": "mapreduce.job.mapsCompleted",
+    "definition": "Number of completed maps",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.mapsPending": {
+    "name": "mapreduce.job.mapsPending",
+    "definition": "Number of pending maps ",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.mapsRunning": {
+    "name": "mapreduce.job.mapsRunning",
+    "definition": "Number of running maps",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.newMapAttempts": {
+    "name": "mapreduce.job.newMapAttempts",
+    "definition": "Number of new map attempts",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.newReduceAttempts": {
+    "name": "mapreduce.job.newReduceAttempts",
+    "definition": "Number of new reduce attempts",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.reduce.task.progress": {
+    "name": "mapreduce.job.reduce.task.progress",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.reducesCompleted": {
+    "name": "mapreduce.job.reducesCompleted",
+    "definition": "Number of completed reduces",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.reducesPending": {
+    "name": "mapreduce.job.reducesPending",
+    "definition": "Number of pending reduces",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.reducesRunning": {
+    "name": "mapreduce.job.reducesRunning",
+    "definition": "Number of running reduces",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.runningMapAttempts": {
+    "name": "mapreduce.job.runningMapAttempts",
+    "definition": "Number of running map attempts",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mapreduce.job.runningReduceAttempts": {
+    "name": "mapreduce.job.runningReduceAttempts",
+    "definition": "Number of running reduce attempts",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

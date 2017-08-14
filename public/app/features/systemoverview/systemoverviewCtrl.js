@@ -14,6 +14,20 @@ define([
       };
     });
 
+    module.filter('translateItemType', function () {
+      return function (text) {
+        var map = {
+          "mem": "内存",
+          "io" : "磁盘",
+          "nw" : "网络",
+          "cpu": "CPU",
+          "kpi": "服务 KPI",
+          "state": "服务状态"
+        };
+        return map[text.toLowerCase()];
+      };
+    });
+
     module.controller('SystemOverviewCtrl', function ($scope, $location, $q, $modal, backendSrv, alertSrv,
       contextSrv, datasourceSrv, alertMgrSrv, healthSrv, serviceDepSrv, jsPlumbService) {
 
@@ -45,7 +59,7 @@ define([
           return value === 0 ? '正常' : '异常';
         }
         if (_.isString(value)) {
-          return value === 'GREEN' ? '正常' : (value === 'YELLOW' ? '告警' : (value === 'RED' ? '严重' : '异常'));
+          return value === 'GREEN' ? '正常' : (value === 'YELLOW' ? '警告' : (value === 'RED' ? '严重' : '异常'));
         }
       };
 
@@ -230,6 +244,7 @@ define([
       };
 
       $scope.nodeClickHandler = function (node) {
+        $scope.selected = -1;
         $(node.el).addClass("active").siblings().removeClass("active");
 
         var serviceId = node.node.data.id;
@@ -251,6 +266,7 @@ define([
           $scope.hostPanel.hosts = [];
 
           _.each(hosts, function (host) {
+            !_.findWhere($scope.hostPanels, { host: host }) && $scope.hostPanels.push({ host: host });
             var tmp = _.findWhere($scope.hostPanels, { host: host }) || { host: host };
             $scope.hostPanel.hosts.push(tmp);
           });
@@ -268,10 +284,17 @@ define([
         serviceDepSrv.readMetricStatus(serviceId, serviceName).then(function (response) {
           $scope.service = response.data;
         });
+
+        // 拿 servicekpi metric 的 message, 储存在 _.metricHelpMessage 中
+        var service = serviceName.split(".")[0];
+        _.each([service, 'mem', 'io', 'nw', 'cpu'], function (item) {
+          backendSrv.readMetricHelpMessage(item);
+        });
       };
 
       $scope.selectHost = function (index, host) {
         $scope.selected = ($scope.selected == index) ? -1 : index;
+        $('[href="#tab-' + host + '-1"]').tab('show');
         $scope.showHost(host);
       };
 
@@ -286,6 +309,12 @@ define([
 
         $scope.predictionPanel = $scope.panels[host].predictionPanel;
         _.forIn($scope.predictionPanel, function (item, key) {
+          // when prediction api returns {}
+          if (item.errTip) {
+            $('.prediction-item-' + $.escapeSelector(host + key)).html(item.errTip);
+            return;
+          }
+
           var score = parseFloat(item.tips[0].data);
           var colors = score > 75 ? ['#BB1144'] : (score > 50 ? ['#FE9805'] : ['#3DB779']);
 
@@ -325,6 +354,7 @@ define([
 
         $scope.currentHost = host;
         $scope.currentItem = item;
+        $scope.currentItemStatus = $scope.service.hostStatusMap[host].itemStatusMap[item].healthStatusType;
         $scope.bsTableData = metric;
 
         $scope.$broadcast('load-table');
@@ -362,7 +392,7 @@ define([
             "tags"      : { "host" : "*" }
           }];
 
-          var q = datasourceSrv.getHostResource(queries, 'now-1m').then(function (response) {
+          var q = datasourceSrv.getHostResource(queries, 'now-5m').then(function (response) {
             _.each(response, function (metric) {
               hostsResource[metric.host]["status"] = $scope.statusFormatter(metric.value);
             });
@@ -379,6 +409,7 @@ define([
 
           var q = datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
             _.each(response, function (metric) {
+              if (!hostsResource[metric.host]) { return; }
               hostsResource[metric.host]["cpu"] = $scope.percentFormatter(metric.value);
             });
           });
@@ -394,6 +425,7 @@ define([
 
           var q = datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
             _.each(response, function (metric) {
+              if (!hostsResource[metric.host]) { return; }
               hostsResource[metric.host]["disk"] = $scope.gbFormatter(metric.value);
             });
           });
@@ -409,6 +441,7 @@ define([
 
           var q = datasourceSrv.getHostResource(queries, 'now-1d').then(function (response) {
             _.each(response, function (metric) {
+              if (!hostsResource[metric.host]) { return; }
               hostsResource[metric.host]["mem"] = $scope.gbFormatter(metric.value);
             });
           });
@@ -458,17 +491,17 @@ define([
             host  : hostname
           };
 
+          var type = /cpu/.test(panel.targets[0].metric) ? 'cpu' : (/mem/.test(panel.targets[0].metric) ? 'mem' : 'disk');
+          predictionPanel[type] = {};
+          predictionPanel[type].tips = [];
+          predictionPanel[type].title = titleMap[type];
+
           backendSrv.getPredictionPercentage(params).then(function (response) {
             var times = ['1天后', '1周后', '1月后', '3月后', '6月后'];
             var num   = 0;
             var data  = response.data;
 
             if (_.isEmpty(data)) { throw Error; }
-
-            var type = /cpu/.test(panel.targets[0].metric) ? 'cpu' : (/mem/.test(panel.targets[0].metric) ? 'mem' : 'disk');
-            predictionPanel[type] = {};
-            predictionPanel[type].tips = [];
-            predictionPanel[type].title = titleMap[type];
 
             for (var i in data) {
               var score = type === 'disk' ? 100 - data[i] : data[i];  // reponse disk 是剩余率, show disk 需要使用率
@@ -484,7 +517,8 @@ define([
             predictionPanel[type]['selectedOption'] = predictionPanel[type].tips[0];
             $scope.panels[hostname]['predictionPanel'] = predictionPanel;
           }).catch(function () {
-            panel.tip = '暂无预测数据';
+            predictionPanel[type].errTip = '暂无预测数据';
+            $scope.panels[hostname]['predictionPanel'] = predictionPanel;
           });
         });
 

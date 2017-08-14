@@ -6,9 +6,9 @@
                     <li class="pull-left">
                         <i class="fa btn btn-primary" ng-class="{true: 'fa-minus', false: 'fa-plus'}[$index == selected]"></i>
                     </li>
-                    <li style="overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">{{host.host}}</li>
+                    <li style="padding-left: 5%; text-align: left;" class="text-overflow">{{host.host}}</li>
                     <li>
-                        <button type="button" style="margin: 8px 54px; padding: 2px 10px;"
+                        <button type="button" style="margin: 8px 0; padding: 2px 10px; position:relative; left: 50%; transform: translateX(-50%);"
                             class="btn-item system-status status-{{ hostsResource[hostPanel.currentService.name][host.host].status | lowercase }}">
                             {{hostsResource[hostPanel.currentService.name][host.host].statusText}}
                         </button>
@@ -80,13 +80,17 @@
                                 <li ng-repeat="(name, item) in host.itemStatusMap"
                                     ng-click="selectHealthItemType(host.host, item.type)"
                                     class="status-{{item.healthStatusType | lowercase}}"
-                                    style="color: #fff;">
+                                    style="color: #fff;"
+                                    bs-tooltip="'{{item.type | formatItemType | translateItemType}}'">
                                     {{item.type | formatItemType | uppercase}}
                                 </li>
                             </ul>
                             <div ng-if="host.healthStatusType !== 'GREY'">
-                                <p style="margin: 20px 0 0;">{{currentItem}} 重要指标：</p>
-                                <p ng-if="currentItem == 'ServiceState'">该服务进程运行正常...</p>
+                                <p ng-if="currentItem!=='ServiceState'" style="margin: 20px 0 0;">{{currentItem}} 重要指标：</p>
+                                <p ng-if="currentItem=='ServiceState'">
+                                    <span ng-if="currentItemStatus=='GREEN'">服务线程正常运行</span>
+                                    <span ng-if="currentItemStatus!=='GREEN'">服务线程中断</span>
+                                </p>
                                 <table-loader
                                     key={{host.host}}
                                     template="/app/features/service/partials/service_host_table.html"></table-loader>

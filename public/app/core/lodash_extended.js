@@ -1,7 +1,8 @@
 define([
+  'jquery',
   'lodash-src'
 ],
-function () {
+function ($) {
   'use strict';
 
   var _ = window._;
@@ -62,7 +63,8 @@ function () {
       "nginx": "Nginx",
       "postgresql": "Postgresql",
       "redis": "Redis",
-      "rabbitmq": "RabbitMQ"
+      "rabbitmq": "RabbitMQ",
+      "iis": "IIS"
     };
   };
 
@@ -120,6 +122,9 @@ function () {
     }
     return obj;
   };
+
+  _.metricHelpMessage = {};
+  _.metricMessage = {};
 
   return _;
 });

@@ -1,0 +1,623 @@
+{
+  "mongo.asserts.regular": {
+    "name": "mongo.asserts.regular",
+    "definition": "有规律的asserts出现的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mongo.extra_info.page_faults": {
+    "name": "mongo.extra_info.page_faults",
+    "definition": "页故障总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mongo.mem.resident": {
+    "name": "mongo.mem.resident",
+    "definition": "数据库使用内存大小",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mongo.metrics.cursor.timedOut": {
+    "name": "mongo.metrics.cursor.timedOut",
+    "definition": "已超时的游标总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mongo.network.numRequests": {
+    "name": "mongo.network.numRequests",
+    "definition": "服务器已收到的不同请求的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "mongo.asserts.msg": {
+    "name": "mongo.asserts.msg",
+    "definition": "asserts出现的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.asserts.rollovers": {
+    "name": "mongo.asserts.rollovers",
+    "definition": "Number of times that the rollover counters roll over per second. The counters rollover to zero every 2 to the 30 assertions.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.asserts.user": {
+    "name": "mongo.asserts.user",
+    "definition": "Number of user assertions raised per second.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.asserts.warning": {
+    "name": "mongo.asserts.warning",
+    "definition": "Warnings assert 出现的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.connections.available": {
+    "name": "mongo.connections.available",
+    "definition": "可用连接数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.connections.current": {
+    "name": "mongo.connections.current",
+    "definition": "用户正在使用的连接数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.globalLock.activeClients.readers": {
+    "name": "mongo.globalLock.activeClients.readers",
+    "definition": "使用全局锁执行读取操作的客户端数目",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.globalLock.activeClients.total": {
+    "name": "mongo.globalLock.activeClients.total",
+    "definition": "使用全局锁的客户端总数 (activeClients.readers+activeClients.writers)",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.globalLock.activeClients.writers": {
+    "name": "mongo.globalLock.activeClients.writers",
+    "definition": "使用全局锁执行写操作的客户端数目",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.globalLock.currentQueue.readers": {
+    "name": "mongo.globalLock.currentQueue.readers",
+    "definition": "等待获取锁的读操作",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.globalLock.currentQueue.total": {
+    "name": "mongo.globalLock.currentQueue.total",
+    "definition": "等待获取锁的全部",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.globalLock.currentQueue.writers": {
+    "name": "mongo.globalLock.currentQueue.writers",
+    "definition": "等待获取锁的写操作",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.globalLock.totalTime": {
+    "name": "mongo.globalLock.totalTime",
+    "definition": "等待锁的总时间",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.locks.Collection.acquireCount": {
+    "name": "mongo.locks.Collection.acquireCount",
+    "definition": "集合锁获取的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.locks.Database.acquireCount": {
+    "name": "mongo.locks.Database.acquireCount",
+    "definition": "数据库锁获取的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.locks.Global.acquireCount": {
+    "name": "mongo.locks.Global.acquireCount",
+    "definition": "全局锁获取的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.locks.Metadata.acquireCount": {
+    "name": "mongo.locks.Metadata.acquireCount",
+    "definition": "Metadata 锁获取的次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.mem.mapped": {
+    "name": "mongo.mem.mapped",
+    "definition": "数据库映射内存的大小, 粗略地等于",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.mem.mappedWithJournal": {
+    "name": "mongo.mem.mappedWithJournal",
+    "definition": "The amount of mapped memory, in megabytes (MB), including the memory used for journaling",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.mem.virtual": {
+    "name": "mongo.mem.virtual",
+    "definition": "数据库使用虚拟内存大小",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.cursor.open.noTimeout": {
+    "name": "mongo.metrics.cursor.open.noTimeout",
+    "definition": "游标打开超时次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.cursor.open.pinned": {
+    "name": "mongo.metrics.cursor.open.pinned",
+    "definition": "The number of “pinned” open cursors.",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.cursor.open.total": {
+    "name": "mongo.metrics.cursor.open.total",
+    "definition": "打开游标的总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.document.deleted": {
+    "name": "mongo.metrics.document.deleted",
+    "definition": "删除文档的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.document.inserted": {
+    "name": "mongo.metrics.document.inserted",
+    "definition": "增加文档的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.document.returned": {
+    "name": "mongo.metrics.document.returned",
+    "definition": "查询返回文档的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.document.updated": {
+    "name": "mongo.metrics.document.updated",
+    "definition": "更新文档的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.getLastError.wtime.num": {
+    "name": "mongo.metrics.getLastError.wtime.num",
+    "definition": "getLastError操作总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.getLastError.wtime.totalMillis": {
+    "name": "mongo.metrics.getLastError.wtime.totalMillis",
+    "definition": "getLastError操作总时间",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.getLastError.wtimeouts": {
+    "name": "mongo.metrics.getLastError.wtimeouts",
+    "definition": "getLastError操作次数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.operation.scanAndOrder": {
+    "name": "mongo.metrics.operation.scanAndOrder",
+    "definition": "返回排序数的查询总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.queryExecutor.scanned": {
+    "name": "mongo.metrics.queryExecutor.scanned",
+    "definition": "当查询或者执行查询计划时扫描索引的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.record.moves": {
+    "name": "mongo.metrics.record.moves",
+    "definition": "反映文档在磁盘中中移动的总次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.apply.batches.num": {
+    "name": "mongo.metrics.repl.apply.batches.num",
+    "definition": "在所有数据库中应用的批处理总数。",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.apply.batches.totalMillis": {
+    "name": "mongo.metrics.repl.apply.batches.totalMillis",
+    "definition": "mongod花费在oplog操作的总时间以毫秒为单位",
+    "type": "counter",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.apply.ops": {
+    "name": "mongo.metrics.repl.apply.ops",
+    "definition": "oplog操作的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.buffer.count": {
+    "name": "mongo.metrics.repl.buffer.count",
+    "definition": "当前oplog缓冲区中的操作数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.buffer.maxSizeBytes": {
+    "name": "mongo.metrics.repl.buffer.maxSizeBytes",
+    "definition": "缓冲区的最大大小",
+    "type": "const",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.buffer.sizeBytes": {
+    "name": "mongo.metrics.repl.buffer.sizeBytes",
+    "definition": "缓冲区的当前大小",
+    "type": "data",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.network.bytes": {
+    "name": "mongo.metrics.repl.network.bytes",
+    "definition": "从replica同步读取的数据总量",
+    "type": "data",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.network.getmores.num": {
+    "name": "mongo.metrics.repl.network.getmores.num",
+    "definition": "getmore操作总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.network.getmores.totalMillis": {
+    "name": "mongo.metrics.repl.network.getmores.totalMillis",
+    "definition": "getmore操作收集数据所需的总时间",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.network.ops": {
+    "name": "mongo.metrics.repl.network.ops",
+    "definition": "从replica中读操作的总次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.network.readersCreated": {
+    "name": "mongo.metrics.repl.network.readersCreated",
+    "definition": "创建的oplog查询进程的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.preload.docs.num": {
+    "name": "mongo.metrics.repl.preload.docs.num",
+    "definition": "The total number of documents loaded during the pre-fetch stage of replication.",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.preload.docs.totalMillis": {
+    "name": "mongo.metrics.repl.preload.docs.totalMillis",
+    "definition": "The total amount of time spent loading documents as part of the pre-fetch stage of replication.",
+    "type": "counter",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.preload.indexes.num": {
+    "name": "mongo.metrics.repl.preload.indexes.num",
+    "definition": "The total number of index entries loaded by members before updating documents as part of the pre-fetch stage of replication.",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.repl.preload.indexes.totalMillis": {
+    "name": "mongo.metrics.repl.preload.indexes.totalMillis",
+    "definition": "The total amount of time, in milliseconds, spent loading index entries as part of the pre-fetch stage of replication.",
+    "type": "counter",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.ttl.deletedDocuments": {
+    "name": "mongo.metrics.ttl.deletedDocuments",
+    "definition": "从具有ttl索引的集合中删除的文档的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.metrics.ttl.passes": {
+    "name": "mongo.metrics.ttl.passes",
+    "definition": "进程使用ttl索引从集合中删除文档的次数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.network.bytesIn": {
+    "name": "mongo.network.bytesIn",
+    "definition": "接收的网络流量大小的字节数",
+    "type": "data",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.network.bytesOut": {
+    "name": "mongo.network.bytesOut",
+    "definition": "发送的网络流量大小的字节数",
+    "type": "data",
+    "unit": "bytes",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.opcounters.command": {
+    "name": "mongo.opcounters.command",
+    "definition": "发出到数据库的命令的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.opcounters.delete": {
+    "name": "mongo.opcounters.delete",
+    "definition": "删除操作的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.opcounters.getmore": {
+    "name": "mongo.opcounters.getmore",
+    "definition": "getmore操作的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.opcounters.insert": {
+    "name": "mongo.opcounters.insert",
+    "definition": "insert操作的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.opcounters.query": {
+    "name": "mongo.opcounters.query",
+    "definition": "query操作的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.opcounters.update": {
+    "name": "mongo.opcounters.update",
+    "definition": "Update 操作的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.opcountersRepl.command": {
+    "name": "mongo.opcountersRepl.command",
+    "definition": "发出到replica的命令的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.opcountersRepl.delete": {
+    "name": "mongo.opcountersRepl.delete",
+    "definition": "Replica 删除操作的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.opcountersRepl.getmore": {
+    "name": "mongo.opcountersRepl.getmore",
+    "definition": "Replica 中getmore操作的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.opcountersRepl.insert": {
+    "name": "mongo.opcountersRepl.insert",
+    "definition": "Replica inserrt操作的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.opcountersRepl.query": {
+    "name": "mongo.opcountersRepl.query",
+    "definition": "Replica 中query操作的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "mongo.opcountersRepl.update": {
+    "name": "mongo.opcountersRepl.update",
+    "definition": "Replica 中update操作的总数",
+    "type": "counter",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

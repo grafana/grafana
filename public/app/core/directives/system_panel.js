@@ -115,7 +115,7 @@ define([
                   "downsample": "1s-sum",
                   "tags": {"host": summary.tag.host}
                 }];
-                datasourceSrv.getHostStatus(queries, 'now-1m').then(function(response) {
+                datasourceSrv.getHostStatus(queries, 'now-5m').then(function(response) {
                   if(response.status > 0) {
                     host.status = 1;
                     scope.hostStatus.unnormal++;

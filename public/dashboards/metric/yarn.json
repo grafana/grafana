@@ -1,0 +1,344 @@
+{
+  "yarn.metrics.activeNodes": {
+    "name": "yarn.metrics.activeNodes",
+    "definition": "The number of active nodes",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "yarn.metrics.allocatedMB": {
+    "name": "yarn.metrics.allocatedMB",
+    "definition": "The amount of memory allocated in MB. If this is closed to totalMB, it is bad",
+    "type": "data",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "yarn.metrics.appsFailed": {
+    "name": "yarn.metrics.appsFailed",
+    "definition": "The number of applications failed",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "yarn.metrics.lostNodes": {
+    "name": "yarn.metrics.lostNodes",
+    "definition": "The number of lost nodes",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "yarn.metrics.rebootedNodes": {
+    "name": "yarn.metrics.rebootedNodes",
+    "definition": "The number of nodes rebooted",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "yarn.metrics.unhealthyNodes": {
+    "name": "yarn.metrics.unhealthyNodes",
+    "definition": "The number of unhealthy nodes",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "yarn.nodes.usedMemoryMB": {
+    "name": "yarn.nodes.usedMemoryMB",
+    "definition": "The total amount of memory currently used on the node (in MB)",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "yarn.apps.allocatedMB": {
+    "name": "yarn.apps.allocatedMB",
+    "definition": "The sum of memory in MB allocated to the application's running containers",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.apps.allocatedVCores": {
+    "name": "yarn.apps.allocatedVCores",
+    "definition": "The sum of virtual cores allocated to the application's running containers",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.apps.elapsedTime": {
+    "name": "yarn.apps.elapsedTime",
+    "definition": "The elapsed time since the application started",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.apps.finishedTime": {
+    "name": "yarn.apps.finishedTime",
+    "definition": "The time in which the application finished",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.apps.memorySeconds": {
+    "name": "yarn.apps.memorySeconds",
+    "definition": "The amount of memory the application has allocated",
+    "type": "number",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.apps.progress": {
+    "name": "yarn.apps.progress",
+    "definition": "The progress of the application as a percent",
+    "type": "number",
+    "unit": "percent",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.apps.runningContainers": {
+    "name": "yarn.apps.runningContainers",
+    "definition": "The number of containers currently running for the application",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.apps.startedTime": {
+    "name": "yarn.apps.startedTime",
+    "definition": "The time in which application started",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.apps.vcoreSeconds": {
+    "name": "yarn.apps.vcoreSeconds",
+    "definition": "The amount of CPU resources the application has allocated",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.allocatedVirtualCores": {
+    "name": "yarn.metrics.allocatedVirtualCores",
+    "definition": "The number of allocated virtual cores",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.appsCompleted": {
+    "name": "yarn.metrics.appsCompleted",
+    "definition": "The number of applications completed",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.appsKilled": {
+    "name": "yarn.metrics.appsKilled",
+    "definition": "The number of applications killed",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.appsPending": {
+    "name": "yarn.metrics.appsPending",
+    "definition": "The number of applications pending",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.appsRunning": {
+    "name": "yarn.metrics.appsRunning",
+    "definition": "The number of applications running",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.appsSubmitted": {
+    "name": "yarn.metrics.appsSubmitted",
+    "definition": "The number of applications submitted",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.availableMB": {
+    "name": "yarn.metrics.availableMB",
+    "definition": "The amount of memory available in MB",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.availableVirtualCores": {
+    "name": "yarn.metrics.availableVirtualCores",
+    "definition": "The number of available virtual cores",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.containersAllocated": {
+    "name": "yarn.metrics.containersAllocated",
+    "definition": "The number of containers allocated",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.containersPending": {
+    "name": "yarn.metrics.containersPending",
+    "definition": "The number of containers pending",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.containersReserved": {
+    "name": "yarn.metrics.containersReserved",
+    "definition": "The number of containers reserved",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.decommissionedNodes": {
+    "name": "yarn.metrics.decommissionedNodes",
+    "definition": "The number of nodes decommissioned",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.reservedMB": {
+    "name": "yarn.metrics.reservedMB",
+    "definition": "The amount of memory reserved in MB",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.reservedVirtualCores": {
+    "name": "yarn.metrics.reservedVirtualCores",
+    "definition": "The number of reserved virtual cores",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.totalMB": {
+    "name": "yarn.metrics.totalMB",
+    "definition": "The amount of total memory in MB",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.totalNodes": {
+    "name": "yarn.metrics.totalNodes",
+    "definition": "The total number of nodes",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.metrics.totalVirtualCores": {
+    "name": "yarn.metrics.totalVirtualCores",
+    "definition": "The total number of virtual cores",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.nodes.availMemoryMB": {
+    "name": "yarn.nodes.availMemoryMB",
+    "definition": "TThe total amount of memory currently available on the node (in MB)",
+    "type": "data",
+    "unit": "MB",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.nodes.availableVirtualCores": {
+    "name": "yarn.nodes.availableVirtualCores",
+    "definition": "The total number of vCores available on the node",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.nodes.lastHealthUpdate": {
+    "name": "yarn.nodes.lastHealthUpdate",
+    "definition": "The last time the node reported its health (in ms since epoch)",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.nodes.numContainers": {
+    "name": "yarn.nodes.numContainers",
+    "definition": "The total number of containers currently running on the node",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "yarn.nodes.usedVirtualCores": {
+    "name": "yarn.nodes.usedVirtualCores",
+    "definition": "The total number of vCores currently used on the node",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

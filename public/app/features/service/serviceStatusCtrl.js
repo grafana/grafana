@@ -13,7 +13,9 @@ define([
       };
     });
 
-    module.controller('ServiceStatusCtrl', function ($scope, $timeout, $q, $location, serviceDepSrv, jsPlumbService, alertSrv) {
+    module.controller('ServiceStatusCtrl', function ($scope, $timeout, $q, $location,
+      serviceDepSrv, jsPlumbService, alertSrv, backendSrv) {
+
       var toolkit = jsPlumbService.getToolkit("serviceToolkit");
 
       $scope.$on('$destroy', function () {
@@ -46,6 +48,7 @@ define([
       };
 
       $scope.nodeClickHandler = function (node) {
+        $scope.selected = -1;
         $(node.el).addClass("active").siblings().removeClass("active");
 
         var serviceId = node.node.data.id;
@@ -56,6 +59,12 @@ define([
 
         serviceDepSrv.readMetricStatus(serviceId, serviceName).then(function (response) {
           $scope.service = response.data;
+        });
+
+        // 拿 servicekpi metric 的 message, 储存在 _.metricHelpMessage 中
+        var service = serviceName.split(".")[0];
+        _.each([service, 'mem', 'io', 'nw', 'cpu'], function (item) {
+          backendSrv.readMetricHelpMessage(item);
         });
       };
 
@@ -96,6 +105,7 @@ define([
 
         $scope.currentHost = host;
         $scope.currentItem = item;
+        $scope.currentItemStatus = $scope.service.hostStatusMap[host].itemStatusMap[item].healthStatusType;
         $scope.bsTableData = metric;
 
         $scope.$broadcast('load-table');
