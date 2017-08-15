@@ -1,0 +1,1 @@
+{"version":3,"sources":["../src/module.js"],"names":["StatusPluginCtrl"],"mappings":";;;;;;;;AAAQA,sB,gBAAAA,gB;;;2BAGNA,gB","file":"module.js","sourcesContent":["import {StatusPluginCtrl} from './status_ctrl';\n\nexport {\n  StatusPluginCtrl as PanelCtrl\n};\n"]}

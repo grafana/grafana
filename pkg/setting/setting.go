@@ -409,7 +409,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	loadConfiguration(args)
 
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
-	PluginsPath = Cfg.Section("paths").Key("plugins").String()
+	PluginsPath = makeAbsolute(Cfg.Section("paths").Key("plugins").String(), HomePath)
 
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)

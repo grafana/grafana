@@ -1,0 +1,81 @@
+.status-panel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center; }
+  .status-panel h1 {
+    font-size: 1.5rem; }
+  .status-panel .st-card-front {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-content: center; }
+  .status-panel .st-card-back .top_section .status-panel-annotation_row {
+    text-align: left;
+    font-size: 0.85rem;
+    padding-bottom: 10px; }
+    .status-panel .st-card-back .top_section .status-panel-annotation_row .row-overflow {
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap; }
+  .status-panel .st-card-back .bottom_section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-content: center; }
+    .status-panel .st-card-back .bottom_section .status_alerts_row {
+      min-height: 1px; }
+  .status-panel .st-card-front,
+  .status-panel .st-card-back {
+    backface-visibility: hidden;
+    transition: transform 0.5s; }
+
+.st-card-front .ok-text, .st-card-front .warning-text, .st-card-front .fail-text, .st-card-front .no-data-text, .st-card-front .disabled-text {
+  display: none;
+  font-size: 2.0rem; }
+
+.ok-state {
+  background-color: green; }
+  .ok-state .ok-text {
+    display: block; }
+
+.warn-state {
+  background-color: orange; }
+  .warn-state .warning-text {
+    display: block; }
+
+.error-state {
+  background-color: red; }
+  .error-state .fail-text {
+    display: block; }
+
+.no-data-state {
+  background-color: gray; }
+  .no-data-state .no-data-text {
+    display: block; }
+
+.disabled-state {
+  background-color: gray; }
+  .disabled-state .disabled-text {
+    display: block; }
+
+.st-card.effect-hover .st-card-back {
+  -webkit-transform: rotateY(-180deg);
+  transform: rotateY(-180deg); }
+
+.st-card.effect-hover:hover .st-card-front, .st-card.effect-hover.flipped .st-card-front {
+  -webkit-transform: rotateY(-180deg);
+  transform: rotateY(-180deg); }
+
+.st-card.effect-hover:hover .st-card-back, .st-card.effect-hover.flipped .st-card-back {
+  -webkit-transform: rotateY(0);
+  transform: rotateY(0); }
+
+.st-card:not(.effect-hover) .st-card-front {
+  display: none; }
+
+/*# sourceMappingURL=status_panel.css.map */
