@@ -26,7 +26,7 @@ export class SideMenuCtrl {
     this.showSignout = this.contextSrv.isSignedIn && !config['disableSignoutMenu'];
     this.maxShownOrgs = 10;
 
-    this.mainLinks = config.bootData.mainNavLinks;
+    this.mainLinks = config.bootData.navTree;
     this.openUserDropdown();
     this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
 

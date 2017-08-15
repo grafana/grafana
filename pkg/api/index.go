@@ -85,7 +85,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	}
 
 	if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
-		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+		data.NavTree = append(data.NavTree, &dtos.NavLink{
 			Text: "New",
 			Icon: "fa fa-fw fa-plus",
 			Url:  "",
@@ -103,7 +103,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		{Text: "Snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "icon-gf icon-gf-snapshot"},
 	}
 
-	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+	data.NavTree = append(data.NavTree, &dtos.NavLink{
 		Text:     "Dashboards",
 		Icon:     "icon-gf icon-gf-dashboard",
 		Url:      setting.AppSubUrl + "/",
@@ -116,7 +116,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			{Text: "Notification channels", Url: setting.AppSubUrl + "/alerting/notifications", Icon: "fa fa-fw fa-bell-o"},
 		}
 
-		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+		data.NavTree = append(data.NavTree, &dtos.NavLink{
 			Text:     "Alerting",
 			Icon:     "icon-gf icon-gf-alert",
 			Url:      setting.AppSubUrl + "/alerting/list",
@@ -165,35 +165,60 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			}
 
 			if len(appLink.Children) > 0 {
-				data.MainNavLinks = append(data.MainNavLinks, appLink)
+				data.NavTree = append(data.NavTree, appLink)
 			}
 		}
 	}
 
 	if c.OrgRole == m.ROLE_ADMIN {
 		cfgNode := &dtos.NavLink{
+			Id:   "cfg",
 			Text: "Configuration",
 			Icon: "fa fa-fw fa-cogs",
 			Url:  setting.AppSubUrl + "/configuration",
 			Children: []*dtos.NavLink{
 				{
-					Text: "Data Sources",
-					Icon: "icon-gf icon-gf-datasources",
-					Url:  setting.AppSubUrl + "/datasources",
+					Text:        "Data Sources",
+					Icon:        "icon-gf icon-gf-datasources",
+					Description: "Add and configure data sources",
+					Id:          "datasources",
+					Url:         setting.AppSubUrl + "/datasources",
 					Children: []*dtos.NavLink{
 						{Text: "List", Url: setting.AppSubUrl + "/datasources", Icon: "icon-gf icon-gf-datasources"},
 						{Text: "New", Url: setting.AppSubUrl + "/datasources", Icon: "fa fa-fw fa-plus"},
 					},
 				},
 				{
-					Text: "Plugins",
-					Icon: "icon-gf icon-gf-apps",
-					Url:  setting.AppSubUrl + "/plugins",
+					Text:        "Preferences",
+					Id:          "org",
+					Description: "Organization preferences",
+					Icon:        "fa fa-fw fa-sliders",
+					Url:         setting.AppSubUrl + "/org",
+				},
+				{
+					Text:        "Plugins",
+					Id:          "plugins",
+					Description: "View and configure plugins",
+					Icon:        "icon-gf icon-gf-apps",
+					Url:         setting.AppSubUrl + "/plugins",
 					Children: []*dtos.NavLink{
 						{Text: "Panels", Url: setting.AppSubUrl + "/plugins?type=panel", Icon: "fa fa-fw fa-stop"},
 						{Text: "Data sources", Url: setting.AppSubUrl + "/plugins?type=datasource", Icon: "icon-gf icon-gf-datasources"},
 						{Text: "Apps", Url: setting.AppSubUrl + "/plugins?type=app", Icon: "icon-gf icon-gf-apps"},
 					},
+				},
+				{
+					Text:        "User Management",
+					Id:          "users",
+					Description: "Manage users & user groups",
+					Icon:        "fa fa-fw fa-users",
+					Url:         setting.AppSubUrl + "/org/users",
+				},
+				{
+					Text:        "API Keys",
+					Description: "Create & manage API keys",
+					Icon:        "fa fa-fw fa-key",
+					Url:         setting.AppSubUrl + "/org/apikeys",
 				},
 			},
 		}
@@ -212,7 +237,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			})
 		}
 
-		data.MainNavLinks = append(data.MainNavLinks, cfgNode)
+		data.NavTree = append(data.NavTree, cfgNode)
 	}
 
 	return &data, nil

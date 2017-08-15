@@ -61,12 +61,12 @@
     margin-bottom: $spacer*1.5;
   }
 
+  a, button {
+    float: right;
+    margin-left: $spacer;
+  }
 }
 
-.page-header__cta {
-  float: right;
-  margin-left: $spacer;
-}
 
 .page-heading {
   font-size: 1.25rem;

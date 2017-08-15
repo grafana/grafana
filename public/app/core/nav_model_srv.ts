@@ -1,6 +1,8 @@
 ///<reference path="../headers/common.d.ts" />
 
 import coreModule from 'app/core/core_module';
+import config from 'app/core/config';
+import _ from 'lodash';
 
 export interface NavModelItem {
   title: string;
@@ -15,10 +17,24 @@ export interface NavModel {
 }
 
 export class NavModelSrv {
+  navItems: any;
 
 
   /** @ngInject */
   constructor(private contextSrv) {
+    this.navItems = config.bootData.navTree;
+  }
+
+  getCfgNode() {
+    return _.find(this.navItems, {id: 'cfg'});
+  }
+
+  getConfigurationNav() {
+    let cfg = this.getCfgNode();
+    return {
+      breadcrumbs: [cfg],
+      node: cfg,
+    };
   }
 
   getAlertingNav(subPage) {
@@ -36,21 +52,11 @@ export class NavModelSrv {
   }
 
   getDatasourceNav(subPage) {
+    let cfg = this.getCfgNode();
+    let ds = _.find(cfg.children, {id: 'datasources'});
     return {
-      items: [
-        {
-          title: 'Configuration',
-          items: [
-            {title: 'Data sources', active: subPage === 0, url: 'datasources',  icon: 'fa fa-database'},
-            {title: 'Users',        active: subPage === 0, url: 'users',        icon: 'fa fa-fw fa-users'},
-            {title: 'Plugins',      active: subPage === 0, url: 'plugins',      icon: 'icon-gf icon-gf-apps'},
-          ]
-        },
-        {
-          title: 'Data sources',
-          url: 'datasources',
-        }
-      ]
+      breadcrumbs: [cfg, ds],
+      node: ds
     };
   }
 
@@ -91,18 +97,11 @@ export class NavModelSrv {
   }
 
   getOrgNav(subPage) {
+    let cfg = this.getCfgNode();
+    let org = _.find(cfg.children, {id: 'org'});
     return {
-      section: {
-        title: 'Organization',
-        url: 'org',
-        icon: 'icon-gf icon-gf-users'
-      },
-      menu: [
-        {title: 'Preferences', active: subPage === 0, url: 'org', icon: 'fa fa-fw fa-cog'},
-        {title: 'Org Users', active: subPage === 1, url: 'org/users', icon: 'fa fa-fw fa-users'},
-        {title: 'API Keys', active: subPage === 2, url: 'org/apikeys', icon: 'fa fa-fw fa-key'},
-        {title: 'Org User Groups', active: subPage === 3, url: 'org/user-groups', icon: 'fa fa-fw fa-users'},
-      ]
+      breadcrumbs: [this.getCfgNode(), org],
+      node: org
     };
   }
 
@@ -124,13 +123,20 @@ export class NavModelSrv {
   }
 
   getPluginsNav() {
+    let cfg = this.getCfgNode();
+    let plugins = _.find(cfg.children, {id: 'plugins'});
     return {
-      section: {
-        title: 'Plugins',
-        url: 'plugins',
-        icon: 'icon-gf icon-gf-apps'
-      },
-      menu: []
+      breadcrumbs: [this.getCfgNode(), plugins],
+      node: plugins
+    };
+  }
+
+  getUserManNav() {
+    let cfg = this.getCfgNode();
+    let users = _.find(cfg.children, {id: 'users'});
+    return {
+      breadcrumbs: [cfg, users],
+      node: users,
     };
   }
 

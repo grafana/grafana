@@ -194,7 +194,7 @@ $gf-form-margin: 0.1rem;
   select.gf-form-input {
     text-indent: .01px;
     text-overflow: '';
-    padding-right: $input-padding-x*2;
+    padding-right: $input-padding-x*4;
     -webkit-appearance: none;
     -moz-appearance: menulist-text; // was set to "window" and caused odd display on windos and linux.
     appearance: none;

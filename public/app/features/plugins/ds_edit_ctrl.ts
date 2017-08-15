@@ -59,7 +59,7 @@ export class DataSourceEditCtrl {
   initNewDatasourceModel() {
     this.isNew = true;
     this.current = angular.copy(defaults);
-    this.navModel.items.push({title: 'New data source'});
+    this.navModel.breadcrumbs.push({text: 'New data source'});
 
     // We are coming from getting started
     if (this.$location.search().gettingstarted) {
@@ -86,7 +86,7 @@ export class DataSourceEditCtrl {
     this.backendSrv.get('/api/datasources/' + id).then(ds => {
       this.isNew = false;
       this.current = ds;
-      this.navModel.items.push({title: ds.name});
+      this.navModel.breadcrumbs.push({text: ds.name});
 
       if (datasourceCreated) {
         datasourceCreated = false;

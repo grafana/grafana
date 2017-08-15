@@ -4,35 +4,30 @@
 	<div class="page-container">
 		<div class="page-header">
 			<h1>
-				<i class="fa fa-cogs"></i>
+				<i class="fa fa-fw fa-cogs"></i>
 				<span>Configuration</span>
 			</h1>
 		</div>
 
-		<section class="card-section" layout-mode>
-			<layout-selector></layout-selector>
+		<section class="card-section card-list-layout-grid">
 
 			<ol class="card-list" >
-				<li class="card-item-wrapper" ng-repeat="ds in ctrl.datasources">
-					<a class="card-item" href="datasources/edit/{{ds.id}}/">
+				<li class="card-item-wrapper" ng-repeat="navItem in ctrl.navModel.node.children">
+					<a class="card-item" ng-href="{{::navItem.url}}">
 						<div class="card-item-header">
 							<div class="card-item-type">
-								{{ds.type}}
 							</div>
 						</div>
 						<div class="card-item-body">
 							<figure class="card-item-figure">
-								<img ng-src="{{ds.typeLogoUrl}}">
+								<i class="{{navItem.icon}}"></i>
 							</figure>
 							<div class="card-item-details">
 								<div class="card-item-name">
-									{{ds.name}}
-									<span ng-if="ds.isDefault">
-										<span class="btn btn-secondary btn-mini">default</span>
-									</span>
+									{{navItem.text}}
 								</div>
 								<div class="card-item-sub-name">
-									{{ds.url}}
+									{{navItem.description}}
 								</div>
 							</div>
 						</div>
@@ -40,9 +35,5 @@
 				</li>
 			</ol>
 		</section>
-
-		<div ng-if="ctrl.datasources.length === 0">
-			<em>No data sources defined</em>
-		</div>
 	</div>
 </div>

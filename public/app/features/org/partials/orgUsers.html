@@ -2,7 +2,10 @@
 
 <div class="page-container">
 	<div class="page-header">
-		<h1>Organization users</h1>
+		<h1>
+			<i class="{{ctrl.navModel.node.icon}}"></i>
+			{{ctrl.navModel.node.text}}
+		</h1>
 
 		<div class="page-header-tabs">
 
@@ -22,8 +25,13 @@
 						Users ({{ctrl.users.length}})
 					</a>
 				</li>
+				<li class="gf-tabs-item">
+					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 0" ng-class="{active: ctrl.editor.index === 1}">
+						Groups (0)
+					</a>
+				</li>
 				<li class="gf-tabs-item" ng-show="ctrl.showInviteUI">
-					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 1" ng-class="{active: ctrl.editor.index === 1}">
+					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 1" ng-class="{active: ctrl.editor.index === 2}">
 						Pending Invitations ({{ctrl.pendingInvites.length}})
 					</a>
 				</li>
@@ -54,8 +62,10 @@
         <td><span class="ellipsis">{{user.email}}</span></td>
 				<td>{{user.lastSeenAtAge}}</td>
         <td>
-          <select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="ctrl.updateOrgUser(user)">
-          </select>
+					<div class="gf-form-select-wrapper width-9">
+						<select type="text" ng-model="user.role" class="gf-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="ctrl.updateOrgUser(user)">
+						</select>
+					</div>
         </td>
         <td>
           <a ng-click="ctrl.removeUser(user)" class="btn btn-danger btn-mini">
