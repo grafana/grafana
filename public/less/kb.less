@@ -2,6 +2,19 @@
   background: none;
   border: none;
   margin: 0;
+  padding: 20px;
+  & > h2 {
+    background: #fff;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 1;
+    padding: 20px;
+    height: 80px;
+    line-height: 80px;
+    margin: 0;
+  }
 }
 
 .kb-search-form {
@@ -9,10 +22,10 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 0;
+  top: 80px;
   z-index: 1;
   padding: 20px;
-  box-shadow: 0 1px 4px 1px rgb(215, 211, 211);
+  box-shadow: 0 6px 6px -1px rgb(215, 211, 211);
   border-bottom: 1px solid rgb(221, 221, 221); 
   .tidy-form {
     margin-top: 36px;
@@ -21,6 +34,8 @@
 
 .kb-list {
   margin-top: 200px;
+  height: 66vh;
+  overflow: scroll;
 }
 
 .kb-item {
@@ -121,5 +136,16 @@
   & > .btn {
     margin-left: 20px;
     padding: 5px 30px;
+  }
+}
+.modal-kb {
+  top: 40px!important;
+  .kb-list {
+    height: 500px;
+  }
+}
+@media (max-height: 900px) {
+  .kb-list {
+    height: 56vh;
   }
 }
