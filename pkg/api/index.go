@@ -113,10 +113,11 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	if c.IsSignedIn {
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
-			Text: "Your Profile",
-			Id:   "profile",
-			Icon: "fa fa-fw fa-user",
-			Url:  setting.AppSubUrl + "/profile",
+			Text:         c.SignedInUser.Login,
+			Id:           "profile",
+			Img:          data.User.GravatarUrl,
+			Url:          setting.AppSubUrl + "/profile",
+			HideFromMenu: true,
 			Children: []*dtos.NavLink{
 				{Text: "Signout", Url: setting.AppSubUrl + "/logout", Icon: "fa fa-fw fa-sign-out", Target: "_self"},
 				{Text: "Your profile", Url: setting.AppSubUrl + "/profile", Icon: "fa fa-fw fa-sliders"},
@@ -256,6 +257,18 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			})
 		}
 
+		data.NavTree = append(data.NavTree, &dtos.NavLink{
+			Text:         "Help",
+			Id:           "help",
+			Url:          "/help",
+			Icon:         "fa fa-fw fa-question",
+			HideFromMenu: true,
+			Children: []*dtos.NavLink{
+				{Text: "Shortcuts", Url: "/shortcuts", Icon: "fa fa-fw fa-keyboard-o", Target: "_self"},
+				{Text: "Community site", Url: "http://community.grafana.com", Icon: "fa fa-fw fa-comment", Target: "_blank"},
+				{Text: "Documentation", Url: "http://docs.grafana.org", Icon: "fa fa-fw fa-file", Target: "_blank"},
+			},
+		})
 		data.NavTree = append(data.NavTree, cfgNode)
 	}
 

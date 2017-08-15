@@ -9,7 +9,7 @@ export class SideMenuCtrl {
   isSignedIn: boolean;
   user: any;
   mainLinks: any;
-  profileNav: any;
+  bottomNav: any;
   appSubUrl: string;
   loginUrl: string;
   orgFilter: string;
@@ -23,8 +23,8 @@ export class SideMenuCtrl {
     this.user = contextSrv.user;
     this.appSubUrl = config.appSubUrl;
     this.maxShownOrgs = 10;
-    this.mainLinks = _.filter(config.bootData.navTree, item => item.id !== 'profile');
-    this.profileNav = _.find(config.bootData.navTree, {id: 'profile'});
+    this.mainLinks = _.filter(config.bootData.navTree, item => !item.hideFromMenu);
+    this.bottomNav = _.filter(config.bootData.navTree, item => item.hideFromMenu);
     this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
 
     this.$scope.$on('$routeChangeSuccess', () => {

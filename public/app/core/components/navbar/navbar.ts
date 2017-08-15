@@ -46,8 +46,9 @@ export function pageH1() {
     restrict: 'E',
     template: `
     <h1>
-    <i class="{{model.node.icon}}"></i>
-    {{model.node.text}}
+    <i class="{{::model.node.icon}}" ng-if="::model.node.icon"></i>
+    <img ng-src="{{::model.node.img}}" ng-if="::model.node.img"></i>
+    {{::model.node.text}}
     </h1>
     `,
     scope: {

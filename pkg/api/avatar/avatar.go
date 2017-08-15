@@ -65,7 +65,7 @@ func New(hash string) *Avatar {
 	return &Avatar{
 		hash: hash,
 		reqParams: url.Values{
-			"d":    {"404"},
+			"d":    {"retro"},
 			"size": {"200"},
 			"r":    {"pg"}}.Encode(),
 	}

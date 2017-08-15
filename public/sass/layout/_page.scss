@@ -58,7 +58,16 @@
     font-size: $font-size-h2;
     flex-grow: 1;
     display: inline-block;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
+
+    img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+      position: relative;
+      top: -3px;
+    }
   }
 
   a, button {
