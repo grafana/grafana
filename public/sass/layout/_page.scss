@@ -23,7 +23,7 @@
   position: absolute;
   width: 100%;
   height: calc(100% - 54px);
-  overflow: scroll;
+  overflow: auto;
 }
 
 .page-header-inner {
@@ -107,9 +107,9 @@
 $breadcrumb-hover-hl: #111;
 $page-nav-bg: black;
 
-// .page-nav {
-//   background: $page-nav-bg;
-// }
+.page-nav {
+  background: $page-nav-bg;
+ }
 
 .page-breadcrumb {
   display: flex;
