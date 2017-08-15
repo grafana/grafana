@@ -16,7 +16,8 @@
                                 ng-model="knowledge.symptom"
                                 class="kb-editor-new"
                                 placeholder="" 
-                                modules="{toolbar: toolbarOptions}">
+                                modules="{toolbar: toolbarOptions}"
+                                on-selection-changed="selectionChanged(editor, range, oldRange, 'symptom')">
                             </ng-quill-editor>
                         </li>
                         <li class="kb-solution">
@@ -27,7 +28,8 @@
                                 ng-model="knowledge.solution"
                                 class="kb-editor-new"
                                 placeholder="" 
-                                modules="{toolbar: toolbarOptions}">
+                                modules="{toolbar: toolbarOptions}"
+                                on-selection-changed="selectionChanged(editor, range, oldRange, 'solution')">
                             </ng-quill-editor>
                         </li>
                         <li class="kb-type-new">
