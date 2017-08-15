@@ -105,7 +105,6 @@
 }
 
 $breadcrumb-hover-hl: #111;
-$page-nav-bg: black;
 
 $page-breadcrumb__angle-1: 39px;
 $page-breadcrumb__angle-ul: 31px;
@@ -120,6 +119,8 @@ $page-breadcrumb__angle-a: 30px;
 
 .page-breadcrumb__item {
   background: $page-nav-bg;
+  box-shadow: $page-nav-shadow;
+
 
   > a {
     color: $text-color-weak;
