@@ -26,9 +26,6 @@
   overflow: auto;
 }
 
-.page-header-inner {
-}
-
 .page-body {
   @include media-breakpoint-up(md) {
     display: flex;

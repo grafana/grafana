@@ -1601,6 +1601,10 @@ gaze@^1.0.0, gaze@^1.1.2:
   dependencies:
     globule "^1.0.0"
 
+gemini-scrollbar@^1.5.2:
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/gemini-scrollbar/-/gemini-scrollbar-1.5.2.tgz#06528e49afe155c45ce9f7c9ee754a9e6f4ed341"
+
 generate-function@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/generate-function/-/generate-function-2.0.0.tgz#6858fe7c0969b7d4e9093337647ac79f60dfbe74"
@@ -1926,12 +1930,12 @@ grunt-sass-lint@^0.2.2:
   dependencies:
     sass-lint "^1.10.2"
 
-grunt-sass@^1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/grunt-sass/-/grunt-sass-1.2.1.tgz#fb87b6caac46fb32d45177fd2e4b6ff7468c1919"
+grunt-sass@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/grunt-sass/-/grunt-sass-2.0.0.tgz#9074cf9d7b4592e20f7788caa727b8f9aa06b60a"
   dependencies:
     each-async "^1.0.0"
-    node-sass "^3.7.0"
+    node-sass "^4.0.0"
     object-assign "^4.0.1"
 
 grunt-string-replace@~1.3.1:
@@ -2816,6 +2820,10 @@ lodash.keys@^3.0.0:
     lodash.isarguments "^3.0.0"
     lodash.isarray "^3.0.0"
 
+lodash.mergewith@^4.6.0:
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/lodash.mergewith/-/lodash.mergewith-4.6.0.tgz#150cf0a16791f5903b8891eab154609274bdea55"
+
 lodash@3.7.x:
   version "3.7.0"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-3.7.0.tgz#3678bd8ab995057c07ade836ed2ef087da811d45"
@@ -3151,9 +3159,9 @@ node-pre-gyp@^0.6.29:
     tar "~2.2.1"
     tar-pack "~3.3.0"
 
-node-sass@^3.7.0:
-  version "3.13.1"
-  resolved "https://registry.yarnpkg.com/node-sass/-/node-sass-3.13.1.tgz#7240fbbff2396304b4223527ed3020589c004fc2"
+node-sass@^4.0.0:
+  version "4.5.3"
+  resolved "https://registry.yarnpkg.com/node-sass/-/node-sass-4.5.3.tgz#d09c9d1179641239d1b97ffc6231fdcec53e1568"
   dependencies:
     async-foreach "^0.1.3"
     chalk "^1.1.1"
@@ -3164,13 +3172,15 @@ node-sass@^3.7.0:
     in-publish "^2.0.0"
     lodash.assign "^4.2.0"
     lodash.clonedeep "^4.3.2"
+    lodash.mergewith "^4.6.0"
     meow "^3.7.0"
     mkdirp "^0.5.1"
     nan "^2.3.2"
     node-gyp "^3.3.1"
     npmlog "^4.0.0"
-    request "^2.61.0"
+    request "^2.79.0"
     sass-graph "^2.1.1"
+    stdout-stream "^1.4.0"
 
 "nomnom@>= 1.5.x":
   version "1.8.1"
@@ -3627,7 +3637,7 @@ readable-stream@1.1:
     isarray "0.0.1"
     string_decoder "~0.10.x"
 
-readable-stream@^2.0.0, "readable-stream@^2.0.0 || ^1.1.13", readable-stream@^2.0.2, readable-stream@^2.0.4, readable-stream@^2.0.5:
+readable-stream@^2.0.0, "readable-stream@^2.0.0 || ^1.1.13", readable-stream@^2.0.1, readable-stream@^2.0.2, readable-stream@^2.0.4, readable-stream@^2.0.5:
   version "2.2.2"
   resolved "https://registry.yarnpkg.com/readable-stream/-/readable-stream-2.2.2.tgz#a9e6fec3c7dda85f8bb1b3ba7028604556fc825e"
   dependencies:
@@ -3745,7 +3755,7 @@ request-progress@~2.0.1:
   dependencies:
     throttleit "^1.0.0"
 
-request@2, request@^2.61.0, request@^2.79.0, request@~2.79.0:
+request@2, request@^2.79.0, request@~2.79.0:
   version "2.79.0"
   resolved "https://registry.yarnpkg.com/request/-/request-2.79.0.tgz#4dfe5bf6be8b8cdc37fcf93e04b65577722710de"
   dependencies:
@@ -4116,6 +4126,12 @@ stack-trace@0.0.x:
 statuses@1, "statuses@>= 1.3.1 < 2", statuses@~1.3.0:
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/statuses/-/statuses-1.3.1.tgz#faf51b9eb74aaef3b3acf4ad5f61abf24cb7b93e"
+
+stdout-stream@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/stdout-stream/-/stdout-stream-1.4.0.tgz#a2c7c8587e54d9427ea9edb3ac3f2cd522df378b"
+  dependencies:
+    readable-stream "^2.0.1"
 
 stream-buffers@^2.1.0:
   version "2.2.0"

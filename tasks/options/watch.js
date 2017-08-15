@@ -24,6 +24,7 @@ module.exports = function(config, grunt) {
     gaze([
       config.srcDir + '/sass/**/*',
       config.srcDir + '/app/**/*',
+      config.srcDir + '/vendor/npm/gemini-scrollbar/*.js',
     ], function(err, watcher) {
 
       console.log('Gaze watchers setup');

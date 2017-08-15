@@ -51,6 +51,7 @@ import {JsonExplorer} from './components/json_explorer/json_explorer';
 import {NavModelSrv, NavModel} from './nav_model_srv';
 import {userPicker} from './components/user_picker';
 import {userGroupPicker} from './components/user_group_picker';
+import {geminiScrollbar} from './components/scroll/scroll';
 
 export {
   arrayJoin,
@@ -81,4 +82,5 @@ export {
   NavModel,
   userPicker,
   userGroupPicker,
+  geminiScrollbar,
 };

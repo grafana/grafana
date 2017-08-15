@@ -65,6 +65,7 @@
   "dependencies": {
     "eventemitter3": "^2.0.2",
     "gaze": "^1.1.2",
+    "gemini-scrollbar": "^1.5.2",
     "grunt-jscs": "3.0.1",
     "grunt-sass-lint": "^0.2.2",
     "grunt-sync": "^0.6.2",
