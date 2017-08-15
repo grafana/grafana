@@ -10,7 +10,7 @@ export class SideMenuCtrl {
   showSignout: boolean;
   user: any;
   mainLinks: any;
-  orgMenu: any;
+  userMenu: any;
   appSubUrl: string;
   loginUrl: string;
   orgFilter: string;
@@ -49,40 +49,39 @@ export class SideMenuCtrl {
  }
 
  openUserDropdown() {
-   this.orgMenu = [
-     {section: 'You', cssClass: 'dropdown-menu-title'},
-     {text: 'Profile', url: this.getUrl('/profile')},
-   ];
+   this.userMenu = [ ];
 
    if (this.showSignout) {
-     this.orgMenu.push({text: "Sign out", url: this.getUrl("/logout"), target: "_self"});
+     this.userMenu.push({text: "Sign out", url: this.getUrl("/logout"), target: "_self", icon: 'fa fa-sign-out'});
    }
 
-   if (this.contextSrv.hasRole('Admin')) {
-     this.orgMenu.push({section: this.user.orgName, cssClass: 'dropdown-menu-title'});
-     this.orgMenu.push({
-       text: "Preferences",
-       url: this.getUrl("/org")
-     });
-     this.orgMenu.push({
-       text: "Users",
-       url: this.getUrl("/org/users")
-     });
-     this.orgMenu.push({
-       text: "User Groups",
-       url: this.getUrl("/org/user-groups")
-     });
-     this.orgMenu.push({
-       text: "API Keys",
-       url: this.getUrl("/org/apikeys")
-     });
-   }
+   this.userMenu.push({text: 'Profile', url: this.getUrl('/profile'), icon: 'fa fa-user'});
 
-   this.orgMenu.push({cssClass: "divider"});
-   this.backendSrv.get('/api/user/orgs').then(orgs => {
-     this.orgs = orgs;
-     this.loadOrgsItems();
-   });
+   // if (this.contextSrv.hasRole('Admin')) {
+   //   this.orgMenu.push({section: this.user.orgName, cssClass: 'dropdown-menu-title'});
+   //   this.orgMenu.push({
+   //     text: "Preferences",
+   //     url: this.getUrl("/org")
+   //   });
+   //   this.orgMenu.push({
+   //     text: "Users",
+   //     url: this.getUrl("/org/users")
+   //   });
+   //   this.orgMenu.push({
+   //     text: "User Groups",
+   //     url: this.getUrl("/org/user-groups")
+   //   });
+   //   this.orgMenu.push({
+   //     text: "API Keys",
+   //     url: this.getUrl("/org/apikeys")
+   //   });
+   // }
+
+   // this.orgMenu.push({cssClass: "divider"});
+   // this.backendSrv.get('/api/user/orgs').then(orgs => {
+   //   this.orgs = orgs;
+   //   this.loadOrgsItems();
+   // });
  }
 
  loadOrgsItems(){

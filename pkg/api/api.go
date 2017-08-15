@@ -41,6 +41,7 @@ func (hs *HttpServer) registerRoutes() {
 	r.Get("/org/users/", reqSignedIn, Index)
 	r.Get("/org/apikeys/", reqSignedIn, Index)
 	r.Get("/dashboard/import/", reqSignedIn, Index)
+	r.Get("/configuration", reqGrafanaAdmin, Index)
 	r.Get("/admin", reqGrafanaAdmin, Index)
 	r.Get("/admin/settings", reqGrafanaAdmin, Index)
 	r.Get("/admin/users", reqGrafanaAdmin, Index)

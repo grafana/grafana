@@ -124,28 +124,6 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		})
 	}
 
-	if c.OrgRole == m.ROLE_ADMIN {
-		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-			Text: "Data Sources",
-			Icon: "icon-gf icon-gf-datasources",
-			Url:  setting.AppSubUrl + "/datasources",
-			Children: []*dtos.NavLink{
-				{Text: "List", Url: setting.AppSubUrl + "/datasources", Icon: "icon-gf icon-gf-datasources"},
-				{Text: "New", Url: setting.AppSubUrl + "/datasources", Icon: "fa fa-fw fa-plus"},
-			},
-		})
-		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-			Text: "Plugins",
-			Icon: "icon-gf icon-gf-apps",
-			Url:  setting.AppSubUrl + "/plugins",
-			Children: []*dtos.NavLink{
-				{Text: "Panels", Url: setting.AppSubUrl + "/plugins?type=panel", Icon: "fa fa-fw fa-stop"},
-				{Text: "Data sources", Url: setting.AppSubUrl + "/plugins?type=datasource", Icon: "icon-gf icon-gf-datasources"},
-				{Text: "Apps", Url: setting.AppSubUrl + "/plugins?type=app", Icon: "icon-gf icon-gf-apps"},
-			},
-		})
-	}
-
 	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
 	if err != nil {
 		return nil, err
@@ -192,18 +170,49 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		}
 	}
 
-	if c.IsGrafanaAdmin {
-		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-			Text: "Admin",
+	if c.OrgRole == m.ROLE_ADMIN {
+		cfgNode := &dtos.NavLink{
+			Text: "Configuration",
 			Icon: "fa fa-fw fa-cogs",
-			Url:  setting.AppSubUrl + "/admin",
+			Url:  setting.AppSubUrl + "/configuration",
 			Children: []*dtos.NavLink{
-				{Text: "Global Users", Url: setting.AppSubUrl + "/admin/users"},
-				{Text: "Global Orgs", Url: setting.AppSubUrl + "/admin/orgs"},
-				{Text: "Server Settings", Url: setting.AppSubUrl + "/admin/settings"},
-				{Text: "Server Stats", Url: setting.AppSubUrl + "/admin/stats"},
+				{
+					Text: "Data Sources",
+					Icon: "icon-gf icon-gf-datasources",
+					Url:  setting.AppSubUrl + "/datasources",
+					Children: []*dtos.NavLink{
+						{Text: "List", Url: setting.AppSubUrl + "/datasources", Icon: "icon-gf icon-gf-datasources"},
+						{Text: "New", Url: setting.AppSubUrl + "/datasources", Icon: "fa fa-fw fa-plus"},
+					},
+				},
+				{
+					Text: "Plugins",
+					Icon: "icon-gf icon-gf-apps",
+					Url:  setting.AppSubUrl + "/plugins",
+					Children: []*dtos.NavLink{
+						{Text: "Panels", Url: setting.AppSubUrl + "/plugins?type=panel", Icon: "fa fa-fw fa-stop"},
+						{Text: "Data sources", Url: setting.AppSubUrl + "/plugins?type=datasource", Icon: "icon-gf icon-gf-datasources"},
+						{Text: "Apps", Url: setting.AppSubUrl + "/plugins?type=app", Icon: "icon-gf icon-gf-apps"},
+					},
+				},
 			},
-		})
+		}
+
+		if c.IsGrafanaAdmin {
+			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
+				Text: "Server Admin",
+				Icon: "fa fa-fw fa-shield",
+				Url:  setting.AppSubUrl + "/admin",
+				Children: []*dtos.NavLink{
+					{Text: "Global Users", Url: setting.AppSubUrl + "/admin/users"},
+					{Text: "Global Orgs", Url: setting.AppSubUrl + "/admin/orgs"},
+					{Text: "Server Settings", Url: setting.AppSubUrl + "/admin/settings"},
+					{Text: "Server Stats", Url: setting.AppSubUrl + "/admin/stats"},
+				},
+			})
+		}
+
+		data.MainNavLinks = append(data.MainNavLinks, cfgNode)
 	}
 
 	return &data, nil

@@ -2,6 +2,7 @@ import  AdminListUsersCtrl from './admin_list_users_ctrl';
 import  './adminListOrgsCtrl';
 import  './adminEditOrgCtrl';
 import  './adminEditUserCtrl';
+import  './configuration_home_ctrl';
 
 import coreModule from 'app/core/core_module';
 
@@ -42,6 +43,16 @@ export class AdminStatsCtrl {
   }
 }
 
+export class ConfigurationHomeCtrl {
+  navModel: any;
+
+  /** @ngInject */
+  constructor(private $scope, private backendSrv, private navModelSrv) {
+    this.navModel = navModelSrv.getAdminNav();
+  }
+}
+
+coreModule.controller('ConfigurationHomeCtrl', ConfigurationHomeCtrl);
 coreModule.controller('AdminSettingsCtrl', AdminSettingsCtrl);
 coreModule.controller('AdminHomeCtrl', AdminHomeCtrl);
 coreModule.controller('AdminStatsCtrl', AdminStatsCtrl);

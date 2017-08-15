@@ -146,7 +146,7 @@ func CacheServer() http.Handler {
 }
 
 func newNotFound() *Avatar {
-	avatar := &Avatar{}
+	avatar := &Avatar{notFound: true}
 
 	// load transparent png into buffer
 	path := filepath.Join(setting.StaticRootPath, "img", "transparent.png")
