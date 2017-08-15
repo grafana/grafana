@@ -95,15 +95,16 @@ define([
         if(isDetail) {
           editor.root.innerHTML = knowledge;
         } else {
-          var length_txt = knowledge.indexOf('\n');
+          var tmp = knowledge.trim();
+          var length_txt = tmp.indexOf('\n');
           length_txt = (length_txt > -1 && length_txt < 100) ? length_txt : 100;
 
-          var length_html = knowledge.indexOf('</');
+          var length_html = tmp.indexOf('</');
           length_html = (length_html > -1 && length_html < 100) ? length_html : 100;
 
           var length = length_txt < length_html ? length_txt : length_html;
-          var end = knowledge.length > length ? '...' : '';
-          editor.root.innerHTML = knowledge.substring(0, length) + end;
+          var end = tmp.length > length ? '...' : '';
+          editor.root.innerHTML = tmp.substring(0, length) + end;
         }
       };
 
