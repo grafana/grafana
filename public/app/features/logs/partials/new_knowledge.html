@@ -1,63 +1,38 @@
 
 <div class="modal-body"  ng-controller="CreateKnowledgeCtrl" ng-init="init()">
 
-    <a class="modal-close" ng-click="dismiss();">
-        <i class="fa fa-remove"></i>
-    </a>
-
-    <h3>
-        创建新的运维知识
-    </h3>
-
-    <br>
-    <br>
+    <h3 style="text-align: left; color: #32b2e1; padding-left: 8%;">添加运维知识</h3>
 
     <form name="newKnows">
-        <div style="display: inline-block">
+        <div style="display: inline-block; width: 80%;">
             <div class="tidy-form-container">
                 <div class="tidy-form">
-                    <ul class="tidy-form-list">
-                        <li class="tidy-form-item knowledge-form-label">
-                            <h4>现象</h4>
-                        </li>
-                        <li>
+                    <ul class="kb-item kb-item-new">
+                        <li class="kb-symptom">
+                            <div class="kb-header">
+                                <div><i style="color:#32b2e1;" class="fa fa-question-circle kb-icon"></i><span>问题描述:</span></div>
+                            </div>
                             <ng-quill-editor 
-                                ng-model="knowledge.symptom" 
-                                theme="snow"
-                                class="kb-editor"
-                                placeholder="override default placeholder" 
-                                on-editor-created="editorCreated(editor)" 
-                                on-content-changed="contentChanged(editor, html, text)" 
-                                on-selection-changed="selectionChanged(editor, range, oldRange, source)">
+                                ng-model="knowledge.symptom"
+                                class="kb-editor-new"
+                                placeholder="" 
+                                modules="{toolbar: toolbarOptions}">
                             </ng-quill-editor>
-                            <!-- <textarea type="text" class="input-xxlarge" style="resize: vertical;" required ng-model="knowledge.symptom"></textarea> -->
                         </li>
-                        <div class="clearfix"></div>
-                    </ul>
-                    <ul class="tidy-form-list">
-                        <li class="tidy-form-item knowledge-form-label">
-                            <h4>解决方案</h4>
-                        </li>
-                        <li>
+                        <li class="kb-solution">
+                            <div class="kb-header">
+                                <div><i style="color:#29ba2d;" class="fa fa-lightbulb-o kb-icon"></i><span>解决方案:</span></div>
+                            </div>
                             <ng-quill-editor 
-                                ng-model="knowledge.solution" 
-                                theme="snow"
-                                class="kb-editor"
-                                placeholder="override default placeholder" 
-                                on-editor-created="editorCreated(editor)" 
-                                on-content-changed="contentChanged(editor, html, text)" 
-                                on-selection-changed="selectionChanged(editor, range, oldRange, source)">
+                                ng-model="knowledge.solution"
+                                class="kb-editor-new"
+                                placeholder="" 
+                                modules="{toolbar: toolbarOptions}">
                             </ng-quill-editor>
-                            <!-- <textarea ng-model="knowledge.solution" style="height:100px; resize:vertical;" class="input-xxlarge" required></textarea> -->
                         </li>
-                        <div class="clearfix"></div>
-                    </ul>
-                    <ul class="tidy-form-list">
-                        <li class="tidy-form-item knowledge-form-label">
-                            <h4>类型</h4>
-                        </li>
-                        <li>
-                            <select class="input-large tidy-form-input" ng-model="knowledge.service" required>
+                        <li class="kb-type-new">
+                            <span>类型:</span>
+                            <select class="input-small" ng-model="knowledge.service" required>
                                 <option ng-repeat="service in services" value="{{service}}">{{service}}</option>
                             </select>
                         </li>
@@ -66,9 +41,9 @@
                 </div>
             </div>
 
-            <div class="" style="margin-top: 30px; margin-bottom: 20px;">
+            <div class="kb-btn-new">
                 <button type="button" class="btn btn-inverse" ng-click="dismiss()">取消</button>
-                <button type="submit" class="btn btn-success" ng-click="new();">确定</button>
+                <button type="submit" class="btn btn-primary" ng-click="new();">确定</button>
             </div>
         </div>
     </form>

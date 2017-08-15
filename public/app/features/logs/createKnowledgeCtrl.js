@@ -14,6 +14,17 @@ define([
         $scope.knowledge.symptom = "";
         $scope.knowledge.solution = "";
         $scope.knowledge.service = "";
+
+        $scope.toolbarOptions = [
+          ['bold'],        // toggled buttons
+          ['blockquote', 'code-block'],
+
+          [{ 'header': 1 }, { 'header': 2 }],               // custom button values
+          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+          [{ 'indent': '-1'}, { 'indent': '+1' }],          // outdent/indent
+
+          ['clean']                                         // remove formatting button
+        ];
       };
 
       $scope.new = function() {
@@ -33,18 +44,6 @@ define([
         $scope.dismiss();
 
       };
-
-      $scope.title = 'Quill works you really works????'
-      $scope.readOnly = false
-      $scope.editorCreated = function (editor) {
-        console.log(editor)
-      }
-      $scope.contentChanged = function (editor, html, text, delta, oldDelta, source) {
-        console.log('editor: ', editor, 'html: ', html, 'text:', text, 'delta: ', delta, 'oldDelta:', oldDelta, 'source:', source)
-      }
-      $scope.selectionChanged = function (editor, range, oldRange, source) {
-        console.log('editor: ', editor, 'range: ', range, 'oldRange:', oldRange, 'source:', source)
-      }
 
     });
   });
