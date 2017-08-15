@@ -29,7 +29,6 @@ define([
       };
 
       $scope.new = function() {
-        console.log($scope.knowledge);
         $scope.knowledge.org_id = contextSrv.user.orgId;
         $scope.knowledge.system_id = contextSrv.user.systemId;
         if(_.every($scope.check)) {
@@ -48,11 +47,11 @@ define([
         }
       };
 
-      $scope.selectionChanged = function(editor, range, oldRange, source) {
-        if(oldRange && oldRange.index) {
-          $scope.check[source] = true;
-        } else {
+      $scope.contentChanged = function(editor, html, text, delta, oldDelta, source) {
+        if(_.isEmpty(text.trim())) {
           $scope.check[source] = false;
+        } else {
+          $scope.check[source] = true;
         }
       };
 

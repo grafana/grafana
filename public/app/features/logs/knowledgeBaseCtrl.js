@@ -29,7 +29,6 @@ define([
           "nginx",
         ];
         $scope.fullText = [];
-        $scope.query();
         $scope.readOnly = true;
       };
 
