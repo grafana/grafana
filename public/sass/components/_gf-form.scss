@@ -1,4 +1,4 @@
-$gf-form-margin: 0.25rem;
+$gf-form-margin: 0.1rem;
 
 .gf-form {
   margin-bottom: $gf-form-margin;
@@ -54,10 +54,10 @@ $gf-form-margin: 0.25rem;
   flex-shrink: 0;
   font-weight: $font-weight-semi-bold;
 
-  background-color: $input-label-bg;
+  background-color: #23252d; //$input-label-bg;
   display: block;
   font-size: $font-size-sm;
-  margin-right: 0;
+  margin-right: $gf-form-margin;
 
   border: $input-btn-border-width solid transparent;
   @include border-radius($label-border-radius-sm);
@@ -112,7 +112,8 @@ $gf-form-margin: 0.25rem;
   background-image: none;
   background-clip: padding-box;
   border: 1px solid $input-border-color;
-  border-bottom: 0px;
+  border-bottom: none;
+  border-left: none;
   @include border-radius($input-border-radius-sm);
   @include box-shadow($input-box-shadow);
   transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;

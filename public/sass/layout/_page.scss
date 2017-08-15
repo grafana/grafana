@@ -11,7 +11,7 @@
 .main-view {
   position: relative;
   flex-grow: 1;
-  background: inear-gradient(180deg, #1b1d25 0, #210d0d);
+  background: linear-gradient(180deg, #251f1f 0, #17181b);
 }
 
 .page-container {
@@ -107,13 +107,15 @@
 $breadcrumb-hover-hl: #111;
 $page-nav-bg: black;
 
-.page-nav {
-  background: $page-nav-bg;
- }
+$page-breadcrumb__angle-1: 39px;
+$page-breadcrumb__angle-ul: 31px;
+$page-breadcrumb__angle-a: 30px;
+
 
 .page-breadcrumb {
   display: flex;
   padding: 0 $spacer;
+  line-height: 0.5;
 }
 
 .page-breadcrumb__item {
@@ -121,6 +123,7 @@ $page-nav-bg: black;
 
   > a {
     color: $text-color-weak;
+    font-size: $font-size-sm;
     display: block;
     padding: 0.6rem 1rem 0.6rem 3rem;;
     position: relative;
@@ -133,9 +136,9 @@ $page-nav-bg: black;
       content: '';
       height: 0;
       width: 0;
-      border: 46px solid transparent;
+      border: $page-breadcrumb__angle-1 solid transparent;
       border-right-width: 0;
-      border-left-width: 41px;
+      border-left-width: $page-breadcrumb__angle-a;
       z-index: 2;
       border-left-color: $page-nav-bg;
     }
@@ -155,9 +158,9 @@ $page-nav-bg: black;
     content: '';
     height: 0;
     width: 0;
-    border: 46px solid transparent;
+    border: $page-breadcrumb__angle-1 solid transparent;
     border-right-width: 0;
-    border-left-width: 41px;
+    border-left-width: $page-breadcrumb__angle-ul;
     z-index: 1;
     transform: translateX(4px);
     border-left-color: #282020;
@@ -189,7 +192,7 @@ $page-nav-bg: black;
   width: 16px;
   height: 16px;
   right: -9px;
-  top: 12px;
+  top: 5px;
   z-index: 3;
 }
 
