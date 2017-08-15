@@ -36,12 +36,14 @@ export class AlertNotificationEditCtrl {
       }
 
       if (!this.$routeParams.id) {
-        this.navModel.breadcrumbs.push({text: 'New'});
+        this.navModel.breadcrumbs.push({text: 'New channel'});
+        this.navModel.node = {text: 'New channel'};
         return _.defaults(this.model, this.defaults);
       }
 
       return this.backendSrv.get(`/api/alert-notifications/${this.$routeParams.id}`).then(result => {
         this.navModel.breadcrumbs.push({text: result.name});
+        this.navModel.node = {text: result.name};
         return result;
       });
     }).then(model => {

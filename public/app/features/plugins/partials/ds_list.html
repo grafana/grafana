@@ -3,10 +3,7 @@
 <div class="scroll-canvas">
 	<div class="page-container">
 		<div class="page-header">
-			<h1>
-				<i class="icon-gf icon-gf-fw icon-gf-datasources"></i>
-				<span>Data Sources</span>
-			</h1>
+			<page-h1 model="ctrl.navModel"></page-h1>
 
 			<a class="page-header__cta btn btn-success" href="datasources/new">
 				<i class="fa fa-plus"></i>
@@ -15,6 +12,7 @@
 		</div>
 
 		<section class="card-section" layout-mode>
+			<layout-selector></layout-selector>
 
 			<ol class="card-list" >
 				<li class="card-item-wrapper" ng-repeat="ds in ctrl.datasources">

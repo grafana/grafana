@@ -3,16 +3,7 @@
 <div class="scroll-canvas">
 	<div class="page-container">
 		<div class="page-header">
-			<h1>
-				<i class="icon-gf icon-gf-datasources"></i>
-				<span ng-show="ctrl.isNew">New data source</span>
-				<span ng-hide="ctrl.isNew">{{ctrl.current.name}}</span>
-			</h1>
-
-			<a class="page-header__cta btn btn-success" href="datasources/new" ng-show="ctrl.isNew">
-				<i class="fa fa-plus"></i>
-				Add data source
-			</a>
+			<page-h1 model="ctrl.navModel"></page-h1>
 
 			<div class="page-header-tabs" ng-show="ctrl.hasDashboards">
 				<ul class="gf-tabs">

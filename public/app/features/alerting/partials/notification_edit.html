@@ -2,8 +2,7 @@
 
 <div class="page-container">
   <div class="page-header">
-    <h1 ng-show="ctrl.model.id">Edit Channel</h1>
-    <h1 ng-show="!ctrl.model.id">New Channel</h1>
+    <page-h1 model="ctrl.navModel"></page-h1>
   </div>
 
   <form name="ctrl.theForm" ng-if="ctrl.notifiers">

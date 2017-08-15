@@ -41,4 +41,21 @@ export function navbarDirective() {
   };
 }
 
+export function pageH1() {
+  return {
+    restrict: 'E',
+    template: `
+    <h1>
+    <i class="{{model.node.icon}}"></i>
+    {{model.node.text}}
+    </h1>
+    `,
+    scope: {
+      model: "=",
+    }
+  };
+}
+
+
+coreModule.directive('pageH1', pageH1);
 coreModule.directive('navbar', navbarDirective);
