@@ -105,19 +105,35 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
 		Text:     "Dashboards",
+		Id:       "dashboards",
 		Icon:     "icon-gf icon-gf-dashboard",
 		Url:      setting.AppSubUrl + "/",
 		Children: dashboardChildNavs,
 	})
 
+	if c.IsSignedIn {
+		data.NavTree = append(data.NavTree, &dtos.NavLink{
+			Text: "Your Profile",
+			Id:   "profile",
+			Icon: "fa fa-fw fa-user",
+			Url:  setting.AppSubUrl + "/profile",
+			Children: []*dtos.NavLink{
+				{Text: "Signout", Url: setting.AppSubUrl + "/logout", Icon: "fa fa-fw fa-sign-out", Target: "_self"},
+				{Text: "Your profile", Url: setting.AppSubUrl + "/profile", Icon: "fa fa-fw fa-sliders"},
+				{Text: "Change Password", Id: "change-password", Url: setting.AppSubUrl + "/profile/password", Icon: "fa fa-fw fa-lock", HideFromMenu: true},
+			},
+		})
+	}
+
 	if setting.AlertingEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR) {
 		alertChildNavs := []*dtos.NavLink{
-			{Text: "Alert List", Url: setting.AppSubUrl + "/alerting/list", Icon: "fa fa-fw fa-list-ul"},
-			{Text: "Notification channels", Url: setting.AppSubUrl + "/alerting/notifications", Icon: "fa fa-fw fa-bell-o"},
+			{Text: "Alert List", Id: "alert-list", Url: setting.AppSubUrl + "/alerting/list", Icon: "fa fa-fw fa-list-ul"},
+			{Text: "Notification channels", Id: "channels", Url: setting.AppSubUrl + "/alerting/notifications", Icon: "fa fa-fw fa-bell-o"},
 		}
 
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
 			Text:     "Alerting",
+			Id:       "alerting",
 			Icon:     "icon-gf icon-gf-alert",
 			Url:      setting.AppSubUrl + "/alerting/list",
 			Children: alertChildNavs,
@@ -133,6 +149,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		if plugin.Pinned {
 			appLink := &dtos.NavLink{
 				Text: plugin.Name,
+				Id:   "plugin-page-" + plugin.Id,
 				Url:  plugin.DefaultNavUrl,
 				Img:  plugin.Info.Logos.Small,
 			}
@@ -216,6 +233,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 				},
 				{
 					Text:        "API Keys",
+					Id:          "apikeys",
 					Description: "Create & manage API keys",
 					Icon:        "fa fa-fw fa-key",
 					Url:         setting.AppSubUrl + "/org/apikeys",
@@ -226,6 +244,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		if c.IsGrafanaAdmin {
 			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
 				Text: "Server Admin",
+				Id:   "admin",
 				Icon: "fa fa-fw fa-shield",
 				Url:  setting.AppSubUrl + "/admin",
 				Children: []*dtos.NavLink{

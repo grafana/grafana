@@ -24,7 +24,7 @@ export class OrgUsersCtrl {
       role: 'Viewer',
     };
 
-    this.navModel = navModelSrv.getUserManNav(0);
+    this.navModel = navModelSrv.getNav('cfg', 'users');
 
     this.get();
     this.editor = { index: 0 };

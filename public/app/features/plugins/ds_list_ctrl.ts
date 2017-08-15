@@ -17,7 +17,7 @@ export class DataSourcesCtrl {
     private datasourceSrv,
     private navModelSrv) {
 
-    this.navModel = this.navModelSrv.getDatasourceNav(0);
+    this.navModel = this.navModelSrv.getNav('cfg', 'datasources');
 
     backendSrv.get('/api/datasources').then(result => {
       this.datasources = result;

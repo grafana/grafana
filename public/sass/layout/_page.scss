@@ -49,7 +49,7 @@
 }
 
 .page-header {
-  padding: $spacer 0 0 0;
+  padding: 2rem 0 0 0;
   margin-bottom: 2rem;
   @include brand-bottom-border();
   @include clearfix();
@@ -58,7 +58,7 @@
     font-size: $font-size-h2;
     flex-grow: 1;
     display: inline-block;
-    margin-bottom: $spacer*1.5;
+    margin-bottom: 2rem;
   }
 
   a, button {

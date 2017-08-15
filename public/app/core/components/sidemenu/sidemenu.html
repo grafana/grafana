@@ -39,7 +39,6 @@
 		</ul>
 	</div>
 
-
 	<div class="sidemenu-item dropup dropdown" ng-if="::ctrl.isSignedIn">
 		<a class="sidemenu-link" href="profile">
 			<span class="icon-circle sidemenu-icon sidemenu-org-avatar">
@@ -59,7 +58,7 @@
 					{{::orgitem.text}}
 				</a>
 			</li>
-			<li ng-repeat="menuItem in ctrl.userMenu" ng-class="::menuItem.cssClass">
+			<li ng-repeat="menuItem in ctrl.profileNav.children" ng-class="::menuItem.cssClass" ng-hide="menuItem.hideFromMenu">
 				<a href="{{::menuItem.url}}" ng-show="::menuItem.url" target="{{::menuItem.target}}">
 					<i class="{{::menuItem.icon}}" ng-show="::menuItem.icon"></i>
 					{{::menuItem.text}}

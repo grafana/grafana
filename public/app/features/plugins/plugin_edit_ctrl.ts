@@ -28,7 +28,7 @@ export class PluginEditCtrl {
     private $http,
     private navModelSrv,
   ) {
-    this.navModel = navModelSrv.getPluginsNav();
+    this.navModel = navModelSrv.getNav('cfg', 'plugins');
     this.model = {};
     this.pluginId = $routeParams.pluginId;
     this.tabIndex = 0;

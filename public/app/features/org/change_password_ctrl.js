@@ -12,7 +12,7 @@ function (angular, config) {
     $scope.command = {};
     $scope.authProxyEnabled = config.authProxyEnabled;
     $scope.ldapEnabled = config.ldapEnabled;
-    $scope.navModel = navModelSrv.getProfileNav();
+    $scope.navModel = navModelSrv.getNav('profile', 'change-password');
 
     $scope.changePassword = function() {
       if (!$scope.userForm.$valid) { return; }

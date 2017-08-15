@@ -2,10 +2,17 @@
 
 <div class="page-container" >
 	<div class="page-header">
-		<h1>Alert List</h1>
+    <h1>
+			<i class="{{ctrl.navModel.node.icon}}"></i>
+			{{ctrl.navModel.node.text}}
+		</h1>
     <a class="btn btn-inverse" ng-click="ctrl.openHowTo()">
 			<i class="fa fa-info-circle"></i>
 			How to add an alert
+		</a>
+    <a class="btn btn-inverse" href="alerting/notifications" >
+			<i class="fa fa-bell"></i>
+			Notification channels
 		</a>
 	</div>
 

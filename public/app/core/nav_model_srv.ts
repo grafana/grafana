@@ -29,114 +29,29 @@ export class NavModelSrv {
     return _.find(this.navItems, {id: 'cfg'});
   }
 
-  getConfigurationNav() {
-    let cfg = this.getCfgNode();
-    return {
-      breadcrumbs: [cfg],
-      node: cfg,
-    };
-  }
+  getNav(...args) {
+    var children = this.navItems;
+    var nav = {breadcrumbs: [], node: null};
 
-  getAlertingNav(subPage) {
-    return {
-      section: {
-        title: 'Alerting',
-        url: 'plugins',
-        icon: 'icon-gf icon-gf-alert'
-      },
-      menu: [
-        {title: 'Alert List', active: subPage === 0, url: 'alerting/list', icon: 'fa fa-list-ul'},
-        {title: 'Notification channels', active: subPage === 1, url: 'alerting/notifications', icon: 'fa fa-bell-o'},
-      ]
-    };
-  }
+    for (let id of args) {
+      let node = _.find(children, {id: id});
+      nav.breadcrumbs.push(node);
+      nav.node = node;
+      children = node.children;
+    }
 
-  getDatasourceNav(subPage) {
-    let cfg = this.getCfgNode();
-    let ds = _.find(cfg.children, {id: 'datasources'});
-    return {
-      breadcrumbs: [cfg, ds],
-      node: ds
-    };
-  }
-
-  getPlaylistsNav(subPage) {
-    return {
-      section: {
-        title: 'Playlists',
-        url: 'playlists',
-        icon: 'fa fa-fw fa-film'
-      },
-      menu: [
-        {title: 'List view', active: subPage === 0, url: 'playlists', icon: 'fa fa-list-ul'},
-        {title: 'Add Playlist', active: subPage === 1, url: 'playlists/create', icon: 'fa fa-plus'},
-      ]
-    };
-  }
-
-  getProfileNav() {
-    return {
-      section: {
-        title: 'User Profile',
-        url: 'profile',
-        icon: 'fa fa-fw fa-user'
-      },
-      menu: []
-    };
+    return nav;
   }
 
   getNotFoundNav() {
-    return {
-      section: {
-        title: 'Page',
-        url: '',
-        icon: 'fa fa-fw fa-warning'
-      },
-      menu: []
+    var node = {
+      text: "Page not found ",
+      icon: "fa fa-fw fa-warning",
     };
-  }
 
-  getOrgNav(subPage) {
-    let cfg = this.getCfgNode();
-    let org = _.find(cfg.children, {id: 'org'});
     return {
-      breadcrumbs: [this.getCfgNode(), org],
-      node: org
-    };
-  }
-
-  getAdminNav(subPage) {
-    return {
-      section: {
-        title: 'Admin',
-        url: 'admin',
-        icon: 'fa fa-fw fa-cogs'
-      },
-      menu: [
-        {title: 'Users', active: subPage === 0, url: 'admin/users', icon: 'fa fa-fw fa-user'},
-        {title: 'Orgs', active: subPage === 1, url: 'admin/orgs', icon: 'fa fa-fw fa-users'},
-        {title: 'Server Settings', active: subPage === 2, url: 'admin/settings', icon: 'fa fa-fw fa-cogs'},
-        {title: 'Server Stats', active: subPage === 2, url: 'admin/stats', icon: 'fa fa-fw fa-line-chart'},
-        {title: 'Style Guide', active: subPage === 2, url: 'styleguide', icon: 'fa fa-fw fa-key'},
-      ]
-    };
-  }
-
-  getPluginsNav() {
-    let cfg = this.getCfgNode();
-    let plugins = _.find(cfg.children, {id: 'plugins'});
-    return {
-      breadcrumbs: [this.getCfgNode(), plugins],
-      node: plugins
-    };
-  }
-
-  getUserManNav() {
-    let cfg = this.getCfgNode();
-    let users = _.find(cfg.children, {id: 'users'});
-    return {
-      breadcrumbs: [cfg, users],
-      node: users,
+      breadcrumbs: [node],
+      node: node
     };
   }
 

@@ -7,10 +7,9 @@ import coreModule from '../../core_module';
 
 export class SideMenuCtrl {
   isSignedIn: boolean;
-  showSignout: boolean;
   user: any;
   mainLinks: any;
-  userMenu: any;
+  profileNav: any;
   appSubUrl: string;
   loginUrl: string;
   orgFilter: string;
@@ -23,11 +22,9 @@ export class SideMenuCtrl {
     this.isSignedIn = contextSrv.isSignedIn;
     this.user = contextSrv.user;
     this.appSubUrl = config.appSubUrl;
-    this.showSignout = this.contextSrv.isSignedIn && !config['disableSignoutMenu'];
     this.maxShownOrgs = 10;
-
-    this.mainLinks = config.bootData.navTree;
-    this.openUserDropdown();
+    this.mainLinks = _.filter(config.bootData.navTree, item => item.id !== 'profile');
+    this.profileNav = _.find(config.bootData.navTree, {id: 'profile'});
     this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
 
     this.$scope.$on('$routeChangeSuccess', () => {
@@ -49,13 +46,6 @@ export class SideMenuCtrl {
  }
 
  openUserDropdown() {
-   this.userMenu = [ ];
-
-   if (this.showSignout) {
-     this.userMenu.push({text: "Sign out", url: this.getUrl("/logout"), target: "_self", icon: 'fa fa-sign-out'});
-   }
-
-   this.userMenu.push({text: 'Profile', url: this.getUrl('/profile'), icon: 'fa fa-user'});
 
    // if (this.contextSrv.hasRole('Admin')) {
    //   this.orgMenu.push({section: this.user.orgName, cssClass: 'dropdown-menu-title'});

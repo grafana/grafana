@@ -24,7 +24,7 @@ class AdminHomeCtrl {
 
   /** @ngInject **/
   constructor(navModelSrv) {
-    this.navModel = navModelSrv.getAdminNav();
+    this.navModel = navModelSrv.getNav('cfg', 'admin');
   }
 }
 
@@ -47,7 +47,7 @@ export class ConfigurationHomeCtrl {
 
   /** @ngInject */
   constructor(private $scope, private backendSrv, private navModelSrv) {
-    this.navModel = navModelSrv.getConfigurationNav();
+    this.navModel = navModelSrv.getNav('cfg');
   }
 }
 

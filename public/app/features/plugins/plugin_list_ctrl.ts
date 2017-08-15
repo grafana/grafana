@@ -10,7 +10,7 @@ export class PluginListCtrl {
   /** @ngInject */
   constructor(private backendSrv: any, $location, navModelSrv) {
     this.tabIndex = 0;
-    this.navModel = navModelSrv.getPluginsNav();
+    this.navModel = navModelSrv.getNav('cfg', 'plugins');
 
     var pluginType = $location.search().type || 'panel';
     switch (pluginType) {
