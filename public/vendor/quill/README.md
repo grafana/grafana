@@ -11,14 +11,14 @@ define(['ng-quill'],function(){})
     class=""
     ng-model="绑定内容"
     modules="{toolbar: toolbarCon}"   //控制toolbar显示、隐藏以及自定义toolbar
-    read-only="readOnly"         //readOnly : true/false
+    read-only="readOnly"         //readOnly : true/false
     placeholder=""               //不写""的话有默认值
     on-editor-created="editorCreated(editor, knows.symptom)" //绑定事件，可选
 >
 </ng-quill-editor>
 ```
 
-* 3.js中声明所需变量及函数
+* 3.js中声明所需变量及函数
 ```
      $scope.绑定内容 = "quill";
      $scope.readOnly = false/true;
