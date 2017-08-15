@@ -41,3 +41,6 @@ profile.cov
 /examples/*/dist
 /packaging/**/*.rpm
 /packaging/**/*.deb
+
+# Ignore OSX indexing
+.DS_Store
