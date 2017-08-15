@@ -7,12 +7,6 @@
 		</span>
 	</a>
 
-	<div class="sidemenu-item">
-		<a class="sidemenu-link" ng-click="ctrl.search()">
-			<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-search"></i></span>
-		</a>
-	</div>
-
 	<div ng-repeat="item in ::ctrl.mainLinks" class="sidemenu-item dropdown">
 		<a href="{{::item.url}}" class="sidemenu-link" target="{{::item.target}}">
 			<span class="icon-circle sidemenu-icon">
@@ -38,8 +32,12 @@
 	<div ng-show="::!ctrl.isSignedIn" class="sidemenu-item">
 		<a href="{{ctrl.loginUrl}}" class="sidemenu-link" target="_self">
 			<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-in"></i></span>
-			<span class="sidemenu-item-text">Sign in</span>
 		</a>
+		<ul class="dropdown-menu dropdown-menu--sidemenu" role="menu">
+			<li class="side-menu-header">
+				<span class="sidemenu-item-text">Sign in</span>
+			</li>
+		</ul>
 	</div>
 
 
@@ -52,14 +50,14 @@
 				</span>
 		</a>
 		<ul class="dropdown-menu dropdown-menu--sidemenu dropup" role="menu">
-			<li ng-show="ctrl.orgs.length > ctrl.maxShownOrgs" style="margin-left: 10px;width: 90%">
-				<span class="sidemenu-item-text">Max shown : {{::ctrl.maxShownOrgs}}</span>
-				<input ng-model="::ctrl.orgFilter" style="padding-left: 5px" type="text" ng-change="::ctrl.loadOrgsItems();" class="gf-input-small width-12" placeholder="Filter">
+			<li ng-show="ctrl.orgs.length > ctrl.maxshownorgs" style="margin-left: 10px;width: 90%">
+				<span class="sidemenu-item-text">max shown : {{::ctrl.maxshownorgs}}</span>
+				<input ng-model="::ctrl.orgfilter" style="padding-left: 5px" type="text" ng-change="::ctrl.loadorgsitems();" class="gf-input-small width-12" placeholder="filter">
 			</li>
-			<li ng-repeat="orgItem in ctrl.orgItems" ng-class="::orgItem.cssClass">
-				<a href="{{::orgItem.url}}" ng-show="::orgItem.url" target="{{::orgItem.target}}">
-					<i class="{{::orgItem.icon}}" ng-show="::orgItem.icon"></i>
-					{{::orgItem.text}}
+			<li ng-repeat="orgitem in ctrl.orgitems" ng-class="::orgitem.cssclass">
+				<a href="{{::orgitem.url}}" ng-show="::orgitem.url" target="{{::orgitem.target}}">
+					<i class="{{::orgitem.icon}}" ng-show="::orgitem.icon"></i>
+					{{::orgitem.text}}
 				</a>
 			</li>
 			<li ng-repeat="menuItem in ctrl.userMenu" ng-class="::menuItem.cssClass">
@@ -78,12 +76,6 @@
 		<a href="http://docs.grafana.org" class="sidemenu-link" target="_blank">
 			<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-question"></i></span>
 		</a>
-
-		<ul class="dropdown-menu dropdown-menu--sidemenu dropup" role="menu">
-			<li class="side-menu-header">
-				<span class="sidemenu-item-text">Documentation</span>
-			</li>
-		</ul>
 	</div>
 </div>
 

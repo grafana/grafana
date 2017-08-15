@@ -1,6 +1,8 @@
 
-.sidemenu-wrapper {
+
+.sidemenu {
   display: flex;
+  flex-flow: column;
   flex-direction: column;
   width: $side-menu-width;
   background-color: $side-menu-bg;
@@ -9,11 +11,6 @@
   a:focus {
     text-decoration: none;
   }
-}
-
-.sidemenu {
-  display: flex;
-  flex-flow: column;
 }
 
 .sidemenu__top {
@@ -110,7 +107,6 @@
   white-space: nowrap;
   background-color: $side-menu-item-hover-bg;
   font-size: 17px;
-  font-weight: normal;
 }
 
 .sidemenu .fa-caret-right {
