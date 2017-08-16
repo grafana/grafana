@@ -3,6 +3,16 @@ $summary-font-color: #313F48;
   border: none;
   background-color: transparent;
 
+  h3 {
+    font-weight: 700;
+    margin: 10px 0;
+    line-height: 40px;
+  }
+
+  li {
+    line-height: 20px;
+  }
+
   .panels-wrapper h3 {
     color: $summary-font-color;
   }
@@ -211,6 +221,14 @@ $summary-font-color: #313F48;
         background-color: #F4F6F9;
       }
     }
+    // overwrite
+    .accordion-group {
+      margin: 0;
+      border: 0;
+    }
+    .accordion-inner {
+      border: 0;
+    }
     .accordion-heading {
       ul {
         margin: 0;
@@ -232,6 +250,9 @@ $summary-font-color: #313F48;
       .btn-primary {
         color: #6ECCFB;
         background-color: transparent;
+        // override
+        background-image: none;
+        border-color: transparent;
       }
     }
     .accordion-body {
@@ -287,7 +308,8 @@ $summary-font-color: #313F48;
           font-weight: bold;
           position: absolute;
           bottom: 25%;
-          left: 43%;
+          left: 50%;
+          transform: translateX(-50%);
           font-size: 16px;
         }
       }
@@ -306,7 +328,8 @@ $summary-font-color: #313F48;
       margin: 0 auto;
       [data-toggle="tab"] + i {
         position: absolute;
-        top: 0;
+        top: 2px;
+        left: 4px;
         visibility: visible;
       }
       .hidden {

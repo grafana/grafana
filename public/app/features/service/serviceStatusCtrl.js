@@ -142,6 +142,12 @@ define([
         consumeRightClick: false
       };
 
+      // 弹窗 查看历史情况
+      $scope.showModal = function (index, metric, host) {
+        // TODO
+        return;
+      };
+
     });
   }
 );

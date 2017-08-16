@@ -584,7 +584,7 @@ define([
 
         var healthModal = $modal({
           scope: $scope,
-          templateUrl: '/app/features/systemoverview/partials/system_overview_modal.html',
+          templateUrl: 'public/app/features/systemoverview/partials/system_overview_modal.html',
           show: false
         });
 

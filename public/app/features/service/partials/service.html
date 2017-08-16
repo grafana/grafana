@@ -54,7 +54,7 @@
                         <span ng-if="currentItemStatus=='GREEN'">服务线程正常运行</span>
                         <span ng-if="currentItemStatus!=='GREEN'">服务线程中断</span>
                     </p>
-                    <table-loader key={{host.hostName}} template="/app/features/service/partials/service_host_table.html"></table-loader>
+                    <table-loader key={{host.hostName}} template="public/app/features/service/partials/service_host_table.html"></table-loader>
                   </div>
                   <div ng-if="host.healthStatusType === 'GREY'">
                     <p>探针没有收集到数据 或 机器没有正常工作</p>
