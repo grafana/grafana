@@ -8,11 +8,11 @@
         <a class="btn btn-primary btn-cmdb" style="margin-left: 12px;" ng-click="importList()">添加设备</a>
         <a class="btn btn-primary btn-cmdb" style="margin-left: 12px;" ng-click="exportList()">导出列表</a>
         <a class="btn btn-success btn-cmdb" style="margin-left: 12px;" ng-click="refreshList()" ng-bind-html="refreshTxt"></a>
+        <form class="form-search cmdb-search">
+        <i class="fa fa-search"></i>
+        <input type="text" class="input-medium search-query" placeholder="搜索设备列表" ng-model="searchHost">
+        </form>
     </h2>
-    <form class="form-search cmdb-search">
-      <i class="fa fa-search"></i>
-      <input type="text" class="input-medium search-query" placeholder="搜索设备列表" ng-model="searchHost">
-    </form>
     <div class="cmdb-container">
         <table class="table table-hover table-striped cmdb-table">
             <tr>

@@ -35,7 +35,7 @@ define([
       newScope.fileChanged = $scope.fileChanged;
       newScope.type = 'service';
       $scope.appEvent('show-modal', {
-        src: 'app/features/cmdb/partials/import_host.html',
+        src: 'public/app/features/cmdb/partials/import_host.html',
         modalClass: 'cmdb-import-host',
         scope: newScope,
       });

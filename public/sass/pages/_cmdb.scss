@@ -26,17 +26,20 @@ $btn-cmdb-color: rgb(25,165,228);
 
 .cmdb-search{
   i{
+    font-size: 16px;
     color: rgb(25,165,228);
     position: absolute;
     left: 10px;
-    top: 8px;
+    top: 9px;
   }
   input{
     padding-left: 30px;
+    border: 1px solid;
+    border-radius: 20px;
   }
-  position: absolute;
-  right: 20px;
-  top: 30px;
+  float: right;
+  position: relative;
+  margin-left: 15px;
 }
 
 .modal.cmdb-import-host{

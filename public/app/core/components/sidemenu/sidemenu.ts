@@ -354,11 +354,6 @@ export class SideMenuCtrl {
           }
         });
       });
-
-      if (config.allowOrgCreate) {
-        item.children.push({text: "新建公司", icon: "fa fa-fw fa-plus", url: _self.getUrl('/org/new')});
-      }
-
       _self.$scope.submenu = item;
     });
   };
