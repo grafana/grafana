@@ -72,10 +72,10 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       return this.performTimeSeriesQuery(request);
     };
 
-    this.getPeriod = function(target, options) {
+    this.getPeriod = function(target, options, now) {
       var start = this.convertToCloudWatchTime(options.range.from, false);
       var end = this.convertToCloudWatchTime(options.range.to, true);
-      var now = Math.round(Date.now() / 1000);
+      now = Math.round((now || Date.now()) / 1000);
 
       var period;
       var range = end - start;

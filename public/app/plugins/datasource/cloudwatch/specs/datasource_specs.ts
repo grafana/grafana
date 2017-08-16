@@ -320,30 +320,75 @@ describe('CloudWatchDatasource', function() {
   it('should caclculate the correct period', function () {
     var hourSec = 60 * 60;
     var daySec = hourSec * 24;
-    var start = 1483196400;
+    var start = 1483196400 * 1000;
     var testData: any[] = [
-      [{ period: 60 }, { namespace: 'AWS/EC2' }, {}, start, start + 3600, (hourSec * 3), 60],
-      [{ period: null }, { namespace: 'AWS/EC2' }, {}, start, start + 3600, (hourSec * 3), 300],
-      [{ period: 60 }, { namespace: 'AWS/ELB' }, {}, start, start + 3600, (hourSec * 3), 60],
-      [{ period: null }, { namespace: 'AWS/ELB' }, {}, start, start + 3600, (hourSec * 3), 60],
-      [{ period: 1 }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 1440 - 1, (hourSec * 3 - 1), 1],
-      [{ period: 1 }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 3600, (hourSec * 3 - 1), 60],
-      [{ period: 60 }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 3600, (hourSec * 3), 60],
-      [{ period: null }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 3600, (hourSec * 3 - 1), 60],
-      [{ period: null }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 3600, (hourSec * 3), 60],
-      [{ period: null }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 3600, (daySec * 15), 60],
-      [{ period: null }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 3600, (daySec * 63), 300],
-      [{ period: null }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 3600, (daySec * 455), 3600]
+      [
+        { period: 60, namespace: 'AWS/EC2' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3), 60
+      ],
+      [
+        { period: null, namespace: 'AWS/EC2' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3), 300
+      ],
+      [
+        { period: 60, namespace: 'AWS/ELB' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3), 60
+      ],
+      [
+        { period: null, namespace: 'AWS/ELB' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3), 60
+      ],
+      [
+        { period: 1, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + (1440 - 1) * 1000) } },
+        (hourSec * 3 - 1), 1
+      ],
+      [
+        { period: 1, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3 - 1), 60
+      ],
+      [
+        { period: 60, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3), 60
+      ],
+      [
+        { period: null, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3 - 1), 60
+      ],
+      [
+        { period: null, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3), 60
+      ],
+      [
+        { period: null, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (daySec * 15), 60
+      ],
+      [
+        { period: null, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (daySec * 63), 300
+      ],
+      [
+        { period: null, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (daySec * 455), 3600
+      ]
     ];
     for (let t of testData) {
       let target = t[0];
-      let query = t[1];
-      let options = t[2];
-      let start = t[3];
-      let end = t[4];
-      let now = start + t[5];
-      let expected = t[6];
-      let actual = ctx.ds.getPeriod(target, query, options, start, end, now);
+      let options = t[1];
+      let now = new Date(options.range.from.valueOf() + t[2] * 1000);
+      let expected = t[3];
+      let actual = ctx.ds.getPeriod(target, options, now);
       expect(actual).to.be(expected);
     }
   });
