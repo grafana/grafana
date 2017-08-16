@@ -197,6 +197,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/profile', {
     templateUrl: 'public/app/features/org/partials/profile.html',
     controller : 'ProfileCtrl',
+    controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })
   .when('/profile/password', {
