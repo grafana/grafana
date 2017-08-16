@@ -9,6 +9,7 @@ export class User {
   isGrafanaAdmin: any;
   isSignedIn: any;
   orgRole: any;
+  systemId: any;
 
   constructor() {
     if (config.bootData.user) {
@@ -30,7 +31,6 @@ export class ContextSrv {
   dashboardLink: any;
   systemsMap: any;
   hostNum: any;
-  system: any;
 
   constructor() {
     this.pinned = store.getBool('grafana.sidemenu.pinned', false);
@@ -51,9 +51,11 @@ export class ContextSrv {
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
     this.isOrgAdmin = this.hasRole('Admin');
-    this.system = 0;
     this.dashboardLink = "";
     this.systemsMap = config.bootData.systems;
+    if (!_.some(this.systemsMap, {'Id': this.user.systemId})) {
+      this.user.systemId = 0;
+    }
     this.hostNum = 0;
   }
 
