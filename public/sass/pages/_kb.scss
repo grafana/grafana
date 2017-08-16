@@ -1,7 +1,6 @@
 .kb-container {
   background: none;
   border: none;
-  margin: 0!important;
   padding: 20px;
   position: relative;
   & > h2 {
@@ -143,6 +142,9 @@
   top: 40px!important;
   .kb-list {
     height: 500px;
+  }
+  .kb-container {
+    margin: 0;
   }
 }
 @media (max-height: 900px) {
