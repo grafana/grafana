@@ -11,45 +11,8 @@
     </ul>
 </topnav>
 
-<div class="page-container" style="background:#fff;">
-    <form>
-        <div class="">
-            <h2>运维知识库搜索</h2>
-            <div class="tidy-form">
-                <ul class="tidy-form-list">
-                    <li class="tidy-form-item"><h4>关键词</h4></li>
-                    <li>
-                        <input placeholder="支持AND, OR, 空格表示OR" type="text" class="input-large tidy-form-input last" ng-model="q" required="">
-                    </li>
-                    <li class="tidy-form-item" style="margin-left:30px;"><h4>类型</h4></li>
-                    <li>
-                        <select class="input-small tidy-form-input" ng-model="service" required>
-                            <option ng-repeat="s in services" value="{{s}}" ng-selected="service == s">{{s}}</option>
-                        </select>
-                    </li>
-                    <li>
-                        <button style="margin:0 20px;" type="submit" class="btn btn-primary" ng-click="query()"><i class="fa fa-search"/>查找</button>
-                        <button class="btn btn-primary btn-success" ng-click="newKnows()">+ 运维经验</button>
-                    </li>
-                </ul>
-                <div class="clearfix"></div>
-            </div>
+<div class="page-container kb-container">
+    <h2>运维知识库 <button class="btn btn-primary btn-success" ng-click="newKnows()">+ 运维经验</button></h2>
 
-            <br>
-        </div>
-    </form>
-    <table class="filter-table ng-scope" ng-if="knowledge.length" style="background:#fff;">
-        <thead>
-            <tr style="background:#fff;">
-                <th>现象</th>
-                <th>解决方案</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr ng-repeat="knows in knowledge" style="background:#fff;">
-                <td>{{knows.symptom}}</td>
-                <td ng-bind-html="knows.solution"></td>
-            </tr>
-        </tbody>
-    </table>
+    <div ng-include="'app/features/logs/partials/knowledge_body.html'"></div>
 </div>

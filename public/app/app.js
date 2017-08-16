@@ -17,7 +17,8 @@ define([
   'app/core/core',
   'ui.calendar',
   'jsPlumbToolkit',
-  'jsPlumbToolkit-angular'
+  'jsPlumbToolkit-angular',
+  'ng-quill',
 ],
 function (angular, $, _, appLevelRequire) {
   "use strict";
@@ -64,6 +65,7 @@ function (angular, $, _, appLevelRequire) {
     'ui.bootstrap',
     'ui.bootstrap.tpls',
     'ui.calendar',
+    'ngQuill'
   ];
 
   var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];

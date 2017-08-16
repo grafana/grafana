@@ -1,6 +1,7 @@
 define([
     'angular',
-    'lodash'
+    'lodash',
+    'ng-quill'
   ],
   function (angular, _) {
     'use strict';
@@ -28,9 +29,11 @@ define([
           "nginx",
         ];
         $scope.fullText = [];
+        $scope.readOnly = true;
       };
 
       $scope.query = function () {
+        $scope.showList = true;
         $scope.showCreatForm = false;
         var params =  {
           q: $scope.q
@@ -85,6 +88,43 @@ define([
 
       $scope.textOverflow = function(index) {
         $scope.fullText[index] = !$scope.fullText[index];
+      };
+
+      $scope.editorCreated = function (editor, knowledge, isDetail) {
+        if(isDetail) {
+          editor.root.innerHTML = knowledge;
+        } else {
+          var tmp = knowledge.trim();
+          var length_txt = tmp.indexOf('\n');
+          length_txt = (length_txt > -1 && length_txt < 100) ? length_txt : 100;
+
+          var length_html = tmp.indexOf('</');
+          length_html = (length_html > -1 && length_html < 100) ? length_html : 100;
+
+          var length = length_txt < length_html ? length_txt : length_html;
+          var end = tmp.length > length ? '...' : '';
+          editor.root.innerHTML = tmp.substring(0, length) + end;
+        }
+      };
+
+      $scope.getDetail = function(knowledge) {
+        $scope.showList = false;
+        $scope.detailKnowledge = knowledge;
+        history.pushState(null, null, document.URL);
+        window.addEventListener('popstate', pushState);
+      };
+
+      $scope.getList = function() {
+        $scope.showList = true;
+      };
+
+      $scope.$on("$destroy", function() {
+        window.removeEventListener('popstate', pushState);
+      });
+
+      // 禁用浏览器后退按钮
+      var pushState = function() {
+        history.pushState(null, null, document.URL);
       };
 
       $scope.init();
