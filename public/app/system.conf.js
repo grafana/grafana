@@ -42,7 +42,9 @@ System.config({
     "angular-strap.tpl":        "vendor/angular-other/angular-strap.tpl",
     "angular-strap-old":        "vendor/angular-other/angular-strap-old",
 
-    "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge"
+    "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge",
+    'quill':                    'vendor/quill/quill.min',
+    'ng-quill':                 'vendor/quill/ng-quill',
   },
 
   packages: {
@@ -71,9 +73,24 @@ System.config({
       deps: ['jquery'],
       exports: 'angular',
     },
+<<<<<<< HEAD
     'vendor/npm/eventemitter3/index.js': {
       format: 'cjs',
       exports: 'EventEmitter'
     },
+=======
+    'vendor/jsPlumb/jsPlumbToolkit.js': {
+      build: false
+    },
+    'vendor/jsPlumb/jsPlumbToolkit-angular.js': {
+      build: false
+    },
+    'vendor/quill/quill.min.js': {
+      build: false
+    },
+    'vendor/quill/ng-quill.js': {
+      build: false
+    }
+>>>>>>> 90e9b33810b108e3df63c95174165f734e574261
   }
 });

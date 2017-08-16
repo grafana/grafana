@@ -207,22 +207,24 @@ export class SideMenuCtrl {
       ]
     });
 
-    if (this.contextSrv.user.orgId === 2) {
-      this.mainLinks.push({
-        text: "配置管理",
-        icon: "fa fa-fw fa-cubes",
-        children: [
-          {
-            text: '设备列表',
-            url: this.getUrl("/cmdb/hostlist")
-          },
-          {
-            text: '设置',
-            url: this.getUrl("/cmdb/setup")
-          }
-        ]
-      });
-    }
+    this.mainLinks.push({
+      text: "配置管理",
+      icon: "fa fa-fw fa-cubes",
+      children: [
+        {
+          text: '设备列表',
+          url: this.getUrl("/cmdb/hostlist")
+        },
+        {
+          text: '服务列表',
+          url: this.getUrl("/cmdb/servicelist")
+        },
+        {
+          text: '设置',
+          url: this.getUrl("/cmdb/setup")
+        }
+      ]
+    });
 
     this.bottomLinks.push({
       text: this.user.name,
@@ -352,11 +354,6 @@ export class SideMenuCtrl {
           }
         });
       });
-
-      if (config.allowOrgCreate) {
-        item.children.push({text: "新建公司", icon: "fa fa-fw fa-plus", url: _self.getUrl('/org/new')});
-      }
-
       _self.$scope.submenu = item;
     });
   };

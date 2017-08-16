@@ -1,0 +1,155 @@
+{
+  "tomcat.jsp.jspCount": {
+    "name": "tomcat.jsp.jspCount",
+    "definition": "The number of JSPs per second that have been loaded in the web module",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "tomcat.jsp.jspQueueLength": {
+    "name": "tomcat.jsp.jspQueueLength",
+    "definition": "The length of the JSP queue (if enabled via maxLoadedJsps)",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "tomcat.requests.errorCount": {
+    "name": "tomcat.requests.errorCount",
+    "definition": "The number of errors per second on all request processors",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "tomcat.requests.maxTime": {
+    "name": "tomcat.requests.maxTime",
+    "definition": "The longest request processing time (in milliseconds)",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "tomcat.requests.processingTime": {
+    "name": "tomcat.requests.processingTime",
+    "definition": "The sum of request processing times across all requests handled by the request processors (in milliseconds) per second",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "tomcat.requests.requestCount": {
+    "name": "tomcat.requests.requestCount",
+    "definition": "The number of requests per second across all request processors",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "tomcat.servlet.errorCount": {
+    "name": "tomcat.servlet.errorCount",
+    "definition": "The number of errors per second on all request processors",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "tomcat.servlet.processingTime": {
+    "name": "tomcat.servlet.processingTime",
+    "definition": "The sum of request processing times across all requests handled by the request processors (in milliseconds) per second",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "tomcat.servlet.requestCount": {
+    "name": "tomcat.servlet.requestCount",
+    "definition": "The number of requests received by the servlet per second",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "tomcat.threading.CurrentThreadCpuTime": {
+    "name": "tomcat.threading.CurrentThreadCpuTime",
+    "definition": "the total CPU time for the current thread",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "tomcat.threading.CurrentThreadUserTime": {
+    "name": "tomcat.threading.CurrentThreadUserTime",
+    "definition": "the CPU time that the current thread has executed in user mode",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "tomcat.threading.DaemonThreadCount": {
+    "name": "tomcat.threading.DaemonThreadCount",
+    "definition": "the current number of live daemon threads",
+    "type": "number",
+    "unit": "int",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "tomcat.threading.PeakThreadCount": {
+    "name": "tomcat.threading.PeakThreadCount",
+    "definition": "The maximum number of allowed worker threads",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "tomcat.threading.ThreadCount": {
+    "name": "tomcat.threading.ThreadCount",
+    "definition": "The number of threads managed by the thread pool",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "tomcat.threading.TotalStartedThreadCount": {
+    "name": "tomcat.threading.TotalStartedThreadCount",
+    "definition": "the total number of threads created and also started since the Java virtual machine started",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "tomcat.threadpool.connectionCount": {
+    "name": "tomcat.threadpool.connectionCount",
+    "definition": "the number of connection",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "tomcat.threadpool.currentThreadCount": {
+    "name": "tomcat.threadpool.currentThreadCount",
+    "definition": "The number of threads that are in use.",
+    "type": "number",
+    "unit": "long",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

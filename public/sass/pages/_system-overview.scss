@@ -1,0 +1,419 @@
+$summary-font-color: #313F48;
+.summary-page {
+  border: none;
+  background-color: transparent;
+
+  h3 {
+    font-weight: 700;
+    margin: 10px 0;
+    line-height: 40px;
+  }
+
+  li {
+    line-height: 20px;
+  }
+
+  .panels-wrapper h3 {
+    color: $summary-font-color;
+  }
+
+  .summary-panel {
+    display: flex;
+    flex-direction: row;
+    h3 {
+      text-align: center;
+    }
+  }
+
+  .view-panel {
+    background-color: #fff;
+    box-shadow: 0px 0px 4px 1px #d8d8d8;
+    margin-bottom: 40px;
+  }
+
+  .health-panel {
+    position: relative;
+    &:first-child{
+      width: 30%;
+      border-right: 2px solid #ECEFF1;
+      padding-bottom: 20px;
+    }
+    &:last-child {
+      flex: auto;
+    }
+    .health-pie {
+      height: 200px;
+      width: 200px;
+      margin: 0 auto;
+    }
+    a {
+      font-weight: bold;
+      span, strong {
+        font-size: 36px;
+        padding-left: 10px;
+      }
+    }
+  }
+
+  .alert-panel {
+    display: flex;
+    flex-direction: row;
+    height: 50%;
+    & > div:first-child {
+      width: 30%;
+      border-right: 2px solid #ECEFF1;
+    }
+    & > div:last-child {
+      flex: auto;
+    }
+    a {
+      display: flex;
+      justify-content: center;
+      padding: 5px 0;
+      span:after {
+        content: '个';
+        font-size: 14px;
+      }
+      span.status-success:after {
+        display: none;
+      }
+    }
+    .panels-wrapper:last-child {
+      div {
+        display: flex;
+        flex-direction: row;
+        li {
+          width: 50%;
+          text-align: center;
+          a span, a strong {
+            font-size: 24px;
+            &:after {
+              font-size: 12px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .anomaly-panel {
+    border-top: 2px solid #ECEFF1;
+    & > div {
+      display: flex;
+      flex-direction: row;
+      margin-top: 20px;
+      li {
+        width: 50%;
+        text-align: center;
+        a span:after {
+          content: '个';
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  .detail-panel {
+    position: relative;
+    h3 {
+      text-align: left;
+      padding-left: 46px;
+    }
+    .panels-wrapper {
+      display: flex;
+      flex-direction: row;
+      .mention {
+        flex: auto;
+        line-height: 40px;
+      }
+    }
+    .jtk-canvas {
+      border: none;
+      background-color: rgba(210, 235, 250, 0.5);
+    }
+    .service-dependency {
+      position: relative;
+      .service-icon {
+        border: 3px solid transparent;
+        transition: all .2s ease-in-out;
+      }
+      .jtk-node.active {
+        .service-icon {
+          height: 60px;
+          width: 60px;
+          line-height: 60px;
+          color: #fff;
+          border: 3px solid rgba(210, 235, 250, 0.7);
+        }
+      }
+      &:after {
+        content: " ";
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-top: 23px solid rgba(210, 235, 250, 0.5);
+        position: absolute;
+        top: 100%;
+        left: 48%;
+      }
+    }
+  }
+
+  .service-panel {
+    background-color: rgba(210, 235, 250, 0.5);
+    position: relative;
+    .mention {
+      span {
+        color: $summary-font-color;
+        margin-right: 70px;
+      }
+      em {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 14px;
+      }
+    }
+  }
+
+  .host-panel {
+    & > em {
+      line-height: 60px;
+      margin-left: 20px;
+      color: #32B2E1;
+    }
+    .mention {
+      button {
+        margin: 16px 30px;
+      }
+      .btn-item {
+        padding: 3px 30px;
+      }
+    }
+  }
+
+  .host-panel-table {
+    padding: 34px 30px;
+    // border: 1px solid #979797;
+    box-sizing: border-box;
+    & > ul {
+      display: flex;
+      flex-direction: row;
+      margin: 0;
+      background-color: rgba(15, 171, 248, 0.6);
+      li {
+        width: 15%;
+        height: 36px;
+        line-height: 36px;
+        text-align: center;
+        color: #fff;
+        box-sizing: border-box;
+      }
+    }
+    .host-list {
+      border: 1px solid #979797;
+      border-top: none;
+    }
+    .host-item {
+      &:nth-child(even) .accordion-heading {
+        background-color: #F4F6F9;
+      }
+    }
+    // overwrite
+    .accordion-group {
+      margin: 0;
+      border: 0;
+    }
+    .accordion-inner {
+      border: 0;
+    }
+    .accordion-heading {
+      ul {
+        margin: 0;
+        display: flex;
+        flex-direction: row;
+        font-weight: bold;
+        li {
+          height: 40px;
+          line-height: 40px;
+          width: 15%;
+          text-align: center;
+          box-sizing: border-box;
+          &:first-child {
+            position: absolute;
+            left: -4%;
+          }
+        }
+      }
+      .btn-primary {
+        color: #6ECCFB;
+        background-color: transparent;
+        // override
+        background-image: none;
+        border-color: transparent;
+      }
+    }
+    .accordion-body {
+      // bootstrap-table override
+      .bootstrap-table {
+        margin: 28px auto;
+      }
+      .fixed-table-container {
+        border: 1px solid #a0a0a0;
+      }
+      table {
+        thead tr {
+          color: #fff;
+          background-color: #A0A0A0;
+        }
+        tbody {
+          tr:hover {
+            background-color: rgba(0, 166, 248, 0.16);
+          }
+          tr:nth-child(odd) {
+            td {
+              background-color: #fff;
+            }
+          }
+          tr:nth-child(even) {
+            td {
+              background-color: #F4F6F9;
+            }
+          }
+        }
+      }
+      .pagination ul > li {
+        &.active > a {
+          background-color: #6ECCFB;
+        }
+        & > a {
+          color: #fff;
+          background-color: #D8D8D8;
+        }
+      }
+    }
+
+    .predictions {
+      display: flex;
+      flex-direction: row;
+      .prediction-item {
+        width: 33%;
+        position: relative;
+        h4 {
+          text-align: center;
+        }
+        em {
+          font-weight: bold;
+          position: absolute;
+          bottom: 25%;
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 16px;
+        }
+      }
+      .prediction-item-pie {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto;
+      }
+      select {
+        width: 76px;
+      }
+    }
+
+    .tab-panel {
+      width: 80%;
+      margin: 0 auto;
+      [data-toggle="tab"] + i {
+        position: absolute;
+        top: 2px;
+        left: 4px;
+        visibility: visible;
+      }
+      .hidden {
+        visibility: hidden;
+      }
+    }
+
+    .kpi-pane {
+      .item-type li {
+        width: 50px;
+        height: 50px;
+        line-height: 50px;
+        vertical-align: middle;
+        text-align: center;
+        border-radius: 50%;
+        margin-right: 30px;
+        display: inline-block;
+        position: relative;
+      }
+    }
+
+  }
+
+  .btn-item {
+    float: left;
+    padding: 5px 10px;
+    margin-right: 20px;
+    width: 10%;
+    span{
+      font-size: 20px;
+      font-weight: bold;
+    }
+  }
+
+  button {
+    border: none;
+    outline: none;
+    &.btn-item {
+      width: initial;
+    }
+  }
+
+  // angular-strap popover override
+  .popover {
+    outline: none;
+    .popover-title {
+      color: #555;
+    }
+  }
+
+  // angular-strap modal override
+  .center {
+    padding: 10px 0 0 0;
+  }
+
+  .status-success, .status-green-color {
+    color: #3DB779;
+  }
+  .status-warning, .status-yellow-color {
+    color: #FE9805;
+  }
+  .status-danger, .status-red-color {
+    color: #BB1144;
+  }
+
+  .bg-success, .status-green {
+    background-color: #3DB779;
+  }
+  .bg-warn, .status-yellow {
+    background-color: #FE9805;
+  }
+  .bg-danger, .status-red {
+    background-color: #BB1144;
+  }
+  .bg-down, .status-grey {
+    background-color: #DBE1EA;
+  }
+}
+
+.text-overflow {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+ 
+ 

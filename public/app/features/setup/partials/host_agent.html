@@ -1,7 +1,7 @@
 <navbar icon="fa fa-fw fa-cloud-download" title="安装指南" title-url="/setting/agent">
-  <a href="/setting/agent" class="navbar-page-btn">
-    安装探针
-	</a>
+  <ul class="nav">
+      <li><a href="/setting/agent">安装探针</a></li>
+  </ul>
 </navbar>
 
 <div class="page-container setup-container">
@@ -65,12 +65,11 @@
         <li style="word-break: break-all">sudo /etc/init.d/cloudwiz-agent start</li>
       </ul>
 
-      <div class="pull-right installed">
-        <button ng-click="nextEvent('skip')" class="btn" ng-if="installed">跳过</button>
-        <button ng-click="nextEvent('import')" class="btn" ng-disabled="!installed" ng-class="{'btn-success':installed}">导入报警规则</button>
-        <button ng-click="createTemp()" class="btn" ng-disabled="!installed" ng-class="{'btn-success':installed}">导入模板</button>
-        <button ng-click="nextEvent('next')" class="btn" ng-disabled="!installed" ng-class="{'btn-primary':installed}">下一步</button>
-      </div>
+    <div class="pull-right installed">
+      <button ng-click="nextEvent('skip')" class="btn" ng-if="installed">跳过</button>
+      <button ng-click="nextEvent('import')" class="btn" ng-disabled="!installed" ng-class="{'btn-success':installed}">导入报警规则</button>
+      <button ng-click="createTemp()" class="btn" ng-disabled="hostDashboard" ng-class="{'btn-success':installed}">导入模板</button>
+      <button ng-click="nextEvent('next')" class="btn" ng-disabled="!installed" ng-class="{'btn-primary':installed}">下一步</button>
     </div>
 
   </div>

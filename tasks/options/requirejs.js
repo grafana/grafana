@@ -24,6 +24,10 @@ module.exports = function(config,grunt) {
       paths: {
         "jsPlumbToolkit": "empty:",
         "jsPlumbToolkit-angular": "empty:",
+        "ui.calendar": "empty:",
+        "zh-cn": "empty:",
+        "quill": "empty:",
+        "ng-quill": "empty:",
       },
 
       done: function (done, output) {

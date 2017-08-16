@@ -125,6 +125,7 @@ function (angular, moment, _) {
       options.title = target.metric + "异常情况";
 
       options.from = moment.utc(anno_create - 3600000).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+      options.to = moment().utc().format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
       options.annotations = [start_anno];
       $location.path("/integrate");
     };

@@ -1,8 +1,6 @@
 define([
     'angular',
     'lodash',
-    'jsPlumbToolkit',
-    'jsPlumbToolkit-angular',
   ],
   function (angular, _) {
     'use strict';
@@ -29,7 +27,7 @@ define([
             key  : service.name,
             label: service.name,
             type : "node",
-            icon : serviceIconMap[service.name]
+            icon : serviceIconMap[service.name] || "iconfont fa-default"
           });
         });
       });
@@ -130,7 +128,7 @@ define([
         return {
           name: serviceName,
           id  : $dragElement.attr('data-node-id'),
-          icon: serviceIconMap[serviceName]
+          icon: serviceIconMap[serviceName] || "iconfont fa-default"
         };
       };
 

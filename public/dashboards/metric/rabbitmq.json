@@ -1,0 +1,246 @@
+{
+  
+  "rabbitmq.node.mem_used": {
+    "name": "rabbitmq.node.mem_used",
+    "definition": "占用内存大小",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "rabbitmq.queue.consumer_utilisation": {
+    "name": "rabbitmq.queue.consumer_utilisation",
+    "definition": "队列用户中可接收消息的时间比例",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "rabbitmq.queue.memory": {
+    "name": "rabbitmq.queue.memory",
+    "definition": "队列所使用内存",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "rabbitmq.queue.messages.rate": {
+    "name": "rabbitmq.queue.messages.rate",
+    "definition": "队列内每秒总message数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "rabbitmq.connections": {
+    "name": "rabbitmq.connections",
+    "definition": "当前vhost连接数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "rabbitmq.node.fd_used": {
+    "name": "rabbitmq.node.fd_used",
+    "definition": "已使用的File Descriptors",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.node.run_queue": {
+    "name": "rabbitmq.node.run_queue",
+    "definition": "等待运行的Erlang进程平均数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.node.sockets_used": {
+    "name": "rabbitmq.node.sockets_used",
+    "definition": "被用作socket的file descriptor数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.node.partitions": {
+    "name": "rabbitmq.node.partitions",
+    "definition": "该节点所监控的网段数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.active_consumers": {
+    "name": "rabbitmq.queue.active_consumers",
+    "definition": "活跃用户的数量活跃用户可以立即接收发送到队列中的message",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.consumers": {
+    "name": "rabbitmq.queue.consumers",
+    "definition": "用户数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages": {
+    "name": "rabbitmq.queue.messages",
+    "definition": "队列内总message数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages_ready": {
+    "name": "rabbitmq.queue.messages_ready",
+    "definition": "准备发送给客户端的message总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages_ready.rate": {
+    "name": "rabbitmq.queue.messages_ready.rate",
+    "definition": "每秒准备发送给客户端的message总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages_unacknowledged": {
+    "name": "rabbitmq.queue.messages_unacknowledged",
+    "definition": "未被承认的即将发送给客户端的message总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages_unacknowledged.rate": {
+    "name": "rabbitmq.queue.messages_unacknowledged.rate",
+    "definition": "每秒未被承认的即将发送给客户端的message总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages.ack.count": {
+    "name": "rabbitmq.queue.messages.ack.count",
+    "definition": "已承认、已发送的message总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages.ack.rate": {
+    "name": "rabbitmq.queue.messages.ack.rate",
+    "definition": "每秒已承认、已发送的message总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages.deliver.count": {
+    "name": "rabbitmq.queue.messages.deliver.count",
+    "definition": "acknowledgement模式下已发送的message",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages.deliver.rate": {
+    "name": "rabbitmq.queue.messages.deliver.rate",
+    "definition": "每acknowledgement模式下已发送的message",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages.deliver_get.count": {
+    "name": "rabbitmq.queue.messages.deliver_get.count",
+    "definition": "四种模式下的message总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages.deliver_get.rate": {
+    "name": "rabbitmq.queue.messages.deliver_get.rate",
+    "definition": "每秒四种模式下的message总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages.publish.count": {
+    "name": "rabbitmq.queue.messages.publish.count",
+    "definition": "已分发的message总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages.publish.rate": {
+    "name": "rabbitmq.queue.messages.publish.rate",
+    "definition": "每秒已分发的message总数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages.redeliver.count": {
+    "name": "rabbitmq.queue.messages.redeliver.count",
+    "definition": "deliver_get中有redeliver标签的message数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.queue.messages.redeliver.rate": {
+    "name": "rabbitmq.queue.messages.redeliver.rate",
+    "definition": "每秒deliver_get中有redeliver标签的message数量",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "rabbitmq.connections.state": {
+    "name": "rabbitmq.connections.state",
+    "definition": "指定状态的vhost连接数",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

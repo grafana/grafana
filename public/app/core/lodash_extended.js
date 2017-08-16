@@ -1,7 +1,8 @@
 define([
+  'jquery',
   'lodash-src'
 ],
-function () {
+function ($) {
   'use strict';
 
   var _ = window._;
@@ -62,7 +63,8 @@ function () {
       "nginx": "Nginx",
       "postgresql": "Postgresql",
       "redis": "Redis",
-      "rabbitmq": "RabbitMQ"
+      "rabbitmq": "RabbitMQ",
+      "iis": "IIS"
     };
   };
 
@@ -101,6 +103,28 @@ function () {
       "redis": "iconfont fa-redis",
       "rabbitmq": "iconfont fa-rabbitmq"
     };
+  }
+
+  _.cmdbInitObj = function(obj) {
+    if(_.isObject(obj)) {
+      for(var i in obj) {
+        if(!_.isNumber(obj[i]) && (_.isNull(obj[i]) || _.isEmpty(obj[i]))){
+          if(/^(memory|hosts|interfaces|devices|services)$/.test(i)) {
+            obj[i] = null;
+          } else {
+            obj[i] = '暂无信息';
+          }
+        };
+        if(_.isObject(obj[i])) {
+          obj[i] = _.cmdbInitObj(obj[i]);
+        }
+      }
+    }
+    return obj;
   };
+
+  _.metricHelpMessage = {};
+  _.metricMessage = {};
+
   return _;
 });

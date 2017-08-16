@@ -412,7 +412,11 @@ define([
       };
 
       $scope.isShowKnows = function(type) {
-        $scope.showKnows = type;
+        $scope.appEvent('show-modal', {
+          src: 'public/app/features/logs/partials/logs_knowledge.html',
+          modalClass: 'modal-kb',
+          scope: $scope.$new(),
+        });
       };
 
       $scope.hideGuide = function() {
@@ -432,7 +436,6 @@ define([
       };
 
       $scope.init = function () {
-        $scope.showKnows = false;
         $scope.query = "*";
         $scope.size = 500;
         //log table

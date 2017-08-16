@@ -251,6 +251,15 @@ function (angular, _, coreModule, config) {
       });
     };
 
+    this.getPredictionPercentage = function (params) {
+      return self.alertD({
+        method: "get",
+        url   : "/anomaly/prediction/usages",
+        params: params,
+        headers: {'Content-Type': 'application/json;'}
+      });
+    };
+
     this.getHostsNum = function () {
       return this.alertD({
         method: "get",
@@ -262,13 +271,34 @@ function (angular, _, coreModule, config) {
       });
     };
 
-    this.uploadHostList = function(params) {
+    this.uploadHostList = function(params, url) {
       return this.alertD({
         method: "post",
-        url: "/cmdb/setting",
+        url: url,
         data: angular.toJson(params),
         headers: {'Content-Type': 'application/json;'},
       });
     };
+
+    this.editServiceHost = function(params) {
+      return this.alertD({
+        method: "post",
+        url: "/cmdb/relationship/overwrite",
+        data: angular.toJson(params),
+        headers: {'Content-Type': 'application/json;'},
+      });
+    };
+
+    this.readMetricHelpMessage = function (key) {
+      !_.metricMessage[key] && this.get('/api/static/metric/' + key).then(function (result) {
+        _.metricMessage[key] = result;
+        _.extend(_.metricHelpMessage, result);
+      })
+      .catch(function (err) {
+        // set isHandled true, then alertSrv won't show
+        err.isHandled = true;
+      });
+    };
+
   });
 });

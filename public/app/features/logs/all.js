@@ -1,3 +1,5 @@
 define([
-  './logsCtrl'
+  './logsCtrl',
+  './knowledgeBaseCtrl',
+  './createKnowledgeCtrl'
 ], function () {});

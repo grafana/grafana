@@ -1,0 +1,389 @@
+{
+  "kafka.bytesrate.BytesInPerSec.FifteenMinuteRate": {
+    "name": "kafka.bytesrate.BytesInPerSec.FifteenMinuteRate",
+    "definition": "Aggregate incoming byte rate in fifteen minute",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "kafka.bytesrate.BytesOutPerSec.FifteenMinuteRate": {
+    "name": "kafka.bytesrate.BytesOutPerSec.FifteenMinuteRate",
+    "definition": "Aggregate coutcoming byte rate in fifteen minute",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "kafka.controller.ActiveControllerCount": {
+    "name": "kafka.controller.ActiveControllerCount",
+    "definition": "Number of active controllers in cluster",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "kafka.controller.OfflinePartitionsCount": {
+    "name": "kafka.controller.OfflinePartitionsCount",
+    "definition": "Number of offline partitions",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "kafka.leaderelection.MeanRate": {
+    "name": "kafka.leaderelection.MeanRate",
+    "definition": "Mean leader election rate",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "kafka.server.expand.MeanRate": {
+    "name": "kafka.server.expand.MeanRate",
+    "definition": "Mean rate at which the pool of in-sync replicas expands",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "kafka.server.shrink.MeanRate": {
+    "name": "kafka.server.shrink.MeanRate",
+    "definition": "Mean rate at which the pool of in-sync replicas shrinks",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "kafka.unclean_leaderelection.MeanRate": {
+    "name": "kafka.unclean_leaderelection.MeanRate",
+    "definition": "Number of `unclean` elections per second",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "kafka.bytesrate.BytesInPerSec.Count": {
+    "name": "kafka.bytesrate.BytesInPerSec.Count",
+    "definition": "Aggregate incoming byte count",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.bytesrate.BytesInPerSec.FiveMinuteRate": {
+    "name": "kafka.bytesrate.BytesInPerSec.FiveMinuteRate",
+    "definition": "Aggregate incoming byte rate in five minute",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.bytesrate.BytesInPerSec.MeanRate": {
+    "name": "kafka.bytesrate.BytesInPerSec.MeanRate",
+    "definition": "Mean aggregate incoming byte rate",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.bytesrate.BytesInPerSec.OneMinuteRate": {
+    "name": "kafka.bytesrate.BytesInPerSec.OneMinuteRate",
+    "definition": "Aggregate incoming byte rate in one minute",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.bytesrate.BytesOutPerSec.Count": {
+    "name": "kafka.bytesrate.BytesOutPerSec.Count",
+    "definition": "Aggregate coutcoming byte count",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.bytesrate.BytesOutPerSec.FiveMinuteRate": {
+    "name": "kafka.bytesrate.BytesOutPerSec.FiveMinuteRate",
+    "definition": "Aggregate coutcoming byte rate in fifteen minute",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.bytesrate.BytesOutPerSec.MeanRate": {
+    "name": "kafka.bytesrate.BytesOutPerSec.MeanRate",
+    "definition": "Mean aggregate coutcoming byte rate",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.bytesrate.BytesOutPerSec.OneMinuteRate": {
+    "name": "kafka.bytesrate.BytesOutPerSec.OneMinuteRate",
+    "definition": "Aggregate coutcoming byte rate in one minute",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.leaderelection.50thPercentile": {
+    "name": "kafka.leaderelection.50thPercentile",
+    "definition": "Time for leaderelection to reach 50thPercentile",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.leaderelection.75thPercentile": {
+    "name": "kafka.leaderelection.75thPercentile",
+    "definition": "Time for leaderelection to reach 75thPercentile",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.leaderelection.95thPercentile": {
+    "name": "kafka.leaderelection.95thPercentile",
+    "definition": "Time for leaderelection to reach 95thPercentile",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.leaderelection.98thPercentile": {
+    "name": "kafka.leaderelection.98thPercentile",
+    "definition": "Time for leaderelection to reach 98thPercentile",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.leaderelection.999thPercentile": {
+    "name": "kafka.leaderelection.999thPercentile",
+    "definition": "Time for leaderelection to reach 999thPercentile",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.leaderelection.99thPercentile": {
+    "name": "kafka.leaderelection.99thPercentile",
+    "definition": "Time for leaderelection to reach 99thPercentile",
+    "type": "time",
+    "unit": "ms",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.leaderelection.Count": {
+    "name": "kafka.leaderelection.Count",
+    "definition": "Leader election count",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.leaderelection.FifteenMinuteRate": {
+    "name": "kafka.leaderelection.FifteenMinuteRate",
+    "definition": "Leader election rate in fifteen minute",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.leaderelection.FiveMinuteRate": {
+    "name": "kafka.leaderelection.FiveMinuteRate",
+    "definition": "Mean leader election rate in five minute",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.leaderelection.Max": {
+    "name": "kafka.leaderelection.Max",
+    "definition": "Max leader election count",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.leaderelection.Mean": {
+    "name": "kafka.leaderelection.Mean",
+    "definition": "Mean leader election count",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.leaderelection.Min": {
+    "name": "kafka.leaderelection.Min",
+    "definition": "Min leader election count",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.leaderelection.OneMinuteRate": {
+    "name": "kafka.leaderelection.OneMinuteRate",
+    "definition": "Mean leader election rate in one minute",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.leaderelection.StdDev": {
+    "name": "kafka.leaderelection.StdDev",
+    "definition": "Standard deviation of leader election ",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.server.UnderReplicatedPartitions": {
+    "name": "kafka.server.UnderReplicatedPartitions",
+    "definition": "Number of under-replicated partitions",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.server.expand.Count": {
+    "name": "kafka.server.expand.Count",
+    "definition": "Count at which the pool of in-sync replicas expands",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.server.expand.FifteenMinuteRate": {
+    "name": "kafka.server.expand.FifteenMinuteRate",
+    "definition": "Fifteen minute rate at which the pool of in-sync replicas expands",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.server.expand.FiveMinuteRate": {
+    "name": "kafka.server.expand.FiveMinuteRate",
+    "definition": "Five minute rate at which the pool of in-sync replicas expands",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.server.expand.OneMinuteRate": {
+    "name": "kafka.server.expand.OneMinuteRate",
+    "definition": "One minute rate at which the pool of in-sync replicas expands",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.server.shrink.Count": {
+    "name": "kafka.server.shrink.Count",
+    "definition": "Count at which the pool of in-sync replicas shrinks",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.server.shrink.FifteenMinuteRate": {
+    "name": "kafka.server.shrink.FifteenMinuteRate",
+    "definition": "Fifteen minute rate at which the pool of in-sync replicas shrinks",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.server.shrink.FiveMinuteRate": {
+    "name": "kafka.server.shrink.FiveMinuteRate",
+    "definition": "Five minute rate at which the pool of in-sync replicas shrinks",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.server.shrink.OneMinuteRate": {
+    "name": "kafka.server.shrink.OneMinuteRate",
+    "definition": "One minute`rate at`which the pool of in-sync replicas shrinks",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.unclean_leaderelection.Count": {
+    "name": "kafka.unclean_leaderelection.Count",
+    "definition": "Number of `unclean` elections",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.unclean_leaderelection.FifteenMinuteRate": {
+    "name": "kafka.unclean_leaderelection.FifteenMinuteRate",
+    "definition": "Number of `unclean` elections per fifteen minute",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.unclean_leaderelection.FiveMinuteRate": {
+    "name": "kafka.unclean_leaderelection.FiveMinuteRate",
+    "definition": "Number of `unclean` elections per five minute",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "kafka.unclean_leaderelection.OneMinuteRate": {
+    "name": "kafka.unclean_leaderelection.OneMinuteRate",
+    "definition": "Number of `unclean` elections per minute",
+    "type": "number",
+    "unit": "short",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "redis.clients.blocked": {
+    "name": "redis.clients.blocked",
+    "definition": "The number of connections waiting on a blocking call",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "redis.info.latency_ms": {
+    "name": "redis.info.latency_ms",
+    "definition": "The latency of the redis INFO command",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "redis.mem.used": {
+    "name": "rredis.mem.used",
+    "definition": "Amount of memory allocated by Redis",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "redis.net.clients": {
+    "name": "redis.net.clients",
+    "definition": "The number of connected clients (excluding slaves)",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "redis.rdb.changes_since_last": {
+    "name": "redis.rdb.changes_since_last",
+    "definition": "The number of changes since the last background save",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "redis.slowlog.micros.avg": {
+    "name": "redis.slowlog.micros.avg",
+    "definition": "The average duration of queries reported in the slow log",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "redis.stats.keyspace_hits": {
+    "name": "redis.stats.keyspace_hits",
+    "definition": "The total number of successful lookups in the db",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "redis.aof.buffer_length": {
+    "name": "redis.aof.buffer_length",
+    "definition": "Size of the AOF buffer.",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "redis.aof.last_rewrite_time": {
+    "name": "redis.aof.last_rewrite_time",
+    "definition": "Duration of the last AOF rewrite",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "redis.aof.rewrite": {
+    "name": "redis.aof.rewrite",
+    "definition": "Flag indicating a AOF rewrite operation is on-going",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "redis.aof.size": {
+    "name": "redis.aof.size",
+    "definition": "AOF current file size (aof_current_size)",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "redis.clients.biggest_input_buf": {
+    "name": "redis.clients.biggest_input_buf",
+    "definition": "The biggest input buffer among current client connections",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "redis.clients.longest_output_list": {
+    "name": "redis.clients.longest_output_list",
+    "definition": "The longest output list among current client connections",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "redis.cpu.sys": {
+    "name": "redis.cpu.sys",
+    "definition": "System CPU consumed by the Redis server",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "redis.cpu.sys_children": {
+    "name": "redis.cpu.sys_children",
+    "definition": "System CPU consumed by the background processes",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "redis.cpu.user": {
+    "name": "redis.cpu.user",
+    "definition": "User CPU consumed by the Redis server",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}

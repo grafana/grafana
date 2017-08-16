@@ -1,0 +1,164 @@
+{
+  "docker.blkio_stats.precpu_stats.cpu_usage": {
+    "name": "docker.blkio_stats.precpu_stats.cpu_usage",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks.preread.memory_stats": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks.preread.memory_stats",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "docker.number_containers_running": {
+    "name": "docker.number_containers_running",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": true
+  },
+  "docker.blkio_stats.precpu_stats.cpu_usage.percpu_usage": {
+    "name": "docker.blkio_stats.precpu_stats.cpu_usage.percpu_usage",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "docker.blkio_stats.precpu_stats.cpu_usage.throttling_data": {
+    "name": "docker.blkio_stats.precpu_stats.cpu_usage.throttling_data",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks.eth0": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks.eth0",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks.preread.memory_stats.pids_stats.id.cpu_stats.cpu_usage": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks.preread.memory_stats.pids_stats.id.cpu_stats.cpu_usage",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks.preread.memory_stats.pids_stats.id.cpu_stats.cpu_usage.percpu_usage": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks.preread.memory_stats.pids_stats.id.cpu_stats.cpu_usage.percpu_usage",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks.preread.memory_stats.pids_stats.id.cpu_stats.cpu_usage.throttling_data": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks.preread.memory_stats.pids_stats.id.cpu_stats.cpu_usage.throttling_data",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks.preread.memory_stats.stats": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats.networks.preread.memory_stats.stats",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats.preread.memory_stats": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats.preread.memory_stats",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats.preread.memory_stats.pids_stats.id.cpu_stats.cpu_usage": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats.preread.memory_stats.pids_stats.id.cpu_stats.cpu_usage",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats.preread.memory_stats.pids_stats.id.cpu_stats.cpu_usage.percpu_usage": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats.preread.memory_stats.pids_stats.id.cpu_stats.cpu_usage.percpu_usage",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats.preread.memory_stats.pids_stats.id.cpu_stats.cpu_usage.throttling_data": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats.preread.memory_stats.pids_stats.id.cpu_stats.cpu_usage.throttling_data",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "docker.blkio_stats.precpu_stats.name.read.storage_stats.preread.memory_stats.stats": {
+    "name": "docker.blkio_stats.precpu_stats.name.read.storage_stats.preread.memory_stats.stats",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  },
+  "docker.number_containers": {
+    "name": "docker.number_containers",
+    "definition": "",
+    "type": "",
+    "unit": "",
+    "recommend": "",
+    "alert": "",
+    "isKpi": false
+  }
+}
