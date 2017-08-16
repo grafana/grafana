@@ -11,7 +11,6 @@ export class NavbarCtrl {
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private contextSrv) {
-    console.log(this.model);
   }
 
   showSearch() {

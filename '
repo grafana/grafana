@@ -120,8 +120,6 @@ li.sidemenu-org-switcher {
 .sidemenu-org-switcher__org-current {
   font-size: $font-size-xs;
   color: $text-color-weak;
-  position: relative;
-  top: -2px;
 }
 
 .sidemenu-org-switcher__switch {
@@ -129,8 +127,8 @@ li.sidemenu-org-switcher {
   padding-left: 1.5rem;
   display: flex;
   align-items: center;
-  > i.fa.fa-random {
-    margin-right: 4px;
-    top: 1px;
+  i.fa > {
+    margin-right: 5px;
+    top: 0;
   }
 }

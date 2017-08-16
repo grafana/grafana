@@ -50,6 +50,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Login:          c.Login,
 			Email:          c.Email,
 			Name:           c.Name,
+			OrgCount:       c.OrgCount,
 			OrgId:          c.OrgId,
 			OrgName:        c.OrgName,
 			OrgRole:        c.OrgRole,
@@ -86,9 +87,9 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
-			Text: "New",
+			Text: "Create",
 			Icon: "fa fa-fw fa-plus",
-			Url:  "",
+			Url:  "#",
 			Children: []*dtos.NavLink{
 				{Text: "Dashboard", Icon: "fa fa-fw fa-plus", Url: setting.AppSubUrl + "/dashboard/new"},
 				{Text: "Folder", Icon: "fa fa-fw fa-plus", Url: setting.AppSubUrl + "/dashboard/new/?editview=new-folder"},
@@ -112,17 +113,33 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	})
 
 	if c.IsSignedIn {
-		data.NavTree = append(data.NavTree, &dtos.NavLink{
+		profileNode := &dtos.NavLink{
 			Text:         c.SignedInUser.Login,
 			Id:           "profile",
 			Img:          data.User.GravatarUrl,
 			Url:          setting.AppSubUrl + "/profile",
 			HideFromMenu: true,
 			Children: []*dtos.NavLink{
-				{Text: "Signout", Url: setting.AppSubUrl + "/logout", Icon: "fa fa-fw fa-sign-out", Target: "_self"},
 				{Text: "Your profile", Url: setting.AppSubUrl + "/profile", Icon: "fa fa-fw fa-sliders"},
 				{Text: "Change Password", Id: "change-password", Url: setting.AppSubUrl + "/profile/password", Icon: "fa fa-fw fa-lock", HideFromMenu: true},
 			},
+		}
+
+		if !setting.DisableSignoutMenu {
+			// add sign out first
+			profileNode.Children = append([]*dtos.NavLink{
+				{Text: "Sign out", Url: setting.AppSubUrl + "/logout", Icon: "fa fa-fw fa-sign-out", Target: "_self"},
+			}, profileNode.Children...)
+		}
+
+		data.NavTree = append(data.NavTree, profileNode)
+	} else {
+		data.NavTree = append(data.NavTree, &dtos.NavLink{
+			Text:         "Sign in",
+			Id:           "sign-in",
+			Icon:         "fa fa-fw fa-sign-in",
+			Url:          setting.AppSubUrl + "/login",
+			HideFromMenu: true,
 		})
 	}
 
@@ -226,7 +243,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 					},
 				},
 				{
-					Text:        "User Management",
+					Text:        "Users",
 					Id:          "users",
 					Description: "Manage users & user groups",
 					Icon:        "fa fa-fw fa-users",
@@ -258,20 +275,21 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			})
 		}
 
-		data.NavTree = append(data.NavTree, &dtos.NavLink{
-			Text:         "Help",
-			Id:           "help",
-			Url:          "/help",
-			Icon:         "fa fa-fw fa-question",
-			HideFromMenu: true,
-			Children: []*dtos.NavLink{
-				{Text: "Shortcuts", Url: "/shortcuts", Icon: "fa fa-fw fa-keyboard-o", Target: "_self"},
-				{Text: "Community site", Url: "http://community.grafana.com", Icon: "fa fa-fw fa-comment", Target: "_blank"},
-				{Text: "Documentation", Url: "http://docs.grafana.org", Icon: "fa fa-fw fa-file", Target: "_blank"},
-			},
-		})
 		data.NavTree = append(data.NavTree, cfgNode)
 	}
+
+	data.NavTree = append(data.NavTree, &dtos.NavLink{
+		Text:         "Help",
+		Id:           "help",
+		Url:          "#",
+		Icon:         "fa fa-fw fa-question",
+		HideFromMenu: true,
+		Children: []*dtos.NavLink{
+			{Text: "Keyboard shortcuts", Url: "/shortcuts", Icon: "fa fa-fw fa-keyboard-o", Target: "_self"},
+			{Text: "Community site", Url: "http://community.grafana.com", Icon: "fa fa-fw fa-comment", Target: "_blank"},
+			{Text: "Documentation", Url: "http://docs.grafana.org", Icon: "fa fa-fw fa-file", Target: "_blank"},
+		},
+	})
 
 	return &data, nil
 }

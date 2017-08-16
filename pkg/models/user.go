@@ -160,6 +160,7 @@ type SignedInUser struct {
 	Name           string
 	Email          string
 	ApiKeyId       int64
+	OrgCount       int
 	IsGrafanaAdmin bool
 	HelpFlags1     HelpFlags1
 	LastSeenAt     time.Time

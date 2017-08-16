@@ -36,7 +36,16 @@
         <img ng-src="{{::item.img}}" ng-show="::item.img">
       </span>
     </a>
-    <ul class="dropdown-menu dropdown-menu--sidemenu" role="menu" ng-if="::item.children">
+    <ul class="dropdown-menu dropdown-menu--sidemenu" role="menu">
+			<li ng-if="item.showOrgSwitcher" class="sidemenu-org-switcher">
+				<a ng-click="ctrl.switchOrg()">
+					<div>
+						<div class="sidemenu-org-switcher__org-name">{{ctrl.contextSrv.user.orgName}}</div>
+						<div class="sidemenu-org-switcher__org-current">Current Org:</div>
+					</div>
+					<div class="sidemenu-org-switcher__switch"><i class="fa fa-fw fa-random"></i>Switch</div>
+				</a>
+			</li>
       <li ng-repeat="child in ::item.children" ng-class="{divider: child.divider}" ng-hide="::child.hideFromMenu">
         <a href="{{::child.url}}" target="{{::child.target}}">
           <i class="{{::child.icon}}" ng-show="::child.icon"></i>
