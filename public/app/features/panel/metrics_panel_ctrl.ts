@@ -195,6 +195,10 @@ class MetricsPanelCtrl extends PanelCtrl {
         if (results.regularities) {
           this.panel.regularResult = results;
         }
+
+        if (results.timeRange) {
+           this.panel.timeRange = results.timeRange;
+        }
         return results;
     });
   }

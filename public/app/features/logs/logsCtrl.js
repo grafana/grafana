@@ -378,6 +378,13 @@ define([
         $rootScope.$broadcast('refresh');
       };
 
+      $scope.currentFilter = "无";
+      $scope.logFilter = function (rule) {
+        $scope.dashboard.rows[0].panels[2].scopedVars.logFilter = rule;
+        $rootScope.$broadcast('refresh');
+        $scope.currentFilter = rule + "日志";
+      };
+
       $scope.showInputModal = function() {
         var newScope = $scope.$new();
         newScope.logCompare = $scope.logCompare;
