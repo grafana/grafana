@@ -12,11 +12,21 @@
 		<div class="gf-form-group">
 			<div class="gf-form">
 				<span class="gf-form-label width-10">公司名称</span>
-				<input type="text" ng-model="newOrg.name" required class="gf-form-input max-width-21" placeholder="organization name">
+				<input type="text" ng-model="newOrg.name" required class="gf-form-input max-width-21" placeholder="请输入公司名称">
+			</div>
+			<br>
+
+			<h3 style="margin-top: 30px;">子系统</h3>
+			<div class="gf-form" ng-repeat="system in newSystems">
+				<span class="gf-form-label width-10">系统名称</span>
+				<input type="text" ng-model="system.name" required class="gf-form-input max-width-21" placeholder="如:办公自动化系统">
+			</div>
+			<div style="text-align: left; margin-top: 6px;">
+				<a ng-click="addSystem()">+ 增加子系统</a>
 			</div>
 			<br>
 			<div class="gf-form-buttons-row">
-				<button type="submit" class="btn btn-success" ng-click="createOrg()">新增</button>
+				<button type="submit" class="btn btn-success pull-right" ng-click="createOrg()">新增</button>
 			</div>
 		</div>
 	</form>
