@@ -10,6 +10,8 @@ import {BundleLoader} from './bundle_loader';
 function setupAngularRoutes($routeProvider, $locationProvider) {
   $locationProvider.html5Mode(true);
 
+  var loadPluginsBundle = new BundleLoader('app/features/plugins/all');
+  var loadAdminBundle = new BundleLoader('app/features/admin/admin');
   var loadOrgBundle = new BundleLoader('app/features/org/all');
   var loadOncallerBundle = new BundleLoader('app/features/oncaller/all');
   var loadCMDBBundle = new BundleLoader('app/features/cmdb/all');
@@ -17,7 +19,6 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   var loadSummaryBundle = new BundleLoader('app/features/summary/all');
   var loadAnomalyBundle = new BundleLoader('app/features/anomaly/all');
   var loadProfileBundle = new BundleLoader('app/features/profile/all');
-  var loadAdminBundle = new BundleLoader('app/features/admin/all');
   var loadServiceBundle = new BundleLoader('app/features/service/all');
   var loadHealthBundle = new BundleLoader('app/features/health/all');
   var loadAnalysisBundle = new BundleLoader('app/features/analysis/all');
@@ -34,6 +35,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     templateUrl: 'public/app/partials/dashboard.html',
     controller : 'LoadDashboardCtrl',
     reloadOnSearch: false,
+    pageClass: 'page-dashboard',
   })
   .when('/systems', {
     templateUrl: 'public/app/partials/systems.html',
@@ -61,39 +63,46 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     templateUrl: 'public/app/partials/dashboard.html',
     controller : 'LoadDashboardCtrl',
     reloadOnSearch: false,
+    pageClass: 'page-dashboard',
   })
   .when('/dashboard-solo/:type/:slug', {
     templateUrl: 'public/app/features/panel/partials/soloPanel.html',
     controller : 'SoloPanelCtrl',
+    pageClass: 'page-dashboard',
   })
   .when('/dashboard-import/:file', {
     templateUrl: 'public/app/partials/dashboard.html',
     controller : 'DashFromImportCtrl',
     reloadOnSearch: false,
+    pageClass: 'page-dashboard',
   })
   .when('/dashboard/new', {
     templateUrl: 'public/app/partials/dashboard.html',
     controller : 'NewDashboardCtrl',
     reloadOnSearch: false,
+    pageClass: 'page-dashboard',
   })
   .when('/import/dashboard', {
     templateUrl: 'public/app/features/dashboard/partials/import.html',
     controller : 'DashboardImportCtrl',
   })
   .when('/datasources', {
-    templateUrl: 'public/app/features/org/partials/datasources.html',
+    templateUrl: 'public/app/features/plugins/partials/ds_list.html',
     controller : 'DataSourcesCtrl',
-    resolve: loadOrgBundle,
+    controllerAs: 'ctrl',
+    resolve: loadPluginsBundle,
   })
   .when('/datasources/edit/:id', {
-    templateUrl: 'public/app/features/org/partials/datasourceEdit.html',
+    templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
     controller : 'DataSourceEditCtrl',
-    resolve: loadOrgBundle,
+    controllerAs: 'ctrl',
+    resolve: loadPluginsBundle,
   })
   .when('/datasources/new', {
-    templateUrl: 'public/app/features/org/partials/datasourceEdit.html',
+    templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
     controller : 'DataSourceEditCtrl',
-    resolve: loadOrgBundle,
+    controllerAs: 'ctrl',
+    resolve: loadPluginsBundle,
   })
   .when('/alerts', {
     templateUrl: 'public/app/features/org/partials/alerts.html',
@@ -178,6 +187,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/org/users', {
     templateUrl: 'public/app/features/org/partials/orgUsers.html',
     controller : 'OrgUsersCtrl',
+    controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })
   .when('/org/apikeys', {
@@ -200,9 +210,21 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controller : 'SelectOrgCtrl',
     resolve: loadProfileBundle,
   })
+  // ADMIN
+  .when('/admin', {
+    templateUrl: 'public/app/features/admin/partials/admin_home.html',
+    controller : 'AdminHomeCtrl',
+    resolve: loadAdminBundle,
+  })
   .when('/admin/settings', {
     templateUrl: 'public/app/features/admin/partials/settings.html',
     controller : 'AdminSettingsCtrl',
+    resolve: loadAdminBundle,
+  })
+  .when('/admin/stats', {
+    templateUrl: 'public/app/features/admin/partials/stats.html',
+    controller : 'AdminStatsCtrl',
+    controllerAs: 'ctrl',
     resolve: loadAdminBundle,
   })
   .when('/admin/users', {
@@ -230,6 +252,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controller : 'AdminEditOrgCtrl',
     resolve: loadAdminBundle,
   })
+  // LOGIN / SIGNUP
   .when('/login', {
     templateUrl: 'public/app/partials/login.html',
     controller : 'LoginCtrl',
@@ -253,6 +276,29 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/user/password/reset', {
     templateUrl: 'public/app/partials/reset_password.html',
     controller : 'ResetPasswordCtrl',
+  })
+  .when('/dashboard/snapshots', {
+    templateUrl: 'public/app/features/snapshot/partials/snapshots.html',
+    controller : 'SnapshotsCtrl',
+    controllerAs: 'ctrl',
+  })
+  .when('/plugins', {
+    templateUrl: 'public/app/features/plugins/partials/plugin_list.html',
+    controller: 'PluginListCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadPluginsBundle,
+  })
+  .when('/plugins/:pluginId/edit', {
+    templateUrl: 'public/app/features/plugins/partials/plugin_edit.html',
+    controller: 'PluginEditCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadPluginsBundle,
+  })
+  .when('/plugins/:pluginId/page/:slug', {
+    templateUrl: 'public/app/features/plugins/partials/plugin_page.html',
+    controller: 'AppPageCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadPluginsBundle,
   })
   .when('/global-alerts', {
     templateUrl: 'public/app/features/dashboard/partials/globalAlerts.html',
@@ -348,6 +394,11 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controller : 'BuildDependCtrl',
     reloadOnSearch: true,
     resolve: loadServiceBundle,
+  })
+  .when('/styleguide/:page?', {
+    controller: 'StyleGuideCtrl',
+    controllerAs: 'ctrl',
+    templateUrl: 'public/app/features/styleguide/styleguide.html',
   })
   .otherwise({
     templateUrl: 'public/app/partials/error.html',
