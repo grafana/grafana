@@ -1,0 +1,28 @@
+<table class="table table-striped table-hack"
+       data-pagination="true"
+       data-page-size="5"
+       data-sort-name="mem"
+       data-undefined-text="notTopN"
+       data-sort-order="desc"
+       data-row-style="rowStyle">
+    <thead>
+        <tr>
+            <th data-field="pid" data-sortable="true" data-formatter="tooltipFormat">TopN进程</th>
+            <th data-field="cpu" data-sortable="true" data-formatter="percentFormatter">CPU </th>
+            <th data-field="mem" data-sortable="true" data-formatter="percentFormatter">MEM </th>
+        </tr>
+    </thead>
+</table>
+<script>
+    function percentFormatter(value) {
+        return value && (value.toFixed(2) + '%');
+    }
+    function tooltipFormat(value, row, index) {
+        return '<span title="' + value + '">' + value + '</span>';
+    }
+    function rowStyle() {
+        return {
+            classes: "fix-table-row-height"
+        };
+    }
+</script>

@@ -658,7 +658,7 @@
                 column.push($.extend({}, {
                     title: $(this).html(),
                     'class': $(this).attr('class'),
-                    titleTooltip: $(this).attr('title'),
+                    titleTooltip: $(this).data('title-tooltip'),  // $(this).attr('title'),
                     rowspan: $(this).attr('rowspan') ? +$(this).attr('rowspan') : undefined,
                     colspan: $(this).attr('colspan') ? +$(this).attr('colspan') : undefined
                 }, $(this).data()));
@@ -814,6 +814,8 @@
                     sprintf(' rowspan="%s"', column.rowspan),
                     sprintf(' colspan="%s"', column.colspan),
                     sprintf(' data-field="%s"', column.field),
+                    column.titleTooltip && 
+                        sprintf(' data-toggle="tooltip" data-container="body" title="%s"', column.titleTooltip),
                     '>');
 
                 html.push(sprintf('<div class="th-inner %s">', that.options.sortable && column.sortable ?
@@ -1765,7 +1767,7 @@
                 item[that.header.stateField] = value === true || (value && value.checked);
             } else {
                 value = typeof value === 'undefined' || value === null ?
-                    that.options.undefinedText : ('<div title="'+value+'">'+value+'</div>');
+                    that.options.undefinedText : ('<div>'+value+'</div>');
 
                 text = that.options.cardView ? ['<div class="card-view">',
                     that.options.showHeader ? sprintf('<span class="title" %s>%s</span>', style,

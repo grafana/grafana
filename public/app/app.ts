@@ -18,6 +18,8 @@ import 'angular-strap-old';
 import 'jsPlumbToolkit';
 import 'jsPlumbToolkit-angular';
 
+import 'ng-quill';
+
 import $ from 'jquery';
 import angular from 'angular';
 import config from 'app/core/config';
@@ -82,6 +84,7 @@ export class GrafanaApp {
       'ui.bootstrap',
       'ui.bootstrap.tpls',
       'ui.calendar',
+      'ngQuill'
     ];
 
     var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];

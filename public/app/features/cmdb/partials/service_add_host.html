@@ -1,0 +1,25 @@
+<div class="modal-body">
+
+  <a class="modal-close" ng-click="dismiss();">
+      <i class="fa fa-remove"></i>
+  </a>
+
+  <h3>
+      添加部署机器
+  </h3>
+  <div class="modal-cmdb-list">
+    <table class="table">
+        <tr>
+            <th><input type="checkbox" ng-model="select_all" ng-change="selectAll(select_all)" /></th>
+            <th>机器名称</th>
+            <th>IP</th>
+        </tr>
+        <tr ng-repeat="host in allHosts">
+            <td><input type="checkbox" ng-model="host.checked" ng-change="selectOne()" /></td>
+            <td>{{host.hostname}}</td>
+            <td>{{host.defaultIp}}</td>
+        </tr>
+    </table>
+  </div>
+    <button class="btn btn-primary" ng-click="addHosts();dismiss();">添加</button>
+</div>

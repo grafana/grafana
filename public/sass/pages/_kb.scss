@@ -1,0 +1,152 @@
+.kb-container {
+  background: none;
+  border: none;
+  margin: 0!important;
+  padding: 20px;
+  position: relative;
+  & > h2 {
+    background: #fff;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 1;
+    padding: 20px;
+    height: 80px;
+    line-height: 80px;
+    margin: 0;
+  }
+}
+
+.kb-search-form {
+  background: #fff;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 80px;
+  z-index: 1;
+  padding: 20px;
+  box-shadow: 0 6px 6px -1px rgb(215, 211, 211);
+  border-bottom: 1px solid rgb(221, 221, 221); 
+  .tidy-form {
+    margin-top: 36px;
+  }
+}
+
+.kb-list {
+  margin-top: 200px;
+  height: 66vh;
+  overflow: scroll;
+}
+
+.kb-item {
+  margin: 10px 0;
+  padding: 15px 15px 0;
+  background: #fff;
+  border: 1px solid rgb(216, 216, 216);
+  border-radius: 3px;
+  box-shadow: 1 2px 3px 0 rgb(204, 204, 204);
+  & > li {
+    margin-bottom: 24px;
+  }
+  &.kb-item-new {
+    border: none;
+  }
+  .ql-toolbar.ql-snow {
+    padding: 5px;
+    text-align: left;
+  }
+  &.kb-hover:hover{
+    box-shadow: 5px 5px 5px 2px rgb(215, 211, 211);
+  }
+}
+
+.kb-header {
+  display: flex;
+  justify-content: space-between;
+  .kb-icon {
+    margin-right: 5px;
+    font-size: 20px;
+  }
+  & > div {
+    display: flex;
+    align-content: center;
+  }
+  span{
+    font-weight: bold;
+    font-size: 14px;
+  }
+}
+
+.kb-editor {
+  border: none;
+  .ql-container.ql-snow {
+    border: none;
+  }
+  &.kb-editor-list .ql-editor {
+    height: 30px;
+    overflow: hidden;
+  }
+}
+
+.kb-type {
+  margin-top: -5px;
+  margin-left: 10px;
+  color: rgb(8,100,177);
+  background: rgb(225,236,244);
+}
+
+.kb-score {
+  margin-top: 36px;
+  display: flex;
+  justify-content: space-between;
+}
+.like-or-dislike {
+  background: #fff;
+  padding: 12px 10px 10px;
+  margin: 0 10px;
+  & > i {
+    font-size: 22px;
+    margin-right: 8px;
+  }
+}
+
+.kb-editor-new .ql-container.ql-snow {
+  height: 100px;
+}
+
+.kb-item-new .kb-header {
+  margin-left: -14px;
+  margin-bottom: 10px;
+}
+
+.kb-type-new {
+  text-align: left;
+  font-weight: bold;
+  & > select {
+    border-color: #32b2e1;
+    margin-left: 15px;
+    margin-top: 8px;
+  }
+}
+
+.kb-btn-new {
+  margin-top: 30px;
+  margin-bottom: 20px;
+  text-align: right;
+  & > .btn {
+    margin-left: 20px;
+    padding: 5px 30px;
+  }
+}
+.modal-kb {
+  top: 40px!important;
+  .kb-list {
+    height: 500px;
+  }
+}
+@media (max-height: 900px) {
+  .kb-list {
+    height: 56vh;
+  }
+}

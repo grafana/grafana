@@ -1,19 +1,21 @@
-//TODO update
+// TODO UPDATE
 // require.config({
 //   urlArgs: 'bust=' + (new Date().getTime()),
 //   baseUrl: 'public',
-//
+
 //   paths: {
 //     'lodash-src':             'vendor/lodash',
 //     lodash:                   'app/core/lodash_extended',
-//
+
 //     text:                     'vendor/requirejs-text/text',
 //     moment:                   'vendor/moment',
-//     angular:                  'vendor/angular/angular',
+//     angular:                  'vendor/angular/angular-1.5',
 //     'angular-route':          'vendor/angular-route/angular-route',
 //     'angular-sanitize':       'vendor/angular-sanitize/angular-sanitize',
 //     'angular-dragdrop':       'vendor/angular-native-dragdrop/draganddrop',
 //     'angular-strap':          'vendor/angular-other/angular-strap',
+//     'angular-strap.tpl':      'vendor/angular-other/angular-strap.tpl',
+//     'angular-strap-old':      'vendor/angular-other/angular-strap-old',
 //     'angular-ui':             'vendor/angular-ui/ui-bootstrap-tpls',
 //     timepicker:               'vendor/angular-other/timepicker',
 //     datepicker:               'vendor/angular-other/datepicker',
@@ -24,7 +26,7 @@
 //     spectrum:                 'vendor/spectrum',
 //     bootstrap:                'vendor/bootstrap/bootstrap',
 //     jquery:                   'vendor/jquery/dist/jquery',
-//
+
 //     'jquery.flot':             'vendor/flot/jquery.flot',
 //     'jquery.flot.pie':         'vendor/flot/jquery.flot.pie',
 //     'jquery.flot.events':      'vendor/flot/jquery.flot.events',
@@ -35,43 +37,49 @@
 //     'jquery.flot.crosshair':   'vendor/flot/jquery.flot.crosshair',
 //     'jquery.flot.fillbelow':   'vendor/flot/jquery.flot.fillbelow',
 //     'jquery.flot.fillbetween': 'vendor/flot/jquery.flot.fillbetween',
-//
+
 //     modernizr:                 'vendor/modernizr-2.6.1',
-//
+
 //     'bootstrap-tagsinput':    'vendor/tagsinput/bootstrap-tagsinput',
 //     'aws-sdk':                'vendor/aws-sdk/dist/aws-sdk.min',
 //     'fullcalendar':           'vendor/fullcalendar/dist/fullcalendar.min',
 //     'ui.calendar':            'vendor/angular-ui-calendar/src/calendar',
 //     'zh-cn':                  'vendor/fullcalendar/dist/zh-cn',
+//     'bootstrap-table':        'vendor/angular-other/bootstrap-table',
+//     'jsPlumbToolkit':         'vendor/jsPlumb/jsPlumbToolkit',
+//     'jsPlumbToolkit-angular': 'vendor/jsPlumb/jsPlumbToolkit-angular',
+
+//     'quill':                  'vendor/quill/quill.min',
+//     'ng-quill':               'vendor/quill/ng-quill',
 //   },
-//
+
 //   shim: {
-//
+
 //     spectrum: {
 //       deps: ['jquery']
 //     },
-//
+
 //     crypto: {
 //       exports: 'Crypto'
 //     },
-//
+
 //     angular: {
 //       deps: ['jquery'],
 //       exports: 'angular'
 //     },
-//
+
 //     bootstrap: {
 //       deps: ['jquery']
 //     },
-//
+
 //     modernizr: {
 //       exports: 'Modernizr'
 //     },
-//
+
 //     jquery: {
 //       exports: 'jQuery'
 //     },
-//
+
 //     // simple dependency declaration
 //     //
 //     'jquery.flot':          ['jquery'],
@@ -90,13 +98,19 @@
 //     'angular-ui':           ['angular'],
 //     'angular-route':        ['angular'],
 //     'angular-strap':        ['angular', 'bootstrap','timepicker', 'datepicker'],
+//     'angular-strap.tpl':    ['angular-strap'],
+//     'angular-strap-old':    ['angular', 'bootstrap','timepicker', 'datepicker'],
 //     'bindonce':             ['angular'],
-//
+//     'bootstrap-table':      ['jquery', 'bootstrap'],
+
 //     timepicker:             ['jquery', 'bootstrap'],
 //     datepicker:             ['jquery', 'bootstrap'],
-//
+
 //     'bootstrap-tagsinput':          ['jquery'],
 //     'ui.calendar':          ['jquery','fullcalendar', 'angular'],
 //     'zh-cn':                ['jquery','moment', 'fullcalendar'],
+//     'jsPlumbToolkit':       ['jquery'],
+//     'jsPlumbToolkit-angular':['angular', 'jsPlumbToolkit'],
+//     'ng-quill':             ['angular', 'quill']
 //   },
 // });

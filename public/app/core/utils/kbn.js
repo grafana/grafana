@@ -206,6 +206,17 @@ function($, _) {
       .replace(/ +/g,'-');
   };
 
+  kbn.exportSeriesListToCsv = function(seriesList) {
+    var text = 'Series;Time;Value\n';
+    _.each(seriesList, function(series) {
+      _.each(series.datapoints, function(dp) {
+        text += series.alias + ';' + new Date(dp[1]).toISOString() + ';' + dp[0] + '\n';
+      });
+    });
+    var blob = new Blob([text], { type: "text/csv;charset=utf-8" });
+    window.saveAs(blob, 'cloudwiz_data_export.csv');
+  };
+
   kbn.stringToJsRegex = function(str) {
     if (str[0] !== '/') {
       return new RegExp('^' + str + '$');

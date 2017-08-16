@@ -1,117 +1,115 @@
 <topnav section="关键指标" icon="fa fa-fw fa-home"></topnav>
 
-<div class="page-container" style="padding-left:20px;">
+<div class="page-container summary-page" style="padding-left:20px;">
     <div class="overview-list" style="box-sizing:border-box;">
-        <div class="main-view-container preview-panel">
+        <div class="main-view-container">
 
-            <div class="grafana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.rows | limitTo: dashboard.rows.length-2" row-height ng-class="{'summary-item':!row.fullwidth}">
-                <div class="row-control">
-                    <div class="row-control-inner">
-                        <div class="row-close" ng-show="row.collapse" data-placement="bottom">
-                            <div class="row-close-buttons">
-                                <span class="row-button bgPrimary" ng-click="toggleRow(row)">
-                                    <i bs-tooltip="'Expand row'" data-placement="right" class="fa fa-caret-left pointer"></i>
-                                </span>
+            <div class="summary-panel view-panel">
+                <div class="health-panel panels-wrapper">
+                    <h3>
+                        <a href="javascript:;" ng-click="showModal(0)" bs-tooltip="'点击查看历史指数'">健康指数趋势</a>
+                        <tip>健康值=(告警指标个数/定义规则总数)*50% + (异常指标/所有指标) * 50%</tip>
+                    </h3>
+                    <div style="position: absolute; bottom: 35%; left: 43%; font-weight: bold;">
+                        <span style="font-size: 38px;">{{healthPanel.score}}</span>
+                        <span style="font-size: 20px;">{{healthPanel.level}}</span>
+                    </div>
+                    <div class="health-pie"></div>
+                </div>
+                <div class="health-panel">
+                    <div class="alert-panel">
+                        <div class="panels-wrapper">
+                            <h3 ng-click="showModal(1)" style="cursor: pointer;" bs-tooltip="'点击查看历史报警'">
+                                报警情况
+                            </h3>
+                            <div>
+                                <li ng-repeat="alert in alertPanel.status" ng-if="alert.count!=0">
+                                    <a href="{{alertPanel.href}}">{{alert.text}} <span class="status-{{alert.type}}">{{alert.count}}</span></a>
+                                </li>
                             </div>
-                            <div class="row-text pointer" ng-click="toggleRow(row)" ng-bind="row.title | interpolateTemplateVars:this"></div>
                         </div>
-                    </div>
-
-                    <div class="panels-wrapper" ng-if="!row.collapse && row.title === '健康指数趋势'">
-                        <h3>{{row.title}}</h3>
-                        <div ng-repeat="(name, panel) in row.panels" class="panel" ui-draggable="!dashboardViewState.fullscreen"
-                            drag="panel.id" ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
-                            <div class="health-panel">
-                                <div data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_overview_modal.html" style="cursor: pointer;">
-                                    <em bs-tooltip="'点击查看历史指数'">{{applicationHealth}}</em>
-                                    <span>{{leveal}}</span>
-                                </div>
-                                <div class="progress progress-striped">
-                                    <div class="bar bar-{{healthProgressState}}" style="width: {{applicationHealth}}%;"></div>
-                                </div>
-                                <br>
-                                <p>自动检测到所有<strong> {{ summary.numMetrics }} </strong>个指标中: 告警指标 <strong>{{ summary.numAlertsTriggered }} </strong>个  异常指标<strong> {{ summary.numAnomalyMetrics }} </strong>个 <tip>健康值=(告警指标个数/定义规则总数)*50% + (异常指标/所有指标) * 50%</tip></p>
-                            </div>
-                            <div class="clearfix"></div>
-                        </div>
-                    </div>
-
-                    <div class="panels-wrapper" ng-if="!row.collapse && row.title === '报警情况'">
-                        <div ng-repeat="(name, panel) in row.panels" class="panel" ui-draggable="!dashboardViewState.fullscreen"
-                            drag="panel.id" ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
-                            <ul class="btn-list-status clearfix" ng-if="panel.status">
-                                <li class="btn-item" style="width:70px; cursor:pointer;" data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_overview_modal.html">
-                                    <strong bs-tooltip="'点击查看历史情况'">报警情况:</strong>
+                        <div class="panels-wrapper">
+                            <h3>系统资源高消耗</h3>
+                            <div>
+                                <li ng-repeat="except in exceptionPanel.status"
+                                    data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_anomaly_modal.html">
+                                    <a href="javascript:;">{{except.text}} <strong class=""> &gt;{{except.threadhold}}</strong></a>
+                                    <a href="javascript:;">进程: <span class="status-{{except.type}}">{{except.count}}</span></a>
                                 </li>
-                                <li ng-if="panel.status.danger[1]!==0"><a href="{{panel.href}}" class="btn-item system-status system-status-danger">{{panel.status.danger[0]}} <span>{{panel.status.danger[1]}}</span></a></li>
-                                <li ng-if="panel.status.warn[1]!==0"><a href="{{panel.href}}" class="btn-item system-status system-status-warning">{{panel.status.warn[0]}} <span>{{panel.status.warn[1]}}</span></a></li>
-                                <li ng-if="panel.status.success[1]!==0"><a href="{{panel.href}}" class="btn-item system-status system-status-success">{{panel.status.success[0]}} <span>{{panel.status.success[1]}}</span></a></li>
-                            </ul>
-                            <div class="clearfix"></div>
-                        </div>
-                    </div>
-
-                    <div class="panels-wrapper" ng-if="!row.collapse && row.title === '智能检测异常指标'">
-                        <div ng-repeat="(name, panel) in row.panels" class="panel" ui-draggable="!dashboardViewState.fullscreen"
-                            drag="panel.id" ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
-                            <ul class="btn-list-status clearfix" ng-if="panel.status">
-                                <li class="btn-item" style="width:70px; cursor:pointer;"  data-placement="center" bs-modal="modal" data-template-url="/app/features/systemoverview/partials/system_overview_modal.html">
-                                    <strong bs-tooltip="'点击查看历史情况'">智能检测异常指标:</strong>
-                                </li>
-                                <li ng-if="panel.status.danger[1]!==0"><a href="{{panel.href}}" class="btn-item system-status system-status-danger">{{panel.status.danger[0]}} <span>{{panel.status.danger[1]}}</span></a></li>
-                                <li ng-if="panel.status.warn[1]!==0"><a href="{{panel.href}}" class="btn-item system-status system-status-warning">{{panel.status.warn[0]}} <span>{{panel.status.warn[1]}}</span></a></li>
-                                <li ng-if="panel.status.success[1]!==0"><a href="{{panel.href}}" class="btn-item system-status system-status-success">{{panel.status.success[0]}} <span>{{panel.status.success[1]}}</span></a></li>
-                            </ul>
-                            <div class="clearfix"></div>
-                        </div>
-                    </div>
-
-                    <div class="panels-wrapper" ng-if="!row.collapse && row.title === '服务状态'">
-                        <h3>{{row.title}}</h3>
-                        <div ng-repeat="(name, panel) in row.panels" class="panel" ui-draggable="!dashboardViewState.fullscreen"
-                            drag="panel.id" ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
-                            <ul class="btn-list-status clearfix" ng-if="panel.allServices">
-                                <li ng-repeat="(name, service) in panel.allServices">
-                                    <button type="button" class="btn-item system-status system-status-{{ service.state===0 ? 'success' : 'warning' }}" data-template-url="/app/features/systemoverview/partials/system_service_status.html" data-auto-close="1" data-placement="bottom" data-trigger="hover" bs-popover>{{service.name}}</button>
-                                </li>
-                            </ul>
-                            <div class="clearfix"></div>
-                        </div>
-                    </div>
-
-                    <div class="panels-wrapper" ng-if="!row.collapse && row.title === '机器连接状态'">
-                        <h3>{{row.title}}</h3>
-                        <table class="table table-bordered table-hover">
-                            <thead>
-                                <tr>
-                                    <th>机器名称</th>
-                                    <th>机器连接状态</th>
-                                    <th>CPU 使用率</th>
-                                    <th>内存使用</th>
-                                    <th>磁盘剩余空间</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr ng-repeat="host in hostPanels | filter : filterNotNumber" ng-click="showPrediction($index, host.host)">
-                                    <td>{{ host.host }}</td>
-                                    <td ng-if="host.status === 0">正常</td>
-                                    <td ng-if="host.status > 0">异常</td>
-                                    <td>{{ host.cpu }}</td>
-                                    <td>{{ host.mem }}</td>
-                                    <td>{{ host.disk }}</td>
-                                </tr>
-                            </tbody> 
-                        </table>
-                        <div class="panel-collapse">
-                            <div class="panel-body">
-                                <overview-panel></overview-panel>
                             </div>
                         </div>
                     </div>
-
-                    <div class="clearfix"></div>
+                    <div class="anomaly-panel panels-wrapper">
+                        <h3 ng-click="showModal(2)" style="cursor: pointer;" bs-tooltip="'点击查看历史情况'">
+                            智能检测异常指标
+                        </h3>
+                        <div>
+                            <li ng-repeat="anomaly in anomalyPanel.status" ng-if="anomaly.count!=0">
+                                <a href="{{anomalyPanel.href}}">{{anomaly.text}} <span class="status-{{anomaly.type}}">{{anomaly.count}}</span></a>
+                            </li>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+
+            <div class="detail-panel view-panel">
+                <div class="service-panel panels-wrapper">
+                    <h3>
+                        <a href="{{servicePanel.href}}">服务状态</a>
+                    </h3>
+                    <div class="mention center">
+                        <span><em class="bg-success"></em>正常</span>
+                        <span><em class="bg-warn"></em>警告</span>
+                        <span><em class="bg-danger"></em>严重</span>
+                        <span><em class="bg-down"></em>没有运行</span>
+                    </div>
+                </div>
+                <div class="service-dependency">
+                    <div class="jtk-demo-canvas jtk-canvas">
+                        <jsplumb-toolkit init="getServices"
+                                            render-params="renderParams"
+                                            jtk-id="serviceToolkit"
+                                            style="width:100%;height:100%;position:relative;margin:0">
+                        </jsplumb-toolkit>
+                    </div>
+                    <script type="text/ng-template" id="node_template.tpl">
+                        <div>
+                            <div class="name">
+                                <i class="{{node.icon}} service-icon status-{{node.status | lowercase}}"></i>
+                                <span>{{node.name}}</span>
+                            </div>
+                        </div>
+                        <jtk-source filter=".connect"></jtk-source>
+                        <jtk-target></jtk-target>
+                    </script>
+                </div>
+
+                <div class="host-panel panels-wrapper" >
+                    <h3>
+                        <a href="{{hostPanel.href}}">机器状态</a>
+                    </h3>
+                    <em ng-if="!hostPanel.currentService.name">点击上图某个服务，查看服务详情</em>
+                    <div class="mention">
+                        <button type="button" ng-if="hostPanel.currentService.name"
+                            class="btn-item system-status status-{{hostPanel.currentService.status | lowercase}}">
+                            {{hostPanel.currentService.name}}
+                        </button>
+                    </div>
+                </div>
+                <div class="table host-panel-table" ng-if="hostPanel.currentService.name">
+                    <ul>
+                        <li>机器名</li>
+                        <li>服务运行状态</li>
+                        <li>机器在线状态</li>
+                        <li>CPU 使用率</li>
+                        <li>内存使用</li>
+                        <li>磁盘剩余空间</li>
+                    </ul>
+                    <overview-panel template="/app/features/systemoverview/partials/system_host_panel.html"></overview-panel>
+                </div>
+            </div>
+
             <div class="clearfix"></div>
 
         </div>

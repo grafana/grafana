@@ -38,7 +38,10 @@ System.config({
     'zh-cn':                    'vendor/fullcalendar/dist/zh-cn',
     'bootstrap-table':          'vendor/angular-other/bootstrap-table',
     'jsPlumbToolkit':           'vendor/jsPlumb/jsPlumbToolkit',
-    'jsPlumbToolkit-angular':   'vendor/jsPlumb/jsPlumbToolkit-angular'
+    'jsPlumbToolkit-angular':   'vendor/jsPlumb/jsPlumbToolkit-angular',
+
+    'quill':                    'vendor/quill/quill.min',
+    'ng-quill':                 'vendor/quill/ng-quill',
   },
 
   packages: {
@@ -71,6 +74,12 @@ System.config({
       build: false
     },
     'vendor/jsPlumb/jsPlumbToolkit-angular.js': {
+      build: false
+    },
+    'vendor/quill/quill.min.js': {
+      build: false
+    },
+    'vendor/quill/ng-quill.js': {
       build: false
     }
   }

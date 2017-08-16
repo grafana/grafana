@@ -81,18 +81,20 @@
   }
 }
 
-.status-green {
-  background-color: #3db779 !important;
-}
+.service-status {
+  .status-green {
+    background-color: #3db779 !important;
+  }
 
-.status-yellow {
-  background-color: #ffc53a !important;
-}
+  .status-yellow {
+    background-color: #ffc53a !important;
+  }
 
-.status-red {
-  background-color: #e04c41 !important;
-}
+  .status-red {
+    background-color: #e04c41 !important;
+  }
 
-.status-grey {
-  background-color: rgba(216, 221, 230, 0.86) !important;
+  .status-grey {
+    background-color: rgba(216, 221, 230, 0.86) !important;
+  }
 }

@@ -1,49 +1,45 @@
 <navbar icon="fa fa-fw fa-cubes" title="配置管理库" title-url="/cmdb/hostlist">
-  <a href="/cmdb/hostlist" class="navbar-page-btn">
-    设备列表
-	</a>
+  <ul class="nav">
+    <li><a href="/cmdb/hostlist">设备列表</a></li>
+  </ul>
 </navbar>
 <div class="page-container">
-  <div class="page-header">
-		<h1>设备列表</h1>
-  
+    <h2>设备列表
+        <a class="btn btn-primary btn-cmdb" style="margin-left: 12px;" ng-click="importList()">添加设备</a>
+        <a class="btn btn-primary btn-cmdb" style="margin-left: 12px;" ng-click="exportList()">导出列表</a>
+        <a class="btn btn-success btn-cmdb" style="margin-left: 12px;" ng-click="refreshList()" ng-bind-html="refreshTxt"></a>
+    </h2>
     <form class="form-search cmdb-search">
       <i class="fa fa-search"></i>
       <input type="text" class="input-medium search-query" placeholder="搜索设备列表" ng-model="searchHost">
     </form>
-
-    <a class="btn btn-success btn-cmdb" style="margin-left: 12px;" ng-click="refreshList()" ng-bind-html="refreshTxt"></a>
-    <a class="btn btn-primary btn-cmdb" style="margin-left: 12px;" ng-click="importList()">添加设备</a>
-  </div>
-	<table class="filter-table form-inline">
-		<thead>
-			<tr>
-				<th>序号</th>
-				<th>ID</th>
-				<th ng-click="orderBy('hostname')" class="pointer" style="white-space: nowrap">名称<i class="fa fa-sort"></i></th>
-				<th>IP</th>
-				<th>虚拟机</th>
-				<th style="white-space: nowrap">操作系统</th>
-				<th ng-click="orderBy('createdAt')" class="pointer">创建时间<i class="fa fa-sort"></i</th>
-				<th>操作</th>
-			</tr>
-		</thead>
-		<tbody>
-      <tr ng-repeat="host in hosts| filter: searchHost | orderBy: order : desc">
-        <td class="main-color">{{$index+1}}</td>
-        <td class="main-color">{{host.id}}</td>
-        <td class="main-color">{{host.hostname}}</td>
-        <td>{{host.defaultIp}}</td>
-        <td>{{host.isVirtual}}</td>
-        <td>{{host.osName}}</td>
-        <td>{{host.createdAt | date:'yyyy-MM-dd HH:mm:ss'}}</td>
-        <td>
-          <a href=""><span class="cmdb-icon-text" bs-tooltip="'敬请期待'" data-placement="top">编辑</span></a>
-          <a href="/cmdb/hostlist/hostdetail?id={{host.id}}">
-            <span class="cmdb-icon-text">详情</span>
-          </a>
-        </td>
-      </tr>
-		</tbody>
-	</table>
+    <div class="cmdb-container">
+        <table class="table table-hover table-striped cmdb-table">
+            <tr>
+                <th>序号</th>
+                <th>ID</th>
+                <th ng-click="orderBy('hostname')" class="pointer">名称<i class="fa fa-sort"></i></th>
+                <th>IP</th>
+                <th>虚拟机</th>
+                <th>操作系统</th>
+                <th ng-click="orderBy('createdAt')" class="pointer">创建时间<i class="fa fa-sort"></i></th>
+                <th>操作</th>
+            </tr>
+            <tr ng-repeat="host in hosts| filter: searchHost | orderBy: order : desc">
+                <td class="main-color">{{$index+1}}</td>
+                <td class="main-color">{{host.id}}</td>
+                <td class="main-color">{{host.hostname}}</td>
+                <td>{{host.defaultIp}}</td>
+                <td>{{host.isVirtual}}</td>
+                <td><p class="text-overflow" style="width: 200px;">{{host.osName}}</p></td>
+                <td>{{host.createdAt | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+                <td>
+                    <a href=""><span class="cmdb-icon-text" bs-tooltip="'敬请期待'" data-placement="top">编辑</span></a>
+                    <a href="/cmdb/hostlist/hostdetail?id={{host.id}}">
+                        <span class="cmdb-icon-text">详情</span>
+                    </a>
+                </td>
+            </tr>
+        </table>
+    </div>
 </div>

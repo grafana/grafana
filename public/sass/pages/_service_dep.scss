@@ -56,16 +56,16 @@
 
 .build-service-depend {    
     position: relative;
-    .service-icon {
-        display: block;
-        font-size:40px;
-        height: 50px;
-        width: 50px;
-        line-height: 50px;
-        margin: 0 auto;
-        border: 1px solid #555;
-        border-radius: 50%;
-    }
+}
+.service-icon {
+    display: block;
+    font-size:40px;
+    height: 50px;
+    width: 50px;
+    line-height: 50px;
+    margin: 0 auto;
+    border: 1px solid #555;
+    border-radius: 50%;
 }
 
 .build-service-depend .description {
@@ -144,6 +144,7 @@ li {
     text-align:center;
     height: 550px;
     background-color: #f3f7fa;
+    overflow: scroll;
 }
 
 .sidebar ul li {
