@@ -73,12 +73,10 @@ System.config({
       deps: ['jquery'],
       exports: 'angular',
     },
-<<<<<<< HEAD
     'vendor/npm/eventemitter3/index.js': {
       format: 'cjs',
       exports: 'EventEmitter'
     },
-=======
     'vendor/jsPlumb/jsPlumbToolkit.js': {
       build: false
     },
@@ -91,6 +89,5 @@ System.config({
     'vendor/quill/ng-quill.js': {
       build: false
     }
->>>>>>> 90e9b33810b108e3df63c95174165f734e574261
   }
 });
