@@ -54,7 +54,7 @@ export class ContextSrv {
     this.dashboardLink = "";
     this.systemsMap = config.bootData.systems;
     if (!_.some(this.systemsMap, {'Id': this.user.systemId})) {
-      this.user.systemId = 0;
+      this.user.systemId = this.systemsMap[0].Id;
     }
     this.hostNum = 0;
   }
