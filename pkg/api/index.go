@@ -133,14 +133,6 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		}
 
 		data.NavTree = append(data.NavTree, profileNode)
-	} else {
-		data.NavTree = append(data.NavTree, &dtos.NavLink{
-			Text:         "Sign in",
-			Id:           "sign-in",
-			Icon:         "fa fa-fw fa-sign-in",
-			Url:          setting.AppSubUrl + "/login",
-			HideFromMenu: true,
-		})
 	}
 
 	if setting.AlertingEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR) {

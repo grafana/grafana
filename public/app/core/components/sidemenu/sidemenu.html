@@ -28,6 +28,16 @@
 </div>
 
 <div class="sidemenu__bottom">
+	<div ng-show="::!ctrl.isSignedIn" class="sidemenu-item">
+		<a href="{{ctrl.loginUrl}}" class="sidemenu-link" target="_self">
+			<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-in"></i></span>
+		</a>
+		<ul class="dropdown-menu dropdown-menu--sidemenu" role="menu">
+			<li class="side-menu-header">
+				<span class="sidemenu-item-text">Sign In</span>
+			</li>
+		</ul>
+	</div>
 
   <div ng-repeat="item in ::ctrl.bottomNav" class="sidemenu-item dropdown dropup">
     <a href="{{::item.url}}" class="sidemenu-link" target="{{::item.target}}">
@@ -57,54 +67,5 @@
       </li>
     </ul>
   </div>
-  <!-- <div ng&#45;show="::!ctrl.isSignedIn" class="sidemenu&#45;item"> -->
-  <!-- 	<a href="{{ctrl.loginUrl}}" class="sidemenu&#45;link" target="_self"> -->
-  <!-- 		<span class="icon&#45;circle sidemenu&#45;icon"><i class="fa fa&#45;fw fa&#45;sign&#45;in"></i></span> -->
-  <!-- 	</a> -->
-  <!-- 	<ul class="dropdown&#45;menu dropdown&#45;menu&#45;&#45;sidemenu" role="menu"> -->
-  <!-- 		<li class="side&#45;menu&#45;header"> -->
-  <!-- 			<span class="sidemenu&#45;item&#45;text">Sign in</span> -->
-  <!-- 		</li> -->
-  <!-- 	</ul> -->
-  <!-- </div> -->
-  <!--  -->
-  <!-- <div class="sidemenu&#45;item dropup dropdown" ng&#45;if="::ctrl.isSignedIn"> -->
-  <!-- 	<a class="sidemenu&#45;link" href="profile"> -->
-  <!-- 		<span class="icon&#45;circle sidemenu&#45;icon sidemenu&#45;org&#45;avatar"> -->
-  <!-- 			<img ng&#45;src="{{::ctrl.user.gravatarUrl}}"> -->
-  <!-- 			<span class="sidemenu&#45;org&#45;avatar&#45;&#45;missing"> -->
-  <!-- 				<i class="fa fa&#45;fw fa&#45;user"></i> -->
-  <!-- 			</span> -->
-  <!-- 		</span> -->
-  <!-- 	</a> -->
-  <!-- 	<ul class="dropdown&#45;menu dropdown&#45;menu&#45;&#45;sidemenu dropup" role="menu"> -->
-  <!-- 		<li ng&#45;repeat="menuItem in ctrl.profileNav.children" ng&#45;class="::menuItem.cssClass" ng&#45;hide="menuItem.hideFromMenu"> -->
-  <!-- 			<a href="{{::menuItem.url}}" ng&#45;show="::menuItem.url" target="{{::menuItem.target}}"> -->
-  <!-- 				<i class="{{::menuItem.icon}}" ng&#45;show="::menuItem.icon"></i> -->
-  <!-- 				{{::menuItem.text}} -->
-  <!-- 			</a> -->
-  <!-- 		</li> -->
-  <!-- 		<li class="side&#45;menu&#45;header"> -->
-  <!-- 			<span class="sidemenu&#45;item&#45;text">{{::ctrl.user.name}}</span> -->
-  <!-- 		</li> -->
-  <!-- 	</ul> -->
-  <!-- </div> -->
-  <!--  -->
-  <!-- <div class="sidemenu&#45;item dropdown dropup"> -->
-  <!-- 	<a href="http://docs.grafana.org" class="sidemenu&#45;link" target="_blank"> -->
-  <!-- 		<span class="icon&#45;circle sidemenu&#45;icon"><i class="fa fa&#45;fw fa&#45;question"></i></span> -->
-  <!-- 	</a> -->
-  <!-- 	<ul class="dropdown&#45;menu dropdown&#45;menu&#45;&#45;sidemenu" role="menu"> -->
-  <!-- 		<li ng&#45;repeat="menuItem in ctrl.helpNav.children" ng&#45;class="::menuItem.cssClass" ng&#45;hide="menuItem.hideFromMenu"> -->
-  <!-- 			<a href="{{::menuItem.url}}" ng&#45;show="::menuItem.url" target="{{::menuItem.target}}"> -->
-  <!-- 				<i class="{{::menuItem.icon}}" ng&#45;show="::menuItem.icon"></i> -->
-  <!-- 				{{::menuItem.text}} -->
-  <!-- 			</a> -->
-  <!-- 		</li> -->
-  <!-- 		<li class="side&#45;menu&#45;header"> -->
-  <!-- 			<span class="sidemenu&#45;item&#45;text">Help</span> -->
-  <!-- 		</li> -->
-  <!-- 	</ul> -->
-  <!-- </div> -->
 </div>
 

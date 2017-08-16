@@ -9,18 +9,13 @@ export class SideMenuCtrl {
   user: any;
   mainLinks: any;
   bottomNav: any;
-  appSubUrl: string;
   loginUrl: string;
-  orgFilter: string;
-  orgItems: any;
-  orgs: any;
-  maxShownOrgs: number;
+  isSignedIn: boolean;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private $location, private contextSrv, private backendSrv, private $element) {
+    this.isSignedIn = contextSrv.isSignedIn;
     this.user = contextSrv.user;
-    this.appSubUrl = config.appSubUrl;
-    this.maxShownOrgs = 10;
     this.mainLinks = _.filter(config.bootData.navTree, item => !item.hideFromMenu);
     this.bottomNav = _.filter(config.bootData.navTree, item => item.hideFromMenu);
     this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
@@ -38,17 +33,13 @@ export class SideMenuCtrl {
       }
       this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
     });
-
-    this.orgFilter = '';
   }
 
- getUrl(url) {
-   return config.appSubUrl + url;
- }
-
- search() {
-   this.$rootScope.appEvent('show-dash-search');
- }
+  switchOrg() {
+    this.$rootScope.appEvent('show-modal', {
+      templateHtml: '<org-switcher dismiss="dismiss()"></org-switcher>',
+    });
+  }
 }
 
 export function sideMenuDirective() {

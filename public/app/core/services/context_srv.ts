@@ -9,6 +9,7 @@ export class User {
   isGrafanaAdmin: any;
   isSignedIn: any;
   orgRole: any;
+  orgId: number;
   timezone: string;
   helpFlags1: number;
   lightTheme: boolean;
