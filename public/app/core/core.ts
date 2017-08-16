@@ -52,6 +52,7 @@ import {NavModelSrv, NavModel} from './nav_model_srv';
 import {userPicker} from './components/user_picker';
 import {userGroupPicker} from './components/user_group_picker';
 import {geminiScrollbar} from './components/scroll/scroll';
+import {gfPageDirective} from './components/gf_page';
 
 export {
   arrayJoin,
@@ -83,4 +84,5 @@ export {
   userPicker,
   userGroupPicker,
   geminiScrollbar,
+  gfPageDirective
 };

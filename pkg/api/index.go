@@ -99,8 +99,8 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	dashboardChildNavs := []*dtos.NavLink{
 		{Text: "Home", Url: setting.AppSubUrl + "/", Icon: "fa fa-fw fa-home"},
-		{Text: "Playlists", Url: setting.AppSubUrl + "/playlists", Icon: "fa fa-fw fa-film"},
-		{Text: "Snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "icon-gf icon-gf-snapshot"},
+		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "fa fa-fw fa-film"},
+		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "icon-gf icon-gf-snapshot"},
 	}
 
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
@@ -249,10 +249,11 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 				Icon: "fa fa-fw fa-shield",
 				Url:  setting.AppSubUrl + "/admin",
 				Children: []*dtos.NavLink{
-					{Text: "Global Users", Url: setting.AppSubUrl + "/admin/users"},
-					{Text: "Global Orgs", Url: setting.AppSubUrl + "/admin/orgs"},
-					{Text: "Server Settings", Url: setting.AppSubUrl + "/admin/settings"},
-					{Text: "Server Stats", Url: setting.AppSubUrl + "/admin/stats"},
+					{Text: "Global Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users"},
+					{Text: "Global Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs"},
+					{Text: "Server Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings"},
+					{Text: "Server Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats"},
+					{Text: "Style Guide", Id: "styleguide", Url: setting.AppSubUrl + "/admin/styleguide"},
 				},
 			})
 		}

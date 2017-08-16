@@ -25,8 +25,12 @@
 .scroll-canvas {
   position: absolute;
   width: 100%;
-  height: calc(100% - 54px);
   overflow: auto;
+  height: 100%;
+
+  &.dashboard-container {
+    height: calc(100% - 54px);
+  }
 }
 
 .page-body {

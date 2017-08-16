@@ -11,7 +11,7 @@ function (angular, _) {
     $scope.user = {};
     $scope.newOrg = { name: '', role: 'Editor' };
     $scope.permissions = {};
-    $scope.navModel = navModelSrv.getAdminNav();
+    $scope.navModel = navModelSrv.getNav('cfg', 'admin', 'global-users');
 
     $scope.init = function() {
       if ($routeParams.id) {

@@ -2,30 +2,34 @@
 
 <div class="page-container">
 	<div class="page-header">
-		<h1>
-			Server Administration
-		</h1>
+		<page-h1 model="ctrl.navModel"></page-h1>
 	</div>
 
-	<a class="btn btn-inverse" href="admin/users">
-		Manage Users
-	</a>
-
-	<a class="btn btn-inverse" href="admin/orgs">
-		Manage Organizations
-	</a>
-
-	<a class="btn btn-inverse" href="admin/settings">
-		View Server Settings
-	</a>
-
-	<a class="btn btn-inverse" href="admin/stats">
-		View Server Stats
-	</a>
-
-	<a class="btn btn-inverse" href="styleguide">
-	  Style guide
-	</a>
+	<section class="card-section card-list-layout-grid">
+		<ol class="card-list" >
+			<li class="card-item-wrapper" ng-repeat="navItem in ctrl.navModel.node.children">
+				<a class="card-item" ng-href="{{::navItem.url}}">
+					<div class="card-item-header">
+						<div class="card-item-type">
+						</div>
+					</div>
+					<div class="card-item-body">
+						<figure class="card-item-figure">
+							<i class="{{navItem.icon}}"></i>
+						</figure>
+						<div class="card-item-details">
+							<div class="card-item-name">
+								{{navItem.text}}
+							</div>
+							<div class="card-item-sub-name">
+								{{navItem.description}}
+							</div>
+						</div>
+					</div>
+				</a>
+			</li>
+		</ol>
+	</section>
 
 </div>
 
