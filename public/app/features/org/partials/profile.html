@@ -51,7 +51,7 @@
 						<span class="btn btn-primary btn-mini" ng-show="org.orgId === contextSrv.user.orgId">
 							当前用户
 						</span>
-						<a ng-click="setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== contextSrv.user.orgId">
+						<a ng-click="ctrl.setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== contextSrv.user.orgId">
 							选择用户
 						</a>
 					</td>
