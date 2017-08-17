@@ -8,10 +8,13 @@ function (_, $, coreModule) {
 
   coreModule.default.directive('metricSegment', function($compile, $sce) {
     var inputTemplate = '<input type="text" data-provide="typeahead" ' +
-      ' class="tight-form-clear-input input-medium"' +
+      ' class="gf-form-input input-medium"' +
       ' spellcheck="false" style="display:none"></input>';
 
-    var buttonTemplate = '<a class="tight-form-item" ng-class="segment.cssClass" ' +
+    var linkTemplate = '<a class="gf-form-label" ng-class="segment.cssClass" ' +
+      'tabindex="1" give-focus="segment.focus" ng-bind-html="segment.html"></a>';
+
+    var selectTemplate = '<a class="gf-form-input gf-form-input--dropdown" ng-class="segment.cssClass" ' +
       'tabindex="1" give-focus="segment.focus" ng-bind-html="segment.html"></a>';
 
     return {
@@ -20,9 +23,9 @@ function (_, $, coreModule) {
         getOptions: "&",
         onChange: "&",
       },
-      link: function($scope, elem) {
+      link: function($scope, elem, attrs) {
         var $input = $(inputTemplate);
-        var $button = $(buttonTemplate);
+        var $button = $(attrs.styleMode === 'select' ? selectTemplate : linkTemplate);
         var segment = $scope.segment;
         var options = null;
         var cancelBlur = null;

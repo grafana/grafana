@@ -9,7 +9,6 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       'vendor/npm/es6-shim/es6-shim.js',
-      'vendor/npm/es6-promise/dist/es6-promise.js',
       'vendor/npm/systemjs/dist/system.src.js',
       'test/test-main.js',
 
@@ -25,9 +24,10 @@ module.exports = function(config) {
     logLevel: config.LOG_INFO,
     autoWatch: true,
     browsers: ['PhantomJS'],
-    captureTimeout: 2000,
+    captureTimeout: 20000,
     singleRun: true,
-    autoWatchBatchDelay: 1000,
+    autoWatchBatchDelay: 10000,
+    browserNoActivityTimeout: 60000,
 
   });
 

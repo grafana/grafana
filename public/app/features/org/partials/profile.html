@@ -6,30 +6,27 @@
 		<h1>个人信息</h1>
 	</div>
 
-	<form name="userForm" class="gf-form-group">
-		<h3 class="page-heading">偏好</h3>
+	<form name="ctrl.userForm" class="gf-form-group">
+		<h3 class="page-heading">信息</h3>
 
 		<div class="gf-form">
-			<span class="gf-form-label width-7">姓名</span>
-			<input class="gf-form-input max-width-21" type="text" required ng-model="user.name" >
+			<span class="gf-form-label width-9">姓名</span>
+			<input class="gf-form-input max-width-21" type="text" required ng-model="ctrl.user.name" >
 		</div>
 		<div class="gf-form">
-			<span class="gf-form-label width-7">邮箱</span>
-			<input class="gf-form-input max-width-21" type="email" required ng-model="user.email">
+			<span class="gf-form-label width-9">邮箱</span>
+			<input class="gf-form-input max-width-21" type="email" required ng-model="ctrl.user.email">
 		</div>
 		<div class="gf-form">
-			<span class="gf-form-label width-7">账号</span>
-			<input class="gf-form-input max-width-21" type="text" required ng-model="user.login">
+			<span class="gf-form-label width-9">账号</span>
+			<input class="gf-form-input max-width-21" type="text" required ng-model="ctrl.user.login">
 		</div>
-		<div class="gf-form">
-			<span class="gf-form-label width-7">UI Theme</span>
-			<select class="gf-form-input gf-size-auto" ng-model="user.theme" ng-options="f for f in ['dark', 'light']"></select>
-		</div>
-
 		<div class="gf-form-button-row">
-			<button type="submit" class="btn btn-success" ng-click="update()">更新</button>
+			<button type="submit" class="btn btn-success" ng-click="ctrl.update()">更新</button>
 		</div>
 	</form>
+
+	<prefs-control mode="user"></prefs-control>
 
 	<h3 class="page-heading">密码</h3>
 	<div class="gf-form-group">
@@ -47,14 +44,14 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr ng-repeat="org in orgs">
+				<tr ng-repeat="org in ctrl.orgs">
 					<td>{{org.name}}</td>
 					<td>{{org.role}}</td>
 					<td class="text-right">
 						<span class="btn btn-primary btn-mini" ng-show="org.orgId === contextSrv.user.orgId">
 							当前用户
 						</span>
-						<a ng-click="setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== contextSrv.user.orgId">
+						<a ng-click="ctrl.setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== contextSrv.user.orgId">
 							选择用户
 						</a>
 					</td>

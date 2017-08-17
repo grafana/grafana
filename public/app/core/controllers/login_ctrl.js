@@ -39,7 +39,9 @@ function (angular, coreModule, config) {
     $scope.buildInfo = {
       version: config.buildInfo.version,
       commit: config.buildInfo.commit,
-      buildstamp: new Date(config.buildInfo.buildstamp * 1000)
+      buildstamp: new Date(config.buildInfo.buildstamp * 1000),
+      latestVersion: config.buildInfo.latestVersion,
+      hasUpdate: config.buildInfo.hasUpdate,
     };
 
     $scope.submit = function() {

@@ -33,8 +33,13 @@
 			<li class="card-item-wrapper" ng-repeat="plugin in ctrl.plugins">
 				<a class="card-item" href="plugins/{{plugin.id}}/edit">
 					<div class="card-item-header">
-						<i class="icon-gf icon-gf-{{plugin.type}}"></i>
-						{{plugin.type}}
+						<div class="card-item-type">
+							<i class="icon-gf icon-gf-{{plugin.type}}"></i>
+							{{plugin.type}}
+						</div>
+					  <div class="card-item-notice" ng-show="plugin.hasUpdate">
+							<span bs-tooltip="plugin.latestVersion">Update available!</span>
+						</div>
 					</div>
 					<div class="card-item-body">
 						<figure class="card-item-figure">

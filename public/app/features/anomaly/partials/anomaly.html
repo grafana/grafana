@@ -26,11 +26,11 @@
       <div id="cluster" style="width: 300px; height: 240px;"></div>
     </div>
     
-    <div ng-if="!(summary.metricHostClusters.elements.length || summary.metricHostNotClustered.elements.length)">
+    <div ng-if="!summary.numAnomalyMetrics">
       <em>系统一切正常</em>
     </div>
 
-    <tabset class="anomaly-container" ng-if="summary.metricHostClusters.elements.length || summary.metricHostNotClustered.elements.length">
+    <tabset class="anomaly-container" ng-if="summary.numAnomalyMetrics">
       <tab heading="聚合分析">
         <div>
           <div class="accordion cluster-list" id="accordion2">

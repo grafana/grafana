@@ -1,6 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import {Subject} from 'vendor/npm/rxjs/Subject';
+import EventEmitter from 'eventemitter3';
 
 var hasOwnProp = {}.hasOwnProperty;
 
@@ -9,48 +9,27 @@ function createName(name) {
 }
 
 export class Emitter {
-  subjects: any;
+  emitter: any;
 
   constructor() {
-    this.subjects = {};
+    this.emitter = new EventEmitter();
   }
 
   emit(name, data?) {
-    var fnName = createName(name);
-    this.subjects[fnName] || (this.subjects[fnName] = new Subject());
-    this.subjects[fnName].next(data);
+    this.emitter.emit(name, data);
   }
 
   on(name, handler, scope?) {
-    var fnName = createName(name);
-    this.subjects[fnName] || (this.subjects[fnName] = new Subject());
-    var subscription = this.subjects[fnName].subscribe(handler);
+    this.emitter.on(name, handler);
 
     if (scope) {
-      scope.$on('$destroy', function() {
-        subscription.unsubscribe();
+      scope.$on('$destroy', () => {
+        this.emitter.off(name, handler);
       });
-    }
-
-    return subscription;
-  };
-
-  off(name, handler) {
-    var fnName = createName(name);
-    if (this.subjects[fnName]) {
-      this.subjects[fnName].dispose();
-      delete this.subjects[fnName];
     }
   }
 
-  dispose() {
-    var subjects = this.subjects;
-    for (var prop in subjects) {
-      if (hasOwnProp.call(subjects, prop)) {
-        subjects[prop].dispose();
-      }
-    }
-
-    this.subjects = {};
+  off(name, handler) {
+    this.emitter.off(name, handler);
   }
 }

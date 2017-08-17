@@ -160,6 +160,24 @@ func canEditDashboard(role m.RoleType) bool {
 }
 
 func GetHomeDashboard(c *middleware.Context) {
+	prefsQuery := m.GetPreferencesWithDefaultsQuery{OrgId: c.OrgId, UserId: c.UserId}
+	if err := bus.Dispatch(&prefsQuery); err != nil {
+		c.JsonApiErr(500, "Failed to get preferences", err)
+	}
+
+	if prefsQuery.Result.HomeDashboardId != 0 {
+		slugQuery := m.GetDashboardSlugByIdQuery{Id: prefsQuery.Result.HomeDashboardId}
+		err := bus.Dispatch(&slugQuery)
+		if err != nil {
+			c.JsonApiErr(500, "Failed to get slug from database", err)
+			return
+		}
+
+		dashRedirect := dtos.DashboardRedirect{RedirectUri: "db/" + slugQuery.Result}
+		c.JSON(200, &dashRedirect)
+		return
+	}
+
 	filePath := path.Join(setting.StaticRootPath, "dashboards/home.json")
 	file, err := os.Open(filePath)
 	if err != nil {

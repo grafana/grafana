@@ -7,8 +7,8 @@
 // ---------------------
 @include media-breakpoint-down(sm) {
   div.panel {
-    width: 100%;
-    padding: 0px;
+    width: 100% !important;
+    padding: 0px !important;
   }
   .panel-margin {
     margin-right: 0;
@@ -24,6 +24,7 @@
     max-width: 120px;
   }
   .dashnav-zoom-out,
+  .dashnav-move-timeframe,
   .dashnav-action-icons {
     display: none;
   }
@@ -40,6 +41,11 @@
   .gf-timepicker-nav-btn {
     max-width: 120px;
   }
+
+  .dashnav-move-timeframe {
+    display: none;
+  }
+
   .panel-in-fullscreen {
     .dashnav-action-icons {
       display: none;
@@ -60,6 +66,9 @@
   .dashnav-zoom-out {
     display: block;
   }
+  .dashnav-move-timeframe {
+    display: block;
+  }
 }
 
 @include media-breakpoint-up(xl) {
@@ -69,7 +78,7 @@
     }
   }
 
-  .dashnav-dashboards-btn a {
+  .page-dashboard .navbar-page-btn {
     max-width: none;
   }
   .gf-timepicker-nav-btn {

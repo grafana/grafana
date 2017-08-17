@@ -36,7 +36,7 @@
 		</ul>
 	</li>
 	<li ng-show="::dashboardMeta.canSave">
-		<a ng-click="saveDashboard()" data-container="body" bs-tooltip="'保存仪表盘'" data-placement="bottom"><i class="fa fa-save"></i></a>
+		<a ng-click="saveDashboard()" data-container="body" bs-tooltip="'保存仪表盘 <br> CTRL+S'" data-placement="bottom"><i class="fa fa-save"></i></a>
 	</li>
 	<li ng-if="::showSettingsMenu" class="dropdown">
 		<a class="pointer" ng-click="hideTooltip($event)" data-container="body" bs-tooltip="'仪表盘管理'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-cog"></i></a>

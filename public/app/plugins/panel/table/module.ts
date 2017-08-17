@@ -11,46 +11,46 @@ import {transformDataToTable} from './transformers';
 import {tablePanelEditor} from './editor';
 import {TableRenderer} from './renderer';
 
-var panelDefaults = {
-  targets: [{}],
-  transform: 'timeseries_to_columns',
-  pageSize: null,
-  showHeader: true,
-  styles: [
-    {
-      type: 'date',
-      pattern: 'Time',
-      dateFormat: 'YYYY-MM-DD HH:mm:ss',
-      valueMaps: [
-        { value: '', op: '=', text: '' }
-      ]
-    },
-    {
-      unit: 'short',
-      type: 'number',
-      decimals: 2,
-      colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-      colorMode: null,
-      pattern: '/.*/',
-      thresholds: [],
-      valueMaps: [
-        { value: '', op: '=', text: '' }
-      ]
-    }
-  ],
-  columns: [],
-  scroll: true,
-  fontSize: '100%',
-  rowHeight: false,
-  sort: {col: 0, desc: true},
-};
-
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
   pageIndex: number;
   dataRaw: any;
   table: any;
+
+  panelDefaults = {
+    targets: [{}],
+    transform: 'timeseries_to_columns',
+    pageSize: null,
+    showHeader: true,
+    styles: [
+      {
+        type: 'date',
+        pattern: 'Time',
+        dateFormat: 'YYYY-MM-DD HH:mm:ss',
+        valueMaps: [
+          { value: '', op: '=', text: '' }
+        ]
+      },
+      {
+        unit: 'short',
+        type: 'number',
+        decimals: 2,
+        colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+        colorMode: null,
+        pattern: '/.*/',
+        thresholds: [],
+        valueMaps: [
+          { value: '', op: '=', text: '' }
+        ]
+      }
+    ],
+    columns: [],
+    scroll: true,
+    fontSize: '100%',
+    rowHeight: false,
+    sort: {col: 0, desc: true},
+  };
 
   /** @ngInject */
   constructor($scope, $injector, private annotationsSrv) {
@@ -64,17 +64,18 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       delete this.panel.fields;
     }
 
+    // TODO UPDATE 
     !this.panel.styles && (this.panel.styles = []);
     // 修正接口“数值转换”的数据
     for (var i = 0; i < this.panel.styles.length; i++) {
       this.panel.styles[i].valueMaps === void 0 && (this.panel.styles[i].valueMaps = [{ value: '', op: '=', text: '' }]);
     }
 
-    _.defaults(this.panel, panelDefaults);
+    _.defaults(this.panel, this.panelDefaults);
 
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
+    this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
   }
@@ -91,17 +92,13 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.pageIndex = 0;
 
     if (this.panel.transform === 'annotations') {
+      this.setTimeQueryStart();
       return this.annotationsSrv.getAnnotations(this.dashboard).then(annotations => {
-        this.dataRaw = annotations;
-        this.render();
+        return {data: annotations};
       });
     }
 
     return super.issueQueries(datasource);
-  }
-
-  onDataSnapshotLoad(data) {
-    this.onDataReceived(data);
   }
 
   onDataError(err) {
@@ -128,12 +125,21 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       }
     }
 
+    this.render();
+  }
+
+  render() {
     this.table = transformDataToTable(this.dataRaw, this.panel);
     this.table.sort(this.panel.sort);
-    this.render(this.table);
+    return super.render(this.table);
   }
 
   toggleColumnSort(col, colIndex) {
+    // remove sort flag from current column
+    if (this.table.columns[this.panel.sort.col]) {
+      this.table.columns[this.panel.sort.col].sort = false;
+    }
+
     if (this.panel.sort.col === colIndex) {
       if (this.panel.sort.desc) {
         this.panel.sort.desc = false;
@@ -144,7 +150,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       this.panel.sort.col = colIndex;
       this.panel.sort.desc = true;
     }
-
     this.render();
   }
 
@@ -169,7 +174,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     function appendTableRows(tbodyElem) {
-      var renderer = new TableRenderer(panel, data, ctrl.dashboard.timezone);
+      var renderer = new TableRenderer(panel, data, ctrl.dashboard.isTimezoneUtc());
       tbodyElem.empty();
       tbodyElem.html(renderer.render(ctrl.pageIndex));
     }
@@ -233,6 +238,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       if (data) {
         renderPanel();
       }
+      ctrl.renderingCompleted();
     });
   }
 }

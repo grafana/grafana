@@ -149,3 +149,8 @@ type GetDashboardsQuery struct {
 	DashboardIds []int64
 	Result       *[]Dashboard
 }
+
+type GetDashboardSlugByIdQuery struct {
+	Id     int64
+	Result string
+}

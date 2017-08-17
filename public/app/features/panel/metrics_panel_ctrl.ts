@@ -15,6 +15,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   error: boolean;
   loading: boolean;
   datasource: any;
+  datasourceName: any;
   $q: any;
   $timeout: any;
   datasourceSrv: any;
@@ -27,7 +28,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   resolution: any;
   timeInfo: any;
   skipDataOnInit: boolean;
-  datasources: any[];
   dataStream: any;
   dataSubscription: any;
 
@@ -52,7 +52,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   private onInitMetricsPanelEditMode() {
     this.addEditorTab('指标', 'public/app/partials/metrics.html');
     this.addEditorTab('时间区间', 'public/app/features/panel/partials/panelTime.html');
-    this.datasources = this.datasourceSrv.getMetricSources();
+    // this.datasources = this.datasourceSrv.getMetricSources();
   }
 
   private onMetricsPanelRefresh() {
@@ -65,7 +65,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       var data = this.panel.snapshotData;
       // backward compatability
       if (!_.isArray(data)) {
-        data = data;
+        data = data.data;
       }
 
       this.events.emit('data-snapshot-load', data);
@@ -82,6 +82,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.loading = true;
 
     // load datasource service
+    this.setTimeQueryStart();
     this.datasourceSrv.get(this.panel.datasource)
     .then(this.issueQueries.bind(this))
     .then(this.handleQueryResult.bind(this))
@@ -165,6 +166,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   issueQueries(datasource) {
     this.updateTimeRange();
+    this.datasource = datasource;
 
     if (!this.panel.targets || this.panel.targets.length === 0) {
       return this.$q.when([]);
@@ -192,6 +194,10 @@ class MetricsPanelCtrl extends PanelCtrl {
 
         if (results.regularities) {
           this.panel.regularResult = results;
+        }
+
+        if (results.timeRange) {
+           this.panel.timeRange = results.timeRange;
         }
         return results;
     });
@@ -256,15 +262,9 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     this.panel.datasource = datasource.value;
+    this.datasourceName = datasource.name;
     this.datasource = null;
     this.refresh();
-  }
-
-  addDataQuery(datasource) {
-    var target = {
-      datasource: datasource ? datasource.name : undefined
-    };
-    this.panel.targets.push(target);
   }
 }
 

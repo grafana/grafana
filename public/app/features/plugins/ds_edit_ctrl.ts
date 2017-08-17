@@ -16,6 +16,8 @@ var defaults = {
   jsonData: {}
 };
 
+var datasourceCreated = false;
+
 export class DataSourceEditCtrl {
   isNew: boolean;
   datasources: any[];
@@ -66,6 +68,11 @@ export class DataSourceEditCtrl {
       this.backendSrv.get('/api/datasources/' + id).then(ds => {
         this.isNew = false;
         this.current = ds;
+
+        if (datasourceCreated) {
+          datasourceCreated = false;
+          this.testDatasource();
+        }
         return this.typeChanged();
       });
     }
@@ -91,9 +98,7 @@ export class DataSourceEditCtrl {
 
       this.datasourceSrv.get(this.current.name).then(datasource => {
         if (!datasource.testDatasource) {
-          this.testing.message = 'Data source does not support test connection feature.';
-          this.testing.status = 'warning';
-          this.testing.title = 'Unknown';
+          delete this.testing;
           return;
         }
 
@@ -111,7 +116,9 @@ export class DataSourceEditCtrl {
           }
         });
       }).finally(() => {
-        this.testing.done = true;
+        if (this.testing) {
+          this.testing.done = true;
+        }
       });
     }
 
@@ -123,14 +130,14 @@ export class DataSourceEditCtrl {
       if (this.current.id) {
         return this.backendSrv.put('/api/datasources/' + this.current.id, this.current).then(() => {
           this.updateFrontendSettings().then(() => {
-            if (test) {
-              this.testDatasource();
-            }
+            this.testDatasource();
           });
         });
       } else {
         return this.backendSrv.post('/api/datasources', this.current).then(result => {
           this.updateFrontendSettings();
+
+          datasourceCreated = true;
           this.$location.path('datasources/edit/' + result.id);
         });
       }

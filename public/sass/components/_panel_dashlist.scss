@@ -1,5 +1,10 @@
-.dashlist-item {
+.dashlist-section-header {
+  margin-bottom: $spacer;
+  color: $text-color-weak;
+}
 
+.dashlist-section {
+  margin-bottom: $spacer;
 }
 
 .dashlist-link {

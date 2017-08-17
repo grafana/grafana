@@ -25,12 +25,12 @@ test:
      # Go test
      - godep go test -v ./pkg/...
      # js tests
-     - ./node_modules/grunt-cli/bin/grunt test
+     - npm test
      - npm run coveralls
 
 deployment:
   master:
     branch: master
     owner: grafana
-    commands: 
+    commands:
       - ./trigger_grafana_packer.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN}

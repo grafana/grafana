@@ -338,6 +338,10 @@ define([
                   "value": "count"
                 },
                 {
+                  "text": "change",
+                  "value": "change"
+                },
+                {
                   "text": "message",
                   "value": "message"
                 }
@@ -446,6 +450,13 @@ define([
       $scope.logCompare = function(timeShift) {
         $scope.dashboard.rows[2].panels[2].targets[1].timeShift = timeShift;
         $rootScope.$broadcast('refresh');
+      };
+
+      $scope.currentFilter = "无";
+      $scope.logFilter = function (rule) {
+        $scope.dashboard.rows[2].panels[2].scopedVars.logFilter = rule;
+        $rootScope.$broadcast('refresh');
+        $scope.currentFilter = rule + "日志";
       };
 
       $scope.init = function (param) {

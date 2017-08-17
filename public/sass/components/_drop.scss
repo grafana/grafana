@@ -1,4 +1,4 @@
-$popover-arrow-size: 1rem;
+$popover-arrow-size: 0.7rem;
 $color: inherit;
 $backgroundColor: $btn-secondary-bg;
 $color: $text-color;
@@ -7,6 +7,7 @@ $attachmentOffset: 0%;
 $easing: cubic-bezier(0, 0, 0.265, 1.00);
 
 .drop-element {
+  z-index: 10000;
   position: absolute;
   display: none;
   opacity: 0;

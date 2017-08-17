@@ -49,7 +49,6 @@ function (angular, _, $) {
               position: 'bottom center',
               template: '<gf-color-picker></gf-color-picker>',
               model: {
-                autoClose: true,
                 series: series,
                 toggleAxis: function() {
                   ctrl.toggleAxis(series);
@@ -157,7 +156,7 @@ function (angular, _, $) {
             }
 
             var html = '<div class="graph-legend-series';
-            if (series.yaxis === 2) { html += ' pull-right'; }
+            if (series.yaxis === 2) { html += ' graph-legend-series--right-y'; }
             if (ctrl.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
             html += '" data-series-index="' + i + '">';
             html += '<div class="graph-legend-icon">';

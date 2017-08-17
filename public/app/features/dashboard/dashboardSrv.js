@@ -9,7 +9,7 @@ function (angular, $, _, moment) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardSrv', function(alertSrv)  {
+  module.factory('dashboardSrv', function(contextSrv, alertSrv)  {
 
     function DashboardModel (data, meta) {
       if (!data) {
@@ -27,7 +27,7 @@ function (angular, $, _, moment) {
       this.originalTitle = this.title;
       this.tags = data.tags || [];
       this.style = data.style || "dark";
-      this.timezone = data.timezone || 'browser';
+      this.timezone = data.timezone || '';
       this.editable = data.editable !== false;
       this.hideControls = data.hideControls || false;
       this.sharedCrosshair = data.sharedCrosshair || false;
@@ -186,6 +186,7 @@ function (angular, $, _, moment) {
     p.formatDate = function(date, format) {
       date = moment.isMoment(date) ? date : moment(date);
       format = format || 'YYYY-MM-DD HH:mm:ss';
+      this.timezone = this.getTimezone();
 
       return this.timezone === 'browser' ?
         moment(date).format(format) :
@@ -208,6 +209,14 @@ function (angular, $, _, moment) {
           return other.refId !== refId;
         });
       });
+    };
+
+    p.isTimezoneUtc = function() {
+      return this.getTimezone() === 'utc';
+    };
+
+    p.getTimezone = function() {
+      return this.timezone ? this.timezone : contextSrv.user.timezone;
     };
 
     p._updateSchema = function(old) {
@@ -422,6 +431,8 @@ function (angular, $, _, moment) {
         // update graph yaxes changes
         panelUpgrades.push(function(panel) {
           if (panel.type !== 'graph') { return; }
+          if (!panel.grid) { return; }
+
           if (!panel.yaxes) {
             panel.yaxes = [
               {

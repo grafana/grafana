@@ -18,7 +18,6 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   var loadSetupBundle = new BundleLoader('app/features/setup/all');
   var loadSummaryBundle = new BundleLoader('app/features/summary/all');
   var loadAnomalyBundle = new BundleLoader('app/features/anomaly/all');
-  var loadProfileBundle = new BundleLoader('app/features/profile/all');
   var loadServiceBundle = new BundleLoader('app/features/service/all');
   var loadHealthBundle = new BundleLoader('app/features/health/all');
   var loadAnalysisBundle = new BundleLoader('app/features/analysis/all');
@@ -196,19 +195,20 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     resolve: loadOrgBundle,
   })
   .when('/profile', {
-    templateUrl: 'public/app/features/profile/partials/profile.html',
+    templateUrl: 'public/app/features/org/partials/profile.html',
     controller : 'ProfileCtrl',
-    resolve: loadProfileBundle,
+    controllerAs: 'ctrl',
+    resolve: loadOrgBundle,
   })
   .when('/profile/password', {
-    templateUrl: 'public/app/features/profile/partials/password.html',
+    templateUrl: 'public/app/features/org/partials/change_password.html',
     controller : 'ChangePasswordCtrl',
-    resolve: loadProfileBundle,
+    resolve: loadOrgBundle,
   })
   .when('/profile/select-org', {
-    templateUrl: 'public/app/features/profile/partials/select_org.html',
+    templateUrl: 'public/app/features/org/partials/select_org.html',
     controller : 'SelectOrgCtrl',
-    resolve: loadProfileBundle,
+    resolve: loadOrgBundle,
   })
   // ADMIN
   .when('/admin', {

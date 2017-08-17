@@ -98,7 +98,8 @@
   .add-row-panel-hint,
   .dashnav-refresh-action,
   .dashnav-zoom-out,
-  .dashnav-action-icons {
+  .dashnav-action-icons,
+  .dashnav-move-timeframe  {
     display: none;
   }
 
@@ -280,12 +281,12 @@ div.flot-text {
 
 .dashboard-header {
   font-family: $headings-font-family;
-  font-size: $font-size-h2;
+  font-size: $font-size-h3;
   text-align: center;
   span {
     display: inline-block;
     @include brand-bottom-border();
-    padding: 1.2rem .5rem .4rem .5rem;
+    padding: 0.5rem .5rem .2rem .5rem;
   }
 }
 // cloudwiz start

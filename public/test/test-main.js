@@ -10,6 +10,7 @@
     baseURL: '/base/',
     defaultJSExtensions: true,
     paths: {
+      'eventemitter3': 'vendor/npm/eventemitter3/index.js',
       'tether': 'vendor/npm/tether/dist/js/tether.js',
       'tether-drop': 'vendor/npm/tether-drop/dist/js/drop.js',
       'moment': 'vendor/moment.js',
@@ -38,6 +39,7 @@
       'fullcalendar':             'vendor/fullcalendar/dist/fullcalendar.min',
       'ui.calendar':              'vendor/angular-ui-calendar/src/calendar',
       'zh-cn':                    'vendor/fullcalendar/dist/zh-cn',
+      "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge"
     },
 
     packages: {
@@ -61,7 +63,11 @@
       'vendor/angular-mocks/angular-mocks.js': {
         format: 'global',
         deps: ['angular'],
-      }
+      },
+      'vendor/npm/eventemitter3/index.js': {
+        format: 'cjs',
+        exports: 'EventEmitter'
+      },
     }
   });
 

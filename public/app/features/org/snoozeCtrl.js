@@ -9,7 +9,7 @@ define([
     module.controller('SnoozeCtrl', function ($scope, backendSrv) {
       var snooze_url = "/alert/status/snooze";
       $scope.init = function () {
-        $scope.snoozeMin = 120;
+        $scope.snoozeMin = "120";
         $scope.moreMinutes = {
           "10": "10分钟",
           "30": "半小时",
@@ -21,7 +21,7 @@ define([
 
         $scope.snooze = function () {
           var relativeMin = (new Date().getTime() - $scope.alertDetails.status.levelChangedTime)/60000;
-          $scope.alertDetails.status.snoozeMinutes = $scope.snoozeMin + relativeMin;
+          $scope.alertDetails.status.snoozeMinutes = relativeMin + parseInt($scope.snoozeMin);
 
           backendSrv.alertD({
             method: "post",

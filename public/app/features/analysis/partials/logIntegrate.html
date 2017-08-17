@@ -15,7 +15,7 @@
 <div class="page-container">
     <form>
         <input type="text" class="input-xlarge tight-form-input ng-pristine ng-untouched ng-valid ng-valid-required" ng-model="query" required="">
-        <button type="submit" class="btn btn-primary" ng-click="reQuery()"><i class="fa fa-search"/>查找</button>
+        <button type="submit" class="btn btn-primary" ng-click="reQuery()"><i class="fa fa-search"></i>查找</button>
     </form>
     <div class="grafana-row" ng-controller="RowCtrl"
         ng-repeat="(row_name, row) in dashboard.rows" row-height>
@@ -43,13 +43,33 @@
         </div>
         <tabset>
             <tab heading="{{panel.title}}" ng-repeat="(name, panel) in row.panels track by panel.id" ng-if="panel.tab !== graph">
+                <ul ng-if="panel.regularResult.data[0].total">
+                    <li style="color: #F9934E;">该时间区域内共有 <strong>{{panel.regularResult.data[0].total}}</strong> 条日志，当前显示前 {{panel.regularResult.data[0].datapoints.length}} 条。放大时间区域，以查看更细日志数据。</li>
+                </ul>
+                <ul ng-if="name == 2">
+                    <li style="color: #F9934E;">当前日志时间段： <strong>{{panel.timeRange.now.start}} 至 {{panel.timeRange.now.end}}</strong></li>
+                    <li style="color: #F9934E;">对比日志时间段： <strong>{{panel.timeRange.relative.start}} 至 {{panel.timeRange.relative.end}}</strong></li>
+                    <li class="btn-group btn-log-filter">过滤条件：
+                            <button class="dropdown-toggle" data-toggle="dropdown">
+                            {{currentFilter}}<span class="caret" style="vertical-align: middle; margin-left: 10px;"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li ng-click="logFilter('增加')">增加日志</li>
+                            <li ng-click="logFilter('减少')">减少日志</li>
+                            <li ng-click="logFilter('新增')">新增日志</li>
+                            <li ng-click="logFilter('消失')">消失日志</li>
+                        </ul>
+                    </li>
+                </ul>
                 <div class="btn-group btn-log-compare" ng-if="name === 2">
                     <button class="dropdown-toggle" data-toggle="dropdown">
                         <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
-                        <li ng-click="logCompare('-1d')">1天以内</li>
-                        <li ng-click="logCompare('-7d')">7天以内</li>
+                        <li ng-click="logCompare('-1d')">1天以前</li>
+                        <li ng-click="logCompare('-7d')">7天以前</li>
+                        <li ng-click="logCompare('-30d')">1月以前</li>
+                        <li ng-click="logCompare('-365d')">1年以前</li>
                         <li ng-click="showInputModal()">自定义</li>
                     </ul>
                 </div>

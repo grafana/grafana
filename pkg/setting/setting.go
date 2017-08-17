@@ -125,6 +125,7 @@ var (
 	appliedEnvOverrides          []string
 
 	ReportingEnabled   bool
+	CheckForUpdates    bool
 	GoogleAnalyticsId  string
 	GoogleTagManagerId string
 
@@ -408,7 +409,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	loadConfiguration(args)
 
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
-	PluginsPath = Cfg.Section("paths").Key("plugins").String()
+	PluginsPath = makeAbsolute(Cfg.Section("paths").Key("plugins").String(), HomePath)
 
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
@@ -486,6 +487,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
+	CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 
