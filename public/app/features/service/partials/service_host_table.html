@@ -9,6 +9,7 @@
             <th data-field="alertRuleSet" data-sortable="true">报警规则</th>
             <th data-field="alertLevel" data-sortable="true" data-formatter="alertsLinkFormat">报警级别</th>
             <th data-field="anomalyHealth" data-sortable="true" data-formatter="healthLinkFormat" data-title-tooltip="正常: 100，临时异常: 25-100，持续异常: &lt;25" >健康值</th>
+            <th data-field="snoozeState" data-sortable="true" data-visible="false">是否暂缓报警</th>
         </tr>
     </thead>
 </table>
@@ -19,7 +20,7 @@
         css: { "background-color": "rgba(246, 0, 0, 0.54)" }
       };
     }
-    if (parseInt(row.anomalyHealth) < 26) {
+    if (parseInt(row.anomalyHealth) < 26 && !row.snoozeState) {
       return {
         css: { "background-color": "rgba(237,129,40,0.52)" }
       };
