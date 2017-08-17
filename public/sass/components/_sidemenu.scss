@@ -52,7 +52,7 @@
       // important to overlap it otherwise it can be hidden
       // again by the mouse getting outside the hover space
       left: $side-menu-width - 2px;
-      @include animation('dropdown-anim 100ms ease-in-out 100ms forwards');
+      @include animation('dropdown-anim 150ms ease-in-out 100ms forwards');
       z-index: 1;
     }
   }
