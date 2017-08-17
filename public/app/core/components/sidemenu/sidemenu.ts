@@ -415,7 +415,8 @@ export class SideMenuCtrl {
       this.$location.url("/systems");
       return;
     }
-    if (!this.isCurrentSystemInSysmtes.bind(this)) {
+    if (!_.some(this.contextSrv.systemsMap, {'Id': this.contextSrv.user.systemId})) {
+      this.contextSrv.user.systemId = this.contextSrv.systemsMap[0].Id;
       this.$location.url("/systems");
       return;
     }
@@ -427,14 +428,6 @@ export class SideMenuCtrl {
       return;
     }
   };
-
-  isCurrentSystemInSysmtes() {
-    var currId = this.contextSrv.user.systemId;
-    if (this.backendSrv.getSystemById(currId) === '') {
-      return false;
-    }
-    return true;
-  }
 }
 
 export function sideMenuDirective() {
