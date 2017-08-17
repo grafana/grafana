@@ -19,6 +19,7 @@ System.config({
     "angular-strap-old":        "vendor/angular-other/angular-strap-old",
     "angular-dragdrop":         "vendor/angular-native-dragdrop/draganddrop.js",
     "angular-bindonce":         "vendor/angular-bindonce/bindonce.js",
+    "angular-animate":          "vendor/angular-other/angular-animate.js",
     "spectrum":                 "vendor/spectrum.js",
     "bootstrap-tagsinput":      "vendor/tagsinput/bootstrap-tagsinput.js",
     "jquery.flot":              "vendor/flot/jquery.flot",
@@ -82,5 +83,10 @@ System.config({
     'vendor/quill/ng-quill.js': {
       build: false
     }
+  },
+
+  bundles: {
+    // 'public_gen/app/3party.js': ['public_gen/app/3party.js']
+    // '33party.js': ['vendor/jquery/dist/jquery.js', 'vendor/moment.js', 'app/core/lodash_extended.js', 'vendor/lodash.js', 'vendor/bootstrap/bootstrap.js']
   }
 });
