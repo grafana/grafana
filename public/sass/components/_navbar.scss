@@ -3,7 +3,6 @@
   display: block;
   overflow: visible;
   position: relative;
-  z-index: 110;
 }
 
 .navbar-inner {
@@ -11,7 +10,14 @@
   padding-right: $spacer;
   background-color: $navbarBackground;
   border-bottom: $navbarBorder;
+  margin-left: $side-menu-width;
   @include clearfix();
+}
+
+.sidemenu-open {
+  .navbar-inner {
+    margin-left: 0;
+  }
 }
 
 .navbar .nav {

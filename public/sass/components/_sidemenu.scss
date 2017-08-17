@@ -1,6 +1,9 @@
 
 
 .sidemenu {
+  position: fixed;
+  height: 30px;
+
   display: flex;
   flex-flow: column;
   flex-direction: column;
@@ -13,12 +16,25 @@
   }
 }
 
+.sidemenu-open {
+  .sidemenu {
+    position: initial;
+    height: auto;
+  }
+  .sidemenu__top,
+  .sidemenu__bottom {
+    display: block;
+  }
+}
+
 .sidemenu__top {
   flex-grow: 1;
+  display: none;
 }
 
 .sidemenu__bottom {
   padding-bottom: $spacer;
+  display: none;
 }
 
 .sidemenu-item {
@@ -134,3 +150,27 @@ li.sidemenu-org-switcher {
     top: 1px;
   }
 }
+
+.sidemenu__logo {
+  display: block;
+  margin-bottom: 3rem;
+  background-color: $side-menu-bg;
+  padding: 0.4rem 1.0rem 0.4rem 0.65rem;
+  min-height: $navbarHeight;
+
+  &:hover {
+    background: $navbarButtonBackgroundHighlight;
+
+    .sidemenu__logo-expand {
+      display: block;
+    }
+  }
+
+  img {
+    width: 30px;
+    position: relative;
+    top: 3px;
+    left: 4px;
+  }
+}
+

@@ -13,7 +13,7 @@ export class SideMenuCtrl {
   isSignedIn: boolean;
 
   /** @ngInject */
-  constructor(private $scope, private $rootScope, private $location, private contextSrv, private backendSrv, private $element) {
+  constructor(private $scope, private $rootScope, private $location, private contextSrv, private $timeout) {
     this.isSignedIn = contextSrv.isSignedIn;
     this.user = contextSrv.user;
     this.mainLinks = _.filter(config.bootData.navTree, item => !item.hideFromMenu);
@@ -28,10 +28,14 @@ export class SideMenuCtrl {
     }
 
     this.$scope.$on('$routeChangeSuccess', () => {
-      if (!this.contextSrv.pinned) {
-        this.contextSrv.sidemenu = false;
-      }
       this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
+    });
+  }
+
+  toggleSideMenu() {
+    this.contextSrv.toggleSideMenu();
+    this.$timeout(() => {
+      this.$rootScope.$broadcast('render');
     });
   }
 

@@ -1,11 +1,10 @@
+<a class="sidemenu__logo" ng-click="ctrl.toggleSideMenu()">
+	<span class="navbar-brand-btn-background">
+		<img src="public/img/grafana_icon.svg"></img>
+	</span>
+</a>
+
 <div class="sidemenu__top">
-
-	<a class="navbar-brand-btn pointer" ng-click="ctrl.contextSrv.toggleSideMenu()">
-		<span class="navbar-brand-btn-background">
-			<img src="public/img/grafana_icon.svg"></img>
-		</span>
-	</a>
-
 	<div ng-repeat="item in ::ctrl.mainLinks" class="sidemenu-item dropdown">
 		<a href="{{::item.url}}" class="sidemenu-link" target="{{::item.target}}">
 			<span class="icon-circle sidemenu-icon">
@@ -39,14 +38,14 @@
 		</ul>
 	</div>
 
-  <div ng-repeat="item in ::ctrl.bottomNav" class="sidemenu-item dropdown dropup">
-    <a href="{{::item.url}}" class="sidemenu-link" target="{{::item.target}}">
-      <span class="icon-circle sidemenu-icon">
-        <i class="{{::item.icon}}" ng-show="::item.icon"></i>
-        <img ng-src="{{::item.img}}" ng-show="::item.img">
-      </span>
-    </a>
-    <ul class="dropdown-menu dropdown-menu--sidemenu" role="menu">
+	<div ng-repeat="item in ::ctrl.bottomNav" class="sidemenu-item dropdown dropup">
+		<a href="{{::item.url}}" class="sidemenu-link" target="{{::item.target}}">
+			<span class="icon-circle sidemenu-icon">
+				<i class="{{::item.icon}}" ng-show="::item.icon"></i>
+				<img ng-src="{{::item.img}}" ng-show="::item.img">
+			</span>
+		</a>
+		<ul class="dropdown-menu dropdown-menu--sidemenu" role="menu">
 			<li ng-if="item.showOrgSwitcher" class="sidemenu-org-switcher">
 				<a ng-click="ctrl.switchOrg()">
 					<div>
@@ -56,16 +55,16 @@
 					<div class="sidemenu-org-switcher__switch"><i class="fa fa-fw fa-random"></i>Switch</div>
 				</a>
 			</li>
-      <li ng-repeat="child in ::item.children" ng-class="{divider: child.divider}" ng-hide="::child.hideFromMenu">
-        <a href="{{::child.url}}" target="{{::child.target}}">
-          <i class="{{::child.icon}}" ng-show="::child.icon"></i>
-          {{::child.text}}
-        </a>
-      </li>
-      <li class="side-menu-header">
-        <span class="sidemenu-item-text">{{::item.text}}</span>
-      </li>
-    </ul>
-  </div>
+			<li ng-repeat="child in ::item.children" ng-class="{divider: child.divider}" ng-hide="::child.hideFromMenu">
+				<a href="{{::child.url}}" target="{{::child.target}}">
+					<i class="{{::child.icon}}" ng-show="::child.icon"></i>
+					{{::child.text}}
+				</a>
+			</li>
+			<li class="side-menu-header">
+				<span class="sidemenu-item-text">{{::item.text}}</span>
+			</li>
+		</ul>
+	</div>
 </div>
 

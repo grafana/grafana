@@ -31,10 +31,7 @@ export class ContextSrv {
   sidemenu: any;
 
   constructor() {
-    this.pinned = store.getBool('grafana.sidemenu.pinned', false);
-    if (this.pinned) {
-      this.sidemenu = true;
-    }
+    this.sidemenu = store.getBool('grafana.sidemenu', false);
 
     if (!config.buildInfo) {
       config.buildInfo = {};
@@ -54,18 +51,13 @@ export class ContextSrv {
     return this.user.orgRole === role;
   }
 
-  setPinnedState(val) {
-    this.pinned = val;
-    store.set('grafana.sidemenu.pinned', val);
-  }
-
   isGrafanaVisible() {
     return !!(document.visibilityState === undefined || document.visibilityState === 'visible');
   }
 
   toggleSideMenu() {
     this.sidemenu = !this.sidemenu;
-    this.setPinnedState(this.sidemenu);
+    store.set('grafana.sidemenu',this.sidemenu);
   }
 }
 

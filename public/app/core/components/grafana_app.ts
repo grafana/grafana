@@ -70,31 +70,19 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
     restrict: 'E',
     controller: GrafanaCtrl,
     link: (scope, elem) => {
-      var ignoreSideMenuHide;
+      var sidemenuOpen;
       var body = $('body');
 
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = function() {};
 
-      // handle sidemenu open state
-      scope.$watch('contextSrv.sidemenu', newVal => {
-        if (newVal !== undefined) {
-          body.toggleClass('sidemenu-open', scope.contextSrv.sidemenu);
-          if (!newVal) {
-            contextSrv.setPinnedState(false);
-          }
-        }
-        if (contextSrv.sidemenu) {
-          ignoreSideMenuHide = true;
-          setTimeout(() => {
-            ignoreSideMenuHide = false;
-          }, 300);
-        }
-      });
+      sidemenuOpen = scope.contextSrv.sidemenu;
+      body.toggleClass('sidemenu-open', sidemenuOpen);
 
-      scope.$watch('contextSrv.pinned', newVal => {
-        if (newVal !== undefined) {
-          body.toggleClass('sidemenu-pinned', newVal);
+      scope.$watch('contextSrv.sidemenu', newVal => {
+        if (sidemenuOpen !== scope.contextSrv.sidemenu) {
+          sidemenuOpen = scope.contextSrv.sidemenu;
+          body.toggleClass('sidemenu-open', scope.contextSrv.sidemenu);
         }
       });
 
@@ -195,15 +183,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
           if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
             scope.$apply(function() {
               scope.appEvent('hide-dash-search');
-            });
-          }
-        }
-
-        // hide sidemenu
-        if (!ignoreSideMenuHide && !contextSrv.pinned && body.find('.sidemenu').length > 0) {
-          if (target.parents('.sidemenu').length === 0) {
-            scope.$apply(function() {
-              scope.contextSrv.toggleSideMenu();
             });
           }
         }
