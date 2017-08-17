@@ -1,13 +1,13 @@
 .dashboard-container {
   padding: $dashboard-padding;
+  background: $dashboard-gradient;
   width: 100%;
+  min-height: 100%;
 }
 
 .template-variable {
   color: $variable;
 }
-
-
 
 div.flot-text {
   color: $text-color !important;

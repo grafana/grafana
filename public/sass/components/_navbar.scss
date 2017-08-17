@@ -4,13 +4,14 @@
   overflow: visible;
   position: relative;
   margin-left: $side-menu-width;
+  box-shadow: 0 0 20px black;
+  z-index: 1;
 }
 
 .navbar-inner {
   min-height: $navbarHeight;
   padding-right: $spacer;
   background-color: $navbarBackground;
-  border-bottom: $navbarBorder;
   @include clearfix();
 }
 
