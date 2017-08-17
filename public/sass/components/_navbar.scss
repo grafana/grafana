@@ -3,6 +3,7 @@
   display: block;
   overflow: visible;
   position: relative;
+  margin-left: $side-menu-width;
 }
 
 .navbar-inner {
@@ -10,12 +11,11 @@
   padding-right: $spacer;
   background-color: $navbarBackground;
   border-bottom: $navbarBorder;
-  margin-left: $side-menu-width;
   @include clearfix();
 }
 
 .sidemenu-open {
-  .navbar-inner {
+  .navbar {
     margin-left: 0;
   }
 }
@@ -59,46 +59,6 @@
   color: $navbarLinkColorActive;
   text-decoration: none;
   background-color: $navbarLinkBackgroundActive;
-}
-
-.navbar-brand-btn {
-  display: block;
-  margin-bottom: 3rem;
-  background-color: $side-menu-bg;
-  padding: 0.4rem 1.0rem 0.4rem 0.65rem;
-  min-height: $navbarHeight;
-
-  .fa-caret-down {
-    font-size: 70%;
-  }
-
-  &:hover {
-    background: $navbarButtonBackgroundHighlight;
-  }
-
-  img {
-    width: 30px;
-    position: relative;
-    top: -1px;
-  }
-
-  .navbar-brand-btn-background {
-    display: inline-block;
-    border: 1px solid $body-bg;
-    padding: 4px;
-    border-radius: 50%;
-    background: $iconContainerBackground;
-    width: 40px;
-    height: 40px;
-  }
-
-  .icon-gf-grafana_wordmark {
-    font-size: 21px;
-    position: relative;
-    top: 6px;
-    padding-left: 5px;
-    display: none;
-  }
 }
 
 .navbar-page-btn-wrapper {

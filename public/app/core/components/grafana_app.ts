@@ -65,7 +65,7 @@ export class GrafanaCtrl {
 }
 
 /** @ngInject */
-export function grafanaAppDirective(playlistSrv, contextSrv) {
+export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScope) {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
@@ -118,6 +118,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
       var lastActivity = new Date().getTime();
       var activeUser = true;
       var inActiveTimeLimit = 60 * 1000;
+      var sidemenuHidden = false;
 
       function checkForInActiveUser() {
         if (!activeUser) {
@@ -131,6 +132,14 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
         if ((new Date().getTime() - lastActivity) > inActiveTimeLimit) {
           activeUser = false;
           body.addClass('user-activity-low');
+          // hide sidemenu
+          if (sidemenuOpen) {
+            sidemenuHidden = true;
+            body.removeClass('sidemenu-open');
+            $timeout(function() {
+              $rootScope.$broadcast("render");
+            }, 100);
+          }
         }
       }
 
@@ -139,6 +148,15 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
         if (!activeUser) {
           activeUser = true;
           body.removeClass('user-activity-low');
+
+          // restore sidemenu
+          if (sidemenuHidden) {
+            sidemenuHidden = false;
+            body.addClass('sidemenu-open');
+            $timeout(function() {
+              $rootScope.$broadcast("render");
+            }, 100);
+          }
         }
       }
 

@@ -1,14 +1,10 @@
-
-
 .sidemenu {
   position: fixed;
-  height: 30px;
-
   display: flex;
   flex-flow: column;
   flex-direction: column;
   width: $side-menu-width;
-  background-color: $side-menu-bg;
+  background: $navbarBackground;
   z-index: 1;
 
   a:focus {
@@ -18,6 +14,7 @@
 
 .sidemenu-open {
   .sidemenu {
+    background: $side-menu-bg;
     position: initial;
     height: auto;
   }
@@ -28,6 +25,7 @@
 }
 
 .sidemenu__top {
+  padding-top: 3rem;
   flex-grow: 1;
   display: none;
 }
@@ -153,8 +151,6 @@ li.sidemenu-org-switcher {
 
 .sidemenu__logo {
   display: block;
-  margin-bottom: 3rem;
-  background-color: $side-menu-bg;
   padding: 0.4rem 1.0rem 0.4rem 0.65rem;
   min-height: $navbarHeight;
 
