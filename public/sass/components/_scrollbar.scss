@@ -37,6 +37,13 @@
   bottom: 2px;
   z-index: 1;
   border-radius: 3px;
+
+  &:hover {
+    .thumb {
+      opacity: 1;
+      transition: opacity 100ms ease-in-out;
+    }
+  }
 }
 
 .gm-scrollbar.-vertical {
@@ -56,13 +63,21 @@
   height: 0;
   cursor: pointer;
   border-radius: inherit;
-  background-color: lighten($body-bg, 10%);
+  background-color: $dark-5;
   transform: translate3d(0,0,0);
+  opacity: 0;
+}
+
+.gemini-scrolling {
+  .gm-scrollbar .thumb {
+    opacity: 1;
+    transition: opacity 100ms ease-in-out;
+  }
 }
 
 .gm-scrollbar .thumb:hover,
 .gm-scrollbar .thumb:active {
-  background-color: lighten($body-bg, 20%);
+  background-color: $blue;
 }
 
 .gm-scrollbar.-vertical .thumb {

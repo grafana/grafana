@@ -12,6 +12,10 @@ export function geminiScrollbar() {
         autoshow: false,
         element: elem[0]
       }).create();
+
+      scope.$on('$destroy', () => {
+        myScrollbar.destroy();
+      });
     }
   };
 }

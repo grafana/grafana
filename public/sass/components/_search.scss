@@ -65,6 +65,7 @@
   max-width: 1100px;
   visibility: none;
   opacity: 0;
+  background: $panel-bg;
   height: 65%;
 
   &--fade-in {
@@ -76,11 +77,9 @@
 
 .search-results-container {
   height: 100%;
-  overflow: auto;
   display: block;
   line-height: 28px;
   padding: $spacer;
-  background: $panel-bg;
   flex-grow: 10;
 
   .selected {

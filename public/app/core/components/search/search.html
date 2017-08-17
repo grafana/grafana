@@ -40,35 +40,38 @@
 	</div>
 
 	<div class="search-dropdown" ng-class="{'search-dropdown--fade-in': ctrl.openCompleted}">
-		<div class="search-results-container" ng-if="ctrl.tagsMode">
-			<div ng-repeat="tag in ctrl.results" class="pointer" style="width: 180px; float: left;"
-				ng-class="{'selected': $index === ctrl.selectedIndex }"
-				ng-click="ctrl.filterByTag(tag.term, $event)">
-				<a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
-					<i class="fa fa-tag"></i>
-					<span>{{tag.term}} &nbsp;({{tag.count}})</span>
-				</a>
+		<div gemini-scrollbar>
+			<div class="search-results-container" ng-if="ctrl.tagsMode">
+				<div ng-repeat="tag in ctrl.results" class="pointer" style="width: 180px; float: left;"
+																												 ng-class="{'selected': $index === ctrl.selectedIndex }"
+														 ng-click="ctrl.filterByTag(tag.term, $event)">
+					<a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
+						<i class="fa fa-tag"></i>
+						<span>{{tag.term}} &nbsp;({{tag.count}})</span>
+					</a>
+				</div>
+			</div>
+
+			<div class="search-results-container" ng-if="!ctrl.tagsMode">
+				<h6 ng-hide="ctrl.results.length">No dashboards matching your query were found.</h6>
+
+				<div ng-repeat="row in ctrl.results">
+					<a class="search-item search-item--{{::row.type}}" ng-class="{'selected': $index == ctrl.selectedIndex}" ng-href="{{row.url}}">
+						<span class="search-result-tags">
+							<span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name="tag"  class="label label-tag">
+								{{tag}}
+							</span>
+							<i class="fa" ng-class="{'fa-star': row.isStarred, 'fa-star-o': !row.isStarred}"></i>
+						</span>
+
+						<span class="search-result-link">
+							<i class="fa search-result-icon"></i>
+							{{::row.title}}
+						</span>
+					</a>
+				</div>
 			</div>
 		</div>
-
-		<div class="search-results-container" ng-if="!ctrl.tagsMode">
-			<h6 ng-hide="ctrl.results.length">No dashboards matching your query were found.</h6>
-
-    <div ng-repeat="row in ctrl.results">
-      <a class="search-item search-item--{{::row.type}}" ng-class="{'selected': $index == ctrl.selectedIndex}" ng-href="{{row.url}}">
-        <span class="search-result-tags">
-          <span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name="tag"  class="label label-tag">
-            {{tag}}
-          </span>
-          <i class="fa" ng-class="{'fa-star': row.isStarred, 'fa-star-o': !row.isStarred}"></i>
-        </span>
-
-        <span class="search-result-link">
-          <i class="fa search-result-icon"></i>
-          {{::row.title}}
-        </span>
-      </a>
-    </div>
 	</div>
 </div>
 

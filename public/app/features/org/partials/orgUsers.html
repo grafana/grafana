@@ -26,12 +26,12 @@
 					</a>
 				</li>
 				<li class="gf-tabs-item">
-					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 0" ng-class="{active: ctrl.editor.index === 1}">
+					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 1" ng-class="{active: ctrl.editor.index === 1}">
 						Groups (0)
 					</a>
 				</li>
-				<li class="gf-tabs-item" ng-show="ctrl.showInviteUI">
-					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 1" ng-class="{active: ctrl.editor.index === 2}">
+				<li class="gf-tabs-item" ng-show="ctrl.pendingInvites.length">
+					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 2" ng-class="{active: ctrl.editor.index === 2}">
 						Pending Invitations ({{ctrl.pendingInvites.length}})
 					</a>
 				</li>
@@ -76,7 +76,7 @@
     </table>
   </div>
 
-  <div ng-if="ctrl.editor.index === 1 && ctrl.showInviteUI">
+  <div ng-if="ctrl.editor.index === 2">
     <table class="filter-table form-inline">
       <thead>
         <tr>

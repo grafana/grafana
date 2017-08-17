@@ -1,23 +1,27 @@
 <div dash-class ng-if="dashboard">
 	<dashnav dashboard="dashboard"></dashnav>
 
-	<div class="dashboard-container scroll-canvas">
-		<div dash-editor-view class="dash-edit-view"></div>
-		<div class="clearfix"></div>
+	<div class="scroll-canvas scroll-canvas--dashboard">
+		<div gemini-scrollbar>
+			<div class="dashboard-container">
+				<div dash-editor-view class="dash-edit-view"></div>
+				<div class="clearfix"></div>
 
-		<dashboard-submenu ng-if="dashboard.meta.submenuEnabled" dashboard="dashboard"></dashboard-submenu>
+				<dashboard-submenu ng-if="dashboard.meta.submenuEnabled" dashboard="dashboard"></dashboard-submenu>
 
-		<div class="clearfix"></div>
+				<div class="clearfix"></div>
 
-    <dash-row class="dash-row" ng-repeat="row in dashboard.rows" row="row" dashboard="dashboard">
-    </dash-row>
+				<dash-row class="dash-row" ng-repeat="row in dashboard.rows" row="row" dashboard="dashboard">
+				</dash-row>
 
-    <div ng-show='dashboard.meta.canEdit && !dashboard.meta.fullscreen' class="add-row-panel-hint">
-      <div class="span12" style="text-align:left;">
-        <span style="margin-left: 12px;" ng-click="addRowDefault()" class="pointer btn btn-inverse btn-small">
-          <span><i class="fa fa-plus"></i> ADD ROW</span>
-        </span>
-      </div>
-    </div>
-  </div>
+				<div ng-show='dashboard.meta.canEdit && !dashboard.meta.fullscreen' class="add-row-panel-hint">
+					<div class="span12" style="text-align:left;">
+						<span style="margin-left: 12px;" ng-click="addRowDefault()" class="pointer btn btn-inverse btn-small">
+							<span><i class="fa fa-plus"></i> ADD ROW</span>
+						</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>

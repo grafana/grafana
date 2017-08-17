@@ -99,7 +99,6 @@ function panelHeader($compile) {
 
         menuScope = scope.$new();
         let menuHtml = createMenuTemplate(scope.ctrl);
-        console.log(menuHtml);
         menuElem.html(menuHtml);
         $compile(menuElem)(menuScope);
 

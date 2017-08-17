@@ -1601,9 +1601,10 @@ gaze@^1.0.0, gaze@^1.1.2:
   dependencies:
     globule "^1.0.0"
 
-gemini-scrollbar@^1.5.2:
+gemini-scrollbar@^1.5.2, "gemini-scrollbar@https://github.com/grafana/gemini-scrollbar#grafana":
   version "1.5.2"
-  resolved "https://registry.yarnpkg.com/gemini-scrollbar/-/gemini-scrollbar-1.5.2.tgz#06528e49afe155c45ce9f7c9ee754a9e6f4ed341"
+  uid "98d8a696502c6226b21358b916e8bf3f8773ad2d"
+  resolved "https://github.com/grafana/gemini-scrollbar#98d8a696502c6226b21358b916e8bf3f8773ad2d"
 
 generate-function@^2.0.0:
   version "2.0.0"

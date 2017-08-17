@@ -47,7 +47,7 @@ export class OrgUsersCtrl {
     } else if (config.disableLoginForm) {
       return "Add Users";
     } else {
-      return "Add or Invite";
+      return "Add";
     }
   }
 
