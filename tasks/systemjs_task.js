@@ -1,13 +1,51 @@
 module.exports = function(grunt) {
   "use strict";
 
-  grunt.registerTask('systemjs:build', function() {
-    var Builder = require('systemjs-builder');
+  // optional constructor options
+  // sets the baseURL and loads the configuration file
+  var Builder = require('systemjs-builder');
+  var builder = new Builder('public_gen', 'public_gen/app/system.conf.js');
+  
+  grunt.registerTask('systemjs:buildCommon', function () {
     var done = this.async();
 
-    // optional constructor options
-    // sets the baseURL and loads the configuration file
-    var builder = new Builder('public_gen', 'public_gen/app/system.conf.js');
+    var thirdparty = [
+      'angular',
+      'angular-bindonce',
+      'angular-dragdrop',
+      'vendor/angular-other/*',
+      'angular-route',
+      'angular-sanitize',
+      'angular-ui',
+      'ui.calendar',
+      'bootstrap',
+      'vendor/flot/*',
+      'fullcalendar',
+      'jquery',
+      'bootstrap-tagsinput',
+      'lodash',
+      'moment',
+      'spectrum',
+      'eventemitter3'
+    ].join(' + ');
+
+    // thirdparty expected to be 'vendor/**/*', but the 'vendor' dir is toooo messy
+    builder
+      .bundle(thirdparty, 'public_gen/app/vendor.js')
+      .then(function() {
+        console.log('Build 3rd-party complete');
+        done();
+      })
+      .catch(function(err) {
+        console.log('Build error');
+        console.log(err);
+        done(false);
+      });
+  });
+  
+  grunt.registerTask('systemjs:build', function() {
+    var done = this.async();
+
     console.log('Starting systemjs-builder');
 
     var modules = [
@@ -22,7 +60,7 @@ module.exports = function(grunt) {
     var expression = modules.join(' + ');
 
     builder
-      .bundle(expression, 'public_gen/app/app_bundle.js')
+      .bundle(expression + ' - app/vendor', 'public_gen/app/app_bundle.js')
       .then(function() {
         console.log('Build complete');
         done();

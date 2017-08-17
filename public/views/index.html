@@ -51,10 +51,17 @@
 		};
 	</script>
 
-	<!-- build:js [[.AppSubUrl]]/public/app/boot.js -->
+	<!-- build:js [[.AppSubUrl]]/public/app/base.js -->
 	<script src="[[.AppSubUrl]]/public/vendor/npm/es6-shim/es6-shim.js"></script>
 	<script src="[[.AppSubUrl]]/public/vendor/npm/systemjs/dist/system.src.js"></script>
 	<script src="[[.AppSubUrl]]/public/app/system.conf.js"></script>
+	<!-- endbuild -->
+
+	<!-- build:js [[.AppSubUrl]]/public/app/vendor.js -->
+	<script src="[[.AppSubUrl]]/public/app/vendor.js"></script>
+	<!-- endbuild -->
+
+	<!-- build:js [[.AppSubUrl]]/public/app/boot.js -->
 	<script src="[[.AppSubUrl]]/public/app/boot.js"></script>
 	<!-- endbuild -->
 
