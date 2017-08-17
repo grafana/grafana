@@ -13,7 +13,6 @@
 			label="To the right" label-class="width-7"
 			checked="ctrl.panel.legend.rightSide" on-change="ctrl.render()">
 		</gf-form-switch>
-
 		<div ng-if="ctrl.panel.legend.rightSide" class="gf-form">
 			<label class="gf-form-label width-7">Width</label>
 			<input type="number" class="gf-form-input max-width-5" placeholder="250" bs-tooltip="'Set a min-width for the legend side table/block'" data-placement="right" ng-model="ctrl.panel.legend.sideWidth" ng-change="ctrl.render()" ng-model-onblur>
@@ -31,7 +30,7 @@
 
 			<gf-form-switch class="gf-form max-width-12"
 				label="Max" label-class="width-6" switch-class="max-width-5"
-				checked="ctrl.panel.legend.max" on-change="ctrl.legendCaluesOptionChanged()">
+				checked="ctrl.panel.legend.max" on-change="ctrl.legendValuesOptionChanged()">
 			</gf-form-switch>
 		</div>
 

@@ -136,7 +136,7 @@ func readVersionFromPackageJson() {
 			// add timestamp to iteration
 			linuxPackageIteration = fmt.Sprintf("%s%v", linuxPackageIteration, time.Now().Unix())
 		}
-		log.Println(fmt.Sprintf("teration %v", linuxPackageIteration))
+		log.Println(fmt.Sprintf("Iteration %v", linuxPackageIteration))
 	}
 }
 
@@ -306,7 +306,7 @@ func ChangeWorkingDir(dir string) {
 }
 
 func grunt(params ...string) {
-	runPrint("./node_modules/grunt-cli/bin/grunt", params...)
+	runPrint("./node_modules/.bin/grunt", params...)
 }
 
 func setup() {

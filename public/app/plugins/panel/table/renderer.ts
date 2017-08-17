@@ -8,7 +8,7 @@ export class TableRenderer {
   formaters: any[];
   colorState: any;
 
-  constructor(private panel, private table, private timezone) {
+  constructor(private panel, private table, private isUtc) {
     this.formaters = [];
     this.colorState = {};
   }
@@ -30,13 +30,13 @@ export class TableRenderer {
     }
 
     if (_.isArray(v)) {
-      v = v.join(',&nbsp;');
+      v = v.join(', ');
     }
 
     return v;
   }
 
-  createColumnFormater(style) {
+  createColumnFormater(style, column) {
     if (!style) {
       return this.defaultCellFormater;
     }
@@ -45,7 +45,7 @@ export class TableRenderer {
       return v => {
         if (_.isArray(v)) { v = v[0]; }
         var date = moment(v);
-        if (this.timezone === 'utc') {
+        if (this.isUtc) {
           date = date.utc();
         }
         return date.format(style.dateFormat);
@@ -53,7 +53,7 @@ export class TableRenderer {
     }
 
     if (style.type === 'number') {
-      let valueFormater = kbn.valueFormats[style.unit];
+      let valueFormater = kbn.valueFormats[column.unit || style.unit];
 
       return v =>  {
         if (v === null || v === void 0) {
@@ -107,7 +107,7 @@ export class TableRenderer {
       let column = this.table.columns[colIndex];
       var regex = kbn.stringToJsRegex(style.pattern);
       if (column.text.match(regex)) {
-        this.formaters[colIndex] = this.createColumnFormater(style);
+        this.formaters[colIndex] = this.createColumnFormater(style, column);
         return this.formaters[colIndex](value);
       }
     }

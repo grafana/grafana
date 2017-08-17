@@ -5,23 +5,21 @@ import _ from 'lodash';
 // import datemath from 'app/core/utils/datemath';
 import {PanelCtrl} from 'app/plugins/sdk';
 
- // Set and populate defaults
-var panelDefaults = {
-  mode    : "markdown", // 'html', 'markdown', 'text'
-  content : "# title",
-};
-
 export class TextPanelCtrl extends PanelCtrl {
   static templateUrl = `public/app/plugins/panel/text/module.html`;
 
   remarkable: any;
   content: string;
-
+  // Set and populate defaults
+  panelDefaults = {
+    mode    : "markdown", // 'html', 'markdown', 'text'
+    content : "# title",
+  };
   /** @ngInject */
   constructor($scope, $injector, private templateSrv, private $sce) {
     super($scope, $injector);
 
-    _.defaults(this.panel, panelDefaults);
+    _.defaults(this.panel, this.panelDefaults);
 
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('refresh', this.onRender.bind(this));

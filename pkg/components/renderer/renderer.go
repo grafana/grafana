@@ -1,6 +1,7 @@
 package renderer
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
@@ -72,6 +73,7 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		if err := cmd.Process.Kill(); err != nil {
 			log.Error(4, "failed to kill: %v", err)
 		}
+		return "", fmt.Errorf("PhantomRenderer::renderToPng timeout (>%vs)", timeout)
 	case <-done:
 	}
 

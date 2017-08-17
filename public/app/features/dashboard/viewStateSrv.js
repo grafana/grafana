@@ -36,7 +36,7 @@ function (angular, _, $) {
         self.update(payload);
       });
 
-      $scope.onAppEvent('panel-instantiated', function(evt, payload) {
+      $scope.onAppEvent('panel-initialized', function(evt, payload) {
         self.registerPanel(payload.scope);
       });
 

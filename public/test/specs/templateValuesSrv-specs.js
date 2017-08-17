@@ -92,6 +92,7 @@ define([
           var ds = {};
           ds.metricFindQuery = sinon.stub().returns(ctx.$q.when(scenario.queryResult));
           ctx.datasourceSrv.get = sinon.stub().returns(ctx.$q.when(ds));
+          ctx.datasourceSrv.getMetricSources = sinon.stub().returns(scenario.metricSources);
 
           ctx.service.updateOptions(scenario.variable);
           ctx.$rootScope.$digest();
@@ -137,7 +138,6 @@ define([
       });
     });
 
-
     describeUpdateVariable('interval variable with auto', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'interval', query: '1s,2h,5h,1d', name: 'test', auto: true, auto_count: 10 };
@@ -166,7 +166,7 @@ define([
 
     describeUpdateVariable('update custom variable', function(scenario) {
       scenario.setup(function() {
-        scenario.variable = { type: 'custom', query: 'hej, hop, asd', name: 'test'};
+        scenario.variable = {type: 'custom', query: 'hej, hop, asd', name: 'test'};
       });
 
       it('should update options array', function() {
@@ -237,7 +237,7 @@ define([
       });
     });
 
-   describeUpdateVariable('regex pattern without slashes', function(scenario) {
+    describeUpdateVariable('regex pattern without slashes', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'query', query: 'apps.*', name: 'test' };
         scenario.variable.regex = 'backend_01';
@@ -280,10 +280,37 @@ define([
       });
 
       it('should add All option with custom value', function() {
-        expect(scenario.variable.options[0].value).to.be('*');
+        expect(scenario.variable.options[0].value).to.be('$__all');
+      });
+    });
+
+    describeUpdateVariable('datasource variable with regex filter', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {
+          type: 'datasource',
+          query: 'graphite',
+          name: 'test',
+          current: {value: 'backend4_pee', text: 'backend4_pee'},
+          regex: '/pee$/'
+        };
+        scenario.metricSources = [
+          {name: 'backend1', meta: {id: 'influx'}},
+          {name: 'backend2_pee', meta: {id: 'graphite'}},
+          {name: 'backend3', meta: {id: 'graphite'}},
+          {name: 'backend4_pee', meta: {id: 'graphite'}},
+        ];
+      });
+
+      it('should set only contain graphite ds and filtered using regex', function() {
+        expect(scenario.variable.options.length).to.be(2);
+        expect(scenario.variable.options[0].value).to.be('backend2_pee');
+        expect(scenario.variable.options[1].value).to.be('backend4_pee');
+      });
+
+      it('should keep current value if available', function() {
+        expect(scenario.variable.current.value).to.be('backend4_pee');
       });
     });
 
   });
-
 });

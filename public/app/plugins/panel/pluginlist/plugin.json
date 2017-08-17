@@ -1,0 +1,16 @@
+{
+  "type": "panel",
+  "name": "Plugin list",
+  "id": "pluginlist",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+},
+    "logos": {
+      "small": "img/icn-dashlist-panel.svg",
+      "large": "img/icn-dashlist-panel.svg"
+    }
+  }
+}

@@ -55,7 +55,7 @@ define([
           newScope.select_all = _.every($scope.allHosts,{'checked': true});
         };
         $scope.appEvent('show-modal', {
-          src: 'app/features/cmdb/partials/service_add_host.html',
+          src: 'public/app/features/cmdb/partials/service_add_host.html',
           modalClass: 'modal-no-header invite-modal cmdb-modal',
           scope: newScope,
         });

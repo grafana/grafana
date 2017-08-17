@@ -41,8 +41,9 @@
     </div>
     <div class="clearfix"></div>
   </div>
-
-  <div ng-if="submenuEnabled" ng-include="'app/partials/submenu.html'">
+  
+  <div ng-if="submenuEnabled">
+    <dashboard-submenu></dashboard-submenu>
   </div>
   <div class="grafana-row" ng-controller="RowCtrl"
        ng-repeat="(row_name, row) in dashboard.rows" row-height style="margin-top: 180px;">

@@ -44,6 +44,7 @@ $brand-primary:         $blue;
 $brand-success:         $green;
 $brand-warning:         $orange;
 $brand-danger:          $red;
+$brand-text-highlight:  #f7941d;
 
 // Status colors
 // -------------------------
@@ -75,12 +76,13 @@ $page-gradient: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%
 $link-color:             $gray-1;
 $link-color-disabled:    lighten($link-color, 30%);
 $link-hover-color:       darken($link-color, 20%);
+$external-link-color:    $blue;
 
 // Typography
 // -------------------------
 $headings-color:       $text-color;
 $abbr-border-color: 	 $gray-2 !default;
-$text-muted: 			     darken($link-color,30%);
+$text-muted: 			     $text-color-weak;
 
 $blockquote-small-color:  $gray-2 !default;
 $blockquote-border-color: $gray-3 !default;
@@ -107,7 +109,8 @@ $tight-form-func-bg:            $gray-5;
 $tight-form-func-highlight-bg:  $gray-6;
 
 $modal-background: $body-bg;
-$code-tag-bg:      $dark-5;
+$code-tag-bg:      $gray-6;
+$code-tag-border:  darken($code-tag-bg, 3%);
 
 // Lists
 $grafanaListBackground:    	   $gray-6;
@@ -266,21 +269,21 @@ $infoText:                $blue;
 $infoBackground:          $blue-dark;
 $infoBorder:              transparent;
 
-
-// Tooltips and popovers
-// -------------------------
-$tooltipColor:            $white;
-$tooltipBackground:       $black;
-$tooltipArrowWidth:       5px;
-$tooltipArrowColor:       $tooltipBackground;
-$tooltipLinkColor:        $text-color;
-
 // popover
-$popover-bg:         $gray-5;
-$popover-color:      $text-color;
+$popover-bg:              $gray-5;
+$popover-color:           $text-color;
 
 $popover-help-bg:         $blue-dark;
 $popover-help-color:      $gray-6;
+
+// Tooltips and popovers
+// -------------------------
+$tooltipColor:            $popover-help-color;
+$tooltipBackground:       $popover-help-bg;
+$tooltipArrowWidth:       5px;
+$tooltipArrowColor:       $tooltipBackground;
+$tooltipLinkColor:        lighten($popover-help-color, 5%);
+$graph-tooltip-bg:        $gray-5;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
@@ -289,4 +292,3 @@ $checkboxImageUrl: '../img/checkbox_white.png';
 $card-background: linear-gradient(135deg, $gray-5, $gray-6);
 $card-background-hover: linear-gradient(135deg, $gray-6, $gray-7);
 $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .1);
-

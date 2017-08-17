@@ -27,9 +27,9 @@ em      { font-style: italic; color: $headings-color; }
 cite    { font-style: normal; }
 
 // Utility classes
-.muted               { color: $gray-2; }
+.muted               { color: $text-muted; }
 a.muted:hover,
-a.muted:focus        { color: darken($gray-2, 10%); }
+a.muted:focus        { color: darken($text-muted, 10%); }
 
 .text-warning        { color: $state-warning-text; }
 a.text-warning:hover,
@@ -114,8 +114,12 @@ hr {
 
 small,
 .small {
-  font-size: 85%;
+  font-size: $font-size-sm;
   font-weight: normal;
+}
+
+.small-xs {
+  font-size: $font-size-xs;
 }
 
 mark,

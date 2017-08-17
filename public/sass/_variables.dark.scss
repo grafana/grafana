@@ -27,7 +27,7 @@ $white:            #fff;
 // -------------------------
 $blue:                  #33B5E5;
 $blue-dark:             #005f81;
-$green:                 #669900;
+$green:                 #609000;
 $red:                   #CC3900;
 $yellow:                #ECBB13;
 $pink:                  #FF4444;
@@ -39,6 +39,7 @@ $brand-primary:         $blue;
 $brand-success:         $green;
 $brand-warning:         $brand-primary;
 $brand-danger:          $red;
+$brand-text-highlight:  #f7941d;
 
 // Status colors
 // -------------------------
@@ -66,15 +67,16 @@ $page-gradient: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%
 
 // Links
 // -------------------------
-$link-color:              darken($white,11%);
-$link-color-disabled:     darken($link-color,30%);
+$link-color:              darken($white, 11%);
+$link-color-disabled:     darken($link-color, 30%);
 $link-hover-color:        $white;
+$external-link-color:     $blue;
 
 // Typography
 // -------------------------
 $headings-color:       darken($white,11%);
 $abbr-border-color: 	 $gray-3 !default;
-$text-muted: 			     darken($link-color,30%);
+$text-muted: 			     $text-color-weak;
 
 $blockquote-small-color:  $gray-3 !default;
 $blockquote-border-color: $gray-4 !default;
@@ -100,7 +102,9 @@ $tight-form-func-bg: 		    #333;
 $tight-form-func-highlight-bg:  #444;
 
 $modal-background: $black;
-$code-tag-bg: #444;
+$code-tag-bg:      $dark-5;
+$code-tag-border:  lighten($code-tag-bg, 2%);
+
 
 // Lists
 $grafanaListBackground:  	  $dark-3;
@@ -240,20 +244,22 @@ $successBackground:       $btn-success-bg;
 $infoText:                $blue-dark;
 $infoBackground:          $blue-dark;
 
-// Tooltips and popovers
-// -------------------------
-$tooltipColor:            $white;
-$tooltipBackground:       rgb(58, 57, 57);
-$tooltipArrowWidth:       5px;
-$tooltipArrowColor:       $tooltipBackground;
-$tooltipLinkColor:        $link-color;
-
 // popover
 $popover-bg:         $dark-4;
 $popover-color:      $text-color;
 
 $popover-help-bg:         $btn-secondary-bg;
 $popover-help-color:      $text-color;
+
+
+// Tooltips and popovers
+// -------------------------
+$tooltipColor:            $popover-help-color;
+$tooltipBackground:       $popover-help-bg;
+$tooltipArrowWidth:       5px;
+$tooltipArrowColor:       $tooltipBackground;
+$tooltipLinkColor:        $link-color;
+$graph-tooltip-bg:        $dark-4;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';
@@ -262,5 +268,3 @@ $checkboxImageUrl: '../img/checkbox.png';
 $card-background: linear-gradient(135deg, #2f2f2f, #262626);
 $card-background-hover: linear-gradient(135deg, #343434, #262626);
 $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .3);
-
-

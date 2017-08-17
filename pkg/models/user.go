@@ -140,7 +140,6 @@ type SignedInUser struct {
 	Login          string
 	Name           string
 	Email          string
-	Theme          string
 	ApiKeyId       int64
 	IsGrafanaAdmin bool
 }

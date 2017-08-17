@@ -37,31 +37,26 @@
 
 	<div ng-include src="'shareLinkOptions.html'"></div>
 
-	<div class="gf-form-group position-center">
-		<div class="gf-form width-30" >
+	<div class="gf-form-group section">
+		<div class="gf-form width-30">
 			<textarea rows="5" data-share-panel-url class="gf-form-input width-30" ng-model='iframeHtml'></textarea>
-		</div>
-	</div>
-	<div class="gf-form-group">
-		<div class="gf-form position-center">
-			<button class="btn btn-inverse" data-clipboard-text="{{iframeHtml}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
 		</div>
 	</div>
 </script>
 
 <script type="text/ng-template" id="shareLinkOptions.html">
-	<div class="gf-form-group position-center">
+	<div class="gf-form-group section">
+		<gf-form-switch class="gf-form"
+			label="Current time range" label-class="width-12" switch-class="max-width-6"
+			checked="options.forCurrent" on-change="buildUrl()">
+		</gf-form-switch>
+		<gf-form-switch class="gf-form"
+			label="Template variables" label-class="width-12" switch-class="max-width-6"
+			checked="options.includeTemplateVars" on-change="buildUrl()">
+		</gf-form-switch>
 		<div class="gf-form">
-			<span class="gf-form-label width-5">当前时间范围</span>
-			<editor-checkbox text="Current time range" model="options.forCurrent" change="buildUrl()"></editor-checkbox>
-		</div>
-		<div class="gf-form">
-			<span class="gf-form-label width-5">包含模板参数</span>
-			<editor-checkbox text="Template variables" model="options.includeTemplateVars" change="buildUrl()"></editor-checkbox>
-		</div>
-		<div class="gf-form">
-			<span class="gf-form-label width-5">主题</span>
-			<div class="gf-form-select-wrapper max-width-10">
+			<span class="gf-form-label width-12">主题</span>
+			<div class="gf-form-select-wrapper width-6">
 				<select class="gf-form-input" ng-model="options.theme" ng-options="f as f for f in ['current', 'dark', 'light']" ng-change="buildUrl()"></select>
 			</div>
 		</div>
@@ -74,18 +69,19 @@
 	</div>
 
 	<div ng-include src="'shareLinkOptions.html'"></div>
-	<div class="gf-form-group position-center">
-		<div class="gf-form-inline">
-
-			<div class="gf-form width-30">
-				<input type="text" data-share-panel-url class="gf-form-input" ng-model="shareUrl"></input>
-			</div>
-			<div class="gf-form pull-right">
-				<button class="btn btn-inverse pull-right" data-clipboard-text="{{shareUrl}}" clipboard-button><i class="fa fa-clipboard"></i> 复制</button>
+	<div>
+		<div class="gf-form-group section">
+			<div class="gf-form-inline">
+				<div class="gf-form width-30">
+					<input type="text" data-share-panel-url class="gf-form-input" ng-model="shareUrl"></input>
+				</div>
+				<div class="gf-form pull-right">
+					<button class="btn btn-inverse pull-right" data-clipboard-text="{{shareUrl}}" clipboard-button><i class="fa fa-clipboard"></i> 复制</button>
+				</div>
 			</div>
 		</div>
 	</div>
-	<div class="gf-form position-center" ng-show="modeSharePanel">
+	<div class="gf-form section" ng-show="modeSharePanel">
 		<a href="{{imageUrl}}" target="_blank"><i class="fa fa-camera"></i> 直接链接渲染图片</a>
 	</div>
 </script>
@@ -115,7 +111,7 @@
 			</p>
 		</div>
 
-		<div class="gf-form-group share-modal-options position-center">
+		<div class="gf-form-group share-modal-options">
 			<div class="gf-form" ng-if="step === 1">
 				<span class="gf-form-label width-12">快照名称</span>
 				<input type="text" ng-model="snapshot.name" class="gf-form-input max-width-15" >

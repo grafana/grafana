@@ -30,7 +30,7 @@ Access | Proxy = access via Grafana backend, Direct = access directory from brow
 ## Query editor
 Open a graph in edit mode by click the title.
 
-![](/img/v2/kairos_query_editor.png)
+![](/img/v2/kairos_query_editor.jpg)
 
 For details on KairosDB metric queries checkout the official.
 - [Query Metrics - KairosDB 0.9.4 documentation](http://kairosdb.github.io/kairosdocs/restapi/QueryMetrics.html).

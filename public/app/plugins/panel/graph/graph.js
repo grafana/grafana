@@ -73,7 +73,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             var legendSeries = _.filter(data, function(series) {
               return series.hideFromLegend(panel.legend) === false;
             });
-            var total = 23 + (22 * legendSeries.length);
+            var total = 23 + (21 * legendSeries.length);
             return Math.min(total, Math.floor(panelHeight/2));
           } else {
             return 26;
@@ -159,8 +159,10 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }
 
         function processOffsetHook(plot, gridMargin) {
-          if (panel.yaxis) { gridMargin.left = 20; }
-          if (panel.rightYAxisLabel) { gridMargin.right = 20; }
+          var left = panel.yaxes[0];
+          var right = panel.yaxes[1];
+          if (left.show && left.label) { gridMargin.left = 20; }
+          if (right.show && right.label) { gridMargin.right = 20; }
         }
 
         // Function for rendering panel
@@ -287,7 +289,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           var max = _.isUndefined(ctrl.range.to) ? null : ctrl.range.to.valueOf();
 
           options.xaxis = {
-            timezone: dashboard.timezone,
+            timezone: dashboard.getTimezone(),
             show: panel['x-axis'],
             mode: "time",
             min: min,

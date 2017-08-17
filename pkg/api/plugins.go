@@ -8,12 +8,14 @@ import (
 	"github.com/wangy1931/grafana/pkg/middleware"
 	m "github.com/wangy1931/grafana/pkg/models"
 	"github.com/wangy1931/grafana/pkg/plugins"
+	"github.com/wangy1931/grafana/pkg/setting"
 )
 
 func GetPluginList(c *middleware.Context) Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
+	coreFilter := c.Query("core")
 
 	pluginSettingsMap, err := plugins.GetPluginSettings(c.OrgId)
 
@@ -28,21 +30,33 @@ func GetPluginList(c *middleware.Context) Response {
 			continue
 		}
 
+		// filter out core plugins
+		if coreFilter == "0" && pluginDef.IsCorePlugin {
+			continue
+		}
+
 		// filter on type
 		if typeFilter != "" && typeFilter != pluginDef.Type {
 			continue
 		}
 
 		listItem := dtos.PluginListItem{
-			Id:   pluginDef.Id,
-			Name: pluginDef.Name,
-			Type: pluginDef.Type,
-			Info: &pluginDef.Info,
+			Id:            pluginDef.Id,
+			Name:          pluginDef.Name,
+			Type:          pluginDef.Type,
+			Info:          &pluginDef.Info,
+			LatestVersion: pluginDef.GrafanaNetVersion,
+			HasUpdate:     pluginDef.GrafanaNetHasUpdate,
+			DefaultNavUrl: pluginDef.DefaultNavUrl,
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
 			listItem.Enabled = pluginSetting.Enabled
 			listItem.Pinned = pluginSetting.Pinned
+		}
+
+		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
+			listItem.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + listItem.Id + "/edit"
 		}
 
 		// filter out disabled
@@ -81,6 +95,8 @@ func GetPluginSettingById(c *middleware.Context) Response {
 			BaseUrl:       def.BaseUrl,
 			Module:        def.Module,
 			DefaultNavUrl: def.DefaultNavUrl,
+			LatestVersion: def.GrafanaNetVersion,
+			HasUpdate:     def.GrafanaNetHasUpdate,
 		}
 
 		query := m.GetPluginSettingByIdQuery{PluginId: pluginId, OrgId: c.OrgId}
@@ -146,11 +162,12 @@ func GetPluginReadme(c *middleware.Context) Response {
 func ImportDashboard(c *middleware.Context, apiCmd dtos.ImportDashboardCommand) Response {
 
 	cmd := plugins.ImportDashboardCommand{
-		OrgId:    c.OrgId,
-		UserId:   c.UserId,
-		PluginId: apiCmd.PluginId,
-		Path:     apiCmd.Path,
-		Inputs:   apiCmd.Inputs,
+		OrgId:     c.OrgId,
+		UserId:    c.UserId,
+		PluginId:  apiCmd.PluginId,
+		Path:      apiCmd.Path,
+		Inputs:    apiCmd.Inputs,
+		Overwrite: apiCmd.Overwrite,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {

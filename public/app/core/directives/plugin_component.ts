@@ -169,7 +169,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         return System.import(model.module).then(function(appModule) {
           return {
             baseUrl: model.baseUrl,
-            name: 'app-config-' + model.pluginId,
+            name: 'app-config-' + model.id,
             bindings: {appModel: "=", appEditCtrl: "="},
             attrs: {"app-model": "ctrl.model", "app-edit-ctrl": "ctrl"},
             Component: appModule.ConfigCtrl,
@@ -206,9 +206,15 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     });
 
     $compile(child)(scope);
-
     elem.empty();
-    elem.append(child);
+
+    // let a binding digest cycle complete before adding to dom
+    setTimeout(function() {
+      elem.append(child);
+      scope.$apply(function() {
+        scope.$broadcast('refresh');
+      });
+    });
   }
 
   function registerPluginComponent(scope, elem, attrs, componentInfo) {

@@ -102,7 +102,6 @@ function(angular, _) {
         value.current = null;
         value.options = null;
       });
-
     };
 
     p.hasChanges = function() {

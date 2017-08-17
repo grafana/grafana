@@ -1,9 +1,11 @@
 package commands
 
 import (
-	"github.com/codegangsta/cli"
-	"github.com/wangy1931/grafana/pkg/cmd/grafana-cli/log"
 	"os"
+
+	"github.com/codegangsta/cli"
+	"github.com/fatih/color"
+	"github.com/wangy1931/grafana/pkg/cmd/grafana-cli/log"
 )
 
 func runCommand(command func(commandLine CommandLine) error) func(context *cli.Context) {
@@ -11,7 +13,7 @@ func runCommand(command func(commandLine CommandLine) error) func(context *cli.C
 
 		cmd := &contextCommandLine{context}
 		if err := command(cmd); err != nil {
-			log.Error("\nError: ")
+			log.Errorf("\n%s: ", color.RedString("Error"))
 			log.Errorf("%s\n\n", err)
 
 			cmd.ShowHelp()
@@ -25,27 +27,33 @@ func runCommand(command func(commandLine CommandLine) error) func(context *cli.C
 var pluginCommands = []cli.Command{
 	{
 		Name:   "install",
-		Usage:  "install <plugin name>",
+		Usage:  "install <plugin id>",
 		Action: runCommand(installCommand),
 	}, {
 		Name:   "list-remote",
 		Usage:  "list remote available plugins",
 		Action: runCommand(listremoteCommand),
 	}, {
-		Name:   "upgrade",
-		Usage:  "upgrade <plugin name>",
-		Action: runCommand(upgradeCommand),
+		Name:    "update",
+		Usage:   "update <plugin id>",
+		Aliases: []string{"upgrade"},
+		Action:  runCommand(upgradeCommand),
 	}, {
-		Name:   "upgrade-all",
-		Usage:  "upgrades all your installed plugins",
-		Action: runCommand(upgradeAllCommand),
+		Name:    "update-all",
+		Aliases: []string{"upgrade-all"},
+		Usage:   "update all your installed plugins",
+		Action:  runCommand(upgradeAllCommand),
 	}, {
 		Name:   "ls",
 		Usage:  "list all installed plugins",
 		Action: runCommand(lsCommand),
 	}, {
+		Name:   "uninstall",
+		Usage:  "uninstall <plugin id>",
+		Action: runCommand(removeCommand),
+	}, {
 		Name:   "remove",
-		Usage:  "remove <plugin name>",
+		Usage:  "remove <plugin id>",
 		Action: runCommand(removeCommand),
 	},
 }

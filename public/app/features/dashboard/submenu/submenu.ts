@@ -8,9 +8,9 @@ export class SubmenuCtrl {
   dashboard: any;
 
   /** @ngInject */
-  constructor(private $rootScope, private templateValuesSrv, private dynamicDashboardSrv) {
-    this.annotations = this.dashboard.templating.list;
-    this.variables = this.dashboard.templating.list;
+  constructor(private $rootScope, private templateValuesSrv, private dynamicDashboardSrv, private $scope) {
+    this.annotations = $rootScope.mainScope.dashboard.templating.list;
+    this.variables = $rootScope.mainScope.dashboard.templating.list;
   }
 
   disableAnnotation(annotation) {

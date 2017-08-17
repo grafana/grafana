@@ -50,6 +50,22 @@ body{
     }
 }
 
+.btn-log-filter {
+    position: relative;
+    font-size: 14px;
+    & > .dropdown-menu {
+        left: 70px;
+    }
+    & > .dropdown-menu > li {
+        padding: 0 10px;
+        cursor: pointer;
+    }
+    & > .dropdown-menu > li:hover {
+        color: white;
+        background: #24ade0;
+    }
+}
+
 .log-panel .table-panel-table td:first-child{
     width: 100px;
 }

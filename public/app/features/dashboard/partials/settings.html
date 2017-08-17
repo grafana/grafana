@@ -26,7 +26,10 @@
 				<input type="text" class="gf-form-input width-25" ng-model='dashboard.title'></input>
 			</div>
 			<div class="gf-form">
-				<label class="gf-form-label width-7">标签<tip>Press enter to a add tag</tip></label>
+				<label class="gf-form-label width-7">
+          标签
+          <info-popover mode="right-normal">Press enter to a add tag</info-popover>
+        </label>
 				<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
 				</bootstrap-tagsinput>
 			</div>
@@ -34,7 +37,7 @@
 			<div class="gf-form">
 				<label class="gf-form-label width-7">时区</label>
 				<div class="gf-form-select-wrapper">
-					<select ng-model="dashboard.timezone" class='gf-form-input' ng-options="f for f in ['browser','utc']"></select>
+					<select ng-model="dashboard.timezone" class='gf-form-input' ng-options="f.value as f.text for f in [{value: '', text: 'Default'}, {value: 'browser', text: 'Local browser time'},{value: 'utc', text: 'UTC'}]" ng-change="timezoneChanged()"></select>
 				</div>
 			</div>
 			<div class="gf-form">
@@ -54,82 +57,83 @@
                         label="编辑"
                         tooltip="Uncheck, then save and reload to disable all dashboard editing"
                         checked="dashboard.editable"
-                        label-class="width-10">
+                        label-class="width-11">
         </gf-form-switch>
         <gf-form-switch class="gf-form"
                         label="隐藏操作栏"
                         tooltip="Hide row controls. Shortcut: CTRL+H"
                         checked="dashboard.hideControls"
-                        label-class="width-10">
+                        label-class="width-11">
         </gf-form-switch>
         <gf-form-switch class="gf-form"
                         label="Shared Crosshair"
                         tooltip="Shared Crosshair line on all graphs. Shortcut: CTRL+O"
                         checked="dashboard.sharedCrosshair"
-                        label-class="width-10">
+                        label-class="width-11">
         </gf-form-switch>
       </div>
     </div>
-  </div>
 
-  <div ng-if="editor.index === 1">
-    <h5 class="section-heading">行设置</h5>
+	</div>
 
-    <div class="gf-form-group">
-      <div class="gf-form-inline" ng-repeat="row in dashboard.rows">
-        <div class="gf-form">
-          <span class="gf-form-label">标题</span>
-          <input type="text" class="gf-form-input max-width-14" ng-model='row.title'></input>
-        </div>
-        <gf-form-switch class="gf-form" label="Show title" checked="row.showTitle" switch-class="max-width-6"></gf-form-switch>
+	<div ng-if="editor.index == 1">
+		<h5 class="section-heading">行设置</h5>
 
-        <div class="gf-form">
-          <button class="btn btn-inverse gf-form-btn" ng-click="_.move(dashboard.rows,$index,$index-1)">
-            <i ng-class="{'invisible': $first}" class="fa fa-arrow-up"></i>
-          </button>
-          <button class="btn btn-inverse gf-from-btn" ng-click="_.move(dashboard.rows,$index,$index+1)">
-            <i ng-class="{'invisible': $last}" class="fa fa-arrow-down"></i>
-          </button>
-          <button class="btn btn-inverse gf-form-btn" click="dashboard.rows = _.without(dashboard.rows,row)">
-            <i class="fa fa-trash"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+		<div class="gf-form-group">
+			<div class="gf-form-inline" ng-repeat="row in dashboard.rows">
+				<div class="gf-form">
+					<span class="gf-form-label">标题</span>
+					<input type="text" class="gf-form-input max-width-14" ng-model='row.title'></input>
+				</div>
+				<gf-form-switch class="gf-form" label="Show title" checked="row.showTitle" switch-class="max-width-6"></gf-form-switch>
 
-  <div ng-if="editor.index === 2">
-    <dash-links-editor></dash-links-editor>
-  </div>
+				<div class="gf-form">
+					<button class="btn btn-inverse gf-form-btn" ng-click="_.move(dashboard.rows,$index,$index-1)">
+						<i ng-class="{'invisible': $first}" class="fa fa-arrow-up"></i>
+					</button>
+					<button class="btn btn-inverse gf-from-btn" ng-click="_.move(dashboard.rows,$index,$index+1)">
+						<i ng-class="{'invisible': $last}" class="fa fa-arrow-down"></i>
+					</button>
+					<button class="btn btn-inverse gf-form-btn" ng-click="dashboard.rows = _.without(dashboard.rows,row)">
+						<i class="fa fa-trash"></i>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
 
-  <div ng-if="editor.index === 3">
-    <gf-time-picker-settings dashboard="dashboard"></gf-time-picker-settings>
-  </div>
+	<div ng-if="editor.index == 2">
+		<dash-links-editor></dash-links-editor>
+	</div>
 
-  <div ng-if="editor.index === 4">
-    <h5 class="section-heading">Dashboard info</h5>
-    <div class="gf-form-group">
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Last updated at:</span>
-        <span class="gf-form-label width-18">{{formatDate(dashboardMeta.updated)}}</span>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Last updated by:</span>
-        <span class="gf-form-label width-18">{{dashboardMeta.updatedBy}}&nbsp;</span>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Created at:</span>
-        <span class="gf-form-label width-18">{{formatDate(dashboardMeta.created)}}&nbsp;</span>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Created by:</span>
-        <span class="gf-form-label width-18">{{dashboardMeta.createdBy}}&nbsp;</span>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Current version:</span>
-        <span class="gf-form-label width-18">{{dashboardMeta.version}}&nbsp;</span>
-      </div>
-    </div>
-  </div>
+	<div ng-if="editor.index == 3">
+		<gf-time-picker-settings dashboard="dashboard"></gf-time-picker-settings>
+	</div>
+
+	<div ng-if="editor.index == 4">
+		<h5 class="section-heading">Dashboard info</h5>
+		<div class="gf-form-group">
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Last updated at:</span>
+				<span class="gf-form-label width-18">{{formatDate(dashboardMeta.updated)}}</span>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Last updated by:</span>
+				<span class="gf-form-label width-18">{{dashboardMeta.updatedBy}}&nbsp;</span>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Created at:</span>
+				<span class="gf-form-label width-18">{{formatDate(dashboardMeta.created)}}&nbsp;</span>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Created by:</span>
+				<span class="gf-form-label width-18">{{dashboardMeta.createdBy}}&nbsp;</span>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Current version:</span>
+				<span class="gf-form-label width-18">{{dashboardMeta.version}}&nbsp;</span>
+			</div>
+		</div>
+	</div>
 </div>
 

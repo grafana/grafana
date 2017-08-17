@@ -127,6 +127,7 @@
 
   .share-modal-options {
     margin: 11px 20px 33px 20px;
+    display: inline-block;
   }
 
   .share-modal-big-icon {
@@ -162,11 +163,6 @@
   }
 }
 
-.modal-body {
-  .position-center {
-    display: inline-block;
-  }
-}
 
 // cloudwiz start
 .modal-body {

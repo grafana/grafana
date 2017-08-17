@@ -425,11 +425,16 @@ function (angular, _, dateMath) {
 
       if (target.filters && target.filters.length > 0) {
         query.filters = angular.copy(target.filters);
+        if(query.filters){
+          for(var filter_key in query.filters){
+            query.filters[filter_key].filter = templateSrv.replace(query.filters[filter_key].filter, options.scopedVars, 'pipe');
+          }
+        }
       } else {
         query.tags = angular.copy(target.tags);
         if(query.tags){
-          for(var key in query.tags){
-            query.tags[key] = templateSrv.replace(query.tags[key], options.scopedVars, 'pipe');
+          for(var tag_key in query.tags){
+            query.tags[tag_key] = templateSrv.replace(query.tags[tag_key], options.scopedVars, 'pipe');
           }
         }
       }

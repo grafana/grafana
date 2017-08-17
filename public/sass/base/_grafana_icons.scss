@@ -1,10 +1,10 @@
 @font-face {
     font-family: 'grafana-icons';
-    src:    url('../fonts/grafana-icons.eot?h6rv8b');
-    src:    url('../fonts/grafana-icons.eot?h6rv8b#iefix') format('embedded-opentype'),
-        url('../fonts/grafana-icons.ttf?h6rv8b') format('truetype'),
-        url('../fonts/grafana-icons.woff?h6rv8b') format('woff'),
-        url('../fonts/grafana-icons.svg?h6rv8b#grafana-icons') format('svg');
+    src:    url('../fonts/grafana-icons.eot?okx5td');
+    src:    url('../fonts/grafana-icons.eot?okx5td#iefix') format('embedded-opentype'),
+        url('../fonts/grafana-icons.ttf?okx5td') format('truetype'),
+        url('../fonts/grafana-icons.woff?okx5td') format('woff'),
+        url('../fonts/grafana-icons.svg?okx5td#grafana-icons') format('svg');
     font-weight: normal;
     font-style: normal;
 }
@@ -61,6 +61,9 @@
 .icon-gf-endpoint:before {
     content: "\e609";
 }
+.icon-gf-page:before {
+    content: "\e908";
+}
 .icon-gf-filter:before {
     content: "\e60a";
 }
@@ -112,9 +115,6 @@
 .icon-gf-save:before {
     content: "\e614";
 }
-.icon-gf-settings:before {
-    content: "\e615";
-}
 .icon-gf-share:before {
     content: "\e616";
 }
@@ -124,10 +124,13 @@
 .icon-gf-search:before {
     content: "\e618";
 }
-.icon-gf-tag-add:before {
+.icon-gf-settings:before {
+    content: "\e615";
+}
+.icon-gf-add:before {
     content: "\e619";
 }
-.icon-gf-tag-remove:before {
+.icon-gf-remove:before {
     content: "\e61a";
 }
 .icon-gf-video:before {
@@ -169,17 +172,16 @@
 .icon-gf-scale:before {
     content: "\e906";
 }
-.icon-gf-litmus:before {
+.icon-gf-pending:before {
+    content: "\e909";
+}
+.icon-gf-verified:before {
+    content: "\e90a";
+}
+.icon-gf-worldping:before {
     content: "\e627";
 }
 .icon-gf-grafana_wordmark:before {
     content: "\e903";
-}
-
-.icon-gf-app:before {
-  content: "\e902";
-}
-.icon-gf-datasource:before {
-  content: "\e607";
 }
 

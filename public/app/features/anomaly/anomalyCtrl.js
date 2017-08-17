@@ -1,6 +1,8 @@
 define([
     'angular',
-    'lodash'
+    'lodash',
+    'jquery.flot',
+    'jquery.flot.pie',
   ],
   function (angular, _) {
     'use strict';
@@ -30,6 +32,48 @@ define([
             $scope.summary.dangerMetricNum += cluster.counter.unhealth;
           });
           $scope.excludeMetricsData = healthSrv.floor(data.metricHostExcluded.elements);
+          var pieData = [
+            {label: "持续异常", data: $scope.summary.dangerMetricNum},
+            {label: "临时异常", data: $scope.summary.numAnomalyMetrics - $scope.summary.dangerMetricNum},
+            {label: "正常指标", data: $scope.summary.numMetrics - $scope.summary.numAnomalyMetrics},
+          ];
+          $.plot("#anomaly-pie", pieData, {
+            series: {
+              pie: {
+                innerRadius: 0.5,
+                show: true,
+                label: {
+                    show: true,
+                    radius: 1/4,
+                }
+              }
+            },
+            legend:{
+              show:false
+            },
+            colors: ['rgb(224,76,65)','rgb(255,197,58)','rgb(61,183,121)']
+          });
+
+          var piePointData = [
+            {label: "异常点数", data: $scope.summary.numAnomaliesInCache},
+            {label: "正常点数", data: $scope.summary.numDataPoints - $scope.summary.numAnomaliesInCache},
+          ];
+          $.plot("#anomaly-point-pie", piePointData, {
+            series: {
+              pie: {
+                innerRadius: 0.5,
+                show: true,
+                label: {
+                    show: true,
+                    radius: 1/4,
+                }
+              }
+            },
+            legend:{
+              show:false
+            },
+            colors: ['rgb(255,197,58)','rgb(61,183,121)']
+          });
           $controller('ClusterCtrl', {$scope: $scope}).init();
         });
         $scope.selected = 0;

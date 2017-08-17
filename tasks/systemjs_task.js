@@ -25,7 +25,8 @@ module.exports = function(grunt) {
       'bootstrap-tagsinput',
       'lodash',
       'moment',
-      'vendor/spectrum',
+      'spectrum',
+      'eventemitter3'
     ].join(' + ');
 
     // thirdparty expected to be 'vendor/**/*', but the 'vendor' dir is toooo messy

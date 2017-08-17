@@ -1,6 +1,7 @@
 define([
   'angular',
-  'lodash'
+  'lodash',
+  'app/plugins/datasource/opentsdb/queryCtrl',
 ],
 function (angular, _) {
   'use strict';
