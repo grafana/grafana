@@ -65,9 +65,8 @@
 
 .anomaly-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   & > div {
-    width: 33.33%;
     & > strong {
       font-size: 36px;
       line-height: 66px;
@@ -103,4 +102,8 @@
 .text-overflow {
   width: 300px;
   @include text-overflow();
+}
+
+.system-item-legend.anomaly-item-legend > dl.small-dl {
+  text-align: center;
 }
