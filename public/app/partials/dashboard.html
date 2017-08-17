@@ -3,8 +3,8 @@
 
 	<div class="scroll-canvas scroll-canvas--dashboard">
 		<div gemini-scrollbar>
+			<div dash-editor-view class="dash-edit-view"></div>
 			<div class="dashboard-container">
-				<div dash-editor-view class="dash-edit-view"></div>
 				<div class="clearfix"></div>
 
 				<dashboard-submenu ng-if="dashboard.meta.submenuEnabled" dashboard="dashboard"></dashboard-submenu>
@@ -13,14 +13,6 @@
 
 				<dash-row class="dash-row" ng-repeat="row in dashboard.rows" row="row" dashboard="dashboard">
 				</dash-row>
-
-				<div ng-show='dashboard.meta.canEdit && !dashboard.meta.fullscreen' class="add-row-panel-hint">
-					<div class="span12" style="text-align:left;">
-						<span style="margin-left: 12px;" ng-click="addRowDefault()" class="pointer btn btn-inverse btn-small">
-							<span><i class="fa fa-plus"></i> ADD ROW</span>
-						</span>
-					</div>
-				</div>
 			</div>
 		</div>
 	</div>

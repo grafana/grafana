@@ -1,13 +1,12 @@
 .dashboard-container {
   padding: $dashboard-padding;
   width: 100%;
+  background: $page-gradient;
 }
 
 .template-variable {
   color: $variable;
 }
-
-
 
 div.flot-text {
   color: $text-color !important;
@@ -172,8 +171,6 @@ div.flot-text {
 }
 
 .panel-full-edit {
-  margin-top: 20px;
-  margin-bottom: 20px;
 }
 
 .panel-highlight  {
@@ -259,4 +256,13 @@ div.flot-text {
     opacity: 1;
     transition: opacity 200ms ease-in-out;
   }
+}
+
+.dashboard-nav-shadow {
+  box-shadow: 0 0 20px black;
+  height: 10px;
+  position: absolute;
+  width: 100%;
+  z-index: 1;
+  top: -10px;
 }

@@ -6,18 +6,15 @@ import config from 'app/core/config';
 import {coreModule, appEvents} from 'app/core/core';
 
 export class AddPanelCtrl {
-  row: any;
   dashboard: any;
-  rowCtrl: any;
   allPanels: any;
   panelHits: any;
   activeIndex: any;
   panelSearch: any;
 
   /** @ngInject */
-  constructor(private $scope, private $timeout, private $rootScope) {
-    this.row = this.rowCtrl.row;
-    this.dashboard = this.rowCtrl.dashboard;
+  constructor(private $scope, private $timeout, private $rootScope, dashboardSrv) {
+    this.dashboard = dashboardSrv.getCurrent();
     this.activeIndex = 0;
 
     this.allPanels = _.chain(config.panels)
@@ -29,9 +26,13 @@ export class AddPanelCtrl {
     this.panelHits = this.allPanels;
   }
 
+  dismiss() {
+    this.$rootScope.appEvent('hide-dash-editor');
+  }
+
   keyDown(evt) {
     if (evt.keyCode === 27) {
-      this.rowCtrl.dropView = 0;
+      //this.rowCtrl.dropView = 0;
       return;
     }
 
@@ -78,24 +79,6 @@ export class AddPanelCtrl {
   }
 
   addPanel(panelPluginInfo) {
-    var defaultSpan = 6;
-    var span = 12 - this.row.span;
-
-    var panel = {
-      id: null,
-      title: config.new_panel_title,
-      span: span < defaultSpan && span > 0 ? span : defaultSpan,
-      type: panelPluginInfo.id,
-    };
-
-    this.rowCtrl.closeDropView();
-    this.dashboard.addPanel(panel, this.row);
-    this.$timeout(() => {
-      this.$rootScope.$broadcast('render');
-      //this.$rootScope.appEvent('panel-change-view', {
-      //  fullscreen: true, edit: true, panelId: panel.id
-      //});
-    });
   }
 }
 
@@ -106,10 +89,8 @@ export function addPanelDirective() {
     controller: AddPanelCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    scope: {
-      rowCtrl: "=",
-    },
+    scope: {},
   };
 }
 
-coreModule.directive('dashRowAddPanel', addPanelDirective);
+coreModule.directive('addPanel', addPanelDirective);
