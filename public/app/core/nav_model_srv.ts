@@ -125,12 +125,6 @@ export class NavModelSrv {
       });
     }
 
-    menu.push({
-      title: 'Shortcuts',
-      icon: 'fa fa-fw fa-keyboard-o',
-      clickHandler: () => dashNavCtrl.showHelpModal()
-    });
-
     if (this.contextSrv.isEditor && !dashboard.meta.isFolder) {
       menu.push({
         title: 'Save As...',

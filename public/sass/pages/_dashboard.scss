@@ -3,12 +3,6 @@
   width: 100%;
 }
 
-.page-dashboard {
-  .main-view {
-    background-image: none;
-  }
-}
-
 .template-variable {
   color: $variable;
 }
@@ -40,6 +34,7 @@ div.flot-text {
 
 .panel-container {
   background-color: $panel-bg;
+  border: $panel-border;
   position: relative;
 
   &.panel-transparent {
