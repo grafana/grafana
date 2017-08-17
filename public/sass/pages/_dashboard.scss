@@ -184,7 +184,9 @@ div.flot-text {
   z-index: 10;
   i {
     position: relative;
-    top: -2px;
+    top: 2px;
+    color: red;
+    font-size: 14px;
   }
 }
 

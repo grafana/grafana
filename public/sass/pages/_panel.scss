@@ -66,6 +66,9 @@
  width: 100%;
  text-align: right;
  padding-left: 20px;
+ &.panelError {
+  padding-left: 36px;
+ }
 }
 .panel-right-menu-item {
  margin-right: 5px;
