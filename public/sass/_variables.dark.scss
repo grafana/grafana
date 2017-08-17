@@ -48,7 +48,7 @@ $critical:              #ed2e18;
 
 // Scaffolding
 // -------------------------
-$body-bg:  			   	    rgb(20,20,20);
+$body-bg:  			   	    rgb(24,20,20);
 $page-bg:  			   	    $dark-2;
 $body-color:   		 	    $gray-4;
 $text-color:   	   		  $gray-4;
@@ -162,11 +162,11 @@ $btn-drag-image: '../img/grab_dark.svg';
 
 // Forms
 // -------------------------
-$input-bg:                       $dark-4;
+$input-bg:                       $black;
 $input-bg-disabled:              $dark-3;
 
 $input-color:                    $gray-4;
-$input-border-color:             $dark-4;
+$input-border-color:             $dark-3;
 $input-box-shadow:               inset 1px 0px 0.3rem 0px rgba(150, 150, 150, 0.10);
 $input-border-focus:             $input-border-color !default;
 $input-box-shadow-focus:         rgba(102,175,233,.6) !default;
@@ -230,7 +230,7 @@ $navbarButtonBackgroundHighlight: $body-bg;
 
 // Sidemenu
 // -------------------------
-$side-menu-bg:            $dark-3;
+$side-menu-bg:            $black;
 $side-menu-item-hover-bg: $dark-2;
 
 // Menu dropdowns
@@ -239,6 +239,11 @@ $menu-dropdown-bg:            $body-bg;
 $menu-dropdown-hover-bg:      $dark-2;
 $menu-dropdown-border-color:  $dark-3;
 $menu-dropdown-shadow: 5px 5px 20px -5px $black;
+
+// Breadcrumb
+// -------------------------
+$page-nav-bg: $black;
+$page-nav-shadow: 5px 5px 20px -5px $black;
 
 
 // Pagination

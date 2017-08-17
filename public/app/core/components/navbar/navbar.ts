@@ -8,13 +8,9 @@ import {NavModel, NavModelItem}  from '../../nav_model_srv';
 
 export class NavbarCtrl {
   model: NavModel;
-  section: NavModelItem;
-  hasMenu: boolean;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private contextSrv) {
-    this.section = this.model.section;
-    this.hasMenu = this.model.menu.length > 0;
   }
 
   showSearch() {
@@ -35,15 +31,31 @@ export function navbarDirective() {
     templateUrl: 'public/app/core/components/navbar/navbar.html',
     controller: NavbarCtrl,
     bindToController: true,
-    transclude: true,
     controllerAs: 'ctrl',
     scope: {
       model: "=",
     },
     link: function(scope, elem) {
-      elem.addClass('navbar');
     }
   };
 }
 
+export function pageH1() {
+  return {
+    restrict: 'E',
+    template: `
+    <h1>
+    <i class="{{::model.node.icon}}" ng-if="::model.node.icon"></i>
+    <img ng-src="{{::model.node.img}}" ng-if="::model.node.img"></i>
+    {{::model.node.text}}
+    </h1>
+    `,
+    scope: {
+      model: "=",
+    }
+  };
+}
+
+
+coreModule.directive('pageH1', pageH1);
 coreModule.directive('navbar', navbarDirective);

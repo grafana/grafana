@@ -48,6 +48,10 @@ a.text-success:hover,
 a.text-success:focus { color: darken($successText, 10%); }
 a { cursor: pointer; }
 
+a:focus {
+  outline:0 none !important;
+}
+
 a[disabled] {
   cursor: default;
   pointer-events: none !important;

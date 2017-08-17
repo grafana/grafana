@@ -2,7 +2,7 @@ System.config({
   defaultJSExtenions: true,
   baseURL: 'public',
   paths: {
-    'virtual-scroll': 'vendor/npm/virtual-scroll/src/index.js',
+    'gemini-scrollbar': 'vendor/npm/gemini-scrollbar/index.js',
     'mousetrap': 'vendor/npm/mousetrap/mousetrap.js',
     'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
     'tether': 'vendor/npm/tether/dist/js/tether.js',
@@ -70,10 +70,6 @@ System.config({
     "vendor/npm/gridstack/dist/gridstack.jQueryUI.js": {
       format: 'global',
       deps: ['gridstack'],
-    },
-    'vendor/npm/virtual-scroll/src/indx.js': {
-      format: 'cjs',
-      exports: 'VirtualScroll',
     },
     'vendor/angular/angular.js': {
       format: 'global',

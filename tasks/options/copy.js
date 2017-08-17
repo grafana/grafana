@@ -32,7 +32,7 @@ module.exports = function(config) {
         'tether-drop/**/*',
         'remarkable/dist/*',
         'remarkable/dist/*',
-        'virtual-scroll/**/*',
+        'gemini-scrollbar/*.js',
         'mousetrap/**/*',
         'gridstack/dist/*',
         'jquery-ui-dist/*',

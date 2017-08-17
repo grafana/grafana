@@ -28,7 +28,7 @@ export class PluginEditCtrl {
     private $http,
     private navModelSrv,
   ) {
-    this.navModel = navModelSrv.getPluginsNav();
+    this.navModel = navModelSrv.getNav('cfg', 'plugins');
     this.model = {};
     this.pluginId = $routeParams.pluginId;
     this.tabIndex = 0;
@@ -42,6 +42,7 @@ export class PluginEditCtrl {
     return this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(result => {
       this.model = result;
       this.pluginIcon = this.getPluginIcon(this.model.type);
+      this.navModel.breadcrumbs.push({text: this.model.name});
 
       this.model.dependencies.plugins.forEach(plug => {
         plug.icon = this.getPluginIcon(plug.type);

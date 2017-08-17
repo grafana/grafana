@@ -3,12 +3,6 @@
   width: 100%;
 }
 
-.page-dashboard {
-  .main-view {
-    background-image: none;
-  }
-}
-
 .template-variable {
   color: $variable;
 }
@@ -29,6 +23,7 @@ div.flot-text {
 
 .panel-container {
   background-color: $panel-bg;
+  border: $panel-border;
   position: relative;
 
   &.panel-transparent {
@@ -59,6 +54,7 @@ div.flot-text {
 
 .panel-title-text {
   cursor: pointer;
+  font-weight: $font-weight-semi-bold;
 
   &:hover {
     color: $link-hover-color;

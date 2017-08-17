@@ -66,6 +66,7 @@
     "eventemitter3": "^2.0.2",
     "gaze": "^1.1.2",
     "gridstack": "https://github.com/grafana/gridstack.js#grafana",
+    "gemini-scrollbar": "https://github.com/grafana/gemini-scrollbar#grafana",
     "grunt-jscs": "3.0.1",
     "grunt-sass-lint": "^0.2.2",
     "grunt-sync": "^0.6.2",

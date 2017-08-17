@@ -1,19 +1,35 @@
 .grafana-app {
-  display: block;
+  display: flex;
+  align-items: stretch;
+  position: absolute;
+  width: 100%;
   height: 100%;
+  top: 0;
+  left: 0;
 }
 
 .main-view {
-  // height: 100%; REMOVED FOR FOOTER TRW
+  position: relative;
+  flex-grow: 1;
+
+  $gradient-opacity: 0.03;
+  background: linear-gradient(135deg, rgba(26, 42, 108, $gradient-opacity), rgba(178, 31, 31, $gradient-opacity), rgba(253, 187, 45, $gradient-opacity)); //Matt experiement
 }
 
 .page-container {
-  background-color: $page-bg;
-  padding: ($spacer * 2) ($spacer * 4);
-  max-width: 1060px;
-  min-height: calc(100% - 54px);
-  padding-bottom: $spacer * 5;
-  background-image: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%)
+  @extend .container;
+  padding: $spacer $spacer $spacer $spacer*3;
+}
+
+.scroll-canvas {
+  position: absolute;
+  width: 100%;
+  overflow: auto;
+  height: 100%;
+
+  &--dashboard {
+    height: calc(100% - 54px);
+  }
 }
 
 .page-body {
@@ -36,18 +52,28 @@
 }
 
 .page-header {
-  padding: $spacer 0 0 0;
+  padding: 2rem 0 0 0;
   margin-bottom: 2rem;
   @include brand-bottom-border();
   @include clearfix();
 
   h1 {
+    font-size: $font-size-h2;
     flex-grow: 1;
     display: inline-block;
-    margin-bottom: $spacer*1.5;
+    margin-bottom: 1rem;
+
+    img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+      position: relative;
+      top: -3px;
+    }
   }
 
-  button, a {
+  a, button {
     float: right;
     margin-left: $spacer;
   }
@@ -88,3 +114,97 @@
 .page-sidebar-section {
   margin-bottom: $spacer*2;
 }
+
+$breadcrumb-hover-hl: #111;
+
+$page-breadcrumb__angle-1: 39px;
+$page-breadcrumb__angle-ul: 31px;
+$page-breadcrumb__angle-a: 30px;
+
+
+.page-breadcrumb {
+  display: flex;
+  padding: 0 $spacer;
+  line-height: 0.5;
+}
+
+.page-breadcrumb__item {
+  background: $page-nav-bg;
+  box-shadow: $page-nav-shadow;
+
+
+  > a {
+    color: $text-color-weak;
+    font-size: $font-size-sm;
+    display: block;
+    padding: 0.6rem 1rem 0.6rem 3rem;;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: -53px;
+      left: 100%;
+      content: '';
+      height: 0;
+      width: 0;
+      border: $page-breadcrumb__angle-1 solid transparent;
+      border-right-width: 0;
+      border-left-width: $page-breadcrumb__angle-a;
+      z-index: 2;
+      border-left-color: $page-nav-bg;
+    }
+  }
+
+  &:first-child {
+    a {
+      padding-left: 1rem;
+    }
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -53px;
+    left: 100%;
+    content: '';
+    height: 0;
+    width: 0;
+    border: $page-breadcrumb__angle-1 solid transparent;
+    border-right-width: 0;
+    border-left-width: $page-breadcrumb__angle-ul;
+    z-index: 1;
+    transform: translateX(4px);
+    border-left-color: #282020;
+    margin: 0;
+  }
+
+  &:hover {
+    background: $breadcrumb-hover-hl;
+
+    .page-breadcrumb__caret {
+      opacity: 1;
+    }
+
+    > a {
+      color: $text-color;
+
+      &::after {
+        border-left-color: $breadcrumb-hover-hl;
+        color: $text-color;
+      }
+    }
+  }
+}
+
+.page-breadcrumb__caret {
+  opacity: 0;
+  position: absolute;
+  display: block;
+  width: 16px;
+  height: 16px;
+  right: -9px;
+  top: 5px;
+  z-index: 3;
+}
+

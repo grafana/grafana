@@ -65,36 +65,24 @@ export class GrafanaCtrl {
 }
 
 /** @ngInject */
-export function grafanaAppDirective(playlistSrv, contextSrv) {
+export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScope) {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
     link: (scope, elem) => {
-      var ignoreSideMenuHide;
+      var sidemenuOpen;
       var body = $('body');
 
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = function() {};
 
-      // handle sidemenu open state
-      scope.$watch('contextSrv.sidemenu', newVal => {
-        if (newVal !== undefined) {
-          body.toggleClass('sidemenu-open', scope.contextSrv.sidemenu);
-          if (!newVal) {
-            contextSrv.setPinnedState(false);
-          }
-        }
-        if (contextSrv.sidemenu) {
-          ignoreSideMenuHide = true;
-          setTimeout(() => {
-            ignoreSideMenuHide = false;
-          }, 300);
-        }
-      });
+      sidemenuOpen = scope.contextSrv.sidemenu;
+      body.toggleClass('sidemenu-open', sidemenuOpen);
 
-      scope.$watch('contextSrv.pinned', newVal => {
-        if (newVal !== undefined) {
-          body.toggleClass('sidemenu-pinned', newVal);
+      scope.$watch('contextSrv.sidemenu', newVal => {
+        if (sidemenuOpen !== scope.contextSrv.sidemenu) {
+          sidemenuOpen = scope.contextSrv.sidemenu;
+          body.toggleClass('sidemenu-open', scope.contextSrv.sidemenu);
         }
       });
 
@@ -130,6 +118,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
       var lastActivity = new Date().getTime();
       var activeUser = true;
       var inActiveTimeLimit = 60 * 1000;
+      var sidemenuHidden = false;
 
       function checkForInActiveUser() {
         if (!activeUser) {
@@ -143,6 +132,14 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
         if ((new Date().getTime() - lastActivity) > inActiveTimeLimit) {
           activeUser = false;
           body.addClass('user-activity-low');
+          // hide sidemenu
+          if (sidemenuOpen) {
+            sidemenuHidden = true;
+            body.removeClass('sidemenu-open');
+            $timeout(function() {
+              $rootScope.$broadcast("render");
+            }, 100);
+          }
         }
       }
 
@@ -151,6 +148,15 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
         if (!activeUser) {
           activeUser = true;
           body.removeClass('user-activity-low');
+
+          // restore sidemenu
+          if (sidemenuHidden) {
+            sidemenuHidden = false;
+            body.addClass('sidemenu-open');
+            $timeout(function() {
+              $rootScope.$broadcast("render");
+            }, 100);
+          }
         }
       }
 
@@ -195,15 +201,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
           if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
             scope.$apply(function() {
               scope.appEvent('hide-dash-search');
-            });
-          }
-        }
-
-        // hide sidemenu
-        if (!ignoreSideMenuHide && !contextSrv.pinned && body.find('.sidemenu').length > 0) {
-          if (target.parents('.sidemenu').length === 0) {
-            scope.$apply(function() {
-              scope.contextSrv.toggleSideMenu();
             });
           }
         }

@@ -12,7 +12,7 @@ export default class AdminListUsersCtrl {
 
   /** @ngInject */
   constructor(private $scope, private backendSrv, private navModelSrv) {
-    this.navModel = navModelSrv.getAdminNav();
+    this.navModel = navModelSrv.getNav('cfg', 'admin', 'global-users');
     this.query = '';
     this.getUsers();
   }

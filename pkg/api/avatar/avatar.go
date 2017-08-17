@@ -65,7 +65,7 @@ func New(hash string) *Avatar {
 	return &Avatar{
 		hash: hash,
 		reqParams: url.Values{
-			"d":    {"404"},
+			"d":    {"retro"},
 			"size": {"200"},
 			"r":    {"pg"}}.Encode(),
 	}
@@ -146,7 +146,7 @@ func CacheServer() http.Handler {
 }
 
 func newNotFound() *Avatar {
-	avatar := &Avatar{}
+	avatar := &Avatar{notFound: true}
 
 	// load transparent png into buffer
 	path := filepath.Join(setting.StaticRootPath, "img", "transparent.png")

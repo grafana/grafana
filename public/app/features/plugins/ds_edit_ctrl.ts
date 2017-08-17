@@ -43,8 +43,7 @@ export class DataSourceEditCtrl {
     private navModelSrv,
   ) {
 
-    this.navModel = navModelSrv.getDatasourceNav(0);
-    this.isNew = true;
+    this.navModel = navModelSrv.getNav('cfg', 'datasources');
     this.datasources = [];
     this.tabIndex = 0;
 
@@ -58,7 +57,12 @@ export class DataSourceEditCtrl {
   }
 
   initNewDatasourceModel() {
+    this.isNew = true;
     this.current = angular.copy(defaults);
+
+    // add to nav & breadcrumbs
+    this.navModel.node = {text: 'New data source', icon: 'icon-gf icon-gf-fw icon-gf-datasources'};
+    this.navModel.breadcrumbs.push(this.navModel.node);
 
     // We are coming from getting started
     if (this.$location.search().gettingstarted) {
@@ -85,10 +89,14 @@ export class DataSourceEditCtrl {
     this.backendSrv.get('/api/datasources/' + id).then(ds => {
       this.isNew = false;
       this.current = ds;
+      this.navModel.node = {text: ds.name, icon: 'icon-gf icon-gf-fw icon-gf-datasources'};
+      this.navModel.breadcrumbs.push(this.navModel.node);
+
       if (datasourceCreated) {
         datasourceCreated = false;
         this.testDatasource();
       }
+
       return this.typeChanged();
     });
   }

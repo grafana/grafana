@@ -1,8 +1,8 @@
 .search-backdrop {
   position: fixed;
   right: 0;
-  bottom: 0;
   left: 0;
+  bottom: 0;
   top: $navbarHeight;
   z-index: $zindex-modal-backdrop;
   background-color: $black;
@@ -10,7 +10,7 @@
 }
 
 .search-container {
-  left: 0;
+  left: $side-menu-width;
   top: 0;
   right: 0;
   bottom: 0;
@@ -65,7 +65,8 @@
   max-width: 1100px;
   visibility: none;
   opacity: 0;
-  height: 100%;
+  background: $panel-bg;
+  height: 65%;
 
   &--fade-in {
     visibility: visible;
@@ -75,12 +76,10 @@
 }
 
 .search-results-container {
-  height: 90%;
-  overflow: auto;
+  height: 100%;
   display: block;
   line-height: 28px;
   padding: $spacer;
-  background: $panel-bg;
   flex-grow: 10;
 
   .selected {

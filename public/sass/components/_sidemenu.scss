@@ -1,17 +1,11 @@
-.sidemenu-canvas {
-  position: relative;
-}
-
-.sidemenu-wrapper {
-  position: absolute;
-  top: 52px;
-  left: 0;
-  //border-top: 1px solid $tight-form-border;
+.sidemenu {
+  position: fixed;
+  display: flex;
+  flex-flow: column;
+  flex-direction: column;
   width: $side-menu-width;
-  background-color: $side-menu-bg;
-  z-index: 1000;
-  opacity: 0;
-  visibility: hidden;
+  background: $navbarBackground;
+  z-index: 1;
 
   a:focus {
     text-decoration: none;
@@ -19,98 +13,58 @@
 }
 
 .sidemenu-open {
-  .sidemenu-wrapper {
-    visibility: visible;
-    //transform: translate3d(0, 0, 0);
-    opacity: 1;
-    transition: opacity 0.3s;
+  .sidemenu {
+    background: $side-menu-bg;
+    position: initial;
+    height: auto;
+  }
+  .sidemenu__top,
+  .sidemenu__bottom {
+    display: block;
   }
 }
 
-.sidemenu-pinned {
-  .sidemenu-wrapper {
-    min-height: calc(100% - 54px);
-  }
-  .dashboard-container {
-    padding-left: $side-menu-width + 8px;
-  }
-  .page-container {
-    margin-left: $side-menu-width;
-  }
-  .search-container {
-    left: $side-menu-width;
-  }
+.sidemenu__top {
+  padding-top: 3rem;
+  flex-grow: 1;
+  display: none;
 }
 
-.sidemenu {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.sidemenu__bottom {
+  padding-bottom: $spacer;
+  display: none;
+}
 
-  > li {
-    position: relative;
-    @include left-brand-border();
+.sidemenu-item {
+  position: relative;
+  @include left-brand-border();
 
-    &.active,
-    &:hover {
-      background-color: $side-menu-item-hover-bg;
-      @include left-brand-border-gradient();
+  &.active,
+  &:hover {
+    background-color: $side-menu-item-hover-bg;
+    @include left-brand-border-gradient();
 
-      .dropdown-menu {
-        margin: 0;
-        display: block;
-        opacity: 0;
-        top: 0px;
-        // important to overlap it otherwise it can be hidden
-        // again by the mouse getting outside the hover space
-        left: $side-menu-width - 2px;
-        @include animation('dropdown-anim 0ms ease-in-out 0ms forwards');
-        z-index: -9999;
-      }
+    .dropdown-menu {
+      margin: 0;
+      display: block;
+      opacity: 0;
+      top: 0px;
+      // important to overlap it otherwise it can be hidden
+      // again by the mouse getting outside the hover space
+      left: $side-menu-width - 2px;
+      @include animation('dropdown-anim 150ms ease-in-out 100ms forwards');
+      z-index: 1;
     }
   }
 }
 
-@include keyframes(dropdown-anim) {
-  0% {
-    opacity: 0;
-    transform: translate3d(-5%,0,0);
-  }
-  100% {
-    opacity: 1;
-    transform: translate3d(0,0,0);
-  }
+.dropup.sidemenu-item:hover .dropdown-menu {
+  top: auto !important;
 }
 
-.icon-circle {
-  width: 40px;
-  height: 40px;
-  display: inline-block;
-  i {
-    color: $link-color;
-    opacity: .7;
-    position: relative;
-    left: 7px;
-    font-size: 150%;
-  }
-
-  .fa {
-    top: 2px;
-  }
-
-  .icon-gf {
-    top: 5px;
-  }
-
-  img {
-    left: 7px;
-    position: relative;
-  }
-}
-
-.sidemenu-item {
+.sidemenu-link {
   color: $link-color;
-  line-height: 47px;
+  line-height: 42px;
   padding: 0px 10px 0px 10px;
   display: block;
   position: relative;
@@ -125,93 +79,94 @@
   }
 }
 
+@include keyframes(dropdown-anim) {
+  0% {
+    opacity: 0;
+    //transform: translate3d(-5%,0,0);
+  }
+  100% {
+    opacity: 1;
+    //transform: translate3d(0,0,0);
+  }
+}
+
+.icon-circle {
+  width: 35px;
+  height: 35px;
+  display: inline-block;
+  i {
+    color: $link-color;
+    opacity: .7;
+    position: relative;
+    left: 3px;
+    font-size: 130%;
+  }
+
+  .fa {
+    top: 2px;
+  }
+
+  .icon-gf {
+    top: 5px;
+  }
+
+  img {
+    left: 3px;
+    position: relative;
+  }
+}
+
 .side-menu-header {
   padding: 10px 10px 10px 20px;
   white-space: nowrap;
   background-color: $side-menu-item-hover-bg;
-  font-size: 18px;
+  font-size: 17px;
 }
 
-.sidemenu-org-section .dropdown-menu-title {
-  margin: 0 10px 0 6px;
-  padding: 7px 0 7px;
-  overflow: hidden;
-  color: $dropdownTitle;
+li.sidemenu-org-switcher {
+  border-bottom: 1px solid $dropdownDividerBottom;
 }
 
-.sidemenu-org-section .dropdown-menu-title > span {
-  display: inline-block;
+.sidemenu-org-switcher__org-name {
+  font-size: $font-size-base;
+}
+
+.sidemenu-org-switcher__org-current {
+  font-size: $font-size-xs;
+  color: $text-color-weak;
   position: relative;
+  top: -2px;
+}
 
-  &::after {
-    display: block;
-    position: absolute;
-    top: 50%;
-    right: 0;
-    left: 100%;
-    width: 200px;
-    height: 1px;
-    margin-left: 5px;
-    background: $dropdownDivider;
-    content: '';
+.sidemenu-org-switcher__switch {
+  font-size: $font-size-sm;
+  padding-left: 1.5rem;
+  display: flex;
+  align-items: center;
+  > i.fa.fa-random {
+    margin-right: 4px;
+    top: 1px;
   }
 }
 
-.sidemenu-org {
-  padding: 17px 10px 15px 14px;
-  box-sizing: border-box;
-  cursor: pointer;
-  display: table;
-  position: relative;
-  width: 100%;
-}
+.sidemenu__logo {
+  display: block;
+  padding: 0.4rem 1.0rem 0.4rem 0.65rem;
+  min-height: $navbarHeight;
 
-.sidemenu .fa-caret-right {
-  position: absolute;
-  top: 38%;
-  right: 6px;
-  font-size: 14px;
-  color: $text-color-faint;
-}
+  &:hover {
+    background: $navbarButtonBackgroundHighlight;
 
-.sidemenu-org-avatar,
-.sidemenu-org-details {
-  display: table-cell;
-  vertical-align: top;
-}
-
-.sidemenu-org-avatar {
-  >img {
-    position: absolute;
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
-    left: 14px;
-    top: 12px;
-    z-index: 10;
+    .sidemenu__logo-expand {
+      display: block;
+    }
   }
-}
 
-.sidemenu-org-avatar--missing {
-  color: $gray-4;
-  text-shadow: 0 1px 0 $dark-1;
-  line-height: 28px;
-  font-size: $font-size-lg;
-}
-
-.sidemenu-org-details {
-  padding-left: 10px;
-  color: $link-color;
-  display: none;
-}
-
-.sidemenu-org-name {
-  display: block;
-  font-size: 13px;
-  color: $link-color-disabled;
-}
-
-.sidemenu-org-user {
-  display: block;
+  img {
+    width: 30px;
+    position: relative;
+    top: 3px;
+    left: 4px;
+  }
 }
 

@@ -10,7 +10,7 @@ class AdminSettingsCtrl {
 
   /** @ngInject **/
   constructor($scope, backendSrv, navModelSrv) {
-    this.navModel = navModelSrv.getAdminNav();
+    this.navModel = navModelSrv.getNav('cfg', 'admin', 'server-settings');
 
     backendSrv.get('/api/admin/settings').then(function(settings) {
       $scope.settings = settings;
@@ -24,7 +24,7 @@ class AdminHomeCtrl {
 
   /** @ngInject **/
   constructor(navModelSrv) {
-    this.navModel = navModelSrv.getAdminNav();
+    this.navModel = navModelSrv.getNav('cfg', 'admin');
   }
 }
 
@@ -34,7 +34,7 @@ export class AdminStatsCtrl {
 
   /** @ngInject */
   constructor(backendSrv: any, navModelSrv) {
-    this.navModel = navModelSrv.getAdminNav();
+    this.navModel = navModelSrv.getNav('cfg', 'admin', 'server-stats');
 
     backendSrv.get('/api/admin/stats').then(stats => {
       this.stats = stats;
@@ -42,6 +42,15 @@ export class AdminStatsCtrl {
   }
 }
 
+export class ConfigurationHomeCtrl { navModel: any;
+
+  /** @ngInject */
+  constructor(private $scope, private backendSrv, private navModelSrv) {
+    this.navModel = navModelSrv.getNav('cfg');
+  }
+}
+
+coreModule.controller('ConfigurationHomeCtrl', ConfigurationHomeCtrl);
 coreModule.controller('AdminSettingsCtrl', AdminSettingsCtrl);
 coreModule.controller('AdminHomeCtrl', AdminHomeCtrl);
 coreModule.controller('AdminStatsCtrl', AdminStatsCtrl);

@@ -120,6 +120,14 @@
       }
     }
   }
+
+  &--sidemenu {
+    li.sidemenu-org-switcher {
+      > a {
+        padding: 8px 10px 8px 15px;
+      }
+    }
+  }
 }
 
 .dropdown-item-text {
@@ -213,7 +221,7 @@
   // Different positioning for bottom up menu
   .dropdown-menu {
     top: auto;
-    bottom: 100%;
+    bottom: 0;
     margin-bottom: 1px;
   }
 }

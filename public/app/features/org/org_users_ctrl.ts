@@ -23,7 +23,8 @@ export class OrgUsersCtrl {
       loginOrEmail: '',
       role: 'Viewer',
     };
-    this.navModel = navModelSrv.getOrgNav(0);
+
+    this.navModel = navModelSrv.getNav('cfg', 'users');
 
     this.get();
     this.editor = { index: 0 };
@@ -46,7 +47,7 @@ export class OrgUsersCtrl {
     } else if (config.disableLoginForm) {
       return "Add Users";
     } else {
-      return "Add or Invite";
+      return "Add";
     }
   }
 

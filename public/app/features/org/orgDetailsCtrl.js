@@ -10,7 +10,7 @@ function (angular) {
 
     $scope.init = function() {
       $scope.getOrgInfo();
-      $scope.navModel = navModelSrv.getOrgNav(0);
+      $scope.navModel = navModelSrv.getNav('cfg', 'org');
     };
 
     $scope.getOrgInfo = function() {

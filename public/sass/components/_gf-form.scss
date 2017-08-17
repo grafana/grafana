@@ -1,4 +1,4 @@
-$gf-form-margin: 0.25rem;
+$gf-form-margin: 0.1rem;
 
 .gf-form {
   margin-bottom: $gf-form-margin;
@@ -51,10 +51,10 @@ $gf-form-margin: 0.25rem;
 
 .gf-form-label {
   padding: $input-padding-y $input-padding-x;
-  margin-right: $gf-form-margin;
   flex-shrink: 0;
+  font-weight: $font-weight-semi-bold;
 
-  background-color: $input-label-bg;
+  background-color: #292a2d; //$input-label-bg;
   display: block;
   font-size: $font-size-sm;
   margin-right: $gf-form-margin;
@@ -111,7 +111,9 @@ $gf-form-margin: 0.25rem;
   background-color: $input-bg;
   background-image: none;
   background-clip: padding-box;
-  border: $input-btn-border-width solid $input-border-color;
+  border: 1px solid $input-border-color;
+  border-bottom: none;
+  border-left: none;
   @include border-radius($input-border-radius-sm);
   @include box-shadow($input-box-shadow);
   transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
@@ -192,7 +194,7 @@ $gf-form-margin: 0.25rem;
   select.gf-form-input {
     text-indent: .01px;
     text-overflow: '';
-    padding-right: $input-padding-x*2;
+    padding-right: $input-padding-x*4;
     -webkit-appearance: none;
     -moz-appearance: menulist-text; // was set to "window" and caused odd display on windos and linux.
     appearance: none;

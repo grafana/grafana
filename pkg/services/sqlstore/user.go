@@ -350,6 +350,7 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 		u.name           as name,
 		u.help_flags1    as help_flags1,
 		u.last_seen_at   as last_seen_at,
+		(SELECT COUNT(*) FROM org_user where org_user.user_id = u.id) as org_count,
 		org.name         as org_name,
 		org_user.role    as org_role,
 		org.id           as org_id

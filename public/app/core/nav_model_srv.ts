@@ -1,6 +1,8 @@
 ///<reference path="../headers/common.d.ts" />
 
 import coreModule from 'app/core/core_module';
+import config from 'app/core/config';
+import _ from 'lodash';
 
 export interface NavModelItem {
   title: string;
@@ -15,117 +17,41 @@ export interface NavModel {
 }
 
 export class NavModelSrv {
+  navItems: any;
 
 
   /** @ngInject */
   constructor(private contextSrv) {
+    this.navItems = config.bootData.navTree;
   }
 
-  getAlertingNav(subPage) {
-    return {
-      section: {
-        title: 'Alerting',
-        url: 'plugins',
-        icon: 'icon-gf icon-gf-alert'
-      },
-      menu: [
-        {title: 'Alert List', active: subPage === 0, url: 'alerting/list', icon: 'fa fa-list-ul'},
-        {title: 'Notification channels', active: subPage === 1, url: 'alerting/notifications', icon: 'fa fa-bell-o'},
-      ]
-    };
+  getCfgNode() {
+    return _.find(this.navItems, {id: 'cfg'});
   }
 
-  getDatasourceNav(subPage) {
-    return {
-      section: {
-        title: 'Data Sources',
-        url: 'datasources',
-        icon: 'icon-gf icon-gf-datasources'
-      },
-      menu: [
-        {title: 'List view', active: subPage === 0, url: 'datasources', icon: 'fa fa-list-ul'},
-        {title: 'Add data source', active: subPage === 1, url: 'datasources/new', icon: 'fa fa-plus'},
-      ]
-    };
-  }
+  getNav(...args) {
+    var children = this.navItems;
+    var nav = {breadcrumbs: [], node: null};
 
-  getPlaylistsNav(subPage) {
-    return {
-      section: {
-        title: 'Playlists',
-        url: 'playlists',
-        icon: 'fa fa-fw fa-film'
-      },
-      menu: [
-        {title: 'List view', active: subPage === 0, url: 'playlists', icon: 'fa fa-list-ul'},
-        {title: 'Add Playlist', active: subPage === 1, url: 'playlists/create', icon: 'fa fa-plus'},
-      ]
-    };
-  }
+    for (let id of args) {
+      let node = _.find(children, {id: id});
+      nav.breadcrumbs.push(node);
+      nav.node = node;
+      children = node.children;
+    }
 
-  getProfileNav() {
-    return {
-      section: {
-        title: 'User Profile',
-        url: 'profile',
-        icon: 'fa fa-fw fa-user'
-      },
-      menu: []
-    };
+    return nav;
   }
 
   getNotFoundNav() {
-    return {
-      section: {
-        title: 'Page',
-        url: '',
-        icon: 'fa fa-fw fa-warning'
-      },
-      menu: []
+    var node = {
+      text: "Page not found ",
+      icon: "fa fa-fw fa-warning",
     };
-  }
 
-  getOrgNav(subPage) {
     return {
-      section: {
-        title: 'Organization',
-        url: 'org',
-        icon: 'icon-gf icon-gf-users'
-      },
-      menu: [
-        {title: 'Preferences', active: subPage === 0, url: 'org', icon: 'fa fa-fw fa-cog'},
-        {title: 'Org Users', active: subPage === 1, url: 'org/users', icon: 'fa fa-fw fa-users'},
-        {title: 'API Keys', active: subPage === 2, url: 'org/apikeys', icon: 'fa fa-fw fa-key'},
-        {title: 'Org User Groups', active: subPage === 3, url: 'org/user-groups', icon: 'fa fa-fw fa-users'},
-      ]
-    };
-  }
-
-  getAdminNav(subPage) {
-    return {
-      section: {
-        title: 'Admin',
-        url: 'admin',
-        icon: 'fa fa-fw fa-cogs'
-      },
-      menu: [
-        {title: 'Users', active: subPage === 0, url: 'admin/users', icon: 'fa fa-fw fa-user'},
-        {title: 'Orgs', active: subPage === 1, url: 'admin/orgs', icon: 'fa fa-fw fa-users'},
-        {title: 'Server Settings', active: subPage === 2, url: 'admin/settings', icon: 'fa fa-fw fa-cogs'},
-        {title: 'Server Stats', active: subPage === 2, url: 'admin/stats', icon: 'fa fa-fw fa-line-chart'},
-        {title: 'Style Guide', active: subPage === 2, url: 'styleguide', icon: 'fa fa-fw fa-key'},
-      ]
-    };
-  }
-
-  getPluginsNav() {
-    return {
-      section: {
-        title: 'Plugins',
-        url: 'plugins',
-        icon: 'icon-gf icon-gf-apps'
-      },
-      menu: []
+      breadcrumbs: [node],
+      node: node
     };
   }
 
@@ -198,12 +124,6 @@ export class NavModelSrv {
         clickHandler: () => dashNavCtrl.makeEditable()
       });
     }
-
-    menu.push({
-      title: 'Shortcuts',
-      icon: 'fa fa-fw fa-keyboard-o',
-      clickHandler: () => dashNavCtrl.showHelpModal()
-    });
 
     if (this.contextSrv.isEditor && !dashboard.meta.isFolder) {
       menu.push({

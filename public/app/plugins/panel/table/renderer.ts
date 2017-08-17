@@ -157,9 +157,9 @@ export class TableRenderer {
     // because of the fixed table headers css only solution
     // there is an issue if header cell is wider the cell
     // this hack adds header content to cell (not visible)
-    var widthHack = '';
+    var columnHtml = '';
     if (addWidthHack) {
-      widthHack = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].title + '</div>';
+      columnHtml = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].title + '</div>';
     }
 
     if (value === undefined) {
@@ -173,8 +173,6 @@ export class TableRenderer {
       cellClasses.push("table-panel-cell-pre");
     }
 
-    var columnHtml = widthHack + value;
-
     if (column.style && column.style.link) {
       // Render cell as link
       var scopedVars = this.renderRowVariables(rowIndex);
@@ -185,11 +183,13 @@ export class TableRenderer {
       var cellTarget = column.style.linkTargetBlank ? '_blank' : '';
 
       cellClasses.push("table-panel-cell-link");
-      columnHtml = `
+      columnHtml += `
         <a href="${cellLink}" target="${cellTarget}" data-link-tooltip data-original-title="${cellLinkTooltip}" data-placement="right">
-          ${columnHtml}
+          ${value}
         </a>
       `;
+    } else {
+      columnHtml += value;
     }
 
     if (column.filterable) {

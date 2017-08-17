@@ -9,7 +9,7 @@ function (angular) {
   module.controller('AdminListOrgsCtrl', function($scope, backendSrv, navModelSrv) {
 
     $scope.init = function() {
-      $scope.navModel = navModelSrv.getAdminNav();
+      $scope.navModel = navModelSrv.getNav('cfg', 'admin', 'global-orgs');
       $scope.getOrgs();
     };
 

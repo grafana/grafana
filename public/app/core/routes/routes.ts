@@ -44,6 +44,12 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     templateUrl: 'public/app/features/dashboard/partials/dash_list.html',
     controller : 'DashListCtrl',
   })
+  .when('/configuration', {
+    templateUrl: 'public/app/features/admin/partials/configuration_home.html',
+    controller : 'ConfigurationHomeCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadAdminBundle,
+  })
   .when('/datasources', {
     templateUrl: 'public/app/features/plugins/partials/ds_list.html',
     controller : 'DataSourcesCtrl',

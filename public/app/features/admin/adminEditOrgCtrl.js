@@ -9,7 +9,7 @@ function (angular) {
   module.controller('AdminEditOrgCtrl', function($scope, $routeParams, backendSrv, $location, navModelSrv) {
 
     $scope.init = function() {
-      $scope.navModel = navModelSrv.getAdminNav();
+      $scope.navModel = navModelSrv.getNav('cfg', 'admin', 'global-orgs');
 
       if ($routeParams.id) {
         $scope.getOrg($routeParams.id);
