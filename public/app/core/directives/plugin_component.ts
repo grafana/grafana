@@ -6,62 +6,7 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import {UnknownPanelCtrl} from 'app/plugins/panel/unknown/module';
-
-export class PanelRow {
-  static template = `
-    <h2 class="panel-header">Row</h2>
-    <a ng-click="ctrl.collapse()">Collapse</a>
-  `;
-
-  dashboard: any;
-  panel: any;
-
-  constructor(private $rootScope) {
-    console.log(this);
-    this.panel.hiddenPanels = this.panel.hiddenPanels || [];
-  }
-
-  collapse() {
-    if (this.panel.hiddenPanels.length > 0) {
-      let panelIndex = _.indexOf(this.dashboard.panels, this.panel);
-
-      for (let child of this.panel.hiddenPanels) {
-        this.dashboard.panels.splice(panelIndex+1, 0, child);
-        child.y = this.panel.y+1;
-        console.log('restoring child', child);
-      }
-
-      this.panel.hiddenPanels = [];
-      return;
-    }
-
-    let foundRow = false;
-    for (let i = 0; i < this.dashboard.panels.length; i++) {
-      let panel = this.dashboard.panels[i];
-
-      if (panel === this.panel) {
-        console.log('found row');
-        foundRow = true;
-        continue;
-      }
-
-      if (!foundRow) {
-        continue;
-      }
-
-      if (panel.type === 'row') {
-        break;
-      }
-
-      this.panel.hiddenPanels.push(panel);
-      console.log('hiding child', panel.id);
-    }
-
-    for (let hiddenPanel of this.panel.hiddenPanels) {
-      this.dashboard.removePanel(hiddenPanel, false);
-    }
-  }
-}
+import {DashboardRowCtrl} from '../components/row_ctrl';
 
 /** @ngInject **/
 function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
@@ -113,10 +58,10 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
   function loadPanelComponentInfo(scope, attrs) {
     if (scope.panel.type === 'row') {
       return $q.when({
-        name: 'panel-row',
+        name: 'dashboard-row',
         bindings: {dashboard: "=", panel: "="},
         attrs: {dashboard: "ctrl.dashboard", panel: "panel"},
-        Component: PanelRow,
+        Component: DashboardRowCtrl,
       });
     }
 

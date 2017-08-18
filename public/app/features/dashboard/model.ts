@@ -20,7 +20,7 @@ export interface Panel {
   title: string;
 }
 
-export const CELL_HEIGHT = 60;
+export const CELL_HEIGHT = 30;
 export const CELL_VMARGIN = 15;
 
 export class DashboardModel {

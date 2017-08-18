@@ -1,14 +1,11 @@
-<!-- <div class="dash&#45;row&#45;header"> -->
-<!-- 	<a class="dash&#45;row&#45;header&#45;title" ng&#45;click="ctrl.toggleCollapse()"> -->
-<!-- 		<span class="dash&#45;row&#45;collapse&#45;toggle pointer"> -->
-<!-- 			<i class="fa fa&#45;chevron&#45;down" ng&#45;show="!ctrl.row.collapse"></i> -->
-<!-- 			<i class="fa fa&#45;chevron&#45;right" ng&#45;show="ctrl.row.collapse"></i> -->
-<!-- 		</span> -->
-<!-- 		<span ng&#45;class="ctrl.row.titleSize">{{ctrl.row.title | interpolateTemplateVars:this}}</span> -->
-<!-- 	</a> -->
-<!-- </div> -->
-<!--  -->
-<!-- <dash&#45;grid ng&#45;if="!ctrl.row.collapse" row="ctrl.row" dashboard="ctrl.dashboard"></dash&#45;grid> -->
-<!--  -->
+<div class="dash-row-header">
+	<a class="dash-row-header-title" ng-click="ctrl.toggleCollapse()">
+		<span class="dash-row-collapse-toggle pointer">
+			<i class="fa fa-chevron-down" ng-show="!ctrl.row.collapse"></i>
+			<i class="fa fa-chevron-right" ng-show="ctrl.row.collapse"></i>
+		</span>
+		<span ng-class="ctrl.row.titleSize">{{ctrl.row.title | interpolateTemplateVars:this}}</span>
+	</a>
+</div>
 
-<h2>Row</h2>
+

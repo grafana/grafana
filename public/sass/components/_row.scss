@@ -1,52 +1,55 @@
 
-.dash-row {
-  display: block;
+.dashboard-row {
   display: flex;
-  flex-direction: column;
-  position: relative;
+  height: 30px;
+  align-items: center;
 
   &--collapse {
-    .dash-row-header {
-      background: $panel-bg;
-      border: $panel-border;
-      margin-bottom: $panel-margin*2;
+    background: $panel-bg;
+    border: $panel-border;
+    margin-bottom: $panel-margin*2;
+  }
+
+  &:hover {
+    background: $panel-bg;
+    .dashboard-row__chevron {
+      color: $link-color;
+    }
+    .dashboard-row__settings {
+      display: block;
     }
   }
 }
 
-.dash-row-header {
+.dashboard-row__title {
   position: relative;
+  flex-grow: 1;
   display: flex;
   flex-direction: row;
   margin-right: $panel-margin;
   margin-left: 0;
-
-  .h1 { font-size: 2.7rem; font-style: normal; line-height: 4rem; font-weight: 300; }
-  .h2 { font-size: 2.4rem; line-height: 3.5rem; font-weight: 300; }
-  .h3 { font-size: 2.0rem; line-height: 3rem; font-weight: 300;}
-  .h4 { font-size: 1.7rem; font-weight: 300;}
-  .h5 { font-size: 1.4rem; font-weight: 300;}
-  .h6 { font-size: 1rem; font-weight: 300; }
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semi-bold;
+  //text-align: center;
+  display: block;
 }
 
-.dash-row-header-title {
-  padding: 0.6rem;
-  flex-grow: 1;
+.dashboard-row__chevron {
+  padding: 0 2px;
+  font-size: $font-size-xs;
+  color: $text-muted;
+  position: relative;
+  left: -3px;
+  top: -1px;
+}
 
-  .dash-row-collapse-toggle {
-    padding: 0 2px;
-    font-size: $font-size-xs;
-    color: $text-muted;
-    position: relative;
-    left: -3px;
-    top: -1px;
-  }
+.dashboard-row__settings {
+  display: none;
+}
 
-  &:hover {
-    .dash-row-collapse-toggle {
-      color: $link-color;
-    }
-  }
+.dashboard-row__title-text {
+  padding-left: 0.6rem;
+  color: $text-color;
 }
 
 .panels-wrapper {
