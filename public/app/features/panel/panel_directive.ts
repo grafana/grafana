@@ -10,7 +10,7 @@ var module = angular.module('grafana.directives');
 
 var panelTemplate = `
   <div class="panel-container">
-    <div class="panel-header">
+    <div class="panel-header grid-drag-handle">
       <span class="panel-info-corner">
         <i class="fa"></i>
         <span class="panel-info-corner-inner"></span>

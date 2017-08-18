@@ -47,7 +47,7 @@ export class GridCtrl {
       cellHeight: CELL_HEIGHT,
       verticalMargin: CELL_VMARGIN,
       acceptWidgets: '.grid-stack-item',
-      handle: '.panel-header'
+      handle: '.grid-drag-handle'
     }).data('gridstack');
 
     this.isInitialized = true;
@@ -104,6 +104,23 @@ export class GridCtrl {
       return 0;
     });
 
+    let lastPanel = null;
+    for (let panel of this.dashboard.panels) {
+      if (lastPanel && lastPanel.type === 'row' && panel.type === 'row') {
+        if (panel.hiddenPanels.length === 0) {
+          continue;
+        }
+
+        for (let item of items) {
+          if (panel.id === parseInt(item.id)) {
+            this.gridstack.move(item.el, item.x, item.y-1, item.width, item.height, false);
+          }
+        }
+      }
+
+      lastPanel = panel;
+    }
+
     this.$scope.$broadcast('render');
   }
 
@@ -156,6 +173,7 @@ export function dashGridItem($timeout, $rootScope) {
         'data-gs-y': panel.y,
         'data-gs-width': panel.width,
         'data-gs-height': panel.height,
+        'data-gs-no-resize': panel.type === 'row',
       });
 
       $rootScope.onAppEvent('panel-fullscreen-exit', (evt, payload) => {

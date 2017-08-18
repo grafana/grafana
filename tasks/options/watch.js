@@ -25,6 +25,7 @@ module.exports = function(config, grunt) {
       config.srcDir + '/sass/**/*',
       config.srcDir + '/app/**/*',
       config.srcDir + '/test/**/*',
+      config.srcDir + '/vendor/npm/gridstack/dist/*.js',
       config.srcDir + '/vendor/npm/gemini-scrollbar/*.js',
     ], function(err, watcher) {
 

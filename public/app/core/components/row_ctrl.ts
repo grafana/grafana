@@ -5,13 +5,18 @@ import _ from 'lodash';
 export class DashboardRowCtrl {
   static template = `
     <a class="dashboard-row__title pointer" ng-click="ctrl.toggle()">
+      <span class="dashboard-row__chevron">
+        <i class="fa fa-chevron-down" ng-hide="ctrl.isCollapsed"></i>
+        <i class="fa fa-chevron-right" ng-show="ctrl.isCollapsed"></i>
+      </span>
       <span class="dashboard-row__title-text">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>
     </a>
+    <div class="dashboard-row__drag grid-drag-handle" ng-if="ctrl.isCollapsed">
+      drag
+    </div>
     <a class="dashboard-row__settings pointer">
       <i class="fa fa-cog"></i>
     </a>
-    <div class="dashboard-row__drag panel-drag-handle" ng-if="ctrl.isCollapsed">
-    </div>
   `;
 
   dashboard: any;
