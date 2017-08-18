@@ -2,20 +2,18 @@
 
 <div class="page-container">
 	<div class="page-header">
-		<h1>
-			<i class="{{ctrl.navModel.node.icon}}"></i>
-			{{ctrl.navModel.node.text}}
-		</h1>
+		<page-h1 model="ctrl.navModel"></page-h1>
+
+		<button class="btn btn-success" ng-click="ctrl.openAddUsersView()" ng-hide="ctrl.externalUserMngLinkUrl">
+			<i class="fa fa-plus"></i>
+			<span>{{ctrl.addUsersBtnName}}</span>
+		</button>
 
 		<div class="page-header-tabs">
-			<button class="btn btn-success" ng-click="ctrl.openAddUsersView()" ng-hide="ctrl.externalUserMngLinkUrl">
-				<i class="fa fa-plus"></i>
-        <span>{{ctrl.addUsersBtnName}}</span>
-			</button>
 
-      <a class="btn btn-inverse" ng-href="{{ctrl.externalUserMngLinkUrl}}" target="_blank" ng-if="ctrl.externalUserMngLinkUrl">
+			<a class="btn btn-inverse" ng-href="{{ctrl.externalUserMngLinkUrl}}" target="_blank" ng-if="ctrl.externalUserMngLinkUrl">
 				<i class="fa fa-external-link-square"></i>
-        {{ctrl.addUsersBtnName}}
+				{{ctrl.addUsersBtnName}}
       </a>
 
 			<ul class="gf-tabs">
@@ -24,13 +22,8 @@
 						Users ({{ctrl.users.length}})
 					</a>
 				</li>
-				<li class="gf-tabs-item">
-					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 1" ng-class="{active: ctrl.editor.index === 1}">
-						Groups (0)
-					</a>
-				</li>
 				<li class="gf-tabs-item" ng-show="ctrl.pendingInvites.length">
-					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 2" ng-class="{active: ctrl.editor.index === 2}">
+					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 1" ng-class="{active: ctrl.editor.index === 1}">
 						Pending Invitations ({{ctrl.pendingInvites.length}})
 					</a>
 				</li>
@@ -79,7 +72,7 @@
     </table>
   </div>
 
-  <div ng-if="ctrl.editor.index === 2">
+  <div ng-if="ctrl.editor.index === 1">
     <table class="filter-table form-inline">
       <thead>
         <tr>
