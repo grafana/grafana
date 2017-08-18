@@ -10,4 +10,5 @@ define([
   './decompose/all',
   './panelinfo/panelInfoEditCtrl',
   './systemoverview/systemoverviewCtrl',
+  './styleguide/styleguide',
 ], function () {});
