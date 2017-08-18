@@ -6,7 +6,7 @@ define([
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ServiceDetailCtrl', function ($scope, backendSrv, $location, $q) {
+  module.controller('CMDBServiceDetailCtrl', function ($scope, backendSrv, $location, $q) {
     $scope.init = function() {
       $scope.order = "'hostname'";
       $scope.desc = false;

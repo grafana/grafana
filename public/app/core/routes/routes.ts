@@ -386,7 +386,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   })
   .when('/cmdb/servicelist/servicedetail', {
     templateUrl: 'public/app/features/cmdb/partials/service_detail.html',
-    controller : 'ServiceDetailCtrl',
+    controller : 'CMDBServiceDetailCtrl',
     resolve: loadCMDBBundle
   })
   .when('/service_dependency', {
