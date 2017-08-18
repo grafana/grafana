@@ -9,7 +9,7 @@
       Create User Group
     </a>
   </div>
-    <div class="gf-form pull-right width-15 gf-form-group">
+    <div class="gf-form width-15 gf-form-group">
       <span style="position: relative;">
         <input type="text" class="gf-form-input" placeholder="Find User Group by name" tabindex="1" give-focus="true"
           ng-model="ctrl.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.get()" />
@@ -19,15 +19,17 @@
     <table class="filter-table form-inline" ng-show="ctrl.userGroups.length > 0">
       <thead>
         <tr>
-          <th>Id</th>
           <th>Name</th>
+          <th>Members</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         <tr ng-repeat="userGroup in ctrl.userGroups">
-          <td>{{userGroup.id}}</td>
-          <td>{{userGroup.name}}</td>
+          <td>
+            <a href="org/user-groups/edit/{{userGroup.id}}">{{userGroup.name}}</a>
+          </td>
+          <td>#Count</td>
           <td class="text-right">
             <a href="org/user-groups/edit/{{userGroup.id}}" class="btn btn-inverse btn-small">
               <i class="fa fa-edit"></i>
