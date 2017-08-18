@@ -10,6 +10,7 @@
     baseURL: '/base/',
     defaultJSExtensions: true,
     paths: {
+      'gemini-scrollbar': 'vendor/npm/gemini-scrollbar/index.js',
       'mousetrap': 'vendor/npm/mousetrap/mousetrap.js',
       'eventemitter3': 'vendor/npm/eventemitter3/index.js',
       'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',

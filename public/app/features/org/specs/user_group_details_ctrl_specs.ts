@@ -19,7 +19,8 @@ var backendSrv = {
     ctx.ctrl = $controller(UserGroupDetailsCtrl, {
       $scope: ctx.scope,
       backendSrv: backendSrv,
-      $routeParams: {id: 1}
+      $routeParams: {id: 1},
+      navModelSrv: {getNav: sinon.stub()}
     });
   }));
 

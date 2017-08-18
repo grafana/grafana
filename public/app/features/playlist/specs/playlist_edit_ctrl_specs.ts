@@ -6,7 +6,9 @@ describe('PlaylistEditCtrl', () => {
   var ctx: any;
   beforeEach(() => {
     let navModelSrv = {
-      getPlaylistsNav: page => {},
+      getNav: () => {
+        return { breadcrumbs: [], node: {}};
+      },
     };
 
     ctx = new PlaylistEditCtrl(null, null, null, null, { current: { params: {} } }, navModelSrv);
