@@ -69,7 +69,7 @@
 					</li>
 				</ul>
 			</li>
-			<li class="navbar-mini-btn-wrapper">
+			<li class="navbar-mini-btn-wrapper" ng-show="::ctrl.dashboard.meta.canSave">
 				<button class="btn btn-secondary btn-mini" ng-click="ctrl.openEditView('add-panel')">
 					<i class="fa fa-plus-circle"></i> Add Panel
 				</button>

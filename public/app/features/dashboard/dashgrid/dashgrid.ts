@@ -10,7 +10,7 @@ import 'gridstack.jquery-ui';
 
 const template = `
 <div class="grid-stack">
-  <dash-grid-item ng-repeat="panel in ctrl.row.panels track by panel.id"
+  <dash-grid-item ng-repeat="panel in ctrl.dashboard.panels track by panel.id"
                   class="grid-stack-item"
                   grid-ctrl="ctrl"
                   panel="panel">
@@ -24,7 +24,6 @@ var rowIndex = 0;
 
 export class GridCtrl {
   options: any;
-  row: any;
   dashboard: any;
   panels: any;
   gridstack: any;
@@ -35,6 +34,7 @@ export class GridCtrl {
 
   /** @ngInject */
   constructor(private $scope, private $element, private $timeout) {
+    console.log(this.dashboard);
     this.index = rowIndex;
     rowIndex += 1;
   }
@@ -71,70 +71,38 @@ export class GridCtrl {
 
   onGridStackItemAdded(item) {
     console.log('row: ' + this.index + ' item added', item);
-    // if item has id dont need to do anything
-    if (item.id) {
-      return;
-    }
-
-    // if this comes from another row we need to remove it
-    this.$timeout(() => this.gridstack.removeWidget(item.el, true));
   }
 
   onGridStackItemRemoved(item) {
     console.log('row: ' + this.index + ' item removed', item.id, item);
-    // ignore items that have no panel id
-    // if (!item.id) {
-    //   return;
-    // }
-    //
-    // let panel = this.dashboard.getPanelById(parseInt(item.id));
-    //
-    // if (panel) {
-    //   panelChangingRow = panel
-    //   this.row.removePanel(panel, false);
-    // }
   }
 
   onGridStackItemsChanged(items) {
-    console.log('row: ' +this.index + ' changes', items);
-
     for (let item of items) {
-      let isFromOtherRow = false;
-
-      if (!item.id) {
-        item.id  = parseInt(item.el.attr('data-gs-id'));
-        isFromOtherRow = true;
-      }
-
       // find panel
-      var panelInfo = this.dashboard.getPanelInfoById(parseInt(item.id));
+      var panel = this.dashboard.getPanelById(parseInt(item.id));
 
-      if (!panelInfo) {
-        console.log('row: ' + this.index + ' item change but no panel found for item', item);
+      if (!panel) {
+        console.log('item change but no panel found for item', item);
         continue;
       }
 
       // update panel model position
-      let panel = panelInfo.panel;
       panel.x = item.x;
       panel.y = item.y;
       panel.width = item.width;
       panel.height = item.height;
 
-      // wait a bit before adding
-      if (isFromOtherRow) {
-        let movePanelFn = (panel, row) => {
-          return this.$timeout(() => {
-            console.log('moving panel movel to another row', panel);
-            // remove from source row
-            row.removePanel(panel, false);
-            // add this this row
-            this.row.panels.push(panel);
-          });
-        };
-        movePanelFn(panelInfo.panel, panelInfo.row);
-      }
+      console.log('updating panel: ' + panel.id + ' x: ' + panel.x + ' y: ' + panel.y);
     }
+
+    this.dashboard.panels.sort(function (a, b) {
+      let aScore = a.x + (a.y * 12);
+      let bScore = b.x + (b.y * 12);
+      if (aScore < bScore) { return -1; }
+      if (aScore > bScore) { return 1; }
+      return 0;
+    });
 
     this.$scope.$broadcast('render');
   }
@@ -155,7 +123,6 @@ export function dashGrid($timeout) {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      row: "=",
       dashboard: "=",
     },
     link: function(scope, elem, attrs, ctrl) {
@@ -181,6 +148,7 @@ export function dashGridItem($timeout, $rootScope) {
     link: function (scope, element, attrs) {
       let gridCtrl = scope.gridCtrl;
       let panel = scope.panel;
+      let gridStackNode = null;
 
       element.attr({
         'data-gs-id': panel.id,
@@ -210,15 +178,19 @@ export function dashGridItem($timeout, $rootScope) {
           return;
         }
 
-        let node = element.data('_gridstack_node');
-        if (node) {
+        if (gridStackNode) {
           console.log('grid-item scope $destroy removeWidget');
-          node._grid.removeWidget(element);
+          gridStackNode._grid.removeWidget(element);
         }
       });
 
       if (gridCtrl.isInitialized) {
         gridCtrl.gridstack.makeWidget(element);
+        gridStackNode = element.data('_gridstack_node');
+      } else {
+        setTimeout(function() {
+          gridStackNode = element.data('_gridstack_node');
+        }, 500);
       }
 
       //   scope.onItemRemoved({item: item});

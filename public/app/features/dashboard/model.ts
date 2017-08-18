@@ -16,6 +16,8 @@ export interface Panel {
   y: number;
   width: number;
   height: number;
+  type: string;
+  title: string;
 }
 
 export const CELL_HEIGHT = 60;
@@ -48,6 +50,7 @@ export class DashboardModel {
   events: any;
   editMode: boolean;
   folderId: number;
+  panels: Panel[];
 
   constructor(data, meta?) {
     if (!data) {
@@ -77,13 +80,8 @@ export class DashboardModel {
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
     this.folderId = data.folderId || null;
+    this.panels = data.panels || [];
     this.rows = [];
-
-    if (data.rows) {
-      for (let row of data.rows) {
-        this.rows.push(new DashboardRow(row));
-      }
-    }
 
     this.initMeta(meta);
     this.updateSchema(data);
@@ -158,23 +156,15 @@ export class DashboardModel {
   }
 
   forEachPanel(callback) {
-    var i, j, row;
-    for (i = 0; i < this.rows.length; i++) {
-      row = this.rows[i];
-      for (j = 0; j < row.panels.length; j++) {
-        callback(row.panels[j], j, row, i);
-      }
+    for (let i = 0; i < this.panels.length; i++) {
+      callback(this.panels[i], i);
     }
   }
 
   getPanelById(id) {
-    for (var i = 0; i < this.rows.length; i++) {
-      var row = this.rows[i];
-      for (var j = 0; j < row.panels.length; j++) {
-        var panel = row.panels[j];
-        if (panel.id === id) {
-          return panel;
-        }
+    for (let panel of this.panels) {
+      if (panel.id === id) {
+        return panel;
       }
     }
     return null;
@@ -185,25 +175,32 @@ export class DashboardModel {
     row.addPanel(panel);
   }
 
-  removeRow(row, force?) {
-    var index = _.indexOf(this.rows, row);
+  removePanel(panel, ask?) {
+    // confirm deletion
+    if (ask !== false) {
+      var text2, confirmText;
+      if (panel.alert) {
+        text2 = "Panel includes an alert rule, removing panel will also remove alert rule";
+        confirmText = "YES";
+      }
 
-    if (!row.panels.length || force) {
-      this.rows.splice(index, 1);
-      row.destroy();
+      appEvents.emit('confirm-modal', {
+        title: 'Remove Panel',
+        text: 'Are you sure you want to remove this panel?',
+        text2: text2,
+        icon: 'fa-trash',
+        confirmText: confirmText,
+        yesText: 'Remove',
+        onConfirm: () => {
+          this.removePanel(panel, false);
+        }
+      });
       return;
     }
 
-    appEvents.emit('confirm-modal', {
-      title: 'Remove Row',
-      text: 'Are you sure you want to remove this row?',
-      icon: 'fa-trash',
-      yesText: 'Delete',
-      onConfirm: () => {
-        this.rows.splice(index, 1);
-        row.destroy();
-      }
-    });
+    var index = _.indexOf(this.panels, panel);
+    this.panels.splice(index, 1);
+    this.events.emit('panel-removed', panel);
   }
 
   setPanelFocus(id) {
@@ -626,7 +623,7 @@ export class DashboardModel {
       }
 
       if (oldVersion < 15) {
-        this.upgradeToGridLayout();
+        this.upgradeToGridLayout(old);
       }
 
       if (panelUpgrades.length === 0) {
@@ -643,13 +640,27 @@ export class DashboardModel {
       }
     }
 
-    upgradeToGridLayout() {
+    upgradeToGridLayout(old) {
       let yPos = 0;
-      let firstRow = this.rows[0];
+      let rowIds = 1000;
 
-      for (let row of this.rows) {
+      for (let row of old.rows) {
         let xPos = 0;
         let height: any = row.height;
+
+        if (this.meta.keepRows) {
+          this.panels.push({
+            id: rowIds++,
+            type: 'row',
+            title: row.title,
+            x: 0,
+            y: yPos,
+            height: 1,
+            width: 12
+          });
+
+          yPos += 1;
+        }
 
         if (_.isString(height)) {
           height = parseInt(height.replace('px', ''), 10);
@@ -671,21 +682,13 @@ export class DashboardModel {
           delete panel.span;
 
           xPos += panel.width;
+
+          this.panels.push(panel);
         }
 
-        if (!this.meta.keepRows) {
-          yPos += height;
-
-          // add to first row
-          if (row !== firstRow) {
-            firstRow.panels = firstRow.panels.concat(row.panels);
-          }
-        }
+        yPos += height;
       }
 
-      if (!this.meta.keepRows) {
-        this.rows = [firstRow];
-      }
+      console.log('panels', this.panels);
     }
 }
-

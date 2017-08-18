@@ -8,14 +8,8 @@
 
 				<dashboard-submenu ng-if="dashboard.meta.submenuEnabled" dashboard="dashboard"></dashboard-submenu>
 
-				<div class="clearfix"></div>
+        <dash-grid dashboard="dashboard"></dash-grid>
 
-				<dashboard-submenu ng-if="dashboard.meta.submenuEnabled" dashboard="dashboard"></dashboard-submenu>
-
-				<div class="clearfix"></div>
-
-				<dash-row class="dash-row" ng-repeat="row in dashboard.rows" row="row" dashboard="dashboard">
-				</dash-row>
 			</div>
 		</div>
 	</div>
