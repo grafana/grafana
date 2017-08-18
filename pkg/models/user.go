@@ -197,6 +197,7 @@ type UserSearchHitDTO struct {
 	Name          string    `json:"name"`
 	Login         string    `json:"login"`
 	Email         string    `json:"email"`
+	AvatarUrl     string    `json:"avatarUrl"`
 	IsAdmin       bool      `json:"isAdmin"`
 	LastSeenAt    time.Time `json:"lastSeenAt"`
 	LastSeenAtAge string    `json:"lastSeenAtAge"`

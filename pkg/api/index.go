@@ -235,11 +235,18 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 					},
 				},
 				{
-					Text:        "Users",
+					Text:        "Members",
 					Id:          "users",
-					Description: "Manage users & user groups",
-					Icon:        "fa fa-fw fa-users",
+					Description: "Manage org members",
+					Icon:        "icon-gf icon-gf-users",
 					Url:         setting.AppSubUrl + "/org/users",
+				},
+				{
+					Text:        "Groups",
+					Id:          "users",
+					Description: "Manage org groups",
+					Icon:        "fa fa-fw fa-users",
+					Url:         setting.AppSubUrl + "/org/user-groups",
 				},
 				{
 					Text:        "API Keys",

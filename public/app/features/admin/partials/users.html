@@ -21,8 +21,7 @@
     <table class="filter-table form-inline">
       <thead>
         <tr>
-          <th>Id</th>
-          <th>Name</th>
+          <th></th>
           <th>Login</th>
           <th>Email</th>
           <th>
@@ -35,8 +34,9 @@
       </thead>
       <tbody>
         <tr ng-repeat="user in ctrl.users">
-          <td>{{user.id}}</td>
-          <td>{{user.name}}</td>
+					<td class="width-4 text-center">
+						<img class="filter-table__avatar" ng-src="{{user.avatarUrl}}"></img>
+					</td>
           <td>{{user.login}}</td>
           <td>{{user.email}}</td>
           <td>
