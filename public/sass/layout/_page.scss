@@ -11,9 +11,7 @@
 .main-view {
   position: relative;
   flex-grow: 1;
-
-  $gradient-opacity: 0.03;
-  background: linear-gradient(135deg, rgba(26, 42, 108, $gradient-opacity), rgba(178, 31, 31, $gradient-opacity), rgba(253, 187, 45, $gradient-opacity)); //Matt experiement
+  background: $page-gradient;
 }
 
 .page-container {
