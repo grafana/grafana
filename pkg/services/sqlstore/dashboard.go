@@ -10,7 +10,6 @@ import (
 	m "github.com/wangy1931/grafana/pkg/models"
 	"github.com/wangy1931/grafana/pkg/services/search"
 	"github.com/wangy1931/grafana/pkg/components/simplejson"
-	"errors"
 	"strconv"
 )
 
@@ -137,7 +136,7 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 func typeSwitch(dash *simplejson.Json) (int64, error) {
 	switch system := dash.Get("system").Interface().(type) {
 	default:
-		return 0, errors.New("can't resolve the systemId type")
+		return dash.Get("system").MustInt64(), nil
 	case string:
 		sysId, err := strconv.ParseInt(system, 10, 64)
 		if err != nil {
