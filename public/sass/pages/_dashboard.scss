@@ -1,7 +1,8 @@
 .dashboard-container {
   padding: $dashboard-padding;
+  background: $dashboard-gradient;
   width: 100%;
-  background: $page-gradient;
+  min-height: 100%;
 }
 
 .template-variable {

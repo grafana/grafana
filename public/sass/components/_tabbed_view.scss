@@ -1,6 +1,7 @@
 .tabbed-view {
-  background-color: $page-bg;
+  background-color: $panel-bg;
   padding: $spacer*3;
+  margin-bottom: $dashboard-padding;
 
   &.tabbed-view--panel-edit {
     padding: 0;

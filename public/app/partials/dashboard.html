@@ -5,6 +5,9 @@
 		<div gemini-scrollbar>
 			<div dash-editor-view class="dash-edit-view"></div>
 			<div class="dashboard-container">
+
+				<dashboard-submenu ng-if="dashboard.meta.submenuEnabled" dashboard="dashboard"></dashboard-submenu>
+
 				<div class="clearfix"></div>
 
 				<dashboard-submenu ng-if="dashboard.meta.submenuEnabled" dashboard="dashboard"></dashboard-submenu>

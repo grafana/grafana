@@ -8,7 +8,6 @@
 		</h1>
 
 		<div class="page-header-tabs">
-
 			<button class="btn btn-success" ng-click="ctrl.openAddUsersView()" ng-hide="ctrl.externalUserMngLinkUrl">
 				<i class="fa fa-plus"></i>
         <span>{{ctrl.addUsersBtnName}}</span>
@@ -47,6 +46,7 @@
     <table class="filter-table form-inline">
       <thead>
         <tr>
+          <th></th>
           <th>Login</th>
           <th>Email</th>
 					<th>
@@ -58,6 +58,9 @@
         </tr>
       </thead>
       <tr ng-repeat="user in ctrl.users">
+        <td class="width-4 text-center">
+					<img class="filter-table__avatar" ng-src="{{user.avatarUrl}}"></img>
+				</td>
         <td>{{user.login}}</td>
         <td><span class="ellipsis">{{user.email}}</span></td>
 				<td>{{user.lastSeenAtAge}}</td>

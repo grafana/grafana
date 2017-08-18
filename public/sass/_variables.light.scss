@@ -69,6 +69,7 @@ $text-shadow-faint: none;
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255,213,0,1.0) 0%, rgba(255,68,0,1.0) 99%, rgba(255,68,0,1.0) 100%);
 $page-gradient: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%);
+$dashboard-gradient: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%);
 
 // Links
 // -------------------------
