@@ -91,7 +91,7 @@ export class DataProcessor {
   }
 
   hashStr(str) {
-  //Implementation of Java's hashcode function	
+  //Implementation of Java's hashcode function
     var hash = 0, i, utfCode;
     if (str.length === 0) {
       return hash;
@@ -108,7 +108,7 @@ export class DataProcessor {
     var datapoints = seriesData.datapoints || [];
     var alias = seriesData.target;
 
-    var colorIndex = hashStr(alias) % colors.length;
+    var colorIndex = this.hashStr(alias) % colors.length;
     var color = this.panel.aliasColors[alias] || colors[colorIndex];
 
     var series = new TimeSeries({datapoints: datapoints, alias: alias, color: color, unit: seriesData.unit});
