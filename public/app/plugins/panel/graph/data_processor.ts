@@ -1,5 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
-
+/* tslint:disable:no-bitwise */
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import moment from 'moment';
@@ -89,12 +89,25 @@ export class DataProcessor {
       }
     }
   }
+  hashStr(str) {
+  //Implementation of Java's hashcode function	
+    var hash = 0, i, utfCode;
+    if (str.length === 0) {
+      return hash;
+    }
+    for (i = 0; i < str.length; i++) {
+      utfCode = str.charCodeAt(i);
+      utfCode = ((hash << 5) - hash) + utfCode;
+      utfCode = utfCode & utfCode;
+    }
+    return hash;
+    }
 
   timeSeriesHandler(seriesData, index, options) {
     var datapoints = seriesData.datapoints || [];
     var alias = seriesData.target;
 
-    var colorIndex = index % colors.length;
+    var colorIndex = hashStr(alias) % colors.length;
     var color = this.panel.aliasColors[alias] || colors[colorIndex];
 
     var series = new TimeSeries({datapoints: datapoints, alias: alias, color: color, unit: seriesData.unit});
