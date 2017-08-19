@@ -2,11 +2,6 @@
   <div class="container">
     <div class="page-breadcrumb">
       <div class="page-breadcrumb__item dropdown" ng-repeat="item in ctrl.model.breadcrumbs">
-        <!-- <a class="pointer" ng&#45;href="{{::item.url}}" data&#45;toggle="dropdown" ng&#45;if="::item.children"> -->
-        <!--   {{::item.text}} -->
-        <!--   <i class="page&#45;breadcrumb__caret fa fa&#45;caret&#45;down"></i> -->
-        <!-- </a> -->
-
         <a class="pointer" ng-href="{{::item.url}}">
           {{::item.text}}
         </a>

@@ -47,7 +47,7 @@ export function pageH1() {
     <h1>
     <i class="{{::model.node.icon}}" ng-if="::model.node.icon"></i>
     <img ng-src="{{::model.node.img}}" ng-if="::model.node.img"></i>
-    {{::model.node.text}}
+    {{model.node.text}}
     </h1>
     `,
     scope: {
