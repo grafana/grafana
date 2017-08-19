@@ -89,6 +89,7 @@ export class DataProcessor {
       }
     }
   }
+
   hashStr(str) {
   //Implementation of Java's hashcode function	
     var hash = 0, i, utfCode;
