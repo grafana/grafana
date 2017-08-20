@@ -265,8 +265,8 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 				Icon: "fa fa-fw fa-shield",
 				Url:  setting.AppSubUrl + "/admin",
 				Children: []*dtos.NavLink{
-					{Text: "Global Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users"},
-					{Text: "Global Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs"},
+					{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users"},
+					{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs"},
 					{Text: "Server Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings"},
 					{Text: "Server Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats"},
 					{Text: "Style Guide", Id: "styleguide", Url: setting.AppSubUrl + "/admin/styleguide"},
