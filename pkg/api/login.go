@@ -137,6 +137,8 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 		log.Error(3, "User login with nil user")
 	}
 
+	c.Resp.Header().Del("Set-Cookie")
+
 	days := 86400 * setting.LogInRememberDays
 	if days > 0 {
 		c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
