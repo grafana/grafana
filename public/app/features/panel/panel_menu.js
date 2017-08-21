@@ -14,7 +14,12 @@ function (angular, $, _, Tether) {
           '<span class="panel-title drag-handle pointer">' +
             '<span class="icon-gf panel-alert-icon"></span>' +
             '<span class="panel-title-text drag-handle">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>' +
-            '<span class="panel-time-info" ng-show="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>' +
+            '<span class="panel-time-info" ng-show="ctrl.timeInfo || ctrl.panel.time_range">' +
+              '<i class="fa fa-clock-o"></i>' +
+              '<span ng-show="ctrl.timeInfo">{{ctrl.timeInfo}}</span>' +
+              '<span ng-show="ctrl.panel.time_range"> ({{ctrl.dashboard.formatDate(ctrl.timeSrv.timeRange().from)}} to' +
+              ' {{ctrl.dashboard.formatDate(ctrl.timeSrv.timeRange().to)}})</span>' +
+            '</span>' +
           '</span>';
 
       function createMenuTemplate(ctrl) {
