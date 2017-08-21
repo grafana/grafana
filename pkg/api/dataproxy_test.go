@@ -60,4 +60,26 @@ func TestDataSourceProxy(t *testing.T) {
 			So(queryVals["p"][0], ShouldEqual, "password")
 		})
 	})
+
+	Convey("When getting elasticsearch datasource proxy", t, func() {
+		ds := m.DataSource{
+			Type:     m.DS_INFLUXDB_08,
+			Url:      "http://elasticsearch",
+			Database: "[logstash-]YYYY.MM.DD",
+		}
+
+		targetUrl, _ := url.Parse(ds.Url)
+		proxy := NewReverseProxy(&ds, "", targetUrl)
+
+		requestUrl, _ := url.Parse("http://grafana.com/sub")
+		req := http.Request{URL: requestUrl}
+
+		proxy.Director(&req)
+
+		Convey("Should resolve index pattern", func() {
+			dsRegex := esIndexRegex(ds.Database)
+			match := dsRegex.MatchString("logstash-2017.12.31")
+			So(match, ShouldBeTrue)
+		})
+	})
 }

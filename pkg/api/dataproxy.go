@@ -1,12 +1,15 @@
 package api
 
 import (
+	"bufio"
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -135,17 +138,43 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	}
 
 	if ds.Type == m.DS_ES {
-		if c.Req.Request.Method == "DELETE" {
-			c.JsonApiErr(403, "Deletes not allowed on proxied Elasticsearch datasource", nil)
+		if (c.Req.Request.Method != "POST" && proxyPath != "_msearch") && (c.Req.Request.Method != "GET" && strings.HasSuffix(proxyPath, "/_stats")) {
+			c.JsonApiErr(403, "Only POSTs to _msearch and GETs to _stats are allowed", nil)
 			return
 		}
-		if c.Req.Request.Method == "PUT" {
-			c.JsonApiErr(403, "Puts not allowed on proxied Elasticsearch datasource", nil)
-			return
+
+		var body string
+		if c.Req.Request.Body != nil {
+			buffer, err := ioutil.ReadAll(c.Req.Request.Body)
+			if err == nil {
+				c.Req.Request.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
+				body = string(buffer)
+			}
 		}
-		if c.Req.Request.Method == "POST" && proxyPath != "_msearch" {
-			c.JsonApiErr(403, "Posts not allowed on proxied Elasticsearch datasource except on /_msearch", nil)
-			return
+
+		scanner := bufio.NewScanner(strings.NewReader(body))
+		for scanner.Scan() {
+			line := scanner.Text()
+
+			var js map[string]interface{}
+			if err := json.Unmarshal([]byte(line), &js); err == nil {
+				if indexField, ok := js["index"]; ok {
+
+					if indexField, ok := indexField.([]interface{}); ok {
+
+						for _, reqIndex := range indexField {
+
+							if index, ok := reqIndex.(string); ok {
+								dsRegex := esIndexRegex(ds.Database)
+
+								if match := dsRegex.MatchString(index); match != true {
+									c.JsonApiErr(403, "Not allowed to use a non-configured index", nil)
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -159,6 +188,32 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	logProxyRequest(ds.Type, c)
 	proxy.ServeHTTP(c.Resp, c.Req.Request)
 	c.Resp.Header().Del("Set-Cookie")
+}
+
+func esIndexRegex(dsDatabase string) *regexp.Regexp {
+	rIndexName, _ := regexp.Compile("\\[.*\\]")
+
+	loc := rIndexName.FindStringIndex(dsDatabase)
+	indexName := dsDatabase[loc[0]+1 : loc[1]-1]
+	indexPartRegex := rIndexName.ReplaceAllString(dsDatabase, indexName)
+
+	indexDatetimePattern := dsDatabase[:loc[0]] + dsDatabase[loc[1]:]
+
+	re := regexp.MustCompile("(YYYY|GGGG)")
+	datetimeRegex := re.ReplaceAllLiteralString(indexDatetimePattern, "\\d{4}")
+	re = regexp.MustCompile("MM")
+	datetimeRegex = re.ReplaceAllLiteralString(datetimeRegex, "[0-1][0-9]")
+	re = regexp.MustCompile("DD")
+	datetimeRegex = re.ReplaceAllLiteralString(datetimeRegex, "[0-3][0-9]")
+	re = regexp.MustCompile("HH")
+	datetimeRegex = re.ReplaceAllLiteralString(datetimeRegex, "[0-2][0-9]")
+	re = regexp.MustCompile("WW")
+	datetimeRegex = re.ReplaceAllLiteralString(datetimeRegex, "[0-5][0-9]")
+
+	rDateTime, _ := regexp.Compile(indexDatetimePattern)
+	regexString := rDateTime.ReplaceAllString(indexPartRegex, datetimeRegex)
+
+	return regexp.MustCompile(regexString)
 }
 
 func logProxyRequest(dataSourceType string, c *middleware.Context) {
