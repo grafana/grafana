@@ -10,6 +10,7 @@ import (
 	m "github.com/wangy1931/grafana/pkg/models"
 	"github.com/wangy1931/grafana/pkg/services/search"
 	"github.com/wangy1931/grafana/pkg/components/simplejson"
+	"strconv"
 )
 
 func init() {
@@ -133,7 +134,18 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 }
 
 func typeSwitch(dash *simplejson.Json) (int64, error) {
-	return dash.Get("system").MustInt64(), nil
+	switch system := dash.Get("system").Interface().(type) {
+	default:
+		return dash.Get("system").MustInt64(), nil
+	case string:
+		sysId, err := strconv.ParseInt(system, 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		return sysId, nil
+	case float64:
+		return int64(system), nil
+	}
 }
 
 type DashboardSearchProjection struct {
