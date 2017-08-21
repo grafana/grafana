@@ -12,54 +12,14 @@
 				<span class="gf-form-label">Organization name</span>
 				<input class="gf-form-input" type="text" required ng-model="org.name">
 			</div>
-			<div class="gf-form">
-				<button type="submit" class="btn gf-form-btn btn-success" ng-click="update()">Update</button>
-			</div>
 		</div>
+
+    <div class="gf-form-button-row">
+      <button type="submit" class="btn btn-success" ng-click="update()">Save</button>
+    </div>
 	</form>
 
 	<prefs-control mode="org"></prefs-control>
-
-	<h3 class="page-heading">Address</h3>
-
-	<form name="addressForm" class="gf-form-group">
-		<div class="gf-form-inline">
-			<div class="gf-form max-width-28">
-				<span class="gf-form-label width-7">Address1</span>
-				<input class="gf-form-input" type="text" ng-model="address.address1">
-			</div>
-			<div class="gf-form max-width-28">
-				<span class="gf-form-label width-7">Address2</span>
-				<input class="gf-form-input" type="text" ng-model="address.address2">
-			</div>
-		</div>
-
-		<div class="gf-form-inline">
-			<div class="gf-form max-width-28">
-				<span class="gf-form-label width-7">City</span>
-				<input class="gf-form-input" type="text" ng-model="address.city">
-			</div>
-			<div class="gf-form max-width-28">
-				<span class="gf-form-label width-7">Postal code</span>
-				<input class="gf-form-input" type="text" ng-model="address.zipCode">
-			</div>
-		</div>
-
-		<div class="gf-form-inline">
-			<div class="gf-form max-width-28">
-				<span class="gf-form-label width-7">State</span>
-				<input class="gf-form-input" type="text" ng-model="address.state">
-			</div>
-			<div class="gf-form max-width-28">
-				<span class="gf-form-label width-7">Country</span>
-				<input class="gf-form-input" type="text" ng-model="address.country">
-			</div>
-		</div>
-
-		<div class="gf-form-button-row">
-			<button type="submit" class="btn btn-success" ng-click="updateAddress()">Update</button>
-		</div>
-	</form>
 
 </div>
 

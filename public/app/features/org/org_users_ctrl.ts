@@ -44,11 +44,9 @@ export class OrgUsersCtrl {
   getAddUserBtnName(): string {
     if (this.externalUserMngLinkName) {
       return this.externalUserMngLinkName;
-    } else if (config.disableLoginForm) {
-      return "Add Users";
-    } else {
-      return "Add";
     }
+
+    return "Add Members";
   }
 
   get() {

@@ -4,7 +4,7 @@
 	<div class="page-header">
 		<page-h1 model="ctrl.navModel"></page-h1>
 
-		<button class="btn btn-success" ng-click="ctrl.openAddUsersView()" ng-hide="ctrl.externalUserMngLinkUrl">
+		<button class="btn btn-primary" ng-click="ctrl.openAddUsersView()" ng-hide="ctrl.externalUserMngLinkUrl">
 			<i class="fa fa-plus"></i>
 			<span>{{ctrl.addUsersBtnName}}</span>
 		</button>
@@ -22,9 +22,9 @@
 						Users ({{ctrl.users.length}})
 					</a>
 				</li>
-				<li class="gf-tabs-item" ng-show="ctrl.pendingInvites.length">
+				<li class="gf-tabs-item">
 					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 1" ng-class="{active: ctrl.editor.index === 1}">
-						Pending Invitations ({{ctrl.pendingInvites.length}})
+						Pending Invites ({{ctrl.pendingInvites.length}})
 					</a>
 				</li>
 			</ul>

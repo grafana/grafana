@@ -74,8 +74,16 @@
   a, button {
     float: right;
     margin-left: $spacer;
+
+    // better align icons
+    .fa {
+      position: relative;
+      top: 1px;
+    }
   }
 }
+
+
 
 .page-heading {
   font-size: 1.25rem;
