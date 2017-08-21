@@ -44,7 +44,7 @@
                             智能检测异常指标
                         </h3>
                         <div>
-                            <li ng-repeat="anomaly in anomalyPanel.status" ng-if="anomaly.count!=0">
+                            <li ng-repeat="anomaly in anomalyPanel.status" ng-if="anomaly.count!=-1">
                                 <a href="{{anomalyPanel.href}}">{{anomaly.text}} <span class="status-{{anomaly.type}}">{{anomaly.count}}</span></a>
                             </li>
                         </div>
