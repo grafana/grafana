@@ -27,6 +27,8 @@ define([
           "opentsdb",
           "mongo3",
           "nginx",
+          "windows",
+          "exchange",
         ];
         $scope.fullText = [];
         $scope.readOnly = true;
