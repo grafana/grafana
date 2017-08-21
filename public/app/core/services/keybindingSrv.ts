@@ -180,14 +180,14 @@ export class KeybindingSrv {
     });
 
     // collapse all rows
-    this.bind('d C', () => {
+    this.bind('d shift+c', () => {
       for (let row of dashboard.rows) {
         row.collapse = true;
       }
     });
 
     // expand all rows
-    this.bind('d E', () => {
+    this.bind('d shift+e', () => {
       for (let row of dashboard.rows) {
         row.collapse = false;
       }
