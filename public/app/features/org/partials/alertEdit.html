@@ -13,7 +13,7 @@
     <h2 ng-show="!isNew">修改报警规则</h2>
 
     <div class="main-view-container preview-panel">
-        <select class="pull-right" style="margin-top: 10px;margin-bottom: -10px; margin-right: 70px; width: 100px;"
+        <select class="pull-right" style="margin-top: -30px;margin-bottom: 10px; margin-right: 5px; width: 100px;"
                       ng-change="setTimeRange()"
                       ng-model="timeSelected"
                       ng-options="f.id as f.txt for f in timeRange">
@@ -149,7 +149,7 @@
               并且持续时间达
             </li>
             <li>
-              <input type="number" min="1" class="tidy-form-input last" style="width: 30px;"
+              <input type="number" min="1" class="tidy-form-input last" style="width: 45px;"
                     ng-model='alertDef.alertDetails.crit.durarionMinutes' 
                     ng-blur="checkForm();" required />
             </li>
@@ -178,7 +178,7 @@
               并且持续时间达
             </li>
             <li>
-              <input type="number" min="1" class="tidy-form-input last" style="width: 30px;"
+              <input type="number" min="1" class="tidy-form-input last" style="width: 45px;"
                     ng-blur="checkForm();"
                     ng-model='alertDef.alertDetails.warn.durarionMinutes' required />
             </li>

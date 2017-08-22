@@ -81,7 +81,7 @@ function (angular, _) {
               "short",
               "short"
             ],
-            "transparent": true
+            "transparent": false
           }
         ],
         "showTitle": false,

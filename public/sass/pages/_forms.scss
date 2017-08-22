@@ -1,5 +1,15 @@
 // 新增的.
+input {
+  border: 1px solid $input-border-color;
+  border-radius: 6px;
+  padding-left: 6px;
+  height: $input-height;
+}
+.tidy-form-box {
+  margin-bottom: 30px
+}
 .tidy-form {
+  margin: 5px;
   h4 {
     margin: 5px 20px 5px 0px;
   }
