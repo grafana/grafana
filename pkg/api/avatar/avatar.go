@@ -217,7 +217,10 @@ func (this *thunderTask) Fetch() {
 	this.Done()
 }
 
-var client = &http.Client{}
+var client *http.Client = &http.Client{
+	Timeout:   time.Second * 2,
+	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
+}
 
 func (this *thunderTask) fetch() error {
 	this.Avatar.timestamp = time.Now()

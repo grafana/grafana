@@ -5,12 +5,12 @@
 
   "routes": [
     {
-      "path": "api/v5/",
+      "path": "tokenTest",
       "method": "*",
-      "url": "https://grafana-api.kentik.com/api/v5",
+      "url": "http://localhost:3333/query",
       "tokenAuth": {
-        "url":  "https://login.microsoftonline.com/{{.JsonData.tenantId}}/oauth2/token",
-        "body": {
+        "url": "https://login.microsoftonline.com/{{.JsonData.tenantId}}/oauth2/token",
+        "params": {
           "grant_type":  "client_credentials",
           "client_id": "{{.JsonData.clientId}}",
           "client_secret": "{{.SecureJsonData.clientSecret}}",
