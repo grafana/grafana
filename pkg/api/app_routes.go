@@ -32,8 +32,7 @@ func InitAppPluginRoutes(r *macaron.Macaron) {
 			url := util.JoinUrlFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
 			handlers := make([]macaron.Handler, 0)
 			handlers = append(handlers, middleware.Auth(&middleware.AuthOptions{
-				ReqSignedIn:     true,
-				ReqGrafanaAdmin: route.ReqGrafanaAdmin,
+				ReqSignedIn: true,
 			}))
 
 			if route.ReqRole != "" {

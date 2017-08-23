@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func getDatasource(id int64, orgId int64) (*m.DataSource, error) {
@@ -27,7 +28,14 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
+	// find plugin
+	plugin, ok := plugins.DataSources[ds.Type]
+	if !ok {
+		c.JsonApiErr(500, "Unable to find datasource plugin", err)
+		return
+	}
+
 	proxyPath := c.Params("*")
-	proxy := pluginproxy.NewDataSourceProxy(ds, c, proxyPath)
+	proxy := pluginproxy.NewDataSourceProxy(ds, plugin, c, proxyPath)
 	proxy.HandleRequest()
 }

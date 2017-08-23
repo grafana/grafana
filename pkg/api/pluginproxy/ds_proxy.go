@@ -32,13 +32,18 @@ type DataSourceProxy struct {
 	targetUrl *url.URL
 	proxyPath string
 	route     *plugins.AppPluginRoute
+	plugin    *plugins.DataSourcePlugin
 }
 
-func NewDataSourceProxy(ds *m.DataSource, ctx *middleware.Context, proxyPath string) *DataSourceProxy {
+func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx *middleware.Context, proxyPath string) *DataSourceProxy {
+	targetUrl, _ := url.Parse(ds.Url)
+
 	return &DataSourceProxy{
 		ds:        ds,
+		plugin:    plugin,
 		ctx:       ctx,
 		proxyPath: proxyPath,
+		targetUrl: targetUrl,
 	}
 }
 
@@ -142,8 +147,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		}
 	}
 
-	targetUrl, _ := url.Parse(proxy.ds.Url)
-	if !checkWhiteList(proxy.ctx, targetUrl.Host) {
+	if !checkWhiteList(proxy.ctx, proxy.targetUrl.Host) {
 		return errors.New("Target url is not a valid target")
 	}
 
@@ -166,25 +170,26 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	// found route if there are any
-	if plugin, ok := plugins.DataSources[proxy.ds.Type]; ok {
-		if len(plugin.Routes) > 0 {
-			for _, route := range plugin.Routes {
-				// method match
-				if route.Method != "*" && route.Method != proxy.ctx.Req.Method {
-					continue
-				}
+	if len(proxy.plugin.Routes) > 0 {
+		for _, route := range proxy.plugin.Routes {
+			// method match
+			if route.Method != "" && route.Method != "*" && route.Method != proxy.ctx.Req.Method {
+				continue
+			}
 
-				if strings.HasPrefix(proxy.proxyPath, route.Path) {
-					logger.Info("Apply Route Rule", "rule", route.Path)
-					proxy.proxyPath = strings.TrimPrefix(proxy.proxyPath, route.Path)
-					proxy.route = route
-					break
+			if route.ReqRole.IsValid() {
+				if !proxy.ctx.HasUserRole(route.ReqRole) {
+					return errors.New("Plugin proxy route access denied")
 				}
+			}
+
+			if strings.HasPrefix(proxy.proxyPath, route.Path) {
+				proxy.route = route
+				break
 			}
 		}
 	}
 
-	proxy.targetUrl = targetUrl
 	return nil
 }
 
@@ -225,6 +230,8 @@ func checkWhiteList(c *middleware.Context, host string) bool {
 
 func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 	logger.Info("ApplyDataSourceRouteRules", "route", proxy.route.Path, "proxyPath", proxy.proxyPath)
+
+	proxy.proxyPath = strings.TrimPrefix(proxy.proxyPath, proxy.route.Path)
 
 	data := templateData{
 		JsonData:       proxy.ds.JsonData.Interface().(map[string]interface{}),
