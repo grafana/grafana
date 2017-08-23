@@ -148,7 +148,14 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   exportCsv() {
-    FileExport.exportTableDataToCsv(this.renderer.render_values());
+    var scope = this.$scope.$new(true);
+    scope.tableData = this.renderer.render_values();
+    scope.panel = 'table';
+    this.publishAppEvent('show-modal', {
+      templateHtml: '<export-data-modal panel="panel" data="tableData"></export-data-modal>',
+      scope,
+      modalClass: 'modal--narrow'
+    });
   }
 
   link(scope, elem, attrs, ctrl) {
