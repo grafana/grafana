@@ -85,8 +85,7 @@
 }
 
 .graph-legend-table {
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: auto;
 
   tbody {
     display: block;
@@ -181,6 +180,7 @@
 
   .graph-legend {
     margin: 0;
+    max-width: 200px;
   }
 
   .graph-legend-series {
