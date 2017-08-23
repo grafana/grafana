@@ -7,8 +7,9 @@ import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 
 export class BackendSrv {
-  inFlightRequests = {};
-  HTTP_REQUEST_CANCELLED = -1;
+  private inFlightRequests = {};
+  private HTTP_REQUEST_CANCELLED = -1;
+  private noBackendCache: boolean;
 
   /** @ngInject */
   constructor(private $http, private alertSrv, private $rootScope, private $q, private $timeout, private contextSrv) {
@@ -32,6 +33,13 @@ export class BackendSrv {
 
   put(url, data) {
     return this.request({ method: 'PUT', url: url, data: data });
+  }
+
+  withNoBackendCache(callback) {
+    this.noBackendCache = true;
+    return callback().finally(() => {
+      this.noBackendCache = false;
+    });
   }
 
   requestErrorHandler(err) {
@@ -148,6 +156,10 @@ export class BackendSrv {
       if (options.headers && options.headers.Authorization) {
         options.headers['X-DS-Authorization'] = options.headers.Authorization;
         delete options.headers.Authorization;
+      }
+
+      if (this.noBackendCache) {
+        options.headers['X-Grafana-NoCache'] = 'true';
       }
     }
 
