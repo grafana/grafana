@@ -37,7 +37,7 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
     });
 
     this._request = function(method, url, data) {
-      this.setIndexPattern();      
+      this.setIndexPattern();
       var options = {
         url: contextSrv.elkUrl + "/" + url,
         method: method,
