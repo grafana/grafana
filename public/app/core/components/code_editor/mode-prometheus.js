@@ -353,7 +353,7 @@ function convertMarkDownTags(text) {
 
 function convertToHTML(item) {
   var docText = lang.escapeHTML(item.docText);
-  docText = convertMarkDownTags(wrapText(docText));
+  docText = convertMarkDownTags(wrapText(docText, 40));
   return [
     "<b>", lang.escapeHTML(item.def), "</b>", "<hr></hr>", docText, "<br>&nbsp"
   ].join("");
