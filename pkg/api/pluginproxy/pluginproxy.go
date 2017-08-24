@@ -1,15 +1,11 @@
 package pluginproxy
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"text/template"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -38,23 +34,8 @@ func getHeaders(route *plugins.AppPluginRoute, orgId int64, appId string) (http.
 		SecureJsonData: query.Result.SecureJsonData.Decrypt(),
 	}
 
-	for _, header := range route.Headers {
-		var contentBuf bytes.Buffer
-		t, err := template.New("content").Parse(header.Content)
-		if err != nil {
-			return nil, errors.New(fmt.Sprintf("could not parse header content template for header %s.", header.Name))
-		}
-
-		err = t.Execute(&contentBuf, data)
-		if err != nil {
-			return nil, errors.New(fmt.Sprintf("failed to execute header content template for header %s.", header.Name))
-		}
-
-		log.Trace("Adding header to proxy request. %s: %s", header.Name, contentBuf.String())
-		result.Add(header.Name, contentBuf.String())
-	}
-
-	return result, nil
+	err := addHeaders(&result, route, data)
+	return result, err
 }
 
 func NewApiPluginProxy(ctx *middleware.Context, proxyPath string, route *plugins.AppPluginRoute, appId string) *httputil.ReverseProxy {

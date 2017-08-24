@@ -1,15 +1,18 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
+import ResponseParser from './response_parser';
 
 export class MysqlDatasource {
   id: any;
   name: any;
+  responseParser: ResponseParser;
 
   /** @ngInject **/
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
+    this.responseParser = new ResponseParser(this.$q);
   }
 
   interpolateVariable(value) {
@@ -49,7 +52,7 @@ export class MysqlDatasource {
         to: options.range.to.valueOf().toString(),
         queries: queries,
       }
-    }).then(this.processQueryResult.bind(this));
+    }).then(this.responseParser.processQueryResult);
   }
 
   annotationQuery(options) {
@@ -72,46 +75,7 @@ export class MysqlDatasource {
         to: options.range.to.valueOf().toString(),
         queries: [query],
       }
-    }).then(this.transformAnnotationResponse.bind(this, options));
-  }
-
-  transformAnnotationResponse(options, data) {
-    const table = data.data.results[options.annotation.name].tables[0];
-
-    let timeColumnIndex = -1;
-    let titleColumnIndex = -1;
-    let textColumnIndex = -1;
-    let tagsColumnIndex = -1;
-
-    for (let i = 0; i < table.columns.length; i++) {
-      if (table.columns[i].text === 'time_sec') {
-        timeColumnIndex = i;
-      } else if (table.columns[i].text === 'title') {
-        titleColumnIndex = i;
-      } else if (table.columns[i].text === 'text') {
-        textColumnIndex = i;
-      } else if (table.columns[i].text === 'tags') {
-        tagsColumnIndex = i;
-      }
-    }
-
-    if (timeColumnIndex === -1) {
-      return this.$q.reject({message: 'Missing mandatory time column (with time_sec column alias) in annotation query.'});
-    }
-
-    const list = [];
-    for (let i = 0; i < table.rows.length; i++) {
-      const row = table.rows[i];
-      list.push({
-        annotation: options.annotation,
-        time: Math.floor(row[timeColumnIndex]) * 1000,
-        title: row[titleColumnIndex],
-        text: row[textColumnIndex],
-        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : []
-      });
-    }
-
-    return list;
+    }).then(data => this.responseParser.transformAnnotationResponse(options, data));
   }
 
   metricFindQuery(query, optionalOptions) {
@@ -134,26 +98,7 @@ export class MysqlDatasource {
         queries: [interpolatedQuery],
       }
     })
-    .then(this.transformFindQueryResponse.bind(this, refId));
-  }
-
-  transformFindQueryResponse(refId, results) {
-    if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) { return []; }
-
-    const rows = results.data.results[refId].tables[0].rows;
-    const res = [];
-    for (let i = 0; i < rows.length; i++) {
-      for (let j = 0; j < rows[i].length; j++) {
-        const value = rows[i][j];
-        if ( res.indexOf( value ) === -1 ) {
-          res.push(value);
-        }
-      }
-    }
-
-    return _.map(res, value => {
-      return { text: value};
-    });
+    .then(data => this.responseParser.parseMetricFindQueryResult(refId, data));
   }
 
   testDatasource() {
@@ -182,40 +127,6 @@ export class MysqlDatasource {
         return { status: "error", message: err.status, title: "Error" };
       }
     });
-  }
-
-  processQueryResult(res) {
-    var data = [];
-
-    if (!res.data.results) {
-      return {data: data};
-    }
-
-    for (let key in res.data.results) {
-      let queryRes = res.data.results[key];
-
-      if (queryRes.series) {
-        for (let series of queryRes.series) {
-          data.push({
-            target: series.name,
-            datapoints: series.points,
-            refId: queryRes.refId,
-            meta: queryRes.meta,
-          });
-        }
-      }
-
-      if (queryRes.tables) {
-        for (let table of queryRes.tables) {
-          table.type = 'table';
-          table.refId = queryRes.refId;
-          table.meta = queryRes.meta;
-          data.push(table);
-        }
-      }
-    }
-
-    return {data: data};
   }
 }
 

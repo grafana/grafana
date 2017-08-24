@@ -217,8 +217,8 @@ func (hs *HttpServer) registerRoutes() {
 		}, reqOrgAdmin)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
-		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
-		r.Any("/datasources/proxy/:id", reqSignedIn, ProxyDataSourceRequest)
+		r.Any("/datasources/proxy/:id/*", reqSignedIn, hs.ProxyDataSourceRequest)
+		r.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
 
 		// Dashboard
 		r.Group("/dashboards", func() {

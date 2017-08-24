@@ -498,7 +498,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           logBase: panel.yaxes[0].logBase || 1,
           min: panel.yaxes[0].min ? _.toNumber(panel.yaxes[0].min) : null,
           max: panel.yaxes[0].max ? _.toNumber(panel.yaxes[0].max) : null,
-          tickDecimals: panel.yaxes[0].decimals !== null ? _.toNumber(panel.yaxes[0].decimals): null
+          tickDecimals: panel.yaxes[0].decimals
         };
 
         options.yaxes.push(defaults);

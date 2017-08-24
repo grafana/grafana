@@ -51,6 +51,31 @@ describe('templateSrv', function() {
     });
   });
 
+  describe('getAdhocFilters', function() {
+    beforeEach(function() {
+      initTemplateSrv([
+        {type: 'datasource', name: 'ds', current: {value: 'logstash', text: 'logstash'}},
+        {type: 'adhoc', name: 'test', datasource: 'oogle', filters: [1]},
+        {type: 'adhoc', name: 'test2', datasource: '$ds', filters: [2]},
+      ]);
+    });
+
+    it('should return filters if datasourceName match', function() {
+      var filters = _templateSrv.getAdhocFilters('oogle');
+      expect(filters).to.eql([1]);
+    });
+
+    it('should return empty array if datasourceName does not match', function() {
+      var filters = _templateSrv.getAdhocFilters('oogleasdasd');
+      expect(filters).to.eql([]);
+    });
+
+    it('should return filters when datasourceName match via data source variable', function() {
+      var filters = _templateSrv.getAdhocFilters('logstash');
+      expect(filters).to.eql([2]);
+    });
+  });
+
   describe('replace can pass multi / all format', function() {
     beforeEach(function() {
       initTemplateSrv([{type: 'query', name: 'test', current: {value: ['value1', 'value2'] }}]);

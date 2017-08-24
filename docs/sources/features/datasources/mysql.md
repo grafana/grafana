@@ -106,6 +106,8 @@ This is something we plan to add.
 
 ## Templating
 
+This feature is currently available in the nightly builds and will be included in the 5.0.0 release.
+
 Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
 
 Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
@@ -125,6 +127,12 @@ A query can returns multiple columns and Grafana will automatically create a lis
 
 ```sql
 SELECT my_host.hostname, my_other_host.hostname2 FROM my_host JOIN my_other_host ON my_host.city = my_other_host.city
+```
+
+Another option is a query that can create a key/value variable. The query should return two columns that are named `__text` and `__value`. The `__text` column value should be unique (if it is not unique then the first value is used). The options in the dropdown will have a text and value that allows you to have a friendly name as text and an id as the value. An example query with `hostname` as the text and `id` as the value:
+
+```sql
+SELECT hostname AS __text, id AS __value FROM my_host
 ```
 
 You can also create nested variables. For example if you had another variable named `region`. Then you could have
