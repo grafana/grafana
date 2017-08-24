@@ -16811,11 +16811,6 @@
     lodash.each = forEach;
     lodash.eachRight = forEachRight;
     lodash.first = head;
-    lodash.findWhere = find;
-    lodash.contains = includes;
-    lodash.where = filter;
-    lodash.pairs = toPairs;
-    lodash.pluck = map;
 
     mixin(lodash, (function() {
       var source = {};
