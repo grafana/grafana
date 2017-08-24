@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"sync"
+	"sort"
 
 	"time"
 
@@ -285,8 +286,13 @@ func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows,
 		}
 	}
 
-	for _, value := range pointsBySeries {
-		result.Series = append(result.Series, value)
+	keys := make([]string, 0)
+	for k,_ := range pointsBySeries {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		result.Series = append(result.Series, pointsBySeries[key])
 	}
 
 	result.Meta.Set("rowCount", rowCount)
