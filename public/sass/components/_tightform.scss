@@ -234,3 +234,12 @@ select.tight-form-input {
   margin: 20px 0 20px 148px;
   display: inline-block;
 }
+
+// cloudwiz start
+.tight-form-item .btn {
+  padding: 0.1rem 0.5rem;
+}
+[type=text].tight-form-input {
+  height: auto;
+}
+// Cloudwiz end
