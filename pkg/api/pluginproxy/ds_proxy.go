@@ -288,13 +288,11 @@ func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) 
 		return "", err
 	}
 
-	logger.Info("client secret", "ClientSecret", data.SecureJsonData["clientSecret"])
 	params := make(url.Values)
 	for key, value := range proxy.route.TokenAuth.Params {
 		if interpolatedParam, err := interpolateString(value, data); err != nil {
 			return "", err
 		} else {
-			logger.Info("param", key, interpolatedParam)
 			params.Add(key, interpolatedParam)
 		}
 	}
