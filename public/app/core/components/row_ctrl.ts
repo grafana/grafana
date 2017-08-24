@@ -6,15 +6,20 @@ export class DashboardRowCtrl {
   static template = `
     <a class="dashboard-row__title pointer" ng-click="ctrl.toggle()">
       <span class="dashboard-row__chevron">
-        <i class="fa fa-chevron-down" ng-hide="ctrl.isCollapsed"></i>
-        <i class="fa fa-chevron-right" ng-show="ctrl.isCollapsed"></i>
+        <i class="fa fa-chevron-down" ng-hide="ctrl.panel.collapse"></i>
+        <i class="fa fa-chevron-right" ng-show="ctrl.panel.collapse"></i>
       </span>
-      <span class="dashboard-row__title-text">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>
+      <span class="dashboard-row__title-text">
+        {{ctrl.panel.title | interpolateTemplateVars:this}}
+      </span>
     </a>
+    <div class="dashboard-row__panel_count">
+        ({{ctrl.panel.hiddenPanels.length}} hidden panels)
+    </div>
     <div class="dashboard-row__actions">
-      <a class="pointer" ng-click="ctrl.moveUp()"><span class="fa fa-arrow-up"></i></a>
-      <a class="pointer" ng-click="ctrl.moveDown()"><span class="fa fa-arrow-down"></i></a>
       <a class="pointer" ng-click="ctrl.openSettings()"><span class="fa fa-cog"></i></a>
+    </div>
+    <div class="dashboard-row__drag grid-drag-handle">
     </div>
   `;
 
@@ -67,6 +72,21 @@ export class DashboardRowCtrl {
     for (let hiddenPanel of this.panel.hiddenPanels) {
       this.dashboard.removePanel(hiddenPanel, false);
     }
+  }
+
+  moveUp() {
+    // let panelIndex = _.indexOf(this.dashboard.panels, this.panel);
+    // let rowAbove = null;
+    // for (let index = panelIndex-1; index > 0; index--) {
+    //   panel = this.dashboard.panels[index];
+    //   if (panel.type === 'row') {
+    //     rowAbove = panel;
+    //   }
+    // }
+    //
+    // if (rowAbove) {
+    //   this.panel.y = rowAbove.y;
+    // }
   }
 
   link(scope, elem) {

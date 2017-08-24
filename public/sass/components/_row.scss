@@ -1,24 +1,35 @@
+$dashboard-row-height: 30px;
 
 .dashboard-row {
   display: flex;
-  height: 30px;
+  height: $dashboard-row-height;
+  line-height: $dashboard-row-height;
   align-items: center;
   padding: 0 0.5rem;
 
   &--collapse {
     background: $panel-bg;
-    border: $panel-border;
-    margin-bottom: $panel-margin*2;
+
+    .dashboard-row__panel_count {
+      display: block;
+    }
+
+    .dashboard-row__drag,
+    .dashboard-row__actions {
+      visibility: visible;
+      opacity: 1;
+    }
   }
 
   &:hover {
     .dashboard-row__chevron {
       color: $link-color;
     }
+
     .dashboard-row__actions {
       visibility: visible;
       opacity: 1;
-      transition: opacity 300ms ease-in-out 200ms;
+      transition: opacity 200ms ease-in-out 100ms;
     }
   }
 }
@@ -38,16 +49,17 @@
   font-size: $font-size-xs;
   color: $text-muted;
   position: relative;
-  top: 5px;
+  top: 1px;
 }
 
 .dashboard-row__actions {
+  padding-right: 1rem;
   font-size: $font-size-sm;
   visibility: hidden;
   opacity: 0;
   a {
     color: $text-color-weak;
-    padding-left: 5px;
+    padding-left: $spacer;
     &:hover {
       color: $link-hover-color;
     }
@@ -57,6 +69,23 @@
 .dashboard-row__title-text {
   padding-left: 0.4rem;
   color: $text-color;
+}
+
+.dashboard-row__panel_count {
+  color: $text-color-weak;
+  font-style: italic;
+  font-size: $font-size-sm;
+  font-weight: normal;
+  display: none;
+}
+
+.dashboard-row__drag {
+  cursor: move;
+  width: 1rem;
+  height: $dashboard-row-height;
+  background: url("../img/grab_dark.svg") no-repeat 50% 50%;
+  background-size: 8px;
+  visibility: hidden;
 }
 
 .panels-wrapper {

@@ -1,6 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import $ from 'jquery';
+import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import {DashboardModel, CELL_HEIGHT, CELL_VMARGIN} from '../model';
 
@@ -167,6 +168,15 @@ export function dashGridItem($timeout, $rootScope) {
         'data-gs-width': panel.width,
         'data-gs-height': panel.height,
         'data-gs-no-resize': panel.type === 'row',
+      });
+
+      // listen for row moments
+      scope.$watch("panel.y", function(newModelY) {
+        let elementY = parseInt(element.attr('data-gs-y'));
+        console.log('new panel y', newModelY, elementY);
+        if (_.isNumber(newModelY) && elementY !== newModelY) {
+          gridCtrl.gridstack.move(element, panel.x, panel.y);
+        }
       });
 
       $rootScope.onAppEvent('panel-fullscreen-exit', (evt, payload) => {
