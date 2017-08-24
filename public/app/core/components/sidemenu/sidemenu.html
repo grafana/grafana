@@ -20,14 +20,14 @@
 	</li>
 
 	<li ng-show="::!ctrl.isSignedIn" bs-tooltip="'登录'" data-placement="right" data-container="body" bs-enabled="showTooltip">
-		<a href="login" class="sidemenu-item" target="_self">
+		<a href="login" class="sidemenu-item sidemenu-main-link" target="_self">
 			<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-in"></i></span>
 			<span class="sidemenu-item-text">登录</span>
 		</a>
 	</li>
 
 	<li ng-show="::ctrl.isSignedIn" bs-tooltip="'登出'" data-placement="right" data-container="body" bs-enabled="showTooltip">
-		<a href="logout" class="sidemenu-item" target="_self">
+		<a href="logout" class="sidemenu-item sidemenu-main-link" target="_self">
 			<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-out"></i></span>
 			<span class="sidemenu-item-text">登出</span>
 		</a>
