@@ -14,6 +14,8 @@ $criticalBackground: rgb(224,76,65);
   background: #fff;
   text-align: center;
   border: 5px solid transparent;
+  border-radius: 6px;
+  box-shadow: 1px 2px 5px 5px #ccc;
   &:hover{
     box-shadow: 5px 5px 3px #888;
     border-left-color:  $blue;
