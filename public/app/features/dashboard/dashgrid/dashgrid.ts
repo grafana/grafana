@@ -31,6 +31,7 @@ export class GridCtrl {
   isInitialized: boolean;
   isDestroyed: boolean;
   index: number;
+  changeRenderPromise: any;
 
   /** @ngInject */
   constructor(private $scope, private $element, private $timeout) {
@@ -78,6 +79,8 @@ export class GridCtrl {
   }
 
   onGridStackItemsChanged(items) {
+    console.log('onGridStackItemsChanged');
+
     for (let item of items) {
       // find panel
       var panel = this.dashboard.getPanelById(parseInt(item.id));
@@ -104,24 +107,14 @@ export class GridCtrl {
       return 0;
     });
 
-    let lastPanel = null;
-    for (let panel of this.dashboard.panels) {
-      if (lastPanel && lastPanel.type === 'row' && panel.type === 'row') {
-        if (panel.hiddenPanels.length === 0) {
-          continue;
-        }
-
-        for (let item of items) {
-          if (panel.id === parseInt(item.id)) {
-            this.gridstack.move(item.el, item.x, item.y-1, item.width, item.height, false);
-          }
-        }
-      }
-
-      lastPanel = panel;
+    if (this.changeRenderPromise) {
+      this.$timeout.cancel(this.changeRenderPromise);
     }
 
-    this.$scope.$broadcast('render');
+    this.changeRenderPromise = this.$timeout(() => {
+      console.log('broadcasting render');
+      this.$scope.$broadcast('render');
+    });
   }
 
   destroy() {
@@ -210,20 +203,6 @@ export function dashGridItem($timeout, $rootScope) {
           gridStackNode = element.data('_gridstack_node');
         }, 500);
       }
-
-      //   scope.onItemRemoved({item: item});
-      //   ctrl.removeItem(element);
-
-
-      //var item = element.data('_gridstack_node');
-      //console.log('link item', item);
-      //gridCtrl.bindItem(element);
-
-      // element.bind('$destroy', function() {
-      //   var item = element.data('_gridstack_node');
-      //   scope.onItemRemoved({item: item});
-      //   ctrl.removeItem(element);
-      // });
     }
   };
 }

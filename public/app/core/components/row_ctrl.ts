@@ -11,26 +11,22 @@ export class DashboardRowCtrl {
       </span>
       <span class="dashboard-row__title-text">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>
     </a>
-    <div class="dashboard-row__drag grid-drag-handle" ng-if="ctrl.isCollapsed">
-      drag
+    <div class="dashboard-row__actions">
+      <a class="pointer" ng-click="ctrl.moveUp()"><span class="fa fa-arrow-up"></i></a>
+      <a class="pointer" ng-click="ctrl.moveDown()"><span class="fa fa-arrow-down"></i></a>
+      <a class="pointer" ng-click="ctrl.openSettings()"><span class="fa fa-cog"></i></a>
     </div>
-    <a class="dashboard-row__settings pointer">
-      <i class="fa fa-cog"></i>
-    </a>
   `;
 
   dashboard: any;
   panel: any;
-  isCollapsed: boolean;
 
   constructor(private $rootScope) {
-    console.log(this);
     this.panel.hiddenPanels = this.panel.hiddenPanels || [];
-    this.isCollapsed = this.panel.hiddenPanels.length > 0;
   }
 
   toggle() {
-    if (this.isCollapsed) {
+    if (this.panel.collapse) {
       let panelIndex = _.indexOf(this.dashboard.panels, this.panel);
 
       for (let child of this.panel.hiddenPanels) {
@@ -40,11 +36,11 @@ export class DashboardRowCtrl {
       }
 
       this.panel.hiddenPanels = [];
-      this.isCollapsed = false;
+      this.panel.collapse = false;
       return;
     }
 
-    this.isCollapsed = true;
+    this.panel.collapse = true;
     let foundRow = false;
 
     for (let i = 0; i < this.dashboard.panels.length; i++) {
@@ -76,8 +72,8 @@ export class DashboardRowCtrl {
   link(scope, elem) {
     elem.addClass('dashboard-row');
 
-    scope.$watch('ctrl.isCollapsed', () => {
-      elem.toggleClass('dashboard-row--collapse', this.isCollapsed);
+    scope.$watch('ctrl.panel.collapse', () => {
+      elem.toggleClass('dashboard-row--collapse', this.panel.collapse === true);
     });
   }
 }

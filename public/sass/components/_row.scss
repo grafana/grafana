@@ -15,8 +15,10 @@
     .dashboard-row__chevron {
       color: $link-color;
     }
-    .dashboard-row__settings {
-      display: block;
+    .dashboard-row__actions {
+      visibility: visible;
+      opacity: 1;
+      transition: opacity 300ms ease-in-out 200ms;
     }
   }
 }
@@ -36,12 +38,20 @@
   font-size: $font-size-xs;
   color: $text-muted;
   position: relative;
-  top: 6px;
+  top: 5px;
 }
 
-.dashboard-row__settings {
-  display: none;
-  color: $text-color-weak;
+.dashboard-row__actions {
+  font-size: $font-size-sm;
+  visibility: hidden;
+  opacity: 0;
+  a {
+    color: $text-color-weak;
+    padding-left: 5px;
+    &:hover {
+      color: $link-hover-color;
+    }
+  }
 }
 
 .dashboard-row__title-text {
