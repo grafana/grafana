@@ -183,7 +183,7 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 	values := make([]interface{}, len(types))
 
 	for i, stype := range types {
-		e.log.Info("type", "type", stype)
+		e.log.Debug("type", "type", stype)
 		switch stype.DatabaseTypeName() {
 		case mysql.FieldTypeNameTiny:
 			values[i] = new(int8)

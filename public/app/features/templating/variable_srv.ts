@@ -247,8 +247,6 @@ export class VariableSrv {
     }
 
     filter.operator = options.operator;
-
-    variable.setFilters(filters);
     this.variableUpdated(variable, true);
   }
 
