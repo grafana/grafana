@@ -134,6 +134,14 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"date":       evalContext.EndTime.Unix(),
 		"attributes": attributes,
 	}
+	if len(evalContext.ImagePublicUrl) > 0 {
+		card["thumbnail"] = map[string]interface{}{
+			"url":    evalContext.ImagePublicUrl,
+			"url@2x": evalContext.ImagePublicUrl,
+			"width":  1193,
+			"height": 564,
+		}
+	}
 
 	body := map[string]interface{}{
 		"message":        message,
