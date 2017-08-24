@@ -7,7 +7,7 @@
     {
       "path": "tokenTest",
       "method": "*",
-      "url": "http://localhost:3333/query",
+      "url": "https://management.azure.com",
       "tokenAuth": {
         "url": "https://login.microsoftonline.com/{{.JsonData.tenantId}}/oauth2/token",
         "params": {

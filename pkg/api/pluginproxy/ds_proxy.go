@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html/template"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
@@ -30,6 +30,7 @@ var (
 		Timeout:   time.Second * 30,
 		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 	}
+	tokenCache = map[int64]*jwtToken{}
 )
 
 type jwtToken struct {
@@ -270,9 +271,18 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
 		}
 	}
+
+	logger.Info("Requesting", "url", req.URL.String())
 }
 
 func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) {
+	if cachedToken, found := tokenCache[proxy.ds.Id]; found {
+		if cachedToken.ExpiresOn.After(time.Now().Add(time.Second * 10)) {
+			logger.Info("Using token from cache")
+			return cachedToken.AccessToken, nil
+		}
+	}
+
 	urlInterpolated, err := interpolateString(proxy.route.TokenAuth.Url, data)
 	if err != nil {
 		return "", err
@@ -299,8 +309,6 @@ func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) 
 	}
 
 	defer resp.Body.Close()
-	respData, err := ioutil.ReadAll(resp.Body)
-	logger.Info("Resp", "resp", string(respData))
 
 	var token jwtToken
 	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
@@ -309,9 +317,10 @@ func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) 
 
 	expiresOnEpoch, _ := strconv.ParseInt(token.ExpiresOnString, 10, 64)
 	token.ExpiresOn = time.Unix(expiresOnEpoch, 0)
+	tokenCache[proxy.ds.Id] = &token
 
-	logger.Debug("Got new access token", "ExpiresOn", token.ExpiresOn)
-	return "", nil
+	logger.Info("Got new access token", "ExpiresOn", token.ExpiresOn)
+	return token.AccessToken, nil
 }
 
 func interpolateString(text string, data templateData) (string, error) {
