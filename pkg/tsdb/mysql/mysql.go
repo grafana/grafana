@@ -1,6 +1,7 @@
 package mysql
 
 import (
+  "container/list"
 	"context"
 	"database/sql"
 	"fmt"
