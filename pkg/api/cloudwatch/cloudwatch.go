@@ -96,7 +96,7 @@ var awsCredentialCache map[string]cache = make(map[string]cache)
 var credentialCacheLock sync.RWMutex
 
 func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
-	cacheKey := dsInfo.Profile + ":" + dsInfo.AssumeRoleArn
+	cacheKey := dsInfo.AccessKey + ":" + dsInfo.Profile + ":" + dsInfo.AssumeRoleArn
 	credentialCacheLock.RLock()
 	if _, ok := awsCredentialCache[cacheKey]; ok {
 		if awsCredentialCache[cacheKey].expiration != nil &&
@@ -150,6 +150,10 @@ func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 			sessionToken = *resp.Credentials.SessionToken
 			expiration = resp.Credentials.Expiration
 		}
+	} else {
+		now := time.Now()
+		e := now.Add(5 * time.Minute)
+		expiration = &e
 	}
 
 	sess, err := session.NewSession()
