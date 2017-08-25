@@ -4,24 +4,28 @@ import _ from 'lodash';
 
 export class DashboardRowCtrl {
   static template = `
-    <a class="dashboard-row__title pointer" ng-click="ctrl.toggle()">
-      <span class="dashboard-row__chevron">
+    <div class="dashboard-row__center">
+      <div class="dashboard-row__actions-left">
         <i class="fa fa-chevron-down" ng-hide="ctrl.panel.collapse"></i>
         <i class="fa fa-chevron-right" ng-show="ctrl.panel.collapse"></i>
-      </span>
-      <span class="dashboard-row__title-text">
-        {{ctrl.panel.title | interpolateTemplateVars:this}}
-      </span>
-    </a>
-    <div class="dashboard-row__panel_count">
-        ({{ctrl.panel.hiddenPanels.length}} hidden panels)
+      </div>
+      <a class="dashboard-row__title pointer" ng-click="ctrl.toggle()">
+        <span class="dashboard-row__title-text">
+          {{ctrl.panel.title | interpolateTemplateVars:this}}
+        </span>
+      </a>
+      <div class="dashboard-row__actions-right">
+        <a class="pointer" ng-click="ctrl.openSettings()"><span class="fa fa-cog"></i></a>
+      </div>
     </div>
-    <div class="dashboard-row__actions">
-      <a class="pointer" ng-click="ctrl.openSettings()"><span class="fa fa-cog"></i></a>
-    </div>
-    <div class="dashboard-row__drag grid-drag-handle">
-    </div>
+
+  <div class="dashboard-row__panel_count">
+    ({{ctrl.panel.hiddenPanels.length}} hidden panels)
+  </div>
+  <div class="dashboard-row__drag grid-drag-handle">
+  </div>
   `;
+
 
   dashboard: any;
   panel: any;

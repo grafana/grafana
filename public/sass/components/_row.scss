@@ -5,7 +5,8 @@ $dashboard-row-height: 30px;
   height: $dashboard-row-height;
   line-height: $dashboard-row-height;
   align-items: center;
-  padding: 0 0.5rem;
+  align-content: center;
+  justify-content: center;
 
   &--collapse {
     background: $panel-bg;
@@ -22,11 +23,8 @@ $dashboard-row-height: 30px;
   }
 
   &:hover {
-    .dashboard-row__chevron {
-      color: $link-color;
-    }
-
-    .dashboard-row__actions {
+    .dashboard-row__actions-left,
+    .dashboard-row__actions-right {
       visibility: visible;
       opacity: 1;
       transition: opacity 200ms ease-in-out 100ms;
@@ -34,29 +32,39 @@ $dashboard-row-height: 30px;
   }
 }
 
-.dashboard-row__title {
+.dashboard-row__center {
   position: relative;
-  flex-grow: 1;
-  display: flex;
-  flex-direction: row;
-  margin-right: $panel-margin;
-  margin-left: 0;
+}
+
+.dashboard-row__title {
+  @include brand-bottom-border();
+
+  position: relative;
+  flex-grow: 0;
   font-size: 1.15rem;
   font-weight: $font-weight-semi-bold;
+  padding: 0rem 1rem 0.3rem 1rem;
 }
 
-.dashboard-row__chevron {
+.dashboard-row__actions-left {
+  position: absolute;
+  left: -23px;
   font-size: $font-size-xs;
   color: $text-muted;
-  position: relative;
   top: 1px;
+  visibility: hidden;
+  opacity: 0;
 }
 
-.dashboard-row__actions {
+.dashboard-row__actions-right {
+  position: absolute;
+  right: -40px;
   padding-right: 1rem;
   font-size: $font-size-sm;
   visibility: hidden;
   opacity: 0;
+  top: 0px;
+
   a {
     color: $text-color-weak;
     padding-left: $spacer;
@@ -67,7 +75,6 @@ $dashboard-row-height: 30px;
 }
 
 .dashboard-row__title-text {
-  padding-left: 0.4rem;
   color: $text-color;
 }
 
@@ -77,6 +84,9 @@ $dashboard-row-height: 30px;
   font-size: $font-size-sm;
   font-weight: normal;
   display: none;
+  position: absolute;
+  right: 30px;
+  top: 0;
 }
 
 .dashboard-row__drag {
@@ -86,6 +96,9 @@ $dashboard-row-height: 30px;
   background: url("../img/grab_dark.svg") no-repeat 50% 50%;
   background-size: 8px;
   visibility: hidden;
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
 .panels-wrapper {
