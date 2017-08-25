@@ -18,7 +18,6 @@ import {Emitter} from 'app/core/core';
 export class PanelCtrl {
   panel: any;
   error: any;
-  row: any;
   dashboard: any;
   editorTabIndex: number;
   pluginName: string;
@@ -201,18 +200,9 @@ export class PanelCtrl {
   }
 
   duplicate() {
-    this.dashboard.duplicatePanel(this.panel, this.row);
+    this.dashboard.duplicatePanel(this.panel);
     this.$timeout(() => {
       this.$scope.$root.$broadcast('render');
-    });
-  }
-
-  updateColumnSpan(span) {
-    this.panel.span = Math.min(Math.max(Math.floor(this.panel.span + span), 1), 12);
-    this.row.panelSpanChanged();
-
-    this.$timeout(() => {
-      this.render();
     });
   }
 

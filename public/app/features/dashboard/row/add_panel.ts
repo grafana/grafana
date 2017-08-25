@@ -32,7 +32,7 @@ export class AddPanelCtrl {
 
   keyDown(evt) {
     if (evt.keyCode === 27) {
-      //this.rowCtrl.dropView = 0;
+      this.dismiss();
       return;
     }
 
@@ -79,6 +79,24 @@ export class AddPanelCtrl {
   }
 
   addPanel(panelPluginInfo) {
+    let defaultHeight = 6;
+    let defaultWidth = 6;
+
+    if (panelPluginInfo.id === "singlestat") {
+      defaultWidth = 3;
+      defaultHeight = 3;
+    }
+
+    this.dashboard.addPanel({
+      type: panelPluginInfo.id,
+      x: 0,
+      y: 0,
+      width: defaultWidth,
+      height: defaultHeight,
+      title: 'New panel',
+    });
+
+    this.dismiss();
   }
 }
 

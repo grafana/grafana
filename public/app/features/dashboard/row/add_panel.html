@@ -17,8 +17,6 @@
 					ng-repeat="panel in ctrl.panelHits"
 					ng-class="{active: $index === ctrl.activeIndex}"
 					ng-click="ctrl.addPanel(panel)"
-					ui-draggable="true"
-					drag="panel.id"
           title="{{panel.name}}">
         <img class="add-panel-item-img" ng-src="{{panel.info.logos.small}}"></img>
         <div class="add-panel-item-name">{{panel.name}}</div>

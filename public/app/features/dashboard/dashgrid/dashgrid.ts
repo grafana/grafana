@@ -170,15 +170,6 @@ export function dashGridItem($timeout, $rootScope) {
         'data-gs-no-resize': panel.type === 'row',
       });
 
-      // listen for row moments
-      scope.$watch("panel.y", function(newModelY) {
-        let elementY = parseInt(element.attr('data-gs-y'));
-        console.log('new panel y', newModelY, elementY);
-        if (_.isNumber(newModelY) && elementY !== newModelY) {
-          gridCtrl.gridstack.move(element, panel.x, panel.y);
-        }
-      });
-
       $rootScope.onAppEvent('panel-fullscreen-exit', (evt, payload) => {
         if (panel.id !== payload.panelId) {
           return;

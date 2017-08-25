@@ -144,13 +144,10 @@ export class DashboardModel {
   }
 
   getNextPanelId() {
-    var i, j, row, panel, max = 0;
-    for (i = 0; i < this.rows.length; i++) {
-      row = this.rows[i];
-      for (j = 0; j < row.panels.length; j++) {
-        panel = row.panels[j];
-        if (panel.id > max) { max = panel.id; }
-      }
+    var j, panel, max = 0;
+    for (j = 0; j < this.panels.length; j++) {
+      panel = this.panels[j];
+      if (panel.id > max) { max = panel.id; }
     }
     return max + 1;
   }
@@ -170,9 +167,9 @@ export class DashboardModel {
     return null;
   }
 
-  addPanel(panel, row) {
+  addPanel(panel) {
     panel.id = this.getNextPanelId();
-    row.addPanel(panel);
+    this.panels.push(panel);
   }
 
   removePanel(panel, ask?) {
