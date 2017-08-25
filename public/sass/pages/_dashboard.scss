@@ -246,6 +246,9 @@ div.flot-text {
   font-family: $headings-font-family;
   font-size: $font-size-h3;
   text-align: center;
+  overflow: hidden;
+  position: relative;
+  top: -10px;
   span {
     display: inline-block;
     @include brand-bottom-border();

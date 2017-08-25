@@ -275,18 +275,19 @@ func GetHomeDashboard(c *middleware.Context) Response {
 }
 
 func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
-	rows := dash.Get("rows").MustArray()
-	row := simplejson.NewFromAny(rows[0])
+	panels := dash.Get("panels").MustArray()
 
 	newpanel := simplejson.NewFromAny(map[string]interface{}{
-		"type": "gettingstarted",
-		"id":   123123,
-		"span": 12,
+		"type":   "gettingstarted",
+		"id":     123123,
+		"x":      0,
+		"y":      3,
+		"width":  12,
+		"height": 4,
 	})
 
-	panels := row.Get("panels").MustArray()
 	panels = append(panels, newpanel)
-	row.Set("panels", panels)
+	dash.Set("panels", panels)
 }
 
 // GetDashboardVersions returns all dashboard versions as JSON
