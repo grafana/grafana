@@ -151,8 +151,7 @@ define([
                   innerRadius: 0.5,
                   show: true,
                   label: {
-                      show: true,
-                      radius: 1/4,
+                      show: false,
                   }
                 }
               },

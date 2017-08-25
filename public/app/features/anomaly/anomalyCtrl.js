@@ -32,10 +32,24 @@ define([
             $scope.summary.dangerMetricNum += cluster.counter.unhealth;
           });
           $scope.excludeMetricsData = healthSrv.floor(data.metricHostExcluded.elements);
+
+          $scope.pieData = {
+            'normalMetricNum': $scope.summary.numMetrics - $scope.summary.numAnomalyMetrics,
+            'criticalMetricNum': $scope.summary.numAnomalyMetrics - $scope.summary.dangerMetricNum,
+            'dangerMetricNum': $scope.summary.dangerMetricNum,
+            'normalPointNum': ($scope.summary.numDataPoints || $scope.summary.numAnomaliesInCache) - $scope.summary.numAnomaliesInCache,
+            'anomalyPointNum': $scope.summary.numAnomaliesInCache
+          };
+          $scope.pieData.normalMetricPer = parseInt($scope.pieData.normalMetricNum / $scope.summary.numMetrics * 100);
+          $scope.pieData.criticalMetricPer = parseInt($scope.pieData.criticalMetricNum / $scope.summary.numMetrics * 100);
+          $scope.pieData.dangerMetricPer = parseInt($scope.pieData.dangerMetricNum / $scope.summary.numMetrics * 100);
+          var dataPointNum = $scope.pieData.normalPointNum + $scope.pieData.anomalyPointNum;
+          $scope.pieData.normalPointPer = parseInt($scope.pieData.normalPointNum / dataPointNum * 100);
+          $scope.pieData.anomalyPointPer = parseInt($scope.pieData.anomalyPointNum / dataPointNum * 100);
           var pieData = [
-            {label: "持续异常", data: $scope.summary.dangerMetricNum},
-            {label: "临时异常", data: $scope.summary.numAnomalyMetrics - $scope.summary.dangerMetricNum},
-            {label: "正常指标", data: $scope.summary.numMetrics - $scope.summary.numAnomalyMetrics},
+            {label: "持续异常", data: $scope.pieData.dangerMetricNum},
+            {label: "临时异常", data: $scope.pieData.criticalMetricNum},
+            {label: "正常指标", data: $scope.pieData.normalMetricNum},
           ];
           $.plot("#anomaly-pie", pieData, {
             series: {
@@ -43,8 +57,7 @@ define([
                 innerRadius: 0.5,
                 show: true,
                 label: {
-                    show: true,
-                    radius: 1/4,
+                    show: false,
                 }
               }
             },
@@ -54,9 +67,10 @@ define([
             colors: ['rgb(224,76,65)','rgb(255,197,58)','rgb(61,183,121)']
           });
 
+          var numDataPoints = ($scope.summary.numDataPoints || $scope.summary.numAnomaliesInCache) - $scope.summary.numAnomaliesInCache;
           var piePointData = [
-            {label: "异常点数", data: $scope.summary.numAnomaliesInCache},
-            {label: "正常点数", data: $scope.summary.numDataPoints - $scope.summary.numAnomaliesInCache},
+            {label: "异常点数", data: $scope.pieData.anomalyPointNum},
+            {label: "正常点数", data: $scope.pieData.normalPointNum},
           ];
           $.plot("#anomaly-point-pie", piePointData, {
             series: {
@@ -64,8 +78,7 @@ define([
                 innerRadius: 0.5,
                 show: true,
                 label: {
-                    show: true,
-                    radius: 1/4,
+                    show: false,
                 }
               }
             },
