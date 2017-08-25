@@ -218,15 +218,14 @@ export class PanelCtrl {
   }
 
   replacePanel(newPanel, oldPanel) {
-    var row = this.row;
-    var index = _.indexOf(this.row.panels, oldPanel);
-    this.row.panels.splice(index, 1);
+    var index = _.indexOf(this.dashboard.panels, oldPanel);
+    this.dashboard.panels.splice(index, 1);
 
     // adding it back needs to be done in next digest
     this.$timeout(() => {
       newPanel.id = oldPanel.id;
-      newPanel.span = oldPanel.span;
-      this.row.panels.splice(index, 0, newPanel);
+      newPanel.width = oldPanel.width;
+      this.dashboard.panels.splice(index, 0, newPanel);
     });
   }
 

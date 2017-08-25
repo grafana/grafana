@@ -225,6 +225,9 @@ div.flot-text {
 
   .panel-fullscreen {
     display: block !important;
+    > .ui-resizable-handle {
+      display: none !important;
+    }
   }
 }
 

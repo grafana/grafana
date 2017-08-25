@@ -104,7 +104,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
   }
 
   dismiss() {
-    this.row.removePanel(this.panel, false);
+    this.dashboard.removePanel(this.panel, false);
 
     this.backendSrv.request({
       method: 'PUT',

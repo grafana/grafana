@@ -174,6 +174,7 @@ export function dashGridItem($timeout, $rootScope) {
         if (panel.id !== payload.panelId) {
           return;
         }
+        gridCtrl.gridstack.locked(element, false);
         element.removeClass('panel-fullscreen');
       }, scope);
 
