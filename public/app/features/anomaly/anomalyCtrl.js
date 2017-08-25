@@ -40,12 +40,12 @@ define([
             'normalPointNum': ($scope.summary.numDataPoints || $scope.summary.numAnomaliesInCache) - $scope.summary.numAnomaliesInCache,
             'anomalyPointNum': $scope.summary.numAnomaliesInCache
           };
-          $scope.pieData.normalMetricPer = parseInt($scope.pieData.normalMetricNum / $scope.summary.numMetrics * 100);
-          $scope.pieData.criticalMetricPer = parseInt($scope.pieData.criticalMetricNum / $scope.summary.numMetrics * 100);
-          $scope.pieData.dangerMetricPer = parseInt($scope.pieData.dangerMetricNum / $scope.summary.numMetrics * 100);
+          $scope.pieData.normalMetricPer = Math.round($scope.pieData.normalMetricNum / $scope.summary.numMetrics * 100);
+          $scope.pieData.criticalMetricPer = Math.round($scope.pieData.criticalMetricNum / $scope.summary.numMetrics * 100);
+          $scope.pieData.dangerMetricPer = Math.round($scope.pieData.dangerMetricNum / $scope.summary.numMetrics * 100);
           var dataPointNum = $scope.pieData.normalPointNum + $scope.pieData.anomalyPointNum;
-          $scope.pieData.normalPointPer = parseInt($scope.pieData.normalPointNum / dataPointNum * 100);
-          $scope.pieData.anomalyPointPer = parseInt($scope.pieData.anomalyPointNum / dataPointNum * 100);
+          $scope.pieData.normalPointPer = Math.round($scope.pieData.normalPointNum / dataPointNum * 100);
+          $scope.pieData.anomalyPointPer = Math.round($scope.pieData.anomalyPointNum / dataPointNum * 100);
           var pieData = [
             {label: "持续异常", data: $scope.pieData.dangerMetricNum},
             {label: "临时异常", data: $scope.pieData.criticalMetricNum},
