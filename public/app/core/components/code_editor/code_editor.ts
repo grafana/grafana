@@ -14,7 +14,7 @@
  *               see Prometheus Data Source implementation for details.
  *
  * Some Ace editor options available via data-* attributes:
- * data-lang-mode          - Language mode (text, sql, javascript, etc.). Default is 'text'.
+ * data-mode               - Language mode (text, sql, javascript, etc.). Default is 'text'.
  * data-theme              - Editor theme (eg 'solarized_dark').
  * data-max-lines          - Max editor height in lines. Editor grows automatically from 1 to maxLines.
  * data-show-gutter        - Show gutter (contains line numbers and additional info).
