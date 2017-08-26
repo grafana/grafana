@@ -8,6 +8,9 @@
     @include font-family-monospace();
     font-size: 1rem;
     min-height: 2.60rem;
+
+    @include border-radius($input-border-radius-sm);
+    border: $input-btn-border-width solid $input-border-color;
   }
 }
 
