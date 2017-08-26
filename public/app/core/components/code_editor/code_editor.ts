@@ -150,7 +150,7 @@ function link(scope, elem, attrs) {
         enableSnippets: true
       });
 
-      if (scope.getCompleter) {
+      if (scope.getCompleter()) {
         codeEditor.completers.push(scope.getCompleter());
       }
     });
