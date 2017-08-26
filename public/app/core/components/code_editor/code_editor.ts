@@ -29,10 +29,12 @@
 ///<reference path="../../../headers/common.d.ts" />
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
+import config from 'app/core/config';
 import ace from 'ace';
 
 const ACE_SRC_BASE = "public/vendor/npm/ace-builds/src-noconflict/";
-const DEFAULT_THEME = "grafana-dark";
+const DEFAULT_THEME_DARK = "grafana-dark";
+const DEFAULT_THEME_LIGHT = "textmate";
 const DEFAULT_MODE = "text";
 const DEFAULT_MAX_LINES = 10;
 const DEFAULT_TAB_SIZE = 2;
@@ -66,11 +68,14 @@ setModuleUrl("snippets", "text");
 let editorTemplate = `<div></div>`;
 
 function link(scope, elem, attrs) {
+  let lightTheme = config.bootData.user.lightTheme;
+  let default_theme = lightTheme ? DEFAULT_THEME_LIGHT : DEFAULT_THEME_DARK;
+
   // Options
   let langMode = attrs.mode || DEFAULT_MODE;
   let maxLines = attrs.maxLines || DEFAULT_MAX_LINES;
   let showGutter = attrs.showGutter !== undefined;
-  let theme = attrs.theme || DEFAULT_THEME;
+  let theme = attrs.theme || default_theme;
   let tabSize = attrs.tabSize || DEFAULT_TAB_SIZE;
   let behavioursEnabled = attrs.behavioursEnabled ? attrs.behavioursEnabled === 'true' : DEFAULT_BEHAVIOURS;
 
@@ -158,7 +163,20 @@ function link(scope, elem, attrs) {
 
   function setThemeMode(theme) {
     setModuleUrl("theme", theme);
-    codeEditor.setTheme(`ace/theme/${theme}`);
+    let themeModule = `ace/theme/${theme}`;
+    ace.config.loadModule(themeModule, (theme_module) => {
+      // Check is theme light or dark and fix if needed
+      let lightTheme = config.bootData.user.lightTheme;
+      let fixedTheme = theme;
+      if (lightTheme && theme_module.isDark) {
+        fixedTheme = DEFAULT_THEME_LIGHT;
+      } else if (!lightTheme && !theme_module.isDark) {
+        fixedTheme = DEFAULT_THEME_DARK;
+      }
+      setModuleUrl("theme", fixedTheme);
+      themeModule = `ace/theme/${fixedTheme}`;
+      codeEditor.setTheme(themeModule);
+    });
   }
 
   function setEditorContent(value) {
