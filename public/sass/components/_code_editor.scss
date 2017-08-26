@@ -5,22 +5,22 @@
   margin-right: 0.25rem;
 
   &.ace_editor {
-    min-height: 2.60rem;
-    font-family: monospace;
+    @include font-family-monospace();
     font-size: 1rem;
+    min-height: 2.60rem;
   }
 }
 
 .ace_editor.ace_autocomplete {
+  @include font-family-monospace();
+  font-size: 1rem;
+
   // Ace editor adds <style> tag at the end of <head>, after grafana.css, so !important
   // is used for overriding styles with the same CSS specificity.
   background-color: $dropdownBackground !important;
   color: $dropdownLinkColor !important;
   border: 1px solid $dropdownBorder !important;
   width: 320px !important;
-
-  font-family: monospace;
-  font-size: 1rem;
 
   .ace_scroller {
     .ace_selected, .ace_active-line, .ace_line-hover {
@@ -43,16 +43,28 @@
   }
 }
 
+$doc-font-size: 0.8rem;
+$doc-text-padding: $doc-font-size * 0.5;
+
 .ace_tooltip.ace_doc-tooltip {
+  @include font-family-monospace();
+  font-size: $doc-font-size;
+
   background-color: $dropdownBackground;
   background-image: none;
   color: $dropdownLinkColor;
   border: 1px solid $dropdownBorder;
-
-  font-family: monospace;
-  font-size: 1rem;
+  padding-top: $doc-text-padding;
+  padding-bottom: 0px;
 
   hr {
     background-color: $dropdownDividerBottom;
+    margin-top: $doc-text-padding;
+    margin-bottom: $doc-text-padding;
+  }
+
+  code {
+    padding: 0px 1px;
+    margin: 0px;
   }
 }
