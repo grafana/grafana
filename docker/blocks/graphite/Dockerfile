@@ -32,6 +32,7 @@ add ./files/my_htpasswd /etc/nginx/.htpasswd
 # Add system service config
 add ./files/nginx.conf /etc/nginx/nginx.conf
 add ./files/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
 # Nginx
 #
 # graphite
@@ -39,6 +40,7 @@ expose  80
 
 # Carbon line receiver port
 expose  2003
+
 # Carbon cache query port
 expose  7002
 

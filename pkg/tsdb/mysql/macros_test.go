@@ -39,5 +39,60 @@ func TestMacroEngine(t *testing.T) {
 			So(sql, ShouldEqual, "WHERE time_column >= FROM_UNIXTIME(18446744066914186738) AND time_column <= FROM_UNIXTIME(18446744066914187038)")
 		})
 
+		Convey("interpolate __timeFrom function", func() {
+			engine := &MySqlMacroEngine{
+				TimeRange: &tsdb.TimeRange{From: "5m", To: "now"},
+			}
+
+			sql, err := engine.Interpolate("select $__timeFrom(time_column)")
+			So(err, ShouldBeNil)
+
+			So(sql, ShouldEqual, "select FROM_UNIXTIME(18446744066914186738)")
+		})
+
+		Convey("interpolate __timeTo function", func() {
+			engine := &MySqlMacroEngine{
+				TimeRange: &tsdb.TimeRange{From: "5m", To: "now"},
+			}
+
+			sql, err := engine.Interpolate("select $__timeTo(time_column)")
+			So(err, ShouldBeNil)
+
+			So(sql, ShouldEqual, "select FROM_UNIXTIME(18446744066914187038)")
+		})
+
+		Convey("interpolate __unixEpochFilter function", func() {
+			engine := &MySqlMacroEngine{
+				TimeRange: &tsdb.TimeRange{From: "5m", To: "now"},
+			}
+
+			sql, err := engine.Interpolate("select $__unixEpochFilter(18446744066914186738)")
+			So(err, ShouldBeNil)
+
+			So(sql, ShouldEqual, "select 18446744066914186738 >= 18446744066914186738 AND 18446744066914186738 <= 18446744066914187038")
+		})
+
+		Convey("interpolate __unixEpochFrom function", func() {
+			engine := &MySqlMacroEngine{
+				TimeRange: &tsdb.TimeRange{From: "5m", To: "now"},
+			}
+
+			sql, err := engine.Interpolate("select $__unixEpochFrom()")
+			So(err, ShouldBeNil)
+
+			So(sql, ShouldEqual, "select 18446744066914186738")
+		})
+
+		Convey("interpolate __unixEpochTo function", func() {
+			engine := &MySqlMacroEngine{
+				TimeRange: &tsdb.TimeRange{From: "5m", To: "now"},
+			}
+
+			sql, err := engine.Interpolate("select $__unixEpochTo()")
+			So(err, ShouldBeNil)
+
+			So(sql, ShouldEqual, "select 18446744066914187038")
+		})
+
 	})
 }

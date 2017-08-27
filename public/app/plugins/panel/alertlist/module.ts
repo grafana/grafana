@@ -104,7 +104,7 @@ class AlertListPanel extends PanelCtrl {
     this.backendSrv.get(`/api/annotations`, params)
       .then(res => {
         this.alertHistory = _.map(res, al => {
-          al.time = moment(al.time).format('MMM D, YYYY HH:mm:ss');
+          al.time = this.dashboard.formatDate(al.time, 'MMM D, YYYY HH:mm:ss');
           al.stateModel = alertDef.getStateDisplayModel(al.newState);
           al.info = alertDef.getAlertAnnotationInfo(al);
           return al;
@@ -125,7 +125,7 @@ class AlertListPanel extends PanelCtrl {
       .then(res => {
         this.currentAlerts = this.sortResult(_.map(res, al => {
           al.stateModel = alertDef.getStateDisplayModel(al.state);
-          al.newStateDateAgo = moment(al.newStateDate).fromNow().replace(" ago", "");
+          al.newStateDateAgo = moment(al.newStateDate).locale('en').fromNow(true);
           return al;
         }));
       });

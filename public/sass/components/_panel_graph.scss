@@ -336,6 +336,7 @@
 }
 
 .axisLabel {
+  display: inline-block;
   color: $text-color;
   font-size: $font-size-sm;
   position: relative;

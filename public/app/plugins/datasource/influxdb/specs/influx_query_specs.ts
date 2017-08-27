@@ -236,6 +236,17 @@ describe('InfluxQuery', function() {
       expect(query.target.select[0][2].type).to.be('math');
     });
 
+    it('should add math when one only query part', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        select: [[{type: 'field', params: ['value']}]]
+      }, templateSrv, {});
+
+      query.addSelectPart(query.selectModels[0], 'math');
+      expect(query.target.select[0].length).to.be(2);
+      expect(query.target.select[0][1].type).to.be('math');
+    });
+
     describe('when render adhoc filters', function() {
       it('should generate correct query segment', function() {
         var query = new InfluxQuery({measurement: 'cpu', }, templateSrv, {});

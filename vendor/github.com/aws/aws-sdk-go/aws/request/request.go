@@ -21,6 +21,9 @@ const (
 	// during protocol unmarshaling.
 	ErrCodeSerialization = "SerializationError"
 
+	// ErrCodeRead is an error that is returned during HTTP reads.
+	ErrCodeRead = "ReadError"
+
 	// ErrCodeResponseTimeout is the connection timeout error that is recieved
 	// during body reads.
 	ErrCodeResponseTimeout = "ResponseTimeout"
@@ -38,23 +41,24 @@ type Request struct {
 	Handlers   Handlers
 
 	Retryer
-	Time             time.Time
-	ExpireTime       time.Duration
-	Operation        *Operation
-	HTTPRequest      *http.Request
-	HTTPResponse     *http.Response
-	Body             io.ReadSeeker
-	BodyStart        int64 // offset from beginning of Body that the request body starts
-	Params           interface{}
-	Error            error
-	Data             interface{}
-	RequestID        string
-	RetryCount       int
-	Retryable        *bool
-	RetryDelay       time.Duration
-	NotHoist         bool
-	SignedHeaderVals http.Header
-	LastSignedAt     time.Time
+	Time                   time.Time
+	ExpireTime             time.Duration
+	Operation              *Operation
+	HTTPRequest            *http.Request
+	HTTPResponse           *http.Response
+	Body                   io.ReadSeeker
+	BodyStart              int64 // offset from beginning of Body that the request body starts
+	Params                 interface{}
+	Error                  error
+	Data                   interface{}
+	RequestID              string
+	RetryCount             int
+	Retryable              *bool
+	RetryDelay             time.Duration
+	NotHoist               bool
+	SignedHeaderVals       http.Header
+	LastSignedAt           time.Time
+	DisableFollowRedirects bool
 
 	context aws.Context
 
@@ -334,10 +338,7 @@ func (r *Request) Sign() error {
 	return r.Error
 }
 
-// ResetBody rewinds the request body backto its starting position, and
-// set's the HTTP Request body reference. When the body is read prior
-// to being sent in the HTTP request it will need to be rewound.
-func (r *Request) ResetBody() {
+func (r *Request) getNextRequestBody() (io.ReadCloser, error) {
 	if r.safeBody != nil {
 		r.safeBody.Close()
 	}
@@ -359,14 +360,14 @@ func (r *Request) ResetBody() {
 	// Related golang/go#18257
 	l, err := computeBodyLength(r.Body)
 	if err != nil {
-		r.Error = awserr.New(ErrCodeSerialization, "failed to compute request body size", err)
-		return
+		return nil, awserr.New(ErrCodeSerialization, "failed to compute request body size", err)
 	}
 
+	var body io.ReadCloser
 	if l == 0 {
-		r.HTTPRequest.Body = noBodyReader
+		body = NoBody
 	} else if l > 0 {
-		r.HTTPRequest.Body = r.safeBody
+		body = r.safeBody
 	} else {
 		// Hack to prevent sending bodies for methods where the body
 		// should be ignored by the server. Sending bodies on these
@@ -378,11 +379,13 @@ func (r *Request) ResetBody() {
 		// a io.Reader that was not also an io.Seeker.
 		switch r.Operation.HTTPMethod {
 		case "GET", "HEAD", "DELETE":
-			r.HTTPRequest.Body = noBodyReader
+			body = NoBody
 		default:
-			r.HTTPRequest.Body = r.safeBody
+			body = r.safeBody
 		}
 	}
+
+	return body, nil
 }
 
 // Attempts to compute the length of the body of the reader using the
@@ -484,7 +487,7 @@ func (r *Request) Send() error {
 			r.Handlers.Retry.Run(r)
 			r.Handlers.AfterRetry.Run(r)
 			if r.Error != nil {
-				debugLogReqError(r, "Send Request", false, r.Error)
+				debugLogReqError(r, "Send Request", false, err)
 				return r.Error
 			}
 			debugLogReqError(r, "Send Request", true, err)
@@ -493,12 +496,13 @@ func (r *Request) Send() error {
 		r.Handlers.UnmarshalMeta.Run(r)
 		r.Handlers.ValidateResponse.Run(r)
 		if r.Error != nil {
-			err := r.Error
 			r.Handlers.UnmarshalError.Run(r)
+			err := r.Error
+
 			r.Handlers.Retry.Run(r)
 			r.Handlers.AfterRetry.Run(r)
 			if r.Error != nil {
-				debugLogReqError(r, "Validate Response", false, r.Error)
+				debugLogReqError(r, "Validate Response", false, err)
 				return r.Error
 			}
 			debugLogReqError(r, "Validate Response", true, err)
@@ -511,7 +515,7 @@ func (r *Request) Send() error {
 			r.Handlers.Retry.Run(r)
 			r.Handlers.AfterRetry.Run(r)
 			if r.Error != nil {
-				debugLogReqError(r, "Unmarshal Response", false, r.Error)
+				debugLogReqError(r, "Unmarshal Response", false, err)
 				return r.Error
 			}
 			debugLogReqError(r, "Unmarshal Response", true, err)

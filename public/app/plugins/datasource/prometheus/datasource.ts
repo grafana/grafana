@@ -205,11 +205,11 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
           return _.includes(tagKeys, k);
         }).value();
 
-        _.each(series.values, function(value) {
+        for (let value of series.values) {
           if (value[1] === '1') {
             var event = {
               annotation: annotation,
-              time: Math.floor(value[0]) * 1000,
+              time: Math.floor(parseFloat(value[0])) * 1000,
               title: self.renderTemplate(titleFormat, series.metric),
               tags: tags,
               text: self.renderTemplate(textFormat, series.metric)
@@ -217,7 +217,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
             eventList.push(event);
           }
-        });
+        }
       });
 
       return eventList;
@@ -253,54 +253,68 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
     var stepMs = parseInt(options.step) * 1000;
     var baseTimestamp = start * 1000;
-    _.each(md.values, function(value) {
+    for (let value of md.values) {
       var dp_value = parseFloat(value[1]);
       if (_.isNaN(dp_value)) {
         dp_value = null;
       }
 
-      var timestamp = value[0] * 1000;
-      for (var t = baseTimestamp; t < timestamp; t += stepMs) {
+      var timestamp = parseFloat(value[0]) * 1000;
+      for (let t = baseTimestamp; t < timestamp; t += stepMs) {
         dps.push([null, t]);
       }
       baseTimestamp = timestamp + stepMs;
       dps.push([dp_value, timestamp]);
-    });
+    }
 
     var endTimestamp = end * 1000;
-    for (var t = baseTimestamp; t <= endTimestamp; t += stepMs) {
+    for (let t = baseTimestamp; t <= endTimestamp; t += stepMs) {
       dps.push([null, t]);
     }
 
     return { target: metricLabel, datapoints: dps };
   };
 
-  this.transformMetricDataToTable = function(series) {
+  this.transformMetricDataToTable = function(md) {
     var table = new TableModel();
-    var self = this;
     var i, j;
+    var metricLabels = {};
 
-    if (series.length === 0) {
+    if (md.length === 0) {
       return table;
     }
 
-    _.each(series, function(series, seriesIndex) {
-      if (seriesIndex === 0) {
-        table.columns.push({text: 'Time', type: 'time'});
-        _.each(_.keys(series.metric), function(key) {
-          table.columns.push({text: key});
-        });
-        table.columns.push({text: 'Value'});
+    // Collect all labels across all metrics
+    _.each(md, function(series) {
+      for (var label in series.metric) {
+        if (!metricLabels.hasOwnProperty(label)) {
+          metricLabels[label] = 1;
+        }
       }
+    });
 
+    // Sort metric labels, create columns for them and record their index
+    var sortedLabels = _.keys(metricLabels).sort();
+    table.columns.push({text: 'Time', type: 'time'});
+    _.each(sortedLabels, function(label, labelIndex) {
+      metricLabels[label] = labelIndex + 1;
+      table.columns.push({text: label});
+    });
+    table.columns.push({text: 'Value'});
+
+    // Populate rows, set value to empty string when label not present.
+    _.each(md, function(series) {
       if (series.values) {
         for (i = 0; i < series.values.length; i++) {
           var values = series.values[i];
-          var reordered = [values[0] * 1000];
+          var reordered: any = [values[0] * 1000];
           if (series.metric) {
-            for (var key in series.metric) {
-              if (series.metric.hasOwnProperty(key)) {
-                reordered.push(series.metric[key]);
+            for (j = 0; j < sortedLabels.length; j++) {
+              var label = sortedLabels[j];
+              if (series.metric.hasOwnProperty(label)) {
+                reordered.push(series.metric[label]);
+              } else {
+                reordered.push('');
               }
             }
           }

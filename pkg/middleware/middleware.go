@@ -62,6 +62,15 @@ func GetContextHandler() macaron.Handler {
 		ctx.Data["ctx"] = ctx
 
 		c.Map(ctx)
+
+		// update last seen at
+		// update last seen every 5min
+		if ctx.ShouldUpdateLastSeenAt() {
+			ctx.Logger.Debug("Updating last user_seen_at", "user_id", ctx.UserId)
+			if err := bus.Dispatch(&m.UpdateUserLastSeenAtCommand{UserId: ctx.UserId}); err != nil {
+				ctx.Logger.Error("Failed to update last_seen_at", "error", err)
+			}
+		}
 	}
 }
 
@@ -99,7 +108,7 @@ func initContextWithUserSessionCookie(ctx *Context, orgId int64) bool {
 
 	query := m.GetSignedInUserQuery{UserId: userId, OrgId: orgId}
 	if err := bus.Dispatch(&query); err != nil {
-		ctx.Logger.Error("Failed to get user with id", "userId", userId)
+		ctx.Logger.Error("Failed to get user with id", "userId", userId, "error", err)
 		return false
 	}
 
@@ -250,6 +259,8 @@ func AddDefaultResponseHeaders() macaron.Handler {
 	return func(ctx *Context) {
 		if ctx.IsApiRequest() && ctx.Req.Method == "GET" {
 			ctx.Resp.Header().Add("Cache-Control", "no-cache")
+			ctx.Resp.Header().Add("Pragma", "no-cache")
+			ctx.Resp.Header().Add("Expires", "-1")
 		}
 	}
 }

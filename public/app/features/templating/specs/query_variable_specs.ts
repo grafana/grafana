@@ -7,7 +7,7 @@ describe('QueryVariable', () => {
   describe('when creating from model', () => {
 
     it('should set defaults', () => {
-      var variable = new QueryVariable({}, null, null, null, null);
+      var variable = new QueryVariable({}, null, null, null, null, null);
       expect(variable.datasource).to.be(null);
       expect(variable.refresh).to.be(0);
       expect(variable.sort).to.be(0);
@@ -19,7 +19,7 @@ describe('QueryVariable', () => {
     });
 
     it('get model should copy changes back to model', () => {
-      var variable = new QueryVariable({}, null, null, null, null);
+      var variable = new QueryVariable({}, null, null, null, null, null);
       variable.options = [{text: 'test'}];
       variable.datasource = 'google';
       variable.regex = 'asd';
@@ -34,7 +34,7 @@ describe('QueryVariable', () => {
     });
 
     it('if refresh != 0 then remove options in presisted mode', () => {
-      var variable = new QueryVariable({}, null, null, null, null);
+      var variable = new QueryVariable({}, null, null, null, null, null);
       variable.options = [{text: 'test'}];
       variable.refresh = 1;
 
@@ -44,7 +44,7 @@ describe('QueryVariable', () => {
   });
 
   describe('can convert and sort metric names',() => {
-    var variable = new QueryVariable({}, null, null, null, null);
+    var variable = new QueryVariable({}, null, null, null, null, null);
     variable.sort = 3; // Numerical (asc)
 
     describe('can sort a mixed array of metric variables', () => {

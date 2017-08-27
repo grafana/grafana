@@ -90,15 +90,18 @@ var (
 	SnapShotRemoveExpired bool
 
 	// User settings
-	AllowUserSignUp    bool
-	AllowUserOrgCreate bool
-	AutoAssignOrg      bool
-	AutoAssignOrgRole  string
-	VerifyEmailEnabled bool
-	LoginHint          string
-	DefaultTheme       string
-	DisableLoginForm   bool
-	DisableSignoutMenu bool
+	AllowUserSignUp         bool
+	AllowUserOrgCreate      bool
+	AutoAssignOrg           bool
+	AutoAssignOrgRole       string
+	VerifyEmailEnabled      bool
+	LoginHint               string
+	DefaultTheme            string
+	DisableLoginForm        bool
+	DisableSignoutMenu      bool
+	ExternalUserMngLinkUrl  string
+	ExternalUserMngLinkName string
+	ExternalUserMngInfo     string
 
 	// Http auth
 	AdminUser     string
@@ -531,6 +534,9 @@ func NewConfigContext(args *CommandLineArgs) error {
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 	LoginHint = users.Key("login_hint").String()
 	DefaultTheme = users.Key("default_theme").String()
+	ExternalUserMngLinkUrl = users.Key("external_manage_link_url").String()
+	ExternalUserMngLinkName = users.Key("external_manage_link_name").String()
+	ExternalUserMngInfo = users.Key("external_manage_info").String()
 
 	// auth
 	auth := Cfg.Section("auth")

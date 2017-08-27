@@ -19,7 +19,7 @@ func init() {
       <h3 class="page-heading">DingDing settings</h3>
       <div class="gf-form">
         <span class="gf-form-label width-10">Url</span>
-        <input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url"></input>
+        <input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx"></input>
       </div>
     `,
 	})

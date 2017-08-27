@@ -1,6 +1,8 @@
 package sqlstore
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -10,6 +12,8 @@ func init() {
 	bus.AddHandler("sql", GetDataSourceStats)
 	bus.AddHandler("sql", GetAdminStats)
 }
+
+var activeUserTimeLimit time.Duration = time.Hour * 24 * 14
 
 func GetDataSourceStats(query *m.GetDataSourceStatsQuery) error {
 	var rawSql = `SELECT COUNT(*) as count, type FROM data_source GROUP BY type`
@@ -27,27 +31,35 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
 			(
 				SELECT COUNT(*)
         FROM ` + dialect.Quote("user") + `
-      ) AS user_count,
+      ) AS users,
 			(
 				SELECT COUNT(*)
         FROM ` + dialect.Quote("org") + `
-      ) AS org_count,
+      ) AS orgs,
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("dashboard") + `
-      ) AS dashboard_count,
+      ) AS dashboards,
+			(
+        SELECT COUNT(*)
+        FROM ` + dialect.Quote("data_source") + `
+      ) AS datasources,
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("playlist") + `
-      ) AS playlist_count,
+      ) AS playlists,
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("alert") + `
-      ) AS alert_count
+      ) AS alerts,
+			(
+				SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` where last_seen_at > ?
+      ) as active_users
 			`
 
+	activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
 	var stats m.SystemStats
-	_, err := x.Sql(rawSql).Get(&stats)
+	_, err := x.Sql(rawSql, activeUserDeadlineDate).Get(&stats)
 	if err != nil {
 		return err
 	}
@@ -61,43 +73,48 @@ func GetAdminStats(query *m.GetAdminStatsQuery) error {
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("user") + `
-      ) AS user_count,
+      ) AS users,
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("org") + `
-      ) AS org_count,
+      ) AS orgs,
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("dashboard") + `
-      ) AS dashboard_count,
+      ) AS dashboards,
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("dashboard_snapshot") + `
-      ) AS db_snapshot_count,
+      ) AS snapshots,
       (
         SELECT COUNT( DISTINCT ( ` + dialect.Quote("term") + ` ))
         FROM ` + dialect.Quote("dashboard_tag") + `
-      ) AS db_tag_count,
+      ) AS tags,
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("data_source") + `
-      ) AS data_source_count,
+      ) AS datasources,
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("playlist") + `
-      ) AS playlist_count,
+      ) AS playlists,
       (
-        SELECT COUNT(DISTINCT ` + dialect.Quote("dashboard_id") + ` )
-        FROM ` + dialect.Quote("star") + `
-      ) AS starred_db_count,
+        SELECT COUNT(*) FROM ` + dialect.Quote("star") + `
+      ) AS stars,
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("alert") + `
-      ) AS alert_count
+      ) AS alerts,
+			(
+				SELECT COUNT(*)
+        from ` + dialect.Quote("user") + ` where last_seen_at > ?
+			) as active_users
       `
 
+	activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
+
 	var stats m.AdminStats
-	_, err := x.Sql(rawSql).Get(&stats)
+	_, err := x.Sql(rawSql, activeUserDeadlineDate).Get(&stats)
 	if err != nil {
 		return err
 	}

@@ -90,17 +90,24 @@ export class VariableSrv {
     return variable;
   }
 
-  addVariable(model) {
-    var variable = this.createVariableFromModel(model);
+  addVariable(variable) {
     this.variables.push(variable);
-    return variable;
+    this.templateSrv.updateTemplateData();
+    this.dashboard.updateSubmenuVisibility();
+  }
+
+  removeVariable(variable) {
+    var index = _.indexOf(this.variables, variable);
+    this.variables.splice(index, 1);
+    this.templateSrv.updateTemplateData();
+    this.dashboard.updateSubmenuVisibility();
   }
 
   updateOptions(variable) {
     return variable.updateOptions();
   }
 
-  variableUpdated(variable) {
+  variableUpdated(variable, emitChangeEvents?) {
     // if there is a variable lock ignore cascading update because we are in a boot up scenario
     if (variable.initLock) {
       return this.$q.when();
@@ -117,7 +124,12 @@ export class VariableSrv {
       }
     });
 
-    return this.$q.all(promises);
+    return this.$q.all(promises).then(() => {
+      if (emitChangeEvents) {
+        this.$rootScope.$emit('template-variable-value-updated');
+        this.$rootScope.$broadcast('refresh');
+      }
+    });
   }
 
   selectOptionsForCurrentValue(variable) {
@@ -218,6 +230,26 @@ export class VariableSrv {
     // update url
     this.$location.search(params);
   }
+
+  setAdhocFilter(options) {
+    var variable = _.find(this.variables, {type: 'adhoc', datasource: options.datasource});
+    if (!variable) {
+      variable = this.createVariableFromModel({name: 'Filters', type: 'adhoc', datasource: options.datasource});
+      this.addVariable(variable);
+    }
+
+    let filters = variable.filters;
+    let filter =  _.find(filters, {key: options.key, value: options.value});
+
+    if (!filter) {
+      filter = {key: options.key, value: options.value};
+      filters.push(filter);
+    }
+
+    filter.operator = options.operator;
+    this.variableUpdated(variable, true);
+  }
+
 }
 
 coreModule.service('variableSrv', VariableSrv);

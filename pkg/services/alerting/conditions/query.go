@@ -104,7 +104,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
-		return nil, fmt.Errorf("Could not find datasource")
+		return nil, fmt.Errorf("Could not find datasource %v", err)
 	}
 
 	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange)

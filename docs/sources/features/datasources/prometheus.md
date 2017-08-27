@@ -78,7 +78,7 @@ For details of *metric names*, *label names* and *label values* are please refer
 There are two syntaxes:
 
 - `$<varname>`  Example: rate(http_requests_total{job=~"$job"}[5m])
-- `[[varname]]` Example: rate(http_requests_total{job="my[[job]]"}[5m])
+- `[[varname]]` Example: rate(http_requests_total{job=~"[[job]]"}[5m])
 
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the *Multi-value* or *Include all value*
 options are enabled, Grafana converts the labels from plain text to a regex compatible string. Which means you have to use `=~` instead of `=`.

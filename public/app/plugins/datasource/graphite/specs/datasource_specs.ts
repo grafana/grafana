@@ -5,7 +5,7 @@ import {GraphiteDatasource} from "../datasource";
 
 describe('graphiteDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
-  var instanceSettings: any = {url: [''], name: 'graphiteProd'};
+  var instanceSettings: any = {url: [''], name: 'graphiteProd', jsonData: {}};
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
