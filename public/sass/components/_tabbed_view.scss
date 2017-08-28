@@ -57,10 +57,13 @@
 }
 
 // cloudwiz start
-.tabbed-view {
+.tabbed-view-timepicker {
   position: absolute;
+  top: 52px;
   left: 0;
   right: 0;
   z-index: 1;
+  background: white;
+  padding: 50px;
 }
 // cloudwiz end
