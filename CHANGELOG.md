@@ -11,7 +11,7 @@
 
 ## New Features
 
-* **Table panel**: Render cell values as links that can use url that uses variables from current table row. [#3754](https://github.com/grafana/grafana/issues/3754)
+* **Table panel**: Render cell values as links that have an url template that uses variables from current table row. [#3754](https://github.com/grafana/grafana/issues/3754)
 * **Elasticsearch**: Add ad hoc filters directly by clicking values in table panel [#8052](https://github.com/grafana/grafana/issues/8052).
 
 ## Enhancements
