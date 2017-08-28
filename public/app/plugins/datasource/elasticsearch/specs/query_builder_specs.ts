@@ -289,11 +289,11 @@ describe('ElasticQueryBuilder', function() {
       {key: 'key6', operator: '!~', value: 'value6'},
     ]);
 
-    expect(query.query.bool.filter[2].term["key1"]).to.be("value1");
-    expect(query.query.bool.filter[3].bool.must_not.term["key2"]).to.be("value2");
-    expect(query.query.bool.filter[4].range["key3"].lt).to.be("value3");
-    expect(query.query.bool.filter[5].range["key4"].gt).to.be("value4");
-    expect(query.query.bool.filter[6].regexp["key5"]).to.be("value5");
-    expect(query.query.bool.filter[7].bool.must_not.regexp["key6"]).to.be("value6");
+    expect(query.query.bool.must.match_phrase["key1"].query).to.be("value1");
+    expect(query.query.bool.must_not.match_phrase["key2"].query).to.be("value2");
+    expect(query.query.bool.filter[2].range["key3"].lt).to.be("value3");
+    expect(query.query.bool.filter[3].range["key4"].gt).to.be("value4");
+    expect(query.query.bool.filter[4].regexp["key5"]).to.be("value5");
+    expect(query.query.bool.filter[5].bool.must_not.regexp["key6"]).to.be("value6");
   });
 });

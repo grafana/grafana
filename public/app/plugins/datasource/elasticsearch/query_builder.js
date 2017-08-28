@@ -1,7 +1,8 @@
 define([
-  './query_def'
+  './query_def',
+  'lodash',
 ],
-function (queryDef) {
+function (queryDef, _) {
   'use strict';
 
   function ElasticQueryBuilder(options) {
@@ -133,17 +134,20 @@ function (queryDef) {
       return;
     }
 
-    var i, filter, condition;
+    var i, filter, condition, queryCondition;
     for (i = 0; i < adhocFilters.length; i++) {
       filter = adhocFilters[i];
       condition = {};
       condition[filter.key] = filter.value;
+      queryCondition = {};
+      queryCondition[filter.key] = {query: filter.value};
+
       switch(filter.operator){
         case "=":
-          query.query.bool.filter.push({"term": condition});
+          _.set(query, "query.bool.must.match_phrase", queryCondition);
           break;
         case "!=":
-          query.query.bool.filter.push({"bool": {"must_not": {"term": condition}}});
+          _.set(query, "query.bool.must_not.match_phrase", queryCondition);
           break;
         case "<":
           condition[filter.key] = {"lt": filter.value};
