@@ -4,8 +4,8 @@
 			<i class="fa fa-clock-o"></i>
 		</span>
 
-		<span class="gf-form-label width-12">Override relative time</span>
-		<span class="gf-form-label width-6">Last</span>
+		<span class="gf-form-label width-12">设置相对时间</span>
+		<span class="gf-form-label width-8">截止至</span>
 
 		<input type="text" class="gf-form-input max-width-8" placeholder="1h"
 			empty-to-null ng-model="ctrl.panel.timeFrom" valid-time-span
@@ -16,10 +16,21 @@
 		<span class="gf-form-label">
 			<i class="fa fa-clock-o"></i>
 		</span>
-		<span class="gf-form-label width-12">Add time shift</span>
-		<span class="gf-form-label width-6">Amount</span>
+		<span class="gf-form-label width-12">添加时间偏移</span>
+		<span class="gf-form-label width-8">相对时间之前</span>
 		<input type="text" class="gf-form-input max-width-8" placeholder="1h"
 			empty-to-null ng-model="ctrl.panel.timeShift" valid-time-span
+			ng-change="ctrl.refresh()" ng-model-onblur></input>
+	</div>
+
+	<div class="gf-form">
+		<span class="gf-form-label">
+			<i class="fa fa-clock-o"></i>
+		</span>
+		<span class="gf-form-label width-12">添加时间偏移</span>
+		<span class="gf-form-label width-8">相对时间之后</span>
+		<input type="text" class="gf-form-input max-width-8" placeholder="1h"
+			empty-to-null ng-model="ctrl.panel.timeForward" valid-time-span
 			ng-change="ctrl.refresh()" ng-model-onblur></input>
 	</div>
 
@@ -30,8 +41,8 @@
 			</span>
 		</div>
 		<gf-form-switch class="gf-form max-width-30"
-			label="Hide time override info" label-class="width-12"
-			checked="ctrl.panel.hideTimeOverride" switch-class="max-width-6" on-change="ctrl.refresh()">
+			label="隐藏时间设置信息" label-class="width-12"
+			checked="ctrl.panel.hideTimeOverride" switch-class="max-width-8" on-change="ctrl.refresh()">
 		</gf-form-switch>
 	</div>
 </div>
