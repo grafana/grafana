@@ -128,7 +128,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     // Prometheus drop query if range/step > 11000
     // calibrate step if it is too big
     if (step !== 0 && range / step > 11000) {
-      return Math.ceil(range / 11000);
+      step = Math.ceil(range / 11000);
     }
     return Math.max(step, autoStep);
   };
