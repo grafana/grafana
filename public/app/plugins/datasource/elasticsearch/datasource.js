@@ -19,13 +19,17 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
     this.url = instanceSettings.url;
     this.index = instanceSettings.index;
     this.name = instanceSettings.name;
-    var tokenTemplate ={};
-    tokenTemplate['_token'] = {value: MD5(backendSrv.getToken())};
-    this.index = templateSrv.replace(this.index, tokenTemplate);
-    instanceSettings.index = this.index;
-    this.timeField = instanceSettings.jsonData.timeField;
-    this.esVersion = instanceSettings.jsonData.esVersion;
-    this.indexPattern = new IndexPattern(instanceSettings.index, instanceSettings.jsonData.interval);
+    this.initToken = this.index;
+    this.setIndexPattern = function() {
+      var tokenTemplate ={};
+      tokenTemplate['_token'] = {value: MD5(backendSrv.getToken())};
+      this.index = templateSrv.replace(this.initToken, tokenTemplate);
+      instanceSettings.index = this.index;
+      this.timeField = instanceSettings.jsonData.timeField;
+      this.esVersion = instanceSettings.jsonData.esVersion;
+      this.indexPattern = new IndexPattern(instanceSettings.index, instanceSettings.jsonData.interval);
+    };
+    this.setIndexPattern();
     this.interval = instanceSettings.jsonData.timeInterval;
     this.queryBuilder = new ElasticQueryBuilder({
       timeField: this.timeField,
@@ -33,6 +37,7 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
     });
 
     this._request = function(method, url, data) {
+      this.setIndexPattern();
       var options = {
         url: contextSrv.elkUrl + "/" + url,
         method: method,
@@ -95,6 +100,7 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
       if (annotation.index) {
         header.index = annotation.index;
       } else {
+        this.setIndexPattern();
         header.index = this.indexPattern.getIndexList(options.range.from, options.range.to);
       }
 
@@ -160,6 +166,7 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
     };
 
     this.getQueryHeader = function(searchType, timeFrom, timeTo) {
+      this.setIndexPattern();
       var header = {search_type: searchType, "ignore_unavailable": true};
       header.index = this.indexPattern.getIndexList(timeFrom, timeTo);
       return angular.toJson(header);

@@ -10,7 +10,7 @@ var template = `
   <div class="gf-form-inline">
     <div class="gf-form">
       <label class="gf-form-label">
-        <i class="icon-gf icon-gf-datasource"></i>
+        <i class="fa fa-database"></i>
       </label>
       <label class="gf-form-label">
         Panel data source

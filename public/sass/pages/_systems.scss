@@ -14,6 +14,8 @@ $criticalBackground: rgb(224,76,65);
   background: #fff;
   text-align: center;
   border: 5px solid transparent;
+  border-radius: 6px;
+  box-shadow: 1px 2px 5px 5px #ccc;
   &:hover{
     box-shadow: 5px 5px 3px #888;
     border-left-color:  $blue;
@@ -53,9 +55,9 @@ $criticalBackground: rgb(224,76,65);
 }
 
 .system-item-pie{
-  width: 150px;
-  height: 150px;
-  margin: -36px auto 0px;
+  width: 100px;
+  height: 100px;
+  margin: -20px auto 12px;
 
   .pieLabel div {
       font-size: 18px!important;

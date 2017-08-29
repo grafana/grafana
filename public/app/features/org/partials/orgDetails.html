@@ -66,7 +66,7 @@
 	<form name="addOrgForm" class="gf-form-group">
 		<div class="gf-form-inline">
 			<div class="gf-form max-width-28">
-				<span class="gf-form-label width-6">新增子系统</span>
+				<span class="gf-form-label width-7">新增子系统</span>
 				<input type="text" ng-model="newSystemName" required class="itight-form-input last" placeholder="如:办公自动化系统">
 			</div>
 			<div class="gf-form">
@@ -81,7 +81,7 @@
 	<form name="addOrgForm" class="gf-form-group" ng-if="systems.length > 0">
 		<div class="gf-form-inline">
 			<div class="gf-form max-width-28" ng-repeat="system in systems">
-				<span class="gf-form-label width-6">子系统名称</span>
+				<span class="gf-form-label width-7">子系统名称</span>
 				<input type="text" required ng-model="system.SystemsName" class="tight-form-input last" style="width: 475px">
 			</div>
 			<div class="gf-form">
@@ -91,14 +91,14 @@
 	</form>
 
 
-	<h3 class="page-heading">Admin Pages</h3>
+	<h3 class="page-heading">管理员页面</h3>
 	<div class="gf-form-group">
 		<div class="gf-form-inline">
 			<div class="gf-form">
-				<a href="org/users" class="btn gf-form-btn btn-inverse">Users &amp; Roles</a>
+				<a href="org/users" class="btn gf-form-btn btn-inverse">用户管理</a>
 			</div>
 			<div class="gf-form">
-			<a href="org/apikeys" class="btn gf-form-btn btn-inverse">API Keys</a>
+			<a href="org/apikeys" class="btn gf-form-btn btn-inverse">密钥管理</a>
 		</div>
 	</div>
 </div>

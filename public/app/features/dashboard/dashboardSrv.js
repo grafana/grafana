@@ -330,7 +330,7 @@ function (angular, $, _, moment) {
         panelUpgrades.push(function(panel) {
           _.each(panel.targets, function(target) {
             if (!target.refId) {
-              target.refId = this.getNextQueryLetter(panel);
+              target.refId = p.getNextQueryLetter(panel);
             }
           }, this);
         });

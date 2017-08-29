@@ -162,6 +162,21 @@ class MetricsPanelCtrl extends PanelCtrl {
       this.rangeRaw = this.range;
     }
 
+    if (this.panel.timeForward) {
+      var timeShiftInterpolated = this.templateSrv.replace(this.panel.timeForward, this.panel.scopedVars);
+      var timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
+      if (timeShiftInfo.invalid) {
+        this.timeInfo = 'invalid timeForward';
+        return;
+      }
+
+      var timeForward = '+' + timeShiftInterpolated;
+      this.timeInfo += ' timeForward ' + timeForward;
+      this.range.from = dateMath.parseDateMath(timeForward, this.range.from, false);
+      this.range.to = dateMath.parseDateMath(timeForward, this.range.to, true);
+
+      this.rangeRaw = this.range;
+    }
     if (this.panel.hideTimeOverride) {
       this.timeInfo = '';
     }

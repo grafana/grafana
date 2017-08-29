@@ -32,7 +32,7 @@ function (angular, $, _, Tether) {
 
       function createMenuTemplate(ctrl) {
         // debugger
-        var template = '<div class="panel-right-menu" ng-show="!ctrl.loading" ng-class="{panelError: ctrl.error}">';
+        var template = '<div class="panel-right-menu drag-handle" ng-show="!ctrl.loading" ng-class="{panelError: ctrl.error}">';
         _.each(ctrl.getMenu(), function (item) {
           if (item.role === 'Editor' && !ctrl.dashboard.meta.canEdit) {
             return;
