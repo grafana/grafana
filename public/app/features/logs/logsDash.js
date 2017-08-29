@@ -282,7 +282,8 @@ define(function() {
           "transform": "json",
           "type": "table",
           "scopedVars": {
-            "logCompare": true
+            "logCompare": true,
+            "logFilter" : "$LOGFILTER"
           }
         },
         {
@@ -573,7 +574,8 @@ define(function() {
     "transform": "json",
     "type": "table",
     "scopedVars": {
-      "logCompare": true
+      "logCompare": true,
+      "logFilter" : "$LOGFILTER"
     },
     "active": true
   };

@@ -108,6 +108,7 @@ define([
         // reset for requesting dashboard
         var panels = $scope.dashboard.rows[0].panels;
         _.forEach(panels, function (panel) {
+          panel.scopedVars && panel.scopedVars.logFilter && (panel.scopedVars.logFilter = tabId ? $scope.tabsCache[tabId].logFilter : "");
           _.forEach(panel.targets, function (target) {
             target.size && (target.size = tabId ? $scope.tabsCache[tabId].size : 500);
             (typeof target.query !== "undefined") && (target.query = tabId ? $scope.tabsCache[tabId].query : "");
@@ -209,7 +210,8 @@ define([
         row = fillRowData(row, {
           "\\$SIZE": $scope.size,
           "\\$QUERY": $scope.query,
-          "\\$TIMESHIFT": $scope.timeShift
+          "\\$TIMESHIFT": $scope.timeShift,
+          "\\$LOGFILTER": $scope.logFilter
         });
 
         $scope.initDashboard({
@@ -263,9 +265,10 @@ define([
 
       // 切换 日志搜索1-n
       $scope.switchCurLogTab = function (tabId, index) {
+        if ($scope.dashboard.rows[0].id == tabId) return;
+
         // 优化: 当前所有数据加载完成 才允许切换
         // ($scope.dashboard.loaded === 4) && resetRow(tabId);
-        if ($scope.dashboard.rows[0].id == tabId) return;
         resetRow(tabId);
       };
 
@@ -277,7 +280,8 @@ define([
         row = fillRowData(row, {
           "\\$SIZE": $scope.size,
           "\\$QUERY": $scope.query,
-          "\\$TIMESHIFT": $scope.timeShift
+          "\\$TIMESHIFT": $scope.timeShift,
+          "\\$LOGFILTER": $scope.logFilter
         });
         $scope.dashboard.rows[0].panels[tab] = row;
       };
