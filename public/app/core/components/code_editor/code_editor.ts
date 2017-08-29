@@ -99,7 +99,7 @@ function link(scope, elem, attrs) {
   // disable depreacation warning
   codeEditor.$blockScrolling = Infinity;
   // Padding hacks
-  codeEditor.renderer.setScrollMargin(10, 11);
+  codeEditor.renderer.setScrollMargin(15, 15);
   codeEditor.renderer.setPadding(10);
 
   setThemeMode(theme);
@@ -133,6 +133,10 @@ function link(scope, elem, attrs) {
     scope.onChange();
   });
 
+  scope.$on("$destroy", () => {
+    codeEditor.destroy();
+  });
+
   // Keybindings
   codeEditor.commands.addCommand({
     name: 'executeQuery',
@@ -155,7 +159,10 @@ function link(scope, elem, attrs) {
         enableSnippets: true
       });
 
+      console.log('getting completer', lang);
       if (scope.getCompleter()) {
+        // make copy of array as ace seems to share completers array between instances
+        codeEditor.completers = codeEditor.completers.slice();
         codeEditor.completers.push(scope.getCompleter());
       }
     });
@@ -176,6 +183,8 @@ function link(scope, elem, attrs) {
       setModuleUrl("theme", fixedTheme);
       themeModule = `ace/theme/${fixedTheme}`;
       codeEditor.setTheme(themeModule);
+
+      elem.addClass("gf-code-editor--theme-loaded");
     });
   }
 

@@ -49,7 +49,7 @@ ace.define("ace/theme/grafana-dark",["require","exports","module","ace/lib/dom"]
   .gf-code-dark .ace_keyword,\
   .gf-code-dark .ace_meta.ace_tag,\
   .gf-code-dark .ace_storage {\
-  color: #fae400\
+  color: #66d9ef\
   }\
   .gf-code-dark .ace_punctuation,\
   .gf-code-dark .ace_punctuation.ace_tag {\
@@ -71,7 +71,7 @@ ace.define("ace/theme/grafana-dark",["require","exports","module","ace/lib/dom"]
   }\
   .gf-code-dark .ace_support.ace_constant,\
   .gf-code-dark .ace_support.ace_function {\
-  color: #66d9ef\
+  color: #59e6e3\
   }\
   .gf-code-dark .ace_fold {\
   background-color: #a6e22e;\

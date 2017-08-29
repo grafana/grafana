@@ -3,6 +3,7 @@
   min-width: 20rem;
   flex-grow: 1;
   margin-right: 0.25rem;
+  visibility: hidden;
 
   &.ace_editor {
     @include font-family-monospace();
@@ -11,6 +12,10 @@
 
     @include border-radius($input-border-radius-sm);
     border: $input-btn-border-width solid $input-border-color;
+  }
+
+  &--theme-loaded {
+    visibility: visible;
   }
 }
 
@@ -46,28 +51,29 @@
   }
 }
 
-$doc-font-size: 0.8rem;
-$doc-text-padding: $doc-font-size * 0.5;
+$doc-font-size: $font-size-sm;
 
 .ace_tooltip.ace_doc-tooltip {
   @include font-family-monospace();
   font-size: $doc-font-size;
 
-  background-color: $dropdownBackground;
+  background-color: $popover-help-bg;
+  color: $popover-help-color;
   background-image: none;
-  color: $dropdownLinkColor;
   border: 1px solid $dropdownBorder;
-  padding-top: $doc-text-padding;
-  padding-bottom: 0px;
+  padding: 0.5rem 1rem;
 
   hr {
-    background-color: $dropdownDividerBottom;
-    margin-top: $doc-text-padding;
-    margin-bottom: $doc-text-padding;
+    background-color: $popover-help-color;
+    margin: 0.5rem 0rem;
   }
 
   code {
     padding: 0px 1px;
     margin: 0px;
   }
+}
+
+.ace_tooltip {
+  border-radius: 3px;
 }
