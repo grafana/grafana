@@ -131,7 +131,7 @@ define([
       };
 
       $scope.currentFilter = "无";
-      $scope.logFilter = function (rule) {
+      $scope.logFilterOperator = function (rule) {
         $scope.logFilter = rule;
         $scope.dashboard.rows[0].panels[2].scopedVars.logFilter = rule;
         $rootScope.$broadcast('refresh');
@@ -234,7 +234,7 @@ define([
             templateUrl: 'public/app/features/logs/partials/log_cluster_modal.html',
             show: false
           });
-  
+
           clusterLogSourceModal.$promise.then(clusterLogSourceModal.show);
         });
       };
@@ -252,7 +252,7 @@ define([
       // 新建 日志搜索tab
       $scope.pushTab = function () {
         currentLogTab = Object.keys($scope.tabsCache).length;
-        resetRow();   
+        resetRow();
 
         $scope.tabs.push({
           "active": true,
