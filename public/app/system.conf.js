@@ -45,6 +45,7 @@ System.config({
     "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge",
     'quill':                    'vendor/quill/quill.min',
     'ng-quill':                 'vendor/quill/ng-quill',
+    'jsdiff':                   'vendor/jsdiff/index',
   },
 
   packages: {

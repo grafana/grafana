@@ -1,385 +1,138 @@
 define([
     'angular',
-    'lodash'
+    'lodash',
+    'moment',
+    'jsdiff',
+    './logsDash',
+    'app/core/utils/datemath'
   ],
-  function (angular) {
+  function (angular, _, moment, Diff, logsDash, dateMath) {
     'use strict';
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('LogsCtrl', function ($scope, contextSrv, $rootScope) {
-      var panelMetas = [
+    module.filter('formatTimeRange', function () {
+      return function (text) {
+        if (!text) return;
+
+        var { from, to } = text;
+        var [ time, relative, index ] = Array.prototype.slice.call(arguments);
+        moment.isMoment(from) && (from = moment(from));
+        moment.isMoment(to) && (to = moment(to));
+
+        from = dateMath.parse(from, false);
+        to = dateMath.parse(to, true);
+
+        relative = parseInt(relative);
+        !_.isNaN(relative) && (
+          from = moment.utc(from).subtract(relative, 'days'),
+          to = moment.utc(to).subtract(relative, 'days')
+        );
+
+        return moment.utc(index === 0 ? from : to).format("YYYY-MM-DD");
+      };
+    });
+
+    module.controller('LogsCtrl', function ($scope, contextSrv, $rootScope, timeSrv, $modal, datasourceSrv, backendSrv, $q) {
+      var currentLogTab = 0;
+      var panelMetas    = logsDash.rows;
+      var logClusterPanel = logsDash.logClusterPanel;
+      var logComparePanel = logsDash.logComparePanel;
+
+      $scope.tabsCache = {};
+      $scope.resultCache = {};
+      $scope.selectedCompare = [];
+      $scope.tabs = [
         {
-          "collapse": false,
-          "editable": false,
-          "height": "300px",
-          "panels": [
-            {
-              "columns": [
-                {
-                  "text": "@timestamp",
-                  "value": "@timestamp"
-                },
-                {
-                  "text": "host",
-                  "value": "host"
-                },
-                {
-                  "text": "_type",
-                  "value": "_type"
-                },
-                {
-                  "text": "message",
-                  "value": "message"
-                }
-              ],
-              "datasource": "elk",
-              "editable": true,
-              "error": false,
-              "fontSize": "100%",
-              "height": "500",
-              "helpInfo": {
-                "context": "",
-                "info": false,
-                "title": ""
-              },
-              "hideTimeOverride": false,
-              "id": 1,
-              "isNew": true,
-              "links": [],
-              "pageSize": null,
-              "scroll": false,
-              "showHeader": true,
-              "sort": {
-                "col": 0,
-                "desc": true
-              },
-              "span": 12,
-              "styles": [
-                {
-                  "dateFormat": "YYYY-MM-DD HH:mm:ss,sss",
-                  "pattern": "@timestamp",
-                  "type": "date"
-                },
-                {
-                  "colorMode": null,
-                  "colors": [
-                    "rgba(245, 54, 54, 0.9)",
-                    "rgba(237, 129, 40, 0.89)",
-                    "rgba(50, 172, 45, 0.97)"
-                  ],
-                  "decimals": 2,
-                  "pattern": "/.*/",
-                  "thresholds": [],
-                  "type": "number",
-                  "unit": "short"
-                }
-              ],
-              "targets": [
-                {
-                  "aggregator": "sum",
-                  "bucketAggs": [],
-                  "downsampleAggregator": "avg",
-                  "dsType": "elasticsearch",
-                  "errors": {},
-                  "metrics": [
-                    {
-                      "field": "select field",
-                      "id": "1",
-                      "meta": {},
-                      "settings": {},
-                      "type": "raw_document"
-                    }
-                  ],
-                  "refId": "A",
-                  "timeField": "@timestamp",
-                  "size": 500
-                }
-              ],
-              "tab": 1,
-              "title": "日志查询",
-              "transform": "json",
-              "transparent": false,
-              "type": "table"
-            },
-            {
-              "columns": [
-                {
-                  "text": "count",
-                  "value": "count"
-                },
-                {
-                  "text": "message",
-                  "value": "message"
-                }
-              ],
-              "datasource": "elk",
-              "editable": true,
-              "error": false,
-              "fontSize": "120%",
-              "height": "500",
-              "helpInfo": {
-                "context": "",
-                "info": false,
-                "title": ""
-              },
-              "hideTimeOverride": false,
-              "id": Math.random(),
-              "isNew": true,
-              "links": [],
-              "pageSize": null,
-              "scroll": false,
-              "showHeader": true,
-              "sort": {
-                "col": 0,
-                "desc": true
-              },
-              "span": 12,
-              "styles": [
-                {
-                  "dateFormat": "YYYY-MM-DD HH:mm:ss,sss",
-                  "pattern": "@timestamp",
-                  "type": "date"
-                },
-                {
-                  "colorMode": null,
-                  "colors": [
-                    "rgba(245, 54, 54, 0.9)",
-                    "rgba(237, 129, 40, 0.89)",
-                    "rgba(50, 172, 45, 0.97)"
-                  ],
-                  "decimals": 0,
-                  "pattern": "/.*/",
-                  "thresholds": [],
-                  "type": "number",
-                  "unit": "short"
-                }
-              ],
-              "targets": [
-                {
-                  "aggregator": "sum",
-                  "bucketAggs": [],
-                  "downsampleAggregator": "avg",
-                  "dsType": "elasticsearch",
-                  "errors": {},
-                  "metrics": [
-                    {
-                      "field": "select field",
-                      "id": Math.random(),
-                      "meta": {},
-                      "settings": {},
-                      "type": "raw_document"
-                    }
-                  ],
-                  "refId": "A",
-                  "timeField": "@timestamp",
-                  "size": 500
-                }
-              ],
-              "title": "聚合数据",
-              "transform": "json",
-              "transparent": false,
-              "type": "table",
-              "tab": 2,
-              "scopedVars": {
-                "logCluster": true
-              }
-            },
-            {
-              "columns": [
-                {
-                  "text": "count",
-                  "value": "count"
-                },
-                {
-                  "text": "change",
-                  "value": "change"
-                },
-                {
-                  "text": "message",
-                  "value": "message"
-                }
-              ],
-              "datasource": "elk",
-              "editable": true,
-              "error": false,
-              "fontSize": "100%",
-              "helpInfo": {
-                "context": "",
-                "info": false,
-                "title": ""
-              },
-              "id": Math.random(),
-              "isNew": true,
-              "links": [],
-              "pageSize": null,
-              "scroll": false,
-              "showHeader": true,
-              "sort": {
-                "col": 0,
-                "desc": true
-              },
-              "span": 12,
-              "styles": [
-                {
-                  "dateFormat": "YYYY-MM-DD HH:mm:ss,sss",
-                  "pattern": "Time",
-                  "type": "date"
-                }
-              ],
-              "targets": [
-                {
-                  "aggregator": "sum",
-                  "bucketAggs": [],
-                  "downsampleAggregator": "avg",
-                  "dsType": "elasticsearch",
-                  "errors": {},
-                  "metrics": [
-                    {
-                      "field": "select field",
-                      "id": Math.random(),
-                      "meta": {},
-                      "settings": {},
-                      "type": "raw_document"
-                    }
-                  ],
-                  "query": "",
-                  "refId": "A",
-                  "timeField": "@timestamp",
-                  "size": 500
-                },
-                {
-                  "bucketAggs": [],
-                  "dsType": "elasticsearch",
-                  "metrics": [
-                    {
-                      "field": "select field",
-                      "id": Math.random(),
-                      "meta": {},
-                      "settings": {},
-                      "type": "raw_document"
-                    }
-                  ],
-                  "query": "",
-                  "refId": "B",
-                  "timeField": "@timestamp",
-                  "timeShift": "-1d",
-                  "size": 500
-                }
-              ],
-              "tab": 3,
-              "title": "日志对比",
-              "transform": "json",
-              "type": "table",
-              "scopedVars": {
-                "logCompare": true
-              }
-            },
-            {
-              "aliasColors": {},
-              "bars": true,
-              "datasource": "elk",
-              "editable": true,
-              "error": false,
-              "fill": 1,
-              "grid": {
-                "leftLogBase": 1,
-                "leftMax": null,
-                "leftMin": null,
-                "rightLogBase": 1,
-                "rightMax": null,
-                "rightMin": null,
-                "threshold1": null,
-                "threshold1Color": "rgba(216, 200, 27, 0.27)",
-                "threshold2": null,
-                "threshold2Color": "rgba(234, 112, 112, 0.22)"
-              },
-              "id": 3,
-              "legend": {
-                "avg": false,
-                "current": false,
-                "max": false,
-                "min": false,
-                "show": false,
-                "total": false,
-                "values": false
-              },
-              "lines": false,
-              "linewidth": 2,
-              "nullPointMode": "connected",
-              "percentage": false,
-              "pointradius": 5,
-              "points": false,
-              "renderer": "flot",
-              "seriesOverrides": [],
-              "span": 12,
-              "stack": false,
-              "steppedLine": false,
-              "targets": [
-                {
-                  "aggregator": "sum",
-                  "bucketAggs": [
-                    {
-                      "field": "@timestamp",
-                      "id": "2",
-                      "settings": {
-                        "interval": "auto",
-                        "min_doc_count": 0
-                      },
-                      "type": "date_histogram"
-                    }
-                  ],
-                  "downsampleAggregator": "avg",
-                  "dsType": "elasticsearch",
-                  "errors": {},
-                  "metric": "internal.alert.state",
-                  "metrics": [
-                    {
-                      "field": "select field",
-                      "id": "1",
-                      "type": "count"
-                    }
-                  ],
-                  "query": "*",
-                  "refId": "A",
-                  "timeField": "@timestamp"
-                }
-              ],
-              "timeFrom": null,
-              "timeShift": null,
-              "title": "日志总数",
-              "tooltip": {
-                "shared": true,
-                "value_type": "cumulative"
-              },
-              "transparent": true,
-              "type": "graph",
-              "x-axis": true,
-              "y-axis": true,
-              "y_formats": [
-                "short",
-                "short"
-              ],
-              "links": [],
-              "helpInfo": {
-                "info": false,
-                "title": "",
-                "context": ""
-              }
-            }
-          ],
-          "showTitle": false,
-          "title": ""
+          "active": true,
+          "title": "日志搜索 1",
+          "id": 1,  // should be the same with panelMeta[0].id
         }
       ];
 
+      // 搜索框帮助
+      $scope.queryInputOptions = [
+        { key: 'host:', helpInfo: '查询特定host日志 (例如: host:centos1)' },
+        { key: 'type:', helpInfo: '查询特定type日志 (例如: type:mysql)' },
+        { key: 'message:', helpInfo: '查询正则匹配的日志 (例如: message:/INFO/)' },
+        { key: 'AND', helpInfo: '联合查询' },
+        { key: 'OR', helpInfo: '联合查询' },
+        { key: 'NOT', helpInfo: '联合查询' }
+      ];
+      $scope.selectQueryOption = function (queryKey) {
+        ($scope.query === "*" || $scope.query === undefined) && ($scope.query = "");
+        $scope.query = $scope.query +  " " + queryKey;
+        $("#dropdownMenu1").focus();
+      };
+      $scope.showQueryOption = function (event) {
+        var code = event.keyCode || event.which;
+        (code == 32) && $("#dropdownMenu1").click();  // Space Code
+      };
+
+      function fillRowData(row, patternMap) {
+        row = JSON.stringify(row);
+        for (var pattern in patternMap) {
+          row = row.replace(new RegExp(pattern, "g"), patternMap[pattern]);
+        }
+        return JSON.parse(row);
+      };
+
+      // 先记住当前的 query 等信息
+      function saveCurQueryInfo(tabId) {
+        var queryInfo = {
+          "query": $scope.query,
+          "size" : $scope.size,
+          "timeShift": $scope.timeShift,
+          "currentRelativeTime": $scope.currentRelativeTime,
+          "logFilter": $scope.logFilter,
+          "currentFilter": $scope.currentFilter,
+          "timeRange": angular.copy($scope.dashboard.time),
+          "row": angular.copy($scope.dashboard.rows[0])
+        };
+        $scope.tabsCache[$scope.dashboard.rows[0].id] = queryInfo;
+      }
+
+      function resetRow(tabId) {
+        saveCurQueryInfo(tabId);
+
+        // reset for view
+        Object.assign($scope, tabId ? $scope.tabsCache[tabId] : {
+          "query": "",
+          "size": "500",
+          "timeShift": "-1d",
+          "currentRelativeTime": "1天以前",
+          "logFilter": "",
+          "currentFilter": "无"
+        });
+
+        // reset for requesting dashboard
+        var panels = $scope.dashboard.rows[0].panels;
+        panels.forEach((panel) => {
+          panel.targets.forEach((target) => {
+            target.size && (target.size = tabId ? $scope.tabsCache[tabId].size : 500);
+            (typeof target.query !== "undefined") && (target.query = tabId ? $scope.tabsCache[tabId].query : "");
+            (typeof target.timeShift !== "undefined") && (target.timeShift = tabId ? $scope.tabsCache[tabId].timeShift : "-1d");
+          });
+        });
+        $scope.dashboard.rows[0].id = tabId ? tabId : $scope.dashboard.rows[0].id + 1;
+
+        // NOTE: 1) 直接修改 $scope.dashboard.time 且 broadcast refresh 了.没有作用. why?
+        //       2) timeSrv.setTime() will broadcast "refresh", 所以在修改了 size/query/id 等设置之后调用. 否则上面的修改没有意义.
+        //          而如果直接修改 rows[0], 会触发 refresh 两次.
+        timeSrv.setTime(tabId ? $scope.tabsCache[tabId].timeRange : { from: "now-6h", to: "now" });
+      };
+
+      $scope.currentRelativeTime = "1天以前";
       $scope.logCompare = function(timeShift) {
+        $scope.timeShift = timeShift;
         $scope.dashboard.rows[0].panels[2].targets[1].timeShift = timeShift;
         $rootScope.$broadcast('refresh');
+        $scope.currentRelativeTime = timeShift.replace("-", "").replace("d", "天") + "以前";
       };
 
       $scope.currentFilter = "无";
       $scope.logFilter = function (rule) {
+        $scope.logFilter = rule;
         $scope.dashboard.rows[0].panels[2].scopedVars.logFilter = rule;
         $rootScope.$broadcast('refresh');
         $scope.currentFilter = rule + "日志";
@@ -396,21 +149,6 @@ define([
         });
       };
 
-      $scope.reQuery = function () {
-        var panels = $scope.dashboard.rows[0].panels;
-        //log
-        panels[0].targets[0].query = $scope.query;
-        //clustering
-        panels[1].targets[0].query = $scope.query;
-        //compareing
-        panels[2].targets[0].query = $scope.query;
-        panels[2].targets[1].query = $scope.query;
-        //count
-        panels[3].targets[0].query = $scope.query;
-
-        $rootScope.$broadcast('refresh');
-      };
-
       $scope.isShowKnows = function(type) {
         $scope.appEvent('show-modal', {
           src: 'public/app/features/logs/partials/logs_knowledge.html',
@@ -419,44 +157,176 @@ define([
         });
       };
 
-      $scope.hideGuide = function() {
-        $scope.showSearchGuide = false;
+      $scope.showSearchCompareModal = function () {
+        // prepare for select ng-model
+        $scope.tabs.forEach((item) => {
+          var tabId = item.id;
+          if (!$scope.tabsCache[tabId]) return;
+          item.queryHeader = $scope.resultCache[tabId].queryHeader;
+        });
+
+        var searchCompareModal = $modal({
+          scope: $scope,
+          templateUrl: '/public/app/features/logs/partials/log_search_compare_modal.html',
+          show: false
+        });
+        searchCompareModal.$promise.then(searchCompareModal.show);
+      };
+
+      $scope.reQuery = function () {
+        var panels = $scope.dashboard.rows[0].panels;
+        panels.forEach((panel) => {
+          panel.targets.forEach((target) => {
+            (typeof target.query !== "undefined") && (target.query = $scope.query);
+          });
+        });
+
+        $rootScope.$broadcast('refresh');
       };
 
       $scope.getLogSize = function(size) {
         var panels = $scope.dashboard.rows[0].panels;
-        if (panels[0].targets[0].size === size) {
-          return;
-        }
-        panels[0].targets[0].size = size;
-        panels[1].targets[0].size = size;
-        panels[2].targets[0].size = size;
-        panels[2].targets[1].size = size;
+        panels.forEach((panel) => {
+          panel.targets.forEach((target) => {
+            if (target.size === size) return;
+            target.size && (target.size = size);
+          });
+        });
+
         $rootScope.$broadcast('refresh');
+      };
+
+      $scope.hideGuide = function() {
+        $scope.showSearchGuide = false;
       };
 
       $scope.init = function () {
         $scope.query = "*";
         $scope.size = 500;
-        //log table
-        panelMetas[0].panels[0].targets[0].query = $scope.query;
-        //clustering
-        panelMetas[0].panels[1].targets[0].query = $scope.query;
-        //comparing
-        panelMetas[0].panels[2].targets[0].query = $scope.query;
-        panelMetas[0].panels[2].targets[1].query = $scope.query;
-        //graph
-        panelMetas[0].panels[3].targets[0].query = $scope.query;
+        $scope.timeShift = "-1d";
+
+        var row = _.cloneDeep(panelMetas[0]);
+        row = fillRowData(row, {
+          "\\$SIZE": $scope.size,
+          "\\$QUERY": $scope.query,
+          "\\$TIMESHIFT": $scope.timeShift
+        });
+
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: false, canSave: false},
           dashboard: {
             title: "整合分析",
             id: "123",
-            rows: panelMetas,
+            rows: [row],
             time: {from: "now-6h", to: "now"}
           }
         }, $scope);
+
+        // 优化: 绑定事件写在 panel table render 里
+        $('body').on('click', '.tab-2 tbody tr td:nth-child(2)', function () {
+          var newScope = $scope.$new();
+          var cid = parseInt($(this).next().find('div:eq(0)').text());
+          var curTabId = $scope.dashboard.rows[0].id;
+
+          newScope.bsTableData = _.findWhere($scope.resultCache[curTabId].logCluster, {'cid': cid}).members;
+          var clusterLogSourceModal = $modal({
+            scope: newScope,
+            templateUrl: 'public/app/features/logs/partials/log_cluster_modal.html',
+            show: false
+          });
+  
+          clusterLogSourceModal.$promise.then(clusterLogSourceModal.show);
+        });
       };
       $scope.init();
+
+      // cache repsonse data when datasource.query successed
+      $scope.$on('data-saved', function (event, payload) {
+        var curTabId = $scope.dashboard.rows[0].id;
+        !$scope.resultCache[curTabId] && ($scope.resultCache[curTabId] = {});
+        $scope.resultCache[curTabId][payload.id] = payload.data;
+
+        saveCurQueryInfo(curTabId);
+      });
+
+      // 新建 日志搜索tab
+      $scope.pushTab = function () {
+        currentLogTab = Object.keys($scope.tabsCache).length;
+        resetRow();   
+
+        $scope.tabs.push({
+          "active": true,
+          "title": "日志搜索 " + $scope.dashboard.rows[0].id,
+          "id": $scope.dashboard.rows[0].id
+        });
+      };
+
+      // 切换 日志搜索1-n
+      $scope.switchCurLogTab = function (tabId, index) {
+        // 优化: 当前所有数据加载完成 才允许切换
+        // ($scope.dashboard.loaded === 4) && resetRow(tabId);
+        if ($scope.dashboard.rows[0].id == tabId) return;
+        resetRow(tabId);
+      };
+
+      // 懒加载 聚合&对比，只对第一次有用
+      $scope.logOperate = function (tab) {
+        if (tab === 0) return;
+
+        var row = tab === 1 ? _.cloneDeep(logClusterPanel) : _.cloneDeep(logComparePanel);
+        row = fillRowData(row, {
+          "\\$SIZE": $scope.size,
+          "\\$QUERY": $scope.query,
+          "\\$TIMESHIFT": $scope.timeShift
+        });
+        $scope.dashboard.rows[0].panels[tab] = row;
+      };
+
+      // 横向对比
+      var textTitle = [];
+      $scope.getSearchQuery = function (selected, index) {
+        textTitle[index] = selected.title;
+        $scope.selectedCompare[index] = selected;
+      };
+
+      $scope.logSearchCompare = function () {
+        if (!$scope.selectedCompare.length) return;
+        var payload = _.map($scope.selectedCompare, "queryHeader").join('');
+
+        backendSrv.logCluster({
+          method: "POST",
+          url: "/log/diff",
+          data: payload
+        }).then(function (res) {
+          var list = transformToDiffData(res.data);
+          $("#diffoutput").html(Diff.buildView({
+            baseTextLines: _.map(list[0], 'cluster').join("\n"),
+            newTextLines : _.map(list[1], 'cluster').join("\n"),
+            baseTextName : textTitle[0],
+            newTextName  : textTitle[1],
+            viewType     : 0
+          }));
+        });
+      };
+
+      function transformToDiffData(data) {
+        var list = [[], []];
+
+        data.forEach((item) => {
+          item.members.forEach((member) => {
+            list[member.group].push({
+              'cluster': item.message,
+              'member' : member.message,
+              '_id': member.id,
+              'timestamp': member.timestamp
+            });
+          });
+        });
+
+        list[0] = _.sortBy(list[0], ['timestamp']);
+        list[1] = _.sortBy(list[1], ['timestamp']);
+        return list;
+      }
+
     });
   });

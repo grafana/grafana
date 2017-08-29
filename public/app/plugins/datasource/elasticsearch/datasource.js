@@ -186,7 +186,7 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
 
         var queryObj = this.queryBuilder.build(target);
         var esQuery = angular.toJson(queryObj);
-        var luceneQuery = target.query || '*';
+        var luceneQuery = target.query;  // 取消默认值 "*", 否则新建一个日志搜索会有查询结果
         luceneQuery = templateSrv.replace(luceneQuery, options.scopedVars, 'lucene');
         luceneQuery = angular.toJson(luceneQuery);
 
@@ -216,13 +216,16 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
           url: "/log/clustering",
           data: payload
         }).then(function (res) {
+          _.each(res.data, function (target, index) {
+            cluster(target, index);
+          });
           res.data = [
             {target: 'docs', type: 'docs', datapoints: res.data}
           ];
+          res.id = "logCluster";
           return res;
         });
       } else if (options.scopedVars && options.scopedVars.logCompare) {
-        var relativeTime = parseInt(options.targets[1].timeShift);
         return backendSrv.logCluster({
           method: "POST",
           url: "/log/compare",
@@ -236,20 +239,12 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
           res.data = [
             {target: 'docs', type: 'docs', datapoints: datapoints}
           ];
-          res.timeRange = {
-            now: {
-              start: moment.utc(timeFrom.valueOf()).subtract(relativeTime, 'days').format("YYYY-MM-DD"),
-              end  : moment.utc(timeTo.valueOf()).subtract(relativeTime, 'days').format("YYYY-MM-DD")
-             },
-             relative: {
-               start: moment.utc(timeFrom.valueOf()).format("YYYY-MM-DD"),
-               end  : moment.utc(timeTo.valueOf()).format("YYYY-MM-DD")
-             }
-           };
+          res.id = "logCompare";
           return res;
         });
       } else {
         return this._post("log/search", payload).then(function (res) {
+          res.id = (searchType === "count") ? "logCount" : "logSearch";
           return new ElasticResponse(sentTargets, res).getTimeSeries();
         });
       }
@@ -362,6 +357,11 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
     };
   }
 
+  // 新增 count0 > 0 && count1 == 0
+  // 消失 count0 == 0 && count1 > 0
+  // 增加 count0 > 0 && count1 > 0 && count0 > count1
+  // 减少 count0 > 0 && count1 > 0 && count0 < count1
+  // 没有变化 count0 == count1
   function compare(target) {
     if (target.count0 === 0 && target.count1 > 0) {
       target.count = "消失日志:" + target.count1;
@@ -369,7 +369,7 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
     } else if (target.count0 > 0 && target.count1 === 0) {
       target.count = "新增日志:" + target.count0;
       target.change = "新增";
-    } else if (target.count0 > 0 && target.count1 > 0 && target.count0 >= target.count1) {
+    } else if (target.count0 > 0 && target.count1 > 0 && target.count0 > target.count1) {
       var num = ((Math.abs(target.count0 - target.count1) / target.count1)*100).toFixed();
       target.count = "出现次数:" + target.count0 + "\n同比增长" + num + "%";
       target.change = "增加";
@@ -377,10 +377,18 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
       var num = ((Math.abs(target.count0 - target.count1) / target.count0)*100).toFixed();
       target.count = "出现次数:" + target.count0 + "\n同比减少" + num + "%";
       target.change = "减少";
+    } else if (target.count0 > 0 && target.count1 > 0 && target.count0 == target.count1) {
+      target.count = "出现次数:" + target.count0;
+      target.change = "没有变化";
     } else {
       target.count = "0";
       target.change = "没有变化";
     }
+  };
+
+  function cluster(target, index) {
+    target.operator = '查看原始日志';
+    target.cid = index;
   };
 
   function MD5(e) {

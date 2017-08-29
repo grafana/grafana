@@ -333,7 +333,7 @@ function (_, queryDef) {
       }
     }
 
-    return {data: seriesList, regularities: this.response.regularities};
+    return {data: seriesList, regularities: this.response.regularities, id: this.response.id, config: this.response.$$config};
   };
 
   return ElasticResponse;

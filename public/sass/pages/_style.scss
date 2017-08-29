@@ -25,47 +25,6 @@ body{
     position: relative;
 }
 
-.btn-log-compare{
-    position: absolute;
-    right: 50px;
-    z-index: 1;
-    &>button{
-        background: none;
-        border: none;
-        line-height: 0px;
-        box-shadow: none!important;
-        -webkit-box-shadow: none!important;
-    }
-    &>.dropdown-menu{
-        left: inherit;
-        right: 0;
-        &>li{
-            padding: 0 10px;
-            cursor: pointer;
-            &:hover{
-                color: white;
-                background: #24ade0;
-            }
-        }
-    }
-}
-
-.btn-log-filter {
-    position: relative;
-    font-size: 14px;
-    & > .dropdown-menu {
-        left: 70px;
-    }
-    & > .dropdown-menu > li {
-        padding: 0 10px;
-        cursor: pointer;
-    }
-    & > .dropdown-menu > li:hover {
-        color: white;
-        background: #24ade0;
-    }
-}
-
 .log-panel .table-panel-table td:first-child{
     width: 100px;
 }

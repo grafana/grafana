@@ -1,0 +1,34 @@
+
+<div class="modal" tabindex="-1" role="dialog" aria-hidden="true" style="max-height: 60%; max-width: 100%; overflow-y: scroll;">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header" ng-show="title">
+        <button type="button" class="close" aria-label="Close" ng-click="$hide()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title" ng-bind="title"></h4>
+      </div>
+      <div class="modal-body" style="background-color: #fff;">
+          <table class="table table-striped table-cluster-modal">
+              <thead>
+                <tr>
+                  <th data-field="timestamp">timestamp</th>
+                  <th data-field="type">type</th>
+                  <th data-field="message">message</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr ng-repeat="row in bsTableData">
+                  <td>{{row.timestamp}}</td>
+                  <td>{{row.type}}</td>
+                  <td>{{row.message}}</td>
+                </tr>
+              </tbody>
+          </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" ng-click="$hide()">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>

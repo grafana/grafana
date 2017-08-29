@@ -1,0 +1,213 @@
+.log-search {
+
+  // override tab style
+  & > .nav-tabs {
+    padding: 0;
+    margin: 0;
+  }
+
+  // override btn
+  .btn-spec {
+    padding: 0.4rem 0.6rem;
+    cursor: pointer;
+    a {
+      display: none;
+    }
+  }
+
+  .pull-right {
+    border: none;
+    padding: 0;
+    a {
+      margin-right: 0;
+      color: #fff !important;
+    }
+  }
+
+}
+
+.log-search-result {
+  border: 1px solid #7B7B7B;
+  border-top: none;
+  padding: 20px;
+
+  .panel {
+    margin: 20px 0;
+  }
+
+  .log-compare {
+    display: flex;
+    flex-direction: row;
+    & > div {
+      flex: auto;
+    }
+  }
+
+  .btn-log-compare {
+    position: relative;
+    padding-left: 30px;
+    & > button {
+      line-height: 2;
+    }
+    & > .dropdown-menu {
+      left: 70px;
+      top: 34px;
+      & > li {
+        padding: 0 10px;
+        cursor: pointer;
+        &:hover {
+          color: white;
+          background: #24ade0;
+        }
+      }
+    }
+  }
+
+  .btn-log-filter {
+    position: relative;
+    font-size: 14px;
+    & > button {
+      line-height: 2;
+    }
+    & > .dropdown-menu {
+      left: 70px;
+      top: 34px;
+    }
+    & > .dropdown-menu > li {
+      padding: 0 10px;
+      cursor: pointer;
+    }
+    & > .dropdown-menu > li:hover {
+      color: white;
+      background: #24ade0;
+    }
+  }
+
+  .hide {
+    display: none;
+  }
+
+  #dropdownMenu1 {
+    width: 400px;
+    & + ul {
+      width: 400px;
+      margin: 0;
+      li a {
+        min-height: 44px;
+        padding: 4px 20px 4px 10px;
+        font-size: 14px;
+        i {
+          display: block;
+          font-size: 10px;
+        }
+      }
+    }
+  }
+
+}
+
+// diff table
+table.diff {
+  width: 100%;
+	border-collapse:collapse;
+  border:1px solid darkgray;
+  white-space:pre-wrap;
+  word-break: break-all;
+  table-layout: fixed;
+  display: table;
+  col {
+    &:nth-child(1) {
+      width: 40px;
+    }
+    &:nth-child(3) {
+      width: 40px;
+    }
+  }
+}
+table.diff tbody th {
+	font-size:11px;
+	border:1px solid #CCC;
+	color:#886;
+	padding:.3em .3em .1em 1em;
+	text-align:right;
+  vertical-align:top;
+  box-sizing: border-box;
+}
+table.diff thead {
+	border-bottom:1px solid #BBC;
+	background:#EFEFEF;
+	font-family:Verdana;
+}
+table.diff thead th.texttitle {
+  text-align:left;
+  height: 40px;
+}
+table.diff tbody td {
+  vertical-align:top;
+  text-align: left;
+  border-bottom: 1px solid #ccc;
+  font-size: 14px;
+  span {
+  }
+}
+table.diff td.empty {
+	background-color:#eaecef;
+}
+table.diff td.replace {
+	background-color:#FD8;
+}
+table.diff td.delete {
+  background-color:rgb(249, 207, 210);
+  float: none;  // 被一个全局的 .delete 影响了 
+}
+table.diff td.skip {
+	background-color:#EFEFEF;
+	border:1px solid #AAA;
+	border-right:1px solid #BBC;
+}
+table.diff td.insert {
+	background-color:rgb(230, 255, 236);
+}
+
+table.diff {
+  th.insert {
+    background-color: rgb(145, 209, 160);
+  }
+  th.delete {
+    background-color: rgb(247, 139, 139);
+    float: none;  // 被一个全局的 .delete 影响了
+  }
+  th.replace {
+    background-color: #edca73;
+  }
+  th.skip {
+    background-color:#EFEFEF;
+    border:1px solid #AAA;
+    border-right:1px solid #BBC;
+  }
+  th.empty {
+    background-color:#fafbfc;
+  }
+}
+
+.table-cluster-modal {
+  th {
+    text-align: center;
+  }
+  tbody {
+    tr td:not(:last-child) {
+      text-align: center;
+    }
+  }
+}
+
+// hard code
+.tab-2 tbody tr td:nth-child(2) {
+  cursor: pointer;
+}
+.tab-2 thead tr th:nth-child(3) {
+  display: none;
+}
+.tab-2 tbody tr td:nth-child(3) {
+  display: none;
+}

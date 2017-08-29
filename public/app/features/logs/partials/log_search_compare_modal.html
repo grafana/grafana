@@ -1,0 +1,39 @@
+<div class="modal" tabindex="-1" role="dialog" aria-hidden="true" style="min-height: 30%; max-height: 60%; max-width: 100%; overflow-y: scroll;">
+    <div class="modal-body">
+    
+        <a class="modal-close" ng-click="$hide()">
+            <i class="fa fa-remove"></i>
+        </a>
+    
+        <h3>
+            选择日志查询结果进行对比：
+        </h3>
+    
+        <form>
+            <div style="display: inline-block">
+                <div class="tight-form-container">
+                    <div class="tight-form">
+                        <select class="tight-form-item"
+                          ng-model="selectedCompare1"
+                          ng-change="getSearchQuery(selectedCompare1, 0);"
+                          ng-options="tab.title for tab in tabs">
+                        </select>
+                        对比
+                        <select class="tight-form-item"
+                          ng-model="selectedCompare2"
+                          ng-change="getSearchQuery(selectedCompare2, 1);"
+                          ng-options="tab.title for tab in tabs">
+                        </select>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+            <div style="display: inline-block">
+                <button type="submit" class="btn btn-success" ng-click="logSearchCompare();">确定</button>
+            </div>
+        </form>
+
+        <div id="diffoutput" style="margin: 30px 0px;"></div>
+
+    </div>
+</div>

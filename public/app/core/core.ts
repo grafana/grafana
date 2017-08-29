@@ -27,6 +27,7 @@ import "./directives/system_panel";
 import "./directives/overview_panel";
 import "./directives/service_dep";
 import "./directives/table_loader";
+import "./directives/log_tabpane";
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';
