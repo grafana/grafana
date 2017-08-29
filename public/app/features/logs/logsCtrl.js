@@ -136,7 +136,7 @@ define([
         $scope.logFilter = rule;
         $scope.dashboard.rows[0].panels[2].scopedVars.logFilter = rule;
         $rootScope.$broadcast('refresh');
-        $scope.currentFilter = rule + "日志";
+        $scope.currentFilter = rule === "" ? "无" : rule + "日志";
       };
 
       $scope.showInputModal = function() {
@@ -205,6 +205,7 @@ define([
         $scope.query = "*";
         $scope.size = 500;
         $scope.timeShift = "-1d";
+        $scope.logFilter = "";
 
         var row = _.cloneDeep(panelMetas[0]);
         row = fillRowData(row, {
