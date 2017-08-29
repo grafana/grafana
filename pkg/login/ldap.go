@@ -174,10 +174,14 @@ func (a *ldapAuther) syncInfoAndOrgRoles(user *m.User, ldapUser *LdapUserInfo) e
 func (a *ldapAuther) GetGrafanaUserFor(ldapUser *LdapUserInfo) (*m.User, error) {
 	// validate that the user has access
 	// if there are no ldap group mappings access is true
-	// otherwise a single group must match
+	// otherwise a single group must matc
 	access := len(a.server.LdapGroups) == 0
 	for _, ldapGroup := range a.server.LdapGroups {
-		if ldapUser.isMemberOf(ldapGroup.GroupDN) {
+		ok, err := a.getMemberofGroup(ldapGroup.GroupDN,ldapUser.DN)
+		if err != nil{
+			return nil, err
+		}
+		if ok {
 			access = true
 			break
 		}
@@ -204,6 +208,27 @@ func (a *ldapAuther) GetGrafanaUserFor(ldapUser *LdapUserInfo) (*m.User, error) 
 	return userQuery.Result, nil
 
 }
+
+func (a *ldapAuther) getMemberofGroup(GroupDN string,DN string) (bool, error){
+	var searchResult *ldap.SearchResult
+	var err error
+	var filter = strings.Replace("(distinguishedName=%s)", "%s", DN, -1)
+		searchReq := ldap.SearchRequest{
+			BaseDN:       GroupDN,
+			Scope:        ldap.ScopeWholeSubtree,
+			DerefAliases: ldap.NeverDerefAliases,
+			Filter: filter,
+		}
+		searchResult, err = a.conn.Search(&searchReq)
+		if err != nil {
+			return false, err
+		}
+	if len(searchResult.Entries) == 0 {
+		return false, ErrInvalidCredentials
+	}
+	return true, nil
+}
+
 func (a *ldapAuther) createGrafanaUser(ldapUser *LdapUserInfo) (*m.User, error) {
 	cmd := m.CreateUserCommand{
 		Login: ldapUser.Username,
@@ -255,8 +280,12 @@ func (a *ldapAuther) SyncOrgRoles(user *m.User, ldapUser *LdapUserInfo) error {
 			if org.OrgId != group.OrgId {
 				continue
 			}
-
-			if ldapUser.isMemberOf(group.GroupDN) {
+			ok, err := a.getMemberofGroup(group.GroupDN,ldapUser.DN)
+			if err != nil{
+				return err
+			}
+			//if ldapUser.isMemberOf(group.GroupDN) {
+			if ok {
 				match = true
 				if org.Role != group.OrgRole {
 					// update role
@@ -281,9 +310,16 @@ func (a *ldapAuther) SyncOrgRoles(user *m.User, ldapUser *LdapUserInfo) error {
 
 	// add missing org roles
 	for _, group := range a.server.LdapGroups {
-		if !ldapUser.isMemberOf(group.GroupDN) {
+		ok, e := a.getMemberofGroup(group.GroupDN,ldapUser.DN)
+			if e != nil{
+				return e
+			}
+		if !ok {
 			continue
 		}
+		// if !ldapUser.isMemberOf(group.GroupDN) {
+		// 	continue
+		// }
 
 		if _, exists := handledOrgIds[group.OrgId]; exists {
 			continue
