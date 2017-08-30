@@ -177,7 +177,7 @@ func (a *ldapAuther) GetGrafanaUserFor(ldapUser *LdapUserInfo) (*m.User, error) 
 	// otherwise a single group must matc
 	access := len(a.server.LdapGroups) == 0
 	for _, ldapGroup := range a.server.LdapGroups {
-		ok, err := a.getMemberofGroup(ldapGroup.GroupDN,ldapUser.DN)
+		ok, err := a.getMemberofGroup(ldapGroup.GroupDN,ldapUser.Username)
 		if err != nil{
 			return nil, err
 		}
@@ -209,10 +209,10 @@ func (a *ldapAuther) GetGrafanaUserFor(ldapUser *LdapUserInfo) (*m.User, error) 
 
 }
 
-func (a *ldapAuther) getMemberofGroup(GroupDN string,DN string) (bool, error){
+func (a *ldapAuther) getMemberofGroup(GroupDN string,Username string) (bool, error){
 	var searchResult *ldap.SearchResult
 	var err error
-	var filter = strings.Replace("(distinguishedName=%s)", "%s", DN, -1)
+	var filter = strings.Replace("(sAMAccountName=%s)", "%s", Username, -1)
 		searchReq := ldap.SearchRequest{
 			BaseDN:       GroupDN,
 			Scope:        ldap.ScopeWholeSubtree,
@@ -280,7 +280,7 @@ func (a *ldapAuther) SyncOrgRoles(user *m.User, ldapUser *LdapUserInfo) error {
 			if org.OrgId != group.OrgId {
 				continue
 			}
-			ok, err := a.getMemberofGroup(group.GroupDN,ldapUser.DN)
+			ok, err := a.getMemberofGroup(group.GroupDN,ldapUser.Username)
 			if err != nil{
 				return err
 			}
@@ -310,7 +310,7 @@ func (a *ldapAuther) SyncOrgRoles(user *m.User, ldapUser *LdapUserInfo) error {
 
 	// add missing org roles
 	for _, group := range a.server.LdapGroups {
-		ok, e := a.getMemberofGroup(group.GroupDN,ldapUser.DN)
+		ok, e := a.getMemberofGroup(group.GroupDN,ldapUser.Username)
 			if e != nil{
 				return e
 			}
