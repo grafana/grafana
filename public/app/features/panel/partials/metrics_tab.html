@@ -1,3 +1,45 @@
+<div class="gf-form-group">
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <label class="gf-form-label">
+				<i class="icon-gf icon-gf-datasources"></i>
+				Data Source
+			</label>
+      <gf-form-dropdown model="ctrl.panelDsValue" css-class="gf-size-auto"
+                        lookup-text="true"
+                        get-options="ctrl.getOptions(true)"
+                        on-change="ctrl.datasourceChanged($option)">
+      </gf-form-dropdown>
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label">Min auto interval</label>
+			<input type="text" class="gf-form-input width-7" placeholder="1s" />
+			<info-popover mode="right-absolute">
+				A lower limit for the auto group by time interval. Recommended to be set to write frequency,
+				for example <code>1m</code> if your data is written every minute. Access auto interval via variable <code>$__interval</code> for time range
+				string and <code>$__interval_ms</code> for numeric variable that can be used in math expressions.
+			</info-popover>
+    </div>
+		<div class="gf-form gf-form--grow">
+			<label class="gf-form-label gf-form-label--grow"></label>
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label">
+				<i class="fa fa-question-circle"></i>
+				<a href="http://google.com">Help &amp; Docs</a>
+			</label>
+		</div>
+		<div class="gf-form">
+			<button class="btn btn-secondary gf-form-btn" ng-click="ctrl.toggleQueryTroubleshooter()">
+				<i class="fa fa-chevron-right" ng-hide="ctrl.queryTroubleshooterOpen"></i>
+				<i class="fa fa-chevron-down" ng-show="ctrl.queryTroubleshooterOpen"></i>
+				Query Inspector
+			</button>
+    </div>
+  </div>
+	<query-troubleshooter panel-ctrl="ctrl.panelCtrl" is-open="ctrl.queryTroubleshooterOpen"></query-troubleshooter>
+</div>
+
 <div class="query-editor-rows gf-form-group">
   <div ng-repeat="target in ctrl.panel.targets" ng-class="{'gf-form-disabled': target.hide}">
     <rebuild-on-change property="ctrl.panel.datasource || target.datasource" show-null="true">
@@ -26,25 +68,4 @@
       </div>
     </div>
   </div>
-</div>
-
-<!-- <query&#45;troubleshooter panel&#45;ctrl="ctrl.panelCtrl"></query&#45;troubleshooter> -->
-
-<div class="gf-form-group">
-  <div class="gf-form-inline">
-    <div class="gf-form">
-      <label class="gf-form-label">Panel Data Source</label>
-      <gf-form-dropdown model="ctrl.panelDsValue"
-                        lookup-text="true"
-                        get-options="ctrl.getOptions(true)"
-                        on-change="ctrl.datasourceChanged($option)">
-      </gf-form-dropdown>
-    </div>
-  </div>
-</div>
-
-<rebuild-on-change property="ctrl.panel.datasource" show-null="true">
-  <plugin-component type="query-options-ctrl">
-  </plugin-component>
-</rebuild-on-change>
 </div>

@@ -13,6 +13,7 @@ export class MetricsTabCtrl {
   dashboard: DashboardModel;
   panelDsValue: any;
   addQueryDropdown: any;
+  queryTroubleshooterOpen: boolean;
 
   /** @ngInject */
   constructor($scope, private uiSegmentSrv, private datasourceSrv) {
@@ -64,6 +65,10 @@ export class MetricsTabCtrl {
 
   addQuery() {
     this.panelCtrl.addQuery({isNew: true});
+  }
+
+  toggleQueryTroubleshooter() {
+    this.queryTroubleshooterOpen = !this.queryTroubleshooterOpen;
   }
 }
 
