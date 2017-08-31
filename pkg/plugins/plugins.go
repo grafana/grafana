@@ -3,6 +3,7 @@ package plugins
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -166,30 +167,24 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	return loader.Load(jsonParser, currentDir)
 }
 
-func GetPluginReadme(pluginId string) ([]byte, error) {
+func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 	plug, exists := Plugins[pluginId]
 	if !exists {
 		return nil, PluginNotFoundError{pluginId}
 	}
 
-	if plug.Readme != nil {
-		return plug.Readme, nil
+	path := filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToUpper(name)))
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		path = filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToLower(name)))
 	}
 
-	readmePath := filepath.Join(plug.PluginDir, "README.md")
-	if _, err := os.Stat(readmePath); os.IsNotExist(err) {
-		readmePath = filepath.Join(plug.PluginDir, "readme.md")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return make([]byte, 0), nil
 	}
 
-	if _, err := os.Stat(readmePath); os.IsNotExist(err) {
-		plug.Readme = make([]byte, 0)
-		return plug.Readme, nil
-	}
-
-	if readmeBytes, err := ioutil.ReadFile(readmePath); err != nil {
+	if data, err := ioutil.ReadFile(path); err != nil {
 		return nil, err
 	} else {
-		plug.Readme = readmeBytes
-		return plug.Readme, nil
+		return data, nil
 	}
 }

@@ -1,12 +1,12 @@
-.grafana-info-box::before {
-  content: "\f05a";
-  font-family:'FontAwesome';
-  position: absolute;
-  top: -13px;
-  left: -8px;
-  font-size: 20px;
-  color: $text-color;
-}
+// .grafana-info-box::before {
+//   content: "\f05a";
+//   font-family:'FontAwesome';
+//   position: absolute;
+//   top: -13px;
+//   left: -8px;
+//   font-size: 20px;
+//   color: $text-color;
+// }
 
 .grafana-info-box {
   position: relative;
@@ -15,6 +15,7 @@
   padding: 1rem;
   border-radius: 4px;
   margin-bottom: $spacer;
+  margin-right: $gf-form-margin;
 
   h5 {
     margin-bottom: $spacer;
@@ -26,5 +27,23 @@
   a {
     @extend .external-link;
   }
+
+  &--animate {
+    max-height: 0;
+    overflow: hidden;
+  }
+
+  &--animate-open {
+    max-height: 1000px;
+    transition: max-height 250ms ease-in-out;
+  }
 }
 
+.grafana-info-box__close {
+  text-align: center;
+  display: block;
+  color: $link-color !important;
+  height: 0;
+  position: relative;
+  top: -9px;
+}

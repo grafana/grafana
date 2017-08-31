@@ -16,6 +16,19 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.withCredentials = instanceSettings.withCredentials;
   this.render_method = instanceSettings.render_method || 'POST';
 
+  this.getQueryOptionsInfo = function() {
+    return {
+      "maxDataPoints": true,
+      "cacheTimeout": true,
+      "links": [
+        {
+          text: "Help",
+          url: "http://docs.grafana.org/features/datasources/graphite/#using-graphite-in-grafana"
+        }
+      ]
+    };
+  };
+
   this.query = function(options) {
     var graphOptions = {
       from: this.translateTime(options.rangeRaw.from, false),

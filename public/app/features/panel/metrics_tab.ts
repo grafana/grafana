@@ -2,6 +2,7 @@
 
 import _ from 'lodash';
 import {DashboardModel} from '../dashboard/model';
+import Remarkable from 'remarkable';
 
 export class MetricsTabCtrl {
   dsName: string;
@@ -14,9 +15,16 @@ export class MetricsTabCtrl {
   panelDsValue: any;
   addQueryDropdown: any;
   queryTroubleshooterOpen: boolean;
+  helpOpen: boolean;
+  hasHelp: boolean;
+  helpHtml: string;
+  hasMinInterval: boolean;
+  hasCacheTimeout: boolean;
+  hasMaxDataPoints: boolean;
+  animateStart: boolean;
 
   /** @ngInject */
-  constructor($scope, private uiSegmentSrv, private datasourceSrv) {
+  constructor($scope, private $sce, private datasourceSrv, private backendSrv, private $timeout) {
     this.panelCtrl = $scope.ctrl;
     $scope.ctrl = this;
 
@@ -34,6 +42,14 @@ export class MetricsTabCtrl {
     this.addQueryDropdown = {text: 'Add Query', value: null, fake: true};
     // update next ref id
     this.panelCtrl.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
+    this.updateDatasourceOptions();
+  }
+
+  updateDatasourceOptions() {
+    this.hasHelp = this.current.meta.hasHelp;
+    this.hasMinInterval = this.current.meta.minInterval === true;
+    this.hasCacheTimeout = this.current.meta.cacheTimeout === true;
+    this.hasMaxDataPoints = this.current.meta.maxDataPoints === true;
   }
 
   getOptions(includeBuiltin) {
@@ -51,6 +67,7 @@ export class MetricsTabCtrl {
 
     this.current = option.datasource;
     this.panelCtrl.setDatasource(option.datasource);
+    this.updateDatasourceOptions();
   }
 
   addMixedQuery(option) {
@@ -65,6 +82,19 @@ export class MetricsTabCtrl {
 
   addQuery() {
     this.panelCtrl.addQuery({isNew: true});
+  }
+
+  toggleHelp() {
+    this.animateStart = false;
+    this.helpOpen = !this.helpOpen;
+    this.backendSrv.get(`/api/plugins/${this.current.meta.id}/markdown/help`).then(res => {
+      var md = new Remarkable();
+      this.helpHtml = this.$sce.trustAsHtml(md.render(res));
+
+      this.$timeout(() => {
+        this.animateStart = true;
+      }, 1);
+    });
   }
 
   toggleQueryTroubleshooter() {
