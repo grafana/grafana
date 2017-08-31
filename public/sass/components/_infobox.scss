@@ -16,26 +16,17 @@
   border-radius: 4px;
   margin-bottom: $spacer;
   margin-right: $gf-form-margin;
+  flex-grow: 1;
 
   h5 {
     margin-bottom: $spacer;
   }
   ul {
-    padding-left: $spacer;
+    padding-left: $spacer * 1.5;
   }
 
   a {
     @extend .external-link;
-  }
-
-  &--animate {
-    max-height: 0;
-    overflow: hidden;
-  }
-
-  &--animate-open {
-    max-height: 1000px;
-    transition: max-height 250ms ease-in-out;
   }
 }
 

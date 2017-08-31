@@ -16,6 +16,10 @@ $gf-form-margin: 0.25rem;
   &--grow {
     flex-grow: 1;
   }
+
+  &--flex-end {
+    justify-content: flex-end;
+  }
 }
 
 .gf-form-disabled {

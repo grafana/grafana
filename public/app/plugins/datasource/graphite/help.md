@@ -1,9 +1,8 @@
 #### Get Shorter legend names
 
-- alias() function to specify a custom series name<
+- alias() function to specify a custom series name
 - aliasByNode(2) to alias by a specific part of your metric path
-- aliasByNode(2, -1) you can add multiple segment paths, and use negative index
-- groupByNode(2, 'sum') is useful if you have 2 wildcards in your metric path and want to sumSeries and group by
+- groupByNode(2, 'sum') is useful if you have 2 wildcards in your metric path and want to sumSeries and group by.
 
 #### Series as parameter
 
@@ -11,8 +10,6 @@
 - Use #[A-Z] to use a graphite query as parameter to a function
 - Examples:
   - asPercent(#A, #B)
-  - prod.srv-01.counters.count - asPercent(#A) : percentage of count in comparison with A query
-  - prod.srv-01.counters.count - sumSeries(#A) : sum count and series A
   - divideSeries(#A, #B)
 
 If a query is added only to be used as a parameter, hide it from the graph with the eye icon

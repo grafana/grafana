@@ -11,82 +11,65 @@
                         on-change="ctrl.datasourceChanged($option)">
       </gf-form-dropdown>
 		</div>
-		<div class="gf-form" ng-if="ctrl.hasMinInterval">
-			<label class="gf-form-label">
-				Min auto interval
-			</label>
-			<input type="text"
-						class="gf-form-input width-6"
-						placeholder="1s"
-						ng-model="ctrl.panel.interval"
-						spellcheck="false"
-						ng-model-onblur ng-change="ctrl.panelCtrl.refresh()"
-						/>
-			<info-popover mode="right-absolute">
-				A lower limit for the auto group by time interval. Recommended to be set to write frequency,
-				for example <code>1m</code> if your data is written every minute. Access auto interval via variable <code>$__interval</code> for time range
-				string and <code>$__interval_ms</code> for numeric variable that can be used in math expressions.
-			</info-popover>
-		</div>
-		<div class="gf-form" ng-if="ctrl.hasCacheTimeout">
-			<label class="gf-form-label">
-				Cache timeout
-			</label>
-			<input  type="text"
-							class="gf-form-input width-6"
-							placeholder="60"
-							ng-model="ctrl.panel.cacheTimeout"
-						  ng-model-onblur ng-change="ctrl.panelCtrl.refresh()"
-							spellcheck="false"
-							/>
-			<info-popover mode="right-absolute">
-					If your time series store has a query cache this option can override the default
-					cache timeout. Specify a numeric value in seconds.
-			</info-popover>
-		</div>
-		<div class="gf-form" ng-if="ctrl.hasMaxDataPoints">
-			<label class="gf-form-label">
-				Max data points
-			</label>
-			<input type="text"
-					 	 class="gf-form-input width-6"
-						 placeholder="auto"
-					   ng-model-onblur ng-change="ctrl.panelCtrl.refresh()"
-						 ng-model="ctrl.panel.maxDataPoints"
-						 spellcheck="false"  />
-			<info-popover mode="right-absolute">
-					The maximum data points the query should return. For graphs this
-					is automatically set to one data point per pixel.
-			</info-popover>
-		</div>
 
 		<div class="gf-form gf-form--grow">
 			<label class="gf-form-label gf-form-label--grow"></label>
 		</div>
 		<div class="gf-form" ng-if="ctrl.hasHelp">
-			<button class="btn btn-secondary gf-form-btn" ng-click="ctrl.toggleHelp()">
-				<i class="fa fa-chevron-right" ng-hide="ctrl.helpOpen"></i>
-				<i class="fa fa-chevron-down" ng-show="ctrl.helpOpen"></i>
-				Help
+			<a class="gf-form-label" ng-click="ctrl.toggleOptions()">
+				<i class="fa fa-fw fa-caret-right" ng-hide="ctrl.optionsOpen"></i><i class="fa fa-fw fa-caret-down" ng-show="ctrl.optionsOpen"></i>Options
+			</a>
+		</div>
+		<div class="gf-form" ng-if="ctrl.hasHelp">
+			<button class="gf-form-label" ng-click="ctrl.toggleHelp()">
+				<i class="fa fa-fw fa-caret-right" ng-hide="ctrl.helpOpen"></i><i class="fa fa-fw fa-caret-down" ng-show="ctrl.helpOpen"></i>Help
 			</button>
 		</div>
 		<div class="gf-form">
-			<button class="btn btn-secondary gf-form-btn" ng-click="ctrl.toggleQueryTroubleshooter()" bs-tooltip="'Display data query request & response'">
-				<i class="fa fa-chevron-right" ng-hide="ctrl.queryTroubleshooterOpen"></i>
-				<i class="fa fa-chevron-down" ng-show="ctrl.queryTroubleshooterOpen"></i>
-				Query Inspector
+			<button class="gf-form-label" ng-click="ctrl.toggleQueryTroubleshooter()" bs-tooltip="'Display query request & response'">
+				<i class="fa fa-fw fa-caret-right" ng-hide="ctrl.queryTroubleshooterOpen"></i><i class="fa fa-fw fa-caret-down" ng-show="ctrl.queryTroubleshooterOpen"></i>Query Inspector
 			</button>
 		</div>
 	</div>
 
-	<div class="grafana-info-box grafana-info-box--animate" ng-if="ctrl.helpOpen" ng-class="{'grafana-info-box--animate-open': ctrl.animateStart}">
-		<div class="markdown-html" ng-bind-html="ctrl.helpHtml"></div>
-		<a class="grafana-info-box__close" ng-click="ctrl.toggleHelp()">
-			<i class="fa fa-chevron-up"></i>
-		</a>
-	</div>
+	<div>
+		<div class="" ng-if="ctrl.optionsOpen">
+			<div class="gf-form gf-form--flex-end" ng-if="ctrl.hasMinInterval">
+				<label class="gf-form-label">Min auto interval</label>
+				<input type="text" class="gf-form-input width-6" placeholder="1s" ng-model="ctrl.panel.interval" spellcheck="false" ng-model-onblur ng-change="ctrl.panelCtrl.refresh()" />
+				<info-popover mode="right-absolute">
+					A lower limit for the auto group by time interval. Recommended to be set to write frequency,
+					for example <code>1m</code> if your data is written every minute. Access auto interval via variable <code>$__interval</code> for time range
+					string and <code>$__interval_ms</code> for numeric variable that can be used in math expressions.
+				</info-popover>
+			</div>
+			<div class="gf-form gf-form--flex-end" ng-if="ctrl.hasCacheTimeout">
+				<label class="gf-form-label width-9">Cache timeout</label>
+				<input  type="text" class="gf-form-input width-6" placeholder="60" ng-model="ctrl.panel.cacheTimeout" ng-model-onblur ng-change="ctrl.panelCtrl.refresh()" spellcheck="false" />
+				<info-popover mode="right-absolute">
+					If your time series store has a query cache this option can override the default
+					cache timeout. Specify a numeric value in seconds.
+				</info-popover>
+			</div>
+			<div class="gf-form gf-form--flex-end" ng-if="ctrl.hasMaxDataPoints">
+				<label class="gf-form-label width-9">Max data points</label>
+				<input type="text" class="gf-form-input width-6" placeholder="auto" ng-model-onblur ng-change="ctrl.panelCtrl.refresh()" ng-model="ctrl.panel.maxDataPoints" spellcheck="false"  />
+				<info-popover mode="right-absolute">
+					The maximum data points the query should return. For graphs this
+					is automatically set to one data point per pixel.
+				</info-popover>
+			</div>
+		</div>
 
-	<query-troubleshooter panel-ctrl="ctrl.panelCtrl" is-open="ctrl.queryTroubleshooterOpen"></query-troubleshooter>
+		<div class="grafana-info-box" ng-if="ctrl.helpOpen">
+			<div class="markdown-html" ng-bind-html="ctrl.helpHtml"></div>
+			<a class="grafana-info-box__close" ng-click="ctrl.toggleHelp()">
+				<i class="fa fa-chevron-up"></i>
+			</a>
+		</div>
+
+		<query-troubleshooter panel-ctrl="ctrl.panelCtrl" is-open="ctrl.queryTroubleshooterOpen"></query-troubleshooter>
+	</div>
 </div>
 
 <div class="query-editor-rows gf-form-group">
@@ -110,9 +93,7 @@
 			</button>
 
 			<div class="dropdown" ng-if="ctrl.current.meta.mixed">
-				<gf-form-dropdown model="ctrl.addQueryDropdown"
-													get-options="ctrl.getOptions(false)"
-													on-change="ctrl.addMixedQuery($option)">
+				<gf-form-dropdown model="ctrl.addQueryDropdown" get-options="ctrl.getOptions(false)" on-change="ctrl.addMixedQuery($option)">
 				</gf-form-dropdown>
 			</div>
 		</div>

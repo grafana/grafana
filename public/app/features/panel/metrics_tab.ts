@@ -21,7 +21,7 @@ export class MetricsTabCtrl {
   hasMinInterval: boolean;
   hasCacheTimeout: boolean;
   hasMaxDataPoints: boolean;
-  animateStart: boolean;
+  optionsOpen: boolean;
 
   /** @ngInject */
   constructor($scope, private $sce, private datasourceSrv, private backendSrv, private $timeout) {
@@ -85,19 +85,25 @@ export class MetricsTabCtrl {
   }
 
   toggleHelp() {
-    this.animateStart = false;
+    this.optionsOpen = false;
+    this.queryTroubleshooterOpen = false;
     this.helpOpen = !this.helpOpen;
+
     this.backendSrv.get(`/api/plugins/${this.current.meta.id}/markdown/help`).then(res => {
       var md = new Remarkable();
       this.helpHtml = this.$sce.trustAsHtml(md.render(res));
-
-      this.$timeout(() => {
-        this.animateStart = true;
-      }, 1);
     });
   }
 
+  toggleOptions() {
+    this.helpOpen = false;
+    this.queryTroubleshooterOpen = false;
+    this.optionsOpen = !this.optionsOpen;
+  }
+
   toggleQueryTroubleshooter() {
+    this.helpOpen = false;
+    this.optionsOpen = false;
     this.queryTroubleshooterOpen = !this.queryTroubleshooterOpen;
   }
 }
