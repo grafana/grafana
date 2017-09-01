@@ -16,12 +16,10 @@ export class MetricsTabCtrl {
   addQueryDropdown: any;
   queryTroubleshooterOpen: boolean;
   helpOpen: boolean;
-  hasHelp: boolean;
-  helpHtml: string;
-  hasMinInterval: boolean;
-  hasCacheTimeout: boolean;
-  hasMaxDataPoints: boolean;
   optionsOpen: boolean;
+  hasQueryHelp: boolean;
+  helpHtml: string;
+  queryOptions: any;
 
   /** @ngInject */
   constructor($scope, private $sce, private datasourceSrv, private backendSrv, private $timeout) {
@@ -46,10 +44,8 @@ export class MetricsTabCtrl {
   }
 
   updateDatasourceOptions() {
-    this.hasHelp = this.current.meta.hasHelp;
-    this.hasMinInterval = this.current.meta.minInterval === true;
-    this.hasCacheTimeout = this.current.meta.cacheTimeout === true;
-    this.hasMaxDataPoints = this.current.meta.maxDataPoints === true;
+    this.hasQueryHelp = this.current.meta.hasQueryHelp;
+    this.queryOptions = this.current.meta.queryOptions;
   }
 
   getOptions(includeBuiltin) {
@@ -89,7 +85,7 @@ export class MetricsTabCtrl {
     this.queryTroubleshooterOpen = false;
     this.helpOpen = !this.helpOpen;
 
-    this.backendSrv.get(`/api/plugins/${this.current.meta.id}/markdown/help`).then(res => {
+    this.backendSrv.get(`/api/plugins/${this.current.meta.id}/markdown/query_help`).then(res => {
       var md = new Remarkable();
       this.helpHtml = this.$sce.trustAsHtml(md.render(res));
     });

@@ -10,8 +10,11 @@
   "metrics": true,
   "alerting": true,
   "annotations": true,
-  "maxDataPoints": true,
-  "cacheTimeout": true,
+
+  "queryOptions": {
+    "maxDataPoints": true,
+    "cacheTimeout": true
+  },
 
   "info": {
     "author": {

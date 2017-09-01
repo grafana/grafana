@@ -15,12 +15,12 @@
 		<div class="gf-form gf-form--grow">
 			<label class="gf-form-label gf-form-label--grow"></label>
 		</div>
-		<div class="gf-form" ng-if="ctrl.hasHelp">
+		<div class="gf-form" ng-if="ctrl.queryOptions">
 			<a class="gf-form-label" ng-click="ctrl.toggleOptions()">
 				<i class="fa fa-fw fa-caret-right" ng-hide="ctrl.optionsOpen"></i><i class="fa fa-fw fa-caret-down" ng-show="ctrl.optionsOpen"></i>Options
 			</a>
 		</div>
-		<div class="gf-form" ng-if="ctrl.hasHelp">
+		<div class="gf-form" ng-if="ctrl.hasQueryHelp">
 			<button class="gf-form-label" ng-click="ctrl.toggleHelp()">
 				<i class="fa fa-fw fa-caret-right" ng-hide="ctrl.helpOpen"></i><i class="fa fa-fw fa-caret-down" ng-show="ctrl.helpOpen"></i>Help
 			</button>
@@ -33,8 +33,8 @@
 	</div>
 
 	<div>
-		<div class="" ng-if="ctrl.optionsOpen">
-			<div class="gf-form gf-form--flex-end" ng-if="ctrl.hasMinInterval">
+		<div ng-if="ctrl.optionsOpen">
+			<div class="gf-form gf-form--flex-end" ng-if="ctrl.queryOptions.minInterval">
 				<label class="gf-form-label">Min auto interval</label>
 				<input type="text" class="gf-form-input width-6" placeholder="1s" ng-model="ctrl.panel.interval" spellcheck="false" ng-model-onblur ng-change="ctrl.panelCtrl.refresh()" />
 				<info-popover mode="right-absolute">
@@ -43,7 +43,7 @@
 					string and <code>$__interval_ms</code> for numeric variable that can be used in math expressions.
 				</info-popover>
 			</div>
-			<div class="gf-form gf-form--flex-end" ng-if="ctrl.hasCacheTimeout">
+			<div class="gf-form gf-form--flex-end" ng-if="ctrl.queryOptions.cacheTimeout">
 				<label class="gf-form-label width-9">Cache timeout</label>
 				<input  type="text" class="gf-form-input width-6" placeholder="60" ng-model="ctrl.panel.cacheTimeout" ng-model-onblur ng-change="ctrl.panelCtrl.refresh()" spellcheck="false" />
 				<info-popover mode="right-absolute">
@@ -51,7 +51,7 @@
 					cache timeout. Specify a numeric value in seconds.
 				</info-popover>
 			</div>
-			<div class="gf-form gf-form--flex-end" ng-if="ctrl.hasMaxDataPoints">
+			<div class="gf-form gf-form--flex-end" ng-if="ctrl.queryOptions.maxDataPoints">
 				<label class="gf-form-label width-9">Max data points</label>
 				<input type="text" class="gf-form-input width-6" placeholder="auto" ng-model-onblur ng-change="ctrl.panelCtrl.refresh()" ng-model="ctrl.panel.maxDataPoints" spellcheck="false"  />
 				<info-popover mode="right-absolute">
