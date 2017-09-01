@@ -91,7 +91,7 @@ func init() {
 		"AWS/SWF": {"DecisionTaskScheduleToStartTime", "DecisionTaskStartToCloseTime", "DecisionTasksCompleted", "StartedDecisionTasksTimedOutOnClose", "WorkflowStartToCloseTime", "WorkflowsCanceled", "WorkflowsCompleted", "WorkflowsContinuedAsNew", "WorkflowsFailed", "WorkflowsTerminated", "WorkflowsTimedOut",
 			"ActivityTaskScheduleToCloseTime", "ActivityTaskScheduleToStartTime", "ActivityTaskStartToCloseTime", "ActivityTasksCanceled", "ActivityTasksCompleted", "ActivityTasksFailed", "ScheduledActivityTasksTimedOutOnClose", "ScheduledActivityTasksTimedOutOnStart", "StartedActivityTasksTimedOutOnClose", "StartedActivityTasksTimedOutOnHeartbeat"},
 		"AWS/VPN":        {"TunnelState", "TunnelDataIn", "TunnelDataOut"},
-		"AWS/WAF":        {"AllowedRequests", "BlockedRequests", "CountedRequests"},
+		"WAF":            {"AllowedRequests", "BlockedRequests", "CountedRequests"},
 		"AWS/WorkSpaces": {"Available", "Unhealthy", "ConnectionAttempt", "ConnectionSuccess", "ConnectionFailure", "SessionLaunchTime", "InSessionLatency", "SessionDisconnect"},
 		"KMS":            {"SecondsUntilKeyMaterialExpiration"},
 	}
@@ -133,7 +133,7 @@ func init() {
 		"AWS/StorageGateway":   {"GatewayId", "GatewayName", "VolumeId"},
 		"AWS/SWF":              {"Domain", "WorkflowTypeName", "WorkflowTypeVersion", "ActivityTypeName", "ActivityTypeVersion"},
 		"AWS/VPN":              {"VpnId", "TunnelIpAddress"},
-		"AWS/WAF":              {"Rule", "WebACL"},
+		"WAF":                  {"Rule", "WebACL"},
 		"AWS/WorkSpaces":       {"DirectoryId", "WorkspaceId"},
 		"KMS":                  {"KeyId"},
 	}
