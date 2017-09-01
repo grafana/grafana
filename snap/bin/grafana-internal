@@ -1,0 +1,7 @@
+#!/bin/sh
+export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
+export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+export GF_PATHS_DATA=$SNAP_COMMON/data
+export GF_PATHS_LOGS=$SNAP_COMMON/data/log
+export GF_PATHS_PLUGINS=$SNAP_COMMON/data/plugins
+exec "$SNAP/bin/grafana-server" -homepath $SNAP "$@"
