@@ -156,7 +156,7 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, model *tsdb.Query
 		MetricName: aws.String(query.MetricName),
 		Dimensions: query.Dimensions,
 		Period:     aws.Int64(int64(query.Period)),
-		StartTime:  aws.Time(startTime.Add(-time.Minute * 15)),
+		StartTime:  aws.Time(startTime),
 		EndTime:    aws.Time(endTime),
 	}
 	if len(query.Statistics) > 0 {
