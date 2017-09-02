@@ -151,8 +151,12 @@ func (query *Query) renderMeasurement() string {
 func (query *Query) renderWhereClause() string {
 	res := " WHERE "
 	conditions := query.renderTags()
-	res += strings.Join(conditions, " ")
 	if len(conditions) > 0 {
+		if len(conditions) > 1 {
+			res += "(" + strings.Join(conditions, " ") + ")"
+		} else {
+			res += conditions[0]
+		}
 		res += " AND "
 	}
 

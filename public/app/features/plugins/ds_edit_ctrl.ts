@@ -58,7 +58,7 @@ export class DataSourceEditCtrl {
   }
 
   initNewDatasourceModel() {
-    this.current = angular.copy(defaults);
+    this.current = _.cloneDeep(defaults);
 
     // We are coming from getting started
     if (this.$location.search().gettingstarted) {
@@ -93,11 +93,21 @@ export class DataSourceEditCtrl {
     });
   }
 
+  userChangedType() {
+    // reset model but keep name & default flag
+    this.current = _.defaults({
+      id: this.current.id,
+      name: this.current.name,
+      isDefault: this.current.isDefault,
+      type: this.current.type,
+    }, _.cloneDeep(defaults));
+    this.typeChanged();
+  }
+
   typeChanged() {
     this.hasDashboards = false;
     return this.backendSrv.get('/api/plugins/' + this.current.type + '/settings').then(pluginInfo => {
       this.datasourceMeta = pluginInfo;
-      console.log(this.datasourceMeta) ;
       this.hasDashboards = _.find(pluginInfo.includes, {type: 'dashboard'});
     });
   }

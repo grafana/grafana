@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"container/list"
 	"context"
 	"database/sql"
 	"fmt"
@@ -245,6 +246,7 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 
 func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 	pointsBySeries := make(map[string]*tsdb.TimeSeries)
+	seriesByQueryOrder := list.New()
 	columnNames, err := rows.Columns()
 
 	if err != nil {
@@ -282,11 +284,13 @@ func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows,
 			series := &tsdb.TimeSeries{Name: rowData.metric}
 			series.Points = append(series.Points, tsdb.TimePoint{rowData.value, rowData.time})
 			pointsBySeries[rowData.metric] = series
+			seriesByQueryOrder.PushBack(rowData.metric)
 		}
 	}
 
-	for _, value := range pointsBySeries {
-		result.Series = append(result.Series, value)
+	for elem := seriesByQueryOrder.Front(); elem != nil; elem = elem.Next() {
+		key := elem.Value.(string)
+		result.Series = append(result.Series, pointsBySeries[key])
 	}
 
 	result.Meta.Set("rowCount", rowCount)

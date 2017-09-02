@@ -92,20 +92,25 @@ export class OrgUsersCtrl {
     evt.stopPropagation();
   }
 
-  openAddUsersView() {
-    var modalScope = this.$scope.$new();
-    modalScope.invitesSent = this.get.bind(this);
+ getInviteUrl(invite) {
+   return invite.url;
+ }
 
-    var src = config.disableLoginForm
-      ? 'public/app/features/org/partials/add_user.html'
-      : 'public/app/features/org/partials/invite.html';
+ openAddUsersView() {
+   var modalScope = this.$scope.$new();
+   modalScope.invitesSent = this.get.bind(this);
 
-    this.$scope.appEvent('show-modal', {
-      src: src,
-      modalClass: 'invite-modal',
-      scope: modalScope
-    });
-  }
+   var src = config.disableLoginForm
+     ? 'public/app/features/org/partials/add_user.html'
+     : 'public/app/features/org/partials/invite.html';
+
+     this.$scope.appEvent('show-modal', {
+       src: src,
+       modalClass: 'invite-modal',
+       scope: modalScope
+     });
+ }
+
 }
 
 coreModule.controller('OrgUsersCtrl', OrgUsersCtrl);

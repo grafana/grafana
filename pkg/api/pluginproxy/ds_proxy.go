@@ -2,15 +2,17 @@ package pluginproxy
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"html/template"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
@@ -23,8 +25,19 @@ import (
 )
 
 var (
-	logger log.Logger = log.New("data-proxy-log")
+	logger log.Logger   = log.New("data-proxy-log")
+	client *http.Client = &http.Client{
+		Timeout:   time.Second * 30,
+		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
+	}
+	tokenCache = map[int64]*jwtToken{}
 )
+
+type jwtToken struct {
+	ExpiresOn       time.Time `json:"-"`
+	ExpiresOnString string    `json:"expires_on"`
+	AccessToken     string    `json:"access_token"`
+}
 
 type DataSourceProxy struct {
 	ds        *m.DataSource
@@ -229,16 +242,12 @@ func checkWhiteList(c *middleware.Context, host string) bool {
 }
 
 func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
-	logger.Info("ApplyDataSourceRouteRules", "route", proxy.route.Path, "proxyPath", proxy.proxyPath)
-
 	proxy.proxyPath = strings.TrimPrefix(proxy.proxyPath, proxy.route.Path)
 
 	data := templateData{
 		JsonData:       proxy.ds.JsonData.Interface().(map[string]interface{}),
 		SecureJsonData: proxy.ds.SecureJsonData.Decrypt(),
 	}
-
-	logger.Info("Apply Route Rule", "rule", proxy.route.Path)
 
 	routeUrl, err := url.Parse(proxy.route.Url)
 	if err != nil {
@@ -254,25 +263,86 @@ func (proxy *DataSourceProxy) applyRoute(req *http.Request) {
 	if err := addHeaders(&req.Header, proxy.route, data); err != nil {
 		logger.Error("Failed to render plugin headers", "error", err)
 	}
+
+	if proxy.route.TokenAuth != nil {
+		if token, err := proxy.getAccessToken(data); err != nil {
+			logger.Error("Failed to get access token", "error", err)
+		} else {
+			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token))
+		}
+	}
+
+	logger.Info("Requesting", "url", req.URL.String())
+}
+
+func (proxy *DataSourceProxy) getAccessToken(data templateData) (string, error) {
+	if cachedToken, found := tokenCache[proxy.ds.Id]; found {
+		if cachedToken.ExpiresOn.After(time.Now().Add(time.Second * 10)) {
+			logger.Info("Using token from cache")
+			return cachedToken.AccessToken, nil
+		}
+	}
+
+	urlInterpolated, err := interpolateString(proxy.route.TokenAuth.Url, data)
+	if err != nil {
+		return "", err
+	}
+
+	params := make(url.Values)
+	for key, value := range proxy.route.TokenAuth.Params {
+		if interpolatedParam, err := interpolateString(value, data); err != nil {
+			return "", err
+		} else {
+			params.Add(key, interpolatedParam)
+		}
+	}
+
+	getTokenReq, _ := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
+	getTokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	getTokenReq.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
+
+	resp, err := client.Do(getTokenReq)
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	var token jwtToken
+	if err := json.NewDecoder(resp.Body).Decode(&token); err != nil {
+		return "", err
+	}
+
+	expiresOnEpoch, _ := strconv.ParseInt(token.ExpiresOnString, 10, 64)
+	token.ExpiresOn = time.Unix(expiresOnEpoch, 0)
+	tokenCache[proxy.ds.Id] = &token
+
+	logger.Info("Got new access token", "ExpiresOn", token.ExpiresOn)
+	return token.AccessToken, nil
+}
+
+func interpolateString(text string, data templateData) (string, error) {
+	t, err := template.New("content").Parse(text)
+	if err != nil {
+		return "", errors.New(fmt.Sprintf("Could not parse template %s.", text))
+	}
+
+	var contentBuf bytes.Buffer
+	err = t.Execute(&contentBuf, data)
+	if err != nil {
+		return "", errors.New(fmt.Sprintf("Failed to execute template %s.", text))
+	}
+
+	return contentBuf.String(), nil
 }
 
 func addHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data templateData) error {
 	for _, header := range route.Headers {
-		var contentBuf bytes.Buffer
-		t, err := template.New("content").Parse(header.Content)
+		interpolated, err := interpolateString(header.Content, data)
 		if err != nil {
-			return errors.New(fmt.Sprintf("could not parse header content template for header %s.", header.Name))
+			return err
 		}
-
-		err = t.Execute(&contentBuf, data)
-		if err != nil {
-			return errors.New(fmt.Sprintf("failed to execute header content template for header %s.", header.Name))
-		}
-
-		value := contentBuf.String()
-
-		logger.Info("Adding headers", "name", header.Name, "value", value)
-		reqHeaders.Add(header.Name, value)
+		reqHeaders.Add(header.Name, interpolated)
 	}
 
 	return nil

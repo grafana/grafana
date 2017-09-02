@@ -148,5 +148,18 @@ func TestDSRouteRule(t *testing.T) {
 				So(queryVals["p"][0], ShouldEqual, "password")
 			})
 		})
+
+		Convey("When interpolating string", func() {
+			data := templateData{
+				SecureJsonData: map[string]string{
+					"Test": "0asd+asd",
+				},
+			}
+
+			interpolated, err := interpolateString("{{.SecureJsonData.Test}}", data)
+			So(err, ShouldBeNil)
+			So(interpolated, ShouldEqual, "0asd+asd")
+		})
+
 	})
 }
