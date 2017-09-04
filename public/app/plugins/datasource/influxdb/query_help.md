@@ -20,3 +20,9 @@
 - The low limit can only be set in the group by time option below your queries
 - You set a low limit by adding a greater sign before the interval
 - Example: &gt;60s if you write metrics to InfluxDB every 60 seconds
+
+#### Documentation links:
+
+[Grafana's InfluxDB Documentation](http://docs.grafana.org/features/datasources/influxdb)
+
+[Official InfluxDB Documentation](https://docs.influxdata.com/influxdb)

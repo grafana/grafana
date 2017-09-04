@@ -1,10 +1,11 @@
 <div class="gf-form-group">
   <div class="gf-form-inline">
     <div class="gf-form">
-      <label class="gf-form-label">
+			<label class="gf-form-label gf-query-ds-label">
 				<i class="icon-gf icon-gf-datasources"></i>
-				Data Source
 			</label>
+      <label class="gf-form-label">Data Source</label>
+
       <gf-form-dropdown model="ctrl.panelDsValue" css-class="gf-size-auto"
                         lookup-text="true"
                         get-options="ctrl.getOptions(true)"
@@ -35,8 +36,8 @@
 	<div>
 		<div ng-if="ctrl.optionsOpen">
 			<div class="gf-form gf-form--flex-end" ng-if="ctrl.queryOptions.minInterval">
-				<label class="gf-form-label">Min auto interval</label>
-				<input type="text" class="gf-form-input width-6" placeholder="1s" ng-model="ctrl.panel.interval" spellcheck="false" ng-model-onblur ng-change="ctrl.panelCtrl.refresh()" />
+				<label class="gf-form-label">Min time interval</label>
+				<input type="text" class="gf-form-input width-6" placeholder="{{ctrl.panelCtrl.interval}}" ng-model="ctrl.panel.interval" spellcheck="false" ng-model-onblur ng-change="ctrl.panelCtrl.refresh()" />
 				<info-popover mode="right-absolute">
 					A lower limit for the auto group by time interval. Recommended to be set to write frequency,
 					for example <code>1m</code> if your data is written every minute. Access auto interval via variable <code>$__interval</code> for time range
