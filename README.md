@@ -124,7 +124,7 @@ To build the frontend assets only on changes:
 
 ```bash
 sudo npm install -g grunt-cli # to do only once to install grunt command line interface
-grunt watch
+grunt && grunt watch
 ```
 
 ### Recompile backend on source change
