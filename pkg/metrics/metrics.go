@@ -5,7 +5,7 @@ var UseNilMetrics bool
 
 func init() {
 	// init with nil metrics
-	initMetricVars(&MetricSettings{})
+	//initMetricVars(&MetricSettings{})
 }
 
 var (

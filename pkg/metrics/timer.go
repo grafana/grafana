@@ -7,6 +7,8 @@ package metrics
 import (
 	"sync"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Timers capture the duration and rate of events.
@@ -31,28 +33,22 @@ type Timer interface {
 	Variance() float64
 }
 
-// NewCustomTimer constructs a new StandardTimer from a Histogram and a Meter.
-func NewCustomTimer(meta *MetricMeta, h Histogram, m Meter) Timer {
-	if UseNilMetrics {
-		return NilTimer{}
-	}
-	return &StandardTimer{
-		MetricMeta: meta,
-		histogram:  h,
-		meter:      m,
-	}
-}
-
 // NewTimer constructs a new StandardTimer using an exponentially-decaying
 // sample with the same reservoir size and alpha as UNIX load averages.
 func NewTimer(meta *MetricMeta) Timer {
-	if UseNilMetrics {
-		return NilTimer{}
-	}
+	promSummary := prometheus.NewSummary(prometheus.SummaryOpts{
+		Name:        promifyName(meta.Name()),
+		Help:        meta.Name(),
+		ConstLabels: prometheus.Labels(meta.GetTagsCopy()),
+	})
+
+	prometheus.MustRegister(promSummary)
+
 	return &StandardTimer{
 		MetricMeta: meta,
 		histogram:  NewHistogram(meta, NewExpDecaySample(1028, 0.015)),
 		meter:      NewMeter(meta),
+		Summary:    promSummary,
 	}
 }
 
@@ -129,6 +125,7 @@ type StandardTimer struct {
 	histogram Histogram
 	meter     Meter
 	mutex     sync.Mutex
+	prometheus.Summary
 }
 
 // Count returns the number of events recorded.
@@ -216,6 +213,8 @@ func (t *StandardTimer) Update(d time.Duration) {
 	defer t.mutex.Unlock()
 	t.histogram.Update(int64(d))
 	t.meter.Mark(1)
+
+	t.Summary.Observe(float64(d))
 }
 
 // Record the duration of an event that started at a time and ends now.
@@ -225,6 +224,8 @@ func (t *StandardTimer) UpdateSince(ts time.Time) {
 	sinceMs := time.Since(ts) / time.Millisecond
 	t.histogram.Update(int64(sinceMs))
 	t.meter.Mark(1)
+
+	t.Summary.Observe(float64(sinceMs))
 }
 
 // Variance returns the variance of the values in the sample.
