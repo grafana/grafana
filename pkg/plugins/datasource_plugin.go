@@ -8,15 +8,14 @@ import (
 
 type DataSourcePlugin struct {
 	FrontendPluginBase
-	Annotations  bool            `json:"annotations"`
-	Metrics      bool            `json:"metrics"`
-	Alerting     bool            `json:"alerting"`
-	QueryOptions map[string]bool `json:"queryOptions,omitempty"`
-	BuiltIn      bool            `json:"builtIn,omitempty"`
-	Mixed        bool            `json:"mixed,omitempty"`
-	HasQueryHelp bool            `json:"hasQueryHelp,omitempty"`
-
-	Routes []*AppPluginRoute `json:"-"`
+	Annotations  bool              `json:"annotations"`
+	Metrics      bool              `json:"metrics"`
+	Alerting     bool              `json:"alerting"`
+	QueryOptions map[string]bool   `json:"queryOptions,omitempty"`
+	BuiltIn      bool              `json:"builtIn,omitempty"`
+	Mixed        bool              `json:"mixed,omitempty"`
+	HasQueryHelp bool              `json:"hasQueryHelp,omitempty"`
+	Routes       []*AppPluginRoute `json:"routes"`
 }
 
 func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
