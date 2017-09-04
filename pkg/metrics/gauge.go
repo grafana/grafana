@@ -4,7 +4,11 @@
 
 package metrics
 
-import "sync/atomic"
+import (
+	"sync/atomic"
+
+	"github.com/prometheus/client_golang/prometheus"
+)
 
 // Gauges hold an int64 value that can be set arbitrarily.
 type Gauge interface {
@@ -15,18 +19,25 @@ type Gauge interface {
 }
 
 func NewGauge(meta *MetricMeta) Gauge {
-	if UseNilMetrics {
-		return NilGauge{}
-	}
+	promGauge := prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:        promifyName(meta.Name()) + "_total",
+		Help:        meta.Name(),
+		ConstLabels: prometheus.Labels(meta.GetTagsCopy()),
+	})
+
+	prometheus.MustRegister(promGauge)
+
 	return &StandardGauge{
 		MetricMeta: meta,
 		value:      0,
+		Gauge:      promGauge,
 	}
 }
 
 func RegGauge(name string, tagStrings ...string) Gauge {
 	tr := NewGauge(NewMetricMeta(name, tagStrings))
-	MetricStats.Register(tr)
+
+	//MetricStats.Register(tr)
 	return tr
 }
 
@@ -65,6 +76,7 @@ func (NilGauge) Value() int64 { return 0 }
 type StandardGauge struct {
 	value int64
 	*MetricMeta
+	prometheus.Gauge
 }
 
 // Snapshot returns a read-only copy of the gauge.
@@ -75,6 +87,7 @@ func (g *StandardGauge) Snapshot() Metric {
 // Update updates the gauge's value.
 func (g *StandardGauge) Update(v int64) {
 	atomic.StoreInt64(&g.value, v)
+	g.Gauge.Set(float64(v))
 }
 
 // Value returns the gauge's current value.

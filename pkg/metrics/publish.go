@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"runtime"
@@ -10,18 +11,46 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics/graphitepublisher"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var metricsLogger log.Logger = log.New("metrics")
 var metricPublishCounter int64 = 0
 
+type logWrapper struct {
+	logger log.Logger
+}
+
+func (lw *logWrapper) Println(v ...interface{}) {
+	lw.logger.Info("graphite metric bridge", v...)
+}
+
 func Init() {
 	settings := readSettings()
 	initMetricVars(settings)
-	go instrumentationLoop(settings)
+	//go instrumentationLoop(settings)
+
+	cfg := &graphitepub.Config{
+		URL:             "localhost:2003",
+		Gatherer:        prometheus.DefaultGatherer,
+		Prefix:          "prefix",
+		Interval:        10 * time.Second,
+		Timeout:         10 * time.Second,
+		Logger:          &logWrapper{logger: metricsLogger},
+		ErrorHandling:   graphitepub.ContinueOnError,
+		CountersAsDelta: true,
+	}
+
+	bridge, err := graphitepub.NewBridge(cfg)
+	if err != nil {
+		metricsLogger.Error("failed to create graphite bridge", "error", err)
+	} else {
+		go bridge.Run(context.Background())
+	}
 }
 
 func instrumentationLoop(settings *MetricSettings) chan struct{} {
@@ -50,13 +79,13 @@ func sendMetrics(settings *MetricSettings) {
 	updateTotalStats()
 
 	metrics := MetricStats.GetSnapshots()
+
 	for _, publisher := range settings.Publishers {
 		publisher.Publish(metrics)
 	}
 }
 
 func updateTotalStats() {
-
 	// every interval also publish totals
 	metricPublishCounter++
 	if metricPublishCounter%10 == 0 {

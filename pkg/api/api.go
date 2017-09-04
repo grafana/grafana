@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // Register adds http routes
@@ -96,6 +97,8 @@ func (hs *HttpServer) registerRoutes() {
 
 	// api renew session based on remember cookie
 	r.Get("/api/login/ping", quota("session"), LoginApiPing)
+
+	r.Get("/metrics", promhttp.Handler())
 
 	// authed api
 	r.Group("/api", func() {
@@ -264,7 +267,7 @@ func (hs *HttpServer) registerRoutes() {
 		r.Get("/tsdb/testdata/random-walk", wrap(GetTestDataRandomWalk))
 
 		// metrics
-		r.Get("/metrics", wrap(GetInternalMetrics))
+		//r.Get("/metrics", wrap(GetInternalMetrics))
 
 		r.Group("/alerts", func() {
 			r.Post("/test", bind(dtos.AlertTestCommand{}), wrap(AlertTest))
