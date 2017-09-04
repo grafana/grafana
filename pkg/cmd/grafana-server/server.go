@@ -142,4 +142,6 @@ func (g *GrafanaServerImpl) writePIDFile() {
 		g.log.Error("Failed to write pidfile", "error", err)
 		os.Exit(1)
 	}
+
+	g.log.Info("Writing PID file", "path", *pidFile, "pid", pid)
 }
