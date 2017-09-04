@@ -6,6 +6,7 @@ set -e
 
 IS_UPGRADE=false
 
+
 case "$1" in
 	configure)
 	[ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"
@@ -39,6 +40,12 @@ case "$1" in
   # If $1=configure and $2 is set, this is an upgrade
   if [ "$2" != "" ]; then
     IS_UPGRADE=true
+  fi
+
+  # make sure there is a /var/run/grafana dir on systemd systems
+  if [ -x /bin/systemctl ] ; then
+    mkdir -p $PID_FILE_DIR
+    chown -R $GRAFANA_USER:$GRAFANA_GROUP $PID_FILE_DIR
   fi
 
   if [ "x$IS_UPGRADE" != "xtrue" ]; then

@@ -25,6 +25,7 @@ stopGrafana() {
 	fi
 }
 
+
 # Initial installation: $1 == 1
 # Upgrade: $1 == 2, and configured to restart on upgrade
 if [ $1 -eq 1 ] ; then
@@ -55,6 +56,12 @@ if [ $1 -eq 1 ] ; then
 	find /etc/grafana -type f -exec chmod 640 {} ';'
 	find /etc/grafana -type d -exec chmod 755 {} ';'
 
+  # make sure there is a /var/run/grafana dir on systemd systems
+  if [ -x /bin/systemctl ] ; then
+    mkdir -p $PID_FILE_DIR
+    chown -R $GRAFANA_USER:$GRAFANA_GROUP $PID_FILE_DIR
+  fi
+
   if [ -x /bin/systemctl ] ; then
     echo "### NOT starting on installation, please execute the following statements to configure grafana to start automatically using systemd"
     echo " sudo /bin/systemctl daemon-reload"
@@ -68,6 +75,12 @@ if [ $1 -eq 1 ] ; then
     echo " sudo service grafana-server start"
   fi
 elif [ $1 -ge 2 ] ; then
+  # make sure there is a /var/run/grafana dir on systemd systems
+  if [ -x /bin/systemctl ] ; then
+    mkdir -p $PID_FILE_DIR
+    chown -R $GRAFANA_USER:$GRAFANA_GROUP $PID_FILE_DIR
+  fi
+
   if [ "$RESTART_ON_UPGRADE" == "true" ]; then
     stopGrafana
     startGrafana
