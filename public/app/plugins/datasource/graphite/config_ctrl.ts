@@ -9,6 +9,7 @@ export class GraphiteConfigCtrl {
 
   /** @ngInject */
   constructor($scope) {
+    this.current.jsonData = this.current.jsonData || {};
     this.current.jsonData.graphiteVersion = this.current.jsonData.graphiteVersion || '0.9';
   }
 
