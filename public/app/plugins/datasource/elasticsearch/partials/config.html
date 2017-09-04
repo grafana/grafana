@@ -25,13 +25,14 @@
 		<span class="gf-form-label width-9">Version</span>
 		<select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.esVersion" ng-options="f.value as f.name for f in ctrl.esVersions"></select>
 	</div>
-
-</div>
-
-<h3 class="page-heading">Default query settings</h3>
-<div class="gf-form-group">
-	<div class="gf-form">
-		<span class="gf-form-label">Group by time interval</span>
-		<input class="gf-form-input max-width-9" type="text" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="example: >10s">
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label width-9">Min interval</span>
+			<input type="text" class="gf-form-input width-6" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="10s"></input>
+			<info-popover mode="right-absolute">
+				A lower limit for the auto group by time interval. Recommended to be set to write frequency,
+				for example <code>1m</code> if your data is written every minute.
+			</info-popover>
+		</div>
 	</div>
 </div>

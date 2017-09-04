@@ -143,8 +143,8 @@ define([
       expect(res.intervalMs).to.be(500);
     });
 
-    it('fixed user interval', function() {
-      var range = { from: dateMath.parse('now-10m'), to: dateMath.parse('now') };
+    it('fixed user min interval', function() {
+      var range = {from: dateMath.parse('now-10m'), to: dateMath.parse('now')};
       var res = kbn.calculateInterval(range, 1600, '10s');
       expect(res.interval).to.be('10s');
       expect(res.intervalMs).to.be(10000);

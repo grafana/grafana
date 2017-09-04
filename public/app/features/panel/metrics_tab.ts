@@ -2,6 +2,7 @@
 
 import _ from 'lodash';
 import {DashboardModel} from '../dashboard/model';
+import Remarkable from 'remarkable';
 
 export class MetricsTabCtrl {
   dsName: string;
@@ -13,9 +14,15 @@ export class MetricsTabCtrl {
   dashboard: DashboardModel;
   panelDsValue: any;
   addQueryDropdown: any;
+  queryTroubleshooterOpen: boolean;
+  helpOpen: boolean;
+  optionsOpen: boolean;
+  hasQueryHelp: boolean;
+  helpHtml: string;
+  queryOptions: any;
 
   /** @ngInject */
-  constructor($scope, private uiSegmentSrv, private datasourceSrv) {
+  constructor($scope, private $sce, private datasourceSrv, private backendSrv, private $timeout) {
     this.panelCtrl = $scope.ctrl;
     $scope.ctrl = this;
 
@@ -33,6 +40,12 @@ export class MetricsTabCtrl {
     this.addQueryDropdown = {text: 'Add Query', value: null, fake: true};
     // update next ref id
     this.panelCtrl.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
+    this.updateDatasourceOptions();
+  }
+
+  updateDatasourceOptions() {
+    this.hasQueryHelp = this.current.meta.hasQueryHelp;
+    this.queryOptions = this.current.meta.queryOptions;
   }
 
   getOptions(includeBuiltin) {
@@ -50,6 +63,7 @@ export class MetricsTabCtrl {
 
     this.current = option.datasource;
     this.panelCtrl.setDatasource(option.datasource);
+    this.updateDatasourceOptions();
   }
 
   addMixedQuery(option) {
@@ -64,6 +78,29 @@ export class MetricsTabCtrl {
 
   addQuery() {
     this.panelCtrl.addQuery({isNew: true});
+  }
+
+  toggleHelp() {
+    this.optionsOpen = false;
+    this.queryTroubleshooterOpen = false;
+    this.helpOpen = !this.helpOpen;
+
+    this.backendSrv.get(`/api/plugins/${this.current.meta.id}/markdown/query_help`).then(res => {
+      var md = new Remarkable();
+      this.helpHtml = this.$sce.trustAsHtml(md.render(res));
+    });
+  }
+
+  toggleOptions() {
+    this.helpOpen = false;
+    this.queryTroubleshooterOpen = false;
+    this.optionsOpen = !this.optionsOpen;
+  }
+
+  toggleQueryTroubleshooter() {
+    this.helpOpen = false;
+    this.optionsOpen = false;
+    this.queryTroubleshooterOpen = !this.queryTroubleshooterOpen;
   }
 }
 

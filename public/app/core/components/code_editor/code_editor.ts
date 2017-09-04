@@ -159,7 +159,6 @@ function link(scope, elem, attrs) {
         enableSnippets: true
       });
 
-      console.log('getting completer', lang);
       if (scope.getCompleter()) {
         // make copy of array as ace seems to share completers array between instances
         codeEditor.completers = codeEditor.completers.slice();
