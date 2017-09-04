@@ -42,12 +42,6 @@ case "$1" in
     IS_UPGRADE=true
   fi
 
-  # make sure there is a /var/run/grafana dir on systemd systems
-  if [ -x /bin/systemctl ] ; then
-    mkdir -p $PID_FILE_DIR
-    chown -R $GRAFANA_USER:$GRAFANA_GROUP $PID_FILE_DIR
-  fi
-
   if [ "x$IS_UPGRADE" != "xtrue" ]; then
     if command -v systemctl >/dev/null; then
       echo "### NOT starting on installation, please execute the following statements to configure grafana to start automatically using systemd"
