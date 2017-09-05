@@ -28,10 +28,6 @@ export class TextPanelCtrl extends PanelCtrl {
   onInitEditMode() {
     this.addEditorTab('Options', 'public/app/plugins/panel/text/editor.html');
     this.editorTabIndex = 1;
-
-    if (this.panel.mode === 'text') {
-      this.panel.mode = 'markdown';
-    }
   }
 
   onRefresh() {
@@ -43,6 +39,8 @@ export class TextPanelCtrl extends PanelCtrl {
       this.renderMarkdown(this.panel.content);
     } else if (this.panel.mode === 'html') {
       this.updateContent(this.panel.content);
+    } else {
+      this.renderText(this.panel.content);
     }
     this.renderingCompleted();
   }
