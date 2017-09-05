@@ -1,10 +1,10 @@
 {
   "author": {
     "name": "Torkel Ödegaard",
-    "company": "Coding Instinct AB"
+    "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "4.5.0-pre1",
+  "version": "4.5.0-beta1",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
