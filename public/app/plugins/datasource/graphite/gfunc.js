@@ -139,8 +139,8 @@ function (_, $) {
   addFuncDef({
     name: 'percentileOfSeries',
     category: categories.Combine,
-    params: [{ name: "n", type: "int" }, { name: "interpolate", type: "select", options: ["true", "false"] }],
-    defaultParams: [95, "false"]
+    params: [{ name: 'n', type: 'int' }, { name: 'interpolate', type: 'boolean', options: ['true', 'false'] }],
+    defaultParams: [95, 'false']
   });
 
   addFuncDef({
@@ -261,8 +261,8 @@ function (_, $) {
   addFuncDef({
     name: 'sortByName',
     category: categories.Special,
-    params: [{ name: "natural", type: "select", options: ["true", "false"], optional: true }],
-    defaultParams: ["false"]
+    params: [{ name: 'natural', type: 'boolean', options: ['true', 'false'], optional: true }],
+    defaultParams: ['false']
   });
 
   addFuncDef({
