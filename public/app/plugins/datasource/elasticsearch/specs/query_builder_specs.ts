@@ -40,8 +40,7 @@ describe('ElasticQueryBuilder', function() {
     var query = builder.build({
       metrics: [{type: 'count', id: '1'}],
       timeField: '@timestamp',
-      bucketAggs: [
-        {type: 'terms', field: '@host', id: '2'},
+      bucketAggs: [ {type: 'terms', field: '@host', id: '2'},
         {type: 'date_histogram', field: '@timestamp', id: '3'}
       ],
     });
@@ -282,6 +281,7 @@ describe('ElasticQueryBuilder', function() {
       bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '3'}],
     }, [
       {key: 'key1', operator: '=', value: 'value1'},
+      {key: 'key2', operator: '=', value: 'value2'},
       {key: 'key2', operator: '!=', value: 'value2'},
       {key: 'key3', operator: '<', value: 'value3'},
       {key: 'key4', operator: '>', value: 'value4'},
@@ -289,8 +289,9 @@ describe('ElasticQueryBuilder', function() {
       {key: 'key6', operator: '!~', value: 'value6'},
     ]);
 
-    expect(query.query.bool.must.match_phrase["key1"].query).to.be("value1");
-    expect(query.query.bool.must_not.match_phrase["key2"].query).to.be("value2");
+    expect(query.query.bool.must[0].match_phrase["key1"].query).to.be("value1");
+    expect(query.query.bool.must[1].match_phrase["key2"].query).to.be("value2");
+    expect(query.query.bool.must_not[0].match_phrase["key2"].query).to.be("value2");
     expect(query.query.bool.filter[2].range["key3"].lt).to.be("value3");
     expect(query.query.bool.filter[3].range["key4"].gt).to.be("value4");
     expect(query.query.bool.filter[4].regexp["key5"]).to.be("value5");
