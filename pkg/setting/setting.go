@@ -119,6 +119,16 @@ var (
 	AuthProxyLdapSyncTtl    int
 	AuthProxyWhitelist      string
 
+	// JWT Auth settings
+	AuthJwtEnabled      bool
+	AuthJwtHeaderName   string
+	AuthJwtJwksUrl      string
+	AuthJwtAudience     string
+	AuthJwtIssuer       string
+	AuthJwtUserField    string
+	AuthJwtUserProperty string
+	AuthJwtAutoSignup   bool
+
 	// Basic Auth
 	BasicAuthEnabled bool
 
@@ -556,6 +566,17 @@ func NewConfigContext(args *CommandLineArgs) error {
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	AuthProxyLdapSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
 	AuthProxyWhitelist = authProxy.Key("whitelist").String()
+
+	// jwt auth
+	jwtAuth := Cfg.Section("auth.jwt")
+	AuthJwtEnabled = jwtAuth.Key("enabled").MustBool(false)
+	AuthJwtHeaderName = jwtAuth.Key("header_name").String()
+	AuthJwtJwksUrl = jwtAuth.Key("jwks_url").String()
+	AuthJwtAudience = jwtAuth.Key("audience").String()
+	AuthJwtIssuer = jwtAuth.Key("issuer").String()
+	AuthJwtUserField = jwtAuth.Key("user_field").String()
+	AuthJwtUserProperty = jwtAuth.Key("user_property").String()
+	AuthJwtAutoSignup = jwtAuth.Key("auto_signup").MustBool(true)
 
 	// basic auth
 	authBasic := Cfg.Section("auth.basic")

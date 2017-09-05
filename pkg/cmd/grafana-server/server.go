@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -69,6 +70,11 @@ func (g *GrafanaServerImpl) Start() {
 		return
 	}
 	defer closer.Close()
+
+	if setting.AuthJwtEnabled {
+		g.log.Info("Initializing JWT Auth.")
+		middleware.JwtAuthInit()
+	}
 
 	// init alerting
 	if setting.AlertingEnabled && setting.ExecuteAlerts {
