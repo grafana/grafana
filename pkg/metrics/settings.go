@@ -1,25 +1,27 @@
 package metrics
 
-import "github.com/grafana/grafana/pkg/setting"
+import (
+	"strings"
+	"time"
 
-type MetricPublisher interface {
-	Publish(metrics []Metric)
-}
+	"github.com/grafana/grafana/pkg/metrics/graphitepublisher"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
+	ini "gopkg.in/ini.v1"
+)
 
 type MetricSettings struct {
-	Enabled         bool
-	IntervalSeconds int64
-
-	Publishers []MetricPublisher
+	Enabled              bool
+	IntervalSeconds      int64
+	GraphiteBridgeConfig *graphitepublisher.Config
 }
 
-func readSettings() *MetricSettings {
+func ReadSettings(file *ini.File) *MetricSettings {
 	var settings = &MetricSettings{
-		Enabled:    false,
-		Publishers: make([]MetricPublisher, 0),
+		Enabled: false,
 	}
 
-	var section, err = setting.Cfg.GetSection("metrics")
+	var section, err = file.GetSection("metrics")
 	if err != nil {
 		metricsLogger.Crit("Unable to find metrics config section", "error", err)
 		return nil
@@ -32,12 +34,46 @@ func readSettings() *MetricSettings {
 		return settings
 	}
 
-	if graphitePublisher, err := CreateGraphitePublisher(); err != nil {
-		metricsLogger.Error("Failed to init Graphite metric publisher", "error", err)
-	} else if graphitePublisher != nil {
-		metricsLogger.Info("Metrics publisher initialized", "type", "graphite")
-		settings.Publishers = append(settings.Publishers, graphitePublisher)
+	cfg, err := parseGraphiteSettings(settings, file)
+	if err != nil {
+		metricsLogger.Crit("Unable to parse metrics graphite section", "error", err)
+		return nil
 	}
 
+	settings.GraphiteBridgeConfig = cfg
+
 	return settings
+}
+
+func parseGraphiteSettings(settings *MetricSettings, file *ini.File) (*graphitepublisher.Config, error) {
+	graphiteSection, err := setting.Cfg.GetSection("metrics.graphite")
+	if err != nil {
+		return nil, nil
+	}
+
+	address := graphiteSection.Key("address").String()
+	if address == "" {
+		return nil, nil
+	}
+
+	cfg := &graphitepublisher.Config{
+		URL:             address,
+		Prefix:          graphiteSection.Key("prefix").MustString("prod.grafana.%(instance_name)s"),
+		CountersAsDelta: true,
+		Gatherer:        prometheus.DefaultGatherer,
+		Interval:        time.Duration(settings.IntervalSeconds) * time.Second,
+		Timeout:         10 * time.Second,
+		Logger:          &logWrapper{logger: metricsLogger},
+		ErrorHandling:   graphitepublisher.ContinueOnError,
+	}
+
+	safeInstanceName := strings.Replace(setting.InstanceName, ".", "_", -1)
+	prefix := graphiteSection.Key("prefix").Value()
+
+	if prefix == "" {
+		prefix = "prod.grafana.%(instance_name)s."
+	}
+
+	cfg.Prefix = strings.Replace(prefix, "%(instance_name)s", safeInstanceName, -1)
+	return cfg, nil
 }

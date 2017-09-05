@@ -57,5 +57,4 @@ type Metric interface {
 	Name() string
 	GetTagsCopy() map[string]string
 	StringifyTags() string
-	Snapshot() Metric
 }

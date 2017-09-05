@@ -11,8 +11,6 @@ import (
 type Counter interface {
 	Metric
 
-	Clear()
-	Count() int64
 	Inc(int64)
 }
 
@@ -20,8 +18,8 @@ func promifyName(name string) string {
 	return strings.Replace(name, ".", "_", -1)
 }
 
-// NewCounter constructs a new StandardCounter.
-func NewCounter(meta *MetricMeta) Counter {
+func RegCounter(name string, tagStrings ...string) Counter {
+	meta := NewMetricMeta(name, tagStrings)
 	promCounter := prometheus.NewCounter(prometheus.CounterOpts{
 		Name:        promifyName(meta.Name()) + "_total",
 		Help:        meta.Name(),
@@ -35,12 +33,6 @@ func NewCounter(meta *MetricMeta) Counter {
 		count:      0,
 		Counter:    promCounter,
 	}
-}
-
-func RegCounter(name string, tagStrings ...string) Counter {
-	cr := NewCounter(NewMetricMeta(name, tagStrings))
-	//MetricStats.Register(cr)
-	return cr
 }
 
 // StandardCounter is the standard implementation of a Counter and uses the

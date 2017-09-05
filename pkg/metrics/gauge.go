@@ -18,7 +18,8 @@ type Gauge interface {
 	Value() int64
 }
 
-func NewGauge(meta *MetricMeta) Gauge {
+func RegGauge(name string, tagStrings ...string) Gauge {
+	meta := NewMetricMeta(name, tagStrings)
 	promGauge := prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:        promifyName(meta.Name()) + "_total",
 		Help:        meta.Name(),
@@ -32,13 +33,6 @@ func NewGauge(meta *MetricMeta) Gauge {
 		value:      0,
 		Gauge:      promGauge,
 	}
-}
-
-func RegGauge(name string, tagStrings ...string) Gauge {
-	tr := NewGauge(NewMetricMeta(name, tagStrings))
-
-	//MetricStats.Register(tr)
-	return tr
 }
 
 // GaugeSnapshot is a read-only copy of another Gauge.
