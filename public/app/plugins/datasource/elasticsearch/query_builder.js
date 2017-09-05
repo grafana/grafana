@@ -1,8 +1,7 @@
 define([
   './query_def',
-  'lodash',
 ],
-function (queryDef, _) {
+function (queryDef) {
   'use strict';
 
   function ElasticQueryBuilder(options) {
