@@ -1,12 +1,18 @@
 package metrics
 
-var MetricStats Registry
-var UseNilMetrics bool
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"runtime"
+	"strings"
+	"time"
 
-func init() {
-	// init with nil metrics
-	//initMetricVars(&MetricSettings{})
-}
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
+)
 
 var (
 	M_Instance_Start                       Counter
@@ -70,9 +76,6 @@ var (
 )
 
 func initMetricVars(settings *MetricSettings) {
-	UseNilMetrics = settings.Enabled == false
-	MetricStats = NewRegistry()
-
 	M_Instance_Start = RegCounter("instance_start")
 
 	M_Page_Status_200 = RegCounter("page.resp_status", "code", "200")
@@ -143,4 +146,100 @@ func initMetricVars(settings *MetricSettings) {
 	M_StatTotal_Users = RegGauge("stat_totals", "stat", "users")
 	M_StatTotal_Orgs = RegGauge("stat_totals", "stat", "orgs")
 	M_StatTotal_Playlists = RegGauge("stat_totals", "stat", "playlists")
+
+	go instrumentationLoop(settings)
+}
+
+func instrumentationLoop(settings *MetricSettings) chan struct{} {
+	M_Instance_Start.Inc(1)
+
+	onceEveryDayTick := time.NewTicker(time.Hour * 24)
+	secondTicker := time.NewTicker(time.Second * time.Duration(settings.IntervalSeconds))
+
+	for {
+		select {
+		case <-onceEveryDayTick.C:
+			sendUsageStats()
+		case <-secondTicker.C:
+			updateTotalStats()
+		}
+	}
+}
+
+func updateTotalStats() {
+	// every interval also publish totals
+	metricPublishCounter++
+	if metricPublishCounter%10 == 0 {
+		// get stats
+		statsQuery := models.GetSystemStatsQuery{}
+		if err := bus.Dispatch(&statsQuery); err != nil {
+			metricsLogger.Error("Failed to get system stats", "error", err)
+			return
+		}
+
+		M_StatTotal_Dashboards.Update(statsQuery.Result.Dashboards)
+		M_StatTotal_Users.Update(statsQuery.Result.Users)
+		M_StatTotal_Playlists.Update(statsQuery.Result.Playlists)
+		M_StatTotal_Orgs.Update(statsQuery.Result.Orgs)
+	}
+}
+
+func sendUsageStats() {
+	if !setting.ReportingEnabled {
+		return
+	}
+
+	metricsLogger.Debug("Sending anonymous usage stats to stats.grafana.org")
+
+	version := strings.Replace(setting.BuildVersion, ".", "_", -1)
+
+	metrics := map[string]interface{}{}
+	report := map[string]interface{}{
+		"version": version,
+		"metrics": metrics,
+		"os":      runtime.GOOS,
+		"arch":    runtime.GOARCH,
+	}
+
+	statsQuery := models.GetSystemStatsQuery{}
+	if err := bus.Dispatch(&statsQuery); err != nil {
+		metricsLogger.Error("Failed to get system stats", "error", err)
+		return
+	}
+
+	metrics["stats.dashboards.count"] = statsQuery.Result.Dashboards
+	metrics["stats.users.count"] = statsQuery.Result.Users
+	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
+	metrics["stats.playlist.count"] = statsQuery.Result.Playlists
+	metrics["stats.plugins.apps.count"] = len(plugins.Apps)
+	metrics["stats.plugins.panels.count"] = len(plugins.Panels)
+	metrics["stats.plugins.datasources.count"] = len(plugins.DataSources)
+	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
+	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
+	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
+
+	dsStats := models.GetDataSourceStatsQuery{}
+	if err := bus.Dispatch(&dsStats); err != nil {
+		metricsLogger.Error("Failed to get datasource stats", "error", err)
+		return
+	}
+
+	// send counters for each data source
+	// but ignore any custom data sources
+	// as sending that name could be sensitive information
+	dsOtherCount := 0
+	for _, dsStat := range dsStats.Result {
+		if models.IsKnownDataSourcePlugin(dsStat.Type) {
+			metrics["stats.ds."+dsStat.Type+".count"] = dsStat.Count
+		} else {
+			dsOtherCount += dsStat.Count
+		}
+	}
+	metrics["stats.ds.other.count"] = dsOtherCount
+
+	out, _ := json.MarshalIndent(report, "", " ")
+	data := bytes.NewBuffer(out)
+
+	client := http.Client{Timeout: time.Duration(5 * time.Second)}
+	go client.Post("https://stats.grafana.org/grafana-usage-report", "application/json", data)
 }

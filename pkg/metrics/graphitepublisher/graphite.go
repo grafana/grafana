@@ -246,7 +246,9 @@ func writeMetric(buf *bufio.Writer, m model.Metric, mf *dto.MetricFamily) error 
 	switch numLabels {
 	case 0:
 		if hasName {
-			return writeSanitized(buf, string(metricName))
+			if err := writeSanitized(buf, string(metricName)); err != nil {
+				return err
+			}
 		}
 	default:
 		sort.Strings(labelStrings)
@@ -306,9 +308,15 @@ func replaceInvalidRune(c rune) rune {
 }
 
 func (b *Bridge) replaceCounterWithDelta(mf *dto.MetricFamily, metric model.Metric, value model.SampleValue) float64 {
-	if !b.countersAsDetlas || mf.GetType() != dto.MetricType_COUNTER {
+	if mf.GetType() != dto.MetricType_COUNTER {
 		return float64(value)
 	}
+
+	if !b.countersAsDetlas {
+		return float64(value)
+	}
+
+	//println("use delta for", metric[model.MetricNameLabel], mf.GetType().String())
 
 	//TODO(bergquist): turn _count in summery into delta
 	//TODO(bergquist): turn _count in histogram into delta

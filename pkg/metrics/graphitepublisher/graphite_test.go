@@ -217,7 +217,7 @@ prefix.name_bucket.constname.constvalue.labelname.val2.le._Inf 3 1477043
 	}
 }
 
-func TestCounter(t *testing.T) {
+func TestCounterVec(t *testing.T) {
 	cntVec := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name:        "name",
@@ -279,6 +279,65 @@ prefix.name.constname.constvalue.labelname.val2.count 1 1477043
 	want2 := `prefix.name.constname.constvalue.labelname.val1.count 1 1477053
 prefix.name.constname.constvalue.labelname.val2.count 1 1477053
 `
+	if got := buf.String(); want2 != got {
+		t.Fatalf("wanted \n%s\n, got \n%s\n", want2, got)
+	}
+}
+
+func TestCounter(t *testing.T) {
+	cntVec := prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name:        "name",
+			Help:        "docstring",
+			ConstLabels: prometheus.Labels{"constname": "constvalue"},
+		})
+
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(cntVec)
+
+	cntVec.Inc()
+
+	b, err := NewBridge(&Config{
+		URL:             "localhost:8080",
+		Gatherer:        reg,
+		CountersAsDelta: true,
+	})
+	if err != nil {
+		t.Fatalf("error creating bridge: %v", err)
+	}
+
+	// first collect
+	mfs, err := reg.Gather()
+	if err != nil {
+		t.Fatalf("error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	err = b.writeMetrics(&buf, mfs, "prefix", model.Time(1477043083))
+	if err != nil {
+		t.Fatalf("error: %v", err)
+	}
+
+	want := "prefix.name.constname.constvalue.count 1 1477043\n"
+	if got := buf.String(); want != got {
+		t.Fatalf("wanted \n%s\n, got \n%s\n", want, got)
+	}
+
+	//next collect
+	cntVec.Inc()
+
+	mfs, err = reg.Gather()
+	if err != nil {
+		t.Fatalf("error: %v", err)
+	}
+
+	buf = bytes.Buffer{}
+	err = b.writeMetrics(&buf, mfs, "prefix", model.Time(1477053083))
+	if err != nil {
+		t.Fatalf("error: %v", err)
+	}
+
+	want2 := "prefix.name.constname.constvalue.count 1 1477053\n"
 	if got := buf.String(); want2 != got {
 		t.Fatalf("wanted \n%s\n, got \n%s\n", want2, got)
 	}
