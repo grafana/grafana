@@ -9,6 +9,8 @@
 
 # 4.5.0 (unreleased)
 
+# 4.5.0-beta1 (2017-09-05)
+
 ## New Features
 
 * **Table panel**: Render cell values as links that can have an url template that uses variables from current table row. [#3754](https://github.com/grafana/grafana/issues/3754)
@@ -36,11 +38,6 @@
 
 * **Modals**: Maintain scroll position after opening/leaving modal [#8800](https://github.com/grafana/grafana/issues/8800)
 * **Templating**: You cannot select data source variables as data source for other template variables [#7510](https://github.com/grafana/grafana/issues/7510)
-
-# 4.4.4 (unreleased)
-
-## Bug Fixes
-
 * **MySQL/Postgres**: Fix for max_idle_conn option default which was wrongly set to zero which does not mean unlimited but means zero, which in practice kind of disables connection pooling, which is not good. Fixes [#8513](https://github.com/grafana/grafana/issues/8513)
 
 # 4.4.3 (2017-08-07)
