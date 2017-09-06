@@ -16,10 +16,12 @@ import (
 )
 
 var (
-	M_Instance_Start prometheus.Counter
-	M_Page_Status    *prometheus.CounterVec
-	M_Api_Status     *prometheus.CounterVec
-	M_Proxy_Status   *prometheus.CounterVec
+	M_Instance_Start       prometheus.Counter
+	M_Page_Status          *prometheus.CounterVec
+	M_Api_Status           *prometheus.CounterVec
+	M_Proxy_Status         *prometheus.CounterVec
+	M_Http_Request_Total   *prometheus.CounterVec
+	M_Http_Request_Summary *prometheus.SummaryVec
 
 	M_Api_User_SignUpStarted   prometheus.Counter
 	M_Api_User_SignUpCompleted prometheus.Counter
@@ -82,6 +84,22 @@ func init() {
 			Help: "proxy http response status",
 		},
 		[]string{"code"},
+	)
+
+	M_Http_Request_Total = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "http_request_total",
+			Help: "http request counter",
+		},
+		[]string{"code", "method"},
+	)
+
+	M_Http_Request_Summary = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name: "http_request_duration",
+			Help: "http request summary",
+		},
+		[]string{"code", "method"},
 	)
 
 	M_Api_User_SignUpStarted = prometheus.NewCounter(prometheus.CounterOpts{
@@ -214,6 +232,9 @@ func initMetricVars(settings *MetricSettings) {
 		M_Instance_Start,
 		M_Page_Status,
 		M_Api_Status,
+		M_Proxy_Status,
+		M_Http_Request_Total,
+		M_Http_Request_Summary,
 		M_Api_User_SignUpStarted,
 		M_Api_User_SignUpCompleted,
 		M_Api_User_SignUpInvite,
