@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics/graphitepublisher"
+	"github.com/grafana/grafana/pkg/metrics/graphitebridge"
 )
 
 var metricsLogger log.Logger = log.New("metrics")
@@ -22,7 +22,7 @@ func Init(settings *MetricSettings) {
 	initMetricVars(settings)
 
 	if settings.GraphiteBridgeConfig != nil {
-		bridge, err := graphitepublisher.NewBridge(settings.GraphiteBridgeConfig)
+		bridge, err := graphitebridge.NewBridge(settings.GraphiteBridgeConfig)
 		if err != nil {
 			metricsLogger.Error("failed to create graphite bridge", "error", err)
 		} else {

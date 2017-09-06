@@ -1,4 +1,4 @@
-package graphitepublisher
+package graphitebridge
 
 import (
 	"bufio"
@@ -142,12 +142,12 @@ func TestWriteSummary(t *testing.T) {
 prefix.name.constname.constvalue.labelname.val1.quantile.0_9 30 1477043
 prefix.name.constname.constvalue.labelname.val1.quantile.0_99 30 1477043
 prefix.name_sum.constname.constvalue.labelname.val1 60 1477043
-prefix.name_count.constname.constvalue.labelname.val1 3 1477043
+prefix.name_count.constname.constvalue.labelname.val1.count 3 1477043
 prefix.name.constname.constvalue.labelname.val2.quantile.0_5 30 1477043
 prefix.name.constname.constvalue.labelname.val2.quantile.0_9 40 1477043
 prefix.name.constname.constvalue.labelname.val2.quantile.0_99 40 1477043
 prefix.name_sum.constname.constvalue.labelname.val2 90 1477043
-prefix.name_count.constname.constvalue.labelname.val2 3 1477043
+prefix.name_count.constname.constvalue.labelname.val2.count 3 1477043
 `
 
 	if got := buf.String(); want != got {
@@ -201,15 +201,15 @@ func TestWriteHistogram(t *testing.T) {
 prefix.name_bucket.constname.constvalue.labelname.val1.le.0_02 0 1477043
 prefix.name_bucket.constname.constvalue.labelname.val1.le.0_05 0 1477043
 prefix.name_bucket.constname.constvalue.labelname.val1.le.0_1 0 1477043
-prefix.name_sum.constname.constvalue.labelname.val1 60 1477043
-prefix.name_count.constname.constvalue.labelname.val1 3 1477043
+prefix.name_sum.constname.constvalue.labelname.val1.sum 60 1477043
+prefix.name_count.constname.constvalue.labelname.val1.count 3 1477043
 prefix.name_bucket.constname.constvalue.labelname.val1.le._Inf 3 1477043
 prefix.name_bucket.constname.constvalue.labelname.val2.le.0_01 0 1477043
 prefix.name_bucket.constname.constvalue.labelname.val2.le.0_02 0 1477043
 prefix.name_bucket.constname.constvalue.labelname.val2.le.0_05 0 1477043
 prefix.name_bucket.constname.constvalue.labelname.val2.le.0_1 0 1477043
-prefix.name_sum.constname.constvalue.labelname.val2 90 1477043
-prefix.name_count.constname.constvalue.labelname.val2 3 1477043
+prefix.name_sum.constname.constvalue.labelname.val2.sum 90 1477043
+prefix.name_count.constname.constvalue.labelname.val2.count 3 1477043
 prefix.name_bucket.constname.constvalue.labelname.val2.le._Inf 3 1477043
 `
 	if got := buf.String(); want != got {
