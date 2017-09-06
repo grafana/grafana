@@ -23,10 +23,7 @@ func (parser *ESQueryParser) SearchRequest(timeRange *tsdb.TimeRange, model *sim
 	start := strconv.FormatInt(timeRange.GetFromAsMsEpoch(), 10)
 	end := strconv.FormatInt(timeRange.GetToAsMsEpoch(), 10)
 	timeFilter := elastic.NewRangeQuery(dsInfo.TimeField).Gte(start).Lte(end).Format(epochMillis)
-	qs := "*"
-	if qs, err = model.Get("query").String(); err != nil {
-		return sr, err
-	}
+	qs := model.Get("query").MustString("*")
 	queryFilter := elastic.NewQueryStringQuery(qs)
 
 	// Metrics
@@ -363,7 +360,13 @@ func (parser *percentileMetricParser) Parse(metric *simplejson.Json) (elastic.Ag
 	percents, err := metric.Get(models.SettingsKey).Get("percents").Array()
 	percentiles := []float64{}
 	for _, p := range percents {
-		percent, err := simplejson.NewFromAny(p).Float64()
+		var percent float64
+		switch ptype := p.(type) {
+		case string:
+			percent, err = strconv.ParseFloat(ptype, 10)
+		default:
+			percent, err = simplejson.NewFromAny(ptype).Float64()
+		}
 		if err != nil {
 			continue
 		}
