@@ -24,7 +24,7 @@ Read the [Basic Concepts](/guides/basic_concepts) document to get a crash course
 
 ### Top header
 
-Let's start with creating a new Dashboard. You can find the new Dashboard link at the bottom of the Dashboard picker. You now have a blank Dashboard.
+Let's start with creating a new Dashboard. You can find the new Dashboard link at the bottom of the Dashboard picker. You now have a blank Dashboard. 
 
 <img class="no-shadow" src="/img/docs/v2/v2_top_nav_annotated.png">
 
@@ -44,7 +44,7 @@ Dashboards are at the core of what Grafana is all about. Dashboards are composed
 
 ## Adding & Editing Graphs and Panels
 
-![](/img/docs/v2/graph_metrics_tab_graphite.png)
+![](/img/docs/v45/metrics_tab.png)
 
 1. You add panels via row menu. The row menu is the green icon to the left of each row.
 2. To edit the graph you click on the graph title to open the panel menu, then `Edit`.
