@@ -158,6 +158,11 @@ export class PrometheusDatasource {
     return this._request('GET', url, query.requestId);
   }
 
+  performInstantQuery(query, time) {
+    var url = '/api/v1/query?query=' + encodeURIComponent(query.expr) + '&time=' + time;
+    return this._request('GET', url, query.requestId);
+  }
+
   performSuggestQuery(query, cache = false) {
     var url = '/api/v1/label/__name__/values';
 
