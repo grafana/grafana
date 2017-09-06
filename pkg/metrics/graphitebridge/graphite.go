@@ -360,12 +360,6 @@ func (b *Bridge) replaceCounterWithDelta(mf *dto.MetricFamily, metric model.Metr
 	}
 
 	return float64(value)
-
-	//println("use delta for", metric[model.MetricNameLabel], mf.GetType().String())
-
-	//TODO(bergquist): turn _count in summery into delta
-	//TODO(bergquist): turn _count in histogram into delta
-
 }
 
 func (b *Bridge) returnDelta(metric model.Metric, value model.SampleValue) float64 {
