@@ -6,8 +6,8 @@ call go run build.go build
 call :CheckError "COMPILE GRAFCRUNCH SERVER"
 
 echo BUILDING GrafCrunch Client
-call yarn install --pure-lockfile
-call :CheckError "YARN UPDATE"
+REM call yarn install --pure-lockfile
+REM call :CheckError "YARN UPDATE"
 call grunt release
 call :CheckError "GRAFCRUNCH CLIENT"
 
