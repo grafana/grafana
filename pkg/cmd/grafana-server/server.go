@@ -54,8 +54,7 @@ func (g *GrafanaServerImpl) Start() {
 	g.writePIDFile()
 
 	initSql()
-	metricsCfg := metrics.ReadSettings(setting.Cfg)
-	metrics.Init(metricsCfg)
+	metrics.Init(setting.Cfg)
 	search.Init()
 	login.Init()
 	social.NewOAuthService()

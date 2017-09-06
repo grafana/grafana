@@ -3,12 +3,13 @@ package metrics
 import (
 	"context"
 
+	ini "gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics/graphitebridge"
 )
 
 var metricsLogger log.Logger = log.New("metrics")
-var metricPublishCounter int64 = 0
 
 type logWrapper struct {
 	logger log.Logger
@@ -18,7 +19,12 @@ func (lw *logWrapper) Println(v ...interface{}) {
 	lw.logger.Info("graphite metric bridge", v...)
 }
 
-func Init(settings *MetricSettings) {
+func Init(file *ini.File) {
+	cfg := ReadSettings(file)
+	internalInit(cfg)
+}
+
+func internalInit(settings *MetricSettings) {
 	initMetricVars(settings)
 
 	if settings.GraphiteBridgeConfig != nil {
