@@ -260,11 +260,11 @@ func instrumentationLoop(settings *MetricSettings) chan struct{} {
 	}
 }
 
+var metricPublishCounter int64 = 0
+
 func updateTotalStats() {
-	// every interval also publish totals
 	metricPublishCounter++
-	if metricPublishCounter%10 == 0 {
-		// get stats
+	if metricPublishCounter == 1 || metricPublishCounter%10 == 0 {
 		statsQuery := models.GetSystemStatsQuery{}
 		if err := bus.Dispatch(&statsQuery); err != nil {
 			metricsLogger.Error("Failed to get system stats", "error", err)
