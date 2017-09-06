@@ -28,38 +28,38 @@ func RequestMetrics() macaron.Handler {
 func countApiRequests(status int) {
 	switch status {
 	case 200:
-		metrics.M_Api_Status_200.Inc(1)
+		metrics.M_Api_Status.WithLabelValues("200").Inc()
 	case 404:
-		metrics.M_Api_Status_404.Inc(1)
+		metrics.M_Api_Status.WithLabelValues("404").Inc()
 	case 500:
-		metrics.M_Api_Status_500.Inc(1)
+		metrics.M_Api_Status.WithLabelValues("500").Inc()
 	default:
-		metrics.M_Api_Status_Unknown.Inc(1)
+		metrics.M_Api_Status.WithLabelValues("unknown").Inc()
 	}
 }
 
 func countPageRequests(status int) {
 	switch status {
 	case 200:
-		metrics.M_Page_Status_200.Inc(1)
+		metrics.M_Page_Status.WithLabelValues("200").Inc()
 	case 404:
-		metrics.M_Page_Status_404.Inc(1)
+		metrics.M_Page_Status.WithLabelValues("404").Inc()
 	case 500:
-		metrics.M_Page_Status_500.Inc(1)
+		metrics.M_Page_Status.WithLabelValues("500").Inc()
 	default:
-		metrics.M_Page_Status_Unknown.Inc(1)
+		metrics.M_Page_Status.WithLabelValues("unknown").Inc()
 	}
 }
 
 func countProxyRequests(status int) {
 	switch status {
 	case 200:
-		metrics.M_Proxy_Status_200.Inc(1)
+		metrics.M_Proxy_Status.WithLabelValues("200").Inc()
 	case 404:
-		metrics.M_Proxy_Status_404.Inc(1)
+		metrics.M_Proxy_Status.WithLabelValues("400").Inc()
 	case 500:
-		metrics.M_Proxy_Status_500.Inc(1)
+		metrics.M_Proxy_Status.WithLabelValues("500").Inc()
 	default:
-		metrics.M_Proxy_Status_Unknown.Inc(1)
+		metrics.M_Proxy_Status.WithLabelValues("unknown").Inc()
 	}
 }

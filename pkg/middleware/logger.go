@@ -19,8 +19,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/macaron.v1"
 )
 
@@ -35,8 +35,8 @@ func Logger() macaron.Handler {
 		timeTakenMs := time.Since(start) / time.Millisecond
 
 		if timer, ok := c.Data["perfmon.timer"]; ok {
-			timerTyped := timer.(metrics.Timer)
-			timerTyped.Update(timeTakenMs)
+			timerTyped := timer.(prometheus.Summary)
+			timerTyped.Observe(float64(timeTakenMs))
 		}
 
 		status := rw.Status()
