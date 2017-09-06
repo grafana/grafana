@@ -13,7 +13,7 @@
 
 // Package graphite provides a bridge to push Prometheus metrics to a Graphite
 // server.
-package graphitepublisher
+package graphitebridge
 
 import (
 	"bufio"
@@ -275,11 +275,37 @@ func writeMetric(buf *bufio.Writer, m model.Metric, mf *dto.MetricFamily) error 
 		}
 	}
 
-	if mf.GetType() == dto.MetricType_COUNTER {
-		// Adding the `.count` suffix makes it possible to configure
-		// `sum` as rollup strategy for counters
+	if err = addExtentionConventionForRollups(buf, mf, m); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func addExtentionConventionForRollups(buf *bufio.Writer, mf *dto.MetricFamily, m model.Metric) error {
+	// Adding `.count` `.sum` suffix makes it possible to configure
+	// different rollup strategies based on metric type
+
+	mfType := mf.GetType()
+	var err error
+	if mfType == dto.MetricType_COUNTER {
 		if _, err = fmt.Fprint(buf, ".count"); err != nil {
 			return err
+		}
+	}
+
+	if mfType == dto.MetricType_SUMMARY || mfType == dto.MetricType_HISTOGRAM {
+		if strings.HasSuffix(string(m[model.MetricNameLabel]), "_count") {
+			if _, err = fmt.Fprint(buf, ".count"); err != nil {
+				return err
+			}
+		}
+	}
+	if mfType == dto.MetricType_HISTOGRAM {
+		if strings.HasSuffix(string(m[model.MetricNameLabel]), "_sum") {
+			if _, err = fmt.Fprint(buf, ".sum"); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -318,19 +344,31 @@ func replaceInvalidRune(c rune) rune {
 }
 
 func (b *Bridge) replaceCounterWithDelta(mf *dto.MetricFamily, metric model.Metric, value model.SampleValue) float64 {
-	if mf.GetType() != dto.MetricType_COUNTER {
-		return float64(value)
-	}
-
 	if !b.countersAsDetlas {
 		return float64(value)
 	}
+
+	mfType := mf.GetType()
+	if mfType == dto.MetricType_COUNTER {
+		return b.returnDelta(metric, value)
+	}
+
+	if mfType == dto.MetricType_SUMMARY {
+		if strings.HasSuffix(string(metric[model.MetricNameLabel]), "_count") {
+			return b.returnDelta(metric, value)
+		}
+	}
+
+	return float64(value)
 
 	//println("use delta for", metric[model.MetricNameLabel], mf.GetType().String())
 
 	//TODO(bergquist): turn _count in summery into delta
 	//TODO(bergquist): turn _count in histogram into delta
 
+}
+
+func (b *Bridge) returnDelta(metric model.Metric, value model.SampleValue) float64 {
 	key := metric.Fingerprint()
 	_, exists := b.lastValue[key]
 	if !exists {
