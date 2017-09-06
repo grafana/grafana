@@ -36,6 +36,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
     this.formats = [
       {text: 'Time series', value: 'time_series'},
       {text: 'Table', value: 'table'},
+      {text: 'Instant', value: 'instant'},
     ];
 
     this.updateLink();
