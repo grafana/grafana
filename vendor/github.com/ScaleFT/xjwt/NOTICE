@@ -1,0 +1,10 @@
+xwjt
+Copyright 2017 ScaleFT, Inc.
+
+This product includes software developed at ScaleFT, Inc.
+(https://www.scaleft.com/).
+
+verify.go is based on <https://github.com/coreos/go-oidc/blob/master/verify.go>:
+
+        This product includes software developed at CoreOS, Inc.
+        (http://www.coreos.com/).
