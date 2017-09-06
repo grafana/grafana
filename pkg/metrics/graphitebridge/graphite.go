@@ -206,6 +206,18 @@ func (b *Bridge) writeMetrics(w io.Writer, mfs []*dto.MetricFamily, prefix strin
 			return err
 		}
 
+		ignoreThisMetric := false
+		for _, v := range ignorePrefix {
+			if strings.HasPrefix(mf.GetName(), v) {
+				ignoreThisMetric = true
+				break
+			}
+		}
+
+		if ignoreThisMetric {
+			continue
+		}
+
 		buf := bufio.NewWriter(w)
 		for _, s := range vec {
 			if err := writeSanitized(buf, prefix); err != nil {

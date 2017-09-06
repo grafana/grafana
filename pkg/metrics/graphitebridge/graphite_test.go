@@ -343,6 +343,46 @@ func TestCounter(t *testing.T) {
 	}
 }
 
+func TestCanIgnoreSomeMetrics(t *testing.T) {
+	cntVec := prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name:        "http_request_total",
+			Help:        "docstring",
+			ConstLabels: prometheus.Labels{"constname": "constvalue"},
+		})
+
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(cntVec)
+
+	cntVec.Inc()
+
+	b, err := NewBridge(&Config{
+		URL:             "localhost:8080",
+		Gatherer:        reg,
+		CountersAsDelta: true,
+	})
+	if err != nil {
+		t.Fatalf("error creating bridge: %v", err)
+	}
+
+	// first collect
+	mfs, err := reg.Gather()
+	if err != nil {
+		t.Fatalf("error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	err = b.writeMetrics(&buf, mfs, "prefix", model.Time(1477043083))
+	if err != nil {
+		t.Fatalf("error: %v", err)
+	}
+
+	want := ""
+	if got := buf.String(); want != got {
+		t.Fatalf("wanted \n%s\n, got \n%s\n", want, got)
+	}
+}
+
 func TestPush(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	cntVec := prometheus.NewCounterVec(
