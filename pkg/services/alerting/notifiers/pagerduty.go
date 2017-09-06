@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -63,7 +62,6 @@ type PagerdutyNotifier struct {
 }
 
 func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
-	metrics.M_Alerting_Notification_Sent_PagerDuty.Inc(1)
 
 	if evalContext.Rule.State == m.AlertStateOK && !this.AutoResolve {
 		this.log.Info("Not sending a trigger to Pagerduty", "state", evalContext.Rule.State, "auto resolve", this.AutoResolve)

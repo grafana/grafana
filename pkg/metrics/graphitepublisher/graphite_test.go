@@ -220,7 +220,7 @@ prefix.name_bucket.constname.constvalue.labelname.val2.le._Inf 3 1477043
 func TestCounterVec(t *testing.T) {
 	cntVec := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name:        "name",
+			Name:        "page_response",
 			Help:        "docstring",
 			ConstLabels: prometheus.Labels{"constname": "constvalue"},
 		},
@@ -254,8 +254,8 @@ func TestCounterVec(t *testing.T) {
 		t.Fatalf("error: %v", err)
 	}
 
-	want := `prefix.name.constname.constvalue.labelname.val1.count 1 1477043
-prefix.name.constname.constvalue.labelname.val2.count 1 1477043
+	want := `prefix.page.response.constname.constvalue.labelname.val1.count 1 1477043
+prefix.page.response.constname.constvalue.labelname.val2.count 1 1477043
 `
 	if got := buf.String(); want != got {
 		t.Fatalf("wanted \n%s\n, got \n%s\n", want, got)
@@ -276,8 +276,8 @@ prefix.name.constname.constvalue.labelname.val2.count 1 1477043
 		t.Fatalf("error: %v", err)
 	}
 
-	want2 := `prefix.name.constname.constvalue.labelname.val1.count 1 1477053
-prefix.name.constname.constvalue.labelname.val2.count 1 1477053
+	want2 := `prefix.page.response.constname.constvalue.labelname.val1.count 1 1477053
+prefix.page.response.constname.constvalue.labelname.val2.count 1 1477053
 `
 	if got := buf.String(); want2 != got {
 		t.Fatalf("wanted \n%s\n, got \n%s\n", want2, got)
@@ -287,7 +287,7 @@ prefix.name.constname.constvalue.labelname.val2.count 1 1477053
 func TestCounter(t *testing.T) {
 	cntVec := prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name:        "name",
+			Name:        "page_response",
 			Help:        "docstring",
 			ConstLabels: prometheus.Labels{"constname": "constvalue"},
 		})
@@ -318,7 +318,7 @@ func TestCounter(t *testing.T) {
 		t.Fatalf("error: %v", err)
 	}
 
-	want := "prefix.name.constname.constvalue.count 1 1477043\n"
+	want := "prefix.page.response.constname.constvalue.count 1 1477043\n"
 	if got := buf.String(); want != got {
 		t.Fatalf("wanted \n%s\n, got \n%s\n", want, got)
 	}
@@ -337,7 +337,7 @@ func TestCounter(t *testing.T) {
 		t.Fatalf("error: %v", err)
 	}
 
-	want2 := "prefix.name.constname.constvalue.count 1 1477053\n"
+	want2 := "prefix.page.response.constname.constvalue.count 1 1477053\n"
 	if got := buf.String(); want2 != got {
 		t.Fatalf("wanted \n%s\n, got \n%s\n", want2, got)
 	}
