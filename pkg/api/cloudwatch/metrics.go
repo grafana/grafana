@@ -91,7 +91,7 @@ func init() {
 		"AWS/SWF": {"DecisionTaskScheduleToStartTime", "DecisionTaskStartToCloseTime", "DecisionTasksCompleted", "StartedDecisionTasksTimedOutOnClose", "WorkflowStartToCloseTime", "WorkflowsCanceled", "WorkflowsCompleted", "WorkflowsContinuedAsNew", "WorkflowsFailed", "WorkflowsTerminated", "WorkflowsTimedOut",
 			"ActivityTaskScheduleToCloseTime", "ActivityTaskScheduleToStartTime", "ActivityTaskStartToCloseTime", "ActivityTasksCanceled", "ActivityTasksCompleted", "ActivityTasksFailed", "ScheduledActivityTasksTimedOutOnClose", "ScheduledActivityTasksTimedOutOnStart", "StartedActivityTasksTimedOutOnClose", "StartedActivityTasksTimedOutOnHeartbeat"},
 		"AWS/VPN":        {"TunnelState", "TunnelDataIn", "TunnelDataOut"},
-		"AWS/WAF":        {"AllowedRequests", "BlockedRequests", "CountedRequests"},
+		"WAF":            {"AllowedRequests", "BlockedRequests", "CountedRequests"},
 		"AWS/WorkSpaces": {"Available", "Unhealthy", "ConnectionAttempt", "ConnectionSuccess", "ConnectionFailure", "SessionLaunchTime", "InSessionLatency", "SessionDisconnect"},
 		"KMS":            {"SecondsUntilKeyMaterialExpiration"},
 	}
@@ -133,7 +133,7 @@ func init() {
 		"AWS/StorageGateway":   {"GatewayId", "GatewayName", "VolumeId"},
 		"AWS/SWF":              {"Domain", "WorkflowTypeName", "WorkflowTypeVersion", "ActivityTypeName", "ActivityTypeVersion"},
 		"AWS/VPN":              {"VpnId", "TunnelIpAddress"},
-		"AWS/WAF":              {"Rule", "WebACL"},
+		"WAF":                  {"Rule", "WebACL"},
 		"AWS/WorkSpaces":       {"DirectoryId", "WorkspaceId"},
 		"KMS":                  {"KeyId"},
 	}
@@ -292,11 +292,6 @@ func getAllMetrics(cwData *datasourceInfo) (cloudwatch.ListMetricsOutput, error)
 var metricsCacheLock sync.Mutex
 
 func getMetricsForCustomMetrics(dsInfo *datasourceInfo, getAllMetrics func(*datasourceInfo) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
-	result, err := getAllMetrics(dsInfo)
-	if err != nil {
-		return []string{}, err
-	}
-
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
@@ -314,6 +309,10 @@ func getMetricsForCustomMetrics(dsInfo *datasourceInfo, getAllMetrics func(*data
 	if customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire.After(time.Now()) {
 		return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
 	}
+	result, err := getAllMetrics(dsInfo)
+	if err != nil {
+		return []string{}, err
+	}
 	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
 	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire = time.Now().Add(5 * time.Minute)
 
@@ -330,11 +329,6 @@ func getMetricsForCustomMetrics(dsInfo *datasourceInfo, getAllMetrics func(*data
 var dimensionsCacheLock sync.Mutex
 
 func getDimensionsForCustomMetrics(dsInfo *datasourceInfo, getAllMetrics func(*datasourceInfo) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
-	result, err := getAllMetrics(dsInfo)
-	if err != nil {
-		return []string{}, err
-	}
-
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
@@ -351,6 +345,10 @@ func getDimensionsForCustomMetrics(dsInfo *datasourceInfo, getAllMetrics func(*d
 
 	if customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire.After(time.Now()) {
 		return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
+	}
+	result, err := getAllMetrics(dsInfo)
+	if err != nil {
+		return []string{}, err
 	}
 	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
 	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire = time.Now().Add(5 * time.Minute)

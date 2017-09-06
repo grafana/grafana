@@ -29,7 +29,7 @@ function (_) {
 
     orderByOptions: [
       {text: "Doc Count",  value: '_count' },
-      {text: "Term value<script>alert('hello')</script>", value: '_term' },
+      {text: "Term value", value: '_term' },
     ],
 
     orderOptions: [

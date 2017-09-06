@@ -114,7 +114,7 @@ func getEngine() (*xorm.Engine, error) {
 			protocol = "unix"
 		}
 
-		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?charset=utf8mb4&allowNativePasswords=true",
+		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
 			DbCfg.User, DbCfg.Pwd, protocol, DbCfg.Host, DbCfg.Name)
 
 		if DbCfg.SslMode == "true" || DbCfg.SslMode == "skip-verify" {

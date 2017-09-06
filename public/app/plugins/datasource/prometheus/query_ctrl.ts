@@ -6,6 +6,7 @@ import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
 import {QueryCtrl} from 'app/plugins/sdk';
+import {PromCompleter} from './completer';
 
 class PrometheusQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -15,6 +16,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
   formats: any;
   oldTarget: any;
   suggestMetrics: any;
+  getMetricsAutocomplete: any;
   linkToPrometheus: any;
 
   /** @ngInject */
@@ -36,22 +38,17 @@ class PrometheusQueryCtrl extends QueryCtrl {
       {text: 'Table', value: 'table'},
     ];
 
-    $scope.$on('typeahead-updated', () => {
-      this.$scope.$apply(() => {
-        this.target.expr += this.target.metric;
-        this.metric = '';
-        this.refreshMetricData();
-      });
-    });
-
-    // called from typeahead so need this
-    // here in order to ensure this ref
-    this.suggestMetrics = (query, callback) => {
-      console.log(this);
-      this.datasource.performSuggestQuery(query).then(callback);
-    };
-
     this.updateLink();
+  }
+
+  getCompleter(query) {
+    return new PromCompleter(this.datasource);
+    // console.log('getquery);
+    // return this.datasource.performSuggestQuery(query).then(res => {
+    //   return res.map(item => {
+    //     return {word: item, type: 'metric'};
+    //   });
+    // });
   }
 
   getDefaultFormat() {

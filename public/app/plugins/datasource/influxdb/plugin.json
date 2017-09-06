@@ -8,6 +8,10 @@
   "annotations": true,
   "alerting": true,
 
+  "queryOptions": {
+    "minInterval": true
+  },
+
   "info": {
     "author": {
       "name": "Grafana Project",
