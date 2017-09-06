@@ -24,6 +24,7 @@ export class PrometheusDatasource {
   directUrl: string;
   basicAuth: any;
   withCredentials: any;
+  metricsNameCache: any;
 
   /** @ngInject */
   constructor(instanceSettings,
@@ -157,11 +158,21 @@ export class PrometheusDatasource {
     return this._request('GET', url, query.requestId);
   }
 
-  performSuggestQuery(query) {
+  performSuggestQuery(query, cache = false) {
     var url = '/api/v1/label/__name__/values';
 
-    return this._request('GET', url).then(function(result) {
-      return _.filter(result.data.data, function (metricName) {
+    if (cache && this.metricsNameCache && this.metricsNameCache.expire > Date.now()) {
+      return this.$q.when(_.filter(this.metricsNameCache.data, metricName => {
+        return metricName.indexOf(query) !== 1;
+      }));
+    }
+
+    return this._request('GET', url).then(result => {
+      this.metricsNameCache = {
+        data: result.data.data,
+        expire: Date.now() + (60 * 1000)
+      };
+      return _.filter(result.data.data, metricName => {
         return metricName.indexOf(query) !== 1;
       });
     });
