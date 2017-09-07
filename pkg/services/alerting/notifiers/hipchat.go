@@ -131,6 +131,12 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"icon": map[string]interface{}{
 			"url": "https://grafana.com/assets/img/fav32.png",
 		},
+    "thumbnail": map[string]interface{}{
+			"url": evalContext.ImagePublicUrl,
+			"url@2x": evalContext.ImagePublicUrl,
+			"width": 1193,
+			"height": 564,
+		},
 		"date": evalContext.EndTime.Unix(),
 	}
 
