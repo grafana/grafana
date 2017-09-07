@@ -176,7 +176,7 @@ define([
     });
 
     it('86399s 1 resolution', function() {
-      var range = { from: dateMath.parse('now-86399s'), to: dateMath.parse('now') };
+      var range = { from: dateMath.parse('now-86390s'), to: dateMath.parse('now') };
       var res = kbn.calculateInterval(range, 1, null);
       expect(res.interval).to.be('12h');
       expect(res.intervalMs).to.be(43200000);
