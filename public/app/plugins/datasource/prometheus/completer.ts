@@ -23,7 +23,7 @@ export class PromCompleter {
     var query = prefix;
     var line = editor.session.getLine(pos.row);
 
-    return this.datasource.performSuggestQuery(query).then(metricNames => {
+    return this.datasource.performSuggestQuery(query, true).then(metricNames => {
       callback(null, metricNames.map(name => {
         let value = name;
         if (prefix === '(') {
