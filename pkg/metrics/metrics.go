@@ -57,6 +57,7 @@ var (
 	M_Alerting_Notification_Sent_Pushover  Counter
 	M_Aws_CloudWatch_GetMetricStatistics   Counter
 	M_Aws_CloudWatch_ListMetrics           Counter
+	M_DB_DataSource_QueryById              Counter
 
 	// Timers
 	M_DataSource_ProxyReq_Timer Timer
@@ -134,6 +135,8 @@ func initMetricVars(settings *MetricSettings) {
 
 	M_Aws_CloudWatch_GetMetricStatistics = RegCounter("aws.cloudwatch.get_metric_statistics")
 	M_Aws_CloudWatch_ListMetrics = RegCounter("aws.cloudwatch.list_metrics")
+
+	M_DB_DataSource_QueryById = RegCounter("db.datasource.query_by_id")
 
 	// Timers
 	M_DataSource_ProxyReq_Timer = RegTimer("api.dataproxy.request.all")

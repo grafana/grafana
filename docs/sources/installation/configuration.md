@@ -15,6 +15,12 @@ weight = 1
 The Grafana back-end has a number of configuration options that can be
 specified in a `.ini` configuration file or specified using environment variables.
 
+## Comments In .ini Files
+
+Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file.
+
+A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
+
 ## Config file locations
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`

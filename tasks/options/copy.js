@@ -19,6 +19,7 @@ module.exports = function(config) {
       cwd: './node_modules',
       expand: true,
       src: [
+        'ace-builds/src-noconflict/**/*',
         'eventemitter3/*.js',
         'systemjs/dist/*.js',
         'es6-promise/**/*',

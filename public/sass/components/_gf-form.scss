@@ -16,6 +16,10 @@ $gf-form-margin: 1px;
   &--grow {
     flex-grow: 1;
   }
+
+  &--flex-end {
+    justify-content: flex-end;
+  }
 }
 
 .gf-form-disabled {
@@ -57,7 +61,6 @@ $gf-form-margin: 1px;
   background-color: #292a2d; //$input-label-bg;
   display: block;
   font-size: $font-size-sm;
-  margin-right: $gf-form-margin;
 
   border: $input-btn-border-width solid transparent;
   @include border-radius($label-border-radius-sm);
@@ -105,7 +108,6 @@ $gf-form-margin: 1px;
   width: 100%;
   padding: $input-padding-y $input-padding-x;
   font-size: $font-size-base;
-  margin-right: $gf-form-margin;
   line-height: $input-line-height;
   color: $input-color;
   background-color: $input-bg;
@@ -116,7 +118,6 @@ $gf-form-margin: 1px;
   border-left: none;
   @include border-radius($input-border-radius-sm);
   @include box-shadow($input-box-shadow);
-  transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -239,6 +240,8 @@ $gf-form-margin: 1px;
   line-height: $input-line-height;
   font-size: $font-size-sm;
   box-shadow: none;
+  @include border-radius($label-border-radius-sm);
+  border: $input-btn-border-width solid transparent;
 
   flex-shrink: 0;
   flex-grow: 0;
@@ -284,7 +287,7 @@ $gf-form-margin: 1px;
   &--right-absolute {
     position: absolute;
     right: $spacer;
-    top: 8px;
+    top: 10px;
   }
 
   &--right-normal {

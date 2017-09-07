@@ -1,10 +1,10 @@
 {
   "author": {
     "name": "Torkel Ödegaard",
-    "company": "Coding Instinct AB"
+    "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "5.0.0-pre1",
+  "version": "4.5.0-beta1",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -63,6 +63,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "ace-builds": "^1.2.8",
     "eventemitter3": "^2.0.2",
     "gaze": "^1.1.2",
     "gridstack": "https://github.com/grafana/gridstack.js#grafana",

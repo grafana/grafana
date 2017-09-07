@@ -84,7 +84,7 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	message := evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text + "<br><a href=" + ruleUrl + ">Check Dasboard</a>"
+	message := evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text + "<br><a href=" + ruleUrl + ">Check Dashboard</a>"
 	fields := make([]map[string]interface{}, 0)
 	message += "<br>"
 	for index, evt := range evalContext.EvalMatches {

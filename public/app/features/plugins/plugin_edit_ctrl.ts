@@ -3,6 +3,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import appEvents from 'app/core/app_events';
+import Remarkable from 'remarkable';
 
 export class PluginEditCtrl {
   model: any;
@@ -68,11 +69,9 @@ export class PluginEditCtrl {
   }
 
   initReadme() {
-    return this.backendSrv.get(`/api/plugins/${this.pluginId}/readme`).then(res => {
-      return System.import('remarkable').then(Remarkable => {
-        var md = new Remarkable();
-        this.readmeHtml = this.$sce.trustAsHtml(md.render(res));
-      });
+    return this.backendSrv.get(`/api/plugins/${this.pluginId}/markdown/readme`).then(res => {
+      var md = new Remarkable();
+      this.readmeHtml = this.$sce.trustAsHtml(md.render(res));
     });
   }
 

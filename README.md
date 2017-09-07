@@ -1,4 +1,4 @@
-[Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana)
+[Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) [![Go Report Card](https://goreportcard.com/badge/github.com/grafana/grafana)](https://goreportcard.com/report/github.com/grafana/grafana)
 ================
 [Website](https://grafana.com) |
 [Twitter](https://twitter.com/grafana) |
@@ -124,7 +124,7 @@ To build the frontend assets only on changes:
 
 ```bash
 sudo npm install -g grunt-cli # to do only once to install grunt command line interface
-grunt watch
+grunt && grunt watch
 ```
 
 ### Recompile backend on source change

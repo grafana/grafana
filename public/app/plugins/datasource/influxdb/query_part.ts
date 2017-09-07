@@ -231,6 +231,15 @@ register({
 });
 
 register({
+  type: 'non_negative_difference',
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+register({
   type: 'moving_average',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,

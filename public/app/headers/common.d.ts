@@ -82,3 +82,8 @@ declare module 'gemini-scrollbar' {
   var d3: any;
   export default d3;
 }
+
+declare module 'ace' {
+  var ace: any;
+  export default ace;
+}

@@ -16,6 +16,7 @@ weight = 2
 Description | Download
 ------------ | -------------
 Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [4.4.3 (x86-64 rpm)](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.4.3-1.x86_64.rpm)
+Latest Beta for CentOS / Fedora / OpenSuse / Redhat Linux | [4.5.0-beta1 (x86-64 rpm)](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.5.0-beta1.x86_64.rpm)
 
 Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
 installation.

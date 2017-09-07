@@ -12,13 +12,14 @@ import {DashboardExporter} from './exporter';
 export class DashExportCtrl {
   dash: any;
   exporter: DashboardExporter;
+  dismiss: () => void;
 
   /** @ngInject */
-  constructor(private backendSrv, dashboardSrv, datasourceSrv, $scope) {
+  constructor(private backendSrv, private dashboardSrv, datasourceSrv, private $scope) {
     this.exporter = new DashboardExporter(datasourceSrv);
 
-    this.exporter.makeExportable(dashboardSrv.getCurrent()).then(dash => {
-      $scope.$apply(() => {
+    this.exporter.makeExportable(this.dashboardSrv.getCurrent()).then(dash => {
+      this.$scope.$apply(() => {
         this.dash = dash;
       });
     });
@@ -31,11 +32,13 @@ export class DashExportCtrl {
   }
 
   saveJson() {
-    var html = angular.toJson(this.dash, true);
-    var uri = "data:application/json," + encodeURIComponent(html);
-    var newWindow = window.open(uri);
-  }
+    var clone = this.dashboardSrv.getCurrent().getSaveModelClone();
 
+    this.$scope.$root.appEvent('show-json-editor', {
+      object: clone,
+    });
+    this.dismiss();
+  }
 }
 
 export function dashExportDirective() {
@@ -45,6 +48,7 @@ export function dashExportDirective() {
     controller: DashExportCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
+    scope: {dismiss: "&"}
   };
 }
 

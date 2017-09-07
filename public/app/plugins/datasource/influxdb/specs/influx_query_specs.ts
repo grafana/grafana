@@ -57,7 +57,7 @@ describe('InfluxQuery', function() {
 
       var queryText = query.render();
 
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server\\\\1\' AND $timeFilter'
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server\\\\1\') AND $timeFilter'
                           + ' GROUP BY time($__interval)');
     });
 
@@ -69,7 +69,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "app" =~ /e.*/ AND $timeFilter GROUP BY time($__interval)');
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("app" =~ /e.*/) AND $timeFilter GROUP BY time($__interval)');
     });
   });
 
@@ -82,7 +82,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' AND "app" = \'email\' AND ' +
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server1\' AND "app" = \'email\') AND ' +
                           '$timeFilter GROUP BY time($__interval)');
     });
   });
@@ -96,7 +96,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' OR "hostname" = \'server2\' AND ' +
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server1\' OR "hostname" = \'server2\') AND ' +
                           '$timeFilter GROUP BY time($__interval)');
     });
   });
@@ -110,7 +110,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "value" > 5 AND $timeFilter');
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("value" > 5) AND $timeFilter');
     });
   });
 

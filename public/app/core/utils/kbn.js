@@ -163,21 +163,15 @@ function($, _) {
     ms: 0.001
   };
 
-  kbn.calculateInterval = function(range, resolution, userInterval) {
+  kbn.calculateInterval = function(range, resolution, lowLimitInterval) {
     var lowLimitMs = 1; // 1 millisecond default low limit
-    var intervalMs, lowLimitInterval;
+    var intervalMs;
 
-    if (userInterval) {
-      if (userInterval[0] === '>') {
-        lowLimitInterval = userInterval.slice(1);
-        lowLimitMs = kbn.interval_to_ms(lowLimitInterval);
+    if (lowLimitInterval) {
+      if (lowLimitInterval[0] === '>') {
+        lowLimitInterval = lowLimitInterval.slice(1);
       }
-      else {
-        return {
-          intervalMs: kbn.interval_to_ms(userInterval),
-          interval: userInterval,
-        };
-      }
+      lowLimitMs = kbn.interval_to_ms(lowLimitInterval);
     }
 
     intervalMs = kbn.round_interval((range.to.valueOf() - range.from.valueOf()) / resolution);
