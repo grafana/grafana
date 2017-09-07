@@ -37,6 +37,15 @@ func init() {
           data-placement="right">
         </input>
       </div>
+			<div class="gf-form max-width-30">
+        <gf-form-switch
+           class="gf-form max-width-30"
+           label="Plain Text"
+           label-class="width-8"
+           checked="ctrl.model.settings.plainText"
+           tooltip="Send Hip Chat messages as text instead of the default card (Allows for more detailed messages).">
+        </gf-form-switch>
+      </div>
     `,
 	})
 
@@ -57,6 +66,7 @@ func NewHipChatNotifier(model *models.AlertNotification) (alerting.Notifier, err
 
 	apikey := model.Settings.Get("apikey").MustString()
 	roomId := model.Settings.Get("roomid").MustString()
+	plainText := model.Settings.Get("plainText").MustBool(false)
 
 	return &HipChatNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
@@ -64,6 +74,7 @@ func NewHipChatNotifier(model *models.AlertNotification) (alerting.Notifier, err
 		ApiKey:       apikey,
 		RoomId:       roomId,
 		log:          log.New("alerting.notifier.hipchat"),
+		PlainText:		plainText,
 	}, nil
 }
 
@@ -73,6 +84,7 @@ type HipChatNotifier struct {
 	ApiKey string
 	RoomId string
 	log    log.Logger
+	PlainText bool
 }
 
 func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
@@ -139,7 +151,10 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"notify":         "true",
 		"message_format": "html",
 		"color":          color,
-		"card":           card,
+	}
+
+	if !this.PlainText {
+		body["card"] = card
 	}
 
 	hipUrl := fmt.Sprintf("%s/v2/room/%s/notification?auth_token=%s", this.Url, this.RoomId, this.ApiKey)
