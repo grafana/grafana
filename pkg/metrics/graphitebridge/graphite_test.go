@@ -96,6 +96,33 @@ func TestSanitize(t *testing.T) {
 	}
 }
 
+func TestSanitizePrefix(t *testing.T) {
+	testCases := []struct {
+		in, out string
+	}{
+		{in: "service.prod.", out: "service.prod."},
+		{in: "service.prod", out: "service.prod"},
+	}
+
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+
+	for i, tc := range testCases {
+		if err := writePrefix(w, tc.in); err != nil {
+			t.Fatalf("write failed: %v", err)
+		}
+		if err := w.Flush(); err != nil {
+			t.Fatalf("flush failed: %v", err)
+		}
+
+		if want, got := tc.out, buf.String(); want != got {
+			t.Fatalf("test case index %d: got sanitized string %s, want %s", i, got, want)
+		}
+
+		buf.Reset()
+	}
+}
+
 func TestWriteSummary(t *testing.T) {
 	sumVec := prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
@@ -133,7 +160,7 @@ func TestWriteSummary(t *testing.T) {
 
 	now := model.Time(1477043083)
 	var buf bytes.Buffer
-	err = b.writeMetrics(&buf, mfs, "prefix", now)
+	err = b.writeMetrics(&buf, mfs, "prefix.", now)
 	if err != nil {
 		t.Fatalf("error: %v", err)
 	}
@@ -192,7 +219,7 @@ func TestWriteHistogram(t *testing.T) {
 
 	now := model.Time(1477043083)
 	var buf bytes.Buffer
-	err = b.writeMetrics(&buf, mfs, "prefix", now)
+	err = b.writeMetrics(&buf, mfs, "prefix.", now)
 	if err != nil {
 		t.Fatalf("error: %v", err)
 	}
@@ -249,7 +276,7 @@ func TestCounterVec(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err = b.writeMetrics(&buf, mfs, "prefix", model.Time(1477043083))
+	err = b.writeMetrics(&buf, mfs, "prefix.", model.Time(1477043083))
 	if err != nil {
 		t.Fatalf("error: %v", err)
 	}
@@ -271,7 +298,7 @@ prefix.page.response.constname.constvalue.labelname.val2.count 1 1477043
 	}
 
 	buf = bytes.Buffer{}
-	err = b.writeMetrics(&buf, mfs, "prefix", model.Time(1477053083))
+	err = b.writeMetrics(&buf, mfs, "prefix.", model.Time(1477053083))
 	if err != nil {
 		t.Fatalf("error: %v", err)
 	}
@@ -313,7 +340,7 @@ func TestCounter(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err = b.writeMetrics(&buf, mfs, "prefix", model.Time(1477043083))
+	err = b.writeMetrics(&buf, mfs, "prefix.", model.Time(1477043083))
 	if err != nil {
 		t.Fatalf("error: %v", err)
 	}
@@ -332,7 +359,7 @@ func TestCounter(t *testing.T) {
 	}
 
 	buf = bytes.Buffer{}
-	err = b.writeMetrics(&buf, mfs, "prefix", model.Time(1477053083))
+	err = b.writeMetrics(&buf, mfs, "prefix.", model.Time(1477053083))
 	if err != nil {
 		t.Fatalf("error: %v", err)
 	}
@@ -372,7 +399,7 @@ func TestCanIgnoreSomeMetrics(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err = b.writeMetrics(&buf, mfs, "prefix", model.Time(1477043083))
+	err = b.writeMetrics(&buf, mfs, "prefix.", model.Time(1477043083))
 	if err != nil {
 		t.Fatalf("error: %v", err)
 	}
@@ -402,7 +429,7 @@ func TestPush(t *testing.T) {
 	b, err := NewBridge(&Config{
 		URL:      host + port,
 		Gatherer: reg,
-		Prefix:   "prefix",
+		Prefix:   "prefix.",
 	})
 	if err != nil {
 		t.Fatalf("error creating bridge: %v", err)
