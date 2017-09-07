@@ -166,9 +166,7 @@ func handleGetNamespaces(req *cwRequest, c *middleware.Context) {
 
 	customNamespaces := req.DataSource.JsonData.Get("customMetricsNamespaces").MustString()
 	if customNamespaces != "" {
-		for _, key := range strings.Split(customNamespaces, ",") {
-			keys = append(keys, key)
-		}
+		keys = append(keys, strings.Split(customNamespaces, ",")...)
 	}
 
 	sort.Sort(sort.StringSlice(keys))
