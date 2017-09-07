@@ -31,6 +31,11 @@ There is also integrated function docs right from the query editor!
 Create column styles that turn cells into links that use the value in the cell  (or other other row values) to generate a url to another dashboard or system:
 ![](/img/docs/v45/table_links.jpg)
 
+### Query Inspector
+Query Inspector is a new feature that shows query requests and responses. This can be helpful if a graph is not shown or shows something very different than what you expected.
+More information [here](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630).
+![](/img/docs/v45/query_inspector.png)
+
 ## Changelog
 
 ### New Features

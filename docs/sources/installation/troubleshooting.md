@@ -17,7 +17,12 @@ The most common problems are related to the query & response from you data sourc
 like a bug or visualization issue in Grafana it is 99% of time a problem with the data source query or
 the data source response.
 
-So make sure to check the query sent and the raw response, learn how in this guide: [How to troubleshoot metric query issues](https://community.grafana.com/t/how-to-troubleshoot-metric-query-issues/50)
+To check this you should use Query Inspector. Query Inspector shows query requests and responses.
+![](/img/docs/v45/query_inspector.png)
+
+A guide on how to use it you can find [here](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630).
+
+<!---So make sure to check the query sent and the raw response, learn how in this guide: [How to troubleshoot metric query issues](https://community.grafana.com/t/how-to-troubleshoot-metric-query-issues/50)--->
 
 ## Logging
 
