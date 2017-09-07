@@ -42,6 +42,9 @@
       "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge",
       "d3": "vendor/d3/d3.js",
       "jquery.flot.dashes": "vendor/flot/jquery.flot.dashes",
+      "jquery-ui": "vendor/jquery-ui/custom.js",
+      "gridstack": "vendor/npm/gridstack/dist/gridstack.js",
+      "gridstack.jquery-ui": "vendor/npm/gridstack/dist/gridstack.jQueryUI.js",
       "ace": "vendor/npm/ace-builds/src-noconflict/ace",
     },
 
@@ -58,6 +61,18 @@
     },
 
     meta: {
+      'vendor/npm/jquery-ui/jquery-ui.js': {
+        format: 'amd',
+        deps: ['jquery'],
+      },
+      'vendor/npm/gridstack/dist/gridstack.js': {
+        format: 'global',
+        deps: ['jquery', 'jquery-ui', 'lodash'],
+      },
+      "vendor/npm/gridstack/dist/gridstack.jQueryUI.js": {
+        format: 'global',
+        deps: ['gridstack'],
+      },
       'vendor/angular/angular.js': {
         format: 'global',
         deps: ['jquery'],
@@ -84,7 +99,7 @@
 
   function file2moduleName(filePath) {
     return filePath.replace(/\\/g, '/')
-    .replace(/^\/base\//, '')
+      .replace(/^\/base\//, '')
       .replace(/\.\w*$/, '');
   }
 
@@ -113,12 +128,12 @@
     // load specs
     return Promise.all(
       Object.keys(window.__karma__.files) // All files served by Karma.
-      .filter(onlySpecFiles)
-      .map(file2moduleName)
-      .map(function(path) {
-        // console.log(path);
-        return System.import(path);
-      }));
+        .filter(onlySpecFiles)
+        .map(file2moduleName)
+        .map(function(path) {
+          // console.log(path);
+          return System.import(path);
+        }));
   }).then(function()  {
     window.__karma__.start();
   }, function(error) {
