@@ -254,9 +254,19 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 			p = "60"
 		}
 	}
-	period, err := strconv.Atoi(p)
-	if err != nil {
-		return nil, err
+
+	period := 300
+	if regexp.MustCompile(`^\d+$`).Match([]byte(p)) {
+		period, err = strconv.Atoi(p)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		d, err := time.ParseDuration(p)
+		if err != nil {
+			return nil, err
+		}
+		period = int(d.Seconds())
 	}
 
 	alias := model.Get("alias").MustString("{{metric}}_{{stat}}")
