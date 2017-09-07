@@ -261,10 +261,10 @@ export class KeybindingSrv {
 
       var rowIdx;
       switch (key) {
-        case 'ctrl+k':
+        case 'up':
           rowIdx = Math.max(0, curRowIdx-1);
           break;
-        case 'ctrl+j':
+        case 'down':
           rowIdx = Math.min(curRowIdx+1, dashboard.rows.length-1);
           break;
       }
@@ -276,10 +276,10 @@ export class KeybindingSrv {
       var curPanelIdx = _.indexOf(ids, dashboard.meta.focusPanelId);
       var panelIdx;
       switch (key) {
-        case 'ctrl+h':
+        case 'left':
           panelIdx = Math.max(0, curPanelIdx-1);
           break;
-        case 'ctrl+l':
+        case 'right':
           panelIdx = Math.min(curPanelIdx+1, ids.length-1);
           break;
       }
@@ -290,7 +290,7 @@ export class KeybindingSrv {
       return { row: 0, panel: 0 };
     };
 
-    ['ctrl+h', 'ctrl+j', 'ctrl+k', 'ctrl+l'].forEach(key => {
+    ['up', 'down', 'left', 'right'].forEach(key => {
       this.bind(key, () => {
         var pos = getNextFocusPanelPosition(key);
         focusPanel(pos);
