@@ -137,7 +137,7 @@ parent = "http_api"
 
 `POST /api/datasources`
 
-**Example Request**:
+**Example Graphite Request**:
 
     POST /api/datasources HTTP/1.1
     Accept: application/json
@@ -152,6 +152,28 @@ parent = "http_api"
       "basicAuth":false
     }
 
+**Example CloudWatch Request**:
+  ```
+    POST /api/datasources HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk  
+  
+  {
+      "name": "test_datasource",
+      "type": "cloudwatch",
+      "url": "http://monitoring.us-west-1.amazonaws.com",
+      "access": "proxy",
+      "jsonData": {
+        "authType": "keys",
+        "defaultRegion": "us-west-1"
+      },
+      "secureJsonData": {
+        "accessKey": "Ol4pIDpeKSA6XikgOl4p",
+        "secretKey": "dGVzdCBrZXkgYmxlYXNlIGRvbid0IHN0ZWFs"
+      }
+  }
+  ```
 
 **Example Response**:
 
