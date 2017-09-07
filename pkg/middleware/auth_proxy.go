@@ -67,7 +67,7 @@ func initContextWithAuthProxy(ctx *Context, orgId int64) bool {
 	if getRequestUserId(ctx) > 0 && getRequestUserId(ctx) != query.Result.UserId {
 		// remove session
 		if err := ctx.Session.Destory(ctx); err != nil {
-			log.Error(3, "Failed to destory session, err")
+			log.Error(3, "Failed to destroy session, err")
 		}
 
 		// initialize a new session
@@ -107,8 +107,8 @@ var syncGrafanaUserWithLdapUser = func(ctx *Context, query *m.GetSignedInUserQue
 			ldapCfg := login.LdapCfg
 
 			for _, server := range ldapCfg.Servers {
-				auther := login.NewLdapAuthenticator(server)
-				if err := auther.SyncSignedInUser(query.Result); err != nil {
+				author := login.NewLdapAuthenticator(server)
+				if err := author.SyncSignedInUser(query.Result); err != nil {
 					return err
 				}
 			}
