@@ -110,6 +110,9 @@ function link(scope, elem, attrs) {
   elem.addClass("gf-code-editor");
   let textarea = elem.find("textarea");
   textarea.addClass('gf-form-input');
+  if (attrs.giveFocus) {
+    textarea.attr('give-focus', attrs.giveFocus);
+  }
 
   // Event handlers
   editorSession.on('change', (e) => {
