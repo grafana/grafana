@@ -71,7 +71,7 @@ func TestWildcardExpansion(t *testing.T) {
 			So(expandeQueries[0].RawQuery, ShouldEqual, fmt.Sprintf("`os.cpu.3.idle`|aggregate.min|aggregate.max where cluster in ('demoapp-1', 'demoapp-2') and host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
 		})
 
-		Convey("Containg wildcard series", func() {
+		Convey("Containing wildcard series", func() {
 			query := &Query{
 				Metrics: []Metric{
 					{Metric: "os.cpu*", Alias: ""},

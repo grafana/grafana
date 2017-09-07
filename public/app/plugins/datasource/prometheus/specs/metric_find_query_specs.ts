@@ -107,4 +107,25 @@ describe('PrometheusMetricFindQuery', function() {
       expect(results[0].text).to.be('metric{job="testjob"} 3846 1443454528000');
     });
   });
+
+  describe('When performing performSuggestQuery', function() {
+    var results;
+    var response;
+    it('cache response', function() {
+      response = {
+        status: "success",
+        data: ["value1", "value2", "value3"]
+      };
+      ctx.$httpBackend.expect('GET', 'proxied/api/v1/label/__name__/values').respond(response);
+      ctx.ds.performSuggestQuery('value', true).then(function(data) { results = data; });
+      ctx.$httpBackend.flush();
+      ctx.$rootScope.$apply();
+      expect(results.length).to.be(3);
+      ctx.ds.performSuggestQuery('value', true).then(function (data) {
+        // get from cache, no need to flush
+        results = data;
+        expect(results.length).to.be(3);
+      });
+    });
+  });
 });

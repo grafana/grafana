@@ -49,15 +49,42 @@ var PrometheusHighlightRules = function() {
       regex : "\\+|\\-|\\*|\\/|%|\\^|=|==|!=|<=|>=|<|>|=\\~|!\\~"
     }, {
       token : "paren.lparen",
-      regex : "[[({]"
+      regex : "[[(]"
+    }, {
+      token : "paren.lparen",
+      regex : "{",
+      next  : "start-label-matcher"
     }, {
       token : "paren.rparen",
-      regex : "[\\])}]"
+      regex : "[\\])]"
+    }, {
+      token : "paren.rparen",
+      regex : "}"
     }, {
       token : "text",
       regex : "\\s+"
+    } ],
+    "start-label-matcher" : [ {
+      token : "label.name",
+      regex : '[a-zA-Z_][a-zA-Z0-9_]*'
+    }, {
+      token : "label.matching_operator",
+      regex : '=|!=|=~|!~'
+    }, {
+      token : "label.value",
+      regex : '"[^"]*"|\'[^\']*\''
+    }, {
+      token : "label.matching_delimiter",
+      regex : ",",
+      push  : 'start-label-matcher'
+    }, {
+      token : "label.matching_end",
+      regex : "}",
+      next  : "start"
     } ]
   };
+
+  this.normalizeRules();
 };
 
 oop.inherits(PrometheusHighlightRules, TextHighlightRules);
@@ -373,6 +400,11 @@ var PrometheusCompletions = function() {};
 
 (function() {
   this.getCompletions = function(state, session, pos, prefix, callback) {
+    var token = session.getTokenAt(pos.row, pos.column);
+    if (token.type === 'label.name' || token.type === 'label.value') {
+      return callback(null, []);
+    }
+
     var completions = keyWordsCompletions.concat(functionsCompletions);
     callback(null, completions);
   };
