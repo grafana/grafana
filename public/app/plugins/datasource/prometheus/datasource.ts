@@ -100,7 +100,7 @@ export class PrometheusDatasource {
       var query: any = {};
       query.expr = this.templateSrv.replace(target.expr, options.scopedVars, self.interpolateQueryExpr);
       query.requestId = options.panelId + target.refId;
-      query.format = target.format;
+      query.instant = target.instant;
 
       var interval = this.templateSrv.replace(target.interval, options.scopedVars) || options.interval;
       var intervalFactor = target.intervalFactor || 1;
@@ -116,7 +116,7 @@ export class PrometheusDatasource {
     }
 
     var allQueryPromise = _.map(queries, query => {
-      if (query.format === 'time_series') {
+      if (!query.instant) {
         return this.performTimeSeriesQuery(query, start, end);
       } else {
         return this.performInstantQuery(query, end);
@@ -333,6 +333,9 @@ export class PrometheusDatasource {
 
     // Populate rows, set value to empty string when label not present.
     _.each(md, function(series) {
+      if (series.value) {
+        series.values = [series.value];
+      }
       if (series.values) {
         for (i = 0; i < series.values.length; i++) {
           var values = series.values[i];

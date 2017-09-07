@@ -14,6 +14,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
   metric: any;
   resolutions: any;
   formats: any;
+  instant: any;
   oldTarget: any;
   suggestMetrics: any;
   getMetricsAutocomplete: any;
@@ -36,8 +37,9 @@ class PrometheusQueryCtrl extends QueryCtrl {
     this.formats = [
       {text: 'Time series', value: 'time_series'},
       {text: 'Table', value: 'table'},
-      {text: 'Instant', value: 'instant'},
     ];
+
+    this.instant = false;
 
     this.updateLink();
   }
