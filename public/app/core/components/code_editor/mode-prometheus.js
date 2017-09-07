@@ -400,7 +400,7 @@ var PrometheusCompletions = function() {};
 
 (function() {
   this.getCompletions = function(state, session, pos, prefix, callback) {
-    let token = session.getTokenAt(pos.row, pos.column);
+    var token = session.getTokenAt(pos.row, pos.column);
     if (token.type === 'label.name' || token.type === 'label.value') {
       return callback(null, []);
     }
