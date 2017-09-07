@@ -220,10 +220,7 @@ func (b *Bridge) writeMetrics(w io.Writer, mfs []*dto.MetricFamily, prefix strin
 
 		buf := bufio.NewWriter(w)
 		for _, s := range vec {
-			if err := writeSanitized(buf, prefix); err != nil {
-				return err
-			}
-			if err := buf.WriteByte('.'); err != nil {
+			if err := writePrefix(buf, prefix); err != nil {
 				return err
 			}
 
@@ -324,6 +321,16 @@ func addExtentionConventionForRollups(buf *bufio.Writer, mf *dto.MetricFamily, m
 	return nil
 }
 
+func writePrefix(buf *bufio.Writer, s string) error {
+	for _, c := range s {
+		if _, err := buf.WriteRune(replaceInvalid(c)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func writeSanitized(buf *bufio.Writer, s string) error {
 	prevUnderscore := false
 
@@ -343,6 +350,13 @@ func writeSanitized(buf *bufio.Writer, s string) error {
 	}
 
 	return nil
+}
+
+func replaceInvalid(c rune) rune {
+	if c == ' ' || c == '.' {
+		return '.'
+	}
+	return replaceInvalidRune(c)
 }
 
 func replaceInvalidRune(c rune) rune {
