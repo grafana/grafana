@@ -77,3 +77,7 @@ $doc-font-size: $font-size-sm;
 .ace_tooltip {
   border-radius: 3px;
 }
+
+.ace_hidden-cursors .ace_cursor {
+  opacity: 0 !important;
+}
