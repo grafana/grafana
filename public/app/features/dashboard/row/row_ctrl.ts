@@ -20,6 +20,10 @@ export class DashRowCtrl {
     if (this.row.isNew) {
       this.dropView = 1;
     }
+
+    this.row.events.on('panel-added', function (panel) {
+      this.$rootScope.appEvent('panel-added', panel);
+    }.bind(this));
   }
 
   onDrop(panelId, dropTarget) {
