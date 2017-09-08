@@ -111,7 +111,14 @@ function link(scope, elem, attrs) {
   let textarea = elem.find("textarea");
   textarea.addClass('gf-form-input');
   if (attrs.giveFocus) {
-    textarea.attr('give-focus', attrs.giveFocus);
+    setTimeout(function () {
+      textarea.focus();
+      var domEl = textarea[0];
+      if (domEl.setSelectionRange) {
+        var pos = textarea.val().length * 2;
+        domEl.setSelectionRange(pos, pos);
+      }
+    }, 200);
   }
 
   // Event handlers
