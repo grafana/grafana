@@ -349,6 +349,14 @@
 			"versionExact": "v1.10.18"
 		},
 		{
+			"checksumSHA1": "vP/0ADSA7kkW5CCadIpV3Q6s+DQ=",
+			"path": "github.com/aws/aws-sdk-go/service/sns",
+			"revision": "5e436e55ac5eddc739f26a2a209b3f4248ee8e0e",
+			"revisionTime": "2017-07-27T22:05:08Z",
+			"version": "v1.10.18",
+			"versionExact": "v1.10.18"
+		},
+		{
 			"checksumSHA1": "VH5y62f+SDyEIqnTibiPtQ687i8=",
 			"path": "github.com/aws/aws-sdk-go/service/sts",
 			"revision": "5e436e55ac5eddc739f26a2a209b3f4248ee8e0e",
