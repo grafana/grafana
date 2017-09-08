@@ -83,20 +83,20 @@ func (s *GenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
 		IsConfirmed bool   `json:"is_confirmed"`
 	}
 
-	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
+	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
 	if err != nil {
 		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
 
 	var records []Record
 
-	err = json.Unmarshal(body, &records)
+	err = json.Unmarshal(response.Body, &records)
 	if err != nil {
 		var data struct {
 			Values []Record `json:"values"`
 		}
 
-		err = json.Unmarshal(body, &data)
+		err = json.Unmarshal(response.Body, &data)
 		if err != nil {
 			return "", fmt.Errorf("Error getting email address: %s", err)
 		}
@@ -120,14 +120,14 @@ func (s *GenericOAuth) FetchTeamMemberships(client *http.Client) ([]int, error) 
 		Id int `json:"id"`
 	}
 
-	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
+	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
 	if err != nil {
 		return nil, fmt.Errorf("Error getting team memberships: %s", err)
 	}
 
 	var records []Record
 
-	err = json.Unmarshal(body, &records)
+	err = json.Unmarshal(response.Body, &records)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting team memberships: %s", err)
 	}
@@ -145,14 +145,14 @@ func (s *GenericOAuth) FetchOrganizations(client *http.Client) ([]string, error)
 		Login string `json:"login"`
 	}
 
-	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/orgs"))
+	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/orgs"))
 	if err != nil {
 		return nil, fmt.Errorf("Error getting organizations: %s", err)
 	}
 
 	var records []Record
 
-	err = json.Unmarshal(body, &records)
+	err = json.Unmarshal(response.Body, &records)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting organizations: %s", err)
 	}
@@ -175,12 +175,12 @@ func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 		Attributes  map[string][]string `json:"attributes"`
 	}
 
-	body, err := HttpGet(client, s.apiUrl)
+	response, err := HttpGet(client, s.apiUrl)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
-	err = json.Unmarshal(body, &data)
+	err = json.Unmarshal(response.Body, &data)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}

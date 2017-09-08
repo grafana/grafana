@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"runtime"
 	"strings"
 	"time"
 
@@ -66,10 +67,10 @@ func updateTotalStats() {
 			return
 		}
 
-		M_StatTotal_Dashboards.Update(statsQuery.Result.DashboardCount)
-		M_StatTotal_Users.Update(statsQuery.Result.UserCount)
-		M_StatTotal_Playlists.Update(statsQuery.Result.PlaylistCount)
-		M_StatTotal_Orgs.Update(statsQuery.Result.OrgCount)
+		M_StatTotal_Dashboards.Update(statsQuery.Result.Dashboards)
+		M_StatTotal_Users.Update(statsQuery.Result.Users)
+		M_StatTotal_Playlists.Update(statsQuery.Result.Playlists)
+		M_StatTotal_Orgs.Update(statsQuery.Result.Orgs)
 	}
 }
 
@@ -86,6 +87,8 @@ func sendUsageStats() {
 	report := map[string]interface{}{
 		"version": version,
 		"metrics": metrics,
+		"os":      runtime.GOOS,
+		"arch":    runtime.GOARCH,
 	}
 
 	statsQuery := m.GetSystemStatsQuery{}
@@ -94,14 +97,16 @@ func sendUsageStats() {
 		return
 	}
 
-	metrics["stats.dashboards.count"] = statsQuery.Result.DashboardCount
-	metrics["stats.users.count"] = statsQuery.Result.UserCount
-	metrics["stats.orgs.count"] = statsQuery.Result.OrgCount
-	metrics["stats.playlist.count"] = statsQuery.Result.PlaylistCount
+	metrics["stats.dashboards.count"] = statsQuery.Result.Dashboards
+	metrics["stats.users.count"] = statsQuery.Result.Users
+	metrics["stats.orgs.count"] = statsQuery.Result.Orgs
+	metrics["stats.playlist.count"] = statsQuery.Result.Playlists
 	metrics["stats.plugins.apps.count"] = len(plugins.Apps)
 	metrics["stats.plugins.panels.count"] = len(plugins.Panels)
 	metrics["stats.plugins.datasources.count"] = len(plugins.DataSources)
-	metrics["stats.alerts.count"] = statsQuery.Result.AlertCount
+	metrics["stats.alerts.count"] = statsQuery.Result.Alerts
+	metrics["stats.active_users.count"] = statsQuery.Result.ActiveUsers
+	metrics["stats.datasources.count"] = statsQuery.Result.Datasources
 
 	dsStats := m.GetDataSourceStatsQuery{}
 	if err := bus.Dispatch(&dsStats); err != nil {

@@ -87,7 +87,7 @@ function addMathStrategy(selectParts, partModel) {
       return;
     }
     // if next to last is math, replace it
-    if (selectParts[partCount-2].def.type === 'math') {
+    if (partCount > 1 && selectParts[partCount-2].def.type === 'math') {
       selectParts[partCount-2] = partModel;
       return;
     } else if (selectParts[partCount-1].def.type === 'alias') { // if last is alias add it before
@@ -223,6 +223,15 @@ register({
 
 register({
   type: 'difference',
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+register({
+  type: 'non_negative_difference',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
   params: [],

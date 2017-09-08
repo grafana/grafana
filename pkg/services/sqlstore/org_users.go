@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func init() {
@@ -71,11 +72,18 @@ func GetOrgUsers(query *m.GetOrgUsersQuery) error {
 	sess := x.Table("org_user")
 	sess.Join("INNER", "user", fmt.Sprintf("org_user.user_id=%s.id", x.Dialect().Quote("user")))
 	sess.Where("org_user.org_id=?", query.OrgId)
-	sess.Cols("org_user.org_id", "org_user.user_id", "user.email", "user.login", "org_user.role")
+	sess.Cols("org_user.org_id", "org_user.user_id", "user.email", "user.login", "org_user.role", "user.last_seen_at")
 	sess.Asc("user.email", "user.login")
 
-	err := sess.Find(&query.Result)
-	return err
+	if err := sess.Find(&query.Result); err != nil {
+		return err
+	}
+
+	for _, user := range query.Result {
+		user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
+	}
+
+	return nil
 }
 
 func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {

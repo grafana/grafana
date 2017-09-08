@@ -181,7 +181,7 @@
   }
 
   .graph-legend {
-    margin: 0;
+    margin: 0 0 0 1rem;
   }
 
   .graph-legend-series {
@@ -321,7 +321,7 @@
 
 .left-yaxis-label {
   top: 50%;
-  left: 0;
+  left: 2px;
   transform: translateX(-50%) translateY(-50%) rotate(-90deg);
   // this is needed for phantomsjs 2.1
   -webkit-transform: translateX(-50%) translateY(-50%) rotate(-90deg);
@@ -329,16 +329,17 @@
 
 .right-yaxis-label {
   top: 50%;
-  right: 0;
+  right: 2px;
   transform: translateX(50%) translateY(-50%) rotate(90deg);
   // this is needed for phantomsjs 2.1
   -webkit-transform: translateX(50%) translateY(-50%) rotate(90deg);
 }
 
 .axisLabel {
+  display: inline-block;
   color: $text-color;
   font-size: $font-size-sm;
-  position: relative;
+  position: absolute;
   text-align: center;
   font-size: 12px;
 }

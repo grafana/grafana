@@ -25,6 +25,7 @@ stopGrafana() {
 	fi
 }
 
+
 # Initial installation: $1 == 1
 # Upgrade: $1 == 2, and configured to restart on upgrade
 if [ $1 -eq 1 ] ; then

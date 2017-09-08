@@ -24,10 +24,14 @@
 </div>
 
 <div class="gf-form-group">
-	<div class="gf-form max-width-21">
-		<span class="gf-form-label">Default group by time</span>
-		<input type="text" class="gf-form-input width-6" ng-model="ctrl.current.jsonData.timeInterval"
-		spellcheck='false' placeholder="example: >10s"></input>
-		<i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >10s'" data-placement="right"></i>
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label">Min time interval</span>
+			<input type="text" class="gf-form-input width-6" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="10s"></input>
+			<info-popover mode="right-absolute">
+				A lower limit for the auto group by time interval. Recommended to be set to write frequency,
+				for example <code>1m</code> if your data is written every minute.
+			</info-popover>
+		</div>
 	</div>
 </div>

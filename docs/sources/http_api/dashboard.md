@@ -240,7 +240,7 @@ Get all tags of dashboards
 
 `GET /api/search/`
 
-Status Codes:
+Query parameters:
 
 - **query** – Search Query
 - **tag** – Tag to use
@@ -267,11 +267,5 @@ Status Codes:
         "type":"dash-db",
         "tags":[],
         "isStarred":false
-      }
-    ]
-
-        "email":"admin@mygraf.com",
-        "login":"admin",
-        "role":"Admin"
       }
     ]

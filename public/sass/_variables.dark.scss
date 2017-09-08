@@ -258,7 +258,6 @@ $popover-border-color:    $gray-1;
 $popover-help-bg:         $btn-secondary-bg;
 $popover-help-color:      $text-color;
 
-
 // Tooltips and popovers
 // -------------------------
 $tooltipColor:            $popover-help-color;
@@ -275,6 +274,9 @@ $checkboxImageUrl: '../img/checkbox.png';
 $card-background: linear-gradient(135deg, #2f2f2f, #262626);
 $card-background-hover: linear-gradient(135deg, #343434, #262626);
 $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .3);
+
+// info box
+$info-box-background: linear-gradient(100deg, #1a4552, #0b2127);
 
 // footer
 $footer-link-color:   $gray-1;

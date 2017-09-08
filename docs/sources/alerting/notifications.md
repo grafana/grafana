@@ -22,7 +22,7 @@ to add and configure a `notification` channel (can be email, Pagerduty or other 
 
 {{< imgbox max-width="40%" img="/img/docs/v43/alert_notifications_menu.png" caption="Alerting Notification Channels" >}}
 
-On the Notification Channels page hit the `New Channel` button to go the the page where you
+On the Notification Channels page hit the `New Channel` button to go the page where you
 can configure and setup a new Notification Channel.
 
 You specify name and type, and type specific options. You can also test the notification to make
@@ -134,7 +134,7 @@ Grafana also supports the following Notification Channels:
 
 # Enable images in notifications {#external-image-store}
 
-Grafana can render the panel associated with the alert rule and include that in the notification. Most Notification Channels require that this image be publicly accessable (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
+Grafana can render the panel associated with the alert rule and include that in the notification. Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
 Amazon S3 and Webdav for this. So to set that up you need to configure the [external image uploader](/installation/configuration/#external-image-storage) in your grafana-server ini config file.
 
 Currently only the Email Channels attaches images if no external image store is specified. To include images in alert notifications for other channels then you need to set up an external image store.

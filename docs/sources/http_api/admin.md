@@ -11,13 +11,15 @@ parent = "http_api"
 
 # Admin API
 
-The admin http API does not currently work with an api token. Api Token's are currently only linked to an organization and organization role. They cannot given
-the permission of server admin, only user's can be given that permission. So in order to use these API calls you will have to use basic auth and Grafana user
-with Grafana admin permission.
+The Admin HTTP API does not currently work with an API Token. API Tokens are currently only linked to an organization and an organization role. They cannot be given
+the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user
+must have the Grafana Admin permission. (The default admin user is called `admin` and has permission to use this API.)
 
 ## Settings
 
 `GET /api/admin/settings`
+
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
 **Example Request**:
 
@@ -176,6 +178,8 @@ with Grafana admin permission.
 
 `GET /api/admin/stats`
 
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
 **Example Request**:
 
     GET /api/admin/stats
@@ -203,7 +207,7 @@ with Grafana admin permission.
 
 `POST /api/admin/users`
 
-Create new user
+Create new user. Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
 **Example Request**:
 
@@ -229,7 +233,8 @@ Create new user
 
 `PUT /api/admin/users/:id/password`
 
-Change password for specific user
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+Change password for a specific user.
 
 **Example Request**:
 
@@ -250,6 +255,8 @@ Change password for specific user
 
 `PUT /api/admin/users/:id/permissions`
 
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
 **Example Request**:
 
     PUT /api/admin/users/2/permissions HTTP/1.1
@@ -269,6 +276,8 @@ Change password for specific user
 
 `DELETE /api/admin/users/:id`
 
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
+
 **Example Request**:
 
     DELETE /api/admin/users/2 HTTP/1.1
@@ -285,6 +294,8 @@ Change password for specific user
 ## Pause all alerts
 
 `POST /api/admin/pause-all-alerts`
+
+Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 
 **Example Request**:
 

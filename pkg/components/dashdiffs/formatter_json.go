@@ -302,16 +302,16 @@ func (f *JSONFormatter) processItem(value interface{}, deltas []diff.Delta, posi
 	return nil
 }
 
-func (f *JSONFormatter) searchDeltas(deltas []diff.Delta, postion diff.Position) (results []diff.Delta) {
+func (f *JSONFormatter) searchDeltas(deltas []diff.Delta, position diff.Position) (results []diff.Delta) {
 	results = make([]diff.Delta, 0)
 	for _, delta := range deltas {
 		switch delta.(type) {
 		case diff.PostDelta:
-			if delta.(diff.PostDelta).PostPosition() == postion {
+			if delta.(diff.PostDelta).PostPosition() == position {
 				results = append(results, delta)
 			}
 		case diff.PreDelta:
-			if delta.(diff.PreDelta).PrePosition() == postion {
+			if delta.(diff.PreDelta).PrePosition() == position {
 				results = append(results, delta)
 			}
 		default:

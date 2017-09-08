@@ -108,7 +108,7 @@ describe('SingleStatCtrl', function() {
     });
   });
 
-  singleStatScenario('When range to text mapping is specifiedfor first range', function(ctx) {
+  singleStatScenario('When range to text mapping is specified for first range', function(ctx) {
     ctx.setup(function() {
       ctx.data = [
         {target: 'test.cpu1', datapoints: [[41,50]]}

@@ -10,6 +10,7 @@ import {transformDataToTable} from './transformers';
 import {tablePanelEditor} from './editor';
 import {columnOptionsTab} from './column_options';
 import {TableRenderer} from './renderer';
+import Drop from 'tether-drop';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -49,8 +50,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private annotationsSrv, private $sanitize) {
+  constructor($scope, $injector, templateSrv, private annotationsSrv, private $sanitize, private variableSrv) {
     super($scope, $injector);
+
     this.pageIndex = 0;
 
     if (this.panel.styles === void 0) {
@@ -123,7 +125,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.table = transformDataToTable(this.dataRaw, this.panel);
     this.table.sort(this.panel.sort);
 
-    this.renderer = new TableRenderer(this.panel, this.table, this.dashboard.isTimezoneUtc(), this.$sanitize);
+    this.renderer = new TableRenderer(this.panel, this.table, this.dashboard.isTimezoneUtc(), this.$sanitize, this.templateSrv);
 
     return super.render(this.table);
   }
@@ -148,7 +150,14 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   exportCsv() {
-    FileExport.exportTableDataToCsv(this.renderer.render_values());
+    var scope = this.$scope.$new(true);
+    scope.tableData = this.renderer.render_values();
+    scope.panel = 'table';
+    this.publishAppEvent('show-modal', {
+      templateHtml: '<export-data-modal panel="panel" data="tableData"></export-data-modal>',
+      scope,
+      modalClass: 'modal--narrow'
+    });
   }
 
   link(scope, elem, attrs, ctrl) {
@@ -217,10 +226,29 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       rootElem.css({'max-height': panel.scroll ? getTableHeight() : '' });
     }
 
+    // hook up link tooltips
+    elem.tooltip({
+      selector: '[data-link-tooltip]'
+    });
+
+    function addFilterClicked(e) {
+      let filterData = $(e.currentTarget).data();
+      var options = {
+        datasource: panel.datasource,
+        key: data.columns[filterData.column].text,
+        value: data.rows[filterData.row][filterData.column],
+        operator: filterData.operator,
+      };
+
+      ctrl.variableSrv.setAdhocFilter(options);
+    }
+
     elem.on('click', '.table-panel-page-link', switchPage);
+    elem.on('click', '.table-panel-filter-link', addFilterClicked);
 
     var unbindDestroy = scope.$on('$destroy', function() {
       elem.off('click', '.table-panel-page-link');
+      elem.off('click', '.table-panel-filter-link');
       unbindDestroy();
     });
 

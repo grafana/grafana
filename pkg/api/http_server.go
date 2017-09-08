@@ -9,7 +9,9 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"time"
 
+	gocache "github.com/patrickmn/go-cache"
 	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/live"
@@ -29,13 +31,15 @@ type HttpServer struct {
 	macaron       *macaron.Macaron
 	context       context.Context
 	streamManager *live.StreamManager
+	cache         *gocache.Cache
 
 	httpSrv *http.Server
 }
 
 func NewHttpServer() *HttpServer {
 	return &HttpServer{
-		log: log.New("http.server"),
+		log:   log.New("http.server"),
+		cache: gocache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 

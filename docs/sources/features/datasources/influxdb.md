@@ -36,7 +36,7 @@ Name | Description
 ### Proxy vs Direct access
 
 Proxy access means that the Grafana backend will proxy all requests from the browser. So requests to InfluxDB will be channeled through
-`grafana-server`. This means that the URL you specify needs to be accessable from the server you are running Grafana on. Proxy access
+`grafana-server`. This means that the URL you specify needs to be accessible from the server you are running Grafana on. Proxy access
 mode is also more secure as the username & password will never reach the browser.
 
 ## Query Editor
@@ -88,7 +88,7 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 - $m = replaced with measurement name
 - $measurement = replaced with measurement name
 - $col = replaced with column name
-- $tag_exampletag = replaced with the value of the `exampletag` tag. To use your tag as an alias in the ALIAS BY field then the tag must be used to group by in the query.
+- $tag_exampletag = replaced with the value of the `exampletag` tag. The syntax is `$tag_yourTagName` (must start with `$tag_`). To use your tag as an alias in the ALIAS BY field then the tag must be used to group by in the query.
 - You can also use [[tag_hostname]] pattern replacement syntax. For example, in the ALIAS BY field using this text `Host: [[tag_hostname]]` would substitute in the `hostname` tag value for each legend value and an example legend value would be: `Host: server1`.
 
 ### Table query / raw data
@@ -132,7 +132,7 @@ You can fetch key names for a given measurement.
 SHOW TAG KEYS [FROM <measurement_name>]
 ```
 
-If you have a variable with key names you can use this variable in a group by clause. This will allow you to change group by using the variable dropdown a the top
+If you have a variable with key names you can use this variable in a group by clause. This will allow you to change group by using the variable dropdown at the top
 of the dashboard.
 
 ### Using variables in queries

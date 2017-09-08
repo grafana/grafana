@@ -1,7 +1,8 @@
 <query-editor-row query-ctrl="ctrl" can-collapse="false">
-  <div class="gf-form-inline">
+	<div class="gf-form-inline">
 		<div class="gf-form gf-form--grow">
-			<textarea rows="10" class="gf-form-input" ng-model="ctrl.target.rawSql" spellcheck="false" placeholder="query expression" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.panelCtrl.refresh()"></textarea>
+			<code-editor content="ctrl.target.rawSql" on-change="ctrl.panelCtrl.refresh()" data-mode="sql">
+			</code-editor>
 		</div>
 	</div>
 
@@ -46,7 +47,14 @@ Table:
 
 Macros:
 - $__time(column) -&gt; UNIX_TIMESTAMP(column) as time_sec
-- $__timeFilter(column) -&gt;  UNIX_TIMESTAMP(time_date_time) &ge; from AND UNIX_TIMESTAMP(time_date_time) &le; 1492750877
+- $__timeFilter(column) -&gt;  UNIX_TIMESTAMP(time_date_time) &ge; 1492750877 AND UNIX_TIMESTAMP(time_date_time) &le; 1492750877
+- $__unixEpochFilter(column) -&gt;  time_unix_epoch &gt; 1492750877 AND time_unix_epoch &lt; 1492750877
+
+Or build your own conditionals using these macros which just return the values:
+- $__timeFrom() -&gt;  FROM_UNIXTIME(1492750877)
+- $__timeTo() -&gt;  FROM_UNIXTIME(1492750877)
+- $__unixEpochFrom() -&gt;  1492750877
+- $__unixEpochTo() -&gt;  1492750877
 		</pre>
 	</div>
 

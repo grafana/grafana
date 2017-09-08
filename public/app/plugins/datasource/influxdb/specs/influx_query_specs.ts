@@ -57,7 +57,7 @@ describe('InfluxQuery', function() {
 
       var queryText = query.render();
 
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server\\\\1\' AND $timeFilter'
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server\\\\1\') AND $timeFilter'
                           + ' GROUP BY time($__interval)');
     });
 
@@ -69,7 +69,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "app" =~ /e.*/ AND $timeFilter GROUP BY time($__interval)');
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("app" =~ /e.*/) AND $timeFilter GROUP BY time($__interval)');
     });
   });
 
@@ -82,7 +82,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' AND "app" = \'email\' AND ' +
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server1\' AND "app" = \'email\') AND ' +
                           '$timeFilter GROUP BY time($__interval)');
     });
   });
@@ -96,7 +96,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' OR "hostname" = \'server2\' AND ' +
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server1\' OR "hostname" = \'server2\') AND ' +
                           '$timeFilter GROUP BY time($__interval)');
     });
   });
@@ -110,7 +110,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "value" > 5 AND $timeFilter');
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("value" > 5) AND $timeFilter');
     });
   });
 
@@ -234,6 +234,17 @@ describe('InfluxQuery', function() {
       query.addSelectPart(query.selectModels[0], 'math');
       expect(query.target.select[0].length).to.be(3);
       expect(query.target.select[0][2].type).to.be('math');
+    });
+
+    it('should add math when one only query part', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        select: [[{type: 'field', params: ['value']}]]
+      }, templateSrv, {});
+
+      query.addSelectPart(query.selectModels[0], 'math');
+      expect(query.target.select[0].length).to.be(2);
+      expect(query.target.select[0][1].type).to.be('math');
     });
 
     describe('when render adhoc filters', function() {

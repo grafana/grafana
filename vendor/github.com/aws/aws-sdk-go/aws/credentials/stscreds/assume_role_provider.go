@@ -12,7 +12,7 @@ between multiple Credentials, Sessions or service clients.
 Assume Role
 
 To assume an IAM role using STS with the SDK you can create a new Credentials
-with the SDKs's stscreds package. 
+with the SDKs's stscreds package.
 
 	// Initial credentials loaded from SDK's default credential chain. Such as
 	// the environment, shared credentials (~/.aws/credentials), or EC2 Instance

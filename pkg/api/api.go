@@ -209,7 +209,7 @@ func (hs *HttpServer) registerRoutes() {
 
 		r.Get("/plugins", wrap(GetPluginList))
 		r.Get("/plugins/:pluginId/settings", wrap(GetPluginSettingById))
-		r.Get("/plugins/:pluginId/readme", wrap(GetPluginReadme))
+		r.Get("/plugins/:pluginId/markdown/:name", wrap(GetPluginMarkdown))
 
 		r.Group("/plugins", func() {
 			r.Get("/:pluginId/dashboards/", wrap(GetPluginDashboards))
@@ -217,12 +217,13 @@ func (hs *HttpServer) registerRoutes() {
 		}, reqOrgAdmin)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
-		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
-		r.Any("/datasources/proxy/:id", reqSignedIn, ProxyDataSourceRequest)
+		r.Any("/datasources/proxy/:id/*", reqSignedIn, hs.ProxyDataSourceRequest)
+		r.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
 
 		// Dashboard
 		r.Group("/dashboards", func() {
-			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
+			r.Get("/db/:slug", GetDashboard)
+			r.Delete("/db/:slug", reqEditorRole, DeleteDashboard)
 
 			r.Get("/id/:dashboardId/versions", wrap(GetDashboardVersions))
 			r.Get("/id/:dashboardId/versions/:id", wrap(GetDashboardVersion))

@@ -116,27 +116,6 @@ function (_, $) {
   });
 
   addFuncDef({
-    name: 'mapSeries',
-    shortName: 'map',
-    params: [{ name: "node", type: 'int' }],
-    defaultParams: [3],
-    category: categories.Combine,
-  });
-
-  addFuncDef({
-    name: 'reduceSeries',
-    shortName: 'reduce',
-    params: [
-      { name: "function", type: 'string', options: ['asPercent', 'diffSeries', 'divideSeries'] },
-      { name: "reduceNode", type: 'int', options: [0,1,2,3,4,5,6,7,8,9,10,11,12,13] },
-      { name: "reduceMatchers", type: 'string' },
-      { name: "reduceMatchers", type: 'string' },
-    ],
-    defaultParams: ['asPercent', 2, 'used_bytes', 'total_bytes'],
-    category: categories.Combine,
-  });
-
-  addFuncDef({
     name: 'sumSeries',
     shortName: 'sum',
     category: categories.Combine,
@@ -153,11 +132,6 @@ function (_, $) {
   });
 
   addFuncDef({
-    name: 'isNonNull',
-    category: categories.Combine,
-  });
-
-  addFuncDef({
     name: 'rangeOfSeries',
     category: categories.Combine
   });
@@ -165,8 +139,8 @@ function (_, $) {
   addFuncDef({
     name: 'percentileOfSeries',
     category: categories.Combine,
-    params: [{ name: "n", type: "int" }, { name: "interpolate", type: "select", options: ["true", "false"] }],
-    defaultParams: [95, "false"]
+    params: [{ name: 'n', type: 'int' }, { name: 'interpolate', type: 'boolean', options: ['true', 'false'] }],
+    defaultParams: [95, 'false']
   });
 
   addFuncDef({
@@ -263,23 +237,6 @@ function (_, $) {
   });
 
   addFuncDef({
-    name: "groupByNodes",
-    category: categories.Special,
-    params: [
-      {
-        name: "function",
-        type: "string",
-        options: ['sum', 'avg', 'maxSeries']
-      },
-      { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] },
-      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
-      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
-      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
-    ],
-    defaultParams: ["sum", 3]
-  });
-
-  addFuncDef({
     name: 'aliasByNode',
     category: categories.Special,
     params: [
@@ -304,8 +261,8 @@ function (_, $) {
   addFuncDef({
     name: 'sortByName',
     category: categories.Special,
-    params: [{ name: "natural", type: "select", options: ["true", "false"], optional: true }],
-    defaultParams: ["false"]
+    params: [{ name: 'natural', type: 'boolean', options: ['true', 'false'], optional: true }],
+    defaultParams: ['false']
   });
 
   addFuncDef({
@@ -379,11 +336,6 @@ function (_, $) {
     category: categories.Transform,
     params: [{ name: "amount", type: "int", }],
     defaultParams: [10]
-  });
-
-  addFuncDef({
-    name: 'offsetToZero',
-    category: categories.Transform,
   });
 
   addFuncDef({
@@ -543,13 +495,6 @@ function (_, $) {
   });
 
   addFuncDef({
-    name: "grep",
-    category: categories.Filter,
-    params: [{ name: "grep", type: 'string' }],
-    defaultParams: ['grep']
-  });
-
-  addFuncDef({
     name: 'highestCurrent',
     category: categories.Filter,
     params: [{ name: "count", type: "int" }],
@@ -575,16 +520,6 @@ function (_, $) {
     category: categories.Filter,
     params: [{ name: "windowSize", type: "int_or_interval", options: ['5', '7', '10', '5min', '10min', '30min', '1hour'] }],
     defaultParams: [10]
-  });
-
-  addFuncDef({
-    name: 'weightedAverage',
-    category: categories.Filter,
-    params: [
-      { name: 'other', type: 'value_or_series', optional: true },
-      { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] },
-    ],
-    defaultParams: ['#A', 4]
   });
 
   addFuncDef({
@@ -644,11 +579,6 @@ function (_, $) {
   });
 
   addFuncDef({
-    name: 'removeEmptySeries',
-    category: categories.Filter
-  });
-
-  addFuncDef({
     name: 'useSeriesAbove',
     category: categories.Filter,
     params: [
@@ -657,6 +587,239 @@ function (_, $) {
       { name: "replace", type: "string" }
     ],
     defaultParams: [0, 'search', 'replace']
+  });
+
+  ////////////////////
+  // Graphite 1.0.x //
+  ////////////////////
+
+  addFuncDef({
+    name: 'aggregateLine',
+    category: categories.Combine,
+    params: [{ name: "func", type: "select", options: ['sum', 'avg', 'min', 'max', 'last']}],
+    defaultParams: ['avg'],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'averageOutsidePercentile',
+    category: categories.Filter,
+    params: [{ name: "n", type: "int", }],
+    defaultParams: [95],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'delay',
+    category: categories.Transform,
+    params: [{ name: 'steps', type: 'int', }],
+    defaultParams: [1],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'exponentialMovingAverage',
+    category: categories.Calculate,
+    params: [{ name: 'windowSize', type: 'int_or_interval', options: ['5', '7', '10', '5min', '10min', '30min', '1hour'] }],
+    defaultParams: [10],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'fallbackSeries',
+    category: categories.Special,
+    params: [{ name: 'fallback', type: 'string' }],
+    defaultParams: ['constantLine(0)'],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: "grep",
+    category: categories.Filter,
+    params: [{ name: "grep", type: 'string' }],
+    defaultParams: ['grep'],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: "groupByNodes",
+    category: categories.Special,
+    params: [
+      {
+        name: "function",
+        type: "string",
+        options: ['sum', 'avg', 'maxSeries']
+      },
+      { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+    ],
+    defaultParams: ["sum", 3],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'integralByInterval',
+    category: categories.Transform,
+    params: [{ name: "intervalUnit", type: "select", options: ['1h', '6h', '12h', '1d', '2d', '7d', '14d', '30d'] }],
+    defaultParams: ['1d'],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'interpolate',
+    category: categories.Transform,
+    params: [{ name: 'limit', type: 'int', optional: true}],
+    defaultParams: [],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'invert',
+    category: categories.Transform,
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'isNonNull',
+    category: categories.Combine,
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'linearRegression',
+    category: categories.Calculate,
+    params: [
+      { name: "startSourceAt", type: "select", options: ['-1h', '-6h', '-12h', '-1d', '-2d', '-7d', '-14d', '-30d'], optional: true },
+      { name: "endSourceAt", type: "select", options: ['-1h', '-6h', '-12h', '-1d', '-2d', '-7d', '-14d', '-30d'], optional: true }
+    ],
+    defaultParams: [],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'mapSeries',
+    shortName: 'map',
+    params: [{ name: "node", type: 'int' }],
+    defaultParams: [3],
+    category: categories.Combine,
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'movingMin',
+    category: categories.Calculate,
+    params: [{ name: 'windowSize', type: 'int_or_interval', options: ['5', '7', '10', '5min', '10min', '30min', '1hour'] }],
+    defaultParams: [10],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'movingMax',
+    category: categories.Calculate,
+    params: [{ name: 'windowSize', type: 'int_or_interval', options: ['5', '7', '10', '5min', '10min', '30min', '1hour'] }],
+    defaultParams: [10],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'movingSum',
+    category: categories.Calculate,
+    params: [{ name: 'windowSize', type: 'int_or_interval', options: ['5', '7', '10', '5min', '10min', '30min', '1hour'] }],
+    defaultParams: [10],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: "multiplySeriesWithWildcards",
+    category: categories.Calculate,
+    params: [
+      { name: "position", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] },
+      { name: "position", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+      { name: "position", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+      { name: "position", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+    ],
+    defaultParams: [2],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'offsetToZero',
+    category: categories.Transform,
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'pow',
+    category: categories.Transform,
+    params: [{ name: 'factor', type: 'int' }],
+    defaultParams: [10],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'powSeries',
+    category: categories.Transform,
+    params: optionalSeriesRefArgs,
+    defaultParams: [''],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'reduceSeries',
+    shortName: 'reduce',
+    params: [
+      { name: "function", type: 'string', options: ['asPercent', 'diffSeries', 'divideSeries'] },
+      { name: "reduceNode", type: 'int', options: [0,1,2,3,4,5,6,7,8,9,10,11,12,13] },
+      { name: "reduceMatchers", type: 'string' },
+      { name: "reduceMatchers", type: 'string' },
+    ],
+    defaultParams: ['asPercent', 2, 'used_bytes', 'total_bytes'],
+    category: categories.Combine,
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'removeBetweenPercentile',
+    category: categories.Filter,
+    params: [{ name: "n", type: "int", }],
+    defaultParams: [95],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'removeEmptySeries',
+    category: categories.Filter,
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'squareRoot',
+    category: categories.Transform,
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'timeSlice',
+    category: categories.Transform,
+    params: [
+      { name: "startSliceAt", type: "select", options: ['-1h', '-6h', '-12h', '-1d', '-2d', '-7d', '-14d', '-30d']},
+      { name: "endSliceAt", type: "select", options: ['-1h', '-6h', '-12h', '-1d', '-2d', '-7d', '-14d', '-30d'], optional: true }
+    ],
+    defaultParams: ['-1h'],
+    version: '1.0'
+  });
+
+  addFuncDef({
+    name: 'weightedAverage',
+    category: categories.Filter,
+    params: [
+      { name: 'other', type: 'value_or_series', optional: true },
+      { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] },
+    ],
+    defaultParams: ['#A', 4],
+    version: '1.0'
   });
 
   _.each(categories, function(funcList, catName) {
@@ -737,6 +900,16 @@ function (_, $) {
     this.text = text;
   };
 
+  function isVersionRelatedFunction(func, graphiteVersion) {
+    return isVersionGreaterOrEqual(graphiteVersion, func.version) || !func.version;
+  }
+
+  function isVersionGreaterOrEqual(a, b) {
+    var a_num = Number(a);
+    var b_num = Number(b);
+    return a_num >= b_num;
+  }
+
   return {
     createFuncInstance: function(funcDef, options) {
       if (_.isString(funcDef)) {
@@ -752,8 +925,18 @@ function (_, $) {
       return index[name];
     },
 
-    getCategories: function() {
-      return categories;
+    getCategories: function(graphiteVersion) {
+      var filteredCategories = {};
+      _.each(categories, function(functions, category) {
+        var filteredFuncs = _.filter(functions, function(func) {
+          return isVersionRelatedFunction(func, graphiteVersion);
+        });
+        if (filteredFuncs.length) {
+          filteredCategories[category] = filteredFuncs;
+        }
+      });
+
+      return filteredCategories;
     }
   };
 

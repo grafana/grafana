@@ -14,7 +14,7 @@ weight = 4
 
 Grafana is very easy to install and run using the offical docker container.
 
-    $ docker run -i -p 3000:3000 grafana/grafana
+    $ docker run -d -p 3000:3000 grafana/grafana
 
 All Grafana configuration settings can be defined using environment
 variables, this is especially useful when using the above container.

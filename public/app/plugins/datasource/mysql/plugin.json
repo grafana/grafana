@@ -14,7 +14,6 @@
     }
   },
 
-  "state": "alpha",
   "alerting": true,
   "annotations": true,
   "metrics": true

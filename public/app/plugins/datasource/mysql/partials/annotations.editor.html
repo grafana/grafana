@@ -28,7 +28,14 @@ An annotation is an event that is overlayed on top of graphs. The query can have
 
 Macros:
 - $__time(column) -&gt; UNIX_TIMESTAMP(column) as time_sec
-- $__timeFilter(column) -&gt;  UNIX_TIMESTAMP(time_date_time) &gt; from AND UNIX_TIMESTAMP(time_date_time) &lt; 1492750877
+- $__timeFilter(column) -&gt;  UNIX_TIMESTAMP(time_date_time) &gt; 1492750877 AND UNIX_TIMESTAMP(time_date_time) &lt; 1492750877
+- $__unixEpochFilter(column) -&gt;  time_unix_epoch &gt; 1492750877 AND time_unix_epoch &lt; 1492750877
+
+Or build your own conditionals using these macros which just return the values:
+- $__timeFrom() -&gt;  FROM_UNIXTIME(1492750877)
+- $__timeTo() -&gt;  FROM_UNIXTIME(1492750877)
+- $__unixEpochFrom() -&gt;  1492750877
+- $__unixEpochTo() -&gt;  1492750877
 		</pre>
 	</div>
 </div>

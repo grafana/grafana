@@ -25,9 +25,6 @@
         <label class="gf-form-label width-9">Exponent</label>
         <input type="number" class="gf-form-input width-8" placeholder="auto" data-placement="right" bs-tooltip="''" ng-model="ctrl.panel.color.exponent" ng-change="ctrl.refresh()" ng-model-onblur>
       </div>
-      <div class="gf-form">
-        <svg id="heatmap-opacity-legend" width="19em" height="2em"></svg>
-      </div>
     </div>
 
     <div ng-show="ctrl.panel.color.mode === 'spectrum'">
@@ -37,10 +34,31 @@
           <select class="input-small gf-form-input" ng-model="ctrl.panel.color.colorScheme" ng-options="s.value as s.name for s in ctrl.colorSchemes" ng-change="ctrl.render()"></select>
         </div>
       </div>
-      <div class="gf-form">
-        <svg id="heatmap-color-legend" width="19em" height="2em"></svg>
-      </div>
     </div>
+
+    <div class="gf-form">
+      <color-legend></color-legend>
+    </div>
+  </div>
+
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Color scale</h5>
+    <div class="gf-form">
+      <label class="gf-form-label width-8">Min</label>
+      <input type="number" ng-model="ctrl.panel.color.min" class="gf-form-input width-5" placeholder="auto" data-placement="right" bs-tooltip="''" ng-change="ctrl.refresh()" ng-model-onblur>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-8">Max</label>
+      <input type="number" ng-model="ctrl.panel.color.max" class="gf-form-input width-5" placeholder="auto" data-placement="right" bs-tooltip="''" ng-change="ctrl.refresh()" ng-model-onblur>
+    </div>
+  </div>
+
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Legend</h5>
+    <gf-form-switch class="gf-form" label-class="width-8"
+      label="Show legend"
+      checked="ctrl.panel.legend.show" on-change="ctrl.render()">
+    </gf-form-switch>
   </div>
 
   <div class="section gf-form-group">
