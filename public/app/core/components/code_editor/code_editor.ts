@@ -110,7 +110,7 @@ function link(scope, elem, attrs) {
   elem.addClass("gf-code-editor");
   let textarea = elem.find("textarea");
   textarea.addClass('gf-form-input');
-  if (attrs.giveFocus) {
+  if (scope.focus) {
     setTimeout(function () {
       textarea.focus();
       var domEl = textarea[0];
@@ -209,6 +209,7 @@ export function codeEditorDirective() {
     template: editorTemplate,
     scope: {
       content: "=",
+      focus: "=",
       onChange: "&",
       getCompleter: "&"
     },
