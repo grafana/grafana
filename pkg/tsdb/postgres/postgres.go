@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
 	"sync"
 	"time"
 
@@ -182,12 +181,10 @@ func (e PostgresqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.
 	values := make([]interface{}, len(types))
 
 	for i, stype := range types {
-
 		e.log.Debug("type", "type", stype)
 
-    var ii interface{}
-    values[i] = &ii
-
+		var ii interface{}
+		values[i] = &ii
 	}
 
 	if err := rows.Scan(values...); err != nil {
@@ -197,28 +194,68 @@ func (e PostgresqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.
 	return values, nil
 }
 
+type RowData struct {
+	time   null.Float
+	value  null.Float
+	metric string
+}
+
 func (e PostgresqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 	pointsBySeries := make(map[string]*tsdb.TimeSeries)
 	seriesByQueryOrder := list.New()
-	columnNames, err := rows.Columns()
 
+	columnNames, err := rows.Columns()
 	if err != nil {
 		return err
 	}
+	columnCount := len(columnNames)
+	values := make([]interface{}, columnCount)
+	valuePtrs := make([]interface{}, columnCount)
 
-	rowData := NewStringStringScan(columnNames)
 	rowLimit := 1000000
 	rowCount := 0
 
 	for ; rows.Next(); rowCount++ {
+		rowData := RowData{}
+
 		if rowCount > rowLimit {
 			return fmt.Errorf("PostgreSQL query row limit exceeded, limit %d", rowLimit)
 		}
 
-		err := rowData.Update(rows.Rows)
-		if err != nil {
-			e.log.Error("PostgreSQL response parsing", "error", err)
-			return fmt.Errorf("PostgreSQL response parsing error %v", err)
+		for i, _ := range columnNames {
+			valuePtrs[i] = &values[i]
+		}
+
+		rows.Scan(valuePtrs...)
+
+		for i, col := range columnNames {
+			var v interface{}
+			val := values[i]
+
+			if b, ok := val.([]byte); ok == true {
+				v = string(b)
+			} else {
+				v = val
+			}
+
+			switch col {
+			case "time":
+				if t, ok := v.(float64); ok == true {
+					rowData.time = null.FloatFrom(float64(t * 1000))
+				}
+				if t, ok := v.(time.Time); ok == true {
+					rowData.time = null.FloatFrom(float64(t.Unix() * 1000))
+				}
+			case "value":
+				if value, ok := v.(float64); ok == true {
+					rowData.value = null.FloatFrom(value)
+				}
+			case "metric":
+				if m, ok := v.(string); ok == true {
+					rowData.metric = m
+				}
+			}
+
 		}
 
 		if rowData.metric == "" {
@@ -250,65 +287,3 @@ func (e PostgresqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.
 	return nil
 }
 
-type stringStringScan struct {
-	rowPtrs     []interface{}
-	rowValues   []string
-	columnNames []string
-	columnCount int
-
-	time   null.Float
-	value  null.Float
-	metric string
-}
-
-func NewStringStringScan(columnNames []string) *stringStringScan {
-	s := &stringStringScan{
-		columnCount: len(columnNames),
-		columnNames: columnNames,
-		rowPtrs:     make([]interface{}, len(columnNames)),
-		rowValues:   make([]string, len(columnNames)),
-	}
-
-	for i := 0; i < s.columnCount; i++ {
-		s.rowPtrs[i] = new(sql.RawBytes)
-	}
-
-	return s
-}
-
-func (s *stringStringScan) Update(rows *sql.Rows) error {
-	if err := rows.Scan(s.rowPtrs...); err != nil {
-		return err
-	}
-
-	s.time = null.FloatFromPtr(nil)
-	s.value = null.FloatFromPtr(nil)
-
-	for i := 0; i < s.columnCount; i++ {
-		if rb, ok := s.rowPtrs[i].(*sql.RawBytes); ok {
-			s.rowValues[i] = string(*rb)
-
-			switch s.columnNames[i] {
-			case "time":
-				if t, err := time.Parse("2017-01-02 15:04:05.000000+02",s.rowValues[i]); err == nil {
-					s.time = null.FloatFrom(float64(t.Unix() * 1000))
-				}
-			case "time_sec":
-				if sec, err := strconv.ParseFloat(s.rowValues[i], 64); err == nil {
-					s.time = null.FloatFrom(float64(sec * 1000))
-				}
-			case "value":
-				if value, err := strconv.ParseFloat(s.rowValues[i], 64); err == nil {
-					s.value = null.FloatFrom(value)
-				}
-			case "metric":
-				s.metric = s.rowValues[i]
-			}
-
-			*rb = nil // reset pointer to discard current value to avoid a bug
-		} else {
-			return fmt.Errorf("Cannot convert index %d column %s to type *sql.RawBytes", i, s.columnNames[i])
-		}
-	}
-	return nil
-}
