@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/null"
@@ -161,7 +160,7 @@ func (e PostgresqlExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows,
 	rowLimit := 1000000
 	rowCount := 0
 
-	for ; rows.Next(); rowCount += 1 {
+	for ; rows.Next(); rowCount++ {
 		if rowCount > rowLimit {
 			return fmt.Errorf("PostgreSQL query row limit exceeded, limit %d", rowLimit)
 		}
@@ -211,7 +210,7 @@ func (e PostgresqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.
 	rowLimit := 1000000
 	rowCount := 0
 
-	for ; rows.Next(); rowCount += 1 {
+	for ; rows.Next(); rowCount++ {
 		if rowCount > rowLimit {
 			return fmt.Errorf("PostgreSQL query row limit exceeded, limit %d", rowLimit)
 		}
@@ -226,7 +225,7 @@ func (e PostgresqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.
 			rowData.metric = "Unknown"
 		}
 
-		e.log.Info("Rows", "metric", rowData.metric, "time", rowData.time, "value", rowData.value)
+		e.log.Debug("Rows", "metric", rowData.metric, "time", rowData.time, "value", rowData.value)
 
 		if !rowData.time.Valid {
 			return fmt.Errorf("Found row with no time value")
