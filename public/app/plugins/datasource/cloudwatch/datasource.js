@@ -48,12 +48,14 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
         item.dimensions = dimensions;
         item.period = self.getPeriod(item, options);
 
-        return _.extend({
+        return {
           refId: item.refId,
           intervalMs: options.intervalMs,
           maxDataPoints: options.maxDataPoints,
           datasourceId: self.instanceSettings.id,
-        }, item);
+          type: 'timeSeriesQuery',
+          parameters: item
+        };
       });
 
       // No valid targets, return the empty result to save a round trip.

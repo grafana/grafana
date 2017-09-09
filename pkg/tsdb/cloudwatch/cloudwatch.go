@@ -62,9 +62,13 @@ func (e *CloudWatchExecutor) Execute(ctx context.Context, queries tsdb.QuerySlic
 
 	currentlyExecuting := 0
 	for _, model := range queries {
+		queryType := model.Model.Get("type").MustString()
+		if queryType != "timeSeriesQuery" {
+			continue
+		}
 		currentlyExecuting++
 		go func(refId string) {
-			queryRes, err := e.executeQuery(ctx, model, queryContext)
+			queryRes, err := e.executeQuery(ctx, model.Model.Get("parameters"), queryContext)
 			currentlyExecuting--
 			if err != nil {
 				errCh <- err
@@ -130,8 +134,8 @@ func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, e
 	return client, nil
 }
 
-func (e *CloudWatchExecutor) executeQuery(ctx context.Context, model *tsdb.Query, queryContext *tsdb.QueryContext) (*tsdb.QueryResult, error) {
-	query, err := parseQuery(model.Model)
+func (e *CloudWatchExecutor) executeQuery(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.QueryContext) (*tsdb.QueryResult, error) {
+	query, err := parseQuery(parameters)
 	if err != nil {
 		return nil, err
 	}
