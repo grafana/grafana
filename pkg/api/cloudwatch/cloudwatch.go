@@ -80,10 +80,6 @@ func init() {
 		"DescribeAlarmsForMetric": handleDescribeAlarmsForMetric,
 		"DescribeAlarmHistory":    handleDescribeAlarmHistory,
 		"DescribeInstances":       handleDescribeInstances,
-		"__GetRegions":            handleGetRegions,
-		"__GetNamespaces":         handleGetNamespaces,
-		"__GetMetrics":            handleGetMetrics,
-		"__GetDimensions":         handleGetDimensions,
 	}
 }
 

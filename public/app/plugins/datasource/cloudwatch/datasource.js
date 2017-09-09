@@ -11,7 +11,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
   'use strict';
 
   /** @ngInject */
-  function CloudWatchDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+  function CloudWatchDatasource(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
     this.type = 'cloudwatch';
     this.name = instanceSettings.name;
     this.supportMetrics = true;
@@ -133,7 +133,21 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
     };
 
     this.getRegions = function() {
-      return this.awsRequest({action: '__GetRegions'});
+      var range = timeSrv.timeRange();
+      return backendSrv.post('/api/tsdb/query', {
+        from: range.from,
+        to: range.to,
+        queries: [
+          {
+            refId: 'metricFindQuery',
+            intervalMs: 1, // dummy
+            maxDataPoints: 1, // dummy
+            datasourceId: this.instanceSettings.id,
+            type: 'metricFindQuery',
+            subtype: 'regions'
+          }
+        ]
+      });
     };
 
     this.getNamespaces = function() {
@@ -200,6 +214,14 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       var namespace;
       var metricName;
 
+      var transformSuggestDataFromTable = function(suggestData) {
+        return _.map(suggestData.results['metricFindQuery'].tables[0].rows, function (v) {
+          return {
+            text: v[0],
+            value: v[1]
+          };
+        });
+      };
       var transformSuggestData = function(suggestData) {
         return _.map(suggestData, function(v) {
           return { text: v };
@@ -208,7 +230,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
 
       var regionQuery = query.match(/^regions\(\)/);
       if (regionQuery) {
-        return this.getRegions();
+        return this.getRegions().then(function (r) { return transformSuggestDataFromTable(r); });
       }
 
       var namespaceQuery = query.match(/^namespaces\(\)/);

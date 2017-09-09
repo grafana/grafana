@@ -53,6 +53,20 @@ func init() {
 }
 
 func (e *CloudWatchExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
+	var result *tsdb.BatchResult
+	queryType := queries[0].Model.Get("type").MustString()
+	switch queryType {
+	case "timeSeriesQuery":
+		result = e.executeTimeSeriesQuery(ctx, queries, queryContext)
+		break
+	case "metricFindQuery":
+		result = e.executeMetricFindQuery(ctx, queries, queryContext)
+		break
+	}
+	return result
+}
+
+func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{
 		QueryResults: make(map[string]*tsdb.QueryResult),
 	}
