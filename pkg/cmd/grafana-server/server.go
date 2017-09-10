@@ -24,6 +24,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
+	opentracing "github.com/opentracing/opentracing-go"
+	jaeger "github.com/uber/jaeger-client-go"
+	jaegercfg "github.com/uber/jaeger-client-go/config"
+	jaegerlog "github.com/uber/jaeger-client-go/log"
 )
 
 func NewGrafanaServer() models.GrafanaServer {
@@ -61,6 +65,35 @@ func (g *GrafanaServerImpl) Start() {
 	eventpublisher.Init()
 	plugins.Init()
 
+	//localhost:5775
+
+	cfg := jaegercfg.Configuration{
+		Disabled: false,
+		Sampler: &jaegercfg.SamplerConfig{
+			Type:  jaeger.SamplerTypeConst,
+			Param: 1,
+		},
+		Reporter: &jaegercfg.ReporterConfig{
+			LogSpans:           false,
+			LocalAgentHostPort: "localhost:5775",
+		},
+	}
+
+	jLogger := jaegerlog.StdLogger
+
+	tracer, closer, err := cfg.New(
+		"grafana",
+		jaegercfg.Logger(jLogger),
+	)
+	if err != nil {
+		g.log.Error("tracing", "error", err)
+		g.Shutdown(1, "Startup failed")
+		return
+	}
+
+	opentracing.InitGlobalTracer(tracer)
+	defer closer.Close()
+
 	// init alerting
 	if setting.AlertingEnabled && setting.ExecuteAlerts {
 		engine := alerting.NewEngine()
@@ -72,7 +105,7 @@ func (g *GrafanaServerImpl) Start() {
 	g.childRoutines.Go(func() error { return cleanUpService.Run(g.context) })
 
 	if err := notifications.Init(); err != nil {
-		g.log.Error("Notification service failed to initialize", "erro", err)
+		g.log.Error("Notification service failed to initialize", "error", err)
 		g.Shutdown(1, "Startup failed")
 		return
 	}

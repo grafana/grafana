@@ -4,6 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+	tlog "github.com/opentracing/opentracing-go/log"
+
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/log"
 	"golang.org/x/sync/errgroup"
@@ -105,6 +108,10 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 
 	done := make(chan struct{})
 
+	span := opentracing.StartSpan("alerting")
+	alertCtx = opentracing.ContextWithSpan(alertCtx, span)
+	evalContext.Ctx = alertCtx
+
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
@@ -115,7 +122,14 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 
 		e.evalHandler.Eval(evalContext)
 		e.resultHandler.Handle(evalContext)
+		span.LogFields(
+			tlog.Int64("alertId", evalContext.Rule.Id),
+			tlog.Int64("dashboardId", evalContext.Rule.DashboardId),
+			tlog.Bool("firing", evalContext.Firing),
+		)
+
 		close(done)
+		span.Finish()
 	}()
 
 	var err error = nil
