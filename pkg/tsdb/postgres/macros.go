@@ -15,17 +15,17 @@ type SqlMacroEngine interface {
 	Interpolate(sql string) (string, error)
 }
 
-type PostgreSqlMacroEngine struct {
+type PostgresMacroEngine struct {
 	TimeRange *tsdb.TimeRange
 }
 
-func NewPostgresqlMacroEngine(timeRange *tsdb.TimeRange) SqlMacroEngine {
-	return &PostgreSqlMacroEngine{
+func NewPostgresMacroEngine(timeRange *tsdb.TimeRange) SqlMacroEngine {
+	return &PostgresMacroEngine{
 		TimeRange: timeRange,
 	}
 }
 
-func (m *PostgreSqlMacroEngine) Interpolate(sql string) (string, error) {
+func (m *PostgresMacroEngine) Interpolate(sql string) (string, error) {
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
@@ -62,7 +62,7 @@ func ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]str
 	return result + str[lastIndex:]
 }
 
-func (m *PostgreSqlMacroEngine) EvaluateMacro(name string, args []string) (string, error) {
+func (m *PostgresMacroEngine) EvaluateMacro(name string, args []string) (string, error) {
 	switch name {
 	case "__time":
 		if len(args) == 0 {
