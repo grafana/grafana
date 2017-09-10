@@ -134,15 +134,14 @@ func (e *PostgresExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 }
 
 func (e PostgresExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
-	columnNames, err := rows.Columns()
-	columnCount := len(columnNames)
 
+	columnNames, err := rows.Columns()
 	if err != nil {
 		return err
 	}
 
 	table := &tsdb.Table{
-		Columns: make([]tsdb.TableColumn, columnCount),
+		Columns: make([]tsdb.TableColumn, len(columnNames)),
 		Rows:    make([]tsdb.RowValues, 0),
 	}
 
@@ -183,7 +182,6 @@ func (e PostgresExecutor) getTypedRowData(rows *core.Rows) (tsdb.RowValues, erro
 
 	for i, stype := range types {
 		e.log.Debug("type", "type", stype)
-
 		valuePtrs[i] = &values[i]
 	}
 

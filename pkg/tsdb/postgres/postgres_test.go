@@ -29,7 +29,11 @@ func TestPostgres(t *testing.T) {
 
 		sql := `
       CREATE TABLE postgres_types(
-        aint int
+        dt_smallint smallint,
+        dt_integer integer,
+        dt_bigint bigint,
+        dt_real real,
+        dt_double double precision
       );
     `
 		_, err := sess.Exec(sql)
@@ -37,7 +41,7 @@ func TestPostgres(t *testing.T) {
 
 		sql = `
       INSERT INTO postgres_types VALUES(
-        1
+        1,2,3,4.5,6.7
       );
     `
 		_, err = sess.Exec(sql)
@@ -53,6 +57,10 @@ func TestPostgres(t *testing.T) {
 			So(err, ShouldBeNil)
 			column := queryResult.Tables[0].Rows[0]
 			So(column[0].(int64), ShouldEqual, 1)
+			So(column[1].(int64), ShouldEqual, 2)
+			So(column[2].(int64), ShouldEqual, 3)
+			So(column[3].(float64), ShouldEqual, 4.5)
+			So(column[4].(float64), ShouldEqual, 6.7)
 //			So(*column[1].(*string), ShouldEqual, "abc")
 //			So(*column[2].(*string), ShouldEqual, "def")
 //			So(*column[3].(*int32), ShouldEqual, 1)
