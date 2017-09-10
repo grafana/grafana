@@ -8,7 +8,7 @@ import (
 )
 
 func TestMacroEngine(t *testing.T) {
-	SkipConvey("MacroEngine", t, func() {
+	Convey("MacroEngine", t, func() {
 
 		Convey("interpolate __time function", func() {
 			engine := &PostgresMacroEngine{}
@@ -16,7 +16,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate("select $__time(time_column)")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "select UNIX_TIMESTAMP(time_column) as time_sec")
+			So(sql, ShouldEqual, "select time_column AS \"time\"")
 		})
 
 		Convey("interpolate __time function wrapped in aggregation", func() {
@@ -25,7 +25,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate("select min($__time(time_column))")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "select min(UNIX_TIMESTAMP(time_column) as time_sec)")
+			So(sql, ShouldEqual, "select min(time_column AS \"time\")")
 		})
 
 		Convey("interpolate __timeFilter function", func() {
