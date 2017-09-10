@@ -3,7 +3,6 @@ package postgres
 import (
 	"container/list"
 	"context"
-	"database/sql"
 	"fmt"
 	"sync"
 	"time"
@@ -17,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type PostgresqlExecutor struct {
+type PostgresExecutor struct {
 	datasource *models.DataSource
 	engine     *xorm.Engine
 	log        log.Logger
@@ -35,11 +34,11 @@ var engineCache = engineCacheType{
 }
 
 func init() {
-	tsdb.RegisterExecutor("postgres", NewPostgresqlExecutor)
+	tsdb.RegisterExecutor("postgres", NewPostgresExecutor)
 }
 
-func NewPostgresqlExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
-	executor := &PostgresqlExecutor{
+func NewPostgresExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
+	executor := &PostgresExecutor{
 		datasource: datasource,
 		log:        log.New("tsdb.postgres"),
 	}
@@ -52,7 +51,7 @@ func NewPostgresqlExecutor(datasource *models.DataSource) (tsdb.Executor, error)
 	return executor, nil
 }
 
-func (e *PostgresqlExecutor) initEngine() error {
+func (e *PostgresExecutor) initEngine() error {
 	engineCache.Lock()
 	defer engineCache.Unlock()
 
@@ -78,12 +77,12 @@ func (e *PostgresqlExecutor) initEngine() error {
 	return nil
 }
 
-func (e *PostgresqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *PostgresExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{
 		QueryResults: make(map[string]*tsdb.QueryResult),
 	}
 
-	macroEngine := NewPostgresqlMacroEngine(context.TimeRange)
+	macroEngine := NewPostgresMacroEngine(context.TimeRange)
 	session := e.engine.NewSession()
 	defer session.Close()
 	db := session.DB()
@@ -134,7 +133,7 @@ func (e *PostgresqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlic
 	return result
 }
 
-func (e PostgresqlExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
+func (e PostgresExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 	columnNames, err := rows.Columns()
 	columnCount := len(columnNames)
 
@@ -151,11 +150,6 @@ func (e PostgresqlExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows,
 		table.Columns[i].Text = name
 	}
 
-	columnTypes, err := rows.ColumnTypes()
-	if err != nil {
-		return err
-	}
-
 	rowLimit := 1000000
 	rowCount := 0
 
@@ -164,7 +158,7 @@ func (e PostgresqlExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows,
 			return fmt.Errorf("PostgreSQL query row limit exceeded, limit %d", rowLimit)
 		}
 
-		values, err := e.getTypedRowData(columnTypes, rows)
+		values, err := e.getTypedRowData(rows)
 		if err != nil {
 			return err
 		}
@@ -177,17 +171,23 @@ func (e PostgresqlExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows,
 	return nil
 }
 
-func (e PostgresqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (e PostgresExecutor) getTypedRowData(rows *core.Rows) (tsdb.RowValues, error) {
+
+	types, err := rows.ColumnTypes()
+	if err != nil {
+		return nil, err
+	}
+
 	values := make([]interface{}, len(types))
+	valuePtrs := make([]interface{}, len(types))
 
 	for i, stype := range types {
 		e.log.Debug("type", "type", stype)
 
-		var ii interface{}
-		values[i] = &ii
+		valuePtrs[i] = &values[i]
 	}
 
-	if err := rows.Scan(values...); err != nil {
+	if err := rows.Scan(valuePtrs...); err != nil {
 		return nil, err
 	}
 
@@ -200,7 +200,7 @@ type RowData struct {
 	metric string
 }
 
-func (e PostgresqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
+func (e PostgresExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 	pointsBySeries := make(map[string]*tsdb.TimeSeries)
 	seriesByQueryOrder := list.New()
 
@@ -208,9 +208,6 @@ func (e PostgresqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.
 	if err != nil {
 		return err
 	}
-	columnCount := len(columnNames)
-	values := make([]interface{}, columnCount)
-	valuePtrs := make([]interface{}, columnCount)
 
 	rowLimit := 1000000
 	rowCount := 0
@@ -222,36 +219,31 @@ func (e PostgresqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.
 			return fmt.Errorf("PostgreSQL query row limit exceeded, limit %d", rowLimit)
 		}
 
-		for i, _ := range columnNames {
-			valuePtrs[i] = &values[i]
+		values, err := e.getTypedRowData(rows)
+		if err != nil {
+			return err
 		}
 
-		rows.Scan(valuePtrs...)
-
 		for i, col := range columnNames {
-			var v interface{}
 			val := values[i]
-
-			if b, ok := val.([]byte); ok == true {
-				v = string(b)
-			} else {
-				v = val
-			}
 
 			switch col {
 			case "time":
-				if t, ok := v.(float64); ok == true {
+				if t, ok := val.(float64); ok == true {
 					rowData.time = null.FloatFrom(float64(t * 1000))
 				}
-				if t, ok := v.(time.Time); ok == true {
+				if t, ok := val.(time.Time); ok == true {
 					rowData.time = null.FloatFrom(float64(t.Unix() * 1000))
 				}
 			case "value":
-				if value, ok := v.(float64); ok == true {
+				if value, ok := val.(float64); ok == true {
 					rowData.value = null.FloatFrom(value)
 				}
 			case "metric":
-				if m, ok := v.(string); ok == true {
+				if m, ok := val.([]byte); ok == true {
+					rowData.metric = string(m)
+				}
+				if m, ok := val.(string); ok == true {
 					rowData.metric = m
 				}
 			}
@@ -286,4 +278,3 @@ func (e PostgresqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.
 	result.Meta.Set("rowCount", rowCount)
 	return nil
 }
-
