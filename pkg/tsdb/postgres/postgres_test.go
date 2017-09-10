@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"testing"
-  "time"
+	"time"
 
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -79,10 +79,10 @@ func TestPostgres(t *testing.T) {
 			So(column[2].(int64), ShouldEqual, 3)
 			So(column[3].(float64), ShouldEqual, 4.5)
 			So(column[4].(float64), ShouldEqual, 6.7)
-      // libpq doesnt properly convert decimal, numeric and char to go types but returns []uint8 instead
-//			So(column[5].(float64), ShouldEqual, 1.1)  
-//			So(column[6].(float64), ShouldEqual, 1.2)
-//			So(column[7].(string), ShouldEqual, "char")
+			// libpq doesnt properly convert decimal, numeric and char to go types but returns []uint8 instead
+			//			So(column[5].(float64), ShouldEqual, 1.1)
+			//			So(column[6].(float64), ShouldEqual, 1.2)
+			//			So(column[7].(string), ShouldEqual, "char")
 			So(column[8].(string), ShouldEqual, "varchar10")
 			So(column[9].(string), ShouldEqual, "text")
 
@@ -92,8 +92,8 @@ func TestPostgres(t *testing.T) {
 			So(column[13].(time.Time), ShouldHaveSameTypeAs, time.Now())
 			So(column[14].(time.Time), ShouldHaveSameTypeAs, time.Now())
 
-      // libpq doesnt properly convert interval to go types but returns []uint8 instead
-//			So(column[15].(time.Time), ShouldHaveSameTypeAs, time.Now())
+			// libpq doesnt properly convert interval to go types but returns []uint8 instead
+			//			So(column[15].(time.Time), ShouldHaveSameTypeAs, time.Now())
 		})
 	})
 }
