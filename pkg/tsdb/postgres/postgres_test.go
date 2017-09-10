@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"testing"
+  "time"
 
   _ "github.com/lib/pq"
 	"github.com/go-xorm/xorm"
@@ -29,11 +30,25 @@ func TestPostgres(t *testing.T) {
 
 		sql := `
       CREATE TABLE postgres_types(
-        dt_smallint smallint,
-        dt_integer integer,
-        dt_bigint bigint,
-        dt_real real,
-        dt_double double precision
+        c00_smallint smallint,
+        c01_integer integer,
+        c02_bigint bigint,
+
+        c03_real real,
+        c04_double double precision,
+        c05_decimal decimal(10,2),
+        c06_numeric numeric(10,2),
+
+        c07_char char(10),
+        c08_varchar varchar(10),
+        c09_text text,
+
+        c10_timestamp timestamp without time zone,
+        c11_timestamptz timestamp with time zone,
+        c12_date date,
+        c13_time time without time zone,
+        c14_timetz time with time zone,
+        c15_interval interval
       );
     `
 		_, err := sess.Exec(sql)
@@ -41,7 +56,11 @@ func TestPostgres(t *testing.T) {
 
 		sql = `
       INSERT INTO postgres_types VALUES(
-        1,2,3,4.5,6.7
+        1,2,3,
+        4.5,6.7,1.1,1.2,
+        'char10','varchar10','text',
+
+        now(),now(),now(),now(),now(),'15m'::interval
       );
     `
 		_, err = sess.Exec(sql)
@@ -61,31 +80,21 @@ func TestPostgres(t *testing.T) {
 			So(column[2].(int64), ShouldEqual, 3)
 			So(column[3].(float64), ShouldEqual, 4.5)
 			So(column[4].(float64), ShouldEqual, 6.7)
-//			So(*column[1].(*string), ShouldEqual, "abc")
-//			So(*column[2].(*string), ShouldEqual, "def")
-//			So(*column[3].(*int32), ShouldEqual, 1)
-//			So(*column[4].(*int16), ShouldEqual, 10)
-//			So(*column[5].(*int64), ShouldEqual, 100)
-//			So(*column[6].(*int), ShouldEqual, 1420070400)
-//			So(*column[7].(*float64), ShouldEqual, 1.11)
-//			So(*column[8].(*float64), ShouldEqual, 2.22)
-//			So(*column[9].(*float64), ShouldEqual, 3.33)
-//			_, offset := time.Now().Zone()
-//			So((*column[10].(*time.Time)), ShouldHappenWithin, time.Duration(10*time.Second), time.Now().Add(time.Duration(offset)*time.Second))
-//			So(*column[11].(*time.Time), ShouldHappenWithin, time.Duration(10*time.Second), time.Now().Add(time.Duration(offset)*time.Second))
-//			So(*column[12].(*string), ShouldEqual, "11:11:11")
-//			So(*column[13].(*[]byte), ShouldHaveSameTypeAs, []byte{1})
-//			So(*column[14].(*string), ShouldEqual, "tinytext")
-//			So(*column[15].(*string), ShouldEqual, "tinyblob")
-//			So(*column[16].(*string), ShouldEqual, "text")
-//			So(*column[17].(*string), ShouldEqual, "blob")
-//			So(*column[18].(*string), ShouldEqual, "mediumtext")
-//			So(*column[19].(*string), ShouldEqual, "mediumblob")
-//			So(*column[20].(*string), ShouldEqual, "longtext")
-//			So(*column[21].(*string), ShouldEqual, "longblob")
-//			So(*column[22].(*string), ShouldEqual, "val2")
-//			So(*column[23].(*string), ShouldEqual, "a,b")
-//			So(*column[24].(*string), ShouldEqual, time.Now().Format("2006-01-02T00:00:00Z"))
+      // libpq doesnt properly convert decimal, numeric and char to go types but returns []uint8 instead
+//			So(column[5].(float64), ShouldEqual, 1.1)  
+//			So(column[6].(float64), ShouldEqual, 1.2)
+//			So(column[7].(string), ShouldEqual, "char")
+			So(column[8].(string), ShouldEqual, "varchar10")
+			So(column[9].(string), ShouldEqual, "text")
+
+			So(column[10].(time.Time), ShouldHaveSameTypeAs, time.Now())
+			So(column[11].(time.Time), ShouldHaveSameTypeAs, time.Now())
+			So(column[12].(time.Time), ShouldHaveSameTypeAs, time.Now())
+			So(column[13].(time.Time), ShouldHaveSameTypeAs, time.Now())
+			So(column[14].(time.Time), ShouldHaveSameTypeAs, time.Now())
+
+      // libpq doesnt properly convert interval to go types but returns []uint8 instead
+//			So(column[15].(time.Time), ShouldHaveSameTypeAs, time.Now())
 		})
 	})
 }
