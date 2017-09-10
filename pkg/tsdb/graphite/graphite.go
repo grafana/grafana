@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
+	opentracing "github.com/opentracing/opentracing-go"
+	tlog "github.com/opentracing/opentracing-go/log"
 )
 
 type GraphiteExecutor struct {
@@ -49,20 +51,26 @@ func init() {
 func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
+	from := "-" + formatTimeRange(context.TimeRange.From)
+	until := formatTimeRange(context.TimeRange.To)
+	var target string
+
 	formData := url.Values{
-		"from":          []string{"-" + formatTimeRange(context.TimeRange.From)},
-		"until":         []string{formatTimeRange(context.TimeRange.To)},
+		"from":          []string{from},
+		"until":         []string{until},
 		"format":        []string{"json"},
 		"maxDataPoints": []string{"500"},
 	}
 
 	for _, query := range queries {
 		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
-			formData["target"] = []string{fixIntervalFormat(fullTarget)}
+			target = fixIntervalFormat(fullTarget)
 		} else {
-			formData["target"] = []string{fixIntervalFormat(query.Model.Get("target").MustString())}
+			target = fixIntervalFormat(query.Model.Get("target").MustString())
 		}
 	}
+
+	formData["target"] = []string{target}
 
 	if setting.Env == setting.DEV {
 		glog.Debug("Graphite request", "params", formData)
@@ -73,6 +81,19 @@ func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		result.Error = err
 		return result
 	}
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "alerting.graphite")
+	span.LogFields(
+		tlog.String("target", target),
+		tlog.String("from", from),
+		tlog.String("until", until),
+	)
+	defer span.Finish()
+
+	opentracing.GlobalTracer().Inject(
+		span.Context(),
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(req.Header))
 
 	res, err := ctxhttp.Do(ctx, e.HttpClient, req)
 	if err != nil {
