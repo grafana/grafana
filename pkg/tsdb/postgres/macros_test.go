@@ -36,7 +36,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate("WHERE $__timeFilter(time_column)")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "WHERE time_column >= FROM_UNIXTIME(18446744066914186738) AND time_column <= FROM_UNIXTIME(18446744066914187038)")
+			So(sql, ShouldEqual, "WHERE time_column >= to_timestamp(18446744066914186738) AND time_column <= to_timestamp(18446744066914187038)")
 		})
 
 		Convey("interpolate __timeFrom function", func() {
@@ -47,7 +47,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate("select $__timeFrom(time_column)")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "select FROM_UNIXTIME(18446744066914186738)")
+			So(sql, ShouldEqual, "select to_timestamp(18446744066914186738)")
 		})
 
 		Convey("interpolate __timeTo function", func() {
@@ -58,7 +58,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate("select $__timeTo(time_column)")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "select FROM_UNIXTIME(18446744066914187038)")
+			So(sql, ShouldEqual, "select to_timestamp(18446744066914187038)")
 		})
 
 		Convey("interpolate __unixEpochFilter function", func() {

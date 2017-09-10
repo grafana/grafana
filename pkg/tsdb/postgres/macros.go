@@ -68,16 +68,16 @@ func (m *PostgresMacroEngine) EvaluateMacro(name string, args []string) (string,
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("UNIX_TIMESTAMP(%s) as time_sec", args[0]), nil
+		return fmt.Sprintf("extract(epoch from %s) as time_sec", args[0]), nil
 	case "__timeFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= FROM_UNIXTIME(%d) AND %s <= FROM_UNIXTIME(%d)", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("%s >= to_timestamp(%d) AND %s <= to_timestamp(%d)", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
 	case "__timeFrom":
-		return fmt.Sprintf("FROM_UNIXTIME(%d)", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("to_timestamp(%d)", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
 	case "__timeTo":
-		return fmt.Sprintf("FROM_UNIXTIME(%d)", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("to_timestamp(%d)", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
