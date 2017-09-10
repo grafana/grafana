@@ -4,7 +4,6 @@ import (
 	"testing"
   "time"
 
-  _ "github.com/lib/pq"
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -14,9 +13,9 @@ import (
 )
 
 // To run this test, remove the Skip from SkipConvey
-// and set up a MySQL db named grafana_tests and a user/password grafana/password
+// and set up a PostgreSQL db named grafana_tests and a user/password grafana/password
 func TestPostgres(t *testing.T) {
-	Convey("PostgreSQL", t, func() {
+	SkipConvey("PostgreSQL", t, func() {
 		x := InitPostgresTestDB(t)
 
 		executor := &PostgresExecutor{
