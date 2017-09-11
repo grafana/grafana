@@ -41,7 +41,9 @@ mode is also more secure as the username & password will never reach the browser
 
 ## Query Editor
 
-![](/assets/img/blog/v2.6/influxdb_editor_v3.gif)
+{{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--center"
+                  animated-gif="/img/docs/v45/influxdb_query.gif" >}}
+
 
 You find the InfluxDB editor in the metrics tab in Graph or Singlestat panel's edit mode. You enter edit mode by clicking the
 panel title, then edit. The editor allows you to select metrics and tags.
