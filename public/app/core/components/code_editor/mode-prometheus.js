@@ -65,13 +65,13 @@ var PrometheusHighlightRules = function() {
       regex : "\\s+"
     } ],
     "start-label-matcher" : [ {
-      token : "label.name",
+      token : "keyword",
       regex : '[a-zA-Z_][a-zA-Z0-9_]*'
     }, {
       token : "keyword.operator",
-      regex : '=|!=|=~|!~'
+      regex : '=~|=|!~|!='
     }, {
-      token : "text",
+      token : "string",
       regex : '"[^"]*"|\'[^\']*\''
     }, {
       token : "punctuation.operator",
