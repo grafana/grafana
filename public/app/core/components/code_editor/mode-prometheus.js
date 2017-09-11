@@ -65,20 +65,20 @@ var PrometheusHighlightRules = function() {
       regex : "\\s+"
     } ],
     "start-label-matcher" : [ {
-      token : "label.name",
+      token : "keyword",
       regex : '[a-zA-Z_][a-zA-Z0-9_]*'
     }, {
-      token : "label.matching_operator",
-      regex : '=|!=|=~|!~'
+      token : "keyword.operator",
+      regex : '=~|=|!~|!='
     }, {
-      token : "label.value",
+      token : "string",
       regex : '"[^"]*"|\'[^\']*\''
     }, {
-      token : "label.matching_delimiter",
+      token : "punctuation.operator",
       regex : ",",
       push  : 'start-label-matcher'
     }, {
-      token : "label.matching_end",
+      token : "paren.rparen",
       regex : "}",
       next  : "start"
     } ]
