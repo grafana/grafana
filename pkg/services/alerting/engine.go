@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/opentracing/opentracing-go"
-	tlog "github.com/opentracing/opentracing-go/log"
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/log"
@@ -122,11 +121,10 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 
 		e.evalHandler.Eval(evalContext)
 		e.resultHandler.Handle(evalContext)
-		span.LogFields(
-			tlog.Int64("alertId", evalContext.Rule.Id),
-			tlog.Int64("dashboardId", evalContext.Rule.DashboardId),
-			tlog.Bool("firing", evalContext.Firing),
-		)
+
+		span.SetTag("alertId", evalContext.Rule.Id)
+		span.SetTag("dashboardId", evalContext.Rule.DashboardId)
+		span.SetTag("firing", evalContext.Firing)
 
 		close(done)
 		span.Finish()

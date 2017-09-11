@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	opentracing "github.com/opentracing/opentracing-go"
-	tlog "github.com/opentracing/opentracing-go/log"
 )
 
 type GraphiteExecutor struct {
@@ -83,11 +82,9 @@ func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 	}
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "alerting.graphite")
-	span.LogFields(
-		tlog.String("target", target),
-		tlog.String("from", from),
-		tlog.String("until", until),
-	)
+	span.SetTag("target", target)
+	span.SetTag("from", from)
+	span.SetTag("until", until)
 	defer span.Finish()
 
 	opentracing.GlobalTracer().Inject(
