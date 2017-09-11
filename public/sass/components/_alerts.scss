@@ -14,7 +14,7 @@
   position: relative;
   color: $white;
   text-shadow: 0 1px 0 rgba(0,0,0,.2);
-  border-radius: 1px;
+  border-radius: 2px;
   display: flex;
   flex-direction: row;
 }
@@ -49,7 +49,7 @@
 }
 
 .alert-close {
-  padding: 0;
+  padding: 0 0 0 1rem;
   border: none;
   background: none;
   display: flex;

@@ -126,7 +126,7 @@ export class DataSourceEditCtrl {
         return;
       }
 
-      this.testing = {done: false};
+      this.testing = {done: false, status: 'error'};
 
       // make test call in no backend cache context
       this.backendSrv.withNoBackendCache(() => {

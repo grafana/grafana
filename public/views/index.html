@@ -31,32 +31,13 @@
 
 			<div class="page-alert-list">
 				<div ng-repeat='alert in dashAlerts.list' class="alert-{{alert.severity}} alert">
-					<button type="button" class="alert-close" ng-click="dashAlerts.clear(alert)">
-						<i class="fa fa-times-circle"></i>
-					</button>
-					<div class="alert-title">{{alert.title}}</div>
-					<div ng-bind='alert.text'></div>
-				</div>
-				<div class="alert-success alert">
-					<div class="alert-icon"><i class="fa fa-check"></i></div>
+					<div class="alert-icon"><i class="{{alert.icon}}"></i></div>
 					<div class="alert-body">
-						<div class="alert-title">Data source updated</div>
+						<div class="alert-title">{{alert.title}}</div>
+						<div class="alert-text" ng-bind='alert.text'></div>
 					</div>
 					<button type="button" class="alert-close" ng-click="dashAlerts.clear(alert)">
-						<i class="fa fa-remove"></i>
-					</button>
-				</div>
-				<br />
-				<br />
-				<br />
-				<div class="alert-error alert">
-					<div class="alert-icon"><i class="fa fa-exclamation"></i></div>
-					<div class="alert-body">
-						<div class="alert-title">Something went wrong</div>
-						<div class="alert-text">Lots of more detail<br />asdas<br />lorem ipsium <br /></div>
-					</div>
-					<button type="button" class="alert-close" ng-click="dashAlerts.clear(alert)">
-						<i class="fa fa-remove"></i>
+						<i class="fa fa fa-remove"></i>
 					</button>
 				</div>
 			</div>
