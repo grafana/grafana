@@ -2,9 +2,12 @@ package alerting
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	tlog "github.com/opentracing/opentracing-go/log"
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/log"
@@ -101,20 +104,21 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 	}()
 
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertTimeout)
+	span := opentracing.StartSpan("alert execution")
+	alertCtx = opentracing.ContextWithSpan(alertCtx, span)
 
 	job.Running = true
 	evalContext := NewEvalContext(alertCtx, job.Rule)
-
-	done := make(chan struct{})
-
-	span := opentracing.StartSpan("alerting")
-	alertCtx = opentracing.ContextWithSpan(alertCtx, span)
 	evalContext.Ctx = alertCtx
 
+	done := make(chan struct{})
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
 				e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))
+				ext.Error.Set(span, true)
+				span.LogFields(tlog.Error(fmt.Errorf("error: %v", err)))
+				span.Finish()
 				close(done)
 			}
 		}()
@@ -126,8 +130,8 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 		span.SetTag("dashboardId", evalContext.Rule.DashboardId)
 		span.SetTag("firing", evalContext.Firing)
 
-		close(done)
 		span.Finish()
+		close(done)
 	}()
 
 	var err error = nil

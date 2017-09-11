@@ -81,7 +81,7 @@ func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		return result
 	}
 
-	span, ctx := opentracing.StartSpanFromContext(ctx, "alerting.graphite")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "graphite query")
 	span.SetTag("target", target)
 	span.SetTag("from", from)
 	span.SetTag("until", until)
