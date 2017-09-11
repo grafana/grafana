@@ -1,11 +1,11 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
-	"time"
 
 	opentracing "github.com/opentracing/opentracing-go"
-	tlog "github.com/opentracing/opentracing-go/log"
+	"github.com/opentracing/opentracing-go/ext"
 
 	"gopkg.in/macaron.v1"
 )
@@ -15,28 +15,21 @@ func RequestTracing() macaron.Handler {
 		rw := res.(macaron.ResponseWriter)
 
 		var span opentracing.Span
-		opName := req.URL.Path
-		carrier := opentracing.HTTPHeadersCarrier(req.Header)
-
-		wireContext, err := opentracing.GlobalTracer().Extract(
-			opentracing.HTTPHeaders, carrier)
-		if err != nil {
-			span = opentracing.StartSpan(opName)
-		} else {
-			span = opentracing.StartSpan(opName, opentracing.ChildOf(wireContext))
-		}
+		tracer := opentracing.GlobalTracer()
+		wireContext, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+		spanName := fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path)
+		span = tracer.StartSpan(spanName, ext.RPCServerOption(wireContext))
 		defer span.Finish()
 
 		ctx := opentracing.ContextWithSpan(req.Context(), span)
 		req = req.WithContext(ctx)
-		start := time.Now()
 
 		c.Next()
 
 		status := rw.Status()
 
-		span.LogFields(
-			tlog.Int("http.status_code", status),
-			tlog.Float64("waited.millis", float64(time.Since(start)/time.Millisecond)))
+		ext.HTTPStatusCode.Set(span, uint16(status))
+		ext.HTTPUrl.Set(span, req.RequestURI)
+		ext.HTTPMethod.Set(span, req.Method)
 	}
 }
