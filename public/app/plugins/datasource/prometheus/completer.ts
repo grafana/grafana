@@ -4,22 +4,27 @@ import {PrometheusDatasource} from "./datasource";
 import _ from 'lodash';
 
 export class PromCompleter {
+  labelQueryCache: any;
   labelNameCache: any;
+  labelValueCache: any;
 
   identifierRegexps = [/[\[\]a-zA-Z_0-9=]/];
 
   constructor(private datasource: PrometheusDatasource) {
+    this.labelQueryCache = {};
     this.labelNameCache = {};
+    this.labelValueCache = {};
   }
 
   getCompletions(editor, session, pos, prefix, callback) {
     let token = session.getTokenAt(pos.row, pos.column);
 
+    var metricName;
     switch (token.type) {
       case 'label.name':
-        var metricName = this.findMetricName(session, pos.row, pos.column);
+        metricName = this.findMetricName(session, pos.row, pos.column);
         if (!metricName) {
-          callback(null, this.transformToCompletions(['__name__', 'instance', 'job']));
+          callback(null, this.transformToCompletions(['__name__', 'instance', 'job'], 'label name'));
           return;
         }
 
@@ -28,23 +33,45 @@ export class PromCompleter {
           return;
         }
 
-        var op = '=~';
-        if (/[a-zA-Z_:][a-zA-Z0-9_:]*/.test(metricName)) {
-          op = '=';
-        }
-        var expr = '{__name__' + op + '"' + metricName + '"}';
-        this.datasource.performInstantQuery({ expr: expr }, new Date().getTime() / 1000).then(response => {
+        this.getLabelNameAndValueForMetric(metricName).then(result => {
           var labelNames = this.transformToCompletions(
-            _.uniq(_.flatten(response.data.data.result.map(r => {
+            _.uniq(_.flatten(result.map(r => {
               return Object.keys(r.metric);
             })))
-          );
+          , 'label name');
           this.labelNameCache[metricName] = labelNames;
           callback(null, labelNames);
         });
         return;
       case 'label.value':
-        callback(null, []);
+        metricName = this.findMetricName(session, pos.row, pos.column);
+        if (!metricName) {
+          callback(null, []);
+          return;
+        }
+
+        var labelNameToken = this.findToken(session, pos.row, pos.column, 'label.name', null, 'paren.lparen');
+        if (!labelNameToken) {
+          callback(null, []);
+          return;
+        }
+        var labelName = labelNameToken.value;
+
+        if (this.labelValueCache[metricName] && this.labelValueCache[metricName][labelName]) {
+          callback(null, this.labelValueCache[metricName][labelName]);
+          return;
+        }
+
+        this.getLabelNameAndValueForMetric(metricName).then(result => {
+          var labelValues = this.transformToCompletions(
+            _.uniq(result.map(r => {
+              return r.metric[labelName];
+            }))
+          , 'label value');
+          this.labelValueCache[metricName] = this.labelValueCache[metricName] || {};
+          this.labelValueCache[metricName][labelName] = labelValues;
+          callback(null, labelValues);
+        });
         return;
     }
 
@@ -78,12 +105,27 @@ export class PromCompleter {
     });
   }
 
-  transformToCompletions(words) {
+  getLabelNameAndValueForMetric(metricName) {
+    if (this.labelQueryCache[metricName]) {
+      return Promise.resolve(this.labelQueryCache[metricName]);
+    }
+    var op = '=~';
+    if (/[a-zA-Z_:][a-zA-Z0-9_:]*/.test(metricName)) {
+      op = '=';
+    }
+    var expr = '{__name__' + op + '"' + metricName + '"}';
+    return this.datasource.performInstantQuery({ expr: expr }, new Date().getTime() / 1000).then(response => {
+      this.labelQueryCache[metricName] = response.data.data.result;
+      return response.data.data.result;
+    });
+  }
+
+  transformToCompletions(words, meta) {
     return words.map(name => {
       return {
         caption: name,
         value: name,
-        meta: "label name",
+        meta: meta,
         score: Number.MAX_VALUE
       };
     });
