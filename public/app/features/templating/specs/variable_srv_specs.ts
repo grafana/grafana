@@ -84,12 +84,12 @@ describe('VariableSrv', function() {
     it('should update options array', function() {
       expect(scenario.variable.options.length).to.be(5);
       expect(scenario.variable.options[0].text).to.be('auto');
-      expect(scenario.variable.options[0].value).to.be('$__auto_interval');
+      expect(scenario.variable.options[0].value).to.be('$__auto_interval_test');
     });
 
-    it('should set $__auto_interval', function() {
+    it('should set $__auto_interval_test', function() {
       var call = ctx.templateSrv.setGrafanaVariable.getCall(0);
-      expect(call.args[0]).to.be('$__auto_interval');
+      expect(call.args[0]).to.be('$__auto_interval_test');
       expect(call.args[1]).to.be('12h');
     });
   });
