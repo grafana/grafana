@@ -21,7 +21,7 @@ export class PromCompleter {
 
     var metricName;
     switch (token.type) {
-      case 'label.name':
+      case 'keyword':
         metricName = this.findMetricName(session, pos.row, pos.column);
         if (!metricName) {
           callback(null, this.transformToCompletions(['__name__', 'instance', 'job'], 'label name'));
@@ -43,14 +43,14 @@ export class PromCompleter {
           callback(null, labelNames);
         });
         return;
-      case 'label.value':
+      case 'string':
         metricName = this.findMetricName(session, pos.row, pos.column);
         if (!metricName) {
           callback(null, []);
           return;
         }
 
-        var labelNameToken = this.findToken(session, pos.row, pos.column, 'label.name', null, 'paren.lparen');
+        var labelNameToken = this.findToken(session, pos.row, pos.column, 'keyword', null, 'paren.lparen');
         if (!labelNameToken) {
           callback(null, []);
           return;
@@ -135,11 +135,11 @@ export class PromCompleter {
     var metricName = '';
 
     var tokens;
-    var nameLabelNameToken = this.findToken(session, row, column, 'label.name', '__name__', 'paren.lparen');
+    var nameLabelNameToken = this.findToken(session, row, column, 'keyword', '__name__', 'paren.lparen');
     if (nameLabelNameToken) {
       tokens = session.getTokens(nameLabelNameToken.row);
       var nameLabelValueToken = tokens[nameLabelNameToken.index + 2];
-      if (nameLabelValueToken && nameLabelValueToken.type === 'label.value') {
+      if (nameLabelValueToken && nameLabelValueToken.type === 'string') {
         metricName = nameLabelValueToken.value.slice(1, -1); // cut begin/end quotation
       }
     } else {
