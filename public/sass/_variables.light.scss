@@ -264,8 +264,8 @@ $state-warning-bg:              $orange;
 $error-text-color:              lighten($red, 10%);
 $success-text-color:            lighten($green, 10%);
 
-$alert-error-bg:         $red;
-$alert-success-bg:       $green;
+$alert-error-bg:          linear-gradient(90deg, #d95136, #e57a2e);
+$alert-success-bg:        linear-gradient(90deg, #3aa655, #47b274);
 
 $infoText:                $blue;
 $infoBackground:          $blue-dark;
