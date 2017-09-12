@@ -53,10 +53,6 @@
     "systemjs": "0.19.41",
     "zone.js": "^0.7.2"
   },
-  "engines": {
-    "node": "4.x",
-    "npm": "2.14.x"
-  },
   "scripts": {
     "build": "./node_modules/grunt-cli/bin/grunt",
     "test": "./node_modules/grunt-cli/bin/grunt test",
