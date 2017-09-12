@@ -1,0 +1,6 @@
+jaeger:
+  image: jaegertracing/all-in-one:latest
+  ports:
+    - "localhost:5775:5775/udp"
+    - "16686:16686"
+  
