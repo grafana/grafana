@@ -16,7 +16,7 @@ export class AlertSrv {
 
   init() {
     this.$rootScope.onAppEvent('alert-error', (e, alert) => {
-      this.set(alert[0], alert[1], 'error', 7000);
+      this.set(alert[0], alert[1], 'error', 12000);
     }, this.$rootScope);
 
     this.$rootScope.onAppEvent('alert-warning', (e, alert) => {

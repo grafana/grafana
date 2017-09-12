@@ -259,16 +259,15 @@ $paginationActiveBackground:          $blue;
 
 // Form states and alerts
 // -------------------------
-$state-warning-text:            lighten($orange, 10%);
-$state-warning-bg:              $orange;
+$warning-text-color:            lighten($orange, 10%);
 $error-text-color:              lighten($red, 10%);
 $success-text-color:            lighten($green, 10%);
+$info-text-color:                     $blue;
 
 $alert-error-bg:          linear-gradient(90deg, #d44939, #e0603d);
 $alert-success-bg:        linear-gradient(90deg, #3aa655, #47b274);
-
-$infoText:                $blue;
-$infoBackground:          $blue-dark;
+$alert-warning-bg:        linear-gradient(90deg, #d44939, #e0603d);
+$alert-info-bg:           $blue-dark;
 
 // popover
 $popover-bg:              $gray-5;

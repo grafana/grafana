@@ -335,7 +335,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       var dimensions = {};
 
       return this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions).then(function () {
-        return { status: 'success', message: 'Data source is working', title: 'Success' };
+        return { status: 'success', message: 'Data source is working' };
       });
     };
 

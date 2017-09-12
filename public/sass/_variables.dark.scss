@@ -103,7 +103,7 @@ $tight-form-func-bg: 		    #333;
 $tight-form-func-highlight-bg:  #444;
 
 $modal-background: $black;
-$code-tag-bg:      $dark-5;
+$code-tag-bg:      $gray-1;
 $code-tag-border:  lighten($code-tag-bg, 2%);
 
 
@@ -238,17 +238,15 @@ $paginationActiveBackground:          $blue;
 
 // Form states and alerts
 // -------------------------
-$state-warning-text:      $warn;
-$state-warning-bg:        $brand-warning;
-$error-text-color:      #E84D4D;
-$success-text-color:    #12D95A;
+$warning-text-color:      $warn;
+$error-text-color:        #E84D4D;
+$success-text-color:      #12D95A;
+$info-text-color:         $blue-dark;
 
-//$alert-error-bg:          linear-gradient(90deg, #d94636, #e55f39);
 $alert-error-bg:          linear-gradient(90deg, #d44939, #e0603d);
 $alert-success-bg:        linear-gradient(90deg, #3aa655, #47b274);
-
-$infoText:                $blue-dark;
-$infoBackground:          $blue-dark;
+$alert-warning-bg:        linear-gradient(90deg, #d44939, #e0603d);
+$alert-info-bg:           linear-gradient(100deg, #1a4552, #00374a);
 
 // popover
 $popover-bg:              $panel-bg;
@@ -278,7 +276,7 @@ $card-background-hover: linear-gradient(135deg, #343434, #262626);
 $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .3);
 
 // info box
-$info-box-background: linear-gradient(100deg, #1a4552, #0b2127);
+$info-box-background: linear-gradient(100deg, #1a4552, #00374a);
 
 // footer
 $footer-link-color:   $gray-1;

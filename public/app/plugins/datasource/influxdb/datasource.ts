@@ -196,11 +196,11 @@ export default class InfluxDatasource {
     return this.metricFindQuery('SHOW DATABASES').then(res => {
       let found = _.find(res, {text: this.database});
       if (!found) {
-        return { status: "error", message: "Could not find the specified database name.", title: "DB Not found" };
+        return { status: "error", message: "Could not find the specified database name." };
       }
-      return { status: "success", message: "Data source is working", title: "Success" };
+      return { status: "success", message: "Data source is working" };
     }).catch(err => {
-      return { status: "error", message: err.message, title: "Test Failed" };
+      return { status: "error", message: err.message };
     });
   }
 

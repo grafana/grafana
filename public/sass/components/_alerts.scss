@@ -7,10 +7,10 @@
 // -------------------------
 
 .alert {
-  padding: 1.5rem 2rem 1.5rem 1.5rem;
+  padding: 1.25rem 2rem 1.25rem 1.5rem;
   margin-bottom: $line-height-base;
   text-shadow: 0 2px 0 rgba(255,255,255,.5);
-  background-color: $state-warning-bg;
+  background: $alert-error-bg;
   position: relative;
   color: $white;
   text-shadow: 0 1px 0 rgba(0,0,0,.2);
@@ -32,11 +32,11 @@
 }
 
 .alert-info {
-  background: $infoBackground;
+  background: $alert-info-bg;
 }
 
 .alert-warning {
-  background-color: $state-warning-bg;
+  background: $alert-warning-bg;
 }
 
 .page-alert-list {
