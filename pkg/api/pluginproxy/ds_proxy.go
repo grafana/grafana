@@ -96,6 +96,11 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	span.SetTag("user_id", proxy.ctx.SignedInUser.UserId)
 	span.SetTag("org_id", proxy.ctx.SignedInUser.OrgId)
 
+	opentracing.GlobalTracer().Inject(
+		span.Context(),
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Request.Header))
+
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req.Request)
 	proxy.ctx.Resp.Header().Del("Set-Cookie")
 }
