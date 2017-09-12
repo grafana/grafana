@@ -240,12 +240,12 @@ $paginationActiveBackground:          $blue;
 // -------------------------
 $state-warning-text:      $warn;
 $state-warning-bg:        $brand-warning;
+$error-text-color:      #E84D4D;
+$success-text-color:    #12D95A;
 
-$errorText:               #E84D4D;
-$errorBackground:         $btn-danger-bg;
-
-$successText:             #12D95A;
-$successBackground:       $btn-success-bg;
+//$alert-error-bg:          linear-gradient(90deg, #d94636, #e55f39);
+$alert-error-bg:          linear-gradient(90deg, #d44939, #e0603d);
+$alert-success-bg:        linear-gradient(90deg, #3aa655, #47b274);
 
 $infoText:                $blue-dark;
 $infoBackground:          $blue-dark;
@@ -257,6 +257,8 @@ $popover-border-color:    $gray-1;
 
 $popover-help-bg:         $btn-secondary-bg;
 $popover-help-color:      $text-color;
+
+$popover-error-bg:        $btn-danger-bg;
 
 // Tooltips and popovers
 // -------------------------

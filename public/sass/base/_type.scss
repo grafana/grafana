@@ -35,17 +35,17 @@ a.muted:focus        { color: darken($text-muted, 10%); }
 a.text-warning:hover,
 a.text-warning:focus { color: darken($state-warning-text, 10%); }
 
-.text-error          { color: $errorText; }
+.text-error          { color: $error-text-color; }
 a.text-error:hover,
-a.text-error:focus   { color: darken($errorText, 10%); }
+a.text-error:focus   { color: darken($error-text-color, 10%); }
 
 .text-info           { color: $infoText; }
 a.text-info:hover,
 a.text-info:focus    { color: darken($infoText, 10%); }
 
-.text-success        { color: $successText; }
+.text-success        { color: $success-text-color; }
 a.text-success:hover,
-a.text-success:focus { color: darken($successText, 10%); }
+a.text-success:focus { color: darken($success-text-color, 10%); }
 a { cursor: pointer; }
 
 a[disabled] {

@@ -259,29 +259,24 @@ $paginationActiveBackground:          $blue;
 
 // Form states and alerts
 // -------------------------
-$state-warning-text:             lighten($orange, 10%);
-$state-warning-bg:       $orange;
-$warningBorder:           transparent;
+$state-warning-text:            lighten($orange, 10%);
+$state-warning-bg:              $orange;
+$error-text-color:              lighten($red, 10%);
+$success-text-color:            lighten($green, 10%);
 
-$errorText:               lighten($red, 10%);
-$errorBackground:         $red;
-$errorBorder:             transparent;
-
-$successText:             lighten($green, 10%);
-$successBackground:       $green;
-$successBorder:           transparent;
+$alert-error-bg:          linear-gradient(90deg, #d44939, #e0603d);
+$alert-success-bg:        linear-gradient(90deg, #3aa655, #47b274);
 
 $infoText:                $blue;
 $infoBackground:          $blue-dark;
-$infoBorder:              transparent;
 
 // popover
 $popover-bg:              $gray-5;
 $popover-color:           $text-color;
 $popover-border-color:    $gray-3;
-
 $popover-help-bg:         $blue-dark;
 $popover-help-color:      $gray-6;
+$popover-error-bg:        $btn-danger-bg;
 
 // Tooltips and popovers
 // -------------------------
