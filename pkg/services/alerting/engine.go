@@ -117,7 +117,10 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 			if err := recover(); err != nil {
 				e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))
 				ext.Error.Set(span, true)
-				span.LogFields(tlog.Error(fmt.Errorf("error: %v", err)))
+				span.LogFields(
+					tlog.Error(fmt.Errorf("%v", err)),
+					tlog.String("message", "failed to execute alert rule. panic was recovered."),
+				)
 				span.Finish()
 				close(done)
 			}
@@ -129,7 +132,6 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 		span.SetTag("alertId", evalContext.Rule.Id)
 		span.SetTag("dashboardId", evalContext.Rule.DashboardId)
 		span.SetTag("firing", evalContext.Firing)
-
 		span.Finish()
 		close(done)
 	}()
