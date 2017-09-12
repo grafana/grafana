@@ -88,19 +88,16 @@ function($, _) {
       // 9h
       case (interval < 32400000):
         return 21600000;  // 6h
-      // 24h
+      // 1d
       case (interval < 86400000):
         return 43200000;  // 12h
-      // 48h
-      case (interval < 172800000):
-        return 86400000;  // 24h
       // 1w
       case (interval < 604800000):
-        return 86400000;  // 24h
+        return 86400000;  // 1d
       // 3w
       case (interval < 1814400000):
         return 604800000; // 1w
-      // 2y
+      // 6w
       case (interval < 3628800000):
         return 2592000000; // 30d
       default:

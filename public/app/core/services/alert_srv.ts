@@ -16,7 +16,7 @@ export class AlertSrv {
 
   init() {
     this.$rootScope.onAppEvent('alert-error', (e, alert) => {
-      this.set(alert[0], alert[1], 'error', 7000);
+      this.set(alert[0], alert[1], 'error', 12000);
     }, this.$rootScope);
 
     this.$rootScope.onAppEvent('alert-warning', (e, alert) => {
@@ -33,6 +33,14 @@ export class AlertSrv {
     appEvents.on('confirm-modal', this.showConfirmModal.bind(this));
   }
 
+  getIconForSeverity(severity) {
+    switch (severity) {
+      case 'success': return 'fa fa-check';
+      case 'error': return 'fa fa-exclamation-triangle';
+      default: return 'fa fa-exclamation';
+    }
+  }
+
   set(title, text, severity, timeout) {
     if (_.isObject(text)) {
       console.log('alert error', text);
@@ -45,6 +53,7 @@ export class AlertSrv {
       title: title || '',
       text: text || '',
       severity: severity || 'info',
+      icon: this.getIconForSeverity(severity)
     };
 
     var newAlertJson = angular.toJson(newAlert);

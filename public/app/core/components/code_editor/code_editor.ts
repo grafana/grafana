@@ -111,6 +111,17 @@ function link(scope, elem, attrs) {
   let textarea = elem.find("textarea");
   textarea.addClass('gf-form-input');
 
+  if (scope.codeEditorFocus) {
+    setTimeout(function () {
+      textarea.focus();
+      var domEl = textarea[0];
+      if (domEl.setSelectionRange) {
+        var pos = textarea.val().length * 2;
+        domEl.setSelectionRange(pos, pos);
+      }
+    }, 100);
+  }
+
   // Event handlers
   editorSession.on('change', (e) => {
     scope.$apply(() => {
@@ -199,6 +210,7 @@ export function codeEditorDirective() {
     template: editorTemplate,
     scope: {
       content: "=",
+      codeEditorFocus: "<",
       onChange: "&",
       getCompleter: "&"
     },

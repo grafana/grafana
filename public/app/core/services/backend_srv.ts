@@ -64,7 +64,13 @@ export class BackendSrv {
     }
 
     if (data.message) {
-      this.alertSrv.set("Problem!", data.message, data.severity, 10000);
+      let description = "";
+      let message = data.message;
+      if (message.length > 80) {
+        description = message;
+        message = "Error";
+      }
+      this.alertSrv.set(message, description, data.severity, 10000);
     }
 
     throw data;
@@ -97,7 +103,7 @@ export class BackendSrv {
       return results.data;
     }, err => {
       // handle unauthorized
-      if (err.status === 401 && firstAttempt) {
+      if (err.status === 401 && this.contextSrv.user.isSignedIn && firstAttempt) {
         return this.loginPing().then(() => {
           options.retry = 1;
           return this.request(options);

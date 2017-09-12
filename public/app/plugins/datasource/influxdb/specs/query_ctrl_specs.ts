@@ -19,9 +19,13 @@ describe('InfluxDBQueryCtrl', function() {
     ctx.$q = $q;
     ctx.scope = $rootScope.$new();
     ctx.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
-    ctx.panelCtrl = {panel: {}};
-    ctx.panelCtrl.refresh = sinon.spy();
     ctx.target = {target: {}};
+    ctx.panelCtrl = {
+      panel: {
+        targets: [ctx.target]
+      }
+    };
+    ctx.panelCtrl.refresh = sinon.spy();
     ctx.ctrl = $controller(InfluxQueryCtrl, {$scope: ctx.scope}, {
       panelCtrl: ctx.panelCtrl,
       target: ctx.target,
