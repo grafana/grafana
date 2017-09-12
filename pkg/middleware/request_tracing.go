@@ -22,7 +22,7 @@ func RequestTracing() macaron.Handler {
 		defer span.Finish()
 
 		ctx := opentracing.ContextWithSpan(req.Context(), span)
-		req = req.WithContext(ctx)
+		c.Req.Request = req.WithContext(ctx)
 
 		c.Next()
 
