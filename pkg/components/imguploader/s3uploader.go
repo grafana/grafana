@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/grafana/grafana/pkg/log"
@@ -53,8 +54,10 @@ func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
 		Credentials: creds,
 	}
 
+	s3_endpoint, _ := endpoints.DefaultResolver().EndpointFor("s3", u.region)
 	key := util.GetRandomString(20) + ".png"
-	log.Debug("Uploading image to s3", "bucket = ", u.bucket, ", key = ", key)
+	image_url := s3_endpoint.URL + "/" + u.bucket + "/" + key
+	log.Debug("Uploading image to s3", "url = ", image_url)
 
 	file, err := os.Open(imageDiskPath)
 	if err != nil {
@@ -77,10 +80,5 @@ func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	if u.region == "us-east-1" {
-		return "https://" + u.bucket + ".s3.amazonaws.com/" + key, nil
-	} else {
-		return "https://" + u.bucket + ".s3-" + u.region + ".amazonaws.com/" + key, nil
-	}
+	return image_url, nil
 }
