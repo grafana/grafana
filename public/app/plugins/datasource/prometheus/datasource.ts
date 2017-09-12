@@ -98,14 +98,29 @@ export class PrometheusDatasource {
       activeTargets.push(target);
 
       var query: any = {};
-      query.expr = this.templateSrv.replace(target.expr, options.scopedVars, self.interpolateQueryExpr);
-      query.requestId = options.panelId + target.refId;
 
-      var interval = this.templateSrv.replace(target.interval, options.scopedVars) || options.interval;
+      var interval = this.intervalSeconds(options.interval);
+      // Minimum interval ("Min step"), if specified for the query. or same as interval otherwise
+      var minInterval = this.intervalSeconds(this.templateSrv.replace(target.interval, options.scopedVars) || options.interval);
       var intervalFactor = target.intervalFactor || 1;
-      target.step = query.step = this.calculateInterval(interval, intervalFactor);
       var range = Math.ceil(end - start);
-      target.step = query.step = this.adjustStep(query.step, this.intervalSeconds(options.interval), range);
+      // Adjust the interval to take into account any specified minimum plus Prometheus limitations
+      var adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
+
+      var scopedVars = options.scopedVars;
+      // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
+      if (interval !== adjustedInterval) {
+        interval = adjustedInterval;
+        scopedVars = Object.assign({}, options.scopedVars, {
+          "__interval":     {text: interval + "s",  value: interval + "s"},
+          "__interval_ms":  {text: interval * 1000, value: interval * 1000},
+        });
+      }
+      target.step = query.step = interval * intervalFactor;
+
+      // Only replace vars in expression after having (possibly) updated interval vars
+      query.expr = this.templateSrv.replace(target.expr, scopedVars, self.interpolateQueryExpr);
+      query.requestId = options.panelId + target.refId;
       queries.push(query);
     }
 
@@ -140,13 +155,14 @@ export class PrometheusDatasource {
     });
   }
 
-  adjustStep(step, autoStep, range) {
-    // Prometheus drop query if range/step > 11000
-    // calibrate step if it is too big
-    if (step !== 0 && range / step > 11000) {
-      step = Math.ceil(range / 11000);
+  adjustInterval(interval, minInterval, range, intervalFactor) {
+    interval = Math.max(interval, minInterval);
+    // Prometheus will drop queries that might return more than 11000 data points.
+    // Calibrate interval if it is too small.
+    if (interval !== 0 && range / intervalFactor / interval > 11000) {
+      interval = Math.ceil(range / intervalFactor / 11000);
     }
-    return Math.max(step, autoStep);
+    return interval;
   }
 
   performTimeSeriesQuery(query, start, end) {
@@ -206,7 +222,7 @@ export class PrometheusDatasource {
     var end = this.getPrometheusTime(options.range.to, true);
     var query = {
       expr: interpolated,
-      step: this.adjustStep(kbn.interval_to_seconds(step), 0, Math.ceil(end - start)) + 's'
+      step: this.adjustInterval(kbn.interval_to_seconds(step), 0, Math.ceil(end - start), 1) + 's'
     };
 
     var self = this;

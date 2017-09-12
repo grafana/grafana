@@ -195,4 +195,266 @@ describe('PrometheusDatasource', function() {
       );
     });
   });
+  describe('The "step" query parameter', function() {
+    var response = {
+      status: "success",
+      data: {
+        resultType: "matrix",
+        result: []
+      }
+    };
+
+    beforeEach(function() {
+      ctx.$httpBackend.flush();
+    });
+
+    it('should be min interval when greater than auto interval', function() {
+      var query = {
+        range: { from: moment(1443438674760), to: moment(1443460274760) },
+        targets: [{
+          expr: 'test',
+          interval: '10s'
+        }],
+        interval: '5s'
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=test' +
+                        '&start=1443438675&end=1443460275&step=10';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+    });
+    it('should be auto interval when greater than min interval', function() {
+      var query = {
+        range: { from: moment(1443438674760), to: moment(1443460274760) },
+        targets: [{
+          expr: 'test',
+          interval: '5s'
+        }],
+        interval: '10s'
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=test' +
+                        '&start=1443438675&end=1443460275&step=10';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+    });
+    it('should result in querying fewer than 11000 data points', function() {
+      var query = {
+        range: { from: moment(1443438674760), to: moment(1443460274760) },
+        targets: [{ expr: 'test' }],
+        interval: '1s'
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=test' +
+                        '&start=1443438675&end=1443460275&step=2';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+    });
+    it('should apply intervalFactor to min interval when greater', function() {
+      var query = {
+        range: { from: moment(1443438674760), to: moment(1443460274760) },
+        targets: [{
+          expr: 'test',
+          interval: '10s',
+          intervalFactor: 10
+        }],
+        interval: '5s'
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=test' +
+                        '&start=1443438675&end=1443460275&step=100';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+    });
+    it('should apply intervalFactor to auto interval when greater', function() {
+      var query = {
+        range: { from: moment(1443438674760), to: moment(1443460274760) },
+        targets: [{
+          expr: 'test',
+          interval: '5s',
+          intervalFactor: 10
+        }],
+        interval: '10s'
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=test' +
+                        '&start=1443438675&end=1443460275&step=100';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+    });
+    it('should not not be affected by the 11000 data points limit when large enough', function() {
+      var query = {
+        // 1 week range
+        range: { from: moment(1443438674760), to: moment(1444043474760) },
+        targets: [{
+          expr: 'test',
+          intervalFactor: 10
+        }],
+        interval: '10s'
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=test' +
+                        '&start=1443438675&end=1444043475&step=100';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+    });
+    it('should be determined by the 11000 data points limit when too small', function() {
+      var query = {
+        // 1 week range
+        range: { from: moment(1443438674760), to: moment(1444043474760) },
+        targets: [{
+          expr: 'test',
+          intervalFactor: 10
+        }],
+        interval: '5s'
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=test' +
+                        '&start=1443438675&end=1444043475&step=60';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+    });
+  });
+  describe('The __interval and __interval_ms template variables', function() {
+    var response = {
+      status: "success",
+      data: {
+        resultType: "matrix",
+        result: []
+      }
+    };
+
+    beforeEach(function() {
+      ctx.$httpBackend.flush();
+    });
+
+    it('should be unchanged when auto interval is greater than min interval', function() {
+      var query = {
+        range: { from: moment(1443438674760), to: moment(1443460274760) },
+        targets: [{
+          expr: 'rate(test[$__interval])',
+          interval: '5s'
+        }],
+        interval: '10s',
+        scopedVars: {
+          "__interval":     {text: "10s",  value: "10s"},
+          "__interval_ms":  {text: 10 * 1000, value: 10 * 1000},
+        }
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=' +
+                        encodeURIComponent('rate(test[10s])') +
+                        '&start=1443438675&end=1443460275&step=10';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+
+      expect(query.scopedVars.__interval.text).to.be("10s");
+      expect(query.scopedVars.__interval.value).to.be("10s");
+      expect(query.scopedVars.__interval_ms.text).to.be(10 * 1000);
+      expect(query.scopedVars.__interval_ms.value).to.be(10 * 1000);
+    });
+    it('should be min interval when it is greater than auto interval', function() {
+      var query = {
+        range: { from: moment(1443438674760), to: moment(1443460274760) },
+        targets: [{
+          expr: 'rate(test[$__interval])',
+          interval: '10s'
+        }],
+        interval: '5s',
+        scopedVars: {
+          "__interval":     {text: "5s",  value: "5s"},
+          "__interval_ms":  {text: 5 * 1000, value: 5 * 1000},
+        }
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=' +
+                        encodeURIComponent('rate(test[10s])') +
+                        '&start=1443438675&end=1443460275&step=10';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+
+      expect(query.scopedVars.__interval.text).to.be("5s");
+      expect(query.scopedVars.__interval.value).to.be("5s");
+      expect(query.scopedVars.__interval_ms.text).to.be(5 * 1000);
+      expect(query.scopedVars.__interval_ms.value).to.be(5 * 1000);
+    });
+    it('should ignore intervalFactor', function() {
+      var query = {
+        range: { from: moment(1443438674760), to: moment(1443460274760) },
+        targets: [{
+          expr: 'rate(test[$__interval])',
+          interval: '5s',
+          intervalFactor: 10
+        }],
+        interval: '10s',
+        scopedVars: {
+          "__interval":     {text: "10s",  value: "10s"},
+          "__interval_ms":  {text: 10 * 1000, value: 10 * 1000},
+        }
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=' +
+                        encodeURIComponent('rate(test[10s])') +
+                        '&start=1443438675&end=1443460275&step=100';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+
+      expect(query.scopedVars.__interval.text).to.be("10s");
+      expect(query.scopedVars.__interval.value).to.be("10s");
+      expect(query.scopedVars.__interval_ms.text).to.be(10 * 1000);
+      expect(query.scopedVars.__interval_ms.value).to.be(10 * 1000);
+    });
+    it('should ignore intervalFactor', function() {
+      var query = {
+        range: { from: moment(1443438674760), to: moment(1443460274760) },
+        targets: [{
+          expr: 'rate(test[$__interval])',
+          interval: '10s',
+          intervalFactor: 10
+        }],
+        interval: '5s',
+        scopedVars: {
+          "__interval":     {text: "5s",  value: "5s"},
+          "__interval_ms":  {text: 5 * 1000, value: 5 * 1000},
+        }
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=' +
+                        encodeURIComponent('rate(test[10s])') +
+                        '&start=1443438675&end=1443460275&step=100';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+
+      expect(query.scopedVars.__interval.text).to.be("5s");
+      expect(query.scopedVars.__interval.value).to.be("5s");
+      expect(query.scopedVars.__interval_ms.text).to.be(5 * 1000);
+      expect(query.scopedVars.__interval_ms.value).to.be(5 * 1000);
+    });
+    it('should be determined by the 11000 data points limit, accounting for intervalFactor', function() {
+      var query = {
+        // 1 week range
+        range: { from: moment(1443438674760), to: moment(1444043474760) },
+        targets: [{
+          expr: 'rate(test[$__interval])',
+          intervalFactor: 10
+        }],
+        interval: '5s',
+        scopedVars: {
+          "__interval":     {text: "5s",  value: "5s"},
+          "__interval_ms":  {text: 5 * 1000, value: 5 * 1000},
+        }
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=' +
+                        encodeURIComponent('rate(test[6s])') +
+                        '&start=1443438675&end=1444043475&step=60';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+
+      expect(query.scopedVars.__interval.text).to.be("5s");
+      expect(query.scopedVars.__interval.value).to.be("5s");
+      expect(query.scopedVars.__interval_ms.text).to.be(5 * 1000);
+      expect(query.scopedVars.__interval_ms.value).to.be(5 * 1000);
+    });
+  });
 });
