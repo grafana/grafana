@@ -18,6 +18,7 @@ type AlertNotification struct {
 }
 
 type CreateAlertNotificationCommand struct {
+	Id        int64            `json:"id"`
 	Name      string           `json:"name"  binding:"Required"`
 	Type      string           `json:"type"  binding:"Required"`
 	IsDefault bool             `json:"isDefault"`

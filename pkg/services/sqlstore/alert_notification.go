@@ -143,6 +143,7 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 		}
 
 		alertNotification := &m.AlertNotification{
+			Id:        cmd.Id,
 			OrgId:     cmd.OrgId,
 			Name:      cmd.Name,
 			Type:      cmd.Type,
