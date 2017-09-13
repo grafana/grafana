@@ -11,8 +11,7 @@ weight = 7
 
 # Using MySQL in Grafana
 
-> Only available in Grafana v4.3+. This data source is not ready for
-> production use, currently in development (alpha state).
+> Only available in Grafana v4.3+.
 
 Grafana ships with a built-in MySQL data source plugin that allow you to query any visualize
 data from a MySQL compatible database.
@@ -58,8 +57,7 @@ If the `Format as` query option is set to `Table` then you can basically do any 
 
 Query editor with example query:
 
-![](/img/docs/v45/mysql_table_query.png)
-
+{{< docs-imagebox img="/img/docs/v45/mysql_table_query.png" class="docs-image--block" >}}
 
 The query:
 
