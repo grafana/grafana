@@ -7,7 +7,7 @@ import (
 )
 
 type Router interface {
-	Route(pattern, method string, handlers ...macaron.Handler)
+	Handle(method, pattern string, handlers []macaron.Handler) *macaron.Route
 }
 
 type RouteRegister interface {
@@ -15,10 +15,12 @@ type RouteRegister interface {
 	Post(string, ...macaron.Handler)
 	Delete(string, ...macaron.Handler)
 	Put(string, ...macaron.Handler)
+	Patch(string, ...macaron.Handler)
+	Any(string, ...macaron.Handler)
 
 	Group(string, func(RouteRegister), ...macaron.Handler)
 
-	Register(Router)
+	Register(Router) *macaron.Router
 }
 
 func newRouteRegister() RouteRegister {
@@ -53,17 +55,22 @@ func (rr *routeRegister) Group(pattern string, fn func(rr RouteRegister), handle
 	rr.groups = append(rr.groups, group)
 }
 
-func (rr *routeRegister) Register(router Router) {
+func (rr *routeRegister) Register(router Router) *macaron.Router {
 	for _, r := range rr.routes {
-		router.Route(r.pattern, r.method, r.handlers...)
+		router.Handle(r.method, r.pattern, r.handlers)
 	}
 
 	for _, g := range rr.groups {
 		g.Register(router)
 	}
+
+	return &macaron.Router{}
 }
 
 func (rr *routeRegister) route(pattern, method string, handlers ...macaron.Handler) {
+	//inject metrics
+	//inject tracing
+
 	rr.routes = append(rr.routes, route{
 		method:   method,
 		pattern:  rr.prefix + pattern,
@@ -85,4 +92,12 @@ func (rr *routeRegister) Delete(pattern string, handlers ...macaron.Handler) {
 
 func (rr *routeRegister) Put(pattern string, handlers ...macaron.Handler) {
 	rr.route(pattern, http.MethodPut, handlers...)
+}
+
+func (rr *routeRegister) Patch(pattern string, handlers ...macaron.Handler) {
+	rr.route(pattern, http.MethodPatch, handlers...)
+}
+
+func (rr *routeRegister) Any(pattern string, handlers ...macaron.Handler) {
+	rr.route(pattern, "*", handlers...)
 }
