@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/mail"
 
 	"github.com/grafana/grafana/pkg/models"
 
@@ -172,6 +173,7 @@ func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 		Login       string              `json:"login"`
 		Username    string              `json:"username"`
 		Email       string              `json:"email"`
+		Upn         string              `json:"upn"`
 		Attributes  map[string][]string `json:"attributes"`
 	}
 
@@ -194,7 +196,12 @@ func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	if userInfo.Email == "" && data.Attributes["email:primary"] != nil {
 		userInfo.Email = data.Attributes["email:primary"][0]
 	}
-
+	if userInfo.Email == "" && data.Upn != "" {
+		emailAddr, emailErr := mail.ParseAddress(data.Upn)
+		if emailErr == nil {
+			userInfo.Email = emailAddr.Address
+		}
+	}
 	if userInfo.Email == "" {
 		userInfo.Email, err = s.FetchPrivateEmail(client)
 		if err != nil {
