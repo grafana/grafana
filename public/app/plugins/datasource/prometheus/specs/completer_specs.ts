@@ -18,7 +18,7 @@ describe('Prometheus editor completer', function() {
   let editor = { session: session };
 
   let datasourceStub = <PrometheusDatasource>{
-    performInstantQuery: sinon.stub().returns(Promise.resolve(
+    performInstantQuery: sinon.stub().withArgs({ expr: '{__name__="node_cpu"' }).returns(Promise.resolve(
       [
         {
           metric: {
@@ -28,7 +28,7 @@ describe('Prometheus editor completer', function() {
         }
       ]
     )),
-    performSuggestQuery: sinon.stub().returns(Promise.resolve(
+    performSuggestQuery: sinon.stub().withArgs('node', true).returns(Promise.resolve(
       [
         'node_cpu'
       ]
