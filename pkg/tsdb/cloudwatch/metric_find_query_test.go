@@ -5,19 +5,20 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	cwapi "github.com/grafana/grafana/pkg/api/cloudwatch"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestCloudWatchMetrics(t *testing.T) {
 
 	Convey("When calling getMetricsForCustomMetrics", t, func() {
-		dsInfo := &DatasourceInfo{
+		dsInfo := &cwapi.DatasourceInfo{
 			Region:        "us-east-1",
 			Namespace:     "Foo",
 			Profile:       "default",
 			AssumeRoleArn: "",
 		}
-		f := func(dsInfo *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
+		f := func(dsInfo *cwapi.DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
 			return cloudwatch.ListMetricsOutput{
 				Metrics: []*cloudwatch.Metric{
 					{
@@ -39,13 +40,13 @@ func TestCloudWatchMetrics(t *testing.T) {
 	})
 
 	Convey("When calling getDimensionsForCustomMetrics", t, func() {
-		dsInfo := &DatasourceInfo{
+		dsInfo := &cwapi.DatasourceInfo{
 			Region:        "us-east-1",
 			Namespace:     "Foo",
 			Profile:       "default",
 			AssumeRoleArn: "",
 		}
-		f := func(dsInfo *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
+		f := func(dsInfo *cwapi.DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
 			return cloudwatch.ListMetricsOutput{
 				Metrics: []*cloudwatch.Metric{
 					{
