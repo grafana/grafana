@@ -54,7 +54,6 @@ const (
 )
 
 var metricCategoryPrefix []string = []string{"proxy_", "api_", "page_", "alerting_", "aws_", "db_", "stat_", "go_", "process_"}
-var ignorePrefix []string = []string{"http_"}
 
 // Config defines the Graphite bridge config.
 type Config struct {
@@ -204,18 +203,6 @@ func (b *Bridge) writeMetrics(w io.Writer, mfs []*dto.MetricFamily, prefix strin
 		}, mf)
 		if err != nil {
 			return err
-		}
-
-		ignoreThisMetric := false
-		for _, v := range ignorePrefix {
-			if strings.HasPrefix(mf.GetName(), v) {
-				ignoreThisMetric = true
-				break
-			}
-		}
-
-		if ignoreThisMetric {
-			continue
 		}
 
 		buf := bufio.NewWriter(w)

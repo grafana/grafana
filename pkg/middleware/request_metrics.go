@@ -10,7 +10,7 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-func RequestMetrics() macaron.Handler {
+func RequestMetrics(handler string) macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		rw := res.(macaron.ResponseWriter)
 		now := time.Now()
@@ -20,8 +20,8 @@ func RequestMetrics() macaron.Handler {
 
 		code := sanitizeCode(status)
 		method := sanitizeMethod(req.Method)
-		metrics.M_Http_Request_Total.WithLabelValues(code, method).Inc()
-		metrics.M_Http_Request_Summary.WithLabelValues(code, method).Observe(time.Since(now).Seconds())
+		metrics.M_Http_Request_Total.WithLabelValues(handler, code, method).Inc()
+		metrics.M_Http_Request_Summary.WithLabelValues(handler, code, method).Observe(time.Since(now).Seconds())
 
 		if strings.HasPrefix(req.RequestURI, "/api/datasources/proxy") {
 			countProxyRequests(status)
