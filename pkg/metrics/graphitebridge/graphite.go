@@ -54,6 +54,7 @@ const (
 )
 
 var metricCategoryPrefix []string = []string{"proxy_", "api_", "page_", "alerting_", "aws_", "db_", "stat_", "go_", "process_"}
+var trimMetricPrefix []string = []string{"grafana_"}
 
 // Config defines the Graphite bridge config.
 type Config struct {
@@ -237,7 +238,13 @@ func writeMetric(buf *bufio.Writer, m model.Metric, mf *dto.MetricFamily) error 
 	for _, v := range metricCategoryPrefix {
 		if strings.HasPrefix(string(metricName), v) {
 			group := strings.Replace(v, "_", " ", 1)
-			metricName = model.LabelValue(strings.Replace(string(metricName), v, group, -1))
+			metricName = model.LabelValue(strings.Replace(string(metricName), v, group, 1))
+		}
+	}
+
+	for _, v := range trimMetricPrefix {
+		if strings.HasPrefix(string(metricName), v) {
+			metricName = model.LabelValue(strings.Replace(string(metricName), v, "", 1))
 		}
 	}
 
