@@ -132,7 +132,16 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       });
     };
 
-    this.getRegions = function() {
+    function transformSuggestDataFromTable(suggestData) {
+      return _.map(suggestData.results['metricFindQuery'].tables[0].rows, function (v) {
+        return {
+          text: v[0],
+          value: v[1]
+        };
+      });
+    }
+
+    this.getRegions = function () {
       var range = timeSrv.timeRange();
       return backendSrv.post('/api/tsdb/query', {
         from: range.from,
@@ -147,31 +156,69 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
             subtype: 'regions'
           }
         ]
-      });
+      }).then(function (r) { return transformSuggestDataFromTable(r); });
     };
 
     this.getNamespaces = function() {
-      return this.awsRequest({action: '__GetNamespaces'});
+      var range = timeSrv.timeRange();
+      return backendSrv.post('/api/tsdb/query', {
+        from: range.from,
+        to: range.to,
+        queries: [
+          {
+            refId: 'metricFindQuery',
+            intervalMs: 1, // dummy
+            maxDataPoints: 1, // dummy
+            datasourceId: this.instanceSettings.id,
+            type: 'metricFindQuery',
+            subtype: 'namespaces'
+          }
+        ]
+      }).then(function (r) { return transformSuggestDataFromTable(r); });
     };
 
-    this.getMetrics = function(namespace, region) {
-      return this.awsRequest({
-        action: '__GetMetrics',
-        region: region,
-        parameters: {
-          namespace: templateSrv.replace(namespace)
-        }
-      });
+    this.getMetrics = function (namespace, region) {
+      var range = timeSrv.timeRange();
+      return backendSrv.post('/api/tsdb/query', {
+        from: range.from,
+        to: range.to,
+        queries: [
+          {
+            refId: 'metricFindQuery',
+            intervalMs: 1, // dummy
+            maxDataPoints: 1, // dummy
+            datasourceId: this.instanceSettings.id,
+            type: 'metricFindQuery',
+            subtype: 'metrics',
+            parameters: {
+              region: region,
+              namespace: templateSrv.replace(namespace)
+            }
+          }
+        ]
+      }).then(function (r) { return transformSuggestDataFromTable(r); });
     };
 
     this.getDimensionKeys = function(namespace, region) {
-      return this.awsRequest({
-        action: '__GetDimensions',
-        region: region,
-        parameters: {
-          namespace: templateSrv.replace(namespace)
-        }
-      });
+      var range = timeSrv.timeRange();
+      return backendSrv.post('/api/tsdb/query', {
+        from: range.from,
+        to: range.to,
+        queries: [
+          {
+            refId: 'metricFindQuery',
+            intervalMs: 1, // dummy
+            maxDataPoints: 1, // dummy
+            datasourceId: this.instanceSettings.id,
+            type: 'metricFindQuery',
+            subtype: 'dimension_keys',
+            parameters: {
+              region: region,
+              namespace: templateSrv.replace(namespace)
+            }
+          }
+        ]
+      }).then(function (r) { return transformSuggestDataFromTable(r); });
     };
 
     this.getDimensionValues = function(region, namespace, metricName, dimensionKey, filterDimensions) {
@@ -214,14 +261,6 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       var namespace;
       var metricName;
 
-      var transformSuggestDataFromTable = function(suggestData) {
-        return _.map(suggestData.results['metricFindQuery'].tables[0].rows, function (v) {
-          return {
-            text: v[0],
-            value: v[1]
-          };
-        });
-      };
       var transformSuggestData = function(suggestData) {
         return _.map(suggestData, function(v) {
           return { text: v };
@@ -230,7 +269,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
 
       var regionQuery = query.match(/^regions\(\)/);
       if (regionQuery) {
-        return this.getRegions().then(function (r) { return transformSuggestDataFromTable(r); });
+        return this.getRegions();
       }
 
       var namespaceQuery = query.match(/^namespaces\(\)/);
