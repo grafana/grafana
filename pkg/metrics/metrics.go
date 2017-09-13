@@ -15,6 +15,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+const exporterName = "grafana"
+
 var (
 	M_Instance_Start       prometheus.Counter
 	M_Page_Status          *prometheus.CounterVec
@@ -58,30 +60,34 @@ var (
 
 func init() {
 	M_Instance_Start = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "instance_start_total",
-		Help: "counter for started instances",
+		Name:      "instance_start_total",
+		Help:      "counter for started instances",
+		Namespace: exporterName,
 	})
 
 	M_Page_Status = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "page_response_status_total",
-			Help: "page http response status",
+			Name:      "page_response_status_total",
+			Help:      "page http response status",
+			Namespace: exporterName,
 		},
 		[]string{"code"},
 	)
 
 	M_Api_Status = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "api_response_status_total",
-			Help: "api http response status",
+			Name:      "api_response_status_total",
+			Help:      "api http response status",
+			Namespace: exporterName,
 		},
 		[]string{"code"},
 	)
 
 	M_Proxy_Status = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "proxy_response_status_total",
-			Help: "proxy http response status",
+			Name:      "proxy_response_status_total",
+			Help:      "proxy http response status",
+			Namespace: exporterName,
 		},
 		[]string{"code"},
 	)
@@ -103,127 +109,159 @@ func init() {
 	)
 
 	M_Api_User_SignUpStarted = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "api_user_signup_started_total",
-		Help: "amount of users who started the signup flow",
+		Name:      "api_user_signup_started_total",
+		Help:      "amount of users who started the signup flow",
+		Namespace: exporterName,
 	})
 
 	M_Api_User_SignUpCompleted = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "api_user_signup_completed_total",
-		Help: "amount of users who completed the signup flow",
+		Name:      "api_user_signup_completed_total",
+		Help:      "amount of users who completed the signup flow",
+		Namespace: exporterName,
 	})
 
 	M_Api_User_SignUpInvite = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "api_user_signup_invite_total",
-		Help: "amount of users who have been invited",
+		Name:      "api_user_signup_invite_total",
+		Help:      "amount of users who have been invited",
+		Namespace: exporterName,
 	})
 
 	M_Api_Dashboard_Save = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name: "api_dashboard_save",
-		Help: "summary for dashboard save duration",
+		Name:      "api_dashboard_save",
+		Help:      "summary for dashboard save duration",
+		Namespace: exporterName,
 	})
 
 	M_Api_Dashboard_Get = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name: "api_dashboard_get",
-		Help: "summary for dashboard get duration",
+		Name:      "api_dashboard_get",
+		Help:      "summary for dashboard get duration",
+		Namespace: exporterName,
 	})
 
 	M_Api_Dashboard_Search = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name: "api_dashboard_search",
-		Help: "summary for dashboard search duration",
+		Name:      "api_dashboard_search",
+		Help:      "summary for dashboard search duration",
+		Namespace: exporterName,
 	})
 
 	M_Api_Admin_User_Create = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "api_admin_user_created_total",
-		Help: "api admin user created counter",
+		Name:      "api_admin_user_created_total",
+		Help:      "api admin user created counter",
+		Namespace: exporterName,
 	})
+
 	M_Api_Login_Post = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "api_login_post_total",
-		Help: "api login post counter",
+		Name:      "api_login_post_total",
+		Help:      "api login post counter",
+		Namespace: exporterName,
 	})
+
 	M_Api_Login_OAuth = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "api_login_oauth_total",
-		Help: "api login oauth counter",
+		Name:      "api_login_oauth_total",
+		Help:      "api login oauth counter",
+		Namespace: exporterName,
 	})
+
 	M_Api_Org_Create = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "api_org_create_total",
-		Help: "api org created counter",
+		Name:      "api_org_create_total",
+		Help:      "api org created counter",
+		Namespace: exporterName,
 	})
 
 	M_Api_Dashboard_Snapshot_Create = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "api_dashboard_snapshot_create_total",
-		Help: "dashboard snapshots created",
+		Name:      "api_dashboard_snapshot_create_total",
+		Help:      "dashboard snapshots created",
+		Namespace: exporterName,
 	})
+
 	M_Api_Dashboard_Snapshot_External = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "api_dashboard_snapshot_external_total",
-		Help: "external dashboard snapshots created",
+		Name:      "api_dashboard_snapshot_external_total",
+		Help:      "external dashboard snapshots created",
+		Namespace: exporterName,
 	})
+
 	M_Api_Dashboard_Snapshot_Get = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "api_dashboard_snapshot_get_total",
-		Help: "loaded dashboards",
+		Name:      "api_dashboard_snapshot_get_total",
+		Help:      "loaded dashboards",
+		Namespace: exporterName,
 	})
 
 	M_Api_Dashboard_Insert = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "api_models_dashboard_insert_total",
-		Help: "dashboards inserted ",
+		Name:      "api_models_dashboard_insert_total",
+		Help:      "dashboards inserted ",
+		Namespace: exporterName,
 	})
 
 	M_Alerting_Result_State = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "alerting_result_total",
-		Help: "alert execution result counter",
+		Name:      "alerting_result_total",
+		Help:      "alert execution result counter",
+		Namespace: exporterName,
 	}, []string{"state"})
 
 	M_Alerting_Notification_Sent = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "alerting_notification_sent_total",
-		Help: "counter for how many alert notifications been sent",
+		Name:      "alerting_notification_sent_total",
+		Help:      "counter for how many alert notifications been sent",
+		Namespace: exporterName,
 	}, []string{"type"})
 
 	M_Aws_CloudWatch_GetMetricStatistics = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "aws_cloudwatch_get_metric_statistics_total",
-		Help: "counter for getting metric statistics from aws",
+		Name:      "aws_cloudwatch_get_metric_statistics_total",
+		Help:      "counter for getting metric statistics from aws",
+		Namespace: exporterName,
 	})
 
 	M_Aws_CloudWatch_ListMetrics = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "aws_cloudwatch_list_metrics_total",
-		Help: "counter for getting list of metrics from aws",
+		Name:      "aws_cloudwatch_list_metrics_total",
+		Help:      "counter for getting list of metrics from aws",
+		Namespace: exporterName,
 	})
 
 	M_DB_DataSource_QueryById = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "db_datasource_query_by_id_total",
-		Help: "counter for getting datasource by id",
+		Name:      "db_datasource_query_by_id_total",
+		Help:      "counter for getting datasource by id",
+		Namespace: exporterName,
 	})
 
 	M_DataSource_ProxyReq_Timer = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name: "api_dataproxy_request_all",
-		Help: "summary for dashboard search duration",
+		Name:      "api_dataproxy_request_all",
+		Help:      "summary for dashboard search duration",
+		Namespace: exporterName,
 	})
+
 	M_Alerting_Execution_Time = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name: "alerting_execution_time_seconds",
-		Help: "summary of alert exeuction duration",
+		Name:      "alerting_execution_time_seconds",
+		Help:      "summary of alert exeuction duration",
+		Namespace: exporterName,
 	})
 
 	M_Alerting_Active_Alerts = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "alerting_active_alerts",
-		Help: "amount of active alerts",
+		Name:      "alerting_active_alerts",
+		Help:      "amount of active alerts",
+		Namespace: exporterName,
 	})
 
 	M_StatTotal_Dashboards = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "stat_totals_dashboard",
-		Help: "total amount of dashboards",
+		Name:      "stat_totals_dashboard",
+		Help:      "total amount of dashboards",
+		Namespace: exporterName,
 	})
 
 	M_StatTotal_Users = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "stat_total_users",
-		Help: "total amount of users",
+		Name:      "stat_total_users",
+		Help:      "total amount of users",
+		Namespace: exporterName,
 	})
 
 	M_StatTotal_Orgs = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "stat_total_orgs",
-		Help: "total amount of orgs",
+		Name:      "stat_total_orgs",
+		Help:      "total amount of orgs",
+		Namespace: exporterName,
 	})
 
 	M_StatTotal_Playlists = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "stat_total_playlists",
-		Help: "total amount of playlists",
+		Name:      "stat_total_playlists",
+		Help:      "total amount of playlists",
+		Namespace: exporterName,
 	})
 }
 

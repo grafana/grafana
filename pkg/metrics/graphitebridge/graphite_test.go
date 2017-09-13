@@ -370,10 +370,10 @@ func TestCounter(t *testing.T) {
 	}
 }
 
-func TestCanIgnoreSomeMetrics(t *testing.T) {
+func TestTrimGrafanaNamespace(t *testing.T) {
 	cntVec := prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name:        "http_request_total",
+			Name:        "grafana_http_request_total",
 			Help:        "docstring",
 			ConstLabels: prometheus.Labels{"constname": "constvalue"},
 		})
@@ -404,7 +404,7 @@ func TestCanIgnoreSomeMetrics(t *testing.T) {
 		t.Fatalf("error: %v", err)
 	}
 
-	want := ""
+	want := "prefix.http_request_total.constname.constvalue.count 1 1477043\n"
 	if got := buf.String(); want != got {
 		t.Fatalf("wanted \n%s\n, got \n%s\n", want, got)
 	}

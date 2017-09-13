@@ -55,7 +55,7 @@ func TestRouteSimpleRegister(t *testing.T) {
 		t.Errorf("want %v routes, got %v", len(testTable), len(fr.route))
 	}
 
-	for i, _ := range testTable {
+	for i := range testTable {
 		if testTable[i].method != fr.route[i].method {
 			t.Errorf("want %s got %v", testTable[i].method, fr.route[i].method)
 		}
@@ -109,7 +109,7 @@ func TestRouteGroupedRegister(t *testing.T) {
 		t.Errorf("want %v routes, got %v", len(testTable), len(fr.route))
 	}
 
-	for i, _ := range testTable {
+	for i := range testTable {
 		if testTable[i].method != fr.route[i].method {
 			t.Errorf("want %s got %v", testTable[i].method, fr.route[i].method)
 		}
@@ -165,7 +165,7 @@ func TestNamedMiddlewareRouteRegister(t *testing.T) {
 		t.Errorf("want %v routes, got %v", len(testTable), len(fr.route))
 	}
 
-	for i, _ := range testTable {
+	for i := range testTable {
 		if testTable[i].method != fr.route[i].method {
 			t.Errorf("want %s got %v", testTable[i].method, fr.route[i].method)
 		}
