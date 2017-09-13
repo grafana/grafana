@@ -1,39 +1,86 @@
 package api
 
-import "testing"
+import (
+	"strconv"
+	"testing"
+
+	macaron "gopkg.in/macaron.v1"
+)
+
+type fakeRouter struct {
+	route []route
+}
+
+func (fr *fakeRouter) Route(pattern, method string, handlers ...macaron.Handler) {
+	fr.route = append(fr.route, route{
+		pattern:  pattern,
+		method:   method,
+		handlers: handlers,
+	})
+}
+
+func emptyHandlers(n int) []macaron.Handler {
+	res := []macaron.Handler{}
+	for i := 1; n >= i; i++ {
+		res = append(res, emptyHandler(strconv.Itoa(i)))
+	}
+	return res
+}
+
+func emptyHandler(name string) macaron.Handler {
+	return struct{ name string }{name: name}
+}
 
 func TestRouteRegister(t *testing.T) {
-
-	rr := &routeRegister{
-		prefix: "",
-		routes: []route{},
+	testTable := []route{
+		{method: "DELETE", pattern: "/admin", handlers: emptyHandlers(1)},
+		{method: "GET", pattern: "/down", handlers: emptyHandlers(2)},
+		{method: "POST", pattern: "/user", handlers: emptyHandlers(1)},
+		{method: "PUT", pattern: "/user/friends", handlers: emptyHandlers(1)},
+		{method: "DELETE", pattern: "/user/admin", handlers: emptyHandlers(2)},
+		{method: "GET", pattern: "/user/admin/all", handlers: emptyHandlers(4)},
 	}
 
-	rr.Delete("/admin")
-	rr.Get("/down")
+	// Setup
+	rr := newRouteRegister()
 
-	rr.Group("/user", func(innerRR RouteRegister) {
-		innerRR.Delete("")
-		innerRR.Get("/friends")
+	rr.Delete("/admin", emptyHandler("1"))
+	rr.Get("/down", emptyHandler("1"), emptyHandler("2"))
+
+	rr.Group("/user", func(user RouteRegister) {
+		user.Post("", emptyHandler("1"))
+		user.Put("/friends", emptyHandler("2"))
+
+		user.Group("/admin", func(admin RouteRegister) {
+			admin.Delete("", emptyHandler("3"))
+			admin.Get("/all", emptyHandler("3"), emptyHandler("4"), emptyHandler("5"))
+
+		}, emptyHandler("3"))
 	})
 
-	println("len", len(rr.routes))
+	fr := &fakeRouter{}
+	rr.Register(fr)
 
-	if rr.routes[0].pattern != "/admin" && rr.routes[0].method != "DELETE" {
-		t.Errorf("expected first route to be DELETE /admin")
+	// Validation
+	if len(fr.route) != len(testTable) {
+		t.Errorf("want %v routes, got %v", len(testTable), len(fr.route))
 	}
 
-	if rr.routes[1].pattern != "/down" && rr.routes[1].method != "GET" {
-		t.Errorf("expected first route to be GET /down")
-	}
+	for i, _ := range testTable {
+		if testTable[i].method != fr.route[i].method {
+			t.Errorf("want %s got %v", testTable[i].method, fr.route[i].method)
+		}
 
-	println("len", len(rr.routes))
+		if testTable[i].pattern != fr.route[i].pattern {
+			t.Errorf("want %s got %v", testTable[i].pattern, fr.route[i].pattern)
+		}
 
-	if rr.routes[2].pattern != "/user" && rr.routes[2].method != "DELETE" {
-		t.Errorf("expected first route to be DELETE /admin")
-	}
-
-	if rr.routes[3].pattern != "/user/friends" && rr.routes[3].method != "GET" {
-		t.Errorf("expected first route to be GET /down")
+		if len(testTable[i].handlers) != len(fr.route[i].handlers) {
+			t.Errorf("want %d handlers got %d handlers \ntestcase: %v\nroute: %v\n",
+				len(testTable[i].handlers),
+				len(fr.route[i].handlers),
+				testTable[i],
+				fr.route[i])
+		}
 	}
 }
