@@ -1,0 +1,32 @@
+# This file configures AppVeyor (http://www.appveyor.com),
+# a Windows-based CI service similar to Travis.
+
+# Identifier for this run
+version: "{build}"
+
+# Clone the repo into this path, which conforms to the standard
+# Go workspace structure.
+clone_folder: c:\gopath\src\cloud.google.com\go
+
+environment:
+  GOPATH: c:\gopath
+  GCLOUD_TESTS_GOLANG_PROJECT_ID: dulcet-port-762
+  GCLOUD_TESTS_GOLANG_KEY: c:\gopath\src\cloud.google.com\go\key.json
+  KEYFILE_CONTENTS:
+    secure: IvRbDAhM2PIQqzVkjzJ4FjizUvoQ+c3vG/qhJQG+HlZ/L5KEkqLu+x6WjLrExrNMyGku4znB2jmbTrUW3Ob4sGG+R5vvqeQ3YMHCVIkw5CxY+/bUDkW5RZWsVbuCnNa/vKsWmCP+/sZW6ICe29yKJ2ZOb6QaauI4s9R6j+cqBbU9pumMGYFRb0Rw3uUU7DKmVFCy+NjTENZIlDP9rmjANgAzigowJJEb2Tg9sLlQKmQeKiBSRN8lKc5Nq60a+fIzHGKvql4eIitDDDpOpyHv15/Xr1BzFw2yDoiR4X1lng0u7q0X9RgX4VIYa6gT16NXBEmQgbuX8gh7SfPMp9RhiZD9sVUaV+yogEabYpyPnmUURo0hXwkctKaBkQlEmKvjHwF5dvbg8+yqGhwtjAgFNimXG3INrwQsfQsZskkQWanutbJf9xy50GyWWFZZdi0uT4oXP/b5P7aklPXKXsvrJKBh7RjEaqBrhi86IJwOjBspvoR4l2WmcQyxb2xzQS1pjbBJFQfYJJ8+JgsstTL8PBO9d4ybJC0li1Om1qnWxkaewvPxxuoHJ9LpRKof19yRYWBmhTXb2tTASKG/zslvl4fgG4DmQBS93WC7dsiGOhAraGw2eCTgd0lYZOhk1FjWl9TS80aktXxzH/7nTvem5ohm+eDl6O0wnTL4KXjQVNSQ1PyLn4lGRJ5MNGzBTRFWIr2API2rca4Fysyfh/UdmazPGlNbY9JPGqb9+F04QzLfqm+Zz/cHy59E7lOSMBlUI4KD6d6ZNNKNRH+/g9i+fSiyiXKugTfda8KBnWGyPwprxuWGYaiQUGUYOwJY5R6x5c4mjImAB310V+Wo33UbWFJiwxEDsiCNqW1meVkBzt2er26vh4qbgCUIQ3iM3gFPfHgy+QxkmIhic7Q1HYacQElt8AAP41M7cCKWCuZidegP37MBB//mjjiNt047ZSQEvB4tqsX/OvfbByVef+cbtVw9T0yjHvmCdPW1XrhyrCCgclu6oYYdbmc5D7BBDRbjjMWGv6YvceAbfGf6ukdB5PuV+TGEN/FoQ1QTRA6Aqf+3fLMg4mS4oyTfw5xyYNbv3qoyLPrp+BnxI53WB9p0hfMg4n9FD6NntBxjDq+Q3Lk/bjC/Y4MaRWdzbMzF9a0lgGfcw9DURlK5p7uGJC9vg34feNoQprxVEZRQ01cHLeob6eGkYm4HxSRx8JY39Mh+9wzJo+k/aIvFleNC3e35NOrkXr6wb5e42n2DwBdPqdNolTLtLFRglAL1LTpp27UjvjieWJAKfoDTR5CKl01sZqt0wPdLLcvsMj6CiPFmccUIOYeZMe86kLBD61Qa5F1EwkgO3Om2qSjW96FzL4skRc+BmU5RrHlAFSldR1wpUgtkUMv9vH5Cy+UJdcvpZ8KbmhZ2PsjF7ddJ1ve9RAw3cP325AyIMwZ77Ef1mgTM0NJze6eSW1qKlEsgt1FADPyeUu1NQTA2H2dueMPGlArWTSUgyWR9AdfpqouT7eg0JWI5w+yUZZC+/rPglYbt84oLmYpwuli0z8FyEQRPIc3EtkfWIv/yYgDr2TZ0N2KvGfpi/MAUWgxI1gleC2uKgEOEtuJthd3XZjF2NoE7IBqjQOINybcJOjyeB5vRLDY1FLuxYzdg1y1etkV4XQig/vje
+
+install:
+  # Info for debugging.
+  - echo %PATH%
+  - go version
+  - go env
+  - go get -v -d -t ./...
+
+
+# Provide a build script, or AppVeyor will call msbuild.
+build_script:
+  - go install -v ./...
+  - echo %KEYFILE_CONTENTS% > %GCLOUD_TESTS_GOLANG_KEY%
+
+test_script:
+  - go test -v ./...
