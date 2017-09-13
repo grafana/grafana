@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/middleware"
 	macaron "gopkg.in/macaron.v1"
 )
 
@@ -68,13 +69,15 @@ func (rr *routeRegister) Register(router Router) *macaron.Router {
 }
 
 func (rr *routeRegister) route(pattern, method string, handlers ...macaron.Handler) {
-	//inject metrics
 	//inject tracing
+
+	h := append(rr.subfixHandlers, handlers...)
+	h = append([]macaron.Handler{middleware.RequestMetrics(pattern)}, h...)
 
 	rr.routes = append(rr.routes, route{
 		method:   method,
 		pattern:  rr.prefix + pattern,
-		handlers: append(rr.subfixHandlers, handlers...),
+		handlers: h,
 	})
 }
 

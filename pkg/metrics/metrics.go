@@ -91,7 +91,7 @@ func init() {
 			Name: "http_request_total",
 			Help: "http request counter",
 		},
-		[]string{"code", "method"},
+		[]string{"handler", "statuscode", "method"},
 	)
 
 	M_Http_Request_Summary = prometheus.NewSummaryVec(
@@ -99,7 +99,7 @@ func init() {
 			Name: "http_request_duration",
 			Help: "http request summary",
 		},
-		[]string{"code", "method"},
+		[]string{"handler", "statuscode", "method"},
 	)
 
 	M_Api_User_SignUpStarted = prometheus.NewCounter(prometheus.CounterOpts{
