@@ -76,11 +76,11 @@ describe('CloudWatchDatasource', function() {
     it('should generate the correct query', function(done) {
       ctx.ds.query(query).then(function() {
         var params = requestParams.queries[0];
-        expect(params.namespace).to.be(query.targets[0].namespace);
-        expect(params.metricName).to.be(query.targets[0].metricName);
-        expect(params.dimensions['InstanceId']).to.be('i-12345678');
-        expect(params.statistics).to.eql(query.targets[0].statistics);
-        expect(params.period).to.be(query.targets[0].period);
+        expect(params.parameters.namespace).to.be(query.targets[0].namespace);
+        expect(params.parameters.metricName).to.be(query.targets[0].metricName);
+        expect(params.parameters.dimensions['InstanceId']).to.be('i-12345678');
+        expect(params.parameters.statistics).to.eql(query.targets[0].statistics);
+        expect(params.parameters.period).to.be(query.targets[0].period);
         done();
       });
       ctx.$rootScope.$apply();
@@ -110,7 +110,7 @@ describe('CloudWatchDatasource', function() {
 
       ctx.ds.query(query).then(function() {
         var params = requestParams.queries[0];
-        expect(params.period).to.be(600);
+        expect(params.parameters.period).to.be(600);
         done();
       });
       ctx.$rootScope.$apply();
@@ -236,7 +236,11 @@ describe('CloudWatchDatasource', function() {
           setupCallback();
           ctx.backendSrv.datasourceRequest = args => {
             scenario.request = args;
-            return ctx.$q.when({data: scenario.requestResponse });
+            return ctx.$q.when({ data: scenario.requestResponse });
+          };
+          ctx.backendSrv.post = (path, args) => {
+            scenario.request = args;
+            return ctx.$q.when(scenario.requestResponse);
           };
           ctx.ds.metricFindQuery(query).then(args => {
             scenario.result = args;
@@ -251,45 +255,81 @@ describe('CloudWatchDatasource', function() {
 
   describeMetricFindQuery('regions()', scenario => {
     scenario.setup(() => {
-      scenario.requestResponse = [{text: 'us-east-1'}];
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [
+              { rows: [['us-east-1', 'us-east-1']] }
+            ]
+          }
+        }
+      };
     });
 
     it('should call __GetRegions and return result', () => {
       expect(scenario.result[0].text).to.contain('us-east-1');
-      expect(scenario.request.data.action).to.be('__GetRegions');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('regions');
     });
   });
 
   describeMetricFindQuery('namespaces()', scenario => {
     scenario.setup(() => {
-      scenario.requestResponse = [{text: 'AWS/EC2'}];
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [
+              { rows: [['AWS/EC2', 'AWS/EC2']] }
+            ]
+          }
+        }
+      };
     });
 
     it('should call __GetNamespaces and return result', () => {
       expect(scenario.result[0].text).to.contain('AWS/EC2');
-      expect(scenario.request.data.action).to.be('__GetNamespaces');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('namespaces');
     });
   });
 
   describeMetricFindQuery('metrics(AWS/EC2)', scenario => {
     scenario.setup(() => {
-      scenario.requestResponse = [{text: 'CPUUtilization'}];
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [
+              { rows: [['CPUUtilization', 'CPUUtilization']] }
+            ]
+          }
+        }
+      };
     });
 
     it('should call __GetMetrics and return result', () => {
       expect(scenario.result[0].text).to.be('CPUUtilization');
-      expect(scenario.request.data.action).to.be('__GetMetrics');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('metrics');
     });
   });
 
   describeMetricFindQuery('dimension_keys(AWS/EC2)', scenario => {
     scenario.setup(() => {
-      scenario.requestResponse = [{text: 'InstanceId'}];
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [
+              { rows: [['InstanceId', 'InstanceId']] }
+            ]
+          }
+        }
+      };
     });
 
     it('should call __GetDimensions and return result', () => {
       expect(scenario.result[0].text).to.be('InstanceId');
-      expect(scenario.request.data.action).to.be('__GetDimensions');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('dimension_keys');
     });
   });
 
