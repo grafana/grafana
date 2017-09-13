@@ -68,6 +68,10 @@ Some functions like aliasByNode support an optional second argument. To add this
 
 You can reference queries by the row “letter” that they’re on (similar to  Microsoft Excel). If you add a second query to a graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.
 
+{{< docs-imagebox img="/img/docs/v45/graphite_nested_queries_still.png" class="docs-image--center"
+                  animated-gif="/img/docs/v45/graphite_nested_queries.gif" >}}
+
+
 ## Point consolidation
 
 All Graphite metrics are consolidated so that Graphite doesn't return more data points than there are pixels in the graph. By default,
