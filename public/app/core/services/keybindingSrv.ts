@@ -193,6 +193,10 @@ export class KeybindingSrv {
       }
     });
 
+    this.bind('d n', e => {
+      this.$location.url("/dashboard/new");
+    });
+
     this.bind('d r', () => {
       scope.broadcastRefresh();
     });

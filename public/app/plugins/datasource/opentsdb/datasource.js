@@ -296,7 +296,7 @@ function (angular, _, dateMath) {
 
     this.testDatasource = function() {
       return this._performSuggestQuery('cpu', 'metrics').then(function () {
-        return { status: "success", message: "Data source is working", title: "Success" };
+        return { status: "success", message: "Data source is working" };
       });
     };
 

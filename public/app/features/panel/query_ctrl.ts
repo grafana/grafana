@@ -10,9 +10,11 @@ export class QueryCtrl {
   panel: any;
   hasRawMode: boolean;
   error: string;
+  isLastQuery: boolean;
 
   constructor(public $scope, private $injector) {
     this.panel = this.panelCtrl.panel;
+    this.isLastQuery = _.indexOf(this.panel.targets, this.target) === (this.panel.targets.length - 1);
   }
 
   refresh() {

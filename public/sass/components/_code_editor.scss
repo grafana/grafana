@@ -28,7 +28,7 @@
   background-color: $dropdownBackground !important;
   color: $dropdownLinkColor !important;
   border: 1px solid $dropdownBorder !important;
-  width: 320px !important;
+  width: 550px !important;
 
   .ace_scroller {
     .ace_selected, .ace_active-line, .ace_line-hover {
@@ -76,4 +76,8 @@ $doc-font-size: $font-size-sm;
 
 .ace_tooltip {
   border-radius: 3px;
+}
+
+.ace_hidden-cursors .ace_cursor {
+  opacity: 0 !important;
 }

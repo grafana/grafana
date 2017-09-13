@@ -40,11 +40,11 @@ const DEFAULT_MAX_LINES = 10;
 const DEFAULT_TAB_SIZE = 2;
 const DEFAULT_BEHAVIOURS = true;
 
-const GRAFANA_MODULES = ['mode-prometheus', 'snippets-prometheus', 'theme-grafana-dark'];
+const GRAFANA_MODULES = ['theme-grafana-dark'];
 const GRAFANA_MODULE_BASE = "public/app/core/components/code_editor/";
 
 // Trick for loading additional modules
-function setModuleUrl(moduleType, name) {
+function setModuleUrl(moduleType, name, pluginBaseUrl = null) {
   let baseUrl = ACE_SRC_BASE;
   let aceModeName = `ace/${moduleType}/${name}`;
   let moduleName = `${moduleType}-${name}`;
@@ -52,6 +52,10 @@ function setModuleUrl(moduleType, name) {
 
   if (_.includes(GRAFANA_MODULES, moduleName)) {
     baseUrl = GRAFANA_MODULE_BASE;
+  }
+
+  if (pluginBaseUrl) {
+    baseUrl = pluginBaseUrl + '/';
   }
 
   if (moduleType === 'snippets') {
@@ -111,6 +115,17 @@ function link(scope, elem, attrs) {
   let textarea = elem.find("textarea");
   textarea.addClass('gf-form-input');
 
+  if (scope.codeEditorFocus) {
+    setTimeout(function () {
+      textarea.focus();
+      var domEl = textarea[0];
+      if (domEl.setSelectionRange) {
+        var pos = textarea.val().length * 2;
+        domEl.setSelectionRange(pos, pos);
+      }
+    }, 100);
+  }
+
   // Event handlers
   editorSession.on('change', (e) => {
     scope.$apply(() => {
@@ -148,8 +163,8 @@ function link(scope, elem, attrs) {
 
   function setLangMode(lang) {
     let aceModeName = `ace/mode/${lang}`;
-    setModuleUrl("mode", lang);
-    setModuleUrl("snippets", lang);
+    setModuleUrl("mode", lang, scope.datasource.meta.baseUrl || null);
+    setModuleUrl("snippets", lang, scope.datasource.meta.baseUrl || null);
     editorSession.setMode(aceModeName);
 
     ace.config.loadModule("ace/ext/language_tools", (language_tools) => {
@@ -199,6 +214,8 @@ export function codeEditorDirective() {
     template: editorTemplate,
     scope: {
       content: "=",
+      datasource: "=",
+      codeEditorFocus: "<",
       onChange: "&",
       getCompleter: "&"
     },

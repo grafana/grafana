@@ -9,6 +9,10 @@
 
 # 4.5.0 (unreleased)
 
+## Enhancements
+
+* **Shortcuts**: Adds shortcut for creating new dashboard [#8876](https://github.com/grafana/grafana/pull/8876) thx [@mtanda](https://github.com/mtanda)
+
 # 4.5.0-beta1 (2017-09-05)
 
 ## New Features

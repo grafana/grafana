@@ -1,8 +1,8 @@
 <query-editor-row query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="false">
 	<div class="gf-form-inline">
 		<div class="gf-form gf-form--grow">
-			<code-editor content="ctrl.target.expr" on-change="ctrl.refreshMetricData()"
-				get-completer="ctrl.getCompleter()" data-mode="prometheus">
+			<code-editor content="ctrl.target.expr" datasource="ctrl.datasource" on-change="ctrl.refreshMetricData()"
+				get-completer="ctrl.getCompleter()" data-mode="prometheus" code-editor-focus="ctrl.isLastQuery">
 			</code-editor>
 		</div>
 	</div>

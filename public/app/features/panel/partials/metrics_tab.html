@@ -73,7 +73,7 @@
 	</div>
 </div>
 
-<div class="query-editor-rows gf-form-group">
+<div class="query-editor-rows gf-form-group" ng-if="ctrl.datasourceInstance">
 	<div ng-repeat="target in ctrl.panel.targets" ng-class="{'gf-form-disabled': target.hide}">
 		<rebuild-on-change property="ctrl.panel.datasource || target.datasource" show-null="true">
 			<plugin-component type="query-ctrl">
@@ -89,8 +89,13 @@
 				</span>
 				<span class="gf-form-query-letter-cell-letter">{{ctrl.panelCtrl.nextRefId}}</span>
 			</label>
-			<button class="btn btn-secondary gf-form-btn" ng-click="ctrl.addQuery()" ng-hide="ctrl.current.meta.mixed">
+			<button class="btn btn-secondary gf-form-btn" ng-click="ctrl.addQuery()" ng-hide="ctrl.datasourceInstance.meta.mixed">
 				Add Query
 			</button>
+			<div class="dropdown" ng-if="ctrl.current.meta.mixed">
+				<gf-form-dropdown model="ctrl.addQueryDropdown" get-options="ctrl.getOptions(false)" on-change="ctrl.addMixedQuery($option)">
+				</gf-form-dropdown>
+			</div>
 		</div>
 	</div>
+</div>

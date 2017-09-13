@@ -29,7 +29,7 @@ func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
 		return ApiError(400, "Query missing datasourceId", nil)
 	}
 
-	dsQuery := models.GetDataSourceByIdQuery{Id: dsId}
+	dsQuery := models.GetDataSourceByIdQuery{Id: dsId, OrgId: c.OrgId}
 	if err := bus.Dispatch(&dsQuery); err != nil {
 		return ApiError(500, "failed to fetch data source", err)
 	}
