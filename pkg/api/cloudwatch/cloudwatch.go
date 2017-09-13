@@ -74,7 +74,6 @@ func (req *cwRequest) GetDatasourceInfo() *DatasourceInfo {
 
 func init() {
 	actionHandlers = map[string]actionHandler{
-		"GetMetricStatistics":     handleGetMetricStatistics,
 		"ListMetrics":             handleListMetrics,
 		"DescribeAlarms":          handleDescribeAlarms,
 		"DescribeAlarmsForMetric": handleDescribeAlarmsForMetric,
@@ -217,58 +216,6 @@ func getAwsConfig(req *cwRequest) (*aws.Config, error) {
 		Credentials: creds,
 	}
 	return cfg, nil
-}
-
-func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
-	cfg, err := getAwsConfig(req)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-	svc := cloudwatch.New(sess, cfg)
-
-	reqParam := &struct {
-		Parameters struct {
-			Namespace          string                  `json:"namespace"`
-			MetricName         string                  `json:"metricName"`
-			Dimensions         []*cloudwatch.Dimension `json:"dimensions"`
-			Statistics         []*string               `json:"statistics"`
-			ExtendedStatistics []*string               `json:"extendedStatistics"`
-			StartTime          int64                   `json:"startTime"`
-			EndTime            int64                   `json:"endTime"`
-			Period             int64                   `json:"period"`
-		} `json:"parameters"`
-	}{}
-	json.Unmarshal(req.Body, reqParam)
-
-	params := &cloudwatch.GetMetricStatisticsInput{
-		Namespace:  aws.String(reqParam.Parameters.Namespace),
-		MetricName: aws.String(reqParam.Parameters.MetricName),
-		Dimensions: reqParam.Parameters.Dimensions,
-		StartTime:  aws.Time(time.Unix(reqParam.Parameters.StartTime, 0)),
-		EndTime:    aws.Time(time.Unix(reqParam.Parameters.EndTime, 0)),
-		Period:     aws.Int64(reqParam.Parameters.Period),
-	}
-	if len(reqParam.Parameters.Statistics) != 0 {
-		params.Statistics = reqParam.Parameters.Statistics
-	}
-	if len(reqParam.Parameters.ExtendedStatistics) != 0 {
-		params.ExtendedStatistics = reqParam.Parameters.ExtendedStatistics
-	}
-
-	resp, err := svc.GetMetricStatistics(params)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-	metrics.M_Aws_CloudWatch_GetMetricStatistics.Inc()
-
-	c.JSON(200, resp)
 }
 
 func handleListMetrics(req *cwRequest, c *middleware.Context) {
