@@ -249,9 +249,7 @@ func (e *CloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 
 	customNamespaces := e.DataSource.JsonData.Get("customMetricsNamespaces").MustString()
 	if customNamespaces != "" {
-		for _, key := range strings.Split(customNamespaces, ",") {
-			keys = append(keys, key)
-		}
+		keys = append(keys, strings.Split(customNamespaces, ",")...)
 	}
 
 	sort.Sort(sort.StringSlice(keys))
