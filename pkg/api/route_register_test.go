@@ -11,12 +11,14 @@ type fakeRouter struct {
 	route []route
 }
 
-func (fr *fakeRouter) Route(pattern, method string, handlers ...macaron.Handler) {
+func (fr *fakeRouter) Handle(method, pattern string, handlers []macaron.Handler) *macaron.Route {
 	fr.route = append(fr.route, route{
 		pattern:  pattern,
 		method:   method,
 		handlers: handlers,
 	})
+
+	return &macaron.Route{}
 }
 
 func emptyHandlers(n int) []macaron.Handler {
