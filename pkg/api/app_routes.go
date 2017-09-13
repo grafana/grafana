@@ -17,7 +17,10 @@ import (
 )
 
 var pluginProxyTransport = &http.Transport{
-	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	TLSClientConfig: &tls.Config{
+		InsecureSkipVerify: true,
+		Renegotiation: tls.RenegotiateFreelyAsClient,
+	},
 	Proxy:           http.ProxyFromEnvironment,
 	Dial: (&net.Dialer{
 		Timeout:   30 * time.Second,
