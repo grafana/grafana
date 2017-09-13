@@ -3,7 +3,6 @@ package api
 import (
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/middleware"
 	macaron "gopkg.in/macaron.v1"
 )
 
@@ -24,11 +23,14 @@ type RouteRegister interface {
 	Register(Router) *macaron.Router
 }
 
-func newRouteRegister() RouteRegister {
+type RegisterNamedMiddleware func(name string) macaron.Handler
+
+func newRouteRegister(namedMiddleware ...RegisterNamedMiddleware) RouteRegister {
 	return &routeRegister{
-		prefix:         "",
-		routes:         []route{},
-		subfixHandlers: []macaron.Handler{},
+		prefix:          "",
+		routes:          []route{},
+		subfixHandlers:  []macaron.Handler{},
+		namedMiddleware: namedMiddleware,
 	}
 }
 
@@ -39,17 +41,19 @@ type route struct {
 }
 
 type routeRegister struct {
-	prefix         string
-	subfixHandlers []macaron.Handler
-	routes         []route
-	groups         []*routeRegister
+	prefix          string
+	subfixHandlers  []macaron.Handler
+	namedMiddleware []RegisterNamedMiddleware
+	routes          []route
+	groups          []*routeRegister
 }
 
 func (rr *routeRegister) Group(pattern string, fn func(rr RouteRegister), handlers ...macaron.Handler) {
 	group := &routeRegister{
-		prefix:         rr.prefix + pattern,
-		subfixHandlers: append(rr.subfixHandlers, handlers...),
-		routes:         []route{},
+		prefix:          rr.prefix + pattern,
+		subfixHandlers:  append(rr.subfixHandlers, handlers...),
+		routes:          []route{},
+		namedMiddleware: rr.namedMiddleware,
 	}
 
 	fn(group)
@@ -71,8 +75,13 @@ func (rr *routeRegister) Register(router Router) *macaron.Router {
 func (rr *routeRegister) route(pattern, method string, handlers ...macaron.Handler) {
 	//inject tracing
 
-	h := append(rr.subfixHandlers, handlers...)
-	h = append([]macaron.Handler{middleware.RequestMetrics(pattern)}, h...)
+	h := make([]macaron.Handler, 0)
+	for _, fn := range rr.namedMiddleware {
+		h = append(h, fn(pattern))
+	}
+
+	h = append(h, rr.subfixHandlers...)
+	h = append(h, handlers...)
 
 	rr.routes = append(rr.routes, route{
 		method:   method,
