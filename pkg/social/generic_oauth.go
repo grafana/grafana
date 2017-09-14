@@ -218,7 +218,7 @@ func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	}
 
 	if userInfo.Login == "" {
-		userInfo.Login = data.Email
+		userInfo.Login = userInfo.Email
 	}
 
 	if !s.IsTeamMember(client) {
