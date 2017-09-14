@@ -388,6 +388,11 @@ function($, _) {
   kbn.valueFormats.sci = function(value, decimals) {
     return value.toExponential(decimals);
   };
+  
+  kbn.valueFormats.locale = function(value, decimals) {
+    // decimals should be ignored for output in locale format
+    return value.toLocaleString();
+  };
 
   // Currencies
   kbn.valueFormats.currencyUSD = kbn.formatBuilders.currency('$');
@@ -708,6 +713,7 @@ function($, _) {
           {text: 'hexadecimal (0x)',    value: 'hex0x'      },
           {text: 'hexadecimal',         value: 'hex'        },
           {text: 'scientific notation', value: 'sci'        },
+          {text: 'locale format',       value: 'locale'     },
         ]
       },
       {
