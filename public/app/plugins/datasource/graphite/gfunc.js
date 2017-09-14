@@ -822,6 +822,18 @@ function (_, $) {
     version: '1.0'
   });
 
+  addFuncDef({
+    name: 'seriesByTag',
+    category: categories.Special,
+    params: [
+      { name: "tagExpression", type: "string" },
+      { name: "tagExpression", type: "string", optional: true },
+      { name: "tagExpression", type: "string", optional: true },
+      { name: "tagExpression", type: "string", optional: true },
+    ],
+    version: '1.0'
+  });
+
   _.each(categories, function(funcList, catName) {
     categories[catName] = _.sortBy(funcList, 'name');
   });
