@@ -916,7 +916,7 @@ function (_, $) {
     // if string contains ',' and next param is optional, split and update both
     if (this._hasMultipleParamsInString(strValue, index)) {
       _.each(strValue.split(','), function(partVal, idx) {
-        this.updateParam(partVal.trim(), idx);
+        this.updateParam(partVal.trim(), index + idx);
       }.bind(this));
       return;
     }
