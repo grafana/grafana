@@ -831,7 +831,7 @@ function (_, $) {
       { name: "tagExpression", type: "string", optional: true },
       { name: "tagExpression", type: "string", optional: true },
     ],
-    version: '1.0'
+    version: '1.1'
   });
 
   addFuncDef({
@@ -849,7 +849,7 @@ function (_, $) {
       { name: "tag", type: "string", optional: true },
     ],
     defaultParams: ["sum", "tag"],
-    version: '1.0'
+    version: '1.1'
   });
 
   addFuncDef({
@@ -862,7 +862,7 @@ function (_, $) {
       { name: "tag", type: "string", optional: true },
     ],
     defaultParams: ["tag"],
-    version: '1.0'
+    version: '1.1'
   });
 
   _.each(categories, function(funcList, catName) {
