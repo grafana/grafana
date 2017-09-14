@@ -102,7 +102,7 @@ func init() {
 
 	M_Http_Request_Summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: "http_request_duration",
+			Name: "http_request_duration_milleseconds",
 			Help: "http request summary",
 		},
 		[]string{"handler", "statuscode", "method"},
@@ -127,19 +127,19 @@ func init() {
 	})
 
 	M_Api_Dashboard_Save = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "api_dashboard_save",
+		Name:      "api_dashboard_save_milleseconds",
 		Help:      "summary for dashboard save duration",
 		Namespace: exporterName,
 	})
 
 	M_Api_Dashboard_Get = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "api_dashboard_get",
+		Name:      "api_dashboard_get_milleseconds",
 		Help:      "summary for dashboard get duration",
 		Namespace: exporterName,
 	})
 
 	M_Api_Dashboard_Search = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "api_dashboard_search",
+		Name:      "api_dashboard_search_milleseconds",
 		Help:      "summary for dashboard search duration",
 		Namespace: exporterName,
 	})
@@ -223,13 +223,13 @@ func init() {
 	})
 
 	M_DataSource_ProxyReq_Timer = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "api_dataproxy_request_all",
+		Name:      "api_dataproxy_request_all_milleseconds",
 		Help:      "summary for dashboard search duration",
 		Namespace: exporterName,
 	})
 
 	M_Alerting_Execution_Time = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "alerting_execution_time_seconds",
+		Name:      "alerting_execution_time_milliseconds",
 		Help:      "summary of alert exeuction duration",
 		Namespace: exporterName,
 	})
