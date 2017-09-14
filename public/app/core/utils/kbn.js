@@ -395,6 +395,7 @@ function($, _) {
   kbn.valueFormats.currencyEUR = kbn.formatBuilders.currency('€');
   kbn.valueFormats.currencyJPY = kbn.formatBuilders.currency('¥');
   kbn.valueFormats.currencyRUB = kbn.formatBuilders.currency('₽');
+  kbn.valueFormats.currencyUAH = kbn.formatBuilders.currency('₴');
 
   // Data (Binary)
   kbn.valueFormats.bits   = kbn.formatBuilders.binarySIPrefix('b');
@@ -718,6 +719,7 @@ function($, _) {
           {text: 'Euro (€)',    value: 'currencyEUR'},
           {text: 'Yen (¥)',     value: 'currencyJPY'},
           {text: 'Rubles (₽)',  value: 'currencyRUB'},
+          {text: 'Hryvnias (₴)',  value: 'currencyUAH'},
         ]
       },
       {
