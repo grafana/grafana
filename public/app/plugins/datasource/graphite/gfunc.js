@@ -852,6 +852,19 @@ function (_, $) {
     version: '1.0'
   });
 
+  addFuncDef({
+    name: "aliasByTags",
+    category: categories.Special,
+    params: [
+      { name: "tag", type: "string" },
+      { name: "tag", type: "string", optional: true },
+      { name: "tag", type: "string", optional: true },
+      { name: "tag", type: "string", optional: true },
+    ],
+    defaultParams: ["tag"],
+    version: '1.0'
+  });
+
   _.each(categories, function(funcList, catName) {
     categories[catName] = _.sortBy(funcList, 'name');
   });
