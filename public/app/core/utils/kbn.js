@@ -388,7 +388,7 @@ function($, _) {
   kbn.valueFormats.sci = function(value, decimals) {
     return value.toExponential(decimals);
   };
-  
+
   kbn.valueFormats.locale = function(value, decimals) {
     // decimals should be ignored for output in locale format
     return value.toLocaleString();
