@@ -10,14 +10,14 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-func RequestTracing() macaron.Handler {
+func RequestTracing(handler string) macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		rw := res.(macaron.ResponseWriter)
 
 		var span opentracing.Span
 		tracer := opentracing.GlobalTracer()
 		wireContext, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-		spanName := fmt.Sprintf("HTTP %s %s", req.Method, req.URL.Path)
+		spanName := fmt.Sprintf("HTTP %s", handler)
 		span = tracer.StartSpan(spanName, ext.RPCServerOption(wireContext))
 		defer span.Finish()
 
