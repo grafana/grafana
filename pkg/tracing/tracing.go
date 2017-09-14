@@ -3,6 +3,7 @@ package tracing
 import (
 	"io"
 	"io/ioutil"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -15,7 +16,8 @@ import (
 )
 
 var (
-	logger log.Logger = log.New("tracing")
+	logger     log.Logger        = log.New("tracing")
+	customTags map[string]string = map[string]string{}
 )
 
 type TracingSettings struct {
@@ -41,6 +43,8 @@ func parseSettings(file *ini.File) *TracingSettings {
 		settings.Enabled = true
 	}
 
+	customTags = splitTagSettings(section.Key("always_included_tag").MustString(""))
+
 	return settings
 }
 
@@ -63,10 +67,14 @@ func internalInit(settings *TracingSettings) (io.Closer, error) {
 
 	jLogger := jaegerlog.StdLogger
 
-	tracer, closer, err := cfg.New(
-		"grafana",
-		jaegercfg.Logger(jLogger),
-	)
+	options := []jaegercfg.Option{}
+	options = append(options, jaegercfg.Logger(jLogger))
+
+	for tag, value := range customTags {
+		options = append(options, jaegercfg.Tag(tag, value))
+	}
+
+	tracer, closer, err := cfg.New("grafana", options...)
 	if err != nil {
 		return nil, err
 	}
@@ -74,4 +82,18 @@ func internalInit(settings *TracingSettings) (io.Closer, error) {
 	logger.Info("Initialized jaeger tracer", "address", settings.Address)
 	opentracing.InitGlobalTracer(tracer)
 	return closer, nil
+}
+
+func splitTagSettings(input string) map[string]string {
+	res := map[string]string{}
+
+	tags := strings.Split(input, ",")
+	for _, v := range tags {
+		kv := strings.Split(v, ":")
+		if len(kv) > 1 {
+			res[kv[0]] = kv[1]
+		}
+	}
+
+	return res
 }

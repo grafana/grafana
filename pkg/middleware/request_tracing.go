@@ -14,11 +14,9 @@ func RequestTracing(handler string) macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		rw := res.(macaron.ResponseWriter)
 
-		var span opentracing.Span
 		tracer := opentracing.GlobalTracer()
 		wireContext, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
-		spanName := fmt.Sprintf("HTTP %s", handler)
-		span = tracer.StartSpan(spanName, ext.RPCServerOption(wireContext))
+		span := tracer.StartSpan(fmt.Sprintf("HTTP %s", handler), ext.RPCServerOption(wireContext))
 		defer span.Finish()
 
 		ctx := opentracing.ContextWithSpan(req.Context(), span)
