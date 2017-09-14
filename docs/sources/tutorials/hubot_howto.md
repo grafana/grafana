@@ -74,7 +74,9 @@ If you do not get an image when opening this link verify that the required font 
 
 ### Grafana API Key
 
-<img src="/img/docs/v2/orgdropdown_api_keys.png" style="width: 150px" class="right"></img>
+<!--<img src="/img/docs/v2/orgdropdown_api_keys.png" style="width: 150px" class="right"></img>-->
+{{< docs-imagebox img="/img/docs/v2/orgdropdown_api_keys.png" max-width="150px" class="docs-image--right">}}
+
 You need to set the environment variable `HUBOT_GRAFANA_API_KEY` to a Grafana API Key.
 You can add these from the API Keys page which you find in the Organization dropdown.
 

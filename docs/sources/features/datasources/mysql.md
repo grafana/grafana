@@ -57,7 +57,7 @@ If the `Format as` query option is set to `Table` then you can basically do any 
 
 Query editor with example query:
 
-{{< docs-imagebox img="/img/docs/v45/mysql_table_query.png" class="docs-image--block" >}}
+{{< docs-imagebox img="/img/docs/v45/mysql_table_query.png" >}}
 
 The query:
 
