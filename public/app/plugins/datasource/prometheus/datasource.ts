@@ -241,7 +241,7 @@ export class PrometheusDatasource {
 
   testDatasource() {
     return this.metricFindQuery('metrics(.*)').then(function() {
-      return { status: 'success', message: 'Data source is working', title: 'Success' };
+      return { status: 'success', message: 'Data source is working'};
     });
   }
 

@@ -126,21 +126,18 @@ export class DataSourceEditCtrl {
         return;
       }
 
-      this.testing = {done: false};
+      this.testing = {done: false, status: 'error'};
 
       // make test call in no backend cache context
       this.backendSrv.withNoBackendCache(() => {
         return datasource.testDatasource().then(result => {
           this.testing.message = result.message;
           this.testing.status = result.status;
-          this.testing.title = result.title;
         }).catch(err => {
           if (err.statusText) {
-            this.testing.message = err.statusText;
-            this.testing.title = "HTTP Error";
+            this.testing.message = 'HTTP Error ' + err.statusText;
           } else {
             this.testing.message = err.message;
-            this.testing.title = "Unknown error";
           }
         });
       }).finally(() => {

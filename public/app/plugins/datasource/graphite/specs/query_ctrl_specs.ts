@@ -24,6 +24,11 @@ describe('GraphiteQueryCtrl', function() {
     ctx.target = {target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)'};
     ctx.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
     ctx.panelCtrl = {panel: {}};
+    ctx.panelCtrl = {
+      panel: {
+        targets: [ctx.target]
+      }
+    };
     ctx.panelCtrl.refresh = sinon.spy();
 
     ctx.ctrl = $controller(GraphiteQueryCtrl, {$scope: ctx.scope}, {

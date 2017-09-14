@@ -7,11 +7,13 @@
 - UX changes to nav & side menu
 - New dashboard grid layout system
 
-# 4.5.0 (unreleased)
+# 4.5.0 (2017-09-14)
 
-## Enhancements
-
+## Fixes & Enhancements since beta1
+* **Security**: Security fix for api vulnerability (in multiple org setups).
 * **Shortcuts**: Adds shortcut for creating new dashboard [#8876](https://github.com/grafana/grafana/pull/8876) thx [@mtanda](https://github.com/mtanda)
+* **Graph**: Right Y-Axis label position fixed [#9172](https://github.com/grafana/grafana/pull/9172) 
+* **General**: Improve rounding of time intervals [#9197](https://github.com/grafana/grafana/pull/9197), thx [@alin-amana](https://github.com/alin-amana)
 
 # 4.5.0-beta1 (2017-09-05)
 

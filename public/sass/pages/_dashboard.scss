@@ -138,7 +138,7 @@ div.flot-text {
   &--error {
     display: block;
     color: $text-color;
-    @include panel-corner-color($errorBackground);
+    @include panel-corner-color($popover-error-bg);
     .fa:before {
       content: "\f12a";
     }
