@@ -16,16 +16,13 @@ weight = -4
 
 ### New prometheus query editor
 
-The new query editor has full syntax highlighting. As well as auto complete for metrics, functions, and range vectors.
+The new query editor has full syntax highlighting. As well as auto complete for metrics, functions, and range vectors. There is also integrated function docs right from the query editor!
 
-![](/img/docs/v45/new_prom_editor_1.png)
-
-There is also integrated function docs right from the query editor!
-
-![](/img/docs/v45/new_prom_editor_2.png)
+{{< docs-imagebox img="/img/docs/v45/prometheus_query_editor_still.png" class="docs-image--block" animated-gif="/img/docs/v45/prometheus_query_editor.gif" >}}
 
 ### Elasticsearch: Add ad-hoc filters from the table panel
-![](/img/docs/v45/elastic_ad_hoc_filters.png)
+
+{{< docs-imagebox img="/img/docs/v45/elastic_ad_hoc_filters.png" class="docs-image--block" >}}
 
 ### Table cell links!
 Create column styles that turn cells into links that use the value in the cell  (or other other row values) to generate a url to another dashboard or system:
