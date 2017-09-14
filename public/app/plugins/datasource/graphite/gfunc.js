@@ -834,6 +834,24 @@ function (_, $) {
     version: '1.0'
   });
 
+  addFuncDef({
+    name: "groupByTags",
+    category: categories.Special,
+    params: [
+      {
+        name: "function",
+        type: "string",
+        options: ['sum', 'avg', 'maxSeries']
+      },
+      { name: "tag", type: "string" },
+      { name: "tag", type: "string", optional: true },
+      { name: "tag", type: "string", optional: true },
+      { name: "tag", type: "string", optional: true },
+    ],
+    defaultParams: ["sum", "tag"],
+    version: '1.0'
+  });
+
   _.each(categories, function(funcList, catName) {
     categories[catName] = _.sortBy(funcList, 'name');
   });
