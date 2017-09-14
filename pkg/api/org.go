@@ -89,7 +89,7 @@ func CreateOrg(c *middleware.Context, cmd m.CreateOrgCommand) Response {
 		return ApiError(500, "Failed to create organization", err)
 	}
 
-	metrics.M_Api_Org_Create.Inc(1)
+	metrics.M_Api_Org_Create.Inc()
 
 	return Json(200, &util.DynMap{
 		"orgId":   cmd.Result.Id,

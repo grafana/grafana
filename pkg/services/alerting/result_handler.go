@@ -42,7 +42,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 		annotationData.Set("noData", true)
 	}
 
-	countStateResult(evalContext.Rule.State)
+	metrics.M_Alerting_Result_State.WithLabelValues(string(evalContext.Rule.State)).Inc()
 	if evalContext.ShouldUpdateAlertState() {
 		handler.log.Info("New state change", "alertId", evalContext.Rule.Id, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
 
@@ -94,19 +94,4 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 	}
 
 	return nil
-}
-
-func countStateResult(state m.AlertStateType) {
-	switch state {
-	case m.AlertStatePending:
-		metrics.M_Alerting_Result_State_Pending.Inc(1)
-	case m.AlertStateAlerting:
-		metrics.M_Alerting_Result_State_Alerting.Inc(1)
-	case m.AlertStateOK:
-		metrics.M_Alerting_Result_State_Ok.Inc(1)
-	case m.AlertStatePaused:
-		metrics.M_Alerting_Result_State_Paused.Inc(1)
-	case m.AlertStateNoData:
-		metrics.M_Alerting_Result_State_NoData.Inc(1)
-	}
 }

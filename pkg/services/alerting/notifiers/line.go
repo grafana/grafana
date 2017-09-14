@@ -2,12 +2,12 @@ package notifiers
 
 import (
 	"fmt"
+	"net/url"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"net/url"
 )
 
 func init() {
@@ -53,7 +53,6 @@ type LineNotifier struct {
 
 func (this *LineNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Executing line notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
-	metrics.M_Alerting_Notification_Sent_LINE.Inc(1)
 
 	var err error
 	switch evalContext.Rule.State {
