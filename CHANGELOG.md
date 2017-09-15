@@ -7,10 +7,10 @@
 - UX changes to nav & side menu
 - New dashboard grid layout system
 
-# 4.5.1 (unreleased)
+# 4.5.1 (2017-09-15)
 
 ## Fixes
-* **MySQL**: Fixed issue with query editor now showing [#9247](https://github.com/grafana/grafana/issues/9247)
+* **MySQL**: Fixed issue with query editor not showing [#9247](https://github.com/grafana/grafana/issues/9247)
 
 # 4.5.0 (2017-09-14)
 
