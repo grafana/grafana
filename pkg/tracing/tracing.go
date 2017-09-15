@@ -16,13 +16,14 @@ import (
 )
 
 var (
-	logger     log.Logger        = log.New("tracing")
-	customTags map[string]string = map[string]string{}
+	logger log.Logger = log.New("tracing")
 )
 
 type TracingSettings struct {
-	Enabled bool
-	Address string
+	Enabled      bool
+	Address      string
+	CustomTags   map[string]string
+	SamplerParam float64
 }
 
 func Init(file *ini.File) (io.Closer, error) {
@@ -43,7 +44,8 @@ func parseSettings(file *ini.File) *TracingSettings {
 		settings.Enabled = true
 	}
 
-	customTags = splitTagSettings(section.Key("always_included_tag").MustString(""))
+	settings.CustomTags = splitTagSettings(section.Key("always_included_tag").MustString(""))
+	settings.SamplerParam = section.Key("sampler_param").MustFloat64(1)
 
 	return settings
 }
@@ -55,9 +57,9 @@ func internalInit(settings *TracingSettings) (io.Closer, error) {
 
 	cfg := jaegercfg.Configuration{
 		Disabled: !settings.Enabled,
-		Sampler: &jaegercfg.SamplerConfig{
+		Sampler: &jaegercfg.SamplerConfig{ //we currently only support SamplerConfig. Open an issue if you need another.
 			Type:  jaeger.SamplerTypeConst,
-			Param: 1,
+			Param: settings.SamplerParam,
 		},
 		Reporter: &jaegercfg.ReporterConfig{
 			LogSpans:           false,
@@ -70,7 +72,7 @@ func internalInit(settings *TracingSettings) (io.Closer, error) {
 	options := []jaegercfg.Option{}
 	options = append(options, jaegercfg.Logger(jLogger))
 
-	for tag, value := range customTags {
+	for tag, value := range settings.CustomTags {
 		options = append(options, jaegercfg.Tag(tag, value))
 	}
 
