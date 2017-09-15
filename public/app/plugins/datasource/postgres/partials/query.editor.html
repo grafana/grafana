@@ -1,7 +1,7 @@
 <query-editor-row query-ctrl="ctrl" can-collapse="false">
 	<div class="gf-form-inline">
 		<div class="gf-form gf-form--grow">
-			<code-editor content="ctrl.target.rawSql" on-change="ctrl.panelCtrl.refresh()" data-mode="sql">
+			<code-editor content="ctrl.target.rawSql" datasource="ctrl.datasource" on-change="ctrl.panelCtrl.refresh()" data-mode="sql">
 			</code-editor>
 		</div>
 	</div>
