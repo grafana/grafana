@@ -7,6 +7,15 @@
 - UX changes to nav & side menu
 - New dashboard grid layout system
 
+# 4.6.0 (unreleased)
+
+## New Features
+* **GCS**: Adds support for Google Cloud Storage [#8370](https://github.com/grafana/grafana/issues/8370) thx [@chuhlomin](https://github.com/chuhlomin)
+* **Prometheus**: Adds /metrics endpoint for exposing Grafana metrics. [#9187](https://github.com/grafana/grafana/pull/9187)
+
+## Breaking changes
+* **Metrics**: The metric structure for internal metrics about Grafana published to graphite has changed. This might break dashboards for internal metrics. 
+
 # 4.5.1 (2017-09-15)
 
 ## Fixes
