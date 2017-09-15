@@ -188,7 +188,7 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, parameters *simpl
 	if err != nil {
 		return nil, err
 	}
-	metrics.M_Aws_CloudWatch_GetMetricStatistics.Inc(1)
+	metrics.M_Aws_CloudWatch_GetMetricStatistics.Inc()
 
 	queryRes, err := parseResponse(resp, query)
 	if err != nil {
