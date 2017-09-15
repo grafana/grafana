@@ -1,6 +1,7 @@
 package imguploader
 
 import (
+	"context"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -15,7 +16,7 @@ func TestUploadToGCS(t *testing.T) {
 
 		gcsUploader, _ := NewImageUploader()
 
-		path, err := gcsUploader.Upload("../../../public/img/logo_transparent_400x.png")
+		path, err := gcsUploader.Upload(context.Background(), "../../../public/img/logo_transparent_400x.png")
 
 		So(err, ShouldBeNil)
 		So(path, ShouldNotEqual, "")
