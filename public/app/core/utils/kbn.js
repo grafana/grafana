@@ -389,6 +389,10 @@ function($, _) {
     return value.toExponential(decimals);
   };
 
+  kbn.valueFormats.locale = function(value, decimals) {
+    return value.toLocaleString(undefined, {maximumFractionDigits: decimals);
+  };
+
   // Currencies
   kbn.valueFormats.currencyUSD = kbn.formatBuilders.currency('$');
   kbn.valueFormats.currencyGBP = kbn.formatBuilders.currency('£');
@@ -709,6 +713,7 @@ function($, _) {
           {text: 'hexadecimal (0x)',    value: 'hex0x'      },
           {text: 'hexadecimal',         value: 'hex'        },
           {text: 'scientific notation', value: 'sci'        },
+          {text: 'locale format',       value: 'locale'     },
         ]
       },
       {
