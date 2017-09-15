@@ -11,7 +11,6 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	jaeger "github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
-	jaegerlog "github.com/uber/jaeger-client-go/log"
 	ini "gopkg.in/ini.v1"
 )
 
@@ -67,7 +66,7 @@ func internalInit(settings *TracingSettings) (io.Closer, error) {
 		},
 	}
 
-	jLogger := jaegerlog.StdLogger
+	jLogger := &jaegerLogWrapper{logger: log.New("jaeger")}
 
 	options := []jaegercfg.Option{}
 	options = append(options, jaegercfg.Logger(jLogger))
@@ -98,4 +97,16 @@ func splitTagSettings(input string) map[string]string {
 	}
 
 	return res
+}
+
+type jaegerLogWrapper struct {
+	logger log.Logger
+}
+
+func (jlw *jaegerLogWrapper) Error(msg string) {
+	jlw.logger.Error(msg)
+}
+
+func (jlw *jaegerLogWrapper) Infof(msg string, args ...interface{}) {
+	jlw.logger.Info(msg, args)
 }
