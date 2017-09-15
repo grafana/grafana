@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/util"
-	"golang.org/x/oauth2/google"
 	"io/ioutil"
 	"net/http"
 	"os"
+
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/util"
+	"golang.org/x/oauth2/google"
 )
 
 type GCSUploader struct {
@@ -26,12 +27,11 @@ func NewGCSUploader(keyFile, bucket string) *GCSUploader {
 	}
 }
 
-func (u *GCSUploader) Upload(imageDiskPath string) (string, error) {
+func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string, error) {
 	key := util.GetRandomString(20) + ".png"
 
 	log.Debug("Opening key file ", u.keyFile)
 
-	ctx := context.Background()
 	data, err := ioutil.ReadFile(u.keyFile)
 	if err != nil {
 		return "", err

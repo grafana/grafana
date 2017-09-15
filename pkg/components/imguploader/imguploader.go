@@ -1,6 +1,7 @@
 package imguploader
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 
@@ -8,13 +9,13 @@ import (
 )
 
 type ImageUploader interface {
-	Upload(path string) (string, error)
+	Upload(ctx context.Context, path string) (string, error)
 }
 
 type NopImageUploader struct {
 }
 
-func (NopImageUploader) Upload(path string) (string, error) {
+func (NopImageUploader) Upload(ctx context.Context, path string) (string, error) {
 	return "", nil
 }
 
