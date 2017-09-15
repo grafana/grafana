@@ -386,8 +386,9 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
         })
         .each(function(dp) {
           var timestamp = new Date(dp.Timestamp).getTime();
-          if (lastTimestamp && (timestamp - lastTimestamp) > periodMs) {
+          while (lastTimestamp && (timestamp - lastTimestamp) > periodMs) {
             dps.push([null, lastTimestamp + periodMs]);
+            lastTimestamp = lastTimestamp + periodMs;
           }
           lastTimestamp = timestamp;
           if (!extended) {
