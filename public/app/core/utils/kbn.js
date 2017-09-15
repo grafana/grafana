@@ -390,8 +390,7 @@ function($, _) {
   };
 
   kbn.valueFormats.locale = function(value, decimals) {
-    // decimals should be ignored for output in locale format
-    return value.toLocaleString();
+    return value.toLocaleString(undefined, {maximumFractionDigits: decimals);
   };
 
   // Currencies
