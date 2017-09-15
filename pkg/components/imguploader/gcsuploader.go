@@ -2,7 +2,6 @@ package imguploader
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/oauth2/google"
+)
+
+const (
+	tokenUrl  string = "https://www.googleapis.com/auth/devstorage.read_write"
+	uploadUrl string = "https://www.googleapis.com/upload/storage/v1/b/%s/o?uploadType=media&name=%s&predefinedAcl=publicRead"
 )
 
 type GCSUploader struct {
@@ -30,24 +34,20 @@ func NewGCSUploader(keyFile, bucket string) *GCSUploader {
 func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string, error) {
 	key := util.GetRandomString(20) + ".png"
 
-	log.Debug("Opening key file ", u.keyFile)
-
+	u.log.Debug("Opening key file ", u.keyFile)
 	data, err := ioutil.ReadFile(u.keyFile)
 	if err != nil {
 		return "", err
 	}
 
-	log.Debug("Creating JWT conf")
-
-	conf, err := google.JWTConfigFromJSON(data, "https://www.googleapis.com/auth/devstorage.read_write")
+	u.log.Debug("Creating JWT conf")
+	conf, err := google.JWTConfigFromJSON(data, tokenUrl)
 	if err != nil {
 		return "", err
 	}
 
-	log.Debug("Creating HTTP client")
-
+	u.log.Debug("Creating HTTP client")
 	client := conf.Client(ctx)
-
 	err = u.uploadFile(client, imageDiskPath, key)
 	if err != nil {
 		return "", err
@@ -57,20 +57,15 @@ func (u *GCSUploader) Upload(ctx context.Context, imageDiskPath string) (string,
 }
 
 func (u *GCSUploader) uploadFile(client *http.Client, imageDiskPath, key string) error {
-	log.Debug("Opening image file ", imageDiskPath)
+	u.log.Debug("Opening image file ", imageDiskPath)
 
 	fileReader, err := os.Open(imageDiskPath)
 	if err != nil {
 		return err
 	}
 
-	reqUrl := fmt.Sprintf(
-		"https://www.googleapis.com/upload/storage/v1/b/%s/o?uploadType=media&name=%s&predefinedAcl=publicRead",
-		u.bucket,
-		key,
-	)
-
-	log.Debug("Request URL: ", reqUrl)
+	reqUrl := fmt.Sprintf(uploadUrl, u.bucket, key)
+	u.log.Debug("Request URL: ", reqUrl)
 
 	req, err := http.NewRequest("POST", reqUrl, fileReader)
 	if err != nil {
@@ -78,18 +73,15 @@ func (u *GCSUploader) uploadFile(client *http.Client, imageDiskPath, key string)
 	}
 
 	req.Header.Add("Content-Type", "image/png")
-
-	log.Debug("Sending POST request to GCS")
+	u.log.Debug("Sending POST request to GCS")
 
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
 
-	log.Debug("GCS API response header", resp.Header)
-
 	if resp.StatusCode != 200 {
-		return errors.New(fmt.Sprintf("GCS response status code %d", resp.StatusCode))
+		return fmt.Errorf("GCS response status code %d", resp.StatusCode)
 	}
 
 	return nil
