@@ -645,7 +645,7 @@ Time to live for snapshots.
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
-You can choose between (s3, webdav). If left empty Grafana will ignore the upload action.
+You can choose between (s3, webdav, qiniu). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
 
@@ -659,6 +659,19 @@ Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-eas
 Access key. e.g. AAAAAAAAAAAAAAAAAAAA
 
 Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:PutObjectAcl' actions.
+
+### secret_key
+Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+## [external_image_storage.qiniu]
+
+### bucket_name
+Bucket Name for Qiniu. Qiniu region can be specified within bucket name.
+
+### access_key
+Access key. e.g. AAAAAAAAAAAAAAAAAAAA
+
+Access key requires permissions to the Qiniu bucket.
 
 ### secret_key
 Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA

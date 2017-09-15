@@ -7,6 +7,11 @@
 			"revision": ""
 		},
 		{
+			"checksumSHA1": "kxi5gC8yIpXfvESP71o5S3LOlhg=",
+			"path": "code.google.com/p/go.net/context",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "7HXb3cry6luicWeJM9Uxwzfo9Rs=",
 			"path": "github.com/Unknwon/com",
 			"revision": "0db4a625e949e956314d7d1adea9bf82384cc10c",
@@ -551,6 +556,57 @@
 			"revisionTime": "2017-07-03T10:12:42Z"
 		},
 		{
+			"checksumSHA1": "R30cqmYcCgzVNYwBlNXhn/a7gmw=",
+			"path": "github.com/qiniu/api.v7/api",
+			"revision": "9c12a67868f8f94d6a75dd6bb59b095db8d40d77",
+			"revisionTime": "2017-07-11T01:55:05Z"
+		},
+		{
+			"checksumSHA1": "iIxwkeBgid0K+4uIKj/N2qgdJM4=",
+			"path": "github.com/qiniu/api.v7/auth/qbox",
+			"revision": "9c12a67868f8f94d6a75dd6bb59b095db8d40d77",
+			"revisionTime": "2017-07-11T01:55:05Z"
+		},
+		{
+			"checksumSHA1": "KRcuP5NMQ7Qvxsok8uZA/yxs2hY=",
+			"path": "github.com/qiniu/api.v7/cdn",
+			"revision": "9c12a67868f8f94d6a75dd6bb59b095db8d40d77",
+			"revisionTime": "2017-07-11T01:55:05Z"
+		},
+		{
+			"checksumSHA1": "zfWoXmMDFsVK5qzFivvnmy9zeG8=",
+			"path": "github.com/qiniu/api.v7/conf",
+			"revision": "9c12a67868f8f94d6a75dd6bb59b095db8d40d77",
+			"revisionTime": "2017-07-11T01:55:05Z"
+		},
+		{
+			"checksumSHA1": "XVK+RfjZ5HpzfZ6/BQMR5O3jP5E=",
+			"path": "github.com/qiniu/api.v7/kodo",
+			"revision": "9c12a67868f8f94d6a75dd6bb59b095db8d40d77",
+			"revisionTime": "2017-07-11T01:55:05Z"
+		},
+		{
+			"checksumSHA1": "GkONsh0XzgcBU3hbB0GJlNQpZLM=",
+			"path": "github.com/qiniu/api.v7/kodocli",
+			"revision": "9c12a67868f8f94d6a75dd6bb59b095db8d40d77",
+			"revisionTime": "2017-07-11T01:55:05Z"
+		},
+		{
+			"checksumSHA1": "EA4uNBPZRo+9leyHHVYetF1j490=",
+			"path": "github.com/qiniu/errors",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "VPjyJL7bmjzMGu5wpzIWEilPA2k=",
+			"path": "github.com/qiniu/log.v1",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "T/0veLN9bH4ZcJpLVSL1p8AfGlo=",
+			"path": "github.com/qiniu/xlog.v1",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "iWCtyR1TkJ22Bi/ygzfKDvOQdQY=",
 			"path": "github.com/sergi/go-diff/diffmatchpatch",
 			"revision": "24e2351369ec4949b2ed0dc5c477afdd4c4034e8",
@@ -669,6 +725,46 @@
 			"path": "gopkg.in/macaron.v1",
 			"revision": "a325110f8b392bce3e5cdeb8c44bf98078ada3be",
 			"revisionTime": "2017-02-13T09:12:08Z"
+		},
+		{
+			"checksumSHA1": "yD0qhKVSSaYIcSU34UgfqY4/9PU=",
+			"path": "qiniupkg.com/trace.v1",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "9t2exgz3OI0iupx2XzTY64dTNTI=",
+			"path": "qiniupkg.com/x/bytes.v7",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "CDoWZiG6RWRZrTwZ8XVxyinlWmQ=",
+			"path": "qiniupkg.com/x/ctype.v7",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "GD+rVFQHBoYJCv4gMCxKkkMB19E=",
+			"path": "qiniupkg.com/x/log.v7",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "H8+RHqplH5pNwKVURcANz3Z7+8Y=",
+			"path": "qiniupkg.com/x/reqid.v7",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "JC/hc2Trmycx7jG7WVTis8ly5W4=",
+			"path": "qiniupkg.com/x/rollog.v1",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "61a0P2QCYvug9eNAIrux+UDyCtg=",
+			"path": "qiniupkg.com/x/rpc.v7",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "V5PhF6cvjkH+CfL/05HVjM3xnjk=",
+			"path": "qiniupkg.com/x/url.v7",
+			"revision": ""
 		}
 	],
 	"rootPath": "github.com/grafana/grafana"
