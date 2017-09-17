@@ -478,6 +478,12 @@ function($, _) {
   kbn.valueFormats.lengthkm = kbn.formatBuilders.decimalSIPrefix('m', 1);
   kbn.valueFormats.lengthmi = kbn.formatBuilders.fixedUnit('mi');
 
+  // Mass
+  kbn.valueFormats.massmg  = kbn.formatBuilders.decimalSIPrefix('g', -1);
+  kbn.valueFormats.massg = kbn.formatBuilders.decimalSIPrefix('g');
+  kbn.valueFormats.masskg = kbn.formatBuilders.decimalSIPrefix('g', 1);
+  kbn.valueFormats.masst = kbn.formatBuilders.fixedUnit('t');
+
   // Velocity
   kbn.valueFormats.velocityms   = kbn.formatBuilders.fixedUnit('m/s');
   kbn.valueFormats.velocitykmh  = kbn.formatBuilders.fixedUnit('km/h');
@@ -795,6 +801,15 @@ function($, _) {
           {text: 'meter (m)',       value: 'lengthm' },
           {text: 'kilometer (km)',  value: 'lengthkm'},
           {text: 'mile (mi)',       value: 'lengthmi'},
+        ]
+      },
+      {
+        text: 'mass',
+        submenu: [
+          {text: 'milligram (mg)', value: 'massmg'},
+          {text: 'gram (g)',       value: 'massg' },
+          {text: 'kilogram (kg)',  value: 'masskg'},
+          {text: 'metric ton (t)', value: 'masst' },
         ]
       },
       {
