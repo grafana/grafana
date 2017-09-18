@@ -132,6 +132,15 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 		span.SetTag("alertId", evalContext.Rule.Id)
 		span.SetTag("dashboardId", evalContext.Rule.DashboardId)
 		span.SetTag("firing", evalContext.Firing)
+		span.SetTag("no_data", evalContext.NoDataFound)
+		if evalContext.Error != nil {
+			ext.Error.Set(span, true)
+			span.LogFields(
+				tlog.Error(evalContext.Error),
+				tlog.String("message", "alerting execution failed"),
+			)
+		}
+
 		span.Finish()
 		close(done)
 	}()
