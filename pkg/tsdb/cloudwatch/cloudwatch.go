@@ -364,8 +364,9 @@ func parseResponse(resp *cloudwatch.GetMetricStatisticsOutput, query *CloudWatch
 			timestamp := *v.Timestamp
 			if _, ok := lastTimestamp[*s]; ok {
 				nextTimestampFromLast := lastTimestamp[*s].Add(time.Duration(query.Period) * time.Second)
-				if timestamp.After(nextTimestampFromLast) {
+				for timestamp.After(nextTimestampFromLast) {
 					series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), float64(nextTimestampFromLast.Unix()*1000)))
+					nextTimestampFromLast = nextTimestampFromLast.Add(time.Duration(query.Period) * time.Second)
 				}
 			}
 			lastTimestamp[*s] = timestamp
