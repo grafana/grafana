@@ -17,13 +17,11 @@ export interface QueryMeta {
 }
 
 
-const defaultQuery = `SELECT
-  UNIX_TIMESTAMP(<time_column>) as time_sec,
-  <value column> as value,
-  <series name column> as metric
-FROM <table name>
-WHERE $__timeFilter(time_column)
-ORDER BY <time_column> ASC
+const defaultQuery = `SELECT 
+  'random' AS "metric",
+  random() as "value",
+  time 
+FROM generate_series($__timeFrom(),$__timeTo(),$__interval::interval*10) AS "time"
 `;
 
 export class PostgresQueryCtrl extends QueryCtrl {
