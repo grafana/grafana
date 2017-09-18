@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -242,6 +243,12 @@ func (e PostgresExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Ro
 				}
 				if value, ok := val.(float64); ok == true {
 					rowData.value = null.FloatFrom(value)
+				}
+				if value, ok := val.([]byte); ok == true {
+					value, err := strconv.ParseFloat(string(value), 64)
+					if err == nil {
+						rowData.value = null.FloatFrom(value)
+					}
 				}
 			case "metric":
 				if m, ok := val.([]byte); ok == true {
