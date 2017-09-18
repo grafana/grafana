@@ -4,7 +4,7 @@
     "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "4.5.0",
+  "version": "4.6.0-pre1",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -66,8 +66,9 @@
     "grunt-jscs": "3.0.1",
     "grunt-sass-lint": "^0.2.2",
     "grunt-sync": "^0.6.2",
+    "jquery": "^3.2.1",
     "karma-sinon": "^1.0.5",
-    "lodash": "^4.17.2",
+    "lodash": "^4.17.4",
     "mousetrap": "^1.6.0",
     "remarkable": "^1.7.1",
     "sinon": "1.17.6",

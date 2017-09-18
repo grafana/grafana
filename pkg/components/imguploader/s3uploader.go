@@ -1,6 +1,7 @@
 package imguploader
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -34,7 +35,7 @@ func NewS3Uploader(region, bucket, acl, accessKey, secretKey string) *S3Uploader
 	}
 }
 
-func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
+func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, error) {
 	sess, err := session.NewSession()
 	if err != nil {
 		return "", err

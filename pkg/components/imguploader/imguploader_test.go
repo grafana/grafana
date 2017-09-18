@@ -96,5 +96,28 @@ func TestImageUploaderFactory(t *testing.T) {
 			So(original.username, ShouldEqual, "username")
 			So(original.password, ShouldEqual, "password")
 		})
+
+		Convey("GCS uploader", func() {
+			var err error
+
+			setting.NewConfigContext(&setting.CommandLineArgs{
+				HomePath: "../../../",
+			})
+
+			setting.ImageUploadProvider = "gcs"
+
+			gcpSec, err := setting.Cfg.GetSection("external_image_storage.gcs")
+			gcpSec.NewKey("key_file", "/etc/secrets/project-79a52befa3f6.json")
+			gcpSec.NewKey("bucket", "project-grafana-east")
+
+			uploader, err := NewImageUploader()
+
+			So(err, ShouldBeNil)
+			original, ok := uploader.(*GCSUploader)
+
+			So(ok, ShouldBeTrue)
+			So(original.keyFile, ShouldEqual, "/etc/secrets/project-79a52befa3f6.json")
+			So(original.bucket, ShouldEqual, "project-grafana-east")
+		})
 	})
 }

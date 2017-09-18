@@ -7,10 +7,25 @@
 - UX changes to nav & side menu
 - New dashboard grid layout system
 
-# 4.5.1 (unreleased)
+# 4.6.0 (unreleased)
+
+## New Features
+* **GCS**: Adds support for Google Cloud Storage [#8370](https://github.com/grafana/grafana/issues/8370) thx [@chuhlomin](https://github.com/chuhlomin)
+* **Prometheus**: Adds /metrics endpoint for exposing Grafana metrics. [#9187](https://github.com/grafana/grafana/pull/9187)
+* **Graph**: Add support for local formating in axis. [#1395](https://github.com/grafana/grafana/issues/1395), thx [@m0nhawk](https://github.com/m0nhawk)
+
+## Breaking changes
+* **Metrics**: The metric structure for internal metrics about Grafana published to graphite has changed. This might break dashboards for internal metrics. 
+
+# 4.5.2 (unreleased)
+
+## Fixes 
+* **Metrics**: dont write NaN values to graphite [#9279](https://github.com/grafana/grafana/issues/9279)
+
+# 4.5.1 (2017-09-15)
 
 ## Fixes
-* **MySQL**: Fixed issue with query editor now showing [#9247](https://github.com/grafana/grafana/issues/9247)
+* **MySQL**: Fixed issue with query editor not showing [#9247](https://github.com/grafana/grafana/issues/9247)
 
 # 4.5.0 (2017-09-14)
 

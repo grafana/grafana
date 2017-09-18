@@ -100,7 +100,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		context.ImageOnDiskPath = imagePath
 	}
 
-	context.ImagePublicUrl, err = uploader.Upload(context.ImageOnDiskPath)
+	context.ImagePublicUrl, err = uploader.Upload(context.Ctx, context.ImageOnDiskPath)
 	if err != nil {
 		return err
 	}

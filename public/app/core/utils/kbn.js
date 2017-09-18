@@ -389,6 +389,10 @@ function($, _) {
     return value.toExponential(decimals);
   };
 
+  kbn.valueFormats.locale = function(value, decimals) {
+    return value.toLocaleString(undefined, {maximumFractionDigits: decimals});
+  };
+
   // Currencies
   kbn.valueFormats.currencyUSD = kbn.formatBuilders.currency('$');
   kbn.valueFormats.currencyGBP = kbn.formatBuilders.currency('£');
@@ -473,6 +477,12 @@ function($, _) {
   kbn.valueFormats.lengthmm = kbn.formatBuilders.decimalSIPrefix('m', -1);
   kbn.valueFormats.lengthkm = kbn.formatBuilders.decimalSIPrefix('m', 1);
   kbn.valueFormats.lengthmi = kbn.formatBuilders.fixedUnit('mi');
+
+  // Mass
+  kbn.valueFormats.massmg  = kbn.formatBuilders.decimalSIPrefix('g', -1);
+  kbn.valueFormats.massg = kbn.formatBuilders.decimalSIPrefix('g');
+  kbn.valueFormats.masskg = kbn.formatBuilders.decimalSIPrefix('g', 1);
+  kbn.valueFormats.masst = kbn.formatBuilders.fixedUnit('t');
 
   // Velocity
   kbn.valueFormats.velocityms   = kbn.formatBuilders.fixedUnit('m/s');
@@ -709,6 +719,7 @@ function($, _) {
           {text: 'hexadecimal (0x)',    value: 'hex0x'      },
           {text: 'hexadecimal',         value: 'hex'        },
           {text: 'scientific notation', value: 'sci'        },
+          {text: 'locale format',       value: 'locale'     },
         ]
       },
       {
@@ -790,6 +801,15 @@ function($, _) {
           {text: 'meter (m)',       value: 'lengthm' },
           {text: 'kilometer (km)',  value: 'lengthkm'},
           {text: 'mile (mi)',       value: 'lengthmi'},
+        ]
+      },
+      {
+        text: 'mass',
+        submenu: [
+          {text: 'milligram (mg)', value: 'massmg'},
+          {text: 'gram (g)',       value: 'massg' },
+          {text: 'kilogram (kg)',  value: 'masskg'},
+          {text: 'metric ton (t)', value: 'masst' },
         ]
       },
       {

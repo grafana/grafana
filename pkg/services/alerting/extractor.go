@@ -89,6 +89,11 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				continue
 			}
 
+			panelId, err := panel.Get("id").Int64()
+			if err != nil {
+				return nil, fmt.Errorf("panel id is required. err %v", err)
+			}
+
 			// backward compatibility check, can be removed later
 			enabled, hasEnabled := jsonAlert.CheckGet("enabled")
 			if hasEnabled && enabled.MustBool() == false {
@@ -103,7 +108,7 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 			alert := &m.Alert{
 				DashboardId: e.Dash.Id,
 				OrgId:       e.OrgId,
-				PanelId:     panel.Get("id").MustInt64(),
+				PanelId:     panelId,
 				Id:          jsonAlert.Get("id").MustInt64(),
 				Name:        jsonAlert.Get("name").MustString(),
 				Handler:     jsonAlert.Get("handler").MustInt64(),

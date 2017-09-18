@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"sort"
 	"strings"
@@ -208,6 +209,10 @@ func (b *Bridge) writeMetrics(w io.Writer, mfs []*dto.MetricFamily, prefix strin
 
 		buf := bufio.NewWriter(w)
 		for _, s := range vec {
+			if math.IsNaN(float64(s.Value)) {
+				continue
+			}
+
 			if err := writePrefix(buf, prefix); err != nil {
 				return err
 			}
@@ -357,7 +362,7 @@ func replaceInvalidRune(c rune) rune {
 	if c == ' ' {
 		return '.'
 	}
-	if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == ':' || (c >= '0' && c <= '9')) {
+	if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '-' || c == '_' || c == ':' || (c >= '0' && c <= '9')) {
 		return '_'
 	}
 	return c
