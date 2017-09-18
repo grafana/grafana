@@ -2,14 +2,12 @@ package tracing
 
 import (
 	"io"
-	"io/ioutil"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
 
 	opentracing "github.com/opentracing/opentracing-go"
-	jaeger "github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	ini "gopkg.in/ini.v1"
 )
@@ -22,6 +20,7 @@ type TracingSettings struct {
 	Enabled      bool
 	Address      string
 	CustomTags   map[string]string
+	SamplerType  string
 	SamplerParam float64
 }
 
@@ -44,6 +43,7 @@ func parseSettings(file *ini.File) *TracingSettings {
 	}
 
 	settings.CustomTags = splitTagSettings(section.Key("always_included_tag").MustString(""))
+	settings.SamplerType = section.Key("sampler_type").MustString("")
 	settings.SamplerParam = section.Key("sampler_param").MustFloat64(1)
 
 	return settings
@@ -51,13 +51,13 @@ func parseSettings(file *ini.File) *TracingSettings {
 
 func internalInit(settings *TracingSettings) (io.Closer, error) {
 	if !settings.Enabled {
-		return ioutil.NopCloser(nil), nil
+		return &nullCloser{}, nil
 	}
 
 	cfg := jaegercfg.Configuration{
 		Disabled: !settings.Enabled,
-		Sampler: &jaegercfg.SamplerConfig{ //we currently only support SamplerConfig. Open an issue if you need another.
-			Type:  jaeger.SamplerTypeConst,
+		Sampler: &jaegercfg.SamplerConfig{
+			Type:  settings.SamplerType,
 			Param: settings.SamplerParam,
 		},
 		Reporter: &jaegercfg.ReporterConfig{
@@ -110,3 +110,7 @@ func (jlw *jaegerLogWrapper) Error(msg string) {
 func (jlw *jaegerLogWrapper) Infof(msg string, args ...interface{}) {
 	jlw.logger.Info(msg, args)
 }
+
+type nullCloser struct{}
+
+func (*nullCloser) Close() error { return nil }
