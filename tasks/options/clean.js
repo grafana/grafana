@@ -8,9 +8,10 @@ module.exports = function(config) {
     css: ['<%= genDir %>/css'],
     packaging: [
       '<%= tempDir %>/public/vendor/npm/rxjs',
-      '<%= tempDir %>/public/vendor/npm/teather',
-      '<%= tempDir %>/public/vendor/npm/teather-drop',
+      '<%= tempDir %>/public/vendor/npm/tether',
+      '<%= tempDir %>/public/vendor/npm/tether-drop',
       '<%= tempDir %>/public/**/*.map',
+      '<%= tempDir %>/public/**/*.ts',
     ],
   };
 };

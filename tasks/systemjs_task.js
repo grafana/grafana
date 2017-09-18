@@ -25,14 +25,6 @@ module.exports = function(grunt) {
     builder
       .bundle(expression, 'public_gen/app/app_bundle.js')
       .then(function(res) {
-        console.log('Build complete', res.modules);
-
-        for (var i = 0; i < res.modules.length; i++) {
-          var modulePath = path.join('public_gen', res.modules[i]);
-          console.log(modulePath);
-          grunt.file.delete(modulePath);
-        }
-
         done();
         grunt.task.run('concat:bundle_and_boot');
       })
