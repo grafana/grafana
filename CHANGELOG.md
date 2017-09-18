@@ -17,6 +17,11 @@
 ## Breaking changes
 * **Metrics**: The metric structure for internal metrics about Grafana published to graphite has changed. This might break dashboards for internal metrics. 
 
+# 4.5.2 (unreleased)
+
+## Fixes 
+* **Metrics**: dont write NaN values to graphite [#9279](https://github.com/grafana/grafana/issues/9279)
+
 # 4.5.1 (2017-09-15)
 
 ## Fixes
