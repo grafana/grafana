@@ -93,7 +93,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   setUnitFormat(subItem) {
     this.panel.format = subItem.value;
-    this.render();
+    this.refresh();
   }
 
   onDataError(err) {
