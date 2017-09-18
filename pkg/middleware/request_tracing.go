@@ -29,5 +29,8 @@ func RequestTracing(handler string) macaron.Handler {
 		ext.HTTPStatusCode.Set(span, uint16(status))
 		ext.HTTPUrl.Set(span, req.RequestURI)
 		ext.HTTPMethod.Set(span, req.Method)
+		if status >= 400 {
+			ext.Error.Set(span, true)
+		}
 	}
 }
