@@ -17,10 +17,10 @@ export interface QueryMeta {
 }
 
 
-const defaultQuery = `SELECT 
+const defaultQuery = `SELECT
   'random' AS "metric",
   random() as "value",
-  time 
+  time
 FROM generate_series($__timeFrom(),$__timeTo(),$__interval::interval*10) AS "time"
 `;
 
