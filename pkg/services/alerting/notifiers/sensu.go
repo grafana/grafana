@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -74,7 +73,6 @@ type SensuNotifier struct {
 
 func (this *SensuNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending sensu result")
-	metrics.M_Alerting_Notification_Sent_Sensu.Inc(1)
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("ruleId", evalContext.Rule.Id)

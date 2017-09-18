@@ -238,6 +238,9 @@ export class DashboardModel {
     delete newPanel.repeatIteration;
     delete newPanel.repeatPanelId;
     delete newPanel.scopedVars;
+    if (newPanel.alert) {
+      delete newPanel.thresholds;
+    }
     delete newPanel.alert;
 
     row.addPanel(newPanel);

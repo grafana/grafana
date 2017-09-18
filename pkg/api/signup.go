@@ -47,7 +47,7 @@ func SignUp(c *middleware.Context, form dtos.SignUpForm) Response {
 		Code:  cmd.Code,
 	})
 
-	metrics.M_Api_User_SignUpStarted.Inc(1)
+	metrics.M_Api_User_SignUpStarted.Inc()
 
 	return Json(200, util.DynMap{"status": "SignUpCreated"})
 }
@@ -111,7 +111,7 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 	}
 
 	loginUserWithUser(user, c)
-	metrics.M_Api_User_SignUpCompleted.Inc(1)
+	metrics.M_Api_User_SignUpCompleted.Inc()
 
 	return Json(200, apiResponse)
 }
