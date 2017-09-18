@@ -22,6 +22,15 @@
 			<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder=""></input>
 		</div>
 	</div>
+	<div class="gf-form">
+		<label class="gf-form-label width-7">SSL Mode</label>
+		<div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
+			<select class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode" ng-options="mode for mode in ['disable', 'require', 'verify-ca', 'verify-full']" ng-init="ctrl.current.jsonData.sslmode"></select>
+			<info-popover mode="right-absolute">
+				This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+			</info-popover>
+		</div>
+	</div>
 </div>
 
 <div class="gf-form-group">

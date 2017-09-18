@@ -63,7 +63,8 @@ func (e *PostgresExecutor) initEngine() error {
 		}
 	}
 
-	cnnstr := fmt.Sprintf("postgres://%s:%s@%s/%s", e.datasource.User, e.datasource.Password, e.datasource.Url, e.datasource.Database)
+	sslmode := e.datasource.JsonData.Get("sslmode").MustString("require")
+	cnnstr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", e.datasource.User, e.datasource.Password, e.datasource.Url, e.datasource.Database, sslmode)
 	e.log.Debug("getEngine", "connection", cnnstr)
 
 	engine, err := xorm.NewEngine("postgres", cnnstr)
