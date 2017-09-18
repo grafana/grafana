@@ -233,7 +233,17 @@ func (e PostgresExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Ro
 				if t, ok := val.(time.Time); ok == true {
 					rowData.time = null.FloatFrom(float64(t.Unix() * 1000))
 				}
+			case "time_sec":
+				if t, ok := val.(float64); ok == true {
+					rowData.time = null.FloatFrom(float64(t * 1000))
+				}
+				if t, ok := val.(int64); ok == true {
+					rowData.time = null.FloatFrom(float64(t * 1000))
+				}
 			case "value":
+				if value, ok := val.(int64); ok == true {
+					rowData.value = null.FloatFrom(float64(value))
+				}
 				if value, ok := val.(float64); ok == true {
 					rowData.value = null.FloatFrom(value)
 				}
