@@ -5,6 +5,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import 'jquery.flot';
 import 'jquery.flot.gauge';
+import moment from 'moment';
 
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
@@ -22,7 +23,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   invalidGaugeRange: boolean;
   panel: any;
   events: any;
-  valueNameOptions: any[] = ['min','max','avg', 'current', 'total', 'name', 'first', 'delta', 'diff', 'range'];
+  valueNameOptions: any[] = ['min','max','avg', 'current', 'total', 'name', 'first', 'delta', 'diff', 'range', 'last_time'];
   tableColumnOptions: any;
 
   // Set and populate defaults
@@ -268,6 +269,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.value = 0;
         data.valueFormatted = _.escape(lastValue);
         data.valueRounded = 0;
+      } else if (this.panel.valueName === 'last_time') {
+        data.value = lastPoint[1];
+        data.valueFormatted = moment(data.value).format('YYYY-MM-DD HH:mm:ss');
       } else {
         data.value = this.series[0].stats[this.panel.valueName];
         data.flotpairs = this.series[0].flotpairs;

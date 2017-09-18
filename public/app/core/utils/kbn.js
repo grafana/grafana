@@ -703,7 +703,7 @@ function($, _, moment) {
     return kbn.toDuration(size, decimals, 'second');
   };
 
-  kbn.valueFormats.dateTimeAsIso = function(size, decimals) {
+  kbn.valueFormats.dateTimeAsIso = function(size) {
     var time = moment(size);
 
     if (moment().isSame(size, 'day')) {
@@ -712,7 +712,7 @@ function($, _, moment) {
     return time.format('YYYY-MM-DD HH:mm:ss');
   };
 
-  kbn.valueFormats.dateTimeAsUS = function(size, decimals) {
+  kbn.valueFormats.dateTimeAsUS = function(size) {
     var time = moment(size);
 
     if (moment().isSame(size, 'day')) {
@@ -721,7 +721,7 @@ function($, _, moment) {
     return time.format('MM/DD/YYYY h:mm:ss a');
   };
 
-  kbn.valueFormats.dateTimeFromNow = function(size, decimals) {
+  kbn.valueFormats.dateTimeFromNow = function(size) {
     return moment(size).fromNow();
   };
 
