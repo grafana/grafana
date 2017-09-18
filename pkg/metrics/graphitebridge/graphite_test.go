@@ -410,6 +410,47 @@ func TestTrimGrafanaNamespace(t *testing.T) {
 	}
 }
 
+func TestSkipNanValues(t *testing.T) {
+	cntVec := prometheus.NewSummary(
+		prometheus.SummaryOpts{
+			Name:        "grafana_http_request_total",
+			Help:        "docstring",
+			ConstLabels: prometheus.Labels{"constname": "constvalue"},
+		})
+
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(cntVec)
+
+	b, err := NewBridge(&Config{
+		URL:             "localhost:8080",
+		Gatherer:        reg,
+		CountersAsDelta: true,
+	})
+	if err != nil {
+		t.Fatalf("error creating bridge: %v", err)
+	}
+
+	// first collect
+	mfs, err := reg.Gather()
+	if err != nil {
+		t.Fatalf("error: %v", err)
+	}
+
+	var buf bytes.Buffer
+	err = b.writeMetrics(&buf, mfs, "prefix.", model.Time(1477043083))
+	if err != nil {
+		t.Fatalf("error: %v", err)
+	}
+
+	want := `prefix.http_request_total_sum.constname.constvalue 0 1477043
+prefix.http_request_total_count.constname.constvalue.count 0 1477043
+`
+
+	if got := buf.String(); want != got {
+		t.Fatalf("wanted \n%s\n, got \n%s\n", want, got)
+	}
+}
+
 func TestPush(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	cntVec := prometheus.NewCounterVec(
