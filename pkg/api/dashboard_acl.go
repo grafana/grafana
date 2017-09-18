@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -59,7 +58,6 @@ func UpdateDashboardAcl(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCom
 		return ApiError(500, "Failed to create permission", err)
 	}
 
-	metrics.M_Api_Dashboard_Acl_Update.Inc(1)
 	return ApiSuccess("Dashboard acl updated")
 }
 

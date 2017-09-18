@@ -300,7 +300,7 @@ a.external-link {
     max-width: 100%;
   }
 
-  ul {
+  ul, ol {
     padding-left: $spacer*1.5;
     margin-bottom: $spacer;
   }
@@ -332,7 +332,7 @@ a.external-link {
     margin-bottom: 0;
   }
 
-  ul:last-child {
+  ul:last-child, ol:last-child {
     margin-bottom: 0;
   }
 }

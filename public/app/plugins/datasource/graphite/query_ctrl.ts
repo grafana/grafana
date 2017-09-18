@@ -184,7 +184,6 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       altSegments.unshift(this.uiSegmentSrv.newSegment('*'));
       return altSegments;
     }).catch(err => {
-      appEvents.emit('alert-error', ['Error', err]);
       return [];
     });
   }

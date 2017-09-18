@@ -1,6 +1,7 @@
 package imguploader
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 
@@ -8,13 +9,13 @@ import (
 )
 
 type ImageUploader interface {
-	Upload(path string) (string, error)
+	Upload(ctx context.Context, path string) (string, error)
 }
 
 type NopImageUploader struct {
 }
 
-func (NopImageUploader) Upload(path string) (string, error) {
+func (NopImageUploader) Upload(ctx context.Context, path string) (string, error) {
 	return "", nil
 }
 
@@ -52,6 +53,16 @@ func NewImageUploader() (ImageUploader, error) {
 		password := webdavSec.Key("password").String()
 
 		return NewWebdavImageUploader(url, username, password, public_url)
+	case "gcs":
+		gcssec, err := setting.Cfg.GetSection("external_image_storage.gcs")
+		if err != nil {
+			return nil, err
+		}
+
+		keyFile := gcssec.Key("key_file").MustString("")
+		bucketName := gcssec.Key("bucket").MustString("")
+
+		return NewGCSUploader(keyFile, bucketName), nil
 	}
 
 	return NopImageUploader{}, nil

@@ -2,7 +2,6 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -17,8 +16,6 @@ func CreateUserGroup(c *middleware.Context, cmd m.CreateUserGroupCommand) Respon
 		}
 		return ApiError(500, "Failed to create User Group", err)
 	}
-
-	metrics.M_Api_UserGroup_Create.Inc(1)
 
 	return Json(200, &util.DynMap{
 		"userGroupId": cmd.Result.Id,
