@@ -19,7 +19,10 @@ module.exports = function(config) {
       cwd: './node_modules',
       expand: true,
       src: [
-        'ace-builds/src-noconflict/**/*',
+        'jquery/dist/jquery.js',
+        'lodash/lodash.js',
+        'ace-builds/src-noconflict/ace.js',
+        'ace-builds/src-noconflict/ext-language_tools.js',
         'eventemitter3/*.js',
         'systemjs/dist/*.js',
         'es6-promise/**/*',

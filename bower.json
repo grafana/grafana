@@ -13,8 +13,6 @@
     "tests"
   ],
   "dependencies": {
-    "jquery": "3.1.0",
-    "lodash": "4.15.0",
     "angular": "1.6.1",
     "angular-route": "1.6.1",
     "angular-mocks": "1.6.1",

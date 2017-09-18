@@ -5,6 +5,13 @@ module.exports = function(config) {
     release: ['<%= destDir %>', '<%= tempDir %>', '<%= genDir %>'],
     gen: ['<%= genDir %>'],
     temp: ['<%= tempDir %>'],
-    css: ['<%= genDir %>/css']
+    css: ['<%= genDir %>/css'],
+    packaging: [
+      '<%= tempDir %>/public/vendor/npm/rxjs',
+      '<%= tempDir %>/public/vendor/npm/tether',
+      '<%= tempDir %>/public/vendor/npm/tether-drop',
+      '<%= tempDir %>/public/**/*.map',
+      '<%= tempDir %>/public/**/*.ts',
+    ],
   };
 };

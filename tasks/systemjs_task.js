@@ -2,6 +2,7 @@ module.exports = function(grunt) {
   "use strict";
 
   grunt.registerTask('systemjs:build', function() {
+    var path = require('path');
     var Builder = require('systemjs-builder');
     var done = this.async();
 
@@ -23,8 +24,7 @@ module.exports = function(grunt) {
 
     builder
       .bundle(expression, 'public_gen/app/app_bundle.js')
-      .then(function() {
-        console.log('Build complete');
+      .then(function(res) {
         done();
         grunt.task.run('concat:bundle_and_boot');
       })
