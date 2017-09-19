@@ -70,21 +70,60 @@ describe('SingleStatCtrl', function() {
     });
   });
 
-  singleStatScenario('showing last timen instead of value', function(ctx) {
+  singleStatScenario('showing last iso time instead of value', function(ctx) {
     ctx.setup(function() {
        ctx.data = [
         {target: 'test.cpu1', datapoints: [[10, 12], [20,1505634997920]]}
        ];
       ctx.ctrl.panel.valueName = 'last_time';
+      ctx.ctrl.panel.format = 'dateTimeAsIso';
     });
 
     it('Should use time instead of value', function() {
       expect(ctx.data.value).to.be(1505634997920);
-      // expect(ctx.data.valueRounded).to.be(1505634997920);
+      expect(ctx.data.valueRounded).to.be(1505634997920);
     });
 
     it('should set formatted value', function() {
       expect(ctx.data.valueFormatted).to.be('2017-09-17 09:56:37');
+    });
+  });
+
+  singleStatScenario('showing last us time instead of value', function(ctx) {
+    ctx.setup(function() {
+       ctx.data = [
+        {target: 'test.cpu1', datapoints: [[10, 12], [20,1505634997920]]}
+       ];
+      ctx.ctrl.panel.valueName = 'last_time';
+      ctx.ctrl.panel.format = 'dateTimeAsUS';
+    });
+
+    it('Should use time instead of value', function() {
+      expect(ctx.data.value).to.be(1505634997920);
+      expect(ctx.data.valueRounded).to.be(1505634997920);
+    });
+
+    it('should set formatted value', function() {
+      expect(ctx.data.valueFormatted).to.be('09/17/2017 9:56:37 am');
+    });
+  });
+
+  singleStatScenario('showing last time from now instead of value', function(ctx) {
+    ctx.setup(function() {
+       ctx.data = [
+        {target: 'test.cpu1', datapoints: [[10, 12], [20,1505634997920]]}
+       ];
+      ctx.ctrl.panel.valueName = 'last_time';
+      ctx.ctrl.panel.format = 'dateTimeFromNow';
+    });
+
+    it('Should use time instead of value', function() {
+      expect(ctx.data.value).to.be(1505634997920);
+      expect(ctx.data.valueRounded).to.be(1505634997920);
+    });
+
+    it('should set formatted value', function() {
+      expect(ctx.data.valueFormatted).to.be('för 2 dagar sedan');
     });
   });
 

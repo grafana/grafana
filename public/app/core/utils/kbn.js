@@ -703,26 +703,27 @@ function($, _, moment) {
     return kbn.toDuration(size, decimals, 'second');
   };
 
-  kbn.valueFormats.dateTimeAsIso = function(size) {
-    var time = moment(size);
+  kbn.valueFormats.dateTimeAsIso = function(epoch) {
+    var time = moment(epoch);
 
-    if (moment().isSame(size, 'day')) {
+    if (moment().isSame(epoch, 'day')) {
       return time.format('HH:mm:ss');
     }
     return time.format('YYYY-MM-DD HH:mm:ss');
   };
 
-  kbn.valueFormats.dateTimeAsUS = function(size) {
-    var time = moment(size);
+  kbn.valueFormats.dateTimeAsUS = function(epoch) {
+    var time = moment(epoch);
 
-    if (moment().isSame(size, 'day')) {
+    if (moment().isSame(epoch, 'day')) {
       return time.format('h:mm:ss a');
     }
     return time.format('MM/DD/YYYY h:mm:ss a');
   };
 
-  kbn.valueFormats.dateTimeFromNow = function(size) {
-    return moment(size).fromNow();
+  kbn.valueFormats.dateTimeFromNow = function(epoch) {
+    console.log(moment());
+    return moment(epoch).fromNow();
   };
 
   ///// FORMAT MENU /////
