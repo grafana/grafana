@@ -176,6 +176,9 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queries
 	case "dimension_keys":
 		data, err = e.handleGetDimensions(ctx, parameters, queryContext)
 		break
+	case "dimension_values":
+		data, err = e.handleGetDimensionValues(ctx, parameters, queryContext)
+		break
 	case "ebs_volume_ids":
 		data, err = e.handleGetEbsVolumeIds(ctx, parameters, queryContext)
 		break
@@ -328,6 +331,49 @@ func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 	return result, nil
 }
 
+func (e *CloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.QueryContext) ([]suggestData, error) {
+	region := parameters.Get("region").MustString()
+	namespace := parameters.Get("namespace").MustString()
+	metricName := parameters.Get("metricName").MustString()
+	dimensionKey := parameters.Get("dimensionKey").MustString()
+	dimensionsJson := parameters.Get("dimensionKey").MustMap()
+
+	var dimensions []*cloudwatch.DimensionFilter
+	for _, d := range dimensionsJson {
+		if dd, ok := d.(map[string]string); ok {
+			dimensions = append(dimensions, &cloudwatch.DimensionFilter{
+				Name:  aws.String(dd["Name"]),
+				Value: aws.String(dd["Value"]),
+			})
+		}
+	}
+
+	metrics, err := e.cloudwatchListMetrics(region, namespace, metricName, dimensions)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]suggestData, 0)
+	dupCheck := make(map[string]bool)
+	for _, metric := range metrics.Metrics {
+		for _, dim := range metric.Dimensions {
+			if *dim.Name == dimensionKey {
+				if _, exists := dupCheck[*dim.Value]; exists {
+					continue
+				}
+				dupCheck[*dim.Value] = true
+				result = append(result, suggestData{Text: *dim.Value, Value: *dim.Value})
+			}
+		}
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Text < result[j].Text
+	})
+
+	return result, nil
+}
+
 func (e *CloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.QueryContext) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	instanceId := parameters.Get("instanceId").MustString()
@@ -426,6 +472,41 @@ func getAwsConfig(dsInfo *cwapi.DatasourceInfo) (*aws.Config, error) {
 		Credentials: creds,
 	}
 	return cfg, nil
+}
+
+func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string, dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
+	dsInfo := e.getDsInfo(region)
+	cfg, err := getAwsConfig(dsInfo)
+	if err != nil {
+		return nil, errors.New("Failed to call cloudwatch:ListMetrics")
+	}
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		return nil, errors.New("Failed to call cloudwatch:ListMetrics")
+	}
+	svc := cloudwatch.New(sess, cfg)
+
+	params := &cloudwatch.ListMetricsInput{
+		Namespace:  aws.String(namespace),
+		MetricName: aws.String(metricName),
+		Dimensions: dimensions,
+	}
+
+	var resp cloudwatch.ListMetricsOutput
+	err = svc.ListMetricsPages(params,
+		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+			metrics.M_Aws_CloudWatch_ListMetrics.Inc()
+			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
+			for _, metric := range metrics {
+				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))
+			}
+			return !lastPage
+		})
+	if err != nil {
+		return nil, errors.New("Failed to call cloudwatch:ListMetrics")
+	}
+
+	return &resp, nil
 }
 
 func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {

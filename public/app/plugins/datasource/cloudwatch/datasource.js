@@ -222,30 +222,28 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
     };
 
     this.getDimensionValues = function(region, namespace, metricName, dimensionKey, filterDimensions) {
-      var request = {
-        region: templateSrv.replace(region),
-        action: 'ListMetrics',
-        parameters: {
-          namespace: templateSrv.replace(namespace),
-          metricName: templateSrv.replace(metricName),
-          dimensions: this.convertDimensionFormat(filterDimensions, {}),
-        }
-      };
-
-      return this.awsRequest(request).then(function(result) {
-        return _.chain(result.Metrics)
-        .map('Dimensions')
-        .flatten()
-        .filter(function(dimension) {
-          return dimension !== null && dimension.Name === dimensionKey;
-        })
-        .map('Value')
-        .uniq()
-        .sortBy()
-        .map(function(value) {
-          return {value: value, text: value};
-        }).value();
-      });
+      var range = timeSrv.timeRange();
+      return backendSrv.post('/api/tsdb/query', {
+        from: range.from,
+        to: range.to,
+        queries: [
+          {
+            refId: 'metricFindQuery',
+            intervalMs: 1, // dummy
+            maxDataPoints: 1, // dummy
+            datasourceId: this.instanceSettings.id,
+            type: 'metricFindQuery',
+            subtype: 'dimension_values',
+            parameters: {
+              region: region,
+              namespace: templateSrv.replace(namespace),
+              metricName: templateSrv.replace(metricName),
+              dimensionKey: templateSrv.replace(dimensionKey),
+              dimensions: this.convertDimensionFormat(filterDimensions, {}),
+            }
+          }
+        ]
+      }).then(function (r) { return transformSuggestDataFromTable(r); });
     };
 
     this.getEbsVolumeIds = function(region, instanceId) {

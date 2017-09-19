@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
@@ -19,7 +18,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -73,7 +71,6 @@ func (req *cwRequest) GetDatasourceInfo() *DatasourceInfo {
 
 func init() {
 	actionHandlers = map[string]actionHandler{
-		"ListMetrics":             handleListMetrics,
 		"DescribeAlarms":          handleDescribeAlarms,
 		"DescribeAlarmsForMetric": handleDescribeAlarmsForMetric,
 		"DescribeAlarmHistory":    handleDescribeAlarmHistory,
@@ -214,52 +211,6 @@ func getAwsConfig(req *cwRequest) (*aws.Config, error) {
 		Credentials: creds,
 	}
 	return cfg, nil
-}
-
-func handleListMetrics(req *cwRequest, c *middleware.Context) {
-	cfg, err := getAwsConfig(req)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-	svc := cloudwatch.New(sess, cfg)
-
-	reqParam := &struct {
-		Parameters struct {
-			Namespace  string                        `json:"namespace"`
-			MetricName string                        `json:"metricName"`
-			Dimensions []*cloudwatch.DimensionFilter `json:"dimensions"`
-		} `json:"parameters"`
-	}{}
-	json.Unmarshal(req.Body, reqParam)
-
-	params := &cloudwatch.ListMetricsInput{
-		Namespace:  aws.String(reqParam.Parameters.Namespace),
-		MetricName: aws.String(reqParam.Parameters.MetricName),
-		Dimensions: reqParam.Parameters.Dimensions,
-	}
-
-	var resp cloudwatch.ListMetricsOutput
-	err = svc.ListMetricsPages(params,
-		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
-			metrics.M_Aws_CloudWatch_ListMetrics.Inc()
-			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
-			for _, metric := range metrics {
-				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))
-			}
-			return !lastPage
-		})
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-
-	c.JSON(200, resp)
 }
 
 func handleDescribeAlarms(req *cwRequest, c *middleware.Context) {
