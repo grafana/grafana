@@ -233,16 +233,16 @@ func (e PostgresExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Ro
 				case int64:
 					rowData.time = null.FloatFrom(float64(value * 1000))
 				case float64:
-					rowData.time = null.FloatFrom(float64(value * 1000))
+					rowData.time = null.FloatFrom(value * 1000)
 				case time.Time:
 					rowData.time = null.FloatFrom(float64(value.Unix() * 1000))
 				}
 			case "value":
 				switch value := val.(type) {
 				case int64:
-					rowData.value = null.FloatFrom(float64(value * 1000))
+					rowData.value = null.FloatFrom(float64(value))
 				case float64:
-					rowData.value = null.FloatFrom(float64(value * 1000))
+					rowData.value = null.FloatFrom(value)
 				case []byte: // decimal is not converted to a go type but returned as []byte
 					v, err := strconv.ParseFloat(string(value), 64)
 					if err == nil {
