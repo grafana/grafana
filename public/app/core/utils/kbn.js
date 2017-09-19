@@ -722,7 +722,6 @@ function($, _, moment) {
   };
 
   kbn.valueFormats.dateTimeFromNow = function(epoch) {
-    console.log(moment());
     return moment(epoch).fromNow();
   };
 

@@ -1,13 +1,16 @@
 ///<reference path="../../../../headers/common.d.ts" />
 
-import {describe, beforeEach, it, sinon, expect, angularMocks} from '../../../../../test/lib/common';
+import {describe, beforeEach, afterEach, it, sinon, expect, angularMocks} from '../../../../../test/lib/common';
 
 import angular from 'angular';
 import helpers from '../../../../../test/specs/helpers';
 import {SingleStatCtrl} from '../module';
+import moment from 'moment';
 
 describe('SingleStatCtrl', function() {
   var ctx = new helpers.ControllerTestContext();
+  var epoch = 1505826363746;
+  var clock;
 
   function singleStatScenario(desc, func) {
 
@@ -85,7 +88,7 @@ describe('SingleStatCtrl', function() {
     });
 
     it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).to.be('2017-09-17 09:56:37');
+      expect(ctx.data.valueFormatted).to.be(moment(1505634997920).format('YYYY-MM-DD HH:mm:ss'));
     });
   });
 
@@ -104,11 +107,16 @@ describe('SingleStatCtrl', function() {
     });
 
     it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).to.be('09/17/2017 9:56:37 am');
+      expect(ctx.data.valueFormatted).to.be(moment(1505634997920).format('MM/DD/YYYY H:mm:ss a'));
     });
   });
 
   singleStatScenario('showing last time from now instead of value', function(ctx) {
+
+    beforeEach(() => {
+      clock = sinon.useFakeTimers(epoch);
+    });
+
     ctx.setup(function() {
        ctx.data = [
         {target: 'test.cpu1', datapoints: [[10, 12], [20,1505634997920]]}
@@ -123,7 +131,11 @@ describe('SingleStatCtrl', function() {
     });
 
     it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).to.be('för 2 dagar sedan');
+      expect(ctx.data.valueFormatted).to.be('2 days ago');
+    });
+
+    afterEach(() => {
+      clock.restore();
     });
   });
 
