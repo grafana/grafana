@@ -6,7 +6,7 @@
       <div class="gf-form" ng-show="ctrl.dataType === 'timeseries'">
         <label class="gf-form-label width-6">Stat</label>
         <div class="gf-form-select-wrapper width-7">
-          <select class="gf-form-input" ng-model="ctrl.panel.valueName" ng-options="f for f in ctrl.valueNameOptions" ng-change="ctrl.render()"></select>
+          <select class="gf-form-input" ng-model="ctrl.panel.valueName" ng-options="f.value as f.text for f in ctrl.valueNameOptions" ng-change="ctrl.refresh()"></select>
         </div>
       </div>
       <div class="gf-form" ng-show="ctrl.dataType === 'table'">
