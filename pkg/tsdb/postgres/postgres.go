@@ -229,34 +229,32 @@ func (e PostgresExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Ro
 
 			switch col {
 			case "time":
-				if t, ok := val.(int64); ok == true {
-					rowData.time = null.FloatFrom(float64(t * 1000))
-				}
-				if t, ok := val.(float64); ok == true {
-					rowData.time = null.FloatFrom(float64(t * 1000))
-				}
-				if t, ok := val.(time.Time); ok == true {
-					rowData.time = null.FloatFrom(float64(t.Unix() * 1000))
+				switch value := val.(type) {
+				case int64:
+					rowData.time = null.FloatFrom(float64(value * 1000))
+				case float64:
+					rowData.time = null.FloatFrom(float64(value * 1000))
+				case time.Time:
+					rowData.time = null.FloatFrom(float64(value.Unix() * 1000))
 				}
 			case "value":
-				if value, ok := val.(int64); ok == true {
-					rowData.value = null.FloatFrom(float64(value))
-				}
-				if value, ok := val.(float64); ok == true {
-					rowData.value = null.FloatFrom(value)
-				}
-				if value, ok := val.([]byte); ok == true {
-					value, err := strconv.ParseFloat(string(value), 64)
+				switch value := val.(type) {
+				case int64:
+					rowData.value = null.FloatFrom(float64(value * 1000))
+				case float64:
+					rowData.value = null.FloatFrom(float64(value * 1000))
+				case []byte: // decimal is not converted to a go type but returned as []byte
+					v, err := strconv.ParseFloat(string(value), 64)
 					if err == nil {
-						rowData.value = null.FloatFrom(value)
+						rowData.value = null.FloatFrom(v)
 					}
 				}
 			case "metric":
-				if m, ok := val.([]byte); ok == true {
-					rowData.metric = string(m)
-				}
-				if m, ok := val.(string); ok == true {
-					rowData.metric = m
+				switch value := val.(type) {
+				case string:
+					rowData.metric = value
+				case []byte: // char is not converted to a go string but returned as []byte
+					rowData.metric = string(value)
 				}
 			}
 
