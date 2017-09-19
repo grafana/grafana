@@ -128,6 +128,7 @@ func TestWriteSummary(t *testing.T) {
 		prometheus.SummaryOpts{
 			Name:        "name",
 			Help:        "docstring",
+			Namespace:   "grafana",
 			ConstLabels: prometheus.Labels{"constname": "constvalue"},
 			Objectives:  map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 		},
@@ -187,6 +188,7 @@ func TestWriteHistogram(t *testing.T) {
 		prometheus.HistogramOpts{
 			Name:        "name",
 			Help:        "docstring",
+			Namespace:   "grafana",
 			ConstLabels: prometheus.Labels{"constname": "constvalue"},
 			Buckets:     []float64{0.01, 0.02, 0.05, 0.1},
 		},
@@ -248,6 +250,17 @@ func TestCounterVec(t *testing.T) {
 	cntVec := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name:        "page_response",
+			Namespace:   "grafana",
+			Help:        "docstring",
+			ConstLabels: prometheus.Labels{"constname": "constvalue"},
+		},
+		[]string{"labelname"},
+	)
+
+	apicntVec := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name:        "api_response",
+			Namespace:   "grafana",
 			Help:        "docstring",
 			ConstLabels: prometheus.Labels{"constname": "constvalue"},
 		},
@@ -256,9 +269,12 @@ func TestCounterVec(t *testing.T) {
 
 	reg := prometheus.NewRegistry()
 	reg.MustRegister(cntVec)
+	reg.MustRegister(apicntVec)
 
 	cntVec.WithLabelValues("val1").Inc()
 	cntVec.WithLabelValues("val2").Inc()
+	apicntVec.WithLabelValues("val1").Inc()
+	apicntVec.WithLabelValues("val2").Inc()
 
 	b, err := NewBridge(&Config{
 		URL:             "localhost:8080",
@@ -281,7 +297,9 @@ func TestCounterVec(t *testing.T) {
 		t.Fatalf("error: %v", err)
 	}
 
-	want := `prefix.page.response.constname.constvalue.labelname.val1.count 1 1477043
+	want := `prefix.api.response.constname.constvalue.labelname.val1.count 1 1477043
+prefix.api.response.constname.constvalue.labelname.val2.count 1 1477043
+prefix.page.response.constname.constvalue.labelname.val1.count 1 1477043
 prefix.page.response.constname.constvalue.labelname.val2.count 1 1477043
 `
 	if got := buf.String(); want != got {
@@ -291,6 +309,8 @@ prefix.page.response.constname.constvalue.labelname.val2.count 1 1477043
 	//next collect
 	cntVec.WithLabelValues("val1").Inc()
 	cntVec.WithLabelValues("val2").Inc()
+	apicntVec.WithLabelValues("val1").Inc()
+	apicntVec.WithLabelValues("val2").Inc()
 
 	mfs, err = reg.Gather()
 	if err != nil {
@@ -303,7 +323,9 @@ prefix.page.response.constname.constvalue.labelname.val2.count 1 1477043
 		t.Fatalf("error: %v", err)
 	}
 
-	want2 := `prefix.page.response.constname.constvalue.labelname.val1.count 1 1477053
+	want2 := `prefix.api.response.constname.constvalue.labelname.val1.count 1 1477053
+prefix.api.response.constname.constvalue.labelname.val2.count 1 1477053
+prefix.page.response.constname.constvalue.labelname.val1.count 1 1477053
 prefix.page.response.constname.constvalue.labelname.val2.count 1 1477053
 `
 	if got := buf.String(); want2 != got {
@@ -316,6 +338,7 @@ func TestCounter(t *testing.T) {
 		prometheus.CounterOpts{
 			Name:        "page_response",
 			Help:        "docstring",
+			Namespace:   "grafana",
 			ConstLabels: prometheus.Labels{"constname": "constvalue"},
 		})
 
@@ -373,7 +396,7 @@ func TestCounter(t *testing.T) {
 func TestTrimGrafanaNamespace(t *testing.T) {
 	cntVec := prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name:        "grafana_http_request_total",
+			Name:        "http_request_total",
 			Help:        "docstring",
 			ConstLabels: prometheus.Labels{"constname": "constvalue"},
 		})
@@ -413,7 +436,7 @@ func TestTrimGrafanaNamespace(t *testing.T) {
 func TestSkipNanValues(t *testing.T) {
 	cntVec := prometheus.NewSummary(
 		prometheus.SummaryOpts{
-			Name:        "grafana_http_request_total",
+			Name:        "http_request_total",
 			Help:        "docstring",
 			ConstLabels: prometheus.Labels{"constname": "constvalue"},
 		})
@@ -457,6 +480,7 @@ func TestPush(t *testing.T) {
 		prometheus.CounterOpts{
 			Name:        "name",
 			Help:        "docstring",
+			Namespace:   "grafana",
 			ConstLabels: prometheus.Labels{"constname": "constvalue"},
 		},
 		[]string{"labelname"},
