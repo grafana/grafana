@@ -43,7 +43,6 @@ export class VariableSrv {
       var previousOptions = variable.options.slice();
 
       return variable.updateOptions()
-      .then(this.variableUpdated.bind(this, variable))
       .then(() => {
         if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
           this.$rootScope.$emit('template-variable-value-updated');
