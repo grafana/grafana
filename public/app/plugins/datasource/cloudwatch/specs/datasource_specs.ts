@@ -336,24 +336,20 @@ describe('CloudWatchDatasource', function() {
   describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)', scenario => {
     scenario.setup(() => {
       scenario.requestResponse = {
-        Metrics: [
-          {
-            Namespace: 'AWS/EC2',
-            MetricName: 'CPUUtilization',
-            Dimensions: [
-              {
-                Name: 'InstanceId',
-                Value: 'i-12345678'
-              }
+        results: {
+          metricFindQuery: {
+            tables: [
+              { rows: [['i-12345678', 'i-12345678']] }
             ]
           }
-        ]
+        }
       };
     });
 
     it('should call __ListMetrics and return result', () => {
-      expect(scenario.result[0].text).to.be('i-12345678');
-      expect(scenario.request.data.action).to.be('ListMetrics');
+      expect(scenario.result[0].text).to.contain('i-12345678');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('dimension_values');
     });
   });
 
@@ -431,40 +427,6 @@ describe('CloudWatchDatasource', function() {
       let actual = ctx.ds.getPeriod(target, options, now);
       expect(actual).to.be(expected);
     }
-  });
-
-  describeMetricFindQuery('ec2_instance_attribute(us-east-1, Tags.Name, { "tag:team": [ "sysops" ] })', scenario => {
-    scenario.setup(() => {
-      scenario.requestResponse = {
-        Reservations: [
-          {
-            Instances: [
-              {
-                Tags: [
-                  { Key: 'InstanceId', Value: 'i-123456' },
-                  { Key: 'Name', Value: 'Sysops Dev Server' },
-                  { Key: 'env', Value: 'dev' },
-                  { Key: 'team', Value: 'sysops' }
-                ]
-              },
-              {
-                Tags: [
-                  { Key: 'InstanceId', Value: 'i-789012' },
-                  { Key: 'Name', Value: 'Sysops Staging Server' },
-                  { Key: 'env', Value: 'staging' },
-                  { Key: 'team', Value: 'sysops' }
-                ]
-              }
-            ]
-          }
-        ]
-      };
-    });
-
-    it('should return the "Name" tag for each instance', function() {
-      expect(scenario.result[0].text).to.be('Sysops Dev Server');
-      expect(scenario.result[1].text).to.be('Sysops Staging Server');
-    });
   });
 
 });
