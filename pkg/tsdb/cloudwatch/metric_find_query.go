@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/ec2"
 	cwapi "github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -174,6 +175,9 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queries
 	case "dimension_keys":
 		data, err = e.handleGetDimensions(ctx, parameters, queryContext)
 		break
+	case "ebs_volume_ids":
+		data, err = e.handleGetEbsVolumeIds(ctx, parameters, queryContext)
+		break
 	}
 	if err != nil {
 		queryResult.Error = err
@@ -318,6 +322,70 @@ func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 	}
 
 	return result, nil
+}
+
+func (e *CloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.QueryContext) ([]suggestData, error) {
+	region := parameters.Get("region").MustString()
+	instanceId := parameters.Get("instanceId").MustString()
+
+	instanceIds := []*string{aws.String(instanceId)}
+	instances, err := e.ec2DescribeInstances(region, nil, instanceIds)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]suggestData, 0)
+	for _, mapping := range instances.Reservations[0].Instances[0].BlockDeviceMappings {
+		result = append(result, suggestData{Text: *mapping.Ebs.VolumeId, Value: *mapping.Ebs.VolumeId})
+	}
+
+	return result, nil
+}
+
+func getAwsConfig(dsInfo *cwapi.DatasourceInfo) (*aws.Config, error) {
+	creds, err := cwapi.GetCredentials(dsInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := &aws.Config{
+		Region:      aws.String(dsInfo.Region),
+		Credentials: creds,
+	}
+	return cfg, nil
+}
+
+func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
+	dsInfo := e.getDsInfo(region)
+	cfg, err := getAwsConfig(dsInfo)
+	if err != nil {
+		return nil, errors.New("Failed to call describe instances")
+	}
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		return nil, errors.New("Failed to call describe instances")
+	}
+	svc := ec2.New(sess, cfg)
+
+	params := &ec2.DescribeInstancesInput{
+		Filters:     filters,
+		InstanceIds: instanceIds,
+	}
+
+	var resp ec2.DescribeInstancesOutput
+	err = svc.DescribeInstancesPages(params,
+		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
+			reservations, _ := awsutil.ValuesAtPath(page, "Reservations")
+			for _, reservation := range reservations {
+				resp.Reservations = append(resp.Reservations, reservation.(*ec2.Reservation))
+			}
+			return !lastPage
+		})
+	if err != nil {
+		return nil, errors.New("Failed to call describe instances")
+	}
+
+	return &resp, nil
 }
 
 func getAllMetrics(cwData *cwapi.DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {

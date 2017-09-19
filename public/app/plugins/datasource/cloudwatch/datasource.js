@@ -248,6 +248,28 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       });
     };
 
+    this.getEbsVolumeIds = function(region, instanceId) {
+      var range = timeSrv.timeRange();
+      return backendSrv.post('/api/tsdb/query', {
+        from: range.from,
+        to: range.to,
+        queries: [
+          {
+            refId: 'metricFindQuery',
+            intervalMs: 1, // dummy
+            maxDataPoints: 1, // dummy
+            datasourceId: this.instanceSettings.id,
+            type: 'metricFindQuery',
+            subtype: 'ebs_volume_ids',
+            parameters: {
+              region: region,
+              instanceId: instanceId
+            }
+          }
+        ]
+      }).then(function (r) { return transformSuggestDataFromTable(r); });
+    };
+
     this.performEC2DescribeInstances = function(region, filters, instanceIds) {
       return this.awsRequest({
         region: region,
@@ -301,17 +323,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       if (ebsVolumeIdsQuery) {
         region = templateSrv.replace(ebsVolumeIdsQuery[1]);
         var instanceId = templateSrv.replace(ebsVolumeIdsQuery[2]);
-        var instanceIds = [
-          instanceId
-        ];
-
-        return this.performEC2DescribeInstances(region, [], instanceIds).then(function(result) {
-          var volumeIds = _.map(result.Reservations[0].Instances[0].BlockDeviceMappings, function(mapping) {
-            return mapping.Ebs.VolumeId;
-          });
-
-          return transformSuggestData(volumeIds);
-        });
+        return this.getEbsVolumeIds(region, instanceId);
       }
 
       var ec2InstanceAttributeQuery = query.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
