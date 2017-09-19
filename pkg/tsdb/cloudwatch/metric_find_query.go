@@ -432,11 +432,11 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 	dsInfo := e.getDsInfo(region)
 	cfg, err := getAwsConfig(dsInfo)
 	if err != nil {
-		return nil, errors.New("Failed to call describe instances")
+		return nil, errors.New("Failed to call ec2:DescribeInstances")
 	}
 	sess, err := session.NewSession(cfg)
 	if err != nil {
-		return nil, errors.New("Failed to call describe instances")
+		return nil, errors.New("Failed to call ec2:DescribeInstances")
 	}
 	svc := ec2.New(sess, cfg)
 
@@ -455,7 +455,7 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 			return !lastPage
 		})
 	if err != nil {
-		return nil, errors.New("Failed to call describe instances")
+		return nil, errors.New("Failed to call ec2:DescribeInstances")
 	}
 
 	return &resp, nil
