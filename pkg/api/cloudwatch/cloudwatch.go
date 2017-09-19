@@ -18,7 +18,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -78,7 +77,6 @@ func init() {
 		"DescribeAlarms":          handleDescribeAlarms,
 		"DescribeAlarmsForMetric": handleDescribeAlarmsForMetric,
 		"DescribeAlarmHistory":    handleDescribeAlarmHistory,
-		"DescribeInstances":       handleDescribeInstances,
 	}
 }
 
@@ -394,52 +392,6 @@ func handleDescribeAlarmHistory(req *cwRequest, c *middleware.Context) {
 	}
 
 	resp, err := svc.DescribeAlarmHistory(params)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-
-	c.JSON(200, resp)
-}
-
-func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
-	cfg, err := getAwsConfig(req)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-	svc := ec2.New(sess, cfg)
-
-	reqParam := &struct {
-		Parameters struct {
-			Filters     []*ec2.Filter `json:"filters"`
-			InstanceIds []*string     `json:"instanceIds"`
-		} `json:"parameters"`
-	}{}
-	json.Unmarshal(req.Body, reqParam)
-
-	params := &ec2.DescribeInstancesInput{}
-	if len(reqParam.Parameters.Filters) > 0 {
-		params.Filters = reqParam.Parameters.Filters
-	}
-	if len(reqParam.Parameters.InstanceIds) > 0 {
-		params.InstanceIds = reqParam.Parameters.InstanceIds
-	}
-
-	var resp ec2.DescribeInstancesOutput
-	err = svc.DescribeInstancesPages(params,
-		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
-			reservations, _ := awsutil.ValuesAtPath(page, "Reservations")
-			for _, reservation := range reservations {
-				resp.Reservations = append(resp.Reservations, reservation.(*ec2.Reservation))
-			}
-			return !lastPage
-		})
 	if err != nil {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return

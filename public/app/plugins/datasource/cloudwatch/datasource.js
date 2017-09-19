@@ -293,14 +293,6 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       }).then(function (r) { return transformSuggestDataFromTable(r); });
     };
 
-    this.performEC2DescribeInstances = function(region, filters, instanceIds) {
-      return this.awsRequest({
-        region: region,
-        action: 'DescribeInstances',
-        parameters: { filters: filters, instanceIds: instanceIds }
-      });
-    };
-
     this.metricFindQuery = function(query) {
       var region;
       var namespace;
