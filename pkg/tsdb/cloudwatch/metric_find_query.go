@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"errors"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -178,6 +179,9 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queries
 	case "ebs_volume_ids":
 		data, err = e.handleGetEbsVolumeIds(ctx, parameters, queryContext)
 		break
+	case "ec2_instance_attribute":
+		data, err = e.handleGetEc2InstanceAttribute(ctx, parameters, queryContext)
+		break
 	}
 	if err != nil {
 		queryResult.Error = err
@@ -338,6 +342,75 @@ func (e *CloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, paramete
 	for _, mapping := range instances.Reservations[0].Instances[0].BlockDeviceMappings {
 		result = append(result, suggestData{Text: *mapping.Ebs.VolumeId, Value: *mapping.Ebs.VolumeId})
 	}
+
+	return result, nil
+}
+
+func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.QueryContext) ([]suggestData, error) {
+	region := parameters.Get("region").MustString()
+	attributeName := parameters.Get("attributeName").MustString()
+	filterJson := parameters.Get("filters").MustMap()
+
+	var filters []*ec2.Filter
+	for k, v := range filterJson {
+		if vv, ok := v.([]string); ok {
+			var vvvv []*string
+			for _, vvv := range vv {
+				vvvv = append(vvvv, &vvv)
+			}
+			filters = append(filters, &ec2.Filter{
+				Name:   aws.String(k),
+				Values: vvvv,
+			})
+		}
+	}
+
+	instances, err := e.ec2DescribeInstances(region, filters, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]suggestData, 0)
+	dupCheck := make(map[string]bool)
+	for _, instance := range instances.Reservations[0].Instances {
+		tags := make(map[string]string)
+		for _, tag := range instance.Tags {
+			tags[*tag.Key] = *tag.Value
+		}
+
+		var data string
+		if strings.Index(attributeName, "Tags.") == 0 {
+			tagName := attributeName[5:]
+			data = tags[tagName]
+		} else {
+			attributePath := strings.Split(attributeName, ".")
+			v := reflect.ValueOf(instance)
+			for _, key := range attributePath {
+				if v.Kind() == reflect.Ptr {
+					v = v.Elem()
+				}
+				if v.Kind() != reflect.Struct {
+					return nil, errors.New("invalid attribute path")
+				}
+				v = v.FieldByName(key)
+			}
+			if attr, ok := v.Interface().(*string); ok {
+				data = *attr
+			} else {
+				return nil, errors.New("invalid attribute path")
+			}
+		}
+
+		if _, exists := dupCheck[data]; exists {
+			continue
+		}
+		dupCheck[data] = true
+		result = append(result, suggestData{Text: data, Value: data})
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Text < result[j].Text
+	})
 
 	return result, nil
 }

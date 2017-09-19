@@ -270,6 +270,29 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       }).then(function (r) { return transformSuggestDataFromTable(r); });
     };
 
+    this.getEc2InstanceAttribute = function(region, attributeName, filters) {
+      var range = timeSrv.timeRange();
+      return backendSrv.post('/api/tsdb/query', {
+        from: range.from,
+        to: range.to,
+        queries: [
+          {
+            refId: 'metricFindQuery',
+            intervalMs: 1, // dummy
+            maxDataPoints: 1, // dummy
+            datasourceId: this.instanceSettings.id,
+            type: 'metricFindQuery',
+            subtype: 'ec2_instance_attribute',
+            parameters: {
+              region: region,
+              attributeName: attributeName,
+              filters: filters
+            }
+          }
+        ]
+      }).then(function (r) { return transformSuggestDataFromTable(r); });
+    };
+
     this.performEC2DescribeInstances = function(region, filters, instanceIds) {
       return this.awsRequest({
         region: region,
@@ -282,12 +305,6 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       var region;
       var namespace;
       var metricName;
-
-      var transformSuggestData = function(suggestData) {
-        return _.map(suggestData, function(v) {
-          return { text: v };
-        });
-      };
 
       var regionQuery = query.match(/^regions\(\)/);
       if (regionQuery) {
@@ -329,33 +346,9 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       var ec2InstanceAttributeQuery = query.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
       if (ec2InstanceAttributeQuery) {
         region = templateSrv.replace(ec2InstanceAttributeQuery[1]);
-        var filterJson = JSON.parse(templateSrv.replace(ec2InstanceAttributeQuery[3]));
-        var filters = _.map(filterJson, function(values, name) {
-          return {
-            Name: name,
-            Values: values
-          };
-        });
         var targetAttributeName = templateSrv.replace(ec2InstanceAttributeQuery[2]);
-
-        return this.performEC2DescribeInstances(region, filters, null).then(function(result) {
-          var attributes = _.chain(result.Reservations)
-          .map(function(reservations) {
-            return _.map(reservations.Instances, function(instance) {
-              var tags = {};
-              _.each(instance.Tags, function(tag) {
-                tags[tag.Key] = tag.Value;
-              });
-              instance.Tags = tags;
-              return instance;
-            });
-          })
-          .map(function(instances) {
-            return _.map(instances, targetAttributeName);
-          })
-          .flatten().uniq().sortBy().value();
-          return transformSuggestData(attributes);
-        });
+        var filterJson = JSON.parse(templateSrv.replace(ec2InstanceAttributeQuery[3]));
+        return this.getEc2InstanceAttribute(region, targetAttributeName, filterJson);
       }
 
       return $q.when([]);
