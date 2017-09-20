@@ -400,6 +400,11 @@ function($, _) {
   kbn.valueFormats.currencyJPY = kbn.formatBuilders.currency('¥');
   kbn.valueFormats.currencyRUB = kbn.formatBuilders.currency('₽');
   kbn.valueFormats.currencyUAH = kbn.formatBuilders.currency('₴');
+  kbn.valueFormats.currencyPLN = kbn.formatBuilders.currency('zł');
+  kbn.valueFormats.currencyINR = kbn.formatBuilders.currency('₹');
+  kbn.valueFormats.currencyILS = kbn.formatBuilders.currency('₪');
+  kbn.valueFormats.currencyTRY = kbn.formatBuilders.currency('₺');
+  kbn.valueFormats.currencyBTC = kbn.formatBuilders.currency('₿');
 
   // Data (Binary)
   kbn.valueFormats.bits   = kbn.formatBuilders.binarySIPrefix('b');
@@ -725,12 +730,17 @@ function($, _) {
       {
         text: 'currency',
         submenu: [
-          {text: 'Dollars ($)', value: 'currencyUSD'},
-          {text: 'Pounds (£)',  value: 'currencyGBP'},
-          {text: 'Euro (€)',    value: 'currencyEUR'},
-          {text: 'Yen (¥)',     value: 'currencyJPY'},
-          {text: 'Rubles (₽)',  value: 'currencyRUB'},
-          {text: 'Hryvnias (₴)',  value: 'currencyUAH'},
+          {text: 'Dollars ($)',        value: 'currencyUSD'},
+          {text: 'Pounds (£)',         value: 'currencyGBP'},
+          {text: 'Euro (€)',           value: 'currencyEUR'},
+          {text: 'Yen (¥)',            value: 'currencyJPY'},
+          {text: 'Rubles (₽)',         value: 'currencyRUB'},
+          {text: 'Hryvnias (₴)',       value: 'currencyUAH'},
+          {text: 'Polish złoty (zł)',  value: 'currencyPLN'},
+          {text: 'Indian rupee (₹)',   value: 'currencyINR'},
+          {text: 'Israeli shekel (₪)', value: 'currencyILS'},
+          {text: 'Turkish lira (₺)',   value: 'currencyTRY'},
+          {text: 'Bitcoin (₿)',        value: 'currencyBTC'},
         ]
       },
       {
