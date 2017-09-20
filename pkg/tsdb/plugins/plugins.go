@@ -13,16 +13,10 @@ import (
 
 func Init() (*plugin.Client, error) {
 	/*
-		Setup
-
-		go get -u google.golang.org/grpc \
-		go get -u github.com/golang/protobuf/{proto,protoc-gen-go} \
-		go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway \
+		setup protoc using https://gist.github.com/bergquist/5df1f201bb605e42538ef40f6ccf82a9
+		run "protoc --go_out=plugins=grpc:. *.proto" to update proto files
 	*/
 
-	/*
-		protoc --go_out=plugins=grpc:. *.proto
-	*/
 	logger := log.New("grafana.plugins")
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: plugin.HandshakeConfig{
