@@ -141,7 +141,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       });
     }
 
-    this.getRegions = function () {
+    this.doMetricQueryRequest = function (subtype, parameters) {
       var range = timeSrv.timeRange();
       return backendSrv.post('/api/tsdb/query', {
         from: range.from,
@@ -153,142 +153,58 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
             maxDataPoints: 1, // dummy
             datasourceId: this.instanceSettings.id,
             type: 'metricFindQuery',
-            subtype: 'regions'
+            subtype: subtype,
+            parameters: parameters
           }
         ]
       }).then(function (r) { return transformSuggestDataFromTable(r); });
+    };
+
+    this.getRegions = function () {
+      return this.doMetricQueryRequest('regions', null);
     };
 
     this.getNamespaces = function() {
-      var range = timeSrv.timeRange();
-      return backendSrv.post('/api/tsdb/query', {
-        from: range.from,
-        to: range.to,
-        queries: [
-          {
-            refId: 'metricFindQuery',
-            intervalMs: 1, // dummy
-            maxDataPoints: 1, // dummy
-            datasourceId: this.instanceSettings.id,
-            type: 'metricFindQuery',
-            subtype: 'namespaces'
-          }
-        ]
-      }).then(function (r) { return transformSuggestDataFromTable(r); });
+      return this.doMetricQueryRequest('namespaces', null);
     };
 
     this.getMetrics = function (namespace, region) {
-      var range = timeSrv.timeRange();
-      return backendSrv.post('/api/tsdb/query', {
-        from: range.from,
-        to: range.to,
-        queries: [
-          {
-            refId: 'metricFindQuery',
-            intervalMs: 1, // dummy
-            maxDataPoints: 1, // dummy
-            datasourceId: this.instanceSettings.id,
-            type: 'metricFindQuery',
-            subtype: 'metrics',
-            parameters: {
-              region: region,
-              namespace: templateSrv.replace(namespace)
-            }
-          }
-        ]
-      }).then(function (r) { return transformSuggestDataFromTable(r); });
+      return this.doMetricQueryRequest('metrics', {
+        region: region,
+        namespace: templateSrv.replace(namespace)
+      });
     };
 
     this.getDimensionKeys = function(namespace, region) {
-      var range = timeSrv.timeRange();
-      return backendSrv.post('/api/tsdb/query', {
-        from: range.from,
-        to: range.to,
-        queries: [
-          {
-            refId: 'metricFindQuery',
-            intervalMs: 1, // dummy
-            maxDataPoints: 1, // dummy
-            datasourceId: this.instanceSettings.id,
-            type: 'metricFindQuery',
-            subtype: 'dimension_keys',
-            parameters: {
-              region: region,
-              namespace: templateSrv.replace(namespace)
-            }
-          }
-        ]
-      }).then(function (r) { return transformSuggestDataFromTable(r); });
+      return this.doMetricQueryRequest('dimension_keys', {
+        region: region,
+        namespace: templateSrv.replace(namespace)
+      });
     };
 
     this.getDimensionValues = function(region, namespace, metricName, dimensionKey, filterDimensions) {
-      var range = timeSrv.timeRange();
-      return backendSrv.post('/api/tsdb/query', {
-        from: range.from,
-        to: range.to,
-        queries: [
-          {
-            refId: 'metricFindQuery',
-            intervalMs: 1, // dummy
-            maxDataPoints: 1, // dummy
-            datasourceId: this.instanceSettings.id,
-            type: 'metricFindQuery',
-            subtype: 'dimension_values',
-            parameters: {
-              region: region,
-              namespace: templateSrv.replace(namespace),
-              metricName: templateSrv.replace(metricName),
-              dimensionKey: templateSrv.replace(dimensionKey),
-              dimensions: this.convertDimensionFormat(filterDimensions, {}),
-            }
-          }
-        ]
-      }).then(function (r) { return transformSuggestDataFromTable(r); });
+      return this.doMetricQueryRequest('dimension_values', {
+        region: region,
+        namespace: templateSrv.replace(namespace),
+        metricName: templateSrv.replace(metricName),
+        dimensionKey: templateSrv.replace(dimensionKey),
+        dimensions: this.convertDimensionFormat(filterDimensions, {}),
+      });
     };
 
     this.getEbsVolumeIds = function(region, instanceId) {
-      var range = timeSrv.timeRange();
-      return backendSrv.post('/api/tsdb/query', {
-        from: range.from,
-        to: range.to,
-        queries: [
-          {
-            refId: 'metricFindQuery',
-            intervalMs: 1, // dummy
-            maxDataPoints: 1, // dummy
-            datasourceId: this.instanceSettings.id,
-            type: 'metricFindQuery',
-            subtype: 'ebs_volume_ids',
-            parameters: {
-              region: region,
-              instanceId: instanceId
-            }
-          }
-        ]
-      }).then(function (r) { return transformSuggestDataFromTable(r); });
+      return this.doMetricQueryRequest('ebs_volume_ids', {
+        region: region,
+        instanceId: instanceId
+      });
     };
 
     this.getEc2InstanceAttribute = function(region, attributeName, filters) {
-      var range = timeSrv.timeRange();
-      return backendSrv.post('/api/tsdb/query', {
-        from: range.from,
-        to: range.to,
-        queries: [
-          {
-            refId: 'metricFindQuery',
-            intervalMs: 1, // dummy
-            maxDataPoints: 1, // dummy
-            datasourceId: this.instanceSettings.id,
-            type: 'metricFindQuery',
-            subtype: 'ec2_instance_attribute',
-            parameters: {
-              region: region,
-              attributeName: attributeName,
-              filters: filters
-            }
-          }
-        ]
-      }).then(function (r) { return transformSuggestDataFromTable(r); });
+      return this.doMetricQueryRequest('ec2_instance_attribute', {
+        region: region,
+        attributeName: attributeName,
+        filters: filters
+      });
     };
 
     this.metricFindQuery = function(query) {
