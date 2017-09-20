@@ -170,21 +170,21 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
 
     this.getMetrics = function (namespace, region) {
       return this.doMetricQueryRequest('metrics', {
-        region: region,
+        region: templateSrv.replace(region),
         namespace: templateSrv.replace(namespace)
       });
     };
 
     this.getDimensionKeys = function(namespace, region) {
       return this.doMetricQueryRequest('dimension_keys', {
-        region: region,
+        region: templateSrv.replace(region),
         namespace: templateSrv.replace(namespace)
       });
     };
 
     this.getDimensionValues = function(region, namespace, metricName, dimensionKey, filterDimensions) {
       return this.doMetricQueryRequest('dimension_values', {
-        region: region,
+        region: templateSrv.replace(region),
         namespace: templateSrv.replace(namespace),
         metricName: templateSrv.replace(metricName),
         dimensionKey: templateSrv.replace(dimensionKey),
@@ -194,15 +194,15 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
 
     this.getEbsVolumeIds = function(region, instanceId) {
       return this.doMetricQueryRequest('ebs_volume_ids', {
-        region: region,
-        instanceId: instanceId
+        region: templateSrv.replace(region),
+        instanceId: templateSrv.replace(instanceId)
       });
     };
 
     this.getEc2InstanceAttribute = function(region, attributeName, filters) {
       return this.doMetricQueryRequest('ec2_instance_attribute', {
-        region: region,
-        attributeName: attributeName,
+        region: templateSrv.replace(region),
+        attributeName: templateSrv.replace(attributeName),
         filters: filters
       });
     };
@@ -224,35 +224,39 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
 
       var metricNameQuery = query.match(/^metrics\(([^\)]+?)(,\s?([^,]+?))?\)/);
       if (metricNameQuery) {
-        return this.getMetrics(templateSrv.replace(metricNameQuery[1]), templateSrv.replace(metricNameQuery[3]));
+        namespace = metricNameQuery[1];
+        region = metricNameQuery[3];
+        return this.getMetrics(namespace, region);
       }
 
       var dimensionKeysQuery = query.match(/^dimension_keys\(([^\)]+?)(,\s?([^,]+?))?\)/);
       if (dimensionKeysQuery) {
-        return this.getDimensionKeys(templateSrv.replace(dimensionKeysQuery[1]), templateSrv.replace(dimensionKeysQuery[3]));
+        namespace = dimensionKeysQuery[1];
+        region = dimensionKeysQuery[3];
+        return this.getDimensionKeys(namespace, region);
       }
 
       var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
       if (dimensionValuesQuery) {
-        region = templateSrv.replace(dimensionValuesQuery[1]);
-        namespace = templateSrv.replace(dimensionValuesQuery[2]);
-        metricName = templateSrv.replace(dimensionValuesQuery[3]);
-        var dimensionKey = templateSrv.replace(dimensionValuesQuery[4]);
+        region = dimensionValuesQuery[1];
+        namespace = dimensionValuesQuery[2];
+        metricName = dimensionValuesQuery[3];
+        var dimensionKey = dimensionValuesQuery[4];
 
         return this.getDimensionValues(region, namespace, metricName, dimensionKey, {});
       }
 
       var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
       if (ebsVolumeIdsQuery) {
-        region = templateSrv.replace(ebsVolumeIdsQuery[1]);
-        var instanceId = templateSrv.replace(ebsVolumeIdsQuery[2]);
+        region = ebsVolumeIdsQuery[1];
+        var instanceId = ebsVolumeIdsQuery[2];
         return this.getEbsVolumeIds(region, instanceId);
       }
 
       var ec2InstanceAttributeQuery = query.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
       if (ec2InstanceAttributeQuery) {
-        region = templateSrv.replace(ec2InstanceAttributeQuery[1]);
-        var targetAttributeName = templateSrv.replace(ec2InstanceAttributeQuery[2]);
+        region = ec2InstanceAttributeQuery[1];
+        var targetAttributeName = ec2InstanceAttributeQuery[2];
         var filterJson = JSON.parse(templateSrv.replace(ec2InstanceAttributeQuery[3]));
         return this.getEc2InstanceAttribute(region, targetAttributeName, filterJson);
       }
