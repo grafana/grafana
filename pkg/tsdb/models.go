@@ -6,6 +6,18 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+type TsdbQuery struct {
+	TimeRange *TimeRange
+	Queries   QuerySlice
+}
+
+func NewQueryContext(queries QuerySlice, timeRange *TimeRange) *TsdbQuery {
+	return &TsdbQuery{
+		TimeRange: timeRange,
+		Queries:   queries,
+	}
+}
+
 type Query struct {
 	RefId         string
 	Model         *simplejson.Json

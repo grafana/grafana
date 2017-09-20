@@ -47,7 +47,7 @@ func init() {
 	tsdb.RegisterExecutor("graphite", NewGraphiteExecutor)
 }
 
-func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	from := "-" + formatTimeRange(context.TimeRange.From)

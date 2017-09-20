@@ -84,7 +84,7 @@ func (e *PrometheusExecutor) getClient() (apiv1.API, error) {
 	return apiv1.NewAPI(client), nil
 }
 
-func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	client, err := e.getClient()
@@ -142,7 +142,7 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 	return string(result)
 }
 
-func parseQuery(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) (*PrometheusQuery, error) {
+func parseQuery(queries tsdb.QuerySlice, queryContext *tsdb.TsdbQuery) (*PrometheusQuery, error) {
 	queryModel := queries[0]
 
 	expr, err := queryModel.Model.Get("expr").String()

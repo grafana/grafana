@@ -20,7 +20,7 @@ func newBatch(dsId int64, queries QuerySlice) *Batch {
 	}
 }
 
-func (bg *Batch) process(ctx context.Context, queryContext *QueryContext) {
+func (bg *Batch) process(ctx context.Context, resultChan chan *BatchResult, tsdbQuery *TsdbQuery) {
 	executor, err := getExecutorFor(bg.Queries[0].DataSource)
 
 	if err != nil {
@@ -32,22 +32,22 @@ func (bg *Batch) process(ctx context.Context, queryContext *QueryContext) {
 		for _, query := range bg.Queries {
 			result.QueryResults[query.RefId] = &QueryResult{Error: result.Error}
 		}
-		queryContext.ResultsChan <- result
+		resultChan <- result
 		return
 	}
 
-	res := executor.Execute(ctx, bg.Queries, queryContext)
+	res := executor.Execute(ctx, bg.Queries, tsdbQuery)
 	bg.Done = true
-	queryContext.ResultsChan <- res
+	resultChan <- res
 }
 
 func (bg *Batch) addQuery(query *Query) {
 	bg.Queries = append(bg.Queries, query)
 }
 
-func (bg *Batch) allDependenciesAreIn(context *QueryContext) bool {
+func (bg *Batch) allDependenciesAreIn(res *Response) bool {
 	for key := range bg.Depends {
-		if _, exists := context.Results[key]; !exists {
+		if _, exists := res.Results[key]; !exists {
 			return false
 		}
 	}

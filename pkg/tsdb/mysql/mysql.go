@@ -81,7 +81,7 @@ func (e *MysqlExecutor) initEngine() error {
 	return nil
 }
 
-func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{
 		QueryResults: make(map[string]*tsdb.QueryResult),
 	}

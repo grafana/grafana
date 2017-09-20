@@ -12,7 +12,7 @@ func NewQueryParser() *QueryParser {
 
 type QueryParser struct{}
 
-func (qp *QueryParser) Parse(model *simplejson.Json, dsInfo *models.DataSource, queryContext *tsdb.QueryContext) (*Query, error) {
+func (qp *QueryParser) Parse(model *simplejson.Json, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*Query, error) {
 	query := &Query{TimeRange: queryContext.TimeRange}
 	query.AddClusterToAlias = model.Get("addClusterToAlias").MustBool(false)
 	query.AddHostToAlias = model.Get("addHostToAlias").MustBool(false)

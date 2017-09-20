@@ -14,7 +14,7 @@ func TestMQEQueryParser(t *testing.T) {
 		parser := &QueryParser{}
 
 		dsInfo := &models.DataSource{JsonData: simplejson.New()}
-		queryContext := &tsdb.QueryContext{}
+		queryContext := &tsdb.TsdbQuery{}
 
 		Convey("can parse simple mqe model", func() {
 			json := `

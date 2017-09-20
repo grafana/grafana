@@ -7,7 +7,7 @@ import (
 type HandleRequestFunc func(ctx context.Context, req *Request) (*Response, error)
 
 func HandleRequest(ctx context.Context, req *Request) (*Response, error) {
-	context := NewQueryContext(req.Queries, req.TimeRange)
+	tsdbQuery := NewQueryContext(req.Queries, req.TimeRange)
 
 	batches, err := getBatches(req)
 	if err != nil {
@@ -15,20 +15,23 @@ func HandleRequest(ctx context.Context, req *Request) (*Response, error) {
 	}
 
 	currentlyExecuting := 0
+	resultsChan := make(chan *BatchResult)
 
 	for _, batch := range batches {
 		if len(batch.Depends) == 0 {
 			currentlyExecuting += 1
 			batch.Started = true
-			go batch.process(ctx, context)
+			go batch.process(ctx, resultsChan, tsdbQuery)
 		}
 	}
 
-	response := &Response{}
+	response := &Response{
+		Results: make(map[string]*QueryResult),
+	}
 
 	for currentlyExecuting != 0 {
 		select {
-		case batchResult := <-context.ResultsChan:
+		case batchResult := <-resultsChan:
 			currentlyExecuting -= 1
 
 			response.BatchTimings = append(response.BatchTimings, batchResult.Timings)
@@ -38,7 +41,7 @@ func HandleRequest(ctx context.Context, req *Request) (*Response, error) {
 			}
 
 			for refId, result := range batchResult.QueryResults {
-				context.Results[refId] = result
+				response.Results[refId] = result
 			}
 
 			for _, batch := range batches {
@@ -47,10 +50,10 @@ func HandleRequest(ctx context.Context, req *Request) (*Response, error) {
 					continue
 				}
 
-				if batch.allDependenciesAreIn(context) {
+				if batch.allDependenciesAreIn(response) {
 					currentlyExecuting += 1
 					batch.Started = true
-					go batch.process(ctx, context)
+					go batch.process(ctx, resultsChan, tsdbQuery)
 				}
 			}
 		case <-ctx.Done():
@@ -58,6 +61,6 @@ func HandleRequest(ctx context.Context, req *Request) (*Response, error) {
 		}
 	}
 
-	response.Results = context.Results
+	//response.Results = tsdbQuery.Results
 	return response, nil
 }

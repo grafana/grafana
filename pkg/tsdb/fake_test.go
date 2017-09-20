@@ -11,7 +11,7 @@ type FakeExecutor struct {
 	resultsFn map[string]ResultsFn
 }
 
-type ResultsFn func(context *QueryContext) *QueryResult
+type ResultsFn func(context *TsdbQuery) *QueryResult
 
 func NewFakeExecutor(dsInfo *models.DataSource) (*FakeExecutor, error) {
 	return &FakeExecutor{
@@ -20,7 +20,7 @@ func NewFakeExecutor(dsInfo *models.DataSource) (*FakeExecutor, error) {
 	}, nil
 }
 
-func (e *FakeExecutor) Execute(ctx context.Context, queries QuerySlice, context *QueryContext) *BatchResult {
+func (e *FakeExecutor) Execute(ctx context.Context, queries QuerySlice, context *TsdbQuery) *BatchResult {
 	result := &BatchResult{QueryResults: make(map[string]*QueryResult)}
 	for _, query := range queries {
 		if results, has := e.results[query.RefId]; has {

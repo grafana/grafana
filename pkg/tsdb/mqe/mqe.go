@@ -44,7 +44,7 @@ type QueryToSend struct {
 	QueryRef *Query
 }
 
-func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	availableSeries, err := e.tokenClient.GetTokenData(ctx)

@@ -48,7 +48,7 @@ func init() {
 	tsdb.RegisterExecutor("opentsdb", NewOpenTsdbExecutor)
 }
 
-func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	var tsdbQuery OpenTsdbQuery
