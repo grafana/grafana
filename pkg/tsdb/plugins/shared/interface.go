@@ -12,12 +12,6 @@ var PluginMap = map[string]plugin.Plugin{
 	"tsdb_mock": &TsdbPluginImpl{},
 }
 
-var Handshake = plugin.HandshakeConfig{
-	ProtocolVersion:  1,
-	MagicCookieKey:   "BASIC_PLUGIN",
-	MagicCookieValue: "hello",
-}
-
 type TsdbPlugin interface {
 	Get(ctx context.Context, req *proto.TsdbRequest) (*proto.TsdbResponse, error)
 }

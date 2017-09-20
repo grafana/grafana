@@ -1,8 +1,6 @@
 package plugins
 
 import (
-	"fmt"
-	"os"
 	"os/exec"
 
 	"golang.org/x/net/context"
@@ -20,47 +18,44 @@ func Init() (*plugin.Client, error) {
 		go get -u google.golang.org/grpc \
 		go get -u github.com/golang/protobuf/{proto,protoc-gen-go} \
 		go get -u github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway \
-
 	*/
 
 	/*
-		Generate
-
-		sudo protoc --go_out=. *.proto
 		protoc --go_out=plugins=grpc:. *.proto
 	*/
-	// initial goal: pass a string object back and forth over grpc.
-	// simplify tsdb req/res message/service
-
-	//lets be silly
-	//plugin path
+	logger := log.New("grafana.plugins")
 	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig:  shared.Handshake,
+		HandshakeConfig: plugin.HandshakeConfig{
+			ProtocolVersion:  1,
+			MagicCookieKey:   "BASIC_PLUGIN",
+			MagicCookieValue: "hello",
+		},
 		Plugins:          shared.PluginMap,
-		Cmd:              exec.Command("sh", "-c", "/home/carl/go/src/github.com/grafana/simple-plugin/simple-plugin"),
+		Cmd:              exec.Command("sh", "-c", "/home/carl/go/src/github.com/grafana/grafana/pkg/tsdb/plugins/mock_tsdb_plugin/simple-plugin"),
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
+		Logger:           logWrapper{logger: logger},
 	})
 
 	// Connect via RPC
 	rpcClient, err := client.Client()
 	if err != nil {
-		fmt.Println("Error:", err.Error())
-		os.Exit(1)
+		return nil, err
 	}
 
 	// Request the plugin
-	raw, err := rpcClient.Dispense("kv")
+	raw, err := rpcClient.Dispense("tsdb_mock")
 	if err != nil {
-		fmt.Println("Error:", err.Error())
-		//os.Exit(1)
-		//client.Kill()
 		return nil, err
 	}
 
 	plugin := raw.(shared.TsdbPlugin)
 	response, err := plugin.Get(context.Background(), &proto.TsdbRequest{})
 
-	log.Error2("got response from plugin. ", "response", response)
+	if err != nil {
+		logger.Error("Response from plugin. ", "response", response)
+	} else {
+		logger.Info("Response from plugin. ", "response", response)
+	}
 
 	return client, nil
 }
