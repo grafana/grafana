@@ -1,0 +1,32 @@
+syntax = "proto3";
+option go_package = "proto";
+
+package plugins;
+
+// Message represents a simple message sent to the Echo service.
+message TsdbRequest {
+  int64 from = 1;
+  int64 to = 2;
+  repeated TsdbQuery queries = 3;
+}
+
+message TsdbQuery {
+  string queryJson = 1;
+}
+
+message TsdbResponse {
+    string error = 1;
+    string errorString = 2;
+    string refId = 3;
+    string metaJson = 4;
+    repeated TsdbSeries series = 5;
+    //repeat TsdbTables tables = x;    
+}
+
+message TsdbSeries {
+  string name = 1;
+}
+
+service TsdbPlugin {
+    rpc Get(TsdbRequest) returns (TsdbResponse);
+}
