@@ -81,7 +81,7 @@ func (e *MysqlExecutor) initEngine() error {
 	return nil
 }
 
-func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *MysqlExecutor) Execute(ctx context.Context, context *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{
 		QueryResults: make(map[string]*tsdb.QueryResult),
 	}
@@ -91,7 +91,7 @@ func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, co
 	defer session.Close()
 	db := session.DB()
 
-	for _, query := range queries {
+	for _, query := range context.Queries {
 		rawSql := query.Model.Get("rawSql").MustString()
 		if rawSql == "" {
 			continue

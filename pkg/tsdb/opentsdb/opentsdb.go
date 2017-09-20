@@ -48,7 +48,7 @@ func init() {
 	tsdb.RegisterExecutor("opentsdb", NewOpenTsdbExecutor)
 }
 
-func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *OpenTsdbExecutor) Execute(ctx context.Context, queryContext *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	var tsdbQuery OpenTsdbQuery
@@ -56,7 +56,7 @@ func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 	tsdbQuery.Start = queryContext.TimeRange.GetFromAsMsEpoch()
 	tsdbQuery.End = queryContext.TimeRange.GetToAsMsEpoch()
 
-	for _, query := range queries {
+	for _, query := range queryContext.Queries {
 		metric := e.buildMetric(query)
 		tsdbQuery.Queries = append(tsdbQuery.Queries, metric)
 	}

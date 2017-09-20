@@ -4,10 +4,13 @@ import (
 	"context"
 )
 
-type HandleRequestFunc func(ctx context.Context, req *Request) (*Response, error)
+type HandleRequestFunc func(ctx context.Context, req *TsdbQuery) (*Response, error)
 
-func HandleRequest(ctx context.Context, req *Request) (*Response, error) {
-	tsdbQuery := NewQueryContext(req.Queries, req.TimeRange)
+func HandleRequest(ctx context.Context, req *TsdbQuery) (*Response, error) {
+	tsdbQuery := &TsdbQuery{
+		Queries:   req.Queries,
+		TimeRange: req.TimeRange,
+	}
 
 	batches, err := getBatches(req)
 	if err != nil {

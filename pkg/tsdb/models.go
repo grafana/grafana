@@ -8,14 +8,7 @@ import (
 
 type TsdbQuery struct {
 	TimeRange *TimeRange
-	Queries   QuerySlice
-}
-
-func NewQueryContext(queries QuerySlice, timeRange *TimeRange) *TsdbQuery {
-	return &TsdbQuery{
-		TimeRange: timeRange,
-		Queries:   queries,
-	}
+	Queries   []*Query
 }
 
 type Query struct {
@@ -24,16 +17,8 @@ type Query struct {
 	Depends       []string
 	DataSource    *models.DataSource
 	Results       []*TimeSeries
-	Exclude       bool
 	MaxDataPoints int64
 	IntervalMs    int64
-}
-
-type QuerySlice []*Query
-
-type Request struct {
-	TimeRange *TimeRange
-	Queries   QuerySlice
 }
 
 type Response struct {

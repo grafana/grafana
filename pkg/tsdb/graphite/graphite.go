@@ -47,7 +47,7 @@ func init() {
 	tsdb.RegisterExecutor("graphite", NewGraphiteExecutor)
 }
 
-func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *GraphiteExecutor) Execute(ctx context.Context, context *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	from := "-" + formatTimeRange(context.TimeRange.From)
@@ -61,7 +61,7 @@ func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		"maxDataPoints": []string{"500"},
 	}
 
-	for _, query := range queries {
+	for _, query := range context.Queries {
 		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
 			target = fixIntervalFormat(fullTarget)
 		} else {

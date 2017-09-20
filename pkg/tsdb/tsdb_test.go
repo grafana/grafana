@@ -14,8 +14,8 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When batches groups for query", t, func() {
 
 		Convey("Given 3 queries for 2 data sources", func() {
-			request := &Request{
-				Queries: QuerySlice{
+			request := &TsdbQuery{
+				Queries: []*Query{
 					{RefId: "A", DataSource: &models.DataSource{Id: 1}},
 					{RefId: "B", DataSource: &models.DataSource{Id: 1}},
 					{RefId: "C", DataSource: &models.DataSource{Id: 2}},
@@ -31,8 +31,8 @@ func TestMetricQuery(t *testing.T) {
 		})
 
 		Convey("Given query 2 depends on query 1", func() {
-			request := &Request{
-				Queries: QuerySlice{
+			request := &TsdbQuery{
+				Queries: []*Query{
 					{RefId: "A", DataSource: &models.DataSource{Id: 1}},
 					{RefId: "B", DataSource: &models.DataSource{Id: 2}},
 					{RefId: "C", DataSource: &models.DataSource{Id: 3}, Depends: []string{"A", "B"}},
@@ -55,8 +55,8 @@ func TestMetricQuery(t *testing.T) {
 	})
 
 	Convey("When executing request with one query", t, func() {
-		req := &Request{
-			Queries: QuerySlice{
+		req := &TsdbQuery{
+			Queries: []*Query{
 				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
 			},
 		}
@@ -74,8 +74,8 @@ func TestMetricQuery(t *testing.T) {
 	})
 
 	Convey("When executing one request with two queries from same data source", t, func() {
-		req := &Request{
-			Queries: QuerySlice{
+		req := &TsdbQuery{
+			Queries: []*Query{
 				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
 				{RefId: "B", DataSource: &models.DataSource{Id: 1, Type: "test"}},
 			},
@@ -100,8 +100,8 @@ func TestMetricQuery(t *testing.T) {
 	})
 
 	Convey("When executing one request with three queries from different datasources", t, func() {
-		req := &Request{
-			Queries: QuerySlice{
+		req := &TsdbQuery{
+			Queries: []*Query{
 				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
 				{RefId: "B", DataSource: &models.DataSource{Id: 1, Type: "test"}},
 				{RefId: "C", DataSource: &models.DataSource{Id: 2, Type: "test"}},
@@ -117,8 +117,8 @@ func TestMetricQuery(t *testing.T) {
 	})
 
 	Convey("When query uses data source of unknown type", t, func() {
-		req := &Request{
-			Queries: QuerySlice{
+		req := &TsdbQuery{
+			Queries: []*Query{
 				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "asdasdas"}},
 			},
 		}
@@ -128,8 +128,8 @@ func TestMetricQuery(t *testing.T) {
 	})
 
 	Convey("When executing request that depend on other query", t, func() {
-		req := &Request{
-			Queries: QuerySlice{
+		req := &TsdbQuery{
+			Queries: []*Query{
 				{
 					RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"},
 				},
@@ -150,7 +150,7 @@ func TestMetricQuery(t *testing.T) {
 		fakeExecutor.HandleQuery("B", func(c *TsdbQuery) *QueryResult {
 			return &QueryResult{
 				Series: TimeSeriesSlice{
-					&TimeSeries{Name: "Bres+" + c.Results["A"].Series[0].Name},
+					&TimeSeries{Name: "Bres+Ares"},
 				}}
 		})
 

@@ -20,9 +20,9 @@ func NewFakeExecutor(dsInfo *models.DataSource) (*FakeExecutor, error) {
 	}, nil
 }
 
-func (e *FakeExecutor) Execute(ctx context.Context, queries QuerySlice, context *TsdbQuery) *BatchResult {
+func (e *FakeExecutor) Execute(ctx context.Context, context *TsdbQuery) *BatchResult {
 	result := &BatchResult{QueryResults: make(map[string]*QueryResult)}
-	for _, query := range queries {
+	for _, query := range context.Queries {
 		if results, has := e.results[query.RefId]; has {
 			result.QueryResults[query.RefId] = results
 		}

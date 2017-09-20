@@ -8,7 +8,7 @@ import (
 )
 
 type Executor interface {
-	Execute(ctx context.Context, queries QuerySlice, query *TsdbQuery) *BatchResult
+	Execute(ctx context.Context, query *TsdbQuery) *BatchResult
 }
 
 var registry map[string]GetExecutorFn

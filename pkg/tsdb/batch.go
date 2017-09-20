@@ -4,7 +4,7 @@ import "context"
 
 type Batch struct {
 	DataSourceId int64
-	Queries      QuerySlice
+	Queries      []*Query
 	Depends      map[string]bool
 	Done         bool
 	Started      bool
@@ -12,7 +12,7 @@ type Batch struct {
 
 type BatchSlice []*Batch
 
-func newBatch(dsId int64, queries QuerySlice) *Batch {
+func newBatch(dsId int64, queries []*Query) *Batch {
 	return &Batch{
 		DataSourceId: dsId,
 		Queries:      queries,
@@ -36,7 +36,10 @@ func (bg *Batch) process(ctx context.Context, resultChan chan *BatchResult, tsdb
 		return
 	}
 
-	res := executor.Execute(ctx, bg.Queries, tsdbQuery)
+	res := executor.Execute(ctx, &TsdbQuery{
+		Queries:   bg.Queries,
+		TimeRange: tsdbQuery.TimeRange,
+	})
 	bg.Done = true
 	resultChan <- res
 }
@@ -55,14 +58,14 @@ func (bg *Batch) allDependenciesAreIn(res *Response) bool {
 	return true
 }
 
-func getBatches(req *Request) (BatchSlice, error) {
+func getBatches(req *TsdbQuery) (BatchSlice, error) {
 	batches := make(BatchSlice, 0)
 
 	for _, query := range req.Queries {
 		if foundBatch := findMatchingBatchGroup(query, batches); foundBatch != nil {
 			foundBatch.addQuery(query)
 		} else {
-			newBatch := newBatch(query.DataSource.Id, QuerySlice{query})
+			newBatch := newBatch(query.DataSource.Id, []*Query{query})
 			batches = append(batches, newBatch)
 
 			for _, refId := range query.Depends {
