@@ -8,6 +8,7 @@ import (
 
 type Router interface {
 	Handle(method, pattern string, handlers []macaron.Handler) *macaron.Route
+	Get(pattern string, handlers ...macaron.Handler) *macaron.Route
 }
 
 type RouteRegister interface {
@@ -62,7 +63,14 @@ func (rr *routeRegister) Group(pattern string, fn func(rr RouteRegister), handle
 
 func (rr *routeRegister) Register(router Router) *macaron.Router {
 	for _, r := range rr.routes {
-		router.Handle(r.method, r.pattern, r.handlers)
+		// GET requests have to be added to macaron routing using Get()
+		// Otherwise HEAD requests will not be allowed.
+		// https://github.com/go-macaron/macaron/blob/a325110f8b392bce3e5cdeb8c44bf98078ada3be/router.go#L198
+		if r.method == http.MethodGet {
+			router.Get(r.pattern, r.handlers...)
+		} else {
+			router.Handle(r.method, r.pattern, r.handlers)
+		}
 	}
 
 	for _, g := range rr.groups {
