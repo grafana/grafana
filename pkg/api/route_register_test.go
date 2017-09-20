@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/http"
 	"strconv"
 	"testing"
 
@@ -15,6 +16,16 @@ func (fr *fakeRouter) Handle(method, pattern string, handlers []macaron.Handler)
 	fr.route = append(fr.route, route{
 		pattern:  pattern,
 		method:   method,
+		handlers: handlers,
+	})
+
+	return &macaron.Route{}
+}
+
+func (fr *fakeRouter) Get(pattern string, handlers ...macaron.Handler) *macaron.Route {
+	fr.route = append(fr.route, route{
+		pattern:  pattern,
+		method:   http.MethodGet,
 		handlers: handlers,
 	})
 

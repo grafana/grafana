@@ -67,11 +67,11 @@ export class AdhocVariable implements Variable {
   }
 
   escapeDelimiter(value) {
-    return value.replace('|', '__gfp__');
+    return value.replace(/\|/g, '__gfp__');
   }
 
   unescapeDelimiter(value) {
-    return value.replace('__gfp__', '|');
+    return value.replace(/__gfp__/g, '|');
   }
 
   setFilters(filters: any[]) {
