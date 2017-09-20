@@ -256,8 +256,8 @@ func (e PostgresExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Ro
 		}
 
 		for i, col := range columnNames {
-			if i == timeIndex {
-				break
+			if i == timeIndex || i == metricIndex {
+				continue
 			}
 
 			switch columnValue := values[i].(type) {
