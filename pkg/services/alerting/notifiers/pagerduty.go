@@ -3,6 +3,8 @@ package notifiers
 import (
 	"strconv"
 
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -74,15 +76,9 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Rule.State == m.AlertStateOK {
 		eventType = "resolve"
 	}
-	customData := make([]map[string]interface{}, 0)
-	fieldLimitCount := 4
-	for index, evt := range evalContext.EvalMatches {
-		customData = append(customData, map[string]interface{}{
-			evt.Metric: evt.Value,
-		})
-		if index > fieldLimitCount {
-			break
-		}
+	customData := "Triggered metrics:\n\n"
+	for _, evt := range evalContext.EvalMatches {
+		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
 	}
 
 	this.log.Info("Notifying Pagerduty", "event_type", eventType)
