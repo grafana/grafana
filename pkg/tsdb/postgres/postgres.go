@@ -182,8 +182,7 @@ func (e PostgresExecutor) getTypedRowData(rows *core.Rows) (tsdb.RowValues, erro
 	values := make([]interface{}, len(types))
 	valuePtrs := make([]interface{}, len(types))
 
-	for i, stype := range types {
-		e.log.Debug("type", "type", stype)
+	for i, _ := range types {
 		valuePtrs[i] = &values[i]
 	}
 
