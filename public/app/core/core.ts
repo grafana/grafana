@@ -51,6 +51,7 @@ import {helpModal} from './components/help/help';
 import {collapseBox} from './components/collapse_box';
 import {JsonExplorer} from './components/json_explorer/json_explorer';
 import {NavModelSrv, NavModel} from './nav_model_srv';
+import {CoolButton} from './components/CoolButton';
 
 
 export {
@@ -80,4 +81,5 @@ export {
   JsonExplorer,
   NavModelSrv,
   NavModel,
+  CoolButton,
 };
