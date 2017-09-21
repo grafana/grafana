@@ -18,9 +18,8 @@ import (
 )
 
 type PostgresExecutor struct {
-	datasource *models.DataSource
-	engine     *xorm.Engine
-	log        log.Logger
+	engine *xorm.Engine
+	log    log.Logger
 }
 
 type engineCacheType struct {
@@ -35,16 +34,15 @@ var engineCache = engineCacheType{
 }
 
 func init() {
-	tsdb.RegisterExecutor("postgres", NewPostgresExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("postgres", NewPostgresExecutor)
 }
 
-func NewPostgresExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
+func NewPostgresExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	executor := &PostgresExecutor{
-		datasource: datasource,
-		log:        log.New("tsdb.postgres"),
+		log: log.New("tsdb.postgres"),
 	}
 
-	err := executor.initEngine()
+	err := executor.initEngine(datasource)
 	if err != nil {
 		return nil, err
 	}
@@ -52,19 +50,19 @@ func NewPostgresExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
 	return executor, nil
 }
 
-func (e *PostgresExecutor) initEngine() error {
+func (e *PostgresExecutor) initEngine(dsInfo *models.DataSource) error {
 	engineCache.Lock()
 	defer engineCache.Unlock()
 
-	if engine, present := engineCache.cache[e.datasource.Id]; present {
-		if version, _ := engineCache.versions[e.datasource.Id]; version == e.datasource.Version {
+	if engine, present := engineCache.cache[dsInfo.Id]; present {
+		if version, _ := engineCache.versions[dsInfo.Id]; version == dsInfo.Version {
 			e.engine = engine
 			return nil
 		}
 	}
 
-	sslmode := e.datasource.JsonData.Get("sslmode").MustString("require")
-	cnnstr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", e.datasource.User, e.datasource.Password, e.datasource.Url, e.datasource.Database, sslmode)
+	sslmode := dsInfo.JsonData.Get("sslmode").MustString("require")
+	cnnstr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", dsInfo.User, dsInfo.Password, dsInfo.Url, dsInfo.Database, sslmode)
 	e.log.Debug("getEngine", "connection", cnnstr)
 
 	engine, err := xorm.NewEngine("postgres", cnnstr)
@@ -74,29 +72,29 @@ func (e *PostgresExecutor) initEngine() error {
 		return err
 	}
 
-	engineCache.cache[e.datasource.Id] = engine
+	engineCache.cache[dsInfo.Id] = engine
 	e.engine = engine
 	return nil
 }
 
-func (e *PostgresExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{
-		QueryResults: make(map[string]*tsdb.QueryResult),
+func (e *PostgresExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
 	}
 
-	macroEngine := NewPostgresMacroEngine(context.TimeRange)
+	macroEngine := NewPostgresMacroEngine(tsdbQuery.TimeRange)
 	session := e.engine.NewSession()
 	defer session.Close()
 	db := session.DB()
 
-	for _, query := range queries {
+	for _, query := range tsdbQuery.Queries {
 		rawSql := query.Model.Get("rawSql").MustString()
 		if rawSql == "" {
 			continue
 		}
 
 		queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefId}
-		result.QueryResults[query.RefId] = queryResult
+		result.Results[query.RefId] = queryResult
 
 		rawSql, err := macroEngine.Interpolate(rawSql)
 		if err != nil {
@@ -132,7 +130,7 @@ func (e *PostgresExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 func (e PostgresExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
