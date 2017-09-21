@@ -158,4 +158,4 @@ There is an option under Series overrides to draw lines as dashes. Set Dashes to
 
 ## Time Range
 
-![](/img/docs/v2/graph_time_range.png)
+<img src="/img/docs/v45/graph-time-range.png" class="no-shadow">
