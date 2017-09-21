@@ -1,8 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import config from 'app/core/config';
-import _ from 'lodash';
-import $ from 'jquery';
 import coreModule from '../../core_module';
 import {NavModel, NavModelItem}  from '../../nav_model_srv';
 
@@ -12,13 +9,17 @@ export class NavbarCtrl {
   hasMenu: boolean;
 
   /** @ngInject */
-  constructor(private $scope, private $rootScope, private contextSrv) {
+  constructor(private $rootScope, private contextSrv) {
     this.section = this.model.section;
     this.hasMenu = this.model.menu.length > 0;
   }
 
   showSearch() {
     this.$rootScope.appEvent('show-dash-search');
+  }
+
+  toggleSideMenu() {
+    this.contextSrv.toggleSideMenu();
   }
 
   navItemClicked(navItem, evt) {

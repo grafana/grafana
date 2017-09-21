@@ -7,7 +7,7 @@ export class DeltaCtrl {
   observer: any;
 
   /** @ngInject */
-  constructor(private $rootScope) {
+  constructor($rootScope) {
     const waitForCompile = function(mutations) {
       if (mutations.length === 1) {
         this.$rootScope.appEvent('json-diff-ready');

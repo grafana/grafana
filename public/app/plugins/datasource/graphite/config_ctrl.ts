@@ -1,8 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
-import _ from 'lodash';
-
 export class GraphiteConfigCtrl {
   static templateUrl = 'public/app/plugins/datasource/graphite/partials/config.html';
   current: any;

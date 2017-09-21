@@ -1,11 +1,8 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
 import config from 'app/core/config';
 import _ from 'lodash';
-import $ from 'jquery';
 import coreModule from '../../core_module';
-import appEvents from 'app/core/app_events';
 
 export class SearchCtrl {
   isOpen: boolean;
@@ -22,7 +19,7 @@ export class SearchCtrl {
   openCompleted: boolean;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private $timeout, private backendSrv, private contextSrv, private $rootScope) {
+  constructor($scope, private $location, private $timeout, private backendSrv, public contextSrv, $rootScope) {
     $rootScope.onAppEvent('show-dash-search', this.openSearch.bind(this), $scope);
     $rootScope.onAppEvent('hide-dash-search', this.closeSearch.bind(this), $scope);
   }

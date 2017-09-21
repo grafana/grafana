@@ -2,10 +2,6 @@
 
 
 import _ from 'lodash';
-import $ from 'jquery';
-import moment from 'moment';
-import angular from 'angular';
-
 import kbn from 'app/core/utils/kbn';
 
 export class ColumnOptionsCtrl {
@@ -22,8 +18,9 @@ export class ColumnOptionsCtrl {
   activeStyleIndex: number;
 
   /** @ngInject */
-  constructor($scope, private $q, private uiSegmentSrv) {
+  constructor($scope) {
     $scope.editor = this;
+
     this.activeStyleIndex = 0;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;

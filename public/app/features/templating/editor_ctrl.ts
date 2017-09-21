@@ -7,7 +7,7 @@ import {variableTypes} from './variable';
 export class VariableEditorCtrl {
 
   /** @ngInject **/
-  constructor(private $scope, private datasourceSrv, private variableSrv, templateSrv) {
+  constructor($scope, datasourceSrv, variableSrv, templateSrv) {
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
     $scope.namePattern = /^(?!__).*$/;

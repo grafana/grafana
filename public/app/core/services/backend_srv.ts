@@ -1,8 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
-import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 
@@ -12,7 +10,7 @@ export class BackendSrv {
   private noBackendCache: boolean;
 
   /** @ngInject */
-  constructor(private $http, private alertSrv, private $rootScope, private $q, private $timeout, private contextSrv) {
+  constructor(private $http, private alertSrv, private $q, private $timeout, private contextSrv) {
   }
 
   get(url, params?) {

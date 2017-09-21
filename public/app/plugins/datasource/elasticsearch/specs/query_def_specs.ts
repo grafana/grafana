@@ -1,5 +1,5 @@
 
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, it, expect} from 'test/lib/common';
 
 import queryDef from '../query_def';
 

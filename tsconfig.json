@@ -9,13 +9,12 @@
         "rootDir": "public/",
         "module": "system",
         "jsx": "react",
-        "noEmitOnError": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "noImplicitReturns":false,
+        "noEmitOnError": false,
+        "emitDecoratorMetadata": false,
+        "experimentalDecorators": false,
+        "noImplicitReturns": false,
         "noImplicitThis": false,
         "noImplicitUseStrict":false,
-        "noUnusedLocals":false,
         "moduleResolution": "classic"
     },
     "include": [

@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import {assignModelProperties} from 'app/core/core';
 

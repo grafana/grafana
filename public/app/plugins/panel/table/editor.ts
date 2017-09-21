@@ -2,12 +2,7 @@
 
 
 import _ from 'lodash';
-import $ from 'jquery';
-import moment from 'moment';
-import angular from 'angular';
-
 import {transformers} from './transformers';
-import kbn from 'app/core/utils/kbn';
 
 export class TablePanelEditorCtrl {
   panel: any;
