@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/components/null"
@@ -100,6 +102,12 @@ func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlic
 		End:   query.End,
 		Step:  query.Step,
 	}
+
+	span, ctx := opentracing.StartSpanFromContext(ctx, "alerting.prometheus")
+	span.SetTag("expr", query.Expr)
+	span.SetTag("start_unixnano", int64(query.Start.UnixNano()))
+	span.SetTag("stop_unixnano", int64(query.End.UnixNano()))
+	defer span.Finish()
 
 	value, err := client.QueryRange(ctx, query.Expr, timeRange)
 
