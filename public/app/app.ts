@@ -9,6 +9,8 @@ import 'angular-sanitize';
 import 'angular-dragdrop';
 import 'angular-bindonce';
 import 'angular-ui';
+import 'react';
+import 'react-dom';
 import 'ngreact';
 
 import $ from 'jquery';

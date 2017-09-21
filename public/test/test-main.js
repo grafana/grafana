@@ -65,7 +65,7 @@
         deps: ['jquery'],
         exports: 'angular',
       },
-      'vendor/angular-mocks/angular-mocks.js': {
+      'vendor/npm/angular-mocks/angular-mocks.js': {
         format: 'global',
         deps: ['angular'],
       },
