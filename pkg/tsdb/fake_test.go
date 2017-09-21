@@ -20,18 +20,18 @@ func NewFakeExecutor(dsInfo *models.DataSource) (*FakeExecutor, error) {
 	}, nil
 }
 
-func (e *FakeExecutor) Query(ctx context.Context, dsInfo *models.DataSource, context *TsdbQuery) *BatchResult {
-	result := &BatchResult{QueryResults: make(map[string]*QueryResult)}
+func (e *FakeExecutor) Query(ctx context.Context, dsInfo *models.DataSource, context *TsdbQuery) (*Response, error) {
+	result := &Response{Results: make(map[string]*QueryResult)}
 	for _, query := range context.Queries {
 		if results, has := e.results[query.RefId]; has {
-			result.QueryResults[query.RefId] = results
+			result.Results[query.RefId] = results
 		}
 		if testFunc, has := e.resultsFn[query.RefId]; has {
-			result.QueryResults[query.RefId] = testFunc(context)
+			result.Results[query.RefId] = testFunc(context)
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 func (e *FakeExecutor) Return(refId string, series TimeSeriesSlice) {

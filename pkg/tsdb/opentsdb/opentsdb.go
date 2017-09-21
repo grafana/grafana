@@ -50,8 +50,8 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("opentsdb", NewOpenTsdbExecutor)
 }
 
-func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{}
+func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{}
 
 	var tsdbQuery OpenTsdbQuery
 
@@ -69,29 +69,26 @@ func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	req, err := e.createRequest(dsInfo, tsdbQuery)
 	if err != nil {
-		result.Error = err
-		return result
+		return nil, err
 	}
 
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
-		result.Error = err
-		return result
+		return nil, err
 	}
 
 	res, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
-		result.Error = err
-		return result
+		return nil, err
 	}
 
 	queryResult, err := e.parseResponse(tsdbQuery, res)
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
 
-	result.QueryResults = queryResult
-	return result
+	result.Results = queryResult
+	return result, nil
 }
 
 func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsdbQuery) (*http.Request, error) {

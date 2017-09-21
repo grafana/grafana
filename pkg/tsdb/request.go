@@ -2,25 +2,17 @@ package tsdb
 
 import (
 	"context"
+
+	"github.com/grafana/grafana/pkg/models"
 )
 
-type HandleRequestFunc func(ctx context.Context, req *TsdbQuery) (*Response, error)
+type HandleRequestFunc func(ctx context.Context, dsInfo *models.DataSource, req *TsdbQuery) (*Response, error)
 
-func HandleRequest(ctx context.Context, req *TsdbQuery) (*Response, error) {
-	//TODO niceify
-	ds := req.Queries[0].DataSource
-	endpoint, err := getTsdbQueryEndpointFor(ds)
+func HandleRequest(ctx context.Context, dsInfo *models.DataSource, req *TsdbQuery) (*Response, error) {
+	endpoint, err := getTsdbQueryEndpointFor(dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
-	res := endpoint.Query(ctx, ds, req)
-	if res.Error != nil {
-		return nil, res.Error
-	}
-
-	return &Response{
-		Results:      res.QueryResults,
-		BatchTimings: []*BatchTiming{res.Timings},
-	}, nil
+	return endpoint.Query(ctx, dsInfo, req)
 }

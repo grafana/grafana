@@ -80,17 +80,17 @@ func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, er
 	return apiv1.NewAPI(client), nil
 }
 
-func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{}
+func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{}
 
 	client, err := e.getClient(dsInfo)
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
 
 	query, err := parseQuery(tsdbQuery.Queries, tsdbQuery)
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
 
 	timeRange := apiv1.Range{
@@ -108,15 +108,15 @@ func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	value, err := client.QueryRange(ctx, query.Expr, timeRange)
 
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
 
 	queryResult, err := parseResponse(value, query)
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
-	result.QueryResults = queryResult
-	return result
+	result.Results = queryResult
+	return result, nil
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {

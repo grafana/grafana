@@ -85,9 +85,9 @@ func (e *MysqlExecutor) initEngine(dsInfo *models.DataSource) error {
 	return nil
 }
 
-func (e *MysqlExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{
-		QueryResults: make(map[string]*tsdb.QueryResult),
+func (e *MysqlExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
 	}
 
 	macroEngine := NewMysqlMacroEngine(tsdbQuery.TimeRange)
@@ -102,7 +102,7 @@ func (e *MysqlExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 		}
 
 		queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefId}
-		result.QueryResults[query.RefId] = queryResult
+		result.Results[query.RefId] = queryResult
 
 		rawSql, err := macroEngine.Interpolate(rawSql)
 		if err != nil {
@@ -138,7 +138,7 @@ func (e *MysqlExecutor) Query(ctx context.Context, dsInfo *models.DataSource, ts
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 func (e MysqlExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {

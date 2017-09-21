@@ -24,19 +24,19 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("grafana-testdata-datasource", NewTestDataExecutor)
 }
 
-func (e *TestDataExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{}
-	result.QueryResults = make(map[string]*tsdb.QueryResult)
+func (e *TestDataExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{}
+	result.Results = make(map[string]*tsdb.QueryResult)
 
 	for _, query := range tsdbQuery.Queries {
 		scenarioId := query.Model.Get("scenarioId").MustString("random_walk")
 		if scenario, exist := ScenarioRegistry[scenarioId]; exist {
-			result.QueryResults[query.RefId] = scenario.Handler(query, tsdbQuery)
-			result.QueryResults[query.RefId].RefId = query.RefId
+			result.Results[query.RefId] = scenario.Handler(query, tsdbQuery)
+			result.Results[query.RefId].RefId = query.RefId
 		} else {
 			e.log.Error("Scenario not found", "scenarioId", scenarioId)
 		}
 	}
 
-	return result
+	return result, nil
 }
