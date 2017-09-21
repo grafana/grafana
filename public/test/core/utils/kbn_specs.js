@@ -98,7 +98,7 @@ define([
   describe('date time formats', function() {
     it('should format as iso date', function() {
       var str = kbn.valueFormats.dateTimeAsIso(1505634997920, 1);
-      expect(str).to.be('2017-09-17 09:56:37');
+      expect(str).to.be(moment(1505634997920).format('YYYY-MM-DD HH:mm:ss'));
     });
 
     it('should format as iso date and skip date when today', function() {
@@ -109,7 +109,7 @@ define([
 
     it('should format as US date', function() {
       var str = kbn.valueFormats.dateTimeAsUS(1505634997920, 1);
-      expect(str).to.be('09/17/2017 9:56:37 am');
+      expect(str).to.be(moment(1505634997920).format('MM/DD/YYYY H:mm:ss a'));
     });
 
     it('should format as US date and skip date when today', function() {
