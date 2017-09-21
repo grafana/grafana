@@ -774,9 +774,9 @@ function($, _, moment) {
       {
         text: 'date & time',
         submenu: [
-          {text: 'YYYY-MM-DD HH:mm:ss',    value: 'dateTimeAsIso' },
+          {text: 'YYYY-MM-DD HH:mm:ss',   value: 'dateTimeAsIso' },
           {text: 'DD/MM/YYYY h:mm:ss a',  value: 'dateTimeAsUS' },
-          {text: 'from now',               value: 'dateTimeFromNow' },
+          {text: 'From Now',              value: 'dateTimeFromNow' },
         ]
       },
       {
