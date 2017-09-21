@@ -15,6 +15,8 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -84,6 +86,20 @@ func (proxy *DataSourceProxy) HandleRequest() {
 	}
 
 	proxy.logRequest()
+
+	span, ctx := opentracing.StartSpanFromContext(proxy.ctx.Req.Context(), "datasource reverse proxy")
+	proxy.ctx.Req.Request = proxy.ctx.Req.WithContext(ctx)
+
+	defer span.Finish()
+	span.SetTag("datasource_id", proxy.ds.Id)
+	span.SetTag("datasource_type", proxy.ds.Type)
+	span.SetTag("user_id", proxy.ctx.SignedInUser.UserId)
+	span.SetTag("org_id", proxy.ctx.SignedInUser.OrgId)
+
+	opentracing.GlobalTracer().Inject(
+		span.Context(),
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(proxy.ctx.Req.Request.Header))
 
 	reverseProxy.ServeHTTP(proxy.ctx.Resp, proxy.ctx.Req.Request)
 	proxy.ctx.Resp.Header().Del("Set-Cookie")

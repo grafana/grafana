@@ -2,7 +2,9 @@ System.config({
   defaultJSExtenions: true,
   baseURL: 'public',
   paths: {
-    'virtual-scroll': 'vendor/npm/virtual-scroll/src/index.js',
+    'react': 'vendor/npm/react/dist/react.js',
+    'react-dom': 'vendor/npm/react-dom/dist/react-dom.js',
+    'ngreact': 'vendor/npm/ngreact/ngReact.js',
     'mousetrap': 'vendor/npm/mousetrap/mousetrap.js',
     'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
     'tether': 'vendor/npm/tether/dist/js/tether.js',

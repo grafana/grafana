@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
+import {describe, beforeEach, afterEach, it, sinon, expect} from 'test/lib/common';
 
 import * as dateMath from 'app/core/utils/datemath';
 import moment from 'moment';
@@ -68,6 +68,10 @@ describe("DateMath", () => {
         expect(dateMath.parse(thenEx).format(format)).to.eql(anchored.subtract(5, span).format(format));
       });
     });
+
+    afterEach(() => {
+      clock.restore();
+    });
   });
 
   describe('rounding', () => {
@@ -88,6 +92,10 @@ describe("DateMath", () => {
       it('should round now to the end of the ' + span, function () {
         expect(dateMath.parse('now/' + span, true).format(format)).to.eql(now.endOf(span).format(format));
       });
+    });
+
+    afterEach(() => {
+      clock.restore();
     });
   });
 

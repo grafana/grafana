@@ -10,6 +10,9 @@
     baseURL: '/base/',
     defaultJSExtensions: true,
     paths: {
+      'react': 'vendor/npm/react/dist/react.js',
+      'react-dom': 'vendor/npm/react-dom/dist/react-dom.js',
+      'ngreact': 'vendor/npm/ngreact/ngReact.js',
       'mousetrap': 'vendor/npm/mousetrap/mousetrap.js',
       'eventemitter3': 'vendor/npm/eventemitter3/index.js',
       'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
@@ -83,7 +86,7 @@
 
   function file2moduleName(filePath) {
     return filePath.replace(/\\/g, '/')
-    .replace(/^\/base\//, '')
+      .replace(/^\/base\//, '')
       .replace(/\.\w*$/, '');
   }
 
@@ -112,12 +115,12 @@
     // load specs
     return Promise.all(
       Object.keys(window.__karma__.files) // All files served by Karma.
-      .filter(onlySpecFiles)
-      .map(file2moduleName)
-      .map(function(path) {
-        // console.log(path);
-        return System.import(path);
-      }));
+        .filter(onlySpecFiles)
+        .map(file2moduleName)
+        .map(function(path) {
+          // console.log(path);
+          return System.import(path);
+        }));
   }).then(function()  {
     window.__karma__.start();
   }, function(error) {
