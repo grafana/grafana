@@ -15,18 +15,41 @@ No mouse? No problem. Grafana has extensive keyboard shortcuts to allow you to n
 
 Press `Shift`+`?` to open the keyboard shortcut dialog from anywhere within the dashboard views.
 
-<img class="no-shadow" src="/img/docs/v2/Grafana-Keyboard-Shortcuts.gif" style="width:80%;">
+{{< docs-imagebox class="docs-image--no-shadow" img="/img/docs/v45/keyboard-shortcuts-still.png"
+                  animated-gif="/img/docs/v45/keyboard-shortcuts.gif" >}}
 
 
 |Shortcut|Action|
 |---|---|
-|`Esc`|Exit fullscreen edit/view mode, close search or any editor view|
-|`F`|Open dashboard search view (also contains import/playlist controls)|
-|`R`|Refresh (Fetches new data and rerenders panels)|
-|`CTRL`+`S`|Save dashboard|
-|`CTRL`+`H`|Hide row controls|
-|`CTRL`+`Z`|Zoom out|
-|`CTRL`+`O`|Enable/Disable shared graph crosshair|
+|Global|
+|`g` `h`|Go to Home Dashboard|
+|`g` `p`|Go to Profile|
+|`s` `o`|Open search|
+|`s` `s`|Open search with starred filter|
+|`s` `t`|Open search in tags view|
+|`Esc`|Exit edit/setting views|
+|Focused Panel|
+|`e`|Toggle panel edit view|
+|`v`|Toggle panel fullscreen view|
+|`p` `s`|Open Panel Share Modal|
+|`p` `r`|Remove Panel|
+|Dashboard|
+|`mod+s`|Save dashboard|
+|`mod+h`|Hide row controls|
+|`d` `r`|Refresh all panels|
+|`d` `s`|Dashboard settings|
+|`d` `v`|Toggle in-active / view mode|
+|`d` `k`|Toggle kiosk mode (hides top nav)|
+|`d` `E`|Expand all rows|
+|`d` `C`|Collapse all rows|
+|`mod+o`|Toggle shared graph crosshair|
+|Focused Row|
+|`r` `c`|Collapse Row|
+|`r` `r`|Remove Row|
+|Time Range|
+|`t` `z`|Zoom out time range|
+|`t` `left arrow`|Move time range back|
+|`t` `right arrow`|Move time range forward|
 
 
 **Note**: Grafana keyboard shortcuts are the same across operating system.
