@@ -12,15 +12,23 @@ weight = 4
 
 # Dashboard List Panel
 
-The dashboard list panel allows you to display dynamic links to other dashboards. The list can be configured to use starred dashboards, a search query and/or dashboard tags.
+<img class="no-shadow" src="/img/docs/v45/dashboard-list-panels.png">
 
-<img class="no-shadow" src="/img/docs/v2/dashboard_list_panels.png">
+The dashboard list panel allows you to display dynamic links to other dashboards. The list can be configured to use starred dashboards, recently viewed dashboards, a search query and/or dashboard tags.
 
 > On each dashboard load, the dashlist panel will re-query the dashboard list, always providing the most up to date results.
 
-## Mode: Starred Dashboards
+## Dashboard List Options
 
-The `starred` dashboard selection displays starred dashboards, up to the number specified in the `Limit Number to` field, in alphabetical order. On dashboard load, the dashlist panel will re-query the favorites to appear in dashboard list panel, always providing the most up to date results.
+{{< docs-imagebox img="/img/docs/v45/dashboard-list-options.png" max-width="600px" class="docs-image--no-shadow">}}
+
+1. `Starred`: The starred dashboard selection displays starred dashboards in alphabetical order. On dashboard load, the dashlist panel will re-query the favorites to appear in dashboard list panel, always providing the most up to date results.
+2. `Recently Viewed`: The recently viewed dashboard selection displays starred dashboards in alphabetical order. On dashboard load, the dashlist panel will re-query the favorites to appear in dashboard list panel, always providing the most up to date results.
+3. `Search`: The search dashboard selection displays dashboards by search query or tag(s). On dashboard load, the dashlist panel will re-query the dashboard list, always providing the most up to date results.
+4. `Show Headings`: When show headings is ticked the choosen list selection is shown as a heading.
+5. `Max Items`: Max items set the maximum of items in a list.
+6. `Query`: Here is where you enter your query you want to search by. Remember that you need you have the `Search` checkbox ticked.
+7. `Tags`: Here is where you enter your tag(s) you want to search by. Remember that you need you have the `Search` checkbox ticked.
 
 <img class="no-shadow" src="/img/docs/v2/dashboard_list_config_starred.png">
 

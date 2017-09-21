@@ -13,10 +13,12 @@ weight = 1
 
 The main panel in Grafana is simply named Graph. It provides a very rich set of graphing options.
 
-<img src="/img/docs/v1/graph_overview.png" class="no-shadow">
+<img src="/img/docs/v45/graph_overview.png" class="no-shadow">
 
-Clicking the title for a panel exposes a menu.  The `edit` option opens additional configuration
+1. Clicking the title for a panel exposes a menu.  The `edit` option opens additional configuration
 options for the panel.
+2. Click to open color & axis selection.
+3. Click to only show this series. Shift/Ctrl + click to hide series.
 
 ## General
 
