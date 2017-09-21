@@ -38,10 +38,10 @@ var engineCache = engineCacheType{
 }
 
 func init() {
-	tsdb.RegisterExecutor("mysql", NewMysqlExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("mysql", NewMysqlExecutor)
 }
 
-func NewMysqlExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
+func NewMysqlExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	executor := &MysqlExecutor{
 		datasource: datasource,
 		log:        log.New("tsdb.mysql"),
@@ -81,7 +81,7 @@ func (e *MysqlExecutor) initEngine() error {
 	return nil
 }
 
-func (e *MysqlExecutor) Execute(ctx context.Context, context *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *MysqlExecutor) Query(ctx context.Context, context *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{
 		QueryResults: make(map[string]*tsdb.QueryResult),
 	}

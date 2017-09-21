@@ -13,7 +13,7 @@ type TestDataExecutor struct {
 	log log.Logger
 }
 
-func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
+func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	return &TestDataExecutor{
 		DataSource: dsInfo,
 		log:        log.New("tsdb.testdata"),
@@ -21,10 +21,10 @@ func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
 }
 
 func init() {
-	tsdb.RegisterExecutor("grafana-testdata-datasource", NewTestDataExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("grafana-testdata-datasource", NewTestDataExecutor)
 }
 
-func (e *TestDataExecutor) Execute(ctx context.Context, context *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *TestDataExecutor) Query(ctx context.Context, context *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 	result.QueryResults = make(map[string]*tsdb.QueryResult)
 

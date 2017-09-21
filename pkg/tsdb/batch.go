@@ -21,7 +21,7 @@ func newBatch(dsId int64, queries []*Query) *Batch {
 }
 
 func (bg *Batch) process(ctx context.Context, resultChan chan *BatchResult, tsdbQuery *TsdbQuery) {
-	executor, err := getExecutorFor(bg.Queries[0].DataSource)
+	executor, err := getTsdbQueryEndpointFor(bg.Queries[0].DataSource)
 
 	if err != nil {
 		bg.Done = true
@@ -36,7 +36,7 @@ func (bg *Batch) process(ctx context.Context, resultChan chan *BatchResult, tsdb
 		return
 	}
 
-	res := executor.Execute(ctx, &TsdbQuery{
+	res := executor.Query(ctx, &TsdbQuery{
 		Queries:   bg.Queries,
 		TimeRange: tsdbQuery.TimeRange,
 	})

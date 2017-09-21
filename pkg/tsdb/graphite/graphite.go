@@ -25,7 +25,7 @@ type GraphiteExecutor struct {
 	HttpClient *http.Client
 }
 
-func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
+func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	httpClient, err := datasource.GetHttpClient()
 
 	if err != nil {
@@ -44,10 +44,10 @@ var (
 
 func init() {
 	glog = log.New("tsdb.graphite")
-	tsdb.RegisterExecutor("graphite", NewGraphiteExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("graphite", NewGraphiteExecutor)
 }
 
-func (e *GraphiteExecutor) Execute(ctx context.Context, context *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *GraphiteExecutor) Query(ctx context.Context, context *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	from := "-" + formatTimeRange(context.TimeRange.From)

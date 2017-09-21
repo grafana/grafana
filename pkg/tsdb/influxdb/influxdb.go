@@ -23,7 +23,7 @@ type InfluxDBExecutor struct {
 	HttpClient     *http.Client
 }
 
-func NewInfluxDBExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
+func NewInfluxDBExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	httpClient, err := datasource.GetHttpClient()
 
 	if err != nil {
@@ -44,10 +44,10 @@ var (
 
 func init() {
 	glog = log.New("tsdb.influxdb")
-	tsdb.RegisterExecutor("influxdb", NewInfluxDBExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("influxdb", NewInfluxDBExecutor)
 }
 
-func (e *InfluxDBExecutor) Execute(ctx context.Context, context *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *InfluxDBExecutor) Query(ctx context.Context, context *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	query, err := e.getQuery(context.Queries, context)

@@ -26,7 +26,7 @@ type OpenTsdbExecutor struct {
 	httpClient *http.Client
 }
 
-func NewOpenTsdbExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
+func NewOpenTsdbExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	httpClient, err := datasource.GetHttpClient()
 
 	if err != nil {
@@ -45,10 +45,10 @@ var (
 
 func init() {
 	plog = log.New("tsdb.opentsdb")
-	tsdb.RegisterExecutor("opentsdb", NewOpenTsdbExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("opentsdb", NewOpenTsdbExecutor)
 }
 
-func (e *OpenTsdbExecutor) Execute(ctx context.Context, queryContext *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *OpenTsdbExecutor) Query(ctx context.Context, queryContext *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	var tsdbQuery OpenTsdbQuery

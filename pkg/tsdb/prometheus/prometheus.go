@@ -39,7 +39,7 @@ func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, erro
 	return bat.Transport.RoundTrip(req)
 }
 
-func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
+func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	transport, err := dsInfo.GetHttpTransport()
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ var (
 
 func init() {
 	plog = log.New("tsdb.prometheus")
-	tsdb.RegisterExecutor("prometheus", NewPrometheusExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("prometheus", NewPrometheusExecutor)
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
@@ -84,7 +84,7 @@ func (e *PrometheusExecutor) getClient() (apiv1.API, error) {
 	return apiv1.NewAPI(client), nil
 }
 
-func (e *PrometheusExecutor) Execute(ctx context.Context, queryContext *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *PrometheusExecutor) Query(ctx context.Context, queryContext *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	client, err := e.getClient()
