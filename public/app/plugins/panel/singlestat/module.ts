@@ -113,7 +113,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   onDataReceived(dataList) {
     const data: any = {};
-    if (dataList.length > 0 && dataList[0].type === 'table'){
+    if (dataList.length > 0 && dataList[0].type === 'table') {
       this.dataType = 'table';
       const tableData = dataList.map(this.tableHandler.bind(this));
       this.setTableValues(tableData, data);

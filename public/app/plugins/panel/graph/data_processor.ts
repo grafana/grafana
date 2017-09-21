@@ -156,7 +156,7 @@ export class DataProcessor {
         });
         fieldParts.pop();
     }
-    if (firstItem.type === 'docs'){
+    if (firstItem.type === 'docs') {
       if (firstItem.datapoints.length === 0) {
         return [];
       }

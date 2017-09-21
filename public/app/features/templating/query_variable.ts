@@ -64,7 +64,7 @@ export class QueryVariable implements Variable {
     return this.model;
   }
 
-  setValue(option){
+  setValue(option) {
     return this.variableSrv.setOptionAsCurrent(this, option);
   }
 

@@ -76,7 +76,7 @@ export class SideMenuCtrl {
    });
  }
 
- loadOrgsItems(){
+ loadOrgsItems() {
    this.orgItems = [];
    this.orgs.forEach(org => {
      if (org.orgId === this.contextSrv.user.orgId) {

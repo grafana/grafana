@@ -47,7 +47,7 @@ describe("Emitter", () => {
 
       events.on('test', () => {
         sub1Called++;
-        throw "hello";
+        throw {message: "hello"};
       });
 
       events.on('test', () => {

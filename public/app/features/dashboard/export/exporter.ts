@@ -38,7 +38,7 @@ export class DashboardExporter {
     var templateizeDatasourceUsage = obj => {
       // ignore data source properties that contain a variable
       if (obj.datasource && obj.datasource.indexOf('$') === 0) {
-        if (variableLookup[obj.datasource.substring(1)]){
+        if (variableLookup[obj.datasource.substring(1)]) {
           return;
         }
       }

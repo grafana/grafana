@@ -190,7 +190,7 @@ export class JsonExplorer {
     if (this.element) {
       if (this.isOpen) {
         this.appendChildren(this.config.animateOpen);
-      } else{
+      } else {
         this.removeChildren(this.config.animateClose);
       }
       this.element.classList.toggle(cssClass('open'));

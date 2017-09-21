@@ -82,7 +82,7 @@ export class VariableSrv {
   createVariableFromModel(model) {
     var ctor = variableTypes[model.type].ctor;
     if (!ctor) {
-      throw "Unable to find variable constructor for " + model.type;
+      throw {message: "Unable to find variable constructor for " + model.type};
     }
 
     var variable = this.$injector.instantiate(ctor, {model: model});
