@@ -38,6 +38,9 @@ module.exports = function(config) {
         'remarkable/dist/*',
         'virtual-scroll/**/*',
         'mousetrap/**/*',
+        'react/dist/*.js',
+        'react-dom/dist/*.js',
+        'ngreact/ngReact.js',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }
