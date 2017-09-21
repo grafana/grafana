@@ -24,7 +24,7 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("grafana-testdata-datasource", NewTestDataExecutor)
 }
 
-func (e *TestDataExecutor) Query(ctx context.Context, context *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *TestDataExecutor) Query(ctx context.Context, dsInfo *models.DataSource, context *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 	result.QueryResults = make(map[string]*tsdb.QueryResult)
 

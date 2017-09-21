@@ -21,9 +21,8 @@ import (
 )
 
 type MysqlExecutor struct {
-	datasource *models.DataSource
-	engine     *xorm.Engine
-	log        log.Logger
+	engine *xorm.Engine
+	log    log.Logger
 }
 
 type engineCacheType struct {
@@ -43,11 +42,10 @@ func init() {
 
 func NewMysqlExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	executor := &MysqlExecutor{
-		datasource: datasource,
-		log:        log.New("tsdb.mysql"),
+		log: log.New("tsdb.mysql"),
 	}
 
-	err := executor.initEngine()
+	err := executor.initEngine(datasource)
 	if err != nil {
 		return nil, err
 	}
@@ -55,18 +53,24 @@ func NewMysqlExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, er
 	return executor, nil
 }
 
-func (e *MysqlExecutor) initEngine() error {
+func (e *MysqlExecutor) initEngine(dsInfo *models.DataSource) error {
 	engineCache.Lock()
 	defer engineCache.Unlock()
 
-	if engine, present := engineCache.cache[e.datasource.Id]; present {
-		if version, _ := engineCache.versions[e.datasource.Id]; version == e.datasource.Version {
+	if engine, present := engineCache.cache[dsInfo.Id]; present {
+		if version, _ := engineCache.versions[dsInfo.Id]; version == dsInfo.Version {
 			e.engine = engine
 			return nil
 		}
 	}
 
-	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC", e.datasource.User, e.datasource.Password, "tcp", e.datasource.Url, e.datasource.Database)
+	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC",
+		dsInfo.User,
+		dsInfo.Password,
+		"tcp",
+		dsInfo.Url,
+		dsInfo.Database)
+
 	e.log.Debug("getEngine", "connection", cnnstr)
 
 	engine, err := xorm.NewEngine("mysql", cnnstr)
@@ -76,12 +80,12 @@ func (e *MysqlExecutor) initEngine() error {
 		return err
 	}
 
-	engineCache.cache[e.datasource.Id] = engine
+	engineCache.cache[dsInfo.Id] = engine
 	e.engine = engine
 	return nil
 }
 
-func (e *MysqlExecutor) Query(ctx context.Context, context *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *MysqlExecutor) Query(ctx context.Context, dsInfo *models.DataSource, context *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{
 		QueryResults: make(map[string]*tsdb.QueryResult),
 	}

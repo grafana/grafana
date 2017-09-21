@@ -18,12 +18,9 @@ import (
 	api "github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
-	//api "github.com/prometheus/client_golang/api"
-	//apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 type PrometheusExecutor struct {
-	*models.DataSource
 	Transport *http.Transport
 }
 
@@ -46,8 +43,7 @@ func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, e
 	}
 
 	return &PrometheusExecutor{
-		DataSource: dsInfo,
-		Transport:  transport,
+		Transport: transport,
 	}, nil
 }
 
@@ -62,17 +58,17 @@ func init() {
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
-func (e *PrometheusExecutor) getClient() (apiv1.API, error) {
+func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, error) {
 	cfg := api.Config{
-		Address:      e.DataSource.Url,
+		Address:      dsInfo.Url,
 		RoundTripper: e.Transport,
 	}
 
-	if e.BasicAuth {
+	if dsInfo.BasicAuth {
 		cfg.RoundTripper = basicAuthTransport{
 			Transport: e.Transport,
-			username:  e.BasicAuthUser,
-			password:  e.BasicAuthPassword,
+			username:  dsInfo.BasicAuthUser,
+			password:  dsInfo.BasicAuthPassword,
 		}
 	}
 
@@ -84,10 +80,10 @@ func (e *PrometheusExecutor) getClient() (apiv1.API, error) {
 	return apiv1.NewAPI(client), nil
 }
 
-func (e *PrometheusExecutor) Query(ctx context.Context, queryContext *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
-	client, err := e.getClient()
+	client, err := e.getClient(dsInfo)
 	if err != nil {
 		return result.WithError(err)
 	}

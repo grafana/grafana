@@ -21,21 +21,11 @@ import (
 )
 
 type GraphiteExecutor struct {
-	*models.DataSource
 	HttpClient *http.Client
 }
 
 func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	httpClient, err := datasource.GetHttpClient()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &GraphiteExecutor{
-		DataSource: datasource,
-		HttpClient: httpClient,
-	}, nil
+	return &GraphiteExecutor{}, nil
 }
 
 var (
@@ -47,7 +37,7 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("graphite", NewGraphiteExecutor)
 }
 
-func (e *GraphiteExecutor) Query(ctx context.Context, context *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource, context *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	from := "-" + formatTimeRange(context.TimeRange.From)
@@ -75,7 +65,13 @@ func (e *GraphiteExecutor) Query(ctx context.Context, context *tsdb.TsdbQuery) *
 		glog.Debug("Graphite request", "params", formData)
 	}
 
-	req, err := e.createRequest(formData)
+	req, err := e.createRequest(dsInfo, formData)
+	if err != nil {
+		result.Error = err
+		return result
+	}
+
+	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
 		result.Error = err
 		return result
@@ -92,7 +88,7 @@ func (e *GraphiteExecutor) Query(ctx context.Context, context *tsdb.TsdbQuery) *
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header))
 
-	res, err := ctxhttp.Do(ctx, e.HttpClient, req)
+	res, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
 		result.Error = err
 		return result
@@ -144,8 +140,8 @@ func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDT
 	return data, nil
 }
 
-func (e *GraphiteExecutor) createRequest(data url.Values) (*http.Request, error) {
-	u, _ := url.Parse(e.Url)
+func (e *GraphiteExecutor) createRequest(dsInfo *models.DataSource, data url.Values) (*http.Request, error) {
+	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(data.Encode()))
@@ -155,8 +151,8 @@ func (e *GraphiteExecutor) createRequest(data url.Values) (*http.Request, error)
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	if e.BasicAuth {
-		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
+	if dsInfo.BasicAuth {
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
 	}
 
 	return req, err

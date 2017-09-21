@@ -8,7 +8,7 @@ import (
 )
 
 type TsdbQueryEndpoint interface {
-	Query(ctx context.Context, query *TsdbQuery) *BatchResult
+	Query(ctx context.Context, ds *models.DataSource, query *TsdbQuery) *BatchResult
 }
 
 var registry map[string]GetTsdbQueryEndpointFn
