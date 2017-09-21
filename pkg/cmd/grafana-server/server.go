@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	tsdbplugins "github.com/grafana/grafana/pkg/plugins/backend"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -31,7 +32,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/social"
 	"github.com/grafana/grafana/pkg/tracing"
-	tsdbplugins "github.com/grafana/grafana/pkg/tsdb/plugins"
 )
 
 func NewGrafanaServer() models.GrafanaServer {
