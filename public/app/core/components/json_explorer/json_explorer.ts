@@ -6,7 +6,6 @@ import {
   getObjectName,
   getType,
   getValuePreview,
-  getPreview,
   cssClass,
   createElement
 } from './helpers';

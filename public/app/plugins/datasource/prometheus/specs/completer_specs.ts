@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
+import {describe, it, sinon, expect} from 'test/lib/common';
 
 import {PromCompleter} from '../completer';
 import {PrometheusDatasource} from '../datasource';

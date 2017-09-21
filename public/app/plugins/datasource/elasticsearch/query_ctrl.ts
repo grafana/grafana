@@ -15,7 +15,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
   rawQueryOld: string;
 
   /** @ngInject **/
-  constructor($scope, $injector, private $rootScope, private $timeout, private uiSegmentSrv) {
+  constructor($scope, $injector, private $rootScope, private uiSegmentSrv) {
     super($scope, $injector);
 
     this.esVersion = this.datasource.esVersion;

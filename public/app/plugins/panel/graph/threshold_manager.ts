@@ -61,8 +61,6 @@ export class ThresholdManager {
       graphValue = parseInt(graphValue.toFixed(0));
       model.value = graphValue;
 
-      var valueCanvasPos = plot.p2c({x: 0, y: graphValue});
-
       handleElem.off("mousemove", dragging);
       handleElem.off("mouseup", dragging);
       handleElem.off("mouseleave", dragging);

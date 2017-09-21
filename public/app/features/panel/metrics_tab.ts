@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from 'lodash';
 import {DashboardModel} from '../dashboard/model';
 import Remarkable from 'remarkable';
 
@@ -22,7 +21,7 @@ export class MetricsTabCtrl {
   queryOptions: any;
 
   /** @ngInject */
-  constructor($scope, private $sce, private datasourceSrv, private backendSrv, private $timeout) {
+  constructor($scope, private $sce, datasourceSrv, private backendSrv) {
     this.panelCtrl = $scope.ctrl;
     $scope.ctrl = this;
 
@@ -74,7 +73,6 @@ export class MetricsTabCtrl {
       return;
     }
 
-    var target: any = {isNew: true};
     this.panelCtrl.addQuery({isNew: true, datasource: option.datasource.name});
     this.addQueryDropdown = {text: 'Add Query', value: null, fake: true};
   }

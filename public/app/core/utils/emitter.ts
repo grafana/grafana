@@ -2,12 +2,6 @@
 
 import EventEmitter from 'eventemitter3';
 
-var hasOwnProp = {}.hasOwnProperty;
-
-function createName(name) {
-    return '$' + name;
-}
-
 export class Emitter {
   emitter: any;
 

@@ -1,7 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import config from 'app/core/config';
-import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from '../../core_module';
 
@@ -19,7 +18,7 @@ export class SideMenuCtrl {
   maxShownOrgs: number;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private contextSrv, private backendSrv, private $element) {
+  constructor(private $scope, private $location, private contextSrv, private backendSrv) {
     this.isSignedIn = contextSrv.isSignedIn;
     this.user = contextSrv.user;
     this.appSubUrl = config.appSubUrl;

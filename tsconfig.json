@@ -15,7 +15,6 @@
         "noImplicitReturns":false,
         "noImplicitThis": false,
         "noImplicitUseStrict":false,
-        "noUnusedLocals":false,
         "moduleResolution": "classic"
     },
     "include": [

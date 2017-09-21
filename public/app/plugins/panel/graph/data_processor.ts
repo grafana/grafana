@@ -1,8 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import moment from 'moment';
 import TimeSeries from 'app/core/time_series2';
 import {colors} from 'app/core/core';
 

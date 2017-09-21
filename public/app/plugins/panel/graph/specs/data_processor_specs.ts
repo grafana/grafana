@@ -1,6 +1,6 @@
 ///<reference path="../../../../headers/common.d.ts" />
 
-import {describe, beforeEach, it, sinon, expect, angularMocks} from '../../../../../test/lib/common';
+import {describe, beforeEach, it, expect} from '../../../../../test/lib/common';
 
 import {DataProcessor} from '../data_processor';
 

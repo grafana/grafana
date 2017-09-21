@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
 
 var template = `

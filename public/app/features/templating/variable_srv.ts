@@ -3,7 +3,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
-import {Variable, variableTypes} from './variable';
+import {variableTypes} from './variable';
 
 export class VariableSrv {
   dashboard: any;

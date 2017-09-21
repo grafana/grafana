@@ -26,14 +26,12 @@ export class HistoryListCtrl {
   isNewLatest: boolean;
 
   /** @ngInject */
-  constructor(private $scope,
-              private $route,
+  constructor(private $route,
               private $rootScope,
               private $location,
-              private $window,
-              private $timeout,
               private $q,
-              private historySrv: HistorySrv) {
+              private historySrv: HistorySrv,
+              public $scope) {
 
     this.appending = false;
     this.diff = 'basic';

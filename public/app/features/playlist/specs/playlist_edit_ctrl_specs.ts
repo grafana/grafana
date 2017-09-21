@@ -9,7 +9,7 @@ describe('PlaylistEditCtrl', () => {
       getPlaylistsNav: page => {},
     };
 
-    ctx = new PlaylistEditCtrl(null, null, null, null, { current: { params: {} } }, navModelSrv);
+    ctx = new PlaylistEditCtrl(null, null, null, { current: { params: {} } }, navModelSrv);
 
     ctx.dashboardresult = [
       { id: 2, title: 'dashboard: 2' },

@@ -1,5 +1,5 @@
 
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 import helpers from 'test/specs/helpers';
 import {GraphiteDatasource} from "../datasource";
 

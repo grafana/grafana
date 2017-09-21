@@ -1,8 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
-import _ from 'lodash';
-
 export class OpenTsConfigCtrl {
   static templateUrl = 'public/app/plugins/datasource/opentsdb/partials/config.html';
   current: any;
