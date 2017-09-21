@@ -1,8 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import config from 'app/core/config';
 import _ from 'lodash';
-import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import Drop from 'tether-drop';
 

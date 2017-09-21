@@ -18,3 +18,8 @@ fake-prometheus-data:
   environment:
     FD_DATASOURCE: prom
 
+alertmanager:
+  image: quay.io/prometheus/alertmanager
+  net: host
+  ports:
+    - "9093:9093"

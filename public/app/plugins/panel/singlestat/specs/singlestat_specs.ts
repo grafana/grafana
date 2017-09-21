@@ -2,7 +2,6 @@
 
 import {describe, beforeEach, afterEach, it, sinon, expect, angularMocks} from '../../../../../test/lib/common';
 
-import angular from 'angular';
 import helpers from '../../../../../test/specs/helpers';
 import {SingleStatCtrl} from '../module';
 import moment from 'moment';

@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 import moment from 'moment';
 import helpers from 'test/specs/helpers';
 import {MysqlDatasource} from '../datasource';

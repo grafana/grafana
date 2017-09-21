@@ -21,21 +21,11 @@ import (
 )
 
 type GraphiteExecutor struct {
-	*models.DataSource
 	HttpClient *http.Client
 }
 
-func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
-	httpClient, err := datasource.GetHttpClient()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &GraphiteExecutor{
-		DataSource: datasource,
-		HttpClient: httpClient,
-	}, nil
+func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	return &GraphiteExecutor{}, nil
 }
 
 var (
@@ -44,14 +34,14 @@ var (
 
 func init() {
 	glog = log.New("tsdb.graphite")
-	tsdb.RegisterExecutor("graphite", NewGraphiteExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("graphite", NewGraphiteExecutor)
 }
 
-func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{}
+func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{}
 
-	from := "-" + formatTimeRange(context.TimeRange.From)
-	until := formatTimeRange(context.TimeRange.To)
+	from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
+	until := formatTimeRange(tsdbQuery.TimeRange.To)
 	var target string
 
 	formData := url.Values{
@@ -61,7 +51,7 @@ func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		"maxDataPoints": []string{"500"},
 	}
 
-	for _, query := range queries {
+	for _, query := range tsdbQuery.Queries {
 		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
 			target = fixIntervalFormat(fullTarget)
 		} else {
@@ -75,10 +65,14 @@ func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		glog.Debug("Graphite request", "params", formData)
 	}
 
-	req, err := e.createRequest(formData)
+	req, err := e.createRequest(dsInfo, formData)
 	if err != nil {
-		result.Error = err
-		return result
+		return nil, err
+	}
+
+	httpClient, err := dsInfo.GetHttpClient()
+	if err != nil {
+		return nil, err
 	}
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "graphite query")
@@ -92,19 +86,17 @@ func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header))
 
-	res, err := ctxhttp.Do(ctx, e.HttpClient, req)
+	res, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
-		result.Error = err
-		return result
+		return nil, err
 	}
 
 	data, err := e.parseResponse(res)
 	if err != nil {
-		result.Error = err
-		return result
+		return nil, err
 	}
 
-	result.QueryResults = make(map[string]*tsdb.QueryResult)
+	result.Results = make(map[string]*tsdb.QueryResult)
 	queryRes := tsdb.NewQueryResult()
 
 	for _, series := range data {
@@ -118,8 +110,8 @@ func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		}
 	}
 
-	result.QueryResults["A"] = queryRes
-	return result
+	result.Results["A"] = queryRes
+	return result, nil
 }
 
 func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {
@@ -144,8 +136,8 @@ func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDT
 	return data, nil
 }
 
-func (e *GraphiteExecutor) createRequest(data url.Values) (*http.Request, error) {
-	u, _ := url.Parse(e.Url)
+func (e *GraphiteExecutor) createRequest(dsInfo *models.DataSource, data url.Values) (*http.Request, error) {
+	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "render")
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(data.Encode()))
@@ -155,8 +147,8 @@ func (e *GraphiteExecutor) createRequest(data url.Values) (*http.Request, error)
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	if e.BasicAuth {
-		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
+	if dsInfo.BasicAuth {
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
 	}
 
 	return req, err

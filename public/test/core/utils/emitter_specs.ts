@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
+import {describe, it, expect} from 'test/lib/common';
 
 import {Emitter} from 'app/core/core';
 
@@ -47,7 +47,7 @@ describe("Emitter", () => {
 
       events.on('test', () => {
         sub1Called++;
-        throw "hello";
+        throw {message: "hello"};
       });
 
       events.on('test', () => {

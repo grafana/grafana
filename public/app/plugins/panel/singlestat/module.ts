@@ -1,11 +1,9 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
 import 'jquery.flot';
 import 'jquery.flot.gauge';
-import moment from 'moment';
 
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
@@ -115,7 +113,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   onDataReceived(dataList) {
     const data: any = {};
-    if (dataList.length > 0 && dataList[0].type === 'table'){
+    if (dataList.length > 0 && dataList[0].type === 'table') {
       this.dataType = 'table';
       const tableData = dataList.map(this.tableHandler.bind(this));
       this.setTableValues(tableData, data);
@@ -182,8 +180,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       return;
     }
 
-    let highestValue = 0;
-    let lowestValue = Number.MAX_VALUE;
     const datapoint = tableData[0][0];
     data.value = datapoint[this.panel.tableColumn];
 
@@ -638,8 +634,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         if ($(evt).parents('.panel-header').length > 0) { return; }
 
         if (linkInfo.target === '_blank') {
-          var redirectWindow = window.open(linkInfo.href, '_blank');
-          redirectWindow.location;
+          window.open(linkInfo.href, '_blank');
           return;
         }
 

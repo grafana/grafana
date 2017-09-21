@@ -1,8 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
-import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import _ from 'lodash';
 
@@ -19,7 +17,7 @@ export class DashImportCtrl {
   gnetInfo: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $location, private $scope, private $routeParams) {
+  constructor(private backendSrv, private $location, private $scope, $routeParams) {
     this.step = 1;
     this.nameExists = false;
 

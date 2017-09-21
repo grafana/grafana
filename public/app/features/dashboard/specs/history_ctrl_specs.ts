@@ -3,14 +3,14 @@ import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/co
 import _ from 'lodash';
 import {HistoryListCtrl} from 'app/features/dashboard/history/history';
 import { versions, compare, restore } from 'test/mocks/history-mocks';
-import config from 'app/core/config';
 
 describe('HistoryListCtrl', function() {
   var RESTORE_ID = 4;
 
   var ctx: any = {};
   var versionsResponse: any = versions();
-  var restoreResponse: any = restore(7, RESTORE_ID);
+
+  restore(7, RESTORE_ID);
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
@@ -65,7 +65,7 @@ describe('HistoryListCtrl', function() {
         expect(ctx.ctrl.mode).to.be('list');
         expect(ctx.ctrl.delta).to.eql({ basic: '', json: '' });
         expect(ctx.ctrl.canCompare).to.be(false);
-        expect(_.find(ctx.ctrl.revisions, rev => rev.checked)).to.be.undefined;
+        expect(_.find(ctx.ctrl.revisions, rev => rev.checked)).to.be(undefined);
       });
 
       it('should indicate loading has finished', function() {
@@ -103,7 +103,7 @@ describe('HistoryListCtrl', function() {
       it('should reset the controller\'s state', function() {
         expect(ctx.ctrl.mode).to.be('list');
         expect(ctx.ctrl.delta).to.eql({ basic: '', json: '' });
-        expect(_.find(ctx.ctrl.revisions, rev => rev.checked)).to.be.undefined;
+        expect(_.find(ctx.ctrl.revisions, rev => rev.checked)).to.be(undefined);
       });
 
       it('should indicate loading has finished', function() {

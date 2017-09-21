@@ -1,6 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
 import {GrafanaDatasource} from './datasource';
 import {QueryCtrl} from 'app/plugins/sdk';
 

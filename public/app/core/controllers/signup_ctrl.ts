@@ -8,9 +8,9 @@ export class SignUpCtrl {
   /** @ngInject */
   constructor(
       private $scope: any,
-      private $location: any,
-      private contextSrv: any,
-      private backendSrv: any) {
+      private backendSrv: any,
+      $location: any,
+      contextSrv: any) {
 
     contextSrv.sidemenu = false;
     $scope.ctrl = this;

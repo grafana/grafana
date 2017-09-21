@@ -1,6 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 import moment from 'moment';
 
@@ -120,7 +119,6 @@ export class PrometheusDatasource {
 
     return this.$q.all(allQueryPromise).then(responseList => {
       var result = [];
-      var index = 0;
 
       _.each(responseList, (response, index) => {
         if (response.status === 'error') {

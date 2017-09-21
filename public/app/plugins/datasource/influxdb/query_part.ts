@@ -6,8 +6,6 @@ import {
   QueryPart,
   functionRenderer,
   suffixRenderer,
-  identityRenderer,
-  quotedIdentityRenderer,
 } from 'app/core/components/query_part/query_part';
 
 var index = [];

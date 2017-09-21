@@ -10,8 +10,6 @@ export class ExportDataModalCtrl {
   asRows: Boolean = true;
   dateTimeFormat: String = 'YYYY-MM-DDTHH:mm:ssZ';
   excel: false;
-  /** @ngInject */
-  constructor(private $scope) { }
 
   export() {
     if (this.panel === 'table') {
