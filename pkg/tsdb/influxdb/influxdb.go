@@ -39,15 +39,15 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("influxdb", NewInfluxDBExecutor)
 }
 
-func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource, context *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
-	query, err := e.getQuery(dsInfo, context.Queries, context)
+	query, err := e.getQuery(dsInfo, tsdbQuery.Queries, tsdbQuery)
 	if err != nil {
 		return result.WithError(err)
 	}
 
-	rawQuery, err := query.Build(context)
+	rawQuery, err := query.Build(tsdbQuery)
 	if err != nil {
 		return result.WithError(err)
 	}

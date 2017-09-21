@@ -37,11 +37,11 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("graphite", NewGraphiteExecutor)
 }
 
-func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource, context *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
-	from := "-" + formatTimeRange(context.TimeRange.From)
-	until := formatTimeRange(context.TimeRange.To)
+	from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
+	until := formatTimeRange(tsdbQuery.TimeRange.To)
 	var target string
 
 	formData := url.Values{
@@ -51,7 +51,7 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		"maxDataPoints": []string{"500"},
 	}
 
-	for _, query := range context.Queries {
+	for _, query := range tsdbQuery.Queries {
 		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
 			target = fixIntervalFormat(fullTarget)
 		} else {

@@ -85,17 +85,17 @@ func (e *MysqlExecutor) initEngine(dsInfo *models.DataSource) error {
 	return nil
 }
 
-func (e *MysqlExecutor) Query(ctx context.Context, dsInfo *models.DataSource, context *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *MysqlExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{
 		QueryResults: make(map[string]*tsdb.QueryResult),
 	}
 
-	macroEngine := NewMysqlMacroEngine(context.TimeRange)
+	macroEngine := NewMysqlMacroEngine(tsdbQuery.TimeRange)
 	session := e.engine.NewSession()
 	defer session.Close()
 	db := session.DB()
 
-	for _, query := range context.Queries {
+	for _, query := range tsdbQuery.Queries {
 		rawSql := query.Model.Get("rawSql").MustString()
 		if rawSql == "" {
 			continue
@@ -275,8 +275,6 @@ func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows,
 		if rowData.metric == "" {
 			rowData.metric = "Unknown"
 		}
-
-		//e.log.Debug("Rows", "metric", rowData.metric, "time", rowData.time, "value", rowData.value)
 
 		if !rowData.time.Valid {
 			return fmt.Errorf("Found row with no time value")

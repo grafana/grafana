@@ -33,9 +33,9 @@ func init() {
 		Id:   "random_walk",
 		Name: "Random Walk",
 
-		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
-			timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
-			to := context.TimeRange.GetToAsMsEpoch()
+		Handler: func(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
+			timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
+			to := tsdbQuery.TimeRange.GetToAsMsEpoch()
 
 			series := newSeriesForQuery(query)
 

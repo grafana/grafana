@@ -80,7 +80,7 @@ func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, er
 	return apiv1.NewAPI(client), nil
 }
 
-func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) *tsdb.BatchResult {
+func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	client, err := e.getClient(dsInfo)
@@ -88,7 +88,7 @@ func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 		return result.WithError(err)
 	}
 
-	query, err := parseQuery(queryContext.Queries, queryContext)
+	query, err := parseQuery(tsdbQuery.Queries, tsdbQuery)
 	if err != nil {
 		return result.WithError(err)
 	}
