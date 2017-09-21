@@ -1,8 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
-import {PostgresDatasource} from './datasource';
 import {QueryCtrl} from 'app/plugins/sdk';
 
 export interface PostgresQuery {
