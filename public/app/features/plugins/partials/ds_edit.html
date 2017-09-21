@@ -42,7 +42,7 @@
 				<div class="gf-form">
 					<span class="gf-form-label width-7">Type</span>
 					<div class="gf-form-select-wrapper max-width-23">
-						<select class="gf-form-input" ng-model="ctrl.current.type" ng-options="v.id as v.name for v in ctrl.types" ng-change="ctrl.typeChanged()"></select>
+						<select class="gf-form-input" ng-model="ctrl.current.type" ng-options="v.id as v.name for v in ctrl.types" ng-change="ctrl.userChangedType()"></select>
 					</div>
 				</div>
 			</div>
@@ -59,9 +59,14 @@
 
 			<div ng-if="ctrl.testing" class="gf-form-group">
 				<h5 ng-show="!ctrl.testing.done">Testing.... <i class="fa fa-spiner fa-spin"></i></h5>
-				<div class="alert-{{ctrl.testing.status}} alert">
-					<div class="alert-title">{{ctrl.testing.title}}</div>
-					<div ng-bind='ctrl.testing.message'></div>
+				<div class="alert-{{ctrl.testing.status}} alert" ng-show="ctrl.testing.done">
+					<div class="alert-icon">
+							<i class="fa fa-exclamation-triangle" ng-show="ctrl.testing.status === 'error'"></i>
+							<i class="fa fa-check" ng-show="ctrl.testing.status !== 'error'"></i>
+					</div>
+					<div class="alert-body">
+						<div class="alert-title">{{ctrl.testing.message}}</div>
+					</div>
 				</div>
 			</div>
 

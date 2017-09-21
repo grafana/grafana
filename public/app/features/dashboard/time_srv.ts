@@ -116,22 +116,23 @@ class TimeSrv {
 
   setAutoRefresh(interval) {
     this.dashboard.refresh = interval;
+    this.cancelNextRefresh();
     if (interval) {
       var intervalMs = kbn.interval_to_ms(interval);
 
-      this.$timeout(() => {
+      this.refreshTimer = this.timer.register(this.$timeout(() => {
         this.startNextRefreshTimer(intervalMs);
         this.refreshDashboard();
-      }, intervalMs);
-
-    } else {
-      this.cancelNextRefresh();
+      }, intervalMs));
     }
 
     // update url
+    var params = this.$location.search();
     if (interval) {
-      var params = this.$location.search();
       params.refresh = interval;
+      this.$location.search(params);
+    } else if (params.refresh) {
+      delete params.refresh;
       this.$location.search(params);
     }
   }

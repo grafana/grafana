@@ -162,8 +162,9 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
   getAltSegments(index) {
     var query = index === 0 ?  '*' : this.getSegmentPathUpTo(index) + '.*';
+    var options = {range: this.panelCtrl.range, requestId: "get-alt-segments"};
 
-    return this.datasource.metricFindQuery(query).then(segments => {
+    return this.datasource.metricFindQuery(query, options).then(segments => {
       var altSegments = _.map(segments, segment => {
         return this.uiSegmentSrv.newSegment({value: segment.text, expandable: segment.expandable});
       });
@@ -183,7 +184,6 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       altSegments.unshift(this.uiSegmentSrv.newSegment('*'));
       return altSegments;
     }).catch(err => {
-      appEvents.emit('alert-error', ['Error', err]);
       return [];
     });
   }

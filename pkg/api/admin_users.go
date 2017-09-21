@@ -35,7 +35,7 @@ func AdminCreateUser(c *middleware.Context, form dtos.AdminCreateUserForm) {
 		return
 	}
 
-	metrics.M_Api_Admin_User_Create.Inc(1)
+	metrics.M_Api_Admin_User_Create.Inc()
 
 	user := cmd.Result
 

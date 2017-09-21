@@ -13,8 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"github.com/prometheus/client_golang/api/prometheus"
-	pmodel "github.com/prometheus/common/model"
+	api "github.com/prometheus/client_golang/api"
+	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	"github.com/prometheus/common/model"
+	//api "github.com/prometheus/client_golang/api"
+	//apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 type PrometheusExecutor struct {
@@ -57,26 +60,26 @@ func init() {
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
-func (e *PrometheusExecutor) getClient() (prometheus.QueryAPI, error) {
-	cfg := prometheus.Config{
-		Address:   e.DataSource.Url,
-		Transport: e.Transport,
+func (e *PrometheusExecutor) getClient() (apiv1.API, error) {
+	cfg := api.Config{
+		Address:      e.DataSource.Url,
+		RoundTripper: e.Transport,
 	}
 
 	if e.BasicAuth {
-		cfg.Transport = basicAuthTransport{
+		cfg.RoundTripper = basicAuthTransport{
 			Transport: e.Transport,
 			username:  e.BasicAuthUser,
 			password:  e.BasicAuthPassword,
 		}
 	}
 
-	client, err := prometheus.New(cfg)
+	client, err := api.NewClient(cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return prometheus.NewQueryAPI(client), nil
+	return apiv1.NewAPI(client), nil
 }
 
 func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
@@ -92,7 +95,7 @@ func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlic
 		return result.WithError(err)
 	}
 
-	timeRange := prometheus.Range{
+	timeRange := apiv1.Range{
 		Start: query.Start,
 		End:   query.End,
 		Step:  query.Step,
@@ -112,7 +115,7 @@ func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlic
 	return result
 }
 
-func formatLegend(metric pmodel.Metric, query *PrometheusQuery) string {
+func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 	if query.LegendFormat == "" {
 		return metric.String()
 	}
@@ -121,7 +124,7 @@ func formatLegend(metric pmodel.Metric, query *PrometheusQuery) string {
 		labelName := strings.Replace(string(in), "{{", "", 1)
 		labelName = strings.Replace(labelName, "}}", "", 1)
 		labelName = strings.TrimSpace(labelName)
-		if val, exists := metric[pmodel.LabelName(labelName)]; exists {
+		if val, exists := metric[model.LabelName(labelName)]; exists {
 			return []byte(val)
 		}
 
@@ -165,11 +168,11 @@ func parseQuery(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) (*Prom
 	}, nil
 }
 
-func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb.QueryResult, error) {
+func parseResponse(value model.Value, query *PrometheusQuery) (map[string]*tsdb.QueryResult, error) {
 	queryResults := make(map[string]*tsdb.QueryResult)
 	queryRes := tsdb.NewQueryResult()
 
-	data, ok := value.(pmodel.Matrix)
+	data, ok := value.(model.Matrix)
 	if !ok {
 		return queryResults, fmt.Errorf("Unsupported result format: %s", value.Type().String())
 	}

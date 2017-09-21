@@ -53,6 +53,10 @@ function (angular, _, dateMath) {
         }
       });
 
+      options.targets = _.filter(options.targets, function(query) {
+        return query.hide !== true;
+      });
+
       return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
         var metricToTargetMapping = mapMetricsToTargets(response.data, options, this.tsdbVersion);
         var result = _.map(response.data, function(metricData, index) {
@@ -292,7 +296,7 @@ function (angular, _, dateMath) {
 
     this.testDatasource = function() {
       return this._performSuggestQuery('cpu', 'metrics').then(function () {
-        return { status: "success", message: "Data source is working", title: "Success" };
+        return { status: "success", message: "Data source is working" };
       });
     };
 

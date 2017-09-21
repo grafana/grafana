@@ -7,8 +7,9 @@ import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 
 export class BackendSrv {
-  inFlightRequests = {};
-  HTTP_REQUEST_CANCELLED = -1;
+  private inFlightRequests = {};
+  private HTTP_REQUEST_CANCELLED = -1;
+  private noBackendCache: boolean;
 
   /** @ngInject */
   constructor(private $http, private alertSrv, private $rootScope, private $q, private $timeout, private contextSrv) {
@@ -34,6 +35,13 @@ export class BackendSrv {
     return this.request({ method: 'PUT', url: url, data: data });
   }
 
+  withNoBackendCache(callback) {
+    this.noBackendCache = true;
+    return callback().finally(() => {
+      this.noBackendCache = false;
+    });
+  }
+
   requestErrorHandler(err) {
     if (err.isHandled) {
       return;
@@ -56,7 +64,13 @@ export class BackendSrv {
     }
 
     if (data.message) {
-      this.alertSrv.set("Problem!", data.message, data.severity, 10000);
+      let description = "";
+      let message = data.message;
+      if (message.length > 80) {
+        description = message;
+        message = "Error";
+      }
+      this.alertSrv.set(message, description, data.severity, 10000);
     }
 
     throw data;
@@ -89,7 +103,7 @@ export class BackendSrv {
       return results.data;
     }, err => {
       // handle unauthorized
-      if (err.status === 401 && firstAttempt) {
+      if (err.status === 401 && this.contextSrv.user.isSignedIn && firstAttempt) {
         return this.loginPing().then(() => {
           options.retry = 1;
           return this.request(options);
@@ -148,6 +162,10 @@ export class BackendSrv {
       if (options.headers && options.headers.Authorization) {
         options.headers['X-DS-Authorization'] = options.headers.Authorization;
         delete options.headers.Authorization;
+      }
+
+      if (this.noBackendCache) {
+        options.headers['X-Grafana-NoCache'] = 'true';
       }
     }
 

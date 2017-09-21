@@ -44,12 +44,16 @@ export class SaveDashboardAsModalCtrl {
     this.clone.editable = true;
     this.clone.hideControls = false;
 
-    // remove alerts
-    this.clone.rows.forEach(row => {
-      row.panels.forEach(panel => {
-        delete panel.alert;
+    // remove alerts if source dashboard is already persisted
+    // do not want to create alert dupes
+    if (dashboard.id > 0) {
+      this.clone.rows.forEach(row => {
+        row.panels.forEach(panel => {
+          delete panel.thresholds;
+          delete panel.alert;
+        });
       });
-    });
+    }
 
     delete this.clone.autoUpdate;
   }

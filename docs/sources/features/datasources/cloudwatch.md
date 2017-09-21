@@ -84,8 +84,8 @@ Name | Description
 *metrics(namespace, [region])* | Returns a list of metrics in the namespace. (specify region for custom metrics)
 *dimension_keys(namespace)* | Returns a list of dimension keys in the namespace.
 *dimension_values(region, namespace, metric, dimension_key)* | Returns a list of dimension values matching the specified `region`, `namespace`, `metric` and `dimension_key`.
-*ebs_volume_ids(region, instance_id)* | Returns a list of volume id matching the specified `region`, `instance_id`.
-*ec2_instance_attribute(region, attribute_name, filters)* | Returns a list of attribute matching the specified `region`, `attribute_name`, `filters`.
+*ebs_volume_ids(region, instance_id)* | Returns a list of volume ids matching the specified `region`, `instance_id`.
+*ec2_instance_attribute(region, attribute_name, filters)* | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
@@ -101,10 +101,13 @@ Query | Service
 *dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)* | RDS
 *dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)* | S3
 
-#### ec2_instance_attribute JSON filters
+## ec2_instance_attribute examples
 
-The `ec2_instance_attribute` query take `filters` in JSON format.
+### JSON filters
+
+The `ec2_instance_attribute` query takes `filters` in JSON format.
 You can specify [pre-defined filters of ec2:DescribeInstances](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html).
+Note that the actual filtering takes place on Amazon's servers, not in Grafana.
 
 Filters syntax:
 
@@ -115,6 +118,45 @@ Filters syntax:
 Example `ec2_instance_attribute()` query
 
     ec2_instance_attribute(us-east-1, InstanceId, { "tag:Environment": [ "production" ] })
+
+### Selecting Attributes
+
+Only 1 attribute per instance can be returned. Any flat attribute can be selected (i.e. if the attribute has a single value and isn't an object or array). Below is a list of available flat attributes:
+
+  * `AmiLaunchIndex`
+  * `Architecture`
+  * `ClientToken`
+  * `EbsOptimized`
+  * `EnaSupport`
+  * `Hypervisor`
+  * `IamInstanceProfile`
+  * `ImageId`
+  * `InstanceId`
+  * `InstanceLifecycle`
+  * `InstanceType`
+  * `KernelId`
+  * `KeyName`
+  * `LaunchTime`
+  * `Platform`
+  * `PrivateDnsName`
+  * `PrivateIpAddress`
+  * `PublicDnsName`
+  * `PublicIpAddress`
+  * `RamdiskId`
+  * `RootDeviceName`
+  * `RootDeviceType`
+  * `SourceDestCheck`
+  * `SpotInstanceRequestId`
+  * `SriovNetSupport`
+  * `SubnetId`
+  * `VirtualizationType`
+  * `VpcId`
+
+Tags can be selected by prepending the tag name with `Tags.`
+
+Example `ec2_instance_attribute()` query
+
+    ec2_instance_attribute(us-east-1, Tags.Name, { "tag:Team": [ "sysops" ] })
 
 ## Cost
 

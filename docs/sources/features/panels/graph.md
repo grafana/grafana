@@ -50,15 +50,11 @@ populate the template variable to a desired value from the link.
 The metrics tab defines what series data and sources to render.  Each datasource provides different
 options.
 
-## Axes & Grid
+## Axes
 
 ![](/img/docs/v43/graph_axes_grid_options.png)
 
-The Axes & Grid tab controls the display of axes, grids and legend.
-
-### Axes
-
-The ``Left Y`` and ``Right Y`` can be customized using:
+The Axes tab controls the display of axes, grids and legend.  The ``Left Y`` and ``Right Y`` can be customized using:
 
 - ``Unit`` - The display unit for the Y value
 - ``Grid Max`` - The maximum Y value. (default auto)

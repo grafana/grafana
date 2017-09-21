@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	gocontext "context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -104,7 +106,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
-		return nil, fmt.Errorf("Could not find datasource")
+		return nil, fmt.Errorf("Could not find datasource %v", err)
 	}
 
 	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange)
@@ -112,6 +114,10 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 
 	resp, err := c.HandleRequest(context.Ctx, req)
 	if err != nil {
+		if err == gocontext.DeadlineExceeded {
+			return nil, fmt.Errorf("Alert execution exceeded the timeout")
+		}
+
 		return nil, fmt.Errorf("tsdb.HandleRequest() error %v", err)
 	}
 

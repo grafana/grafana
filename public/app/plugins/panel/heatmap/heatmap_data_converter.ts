@@ -51,6 +51,7 @@ function elasticHistogramToHeatmap(seriesList) {
  * @return {Array}          Array of "card" objects
  */
 function convertToCards(buckets) {
+  let min = 0, max = 0;
   let cards = [];
   _.forEach(buckets, xBucket => {
     _.forEach(xBucket.buckets, yBucket=> {
@@ -62,10 +63,19 @@ function convertToCards(buckets) {
         count: yBucket.count,
       };
       cards.push(card);
+
+      if (cards.length === 1) {
+        min = yBucket.count;
+        max = yBucket.count;
+      }
+
+      min = yBucket.count < min ? yBucket.count : min;
+      max = yBucket.count > max ? yBucket.count : max;
     });
   });
 
-  return cards;
+  let cardStats = {min, max};
+  return {cards, cardStats};
 }
 
 /**
@@ -214,12 +224,14 @@ function pushToYBuckets(buckets, bucketNum, value, point, bounds) {
   }
   if (buckets[bucketNum]) {
     buckets[bucketNum].values.push(value);
+    buckets[bucketNum].points.push(point);
     buckets[bucketNum].count += count;
   } else {
     buckets[bucketNum] = {
       y: bucketNum,
       bounds: bounds,
       values: [value],
+      points: [point],
       count: count,
     };
   }

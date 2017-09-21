@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -21,7 +20,7 @@ func init() {
       <h3 class="page-heading">PagerDuty settings</h3>
       <div class="gf-form">
         <span class="gf-form-label width-14">Integration Key</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.integrationKey" placeholder="Pagerduty integeration Key"></input>
+        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.integrationKey" placeholder="Pagerduty Integration Key"></input>
       </div>
       <div class="gf-form">
         <gf-form-switch
@@ -63,7 +62,6 @@ type PagerdutyNotifier struct {
 }
 
 func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
-	metrics.M_Alerting_Notification_Sent_PagerDuty.Inc(1)
 
 	if evalContext.Rule.State == m.AlertStateOK && !this.AutoResolve {
 		this.log.Info("Not sending a trigger to Pagerduty", "state", evalContext.Rule.State, "auto resolve", this.AutoResolve)

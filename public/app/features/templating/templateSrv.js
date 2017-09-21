@@ -15,7 +15,6 @@ function (angular, _, kbn) {
     this._index = {};
     this._texts = {};
     this._grafanaVariables = {};
-    this._adhocVariables = {};
 
     // default built ins
     this._builtIns = {};
@@ -30,16 +29,9 @@ function (angular, _, kbn) {
     this.updateTemplateData = function() {
       this._index = {};
       this._filters = {};
-      this._adhocVariables = {};
 
       for (var i = 0; i < this.variables.length; i++) {
         var variable = this.variables[i];
-
-        // add adhoc filters to it's own index
-        if (variable.type === 'adhoc') {
-          this._adhocVariables[variable.datasource] = variable;
-          continue;
-        }
 
         if (!variable.current || !variable.current.isNone && !variable.current.value) {
           continue;
@@ -47,7 +39,6 @@ function (angular, _, kbn) {
 
         this._index[variable.name] = variable;
       }
-
     };
 
     this.variableInitialized = function(variable) {
@@ -55,11 +46,26 @@ function (angular, _, kbn) {
     };
 
     this.getAdhocFilters = function(datasourceName) {
-      var variable = this._adhocVariables[datasourceName];
-      if (variable) {
-        return variable.filters || [];
+      var filters = [];
+
+      for (var i = 0; i < this.variables.length; i++) {
+        var variable = this.variables[i];
+        if (variable.type !== 'adhoc') {
+          continue;
+        }
+
+        if (variable.datasource === datasourceName) {
+          filters = filters.concat(variable.filters);
+        }
+
+        if (variable.datasource.indexOf('$') === 0) {
+          if (this.replace(variable.datasource) === datasourceName) {
+            filters = filters.concat(variable.filters);
+          }
+        }
       }
-      return [];
+
+      return filters;
     };
 
     function luceneEscape(value) {

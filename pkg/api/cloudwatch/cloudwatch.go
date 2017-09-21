@@ -39,6 +39,7 @@ type cwRequest struct {
 type datasourceInfo struct {
 	Profile       string
 	Region        string
+	AuthType      string
 	AssumeRoleArn string
 	Namespace     string
 
@@ -47,6 +48,7 @@ type datasourceInfo struct {
 }
 
 func (req *cwRequest) GetDatasourceInfo() *datasourceInfo {
+	authType := req.DataSource.JsonData.Get("authType").MustString()
 	assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	accessKey := ""
 	secretKey := ""
@@ -61,6 +63,7 @@ func (req *cwRequest) GetDatasourceInfo() *datasourceInfo {
 	}
 
 	return &datasourceInfo{
+		AuthType:      authType,
 		AssumeRoleArn: assumeRoleArn,
 		Region:        req.Region,
 		Profile:       req.DataSource.Database,
@@ -110,7 +113,7 @@ func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
 	sessionToken := ""
 	var expiration *time.Time
 	expiration = nil
-	if strings.Index(dsInfo.AssumeRoleArn, "arn:aws:iam:") == 0 {
+	if dsInfo.AuthType == "arn" && strings.Index(dsInfo.AssumeRoleArn, "arn:aws:iam:") == 0 {
 		params := &sts.AssumeRoleInput{
 			RoleArn:         aws.String(dsInfo.AssumeRoleArn),
 			RoleSessionName: aws.String("GrafanaSession"),
@@ -263,7 +266,7 @@ func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return
 	}
-	metrics.M_Aws_CloudWatch_GetMetricStatistics.Inc(1)
+	metrics.M_Aws_CloudWatch_GetMetricStatistics.Inc()
 
 	c.JSON(200, resp)
 }
@@ -299,7 +302,7 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 	var resp cloudwatch.ListMetricsOutput
 	err = svc.ListMetricsPages(params,
 		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
-			metrics.M_Aws_CloudWatch_ListMetrics.Inc(1)
+			metrics.M_Aws_CloudWatch_ListMetrics.Inc()
 			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
 			for _, metric := range metrics {
 				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))

@@ -22,6 +22,7 @@ describe('VariableSrv', function() {
     ctx.variableSrv.init({
       templating: {list: []},
       events: new Emitter(),
+      updateSubmenuVisibility: sinon.stub(),
     });
     ctx.$rootScope.$digest();
   }));
@@ -41,7 +42,9 @@ describe('VariableSrv', function() {
         ctx.datasourceSrv.getMetricSources = sinon.stub().returns(scenario.metricSources);
 
 
-        scenario.variable = ctx.variableSrv.addVariable(scenario.variableModel);
+        scenario.variable = ctx.variableSrv.createVariableFromModel(scenario.variableModel);
+        ctx.variableSrv.addVariable(scenario.variable);
+
         ctx.variableSrv.updateOptions(scenario.variable);
         ctx.$rootScope.$digest();
       });

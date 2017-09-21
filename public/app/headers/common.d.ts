@@ -77,3 +77,8 @@ declare module 'twemoji' {
   var twemoji: any;
   export default twemoji;
 }
+
+declare module 'ace' {
+  var ace: any;
+  export default ace;
+}

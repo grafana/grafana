@@ -1,7 +1,9 @@
-<query-editor-row query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
+<query-editor-row query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="false">
 	<div class="gf-form-inline">
 		<div class="gf-form gf-form--grow">
-			<textarea rows="3" class="gf-form-input" ng-model="ctrl.target.expr" spellcheck="false" placeholder="query expression" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.refreshMetricData()"></textarea>
+			<code-editor content="ctrl.target.expr" datasource="ctrl.datasource" on-change="ctrl.refreshMetricData()"
+				get-completer="ctrl.getCompleter()" data-mode="prometheus" code-editor-focus="ctrl.isLastQuery">
+			</code-editor>
 		</div>
 	</div>
 
@@ -38,17 +40,6 @@
 			</div>
 		</div>
 
-		<div class="gf-form gf-form--grow">
-			<div class="gf-form-label gf-form-label--grow"></div>
-		</div>
-	</div>
-
-	<div class="gf-form-inline">
-		<div class="gf-form max-width-26">
-			<label class="gf-form-label width-8">Metric lookup</label>
-			<input type="text" class="gf-form-input" ng-model="ctrl.target.metric" spellcheck='false' bs-typeahead="ctrl.suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100>
-		</div>
-
 		<div class="gf-form">
 			<label class="gf-form-label width-6">Format as</label>
 			<div class="gf-form-select-wrapper width-8">
@@ -65,5 +56,6 @@
 			<div class="gf-form-label gf-form-label--grow"></div>
 		</div>
 	</div>
+
 
 </query-editor-row>

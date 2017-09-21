@@ -11,9 +11,23 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.basicAuth = instanceSettings.basicAuth;
   this.url = instanceSettings.url;
   this.name = instanceSettings.name;
+  this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || '0.9';
   this.cacheTimeout = instanceSettings.cacheTimeout;
   this.withCredentials = instanceSettings.withCredentials;
   this.render_method = instanceSettings.render_method || 'POST';
+
+  this.getQueryOptionsInfo = function() {
+    return {
+      "maxDataPoints": true,
+      "cacheTimeout": true,
+      "links": [
+        {
+          text: "Help",
+          url: "http://docs.grafana.org/features/datasources/graphite/#using-graphite-in-grafana"
+        }
+      ]
+    };
+  };
 
   this.query = function(options) {
     var graphOptions = {
@@ -160,17 +174,27 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     return date.unix();
   };
 
-  this.metricFindQuery = function(query) {
-    var interpolated;
-    try {
-      interpolated = encodeURIComponent(templateSrv.replace(query));
-    } catch (err) {
-      return $q.reject(err);
+  this.metricFindQuery = function(query, optionalOptions) {
+    let options = optionalOptions || {};
+    let interpolatedQuery = templateSrv.replace(query);
+
+    let httpOptions: any =  {
+      method: 'GET',
+      url: '/metrics/find',
+      params: {
+        query: interpolatedQuery
+      },
+      // for cancellations
+      requestId: options.requestId,
+    };
+
+    if (options && options.range) {
+      httpOptions.params.from = this.translateTime(options.range.from, false);
+      httpOptions.params.until = this.translateTime(options.range.to, true);
     }
 
-    return this.doGraphiteRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })
-    .then(function(results) {
-      return _.map(results.data, function(metric) {
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      return _.map(results.data, metric => {
         return {
           text: metric.text,
           expandable: metric.expandable ? true : false
@@ -181,7 +205,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 
   this.testDatasource = function() {
     return this.metricFindQuery('*').then(function () {
-      return { status: "success", message: "Data source is working", title: "Success" };
+      return { status: "success", message: "Data source is working"};
     });
   };
 

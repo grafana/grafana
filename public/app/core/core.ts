@@ -20,6 +20,8 @@ import './jquery_extended';
 import './partials';
 import './components/jsontree/jsontree';
 import './components/emoji_picker/emoji_picker';
+import './components/code_editor/code_editor';
+import './utils/outline';
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';

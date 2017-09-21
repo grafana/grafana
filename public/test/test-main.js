@@ -41,7 +41,8 @@
       "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge",
       "d3": "vendor/d3/d3.js",
       "jquery.flot.dashes": "vendor/flot/jquery.flot.dashes",
-      "twemoji": "vendor/npm/twemoji/2/twemoji.amd.js"
+      "twemoji": "vendor/npm/twemoji/2/twemoji.amd.js",
+      "ace": "vendor/npm/ace-builds/src-noconflict/ace",
     },
 
     packages: {
@@ -73,6 +74,10 @@
       'vendor/npm/mousetrap/mousetrap.js': {
         format: 'global',
         exports: 'Mousetrap'
+      },
+      'vendor/npm/ace-builds/src-noconflict/ace.js': {
+        format: 'global',
+        exports: 'ace'
       },
     }
   });

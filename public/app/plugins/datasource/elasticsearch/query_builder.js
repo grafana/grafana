@@ -1,5 +1,5 @@
 define([
-  './query_def'
+  './query_def',
 ],
 function (queryDef) {
   'use strict';
@@ -133,17 +133,23 @@ function (queryDef) {
       return;
     }
 
-    var i, filter, condition;
+    var i, filter, condition, queryCondition;
+
     for (i = 0; i < adhocFilters.length; i++) {
       filter = adhocFilters[i];
       condition = {};
       condition[filter.key] = filter.value;
+      queryCondition = {};
+      queryCondition[filter.key] = {query: filter.value};
+
       switch(filter.operator){
         case "=":
-          query.query.bool.filter.push({"term": condition});
+          if (!query.query.bool.must) { query.query.bool.must = []; }
+          query.query.bool.must.push({match_phrase: queryCondition});
           break;
         case "!=":
-          query.query.bool.filter.push({"bool": {"must_not": {"term": condition}}});
+          if (!query.query.bool.must_not) { query.query.bool.must_not = []; }
+          query.query.bool.must_not.push({match_phrase: queryCondition});
           break;
         case "<":
           condition[filter.key] = {"lt": filter.value};

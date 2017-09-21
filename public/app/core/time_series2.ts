@@ -191,10 +191,9 @@ export default class TimeSeries {
           this.stats.logmin = currentValue;
         }
 
-      }
-
-      if (currentValue !== 0) {
-        this.allIsZero = false;
+        if (currentValue !== 0) {
+          this.allIsZero = false;
+        }
       }
 
       result.push([currentTime, currentValue]);

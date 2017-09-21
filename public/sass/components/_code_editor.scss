@@ -1,0 +1,83 @@
+.gf-code-editor {
+  min-height: 2.60rem;
+  min-width: 20rem;
+  flex-grow: 1;
+  margin-right: 0.25rem;
+  visibility: hidden;
+
+  &.ace_editor {
+    @include font-family-monospace();
+    font-size: 1rem;
+    min-height: 2.60rem;
+
+    @include border-radius($input-border-radius-sm);
+    border: $input-btn-border-width solid $input-border-color;
+  }
+
+  &--theme-loaded {
+    visibility: visible;
+  }
+}
+
+.ace_editor.ace_autocomplete {
+  @include font-family-monospace();
+  font-size: 1rem;
+
+  // Ace editor adds <style> tag at the end of <head>, after grafana.css, so !important
+  // is used for overriding styles with the same CSS specificity.
+  background-color: $dropdownBackground !important;
+  color: $dropdownLinkColor !important;
+  border: 1px solid $dropdownBorder !important;
+  width: 550px !important;
+
+  .ace_scroller {
+    .ace_selected, .ace_active-line, .ace_line-hover {
+      color: $dropdownLinkColorHover;
+      background-color: $dropdownLinkBackgroundHover !important;
+    }
+
+    .ace_line-hover {
+      border-color: transparent;
+    }
+
+    .ace_completion-highlight {
+      color: $yellow;
+    }
+
+    .ace_rightAlignedText {
+      color: $text-muted;
+      z-index: 0;
+    }
+  }
+}
+
+$doc-font-size: $font-size-sm;
+
+.ace_tooltip.ace_doc-tooltip {
+  @include font-family-monospace();
+  font-size: $doc-font-size;
+
+  background-color: $popover-help-bg;
+  color: $popover-help-color;
+  background-image: none;
+  border: 1px solid $dropdownBorder;
+  padding: 0.5rem 1rem;
+
+  hr {
+    background-color: $popover-help-color;
+    margin: 0.5rem 0rem;
+  }
+
+  code {
+    padding: 0px 1px;
+    margin: 0px;
+  }
+}
+
+.ace_tooltip {
+  border-radius: 3px;
+}
+
+.ace_hidden-cursors .ace_cursor {
+  opacity: 0 !important;
+}

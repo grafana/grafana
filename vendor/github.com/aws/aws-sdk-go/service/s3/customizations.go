@@ -44,3 +44,21 @@ func defaultInitRequestFn(r *request.Request) {
 		r.Handlers.Unmarshal.PushFront(copyMultipartStatusOKUnmarhsalError)
 	}
 }
+
+// bucketGetter is an accessor interface to grab the "Bucket" field from
+// an S3 type.
+type bucketGetter interface {
+	getBucket() string
+}
+
+// sseCustomerKeyGetter is an accessor interface to grab the "SSECustomerKey"
+// field from an S3 type.
+type sseCustomerKeyGetter interface {
+	getSSECustomerKey() string
+}
+
+// copySourceSSECustomerKeyGetter is an accessor interface to grab the
+// "CopySourceSSECustomerKey" field from an S3 type.
+type copySourceSSECustomerKeyGetter interface {
+	getCopySourceSSECustomerKey() string
+}

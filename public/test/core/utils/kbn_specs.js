@@ -143,8 +143,8 @@ define([
       expect(res.intervalMs).to.be(500);
     });
 
-    it('fixed user interval', function() {
-      var range = { from: dateMath.parse('now-10m'), to: dateMath.parse('now') };
+    it('fixed user min interval', function() {
+      var range = {from: dateMath.parse('now-10m'), to: dateMath.parse('now')};
       var res = kbn.calculateInterval(range, 1600, '10s');
       expect(res.interval).to.be('10s');
       expect(res.intervalMs).to.be(10000);
@@ -166,6 +166,20 @@ define([
       var range = { from: dateMath.parse('now-10s'), to: dateMath.parse('now') };
       var res = kbn.calculateInterval(range, 900, '>15ms');
       expect(res.interval).to.be('15ms');
+    });
+
+    it('1d 1 resolution', function() {
+      var range = { from: dateMath.parse('now-1d'), to: dateMath.parse('now') };
+      var res = kbn.calculateInterval(range, 1, null);
+      expect(res.interval).to.be('1d');
+      expect(res.intervalMs).to.be(86400000);
+    });
+
+    it('86399s 1 resolution', function() {
+      var range = { from: dateMath.parse('now-86390s'), to: dateMath.parse('now') };
+      var res = kbn.calculateInterval(range, 1, null);
+      expect(res.interval).to.be('12h');
+      expect(res.intervalMs).to.be(43200000);
     });
   });
 

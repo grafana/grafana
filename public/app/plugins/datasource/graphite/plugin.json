@@ -11,6 +11,11 @@
   "alerting": true,
   "annotations": true,
 
+  "queryOptions": {
+    "maxDataPoints": true,
+    "cacheTimeout": true
+  },
+
   "info": {
     "author": {
       "name": "Grafana Project",

@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"container/list"
 	"context"
 	"database/sql"
 	"fmt"
@@ -65,7 +66,7 @@ func (e *MysqlExecutor) initEngine() error {
 		}
 	}
 
-	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?charset=utf8mb4&parseTime=true&loc=UTC", e.datasource.User, e.datasource.Password, "tcp", e.datasource.Url, e.datasource.Database)
+	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC", e.datasource.User, e.datasource.Password, "tcp", e.datasource.Url, e.datasource.Database)
 	e.log.Debug("getEngine", "connection", cnnstr)
 
 	engine, err := xorm.NewEngine("mysql", cnnstr)
@@ -183,7 +184,7 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 	values := make([]interface{}, len(types))
 
 	for i, stype := range types {
-		e.log.Info("type", "type", stype)
+		e.log.Debug("type", "type", stype)
 		switch stype.DatabaseTypeName() {
 		case mysql.FieldTypeNameTiny:
 			values[i] = new(int8)
@@ -205,6 +206,8 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 			values[i] = new(float32)
 		case mysql.FieldTypeNameNewDecimal:
 			values[i] = new(float64)
+		case mysql.FieldTypeNameFloat:
+			values[i] = new(float64)
 		case mysql.FieldTypeNameTimestamp:
 			values[i] = new(time.Time)
 		case mysql.FieldTypeNameDateTime:
@@ -215,6 +218,20 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 			values[i] = new(int16)
 		case mysql.FieldTypeNameNULL:
 			values[i] = nil
+		case mysql.FieldTypeNameBit:
+			values[i] = new([]byte)
+		case mysql.FieldTypeNameBLOB:
+			values[i] = new(string)
+		case mysql.FieldTypeNameTinyBLOB:
+			values[i] = new(string)
+		case mysql.FieldTypeNameMediumBLOB:
+			values[i] = new(string)
+		case mysql.FieldTypeNameLongBLOB:
+			values[i] = new(string)
+		case mysql.FieldTypeNameString:
+			values[i] = new(string)
+		case mysql.FieldTypeNameDate:
+			values[i] = new(string)
 		default:
 			return nil, fmt.Errorf("Database type %s not supported", stype.DatabaseTypeName())
 		}
@@ -229,6 +246,7 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 
 func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 	pointsBySeries := make(map[string]*tsdb.TimeSeries)
+	seriesByQueryOrder := list.New()
 	columnNames, err := rows.Columns()
 
 	if err != nil {
@@ -266,11 +284,13 @@ func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows,
 			series := &tsdb.TimeSeries{Name: rowData.metric}
 			series.Points = append(series.Points, tsdb.TimePoint{rowData.value, rowData.time})
 			pointsBySeries[rowData.metric] = series
+			seriesByQueryOrder.PushBack(rowData.metric)
 		}
 	}
 
-	for _, value := range pointsBySeries {
-		result.Series = append(result.Series, value)
+	for elem := seriesByQueryOrder.Front(); elem != nil; elem = elem.Next() {
+		key := elem.Value.(string)
+		result.Series = append(result.Series, pointsBySeries[key])
 	}
 
 	result.Meta.Set("rowCount", rowCount)

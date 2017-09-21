@@ -6,6 +6,7 @@ set -e
 
 IS_UPGRADE=false
 
+
 case "$1" in
 	configure)
 	[ -z "$GRAFANA_USER" ] && GRAFANA_USER="grafana"

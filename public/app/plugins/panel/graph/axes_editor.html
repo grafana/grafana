@@ -4,34 +4,38 @@
 		<h5 class="section-heading" ng-show="$index === 0">Left Y</h5>
 		<h5 class="section-heading" ng-show="$index === 1">Right Y</h5>
 
-		<gf-form-switch class="gf-form" label="Show" label-class="width-5" checked="yaxis.show" on-change="ctrl.render()"></gf-form-switch>
+		<gf-form-switch class="gf-form" label="Show" label-class="width-6" checked="yaxis.show" on-change="ctrl.render()"></gf-form-switch>
 
 		<div ng-if="yaxis.show">
 			<div class="gf-form">
-				<label class="gf-form-label width-5">Unit</label>
-				<div class="gf-form-dropdown-typeahead max-width-15" ng-model="yaxis.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat(yaxis, $subItem)"></div>
+				<label class="gf-form-label width-6">Unit</label>
+				<div class="gf-form-dropdown-typeahead max-width-20" ng-model="yaxis.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat(yaxis, $subItem)"></div>
 			</div>
 
 			<div class="gf-form">
-				<label class="gf-form-label width-5">Scale</label>
-				<div class="gf-form-select-wrapper max-width-15">
+				<label class="gf-form-label width-6">Scale</label>
+				<div class="gf-form-select-wrapper max-width-20">
 					<select class="gf-form-input" ng-model="yaxis.logBase" ng-options="v as k for (k, v) in ctrl.logScales" ng-change="ctrl.render()"></select>
 				</div>
 			</div>
 
 			<div class="gf-form-inline">
 				<div class="gf-form">
-					<label class="gf-form-label width-5">Y-Min</label>
+					<label class="gf-form-label width-6">Y-Min</label>
 					<input type="text" class="gf-form-input width-5" placeholder="auto" empty-to-null ng-model="yaxis.min" ng-change="ctrl.render()" ng-model-onblur>
 				</div>
 				<div class="gf-form">
-					<label class="gf-form-label width-5">Y-Max</label>
+					<label class="gf-form-label width-6">Y-Max</label>
 					<input type="text" class="gf-form-input width-5" placeholder="auto" empty-to-null ng-model="yaxis.max" ng-change="ctrl.render()" ng-model-onblur>
 				</div>
+      </div>
+      <div class="gf-form">
+				<label class="gf-form-label width-6">Decimals</label>
+				<input type="number" class="gf-form-input max-width-20" placeholder="auto" bs-tooltip="'Override automatic decimal precision for y-axis'" data-placement="right" ng-model="yaxis.decimals" ng-change="ctrl.render()" ng-model-onblur>
 			</div>
 
 			<div class="gf-form">
-				<label class="gf-form-label width-5">Label</label>
+				<label class="gf-form-label width-6">Label</label>
 				<input type="text" class="gf-form-input max-width-20" ng-model="yaxis.label" ng-change="ctrl.render()" ng-model-onblur>
 			</div>
 		</div>
@@ -44,26 +48,14 @@
 		<div class="gf-form">
 			<label class="gf-form-label width-6">Mode</label>
 			<div class="gf-form-select-wrapper max-width-15">
-				<select class="gf-form-input" ng-model="ctrl.panel.xaxis.mode" ng-options="v as k for (k, v) in ctrl.xAxisModes" ng-change="ctrl.xAxisOptionChanged()"> </select>
+				<select class="gf-form-input" ng-model="ctrl.panel.xaxis.mode" ng-options="v as k for (k, v) in ctrl.xAxisModes" ng-change="ctrl.xAxisModeChanged()"> </select>
 			</div>
-		</div>
-
-    <!-- Table mode -->
-		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'field'">
-			<label class="gf-form-label width-6">Name</label>
-      <metric-segment-model property="ctrl.panel.xaxis.name" get-options="ctrl.getDataFieldNames(false)" on-change="ctrl.xAxisOptionChanged()" custom="false" css-class="width-10" select-mode="true"></metric-segment-model>
-		</div>
-
-    <!-- Series mode -->
-		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'field'">
-			<label class="gf-form-label width-6">Value</label>
-      <metric-segment-model property="ctrl.panel.xaxis.values[0]" get-options="ctrl.getDataFieldNames(true)" on-change="ctrl.xAxisOptionChanged()" custom="false" css-class="width-10" select-mode="true"></metric-segment-model>
 		</div>
 
 		<!-- Series mode -->
 		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'series'">
 			<label class="gf-form-label width-6">Value</label>
-      <metric-segment-model property="ctrl.panel.xaxis.values[0]" options="ctrl.xAxisStatOptions" on-change="ctrl.xAxisOptionChanged()" custom="false" css-class="width-10" select-mode="true"></metric-segment-model>
+      <metric-segment-model property="ctrl.panel.xaxis.values[0]" options="ctrl.xAxisStatOptions" on-change="ctrl.xAxisValueChanged()" custom="false" css-class="width-10" select-mode="true"></metric-segment-model>
 		</div>
 
 		<!-- Histogram mode -->

@@ -1,10 +1,10 @@
 {
   "author": {
     "name": "Torkel Ödegaard",
-    "company": "Coding Instinct AB"
+    "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "5.0.0-pre1",
+  "version": "4.5.0",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -53,16 +53,14 @@
     "systemjs": "0.19.41",
     "zone.js": "^0.7.2"
   },
-  "engines": {
-    "node": "4.x",
-    "npm": "2.14.x"
-  },
   "scripts": {
     "build": "./node_modules/grunt-cli/bin/grunt",
-    "test": "./node_modules/grunt-cli/bin/grunt test"
+    "test": "./node_modules/grunt-cli/bin/grunt test",
+    "dev": "./node_modules/grunt-cli/bin/grunt && ./node_modules/grunt-cli/bin/grunt watch"
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "ace-builds": "^1.2.8",
     "eventemitter3": "^2.0.2",
     "gaze": "^1.1.2",
     "grunt-jscs": "3.0.1",

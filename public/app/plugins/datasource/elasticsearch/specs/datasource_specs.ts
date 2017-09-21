@@ -129,7 +129,10 @@ describe('ElasticDatasource', function() {
                   '@timestamp': {type: 'date'},
                   beat: {
                     properties: {
-                      name: {type: 'string'},
+                      name: {
+                        fields: {raw: {type: 'keyword'}},
+                        type: 'string'
+                      },
                       hostname: {type: 'string'},
                     }
                   },
@@ -169,6 +172,7 @@ describe('ElasticDatasource', function() {
         var fields = _.map(fieldObjects, 'text');
         expect(fields).to.eql([
           '@timestamp',
+          'beat.name.raw',
           'beat.name',
           'beat.hostname',
           'system.cpu.system',
