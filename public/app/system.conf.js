@@ -14,10 +14,10 @@ System.config({
     "jquery": "vendor/npm/jquery/dist/jquery.js",
     'lodash-src': 'vendor/npm/lodash/lodash.js',
     "lodash": 'app/core/lodash_extended.js',
-    "angular": "vendor/angular/angular.js",
+    "angular": "vendor/npm/angular/angular.js",
     "bootstrap": "vendor/bootstrap/bootstrap.js",
-    'angular-route':          'vendor/angular-route/angular-route.js',
-    'angular-sanitize':       'vendor/angular-sanitize/angular-sanitize.js',
+    'angular-route':          'vendor/npm/angular-route/angular-route.js',
+    'angular-sanitize':       'vendor/npm/angular-sanitize/angular-sanitize.js',
     "angular-ui":             "vendor/angular-ui/ui-bootstrap-tpls.js",
     "angular-strap":          "vendor/angular-other/angular-strap.js",
     "angular-dragdrop":       "vendor/angular-native-dragdrop/draganddrop.js",
@@ -63,7 +63,7 @@ System.config({
       format: 'cjs',
       exports: 'VirtualScroll',
     },
-    'vendor/angular/angular.js': {
+    'vendor/npm/angular/angular.js': {
       format: 'global',
       deps: ['jquery'],
       exports: 'angular',

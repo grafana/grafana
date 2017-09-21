@@ -19,6 +19,10 @@ module.exports = function(config) {
       cwd: './node_modules',
       expand: true,
       src: [
+        'angular/angular.js',
+        'angular-mocks/angular-mocks.js',
+        'angular-route/angular-route.js',
+        'angular-sanitize/angular-sanitize.js',
         'jquery/dist/jquery.js',
         'lodash/lodash.js',
         'ace-builds/src-noconflict/ace.js',
