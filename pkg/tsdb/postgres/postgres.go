@@ -188,6 +188,25 @@ func (e PostgresExecutor) getTypedRowData(rows *core.Rows) (tsdb.RowValues, erro
 		return nil, err
 	}
 
+	// convert types not handled by lib/pq
+	// unhandled types are returned as []byte
+	for i := 0; i < len(types); i++ {
+		if value, ok := values[i].([]byte); ok == true {
+			switch types[i].DatabaseTypeName() {
+			case "NUMERIC":
+				v, err := strconv.ParseFloat(string(value), 64)
+				if err == nil {
+					values[i] = v
+				}
+			case "UNKNOWN":
+				// char literals dont have explicit type
+				values[i] = string(value)
+			default:
+				e.log.Debug("Rows", "Unknown database type", types[i].DatabaseTypeName(), "value", value)
+			}
+		}
+	}
+
 	return values, nil
 }
 
@@ -241,15 +260,14 @@ func (e PostgresExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Ro
 		case time.Time:
 			timestamp = float64(columnValue.Unix() * 1000)
 		default:
-			return fmt.Errorf("Found row with no valid time value")
+			return fmt.Errorf("Invalid type for column time, must be of type timestamp or unix timestamp")
 		}
 
 		if metricIndex >= 0 {
-			switch columnValue := values[metricIndex].(type) {
-			case string:
+			if columnValue, ok := values[metricIndex].(string); ok == true {
 				metric = columnValue
-			case []byte: // char is not converted to a go string but returned as []byte
-				metric = string(columnValue)
+			} else {
+				return fmt.Errorf("Column metric must be of type char,varchar or text")
 			}
 		}
 
@@ -263,11 +281,6 @@ func (e PostgresExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Ro
 				value = null.FloatFrom(float64(columnValue))
 			case float64:
 				value = null.FloatFrom(columnValue)
-			case []byte: // decimal is not converted to a go type but returned as []byte
-				v, err := strconv.ParseFloat(string(columnValue), 64)
-				if err == nil {
-					value = null.FloatFrom(v)
-				}
 			default:
 				return fmt.Errorf("Unknown datatype in column %s: type: %T value: %v", col, columnValue, columnValue)
 			}
