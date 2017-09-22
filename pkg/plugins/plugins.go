@@ -17,12 +17,13 @@ import (
 )
 
 var (
-	DataSources  map[string]*DataSourcePlugin
-	Panels       map[string]*PanelPlugin
-	StaticRoutes []*PluginStaticRoute
-	Apps         map[string]*AppPlugin
-	Plugins      map[string]*PluginBase
-	PluginTypes  map[string]interface{}
+	DataSources        map[string]*DataSourcePlugin
+	Panels             map[string]*PanelPlugin
+	StaticRoutes       []*PluginStaticRoute
+	Apps               map[string]*AppPlugin
+	Plugins            map[string]*PluginBase
+	BackendDatasources map[string]*BackendDatasource
+	PluginTypes        map[string]interface{}
 
 	GrafanaLatestVersion string
 	GrafanaHasUpdate     bool
@@ -34,7 +35,9 @@ type PluginScanner struct {
 	errors     []error
 }
 
-func Init() error {
+type Dispose func()
+
+func Init() (Dispose, error) {
 	plog = log.New("plugins")
 
 	DataSources = make(map[string]*DataSourcePlugin)
@@ -42,10 +45,12 @@ func Init() error {
 	Panels = make(map[string]*PanelPlugin)
 	Apps = make(map[string]*AppPlugin)
 	Plugins = make(map[string]*PluginBase)
+	BackendDatasources = make(map[string]*BackendDatasource)
 	PluginTypes = map[string]interface{}{
-		"panel":      PanelPlugin{},
-		"datasource": DataSourcePlugin{},
-		"app":        AppPlugin{},
+		"panel":              PanelPlugin{},
+		"datasource":         DataSourcePlugin{},
+		"app":                AppPlugin{},
+		"backend-datasource": BackendDatasource{},
 	}
 
 	plog.Info("Starting plugin search")
@@ -77,10 +82,26 @@ func Init() error {
 		app.initApp()
 	}
 
+	killers := []Killable{}
+	for _, be := range BackendDatasources {
+		killable, err := be.initBackendPlugin()
+		if err != nil {
+			plog.Error("failed to init plugin", "id", be.Id, "error", err)
+		} else {
+			killers = append(killers, killable)
+		}
+	}
+
 	go StartPluginUpdateChecker()
 	go updateAppDashboards()
 
-	return nil
+	return dispose, nil
+}
+
+func dispose() {
+	for _, p := range BackendDatasources {
+		p.Kill()
+	}
 }
 
 func checkPluginPaths() error {

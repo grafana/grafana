@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	tsdbplugins "github.com/grafana/grafana/pkg/plugins/backend"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -67,13 +66,13 @@ func (g *GrafanaServerImpl) Start() {
 	search.Init()
 	login.Init()
 	social.NewOAuthService()
-	plugins.Init()
-	pluginClient, err := tsdbplugins.Init()
+
+	pluginCloser, err := plugins.Init()
 	if err != nil {
 		g.log.Error("failed to start plugins", "error", err)
 		g.Shutdown(1, "Startup failed")
 	}
-	defer pluginClient.Kill()
+	defer pluginCloser()
 
 	if err := provisioning.Init(g.context, setting.HomePath, setting.Cfg); err != nil {
 		logger.Error("Failed to provision Grafana from config", "error", err)
@@ -81,13 +80,13 @@ func (g *GrafanaServerImpl) Start() {
 		return
 	}
 
-	closer, err := tracing.Init(setting.Cfg)
+	tracingCloser, err := tracing.Init(setting.Cfg)
 	if err != nil {
 		g.log.Error("Tracing settings is not valid", "error", err)
 		g.Shutdown(1, "Startup failed")
 		return
 	}
-	defer closer.Close()
+	defer tracingCloser.Close()
 
 	// init alerting
 	if setting.AlertingEnabled && setting.ExecuteAlerts {
