@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -27,10 +28,8 @@ type CloudWatchExecutor struct {
 	*models.DataSource
 }
 
-func NewCloudWatchExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
-	return &CloudWatchExecutor{
-		DataSource: dsInfo,
-	}, nil
+func NewCloudWatchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	return &CloudWatchExecutor{}, nil
 }
 
 var (
@@ -41,7 +40,7 @@ var (
 
 func init() {
 	plog = log.New("tsdb.cloudwatch")
-	tsdb.RegisterExecutor("cloudwatch", NewCloudWatchExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", NewCloudWatchExecutor)
 	standardStatistics = map[string]bool{
 		"Average":     true,
 		"Maximum":     true,
@@ -52,37 +51,43 @@ func init() {
 	aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
-func (e *CloudWatchExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
-	var result *tsdb.BatchResult
-	queryType := queries[0].Model.Get("type").MustString()
+func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	var result *tsdb.Response
+	e.DataSource = dsInfo
+	queryType := queryContext.Queries[0].Model.Get("type").MustString("")
+	var err error
+
 	switch queryType {
 	case "timeSeriesQuery":
-		result = e.executeTimeSeriesQuery(ctx, queries, queryContext)
+		result, err = e.executeTimeSeriesQuery(ctx, queryContext)
 		break
 	case "metricFindQuery":
-		result = e.executeMetricFindQuery(ctx, queries, queryContext)
+		result, err = e.executeMetricFindQuery(ctx, queryContext)
 		break
+	default:
+		err = fmt.Errorf("missing querytype")
 	}
-	return result
+
+	return result, err
 }
 
-func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{
-		QueryResults: make(map[string]*tsdb.QueryResult),
+func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
 	}
 
 	errCh := make(chan error, 1)
 	resCh := make(chan *tsdb.QueryResult, 1)
 
 	currentlyExecuting := 0
-	for _, model := range queries {
+	for i, model := range queryContext.Queries {
 		queryType := model.Model.Get("type").MustString()
 		if queryType != "timeSeriesQuery" {
 			continue
 		}
 		currentlyExecuting++
-		go func(refId string) {
-			queryRes, err := e.executeQuery(ctx, model.Model.Get("parameters"), queryContext)
+		go func(refId string, index int) {
+			queryRes, err := e.executeQuery(ctx, queryContext.Queries[index].Model.Get("parameters"), queryContext)
 			currentlyExecuting--
 			if err != nil {
 				errCh <- err
@@ -90,21 +95,21 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queries
 				queryRes.RefId = refId
 				resCh <- queryRes
 			}
-		}(model.RefId)
+		}(model.RefId, i)
 	}
 
 	for currentlyExecuting != 0 {
 		select {
 		case res := <-resCh:
-			result.QueryResults[res.RefId] = res
+			result.Results[res.RefId] = res
 		case err := <-errCh:
-			return result.WithError(err)
+			return result, err
 		case <-ctx.Done():
-			return result.WithError(ctx.Err())
+			return result, ctx.Err()
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, error) {
@@ -148,7 +153,7 @@ func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, e
 	return client, nil
 }
 
-func (e *CloudWatchExecutor) executeQuery(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.QueryContext) (*tsdb.QueryResult, error) {
+func (e *CloudWatchExecutor) executeQuery(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) (*tsdb.QueryResult, error) {
 	query, err := parseQuery(parameters)
 	if err != nil {
 		return nil, err

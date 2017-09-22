@@ -153,14 +153,15 @@ func init() {
 	customMetricsDimensionsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
 }
 
-func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{
-		QueryResults: make(map[string]*tsdb.QueryResult),
+func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
 	}
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: queries[0].RefId}
+	firstQuery := queryContext.Queries[0]
+	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: firstQuery.RefId}
 
-	parameters := queries[0].Model.Get("parameters")
-	subType := queries[0].Model.Get("subtype").MustString()
+	parameters := firstQuery.Model.Get("parameters")
+	subType := firstQuery.Model.Get("subtype").MustString()
 	var data []suggestData
 	var err error
 	switch subType {
@@ -186,12 +187,10 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queries
 		data, err = e.handleGetEc2InstanceAttribute(ctx, parameters, queryContext)
 		break
 	}
-	if err != nil {
-		queryResult.Error = err
-	}
+
 	transformToTable(data, queryResult)
-	result.QueryResults[queries[0].RefId] = queryResult
-	return result
+	result.Results[firstQuery.RefId] = queryResult
+	return result, err
 }
 
 func transformToTable(data []suggestData, result *tsdb.QueryResult) {
@@ -238,7 +237,7 @@ func (e *CloudWatchExecutor) getDsInfo(region string) *cwapi.DatasourceInfo {
 
 // Whenever this list is updated, frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
-func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.QueryContext) ([]suggestData, error) {
+func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	regions := []string{
 		"ap-northeast-1", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "ap-south-1", "ca-central-1", "cn-north-1",
 		"eu-central-1", "eu-west-1", "eu-west-2", "sa-east-1", "us-east-1", "us-east-2", "us-gov-west-1", "us-west-1", "us-west-2",
@@ -252,7 +251,7 @@ func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *s
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.QueryContext) ([]suggestData, error) {
+func (e *CloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	keys := []string{}
 	for key := range metricsMap {
 		keys = append(keys, key)
@@ -273,7 +272,7 @@ func (e *CloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.QueryContext) ([]suggestData, error) {
+func (e *CloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -302,7 +301,7 @@ func (e *CloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *s
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.QueryContext) ([]suggestData, error) {
+func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 
@@ -331,7 +330,7 @@ func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.QueryContext) ([]suggestData, error) {
+func (e *CloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	namespace := parameters.Get("namespace").MustString()
 	metricName := parameters.Get("metricName").MustString()
@@ -374,7 +373,7 @@ func (e *CloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.QueryContext) ([]suggestData, error) {
+func (e *CloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	instanceId := parameters.Get("instanceId").MustString()
 
@@ -392,7 +391,7 @@ func (e *CloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, paramete
 	return result, nil
 }
 
-func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.QueryContext) ([]suggestData, error) {
+func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	attributeName := parameters.Get("attributeName").MustString()
 	filterJson := parameters.Get("filters").MustMap()
