@@ -445,6 +445,7 @@ function($, _, moment) {
   kbn.valueFormats.kvoltampreact = kbn.formatBuilders.decimalSIPrefix('var', 1);
   kbn.valueFormats.watth        = kbn.formatBuilders.decimalSIPrefix('Wh');
   kbn.valueFormats.kwatth       = kbn.formatBuilders.decimalSIPrefix('Wh', 1);
+  kbn.valueFormats.kwattm       = kbn.formatBuilders.decimalSIPrefix('W/Min', 1);
   kbn.valueFormats.joule        = kbn.formatBuilders.decimalSIPrefix('J');
   kbn.valueFormats.ev           = kbn.formatBuilders.decimalSIPrefix('eV');
   kbn.valueFormats.amp          = kbn.formatBuilders.decimalSIPrefix('A');
@@ -452,6 +453,7 @@ function($, _, moment) {
   kbn.valueFormats.volt         = kbn.formatBuilders.decimalSIPrefix('V');
   kbn.valueFormats.kvolt        = kbn.formatBuilders.decimalSIPrefix('V', 1);
   kbn.valueFormats.dBm          = kbn.formatBuilders.decimalSIPrefix('dBm');
+  kbn.valueFormats.ohm          = kbn.formatBuilders.decimalSIPrefix('Ω');
 
   // Temperature
   kbn.valueFormats.celsius   = kbn.formatBuilders.fixedUnit('°C');
@@ -478,6 +480,12 @@ function($, _, moment) {
   kbn.valueFormats.lengthmm = kbn.formatBuilders.decimalSIPrefix('m', -1);
   kbn.valueFormats.lengthkm = kbn.formatBuilders.decimalSIPrefix('m', 1);
   kbn.valueFormats.lengthmi = kbn.formatBuilders.fixedUnit('mi');
+  kbn.valueFormats.lengthft = kbn.formatBuilders.fixedUnit('ft');
+
+  // Area
+  kbn.valueFormats.areaM2 = kbn.formatBuilders.fixedUnit('m²');
+  kbn.valueFormats.areaF2 = kbn.formatBuilders.fixedUnit('ft²');
+  kbn.valueFormats.areaMI2 = kbn.formatBuilders.fixedUnit('mi²');
 
   // Mass
   kbn.valueFormats.massmg  = kbn.formatBuilders.decimalSIPrefix('g', -1);
@@ -491,6 +499,11 @@ function($, _, moment) {
   kbn.valueFormats.velocitymph  = kbn.formatBuilders.fixedUnit('mph');
   kbn.valueFormats.velocityknot = kbn.formatBuilders.fixedUnit('kn');
 
+  // Acceleration
+  kbn.valueFormats.accMS2 = kbn.formatBuilders.fixedUnit('m/sec²');
+  kbn.valueFormats.accFS2 = kbn.formatBuilders.fixedUnit('f/sec²');
+  kbn.valueFormats.accG   = kbn.formatBuilders.fixedUnit('g');
+
   // Volume
   kbn.valueFormats.litre  = kbn.formatBuilders.decimalSIPrefix('L');
   kbn.valueFormats.mlitre = kbn.formatBuilders.decimalSIPrefix('L', -1);
@@ -503,6 +516,11 @@ function($, _, moment) {
   kbn.valueFormats.flowcms  = kbn.formatBuilders.fixedUnit('cms');
   kbn.valueFormats.flowcfs  = kbn.formatBuilders.fixedUnit('cfs');
   kbn.valueFormats.flowcfm  = kbn.formatBuilders.fixedUnit('cfm');
+
+  // Angle
+  kbn.valueFormats.degree  = kbn.formatBuilders.fixedUnit('°');
+  kbn.valueFormats.radian  = kbn.formatBuilders.fixedUnit('rad');
+  kbn.valueFormats.grad    = kbn.formatBuilders.fixedUnit('grad');
 
   // Time
   kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
@@ -835,6 +853,14 @@ function($, _, moment) {
         ]
       },
       {
+        text: 'area',
+        submenu: [
+          {text: 'Square Meters (m²)', value: 'areaM2' },
+          {text: 'Square Feet (ft²)',  value: 'areaF2' },
+          {text: 'Square Miles (mi²)', value: 'areaMI2'},
+        ]
+      },
+      {
         text: 'mass',
         submenu: [
           {text: 'milligram (mg)', value: 'massmg'},
@@ -873,6 +899,7 @@ function($, _, moment) {
           {text: 'kilovolt-ampere reactive (kvar)', value: 'kvoltampreact'},
           {text: 'watt-hour (Wh)',             value: 'watth'       },
           {text: 'kilowatt-hour (kWh)',        value: 'kwatth'      },
+          {text: 'kilowatt-min (kWm)',         value: 'kwattm'      },
           {text: 'joule (J)',                  value: 'joule'       },
           {text: 'electron volt (eV)',         value: 'ev'          },
           {text: 'Ampere (A)',                 value: 'amp'         },
@@ -880,6 +907,7 @@ function($, _, moment) {
           {text: 'Volt (V)',                   value: 'volt'        },
           {text: 'Kilovolt (kV)',              value: 'kvolt'       },
           {text: 'Decibel-milliwatt (dBm)',    value: 'dBm'         },
+          {text: 'Ohm (Ω)',                    value: 'ohm'         }
         ]
       },
       {
@@ -917,6 +945,22 @@ function($, _, moment) {
           {text: 'Cubic meters/sec (cms)',  value: 'flowcms'  },
           {text: 'Cubic feet/sec (cfs)',    value: 'flowcfs'  },
           {text: 'Cubic feet/min (cfm)',    value: 'flowcfm'  },
+        ]
+      },
+      {
+        text: 'angle',
+        submenu: [
+          {text: 'Degrees (°)', value: 'degree' },
+          {text: 'Radians',  value: 'radian'    },
+          {text: 'Gradian',  value: 'grad'      }
+        ]
+      },
+      {
+        text: 'acceleration',
+        submenu: [
+          {text: 'Meters/sec²', value: 'accMS2' },
+          {text: 'Feet/sec²',  value: 'accFS2'  },
+          {text: 'G unit',  value: 'accG'       }
         ]
       }
     ];
