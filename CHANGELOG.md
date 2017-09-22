@@ -17,9 +17,6 @@
 * **Unit types**: New date & time unit types added, useful in singlestat to show dates & times. [#3678](https://github.com/grafana/grafana/issues/3678), [#6710](https://github.com/grafana/grafana/issues/6710), [#2764](https://github.com/grafana/grafana/issues/6710)
 * **Cli**: Make it possible to install plugins from any url [#5873](https://github.com/grafana/grafana/issues/5873)
 
-## Breaking changes
-* **Metrics**: The metric structure for internal metrics about Grafana published to graphite has changed. This might break dashboards for internal metrics. 
-
 # 4.5.2 (2017-09-22)
 
 ## Fixes 
@@ -33,6 +30,9 @@
 
 ## Fixes
 * **MySQL**: Fixed issue with query editor not showing [#9247](https://github.com/grafana/grafana/issues/9247)
+
+## Breaking changes
+* **Metrics**: The metric structure for internal metrics about Grafana published to graphite has changed. This might break dashboards for internal metrics. 
 
 # 4.5.0 (2017-09-14)
 
