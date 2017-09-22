@@ -194,12 +194,13 @@ func (e PostgresExecutor) getTypedRowData(rows *core.Rows) (tsdb.RowValues, erro
 		if value, ok := values[i].([]byte); ok == true {
 			switch types[i].DatabaseTypeName() {
 			case "NUMERIC":
-				v, err := strconv.ParseFloat(string(value), 64)
-				if err == nil {
+				if v, err := strconv.ParseFloat(string(value), 64); err == nil {
 					values[i] = v
+				} else {
+					e.log.Debug("Rows", "Error converting numeric to float", value)
 				}
-			case "UNKNOWN":
-				// char literals dont have explicit type
+			case "UNKNOWN", "CIDR", "INET", "MACADDR":
+				// char literals have type UNKNOWN
 				values[i] = string(value)
 			default:
 				e.log.Debug("Rows", "Unknown database type", types[i].DatabaseTypeName(), "value", value)
@@ -282,7 +283,7 @@ func (e PostgresExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Ro
 			case float64:
 				value = null.FloatFrom(columnValue)
 			default:
-				return fmt.Errorf("Unknown datatype in column %s: type: %T value: %v", col, columnValue, columnValue)
+				return fmt.Errorf("Value column must have numeric datatype, column: %s type: %T value: %v", col, columnValue, columnValue)
 			}
 			if metricIndex == -1 {
 				metric = col
