@@ -12,7 +12,7 @@ weight = 2
 
 # Singlestat Panel
 
-{{< docs-imagebox img="/img/docs/v45/singlestat-panel.png" class="docs-image--no-shadow">}}
+{{< docs-imagebox img="/img/docs/v45/singlestat-panel.png" max-width="900px" >}}
 
 The Singlestat Panel allows you to show the one main summary stat of a SINGLE series. It reduces the series into a single number (by looking at the max, min, average, or sum of values in the series). Singlestat also provides thresholds to color the stat or the Panel background. It can also translate the single number into a text value, and show a sparkline summary of the series.
 
@@ -20,7 +20,7 @@ The Singlestat Panel allows you to show the one main summary stat of a SINGLE se
 
 The singlestat panel has a normal query editor to allow you define your exact metric queries like many other Panels. Through the Options tab, you can access the Singlestat-specific functionality.
 
-<img class="no-shadow" src="/img/docs/v45/singlestat-value-options.png">
+{{< docs-imagebox img="/img/docs/v45/singlestat-value-options.png" class="docs-image--no-shadow" max-width= "900px" >}}
 
 1. `Stats`: The Stats field let you set the function (min, max, average, current, total, first, delta, range) that your entire query is reduced into a single value with. This reduces the entire query into a single summary value that is displayed.
    * `min` - The smallest value in the series
@@ -60,6 +60,8 @@ Sparklines are a great way of seeing the historical data related to the summary 
 3. `Line Color`: This color selection applies to the color of the sparkline itself.
 4. `Fill Color`: This color selection applies to the area below the sparkline.
 
+<div class="clearfix"></div>
+
 > ***Pro-tip:*** Reduce the opacity on  fill colors for nice looking panels.
 
 ### Gauge
@@ -73,11 +75,15 @@ Gauges gives a clear picture of how high a value is in it's context. It's a grea
 3. `Threshold Labels`: Check if you want to show the threshold labels. Thresholds are set in the color options.
 4. `Threshold Markers`: Check if you want to have a second meter showing the thresholds.
 
+<div class="clearfix"></div>
+
 ### Value to text mapping
 
 {{< docs-imagebox img="/img/docs/v45/singlestat-value-mapping.png" class="docs-image--right docs-image--no-shadow">}}
 
 Value to text mapping allows you to translate the value of the summary stat into explicit text. The text will respect all styling, thresholds and customization defined for the value. This can be useful to translate the number of the main Singlestat value into a context-specific human-readable word or message.
+
+<div class="clearfix"></div>
 
 ## Troubleshooting
 
