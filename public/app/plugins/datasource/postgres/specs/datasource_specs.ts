@@ -27,7 +27,7 @@ describe('PostgreSQLDatasource', function() {
     const options = {
       annotation: {
         name: annotationName,
-        rawQuery: 'select time_sec, title, text, tags from table;'
+        rawQuery: 'select time, title, text, tags from table;'
       },
       range: {
         from: moment(1432288354),
@@ -41,7 +41,7 @@ describe('PostgreSQLDatasource', function() {
           refId: annotationName,
           tables: [
             {
-              columns: [{text: 'time_sec'}, {text: 'title'}, {text: 'text'}, {text: 'tags'}],
+              columns: [{text: 'time'}, {text: 'title'}, {text: 'text'}, {text: 'tags'}],
               rows: [
                 [1432288355, 'aTitle', 'some text', 'TagA,TagB'],
                 [1432288390, 'aTitle2', 'some text2', ' TagB , TagC'],

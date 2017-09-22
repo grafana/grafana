@@ -111,7 +111,7 @@ export default class ResponseParser {
     let tagsColumnIndex = -1;
 
     for (let i = 0; i < table.columns.length; i++) {
-      if (table.columns[i].text === 'time_sec') {
+      if (table.columns[i].text === 'time') {
         timeColumnIndex = i;
       } else if (table.columns[i].text === 'title') {
         titleColumnIndex = i;
@@ -123,7 +123,7 @@ export default class ResponseParser {
     }
 
     if (timeColumnIndex === -1) {
-      return this.$q.reject({message: 'Missing mandatory time column (with time_sec column alias) in annotation query.'});
+      return this.$q.reject({message: 'Missing mandatory time column in annotation query.'});
     }
 
     const list = [];
