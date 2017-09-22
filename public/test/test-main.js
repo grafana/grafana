@@ -11,6 +11,9 @@
     defaultJSExtensions: true,
     paths: {
       'gemini-scrollbar': 'vendor/npm/gemini-scrollbar/index.js',
+      'react': 'vendor/npm/react/dist/react.js',
+      'react-dom': 'vendor/npm/react-dom/dist/react-dom.js',
+      'ngreact': 'vendor/npm/ngreact/ngReact.js',
       'mousetrap': 'vendor/npm/mousetrap/mousetrap.js',
       'eventemitter3': 'vendor/npm/eventemitter3/index.js',
       'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',

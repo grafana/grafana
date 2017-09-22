@@ -6,8 +6,17 @@ global:
 
 # Load and evaluate rules in this file every 'evaluation_interval' seconds.
 rule_files:
+  - "alert.rules"
   # - "first.rules"
   # - "second.rules"
+
+alerting:
+  alertmanagers:
+  - scheme: http
+    static_configs:
+    - targets:
+      - "127.0.0.1:9093"
+
 
 # A scrape configuration containing exactly one endpoint to scrape:
 # Here it's Prometheus itself.

@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 import moment from 'moment';
 
@@ -22,7 +21,7 @@ export class AlertListCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $location, private $scope, navModelSrv) {
+  constructor(private backendSrv, private $location, navModelSrv) {
     this.navModel = navModelSrv.getNav('alerting');
 
     var params = $location.search();
@@ -70,4 +69,3 @@ export class AlertListCtrl {
 }
 
 coreModule.controller('AlertListCtrl', AlertListCtrl);
-

@@ -2,7 +2,6 @@
 
 import config from 'app/core/config';
 import _ from 'lodash';
-import angular from 'angular';
 import $ from 'jquery';
 import {profiler} from 'app/core/profiler';
 import Remarkable from 'remarkable';

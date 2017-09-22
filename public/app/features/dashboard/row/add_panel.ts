@@ -3,7 +3,7 @@
 import _ from 'lodash';
 
 import config from 'app/core/config';
-import {coreModule, appEvents} from 'app/core/core';
+import {coreModule} from 'app/core/core';
 
 export class AddPanelCtrl {
   dashboard: any;
@@ -13,7 +13,7 @@ export class AddPanelCtrl {
   panelSearch: any;
 
   /** @ngInject */
-  constructor(private $scope, private $timeout, private $rootScope, dashboardSrv) {
+  constructor(private $rootScope, dashboardSrv) {
     this.dashboard = dashboardSrv.getCurrent();
     this.activeIndex = 0;
 

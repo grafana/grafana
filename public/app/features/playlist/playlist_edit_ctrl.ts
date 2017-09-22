@@ -1,9 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 import coreModule from '../../core/core_module';
-import config from 'app/core/config';
 
 export class PlaylistEditCtrl {
   filteredDashboards: any = [];
@@ -21,11 +19,10 @@ export class PlaylistEditCtrl {
   /** @ngInject */
   constructor(
     private $scope,
-    private playlistSrv,
     private backendSrv,
     private $location,
-    private $route,
-    private navModelSrv
+    $route,
+    navModelSrv
   ) {
     this.navModel = navModelSrv.getNav('dashboards', 'playlists');
 

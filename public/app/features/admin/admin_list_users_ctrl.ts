@@ -11,7 +11,7 @@ export default class AdminListUsersCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private $scope, private backendSrv, private navModelSrv) {
+  constructor(private $scope, private backendSrv, navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg', 'admin', 'global-users');
     this.query = '';
     this.getUsers();

@@ -14,7 +14,7 @@ export class UserGroupsCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private $scope, private $http, private backendSrv, private $location, navModelSrv) {
+  constructor(private backendSrv, navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg', 'users');
     this.get();
   }
@@ -41,7 +41,7 @@ export class UserGroupsCtrl {
   }
 
   deleteUserGroup(userGroup) {
-    this.$scope.appEvent('confirm-modal', {
+    appEvents.emit('confirm-modal', {
       title: 'Delete',
       text: 'Are you sure you want to delete User Group ' + userGroup.name + '?',
       yesText: "Delete",

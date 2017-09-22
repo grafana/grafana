@@ -6,22 +6,19 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+type TsdbQuery struct {
+	TimeRange *TimeRange
+	Queries   []*Query
+}
+
 type Query struct {
 	RefId         string
 	Model         *simplejson.Json
 	Depends       []string
 	DataSource    *models.DataSource
 	Results       []*TimeSeries
-	Exclude       bool
 	MaxDataPoints int64
 	IntervalMs    int64
-}
-
-type QuerySlice []*Query
-
-type Request struct {
-	TimeRange *TimeRange
-	Queries   QuerySlice
 }
 
 type Response struct {

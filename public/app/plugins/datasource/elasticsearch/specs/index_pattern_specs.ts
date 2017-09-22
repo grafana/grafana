@@ -1,6 +1,6 @@
 ///<amd-dependency path="test/specs/helpers" name="helpers" />
 
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
+import {describe, it, expect} from 'test/lib/common';
 import moment from 'moment';
 import IndexPattern from '../index_pattern';
 

@@ -2,13 +2,12 @@
 
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import _ from 'lodash';
 
 export class CreateUserGroupCtrl {
   userGroupName = '';
 
   /** @ngInject */
-  constructor(private backendSrv, private $scope, $sce, private $location) {
+  constructor(private backendSrv, private $location) {
   }
 
   createUserGroup() {

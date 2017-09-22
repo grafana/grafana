@@ -1,9 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import $ from 'jquery';
-import _ from 'lodash';
 import coreModule from 'app/core/core_module';
-import {DashboardModel, CELL_HEIGHT, CELL_VMARGIN} from '../model';
+import {CELL_HEIGHT, CELL_VMARGIN} from '../model';
 
 import 'jquery-ui';
 import 'gridstack';

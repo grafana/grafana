@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 import coreModule from '../../core/core_module';
 
@@ -9,7 +8,7 @@ export class PlaylistsCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private backendSrv, private navModelSrv) {
+  constructor(private $scope, private backendSrv, navModelSrv) {
     this.navModel = navModelSrv.getNav('dashboards', 'playlists');
 
     backendSrv.get('/api/playlists').then(result => {

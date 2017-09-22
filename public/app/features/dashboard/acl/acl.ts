@@ -1,7 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import coreModule from 'app/core/core_module';
-import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 
 export class AclCtrl {
@@ -23,10 +22,11 @@ export class AclCtrl {
   newType: string;
   canUpdate: boolean;
   error: string;
+
   readonly duplicateError = 'This permission exists already.';
 
   /** @ngInject */
-  constructor(private backendSrv, private dashboardSrv, private $sce, private $scope) {
+  constructor(private backendSrv, dashboardSrv, private $sce, private $scope) {
     this.items = [];
     this.resetNewType();
     this.dashboard = dashboardSrv.getCurrent();

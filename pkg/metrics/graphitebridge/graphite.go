@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"sort"
 	"strings"
@@ -53,7 +54,17 @@ const (
 	AbortOnError
 )
 
-var metricCategoryPrefix []string = []string{"proxy_", "api_", "page_", "alerting_", "aws_", "db_", "stat_", "go_", "process_"}
+var metricCategoryPrefix []string = []string{
+	"proxy_",
+	"api_",
+	"page_",
+	"alerting_",
+	"aws_",
+	"db_",
+	"stat_",
+	"go_",
+	"process_"}
+
 var trimMetricPrefix []string = []string{"grafana_"}
 
 // Config defines the Graphite bridge config.
@@ -208,6 +219,10 @@ func (b *Bridge) writeMetrics(w io.Writer, mfs []*dto.MetricFamily, prefix strin
 
 		buf := bufio.NewWriter(w)
 		for _, s := range vec {
+			if math.IsNaN(float64(s.Value)) {
+				continue
+			}
+
 			if err := writePrefix(buf, prefix); err != nil {
 				return err
 			}
@@ -235,16 +250,17 @@ func writeMetric(buf *bufio.Writer, m model.Metric, mf *dto.MetricFamily) error 
 	if !hasName {
 		numLabels = len(m)
 	}
-	for _, v := range metricCategoryPrefix {
-		if strings.HasPrefix(string(metricName), v) {
-			group := strings.Replace(v, "_", " ", 1)
-			metricName = model.LabelValue(strings.Replace(string(metricName), v, group, 1))
-		}
-	}
 
 	for _, v := range trimMetricPrefix {
 		if strings.HasPrefix(string(metricName), v) {
 			metricName = model.LabelValue(strings.Replace(string(metricName), v, "", 1))
+		}
+	}
+
+	for _, v := range metricCategoryPrefix {
+		if strings.HasPrefix(string(metricName), v) {
+			group := strings.Replace(v, "_", " ", 1)
+			metricName = model.LabelValue(strings.Replace(string(metricName), v, group, 1))
 		}
 	}
 
@@ -357,7 +373,7 @@ func replaceInvalidRune(c rune) rune {
 	if c == ' ' {
 		return '.'
 	}
-	if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == ':' || (c >= '0' && c <= '9')) {
+	if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '-' || c == '_' || c == ':' || (c >= '0' && c <= '9')) {
 		return '_'
 	}
 	return c

@@ -2,7 +2,6 @@
 
 import _ from 'lodash';
 
-import {TestDataDatasource} from './datasource';
 import {QueryCtrl} from 'app/plugins/sdk';
 
 export class TestDataQueryCtrl extends QueryCtrl {

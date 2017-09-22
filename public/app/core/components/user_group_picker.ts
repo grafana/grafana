@@ -1,5 +1,4 @@
 import coreModule from 'app/core/core_module';
-import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 
 const template = `
@@ -17,7 +16,7 @@ export class UserGroupPickerCtrl {
   debouncedSearchGroups: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $scope, $sce, private uiSegmentSrv) {
+  constructor(private backendSrv) {
     this.debouncedSearchGroups = _.debounce(this.searchGroups, 500, {'leading': true, 'trailing': false});
     this.reset();
   }

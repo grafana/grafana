@@ -5,7 +5,6 @@ import moment from 'moment';
 import angular from 'angular';
 import {appEvents, NavModel} from 'app/core/core';
 import {DashboardModel} from '../model';
-import {DashboardExporter} from '../export/exporter';
 
 export class DashNavCtrl {
   dashboard: DashboardModel;
@@ -18,12 +17,9 @@ export class DashNavCtrl {
     private $rootScope,
     private dashboardSrv,
     private $location,
-    private playlistSrv,
     private backendSrv,
-    private $timeout,
-    private datasourceSrv,
-    private navModelSrv,
-    private contextSrv) {
+    private contextSrv,
+    navModelSrv) {
       this.navModel = navModelSrv.getDashboardNav(this.dashboard, this);
 
       appEvents.on('save-dashboard', this.saveDashboard.bind(this), $scope);

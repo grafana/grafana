@@ -78,7 +78,6 @@
 @import "components/row.scss";
 @import "components/gridstack.scss";
 @import "components/json_explorer.scss";
-@import "components/collapse_box.scss";
 @import "components/code_editor.scss";
 
 // PAGES
@@ -91,6 +90,6 @@
 @import "pages/plugins";
 @import "pages/signup";
 @import "pages/styleguide";
-
+@import "pages/errorpage";
 @import "old_responsive";
 @import "components/view_states.scss";

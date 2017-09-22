@@ -1,7 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import $ from 'jquery';
-import angular from 'angular';
 import {coreModule} from 'app/core/core';
 
 var template = `

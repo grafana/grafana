@@ -2,7 +2,6 @@
 
 import config from 'app/core/config';
 import {coreModule} from 'app/core/core';
-import _ from 'lodash';
 
 export class ProfileCtrl {
   user: any;

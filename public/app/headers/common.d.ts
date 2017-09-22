@@ -1,4 +1,3 @@
-/// <reference path="./es6-shim/es6-shim.d.ts" />
 
 declare var System: any;
 
@@ -49,11 +48,6 @@ declare module 'tether-drop' {
 }
 
 declare module 'eventemitter3' {
-  var config: any;
-  export default config;
-}
-
-declare module 'virtual-scroll' {
   var config: any;
   export default config;
 }

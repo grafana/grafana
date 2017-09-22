@@ -2,7 +2,6 @@
 
 import GeminiScrollbar from 'gemini-scrollbar';
 import coreModule from 'app/core/core_module';
-import _ from 'lodash';
 
 export function geminiScrollbar() {
   return {

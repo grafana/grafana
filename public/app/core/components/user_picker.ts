@@ -1,5 +1,4 @@
 import coreModule from 'app/core/core_module';
-import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 
 const template = `
@@ -17,7 +16,7 @@ export class UserPickerCtrl {
   userPicked: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $scope, $sce) {
+  constructor(private backendSrv) {
     this.reset();
     this.debouncedSearchUsers = _.debounce(this.searchUsers, 500, {'leading': true, 'trailing': false});
   }

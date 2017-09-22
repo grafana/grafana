@@ -1,8 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
-import config from 'app/core/config';
 import {appEvents, coreModule} from 'app/core/core';
 
 export class AlertNotificationEditCtrl {

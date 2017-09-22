@@ -1,16 +1,13 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import config from 'app/core/config';
-import _ from 'lodash';
-import $ from 'jquery';
 import coreModule from '../../core_module';
-import {NavModel, NavModelItem}  from '../../nav_model_srv';
+import {NavModel}  from '../../nav_model_srv';
 
 export class NavbarCtrl {
   model: NavModel;
 
   /** @ngInject */
-  constructor(private $scope, private $rootScope, private contextSrv) {
+  constructor(private $rootScope) {
   }
 
   showSearch() {

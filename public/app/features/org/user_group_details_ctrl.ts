@@ -1,14 +1,13 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import coreModule from 'app/core/core_module';
-import _ from 'lodash';
 
 export default class UserGroupDetailsCtrl {
   userGroup: UserGroup;
   userGroupMembers: User[] = [];
   navModel: any;
 
-  constructor(private $scope, private $http, private backendSrv, private $routeParams, navModelSrv) {
+  constructor(private $scope, private backendSrv, private $routeParams, navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg', 'users');
     this.get();
   }

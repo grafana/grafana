@@ -4,7 +4,7 @@ define([
 function (coreModule) {
   'use strict';
 
-  coreModule.default.directive('passwordStrength', function() {
+  coreModule.default.directive('passwordStrength2', function() {
     var template = '<div class="password-strength small" ng-if="!loginMode" ng-class="strengthClass">' +
       '<em>{{strengthText}}</em>' +
       '</div>';

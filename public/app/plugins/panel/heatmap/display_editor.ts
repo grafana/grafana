@@ -1,10 +1,4 @@
 ///<reference path="../../../headers/common.d.ts" />
-import _ from 'lodash';
-import $ from 'jquery';
-import d3 from 'd3';
-import {contextSrv} from 'app/core/core';
-
-const COLOR_LEGEND_SELECTOR = '.heatmap-color-legend';
 
 export class HeatmapDisplayEditorCtrl {
   panel: any;

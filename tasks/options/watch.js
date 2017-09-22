@@ -22,9 +22,9 @@ module.exports = function(config, grunt) {
     }
 
     gaze([
-      config.srcDir + '/sass/**/*',
       config.srcDir + '/app/**/*',
       config.srcDir + '/test/**/*',
+      config.srcDir + '/sass/**/*',            
       config.srcDir + '/vendor/npm/gridstack/dist/*.js',
       config.srcDir + '/vendor/npm/gemini-scrollbar/*.js',
     ], function(err, watcher) {

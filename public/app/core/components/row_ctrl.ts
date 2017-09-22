@@ -30,7 +30,7 @@ export class DashboardRowCtrl {
   dashboard: any;
   panel: any;
 
-  constructor(private $rootScope) {
+  constructor() {
     this.panel.hiddenPanels = this.panel.hiddenPanels || [];
   }
 

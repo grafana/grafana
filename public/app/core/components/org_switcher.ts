@@ -1,7 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import coreModule from 'app/core/core_module';
-import config from 'app/core/config';
 import {contextSrv} from 'app/core/services/context_srv';
 
 const template = `

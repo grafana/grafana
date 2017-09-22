@@ -17,24 +17,16 @@ import (
 )
 
 type InfluxDBExecutor struct {
-	*models.DataSource
+	//*models.DataSource
 	QueryParser    *InfluxdbQueryParser
 	ResponseParser *ResponseParser
-	HttpClient     *http.Client
+	//HttpClient     *http.Client
 }
 
-func NewInfluxDBExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
-	httpClient, err := datasource.GetHttpClient()
-
-	if err != nil {
-		return nil, err
-	}
-
+func NewInfluxDBExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	return &InfluxDBExecutor{
-		DataSource:     datasource,
 		QueryParser:    &InfluxdbQueryParser{},
 		ResponseParser: &ResponseParser{},
-		HttpClient:     httpClient,
 	}, nil
 }
 
@@ -44,18 +36,18 @@ var (
 
 func init() {
 	glog = log.New("tsdb.influxdb")
-	tsdb.RegisterExecutor("influxdb", NewInfluxDBExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("influxdb", NewInfluxDBExecutor)
 }
 
-func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
-	query, err := e.getQuery(queries, context)
+	query, err := e.getQuery(dsInfo, tsdbQuery.Queries, tsdbQuery)
 	if err != nil {
 		return result.WithError(err)
 	}
 
-	rawQuery, err := query.Build(context)
+	rawQuery, err := query.Build(tsdbQuery)
 	if err != nil {
 		return result.WithError(err)
 	}
@@ -64,12 +56,17 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		glog.Debug("Influxdb query", "raw query", rawQuery)
 	}
 
-	req, err := e.createRequest(rawQuery)
+	req, err := e.createRequest(dsInfo, rawQuery)
 	if err != nil {
 		return result.WithError(err)
 	}
 
-	resp, err := ctxhttp.Do(ctx, e.HttpClient, req)
+	httpClient, err := dsInfo.GetHttpClient()
+	if err != nil {
+		return result.WithError(err)
+	}
+
+	resp, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
 		return result.WithError(err)
 	}
@@ -98,10 +95,10 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 	return result
 }
 
-func (e *InfluxDBExecutor) getQuery(queries tsdb.QuerySlice, context *tsdb.QueryContext) (*Query, error) {
+func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Query, context *tsdb.TsdbQuery) (*Query, error) {
 	for _, v := range queries {
 
-		query, err := e.QueryParser.Parse(v.Model, e.DataSource)
+		query, err := e.QueryParser.Parse(v.Model, dsInfo)
 		if err != nil {
 			return nil, err
 		}
@@ -112,8 +109,8 @@ func (e *InfluxDBExecutor) getQuery(queries tsdb.QuerySlice, context *tsdb.Query
 	return nil, fmt.Errorf("query request contains no queries")
 }
 
-func (e *InfluxDBExecutor) createRequest(query string) (*http.Request, error) {
-	u, _ := url.Parse(e.Url)
+func (e *InfluxDBExecutor) createRequest(dsInfo *models.DataSource, query string) (*http.Request, error) {
+	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "query")
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
@@ -123,18 +120,18 @@ func (e *InfluxDBExecutor) createRequest(query string) (*http.Request, error) {
 
 	params := req.URL.Query()
 	params.Set("q", query)
-	params.Set("db", e.Database)
+	params.Set("db", dsInfo.Database)
 	params.Set("epoch", "s")
 	req.URL.RawQuery = params.Encode()
 
 	req.Header.Set("User-Agent", "Grafana")
 
-	if e.BasicAuth {
-		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
+	if dsInfo.BasicAuth {
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
 	}
 
-	if !e.BasicAuth && e.User != "" {
-		req.SetBasicAuth(e.User, e.Password)
+	if !dsInfo.BasicAuth && dsInfo.User != "" {
+		req.SetBasicAuth(dsInfo.User, dsInfo.Password)
 	}
 
 	glog.Debug("Influxdb request", "url", req.URL.String())

@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type ScenarioHandler func(query *tsdb.Query, context *tsdb.QueryContext) *tsdb.QueryResult
+type ScenarioHandler func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult
 
 type Scenario struct {
 	Id          string          `json:"id"`
@@ -33,9 +33,9 @@ func init() {
 		Id:   "random_walk",
 		Name: "Random Walk",
 
-		Handler: func(query *tsdb.Query, context *tsdb.QueryContext) *tsdb.QueryResult {
-			timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
-			to := context.TimeRange.GetToAsMsEpoch()
+		Handler: func(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
+			timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
+			to := tsdbQuery.TimeRange.GetToAsMsEpoch()
 
 			series := newSeriesForQuery(query)
 
@@ -60,7 +60,7 @@ func init() {
 	registerScenario(&Scenario{
 		Id:   "no_data_points",
 		Name: "No Data Points",
-		Handler: func(query *tsdb.Query, context *tsdb.QueryContext) *tsdb.QueryResult {
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			return tsdb.NewQueryResult()
 		},
 	})
@@ -68,7 +68,7 @@ func init() {
 	registerScenario(&Scenario{
 		Id:   "datapoints_outside_range",
 		Name: "Datapoints Outside Range",
-		Handler: func(query *tsdb.Query, context *tsdb.QueryContext) *tsdb.QueryResult {
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			queryRes := tsdb.NewQueryResult()
 
 			series := newSeriesForQuery(query)
@@ -85,7 +85,7 @@ func init() {
 		Id:          "csv_metric_values",
 		Name:        "CSV Metric Values",
 		StringInput: "1,20,90,30,5,0",
-		Handler: func(query *tsdb.Query, context *tsdb.QueryContext) *tsdb.QueryResult {
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			queryRes := tsdb.NewQueryResult()
 
 			stringInput := query.Model.Get("stringInput").MustString()

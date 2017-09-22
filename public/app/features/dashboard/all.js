@@ -22,7 +22,6 @@ define([
   './export/export_modal',
   './export_data/export_data_modal',
   './ad_hoc_filters',
-  './row/row_ctrl',
   './repeat_option/repeat_option',
   './dashgrid/dashgrid',
   './acl/acl',

@@ -168,15 +168,16 @@ export default class TimeSeries {
         if (currentValue < this.stats.min) {
           this.stats.min = currentValue;
         }
-        if (this.stats.first === null){
+
+        if (this.stats.first === null) {
           this.stats.first = currentValue;
-        }else{
+        } else {
           if (previousValue > currentValue) {   // counter reset
             previousDeltaUp = false;
             if (i === this.datapoints.length-1) {  // reset on last
                 this.stats.delta += currentValue;
             }
-          }else{
+          } else {
             if (previousDeltaUp) {
               this.stats.delta += currentValue - previousValue;    // normal increment
             } else {

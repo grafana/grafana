@@ -2,7 +2,6 @@
 
 import _ from 'lodash';
 import config from 'app/core/config';
-import coreModule from 'app/core/core_module';
 
 import {Observable} from 'vendor/npm/rxjs/Observable';
 

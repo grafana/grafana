@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 
 import config from 'app/core/config';
@@ -34,13 +33,12 @@ export class DataSourceEditCtrl {
 
   /** @ngInject */
   constructor(
-    private $scope,
     private $q,
     private backendSrv,
     private $routeParams,
     private $location,
     private datasourceSrv,
-    private navModelSrv,
+    navModelSrv,
   ) {
 
     this.navModel = navModelSrv.getNav('cfg', 'datasources');

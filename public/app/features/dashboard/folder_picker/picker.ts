@@ -1,7 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import coreModule from 'app/core/core_module';
-import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 
 export class FolderPickerCtrl {
@@ -14,7 +13,7 @@ export class FolderPickerCtrl {
   private folder: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $scope, private $sce) {
+  constructor(private backendSrv) {
     if (!this.labelClass) {
       this.labelClass = "width-7";
     }

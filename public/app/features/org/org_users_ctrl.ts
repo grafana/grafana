@@ -1,7 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import config from 'app/core/config';
-import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import Remarkable from 'remarkable';
 
@@ -18,7 +17,7 @@ export class OrgUsersCtrl {
   addUsersBtnName: string;
 
   /** @ngInject */
-  constructor(private $scope, private $http, private backendSrv, navModelSrv, $sce) {
+  constructor(private $scope, private backendSrv, navModelSrv, $sce) {
     this.user = {
       loginOrEmail: '',
       role: 'Viewer',

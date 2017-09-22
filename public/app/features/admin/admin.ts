@@ -42,10 +42,11 @@ export class AdminStatsCtrl {
   }
 }
 
-export class ConfigurationHomeCtrl { navModel: any;
+export class ConfigurationHomeCtrl {
+  navModel: any;
 
   /** @ngInject */
-  constructor(private $scope, private backendSrv, private navModelSrv) {
+  constructor(navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg');
   }
 }

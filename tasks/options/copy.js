@@ -40,6 +40,9 @@ module.exports = function(config) {
         'mousetrap/**/*',
         'gridstack/dist/*',
         'jquery-ui-dist/*',
+        'react/dist/*.js',
+        'react-dom/dist/*.js',
+        'ngreact/ngReact.js',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }

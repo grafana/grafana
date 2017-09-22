@@ -2,14 +2,13 @@
 
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import _ from 'lodash';
 
 export class FolderCtrl {
   title: string;
   dismiss: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $scope, private $location) {
+  constructor(private backendSrv, private $location) {
   }
 
   create() {

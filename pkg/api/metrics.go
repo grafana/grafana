@@ -31,7 +31,7 @@ func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
 		return ApiError(500, "failed to fetch data source", err)
 	}
 
-	request := &tsdb.Request{TimeRange: timeRange}
+	request := &tsdb.TsdbQuery{TimeRange: timeRange}
 
 	for _, query := range reqDto.Queries {
 		request.Queries = append(request.Queries, &tsdb.Query{
@@ -98,7 +98,7 @@ func GetTestDataRandomWalk(c *middleware.Context) Response {
 	intervalMs := c.QueryInt64("intervalMs")
 
 	timeRange := tsdb.NewTimeRange(from, to)
-	request := &tsdb.Request{TimeRange: timeRange}
+	request := &tsdb.TsdbQuery{TimeRange: timeRange}
 
 	request.Queries = append(request.Queries, &tsdb.Query{
 		RefId:      "A",
