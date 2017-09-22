@@ -45,6 +45,9 @@ module.exports = function(config) {
         'react/dist/*.js',
         'react-dom/dist/*.js',
         'ngreact/ngReact.js',
+        'angular-bindonce/bindonce.js',
+        'angular-native-dragdrop/draganddrop.js',
+        'clipboard/dist/clipboard.js',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }

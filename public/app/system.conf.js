@@ -20,8 +20,8 @@ System.config({
     'angular-sanitize':       'vendor/npm/angular-sanitize/angular-sanitize.js',
     "angular-ui":             "vendor/angular-ui/ui-bootstrap-tpls.js",
     "angular-strap":          "vendor/angular-other/angular-strap.js",
-    "angular-dragdrop":       "vendor/angular-native-dragdrop/draganddrop.js",
-    "angular-bindonce":       "vendor/angular-bindonce/bindonce.js",
+    "angular-dragdrop":       "vendor/npm/angular-native-dragdrop/draganddrop.js",
+    "angular-bindonce":       "vendor/npm/angular-bindonce/bindonce.js",
     "spectrum": "vendor/spectrum.js",
     "bootstrap-tagsinput": "vendor/tagsinput/bootstrap-tagsinput.js",
     "jquery.flot": "vendor/flot/jquery.flot",
@@ -35,7 +35,8 @@ System.config({
     "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge",
     "d3": "vendor/d3/d3.js",
     "jquery.flot.dashes": "vendor/flot/jquery.flot.dashes",
-    "ace": "vendor/npm/ace-builds/src-noconflict/ace"
+    "ace": "vendor/npm/ace-builds/src-noconflict/ace",
+    "clipboard": "vendor/npm/clipboard/dist/clipboard.js"
   },
 
   packages: {
