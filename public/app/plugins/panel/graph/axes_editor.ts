@@ -15,7 +15,7 @@ export class AxesEditorCtrl {
   constructor(private $scope, private $q) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-    $scope.ctrl = this;
+    this.$scope.ctrl = this;
 
     this.unitFormats = kbn.getUnitFormats();
 

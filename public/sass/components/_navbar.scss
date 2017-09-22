@@ -63,7 +63,7 @@
   border-right: 1px solid $tight-form-border;
   background-color: $navbarButtonBackground;
   padding: 0.4rem 1.0rem 0.4rem 1rem;
-  min-height:: $navbarHeight;
+  min-height: $navbarHeight;
 
   .fa-caret-down {
     font-size: 70%;
@@ -115,7 +115,7 @@
   background-color: $navbarButtonBackground;
   font-size: $font-size-lg;
   padding: 1rem 1rem 0.75rem 1rem;
-  min-height:: $navbarHeight;
+  min-height: $navbarHeight;
 
   &:hover, &.active {
     background: $navbarButtonBackgroundHighlight;

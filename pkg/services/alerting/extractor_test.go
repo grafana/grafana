@@ -200,6 +200,83 @@ func TestAlertRuleExtraction(t *testing.T) {
 			})
 		})
 
+		Convey("Panels missing id should return error", func() {
+			panelWithoutId := `
+      {
+        "id": 57,
+        "title": "Graphite 4",
+        "originalTitle": "Graphite 4",
+        "tags": ["graphite"],
+        "rows": [
+        {
+          "panels": [
+          {
+            "title": "Active desktop users",
+            "editable": true,
+            "type": "graph",
+            "targets": [
+            {
+              "refId": "A",
+              "target": "aliasByNode(statsd.fakesite.counters.session_start.desktop.count, 4)"
+            }
+            ],
+            "datasource": null,
+            "alert": {
+              "name": "name1",
+              "message": "desc1",
+              "handler": 1,
+              "frequency": "60s",
+              "conditions": [
+              {
+                "type": "query",
+                "query": {"params": ["A", "5m", "now"]},
+                "reducer": {"type": "avg", "params": []},
+                "evaluator": {"type": ">", "params": [100]}
+              }
+              ]
+            }
+          },
+          {
+            "title": "Active mobile users",
+            "id": 4,
+            "targets": [
+              {"refId": "A", "target": ""},
+              {"refId": "B", "target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}
+            ],
+            "datasource": "graphite2",
+            "alert": {
+              "name": "name2",
+              "message": "desc2",
+              "handler": 0,
+              "frequency": "60s",
+              "severity": "warning",
+              "conditions": [
+              {
+                "type": "query",
+                "query":  {"params": ["B", "5m", "now"]},
+                "reducer": {"type": "avg", "params": []},
+                "evaluator": {"type": ">", "params": [100]}
+              }
+              ]
+            }
+          }
+          ]
+        }
+      ]
+			}`
+
+			dashJson, err := simplejson.NewJson([]byte(panelWithoutId))
+			So(err, ShouldBeNil)
+			dash := m.NewDashboardFromJson(dashJson)
+			extractor := NewDashAlertExtractor(dash, 1)
+
+			_, err = extractor.GetAlerts()
+
+			Convey("panels without Id should return error", func() {
+				So(err, ShouldNotBeNil)
+			})
+		})
+
 		Convey("Parse and validate dashboard containing influxdb alert", func() {
 
 			json2 := `{

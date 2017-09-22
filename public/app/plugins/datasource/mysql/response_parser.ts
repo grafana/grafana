@@ -3,7 +3,7 @@
 import _ from 'lodash';
 
 export default class ResponseParser {
-  constructor(private $q){}
+  constructor(private $q) {}
 
   processQueryResult(res) {
     var data = [];
@@ -47,7 +47,7 @@ export default class ResponseParser {
     const textColIndex = this.findColIndex(columns, '__text');
     const valueColIndex = this.findColIndex(columns, '__value');
 
-    if (columns.length === 2 && textColIndex !== -1 && valueColIndex !== -1){
+    if (columns.length === 2 && textColIndex !== -1 && valueColIndex !== -1) {
       return this.transformToKeyValueList(rows, textColIndex, valueColIndex);
     }
 

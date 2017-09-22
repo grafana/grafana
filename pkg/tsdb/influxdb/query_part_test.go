@@ -10,7 +10,7 @@ import (
 func TestInfluxdbQueryPart(t *testing.T) {
 	Convey("Influxdb query parts", t, func() {
 
-		queryContext := &tsdb.QueryContext{TimeRange: tsdb.NewTimeRange("5m", "now")}
+		queryContext := &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("5m", "now")}
 		query := &Query{}
 
 		Convey("render field ", func() {

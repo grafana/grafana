@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, beforeEach} from 'test/lib/common';
 
 import {DashboardSrv} from '../dashboard_srv';
 

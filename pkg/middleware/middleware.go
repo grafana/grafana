@@ -10,10 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/log"
 	l "github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Context struct {
@@ -251,7 +251,7 @@ func (ctx *Context) HasHelpFlag(flag m.HelpFlags1) bool {
 	return ctx.HelpFlags1.HasFlag(flag)
 }
 
-func (ctx *Context) TimeRequest(timer metrics.Timer) {
+func (ctx *Context) TimeRequest(timer prometheus.Summary) {
 	ctx.Data["perfmon.timer"] = timer
 }
 

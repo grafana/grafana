@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import config from 'app/core/config';
 import angular from 'angular';
 import moment from 'moment';
 import _ from 'lodash';
@@ -238,6 +237,9 @@ export class DashboardModel {
     delete newPanel.repeatIteration;
     delete newPanel.repeatPanelId;
     delete newPanel.scopedVars;
+    if (newPanel.alert) {
+      delete newPanel.thresholds;
+    }
     delete newPanel.alert;
 
     row.addPanel(newPanel);

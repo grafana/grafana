@@ -5,19 +5,21 @@
         "outDir": "public_gen",
         "noImplicitAny": false,
         "target": "es5",
+        "lib": ["es6", "dom"],
         "rootDir": "public/",
         "module": "system",
-        "noEmitOnError": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "noImplicitReturns":false,
-        "noImplicitThis":false,
+        "jsx": "react",
+        "noEmitOnError": false,
+        "emitDecoratorMetadata": false,
+        "experimentalDecorators": false,
+        "noImplicitReturns": false,
+        "noImplicitThis": false,
         "noImplicitUseStrict":false,
-        "noUnusedLocals":false,
         "moduleResolution": "classic"
     },
     "include": [
         "public/app/**/*.ts",
+        "public/app/**/*.tsx",
         "public/test/**/*.ts"
     ],
     "exclude": [

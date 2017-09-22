@@ -4,7 +4,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -68,7 +67,6 @@ type WebhookNotifier struct {
 
 func (this *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending webhook")
-	metrics.M_Alerting_Notification_Sent_Webhook.Inc(1)
 
 	bodyJSON := simplejson.New()
 	bodyJSON.Set("title", evalContext.GetNotificationTitle())

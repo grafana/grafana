@@ -186,7 +186,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	// login
 	loginUserWithUser(userQuery.Result, ctx)
 
-	metrics.M_Api_Login_OAuth.Inc(1)
+	metrics.M_Api_Login_OAuth.Inc()
 
 	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		ctx.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")

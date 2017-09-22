@@ -15,20 +15,23 @@ weight = 1
 
 Description | Download
 ------------ | -------------
-Stable for Debian-based Linux | [grafana_4.4.3_amd64.deb](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.4.3_amd64.deb)
-Beta for Debian-based Linux | [grafana_4.5.0-beta1_amd64.deb](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.5.0-beta1_amd64.deb)
+Stable for Debian-based Linux | [grafana_4.5.1_amd64.deb](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.5.1_amd64.deb)
+
+<!-- Beta for Debian-based Linux | [grafana_4.5.0-beta1_amd64.deb](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.5.0-beta1_amd64.deb) -->
 
 Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
 
 ## Install Stable
 
+
 ```bash
-wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.4.3_amd64.deb
+wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.5.1_amd64.deb
 sudo apt-get install -y adduser libfontconfig
-sudo dpkg -i grafana_4.4.3_amd64.deb
+sudo dpkg -i grafana_4.5.1_amd64.deb
 ```
 
+<!--
 ## Install Latest Beta
 
 ```bash
@@ -36,6 +39,7 @@ wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.5.0-b
 sudo apt-get install -y adduser libfontconfig
 sudo dpkg -i grafana_4.5.0-beta1_amd64.deb
 ```
+-->
 
 ## APT Repository
 

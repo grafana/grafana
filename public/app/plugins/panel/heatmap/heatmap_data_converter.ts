@@ -1,7 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import TimeSeries from 'app/core/time_series2';
 
 let VALUE_INDEX = 0;
 let TIME_INDEX = 1;

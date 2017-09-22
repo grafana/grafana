@@ -2,6 +2,7 @@ package imguploader
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -33,7 +34,7 @@ var netClient = &http.Client{
 	Transport: netTransport,
 }
 
-func (u *WebdavUploader) Upload(pa string) (string, error) {
+func (u *WebdavUploader) Upload(ctx context.Context, pa string) (string, error) {
 	url, _ := url.Parse(u.url)
 	filename := util.GetRandomString(20) + ".png"
 	url.Path = path.Join(url.Path, filename)

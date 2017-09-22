@@ -1,11 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import kbn from 'app/core/utils/kbn';
 import angular from 'angular';
 import coreModule from 'app/core/core_module';
-import appEvents from 'app/core/app_events';
-import config from 'app/core/config';
-import _ from 'lodash';
 
 import {DashboardExporter} from './exporter';
 
@@ -15,7 +11,7 @@ export class DashExportCtrl {
   dismiss: () => void;
 
   /** @ngInject */
-  constructor(private backendSrv, private dashboardSrv, datasourceSrv, private $scope) {
+  constructor(private dashboardSrv, datasourceSrv, private $scope) {
     this.exporter = new DashboardExporter(datasourceSrv);
 
     this.exporter.makeExportable(this.dashboardSrv.getCurrent()).then(dash => {

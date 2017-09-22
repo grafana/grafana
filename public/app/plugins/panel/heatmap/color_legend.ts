@@ -1,4 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
+
 import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
@@ -143,7 +144,6 @@ function drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minVal
     return;
   }
 
-  let legendValueDomain = _.sortBy(colorScale.domain());
   let legendValueScale = d3.scaleLinear()
     .domain([0, rangeTo])
     .range([0, legendWidth]);
@@ -156,6 +156,7 @@ function drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minVal
   let colorRect = legendElem.find(":first-child");
   let posY = colorRect.height() + 2;
   let posX = getSvgElemX(colorRect);
+
   d3.select(legendElem.get(0)).append("g")
     .attr("class", "axis")
     .attr("transform", "translate(" + posX + "," + posY + ")")

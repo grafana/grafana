@@ -4,12 +4,14 @@
     "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "4.5.0",
+  "version": "4.6.0-pre1",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
   },
   "devDependencies": {
+    "@types/react": "^16.0.5",
+    "@types/react-dom": "^15.5.4",
     "autoprefixer": "^6.4.0",
     "es6-promise": "^3.0.2",
     "es6-shim": "^0.35.1",
@@ -48,7 +50,7 @@
     "mocha": "3.2.0",
     "phantomjs-prebuilt": "^2.1.14",
     "reflect-metadata": "0.1.8",
-    "rxjs": "^5.0.0-rc.5",
+    "rxjs": "^5.4.3",
     "sass-lint": "^1.10.2",
     "systemjs": "0.19.41",
     "zone.js": "^0.7.2"
@@ -60,22 +62,35 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "@types/enzyme": "^2.8.8",
     "ace-builds": "^1.2.8",
+    "angular": "^1.6.6",
+    "angular-bindonce": "^0.3.1",
+    "angular-mocks": "^1.6.6",
+    "angular-native-dragdrop": "^1.2.2",
+    "angular-route": "^1.6.6",
+    "angular-sanitize": "^1.6.6",
+    "clipboard": "^1.7.1",
     "eventemitter3": "^2.0.2",
     "gaze": "^1.1.2",
     "grunt-jscs": "3.0.1",
     "grunt-sass-lint": "^0.2.2",
     "grunt-sync": "^0.6.2",
+    "jquery": "^3.2.1",
     "karma-sinon": "^1.0.5",
-    "lodash": "^4.17.2",
+    "lodash": "^4.17.4",
     "mousetrap": "^1.6.0",
+    "ngreact": "^0.4.1",
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1",
+    "react-test-renderer": "^15.6.1",
     "remarkable": "^1.7.1",
     "sinon": "1.17.6",
     "systemjs-builder": "^0.15.34",
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop",
-    "tslint": "^5.1.0",
-    "typescript": "^2.2.2",
+    "tslint": "^5.7.0",
+    "typescript": "^2.5.2",
     "virtual-scroll": "^1.1.1"
   }
 }

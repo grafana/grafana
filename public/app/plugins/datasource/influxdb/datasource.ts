@@ -1,6 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 
 import * as dateMath from 'app/core/utils/datemath';
