@@ -73,7 +73,7 @@ There are three options:
 
 - The `Series` option means that the data is grouped by series and not by time. The y-axis still represents the value.
 
-    <img src="/img/docs/v45/graph-x-axis-mode-series.png" class="no-shadow">
+    {{< docs-imagebox img="/img/docs/v45/graph-x-axis-mode-series.png" max-width="700px">}}
 
 - The `Histogram` option converts the graph into a histogram. A Histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range. Histograms and buckets are described in more detail [here](http://docs.grafana.org/features/panels/heatmap/#histograms-and-buckets).
 
