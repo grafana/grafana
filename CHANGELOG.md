@@ -19,9 +19,13 @@
 ## Breaking changes
 * **Metrics**: The metric structure for internal metrics about Grafana published to graphite has changed. This might break dashboards for internal metrics. 
 
-# 4.5.2 (unreleased)
+# 4.5.2 (2017-09-22)
 
 ## Fixes 
+* **Graphite**: Fix for issues with jsonData & graphiteVersion null errors [#9258](https://github.com/grafana/grafana/issues/9258)
+* **Graphite**: Fix for Grafana internal metrics to Graphite sending NaN values [#9279](https://github.com/grafana/grafana/issues/9279)
+* **HTTP API**: Fix for HEAD method requests [#9307](https://github.com/grafana/grafana/issues/9307)
+* **Templating**: Fix for duplicate template variable queries when refresh is set to time range change [#9185](https://github.com/grafana/grafana/issues/9185)
 * **Metrics**: dont write NaN values to graphite [#9279](https://github.com/grafana/grafana/issues/9279)
 
 # 4.5.1 (2017-09-15)
