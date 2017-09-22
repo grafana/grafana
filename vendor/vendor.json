@@ -461,10 +461,31 @@
 			"revisionTime": "2017-02-10T14:05:23Z"
 		},
 		{
-			"checksumSHA1": "ZAj/o03zG8Ui4mZ4XmzU4yyKC04=",
+			"checksumSHA1": "RYMOEINLFNWIJk8aKNifSlPhg9U=",
 			"path": "github.com/lib/pq",
-			"revision": "dd1fe2071026ce53f36a39112e645b4d4f5793a4",
-			"revisionTime": "2017-07-07T05:36:02Z"
+			"revision": "23da1db4f16d9658a86ae9b717c245fc078f10f1",
+			"revisionTime": "2017-09-18T17:50:43Z"
+		},
+		{
+			"checksumSHA1": "jaCQF1par6Jl8g+V2Cgp0n/0wSc=",
+			"origin": "github.com/grafana/grafana/vendor/github.com/lib/pq/hstore",
+			"path": "github.com/lib/pq/hstore",
+			"revision": "23da1db4f16d9658a86ae9b717c245fc078f10f1",
+			"revisionTime": "2017-09-18T17:50:43Z"
+		},
+		{
+			"checksumSHA1": "mJHrY33tDs2MRhHt+XunkRF/5ek=",
+			"origin": "github.com/grafana/grafana/vendor/github.com/lib/pq/listen_example",
+			"path": "github.com/lib/pq/listen_example",
+			"revision": "23da1db4f16d9658a86ae9b717c245fc078f10f1",
+			"revisionTime": "2017-09-18T17:50:43Z"
+		},
+		{
+			"checksumSHA1": "AU3fA8Sm33Vj9PBoRPSeYfxLRuE=",
+			"origin": "github.com/grafana/grafana/vendor/github.com/lib/pq/oid",
+			"path": "github.com/lib/pq/oid",
+			"revision": "23da1db4f16d9658a86ae9b717c245fc078f10f1",
+			"revisionTime": "2017-09-18T17:50:43Z"
 		},
 		{
 			"checksumSHA1": "bKMZjd2wPw13VwoE7mBeSv5djFA=",
