@@ -148,7 +148,16 @@ transformers['table'] = {
     }
 
     model.columns = data[0].columns;
-    model.rows = data[0].rows;
+    for (var i = 0; i < data.length; i++) {
+      var series = data[i];
+      if (series.columns.length !== data[0].columns.length) {
+        model.rows = data[0].rows;
+        break;
+      }
+      for (var y = 0; y < series.rows.length; y++) {
+        model.rows.push(series.rows[y]);
+      }
+    }
   }
 };
 
