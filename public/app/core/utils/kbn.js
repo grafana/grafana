@@ -703,6 +703,14 @@ function($, _, moment) {
     return kbn.toDuration(size, decimals, 'second');
   };
 
+  kbn.valueFormats.dtdurationfromnowms = function(size, decimals) {
+    return kbn.toDuration(size - Date.now(), decimals, 'millisecond');
+  };
+
+  kbn.valueFormats.dtdurationfromnows = function(size, decimals) {
+    return kbn.toDuration(size - (Date.now() / 1000 | 0), decimals, 'second');
+  };
+
   kbn.valueFormats.dateTimeAsIso = function(epoch) {
     var time = moment(epoch);
 
@@ -759,16 +767,18 @@ function($, _, moment) {
       {
         text: 'time',
         submenu: [
-          {text: 'Hertz (1/s)',       value: 'hertz'},
-          {text: 'nanoseconds (ns)' , value: 'ns'   },
-          {text: 'microseconds (µs)', value: 'µs'   },
-          {text: 'milliseconds (ms)', value: 'ms'   },
-          {text: 'seconds (s)',       value: 's'    },
-          {text: 'minutes (m)',       value: 'm'    },
-          {text: 'hours (h)',         value: 'h'    },
-          {text: 'days (d)',          value: 'd'    },
-          {text: 'duration (ms)',     value: 'dtdurationms' },
-          {text: 'duration (s)',      value: 'dtdurations' },
+          {text: 'Hertz (1/s)',            value: 'hertz'},
+          {text: 'nanoseconds (ns)' ,      value: 'ns'   },
+          {text: 'microseconds (µs)',      value: 'µs'   },
+          {text: 'milliseconds (ms)',      value: 'ms'   },
+          {text: 'seconds (s)',            value: 's'    },
+          {text: 'minutes (m)',            value: 'm'    },
+          {text: 'hours (h)',              value: 'h'    },
+          {text: 'days (d)',               value: 'd'    },
+          {text: 'duration (ms)',          value: 'dtdurationms' },
+          {text: 'duration (s)',           value: 'dtdurations' },
+          {text: 'duration from now (ms)', value: 'dtdurationfromnowms' },
+          {text: 'duration from now (s)',  value: 'dtdurationfromnows' },
         ]
       },
       {
