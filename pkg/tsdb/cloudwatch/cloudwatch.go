@@ -3,7 +3,6 @@ package cloudwatch
 import (
 	"context"
 	"errors"
-	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -58,14 +57,14 @@ func (e *CloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 	var err error
 
 	switch queryType {
-	case "timeSeriesQuery":
-		result, err = e.executeTimeSeriesQuery(ctx, queryContext)
-		break
 	case "metricFindQuery":
 		result, err = e.executeMetricFindQuery(ctx, queryContext)
 		break
+	case "timeSeriesQuery":
+		fallthrough
 	default:
-		err = fmt.Errorf("missing querytype")
+		result, err = e.executeTimeSeriesQuery(ctx, queryContext)
+		break
 	}
 
 	return result, err
