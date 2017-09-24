@@ -419,7 +419,7 @@ function($, _, moment) {
   // Data Rate
   kbn.valueFormats.pps    = kbn.formatBuilders.decimalSIPrefix('pps');
   kbn.valueFormats.bps    = kbn.formatBuilders.decimalSIPrefix('bps');
-  kbn.valueFormats.Bps    = kbn.formatBuilders.decimalSIPrefix('Bps');
+  kbn.valueFormats.Bps    = kbn.formatBuilders.decimalSIPrefix('B/s');
   kbn.valueFormats.KBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 1);
   kbn.valueFormats.Kbits  = kbn.formatBuilders.decimalSIPrefix('bps', 1);
   kbn.valueFormats.MBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 2);
@@ -804,7 +804,7 @@ function($, _, moment) {
         submenu: [
           {text: 'packets/sec', value: 'pps'},
           {text: 'bits/sec',    value: 'bps'},
-          {text: 'bytes/sec',   value: 'Bps'},
+          {text: 'bytes/sec',   value: 'B/s'},
           {text: 'kilobits/sec', value: 'Kbits'},
           {text: 'kilobytes/sec',    value: 'KBs'},
           {text: 'megabits/sec', value: 'Mbits'},
