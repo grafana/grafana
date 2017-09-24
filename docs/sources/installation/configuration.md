@@ -593,6 +593,9 @@ Address used when sending out emails, defaults to `admin@grafana.localhost`
 ### from_name
 Name to be used when sending out emails, defaults to `Grafana`
 
+### ehlo_identity
+Name to be used as client identity for EHLO in SMTP dialog, defaults to instance_name.
+
 ## [log]
 
 ### mode
