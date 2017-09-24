@@ -1,4 +1,3 @@
-
 import "../datasource";
 import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 import helpers from 'test/specs/helpers';
@@ -76,11 +75,11 @@ describe('CloudWatchDatasource', function() {
     it('should generate the correct query', function(done) {
       ctx.ds.query(query).then(function() {
         var params = requestParams.queries[0];
-        expect(params.parameters.namespace).to.be(query.targets[0].namespace);
-        expect(params.parameters.metricName).to.be(query.targets[0].metricName);
-        expect(params.parameters.dimensions['InstanceId']).to.be('i-12345678');
-        expect(params.parameters.statistics).to.eql(query.targets[0].statistics);
-        expect(params.parameters.period).to.be(query.targets[0].period);
+        expect(params.namespace).to.be(query.targets[0].namespace);
+        expect(params.metricName).to.be(query.targets[0].metricName);
+        expect(params.dimensions['InstanceId']).to.be('i-12345678');
+        expect(params.statistics).to.eql(query.targets[0].statistics);
+        expect(params.period).to.be(query.targets[0].period);
         done();
       });
       ctx.$rootScope.$apply();
@@ -110,7 +109,7 @@ describe('CloudWatchDatasource', function() {
 
       ctx.ds.query(query).then(function() {
         var params = requestParams.queries[0];
-        expect(params.parameters.period).to.be(600);
+        expect(params.period).to.be(600);
         done();
       });
       ctx.$rootScope.$apply();

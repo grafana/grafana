@@ -87,7 +87,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 		}
 		currentlyExecuting++
 		go func(refId string, index int) {
-			queryRes, err := e.executeQuery(ctx, queryContext.Queries[index].Model.Get("parameters"), queryContext)
+			queryRes, err := e.executeQuery(ctx, queryContext.Queries[index].Model, queryContext)
 			currentlyExecuting--
 			if err != nil {
 				errCh <- err

@@ -48,14 +48,13 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
         item.dimensions = dimensions;
         item.period = self.getPeriod(item, options);
 
-        return {
+        return _.extend({
           refId: item.refId,
           intervalMs: options.intervalMs,
           maxDataPoints: options.maxDataPoints,
           datasourceId: self.instanceSettings.id,
           type: 'timeSeriesQuery',
-          parameters: item
-        };
+        }, item);
       });
 
       // No valid targets, return the empty result to save a round trip.
@@ -147,15 +146,14 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
         from: range.from,
         to: range.to,
         queries: [
-          {
+          _.extend({
             refId: 'metricFindQuery',
             intervalMs: 1, // dummy
             maxDataPoints: 1, // dummy
             datasourceId: this.instanceSettings.id,
             type: 'metricFindQuery',
-            subtype: subtype,
-            parameters: parameters
-          }
+            subtype: subtype
+          }, parameters)
         ]
       }).then(function (r) { return transformSuggestDataFromTable(r); });
     };
