@@ -204,6 +204,7 @@ func (e PostgresExecutor) getTypedRowData(rows *core.Rows) (tsdb.RowValues, erro
 				values[i] = string(value)
 			default:
 				e.log.Debug("Rows", "Unknown database type", types[i].DatabaseTypeName(), "value", value)
+				values[i] = string(value)
 			}
 		}
 	}
