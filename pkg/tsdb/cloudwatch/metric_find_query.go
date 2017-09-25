@@ -160,7 +160,7 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 	firstQuery := queryContext.Queries[0]
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: firstQuery.RefId}
 
-	parameters := firstQuery.Model.Get("parameters")
+	parameters := firstQuery.Model
 	subType := firstQuery.Model.Get("subtype").MustString()
 	var data []suggestData
 	var err error
