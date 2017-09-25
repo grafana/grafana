@@ -206,8 +206,11 @@ export class ColorPickerCtrl {
 export function colorPicker() {
   function link(scope, elem, attrs) {
     scope.$watch('color', (newValue, oldValue) => {
-      if (newValue !== scope.color && newValue !== oldValue) {
-        scope.color = newValue;
+      if (newValue !== oldValue) {
+        scope.onChange();
+        if (newValue !== scope.color) {
+          scope.color = newValue;
+        }
       }
     });
   }
@@ -217,7 +220,8 @@ export function colorPicker() {
     controller: ColorPickerCtrl,
     controllerAs: 'ctrl',
     scope: {
-      color: "="
+      color: "=",
+      onChange: "&"
     },
     template: picker_button_template,
     link: link
