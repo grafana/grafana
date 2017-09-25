@@ -69,24 +69,21 @@
     <div class="gf-form">
       <label class="gf-form-label width-8">Colors</label>
       <span class="gf-form-label">
-        <spectrum-picker ng-model="ctrl.panel.colors[0]" ng-change="ctrl.render()" ></spectrum-picker>
+        <color-picker color="ctrl.panel.colors[0]" on-change="ctrl.render()"></color-picker>
+        <!-- <spectrum-picker ng-model="ctrl.panel.colors[0]" ng-change="ctrl.render()" ></spectrum-picker> -->
       </span>
       <span class="gf-form-label">
-        <spectrum-picker ng-model="ctrl.panel.colors[1]" ng-change="ctrl.render()" ></spectrum-picker>
+        <color-picker color="ctrl.panel.colors[1]" on-change="ctrl.render()"></color-picker>
+        <!-- <spectrum-picker ng-model="ctrl.panel.colors[1]" ng-change="ctrl.render()" ></spectrum-picker> -->
       </span>
       <span class="gf-form-label">
-        <spectrum-picker ng-model="ctrl.panel.colors[2]" ng-change="ctrl.render()" ></spectrum-picker>
+        <color-picker color="ctrl.panel.colors[2]" on-change="ctrl.render()"></color-picker>
+        <!-- <spectrum-picker ng-model="ctrl.panel.colors[2]" ng-change="ctrl.render()" ></spectrum-picker> -->
       </span>
       <span class="gf-form-label">
         <a  ng-click="ctrl.invertColorOrder()">
           Invert
         </a>
-      </span>
-    </div>
-    <div class="gf-form">
-      <label class="gf-form-label width-8">Colors</label>
-      <span class="gf-form-label">
-        <color-picker color="ctrl.panel.colors[0]" on-change="ctrl.render()"></color-picker>
       </span>
     </div>
   </div>
