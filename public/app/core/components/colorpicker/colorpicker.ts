@@ -179,7 +179,7 @@ export class ColorPickerCtrl {
         target: el[0],
         content: contentElement,
         position: 'top center',
-        classes: 'drop-popover drop-popover--form',
+        classes: 'drop-popover drop-popover--form gf-color-picker',
         openOn: 'hover',
         hoverCloseDelay: 200,
         tetherOptions: {
