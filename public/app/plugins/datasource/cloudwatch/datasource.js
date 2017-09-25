@@ -5,9 +5,8 @@ define([
   'app/core/utils/datemath',
   'app/core/utils/kbn',
   'app/features/templating/variable',
-  './annotation_query',
 ],
-function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnotationQuery) {
+function (angular, _, moment, dateMath, kbn, templatingVariable) {
   'use strict';
 
   /** @ngInject */
@@ -262,42 +261,50 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       return $q.when([]);
     };
 
-    this.performDescribeAlarms = function(region, actionPrefix, alarmNamePrefix, alarmNames, stateValue) {
-      return this.awsRequest({
-        region: region,
-        action: 'DescribeAlarms',
-        parameters: { actionPrefix: actionPrefix, alarmNamePrefix: alarmNamePrefix, alarmNames: alarmNames, stateValue: stateValue }
+    this.annotationQuery = function (options) {
+      var annotation = options.annotation;
+      var defaultPeriod = annotation.prefixMatching ? '' : '300';
+      var period = annotation.period || defaultPeriod;
+      period = parseInt(period, 10);
+      var dimensions = {};
+      _.each(annotation.dimensions, function (value, key) {
+        dimensions[templateSrv.replace(key, options.scopedVars)] = templateSrv.replace(value, options.scopedVars);
       });
-    };
+      var parameters = {
+        prefixMatching: annotation.prefixMatching,
+        region: templateSrv.replace(annotation.region),
+        namespace: templateSrv.replace(annotation.namespace),
+        metricName: templateSrv.replace(annotation.metricName),
+        dimensions: dimensions,
+        statistics: _.map(annotation.statistics, function (s) { return templateSrv.replace(s); }),
+        period: period,
+        actionPrefix: annotation.actionPrefix || '',
+        alarmNamePrefix: annotation.alarmNamePrefix || ''
+      };
 
-    this.performDescribeAlarmsForMetric = function(region, namespace, metricName, dimensions, statistic, period) {
-      var s = _.includes(self.standardStatistics, statistic) ? statistic : '';
-      var es = _.includes(self.standardStatistics, statistic) ? '' : statistic;
-      return this.awsRequest({
-        region: region,
-        action: 'DescribeAlarmsForMetric',
-        parameters: {
-          namespace: namespace,
-          metricName: metricName,
-          dimensions: dimensions,
-          statistic: s,
-          extendedStatistic: es,
-          period: period
-        }
+      return backendSrv.post('/api/tsdb/query', {
+        from: options.range.from,
+        to: options.range.to,
+        queries: [
+          _.extend({
+            refId: 'annotationQuery',
+            intervalMs: 1, // dummy
+            maxDataPoints: 1, // dummy
+            datasourceId: this.instanceSettings.id,
+            type: 'annotationQuery'
+          }, parameters)
+        ]
+      }).then(function (r) {
+        return _.map(r.results['annotationQuery'].tables[0].rows, function (v) {
+          return {
+            annotation: annotation,
+            time: Date.parse(v[0]),
+            title: v[1],
+            tags: [v[2]],
+            text: v[3]
+          };
+        });
       });
-    };
-
-    this.performDescribeAlarmHistory = function(region, alarmName, startDate, endDate) {
-      return this.awsRequest({
-        region: region,
-        action: 'DescribeAlarmHistory',
-        parameters: { alarmName: alarmName, startDate: startDate, endDate: endDate }
-      });
-    };
-
-    this.annotationQuery = function(options) {
-      var annotationQuery = new CloudWatchAnnotationQuery(this, options.annotation, $q, templateSrv);
-      return annotationQuery.process(options.range.from, options.range.to);
     };
 
     this.testDatasource = function() {
