@@ -38,7 +38,7 @@ var picker_template = `
     </div>
   </div>
   <div class="color-model-container">
-    <input class="gf-form-input" ng-model="color" ng-change="onColorStringChange(color)"></input>
+    <input class="gf-form-input" ng-model="color" ng-blur="onColorStringChange(color)"></input>
   </div>
 </div>
 `;
