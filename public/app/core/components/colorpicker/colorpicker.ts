@@ -25,7 +25,8 @@ var picker_template = `
     <div id="gf-colors" ng-show="currentTab === 'gf-colors'">
       <div class="graph-legend-popover">
         <p class="m-b-0">
-          <i ng-repeat="c in ctrl.colors" class="pointer fa fa-circle"
+          <i ng-repeat="c in ctrl.colors" class="pointer fa"
+            ng-class="{'fa-circle': c !== color, 'fa-circle-o': c === color}"
             ng-style="{color:c}"
             ng-click="ctrl.colorSelected(c);">&nbsp;
           </i>
