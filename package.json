@@ -64,6 +64,13 @@
   "dependencies": {
     "@types/enzyme": "^2.8.8",
     "ace-builds": "^1.2.8",
+    "angular": "^1.6.6",
+    "angular-bindonce": "^0.3.1",
+    "angular-mocks": "^1.6.6",
+    "angular-native-dragdrop": "^1.2.2",
+    "angular-route": "^1.6.6",
+    "angular-sanitize": "^1.6.6",
+    "clipboard": "^1.7.1",
     "eventemitter3": "^2.0.2",
     "gaze": "^1.1.2",
     "grunt-jscs": "3.0.1",

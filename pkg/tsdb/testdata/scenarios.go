@@ -30,6 +30,67 @@ func init() {
 	logger.Debug("Initializing TestData Scenario")
 
 	registerScenario(&Scenario{
+		Id:   "exponential_heatmap_bucket_data",
+		Name: "Exponential heatmap bucket data",
+
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			to := context.TimeRange.GetToAsMsEpoch()
+
+			var series []*tsdb.TimeSeries
+			start := 1
+			factor := 2
+			for i := 0; i < 10; i++ {
+				timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
+				serie := &tsdb.TimeSeries{Name: strconv.Itoa(start)}
+				start *= factor
+
+				points := make(tsdb.TimeSeriesPoints, 0)
+				for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
+					v := float64(rand.Int63n(100))
+					points = append(points, tsdb.NewTimePoint(null.FloatFrom(v), float64(timeWalkerMs)))
+					timeWalkerMs += query.IntervalMs * 50
+				}
+
+				serie.Points = points
+				series = append(series, serie)
+			}
+
+			queryRes := tsdb.NewQueryResult()
+			queryRes.Series = append(queryRes.Series, series...)
+			return queryRes
+		},
+	})
+
+	registerScenario(&Scenario{
+		Id:   "linear_heatmap_bucket_data",
+		Name: "Linear heatmap bucket data",
+
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			to := context.TimeRange.GetToAsMsEpoch()
+
+			var series []*tsdb.TimeSeries
+			for i := 0; i < 10; i++ {
+				timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
+				serie := &tsdb.TimeSeries{Name: strconv.Itoa(i * 10)}
+
+				points := make(tsdb.TimeSeriesPoints, 0)
+				for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
+					v := float64(rand.Int63n(100))
+					points = append(points, tsdb.NewTimePoint(null.FloatFrom(v), float64(timeWalkerMs)))
+					timeWalkerMs += query.IntervalMs * 50
+				}
+
+				serie.Points = points
+				series = append(series, serie)
+			}
+
+			queryRes := tsdb.NewQueryResult()
+			queryRes.Series = append(queryRes.Series, series...)
+			return queryRes
+		},
+	})
+
+	registerScenario(&Scenario{
 		Id:   "random_walk",
 		Name: "Random Walk",
 

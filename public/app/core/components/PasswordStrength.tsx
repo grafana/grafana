@@ -1,5 +1,4 @@
 import * as React from 'react';
-import 'react-dom';
 import coreModule from '../core_module';
 
 export interface IProps {

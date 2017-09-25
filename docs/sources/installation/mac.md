@@ -43,3 +43,35 @@ To upgrade grafana if you've installed from HEAD:
 ```
 brew reinstall --HEAD grafana/grafana/grafana
 ```
+
+### Starting Grafana
+
+To start Grafana using homebrew services first make sure homebrew/services is installed.
+
+```
+brew tap homebrew/services
+```
+
+Then start Grafana using:
+
+```
+brew services start grafana
+```
+
+
+### Configuration
+
+The Configuration file should be located at `/usr/local/etc/grafana/grafana.ini`.
+
+### Logs
+
+The log file should be located at `/usr/local/var/log/grafana/grafana.log`.
+
+### Plugins
+
+If you want to manually install a plugin place it here: `/usr/local/var/lib/grafana/plugins`.
+
+### Database
+
+The default sqlite database is located at `/usr/local/var/lib/grafana`
+

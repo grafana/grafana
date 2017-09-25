@@ -25,7 +25,7 @@ function (angular, require, coreModule, kbn) {
         getText: '&clipboardButton'
       },
       link: function(scope, elem) {
-        require(['vendor/clipboard/dist/clipboard'], function(Clipboard) {
+        require(['clipboard'], function(Clipboard) {
           scope.clipboard = new Clipboard(elem[0], {
             text: function() {
               return scope.getText();
