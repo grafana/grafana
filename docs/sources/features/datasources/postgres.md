@@ -90,8 +90,19 @@ If you set `Format as` to `Time series`, for use in Graph panel for example, the
 Any column except `time` and `metric` is treated as a
 You may return a column named `metric` that is used as metric name for the value column.
 
+Example with `metric` column
 
-Example:
+```sql
+SELECT
+  min(time_date_time) as time,
+  min(value_double),
+  'min' as metric
+FROM test_data
+WHERE $__timeFilter(time_date_time)
+GROUP BY metric1, (extract(epoch from time_date_time)/extract(epoch from $__interval::interval))::int
+ORDER BY time asc
+```
+Example with multiple columns:
 
 ```sql
 SELECT
@@ -118,7 +129,7 @@ return things like measurement names, key names or key values that are shown as 
 For example, you can have a variable that contains all values for the `hostname` column in a table if you specify a query like this in the templating variable *Query* setting.
 
 ```sql
-SELECT hostname FROM my_host
+SELECT hostname FROM host
 ```
 
 A query can returns multiple columns and Grafana will automatically create a list from them. For example, the query below will return a list with values from `hostname` and `hostname2`.
