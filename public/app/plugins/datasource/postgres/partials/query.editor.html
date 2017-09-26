@@ -39,8 +39,8 @@
 	<div class="gf-form"  ng-show="ctrl.showHelp">
 		<pre class="gf-form-pre alert alert-info">Time series:
 - return column named time (UTC in seconds or timestamp)
-- return column named value for the time point value
-- return column named metric to represent the series name
+- return column(s) with numeric datatype as values
+- (Optional: return column named metric to represent the series name. If no column named metric is found the column name of the value column is used as series name)
 
 Table:
 - return any set of columns
