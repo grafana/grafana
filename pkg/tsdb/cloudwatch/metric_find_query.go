@@ -210,30 +210,6 @@ func transformToTable(data []suggestData, result *tsdb.QueryResult) {
 	result.Meta.Set("rowCount", len(data))
 }
 
-func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
-	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
-	accessKey := ""
-	secretKey := ""
-	for key, value := range e.DataSource.SecureJsonData.Decrypt() {
-		if key == "accessKey" {
-			accessKey = value
-		}
-		if key == "secretKey" {
-			secretKey = value
-		}
-	}
-
-	datasourceInfo := &DatasourceInfo{
-		Region:        region,
-		Profile:       e.DataSource.Database,
-		AssumeRoleArn: assumeRoleArn,
-		AccessKey:     accessKey,
-		SecretKey:     secretKey,
-	}
-
-	return datasourceInfo
-}
-
 // Whenever this list is updated, frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
@@ -460,16 +436,10 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 }
 
 func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string, dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
-	dsInfo := e.getDsInfo(region)
-	cfg, err := getAwsConfig(dsInfo)
+	svc, err := e.getClient(region)
 	if err != nil {
-		return nil, errors.New("Failed to call cloudwatch:ListMetrics")
+		return nil, err
 	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, errors.New("Failed to call cloudwatch:ListMetrics")
-	}
-	svc := cloudwatch.New(sess, cfg)
 
 	params := &cloudwatch.ListMetricsInput{
 		Namespace:  aws.String(namespace),
@@ -496,7 +466,7 @@ func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace stri
 
 func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
 	dsInfo := e.getDsInfo(region)
-	cfg, err := getAwsConfig(dsInfo)
+	cfg, err := e.getAwsConfig(dsInfo)
 	if err != nil {
 		return nil, errors.New("Failed to call ec2:DescribeInstances")
 	}

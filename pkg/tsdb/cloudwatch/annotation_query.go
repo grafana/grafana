@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -34,16 +33,10 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 	actionPrefix := parameters.Get("actionPrefix").MustString("")
 	alarmNamePrefix := parameters.Get("alarmNamePrefix").MustString("")
 
-	dsInfo := e.getDsInfo(region)
-	cfg, err := getAwsConfig(dsInfo)
+	svc, err := e.getClient(region)
 	if err != nil {
-		return nil, errors.New("Failed to call cloudwatch:ListMetrics")
+		return nil, err
 	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, errors.New("Failed to call cloudwatch:ListMetrics")
-	}
-	svc := cloudwatch.New(sess, cfg)
 
 	var alarmNames []*string
 	if usePrefixMatch {

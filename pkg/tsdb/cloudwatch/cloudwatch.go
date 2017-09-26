@@ -15,7 +15,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -24,6 +23,17 @@ import (
 
 type CloudWatchExecutor struct {
 	*models.DataSource
+}
+
+type DatasourceInfo struct {
+	Profile       string
+	Region        string
+	AuthType      string
+	AssumeRoleArn string
+	Namespace     string
+
+	AccessKey string
+	SecretKey string
 }
 
 func NewCloudWatchExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
@@ -111,47 +121,6 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 	}
 
 	return result, nil
-}
-
-func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, error) {
-	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
-
-	accessKey := ""
-	secretKey := ""
-	for key, value := range e.DataSource.SecureJsonData.Decrypt() {
-		if key == "accessKey" {
-			accessKey = value
-		}
-		if key == "secretKey" {
-			secretKey = value
-		}
-	}
-
-	datasourceInfo := &DatasourceInfo{
-		Region:        region,
-		Profile:       e.DataSource.Database,
-		AssumeRoleArn: assumeRoleArn,
-		AccessKey:     accessKey,
-		SecretKey:     secretKey,
-	}
-
-	credentials, err := GetCredentials(datasourceInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := &aws.Config{
-		Region:      aws.String(region),
-		Credentials: credentials,
-	}
-
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	client := cloudwatch.New(sess, cfg)
-	return client, nil
 }
 
 func (e *CloudWatchExecutor) executeQuery(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) (*tsdb.QueryResult, error) {

@@ -13,19 +13,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/sts"
 )
-
-type DatasourceInfo struct {
-	Profile       string
-	Region        string
-	AuthType      string
-	AssumeRoleArn string
-	Namespace     string
-
-	AccessKey string
-	SecretKey string
-}
 
 type cache struct {
 	credential *credentials.Credentials
@@ -150,7 +140,31 @@ func ec2RoleProvider(sess *session.Session) credentials.Provider {
 	return &ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute}
 }
 
-func getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, error) {
+func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
+	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
+	accessKey := ""
+	secretKey := ""
+	for key, value := range e.DataSource.SecureJsonData.Decrypt() {
+		if key == "accessKey" {
+			accessKey = value
+		}
+		if key == "secretKey" {
+			secretKey = value
+		}
+	}
+
+	datasourceInfo := &DatasourceInfo{
+		Region:        region,
+		Profile:       e.DataSource.Database,
+		AssumeRoleArn: assumeRoleArn,
+		AccessKey:     accessKey,
+		SecretKey:     secretKey,
+	}
+
+	return datasourceInfo
+}
+
+func (e *CloudWatchExecutor) getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, error) {
 	creds, err := GetCredentials(dsInfo)
 	if err != nil {
 		return nil, err
@@ -161,4 +175,20 @@ func getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, error) {
 		Credentials: creds,
 	}
 	return cfg, nil
+}
+
+func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, error) {
+	datasourceInfo := e.getDsInfo(region)
+	cfg, err := e.getAwsConfig(datasourceInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	client := cloudwatch.New(sess, cfg)
+	return client, nil
 }
