@@ -17,7 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	cwapi "github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -128,7 +127,7 @@ func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, e
 		}
 	}
 
-	datasourceInfo := &cwapi.DatasourceInfo{
+	datasourceInfo := &DatasourceInfo{
 		Region:        region,
 		Profile:       e.DataSource.Database,
 		AssumeRoleArn: assumeRoleArn,
@@ -136,7 +135,7 @@ func (e *CloudWatchExecutor) getClient(region string) (*cloudwatch.CloudWatch, e
 		SecretKey:     secretKey,
 	}
 
-	credentials, err := cwapi.GetCredentials(datasourceInfo)
+	credentials, err := GetCredentials(datasourceInfo)
 	if err != nil {
 		return nil, err
 	}

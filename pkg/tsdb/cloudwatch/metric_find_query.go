@@ -14,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	cwapi "github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -211,7 +210,7 @@ func transformToTable(data []suggestData, result *tsdb.QueryResult) {
 	result.Meta.Set("rowCount", len(data))
 }
 
-func (e *CloudWatchExecutor) getDsInfo(region string) *cwapi.DatasourceInfo {
+func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
 	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	accessKey := ""
 	secretKey := ""
@@ -224,7 +223,7 @@ func (e *CloudWatchExecutor) getDsInfo(region string) *cwapi.DatasourceInfo {
 		}
 	}
 
-	datasourceInfo := &cwapi.DatasourceInfo{
+	datasourceInfo := &DatasourceInfo{
 		Region:        region,
 		Profile:       e.DataSource.Database,
 		AssumeRoleArn: assumeRoleArn,
@@ -460,19 +459,6 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	return result, nil
 }
 
-func getAwsConfig(dsInfo *cwapi.DatasourceInfo) (*aws.Config, error) {
-	creds, err := cwapi.GetCredentials(dsInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	cfg := &aws.Config{
-		Region:      aws.String(dsInfo.Region),
-		Credentials: creds,
-	}
-	return cfg, nil
-}
-
 func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string, dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
 	dsInfo := e.getDsInfo(region)
 	cfg, err := getAwsConfig(dsInfo)
@@ -541,8 +527,8 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 	return &resp, nil
 }
 
-func getAllMetrics(cwData *cwapi.DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
-	creds, err := cwapi.GetCredentials(cwData)
+func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
+	creds, err := GetCredentials(cwData)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}
@@ -579,7 +565,7 @@ func getAllMetrics(cwData *cwapi.DatasourceInfo) (cloudwatch.ListMetricsOutput, 
 
 var metricsCacheLock sync.Mutex
 
-func getMetricsForCustomMetrics(dsInfo *cwapi.DatasourceInfo, getAllMetrics func(*cwapi.DatasourceInfo) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+func getMetricsForCustomMetrics(dsInfo *DatasourceInfo, getAllMetrics func(*DatasourceInfo) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
@@ -616,7 +602,7 @@ func getMetricsForCustomMetrics(dsInfo *cwapi.DatasourceInfo, getAllMetrics func
 
 var dimensionsCacheLock sync.Mutex
 
-func getDimensionsForCustomMetrics(dsInfo *cwapi.DatasourceInfo, getAllMetrics func(*cwapi.DatasourceInfo) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+func getDimensionsForCustomMetrics(dsInfo *DatasourceInfo, getAllMetrics func(*DatasourceInfo) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 

@@ -183,14 +183,14 @@ func ec2RoleProvider(sess *session.Session) credentials.Provider {
 	return &ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute}
 }
 
-func getAwsConfig(req *cwRequest) (*aws.Config, error) {
-	creds, err := GetCredentials(req.GetDatasourceInfo())
+func getAwsConfig(dsInfo *DatasourceInfo) (*aws.Config, error) {
+	creds, err := GetCredentials(dsInfo)
 	if err != nil {
 		return nil, err
 	}
 
 	cfg := &aws.Config{
-		Region:      aws.String(req.Region),
+		Region:      aws.String(dsInfo.Region),
 		Credentials: creds,
 	}
 	return cfg, nil
