@@ -14,15 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
-	m "github.com/grafana/grafana/pkg/models"
 )
-
-type cwRequest struct {
-	Region     string `json:"region"`
-	Action     string `json:"action"`
-	Body       []byte `json:"-"`
-	DataSource *m.DataSource
-}
 
 type DatasourceInfo struct {
 	Profile       string
@@ -33,31 +25,6 @@ type DatasourceInfo struct {
 
 	AccessKey string
 	SecretKey string
-}
-
-func (req *cwRequest) GetDatasourceInfo() *DatasourceInfo {
-	authType := req.DataSource.JsonData.Get("authType").MustString()
-	assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
-	accessKey := ""
-	secretKey := ""
-
-	for key, value := range req.DataSource.SecureJsonData.Decrypt() {
-		if key == "accessKey" {
-			accessKey = value
-		}
-		if key == "secretKey" {
-			secretKey = value
-		}
-	}
-
-	return &DatasourceInfo{
-		AuthType:      authType,
-		AssumeRoleArn: assumeRoleArn,
-		Region:        req.Region,
-		Profile:       req.DataSource.Database,
-		AccessKey:     accessKey,
-		SecretKey:     secretKey,
-	}
 }
 
 type cache struct {
