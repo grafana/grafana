@@ -20,16 +20,16 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: firstQuery.RefId}
 
 	parameters := firstQuery.Model
-	usePrefixMatch := parameters.Get("prefixMatching").MustBool()
+	usePrefixMatch := parameters.Get("prefixMatching").MustBool(false)
 	region := parameters.Get("region").MustString("")
 	namespace := parameters.Get("namespace").MustString("")
 	metricName := parameters.Get("metricName").MustString("")
 	dimensions := parameters.Get("dimensions").MustMap()
 	statistics := parameters.Get("statistics").MustStringArray()
 	extendedStatistics := parameters.Get("extendedStatistics").MustStringArray()
-	period := int64(300)
-	if usePrefixMatch {
-		period = int64(parameters.Get("period").MustInt(0))
+	period := int64(parameters.Get("period").MustInt(0))
+	if period == 0 && !usePrefixMatch {
+		period = 300
 	}
 	actionPrefix := parameters.Get("actionPrefix").MustString("")
 	alarmNamePrefix := parameters.Get("alarmNamePrefix").MustString("")
@@ -75,9 +75,9 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 			params := &cloudwatch.DescribeAlarmsForMetricInput{
 				Namespace:  aws.String(namespace),
 				MetricName: aws.String(metricName),
-				Period:     aws.Int64(int64(period)),
 				Dimensions: qd,
 				Statistic:  aws.String(s),
+				Period:     aws.Int64(int64(period)),
 			}
 			resp, err := svc.DescribeAlarmsForMetric(params)
 			if err != nil {
@@ -91,9 +91,9 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 			params := &cloudwatch.DescribeAlarmsForMetricInput{
 				Namespace:         aws.String(namespace),
 				MetricName:        aws.String(metricName),
-				Period:            aws.Int64(int64(period)),
 				Dimensions:        qd,
 				ExtendedStatistic: aws.String(s),
+				Period:            aws.Int64(int64(period)),
 			}
 			resp, err := svc.DescribeAlarmsForMetric(params)
 			if err != nil {
@@ -109,7 +109,6 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 	if err != nil {
 		return nil, err
 	}
-
 	endTime, err := queryContext.TimeRange.ParseTo()
 	if err != nil {
 		return nil, err
@@ -175,15 +174,18 @@ func filterAlarms(alarms *cloudwatch.DescribeAlarmsOutput, namespace string, met
 		}
 
 		match := true
-		for _, d := range alarm.Dimensions {
-			if _, ok := dimensions[*d.Name]; !ok {
-				match = false
+		if len(dimensions) == 0 {
+			// all match
+		} else if len(alarm.Dimensions) != len(dimensions) {
+			match = false
+		} else {
+			for _, d := range alarm.Dimensions {
+				if _, ok := dimensions[*d.Name]; !ok {
+					match = false
+				}
 			}
 		}
 		if !match {
-			continue
-		}
-		if period != 0 && *alarm.Period != period {
 			continue
 		}
 
@@ -209,6 +211,10 @@ func filterAlarms(alarms *cloudwatch.DescribeAlarmsOutput, namespace string, met
 			if !found {
 				continue
 			}
+		}
+
+		if period != 0 && *alarm.Period != period {
+			continue
 		}
 
 		alarmNames = append(alarmNames, alarm.AlarmName)

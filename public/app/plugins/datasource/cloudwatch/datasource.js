@@ -259,6 +259,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
 
     this.annotationQuery = function (options) {
       var annotation = options.annotation;
+      var statistics = _.map(annotation.statistics, function (s) { return templateSrv.replace(s); });
       var defaultPeriod = annotation.prefixMatching ? '' : '300';
       var period = annotation.period || defaultPeriod;
       period = parseInt(period, 10);
@@ -268,7 +269,8 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
         namespace: templateSrv.replace(annotation.namespace),
         metricName: templateSrv.replace(annotation.metricName),
         dimensions: this.convertDimensionFormat(annotation.dimensions, {}),
-        statistics: _.map(annotation.statistics, function (s) { return templateSrv.replace(s); }),
+        statistics: _.filter(statistics, function (s) { return _.includes(self.standardStatistics, s); }),
+        extendedStatistics: _.filter(statistics, function (s) { return !_.includes(self.standardStatistics, s); }),
         period: period,
         actionPrefix: annotation.actionPrefix || '',
         alarmNamePrefix: annotation.alarmNamePrefix || ''
