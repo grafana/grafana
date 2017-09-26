@@ -132,7 +132,7 @@ For example, you can have a variable that contains all values for the `hostname`
 SELECT hostname FROM host
 ```
 
-A query can returns multiple columns and Grafana will automatically create a list from them. For example, the query below will return a list with values from `hostname` and `hostname2`.
+A query can return multiple columns and Grafana will automatically create a list from them. For example, the query below will return a list with values from `hostname` and `hostname2`.
 
 ```sql
 SELECT host.hostname, other_host.hostname2 FROM host JOIN other_host ON host.city = other_host.city

@@ -16,10 +16,12 @@ export interface QueryMeta {
 
 
 const defaultQuery = `SELECT
-  'random' AS "metric",
-  random() as "value",
-  time
-FROM generate_series($__timeFrom(),$__timeTo(),$__interval::interval*10) AS "time"
+  $__time(time_column),
+  value1
+FROM
+  metric_table
+WHERE
+  $__timeFilter(time_column)
 `;
 
 export class PostgresQueryCtrl extends QueryCtrl {
