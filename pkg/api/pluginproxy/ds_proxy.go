@@ -17,7 +17,6 @@ import (
 
 	"github.com/opentracing/opentracing-go"
 
-	"github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -63,11 +62,6 @@ func NewDataSourceProxy(ds *m.DataSource, plugin *plugins.DataSourcePlugin, ctx 
 }
 
 func (proxy *DataSourceProxy) HandleRequest() {
-	if proxy.ds.Type == m.DS_CLOUDWATCH {
-		cloudwatch.HandleRequest(proxy.ctx, proxy.ds)
-		return
-	}
-
 	if err := proxy.validateRequest(); err != nil {
 		proxy.ctx.JsonApiErr(403, err.Error(), nil)
 		return

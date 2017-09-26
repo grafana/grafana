@@ -1,10 +1,7 @@
 package cloudwatch
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"sync"
@@ -16,15 +13,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/sts"
-	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 )
-
-type actionHandler func(*cwRequest, *middleware.Context)
-
-var actionHandlers map[string]actionHandler
 
 type cwRequest struct {
 	Region     string `json:"region"`
@@ -66,14 +57,6 @@ func (req *cwRequest) GetDatasourceInfo() *DatasourceInfo {
 		Profile:       req.DataSource.Database,
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,
-	}
-}
-
-func init() {
-	actionHandlers = map[string]actionHandler{
-		"DescribeAlarms":          handleDescribeAlarms,
-		"DescribeAlarmsForMetric": handleDescribeAlarmsForMetric,
-		"DescribeAlarmHistory":    handleDescribeAlarmHistory,
 	}
 }
 
@@ -211,156 +194,4 @@ func getAwsConfig(req *cwRequest) (*aws.Config, error) {
 		Credentials: creds,
 	}
 	return cfg, nil
-}
-
-func handleDescribeAlarms(req *cwRequest, c *middleware.Context) {
-	cfg, err := getAwsConfig(req)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-	svc := cloudwatch.New(sess, cfg)
-
-	reqParam := &struct {
-		Parameters struct {
-			ActionPrefix    string    `json:"actionPrefix"`
-			AlarmNamePrefix string    `json:"alarmNamePrefix"`
-			AlarmNames      []*string `json:"alarmNames"`
-			StateValue      string    `json:"stateValue"`
-		} `json:"parameters"`
-	}{}
-	json.Unmarshal(req.Body, reqParam)
-
-	params := &cloudwatch.DescribeAlarmsInput{
-		MaxRecords: aws.Int64(100),
-	}
-	if reqParam.Parameters.ActionPrefix != "" {
-		params.ActionPrefix = aws.String(reqParam.Parameters.ActionPrefix)
-	}
-	if reqParam.Parameters.AlarmNamePrefix != "" {
-		params.AlarmNamePrefix = aws.String(reqParam.Parameters.AlarmNamePrefix)
-	}
-	if len(reqParam.Parameters.AlarmNames) != 0 {
-		params.AlarmNames = reqParam.Parameters.AlarmNames
-	}
-	if reqParam.Parameters.StateValue != "" {
-		params.StateValue = aws.String(reqParam.Parameters.StateValue)
-	}
-
-	resp, err := svc.DescribeAlarms(params)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-
-	c.JSON(200, resp)
-}
-
-func handleDescribeAlarmsForMetric(req *cwRequest, c *middleware.Context) {
-	cfg, err := getAwsConfig(req)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-	svc := cloudwatch.New(sess, cfg)
-
-	reqParam := &struct {
-		Parameters struct {
-			Namespace         string                  `json:"namespace"`
-			MetricName        string                  `json:"metricName"`
-			Dimensions        []*cloudwatch.Dimension `json:"dimensions"`
-			Statistic         string                  `json:"statistic"`
-			ExtendedStatistic string                  `json:"extendedStatistic"`
-			Period            int64                   `json:"period"`
-		} `json:"parameters"`
-	}{}
-	json.Unmarshal(req.Body, reqParam)
-
-	params := &cloudwatch.DescribeAlarmsForMetricInput{
-		Namespace:  aws.String(reqParam.Parameters.Namespace),
-		MetricName: aws.String(reqParam.Parameters.MetricName),
-		Period:     aws.Int64(reqParam.Parameters.Period),
-	}
-	if len(reqParam.Parameters.Dimensions) != 0 {
-		params.Dimensions = reqParam.Parameters.Dimensions
-	}
-	if reqParam.Parameters.Statistic != "" {
-		params.Statistic = aws.String(reqParam.Parameters.Statistic)
-	}
-	if reqParam.Parameters.ExtendedStatistic != "" {
-		params.ExtendedStatistic = aws.String(reqParam.Parameters.ExtendedStatistic)
-	}
-
-	resp, err := svc.DescribeAlarmsForMetric(params)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-
-	c.JSON(200, resp)
-}
-
-func handleDescribeAlarmHistory(req *cwRequest, c *middleware.Context) {
-	cfg, err := getAwsConfig(req)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-	svc := cloudwatch.New(sess, cfg)
-
-	reqParam := &struct {
-		Parameters struct {
-			AlarmName       string `json:"alarmName"`
-			HistoryItemType string `json:"historyItemType"`
-			StartDate       int64  `json:"startDate"`
-			EndDate         int64  `json:"endDate"`
-		} `json:"parameters"`
-	}{}
-	json.Unmarshal(req.Body, reqParam)
-
-	params := &cloudwatch.DescribeAlarmHistoryInput{
-		AlarmName: aws.String(reqParam.Parameters.AlarmName),
-		StartDate: aws.Time(time.Unix(reqParam.Parameters.StartDate, 0)),
-		EndDate:   aws.Time(time.Unix(reqParam.Parameters.EndDate, 0)),
-	}
-	if reqParam.Parameters.HistoryItemType != "" {
-		params.HistoryItemType = aws.String(reqParam.Parameters.HistoryItemType)
-	}
-
-	resp, err := svc.DescribeAlarmHistory(params)
-	if err != nil {
-		c.JsonApiErr(500, "Unable to call AWS API", err)
-		return
-	}
-
-	c.JSON(200, resp)
-}
-
-func HandleRequest(c *middleware.Context, ds *m.DataSource) {
-	var req cwRequest
-	req.Body, _ = ioutil.ReadAll(c.Req.Request.Body)
-	req.DataSource = ds
-	json.Unmarshal(req.Body, &req)
-
-	if handler, found := actionHandlers[req.Action]; !found {
-		c.JsonApiErr(500, "Unexpected AWS Action", errors.New(req.Action))
-		return
-	} else {
-		handler(&req, c)
-	}
 }
