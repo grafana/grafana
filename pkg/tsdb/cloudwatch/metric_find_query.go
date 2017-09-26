@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -14,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -184,6 +186,9 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 		break
 	case "ec2_instance_attribute":
 		data, err = e.handleGetEc2InstanceAttribute(ctx, parameters, queryContext)
+		break
+	case "tg_to_alb":
+		data, err = e.handleTgToAlb(ctx, parameters, queryContext)
 		break
 	}
 
@@ -437,6 +442,35 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 	return result, nil
 }
 
+func (e *CloudWatchExecutor) handleTgToAlb(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+
+	albDimension := regexp.MustCompile(":loadbalancer/(.*)")
+
+	region := parameters.Get("region").MustString()
+	namesRaw := parameters.Get("names").MustArray()
+
+	var names []*string
+	for _, name := range namesRaw {
+		names = append(names, aws.String(name.(string)))
+	}
+	tgs, err := e.elbv2DescribeTargetGroups(region, names)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]suggestData, 0)
+	for _, tg := range tgs.TargetGroups {
+		for _, alb := range tg.LoadBalancerArns {
+			m := albDimension.FindStringSubmatch(*alb)
+			if len(m) == 2 {
+				result = append(result, suggestData{Text: m[1], Value: m[1]})
+			}
+		}
+	}
+
+	return result, nil
+}
+
 func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string, dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
 	svc, err := e.getClient(region)
 	if err != nil {
@@ -497,6 +531,31 @@ func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.
 	}
 
 	return &resp, nil
+}
+
+func (e *CloudWatchExecutor) elbv2DescribeTargetGroups(region string, names []*string) (*elbv2.DescribeTargetGroupsOutput, error) {
+	dsInfo := e.getDsInfo(region)
+	cfg, err := e.getAwsConfig(dsInfo)
+	if err != nil {
+		return nil, errors.New("Failed to call elbv2:DescribeTargetGroups")
+	}
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		return nil, errors.New("Failed to call elbv2:DescribeTargetGroups")
+	}
+	svc := elbv2.New(sess, cfg)
+
+	params := &elbv2.DescribeTargetGroupsInput{}
+	if len(names) > 0 {
+		params.Names = names
+	}
+
+	resp, err := svc.DescribeTargetGroups(params)
+	if err != nil {
+		return nil, errors.New("Failed to call elbv2:DescribeTargetGroups")
+	}
+
+	return resp, nil
 }
 
 func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
