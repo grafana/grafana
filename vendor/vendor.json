@@ -347,6 +347,14 @@
 			"versionExact": "v1.10.18"
 		},
 		{
+			"checksumSHA1": "P0SzxhcZ8vFMDys3qIWQW7MhD8k=",
+			"path": "github.com/aws/aws-sdk-go/service/elbv2",
+			"revision": "5e436e55ac5eddc739f26a2a209b3f4248ee8e0e",
+			"revisionTime": "2017-07-27T22:05:08Z",
+			"version": "v1.10.18",
+			"versionExact": "v1.10.18"
+		},
+		{
 			"checksumSHA1": "2ow2XQ9RCOgOwyJKHt7bibwWv8M=",
 			"path": "github.com/aws/aws-sdk-go/service/s3",
 			"revision": "5e436e55ac5eddc739f26a2a209b3f4248ee8e0e",
