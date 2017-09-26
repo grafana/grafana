@@ -142,34 +142,34 @@ export class DataProcessor {
     let fields = [];
     var firstItem = dataList[0];
     let fieldParts = [];
+
     function getPropertiesRecursive(obj) {
-        _.forEach(obj, (value, key) => {
-          if (_.isObject(value)) {
-            fieldParts.push(key);
-            getPropertiesRecursive(value);
-          } else {
-            if (!onlyNumbers || _.isNumber(value)) {
-              let field = fieldParts.concat(key).join('.');
-              fields.push(field);
-            }
+      _.forEach(obj, (value, key) => {
+        if (_.isObject(value)) {
+          fieldParts.push(key);
+          getPropertiesRecursive(value);
+        } else {
+          if (!onlyNumbers || _.isNumber(value)) {
+            let field = fieldParts.concat(key).join('.');
+            fields.push(field);
           }
-        });
-        fieldParts.pop();
+        }
+      });
+      fieldParts.pop();
     }
+
     if (firstItem.type === 'docs') {
       if (firstItem.datapoints.length === 0) {
         return [];
       }
       getPropertiesRecursive(firstItem.datapoints[0]);
-      return fields;
     }
+
+    return fields;
   }
 
   getXAxisValueOptions(options) {
     switch (this.panel.xaxis.mode) {
-      case 'time': {
-        return [];
-      }
       case 'series': {
         return [
           {text: 'Avg', value: 'avg'},
@@ -180,6 +180,8 @@ export class DataProcessor {
         ];
       }
     }
+
+    return [];
   }
 
   pluckDeep(obj: any, property: string) {

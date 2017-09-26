@@ -84,7 +84,7 @@ export class AlertTabCtrl {
     });
   }
 
-  getNotificationIcon(type) {
+  getNotificationIcon(type): string {
     switch (type) {
       case "email": return "fa fa-envelope";
       case "slack": return "fa fa-slack";
@@ -95,6 +95,7 @@ export class AlertTabCtrl {
       case "hipchat": return "fa fa-mail-forward";
       case "pushover": return "fa fa-mobile";
     }
+    return 'fa fa-bell';
   }
 
   getNotifications() {

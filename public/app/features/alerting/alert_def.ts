@@ -106,6 +106,8 @@ function getStateDisplayModel(state) {
       };
     }
   }
+
+  throw {message: 'Unknown alert state'};
 }
 
 function joinEvalMatches(matches, separator: string) {
