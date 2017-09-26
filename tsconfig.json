@@ -1,21 +1,26 @@
 {
     "compilerOptions": {
-        "sourceMap": true,
         "declaration": true,
         "outDir": "public_gen",
         "noImplicitAny": false,
         "target": "es5",
         "lib": ["es6", "dom"],
         "rootDir": "public/",
-        "module": "system",
+        "module": "es6",
         "jsx": "react",
+        "inlineSourceMap": false,
+        "sourceMap": true,
         "noEmitOnError": false,
         "emitDecoratorMetadata": false,
         "experimentalDecorators": false,
         "noImplicitReturns": true,
         "noImplicitThis": false,
         "noImplicitUseStrict":false,
-        "moduleResolution": "classic"
+        "moduleResolution": "node",
+        "baseUrl": "public",
+        "paths": {
+          "app": ["app"]
+        }
     },
     "include": [
         "public/app/**/*.ts",
@@ -23,7 +28,5 @@
         "public/test/**/*.ts"
     ],
     "exclude": [
-        "public/vendor/**/*",
-        "public/**/*.d.ts"
     ]
 }

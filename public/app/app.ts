@@ -1,7 +1,7 @@
 ///<reference path="headers/common.d.ts" />
 
 import 'bootstrap';
-import 'vendor/filesaver';
+import 'file-saver';
 import 'lodash-src';
 import 'angular-strap';
 import 'angular-route';
