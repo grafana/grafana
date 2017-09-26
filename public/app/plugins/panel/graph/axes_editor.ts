@@ -15,7 +15,7 @@ export class AxesEditorCtrl {
   constructor(private $scope, private $q) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-    $scope.ctrl = this;
+    this.$scope.ctrl = this;
 
     this.unitFormats = kbn.getUnitFormats();
 
@@ -59,10 +59,12 @@ export class AxesEditorCtrl {
     this.panelCtrl.render();
   }
 
-  xAxisOptionChanged()  {
-    if (!this.panel.xaxis.values || !this.panel.xaxis.values[0]){
-      this.panelCtrl.processor.setPanelDefaultsForNewXAxisMode();
-    }
+  xAxisModeChanged()  {
+    this.panelCtrl.processor.setPanelDefaultsForNewXAxisMode();
+    this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
+  }
+
+  xAxisValueChanged() {
     this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
   }
 

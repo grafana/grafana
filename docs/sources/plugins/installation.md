@@ -72,6 +72,11 @@ The Download URL from Grafana.com API is in this form:
 
 `https://grafana.com/api/plugins/<plugin id>/versions/<version number>/download`
 
+You can specify a local URL by using the `--pluginUrl` option.
+```
+grafana-cli --pluginUrl https://nexus.company.com/grafana/plugins/<plugin-id>-<plugin-version>.zip plugins install <plugin-id>
+```
+
 To manually install a Plugin via the Grafana.com API:
 
 1. Find the plugin you want to download, the plugin id can be found on the Installation Tab on the plugin's page on Grafana.com. In this example, the plugin id is `jdbranham-diagram-panel`:

@@ -120,6 +120,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         if (panelWidth === 0) {
           return true;
         }
+
+        return false;
       }
 
       function drawHook(plot) {
@@ -146,16 +148,12 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
 
         // add left axis labels
         if (panel.yaxes[0].label && panel.yaxes[0].show) {
-          var yaxisLabel = $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>")
-          .text(panel.yaxes[0].label)
-          .appendTo(elem);
+          $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>").text(panel.yaxes[0].label).appendTo(elem);
         }
 
         // add right axis labels
         if (panel.yaxes[1].label && panel.yaxes[1].show) {
-          var rightLabel = $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>")
-          .text(panel.yaxes[1].label)
-          .appendTo(elem);
+          $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>").text(panel.yaxes[1].label).appendTo(elem);
         }
 
         thresholdManager.draw(plot);
@@ -389,6 +387,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         if (legendSideLastValue !== null && panel.legend.rightSide !== legendSideLastValue) {
           return true;
         }
+        return false;
       }
 
       function addTimeAxis(options) {
@@ -617,12 +616,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         }
 
         return ticks;
-      }
-
-      function decimalPlaces(num) {
-        if (!num) { return 0; }
-
-        return (num.toString().split('.')[1] || []).length;
       }
 
       function configureAxisMode(axis, format) {

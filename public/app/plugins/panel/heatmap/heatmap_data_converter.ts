@@ -1,7 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import TimeSeries from 'app/core/time_series2';
 
 let VALUE_INDEX = 0;
 let TIME_INDEX = 1;
@@ -22,7 +21,7 @@ function elasticHistogramToHeatmap(seriesList) {
   for (let series of seriesList) {
     let bound = Number(series.alias);
     if (isNaN(bound)) {
-      return;
+      return heatmap;
     }
 
     for (let point of series.datapoints) {
@@ -385,36 +384,40 @@ function isHeatmapDataEqual(objA: any, objB: any): boolean {
   let is_eql = !emptyXOR(objA, objB);
 
   _.forEach(objA, (xBucket: XBucket, x) => {
-      if (objB[x]) {
+    if (objB[x]) {
       if (emptyXOR(xBucket.buckets, objB[x].buckets)) {
-      is_eql = false;
-      return false;
-      }
-
-      _.forEach(xBucket.buckets, (yBucket: YBucket, y) => {
-          if (objB[x].buckets && objB[x].buckets[y]) {
-          if (objB[x].buckets[y].values) {
-          is_eql = _.isEqual(_.sortBy(yBucket.values), _.sortBy(objB[x].buckets[y].values));
-          if (!is_eql) {
-          return false;
-          }
-          } else {
-          is_eql = false;
-          return false;
-          }
-          } else {
-          is_eql = false;
-          return false;
-          }
-          });
-
-      if (!is_eql) {
-        return false;
-      }
-      } else {
         is_eql = false;
         return false;
       }
+
+      _.forEach(xBucket.buckets, (yBucket: YBucket, y) => {
+        if (objB[x].buckets && objB[x].buckets[y]) {
+          if (objB[x].buckets[y].values) {
+            is_eql = _.isEqual(_.sortBy(yBucket.values), _.sortBy(objB[x].buckets[y].values));
+            if (!is_eql) {
+              return false;
+            } else {
+              return true;
+            }
+          } else {
+            is_eql = false;
+            return false;
+          }
+        } else {
+          is_eql = false;
+          return false;
+        }
+      });
+
+      if (!is_eql) {
+        return false;
+      } else {
+        return true;
+      }
+    } else {
+      is_eql = false;
+      return false;
+    }
   });
 
   return is_eql;
@@ -426,11 +429,11 @@ function emptyXOR(foo: any, bar: any): boolean {
 
 export {
   convertToHeatMap,
-    elasticHistogramToHeatmap,
-    convertToCards,
-    mergeZeroBuckets,
-    getMinLog,
-    getValueBucketBound,
-    isHeatmapDataEqual,
-    calculateBucketSize
+  elasticHistogramToHeatmap,
+  convertToCards,
+  mergeZeroBuckets,
+  getMinLog,
+  getValueBucketBound,
+  isHeatmapDataEqual,
+  calculateBucketSize
 };

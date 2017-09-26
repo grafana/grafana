@@ -9,6 +9,9 @@ import 'angular-sanitize';
 import 'angular-dragdrop';
 import 'angular-bindonce';
 import 'angular-ui';
+import 'react';
+import 'react-dom';
+import 'ngreact';
 
 import $ from 'jquery';
 import angular from 'angular';
@@ -84,6 +87,7 @@ export class GrafanaApp {
       'pasvaz.bindonce',
       'ui.bootstrap',
       'ui.bootstrap.tpls',
+      'react'
     ];
 
     var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];

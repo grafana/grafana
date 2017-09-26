@@ -13,14 +13,15 @@ weight = 1
 
 The main panel in Grafana is simply named Graph. It provides a very rich set of graphing options.
 
-<img src="/img/docs/v1/graph_overview.png" class="no-shadow">
+{{< docs-imagebox img="/img/docs/v45/graph_overview.png" class="docs-image--no-shadow" max-width= "900px" >}}
 
-Clicking the title for a panel exposes a menu.  The `edit` option opens additional configuration
-options for the panel.
+1. Clicking the title for a panel exposes a menu.  The `edit` option opens additional configuration options for the panel.
+2. Click to open color & axis selection.
+3. Click to only show this series. Shift/Ctrl + click to hide series.
 
 ## General
 
-![](/img/docs/v43/graph_general.png)
+{{< docs-imagebox img="/img/docs/v43/graph_general.png"  max-width= "900px" >}}
 
 The general tab allows customization of a panel's appearance and menu options.
 
@@ -50,15 +51,11 @@ populate the template variable to a desired value from the link.
 The metrics tab defines what series data and sources to render.  Each datasource provides different
 options.
 
-## Axes & Grid
+## Axes
 
-![](/img/docs/v43/graph_axes_grid_options.png)
+{{< docs-imagebox img="/img/docs/v43/graph_axes_grid_options.png"  max-width= "900px" >}}
 
-The Axes & Grid tab controls the display of axes, grids and legend.
-
-### Axes
-
-The ``Left Y`` and ``Right Y`` can be customized using:
+The Axes tab controls the display of axes, grids and legend.  The ``Left Y`` and ``Right Y`` can be customized using:
 
 - ``Unit`` - The display unit for the Y value
 - ``Grid Max`` - The maximum Y value. (default auto)
@@ -105,7 +102,7 @@ It is just the sum of all data points received by Grafana.
 
 ## Display styles
 
-![](/img/docs/v43/graph_display_styles.png)
+{{< docs-imagebox img="/img/docs/v43/graph_display_styles.png"  max-width= "900px" >}}
 
 Display styles control visual properties of the graph.
 
@@ -160,4 +157,6 @@ There is an option under Series overrides to draw lines as dashes. Set Dashes to
 
 ## Time Range
 
-![](/img/docs/v2/graph_time_range.png)
+The time range tab allows you to override the dashboard time range and specify a panel specific time. Either through a relative from now time option or through a timeshift.
+
+{{< docs-imagebox img="/img/docs/v45/graph-time-range.png"  max-width= "900px" >}}

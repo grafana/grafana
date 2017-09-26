@@ -95,9 +95,7 @@ function (_) {
 
   PrometheusMetricFindQuery.prototype.queryResultQuery = function(query) {
     var end = this.datasource.getPrometheusTime(this.range.to, true);
-    var url = '/api/v1/query?query=' + encodeURIComponent(query) + '&time=' + end;
-
-    return this.datasource._request('GET', url)
+    return this.datasource.performInstantQuery({ expr: query }, end)
     .then(function(result) {
       return _.map(result.data.data.result, function(metricData) {
         var text = metricData.metric.__name__ || '';

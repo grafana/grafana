@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
+import {describe, it, expect} from 'test/lib/common';
 import InfluxQueryBuilder from '../query_builder';
 
 describe('InfluxQueryBuilder', function() {

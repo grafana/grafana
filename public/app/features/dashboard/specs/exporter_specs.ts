@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
 import _ from 'lodash';
 import config from 'app/core/config';

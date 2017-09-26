@@ -55,7 +55,7 @@ export class SaveDashboardModalCtrl {
   dismiss: () => void;
 
   /** @ngInject */
-  constructor(private $scope, private dashboardSrv) {
+  constructor(private dashboardSrv) {
     this.message = '';
     this.max = 64;
   }

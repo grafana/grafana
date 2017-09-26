@@ -101,3 +101,7 @@ func (fcli *FakeCommandLine) RepoDirectory() string {
 func (fcli *FakeCommandLine) PluginDirectory() string {
 	return fcli.GlobalString("pluginsDir")
 }
+
+func (fcli *FakeCommandLine) PluginURL() string {
+	return fcli.GlobalString("pluginUrl")
+}

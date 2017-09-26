@@ -2,8 +2,6 @@
 
 import {liveSrv} from 'app/core/core';
 
-import {Observable} from 'vendor/npm/rxjs/Observable';
-
 class DataObservable {
   target: any;
 

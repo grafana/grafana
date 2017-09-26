@@ -1,7 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import config from 'app/core/config';
-import angular from 'angular';
 import moment from 'moment';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
@@ -116,16 +114,14 @@ class TimeSrv {
 
   setAutoRefresh(interval) {
     this.dashboard.refresh = interval;
+    this.cancelNextRefresh();
     if (interval) {
       var intervalMs = kbn.interval_to_ms(interval);
 
-      this.$timeout(() => {
+      this.refreshTimer = this.timer.register(this.$timeout(() => {
         this.startNextRefreshTimer(intervalMs);
         this.refreshDashboard();
-      }, intervalMs);
-
-    } else {
-      this.cancelNextRefresh();
+      }, intervalMs));
     }
 
     // update url

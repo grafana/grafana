@@ -3,7 +3,7 @@
 import _ from 'lodash';
 
 import config from 'app/core/config';
-import {coreModule, appEvents} from 'app/core/core';
+import {coreModule} from 'app/core/core';
 
 import './options';
 import './add_panel';
@@ -186,7 +186,6 @@ coreModule.directive('panelWidth', function($rootScope) {
 coreModule.directive('panelDropZone', function($timeout) {
   return function(scope, element) {
     var row = scope.ctrl.row;
-    var dashboard = scope.ctrl.dashboard;
     var indrag = false;
     var textEl = element.find('.panel-drop-zone-text');
 

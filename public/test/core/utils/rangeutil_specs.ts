@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
+import {describe, it, expect} from 'test/lib/common';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import _ from 'lodash';

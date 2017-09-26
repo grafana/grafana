@@ -266,7 +266,7 @@ func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return
 	}
-	metrics.M_Aws_CloudWatch_GetMetricStatistics.Inc(1)
+	metrics.M_Aws_CloudWatch_GetMetricStatistics.Inc()
 
 	c.JSON(200, resp)
 }
@@ -302,7 +302,7 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 	var resp cloudwatch.ListMetricsOutput
 	err = svc.ListMetricsPages(params,
 		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
-			metrics.M_Aws_CloudWatch_ListMetrics.Inc(1)
+			metrics.M_Aws_CloudWatch_ListMetrics.Inc()
 			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
 			for _, metric := range metrics {
 				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))

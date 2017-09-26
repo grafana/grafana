@@ -60,7 +60,7 @@ export function getValuePreview (object: Object, value: string): string {
   if (type === 'string') {
     value = '"' + escapeString(value) + '"';
   }
-  if (type === 'function'){
+  if (type === 'function') {
 
     // Remove content of the function
     return object.toString()

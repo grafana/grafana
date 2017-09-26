@@ -15,10 +15,22 @@
       <div class="page-header">
         <h1>Server side error :(</h1>
       </div>
-      <h4>[[.Title]]</h4>
-      [[if .ErrorMsg]]
-        <pre>[[.ErrorMsg]]</pre>
-      [[end]]
+      <div class="panel-container" style="padding: 2rem">
+        <div class="alert">
+          <div class="alert-icon"><i class="fa fa-exclamation-triangle"></i></div>
+					<div class="alert-body">
+						<div class="alert-title">[[.Title]]</div>
+						<div class="alert-text">
+              [[if .ErrorMsg]]
+                <pre>[[.ErrorMsg]]</pre>
+              [[end]]
+            </div>
+					</div>
+        </div>
+        <div style="padding: 2rem 0 0">
+          <p>Check the Grafana server logs for the detailed error message.</p>
+        </div>
+      </div>
     </div>
   </body>
 </html>

@@ -23,6 +23,7 @@ module.exports = function(config, grunt) {
 
     gaze([
       config.srcDir + '/app/**/*',
+      config.srcDir + '/test/**/*',
       config.srcDir + '/sass/**/*',
     ], function(err, watcher) {
 

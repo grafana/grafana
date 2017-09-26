@@ -126,7 +126,7 @@ func init() {
 		"AWS/NATGateway":       {"NatGatewayId"},
 		"AWS/OpsWorks":         {"StackId", "LayerId", "InstanceId"},
 		"AWS/Redshift":         {"NodeID", "ClusterIdentifier"},
-		"AWS/RDS":              {"DBInstanceIdentifier", "DBClusterIdentifier", "DatabaseClass", "EngineName", "Role"},
+		"AWS/RDS":              {"DBInstanceIdentifier", "DBClusterIdentifier", "DbClusterIdentifier", "DatabaseClass", "EngineName", "Role"},
 		"AWS/Route53":          {"HealthCheckId", "Region"},
 		"AWS/S3":               {"BucketName", "StorageType", "FilterId"},
 		"AWS/SES":              {},
@@ -275,7 +275,7 @@ func getAllMetrics(cwData *datasourceInfo) (cloudwatch.ListMetricsOutput, error)
 	var resp cloudwatch.ListMetricsOutput
 	err = svc.ListMetricsPages(params,
 		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
-			metrics.M_Aws_CloudWatch_ListMetrics.Inc(1)
+			metrics.M_Aws_CloudWatch_ListMetrics.Inc()
 			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
 			for _, metric := range metrics {
 				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))

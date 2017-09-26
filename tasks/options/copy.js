@@ -19,7 +19,14 @@ module.exports = function(config) {
       cwd: './node_modules',
       expand: true,
       src: [
-        'ace-builds/src-noconflict/**/*',
+        'angular/angular.js',
+        'angular-mocks/angular-mocks.js',
+        'angular-route/angular-route.js',
+        'angular-sanitize/angular-sanitize.js',
+        'jquery/dist/jquery.js',
+        'lodash/lodash.js',
+        'ace-builds/src-noconflict/ace.js',
+        'ace-builds/src-noconflict/ext-language_tools.js',
         'eventemitter3/*.js',
         'systemjs/dist/*.js',
         'es6-promise/**/*',
@@ -35,6 +42,12 @@ module.exports = function(config) {
         'remarkable/dist/*',
         'virtual-scroll/**/*',
         'mousetrap/**/*',
+        'react/dist/*.js',
+        'react-dom/dist/*.js',
+        'ngreact/ngReact.js',
+        'angular-bindonce/bindonce.js',
+        'angular-native-dragdrop/draganddrop.js',
+        'clipboard/dist/clipboard.js',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }

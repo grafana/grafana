@@ -1,9 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
-import config from 'app/core/config';
-import _ from 'lodash';
-import $ from 'jquery';
 import coreModule from '../../core/core_module';
 
 export class PlaylistSearchCtrl {
@@ -13,7 +9,7 @@ export class PlaylistSearchCtrl {
   searchStarted: any;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private $timeout, private backendSrv, private contextSrv) {
+  constructor($timeout, private backendSrv) {
     this.query = {query: '', tag: [], starred: false, limit: 30};
 
     $timeout(() => {
