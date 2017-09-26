@@ -335,14 +335,14 @@ func (e *CloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 	namespace := parameters.Get("namespace").MustString()
 	metricName := parameters.Get("metricName").MustString()
 	dimensionKey := parameters.Get("dimensionKey").MustString()
-	dimensionsJson := parameters.Get("dimensionKey").MustMap()
+	dimensionsJson := parameters.Get("dimensions").MustMap()
 
 	var dimensions []*cloudwatch.DimensionFilter
-	for _, d := range dimensionsJson {
-		if dd, ok := d.(map[string]string); ok {
+	for k, v := range dimensionsJson {
+		if vv, ok := v.(string); ok {
 			dimensions = append(dimensions, &cloudwatch.DimensionFilter{
-				Name:  aws.String(dd["Name"]),
-				Value: aws.String(dd["Value"]),
+				Name:  aws.String(k),
+				Value: aws.String(vv),
 			})
 		}
 	}

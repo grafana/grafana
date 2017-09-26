@@ -40,11 +40,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
         item.region = templateSrv.replace(item.region, options.scopedVars);
         item.namespace = templateSrv.replace(item.namespace, options.scopedVars);
         item.metricName = templateSrv.replace(item.metricName, options.scopedVars);
-        var dimensions = {};
-        _.each(item.dimensions, function (value, key) {
-          dimensions[templateSrv.replace(key, options.scopedVars)] = templateSrv.replace(value, options.scopedVars);
-        });
-        item.dimensions = dimensions;
+        item.dimensions = self.convertDimensionFormat(item.dimensions, options.scopeVars);
         item.period = self.getPeriod(item, options);
 
         return _.extend({
@@ -266,16 +262,12 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
       var defaultPeriod = annotation.prefixMatching ? '' : '300';
       var period = annotation.period || defaultPeriod;
       period = parseInt(period, 10);
-      var dimensions = {};
-      _.each(annotation.dimensions, function (value, key) {
-        dimensions[templateSrv.replace(key, options.scopedVars)] = templateSrv.replace(value, options.scopedVars);
-      });
       var parameters = {
         prefixMatching: annotation.prefixMatching,
         region: templateSrv.replace(annotation.region),
         namespace: templateSrv.replace(annotation.namespace),
         metricName: templateSrv.replace(annotation.metricName),
-        dimensions: dimensions,
+        dimensions: this.convertDimensionFormat(annotation.dimensions, {}),
         statistics: _.map(annotation.statistics, function (s) { return templateSrv.replace(s); }),
         period: period,
         actionPrefix: annotation.actionPrefix || '',
@@ -385,12 +377,11 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
     };
 
     this.convertDimensionFormat = function(dimensions, scopedVars) {
-      return _.map(dimensions, function(value, key) {
-        return {
-          Name: templateSrv.replace(key, scopedVars),
-          Value: templateSrv.replace(value, scopedVars)
-        };
+      var convertedDimensions = {};
+      _.each(dimensions, function (value, key) {
+        convertedDimensions[templateSrv.replace(key, scopedVars)] = templateSrv.replace(value, scopedVars);
       });
+      return convertedDimensions;
     };
 
   }
