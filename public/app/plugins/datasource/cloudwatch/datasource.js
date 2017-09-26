@@ -60,8 +60,8 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
       }
 
       var request = {
-        from: options.rangeRaw.from,
-        to: options.rangeRaw.to,
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
         queries: queries
       };
 
@@ -138,8 +138,8 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
     this.doMetricQueryRequest = function (subtype, parameters) {
       var range = timeSrv.timeRange();
       return backendSrv.post('/api/tsdb/query', {
-        from: range.from,
-        to: range.to,
+        from: range.from.valueOf().toString(),
+        to: range.to.valueOf().toString(),
         queries: [
           _.extend({
             refId: 'metricFindQuery',
@@ -275,8 +275,8 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
       };
 
       return backendSrv.post('/api/tsdb/query', {
-        from: options.range.from,
-        to: options.range.to,
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
         queries: [
           _.extend({
             refId: 'annotationQuery',
