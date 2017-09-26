@@ -110,9 +110,10 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 	annotations := make([]map[string]string, 0)
 	for _, alarmName := range alarmNames {
 		params := &cloudwatch.DescribeAlarmHistoryInput{
-			AlarmName: alarmName,
-			StartDate: aws.Time(startTime),
-			EndDate:   aws.Time(endTime),
+			AlarmName:  alarmName,
+			StartDate:  aws.Time(startTime),
+			EndDate:    aws.Time(endTime),
+			MaxRecords: aws.Int64(100),
 		}
 		resp, err := svc.DescribeAlarmHistory(params)
 		if err != nil {

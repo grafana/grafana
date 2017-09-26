@@ -392,40 +392,42 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 
 	result := make([]suggestData, 0)
 	dupCheck := make(map[string]bool)
-	for _, instance := range instances.Reservations[0].Instances {
-		tags := make(map[string]string)
-		for _, tag := range instance.Tags {
-			tags[*tag.Key] = *tag.Value
-		}
+	for _, reservation := range instances.Reservations {
+		for _, instance := range reservation.Instances {
+			tags := make(map[string]string)
+			for _, tag := range instance.Tags {
+				tags[*tag.Key] = *tag.Value
+			}
 
-		var data string
-		if strings.Index(attributeName, "Tags.") == 0 {
-			tagName := attributeName[5:]
-			data = tags[tagName]
-		} else {
-			attributePath := strings.Split(attributeName, ".")
-			v := reflect.ValueOf(instance)
-			for _, key := range attributePath {
-				if v.Kind() == reflect.Ptr {
-					v = v.Elem()
+			var data string
+			if strings.Index(attributeName, "Tags.") == 0 {
+				tagName := attributeName[5:]
+				data = tags[tagName]
+			} else {
+				attributePath := strings.Split(attributeName, ".")
+				v := reflect.ValueOf(instance)
+				for _, key := range attributePath {
+					if v.Kind() == reflect.Ptr {
+						v = v.Elem()
+					}
+					if v.Kind() != reflect.Struct {
+						return nil, errors.New("invalid attribute path")
+					}
+					v = v.FieldByName(key)
 				}
-				if v.Kind() != reflect.Struct {
+				if attr, ok := v.Interface().(*string); ok {
+					data = *attr
+				} else {
 					return nil, errors.New("invalid attribute path")
 				}
-				v = v.FieldByName(key)
 			}
-			if attr, ok := v.Interface().(*string); ok {
-				data = *attr
-			} else {
-				return nil, errors.New("invalid attribute path")
-			}
-		}
 
-		if _, exists := dupCheck[data]; exists {
-			continue
+			if _, exists := dupCheck[data]; exists {
+				continue
+			}
+			dupCheck[data] = true
+			result = append(result, suggestData{Text: data, Value: data})
 		}
-		dupCheck[data] = true
-		result = append(result, suggestData{Text: data, Value: data})
 	}
 
 	sort.Slice(result, func(i, j int) bool {
