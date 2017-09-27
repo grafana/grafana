@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -157,6 +158,10 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, parameters *simpl
 	}
 	if len(query.ExtendedStatistics) > 0 {
 		params.ExtendedStatistics = query.ExtendedStatistics
+	}
+
+	if setting.Env == setting.DEV {
+		plog.Debug("CloudWatch query", "raw query", params)
 	}
 
 	resp, err := client.GetMetricStatisticsWithContext(ctx, params, request.WithResponseReadTimeout(10*time.Second))
