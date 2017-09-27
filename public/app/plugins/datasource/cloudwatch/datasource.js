@@ -264,8 +264,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
       var tgToAlbQuery = query.match(/^tg_to_alb\(([^,]+?),\s*(.*)\s*\)/);
       if (tgToAlbQuery) {
         region = tgToAlbQuery[1];
-        var rawNames = tgToAlbQuery[2];
-        var names = rawNames ? rawNames.split(/\s*,\s*/) : [];
+        var names = tgToAlbQuery[2] ? tgToAlbQuery[2].split(/\s*,\s*/) : [];
         return this.getTgToAlb(region, names);
       }
 
@@ -408,7 +407,6 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
       });
       return convertedDimensions;
     };
-
   }
 
   return CloudWatchDatasource;
