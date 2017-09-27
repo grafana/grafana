@@ -651,12 +651,16 @@ These options control how images should be made public so they can be shared on 
 You can choose between (s3, webdav, gcs). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
+### bucket
+Bucket name for S3. e.g. grafana.snapshot
+### region
+Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc
 
 ### bucket_url
+(for backward compatibility, only works when no bucket or region are configured)
 Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-east-1', e.g.
 - http://grafana.s3.amazonaws.com/
 - https://grafana.s3-ap-southeast-2.amazonaws.com/
-- https://grafana.s3-cn-north-1.amazonaws.com.cn
 
 ### access_key
 Access key. e.g. AAAAAAAAAAAAAAAAAAAA
