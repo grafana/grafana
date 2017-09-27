@@ -269,8 +269,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
         namespace: templateSrv.replace(annotation.namespace),
         metricName: templateSrv.replace(annotation.metricName),
         dimensions: this.convertDimensionFormat(annotation.dimensions, {}),
-        statistics: _.filter(statistics, function (s) { return _.includes(self.standardStatistics, s); }),
-        extendedStatistics: _.filter(statistics, function (s) { return !_.includes(self.standardStatistics, s); }),
+        statistics: statistics,
         period: period,
         actionPrefix: annotation.actionPrefix || '',
         alarmNamePrefix: annotation.alarmNamePrefix || ''

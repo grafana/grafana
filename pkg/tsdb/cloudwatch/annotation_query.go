@@ -24,8 +24,10 @@ func (e *CloudWatchExecutor) executeAnnotationQuery(ctx context.Context, queryCo
 	namespace := parameters.Get("namespace").MustString("")
 	metricName := parameters.Get("metricName").MustString("")
 	dimensions := parameters.Get("dimensions").MustMap()
-	statistics := parameters.Get("statistics").MustStringArray()
-	extendedStatistics := parameters.Get("extendedStatistics").MustStringArray()
+	statistics, extendedStatistics, err := parseStatistics(parameters)
+	if err != nil {
+		return nil, err
+	}
 	period := int64(parameters.Get("period").MustInt(0))
 	if period == 0 && !usePrefixMatch {
 		period = 300

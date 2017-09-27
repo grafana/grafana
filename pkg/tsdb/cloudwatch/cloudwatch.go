@@ -194,16 +194,16 @@ func parseDimensions(model *simplejson.Json) ([]*cloudwatch.Dimension, error) {
 	return result, nil
 }
 
-func parseStatistics(model *simplejson.Json) ([]*string, []*string, error) {
-	var statistics []*string
-	var extendedStatistics []*string
+func parseStatistics(model *simplejson.Json) ([]string, []string, error) {
+	var statistics []string
+	var extendedStatistics []string
 
 	for _, s := range model.Get("statistics").MustArray() {
 		if ss, ok := s.(string); ok {
 			if _, isStandard := standardStatistics[ss]; isStandard {
-				statistics = append(statistics, &ss)
+				statistics = append(statistics, ss)
 			} else {
-				extendedStatistics = append(extendedStatistics, &ss)
+				extendedStatistics = append(extendedStatistics, ss)
 			}
 		} else {
 			return nil, nil, errors.New("failed to parse")
@@ -269,8 +269,8 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 		Namespace:          namespace,
 		MetricName:         metricName,
 		Dimensions:         dimensions,
-		Statistics:         statistics,
-		ExtendedStatistics: extendedStatistics,
+		Statistics:         aws.StringSlice(statistics),
+		ExtendedStatistics: aws.StringSlice(extendedStatistics),
 		Period:             period,
 		Alias:              alias,
 	}, nil
