@@ -284,6 +284,7 @@ describe('PrometheusDatasource', function() {
 
     it('should be min interval when greater than auto interval', function() {
       var query = {
+        // 6 hour range
         range: { from: moment(1443438674760), to: moment(1443460274760) },
         targets: [{
           expr: 'test',
@@ -299,6 +300,7 @@ describe('PrometheusDatasource', function() {
     });
     it('should be auto interval when greater than min interval', function() {
       var query = {
+        // 6 hour range
         range: { from: moment(1443438674760), to: moment(1443460274760) },
         targets: [{
           expr: 'test',
@@ -314,6 +316,7 @@ describe('PrometheusDatasource', function() {
     });
     it('should result in querying fewer than 11000 data points', function() {
       var query = {
+        // 6 hour range
         range: { from: moment(1443438674760), to: moment(1443460274760) },
         targets: [{ expr: 'test' }],
         interval: '1s'
@@ -324,8 +327,9 @@ describe('PrometheusDatasource', function() {
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
     });
-    it('should apply intervalFactor to min interval when greater', function() {
+    it('should not apply min interval when interval * intervalFactor greater', function() {
       var query = {
+        // 6 hour range
         range: { from: moment(1443438674760), to: moment(1443460274760) },
         targets: [{
           expr: 'test',
@@ -335,13 +339,31 @@ describe('PrometheusDatasource', function() {
         interval: '5s'
       };
       var urlExpected = 'proxied/api/v1/query_range?query=test' +
-                        '&start=1443438675&end=1443460275&step=100';
+                        '&start=1443438675&end=1443460275&step=50';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+    });
+    it('should apply min interval when interval * intervalFactor smaller', function() {
+      var query = {
+        // 6 hour range
+        range: { from: moment(1443438674760), to: moment(1443460274760) },
+        targets: [{
+          expr: 'test',
+          interval: '15s',
+          intervalFactor: 2
+        }],
+        interval: '5s'
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=test' +
+                        '&start=1443438675&end=1443460275&step=15';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
     });
     it('should apply intervalFactor to auto interval when greater', function() {
       var query = {
+        // 6 hour range
         range: { from: moment(1443438674760), to: moment(1443460274760) },
         targets: [{
           expr: 'test',
@@ -404,6 +426,7 @@ describe('PrometheusDatasource', function() {
 
     it('should be unchanged when auto interval is greater than min interval', function() {
       var query = {
+        // 6 hour range
         range: { from: moment(1443438674760), to: moment(1443460274760) },
         targets: [{
           expr: 'rate(test[$__interval])',
@@ -429,6 +452,7 @@ describe('PrometheusDatasource', function() {
     });
     it('should be min interval when it is greater than auto interval', function() {
       var query = {
+        // 6 hour range
         range: { from: moment(1443438674760), to: moment(1443460274760) },
         targets: [{
           expr: 'rate(test[$__interval])',
@@ -452,8 +476,9 @@ describe('PrometheusDatasource', function() {
       expect(query.scopedVars.__interval_ms.text).to.be(5 * 1000);
       expect(query.scopedVars.__interval_ms.value).to.be(5 * 1000);
     });
-    it('should ignore intervalFactor', function() {
+    it('should account for intervalFactor', function() {
       var query = {
+        // 6 hour range
         range: { from: moment(1443438674760), to: moment(1443460274760) },
         targets: [{
           expr: 'rate(test[$__interval])',
@@ -467,7 +492,7 @@ describe('PrometheusDatasource', function() {
         }
       };
       var urlExpected = 'proxied/api/v1/query_range?query=' +
-                        encodeURIComponent('rate(test[10s])') +
+                        encodeURIComponent('rate(test[100s])') +
                         '&start=1443438675&end=1443460275&step=100';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
@@ -478,8 +503,9 @@ describe('PrometheusDatasource', function() {
       expect(query.scopedVars.__interval_ms.text).to.be(10 * 1000);
       expect(query.scopedVars.__interval_ms.value).to.be(10 * 1000);
     });
-    it('should ignore intervalFactor', function() {
+    it('should be interval * intervalFactor when greater than min interval', function() {
       var query = {
+        // 6 hour range
         range: { from: moment(1443438674760), to: moment(1443460274760) },
         targets: [{
           expr: 'rate(test[$__interval])',
@@ -493,8 +519,35 @@ describe('PrometheusDatasource', function() {
         }
       };
       var urlExpected = 'proxied/api/v1/query_range?query=' +
-                        encodeURIComponent('rate(test[10s])') +
-                        '&start=1443438675&end=1443460275&step=100';
+                        encodeURIComponent('rate(test[50s])') +
+                        '&start=1443438675&end=1443460275&step=50';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+
+      expect(query.scopedVars.__interval.text).to.be("5s");
+      expect(query.scopedVars.__interval.value).to.be("5s");
+      expect(query.scopedVars.__interval_ms.text).to.be(5 * 1000);
+      expect(query.scopedVars.__interval_ms.value).to.be(5 * 1000);
+    });
+    it('should be min interval when greater than interval * intervalFactor', function() {
+      var query = {
+        // 6 hour range
+        range: { from: moment(1443438674760), to: moment(1443460274760) },
+        targets: [{
+          expr: 'rate(test[$__interval])',
+          interval: '15s',
+          intervalFactor: 2
+        }],
+        interval: '5s',
+        scopedVars: {
+          "__interval":     {text: "5s",  value: "5s"},
+          "__interval_ms":  {text: 5 * 1000, value: 5 * 1000},
+        }
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=' +
+                        encodeURIComponent('rate(test[15s])') +
+                        '&start=1443438675&end=1443460275&step=15';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -519,7 +572,7 @@ describe('PrometheusDatasource', function() {
         }
       };
       var urlExpected = 'proxied/api/v1/query_range?query=' +
-                        encodeURIComponent('rate(test[6s])') +
+                        encodeURIComponent('rate(test[60s])') +
                         '&start=1443438675&end=1444043475&step=60';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);

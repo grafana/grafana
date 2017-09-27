@@ -104,7 +104,7 @@ export class PrometheusDatasource {
       var minInterval = this.intervalSeconds(this.templateSrv.replace(target.interval, options.scopedVars) || options.interval);
       var intervalFactor = target.intervalFactor || 1;
       var range = Math.ceil(end - start);
-      // Adjust the interval to take into account any specified minimum plus Prometheus limitations
+      // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
       var adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
 
       var scopedVars = options.scopedVars;
@@ -116,7 +116,7 @@ export class PrometheusDatasource {
           "__interval_ms":  {text: interval * 1000, value: interval * 1000},
         });
       }
-      target.step = query.step = interval * intervalFactor;
+      target.step = query.step = interval;
 
       // Only replace vars in expression after having (possibly) updated interval vars
       query.expr = this.templateSrv.replace(target.expr, scopedVars, self.interpolateQueryExpr);
@@ -163,12 +163,12 @@ export class PrometheusDatasource {
   }
 
   adjustInterval(interval, minInterval, range, intervalFactor) {
-    interval = Math.max(interval, minInterval);
     // Prometheus will drop queries that might return more than 11000 data points.
     // Calibrate interval if it is too small.
     if (interval !== 0 && range / intervalFactor / interval > 11000) {
       interval = Math.ceil(range / intervalFactor / 11000);
     }
+    interval = Math.max(interval * intervalFactor, minInterval);
     return interval;
   }
 
