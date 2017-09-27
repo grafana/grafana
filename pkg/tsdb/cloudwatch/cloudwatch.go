@@ -94,7 +94,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 	currentlyExecuting := 0
 	for i, model := range queryContext.Queries {
 		queryType := model.Model.Get("type").MustString()
-		if queryType != "timeSeriesQuery" {
+		if queryType != "timeSeriesQuery" && queryType != "" {
 			continue
 		}
 		currentlyExecuting++
