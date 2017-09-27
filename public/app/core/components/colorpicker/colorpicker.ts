@@ -7,6 +7,7 @@ import $ from 'jquery';
 import Drop from 'tether-drop';
 import coreModule from 'app/core/core_module';
 import 'spectrum';
+import {sortedColors} from 'app/core/utils/colors';
 
 // Spectrum picker uses TinyColor and loads it as a global variable, so we can use it here also
 declare var tinycolor;
@@ -52,7 +53,7 @@ export class ColorPickerPopoverCtrl {
   /** @ngInject */
   constructor(private $scope, private $rootScope) {
     this.$scope = $scope;
-    this.colors = sortColors($rootScope.colors);
+    this.colors = sortedColors;
     this.color = $scope.color;
   }
 
@@ -229,22 +230,3 @@ export function colorPicker() {
 }
 
 coreModule.directive('colorPicker', colorPicker);
-
-function sortColors(rgbColors) {
-  const PALETTE_ROWS = 4;
-  const PALETTE_COLUMNS = 14;
-
-  let hslColors = _.map(rgbColors, rgbColor => {
-    return tinycolor(rgbColor).toHsl();
-  });
-
-  let sortedHSLColors = _.sortBy(hslColors, ['h']);
-  sortedHSLColors = _.chunk(sortedHSLColors, PALETTE_ROWS);
-  sortedHSLColors = _.map(sortedHSLColors, chunk => {
-    return _.sortBy(chunk, 'l');
-  });
-  sortedHSLColors = _.flattenDeep(_.zip(...sortedHSLColors));
-
-  let sortedRGBColors = _.map(sortedHSLColors, c => tinycolor(c).toHexString());
-  return sortedRGBColors;
-}
