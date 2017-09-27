@@ -428,4 +428,28 @@ describe('CloudWatchDatasource', function() {
     }
   });
 
+  describeMetricFindQuery('tg_to_alb(us-east-1, my-tg-A, my-tg-B)', scenario => {
+    scenario.setup(() => {
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [
+              { rows: [
+                ['app/my-alb-1/15814e65c716d4d4', 'app/my-alb-1/15814e65c716d4d4'],
+                ['app/my-alb-2/15814e65c716d666', 'app/my-alb-2/15814e65c716d666']
+              ]}
+            ]
+          }
+        }
+      };
+    });
+
+    it('should call and return result', () => {
+      expect(scenario.result[0].text).to.be('app/my-alb-1/15814e65c716d4d4');
+      expect(scenario.result[1].text).to.be('app/my-alb-2/15814e65c716d666');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('tg_to_alb');
+    });
+  });
+
 });

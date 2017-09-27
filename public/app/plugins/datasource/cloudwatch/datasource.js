@@ -200,6 +200,13 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
       });
     };
 
+    this.getTgToAlb = function(region, names) {
+      return this.doMetricQueryRequest('tg_to_alb', {
+        region: templateSrv.replace(region),
+        names: _.map(names, function(n) { return templateSrv.replace(n); })
+      });
+    };
+
     this.metricFindQuery = function(query) {
       var region;
       var namespace;
@@ -252,6 +259,14 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
         var targetAttributeName = ec2InstanceAttributeQuery[2];
         var filterJson = JSON.parse(templateSrv.replace(ec2InstanceAttributeQuery[3]));
         return this.getEc2InstanceAttribute(region, targetAttributeName, filterJson);
+      }
+
+      var tgToAlbQuery = query.match(/^tg_to_alb\(([^,]+?),\s*(.*)\s*\)/);
+      if (tgToAlbQuery) {
+        region = tgToAlbQuery[1];
+        var rawNames = tgToAlbQuery[2];
+        var names = rawNames ? rawNames.split(/\s*,\s*/) : [];
+        return this.getTgToAlb(region, names);
       }
 
       return $q.when([]);
