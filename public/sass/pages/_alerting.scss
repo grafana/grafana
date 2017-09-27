@@ -30,13 +30,57 @@
 
 // Alert List
 
-.alert-list-item-state {
+.alert-list {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.alert-list-icon {
   font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   .icon-gf, .fa {
-    font-size: 120%;
+    font-size: 200%;
     position: relative;
     top: 2px;
   }
+}
+
+.alert-list-body {
+  display: flex;
+}
+
+.alert-list-main {
+  padding: 0 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.alert-list-title {
+  font-size: $font-size-base;
+  margin: 0;
+  font-weight: 600;
+}
+
+.alert-list-state {
+  font-weight: bold;
+}
+
+.alert-list-text {
+  font-size: $font-size-sm;
+  margin: 0;
+  line-height: 1.5rem;
+}
+
+.alert-list-footer {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-end;
+  color: $text-color-weak;
 }
 
 .panel-has-alert {

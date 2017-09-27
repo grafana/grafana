@@ -12,7 +12,7 @@
 			<li ng-class="{active: ctrl.subTabIndex === 2}">
 				<a ng-click="ctrl.changeTabIndex(2)">State history</a>
 			</li>
-      <li>
+      			<li>
 				<a ng-click="ctrl.delete()">Delete</a>
 			</li>
 		</ul>
@@ -41,10 +41,10 @@
 						<metric-segment-model css-class="query-keyword width-5" ng-if="$index" property="conditionModel.operator.type" options="ctrl.evalOperators" custom="false"></metric-segment-model>
 						<span class="gf-form-label query-keyword width-5" ng-if="$index===0">WHEN</span>
 					</div>
-          <div class="gf-form">
+          			<div class="gf-form">
 						<query-part-editor class="gf-form-label query-part width-6" part="conditionModel.reducerPart" handle-event="ctrl.handleReducerPartEvent(conditionModel, $event)">
 						</query-part-editor>
-            <span class="gf-form-label query-keyword">OF</span>
+            			<span class="gf-form-label query-keyword">OF</span>
 					</div>
 					<div class="gf-form">
 						<query-part-editor class="gf-form-label query-part" part="conditionModel.queryPart" handle-event="ctrl.handleQueryPartEvent(conditionModel, $event)">
@@ -53,8 +53,8 @@
 					<div class="gf-form">
 						<metric-segment-model property="conditionModel.evaluator.type" options="ctrl.evalFunctions" custom="false" css-class="query-keyword" on-change="ctrl.evaluatorTypeChanged(conditionModel.evaluator)"></metric-segment-model>
 						<input class="gf-form-input max-width-9" type="number" step="any" ng-hide="conditionModel.evaluator.params.length === 0" ng-model="conditionModel.evaluator.params[0]" ng-change="ctrl.evaluatorParamsChanged()"></input>
-            <label class="gf-form-label query-keyword" ng-show="conditionModel.evaluator.params.length === 2">TO</label>
-            <input class="gf-form-input max-width-9" type="number" step="any" ng-if="conditionModel.evaluator.params.length === 2" ng-model="conditionModel.evaluator.params[1]" ng-change="ctrl.evaluatorParamsChanged()"></input>
+            			<label class="gf-form-label query-keyword" ng-show="conditionModel.evaluator.params.length === 2">TO</label>
+            			<input class="gf-form-input max-width-9" type="number" step="any" ng-if="conditionModel.evaluator.params.length === 2" ng-model="conditionModel.evaluator.params[1]" ng-change="ctrl.evaluatorParamsChanged()"></input>
 					</div>
 					<div class="gf-form">
 						<label class="gf-form-label">
@@ -77,13 +77,12 @@
 						</ul>
 					</label>
 				</div>
-
 			</div>
 
 			<div class="gf-form-group">
 				<div class="gf-form">
-          <span class="gf-form-label width-18">If no data or all values are null</span>
-          <span class="gf-form-label query-keyword">SET STATE TO</span>
+          			<span class="gf-form-label width-18">If no data or all values are null</span>
+          			<span class="gf-form-label query-keyword">SET STATE TO</span>
 					<div class="gf-form-select-wrapper">
 						<select class="gf-form-input" ng-model="ctrl.alert.noDataState" ng-options="f.value as f.text for f in ctrl.noDataModes">
 						</select>
@@ -91,8 +90,8 @@
 				</div>
 
 				<div class="gf-form">
-          <span class="gf-form-label width-18">If execution error or timeout</span>
-          <span class="gf-form-label query-keyword">SET STATE TO</span>
+          			<span class="gf-form-label width-18">If execution error or timeout</span>
+          			<span class="gf-form-label query-keyword">SET STATE TO</span>
 					<div class="gf-form-select-wrapper">
 						<select class="gf-form-input" ng-model="ctrl.alert.executionErrorState" ng-options="f.value as f.text for f in ctrl.executionErrorModes">
 						</select>
@@ -135,35 +134,31 @@
 
 		<div class="gf-form-group" style="max-width: 720px;" ng-if="ctrl.subTabIndex === 2">
 			<button class="btn btn-mini btn-danger pull-right" ng-click="ctrl.clearHistory()"><i class="fa fa-trash"></i>&nbsp;Clear history</button>
-      <h5 class="section-heading" style="whitespace: nowrap">
+      		<h5 class="section-heading" style="whitespace: nowrap">
 				State history <span class="muted small">(last 50 state changes)</span>
 			</h5>
 
-      <div ng-show="ctrl.alertHistory.length === 0">
-        <br>
-        <i>No state changes recorded</i>
-      </div>
+      		<div ng-show="ctrl.alertHistory.length === 0">
+        		<br>
+        		<i>No state changes recorded</i>
+      		</div>
 
 			<section class="card-section card-list-layout-list">
 				<ol class="card-list" >
 					<li class="card-item-wrapper" ng-repeat="ah in ctrl.alertHistory">
-						<div class="card-item card-item--alert">
-              <div class="card-item-header">
-                <div class="card-item-type">
-                </div>
-              </div>
-							<div class="card-item-body">
-								<div class="card-item-details">
-									<div class="card-item-sub-name">
-										<span class="alert-list-item-state {{ah.stateModel.stateClass}}">
-											<i class="{{ah.stateModel.iconClass}}"></i>
-                      {{ah.stateModel.text}}
-                    </span> {{ah.time}}
-									</div>
-									<div class="card-item-sub-name">
-										{{ah.info}}
-									</div>
+						<div class="alert-list card-item card-item--alert">
+							<div class="alert-list-body">
+								<div class="alert-list-icon alert-list-item-state {{ah.stateModel.stateClass}}">
+									<i class="{{ah.stateModel.iconClass}}"></i>
 								</div>
+								<div class="alert-list-main">
+									<p class="alert-list-state alert-list-text {{ah.stateModel.stateClass}}">{{ah.stateModel.text}}</p>
+									<p class="alert-list-text">{{ah.info}}</p>
+								</div>
+							</div>
+							<div class="alert-list-footer">
+								<p class="alert-list-text">{{ah.time}}</p>
+								<p class="alert-list-text">Img Link -></p>
 							</div>
 						</div>
 					</li>
