@@ -69,10 +69,11 @@ export class QueryTroubleshooterCtrl {
     }
   }
 
-  getClipboardText() {
+  getClipboardText(): string {
     if (this.jsonExplorer) {
       return JSON.stringify(this.jsonExplorer.json, null, 2);
     }
+    return '';
   }
 
   onRequestResponse(data) {

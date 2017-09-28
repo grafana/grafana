@@ -471,7 +471,5 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
 
   }
 
-  return {
-    CloudWatchDatasource: CloudWatchDatasource
-  };
+  return CloudWatchDatasource;
 });

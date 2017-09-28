@@ -120,6 +120,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         if (panelWidth === 0) {
           return true;
         }
+
+        return false;
       }
 
       function drawHook(plot) {
@@ -385,6 +387,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         if (legendSideLastValue !== null && panel.legend.rightSide !== legendSideLastValue) {
           return true;
         }
+        return false;
       }
 
       function addTimeAxis(options) {

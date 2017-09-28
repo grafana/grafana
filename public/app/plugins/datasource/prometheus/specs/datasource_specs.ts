@@ -26,7 +26,7 @@ describe('PrometheusDatasource', function() {
                       '&start=1443438675&end=1443460275&step=60';
     var query = {
       range: { from: moment(1443438674760), to: moment(1443460274760) },
-      targets: [{ expr: 'test{job="testjob"}' }],
+      targets: [{ expr: 'test{job="testjob"}', format: 'time_series' }],
       interval: '60s'
     };
     var response = {
@@ -62,7 +62,7 @@ describe('PrometheusDatasource', function() {
                       '&start=' + start + '&end=' + end + '&step=' + step;
     var query = {
       range: { from: moment(1443438674760), to: moment(1443460274760) },
-      targets: [{ expr: 'test{job="testjob"}' }],
+      targets: [{ expr: 'test{job="testjob"}', format: 'time_series' }],
       interval: '60s'
     };
     var response = {
@@ -119,7 +119,40 @@ describe('PrometheusDatasource', function() {
       expect(results.data[1].datapoints[3][0]).to.be(null);
     });
   });
-  describe('When performing annotationQuery', function() {
+  describe('When querying prometheus with one target and instant = true', function () {
+    var results;
+    var urlExpected = 'proxied/api/v1/query?query=' +
+      encodeURIComponent('test{job="testjob"}') +
+      '&time=1443460275';
+    var query = {
+      range: { from: moment(1443438674760), to: moment(1443460274760) },
+      targets: [{ expr: 'test{job="testjob"}', format: 'time_series', instant: true }],
+      interval: '60s'
+    };
+    var response = {
+      status: "success",
+      data: {
+        resultType: "vector",
+        result: [{
+          metric: { "__name__": "test", job: "testjob" },
+          value: [1443454528, "3846"]
+        }]
+      }
+    };
+    beforeEach(function () {
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query).then(function (data) { results = data; });
+      ctx.$httpBackend.flush();
+    });
+    it('should generate the correct query', function () {
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+    });
+    it('should return series list', function () {
+      expect(results.data.length).to.be(1);
+      expect(results.data[0].target).to.be('test{job="testjob"}');
+    });
+  });
+  describe('When performing annotationQuery', function () {
     var results;
     var urlExpected = 'proxied/api/v1/query_range?query=' +
                       encodeURIComponent('ALERTS{alertstate="firing"}') +
@@ -189,6 +222,47 @@ describe('PrometheusDatasource', function() {
         [ { text: 'Time', type: 'time' },
           { text: '__name__' },
           { text: 'instance' },
+          { text: 'job' },
+          { text: 'Value' }
+        ]
+      );
+    });
+  });
+  describe('When resultFormat is table and instant = true', function() {
+    var results;
+    var urlExpected = 'proxied/api/v1/query?query=' +
+      encodeURIComponent('test{job="testjob"}') +
+      '&time=1443460275';
+    var query = {
+      range: { from: moment(1443438674760), to: moment(1443460274760) },
+      targets: [{ expr: 'test{job="testjob"}', format: 'time_series', instant: true }],
+      interval: '60s'
+    };
+    var response = {
+      status: "success",
+      data: {
+        resultType: "vector",
+        result: [{
+          metric: { "__name__": "test", job: "testjob" },
+          value: [1443454528, "3846"]
+        }]
+      }
+    };
+    beforeEach(function () {
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query).then(function (data) { results = data; });
+      ctx.$httpBackend.flush();
+    });
+    it('should return table model', function() {
+      var table = ctx.ds.transformMetricDataToTable(response.data.result);
+      expect(table.type).to.be('table');
+      expect(table.rows).to.eql(
+        [
+          [ 1443454528000, 'test', 'testjob', 3846]
+        ]);
+      expect(table.columns).to.eql(
+        [ { text: 'Time', type: 'time' },
+          { text: '__name__' },
           { text: 'job' },
           { text: 'Value' }
         ]
