@@ -65,7 +65,6 @@
     },
 
     meta: {
-<<<<<<< HEAD
       'vendor/npm/jquery-ui/jquery-ui.js': {
         format: 'amd',
         deps: ['jquery'],
@@ -78,12 +77,7 @@
         format: 'global',
         deps: ['gridstack'],
       },
-      'vendor/angular/angular.js': {
-||||||| merged common ancestors
-      'vendor/angular/angular.js': {
-=======
       'vendor/npm/angular/angular.js': {
->>>>>>> 0e5e2f3fb990293632402b20107aa09999c3f844
         format: 'global',
         deps: ['jquery'],
         exports: 'angular',

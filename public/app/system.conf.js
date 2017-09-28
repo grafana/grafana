@@ -39,7 +39,7 @@ System.config({
     "jquery-ui": "vendor/jquery-ui/custom.js",
     "gridstack": "vendor/npm/gridstack/dist/gridstack.js",
     "gridstack.jquery-ui": "vendor/npm/gridstack/dist/gridstack.jQueryUI.js",
-    "ace": "vendor/npm/ace-builds/src-noconflict/ace"
+    "ace": "vendor/npm/ace-builds/src-noconflict/ace",
     "clipboard": "vendor/npm/clipboard/dist/clipboard.js"
   },
 
