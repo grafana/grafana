@@ -45,9 +45,17 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 		return t.Transport, nil
 	}
 
+	var tlsSkipVerify, tlsClientAuth, tlsAuthWithCACert bool
+	if ds.JsonData != nil {
+		tlsClientAuth = ds.JsonData.Get("tlsClientAuth").MustBool(false)
+		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
+		tlsSkipVerify = ds.JsonData.Get("tlsSkipVerify").MustBool(false)
+	}
+
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			Renegotiation: tls.RenegotiateFreelyAsClient,
+			InsecureSkipVerify: tlsSkipVerify,
+			Renegotiation:      tls.RenegotiateFreelyAsClient,
 		},
 		Proxy: http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
@@ -59,12 +67,6 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 		ExpectContinueTimeout: 1 * time.Second,
 		MaxIdleConns:          100,
 		IdleConnTimeout:       90 * time.Second,
-	}
-
-	var tlsClientAuth, tlsAuthWithCACert bool
-	if ds.JsonData != nil {
-		tlsClientAuth = ds.JsonData.Get("tlsClientAuth").MustBool(false)
-		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
 	}
 
 	if tlsClientAuth || tlsAuthWithCACert {

@@ -29,61 +29,140 @@ func TestDataSourceCache(t *testing.T) {
 		Convey("Should be using the cached proxy", func() {
 			So(t2, ShouldEqual, t1)
 		})
+		Convey("Should verify TLS by default", func() {
+			So(t1.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+		})
+		Convey("Should have no TLS client certificate configured", func() {
+			So(len(t1.TLSClientConfig.Certificates), ShouldEqual, 0)
+		})
+		Convey("Should have no user-supplied TLS CA onfigured", func() {
+			So(t1.TLSClientConfig.RootCAs, ShouldBeNil)
+		})
 	})
 
-	Convey("When getting kubernetes datasource proxy", t, func() {
+	Convey("When caching a datasource proxy then updating it", t, func() {
+		clearCache()
+		setting.SecretKey = "password"
+
+		json := simplejson.New()
+		json.Set("tlsAuthWithCACert", true)
+
+		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
+		So(err, ShouldBeNil)
+		ds := DataSource{
+			Id:             1,
+			Url:            "http://k8s:8001",
+			Type:           "Kubernetes",
+			SecureJsonData: map[string][]byte{"tlsCACert": tlsCaCert},
+			Updated:        time.Now().Add(-2 * time.Minute),
+		}
+
+		t1, err := ds.GetHttpTransport()
+		So(err, ShouldBeNil)
+
+		Convey("Should verify TLS by default", func() {
+			So(t1.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+		})
+		Convey("Should have no TLS client certificate configured", func() {
+			So(len(t1.TLSClientConfig.Certificates), ShouldEqual, 0)
+		})
+		Convey("Should have no user-supplied TLS CA configured", func() {
+			So(t1.TLSClientConfig.RootCAs, ShouldBeNil)
+		})
+
+		ds.JsonData = nil
+		ds.SecureJsonData = map[string][]byte{}
+		ds.Updated = time.Now()
+
+		t2, err := ds.GetHttpTransport()
+		So(err, ShouldBeNil)
+
+		Convey("Should have no user-supplied TLS CA configured after the update", func() {
+			So(t2.TLSClientConfig.RootCAs, ShouldBeNil)
+		})
+	})
+
+	Convey("When caching a datasource proxy with TLS client authentication enabled", t, func() {
 		clearCache()
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
 		json.Set("tlsClientAuth", true)
+
+		tlsClientCert, err := util.Encrypt([]byte(clientCert), "password")
+		So(err, ShouldBeNil)
+		tlsClientKey, err := util.Encrypt([]byte(clientKey), "password")
+		So(err, ShouldBeNil)
+
+		ds := DataSource{
+			Id:       1,
+			Url:      "http://k8s:8001",
+			Type:     "Kubernetes",
+			JsonData: json,
+			SecureJsonData: map[string][]byte{
+				"tlsClientCert": tlsClientCert,
+				"tlsClientKey":  tlsClientKey,
+			},
+		}
+
+		tr, err := ds.GetHttpTransport()
+		So(err, ShouldBeNil)
+
+		Convey("Should verify TLS by default", func() {
+			So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+		})
+		Convey("Should have a TLS client certificate configured", func() {
+			So(len(tr.TLSClientConfig.Certificates), ShouldEqual, 1)
+		})
+	})
+
+	Convey("When caching a datasource proxy with a user-supplied TLS CA", t, func() {
+		clearCache()
+		setting.SecretKey = "password"
+
+		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 
-		t := time.Now()
+		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
+		So(err, ShouldBeNil)
+
 		ds := DataSource{
-			Url:     "http://k8s:8001",
-			Type:    "Kubernetes",
-			Updated: t.Add(-2 * time.Minute),
+			Id:             1,
+			Url:            "http://k8s:8001",
+			Type:           "Kubernetes",
+			JsonData:       json,
+			SecureJsonData: map[string][]byte{"tlsCACert": tlsCaCert},
 		}
 
-		transport, err := ds.GetHttpTransport()
+		tr, err := ds.GetHttpTransport()
 		So(err, ShouldBeNil)
 
-		Convey("Should verify TLS certificates by default", func() {
-			So(transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
+		Convey("Should verify TLS by default", func() {
+			So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
 		})
+		Convey("Should have a TLS CA configured", func() {
+			So(len(tr.TLSClientConfig.RootCAs.Subjects()), ShouldEqual, 1)
+		})
+	})
 
-		ds.JsonData = json
+	Convey("When caching a datasource proxy when user skips TLS verification", t, func() {
+		clearCache()
 
-		tlsCaCert, _ := util.Encrypt([]byte(caCert), "password")
-		tlsClientCert, _ := util.Encrypt([]byte(clientCert), "password")
-		tlsClientKey, _ := util.Encrypt([]byte(clientKey), "password")
+		json := simplejson.New()
+		json.Set("tlsSkipVerify", true)
 
-		ds.SecureJsonData = map[string][]byte{
-			"tlsCACert":     tlsCaCert,
-			"tlsClientCert": tlsClientCert,
-			"tlsClientKey":  tlsClientKey,
+		ds := DataSource{
+			Id:       1,
+			Url:      "http://k8s:8001",
+			Type:     "Kubernetes",
+			JsonData: json,
 		}
-		ds.Updated = t.Add(-1 * time.Minute)
 
-		transport, err = ds.GetHttpTransport()
+		tr, err := ds.GetHttpTransport()
 		So(err, ShouldBeNil)
 
-		Convey("Should add cert and verify TLS certificates", func() {
-			So(transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
-			So(len(transport.TLSClientConfig.Certificates), ShouldEqual, 1)
-		})
-
-		ds.JsonData = nil
-		ds.SecureJsonData = map[string][]byte{}
-		ds.Updated = t
-
-		transport, err = ds.GetHttpTransport()
-		So(err, ShouldBeNil)
-
-		Convey("Should remove cert but still verify TLS certificates", func() {
-			So(transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
-			So(len(transport.TLSClientConfig.Certificates), ShouldEqual, 0)
+		Convey("Should skip TLS verification", func() {
+			So(tr.TLSClientConfig.InsecureSkipVerify, ShouldEqual, true)
 		})
 	})
 }
@@ -115,7 +194,8 @@ FHoXIyGOdq1chmRVocdGBCF8fUoGIbuF14r53rpvcbEKtKnnP8+96luKAZLq0a4n
 3lb92xM=
 -----END CERTIFICATE-----`
 
-const clientCert string = `-----BEGIN CERTIFICATE-----
+const clientCert string = `
+-----BEGIN CERTIFICATE-----
 MIICsjCCAZoCCQCcd8sOfstQLzANBgkqhkiG9w0BAQsFADAXMRUwEwYDVQQDDAxj
 YS1rOHMtc3RobG0wHhcNMTYxMTAyMDkyNTE1WhcNMTcxMTAyMDkyNTE1WjAfMR0w
 GwYDVQQDDBRhZG0tZGFuaWVsLWs4cy1zdGhsbTCCASIwDQYJKoZIhvcNAQEBBQAD
