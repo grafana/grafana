@@ -39,17 +39,17 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("influxdb", NewInfluxDBExecutor)
 }
 
-func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{}
+func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{}
 
 	query, err := e.getQuery(dsInfo, tsdbQuery.Queries, tsdbQuery)
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
 
 	rawQuery, err := query.Build(tsdbQuery)
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
 
 	if setting.Env == setting.DEV {
@@ -58,21 +58,21 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	req, err := e.createRequest(dsInfo, rawQuery)
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
 
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
 
 	resp, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
 
 	if resp.StatusCode/100 != 2 {
-		return result.WithError(fmt.Errorf("Influxdb returned statuscode invalid status code: %v", resp.Status))
+		return nil, fmt.Errorf("Influxdb returned statuscode invalid status code: %v", resp.Status)
 	}
 
 	var response Response
@@ -82,17 +82,17 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	err = dec.Decode(&response)
 
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
 
 	if response.Err != nil {
-		return result.WithError(response.Err)
+		return nil, response.Err
 	}
 
-	result.QueryResults = make(map[string]*tsdb.QueryResult)
-	result.QueryResults["A"] = e.ResponseParser.Parse(&response, query)
+	result.Results = make(map[string]*tsdb.QueryResult)
+	result.Results["A"] = e.ResponseParser.Parse(&response, query)
 
-	return result
+	return result, nil
 }
 
 func (e *InfluxDBExecutor) getQuery(dsInfo *models.DataSource, queries []*tsdb.Query, context *tsdb.TsdbQuery) (*Query, error) {

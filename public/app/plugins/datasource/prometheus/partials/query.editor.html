@@ -45,6 +45,8 @@
 			<div class="gf-form-select-wrapper width-8">
 				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()"></select>
 			</div>
+			<gf-form-switch class="gf-form" label="Instant" label-class="width-5" checked="ctrl.target.instant" on-change="ctrl.refresh()">
+			</gf-form-switch>
 			<label class="gf-form-label">
 				<a href="{{ctrl.linkToPrometheus}}" target="_blank" bs-tooltip="'Link to Graph in Prometheus'">
 					<i class="fa fa-share-square-o"></i>

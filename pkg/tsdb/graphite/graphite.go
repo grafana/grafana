@@ -37,8 +37,8 @@ func init() {
 	tsdb.RegisterTsdbQueryEndpoint("graphite", NewGraphiteExecutor)
 }
 
-func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{}
+func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{}
 
 	from := "-" + formatTimeRange(tsdbQuery.TimeRange.From)
 	until := formatTimeRange(tsdbQuery.TimeRange.To)
@@ -67,14 +67,12 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	req, err := e.createRequest(dsInfo, formData)
 	if err != nil {
-		result.Error = err
-		return result
+		return nil, err
 	}
 
 	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
-		result.Error = err
-		return result
+		return nil, err
 	}
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "graphite query")
@@ -90,17 +88,15 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	res, err := ctxhttp.Do(ctx, httpClient, req)
 	if err != nil {
-		result.Error = err
-		return result
+		return nil, err
 	}
 
 	data, err := e.parseResponse(res)
 	if err != nil {
-		result.Error = err
-		return result
+		return nil, err
 	}
 
-	result.QueryResults = make(map[string]*tsdb.QueryResult)
+	result.Results = make(map[string]*tsdb.QueryResult)
 	queryRes := tsdb.NewQueryResult()
 
 	for _, series := range data {
@@ -114,8 +110,8 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		}
 	}
 
-	result.QueryResults["A"] = queryRes
-	return result
+	result.Results["A"] = queryRes
+	return result, nil
 }
 
 func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDTO, error) {

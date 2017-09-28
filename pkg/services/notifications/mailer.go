@@ -101,7 +101,11 @@ func createDialer() (*gomail.Dialer, error) {
 
 	d := gomail.NewDialer(host, iPort, setting.Smtp.User, setting.Smtp.Password)
 	d.TLSConfig = tlsconfig
-	d.LocalName = setting.InstanceName
+	if setting.Smtp.EhloIdentity != "" {
+		d.LocalName = setting.Smtp.EhloIdentity
+	} else {
+		d.LocalName = setting.InstanceName
+	}
 	return d, nil
 }
 

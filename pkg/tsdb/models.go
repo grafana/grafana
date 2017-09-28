@@ -22,24 +22,8 @@ type Query struct {
 }
 
 type Response struct {
-	BatchTimings []*BatchTiming          `json:"timings"`
-	Results      map[string]*QueryResult `json:"results"`
-	Message      string                  `json:"message,omitempty"`
-}
-
-type BatchTiming struct {
-	TimeElapsed int64
-}
-
-type BatchResult struct {
-	Error        error
-	QueryResults map[string]*QueryResult
-	Timings      *BatchTiming
-}
-
-func (br *BatchResult) WithError(err error) *BatchResult {
-	br.Error = err
-	return br
+	Results map[string]*QueryResult `json:"results"`
+	Message string                  `json:"message,omitempty"`
 }
 
 type QueryResult struct {

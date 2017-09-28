@@ -48,6 +48,7 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
+			Renegotiation:      tls.RenegotiateFreelyAsClient,
 		},
 		Proxy: http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{

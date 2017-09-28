@@ -23,15 +23,15 @@
       "jquery": "vendor/npm/jquery/dist/jquery.js",
       'lodash-src': 'vendor/npm/lodash/lodash.js',
       "lodash": 'app/core/lodash_extended.js',
-      "angular": 'vendor/angular/angular.js',
-      'angular-mocks': 'vendor/angular-mocks/angular-mocks.js',
+      "angular": 'vendor/npm/angular/angular.js',
+      'angular-mocks': 'vendor/npm/angular-mocks/angular-mocks.js',
       "bootstrap":  "vendor/bootstrap/bootstrap.js",
-      'angular-route':          'vendor/angular-route/angular-route.js',
-      'angular-sanitize':       'vendor/angular-sanitize/angular-sanitize.js',
+      'angular-route':          'vendor/npm/angular-route/angular-route.js',
+      'angular-sanitize':       'vendor/npm/angular-sanitize/angular-sanitize.js',
       "angular-ui":             "vendor/angular-ui/ui-bootstrap-tpls.js",
       "angular-strap":          "vendor/angular-other/angular-strap.js",
-      "angular-dragdrop":       "vendor/angular-native-dragdrop/draganddrop.js",
-      "angular-bindonce":       "vendor/angular-bindonce/bindonce.js",
+      "angular-dragdrop":       "vendor/npm/angular-native-dragdrop/draganddrop.js",
+      "angular-bindonce":       "vendor/npm/angular-bindonce/bindonce.js",
       "spectrum": "vendor/spectrum.js",
       "bootstrap-tagsinput": "vendor/tagsinput/bootstrap-tagsinput.js",
       "jquery.flot": "vendor/flot/jquery.flot",
@@ -49,6 +49,7 @@
       "gridstack": "vendor/npm/gridstack/dist/gridstack.js",
       "gridstack.jquery-ui": "vendor/npm/gridstack/dist/gridstack.jQueryUI.js",
       "ace": "vendor/npm/ace-builds/src-noconflict/ace",
+      "clipboard": "vendor/npm/clipboard/dist/clipboard.js"
     },
 
     packages: {
@@ -64,6 +65,7 @@
     },
 
     meta: {
+<<<<<<< HEAD
       'vendor/npm/jquery-ui/jquery-ui.js': {
         format: 'amd',
         deps: ['jquery'],
@@ -77,11 +79,16 @@
         deps: ['gridstack'],
       },
       'vendor/angular/angular.js': {
+||||||| merged common ancestors
+      'vendor/angular/angular.js': {
+=======
+      'vendor/npm/angular/angular.js': {
+>>>>>>> 0e5e2f3fb990293632402b20107aa09999c3f844
         format: 'global',
         deps: ['jquery'],
         exports: 'angular',
       },
-      'vendor/angular-mocks/angular-mocks.js': {
+      'vendor/npm/angular-mocks/angular-mocks.js': {
         format: 'global',
         deps: ['angular'],
       },

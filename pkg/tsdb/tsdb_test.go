@@ -19,7 +19,7 @@ func TestMetricQuery(t *testing.T) {
 		fakeExecutor := registerFakeExecutor()
 		fakeExecutor.Return("A", TimeSeriesSlice{&TimeSeries{Name: "argh"}})
 
-		res, err := HandleRequest(context.TODO(), req)
+		res, err := HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req)
 		So(err, ShouldBeNil)
 
 		Convey("Should return query results", func() {
@@ -40,18 +40,13 @@ func TestMetricQuery(t *testing.T) {
 		fakeExecutor.Return("A", TimeSeriesSlice{&TimeSeries{Name: "argh"}})
 		fakeExecutor.Return("B", TimeSeriesSlice{&TimeSeries{Name: "barg"}})
 
-		res, err := HandleRequest(context.TODO(), req)
+		res, err := HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req)
 		So(err, ShouldBeNil)
 
 		Convey("Should return query results", func() {
 			So(len(res.Results), ShouldEqual, 2)
 			So(res.Results["B"].Series[0].Name, ShouldEqual, "barg")
 		})
-
-		Convey("Should have been batched in one request", func() {
-			So(len(res.BatchTimings), ShouldEqual, 1)
-		})
-
 	})
 
 	Convey("When query uses data source of unknown type", t, func() {
@@ -61,7 +56,7 @@ func TestMetricQuery(t *testing.T) {
 			},
 		}
 
-		_, err := HandleRequest(context.TODO(), req)
+		_, err := HandleRequest(context.TODO(), &models.DataSource{Id: 12, Type: "testjughjgjg"}, req)
 		So(err, ShouldNotBeNil)
 	})
 }

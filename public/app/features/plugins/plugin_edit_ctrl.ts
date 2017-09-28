@@ -80,6 +80,7 @@ export class PluginEditCtrl {
       case 'app':  return 'icon-gf icon-gf-apps';
       case 'page':  return 'icon-gf icon-gf-endpoint-tiny';
       case 'dashboard':  return 'icon-gf icon-gf-dashboard';
+      default: return 'icon-gf icon-gf-apps';
     }
   }
 

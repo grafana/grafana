@@ -64,6 +64,38 @@
 
 .navbar-page-btn-wrapper {
   float: left;
+<<<<<<< HEAD
+||||||| merged common ancestors
+  margin: 0;
+  border-right: 1px solid $tight-form-border;
+  background-color: $navbarButtonBackground;
+  padding: 0.4rem 1.0rem 0.4rem 1rem;
+  min-height:: $navbarHeight;
+
+  .fa-caret-down {
+    font-size: 70%;
+  }
+
+  .fa-chevron-left{
+    display: none;
+  }
+
+=======
+  margin: 0;
+  border-right: 1px solid $tight-form-border;
+  background-color: $navbarButtonBackground;
+  padding: 0.4rem 1.0rem 0.4rem 1rem;
+  min-height: $navbarHeight;
+
+  .fa-caret-down {
+    font-size: 70%;
+  }
+
+  .fa-chevron-left{
+    display: none;
+  }
+
+>>>>>>> 0e5e2f3fb990293632402b20107aa09999c3f844
   &:hover {
     background: $navbarButtonBackgroundHighlight;
   }
@@ -78,7 +110,7 @@
   color: darken($link-color, 5%);
   font-size: $font-size-lg;
   padding: 1rem 1rem 0.75rem 1rem;
-  min-height:: $navbarHeight;
+  min-height: $navbarHeight;
 
   .fa-caret-down {
     font-size: 60%;

@@ -12,7 +12,7 @@
         "noEmitOnError": false,
         "emitDecoratorMetadata": false,
         "experimentalDecorators": false,
-        "noImplicitReturns": false,
+        "noImplicitReturns": true,
         "noImplicitThis": false,
         "noImplicitUseStrict":false,
         "moduleResolution": "classic"
@@ -26,5 +26,4 @@
         "public/vendor/**/*",
         "public/**/*.d.ts"
     ]
-
 }

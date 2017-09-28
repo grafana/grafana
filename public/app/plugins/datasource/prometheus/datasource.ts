@@ -99,6 +99,7 @@ export class PrometheusDatasource {
       var query: any = {};
       query.expr = this.templateSrv.replace(target.expr, options.scopedVars, self.interpolateQueryExpr);
       query.requestId = options.panelId + target.refId;
+      query.instant = target.instant;
 
       var interval = this.templateSrv.replace(target.interval, options.scopedVars) || options.interval;
       var intervalFactor = target.intervalFactor || 1;
@@ -114,7 +115,11 @@ export class PrometheusDatasource {
     }
 
     var allQueryPromise = _.map(queries, query => {
-      return this.performTimeSeriesQuery(query, start, end);
+      if (!query.instant) {
+        return this.performTimeSeriesQuery(query, start, end);
+      } else {
+        return this.performInstantQuery(query, end);
+      }
     });
 
     return this.$q.all(allQueryPromise).then(responseList => {
@@ -129,7 +134,11 @@ export class PrometheusDatasource {
           result.push(self.transformMetricDataToTable(response.data.data.result));
         } else {
           for (let metricData of response.data.data.result) {
-            result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
+            if (response.data.data.resultType === 'matrix') {
+              result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
+            } else if (response.data.data.resultType === 'vector') {
+              result.push(self.transformInstantMetricData(metricData, activeTargets[index]));
+            }
           }
         }
       });
@@ -153,6 +162,11 @@ export class PrometheusDatasource {
     }
 
     var url = '/api/v1/query_range?query=' + encodeURIComponent(query.expr) + '&start=' + start + '&end=' + end + '&step=' + query.step;
+    return this._request('GET', url, query.requestId);
+  }
+
+  performInstantQuery(query, time) {
+    var url = '/api/v1/query?query=' + encodeURIComponent(query.expr) + '&time=' + time;
     return this._request('GET', url, query.requestId);
   }
 
@@ -317,6 +331,9 @@ export class PrometheusDatasource {
 
     // Populate rows, set value to empty string when label not present.
     _.each(md, function(series) {
+      if (series.value) {
+        series.values = [series.value];
+      }
       if (series.values) {
         for (i = 0; i < series.values.length; i++) {
           var values = series.values[i];
@@ -338,6 +355,13 @@ export class PrometheusDatasource {
     });
 
     return table;
+  }
+
+  transformInstantMetricData(md, options) {
+    var dps = [], metricLabel = null;
+    metricLabel = this.createMetricLabel(md.metric, options);
+    dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
+    return { target: metricLabel, datapoints: dps };
   }
 
   createMetricLabel(labelData, options) {
