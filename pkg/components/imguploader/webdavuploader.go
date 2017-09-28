@@ -23,7 +23,8 @@ type WebdavUploader struct {
 var netTransport = &http.Transport{
 	Proxy: http.ProxyFromEnvironment,
 	Dial: (&net.Dialer{
-		Timeout: 60 * time.Second,
+		Timeout:   60 * time.Second,
+		DualStack: true,
 	}).Dial,
 	TLSHandshakeTimeout: 5 * time.Second,
 }

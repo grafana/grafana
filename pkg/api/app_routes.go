@@ -22,6 +22,7 @@ var pluginProxyTransport = &http.Transport{
 	Dial: (&net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
+		DualStack: true,
 	}).Dial,
 	TLSHandshakeTimeout: 10 * time.Second,
 }
