@@ -2,24 +2,22 @@
   <section class="card-section card-list-layout-list" ng-if="ctrl.panel.show === 'current'">
     <ol class="card-list">
       <li class="card-item-wrapper" ng-repeat="alert in ctrl.currentAlerts">
-        <div class="card-item card-item--alert">
-          <div class="card-item-body">
-            <div class="card-item-details">
-              <div class="card-item-notice">
-                <a href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert">
-                  {{alert.name}}
-                </a>
-              </div>
-              <div class="card-item-sub-name">
-                <span class="alert-list-item-state {{alert.stateModel.stateClass}}">
+        <div class="alert-list card-item card-item--alert">
+          <div class="alert-list-body">
+              <div class="alert-list-icon alert-list-item-state {{alert.stateModel.stateClass}}">
                   <i class="{{alert.stateModel.iconClass}}"></i>
-                  {{alert.stateModel.text}}
-                </span> for {{alert.newStateDateAgo}}
               </div>
-              <div class="small muted" ng-show="alert.executionError">
-                {{alert.executionError}}
-              </div>
-            </div>
+              <div class="alert-list-main">
+                  <p class="alert-list-title">
+                    <a href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert">
+                      {{alert.name}}
+                    </a>
+                  </p>
+                  <p class="alert-list-text">
+                    <span class="alert-list-state {{alert.stateModel.stateClass}}">{{alert.stateModel.text}}</span>
+                   for {{alert.newStateDateAgo}}
+                  </p>
+                </div>
           </div>
         </div>
       </li>
@@ -36,13 +34,15 @@
             </div>
             <div class="alert-list-main">
               <p class="alert-list-title">{{al.title}}</p>
-              <p class="alert-list-state alert-list-text {{al.stateModel.stateClass}}">{{al.stateModel.text}}</p>
-              <p class="alert-list-text">{{al.info}}</p>
+              <div class="alert-list-text">
+                <span class="alert-list-state {{al.stateModel.stateClass}}">{{al.stateModel.text}}</span>
+                <span class="alert-list-info alert-list-info-left">{{al.info}}</span>
+              </div>
             </div>
           </div>
           <div class="alert-list-footer">
-            <p class="alert-list-text">{{al.time}}</p>
-            <p class="alert-list-text">Img Link -></p>
+            <span class="alert-list-text">{{al.time}}</span>
+            <span class="alert-list-text"><!--Img Link--></span>
           </div>
         </div>
       </li>

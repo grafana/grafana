@@ -151,14 +151,14 @@
 								<div class="alert-list-icon alert-list-item-state {{ah.stateModel.stateClass}}">
 									<i class="{{ah.stateModel.iconClass}}"></i>
 								</div>
-								<div class="alert-list-main">
-									<p class="alert-list-state alert-list-text {{ah.stateModel.stateClass}}">{{ah.stateModel.text}}</p>
-									<p class="alert-list-text">{{ah.info}}</p>
+								<div class="alert-list-main alert-list-text">
+									<span class="alert-list-state {{ah.stateModel.stateClass}}">{{ah.stateModel.text}}</span>
+									<span class="alert-list-info">{{ah.info}}</span>
 								</div>
 							</div>
-							<div class="alert-list-footer">
-								<p class="alert-list-text">{{ah.time}}</p>
-								<p class="alert-list-text">Img Link -></p>
+							<div class="alert-list-footer alert-list-text">
+								<span>{{ah.time}}</span>
+								<span><!--Img Link--></span>
 							</div>
 						</div>
 					</li>

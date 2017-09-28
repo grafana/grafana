@@ -73,6 +73,15 @@
   font-size: $font-size-sm;
   margin: 0;
   line-height: 1.5rem;
+  color: $text-color-weak;
+}
+
+.alert-list-info {
+  color: $text-color;
+}
+
+.alert-list-info-left {
+  padding-left: 2rem;
 }
 
 .alert-list-footer {
@@ -80,7 +89,6 @@
   justify-content: space-between;
   flex-direction: column;
   align-items: flex-end;
-  color: $text-color-weak;
 }
 
 .panel-has-alert {
