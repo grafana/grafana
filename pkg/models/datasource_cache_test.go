@@ -49,7 +49,7 @@ func TestDataSourceCache(t *testing.T) {
 		transport, err := ds.GetHttpTransport()
 		So(err, ShouldBeNil)
 
-		Convey("Should have no cert", func() {
+		Convey("Should disable TLS certificate verification", func() {
 			So(transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, true)
 		})
 
@@ -69,7 +69,7 @@ func TestDataSourceCache(t *testing.T) {
 		transport, err = ds.GetHttpTransport()
 		So(err, ShouldBeNil)
 
-		Convey("Should add cert", func() {
+		Convey("Should add cert and enable TLS certificate verification", func() {
 			So(transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
 			So(len(transport.TLSClientConfig.Certificates), ShouldEqual, 1)
 		})
@@ -81,7 +81,7 @@ func TestDataSourceCache(t *testing.T) {
 		transport, err = ds.GetHttpTransport()
 		So(err, ShouldBeNil)
 
-		Convey("Should remove cert", func() {
+		Convey("Should remove cert and disable TLS certificate vertification", func() {
 			So(transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, true)
 			So(len(transport.TLSClientConfig.Certificates), ShouldEqual, 0)
 		})
