@@ -72,6 +72,10 @@ function (queryDef) {
       esAgg.interval = "$__interval";
     }
 
+    if (settings.time_zone) {
+      esAgg.time_zone = settings.time_zone;
+    }
+
     if (settings.missing) {
       esAgg.missing = settings.missing;
     }

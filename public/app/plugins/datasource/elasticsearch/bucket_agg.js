@@ -128,6 +128,10 @@ function (angular, _, queryDef) {
           $scope.agg.field = $scope.target.timeField;
           settingsLinkText = 'Interval: ' + settings.interval;
 
+          if (settings.time_zone) {
+            settingsLinkText += ', Time Zone: ' + settings.time_zone;
+          }
+
           if (settings.min_doc_count > 0) {
             settingsLinkText += ', Min Doc Count: ' + settings.min_doc_count;
           }
