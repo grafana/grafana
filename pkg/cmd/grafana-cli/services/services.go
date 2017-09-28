@@ -22,7 +22,7 @@ var (
 	grafanaVersion string
 )
 
-func Init(version string) {
+func Init(version string, skipTLSVerify bool) {
 	grafanaVersion = version
 
 	tr := &http.Transport{
@@ -36,8 +36,9 @@ func Init(version string) {
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
-
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: skipTLSVerify,
+		},
 	}
 
 	HttpClient = http.Client{

@@ -97,7 +97,7 @@ func OAuthLogin(ctx *middleware.Context) {
 
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
+				InsecureSkipVerify: setting.OAuthService.OAuthInfos[name].TlsSkipVerify,
 				Certificates:       []tls.Certificate{cert},
 				RootCAs:            caCertPool,
 			},
