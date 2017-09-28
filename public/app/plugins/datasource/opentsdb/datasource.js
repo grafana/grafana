@@ -472,7 +472,5 @@ function (angular, _, dateMath) {
     }
   }
 
-  return {
-    OpenTsDatasource: OpenTsDatasource
-  };
+  return OpenTsDatasource;
 });
