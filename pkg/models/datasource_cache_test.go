@@ -36,7 +36,7 @@ func TestDataSourceCache(t *testing.T) {
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
-		json.Set("tlsAuth", true)
+		json.Set("tlsClientAuth", true)
 		json.Set("tlsAuthWithCACert", true)
 
 		t := time.Now()
@@ -49,8 +49,8 @@ func TestDataSourceCache(t *testing.T) {
 		transport, err := ds.GetHttpTransport()
 		So(err, ShouldBeNil)
 
-		Convey("Should disable TLS certificate verification", func() {
-			So(transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, true)
+		Convey("Should verify TLS certificates by default", func() {
+			So(transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
 		})
 
 		ds.JsonData = json
@@ -69,7 +69,7 @@ func TestDataSourceCache(t *testing.T) {
 		transport, err = ds.GetHttpTransport()
 		So(err, ShouldBeNil)
 
-		Convey("Should add cert and enable TLS certificate verification", func() {
+		Convey("Should add cert and verify TLS certificates", func() {
 			So(transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
 			So(len(transport.TLSClientConfig.Certificates), ShouldEqual, 1)
 		})
@@ -81,8 +81,8 @@ func TestDataSourceCache(t *testing.T) {
 		transport, err = ds.GetHttpTransport()
 		So(err, ShouldBeNil)
 
-		Convey("Should remove cert and disable TLS certificate vertification", func() {
-			So(transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, true)
+		Convey("Should remove cert but still verify TLS certificates", func() {
+			So(transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
 			So(len(transport.TLSClientConfig.Certificates), ShouldEqual, 0)
 		})
 	})

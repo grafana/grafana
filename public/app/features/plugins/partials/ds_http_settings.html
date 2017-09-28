@@ -44,7 +44,7 @@
     <gf-form-switch class="gf-form" label="With Credentials" tooltip="Whether credentials such as cookies or auth headers should be sent with cross-site requests." checked="current.withCredentials" label-class="width-11" switch-class="max-width-6"></gf-form-switch>
   </div>
   <div class="gf-form-inline">
-    <gf-form-switch class="gf-form" ng-if="current.access=='proxy'" label="TLS Client Auth" label-class="width-8" checked="current.jsonData.tlsAuth" switch-class="max-width-6"></gf-form-switch>
+    <gf-form-switch class="gf-form" ng-if="current.access=='proxy'" label="TLS Client Auth" label-class="width-8" checked="current.jsonData.tlsClientAuth" switch-class="max-width-6"></gf-form-switch>
     <gf-form-switch class="gf-form" ng-if="current.access=='proxy'" label="With CA Cert" tooltip="Optional. Needed for self-signed TLS Certs." checked="current.jsonData.tlsAuthWithCACert" label-class="width-11" switch-class="max-width-6"></gf-form-switch>
   </div>
 </div>
@@ -66,7 +66,7 @@
 	</div>
 </div>
 
-<div class="gf-form-group" ng-if="current.jsonData.tlsAuth && current.access=='proxy'">
+<div class="gf-form-group" ng-if="(current.jsonData.tlsClientAuth || current.jsonData.tlsAuthWithCACert) && current.access=='proxy'">
   <div class="gf-form">
     <h6>TLS Auth Details</h6>
     <info-popover mode="header">TLS Certs are encrypted and stored in the Grafana database.</info-popover>
@@ -87,29 +87,31 @@
     </div>
   </div>
 
-  <div class="gf-form-inline">
-    <div class="gf-form gf-form--v-stretch">
-      <label class="gf-form-label width-7">Client Cert</label>
+  <div ng-if="current.jsonData.tlsClientAuth">
+    <div class="gf-form-inline">
+      <div class="gf-form gf-form--v-stretch">
+        <label class="gf-form-label width-7">Client Cert</label>
+      </div>
+      <div class="gf-form gf-form--grow" ng-if="!current.secureJsonFields.tlsClientCert">
+        <textarea rows="7" class="gf-form-input gf-form-textarea" ng-model="current.secureJsonData.tlsClientCert" placeholder="Begins with -----BEGIN CERTIFICATE-----" required></textarea>
+      </div>
+      <div class="gf-form" ng-if="current.secureJsonFields.tlsClientCert">
+        <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured">
+        <a class="btn btn-secondary gf-form-btn" href="#" ng-click="current.secureJsonFields.tlsClientCert = false">reset</a>
+      </div>
     </div>
-    <div class="gf-form gf-form--grow" ng-if="!current.secureJsonFields.tlsClientCert">
-      <textarea rows="7" class="gf-form-input gf-form-textarea" ng-model="current.secureJsonData.tlsClientCert" placeholder="Begins with -----BEGIN CERTIFICATE-----" required></textarea>
-    </div>
-    <div class="gf-form" ng-if="current.secureJsonFields.tlsClientCert">
-      <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured">
-      <a class="btn btn-secondary gf-form-btn" href="#" ng-click="current.secureJsonFields.tlsClientCert = false">reset</a>
-    </div>
-  </div>
 
-  <div class="gf-form-inline">
-    <div class="gf-form gf-form--v-stretch">
-      <label class="gf-form-label width-7">Client Key</label>
-    </div>
-    <div class="gf-form gf-form--grow" ng-if="!current.secureJsonFields.tlsClientKey">
-      <textarea rows="7" class="gf-form-input gf-form-textarea" ng-model="current.secureJsonData.tlsClientKey" placeholder="Begins with -----BEGIN RSA PRIVATE KEY-----" required></textarea>
-    </div>
-    <div class="gf-form" ng-if="current.secureJsonFields.tlsClientKey">
-      <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured">
-      <a class="btn btn-secondary gf-form-btn" href="#" ng-click="current.secureJsonFields.tlsClientKey = false">reset</a>
+    <div class="gf-form-inline">
+      <div class="gf-form gf-form--v-stretch">
+        <label class="gf-form-label width-7">Client Key</label>
+      </div>
+      <div class="gf-form gf-form--grow" ng-if="!current.secureJsonFields.tlsClientKey">
+        <textarea rows="7" class="gf-form-input gf-form-textarea" ng-model="current.secureJsonData.tlsClientKey" placeholder="Begins with -----BEGIN RSA PRIVATE KEY-----" required></textarea>
+      </div>
+      <div class="gf-form" ng-if="current.secureJsonFields.tlsClientKey">
+        <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured">
+        <a class="btn btn-secondary gf-form-btn" href="#" ng-click="current.secureJsonFields.tlsClientKey = false">reset</a>
+      </div>
     </div>
   </div>
 </div>

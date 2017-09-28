@@ -47,8 +47,7 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-			Renegotiation:      tls.RenegotiateFreelyAsClient,
+			Renegotiation: tls.RenegotiateFreelyAsClient,
 		},
 		Proxy: http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
@@ -62,15 +61,13 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 		IdleConnTimeout:       90 * time.Second,
 	}
 
-	var tlsAuth, tlsAuthWithCACert bool
+	var tlsClientAuth, tlsAuthWithCACert bool
 	if ds.JsonData != nil {
-		tlsAuth = ds.JsonData.Get("tlsAuth").MustBool(false)
+		tlsClientAuth = ds.JsonData.Get("tlsClientAuth").MustBool(false)
 		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
 	}
 
-	if tlsAuth {
-		transport.TLSClientConfig.InsecureSkipVerify = false
-
+	if tlsClientAuth || tlsAuthWithCACert {
 		decrypted := ds.SecureJsonData.Decrypt()
 
 		if tlsAuthWithCACert && len(decrypted["tlsCACert"]) > 0 {
@@ -81,11 +78,13 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 			}
 		}
 
-		cert, err := tls.X509KeyPair([]byte(decrypted["tlsClientCert"]), []byte(decrypted["tlsClientKey"]))
-		if err != nil {
-			return nil, err
+		if tlsClientAuth {
+			cert, err := tls.X509KeyPair([]byte(decrypted["tlsClientCert"]), []byte(decrypted["tlsClientKey"]))
+			if err != nil {
+				return nil, err
+			}
+			transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
 		}
-		transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
 	}
 
 	ptc.cache[ds.Id] = cachedTransport{
