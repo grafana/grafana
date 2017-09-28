@@ -1,15 +1,15 @@
-define([
-  './query_def',
-],
-function (queryDef) {
-  'use strict';
+import * as queryDef from './query_def';
 
-  function ElasticQueryBuilder(options) {
+export class ElasticQueryBuilder {
+  timeField: string;
+  esVersion: number;
+
+  constructor(options) {
     this.timeField = options.timeField;
     this.esVersion = options.esVersion;
   }
 
-  ElasticQueryBuilder.prototype.getRangeFilter = function() {
+  getRangeFilter() {
     var filter = {};
     filter[this.timeField] = {
       gte: "$timeFrom",
@@ -18,9 +18,9 @@ function (queryDef) {
     };
 
     return filter;
-  };
+  }
 
-  ElasticQueryBuilder.prototype.buildTermsAgg = function(aggDef, queryNode, target) {
+  buildTermsAgg(aggDef, queryNode, target) {
     var metricRef, metric, y;
     queryNode.terms = { "field": aggDef.field };
 
@@ -57,10 +57,10 @@ function (queryDef) {
     }
 
     return queryNode;
-  };
+  }
 
-  ElasticQueryBuilder.prototype.getDateHistogramAgg = function(aggDef) {
-    var esAgg = {};
+  getDateHistogramAgg(aggDef) {
+    var esAgg: any = {};
     var settings = aggDef.settings || {};
     esAgg.interval = settings.interval;
     esAgg.field = this.timeField;
@@ -77,10 +77,10 @@ function (queryDef) {
     }
 
     return esAgg;
-  };
+  }
 
-  ElasticQueryBuilder.prototype.getHistogramAgg = function(aggDef) {
-    var esAgg = {};
+  getHistogramAgg(aggDef) {
+    var esAgg: any = {};
     var settings = aggDef.settings || {};
     esAgg.interval = settings.interval;
     esAgg.field = aggDef.field;
@@ -90,9 +90,9 @@ function (queryDef) {
       esAgg.missing = settings.missing;
     }
     return esAgg;
-  };
+  }
 
-  ElasticQueryBuilder.prototype.getFiltersAgg = function(aggDef) {
+  getFiltersAgg(aggDef) {
     var filterObj = {};
     for (var i = 0; i < aggDef.settings.filters.length; i++) {
       var query = aggDef.settings.filters[i].query;
@@ -107,9 +107,9 @@ function (queryDef) {
     }
 
     return filterObj;
-  };
+  }
 
-  ElasticQueryBuilder.prototype.documentQuery = function(query, size) {
+  documentQuery(query, size) {
     query.size = size;
     query.sort = {};
     query.sort[this.timeField] = {order: 'desc', unmapped_type: 'boolean'};
@@ -126,9 +126,9 @@ function (queryDef) {
       query.docvalue_fields = [this.timeField];
     }
     return query;
-  };
+  }
 
-  ElasticQueryBuilder.prototype.addAdhocFilters = function(query, adhocFilters) {
+  addAdhocFilters(query, adhocFilters) {
     if (!adhocFilters) {
       return;
     }
@@ -142,7 +142,7 @@ function (queryDef) {
       queryCondition = {};
       queryCondition[filter.key] = {query: filter.value};
 
-      switch(filter.operator){
+      switch (filter.operator){
         case "=":
           if (!query.query.bool.must) { query.query.bool.must = []; }
           query.query.bool.must.push({match_phrase: queryCondition});
@@ -169,7 +169,7 @@ function (queryDef) {
     }
   };
 
-  ElasticQueryBuilder.prototype.build = function(target, adhocFilters, queryString) {
+  build(target, adhocFilters?, queryString?) {
     // make sure query has defaults;
     target.metrics = target.metrics || [{ type: 'count', id: '1' }];
     target.dsType = 'elasticsearch';
@@ -213,7 +213,7 @@ function (queryDef) {
       var aggDef = target.bucketAggs[i];
       var esAgg = {};
 
-      switch(aggDef.type) {
+      switch (aggDef.type) {
         case 'date_histogram': {
           esAgg["date_histogram"] = this.getDateHistogramAgg(aggDef);
           break;
@@ -273,10 +273,10 @@ function (queryDef) {
     }
 
     return query;
-  };
+  }
 
-  ElasticQueryBuilder.prototype.getTermsQuery = function(queryDef) {
-    var query = {
+  getTermsQuery(queryDef) {
+    var query: any = {
       "size": 0,
       "query": {
         "bool": {
@@ -311,7 +311,5 @@ function (queryDef) {
       }
     };
     return query;
-  };
-
-  return ElasticQueryBuilder;
-});
+  }
+}
