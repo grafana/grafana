@@ -50,7 +50,7 @@
     "phantomjs-prebuilt": "^2.1.15",
     "rxjs": "^5.4.3",
     "sass-lint": "^1.10.2",
-    "systemjs": "0.20.19"
+    "systemjs": "0.19.41"
   },
   "scripts": {
     "build": "./node_modules/grunt-cli/bin/grunt",

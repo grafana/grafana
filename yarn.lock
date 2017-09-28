@@ -4448,9 +4448,11 @@ systemjs-builder@^0.16.10:
     traceur "0.0.105"
     uglify-js "^2.6.1"
 
-systemjs@0.20.19:
-  version "0.20.19"
-  resolved "https://registry.yarnpkg.com/systemjs/-/systemjs-0.20.19.tgz#c2b9e79c19f4bea53a19b1ed3f974ffb463be949"
+systemjs@0.19.41:
+  version "0.19.41"
+  resolved "https://registry.yarnpkg.com/systemjs/-/systemjs-0.19.41.tgz#835d2c0f10bf403b551fedc875f84bb44a02c4eb"
+  dependencies:
+    when "^3.7.5"
 
 systemjs@^0.19.46:
   version "0.19.47"
