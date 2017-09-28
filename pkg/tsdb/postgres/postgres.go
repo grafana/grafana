@@ -283,6 +283,8 @@ func (e PostgresExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Ro
 				value = null.FloatFrom(float64(columnValue))
 			case float64:
 				value = null.FloatFrom(columnValue)
+			case nil:
+				value.Valid = false
 			default:
 				return fmt.Errorf("Value column must have numeric datatype, column: %s type: %T value: %v", col, columnValue, columnValue)
 			}
