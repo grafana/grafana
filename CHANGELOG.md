@@ -23,6 +23,9 @@
 * **Dataproxy**: Allow grafan to renegotiate tls connection [#9250](https://github.com/grafana/grafana/issues/9250)
 * **HTTP**: set net.Dialer.DualStack to true for all http clients [#9367](https://github.com/grafana/grafana/pull/9367)
 
+## Tech
+* **Go**: Grafana is now built using golang 1.9
+
 # 4.5.2 (2017-09-22)
 
 ## Fixes 
