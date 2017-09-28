@@ -3,6 +3,7 @@ package models
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"net"
 	"net/http"
 	"sync"
@@ -71,13 +72,13 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 
 	if tlsClientAuth || tlsAuthWithCACert {
 		decrypted := ds.SecureJsonData.Decrypt()
-
 		if tlsAuthWithCACert && len(decrypted["tlsCACert"]) > 0 {
 			caPool := x509.NewCertPool()
 			ok := caPool.AppendCertsFromPEM([]byte(decrypted["tlsCACert"]))
-			if ok {
-				transport.TLSClientConfig.RootCAs = caPool
+			if !ok {
+				return nil, errors.New("Failed to parse TLS CA PEM certificate")
 			}
+			transport.TLSClientConfig.RootCAs = caPool
 		}
 
 		if tlsClientAuth {
