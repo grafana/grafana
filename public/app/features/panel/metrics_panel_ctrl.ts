@@ -25,6 +25,9 @@ class MetricsPanelCtrl extends PanelCtrl {
   range: any;
   interval: any;
   intervalMs: any;
+  intervalS: any;
+  intervalM: any;
+  intervalH: any;
   resolution: any;
   timeInfo: any;
   skipDataOnInit: boolean;
@@ -161,6 +164,9 @@ class MetricsPanelCtrl extends PanelCtrl {
     var res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
     this.interval = res.interval;
     this.intervalMs = res.intervalMs;
+    this.intervalS = res.intervalS;
+    this.intervalM = res.intervalM;
+    this.intervalH = res.intervalH;
   }
 
   applyPanelTimeOverrides() {
@@ -217,6 +223,9 @@ class MetricsPanelCtrl extends PanelCtrl {
     var scopedVars = Object.assign({}, this.panel.scopedVars, {
       "__interval":     {text: this.interval,   value: this.interval},
       "__interval_ms":  {text: this.intervalMs, value: this.intervalMs},
+      "__interval_s":  {text: this.intervalS, value: this.intervalS},
+      "__interval_m":  {text: this.intervalM, value: this.intervalM},
+      "__interval_h":  {text: this.intervalH, value: this.intervalH},
     });
 
     var metricsQuery = {
@@ -225,6 +234,9 @@ class MetricsPanelCtrl extends PanelCtrl {
       rangeRaw: this.range.raw,
       interval: this.interval,
       intervalMs: this.intervalMs,
+      intervalS: this.intervalS,
+      intervalM: this.intervalM,
+      intervalH: this.intervalH,
       targets: this.panel.targets,
       format: this.panel.renderer === 'png' ? 'png' : 'json',
       maxDataPoints: this.resolution,

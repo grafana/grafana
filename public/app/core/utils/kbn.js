@@ -164,6 +164,9 @@ function($, _, moment) {
   kbn.calculateInterval = function(range, resolution, lowLimitInterval) {
     var lowLimitMs = 1; // 1 millisecond default low limit
     var intervalMs;
+    var intervalS;
+    var intervalM;
+    var intervalH;
 
     if (lowLimitInterval) {
       if (lowLimitInterval[0] === '>') {
@@ -176,9 +179,15 @@ function($, _, moment) {
     if (lowLimitMs > intervalMs) {
       intervalMs = lowLimitMs;
     }
+    intervalS = intervalMs / 1000;
+    intervalM = intervalS / 60;
+    intervalH = intervalM / 60;
 
     return {
       intervalMs: intervalMs,
+      intervalS: intervalS,
+      intervalM: intervalM,
+      intervalH: intervalH,
       interval: kbn.secondsToHms(intervalMs / 1000),
     };
   };
