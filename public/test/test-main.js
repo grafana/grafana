@@ -8,7 +8,7 @@
 
   System.config({
     baseURL: '/base/',
-    defaultJSExtensions: true,
+    defaultExtension: 'js',
     paths: {
       'react': 'vendor/npm/react/dist/react.js',
       'react-dom': 'vendor/npm/react-dom/dist/react-dom.js',
@@ -55,12 +55,18 @@
       vendor: {
         defaultExtension: 'js',
       },
+      test: {
+        defaultExtension: 'js',
+      }
     },
 
     map: {
     },
 
     meta: {
+      'vendor/angular-other/angular-strap.js': {
+        deps: ['angular']
+      },
       'vendor/npm/angular/angular.js': {
         format: 'global',
         deps: ['jquery'],

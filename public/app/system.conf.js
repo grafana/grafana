@@ -53,11 +53,6 @@ System.config({
     test: {
       defaultExtension: 'js',
     },
-    'angular-strap': {
-      meta: {
-        deps: ['angular']
-      }
-    }
   },
 
   map: {
