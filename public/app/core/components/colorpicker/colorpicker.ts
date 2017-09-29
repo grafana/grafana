@@ -1,8 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import angular from 'angular';
-import config from 'app/core/config';
-import _ from 'lodash';
 import $ from 'jquery';
 import Drop from 'tether-drop';
 import coreModule from 'app/core/core_module';
@@ -51,7 +49,7 @@ export class ColorPickerPopoverCtrl {
   currentTab: string;
 
   /** @ngInject */
-  constructor(private $scope, private $rootScope) {
+  constructor(private $scope) {
     this.$scope = $scope;
     this.colors = sortedColors;
     this.color = $scope.color;
@@ -159,7 +157,7 @@ export class ColorPickerCtrl {
   colorPickerDrop: any;
 
   /** @ngInject */
-  constructor(private $scope, private $rootScope, private $timeout, private $compile) {
+  constructor(private $scope, private $timeout, private $compile) {
     this.$scope = $scope;
     this.colorPickerDrop = null;
   }

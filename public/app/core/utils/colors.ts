@@ -3,8 +3,8 @@ import _ from 'lodash';
 // Spectrum picker uses TinyColor and loads it as a global variable, so we can use it here also
 declare var tinycolor;
 
-const PALETTE_ROWS = 4;
-const PALETTE_COLUMNS = 14;
+export const PALETTE_ROWS = 4;
+export const PALETTE_COLUMNS = 14;
 
 let colors = [
   "#7EB26D","#EAB839","#6ED0E0","#EF843C","#E24D42","#1F78C1","#BA43A9","#705DA0",
