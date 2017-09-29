@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -30,7 +31,7 @@ func (m *PostgresMacroEngine) Interpolate(sql string) (string, error) {
 	var macroError error
 
 	sql = ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
-		res, err := m.EvaluateMacro(groups[1], groups[2:])
+		res, err := m.EvaluateMacro(groups[1], strings.Split(groups[2], ","))
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -83,6 +84,11 @@ func (m *PostgresMacroEngine) EvaluateMacro(name string, args []string) (string,
 		return fmt.Sprintf("to_timestamp(%d)", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
 	case "__timeTo":
 		return fmt.Sprintf("to_timestamp(%d)", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+	case "__timeGroup":
+		if len(args) < 2 {
+			return "", fmt.Errorf("macro %v needs time column and interval", name)
+		}
+		return fmt.Sprintf("(extract(epoch from \"%s\")/extract(epoch from %s::interval))::int", args[0], args[1]), nil
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
