@@ -300,6 +300,15 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
       });
     };
 
+    this.targetContainsTemplate = function(target) {
+      return templateSrv.variableExists(target.region) ||
+      templateSrv.variableExists(target.namespace) ||
+      templateSrv.variableExists(target.metricName) ||
+      _.find(target.dimensions, function(v, k) {
+        return templateSrv.variableExists(k) || templateSrv.variableExists(v);
+      });
+    };
+
     this.testDatasource = function() {
       /* use billing metrics for test */
       var region = this.defaultRegion;
