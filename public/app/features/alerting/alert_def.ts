@@ -49,6 +49,8 @@ var reducerTypes = [
   {text: 'count()', value: 'count'},
   {text: 'last()', value: 'last'},
   {text: 'median()', value: 'median'},
+  {text: 'diff()', value: 'diff'},
+  {text: 'shake()', value: 'shake'},
 ];
 
 var noDataModes = [
