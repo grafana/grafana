@@ -94,6 +94,53 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 				value = (values[(length/2)-1] + values[length/2]) / 2
 			}
 		}
+	case "diff":
+		var (
+			points = series.Points
+			first  float64
+			i      int
+		)
+		// get the newest point
+		for i = len(points) - 1; i >= 0; i-- {
+			if points[i][0].Valid {
+				allNull = false
+				first = points[i][0].Float64
+				break
+			}
+		}
+		// get other points
+		points = points[0:i]
+		for i := len(points) - 1; i >= 0; i-- {
+			if points[i][0].Valid {
+				allNull = false
+				value = first - points[i][0].Float64
+				break
+			}
+		}
+	case "pdiff":
+		var (
+			points = series.Points
+			first  float64
+			i      int
+		)
+		// get the newest point
+		for i = len(points) - 1; i >= 0; i-- {
+			if points[i][0].Valid {
+				allNull = false
+				first = points[i][0].Float64
+				break
+			}
+		}
+		// get other points
+		points = points[0:i]
+		for i := len(points) - 1; i >= 0; i-- {
+			if points[i][0].Valid {
+				allNull = false
+				val := (first - points[i][0].Float64) / points[i][0].Float64 * 100
+				value = math.Abs(val)
+				break
+			}
+		}
 	}
 
 	if allNull {
