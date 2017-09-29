@@ -3,10 +3,8 @@
 import _ from 'lodash';
 import moment from 'moment';
 import alertDef from '../../../features/alerting/alert_def';
-import config from 'app/core/config';
 import {PanelCtrl} from 'app/plugins/sdk';
 
-import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
 
 class AlertListPanel extends PanelCtrl {
@@ -37,7 +35,7 @@ class AlertListPanel extends PanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private $location, private backendSrv, private timeSrv, private templateSrv) {
+  constructor($scope, $injector, private backendSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 

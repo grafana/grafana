@@ -1,8 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import config from 'app/core/config';
-import _ from 'lodash';
-import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 
 var template = `
@@ -37,7 +34,7 @@ export class ColorPickerCtrl {
   showAxisControls: boolean;
 
   /** @ngInject */
-  constructor(private $scope, private $rootScope) {
+  constructor(private $scope, $rootScope) {
     this.colors = $rootScope.colors;
     this.autoClose = $scope.autoClose;
     this.series = $scope.series;

@@ -2,8 +2,6 @@
 export class ThresholdMapper {
 
   static alertToGraphThresholds(panel) {
-    var alert = panel.alert;
-
     if (panel.type !== 'graph') {
       return false;
     }

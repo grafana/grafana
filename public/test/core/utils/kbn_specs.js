@@ -1,7 +1,8 @@
 define([
   'app/core/utils/kbn',
-  'app/core/utils/datemath'
-], function(kbn, dateMath) {
+  'app/core/utils/datemath',
+  'moment'
+], function(kbn, dateMath, moment) {
   'use strict';
 
   describe('unit format menu', function() {
@@ -93,6 +94,42 @@ define([
   describeValueFormat('d', 3, 1, 0, '3 day');
   describeValueFormat('d', 245, 100, 0, '35 week');
   describeValueFormat('d', 2456, 10, 0, '6.73 year');
+
+  describe('date time formats', function() {
+    it('should format as iso date', function() {
+      var str = kbn.valueFormats.dateTimeAsIso(1505634997920, 1);
+      expect(str).to.be(moment(1505634997920).format('YYYY-MM-DD HH:mm:ss'));
+    });
+
+    it('should format as iso date and skip date when today', function() {
+      var now = moment();
+      var str = kbn.valueFormats.dateTimeAsIso(now.valueOf(), 1);
+      expect(str).to.be(now.format("HH:mm:ss"));
+    });
+
+    it('should format as US date', function() {
+      var str = kbn.valueFormats.dateTimeAsUS(1505634997920, 1);
+      expect(str).to.be(moment(1505634997920).format('MM/DD/YYYY H:mm:ss a'));
+    });
+
+    it('should format as US date and skip date when today', function() {
+      var now = moment();
+      var str = kbn.valueFormats.dateTimeAsUS(now.valueOf(), 1);
+      expect(str).to.be(now.format("h:mm:ss a"));
+    });
+
+    it('should format as from now with days', function() {
+      var daysAgo = moment().add(-7, 'd');
+      var str = kbn.valueFormats.dateTimeFromNow(daysAgo.valueOf(), 1);
+      expect(str).to.be('7 days ago');
+    });
+
+    it('should format as from now with minutes', function() {
+      var daysAgo = moment().add(-2, 'm');
+      var str = kbn.valueFormats.dateTimeFromNow(daysAgo.valueOf(), 1);
+      expect(str).to.be('2 minutes ago');
+    });
+  });
 
   describe('kbn.toFixed and negative decimals', function() {
     it('should treat as zero decimals', function() {

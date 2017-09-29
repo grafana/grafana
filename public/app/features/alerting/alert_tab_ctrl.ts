@@ -5,7 +5,6 @@ import {ThresholdMapper} from './threshold_mapper';
 import {QueryPart} from 'app/core/components/query_part/query_part';
 import alertDef from './alert_def';
 import config from 'app/core/config';
-import moment from 'moment';
 import appEvents from 'app/core/app_events';
 
 export class AlertTabCtrl {
@@ -30,13 +29,11 @@ export class AlertTabCtrl {
 
   /** @ngInject */
   constructor(private $scope,
-              private $timeout,
               private backendSrv,
               private dashboardSrv,
               private uiSegmentSrv,
               private $q,
-              private datasourceSrv,
-              private templateSrv) {
+              private datasourceSrv) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
@@ -87,7 +84,7 @@ export class AlertTabCtrl {
     });
   }
 
-  getNotificationIcon(type) {
+  getNotificationIcon(type): string {
     switch (type) {
       case "email": return "fa fa-envelope";
       case "slack": return "fa fa-slack";
@@ -98,6 +95,7 @@ export class AlertTabCtrl {
       case "hipchat": return "fa fa-mail-forward";
       case "pushover": return "fa fa-mobile";
     }
+    return 'fa fa-bell';
   }
 
   getNotifications() {

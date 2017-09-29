@@ -48,11 +48,13 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
+			Renegotiation:      tls.RenegotiateFreelyAsClient,
 		},
 		Proxy: http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
+			DualStack: true,
 		}).Dial,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,

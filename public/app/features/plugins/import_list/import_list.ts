@@ -1,6 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
@@ -11,7 +10,7 @@ export class DashImportListCtrl {
   datasource: any;
 
   /** @ngInject */
-  constructor($scope, private $http, private backendSrv, private $rootScope) {
+  constructor($scope, private backendSrv, private $rootScope) {
     this.dashboards = [];
 
     backendSrv.get(`/api/plugins/${this.plugin.id}/dashboards`).then(dashboards => {
@@ -39,6 +38,8 @@ export class DashImportListCtrl {
             });
           }, 500);
         });
+      } else {
+        return Promise.resolve();
       }
     });
   }

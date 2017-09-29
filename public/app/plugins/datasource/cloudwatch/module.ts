@@ -1,6 +1,6 @@
 import './query_parameter_ctrl';
 
-import {CloudWatchDatasource} from './datasource';
+import CloudWatchDatasource from './datasource';
 import {CloudWatchQueryCtrl} from './query_ctrl';
 import {CloudWatchConfigCtrl} from './config_ctrl';
 

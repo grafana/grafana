@@ -5,7 +5,6 @@ import { describe, beforeEach, it, sinon, expect, angularMocks } from '../../../
 import '../module';
 import angular from 'angular';
 import $ from 'jquery';
-import _ from 'lodash';
 import helpers from 'test/specs/helpers';
 import TimeSeries from 'app/core/time_series2';
 import moment from 'moment';
@@ -131,7 +130,7 @@ describe('grafanaHeatmap', function () {
 
           ctrl.data = ctx.data;
           ctx.element = element;
-          let render = rendering(scope, $(element), [], ctrl);
+          rendering(scope, $(element), [], ctrl);
           ctrl.events.emit('render');
         }));
       };

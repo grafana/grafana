@@ -2,9 +2,7 @@
 
 import angular from 'angular';
 import _ from 'lodash';
-import moment from 'moment';
 
-import * as dateMath from 'app/core/utils/datemath';
 import {QueryCtrl} from 'app/plugins/sdk';
 import {PromCompleter} from './completer';
 
@@ -14,6 +12,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
   metric: any;
   resolutions: any;
   formats: any;
+  instant: any;
   oldTarget: any;
   suggestMetrics: any;
   getMetricsAutocomplete: any;
@@ -37,6 +36,8 @@ class PrometheusQueryCtrl extends QueryCtrl {
       {text: 'Time series', value: 'time_series'},
       {text: 'Table', value: 'table'},
     ];
+
+    this.instant = false;
 
     this.updateLink();
   }

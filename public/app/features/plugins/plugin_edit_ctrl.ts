@@ -2,7 +2,6 @@
 
 import angular from 'angular';
 import _ from 'lodash';
-import appEvents from 'app/core/app_events';
 import Remarkable from 'remarkable';
 
 export class PluginEditCtrl {
@@ -24,10 +23,9 @@ export class PluginEditCtrl {
     private $scope,
     private $rootScope,
     private backendSrv,
-    private $routeParams,
     private $sce,
-    private $http,
-    private navModelSrv,
+    $routeParams,
+    navModelSrv,
   ) {
     this.navModel = navModelSrv.getPluginsNav();
     this.model = {};
@@ -81,6 +79,7 @@ export class PluginEditCtrl {
       case 'app':  return 'icon-gf icon-gf-apps';
       case 'page':  return 'icon-gf icon-gf-endpoint-tiny';
       case 'dashboard':  return 'icon-gf icon-gf-dashboard';
+      default: return 'icon-gf icon-gf-apps';
     }
   }
 

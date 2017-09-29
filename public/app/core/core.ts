@@ -8,7 +8,6 @@ import "./directives/dropdown_typeahead";
 import "./directives/metric_segment";
 import "./directives/misc";
 import "./directives/ng_model_on_blur";
-import "./directives/password_strength";
 import "./directives/spectrum_picker";
 import "./directives/tags";
 import "./directives/value_select_dropdown";
@@ -36,7 +35,6 @@ import {layoutSelector} from './components/layout_selector/layout_selector';
 import {switchDirective} from './components/switch';
 import {dashboardSelector} from './components/dashboard_selector';
 import {queryPartEditorDirective} from './components/query_part/query_part_editor';
-import {WizardFlow} from './components/wizard/wizard';
 import {formDropdownDirective} from './components/form_dropdown/form_dropdown';
 import 'app/core/controllers/all';
 import 'app/core/services/all';
@@ -49,10 +47,9 @@ import {assignModelProperties} from './utils/model_utils';
 import {contextSrv} from './services/context_srv';
 import {KeybindingSrv} from './services/keybindingSrv';
 import {helpModal} from './components/help/help';
-import {collapseBox} from './components/collapse_box';
+import {PasswordStrength} from './components/PasswordStrength';
 import {JsonExplorer} from './components/json_explorer/json_explorer';
 import {NavModelSrv, NavModel} from './nav_model_srv';
-
 
 export {
   arrayJoin,
@@ -70,15 +67,14 @@ export {
   appEvents,
   dashboardSelector,
   queryPartEditorDirective,
-  WizardFlow,
   colors,
   formDropdownDirective,
   assignModelProperties,
   contextSrv,
   KeybindingSrv,
   helpModal,
-  collapseBox,
   JsonExplorer,
   NavModelSrv,
   NavModel,
+  PasswordStrength,
 };

@@ -1,9 +1,8 @@
 
 import "../datasource";
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
-import moment from 'moment';
+import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 import helpers from 'test/specs/helpers';
-import {CloudWatchDatasource} from "../datasource";
+import CloudWatchDatasource from "../datasource";
 
 describe('CloudWatchDatasource', function() {
   var ctx = new helpers.ServiceTestContext();

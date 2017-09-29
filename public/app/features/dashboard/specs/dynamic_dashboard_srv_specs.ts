@@ -1,6 +1,6 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 
-import {DashboardSrv} from '../dashboard_srv';
+import '../dashboard_srv';
 import {DynamicDashboardSrv} from '../dynamic_dashboard_srv';
 
 function dynamicDashScenario(desc, func)  {

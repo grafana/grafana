@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import coreModule from '../../core/core_module';
 import kbn from 'app/core/utils/kbn';
 import appEvents from 'app/core/app_events';
@@ -16,7 +15,6 @@ class PlaylistSrv {
 
   /** @ngInject */
   constructor(
-    private $rootScope: any,
     private $location: any,
     private $timeout: any,
     private backendSrv: any,

@@ -1,8 +1,9 @@
 define([
   'jquery',
-  'lodash'
+  'lodash',
+  'moment'
 ],
-function($, _) {
+function($, _, moment) {
   'use strict';
 
   var kbn = {};
@@ -702,6 +703,28 @@ function($, _) {
     return kbn.toDuration(size, decimals, 'second');
   };
 
+  kbn.valueFormats.dateTimeAsIso = function(epoch) {
+    var time = moment(epoch);
+
+    if (moment().isSame(epoch, 'day')) {
+      return time.format('HH:mm:ss');
+    }
+    return time.format('YYYY-MM-DD HH:mm:ss');
+  };
+
+  kbn.valueFormats.dateTimeAsUS = function(epoch) {
+    var time = moment(epoch);
+
+    if (moment().isSame(epoch, 'day')) {
+      return time.format('h:mm:ss a');
+    }
+    return time.format('MM/DD/YYYY h:mm:ss a');
+  };
+
+  kbn.valueFormats.dateTimeFromNow = function(epoch) {
+    return moment(epoch).fromNow();
+  };
+
   ///// FORMAT MENU /////
 
   kbn.getUnitFormats = function() {
@@ -745,7 +768,15 @@ function($, _) {
           {text: 'hours (h)',         value: 'h'    },
           {text: 'days (d)',          value: 'd'    },
           {text: 'duration (ms)',     value: 'dtdurationms' },
-          {text: 'duration (s)',      value: 'dtdurations' }
+          {text: 'duration (s)',      value: 'dtdurations' },
+        ]
+      },
+      {
+        text: 'date & time',
+        submenu: [
+          {text: 'YYYY-MM-DD HH:mm:ss',   value: 'dateTimeAsIso' },
+          {text: 'DD/MM/YYYY h:mm:ss a',  value: 'dateTimeAsUS' },
+          {text: 'From Now',              value: 'dateTimeFromNow' },
         ]
       },
       {

@@ -10,7 +10,7 @@ export class AdHocFiltersCtrl {
   removeTagFilterSegment: any;
 
   /** @ngInject */
-  constructor(private uiSegmentSrv, private datasourceSrv, private $q, private variableSrv, private $scope, private $rootScope) {
+  constructor(private uiSegmentSrv, private datasourceSrv, private $q, private variableSrv, $scope, private $rootScope) {
     this.removeTagFilterSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove filter --'});
     this.buildSegmentModel();
     this.$rootScope.onAppEvent('template-variable-value-updated', this.buildSegmentModel.bind(this), $scope);
@@ -107,7 +107,6 @@ export class AdHocFiltersCtrl {
   updateVariableModel() {
     var filters = [];
     var filterIndex = -1;
-    var operator = "";
     var hasFakes = false;
 
     this.segments.forEach(segment => {

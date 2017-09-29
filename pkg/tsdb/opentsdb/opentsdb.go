@@ -22,20 +22,22 @@ import (
 )
 
 type OpenTsdbExecutor struct {
-	*models.DataSource
-	httpClient *http.Client
+	//*models.DataSource
+	//httpClient *http.Client
 }
 
-func NewOpenTsdbExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
-	httpClient, err := datasource.GetHttpClient()
+func NewOpenTsdbExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	/*
+		httpClient, err := datasource.GetHttpClient()
 
-	if err != nil {
-		return nil, err
-	}
+		if err != nil {
+			return nil, err
+		}
+	*/
 
 	return &OpenTsdbExecutor{
-		DataSource: datasource,
-		httpClient: httpClient,
+	//DataSource: datasource,
+	//httpClient: httpClient,
 	}, nil
 }
 
@@ -45,18 +47,18 @@ var (
 
 func init() {
 	plog = log.New("tsdb.opentsdb")
-	tsdb.RegisterExecutor("opentsdb", NewOpenTsdbExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("opentsdb", NewOpenTsdbExecutor)
 }
 
-func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{}
+func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{}
 
 	var tsdbQuery OpenTsdbQuery
 
 	tsdbQuery.Start = queryContext.TimeRange.GetFromAsMsEpoch()
 	tsdbQuery.End = queryContext.TimeRange.GetToAsMsEpoch()
 
-	for _, query := range queries {
+	for _, query := range queryContext.Queries {
 		metric := e.buildMetric(query)
 		tsdbQuery.Queries = append(tsdbQuery.Queries, metric)
 	}
@@ -65,29 +67,32 @@ func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		plog.Debug("OpenTsdb request", "params", tsdbQuery)
 	}
 
-	req, err := e.createRequest(tsdbQuery)
+	req, err := e.createRequest(dsInfo, tsdbQuery)
 	if err != nil {
-		result.Error = err
-		return result
+		return nil, err
 	}
 
-	res, err := ctxhttp.Do(ctx, e.httpClient, req)
+	httpClient, err := dsInfo.GetHttpClient()
 	if err != nil {
-		result.Error = err
-		return result
+		return nil, err
+	}
+
+	res, err := ctxhttp.Do(ctx, httpClient, req)
+	if err != nil {
+		return nil, err
 	}
 
 	queryResult, err := e.parseResponse(tsdbQuery, res)
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
 
-	result.QueryResults = queryResult
-	return result
+	result.Results = queryResult
+	return result, nil
 }
 
-func (e *OpenTsdbExecutor) createRequest(data OpenTsdbQuery) (*http.Request, error) {
-	u, _ := url.Parse(e.Url)
+func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsdbQuery) (*http.Request, error) {
+	u, _ := url.Parse(dsInfo.Url)
 	u.Path = path.Join(u.Path, "api/query")
 
 	postData, err := json.Marshal(data)
@@ -99,8 +104,8 @@ func (e *OpenTsdbExecutor) createRequest(data OpenTsdbQuery) (*http.Request, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	if e.BasicAuth {
-		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
+	if dsInfo.BasicAuth {
+		req.SetBasicAuth(dsInfo.BasicAuthUser, dsInfo.BasicAuthPassword)
 	}
 
 	return req, err
