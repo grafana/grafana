@@ -651,10 +651,15 @@ These options control how images should be made public so they can be shared on 
 You can choose between (s3, webdav, gcs). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
+
 ### bucket
 Bucket name for S3. e.g. grafana.snapshot
+
 ### region
 Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc
+
+### path
+Optional extra path inside bucket, useful to apply expiration policies
 
 ### bucket_url
 (for backward compatibility, only works when no bucket or region are configured)

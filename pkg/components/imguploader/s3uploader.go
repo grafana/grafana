@@ -19,16 +19,18 @@ import (
 type S3Uploader struct {
 	region    string
 	bucket    string
+	path      string
 	acl       string
 	secretKey string
 	accessKey string
 	log       log.Logger
 }
 
-func NewS3Uploader(region, bucket, acl, accessKey, secretKey string) *S3Uploader {
+func NewS3Uploader(region, bucket, path, acl, accessKey, secretKey string) *S3Uploader {
 	return &S3Uploader{
 		region:    region,
 		bucket:    bucket,
+		path:      path,
 		acl:       acl,
 		accessKey: accessKey,
 		secretKey: secretKey,
@@ -56,7 +58,7 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 	}
 
 	s3_endpoint, _ := endpoints.DefaultResolver().EndpointFor("s3", u.region)
-	key := util.GetRandomString(20) + ".png"
+	key := u.path + util.GetRandomString(20) + ".png"
 	image_url := s3_endpoint.URL + "/" + u.bucket + "/" + key
 	log.Debug("Uploading image to s3", "url = ", image_url)
 
