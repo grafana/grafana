@@ -7,9 +7,15 @@ class PostgresConfigCtrl {
   static templateUrl = 'partials/config.html';
 }
 
-const defaultQuery = `
-  SELECT generate_series($__timeFrom(),$__timeTo(),'30s'::interval) AS "time", random() as "value",'random' AS "metric"
-  `;
+const defaultQuery = `SELECT
+  extract(epoch from time_column) AS time,
+  title_column as title,
+  description_column as text
+FROM
+  metric_table
+WHERE
+  $__timeFilter(time_column)
+`;
 
 class PostgresAnnotationsQueryCtrl {
   static templateUrl = 'partials/annotations.editor.html';
