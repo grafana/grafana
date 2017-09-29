@@ -86,8 +86,8 @@ func TestSimpleReducer(t *testing.T) {
 			So(result, ShouldEqual, float64(10))
 		})
 
-		Convey("pdiff", func() {
-			result := testReducer("pdiff", 30, 40)
+		Convey("percent_diff", func() {
+			result := testReducer("percent_diff", 30, 40)
 			So(result, ShouldEqual, float64(33.33333333333333))
 		})
 

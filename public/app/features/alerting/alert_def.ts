@@ -50,7 +50,7 @@ var reducerTypes = [
   {text: 'last()', value: 'last'},
   {text: 'median()', value: 'median'},
   {text: 'diff()', value: 'diff'},
-  {text: 'pdiff()', value: 'pdiff'},
+  {text: 'percent_diff()', value: 'percent_diff'},
 ];
 
 var noDataModes = [

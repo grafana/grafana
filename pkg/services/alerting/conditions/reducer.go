@@ -117,7 +117,7 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 				break
 			}
 		}
-	case "pdiff":
+	case "percent_diff":
 		var (
 			points = series.Points
 			first  float64
