@@ -50,6 +50,17 @@ func TestMacroEngine(t *testing.T) {
 			So(sql, ShouldEqual, "select to_timestamp(18446744066914186738)")
 		})
 
+		Convey("interpolate __timeGroup function", func() {
+			engine := &PostgresMacroEngine{
+				TimeRange: &tsdb.TimeRange{From: "5m", To: "now"},
+			}
+
+			sql, err := engine.Interpolate("GROUP BY $__timeGroup(time_column,'5m')")
+			So(err, ShouldBeNil)
+
+			So(sql, ShouldEqual, "GROUP BY (extract(epoch from \"time_column\")/extract(epoch from '5m'::interval))::int")
+		})
+
 		Convey("interpolate __timeTo function", func() {
 			engine := &PostgresMacroEngine{
 				TimeRange: &tsdb.TimeRange{From: "5m", To: "now"},
