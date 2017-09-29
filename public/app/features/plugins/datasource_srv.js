@@ -1,10 +1,11 @@
 define([
   'angular',
   'lodash',
-  '../core_module',
+  'app/core/core_module',
   'app/core/config',
+  './plugin_loader',
 ],
-function (angular, _, coreModule, config) {
+function (angular, _, coreModule, config, pluginLoader) {
   'use strict';
 
   coreModule.default.service('datasourceSrv', function($q, $injector, $rootScope, templateSrv) {
@@ -41,7 +42,7 @@ function (angular, _, coreModule, config) {
       var deferred = $q.defer();
       var pluginDef = dsConfig.meta;
 
-      System.import(pluginDef.module).then(function(plugin) {
+      pluginLoader.importPluginModule(pluginDef.module).then(function(plugin) {
         // check if its in cache now
         if (self.datasources[name]) {
           deferred.resolve(self.datasources[name]);

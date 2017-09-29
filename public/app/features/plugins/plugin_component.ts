@@ -1,11 +1,11 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
 
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
-import {UnknownPanelCtrl} from 'app/plugins/panel/unknown/module';
+import {importPluginModule}  from './plugin_loader';
+
+// import {UnknownPanelCtrl} from 'app/plugins/panel/unknown/module';
 
 /** @ngInject **/
 function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
@@ -62,9 +62,10 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     };
 
     let panelInfo = config.panels[scope.panel.type];
-    var panelCtrlPromise = Promise.resolve(UnknownPanelCtrl);
+    var panelCtrlPromise = null; // Promise.resolve(UnknownPanelCtrl);
     if (panelInfo) {
-      panelCtrlPromise = System.import(panelInfo.module).then(function(panelModule) {
+      panelCtrlPromise = importPluginModule(panelInfo.module).then(function(panelModule) {
+        console.log('imported module', panelModule);
         return panelModule.PanelCtrl;
       });
     }
@@ -104,7 +105,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         return datasourceSrv.get(datasource).then(ds => {
           scope.datasource = ds;
 
-          return System.import(ds.meta.module).then(dsModule => {
+          return importPluginModule(ds.meta.module).then(dsModule => {
             return {
               baseUrl: ds.meta.baseUrl,
               name: 'query-ctrl-' + ds.meta.id,
@@ -118,7 +119,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       // QueryOptionsCtrl
       case "query-options-ctrl": {
         return datasourceSrv.get(scope.ctrl.panel.datasource).then(ds => {
-          return System.import(ds.meta.module).then((dsModule): any => {
+          return importPluginModule(ds.meta.module).then((dsModule): any => {
             if (!dsModule.QueryOptionsCtrl) {
               return {notFound: true};
             }
@@ -135,7 +136,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       }
       // Annotations
       case "annotations-query-ctrl": {
-        return System.import(scope.ctrl.currentDatasource.meta.module).then(function(dsModule) {
+        return importPluginModule(scope.ctrl.currentDatasource.meta.module).then(function(dsModule) {
           return {
             baseUrl: scope.ctrl.currentDatasource.meta.baseUrl,
             name: 'annotations-query-ctrl-' + scope.ctrl.currentDatasource.meta.id,
@@ -148,7 +149,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       // Datasource ConfigCtrl
       case 'datasource-config-ctrl': {
         var dsMeta = scope.ctrl.datasourceMeta;
-        return System.import(dsMeta.module).then(function(dsModule): any {
+        return importPluginModule(dsMeta.module).then(function(dsModule): any {
           if (!dsModule.ConfigCtrl) {
             return {notFound: true};
           }
@@ -165,7 +166,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       // AppConfigCtrl
       case 'app-config-ctrl': {
         let model = scope.ctrl.model;
-        return System.import(model.module).then(function(appModule) {
+        return importPluginModule(model.module).then(function(appModule) {
           return {
             baseUrl: model.baseUrl,
             name: 'app-config-' + model.id,
@@ -178,7 +179,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       // App Page
       case 'app-page': {
         let appModel = scope.ctrl.appModel;
-        return System.import(appModel.module).then(function(appModule) {
+        return importPluginModule(appModel.module).then(function(appModule) {
           return {
             baseUrl: appModel.baseUrl,
             name: 'app-page-' + appModel.id + '-' + scope.ctrl.page.slug,

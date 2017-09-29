@@ -2,7 +2,7 @@ define([
   'angular',
   'jquery',
   '../core_module',
-  'bootstrap-tagsinput',
+  'vendor/tagsinput/bootstrap-tagsinput.js',
 ],
 function (angular, $, coreModule) {
   'use strict';

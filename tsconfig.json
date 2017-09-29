@@ -1,31 +1,32 @@
 {
     "compilerOptions": {
-        "declaration": true,
-        "outDir": "public_gen",
-        "noImplicitAny": false,
-        "target": "es5",
-        "lib": ["es6", "dom"],
-        "rootDir": "public/",
-        "module": "es6",
-        "jsx": "react",
-        "inlineSourceMap": false,
-        "sourceMap": true,
-        "noEmitOnError": false,
-        "emitDecoratorMetadata": false,
-        "experimentalDecorators": false,
-        "noImplicitReturns": true,
-        "noImplicitThis": false,
-        "noImplicitUseStrict":false,
-        "moduleResolution": "node",
-        "baseUrl": "public",
-        "paths": {
-          "app": ["app"]
-        }
+      "moduleResolution": "node",
+      "outDir": "public_gen",
+      "target": "es5",
+      "lib": ["es6", "dom"],
+      "rootDir": "public/",
+      "jsx": "react",
+      "module": "esnext",
+      "declaration": false,
+      "allowSyntheticDefaultImports": true,
+      "inlineSourceMap": false,
+      "sourceMap": true,
+      "noEmitOnError": false,
+      "emitDecoratorMetadata": false,
+      "experimentalDecorators": false,
+      "noImplicitReturns": true,
+      "noImplicitThis": false,
+      "noImplicitUseStrict":false,
+      "noImplicitAny": false,
+      "baseUrl": "public",
+      "paths": {
+        "app": ["app"]
+      }
     },
     "include": [
-        "public/app/**/*.ts",
-        "public/app/**/*.tsx",
-        "public/test/**/*.ts"
+      "public/app/**/*.ts",
+      "public/app/**/*.tsx",
+      "public/test/**/*.ts"
     ],
     "exclude": [
     ]
