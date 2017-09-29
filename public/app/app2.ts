@@ -7,45 +7,61 @@ import _ from 'lodash';
 import * as sdk from 'app/plugins/sdk';
 import kbn from 'app/core/utils/kbn';
 import moment from 'moment';
+import jquery from 'jquery';
+
+import 'file-saver';
+import 'angular-route';
+import 'angular-sanitize';
+import 'angular-native-dragdrop';
+import 'angular-bindonce';
+import 'react';
+import 'react-dom';
+import 'ngreact';
+
+// import 'vendor/bootstrap/bootstrap.js';
+// import 'vendor/angular-ui/ui-bootstrap-tpls.js';
+// import 'vendor/angular-other/angular-strap.js';
 
 console.log(System);
 console.log(HelpCtrl);
 console.log(angular);
-
-System.config({
-  baseURL: 'public',
-  defaultExtension: 'js',
-  packages: {
-    'plugins': {
-      defaultExtension: 'js'
-    }
-  },
-  map: {
-    text: 'vendor/plugin-text/text.js',
-    css: 'app/core/utils/css_loader.js'
-  },
-});
-
-console.log(System);
-
-System.registerDynamic('lodash', [], true, function(require, exports, module) {
-  module.exports = _;
-});
-
-System.registerDynamic('kbn', [], true, function(require, exports, module) {
-  module.exports = kbn;
-});
-
-System.registerDynamic('moment', [], true, function(require, exports, module) {
-  module.exports = moment;
-});
-
-System.registerDynamic('app/plugins/sdk', [], true, function(require, exports, module) {
-  module.exports = sdk;
-});
-
-let path = 'plugins/grafana-simple-json-datasource/module';
-System.import(path).then(res => {
-  console.log('result', res);
-});
-
+console.log(kbn);
+console.log(jquery);
+//
+// System.config({
+//   baseURL: 'public',
+//   defaultExtension: 'js',
+//   packages: {
+//     'plugins': {
+//       defaultExtension: 'js'
+//     }
+//   },
+//   map: {
+//     text: 'vendor/plugin-text/text.js',
+//     css: 'app/core/utils/css_loader.js'
+//   },
+// });
+//
+// console.log(System);
+//
+// System.registerDynamic('lodash', [], true, function(require, exports, module) {
+//   module.exports = _;
+// });
+//
+// System.registerDynamic('kbn', [], true, function(require, exports, module) {
+//   module.exports = kbn;
+// });
+//
+// System.registerDynamic('moment', [], true, function(require, exports, module) {
+//   module.exports = moment;
+// });
+//
+// System.registerDynamic('app/plugins/sdk', [], true, function(require, exports, module) {
+//   module.exports = sdk;
+// });
+//
+// let path = 'plugins/grafana-simple-json-datasource/module';
+// System.import(path).then(res => {
+//   console.log('result', res);
+// });
+//

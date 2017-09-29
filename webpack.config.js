@@ -31,6 +31,7 @@ module.exports = {
       {
         test: /\.(ts|tsx)$/,
         enforce: 'pre',
+        exclude: /node_modules/,
         use: {
           loader: 'tslint-loader',
           options: {
@@ -40,20 +41,12 @@ module.exports = {
       },
       {
         test: /\.tsx?$/,
+        exclude: /node_modules/,
         use: [
           // { loader: 'babel-loader', options:  { "presets": "es2015" } },
           { loader: "awesome-typescript-loader" }
         ]
       },
-      { test: /\.json$/, loader: 'json-loader' },
-      { test: /\.css$/, loader: 'style-loader!css-loader' },
-      { test: /\.(gif|png|jpe?g)$/i, loader: 'file-loader?name=dist/images/[name].[ext]' },
-      { test: /\.woff2?$/, loader: 'url-loader?name=dist/fonts/[name].[ext]&limit=10000&mimetype=application/font-woff' },
-      { test: /\.(ttf|eot|svg)$/, loader: 'file-loader?name=dist/fonts/[name].[ext]' },
-      // {
-      //   test: require.resolve(__dirname + '/public/vendor/tagsinput/bootstrap-tagsinput.js'),
-      //   use: 'imports-loader?$=>jquery'
-      // }
       {
         test: require.resolve('jquery'),
         use: [
