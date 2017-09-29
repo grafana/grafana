@@ -10,9 +10,9 @@
     "url": "http://github.com/grafana/grafana.git"
   },
   "devDependencies": {
+    "@types/enzyme": "^2.8.8",
     "@types/react": "^16.0.5",
     "@types/react-dom": "^15.5.4",
-    "@types/enzyme": "^2.8.8",
     "autoprefixer": "^6.4.0",
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.2",
@@ -56,18 +56,18 @@
     "load-grunt-tasks": "3.5.2",
     "mocha": "3.2.0",
     "phantomjs-prebuilt": "^2.1.14",
+    "react-test-renderer": "^15.6.1",
     "reflect-metadata": "0.1.8",
     "rxjs": "^5.4.3",
     "sass-lint": "^1.10.2",
     "sass-loader": "^6.0.6",
     "systemjs": "0.19.41",
-    "tslint-loader": "^3.5.3",
-    "webpack": "^3.6.0",
-    "zone.js": "^0.7.2",
     "ts-loader": "^2.3.7",
     "tslint": "^5.7.0",
+    "tslint-loader": "^3.5.3",
     "typescript": "^2.5.2",
-    "react-test-renderer": "^15.6.1"
+    "webpack": "^3.6.0",
+    "zone.js": "^0.7.2"
   },
   "scripts": {
     "webpack": "./node_modules/.bin/webpack",
@@ -107,6 +107,7 @@
     "remarkable": "^1.7.1",
     "sinon": "1.17.6",
     "systemjs-builder": "^0.15.34",
+    "systemjs-plugin-css": "^0.1.36",
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop",
     "virtual-scroll": "^1.1.1"

@@ -9,7 +9,6 @@ module.exports = function(grunt) {
     'jshint:tests',
     'jscs',
     'clean:release',
-    'copy:node_modules',
     'copy:public_to_gen',
     'exec:tslint',
     'exec:tscompile',

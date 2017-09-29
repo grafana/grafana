@@ -7617,6 +7617,10 @@ symbol-observable@^1.0.1:
     traceur "0.0.105"
     uglify-js "~2.7.5"
 
+systemjs-plugin-css@^0.1.36:
+  version "0.1.36"
+  resolved "https://registry.yarnpkg.com/systemjs-plugin-css/-/systemjs-plugin-css-0.1.36.tgz#1ab38811ae6dd71190cefe33f1fe41976a09387d"
+
 systemjs@0.19.41:
   version "0.19.41"
   resolved "https://registry.yarnpkg.com/systemjs/-/systemjs-0.19.41.tgz#835d2c0f10bf403b551fedc875f84bb44a02c4eb"

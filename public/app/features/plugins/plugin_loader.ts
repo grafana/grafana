@@ -31,7 +31,7 @@ System.config({
   },
   map: {
     text: 'vendor/plugin-text/text.js',
-    css: 'app/core/utils/css_loader.js'
+    css: 'vendor/plugin-css/css.js'
   },
 });
 
@@ -43,6 +43,7 @@ System.registerDynamic('app/plugins/sdk', [], true, function(require, exports, m
 System.registerDynamic('app/core/utils/kbn', [], true, function(require, exports, module) { module.exports = kbn; });
 System.registerDynamic('app/core/config', [], true, function(require, exports, module) { module.exports = config; });
 System.registerDynamic('app/core/time_series', [], true, function(require, exports, module) { module.exports = TimeSeries; });
+System.registerDynamic('app/core/time_series2', [], true, function(require, exports, module) { module.exports = TimeSeries; });
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.selection';
@@ -65,5 +66,13 @@ export function importPluginModule(path: string): Promise<any> {
     return Promise.resolve(builtIn);
   }
   return System.import(path);
+}
+
+export function loadPluginCss(options) {
+  if (config.bootData.user.lightTheme) {
+    System.import(options.light + '!css');
+  } else {
+    System.import(options.dark + '!css');
+  }
 }
 
