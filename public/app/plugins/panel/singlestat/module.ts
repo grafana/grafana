@@ -215,6 +215,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
+  onColorChange(panelColorIndex) {
+    return (color) => {
+      this.panel.colors[panelColorIndex] = color;
+      this.render();
+    };
+  }
+
   getDecimalsForValue(value) {
     if (_.isNumber(this.panel.decimals)) {
       return {decimals: this.panel.decimals, scaledDecimals: null};
