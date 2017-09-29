@@ -1,13 +1,13 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import 'jquery.flot';
-import 'jquery.flot.selection';
-import 'jquery.flot.time';
-import 'jquery.flot.stack';
-import 'jquery.flot.stackpercent';
-import 'jquery.flot.fillbelow';
-import 'jquery.flot.crosshair';
-import 'jquery.flot.dashes';
+import 'vendor/flot/jquery.flot';
+import 'vendor/flot/jquery.flot.selection';
+import 'vendor/flot/jquery.flot.time';
+import 'vendor/flot/jquery.flot.stack';
+import 'vendor/flot/jquery.flot.stackpercent';
+import 'vendor/flot/jquery.flot.fillbelow';
+import 'vendor/flot/jquery.flot.crosshair';
+import 'vendor/flot/jquery.flot.dashes';
 import './jquery.flot.events';
 
 import $ from 'jquery';

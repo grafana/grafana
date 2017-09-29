@@ -10,6 +10,7 @@
     "url": "http://github.com/grafana/grafana.git"
   },
   "devDependencies": {
+    "@types/d3": "^4.10.1",
     "@types/enzyme": "^2.8.8",
     "@types/react": "^16.0.5",
     "@types/react-dom": "^15.5.4",
@@ -53,8 +54,8 @@
     "karma-expect": "~1.1.3",
     "karma-mocha": "~1.3.0",
     "karma-phantomjs-launcher": "1.0.2",
-    "karma-sourcemap-loader": "^0.3.7",
     "karma-sinon": "^1.0.5",
+    "karma-sourcemap-loader": "^0.3.7",
     "karma-webpack": "^2.0.4",
     "load-grunt-tasks": "3.5.2",
     "mocha": "3.2.0",
@@ -65,16 +66,17 @@
     "sass-lint": "^1.10.2",
     "sass-loader": "^6.0.6",
     "systemjs": "0.19.41",
+    "systemjs-plugin-css": "^0.1.36",
     "ts-loader": "^2.3.7",
     "tslint": "^5.7.0",
     "tslint-loader": "^3.5.3",
     "typescript": "^2.5.2",
     "webpack": "^3.6.0",
-    "zone.js": "^0.7.2",
-    "systemjs-plugin-css": "^0.1.36"
+    "zone.js": "^0.7.2"
   },
   "scripts": {
     "webpack": "./node_modules/.bin/webpack",
+    "watch": "./node_modules/.bin/webpack --progress --colors --watch",
     "build": "./node_modules/grunt-cli/bin/grunt",
     "test": "./node_modules/grunt-cli/bin/grunt test",
     "test-watch": "karma start --auto-watch --no-single-run"
@@ -91,6 +93,7 @@
     "awesome-typescript-loader": "^3.2.3",
     "babel-polyfill": "^6.26.0",
     "clipboard": "^1.7.1",
+    "d3": "^4.10.2",
     "eventemitter3": "^2.0.3",
     "expose-loader": "^0.7.3",
     "file-saver": "^1.3.3",

@@ -67,9 +67,9 @@ module.exports = function(config) {
       ]
     },
 
-    webpackServer: {
-      noInfo: true, // please don't spam the console when running in karma!
-    },
+    // webpackServer: {
+    //   noInfo: true, // please don't spam the console when running in karma!
+    // },
 
     // list of files to exclude
     exclude: [],
@@ -81,8 +81,8 @@ module.exports = function(config) {
     browsers: ['PhantomJS'],
     captureTimeout: 20000,
     singleRun: true,
-    autoWatchBatchDelay: 1000,
-    browserNoActivityTimeout: 60000,
+    // autoWatchBatchDelay: 1000,
+    // browserNoActivityTimeout: 60000,
   });
 
 };

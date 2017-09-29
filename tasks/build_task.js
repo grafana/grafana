@@ -10,8 +10,6 @@ module.exports = function(grunt) {
     'jscs',
     'clean:release',
     'copy:public_to_gen',
-    'exec:tslint',
-    'exec:tscompile',
     'karma:test',
     'phantomjs',
     'css',

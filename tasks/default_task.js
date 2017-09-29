@@ -18,10 +18,8 @@ module.exports = function(grunt) {
     'jscs',
     'jshint',
     'copy:public_to_gen',
-    'exec:tslint',
     'phantomjs',
     'css',
-    'exec:tscompile'
   ]);
 
   grunt.registerTask('test', ['default', 'karma:test', 'no-only-tests']);
