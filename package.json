@@ -11,7 +11,8 @@
   },
   "devDependencies": {
     "@types/d3": "^4.10.1",
-    "@types/enzyme": "^2.8.8",
+    "@types/enzyme": "^2.8.9",
+    "@types/node": "^8.0.31",
     "@types/react": "^16.0.5",
     "@types/react-dom": "^15.5.4",
     "autoprefixer": "^6.4.0",
@@ -19,6 +20,8 @@
     "babel-loader": "^7.1.2",
     "babel-preset-es2015": "^6.24.1",
     "css-loader": "^0.28.7",
+    "enzyme": "^3.0.0",
+    "enzyme-adapter-react-16": "^1.0.0",
     "es6-promise": "^3.0.2",
     "es6-shim": "^0.35.3",
     "expect.js": "~0.2.0",

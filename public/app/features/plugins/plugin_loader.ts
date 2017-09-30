@@ -54,9 +54,6 @@ System.config({
   baseURL: 'public',
   defaultExtension: 'js',
   packages: {
-    "app/plugins": {
-      defaultExtension: 'js'
-    },
     'plugins': {
       defaultExtension: 'js'
     }

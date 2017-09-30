@@ -197,6 +197,10 @@
   version "6.0.88"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.88.tgz#f618f11a944f6a18d92b5c472028728a3e3d4b66"
 
+"@types/node@^8.0.31":
+  version "8.0.31"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.31.tgz#d9af61093cf4bfc9f066ca34de0175012cfb0ce9"
+
 "@types/react-dom@^15.5.4":
   version "15.5.5"
   resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-15.5.5.tgz#6b117c7697b61fe74132bfe5c72bceb3319433b8"
@@ -3712,13 +3716,6 @@ grunt-sass@^2.0.0:
     node-sass "^4.0.0"
     object-assign "^4.0.1"
 
-grunt-string-replace@~1.3.1:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/grunt-string-replace/-/grunt-string-replace-1.3.1.tgz#633a03bc78482a0e0e1f9df7f645811fc1fbb162"
-  dependencies:
-    async "^2.0.0"
-    chalk "^1.0.0"
-
 grunt-usemin@3.1.1:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/grunt-usemin/-/grunt-usemin-3.1.1.tgz#5ab679510d672cea566cc717abe8b8a009f641c2"
@@ -7044,10 +7041,6 @@ reduce-function-call@^1.0.1:
   resolved "https://registry.yarnpkg.com/reduce-function-call/-/reduce-function-call-1.0.2.tgz#5a200bf92e0e37751752fe45b0ab330fd4b6be99"
   dependencies:
     balanced-match "^0.4.2"
-
-reflect-metadata@0.1.8:
-  version "0.1.8"
-  resolved "https://registry.yarnpkg.com/reflect-metadata/-/reflect-metadata-0.1.8.tgz#72426d570b60776e3688968bd5ab9537a15cecf6"
 
 regenerate@^1.2.1:
   version "1.3.3"
