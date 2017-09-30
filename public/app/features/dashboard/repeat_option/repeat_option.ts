@@ -9,7 +9,8 @@ var template = `
 </div>
 `;
 
-coreModule.directive('dashRepeatOption', function(variableSrv) {
+/** @ngInject **/
+function dashRepeatOptionDirective(variableSrv) {
   return {
     restrict: 'E',
     template: template,
@@ -30,5 +31,6 @@ coreModule.directive('dashRepeatOption', function(variableSrv) {
       scope.variables.unshift({text: 'Disabled', value: null});
     }
   };
-});
+}
 
+coreModule.directive('dashRepeatOption', dashRepeatOptionDirective);

@@ -5,5 +5,8 @@ module.exports = function(config) {
     release: ['<%= destDir %>', '<%= tempDir %>', '<%= genDir %>'],
     build: ['<%= srcDir %>/build'],
     temp: ['<%= tempDir %>'],
+    packaging: [
+      '<%= tempDir %>/public/app/**/*.ts',
+    ],
   };
 };

@@ -21,7 +21,8 @@ import {ThresholdManager} from './threshold_manager';
 import {EventManager} from 'app/features/annotations/all';
 import {convertValuesToHistogram, getSeriesValues} from './histogram';
 
-coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
+/** @ngInject **/
+function graphDirective($rootScope, timeSrv, popoverSrv) {
   return {
     restrict: 'A',
     template: '',
@@ -683,4 +684,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       });
     }
   };
-});
+}
+
+coreModule.directive('grafanaGraph', graphDirective);
