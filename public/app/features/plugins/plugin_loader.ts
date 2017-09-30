@@ -1,4 +1,4 @@
-import System from 'systemjs/dist/system.src.js';
+import System from 'systemjs/dist/system.js';
 import _ from 'lodash';
 import * as sdk from 'app/plugins/sdk';
 import kbn from 'app/core/utils/kbn';
