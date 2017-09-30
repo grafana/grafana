@@ -20,6 +20,7 @@ module.exports = function(grunt) {
     'copy:public_to_gen',
     'phantomjs',
     'css',
+    'exec:webpack-dev',
   ]);
 
   grunt.registerTask('test', ['default', 'karma:test', 'no-only-tests']);

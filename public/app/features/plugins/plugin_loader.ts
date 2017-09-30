@@ -8,23 +8,32 @@ import jquery from 'jquery';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 
-console.log('loading graphite');
 import * as graphitePlugin from 'app/plugins/datasource/graphite/module';
-
-// import textPanel from './panel/text/module';
-// import graphPanel from './panel/graph/module';
+import * as textPanel from 'app/plugins/panel/text/module';
+import * as graphPanel from 'app/plugins/panel/graph/module';
+import * as dashListPanel from 'app/plugins/panel/dashlist/module';
+import * as pluginsListPanel from 'app/plugins/panel/pluginlist/module';
+import * as alertListPanel from 'app/plugins/panel/alertlist/module';
+import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
+import * as tablePanel from 'app/plugins/panel/table/module';
+import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
 
 let builtInPlugins = {
-  "app/plugins/datasource/graphite/module": graphitePlugin
+  "app/plugins/datasource/graphite/module": graphitePlugin,
+  "app/plugins/panel/text/module": textPanel,
+  "app/plugins/panel/graph/module": graphPanel,
+  "app/plugins/panel/dashlist/module": dashListPanel,
+  "app/plugins/panel/pluginlist/module": pluginsListPanel,
+  "app/plugins/panel/alertlist/module": alertListPanel,
+  "app/plugins/panel/heatmap/module": heatmapPanel,
+  "app/plugins/panel/table/module": tablePanel,
+  "app/plugins/panel/singlestat/module": singlestatPanel,
 };
 
 System.config({
   baseURL: 'public',
   defaultExtension: 'js',
   packages: {
-    // 'app/plugins': {
-    //   defaultExtension: 'js'
-    // },
     'plugins': {
       defaultExtension: 'js'
     }
@@ -62,7 +71,6 @@ for (let flotDep of ['jquery.flot', 'jquery.flot.pie', 'jquery.flot.time']) {
 export function importPluginModule(path: string): Promise<any> {
   let builtIn = builtInPlugins[path];
   if (builtIn) {
-    console.log('builtIn', builtIn);
     return Promise.resolve(builtIn);
   }
   return System.import(path);

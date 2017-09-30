@@ -6,9 +6,23 @@ import {BundleLoader} from './bundle_loader';
 function setupAngularRoutes($routeProvider, $locationProvider) {
   $locationProvider.html5Mode(true);
 
-  var loadOrgBundle = new BundleLoader('app/features/org/all');
-  var loadAdminBundle = new BundleLoader('app/features/admin/admin');
-  var loadAlertingBundle = new BundleLoader('app/features/alerting/all');
+  var loadOrgBundle = {
+    lazy: ["$q", "$route", "$rootScope", ($q, $route, $rootScope) => {
+      return System.import('app/features/org/all');
+    }]
+  };
+
+  var loadAdminBundle = {
+    lazy: ["$q", "$route", "$rootScope", ($q, $route, $rootScope) => {
+      return System.import('app/features/admin/admin');
+    }]
+  };
+
+  var loadAlertingBundle = {
+    lazy: ["$q", "$route", "$rootScope", ($q, $route, $rootScope) => {
+      return System.import('app/features/alerting/all');
+    }]
+  };
 
   $routeProvider
   .when('/', {

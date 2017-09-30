@@ -1,4 +1,3 @@
-
 const webpack = require('webpack');
 const path = require('path');
 const { CheckerPlugin } = require('awesome-typescript-loader')
@@ -7,9 +6,8 @@ module.exports = {
   entry: {
     'app': './public/app/index.ts'
   },
-  devtool: "source-map",
   output: {
-    path: path.resolve(__dirname, './public_gen'),
+    path: path.resolve(__dirname, '../../public_gen'),
     filename: 'app/[name].bundle.js',
     chunkFilename: 'app/[name].bundle.js',
     publicPath: "public/",
@@ -43,6 +41,7 @@ module.exports = {
         test: /\.tsx?$/,
         exclude: /node_modules/,
         use: [
+          // { loader: "ng-annotate-loader", options: { es6: true } },
           // { loader: 'babel-loader', options:  { "presets": "es2015" } },
           { loader: "awesome-typescript-loader" }
         ]

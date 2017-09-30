@@ -1,5 +1,6 @@
 var webpack = require('webpack');
 var path = require('path');
+var webpackTestConfig = require('./scripts/webpack/webpack.test.js');
 
 module.exports = function(config) {
 
@@ -17,56 +18,7 @@ module.exports = function(config) {
       'public/test/index.ts': ['webpack', 'sourcemap'],
     },
 
-    webpack: {
-      devtool: 'inline-source-map',
-      module: {
-        loaders: [
-          {
-            test: /\.tsx?$/,
-            exclude: /node_modules/,
-            use: [
-              // { loader: 'babel-loader', options:  { "presets": "es2015" } },
-              { loader: "awesome-typescript-loader" }
-            ]
-          },
-          {
-            test: require.resolve('jquery'),
-            use: [
-              {
-                loader: 'expose-loader',
-                query: 'jQuery'
-              },
-              {
-                loader: 'expose-loader',
-                query: '$'
-              }
-            ]
-          }
-        ],
-      },
-      externals: {
-        'react/addons': true,
-        'react/lib/ExecutionEnvironment': true,
-        'react/lib/ReactContext': true,
-        '.': true,
-      },
-      node: {
-        fs: 'empty'
-      },
-      resolve: {
-        extensions: ['.ts', '.tsx', '.es6', '.js', '.json'],
-        modules: [
-          path.resolve('public'),
-          path.resolve('node_modules')
-        ],
-      },
-      plugins: [
-        new webpack.SourceMapDevToolPlugin({
-          filename: null, // if no value is provided the sourcemap is inlined
-          test: /\.(ts|js)($|\?)/i // process .js and .ts files only
-        })
-      ]
-    },
+    webpack: webpackTestConfig,
 
     // webpackServer: {
     //   noInfo: true, // please don't spam the console when running in karma!
