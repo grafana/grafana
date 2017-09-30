@@ -5,9 +5,9 @@ module.exports = function(config) {
     },
     build: {
       expand: true,
-      cwd: '<%= genDir %>',
-      src: ['css/*.css', 'vendor/css/*.css'],
-      dest: '<%= genDir %>'
+      cwd: '<%= srcDir %>',
+      src: ['build/*.css'],
+      dest: '<%= srcDir %>'
     }
   };
 };

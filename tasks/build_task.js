@@ -6,20 +6,15 @@ module.exports = function(grunt) {
   // Concat and Minify the src directory into dist
   grunt.registerTask('build', [
     'jshint:source',
-    'jshint:tests',
     'jscs',
     'clean:release',
-    'copy:public_to_gen',
-    'karma:test',
-    'phantomjs',
+    'clean:build',
+    // 'exec:tslint',
+    // karma:test',
+    // 'phantomjs',
     'css',
-    'htmlmin:build',
-    'cssmin:build',
-    'exec:webpack-prod',
-    'filerev',
-    'remapFilerev',
-    'usemin',
-    'uglify:genDir'
+    // 'cssmin:build',
+    'webpack:prod',
   ]);
 
   grunt.registerTask('build-post-process', function() {

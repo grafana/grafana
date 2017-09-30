@@ -36,7 +36,7 @@ class StyleGuideCtrl {
    }
 
   loadColors() {
-   this.$http.get('public/sass/styleguide.json').then(res => {
+   this.$http.get('public/build/styleguide.json').then(res => {
       this.colors = _.map(res.data[this.theme], (value, key) => {
         return {name: key, value: value};
       });

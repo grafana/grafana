@@ -15,7 +15,7 @@ module.exports = function(config) {
       ]
     },
     dist: {
-      src: '<%= genDir %>/css/*.css'
+      src: '<%= srcDir %>/build/*.css'
     }
   }
 };

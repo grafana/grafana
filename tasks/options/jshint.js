@@ -5,11 +5,6 @@ module.exports = function(config) {
         src: ['Gruntfile.js', '<%= srcDir %>/app/**/*.js'],
       }
     },
-    tests: {
-      files: {
-        src: ['<%= srcDir %>/test/**/*.js'],
-      }
-    },
     options: {
       jshintrc: true,
       reporter: require('jshint-stylish'),

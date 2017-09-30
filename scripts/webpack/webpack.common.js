@@ -2,6 +2,7 @@ const path = require('path');
 const {CheckerPlugin} = require('awesome-typescript-loader')
 
 module.exports = {
+  target: 'web',
   entry: {
     app: './public/app/index.ts',
   },
