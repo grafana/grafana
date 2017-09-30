@@ -6,7 +6,6 @@ module.exports = function(config) {
     build: ['<%= srcDir %>/build'],
     temp: ['<%= tempDir %>'],
     packaging: [
-      '<%= tempDir %>/public/app/**/*.ts',
     ],
   };
 };
