@@ -44,6 +44,16 @@ System.config({
   },
 });
 
+// add cache busting
+var systemLocate = System.locate;
+System.cacheBust = '?bust=' + Date.now();
+System.locate = function(load) {
+  var System = this;
+  return Promise.resolve(systemLocate.call(this, load)).then(function(address) {
+    return address + System.cacheBust;
+  });
+};
+
 System.registerDynamic('lodash', [], true, function(require, exports, module) { module.exports = _; });
 System.registerDynamic('moment', [], true, function(require, exports, module) { module.exports = moment; });
 System.registerDynamic('jquery', [], true, function(require, exports, module) { module.exports = jquery; });

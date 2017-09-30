@@ -1,16 +1,16 @@
-const webpack = require('webpack');
 const path = require('path');
-const { CheckerPlugin } = require('awesome-typescript-loader')
+const webpack = require('webpack');
+const {CheckerPlugin} = require('awesome-typescript-loader')
+var HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   entry: {
-    'app': './public/app/index.ts'
+    app: './public/app/index.ts',
   },
   output: {
-    path: path.resolve(__dirname, '../../public_gen'),
-    filename: 'app/[name].bundle.js',
-    chunkFilename: 'app/[name].bundle.js',
-    publicPath: "public/",
+    path: path.resolve(__dirname, '../../public/build'),
+    filename: '[name].[chunkhash].js',
+    publicPath: "public/build/",
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.es6', '.js', '.json'],
@@ -58,10 +58,31 @@ module.exports = {
             query: '$'
           }
         ]
+      },
+      {
+        test: /\.html$/,
+        exclude: /index\.template.html/,
+        use: [
+          { loader:'ngtemplate-loader?relativeTo=' + (path.resolve(__dirname, '../../public')) + '&prefix=public'},
+          {
+            loader: 'html-loader',
+            options: {
+              attrs: [],
+              minimize: true,
+              removeComments: false,
+              collapseWhitespace: false
+            }
+          }
+        ]
       }
     ]
   },
   plugins: [
     new CheckerPlugin(),
+    new HtmlWebpackPlugin({
+      filename: path.resolve(__dirname, '../../public/views/index.html'),
+      template: path.resolve(__dirname, '../../public/views/index.template.html'),
+      inject: 'body',
+    }),
   ]
 };

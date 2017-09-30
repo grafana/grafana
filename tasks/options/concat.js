@@ -4,27 +4,27 @@ module.exports = function(config) {
   return {
     cssDark: {
       src: [
-        '<%= genDir %>/vendor/css/timepicker.css',
-        '<%= genDir %>/vendor/css/spectrum.css',
-        '<%= genDir %>/css/grafana.dark.css',
-        '<%= genDir %>/vendor/css/font-awesome.min.css'
+        '<%= srcDir %>/vendor/css/timepicker.css',
+        '<%= srcDir %>/vendor/css/spectrum.css',
+        '<%= srcDir %>/build/grafana.dark.css',
+        '<%= srcDir %>/vendor/css/font-awesome.min.css'
       ],
-      dest: '<%= genDir %>/css/grafana.dark.min.css'
+      dest: '<%= srcDir %>/build/grafana.dark.min.css'
     },
 
     cssLight: {
       src: [
-        '<%= genDir %>/vendor/css/timepicker.css',
-        '<%= genDir %>/vendor/css/spectrum.css',
-        '<%= genDir %>/css/grafana.light.css',
-        '<%= genDir %>/vendor/css/font-awesome.min.css'
+        '<%= srcDir %>/vendor/css/timepicker.css',
+        '<%= srcDir %>/vendor/css/spectrum.css',
+        '<%= srcDir %>/build/grafana.light.css',
+        '<%= srcDir %>/vendor/css/font-awesome.min.css'
       ],
-      dest: '<%= genDir %>/css/grafana.light.min.css'
+      dest: '<%= srcDir %>/build/grafana.light.min.css'
     },
 
     cssFonts: {
-      src: ['<%= genDir %>/css/fonts.css'],
-      dest: '<%= genDir %>/css/fonts.min.css'
+      src: ['<%= srcDir %>/build/fonts.css'],
+      dest: '<%= srcDir %>/build/fonts.min.css'
     },
 
   };

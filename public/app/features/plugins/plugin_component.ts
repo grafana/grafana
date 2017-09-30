@@ -65,7 +65,6 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     var panelCtrlPromise = Promise.resolve(UnknownPanelCtrl);
     if (panelInfo) {
       panelCtrlPromise = importPluginModule(panelInfo.module).then(function(panelModule) {
-        console.log('imported module', panelModule);
         return panelModule.PanelCtrl;
       });
     }

@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
       "moduleResolution": "node",
-      "outDir": "public_gen",
+      "outDir": "public/dist",
       "target": "es5",
       "lib": ["es6", "dom"],
       "rootDir": "public/",

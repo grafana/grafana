@@ -20,9 +20,9 @@ module.exports = function(config) {
 
     webpack: webpackTestConfig,
 
-    // webpackServer: {
-    //   noInfo: true, // please don't spam the console when running in karma!
-    // },
+    webpackServer: {
+      noInfo: true, // please don't spam the console when running in karma!
+    },
 
     // list of files to exclude
     exclude: [],
