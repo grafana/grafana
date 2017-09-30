@@ -8,6 +8,11 @@ import angular from 'angular';
 import 'angular-mocks';
 import 'app/app';
 
+// configure enzyme
+import Enzyme from 'enzyme';
+import Adapter from 'enzyme-adapter-react-16';
+Enzyme.configure({ adapter: new Adapter() });
+
 angular.module('grafana', ['ngRoute']);
 angular.module('grafana.services', ['ngRoute', '$strap.directives']);
 angular.module('grafana.panels', []);
@@ -16,9 +21,7 @@ angular.module('grafana.directives', []);
 angular.module('grafana.filters', []);
 angular.module('grafana.routes', ['ngRoute']);
 
-declare var require: any;
-const context = require.context('../', true, /specs/);
-
+const context = (<any>require).context('../', true, /specs/);
 for (let key of context.keys()) {
   context(key);
 }
