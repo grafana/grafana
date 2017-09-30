@@ -7,6 +7,8 @@ import 'jquery';
 import angular from 'angular';
 import 'angular-mocks';
 import 'app/app';
+import System from 'systemjs/dist/system.src';
+console.log(System);
 // import './specs/test_specs';
 //
 // declare var window: any;
@@ -24,13 +26,10 @@ angular.module('grafana.directives', []);
 angular.module('grafana.filters', []);
 angular.module('grafana.routes', ['ngRoute']);
 
-const context = require.context('../', true, /_specs\.ts/);
+const context = require.context('../', true, /core.*_specs\.ts/);
 
 for (let key of context.keys()) {
   console.log('key: ', key);
-  // if (key.indexOf('elasticsearch') > 0) {
-  //   return;
-  // }
   context(key);
 }
 

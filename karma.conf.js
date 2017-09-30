@@ -48,6 +48,7 @@ module.exports = function(config) {
         'react/addons': true,
         'react/lib/ExecutionEnvironment': true,
         'react/lib/ReactContext': true,
+        'systemjs/dist/system.src': true,
       },
       node: {
         fs: 'empty'
