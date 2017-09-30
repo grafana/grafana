@@ -9,6 +9,15 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 
 import * as graphitePlugin from 'app/plugins/datasource/graphite/module';
+import * as cloudwatchPlugin from 'app/plugins/datasource/cloudwatch/module';
+import * as elasticsearchPlugin from 'app/plugins/datasource/elasticsearch/module';
+import * as opentsdbPlugin from 'app/plugins/datasource/opentsdb/module';
+import * as grafanaPlugin from 'app/plugins/datasource/grafana/module';
+import * as influxdbPlugin from 'app/plugins/datasource/influxdb/module';
+import * as mixedPlugin from 'app/plugins/datasource/mixed/module';
+import * as mysqlPlugin from 'app/plugins/datasource/mysql/module';
+import * as prometheusPlugin from 'app/plugins/datasource/prometheus/module';
+
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as graphPanel from 'app/plugins/panel/graph/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
@@ -21,6 +30,15 @@ import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
 
 let builtInPlugins = {
   "app/plugins/datasource/graphite/module": graphitePlugin,
+  "app/plugins/datasource/cloudwatch/module": cloudwatchPlugin,
+  "app/plugins/datasource/elasticsearch/module": elasticsearchPlugin,
+  "app/plugins/datasource/opentsdb/module": opentsdbPlugin,
+  "app/plugins/datasource/grafana/module": grafanaPlugin,
+  "app/plugins/datasource/influxdb/module": influxdbPlugin,
+  "app/plugins/datasource/mixed/module": mixedPlugin,
+  "app/plugins/datasource/mysql/module": mysqlPlugin,
+  "app/plugins/datasource/prometheus/module": prometheusPlugin,
+
   "app/plugins/panel/text/module": textPanel,
   "app/plugins/panel/graph/module": graphPanel,
   "app/plugins/panel/dashlist/module": dashListPanel,
@@ -36,6 +54,9 @@ System.config({
   baseURL: 'public',
   defaultExtension: 'js',
   packages: {
+    "app/plugins": {
+      defaultExtension: 'js'
+    },
     'plugins': {
       defaultExtension: 'js'
     }
