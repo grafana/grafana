@@ -25,18 +25,14 @@ angular.module('grafana.filters', []);
 angular.module('grafana.routes', ['ngRoute']);
 
 const context = require.context('../', true, /_specs\.ts/);
-context.keys().forEach(key => {
+
+for (let key of context.keys()) {
   console.log('key: ', key);
   // if (key.indexOf('elasticsearch') > 0) {
   //   return;
   // }
-  try {
-   var res = context(key);
-   console.log('res', res);
-  } catch (e) {
-    console.log('context err', e);
-  }
-});
+  context(key);
+}
 
 
 
