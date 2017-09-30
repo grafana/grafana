@@ -1,7 +1,5 @@
 const path = require('path');
-const webpack = require('webpack');
 const {CheckerPlugin} = require('awesome-typescript-loader')
-var HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   entry: {
@@ -33,7 +31,7 @@ module.exports = {
         use: {
           loader: 'tslint-loader',
           options: {
-            emitErrors: false
+            emitErrors: true
           }
         }
       },
@@ -41,8 +39,6 @@ module.exports = {
         test: /\.tsx?$/,
         exclude: /node_modules/,
         use: [
-          // { loader: "ng-annotate-loader", options: { es6: true } },
-          // { loader: 'babel-loader', options:  { "presets": "es2015" } },
           { loader: "awesome-typescript-loader" }
         ]
       },
@@ -79,10 +75,5 @@ module.exports = {
   },
   plugins: [
     new CheckerPlugin(),
-    new HtmlWebpackPlugin({
-      filename: path.resolve(__dirname, '../../public/views/index.html'),
-      template: path.resolve(__dirname, '../../public/views/index.template.html'),
-      inject: 'body',
-    }),
   ]
 };

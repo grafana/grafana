@@ -14,16 +14,20 @@ module.exports = function(grunt) {
   );
 
   grunt.registerTask('default', [
-    'clean:gen',
-    'jscs',
-    'jshint',
-    'copy:public_to_gen',
+    'clean:build',
     'phantomjs',
     'css',
-    'exec:webpack-dev',
+    'webpack:dev',
   ]);
 
-  grunt.registerTask('test', ['default', 'karma:test', 'no-only-tests']);
+  grunt.registerTask('test', [
+    'clean:build',
+    'jscs',
+    'jshint',
+    'exec:tslint',
+    'karma:test',
+    'no-only-tests'
+  ]);
 
   grunt.registerTask('no-only-tests', function() {
     var files = grunt.file.expand('public/**/*_specs\.ts', 'public/**/*_specs\.js');

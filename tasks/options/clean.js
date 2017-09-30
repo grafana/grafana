@@ -3,15 +3,7 @@ module.exports = function(config) {
 
   return {
     release: ['<%= destDir %>', '<%= tempDir %>', '<%= genDir %>'],
-    gen: ['<%= genDir %>'],
+    build: ['<%= srcDir %>/build'],
     temp: ['<%= tempDir %>'],
-    css: ['<%= genDir %>/css'],
-    packaging: [
-      '<%= tempDir %>/public/vendor/npm/rxjs',
-      '<%= tempDir %>/public/vendor/npm/tether',
-      '<%= tempDir %>/public/vendor/npm/tether-drop',
-      '<%= tempDir %>/public/**/*.map',
-      '<%= tempDir %>/public/**/*.ts',
-    ],
   };
 };

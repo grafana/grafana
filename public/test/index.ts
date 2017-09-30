@@ -20,7 +20,6 @@ declare var require: any;
 const context = require.context('../', true, /specs/);
 
 for (let key of context.keys()) {
-  console.log('key: ', key);
   context(key);
 }
 

@@ -1,6 +1,5 @@
 import './dashboard_loaders';
 import coreModule from 'app/core/core_module';
-import {BundleLoader} from './bundle_loader';
 
 /** @ngInject **/
 function setupAngularRoutes($routeProvider, $locationProvider) {

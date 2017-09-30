@@ -8,11 +8,6 @@ module.exports = function(config, grunt) {
   var lastTime;
 
   grunt.registerTask('watch', function() {
-    if (!grunt.option('skip-ts-compile')) {
-      grunt.log.writeln('We recommoned starting with: grunt watch --force --skip-ts-compile')
-      grunt.log.writeln('Then do incremental typescript builds with: grunt exec:tswatch')
-    }
-
     done = this.async();
     lastTime = new Date().getTime();
 
@@ -22,8 +17,6 @@ module.exports = function(config, grunt) {
     }
 
     gaze([
-      config.srcDir + '/app/**/*',
-      config.srcDir + '/test/**/*',
       config.srcDir + '/sass/**/*',
     ], function(err, watcher) {
 
@@ -42,39 +35,9 @@ module.exports = function(config, grunt) {
         var newPath;
         grunt.log.writeln('File Changed: ', filepath);
 
-        if (/(\.html)|(\.json)$/.test(filepath)) {
-          newPath = filepath.replace(/^public/, 'public_gen');
-          grunt.log.writeln('Copying to ' + newPath);
-          grunt.file.copy(filepath, newPath);
-        }
-
-        if (/(\.js)$/.test(filepath)) {
-          newPath = filepath.replace(/^public/, 'public_gen');
-          grunt.log.writeln('Copying to ' + newPath);
-          grunt.file.copy(filepath, newPath);
-
-          grunt.task.run('jshint');
-          grunt.task.run('jscs');
-        }
-
         if (/(\.scss)$/.test(filepath)) {
           grunt.task.run('clean:css');
           grunt.task.run('css');
-        }
-
-        if (/(\.ts)$/.test(filepath)) {
-          newPath = filepath.replace(/^public/, 'public_gen');
-          grunt.log.writeln('Copying to ' + newPath);
-          grunt.file.copy(filepath, newPath);
-
-          if (grunt.option('skip-ts-compile')) {
-            grunt.log.writeln('Skipping ts compile, run grunt exec:tswatch to start typescript watcher')
-          } else {
-            grunt.task.run('exec:tscompile');
-          }
-
-          grunt.config('tslint.source.files.src', filepath);
-          grunt.task.run('exec:tslintfile');
         }
 
         done();
