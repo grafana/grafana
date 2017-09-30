@@ -21,6 +21,12 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import moment from 'moment';
 
+// add move to lodash for backward compatabiltiy
+_.move = function (array, fromIndex, toIndex) {
+  array.splice(toIndex, 0, array.splice(fromIndex, 1)[0]);
+  return array;
+};
+
 import {coreModule} from './core/core';
 
 export class GrafanaApp {
