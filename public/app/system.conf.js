@@ -1,5 +1,6 @@
 System.config({
-  defaultJSExtenions: true,
+  warnings: true,
+  defaultExtenion: 'js',
   baseURL: 'public',
   paths: {
     'react': 'vendor/npm/react/dist/react.js',
@@ -60,6 +61,9 @@ System.config({
   },
 
   meta: {
+    'vendor/angular-other/angular-strap.js': {
+      deps: ['angular']
+    },
     'vendor/npm/virtual-scroll/src/indx.js': {
       format: 'cjs',
       exports: 'VirtualScroll',

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import coreModule from '../core_module';
 
 export interface IProps {
@@ -36,3 +36,4 @@ export class PasswordStrength extends React.Component<IProps, any> {
 coreModule.directive('passwordStrength', function(reactDirective) {
   return reactDirective(PasswordStrength, ['password']);
 });
+

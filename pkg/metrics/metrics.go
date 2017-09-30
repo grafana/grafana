@@ -56,6 +56,7 @@ var (
 	M_StatTotal_Users        prometheus.Gauge
 	M_StatTotal_Orgs         prometheus.Gauge
 	M_StatTotal_Playlists    prometheus.Gauge
+	M_Grafana_Version        *prometheus.GaugeVec
 )
 
 func init() {
@@ -263,6 +264,13 @@ func init() {
 		Help:      "total amount of playlists",
 		Namespace: exporterName,
 	})
+
+	M_Grafana_Version = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "info",
+		Help:      "Information about the Grafana",
+		Namespace: exporterName,
+	}, []string{"version"})
+
 }
 
 func initMetricVars(settings *MetricSettings) {
@@ -298,7 +306,8 @@ func initMetricVars(settings *MetricSettings) {
 		M_StatTotal_Dashboards,
 		M_StatTotal_Users,
 		M_StatTotal_Orgs,
-		M_StatTotal_Playlists)
+		M_StatTotal_Playlists,
+		M_Grafana_Version)
 
 	go instrumentationLoop(settings)
 }

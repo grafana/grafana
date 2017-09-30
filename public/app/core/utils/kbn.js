@@ -401,6 +401,7 @@ function($, _, moment) {
   kbn.valueFormats.currencyJPY = kbn.formatBuilders.currency('¥');
   kbn.valueFormats.currencyRUB = kbn.formatBuilders.currency('₽');
   kbn.valueFormats.currencyUAH = kbn.formatBuilders.currency('₴');
+  kbn.valueFormats.currencyBRL = kbn.formatBuilders.currency('R$');
 
   // Data (Binary)
   kbn.valueFormats.bits   = kbn.formatBuilders.binarySIPrefix('b');
@@ -754,6 +755,7 @@ function($, _, moment) {
           {text: 'Yen (¥)',     value: 'currencyJPY'},
           {text: 'Rubles (₽)',  value: 'currencyRUB'},
           {text: 'Hryvnias (₴)',  value: 'currencyUAH'},
+          {text: 'Real (R$)', value: 'currencyBRL'},
         ]
       },
       {

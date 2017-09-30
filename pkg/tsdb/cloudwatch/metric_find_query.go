@@ -1,7 +1,9 @@
 package cloudwatch
 
 import (
-	"encoding/json"
+	"context"
+	"errors"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -11,13 +13,19 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 var metricsMap map[string][]string
 var dimensionsMap map[string][]string
+
+type suggestData struct {
+	Text  string
+	Value string
+}
 
 type CustomMetricsCache struct {
 	Expire time.Time
@@ -144,117 +152,355 @@ func init() {
 	customMetricsDimensionsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
 }
 
+func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
+	}
+	firstQuery := queryContext.Queries[0]
+	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: firstQuery.RefId}
+
+	parameters := firstQuery.Model
+	subType := firstQuery.Model.Get("subtype").MustString()
+	var data []suggestData
+	var err error
+	switch subType {
+	case "regions":
+		data, err = e.handleGetRegions(ctx, parameters, queryContext)
+		break
+	case "namespaces":
+		data, err = e.handleGetNamespaces(ctx, parameters, queryContext)
+		break
+	case "metrics":
+		data, err = e.handleGetMetrics(ctx, parameters, queryContext)
+		break
+	case "dimension_keys":
+		data, err = e.handleGetDimensions(ctx, parameters, queryContext)
+		break
+	case "dimension_values":
+		data, err = e.handleGetDimensionValues(ctx, parameters, queryContext)
+		break
+	case "ebs_volume_ids":
+		data, err = e.handleGetEbsVolumeIds(ctx, parameters, queryContext)
+		break
+	case "ec2_instance_attribute":
+		data, err = e.handleGetEc2InstanceAttribute(ctx, parameters, queryContext)
+		break
+	}
+
+	transformToTable(data, queryResult)
+	result.Results[firstQuery.RefId] = queryResult
+	return result, err
+}
+
+func transformToTable(data []suggestData, result *tsdb.QueryResult) {
+	table := &tsdb.Table{
+		Columns: make([]tsdb.TableColumn, 2),
+		Rows:    make([]tsdb.RowValues, 0),
+	}
+	table.Columns[0].Text = "text"
+	table.Columns[1].Text = "value"
+
+	for _, r := range data {
+		values := make([]interface{}, 2)
+		values[0] = r.Text
+		values[1] = r.Value
+		table.Rows = append(table.Rows, values)
+	}
+	result.Tables = append(result.Tables, table)
+	result.Meta.Set("rowCount", len(data))
+}
+
 // Whenever this list is updated, frontend list should also be updated.
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
-func handleGetRegions(req *cwRequest, c *middleware.Context) {
+func (e *CloudWatchExecutor) handleGetRegions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	regions := []string{
 		"ap-northeast-1", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "ap-south-1", "ca-central-1", "cn-north-1",
 		"eu-central-1", "eu-west-1", "eu-west-2", "sa-east-1", "us-east-1", "us-east-2", "us-gov-west-1", "us-west-1", "us-west-2",
 	}
 
-	result := []interface{}{}
+	result := make([]suggestData, 0)
 	for _, region := range regions {
-		result = append(result, util.DynMap{"text": region, "value": region})
+		result = append(result, suggestData{Text: region, Value: region})
 	}
 
-	c.JSON(200, result)
+	return result, nil
 }
 
-func handleGetNamespaces(req *cwRequest, c *middleware.Context) {
+func (e *CloudWatchExecutor) handleGetNamespaces(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	keys := []string{}
 	for key := range metricsMap {
 		keys = append(keys, key)
 	}
 
-	customNamespaces := req.DataSource.JsonData.Get("customMetricsNamespaces").MustString()
+	customNamespaces := e.DataSource.JsonData.Get("customMetricsNamespaces").MustString()
 	if customNamespaces != "" {
 		keys = append(keys, strings.Split(customNamespaces, ",")...)
 	}
 
 	sort.Sort(sort.StringSlice(keys))
 
-	result := []interface{}{}
+	result := make([]suggestData, 0)
 	for _, key := range keys {
-		result = append(result, util.DynMap{"text": key, "value": key})
+		result = append(result, suggestData{Text: key, Value: key})
 	}
 
-	c.JSON(200, result)
+	return result, nil
 }
 
-func handleGetMetrics(req *cwRequest, c *middleware.Context) {
-	reqParam := &struct {
-		Parameters struct {
-			Namespace string `json:"namespace"`
-		} `json:"parameters"`
-	}{}
-
-	json.Unmarshal(req.Body, reqParam)
+func (e *CloudWatchExecutor) handleGetMetrics(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	region := parameters.Get("region").MustString()
+	namespace := parameters.Get("namespace").MustString()
 
 	var namespaceMetrics []string
-	if !isCustomMetrics(reqParam.Parameters.Namespace) {
+	if !isCustomMetrics(namespace) {
 		var exists bool
-		if namespaceMetrics, exists = metricsMap[reqParam.Parameters.Namespace]; !exists {
-			c.JsonApiErr(404, "Unable to find namespace "+reqParam.Parameters.Namespace, nil)
-			return
+		if namespaceMetrics, exists = metricsMap[namespace]; !exists {
+			return nil, errors.New("Unable to find namespace " + namespace)
 		}
 	} else {
 		var err error
-		cwData := req.GetDatasourceInfo()
-		cwData.Namespace = reqParam.Parameters.Namespace
+		dsInfo := e.getDsInfo(region)
+		dsInfo.Namespace = namespace
 
-		if namespaceMetrics, err = getMetricsForCustomMetrics(cwData, getAllMetrics); err != nil {
-			c.JsonApiErr(500, "Unable to call AWS API", err)
-			return
+		if namespaceMetrics, err = getMetricsForCustomMetrics(dsInfo, getAllMetrics); err != nil {
+			return nil, errors.New("Unable to call AWS API")
 		}
 	}
 	sort.Sort(sort.StringSlice(namespaceMetrics))
 
-	result := []interface{}{}
+	result := make([]suggestData, 0)
 	for _, name := range namespaceMetrics {
-		result = append(result, util.DynMap{"text": name, "value": name})
+		result = append(result, suggestData{Text: name, Value: name})
 	}
 
-	c.JSON(200, result)
+	return result, nil
 }
 
-func handleGetDimensions(req *cwRequest, c *middleware.Context) {
-	reqParam := &struct {
-		Parameters struct {
-			Namespace string `json:"namespace"`
-		} `json:"parameters"`
-	}{}
-
-	json.Unmarshal(req.Body, reqParam)
+func (e *CloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	region := parameters.Get("region").MustString()
+	namespace := parameters.Get("namespace").MustString()
 
 	var dimensionValues []string
-	if !isCustomMetrics(reqParam.Parameters.Namespace) {
+	if !isCustomMetrics(namespace) {
 		var exists bool
-		if dimensionValues, exists = dimensionsMap[reqParam.Parameters.Namespace]; !exists {
-			c.JsonApiErr(404, "Unable to find dimension "+reqParam.Parameters.Namespace, nil)
-			return
+		if dimensionValues, exists = dimensionsMap[namespace]; !exists {
+			return nil, errors.New("Unable to find dimension " + namespace)
 		}
 	} else {
 		var err error
-		dsInfo := req.GetDatasourceInfo()
-		dsInfo.Namespace = reqParam.Parameters.Namespace
+		dsInfo := e.getDsInfo(region)
+		dsInfo.Namespace = namespace
 
 		if dimensionValues, err = getDimensionsForCustomMetrics(dsInfo, getAllMetrics); err != nil {
-			c.JsonApiErr(500, "Unable to call AWS API", err)
-			return
+			return nil, errors.New("Unable to call AWS API")
 		}
 	}
 	sort.Sort(sort.StringSlice(dimensionValues))
 
-	result := []interface{}{}
+	result := make([]suggestData, 0)
 	for _, name := range dimensionValues {
-		result = append(result, util.DynMap{"text": name, "value": name})
+		result = append(result, suggestData{Text: name, Value: name})
 	}
 
-	c.JSON(200, result)
+	return result, nil
 }
 
-func getAllMetrics(cwData *datasourceInfo) (cloudwatch.ListMetricsOutput, error) {
-	creds, err := getCredentials(cwData)
+func (e *CloudWatchExecutor) handleGetDimensionValues(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	region := parameters.Get("region").MustString()
+	namespace := parameters.Get("namespace").MustString()
+	metricName := parameters.Get("metricName").MustString()
+	dimensionKey := parameters.Get("dimensionKey").MustString()
+	dimensionsJson := parameters.Get("dimensions").MustMap()
+
+	var dimensions []*cloudwatch.DimensionFilter
+	for k, v := range dimensionsJson {
+		if vv, ok := v.(string); ok {
+			dimensions = append(dimensions, &cloudwatch.DimensionFilter{
+				Name:  aws.String(k),
+				Value: aws.String(vv),
+			})
+		}
+	}
+
+	metrics, err := e.cloudwatchListMetrics(region, namespace, metricName, dimensions)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]suggestData, 0)
+	dupCheck := make(map[string]bool)
+	for _, metric := range metrics.Metrics {
+		for _, dim := range metric.Dimensions {
+			if *dim.Name == dimensionKey {
+				if _, exists := dupCheck[*dim.Value]; exists {
+					continue
+				}
+				dupCheck[*dim.Value] = true
+				result = append(result, suggestData{Text: *dim.Value, Value: *dim.Value})
+			}
+		}
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Text < result[j].Text
+	})
+
+	return result, nil
+}
+
+func (e *CloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	region := parameters.Get("region").MustString()
+	instanceId := parameters.Get("instanceId").MustString()
+
+	instanceIds := []*string{aws.String(instanceId)}
+	instances, err := e.ec2DescribeInstances(region, nil, instanceIds)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]suggestData, 0)
+	for _, mapping := range instances.Reservations[0].Instances[0].BlockDeviceMappings {
+		result = append(result, suggestData{Text: *mapping.Ebs.VolumeId, Value: *mapping.Ebs.VolumeId})
+	}
+
+	return result, nil
+}
+
+func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
+	region := parameters.Get("region").MustString()
+	attributeName := parameters.Get("attributeName").MustString()
+	filterJson := parameters.Get("filters").MustMap()
+
+	var filters []*ec2.Filter
+	for k, v := range filterJson {
+		if vv, ok := v.([]string); ok {
+			var vvvv []*string
+			for _, vvv := range vv {
+				vvvv = append(vvvv, &vvv)
+			}
+			filters = append(filters, &ec2.Filter{
+				Name:   aws.String(k),
+				Values: vvvv,
+			})
+		}
+	}
+
+	instances, err := e.ec2DescribeInstances(region, filters, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]suggestData, 0)
+	dupCheck := make(map[string]bool)
+	for _, reservation := range instances.Reservations {
+		for _, instance := range reservation.Instances {
+			tags := make(map[string]string)
+			for _, tag := range instance.Tags {
+				tags[*tag.Key] = *tag.Value
+			}
+
+			var data string
+			if strings.Index(attributeName, "Tags.") == 0 {
+				tagName := attributeName[5:]
+				data = tags[tagName]
+			} else {
+				attributePath := strings.Split(attributeName, ".")
+				v := reflect.ValueOf(instance)
+				for _, key := range attributePath {
+					if v.Kind() == reflect.Ptr {
+						v = v.Elem()
+					}
+					if v.Kind() != reflect.Struct {
+						return nil, errors.New("invalid attribute path")
+					}
+					v = v.FieldByName(key)
+				}
+				if attr, ok := v.Interface().(*string); ok {
+					data = *attr
+				} else {
+					return nil, errors.New("invalid attribute path")
+				}
+			}
+
+			if _, exists := dupCheck[data]; exists {
+				continue
+			}
+			dupCheck[data] = true
+			result = append(result, suggestData{Text: data, Value: data})
+		}
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Text < result[j].Text
+	})
+
+	return result, nil
+}
+
+func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace string, metricName string, dimensions []*cloudwatch.DimensionFilter) (*cloudwatch.ListMetricsOutput, error) {
+	svc, err := e.getClient(region)
+	if err != nil {
+		return nil, err
+	}
+
+	params := &cloudwatch.ListMetricsInput{
+		Namespace:  aws.String(namespace),
+		MetricName: aws.String(metricName),
+		Dimensions: dimensions,
+	}
+
+	var resp cloudwatch.ListMetricsOutput
+	err = svc.ListMetricsPages(params,
+		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+			metrics.M_Aws_CloudWatch_ListMetrics.Inc()
+			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
+			for _, metric := range metrics {
+				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))
+			}
+			return !lastPage
+		})
+	if err != nil {
+		return nil, errors.New("Failed to call cloudwatch:ListMetrics")
+	}
+
+	return &resp, nil
+}
+
+func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
+	dsInfo := e.getDsInfo(region)
+	cfg, err := e.getAwsConfig(dsInfo)
+	if err != nil {
+		return nil, errors.New("Failed to call ec2:DescribeInstances")
+	}
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		return nil, errors.New("Failed to call ec2:DescribeInstances")
+	}
+	svc := ec2.New(sess, cfg)
+
+	params := &ec2.DescribeInstancesInput{
+		Filters:     filters,
+		InstanceIds: instanceIds,
+	}
+
+	var resp ec2.DescribeInstancesOutput
+	err = svc.DescribeInstancesPages(params,
+		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
+			reservations, _ := awsutil.ValuesAtPath(page, "Reservations")
+			for _, reservation := range reservations {
+				resp.Reservations = append(resp.Reservations, reservation.(*ec2.Reservation))
+			}
+			return !lastPage
+		})
+	if err != nil {
+		return nil, errors.New("Failed to call ec2:DescribeInstances")
+	}
+
+	return &resp, nil
+}
+
+func getAllMetrics(cwData *DatasourceInfo) (cloudwatch.ListMetricsOutput, error) {
+	creds, err := GetCredentials(cwData)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}
@@ -291,7 +537,7 @@ func getAllMetrics(cwData *datasourceInfo) (cloudwatch.ListMetricsOutput, error)
 
 var metricsCacheLock sync.Mutex
 
-func getMetricsForCustomMetrics(dsInfo *datasourceInfo, getAllMetrics func(*datasourceInfo) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+func getMetricsForCustomMetrics(dsInfo *DatasourceInfo, getAllMetrics func(*DatasourceInfo) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
@@ -328,7 +574,7 @@ func getMetricsForCustomMetrics(dsInfo *datasourceInfo, getAllMetrics func(*data
 
 var dimensionsCacheLock sync.Mutex
 
-func getDimensionsForCustomMetrics(dsInfo *datasourceInfo, getAllMetrics func(*datasourceInfo) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+func getDimensionsForCustomMetrics(dsInfo *DatasourceInfo, getAllMetrics func(*DatasourceInfo) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
