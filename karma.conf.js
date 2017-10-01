@@ -11,7 +11,7 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'public/test/index.ts',
+      { pattern: 'public/test/index.ts', watched: false }
     ],
 
     preprocessors: {
@@ -19,7 +19,6 @@ module.exports = function(config) {
     },
 
     webpack: webpackTestConfig,
-
     webpackServer: {
       noInfo: true, // please don't spam the console when running in karma!
     },

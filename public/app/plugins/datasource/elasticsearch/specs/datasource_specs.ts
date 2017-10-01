@@ -5,8 +5,6 @@ import angular from 'angular';
 import helpers from 'test/specs/helpers';
 import {ElasticDatasource} from "../datasource";
 
-console.log(ElasticDatasource);
-
 describe('ElasticDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
 

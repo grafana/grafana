@@ -60,7 +60,7 @@ npm run test
 
 Run tests in watch mode
 ```bash
-npm run test-watch
+npm run watch-test
 ```
 
 ### Recompile backend on source change
