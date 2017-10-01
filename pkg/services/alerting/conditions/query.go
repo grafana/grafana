@@ -112,7 +112,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange)
 	result := make(tsdb.TimeSeriesSlice, 0)
 
-	resp, err := c.HandleRequest(context.Ctx, req)
+	resp, err := c.HandleRequest(context.Ctx, getDsInfo.Result, req)
 	if err != nil {
 		if err == gocontext.DeadlineExceeded {
 			return nil, fmt.Errorf("Alert execution exceeded the timeout")
@@ -139,8 +139,8 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	return result, nil
 }
 
-func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRange *tsdb.TimeRange) *tsdb.Request {
-	req := &tsdb.Request{
+func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRange *tsdb.TimeRange) *tsdb.TsdbQuery {
+	req := &tsdb.TsdbQuery{
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
 			{

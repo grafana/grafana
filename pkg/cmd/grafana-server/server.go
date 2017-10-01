@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
+	"github.com/grafana/grafana/pkg/tracing"
 )
 
 func NewGrafanaServer() models.GrafanaServer {
@@ -61,6 +62,14 @@ func (g *GrafanaServerImpl) Start() {
 	eventpublisher.Init()
 	plugins.Init()
 
+	closer, err := tracing.Init(setting.Cfg)
+	if err != nil {
+		g.log.Error("Tracing settings is not valid", "error", err)
+		g.Shutdown(1, "Startup failed")
+		return
+	}
+	defer closer.Close()
+
 	// init alerting
 	if setting.AlertingEnabled && setting.ExecuteAlerts {
 		engine := alerting.NewEngine()
@@ -71,8 +80,8 @@ func (g *GrafanaServerImpl) Start() {
 	cleanUpService := cleanup.NewCleanUpService()
 	g.childRoutines.Go(func() error { return cleanUpService.Run(g.context) })
 
-	if err := notifications.Init(); err != nil {
-		g.log.Error("Notification service failed to initialize", "erro", err)
+	if err = notifications.Init(); err != nil {
+		g.log.Error("Notification service failed to initialize", "error", err)
 		g.Shutdown(1, "Startup failed")
 		return
 	}

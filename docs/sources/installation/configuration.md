@@ -308,15 +308,15 @@ options are `Editor` and `Admin`.
 
 ## [auth.github]
 
-You need to create a GitHub application (you find this under the GitHub
-profile page). When you create the application you will need to specify
+You need to create a GitHub OAuth application (you find this under the GitHub
+settings page). When you create the application you will need to specify
 a callback URL. Specify this as callback:
 
     http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/github
 
 This callback URL must match the full HTTP address that you use in your
 browser to access Grafana, but with the prefix path of `/login/github`.
-When the GitHub application is created you will get a Client ID and a
+When the GitHub OAuth application is created you will get a Client ID and a
 Client Secret. Specify these in the Grafana configuration file. For
 example:
 
@@ -593,6 +593,9 @@ Address used when sending out emails, defaults to `admin@grafana.localhost`
 ### from_name
 Name to be used when sending out emails, defaults to `Grafana`
 
+### ehlo_identity
+Name to be used as client identity for EHLO in SMTP dialog, defaults to instance_name.
+
 ## [log]
 
 ### mode
@@ -645,15 +648,19 @@ Time to live for snapshots.
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
-You can choose between (s3, webdav). If left empty Grafana will ignore the upload action.
+You can choose between (s3, webdav, gcs). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
+### bucket
+Bucket name for S3. e.g. grafana.snapshot
+### region
+Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc
 
 ### bucket_url
+(for backward compatibility, only works when no bucket or region are configured)
 Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-east-1', e.g.
 - http://grafana.s3.amazonaws.com/
 - https://grafana.s3-ap-southeast-2.amazonaws.com/
-- https://grafana.s3-cn-north-1.amazonaws.com.cn
 
 ### access_key
 Access key. e.g. AAAAAAAAAAAAAAAAAAAA
@@ -676,6 +683,17 @@ basic auth username
 
 ### password
 basic auth password
+
+## [external_image_storage.gcs]
+
+### key_file
+Path to JSON key file associated with a Google service account to authenticate and authorize.
+Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
+
+Service Account should have "Storage Object Writer" role.
+
+### bucket name
+Bucket Name on Google Cloud Storage. 
 
 ## [alerting]
 

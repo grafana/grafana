@@ -1,5 +1,5 @@
 
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 import helpers from 'test/specs/helpers';
 import {GraphiteDatasource} from "../datasource";
 
@@ -9,7 +9,7 @@ describe('graphiteDatasource', function() {
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.providePhase(['backendSrv']));
+  beforeEach(ctx.providePhase(['backendSrv', 'templateSrv']));
   beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
     ctx.$q = $q;
     ctx.$httpBackend =  $httpBackend;

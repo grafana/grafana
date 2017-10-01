@@ -1,7 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import moment from 'moment';
 import {coreModule} from 'app/core/core';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 import {AnnotationEvent} from './event';

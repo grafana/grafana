@@ -1,6 +1,7 @@
 package imguploader
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 
@@ -8,13 +9,13 @@ import (
 )
 
 type ImageUploader interface {
-	Upload(path string) (string, error)
+	Upload(ctx context.Context, path string) (string, error)
 }
 
 type NopImageUploader struct {
 }
 
-func (NopImageUploader) Upload(path string) (string, error) {
+func (NopImageUploader) Upload(ctx context.Context, path string) (string, error) {
 	return "", nil
 }
 
@@ -27,15 +28,21 @@ func NewImageUploader() (ImageUploader, error) {
 			return nil, err
 		}
 
+		bucket := s3sec.Key("bucket").MustString("")
+		region := s3sec.Key("region").MustString("")
 		bucketUrl := s3sec.Key("bucket_url").MustString("")
 		accessKey := s3sec.Key("access_key").MustString("")
 		secretKey := s3sec.Key("secret_key").MustString("")
-		info, err := getRegionAndBucketFromUrl(bucketUrl)
-		if err != nil {
-			return nil, err
+		if bucket == "" || region == "" {
+			info, err := getRegionAndBucketFromUrl(bucketUrl)
+			if err != nil {
+				return nil, err
+			}
+			bucket = info.bucket
+			region = info.region
 		}
 
-		return NewS3Uploader(info.region, info.bucket, "public-read", accessKey, secretKey), nil
+		return NewS3Uploader(region, bucket, "public-read", accessKey, secretKey), nil
 	case "webdav":
 		webdavSec, err := setting.Cfg.GetSection("external_image_storage.webdav")
 		if err != nil {
@@ -52,6 +59,16 @@ func NewImageUploader() (ImageUploader, error) {
 		password := webdavSec.Key("password").String()
 
 		return NewWebdavImageUploader(url, username, password, public_url)
+	case "gcs":
+		gcssec, err := setting.Cfg.GetSection("external_image_storage.gcs")
+		if err != nil {
+			return nil, err
+		}
+
+		keyFile := gcssec.Key("key_file").MustString("")
+		bucketName := gcssec.Key("bucket").MustString("")
+
+		return NewGCSUploader(keyFile, bucketName), nil
 	}
 
 	return NopImageUploader{}, nil

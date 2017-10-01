@@ -3,9 +3,8 @@ define([
   'lodash',
   'angular',
   'tether-drop',
-  'app/core/components/emoji_picker/emoji_converter'
 ],
-function ($, _, angular, Drop, emojiConverter) {
+function ($, _, angular, Drop) {
   'use strict';
 
   function createAnnotationToolip(element, event, plot) {
@@ -234,7 +233,7 @@ function ($, _, angular, Drop, emojiConverter) {
       } else if (this._types === null || !this._types[eventTypeId] || this._types[eventTypeId].icon === undefined) {
         icon = null;
       } else {
-        icon = this._types[eventTypeId].emoji || this._types[eventTypeId].icon;
+        icon = this._types[eventTypeId].icon;
       }
 
       if (this._types === null || !this._types[eventTypeId] || this._types[eventTypeId].markerTooltip === undefined) {
@@ -278,24 +277,17 @@ function ($, _, angular, Drop, emojiConverter) {
       if (markerShow) {
         var marker;
         if (icon) {
-          var iconElem = emojiConverter.buildEmojiElem(icon);
-          iconElem = $(iconElem).css({
-            "position": "absolute",
-            // Adjust icon position only to show tooltip in the center of marker
-            "left": -0.6 + "rem",
-            "height": 1 + "rem"
-          });
-
           marker = $('<div class="events_marker"></div>').css({
             "position": "absolute",
-            "left": 0 + "px",
+            "left": (-markerSize-Math.round(lineWidth/2)) + "px",
             "font-size": 1.2 + "rem",
             "line-height": 0,
             "width": 0,
             "height": 0,
+            "border-left": markerSize+"px solid transparent",
+            "border-right": markerSize+"px solid transparent"
           });
 
-          marker.append(iconElem);
           marker.appendTo(line);
         } else {
           marker = $('<div class="events_marker"></div>').css({

@@ -94,10 +94,10 @@ to the same location (and overwrite the existing files). This might overwrite yo
 recommend you place your config changes in a file named  `<grafana_install_dir>/conf/custom.ini`
 as this will make upgrades easier without risking losing your config changes.
 
-## Upgrading form 1.x
+## Upgrading from 1.x
 
 [Migrating from 1.x to 2.x]({{< relref "installation/migrating_to2.md" >}})
 
-## Upgrading form 2.x
+## Upgrading from 2.x
 
-We are not aware of any issues upgrading directly from 2.x to 4.x but to on the safe side go via 3.x.
+We are not aware of any issues upgrading directly from 2.x to 4.x but to be on the safe side go via 3.x => 4.x.

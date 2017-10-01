@@ -38,6 +38,12 @@ func main() {
 			Value:  "https://grafana.com/api/plugins",
 			EnvVar: "GF_PLUGIN_REPO",
 		},
+		cli.StringFlag{
+			Name:   "pluginUrl",
+			Usage:  "Full url to the plugin zip file instead of downloading the plugin from grafana.com/api",
+			Value:  "",
+			EnvVar: "GF_PLUGIN_URL",
+		},
 		cli.BoolFlag{
 			Name:  "debug, d",
 			Usage: "enable debug logging",

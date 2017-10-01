@@ -1,16 +1,12 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
-import moment from 'moment';
-import * as FileExport from 'app/core/utils/file_export';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 import {transformDataToTable} from './transformers';
 import {tablePanelEditor} from './editor';
 import {columnOptionsTab} from './column_options';
 import {TableRenderer} from './renderer';
-import Drop from 'tether-drop';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -160,11 +156,10 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     });
   }
 
-  link(scope, elem, attrs, ctrl) {
+  link(scope, elem, attrs, ctrl: TablePanelCtrl) {
     var data;
     var panel = ctrl.panel;
     var pageCount = 0;
-    var formaters = [];
 
     function getTableHeight() {
       var panelHeight = ctrl.height;

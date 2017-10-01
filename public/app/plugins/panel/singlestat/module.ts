@@ -1,10 +1,8 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
-import 'jquery.flot';
-import 'jquery.flot.gauge';
+import 'vendor/flot/jquery.flot';
+import 'vendor/flot/jquery.flot.gauge';
+import 'app/features/panellinks/linkSrv';
 
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
@@ -22,7 +20,19 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   invalidGaugeRange: boolean;
   panel: any;
   events: any;
-  valueNameOptions: any[] = ['min','max','avg', 'current', 'total', 'name', 'first', 'delta', 'diff', 'range'];
+  valueNameOptions: any[] = [
+    {value : 'min', text: 'Min'},
+    {value : 'max', text: 'Max'},
+    {value : 'avg', text: 'Average'},
+    {value : 'current', text: 'Current'},
+    {value : 'total', text: 'Total'},
+    {value : 'name', text: 'Name'},
+    {value : 'first', text: 'First'},
+    {value : 'delta', text: 'Delta'},
+    {value : 'diff', text: 'Difference'},
+    {value : 'range', text: 'Range'},
+    {value : 'last_time', text: 'Time of last point'}
+  ];
   tableColumnOptions: any;
 
   // Set and populate defaults
@@ -93,7 +103,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   setUnitFormat(subItem) {
     this.panel.format = subItem.value;
-    this.render();
+    this.refresh();
   }
 
   onDataError(err) {
@@ -102,7 +112,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   onDataReceived(dataList) {
     const data: any = {};
-    if (dataList.length > 0 && dataList[0].type === 'table'){
+    if (dataList.length > 0 && dataList[0].type === 'table') {
       this.dataType = 'table';
       const tableData = dataList.map(this.tableHandler.bind(this));
       this.setTableValues(tableData, data);
@@ -169,8 +179,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       return;
     }
 
-    let highestValue = 0;
-    let lowestValue = Number.MAX_VALUE;
     const datapoint = tableData[0][0];
     data.value = datapoint[this.panel.tableColumn];
 
@@ -257,8 +265,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     if (this.series && this.series.length > 0) {
-      var lastPoint = _.last(this.series[0].datapoints);
-      var lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
+      let lastPoint = _.last(this.series[0].datapoints);
+      let lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
 
       if (this.panel.valueName === 'name') {
         data.value = 0;
@@ -268,12 +276,17 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.value = 0;
         data.valueFormatted = _.escape(lastValue);
         data.valueRounded = 0;
+      } else if (this.panel.valueName === 'last_time') {
+        let formatFunc = kbn.valueFormats[this.panel.format];
+        data.value = lastPoint[1];
+        data.valueRounded = data.value;
+        data.valueFormatted = formatFunc(data.value, 0, 0);
       } else {
         data.value = this.series[0].stats[this.panel.valueName];
         data.flotpairs = this.series[0].flotpairs;
 
-        var decimalInfo = this.getDecimalsForValue(data.value);
-        var formatFunc = kbn.valueFormats[this.panel.format];
+        let decimalInfo = this.getDecimalsForValue(data.value);
+        let formatFunc = kbn.valueFormats[this.panel.format];
         data.valueFormatted = formatFunc(data.value, decimalInfo.decimals, decimalInfo.scaledDecimals);
         data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
       }
@@ -620,8 +633,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         if ($(evt).parents('.panel-header').length > 0) { return; }
 
         if (linkInfo.target === '_blank') {
-          var redirectWindow = window.open(linkInfo.href, '_blank');
-          redirectWindow.location;
+          window.open(linkInfo.href, '_blank');
           return;
         }
 

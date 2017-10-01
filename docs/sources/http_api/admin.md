@@ -161,6 +161,7 @@ Only works with Basic Authentication (username and password). See [introduction]
         "enabled":"false",
         "from_address":"admin@grafana.localhost",
         "from_name":"Grafana",
+        "ehlo_identity":"dashboard.example.com",
         "host":"localhost:25",
         "key_file":"",
         "password":"************",

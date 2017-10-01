@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/components/null"
@@ -16,12 +18,9 @@ import (
 	api "github.com/prometheus/client_golang/api"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	"github.com/prometheus/common/model"
-	//api "github.com/prometheus/client_golang/api"
-	//apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 type PrometheusExecutor struct {
-	*models.DataSource
 	Transport *http.Transport
 }
 
@@ -37,15 +36,14 @@ func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, erro
 	return bat.Transport.RoundTrip(req)
 }
 
-func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
+func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	transport, err := dsInfo.GetHttpTransport()
 	if err != nil {
 		return nil, err
 	}
 
 	return &PrometheusExecutor{
-		DataSource: dsInfo,
-		Transport:  transport,
+		Transport: transport,
 	}, nil
 }
 
@@ -56,21 +54,21 @@ var (
 
 func init() {
 	plog = log.New("tsdb.prometheus")
-	tsdb.RegisterExecutor("prometheus", NewPrometheusExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("prometheus", NewPrometheusExecutor)
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
-func (e *PrometheusExecutor) getClient() (apiv1.API, error) {
+func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, error) {
 	cfg := api.Config{
-		Address:      e.DataSource.Url,
+		Address:      dsInfo.Url,
 		RoundTripper: e.Transport,
 	}
 
-	if e.BasicAuth {
+	if dsInfo.BasicAuth {
 		cfg.RoundTripper = basicAuthTransport{
 			Transport: e.Transport,
-			username:  e.BasicAuthUser,
-			password:  e.BasicAuthPassword,
+			username:  dsInfo.BasicAuthUser,
+			password:  dsInfo.BasicAuthPassword,
 		}
 	}
 
@@ -82,17 +80,17 @@ func (e *PrometheusExecutor) getClient() (apiv1.API, error) {
 	return apiv1.NewAPI(client), nil
 }
 
-func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{}
+func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{}
 
-	client, err := e.getClient()
+	client, err := e.getClient(dsInfo)
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
 
-	query, err := parseQuery(queries, queryContext)
+	query, err := parseQuery(tsdbQuery.Queries, tsdbQuery)
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
 
 	timeRange := apiv1.Range{
@@ -101,18 +99,24 @@ func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlic
 		Step:  query.Step,
 	}
 
+	span, ctx := opentracing.StartSpanFromContext(ctx, "alerting.prometheus")
+	span.SetTag("expr", query.Expr)
+	span.SetTag("start_unixnano", int64(query.Start.UnixNano()))
+	span.SetTag("stop_unixnano", int64(query.End.UnixNano()))
+	defer span.Finish()
+
 	value, err := client.QueryRange(ctx, query.Expr, timeRange)
 
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
 
 	queryResult, err := parseResponse(value, query)
 	if err != nil {
-		return result.WithError(err)
+		return nil, err
 	}
-	result.QueryResults = queryResult
-	return result
+	result.Results = queryResult
+	return result, nil
 }
 
 func formatLegend(metric model.Metric, query *PrometheusQuery) string {
@@ -134,7 +138,7 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 	return string(result)
 }
 
-func parseQuery(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) (*PrometheusQuery, error) {
+func parseQuery(queries []*tsdb.Query, queryContext *tsdb.TsdbQuery) (*PrometheusQuery, error) {
 	queryModel := queries[0]
 
 	expr, err := queryModel.Model.Get("expr").String()

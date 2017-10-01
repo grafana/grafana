@@ -3,7 +3,6 @@
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import {Variable, containsVariable, assignModelProperties, variableTypes} from './variable';
-import {VariableSrv} from './variable_srv';
 
 function getNoneOption() {
   return { text: 'None', value: '', isNone: true };
@@ -48,7 +47,7 @@ export class QueryVariable implements Variable {
   };
 
   /** @ngInject **/
-  constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private $q, private timeSrv)  {
+  constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private timeSrv)  {
     // copy model properties to this instance
     assignModelProperties(this, model, this.defaults);
   }
@@ -65,7 +64,7 @@ export class QueryVariable implements Variable {
     return this.model;
   }
 
-  setValue(option){
+  setValue(option) {
     return this.variableSrv.setOptionAsCurrent(this, option);
   }
 

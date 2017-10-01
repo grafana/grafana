@@ -31,7 +31,7 @@ func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
 		return ApiError(500, "failed to fetch data source", err)
 	}
 
-	request := &tsdb.Request{TimeRange: timeRange}
+	request := &tsdb.TsdbQuery{TimeRange: timeRange}
 
 	for _, query := range reqDto.Queries {
 		request.Queries = append(request.Queries, &tsdb.Query{
@@ -43,7 +43,7 @@ func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
 		})
 	}
 
-	resp, err := tsdb.HandleRequest(context.Background(), request)
+	resp, err := tsdb.HandleRequest(context.Background(), dsQuery.Result, request)
 	if err != nil {
 		return ApiError(500, "Metric request error", err)
 	}
@@ -98,18 +98,19 @@ func GetTestDataRandomWalk(c *middleware.Context) Response {
 	intervalMs := c.QueryInt64("intervalMs")
 
 	timeRange := tsdb.NewTimeRange(from, to)
-	request := &tsdb.Request{TimeRange: timeRange}
+	request := &tsdb.TsdbQuery{TimeRange: timeRange}
 
+	dsInfo := &models.DataSource{Type: "grafana-testdata-datasource"}
 	request.Queries = append(request.Queries, &tsdb.Query{
 		RefId:      "A",
 		IntervalMs: intervalMs,
 		Model: simplejson.NewFromAny(&util.DynMap{
 			"scenario": "random_walk",
 		}),
-		DataSource: &models.DataSource{Type: "grafana-testdata-datasource"},
+		DataSource: dsInfo,
 	})
 
-	resp, err := tsdb.HandleRequest(context.Background(), request)
+	resp, err := tsdb.HandleRequest(context.Background(), dsInfo, request)
 	if err != nil {
 		return ApiError(500, "Metric request error", err)
 	}

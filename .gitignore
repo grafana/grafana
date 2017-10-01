@@ -4,6 +4,8 @@ coverage/
 .aws-config.json
 awsconfig
 /dist
+/public/build
+/public/views/index.html
 /emails/dist
 /public_gen
 /public/vendor/npm
@@ -25,6 +27,7 @@ public/css/*.min.css
 .idea/
 *.iml
 *.tmp
+.DS_Store
 .vscode/
 
 /data/*

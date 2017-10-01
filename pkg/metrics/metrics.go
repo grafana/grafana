@@ -56,6 +56,7 @@ var (
 	M_StatTotal_Users        prometheus.Gauge
 	M_StatTotal_Orgs         prometheus.Gauge
 	M_StatTotal_Playlists    prometheus.Gauge
+	M_Grafana_Version        *prometheus.GaugeVec
 )
 
 func init() {
@@ -102,7 +103,7 @@ func init() {
 
 	M_Http_Request_Summary = prometheus.NewSummaryVec(
 		prometheus.SummaryOpts{
-			Name: "http_request_duration_milleseconds",
+			Name: "http_request_duration_milliseconds",
 			Help: "http request summary",
 		},
 		[]string{"handler", "statuscode", "method"},
@@ -127,19 +128,19 @@ func init() {
 	})
 
 	M_Api_Dashboard_Save = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "api_dashboard_save_milleseconds",
+		Name:      "api_dashboard_save_milliseconds",
 		Help:      "summary for dashboard save duration",
 		Namespace: exporterName,
 	})
 
 	M_Api_Dashboard_Get = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "api_dashboard_get_milleseconds",
+		Name:      "api_dashboard_get_milliseconds",
 		Help:      "summary for dashboard get duration",
 		Namespace: exporterName,
 	})
 
 	M_Api_Dashboard_Search = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "api_dashboard_search_milleseconds",
+		Name:      "api_dashboard_search_milliseconds",
 		Help:      "summary for dashboard search duration",
 		Namespace: exporterName,
 	})
@@ -223,7 +224,7 @@ func init() {
 	})
 
 	M_DataSource_ProxyReq_Timer = prometheus.NewSummary(prometheus.SummaryOpts{
-		Name:      "api_dataproxy_request_all_milleseconds",
+		Name:      "api_dataproxy_request_all_milliseconds",
 		Help:      "summary for dashboard search duration",
 		Namespace: exporterName,
 	})
@@ -263,6 +264,13 @@ func init() {
 		Help:      "total amount of playlists",
 		Namespace: exporterName,
 	})
+
+	M_Grafana_Version = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name:      "info",
+		Help:      "Information about the Grafana",
+		Namespace: exporterName,
+	}, []string{"version"})
+
 }
 
 func initMetricVars(settings *MetricSettings) {
@@ -298,7 +306,8 @@ func initMetricVars(settings *MetricSettings) {
 		M_StatTotal_Dashboards,
 		M_StatTotal_Users,
 		M_StatTotal_Orgs,
-		M_StatTotal_Playlists)
+		M_StatTotal_Playlists,
+		M_Grafana_Version)
 
 	go instrumentationLoop(settings)
 }

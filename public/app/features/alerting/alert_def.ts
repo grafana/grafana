@@ -49,6 +49,8 @@ var reducerTypes = [
   {text: 'count()', value: 'count'},
   {text: 'last()', value: 'last'},
   {text: 'median()', value: 'median'},
+  {text: 'diff()', value: 'diff'},
+  {text: 'percent_diff()', value: 'percent_diff'},
 ];
 
 var noDataModes = [
@@ -106,6 +108,8 @@ function getStateDisplayModel(state) {
       };
     }
   }
+
+  throw {message: 'Unknown alert state'};
 }
 
 function joinEvalMatches(matches, separator: string) {

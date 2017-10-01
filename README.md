@@ -24,7 +24,7 @@ the latest master builds [here](https://grafana.com/grafana/download)
 
 ### Dependencies
 
-- Go 1.8.1
+- Go 1.9
 - NodeJS LTS
 
 ### Building the backend
@@ -46,10 +46,21 @@ yarn install --pure-lockfile
 npm run build
 ```
 
-To build the frontend assets only on changes:
+To rebuild frontend assets (typesript, sass etc) as you change them start
+the watcher via.
 
 ```bash
-npm run dev
+npm run watch
+```
+
+Run tests
+```bash
+npm run test
+```
+
+Run tests in watch mode
+```bash
+npm run watch-test
 ```
 
 ### Recompile backend on source change

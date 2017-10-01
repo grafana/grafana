@@ -13,7 +13,7 @@ dev environment. Grafana ships with its own required backend server; also comple
 
 ## Dependencies
 
-- [Go 1.8.1](https://golang.org/dl/)
+- [Go 1.9](https://golang.org/dl/)
 - [NodeJS LTS](https://nodejs.org/download/)
 - [Git](https://git-scm.com/downloads)
 
@@ -27,7 +27,7 @@ go get github.com/grafana/grafana
 
 On Windows use setx instead of export and then restart your command prompt:
 ```
-setx GOPATH %cd% 
+setx GOPATH %cd%
 ```
 
 You may see an error such as: `package github.com/grafana/grafana: no buildable Go source files`. This is just a warning, and you can proceed with the directions.
@@ -43,7 +43,7 @@ go run build.go build              # (or 'go build ./pkg/cmd/grafana-server')
 The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on windows you need
 to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
 
-[node-gyp](https://github.com/nodejs/node-gyp#installation) is the Node.js native addon build tool and it requires extra dependencies to be installed on Windows. In a command prompt which is run as administrator, run: 
+[node-gyp](https://github.com/nodejs/node-gyp#installation) is the Node.js native addon build tool and it requires extra dependencies to be installed on Windows. In a command prompt which is run as administrator, run:
 
 ```
 npm --add-python-to-path='true' --debug install --global windows-build-tools
@@ -88,7 +88,7 @@ go get github.com/Unknwon/bra
 
 bra run
 ```
-You'll also need to run `grunt watch` to watch for changes to the front-end.
+You'll also need to run `npm run watch` to watch for changes to the front-end.
 
 ## Creating optimized release packages
 This step builds linux packages and requires that fpm is installed. Install fpm via `gem install fpm`.
@@ -119,7 +119,7 @@ Please contribute to the Grafana project and submit a pull request! Build new fe
 
 **Problem**: When running `bra run` for the first time you get an error that it is not a recognized command.
 
-**Solution**: Add the bin directory in your Go workspace directory to the path. Per default this is `$HOME/go/bin` on Linux and `%USERPROFILE%\go\bin` on Windows or `$GOPATH/bin` (`%GOPATH%\bin` on Windows) if you have set your own workspace directory. 
+**Solution**: Add the bin directory in your Go workspace directory to the path. Per default this is `$HOME/go/bin` on Linux and `%USERPROFILE%\go\bin` on Windows or `$GOPATH/bin` (`%GOPATH%\bin` on Windows) if you have set your own workspace directory.
 <br><br>
 
 **Problem**: When executing a `go get` command on Windows and you get an error about the git repository not existing.

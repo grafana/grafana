@@ -1,8 +1,9 @@
 define([
   'jquery',
-  'lodash'
+  'lodash',
+  'moment'
 ],
-function($, _) {
+function($, _, moment) {
   'use strict';
 
   var kbn = {};
@@ -389,6 +390,10 @@ function($, _) {
     return value.toExponential(decimals);
   };
 
+  kbn.valueFormats.locale = function(value, decimals) {
+    return value.toLocaleString(undefined, {maximumFractionDigits: decimals});
+  };
+
   // Currencies
   kbn.valueFormats.currencyUSD = kbn.formatBuilders.currency('$');
   kbn.valueFormats.currencyGBP = kbn.formatBuilders.currency('£');
@@ -396,6 +401,7 @@ function($, _) {
   kbn.valueFormats.currencyJPY = kbn.formatBuilders.currency('¥');
   kbn.valueFormats.currencyRUB = kbn.formatBuilders.currency('₽');
   kbn.valueFormats.currencyUAH = kbn.formatBuilders.currency('₴');
+  kbn.valueFormats.currencyBRL = kbn.formatBuilders.currency('R$');
 
   // Data (Binary)
   kbn.valueFormats.bits   = kbn.formatBuilders.binarySIPrefix('b');
@@ -473,6 +479,12 @@ function($, _) {
   kbn.valueFormats.lengthmm = kbn.formatBuilders.decimalSIPrefix('m', -1);
   kbn.valueFormats.lengthkm = kbn.formatBuilders.decimalSIPrefix('m', 1);
   kbn.valueFormats.lengthmi = kbn.formatBuilders.fixedUnit('mi');
+
+  // Mass
+  kbn.valueFormats.massmg  = kbn.formatBuilders.decimalSIPrefix('g', -1);
+  kbn.valueFormats.massg = kbn.formatBuilders.decimalSIPrefix('g');
+  kbn.valueFormats.masskg = kbn.formatBuilders.decimalSIPrefix('g', 1);
+  kbn.valueFormats.masst = kbn.formatBuilders.fixedUnit('t');
 
   // Velocity
   kbn.valueFormats.velocityms   = kbn.formatBuilders.fixedUnit('m/s');
@@ -692,6 +704,28 @@ function($, _) {
     return kbn.toDuration(size, decimals, 'second');
   };
 
+  kbn.valueFormats.dateTimeAsIso = function(epoch) {
+    var time = moment(epoch);
+
+    if (moment().isSame(epoch, 'day')) {
+      return time.format('HH:mm:ss');
+    }
+    return time.format('YYYY-MM-DD HH:mm:ss');
+  };
+
+  kbn.valueFormats.dateTimeAsUS = function(epoch) {
+    var time = moment(epoch);
+
+    if (moment().isSame(epoch, 'day')) {
+      return time.format('h:mm:ss a');
+    }
+    return time.format('MM/DD/YYYY h:mm:ss a');
+  };
+
+  kbn.valueFormats.dateTimeFromNow = function(epoch) {
+    return moment(epoch).fromNow();
+  };
+
   ///// FORMAT MENU /////
 
   kbn.getUnitFormats = function() {
@@ -709,6 +743,7 @@ function($, _) {
           {text: 'hexadecimal (0x)',    value: 'hex0x'      },
           {text: 'hexadecimal',         value: 'hex'        },
           {text: 'scientific notation', value: 'sci'        },
+          {text: 'locale format',       value: 'locale'     },
         ]
       },
       {
@@ -720,6 +755,7 @@ function($, _) {
           {text: 'Yen (¥)',     value: 'currencyJPY'},
           {text: 'Rubles (₽)',  value: 'currencyRUB'},
           {text: 'Hryvnias (₴)',  value: 'currencyUAH'},
+          {text: 'Real (R$)', value: 'currencyBRL'},
         ]
       },
       {
@@ -734,7 +770,15 @@ function($, _) {
           {text: 'hours (h)',         value: 'h'    },
           {text: 'days (d)',          value: 'd'    },
           {text: 'duration (ms)',     value: 'dtdurationms' },
-          {text: 'duration (s)',      value: 'dtdurations' }
+          {text: 'duration (s)',      value: 'dtdurations' },
+        ]
+      },
+      {
+        text: 'date & time',
+        submenu: [
+          {text: 'YYYY-MM-DD HH:mm:ss',   value: 'dateTimeAsIso' },
+          {text: 'DD/MM/YYYY h:mm:ss a',  value: 'dateTimeAsUS' },
+          {text: 'From Now',              value: 'dateTimeFromNow' },
         ]
       },
       {
@@ -790,6 +834,15 @@ function($, _) {
           {text: 'meter (m)',       value: 'lengthm' },
           {text: 'kilometer (km)',  value: 'lengthkm'},
           {text: 'mile (mi)',       value: 'lengthmi'},
+        ]
+      },
+      {
+        text: 'mass',
+        submenu: [
+          {text: 'milligram (mg)', value: 'massmg'},
+          {text: 'gram (g)',       value: 'massg' },
+          {text: 'kilogram (kg)',  value: 'masskg'},
+          {text: 'metric ton (t)', value: 'masst' },
         ]
       },
       {

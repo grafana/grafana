@@ -1,7 +1,7 @@
 ///<reference path="../../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import { describe, beforeEach, it, sinon, expect, angularMocks } from '../../../../../test/lib/common';
+import { describe, beforeEach, it, expect } from '../../../../../test/lib/common';
 import TimeSeries from 'app/core/time_series2';
 import {convertToHeatMap, convertToCards, elasticHistogramToHeatmap,
         calculateBucketSize, isHeatmapDataEqual} from '../heatmap_data_converter';
@@ -272,17 +272,14 @@ describe('convertToCards', () => {
       {x: 1422774000000, y: 2, count: 1, values: [2], yBounds: {}},
       {x: 1422774060000, y: 2, count: 2, values: [2, 3], yBounds: {}}
     ];
-    let {cards, cardStats} = convertToCards(buckets);
-    expect(cards).to.eql(expectedCards);
+    let res = convertToCards(buckets);
+    expect(res.cards).to.eql(expectedCards);
   });
 
   it('should build proper cards stats', () => {
-    let expectedStats = {
-      min: 1,
-      max: 2
-    };
-    let {cards, cardStats} = convertToCards(buckets);
-    expect(cardStats).to.eql(expectedStats);
+    let expectedStats = {min: 1, max: 2};
+    let res = convertToCards(buckets);
+    expect(res.cardStats).to.eql(expectedStats);
   });
 });
 
