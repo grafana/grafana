@@ -3,12 +3,11 @@ var path = require('path');
 module.exports = function(grunt) {
   "use strict";
 
-  // Concat and Minify the src directory into dist
-  grunt.registerTask('build', [
-    'clean:release',
-    'clean:build',
-    'phantomjs',
-    'webpack:prod',
+  // build, then zip and upload to s3
+  grunt.registerTask('release', [
+    'build',
+    'build-post-process',
+    'compress:release'
   ]);
 
   grunt.registerTask('build-post-process', function() {
@@ -39,5 +38,4 @@ module.exports = function(grunt) {
 
     grunt.file.write(path.join(grunt.config('tempDir'), 'VERSION'), grunt.config('pkg.version'));
   });
-
 };
