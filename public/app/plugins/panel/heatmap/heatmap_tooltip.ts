@@ -1,6 +1,4 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import d3 from 'd3';
+import d3 from 'vendor/d3/d3';
 import $ from 'jquery';
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
