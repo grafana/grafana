@@ -8,7 +8,6 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const WebpackCleanupPlugin = require('webpack-cleanup-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-
 const pkg = require('../../package.json');
 let dependencies = Object.keys(pkg.dependencies);
 
@@ -48,8 +47,8 @@ module.exports = merge(common, {
       names: ['vendor', 'manifest'],
     }),
     new WebpackCleanupPlugin(),
-    new BundleAnalyzerPlugin({
-      analyzerPort: 8889
-    })
+    // new BundleAnalyzerPlugin({
+    //   analyzerPort: 8889
+    // })
   ]
 });

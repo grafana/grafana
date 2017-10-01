@@ -3,6 +3,9 @@ const {CheckerPlugin} = require('awesome-typescript-loader')
 
 module.exports = {
   target: 'web',
+  stats: {
+    children: false
+  },
   entry: {
     app: './public/app/index.ts',
   },
