@@ -10,12 +10,10 @@
 
 		<base href="[[.AppSubUrl]]/" />
 
-		<link href='public/build/fonts.min.css?v[[ .BuildVersion ]]' rel='stylesheet' type='text/css'>
-
 		[[if .User.LightTheme]]
-		  <link rel="stylesheet" href="public/build/grafana.light.min.css?v[[ .BuildVersion ]]">
+		  <link rel="stylesheet" href="public/build/grafana.light.css?v[[ .BuildVersion ]]">
 		[[else]]
-		  <link rel="stylesheet" href="public/build/grafana.dark.min.css?v[[ .BuildVersion ]]">
+		  <link rel="stylesheet" href="public/build/grafana.dark.css?v[[ .BuildVersion ]]">
 		[[end]]
 
     <link rel="icon" type="image/png" href="public/img/fav32.png">
