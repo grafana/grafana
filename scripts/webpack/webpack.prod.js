@@ -7,8 +7,16 @@ const webpack = require('webpack');
 const path = require('path');
 const ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 module.exports = merge(common, {
+  devtool: "source-map",
+
+  entry: {
+    dark: './public/sass/grafana.dark.scss',
+    light: './public/sass/grafana.light.scss',
+  },
+
   module: {
     rules: [
       require('./sass.rule.js')({
@@ -16,7 +24,11 @@ module.exports = merge(common, {
       })
     ]
   },
+
   plugins: [
+    new ExtractTextPlugin({
+      filename: 'grafana.[name].css',
+    }),
     new ngAnnotatePlugin(),
     new UglifyJSPlugin(),
     new webpack.DefinePlugin({

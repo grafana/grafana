@@ -12,7 +12,6 @@ module.exports = merge(common, {
   devtool: "source-map",
 
   entry: {
-    fonts: './public/sass/grafana.dark.scss',
     dark: './public/sass/grafana.dark.scss',
     light: './public/sass/grafana.light.scss',
   },
