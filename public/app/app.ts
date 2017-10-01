@@ -11,9 +11,9 @@ import 'react';
 import 'react-dom';
 import 'ngreact';
 
-import 'vendor/bootstrap/bootstrap.js';
-import 'vendor/angular-ui/ui-bootstrap-tpls.js';
-import 'vendor/angular-other/angular-strap.js';
+import 'vendor/bootstrap/bootstrap';
+import 'vendor/angular-ui/ui-bootstrap-tpls';
+import 'vendor/angular-other/angular-strap';
 
 import $ from 'jquery';
 import angular from 'angular';
