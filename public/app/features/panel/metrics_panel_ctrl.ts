@@ -218,6 +218,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     });
 
     var metricsQuery = {
+      timezone: this.dashboard.getTimezone(),
       panelId: this.panel.id,
       range: this.range,
       rangeRaw: this.range.raw,
