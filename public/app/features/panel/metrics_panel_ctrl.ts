@@ -1,10 +1,8 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import $ from 'jquery';
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {PanelCtrl} from './panel_ctrl';
+import {PanelCtrl} from 'app/features/panel/panel_ctrl';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
@@ -220,6 +218,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     });
 
     var metricsQuery = {
+      timezone: this.dashboard.getTimezone(),
       panelId: this.panel.id,
       range: this.range,
       rangeRaw: this.range.raw,

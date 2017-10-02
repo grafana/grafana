@@ -27,7 +27,7 @@ go get github.com/grafana/grafana
 
 On Windows use setx instead of export and then restart your command prompt:
 ```
-setx GOPATH %cd% 
+setx GOPATH %cd%
 ```
 
 You may see an error such as: `package github.com/grafana/grafana: no buildable Go source files`. This is just a warning, and you can proceed with the directions.
@@ -43,35 +43,25 @@ go run build.go build              # (or 'go build ./pkg/cmd/grafana-server')
 The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on windows you need
 to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
 
-[node-gyp](https://github.com/nodejs/node-gyp#installation) is the Node.js native addon build tool and it requires extra dependencies to be installed on Windows. In a command prompt which is run as administrator, run: 
+[node-gyp](https://github.com/nodejs/node-gyp#installation) is the Node.js native addon build tool and it requires extra dependencies to be installed on Windows. In a command prompt which is run as administrator, run:
 
 ```
 npm --add-python-to-path='true' --debug install --global windows-build-tools
 ```
 
-## Build the Front-end Assets
+## Build the Frontend Assets
 
-To build less to css for the frontend you will need a recent version of node (v0.12.0),
-npm (v2.5.0) and grunt (v0.4.5). Run the following:
+For this you need nodejs (v.6+).
 
 ```
 npm install -g yarn
 yarn install --pure-lockfile
-npm install -g grunt-cli
-grunt
+npm run build
 ```
-
-## Recompile backend on source change
-To rebuild on source change
-```
-go get github.com/Unknwon/bra
-bra run
-```
-
-If the `bra run` command does not work, make sure that the bin directory in your Go workspace directory is in the path. $GOPATH/bin (or %GOPATH%\bin in Windows) is in your path.
 
 ## Running Grafana Locally
 You can run a local instance of Grafana by running:
+
 ```
 ./bin/grafana-server
 ```
@@ -81,16 +71,21 @@ If you built it with `go build .`, run `./grafana`
 
 Open grafana in your browser (default [http://localhost:3000](http://localhost:3000)) and login with admin user (default user/pass = admin/admin).
 
-## Developing for Grafana
-To add features, customize your config, etc, you'll need to rebuild on source change.
+## Developing Grafana
+
+To add features, customize your config, etc, you'll need to rebuild the backend when you change the source code. We use a tool named `bra` that
+does this.
+
 ```
 go get github.com/Unknwon/bra
 
 bra run
 ```
-You'll also need to run `grunt watch` to watch for changes to the front-end.
+
+You'll also need to run `npm run watch` to watch for changes to the front-end (typescript, html, sass)
 
 ## Creating optimized release packages
+
 This step builds linux packages and requires that fpm is installed. Install fpm via `gem install fpm`.
 
 ```
@@ -104,6 +99,10 @@ You only need to add the options you want to override. Config files are applied 
 
 1. grafana.ini
 2. custom.ini
+
+### Set app_mode to development
+
+In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = development`.
 
 Learn more about Grafana config options in the [Configuration section](/installation/configuration/)
 
@@ -119,7 +118,7 @@ Please contribute to the Grafana project and submit a pull request! Build new fe
 
 **Problem**: When running `bra run` for the first time you get an error that it is not a recognized command.
 
-**Solution**: Add the bin directory in your Go workspace directory to the path. Per default this is `$HOME/go/bin` on Linux and `%USERPROFILE%\go\bin` on Windows or `$GOPATH/bin` (`%GOPATH%\bin` on Windows) if you have set your own workspace directory. 
+**Solution**: Add the bin directory in your Go workspace directory to the path. Per default this is `$HOME/go/bin` on Linux and `%USERPROFILE%\go\bin` on Windows or `$GOPATH/bin` (`%GOPATH%\bin` on Windows) if you have set your own workspace directory.
 <br><br>
 
 **Problem**: When executing a `go get` command on Windows and you get an error about the git repository not existing.

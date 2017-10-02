@@ -10,6 +10,7 @@ describe('templateSrv', function() {
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(angularMocks.module($provide => {
     $provide.value('timeSrv', {});
+    $provide.value('datasourceSrv', {});
   }));
 
   beforeEach(angularMocks.inject(function(variableSrv, templateSrv) {

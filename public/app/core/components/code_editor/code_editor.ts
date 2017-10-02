@@ -26,60 +26,31 @@
  * Ctrl-Enter (Command-Enter): run onChange() function
  */
 
-///<reference path="../../../headers/common.d.ts" />
-import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
-import ace from 'ace';
+import ace from 'brace';
+import './theme-grafana-dark';
+import 'brace/ext/language_tools';
+import 'brace/theme/textmate';
+import 'brace/mode/text';
+import 'brace/snippets/text';
+import 'brace/mode/sql';
+import 'brace/snippets/sql';
 
-const ACE_SRC_BASE = "public/vendor/npm/ace-builds/src-noconflict/";
-const DEFAULT_THEME_DARK = "grafana-dark";
-const DEFAULT_THEME_LIGHT = "textmate";
+const DEFAULT_THEME_DARK = "ace/theme/grafana-dark";
+const DEFAULT_THEME_LIGHT = "ace/theme/textmate";
 const DEFAULT_MODE = "text";
 const DEFAULT_MAX_LINES = 10;
 const DEFAULT_TAB_SIZE = 2;
 const DEFAULT_BEHAVIOURS = true;
 
-const GRAFANA_MODULES = ['theme-grafana-dark'];
-const GRAFANA_MODULE_BASE = "public/app/core/components/code_editor/";
-
-// Trick for loading additional modules
-function setModuleUrl(moduleType, name, pluginBaseUrl = null) {
-  let baseUrl = ACE_SRC_BASE;
-  let aceModeName = `ace/${moduleType}/${name}`;
-  let moduleName = `${moduleType}-${name}`;
-  let componentName = `${moduleName}.js`;
-
-  if (_.includes(GRAFANA_MODULES, moduleName)) {
-    baseUrl = GRAFANA_MODULE_BASE;
-  }
-
-  if (pluginBaseUrl) {
-    baseUrl = pluginBaseUrl + '/';
-  }
-
-  if (moduleType === 'snippets') {
-    componentName = `${moduleType}/${name}.js`;
-  }
-
-  ace.config.setModuleUrl(aceModeName, baseUrl + componentName);
-}
-
-setModuleUrl("ext", "language_tools");
-setModuleUrl("mode", "text");
-setModuleUrl("snippets", "text");
-
 let editorTemplate = `<div></div>`;
 
 function link(scope, elem, attrs) {
-  let lightTheme = config.bootData.user.lightTheme;
-  let default_theme = lightTheme ? DEFAULT_THEME_LIGHT : DEFAULT_THEME_DARK;
-
   // Options
   let langMode = attrs.mode || DEFAULT_MODE;
   let maxLines = attrs.maxLines || DEFAULT_MAX_LINES;
   let showGutter = attrs.showGutter !== undefined;
-  let theme = attrs.theme || default_theme;
   let tabSize = attrs.tabSize || DEFAULT_TAB_SIZE;
   let behavioursEnabled = attrs.behavioursEnabled ? attrs.behavioursEnabled === 'true' : DEFAULT_BEHAVIOURS;
 
@@ -103,10 +74,10 @@ function link(scope, elem, attrs) {
   // disable depreacation warning
   codeEditor.$blockScrolling = Infinity;
   // Padding hacks
-  codeEditor.renderer.setScrollMargin(15, 15);
+  (<any>codeEditor.renderer).setScrollMargin(15, 15);
   codeEditor.renderer.setPadding(10);
 
-  setThemeMode(theme);
+  setThemeMode();
   setLangMode(langMode);
   setEditorContent(scope.content);
 
@@ -162,44 +133,31 @@ function link(scope, elem, attrs) {
   });
 
   function setLangMode(lang) {
-    let aceModeName = `ace/mode/${lang}`;
-    setModuleUrl("mode", lang, scope.datasource.meta.baseUrl || null);
-    setModuleUrl("snippets", lang, scope.datasource.meta.baseUrl || null);
-    editorSession.setMode(aceModeName);
-
-    ace.config.loadModule("ace/ext/language_tools", (language_tools) => {
-      codeEditor.setOptions({
-        enableBasicAutocompletion: true,
-        enableLiveAutocompletion: true,
-        enableSnippets: true
-      });
-
-      if (scope.getCompleter()) {
-        // make copy of array as ace seems to share completers array between instances
-        codeEditor.completers = codeEditor.completers.slice();
-        codeEditor.completers.push(scope.getCompleter());
-      }
+    ace.acequire("ace/ext/language_tools");
+    codeEditor.setOptions({
+      enableBasicAutocompletion: true,
+      enableLiveAutocompletion: true,
+      enableSnippets: true
     });
+
+    if (scope.getCompleter()) {
+      // make copy of array as ace seems to share completers array between instances
+      const anyEditor = <any>codeEditor;
+      anyEditor.completers = anyEditor.completers.slice();
+      anyEditor.completers.push(scope.getCompleter());
+    }
+
+    let aceModeName = `ace/mode/${lang}`;
+    editorSession.setMode(aceModeName);
   }
 
-  function setThemeMode(theme) {
-    setModuleUrl("theme", theme);
-    let themeModule = `ace/theme/${theme}`;
-    ace.config.loadModule(themeModule, (theme_module) => {
-      // Check is theme light or dark and fix if needed
-      let lightTheme = config.bootData.user.lightTheme;
-      let fixedTheme = theme;
-      if (lightTheme && theme_module.isDark) {
-        fixedTheme = DEFAULT_THEME_LIGHT;
-      } else if (!lightTheme && !theme_module.isDark) {
-        fixedTheme = DEFAULT_THEME_DARK;
-      }
-      setModuleUrl("theme", fixedTheme);
-      themeModule = `ace/theme/${fixedTheme}`;
-      codeEditor.setTheme(themeModule);
+  function setThemeMode() {
+    let theme = DEFAULT_THEME_DARK;
+    if (config.bootData.user.lightTheme) {
+      theme = DEFAULT_THEME_LIGHT;
+    }
 
-      elem.addClass("gf-code-editor--theme-loaded");
-    });
+    codeEditor.setTheme(theme);
   }
 
   function setEditorContent(value) {

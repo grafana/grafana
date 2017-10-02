@@ -264,12 +264,16 @@ func applyCommandLineDefaultProperties(props map[string]string) {
 
 func applyCommandLineProperties(props map[string]string) {
 	for _, section := range Cfg.Sections() {
+		sectionName := section.Name() + "."
+		if section.Name() == ini.DEFAULT_SECTION {
+			sectionName = ""
+		}
 		for _, key := range section.Keys() {
-			keyString := fmt.Sprintf("%s.%s", section.Name(), key.Name())
+			keyString := sectionName + key.Name()
 			value, exists := props[keyString]
 			if exists {
-				key.SetValue(value)
 				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
+				key.SetValue(value)
 			}
 		}
 	}
@@ -449,16 +453,11 @@ func validateStaticRootPath() error {
 		return nil
 	}
 
-	if _, err := os.Stat(path.Join(StaticRootPath, "css")); err == nil {
-		return nil
+	if _, err := os.Stat(path.Join(StaticRootPath, "build")); err != nil {
+		logger.Error("Failed to detect generated javascript files in public/build")
 	}
 
-	if _, err := os.Stat(StaticRootPath + "_gen/css"); err == nil {
-		StaticRootPath = StaticRootPath + "_gen"
-		return nil
-	}
-
-	return fmt.Errorf("Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?", StaticRootPath)
+	return nil
 }
 
 func NewConfigContext(args *CommandLineArgs) error {
@@ -656,4 +655,5 @@ func LogConfigurationInfo() {
 	logger.Info("Path Data", "path", DataPath)
 	logger.Info("Path Logs", "path", LogsPath)
 	logger.Info("Path Plugins", "path", PluginsPath)
+	logger.Info("App mode " + Env)
 }

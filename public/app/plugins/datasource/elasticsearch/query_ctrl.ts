@@ -5,7 +5,7 @@ import './metric_agg';
 
 import angular from 'angular';
 import _ from 'lodash';
-import queryDef from './query_def';
+import * as queryDef from './query_def';
 import {QueryCtrl} from 'app/plugins/sdk';
 
 export class ElasticQueryCtrl extends QueryCtrl {

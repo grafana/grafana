@@ -1,3 +1,7 @@
+// vendor
+@import "../vendor/css/timepicker.css";
+@import "../vendor/css/spectrum.css";
+
 // MIXINS
 @import "mixins/mixins";
 @import "mixins/animations";
@@ -15,8 +19,7 @@
 @import "base/type";
 @import "base/forms";
 @import "base/grid";
-@import "base/font_awesome";
-@import "base/grafana_icons";
+@import "base/fonts";
 @import "base/code";
 
 // UTILS

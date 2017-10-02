@@ -21,6 +21,7 @@ import (
 
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	_ "github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
 	_ "github.com/grafana/grafana/pkg/tsdb/influxdb"
 	_ "github.com/grafana/grafana/pkg/tsdb/mysql"
