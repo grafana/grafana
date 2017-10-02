@@ -2,8 +2,6 @@ define([
   'angular',
   'lodash',
   'jquery',
-  'jquery.flot',
-  'jquery.flot.time',
 ],
 function (angular, _, $) {
   'use strict';

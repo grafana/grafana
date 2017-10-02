@@ -1,9 +1,7 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
-import d3 from 'd3';
+import d3 from 'vendor/d3/d3';
 import {contextSrv} from 'app/core/core';
 import {tickStep} from 'app/core/utils/ticks';
 

@@ -1,6 +1,3 @@
-///<reference path="../headers/common.d.ts" />
-///<reference path="./mod_defs.d.ts" />
-
 import "./directives/dash_class";
 import "./directives/confirm_click";
 import "./directives/dash_edit_link";
@@ -11,7 +8,6 @@ import "./directives/ng_model_on_blur";
 import "./directives/spectrum_picker";
 import "./directives/tags";
 import "./directives/value_select_dropdown";
-import "./directives/plugin_component";
 import "./directives/rebuild_on_change";
 import "./directives/give_focus";
 import "./directives/diff-view";

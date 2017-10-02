@@ -1,6 +1,6 @@
 {
   "browser": true,
-
+  "esversion": 6,
   "bitwise":false,
   "curly": true,
   "eqnull": true,
