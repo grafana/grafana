@@ -1,5 +1,3 @@
-///<reference path="../headers/common.d.ts" />
-
 import $ from 'jquery';
 import angular from 'angular';
 

@@ -11,11 +11,12 @@ weight = 1
 
 # Graph Panel
 
+{{< docs-imagebox img="/img/docs/v45/graph_overview.png" class="docs-image--no-shadow" max-width="850px" >}}
+
 The main panel in Grafana is simply named Graph. It provides a very rich set of graphing options.
 
-{{< docs-imagebox img="/img/docs/v45/graph_overview.png" class="docs-image--no-shadow" max-width= "900px" >}}
-
-1. Clicking the title for a panel exposes a menu.  The `edit` option opens additional configuration options for the panel.
+1. Clicking the title for a panel exposes a menu.  The `edit` option opens additional configuration
+options for the panel.
 2. Click to open color & axis selection.
 3. Click to only show this series. Shift/Ctrl + click to hide series.
 
@@ -27,9 +28,9 @@ The general tab allows customization of a panel's appearance and menu options.
 
 ### General Options
 
-- ``Title`` - The panel title on the dashboard
-- ``Span`` - The panel width in columns
-- ``Height`` - The panel contents height in pixels
+- **Title** - The panel title on the dashboard
+- **Span** - The panel width in columns
+- **Height** - The panel contents height in pixels
 
 ### Drilldown / detail link
 
@@ -72,7 +73,7 @@ There are three options:
 
 - The `Series` option means that the data is grouped by series and not by time. The y-axis still represents the value.
 
-    <img src="/img/docs/v4/x_axis_mode_series.png" class="no-shadow">
+    {{< docs-imagebox img="/img/docs/v45/graph-x-axis-mode-series.png" max-width="700px">}}
 
 - The `Histogram` option converts the graph into a histogram. A Histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range. Histograms and buckets are described in more detail [here](http://docs.grafana.org/features/panels/heatmap/#histograms-and-buckets).
 
@@ -157,6 +158,12 @@ There is an option under Series overrides to draw lines as dashes. Set Dashes to
 
 ## Time Range
 
+<<<<<<< HEAD
 The time range tab allows you to override the dashboard time range and specify a panel specific time. Either through a relative from now time option or through a timeshift.
 
 {{< docs-imagebox img="/img/docs/v45/graph-time-range.png"  max-width= "900px" >}}
+||||||| merged common ancestors
+![](/img/docs/v2/graph_time_range.png)
+=======
+<img src="/img/docs/v45/graph-time-range.png" class="no-shadow">
+>>>>>>> 0a65100eaf64cd57b38110001bf614630821610c
