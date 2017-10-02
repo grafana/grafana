@@ -9,7 +9,15 @@ const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const WebpackCleanupPlugin = require('webpack-cleanup-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 const pkg = require('../../package.json');
+const _ = require('lodash');
+
 let dependencies = Object.keys(pkg.dependencies);
+// remove jquery
+dependencies = _.filter(dependencies, function(key) {
+  return key !== 'jquery';
+});
+// add it first
+dependencies.unshift('jquery');
 
 module.exports = merge(common, {
   devtool: "source-map",
