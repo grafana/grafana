@@ -2,7 +2,7 @@ import React from 'react';
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import $ from 'jquery';
-import 'spectrum';
+import 'vendor/spectrum';
 
 export interface IProps {
   color: string;
