@@ -96,9 +96,9 @@
   "scripts": {
     "dev": "./node_modules/.bin/webpack --progress --colors --config scripts/webpack/webpack.dev.js",
     "watch": "./node_modules/.bin/webpack --progress --colors --watch --config scripts/webpack/webpack.dev.js",
-    "build": "./node_modules/grunt-cli/bin/grunt build",
-    "test": "./node_modules/grunt-cli/bin/grunt test",
-    "lint" : "node ./node_modules/tslint/lib/tslint-cli.js -c tslint.json --project ./tsconfig.json --type-check",
+    "build": "./node_modules/.bin/grunt build",
+    "test": "./node_modules/.bin/grunt test",
+    "lint" : "./node_modules/.bin/tslint -c tslint.json --project ./tsconfig.json --type-check",
     "watch-test": "./node_modules/grunt-cli/bin/grunt karma:dev"
   },
   "license": "Apache-2.0",
