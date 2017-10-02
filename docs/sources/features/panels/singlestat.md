@@ -12,15 +12,15 @@ weight = 2
 
 # Singlestat Panel
 
-{{< docs-imagebox img="/img/docs/v45/singlestat-panel.png" max-width="900px" >}}
+{{< docs-imagebox img="/img/docs/v45/singlestat-panel.png" class="docs-image--no-shadow" max-width="900px" >}}
 
 The Singlestat Panel allows you to show the one main summary stat of a SINGLE series. It reduces the series into a single number (by looking at the max, min, average, or sum of values in the series). Singlestat also provides thresholds to color the stat or the Panel background. It can also translate the single number into a text value, and show a sparkline summary of the series.
 
 ### Singlestat Panel Configuration
 
-The singlestat panel has a normal query editor to allow you define your exact metric queries like many other Panels. Through the Options tab, you can access the Singlestat-specific functionality.
+The singlestat panel has a normal query editor to allow you define your exact metric queries like many other Panels. In the Options tab, you can access the Singlestat-specific functionality.
 
-{{< docs-imagebox img="/img/docs/v45/singlestat-value-options.png" class="docs-image--no-shadow" max-width= "900px" >}}
+{{< docs-imagebox img="/img/docs/v45/singlestat-value-options.png" class="docs-image--no-shadow" max-width="900px" >}}
 
 1. `Stats`: The Stats field let you set the function (min, max, average, current, total, first, delta, range) that your entire query is reduced into a single value with. This reduces the entire query into a single summary value that is displayed.
    * `min` - The smallest value in the series
@@ -64,6 +64,7 @@ Sparklines are a great way of seeing the historical data related to the summary 
 
 > ***Pro-tip:*** Reduce the opacity on  fill colors for nice looking panels.
 
+<<<<<<< HEAD
 ### Gauge
 
 Gauges gives a clear picture of how high a value is in it's context. It's a great way to see if a value is close to the thresholds. The gauge uses the colors set in the color options.
@@ -77,13 +78,39 @@ Gauges gives a clear picture of how high a value is in it's context. It's a grea
 
 <div class="clearfix"></div>
 
+||||||| merged common ancestors
+=======
+### Gauge
+
+Gauges gives a clear picture of how high a value is in it's context. It's a great way to see if a value is close to the thresholds. The gauge uses the colors set in the color options.
+
+{{< docs-imagebox img="/img/docs/v45/singlestat-gauge-options.png" max-width="500px" class="docs-image--right docs-image--no-shadow">}}
+
+1. `Show`: The show checkbox will toggle wether the gauge is shown in the panel. When unselected, only the Singlestat value will appear.
+2. `Min/Max`: This sets the start and end point for the gauge.
+3. `Threshold Labels`: Check if you want to show the threshold labels. Thresholds are set in the color options.
+4. `Threshold Markers`: Check if you want to have a second meter showing the thresholds.
+
+>>>>>>> 0a65100eaf64cd57b38110001bf614630821610c
 ### Value to text mapping
 
+<<<<<<< HEAD
 {{< docs-imagebox img="/img/docs/v45/singlestat-value-mapping.png" class="docs-image--right docs-image--no-shadow">}}
 
 Value to text mapping allows you to translate the value of the summary stat into explicit text. The text will respect all styling, thresholds and customization defined for the value. This can be useful to translate the number of the main Singlestat value into a context-specific human-readable word or message.
+||||||| merged common ancestors
+Value to text mapping allows you to translate the value of the summary stat into explicit text. The text will respect all styling, thresholds and customization defined for the value. This can be useful to translate the number of the main Singlestat value into a context-specific human-readable word or message.
+=======
+{{< docs-imagebox img="/img/docs/v45/singlestat-value-mapping.png" class="docs-image--right docs-image--no-shadow">}}
+>>>>>>> 0a65100eaf64cd57b38110001bf614630821610c
 
+<<<<<<< HEAD
 <div class="clearfix"></div>
+||||||| merged common ancestors
+<img class="no-shadow" src="/img/docs/v1/Singlestat-ValueMapping.png">
+=======
+Value to text mapping allows you to translate the value of the summary stat into explicit text. The text will respect all styling, thresholds and customization defined for the value. This can be useful to translate the number of the main Singlestat value into a context-specific human-readable word or message.
+>>>>>>> 0a65100eaf64cd57b38110001bf614630821610c
 
 ## Troubleshooting
 

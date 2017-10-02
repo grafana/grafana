@@ -88,9 +88,9 @@
     "npm": "^5.4.2"
   },
   "scripts": {
-    "webpack": "./node_modules/.bin/webpack --progress --colors --config scripts/webpack/webpack.dev.js",
+    "dev": "./node_modules/.bin/webpack --progress --colors --config scripts/webpack/webpack.dev.js",
     "watch": "./node_modules/.bin/webpack --progress --colors --watch --config scripts/webpack/webpack.dev.js",
-    "build": "./node_modules/grunt-cli/bin/grunt",
+    "build": "./node_modules/grunt-cli/bin/grunt build",
     "test": "./node_modules/grunt-cli/bin/grunt test",
     "test-watch": "karma start --auto-watch --no-single-run"
   },

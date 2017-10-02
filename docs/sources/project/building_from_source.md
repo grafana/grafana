@@ -49,29 +49,19 @@ to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
 npm --add-python-to-path='true' --debug install --global windows-build-tools
 ```
 
-## Build the Front-end Assets
+## Build the Frontend Assets
 
-To build less to css for the frontend you will need a recent version of node (v0.12.0),
-npm (v2.5.0) and grunt (v0.4.5). Run the following:
+For this you need nodejs (v.6+).
 
 ```
 npm install -g yarn
 yarn install --pure-lockfile
-npm install -g grunt-cli
-grunt
+npm run build
 ```
-
-## Recompile backend on source change
-To rebuild on source change
-```
-go get github.com/Unknwon/bra
-bra run
-```
-
-If the `bra run` command does not work, make sure that the bin directory in your Go workspace directory is in the path. $GOPATH/bin (or %GOPATH%\bin in Windows) is in your path.
 
 ## Running Grafana Locally
 You can run a local instance of Grafana by running:
+
 ```
 ./bin/grafana-server
 ```
@@ -81,16 +71,21 @@ If you built it with `go build .`, run `./grafana`
 
 Open grafana in your browser (default [http://localhost:3000](http://localhost:3000)) and login with admin user (default user/pass = admin/admin).
 
-## Developing for Grafana
-To add features, customize your config, etc, you'll need to rebuild on source change.
+## Developing Grafana
+
+To add features, customize your config, etc, you'll need to rebuild the backend when you change the source code. We use a tool named `bra` that
+does this.
+
 ```
 go get github.com/Unknwon/bra
 
 bra run
 ```
-You'll also need to run `npm run watch` to watch for changes to the front-end.
+
+You'll also need to run `npm run watch` to watch for changes to the front-end (typescript, html, sass)
 
 ## Creating optimized release packages
+
 This step builds linux packages and requires that fpm is installed. Install fpm via `gem install fpm`.
 
 ```
@@ -104,6 +99,10 @@ You only need to add the options you want to override. Config files are applied 
 
 1. grafana.ini
 2. custom.ini
+
+### Set app_mode to development
+
+In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = development`.
 
 Learn more about Grafana config options in the [Configuration section](/installation/configuration/)
 

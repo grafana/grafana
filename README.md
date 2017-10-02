@@ -37,8 +37,7 @@ go run build.go build
 
 ### Building frontend assets
 
-To build less to css for the frontend you will need a recent version of **node (v6+)**,
-npm (v2.5.0) and grunt (v0.4.5). Run the following:
+For this you need nodejs (v.6+).
 
 ```bash
 npm install -g yarn
@@ -46,8 +45,7 @@ yarn install --pure-lockfile
 npm run build
 ```
 
-To rebuild frontend assets (typesript, sass etc) as you change them start
-the watcher via.
+To rebuild frontend assets (typesript, sass etc) as you change them start the watcher via.
 
 ```bash
 npm run watch
@@ -64,6 +62,7 @@ npm run watch-test
 ```
 
 ### Recompile backend on source change
+
 To rebuild on source change.
 ```bash
 go get github.com/Unknwon/bra
@@ -79,6 +78,8 @@ You only need to add the options you want to override. Config files are applied 
 
 1. grafana.ini
 1. custom.ini
+
+In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = development`.
 
 ## Contribute
 If you have any idea for an improvement or found a bug do not hesitate to open an issue.
