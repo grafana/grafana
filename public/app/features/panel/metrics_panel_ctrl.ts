@@ -217,7 +217,10 @@ class MetricsPanelCtrl extends PanelCtrl {
       "__interval_ms":  {text: this.intervalMs, value: this.intervalMs},
     });
 
+    var timezone = this.dashboard.getTimezone ? this.dashboard.getTimezone() : 'local';
+
     var metricsQuery = {
+      timezone: timezone,
       panelId: this.panel.id,
       range: this.range,
       rangeRaw: this.range.raw,
