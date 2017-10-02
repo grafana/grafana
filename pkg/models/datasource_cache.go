@@ -48,7 +48,7 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 
 	var tlsSkipVerify, tlsClientAuth, tlsAuthWithCACert bool
 	if ds.JsonData != nil {
-		tlsClientAuth = ds.JsonData.Get("tlsClientAuth").MustBool(false)
+		tlsClientAuth = ds.JsonData.Get("tlsAuth").MustBool(false)
 		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
 		tlsSkipVerify = ds.JsonData.Get("tlsSkipVerify").MustBool(false)
 	}

@@ -87,7 +87,7 @@ func TestDataSourceCache(t *testing.T) {
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
-		json.Set("tlsClientAuth", true)
+		json.Set("tlsAuth", true)
 
 		tlsClientCert, err := util.Encrypt([]byte(clientCert), "password")
 		So(err, ShouldBeNil)

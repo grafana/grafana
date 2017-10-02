@@ -45,7 +45,7 @@
         <gf-form-switch class="gf-form" label="With Credentials" tooltip="Whether credentials such as cookies or auth headers should be sent with cross-site requests." checked="current.withCredentials" label-class="width-11" switch-class="max-width-6"></gf-form-switch>
       </div>
       <div class="gf-form-inline">
-        <gf-form-switch class="gf-form" ng-if="current.access=='proxy'" label="TLS Client Auth" label-class="width-8" checked="current.jsonData.tlsClientAuth" switch-class="max-width-6"></gf-form-switch>
+        <gf-form-switch class="gf-form" ng-if="current.access=='proxy'" label="TLS Client Auth" label-class="width-8" checked="current.jsonData.tlsAuth" switch-class="max-width-6"></gf-form-switch>
         <gf-form-switch class="gf-form" ng-if="current.access=='proxy'" label="With CA Cert" tooltip="Optional. Needed for self-signed TLS Certs." checked="current.jsonData.tlsAuthWithCACert" label-class="width-11" switch-class="max-width-6"></gf-form-switch>
       </div>
     </div>
@@ -73,7 +73,7 @@
 	</div>
 </div>
 
-<div class="gf-form-group" ng-if="(current.jsonData.tlsClientAuth || current.jsonData.tlsAuthWithCACert) && current.access=='proxy'">
+<div class="gf-form-group" ng-if="(current.jsonData.tlsAuth || current.jsonData.tlsAuthWithCACert) && current.access=='proxy'">
   <div class="gf-form">
     <h6>TLS Auth Details</h6>
     <info-popover mode="header">TLS Certs are encrypted and stored in the Grafana database.</info-popover>
@@ -94,7 +94,7 @@
     </div>
   </div>
 
-  <div ng-if="current.jsonData.tlsClientAuth">
+  <div ng-if="current.jsonData.tlsAuth">
     <div class="gf-form-inline">
       <div class="gf-form gf-form--v-stretch">
         <label class="gf-form-label width-7">Client Cert</label>
