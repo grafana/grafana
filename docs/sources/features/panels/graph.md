@@ -11,9 +11,9 @@ weight = 1
 
 # Graph Panel
 
-The main panel in Grafana is simply named Graph. It provides a very rich set of graphing options.
+{{< docs-imagebox img="/img/docs/v45/graph_overview.png" class="docs-image--no-shadow" max-width="850px" >}}
 
-<img src="/img/docs/v45/graph_overview.png" class="no-shadow">
+The main panel in Grafana is simply named Graph. It provides a very rich set of graphing options.
 
 1. Clicking the title for a panel exposes a menu.  The `edit` option opens additional configuration
 options for the panel.
@@ -28,9 +28,9 @@ The general tab allows customization of a panel's appearance and menu options.
 
 ### General Options
 
-- ``Title`` - The panel title on the dashboard
-- ``Span`` - The panel width in columns
-- ``Height`` - The panel contents height in pixels
+- **Title** - The panel title on the dashboard
+- **Span** - The panel width in columns
+- **Height** - The panel contents height in pixels
 
 ### Drilldown / detail link
 

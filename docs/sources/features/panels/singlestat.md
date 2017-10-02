@@ -12,15 +12,15 @@ weight = 2
 
 # Singlestat Panel
 
-{{< docs-imagebox img="/img/docs/v45/singlestat-panel.png" class="docs-image--no-shadow">}}
+{{< docs-imagebox img="/img/docs/v45/singlestat-panel.png" class="docs-image--no-shadow" max-width="900px" >}}
 
 The Singlestat Panel allows you to show the one main summary stat of a SINGLE series. It reduces the series into a single number (by looking at the max, min, average, or sum of values in the series). Singlestat also provides thresholds to color the stat or the Panel background. It can also translate the single number into a text value, and show a sparkline summary of the series.
 
 ### Singlestat Panel Configuration
 
-The singlestat panel has a normal query editor to allow you define your exact metric queries like many other Panels. Through the Options tab, you can access the Singlestat-specific functionality.
+The singlestat panel has a normal query editor to allow you define your exact metric queries like many other Panels. In the Options tab, you can access the Singlestat-specific functionality.
 
-<img class="no-shadow" src="/img/docs/v45/singlestat-value-options.png">
+{{< docs-imagebox img="/img/docs/v45/singlestat-value-options.png" class="docs-image--no-shadow" max-width="900px" >}}
 
 1. `Stats`: The Stats field let you set the function (min, max, average, current, total, first, delta, range) that your entire query is reduced into a single value with. This reduces the entire query into a single summary value that is displayed.
    * `min` - The smallest value in the series
