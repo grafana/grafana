@@ -195,7 +195,8 @@ class TimeSrv {
       from: moment.isMoment(this.time.from) ? moment(this.time.from) : this.time.from,
       to: moment.isMoment(this.time.to) ? moment(this.time.to) : this.time.to,
     };
-    var timezone = this.dashboard && this.dashboard.getTimezone ? this.dashboard.getTimezone() : 'local';
+
+    var timezone = this.dashboard && this.dashboard.getTimezone();
 
     return {
       from: dateMath.parse(raw.from, false, timezone),
