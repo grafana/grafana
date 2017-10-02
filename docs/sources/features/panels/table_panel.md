@@ -25,8 +25,8 @@ The table panel has many ways to manipulate your data for optimal presentation.
 {{< docs-imagebox img="/img/docs/v45/table_options.png" class="docs-image--no-shadow" max-width= "500px" >}}
 
 
-1. `Data`: Control how your query is transformed into a table.
-2. `Paging`: Table display options.
+1. **Data**: Control how your query is transformed into a table.
+2. **Paging**: Table display options.
 
 
 ## Data to Table
@@ -80,9 +80,9 @@ transform mode and pick the columns using the **Columns** section.
 
 {{< docs-imagebox img="/img/docs/v45/table_paging.png" class="docs-image--no-shadow docs-image--right" max-width="350px" >}}
 
-1. `Pagination (Page Size)`: The table display fields allow you to control The `Pagination` (page size) is the threshold at which the table rows will be broken into pages. For example, if your table had 95 records with a pagination value of 10, your table would be split across 9 pages.
-2. `Scroll`: The `scroll bar` checkbox toggles the ability to scroll within the panel, when unchecked, the panel height will grow to display all rows.
-3. `Font Size`: The `font size` field allows you to increase or decrease the size for the panel, relative to the default font size.
+1. **Rows Per Page**: The table display fields allow you to control how many rows per page there should be. For example, if your table had 95 records with a rows per page value of 10, your table would be split across 10 pages.
+2. **Scroll**: The `scroll bar` checkbox toggles the ability to scroll within the panel, when unchecked, the panel height will grow to display all rows.
+3. **Font Size**: The `font size` field allows you to increase or decrease the size for the panel, relative to the default font size.
 
 
 ## Column Styles
@@ -91,9 +91,9 @@ The column styles allow you control how dates and numbers are formatted.
 
 {{< docs-imagebox img="/img/docs/v45/table_column_styles.png" class="docs-image--no-shadow" >}}
 
-1. `Name or regex`: The Name or Regex field controls what columns the rule should be applied to. The regex or name filter will be matched against the column name not against column values.
-2. `Column Header`: Title for the column, when using a Regex the title can include replacement strings like `$1`.
-3.  `Add column style rule`: Add new column rule.
-4. `Thresholds` and `Coloring`: Specify color mode and thresholds limits.
-5. `Type`: The three supported types of types are `Number`, `String` and `Date`. `Unit` and `Decimals`: Specify unit and decimal precision for numbers.`Format`: Specify date format for dates.
+1. **Name or regex**: The Name or Regex field controls what columns the rule should be applied to. The regex or name filter will be matched against the column name not against column values.
+2. **Column Header**: Title for the column, when using a Regex the title can include replacement strings like `$1`.
+3. **Add column style rule**: Add new column rule.
+4. **Thresholds and Coloring**: Specify color mode and thresholds limits.
+5. **Type**: The three supported types of types are `Number`, `String` and `Date`. `Unit` and `Decimals`: Specify unit and decimal precision for numbers.`Format`: Specify date format for dates.
 
