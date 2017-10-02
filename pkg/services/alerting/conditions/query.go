@@ -49,9 +49,14 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 	evalMatchCount := 0
 	var matches []*alerting.EvalMatch
 
+	err = c.Evaluator.Update(context)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, series := range seriesList {
 		reducedValue := c.Reducer.Reduce(series)
-		evalMatch := c.Evaluator.Eval(reducedValue)
+		evalMatch := c.Evaluator.Eval(series.Name, reducedValue)
 
 		if reducedValue.Valid == false {
 			emptySerieCount++
@@ -77,7 +82,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 	// handle no series special case
 	if len(seriesList) == 0 {
 		// eval condition for null value
-		evalMatch := c.Evaluator.Eval(null.FloatFromPtr(nil))
+		evalMatch := c.Evaluator.Eval("", null.FloatFromPtr(nil))
 
 		if context.IsTestRun {
 			context.Logs = append(context.Logs, &alerting.ResultLogEntry{
@@ -179,7 +184,7 @@ func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 	condition.Reducer = NewSimpleReducer(reducerJson.Get("type").MustString())
 
 	evaluatorJson := model.Get("evaluator")
-	evaluator, err := NewAlertEvaluator(evaluatorJson)
+	evaluator, err := NewAlertEvaluator(&condition, evaluatorJson)
 	if err != nil {
 		return nil, err
 	}

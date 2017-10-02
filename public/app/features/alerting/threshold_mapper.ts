@@ -53,6 +53,9 @@ export class ThresholdMapper {
           }
           break;
         }
+        default: {
+          break;
+        }
       }
       break;
     }
