@@ -39,7 +39,6 @@ func GetAnnotations(c *middleware.Context) Response {
 			NewState:     item.NewState,
 			PrevState:    item.PrevState,
 			Text:         item.Text,
-			Icon:         item.Icon,
 			Metric:       item.Metric,
 			Title:        item.Title,
 			PanelId:      item.PanelId,
@@ -63,8 +62,6 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 		Epoch:       cmd.Time / 1000,
 		Title:       cmd.Title,
 		Text:        cmd.Text,
-		Icon:        cmd.Icon,
-		CategoryId:  cmd.CategoryId,
 		NewState:    cmd.FillColor,
 		Type:        annotations.EventType,
 	}
@@ -106,7 +103,6 @@ func UpdateAnnotation(c *middleware.Context, cmd dtos.UpdateAnnotationsCmd) Resp
 		Epoch:  cmd.Time / 1000,
 		Title:  cmd.Title,
 		Text:   cmd.Text,
-		Icon:   cmd.Icon,
 		Type:   annotations.EventType,
 	}
 

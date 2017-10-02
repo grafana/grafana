@@ -398,9 +398,7 @@ function ($, _, angular, Drop) {
         lineStyle = this._types[eventTypeId].lineStyle.toLowerCase();
       }
 
-      var topOffset = xaxis.options.eventSectionHeight || 0;
-      topOffset = topOffset / 3 + 2;
-
+      var topOffset = 2;
       top = o.top + this._plot.height() + topOffset;
 
       var timeFrom = Math.min(event.min, event.timeEnd);

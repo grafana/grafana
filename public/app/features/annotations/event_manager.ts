@@ -146,8 +146,8 @@ export class EventManager {
     let regions = getRegions(annotations);
     addRegionMarking(regions, flotOptions);
 
-    let eventSectionHeight = 25;
-    let eventSectionMargin = 15;
+    let eventSectionHeight = 20;
+    let eventSectionMargin = 7;
     flotOptions.grid.eventSectionHeight = eventSectionMargin;
     flotOptions.xaxis.eventSectionHeight = eventSectionHeight;
 

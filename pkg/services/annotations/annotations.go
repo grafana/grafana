@@ -62,12 +62,10 @@ type Item struct {
 	UserId      int64    `json:"userId"`
 	DashboardId int64    `json:"dashboardId"`
 	PanelId     int64    `json:"panelId"`
-	CategoryId  int64    `json:"categoryId"`
 	RegionId    int64    `json:"regionId"`
 	Type        ItemType `json:"type"`
 	Title       string   `json:"title"`
 	Text        string   `json:"text"`
-	Icon        string   `json:"icon"`
 	Metric      string   `json:"metric"`
 	AlertId     int64    `json:"alertId"`
 	PrevState   string   `json:"prevState"`

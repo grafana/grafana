@@ -14,7 +14,6 @@ type Annotation struct {
 	Time         int64  `json:"time"`
 	Title        string `json:"title"`
 	Text         string `json:"text"`
-	Icon         string `json:"icon"`
 	Metric       string `json:"metric"`
 	RegionId     int64  `json:"regionId"`
 	Type         string `json:"type"`
@@ -25,11 +24,9 @@ type Annotation struct {
 type PostAnnotationsCmd struct {
 	DashboardId int64  `json:"dashboardId"`
 	PanelId     int64  `json:"panelId"`
-	CategoryId  int64  `json:"categoryId"`
 	Time        int64  `json:"time"`
 	Title       string `json:"title"`
 	Text        string `json:"text"`
-	Icon        string `json:"icon"`
 
 	FillColor string `json:"fillColor"`
 	IsRegion  bool   `json:"isRegion"`
