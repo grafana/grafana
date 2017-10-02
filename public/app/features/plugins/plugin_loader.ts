@@ -7,6 +7,7 @@ import angular from 'angular';
 import jquery from 'jquery';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
+import * as datemath from 'app/core/utils/datemath';
 
 import * as graphitePlugin from 'app/plugins/datasource/graphite/module';
 import * as cloudwatchPlugin from 'app/plugins/datasource/cloudwatch/module';
@@ -78,15 +79,22 @@ System.locate = function(load) {
   });
 };
 
-System.registerDynamic('lodash', [], true, function(require, exports, module) { module.exports = _; });
-System.registerDynamic('moment', [], true, function(require, exports, module) { module.exports = moment; });
-System.registerDynamic('jquery', [], true, function(require, exports, module) { module.exports = jquery; });
-System.registerDynamic('angular', [], true, function(require, exports, module) { module.exports = angular; });
-System.registerDynamic('app/plugins/sdk', [], true, function(require, exports, module) { module.exports = sdk; });
-System.registerDynamic('app/core/utils/kbn', [], true, function(require, exports, module) { module.exports = kbn; });
-System.registerDynamic('app/core/config', [], true, function(require, exports, module) { module.exports = config; });
-System.registerDynamic('app/core/time_series', [], true, function(require, exports, module) { module.exports = TimeSeries; });
-System.registerDynamic('app/core/time_series2', [], true, function(require, exports, module) { module.exports = TimeSeries; });
+function exposeToPlugin(name: string, component: any) {
+  System.registerDynamic(name, [], true, function(require, exports, module) {
+    module.exports = component;
+  });
+}
+
+exposeToPlugin('lodash', _);
+exposeToPlugin('moment', moment);
+exposeToPlugin('jquery', jquery);
+exposeToPlugin('angular', angular);
+exposeToPlugin('app/plugins/sdk', sdk);
+exposeToPlugin('app/core/utils/datemath', datemath);
+exposeToPlugin('app/core/utils/kbn', kbn);
+exposeToPlugin('app/core/config', config);
+exposeToPlugin('app/core/time_series', TimeSeries);
+exposeToPlugin('app/core/time_series2', TimeSeries);
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.selection';
