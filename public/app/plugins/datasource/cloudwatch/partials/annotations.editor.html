@@ -4,7 +4,8 @@
 	<div class="section">
 		<h5>Prefix matching</h5>
 		<div class="editor-option">
-			<editor-checkbox text="Enable" model="ctrl.annotation.prefixMatching"></editor-checkbox>
+			<!--<editor-checkbox text="Enable" model="ctrl.annotation.prefixMatching"></editor-checkbox>-->
+			<gf-form-switch class="gf-form" label="Enable" checked="ctrl.annotation.prefixMatching" switch-class="max-width-6"></gf-form-switch>
 		</div>
 
 		<div class="editor-option" ng-if="ctrl.annotation.prefixMatching">
