@@ -8,8 +8,6 @@ const path = require('path');
 const ngAnnotatePlugin = require('ng-annotate-webpack-plugin');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
-const pkg = require('../../package.json');
-let dependencies = Object.keys(pkg.dependencies);
 
 module.exports = merge(common, {
   devtool: "source-map",
@@ -17,7 +15,7 @@ module.exports = merge(common, {
   entry: {
     dark: './public/sass/grafana.dark.scss',
     light: './public/sass/grafana.light.scss',
-    vendor: dependencies,
+    vendor: require('./dependencies'),
   },
 
   module: {

@@ -7,52 +7,11 @@ import angular from 'angular';
 import jquery from 'jquery';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-
-import * as graphitePlugin from 'app/plugins/datasource/graphite/module';
-import * as cloudwatchPlugin from 'app/plugins/datasource/cloudwatch/module';
-import * as elasticsearchPlugin from 'app/plugins/datasource/elasticsearch/module';
-import * as opentsdbPlugin from 'app/plugins/datasource/opentsdb/module';
-import * as grafanaPlugin from 'app/plugins/datasource/grafana/module';
-import * as influxdbPlugin from 'app/plugins/datasource/influxdb/module';
-import * as mixedPlugin from 'app/plugins/datasource/mixed/module';
-import * as mysqlPlugin from 'app/plugins/datasource/mysql/module';
-import * as prometheusPlugin from 'app/plugins/datasource/prometheus/module';
-
-import * as textPanel from 'app/plugins/panel/text/module';
-import * as graphPanel from 'app/plugins/panel/graph/module';
-import * as dashListPanel from 'app/plugins/panel/dashlist/module';
-import * as pluginsListPanel from 'app/plugins/panel/pluginlist/module';
-import * as alertListPanel from 'app/plugins/panel/alertlist/module';
-import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
-import * as tablePanel from 'app/plugins/panel/table/module';
-import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
-import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
-import * as testDataAppPlugin from 'app/plugins/app/testdata/module';
-import * as testDataDSPlugin from 'app/plugins/app/testdata/datasource/module';
-
-let builtInPlugins = {
-  "app/plugins/datasource/graphite/module": graphitePlugin,
-  "app/plugins/datasource/cloudwatch/module": cloudwatchPlugin,
-  "app/plugins/datasource/elasticsearch/module": elasticsearchPlugin,
-  "app/plugins/datasource/opentsdb/module": opentsdbPlugin,
-  "app/plugins/datasource/grafana/module": grafanaPlugin,
-  "app/plugins/datasource/influxdb/module": influxdbPlugin,
-  "app/plugins/datasource/mixed/module": mixedPlugin,
-  "app/plugins/datasource/mysql/module": mysqlPlugin,
-  "app/plugins/datasource/prometheus/module": prometheusPlugin,
-  "app/plugins/app/testdata/module": testDataAppPlugin,
-  "app/plugins/app/testdata/datasource/module": testDataDSPlugin,
-
-  "app/plugins/panel/text/module": textPanel,
-  "app/plugins/panel/graph/module": graphPanel,
-  "app/plugins/panel/dashlist/module": dashListPanel,
-  "app/plugins/panel/pluginlist/module": pluginsListPanel,
-  "app/plugins/panel/alertlist/module": alertListPanel,
-  "app/plugins/panel/heatmap/module": heatmapPanel,
-  "app/plugins/panel/table/module": tablePanel,
-  "app/plugins/panel/singlestat/module": singlestatPanel,
-  "app/plugins/panel/gettingstarted/module": gettingStartedPanel,
-};
+import TableModel from 'app/core/table_model';
+import {Observable} from 'rxjs/Observable';
+import {Subject} from 'rxjs/Subject';
+import * as datemath from 'app/core/utils/datemath';
+import builtInPlugins from './buit_in_plugins';
 
 System.config({
   baseURL: 'public',
@@ -78,15 +37,26 @@ System.locate = function(load) {
   });
 };
 
-System.registerDynamic('lodash', [], true, function(require, exports, module) { module.exports = _; });
-System.registerDynamic('moment', [], true, function(require, exports, module) { module.exports = moment; });
-System.registerDynamic('jquery', [], true, function(require, exports, module) { module.exports = jquery; });
-System.registerDynamic('angular', [], true, function(require, exports, module) { module.exports = angular; });
-System.registerDynamic('app/plugins/sdk', [], true, function(require, exports, module) { module.exports = sdk; });
-System.registerDynamic('app/core/utils/kbn', [], true, function(require, exports, module) { module.exports = kbn; });
-System.registerDynamic('app/core/config', [], true, function(require, exports, module) { module.exports = config; });
-System.registerDynamic('app/core/time_series', [], true, function(require, exports, module) { module.exports = TimeSeries; });
-System.registerDynamic('app/core/time_series2', [], true, function(require, exports, module) { module.exports = TimeSeries; });
+function exposeToPlugin(name: string, component: any) {
+  System.registerDynamic(name, [], true, function(require, exports, module) {
+    module.exports = component;
+  });
+}
+
+exposeToPlugin('lodash', _);
+exposeToPlugin('moment', moment);
+exposeToPlugin('jquery', jquery);
+exposeToPlugin('angular', angular);
+exposeToPlugin('rxjs/Subject', Subject);
+exposeToPlugin('rxjs/Observable', Observable);
+
+exposeToPlugin('app/plugins/sdk', sdk);
+exposeToPlugin('app/core/utils/datemath', datemath);
+exposeToPlugin('app/core/utils/kbn', kbn);
+exposeToPlugin('app/core/config', config);
+exposeToPlugin('app/core/time_series', TimeSeries);
+exposeToPlugin('app/core/time_series2', TimeSeries);
+exposeToPlugin('app/core/table_model', TableModel);
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.selection';
@@ -99,7 +69,7 @@ import 'vendor/flot/jquery.flot.crosshair';
 import 'vendor/flot/jquery.flot.dashes';
 
 for (let flotDep of ['jquery.flot', 'jquery.flot.pie', 'jquery.flot.time']) {
-  System.registerDynamic(flotDep, [], true, function(require, exports, module) { module.exports = {fakeDep: 1}; });
+  exposeToPlugin(flotDep, {fakeDep: 1});
 }
 
 export function importPluginModule(path: string): Promise<any> {
