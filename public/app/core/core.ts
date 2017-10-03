@@ -16,10 +16,8 @@ import './partials';
 import './components/jsontree/jsontree';
 import './components/code_editor/code_editor';
 import './utils/outline';
-// import './components/colorpicker/ColorPalette';
-// import './components/colorpicker/SpectrumPicker';
-// import './components/colorpicker/ColorPickerPopover';
 import './components/colorpicker/ColorPicker';
+import './components/colorpicker/SeriesColorPicker';
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';
