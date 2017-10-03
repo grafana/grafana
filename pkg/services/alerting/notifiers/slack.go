@@ -74,6 +74,7 @@ func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	recipient := model.Settings.Get("recipient").MustString()
 	mention := model.Settings.Get("mention").MustString()
 	token := model.Settings.Get("token").MustString()
+	uploadImage := model.Settings.Get("uploadImage").MustBool(true)
 
 	return &SlackNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
@@ -81,6 +82,7 @@ func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 		Recipient:    recipient,
 		Mention:      mention,
 		Token:        token,
+		Upload:       uploadImage,
 		log:          log.New("alerting.notifier.slack"),
 	}, nil
 }
@@ -91,6 +93,7 @@ type SlackNotifier struct {
 	Recipient string
 	Mention   string
 	Token     string
+	Upload    bool
 	log       log.Logger
 }
 
@@ -162,7 +165,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		this.log.Error("Failed to send slack notification", "error", err, "webhook", this.Name)
 		return err
 	}
-	if this.Token != "" {
+	if this.Token != "" && this.UploadImage {
 		err = SlackFileUpload(evalContext, this.log, "https://slack.com/api/files.upload", this.Recipient, this.Token)
 		if err != nil {
 			return err
