@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import React from 'react';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
