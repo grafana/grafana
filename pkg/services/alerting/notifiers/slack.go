@@ -163,29 +163,35 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 	if this.Token != "" {
-		slackUploadUrl := "https://slack.com/api/files.upload"
-		if evalContext.ImageOnDiskPath == "" {
-			evalContext.ImageOnDiskPath = "public/img/mixed_styles.png"
-		}
-		this.log.Info("Uploading to slack via file.upload API")
-		headers, uploadBody, err := GenerateSlackUpload(evalContext.ImageOnDiskPath, this.Token, this.Recipient)
-		if err != nil {
-			return err
-		}
-		cmd := &m.SendWebhookSync{Url: slackUploadUrl, Body: uploadBody.String(), HttpHeader: headers, HttpMethod: "POST"}
-		if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-			this.log.Error("Failed to upload slack image", "error", err, "webhook", "file.upload")
-			return err
-		}
+		err = SlackFileUpload(evalContext, this.log, "https://slack.com/api/files.upload", this.Recipient, this.Token)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 
-func GenerateSlackUpload(file string, token string, recipient string) (map[string]string, bytes.Buffer, error) {
+func SlackFileUpload(evalContext *alerting.EvalContext, log log.Logger, url string, recipient string, token string) error {
+	if evalContext.ImageOnDiskPath == "" {
+		evalContext.ImageOnDiskPath = "public/img/mixed_styles.png"
+	}
+	log.Info("Uploading to slack via file.upload API")
+	headers, uploadBody, err := GenerateSlackBody(evalContext.ImageOnDiskPath, token, recipient)
+	if err != nil {
+		return err
+	}
+	cmd := &m.SendWebhookSync{Url: url, Body: uploadBody.String(), HttpHeader: headers, HttpMethod: "POST"}
+	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+		log.Error("Failed to upload slack image", "error", err, "webhook", "file.upload")
+		return err
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GenerateSlackBody(file string, token string, recipient string) (map[string]string, bytes.Buffer, error) {
 	// Slack requires all POSTs to files.upload to present
 	// an "application/x-www-form-urlencoded" encoded querystring
 	// See https://api.slack.com/methods/files.upload
