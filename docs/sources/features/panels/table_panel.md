@@ -43,20 +43,20 @@ you want in the table. Only applicable for some transforms.
 
 {{< docs-imagebox img="/img/docs/v45/table_ts_to_rows.png"  >}}
 
-In the most simple mode you can turn time series to rows. This means you get a `Time`, `Metric` and a `Value` column. Where `Metric` is the name of the time series.
+In the most simple mode you can turn time series to rows. This means you get a **Time**, **Metric** and a **Value** column. Where **Metric** is the name of the time series.
 
 ### Time series to columns
 
 {{< docs-imagebox img="/img/docs/v45/table_ts_to_columns.png" >}}
 
 
-This transform allows you to take multiple time series and group them by time. Which will result in the primary column being `Time` and a column for each time series.
+This transform allows you to take multiple time series and group them by time. Which will result in the primary column being **Time** and a column for each time series.
 
 ### Time series aggregations
 
 {{< docs-imagebox img="/img/docs/v45/table_ts_to_aggregations.png" >}}
 
-This table transformation will lay out your table into rows by metric, allowing columns of `Avg`, `Min`, `Max`, `Total`, `Current` and `Count`. More than one column can be added.
+This table transformation will lay out your table into rows by metric, allowing columns of **Avg**, **Min**, **Max**, **Total**, **Current** and **Count**. More than one column can be added.
 
 ### Annotations
 
@@ -70,7 +70,7 @@ mode then any queries you have in the metrics tab will be ignored.
 
 {{< docs-imagebox img="/img/docs/v45/table_json_data.png" max-width="500px" >}}
 
-If you have an Elasticsearch **Raw Document** query or an Elasticsearch query without a `date histogram` use this
+If you have an Elasticsearch **Raw Document** query or an Elasticsearch query without a **date histogram** use this
 transform mode and pick the columns using the **Columns** section.
 
 
@@ -81,8 +81,8 @@ transform mode and pick the columns using the **Columns** section.
 {{< docs-imagebox img="/img/docs/v45/table_paging.png" class="docs-image--no-shadow docs-image--right" max-width="350px" >}}
 
 1. **Rows Per Page**: The table display fields allow you to control how many rows per page there should be. For example, if your table had 95 records with a rows per page value of 10, your table would be split across 10 pages.
-2. **Scroll**: The `scroll bar` checkbox toggles the ability to scroll within the panel, when unchecked, the panel height will grow to display all rows.
-3. **Font Size**: The `font size` field allows you to increase or decrease the size for the panel, relative to the default font size.
+2. **Scroll**: The scroll bar checkbox toggles the ability to scroll within the panel, when unchecked, the panel height will grow to display all rows.
+3. **Font Size**: The font size field allows you to increase or decrease the size for the panel, relative to the default font size.
 
 
 ## Column Styles
@@ -95,5 +95,5 @@ The column styles allow you control how dates and numbers are formatted.
 2. **Column Header**: Title for the column, when using a Regex the title can include replacement strings like `$1`.
 3. **Add column style rule**: Add new column rule.
 4. **Thresholds and Coloring**: Specify color mode and thresholds limits.
-5. **Type**: The three supported types of types are `Number`, `String` and `Date`. `Unit` and `Decimals`: Specify unit and decimal precision for numbers.`Format`: Specify date format for dates.
+5. **Type**: The three supported types of types are **Number**, **String** and **Date**. **Unit** and **Decimals**: Specify unit and decimal precision for numbers. **Format**: Specify date format for dates.
 
