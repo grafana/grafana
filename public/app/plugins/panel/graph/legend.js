@@ -45,7 +45,8 @@ function (angular, _, $) {
             popoverSrv.show({
               element: el[0],
               position: 'bottom center',
-              template: '<series-color-picker series="series" onToggleAxis="toggleAxis" onColorChange="colorSelected"></series-color-picker>',
+              template: '<series-color-picker series="series" onToggleAxis="toggleAxis" onColorChange="colorSelected">' +
+                '</series-color-picker>',
               openOn: 'hover',
               model: {
                 series: series,
