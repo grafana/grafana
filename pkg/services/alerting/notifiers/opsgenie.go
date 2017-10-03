@@ -125,7 +125,7 @@ func (this *OpsGenieNotifier) closeAlert(evalContext *alerting.EvalContext) erro
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &m.SendWebhookSync{
-		Url:        fmt.Sprintf("%s/%s/close?identifierType=alias", opsgenieAlertURL,"alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10)),
+		Url:        fmt.Sprintf("%s/alertId-%d/close?identifierType=alias", opsgenieAlertURL, evalContext.Rule.Id)
 		Body:       string(body),
 		HttpMethod: "POST",
     		HttpHeader: map[string]string{
