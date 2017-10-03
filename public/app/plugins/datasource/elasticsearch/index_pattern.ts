@@ -27,11 +27,10 @@ export class IndexPattern {
 
     var intervalInfo = intervalMap[this.interval];
     var start = moment(from).utc().startOf(intervalInfo.startOf);
-    var startEpoch = start.valueOf();
     var endEpoch = moment(to).utc().startOf(intervalInfo.startOf).valueOf();
     var indexList = [];
 
-    while (startEpoch <= endEpoch) {
+    while (start.valueOf() <= endEpoch) {
       indexList.push(start.format(this.pattern));
       start.add(1, intervalInfo.amount);
     }
