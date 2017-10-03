@@ -45,8 +45,8 @@ module.exports = merge(common, {
       names: ['vendor', 'manifest'],
     }),
     new WebpackCleanupPlugin(),
-    new BundleAnalyzerPlugin({
-      analyzerPort: 8889
-    })
+    // new BundleAnalyzerPlugin({
+    //   analyzerPort: 8889
+    // })
   ]
 });
