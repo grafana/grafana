@@ -1,11 +1,9 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import moment from 'moment';
 
 declare var window: any;
 
-const DEFAULT_DATETIME_FORMAT: String = 'YYYY-MM-DDTHH:mm:ssZ';
+const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
 
 export function exportSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
     var text = excel ? 'sep=;\n' : '' + 'Series;Time;Value\n';
