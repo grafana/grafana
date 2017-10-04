@@ -3,7 +3,6 @@ import './editor_ctrl';
 import angular from 'angular';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
-import {AnnotationEvent} from './event';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
