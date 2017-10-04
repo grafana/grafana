@@ -44,7 +44,6 @@ module.exports = merge(common, {
     new webpack.optimize.CommonsChunkPlugin({
       names: ['vendor', 'manifest'],
     }),
-    new WebpackCleanupPlugin(),
     // new BundleAnalyzerPlugin({
     //   analyzerPort: 8889
     // })

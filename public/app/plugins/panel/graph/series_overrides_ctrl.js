@@ -57,7 +57,7 @@ define([
         element: $element.find(".dropdown")[0],
         position: 'top center',
         openOn: 'click',
-        template: '<gf-color-picker></gf-color-picker>',
+        template: '<series-color-picker onColorChange="colorSelected" />',
         model: {
           autoClose: true,
           colorSelected: $scope.colorSelected,

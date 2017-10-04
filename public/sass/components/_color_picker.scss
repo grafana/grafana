@@ -35,3 +35,14 @@
   float: left;
   z-index: 0;
 }
+
+.gf-color-picker__body {
+  padding-bottom: 10px;
+  padding-left: 6px;
+}
+
+.drop-popover.gf-color-picker {
+  .drop-content {
+    width: 210px;
+  }
+}

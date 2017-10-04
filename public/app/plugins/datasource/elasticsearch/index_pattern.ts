@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import moment from 'moment';
 
 const intervalMap = {
@@ -29,10 +27,10 @@ export class IndexPattern {
 
     var intervalInfo = intervalMap[this.interval];
     var start = moment(from).utc().startOf(intervalInfo.startOf);
-    var end = moment(to).utc().startOf(intervalInfo.startOf).valueOf();
+    var endEpoch = moment(to).utc().startOf(intervalInfo.startOf).valueOf();
     var indexList = [];
 
-    while (start <= end) {
+    while (start.valueOf() <= endEpoch) {
       indexList.push(start.format(this.pattern));
       start.add(1, intervalInfo.amount);
     }
