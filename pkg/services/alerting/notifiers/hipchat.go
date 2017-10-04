@@ -86,8 +86,12 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	attributes := make([]map[string]interface{}, 0)
 	for index, evt := range evalContext.EvalMatches {
+		metricName := evt.Metric
+		if len(metricName) > 50 {
+			metricName = metricName[:50]
+		}
 		attributes = append(attributes, map[string]interface{}{
-			"label": evt.Metric,
+			"label": metricName,
 			"value": map[string]interface{}{
 				"label": strconv.FormatFloat(evt.Value.Float64, 'f', -1, 64),
 			},
@@ -110,6 +114,11 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Rule.State != models.AlertStateOK { //dont add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
 	}
+
+	if len(message) < 1 {
+		message = evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text
+	}
+
 	//HipChat has a set list of colors
 	var color string
 	switch evalContext.Rule.State {
@@ -153,6 +162,7 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	hipUrl := fmt.Sprintf("%s/v2/room/%s/notification?auth_token=%s", this.Url, this.RoomId, this.ApiKey)
 	data, _ := json.Marshal(&body)
+	this.log.Debug(string(data))
 	cmd := &models.SendWebhookSync{Url: hipUrl, Body: string(data)}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
