@@ -21,7 +21,7 @@ If basic auth is enabled (it is enabled by default) you can authenticate your HT
 standard basic auth. Basic auth will also authenticate LDAP users.
 
 curl example:
-```
+```bash
 ?curl http://admin:admin@localhost:3000/api/org
 {"id":1,"name":"Main Org."}
 ```
@@ -36,9 +36,11 @@ You use the token in all requests in the `Authorization` header, like this:
 
 **Example**:
 
-    GET http://your.grafana.com/api/dashboards/db/mydash HTTP/1.1
-    Accept: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```json
+GET http://your.grafana.com/api/dashboards/db/mydash HTTP/1.1
+Accept: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 The `Authorization` header value should be `Bearer <your api key>`.
 
@@ -50,28 +52,32 @@ The `Authorization` header value should be `Bearer <your api key>`.
 
 **Example Request**:
 
-    GET /api/auth/keys HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```json
+GET /api/auth/keys HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```json
+HTTP/1.1 200
+Content-Type: application/json
 
-    [
-      {
-        "id": 3,
-        "name": "API",
-        "role": "Admin"
-      },
-      {
-        "id": 1,
-        "name": "TestAdmin",
-        "role": "Admin"
-      }
-    ]
+[
+  {
+    "id": 3,
+    "name": "API",
+    "role": "Admin"
+  },
+  {
+    "id": 1,
+    "name": "TestAdmin",
+    "role": "Admin"
+  }
+]
+```
 
 ## Create API Key
 
@@ -79,15 +85,17 @@ The `Authorization` header value should be `Bearer <your api key>`.
 
 **Example Request**:
 
-    POST /api/auth/keys HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```json
+POST /api/auth/keys HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
-    {
-      "name": "mykey",
-      "role": "Admin"
-    }
+{
+  "name": "mykey",
+  "role": "Admin"
+}
+```
 
 JSON Body schema:
 
@@ -96,10 +104,12 @@ JSON Body schema:
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```json
+HTTP/1.1 200
+Content-Type: application/json
 
-    {"name":"mykey","key":"eyJrIjoiWHZiSWd3NzdCYUZnNUtibE9obUpESmE3bzJYNDRIc0UiLCJuIjoibXlrZXkiLCJpZCI6MX1="}
+{"name":"mykey","key":"eyJrIjoiWHZiSWd3NzdCYUZnNUtibE9obUpESmE3bzJYNDRIc0UiLCJuIjoibXlrZXkiLCJpZCI6MX1="}
+```
 
 ## Delete API Key
 
@@ -107,14 +117,17 @@ JSON Body schema:
 
 **Example Request**:
 
-    DELETE /api/auth/keys/3 HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
+```json
+DELETE /api/auth/keys/3 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```json
+HTTP/1.1 200
+Content-Type: application/json
 
-    {"message":"API key deleted"}
+{"message":"API key deleted"}
+```

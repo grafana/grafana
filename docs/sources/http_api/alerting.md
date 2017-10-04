@@ -23,11 +23,12 @@ This API can also be used to create, update and delete alert notifications.
 
 **Example Request**:
 
-    GET /api/alerts HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
+```bash
+GET /api/alerts HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
   Querystring Parameters:
 
   These parameters are used as querystring parameters. For example:
@@ -41,28 +42,30 @@ This API can also be used to create, update and delete alert notifications.
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
-    [
+```json
+HTTP/1.1 200
+Content-Type: application/json
+[
+  {
+    "id": 1,
+    "dashboardId": 1,
+    "panelId": 1,
+    "name": "fire place sensor",
+    "message": "Someone is trying to break in through the fire place",
+    "state": "alerting",
+    "evalDate": "0001-01-01T00:00:00Z",
+    "evalData": [
       {
-        "id": 1,
-        "dashboardId": 1,
-        "panelId": 1,
-        "name": "fire place sensor",
-        "message": "Someone is trying to break in through the fire place",
-        "state": "alerting",
-        "evalDate": "0001-01-01T00:00:00Z",
-        "evalData": [
-          {
-            "metric": "fire",
-            "tags": null,
-            "value": 5.349999999999999
-          }
-        "newStateDate": "2016-12-25",
-        "executionError": "",
-        "dashboardUri": "http://grafana.com/dashboard/db/sensors"
+        "metric": "fire",
+        "tags": null,
+        "value": 5.349999999999999
       }
-    ]
+    "newStateDate": "2016-12-25",
+    "executionError": "",
+    "dashboardUri": "http://grafana.com/dashboard/db/sensors"
+  }
+]
+```
 
 ## Get one alert
 
@@ -70,26 +73,30 @@ This API can also be used to create, update and delete alert notifications.
 
 **Example Request**:
 
-    GET /api/alerts/1 HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```json
+GET /api/alerts/1 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
-    {
-      "id": 1,
-      "dashboardId": 1,
-      "panelId": 1,
-      "name": "fire place sensor",
-      "message": "Someone is trying to break in through the fire place",
-      "state": "alerting",
-      "newStateDate": "2016-12-25",
-      "executionError": "",
-      "dashboardUri": "http://grafana.com/dashboard/db/sensors"
-    }
+```json
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "id": 1,
+  "dashboardId": 1,
+  "panelId": 1,
+  "name": "fire place sensor",
+  "message": "Someone is trying to break in through the fire place",
+  "state": "alerting",
+  "newStateDate": "2016-12-25",
+  "executionError": "",
+  "dashboardUri": "http://grafana.com/dashboard/db/sensors"
+}
+```
 
 ## Pause alert
 
@@ -97,14 +104,16 @@ This API can also be used to create, update and delete alert notifications.
 
 **Example Request**:
 
-    POST /api/alerts/1/pause HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```json
+POST /api/alerts/1/pause HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
-    {
-      "paused": true
-    }
+{
+  "paused": true
+}
+```
 
 The :id query parameter is the id of the alert to be paused or unpaused.
 
@@ -114,13 +123,15 @@ JSON Body Schema:
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
-    {
-      "alertId": 1,
-      "state":   "Paused",
-      "message": "alert paused"
-    }
+```json
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "alertId": 1,
+  "state":   "Paused",
+  "message": "alert paused"
+}
+```
 
 ## Get alert notifications
 
@@ -128,26 +139,29 @@ JSON Body Schema:
 
 **Example Request**:
 
-    GET /api/alert-notifications HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
-
+```json
+GET /api/alert-notifications HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```json
+HTTP/1.1 200
+Content-Type: application/json
 
-    {
-      "id": 1,
-      "name": "Team A",
-      "type": "email",
-      "isDefault": true,
-      "created": "2017-01-01 12:45",
-      "updated": "2017-01-01 12:45"
-    }
+{
+  "id": 1,
+  "name": "Team A",
+  "type": "email",
+  "isDefault": true,
+  "created": "2017-01-01 12:45",
+  "updated": "2017-01-01 12:45"
+}
+```
 
 ## Create alert notification
 
@@ -155,34 +169,37 @@ JSON Body Schema:
 
 **Example Request**:
 
-    POST /api/alert-notifications HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```json
+POST /api/alert-notifications HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
-    {
-      "name": "new alert notification",  //Required
-      "type":  "email", //Required
-      "isDefault": false,
-      "settings": {
-        "addresses": "carl@grafana.com;dev@grafana.com"
-      }
-    }
-
+{
+  "name": "new alert notification",  //Required
+  "type":  "email", //Required
+  "isDefault": false,
+  "settings": {
+    "addresses": "carl@grafana.com;dev@grafana.com"
+  }
+}
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
-    {
-      "id": 1,
-      "name": "new alert notification",
-      "type": "email",
-      "isDefault": false,
-      "settings": { addresses: "carl@grafana.com;dev@grafana.com"} }
-      "created": "2017-01-01 12:34",
-      "updated": "2017-01-01 12:34"
-    }
+```json
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "id": 1,
+  "name": "new alert notification",
+  "type": "email",
+  "isDefault": false,
+  "settings": { addresses: "carl@grafana.com;dev@grafana.com"} }
+  "created": "2017-01-01 12:34",
+  "updated": "2017-01-01 12:34"
+}
+```
 
 ## Update alert notification
 
@@ -190,35 +207,38 @@ JSON Body Schema:
 
 **Example Request**:
 
-    PUT /api/alert-notifications/1 HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```json
+PUT /api/alert-notifications/1 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
-    {
-      "id": 1,
-      "name": "new alert notification",  //Required
-      "type":  "email", //Required
-      "isDefault": false,
-      "settings": {
-        "addresses: "carl@grafana.com;dev@grafana.com"
-      }
-    }
-
+{
+  "id": 1,
+  "name": "new alert notification",  //Required
+  "type":  "email", //Required
+  "isDefault": false,
+  "settings": {
+    "addresses: "carl@grafana.com;dev@grafana.com"
+  }
+}
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
-    {
-      "id": 1,
-      "name": "new alert notification",
-      "type": "email",
-      "isDefault": false,
-      "settings": { addresses: "carl@grafana.com;dev@grafana.com"} }
-      "created": "2017-01-01 12:34",
-      "updated": "2017-01-01 12:34"
-    }
+```json
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "id": 1,
+  "name": "new alert notification",
+  "type": "email",
+  "isDefault": false,
+  "settings": { addresses: "carl@grafana.com;dev@grafana.com"} }
+  "created": "2017-01-01 12:34",
+  "updated": "2017-01-01 12:34"
+}
+```
 
 ## Delete alert notification
 
@@ -226,15 +246,19 @@ JSON Body Schema:
 
 **Example Request**:
 
-    DELETE /api/alert-notifications/1 HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```json
+DELETE /api/alert-notifications/1 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
-    {
-      "message": "Notification deleted"
-    }
+```json
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "message": "Notification deleted"
+}
+```

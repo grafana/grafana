@@ -29,7 +29,7 @@ installed grafana to custom location using a binary tar/zip it is usally in `<gr
 
 #### mysql
 
-```
+```bash
 backup:
 > mysqldump -u root -p[root_password] [grafana] > grafana_backup.sql
 
@@ -39,7 +39,7 @@ restore:
 
 #### postgres
 
-```
+```bash
 backup:
 > pg_dump grafana > grafana_backup
 
@@ -54,7 +54,7 @@ and execute the same `dpkg -i` command but with the new package. It will upgrade
 
 If you used our APT repository:
 
-```
+```bash
 sudo apt-get update
 sudo apt-get install grafana
 ```
@@ -73,14 +73,14 @@ and execute the same `yum install` or `rpm -i` command but with the new package.
 
 If you used our YUM repository:
 
-```
+```bash
 sudo yum update grafana
 ```
 
 ### Docker
 
 This just an example, details depend on how you configured your grafana container.
-```
+```bash
 docker pull grafana
 docker stop my-grafana-container
 docker rm my-grafana-container
