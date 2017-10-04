@@ -12,6 +12,9 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
   functions: any[];
   segments: any[];
+  tagSegments: any[];
+  seriesByTagUsed: boolean;
+  removeTagSegment: any;
 
   /** @ngInject **/
   constructor($scope, $injector, private uiSegmentSrv, private templateSrv) {
@@ -21,6 +24,8 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       this.target.target = this.target.target || '';
       this.parseTarget();
     }
+
+    this.removeTagSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove tag --'});
   }
 
   toggleEditorMode() {
@@ -59,6 +64,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     }
 
     this.checkOtherSegments(this.segments.length - 1);
+    this.checkForSeriesByTag();
   }
 
   addFunctionParameter(func, value, index, shiftBack) {
@@ -114,6 +120,40 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     return func.def.name !== 'seriesByTag';
   }
 
+  checkForSeriesByTag() {
+    let seriesByTagFunc = _.find(this.functions, (func) => func.def.name === 'seriesByTag');
+    if (seriesByTagFunc) {
+      this.seriesByTagUsed = true;
+      let tags = this.splitSeriesByTagParams(seriesByTagFunc);
+      this.tagSegments = [];
+      _.each(tags, (tag) => {
+        this.tagSegments.push(this.uiSegmentSrv.newKey(tag.key));
+        this.tagSegments.push(this.uiSegmentSrv.newOperator(tag.operator));
+        this.tagSegments.push(this.uiSegmentSrv.newKeyValue(tag.value));
+      });
+
+      this.fixTagSegments();
+    }
+  }
+
+  splitSeriesByTagParams(func) {
+    const tagPattern = /([^\!=~]+)([\!=~]+)([^\!=~]+)/;
+    return _.flatten(_.map(func.params, (param: string) => {
+      let matches = tagPattern.exec(param);
+      if (matches) {
+        let tag = matches.slice(1);
+        if (tag.length === 3) {
+          return {
+            key: tag[0],
+            operator: tag[1],
+            value: tag[2]
+          }
+        }
+      }
+      return [];
+    }));
+  }
+
   getSegmentPathUpTo(index) {
     var arr = this.segments.slice(0, index);
 
@@ -159,6 +199,36 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
   wrapFunction(target, func) {
     return func.render(target);
+  }
+
+  getAltTagSegments(index) {
+    let paramPartIndex = getParamPartIndex(index);
+
+    if (paramPartIndex === 1) {
+      // Operator
+      let operators = ['=', '!=', '=~', '!=~'];
+      let segments = _.map(operators, (operator) => this.uiSegmentSrv.newOperator(operator));
+      return Promise.resolve(segments);
+    } else if (paramPartIndex === 0) {
+      // Tag
+      return this.datasource.getTags().then(segments => {
+        let altSegments = _.map(segments, segment => {
+          return this.uiSegmentSrv.newSegment({value: segment.text, expandable: false});
+        });
+        altSegments.splice(0, 0, _.cloneDeep(this.removeTagSegment));
+        return altSegments;
+      });
+    } else {
+      // Tag value
+      let relatedTagSegmentIndex = getRelatedTagSegmentIndex(index);
+      let tag = this.tagSegments[relatedTagSegmentIndex].value;
+      return this.datasource.getTagValues(tag).then(segments => {
+        let altSegments = _.map(segments, segment => {
+          return this.uiSegmentSrv.newSegment({value: segment.text, expandable: false});
+        });
+        return altSegments;
+      });
+    }
   }
 
   getAltSegments(index) {
@@ -207,6 +277,52 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
     this.setSegmentFocus(segmentIndex + 1);
     this.targetChanged();
+  }
+
+  tagSegmentChanged(tagSegment, segmentIndex) {
+    this.error = null;
+
+    if (tagSegment.value === this.removeTagSegment.value) {
+      this.removeTag(segmentIndex);
+      return;
+    }
+
+    if (tagSegment.type === 'plus-button') {
+      let newTag = {key: tagSegment.value, operator: '=', value: 'select tag value'};
+      this.tagSegments.splice(this.tagSegments.length - 1, 1);
+      this.addNewTag(newTag);
+    }
+
+    let paramIndex = getParamIndex(segmentIndex);
+    let newTagParam = this.renderTagParam(segmentIndex);
+    this.functions[this.getSeriesByTagFuncIndex()].params[paramIndex] = newTagParam;
+
+    this.targetChanged();
+    this.parseTarget();
+  }
+
+  getSeriesByTagFuncIndex() {
+    return _.findIndex(this.functions, (func) => func.def.name === 'seriesByTag');
+  }
+
+  addNewTag(tag) {
+    this.tagSegments.push(this.uiSegmentSrv.newKey(tag.key));
+    this.tagSegments.push(this.uiSegmentSrv.newOperator(tag.operator));
+    this.tagSegments.push(this.uiSegmentSrv.newKeyValue(tag.value));
+  }
+
+  removeTag(index) {
+    let paramIndex = getParamIndex(index);
+    this.tagSegments.splice(index, 3);
+    this.functions[this.getSeriesByTagFuncIndex()].params.splice(paramIndex, 1);
+
+    this.targetChanged();
+    this.parseTarget();
+  }
+
+  renderTagParam(segmentIndex) {
+    let tagIndex = getRelatedTagSegmentIndex(segmentIndex)
+    return _.map(this.tagSegments.slice(tagIndex, tagIndex + 3), (segment) => segment.value).join('');
   }
 
   targetTextChanged() {
@@ -304,6 +420,10 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     if (!newFunc.params.length && newFunc.added) {
       this.targetChanged();
     }
+
+    if (newFunc.def.name === 'seriesByTag') {
+      this.parseTarget();
+    }
   }
 
   moveAliasFuncLast() {
@@ -333,4 +453,29 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       }
     }
   }
+
+  fixTagSegments() {
+    var count = this.tagSegments.length;
+    var lastSegment = this.tagSegments[Math.max(count-1, 0)];
+
+    if (!lastSegment || lastSegment.type !== 'plus-button') {
+      this.tagSegments.push(this.uiSegmentSrv.newPlusButton());
+    }
+  }
+
+  showDelimiter(index) {
+    return getParamPartIndex(index) === 2 && index !== this.tagSegments.length - 2;
+  }
+}
+
+function getParamIndex(segmentIndex) {
+  return Math.floor(segmentIndex / 3);
+}
+
+function getParamPartIndex(segmentIndex) {
+  return segmentIndex % 3;
+}
+
+function getRelatedTagSegmentIndex(segmentIndex) {
+  return getParamIndex(segmentIndex) * 3;
 }

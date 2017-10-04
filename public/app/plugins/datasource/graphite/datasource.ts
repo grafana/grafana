@@ -200,6 +200,60 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     });
   };
 
+  this.getTags = function(optionalOptions) {
+    let options = optionalOptions || {};
+
+    let httpOptions: any =  {
+      method: 'GET',
+      url: '/tags',
+      // for cancellations
+      requestId: options.requestId,
+    };
+
+    if (options && options.range) {
+      httpOptions.params.from = this.translateTime(options.range.from, false);
+      httpOptions.params.until = this.translateTime(options.range.to, true);
+    }
+
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      return _.map(results.data, tag => {
+        return {
+          text: tag.tag,
+          id: tag.id
+        };
+      });
+    });
+  };
+
+  this.getTagValues = function(tag, optionalOptions) {
+    let options = optionalOptions || {};
+
+    let httpOptions: any =  {
+      method: 'GET',
+      url: '/tags/' + tag,
+      // for cancellations
+      requestId: options.requestId,
+    };
+
+    if (options && options.range) {
+      httpOptions.params.from = this.translateTime(options.range.from, false);
+      httpOptions.params.until = this.translateTime(options.range.to, true);
+    }
+
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      if (results.data && results.data.values) {
+        return _.map(results.data.values, value => {
+          return {
+            text: value.value,
+            id: value.id
+          };
+        });
+      } else {
+        return [];
+      }
+    });
+  };
+
   this.testDatasource = function() {
     return this.metricFindQuery('*').then(function () {
       return { status: "success", message: "Data source is working"};
