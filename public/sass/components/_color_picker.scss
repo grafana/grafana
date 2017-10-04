@@ -36,8 +36,9 @@
   z-index: 0;
 }
 
-.colorpicker-container {
-  min-height: 190px;
+.gf-color-picker__body {
+  padding-bottom: 10px;
+  padding-left: 6px;
 }
 
 .drop-popover.gf-color-picker {

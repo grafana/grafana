@@ -22,12 +22,6 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
       color: this.props.color,
       colorString: this.props.color
     };
-
-    this.onColorStringChange = this.onColorStringChange.bind(this);
-    this.onColorStringBlur = this.onColorStringBlur.bind(this);
-    this.sampleColorSelected = this.sampleColorSelected.bind(this);
-    this.spectrumColorSelected = this.spectrumColorSelected.bind(this);
-    this.setPickerNavElem = this.setPickerNavElem.bind(this);
   }
 
   setPickerNavElem(elem) {
@@ -89,32 +83,32 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
   render() {
     const paletteTab = (
       <div id="palette">
-        <GfColorPalette color={this.state.color} onColorSelect={this.sampleColorSelected} />
+        <GfColorPalette color={this.state.color} onColorSelect={this.sampleColorSelected.bind(this)} />
       </div>
     );
     const spectrumTab = (
       <div id="spectrum">
-        <GfSpectrumPicker color={this.props.color} onColorSelect={this.spectrumColorSelected} options={{}} />
+        <GfSpectrumPicker color={this.props.color} onColorSelect={this.spectrumColorSelected.bind(this)} options={{}} />
       </div>
     );
     const currentTab = this.state.tab === 'palette' ? paletteTab : spectrumTab;
 
     return (
       <div className="gf-color-picker">
-        <ul className="nav nav-tabs" id="colorpickernav" ref={this.setPickerNavElem}>
+        <ul className="nav nav-tabs" id="colorpickernav" ref={this.setPickerNavElem.bind(this)}>
           <li className="gf-tabs-item-colorpicker">
             <a href="#palette" data-toggle="tab">Colors</a>
           </li>
           <li className="gf-tabs-item-colorpicker">
-            <a href="#spectrum" data-toggle="tab">Spectrum</a>
+            <a href="#spectrum" data-toggle="tab">Custom</a>
           </li>
         </ul>
-        <div className="colorpicker-container">
+        <div className="gf-color-picker__body">
           {currentTab}
         </div>
-        <div className="color-model-container">
-          <input className="gf-form-input" value={this.state.colorString}
-            onChange={this.onColorStringChange} onBlur={this.onColorStringBlur}>
+        <div>
+          <input className="gf-form-input gf-form-input--small" value={this.state.colorString}
+            onChange={this.onColorStringChange.bind(this)} onBlur={this.onColorStringBlur.bind(this)}>
           </input>
         </div>
       </div>

@@ -171,6 +171,12 @@ $gf-form-margin: 0.25rem;
       pointer-events: none;
     }
   }
+
+  &--small {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: $font-size-sm;
+  }
 }
 
 .gf-form-hint {

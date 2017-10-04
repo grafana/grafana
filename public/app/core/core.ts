@@ -23,7 +23,6 @@ import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';
 import {searchDirective} from './components/search/search';
 import {infoPopover} from './components/info_popover';
-import {colorPicker} from './components/colorpicker';
 import {navbarDirective} from './components/navbar/navbar';
 import {arrayJoin} from './directives/array_join';
 import {liveSrv} from './live/live_srv';
@@ -55,7 +54,6 @@ export {
   sideMenuDirective,
   navbarDirective,
   searchDirective,
-  colorPicker,
   liveSrv,
   layoutSelector,
   switchDirective,

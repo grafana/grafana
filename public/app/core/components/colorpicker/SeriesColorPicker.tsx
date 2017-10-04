@@ -1,6 +1,6 @@
 import React from 'react';
 import coreModule from 'app/core/core_module';
-import { ColorPickerPopover } from './ColorPickerPopover';
+import {ColorPickerPopover} from './ColorPickerPopover';
 
 export interface IProps {
   series: any;
@@ -23,27 +23,33 @@ export class SeriesColorPicker extends React.Component<IProps, any> {
     this.props.onToggleAxis();
   }
 
-  render() {
+  renderAxisSelection() {
     const leftButtonClass = this.props.series.yaxis === 1 ? 'btn-success' : 'btn-inverse';
     const rightButtonClass = this.props.series.yaxis === 2 ? 'btn-success' : 'btn-inverse';
 
     return (
+      <div className="p-b-1">
+        <label className="small p-r-1">Y Axis:</label>
+        <button onClick={this.onToggleAxis} className={'btn btn-small ' + leftButtonClass}>
+          Left
+        </button>
+        <button onClick={this.onToggleAxis} className={'btn btn-small ' + rightButtonClass}>
+          Right
+        </button>
+      </div>
+    );
+  }
+
+  render() {
+    return (
       <div className="graph-legend-popover">
-        <div className="p-b-1">
-          <label>Y Axis:</label>
-          <button onClick={this.onToggleAxis} className={"btn btn-small " + leftButtonClass}>
-            Left
-          </button>
-          <button onClick={this.onToggleAxis} className={"btn btn-small " + rightButtonClass}>
-            Right
-          </button>
-        </div>
-        <ColorPickerPopover color={this.props.series.color} onColorSelect={this.onColorChange} />
+        {this.props.series && this.renderAxisSelection()}
+        <ColorPickerPopover color="#7EB26D" onColorSelect={this.onColorChange} />
       </div>
     );
   }
 }
 
-coreModule.directive('seriesColorPicker', function (reactDirective) {
+coreModule.directive('seriesColorPicker', function(reactDirective) {
   return reactDirective(SeriesColorPicker, ['series', 'onColorChange', 'onToggleAxis']);
 });
