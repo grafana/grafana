@@ -419,7 +419,7 @@ function($, _, moment) {
   // Data Rate
   kbn.valueFormats.pps    = kbn.formatBuilders.decimalSIPrefix('pps');
   kbn.valueFormats.bps    = kbn.formatBuilders.decimalSIPrefix('bps');
-  kbn.valueFormats.Bps    = kbn.formatBuilders.decimalSIPrefix('B/s');
+  kbn.valueFormats.Bps    = kbn.formatBuilders.decimalSIPrefix('Bps');
   kbn.valueFormats.KBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 1);
   kbn.valueFormats.Kbits  = kbn.formatBuilders.decimalSIPrefix('bps', 1);
   kbn.valueFormats.MBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 2);
