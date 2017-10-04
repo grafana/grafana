@@ -17,6 +17,7 @@ const (
 	DS_CLOUDWATCH    = "cloudwatch"
 	DS_KAIROSDB      = "kairosdb"
 	DS_PROMETHEUS    = "prometheus"
+	DS_POSTGRES      = "postgres"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
 )
@@ -62,6 +63,7 @@ var knownDatasourcePlugins map[string]bool = map[string]bool{
 	DS_CLOUDWATCH:                         true,
 	DS_PROMETHEUS:                         true,
 	DS_OPENTSDB:                           true,
+	DS_POSTGRES:                           true,
 	"opennms":                             true,
 	"druid":                               true,
 	"dalmatinerdb":                        true,
