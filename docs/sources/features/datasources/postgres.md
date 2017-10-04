@@ -56,7 +56,7 @@ Macro example | Description
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
-The query editor has a link named `Generated SQL` that show up after a query as been executed, while in panel edit mode. Click on it and it will expand and show the raw interpolated SQL string that was executed.
+The query editor has a link named `Generated SQL` that shows up after a query as been executed, while in panel edit mode. Click on it and it will expand and show the raw interpolated SQL string that was executed.
 
 ## Table queries
 
@@ -88,7 +88,7 @@ The resulting table panel:
 ### Time series queries
 
 If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must return a column named `time` that returns either a sql datetime or any numeric datatype representing unix epoch in seconds.
-Any column except `time` and `metric` is treated as a
+Any column except `time` and `metric` is treated as a value column.
 You may return a column named `metric` that is used as metric name for the value column.
 
 Example with `metric` column
