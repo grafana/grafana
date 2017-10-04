@@ -30,7 +30,6 @@ func TestAnnotations(t *testing.T) {
 		repo := SqlAnnotationRepo{}
 
 		Convey("Can save annotation", func() {
-
 			err := repo.Save(&annotations.Item{
 				OrgId:       1,
 				UserId:      1,
@@ -108,6 +107,45 @@ func TestAnnotations(t *testing.T) {
 
 				So(err, ShouldBeNil)
 				So(items, ShouldHaveLength, 1)
+			})
+
+			Convey("Can update annotation", func() {
+				items, err := repo.Find(&annotations.ItemQuery{
+					OrgId:       1,
+					DashboardId: 1,
+					From:        0,
+					To:          15,
+				})
+
+				So(err, ShouldBeNil)
+
+				annotationId := items[0].Id
+
+				err = repo.Update(&annotations.Item{
+					Id:    annotationId,
+					OrgId: 1,
+					Title: "a new title",
+					Text:  "something new",
+					Tags:  "",
+				})
+
+				So(err, ShouldBeNil)
+
+				items, err = repo.Find(&annotations.ItemQuery{
+					OrgId:       1,
+					DashboardId: 1,
+					From:        0,
+					To:          15,
+				})
+
+				So(err, ShouldBeNil)
+
+				Convey("Can read tags", func() {
+					So(items[0].Id, ShouldEqual, annotationId)
+					So(items[0].Tags, ShouldEqual, "")
+					So(items[0].Title, ShouldEqual, "a new title")
+					So(items[0].Text, ShouldEqual, "something new")
+				})
 			})
 		})
 	})

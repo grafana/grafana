@@ -11,21 +11,25 @@ type Tag struct {
 }
 
 func ParseTagsString(str string) (tags []*Tag) {
-	if str == "" {
+	if strings.Trim(str, " ") == "" {
 		return
 	}
 
-	tagPairs := strings.Split(str, ",")
+	tagPairs := strings.Split(strings.Trim(str, " "), ",")
 
 	for _, tagPair := range tagPairs {
 		var tag Tag
 
 		if strings.Contains(tagPair, ":") {
 			keyValue := strings.Split(tagPair, ":")
-			tag.Key = keyValue[0]
-			tag.Value = keyValue[1]
+			tag.Key = strings.Trim(keyValue[0], " ")
+			tag.Value = strings.Trim(keyValue[1], " ")
 		} else {
-			tag.Key = tagPair
+			tag.Key = strings.Trim(tagPair, " ")
+		}
+
+		if tag.Key == "" {
+			continue
 		}
 
 		tags = append(tags, &tag)

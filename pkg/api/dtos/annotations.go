@@ -41,6 +41,7 @@ type UpdateAnnotationsCmd struct {
 	Time         int64  `json:"time"`
 	Title        string `json:"title"`
 	Text         string `json:"text"`
+	Tags         string `json:"tags"`
 	Icon         string `json:"icon"`
 
 	FillColor string `json:"fillColor"`

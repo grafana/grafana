@@ -1,11 +1,8 @@
-///<reference path="../../headers/common.d.ts" />
-
 import './editor_ctrl';
 
 import angular from 'angular';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
-import {AnnotationEvent} from './event';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -191,6 +188,7 @@ export class AnnotationsSrv {
       item.max = item.time;
       item.scope = 1;
       item.eventType = annotation.name;
+      item.tags = item.tags.split(',');
     }
     return results;
   }

@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 
 class GrafanaDatasource {
@@ -41,7 +39,7 @@ class GrafanaDatasource {
       to: options.range.to.valueOf(),
       limit: options.annotation.limit,
       type: options.annotation.type,
-      tags: options.annotation.tags,
+      tags: options.annotation.tags ? options.annotation.tags.join(','): '',
     });
   }
 

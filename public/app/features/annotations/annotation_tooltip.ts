@@ -1,10 +1,7 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import alertDef from '../alerting/alert_def';
-import { EventManager } from 'app/features/annotations/all';
 
 /** @ngInject **/
 export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, popoverSrv, $compile) {

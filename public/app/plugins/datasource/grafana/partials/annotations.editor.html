@@ -16,8 +16,9 @@
 		</div>
 	</div>
 	<div class="gf-form">
-		<span class="gf-form-label width-7">Tags</span>
-		<input type="text" ng-model="ctrl.annotation.tags" class="gf-form-input max-width-20">
+    <span class="gf-form-label width-7">Tags</span>
+    <bootstrap-tagsinput ng-model="ctrl.annotation.tags" tagclass="label label-tag" placeholder="add tags">
+    </bootstrap-tagsinput>
 	</div>
 	<div class="gf-form">
 		<span class="gf-form-label width-7">Max limit</span>

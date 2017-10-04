@@ -107,6 +107,7 @@ func UpdateAnnotation(c *middleware.Context, cmd dtos.UpdateAnnotationsCmd) Resp
 		Title:  cmd.Title,
 		Text:   cmd.Text,
 		Type:   annotations.EventType,
+		Tags:   cmd.Tags,
 	}
 
 	if err := repo.Update(&item); err != nil {
