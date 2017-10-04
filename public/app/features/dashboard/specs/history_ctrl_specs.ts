@@ -2,7 +2,7 @@ import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/co
 
 import _ from 'lodash';
 import {HistoryListCtrl} from 'app/features/dashboard/history/history';
-import { versions, compare, restore } from 'test/mocks/history-mocks';
+import {versions, compare, restore} from './history_mocks';
 
 describe('HistoryListCtrl', function() {
   var RESTORE_ID = 4;

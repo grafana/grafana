@@ -1,10 +1,9 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
-
 import {QueryCtrl} from 'app/plugins/sdk';
 import {PromCompleter} from './completer';
+import './mode-prometheus';
+import './snippets/prometheus';
 
 class PrometheusQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -44,12 +43,6 @@ class PrometheusQueryCtrl extends QueryCtrl {
 
   getCompleter(query) {
     return new PromCompleter(this.datasource);
-    // console.log('getquery);
-    // return this.datasource.performSuggestQuery(query).then(res => {
-    //   return res.map(item => {
-    //     return {word: item, type: 'metric'};
-    //   });
-    // });
   }
 
   getDefaultFormat() {

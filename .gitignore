@@ -4,6 +4,8 @@ coverage/
 .aws-config.json
 awsconfig
 /dist
+/public/build
+/public/views/index.html
 /emails/dist
 /public_gen
 /public/vendor/npm

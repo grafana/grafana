@@ -57,7 +57,8 @@ coreModule.filter('noXml', function() {
   };
 });
 
-coreModule.filter('interpolateTemplateVars', function (templateSrv) {
+/** @ngInject */
+function interpolateTemplateVars(templateSrv) {
   var filterFunc: any = function(text, scope) {
     var scopedVars;
     if (scope.ctrl) {
@@ -71,6 +72,7 @@ coreModule.filter('interpolateTemplateVars', function (templateSrv) {
 
   filterFunc.$stateful = true;
   return filterFunc;
-});
+}
 
+coreModule.filter('interpolateTemplateVars', interpolateTemplateVars);
 export default {};
