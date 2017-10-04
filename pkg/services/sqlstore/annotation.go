@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
@@ -17,6 +16,15 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
+		}
+
+		if item.Data != nil {
+			tags := item.Data.Get("tags").MustStringArray()
+			for _, tag := range tags {
+				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag) VALUES(?,?)", item.Id, tag); err != nil {
+					return err
+				}
+			}
 		}
 
 		return nil
@@ -63,8 +71,8 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 	params := make([]interface{}, 0)
 
 	sql.WriteString(`SELECT *
-						from annotation
-						`)
+	from annotation
+	`)
 
 	sql.WriteString(`WHERE org_id = ?`)
 	params = append(params, query.OrgId)
@@ -97,13 +105,6 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 	if query.Type != "" {
 		sql.WriteString(` AND type = ?`)
 		params = append(params, string(query.Type))
-	}
-
-	if len(query.NewState) > 0 {
-		sql.WriteString(` AND new_state IN (?` + strings.Repeat(",?", len(query.NewState)-1) + ")")
-		for _, v := range query.NewState {
-			params = append(params, v)
-		}
 	}
 
 	if query.Limit == 0 {

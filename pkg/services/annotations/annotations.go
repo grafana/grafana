@@ -17,7 +17,7 @@ type ItemQuery struct {
 	AlertId     int64    `json:"alertId"`
 	DashboardId int64    `json:"dashboardId"`
 	PanelId     int64    `json:"panelId"`
-	NewState    []string `json:"newState"`
+	Tags        []string `json:"tags"`
 
 	Limit int64 `json:"limit"`
 }
@@ -57,20 +57,19 @@ const (
 )
 
 type Item struct {
-	Id          int64    `json:"id"`
-	OrgId       int64    `json:"orgId"`
-	UserId      int64    `json:"userId"`
-	DashboardId int64    `json:"dashboardId"`
-	PanelId     int64    `json:"panelId"`
-	RegionId    int64    `json:"regionId"`
-	Type        ItemType `json:"type"`
-	Title       string   `json:"title"`
-	Text        string   `json:"text"`
-	Metric      string   `json:"metric"`
-	AlertId     int64    `json:"alertId"`
-	PrevState   string   `json:"prevState"`
-	NewState    string   `json:"newState"`
-	Epoch       int64    `json:"epoch"`
-
-	Data *simplejson.Json `json:"data"`
+	Id          int64            `json:"id"`
+	OrgId       int64            `json:"orgId"`
+	UserId      int64            `json:"userId"`
+	DashboardId int64            `json:"dashboardId"`
+	PanelId     int64            `json:"panelId"`
+	RegionId    int64            `json:"regionId"`
+	Type        ItemType         `json:"type"`
+	Title       string           `json:"title"`
+	Text        string           `json:"text"`
+	Metric      string           `json:"metric"`
+	AlertId     int64            `json:"alertId"`
+	PrevState   string           `json:"prevState"`
+	NewState    string           `json:"newState"`
+	Epoch       int64            `json:"epoch"`
+	Data        *simplejson.Json `json:"data"`
 }
