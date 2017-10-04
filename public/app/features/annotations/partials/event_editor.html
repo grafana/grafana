@@ -1,6 +1,6 @@
 
-<h5 class="section-heading text-center" ng-if="!ctrl.event.annotationId">Add annotation</h5>
-<h5 class="section-heading text-center" ng-if="ctrl.event.annotationId">Edit annotation</h5>
+<h5 class="section-heading text-center" ng-if="!ctrl.event.annotationId">Add Annotation</h5>
+<h5 class="section-heading text-center" ng-if="ctrl.event.annotationId">Edit Annotation</h5>
 
 <form name="ctrl.form" class="text-center">
   <div style="display: inline-block">
@@ -33,7 +33,8 @@
 
 		<div class="gf-form">
       <span class="gf-form-label width-7">Tags</span>
-      <input type="text" ng-model="ctrl.event.tags" class="gf-form-input max-width-20">
+      <bootstrap-tagsinput ng-model="ctrl.event.tags" tagclass="label label-tag" placeholder="add tags">
+      </bootstrap-tagsinput>
     </div>
 
     <div class="gf-form-button-row">

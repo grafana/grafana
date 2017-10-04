@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import './editor_ctrl';
 
 import angular from 'angular';
@@ -191,6 +189,7 @@ export class AnnotationsSrv {
       item.max = item.time;
       item.scope = 1;
       item.eventType = annotation.name;
+      item.tags = item.tags.split(',');
     }
     return results;
   }
