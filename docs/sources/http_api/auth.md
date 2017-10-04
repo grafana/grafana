@@ -36,7 +36,7 @@ You use the token in all requests in the `Authorization` header, like this:
 
 **Example**:
 
-```json
+```http
 GET http://your.grafana.com/api/dashboards/db/mydash HTTP/1.1
 Accept: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -52,7 +52,7 @@ The `Authorization` header value should be `Bearer <your api key>`.
 
 **Example Request**:
 
-```json
+```http
 GET /api/auth/keys HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -61,7 +61,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -85,7 +85,7 @@ Content-Type: application/json
 
 **Example Request**:
 
-```json
+```http
 POST /api/auth/keys HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -104,7 +104,7 @@ JSON Body schema:
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -117,7 +117,7 @@ Content-Type: application/json
 
 **Example Request**:
 
-```json
+```http
 DELETE /api/auth/keys/3 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -125,7 +125,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 

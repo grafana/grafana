@@ -23,7 +23,7 @@ This API can also be used to create, update and delete alert notifications.
 
 **Example Request**:
 
-```bash
+```http
 GET /api/alerts HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -42,7 +42,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 [
@@ -73,7 +73,7 @@ Content-Type: application/json
 
 **Example Request**:
 
-```json
+```http
 GET /api/alerts/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -82,7 +82,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 {
@@ -104,7 +104,7 @@ Content-Type: application/json
 
 **Example Request**:
 
-```json
+```http
 POST /api/alerts/1/pause HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -123,7 +123,7 @@ JSON Body Schema:
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 {
@@ -139,7 +139,7 @@ Content-Type: application/json
 
 **Example Request**:
 
-```json
+```http
 GET /api/alert-notifications HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -149,7 +149,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 
@@ -169,7 +169,7 @@ Content-Type: application/json
 
 **Example Request**:
 
-```json
+```http
 POST /api/alert-notifications HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -187,7 +187,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 {
@@ -207,7 +207,7 @@ Content-Type: application/json
 
 **Example Request**:
 
-```json
+```http
 PUT /api/alert-notifications/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -226,7 +226,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 {
@@ -246,7 +246,7 @@ Content-Type: application/json
 
 **Example Request**:
 
-```json
+```http
 DELETE /api/alert-notifications/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
@@ -255,7 +255,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
-```json
+```http
 HTTP/1.1 200
 Content-Type: application/json
 {
