@@ -1,19 +1,21 @@
 
 <div class="gf-form-group">
-	<div class="gf-form-inline">
-		<div class="gf-form">
-			<span class="gf-form-label width-7">Type</span>
-			<div class="gf-form-select-wrapper">
-				<select class="gf-form-input" ng-model="ctrl.annotation.type" ng-options="f.value as f.text for f in [{text: 'Event', value: 'event'}, {text: 'Alert', value: 'alert'}]">
-				</select>
-			</div>
+	<div class="gf-form">
+		<span class="gf-form-label width-7">Type</span>
+		<div class="gf-form-select-wrapper">
+			<select class="gf-form-input" ng-model="ctrl.annotation.type" ng-options="f.value as f.text for f in [{text: 'Event', value: 'event'}, {text: 'Alert', value: 'alert'}]">
+			</select>
 		</div>
-		<div class="gf-form">
-			<span class="gf-form-label width-7">Max limit</span>
-			<div class="gf-form-select-wrapper">
-				<select class="gf-form-input" ng-model="ctrl.annotation.limit" ng-options="f for f in [10,50,100,200,300,500,1000,2000]">
-				</select>
-			</div>
+	</div>
+	<div class="gf-form">
+		<span class="gf-form-label width-7">Tags</span>
+		<input type="text" ng-model="ctrl.annotation.tags" class="gf-form-input max-width-20">
+	</div>
+	<div class="gf-form">
+		<span class="gf-form-label width-7">Max limit</span>
+		<div class="gf-form-select-wrapper">
+			<select class="gf-form-input" ng-model="ctrl.annotation.limit" ng-options="f for f in [10,50,100,200,300,500,1000,2000]">
+			</select>
 		</div>
 	</div>
 </div>

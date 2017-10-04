@@ -18,6 +18,7 @@ func GetAnnotations(c *middleware.Context) Response {
 		DashboardId: c.QueryInt64("dashboardId"),
 		PanelId:     c.QueryInt64("panelId"),
 		Limit:       c.QueryInt64("limit"),
+		Tags:        c.Query("tags"),
 	}
 
 	repo := annotations.GetRepository()
@@ -43,6 +44,7 @@ func GetAnnotations(c *middleware.Context) Response {
 			PanelId:      item.PanelId,
 			RegionId:     item.RegionId,
 			UserId:       item.UserId,
+			Tags:         item.Tags,
 			Type:         string(item.Type),
 		})
 	}
@@ -61,8 +63,10 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 		Epoch:       cmd.Time / 1000,
 		Title:       cmd.Title,
 		Text:        cmd.Text,
+		Data:        cmd.Data,
 		NewState:    cmd.FillColor,
 		Type:        annotations.EventType,
+		Tags:        cmd.Tags,
 	}
 
 	if err := repo.Save(&item); err != nil {

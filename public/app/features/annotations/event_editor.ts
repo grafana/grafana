@@ -4,8 +4,6 @@ import {coreModule} from 'app/core/core';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 import {AnnotationEvent} from './event';
 
-const DEFAULT_EVENT_ICON = '1f494';
-
 export class EventEditorCtrl {
   panelCtrl: MetricsPanelCtrl;
   event: AnnotationEvent;
@@ -22,11 +20,6 @@ export class EventEditorCtrl {
     this.event.time = tryEpochToMoment(this.event.time);
     if (this.event.isRegion) {
       this.event.timeEnd = tryEpochToMoment(this.event.timeEnd);
-    }
-
-    if (!(this.event && this.event.icon)) {
-      // This overrides default icon from emojipicker.ts
-      this.event.icon = DEFAULT_EVENT_ICON;
     }
   }
 

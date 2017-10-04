@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
 
@@ -18,17 +20,42 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 			return err
 		}
 
-		if item.Data != nil {
-			tags := item.Data.Get("tags").MustStringArray()
-			for _, tag := range tags {
-				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag) VALUES(?,?)", item.Id, tag); err != nil {
-					return err
+		if item.Tags != "" {
+			if tags, err := r.ensureTagsExist(sess, item.Tags); err != nil {
+				return err
+			} else {
+				for _, tag := range tags {
+					if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", item.Id, tag.Id); err != nil {
+						return err
+					}
 				}
 			}
 		}
 
 		return nil
 	})
+}
+
+// Will insert if needed any new key/value pars and return ids
+func (r *SqlAnnotationRepo) ensureTagsExist(sess *DBSession, tagString string) ([]*models.Tag, error) {
+	tags := models.ParseTagsString(tagString)
+
+	for _, tag := range tags {
+		var existingTag models.Tag
+
+		// check if it exists
+		if exists, err := sess.Table("tag").Where("key=? AND value=?", tag.Key, tag.Value).Get(&existingTag); err != nil {
+			return nil, err
+		} else if exists {
+			tag.Id = existingTag.Id
+		} else {
+			if _, err := sess.Table("tag").Insert(tag); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return tags, nil
 }
 
 func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
@@ -70,9 +97,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
-	sql.WriteString(`SELECT *
-	from annotation
-	`)
+	sql.WriteString(`SELECT * from annotation `)
 
 	sql.WriteString(`WHERE org_id = ?`)
 	params = append(params, query.OrgId)
@@ -105,6 +130,31 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 	if query.Type != "" {
 		sql.WriteString(` AND type = ?`)
 		params = append(params, string(query.Type))
+	}
+
+	if len(query.Tags) > 0 {
+		keyValueFilters := []string{}
+		tags := models.ParseTagsString(query.Tags)
+		for _, tag := range tags {
+			if tag.Value == "" {
+				keyValueFilters = append(keyValueFilters, "(tag.key = ?)")
+				params = append(params, tag.Key)
+			} else {
+				keyValueFilters = append(keyValueFilters, "(tag.key = ? AND tag.value = ?)")
+				params = append(params, tag.Key, tag.Value)
+			}
+		}
+
+		tagsSubQuery := fmt.Sprintf(`
+			SELECT SUM(1) FROM annotation_tag at
+				INNER JOIN tag on tag.id = at.tag_id
+				WHERE at.annotation_id = annotation.id
+					AND (
+						%s
+					)
+		`, strings.Join(keyValueFilters, " OR "))
+
+		sql.WriteString(fmt.Sprintf(" AND (%s) = %d ", tagsSubQuery, len(tags)))
 	}
 
 	if query.Limit == 0 {

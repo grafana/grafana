@@ -5,9 +5,23 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
+
+func TestSavingTags(t *testing.T) {
+	Convey("Testing annotation saving/loading", t, func() {
+		InitTestDB(t)
+
+		repo := SqlAnnotationRepo{}
+
+		Convey("Can save tags", func() {
+			tags, err := repo.ensureTagsExist(newSession(), "outage,type:outage,server:server-1,error")
+
+			So(err, ShouldBeNil)
+			So(len(tags), ShouldEqual, 4)
+		})
+	})
+}
 
 func TestAnnotations(t *testing.T) {
 	Convey("Testing annotation saving/loading", t, func() {
@@ -24,9 +38,7 @@ func TestAnnotations(t *testing.T) {
 				Title:       "title",
 				Text:        "hello",
 				Epoch:       10,
-				Data: simplejson.NewFromAny(map[string]interface{}{
-					"tags": []string{"outage", "not my fault"},
-				}),
+				Tags:        "outage,error,type:outage,server:server-1",
 			})
 
 			So(err, ShouldBeNil)
@@ -43,7 +55,7 @@ func TestAnnotations(t *testing.T) {
 				So(items, ShouldHaveLength, 1)
 
 				Convey("Can read tags", func() {
-					So(items[0].Data.Get("tags").MustStringArray(), ShouldResemble, []string{"outage", "not my fault"})
+					So(items[0].Tags, ShouldEqual, "outage,error,type:outage,server:server-1")
 				})
 			})
 
@@ -65,20 +77,33 @@ func TestAnnotations(t *testing.T) {
 					DashboardId: 1,
 					From:        1,
 					To:          15,
-					Tags:        []string{"asd"},
+					Tags:        "asd",
 				})
 
 				So(err, ShouldBeNil)
 				So(items, ShouldHaveLength, 0)
 			})
 
-			Convey("Should find one when all tag filter does match", func() {
+			Convey("Should find one when all tag filters does match", func() {
 				items, err := repo.Find(&annotations.ItemQuery{
 					OrgId:       1,
 					DashboardId: 1,
 					From:        1,
 					To:          15,
-					Tags:        []string{"outage", "not my fault"},
+					Tags:        "outage,error",
+				})
+
+				So(err, ShouldBeNil)
+				So(items, ShouldHaveLength, 1)
+			})
+
+			Convey("Should find one when all key value tag filters does match", func() {
+				items, err := repo.Find(&annotations.ItemQuery{
+					OrgId:       1,
+					DashboardId: 1,
+					From:        1,
+					To:          15,
+					Tags:        "type:outage,server:server-1",
 				})
 
 				So(err, ShouldBeNil)

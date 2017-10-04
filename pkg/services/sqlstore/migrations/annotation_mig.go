@@ -61,6 +61,10 @@ func addAnnotationMig(mg *Migrator) {
 	categoryIdIndex := &Index{Cols: []string{"org_id", "category_id"}, Type: IndexType}
 	mg.AddMigration("Drop category_id index", NewDropIndexMigration(table, categoryIdIndex))
 
+	mg.AddMigration("Add column tags to annotation table", NewAddColumnMigration(table, &Column{
+		Name: "tags", Type: DB_NVarchar, Nullable: true, Length: 500,
+	}))
+
 	///
 	/// Annotation tag
 	///
@@ -69,13 +73,13 @@ func addAnnotationMig(mg *Migrator) {
 		Name: "annotation_tag",
 		Columns: []*Column{
 			{Name: "annotation_id", Type: DB_BigInt, Nullable: false},
-			{Name: "tag", Type: DB_NVarchar, Length: 50, Nullable: false},
+			{Name: "tag_id", Type: DB_BigInt, Nullable: false},
 		},
 		Indices: []*Index{
-			{Cols: []string{"annotation_id", "tag"}, Type: UniqueIndex},
+			{Cols: []string{"annotation_id", "tag_id"}, Type: UniqueIndex},
 		},
 	}
 
-	mg.AddMigration("Create annotation_tag table", NewAddTableMigration(annotationTagTable))
-	mg.AddMigration("Add unique index annotation_tag.annotation_id_tag", NewAddIndexMigration(annotationTagTable, annotationTagTable.Indices[0]))
+	mg.AddMigration("Create annotation_tag table v2", NewAddTableMigration(annotationTagTable))
+	mg.AddMigration("Add unique index annotation_tag.annotation_id_tag_id", NewAddIndexMigration(annotationTagTable, annotationTagTable.Indices[0]))
 }
