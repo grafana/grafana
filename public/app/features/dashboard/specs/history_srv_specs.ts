@@ -2,7 +2,7 @@ import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 
 import helpers from 'test/specs/helpers';
 import '../history/history_srv';
-import {versions, restore} from 'test/mocks/history-mocks';
+import {versions, restore} from './history_mocks';
 
 describe('historySrv', function() {
   var ctx = new helpers.ServiceTestContext();

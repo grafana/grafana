@@ -1,18 +1,27 @@
-///<reference path="../../headers/common.d.ts" />
-
 import './dashboard_loaders';
-
 import coreModule from 'app/core/core_module';
-import {BundleLoader} from './bundle_loader';
 
 /** @ngInject **/
 function setupAngularRoutes($routeProvider, $locationProvider) {
   $locationProvider.html5Mode(true);
 
-  var loadOrgBundle = new BundleLoader('app/features/org/all');
-  var loadPluginsBundle = new BundleLoader('app/features/plugins/all');
-  var loadAdminBundle = new BundleLoader('app/features/admin/admin');
-  var loadAlertingBundle = new BundleLoader('app/features/alerting/all');
+  var loadOrgBundle = {
+    lazy: ["$q", "$route", "$rootScope", ($q, $route, $rootScope) => {
+      return System.import('app/features/org/all');
+    }]
+  };
+
+  var loadAdminBundle = {
+    lazy: ["$q", "$route", "$rootScope", ($q, $route, $rootScope) => {
+      return System.import('app/features/admin/admin');
+    }]
+  };
+
+  var loadAlertingBundle = {
+    lazy: ["$q", "$route", "$rootScope", ($q, $route, $rootScope) => {
+      return System.import('app/features/alerting/all');
+    }]
+  };
 
   $routeProvider
   .when('/', {
@@ -47,19 +56,16 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     templateUrl: 'public/app/features/plugins/partials/ds_list.html',
     controller : 'DataSourcesCtrl',
     controllerAs: 'ctrl',
-    resolve: loadPluginsBundle,
   })
   .when('/datasources/edit/:id', {
     templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
     controller : 'DataSourceEditCtrl',
     controllerAs: 'ctrl',
-    resolve: loadPluginsBundle,
   })
   .when('/datasources/new', {
     templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
     controller : 'DataSourceEditCtrl',
     controllerAs: 'ctrl',
-    resolve: loadPluginsBundle,
   })
   .when('/org', {
     templateUrl: 'public/app/features/org/partials/orgDetails.html',
@@ -175,19 +181,16 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     templateUrl: 'public/app/features/plugins/partials/plugin_list.html',
     controller: 'PluginListCtrl',
     controllerAs: 'ctrl',
-    resolve: loadPluginsBundle,
   })
   .when('/plugins/:pluginId/edit', {
     templateUrl: 'public/app/features/plugins/partials/plugin_edit.html',
     controller: 'PluginEditCtrl',
     controllerAs: 'ctrl',
-    resolve: loadPluginsBundle,
   })
   .when('/plugins/:pluginId/page/:slug', {
     templateUrl: 'public/app/features/plugins/partials/plugin_page.html',
     controller: 'AppPageCtrl',
     controllerAs: 'ctrl',
-    resolve: loadPluginsBundle,
   })
   .when('/styleguide/:page?', {
     controller: 'StyleGuideCtrl',

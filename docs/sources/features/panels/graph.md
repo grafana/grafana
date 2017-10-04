@@ -11,11 +11,12 @@ weight = 1
 
 # Graph Panel
 
+{{< docs-imagebox img="/img/docs/v45/graph_overview.png" class="docs-image--no-shadow" max-width="850px" >}}
+
 The main panel in Grafana is simply named Graph. It provides a very rich set of graphing options.
 
-{{< docs-imagebox img="/img/docs/v45/graph_overview.png" class="docs-image--no-shadow" max-width= "900px" >}}
-
-1. Clicking the title for a panel exposes a menu.  The `edit` option opens additional configuration options for the panel.
+1. Clicking the title for a panel exposes a menu.  The `edit` option opens additional configuration
+options for the panel.
 2. Click to open color & axis selection.
 3. Click to only show this series. Shift/Ctrl + click to hide series.
 
@@ -27,9 +28,9 @@ The general tab allows customization of a panel's appearance and menu options.
 
 ### General Options
 
-- ``Title`` - The panel title on the dashboard
-- ``Span`` - The panel width in columns
-- ``Height`` - The panel contents height in pixels
+- **Title** - The panel title on the dashboard
+- **Span** - The panel width in columns
+- **Height** - The panel contents height in pixels
 
 ### Drilldown / detail link
 
@@ -55,44 +56,46 @@ options.
 
 {{< docs-imagebox img="/img/docs/v43/graph_axes_grid_options.png"  max-width= "900px" >}}
 
-The Axes tab controls the display of axes, grids and legend.  The ``Left Y`` and ``Right Y`` can be customized using:
+The Axes tab controls the display of axes, grids and legend.  The **Left Y** and **Right Y** can be customized using:
 
-- ``Unit`` - The display unit for the Y value
-- ``Grid Max`` - The maximum Y value. (default auto)
-- ``Grid Min`` - The minimum Y value. (default auto)
-- ``Label`` - The Y axis label (default "")
+- **Unit** - The display unit for the Y value
+- **Scale** -
+- **Y-Min** - The minimum Y value. (default auto)
+- **Y-Max** - The maximum Y value. (default auto)
+- **Label** - The Y axis label (default "")
 
-Axes can also be hidden by unchecking the appropriate box from `Show Axis`.
+Axes can also be hidden by unchecking the appropriate box from **Show**.
 
 ### X-Axis Mode
 
 There are three options:
 
-- The default option is `Time` and means the x-axis represents time and that the data is grouped by time (for example, by hour or by minute).
+- The default option is **Time** and means the x-axis represents time and that the data is grouped by time (for example, by hour or by minute).
 
-- The `Series` option means that the data is grouped by series and not by time. The y-axis still represents the value.
+- The **Series** option means that the data is grouped by series and not by time. The y-axis still represents the value.
 
-    <img src="/img/docs/v4/x_axis_mode_series.png" class="no-shadow">
+    {{< docs-imagebox img="/img/docs/v45/graph-x-axis-mode-series.png" max-width="700px">}}
 
-- The `Histogram` option converts the graph into a histogram. A Histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range. Histograms and buckets are described in more detail [here](http://docs.grafana.org/features/panels/heatmap/#histograms-and-buckets).
+- The **Histogram** option converts the graph into a histogram. A Histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range. Histograms and buckets are described in more detail [here](http://docs.grafana.org/features/panels/heatmap/#histograms-and-buckets).
 
     <img src="/img/docs/v43/heatmap_histogram.png" class="no-shadow">
 
 ### Legend
 
-The legend hand be hidden by checking the ``Show`` checkbox.  If it's shown, it can be
-displayed as a table of values by checking the ``Table`` checkbox.  Series with no
-values can be hidden from the legend using the ``Hide empty`` checkbox.
+The legend hand be hidden by checking the **Show** checkbox.  If it's shown, it can be
+displayed as a table of values by checking the **Table** checkbox.  Series with no
+values can be hidden from the legend using the **Hide empty** checkbox.
 
 ### Legend Values
 
 Additional values can be shown along-side the legend names:
-- ``Total`` - Sum of all values returned from metric query
-- ``Current`` - Last value returned from the metric query
-- ``Min`` - Minimum of all values returned from metric query
-- ``Max`` - Maximum of all values returned from the metric query
-- ``Avg`` - Average of all values returned from metric query
-- ``Decimals`` - Controls how many decimals are displayed for legend values (and graph hover tooltips)
+
+- **Total** - Sum of all values returned from metric query
+- **Current** - Last value returned from the metric query
+- **Min** - Minimum of all values returned from metric query
+- **Max** - Maximum of all values returned from the metric query
+- **Avg** - Average of all values returned from metric query
+- **Decimals** - Controls how many decimals are displayed for legend values (and graph hover tooltips)
 
 The legend values are calculated client side by Grafana and depend on what type of
 aggregation or point consolidation your metric query is using. All the above legend values cannot
@@ -114,23 +117,23 @@ the graph crosses a particular threshold.
 
 ### Chart Options
 
-- ``Bar`` - Display values as a bar chart
-- ``Lines`` - Display values as a line graph
-- ``Points`` - Display points for values
+- **Bar** - Display values as a bar chart
+- **Lines** - Display values as a line graph
+- **Points** - Display points for values
 
 ### Line Options
 
-- ``Line Fill`` - Amount of color fill for a series. 0 is none.
-- ``Line Width`` - The width of the line for a series.
-- ``Null point mode`` - How null values are displayed
-- ``Staircase line`` - Draws adjacent points as staircase
+- **Line Fill** - Amount of color fill for a series. 0 is none.
+- **Line Width** - The width of the line for a series.
+- **Null point mode** - How null values are displayed
+- **Staircase line** - Draws adjacent points as staircase
 
 ### Multiple Series
 
 If there are multiple series, they can be displayed as a group.
 
-- ``Stack`` - Each series is stacked on top of another
-- ``Percent`` - Each series is drawn as a percentage of the total of all series
+- **Stack** - Each series is stacked on top of another
+- **Percent** - Each series is drawn as a percentage of the total of all series
 
 If you have stack enabled, you can select what the mouse hover feature should show.
 
@@ -139,12 +142,12 @@ If you have stack enabled, you can select what the mouse hover feature should sh
 
 ### Rendering
 
-- ``Flot`` - Render the graphs in the browser using Flot (default)
-- ``Graphite PNG`` - Render the graph on the server using graphite's render API.
+- **Flot** - Render the graphs in the browser using Flot (default)
+- **Graphite PNG** - Render the graph on the server using graphite's render API.
 
 ### Tooltip
 
-- ``All series`` - Show all series on the same tooltip and a x crosshairs to help follow all series
+- **All series** - Show all series on the same tooltip and a x crosshairs to help follow all series
 
 ### Series Specific Overrides
 

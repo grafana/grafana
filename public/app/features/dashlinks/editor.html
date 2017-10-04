@@ -3,74 +3,78 @@
 
 	<div ng-repeat="link in dashboard.links">
 
-		<div class="gf-form-group">
-			<div class="gf-form-inline">
+		<div class="gf-form-group gf-form-inline">
+			<div class="section">
 				<div class="gf-form">
-					<span class="gf-form-label width-6">Type</span>
+					<span class="gf-form-label width-8">Type</span>
 					<div class="gf-form-select-wrapper width-10">
 						<select class="gf-form-input" ng-model="link.type" ng-options="f for f in ['dashboards','link']" ng-change="updated()"></select>
 					</div>
 				</div>
-
 				<div class="gf-form" ng-show="link.type === 'dashboards'">
-					<span class="gf-form-label">With tags</span>
-					<bootstrap-tagsinput ng-model="link.tags" tagclass="label label-tag" placeholder="add tags"></bootstrap-tagsinput>
+					<span class="gf-form-label width-8">With tags</span>
+					<bootstrap-tagsinput ng-model="link.tags" class="width-10" tagclass="label label-tag" placeholder="add tags" style="margin-right: .25rem"></bootstrap-tagsinput>
 				</div>
-
-				<div class="gf-form" ng-show="link.type === 'dashboards'">
-					<editor-checkbox text="As dropdown" model="link.asDropdown" change="updated()"></editor-checkbox>
-				</div>
-
-				<div class="gf-form max-width-30" ng-show="link.type === 'link'">
-					<li class="gf-form-label width-6">Url</li>
-					<input type="text" ng-model="link.url" class="gf-form-input" ng-model-onblur ng-change="updated()">
-				</div>
-
-				<div class="gf-form">
-					<button class="btn btn-inverse btn-mini" ng-click="moveLink($index, -1)" ng-hide="$first"><i class="fa fa-arrow-up"></i></button>
-				</div>
-				<div class="gf-form">
-					<button class="btn btn-inverse btn-mini" ng-click="moveLink($index, 1)" ng-hide="$last"><i class="fa fa-arrow-down"></i></button>
-				</div>
-				<div class="gf-form">
-					<button class="btn btn-inverse btn-mini" ng-click="deleteLink($index)"><i class="fa fa-trash" ></i></button>
-				</div>
-			</div>
-
-			<div class="gf-form" ng-show="link.type === 'dashboards' && link.asDropdown">
-				<span class="gf-form-label width-6">Title</span>
-				<input type="text" ng-model="link.title" class="gf-form-input max-width-25" ng-model-onblur ng-change="updated()">
-			</div>
-
-			<div class="gf-form-inline" ng-show="link.type === 'link'">
-				<div class="gf-form">
-					<span class="gf-form-label width-6">Title</span>
+				<gf-form-switch ng-show="link.type === 'dashboards'" class="gf-form" label="As dropdown" checked="link.asDropdown" switch-class="max-width-4" label-class="width-8"></gf-form-switch>
+				<div class="gf-form" ng-show="link.type === 'dashboards' && link.asDropdown">
+					<span class="gf-form-label width-8">Title</span>
 					<input type="text" ng-model="link.title" class="gf-form-input max-width-10" ng-model-onblur ng-change="updated()">
 				</div>
+				<div ng-show="link.type === 'link'">
+					<div class="gf-form">
+						<li class="gf-form-label width-8">Url</li>
+						<input type="text" ng-model="link.url" class="gf-form-input width-20" ng-model-onblur ng-change="updated()">
+					</div>
 
-				<div class="gf-form">
-					<span class="gf-form-label width-6">Tooltip</span>
-					<input type="text" ng-model="link.tooltip" class="gf-form-input max-width-10" placeholder="Open dashboard" ng-model-onblur ng-change="updated()">
-				</div>
+					<div class="gf-form">
+						<span class="gf-form-label width-8">Title</span>
+						<input type="text" ng-model="link.title" class="gf-form-input width-20" ng-model-onblur ng-change="updated()">
+					</div>
 
-				<div class="gf-form">
-					<span class="gf-form-label width-6">Icon</span>
-					<div class="gf-form-select-wrapper max-width-10">
-						<select class="gf-form-input" ng-model="link.icon" ng-options="k as k for (k, v) in iconMap" ng-change="updated()"></select>
+					<div class="gf-form">
+						<span class="gf-form-label width-8">Tooltip</span>
+						<input type="text" ng-model="link.tooltip" class="gf-form-input width-20" placeholder="Open dashboard" ng-model-onblur ng-change="updated()">
+					</div>
+
+					<div class="gf-form">
+						<span class="gf-form-label width-8">Icon</span>
+						<div class="gf-form-select-wrapper width-20">
+								<select class="gf-form-input" ng-model="link.icon" ng-options="k as k for (k, v) in iconMap" ng-change="updated()"></select>
+						</div>
 					</div>
 				</div>
 			</div>
 
-			<div class="gf-form-inline">
+			<div class="section gf-form-inline"  style="display: flex">
+				<div>
+					<div class="gf-form">
+						<span class="gf-form-label width-6">Include</span>
+					</div>
+				</div>
+				<div>
+					<gf-form-switch class="gf-form" label="Time range" checked="link.keepTime" switch-class="max-width-6" label-class="width-9"></gf-form-switch>
+					<gf-form-switch class="gf-form" label="Variable values" checked="link.includeVars" switch-class="max-width-6" label-class="width-9"></gf-form-switch>
+					<gf-form-switch class="gf-form" label="Open in new tab" checked="link.targetBlank" switch-class="max-width-6" label-class="width-9"></gf-form-switch>
+				</div>
+			</div>
+
+			<div style="display:flex; flex-direction:column; justify-content:flex-start">
 				<div class="gf-form">
-					<span class="gf-form-label width-6">Include</span>
-					<editor-checkbox text="Time range" model="link.keepTime" change="updated()"></editor-checkbox>
-					<editor-checkbox text="Variable values" model="link.includeVars" change="updated()"></editor-checkbox>
-					<editor-checkbox text="Open in new tab " model="link.targetBlank" change="updated()"></editor-checkbox>
+					<button class="btn btn-inverse gf-form-btn width-4" ng-click="deleteLink($index)">
+						<i class="fa fa-trash"></i>
+					</button>
+				</div>
+				<div class="gf-form">
+					<button class="btn btn-inverse gf-form-btn width-4" ng-click="moveLink($index, -1)" ng-hide="$first"><i class="fa fa-arrow-up"></i></button>
+				</div>
+				<div class="gf-form">
+					<button class="btn btn-inverse gf-form-btn width-4" ng-click="moveLink($index, 1)" ng-hide="$last"><i class="fa fa-arrow-down"></i></button>
 				</div>
 			</div>
 		</div>
 	</div>
 </div>
+
+
 
 <button class="btn btn-inverse" ng-click="addLink()"><i class="fa fa-plus"></i> Add link</button>

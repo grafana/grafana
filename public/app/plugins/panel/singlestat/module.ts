@@ -1,9 +1,8 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import $ from 'jquery';
-import 'jquery.flot';
-import 'jquery.flot.gauge';
+import 'vendor/flot/jquery.flot';
+import 'vendor/flot/jquery.flot.gauge';
+import 'app/features/panellinks/linkSrv';
 
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
@@ -213,6 +212,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.panel.colors[0] = this.panel.colors[2];
     this.panel.colors[2] = tmp;
     this.render();
+  }
+
+  onColorChange(panelColorIndex) {
+    return (color) => {
+      this.panel.colors[panelColorIndex] = color;
+      this.render();
+    };
   }
 
   getDecimalsForValue(value) {
