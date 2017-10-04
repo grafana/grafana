@@ -35,3 +35,13 @@
   float: left;
   z-index: 0;
 }
+
+.colorpicker-container {
+  min-height: 190px;
+}
+
+.drop-popover.gf-color-picker {
+  .drop-content {
+    width: 210px;
+  }
+}
