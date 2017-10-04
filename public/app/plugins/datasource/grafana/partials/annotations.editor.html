@@ -1,9 +1,17 @@
 
 <div class="gf-form-group">
 	<div class="gf-form">
-		<span class="gf-form-label width-7">Type</span>
+		<span class="gf-form-label width-7">
+			Scope
+			<info-popover mode="right-normal">
+				<ul>
+					<li>Panel: This will fetch annotation and alert state changes and show them only on the event's associated panel.</li>
+					<li>Global: This will fetch any annotation events that match the tags filter.</li>
+				</ul>
+			</info-popover>
+		</span>
 		<div class="gf-form-select-wrapper">
-			<select class="gf-form-input" ng-model="ctrl.annotation.type" ng-options="f.value as f.text for f in [{text: 'Event', value: 'event'}, {text: 'Alert', value: 'alert'}]">
+			<select class="gf-form-input" ng-model="ctrl.annotation.scope" ng-options="f.value as f.text for f in ctrl.scopes">
 			</select>
 		</div>
 	</div>

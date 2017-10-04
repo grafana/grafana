@@ -96,36 +96,18 @@
 							</div>
 						</div>
 					</div>
-					<div class="gf-form-group">
-						<div class="gf-form-inline">
-							<div class="gf-form">
-								<span class="gf-form-label width-9">Show in</span>
-								<div class="gf-form-select-wrapper width-12">
-									<select class="gf-form-input" ng-model="ctrl.currentAnnotation.showIn" ng-options="f.value as f.text for f in ctrl.showOptions"></select>
-								</div>
-							</div>
-							<gf-form-switch class="gf-form"
-															label="Hide toggle"
-															tooltip="Hides the annotation query toggle from showing at the top of the dashboard"
-															checked="ctrl.currentAnnotation.hide"
-															label-class="width-9">
-							</gf-form-switch>
-						</div>
-						<div class="gf-form-inline">
-							<div class="gf-form">
-								<label class="gf-form-label width-9">Color</label>
-								<spectrum-picker class="gf-form-input width-3" ng-model="ctrl.currentAnnotation.iconColor"></spectrum-picker>
-							</div>
-							<!--<div class="gf-form">
-								<label class="gf-form-label width-7">Icon</label>
-								<input type="text" class="gf-form-input width-12" ng-model='ctrl.currentAnnotation.icon' placeholder="icon name"></input>
-							</div>-->
-							<!-- <div class="gf&#45;form"> -->
-							<!-- 	<label class="gf&#45;form&#45;label width&#45;7">Icon</label> -->
-							<!-- 	<gf&#45;icon&#45;picker icon="ctrl.currentAnnotation.emoji"></gf&#45;icon&#45;picker> -->
-							<!-- </div> -->
+					<div class="gf-form-inline">
+						<div class="gf-form">
+							<label class="gf-form-label width-9">Color</label>
+							<spectrum-picker class="gf-form-input width-3" ng-model="ctrl.currentAnnotation.iconColor"></spectrum-picker>
 						</div>
 					</div>
+					<gf-form-switch class="gf-form"
+													label="Hide toggle"
+													tooltip="Hides the annotation query toggle from showing at the top of the dashboard"
+													checked="ctrl.currentAnnotation.hide"
+													label-class="width-9">
+					</gf-form-switch>
 				</div>
 
 				<h5 class="section-heading">Query</h5>

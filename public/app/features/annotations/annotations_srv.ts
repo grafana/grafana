@@ -70,22 +70,22 @@ export class AnnotationsSrv {
   }
 
   getPanelAnnotations(options) {
-    var panel = options.panel;
-    var dashboard = options.dashboard;
-
-    if (dashboard.id && panel && panel.alert) {
-      return this.backendSrv.get('/api/annotations', {
-        from: options.range.from.valueOf(),
-        to: options.range.to.valueOf(),
-        limit: 100,
-        panelId: panel.id,
-        dashboardId: dashboard.id,
-      }).then(results => {
-        // this built in annotation source name `panel-alert` is used in annotation tooltip
-        // to know that this annotation is from panel alert
-        return this.translateQueryResult({iconColor: '#AA0000', name: 'panel-alert'}, results);
-      });
-    }
+    // var panel = options.panel;
+    // var dashboard = options.dashboard;
+    //
+    // if (dashboard.id && panel && panel.alert) {
+    //   return this.backendSrv.get('/api/annotations', {
+    //     from: options.range.from.valueOf(),
+    //     to: options.range.to.valueOf(),
+    //     limit: 100,
+    //     panelId: panel.id,
+    //     dashboardId: dashboard.id,
+    //   }).then(results => {
+    //     // this built in annotation source name `panel-alert` is used in annotation tooltip
+    //     // to know that this annotation is from panel alert
+    //     return this.translateQueryResult({iconColor: '#AA0000', name: 'panel-alert'}, results);
+    //   });
+    // }
 
     return this.$q.when([]);
   }
