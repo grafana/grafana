@@ -8,6 +8,7 @@ import jquery from 'jquery';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
+import appEvents from 'app/core/app_events';
 import {Observable} from 'rxjs/Observable';
 import {Subject} from 'rxjs/Subject';
 import * as datemath from 'app/core/utils/datemath';
@@ -57,6 +58,7 @@ exposeToPlugin('app/core/config', config);
 exposeToPlugin('app/core/time_series', TimeSeries);
 exposeToPlugin('app/core/time_series2', TimeSeries);
 exposeToPlugin('app/core/table_model', TableModel);
+exposeToPlugin('app/core/app_events', appEvents);
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.selection';
