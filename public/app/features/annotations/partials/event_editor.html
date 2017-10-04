@@ -1,6 +1,6 @@
 
-<h5 class="section-heading text-center" ng-if="!ctrl.event.annotationId">Add Annotation</h5>
-<h5 class="section-heading text-center" ng-if="ctrl.event.annotationId">Edit Annotation</h5>
+<h5 class="section-heading text-center" ng-if="!ctrl.event.id">Add Annotation</h5>
+<h5 class="section-heading text-center" ng-if="ctrl.event.id">Edit Annotation</h5>
 
 <form name="ctrl.form" class="text-center">
   <div style="display: inline-block">
@@ -39,7 +39,7 @@
 
     <div class="gf-form-button-row">
       <button type="submit" class="btn gf-form-btn btn-success" ng-click="ctrl.save()">Save</button>
-      <button ng-if="ctrl.event.annotationId" type="submit" class="btn gf-form-btn btn-danger" ng-click="ctrl.delete()">Delete</button>
+      <button ng-if="ctrl.event.id" type="submit" class="btn gf-form-btn btn-danger" ng-click="ctrl.delete()">Delete</button>
       <a class="btn-text" ng-click="ctrl.close();">Cancel</a>
     </div>
   </div>

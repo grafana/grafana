@@ -68,6 +68,9 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
         tags = event.tags.split(',');
         if (tags.length === 1) {
           tags = event.tags.split(' ');
+          if (tags[0] === "") {
+            tags = [];
+          }
         }
       }
 

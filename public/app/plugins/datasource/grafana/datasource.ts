@@ -6,27 +6,29 @@ class GrafanaDatasource {
   constructor(private backendSrv, private $q) {}
 
   query(options) {
-    return this.backendSrv.get('/api/tsdb/testdata/random-walk', {
-      from: options.range.from.valueOf(),
-      to: options.range.to.valueOf(),
-      intervalMs: options.intervalMs,
-      maxDataPoints: options.maxDataPoints,
-    }).then(res => {
-      var data = [];
+    return this.backendSrv
+      .get('/api/tsdb/testdata/random-walk', {
+        from: options.range.from.valueOf(),
+        to: options.range.to.valueOf(),
+        intervalMs: options.intervalMs,
+        maxDataPoints: options.maxDataPoints,
+      })
+      .then(res => {
+        var data = [];
 
-      if (res.results) {
-        _.forEach(res.results, queryRes => {
-          for (let series of queryRes.series) {
-            data.push({
-              target: series.name,
-              datapoints: series.points
-            });
-          }
-        });
-      }
+        if (res.results) {
+          _.forEach(res.results, queryRes => {
+            for (let series of queryRes.series) {
+              data.push({
+                target: series.name,
+                datapoints: series.points,
+              });
+            }
+          });
+        }
 
-      return {data: data};
-    });
+        return {data: data};
+      });
   }
 
   metricFindQuery(options) {
@@ -34,15 +36,20 @@ class GrafanaDatasource {
   }
 
   annotationQuery(options) {
-    return this.backendSrv.get('/api/annotations', {
+    const params = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       limit: options.annotation.limit,
-      type: options.annotation.type,
-      tags: options.annotation.tags ? options.annotation.tags.join(','): '',
-    });
-  }
+      tags: options.annotation.tags ? options.annotation.tags.join(',') : '',
+    };
 
+    if (options.scope === 'panel') {
+      params.dashboardId = options.dashboardId;
+      params.tags = '';
+    }
+
+    return this.backendSrv.get('/api/annotations', params);
+  }
 }
 
 export {GrafanaDatasource};

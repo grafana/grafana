@@ -32,20 +32,21 @@ func GetAnnotations(c *middleware.Context) Response {
 
 	for _, item := range items {
 		result = append(result, dtos.Annotation{
-			AnnotationId: item.Id,
-			AlertId:      item.AlertId,
-			Time:         item.Epoch * 1000,
-			Data:         item.Data,
-			NewState:     item.NewState,
-			PrevState:    item.PrevState,
-			Text:         item.Text,
-			Metric:       item.Metric,
-			Title:        item.Title,
-			PanelId:      item.PanelId,
-			RegionId:     item.RegionId,
-			UserId:       item.UserId,
-			Tags:         item.Tags,
-			Type:         string(item.Type),
+			Id:          item.Id,
+			AlertId:     item.AlertId,
+			Time:        item.Epoch * 1000,
+			Data:        item.Data,
+			NewState:    item.NewState,
+			PrevState:   item.PrevState,
+			Text:        item.Text,
+			Metric:      item.Metric,
+			Title:       item.Title,
+			PanelId:     item.PanelId,
+			DashboardId: item.DashboardId,
+			RegionId:    item.RegionId,
+			UserId:      item.UserId,
+			Tags:        item.Tags,
+			Type:        string(item.Type),
 		})
 	}
 
