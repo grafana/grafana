@@ -278,10 +278,6 @@ describe('PrometheusDatasource', function() {
       }
     };
 
-    beforeEach(function() {
-      ctx.$httpBackend.flush();
-    });
-
     it('should be min interval when greater than auto interval', function() {
       var query = {
         // 6 hour range
@@ -419,10 +415,6 @@ describe('PrometheusDatasource', function() {
         result: []
       }
     };
-
-    beforeEach(function() {
-      ctx.$httpBackend.flush();
-    });
 
     it('should be unchanged when auto interval is greater than min interval', function() {
       var query = {
