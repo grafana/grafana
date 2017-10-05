@@ -33,12 +33,6 @@ export class AnnotationsEditorCtrl {
     this.datasources = datasourceSrv.getAnnotationSources();
     this.annotations = $scope.dashboard.annotations.list;
     this.reset();
-
-    $scope.$watch('mode', newVal => {
-      if (newVal === 'new') {
-        this.reset();
-      }
-    });
   }
 
   datasourceChanged() {
@@ -67,6 +61,11 @@ export class AnnotationsEditorCtrl {
     this.reset();
     this.mode = 'list';
     this.$scope.broadcastRefresh();
+  }
+
+  setupNew() {
+    this.mode = 'new';
+    this.reset();
   }
 
   add() {

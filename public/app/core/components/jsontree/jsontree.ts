@@ -13,7 +13,7 @@ coreModule.directive('jsonTree', [function jsonTreeDirective() {
 
       var jsonExp = new JsonExplorer(scope.object, 3, {
         animateOpen: true
-      })
+      });
 
       const html = jsonExp.render(true);
       elem.html(html);
