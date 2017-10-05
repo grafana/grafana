@@ -402,6 +402,7 @@ function($, _, moment) {
   kbn.valueFormats.currencyRUB = kbn.formatBuilders.currency('₽');
   kbn.valueFormats.currencyUAH = kbn.formatBuilders.currency('₴');
   kbn.valueFormats.currencyBRL = kbn.formatBuilders.currency('R$');
+  kbn.valueFormats.currencyNOK = kbn.formatBuilders.currency('kr');
 
   // Data (Binary)
   kbn.valueFormats.bits   = kbn.formatBuilders.binarySIPrefix('b');
@@ -756,6 +757,7 @@ function($, _, moment) {
           {text: 'Rubles (₽)',  value: 'currencyRUB'},
           {text: 'Hryvnias (₴)',  value: 'currencyUAH'},
           {text: 'Real (R$)', value: 'currencyBRL'},
+          {text: 'Norwegian Krone (kr)', value: 'currencyNOK'},
         ]
       },
       {
