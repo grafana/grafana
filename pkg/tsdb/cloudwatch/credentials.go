@@ -141,6 +141,11 @@ func ec2RoleProvider(sess *session.Session) credentials.Provider {
 }
 
 func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
+	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
+	if region == "default" {
+		region = defaultRegion
+	}
+
 	authType := e.DataSource.JsonData.Get("authType").MustString()
 	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	accessKey := ""
