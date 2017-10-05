@@ -7,7 +7,7 @@ import 'app/features/panellinks/linkSrv';
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import {MetricsPanelCtrl} from 'app/plugins/sdk';
+import {MetricsPanelCtrl, alertTab} from 'app/plugins/sdk';
 
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -102,6 +102,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Options', 'public/app/plugins/panel/singlestat/editor.html', 2);
     this.addEditorTab('Value Mappings', 'public/app/plugins/panel/singlestat/mappings.html', 3);
     this.unitFormats = kbn.getUnitFormats();
+    if (config.alertingEnabled) {
+      this.addEditorTab('Alert', alertTab, 5);
+    }
   }
 
   setUnitFormat(subItem) {
