@@ -104,10 +104,10 @@ func (this *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) err
 		Url:        opsgenieAlertURL,
 		Body:       string(body),
 		HttpMethod: "POST",
-    		HttpHeader: map[string]string{
-          		"Content-Type": "application/json",
-      		"Authorization": fmt.Sprintf("GenieKey %s", this.ApiKey),
-    		},
+		HttpHeader: map[string]string{
+			"Content-Type":  "application/json",
+			"Authorization": fmt.Sprintf("GenieKey %s", this.ApiKey),
+		},
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
@@ -128,10 +128,10 @@ func (this *OpsGenieNotifier) closeAlert(evalContext *alerting.EvalContext) erro
 		Url:        fmt.Sprintf("%s/alertId-%d/close?identifierType=alias", opsgenieAlertURL, evalContext.Rule.Id),
 		Body:       string(body),
 		HttpMethod: "POST",
-    		HttpHeader: map[string]string{
-          		"Content-Type": "application/json",
-          		"Authorization": fmt.Sprintf("GenieKey %s", this.ApiKey),
-    		},
+		HttpHeader: map[string]string{
+			"Content-Type":  "application/json",
+			"Authorization": fmt.Sprintf("GenieKey %s", this.ApiKey),
+		},
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
