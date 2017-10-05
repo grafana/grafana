@@ -37,12 +37,12 @@ type PostAnnotationsCmd struct {
 }
 
 type UpdateAnnotationsCmd struct {
-	AnnotationId int64  `json:"annotationId"`
-	Time         int64  `json:"time"`
-	Title        string `json:"title"`
-	Text         string `json:"text"`
-	Tags         string `json:"tags"`
-	Icon         string `json:"icon"`
+	Id    int64  `json:"id"`
+	Time  int64  `json:"time"`
+	Title string `json:"title"`
+	Text  string `json:"text"`
+	Tags  string `json:"tags"`
+	Icon  string `json:"icon"`
 
 	FillColor string `json:"fillColor"`
 	IsRegion  bool   `json:"isRegion"`
