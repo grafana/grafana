@@ -41,7 +41,6 @@
       </div>
       <div class="gf-form"  ng-if="style.type === 'date'">
         <label class="gf-form-label width-11">Date Format</label>
-        <!--<metric-segment-model property="style.dateFormat" options="editor.dateFormats" on-change="editor.render()" custom="true" class="width-14"></metric-segment-model>-->
         <div class="gf-form-select-wrapper width-16">
           <select class="gf-form-input" ng-model="style.dateFormat" ng-options="c.value as c.text for c in editor.dateFormats" ng-change="editor.render()"></select>
         </div>
