@@ -9,11 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/tsdb"
+	_ "github.com/lib/pq"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 // To run this test, remove the Skip from SkipConvey
-// and set up a PostgreSQL db named grafana_tests and a user/password grafana/password
+// and set up a PostgreSQL db named grafanatest and a user/password grafanatest/grafanatest
 func TestPostgres(t *testing.T) {
 	SkipConvey("PostgreSQL", t, func() {
 		x := InitPostgresTestDB(t)

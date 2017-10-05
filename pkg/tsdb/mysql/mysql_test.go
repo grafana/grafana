@@ -19,8 +19,11 @@ func TestMySQL(t *testing.T) {
 		x := InitMySQLTestDB(t)
 
 		executor := &MysqlExecutor{
-			engine: x,
-			log:    log.New("tsdb.mysql"),
+			sqlEngine: &tsdb.DefaultSqlEngine{
+				MacroEngine: NewMysqlMacroEngine(),
+				XormEngine:  x,
+			},
+			log: log.New("tsdb.mysql"),
 		}
 
 		sess := x.NewSession()
