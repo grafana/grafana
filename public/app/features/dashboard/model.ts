@@ -617,8 +617,8 @@ export class DashboardModel {
       if (oldVersion < 15) {
         this.annotations.list.unshift({
           datasource: '-- Grafana --',
-          name: "Panel Annotations & Alert History",
-          type: 'panel',
+          name: "Annotations & Alerts",
+          type: 'dashboard',
           iconColor: 'rgb(0, 211, 255)',
           enable: true,
           hide: true,

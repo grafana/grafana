@@ -47,10 +47,10 @@ class GrafanaDatasource {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       limit: options.annotation.limit,
-      tags: this.getAnnotationTagString(options.tags),
+      tags: this.getAnnotationTagString(options.annotation.tags),
     };
 
-    if (options.annotation.type === 'panel') {
+    if (options.annotation.type === 'dashboard') {
       params.dashboardId = options.dashboard.id;
       params.tags = '';
     }

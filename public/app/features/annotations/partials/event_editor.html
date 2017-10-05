@@ -9,14 +9,6 @@
       <textarea class="gf-form-input width-20" rows="2" ng-model="ctrl.event.text"  placeholder="Description"></textarea>
     </div>
 
-		<div class="gf-form gf-form--v-stretch">
-			<span class="gf-form-label width-7">Location</span>
-			<div class="gf-form-select-wrapper width-20">
-				<select class="gf-form-input" ng-model="ctrl.event.type" ng-options="f.value as f.text for f in ctrl.types">
-				</select>
-			</div>
-		</div>
-
 		<div class="gf-form">
 			<span class="gf-form-label width-7">Tags</span>
 			<bootstrap-tagsinput ng-model="ctrl.event.tags" tagclass="label label-tag" placeholder="add tags">

@@ -11,16 +11,10 @@ export class EventEditorCtrl {
   form: any;
   close: any;
 
-  types = [
-    {text: 'This Panel Only', value: 'panel'},
-    {text: 'Global', value: 'global'}
-  ];
-
   /** @ngInject **/
   constructor(private annotationsSrv) {
     this.event.panelId = this.panelCtrl.panel.id;
     this.event.dashboardId = this.panelCtrl.dashboard.id;
-    this.event.type = this.event.type || 'panel';
 
     // Annotations query returns time as Unix timestamp in milliseconds
     this.event.time = tryEpochToMoment(this.event.time);

@@ -53,9 +53,13 @@
 			</div>
 			<table class="grafana-options-table">
 				<tr ng-repeat="annotation in ctrl.annotations">
-					<td style="width:90%">
+					<td style="width:90%" ng-hide="annotation.builtIn">
 						<i class="fa fa-bolt" style="color:{{annotation.iconColor}}"></i> &nbsp;
 						{{annotation.name}}
+					</td>
+					<td style="width:90%" ng-show="annotation.builtIn">
+						<i class="fa fa-comment"></i> &nbsp;
+						<em class="muted">{{annotation.name}} (Built-in)</em>
 					</td>
 					<td style="width: 1%"><i ng-click="_.move(ctrl.annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
 					<td style="width: 1%"><i ng-click="_.move(ctrl.annotations,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>

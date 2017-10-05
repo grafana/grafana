@@ -180,7 +180,7 @@ describe('DashboardModel', function() {
     });
 
     it('should move pulldowns to new schema', function() {
-      expect(model.annotations.list[0].name).to.be('old');
+      expect(model.annotations.list[1].name).to.be('old');
     });
 
     it('table panel should only have two thresholds values', function() {
@@ -207,7 +207,7 @@ describe('DashboardModel', function() {
     });
 
     it('dashboard schema version should be set to latest', function() {
-      expect(model.schemaVersion).to.be(14);
+      expect(model.schemaVersion).to.be(15);
     });
 
     it('graph thresholds should be migrated', function() {
@@ -217,26 +217,6 @@ describe('DashboardModel', function() {
       expect(graph.thresholds[0].fillColor).to.be('yellow');
       expect(graph.thresholds[1].value).to.be(400);
       expect(graph.thresholds[1].fillColor).to.be('red');
-    });
-  });
-
-  describe('when creating dashboard model with missing list for annoations or templating', function() {
-    var model;
-
-    beforeEach(function() {
-      model = new DashboardModel({
-        annotations: {
-          enable: true,
-        },
-        templating: {
-          enable: true
-        }
-      });
-    });
-
-    it('should add empty list', function() {
-      expect(model.annotations.list.length).to.be(0);
-      expect(model.templating.list.length).to.be(0);
     });
   });
 
@@ -329,6 +309,7 @@ describe('DashboardModel', function() {
 
     beforeEach(function() {
       model = new DashboardModel({
+        schemaVersion: 15,
         annotations: {
           enable: true,
         },

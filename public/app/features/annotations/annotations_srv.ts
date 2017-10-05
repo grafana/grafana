@@ -28,8 +28,9 @@ export class AnnotationsSrv {
 
         // filter out annotations that do not belong to requesting panel
         annotations = _.filter(annotations, item => {
-          if (item.panelId && options.panel.id !== item.panelId) {
-            return false;
+          // if event has panel id and query is of type dashboard then panel and requesting panel id must match
+          if (item.panelId && item.source.type === 'dashboard') {
+            return item.panelId === options.panel.id;
           }
           return true;
         });

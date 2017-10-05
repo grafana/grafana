@@ -26,7 +26,6 @@ type PostAnnotationsCmd struct {
 	DashboardId int64            `json:"dashboardId"`
 	PanelId     int64            `json:"panelId"`
 	Time        int64            `json:"time"`
-	Title       string           `json:"title"`
 	Text        string           `json:"text"`
 	Tags        string           `json:"tags"`
 	Data        *simplejson.Json `json:"data"`
@@ -37,12 +36,11 @@ type PostAnnotationsCmd struct {
 }
 
 type UpdateAnnotationsCmd struct {
-	Id    int64  `json:"id"`
-	Time  int64  `json:"time"`
-	Title string `json:"title"`
-	Text  string `json:"text"`
-	Tags  string `json:"tags"`
-	Icon  string `json:"icon"`
+	Id   int64  `json:"id"`
+	Time int64  `json:"time"`
+	Text string `json:"text"`
+	Tags string `json:"tags"`
+	Icon string `json:"icon"`
 
 	FillColor string `json:"fillColor"`
 	IsRegion  bool   `json:"isRegion"`

@@ -9,7 +9,7 @@ class GrafanaAnnotationsQueryCtrl {
   annotation: any;
 
   types = [
-    {text: 'Panel', value: 'panel'},
+    {text: 'Dashboard', value: 'dashboard'},
     {text: 'Global', value: 'global'}
   ];
 
