@@ -764,7 +764,6 @@ function($, _, moment) {
           {text: 'Icelandic Krone (kr)', value: 'currencyISK'},
           {text: 'Norwegian Krone (kr)', value: 'currencyNOK'},
           {text: 'Swedish Krone (kr)', value: 'currencySEK'},
-          
         ]
       },
       {
