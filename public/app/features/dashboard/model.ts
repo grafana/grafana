@@ -305,7 +305,7 @@ export class DashboardModel {
     var i, j, k;
     var oldVersion = this.schemaVersion;
     var panelUpgrades = [];
-    this.schemaVersion = 14;
+    this.schemaVersion = 15;
 
     if (oldVersion === this.schemaVersion) {
       return;
@@ -612,6 +612,17 @@ export class DashboardModel {
 
       if (oldVersion < 14) {
         this.graphTooltip = old.sharedCrosshair ? 1 : 0;
+      }
+
+      if (oldVersion < 15) {
+        this.annotations.list.unshift({
+          datasource: '-- Grafana --',
+          name: "Panel Annotations & Alert History",
+          type: 'panel',
+          enable: true,
+          hide: true,
+          builtIn: 1,
+        });
       }
 
       if (panelUpgrades.length === 0) {

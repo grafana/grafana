@@ -21,10 +21,10 @@ export class AnnotationsSrv {
 
   getAnnotations(options) {
     return this.$q
-      .all([this.getGlobalAnnotations(options), this.getPanelAnnotations(options), this.getAlertStates(options)])
+      .all([this.getGlobalAnnotations(options), this.getAlertStates(options)])
       .then(results => {
         // combine the annotations and flatten results
-        var annotations = _.flattenDeep([results[0], results[1]]);
+        var annotations = _.flattenDeep(results[0]);
 
         // filter out annotations that do not belong to requesting panel
         annotations = _.filter(annotations, item => {
@@ -38,7 +38,7 @@ export class AnnotationsSrv {
         annotations = makeRegions(annotations, options);
 
         // look for alert state for this panel
-        var alertState = _.find(results[2], {panelId: options.panel.id});
+        var alertState = _.find(results[1], {panelId: options.panel.id});
 
         return {
           annotations: annotations,
@@ -49,30 +49,10 @@ export class AnnotationsSrv {
         if (!err.message && err.data && err.data.message) {
           err.message = err.data.message;
         }
+        console.log('AnnotationSrv.query error', err);
         this.$rootScope.appEvent('alert-error', ['Annotation Query Failed', err.message || err]);
-
         return [];
       });
-  }
-
-  getPanelAnnotations(options) {
-    // var panel = options.panel;
-    // var dashboard = options.dashboard;
-    //
-    // if (dashboard.id && panel && panel.alert) {
-    //   return this.backendSrv.get('/api/annotations', {
-    //     from: options.range.from.valueOf(),
-    //     to: options.range.to.valueOf(),
-    //     limit: 100,
-    //     panelId: panel.id,
-    //     dashboardId: dashboard.id,
-    //   }).then(results => {
-    //     // this built in annotation source name `panel-alert` is used in annotation tooltip
-    //     // to know that this annotation is from panel alert
-    //     return this.translateQueryResult({iconColor: '#AA0000', name: 'panel-alert'}, results);
-    //   });
-    // }
-    return this.$q.when([]);
   }
 
   getAlertStates(options) {

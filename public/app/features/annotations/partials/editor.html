@@ -59,7 +59,6 @@
 					</td>
 					<td style="width: 1%"><i ng-click="_.move(ctrl.annotations,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
 					<td style="width: 1%"><i ng-click="_.move(ctrl.annotations,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
-
 					<td style="width: 1%">
 						<a ng-click="ctrl.edit(annotation)" class="btn btn-inverse btn-mini">
 							<i class="fa fa-edit"></i>
@@ -67,7 +66,7 @@
 						</a>
 					</td>
 					<td style="width: 1%">
-						<a ng-click="ctrl.removeAnnotation(annotation)" class="btn btn-danger btn-mini">
+						<a ng-click="ctrl.removeAnnotation(annotation)" class="btn btn-danger btn-mini" ng-hide="annotation.builtIn">
 							<i class="fa fa-remove"></i>
 						</a>
 					</td>
@@ -82,47 +81,58 @@
 		</div>
 
 		<div class="annotations-basic-settings" ng-if="ctrl.mode === 'edit' || ctrl.mode === 'new'">
-			<div class="gf-form-group">
-				<h5 class="section-heading">Options</h5>
+			<div>
+				<div class="gf-form-group">
+					<h5 class="section-heading">General</h5>
 					<div class="gf-form-inline">
 						<div class="gf-form">
-							<span class="gf-form-label width-9">Name</span>
-							<input type="text" class="gf-form-input width-12" ng-model='ctrl.currentAnnotation.name' placeholder="name"></input>
+							<span class="gf-form-label width-7">Name</span>
+							<input type="text" class="gf-form-input width-20" ng-model='ctrl.currentAnnotation.name' placeholder="name"></input>
 						</div>
 						<div class="gf-form">
-							<span class="gf-form-label width-9">Data source</span>
-							<div class="gf-form-select-wrapper width-12">
+							<span class="gf-form-label width-7">Data source</span>
+							<div class="gf-form-select-wrapper">
 								<select class="gf-form-input" ng-model="ctrl.currentAnnotation.datasource" ng-options="f.name as f.name for f in ctrl.datasources" ng-change="ctrl.datasourceChanged()"></select>
 							</div>
 						</div>
 					</div>
+				</div>
+
+				<div class="gf-form-group">
 					<div class="gf-form-inline">
+						<gf-form-switch class="gf-form"
+														label="Enabled"
+														checked="ctrl.currentAnnotation.enable"
+														on-change="ctrl.annotationEnabledChange()"
+														label-class="width-7">
+						</gf-form-switch>
+						<gf-form-switch class="gf-form"
+														label="Hidden"
+														tooltip="Hides the annotation query toggle from showing at the top of the dashboard"
+														checked="ctrl.currentAnnotation.hide"
+														on-change="ctrl.annotationHiddenChanged()"
+														label-class="width-7">
+						</gf-form-switch>
 						<div class="gf-form">
-							<label class="gf-form-label width-9">Color</label>
+							<label class="gf-form-label">Color</label>
 							<spectrum-picker class="gf-form-input width-3" ng-model="ctrl.currentAnnotation.iconColor"></spectrum-picker>
 						</div>
 					</div>
-					<gf-form-switch class="gf-form"
-													label="Hide toggle"
-													tooltip="Hides the annotation query toggle from showing at the top of the dashboard"
-													checked="ctrl.currentAnnotation.hide"
-													label-class="width-9">
-					</gf-form-switch>
 				</div>
+			</div>
 
-				<h5 class="section-heading">Query</h5>
-				<rebuild-on-change property="ctrl.currentDatasource">
-					<plugin-component type="annotations-query-ctrl">
-					</plugin-component>
-				</rebuild-on-change>
+			<h5 class="section-heading">Query</h5>
+			<rebuild-on-change property="ctrl.currentDatasource">
+				<plugin-component type="annotations-query-ctrl">
+				</plugin-component>
+			</rebuild-on-change>
 
-				<div class="gf-form">
-					<div class="gf-form-button-row p-y-0">
-						<button ng-show="ctrl.mode === 'new'" type="button" class="btn gf-form-button btn-success" ng-click="ctrl.add()">Add</button>
-						<button ng-show="ctrl.mode === 'edit'" type="button" class="btn btn-success pull-left" ng-click="ctrl.update()">Update</button>
-					</div>
+			<div class="gf-form">
+				<div class="gf-form-button-row p-y-0">
+					<button ng-show="ctrl.mode === 'new'" type="button" class="btn gf-form-button btn-success" ng-click="ctrl.add()">Add</button>
+					<button ng-show="ctrl.mode === 'edit'" type="button" class="btn btn-success pull-left" ng-click="ctrl.update()">Update</button>
 				</div>
+			</div>
 		</div>
-
 	</div>
 </div>

@@ -84,6 +84,14 @@ export class AnnotationsEditorCtrl {
     this.$scope.dashboard.updateSubmenuVisibility();
     this.$scope.broadcastRefresh();
   }
+
+  annotationEnabledChange() {
+    this.$scope.broadcastRefresh();
+  }
+
+  annotationHiddenChanged() {
+    this.$scope.dashboard.updateSubmenuVisibility();
+  }
 }
 
 coreModule.controller('AnnotationsEditorCtrl', AnnotationsEditorCtrl);

@@ -3,7 +3,7 @@
 	<div class="gf-form-inline">
 		<div class="gf-form">
 			<span class="gf-form-label width-7">
-				Scope
+				Type
 				<info-popover mode="right-normal">
 					<ul>
 						<li>Panel: This will fetch annotation and alert state changes and show them only on the event's associated panel.</li>
@@ -12,15 +12,17 @@
 				</info-popover>
 			</span>
 			<div class="gf-form-select-wrapper width-8">
-				<select class="gf-form-input" ng-model="ctrl.annotation.scope" ng-options="f.value as f.text for f in ctrl.scopes">
+				<select class="gf-form-input" ng-model="ctrl.annotation.type" ng-options="f.value as f.text for f in ctrl.types">
 				</select>
 			</div>
 		</div>
-		<div class="gf-form" ng-if="ctrl.annotation.scope === 'global'">
+
+		<div class="gf-form" ng-if="ctrl.annotation.type === 'global'">
 			<span class="gf-form-label">Tags</span>
 			<bootstrap-tagsinput ng-model="ctrl.annotation.tags" tagclass="label label-tag" placeholder="add tags">
 			</bootstrap-tagsinput>
 		</div>
+
 		<div class="gf-form">
 			<span class="gf-form-label">Max limit</span>
 			<div class="gf-form-select-wrapper">
@@ -30,3 +32,4 @@
 		</div>
 	</div>
 </div>
+

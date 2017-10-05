@@ -31,16 +31,24 @@
       <textarea class="gf-form-input width-20" rows="3" ng-model="ctrl.event.text"  placeholder="Event description"></textarea>
     </div>
 
-		<div class="gf-form">
-      <span class="gf-form-label width-7">Tags</span>
-      <bootstrap-tagsinput ng-model="ctrl.event.tags" tagclass="label label-tag" placeholder="add tags">
-      </bootstrap-tagsinput>
-    </div>
+		<div class="gf-form gf-form--v-stretch">
+			<span class="gf-form-label width-7">Type</span>
+			<div class="gf-form-select-wrapper width-12">
+				<select class="gf-form-input" ng-model="ctrl.event.type" ng-options="f.value as f.text for f in ctrl.types">
+				</select>
+			</div>
+		</div>
 
-    <div class="gf-form-button-row">
-      <button type="submit" class="btn gf-form-btn btn-success" ng-click="ctrl.save()">Save</button>
-      <button ng-if="ctrl.event.id" type="submit" class="btn gf-form-btn btn-danger" ng-click="ctrl.delete()">Delete</button>
-      <a class="btn-text" ng-click="ctrl.close();">Cancel</a>
-    </div>
-  </div>
+		<div class="gf-form">
+			<span class="gf-form-label width-7">Tags</span>
+			<bootstrap-tagsinput ng-model="ctrl.event.tags" tagclass="label label-tag" placeholder="add tags">
+			</bootstrap-tagsinput>
+		</div>
+
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn gf-form-btn btn-success" ng-click="ctrl.save()">Save</button>
+			<button ng-if="ctrl.event.id" type="submit" class="btn gf-form-btn btn-danger" ng-click="ctrl.delete()">Delete</button>
+			<a class="btn-text" ng-click="ctrl.close();">Cancel</a>
+		</div>
+	</div>
 </form>

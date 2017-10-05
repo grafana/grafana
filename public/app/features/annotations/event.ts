@@ -8,5 +8,6 @@ export class AnnotationEvent {
   isRegion: boolean;
   title: string;
   text: string;
-  icon: string;
+  type: string;
+  tags: string;
 }

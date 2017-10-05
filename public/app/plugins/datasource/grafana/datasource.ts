@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import moment from 'moment';
 
 class GrafanaDatasource {
 
@@ -36,16 +35,23 @@ class GrafanaDatasource {
     return this.$q.when({data: []});
   }
 
+  getAnnotationTagString(tags): string | null {
+    if (_.isArray(tags)) {
+      return tags.join(',');
+    }
+    return null;
+  }
+
   annotationQuery(options) {
     const params: any = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       limit: options.annotation.limit,
-      tags: options.annotation.tags ? options.annotation.tags.join(',') : '',
+      tags: this.getAnnotationTagString(options.tags),
     };
 
-    if (options.scope === 'panel') {
-      params.dashboardId = options.dashboardId;
+    if (options.annotation.type === 'panel') {
+      params.dashboardId = options.dashboard.id;
       params.tags = '';
     }
 

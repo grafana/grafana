@@ -8,13 +8,13 @@ class GrafanaQueryCtrl extends QueryCtrl {
 class GrafanaAnnotationsQueryCtrl {
   annotation: any;
 
-  scopes = [
+  types = [
     {text: 'Panel', value: 'panel'},
     {text: 'Global', value: 'global'}
   ];
 
   constructor() {
-    this.annotation.scope = this.annotation.scope || 'global';
+    this.annotation.type = this.annotation.type || 'global';
     this.annotation.limit = this.annotation.limit || 100;
   }
 
