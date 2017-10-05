@@ -417,8 +417,8 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
     let newTagParam = renderTagString(tag);
     this.getSeriesByTagFunc().params[tagIndex] = newTagParam;
+    this.tags[tagIndex] = tag;
     this.targetChanged();
-    this.parseTarget();
   }
 
   getSeriesByTagFuncIndex() {
@@ -439,15 +439,15 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     let newTag = {key: newTagKey, operator: '=', value: 'select tag value'};
     let newTagParam = renderTagString(newTag);
     this.getSeriesByTagFunc().params.push(newTagParam);
+    this.tags.push(newTag);
     this.targetChanged();
-    this.parseTarget();
+    this.fixTagSegments();
   }
 
   removeTag(index) {
     this.getSeriesByTagFunc().params.splice(index, 1);
-
+    this.tags.splice(index, 1);
     this.targetChanged();
-    this.parseTarget();
   }
 
   fixTagSegments() {
