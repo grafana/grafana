@@ -23,10 +23,10 @@ RUN curl --silent --location https://rpm.nodesource.com/setup_6.x | bash - && \
 
 RUN wget https://dl.yarnpkg.com/rpm/yarn.repo -O /etc/yum.repos.d/yarn.repo && \
     yum install -y yarn --nogpgcheck && \
-    wget https://storage.googleapis.com/golang/go1.9.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go1.9.linux-amd64.tar.gz
+    wget https://storage.googleapis.com/golang/go1.9.1.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.9.1.linux-amd64.tar.gz
 
-ENV GOLANG_VERSION 1.9
+ENV GOLANG_VERSION 1.9.1
 ENV PATH /usr/local/go/bin:$PATH
 
 RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
