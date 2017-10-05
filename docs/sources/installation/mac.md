@@ -15,7 +15,7 @@ Installation can be done using [homebrew](http://brew.sh/)
 
 Install latest stable:
 
-```
+```bash
 brew update
 brew install grafana
 ```
@@ -24,7 +24,7 @@ To start grafana look at the command printed after the homebrew install complete
 
 To upgrade use the reinstall command
 
-```
+```bash
 brew update
 brew reinstall grafana
 ```
@@ -34,13 +34,13 @@ brew reinstall grafana
 You can also install the latest unstable grafana from git:
 
 
-```
+```bash
 brew install --HEAD grafana/grafana/grafana
 ```
 
 To upgrade grafana if you've installed from HEAD:
 
-```
+```bash
 brew reinstall --HEAD grafana/grafana/grafana
 ```
 
@@ -48,13 +48,13 @@ brew reinstall --HEAD grafana/grafana/grafana
 
 To start Grafana using homebrew services first make sure homebrew/services is installed.
 
-```
+```bash
 brew tap homebrew/services
 ```
 
 Then start Grafana using:
 
-```
+```bash
 brew services start grafana
 ```
 

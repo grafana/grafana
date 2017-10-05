@@ -20,20 +20,20 @@ dev environment. Grafana ships with its own required backend server; also comple
 ## Get Code
 Create a directory for the project and set your path accordingly (or use the [default Go workspace directory](https://golang.org/doc/code.html#GOPATH)). Then download and install Grafana into your $GOPATH directory:
 
-```
+```bash
 export GOPATH=`pwd`
 go get github.com/grafana/grafana
 ```
 
 On Windows use setx instead of export and then restart your command prompt:
-```
+```bash
 setx GOPATH %cd%
 ```
 
 You may see an error such as: `package github.com/grafana/grafana: no buildable Go source files`. This is just a warning, and you can proceed with the directions.
 
 ## Building the backend
-```
+```bash
 cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup
 go run build.go build              # (or 'go build ./pkg/cmd/grafana-server')
@@ -45,7 +45,7 @@ to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
 
 [node-gyp](https://github.com/nodejs/node-gyp#installation) is the Node.js native addon build tool and it requires extra dependencies to be installed on Windows. In a command prompt which is run as administrator, run:
 
-```
+```bash
 npm --add-python-to-path='true' --debug install --global windows-build-tools
 ```
 
@@ -53,7 +53,7 @@ npm --add-python-to-path='true' --debug install --global windows-build-tools
 
 For this you need nodejs (v.6+).
 
-```
+```bash
 npm install -g yarn
 yarn install --pure-lockfile
 npm run build
@@ -62,7 +62,7 @@ npm run build
 ## Running Grafana Locally
 You can run a local instance of Grafana by running:
 
-```
+```bash
 ./bin/grafana-server
 ```
 If you built the binary with `go run build.go build`, run `./bin/grafana-server`
@@ -76,7 +76,7 @@ Open grafana in your browser (default [http://localhost:3000](http://localhost:3
 To add features, customize your config, etc, you'll need to rebuild the backend when you change the source code. We use a tool named `bra` that
 does this.
 
-```
+```bash
 go get github.com/Unknwon/bra
 
 bra run
@@ -88,7 +88,7 @@ You'll also need to run `npm run watch` to watch for changes to the front-end (t
 
 This step builds linux packages and requires that fpm is installed. Install fpm via `gem install fpm`.
 
-```
+```bash
 go run build.go build package
 ```
 

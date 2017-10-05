@@ -15,7 +15,7 @@ weight = 1
 It should be straight forward to get Grafana up and running behind a reverse proxy. But here are some things that you might run into.
 
 Links and redirects will not be rendered correctly unless you set the server.domain setting.
-```
+```bash
 [server]
 domain = foo.bar
 ```
@@ -28,14 +28,14 @@ Here are some example configurations for running Grafana behind a reverse proxy.
 
 ### Grafana configuration (ex http://foo.bar.com)
 
-```
+```bash
 [server]
 domain = foo.bar
 ```
 
 ### Nginx configuration
 
-```
+```bash
 server {
   listen 80;
   root /usr/share/nginx/www;
@@ -50,14 +50,14 @@ server {
 ### Examples with **sub path** (ex http://foo.bar.com/grafana)
 
 #### Grafana configuration with sub path
-```
+```bash
 [server]
 domain = foo.bar
 root_url = %(protocol)s://%(domain)s:/grafana
 ```
 
 #### Nginx configuration with sub path
-```
+```bash
 server {
   listen 80;
   root /usr/share/nginx/www;
