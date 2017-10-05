@@ -64,15 +64,6 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       }
 
       var tags = event.tags;
-      if (_.isString(event.tags)) {
-        tags = event.tags.split(',');
-        if (tags.length === 1) {
-          tags = event.tags.split(' ');
-          if (tags[0] === "") {
-            tags = [];
-          }
-        }
-      }
 
       if (tags && tags.length) {
         scope.tags = tags;
@@ -85,7 +76,6 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
 
       tooltip += "</div>";
       tooltip += '</div>';
-      console.log(tooltip);
 
       var $tooltip = $(tooltip);
       $tooltip.appendTo(element);
