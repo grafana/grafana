@@ -17,7 +17,7 @@ But it will give you an idea of our current vision and plan.
 ### Long term 
 
 - Backend plugins to support more Auth options, Alerting data sources & notifications
-- Universial time series transformations for any data source (meta queries)
+- Universal time series transformations for any data source (meta queries)
 - Reporting
 - Web socket & live data streams
 - Migrate to Angular2 or react
