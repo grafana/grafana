@@ -115,7 +115,7 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		message += " " + evalContext.Rule.Message
 	}
 
-	if len(message) < 1 {
+	if message == "" {
 		message = evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text
 	}
 
@@ -143,7 +143,7 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"date":       evalContext.EndTime.Unix(),
 		"attributes": attributes,
 	}
-	if len(evalContext.ImagePublicUrl) > 0 {
+	if evalContext.ImagePublicUrl != "" {
 		card["thumbnail"] = map[string]interface{}{
 			"url":    evalContext.ImagePublicUrl,
 			"url@2x": evalContext.ImagePublicUrl,
@@ -162,7 +162,7 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	hipUrl := fmt.Sprintf("%s/v2/room/%s/notification?auth_token=%s", this.Url, this.RoomId, this.ApiKey)
 	data, _ := json.Marshal(&body)
-	this.log.Debug(string(data))
+	this.log.Info("Request payload", "json", string(data))
 	cmd := &models.SendWebhookSync{Url: hipUrl, Body: string(data)}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
