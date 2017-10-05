@@ -102,7 +102,7 @@ func UpdateAnnotation(c *middleware.Context, cmd dtos.UpdateAnnotationsCmd) Resp
 	item := annotations.Item{
 		OrgId:  c.OrgId,
 		UserId: c.UserId,
-		Id:     cmd.AnnotationId,
+		Id:     cmd.Id,
 		Epoch:  cmd.Time / 1000,
 		Title:  cmd.Title,
 		Text:   cmd.Text,

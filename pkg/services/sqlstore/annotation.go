@@ -66,6 +66,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		)
 		existing := new(annotations.Item)
 
+		fmt.Printf("annid: %v", item.Id)
 		if item.Id == 0 && item.RegionId != 0 {
 			// Update region end time
 			isExist, err = sess.Table("annotation").Where("region_id=? AND id!=? AND org_id=?", item.RegionId, item.RegionId, item.OrgId).Get(existing)

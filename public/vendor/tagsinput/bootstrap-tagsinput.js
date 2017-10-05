@@ -290,6 +290,13 @@
         self.$input.focus();
       }, self));
 
+      self.$container.on('blur', 'input', $.proxy(function(event) {
+        var $input = $(event.target);
+        self.add($input.val());
+        $input.val('');
+        event.preventDefault();
+      }, self));
+
       self.$container.on('keydown', 'input', $.proxy(function(event) {
         var $input = $(event.target),
             $inputWrapper = self.findInputWrapper();
