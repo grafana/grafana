@@ -118,7 +118,6 @@ export class EventManager {
             min: this.event.time.valueOf(),
             title: this.event.title,
             text: this.event.text,
-            icon: this.event.icon,
             eventType: '$__alerting'
           }
         ];
@@ -135,7 +134,6 @@ export class EventManager {
         if (!types[item.source.name]) {
           types[item.source.name] = {
             color: item.source.iconColor,
-            icon: item.source.icon,
             position: 'BOTTOM',
             markerSize: 5,
           };

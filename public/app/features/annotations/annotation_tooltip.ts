@@ -30,37 +30,37 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       var tooltip = '<div class="graph-annotation">';
       var titleStateClass = '';
 
-      if (event.source.name === 'panel-alert' && event.type !== 'event') {
+      if (event.type === 'alert') {
         var stateModel = alertDef.getStateDisplayModel(event.newState);
         titleStateClass = stateModel.stateClass;
         title = `<i class="icon-gf ${stateModel.iconClass}"></i> ${stateModel.text}`;
         text = alertDef.getAlertAnnotationInfo(event);
+      } else if (title) {
+        text = title + '<br />' + text;
+        title = '';
       }
 
-      tooltip += `
+      var header = `
         <div class="graph-annotation-header">
           <span class="graph-annotation-title ${titleStateClass}">${sanitizeString(title)}</span>
           <span class="graph-annotation-time">${dashboard.formatDate(event.min)}</span>
       `;
 
       // Show edit icon only for users with at least Editor role
-      var userIsEventEditor = contextSrv.isEditor;
-      if (event.type === 'event' && userIsEventEditor) {
-        tooltip += `
+      if (event.dashboardId && contextSrv.isEditor) {
+        header += `
           <span class="pointer graph-annotation-edit-icon" ng-click="onEdit()">
             <i class="fa fa-pencil-square"></i>
           </span>
         `;
       }
 
-      tooltip += `
-        </div>
-      `;
-
+      header += `</div>`;
+      tooltip += header;
       tooltip += '<div class="graph-annotation-body">';
 
       if (text) {
-        tooltip += sanitizeString(text).replace(/\n/g, '<br>') + '<br>';
+        tooltip += '<div>' + sanitizeString(text).replace(/\n/g, '<br>') + '</div>';
       }
 
       var tags = event.tags;
@@ -84,6 +84,8 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       }
 
       tooltip += "</div>";
+      tooltip += '</div>';
+      console.log(tooltip);
 
       var $tooltip = $(tooltip);
       $tooltip.appendTo(element);

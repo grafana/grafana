@@ -29,7 +29,7 @@ function ($, _, angular, Drop) {
         content: content,
         position: "bottom center",
         classes: 'drop-popover drop-popover--annotation',
-        openOn: 'hover',
+        openOn: 'click',
         hoverCloseDelay: 200,
         tetherOptions: {
           constraints: [{to: 'window', pin: true, attachment: "both"}]

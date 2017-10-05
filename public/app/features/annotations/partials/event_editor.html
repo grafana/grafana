@@ -4,36 +4,14 @@
 
 <form name="ctrl.form" class="text-center">
   <div style="display: inline-block">
-    <div class="gf-form">
-      <span class="gf-form-label width-7">Title</span>
-      <input type="text" ng-model="ctrl.event.title" class="gf-form-input max-width-20" required>
-    </div>
-    <!-- single event -->
-    <!-- <div ng&#45;if="!ctrl.event.isRegion"> -->
-    <!--   <div class="gf&#45;form"> -->
-    <!--     <span class="gf&#45;form&#45;label width&#45;7">Time</span> -->
-    <!--     <input type="text" ng&#45;model="ctrl.event.time" class="gf&#45;form&#45;input max&#45;width&#45;20" input&#45;datetime required ng&#45;change="ctrl.timeChanged()"> -->
-    <!--   </div> -->
-    <!-- </div> -->
-    <!-- <!&#45;&#45; region event &#45;&#45;> -->
-    <!-- <div ng&#45;if="ctrl.event.isRegion"> -->
-    <!--   <div class="gf&#45;form"> -->
-    <!--     <span class="gf&#45;form&#45;label width&#45;7">Start</span> -->
-    <!--     <input type="text" ng&#45;model="ctrl.event.time" class="gf&#45;form&#45;input max&#45;width&#45;20" input&#45;datetime required ng&#45;change="ctrl.timeChanged()"> -->
-    <!--   </div> -->
-    <!--   <div class="gf&#45;form"> -->
-    <!--     <span class="gf&#45;form&#45;label width&#45;7">End</span> -->
-    <!--     <input type="text" ng&#45;model="ctrl.event.timeEnd" class="gf&#45;form&#45;input max&#45;width&#45;20" input&#45;datetime required ng&#45;change="ctrl.timeChanged()"> -->
-    <!--   </div> -->
-    <!-- </div> -->
     <div class="gf-form gf-form--v-stretch">
       <span class="gf-form-label width-7">Description</span>
-      <textarea class="gf-form-input width-20" rows="3" ng-model="ctrl.event.text"  placeholder="Event description"></textarea>
+      <textarea class="gf-form-input width-20" rows="2" ng-model="ctrl.event.text"  placeholder="Description"></textarea>
     </div>
 
 		<div class="gf-form gf-form--v-stretch">
-			<span class="gf-form-label width-7">Type</span>
-			<div class="gf-form-select-wrapper width-12">
+			<span class="gf-form-label width-7">Location</span>
+			<div class="gf-form-select-wrapper width-20">
 				<select class="gf-form-input" ng-model="ctrl.event.type" ng-options="f.value as f.text for f in ctrl.types">
 				</select>
 			</div>

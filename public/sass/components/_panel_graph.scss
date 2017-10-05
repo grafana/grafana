@@ -290,13 +290,17 @@
   .graph-annotation-header {
     background-color: $input-label-bg;
     padding: 0.40rem 0.65rem;
+    display: flex;
   }
 
   .graph-annotation-title {
     font-weight: $font-weight-semi-bold;
     padding-right: $spacer;
-    position: relative;
-    top: 2px;
+    max-width: 100px;
+    overflow: hidden;
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .graph-annotation-edit-icon {

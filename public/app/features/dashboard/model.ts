@@ -619,6 +619,7 @@ export class DashboardModel {
           datasource: '-- Grafana --',
           name: "Panel Annotations & Alert History",
           type: 'panel',
+          iconColor: 'rgb(0, 211, 255)',
           enable: true,
           hide: true,
           builtIn: 1,

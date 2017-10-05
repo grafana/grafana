@@ -15,7 +15,6 @@ export class AnnotationsEditorCtrl {
     name: '',
     datasource: null,
     iconColor: 'rgba(255, 96, 96, 1)',
-    icon: 'fa-info-circle',
     enable: true,
     showIn: 0,
     hide: false,

@@ -12,7 +12,7 @@ export class EventEditorCtrl {
   close: any;
 
   types = [
-    {text: 'Panel', value: 'panel'},
+    {text: 'This Panel Only', value: 'panel'},
     {text: 'Global', value: 'global'}
   ];
 
