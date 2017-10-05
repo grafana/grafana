@@ -18,6 +18,7 @@
       "noImplicitThis": false,
       "noImplicitUseStrict":false,
       "noImplicitAny": false,
+      "noUnusedLocals": true,
       "baseUrl": "public",
       "paths": {
         "app": ["app"]

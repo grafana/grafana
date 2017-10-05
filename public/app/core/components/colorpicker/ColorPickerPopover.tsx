@@ -88,7 +88,7 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
     );
     const spectrumTab = (
       <div id="spectrum">
-        <GfSpectrumPicker color={this.props.color} onColorSelect={this.spectrumColorSelected.bind(this)} options={{}} />
+        <GfSpectrumPicker color={this.state.color} onColorSelect={this.spectrumColorSelected.bind(this)} options={{}} />
       </div>
     );
     const currentTab = this.state.tab === 'palette' ? paletteTab : spectrumTab;
