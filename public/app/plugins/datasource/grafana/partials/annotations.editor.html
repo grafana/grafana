@@ -3,11 +3,11 @@
 	<div class="gf-form-inline">
 		<div class="gf-form">
 			<span class="gf-form-label width-8">
-				Type
+				Filter by
 				<info-popover mode="right-normal">
 					<ul>
 						<li>Dashboard: This will fetch annotation and alert state changes for whole dashboard and show them only on the event's originating panel.</li>
-						<li>Global: This will fetch any annotation events that match the tags filter.</li>
+						<li>All: This will fetch any annotation events that match the tags filter.</li>
 					</ul>
 				</info-popover>
 			</span>
@@ -17,7 +17,7 @@
 			</div>
 		</div>
 
-		<div class="gf-form" ng-if="ctrl.annotation.type === 'global'">
+		<div class="gf-form" ng-if="ctrl.annotation.type === 'tags'">
 			<span class="gf-form-label">Tags</span>
 			<bootstrap-tagsinput ng-model="ctrl.annotation.tags" tagclass="label label-tag" placeholder="add tags">
 			</bootstrap-tagsinput>

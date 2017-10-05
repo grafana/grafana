@@ -10,11 +10,11 @@ class GrafanaAnnotationsQueryCtrl {
 
   types = [
     {text: 'Dashboard', value: 'dashboard'},
-    {text: 'Global', value: 'global'}
+    {text: 'Tags', value: 'tags'}
   ];
 
   constructor() {
-    this.annotation.type = this.annotation.type || 'global';
+    this.annotation.type = this.annotation.type || 'tags';
     this.annotation.limit = this.annotation.limit || 100;
   }
 

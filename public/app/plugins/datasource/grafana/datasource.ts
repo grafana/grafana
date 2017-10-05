@@ -52,7 +52,12 @@ class GrafanaDatasource {
 
     if (options.annotation.type === 'dashboard') {
       params.dashboardId = options.dashboard.id;
-      params.tags = '';
+      delete params.tags;
+    } else {
+      // require at least one tag
+      if (!_.isArray(options.annotation.tags) || options.annotation.tags.length === 0) {
+        return this.$q.when([]);
+      }
     }
 
     return this.backendSrv.get('/api/annotations', params);
