@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import moment from 'moment';
 
 class GrafanaDatasource {
 
@@ -6,7 +7,7 @@ class GrafanaDatasource {
   constructor(private backendSrv, private $q) {}
 
   query(options) {
-    return this.backendSrv
+      return this.backendSrv
       .get('/api/tsdb/testdata/random-walk', {
         from: options.range.from.valueOf(),
         to: options.range.to.valueOf(),
@@ -36,7 +37,7 @@ class GrafanaDatasource {
   }
 
   annotationQuery(options) {
-    const params = {
+    const params: any = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       limit: options.annotation.limit,

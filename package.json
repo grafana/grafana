@@ -97,7 +97,7 @@
     "watch": "./node_modules/.bin/webpack --progress --colors --watch --config scripts/webpack/webpack.dev.js",
     "build": "./node_modules/.bin/grunt build",
     "test": "./node_modules/.bin/grunt test",
-    "lint" : "./node_modules/.bin/tslint -c tslint.json --project ./tsconfig.json --type-check",
+    "lint" : "./node_modules/.bin/tslint -c tslint.json --project tsconfig.json --type-check",
     "watch-test": "./node_modules/grunt-cli/bin/grunt karma:dev"
   },
   "license": "Apache-2.0",

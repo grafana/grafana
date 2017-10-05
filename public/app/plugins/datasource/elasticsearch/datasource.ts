@@ -174,7 +174,7 @@ export class ElasticDatasource {
       }
       return list;
     });
-  };
+  }
 
   testDatasource() {
     this.timeSrv.setTime({ from: 'now-1m', to: 'now' }, true);
@@ -242,7 +242,7 @@ export class ElasticDatasource {
     return this.post('_msearch', payload).then(function(res) {
       return new ElasticResponse(sentTargets, res).getTimeSeries();
     });
-  };
+  }
 
   getFields(query) {
     return this.get('/_mapping').then(function(result) {

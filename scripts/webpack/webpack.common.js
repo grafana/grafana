@@ -29,13 +29,14 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(ts|tsx)$/,
+        test: /\.tsx?$/,
         enforce: 'pre',
         exclude: /node_modules/,
         use: {
           loader: 'tslint-loader',
           options: {
-            emitErrors: true
+            emitErrors: true,
+            typeCheck: false,
           }
         }
       },
