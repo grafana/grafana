@@ -44,7 +44,7 @@ export class SeriesColorPicker extends React.Component<IProps, any> {
     return (
       <div className="graph-legend-popover">
         {this.props.series && this.renderAxisSelection()}
-        <ColorPickerPopover color="#7EB26D" onColorSelect={this.onColorChange} />
+        <ColorPickerPopover color={this.props.series.color} onColorSelect={this.onColorChange} />
       </div>
     );
   }
