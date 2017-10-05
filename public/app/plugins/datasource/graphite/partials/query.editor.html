@@ -10,12 +10,26 @@
         <label class="gf-form-label query-keyword">seriesByTag</label>
       </div>
 
-      <div ng-repeat="tagSegment in ctrl.tagSegments" role="menuitem" class="gf-form">
-        <metric-segment segment="tagSegment"
-          get-options="ctrl.getAltTagSegments($index)"
-          on-change="ctrl.tagSegmentChanged(tagSegment, $index)">
-        </metric-segment>
+      <div ng-repeat="tag in ctrl.tags" class="gf-form">
+        <gf-form-dropdown model="tag.key" lookup-text="false" allow-custom="false" label-mode="true" css-class="query-segment-key"
+          get-options="ctrl.getTags()"
+          on-change="ctrl.tagChanged(tag, $index)">
+        </gf-form-dropdown>
+        <gf-form-dropdown model="tag.operator" lookup-text="false" allow-custom="false" label-mode="true" css-class="query-segment-operator"
+          get-options="ctrl.getTagOperators()"
+          on-change="ctrl.tagChanged(tag, $index)">
+        </gf-form-dropdown>
+        <gf-form-dropdown model="tag.value" lookup-text="false" allow-custom="false" label-mode="true" css-class="query-segment-value"
+          get-options="ctrl.getTagValues(tag)"
+          on-change="ctrl.tagChanged(tag, $index)">
+        </gf-form-dropdown>
         <label class="gf-form-label query-keyword" ng-if="ctrl.showDelimiter($index)">,</label>
+      </div>
+      <div ng-if="ctrl.seriesByTagUsed" ng-repeat="segment in ctrl.addTagSegments" role="menuitem" class="gf-form">
+        <metric-segment segment="segment"
+          get-options="ctrl.getTagsAsSegments()"
+          on-change="ctrl.addNewTag(segment)">
+        </metric-segment>
       </div>
 
       <div ng-repeat="segment in ctrl.segments" role="menuitem" class="gf-form">
