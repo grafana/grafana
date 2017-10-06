@@ -48,12 +48,13 @@ export class TableRenderer {
       return null;
     }
 
+    value = Number(value);
     for (var i = style.thresholds.length; i > 0; i--) {
-      if (value >= style.thresholds[i - 1]) {
+      if (value >= Number(style.thresholds[i - 1])) {
         return style.colors[i];
       }
     }
-    return _.first(style.colors);
+    return style.colors[0];
   }
 
   defaultCellFormatter(v, style) {
@@ -97,6 +98,27 @@ export class TableRenderer {
           date = date.utc();
         }
         return date.format(column.style.dateFormat);
+      };
+    }
+
+    if (column.style.type === 'string') {
+      return v => {
+        if (v === undefined || v === null) {
+          return '-';
+        }
+
+        if (column.style.textMappings && column.style.colorMode) {
+          for (let i = 0; i < column.style.textMappings.length; i++) {
+            let mapping = column.style.textMappings[i];
+            var regex = kbn.stringToJsRegex(mapping.text);
+            if (v.match(regex)) {
+              this.colorState[column.style.colorMode] = this.getColorForValue(mapping.value, column.style);
+              break;
+            }
+          }
+        }
+
+        return this.defaultCellFormatter(v, column.style);
       };
     }
 

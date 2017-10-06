@@ -110,6 +110,19 @@ export class ColumnOptionsCtrl {
       this.render();
     };
   }
+
+  addTextMapping(style) {
+    if (!style.textMappings) {
+      style.textMappings = [];
+    }
+    style.textMappings.push({ text: '', value: null });
+    this.panelCtrl.render();
+  }
+
+  removeTextMapping(style, index) {
+    style.textMappings.splice(index, 1);
+    this.panelCtrl.render();
+  }
 }
 
 /** @ngInject */
