@@ -46,51 +46,66 @@ function ($, _, angular, Drop) {
     }]);
   }
 
+  var markerElementToAttachTo = null;
+
   function createEditPopover(element, event, plot) {
     var eventManager = plot.getOptions().events.manager;
     if (eventManager.editorOpen) {
+      // update marker element to attach to (needed in case of legend on the right when there is a double render pass and the inital marker element is removed)
+      markerElementToAttachTo = element;
       return;
     }
 
-    var injector = angular.element(document).injector();
-    var content = document.createElement('div');
-    content.innerHTML = '<event-editor panel-ctrl="panelCtrl" event="event" close="close()"></event-editor>';
+    // mark as openend
+    eventManager.editorOpened();
+    // set marker elment to attache to
+    markerElementToAttachTo = element
 
-    injector.invoke(["$compile", "$rootScope", function($compile, $rootScope) {
-      var scope = $rootScope.$new(true);
-      var drop;
+    // wait for element to be attached and positioned
+    setTimeout(function() {
 
-      scope.event = event;
-      scope.panelCtrl = eventManager.panelCtrl;
-      scope.close = function() {
-        drop.close();
-      };
+      var injector = angular.element(document).injector();
+      var content = document.createElement('div');
+      content.innerHTML = '<event-editor panel-ctrl="panelCtrl" event="event" close="close()"></event-editor>';
 
-      $compile(content)(scope);
-      scope.$digest();
+      injector.invoke(["$compile", "$rootScope", function($compile, $rootScope) {
+        var scope = $rootScope.$new(true);
+        var drop;
 
-      drop = new Drop({
-        target: element[0],
-        content: content,
-        position: "bottom center",
-        classes: 'drop-popover drop-popover--form',
-        openOn: 'click',
-        tetherOptions: {
-          constraints: [{to: 'window', pin: true, attachment: "both"}]
-        }
-      });
+        scope.event = event;
+        scope.panelCtrl = eventManager.panelCtrl;
+        scope.close = function() {
+          drop.close();
+        };
 
-      drop.open();
-      eventManager.editorOpened();
+        $compile(content)(scope);
+        scope.$digest();
 
-      drop.on('close', function() {
-        setTimeout(function() {
-          eventManager.editorClosed();
-          scope.$destroy();
-          drop.destroy();
+        drop = new Drop({
+          target: markerElementToAttachTo[0],
+          content: content,
+          position: "bottom center",
+          classes: 'drop-popover drop-popover--form',
+          openOn: 'click',
+          tetherOptions: {
+            constraints: [{to: 'window', pin: true, attachment: "both"}]
+          }
         });
-      });
-    }]);
+
+        drop.open();
+        eventManager.editorOpened();
+
+        drop.on('close', function() {
+          // need timeout here in order call drop.destroy
+          setTimeout(function() {
+            eventManager.editorClosed();
+            scope.$destroy();
+            drop.destroy();
+          });
+        });
+      }]);
+
+    }, 100);
   }
 
   /*
@@ -349,9 +364,7 @@ function ($, _, angular, Drop) {
         };
 
         if (event.editModel) {
-          setTimeout(function() {
-            createEditPopover(marker, event.editModel, that._plot);
-          }, 100);
+          createEditPopover(marker, event.editModel, that._plot);
         }
 
         var mouseleave = function() {
@@ -473,9 +486,7 @@ function ($, _, angular, Drop) {
       };
 
       if (event.editModel) {
-        setTimeout(function() {
-          createEditPopover(region, event.editModel, that._plot);
-        }, 100);
+        createEditPopover(region, event.editModel, that._plot);
       }
 
       var mouseleave = function () {
