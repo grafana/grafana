@@ -35,19 +35,13 @@ class GrafanaDatasource {
     return this.$q.when({data: []});
   }
 
-  getAnnotationTagString(tags): string | null {
-    if (_.isArray(tags)) {
-      return tags.join(',');
-    }
-    return null;
-  }
 
   annotationQuery(options) {
     const params: any = {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       limit: options.annotation.limit,
-      tags: this.getAnnotationTagString(options.annotation.tags),
+      tags: options.annotation.tags,
     };
 
     if (options.annotation.type === 'dashboard') {

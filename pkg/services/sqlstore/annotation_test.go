@@ -17,10 +17,10 @@ func TestSavingTags(t *testing.T) {
 
 		Convey("Can save tags", func() {
 			tagPairs := []*models.Tag{
-				&models.Tag{Key: "outage"},
-				&models.Tag{Key: "type", Value: "outage"},
-				&models.Tag{Key: "server", Value: "server-1"},
-				&models.Tag{Key: "error"},
+				{Key: "outage"},
+				{Key: "type", Value: "outage"},
+				{Key: "server", Value: "server-1"},
+				{Key: "error"},
 			}
 			tags, err := repo.ensureTagsExist(newSession(), tagPairs)
 
@@ -180,6 +180,29 @@ func TestAnnotations(t *testing.T) {
 					So(items[0].Text, ShouldEqual, "something new")
 				})
 			})
+
+			Convey("Can delete annotation", func() {
+				query := &annotations.ItemQuery{
+					OrgId:       1,
+					DashboardId: 1,
+					From:        0,
+					To:          15,
+				}
+				items, err := repo.Find(query)
+				So(err, ShouldBeNil)
+
+				annotationId := items[0].Id
+
+				err = repo.Delete(&annotations.DeleteParams{Id: annotationId})
+
+				items, err = repo.Find(query)
+				So(err, ShouldBeNil)
+
+				Convey("Should be deleted", func() {
+					So(len(items), ShouldEqual, 0)
+				})
+			})
+
 		})
 	})
 }

@@ -160,6 +160,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 
 	if len(query.Tags) > 0 {
 		keyValueFilters := []string{}
+
 		tags := models.ParseTagPairs(query.Tags)
 		for _, tag := range tags {
 			if tag.Value == "" {
@@ -202,24 +203,30 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 func (r *SqlAnnotationRepo) Delete(params *annotations.DeleteParams) error {
 	return inTransaction(func(sess *DBSession) error {
 		var (
-			err         error
 			sql         string
+			annoTagSql  string
 			queryParams []interface{}
 		)
 
 		if params.RegionId != 0 {
+			annoTagSql = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE region_id = ?)"
 			sql = "DELETE FROM annotation WHERE region_id = ?"
 			queryParams = []interface{}{params.RegionId}
 		} else if params.Id != 0 {
+			annoTagSql = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE id = ?)"
 			sql = "DELETE FROM annotation WHERE id = ?"
 			queryParams = []interface{}{params.Id}
 		} else {
+			annoTagSql = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE dashboard_id = ? AND panel_id = ?)"
 			sql = "DELETE FROM annotation WHERE dashboard_id = ? AND panel_id = ?"
 			queryParams = []interface{}{params.DashboardId, params.PanelId}
 		}
 
-		_, err = sess.Exec(sql, queryParams...)
-		if err != nil {
+		if _, err := sess.Exec(annoTagSql, queryParams...); err != nil {
+			return err
+		}
+
+		if _, err := sess.Exec(sql, queryParams...); err != nil {
 			return err
 		}
 

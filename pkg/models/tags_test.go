@@ -81,9 +81,9 @@ func TestParsingTags(t *testing.T) {
 
 		Convey("Can join tag pairs", func() {
 			tagPairs := []*Tag{
-				&Tag{Key: "key1", Value: "val1"},
-				&Tag{Key: "key2", Value: ""},
-				&Tag{Key: "key3"},
+				{Key: "key1", Value: "val1"},
+				{Key: "key2", Value: ""},
+				{Key: "key3"},
 			}
 			tags := JoinTagPairs(tagPairs)
 			So(len(tags), ShouldEqual, 3)
