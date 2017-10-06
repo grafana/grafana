@@ -96,12 +96,14 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 }
 
 func UpdateAnnotation(c *middleware.Context, cmd dtos.UpdateAnnotationsCmd) Response {
+	annotationId := c.ParamsInt64(":annotationId")
+
 	repo := annotations.GetRepository()
 
 	item := annotations.Item{
 		OrgId:  c.OrgId,
 		UserId: c.UserId,
-		Id:     cmd.Id,
+		Id:     annotationId,
 		Epoch:  cmd.Time / 1000,
 		Text:   cmd.Text,
 		Type:   annotations.EventType,
