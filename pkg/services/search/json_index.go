@@ -58,7 +58,7 @@ func (index *JsonDashIndex) Search(query *Query) ([]*Hit, error) {
 			break
 		}
 
-		// add results with matchig title filter
+		// add results with matching title filter
 		if strings.Contains(item.TitleLower, queryStr) {
 			results = append(results, &Hit{
 				Type:  DashHitJson,
@@ -85,6 +85,16 @@ func (index *JsonDashIndex) GetDashboard(path string) *m.Dashboard {
 func (index *JsonDashIndex) updateIndex() error {
 	var items = make([]*JsonDashIndexItem, 0)
 
+	isHidden := func(path string) bool {
+		subPath := strings.TrimPrefix(path, index.path)
+		names := strings.Split(subPath, "/")
+		for _, name := range names {
+			if strings.HasPrefix(name, ".") {
+				return true
+			}
+		}
+		return false
+	}
 	visitor := func(path string, f os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -93,7 +103,7 @@ func (index *JsonDashIndex) updateIndex() error {
 			return nil
 		}
 
-		if strings.HasSuffix(f.Name(), ".json") {
+		if strings.HasSuffix(f.Name(), ".json") && !isHidden(path) {
 			dash, err := loadDashboardFromFile(path)
 			if err != nil {
 				return err
