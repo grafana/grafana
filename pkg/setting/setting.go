@@ -762,6 +762,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		log.Warn("require_email_validation is enabled but smtp is disabled")
 	}
 
+	readXMPPSettings()
+
 	// check old key  name
 	GrafanaComUrl = iniFile.Section("grafana_net").Key("url").MustString("")
 	if GrafanaComUrl == "" {

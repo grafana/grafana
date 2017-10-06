@@ -346,6 +346,11 @@
   version = "v1.7.0"
 
 [[projects]]
+  name = "github.com/mattn/go-xmpp"
+  packages = ["."]
+  revision = "6093f50721ed2204a87a81109ca5a466a5bec6c1"
+
+[[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
   revision = "3247c84500bff8d9fb6d579d800f20b3e091582c"
