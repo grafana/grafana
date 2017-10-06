@@ -287,13 +287,13 @@
     margin-top: 8px;
   }
 
-  .graph-annotation-header {
+  .graph-annotation__header {
     background-color: $input-label-bg;
     padding: 0.40rem 0.65rem;
     display: flex;
   }
 
-  .graph-annotation-title {
+  .graph-annotation__title {
     font-weight: $font-weight-semi-bold;
     padding-right: $spacer;
     max-width: 100px;
@@ -303,11 +303,11 @@
     text-overflow: ellipsis;
   }
 
-  .graph-annotation-edit-icon {
+  .graph-annotation__edit-icon {
     padding-left: $spacer;
   }
 
-  .graph-annotation-time {
+  .graph-annotation__time {
     color: $text-muted;
     font-style: italic;
     font-weight: normal;
@@ -316,8 +316,16 @@
     top: 1px;
   }
 
-  .graph-annotation-body {
+  .graph-annotation__body {
     padding: 0.65rem;
+  }
+
+  .graph-annotation__user {
+    img {
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+    }
   }
 
   a {

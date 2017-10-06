@@ -41,7 +41,6 @@ func TestAnnotations(t *testing.T) {
 				OrgId:       1,
 				UserId:      1,
 				DashboardId: 1,
-				Title:       "title",
 				Text:        "hello",
 				Epoch:       10,
 				Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
@@ -132,7 +131,6 @@ func TestAnnotations(t *testing.T) {
 				err = repo.Update(&annotations.Item{
 					Id:    annotationId,
 					OrgId: 1,
-					Title: "a new title",
 					Text:  "something new",
 					Tags:  []string{},
 				})
@@ -146,7 +144,6 @@ func TestAnnotations(t *testing.T) {
 				Convey("Can read tags", func() {
 					So(items[0].Id, ShouldEqual, annotationId)
 					So(len(items[0].Tags), ShouldEqual, 0)
-					So(items[0].Title, ShouldEqual, "a new title")
 					So(items[0].Text, ShouldEqual, "something new")
 				})
 			})
@@ -167,7 +164,6 @@ func TestAnnotations(t *testing.T) {
 				err = repo.Update(&annotations.Item{
 					Id:    annotationId,
 					OrgId: 1,
-					Title: "a new title",
 					Text:  "something new",
 					Tags:  []string{"newtag1", "newtag2"},
 				})
@@ -181,7 +177,6 @@ func TestAnnotations(t *testing.T) {
 				Convey("Can read tags", func() {
 					So(items[0].Id, ShouldEqual, annotationId)
 					So(items[0].Tags, ShouldResemble, []string{"newtag1", "newtag2"})
-					So(items[0].Title, ShouldEqual, "a new title")
 					So(items[0].Text, ShouldEqual, "something new")
 				})
 			})

@@ -27,29 +27,14 @@ func GetAnnotations(c *middleware.Context) Response {
 		return ApiError(500, "Failed to get annotations", err)
 	}
 
-	result := make([]dtos.Annotation, 0)
-
 	for _, item := range items {
-		result = append(result, dtos.Annotation{
-			Id:          item.Id,
-			AlertId:     item.AlertId,
-			Time:        item.Epoch * 1000,
-			Data:        item.Data,
-			NewState:    item.NewState,
-			PrevState:   item.PrevState,
-			Text:        item.Text,
-			Metric:      item.Metric,
-			Title:       item.Title,
-			PanelId:     item.PanelId,
-			DashboardId: item.DashboardId,
-			RegionId:    item.RegionId,
-			UserId:      item.UserId,
-			Tags:        item.Tags,
-			Type:        string(item.Type),
-		})
+		if item.Email != "" {
+			item.AvatarUrl = dtos.GetGravatarUrl(item.Email)
+		}
+		item.Time = item.Time * 1000
 	}
 
-	return Json(200, result)
+	return Json(200, items)
 }
 
 func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response {
@@ -63,8 +48,6 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 		Epoch:       cmd.Time / 1000,
 		Text:        cmd.Text,
 		Data:        cmd.Data,
-		NewState:    cmd.FillColor,
-		Type:        annotations.EventType,
 		Tags:        cmd.Tags,
 	}
 
@@ -104,7 +87,6 @@ func UpdateAnnotation(c *middleware.Context, cmd dtos.UpdateAnnotationsCmd) Resp
 		Id:     cmd.Id,
 		Epoch:  cmd.Time / 1000,
 		Text:   cmd.Text,
-		Type:   annotations.EventType,
 		Tags:   cmd.Tags,
 	}
 

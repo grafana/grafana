@@ -30,26 +30,32 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       var tooltip = '<div class="graph-annotation">';
       var titleStateClass = '';
 
-      if (event.type === 'alert') {
+      if (event.alertId) {
         var stateModel = alertDef.getStateDisplayModel(event.newState);
         titleStateClass = stateModel.stateClass;
         title = `<i class="icon-gf ${stateModel.iconClass}"></i> ${stateModel.text}`;
         text = alertDef.getAlertAnnotationInfo(event);
+        if (event.text)  {
+          text = text + '<br />' + event.text;
+        }
       } else if (title) {
         text = title + '<br />' + text;
         title = '';
       }
 
-      var header = `
-        <div class="graph-annotation-header">
-          <span class="graph-annotation-title ${titleStateClass}">${sanitizeString(title)}</span>
-          <span class="graph-annotation-time">${dashboard.formatDate(event.min)}</span>
+      var header = `<div class="graph-annotation__header">`;
+      if (event.login) {
+        header += `<div class="graph-annotation__user" bs-tooltip="'Created by ${event.login}'"><img src="${event.avatarUrl}" /></div>`;
+      }
+      header += `
+          <span class="graph-annotation__title ${titleStateClass}">${sanitizeString(title)}</span>
+          <span class="graph-annotation__time">${dashboard.formatDate(event.min)}</span>
       `;
 
       // Show edit icon only for users with at least Editor role
-      if (event.dashboardId && contextSrv.isEditor) {
+      if (event.id && contextSrv.isEditor) {
         header += `
-          <span class="pointer graph-annotation-edit-icon" ng-click="onEdit()">
+          <span class="pointer graph-annotation__edit-icon" ng-click="onEdit()">
             <i class="fa fa-pencil-square"></i>
           </span>
         `;
@@ -57,7 +63,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
 
       header += `</div>`;
       tooltip += header;
-      tooltip += '<div class="graph-annotation-body">';
+      tooltip += '<div class="graph-annotation__body">';
 
       if (text) {
         tooltip += '<div>' + sanitizeString(text).replace(/\n/g, '<br>') + '</div>';
@@ -68,10 +74,6 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       if (tags && tags.length) {
         scope.tags = tags;
         tooltip += '<span class="label label-tag small" ng-repeat="tag in tags" tag-color-from-name="tag">{{tag}}</span><br/>';
-      }
-
-      if (event.userName) {
-        tooltip += '<div class="graph-annotation-user">User: ' + event.userName + "</div>";
       }
 
       tooltip += "</div>";

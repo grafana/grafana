@@ -80,7 +80,6 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		}
 
 		existing.Epoch = item.Epoch
-		existing.Title = item.Title
 		existing.Text = item.Text
 		if item.RegionId != 0 {
 			existing.RegionId = item.RegionId
@@ -103,7 +102,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 
 		existing.Tags = item.Tags
 
-		if _, err := sess.Table("annotation").Id(existing.Id).Cols("epoch", "title", "text", "region_id", "tags").Update(existing); err != nil {
+		if _, err := sess.Table("annotation").Id(existing.Id).Cols("epoch", "text", "region_id", "tags").Update(existing); err != nil {
 			return err
 		}
 
@@ -111,47 +110,52 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 	})
 }
 
-func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.Item, error) {
+func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
 	sql.WriteString(`
 		SELECT
+			annotation.id,
+			annotation.epoch as time,
+			annotation.dashboard_id,
+			annotation.panel_id,
+			annotation.new_state,
+			annotation.prev_state,
+			annotation.alert_id,
+			annotation.region_id,
+			annotation.text,
+			annotation.tags,
+			annotation.data,
+			usr.email,
+			usr.login,
+			alert.name as alert_name
 		FROM annotation
-		OUTER JOIN ` + dialect.Quote("user") ` as usr on usr.user_id = annotation.user_id
+		LEFT OUTER JOIN ` + dialect.Quote("user") + ` as usr on usr.id = annotation.user_id
+		LEFT OUTER JOIN alert on alert.id = annotation.alert_id
 		`)
 
-	sql.WriteString(`WHERE org_id = ?`)
+	sql.WriteString(`WHERE annotation.org_id = ?`)
 	params = append(params, query.OrgId)
 
 	if query.AlertId != 0 {
-		sql.WriteString(` AND alert_id = ?`)
-		params = append(params, query.AlertId)
-	}
-
-	if query.AlertId != 0 {
-		sql.WriteString(` AND alert_id = ?`)
+		sql.WriteString(` AND annotation.alert_id = ?`)
 		params = append(params, query.AlertId)
 	}
 
 	if query.DashboardId != 0 {
-		sql.WriteString(` AND dashboard_id = ?`)
+		sql.WriteString(` AND annotation.dashboard_id = ?`)
 		params = append(params, query.DashboardId)
 	}
 
 	if query.PanelId != 0 {
-		sql.WriteString(` AND panel_id = ?`)
+		sql.WriteString(` AND annotation.panel_id = ?`)
 		params = append(params, query.PanelId)
 	}
 
 	if query.From > 0 && query.To > 0 {
-		sql.WriteString(` AND epoch BETWEEN ? AND ?`)
+		sql.WriteString(` AND annotation.epoch BETWEEN ? AND ?`)
 		params = append(params, query.From, query.To)
-	}
-
-	if query.Type != "" {
-		sql.WriteString(` AND type = ?`)
-		params = append(params, string(query.Type))
 	}
 
 	if len(query.Tags) > 0 {
@@ -187,7 +191,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 
 	sql.WriteString(fmt.Sprintf(" ORDER BY epoch DESC LIMIT %v", query.Limit))
 
-	items := make([]*annotations.Item, 0)
+	items := make([]*annotations.ItemDTO, 0)
 	if err := x.Sql(sql.String(), params...).Find(&items); err != nil {
 		return nil, err
 	}

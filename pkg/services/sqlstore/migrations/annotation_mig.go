@@ -82,4 +82,10 @@ func addAnnotationMig(mg *Migrator) {
 
 	mg.AddMigration("Create annotation_tag table v2", NewAddTableMigration(annotationTagTable))
 	mg.AddMigration("Add unique index annotation_tag.annotation_id_tag_id", NewAddIndexMigration(annotationTagTable, annotationTagTable.Indices[0]))
+
+	updateTextFieldSql := "UPDATE annotation SET TEXT = '' WHERE alert_id > 0"
+	mg.AddMigration("Update alert annotations and set TEXT to empty", new(RawSqlMigration).
+		Sqlite(updateTextFieldSql).
+		Postgres(updateTextFieldSql).
+		Mysql(updateTextFieldSql))
 }
