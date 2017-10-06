@@ -17,7 +17,7 @@ type ItemQuery struct {
 	AlertId     int64    `json:"alertId"`
 	DashboardId int64    `json:"dashboardId"`
 	PanelId     int64    `json:"panelId"`
-	Tags        string   `json:"tags"`
+	Tags        []string `json:"tags"`
 
 	Limit int64 `json:"limit"`
 }
@@ -71,6 +71,6 @@ type Item struct {
 	PrevState   string           `json:"prevState"`
 	NewState    string           `json:"newState"`
 	Epoch       int64            `json:"epoch"`
-	Tags        string           `json:"tags"`
+	Tags        []string         `json:"tags"`
 	Data        *simplejson.Json `json:"data"`
 }

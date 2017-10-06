@@ -41,8 +41,6 @@ export class EventEditorCtrl {
       }
     }
 
-    saveModel.tags = saveModel.tags.join(',');
-
     if (saveModel.id) {
       this.annotationsSrv.updateAnnotationEvent(saveModel)
       .then(() => {
