@@ -81,7 +81,7 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	// initialize oauth2 context
 	oauthCtx := oauth2.NoContext
-	if setting.OAuthService.OAuthInfos[name].TlsClientCert != "" {
+	if setting.OAuthService.OAuthInfos[name].TlsClientCert != "" || setting.OAuthService.OAuthInfos[name].TlsClientKey != "" {
 		cert, err := tls.LoadX509KeyPair(setting.OAuthService.OAuthInfos[name].TlsClientCert, setting.OAuthService.OAuthInfos[name].TlsClientKey)
 		if err != nil {
 			log.Fatal(err)
