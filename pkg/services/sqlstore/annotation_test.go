@@ -5,6 +5,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
 
@@ -15,7 +16,13 @@ func TestSavingTags(t *testing.T) {
 		repo := SqlAnnotationRepo{}
 
 		Convey("Can save tags", func() {
-			tags, err := repo.ensureTagsExist(newSession(), []string{"outage", "type:outage", "server:server-1", "error"})
+			tagPairs := []*models.Tag{
+				&models.Tag{Key: "outage"},
+				&models.Tag{Key: "type", Value: "outage"},
+				&models.Tag{Key: "server", Value: "server-1"},
+				&models.Tag{Key: "error"},
+			}
+			tags, err := repo.ensureTagsExist(newSession(), tagPairs)
 
 			So(err, ShouldBeNil)
 			So(len(tags), ShouldEqual, 4)

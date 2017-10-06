@@ -67,5 +67,29 @@ func TestParsingTags(t *testing.T) {
 			So(tags[2].Key, ShouldEqual, "has error")
 			So(tags[2].Value, ShouldEqual, "")
 		})
+
+		Convey("Can filter out duplicate tags", func() {
+			tags := ParseTagPairs([]string{"test", "test", "key:val1", "key:val2"})
+			So(len(tags), ShouldEqual, 3)
+			So(tags[0].Key, ShouldEqual, "test")
+			So(tags[0].Value, ShouldEqual, "")
+			So(tags[1].Key, ShouldEqual, "key")
+			So(tags[1].Value, ShouldEqual, "val1")
+			So(tags[2].Key, ShouldEqual, "key")
+			So(tags[2].Value, ShouldEqual, "val2")
+		})
+
+		Convey("Can join tag pairs", func() {
+			tagPairs := []*Tag{
+				&Tag{Key: "key1", Value: "val1"},
+				&Tag{Key: "key2", Value: ""},
+				&Tag{Key: "key3"},
+			}
+			tags := JoinTagPairs(tagPairs)
+			So(len(tags), ShouldEqual, 3)
+			So(tags[0], ShouldEqual, "key1:val1")
+			So(tags[1], ShouldEqual, "key2")
+			So(tags[2], ShouldEqual, "key3")
+		})
 	})
 }

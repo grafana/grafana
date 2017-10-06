@@ -15,13 +15,14 @@ type SqlAnnotationRepo struct {
 
 func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 	return inTransaction(func(sess *DBSession) error {
-
+		tags := models.ParseTagPairs(item.Tags)
+		item.Tags = models.JoinTagPairs(tags)
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
 		}
 
 		if item.Tags != nil {
-			if tags, err := r.ensureTagsExist(sess, item.Tags); err != nil {
+			if tags, err := r.ensureTagsExist(sess, tags); err != nil {
 				return err
 			} else {
 				for _, tag := range tags {
@@ -37,9 +38,7 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 }
 
 // Will insert if needed any new key/value pars and return ids
-func (r *SqlAnnotationRepo) ensureTagsExist(sess *DBSession, tagString []string) ([]*models.Tag, error) {
-	tags := models.ParseTagPairs(tagString)
-
+func (r *SqlAnnotationRepo) ensureTagsExist(sess *DBSession, tags []*models.Tag) ([]*models.Tag, error) {
 	for _, tag := range tags {
 		var existingTag models.Tag
 
@@ -88,16 +87,15 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		}
 
 		if item.Tags != nil {
-			existingTags := models.ParseTagPairs(existing.Tags)
-
-			if tags, err := r.ensureTagsExist(sess, item.Tags); err != nil {
+			if tags, err := r.ensureTagsExist(sess, models.ParseTagPairs(item.Tags)); err != nil {
 				return err
 			} else {
+				if _, err := sess.Exec("DELETE FROM annotation_tag WHERE annotation_id = ?", existing.Id); err != nil {
+					return err
+				}
 				for _, tag := range tags {
-					if !containsTag(existingTags, tag) {
-						if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", existing.Id, tag.Id); err != nil {
-							return err
-						}
+					if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", existing.Id, tag.Id); err != nil {
+						return err
 					}
 				}
 			}
@@ -111,15 +109,6 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 
 		return nil
 	})
-}
-
-func containsTag(existingTags []*models.Tag, tag *models.Tag) bool {
-	for _, t := range existingTags {
-		if t.Id == t.Id {
-			return true
-		}
-	}
-	return false
 }
 
 func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.Item, error) {
