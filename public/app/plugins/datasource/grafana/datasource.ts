@@ -45,7 +45,13 @@ class GrafanaDatasource {
     };
 
     if (options.annotation.type === 'dashboard') {
+      // if no dashboard id yet return
+      if (!options.dashboard.id) {
+        return this.$q.when([]);
+      }
+      // filter by dashboard id
       params.dashboardId = options.dashboard.id;
+      // remove tags filter if any
       delete params.tags;
     } else {
       // require at least one tag
