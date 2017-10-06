@@ -84,7 +84,6 @@ function (angular, $, coreModule) {
           select.attr('placeholder', attrs.placeholder);
         }
 
-        console.log(attrs);
         select.tagsinput({
           typeahead: {
             source: angular.isFunction(scope.$parent[attrs.typeaheadSource]) ? scope.$parent[attrs.typeaheadSource] : null

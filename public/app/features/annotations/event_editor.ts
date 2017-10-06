@@ -75,10 +75,6 @@ export class EventEditorCtrl {
       this.close();
     });
   }
-
-  timeChanged() {
-    this.panelCtrl.render();
-  }
 }
 
 function tryEpochToMoment(timestamp) {

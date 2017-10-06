@@ -37,7 +37,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       var legendSideLastValue = null;
       var rootScope = scope.$root;
       var panelWidth = 0;
-      var eventManager = new EventManager(ctrl, elem, popoverSrv);
+      var eventManager = new EventManager(ctrl);
       var thresholdManager = new ThresholdManager(ctrl);
       var tooltip = new GraphTooltip(elem, dashboard, scope, function() {
         return sortedSeries;
@@ -651,16 +651,11 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         return "%H:%M";
       }
 
-      // Show event editor only for users with at least Editor role
-      function userIsEventEditor() {
-        return contextSrv.isEditor;
-      }
-
       elem.bind("plotselected", function (event, ranges) {
-        if ((ranges.ctrlKey || ranges.metaKey) && userIsEventEditor()) {
-          scope.$apply(() => {
+        if ((ranges.ctrlKey || ranges.metaKey) && contextSrv.isEditor) {
+          setTimeout(() => {
             eventManager.updateTime(ranges.xaxis);
-          });
+          }, 100);
         } else {
           scope.$apply(function() {
             timeSrv.setTime({
@@ -672,22 +667,14 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       });
 
       elem.bind("plotclick", function (event, pos, item) {
-        if ((pos.ctrlKey || pos.metaKey || eventManager.event) && userIsEventEditor()) {
+        if ((pos.ctrlKey || pos.metaKey) && contextSrv.isEditor) {
           // Skip if range selected (added in "plotselected" event handler)
           let isRangeSelection = pos.x !== pos.x1;
           if (!isRangeSelection) {
-            scope.$apply(() => {
+            setTimeout(() => {
               eventManager.updateTime({from: pos.x, to: null});
-            });
+            }, 100);
           }
-        }
-      });
-
-      elem.bind("editevent", (e, annotationEvent, elem) => {
-        if (userIsEventEditor()) {
-          let marker = elem.find(":first");
-          marker = $(plot.getPlaceholder()).find(marker);
-          eventManager.editEvent(annotationEvent);
         }
       });
 

@@ -6,7 +6,6 @@ export class AnnotationEvent {
   time: any;
   timeEnd: any;
   isRegion: boolean;
-  title: string;
   text: string;
   type: string;
   tags: string;

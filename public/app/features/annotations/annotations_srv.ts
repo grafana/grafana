@@ -182,20 +182,20 @@ function getRegions(events, range) {
     _.map(regions, region_events => {
       let region_obj = _.head(region_events);
       if (region_events && region_events.length > 1) {
-        region_obj.timeEnd = region_events[1].min;
+        region_obj.timeEnd = region_events[1].time;
         region_obj.isRegion = true;
         return region_obj;
       } else {
         if (region_events && region_events.length) {
           // Don't change proper region object
-          if (!region_obj.min || !region_obj.timeEnd) {
+          if (!region_obj.time || !region_obj.timeEnd) {
             // This is cut region
             if (isStartOfRegion(region_obj)) {
               region_obj.timeEnd = range.to.valueOf() - 1;
             } else {
               // Start time = null
-              region_obj.timeEnd = region_obj.min;
-              region_obj.min = range.from.valueOf() + 1;
+              region_obj.timeEnd = region_obj.time;
+              region_obj.time = range.from.valueOf() + 1;
             }
             region_obj.isRegion = true;
           }

@@ -33,9 +33,7 @@ describe('AnnotationsSrv', function() {
     });
 
     it('should set defaults', () => {
-      expect(translatedAnnotations[0].scope).to.eql(1);
-      expect(translatedAnnotations[0].min).to.eql(time);
-      expect(translatedAnnotations[0].max).to.eql(time);
+      expect(translatedAnnotations[0].source).to.eql(annotationSource);
     });
   });
 });

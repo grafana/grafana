@@ -28,7 +28,7 @@
     this.$element = $(element);
     this.$element.hide();
 
-    this.widthClass = options.widthClass || 'width-12';
+    this.widthClass = options.widthClass || 'width-9';
     this.isSelect = (element.tagName === 'SELECT');
     this.multiple = (this.isSelect && element.hasAttribute('multiple'));
     this.objectItems = options && options.itemValue;

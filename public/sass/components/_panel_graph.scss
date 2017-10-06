@@ -288,7 +288,7 @@
   }
 
   .graph-annotation__header {
-    background-color: $input-label-bg;
+    background-color: $popover-border-color;
     padding: 0.40rem 0.65rem;
     display: flex;
   }
@@ -296,7 +296,7 @@
   .graph-annotation__title {
     font-weight: $font-weight-semi-bold;
     padding-right: $spacer;
-    max-width: 100px;
+    max-width: 150px;
     overflow: hidden;
     display: inline-block;
     white-space: nowrap;

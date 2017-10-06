@@ -13,11 +13,11 @@ function ($, _, angular, Drop) {
     content.innerHTML = '<annotation-tooltip event="event" on-edit="onEdit()"></annotation-tooltip>';
 
     injector.invoke(["$compile", "$rootScope", function($compile, $rootScope) {
+      var eventManager = plot.getOptions().events.manager;
       var tmpScope = $rootScope.$new(true);
       tmpScope.event = event;
-
       tmpScope.onEdit = function() {
-        plot.getPlaceholder().trigger("editevent", [event, element.parent()]);
+        eventManager.editEvent(event);
       };
 
       $compile(content)(tmpScope);
@@ -40,6 +40,53 @@ function ($, _, angular, Drop) {
 
       drop.on('close', function() {
         setTimeout(function() {
+          drop.destroy();
+        });
+      });
+    }]);
+  }
+
+  function createEditPopover(element, event, plot) {
+    var eventManager = plot.getOptions().events.manager;
+    if (eventManager.editorOpen) {
+      return;
+    }
+
+    var injector = angular.element(document).injector();
+    var content = document.createElement('div');
+    content.innerHTML = '<event-editor panel-ctrl="panelCtrl" event="event" close="close()"></event-editor>';
+
+    injector.invoke(["$compile", "$rootScope", function($compile, $rootScope) {
+      var scope = $rootScope.$new(true);
+      var drop;
+
+      scope.event = event;
+      scope.panelCtrl = eventManager.panelCtrl;
+      scope.close = function() {
+        drop.close();
+      };
+
+      $compile(content)(scope);
+      scope.$digest();
+
+      drop = new Drop({
+        target: element[0],
+        content: content,
+        position: "bottom center",
+        classes: 'drop-popover drop-popover--form',
+        openOn: 'click',
+        tetherOptions: {
+          constraints: [{to: 'window', pin: true, attachment: "both"}]
+        }
+      });
+
+      drop.open();
+      eventManager.editorOpened();
+
+      drop.on('close', function() {
+        setTimeout(function() {
+          eventManager.editorClosed();
+          scope.$destroy();
           drop.destroy();
         });
       });
@@ -199,7 +246,7 @@ function ($, _, angular, Drop) {
       var o = this._plot.getPlotOffset();
       var axes = this._plot.getAxes();
       var xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
-      var yaxis, top, left, color, markerSize, markerShow, lineStyle, lineWidth, icon;
+      var yaxis, top, left, color, markerSize, markerShow, lineStyle, lineWidth;
       var markerTooltip;
 
       // determine the y axis used
@@ -225,15 +272,6 @@ function ($, _, angular, Drop) {
         markerShow = true;
       } else {
         markerShow = this._types[eventTypeId].markerShow;
-      }
-
-      if (event.icon) {
-        // Use user-defined icon
-        icon = event.icon;
-      } else if (this._types === null || !this._types[eventTypeId] || this._types[eventTypeId].icon === undefined) {
-        icon = null;
-      } else {
-        icon = this._types[eventTypeId].icon;
       }
 
       if (this._types === null || !this._types[eventTypeId] || this._types[eventTypeId].markerTooltip === undefined) {
@@ -275,34 +313,18 @@ function ($, _, angular, Drop) {
       .appendTo(container);
 
       if (markerShow) {
-        var marker;
-        if (icon) {
-          marker = $('<div class="events_marker"></div>').css({
-            "position": "absolute",
-            "left": (-markerSize-Math.round(lineWidth/2)) + "px",
-            "font-size": 1.2 + "rem",
-            "line-height": 0,
-            "width": 0,
-            "height": 0,
-            "border-left": markerSize+"px solid transparent",
-            "border-right": markerSize+"px solid transparent"
-          });
+        var marker = $('<div class="events_marker"></div>').css({
+          "position": "absolute",
+          "left": (-markerSize - Math.round(lineWidth / 2)) + "px",
+          "font-size": 0,
+          "line-height": 0,
+          "width": 0,
+          "height": 0,
+          "border-left": markerSize+"px solid transparent",
+          "border-right": markerSize+"px solid transparent"
+        });
 
-          marker.appendTo(line);
-        } else {
-          marker = $('<div class="events_marker"></div>').css({
-            "position": "absolute",
-            "left": (-markerSize - Math.round(lineWidth / 2)) + "px",
-            "font-size": 0,
-            "line-height": 0,
-            "width": 0,
-            "height": 0,
-            "border-left": markerSize+"px solid transparent",
-            "border-right": markerSize+"px solid transparent"
-          });
-
-          marker.appendTo(line);
-        }
+        marker.appendTo(line);
 
         if (this._types[eventTypeId] && this._types[eventTypeId].position && this._types[eventTypeId].position.toUpperCase() === 'BOTTOM') {
           marker.css({
@@ -325,6 +347,12 @@ function ($, _, angular, Drop) {
         var mouseenter = function() {
           createAnnotationToolip(marker, $(this).data("event"), that._plot);
         };
+
+        if (event.editModel) {
+          setTimeout(function() {
+            createEditPopover(marker, event.editModel, that._plot);
+          }, 100);
+        }
 
         var mouseleave = function() {
           that._plot.clearSelection();
@@ -443,6 +471,12 @@ function ($, _, angular, Drop) {
       var mouseenter = function () {
         createAnnotationToolip(region, $(this).data("event"), that._plot);
       };
+
+      if (event.editModel) {
+        setTimeout(function() {
+          createEditPopover(region, event.editModel, that._plot);
+        }, 100);
+      }
 
       var mouseleave = function () {
         that._plot.clearSelection();

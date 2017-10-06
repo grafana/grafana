@@ -10,22 +10,23 @@ const OK_COLOR =       "rgba(11, 237, 50, 1)",
 
 export class EventManager {
   event: AnnotationEvent;
+  editorOpen: boolean;
 
-  constructor(private panelCtrl: MetricsPanelCtrl, private elem, private popoverSrv) {
+  constructor(private panelCtrl: MetricsPanelCtrl) {
   }
 
   editorClosed() {
     this.event = null;
+    this.editorOpen = false;
     this.panelCtrl.render();
   }
 
+  editorOpened() {
+    this.editorOpen = true;
+  }
+
   updateTime(range) {
-    if (this.event) {
-      // means the editor is not visible
-      this.panelCtrl.render();
-      return;
-    } else {
-      // init new event
+    if (!this.event) {
       this.event = new AnnotationEvent();
       this.event.dashboardId = this.panelCtrl.dashboard.id;
       this.event.panelId = this.panelCtrl.panel.id;
@@ -39,38 +40,11 @@ export class EventManager {
       this.event.isRegion = true;
     }
 
-    this.popoverSrv.show({
-      element: this.elem[0],
-      classNames: 'drop-popover drop-popover--form',
-      position: 'bottom center',
-      openOn: null,
-      template: '<event-editor panel-ctrl="panelCtrl" event="event" close="dismiss()"></event-editor>',
-      onClose: this.editorClosed.bind(this),
-      model: {
-        event: this.event,
-        panelCtrl: this.panelCtrl,
-      },
-    });
-
     this.panelCtrl.render();
   }
 
   editEvent(event, elem?) {
     this.event = event;
-    let element = elem ? this.elem.find(elem) : this.elem;
-    this.popoverSrv.show({
-      element: element[0],
-      classNames: 'drop-popover drop-popover--form',
-      position: 'bottom center',
-      openOn: null,
-      template: '<event-editor panel-ctrl="panelCtrl" event="event" close="dismiss()"></event-editor>',
-      onClose: this.editorClosed.bind(this),
-      model: {
-        event: event,
-        panelCtrl: this.panelCtrl,
-      },
-    });
-
     this.panelCtrl.render();
   }
 
@@ -104,21 +78,18 @@ export class EventManager {
             isRegion: true,
             min: this.event.time.valueOf(),
             timeEnd: this.event.timeEnd.valueOf(),
-            title: this.event.title,
             text: this.event.text,
             eventType: '$__alerting',
-            source: {
-              iconColor: ALERTING_COLOR,
-            }
+            editModel: this.event,
           }
         ];
       } else {
         annotations = [
           {
             min: this.event.time.valueOf(),
-            title: this.event.title,
             text: this.event.text,
-            eventType: '$__alerting'
+            editModel: this.event,
+            eventType: '$__alerting',
           }
         ];
       }
@@ -159,6 +130,7 @@ export class EventManager {
       levels: _.keys(types).length + 1,
       data: annotations,
       types: types,
+      manager: this
     };
   }
 }
