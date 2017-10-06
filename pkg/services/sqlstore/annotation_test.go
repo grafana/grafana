@@ -15,7 +15,7 @@ func TestSavingTags(t *testing.T) {
 		repo := SqlAnnotationRepo{}
 
 		Convey("Can save tags", func() {
-			tags, err := repo.ensureTagsExist(newSession(), "outage,type:outage,server:server-1,error")
+			tags, err := repo.ensureTagsExist(newSession(), []string{"outage", "type:outage", "server:server-1", "error"})
 
 			So(err, ShouldBeNil)
 			So(len(tags), ShouldEqual, 4)
@@ -37,7 +37,7 @@ func TestAnnotations(t *testing.T) {
 				Title:       "title",
 				Text:        "hello",
 				Epoch:       10,
-				Tags:        "outage,error,type:outage,server:server-1",
+				Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
 			})
 
 			So(err, ShouldBeNil)
@@ -54,7 +54,7 @@ func TestAnnotations(t *testing.T) {
 				So(items, ShouldHaveLength, 1)
 
 				Convey("Can read tags", func() {
-					So(items[0].Tags, ShouldEqual, "outage,error,type:outage,server:server-1")
+					So(items[0].Tags, ShouldResemble, []string{"outage", "error", "type:outage", "server:server-1"})
 				})
 			})
 
@@ -76,7 +76,7 @@ func TestAnnotations(t *testing.T) {
 					DashboardId: 1,
 					From:        1,
 					To:          15,
-					Tags:        "asd",
+					Tags:        []string{"asd"},
 				})
 
 				So(err, ShouldBeNil)
@@ -89,7 +89,7 @@ func TestAnnotations(t *testing.T) {
 					DashboardId: 1,
 					From:        1,
 					To:          15,
-					Tags:        "outage,error",
+					Tags:        []string{"outage", "error"},
 				})
 
 				So(err, ShouldBeNil)
@@ -102,20 +102,21 @@ func TestAnnotations(t *testing.T) {
 					DashboardId: 1,
 					From:        1,
 					To:          15,
-					Tags:        "type:outage,server:server-1",
+					Tags:        []string{"type:outage", "server:server-1"},
 				})
 
 				So(err, ShouldBeNil)
 				So(items, ShouldHaveLength, 1)
 			})
 
-			Convey("Can update annotation", func() {
-				items, err := repo.Find(&annotations.ItemQuery{
+			Convey("Can update annotation and remove all tags", func() {
+				query := &annotations.ItemQuery{
 					OrgId:       1,
 					DashboardId: 1,
 					From:        0,
 					To:          15,
-				})
+				}
+				items, err := repo.Find(query)
 
 				So(err, ShouldBeNil)
 
@@ -126,23 +127,53 @@ func TestAnnotations(t *testing.T) {
 					OrgId: 1,
 					Title: "a new title",
 					Text:  "something new",
-					Tags:  "",
+					Tags:  []string{},
 				})
 
 				So(err, ShouldBeNil)
 
-				items, err = repo.Find(&annotations.ItemQuery{
-					OrgId:       1,
-					DashboardId: 1,
-					From:        0,
-					To:          15,
-				})
+				items, err = repo.Find(query)
 
 				So(err, ShouldBeNil)
 
 				Convey("Can read tags", func() {
 					So(items[0].Id, ShouldEqual, annotationId)
-					So(items[0].Tags, ShouldEqual, "")
+					So(len(items[0].Tags), ShouldEqual, 0)
+					So(items[0].Title, ShouldEqual, "a new title")
+					So(items[0].Text, ShouldEqual, "something new")
+				})
+			})
+
+			Convey("Can update annotation with new tags", func() {
+				query := &annotations.ItemQuery{
+					OrgId:       1,
+					DashboardId: 1,
+					From:        0,
+					To:          15,
+				}
+				items, err := repo.Find(query)
+
+				So(err, ShouldBeNil)
+
+				annotationId := items[0].Id
+
+				err = repo.Update(&annotations.Item{
+					Id:    annotationId,
+					OrgId: 1,
+					Title: "a new title",
+					Text:  "something new",
+					Tags:  []string{"newtag1", "newtag2"},
+				})
+
+				So(err, ShouldBeNil)
+
+				items, err = repo.Find(query)
+
+				So(err, ShouldBeNil)
+
+				Convey("Can read tags", func() {
+					So(items[0].Id, ShouldEqual, annotationId)
+					So(items[0].Tags, ShouldResemble, []string{"newtag1", "newtag2"})
 					So(items[0].Title, ShouldEqual, "a new title")
 					So(items[0].Text, ShouldEqual, "something new")
 				})

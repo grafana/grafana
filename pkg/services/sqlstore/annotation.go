@@ -20,7 +20,7 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 			return err
 		}
 
-		if item.Tags != "" {
+		if item.Tags != nil {
 			if tags, err := r.ensureTagsExist(sess, item.Tags); err != nil {
 				return err
 			} else {
@@ -37,8 +37,8 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 }
 
 // Will insert if needed any new key/value pars and return ids
-func (r *SqlAnnotationRepo) ensureTagsExist(sess *DBSession, tagString string) ([]*models.Tag, error) {
-	tags := models.ParseTagsString(tagString)
+func (r *SqlAnnotationRepo) ensureTagsExist(sess *DBSession, tagString []string) ([]*models.Tag, error) {
+	tags := models.ParseTagPairs(tagString)
 
 	for _, tag := range tags {
 		var existingTag models.Tag
@@ -66,7 +66,6 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		)
 		existing := new(annotations.Item)
 
-		fmt.Printf("annid: %v", item.Id)
 		if item.Id == 0 && item.RegionId != 0 {
 			// Update region end time
 			isExist, err = sess.Table("annotation").Where("region_id=? AND id!=? AND org_id=?", item.RegionId, item.RegionId, item.OrgId).Get(existing)
@@ -87,6 +86,23 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		if item.RegionId != 0 {
 			existing.RegionId = item.RegionId
 		}
+
+		if item.Tags != nil {
+			existingTags := models.ParseTagPairs(existing.Tags)
+
+			if tags, err := r.ensureTagsExist(sess, item.Tags); err != nil {
+				return err
+			} else {
+				for _, tag := range tags {
+					if !containsTag(existingTags, tag) {
+						if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", existing.Id, tag.Id); err != nil {
+							return err
+						}
+					}
+				}
+			}
+		}
+
 		existing.Tags = item.Tags
 
 		if _, err := sess.Table("annotation").Id(existing.Id).Cols("epoch", "title", "text", "region_id", "tags").Update(existing); err != nil {
@@ -95,6 +111,15 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 
 		return nil
 	})
+}
+
+func containsTag(existingTags []*models.Tag, tag *models.Tag) bool {
+	for _, t := range existingTags {
+		if t.Id == t.Id {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.Item, error) {
@@ -138,7 +163,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 
 	if len(query.Tags) > 0 {
 		keyValueFilters := []string{}
-		tags := models.ParseTagsString(query.Tags)
+		tags := models.ParseTagPairs(query.Tags)
 		for _, tag := range tags {
 			if tag.Value == "" {
 				keyValueFilters = append(keyValueFilters, "(tag.key = ?)")
@@ -149,16 +174,18 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 			}
 		}
 
-		tagsSubQuery := fmt.Sprintf(`
-			SELECT SUM(1) FROM annotation_tag at
-				INNER JOIN tag on tag.id = at.tag_id
-				WHERE at.annotation_id = annotation.id
-					AND (
-						%s
-					)
-		`, strings.Join(keyValueFilters, " OR "))
+		if len(tags) > 0 {
+			tagsSubQuery := fmt.Sprintf(`
+        SELECT SUM(1) FROM annotation_tag at
+          INNER JOIN tag on tag.id = at.tag_id
+          WHERE at.annotation_id = annotation.id
+            AND (
+              %s
+            )
+      `, strings.Join(keyValueFilters, " OR "))
 
-		sql.WriteString(fmt.Sprintf(" AND (%s) = %d ", tagsSubQuery, len(tags)))
+			sql.WriteString(fmt.Sprintf(" AND (%s) = %d ", tagsSubQuery, len(tags)))
+		}
 	}
 
 	if query.Limit == 0 {

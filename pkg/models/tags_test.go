@@ -7,9 +7,14 @@ import (
 )
 
 func TestParsingTags(t *testing.T) {
-	Convey("Testing parsing a tag string into tags", t, func() {
-		Convey("Can parse valid tags string", func() {
-			tags := ParseTagsString("outage,type:outage,error")
+	Convey("Testing parsing a tag pairs into tags", t, func() {
+		Convey("Can parse one empty tag", func() {
+			tags := ParseTagPairs([]string{""})
+			So(len(tags), ShouldEqual, 0)
+		})
+
+		Convey("Can parse valid tags", func() {
+			tags := ParseTagPairs([]string{"outage", "type:outage", "error"})
 			So(len(tags), ShouldEqual, 3)
 			So(tags[0].Key, ShouldEqual, "outage")
 			So(tags[0].Value, ShouldEqual, "")
@@ -19,8 +24,8 @@ func TestParsingTags(t *testing.T) {
 			So(tags[2].Value, ShouldEqual, "")
 		})
 
-		Convey("Can parse tags string with spaces", func() {
-			tags := ParseTagsString(" outage , type : outage  ,error ")
+		Convey("Can parse tags with spaces", func() {
+			tags := ParseTagPairs([]string{" outage ", " type : outage ", "error "})
 			So(len(tags), ShouldEqual, 3)
 			So(tags[0].Key, ShouldEqual, "outage")
 			So(tags[0].Value, ShouldEqual, "")
@@ -30,8 +35,8 @@ func TestParsingTags(t *testing.T) {
 			So(tags[2].Value, ShouldEqual, "")
 		})
 
-		Convey("Can parse tags string with extra commas", func() {
-			tags := ParseTagsString(" outage ,,,:, type : outage  ,error ,,,")
+		Convey("Can parse empty tags", func() {
+			tags := ParseTagPairs([]string{" outage ", "", "", ":", "type : outage ", "error ", "", ""})
 			So(len(tags), ShouldEqual, 3)
 			So(tags[0].Key, ShouldEqual, "outage")
 			So(tags[0].Value, ShouldEqual, "")
@@ -41,8 +46,8 @@ func TestParsingTags(t *testing.T) {
 			So(tags[2].Value, ShouldEqual, "")
 		})
 
-		Convey("Can parse tags string with extra colons", func() {
-			tags := ParseTagsString(" outage,type : outage:outage2 :outage3  ,error :")
+		Convey("Can parse tags with extra colons", func() {
+			tags := ParseTagPairs([]string{" outage", "type : outage:outage2 :outage3 ", "error :"})
 			So(len(tags), ShouldEqual, 3)
 			So(tags[0].Key, ShouldEqual, "outage")
 			So(tags[0].Value, ShouldEqual, "")
@@ -52,8 +57,8 @@ func TestParsingTags(t *testing.T) {
 			So(tags[2].Value, ShouldEqual, "")
 		})
 
-		Convey("Can parse tags string that contains key and values with spaces", func() {
-			tags := ParseTagsString(" outage 1,type 1: outage 1  ,has error ")
+		Convey("Can parse tags that contains key and values with spaces", func() {
+			tags := ParseTagPairs([]string{" outage 1", "type 1: outage 1 ", "has error "})
 			So(len(tags), ShouldEqual, 3)
 			So(tags[0].Key, ShouldEqual, "outage 1")
 			So(tags[0].Value, ShouldEqual, "")

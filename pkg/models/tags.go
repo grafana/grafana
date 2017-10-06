@@ -10,12 +10,10 @@ type Tag struct {
 	Value string
 }
 
-func ParseTagsString(str string) (tags []*Tag) {
-	if strings.Trim(str, " ") == "" {
-		return
+func ParseTagPairs(tagPairs []string) (tags []*Tag) {
+	if tagPairs == nil {
+		return []*Tag{}
 	}
-
-	tagPairs := strings.Split(strings.Trim(str, " "), ",")
 
 	for _, tagPair := range tagPairs {
 		var tag Tag
