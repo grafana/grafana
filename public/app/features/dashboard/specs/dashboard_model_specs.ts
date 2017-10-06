@@ -46,8 +46,8 @@ describe('DashboardModel', function() {
       var saveModel = model.getSaveModelClone();
       var keys = _.keys(saveModel);
 
-      expect(keys[0]).to.be('addEmptyRow');
-      expect(keys[1]).to.be('addPanel');
+      expect(keys[0]).to.be('addBuiltInAnnotationQuery');
+      expect(keys[1]).to.be('addEmptyRow');
     });
   });
 
@@ -180,7 +180,7 @@ describe('DashboardModel', function() {
     });
 
     it('should move pulldowns to new schema', function() {
-      expect(model.annotations.list[1].name).to.be('old');
+      expect(model.annotations.list[0].name).to.be('old');
     });
 
     it('table panel should only have two thresholds values', function() {
@@ -207,7 +207,7 @@ describe('DashboardModel', function() {
     });
 
     it('dashboard schema version should be set to latest', function() {
-      expect(model.schemaVersion).to.be(15);
+      expect(model.schemaVersion).to.be(14);
     });
 
     it('graph thresholds should be migrated', function() {
@@ -309,7 +309,6 @@ describe('DashboardModel', function() {
 
     beforeEach(function() {
       model = new DashboardModel({
-        schemaVersion: 15,
         annotations: {
           enable: true,
         },
@@ -320,7 +319,12 @@ describe('DashboardModel', function() {
     });
 
     it('should add empty list', function() {
-      expect(model.annotations.list.length).to.be(0);
+      expect(model.annotations.list.length).to.be(1);
+      expect(model.templating.list.length).to.be(0);
+    });
+
+    it('should add builtin annotation query', function() {
+      expect(model.annotations.list[0].builtIn).to.be(1);
       expect(model.templating.list.length).to.be(0);
     });
   });

@@ -83,24 +83,24 @@ export class AnnotationsSrv {
   getGlobalAnnotations(options) {
     var dashboard = options.dashboard;
 
-    if (dashboard.annotations.list.length === 0) {
-      return this.$q.when([]);
-    }
-
     if (this.globalAnnotationsPromise) {
       return this.globalAnnotationsPromise;
     }
 
-    var annotations = _.filter(dashboard.annotations.list, {enable: true});
     var range = this.timeSrv.timeRange();
+    var promises = [];
 
-    this.globalAnnotationsPromise = this.$q.all(
-      _.map(annotations, annotation => {
-        if (annotation.snapshotData) {
-          return this.translateQueryResult(annotation, annotation.snapshotData);
-        }
+    for (let annotation of dashboard.annotations.list) {
+      if (!annotation.enable) {
+        continue;
+      }
 
-        return this.datasourceSrv
+      if (annotation.snapshotData) {
+        return this.translateQueryResult(annotation, annotation.snapshotData);
+      }
+
+      promises.push(
+        this.datasourceSrv
           .get(annotation.datasource)
           .then(datasource => {
             // issue query against data source
@@ -118,10 +118,11 @@ export class AnnotationsSrv {
             }
             // translate result
             return this.translateQueryResult(annotation, results);
-          });
-      }),
-    );
+          })
+      );
+    }
 
+    this.globalAnnotationsPromise = this.$q.all(promises);
     return this.globalAnnotationsPromise;
   }
 

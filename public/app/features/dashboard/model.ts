@@ -71,8 +71,33 @@ export class DashboardModel {
       }
     }
 
+    this.addBuiltInAnnotationQuery();
     this.updateSchema(data);
     this.initMeta(meta);
+  }
+
+  addBuiltInAnnotationQuery() {
+    let found = false;
+    for (let item of this.annotations.list) {
+      if (item.builtIn === 1) {
+        found = true;
+        break;
+      }
+    }
+
+    if (found) {
+      return;
+    }
+
+    this.annotations.list.unshift({
+      datasource: '-- Grafana --',
+      name: 'Annotations & Alerts',
+      type: 'dashboard',
+      iconColor: 'rgb(0, 211, 255)',
+      enable: true,
+      hide: true,
+      builtIn: 1,
+    });
   }
 
   private initMeta(meta) {
@@ -305,7 +330,7 @@ export class DashboardModel {
     var i, j, k;
     var oldVersion = this.schemaVersion;
     var panelUpgrades = [];
-    this.schemaVersion = 15;
+    this.schemaVersion = 14;
 
     if (oldVersion === this.schemaVersion) {
       return;
@@ -612,18 +637,6 @@ export class DashboardModel {
 
       if (oldVersion < 14) {
         this.graphTooltip = old.sharedCrosshair ? 1 : 0;
-      }
-
-      if (oldVersion < 15) {
-        this.annotations.list.unshift({
-          datasource: '-- Grafana --',
-          name: "Annotations & Alerts",
-          type: 'dashboard',
-          iconColor: 'rgb(0, 211, 255)',
-          enable: true,
-          hide: true,
-          builtIn: 1,
-        });
       }
 
       if (panelUpgrades.length === 0) {
