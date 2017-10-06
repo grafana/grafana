@@ -101,7 +101,11 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
-	sql.WriteString(`SELECT * from annotation `)
+	sql.WriteString(`
+		SELECT
+		FROM annotation
+		OUTER JOIN ` + dialect.Quote("user") ` as usr on usr.user_id = annotation.user_id
+		`)
 
 	sql.WriteString(`WHERE org_id = ?`)
 	params = append(params, query.OrgId)
