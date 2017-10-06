@@ -45,3 +45,10 @@ profile.cov
 /examples/*/dist
 /packaging/**/*.rpm
 /packaging/**/*.deb
+
+/vendor/**/*.py
+/vendor/**/*.xml
+/vendor/**/*.yml
+/vendor/**/*_test.go
+/vendor/**/.editorconfig
+/vendor/**/appengine*
