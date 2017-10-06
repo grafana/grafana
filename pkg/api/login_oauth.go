@@ -83,7 +83,7 @@ func OAuthLogin(ctx *middleware.Context) {
 			InsecureSkipVerify: setting.OAuthService.OAuthInfos[name].TlsSkipVerify,
 		},
 	}
-	sslcli := &http.Client{
+	oauthClient := &http.Client{
 		Transport: tr,
 	}
 
@@ -107,7 +107,7 @@ func OAuthLogin(ctx *middleware.Context) {
 		tr.TLSClientConfig.RootCAs = caCertPool
 	}
 
-	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, sslcli)
+	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, oauthClient)
 
 	// get token from provider
 	token, err := connect.Exchange(oauthCtx, code)
