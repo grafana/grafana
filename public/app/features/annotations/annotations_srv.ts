@@ -118,7 +118,7 @@ export class AnnotationsSrv {
             }
             // translate result
             return this.translateQueryResult(annotation, results);
-          })
+          }),
       );
     }
 

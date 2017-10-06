@@ -296,11 +296,11 @@
   .graph-annotation__title {
     font-weight: $font-weight-semi-bold;
     padding-right: $spacer;
-    max-width: 150px;
     overflow: hidden;
     display: inline-block;
     white-space: nowrap;
     text-overflow: ellipsis;
+    flex-grow: 1;
   }
 
   .graph-annotation__edit-icon {
@@ -328,11 +328,10 @@
     }
   }
 
-  a {
+  a[href] {
     color: $blue;
     text-decoration: underline;
   }
-
 }
 
 .left-yaxis-label {

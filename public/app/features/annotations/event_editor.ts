@@ -10,6 +10,7 @@ export class EventEditorCtrl {
   timeRange: {from: number, to: number};
   form: any;
   close: any;
+  timeFormated: string;
 
   /** @ngInject **/
   constructor(private annotationsSrv) {
@@ -21,6 +22,8 @@ export class EventEditorCtrl {
     if (this.event.isRegion) {
       this.event.timeEnd = tryEpochToMoment(this.event.timeEnd);
     }
+
+    this.timeFormated = this.panelCtrl.dashboard.formatDate(this.event.time);
   }
 
   save() {
