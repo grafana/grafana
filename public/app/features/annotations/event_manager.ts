@@ -2,18 +2,13 @@ import _ from 'lodash';
 import moment from 'moment';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 import {AnnotationEvent} from './event';
-
-const OK_COLOR =       "rgba(11, 237, 50, 1)",
-      ALERTING_COLOR = "rgba(237, 46, 24, 1)",
-      NO_DATA_COLOR =  "rgba(150, 150, 150, 1)";
-
+import {OK_COLOR, ALERTING_COLOR, NO_DATA_COLOR, DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
 
 export class EventManager {
   event: AnnotationEvent;
   editorOpen: boolean;
 
-  constructor(private panelCtrl: MetricsPanelCtrl) {
-  }
+  constructor(private panelCtrl: MetricsPanelCtrl) {}
 
   editorClosed() {
     this.event = null;
@@ -54,18 +49,23 @@ export class EventManager {
     }
 
     var types = {
-      '$__alerting': {
+      $__alerting: {
         color: ALERTING_COLOR,
         position: 'BOTTOM',
         markerSize: 5,
       },
-      '$__ok': {
+      $__ok: {
         color: OK_COLOR,
         position: 'BOTTOM',
         markerSize: 5,
       },
-      '$__no_data': {
+      $__no_data: {
         color: NO_DATA_COLOR,
+        position: 'BOTTOM',
+        markerSize: 5,
+      },
+      $__editing: {
+        color: DEFAULT_ANNOTATION_COLOR,
         position: 'BOTTOM',
         markerSize: 5,
       },
@@ -79,9 +79,9 @@ export class EventManager {
             min: this.event.time.valueOf(),
             timeEnd: this.event.timeEnd.valueOf(),
             text: this.event.text,
-            eventType: '$__alerting',
+            eventType: '$__editing',
             editModel: this.event,
-          }
+          },
         ];
       } else {
         annotations = [
@@ -89,8 +89,8 @@ export class EventManager {
             min: this.event.time.valueOf(),
             text: this.event.text,
             editModel: this.event,
-            eventType: '$__alerting',
-          }
+            eventType: '$__editing',
+          },
         ];
       }
     } else {
@@ -130,7 +130,7 @@ export class EventManager {
       levels: _.keys(types).length + 1,
       data: annotations,
       types: types,
-      manager: this
+      manager: this,
     };
   }
 }
@@ -141,7 +141,7 @@ function getRegions(events) {
 
 function addRegionMarking(regions, flotOptions) {
   let markings = flotOptions.grid.markings;
-  let defaultColor = 'rgb(237, 46, 24)';
+  let defaultColor = DEFAULT_ANNOTATION_COLOR;
   let fillColor;
 
   _.each(regions, region => {
@@ -158,8 +158,8 @@ function addRegionMarking(regions, flotOptions) {
       fillColor = convertToRGB(fillColor);
     }
 
-    fillColor = addAlphaToRGB(fillColor, 0.090);
-    markings.push({ xaxis: { from: region.min, to: region.timeEnd }, color: fillColor });
+    fillColor = addAlphaToRGB(fillColor, 0.09);
+    markings.push({xaxis: {from: region.min, to: region.timeEnd}, color: fillColor});
   });
 }
 
@@ -179,8 +179,8 @@ function convertToRGB(hex: string): string {
     let rgb = _.map(match.slice(1), hex_val => {
       return parseInt(hex_val, 16);
     });
-    return 'rgb(' + rgb.join(',')  + ')';
+    return 'rgb(' + rgb.join(',') + ')';
   } else {
-    return "";
+    return '';
   }
 }

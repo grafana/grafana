@@ -5,6 +5,10 @@ declare var tinycolor;
 
 export const PALETTE_ROWS = 4;
 export const PALETTE_COLUMNS = 14;
+export const DEFAULT_ANNOTATION_COLOR = 'rgba(0, 211, 255, 1)';
+export const OK_COLOR = "rgba(11, 237, 50, 1)";
+export const ALERTING_COLOR = "rgba(237, 46, 24, 1)";
+export const NO_DATA_COLOR = "rgba(150, 150, 150, 1)";
 
 let colors = [
   "#7EB26D","#EAB839","#6ED0E0","#EF843C","#E24D42","#1F78C1","#BA43A9","#705DA0",

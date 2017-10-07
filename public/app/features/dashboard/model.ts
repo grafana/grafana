@@ -5,6 +5,7 @@ import moment from 'moment';
 import _ from 'lodash';
 import $ from 'jquery';
 
+import {DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
 import {Emitter, contextSrv, appEvents} from 'app/core/core';
 import {DashboardRow} from './row/row_model';
 import sortByKeys from 'app/core/utils/sort_by_keys';
@@ -93,7 +94,7 @@ export class DashboardModel {
       datasource: '-- Grafana --',
       name: 'Annotations & Alerts',
       type: 'dashboard',
-      iconColor: 'rgb(0, 211, 255)',
+      iconColor: DEFAULT_ANNOTATION_COLOR,
       enable: true,
       hide: true,
       builtIn: 1,
