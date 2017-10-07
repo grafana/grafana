@@ -10,7 +10,7 @@ const WebpackCleanupPlugin = require('webpack-cleanup-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = merge(common, {
-  devtool: "source-map",
+  devtool: "eval-source-map",
 
   entry: {
     dark: './public/sass/grafana.dark.scss',

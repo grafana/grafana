@@ -103,7 +103,7 @@ define([
     };
 
     this.createService = function(name) {
-      return window.inject(function($q, $rootScope, $httpBackend, $injector, $location) {
+      return window.inject(function($q, $rootScope, $httpBackend, $injector, $location, $timeout) {
         self.$q = $q;
         self.$rootScope = $rootScope;
         self.$httpBackend =  $httpBackend;
@@ -111,6 +111,7 @@ define([
 
         self.$rootScope.onAppEvent = function() {};
         self.$rootScope.appEvent = function() {};
+        self.$timeout = $timeout;
 
         self.service = $injector.get(name);
       });

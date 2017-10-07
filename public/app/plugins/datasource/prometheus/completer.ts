@@ -33,7 +33,7 @@ export class PromCompleter {
           return;
         }
 
-        this.getLabelNameAndValueForMetric(metricName).then(result => {
+        return this.getLabelNameAndValueForMetric(metricName).then(result => {
           var labelNames = this.transformToCompletions(
             _.uniq(_.flatten(result.map(r => {
               return Object.keys(r.metric);
@@ -42,7 +42,6 @@ export class PromCompleter {
           this.labelNameCache[metricName] = labelNames;
           callback(null, labelNames);
         });
-        return;
       case 'string.quoted':
         metricName = this.findMetricName(session, pos.row, pos.column);
         if (!metricName) {
@@ -62,7 +61,7 @@ export class PromCompleter {
           return;
         }
 
-        this.getLabelNameAndValueForMetric(metricName).then(result => {
+        return this.getLabelNameAndValueForMetric(metricName).then(result => {
           var labelValues = this.transformToCompletions(
             _.uniq(result.map(r => {
               return r.metric[labelName];
@@ -72,7 +71,6 @@ export class PromCompleter {
           this.labelValueCache[metricName][labelName] = labelValues;
           callback(null, labelValues);
         });
-        return;
     }
 
     if (prefix === '[') {
