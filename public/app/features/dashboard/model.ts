@@ -71,8 +71,33 @@ export class DashboardModel {
       }
     }
 
+    this.addBuiltInAnnotationQuery();
     this.updateSchema(data);
     this.initMeta(meta);
+  }
+
+  addBuiltInAnnotationQuery() {
+    let found = false;
+    for (let item of this.annotations.list) {
+      if (item.builtIn === 1) {
+        found = true;
+        break;
+      }
+    }
+
+    if (found) {
+      return;
+    }
+
+    this.annotations.list.unshift({
+      datasource: '-- Grafana --',
+      name: 'Annotations & Alerts',
+      type: 'dashboard',
+      iconColor: 'rgb(0, 211, 255)',
+      enable: true,
+      hide: true,
+      builtIn: 1,
+    });
   }
 
   private initMeta(meta) {

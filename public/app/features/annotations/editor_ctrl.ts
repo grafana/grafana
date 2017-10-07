@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
@@ -35,12 +33,6 @@ export class AnnotationsEditorCtrl {
     this.datasources = datasourceSrv.getAnnotationSources();
     this.annotations = $scope.dashboard.annotations.list;
     this.reset();
-
-    $scope.$watch('mode', newVal => {
-      if (newVal === 'new') {
-        this.reset();
-      }
-    });
   }
 
   datasourceChanged() {
@@ -71,6 +63,11 @@ export class AnnotationsEditorCtrl {
     this.$scope.broadcastRefresh();
   }
 
+  setupNew() {
+    this.mode = 'new';
+    this.reset();
+  }
+
   add() {
     this.annotations.push(this.currentAnnotation);
     this.reset();
@@ -84,6 +81,14 @@ export class AnnotationsEditorCtrl {
     this.annotations.splice(index, 1);
     this.$scope.dashboard.updateSubmenuVisibility();
     this.$scope.broadcastRefresh();
+  }
+
+  annotationEnabledChange() {
+    this.$scope.broadcastRefresh();
+  }
+
+  annotationHiddenChanged() {
+    this.$scope.dashboard.updateSubmenuVisibility();
   }
 }
 

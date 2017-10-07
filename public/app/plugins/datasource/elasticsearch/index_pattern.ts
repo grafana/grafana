@@ -18,7 +18,7 @@ export class IndexPattern {
     } else {
       return this.pattern;
     }
-  };
+  }
 
   getIndexList(from, to) {
     if (!this.interval) {
