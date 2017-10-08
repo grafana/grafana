@@ -24,6 +24,7 @@ export class DashboardRow {
     repeatRowId: null,
     repeatIteration: null,
     collapse: false,
+    align: { center: false },
   };
 
   constructor(private model) {
