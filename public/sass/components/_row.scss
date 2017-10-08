@@ -54,6 +54,19 @@
   position: relative;
 }
 
+.panels-wrapper.center {
+  text-align: center;
+  .panel{
+    float: initial;
+  }
+  .panel.panel-drop-zone{
+    display: none !important;
+  }
+  .panel .panel-full-edit{
+    text-align: initial;
+  }
+}
+
 .dash-row-dropview {
   position: relative;
   background:  $panel-bg;

@@ -16,7 +16,7 @@
 	<dash-row-options row-ctrl="ctrl"></dash-row-options>
 </div>
 
-<div class="panels-wrapper" ng-if="!ctrl.row.collapse">
+<div class="panels-wrapper" ng-class="{'center': ctrl.row.align.center}" ng-if="!ctrl.row.collapse">
   <div class="dash-row-menu-container" data-click-hide ng-hide="ctrl.dashboard.meta.fullscreen">
     <ul class="dash-row-menu" role="menu">
       <li>
