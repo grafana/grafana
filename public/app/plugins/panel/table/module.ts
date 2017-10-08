@@ -76,7 +76,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     actions.push({text: 'Export CSV', click: 'ctrl.exportCsv()'});
   }
 
-  issueQueries(datasource) {
+  issueQueries() {
     this.pageIndex = 0;
 
     if (this.panel.transform === 'annotations') {
@@ -87,7 +87,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       });
     }
 
-    return super.issueQueries(datasource);
+    return super.issueQueries();
   }
 
   onDataError(err) {
