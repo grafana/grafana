@@ -13,6 +13,7 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetDataSources)
+	bus.AddHandler("sql", GetAllDataSources)
 	bus.AddHandler("sql", AddDataSource)
 	bus.AddHandler("sql", DeleteDataSourceById)
 	bus.AddHandler("sql", DeleteDataSourceByName)
@@ -49,6 +50,13 @@ func GetDataSourceByName(query *m.GetDataSourceByNameQuery) error {
 
 func GetDataSources(query *m.GetDataSourcesQuery) error {
 	sess := x.Limit(1000, 0).Where("org_id=?", query.OrgId).Asc("name")
+
+	query.Result = make([]*m.DataSource, 0)
+	return sess.Find(&query.Result)
+}
+
+func GetAllDataSources(query *m.GetAllDataSourcesQuery) error {
+	sess := x.Limit(1000, 0).Asc("name")
 
 	query.Result = make([]*m.DataSource, 0)
 	return sess.Find(&query.Result)

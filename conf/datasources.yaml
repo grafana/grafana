@@ -1,28 +1,30 @@
-# - name: Graphite202
-#   type: graphite
-#   access: proxy
-#   url: http://localhost:8080
-#   password:
-#   user: 
-#   database:
-#   basicAuth:
-#   basicAuthUser:
-#   basicAuthPassword:
-#   withCredentials:
-#   isDefault: true
-#   jsonData: {}
-#   secureJsonFields: {}
-# - name: Prometheus
-#   type: prometheus
-#   access: proxy
-#   url: http://localhost:9090
-#   password:
-#   user: 
-#   database:
-#   basicAuth:
-#   basicAuthUser:
-#   basicAuthPassword:
-#   withCredentials:
-#   isDefault: true
-#   jsonData: {}
-#   secureJsonFields: {}
+purgeOtherDatasources: false
+datasources:
+  - name: Graphite202
+    type: graphite
+    access: proxy
+    url: http://localhost:8080
+    password:
+    user: 
+    database:
+    basicAuth:
+    basicAuthUser:
+    basicAuthPassword:
+    withCredentials:
+    isDefault: true
+    jsonData: {}
+    secureJsonFields: {}
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+    password:
+    user: 
+    database:
+    basicAuth:
+    basicAuthUser:
+    basicAuthPassword:
+    withCredentials:
+    isDefault: true
+    jsonData: {}
+    secureJsonFields: {}
