@@ -22,5 +22,9 @@
   },
 
   "annotations": true,
-  "metrics": true
+  "metrics": true,
+
+  "queryOptions": {
+    "minInterval": true
+  }
 }

@@ -133,14 +133,16 @@ describe('grafanaGraph', function() {
     it('should apply axis transform, autoscaling (if necessary) and ticks', function() {
       var axisAutoscale = ctx.plotOptions.yaxes[0];
       expect(axisAutoscale.transform(100)).to.be(2);
-      expect(axisAutoscale.inverseTransform(-3)).to.be(0.001);
-      expect(axisAutoscale.min).to.be(0.001);
+      expect(axisAutoscale.inverseTransform(-3)).to.within(0.00099999999,0.00100000001);
+      expect(axisAutoscale.min).to.within(0.00099999999,0.00100000001);
       expect(axisAutoscale.max).to.be(10000);
-      expect(axisAutoscale.ticks.length).to.be(8);
-      expect(axisAutoscale.ticks[0]).to.be(0.001);
-      expect(axisAutoscale.ticks[7]).to.be(10000);
-      expect(axisAutoscale.tickDecimals).to.be(3);
-
+      expect(axisAutoscale.ticks.length).to.within(7,8);
+      expect(axisAutoscale.ticks[0]).to.within(0.00099999999,0.00100000001);
+      if (axisAutoscale.ticks.length === 7) {
+        expect(axisAutoscale.ticks[axisAutoscale.ticks.length-1]).to.within(999.9999,1000.0001);
+      } else {
+        expect(axisAutoscale.ticks[axisAutoscale.ticks.length-1]).to.be(10000);
+      }
 
       var axisFixedscale = ctx.plotOptions.yaxes[1];
       expect(axisFixedscale.min).to.be(0.05);
@@ -148,8 +150,6 @@ describe('grafanaGraph', function() {
       expect(axisFixedscale.ticks.length).to.be(5);
       expect(axisFixedscale.ticks[0]).to.be(0.1);
       expect(axisFixedscale.ticks[4]).to.be(1000);
-      expect(axisFixedscale.tickDecimals).to.be(1);
-
     });
   });
 
@@ -166,13 +166,12 @@ describe('grafanaGraph', function() {
     it('should not set min and max and should create some fake ticks', function() {
       var axisAutoscale = ctx.plotOptions.yaxes[0];
       expect(axisAutoscale.transform(100)).to.be(2);
-      expect(axisAutoscale.inverseTransform(-3)).to.be(0.001);
+      expect(axisAutoscale.inverseTransform(-3)).to.within(0.00099999999,0.00100000001);
       expect(axisAutoscale.min).to.be(undefined);
       expect(axisAutoscale.max).to.be(undefined);
       expect(axisAutoscale.ticks.length).to.be(2);
       expect(axisAutoscale.ticks[0]).to.be(1);
       expect(axisAutoscale.ticks[1]).to.be(2);
-      expect(axisAutoscale.tickDecimals).to.be(undefined);
     });
   });
 
@@ -189,16 +188,15 @@ describe('grafanaGraph', function() {
       data[0].yaxis = 1;
     });
 
-    it('should set min to 0.1 and add a tick for 0.1 and tickDecimals to be 0', function() {
+    it('should set min to 0.1 and add a tick for 0.1', function() {
       var axisAutoscale = ctx.plotOptions.yaxes[0];
       expect(axisAutoscale.transform(100)).to.be(2);
-      expect(axisAutoscale.inverseTransform(-3)).to.be(0.001);
+      expect(axisAutoscale.inverseTransform(-3)).to.within(0.00099999999,0.00100000001);
       expect(axisAutoscale.min).to.be(0.1);
       expect(axisAutoscale.max).to.be(10000);
       expect(axisAutoscale.ticks.length).to.be(6);
       expect(axisAutoscale.ticks[0]).to.be(0.1);
       expect(axisAutoscale.ticks[5]).to.be(10000);
-      expect(axisAutoscale.tickDecimals).to.be(0);
     });
   });
 
@@ -222,7 +220,6 @@ describe('grafanaGraph', function() {
       expect(axisAutoscale.ticks[0]).to.be(0.1);
       expect(axisAutoscale.ticks[7]).to.be(262144);
       expect(axisAutoscale.max).to.be(262144);
-      expect(axisAutoscale.tickDecimals).to.be(0);
     });
 
     it('should set axis max to be max tick value', function() {

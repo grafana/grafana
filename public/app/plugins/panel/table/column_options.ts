@@ -2,10 +2,6 @@
 
 
 import _ from 'lodash';
-import $ from 'jquery';
-import moment from 'moment';
-import angular from 'angular';
-
 import kbn from 'app/core/utils/kbn';
 
 export class ColumnOptionsCtrl {
@@ -22,8 +18,9 @@ export class ColumnOptionsCtrl {
   activeStyleIndex: number;
 
   /** @ngInject */
-  constructor($scope, private $q, private uiSegmentSrv) {
+  constructor($scope) {
     $scope.editor = this;
+
     this.activeStyleIndex = 0;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
@@ -43,6 +40,7 @@ export class ColumnOptionsCtrl {
     this.fontSizes = ['80%', '90%', '100%', '110%', '120%', '130%', '150%', '160%', '180%', '200%', '220%', '250%'];
     this.dateFormats = [
       {text: 'YYYY-MM-DD HH:mm:ss', value: 'YYYY-MM-DD HH:mm:ss'},
+      {text: 'YYYY-MM-DD HH:mm:ss.SSS', value: 'YYYY-MM-DD HH:mm:ss.SSS'},
       {text: 'MM/DD/YY h:mm:ss a', value: 'MM/DD/YY h:mm:ss a'},
       {text: 'MMMM D, YYYY LT',  value: 'MMMM D, YYYY LT'},
     ];

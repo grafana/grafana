@@ -18,7 +18,11 @@ describe('OpenTsQueryCtrl', function() {
     ctx.$q = $q;
     ctx.scope = $rootScope.$new();
     ctx.target = {target: ''};
-    ctx.panelCtrl = {panel: {}};
+    ctx.panelCtrl = {
+      panel: {
+        targets: [ctx.target]
+      }
+    };
     ctx.panelCtrl.refresh = sinon.spy();
     ctx.datasource.getAggregators = sinon.stub().returns(ctx.$q.when([]));
     ctx.datasource.getFilterTypes = sinon.stub().returns(ctx.$q.when([]));

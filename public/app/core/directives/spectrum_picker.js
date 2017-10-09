@@ -1,7 +1,7 @@
 define([
   'angular',
   '../core_module',
-  'spectrum',
+  'vendor/spectrum',
 ],
 function (angular, coreModule) {
   'use strict';

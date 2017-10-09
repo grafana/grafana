@@ -31,21 +31,21 @@ cite    { font-style: normal; }
 a.muted:hover,
 a.muted:focus        { color: darken($text-muted, 10%); }
 
-.text-warning        { color: $state-warning-text; }
+.text-warning        { color: $warning-text-color; }
 a.text-warning:hover,
-a.text-warning:focus { color: darken($state-warning-text, 10%); }
+a.text-warning:focus { color: darken($warning-text-color, 10%); }
 
-.text-error          { color: $errorText; }
+.text-error          { color: $error-text-color; }
 a.text-error:hover,
-a.text-error:focus   { color: darken($errorText, 10%); }
+a.text-error:focus   { color: darken($error-text-color, 10%); }
 
-.text-info           { color: $infoText; }
+.text-info           { color: $info-text-color; }
 a.text-info:hover,
-a.text-info:focus    { color: darken($infoText, 10%); }
+a.text-info:focus    { color: darken($info-text-color, 10%); }
 
-.text-success        { color: $successText; }
+.text-success        { color: $success-text-color; }
 a.text-success:hover,
-a.text-success:focus { color: darken($successText, 10%); }
+a.text-success:focus { color: darken($success-text-color, 10%); }
 a { cursor: pointer; }
 
 a[disabled] {
@@ -130,7 +130,7 @@ small,
 mark,
 .mark {
   padding: .2em;
-  background-color: $state-warning-bg;
+  background: $alert-warning-bg;
 }
 
 
@@ -296,7 +296,7 @@ a.external-link {
     max-width: 100%;
   }
 
-  ul {
+  ul, ol {
     padding-left: $spacer*1.5;
     margin-bottom: $spacer;
   }
@@ -328,7 +328,7 @@ a.external-link {
     margin-bottom: 0;
   }
 
-  ul:last-child {
+  ul:last-child, ol:last-child {
     margin-bottom: 0;
   }
 }

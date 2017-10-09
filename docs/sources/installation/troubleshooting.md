@@ -11,13 +11,18 @@ weight = 8
 
 # Troubleshooting
 
-## visualization & query issues
+## Visualization & Query issues
+
+{{< imgbox max-width="40%" img="/img/docs/v45/query_inspector.png" caption="Query Inspector" >}}
 
 The most common problems are related to the query & response from you data source. Even if it looks
 like a bug or visualization issue in Grafana it is 99% of time a problem with the data source query or
 the data source response.
 
-So make sure to check the query sent and the raw response, learn how in this guide: [How to troubleshoot metric query issues](https://community.grafana.com/t/how-to-troubleshoot-metric-query-issues/50)
+To check this you should use Query Inspector (new in Grafana v4.5). The query Inspector shows query requests and responses.
+
+For more on the query insector read [this guide here](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630). For
+older versions of Grafana read the [how troubleshoot metric query issue](https://community.grafana.com/t/how-to-troubleshoot-metric-query-issues/50/2) article.
 
 ## Logging
 

@@ -1,13 +1,13 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import 'jquery.flot';
-import 'jquery.flot.selection';
-import 'jquery.flot.time';
-import 'jquery.flot.stack';
-import 'jquery.flot.stackpercent';
-import 'jquery.flot.fillbelow';
-import 'jquery.flot.crosshair';
-import 'jquery.flot.dashes';
+import 'vendor/flot/jquery.flot';
+import 'vendor/flot/jquery.flot.selection';
+import 'vendor/flot/jquery.flot.time';
+import 'vendor/flot/jquery.flot.stack';
+import 'vendor/flot/jquery.flot.stackpercent';
+import 'vendor/flot/jquery.flot.fillbelow';
+import 'vendor/flot/jquery.flot.crosshair';
+import 'vendor/flot/jquery.flot.dashes';
 import './jquery.flot.events';
 
 import $ from 'jquery';
@@ -21,7 +21,8 @@ import {ThresholdManager} from './threshold_manager';
 import {EventManager} from 'app/features/annotations/all';
 import {convertValuesToHistogram, getSeriesValues} from './histogram';
 
-coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
+/** @ngInject **/
+function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
   return {
     restrict: 'A',
     template: '',
@@ -36,7 +37,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       var legendSideLastValue = null;
       var rootScope = scope.$root;
       var panelWidth = 0;
-      var eventManager = new EventManager(ctrl, elem, popoverSrv);
+      var eventManager = new EventManager(ctrl);
       var thresholdManager = new ThresholdManager(ctrl);
       var tooltip = new GraphTooltip(elem, dashboard, scope, function() {
         return sortedSeries;
@@ -120,6 +121,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         if (panelWidth === 0) {
           return true;
         }
+
+        return false;
       }
 
       function drawHook(plot) {
@@ -146,16 +149,12 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
 
         // add left axis labels
         if (panel.yaxes[0].label && panel.yaxes[0].show) {
-          var yaxisLabel = $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>")
-          .text(panel.yaxes[0].label)
-          .appendTo(elem);
+          $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>").text(panel.yaxes[0].label).appendTo(elem);
         }
 
         // add right axis labels
         if (panel.yaxes[1].label && panel.yaxes[1].show) {
-          var rightLabel = $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>")
-          .text(panel.yaxes[1].label)
-          .appendTo(elem);
+          $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>").text(panel.yaxes[1].label).appendTo(elem);
         }
 
         thresholdManager.draw(plot);
@@ -269,6 +268,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
             clickable: true,
             color: '#c8c8c8',
             margin: { left: 0, right: 0 },
+            labelMarginX: 0,
           },
           selection: {
             mode: "x",
@@ -375,7 +375,11 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       }
 
       function translateFillOption(fill) {
-        return fill === 0 ? 0.001 : fill/10;
+        if (panel.percentage && panel.stack) {
+          return fill === 0 ? 0.001 : fill/10;
+        } else {
+          return fill/10;
+        }
       }
 
       function shouldDelayDraw(panel) {
@@ -385,6 +389,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         if (legendSideLastValue !== null && panel.legend.rightSide !== legendSideLastValue) {
           return true;
         }
+        return false;
       }
 
       function addTimeAxis(options) {
@@ -494,6 +499,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           logBase: panel.yaxes[0].logBase || 1,
           min: panel.yaxes[0].min ? _.toNumber(panel.yaxes[0].min) : null,
           max: panel.yaxes[0].max ? _.toNumber(panel.yaxes[0].max) : null,
+          tickDecimals: panel.yaxes[0].decimals
         };
 
         options.yaxes.push(defaults);
@@ -506,6 +512,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           secondY.position = 'right';
           secondY.min = panel.yaxes[1].min ? _.toNumber(panel.yaxes[1].min) : null;
           secondY.max = panel.yaxes[1].max ? _.toNumber(panel.yaxes[1].max) : null;
+          secondY.tickDecimals = panel.yaxes[1].decimals !== null ? _.toNumber(panel.yaxes[1].decimals): null;
           options.yaxes.push(secondY);
 
           applyLogScale(options.yaxes[1], data);
@@ -584,7 +591,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           if (axis.ticks[axis.ticks.length - 1] > axis.max) {
             axis.max = axis.ticks[axis.ticks.length - 1];
           }
-          axis.tickDecimals = decimalPlaces(min);
         } else {
           axis.ticks = [1, 2];
           delete axis.min;
@@ -612,12 +618,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         }
 
         return ticks;
-      }
-
-      function decimalPlaces(num) {
-        if (!num) { return 0; }
-
-        return (num.toString().split('.')[1] || []).length;
       }
 
       function configureAxisMode(axis, format) {
@@ -652,10 +652,10 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       }
 
       elem.bind("plotselected", function (event, ranges) {
-        if (ranges.ctrlKey || ranges.metaKey)  {
-          // scope.$apply(() => {
-          //   eventManager.updateTime(ranges.xaxis);
-          // });
+        if ((ranges.ctrlKey || ranges.metaKey) && contextSrv.isEditor) {
+          setTimeout(() => {
+            eventManager.updateTime(ranges.xaxis);
+          }, 100);
         } else {
           scope.$apply(function() {
             timeSrv.setTime({
@@ -667,13 +667,13 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       });
 
       elem.bind("plotclick", function (event, pos, item) {
-        if (pos.ctrlKey || pos.metaKey || eventManager.event)  {
+        if ((pos.ctrlKey || pos.metaKey) && contextSrv.isEditor) {
           // Skip if range selected (added in "plotselected" event handler)
           let isRangeSelection = pos.x !== pos.x1;
           if (!isRangeSelection) {
-            // scope.$apply(() => {
-            //   eventManager.updateTime({from: pos.x, to: null});
-            // });
+            setTimeout(() => {
+              eventManager.updateTime({from: pos.x, to: null});
+            }, 100);
           }
         }
       });
@@ -685,4 +685,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       });
     }
   };
-});
+}
+
+coreModule.directive('grafanaGraph', graphDirective);

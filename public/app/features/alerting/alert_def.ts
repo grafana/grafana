@@ -49,6 +49,8 @@ var reducerTypes = [
   {text: 'count()', value: 'count'},
   {text: 'last()', value: 'last'},
   {text: 'median()', value: 'median'},
+  {text: 'diff()', value: 'diff'},
+  {text: 'percent_diff()', value: 'percent_diff'},
 ];
 
 var noDataModes = [
@@ -106,6 +108,8 @@ function getStateDisplayModel(state) {
       };
     }
   }
+
+  throw {message: 'Unknown alert state'};
 }
 
 function joinEvalMatches(matches, separator: string) {
@@ -124,7 +128,6 @@ function joinEvalMatches(matches, separator: string) {
 }
 
 function getAlertAnnotationInfo(ah) {
-
   // backward compatability, can be removed in grafana 5.x
   // old way stored evalMatches in data property directly,
   // new way stores it in evalMatches property on new data object

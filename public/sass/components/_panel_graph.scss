@@ -181,7 +181,7 @@
   }
 
   .graph-legend {
-    margin: 0;
+    margin: 0 0 0 1rem;
   }
 
   .graph-legend-series {
@@ -287,19 +287,27 @@
     margin-top: 8px;
   }
 
-  .graph-annotation-header {
-    background-color: $input-label-bg;
+  .graph-annotation__header {
+    background-color: $popover-border-color;
     padding: 0.40rem 0.65rem;
+    display: flex;
   }
 
-  .graph-annotation-title {
+  .graph-annotation__title {
     font-weight: $font-weight-semi-bold;
     padding-right: $spacer;
-    position: relative;
-    top: 2px;
+    overflow: hidden;
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex-grow: 1;
   }
 
-  .graph-annotation-time {
+  .graph-annotation__edit-icon {
+    padding-left: $spacer;
+  }
+
+  .graph-annotation__time {
     color: $text-muted;
     font-style: italic;
     font-weight: normal;
@@ -308,20 +316,27 @@
     top: 1px;
   }
 
-  .graph-annotation-body {
+  .graph-annotation__body {
     padding: 0.65rem;
   }
 
-  a {
+  .graph-annotation__user {
+    img {
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  a[href] {
     color: $blue;
     text-decoration: underline;
   }
-
 }
 
 .left-yaxis-label {
   top: 50%;
-  left: 0;
+  left: 2px;
   transform: translateX(-50%) translateY(-50%) rotate(-90deg);
   // this is needed for phantomsjs 2.1
   -webkit-transform: translateX(-50%) translateY(-50%) rotate(-90deg);
@@ -329,16 +344,17 @@
 
 .right-yaxis-label {
   top: 50%;
-  right: 0;
+  right: 2px;
   transform: translateX(50%) translateY(-50%) rotate(90deg);
   // this is needed for phantomsjs 2.1
   -webkit-transform: translateX(50%) translateY(-50%) rotate(90deg);
 }
 
 .axisLabel {
+  display: inline-block;
   color: $text-color;
   font-size: $font-size-sm;
-  position: relative;
+  position: absolute;
   text-align: center;
   font-size: 12px;
 }

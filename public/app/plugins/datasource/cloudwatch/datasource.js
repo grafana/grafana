@@ -5,18 +5,18 @@ define([
   'app/core/utils/datemath',
   'app/core/utils/kbn',
   'app/features/templating/variable',
-  './annotation_query',
 ],
-function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnotationQuery) {
+function (angular, _, moment, dateMath, kbn, templatingVariable) {
   'use strict';
 
   /** @ngInject */
-  function CloudWatchDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+  function CloudWatchDatasource(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
     this.type = 'cloudwatch';
     this.name = instanceSettings.name;
     this.supportMetrics = true;
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
+    this.instanceSettings = instanceSettings;
     this.standardStatistics = [
       'Average',
       'Maximum',
@@ -27,31 +27,30 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
 
     var self = this;
     this.query = function(options) {
-      var start = self.convertToCloudWatchTime(options.range.from, false);
-      var end = self.convertToCloudWatchTime(options.range.to, true);
-
-      var queries = [];
       options = angular.copy(options);
       options.targets = this.expandTemplateVariable(options.targets, options.scopedVars, templateSrv);
-      _.each(options.targets, function(target) {
-        if (target.hide || !target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
-          return;
-        }
 
-        var query = {};
-        query.region = templateSrv.replace(target.region, options.scopedVars);
-        query.namespace = templateSrv.replace(target.namespace, options.scopedVars);
-        query.metricName = templateSrv.replace(target.metricName, options.scopedVars);
-        query.dimensions = self.convertDimensionFormat(target.dimensions, options.scopedVars);
-        query.statistics = target.statistics;
+      var queries = _.filter(options.targets, function (item) {
+        return item.hide !== true &&
+          !!item.region &&
+          !!item.namespace &&
+          !!item.metricName &&
+          !_.isEmpty(item.statistics);
+      }).map(function (item) {
+        item.region = templateSrv.replace(item.region, options.scopedVars);
+        item.namespace = templateSrv.replace(item.namespace, options.scopedVars);
+        item.metricName = templateSrv.replace(item.metricName, options.scopedVars);
+        item.dimensions = self.convertDimensionFormat(item.dimensions, options.scopeVars);
+        item.period = self.getPeriod(item, options);
 
-        var now = Math.round(Date.now() / 1000);
-        var period = this._getPeriod(target, query, options, start, end, now);
-        target.period = period;
-        query.period = period;
-
-        queries.push(query);
-      }.bind(this));
+        return _.extend({
+          refId: item.refId,
+          intervalMs: options.intervalMs,
+          maxDataPoints: options.maxDataPoints,
+          datasourceId: self.instanceSettings.id,
+          type: 'timeSeriesQuery',
+        }, item);
+      });
 
       // No valid targets, return the empty result to save a round trip.
       if (_.isEmpty(queries)) {
@@ -60,43 +59,49 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
         return d.promise;
       }
 
-      var allQueryPromise = _.map(queries, function(query) {
-        return this.performTimeSeriesQuery(query, start, end);
-      }.bind(this));
+      var request = {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries: queries
+      };
 
-      return $q.all(allQueryPromise).then(function(allResponse) {
-        var result = [];
-
-        _.each(allResponse, function(response, index) {
-          var metrics = transformMetricData(response, options.targets[index], options.scopedVars);
-          result = result.concat(metrics);
-        });
-
-        return {data: result};
-      });
+      return this.performTimeSeriesQuery(request);
     };
 
-    this._getPeriod = function(target, query, options, start, end, now) {
+    this.getPeriod = function(target, options, now) {
+      var start = this.convertToCloudWatchTime(options.range.from, false);
+      var end = this.convertToCloudWatchTime(options.range.to, true);
+      now = Math.round((now || Date.now()) / 1000);
+
       var period;
       var range = end - start;
 
-      var daySec = 60 * 60 * 24;
+      var hourSec = 60 * 60;
+      var daySec = hourSec * 24;
       var periodUnit = 60;
-      if (now - start > (daySec * 15)) { // until 63 days ago
-        periodUnit = period = 60 * 5;
-      } else if (now - start > (daySec * 63)) { // until 455 days ago
-        periodUnit = period = 60 * 60;
-      } else if (now - start > (daySec * 455)) { // over 455 days, should return error, but try to long period
-        periodUnit = period = 60 * 60;
-      } else if (!target.period) {
-        period = (query.namespace === 'AWS/EC2') ? 300 : 60;
-      } else if (/^\d+$/.test(target.period)) {
-        period = parseInt(target.period, 10);
+      if (!target.period) {
+        if (now - start <= (daySec * 15)) { // until 15 days ago
+          if (target.namespace === 'AWS/EC2') {
+            periodUnit = period = 300;
+          } else {
+            periodUnit = period = 60;
+          }
+        } else if (now - start <= (daySec * 63)) { // until 63 days ago
+          periodUnit = period = 60 * 5;
+        } else if (now - start <= (daySec * 455)) { // until 455 days ago
+          periodUnit = period = 60 * 60;
+        } else { // over 455 days, should return error, but try to long period
+          periodUnit = period = 60 * 60;
+        }
       } else {
-        period = kbn.interval_to_seconds(templateSrv.replace(target.period, options.scopedVars));
+        if (/^\d+$/.test(target.period)) {
+          period = parseInt(target.period, 10);
+        } else {
+          period = kbn.interval_to_seconds(templateSrv.replace(target.period, options.scopedVars));
+        }
       }
-      if (period < 60) {
-        period = 60;
+      if (period < 1) {
+        period = 1;
       }
       if (range / period >= 1440) {
         period = Math.ceil(range / 1440 / periodUnit) * periodUnit;
@@ -105,85 +110,93 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       return period;
     };
 
-    this.performTimeSeriesQuery = function(query, start, end) {
-      var statistics = _.filter(query.statistics, function(s) { return _.includes(self.standardStatistics, s); });
-      var extendedStatistics = _.reject(query.statistics, function(s) { return _.includes(self.standardStatistics, s); });
-      return this.awsRequest({
-        region: query.region,
-        action: 'GetMetricStatistics',
-        parameters:  {
-          namespace: query.namespace,
-          metricName: query.metricName,
-          dimensions: query.dimensions,
-          statistics: statistics,
-          extendedStatistics: extendedStatistics,
-          startTime: start,
-          endTime: end,
-          period: query.period
+    this.performTimeSeriesQuery = function(request) {
+      return backendSrv.post('/api/tsdb/query', request).then(function (res) {
+        var data = [];
+
+        if (res.results) {
+          _.forEach(res.results, function (queryRes) {
+            _.forEach(queryRes.series, function (series) {
+              data.push({target: series.name, datapoints: series.points});
+            });
+          });
         }
+
+        return {data: data};
       });
     };
 
-    this.getRegions = function() {
-      return this.awsRequest({action: '__GetRegions'});
+    function transformSuggestDataFromTable(suggestData) {
+      return _.map(suggestData.results['metricFindQuery'].tables[0].rows, function (v) {
+        return {
+          text: v[0],
+          value: v[1]
+        };
+      });
+    }
+
+    this.doMetricQueryRequest = function (subtype, parameters) {
+      var range = timeSrv.timeRange();
+      return backendSrv.post('/api/tsdb/query', {
+        from: range.from.valueOf().toString(),
+        to: range.to.valueOf().toString(),
+        queries: [
+          _.extend({
+            refId: 'metricFindQuery',
+            intervalMs: 1, // dummy
+            maxDataPoints: 1, // dummy
+            datasourceId: this.instanceSettings.id,
+            type: 'metricFindQuery',
+            subtype: subtype
+          }, parameters)
+        ]
+      }).then(function (r) { return transformSuggestDataFromTable(r); });
+    };
+
+    this.getRegions = function () {
+      return this.doMetricQueryRequest('regions', null);
     };
 
     this.getNamespaces = function() {
-      return this.awsRequest({action: '__GetNamespaces'});
+      return this.doMetricQueryRequest('namespaces', null);
     };
 
-    this.getMetrics = function(namespace, region) {
-      return this.awsRequest({
-        action: '__GetMetrics',
-        region: region,
-        parameters: {
-          namespace: templateSrv.replace(namespace)
-        }
+    this.getMetrics = function (namespace, region) {
+      return this.doMetricQueryRequest('metrics', {
+        region: templateSrv.replace(region),
+        namespace: templateSrv.replace(namespace)
       });
     };
 
     this.getDimensionKeys = function(namespace, region) {
-      return this.awsRequest({
-        action: '__GetDimensions',
-        region: region,
-        parameters: {
-          namespace: templateSrv.replace(namespace)
-        }
+      return this.doMetricQueryRequest('dimension_keys', {
+        region: templateSrv.replace(region),
+        namespace: templateSrv.replace(namespace)
       });
     };
 
     this.getDimensionValues = function(region, namespace, metricName, dimensionKey, filterDimensions) {
-      var request = {
+      return this.doMetricQueryRequest('dimension_values', {
         region: templateSrv.replace(region),
-        action: 'ListMetrics',
-        parameters: {
-          namespace: templateSrv.replace(namespace),
-          metricName: templateSrv.replace(metricName),
-          dimensions: this.convertDimensionFormat(filterDimensions, {}),
-        }
-      };
-
-      return this.awsRequest(request).then(function(result) {
-        return _.chain(result.Metrics)
-        .map('Dimensions')
-        .flatten()
-        .filter(function(dimension) {
-          return dimension !== null && dimension.Name === dimensionKey;
-        })
-        .map('Value')
-        .uniq()
-        .sortBy()
-        .map(function(value) {
-          return {value: value, text: value};
-        }).value();
+        namespace: templateSrv.replace(namespace),
+        metricName: templateSrv.replace(metricName),
+        dimensionKey: templateSrv.replace(dimensionKey),
+        dimensions: this.convertDimensionFormat(filterDimensions, {}),
       });
     };
 
-    this.performEC2DescribeInstances = function(region, filters, instanceIds) {
-      return this.awsRequest({
-        region: region,
-        action: 'DescribeInstances',
-        parameters: { filters: filters, instanceIds: instanceIds }
+    this.getEbsVolumeIds = function(region, instanceId) {
+      return this.doMetricQueryRequest('ebs_volume_ids', {
+        region: templateSrv.replace(region),
+        instanceId: templateSrv.replace(instanceId)
+      });
+    };
+
+    this.getEc2InstanceAttribute = function(region, attributeName, filters) {
+      return this.doMetricQueryRequest('ec2_instance_attribute', {
+        region: templateSrv.replace(region),
+        attributeName: templateSrv.replace(attributeName),
+        filters: filters
       });
     };
 
@@ -191,12 +204,6 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       var region;
       var namespace;
       var metricName;
-
-      var transformSuggestData = function(suggestData) {
-        return _.map(suggestData, function(v) {
-          return { text: v };
-        });
-      };
 
       var regionQuery = query.match(/^regions\(\)/);
       if (regionQuery) {
@@ -210,102 +217,96 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
 
       var metricNameQuery = query.match(/^metrics\(([^\)]+?)(,\s?([^,]+?))?\)/);
       if (metricNameQuery) {
-        return this.getMetrics(metricNameQuery[1], metricNameQuery[3]);
+        namespace = metricNameQuery[1];
+        region = metricNameQuery[3];
+        return this.getMetrics(namespace, region);
       }
 
       var dimensionKeysQuery = query.match(/^dimension_keys\(([^\)]+?)(,\s?([^,]+?))?\)/);
       if (dimensionKeysQuery) {
-        return this.getDimensionKeys(dimensionKeysQuery[1], dimensionKeysQuery[3]);
+        namespace = dimensionKeysQuery[1];
+        region = dimensionKeysQuery[3];
+        return this.getDimensionKeys(namespace, region);
       }
 
       var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
       if (dimensionValuesQuery) {
-        region = templateSrv.replace(dimensionValuesQuery[1]);
-        namespace = templateSrv.replace(dimensionValuesQuery[2]);
-        metricName = templateSrv.replace(dimensionValuesQuery[3]);
-        var dimensionKey = templateSrv.replace(dimensionValuesQuery[4]);
+        region = dimensionValuesQuery[1];
+        namespace = dimensionValuesQuery[2];
+        metricName = dimensionValuesQuery[3];
+        var dimensionKey = dimensionValuesQuery[4];
 
         return this.getDimensionValues(region, namespace, metricName, dimensionKey, {});
       }
 
       var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
       if (ebsVolumeIdsQuery) {
-        region = templateSrv.replace(ebsVolumeIdsQuery[1]);
-        var instanceId = templateSrv.replace(ebsVolumeIdsQuery[2]);
-        var instanceIds = [
-          instanceId
-        ];
-
-        return this.performEC2DescribeInstances(region, [], instanceIds).then(function(result) {
-          var volumeIds = _.map(result.Reservations[0].Instances[0].BlockDeviceMappings, function(mapping) {
-            return mapping.Ebs.VolumeId;
-          });
-
-          return transformSuggestData(volumeIds);
-        });
+        region = ebsVolumeIdsQuery[1];
+        var instanceId = ebsVolumeIdsQuery[2];
+        return this.getEbsVolumeIds(region, instanceId);
       }
 
       var ec2InstanceAttributeQuery = query.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
       if (ec2InstanceAttributeQuery) {
-        region = templateSrv.replace(ec2InstanceAttributeQuery[1]);
+        region = ec2InstanceAttributeQuery[1];
+        var targetAttributeName = ec2InstanceAttributeQuery[2];
         var filterJson = JSON.parse(templateSrv.replace(ec2InstanceAttributeQuery[3]));
-        var filters = _.map(filterJson, function(values, name) {
-          return {
-            Name: name,
-            Values: values
-          };
-        });
-        var targetAttributeName = templateSrv.replace(ec2InstanceAttributeQuery[2]);
-
-        return this.performEC2DescribeInstances(region, filters, null).then(function(result) {
-          var attributes = _.chain(result.Reservations)
-          .map(function(reservations) {
-            return _.map(reservations.Instances, targetAttributeName);
-          })
-          .flatten().uniq().sortBy().value();
-          return transformSuggestData(attributes);
-        });
+        return this.getEc2InstanceAttribute(region, targetAttributeName, filterJson);
       }
 
       return $q.when([]);
     };
 
-    this.performDescribeAlarms = function(region, actionPrefix, alarmNamePrefix, alarmNames, stateValue) {
-      return this.awsRequest({
-        region: region,
-        action: 'DescribeAlarms',
-        parameters: { actionPrefix: actionPrefix, alarmNamePrefix: alarmNamePrefix, alarmNames: alarmNames, stateValue: stateValue }
+    this.annotationQuery = function (options) {
+      var annotation = options.annotation;
+      var statistics = _.map(annotation.statistics, function (s) { return templateSrv.replace(s); });
+      var defaultPeriod = annotation.prefixMatching ? '' : '300';
+      var period = annotation.period || defaultPeriod;
+      period = parseInt(period, 10);
+      var parameters = {
+        prefixMatching: annotation.prefixMatching,
+        region: templateSrv.replace(annotation.region),
+        namespace: templateSrv.replace(annotation.namespace),
+        metricName: templateSrv.replace(annotation.metricName),
+        dimensions: this.convertDimensionFormat(annotation.dimensions, {}),
+        statistics: statistics,
+        period: period,
+        actionPrefix: annotation.actionPrefix || '',
+        alarmNamePrefix: annotation.alarmNamePrefix || ''
+      };
+
+      return backendSrv.post('/api/tsdb/query', {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries: [
+          _.extend({
+            refId: 'annotationQuery',
+            intervalMs: 1, // dummy
+            maxDataPoints: 1, // dummy
+            datasourceId: this.instanceSettings.id,
+            type: 'annotationQuery'
+          }, parameters)
+        ]
+      }).then(function (r) {
+        return _.map(r.results['annotationQuery'].tables[0].rows, function (v) {
+          return {
+            annotation: annotation,
+            time: Date.parse(v[0]),
+            title: v[1],
+            tags: [v[2]],
+            text: v[3]
+          };
+        });
       });
     };
 
-    this.performDescribeAlarmsForMetric = function(region, namespace, metricName, dimensions, statistic, period) {
-      var s = _.includes(self.standardStatistics, statistic) ? statistic : '';
-      var es = _.includes(self.standardStatistics, statistic) ? '' : statistic;
-      return this.awsRequest({
-        region: region,
-        action: 'DescribeAlarmsForMetric',
-        parameters: {
-          namespace: namespace,
-          metricName: metricName,
-          dimensions: dimensions,
-          statistic: s,
-          extendedStatistic: es,
-          period: period
-        }
+    this.targetContainsTemplate = function(target) {
+      return templateSrv.variableExists(target.region) ||
+      templateSrv.variableExists(target.namespace) ||
+      templateSrv.variableExists(target.metricName) ||
+      _.find(target.dimensions, function(v, k) {
+        return templateSrv.variableExists(k) || templateSrv.variableExists(v);
       });
-    };
-
-    this.performDescribeAlarmHistory = function(region, alarmName, startDate, endDate) {
-      return this.awsRequest({
-        region: region,
-        action: 'DescribeAlarmHistory',
-        parameters: { alarmName: alarmName, startDate: startDate, endDate: endDate }
-      });
-    };
-
-    this.annotationQuery = function(options) {
-      var annotationQuery = new CloudWatchAnnotationQuery(this, options.annotation, $q, templateSrv);
-      return annotationQuery.process(options.range.from, options.range.to);
     };
 
     this.testDatasource = function() {
@@ -316,7 +317,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       var dimensions = {};
 
       return this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions).then(function () {
-        return { status: 'success', message: 'Data source is working', title: 'Success' };
+        return { status: 'success', message: 'Data source is working' };
       });
     };
 
@@ -335,61 +336,6 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
     this.getDefaultRegion = function() {
       return this.defaultRegion;
     };
-
-    function transformMetricData(md, options, scopedVars) {
-      var aliasRegex = /\{\{(.+?)\}\}/g;
-      var aliasPattern = options.alias || '{{metric}}_{{stat}}';
-      var aliasData = {
-        region: templateSrv.replace(options.region, scopedVars),
-        namespace: templateSrv.replace(options.namespace, scopedVars),
-        metric: templateSrv.replace(options.metricName, scopedVars),
-      };
-
-      var aliasDimensions = {};
-
-      _.each(_.keys(options.dimensions), function(origKey) {
-        var key = templateSrv.replace(origKey, scopedVars);
-        var value = templateSrv.replace(options.dimensions[origKey], scopedVars);
-        aliasDimensions[key] = value;
-      });
-
-      _.extend(aliasData, aliasDimensions);
-
-      var periodMs = options.period * 1000;
-
-      return _.map(options.statistics, function(stat) {
-        var extended = !_.includes(self.standardStatistics, stat);
-        var dps = [];
-        var lastTimestamp = null;
-        _.chain(md.Datapoints)
-        .sortBy(function(dp) {
-          return dp.Timestamp;
-        })
-        .each(function(dp) {
-          var timestamp = new Date(dp.Timestamp).getTime();
-          if (lastTimestamp && (timestamp - lastTimestamp) > periodMs) {
-            dps.push([null, lastTimestamp + periodMs]);
-          }
-          lastTimestamp = timestamp;
-          if (!extended) {
-            dps.push([dp[stat], timestamp]);
-          } else {
-            dps.push([dp.ExtendedStatistics[stat], timestamp]);
-          }
-        })
-        .value();
-
-        aliasData.stat = stat;
-        var seriesName = aliasPattern.replace(aliasRegex, function(match, g1) {
-          if (aliasData[g1]) {
-            return aliasData[g1];
-          }
-          return g1;
-        });
-
-        return {target: seriesName, datapoints: dps};
-      });
-    }
 
     this.getExpandedVariables = function(target, dimensionKey, variable, templateSrv) {
       /* if the all checkbox is marked we should add all values to the targets */
@@ -441,17 +387,14 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
     };
 
     this.convertDimensionFormat = function(dimensions, scopedVars) {
-      return _.map(dimensions, function(value, key) {
-        return {
-          Name: templateSrv.replace(key, scopedVars),
-          Value: templateSrv.replace(value, scopedVars)
-        };
+      var convertedDimensions = {};
+      _.each(dimensions, function (value, key) {
+        convertedDimensions[templateSrv.replace(key, scopedVars)] = templateSrv.replace(value, scopedVars);
       });
+      return convertedDimensions;
     };
 
   }
 
-  return {
-    CloudWatchDatasource: CloudWatchDatasource
-  };
+  return CloudWatchDatasource;
 });

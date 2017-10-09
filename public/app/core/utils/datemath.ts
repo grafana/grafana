@@ -5,7 +5,7 @@ import moment from 'moment';
 
 var units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
-export function parse(text, roundUp?) {
+export function parse(text, roundUp?, timezone?) {
   if (!text) { return undefined; }
   if (moment.isMoment(text)) { return text; }
   if (_.isDate(text)) { return moment(text); }
@@ -16,7 +16,11 @@ export function parse(text, roundUp?) {
   var parseString;
 
   if (text.substring(0, 3) === 'now') {
-    time = moment();
+    if (timezone === 'utc') {
+      time = moment.utc();
+    } else {
+      time = moment();
+    }
     mathString = text.substring('now'.length);
   } else {
     index = text.indexOf('||');

@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
+import {describe, beforeEach, it, expect} from 'test/lib/common';
 
 import TableModel from 'app/core/table_model';
 

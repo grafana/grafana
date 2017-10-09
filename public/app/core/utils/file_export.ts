@@ -1,14 +1,12 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import moment from 'moment';
 
 declare var window: any;
 
-const DEFAULT_DATETIME_FORMAT: String = 'YYYY-MM-DDTHH:mm:ssZ';
+const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
 
-export function exportSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT) {
-    var text = 'Series;Time;Value\n';
+export function exportSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
+    var text = (excel ? 'sep=;\n' : '') + 'Series;Time;Value\n';
     _.each(seriesList, function(series) {
         _.each(series.datapoints, function(dp) {
             text += series.alias + ';' + moment(dp[1]).format(dateTimeFormat) + ';' + dp[0] + '\n';
@@ -17,8 +15,8 @@ export function exportSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATET
     saveSaveBlob(text, 'grafana_data_export.csv');
 }
 
-export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT) {
-    var text = 'Time;';
+export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
+    var text = (excel ? 'sep=;\n' : '') + 'Time;';
     // add header
     _.each(seriesList, function(series) {
         text += series.alias + ';';
@@ -52,8 +50,8 @@ export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAUL
     saveSaveBlob(text, 'grafana_data_export.csv');
 }
 
-export function exportTableDataToCsv(table) {
-    var text = '';
+export function exportTableDataToCsv(table, excel = false) {
+  var text = excel ? 'sep=;\n' : '';
     // add header
     _.each(table.columns, function(column) {
         text += (column.title || column.text) + ';';

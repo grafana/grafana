@@ -8,7 +8,7 @@ export class HelpCtrl {
   shortcuts: any;
 
   /** @ngInject */
-  constructor(private $scope, $sce) {
+  constructor() {
     this.tabIndex = 0;
     this.shortcuts = {
       'Global': [

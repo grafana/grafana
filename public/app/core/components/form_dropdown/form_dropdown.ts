@@ -1,6 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from '../../core_module';
@@ -115,7 +114,9 @@ export class FormDropdownCtrl {
       this.optionCache = options;
 
       // extract texts
-      let optionTexts = _.map(options, 'text');
+      let optionTexts = _.map(options, op => {
+        return _.escape(op.text);
+      });
 
       // add custom values
       if (this.allowCustom) {

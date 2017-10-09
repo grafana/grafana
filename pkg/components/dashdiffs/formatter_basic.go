@@ -231,7 +231,7 @@ func (b *BasicDiff) Basic(lines []*JSONLine) []*BasicBlock {
 // in the JSON document to a top level key.
 //
 // In order to produce distinct "blocks" when rendering the basic diff,
-// we need a way to distinguish between differnt sections of data.
+// we need a way to distinguish between different sections of data.
 // To do this, we consider the value(s) of each top-level JSON key to
 // represent a distinct block for Grafana's JSON data structure, so
 // we perform this check to see if we've entered a new "block". If we

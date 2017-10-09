@@ -4,6 +4,7 @@
   "id": "cloudwatch",
 
   "metrics": true,
+  "alerting": true,
   "annotations": true,
 
   "info": {

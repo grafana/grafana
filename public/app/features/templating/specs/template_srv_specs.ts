@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 
 import '../all';
 import {Emitter} from 'app/core/core';
@@ -10,6 +10,7 @@ describe('templateSrv', function() {
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(angularMocks.module($provide => {
     $provide.value('timeSrv', {});
+    $provide.value('datasourceSrv', {});
   }));
 
   beforeEach(angularMocks.inject(function(variableSrv, templateSrv) {
@@ -48,6 +49,31 @@ describe('templateSrv', function() {
     it('should replace $test with scoped text', function() {
       var target = _templateSrv.replaceWithText('this.$test.filters', {'test': {value: 'mupp', text: 'asd'}});
       expect(target).to.be('this.asd.filters');
+    });
+  });
+
+  describe('getAdhocFilters', function() {
+    beforeEach(function() {
+      initTemplateSrv([
+        {type: 'datasource', name: 'ds', current: {value: 'logstash', text: 'logstash'}},
+        {type: 'adhoc', name: 'test', datasource: 'oogle', filters: [1]},
+        {type: 'adhoc', name: 'test2', datasource: '$ds', filters: [2]},
+      ]);
+    });
+
+    it('should return filters if datasourceName match', function() {
+      var filters = _templateSrv.getAdhocFilters('oogle');
+      expect(filters).to.eql([1]);
+    });
+
+    it('should return empty array if datasourceName does not match', function() {
+      var filters = _templateSrv.getAdhocFilters('oogleasdasd');
+      expect(filters).to.eql([]);
+    });
+
+    it('should return filters when datasourceName match via data source variable', function() {
+      var filters = _templateSrv.getAdhocFilters('logstash');
+      expect(filters).to.eql([2]);
     });
   });
 

@@ -3,7 +3,7 @@
 		<div class="gf-form">
 			<span class="gf-form-label">Mode</span>
 			<span class="gf-form-select-wrapper">
-				<select class="gf-form-input" ng-model="ctrl.panel.mode" ng-options="f for f in ['html','markdown','text']"></select>
+				<select class="gf-form-input" ng-model="ctrl.panel.mode" ng-options="f for f in ['html','markdown']"></select>
 			</span>
 		</div>
 	</div>
@@ -15,5 +15,5 @@
 	(This area uses <a target="_blank" href="http://en.wikipedia.org/wiki/Markdown">Markdown</a>. HTML is not supported)
 </span>
 
-<textarea class="gf-form-input" ng-model="ctrl.panel.content" rows="20" style="width:95%" ng-change="ctrl.render()" ng-model-onblur>
+<textarea class="gf-form-input" ng-model="ctrl.panel.content" rows="20" style="width:95%" give-focus="true" ng-change="ctrl.render()" ng-model-onblur>
 </textarea>

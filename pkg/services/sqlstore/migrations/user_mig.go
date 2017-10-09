@@ -103,4 +103,8 @@ func addUserMigrations(mg *Migrator) {
 		{Name: "company", Type: DB_NVarchar, Length: 255, Nullable: true},
 		{Name: "theme", Type: DB_NVarchar, Length: 255, Nullable: true},
 	}))
+
+	mg.AddMigration("Add last_seen_at column to user", NewAddColumnMigration(userV2, &Column{
+		Name: "last_seen_at", Type: DB_DateTime, Nullable: true,
+	}))
 }

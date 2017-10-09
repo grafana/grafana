@@ -36,12 +36,12 @@ func (s *SocialGoogle) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 		Email string `json:"email"`
 	}
 
-	body, err := HttpGet(client, s.apiUrl)
+	response, err := HttpGet(client, s.apiUrl)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
-	err = json.Unmarshal(body, &data)
+	err = json.Unmarshal(response.Body, &data)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}

@@ -1,7 +1,8 @@
 define([
   'app/core/utils/kbn',
-  'app/core/utils/datemath'
-], function(kbn, dateMath) {
+  'app/core/utils/datemath',
+  'moment'
+], function(kbn, dateMath, moment) {
   'use strict';
 
   describe('unit format menu', function() {
@@ -94,6 +95,42 @@ define([
   describeValueFormat('d', 245, 100, 0, '35 week');
   describeValueFormat('d', 2456, 10, 0, '6.73 year');
 
+  describe('date time formats', function() {
+    it('should format as iso date', function() {
+      var str = kbn.valueFormats.dateTimeAsIso(1505634997920, 1);
+      expect(str).to.be(moment(1505634997920).format('YYYY-MM-DD HH:mm:ss'));
+    });
+
+    it('should format as iso date and skip date when today', function() {
+      var now = moment();
+      var str = kbn.valueFormats.dateTimeAsIso(now.valueOf(), 1);
+      expect(str).to.be(now.format("HH:mm:ss"));
+    });
+
+    it('should format as US date', function() {
+      var str = kbn.valueFormats.dateTimeAsUS(1505634997920, 1);
+      expect(str).to.be(moment(1505634997920).format('MM/DD/YYYY H:mm:ss a'));
+    });
+
+    it('should format as US date and skip date when today', function() {
+      var now = moment();
+      var str = kbn.valueFormats.dateTimeAsUS(now.valueOf(), 1);
+      expect(str).to.be(now.format("h:mm:ss a"));
+    });
+
+    it('should format as from now with days', function() {
+      var daysAgo = moment().add(-7, 'd');
+      var str = kbn.valueFormats.dateTimeFromNow(daysAgo.valueOf(), 1);
+      expect(str).to.be('7 days ago');
+    });
+
+    it('should format as from now with minutes', function() {
+      var daysAgo = moment().add(-2, 'm');
+      var str = kbn.valueFormats.dateTimeFromNow(daysAgo.valueOf(), 1);
+      expect(str).to.be('2 minutes ago');
+    });
+  });
+
   describe('kbn.toFixed and negative decimals', function() {
     it('should treat as zero decimals', function() {
       var str = kbn.toFixed(186.123, -2);
@@ -143,8 +180,8 @@ define([
       expect(res.intervalMs).to.be(500);
     });
 
-    it('fixed user interval', function() {
-      var range = { from: dateMath.parse('now-10m'), to: dateMath.parse('now') };
+    it('fixed user min interval', function() {
+      var range = {from: dateMath.parse('now-10m'), to: dateMath.parse('now')};
       var res = kbn.calculateInterval(range, 1600, '10s');
       expect(res.interval).to.be('10s');
       expect(res.intervalMs).to.be(10000);
@@ -166,6 +203,20 @@ define([
       var range = { from: dateMath.parse('now-10s'), to: dateMath.parse('now') };
       var res = kbn.calculateInterval(range, 900, '>15ms');
       expect(res.interval).to.be('15ms');
+    });
+
+    it('1d 1 resolution', function() {
+      var range = { from: dateMath.parse('now-1d'), to: dateMath.parse('now') };
+      var res = kbn.calculateInterval(range, 1, null);
+      expect(res.interval).to.be('1d');
+      expect(res.intervalMs).to.be(86400000);
+    });
+
+    it('86399s 1 resolution', function() {
+      var range = { from: dateMath.parse('now-86390s'), to: dateMath.parse('now') };
+      var res = kbn.calculateInterval(range, 1, null);
+      expect(res.interval).to.be('12h');
+      expect(res.intervalMs).to.be(43200000);
     });
   });
 

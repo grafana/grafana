@@ -5,9 +5,8 @@ import appEvents  from 'app/core/app_events';
 import {coreModule, JsonExplorer} from 'app/core/core';
 
 const template = `
-<collapse-box title="Query Troubleshooter" is-open="ctrl.isOpen" state-changed="ctrl.stateChanged()"
-              ng-class="{'collapse-box--error': ctrl.hasError}">
-  <collapse-box-actions>
+<div class="query-troubleshooter" ng-if="ctrl.isOpen">
+  <div class="query-troubleshooter__header">
     <a class="pointer" ng-click="ctrl.toggleExpand()" ng-hide="ctrl.allNodesExpanded">
       <i class="fa fa-plus-square-o"></i> Expand All
     </a>
@@ -15,12 +14,12 @@ const template = `
       <i class="fa fa-minus-square-o"></i> Collapse All
     </a>
     <a class="pointer" clipboard-button="ctrl.getClipboardText()"><i class="fa fa-clipboard"></i> Copy to Clipboard</a>
-  </collapse-box-actions>
-  <collapse-box-body>
+  </div>
+  <div class="query-troubleshooter__body">
     <i class="fa fa-spinner fa-spin" ng-show="ctrl.isLoading"></i>
     <div class="query-troubleshooter-json"></div>
-  </collapse-box-body>
-</collapse-box>
+  </div>
+</div>
 `;
 
 export class QueryTroubleshooterCtrl {
@@ -42,7 +41,9 @@ export class QueryTroubleshooterCtrl {
 
     appEvents.on('ds-request-response', this.onRequestResponseEventListener);
     appEvents.on('ds-request-error', this.onRequestErrorEventListener);
+
     $scope.$on('$destroy',  this.removeEventsListeners.bind(this));
+    $scope.$watch('ctrl.isOpen',  this.stateChanged.bind(this));
   }
 
   removeEventsListeners() {
@@ -51,6 +52,11 @@ export class QueryTroubleshooterCtrl {
   }
 
   onRequestError(err) {
+    // ignore if closed
+    if (!this.isOpen) {
+      return;
+    }
+
     this.isOpen = true;
     this.hasError = true;
     this.onRequestResponse(err);
@@ -63,10 +69,11 @@ export class QueryTroubleshooterCtrl {
     }
   }
 
-  getClipboardText() {
+  getClipboardText(): string {
     if (this.jsonExplorer) {
       return JSON.stringify(this.jsonExplorer.json, null, 2);
     }
+    return '';
   }
 
   onRequestResponse(data) {
@@ -133,7 +140,8 @@ export function queryTroubleshooter() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      panelCtrl: "="
+      panelCtrl: "=",
+      isOpen: "=",
     },
     link: function(scope, elem, attrs, ctrl) {
 

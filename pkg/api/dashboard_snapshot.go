@@ -34,13 +34,13 @@ func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapsho
 
 		cmd.OrgId = -1
 		cmd.UserId = -1
-		metrics.M_Api_Dashboard_Snapshot_External.Inc(1)
+		metrics.M_Api_Dashboard_Snapshot_External.Inc()
 	} else {
 		cmd.Key = util.GetRandomString(32)
 		cmd.DeleteKey = util.GetRandomString(32)
 		cmd.OrgId = c.OrgId
 		cmd.UserId = c.UserId
-		metrics.M_Api_Dashboard_Snapshot_Create.Inc(1)
+		metrics.M_Api_Dashboard_Snapshot_Create.Inc()
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -84,7 +84,7 @@ func GetDashboardSnapshot(c *middleware.Context) {
 		},
 	}
 
-	metrics.M_Api_Dashboard_Snapshot_Get.Inc(1)
+	metrics.M_Api_Dashboard_Snapshot_Get.Inc()
 
 	c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	c.JSON(200, dto)

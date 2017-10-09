@@ -9,18 +9,16 @@
 <div class="gf-form-group">
 	<div class="gf-form-inline">
 		<div class="gf-form">
-			<span class="gf-form-label width-4">Title</span>
-			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.titleColumn' placeholder=""></input>
+			<span class="gf-form-label width-4">Text</span>
+			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.textColumn' placeholder=""></input>
 		</div>
-
 		<div class="gf-form">
 			<span class="gf-form-label width-4">Tags</span>
 			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.tagsColumn' placeholder=""></input>
 		</div>
-
-		<div class="gf-form">
-			<span class="gf-form-label width-4">Text</span>
-			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.textColumn' placeholder=""></input>
+		<div class="gf-form" ng-show="ctrl.annotation.titleColumn">
+			<span class="gf-form-label width-4">Title <em class="muted">(depricated)</em></span>
+			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.titleColumn' placeholder=""></input>
 		</div>
 	</div>
 </div>

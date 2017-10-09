@@ -28,7 +28,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 		tag1 := &Tag{Key: "hostname", Value: "server1", Operator: "="}
 		tag2 := &Tag{Key: "hostname", Value: "server2", Operator: "=", Condition: "OR"}
 
-		queryContext := &tsdb.QueryContext{
+		queryContext := &tsdb.TsdbQuery{
 			TimeRange: tsdb.NewTimeRange("5m", "now"),
 		}
 
@@ -57,7 +57,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := query.Build(queryContext)
 			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE "hostname" = 'server1' OR "hostname" = 'server2' AND time > now() - 5m GROUP BY time(5s), "datacenter" fill(null)`)
+			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE ("hostname" = 'server1' OR "hostname" = 'server2') AND time > now() - 5m GROUP BY time(5s), "datacenter" fill(null)`)
 		})
 
 		Convey("can build query with math part", func() {
@@ -101,12 +101,12 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			query := Query{}
 			Convey("render from: 2h to now-1h", func() {
 				query := Query{}
-				queryContext := &tsdb.QueryContext{TimeRange: tsdb.NewTimeRange("2h", "now-1h")}
+				queryContext := &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("2h", "now-1h")}
 				So(query.renderTimeFilter(queryContext), ShouldEqual, "time > now() - 2h and time < now() - 1h")
 			})
 
 			Convey("render from: 10m", func() {
-				queryContext := &tsdb.QueryContext{TimeRange: tsdb.NewTimeRange("10m", "now")}
+				queryContext := &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("10m", "now")}
 				So(query.renderTimeFilter(queryContext), ShouldEqual, "time > now() - 10m")
 			})
 		})

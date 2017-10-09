@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -19,6 +20,8 @@ func init() {
 }
 
 func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
+	metrics.M_DB_DataSource_QueryById.Inc()
+
 	datasource := m.DataSource{OrgId: query.OrgId, Id: query.Id}
 	has, err := x.Get(&datasource)
 

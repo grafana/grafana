@@ -33,48 +33,46 @@
 
   <div class="section gf-form-group" ng-if="ctrl.panel.dataFormat == 'timeseries'">
     <h5 class="section-heading">Buckets</h5>
-    <div ng-show="ctrl.panel.yAxis.logBase === 1">
-      <div class="gf-form-inline">
-        <div class="gf-form">
-          <label class="gf-form-label">Y Axis</label>
-          <label class="gf-form-label">Buckets</label>
-          <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right"
-                                                                                bs-tooltip="'Number of buckets for Y axis.'"
-                                                                                ng-model="ctrl.panel.yBucketNumber" ng-change="ctrl.refresh()" ng-model-onblur>
-        </div>
-        <div class="gf-form">
-          <label class="gf-form-label">Size</label>
-          <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right"
-                                                                                bs-tooltip="'Size of bucket. Has priority over Buckets option.'"
-                                                                                ng-model="ctrl.panel.yBucketSize" ng-change="ctrl.refresh()" ng-model-onblur>
-        </div>
-      </div>
-      <div class="gf-form-inline">
-        <div class="gf-form">
-          <label class="gf-form-label">X Axis</label>
-          <label class="gf-form-label">Buckets</label>
-          <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right"
-                                                                                bs-tooltip="'Number of buckets for Y axis.'"
-                                                                                ng-model="ctrl.panel.xBucketNumber" ng-change="ctrl.refresh()" ng-model-onblur>
-        </div>
-        <div class="gf-form">
-          <label class="gf-form-label">Size</label>
-          <input type="text" class="gf-form-input width-5" placeholder="auto" data-placement="right"
-                                                                              bs-tooltip="'Size of bucket. Number or interval (10s, 5m, 1h, etc). Supported intervals: ms, s, m, h, d, w, M, y. Has priority over Buckets option.'"
-                                                                              ng-model="ctrl.panel.xBucketSize" ng-change="ctrl.refresh()" ng-model-onblur>
-        </div>
-      </div>
-    </div>
-    <div ng-show="ctrl.panel.yAxis.logBase !== 1">
+    <div class="gf-form-inline">
       <div class="gf-form">
-        <label class="gf-form-label width-7">Split Factor</label>
+        <label class="gf-form-label width-5">Y Axis</label>
+      </div>
+      <div class="gf-form" ng-show="ctrl.panel.yAxis.logBase === 1">
+        <label class="gf-form-label width-5">Buckets</label>
+        <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right"
+                                                                              bs-tooltip="'Number of buckets for Y axis.'"
+                                                                              ng-model="ctrl.panel.yBucketNumber" ng-change="ctrl.refresh()" ng-model-onblur>
+      </div>
+      <div class="gf-form" ng-show="ctrl.panel.yAxis.logBase === 1">
+        <label class="gf-form-label width-4">Size</label>
+        <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right"
+                                                                              bs-tooltip="'Size of bucket. Has priority over Buckets option.'"
+                                                                              ng-model="ctrl.panel.yBucketSize" ng-change="ctrl.refresh()" ng-model-onblur>
+      </div>
+      <div class="gf-form" ng-show="ctrl.panel.yAxis.logBase !== 1">
+        <label class="gf-form-label width-10">Split Factor</label>
         <input type="number"
-               class="gf-form-input width-3"
+               class="gf-form-input width-9"
                placeholder="1"
                data-placement="right"
                bs-tooltip="'For log scales only. By default Y values is splitted by integer powers of log base (1, 2, 4, 8, 16, ... for log2). This option allows to split each default bucket into specified number of buckets.'"
                ng-model="ctrl.panel.yAxis.splitFactor" ng-change="ctrl.refresh()" ng-model-onblur>
         </input>
+      </div>
+    </div>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label width-5">X Axis</label>
+        <label class="gf-form-label width-5">Buckets</label>
+        <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right"
+                                                                              bs-tooltip="'Number of buckets for X axis.'"
+                                                                              ng-model="ctrl.panel.xBucketNumber" ng-change="ctrl.refresh()" ng-model-onblur>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-4">Size</label>
+        <input type="text" class="gf-form-input width-5" placeholder="auto" data-placement="right"
+                                                                            bs-tooltip="'Size of bucket. Number or interval (10s, 5m, 1h, etc). Supported intervals: ms, s, m, h, d, w, M, y. Has priority over Buckets option.'"
+                                                                            ng-model="ctrl.panel.xBucketSize" ng-change="ctrl.refresh()" ng-model-onblur>
       </div>
     </div>
   </div>

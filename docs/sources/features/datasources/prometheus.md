@@ -39,14 +39,16 @@ Name | Description
 
 Open a graph in edit mode by click the title > Edit (or by pressing `e` key while hovering over panel).
 
-![](/img/docs/v43/prometheus_query_editor.png)
+{{< docs-imagebox img="/img/docs/v45/prometheus_query_editor_still.png"
+                  animated-gif="/img/docs/v45/prometheus_query_editor.gif" >}}
 
 Name | Description
 ------- | --------
 *Query expression* | Prometheus query expression, check out the [Prometheus documentation](http://prometheus.io/docs/querying/basics/).
 *Legend format* | Controls the name of the time series, using name or pattern. For example `{{hostname}}` will be replaced with label value for the label `hostname`.
 *Min step* | Set a lower limit for the Prometheus step option. Step controls how big the jumps are when the Prometheus query engine performs range queries. Sadly there is no official prometheus documentation to link to for this very important option.
-*Resolution* | Controls the step option. Small steps create high-resolution graphs but can be slow over larger time ranges, lowering the resolution can speed things up. `1/2` will try to set step option to generate 1 data point for every other pixel. A value of `1/10` will try to set step option so there is a data point every 10 pixels.*Metric lookup* | Search for metric names in this input field.
+*Resolution* | Controls the step option. Small steps create high-resolution graphs but can be slow over larger time ranges, lowering the resolution can speed things up. `1/2` will try to set step option to generate 1 data point for every other pixel. A value of `1/10` will try to set step option so there is a data point every 10 pixels.
+*Metric lookup* | Search for metric names in this input field.
 *Format as* | **(New in v4.3)** Switch between Table & Time series. Table format will only work in the Table panel.
 
 ## Templating
@@ -77,7 +79,7 @@ For details of *metric names*, *label names* and *label values* are please refer
 There are two syntaxes:
 
 - `$<varname>`  Example: rate(http_requests_total{job=~"$job"}[5m])
-- `[[varname]]` Example: rate(http_requests_total{job="my[[job]]"}[5m])
+- `[[varname]]` Example: rate(http_requests_total{job=~"[[job]]"}[5m])
 
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the *Multi-value* or *Include all value*
 options are enabled, Grafana converts the labels from plain text to a regex compatible string. Which means you have to use `=~` instead of `=`.

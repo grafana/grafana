@@ -14,10 +14,7 @@ export class KeybindingSrv {
   /** @ngInject */
   constructor(
     private $rootScope,
-    private $modal,
-    private $location,
-    private contextSrv,
-    private $timeout) {
+    private $location) {
 
     // clear out all shortcuts on route change
     $rootScope.$on('$routeChangeSuccess', () => {
@@ -180,17 +177,21 @@ export class KeybindingSrv {
     });
 
     // collapse all rows
-    this.bind('d C', () => {
+    this.bind('d shift+c', () => {
       for (let row of dashboard.rows) {
         row.collapse = true;
       }
     });
 
     // expand all rows
-    this.bind('d E', () => {
+    this.bind('d shift+e', () => {
       for (let row of dashboard.rows) {
         row.collapse = false;
       }
+    });
+
+    this.bind('d n', e => {
+      this.$location.url("/dashboard/new");
     });
 
     this.bind('d r', () => {
@@ -214,12 +215,8 @@ export class KeybindingSrv {
       if (popups.length > 0) {
         return;
       }
-      // close modals
-      var modalData = $(".modal").data();
-      if (modalData && modalData.$scope && modalData.$scope.dismiss) {
-        modalData.$scope.dismiss();
-      }
 
+      scope.appEvent('hide-modal');
       scope.appEvent('hide-dash-editor');
       scope.appEvent('panel-change-view', {fullscreen: false, edit: false});
     });

@@ -7,64 +7,76 @@
 // -------------------------
 
 .alert {
-  padding: 0.5rem 2rem 0.5rem 1rem;
+  padding: 1.25rem 2rem 1.25rem 1.5rem;
   margin-bottom: $line-height-base;
-  text-shadow: 0 1px 0 rgba(255,255,255,.5);
-  background-color: $state-warning-bg;
+  text-shadow: 0 2px 0 rgba(255,255,255,.5);
+  background: $alert-error-bg;
   position: relative;
   color: $white;
-  text-shadow: 0 1px 0 rgba(0,0,0,.5);
+  text-shadow: 0 1px 0 rgba(0,0,0,.2);
   border-radius: 2px;
+  display: flex;
+  flex-direction: row;
 }
 
 // Alternate styles
 // -------------------------
 
 .alert-success {
-  background-color: $successBackground;
+  background: $alert-success-bg;
 }
 
 .alert-danger,
 .alert-error {
-  background-color: $errorBackground;
+  background: $alert-error-bg;
 }
 
 .alert-info {
-  background-color: $infoBackground;
+  background: $alert-info-bg;
 }
 
 .alert-warning {
-  background-color: $state-warning-bg;
+  background: $alert-warning-bg;
 }
 
 .page-alert-list {
   z-index: 8000;
-  min-width: 300px;
-  max-width: 300px;
+  min-width: 400px;
+  max-width: 600px;
   position: fixed;
-  right: 20px;
-  top: 56px;
+  right: 10px;
+  top: 60px;
 }
 
 .alert-close {
-  position: absolute;
-  top: -4px;
-  right: -2px;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  background: $white;
-  border-radius: 50%;
+  padding: 0 0 0 1rem;
   border: none;
-  font-size: 1.1rem;
-  color: $dark-4;
+  background: none;
+  display: flex;
+  align-items: center;
   .fa {
-    position: relative;
-    top: -2px;
+    align-self: flex-end;
+    font-size: 1.5rem;
+    color: rgba(255,255,255,.75)
   }
 }
 
 .alert-title {
   font-weight: $font-weight-semi-bold;
   padding-bottom: 2px;
+}
+
+.alert-icon {
+  padding: 0 1rem 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  .fa {
+    font-size: 1.5rem;
+  }
+}
+
+.alert-body {
+  flex-grow: 1;
 }

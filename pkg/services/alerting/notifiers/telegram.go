@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -80,7 +79,6 @@ func NewTelegramNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending alert notification to", "bot_token", this.BotToken)
 	this.log.Info("Sending alert notification to", "chat_id", this.ChatID)
-	metrics.M_Alerting_Notification_Sent_Telegram.Inc(1)
 
 	bodyJSON := simplejson.New()
 

@@ -16,7 +16,7 @@ var (
 	regexpMeasurementPattern *regexp.Regexp = regexp.MustCompile(`^\/.*\/$`)
 )
 
-func (query *Query) Build(queryContext *tsdb.QueryContext) (string, error) {
+func (query *Query) Build(queryContext *tsdb.TsdbQuery) (string, error) {
 	var res string
 
 	if query.UseRawQuery && query.RawQuery != "" {
@@ -41,7 +41,7 @@ func (query *Query) Build(queryContext *tsdb.QueryContext) (string, error) {
 	return res, nil
 }
 
-func getDefinedInterval(query *Query, queryContext *tsdb.QueryContext) (*tsdb.Interval, error) {
+func getDefinedInterval(query *Query, queryContext *tsdb.TsdbQuery) (*tsdb.Interval, error) {
 	defaultInterval := tsdb.CalculateInterval(queryContext.TimeRange)
 
 	if query.Interval == "" {
@@ -104,7 +104,7 @@ func (query *Query) renderTags() []string {
 	return res
 }
 
-func (query *Query) renderTimeFilter(queryContext *tsdb.QueryContext) string {
+func (query *Query) renderTimeFilter(queryContext *tsdb.TsdbQuery) string {
 	from := "now() - " + queryContext.TimeRange.From
 	to := ""
 
@@ -115,7 +115,7 @@ func (query *Query) renderTimeFilter(queryContext *tsdb.QueryContext) string {
 	return fmt.Sprintf("time > %s%s", from, to)
 }
 
-func (query *Query) renderSelectors(queryContext *tsdb.QueryContext) string {
+func (query *Query) renderSelectors(queryContext *tsdb.TsdbQuery) string {
 	res := "SELECT "
 
 	var selectors []string
@@ -151,15 +151,19 @@ func (query *Query) renderMeasurement() string {
 func (query *Query) renderWhereClause() string {
 	res := " WHERE "
 	conditions := query.renderTags()
-	res += strings.Join(conditions, " ")
 	if len(conditions) > 0 {
+		if len(conditions) > 1 {
+			res += "(" + strings.Join(conditions, " ") + ")"
+		} else {
+			res += conditions[0]
+		}
 		res += " AND "
 	}
 
 	return res
 }
 
-func (query *Query) renderGroupBy(queryContext *tsdb.QueryContext) string {
+func (query *Query) renderGroupBy(queryContext *tsdb.TsdbQuery) string {
 	groupBy := ""
 	for i, group := range query.GroupBy {
 		if i == 0 {

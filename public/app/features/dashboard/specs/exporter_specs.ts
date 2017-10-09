@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
 import _ from 'lodash';
 import config from 'app/core/config';
@@ -80,6 +80,10 @@ describe('given dashboard with repeated panels', function() {
       name: 'mixed',
       meta: {id: "mixed", info: {version: "1.2.1"}, name: "Mixed", builtIn: true}
     }));
+    datasourceSrvStub.get.withArgs('-- Grafana --').returns(Promise.resolve({
+      name: '-- Grafana --',
+      meta: {id: "grafana", info: {version: "1.2.1"}, name: "grafana", builtIn: true}
+    }));
 
     config.panels['graph'] = {
       id: "graph",
@@ -116,7 +120,7 @@ describe('given dashboard with repeated panels', function() {
   });
 
   it('should replace datasource in annotation query', function() {
-    expect(exported.annotations.list[0].datasource).to.be("${DS_GFDB}");
+    expect(exported.annotations.list[1].datasource).to.be("${DS_GFDB}");
   });
 
   it('should add datasource as input', function() {

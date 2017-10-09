@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 
 import config from 'app/core/config';
@@ -34,7 +33,6 @@ export class DataSourceEditCtrl {
 
   /** @ngInject */
   constructor(
-    private $scope,
     private $q,
     private backendSrv,
     private $routeParams,
@@ -43,7 +41,7 @@ export class DataSourceEditCtrl {
     private navModelSrv,
   ) {
 
-    this.navModel = navModelSrv.getDatasourceNav(0);
+    this.navModel = this.navModelSrv.getDatasourceNav(0);
     this.isNew = true;
     this.datasources = [];
     this.tabIndex = 0;
@@ -58,7 +56,7 @@ export class DataSourceEditCtrl {
   }
 
   initNewDatasourceModel() {
-    this.current = angular.copy(defaults);
+    this.current = _.cloneDeep(defaults);
 
     // We are coming from getting started
     if (this.$location.search().gettingstarted) {
@@ -93,11 +91,21 @@ export class DataSourceEditCtrl {
     });
   }
 
+  userChangedType() {
+    // reset model but keep name & default flag
+    this.current = _.defaults({
+      id: this.current.id,
+      name: this.current.name,
+      isDefault: this.current.isDefault,
+      type: this.current.type,
+    }, _.cloneDeep(defaults));
+    this.typeChanged();
+  }
+
   typeChanged() {
     this.hasDashboards = false;
     return this.backendSrv.get('/api/plugins/' + this.current.type + '/settings').then(pluginInfo => {
       this.datasourceMeta = pluginInfo;
-      console.log(this.datasourceMeta) ;
       this.hasDashboards = _.find(pluginInfo.includes, {type: 'dashboard'});
     });
   }
@@ -111,31 +119,28 @@ export class DataSourceEditCtrl {
   }
 
   testDatasource() {
-    this.testing = { done: false };
-
     this.datasourceSrv.get(this.current.name).then(datasource => {
       if (!datasource.testDatasource) {
-        delete this.testing;
         return;
       }
 
-      return datasource.testDatasource().then(result => {
-        this.testing.message = result.message;
-        this.testing.status = result.status;
-        this.testing.title = result.title;
-      }).catch(err => {
-        if (err.statusText) {
-          this.testing.message = err.statusText;
-          this.testing.title = "HTTP Error";
-        } else {
-          this.testing.message = err.message;
-          this.testing.title = "Unknown error";
-        }
-      });
-    }).finally(() => {
-      if (this.testing) {
+      this.testing = {done: false, status: 'error'};
+
+      // make test call in no backend cache context
+      this.backendSrv.withNoBackendCache(() => {
+        return datasource.testDatasource().then(result => {
+          this.testing.message = result.message;
+          this.testing.status = result.status;
+        }).catch(err => {
+          if (err.statusText) {
+            this.testing.message = 'HTTP Error ' + err.statusText;
+          } else {
+            this.testing.message = err.message;
+          }
+        });
+      }).finally(() => {
         this.testing.done = true;
-      }
+      });
     });
   }
 

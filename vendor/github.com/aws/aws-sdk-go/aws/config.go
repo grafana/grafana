@@ -53,6 +53,13 @@ type Config struct {
 	// to use based on region.
 	EndpointResolver endpoints.Resolver
 
+	// EnforceShouldRetryCheck is used in the AfterRetryHandler to always call
+	// ShouldRetry regardless of whether or not if request.Retryable is set.
+	// This will utilize ShouldRetry method of custom retryers. If EnforceShouldRetryCheck
+	// is not set, then ShouldRetry will only be called if request.Retryable is nil.
+	// Proper handling of the request.Retryable field is important when setting this field.
+	EnforceShouldRetryCheck *bool
+
 	// The region to send requests to. This parameter is required and must
 	// be configured globally or on a per-client basis unless otherwise
 	// noted. A full list of regions is found in the "Regions and Endpoints"
@@ -88,7 +95,7 @@ type Config struct {
 	// recoverable failures.
 	//
 	// When nil or the value does not implement the request.Retryer interface,
-	// the request.DefaultRetryer will be used.
+	// the client.DefaultRetryer will be used.
 	//
 	// When both Retryer and MaxRetries are non-nil, the former is used and
 	// the latter ignored.
@@ -442,6 +449,10 @@ func mergeInConfig(dst *Config, other *Config) {
 
 	if other.DisableRestProtocolURICleaning != nil {
 		dst.DisableRestProtocolURICleaning = other.DisableRestProtocolURICleaning
+	}
+
+	if other.EnforceShouldRetryCheck != nil {
+		dst.EnforceShouldRetryCheck = other.EnforceShouldRetryCheck
 	}
 }
 

@@ -17,11 +17,15 @@ import (
 )
 
 var pluginProxyTransport = &http.Transport{
-	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	Proxy:           http.ProxyFromEnvironment,
+	TLSClientConfig: &tls.Config{
+		InsecureSkipVerify: true,
+		Renegotiation:      tls.RenegotiateFreelyAsClient,
+	},
+	Proxy: http.ProxyFromEnvironment,
 	Dial: (&net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
+		DualStack: true,
 	}).Dial,
 	TLSHandshakeTimeout: 10 * time.Second,
 }
@@ -32,8 +36,7 @@ func InitAppPluginRoutes(r *macaron.Macaron) {
 			url := util.JoinUrlFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
 			handlers := make([]macaron.Handler, 0)
 			handlers = append(handlers, middleware.Auth(&middleware.AuthOptions{
-				ReqSignedIn:     true,
-				ReqGrafanaAdmin: route.ReqGrafanaAdmin,
+				ReqSignedIn: true,
 			}))
 
 			if route.ReqRole != "" {

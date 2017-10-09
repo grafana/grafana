@@ -3,10 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"runtime"
 	"runtime/trace"
 	"strconv"
@@ -16,7 +14,7 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,16 +22,17 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	_ "github.com/grafana/grafana/pkg/tsdb/elasticsearch"
+	_ "github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
 	_ "github.com/grafana/grafana/pkg/tsdb/influxdb"
-	_ "github.com/grafana/grafana/pkg/tsdb/mqe"
 	_ "github.com/grafana/grafana/pkg/tsdb/mysql"
 	_ "github.com/grafana/grafana/pkg/tsdb/opentsdb"
+
 	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
 	_ "github.com/grafana/grafana/pkg/tsdb/testdata"
 )
 
-var version = "4.1.0"
+var version = "4.6.0"
 var commit = "NA"
 var buildstamp string
 var build_date string
@@ -44,7 +43,6 @@ var pidFile = flag.String("pidfile", "", "path to pid file")
 var exitChan = make(chan int)
 
 func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func main() {
@@ -85,48 +83,15 @@ func main() {
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
 
+	metrics.M_Grafana_Version.WithLabelValues(version).Set(1)
+
 	server := NewGrafanaServer()
 	server.Start()
-}
-
-func initRuntime() {
-	err := setting.NewConfigContext(&setting.CommandLineArgs{
-		Config:   *configFile,
-		HomePath: *homePath,
-		Args:     flag.Args(),
-	})
-
-	if err != nil {
-		log.Fatal(3, err.Error())
-	}
-
-	logger := log.New("main")
-	logger.Info("Starting Grafana", "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
-
-	setting.LogConfigurationInfo()
 }
 
 func initSql() {
 	sqlstore.NewEngine()
 	sqlstore.EnsureAdminUser()
-}
-
-func writePIDFile() {
-	if *pidFile == "" {
-		return
-	}
-
-	// Ensure the required directory structure exists.
-	err := os.MkdirAll(filepath.Dir(*pidFile), 0700)
-	if err != nil {
-		log.Fatal(3, "Failed to verify pid directory", err)
-	}
-
-	// Retrieve the PID and write it.
-	pid := strconv.Itoa(os.Getpid())
-	if err := ioutil.WriteFile(*pidFile, []byte(pid), 0644); err != nil {
-		log.Fatal(3, "Failed to write pidfile", err)
-	}
 }
 
 func listenToSystemSignals(server models.GrafanaServer) {

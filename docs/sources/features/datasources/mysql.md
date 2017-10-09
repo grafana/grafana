@@ -11,8 +11,7 @@ weight = 7
 
 # Using MySQL in Grafana
 
-> Only available in Grafana v4.3+. This data source is not ready for
-> production use, currently in development (alpha state).
+> Only available in Grafana v4.3+.
 
 Grafana ships with a built-in MySQL data source plugin that allow you to query any visualize
 data from a MySQL compatible database.
@@ -29,8 +28,7 @@ data from a MySQL compatible database.
 The database user you specify when you add the data source should only be granted SELECT permissions on
 the specified database & tables you want to query. Grafana does not validate that the query is safe. The query
 could include any SQL statement. For example, statements like `USE otherdb;` and `DROP TABLE user;` would be
-executed. To protect against this we **Highly** recommmend you create a specific mysql user with
-restricted permissions.
+executed. To protect against this we **Highly** recommmend you create a specific mysql user with restricted permissions.
 
 Example:
 
@@ -49,11 +47,9 @@ Macro example | Description
 ------------ | -------------
 *$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn > FROM_UNIXTIME(1494410783) AND dateColumn < FROM_UNIXTIME(1494497183)*
 
-We plan to add many more macros. If you have suggestions for what macros you would like to see, please
-[open an issue](https://github.com/grafana/grafana) in our GitHub repo.
+We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
-The query editor has a link named `Generated SQL` that show up after a query as been executed, while in panel edit mode. Click
-on it and it will expand and show the raw interpolated SQL string that was executed.
+The query editor has a link named `Generated SQL` that show up after a query as been executed, while in panel edit mode. Click on it and it will expand and show the raw interpolated SQL string that was executed.
 
 ## Table queries
 
@@ -61,8 +57,7 @@ If the `Format as` query option is set to `Table` then you can basically do any 
 
 Query editor with example query:
 
-![](/img/docs/v43/mysql_table_query.png)
-
+{{< docs-imagebox img="/img/docs/v45/mysql_table_query.png" >}}
 
 The query:
 
@@ -109,8 +104,71 @@ This is something we plan to add.
 
 ## Templating
 
-You can use variables in your queries but there are currently no support for defining `Query` variables
-that target a MySQL data source.
+This feature is currently available in the nightly builds and will be included in the 5.0.0 release.
+
+Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
+
+Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
+
+### Query Variable
+
+If you add a template variable of the type `Query`, you can write a MySQL query that can
+return things like measurement names, key names or key values that are shown as a dropdown select box.
+
+For example, you can have a variable that contains all values for the `hostname` column in a table if you specify a query like this in the templating variable *Query* setting.
+
+```sql
+SELECT hostname FROM my_host
+```
+
+A query can returns multiple columns and Grafana will automatically create a list from them. For example, the query below will return a list with values from `hostname` and `hostname2`.
+
+```sql
+SELECT my_host.hostname, my_other_host.hostname2 FROM my_host JOIN my_other_host ON my_host.city = my_other_host.city
+```
+
+Another option is a query that can create a key/value variable. The query should return two columns that are named `__text` and `__value`. The `__text` column value should be unique (if it is not unique then the first value is used). The options in the dropdown will have a text and value that allows you to have a friendly name as text and an id as the value. An example query with `hostname` as the text and `id` as the value:
+
+```sql
+SELECT hostname AS __text, id AS __value FROM my_host
+```
+
+You can also create nested variables. For example if you had another variable named `region`. Then you could have
+the hosts variable only show hosts from the current selected region with a query like this (if `region` is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values):
+
+```sql
+SELECT hostname FROM my_host  WHERE region IN($region)
+```
+
+### Using Variables in Queries
+
+Template variables are quoted automatically so if it is a string value do not wrap them in quotes in where clauses. If the variable is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values.
+
+There are two syntaxes:
+
+`$<varname>`  Example with a template variable named `hostname`:
+
+```sql
+SELECT
+  UNIX_TIMESTAMP(atimestamp) as time_sec,
+  aint as value,
+  avarchar as metric
+FROM my_table
+WHERE $__timeFilter(atimestamp) and hostname in($hostname)
+ORDER BY atimestamp ASC
+```
+
+`[[varname]]`  Example with a template variable named `hostname`:
+
+```sql
+SELECT
+  UNIX_TIMESTAMP(atimestamp) as time_sec,
+  aint as value,
+  avarchar as metric
+FROM my_table
+WHERE $__timeFilter(atimestamp) and hostname in([[hostname]])
+ORDER BY atimestamp ASC
+```
 
 ## Alerting
 

@@ -229,8 +229,11 @@ export default class InfluxQuery {
       return this.renderTagCondition(tag, index, interpolate);
     });
 
-    query += conditions.join(' ');
-    query += (conditions.length > 0 ? ' AND ' : '') + '$timeFilter';
+    if (conditions.length > 0) {
+      query += '(' + conditions.join(' ') + ') AND ';
+    }
+
+    query += '$timeFilter';
 
     var groupBySection = "";
     for (i = 0; i < this.groupByParts.length; i++) {

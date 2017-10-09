@@ -41,15 +41,13 @@
 			</div>
 
 			<div class="gf-form-inline gf-form-group">
-				<div class="gf-form">
-					<a class="btn btn-inverse btn-small" ng-click="addInvite()">
+				<div class="gf-form" style="margin-right:.25rem">
+					<a class="btn btn-inverse gf-form-button" ng-click="addInvite()">
 						<i class="fa fa-plus"></i>
 						Invite another
 					</a>
 				</div>
-				<div class="gf-form">
-					<editor-checkbox text="Skip sending invite email" model="options.skipEmails" change="targetBlur()"></editor-checkbox>
-				</div>
+				<gf-form-switch class="gf-form" label="Skip sending invite email" checked="options.skipEmails" switch-class="max-width-6"></gf-form-switch>
 			</div>
 
 			<div class="gf-form-button-row">

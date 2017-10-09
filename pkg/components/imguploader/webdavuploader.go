@@ -2,6 +2,7 @@ package imguploader
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -23,7 +24,8 @@ type WebdavUploader struct {
 var netTransport = &http.Transport{
 	Proxy: http.ProxyFromEnvironment,
 	Dial: (&net.Dialer{
-		Timeout: 60 * time.Second,
+		Timeout:   60 * time.Second,
+		DualStack: true,
 	}).Dial,
 	TLSHandshakeTimeout: 5 * time.Second,
 }
@@ -33,7 +35,7 @@ var netClient = &http.Client{
 	Transport: netTransport,
 }
 
-func (u *WebdavUploader) Upload(pa string) (string, error) {
+func (u *WebdavUploader) Upload(ctx context.Context, pa string) (string, error) {
 	url, _ := url.Parse(u.url)
 	filename := util.GetRandomString(20) + ".png"
 	url.Path = path.Join(url.Path, filename)

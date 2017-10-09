@@ -1,24 +1,27 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
+import ResponseParser from './response_parser';
 
 export class MysqlDatasource {
   id: any;
   name: any;
+  responseParser: ResponseParser;
 
   /** @ngInject **/
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
+    this.responseParser = new ResponseParser(this.$q);
   }
 
   interpolateVariable(value) {
     if (typeof value === 'string') {
-      return '\"' + value + '\"';
+      return '\'' + value + '\'';
     }
 
     var quotedValues = _.map(value, function(val) {
-      return '\"' + val + '\"';
+      return '\'' + val + '\'';
     });
     return  quotedValues.join(',');
   }
@@ -49,7 +52,7 @@ export class MysqlDatasource {
         to: options.range.to.valueOf().toString(),
         queries: queries,
       }
-    }).then(this.processQueryResult.bind(this));
+    }).then(this.responseParser.processQueryResult);
   }
 
   annotationQuery(options) {
@@ -72,46 +75,30 @@ export class MysqlDatasource {
         to: options.range.to.valueOf().toString(),
         queries: [query],
       }
-    }).then(this.transformAnnotationResponse.bind(this, options));
+    }).then(data => this.responseParser.transformAnnotationResponse(options, data));
   }
 
-  transformAnnotationResponse(options, data) {
-    const table = data.data.results[options.annotation.name].tables[0];
+  metricFindQuery(query, optionalOptions) {
+    let refId = 'tempvar';
+    if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
+      refId = optionalOptions.variable.name;
+    }
 
-    let timeColumnIndex = -1;
-    let titleColumnIndex = -1;
-    let textColumnIndex = -1;
-    let tagsColumnIndex = -1;
+    const interpolatedQuery = {
+      refId: refId,
+      datasourceId: this.id,
+      rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
+      format: 'table',
+    };
 
-    for (let i = 0; i < table.columns.length; i++) {
-      if (table.columns[i].text === 'time_sec') {
-        timeColumnIndex = i;
-      } else if (table.columns[i].text === 'title') {
-        titleColumnIndex = i;
-      } else if (table.columns[i].text === 'text') {
-        textColumnIndex = i;
-      } else if (table.columns[i].text === 'tags') {
-        tagsColumnIndex = i;
+    return this.backendSrv.datasourceRequest({
+      url: '/api/tsdb/query',
+      method: 'POST',
+      data: {
+        queries: [interpolatedQuery],
       }
-    }
-
-    if (timeColumnIndex === -1) {
-      return this.$q.reject({message: 'Missing mandatory time column (with time_sec column alias) in annotation query.'});
-    }
-
-    const list = [];
-    for (let i = 0; i < table.rows.length; i++) {
-      const row = table.rows[i];
-      list.push({
-        annotation: options.annotation,
-        time: Math.floor(row[timeColumnIndex]) * 1000,
-        title: row[titleColumnIndex],
-        text: row[textColumnIndex],
-        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : []
-      });
-    }
-
-    return list;
+    })
+    .then(data => this.responseParser.parseMetricFindQueryResult(refId, data));
   }
 
   testDatasource() {
@@ -131,49 +118,15 @@ export class MysqlDatasource {
         }],
       }
     }).then(res => {
-      return { status: "success", message: "Database Connection OK", title: "Success" };
+      return { status: "success", message: "Database Connection OK"};
     }).catch(err => {
       console.log(err);
       if (err.data && err.data.message) {
-        return { status: "error", message: err.data.message, title: "Error" };
+        return { status: "error", message: err.data.message };
       } else {
-        return { status: "error", message: err.status, title: "Error" };
+        return { status: "error", message: err.status };
       }
     });
-  }
-
-  processQueryResult(res) {
-    var data = [];
-
-    if (!res.data.results) {
-      return {data: data};
-    }
-
-    for (let key in res.data.results) {
-      let queryRes = res.data.results[key];
-
-      if (queryRes.series) {
-        for (let series of queryRes.series) {
-          data.push({
-            target: series.name,
-            datapoints: series.points,
-            refId: queryRes.refId,
-            meta: queryRes.meta,
-          });
-        }
-      }
-
-      if (queryRes.tables) {
-        for (let table of queryRes.tables) {
-          table.type = 'table';
-          table.refId = queryRes.refId;
-          table.meta = queryRes.meta;
-          data.push(table);
-        }
-      }
-    }
-
-    return {data: data};
   }
 }
 

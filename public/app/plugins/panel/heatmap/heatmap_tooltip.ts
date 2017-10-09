@@ -1,6 +1,4 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import d3 from 'd3';
+import d3 from 'vendor/d3/d3';
 import $ from 'jquery';
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
@@ -83,7 +81,10 @@ export class HeatmapTooltip {
 
     let boundBottom, boundTop, valuesNumber;
     let xData = data.buckets[xBucketIndex];
-    let yData = xData.buckets[yBucketIndex];
+    // Search in special 'zero' bucket also
+    let yData = _.find(xData.buckets, (bucket, bucketIndex) => {
+      return bucket.bounds.bottom === yBucketIndex || bucketIndex === yBucketIndex;
+    });
 
     let tooltipTimeFormat = 'YYYY-MM-DD HH:mm:ss';
     let time = this.dashboard.formatDate(xData.x, tooltipTimeFormat);
@@ -105,7 +106,9 @@ export class HeatmapTooltip {
 
     if (yData) {
       if (yData.bounds) {
-        boundBottom = valueFormatter(yData.bounds.bottom);
+        // Display 0 if bucket is a special 'zero' bucket
+        let bottom = yData.y ? yData.bounds.bottom : 0;
+        boundBottom = valueFormatter(bottom);
         boundTop = valueFormatter(yData.bounds.top);
         valuesNumber = yData.count;
         tooltipHtml += `<div>
@@ -165,7 +168,7 @@ export class HeatmapTooltip {
     let yBucketSize = this.scope.ctrl.data.yBucketSize;
     let {min, max, ticks} = this.scope.ctrl.data.yAxis;
     let histogramData = _.map(xBucket.buckets, bucket => {
-      return [bucket.y, bucket.values.length];
+      return [bucket.bounds.bottom, bucket.values.length];
     });
     histogramData = _.filter(histogramData, d => {
       return d[0] >= min && d[0] <= max;
@@ -180,7 +183,8 @@ export class HeatmapTooltip {
     if (this.panel.yAxis.logBase === 1) {
       barWidth = Math.floor(HISTOGRAM_WIDTH / (max - min) * yBucketSize * 0.9);
     } else {
-      barWidth = Math.floor(HISTOGRAM_WIDTH / ticks / yBucketSize * 0.9);
+      let barNumberFactor = yBucketSize ? yBucketSize : 1;
+      barWidth = Math.floor(HISTOGRAM_WIDTH / ticks / barNumberFactor * 0.9);
     }
     barWidth = Math.max(barWidth, 1);
 

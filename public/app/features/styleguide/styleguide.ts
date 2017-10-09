@@ -15,7 +15,7 @@ class StyleGuideCtrl {
   navModel: any;
 
   /** @ngInject **/
-  constructor(private $http, private $routeParams, private $location, private backendSrv, navModelSrv) {
+  constructor(private $http, private $routeParams, private backendSrv, navModelSrv) {
     this.navModel = navModelSrv.getAdminNav();
     this.theme = config.bootData.user.lightTheme ? 'light': 'dark';
     this.page = {};
@@ -36,7 +36,7 @@ class StyleGuideCtrl {
    }
 
   loadColors() {
-   this.$http.get('public/sass/styleguide.json').then(res => {
+   this.$http.get('public/build/styleguide.json').then(res => {
       this.colors = _.map(res.data[this.theme], (value, key) => {
         return {name: key, value: value};
       });

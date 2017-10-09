@@ -62,6 +62,8 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 
 		if ds.JsonData != nil {
 			dsMap["jsonData"] = ds.JsonData
+		} else {
+			dsMap["jsonData"] = make(map[string]string)
 		}
 
 		if ds.Access == m.DS_ACCESS_DIRECT {
@@ -131,17 +133,20 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	}
 
 	jsonObj := map[string]interface{}{
-		"defaultDatasource":  defaultDatasource,
-		"datasources":        datasources,
-		"panels":             panels,
-		"appSubUrl":          setting.AppSubUrl,
-		"allowOrgCreate":     (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		"authProxyEnabled":   setting.AuthProxyEnabled,
-		"ldapEnabled":        setting.LdapEnabled,
-		"alertingEnabled":    setting.AlertingEnabled,
-		"googleAnalyticsId":  setting.GoogleAnalyticsId,
-		"disableLoginForm":   setting.DisableLoginForm,
-		"disableSignoutMenu": setting.DisableSignoutMenu,
+		"defaultDatasource":       defaultDatasource,
+		"datasources":             datasources,
+		"panels":                  panels,
+		"appSubUrl":               setting.AppSubUrl,
+		"allowOrgCreate":          (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		"authProxyEnabled":        setting.AuthProxyEnabled,
+		"ldapEnabled":             setting.LdapEnabled,
+		"alertingEnabled":         setting.AlertingEnabled,
+		"googleAnalyticsId":       setting.GoogleAnalyticsId,
+		"disableLoginForm":        setting.DisableLoginForm,
+		"disableSignoutMenu":      setting.DisableSignoutMenu,
+		"externalUserMngInfo":     setting.ExternalUserMngInfo,
+		"externalUserMngLinkUrl":  setting.ExternalUserMngLinkUrl,
+		"externalUserMngLinkName": setting.ExternalUserMngLinkName,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,

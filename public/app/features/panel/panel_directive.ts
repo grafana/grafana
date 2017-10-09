@@ -2,9 +2,7 @@
 
 import angular from 'angular';
 import $ from 'jquery';
-import _ from 'lodash';
 import Drop from 'tether-drop';
-import {appEvents} from 'app/core/core';
 
 var module = angular.module('grafana.directives');
 

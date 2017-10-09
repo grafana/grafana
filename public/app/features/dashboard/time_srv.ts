@@ -1,7 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import config from 'app/core/config';
-import angular from 'angular';
 import moment from 'moment';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
@@ -116,22 +114,23 @@ class TimeSrv {
 
   setAutoRefresh(interval) {
     this.dashboard.refresh = interval;
+    this.cancelNextRefresh();
     if (interval) {
       var intervalMs = kbn.interval_to_ms(interval);
 
-      this.$timeout(() => {
+      this.refreshTimer = this.timer.register(this.$timeout(() => {
         this.startNextRefreshTimer(intervalMs);
         this.refreshDashboard();
-      }, intervalMs);
-
-    } else {
-      this.cancelNextRefresh();
+      }, intervalMs));
     }
 
     // update url
+    var params = this.$location.search();
     if (interval) {
-      var params = this.$location.search();
       params.refresh = interval;
+      this.$location.search(params);
+    } else if (params.refresh) {
+      delete params.refresh;
       this.$location.search(params);
     }
   }
@@ -197,9 +196,11 @@ class TimeSrv {
       to: moment.isMoment(this.time.to) ? moment(this.time.to) : this.time.to,
     };
 
+    var timezone = this.dashboard && this.dashboard.getTimezone();
+
     return {
-      from: dateMath.parse(raw.from, false),
-      to: dateMath.parse(raw.to, true),
+      from: dateMath.parse(raw.from, false, timezone),
+      to: dateMath.parse(raw.to, true, timezone),
       raw: raw
     };
   }

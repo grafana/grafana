@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"container/list"
 	"context"
 	"database/sql"
 	"fmt"
@@ -20,9 +21,8 @@ import (
 )
 
 type MysqlExecutor struct {
-	datasource *models.DataSource
-	engine     *xorm.Engine
-	log        log.Logger
+	engine *xorm.Engine
+	log    log.Logger
 }
 
 type engineCacheType struct {
@@ -37,16 +37,15 @@ var engineCache = engineCacheType{
 }
 
 func init() {
-	tsdb.RegisterExecutor("mysql", NewMysqlExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("mysql", NewMysqlExecutor)
 }
 
-func NewMysqlExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
+func NewMysqlExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	executor := &MysqlExecutor{
-		datasource: datasource,
-		log:        log.New("tsdb.mysql"),
+		log: log.New("tsdb.mysql"),
 	}
 
-	err := executor.initEngine()
+	err := executor.initEngine(datasource)
 	if err != nil {
 		return nil, err
 	}
@@ -54,18 +53,24 @@ func NewMysqlExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
 	return executor, nil
 }
 
-func (e *MysqlExecutor) initEngine() error {
+func (e *MysqlExecutor) initEngine(dsInfo *models.DataSource) error {
 	engineCache.Lock()
 	defer engineCache.Unlock()
 
-	if engine, present := engineCache.cache[e.datasource.Id]; present {
-		if version, _ := engineCache.versions[e.datasource.Id]; version == e.datasource.Version {
+	if engine, present := engineCache.cache[dsInfo.Id]; present {
+		if version, _ := engineCache.versions[dsInfo.Id]; version == dsInfo.Version {
 			e.engine = engine
 			return nil
 		}
 	}
 
-	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?charset=utf8mb4&parseTime=true&loc=UTC", e.datasource.User, e.datasource.Password, "tcp", e.datasource.Url, e.datasource.Database)
+	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC",
+		dsInfo.User,
+		dsInfo.Password,
+		"tcp",
+		dsInfo.Url,
+		dsInfo.Database)
+
 	e.log.Debug("getEngine", "connection", cnnstr)
 
 	engine, err := xorm.NewEngine("mysql", cnnstr)
@@ -75,29 +80,29 @@ func (e *MysqlExecutor) initEngine() error {
 		return err
 	}
 
-	engineCache.cache[e.datasource.Id] = engine
+	engineCache.cache[dsInfo.Id] = engine
 	e.engine = engine
 	return nil
 }
 
-func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{
-		QueryResults: make(map[string]*tsdb.QueryResult),
+func (e *MysqlExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	result := &tsdb.Response{
+		Results: make(map[string]*tsdb.QueryResult),
 	}
 
-	macroEngine := NewMysqlMacroEngine(context.TimeRange)
+	macroEngine := NewMysqlMacroEngine(tsdbQuery.TimeRange)
 	session := e.engine.NewSession()
 	defer session.Close()
 	db := session.DB()
 
-	for _, query := range queries {
+	for _, query := range tsdbQuery.Queries {
 		rawSql := query.Model.Get("rawSql").MustString()
 		if rawSql == "" {
 			continue
 		}
 
 		queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefId}
-		result.QueryResults[query.RefId] = queryResult
+		result.Results[query.RefId] = queryResult
 
 		rawSql, err := macroEngine.Interpolate(rawSql)
 		if err != nil {
@@ -133,7 +138,7 @@ func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, co
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 func (e MysqlExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
@@ -183,7 +188,7 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 	values := make([]interface{}, len(types))
 
 	for i, stype := range types {
-		e.log.Info("type", "type", stype)
+		e.log.Debug("type", "type", stype)
 		switch stype.DatabaseTypeName() {
 		case mysql.FieldTypeNameTiny:
 			values[i] = new(int8)
@@ -205,6 +210,8 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 			values[i] = new(float32)
 		case mysql.FieldTypeNameNewDecimal:
 			values[i] = new(float64)
+		case mysql.FieldTypeNameFloat:
+			values[i] = new(float64)
 		case mysql.FieldTypeNameTimestamp:
 			values[i] = new(time.Time)
 		case mysql.FieldTypeNameDateTime:
@@ -215,6 +222,20 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 			values[i] = new(int16)
 		case mysql.FieldTypeNameNULL:
 			values[i] = nil
+		case mysql.FieldTypeNameBit:
+			values[i] = new([]byte)
+		case mysql.FieldTypeNameBLOB:
+			values[i] = new(string)
+		case mysql.FieldTypeNameTinyBLOB:
+			values[i] = new(string)
+		case mysql.FieldTypeNameMediumBLOB:
+			values[i] = new(string)
+		case mysql.FieldTypeNameLongBLOB:
+			values[i] = new(string)
+		case mysql.FieldTypeNameString:
+			values[i] = new(string)
+		case mysql.FieldTypeNameDate:
+			values[i] = new(string)
 		default:
 			return nil, fmt.Errorf("Database type %s not supported", stype.DatabaseTypeName())
 		}
@@ -229,6 +250,7 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 
 func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 	pointsBySeries := make(map[string]*tsdb.TimeSeries)
+	seriesByQueryOrder := list.New()
 	columnNames, err := rows.Columns()
 
 	if err != nil {
@@ -254,8 +276,6 @@ func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows,
 			rowData.metric = "Unknown"
 		}
 
-		//e.log.Debug("Rows", "metric", rowData.metric, "time", rowData.time, "value", rowData.value)
-
 		if !rowData.time.Valid {
 			return fmt.Errorf("Found row with no time value")
 		}
@@ -266,11 +286,13 @@ func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows,
 			series := &tsdb.TimeSeries{Name: rowData.metric}
 			series.Points = append(series.Points, tsdb.TimePoint{rowData.value, rowData.time})
 			pointsBySeries[rowData.metric] = series
+			seriesByQueryOrder.PushBack(rowData.metric)
 		}
 	}
 
-	for _, value := range pointsBySeries {
-		result.Series = append(result.Series, value)
+	for elem := seriesByQueryOrder.Front(); elem != nil; elem = elem.Next() {
+		key := elem.Value.(string)
+		result.Series = append(result.Series, pointsBySeries[key])
 	}
 
 	result.Meta.Set("rowCount", rowCount)

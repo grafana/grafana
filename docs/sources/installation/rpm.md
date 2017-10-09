@@ -15,7 +15,9 @@ weight = 2
 
 Description | Download
 ------------ | -------------
-Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [4.4.0 (x86-64 rpm)](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.4.0-1.x86_64.rpm)
+Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [4.5.2 (x86-64 rpm)](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.5.2-1.x86_64.rpm)
+
+<!-- Latest Beta for CentOS / Fedora / OpenSuse / Redhat Linux | [4.5.0-beta1 (x86-64 rpm)](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.5.0-beta1.x86_64.rpm) -->
 
 Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
@@ -24,42 +26,54 @@ installation.
 
 You can install Grafana using Yum directly.
 
-    $ sudo yum install https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.4.0-1.x86_64.rpm
+```bash
+$ sudo yum install https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.5.2-1.x86_64.rpm
+```
 
 Or install manually using `rpm`.
 
 #### On CentOS / Fedora / Redhat:
 
-    $ wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.4.0-1.x86_64.rpm
-    $ sudo yum install initscripts fontconfig
-    $ sudo rpm -Uvh grafana-4.4.0-1.x86_64.rpm
+```bash
+$ wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.5.2-1.x86_64.rpm
+$ sudo yum install initscripts fontconfig
+$ sudo rpm -Uvh grafana-4.5.2-1.x86_64.rpm
+```
 
 #### On OpenSuse:
 
-    $ sudo rpm -i --nodeps grafana-4.4.0-1.x86_64.rpm
+```bash
+$ sudo rpm -i --nodeps grafana-4.5.2-1.x86_64.rpm
+```
 
 ## Install via YUM Repository
 
 Add the following to a new file at `/etc/yum.repos.d/grafana.repo`
 
-    [grafana]
-    name=grafana
-    baseurl=https://packagecloud.io/grafana/stable/el/6/$basearch
-    repo_gpgcheck=1
-    enabled=1
-    gpgcheck=1
-    gpgkey=https://packagecloud.io/gpg.key https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana
-    sslverify=1
-    sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+```bash
+[grafana]
+name=grafana
+baseurl=https://packagecloud.io/grafana/stable/el/6/$basearch
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://packagecloud.io/gpg.key
+https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+```
 
-There is also a testing repository if you want beta or release
-candidates.
+There is also a testing repository if you want beta or release candidates.
 
-    baseurl=https://packagecloud.io/grafana/testing/el/6/$basearch
+```bash
+baseurl=https://packagecloud.io/grafana/testing/el/6/$basearch
+```
 
 Then install Grafana via the `yum` command.
 
-    $ sudo yum install grafana
+```bash
+$ sudo yum install grafana
+```
 
 ### RPM GPG Key
 
@@ -80,7 +94,9 @@ key](https://grafanarel.s3.amazonaws.com/RPM-GPG-KEY-grafana).
 
 You can start Grafana by running:
 
-    $ sudo service grafana-server start
+```bash
+$ sudo service grafana-server start
+```
 
 This will start the `grafana-server` process as the `grafana` user,
 which is created during package installation. The default HTTP port is
@@ -88,17 +104,23 @@ which is created during package installation. The default HTTP port is
 
 To configure the Grafana server to start at boot time:
 
-    $ sudo /sbin/chkconfig --add grafana-server
+```bash
+$ sudo /sbin/chkconfig --add grafana-server
+```
 
 ## Start the server (via systemd)
 
-    $ systemctl daemon-reload
-    $ systemctl start grafana-server
-    $ systemctl status grafana-server
+```bash
+$ systemctl daemon-reload
+$ systemctl start grafana-server
+$ systemctl status grafana-server
+```
 
 ### Enable the systemd service to start at boot
 
-    sudo systemctl enable grafana-server.service
+```bash
+sudo systemctl enable grafana-server.service
+```
 
 ## Environment file
 
@@ -137,7 +159,7 @@ for example in alert notifications.
 
 If the image is missing text make sure you have font packages installed.
 
-```
+```bash
 yum install fontconfig
 yum install freetype*
 yum install urw-fonts

@@ -24,9 +24,9 @@ Read the [Basic Concepts](/guides/basic_concepts) document to get a crash course
 
 ### Top header
 
-Let's start with creating a new Dashboard. You can find the new Dashboard link at the bottom of the Dashboard picker. You now have a blank Dashboard.
+Let's start with creating a new Dashboard. You can find the new Dashboard link on the right side of the Dashboard picker. You now have a blank Dashboard. 
 
-<img class="no-shadow" src="/img/docs/v2/v2_top_nav_annotated.png">
+<img class="no-shadow" src="/img/docs/v45/top_nav_annotated.png">
 
 The image above shows you the top header for a Dashboard.
 
@@ -41,19 +41,7 @@ The image above shows you the top header for a Dashboard.
 
 Dashboards are at the core of what Grafana is all about. Dashboards are composed of individual Panels arranged on a number of Rows. Grafana ships with a variety of Panels. Grafana makes it easy to construct the right queries, and customize the display properties so that you can create the perfect Dashboard for your need. Each Panel can interact with data from any configured Grafana Data Source (currently InfluxDB, Graphite, OpenTSDB, Prometheus and Cloudwatch). The [Basic Concepts](/guides/basic_concepts) guide explores these key ideas in detail.
 
-
-## Adding & Editing Graphs and Panels
-
-![](/img/docs/v2/graph_metrics_tab_graphite.png)
-
-1. You add panels via row menu. The row menu is the green icon to the left of each row.
-2. To edit the graph you click on the graph title to open the panel menu, then `Edit`.
-3. This should take you to the `Metrics` tab. In this tab you should see the editor for your default data source.
-
-When you click the `Metrics` tab, you are presented with a Query Editor that is specific to the Panel Data Source. Use the Query Editor to build your queries and Grafana will visualize them in real time.
-
-
-<img src="/img/docs/v2/dashboard_annotated.png" class="no-shadow">
+<img src="/img/docs/v45/dashboard_annotated.png" class="no-shadow">
 
 1. Zoom out time range
 2. Time picker dropdown. Here you can access relative time range options, auto refresh options and set custom absolute time ranges.
@@ -61,6 +49,17 @@ When you click the `Metrics` tab, you are presented with a Query Editor that is 
 4. Row controls menu. Via this menu you can add panels to the row, set row height and more.
 5. Dashboard panel. You edit panels by clicking the panel title.
 6. Graph legend. You can change series colors, y-axis and series visibility directly from the legend.
+
+
+## Adding & Editing Graphs and Panels
+
+![](/img/docs/v45/metrics_tab.png)
+
+1. You add panels via row menu. The row menu is the icon to the left of each row.
+2. To edit the graph you click on the graph title to open the panel menu, then `Edit`.
+3. This should take you to the `Metrics` tab. In this tab you should see the editor for your default data source.
+
+When you click the `Metrics` tab, you are presented with a Query Editor that is specific to the Panel Data Source. Use the Query Editor to build your queries and Grafana will visualize them in real time.
 
 ## Drag-and-Drop panels
 

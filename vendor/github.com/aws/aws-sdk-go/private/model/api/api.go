@@ -23,6 +23,7 @@ type API struct {
 	Shapes        map[string]*Shape
 	Waiters       []Waiter
 	Documentation string
+	Examples      Examples
 
 	// Set to true to avoid removing unused shapes
 	NoRemoveUnusedShapes bool
@@ -320,6 +321,98 @@ func (a *API) APIName() string {
 	return a.name
 }
 
+var tplServiceDoc = template.Must(template.New("service docs").Funcs(template.FuncMap{
+	"GetCrosslinkURL": GetCrosslinkURL,
+}).
+	Parse(`
+// Package {{ .PackageName }} provides the client and types for making API
+// requests to {{ .Metadata.ServiceFullName }}.
+{{ if .Documentation -}}
+//
+{{ .Documentation }}
+{{ end -}}
+{{ $crosslinkURL := GetCrosslinkURL $.BaseCrosslinkURL $.APIName $.Metadata.UID -}}
+{{ if $crosslinkURL -}}
+//
+// See {{ $crosslinkURL }} for more information on this service.
+{{ end -}}
+//
+// See {{ .PackageName }} package documentation for more information.
+// https://docs.aws.amazon.com/sdk-for-go/api/service/{{ .PackageName }}/
+//
+// Using the Client
+//
+// To use the client for {{ .Metadata.ServiceFullName }} you will first need
+// to create a new instance of it. 
+//
+// When creating a client for an AWS service you'll first need to have a Session
+// already created. The Session provides configuration that can be shared
+// between multiple service clients. Additional configuration can be applied to
+// the Session and service's client when they are constructed. The aws package's
+// Config type contains several fields such as Region for the AWS Region the
+// client should make API requests too. The optional Config value can be provided
+// as the variadic argument for Sessions and client creation.
+//
+// Once the service's client is created you can use it to make API requests the
+// AWS service. These clients are safe to use concurrently.
+//
+//   // Create a session to share configuration, and load external configuration.
+//   sess := session.Must(session.NewSession())
+//
+//   // Create the service's client with the session.
+//   svc := {{ .PackageName }}.New(sess)
+//
+// See the SDK's documentation for more information on how to use service clients.
+// https://docs.aws.amazon.com/sdk-for-go/api/
+// 
+// See aws package's Config type for more information on configuration options.
+// https://docs.aws.amazon.com/sdk-for-go/api/aws/#Config
+//
+// See the {{ .Metadata.ServiceFullName }} client {{ .StructName }} for more
+// information on creating the service's client.
+// https://docs.aws.amazon.com/sdk-for-go/api/service/{{ .PackageName }}/#New
+//
+{{ $opts := .OperationNames -}}
+{{ $optName := index $opts 0 -}}
+{{ $opt := index .Operations $optName -}}
+{{ $optInputName := $opt.InputRef.GoTypeWithPkgName -}}
+// Once the client is created you can make an API request to the service.
+// Each API method takes a input parameter, and returns the service response
+// and an error.
+//
+// The API method will document which error codes the service can be returned
+// by the operation if the service models the API operation's errors. These
+// errors will also be available as const strings prefixed with "ErrCode".
+//
+//   result, err := svc.{{ $opt.ExportedName }}(params)
+//   if err != nil {
+//       // Cast err to awserr.Error to handle specific error codes.
+//       aerr, ok := err.(awserr.Error)
+//       if ok && aerr.Code() == <error code to check for> {
+//           // Specific error code handling
+//       }
+//       return err
+//   }
+//
+//   fmt.Println("{{ $optName }} result:")
+//   fmt.Println(result)
+//
+// Using the Client with Context
+//
+// The service's client also provides methods to make API requests with a Context
+// value. This allows you to control the timeout, and cancellation of pending
+// requests. These methods also take request Option as variadic parameter to apply
+// additional configuration to the API request.
+//
+//   ctx := context.Background()
+//
+//   result, err := svc.{{ $opt.ExportedName }}WithContext(ctx, params)
+//
+// See the request package documentation for more information on using Context pattern
+// with the SDK.
+// https://docs.aws.amazon.com/sdk-for-go/api/aws/request/
+`))
+
 // A tplService defines the template for the service generated code.
 var tplService = template.Must(template.New("service").Funcs(template.FuncMap{
 	"ServiceNameValue": func(a *API) string {
@@ -328,7 +421,6 @@ var tplService = template.Must(template.New("service").Funcs(template.FuncMap{
 		}
 		return "ServiceName"
 	},
-	"GetCrosslinkURL": GetCrosslinkURL,
 	"EndpointsIDConstValue": func(a *API) string {
 		if a.NoConstServiceNames {
 			return fmt.Sprintf("%q", a.Metadata.EndpointPrefix)
@@ -346,12 +438,12 @@ var tplService = template.Must(template.New("service").Funcs(template.FuncMap{
 		return "EndpointsID"
 	},
 }).Parse(`
-{{ .Documentation }}// The service client's operations are safe to be used concurrently.
-// It is not safe to mutate any of the client's properties though.
-{{ $crosslinkURL := GetCrosslinkURL $.BaseCrosslinkURL $.APIName $.Metadata.UID -}}
-{{ if ne $crosslinkURL "" -}} 
-// Please also see {{ $crosslinkURL }}
-{{ end -}}
+// {{ .StructName }} provides the API operation methods for making requests to
+// {{ .Metadata.ServiceFullName }}. See this package's package overview docs
+// for details on the service.
+//
+// {{ .StructName }} methods are safe to use concurrently. It is not safe to
+// modify mutate any of the struct's properties though.
 type {{ .StructName }} struct {
 	*client.Client
 }
@@ -456,6 +548,20 @@ func (c *{{ .StructName }}) newRequest(op *request.Operation, params, data inter
 	return req
 }
 `))
+
+// ServicePackageDoc generates the contents of the doc file for the service.
+//
+// Will also read in the custom doc templates for the service if found.
+func (a *API) ServicePackageDoc() string {
+	a.imports = map[string]bool{}
+
+	var buf bytes.Buffer
+	if err := tplServiceDoc.Execute(&buf, a); err != nil {
+		panic(err)
+	}
+
+	return buf.String()
+}
 
 // ServiceGoCode renders service go code. Returning it as a string.
 func (a *API) ServiceGoCode() string {

@@ -1,8 +1,8 @@
 ///<amd-dependency path="test/specs/helpers" name="helpers" />
 
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
+import {describe, it, expect} from 'test/lib/common';
 import moment from 'moment';
-import IndexPattern from '../index_pattern';
+import {IndexPattern} from '../index_pattern';
 
 describe('IndexPattern', function() {
 
@@ -19,7 +19,7 @@ describe('IndexPattern', function() {
 
     describe('no interval', function() {
       it('should return correct index', function() {
-        var pattern = new IndexPattern('my-metrics');
+        var pattern = new IndexPattern('my-metrics', null);
         var from = new Date(2015, 4, 30, 1, 2, 3);
         var to = new Date(2015, 5, 1, 12, 5 , 6);
         expect(pattern.getIndexList(from, to)).to.eql('my-metrics');
