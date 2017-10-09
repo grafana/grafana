@@ -1,8 +1,9 @@
 import _ from 'lodash';
 import moment from 'moment';
+import tinycolor from 'tinycolor2';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 import {AnnotationEvent} from './event';
-import {OK_COLOR, ALERTING_COLOR, NO_DATA_COLOR, DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
+import {OK_COLOR, ALERTING_COLOR, NO_DATA_COLOR, DEFAULT_ANNOTATION_COLOR, REGION_FILL_ALPHA} from 'app/core/utils/colors';
 
 export class EventManager {
   event: AnnotationEvent;
@@ -151,36 +152,17 @@ function addRegionMarking(regions, flotOptions) {
       fillColor = defaultColor;
     }
 
-    // Convert #FFFFFF to rgb(255, 255, 255)
-    // because panels with alerting use this format
-    let hexPattern = /^#[\da-fA-f]{3,6}/;
-    if (hexPattern.test(fillColor)) {
-      fillColor = convertToRGB(fillColor);
-    }
-
-    fillColor = addAlphaToRGB(fillColor, 0.09);
+    fillColor = addAlphaToRGB(fillColor, REGION_FILL_ALPHA);
     markings.push({xaxis: {from: region.min, to: region.timeEnd}, color: fillColor});
   });
 }
 
-function addAlphaToRGB(rgb: string, alpha: number): string {
-  let rgbPattern = /^rgb\(/;
-  if (rgbPattern.test(rgb)) {
-    return rgb.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+function addAlphaToRGB(colorString: string, alpha: number): string {
+  let color = tinycolor(colorString);
+  if (color.isValid()) {
+    color.setAlpha(alpha);
+    return color.toRgbString();
   } else {
-    return rgb.replace(/[\d\.]+\)/, `${alpha})`);
-  }
-}
-
-function convertToRGB(hex: string): string {
-  let hexPattern = /#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})/g;
-  let match = hexPattern.exec(hex);
-  if (match) {
-    let rgb = _.map(match.slice(1), hex_val => {
-      return parseInt(hex_val, 16);
-    });
-    return 'rgb(' + rgb.join(',') + ')';
-  } else {
-    return '';
+    return colorString;
   }
 }
