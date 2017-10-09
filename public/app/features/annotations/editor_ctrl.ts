@@ -41,6 +41,8 @@ export class AnnotationsEditorCtrl {
         this.reset();
       }
     });
+
+    this.onColorChange = this.onColorChange.bind(this);
   }
 
   datasourceChanged() {
@@ -84,6 +86,10 @@ export class AnnotationsEditorCtrl {
     this.annotations.splice(index, 1);
     this.$scope.dashboard.updateSubmenuVisibility();
     this.$scope.broadcastRefresh();
+  }
+
+  onColorChange(newColor) {
+    this.currentAnnotation.iconColor = newColor;
   }
 }
 

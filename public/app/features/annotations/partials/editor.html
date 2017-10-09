@@ -113,7 +113,9 @@
 						</div>
 						<div class="gf-form">
 							<label class="gf-form-label width-9">Color</label>
-							<spectrum-picker class="gf-form-input width-3" ng-model="ctrl.currentAnnotation.iconColor"></spectrum-picker>
+							<span class="gf-form-label">
+								<color-picker color="ctrl.currentAnnotation.iconColor" onChange="ctrl.onColorChange"></color-picker>
+							</span>
 						</div>
 					</div>
 				</div>

@@ -12,7 +12,7 @@
       <div class="gf-form">
         <label class="gf-form-label width-9">Color</label>
         <span class="gf-form-label">
-          <spectrum-picker ng-model="ctrl.panel.color.cardColor" ng-change="ctrl.render()" ></spectrum-picker>
+          <color-picker color="ctrl.panel.color.cardColor" onChange="ctrl.onCardColorChange"></color-picker>
         </span>
       </div>
       <div class="gf-form">

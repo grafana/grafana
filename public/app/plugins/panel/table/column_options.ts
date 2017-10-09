@@ -53,6 +53,8 @@ export class ColumnOptionsCtrl {
         return col.text;
       });
     };
+
+    this.onColorChange = this.onColorChange.bind(this);
   }
 
   render() {
@@ -103,6 +105,13 @@ export class ColumnOptionsCtrl {
     ref[0] = ref[2];
     ref[2] = copy;
     this.panelCtrl.render();
+  }
+
+  onColorChange(styleIndex, colorIndex) {
+    return (newColor) => {
+      this.panel.styles[styleIndex].colors[colorIndex] = newColor;
+      this.render();
+    };
   }
 }
 
