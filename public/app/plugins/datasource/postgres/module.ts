@@ -5,6 +5,11 @@ import {PostgresQueryCtrl} from './query_ctrl';
 
 class PostgresConfigCtrl {
   static templateUrl = 'partials/config.html';
+
+  current: any;
+  constructor($scope) {
+    this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'require';
+  }
 }
 
 const defaultQuery = `SELECT

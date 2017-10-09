@@ -32,8 +32,7 @@ func NewPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 		MacroEngine: NewPostgresMacroEngine(),
 	}
 
-	sslmode := datasource.JsonData.Get("sslmode").MustString("require")
-	cnnstr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", datasource.User, datasource.Password, datasource.Url, datasource.Database, sslmode)
+	cnnstr := generateConnectionString(datasource)
 	endpoint.log.Debug("getEngine", "connection", cnnstr)
 
 	if err := endpoint.sqlEngine.InitEngine("postgres", datasource, cnnstr); err != nil {
@@ -41,6 +40,19 @@ func NewPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 	}
 
 	return endpoint, nil
+}
+
+func generateConnectionString(datasource *models.DataSource) string {
+	password := ""
+	for key, value := range datasource.SecureJsonData.Decrypt() {
+		if key == "password" {
+			password = value
+			break
+		}
+	}
+
+	sslmode := datasource.JsonData.Get("sslmode").MustString("require")
+	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", datasource.User, password, datasource.Url, datasource.Database, sslmode)
 }
 
 func (e *PostgresQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {

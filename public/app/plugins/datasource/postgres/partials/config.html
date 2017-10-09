@@ -9,18 +9,23 @@
 
 	<div class="gf-form max-width-30">
 		<span class="gf-form-label width-7">Database</span>
-		<input type="text" class="gf-form-input" ng-model='ctrl.current.database' placeholder="" required></input>
+		<input type="text" class="gf-form-input" ng-model='ctrl.current.database' placeholder="database name" required></input>
 	</div>
 
 	<div class="gf-form-inline">
 		<div class="gf-form max-width-15">
 			<span class="gf-form-label width-7">User</span>
-			<input type="text" class="gf-form-input" ng-model='ctrl.current.user' placeholder=""></input>
+			<input type="text" class="gf-form-input" ng-model='ctrl.current.user' placeholder="user"></input>
 		</div>
-		<div class="gf-form max-width-15">
+		<div class="gf-form max-width-15" ng-if="!ctrl.current.secureJsonFields.password">
 			<span class="gf-form-label width-7">Password</span>
-			<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder=""></input>
-		</div>
+			<input type="password" class="gf-form-input" ng-model='ctrl.current.secureJsonData.password' placeholder="password"></input>
+    </div>
+    <div class="gf-form max-width-19" ng-if="ctrl.current.secureJsonFields.password">
+      <span class="gf-form-label width-7">Password</span>
+      <input type="text" class="gf-form-input" disabled="disabled" value="configured">
+      <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.current.secureJsonFields.password = false">reset</a>
+    </div>
 	</div>
 	<div class="gf-form">
 		<label class="gf-form-label width-7">SSL Mode</label>
