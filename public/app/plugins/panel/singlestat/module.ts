@@ -92,6 +92,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+
+    this.onSparklineColorChange = this.onSparklineColorChange.bind(this);
+    this.onSparklineFillChange = this.onSparklineFillChange.bind(this);
   }
 
   onInitEditMode() {
@@ -219,6 +222,16 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       this.panel.colors[panelColorIndex] = color;
       this.render();
     };
+  }
+
+  onSparklineColorChange(newColor) {
+    this.panel.sparkline.lineColor = newColor;
+    this.render();
+  }
+
+  onSparklineFillChange(newColor) {
+    this.panel.sparkline.fillColor = newColor;
+    this.render();
   }
 
   getDecimalsForValue(value) {

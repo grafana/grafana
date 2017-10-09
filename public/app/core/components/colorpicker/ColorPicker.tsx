@@ -77,5 +77,8 @@ export class ColorPicker extends React.Component<IProps, any> {
 }
 
 coreModule.directive('colorPicker', function (reactDirective) {
-  return reactDirective(ColorPicker, ['color', 'onChange']);
+  return reactDirective(ColorPicker, [
+    'color',
+    ['onChange', { watchDepth: 'reference', wrapApply: true }]
+  ]);
 });
