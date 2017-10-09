@@ -77,11 +77,12 @@
 @import "components/tabbed_view";
 @import "components/query_part";
 @import "components/jsontree";
-@import "components/edit_sidemenu.scss";
+@import "components/edit_sidemenu";
 @import "components/row.scss";
-@import "components/gridstack.scss";
-@import "components/json_explorer.scss";
-@import "components/code_editor.scss";
+@import "components/json_explorer";
+@import "components/code_editor";
+@import "components/dashboard_grid";
+
 
 // PAGES
 @import "pages/login";

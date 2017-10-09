@@ -25,6 +25,7 @@ div.flot-text {
   background-color: $panel-bg;
   border: $panel-border;
   position: relative;
+  height: 100%;
 
   &.panel-transparent {
     background-color: transparent;
@@ -34,6 +35,7 @@ div.flot-text {
 
 .panel-content {
   padding: 0px 10px 5px 10px;
+  height: 100%;
 }
 
 .panel-title-container {

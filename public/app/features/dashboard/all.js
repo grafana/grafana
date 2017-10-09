@@ -23,7 +23,7 @@ define([
   './export_data/export_data_modal',
   './ad_hoc_filters',
   './repeat_option/repeat_option',
-  './dashgrid/dashgrid',
+  './dashgrid/DashboardGrid',
   './acl/acl',
   './folder_picker/picker',
   './folder_modal/folder'
