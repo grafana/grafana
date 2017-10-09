@@ -9,7 +9,8 @@
 				<dashboard-submenu ng-if="dashboard.meta.submenuEnabled" dashboard="dashboard"></dashboard-submenu>
 
         <!-- <dash&#45;grid dashboard="dashboard"></dash&#45;grid> -->
-				<dashboard-grid dashboard="dashboard"></dashboard-grid>
+				<dashboard-grid dashboard="dashboard" get-panel-loader="getPanelLoader">
+				</dashboard-grid>
 
 			</div>
 		</div>

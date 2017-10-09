@@ -3,9 +3,10 @@ import coreModule from 'app/core/core_module';
 import ReactGridLayout from 'react-grid-layout';
 import {DashboardModel} from '../model';
 import {DashboardPanel} from './DashboardPanel';
+import {PanelLoader} from './PanelLoader';
 import sizeMe from 'react-sizeme';
 
-const COLUMN_COUNT = 24;
+const COLUMN_COUNT = 12;
 const ROW_HEIGHT = 30;
 
 function GridWrapper({size, layout, onLayoutChange, children}) {
@@ -37,6 +38,7 @@ const SizedReactLayoutGrid = sizeMe({monitorWidth: true})(GridWrapper);
 
 export interface DashboardGridProps {
   dashboard: DashboardModel;
+  getPanelLoader: () => PanelLoader;
 }
 
 export class DashboardGrid extends React.Component<DashboardGridProps, any> {
@@ -69,7 +71,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     for (let panel of this.props.dashboard.panels) {
       panelElements.push(
         <div key={panel.id.toString()} className="panel">
-          <DashboardPanel panel={panel} />
+          <DashboardPanel panel={panel} getPanelLoader={this.props.getPanelLoader} dashboard={this.props.dashboard} />
         </div>,
       );
     }
@@ -86,5 +88,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
 }
 
 coreModule.directive('dashboardGrid', function(reactDirective) {
-  return reactDirective(DashboardGrid, [['dashboard', {watchDepth: 'reference'}]]);
+  return reactDirective(DashboardGrid, [
+    ['dashboard', {watchDepth: 'reference'}],
+    ['getPanelLoader', {watchDepth: 'reference', wrapApply: false}],
+  ]);
 });

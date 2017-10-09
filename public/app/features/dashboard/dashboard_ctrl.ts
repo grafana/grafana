@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import angular from 'angular';
 
@@ -19,6 +17,7 @@ export class DashboardCtrl {
     unsavedChangesSrv,
     dynamicDashboardSrv,
     dashboardViewStateSrv,
+    panelLoader,
     contextSrv,
     alertSrv,
     $timeout) {
@@ -130,6 +129,10 @@ export class DashboardCtrl {
         $scope.dashboard.folderId = folder.id;
         $scope.dashboard.meta.folderId = folder.id;
         $scope.dashboard.meta.folderTitle= folder.title;
+      };
+
+      $scope.getPanelLoader = function() {
+        return panelLoader;
       };
     }
 

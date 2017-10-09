@@ -24,6 +24,7 @@ define([
   './ad_hoc_filters',
   './repeat_option/repeat_option',
   './dashgrid/DashboardGrid',
+  './dashgrid/PanelLoader',
   './acl/acl',
   './folder_picker/picker',
   './folder_modal/folder'
