@@ -122,6 +122,7 @@
     "react-dom": "^16.0.0",
     "remarkable": "^1.7.1",
     "tether": "^1.4.0",
-    "tether-drop": "https://github.com/torkelo/drop"
+    "tether-drop": "https://github.com/torkelo/drop",
+    "tinycolor2": "^1.4.1"
   }
 }

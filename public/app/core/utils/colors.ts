@@ -1,7 +1,5 @@
 import _ from 'lodash';
-
-// Spectrum picker uses TinyColor and loads it as a global variable, so we can use it here also
-declare var tinycolor;
+import tinycolor from 'tinycolor2';
 
 export const PALETTE_ROWS = 4;
 export const PALETTE_COLUMNS = 14;
