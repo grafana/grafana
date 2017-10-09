@@ -454,6 +454,40 @@ allow_sign_up = true
 
 Set api_url to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
 
+### Set up oauth2 with Okta
+
+First set up Grafana as an OpenId client "webapplication" in Okta. Then set the Base URIs to `https://<grafana domain>/` and set the Login redirect URIs to `https://<grafana domain>/login/generic_oauth`.
+
+Finaly set up the generic oauth module like this:
+```bash
+[auth.generic_oauth]
+name = Okta
+enabled = true
+scopes = openid profile email
+client_id = <okta application Client ID>
+client_secret = <okta application Client Secret>
+auth_url = https://<okta domain>/oauth2/v1/authorize
+token_url = https://<okta domain>/oauth2/v1/token
+api_url = https://<okta domain>/oauth2/v1/userinfo
+```
+
+### Set up oauth2 with Bitbucket
+
+```bash
+[auth.generic_oauth]
+name = BitBucket
+enabled = true
+allow_sign_up = true
+client_id = <client id>
+client_secret = <secret>
+scopes = account email
+auth_url = https://bitbucket.org/site/oauth2/authorize
+token_url = https://bitbucket.org/site/oauth2/access_token
+api_url = https://api.bitbucket.org/2.0/user
+team_ids =
+allowed_organizations =
+```
+
 <hr>
 
 ## [auth.basic]
