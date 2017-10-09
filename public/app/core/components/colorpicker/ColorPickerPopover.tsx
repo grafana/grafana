@@ -7,6 +7,8 @@ import { GfSpectrumPicker } from './SpectrumPicker';
 // Spectrum picker uses TinyColor and loads it as a global variable, so we can use it here also
 declare var tinycolor;
 
+const DEFAULT_COLOR = '#000000';
+
 export interface IProps {
   color: string;
   onColorSelect: (c: string) => void;
@@ -19,8 +21,8 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
     super(props);
     this.state = {
       tab: 'palette',
-      color: this.props.color,
-      colorString: this.props.color
+      color: this.props.color || DEFAULT_COLOR,
+      colorString: this.props.color || DEFAULT_COLOR
     };
   }
 
