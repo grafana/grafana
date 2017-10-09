@@ -147,13 +147,13 @@ class GraphCtrl extends MetricsPanelCtrl {
     actions.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
   }
 
-  issueQueries(datasource) {
+  issueQueries() {
     this.annotationsPromise = this.annotationsSrv.getAnnotations({
       dashboard: this.dashboard,
       panel: this.panel,
       range: this.range,
     });
-    return super.issueQueries(datasource);
+    return super.issueQueries();
   }
 
   zoomOut(evt) {

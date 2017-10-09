@@ -93,7 +93,9 @@ class MetricsPanelCtrl extends PanelCtrl {
     // load datasource service
     this.setTimeQueryStart();
     this.datasourceSrv.get(this.panel.datasource)
+    .then(datasource => this.datasource = datasource)
     .then(this.updateTimeRange.bind(this))
+    .then(this.calculateInterval.bind(this))
     .then(this.issueQueries.bind(this))
     .then(this.handleQueryResult.bind(this))
     .catch(err => {
@@ -121,7 +123,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     });
   }
 
-
   setTimeQueryStart() {
     this.timing.queryStart = new Date().getTime();
   }
@@ -130,8 +131,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.timing.queryEnd = new Date().getTime();
   }
 
-  updateTimeRange(datasource?) {
-    this.datasource = datasource || this.datasource;
+  updateTimeRange() {
     this.range = this.timeSrv.timeRange();
 
     this.applyPanelTimeOverrides();
@@ -141,25 +141,33 @@ class MetricsPanelCtrl extends PanelCtrl {
     } else {
       this.resolution = Math.ceil($(window).width() * (this.panel.span / 12));
     }
-
-    this.calculateInterval();
-
-    return this.datasource;
   }
 
   calculateInterval() {
-    var intervalOverride = this.panel.interval;
+    var intervalOverride;
 
-    // if no panel interval check datasource
-    if (intervalOverride) {
-      intervalOverride = this.templateSrv.replace(intervalOverride, this.panel.scopedVars);
+    if (this.panel.interval) {
+      intervalOverride = this.$q.resolve(this.templateSrv.replace(this.panel.interval, this.panel.scopedVars));
     } else if (this.datasource && this.datasource.interval) {
-      intervalOverride = this.datasource.interval;
+      intervalOverride = this.$q.resolve(this.datasource.interval);
+    } else if (this.datasource && this.datasource.meta.mixed) {
+      var promises = _(this.panel.targets)
+      .map(target => target.datasource)
+      .uniq()
+      .map(datasource => this.datasourceSrv.get(datasource));
+      intervalOverride = this.$q.all(promises).then(datasources => {
+        var minInterval = _(datasources)
+        .filter('interval')
+        .maxBy(ds => kbn.interval_to_ms(ds.interval));
+        return minInterval ? minInterval.interval : undefined;
+      });
     }
 
-    var res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
-    this.interval = res.interval;
-    this.intervalMs = res.intervalMs;
+    return intervalOverride.then(override => {
+      var res = kbn.calculateInterval(this.range, this.resolution, override);
+      this.interval = res.interval;
+      this.intervalMs = res.intervalMs;
+    });
   }
 
   applyPanelTimeOverrides() {
@@ -204,9 +212,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
   }
 
-  issueQueries(datasource) {
-    this.datasource = datasource;
-
+  issueQueries() {
     if (!this.panel.targets || this.panel.targets.length === 0) {
       return this.$q.when([]);
     }
@@ -232,7 +238,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       cacheTimeout: this.panel.cacheTimeout
     };
 
-    return datasource.query(metricsQuery);
+    return this.datasource.query(metricsQuery);
   }
 
   handleQueryResult(result) {
