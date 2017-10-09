@@ -73,6 +73,17 @@ describe('InfluxQueryBuilder', function() {
       expect(query).to.be('SHOW TAG VALUES FROM "cpu" WITH KEY = "app" WHERE "host" = \'server1\'');
     });
 
+    it ('should select from policy correctly if policy is specified', function() {
+        var builder = new InfluxQueryBuilder({
+          measurement: 'cpu',
+          policy: 'one_week',
+          tags: [{key: 'app', value: 'email'},
+                 {key: 'host', value: 'server1'}]
+        });
+        var query = builder.buildExploreQuery('TAG_VALUES', 'app');
+        expect(query).to.be('SHOW TAG VALUES FROM "one_week"."cpu" WITH KEY = "app" WHERE "host" = \'server1\'');
+    });
+
     it('should switch to regex operator in tag condition', function() {
       var builder = new InfluxQueryBuilder({
         measurement: 'cpu',
