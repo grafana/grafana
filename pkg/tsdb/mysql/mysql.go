@@ -17,21 +17,21 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type MysqlExecutor struct {
+type MysqlQueryEndpoint struct {
 	sqlEngine tsdb.SqlEngine
 	log       log.Logger
 }
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("mysql", NewMysqlExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("mysql", NewMysqlQueryEndpoint)
 }
 
-func NewMysqlExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	executor := &MysqlExecutor{
+func NewMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	endpoint := &MysqlQueryEndpoint{
 		log: log.New("tsdb.mysql"),
 	}
 
-	executor.sqlEngine = &tsdb.DefaultSqlEngine{
+	endpoint.sqlEngine = &tsdb.DefaultSqlEngine{
 		MacroEngine: NewMysqlMacroEngine(),
 	}
 
@@ -42,21 +42,21 @@ func NewMysqlExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, er
 		datasource.Url,
 		datasource.Database,
 	)
-	executor.log.Debug("getEngine", "connection", cnnstr)
+	endpoint.log.Debug("getEngine", "connection", cnnstr)
 
-	if err := executor.sqlEngine.InitEngine("mysql", datasource, cnnstr); err != nil {
+	if err := endpoint.sqlEngine.InitEngine("mysql", datasource, cnnstr); err != nil {
 		return nil, err
 	}
 
-	return executor, nil
+	return endpoint, nil
 }
 
 // Query is the main function for the MysqlExecutor
-func (e *MysqlExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	return e.sqlEngine.Query(ctx, dsInfo, tsdbQuery, e.TransformToTimeSeries, e.TransformToTable)
+func (e *MysqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	return e.sqlEngine.Query(ctx, dsInfo, tsdbQuery, e.transformToTimeSeries, e.transformToTable)
 }
 
-func (e MysqlExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
+func (e MysqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 	columnNames, err := rows.Columns()
 	columnCount := len(columnNames)
 
@@ -99,7 +99,7 @@ func (e MysqlExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows, resu
 	return nil
 }
 
-func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (e MysqlQueryEndpoint) getTypedRowData(types []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
 	values := make([]interface{}, len(types))
 
 	for i, stype := range types {
@@ -163,7 +163,7 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 	return values, nil
 }
 
-func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
+func (e MysqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 	pointsBySeries := make(map[string]*tsdb.TimeSeries)
 	seriesByQueryOrder := list.New()
 	columnNames, err := rows.Columns()

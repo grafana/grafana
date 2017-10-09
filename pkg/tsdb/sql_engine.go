@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// SqlEngine is base/helper class for relational database data sources.
+// SqlEngine is a wrapper class around xorm for relational database data sources.
 type SqlEngine interface {
 	InitEngine(driverName string, dsInfo *models.DataSource, cnnstr string) error
 	Query(

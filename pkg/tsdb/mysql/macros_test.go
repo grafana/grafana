@@ -9,11 +9,10 @@ import (
 
 func TestMacroEngine(t *testing.T) {
 	Convey("MacroEngine", t, func() {
+		engine := &MySqlMacroEngine{}
 		timeRange := &tsdb.TimeRange{From: "5m", To: "now"}
 
 		Convey("interpolate __time function", func() {
-			engine := &MySqlMacroEngine{}
-
 			sql, err := engine.Interpolate(nil, "select $__time(time_column)")
 			So(err, ShouldBeNil)
 
@@ -21,8 +20,6 @@ func TestMacroEngine(t *testing.T) {
 		})
 
 		Convey("interpolate __time function wrapped in aggregation", func() {
-			engine := &MySqlMacroEngine{}
-
 			sql, err := engine.Interpolate(nil, "select min($__time(time_column))")
 			So(err, ShouldBeNil)
 
@@ -30,8 +27,6 @@ func TestMacroEngine(t *testing.T) {
 		})
 
 		Convey("interpolate __timeFilter function", func() {
-			engine := &MySqlMacroEngine{}
-
 			sql, err := engine.Interpolate(timeRange, "WHERE $__timeFilter(time_column)")
 			So(err, ShouldBeNil)
 
@@ -39,8 +34,6 @@ func TestMacroEngine(t *testing.T) {
 		})
 
 		Convey("interpolate __timeFrom function", func() {
-			engine := &MySqlMacroEngine{}
-
 			sql, err := engine.Interpolate(timeRange, "select $__timeFrom(time_column)")
 			So(err, ShouldBeNil)
 
@@ -48,8 +41,6 @@ func TestMacroEngine(t *testing.T) {
 		})
 
 		Convey("interpolate __timeTo function", func() {
-			engine := &MySqlMacroEngine{}
-
 			sql, err := engine.Interpolate(timeRange, "select $__timeTo(time_column)")
 			So(err, ShouldBeNil)
 
@@ -57,8 +48,6 @@ func TestMacroEngine(t *testing.T) {
 		})
 
 		Convey("interpolate __unixEpochFilter function", func() {
-			engine := &MySqlMacroEngine{}
-
 			sql, err := engine.Interpolate(timeRange, "select $__unixEpochFilter(18446744066914186738)")
 			So(err, ShouldBeNil)
 
@@ -66,8 +55,6 @@ func TestMacroEngine(t *testing.T) {
 		})
 
 		Convey("interpolate __unixEpochFrom function", func() {
-			engine := &MySqlMacroEngine{}
-
 			sql, err := engine.Interpolate(timeRange, "select $__unixEpochFrom()")
 			So(err, ShouldBeNil)
 
@@ -75,8 +62,6 @@ func TestMacroEngine(t *testing.T) {
 		})
 
 		Convey("interpolate __unixEpochTo function", func() {
-			engine := &MySqlMacroEngine{}
-
 			sql, err := engine.Interpolate(timeRange, "select $__unixEpochTo()")
 			So(err, ShouldBeNil)
 
