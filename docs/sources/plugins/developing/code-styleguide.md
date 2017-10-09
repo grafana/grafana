@@ -23,7 +23,7 @@ The most important fields are the first three, especially the id. The convention
 
 Examples:
 
-```
+```bash
 raintank-worldping-app
 grafana-simple-json-datasource
 grafana-piechart-panel
@@ -66,7 +66,7 @@ The README.md file is rendered both on Grafana.net and in the plugins section in
 
 Here is a typical directory structure for a plugin.
 
-```
+```bash
 johnnyb-awesome-datasource
 |-- dist
 |-- spec

@@ -41,9 +41,17 @@ profile.cov
 .notouch
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
+/pkg/cmd/grafana-server/debug
 /examples/*/dist
 /packaging/**/*.rpm
 /packaging/**/*.deb
 
 # Ignore OSX indexing
 .DS_Store
+
+/vendor/**/*.py
+/vendor/**/*.xml
+/vendor/**/*.yml
+/vendor/**/*_test.go
+/vendor/**/.editorconfig
+/vendor/**/appengine*

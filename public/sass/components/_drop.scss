@@ -51,9 +51,16 @@ $easing: cubic-bezier(0, 0, 0.265, 1.00);
   }
 }
 
+.drop-element.drop-popover {
+  .drop-content {
+    box-shadow: $popover-shadow;
+  }
+}
+
 .drop-element.drop-popover--form {
   .drop-content {
     max-width: none;
+    padding: 0;
   }
 }
 

@@ -104,7 +104,7 @@ func (db *Postgres) SqlType(c *Column) string {
 
 func (db *Postgres) TableCheckSql(tableName string) (string, []interface{}) {
 	args := []interface{}{"grafana", tableName}
-	sql := "SELECT `TABLE_NAME` from `INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=? and `TABLE_NAME`=?"
+	sql := "SELECT table_name FROM information_schema.tables WHERE table_schema=? and table_name=?"
 	return sql, args
 }
 

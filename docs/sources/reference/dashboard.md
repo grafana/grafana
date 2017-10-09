@@ -24,7 +24,7 @@ When a user creates a new dashboard, a new dashboard JSON object is initialized 
 
 > Note: In the following JSON, id is shown as null which is the default value assigned to it until a dashboard is saved. Once a dashboard is saved, an integer value is assigned to the `id` field.
 
-```
+```json
 {
   "id": null,
   "title": "New dashboard",

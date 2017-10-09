@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import angular from 'angular';
 import * as fileExport from 'app/core/utils/file_export';
 import appEvents from 'app/core/app_events';
@@ -8,7 +6,7 @@ export class ExportDataModalCtrl {
   private data: any[];
   private panel: string;
   asRows: Boolean = true;
-  dateTimeFormat: String = 'YYYY-MM-DDTHH:mm:ssZ';
+  dateTimeFormat = 'YYYY-MM-DDTHH:mm:ssZ';
   excel: false;
 
   export() {

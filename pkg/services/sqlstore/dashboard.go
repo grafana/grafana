@@ -378,6 +378,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			"DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?",
 			"DELETE FROM dashboard_version WHERE dashboard_id = ?",
 			"DELETE FROM dashboard WHERE folder_id = ?",
+			"DELETE FROM annotation WHERE dashboard_id = ?",
 		}
 
 		for _, sql := range deletes {

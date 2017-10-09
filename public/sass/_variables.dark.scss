@@ -269,7 +269,8 @@ $alert-info-bg:           linear-gradient(100deg, #1a4552, #00374a);
 // popover
 $popover-bg:              $panel-bg;
 $popover-color:           $text-color;
-$popover-border-color:    $gray-1;
+$popover-border-color:    $dark-4;
+$popover-shadow:          0 0 20px black;
 
 $popover-help-bg:         $btn-secondary-bg;
 $popover-help-color:      $text-color;

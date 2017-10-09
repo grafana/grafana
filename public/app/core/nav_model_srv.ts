@@ -90,7 +90,7 @@ export class NavModelSrv {
 
       menu.push({
         title: 'Annotations',
-        icon: 'fa fa-fw fa-bolt',
+        icon: 'fa fa-fw fa-comment',
         clickHandler: () => dashNavCtrl.openEditView('annotations')
       });
 

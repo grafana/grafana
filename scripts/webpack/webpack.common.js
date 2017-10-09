@@ -29,13 +29,14 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(ts|tsx)$/,
+        test: /\.tsx?$/,
         enforce: 'pre',
         exclude: /node_modules/,
         use: {
           loader: 'tslint-loader',
           options: {
-            emitErrors: true
+            emitErrors: true,
+            typeCheck: false,
           }
         }
       },
@@ -59,10 +60,6 @@ module.exports = {
           }
         ]
       },
-      // {
-      //   test   : /\.(ico|png|cur|jpg|ttf|eot|svg|woff(2)?)(\?[a-z0-9]+)?$/,
-      //   loader : 'file-loader',
-      // },
       {
         test: /\.html$/,
         exclude: /index\.template.html/,

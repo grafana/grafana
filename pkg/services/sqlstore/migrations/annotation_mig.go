@@ -57,4 +57,37 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Add column region_id to annotation table", NewAddColumnMigration(table, &Column{
 		Name: "region_id", Type: DB_BigInt, Nullable: true, Default: "0",
 	}))
+
+	categoryIdIndex := &Index{Cols: []string{"org_id", "category_id"}, Type: IndexType}
+	mg.AddMigration("Drop category_id index", NewDropIndexMigration(table, categoryIdIndex))
+
+	mg.AddMigration("Add column tags to annotation table", NewAddColumnMigration(table, &Column{
+		Name: "tags", Type: DB_NVarchar, Nullable: true, Length: 500,
+	}))
+
+	///
+	/// Annotation tag
+	///
+	annotationTagTable := Table{
+		Name: "annotation_tag",
+		Columns: []*Column{
+			{Name: "annotation_id", Type: DB_BigInt, Nullable: false},
+			{Name: "tag_id", Type: DB_BigInt, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"annotation_id", "tag_id"}, Type: UniqueIndex},
+		},
+	}
+
+	mg.AddMigration("Create annotation_tag table v2", NewAddTableMigration(annotationTagTable))
+	mg.AddMigration("Add unique index annotation_tag.annotation_id_tag_id", NewAddIndexMigration(annotationTagTable, annotationTagTable.Indices[0]))
+
+	//
+	// clear alert text
+	//
+	updateTextFieldSql := "UPDATE annotation SET TEXT = '' WHERE alert_id > 0"
+	mg.AddMigration("Update alert annotations and set TEXT to empty", new(RawSqlMigration).
+		Sqlite(updateTextFieldSql).
+		Postgres(updateTextFieldSql).
+		Mysql(updateTextFieldSql))
 }

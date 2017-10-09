@@ -7,6 +7,7 @@ import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import {profiler} from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
+import Drop from 'tether-drop';
 
 export class GrafanaCtrl {
 
@@ -104,6 +105,11 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         // check for kiosk url param
         if (data.params.kiosk) {
           appEvents.emit('toggle-kiosk-mode');
+        }
+
+        // close all drops
+        for (let drop of Drop.drops) {
+          drop.destroy();
         }
       });
 

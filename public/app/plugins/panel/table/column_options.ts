@@ -40,6 +40,7 @@ export class ColumnOptionsCtrl {
     this.fontSizes = ['80%', '90%', '100%', '110%', '120%', '130%', '150%', '160%', '180%', '200%', '220%', '250%'];
     this.dateFormats = [
       {text: 'YYYY-MM-DD HH:mm:ss', value: 'YYYY-MM-DD HH:mm:ss'},
+      {text: 'YYYY-MM-DD HH:mm:ss.SSS', value: 'YYYY-MM-DD HH:mm:ss.SSS'},
       {text: 'MM/DD/YY h:mm:ss a', value: 'MM/DD/YY h:mm:ss a'},
       {text: 'MMMM D, YYYY LT',  value: 'MMMM D, YYYY LT'},
     ];
@@ -52,6 +53,8 @@ export class ColumnOptionsCtrl {
         return col.text;
       });
     };
+
+    this.onColorChange = this.onColorChange.bind(this);
   }
 
   render() {
@@ -102,6 +105,13 @@ export class ColumnOptionsCtrl {
     ref[0] = ref[2];
     ref[2] = copy;
     this.panelCtrl.render();
+  }
+
+  onColorChange(styleIndex, colorIndex) {
+    return (newColor) => {
+      this.panel.styles[styleIndex].colors[colorIndex] = newColor;
+      this.render();
+    };
   }
 }
 

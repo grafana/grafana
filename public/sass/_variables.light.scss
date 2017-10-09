@@ -284,9 +284,11 @@ $alert-warning-bg:        linear-gradient(90deg, #d44939, #e0603d);
 $alert-info-bg:           $blue-dark;
 
 // popover
-$popover-bg:              $gray-5;
+$popover-bg:              $panel-bg;
 $popover-color:           $text-color;
-$popover-border-color:    $gray-3;
+$popover-border-color:    $gray-5;
+$popover-shadow:          0 0 20px $white;
+
 $popover-help-bg:         $blue-dark;
 $popover-help-color:      $gray-6;
 $popover-error-bg:        $btn-danger-bg;

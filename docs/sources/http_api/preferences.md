@@ -26,17 +26,21 @@ system default value.
 
 **Example Request**:
 
-    GET /api/user/preferences HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+GET /api/user/preferences HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-    {"theme":"","homeDashboardId":0,"timezone":""}
+{"theme":"","homeDashboardId":0,"timezone":""}
+```
 
 ## Update Current User Prefs
 
@@ -44,23 +48,27 @@ system default value.
 
 **Example Request**:
 
-    PUT /api/user/preferences HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+PUT /api/user/preferences HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
-    {
-      "theme": "",
-      "homeDashboardId":0,
-      "timezone":"utc"
-    }
+{
+  "theme": "",
+  "homeDashboardId":0,
+  "timezone":"utc"
+}
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: text/plain; charset=utf-8
+```http
+HTTP/1.1 200
+Content-Type: text/plain; charset=utf-8
 
-    {"message":"Preferences updated"}
+{"message":"Preferences updated"}
+```
 
 ## Get Current Org Prefs
 
@@ -68,17 +76,21 @@ system default value.
 
 **Example Request**:
 
-    GET /api/org/preferences HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+GET /api/org/preferences HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-    {"theme":"","homeDashboardId":0,"timezone":""}
+{"theme":"","homeDashboardId":0,"timezone":""}
+```
 
 ## Update Current Org Prefs
 
@@ -86,20 +98,24 @@ system default value.
 
 **Example Request**:
 
-    PUT /api/org/preferences HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+PUT /api/org/preferences HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
-    {
-      "theme": "",
-      "homeDashboardId":0,
-      "timezone":"utc"
-    }
+{
+  "theme": "",
+  "homeDashboardId":0,
+  "timezone":"utc"
+}
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: text/plain; charset=utf-8
+```http
+HTTP/1.1 200
+Content-Type: text/plain; charset=utf-8
 
-    {"message":"Preferences updated"}
+{"message":"Preferences updated"}
+```
