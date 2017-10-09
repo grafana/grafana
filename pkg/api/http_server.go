@@ -11,6 +11,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	gocache "github.com/patrickmn/go-cache"
@@ -187,7 +189,9 @@ func (hs *HttpServer) metricsEndpoint(ctx *macaron.Context) {
 		return
 	}
 
-	promhttp.Handler().ServeHTTP(ctx.Resp, ctx.Req.Request)
+	promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{
+		DisableCompression: true,
+	}).ServeHTTP(ctx.Resp, ctx.Req.Request)
 }
 
 func (hs *HttpServer) healthHandler(ctx *macaron.Context) {
