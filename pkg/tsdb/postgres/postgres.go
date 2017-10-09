@@ -5,135 +5,49 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/go-xorm/core"
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type PostgresExecutor struct {
-	engine *xorm.Engine
-	log    log.Logger
-}
-
-type engineCacheType struct {
-	cache    map[int64]*xorm.Engine
-	versions map[int64]int
-	sync.Mutex
-}
-
-var engineCache = engineCacheType{
-	cache:    make(map[int64]*xorm.Engine),
-	versions: make(map[int64]int),
+type PostgresQueryEndpoint struct {
+	sqlEngine tsdb.SqlEngine
+	log       log.Logger
 }
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("postgres", NewPostgresExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("postgres", NewPostgresQueryEndpoint)
 }
 
-func NewPostgresExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	executor := &PostgresExecutor{
+func NewPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	endpoint := &PostgresQueryEndpoint{
 		log: log.New("tsdb.postgres"),
 	}
 
-	err := executor.initEngine(datasource)
-	if err != nil {
+	endpoint.sqlEngine = &tsdb.DefaultSqlEngine{
+		MacroEngine: NewPostgresMacroEngine(),
+	}
+
+	sslmode := datasource.JsonData.Get("sslmode").MustString("require")
+	cnnstr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", datasource.User, datasource.Password, datasource.Url, datasource.Database, sslmode)
+	endpoint.log.Debug("getEngine", "connection", cnnstr)
+
+	if err := endpoint.sqlEngine.InitEngine("postgres", datasource, cnnstr); err != nil {
 		return nil, err
 	}
 
-	return executor, nil
+	return endpoint, nil
 }
 
-func (e *PostgresExecutor) initEngine(dsInfo *models.DataSource) error {
-	engineCache.Lock()
-	defer engineCache.Unlock()
-
-	if engine, present := engineCache.cache[dsInfo.Id]; present {
-		if version, _ := engineCache.versions[dsInfo.Id]; version == dsInfo.Version {
-			e.engine = engine
-			return nil
-		}
-	}
-
-	sslmode := dsInfo.JsonData.Get("sslmode").MustString("require")
-	cnnstr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", dsInfo.User, dsInfo.Password, dsInfo.Url, dsInfo.Database, sslmode)
-	e.log.Debug("getEngine", "connection", cnnstr)
-
-	engine, err := xorm.NewEngine("postgres", cnnstr)
-	engine.SetMaxOpenConns(10)
-	engine.SetMaxIdleConns(10)
-	if err != nil {
-		return err
-	}
-
-	engineCache.cache[dsInfo.Id] = engine
-	e.engine = engine
-	return nil
+func (e *PostgresQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	return e.sqlEngine.Query(ctx, dsInfo, tsdbQuery, e.transformToTimeSeries, e.transformToTable)
 }
 
-func (e *PostgresExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
-	}
-
-	macroEngine := NewPostgresMacroEngine(tsdbQuery.TimeRange)
-	session := e.engine.NewSession()
-	defer session.Close()
-	db := session.DB()
-
-	for _, query := range tsdbQuery.Queries {
-		rawSql := query.Model.Get("rawSql").MustString()
-		if rawSql == "" {
-			continue
-		}
-
-		queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefId}
-		result.Results[query.RefId] = queryResult
-
-		rawSql, err := macroEngine.Interpolate(rawSql)
-		if err != nil {
-			queryResult.Error = err
-			continue
-		}
-
-		queryResult.Meta.Set("sql", rawSql)
-
-		rows, err := db.Query(rawSql)
-		if err != nil {
-			queryResult.Error = err
-			continue
-		}
-
-		defer rows.Close()
-
-		format := query.Model.Get("format").MustString("time_series")
-
-		switch format {
-		case "time_series":
-			err := e.TransformToTimeSeries(query, rows, queryResult)
-			if err != nil {
-				queryResult.Error = err
-				continue
-			}
-		case "table":
-			err := e.TransformToTable(query, rows, queryResult)
-			if err != nil {
-				queryResult.Error = err
-				continue
-			}
-		}
-	}
-
-	return result, nil
-}
-
-func (e PostgresExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
+func (e PostgresQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 
 	columnNames, err := rows.Columns()
 	if err != nil {
@@ -170,7 +84,7 @@ func (e PostgresExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows, r
 	return nil
 }
 
-func (e PostgresExecutor) getTypedRowData(rows *core.Rows) (tsdb.RowValues, error) {
+func (e PostgresQueryEndpoint) getTypedRowData(rows *core.Rows) (tsdb.RowValues, error) {
 
 	types, err := rows.ColumnTypes()
 	if err != nil {
@@ -212,7 +126,7 @@ func (e PostgresExecutor) getTypedRowData(rows *core.Rows) (tsdb.RowValues, erro
 	return values, nil
 }
 
-func (e PostgresExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
+func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 	pointsBySeries := make(map[string]*tsdb.TimeSeries)
 	seriesByQueryOrder := list.New()
 	columnNames, err := rows.Columns()
@@ -229,7 +143,7 @@ func (e PostgresExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Ro
 	// check columns of resultset
 	for i, col := range columnNames {
 		switch col {
-		case "time":
+		case "time_sec":
 			timeIndex = i
 		case "metric":
 			metricIndex = i
@@ -306,7 +220,7 @@ func (e PostgresExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Ro
 	return nil
 }
 
-func (e PostgresExecutor) appendTimePoint(pointsBySeries map[string]*tsdb.TimeSeries, seriesByQueryOrder *list.List, metric string, timestamp float64, value null.Float) {
+func (e PostgresQueryEndpoint) appendTimePoint(pointsBySeries map[string]*tsdb.TimeSeries, seriesByQueryOrder *list.List, metric string, timestamp float64, value null.Float) {
 	if series, exist := pointsBySeries[metric]; exist {
 		series.Points = append(series.Points, tsdb.TimePoint{value, null.FloatFrom(timestamp)})
 	} else {

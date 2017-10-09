@@ -12,26 +12,21 @@ import (
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
-type SqlMacroEngine interface {
-	Interpolate(sql string) (string, error)
-}
-
 type PostgresMacroEngine struct {
 	TimeRange *tsdb.TimeRange
 }
 
-func NewPostgresMacroEngine(timeRange *tsdb.TimeRange) SqlMacroEngine {
-	return &PostgresMacroEngine{
-		TimeRange: timeRange,
-	}
+func NewPostgresMacroEngine() tsdb.SqlMacroEngine {
+	return &PostgresMacroEngine{}
 }
 
-func (m *PostgresMacroEngine) Interpolate(sql string) (string, error) {
+func (m *PostgresMacroEngine) Interpolate(timeRange *tsdb.TimeRange, sql string) (string, error) {
+	m.TimeRange = timeRange
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
-	sql = ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
-		res, err := m.EvaluateMacro(groups[1], strings.Split(groups[2], ","))
+	sql = replaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
+		res, err := m.evaluateMacro(groups[1], strings.Split(groups[2], ","))
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -46,7 +41,7 @@ func (m *PostgresMacroEngine) Interpolate(sql string) (string, error) {
 	return sql, nil
 }
 
-func ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
+func replaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]string) string) string {
 	result := ""
 	lastIndex := 0
 
@@ -63,18 +58,18 @@ func ReplaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]str
 	return result + str[lastIndex:]
 }
 
-func (m *PostgresMacroEngine) EvaluateMacro(name string, args []string) (string, error) {
+func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string, error) {
 	switch name {
 	case "__time":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s AS \"time\"", args[0]), nil
-	case "__timeSec":
+		return fmt.Sprintf("%s AS \"time_sec\"", args[0]), nil
+	case "__timeEpoch":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("extract(epoch from %s) as \"time\"", args[0]), nil
+		return fmt.Sprintf("extract(epoch from %s) as \"time_sec\"", args[0]), nil
 	case "__timeFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)

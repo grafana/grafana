@@ -19,14 +19,16 @@ func TestPostgres(t *testing.T) {
 	SkipConvey("PostgreSQL", t, func() {
 		x := InitPostgresTestDB(t)
 
-		executor := &PostgresExecutor{
-			engine: x,
-			log:    log.New("tsdb.postgres"),
+		endpoint := &PostgresQueryEndpoint{
+			sqlEngine: &tsdb.DefaultSqlEngine{
+				MacroEngine: NewPostgresMacroEngine(),
+				XormEngine:  x,
+			},
+			log: log.New("tsdb.postgres"),
 		}
 
 		sess := x.NewSession()
 		defer sess.Close()
-		db := sess.DB()
 
 		sql := `
       CREATE TABLE postgres_types(
@@ -66,14 +68,23 @@ func TestPostgres(t *testing.T) {
 		_, err = sess.Exec(sql)
 		So(err, ShouldBeNil)
 
-		Convey("TransformToTable should map PostgreSQL column types to Go types", func() {
-			rows, err := db.Query("SELECT * FROM postgres_types")
-			defer rows.Close()
+		Convey("Query with Table format should map PostgreSQL column types to Go types", func() {
+			query := &tsdb.TsdbQuery{
+				Queries: []*tsdb.Query{
+					{
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"rawSql": "SELECT * FROM postgres_types",
+							"format": "table",
+						}),
+						RefId: "A",
+					},
+				},
+			}
+
+			resp, err := endpoint.Query(nil, nil, query)
+			queryResult := resp.Results["A"]
 			So(err, ShouldBeNil)
 
-			queryResult := &tsdb.QueryResult{Meta: simplejson.New()}
-			err = executor.TransformToTable(nil, rows, queryResult)
-			So(err, ShouldBeNil)
 			column := queryResult.Tables[0].Rows[0]
 			So(column[0].(int64), ShouldEqual, 1)
 			So(column[1].(int64), ShouldEqual, 2)

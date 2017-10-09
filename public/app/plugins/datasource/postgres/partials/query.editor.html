@@ -38,7 +38,7 @@
 
 	<div class="gf-form"  ng-show="ctrl.showHelp">
 		<pre class="gf-form-pre alert alert-info">Time series:
-- return column named time (UTC in seconds or timestamp)
+- return column named time_sec (UTC in seconds or timestamp)
 - return column(s) with numeric datatype as values
 - (Optional: return column named metric to represent the series name. If no column named metric is found the column name of the value column is used as series name)
 
@@ -46,7 +46,8 @@ Table:
 - return any set of columns
 
 Macros:
-- $__time(column) -&gt; column as "time"
+- $__time(column) -&gt; column as "time_sec"
+- $__timeEpoch -&gt; extract(epoch from column) as "time_sec"
 - $__timeFilter(column) -&gt;  column &ge; to_timestamp(1492750877) AND column &le; to_timestamp(1492750877)
 - $__unixEpochFilter(column) -&gt;  column &gt; 1492750877 AND column &lt; 1492750877
 
