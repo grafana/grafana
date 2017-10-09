@@ -2,6 +2,7 @@ import React from 'react';
 import coreModule from 'app/core/core_module';
 import ReactGridLayout from 'react-grid-layout';
 import {DashboardModel} from '../model';
+import {DashboardPanel} from './DashboardPanel';
 import sizeMe from 'react-sizeme';
 
 const COLUMN_COUNT = 24;
@@ -68,14 +69,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     for (let panel of this.props.dashboard.panels) {
       panelElements.push(
         <div key={panel.id.toString()} className="panel">
-          <div className="panel-container">
-            <div className="panel-header grid-drag-handle">
-              <div className="panel-title-container">{panel.type}</div>
-            </div>
-            <div className="panel-content">
-              {panel.title} - {panel.type}
-            </div>
-          </div>
+          <DashboardPanel panel={panel} />
         </div>,
       );
     }
