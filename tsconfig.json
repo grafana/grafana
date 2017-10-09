@@ -9,8 +9,8 @@
       "module": "esnext",
       "declaration": false,
       "allowSyntheticDefaultImports": true,
-      "inlineSourceMap": true,
-      "sourceMap": false,
+      "inlineSourceMap": false,
+      "sourceMap": true,
       "noEmitOnError": false,
       "emitDecoratorMetadata": false,
       "experimentalDecorators": false,
@@ -28,7 +28,5 @@
       "public/app/**/*.ts",
       "public/app/**/*.tsx",
       "public/test/**/*.ts"
-    ],
-    "exclude": [
     ]
 }
