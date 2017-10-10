@@ -29,7 +29,7 @@ func TestKafkaNotifier(t *testing.T) {
 			Convey("settings should send an event to kafka", func() {
 				json := `
 				{
-					"kafkaEndpoint": "http://localhost:8082",
+					"kafkaRestProxy": "http://localhost:8082",
 					"kafkaTopic": "topic1"
 				}`
 
