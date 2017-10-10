@@ -1,15 +1,15 @@
-<div dash-class ng-if="dashboard">
-	<dashnav dashboard="dashboard"></dashnav>
+<div dash-class ng-if="ctrl.dashboard">
+	<dashnav dashboard="ctrl.dashboard"></dashnav>
 
 	<div class="scroll-canvas scroll-canvas--dashboard">
 		<div gemini-scrollbar>
 			<div dash-editor-view class="dash-edit-view"></div>
 			<div class="dashboard-container">
 
-				<dashboard-submenu ng-if="dashboard.meta.submenuEnabled" dashboard="dashboard"></dashboard-submenu>
+				<dashboard-submenu ng-if="ctrl.dashboard.meta.submenuEnabled" dashboard="ctrl.dashboard">
+				</dashboard-submenu>
 
-        <!-- <dash&#45;grid dashboard="dashboard"></dash&#45;grid> -->
-				<dashboard-grid dashboard="dashboard" get-panel-loader="getPanelLoader">
+				<dashboard-grid get-panel-container="ctrl.getPanelContainer">
 				</dashboard-grid>
 
 			</div>

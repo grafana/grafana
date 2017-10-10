@@ -23,6 +23,7 @@ export class PanelLoader {
 
     return {
       destroy: () => {
+        console.log('AttachedPanel:Destroy, id' + panel.id);
         panelScope.$destroy();
         compiledElem.remove();
       }

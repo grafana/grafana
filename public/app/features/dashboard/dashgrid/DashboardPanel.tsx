@@ -1,14 +1,16 @@
 import React from 'react';
-import {PanelLoader} from './PanelLoader';
+import {PanelModel} from '../PanelModel';
+import {PanelContainer} from './PanelContainer';
+import {AttachedPanel} from './PanelLoader';
 
 export interface DashboardPanelProps {
-  panel: any;
-  dashboard: any;
-  getPanelLoader: () => PanelLoader;
+  panel: PanelModel;
+  getPanelContainer: () => PanelContainer;
 }
 
 export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
-  private element: any;
+  element: any;
+  attachedPanel: AttachedPanel;
 
   constructor(props) {
     super(props);
@@ -16,8 +18,17 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
   }
 
   componentDidMount() {
-    var loader = this.props.getPanelLoader();
-    loader.load(this.element, this.props.panel, this.props.dashboard);
+    const panelContainer = this.props.getPanelContainer();
+    const dashboard = panelContainer.getDashboard();
+    const loader = panelContainer.getPanelLoader();
+
+    this.attachedPanel = loader.load(this.element, this.props.panel, dashboard);
+  }
+
+  componentWillUnmount() {
+    if (this.attachedPanel) {
+      this.attachedPanel.destroy();
+    }
   }
 
   render() {

@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import moment from 'moment';
 import _ from 'lodash';
@@ -8,17 +6,8 @@ import $ from 'jquery';
 import {DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
 import {Emitter, contextSrv, appEvents} from 'app/core/core';
 import {DashboardRow} from './row/row_model';
+import {PanelModel} from './PanelModel';
 import sortByKeys from 'app/core/utils/sort_by_keys';
-
-export interface Panel {
-  id: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  type: string;
-  title: string;
-}
 
 export const CELL_HEIGHT = 30;
 export const CELL_VMARGIN = 15;
@@ -50,7 +39,7 @@ export class DashboardModel {
   events: any;
   editMode: boolean;
   folderId: number;
-  panels: Panel[];
+  panels: PanelModel[];
 
   constructor(data, meta?) {
     if (!data) {

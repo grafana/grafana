@@ -1,13 +1,12 @@
 import React from 'react';
 import coreModule from 'app/core/core_module';
 import ReactGridLayout from 'react-grid-layout';
-import {DashboardModel} from '../model';
+import {CELL_HEIGHT, CELL_VMARGIN} from '../model';
 import {DashboardPanel} from './DashboardPanel';
-import {PanelLoader} from './PanelLoader';
+import {PanelContainer} from './PanelContainer';
 import sizeMe from 'react-sizeme';
 
 const COLUMN_COUNT = 12;
-const ROW_HEIGHT = 30;
 
 function GridWrapper({size, layout, onLayoutChange, children}) {
   if (size.width === 0) {
@@ -23,9 +22,9 @@ function GridWrapper({size, layout, onLayoutChange, children}) {
       isDraggable={true}
       isResizable={true}
       measureBeforeMount={false}
-      margin={[10, 10]}
+      margin={[CELL_VMARGIN, CELL_VMARGIN]}
       cols={COLUMN_COUNT}
-      rowHeight={ROW_HEIGHT}
+      rowHeight={CELL_HEIGHT}
       draggableHandle=".grid-drag-handle"
       layout={layout}
       onLayoutChange={onLayoutChange}>
@@ -37,21 +36,24 @@ function GridWrapper({size, layout, onLayoutChange, children}) {
 const SizedReactLayoutGrid = sizeMe({monitorWidth: true})(GridWrapper);
 
 export interface DashboardGridProps {
-  dashboard: DashboardModel;
-  getPanelLoader: () => PanelLoader;
+  getPanelContainer: () => PanelContainer;
 }
 
 export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   gridToPanelMap: any;
+  panelContainer: PanelContainer;
 
   constructor(props) {
     super(props);
+    this.panelContainer = this.props.getPanelContainer();
     this.onLayoutChange = this.onLayoutChange.bind(this);
   }
 
   buildLayout() {
     const layout = [];
-    for (let panel of this.props.dashboard.panels) {
+    const panels = this.panelContainer.getPanels();
+
+    for (let panel of panels) {
       layout.push({
         i: panel.id.toString(),
         x: panel.x,
@@ -60,21 +62,28 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
         h: panel.height,
       });
     }
-    console.log(layout);
+
+    console.log('layout', layout);
     return layout;
   }
 
   onLayoutChange() {}
 
   renderPanels() {
+    const panels = this.panelContainer.getPanels();
     const panelElements = [];
-    for (let panel of this.props.dashboard.panels) {
+
+    for (let panel of panels) {
       panelElements.push(
         <div key={panel.id.toString()} className="panel">
-          <DashboardPanel panel={panel} getPanelLoader={this.props.getPanelLoader} dashboard={this.props.dashboard} />
+          <DashboardPanel
+            panel={panel}
+            getPanelContainer={this.props.getPanelContainer}
+          />
         </div>,
       );
     }
+
     return panelElements;
   }
 
@@ -88,8 +97,5 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
 }
 
 coreModule.directive('dashboardGrid', function(reactDirective) {
-  return reactDirective(DashboardGrid, [
-    ['dashboard', {watchDepth: 'reference'}],
-    ['getPanelLoader', {watchDepth: 'reference', wrapApply: false}],
-  ]);
+  return reactDirective(DashboardGrid, [['getPanelContainer', {watchDepth: 'reference', wrapApply: false}]]);
 });
