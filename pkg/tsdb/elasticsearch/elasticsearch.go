@@ -21,7 +21,7 @@ type ESExecutor struct {
 	*esmodel.ESDataSource
 }
 
-func NewElasticSearchExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
+func NewElasticSearchExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	ds, err := esmodel.NewEsDataSource(datasource)
 	if err != nil {
 		return nil, err
@@ -33,19 +33,20 @@ func NewElasticSearchExecutor(datasource *models.DataSource) (tsdb.Executor, err
 
 func init() {
 	glog = log.New("tsdb.elasticsearch")
-	tsdb.RegisterExecutor("elasticsearch", NewElasticSearchExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("elasticsearch", NewElasticSearchExecutor)
 }
 
-func (e *ESExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, query *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *ESExecutor) Query(ctx context.Context, ds *models.DataSource, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	if e.Version == 2 {
-		return es2.Execute(e.ESDataSource, ctx, queries, query)
+		return es2.Execute(e.ESDataSource, ctx, ds, query)
 	} else if e.Version == 5 {
-		return es5.Execute(e.ESDataSource, ctx, queries, query)
+		return es5.Execute(e.ESDataSource, ctx, ds, query)
 	}
-	result := &tsdb.BatchResult{
-		Error:        errors.New(fmt.Sprintf("we do not support for es version %d yet", e.Version)),
-		QueryResults: map[string]*tsdb.QueryResult{},
+	msg := fmt.Sprintf("we do not support for es version %d yet", e.Version)
+	result := &tsdb.Response{
+		Message: msg,
+		Results: map[string]*tsdb.QueryResult{},
 	}
 
-	return result
+	return result, errors.New(msg)
 }
