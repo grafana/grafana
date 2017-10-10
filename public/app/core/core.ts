@@ -5,7 +5,6 @@ import "./directives/dropdown_typeahead";
 import "./directives/metric_segment";
 import "./directives/misc";
 import "./directives/ng_model_on_blur";
-import "./directives/spectrum_picker";
 import "./directives/tags";
 import "./directives/value_select_dropdown";
 import "./directives/rebuild_on_change";

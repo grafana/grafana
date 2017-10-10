@@ -27,7 +27,7 @@ describe('MySQLDatasource', function() {
     const options = {
       annotation: {
         name: annotationName,
-        rawQuery: 'select time_sec, title, text, tags from table;'
+        rawQuery: 'select time_sec, text, tags from table;'
       },
       range: {
         from: moment(1432288354),
@@ -191,6 +191,26 @@ describe('MySQLDatasource', function() {
       expect(results.length).to.be(1);
       expect(results[0].text).to.be('aTitle');
       expect(results[0].value).to.be('same');
+    });
+  });
+
+  describe('When interpolating variables', () => {
+    describe('and value is a string', () => {
+      it('should return a quoted value', () => {
+        expect(ctx.ds.interpolateVariable('abc')).to.eql('\'abc\'');
+      });
+    });
+
+    describe('and value is a number', () => {
+      it('should return an unquoted value', () => {
+        expect(ctx.ds.interpolateVariable(1000)).to.eql(1000);
+      });
+    });
+
+    describe('and value is an array of strings', () => {
+      it('should return comma separated quoted values', () => {
+        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'])).to.eql('\'a\',\'b\',\'c\'');
+      });
     });
   });
 });

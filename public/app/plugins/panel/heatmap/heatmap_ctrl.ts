@@ -119,6 +119,8 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+
+    this.onCardColorChange = this.onCardColorChange.bind(this);
   }
 
   onInitEditMode() {
@@ -233,6 +235,11 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
   onDataError() {
     this.series = [];
+    this.render();
+  }
+
+  onCardColorChange(newColor) {
+    this.panel.color.cardColor = newColor;
     this.render();
   }
 

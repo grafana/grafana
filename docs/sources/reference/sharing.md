@@ -43,7 +43,7 @@ You also get a link to service side rendered PNG of the panel. Useful if you wan
 
 Example of a link to a server-side rendered PNG:
 
-```
+```bash
 http://play.grafana.org/render/dashboard-solo/db/grafana-play-home?orgId=1&panelId=4&from=1499272191563&to=1499279391563&width=1000&height=500&tz=UTC%2B02%3A00&timeout=5000
 ```
 

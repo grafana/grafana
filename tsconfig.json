@@ -9,8 +9,8 @@
       "module": "esnext",
       "declaration": false,
       "allowSyntheticDefaultImports": true,
-      "inlineSourceMap": true,
-      "sourceMap": false,
+      "inlineSourceMap": false,
+      "sourceMap": true,
       "noEmitOnError": false,
       "emitDecoratorMetadata": false,
       "experimentalDecorators": false,
@@ -18,6 +18,7 @@
       "noImplicitThis": false,
       "noImplicitUseStrict":false,
       "noImplicitAny": false,
+      "noUnusedLocals": true,
       "baseUrl": "public",
       "paths": {
         "app": ["app"]
@@ -27,7 +28,5 @@
       "public/app/**/*.ts",
       "public/app/**/*.tsx",
       "public/test/**/*.ts"
-    ],
-    "exclude": [
     ]
 }

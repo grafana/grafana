@@ -106,13 +106,14 @@ export default class ResponseParser {
     const table = data.data.results[options.annotation.name].tables[0];
 
     let timeColumnIndex = -1;
-    let titleColumnIndex = -1;
     let textColumnIndex = -1;
     let tagsColumnIndex = -1;
 
     for (let i = 0; i < table.columns.length; i++) {
       if (table.columns[i].text === 'time_sec') {
         timeColumnIndex = i;
+      } else if (table.columns[i].text === 'title') {
+        return this.$q.reject({message: 'The title column for annotations is deprecated, now only a column named text is returned'});
       } else if (table.columns[i].text === 'text') {
         textColumnIndex = i;
       } else if (table.columns[i].text === 'tags') {
@@ -130,7 +131,6 @@ export default class ResponseParser {
       list.push({
         annotation: options.annotation,
         time: Math.floor(row[timeColumnIndex]) * 1000,
-        title: row[titleColumnIndex],
         text: row[textColumnIndex],
         tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : []
       });

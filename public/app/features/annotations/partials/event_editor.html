@@ -1,38 +1,35 @@
 
-<h5 class="section-heading text-center">Add annotation</h5>
-
-<form name="ctrl.form" class="text-center">
-	<div style="display: inline-block">
-		<div class="gf-form">
-			<span class="gf-form-label width-7">Title</span>
-			<input type="text" ng-model="ctrl.event.title" class="gf-form-input max-width-20" required>
+<div class="graph-annotation">
+	<div class="graph-annotation__header">
+		<div class="graph-annotation__user" bs-tooltip="'Created by {{ctrl.login}}'">
 		</div>
-		<!-- single event -->
-		<div ng-if="!ctrl.event.isRegion">
-      <div class="gf-form">
-        <span class="gf-form-label width-7">Time</span>
-        <input type="text" ng-model="ctrl.event.time" class="gf-form-input max-width-20" input-datetime required ng-change="ctrl.timeChanged()">
-      </div>
-    </div>
-    <!-- region event -->
-    <div ng-if="ctrl.event.isRegion">
-      <div class="gf-form">
-        <span class="gf-form-label width-7">Start</span>
-        <input type="text" ng-model="ctrl.event.time" class="gf-form-input max-width-20" input-datetime required ng-change="ctrl.timeChanged()">
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-7">End</span>
-        <input type="text" ng-model="ctrl.event.timeEnd" class="gf-form-input max-width-20" input-datetime required ng-change="ctrl.timeChanged()">
-      </div>
-    </div>
-    <div class="gf-form gf-form--v-stretch">
-      <span class="gf-form-label width-7">Description</span>
-      <textarea class="gf-form-input width-20" rows="3" ng-model="ctrl.event.text"  placeholder="Event description"></textarea>
-    </div>
 
-    <div class="gf-form-button-row">
-      <button type="submit" class="btn gf-form-btn btn-success" ng-click="ctrl.save()">Save</button>
-			<a class="btn-text" ng-click="ctrl.close();">Cancel</a>
-    </div>
-  </div>
-</form>
+		<div class="graph-annotation__title">
+			<span ng-if="!ctrl.event.id">Add Annotation</span>
+			<span ng-if="ctrl.event.id">Edit Annotation</span>
+		</div>
+
+    <div class="graph-annotation__time">{{ctrl.timeFormated}}</div>
+	</div>
+
+	<form name="ctrl.form" class="graph-annotation__body text-center">
+		<div style="display: inline-block">
+			<div class="gf-form gf-form--v-stretch">
+				<span class="gf-form-label width-7">Description</span>
+				<textarea class="gf-form-input width-20" rows="2" ng-model="ctrl.event.text"  placeholder="Description"></textarea>
+			</div>
+
+			<div class="gf-form">
+				<span class="gf-form-label width-7">Tags</span>
+				<bootstrap-tagsinput ng-model="ctrl.event.tags" tagclass="label label-tag" placeholder="add tags">
+				</bootstrap-tagsinput>
+			</div>
+
+			<div class="gf-form-button-row">
+				<button type="submit" class="btn btn-success" ng-click="ctrl.save()">Save</button>
+				<button ng-if="ctrl.event.id" type="submit" class="btn btn-danger" ng-click="ctrl.delete()">Delete</button>
+				<a class="btn-text" ng-click="ctrl.close();">Cancel</a>
+			</div>
+		</div>
+	</form>
+</div>

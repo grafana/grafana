@@ -83,7 +83,6 @@ export class ElasticDatasource {
     var timeField = annotation.timeField || '@timestamp';
     var queryString = annotation.query || '*';
     var tagsField = annotation.tagsField || 'tags';
-    var titleField = annotation.titleField || 'desc';
     var textField = annotation.textField || null;
 
     var range = {};
@@ -146,9 +145,6 @@ export class ElasticDatasource {
           }
         }
 
-        if (_.isArray(fieldValue)) {
-          fieldValue = fieldValue.join(', ');
-        }
         return fieldValue;
       };
 
@@ -165,16 +161,27 @@ export class ElasticDatasource {
         var event = {
           annotation: annotation,
           time: moment.utc(time).valueOf(),
-          title: getFieldFromSource(source, titleField),
+          text: getFieldFromSource(source, textField),
           tags: getFieldFromSource(source, tagsField),
-          text: getFieldFromSource(source, textField)
         };
+
+        // legacy support for title tield
+        if (annotation.titleField) {
+          const title = getFieldFromSource(source, annotation.titleField);
+          if (title) {
+            event.text = title + '\n' + event.text;
+          }
+        }
+
+        if (typeof event.tags === 'string') {
+          event.tags = event.tags.split(',');
+        }
 
         list.push(event);
       }
       return list;
     });
-  };
+  }
 
   testDatasource() {
     this.timeSrv.setTime({ from: 'now-1m', to: 'now' }, true);
@@ -242,7 +249,7 @@ export class ElasticDatasource {
     return this.post('_msearch', payload).then(function(res) {
       return new ElasticResponse(sentTargets, res).getTimeSeries();
     });
-  };
+  }
 
   getFields(query) {
     return this.get('/_mapping').then(function(result) {

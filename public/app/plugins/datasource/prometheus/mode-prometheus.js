@@ -65,13 +65,13 @@ var PrometheusHighlightRules = function() {
       regex : "\\s+"
     } ],
     "start-label-matcher" : [ {
-      token : "keyword",
+      token : "entity.name.tag",
       regex : '[a-zA-Z_][a-zA-Z0-9_]*'
     }, {
       token : "keyword.operator",
       regex : '=~|=|!~|!='
     }, {
-      token : "string",
+      token : "string.quoted",
       regex : '"[^"]*"|\'[^\']*\''
     }, {
       token : "punctuation.operator",
@@ -401,7 +401,7 @@ var PrometheusCompletions = function() {};
 (function() {
   this.getCompletions = function(state, session, pos, prefix, callback) {
     var token = session.getTokenAt(pos.row, pos.column);
-    if (token.type === 'label.name' || token.type === 'label.value') {
+    if (token.type === 'entity.name.tag' || token.type === 'string.quoted') {
       return callback(null, []);
     }
 

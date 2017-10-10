@@ -45,7 +45,7 @@ yarn install --pure-lockfile
 npm run build
 ```
 
-To rebuild frontend assets (typesript, sass etc) as you change them start the watcher via.
+To rebuild frontend assets (typescript, sass etc) as you change them start the watcher via.
 
 ```bash
 npm run watch

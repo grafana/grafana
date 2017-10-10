@@ -92,6 +92,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+
+    this.onSparklineColorChange = this.onSparklineColorChange.bind(this);
+    this.onSparklineFillChange = this.onSparklineFillChange.bind(this);
   }
 
   onInitEditMode() {
@@ -219,6 +222,16 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       this.panel.colors[panelColorIndex] = color;
       this.render();
     };
+  }
+
+  onSparklineColorChange(newColor) {
+    this.panel.sparkline.lineColor = newColor;
+    this.render();
+  }
+
+  onSparklineFillChange(newColor) {
+    this.panel.sparkline.fillColor = newColor;
+    this.render();
   }
 
   getDecimalsForValue(value) {
@@ -432,7 +445,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     function addGauge() {
       var width = elem.width();
       var height = elem.height();
-      var dimension = Math.min(width, height);
+      // Allow to use a bit more space for wide gauges
+      var dimension = Math.min(width, height * 1.3);
 
       ctrl.invalidGaugeRange = false;
       if (panel.gauge.minValue > panel.gauge.maxValue) {
@@ -469,8 +483,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       var fontScale = parseInt(panel.valueFontSize) / 100;
       var fontSize = Math.min(dimension/5, 100) * fontScale;
-      var gaugeWidth = Math.min(dimension/6, 60);
+      // Reduce gauge width if threshold labels enabled
+      var gaugeWidthReduceRatio = panel.gauge.thresholdLabels ? 1.5 : 1;
+      var gaugeWidth = Math.min(dimension/6, 60) / gaugeWidthReduceRatio;
       var thresholdMarkersWidth = gaugeWidth/5;
+      var thresholdLabelFontSize = fontSize / 2.5;
 
       var options = {
         series: {
@@ -491,8 +508,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
               values: thresholds,
               label: {
                 show: panel.gauge.thresholdLabels,
-                margin: 8,
-                font: { size: 18 }
+                margin: thresholdMarkersWidth + 1,
+                font: { size: thresholdLabelFontSize }
               },
               show: panel.gauge.thresholdMarkers,
               width: thresholdMarkersWidth,
@@ -589,7 +606,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       var body = panel.gauge.show ? '' : getBigValueHtml();
 
-      if (panel.colorBackground && !isNaN(data.value)) {
+      if (panel.colorBackground) {
         var color = getColorForValue(data, data.value);
         if (color) {
           $panelContainer.css('background-color', color);
@@ -673,6 +690,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 }
 
 function getColorForValue(data, value) {
+  if (!_.isFinite(value)) {
+    return null;
+  }
   for (var i = data.thresholds.length; i > 0; i--) {
     if (value >= data.thresholds[i-1]) {
       return data.colorMap[i];

@@ -188,4 +188,4 @@ export function describeOrderBy(orderBy, target) {
   } else {
     return "metric not found";
   }
-};
+}
