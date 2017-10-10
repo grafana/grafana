@@ -278,12 +278,14 @@ func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
 	panels := dash.Get("panels").MustArray()
 
 	newpanel := simplejson.NewFromAny(map[string]interface{}{
-		"type":   "gettingstarted",
-		"id":     123123,
-		"x":      0,
-		"y":      3,
-		"width":  12,
-		"height": 4,
+		"type": "gettingstarted",
+		"id":   123123,
+		"gridPos": map[string]interface{}{
+			"x": 0,
+			"y": 3,
+			"w": 12,
+			"h": 4,
+		},
 	})
 
 	panels = append(panels, newpanel)
