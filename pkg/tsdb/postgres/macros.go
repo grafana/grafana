@@ -1,8 +1,9 @@
-package mysql
+package postgres
 
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -11,21 +12,21 @@ import (
 const rsIdentifier = `([_a-zA-Z0-9]+)`
 const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
-type MySqlMacroEngine struct {
+type PostgresMacroEngine struct {
 	TimeRange *tsdb.TimeRange
 }
 
-func NewMysqlMacroEngine() tsdb.SqlMacroEngine {
-	return &MySqlMacroEngine{}
+func NewPostgresMacroEngine() tsdb.SqlMacroEngine {
+	return &PostgresMacroEngine{}
 }
 
-func (m *MySqlMacroEngine) Interpolate(timeRange *tsdb.TimeRange, sql string) (string, error) {
+func (m *PostgresMacroEngine) Interpolate(timeRange *tsdb.TimeRange, sql string) (string, error) {
 	m.TimeRange = timeRange
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
 	sql = replaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
-		res, err := m.evaluateMacro(groups[1], groups[2:])
+		res, err := m.evaluateMacro(groups[1], strings.Split(groups[2], ","))
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -57,22 +58,32 @@ func replaceAllStringSubmatchFunc(re *regexp.Regexp, str string, repl func([]str
 	return result + str[lastIndex:]
 }
 
-func (m *MySqlMacroEngine) evaluateMacro(name string, args []string) (string, error) {
+func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string, error) {
 	switch name {
 	case "__time":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("UNIX_TIMESTAMP(%s) as time_sec", args[0]), nil
+		return fmt.Sprintf("%s AS \"time\"", args[0]), nil
+	case "__timeEpoch":
+		if len(args) == 0 {
+			return "", fmt.Errorf("missing time column argument for macro %v", name)
+		}
+		return fmt.Sprintf("extract(epoch from %s) as \"time\"", args[0]), nil
 	case "__timeFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("%s >= FROM_UNIXTIME(%d) AND %s <= FROM_UNIXTIME(%d)", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("%s >= to_timestamp(%d) AND %s <= to_timestamp(%d)", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
 	case "__timeFrom":
-		return fmt.Sprintf("FROM_UNIXTIME(%d)", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("to_timestamp(%d)", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
 	case "__timeTo":
-		return fmt.Sprintf("FROM_UNIXTIME(%d)", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+		return fmt.Sprintf("to_timestamp(%d)", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+	case "__timeGroup":
+		if len(args) < 2 {
+			return "", fmt.Errorf("macro %v needs time column and interval", name)
+		}
+		return fmt.Sprintf("(extract(epoch from \"%s\")/extract(epoch from %s::interval))::int", args[0], args[1]), nil
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)

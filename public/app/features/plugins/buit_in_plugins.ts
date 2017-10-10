@@ -6,6 +6,7 @@ import * as grafanaPlugin from 'app/plugins/datasource/grafana/module';
 import * as influxdbPlugin from 'app/plugins/datasource/influxdb/module';
 import * as mixedPlugin from 'app/plugins/datasource/mixed/module';
 import * as mysqlPlugin from 'app/plugins/datasource/mysql/module';
+import * as postgresPlugin from 'app/plugins/datasource/postgres/module';
 import * as prometheusPlugin from 'app/plugins/datasource/prometheus/module';
 
 import * as textPanel from 'app/plugins/panel/text/module';
@@ -29,6 +30,7 @@ const builtInPlugins = {
   "app/plugins/datasource/influxdb/module": influxdbPlugin,
   "app/plugins/datasource/mixed/module": mixedPlugin,
   "app/plugins/datasource/mysql/module": mysqlPlugin,
+  "app/plugins/datasource/postgres/module": postgresPlugin,
   "app/plugins/datasource/prometheus/module": prometheusPlugin,
   "app/plugins/app/testdata/module": testDataAppPlugin,
   "app/plugins/app/testdata/datasource/module": testDataDSPlugin,
