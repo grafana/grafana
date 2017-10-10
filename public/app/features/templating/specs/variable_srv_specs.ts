@@ -88,8 +88,16 @@ describe('VariableSrv', function() {
     });
 
     it('should set $__auto_interval_test', function() {
-      var call = ctx.templateSrv.setGrafanaVariable.getCall(0);
+      var call = ctx.templateSrv.setGrafanaVariable.firstCall;
       expect(call.args[0]).to.be('$__auto_interval_test');
+      expect(call.args[1]).to.be('12h');
+    });
+
+    // updateAutoValue() gets called twice: once directly once via VariableSrv.validateVariableSelectionState()
+    // So use lastCall instead of a specific call number
+    it('should set $__auto_interval', function() {
+      var call = ctx.templateSrv.setGrafanaVariable.lastCall;
+      expect(call.args[0]).to.be('$__auto_interval');
       expect(call.args[1]).to.be('12h');
     });
   });
@@ -430,14 +438,33 @@ describe('VariableSrv', function() {
       });
 
       it('should correctly set $__auto_interval_variableX', function() {
-        var call = ctx.templateSrv.setGrafanaVariable.firstCall;
-        expect(call.args[0]).to.be('$__auto_interval_variable1');
-        expect(call.args[1]).to.be('12h');
-        // setGrafanaVariable() gets called twice: once directly once via VariableSrv.validateVariableSelectionState()
-        // So use firstCall and lastCall instead of specific call numbers
-        call = ctx.templateSrv.setGrafanaVariable.lastCall;
-        expect(call.args[0]).to.be('$__auto_interval_variable2');
-        expect(call.args[1]).to.be('10m');
+        var variable1Set, variable2Set, legacySet, unknownSet = false;
+        // updateAutoValue() gets called repeatedly: once directly once via VariableSrv.validateVariableSelectionState()
+        // So check that all calls are valid rather than expect a specific number and/or ordering of calls
+        for (var i = 0; i < ctx.templateSrv.setGrafanaVariable.callCount; i++) {
+          var call = ctx.templateSrv.setGrafanaVariable.getCall(i);
+          switch (call.args[0]) {
+            case '$__auto_interval_variable1':
+              expect(call.args[1]).to.be('12h');
+              variable1Set = true;
+              break;
+            case '$__auto_interval_variable2':
+              expect(call.args[1]).to.be('10m');
+              variable2Set = true;
+              break;
+            case '$__auto_interval':
+              expect(call.args[1]).to.match(/^(12h|10m)$/);
+              legacySet = true;
+              break;
+            default:
+              unknownSet = true;
+              break;
+          }
+        }
+        expect(variable1Set).to.be.equal(true);
+        expect(variable2Set).to.be.equal(true);
+        expect(legacySet).to.be.equal(true);
+        expect(unknownSet).to.be.equal(false);
       });
     });
 });

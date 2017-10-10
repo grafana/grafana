@@ -56,6 +56,8 @@ export class IntervalVariable implements Variable {
 
     var res = kbn.calculateInterval(this.timeSrv.timeRange(), this.auto_count, this.auto_min);
     this.templateSrv.setGrafanaVariable('$__auto_interval_' + this.name, res.interval);
+    // for backward compatibility, to be removed eventually
+    this.templateSrv.setGrafanaVariable('$__auto_interval', res.interval);
   }
 
   updateOptions() {
