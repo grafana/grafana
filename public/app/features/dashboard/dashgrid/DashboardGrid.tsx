@@ -4,6 +4,7 @@ import ReactGridLayout from 'react-grid-layout';
 import {CELL_HEIGHT, CELL_VMARGIN} from '../model';
 import {DashboardPanel} from './DashboardPanel';
 import {PanelContainer} from './PanelContainer';
+import {PanelModel} from '../PanelModel';
 import sizeMe from 'react-sizeme';
 
 const COLUMN_COUNT = 12;
@@ -22,6 +23,8 @@ function GridWrapper({size, layout, onLayoutChange, children}) {
       isDraggable={true}
       isResizable={true}
       measureBeforeMount={false}
+      containerPadding={[0, 0]}
+      useCSSTransforms={true}
       margin={[CELL_VMARGIN, CELL_VMARGIN]}
       cols={COLUMN_COUNT}
       rowHeight={CELL_HEIGHT}
@@ -42,6 +45,7 @@ export interface DashboardGridProps {
 export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   gridToPanelMap: any;
   panelContainer: PanelContainer;
+  panelMap: {[id: string]: PanelModel};
 
   constructor(props) {
     super(props);
@@ -52,22 +56,34 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   buildLayout() {
     const layout = [];
     const panels = this.panelContainer.getPanels();
+    this.panelMap = {};
 
     for (let panel of panels) {
+      let stringId = panel.id.toString();
+      this.panelMap[stringId] = panel;
+
+      if (!panel.gridPos) {
+        console.log('panel without gridpos');
+        continue;
+      }
+
       layout.push({
-        i: panel.id.toString(),
-        x: panel.x,
-        y: panel.y,
-        w: panel.width,
-        h: panel.height,
+        i: stringId,
+        x: panel.gridPos.x,
+        y: panel.gridPos.y,
+        w: panel.gridPos.w,
+        h: panel.gridPos.h,
       });
     }
 
-    console.log('layout', layout);
     return layout;
   }
 
-  onLayoutChange() {}
+  onLayoutChange(newLayout) {
+    for (const newPos of newLayout) {
+      this.panelMap[newPos.i].updateGridPos(newPos);
+    }
+  }
 
   renderPanels() {
     const panels = this.panelContainer.getPanels();
@@ -76,10 +92,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     for (let panel of panels) {
       panelElements.push(
         <div key={panel.id.toString()} className="panel">
-          <DashboardPanel
-            panel={panel}
-            getPanelContainer={this.props.getPanelContainer}
-          />
+          <DashboardPanel panel={panel} getPanelContainer={this.props.getPanelContainer} />
         </div>,
       );
     }

@@ -121,7 +121,8 @@ export class DashboardCtrl implements PanelContainer {
     }
 
     panelPossitionUpdated(panel: PanelModel) {
-      console.log('panel pos updated', panel);
+      //console.log('panel pos updated', panel);
+      //this.$rootScope.$broadcast('render');
     }
 
     timezoneChanged() {

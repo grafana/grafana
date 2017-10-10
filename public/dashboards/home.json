@@ -13,7 +13,6 @@
     {
       "content": "<div class=\"text-center dashboard-header\">\n  <span>Home Dashboard</span>\n</div>",
       "editable": true,
-      "height": 2,
       "id": 1,
       "links": [],
       "mode": "html",
@@ -21,14 +20,16 @@
       "title": "",
       "transparent": true,
       "type": "text",
-      "width": 12,
-      "x": 0,
-      "y": 0
+      "gridPos": {
+        "w": 12,
+        "h": 2,
+        "x": 0,
+        "y": 0
+      }
     },
     {
       "folderId": 0,
       "headings": true,
-      "height": 17,
       "id": 3,
       "limit": 4,
       "links": [],
@@ -40,22 +41,27 @@
       "title": "",
       "transparent": false,
       "type": "dashlist",
-      "width": 7,
-      "x": 0,
-      "y": 6
+      "gridPos": {
+        "w": 7,
+        "h": 17,
+        "x": 0,
+        "y": 6
+      }
     },
     {
       "editable": true,
       "error": false,
-      "height": 17,
       "id": 4,
       "links": [],
       "title": "",
       "transparent": false,
       "type": "pluginlist",
-      "width": 5,
-      "x": 7,
-      "y": 6
+      "gridPos": {
+        "w": 5,
+        "h": 17,
+        "x": 7,
+        "y": 6
+      }
     }
   ],
   "rows": [],

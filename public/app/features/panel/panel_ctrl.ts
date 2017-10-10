@@ -37,7 +37,7 @@ export class PanelCtrl {
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
     this.editorTabIndex = 0;
-    this.events = new Emitter();
+    this.events = this.panel.events;
     this.timing = {};
 
     var plugin = config.panels[this.panel.type];
@@ -47,21 +47,14 @@ export class PanelCtrl {
     }
 
     $scope.$on("refresh", () => this.refresh());
-    $scope.$on("render", () => this.render());
     $scope.$on("$destroy", () => {
       this.events.emit('panel-teardown');
       this.events.removeAllListeners();
     });
-
-    // we should do something interesting
-    // with newly added panels
-    if (this.panel.isNew) {
-      delete this.panel.isNew;
-    }
   }
 
   init() {
-    this.calculatePanelHeight();
+    this.events.on('panel-size-changed', this.onSizeChanged.bind(this));
     this.publishAppEvent('panel-initialized', {scope: this.$scope});
     this.events.emit('panel-initialized');
   }
@@ -71,7 +64,7 @@ export class PanelCtrl {
   }
 
   refresh() {
-   this.events.emit('refresh', null);
+    this.events.emit('refresh', null);
   }
 
   publishAppEvent(evtName, evt) {
@@ -170,21 +163,22 @@ export class PanelCtrl {
        var fullscreenHeight = Math.floor(docHeight * 0.8);
        this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
     } else {
-      this.containerHeight = this.panel.height * CELL_HEIGHT + ((this.panel.height-1) * CELL_VMARGIN);
+      this.containerHeight = this.panel.gridPos.h * CELL_HEIGHT + ((this.panel.gridPos.h-1) * CELL_VMARGIN);
     }
 
     this.height = this.containerHeight - (PANEL_BORDER + PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
   }
 
   render(payload?) {
-    // ignore if other panel is in fullscreen mode
-    if (this.otherPanelInFullscreenMode()) {
-      return;
-    }
-
-    this.calculatePanelHeight();
     this.timing.renderStart = new Date().getTime();
     this.events.emit('render', payload);
+  }
+
+  private onSizeChanged() {
+    this.calculatePanelHeight();
+    this.$timeout(() => {
+      this.render();
+    });
   }
 
   duplicate() {
