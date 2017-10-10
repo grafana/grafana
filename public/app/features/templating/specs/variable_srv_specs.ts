@@ -395,4 +395,49 @@ describe('VariableSrv', function() {
         expect(scenario.variable.options[1].value).to.be('hop');
       });
     });
+
+    describe('multiple interval variables with auto', function() {
+      var variable1, variable2;
+
+      beforeEach(function() {
+        var range = {
+          from: moment(new Date()).subtract(7, 'days').toDate(),
+          to: new Date()
+        };
+        ctx.timeSrv.timeRange = sinon.stub().returns(range);
+        ctx.templateSrv.setGrafanaVariable = sinon.spy();
+
+        var variableModel1 = {type: 'interval', query: '1s,2h,5h,1d', name: 'variable1', auto: true, auto_count: 10 };
+        variable1 = ctx.variableSrv.createVariableFromModel(variableModel1);
+        ctx.variableSrv.addVariable(variable1);
+
+        var variableModel2 = {type: 'interval', query: '1s,2h,5h', name: 'variable2', auto: true, auto_count: 1000 };
+        variable2 = ctx.variableSrv.createVariableFromModel(variableModel2);
+        ctx.variableSrv.addVariable(variable2);
+
+        ctx.variableSrv.updateOptions(variable1);
+        ctx.variableSrv.updateOptions(variable2);
+        ctx.$rootScope.$digest();
+      });
+
+      it('should update options array', function() {
+        expect(variable1.options.length).to.be(5);
+        expect(variable1.options[0].text).to.be('auto');
+        expect(variable1.options[0].value).to.be('$__auto_interval_variable1');
+        expect(variable2.options.length).to.be(4);
+        expect(variable2.options[0].text).to.be('auto');
+        expect(variable2.options[0].value).to.be('$__auto_interval_variable2');
+      });
+
+      it('should correctly set $__auto_interval_variableX', function() {
+        var call = ctx.templateSrv.setGrafanaVariable.firstCall;
+        expect(call.args[0]).to.be('$__auto_interval_variable1');
+        expect(call.args[1]).to.be('12h');
+        // setGrafanaVariable() gets called twice: once directly once via VariableSrv.validateVariableSelectionState()
+        // So use firstCall and lastCall instead of specific call numbers
+        call = ctx.templateSrv.setGrafanaVariable.lastCall;
+        expect(call.args[0]).to.be('$__auto_interval_variable2');
+        expect(call.args[1]).to.be('10m');
+      });
+    });
 });
