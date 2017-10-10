@@ -16,14 +16,14 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(nil, "select $__time(time_column)")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "select time_column AS \"time_sec\"")
+			So(sql, ShouldEqual, "select time_column AS \"time\"")
 		})
 
 		Convey("interpolate __time function wrapped in aggregation", func() {
 			sql, err := engine.Interpolate(nil, "select min($__time(time_column))")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "select min(time_column AS \"time_sec\")")
+			So(sql, ShouldEqual, "select min(time_column AS \"time\")")
 		})
 
 		Convey("interpolate __timeFilter function", func() {

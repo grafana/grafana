@@ -155,7 +155,7 @@ func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *co
 	// check columns of resultset
 	for i, col := range columnNames {
 		switch col {
-		case "time_sec":
+		case "time":
 			timeIndex = i
 		case "metric":
 			metricIndex = i
