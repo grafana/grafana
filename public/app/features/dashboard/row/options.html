@@ -30,5 +30,22 @@
 				<dash-repeat-option model="ctrl.row"></dash-repeat-option>
 			</div>
 		</div>
+    <div class="section">
+      <div class="gf-form">
+        <gf-form-switch class="gf-form" label="Hide Row" checked="ctrl.row.autoHideRow">
+        </gf-form-switch>
+      </div>
+      <div class="gf-form">
+        <div>
+          <input type="text" class="gf-form-input max-width-6" ng-model='ctrl.row.conditionLeft'></input>
+        </div>
+        <div class="gf-form-select-wrapper">
+          <select class="input-small gf-form-input" ng-model="ctrl.row.operator" ng-options="f for f in ctrl.conditions"></select>
+        </div>
+        <div>
+          <input type="text" class="gf-form-input max-width-6" ng-model='ctrl.row.conditionRight'></input>
+        </div>
+      </div>
+    </div>
 	</div>
 </div>
