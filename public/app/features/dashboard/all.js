@@ -25,6 +25,7 @@ define([
   './repeat_option/repeat_option',
   './dashgrid/DashboardGrid',
   './dashgrid/PanelLoader',
+  './row/add_panel',
   './acl/acl',
   './folder_picker/picker',
   './folder_modal/folder'

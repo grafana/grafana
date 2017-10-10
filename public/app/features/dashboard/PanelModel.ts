@@ -8,7 +8,6 @@ export interface GridPos {
 }
 
 const notPersistedProperties: {[str: string]: boolean} = {
-  "model": true,
   "events": true,
 };
 
@@ -19,26 +18,26 @@ export class PanelModel {
   title: string;
   events: Emitter;
 
-  constructor(private model) {
+  constructor(model) {
+    this.events = new Emitter();
+
     // copy properties from persisted model
     for (var property in model) {
       this[property] = model[property];
     }
-
-    this.events = new Emitter();
   }
 
   getSaveModel() {
-    this.model = {};
+    const model: any = {};
     for (var property in this) {
       if (notPersistedProperties[property] || !this.hasOwnProperty(property)) {
-        console.log('PanelModel.getSaveModel() skiping property', property);
         continue;
       }
 
-      this.model[property] = this[property];
+      model[property] = this[property];
     }
-    return this.model;
+
+    return model;
   }
 
   updateGridPos(newPos: GridPos) {

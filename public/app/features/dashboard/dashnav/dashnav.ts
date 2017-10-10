@@ -145,6 +145,14 @@ export class DashNavCtrl {
       this.$rootScope.appEvent('show-dash-search');
     }
 
+    addPanel() {
+      this.dashboard.addPanel({
+        type: 'graph',
+        gridPos: {x: 0, y: 0, w: 6, h: 5},
+        title: 'New Graph',
+      });
+    }
+
     navItemClicked(navItem, evt) {
       if (navItem.clickHandler) {
         navItem.clickHandler();

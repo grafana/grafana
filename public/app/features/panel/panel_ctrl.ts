@@ -178,7 +178,7 @@ export class PanelCtrl {
     this.calculatePanelHeight();
     this.$timeout(() => {
       this.render();
-    });
+    }, 100);
   }
 
   duplicate() {

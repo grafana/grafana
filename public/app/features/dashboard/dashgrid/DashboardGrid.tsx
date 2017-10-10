@@ -3,13 +3,14 @@ import coreModule from 'app/core/core_module';
 import ReactGridLayout from 'react-grid-layout';
 import {CELL_HEIGHT, CELL_VMARGIN} from '../model';
 import {DashboardPanel} from './DashboardPanel';
+import {DashboardModel} from '../model';
 import {PanelContainer} from './PanelContainer';
 import {PanelModel} from '../PanelModel';
 import sizeMe from 'react-sizeme';
 
 const COLUMN_COUNT = 12;
 
-function GridWrapper({size, layout, onLayoutChange, children}) {
+function GridWrapper({size, layout, onLayoutChange, children, onResize}) {
   if (size.width === 0) {
     console.log('size is zero!');
   }
@@ -30,6 +31,7 @@ function GridWrapper({size, layout, onLayoutChange, children}) {
       rowHeight={CELL_HEIGHT}
       draggableHandle=".grid-drag-handle"
       layout={layout}
+      onResize={onResize}
       onLayoutChange={onLayoutChange}>
       {children}
     </ReactGridLayout>
@@ -45,20 +47,25 @@ export interface DashboardGridProps {
 export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   gridToPanelMap: any;
   panelContainer: PanelContainer;
+  dashboard: DashboardModel;
   panelMap: {[id: string]: PanelModel};
 
   constructor(props) {
     super(props);
     this.panelContainer = this.props.getPanelContainer();
     this.onLayoutChange = this.onLayoutChange.bind(this);
+    this.onResize = this.onResize.bind(this);
+
+    // subscribe to dashboard events
+    this.dashboard = this.panelContainer.getDashboard();
+    this.dashboard.on('panel-added', this.panelAdded.bind(this));
   }
 
   buildLayout() {
     const layout = [];
-    const panels = this.panelContainer.getPanels();
     this.panelMap = {};
 
-    for (let panel of panels) {
+    for (let panel of this.dashboard.panels) {
       let stringId = panel.id.toString();
       this.panelMap[stringId] = panel;
 
@@ -85,11 +92,18 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     }
   }
 
+  panelAdded() {
+    this.forceUpdate();
+  }
+
+  onResize(layout, oldItem, newItem) {
+    this.panelMap[newItem.i].updateGridPos(newItem);
+  }
+
   renderPanels() {
-    const panels = this.panelContainer.getPanels();
     const panelElements = [];
 
-    for (let panel of panels) {
+    for (let panel of this.dashboard.panels) {
       panelElements.push(
         <div key={panel.id.toString()} className="panel">
           <DashboardPanel panel={panel} getPanelContainer={this.props.getPanelContainer} />
@@ -101,8 +115,9 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   }
 
   render() {
+    console.log('DashboardGrid.render()');
     return (
-      <SizedReactLayoutGrid layout={this.buildLayout()} onLayoutChange={this.onLayoutChange}>
+      <SizedReactLayoutGrid layout={this.buildLayout()} onLayoutChange={this.onLayoutChange} onResize={this.onResize}>
         {this.renderPanels()}
       </SizedReactLayoutGrid>
     );

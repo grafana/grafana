@@ -5,7 +5,7 @@
 
 	<ul class="gf-tabs">
 		<li class="gf-tabs-item" ng-repeat="tab in ::['General', 'Links', 'Time picker']">
-			<a class="gf-tabs-link" ng-click="editor.index = $index" ng-class="{active: editor.index === $index}">
+			<a class="gf-tabs-link" ng-click="ctrl.editTab = $index" ng-class="{active: ctrl.editTab === $index}">
 				{{::tab}}
 			</a>
 		</li>
@@ -17,30 +17,30 @@
 </div>
 
 <div class="tabbed-view-body">
-	<div ng-if="editor.index == 0">
+	<div ng-if="ctrl.editTab == 0">
 
 		<div class="gf-form-group section">
       <h5 class="section-heading">Details</h5>
 			<div class="gf-form">
 				<label class="gf-form-label width-7">Name</label>
-				<input type="text" class="gf-form-input width-30" ng-model='dashboard.title'></input>
+				<input type="text" class="gf-form-input width-30" ng-model='ctrl.dashboard.title'></input>
 			</div>
       <div class="gf-form">
 				<label class="gf-form-label width-7">Description</label>
-				<input type="text" class="gf-form-input width-30" ng-model='dashboard.description'></input>
+				<input type="text" class="gf-form-input width-30" ng-model='ctrl.dashboard.description'></input>
 			</div>
       <div class="gf-form">
 				<label class="gf-form-label width-7">
           Tags
           <info-popover mode="right-normal">Press enter to add a tag</info-popover>
         </label>
-				<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
+				<bootstrap-tagsinput ng-model="ctrl.dashboard.tags" tagclass="label label-tag" placeholder="add tags">
 				</bootstrap-tagsinput>
 			</div>
 
-      <folder-picker ng-if="!dashboardMeta.isFolder"
-										 initial-title="dashboardMeta.folderTitle"
-										 on-change="onFolderChange($folder)"
+      <folder-picker ng-if="!ctrl.dashboard.meta.isFolder"
+										 initial-title="ctrl.dashboard.meta.folderTitle"
+										 on-change="ctrl.onFolderChange($folder)"
 										 label-class="width-7">
 			</folder-picker>
 		</div>
@@ -51,19 +51,19 @@
         <div class="gf-form">
           <label class="gf-form-label width-11">Timezone</label>
           <div class="gf-form-select-wrapper">
-            <select ng-model="dashboard.timezone" class='gf-form-input' ng-options="f.value as f.text for f in [{value: '', text: 'Default'}, {value: 'browser', text: 'Local browser time'},{value: 'utc', text: 'UTC'}]" ng-change="timezoneChanged()"></select>
+            <select ng-model="ctrl.dashboard.timezone" class='gf-form-input' ng-options="f.value as f.text for f in [{value: '', text: 'Default'}, {value: 'browser', text: 'Local browser time'},{value: 'utc', text: 'UTC'}]" ng-change="timezoneChanged()"></select>
           </div>
         </div>
         <gf-form-switch class="gf-form"
                         label="Editable"
                         tooltip="Uncheck, then save and reload to disable all dashboard editing"
-                        checked="dashboard.editable"
+                        checked="ctrl.dashboard.editable"
                         label-class="width-11">
         </gf-form-switch>
 				<gf-form-switch class="gf-form"
                         label="Hide Controls"
                         tooltip="Hide row controls. Shortcut: CTRL+H or CMD+H"
-                        checked="dashboard.hideControls"
+                        checked="ctrl.dashboard.hideControls"
                         label-class="width-11">
         </gf-form-switch>
       </div>
@@ -79,7 +79,7 @@
           </info-popover>
         </label>
         <div class="gf-form-select-wrapper">
-          <select ng-model="dashboard.graphTooltip" class='gf-form-input' ng-options="f.value as f.text for f in [{value: 0, text: 'Default'}, {value: 1, text: 'Shared crosshair'},{value: 2, text: 'Shared Tooltip'}]"></select>
+          <select ng-model="ctrl.dashboard.graphTooltip" class='gf-form-input' ng-options="f.value as f.text for f in [{value: 0, text: 'Default'}, {value: 1, text: 'Shared crosshair'},{value: 2, text: 'Shared Tooltip'}]"></select>
         </div>
       </div>
     </div>
@@ -90,7 +90,7 @@
 	</div>
 
 	<div ng-if="editor.index == 2">
-		<gf-time-picker-settings dashboard="dashboard"></gf-time-picker-settings>
+		<gf-time-picker-settings dashboard="ctrl.dashboard"></gf-time-picker-settings>
 	</div>
 
 </div>

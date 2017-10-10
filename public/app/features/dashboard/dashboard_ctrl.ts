@@ -3,12 +3,12 @@ import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import {PanelContainer} from './dashgrid/PanelContainer';
 import {DashboardModel} from './model';
-import {PanelModel} from './PanelModel';
 
 export class DashboardCtrl implements PanelContainer {
   dashboard: DashboardModel;
   dashboardViewState: any;
   loadedFallbackDashboard: boolean;
+  editTab: number;
 
   /** @ngInject */
   constructor(
@@ -26,6 +26,9 @@ export class DashboardCtrl implements PanelContainer {
       // temp hack due to way dashboards are loaded
       // can't use controllerAs on route yet
       $scope.ctrl = this;
+
+      // TODO: break out settings view to separate view & controller
+      this.editTab = 0;
 
       // funcs called from React component bindings and needs this binding
       this.getPanelContainer = this.getPanelContainer.bind(this);
@@ -114,15 +117,6 @@ export class DashboardCtrl implements PanelContainer {
 
     getPanelLoader() {
       return this.panelLoader;
-    }
-
-    getPanels() {
-      return this.dashboard.panels;
-    }
-
-    panelPossitionUpdated(panel: PanelModel) {
-      //console.log('panel pos updated', panel);
-      //this.$rootScope.$broadcast('render');
     }
 
     timezoneChanged() {

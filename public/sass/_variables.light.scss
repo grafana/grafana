@@ -112,9 +112,9 @@ $tight-form-bg:    		$gray-6;
 $tight-form-func-bg:            $gray-5;
 $tight-form-func-highlight-bg:  $gray-6;
 
-$modal-background: $body-bg;
-$code-tag-bg:      $gray-6;
-$code-tag-border:  darken($code-tag-bg, 3%);
+$modal-backdrop-bg: $body-bg;
+$code-tag-bg:       $gray-6;
+$code-tag-border:   darken($code-tag-bg, 3%);
 
 // Lists
 $grafanaListBackground:    	   $gray-6;

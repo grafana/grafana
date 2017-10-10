@@ -180,7 +180,8 @@ export class DashboardModel {
 
   addPanel(panel) {
     panel.id = this.getNextPanelId();
-    this.panels.push(panel);
+    this.panels.unshift(new PanelModel(panel));
+    this.events.emit('panel-added', panel);
   }
 
   removePanel(panel, ask?) {
@@ -280,6 +281,14 @@ export class DashboardModel {
     for (let row of this.rows) {
       row.destroy();
     }
+  }
+
+  on(eventName, callback) {
+    this.events.on(eventName, callback);
+  }
+
+  off(eventName, callback?) {
+    this.events.off(eventName, callback);
   }
 
   cycleGraphTooltip() {
