@@ -113,8 +113,6 @@ export default class ResponseParser {
     for (let i = 0; i < table.columns.length; i++) {
       if (table.columns[i].text === 'time_sec') {
         timeColumnIndex = i;
-      } else if (table.columns[i].text === 'title') {
-        titleColumnIndex = i;
       } else if (table.columns[i].text === 'text') {
         textColumnIndex = i;
       } else if (table.columns[i].text === 'tags') {
