@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 
 import '../all';
 import {Emitter} from 'app/core/core';
@@ -10,6 +10,7 @@ describe('templateSrv', function() {
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(angularMocks.module($provide => {
     $provide.value('timeSrv', {});
+    $provide.value('datasourceSrv', {});
   }));
 
   beforeEach(angularMocks.inject(function(variableSrv, templateSrv) {

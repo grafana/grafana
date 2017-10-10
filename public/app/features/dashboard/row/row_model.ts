@@ -1,7 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import {Emitter, contextSrv, appEvents, assignModelProperties} from 'app/core/core';
+import {Emitter, appEvents, assignModelProperties} from 'app/core/core';
 
 export class DashboardRow {
   panels: any;

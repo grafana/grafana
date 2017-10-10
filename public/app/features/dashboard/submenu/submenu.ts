@@ -11,7 +11,6 @@ export class SubmenuCtrl {
   /** @ngInject */
   constructor(private $rootScope,
               private variableSrv,
-              private templateSrv,
               private $location) {
     this.annotations = this.dashboard.templating.list;
     this.variables = this.variableSrv.variables;

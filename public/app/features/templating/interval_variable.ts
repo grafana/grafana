@@ -3,7 +3,6 @@
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import {Variable, assignModelProperties, variableTypes} from './variable';
-import {VariableSrv} from './variable_srv';
 
 export class IntervalVariable implements Variable {
   name: string;

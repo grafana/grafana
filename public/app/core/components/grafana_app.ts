@@ -1,14 +1,13 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import config from 'app/core/config';
-import store from 'app/core/store';
 import _ from 'lodash';
-import angular from 'angular';
 import $ from 'jquery';
 
 import coreModule from 'app/core/core_module';
 import {profiler} from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
+import Drop from 'tether-drop';
 
 export class GrafanaCtrl {
 
@@ -118,6 +117,11 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
         // check for kiosk url param
         if (data.params.kiosk) {
           appEvents.emit('toggle-kiosk-mode');
+        }
+
+        // close all drops
+        for (let drop of Drop.drops) {
+          drop.destroy();
         }
       });
 

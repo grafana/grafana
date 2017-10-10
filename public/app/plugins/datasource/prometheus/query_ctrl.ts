@@ -1,12 +1,9 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
-import moment from 'moment';
-
-import * as dateMath from 'app/core/utils/datemath';
 import {QueryCtrl} from 'app/plugins/sdk';
 import {PromCompleter} from './completer';
+import './mode-prometheus';
+import './snippets/prometheus';
 
 class PrometheusQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -14,6 +11,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
   metric: any;
   resolutions: any;
   formats: any;
+  instant: any;
   oldTarget: any;
   suggestMetrics: any;
   getMetricsAutocomplete: any;
@@ -38,17 +36,13 @@ class PrometheusQueryCtrl extends QueryCtrl {
       {text: 'Table', value: 'table'},
     ];
 
+    this.instant = false;
+
     this.updateLink();
   }
 
   getCompleter(query) {
     return new PromCompleter(this.datasource);
-    // console.log('getquery);
-    // return this.datasource.performSuggestQuery(query).then(res => {
-    //   return res.map(item => {
-    //     return {word: item, type: 'metric'};
-    //   });
-    // });
   }
 
   getDefaultFormat() {

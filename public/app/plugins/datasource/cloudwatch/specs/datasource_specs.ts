@@ -1,9 +1,7 @@
-
 import "../datasource";
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
-import moment from 'moment';
+import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 import helpers from 'test/specs/helpers';
-import {CloudWatchDatasource} from "../datasource";
+import CloudWatchDatasource from "../datasource";
 
 describe('CloudWatchDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
@@ -29,6 +27,7 @@ describe('CloudWatchDatasource', function() {
 
     var query = {
       range: { from: 'now-1h', to: 'now' },
+      rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
           region: 'us-east-1',
@@ -44,37 +43,41 @@ describe('CloudWatchDatasource', function() {
     };
 
     var response = {
-      Datapoints: [
-        {
-          Average: 1,
-          Timestamp: 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)'
-        },
-        {
-          Average: 2,
-          Timestamp: 'Wed Dec 31 1969 16:05:00 GMT-0800 (PST)'
-        },
-        {
-          Average: 5,
-          Timestamp: 'Wed Dec 31 1969 16:15:00 GMT-0800 (PST)'
+      timings: [null],
+      results: {
+        A: {
+          error: '',
+          refId: 'A',
+          series: [
+            {
+              name: 'CPUUtilization_Average',
+              points: [
+                [1, 1483228800000],
+                [2, 1483229100000],
+                [5, 1483229700000],
+              ],
+              tags: {
+                InstanceId: 'i-12345678'
+              }
+            }
+          ]
         }
-      ],
-      Label: 'CPUUtilization'
+      }
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(params) {
+      ctx.backendSrv.post = function(path, params) {
         requestParams = params;
-        return ctx.$q.when({data: response});
+        return ctx.$q.when(response);
       };
     });
 
     it('should generate the correct query', function(done) {
       ctx.ds.query(query).then(function() {
-        var params = requestParams.data.parameters;
+        var params = requestParams.queries[0];
         expect(params.namespace).to.be(query.targets[0].namespace);
         expect(params.metricName).to.be(query.targets[0].metricName);
-        expect(params.dimensions[0].Name).to.be(Object.keys(query.targets[0].dimensions)[0]);
-        expect(params.dimensions[0].Value).to.be(query.targets[0].dimensions[Object.keys(query.targets[0].dimensions)[0]]);
+        expect(params.dimensions['InstanceId']).to.be('i-12345678');
         expect(params.statistics).to.eql(query.targets[0].statistics);
         expect(params.period).to.be(query.targets[0].period);
         done();
@@ -89,6 +92,7 @@ describe('CloudWatchDatasource', function() {
 
       var query = {
         range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
             region: 'us-east-1',
@@ -104,7 +108,7 @@ describe('CloudWatchDatasource', function() {
       };
 
       ctx.ds.query(query).then(function() {
-        var params = requestParams.data.parameters;
+        var params = requestParams.queries[0];
         expect(params.period).to.be(600);
         done();
       });
@@ -113,16 +117,8 @@ describe('CloudWatchDatasource', function() {
 
     it('should return series list', function(done) {
       ctx.ds.query(query).then(function(result) {
-        expect(result.data[0].target).to.be('CPUUtilization_Average');
-        expect(result.data[0].datapoints[0][0]).to.be(response.Datapoints[0]['Average']);
-        done();
-      });
-      ctx.$rootScope.$apply();
-    });
-
-    it('should return null for missing data point', function(done) {
-      ctx.ds.query(query).then(function(result) {
-        expect(result.data[0].datapoints[2][0]).to.be(null);
+        expect(result.data[0].target).to.be(response.results.A.series[0].name);
+        expect(result.data[0].datapoints[0][0]).to.be(response.results.A.series[0].points[0][0]);
         done();
       });
       ctx.$rootScope.$apply();
@@ -174,6 +170,7 @@ describe('CloudWatchDatasource', function() {
 
     var query = {
       range: { from: 'now-1h', to: 'now' },
+      rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
           region: 'us-east-1',
@@ -190,40 +187,40 @@ describe('CloudWatchDatasource', function() {
     };
 
     var response = {
-      Datapoints: [
-        {
-          ExtendedStatistics: {
-            'p90.00': 1
-          },
-          Timestamp: 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)'
-        },
-        {
-          ExtendedStatistics: {
-            'p90.00': 2
-          },
-          Timestamp: 'Wed Dec 31 1969 16:05:00 GMT-0800 (PST)'
-        },
-        {
-          ExtendedStatistics: {
-            'p90.00': 5
-          },
-          Timestamp: 'Wed Dec 31 1969 16:15:00 GMT-0800 (PST)'
+      timings: [null],
+      results: {
+        A: {
+          error: '',
+          refId: 'A',
+          series: [
+            {
+              name: 'TargetResponseTime_p90.00',
+              points: [
+                [1, 1483228800000],
+                [2, 1483229100000],
+                [5, 1483229700000],
+              ],
+              tags: {
+                LoadBalancer: 'lb',
+                TargetGroup: 'tg'
+              }
+            }
+          ]
         }
-      ],
-      Label: 'TargetResponseTime'
+      }
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(params) {
+      ctx.backendSrv.post = function(path, params) {
         requestParams = params;
-        return ctx.$q.when({data: response});
+        return ctx.$q.when(response);
       };
     });
 
     it('should return series list', function(done) {
       ctx.ds.query(query).then(function(result) {
-        expect(result.data[0].target).to.be('TargetResponseTime_p90.00');
-        expect(result.data[0].datapoints[0][0]).to.be(response.Datapoints[0].ExtendedStatistics['p90.00']);
+        expect(result.data[0].target).to.be(response.results.A.series[0].name);
+        expect(result.data[0].datapoints[0][0]).to.be(response.results.A.series[0].points[0][0]);
         done();
       });
       ctx.$rootScope.$apply();
@@ -238,7 +235,11 @@ describe('CloudWatchDatasource', function() {
           setupCallback();
           ctx.backendSrv.datasourceRequest = args => {
             scenario.request = args;
-            return ctx.$q.when({data: scenario.requestResponse });
+            return ctx.$q.when({ data: scenario.requestResponse });
+          };
+          ctx.backendSrv.post = (path, args) => {
+            scenario.request = args;
+            return ctx.$q.when(scenario.requestResponse);
           };
           ctx.ds.metricFindQuery(query).then(args => {
             scenario.result = args;
@@ -253,135 +254,178 @@ describe('CloudWatchDatasource', function() {
 
   describeMetricFindQuery('regions()', scenario => {
     scenario.setup(() => {
-      scenario.requestResponse = [{text: 'us-east-1'}];
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [
+              { rows: [['us-east-1', 'us-east-1']] }
+            ]
+          }
+        }
+      };
     });
 
     it('should call __GetRegions and return result', () => {
       expect(scenario.result[0].text).to.contain('us-east-1');
-      expect(scenario.request.data.action).to.be('__GetRegions');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('regions');
     });
   });
 
   describeMetricFindQuery('namespaces()', scenario => {
     scenario.setup(() => {
-      scenario.requestResponse = [{text: 'AWS/EC2'}];
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [
+              { rows: [['AWS/EC2', 'AWS/EC2']] }
+            ]
+          }
+        }
+      };
     });
 
     it('should call __GetNamespaces and return result', () => {
       expect(scenario.result[0].text).to.contain('AWS/EC2');
-      expect(scenario.request.data.action).to.be('__GetNamespaces');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('namespaces');
     });
   });
 
   describeMetricFindQuery('metrics(AWS/EC2)', scenario => {
     scenario.setup(() => {
-      scenario.requestResponse = [{text: 'CPUUtilization'}];
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [
+              { rows: [['CPUUtilization', 'CPUUtilization']] }
+            ]
+          }
+        }
+      };
     });
 
     it('should call __GetMetrics and return result', () => {
       expect(scenario.result[0].text).to.be('CPUUtilization');
-      expect(scenario.request.data.action).to.be('__GetMetrics');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('metrics');
     });
   });
 
   describeMetricFindQuery('dimension_keys(AWS/EC2)', scenario => {
     scenario.setup(() => {
-      scenario.requestResponse = [{text: 'InstanceId'}];
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [
+              { rows: [['InstanceId', 'InstanceId']] }
+            ]
+          }
+        }
+      };
     });
 
     it('should call __GetDimensions and return result', () => {
       expect(scenario.result[0].text).to.be('InstanceId');
-      expect(scenario.request.data.action).to.be('__GetDimensions');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('dimension_keys');
     });
   });
 
   describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)', scenario => {
     scenario.setup(() => {
       scenario.requestResponse = {
-        Metrics: [
-          {
-            Namespace: 'AWS/EC2',
-            MetricName: 'CPUUtilization',
-            Dimensions: [
-              {
-                Name: 'InstanceId',
-                Value: 'i-12345678'
-              }
+        results: {
+          metricFindQuery: {
+            tables: [
+              { rows: [['i-12345678', 'i-12345678']] }
             ]
           }
-        ]
+        }
       };
     });
 
     it('should call __ListMetrics and return result', () => {
-      expect(scenario.result[0].text).to.be('i-12345678');
-      expect(scenario.request.data.action).to.be('ListMetrics');
+      expect(scenario.result[0].text).to.contain('i-12345678');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('dimension_values');
     });
   });
 
   it('should caclculate the correct period', function () {
     var hourSec = 60 * 60;
     var daySec = hourSec * 24;
-    var start = 1483196400;
+    var start = 1483196400 * 1000;
     var testData: any[] = [
-      [{ period: 60 }, { namespace: 'AWS/EC2' }, {}, start, start + 3600, (hourSec * 3), 60],
-      [{ period: null }, { namespace: 'AWS/EC2' }, {}, start, start + 3600, (hourSec * 3), 300],
-      [{ period: 60 }, { namespace: 'AWS/ELB' }, {}, start, start + 3600, (hourSec * 3), 60],
-      [{ period: null }, { namespace: 'AWS/ELB' }, {}, start, start + 3600, (hourSec * 3), 60],
-      [{ period: 1 }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 1440 - 1, (hourSec * 3 - 1), 1],
-      [{ period: 1 }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 3600, (hourSec * 3 - 1), 60],
-      [{ period: 60 }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 3600, (hourSec * 3), 60],
-      [{ period: null }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 3600, (hourSec * 3 - 1), 60],
-      [{ period: null }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 3600, (hourSec * 3), 60],
-      [{ period: null }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 3600, (daySec * 15), 60],
-      [{ period: null }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 3600, (daySec * 63), 300],
-      [{ period: null }, { namespace: 'CustomMetricsNamespace' }, {}, start, start + 3600, (daySec * 455), 3600]
+      [
+        { period: 60, namespace: 'AWS/EC2' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3), 60
+      ],
+      [
+        { period: null, namespace: 'AWS/EC2' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3), 300
+      ],
+      [
+        { period: 60, namespace: 'AWS/ELB' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3), 60
+      ],
+      [
+        { period: null, namespace: 'AWS/ELB' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3), 60
+      ],
+      [
+        { period: 1, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + (1440 - 1) * 1000) } },
+        (hourSec * 3 - 1), 1
+      ],
+      [
+        { period: 1, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3 - 1), 60
+      ],
+      [
+        { period: 60, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3), 60
+      ],
+      [
+        { period: null, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3 - 1), 60
+      ],
+      [
+        { period: null, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (hourSec * 3), 60
+      ],
+      [
+        { period: null, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (daySec * 15), 60
+      ],
+      [
+        { period: null, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (daySec * 63), 300
+      ],
+      [
+        { period: null, namespace: 'CustomMetricsNamespace' },
+        { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
+        (daySec * 455), 3600
+      ]
     ];
     for (let t of testData) {
       let target = t[0];
-      let query = t[1];
-      let options = t[2];
-      let start = t[3];
-      let end = t[4];
-      let now = start + t[5];
-      let expected = t[6];
-      let actual = ctx.ds.getPeriod(target, query, options, start, end, now);
+      let options = t[1];
+      let now = new Date(options.range.from.valueOf() + t[2] * 1000);
+      let expected = t[3];
+      let actual = ctx.ds.getPeriod(target, options, now);
       expect(actual).to.be(expected);
     }
-  });
-
-  describeMetricFindQuery('ec2_instance_attribute(us-east-1, Tags.Name, { "tag:team": [ "sysops" ] })', scenario => {
-    scenario.setup(() => {
-      scenario.requestResponse = {
-        Reservations: [
-          {
-            Instances: [
-              {
-                Tags: [
-                  { Key: 'InstanceId', Value: 'i-123456' },
-                  { Key: 'Name', Value: 'Sysops Dev Server' },
-                  { Key: 'env', Value: 'dev' },
-                  { Key: 'team', Value: 'sysops' }
-                ]
-              },
-              {
-                Tags: [
-                  { Key: 'InstanceId', Value: 'i-789012' },
-                  { Key: 'Name', Value: 'Sysops Staging Server' },
-                  { Key: 'env', Value: 'staging' },
-                  { Key: 'team', Value: 'sysops' }
-                ]
-              }
-            ]
-          }
-        ]
-      };
-    });
-
-    it('should return the "Name" tag for each instance', function() {
-      expect(scenario.result[0].text).to.be('Sysops Dev Server');
-      expect(scenario.result[1].text).to.be('Sysops Staging Server');
-    });
   });
 
 });

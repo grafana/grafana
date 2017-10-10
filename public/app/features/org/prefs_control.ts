@@ -1,7 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import config from 'app/core/config';
-import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 
 export class PrefsControlCtrl {
@@ -60,9 +59,13 @@ var template = `
   </div>
 
   <div class="gf-form">
-    <span class="gf-form-label width-10">Home Dashboard</span>
-    <dashboard-selector class="gf-form-select-wrapper max-width-20 gf-form-select-wrapper--has-help-icon"
-                        model="ctrl.prefs.homeDashboardId">
+    <span class="gf-form-label width-10">
+      Home Dashboard
+      <info-popover mode="right-normal">
+        Not finding dashboard you want? Star it first, then it should appear in this select box.
+      </info-popover>
+    </span>
+    <dashboard-selector class="gf-form-select-wrapper max-width-20" model="ctrl.prefs.homeDashboardId">
     </dashboard-selector>
   </div>
 

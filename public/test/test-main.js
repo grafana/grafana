@@ -41,6 +41,7 @@
       "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge",
       "d3": "vendor/d3/d3.js",
       "jquery.flot.dashes": "vendor/flot/jquery.flot.dashes",
+      "twemoji": "vendor/npm/twemoji/2/twemoji.amd.js",
       "ace": "vendor/npm/ace-builds/src-noconflict/ace",
     },
 

@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
+import {describe, it, expect} from 'test/lib/common';
 import InfluxSeries from '../influx_series';
 
 describe('when generating timeseries from influxdb response', function() {

@@ -10,7 +10,7 @@ const  template = `
       <span class="p-l-1">Unsaved changes</span>
     </h2>
 
-    <a class="modal-header-close" ng-click="dismiss();">
+    <a class="modal-header-close" ng-click="ctrl.dismiss();">
       <i class="fa fa-remove"></i>
     </a>
   </div>
@@ -35,7 +35,7 @@ export class UnsavedChangesModalCtrl {
   dismiss: () => void;
 
   /** @ngInject */
-  constructor(private $rootScope, private unsavedChangesSrv) {
+  constructor(private unsavedChangesSrv) {
   }
 
   discard() {

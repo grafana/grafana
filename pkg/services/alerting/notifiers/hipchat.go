@@ -84,15 +84,17 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	message := evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text + "<br><a href=" + ruleUrl + ">Check Dashboard</a>"
-	fields := make([]map[string]interface{}, 0)
-	message += "<br>"
+	attributes := make([]map[string]interface{}, 0)
 	for index, evt := range evalContext.EvalMatches {
-		message += evt.Metric + " :: " + strconv.FormatFloat(evt.Value.Float64, 'f', -1, 64) + "<br>"
-		fields = append(fields, map[string]interface{}{
-			"title": evt.Metric,
-			"value": evt.Value,
-			"short": true,
+		metricName := evt.Metric
+		if len(metricName) > 50 {
+			metricName = metricName[:50]
+		}
+		attributes = append(attributes, map[string]interface{}{
+			"label": metricName,
+			"value": map[string]interface{}{
+				"label": strconv.FormatFloat(evt.Value.Float64, 'f', -1, 64),
+			},
 		})
 		if index > maxFieldCount {
 			break
@@ -100,16 +102,23 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	if evalContext.Error != nil {
-		fields = append(fields, map[string]interface{}{
-			"title": "Error message",
-			"value": evalContext.Error.Error(),
-			"short": false,
+		attributes = append(attributes, map[string]interface{}{
+			"label": "Error message",
+			"value": map[string]interface{}{
+				"label": evalContext.Error.Error(),
+			},
 		})
 	}
 
+	message := ""
 	if evalContext.Rule.State != models.AlertStateOK { //dont add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
 	}
+
+	if message == "" {
+		message = evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text
+	}
+
 	//HipChat has a set list of colors
 	var color string
 	switch evalContext.Rule.State {
@@ -123,15 +132,24 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	// Add a card with link to the dashboard
 	card := map[string]interface{}{
-		"style":       "link",
+		"style":       "application",
 		"url":         ruleUrl,
 		"id":          "1",
 		"title":       evalContext.GetNotificationTitle(),
-		"description": evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text,
+		"description": message,
 		"icon": map[string]interface{}{
 			"url": "https://grafana.com/assets/img/fav32.png",
 		},
-		"date": evalContext.EndTime.Unix(),
+		"date":       evalContext.EndTime.Unix(),
+		"attributes": attributes,
+	}
+	if evalContext.ImagePublicUrl != "" {
+		card["thumbnail"] = map[string]interface{}{
+			"url":    evalContext.ImagePublicUrl,
+			"url@2x": evalContext.ImagePublicUrl,
+			"width":  1193,
+			"height": 564,
+		}
 	}
 
 	body := map[string]interface{}{
@@ -144,6 +162,7 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	hipUrl := fmt.Sprintf("%s/v2/room/%s/notification?auth_token=%s", this.Url, this.RoomId, this.ApiKey)
 	data, _ := json.Marshal(&body)
+	this.log.Info("Request payload", "json", string(data))
 	cmd := &models.SendWebhookSync{Url: hipUrl, Body: string(data)}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {

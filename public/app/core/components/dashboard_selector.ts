@@ -1,15 +1,9 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import config from 'app/core/config';
-import _ from 'lodash';
-import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 
 var template = `
 <select class="gf-form-input" ng-model="ctrl.model" ng-options="f.value as f.text for f in ctrl.options"></select>
-<info-popover mode="right-absolute">
-  Not finding dashboard you want? Star it first, then it should appear in this select box.
-</info-popover>
 `;
 
 export class DashboardSelectorCtrl {

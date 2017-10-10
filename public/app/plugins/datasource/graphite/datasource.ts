@@ -1,9 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
-import moment from 'moment';
-
 import * as dateMath from 'app/core/utils/datemath';
 
 /** @ngInject */
@@ -71,6 +68,18 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     return result;
   };
 
+  this.parseTags = function(tagString) {
+    let tags = [];
+    tags = tagString.split(',');
+    if (tags.length === 1) {
+      tags = tagString.split(' ');
+      if (tags[0] === '') {
+        tags = [];
+      }
+    }
+    return tags;
+  };
+
   this.annotationQuery = function(options) {
     // Graphite metric as annotation
     if (options.annotation.target) {
@@ -105,19 +114,25 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     } else {
       // Graphite event as annotation
       var tags = templateSrv.replace(options.annotation.tags);
-      return this.events({range: options.rangeRaw, tags: tags}).then(function(results) {
+      return this.events({range: options.rangeRaw, tags: tags}).then(results => {
         var list = [];
         for (var i = 0; i < results.data.length; i++) {
           var e = results.data[i];
+
+          var tags = e.tags;
+          if (_.isString(e.tags)) {
+            tags = this.parseTags(e.tags);
+          }
 
           list.push({
             annotation: options.annotation,
             time: e.when * 1000,
             title: e.what,
-            tags: e.tags,
+            tags: tags,
             text: e.data
           });
         }
+
         return list;
       });
     }
@@ -129,7 +144,6 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       if (options.tags) {
         tags = '&tags=' + options.tags;
       }
-
       return this.doGraphiteRequest({
         method: 'GET',
         url: '/events/get_data?from=' + this.translateTime(options.range.from, false) +
@@ -205,7 +219,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 
   this.testDatasource = function() {
     return this.metricFindQuery('*').then(function () {
-      return { status: "success", message: "Data source is working", title: "Success" };
+      return { status: "success", message: "Data source is working"};
     });
   };
 

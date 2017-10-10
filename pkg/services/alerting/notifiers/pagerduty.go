@@ -3,10 +3,11 @@ package notifiers
 import (
 	"strconv"
 
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -63,7 +64,6 @@ type PagerdutyNotifier struct {
 }
 
 func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
-	metrics.M_Alerting_Notification_Sent_PagerDuty.Inc(1)
 
 	if evalContext.Rule.State == m.AlertStateOK && !this.AutoResolve {
 		this.log.Info("Not sending a trigger to Pagerduty", "state", evalContext.Rule.State, "auto resolve", this.AutoResolve)
@@ -74,6 +74,10 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Rule.State == m.AlertStateOK {
 		eventType = "resolve"
 	}
+	customData := "Triggered metrics:\n\n"
+	for _, evt := range evalContext.EvalMatches {
+		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
+	}
 
 	this.log.Info("Notifying Pagerduty", "event_type", eventType)
 
@@ -81,6 +85,7 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("service_key", this.Key)
 	bodyJSON.Set("description", evalContext.Rule.Name+" - "+evalContext.Rule.Message)
 	bodyJSON.Set("client", "Grafana")
+	bodyJSON.Set("details", customData)
 	bodyJSON.Set("event_type", eventType)
 	bodyJSON.Set("incident_key", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
 
