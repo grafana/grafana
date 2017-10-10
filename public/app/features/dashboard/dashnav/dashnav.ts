@@ -48,15 +48,10 @@ export class DashNavCtrl {
     }
 
     starDashboard() {
-      if (this.dashboard.meta.isStarred) {
-        return this.backendSrv.delete('/api/user/stars/dashboard/' + this.dashboard.id).then(() =>  {
-          this.dashboard.meta.isStarred = false;
-        });
-      }
-
-      this.backendSrv.post('/api/user/stars/dashboard/' + this.dashboard.id).then(() => {
-        this.dashboard.meta.isStarred = true;
-      });
+      this.dashboardSrv.starDashboard(this.dashboard.id, this.dashboard.meta.isStarred)
+        .then(newState => {
+          this.dashboard.meta.isStarred = newState;
+      })
     }
 
     shareDashboard(tabIndex) {

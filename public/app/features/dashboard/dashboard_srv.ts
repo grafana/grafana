@@ -131,6 +131,18 @@ export class DashboardSrv {
       modalClass: 'modal--narrow'
     });
   }
+
+  starDashboard(dashboardId, isStarred) {
+    if (isStarred) {
+      return this.backendSrv.delete('/api/user/stars/dashboard/' + dashboardId).then(() =>  {
+        return false;
+      });
+    }
+
+    return this.backendSrv.post('/api/user/stars/dashboard/' + dashboardId).then(() => {
+      return true;
+    });
+  }
 }
 
 coreModule.service('dashboardSrv', DashboardSrv);
