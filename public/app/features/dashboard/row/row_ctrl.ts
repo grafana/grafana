@@ -100,6 +100,28 @@ export class DashRowCtrl {
     this.dropView = 1;
   }
 
+  evalCondition(left, right) {
+    if (!!this.dashboard.meta.disableHideRow) {
+      return true;
+    }
+    if (!this.row.autoHideRow) {
+      return true;
+    }
+    switch (this.row.operator) {
+      case "Equals":
+        return left === right;
+      case "Greater than":
+        return left > right;
+      case "Less than":
+        return left < right;
+      case "Include":
+        return left.split(" + ").some(function (item) {
+          return item === right;
+        });
+    }
+    return true;
+  }
+
   onMenuRowOptions() {
     this.dropView = 2;
   }

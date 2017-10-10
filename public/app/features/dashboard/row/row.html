@@ -1,4 +1,6 @@
-<div class="dash-row-header" ng-if="ctrl.row.showTitle || ctrl.row.collapse">
+<div class="dash-row-header" ng-if="(ctrl.row.showTitle || ctrl.row.collapse) &&
+( ctrl.evalCondition(ctrl.row.conditionLeft | interpolateTemplateVars:this ,
+              ctrl.row.conditionRight | interpolateTemplateVars:this) )">
 	<a class="dash-row-header-title" ng-click="ctrl.toggleCollapse()">
 		<span class="dash-row-collapse-toggle pointer">
 			<i class="fa fa-chevron-down" ng-show="!ctrl.row.collapse"></i>
@@ -16,7 +18,9 @@
 	<dash-row-options row-ctrl="ctrl"></dash-row-options>
 </div>
 
-<div class="panels-wrapper" ng-if="!ctrl.row.collapse">
+<div class="panels-wrapper" ng-if="!ctrl.row.collapse &&
+ctrl.evalCondition(ctrl.row.conditionLeft | interpolateTemplateVars:this ,
+              ctrl.row.conditionRight | interpolateTemplateVars:this)">
   <div class="dash-row-menu-container" data-click-hide ng-hide="ctrl.dashboard.meta.fullscreen">
     <ul class="dash-row-menu" role="menu">
       <li>

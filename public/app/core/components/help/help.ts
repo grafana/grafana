@@ -39,6 +39,7 @@ export class HelpCtrl {
       'Focused Row': [
         {keys: ['r', 'c'], description: 'Collapse Row'},
         {keys: ['r', 'r'], description: 'Remove Row'},
+        {keys: ['r', 'd'], description: 'Disable hide rows by condition'},
       ],
       'Time Range': [
         {keys: ['t', 'z'], description: 'Zoom out time range'},

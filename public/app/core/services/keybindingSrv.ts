@@ -176,6 +176,15 @@ export class KeybindingSrv {
       }
     });
 
+    // disable hide row
+    this.bind('r d', () => {
+      if (!dashboard.meta.disableHideRow) {
+        dashboard.meta.disableHideRow = true;
+      } else {
+        dashboard.meta.disableHideRow = false;
+      }
+    });
+
     // collapse all rows
     this.bind('d shift+c', () => {
       for (let row of dashboard.rows) {
