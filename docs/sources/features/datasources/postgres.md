@@ -11,8 +11,7 @@ weight = 7
 
 # Using PostgreSQL in Grafana
 
-Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize
-data from a PostgreSQL compatible database.
+Grafana ships with a built-in PostgreSQL data source plugin that allows you to query and visualize data from a PostgreSQL compatible database.
 
 ## Adding the data source
 
@@ -64,18 +63,18 @@ If the `Format as` query option is set to `Table` then you can basically do any 
 
 Query editor with example query:
 
-![](/img/docs/v43/mysql_table_query.png)
+![](/img/docs/v46/postgres_table_query.png)
 
 
 The query:
 
 ```sql
 SELECT
-  title as 'Title',
-  user.login as 'Created By' ,
-  dashboard.created as 'Created On'
- FROM dashboard
-INNER JOIN user on user.id = dashboard.created_by
+  title as "Title",
+  "user".login as "Created By",
+  dashboard.created as "Created On"
+FROM dashboard
+INNER JOIN "user" on "user".id = dashboard.created_by
 WHERE $__timeFilter(dashboard.created)
 ```
 
@@ -83,7 +82,7 @@ You can control the name of the Table panel columns by using regular `as ` SQL c
 
 The resulting table panel:
 
-![](/img/docs/v43/mysql_table.png)
+![](/img/docs/v46/postgres_table.png)
 
 ### Time series queries
 
@@ -103,6 +102,7 @@ WHERE $__timeFilter(time_date_time)
 GROUP BY metric1, (extract(epoch from time_date_time)/extract(epoch from $__interval::interval))::int
 ORDER BY time asc
 ```
+
 Example with multiple columns:
 
 ```sql
