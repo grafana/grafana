@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"testing"
 
+	"github.com/go-xorm/xorm"
 	. "github.com/smartystreets/goconvey/convey"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -12,9 +13,10 @@ import (
 )
 
 func TestDashboardDataAccess(t *testing.T) {
+	var x *xorm.Engine
 
 	Convey("Testing DB", t, func() {
-		InitTestDB(t)
+		x = InitTestDB(t)
 
 		Convey("Given saved dashboard", func() {
 			savedFolder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
