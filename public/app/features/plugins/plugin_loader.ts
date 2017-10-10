@@ -8,11 +8,12 @@ import jquery from 'jquery';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
-import appEvents from 'app/core/app_events';
+import {coreModule, appEvents, contextSrv} from 'app/core/core';
 import {Observable} from 'rxjs/Observable';
 import {Subject} from 'rxjs/Subject';
 import * as datemath from 'app/core/utils/datemath';
 import builtInPlugins from './buit_in_plugins';
+import d3 from 'vendor/d3/d3';
 
 System.config({
   baseURL: 'public',
@@ -50,6 +51,7 @@ exposeToPlugin('jquery', jquery);
 exposeToPlugin('angular', angular);
 exposeToPlugin('rxjs/Subject', Subject);
 exposeToPlugin('rxjs/Observable', Observable);
+exposeToPlugin('d3', d3);
 
 exposeToPlugin('app/plugins/sdk', sdk);
 exposeToPlugin('app/core/utils/datemath', datemath);
@@ -59,6 +61,13 @@ exposeToPlugin('app/core/time_series', TimeSeries);
 exposeToPlugin('app/core/time_series2', TimeSeries);
 exposeToPlugin('app/core/table_model', TableModel);
 exposeToPlugin('app/core/app_events', appEvents);
+exposeToPlugin('app/core/core_module', coreModule);
+exposeToPlugin('app/core/core_module', coreModule);
+exposeToPlugin('app/core/core', {
+  coreModule: coreModule,
+  appEvents: appEvents,
+  contextSrv: contextSrv,
+});
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.selection';
