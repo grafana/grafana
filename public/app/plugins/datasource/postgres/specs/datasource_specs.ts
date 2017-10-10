@@ -41,11 +41,11 @@ describe('PostgreSQLDatasource', function() {
           refId: annotationName,
           tables: [
             {
-              columns: [{text: 'time'}, {text: 'title'}, {text: 'text'}, {text: 'tags'}],
+              columns: [{text: 'time'}, {text: 'text'}, {text: 'tags'}],
               rows: [
-                [1432288355, 'aTitle', 'some text', 'TagA,TagB'],
-                [1432288390, 'aTitle2', 'some text2', ' TagB , TagC'],
-                [1432288400, 'aTitle3', 'some text3']
+                [1432288355, 'some text', 'TagA,TagB'],
+                [1432288390, 'some text2', ' TagB , TagC'],
+                [1432288400, 'some text3']
               ]
             }
           ]
@@ -64,7 +64,6 @@ describe('PostgreSQLDatasource', function() {
     it('should return annotation list', function() {
       expect(results.length).to.be(3);
 
-      expect(results[0].title).to.be('aTitle');
       expect(results[0].text).to.be('some text');
       expect(results[0].tags[0]).to.be('TagA');
       expect(results[0].tags[1]).to.be('TagB');
