@@ -26,9 +26,9 @@ describe('grafanaGraph', function() {
 
         beforeEach(angularMocks.inject(function($rootScope, $compile) {
           var ctrl: any = {
-            events: new Emitter(),
             height: 200,
             panel: {
+              events: new Emitter(),
               legend: {},
               grid: { },
               yaxes: [

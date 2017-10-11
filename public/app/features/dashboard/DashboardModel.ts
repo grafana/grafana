@@ -672,7 +672,7 @@ export class DashboardModel {
 
       for (let row of old.rows) {
         let xPos = 0;
-        let height: any = row.height;
+        let height: any = row.height || 250;
 
         // if (this.meta.keepRows) {
         //   this.panels.push({

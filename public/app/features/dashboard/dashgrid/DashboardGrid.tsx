@@ -117,7 +117,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   }
 
   render() {
-    console.log('DashboardGrid.render()');
     return (
       <SizedReactLayoutGrid layout={this.buildLayout()} onLayoutChange={this.onLayoutChange} onResize={this.onResize}>
         {this.renderPanels()}
