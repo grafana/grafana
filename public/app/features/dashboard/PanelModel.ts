@@ -18,6 +18,7 @@ export class PanelModel {
   gridPos:  GridPos;
   type: string;
   title: string;
+  alert?: any;
 
   // non persisted
   fullscreen: boolean;
