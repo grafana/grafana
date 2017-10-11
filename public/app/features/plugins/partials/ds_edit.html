@@ -27,24 +27,24 @@
     <form name="ctrl.editForm" ng-if="ctrl.current">
       <div class="gf-form-group">
         <div class="gf-form-inline">
-					<div class="gf-form max-width-30">
-						<span class="gf-form-label width-7">Name</span>
-						<input class="gf-form-input max-width-23" type="text" ng-model="ctrl.current.name" placeholder="name" required>
-						<info-popover offset="0px -135px" mode="right-absolute">
-							The name is used when you select the data source in panels.
-							The <em>Default</em> data source is preselected in new
-							panels.
-						</info-popover>
-					</div>
-					<gf-form-switch class="gf-form" label="Default" checked="ctrl.current.isDefault" switch-class="max-width-6"></gf-form-switch>
+			<div class="gf-form max-width-30">
+				<span class="gf-form-label width-7">Name</span>
+				<input class="gf-form-input max-width-23" type="text" ng-model="ctrl.current.name" placeholder="name" required>
+				<info-popover offset="0px -135px" mode="right-absolute">
+					The name is used when you select the data source in panels.
+					The <em>Default</em> data source is preselected in new
+					panels.
+					</info-popover>
 				</div>
+				<gf-form-switch class="gf-form" label="Default" checked="ctrl.current.isDefault" switch-class="max-width-6"></gf-form-switch>
+			</div>
 
-				<div class="gf-form">
-					<span class="gf-form-label width-7">Type</span>
-					<div class="gf-form-select-wrapper max-width-23">
-						<select class="gf-form-input" ng-model="ctrl.current.type" ng-options="v.id as v.name for v in ctrl.types" ng-change="ctrl.userChangedType()"></select>
-					</div>
+			<div class="gf-form max-width-30">
+				<span class="gf-form-label width-7">Type</span>
+				<div class="gf-form-select-wrapper max-width-23">
+					<select class="gf-form-input" ng-model="ctrl.current.type" ng-options="v.id as v.name for v in ctrl.types" ng-change="ctrl.userChangedType()"></select>
 				</div>
+			</div>
 			</div>
 
 			<div class="alert alert-info gf-form-group" ng-if="ctrl.datasourceMeta.state === 'alpha'">
@@ -71,9 +71,9 @@
 			</div>
 
 			<div class="gf-form-button-row">
-				<button type="submit" class="btn btn-success" ng-show="ctrl.isNew" ng-click="ctrl.saveChanges()">Add</button>
-				<button type="submit" class="btn btn-success" ng-show="!ctrl.isNew" ng-click="ctrl.saveChanges()">Save &amp; Test</button>
-				<button type="submit" class="btn btn-danger" ng-show="!ctrl.isNew" ng-click="ctrl.delete()">
+				<button type="submit" class="btn btn-success width-6" ng-show="ctrl.isNew" ng-click="ctrl.saveChanges()">Add</button>
+				<button type="submit" class="btn btn-success width-6" ng-show="!ctrl.isNew" ng-click="ctrl.saveChanges()">Save &amp; Test</button>
+				<button type="submit" class="btn btn-danger width-6" ng-show="!ctrl.isNew" ng-click="ctrl.delete()">
 					Delete
 				</button>
 				<a class="btn btn-link" href="datasources">Cancel</a>
