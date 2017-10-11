@@ -709,12 +709,12 @@ export class DashboardModel {
 
           delete panel.span;
 
-          xPos += rowGridHeight;
+          xPos += panel.gridPos.w;
 
           this.panels.push(new PanelModel(panel));
         }
 
-        yPos += height;
+        yPos += rowGridHeight;
       }
 
       console.log('panels', this.panels);
