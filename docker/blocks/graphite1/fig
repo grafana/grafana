@@ -1,16 +1,28 @@
-graphite:
-  build: blocks/graphite1
-  ports:
-    - "8080:80"
-    - "2003:2003"
-  volumes:
-    - /etc/localtime:/etc/localtime:ro
-    - /etc/timezone:/etc/timezone:ro
+# version: '3'
+# services:
+# graphite1:
+#    build:
+#      context: blocks/graphite1
+#      args:
+#        - version=master
+graphite1:
+    build: blocks/graphite1
+    ports:
+      - "8080:80"
+      - "2003:2003"
+    networks:
+      - graphite
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
 
-fake-graphite-data:
-  image: grafana/fake-data-gen
-  net: bridge
-  environment:
-    FD_DATASOURCE: graphite
-    FD_PORT: 2003
+  fake-graphite-data:
+    image: grafana/fake-data-gen
+    networks:
+      - graphite
+    environment:
+      FD_DATASOURCE: graphite
+      FD_PORT: 2003
 
+networks:
+  graphite:
