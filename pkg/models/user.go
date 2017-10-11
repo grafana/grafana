@@ -10,6 +10,12 @@ var (
 	ErrUserNotFound = errors.New("User not found")
 )
 
+type Password string
+
+func (p Password) IsWeak() bool {
+	return len(p) <= 4
+}
+
 type User struct {
 	Id            int64
 	Version       int
@@ -22,12 +28,14 @@ type User struct {
 	Company       string
 	EmailVerified bool
 	Theme         string
+	HelpFlags1    HelpFlags1
 
 	IsAdmin bool
 	OrgId   int64
 
-	Created time.Time
-	Updated time.Time
+	Created    time.Time
+	Updated    time.Time
+	LastSeenAt time.Time
 }
 
 func (u *User) NameOrFallback() string {
@@ -44,15 +52,16 @@ func (u *User) NameOrFallback() string {
 // COMMANDS
 
 type CreateUserCommand struct {
-	Email         string
-	Login         string
-	Name          string
-	Company       string
-	OrgName       string
-	Password      string
-	EmailVerified bool
-	IsAdmin       bool
-	SkipOrgSetup  bool
+	Email          string
+	Login          string
+	Name           string
+	Company        string
+	OrgName        string
+	Password       string
+	EmailVerified  bool
+	IsAdmin        bool
+	SkipOrgSetup   bool
+	DefaultOrgRole string
 
 	Result User
 }
@@ -95,6 +104,11 @@ type GetUserByLoginQuery struct {
 	Result       *User
 }
 
+type GetUserByEmailQuery struct {
+	Email  string
+	Result *User
+}
+
 type GetUserByIdQuery struct {
 	Id     int64
 	Result *User
@@ -104,6 +118,7 @@ type GetSignedInUserQuery struct {
 	UserId int64
 	Login  string
 	Email  string
+	OrgId  int64
 	Result *SignedInUser
 }
 
@@ -113,11 +128,19 @@ type GetUserProfileQuery struct {
 }
 
 type SearchUsersQuery struct {
+	OrgId int64
 	Query string
 	Page  int
 	Limit int
 
-	Result []*UserSearchHitDTO
+	Result SearchUserQueryResult
+}
+
+type SearchUserQueryResult struct {
+	TotalCount int64               `json:"totalCount"`
+	Users      []*UserSearchHitDTO `json:"users"`
+	Page       int                 `json:"page"`
+	PerPage    int                 `json:"perPage"`
 }
 
 type GetUserOrgListQuery struct {
@@ -136,12 +159,22 @@ type SignedInUser struct {
 	Login          string
 	Name           string
 	Email          string
-	Theme          string
 	ApiKeyId       int64
 	IsGrafanaAdmin bool
+	HelpFlags1     HelpFlags1
+	LastSeenAt     time.Time
+}
+
+func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
+	return u.UserId > 0 && time.Since(u.LastSeenAt) > time.Minute*5
+}
+
+type UpdateUserLastSeenAtCommand struct {
+	UserId int64
 }
 
 type UserProfileDTO struct {
+	Id             int64  `json:"id"`
 	Email          string `json:"email"`
 	Name           string `json:"name"`
 	Login          string `json:"login"`
@@ -151,11 +184,13 @@ type UserProfileDTO struct {
 }
 
 type UserSearchHitDTO struct {
-	Id      int64  `json:"id"`
-	Name    string `json:"name"`
-	Login   string `json:"login"`
-	Email   string `json:"email"`
-	IsAdmin bool   `json:"isAdmin"`
+	Id            int64     `json:"id"`
+	Name          string    `json:"name"`
+	Login         string    `json:"login"`
+	Email         string    `json:"email"`
+	IsAdmin       bool      `json:"isAdmin"`
+	LastSeenAt    time.Time `json:"lastSeenAt"`
+	LastSeenAtAge string    `json:"lastSeenAtAge"`
 }
 
 type UserIdDTO struct {

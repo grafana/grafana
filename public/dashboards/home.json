@@ -1,7 +1,6 @@
 {
   "id": null,
   "title": "Home",
-  "originalTitle": "Home",
   "tags": [],
   "style": "dark",
   "timezone": "browser",
@@ -9,55 +8,61 @@
   "hideControls": true,
   "sharedCrosshair": false,
   "rows": [
-    {
+   {
+      "title": "Home Dashboard",
       "collapse": false,
       "editable": true,
-      "height": "90px",
+      "height": "25px",
       "panels": [
         {
           "content": "<div class=\"text-center dashboard-header\">\n  <span>Home Dashboard</span>\n</div>",
           "editable": true,
           "id": 1,
+          "links": [],
           "mode": "html",
           "span": 12,
           "style": {},
           "title": "",
           "transparent": true,
-          "type": "text",
-          "links": []
+          "type": "text"
         }
-      ],
-      "title": "New row"
-    },
-    {
+     ]
+   },
+   {
       "collapse": false,
       "editable": true,
       "height": "510px",
       "panels": [
         {
-          "id": 2,
-          "limit": 10,
-          "mode": "starred",
+          "id": 3,
+          "limit": 4,
+          "links": [],
           "query": "",
-          "span": 6,
+          "span": 7,
           "tags": [],
-          "title": "Starred dashboards",
-          "type": "dashlist"
+          "title": "",
+          "transparent": false,
+          "type": "dashlist",
+          "recent": true,
+          "search": false,
+          "starred": true,
+          "headings": true
         },
         {
-          "id": 3,
-          "limit": 10,
-          "mode": "recently viewed",
-          "query": "",
-          "span": 6,
-          "tags": [],
-          "title": "Recently viewed dashboards",
-          "type": "dashlist"
+          "editable": true,
+          "error": false,
+          "id": 4,
+          "isNew": true,
+          "links": [],
+          "span": 5,
+          "title": "",
+          "transparent": false,
+          "type": "pluginlist"
         }
       ],
       "title": "Row"
-    }
-  ],
+   }
+ ],
   "time": {
     "from": "now-6h",
     "to": "now"
@@ -95,7 +100,7 @@
   "annotations": {
     "list": []
   },
-  "schemaVersion": 9,
-  "version": 5,
+  "schemaVersion": 12,
+  "version": 0,
   "links": []
 }

@@ -1,5 +1,17 @@
 {
   "type": "panel",
   "name": "Singlestat",
-  "id": "singlestat"
+  "id": "singlestat",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+},
+    "logos": {
+      "small": "img/icn-singlestat-panel.svg",
+      "large": "img/icn-singlestat-panel.svg"
+    }
+  }
 }
+

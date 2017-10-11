@@ -9,26 +9,13 @@ function (angular, $, _, Tether) {
 
   angular
     .module('grafana.directives')
-    .directive('panelMenu', function($compile, linkSrv) {
+    .directive('panelMenu', function($compile) {
       var linkTemplate =
           '<span class="panel-title drag-handle pointer">' +
+            '<span class="icon-gf panel-alert-icon"></span>' +
             '<span class="panel-title-text drag-handle">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>' +
-            '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
             '<span class="panel-time-info" ng-show="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>' +
           '</span>';
-
-      function createExternalLinkMenu(ctrl) {
-        var template = '<div class="panel-menu small">';
-        template += '<div class="panel-menu-row">';
-
-        if (ctrl.panel.links) {
-          _.each(ctrl.panel.links, function(link) {
-            var info = linkSrv.getPanelLinkAnchorInfo(link, ctrl.panel.scopedVars);
-            template += '<a class="panel-menu-link" href="' + info.href + '" target="' + info.target + '">' + info.title + '</a>';
-          });
-        }
-        return template;
-      }
 
       function createMenuTemplate(ctrl) {
         var template = '<div class="panel-menu small">';
@@ -56,6 +43,7 @@ function (angular, $, _, Tether) {
 
           template += '<a class="panel-menu-link" ';
           if (item.click) { template += ' ng-click="' + item.click + '"'; }
+          if (item.href) { template += ' href="' + item.href + '"'; }
           template += '>';
           template += item.text + '</a>';
         });
@@ -74,7 +62,6 @@ function (angular, $, _, Tether) {
         restrict: 'A',
         link: function($scope, elem) {
           var $link = $(linkTemplate);
-          var $panelLinksBtn = $link.find(".panel-links-btn");
           var $panelContainer = elem.parents(".panel-container");
           var menuScope = null;
           var ctrl = $scope.ctrl;
@@ -83,11 +70,6 @@ function (angular, $, _, Tether) {
           var teather;
 
           elem.append($link);
-
-          $scope.$watchCollection('ctrl.panel.links', function(newValue) {
-            var showIcon = (newValue ? newValue.length > 0 : false) && ctrl.panel.title !== '';
-            $panelLinksBtn.toggle(showIcon);
-          });
 
           function dismiss(time, force) {
             clearTimeout(timeout);
@@ -129,11 +111,7 @@ function (angular, $, _, Tether) {
             }
 
             var menuTemplate;
-            if ($(e.target).hasClass('fa-external-link')) {
-              menuTemplate = createExternalLinkMenu(ctrl);
-            } else {
-              menuTemplate = createMenuTemplate(ctrl);
-            }
+            menuTemplate = createMenuTemplate(ctrl);
 
             $menu = $(menuTemplate);
             $menu.mouseleave(function() {

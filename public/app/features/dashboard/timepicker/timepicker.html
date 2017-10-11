@@ -1,9 +1,13 @@
 <ul class="nav gf-timepicker-nav">
 
-	<li class="dashnav-zoom-out" style="padding-top: 2px">
-		<a class='small' ng-click='ctrl.zoom(2)'>
-			Zoom Out
-		</a>
+	<li class="dashnav-move-timeframe gf-timepicker-time-control" bs-tooltip="'Shift time backward <br> (left arrow key)'" data-placement="bottom">
+		<a ng-click='ctrl.move(-1)'><i class="fa fa-chevron-left"></i></a>
+	</li>
+	<li class="dashnav-zoom-out gf-timepicker-time-control" bs-tooltip="'Time range zoom out <br> CTRL+Z'" data-placement="bottom">
+		<a ng-click='ctrl.zoom(2)'>Zoom Out</a></li>
+	</li>
+	<li class="dashnav-move-timeframe gf-timepicker-time-control" bs-tooltip="'Shift time forward <br> (right arrow key)'" data-placement="bottom">
+		<a ng-click='ctrl.move(1)'><i class="fa fa-chevron-right"></i></a>
 	</li>
 
 	<li>

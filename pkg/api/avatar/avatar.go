@@ -65,7 +65,7 @@ func New(hash string) *Avatar {
 	return &Avatar{
 		hash: hash,
 		reqParams: url.Values{
-			"d":    {"404"},
+			"d":    {"retro"},
 			"size": {"200"},
 			"r":    {"pg"}}.Encode(),
 	}
@@ -116,6 +116,7 @@ func (this *service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if avatar.Expired() {
 		if err := avatar.Update(); err != nil {
 			log.Trace("avatar update error: %v", err)
+			avatar = this.notFound
 		}
 	}
 
@@ -145,7 +146,7 @@ func CacheServer() http.Handler {
 }
 
 func newNotFound() *Avatar {
-	avatar := &Avatar{}
+	avatar := &Avatar{notFound: true}
 
 	// load transparent png into buffer
 	path := filepath.Join(setting.StaticRootPath, "img", "transparent.png")
@@ -216,7 +217,10 @@ func (this *thunderTask) Fetch() {
 	this.Done()
 }
 
-var client = &http.Client{}
+var client *http.Client = &http.Client{
+	Timeout:   time.Second * 2,
+	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
+}
 
 func (this *thunderTask) fetch() error {
 	this.Avatar.timestamp = time.Now()

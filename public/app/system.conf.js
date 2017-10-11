@@ -2,12 +2,15 @@ System.config({
   defaultJSExtenions: true,
   baseURL: 'public',
   paths: {
+    'virtual-scroll': 'vendor/npm/virtual-scroll/src/index.js',
+    'mousetrap': 'vendor/npm/mousetrap/mousetrap.js',
     'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
     'tether': 'vendor/npm/tether/dist/js/tether.js',
+    'eventemitter3': 'vendor/npm/eventemitter3/index.js',
     'tether-drop': 'vendor/npm/tether-drop/dist/js/drop.js',
     'moment': 'vendor/moment.js',
     "jquery": "vendor/jquery/dist/jquery.js",
-    'lodash-src': 'vendor/lodash.js',
+    'lodash-src': 'vendor/lodash/dist/lodash.js',
     "lodash": 'app/core/lodash_extended.js',
     "angular": "vendor/angular/angular.js",
     "bootstrap": "vendor/bootstrap/bootstrap.js",
@@ -26,7 +29,12 @@ System.config({
     "jquery.flot.stackpercent": "vendor/flot/jquery.flot.stackpercent",
     "jquery.flot.time": "vendor/flot/jquery.flot.time",
     "jquery.flot.crosshair": "vendor/flot/jquery.flot.crosshair",
-    "jquery.flot.fillbelow": "vendor/flot/jquery.flot.fillbelow"
+    "jquery.flot.fillbelow": "vendor/flot/jquery.flot.fillbelow",
+    "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge",
+    "d3": "vendor/d3/d3.js",
+    "jquery.flot.dashes": "vendor/flot/jquery.flot.dashes",
+    "twemoji": "vendor/npm/twemoji/2/twemoji.amd.js",
+    "ace": "vendor/npm/ace-builds/src-noconflict/ace",
   },
 
   packages: {
@@ -50,10 +58,26 @@ System.config({
   },
 
   meta: {
+    'vendor/npm/virtual-scroll/src/indx.js': {
+      format: 'cjs',
+      exports: 'VirtualScroll',
+    },
     'vendor/angular/angular.js': {
       format: 'global',
       deps: ['jquery'],
       exports: 'angular',
     },
+    'vendor/npm/eventemitter3/index.js': {
+      format: 'cjs',
+      exports: 'EventEmitter'
+    },
+    'vendor/npm/mousetrap/mousetrap.js': {
+      format: 'global',
+      exports: 'Mousetrap'
+    },
+    'vendor/npm/ace-builds/src-noconflict/ace.js': {
+      format: 'global',
+      exports: 'ace'
+    }
   }
 });

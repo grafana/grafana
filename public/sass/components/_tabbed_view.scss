@@ -1,7 +1,7 @@
 .tabbed-view {
   background-color: $page-bg;
   background-image: $page-gradient;
-  margin: -($panel-margin*2);
+  margin: (-$panel-margin*2) (-$panel-margin);
   margin-bottom: $spacer*2;
   padding: $spacer*3;
 
@@ -9,7 +9,6 @@
     padding: 0;
 
     .tabbed-view-header {
-      padding: 0;
       background-color: $body-bg;
       padding: 1.5em 1rem 0 1rem;
     }
@@ -28,7 +27,7 @@
   float: left;
   font-style: italic;
   padding-top: 0.5rem;
-  margin: 0 $spacer*3 0 $spacer*1.5;
+  margin: 0 $spacer*3 0 $spacer*1;
 }
 
 .tabbed-view-close-btn {
@@ -38,17 +37,17 @@
   background-color: transparent;
   border: none;
   padding: ($tabs-padding-top + $tabs-top-margin) $spacer $tabs-padding-bottom;
+  color: $text-color;
   i {
     font-size: 120%;
   }
-  color: $text-color;
   &:hover {
     color: $white;
   }
 }
 
 .tabbed-view-body {
-  padding: $spacer*1.5;
+  padding: $spacer*2 $spacer;
   min-height: 250px;
 }
 

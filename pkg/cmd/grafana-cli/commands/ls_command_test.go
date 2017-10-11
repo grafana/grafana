@@ -9,10 +9,10 @@ import (
 )
 
 func TestMissingPath(t *testing.T) {
-	var org = validateLsCommmand
+	var org = validateLsCommand
 
 	Convey("ls command", t, func() {
-		validateLsCommmand = org
+		validateLsCommand = org
 
 		Convey("Missing path", func() {
 			commandLine := &commandstest.FakeCommandLine{
@@ -61,7 +61,7 @@ func TestMissingPath(t *testing.T) {
 				},
 			}
 
-			validateLsCommmand = func(pluginDir string) error {
+			validateLsCommand = func(pluginDir string) error {
 				return errors.New("dummie error")
 			}
 

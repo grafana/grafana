@@ -19,24 +19,21 @@
 
 .filter-table tr {
   background: $grafanaListBackground;
-  border-bottom: 2px solid $page-bg;
+  border-bottom: 3px solid $page-bg;
 }
 
 .filter-table th {
   width: auto;
-  padding: 10px 15px 10px 0;
+  padding: $table-cell-padding;
   text-align: left;
-
-  &:first-child {
-    padding-left: 15px;
-  }
 }
 
 .filter-table td {
-  padding: 15px 15px 15px 0;
+  padding: $table-cell-padding;
 
-  &:first-child {
-    padding-left: 15px;
+  &.filter-table__switch-cell {
+    padding: 0;
+    border-right: 3px solid $page-bg;
   }
 }
 
@@ -55,3 +52,5 @@
 .filter-table .expanded > td {
   padding-bottom: 0;
 }
+
+

@@ -1,0 +1,32 @@
+{
+  "type": "app",
+  "name": "Grafana TestData",
+  "id": "testdata",
+
+  "info": {
+    "description": "Grafana test data app",
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "version": "1.0.17",
+    "updated": "2016-09-26"
+  },
+
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "TestData - Graph Last 1h",
+      "path": "dashboards/graph_last_1h.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "TestData - Alerts",
+      "path": "dashboards/alerts.json"
+    }
+  ],
+
+  "dependencies": {
+    "grafanaVersion": "4.x.x"
+  }
+}

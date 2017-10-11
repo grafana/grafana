@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 
 export class QueryCtrl {
@@ -10,48 +9,16 @@ export class QueryCtrl {
   panel: any;
   hasRawMode: boolean;
   error: string;
+  isLastQuery: boolean;
 
-  constructor(public $scope, private $injector) {
+  constructor(public $scope, public $injector) {
     this.panel = this.panelCtrl.panel;
-
-    if (!this.target.refId) {
-      this.target.refId = this.getNextQueryLetter();
-    }
-  }
-
-  getNextQueryLetter() {
-    var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    return _.find(letters, refId => {
-      return _.every(this.panel.targets, function(other) {
-        return other.refId !== refId;
-      });
-    });
-  }
-
-  removeQuery() {
-    this.panel.targets = _.without(this.panel.targets, this.target);
-    this.panelCtrl.refresh();
-  };
-
-  duplicateQuery() {
-    var clone = angular.copy(this.target);
-    clone.refId = this.getNextQueryLetter();
-    this.panel.targets.push(clone);
-  }
-
-  moveQuery(direction) {
-    var index = _.indexOf(this.panel.targets, this.target);
-    _.move(this.panel.targets, index, index + direction);
+    this.isLastQuery = _.indexOf(this.panel.targets, this.target) === (this.panel.targets.length - 1);
   }
 
   refresh() {
     this.panelCtrl.refresh();
   }
 
-  toggleHideQuery() {
-    this.target.hide = !this.target.hide;
-    this.panelCtrl.refresh();
-  }
 }
 

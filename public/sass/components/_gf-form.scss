@@ -1,16 +1,34 @@
 $gf-form-margin: 0.25rem;
-$gf-form-label-margin: 0.25rem;
 
 .gf-form {
   margin-bottom: $gf-form-margin;
-  margin-right: $gf-form-margin;
   display: flex;
   flex-direction: row;
   align-items: center;
   text-align: left;
+  position: relative;
+  font-size: $font-size-sm;
 
-  .cr1 {
-    margin-left: 8px;
+  &--offset-1 {
+    margin-left: $spacer;
+  }
+
+  &--grow {
+    flex-grow: 1;
+  }
+
+  &--flex-end {
+    justify-content: flex-end;
+  }
+}
+
+.gf-form-disabled {
+  color: $text-color-weak;
+
+  .query-keyword,
+  a,
+  .gf-form-input {
+    color: $text-color-weak;
   }
 }
 
@@ -23,10 +41,6 @@ $gf-form-label-margin: 0.25rem;
   flex-direction: row;
   flex-wrap: wrap;
   align-content: flex-start;
-
-  .gf-form-flex {
-    flex-grow: 1;
-  }
 }
 
 .gf-form-button-row {
@@ -38,14 +52,33 @@ $gf-form-label-margin: 0.25rem;
 
 .gf-form-label {
   padding: $input-padding-y $input-padding-x;
-  line-height: $input-line-height;
+  margin-right: $gf-form-margin;
   flex-shrink: 0;
 
   background-color: $input-label-bg;
   display: block;
   font-size: $font-size-sm;
-  margin-right: $gf-form-label-margin;
 
+  border: $input-btn-border-width solid transparent;
+  @include border-radius($label-border-radius-sm);
+
+
+  &--grow {
+    flex-grow: 1;
+    min-height: 2.60rem;
+  }
+
+  &--error {
+    color: $critical;
+  }
+}
+
+.gf-form-pre {
+  display: block;
+  flex-grow: 1;
+  font-size: $font-size-sm;
+  margin: 0;
+  margin-right: $gf-form-margin;
   border: $input-btn-border-width solid transparent;
   @include border-radius($label-border-radius-sm);
 }
@@ -63,10 +96,15 @@ $gf-form-label-margin: 0.25rem;
   }
 }
 
+.gf-form-textarea {
+  max-width: 650px;
+}
+
 .gf-form-input {
   display: block;
   width: 100%;
   padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
   font-size: $font-size-base;
   line-height: $input-line-height;
   color: $input-color;
@@ -76,13 +114,25 @@ $gf-form-label-margin: 0.25rem;
   border: $input-btn-border-width solid $input-border-color;
   @include border-radius($input-border-radius-sm);
   @include box-shadow($input-box-shadow);
-  transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  // text areas should be scrollable
+  @at-root textarea#{&} {
+    overflow: auto;
+  }
 
   // Unstyle the caret on `<select>`s in IE10+.
   &::-ms-expand {
     background-color: transparent;
     border: 0;
     display: none;
+  }
+
+  &.gf-input-small {
+    padding: $input-padding-y/3 $input-padding-x/3;
+    font-size: $font-size-xs;
   }
 
   // Customize the `:focus` state to imitate native WebKit styles.
@@ -106,9 +156,41 @@ $gf-form-label-margin: 0.25rem;
   }
 
   &.gf-size-auto { width: auto; }
+
+  &--dropdown {
+    padding-right: $input-padding-x*2;
+
+    &::after {
+      position: absolute;
+      top: 35%;
+      right: $input-padding-x;
+      background-color: transparent;
+      color: $input-color;
+      font: normal normal normal $font-size-sm/1 FontAwesome;
+      content: '\f0d7';
+      pointer-events: none;
+    }
+  }
+
+  &--small {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: $font-size-sm;
+  }
+}
+
+.gf-form-hint {
+  width: 100%;
+}
+
+.gf-form-hint-text {
+  display: block;
+  text-align: right;
+  padding-top: 0.5em;
 }
 
 .gf-form-select-wrapper {
+  margin-right: $gf-form-margin;
   position: relative;
   background-color: $input-bg;
 
@@ -125,9 +207,62 @@ $gf-form-label-margin: 0.25rem;
       color: transparent;
       text-shadow: 0 0 0 $text-color;
     }
+
+    &.ng-empty {
+      color: $text-color-weak;
+    }
   }
 
-  &:after {
+  &::after {
+    position: absolute;
+    top: 35%;
+    right: $input-padding-x/2;
+    background-color: transparent;
+    color: $input-color;
+    font: normal normal normal $font-size-sm/1 FontAwesome;
+    content: '\f0d7';
+    pointer-events: none;
+  }
+
+  &--has-help-icon {
+    &::after {
+      right: $input-padding-x*3;
+    }
+  }
+}
+
+.gf-form--v-stretch {
+  align-items: stretch;
+}
+
+.gf-form-btn {
+  padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
+  line-height: $input-line-height;
+  font-size: $font-size-sm;
+  box-shadow: none;
+  border: $input-btn-border-width solid transparent;
+
+  flex-shrink: 0;
+  flex-grow: 0;
+}
+
+.natural-language-input {
+  &input[type="number"] {
+    font-size: $font-size-base;
+    line-height: $input-line-height;
+    margin: -6px -5px 0 5px;
+    padding: $input-padding-y/2 $input-padding-x/2;
+  }
+}
+
+.gf-form-dropdown-typeahead {
+  margin-right: $gf-form-margin;
+  position: relative;
+  background-color: $input-bg;
+  padding-right: $input-padding-x;
+
+  &::after {
     position: absolute;
     top: 35%;
     right: $input-padding-x/2;
@@ -139,9 +274,38 @@ $gf-form-label-margin: 0.25rem;
   }
 }
 
-.gf-form-btn {
-  padding: $input-padding-y $input-padding-x;
-  line-height: $input-line-height;
-  flex-shrink: 0;
+.gf-form-help-icon {
   flex-grow: 0;
+  padding-left: $spacer;
+  color: $text-color-weak;
+
+  &--bold {
+    color: $text-color-emphasis;
+    padding-left: 0;
+  }
+
+  &--right-absolute {
+    position: absolute;
+    right: $spacer;
+    top: 10px;
+  }
+
+  &--right-normal {
+    float: right;
+  }
+
+  &--header {
+    margin-bottom: $gf-form-margin
+  }
+}
+
+select.gf-form-input ~ .gf-form-help-icon {
+  right: 10px;
+}
+
+.gf-form-icon--right-absolute {
+  position: absolute;
+  right: $spacer;
+  top: 10px;
+  color: $text-muted;
 }

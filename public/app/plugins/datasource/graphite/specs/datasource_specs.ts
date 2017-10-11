@@ -1,35 +1,39 @@
 
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 import helpers from 'test/specs/helpers';
 import {GraphiteDatasource} from "../datasource";
+import moment from 'moment';
+import _ from 'lodash';
 
 describe('graphiteDatasource', function() {
-  var ctx = new helpers.ServiceTestContext();
-  var instanceSettings: any = {url: ['']};
+  let ctx = new helpers.ServiceTestContext();
+  let instanceSettings: any = {url: [''], name: 'graphiteProd', jsonData: {}};
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.providePhase(['backendSrv']));
+  beforeEach(ctx.providePhase(['backendSrv', 'templateSrv']));
   beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
     ctx.$q = $q;
     ctx.$httpBackend =  $httpBackend;
     ctx.$rootScope = $rootScope;
     ctx.$injector = $injector;
+    $httpBackend.when('GET', /\.html$/).respond('');
   }));
 
   beforeEach(function() {
     ctx.ds = ctx.$injector.instantiate(GraphiteDatasource, {instanceSettings: instanceSettings});
   });
 
-  describe('When querying influxdb with one target using query editor target spec', function() {
-    var query = {
-    rangeRaw: { from: 'now-1h', to: 'now' },
-    targets: [{ target: 'prod1.count' }, {target: 'prod2.count'}],
-    maxDataPoints: 500,
+  describe('When querying graphite with one target using query editor target spec', function() {
+    let query = {
+      panelId: 3,
+      rangeRaw: { from: 'now-1h', to: 'now' },
+      targets: [{ target: 'prod1.count' }, {target: 'prod2.count'}],
+      maxDataPoints: 500,
     };
 
-    var results;
-    var requestOptions;
+    let results;
+    let requestOptions;
 
     beforeEach(function() {
       ctx.backendSrv.datasourceRequest = function(options) {
@@ -45,8 +49,12 @@ describe('graphiteDatasource', function() {
       expect(requestOptions.url).to.be('/render');
     });
 
+    it('should set unique requestId', function() {
+      expect(requestOptions.requestId).to.be('graphiteProd.panelId.3');
+    });
+
     it('should query correctly', function() {
-      var params = requestOptions.data.split('&');
+      let params = requestOptions.data.split('&');
       expect(params).to.contain('target=prod1.count');
       expect(params).to.contain('target=prod2.count');
       expect(params).to.contain('from=-1h');
@@ -54,7 +62,7 @@ describe('graphiteDatasource', function() {
     });
 
     it('should exclude undefined params', function() {
-      var params = requestOptions.data.split('&');
+      let params = requestOptions.data.split('&');
       expect(params).to.not.contain('cacheTimeout=undefined');
     });
 
@@ -69,58 +77,130 @@ describe('graphiteDatasource', function() {
 
   });
 
+  describe('when fetching Graphite Events as annotations', () => {
+    let results;
+
+    const options = {
+      annotation: {
+        tags: 'tag1'
+      },
+      range: {
+        from: moment(1432288354),
+        to: moment(1432288401)
+      },
+      rangeRaw: {from: "now-24h", to: "now"}
+    };
+
+    describe('and tags are returned as string', () => {
+      const response = {
+        data: [
+        {
+          when: 1507222850,
+          tags: 'tag1 tag2',
+          data: 'some text',
+          id: 2,
+          what: 'Event - deploy'
+        }
+      ]};
+
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = function(options) {
+          return ctx.$q.when(response);
+        };
+
+        ctx.ds.annotationQuery(options).then(function(data) { results = data; });
+        ctx.$rootScope.$apply();
+      });
+
+      it('should parse the tags string into an array', () => {
+        expect(_.isArray(results[0].tags)).to.eql(true);
+        expect(results[0].tags.length).to.eql(2);
+        expect(results[0].tags[0]).to.eql('tag1');
+        expect(results[0].tags[1]).to.eql('tag2');
+      });
+    });
+
+    describe('and tags are returned as an array', () => {
+      const response = {
+        data: [
+        {
+          when: 1507222850,
+          tags: ['tag1', 'tag2'],
+          data: 'some text',
+          id: 2,
+          what: 'Event - deploy'
+        }
+      ]};
+      beforeEach(() => {
+        ctx.backendSrv.datasourceRequest = function(options) {
+          return ctx.$q.when(response);
+        };
+
+        ctx.ds.annotationQuery(options).then(function(data) { results = data; });
+        ctx.$rootScope.$apply();
+      });
+
+      it('should parse the tags string into an array', () => {
+        expect(_.isArray(results[0].tags)).to.eql(true);
+        expect(results[0].tags.length).to.eql(2);
+        expect(results[0].tags[0]).to.eql('tag1');
+        expect(results[0].tags[1]).to.eql('tag2');
+      });
+    });
+  });
+
   describe('building graphite params', function() {
     it('should return empty array if no targets', function() {
-      var results = ctx.ds.buildGraphiteParams({
+      let results = ctx.ds.buildGraphiteParams({
         targets: [{}]
       });
       expect(results.length).to.be(0);
     });
 
     it('should uri escape targets', function() {
-      var results = ctx.ds.buildGraphiteParams({
+      let results = ctx.ds.buildGraphiteParams({
       targets: [{target: 'prod1.{test,test2}'}, {target: 'prod2.count'}]
       });
       expect(results).to.contain('target=prod1.%7Btest%2Ctest2%7D');
     });
 
     it('should replace target placeholder', function() {
-      var results = ctx.ds.buildGraphiteParams({
+      let results = ctx.ds.buildGraphiteParams({
       targets: [{target: 'series1'}, {target: 'series2'}, {target: 'asPercent(#A,#B)'}]
       });
       expect(results[2]).to.be('target=asPercent(series1%2Cseries2)');
     });
 
     it('should replace target placeholder for hidden series', function() {
-      var results = ctx.ds.buildGraphiteParams({
+      let results = ctx.ds.buildGraphiteParams({
       targets: [{target: 'series1', hide: true}, {target: 'sumSeries(#A)', hide: true}, {target: 'asPercent(#A,#B)'}]
       });
       expect(results[0]).to.be('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
     });
 
     it('should replace target placeholder when nesting query references', function() {
-      var results = ctx.ds.buildGraphiteParams({
+      let results = ctx.ds.buildGraphiteParams({
       targets: [{target: 'series1'}, {target: 'sumSeries(#A)'}, {target: 'asPercent(#A,#B)'}]
       });
       expect(results[2]).to.be('target=' + encodeURIComponent("asPercent(series1,sumSeries(series1))"));
     });
 
     it('should fix wrong minute interval parameters', function() {
-      var results = ctx.ds.buildGraphiteParams({
+      let results = ctx.ds.buildGraphiteParams({
       targets: [{target: "summarize(prod.25m.count, '25m', 'sum')" }]
       });
       expect(results[0]).to.be('target=' + encodeURIComponent("summarize(prod.25m.count, '25min', 'sum')"));
     });
 
     it('should fix wrong month interval parameters', function() {
-      var results = ctx.ds.buildGraphiteParams({
+      let results = ctx.ds.buildGraphiteParams({
       targets: [{target: "summarize(prod.5M.count, '5M', 'sum')" }]
       });
       expect(results[0]).to.be('target=' + encodeURIComponent("summarize(prod.5M.count, '5mon', 'sum')"));
     });
 
     it('should ignore empty targets', function() {
-      var results = ctx.ds.buildGraphiteParams({
+      let results = ctx.ds.buildGraphiteParams({
       targets: [{target: 'series1'}, {target: ''}]
       });
       expect(results.length).to.be(2);

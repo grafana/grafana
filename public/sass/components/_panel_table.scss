@@ -72,7 +72,40 @@
     &:last-child {
       border-right: none;
     }
+
+    &.table-panel-cell-pre {
+      white-space: pre;
+    }
+
+    &.table-panel-cell-link {
+      // Expand internal div to cell size (make all cell clickable)
+      padding: 0;
+
+      a {
+        padding: 0.45em 0 0.45em 1.1em;
+        height: 100%;
+        display: inline-block;
+      }
+    }
+
+    &.cell-highlighted:hover {
+      background-color: $tight-form-func-bg;
+    }
+
+    &:hover {
+      .table-panel-filter-link {
+        visibility: visible;
+      }
+    }
   }
+}
+
+.table-panel-filter-link {
+  visibility: hidden;
+  color: $text-color-weak;
+  float: right;
+  display: block;
+  padding: 0 5px;
 }
 
 .table-panel-header-bg {

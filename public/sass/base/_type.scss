@@ -27,26 +27,31 @@ em      { font-style: italic; color: $headings-color; }
 cite    { font-style: normal; }
 
 // Utility classes
-.muted               { color: $gray-2; }
+.muted               { color: $text-muted; }
 a.muted:hover,
-a.muted:focus        { color: darken($gray-2, 10%); }
+a.muted:focus        { color: darken($text-muted, 10%); }
 
-.text-warning        { color: $state-warning-text; }
+.text-warning        { color: $warning-text-color; }
 a.text-warning:hover,
-a.text-warning:focus { color: darken($state-warning-text, 10%); }
+a.text-warning:focus { color: darken($warning-text-color, 10%); }
 
-.text-error          { color: $errorText; }
+.text-error          { color: $error-text-color; }
 a.text-error:hover,
-a.text-error:focus   { color: darken($errorText, 10%); }
+a.text-error:focus   { color: darken($error-text-color, 10%); }
 
-.text-info           { color: $infoText; }
+.text-info           { color: $info-text-color; }
 a.text-info:hover,
-a.text-info:focus    { color: darken($infoText, 10%); }
+a.text-info:focus    { color: darken($info-text-color, 10%); }
 
-.text-success        { color: $successText; }
+.text-success        { color: $success-text-color; }
 a.text-success:hover,
-a.text-success:focus { color: darken($successText, 10%); }
+a.text-success:focus { color: darken($success-text-color, 10%); }
 a { cursor: pointer; }
+
+a[disabled] {
+  cursor: default;
+  pointer-events: none !important;
+}
 
 .text-left           { text-align: left; }
 .text-right          { text-align: right; }
@@ -114,14 +119,18 @@ hr {
 
 small,
 .small {
-  font-size: 85%;
+  font-size: $font-size-sm;
   font-weight: normal;
+}
+
+.small-xs {
+  font-size: $font-size-xs;
 }
 
 mark,
 .mark {
   padding: .2em;
-  background-color: $state-warning-bg;
+  background: $alert-warning-bg;
 }
 
 
@@ -281,3 +290,46 @@ a.external-link {
 .pointer {
   cursor: pointer;
 }
+
+.markdown-html {
+  img {
+    max-width: 100%;
+  }
+
+  ul, ol {
+    padding-left: $spacer*1.5;
+    margin-bottom: $spacer;
+  }
+
+  table {
+    td, th {
+      padding: $spacer*.5 $spacer;
+    }
+    th {
+      font-weight: normal;
+      background: $table-bg-accent;
+    }
+  }
+
+  table, th, td {
+    border: 1px solid $table-border;
+    border-collapse: collapse;
+  }
+
+  a {
+    text-decoration: underline;
+    color: $external-link-color;
+    &:hover {
+      color: lighten($external-link-color, 10%);
+    }
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  ul:last-child, ol:last-child {
+    margin-bottom: 0;
+  }
+}
+

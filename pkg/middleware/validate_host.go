@@ -8,7 +8,12 @@ import (
 )
 
 func ValidateHostHeader(domain string) macaron.Handler {
-	return func(c *macaron.Context) {
+	return func(c *Context) {
+		// ignore local render calls
+		if c.IsRenderCall {
+			return
+		}
+
 		h := c.Req.Host
 		if i := strings.Index(h, ":"); i >= 0 {
 			h = h[:i]

@@ -2,6 +2,7 @@
 
 import _ from 'lodash';
 import queryPart from './query_part';
+import kbn from 'app/core/utils/kbn';
 
 export default class InfluxQuery {
   target: any;
@@ -11,6 +12,7 @@ export default class InfluxQuery {
   templateSrv: any;
   scopedVars: any;
 
+  /** @ngInject */
   constructor(target, templateSrv?, scopedVars?) {
     this.target = target;
     this.templateSrv = templateSrv;
@@ -19,9 +21,10 @@ export default class InfluxQuery {
     target.policy = target.policy || 'default';
     target.dsType = 'influxdb';
     target.resultFormat = target.resultFormat || 'time_series';
+    target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
     target.groupBy = target.groupBy || [
-      {type: 'time', params: ['$interval']},
+      {type: 'time', params: ['$__interval']},
       {type: 'fill', params: ['null']},
     ];
     target.select = target.select || [[
@@ -151,20 +154,24 @@ export default class InfluxQuery {
       if (interpolate) {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
-      value = "'" + value.replace('\\', '\\\\') + "'";
-    } else if (interpolate){
+      if (operator !== '>' && operator !== '<') {
+        value = "'" + value.replace(/\\/g, '\\\\') + "'";
+      }
+    } else if (interpolate) {
       value = this.templateSrv.replace(value, this.scopedVars, 'regex');
     }
 
     return str + '"' + tag.key + '" ' + operator + ' ' + value;
   }
 
-  getMeasurementAndPolicy() {
+  getMeasurementAndPolicy(interpolate) {
     var policy = this.target.policy;
-    var measurement = this.target.measurement;
+    var measurement = this.target.measurement || 'measurement';
 
-    if (!measurement.match('^/.*/')) {
+    if (!measurement.match('^/.*/$')) {
       measurement = '"' + measurement+ '"';
+    } else if (interpolate) {
+      measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
     }
 
     if (policy !== 'default') {
@@ -176,19 +183,29 @@ export default class InfluxQuery {
     return policy + measurement;
   }
 
+  interpolateQueryStr(value, variable, defaultFormatFn) {
+    // if no multi or include all do not regexEscape
+    if (!variable.multi && !variable.includeAll) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      return kbn.regexEscape(value);
+    }
+
+    var escapedValues = _.map(value, kbn.regexEscape);
+    return '(' + escapedValues.join('|') + ')';
+  }
+
   render(interpolate?) {
     var target = this.target;
 
     if (target.rawQuery) {
       if (interpolate) {
-        return this.templateSrv.replace(target.query, this.scopedVars, 'regex');
+        return this.templateSrv.replace(target.query, this.scopedVars, this.interpolateQueryStr);
       } else {
         return target.query;
       }
-    }
-
-    if (!target.measurement) {
-      throw {message: "Metric measurement is missing"};
     }
 
     var query = 'SELECT ';
@@ -207,13 +224,16 @@ export default class InfluxQuery {
       query += selectText;
     }
 
-    query += ' FROM ' + this.getMeasurementAndPolicy() + ' WHERE ';
+    query += ' FROM ' + this.getMeasurementAndPolicy(interpolate) + ' WHERE ';
     var conditions = _.map(target.tags, (tag, index) => {
       return this.renderTagCondition(tag, index, interpolate);
     });
 
-    query += conditions.join(' ');
-    query += (conditions.length > 0 ? ' AND ' : '') + '$timeFilter';
+    if (conditions.length > 0) {
+      query += '(' + conditions.join(' ') + ') AND ';
+    }
+
+    query += '$timeFilter';
 
     var groupBySection = "";
     for (i = 0; i < this.groupByParts.length; i++) {
@@ -233,6 +253,25 @@ export default class InfluxQuery {
       query += ' fill(' + target.fill + ')';
     }
 
+    if (target.orderByTime === 'DESC') {
+      query += ' ORDER BY time DESC';
+    }
+
+    if (target.limit) {
+      query += ' LIMIT ' + target.limit;
+    }
+
+    if (target.slimit) {
+      query += ' SLIMIT ' + target.slimit;
+    }
+
     return query;
+  }
+
+  renderAdhocFilters(filters) {
+    var conditions = _.map(filters, (tag, index) => {
+      return this.renderTagCondition(tag, index, false);
+    });
+    return conditions.join(' ');
   }
 }

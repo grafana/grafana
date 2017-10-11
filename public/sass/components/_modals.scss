@@ -21,6 +21,7 @@
 // Base modal
 .modal {
   position: fixed;
+  overflow: hidden;
   z-index: $zindex-modal;
   width: 100%;
 	background-color: $panel-bg;
@@ -33,7 +34,7 @@
   right: 0;
   margin-left: auto;
   margin-right: auto;
-  top: 20%;
+  top: 10%;
 }
 
 .modal-header {
@@ -105,7 +106,7 @@
   }
 
   .confirm-modal-text2 {
-    font-size: $font-size-h5;
+    font-size: $font-size-root;
     padding-top: $spacer;
   }
 
@@ -115,10 +116,16 @@
       margin-right: $spacer/2;
     }
   }
+
+  .modal-content-confirm-text {
+    margin-bottom: 2rem;
+    span {
+      text-align: center;
+    }
+  }
 }
 
 .share-modal-body {
-  text-align: center;
   padding: 10px 0;
 
   .tight-form {
@@ -126,34 +133,40 @@
   }
 
   .share-modal-options {
-    margin: 11px 20px 33px 20px;
+    margin: 11px 0px 33px 0px;
+    display: inline-block;
   }
 
   .share-modal-big-icon {
-    margin-bottom: 2rem;
-
+    margin-bottom: 10px;
+    margin-right: 2rem;
     .fa, .icon-gf {
-      font-size: 70px;
+      font-size: 50px;
     }
   }
 
-  .share-snapshot-info-text {
-    margin: 10px 105px;
+  .share-modal-info-text {
+    margin-top: 5px;
     strong {
       color: $headings-color;
       font-weight: 500;
     }
   }
 
-  .share-snapshot-header {
-    margin: 20px 0 22px 0;
+  .share-modal-header {
+    display: flex;
+    margin: 0px 0 22px 0;
+  }
+
+  .share-modal-content {
+    flex-grow: 1;
   }
 
   .tight-form {
     text-align: left;
   }
 
-  .share-snapshot-link {
+  .share-modal-link {
     max-width: 716px;
     white-space: nowrap;
     overflow: hidden;
@@ -162,8 +175,4 @@
   }
 }
 
-.modal-body {
-  .position-center {
-    display: inline-block;
-  }
-}
+

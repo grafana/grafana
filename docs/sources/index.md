@@ -1,37 +1,51 @@
----
-page_title: Grafana Installation
-page_description: Install guide for Grafana.
-page_keywords: grafana, installation, documentation
----
++++
+title = "Docs Home"
+description = "Install guide for Grafana"
+keywords = ["grafana", "installation", "documentation"]
+type = "docs"
+aliases = ["v1.1", "guides/reference/admin"]
+[menu.docs]
+name = "Welcome to the Docs"
+identifier = "root"
+weight = -1
++++
 
-# Installation
+# Welcome to the Grafana Documentation
 
-Grafana is easily installed via a Debian/Ubuntu package (.deb), via
-Redhat/Centos package (.rpm) or manually via a tarball that contains all
-required files and binaries. If you can't find a package or binary for
-your platform, you might be able to build one yourself. Read the [build
-from source](../project/building_from_source) instructions for more
-information.
+Grafana is an open source metric analytics & visualization suite. It is most commonly used for
+visualizing time series data for infrastructure and application analytics but many use it in
+other domains including industrial sensors, home automation, weather, and process control.
 
-## Platforms
-- [Installing on Debian / Ubuntu](installation/debian.md)
-- [Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)](installation/rpm.md)
-- [Installing on Mac OS X](installation/mac.md)
-- [Installing on Windows](installation/windows.md)
-- [Installing on Docker](installation/docker.md)
-- [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)](installation/provisioning.md)
-- [Nightly Builds](http://grafana.org/download/builds.html)
+## Installing Grafana
+- [Installing on Debian / Ubuntu](installation/debian)
+- [Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)](installation/rpm)
+- [Installing on Mac OS X](installation/mac)
+- [Installing on Windows](installation/windows)
+- [Installing on Docker](installation/docker)
+- [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)](installation/provisioning)
+- [Nightly Builds](https://grafana.com/grafana/download)
 
-## Configuration
+For other platforms Read the [build from source]({{< relref "project/building_from_source.md" >}})
+instructions for more information.
+
+## Configuring Grafana
 
 The back-end web server has a number of configuration options. Go the
-[Configuration](/installation/configuration) page for details on all
+[Configuration]({{< relref "installation/configuration.md" >}}) page for details on all
 those options.
+
+
+## Getting started
+
+- [Getting Started]({{< relref "guides/getting_started.md" >}})
+- [Basic Concepts]({{< relref "guides/basic_concepts.md" >}})
+- [Screencasts]({{< relref "tutorials/screencasts.md" >}})
 
 ## Data sources guides
 
-- [Graphite](datasources/graphite.md)
-- [Elasticsearch](datasources/elasticsearch.md)
-- [InfluxDB](datasources/influxdb.md)
-- [OpenTSDB](datasources/opentsdb.md)
+- [Graphite]({{< relref "features/datasources/graphite.md" >}})
+- [Elasticsearch]({{< relref "features/datasources/elasticsearch.md" >}})
+- [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
+
 

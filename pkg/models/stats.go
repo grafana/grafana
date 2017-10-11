@@ -1,10 +1,13 @@
 package models
 
 type SystemStats struct {
-	DashboardCount int
-	UserCount      int
-	OrgCount       int
-	PlaylistCount  int
+	Dashboards  int64
+	Datasources int64
+	Users       int64
+	ActiveUsers int64
+	Orgs        int64
+	Playlists   int64
+	Alerts      int64
 }
 
 type DataSourceStats struct {
@@ -21,15 +24,16 @@ type GetDataSourceStatsQuery struct {
 }
 
 type AdminStats struct {
-	UserCount         int `json:"user_count"`
-	OrgCount          int `json:"org_count"`
-	DashboardCount    int `json:"dashboard_count"`
-	DbSnapshotCount   int `json:"db_snapshot_count"`
-	DbTagCount        int `json:"db_tag_count"`
-	DataSourceCount   int `json:"data_source_count"`
-	PlaylistCount     int `json:"playlist_count"`
-	StarredDbCount    int `json:"starred_db_count"`
-	GrafanaAdminCount int `json:"grafana_admin_count"`
+	Users       int `json:"users"`
+	Orgs        int `json:"orgs"`
+	Dashboards  int `json:"dashboards"`
+	Snapshots   int `json:"snapshots"`
+	Tags        int `json:"tags"`
+	Datasources int `json:"datasources"`
+	Playlists   int `json:"playlists"`
+	Stars       int `json:"stars"`
+	Alerts      int `json:"alerts"`
+	ActiveUsers int `json:"activeUsers"`
 }
 
 type GetAdminStatsQuery struct {

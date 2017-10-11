@@ -7,6 +7,7 @@
   background-color: $input-bg;
 
   input {
+    display: inline-block;
     border: none;
     border-right: 1px solid $tight-form-border;
     margin: 0px;
@@ -24,7 +25,7 @@
     [data-role="remove"] {
       margin-left:8px;
       cursor:pointer;
-      &:after{
+      &::after{
         content: "x";
         padding:0px 2px;
       }

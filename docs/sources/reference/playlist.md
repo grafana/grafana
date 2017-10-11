@@ -1,8 +1,12 @@
----
-page_title: Playlist Guide
-page_description: Playlist guide for Grafana
-page_keywords: grafana, playlist, documentation
----
++++
+title = "Playlist"
+keywords = ["grafana", "dashboard", "documentation", "playlist"]
+type = "docs"
+[menu.docs]
+parent = "dashboard_features"
+weight = 4
++++
+
 
 # Playlist
 
@@ -12,9 +16,9 @@ Since Grafana automatically scales Dashboards to any resolution they're perfect 
 
 ## Creating a Playlist
 
-The Playlist feature can be accessed from Grafana's sidemenu. Click the 'Playlist' button from the sidemenu to access the Playlist functionality. When 'Playlist' button is clicked, playlist view will open up showing saved playlists and an option to create new playlists.
+{{< docs-imagebox img="/img/docs/v3/playlist.png" max-width="25rem" class="docs-image--right">}}
 
-<img src="/img/v2/dashboard_search.png" class="no-shadow">
+The Playlist feature can be accessed from Grafana's sidemenu, in the Dashboard submenu.
 
 Click on "New Playlist" button to create a new playlist. Firstly, name your playlist and configure a time interval for Grafana to wait on a particular Dashboard before advancing to the next one on the Playlist.
 
@@ -39,3 +43,25 @@ Playlists can also be manually controlled utilizing the Playlist controls at the
 Click the stop button to stop the Playlist, and exit to the current Dashboard.
 Click the next button to advance to the next Dashboard in the Playlist.
 Click the back button to rewind to the previous Dashboard in the Playlist.
+
+## TV or Kiosk Mode
+
+In TV mode the top navbar, row & panel controls will all fade to transparent.
+
+This happens automatically after one minute of user inactivity but can also be toggled manually
+with the `d v` sequence shortcut. Any mouse movement or keyboard action will
+restore navbar & controls.
+
+Another feature is the kiosk mode - in kiosk mode the navbar is completely hidden/removed from view. This can be enabled with the `d k`
+shortcut.
+
+To put a playlist into kiosk mode, use the `d k` shortcut after the playlist has started. The same shortcut will toggle the playlist out of kiosk mode.
+
+### Linking to the Playlist in Kiosk Mode
+
+If you want to create a link to the playlist with kiosk mode enabled:
+
+1. Copy the Start Url (by right clicking on the Play button and choosing Copy link address).
+2. Add the `?kiosk` parameter to the url.
+
+For example, to open the first playlist on the Grafana Play site in kiosk mode: [http://play.grafana.org/playlists/play/1?kiosk](http://play.grafana.org/playlists/play/1?kiosk)

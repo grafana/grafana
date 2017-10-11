@@ -36,11 +36,6 @@ MAX_OPEN_FILES=10000
 PID_FILE=/var/run/$NAME.pid
 DAEMON=/usr/sbin/$NAME
 
-if [ `id -u` -ne 0 ]; then
-  echo "You need root privileges to run this script"
-  exit 4
-fi
-
 if [ ! -x $DAEMON ]; then
   echo "Program not installed or not executable"
   exit 5
@@ -70,10 +65,16 @@ function isRunning() {
   status -p $PID_FILE $NAME > /dev/null 2>&1
 }
 
+function checkUser() {
+  if [ `id -u` -ne 0 ]; then
+    echo "You need root privileges to run this script"
+    exit 4
+  fi
+}
+
 case "$1" in
   start)
-    echo -n $"Starting $DESC: .... "
-
+    checkUser
     isRunning
     if [ $? -eq 0 ]; then
       echo "Already running."
@@ -90,7 +91,7 @@ case "$1" in
 
     # Start Daemon
     cd $GRAFANA_HOME
-    su -s /bin/sh -c "nohup ${DAEMON} ${DAEMON_OPTS} >> /dev/null 3>&1 &" $GRAFANA_USER 2> /dev/null
+    action $"Starting $DESC: ..." su -s /bin/sh -c "nohup ${DAEMON} ${DAEMON_OPTS} >> /dev/null 3>&1 &" $GRAFANA_USER 2> /dev/null
     return=$?
     if [ $return -eq 0 ]
     then
@@ -114,26 +115,26 @@ case "$1" in
       done
     fi
 
-    echo "OK"
     exit $return
     ;;
   stop)
-    echo -n "Stopping $DESC ..."
+    checkUser
+    echo -n "Stopping $DESC: ..."
 
     if [ -f "$PID_FILE" ]; then
       killproc -p $PID_FILE -d 20 $NAME
       if [ $? -eq 1 ]; then
-        echo -n "$DESC is not running but pid file exists, cleaning up"
+        echo  "$DESC is not running but pid file exists, cleaning up"
       elif [ $? -eq 3 ]; then
         PID="`cat $PID_FILE`"
-        echo -n "Failed to stop $DESC (pid $PID)"
+        echo  "Failed to stop $DESC (pid $PID)"
         exit 1
       fi
       rm -f "$PID_FILE"
-      echo "OK"
+      echo  ""
       exit 0
     else
-      echo -n "(not running)"
+      echo  "(not running)"
     fi
     exit 0
     ;;

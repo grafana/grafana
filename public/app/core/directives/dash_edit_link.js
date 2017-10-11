@@ -1,100 +1,137 @@
 define([
   'jquery',
+  'angular',
   '../core_module',
 ],
-function ($, coreModule) {
+function ($, angular, coreModule) {
   'use strict';
 
   var editViewMap = {
-    'settings':    { src: 'public/app/features/dashboard/partials/settings.html', title: "Settings" },
-    'annotations': { src: 'public/app/features/annotations/partials/editor.html', title: "Annotations" },
-    'templating':  { src: 'public/app/features/templating/partials/editor.html', title: "Templating" }
+    'settings':    { src: 'public/app/features/dashboard/partials/settings.html'},
+    'annotations': { src: 'public/app/features/annotations/partials/editor.html'},
+    'templating':  { src: 'public/app/features/templating/partials/editor.html'},
+    'history':     { html: '<gf-dashboard-history dashboard="dashboard"></gf-dashboard-history>'},
+    'timepicker':  { src: 'public/app/features/dashboard/timepicker/dropdown.html' },
+    'import':      { html: '<dash-import></dash-import>' }
   };
 
-  coreModule.default.directive('dashEditorLink', function($timeout) {
-    return {
-      restrict: 'A',
-      link: function(scope, elem, attrs) {
-        var partial = attrs.dashEditorLink;
-
-        elem.bind('click',function() {
-          $timeout(function() {
-            var editorScope = attrs.editorScope === 'isolated' ? null : scope;
-            scope.appEvent('show-dash-editor', { src: partial, scope: editorScope });
-          });
-        });
-      }
-    };
-  });
-
-  coreModule.default.directive('dashEditorView', function($compile, $location) {
+  coreModule.default.directive('dashEditorView', function($compile, $location, $rootScope) {
     return {
       restrict: 'A',
       link: function(scope, elem) {
         var editorScope;
-        var lastEditor;
+        var lastEditView;
 
-        function hideEditorPane() {
+        function hideEditorPane(hideToShowOtherView) {
           if (editorScope) {
-            scope.appEvent('dash-editor-hidden', lastEditor);
-            editorScope.dismiss();
+            editorScope.dismiss(hideToShowOtherView);
           }
         }
 
-        function showEditorPane(evt, payload, editview) {
-          if (editview) {
-            scope.contextSrv.editview = editViewMap[editview];
-            payload.src = scope.contextSrv.editview.src;
+        function showEditorPane(evt, options) {
+          if (options.editview) {
+            options.src = editViewMap[options.editview].src;
+            options.html = editViewMap[options.editview].html;
           }
 
-          if (lastEditor === payload.src) {
-            hideEditorPane();
+          if (lastEditView && lastEditView === options.editview) {
+            hideEditorPane(false);
             return;
           }
 
-          hideEditorPane();
+          hideEditorPane(true);
 
-          lastEditor = payload.src;
-          editorScope = payload.scope ? payload.scope.$new() : scope.$new();
+          lastEditView = options.editview;
+          editorScope = options.scope ? options.scope.$new() : scope.$new();
 
-          editorScope.dismiss = function() {
+          editorScope.dismiss = function(hideToShowOtherView) {
             editorScope.$destroy();
-            elem.empty();
-            lastEditor = null;
+            lastEditView = null;
             editorScope = null;
+            elem.removeClass('dash-edit-view--open');
 
-            if (editview) {
+            if (!hideToShowOtherView) {
+              setTimeout(function() {
+                elem.empty();
+              }, 250);
+            }
+
+            if (options.editview) {
               var urlParams = $location.search();
-              if (editview === urlParams.editview) {
+              if (options.editview === urlParams.editview) {
                 delete urlParams.editview;
-                $location.search(urlParams);
+
+                // even though we always are in apply phase here
+                // some angular bug is causing location search updates to
+                // not happen always so this is a hack fix or that
+                setTimeout(function() {
+                  $rootScope.$apply(function() {
+                    $location.search(urlParams);
+                  });
+                });
               }
             }
           };
 
-          var src = "'" + payload.src + "'";
-          var view = $('<div class="tabbed-view" ng-include="' + src + '"></div>');
+          if (options.editview === 'import') {
+            var modalScope = $rootScope.$new();
+            modalScope.$on("$destroy", function() {
+              editorScope.dismiss();
+            });
 
-          elem.append(view);
-          $compile(elem.contents())(editorScope);
+            $rootScope.appEvent('show-modal', {
+              templateHtml: '<dash-import></dash-import>',
+              scope: modalScope,
+              backdrop: 'static'
+            });
+
+            return;
+          }
+
+          var view;
+          if (options.src)  {
+            view = angular.element(document.createElement('div'));
+            view.html('<div class="tabbed-view" ng-include="' + "'" + options.src + "'" + '"></div>');
+          } else {
+            view = angular.element(document.createElement('div'));
+            view.addClass('tabbed-view');
+            view.html(options.html);
+          }
+
+          $compile(view)(editorScope);
+
+          setTimeout(function() {
+            elem.empty();
+            elem.append(view);
+            setTimeout(function() {
+              elem.addClass('dash-edit-view--open');
+            }, 10);
+          }, 10);
         }
 
         scope.$watch("dashboardViewState.state.editview", function(newValue, oldValue) {
           if (newValue) {
-            showEditorPane(null, {}, newValue);
+            showEditorPane(null, {editview: newValue});
           } else if (oldValue) {
-            scope.contextSrv.editview = null;
-            if (lastEditor === editViewMap[oldValue]) {
+            if (lastEditView === oldValue) {
               hideEditorPane();
             }
           }
         });
 
-        scope.contextSrv.editview = null;
         scope.$on("$destroy", hideEditorPane);
-        scope.onAppEvent('hide-dash-editor', hideEditorPane);
+
+        scope.onAppEvent('hide-dash-editor', function() {
+          hideEditorPane(false);
+        });
+
         scope.onAppEvent('show-dash-editor', showEditorPane);
+
+        scope.onAppEvent('panel-fullscreen-enter', function() {
+          scope.appEvent('hide-dash-editor');
+        });
       }
     };
   });
 });
+

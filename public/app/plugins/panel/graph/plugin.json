@@ -1,5 +1,17 @@
 {
   "type": "panel",
   "name": "Graph",
-  "id": "graph"
+  "id": "graph",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+},
+    "logos": {
+      "small": "img/icn-graph-panel.svg",
+      "large": "img/icn-graph-panel.svg"
+    }
+  }
 }
+

@@ -5,7 +5,7 @@
 		<label class="small">From:</label>
 		<div class="gf-form-inline">
 			<div class="gf-form max-width-28">
-				<input type="text" class="gf-form-input input-large" ng-model="ctrl.timeRaw.from" input-datetime>
+				<input type="text" class="gf-form-input input-large" ng-model="ctrl.editTimeRaw.from" input-datetime>
 			</div>
 			<div class="gf-form">
 				<button class="btn gf-form-btn btn-primary" type="button" ng-click="openFromPicker=!openFromPicker">
@@ -15,14 +15,14 @@
 		</div>
 
 		<div ng-if="openFromPicker">
-			<datepicker ng-model="ctrl.absolute.fromJs" class="gf-timepicker-component" show-weeks="false" ng-change="ctrl.absoluteFromChanged()"></datepicker>
+			<datepicker ng-model="ctrl.absolute.fromJs" class="gf-timepicker-component" show-weeks="false" starting-day="ctrl.firstDayOfWeek" ng-change="ctrl.absoluteFromChanged()"></datepicker>
 		</div>
 
 
 		<label class="small">To:</label>
 		<div class="gf-form-inline">
 			<div class="gf-form max-width-28">
-				<input type="text" class="gf-form-input input-large" ng-model="ctrl.timeRaw.to" input-datetime>
+				<input type="text" class="gf-form-input input-large" ng-model="ctrl.editTimeRaw.to" input-datetime>
 			</div>
 			<div class="gf-form">
 				<button class="btn gf-form-btn btn-primary" type="button" ng-click="openToPicker=!openToPicker">
@@ -32,7 +32,7 @@
 		</div>
 
 		<div ng-if="openToPicker">
-			<datepicker ng-model="ctrl.absolute.toJs" class="gf-timepicker-component" show-weeks="false" ng-change="ctrl.absoluteToChanged()"></datepicker>
+			<datepicker ng-model="ctrl.absolute.toJs" class="gf-timepicker-component" show-weeks="false" starting-day="ctrl.firstDayOfWeek" ng-change="ctrl.absoluteToChanged()"></datepicker>
 		</div>
 
 		<label class="small">Refreshing every:</label>

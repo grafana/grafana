@@ -38,10 +38,11 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		url := ds.Url
 
 		if ds.Access == m.DS_ACCESS_PROXY {
-			url = setting.AppSubUrl + "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
+			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
 		}
 
 		var dsMap = map[string]interface{}{
+			"id":   ds.Id,
 			"type": ds.Type,
 			"name": ds.Name,
 			"url":  url,
@@ -59,8 +60,10 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			defaultDatasource = ds.Name
 		}
 
-		if len(ds.JsonData) > 0 {
+		if ds.JsonData != nil {
 			dsMap["jsonData"] = ds.JsonData
+		} else {
+			dsMap["jsonData"] = make(map[string]string)
 		}
 
 		if ds.Access == m.DS_ACCESS_DIRECT {
@@ -101,17 +104,15 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		datasources[ds.Name] = dsMap
 	}
 
-	// add grafana backend data source
-	grafanaDatasourceMeta, _ := plugins.DataSources["grafana"]
-	datasources["-- Grafana --"] = map[string]interface{}{
-		"type": "grafana",
-		"meta": grafanaDatasourceMeta,
-	}
-
-	// add mixed backend data source
-	datasources["-- Mixed --"] = map[string]interface{}{
-		"type": "mixed",
-		"meta": plugins.DataSources["mixed"],
+	// add datasources that are built in (meaning they are not added via data sources page, nor have any entry in datasource table)
+	for _, ds := range plugins.DataSources {
+		if ds.BuiltIn {
+			datasources[ds.Name] = map[string]interface{}{
+				"type": ds.Type,
+				"name": ds.Name,
+				"meta": plugins.DataSources[ds.Id],
+			}
+		}
 	}
 
 	if defaultDatasource == "" {
@@ -121,29 +122,63 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	panels := map[string]interface{}{}
 	for _, panel := range enabledPlugins.Panels {
 		panels[panel.Id] = map[string]interface{}{
-			"module":  panel.Module,
-			"baseUrl": panel.BaseUrl,
-			"name":    panel.Name,
-			"id":      panel.Id,
-			"info":    panel.Info,
+			"module":       panel.Module,
+			"baseUrl":      panel.BaseUrl,
+			"name":         panel.Name,
+			"id":           panel.Id,
+			"info":         panel.Info,
+			"hideFromList": panel.HideFromList,
+			"sort":         getPanelSort(panel.Id),
 		}
 	}
 
 	jsonObj := map[string]interface{}{
-		"defaultDatasource": defaultDatasource,
-		"datasources":       datasources,
-		"panels":            panels,
-		"appSubUrl":         setting.AppSubUrl,
-		"allowOrgCreate":    (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		"authProxyEnabled":  setting.AuthProxyEnabled,
+		"defaultDatasource":       defaultDatasource,
+		"datasources":             datasources,
+		"panels":                  panels,
+		"appSubUrl":               setting.AppSubUrl,
+		"allowOrgCreate":          (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		"authProxyEnabled":        setting.AuthProxyEnabled,
+		"ldapEnabled":             setting.LdapEnabled,
+		"alertingEnabled":         setting.AlertingEnabled,
+		"googleAnalyticsId":       setting.GoogleAnalyticsId,
+		"disableLoginForm":        setting.DisableLoginForm,
+		"disableSignoutMenu":      setting.DisableSignoutMenu,
+		"externalUserMngInfo":     setting.ExternalUserMngInfo,
+		"externalUserMngLinkUrl":  setting.ExternalUserMngLinkUrl,
+		"externalUserMngLinkName": setting.ExternalUserMngLinkName,
 		"buildInfo": map[string]interface{}{
-			"version":    setting.BuildVersion,
-			"commit":     setting.BuildCommit,
-			"buildstamp": setting.BuildStamp,
+			"version":       setting.BuildVersion,
+			"commit":        setting.BuildCommit,
+			"buildstamp":    setting.BuildStamp,
+			"latestVersion": plugins.GrafanaLatestVersion,
+			"hasUpdate":     plugins.GrafanaHasUpdate,
+			"env":           setting.Env,
 		},
 	}
 
 	return jsonObj, nil
+}
+
+func getPanelSort(id string) int {
+	sort := 100
+	switch id {
+	case "graph":
+		sort = 1
+	case "singlestat":
+		sort = 2
+	case "table":
+		sort = 3
+	case "text":
+		sort = 4
+	case "heatmap":
+		sort = 5
+	case "alertlist":
+		sort = 6
+	case "dashlist":
+		sort = 7
+	}
+	return sort
 }
 
 func GetFrontendSettings(c *middleware.Context) {

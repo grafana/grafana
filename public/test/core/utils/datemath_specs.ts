@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common'
+import {describe, beforeEach, afterEach, it, sinon, expect} from 'test/lib/common';
 
 import * as dateMath from 'app/core/utils/datemath';
 import moment from 'moment';
@@ -42,7 +42,15 @@ describe("DateMath", () => {
     expected.setSeconds(0);
     expected.setMilliseconds(0);
 
-    var startOfDay = dateMath.parse('now/d', false).valueOf()
+    var startOfDay = dateMath.parse('now/d', false).valueOf();
+    expect(startOfDay).to.be(expected.getTime());
+  });
+
+  it("now/d on a utc dashboard should be start of the current day in UTC time", () => {
+    var today = new Date();
+    var expected = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0));
+
+    var startOfDay = dateMath.parse('now/d', false, 'utc').valueOf();
     expect(startOfDay).to.be(expected.getTime());
   });
 
@@ -68,6 +76,10 @@ describe("DateMath", () => {
         expect(dateMath.parse(thenEx).format(format)).to.eql(anchored.subtract(5, span).format(format));
       });
     });
+
+    afterEach(() => {
+      clock.restore();
+    });
   });
 
   describe('rounding', () => {
@@ -88,6 +100,10 @@ describe("DateMath", () => {
       it('should round now to the end of the ' + span, function () {
         expect(dateMath.parse('now/' + span, true).format(format)).to.eql(now.endOf(span).format(format));
       });
+    });
+
+    afterEach(() => {
+      clock.restore();
     });
   });
 

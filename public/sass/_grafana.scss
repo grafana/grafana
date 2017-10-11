@@ -1,3 +1,7 @@
+// vendor
+@import "../vendor/css/timepicker.css";
+@import "../vendor/css/spectrum.css";
+
 // MIXINS
 @import "mixins/mixins";
 @import "mixins/animations";
@@ -14,9 +18,9 @@
 @import "base/reboot";
 @import "base/type";
 @import "base/forms";
-@import "base/fonts";
 @import "base/grid";
-@import "base/font_awesome";
+@import "base/fonts";
+@import "base/code";
 
 // UTILS
 @import "utils/utils";
@@ -30,26 +34,30 @@
 @import "layout/page";
 
 // COMPONENTS
+@import "components/cards";
 @import "components/buttons";
 @import "components/navs";
 @import "components/tabs";
 @import "components/alerts";
+@import "components/switch";
 @import "components/tooltip";
 @import "components/tags";
 @import "components/panel_graph";
 @import "components/submenu";
+@import "components/panel_alertlist";
 @import "components/panel_dashlist";
+@import "components/panel_gettingstarted";
+@import "components/panel_pluginlist";
 @import "components/panel_singlestat";
 @import "components/panel_table";
 @import "components/panel_text";
+@import "components/panel_heatmap";
 @import "components/tagsinput";
 @import "components/tables_lists";
 @import "components/search";
-@import "components/tightform";
 @import "components/gf-form";
 @import "components/sidemenu";
 @import "components/navbar";
-@import "components/gfbox";
 @import "components/timepicker";
 @import "components/filter-controls";
 @import "components/filter-list";
@@ -66,6 +74,13 @@
 @import "components/drop";
 @import "components/query_editor";
 @import "components/tabbed_view";
+@import "components/query_part";
+@import "components/jsontree";
+@import "components/edit_sidemenu.scss";
+@import "components/row.scss";
+@import "components/icon-picker.scss";
+@import "components/json_explorer.scss";
+@import "components/code_editor.scss";
 
 // PAGES
 @import "pages/login";
@@ -73,9 +88,10 @@
 @import "pages/playlist";
 @import "pages/admin";
 @import "pages/alerting";
+@import "pages/history";
 @import "pages/plugins";
 @import "pages/signup";
 @import "pages/styleguide";
-
-
+@import "pages/errorpage";
 @import "old_responsive";
+@import "components/view_states.scss";

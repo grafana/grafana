@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
+import {describe, beforeEach, it, expect} from 'test/lib/common';
 
 import {transformers, transformDataToTable} from '../transformers';
 
@@ -153,14 +153,16 @@ describe('when transforming time series table', () => {
 
     describe('Annnotations', () => {
       var panel = {transform: 'annotations'};
-      var rawData = [
-        {
-          min: 1000,
-          text: 'hej',
-          tags: ['tags', 'asd'],
-          title: 'title',
-        }
-      ];
+      var rawData = {
+        annotations: [
+          {
+            min: 1000,
+            text: 'hej',
+            tags: ['tags', 'asd'],
+            title: 'title',
+          }
+        ]
+      };
 
       beforeEach(() => {
         table = transformDataToTable(rawData, panel);

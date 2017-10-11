@@ -1,6 +1,0 @@
-[submodule "docs/manual-en-US"]
-	path = docs/manual-en-US
-	url = https://github.com/go-xorm/manual-en-US.git
-[submodule "docs/manual-zh-CN"]
-	path = docs/manual-zh-CN
-	url = https://github.com/go-xorm/manual-zh-CN.git

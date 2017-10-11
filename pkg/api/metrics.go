@@ -1,36 +1,119 @@
 package api
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/middleware"
-	"math/rand"
-	"strconv"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/testdata"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetTestMetrics(c *middleware.Context) {
-	from := c.QueryInt64("from")
-	to := c.QueryInt64("to")
-	maxDataPoints := c.QueryInt64("maxDataPoints")
-	stepInSeconds := (to - from) / maxDataPoints
+// POST /api/tsdb/query
+func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
+	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
 
-	result := dtos.MetricQueryResultDto{}
-	result.Data = make([]dtos.MetricQueryResultDataDto, 1)
-
-	for seriesIndex := range result.Data {
-		points := make([][2]float64, maxDataPoints)
-		walker := rand.Float64() * 100
-		time := from
-
-		for i := range points {
-			points[i][0] = walker
-			points[i][1] = float64(time)
-			walker += rand.Float64() - 0.5
-			time += stepInSeconds
-		}
-
-		result.Data[seriesIndex].Target = "test-series-" + strconv.Itoa(seriesIndex)
-		result.Data[seriesIndex].DataPoints = points
+	if len(reqDto.Queries) == 0 {
+		return ApiError(400, "No queries found in query", nil)
 	}
 
-	c.JSON(200, &result)
+	dsId, err := reqDto.Queries[0].Get("datasourceId").Int64()
+	if err != nil {
+		return ApiError(400, "Query missing datasourceId", nil)
+	}
+
+	dsQuery := models.GetDataSourceByIdQuery{Id: dsId, OrgId: c.OrgId}
+	if err := bus.Dispatch(&dsQuery); err != nil {
+		return ApiError(500, "failed to fetch data source", err)
+	}
+
+	request := &tsdb.TsdbQuery{TimeRange: timeRange}
+
+	for _, query := range reqDto.Queries {
+		request.Queries = append(request.Queries, &tsdb.Query{
+			RefId:         query.Get("refId").MustString("A"),
+			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
+			IntervalMs:    query.Get("intervalMs").MustInt64(1000),
+			Model:         query,
+			DataSource:    dsQuery.Result,
+		})
+	}
+
+	resp, err := tsdb.HandleRequest(context.Background(), dsQuery.Result, request)
+	if err != nil {
+		return ApiError(500, "Metric request error", err)
+	}
+
+	statusCode := 200
+	for _, res := range resp.Results {
+		if res.Error != nil {
+			res.ErrorString = res.Error.Error()
+			resp.Message = res.ErrorString
+			statusCode = 500
+		}
+	}
+
+	return Json(statusCode, &resp)
+}
+
+// GET /api/tsdb/testdata/scenarios
+func GetTestDataScenarios(c *middleware.Context) Response {
+	result := make([]interface{}, 0)
+
+	for _, scenario := range testdata.ScenarioRegistry {
+		result = append(result, map[string]interface{}{
+			"id":          scenario.Id,
+			"name":        scenario.Name,
+			"description": scenario.Description,
+			"stringInput": scenario.StringInput,
+		})
+	}
+
+	return Json(200, &result)
+}
+
+// Genereates a index out of range error
+func GenerateError(c *middleware.Context) Response {
+	var array []string
+	return Json(200, array[20])
+}
+
+// GET /api/tsdb/testdata/gensql
+func GenerateSqlTestData(c *middleware.Context) Response {
+	if err := bus.Dispatch(&models.InsertSqlTestDataCommand{}); err != nil {
+		return ApiError(500, "Failed to insert test data", err)
+	}
+
+	return Json(200, &util.DynMap{"message": "OK"})
+}
+
+// GET /api/tsdb/testdata/random-walk
+func GetTestDataRandomWalk(c *middleware.Context) Response {
+	from := c.Query("from")
+	to := c.Query("to")
+	intervalMs := c.QueryInt64("intervalMs")
+
+	timeRange := tsdb.NewTimeRange(from, to)
+	request := &tsdb.TsdbQuery{TimeRange: timeRange}
+
+	dsInfo := &models.DataSource{Type: "grafana-testdata-datasource"}
+	request.Queries = append(request.Queries, &tsdb.Query{
+		RefId:      "A",
+		IntervalMs: intervalMs,
+		Model: simplejson.NewFromAny(&util.DynMap{
+			"scenario": "random_walk",
+		}),
+		DataSource: dsInfo,
+	})
+
+	resp, err := tsdb.HandleRequest(context.Background(), dsInfo, request)
+	if err != nil {
+		return ApiError(500, "Metric request error", err)
+	}
+
+	return Json(200, &resp)
 }

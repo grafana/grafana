@@ -1,8 +1,13 @@
-----
-page_title: Administration
-page_description: Grafana Administration
-page_keywords: grafana, admin, administration, documentation
----
++++
+title = "Admin Roles"
+description = "Users & Organization permission and administration"
+keywords = ["grafana", "configuration", "documentation", "admin", "users", "permissions"]
+type = "docs"
+[menu.docs]
+name = "Admin Roles"
+parent = "admin"
+weight = 3
++++
 
 # Administration
 
@@ -22,7 +27,7 @@ modify Organization details and options.
 
 ## Grafana Administrators
 
-<img src="/img/v2/admin_sidenav.png" class="right" style="margin-left: 15px">
+<img src="/img/v2/admin_sidenav.png" class="pull-right" style="margin-left: 15px">
 As a Grafana Administrator, you have complete access to any Organization or User in that instance of Grafana.
 When performing actions as a Grafana admin, the sidebar will change it's appearance as below to indicate you are performing global server administration.
 
@@ -30,7 +35,8 @@ From the Grafana Server Admin page, you can access the System Info page which su
 
 ## Why would I have multiple Organizations?
 
-In many cases, a Grafana installation will only have one Organization. There's no need to create multiple Organizations
-if you want all your users to have access to the same set of dashboards and data. In a multitenant deployment,
+Organizations in Grafana are best suited for a **multi-tenant deployment**. In a multi-tenant deployment,
 Organizations can be used to provide a full Grafana experience to different sets of users from a single Grafana instance,
 at the convenience of the Grafana Administrator.
+
+In most cases, a Grafana installation will only have **one** Organization. Since dashboards, data sources and other configuration items are not shared between organizations, there's no need to create multiple Organizations if you want all your users to have access to the same set of dashboards and data.

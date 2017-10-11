@@ -1,13 +1,18 @@
 {
   "rules": {
-    "class-name": true,
-    "comment-format": [true, "check-space"],
+    "no-string-throw": true,
+    "no-unused-expression": true,
+    "no-duplicate-variable": true,
+		"no-unused-variable": true,
     "curly": true,
+    "class-name": true,
+    "semicolon": [true, "always", "ignore-bound-class-methods"],
+    "triple-equals": [true, "allow-null-check"],
+    "comment-format": [false, "check-space"],
     "eofline": true,
     "forin": false,
-    "indent": [true, "spaces"],
+    "indent": [true, "spaces", 2],
     "label-position": true,
-    "label-undefined": true,
     "max-line-length": [true, 140],
     "member-access": false,
     "no-arg": true,
@@ -21,8 +26,6 @@
     ],
     "no-construct": true,
     "no-debugger": true,
-    "no-duplicate-key": true,
-    "no-duplicate-variable": true,
     "no-empty": false,
     "no-eval": true,
     "no-inferrable-types": true,
@@ -30,9 +33,6 @@
     "no-string-literal": false,
     "no-switch-case-fall-through": false,
     "no-trailing-whitespace": true,
-    "no-unused-expression": false,
-    "no-unused-variable": false,
-    "no-unreachable": true,
     "no-use-before-declare": true,
     "no-var-keyword": false,
     "object-literal-sort-keys": false,
@@ -42,8 +42,6 @@
       "check-else"
     ],
     "radix": false,
-    "semicolon": true,
-    "triple-equals": [true, "allow-null-check"],
     "typedef-whitespace": [true, {
       "call-signature": "nospace",
       "index-signature": "nospace",
@@ -55,7 +53,8 @@
     "whitespace": [true,
       "check-branch",
       "check-decl",
-      "check-type"
+      "check-type",
+      "check-preblock"
     ]
   }
 }

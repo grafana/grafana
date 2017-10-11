@@ -1,18 +1,22 @@
 package bus
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 )
 
 type HandlerFunc interface{}
+type CtxHandlerFunc func()
 type Msg interface{}
 
 type Bus interface {
 	Dispatch(msg Msg) error
+	DispatchCtx(ctx context.Context, msg Msg) error
 	Publish(msg Msg) error
 
 	AddHandler(handler HandlerFunc)
+	AddCtxHandler(handler HandlerFunc)
 	AddEventListener(handler HandlerFunc)
 	AddWildcardListener(handler HandlerFunc)
 }
@@ -32,6 +36,27 @@ func New() Bus {
 	bus.listeners = make(map[string][]HandlerFunc)
 	bus.wildcardListeners = make([]HandlerFunc, 0)
 	return bus
+}
+
+func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
+	var msgName = reflect.TypeOf(msg).Elem().Name()
+
+	var handler = b.handlers[msgName]
+	if handler == nil {
+		return fmt.Errorf("handler not found for %s", msgName)
+	}
+
+	var params = make([]reflect.Value, 2)
+	params[0] = reflect.ValueOf(ctx)
+	params[1] = reflect.ValueOf(msg)
+
+	ret := reflect.ValueOf(handler).Call(params)
+	err := ret[0].Interface()
+	if err == nil {
+		return nil
+	} else {
+		return err.(error)
+	}
 }
 
 func (b *InProcBus) Dispatch(msg Msg) error {
@@ -90,6 +115,12 @@ func (b *InProcBus) AddHandler(handler HandlerFunc) {
 	b.handlers[queryTypeName] = handler
 }
 
+func (b *InProcBus) AddCtxHandler(handler HandlerFunc) {
+	handlerType := reflect.TypeOf(handler)
+	queryTypeName := handlerType.In(1).Elem().Name()
+	b.handlers[queryTypeName] = handler
+}
+
 func (b *InProcBus) AddEventListener(handler HandlerFunc) {
 	handlerType := reflect.TypeOf(handler)
 	eventName := handlerType.In(0).Elem().Name()
@@ -106,6 +137,11 @@ func AddHandler(implName string, handler HandlerFunc) {
 }
 
 // Package level functions
+func AddCtxHandler(implName string, handler HandlerFunc) {
+	globalBus.AddCtxHandler(handler)
+}
+
+// Package level functions
 func AddEventListener(handler HandlerFunc) {
 	globalBus.AddEventListener(handler)
 }
@@ -116,6 +152,10 @@ func AddWildcardListener(handler HandlerFunc) {
 
 func Dispatch(msg Msg) error {
 	return globalBus.Dispatch(msg)
+}
+
+func DispatchCtx(ctx context.Context, msg Msg) error {
+	return globalBus.DispatchCtx(ctx, msg)
 }
 
 func Publish(msg Msg) error {

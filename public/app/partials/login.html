@@ -17,7 +17,7 @@
 				</button>
 			</div>
 
-      <form name="loginForm" class="login-form gf-form-group">
+      <form name="loginForm" class="login-form gf-form-group" ng-hide="disableLoginForm">
 				<div class="gf-form" ng-if="loginMode">
 					<span class="gf-form-label width-7">User</span>
 					<input type="text" name="username" class="gf-form-input max-width-14" required ng-model='formModel.user' placeholder={{loginHint}}>
@@ -40,47 +40,46 @@
 			</form>
 
 			<div ng-if="loginMode">
-				<div class="text-center login-divider" ng-if="oauthEnabled">
+				<div class="text-center login-divider" ng-show="oauthEnabled">
 					<div class="login-divider-line">
 						<span class="login-divider-text">
-							Or login with
+							<span ng-hide="disableLoginForm">Or</span> Login With
 						</span>
 					</div>
 				</div>
 
 				<div class="clearfix"></div>
 
-				<div class="login-oauth text-center" ng-if="oauthEnabled">
-					<a class="btn btn-large btn-google" href="login/google" target="_self" ng-if="googleAuthEnabled">
+				<div class="login-oauth text-center" ng-show="oauthEnabled">
+					<a class="btn btn-large btn-google" href="login/google" target="_self" ng-if="oauth.google">
 						<i class="fa fa-google"></i>
-						with Google
+						Google
 					</a>
-					<a class="btn btn-large btn-github" href="login/github" target="_self" ng-if="githubAuthEnabled">
+					<a class="btn btn-large btn-github" href="login/github" target="_self" ng-if="oauth.github">
 						<i class="fa fa-github"></i>
-						with Github
+						GitHub
 					</a>
-				</div>
-			</div>
-
-			<div class="clearfix"></div>
-
-			<div class="text-center password-recovery">
-				<div class="text-center">
-					<a href="user/password/send-reset-email">
-						Forgot your password?
+					<a class="btn btn-large btn-grafana-com" href="login/grafana_com" target="_self" ng-if="oauth.grafana_com">
+						<img src="public/img/grafana_com_auth_icon.svg"></img>
+						<span>Grafana.com</span>
+					</a>
+					<a class="btn btn-large btn-generic-oauth" href="login/generic_oauth" target="_self" ng-if="oauth.generic_oauth">
+						<i class="fa fa-gear"></i>
+						{{oauth.generic_oauth.name}}
 					</a>
 				</div>
 			</div>
 		</div>
 
-		<div class="row" style="margin-top: 50px">
-			<div class="version-footer text-center small">
-				Grafana version: {{buildInfo.version}}, commit: {{buildInfo.commit}},
-				build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}
+		<div class="clearfix"></div>
+
+		<div class="text-center password-recovery" ng-hide="disableLoginForm">
+			<div class="text-center">
+				<a href="user/password/send-reset-email">
+					Forgot your password?
+				</a>
 			</div>
 		</div>
+
 	</div>
-
 </div>
-
-

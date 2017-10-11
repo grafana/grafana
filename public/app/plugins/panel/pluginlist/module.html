@@ -1,0 +1,30 @@
+<div class="pluginlist">
+  <div class="pluginlist-section" ng-repeat="category in ctrl.viewModel">
+    <h6 class="pluginlist-section-header">
+      {{category.header}}
+    </h6>
+    <div class="pluginlist-item" ng-repeat="plugin in category.list">
+      <a class="pluginlist-link pluginlist-link-{{plugin.state}} pointer" href="{{plugin.defaultNavUrl}}">
+        <span>
+          <img ng-src="{{plugin.info.logos.small}}" class="pluginlist-image">
+          <span class="pluginlist-title">{{plugin.name}}</span>
+          <span class="pluginlist-version">v{{plugin.info.version}}</span>
+        </span>
+        <span class="pluginlist-message pluginlist-message--update" ng-show="plugin.hasUpdate" ng-click="ctrl.updateAvailable(plugin, $event)" bs-tooltip="'New version: ' + plugin.latestVersion">
+          Update available!
+        </span>
+        <span class="pluginlist-message pluginlist-message--enable" ng-show="!plugin.enabled && !plugin.hasUpdate">
+          Enable now
+        </span>
+        <span class="pluginlist-message pluginlist-message--no-update" ng-show="plugin.enabled && !plugin.hasUpdate">
+          Up to date
+        </span>
+      </a>
+    </div>
+    <div class="pluginlist-item" ng-show="category.list.length === 0">
+      <a class="pluginlist-link pluginlist-link-{{plugin.state}}" href="https://grafana.com/plugins">
+        <span class="pluginlist-none-installed">None installed. <span class="pluginlist-emphasis">Browse Grafana.com</span></span>
+      </a>
+    </div>
+  </div>
+</div>

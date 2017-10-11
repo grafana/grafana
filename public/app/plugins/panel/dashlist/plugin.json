@@ -1,5 +1,16 @@
 {
   "type": "panel",
   "name": "Dashboard list",
-  "id": "dashlist"
+  "id": "dashlist",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+},
+    "logos": {
+      "small": "img/icn-dashlist-panel.svg",
+      "large": "img/icn-dashlist-panel.svg"
+    }
+  }
 }

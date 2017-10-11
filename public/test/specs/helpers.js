@@ -25,7 +25,7 @@ define([
     };
 
     this.providePhase = function(mocks) {
-      return module(function($provide) {
+      return window.module(function($provide) {
         $provide.value('datasourceSrv', self.datasourceSrv);
         $provide.value('annotationsSrv', self.annotationsSrv);
         $provide.value('timeSrv', self.timeSrv);
@@ -38,7 +38,7 @@ define([
     };
 
     this.createPanelController = function(Ctrl) {
-      return inject(function($controller, $rootScope, $q, $location, $browser) {
+      return window.inject(function($controller, $rootScope, $q, $location, $browser) {
         self.scope = $rootScope.$new();
         self.$location = $location;
         self.$browser = $browser;
@@ -60,7 +60,7 @@ define([
     };
 
     this.createControllerPhase = function(controllerName) {
-      return inject(function($controller, $rootScope, $q, $location, $browser) {
+      return window.inject(function($controller, $rootScope, $q, $location, $browser) {
         self.scope = $rootScope.$new();
         self.$location = $location;
         self.$browser = $browser;
@@ -92,11 +92,10 @@ define([
     self.timeSrv = new TimeSrvStub();
     self.datasourceSrv = {};
     self.backendSrv = {};
-    self.$location = {};
     self.$routeParams = {};
 
     this.providePhase = function(mocks) {
-      return module(function($provide) {
+      return window.module(function($provide) {
         _.each(mocks, function(key) {
           $provide.value(key, self[key]);
         });
@@ -104,13 +103,15 @@ define([
     };
 
     this.createService = function(name) {
-      return inject(function($q, $rootScope, $httpBackend, $injector) {
+      return window.inject(function($q, $rootScope, $httpBackend, $injector, $location, $timeout) {
         self.$q = $q;
         self.$rootScope = $rootScope;
         self.$httpBackend =  $httpBackend;
+        self.$location = $location;
 
         self.$rootScope.onAppEvent = function() {};
         self.$rootScope.appEvent = function() {};
+        self.$timeout = $timeout;
 
         self.service = $injector.get(name);
       });
@@ -138,6 +139,10 @@ define([
     this.replace = function(target) {
       return target;
     };
+
+    this.setTime = function(time) {
+      this.time = time;
+    };
   }
 
   function ContextSrvStub() {
@@ -151,12 +156,14 @@ define([
     this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
     this.data = {};
     this.replace = function(text) {
-      return _.template(text, this.data,  this.templateSettings);
+      return _.template(text, this.templateSettings)(this.data);
     };
     this.init = function() {};
+    this.getAdhocFilters = function() { return []; };
     this.fillVariableValuesForUrl = function() {};
     this.updateTemplateData = function() { };
     this.variableExists = function() { return false; };
+    this.variableInitialized = function() { };
     this.highlightVariablesAsHtml = function(str) { return str; };
     this.setGrafanaVariable = function(name, value) {
       this.data[name] = value;

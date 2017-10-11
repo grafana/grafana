@@ -6,6 +6,11 @@
   color: $brand-primary;
 }
 
+.emphasis-word {
+  font-weight: 500;
+  color: $text-color-emphasis;
+}
+
 // Close icons
 // --------------------------------------------------
 .close {
@@ -47,6 +52,7 @@ button.close {
 .pull-right {
   float: right !important;
 }
+
 .pull-left {
   float: left !important;
 }
@@ -55,13 +61,14 @@ button.close {
 .hide {
   display: none;
 }
+
 .show {
   display: block;
 }
 
 // Visibility
 .invisible {
-  visibility: hidden;
+  visibility: hidden !important;
 }
 
 // For Affix plugin

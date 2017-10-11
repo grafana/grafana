@@ -1,21 +1,22 @@
-<navbar title="Organization" icon="icon-gf icon-gf-users">
-</navbar>
+<navbar model="navModel"></navbar>
 
-<div class="page-container">
-	<div class="page">
+<div class="page-container" ng-form="playlistEditForm">
+	<div class="page-header">
+		<h1>New Organization</h1>
+	</div>
 
-		<h2 style="margin-top: 30px;">Add Organization</h2>
+	<p class="playlist-description">Each organization contains their own dashboards, data sources and configuration, and cannot be shared between orgs. While users may belong to more than one, mutiple organization are most frequently used in multi-tenant deployments. </p>
 
-		<form name="form" class="gf-form-group">
+	<form>
+		<div class="gf-form-group">
 			<div class="gf-form">
 				<span class="gf-form-label width-10">Org. name</span>
-				<input type="text" ng-model="newOrg.name" required class="gf-form-input" placeholder="organization name">
+				<input type="text" ng-model="newOrg.name" required class="gf-form-input max-width-21" placeholder="organization name">
 			</div>
 			<br>
 			<div class="gf-form-buttons-row">
-				<button class="btn btn-success pull-right" ng-click="createOrg()">Create</button>
+				<button type="submit" class="btn btn-success" ng-click="createOrg()">Create</button>
 			</div>
-		</form>
-	</div>
+		</div>
+	</form>
 </div>
-

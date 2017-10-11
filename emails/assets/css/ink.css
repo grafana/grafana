@@ -17,6 +17,8 @@ body{
   padding:0;
 }
 
+
+
 .ExternalClass {
   width:100%;
 }
@@ -42,7 +44,6 @@ img {
   text-decoration:none;
   -ms-interpolation-mode: bicubic;
   width: auto;
-  max-width: 100%;
   float: left;
   clear: both;
   display: block;
@@ -581,8 +582,7 @@ body.outlook p {
 @media only screen and (max-width: 600px) {
 
   table[class="body"] img {
-    width: auto !important;
-    height: auto !important;
+
   }
 
   table[class="body"] center {

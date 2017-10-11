@@ -8,7 +8,7 @@ func addDashboardMigration(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "version", Type: DB_Int, Nullable: false},
-			{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "slug", Type: DB_NVarchar, Length: 189, Nullable: false},
 			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "data", Type: DB_Text, Nullable: false},
 			{Name: "account_id", Type: DB_BigInt, Nullable: false},
@@ -56,7 +56,7 @@ func addDashboardMigration(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "version", Type: DB_Int, Nullable: false},
-			{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "slug", Type: DB_NVarchar, Length: 189, Nullable: false},
 			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "data", Type: DB_Text, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
@@ -101,5 +101,39 @@ func addDashboardMigration(mg *Migrator) {
 	// add column to store creator of a dashboard
 	mg.AddMigration("Add column created_by in dashboard - v2", NewAddColumnMigration(dashboardV2, &Column{
 		Name: "created_by", Type: DB_Int, Nullable: true,
+	}))
+
+	// add column to store gnetId
+	mg.AddMigration("Add column gnetId in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "gnet_id", Type: DB_BigInt, Nullable: true,
+	}))
+
+	mg.AddMigration("Add index for gnetId in dashboard", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"gnet_id"}, Type: IndexType,
+	}))
+
+	// add column to store plugin_id
+	mg.AddMigration("Add column plugin_id in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "plugin_id", Type: DB_NVarchar, Nullable: true, Length: 189,
+	}))
+
+	mg.AddMigration("Add index for plugin_id in dashboard", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"org_id", "plugin_id"}, Type: IndexType,
+	}))
+
+	// dashboard_id index for dashboard_tag table
+	mg.AddMigration("Add index for dashboard_id in dashboard_tag", NewAddIndexMigration(dashboardTagV1, &Index{
+		Cols: []string{"dashboard_id"}, Type: IndexType,
+	}))
+
+	mg.AddMigration("Update dashboard table charset", NewTableCharsetMigration("dashboard", []*Column{
+		{Name: "slug", Type: DB_NVarchar, Length: 189, Nullable: false},
+		{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "plugin_id", Type: DB_NVarchar, Nullable: true, Length: 189},
+		{Name: "data", Type: DB_MediumText, Nullable: false},
+	}))
+
+	mg.AddMigration("Update dashboard_tag table charset", NewTableCharsetMigration("dashboard_tag", []*Column{
+		{Name: "term", Type: DB_NVarchar, Length: 50, Nullable: false},
 	}))
 }

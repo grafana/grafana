@@ -21,9 +21,15 @@
 					<i class="{{::menuItem.icon}}" ng-show="::menuItem.icon"></i>
 					{{::menuItem.text}}
 				</a>
-				<a ng-click="menuItem.click()" ng-show="::menuItem.click">
-					<i class="{{::menuItem.icon}}"></i>
-					{{::menuItem.text}}
+			</li>
+            <li ng-show="ctrl.orgs.length > ctrl.maxShownOrgs" style="margin-left: 10px;width: 90%">
+                <span class="sidemenu-item-text">Max shown : {{::ctrl.maxShownOrgs}}</span>
+                <input ng-model="::ctrl.orgFilter" style="padding-left: 5px" type="text" ng-change="::ctrl.loadOrgsItems();" class="gf-input-small width-12" placeholder="Filter">
+            </li>
+            <li ng-repeat="orgItem in ctrl.orgItems" ng-class="::orgItem.cssClass">
+				<a href="{{::orgItem.url}}" ng-show="::orgItem.url" target="{{::orgItem.target}}">
+					<i class="{{::orgItem.icon}}" ng-show="::orgItem.icon"></i>
+					{{::orgItem.text}}
 				</a>
 			</li>
 		</ul>
@@ -40,13 +46,16 @@
 		</a>
 		<ul class="dropdown-menu" role="menu" ng-if="::item.children">
 			<li ng-repeat="child in ::item.children" ng-class="{divider: child.divider}">
-				<a href="{{::child.url}}">{{::child.text}}</a>
+				<a href="{{::child.url}}">
+					<i class="{{::child.icon}}" ng-show="::child.icon"></i>
+					{{::child.text}}
+				</a>
 			</li>
 		</ul>
 	</li>
 
 	<li ng-show="::!ctrl.isSignedIn">
-		<a href="login" class="sidemenu-item" target="_self">
+    <a href="{{ctrl.loginUrl}}" class="sidemenu-item" target="_self">
 			<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-in"></i></span>
 			<span class="sidemenu-item-text">Sign in</span>
 		</a>

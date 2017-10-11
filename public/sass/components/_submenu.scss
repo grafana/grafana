@@ -1,6 +1,11 @@
 .submenu-controls {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: flex-start;
+
   margin: 0 $panel-margin ($panel-margin*2) $panel-margin;
-  font-size: 16px;
 }
 
 .annotation-disabled, .annotation-disabled a {
@@ -8,51 +13,39 @@
 }
 
 .annotation-segment {
+  padding: 8px 7px;
+
   label.cr1 {
     margin-left: 5px;
     margin-top: 3px;
   }
-  padding: 8px 7px;
 }
 
 .submenu-item {
   margin-right: 20px;
   display: inline-block;
-  border-radius: 3px;
-  background-color: $panel-bg;
-  border: $panel-border;
-  margin-right: 10px;
+  margin-right: 15px;
   display: inline-block;
   float: left;
 
   .fa-caret-down {
     font-size: 75%;
     position: relative;
-    top: 1px;
+    top: -1px;
+    left: 1px;
   }
 }
 
 .variable-value-link {
-  font-size: 16px;
   padding-right: 10px;
-  .label-tag {
-    margin: 0 5px;
-  }
-
   padding: 8px 7px;
   box-sizing: content-box;
   display: inline-block;
-  font-weight: normal;
-  display: inline-block;
   color: $text-color;
-}
 
-.submenu-item-label {
-  padding: 8px 0px 8px 7px;
-  box-sizing: content-box;
-  display: inline-block;
-  font-weight: normal;
-  display: inline-block;
+  .label-tag {
+    margin: 0 5px;
+  }
 }
 
 .variable-link-wrapper  {

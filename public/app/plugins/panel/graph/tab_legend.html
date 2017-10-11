@@ -1,0 +1,73 @@
+<div class="editor-row">
+	<div class="section gf-form-group">
+		<h5 class="section-heading">Options</h5>
+		<gf-form-switch class="gf-form"
+			label="Show" label-class="width-7"
+			checked="ctrl.panel.legend.show" on-change="ctrl.refresh()">
+		</gf-form-switch>
+		<gf-form-switch class="gf-form"
+			label="As Table" label-class="width-7"
+			checked="ctrl.panel.legend.alignAsTable" on-change="ctrl.render()">
+		</gf-form-switch>
+		<gf-form-switch class="gf-form"
+			label="To the right" label-class="width-7"
+			checked="ctrl.panel.legend.rightSide" on-change="ctrl.render()">
+		</gf-form-switch>
+		<div ng-if="ctrl.panel.legend.rightSide" class="gf-form">
+			<label class="gf-form-label width-7">Width</label>
+			<input type="number" class="gf-form-input max-width-5" placeholder="250" bs-tooltip="'Set a min-width for the legend side table/block'" data-placement="right" ng-model="ctrl.panel.legend.sideWidth" ng-change="ctrl.render()" ng-model-onblur>
+		</div>
+	</div>
+
+	<div class="section gf-form-group">
+		<h5 class="section-heading">Values</h5>
+
+		<div class="gf-form-inline">
+			<gf-form-switch class="gf-form"
+				label="Min" label-class="width-4"
+				checked="ctrl.panel.legend.min" on-change="ctrl.legendValuesOptionChanged()">
+			</gf-form-switch>
+
+			<gf-form-switch class="gf-form max-width-12"
+				label="Max" label-class="width-6" switch-class="max-width-5"
+				checked="ctrl.panel.legend.max" on-change="ctrl.legendValuesOptionChanged()">
+			</gf-form-switch>
+		</div>
+
+		<div class="gf-form-inline">
+			<gf-form-switch class="gf-form"
+				label="Avg" label-class="width-4"
+				checked="ctrl.panel.legend.avg" on-change="ctrl.legendValuesOptionChanged()">
+			</gf-form-switch>
+
+			<gf-form-switch class="gf-form max-width-12"
+				label="Current" label-class="width-6" switch-class="max-width-5"
+				checked="ctrl.panel.legend.current" on-change="ctrl.legendValuesOptionChanged()">
+			</gf-form-switch>
+		</div>
+
+		<div class="gf-form-inline">
+			<gf-form-switch class="gf-form"
+				label="Total" label-class="width-4"
+				checked="ctrl.panel.legend.total" on-change="ctrl.legendValuesOptionChanged()">
+			</gf-form-switch>
+
+			<div class="gf-form">
+				<label class="gf-form-label width-6">Decimals</label>
+				<input type="number" class="gf-form-input width-5" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right" ng-model="ctrl.panel.decimals" ng-change="ctrl.render()" ng-model-onblur>
+			</div>
+		</div>
+	</div>
+
+	<div class="section gf-form-group">
+		<h5 class="section-heading">Hide series</h5>
+		<gf-form-switch class="gf-form"
+			label="With only nulls" label-class="width-10"
+			checked="ctrl.panel.legend.hideEmpty" on-change="ctrl.render()">
+		</gf-form-switch>
+		<gf-form-switch class="gf-form"
+			label="With only zeros" label-class="width-10"
+			checked="ctrl.panel.legend.hideZero" on-change="ctrl.render()">
+		</gf-form-switch>
+	</div>
+</div>

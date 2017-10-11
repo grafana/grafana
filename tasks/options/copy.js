@@ -19,13 +19,10 @@ module.exports = function(config) {
       cwd: './node_modules',
       expand: true,
       src: [
-        'angular2/bundles/*.js',
-        'angular2/*.d.ts',
-        'angular2/typings/**/*',
-        'angular2/manual_typings/**/*',
+        'ace-builds/src-noconflict/**/*',
+        'eventemitter3/*.js',
         'systemjs/dist/*.js',
         'es6-promise/**/*',
-        'es5-shim/*.js',
         'es6-shim/*.js',
         'reflect-metadata/*.js',
         'reflect-metadata/*.ts',
@@ -35,6 +32,11 @@ module.exports = function(config) {
         'tether-drop/**/*',
         'tether-drop/**/*',
         'remarkable/dist/*',
+        'remarkable/dist/*',
+        'virtual-scroll/**/*',
+        'mousetrap/**/*',
+        'twemoji/2/twemoji.amd*',
+        'twemoji/2/svg/*.svg',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }

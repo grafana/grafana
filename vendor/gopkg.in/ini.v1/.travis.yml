@@ -1,0 +1,16 @@
+sudo: false
+language: go
+
+go:
+  - 1.4
+  - 1.5
+  - 1.6
+  - tip
+
+script: 
+  - go get -v github.com/smartystreets/goconvey
+  - go test -v -cover -race
+
+notifications:
+  email:
+    - u@gogs.io

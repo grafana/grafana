@@ -93,3 +93,15 @@ func (fcli *FakeCommandLine) Args() cli.Args {
 func (fcli *FakeCommandLine) ShowVersion() {
 	fcli.VersionShown = true
 }
+
+func (fcli *FakeCommandLine) RepoDirectory() string {
+	return fcli.GlobalString("repo")
+}
+
+func (fcli *FakeCommandLine) PluginDirectory() string {
+	return fcli.GlobalString("pluginsDir")
+}
+
+func (fcli *FakeCommandLine) PluginURL() string {
+	return fcli.GlobalString("pluginUrl")
+}

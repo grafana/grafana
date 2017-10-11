@@ -3,6 +3,8 @@ package plugins
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -21,6 +23,10 @@ var (
 	Apps         map[string]*AppPlugin
 	Plugins      map[string]*PluginBase
 	PluginTypes  map[string]interface{}
+
+	GrafanaLatestVersion string
+	GrafanaHasUpdate     bool
+	plog                 log.Logger
 )
 
 type PluginScanner struct {
@@ -29,6 +35,8 @@ type PluginScanner struct {
 }
 
 func Init() error {
+	plog = log.New("plugins")
+
 	DataSources = make(map[string]*DataSourcePlugin)
 	StaticRoutes = make([]*PluginStaticRoute, 0)
 	Panels = make(map[string]*PanelPlugin)
@@ -40,16 +48,16 @@ func Init() error {
 		"app":        AppPlugin{},
 	}
 
-	log.Info("Plugins: Scan starting")
+	plog.Info("Starting plugin search")
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
 
 	// check if plugins dir exists
 	if _, err := os.Stat(setting.PluginsPath); os.IsNotExist(err) {
-		log.Warn("Plugins: Plugin dir %v does not exist", setting.PluginsPath)
+		plog.Warn("Plugin dir does not exist", "dir", setting.PluginsPath)
 		if err = os.MkdirAll(setting.PluginsPath, os.ModePerm); err != nil {
-			log.Warn("Plugins: Failed to create plugin dir: %v, error: %v", setting.PluginsPath, err)
+			plog.Warn("Failed to create plugin dir", "dir", setting.PluginsPath, "error", err)
 		} else {
-			log.Info("Plugins: Plugin dir %v created", setting.PluginsPath)
+			plog.Info("Plugin dir created", "dir", setting.PluginsPath)
 			scan(setting.PluginsPath)
 		}
 	} else {
@@ -68,6 +76,9 @@ func Init() error {
 	for _, app := range Apps {
 		app.initApp()
 	}
+
+	go StartPluginUpdateChecker()
+	go updateAppDashboards()
 
 	return nil
 }
@@ -154,4 +165,26 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 
 	reader.Seek(0, 0)
 	return loader.Load(jsonParser, currentDir)
+}
+
+func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
+	plug, exists := Plugins[pluginId]
+	if !exists {
+		return nil, PluginNotFoundError{pluginId}
+	}
+
+	path := filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToUpper(name)))
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		path = filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToLower(name)))
+	}
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return make([]byte, 0), nil
+	}
+
+	if data, err := ioutil.ReadFile(path); err != nil {
+		return nil, err
+	} else {
+		return data, nil
+	}
 }

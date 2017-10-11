@@ -4,9 +4,26 @@
   "id": "graphite",
 
   "includes": [
-    {"type": "dashboard", "name": "Carbon Stats", "path": "dashboards/carbon_stats.json"}
+    {"type": "dashboard", "name": "Graphite Carbon Metrics", "path": "dashboards/carbon_metrics.json"}
   ],
 
   "metrics": true,
-  "annotations": true
+  "alerting": true,
+  "annotations": true,
+
+  "queryOptions": {
+    "maxDataPoints": true,
+    "cacheTimeout": true
+  },
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/graphite_logo.png",
+      "large": "img/graphite_logo.png"
+    }
+  }
 }

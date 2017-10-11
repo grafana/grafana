@@ -8,324 +8,252 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
-	"sync"
+
+	"gopkg.in/ini.v1"
+
+	"github.com/go-stack/stack"
+	"github.com/inconshreveable/log15"
+	"github.com/inconshreveable/log15/term"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
-var (
-	loggers []*Logger
-)
+var Root log15.Logger
+var loggersToClose []DisposableHandler
 
-func NewLogger(bufLen int64, mode, config string) {
-	logger := newLogger(bufLen)
-
-	isExist := false
-	for _, l := range loggers {
-		if l.adapter == mode {
-			isExist = true
-			l = logger
-		}
-	}
-	if !isExist {
-		loggers = append(loggers, logger)
-	}
-	if err := logger.SetLogger(mode, config); err != nil {
-		Fatal(1, "Fail to set logger(%s): %v", mode, err)
-	}
+func init() {
+	loggersToClose = make([]DisposableHandler, 0)
+	Root = log15.Root()
+	Root.SetHandler(log15.DiscardHandler())
 }
 
-// this helps you work around the performance annoyance mentioned in
-// https://github.com/grafana/grafana/issues/4055
-// until we refactor this library completely
-func Level(level LogLevel) {
-	for i := range loggers {
-		loggers[i].level = level
-	}
+func New(logger string, ctx ...interface{}) Logger {
+	params := append([]interface{}{"logger", logger}, ctx...)
+	return Root.New(params...)
 }
 
 func Trace(format string, v ...interface{}) {
-	for _, logger := range loggers {
-		logger.Trace(format, v...)
+	var message string
+	if len(v) > 0 {
+		message = fmt.Sprintf(format, v...)
+	} else {
+		message = format
 	}
+
+	Root.Debug(message)
 }
 
 func Debug(format string, v ...interface{}) {
-	for _, logger := range loggers {
-		logger.Debug(format, v...)
+	var message string
+	if len(v) > 0 {
+		message = fmt.Sprintf(format, v...)
+	} else {
+		message = format
 	}
+
+	Root.Debug(message)
+}
+
+func Debug2(message string, v ...interface{}) {
+	Root.Debug(message, v...)
 }
 
 func Info(format string, v ...interface{}) {
-	for _, logger := range loggers {
-		logger.Info(format, v...)
+	var message string
+	if len(v) > 0 {
+		message = fmt.Sprintf(format, v...)
+	} else {
+		message = format
 	}
+
+	Root.Info(message)
+}
+
+func Info2(message string, v ...interface{}) {
+	Root.Info(message, v...)
 }
 
 func Warn(format string, v ...interface{}) {
-	for _, logger := range loggers {
-		logger.Warn(format, v...)
+	var message string
+	if len(v) > 0 {
+		message = fmt.Sprintf(format, v...)
+	} else {
+		message = format
 	}
+
+	Root.Warn(message)
+}
+
+func Warn2(message string, v ...interface{}) {
+	Root.Warn(message, v...)
 }
 
 func Error(skip int, format string, v ...interface{}) {
-	for _, logger := range loggers {
-		logger.Error(skip, format, v...)
-	}
+	Root.Error(fmt.Sprintf(format, v...))
+}
+
+func Error2(message string, v ...interface{}) {
+	Root.Error(message, v...)
 }
 
 func Critical(skip int, format string, v ...interface{}) {
-	for _, logger := range loggers {
-		logger.Critical(skip, format, v...)
-	}
+	Root.Crit(fmt.Sprintf(format, v...))
 }
 
 func Fatal(skip int, format string, v ...interface{}) {
-	Error(skip, format, v...)
-	for _, l := range loggers {
-		l.Close()
-	}
+	Root.Crit(fmt.Sprintf(format, v))
+	Close()
 	os.Exit(1)
 }
 
 func Close() {
-	for _, l := range loggers {
-		l.Close()
-		// delete the logger.
-		l = nil
+	for _, logger := range loggersToClose {
+		logger.Close()
 	}
-	// clear the loggers slice.
-	loggers = nil
+	loggersToClose = make([]DisposableHandler, 0)
 }
 
-// .___        __                 _____
-// |   | _____/  |_  ____________/ ____\____    ____  ____
-// |   |/    \   __\/ __ \_  __ \   __\\__  \ _/ ___\/ __ \
-// |   |   |  \  | \  ___/|  | \/|  |   / __ \\  \__\  ___/
-// |___|___|  /__|  \___  >__|   |__|  (____  /\___  >___  >
-//          \/          \/                  \/     \/    \/
-
-type LogLevel int
-
-const (
-	TRACE LogLevel = iota
-	DEBUG
-	INFO
-	WARN
-	ERROR
-	CRITICAL
-	FATAL
-)
-
-// LoggerInterface represents behaviors of a logger provider.
-type LoggerInterface interface {
-	Init(config string) error
-	WriteMsg(msg string, skip int, level LogLevel) error
-	Destroy()
-	Flush()
+var logLevels = map[string]log15.Lvl{
+	"trace":    log15.LvlDebug,
+	"debug":    log15.LvlDebug,
+	"info":     log15.LvlInfo,
+	"warn":     log15.LvlWarn,
+	"error":    log15.LvlError,
+	"critical": log15.LvlCrit,
 }
 
-type loggerType func() LoggerInterface
+func getLogLevelFromConfig(key string, defaultName string, cfg *ini.File) (string, log15.Lvl) {
+	levelName := cfg.Section(key).Key("level").MustString(defaultName)
+	levelName = strings.ToLower(levelName)
+	level := getLogLevelFromString(levelName)
+	return levelName, level
+}
 
-var adapters = make(map[string]loggerType)
+func getLogLevelFromString(levelName string) log15.Lvl {
+	level, ok := logLevels[levelName]
 
-// Register registers given logger provider to adapters.
-func Register(name string, log loggerType) {
-	if log == nil {
-		panic("log: register provider is nil")
+	if !ok {
+		Root.Error("Unknown log level", "level", levelName)
+		return log15.LvlError
 	}
-	if _, dup := adapters[name]; dup {
-		panic("log: register called twice for provider \"" + name + "\"")
-	}
-	adapters[name] = log
+
+	return level
 }
 
-type logMsg struct {
-	skip  int
-	level LogLevel
-	msg   string
-}
+func getFilters(filterStrArray []string) map[string]log15.Lvl {
+	filterMap := make(map[string]log15.Lvl)
 
-// Logger is default logger in beego application.
-// it can contain several providers and log message into all providers.
-type Logger struct {
-	adapter string
-	lock    sync.Mutex
-	level   LogLevel
-	msg     chan *logMsg
-	outputs map[string]LoggerInterface
-	quit    chan bool
-}
-
-// newLogger initializes and returns a new logger.
-func newLogger(buffer int64) *Logger {
-	l := &Logger{
-		msg:     make(chan *logMsg, buffer),
-		outputs: make(map[string]LoggerInterface),
-		quit:    make(chan bool),
-	}
-	go l.StartLogger()
-	return l
-}
-
-// SetLogger sets new logger instanse with given logger adapter and config.
-func (l *Logger) SetLogger(adapter string, config string) error {
-	l.lock.Lock()
-	defer l.lock.Unlock()
-	if log, ok := adapters[adapter]; ok {
-		lg := log()
-		if err := lg.Init(config); err != nil {
-			return err
+	for _, filterStr := range filterStrArray {
+		parts := strings.Split(filterStr, ":")
+		if len(parts) > 1 {
+			filterMap[parts[0]] = getLogLevelFromString(parts[1])
 		}
-		l.outputs[adapter] = lg
-		l.adapter = adapter
-	} else {
-		panic("log: unknown adapter \"" + adapter + "\" (forgotten register?)")
 	}
-	return nil
+
+	return filterMap
 }
 
-// DelLogger removes a logger adapter instance.
-func (l *Logger) DelLogger(adapter string) error {
-	l.lock.Lock()
-	defer l.lock.Unlock()
-	if lg, ok := l.outputs[adapter]; ok {
-		lg.Destroy()
-		delete(l.outputs, adapter)
-	} else {
-		panic("log: unknown adapter \"" + adapter + "\" (forgotten register?)")
+func getLogFormat(format string) log15.Format {
+	switch format {
+	case "console":
+		if term.IsTty(os.Stdout.Fd()) {
+			return log15.TerminalFormat()
+		}
+		return log15.LogfmtFormat()
+	case "text":
+		return log15.LogfmtFormat()
+	case "json":
+		return log15.JsonFormat()
+	default:
+		return log15.LogfmtFormat()
 	}
-	return nil
 }
 
-func (l *Logger) writerMsg(skip int, level LogLevel, msg string) error {
-	lm := &logMsg{
-		skip:  skip,
-		level: level,
-	}
+func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
+	Close()
 
-	// Only error information needs locate position for debugging.
-	if lm.level >= ERROR {
-		pc, file, line, ok := runtime.Caller(skip)
-		if ok {
-			// Get caller function name.
-			fn := runtime.FuncForPC(pc)
-			var fnName string
-			if fn == nil {
-				fnName = "?()"
-			} else {
-				fnName = strings.TrimLeft(filepath.Ext(fn.Name()), ".") + "()"
+	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
+	defaultFilters := getFilters(util.SplitString(cfg.Section("log").Key("filters").String()))
+
+	handlers := make([]log15.Handler, 0)
+
+	for _, mode := range modes {
+		mode = strings.TrimSpace(mode)
+		sec, err := cfg.GetSection("log." + mode)
+		if err != nil {
+			Root.Error("Unknown log mode", "mode", mode)
+		}
+
+		// Log level.
+		_, level := getLogLevelFromConfig("log."+mode, defaultLevelName, cfg)
+		modeFilters := getFilters(util.SplitString(sec.Key("filters").String()))
+		format := getLogFormat(sec.Key("format").MustString(""))
+
+		var handler log15.Handler
+
+		// Generate log configuration.
+		switch mode {
+		case "console":
+			handler = log15.StreamHandler(os.Stdout, format)
+		case "file":
+			fileName := sec.Key("file_name").MustString(filepath.Join(logsPath, "grafana.log"))
+			os.MkdirAll(filepath.Dir(fileName), os.ModePerm)
+			fileHandler := NewFileWriter()
+			fileHandler.Filename = fileName
+			fileHandler.Format = format
+			fileHandler.Rotate = sec.Key("log_rotate").MustBool(true)
+			fileHandler.Maxlines = sec.Key("max_lines").MustInt(1000000)
+			fileHandler.Maxsize = 1 << uint(sec.Key("max_size_shift").MustInt(28))
+			fileHandler.Daily = sec.Key("daily_rotate").MustBool(true)
+			fileHandler.Maxdays = sec.Key("max_days").MustInt64(7)
+			fileHandler.Init()
+
+			loggersToClose = append(loggersToClose, fileHandler)
+			handler = fileHandler
+		case "syslog":
+			sysLogHandler := NewSyslog(sec, format)
+
+			loggersToClose = append(loggersToClose, sysLogHandler)
+			handler = sysLogHandler
+		}
+
+		for key, value := range defaultFilters {
+			if _, exist := modeFilters[key]; !exist {
+				modeFilters[key] = value
 			}
-
-			lm.msg = fmt.Sprintf("[%s:%d %s] %s", filepath.Base(file), line, fnName, msg)
-		} else {
-			lm.msg = msg
 		}
-	} else {
-		lm.msg = msg
+
+		handler = LogFilterHandler(level, modeFilters, handler)
+		handlers = append(handlers, handler)
 	}
-	l.msg <- lm
-	return nil
+
+	Root.SetHandler(log15.MultiHandler(handlers...))
 }
 
-// StartLogger starts logger chan reading.
-func (l *Logger) StartLogger() {
-	for {
-		select {
-		case bm := <-l.msg:
-			for _, l := range l.outputs {
-				if err := l.WriteMsg(bm.msg, bm.skip, bm.level); err != nil {
-					fmt.Println("ERROR, unable to WriteMsg:", err)
+func LogFilterHandler(maxLevel log15.Lvl, filters map[string]log15.Lvl, h log15.Handler) log15.Handler {
+	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
+
+		if len(filters) > 0 {
+			for i := 0; i < len(r.Ctx); i += 2 {
+				key := r.Ctx[i].(string)
+				if key == "logger" {
+					loggerName, strOk := r.Ctx[i+1].(string)
+					if strOk {
+						if filterLevel, ok := filters[loggerName]; ok {
+							return r.Lvl <= filterLevel
+						}
+					}
 				}
 			}
-		case <-l.quit:
-			return
 		}
-	}
+
+		return r.Lvl <= maxLevel
+	}, h)
 }
 
-// Flush flushs all chan data.
-func (l *Logger) Flush() {
-	for _, l := range l.outputs {
-		l.Flush()
-	}
-}
-
-// Close closes logger, flush all chan data and destroy all adapter instances.
-func (l *Logger) Close() {
-	l.quit <- true
-	for {
-		if len(l.msg) > 0 {
-			bm := <-l.msg
-			for _, l := range l.outputs {
-				if err := l.WriteMsg(bm.msg, bm.skip, bm.level); err != nil {
-					fmt.Println("ERROR, unable to WriteMsg:", err)
-				}
-			}
-		} else {
-			break
-		}
-	}
-	for _, l := range l.outputs {
-		l.Flush()
-		l.Destroy()
-	}
-}
-
-func (l *Logger) Trace(format string, v ...interface{}) {
-	if l.level > TRACE {
-		return
-	}
-	msg := fmt.Sprintf("[T] "+format, v...)
-	l.writerMsg(0, TRACE, msg)
-}
-
-func (l *Logger) Debug(format string, v ...interface{}) {
-	if l.level > DEBUG {
-		return
-	}
-	msg := fmt.Sprintf("[D] "+format, v...)
-	l.writerMsg(0, DEBUG, msg)
-}
-
-func (l *Logger) Info(format string, v ...interface{}) {
-	if l.level > INFO {
-		return
-	}
-	msg := fmt.Sprintf("[I] "+format, v...)
-	l.writerMsg(0, INFO, msg)
-}
-
-func (l *Logger) Warn(format string, v ...interface{}) {
-	if l.level > WARN {
-		return
-	}
-	msg := fmt.Sprintf("[W] "+format, v...)
-	l.writerMsg(0, WARN, msg)
-}
-
-func (l *Logger) Error(skip int, format string, v ...interface{}) {
-	if l.level > ERROR {
-		return
-	}
-	msg := fmt.Sprintf("[E] "+format, v...)
-	l.writerMsg(skip, ERROR, msg)
-}
-
-func (l *Logger) Critical(skip int, format string, v ...interface{}) {
-	if l.level > CRITICAL {
-		return
-	}
-	msg := fmt.Sprintf("[C] "+format, v...)
-	l.writerMsg(skip, CRITICAL, msg)
-}
-
-func (l *Logger) Fatal(skip int, format string, v ...interface{}) {
-	if l.level > FATAL {
-		return
-	}
-	msg := fmt.Sprintf("[F] "+format, v...)
-	l.writerMsg(skip, FATAL, msg)
-	l.Close()
-	os.Exit(1)
+func Stack(skip int) string {
+	call := stack.Caller(skip)
+	s := stack.Trace().TrimBelow(call).TrimRuntime()
+	return s.String()
 }

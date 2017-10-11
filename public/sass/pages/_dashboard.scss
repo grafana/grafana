@@ -13,97 +13,7 @@
   color: $variable;
 }
 
-.row-tab {
-  .dropdown-menu-right {
-    top: 0;
-    left: 33px;
-  }
-}
 
-.row-tab-button {
-  padding: 0px;
-  cursor: pointer;
-  vertical-align: middle;
-  width: 30px;
-  height: 30px;
-  text-align: center;
-  display: inline-block;
-  line-height: 30px;
-  background: $btn-success-bg;
-  color: rgba(255,255,255,.90);
-}
-
-.row-button {
-  width: 24px;
-  float: left;
-  cursor: pointer;
-  line-height: 31px;
-  background-color: $blue-dark;
-}
-
-.row-text {
-  white-space: nowrap;
-  text-transform: uppercase;
-  font-weight: bold;
-  font-size: 0.9em;
-  text-align: center;
-  line-height: 31px;
-  height: 31px;
-}
-
-.row-close {
-  padding: 0px;
-  margin: 0px;
-  background: $panel-bg;
-  text-align: center;
-}
-
-.row-close-buttons {
-  position: absolute;
-  left: 0;
-}
-
-.row-open {
-  margin-top: 5px;
-  left: -30px;
-  position: absolute;
-  z-index: 100;
-  transition: .10s left;
-  transition-delay: .10s;
-
-  &:hover {
-    left: -12px;
-  }
-}
-
-.row-control-inner {
-  padding:0px;
-  margin:0px;
-  position:relative;
-}
-
-.hide-controls {
-  padding: 0;
-  .row-tab {
-    display: none;
-  }
-  .add-row-panel-hint {
-    display: none;
-  }
-}
-
-.playlist-active {
-  .add-row-panel-hint,
-  .dashnav-refresh-action,
-  .dashnav-zoom-out,
-  .dashnav-action-icons {
-    display: none;
-  }
-
-  .grafana-menu-stop-playlist {
-    display: list-item;
-  }
-}
 
 div.flot-text {
   color: $text-color !important;
@@ -112,8 +22,15 @@ div.flot-text {
 .panel {
   display: inline-block;
   float: left;
-  vertical-align: top;
-  position: relative;
+
+  &--solo {
+    .resize-panel-handle {
+      display: none;
+    }
+    .panel-container {
+      border: none;
+    }
+  }
 }
 
 .panel-margin {
@@ -125,11 +42,6 @@ div.flot-text {
   background-color: $panel-bg;
   position: relative;
   border: $panel-border;
-  &:hover {
-    .panel-actions {
-      display: block;
-    }
-  }
 
   &.panel-transparent {
     background-color: transparent;
@@ -145,6 +57,7 @@ div.flot-text {
   min-height: 9px;
   padding-top: 4px;
   cursor: pointer;
+  word-wrap: break-word;
 }
 
 .panel-title {
@@ -154,11 +67,6 @@ div.flot-text {
   cursor: pointer;
   width: 100%;
   display: block;
-}
-
-.panel-links-btn {
-  margin-left: 10px;
-  display: none;
 }
 
 .panel-loading {
@@ -172,33 +80,68 @@ div.flot-text {
   text-align: center;
 }
 
-.panel-error {
-  color: $white;
-  position: absolute;
-  left: 0;
-  padding: 0px 17px 6px 5px;
-  top: 0;
-  z-index: 10;
-  i {
-    position: relative;
-    top: -2px;
-  }
-}
 
-.panel-error-arrow {
+.panel-info-corner-inner {
   width: 0;
   height: 0;
   position: absolute;
-  border-left: 31px solid transparent;
-  border-right: 30px solid transparent;
-  border-bottom: 27px solid $panel-bg;
   left: 0;
   bottom: 0;
 }
 
-.panel-fullscreen {
-  .panel-title-container {
-    padding: 8px;
+@mixin panel-corner-color($corner-bg) {
+  .panel-info-corner-inner {
+    border-left: 27px solid $corner-bg;
+    border-right: none;
+    border-bottom: 27px solid transparent;
+  }
+}
+
+.panel-info-corner {
+  color: $text-muted;
+  cursor: pointer;
+  position: absolute;
+  display: none;
+  left: 0;
+  width: 27px;
+  height: 27px;
+  top: 0;
+  z-index: 10;
+
+  .fa {
+    position: relative;
+    top: -4px;
+    left: -6px;
+    font-size: 75%;
+    z-index: 1000;
+  }
+
+  &--info {
+    display: block;
+    @include panel-corner-color(lighten($panel-bg, 4%));
+    .fa:before {
+      content: "\f129";
+    }
+  }
+
+  &--links {
+    display: block;
+    @include panel-corner-color(lighten($panel-bg, 4%));
+    .fa {
+      left: -5px;
+    }
+    .fa:before {
+      content: "\f08e";
+    }
+  }
+
+  &--error {
+    display: block;
+    color: $text-color;
+    @include panel-corner-color($popover-error-bg);
+    .fa:before {
+      content: "\f12a";
+    }
   }
 }
 
@@ -211,11 +154,11 @@ div.flot-text {
   z-index: 500;
   position: absolute;
   background: $tight-form-func-bg;
-  border: 1px solid black;
+  border: $panel-menu-border;
 
   .panel-menu-row {
     white-space: nowrap;
-    border-bottom: 1px solid black;
+    border-bottom: $panel-menu-border;
     &:last-child {
       border-bottom: none;
     }
@@ -227,7 +170,7 @@ div.flot-text {
 
   .panel-menu-link {
     display: inline-block;
-    border-right: 1px solid black;
+    border-right: $panel-menu-border;
     &:last-child {
       border: none;
     }
@@ -239,8 +182,12 @@ div.flot-text {
 }
 
 .panel-highlight  {
-  box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 5px rgba(82,168,236,10.8)
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236,10.8)
 }
+
+// .panel-hover-highlight  {
+//   box-shadow: inset 0 1px 1px rgba(0,0,0,0.025), 0 0 1px rgba(82,168,236,0.5)
+// }
 
 .on-drag-hover {
   .panel-container {
@@ -251,7 +198,20 @@ div.flot-text {
 .panel-drop-zone {
   display: none;
   .panel-container {
-    border: 1px solid $dark-3;
+    border: $panel-border;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    color: $text-color-faint;
+    font-weight: bold;
+    background: $panel-drop-zone-bg;
+  }
+}
+
+.panel-in-fullscreen {
+  .panel-drop-zone {
+    display: none !important;
   }
 }
 
@@ -267,22 +227,40 @@ div.flot-text {
 }
 
 .resize-panel-handle {
-  cursor: se-resize;
+  cursor: nwse-resize;
   position: absolute;
+  font-size: 10px;
   bottom: 0;
   right: 0;
   width: 15px;
   height: 15px;
   display: block;
+  color: $text-color-faint;
+
+  &:before {
+    left: initial;
+    right: -1px;
+    bottom: 0px;
+    position: absolute;
+  }
 }
 
 .dashboard-header {
   font-family: $headings-font-family;
-  font-size: $font-size-h2;
+  font-size: $font-size-h3;
   text-align: center;
   span {
     display: inline-block;
     @include brand-bottom-border();
-    padding: 1.2rem .5rem .4rem .5rem;
+    padding: 0.5rem .5rem .2rem .5rem;
+  }
+}
+
+.dash-edit-view {
+  opacity: 0;
+
+  &--open{
+    opacity: 1;
+    transition: opacity 200ms ease-in-out;
   }
 }

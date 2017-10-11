@@ -19,13 +19,21 @@
 <div class="tabbed-view-body">
 	<div ng-if="editor.index == 0">
 
-		<div class="gf-form-group">
+		<div class="gf-form-group section">
+      <h5 class="section-heading">Details</h5>
 			<div class="gf-form">
-				<label class="gf-form-label width-7">Title</label>
-				<input type="text" class="gf-form-input max-width-25" ng-model='dashboard.title'></input>
+				<label class="gf-form-label width-7">Name</label>
+				<input type="text" class="gf-form-input width-30" ng-model='dashboard.title'></input>
 			</div>
-			<div class="gf-form">
-				<label class="gf-form-label width-7">Tags<tip>Press enter to a add tag</tip></label>
+      <div class="gf-form">
+				<label class="gf-form-label width-7">Description</label>
+				<input type="text" class="gf-form-input width-30" ng-model='dashboard.description'></input>
+			</div>
+      <div class="gf-form">
+				<label class="gf-form-label width-7">
+          Tags
+          <info-popover mode="right-normal">Press enter to add a tag</info-popover>
+        </label>
 				<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
 				</bootstrap-tagsinput>
 			</div>
@@ -33,25 +41,44 @@
 			<div class="gf-form">
 				<label class="gf-form-label width-7">Timezone</label>
 				<div class="gf-form-select-wrapper">
-					<select ng-model="dashboard.timezone" class='gf-form-input' ng-options="f for f in ['browser','utc']"></select>
+					<select ng-model="dashboard.timezone" class='gf-form-input' ng-options="f.value as f.text for f in [{value: '', text: 'Default'}, {value: 'browser', text: 'Local browser time'},{value: 'utc', text: 'UTC'}]" ng-change="timezoneChanged()"></select>
 				</div>
 			</div>
 		</div>
 
-		<h5 class="section-heading">On/Off Toggles</h5>
-		<div class="gf-form-group">
-			<div class="gf-form-inline">
-				<div class="gf-form">
-					<editor-checkbox text="Editable" model="dashboard.editable"></editor-checkbox>
-				</div>
-				<div class="gf-form">
-					<editor-checkbox text="Hide Controls (CTRL+H)" model="dashboard.hideControls"></editor-checkbox>
-				</div>
-				<div class="gf-form">
-					<editor-checkbox text="Shared Crosshair (CTRL+O)" model="dashboard.sharedCrosshair"></editor-checkbox>
-				</div>
-			</div>
-		</div>
+    <div class="section">
+      <h5 class="section-heading">Toggles</h5>
+      <div class="gf-form-group">
+        <gf-form-switch class="gf-form"
+                        label="Editable"
+                        tooltip="Uncheck, then save and reload to disable all dashboard editing"
+                        checked="dashboard.editable"
+                        label-class="width-11">
+        </gf-form-switch>
+				<gf-form-switch class="gf-form"
+                        label="Hide Controls"
+                        tooltip="Hide row controls. Shortcut: CTRL+H or CMD+H"
+                        checked="dashboard.hideControls"
+                        label-class="width-11">
+        </gf-form-switch>
+      </div>
+    </div>
+
+    <div class="section">
+      <h5 class="section-heading">Panel Options</h5>
+      <div class="gf-form">
+        <label class="gf-form-label width-11">
+          Graph Tooltip
+          <info-popover mode="right-normal">
+            Cycle between options using Shortcut: CTRL+O or CMD+O
+          </info-popover>
+        </label>
+        <div class="gf-form-select-wrapper">
+          <select ng-model="dashboard.graphTooltip" class='gf-form-input' ng-options="f.value as f.text for f in [{value: 0, text: 'Default'}, {value: 1, text: 'Shared crosshair'},{value: 2, text: 'Shared Tooltip'}]"></select>
+        </div>
+      </div>
+    </div>
+
 	</div>
 
 	<div ng-if="editor.index == 1">
@@ -62,18 +89,18 @@
 				<div class="gf-form">
 					<span class="gf-form-label">Title</span>
 					<input type="text" class="gf-form-input max-width-14" ng-model='row.title'></input>
-					<editor-checkbox text="Show title" model="row.showTitle"></editor-checkbox>
 				</div>
+				<gf-form-switch class="gf-form" label="Show title" checked="row.showTitle" switch-class="max-width-6"></gf-form-switch>
 
 				<div class="gf-form">
-					<button class="btn btn-inverse btn-mini" style="margin-right: 5px;" ng-click="dashboard.rows = _.without(dashboard.rows,row)">
-						<i class="fa fa-trash"></i>
-					</button>
-					<button class="btn btn-inverse btn-mini" ng-hide="$first" style="margin-right: 5px;" ng-click="_.move(dashboard.rows,$index,$index-1)">
+					<button class="btn btn-inverse gf-form-btn width-3" ng-click="_.move(dashboard.rows,$index,$index-1)">
 						<i ng-class="{'invisible': $first}" class="fa fa-arrow-up"></i>
 					</button>
-					<button class="btn btn-inverse btn-mini" ng-hide="$last" style="margin-right: 5px;" ng-click="_.move(dashboard.rows,$index,$index+1)">
+					<button class="btn btn-inverse gf-form-btn width-3" ng-click="_.move(dashboard.rows,$index,$index+1)">
 						<i ng-class="{'invisible': $last}" class="fa fa-arrow-down"></i>
+					</button>
+					<button class="btn btn-inverse gf-form-btn width-3" ng-click="dashboard.rows = _.without(dashboard.rows,row)">
+						<i class="fa fa-trash"></i>
 					</button>
 				</div>
 			</div>
@@ -93,7 +120,7 @@
 		<div class="gf-form-group">
 			<div class="gf-form">
 				<span class="gf-form-label width-10">Last updated at:</span>
-				<span class="gf-form-label width-18">{{formatDate(dashboardMeta.updated)}}</span>
+				<span class="gf-form-label width-18">{{dashboard.formatDate(dashboardMeta.updated)}}</span>
 			</div>
 			<div class="gf-form">
 				<span class="gf-form-label width-10">Last updated by:</span>
@@ -101,7 +128,7 @@
 			</div>
 			<div class="gf-form">
 				<span class="gf-form-label width-10">Created at:</span>
-				<span class="gf-form-label width-18">{{formatDate(dashboardMeta.created)}}&nbsp;</span>
+				<span class="gf-form-label width-18">{{dashboard.formatDate(dashboardMeta.created)}}&nbsp;</span>
 			</div>
 			<div class="gf-form">
 				<span class="gf-form-label width-10">Created by:</span>
@@ -114,4 +141,3 @@
 		</div>
 	</div>
 </div>
-

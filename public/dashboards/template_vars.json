@@ -1,7 +1,6 @@
 {
   "id": null,
   "title": "Templated Graphs Nested",
-  "originalTitle": "Templated Graphs Nested",
   "tags": [
     "showcase",
     "templated"
@@ -51,6 +50,9 @@
           "lines": true,
           "fill": 1,
           "linewidth": 1,
+          "dashes": false,
+          "dashLength": 10,
+          "spaceLength": 10,
           "points": false,
           "pointradius": 5,
           "bars": false,
@@ -258,6 +260,6 @@
   "annotations": {
     "enable": false
   },
-  "refresh": "Never",
+  "refresh": 0,
   "version": 6
 }

@@ -1,14 +1,12 @@
 define([
   './panellinks/module',
   './dashlinks/module',
-  './annotations/annotations_srv',
-  './templating/templateSrv',
+  './annotations/all',
+  './templating/all',
+  './plugins/all',
   './dashboard/all',
   './playlist/all',
   './snapshot/all',
   './panel/all',
-  './profile/profileCtrl',
-  './profile/changePasswordCtrl',
-  './profile/selectOrgCtrl',
   './styleguide/styleguide',
 ], function () {});

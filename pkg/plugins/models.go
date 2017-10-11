@@ -3,30 +3,51 @@ package plugins
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/log"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var (
+	PluginTypeApp        = "app"
+	PluginTypeDatasource = "datasource"
+	PluginTypePanel      = "panel"
+	PluginTypeDashboard  = "dashboard"
+)
+
+type PluginNotFoundError struct {
+	PluginId string
+}
+
+func (e PluginNotFoundError) Error() string {
+	return fmt.Sprintf("Plugin with id %s not found", e.PluginId)
+}
 
 type PluginLoader interface {
 	Load(decoder *json.Decoder, pluginDir string) error
 }
 
 type PluginBase struct {
-	Type          string             `json:"type"`
-	Name          string             `json:"name"`
-	Id            string             `json:"id"`
-	Info          PluginInfo         `json:"info"`
-	Dependencies  PluginDependencies `json:"dependencies"`
-	Includes      []*PluginInclude   `json:"includes"`
-	Module        string             `json:"module"`
-	BaseUrl       string             `json:"baseUrl"`
-	StaticRoot    string             `json:"staticRoot"`
-	StaticRootAbs string             `json:"-"`
+	Type         string             `json:"type"`
+	Name         string             `json:"name"`
+	Id           string             `json:"id"`
+	Info         PluginInfo         `json:"info"`
+	Dependencies PluginDependencies `json:"dependencies"`
+	Includes     []*PluginInclude   `json:"includes"`
+	Module       string             `json:"module"`
+	BaseUrl      string             `json:"baseUrl"`
+	HideFromList bool               `json:"hideFromList,omitempty"`
+	State        string             `json:"state,omitempty"`
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`
+	DefaultNavUrl   string `json:"-"`
+	IsCorePlugin    bool   `json:"-"`
+
+	GrafanaNetVersion   string `json:"-"`
+	GrafanaNetHasUpdate bool   `json:"-"`
 }
 
 func (pb *PluginBase) registerPlugin(pluginDir string) error {
@@ -35,7 +56,7 @@ func (pb *PluginBase) registerPlugin(pluginDir string) error {
 	}
 
 	if !strings.HasPrefix(pluginDir, setting.StaticRootPath) {
-		log.Info("Plugins: Registering plugin %v", pb.Name)
+		plog.Info("Registering plugin", "name", pb.Name)
 	}
 
 	if len(pb.Dependencies.Plugins) == 0 {
@@ -44,6 +65,12 @@ func (pb *PluginBase) registerPlugin(pluginDir string) error {
 
 	if pb.Dependencies.GrafanaVersion == "" {
 		pb.Dependencies.GrafanaVersion = "*"
+	}
+
+	for _, include := range pb.Includes {
+		if include.Role == "" {
+			include.Role = m.RoleType(m.ROLE_VIEWER)
+		}
 	}
 
 	pb.PluginDir = pluginDir
@@ -57,10 +84,16 @@ type PluginDependencies struct {
 }
 
 type PluginInclude struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
-	Type string `json:"type"`
-	Id   string `json:"id"`
+	Name       string     `json:"name"`
+	Path       string     `json:"path"`
+	Type       string     `json:"type"`
+	Component  string     `json:"component"`
+	Role       m.RoleType `json:"role"`
+	AddToNav   bool       `json:"addToNav"`
+	DefaultNav bool       `json:"defaultNav"`
+	Slug       string     `json:"slug"`
+
+	Id string `json:"-"`
 }
 
 type PluginDependencyItem struct {

@@ -18,33 +18,36 @@ export class TimePickerCtrl {
   panel: any;
   absolute: any;
   timeRaw: any;
+  editTimeRaw: any;
   tooltip: string;
   rangeString: string;
   timeOptions: any;
   refresh: any;
-  isOpen: boolean;
   isUtc: boolean;
+  firstDayOfWeek: number;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private timeSrv) {
     $scope.ctrl = this;
 
-    $rootScope.onAppEvent('zoom-out', () => this.zoom(2), $scope);
-    $rootScope.onAppEvent('refresh', () => this.init(), $scope);
-    $rootScope.onAppEvent('dash-editor-hidden', () => this.isOpen = false, $scope);
+    $rootScope.onAppEvent('shift-time-forward', () => this.move(1), $scope);
+    $rootScope.onAppEvent('shift-time-backward', () => this.move(-1), $scope);
+    $rootScope.onAppEvent('refresh', this.onRefresh.bind(this), $scope);
 
-    this.init();
+    // init options
+    this.panel = this.dashboard.timepicker;
+    _.defaults(this.panel, TimePickerCtrl.defaults);
+    this.firstDayOfWeek = moment.localeData().firstDayOfWeek();
+
+    // init time stuff
+    this.onRefresh();
   }
 
-  init() {
-    this.panel = this.dashboard.timepicker;
-
-    _.defaults(this.panel, TimePickerCtrl.defaults);
-
+  onRefresh() {
     var time = angular.copy(this.timeSrv.timeRange());
-    var timeRaw = angular.copy(this.timeSrv.timeRange(false));
+    var timeRaw = angular.copy(time.raw);
 
-    if (this.dashboard.timezone === 'browser') {
+    if (!this.dashboard.isTimezoneUtc()) {
       time.from.local();
       time.to.local();
       if (moment.isMoment(timeRaw.from)) {
@@ -53,6 +56,7 @@ export class TimePickerCtrl {
       if (moment.isMoment(timeRaw.to)) {
         timeRaw.to.local();
       }
+      this.isUtc = false;
     } else {
       this.isUtc = true;
     }
@@ -61,35 +65,39 @@ export class TimePickerCtrl {
     this.absolute = {fromJs: time.from.toDate(), toJs: time.to.toDate()};
     this.tooltip = this.dashboard.formatDate(time.from) + ' <br>to<br>';
     this.tooltip += this.dashboard.formatDate(time.to);
-
-    // do not update time raw when dropdown is open
-    // as auto refresh will reset the from/to input fields
-    if (!this.isOpen) {
-      this.timeRaw = timeRaw;
-    }
+    this.timeRaw = timeRaw;
   }
 
   zoom(factor) {
+    this.$rootScope.appEvent('zoom-out', 2);
+  }
+
+  move(direction) {
     var range = this.timeSrv.timeRange();
 
-    var timespan = (range.to.valueOf() - range.from.valueOf());
-    var center = range.to.valueOf() - timespan/2;
-
-    var to = (center + (timespan*factor)/2);
-    var from = (center - (timespan*factor)/2);
-
-    if (to > Date.now() && range.to <= Date.now()) {
-      var offset = to - Date.now();
-      from = from - offset;
-      to = Date.now();
+    var timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
+    var to, from;
+    if (direction === -1) {
+      to = range.to.valueOf() - timespan;
+      from = range.from.valueOf() - timespan;
+    } else if (direction === 1) {
+      to = range.to.valueOf() + timespan;
+      from = range.from.valueOf() + timespan;
+      if (to > Date.now() && range.to < Date.now()) {
+        to = Date.now();
+        from = range.from.valueOf();
+      }
+    } else {
+      to = range.to.valueOf();
+      from = range.from.valueOf();
     }
 
-    this.timeSrv.setTime({from: moment.utc(from), to: moment.utc(to) });
+    this.timeSrv.setTime({from: moment.utc(from), to: moment.utc(to)});
   }
 
   openDropdown() {
-    this.init();
-    this.isOpen = true;
+    this.onRefresh();
+    this.editTimeRaw = this.timeRaw;
     this.timeOptions = rangeUtil.getRelativeTimesList(this.panel, this.rangeString);
     this.refresh = {
       value: this.dashboard.refresh,
@@ -101,7 +109,7 @@ export class TimePickerCtrl {
     this.refresh.options.unshift({text: 'off'});
 
     this.$rootScope.appEvent('show-dash-editor', {
-      src: 'public/app/features/dashboard/timepicker/dropdown.html',
+      editview: 'timepicker',
       scope: this.$scope,
       cssClass: 'gf-timepicker-dropdown',
     });
@@ -112,20 +120,20 @@ export class TimePickerCtrl {
       this.timeSrv.setAutoRefresh(this.refresh.value);
     }
 
-    this.timeSrv.setTime(this.timeRaw, true);
+    this.timeSrv.setTime(this.editTimeRaw);
     this.$rootScope.appEvent('hide-dash-editor');
   }
 
   absoluteFromChanged() {
-    this.timeRaw.from = this.getAbsoluteMomentForTimezone(this.absolute.fromJs);
+    this.editTimeRaw.from = this.getAbsoluteMomentForTimezone(this.absolute.fromJs);
   }
 
   absoluteToChanged() {
-    this.timeRaw.to = this.getAbsoluteMomentForTimezone(this.absolute.toJs);
+    this.editTimeRaw.to = this.getAbsoluteMomentForTimezone(this.absolute.toJs);
   }
 
   getAbsoluteMomentForTimezone(jsDate) {
-    return this.dashboard.timezone === 'browser' ? moment(jsDate) : moment(jsDate).utc();
+    return this.dashboard.isTimezoneUtc() ? moment(jsDate).utc() : moment(jsDate);
   }
 
   setRelativeFilter(timespan) {

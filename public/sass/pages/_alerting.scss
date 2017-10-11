@@ -1,31 +1,18 @@
-.copy-query {
-  display: block;
-  width: 30px;
-  height: 36px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent url(/img/CopyQuery.png) 50% 50% no-repeat;
-  cursor: pointer;
+.alert-state-paused,
+.alert-state-pending {
+  color: $text-muted;
 }
 
-.alert-state {
-  display: inline-block;
-  padding-left: 30px;
-  background: 0 50% no-repeat;
-  background-size: 20px auto;
-}
-
-.alert-state-online {
-  background-image: url('/img/online.svg');
+.alert-state-ok {
+  color: $online;
 }
 
 .alert-state-warning {
-  background-image: url('/img/warn-tiny.svg');
+  color: $warn;
 }
 
 .alert-state-critical {
-  background-image: url('/img/critical.svg');
+  color: $critical;
 }
 
 .alert-notify-emails {
@@ -39,4 +26,114 @@
 
 .alert-notify-emails .bootstrap-tagsinput input {
   border: 0;
+}
+
+// Alert List
+
+.alert-list {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.alert-list-icon {
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  .icon-gf, .fa {
+    font-size: 200%;
+    position: relative;
+    top: 2px;
+  }
+}
+
+.alert-list-body {
+  display: flex;
+}
+
+.alert-list-main {
+  padding: 0 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.alert-list-title {
+  font-size: $font-size-base;
+  margin: 0;
+  font-weight: 600;
+}
+
+.alert-list-state {
+  font-weight: bold;
+}
+
+.alert-list-text {
+  font-size: $font-size-sm;
+  margin: 0;
+  line-height: 1.5rem;
+  color: $text-color-weak;
+}
+
+.alert-list-info {
+  color: $text-color;
+}
+
+.alert-list-info-left {
+  padding-left: 2rem;
+}
+
+.alert-list-footer {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.panel-has-alert {
+  .panel-alert-icon:before {
+    content: "\e611";
+    position: relative;
+    top: 1px;
+    left: -3px;
+  }
+}
+
+.panel-alert-state {
+  &--alerting {
+    box-shadow: 0 0 10px rgba($critical,0.5);
+    position: relative;
+
+    .panel-alert-icon:before {
+      color: $critical;
+      content: "\e610";
+    }
+  }
+
+  &--alerting::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    box-shadow: 0 0 10px rgba($critical,1);
+    opacity: 0;
+    animation: alerting-panel 1.6s cubic-bezier(1,.1,.73,1) 0s infinite alternate;
+  }
+
+
+  &--ok {
+    .panel-alert-icon:before {
+      color: $online;
+      content: "\e611";
+    }
+  }
+}
+
+@keyframes alerting-panel {
+  100% {
+    opacity: 1;
+  }
 }

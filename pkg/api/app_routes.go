@@ -1,6 +1,11 @@
 package api
 
 import (
+	"crypto/tls"
+	"net"
+	"net/http"
+	"time"
+
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -11,14 +16,27 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var pluginProxyTransport = &http.Transport{
+	TLSClientConfig: &tls.Config{
+		InsecureSkipVerify: true,
+		Renegotiation:      tls.RenegotiateFreelyAsClient,
+	},
+	Proxy: http.ProxyFromEnvironment,
+	Dial: (&net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+		DualStack: true,
+	}).Dial,
+	TLSHandshakeTimeout: 10 * time.Second,
+}
+
 func InitAppPluginRoutes(r *macaron.Macaron) {
 	for _, plugin := range plugins.Apps {
 		for _, route := range plugin.Routes {
 			url := util.JoinUrlFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
 			handlers := make([]macaron.Handler, 0)
 			handlers = append(handlers, middleware.Auth(&middleware.AuthOptions{
-				ReqSignedIn:     true,
-				ReqGrafanaAdmin: route.ReqGrafanaAdmin,
+				ReqSignedIn: true,
 			}))
 
 			if route.ReqRole != "" {
@@ -30,7 +48,7 @@ func InitAppPluginRoutes(r *macaron.Macaron) {
 			}
 			handlers = append(handlers, AppPluginRoute(route, plugin.Id))
 			r.Route(url, route.Method, handlers...)
-			log.Info("Plugins: Adding proxy route %s", url)
+			log.Debug("Plugins: Adding proxy route %s", url)
 		}
 	}
 }
@@ -40,7 +58,7 @@ func AppPluginRoute(route *plugins.AppPluginRoute, appId string) macaron.Handler
 		path := c.Params("*")
 
 		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appId)
-		proxy.Transport = dataProxyTransport
+		proxy.Transport = pluginProxyTransport
 		proxy.ServeHTTP(c.Resp, c.Req.Request)
 	}
 }

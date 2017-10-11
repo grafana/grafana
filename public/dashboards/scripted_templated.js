@@ -13,7 +13,7 @@
 
 'use strict';
 
-// accessable variables in this scope
+// accessible variables in this scope
 var window, document, ARGS, $, jQuery, moment, kbn;
 
 // Setup some variables
@@ -25,13 +25,15 @@ var ARGS;
 // Intialize a skeleton with nothing but a rows array and service object
 dashboard = {
   rows : [],
+  schemaVersion: 13,
 };
+
 
 // Set a title
 dashboard.title = 'Scripted and templated dash';
 
 // Set default time
-// time can be overriden in the url using from/to parameteres, but this is
+// time can be overridden in the url using from/to parameters, but this is
 // handled automatically in grafana core during dashboard initialization
 dashboard.time = {
   from: "now-6h",
@@ -39,21 +41,22 @@ dashboard.time = {
 };
 
 dashboard.templating = {
-  enable: true,
   list: [
     {
       name: 'test',
       query: 'apps.backend.*',
-      refresh: true,
-      options: [],
-      current: null,
+      refresh: 1,
+      type: 'query',
+      datasource: null,
+      hide: 2,
     },
     {
       name: 'test2',
       query: '*',
-      refresh: true,
-      options: [],
-      current: null,
+      refresh: 1,
+      type: 'query',
+      datasource: null,
+      hide: 2,
     }
   ]
 };

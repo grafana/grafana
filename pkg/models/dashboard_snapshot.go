@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+)
 
 // DashboardSnapshot model
 type DashboardSnapshot struct {
@@ -17,7 +21,7 @@ type DashboardSnapshot struct {
 	Created time.Time
 	Updated time.Time
 
-	Dashboard map[string]interface{}
+	Dashboard *simplejson.Json
 }
 
 // DashboardSnapshotDTO without dashboard map
@@ -40,9 +44,9 @@ type DashboardSnapshotDTO struct {
 // COMMANDS
 
 type CreateDashboardSnapshotCommand struct {
-	Dashboard map[string]interface{} `json:"dashboard" binding:"Required"`
-	Name      string                 `json:"name" binding:"Required"`
-	Expires   int64                  `json:"expires"`
+	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
+	Name      string           `json:"name"`
+	Expires   int64            `json:"expires"`
 
 	// these are passed when storing an external snapshot ref
 	External  bool   `json:"external"`
@@ -59,6 +63,9 @@ type DeleteDashboardSnapshotCommand struct {
 	DeleteKey string `json:"-"`
 }
 
+type DeleteExpiredSnapshotsCommand struct {
+}
+
 type GetDashboardSnapshotQuery struct {
 	Key string
 
@@ -66,11 +73,12 @@ type GetDashboardSnapshotQuery struct {
 }
 
 type DashboardSnapshots []*DashboardSnapshot
+type DashboardSnapshotsList []*DashboardSnapshotDTO
 
 type GetDashboardSnapshotsQuery struct {
 	Name  string
 	Limit int
 	OrgId int64
 
-	Result DashboardSnapshots
+	Result DashboardSnapshotsList
 }

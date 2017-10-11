@@ -16,41 +16,43 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/macaron.v1"
 )
 
 func Logger() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		start := time.Now()
-
-		uname := c.GetCookie(setting.CookieUserName)
-		if len(uname) == 0 {
-			uname = "-"
-		}
+		c.Data["perfmon.start"] = start
 
 		rw := res.(macaron.ResponseWriter)
 		c.Next()
 
-		content := fmt.Sprintf("Completed %s %s \"%s %s %s\" %v %s %d bytes in %dus", c.RemoteAddr(), uname, req.Method, req.URL.Path, req.Proto, rw.Status(), http.StatusText(rw.Status()), rw.Size(), time.Since(start)/time.Microsecond)
+		timeTakenMs := time.Since(start) / time.Millisecond
 
-		switch rw.Status() {
-		case 200, 304:
-			content = fmt.Sprintf("%s", content)
+		if timer, ok := c.Data["perfmon.timer"]; ok {
+			timerTyped := timer.(prometheus.Summary)
+			timerTyped.Observe(float64(timeTakenMs))
+		}
+
+		status := rw.Status()
+		if status == 200 || status == 304 {
 			if !setting.RouterLogging {
 				return
 			}
-		case 404:
-			content = fmt.Sprintf("%s", content)
-		case 500:
-			content = fmt.Sprintf("%s", content)
 		}
 
-		log.Info(content)
+		if ctx, ok := c.Data["ctx"]; ok {
+			ctxTyped := ctx.(*Context)
+			if status == 500 {
+				ctxTyped.Logger.Error("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "time_ms", int64(timeTakenMs), "size", rw.Size(), "referer", req.Referer())
+			} else {
+				ctxTyped.Logger.Info("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "time_ms", int64(timeTakenMs), "size", rw.Size(), "referer", req.Referer())
+			}
+		}
 	}
 }

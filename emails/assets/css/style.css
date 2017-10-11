@@ -9,7 +9,8 @@ h1 {font-size: 40px;}
 h2 {font-size: 36px;}
 h3 {
   font-size: 22px;
-  margin-top: 20px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 h4 {font-size: 20px;}
 h5 {font-size: 18px;}
@@ -79,10 +80,17 @@ table.google-plus:hover td {
 }
 
 .header {
-  background: #333;
+margin-top:25px;
+margin-bottom: 25px;
+}
+
+.data {
+  font-size: 16px;
 }
 
 .footer {
+  background-color: #2e2e2e;
+  color: #999999;
   margin-top: 20px;
 }
 
@@ -93,6 +101,10 @@ table.google-plus:hover td {
 
   table[class="body"] .left-text-pad {
     padding-right: 10px !important;
+  }
+
+  .logo {
+    margin-left: 10px;
   }
 }
 
@@ -132,6 +144,45 @@ table.columns td.better-button {
 
 .better-button:active a {
   color: #FFFFFF !important;
+}
+
+table.better-button-alt {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+table.columns td.better-button-alt {
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+  padding-bottom: 0px;
+}
+
+.better-button-alt a {
+  text-decoration: none;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+
+  padding: 12px 25px;
+  border: 1px solid #ff8f2b;
+  background-color: #EFEFEF;
+  display: inline-block;
+  color: #ff8f2b;
+}
+
+.better-button-alt:hover a {
+  color: #ff8f2b !important;
+  background-color: #DDDDDD;
+  border: 1px solid #F2821E;
+}
+
+.better-button-alt:visited a {
+  color: #ff8f2b !important;
+}
+
+.better-button-alt:active a {
+  color: #ff8f2b !important;
 }
 
 .verification-code {

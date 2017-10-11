@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
+import {describe, it, expect} from 'test/lib/common';
 
 import InfluxQuery from '../influx_query';
 
@@ -12,7 +12,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($interval) fill(null)');
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(null)');
     });
   });
 
@@ -24,7 +24,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "5m_avg"."cpu" WHERE $timeFilter GROUP BY time($interval) fill(null)');
+      expect(queryText).to.be('SELECT mean("value") FROM "5m_avg"."cpu" WHERE $timeFilter GROUP BY time($__interval) fill(null)');
     });
   });
 
@@ -43,7 +43,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") /100 AS "text" FROM "cpu" WHERE $timeFilter GROUP BY time($interval) fill(null)');
+      expect(queryText).to.be('SELECT mean("value") /100 AS "text" FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(null)');
     });
   });
 
@@ -57,8 +57,8 @@ describe('InfluxQuery', function() {
 
       var queryText = query.render();
 
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server\\\\1\' AND $timeFilter'
-                          + ' GROUP BY time($interval)');
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server\\\\1\') AND $timeFilter'
+                          + ' GROUP BY time($__interval)');
     });
 
     it('should switch regex operator with tag value is regex', function() {
@@ -69,7 +69,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "app" =~ /e.*/ AND $timeFilter GROUP BY time($interval)');
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("app" =~ /e.*/) AND $timeFilter GROUP BY time($__interval)');
     });
   });
 
@@ -82,8 +82,8 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' AND "app" = \'email\' AND ' +
-                          '$timeFilter GROUP BY time($interval)');
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server1\' AND "app" = \'email\') AND ' +
+                          '$timeFilter GROUP BY time($__interval)');
     });
   });
 
@@ -96,8 +96,21 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "hostname" = \'server1\' OR "hostname" = \'server2\' AND ' +
-                          '$timeFilter GROUP BY time($interval)');
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server1\' OR "hostname" = \'server2\') AND ' +
+                          '$timeFilter GROUP BY time($__interval)');
+    });
+  });
+
+  describe('query with value condition', function() {
+    it('should not quote value', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        groupBy: [],
+        tags: [{key: 'value', value: '5', operator: '>'}]
+      }, templateSrv, {});
+
+      var queryText = query.render();
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("value" > 5) AND $timeFilter');
     });
   });
 
@@ -110,8 +123,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter ' +
-                          'GROUP BY time($interval), "host"');
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($__interval), "host"');
     });
   });
 
@@ -135,7 +147,7 @@ describe('InfluxQuery', function() {
         groupBy: [{type: 'time'}, {type: 'fill', params: ['0']}],
       }, templateSrv, {});
       var queryText = query.render();
-      expect(queryText).to.be('SELECT "value" FROM "cpu" WHERE $timeFilter GROUP BY time($interval) fill(0)');
+      expect(queryText).to.be('SELECT "value" FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(0)');
     });
   });
 
@@ -222,6 +234,30 @@ describe('InfluxQuery', function() {
       query.addSelectPart(query.selectModels[0], 'math');
       expect(query.target.select[0].length).to.be(3);
       expect(query.target.select[0][2].type).to.be('math');
+    });
+
+    it('should add math when one only query part', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        select: [[{type: 'field', params: ['value']}]]
+      }, templateSrv, {});
+
+      query.addSelectPart(query.selectModels[0], 'math');
+      expect(query.target.select[0].length).to.be(2);
+      expect(query.target.select[0][1].type).to.be('math');
+    });
+
+    describe('when render adhoc filters', function() {
+      it('should generate correct query segment', function() {
+        var query = new InfluxQuery({measurement: 'cpu', }, templateSrv, {});
+
+        var queryText = query.renderAdhocFilters([
+          {key: 'key1', operator: '=', value: 'value1'},
+          {key: 'key2', operator: '!=', value: 'value2'},
+        ]);
+
+        expect(queryText).to.be('"key1" = \'value1\' AND "key2" != \'value2\'');
+      });
     });
 
   });

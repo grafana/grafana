@@ -47,6 +47,7 @@ function (angular, moment, _, $, kbn, dateMath, impressionStore) {
       }
 
       promise.then(function(result) {
+
         if (result.meta.dashboardNotFound !== true) {
           impressionStore.impressions.addDashboardImpression(result.dashboard.id);
         }

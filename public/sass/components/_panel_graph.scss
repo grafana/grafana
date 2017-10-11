@@ -47,19 +47,19 @@
   white-space: nowrap;
   font-size: 85%;
   text-align: left;
-  &.current:before {
+  &.current::before {
     content: "Current: "
   }
-  &.max:before {
+  &.max::before {
     content: "Max: "
   }
-  &.min:before {
+  &.min::before {
     content: "Min: "
   }
-  &.total:before {
+  &.total::before {
     content: "Total: "
   }
-  &.avg:before {
+  &.avg::before {
     content: "Avg: "
   }
 }
@@ -74,6 +74,10 @@
   float: left;
   white-space: nowrap;
   padding-left: 10px;
+
+  &--right-y {
+    float: right;
+  }
 }
 
 .graph-legend-value {
@@ -81,15 +85,28 @@
 }
 
 .graph-legend-table {
-  overflow-y: scroll;
+  tbody {
+    display: block;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 1px;
+  }
 
-  .graph-legend-series { display: table-row;
+  .graph-legend-series {
+    display: table-row;
     float: none;
     padding-left: 0;
-    &.pull-right {
+    &--right-y {
       float: none;
+
+      .graph-legend-alias::after {
+        content: '(right-y)';
+        padding: 0 5px;
+        color: $text-color-weak;
+      }
     }
   }
+
 
   td, .graph-legend-alias, .graph-legend-icon, .graph-legend-value {
     float: none;
@@ -116,6 +133,9 @@
     padding-left: 7px;
     text-align: left;
     width: 95%;
+    max-width: 650px;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 
   .graph-legend-series:nth-child(odd) {
@@ -124,7 +144,7 @@
 
   .graph-legend-value {
     &.current, &.max, &.min, &.total, &.avg {
-      &:before {
+      &::before {
         content: '';
       }
     }
@@ -161,7 +181,7 @@
   }
 
   .graph-legend {
-    margin: 0;
+    margin: 0 0 0 1rem;
   }
 
   .graph-legend-series {
@@ -222,30 +242,40 @@
 
 .graph-tooltip {
   white-space: nowrap;
+  font-size: $font-size-sm;
+  background-color: $graph-tooltip-bg;
+  color: $text-color;
 
   .graph-tooltip-time {
     text-align: center;
-    font-weight: $font-weight-semi-bold;
     position: relative;
     top: -3px;
-  }
-
-  .tone-down {
-    opacity: 0.7;
+    padding: 0.2rem;
+    font-weight: bold;
+    color: $text-color;
   }
 
   .graph-tooltip-list-item {
     display: table-row;
+
+    &--highlight {
+      color: $text-color-emphasis;
+      font-weight: bold;
+    }
   }
 
   .graph-tooltip-series-name {
     display: table-cell;
-  }
+    padding: 0.15rem;
+    max-width: 650px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+   }
 
   .graph-tooltip-value {
     display: table-cell;
     font-weight: bold;
-    padding-left: 10px;
+    padding-left: 15px;
     text-align: right;
   }
 }
@@ -257,39 +287,71 @@
     margin-top: 8px;
   }
 
-  .graph-annotation-title {
-    font-weight: $font-weight-semi-bold;
-    position: relative;
-    top: -0.4rem;
+  .graph-annotation__header {
+    background-color: $popover-border-color;
+    padding: 0.40rem 0.65rem;
+    display: flex;
   }
 
-  a {
+  .graph-annotation__title {
+    font-weight: $font-weight-semi-bold;
+    padding-right: $spacer;
+    overflow: hidden;
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+  }
+
+  .graph-annotation__edit-icon {
+    padding-left: $spacer;
+  }
+
+  .graph-annotation__time {
+    color: $text-muted;
+    font-style: italic;
+    font-weight: normal;
+    display: inline-block;
+    position: relative;
+    top: 1px;
+  }
+
+  .graph-annotation__body {
+    padding: 0.65rem;
+  }
+
+  .graph-annotation__user {
+    img {
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  a[href] {
     color: $blue;
     text-decoration: underline;
-  }
-
-  .graph-annotation-time {
-    position: relative;
-    text-align: center;
-    top: 0.6rem;
   }
 }
 
 .left-yaxis-label {
   top: 50%;
-  left: -5px;
-  transform: rotate(-90deg);
-  transform-origin: left top;
+  left: 2px;
+  transform: translateX(-50%) translateY(-50%) rotate(-90deg);
+  // this is needed for phantomsjs 2.1
+  -webkit-transform: translateX(-50%) translateY(-50%) rotate(-90deg);
 }
 
 .right-yaxis-label {
   top: 50%;
-  right: -5px;
-  transform: rotate(90deg);
-  transform-origin: right top;
+  right: 2px;
+  transform: translateX(50%) translateY(-50%) rotate(90deg);
+  // this is needed for phantomsjs 2.1
+  -webkit-transform: translateX(50%) translateY(-50%) rotate(90deg);
 }
 
 .axisLabel {
+  display: inline-block;
   color: $text-color;
   font-size: $font-size-sm;
   position: absolute;
@@ -297,3 +359,92 @@
   font-size: 12px;
 }
 
+.alert-handle-wrapper {
+  position: absolute;
+  user-select: none;
+
+  .alert-handle {
+    z-index: 10;
+    position: relative;
+    float: right;
+    box-shadow: $card-shadow;
+    background: $card-background;
+    cursor: move;
+    width: 100px;
+    font-size: $font-size-sm;
+    border-radius: 4px;
+    text-align: left;
+    color: $text-muted;
+
+    &:hover {
+      background-color: $btn-inverse-bg-hl;
+    }
+
+    .icon-gf {
+      font-size: 14px;
+      position: relative;
+      top: 0px;
+      float: left;
+      border-right: 1px solid $btn-divider-left;
+      padding: 0.5rem 0.3rem 0.4rem 0.4rem;
+    }
+  }
+
+  .alert-handle-value {
+    border-left: 1px solid $btn-divider-right;
+    padding: 0.5rem;
+    line-height: 2rem;
+
+    .alert-handle-grip {
+      background: url($btn-drag-image) no-repeat 50% 50%;
+      background-size: 8px;
+      float: right;
+      width: 1rem;
+      height: 2rem;
+      margin-right: 2px;
+    }
+  }
+
+  &--T1 {
+    right: -222px;
+    width: 245px;
+
+    .alert-handle-line {
+      width: 145px;
+    }
+  }
+
+  &--T0{
+    right: -104px;
+    width: 129px;
+
+    .alert-handle-line {
+      width: 28px;
+    }
+  }
+
+  &--no-value {
+    .alert-handle-line {
+      display: none;
+    }
+  }
+
+  .alert-handle-line {
+    float: left;
+    height: 2px;
+    margin-top: 13px;
+    z-index: 0;
+    position: relative;
+
+    &--critical {
+      background-color: rgba(237, 46, 24, 0.60);
+    }
+    &--warning {
+      background-color: rgba(247, 149, 32, 0.60);
+    }
+  }
+}
+
+.thresholds-form-disabled {
+  filter: blur(3px);
+}

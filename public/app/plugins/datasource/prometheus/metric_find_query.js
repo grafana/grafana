@@ -1,13 +1,13 @@
 define([
-  'lodash',
-  'moment',
+  'lodash'
 ],
-function (_, moment) {
+function (_) {
   'use strict';
 
-  function PrometheusMetricFindQuery(datasource, query) {
+  function PrometheusMetricFindQuery(datasource, query, timeSrv) {
     this.datasource = datasource;
     this.query = query;
+    this.range = timeSrv.timeRange();
   }
 
   PrometheusMetricFindQuery.prototype.process = function() {
@@ -51,13 +51,21 @@ function (_, moment) {
         });
       });
     } else {
-      url = '/api/v1/series?match[]=' + encodeURIComponent(metric);
+      var start = this.datasource.getPrometheusTime(this.range.from, false);
+      var end = this.datasource.getPrometheusTime(this.range.to, true);
+      url = '/api/v1/series?match[]=' + encodeURIComponent(metric)
+        + '&start=' + start
+        + '&end=' + end;
 
       return this.datasource._request('GET', url)
       .then(function(result) {
-        return _.map(result.data.data, function(metric) {
+        var _labels = _.map(result.data.data, function(metric) {
+          return metric[label];
+        });
+
+        return _.uniq(_labels).map(function(metric) {
           return {
-            text: metric[label],
+            text: metric,
             expandable: true
           };
         });
@@ -86,9 +94,8 @@ function (_, moment) {
   };
 
   PrometheusMetricFindQuery.prototype.queryResultQuery = function(query) {
-    var url = '/api/v1/query?query=' + encodeURIComponent(query) + '&time=' + (moment().valueOf() / 1000);
-
-    return this.datasource._request('GET', url)
+    var end = this.datasource.getPrometheusTime(this.range.to, true);
+    return this.datasource.performInstantQuery({ expr: query }, end)
     .then(function(result) {
       return _.map(result.data.data.result, function(metricData) {
         var text = metricData.metric.__name__ || '';
@@ -107,7 +114,11 @@ function (_, moment) {
   };
 
   PrometheusMetricFindQuery.prototype.metricNameAndLabelsQuery = function(query) {
-    var url = '/api/v1/series?match[]=' + encodeURIComponent(query);
+    var start = this.datasource.getPrometheusTime(this.range.from, false);
+    var end = this.datasource.getPrometheusTime(this.range.to, true);
+    var url = '/api/v1/series?match[]=' + encodeURIComponent(query)
+      + '&start=' + start
+      + '&end=' + end;
 
     var self = this;
     return this.datasource._request('GET', url)

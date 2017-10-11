@@ -9,21 +9,29 @@ module.exports = function (grunt) {
     genDir: 'public_gen',
     destDir: 'dist',
     tempDir: 'tmp',
-    arch: os.arch(),
     platform: process.platform.replace('win32', 'windows'),
   };
 
-  if (process.platform.match(/^win/)) {
-    config.arch = process.env.hasOwnProperty('ProgramFiles(x86)') ? 'x64' : 'x86';
+  if (grunt.option('arch')) {
+    config.arch = grunt.option('arch');
+  } else {
+    config.arch = os.arch();
+
+    if (process.platform.match(/^win/)) {
+      config.arch = process.env.hasOwnProperty('ProgramFiles(x86)') ? 'x64' : 'x86';
+    }
   }
 
+  config.phjs = grunt.option('phjsToRelease');
+
   config.pkg.version = grunt.option('pkgVer') || config.pkg.version;
+  console.log('Version', config.pkg.version);
 
   // load plugins
   require('load-grunt-tasks')(grunt);
 
   // load task definitions
-  grunt.loadTasks('tasks');
+  grunt.loadTasks('./scripts/grunt');
 
   // Utility function to load plugin settings into config
   function loadConfig(config,path) {
@@ -38,7 +46,7 @@ module.exports = function (grunt) {
   }
 
   // Merge that object with what with whatever we have here
-  loadConfig(config,'./tasks/options/');
+  loadConfig(config,'./scripts/grunt/options/');
   // pass the config to grunt
   grunt.initConfig(config);
 };

@@ -4,15 +4,19 @@ import (
 	"archive/zip"
 	"bytes"
 	"errors"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
-	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
-	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
 	"regexp"
+	"strings"
+
+	"github.com/fatih/color"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
+	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 )
 
 func validateInput(c CommandLine, pluginFolder string) error {
@@ -21,13 +25,20 @@ func validateInput(c CommandLine, pluginFolder string) error {
 		return errors.New("please specify plugin to install")
 	}
 
-	pluginDir := c.GlobalString("path")
-	if pluginDir == "" {
-		return errors.New("missing path flag")
+	pluginsDir := c.PluginDirectory()
+	if pluginsDir == "" {
+		return errors.New("missing pluginsDir flag")
 	}
 
-	fileInfo, err := os.Stat(pluginDir)
-	if err != nil && !fileInfo.IsDir() {
+	fileInfo, err := os.Stat(pluginsDir)
+	if err != nil {
+		if err = os.MkdirAll(pluginsDir, os.ModePerm); err != nil {
+			return errors.New(fmt.Sprintf("pluginsDir (%s) is not a directory", pluginsDir))
+		}
+		return nil
+	}
+
+	if !fileInfo.IsDir() {
 		return errors.New("path is not a directory")
 	}
 
@@ -35,7 +46,7 @@ func validateInput(c CommandLine, pluginFolder string) error {
 }
 
 func installCommand(c CommandLine) error {
-	pluginFolder := c.GlobalString("path")
+	pluginFolder := c.PluginDirectory()
 	if err := validateInput(c, pluginFolder); err != nil {
 		return err
 	}
@@ -43,51 +54,48 @@ func installCommand(c CommandLine) error {
 	pluginToInstall := c.Args().First()
 	version := c.Args().Get(1)
 
-	if version == "" {
-		log.Infof("version: latest\n")
-	} else {
-		log.Infof("version: %v\n", version)
-	}
-
 	return InstallPlugin(pluginToInstall, version, c)
 }
 
 func InstallPlugin(pluginName, version string, c CommandLine) error {
-	plugin, err := s.GetPlugin(pluginName, c.GlobalString("repo"))
-	pluginFolder := c.GlobalString("path")
+	pluginFolder := c.PluginDirectory()
+	downloadURL := c.PluginURL()
+	if downloadURL == "" {
+		plugin, err := s.GetPlugin(pluginName, c.RepoDirectory())
+		if err != nil {
+			return err
+		}
+
+		v, err := SelectVersion(plugin, version)
+		if err != nil {
+			return err
+		}
+
+		if version == "" {
+			version = v.Version
+		}
+		downloadURL = fmt.Sprintf("%s/%s/versions/%s/download",
+			c.GlobalString("repo"),
+			pluginName,
+			version)
+	}
+
+	logger.Infof("installing %v @ %v\n", pluginName, version)
+	logger.Infof("from url: %v\n", downloadURL)
+	logger.Infof("into: %v\n", pluginFolder)
+	logger.Info("\n")
+
+	err := downloadFile(pluginName, pluginFolder, downloadURL)
 	if err != nil {
 		return err
 	}
 
-	v, err := SelectVersion(plugin, version)
-	if err != nil {
-		return err
-	}
-
-	url := v.Url
-	commit := v.Commit
-
-	if version == "" {
-		version = v.Version
-	}
-
-	downloadURL := url + "/archive/" + commit + ".zip"
-
-	log.Infof("installing %v @ %v\n", plugin.Id, version)
-	log.Infof("from url: %v\n", downloadURL)
-	log.Infof("on commit: %v\n", commit)
-	log.Infof("into: %v\n", pluginFolder)
-
-	err = downloadFile(plugin.Id, pluginFolder, downloadURL)
-	if err == nil {
-		log.Infof("Installed %v successfully ✔\n", plugin.Id)
-	}
+	logger.Infof("%s Installed %s successfully \n", color.GreenString("✔"), pluginName)
 
 	res, _ := s.ReadPlugin(pluginFolder, pluginName)
-
-	for _, v := range res.Dependency.Plugins {
+	for _, v := range res.Dependencies.Plugins {
 		InstallPlugin(v.Id, version, c)
-		log.Infof("Installed Dependency: %v ✔\n", v.Id)
+		logger.Infof("Installed dependency: %v ✔\n", v.Id)
 	}
 
 	return err
@@ -113,16 +121,22 @@ func RemoveGitBuildFromName(pluginName, filename string) string {
 }
 
 var retryCount = 0
+var permissionsDeniedMessage = "Could not create %s. Permission denied. Make sure you have write access to plugindir"
 
 func downloadFile(pluginName, filePath, url string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			retryCount++
-			if retryCount == 1 {
-				log.Debug("\nFailed downloading. Will retry once.\n")
-				downloadFile(pluginName, filePath, url)
+			if retryCount < 3 {
+				fmt.Println("Failed downloading. Will retry once.")
+				err = downloadFile(pluginName, filePath, url)
 			} else {
-				panic(r)
+				failure := fmt.Sprintf("%v", r)
+				if failure == "runtime error: makeslice: len out of range" {
+					err = fmt.Errorf("Corrupt http response from source. Please try again.\n")
+				} else {
+					panic(r)
+				}
 			}
 		}
 	}()
@@ -146,22 +160,30 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 		newFile := path.Join(filePath, RemoveGitBuildFromName(pluginName, zf.Name))
 
 		if zf.FileInfo().IsDir() {
-			os.Mkdir(newFile, 0777)
+			err := os.Mkdir(newFile, 0777)
+			if PermissionsError(err) {
+				return fmt.Errorf(permissionsDeniedMessage, newFile)
+			}
 		} else {
 			dst, err := os.Create(newFile)
-			if err != nil {
-				log.Errorf("%v", err)
+			if PermissionsError(err) {
+				return fmt.Errorf(permissionsDeniedMessage, newFile)
 			}
-			defer dst.Close()
+
 			src, err := zf.Open()
 			if err != nil {
-				log.Errorf("%v", err)
+				logger.Errorf("Failed to extract file: %v", err)
 			}
-			defer src.Close()
 
 			io.Copy(dst, src)
+			dst.Close()
+			src.Close()
 		}
 	}
 
 	return nil
+}
+
+func PermissionsError(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "permission denied")
 }

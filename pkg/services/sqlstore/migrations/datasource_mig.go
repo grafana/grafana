@@ -10,7 +10,7 @@ func addDataSourceMigration(mg *Migrator) {
 			{Name: "account_id", Type: DB_BigInt, Nullable: false},
 			{Name: "version", Type: DB_Int, Nullable: false},
 			{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "access", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "url", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "password", Type: DB_NVarchar, Length: 255, Nullable: true},
@@ -49,7 +49,7 @@ func addDataSourceMigration(mg *Migrator) {
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "version", Type: DB_Int, Nullable: false},
 			{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "access", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "url", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "password", Type: DB_NVarchar, Length: 255, Nullable: true},
@@ -100,5 +100,24 @@ func addDataSourceMigration(mg *Migrator) {
 	// add column to activate withCredentials option
 	mg.AddMigration("Add column with_credentials", NewAddColumnMigration(tableV2, &Column{
 		Name: "with_credentials", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+
+	// add column that can store TLS client auth data
+	mg.AddMigration("Add secure json data column", NewAddColumnMigration(tableV2, &Column{
+		Name: "secure_json_data", Type: DB_Text, Nullable: true,
+	}))
+
+	mg.AddMigration("Update data_source table charset", NewTableCharsetMigration(tableV2.Name, []*Column{
+		{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "access", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "url", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "password", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "user", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "database", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "basic_auth_user", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "basic_auth_password", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "json_data", Type: DB_Text, Nullable: true},
+		{Name: "secure_json_data", Type: DB_Text, Nullable: true},
 	}))
 }

@@ -19,7 +19,7 @@ function () {
       return variable === value ? alt : value;
     },
     toggleInOut: function(array,value) {
-      if(_.contains(array,value)) {
+      if(_.includes(array,value)) {
         array = _.without(array,value);
       } else {
         array.push(value);

@@ -3,14 +3,166 @@
   color: $blue;
 }
 
-.query-segment-key {
-  border-right: none;
-  padding-right: 1px;
-}
-
 .query-segment-operator {
-  padding-right: 1px;
-  border-right: none;
   color: $orange;
 }
 
+.gf-form-query {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-content: flex-start;
+  align-items: flex-start;
+
+  .gf-form,
+  .gf-form-filler {
+    margin-bottom: 2px;
+  }
+
+  .gf-form-switch,
+  .gf-form-switch label,
+  .gf-form-input,
+  .gf-form-select-wrapper,
+  .gf-form-filler,
+  .gf-form-label {
+    margin-right: 2px;
+  }
+}
+
+.gf-form-query-content {
+  flex-grow: 2;
+
+  &--collapsed {
+    overflow: hidden;
+
+    .gf-form-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      white-space: nowrap;
+    }
+  }
+}
+
+.gf-form-query-letter-cell {
+  .gf-form-query-letter-cell-carret {
+    display: inline-block;
+    width: 0.7rem;
+    position: relative;
+    left: -2px;
+  }
+  .gf-form-query-letter-cell-letter {
+    font-weight: bold;
+    color: $blue;
+  }
+  .gf-form-query-letter-cell-ds {
+    color: $text-color-weak;
+  }
+}
+
+.gf-query-ds-label {
+  text-align: center;
+  width: 44px;
+}
+
+.grafana-metric-options {
+  margin-top: 25px;
+}
+
+.tight-form-func {
+  background: $tight-form-func-bg;
+
+  &.show-function-controls {
+    padding-top: 5px;
+    min-width: 100px;
+    text-align: center;
+  }
+}
+
+input[type="text"].tight-form-func-param {
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tight-form-func-controls {
+  display: none;
+  text-align: center;
+
+  .fa-arrow-left {
+    float: left;
+    position: relative;
+    top: 2px;
+  }
+  .fa-arrow-right {
+    float: right;
+    position: relative;
+    top: 2px;
+  }
+  .fa-remove {
+    margin-left: 10px;
+  }
+}
+
+.grafana-metric-options {
+  margin-top: 25px;
+}
+
+.tight-form-func {
+  background: $tight-form-func-bg;
+
+  &.show-function-controls {
+    padding-top: 5px;
+    min-width: 100px;
+    text-align: center;
+  }
+}
+
+input[type="text"].tight-form-func-param {
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tight-form-func-controls {
+  display: none;
+  text-align: center;
+
+  .fa-arrow-left {
+    float: left;
+    position: relative;
+    top: 2px;
+  }
+  .fa-arrow-right {
+    float: right;
+    position: relative;
+    top: 2px;
+  }
+  .fa-remove {
+    margin-left: 10px;
+  }
+}
+
+.query-troubleshooter {
+  font-size: $font-size-sm;
+  margin: $gf-form-margin;
+  border: 1px solid $btn-secondary-bg;
+  min-height: 100px;
+  border-radius: 3px;
+}
+
+.query-troubleshooter__header {
+  float: right;
+  font-size: $font-size-sm;
+  text-align: right;
+  padding: $input-padding-y $input-padding-x;
+  a {
+    margin-left: $spacer;
+  }
+}
+
+.query-troubleshooter__body {
+  padding: $spacer 0;
+}

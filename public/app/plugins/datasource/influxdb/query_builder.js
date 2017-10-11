@@ -25,8 +25,8 @@ function (_) {
       }
     }
 
-    // quote value unless regex
-    if (operator !== '=~' && operator !== '!~') {
+    // quote value unless regex or number
+    if (operator !== '=~' && operator !== '!~' && isNaN(+value)) {
       value = "'" + value + "'";
     }
 
@@ -39,7 +39,7 @@ function (_) {
     return this.target.rawQuery ? this._modifyRawQuery() : this._buildQuery();
   };
 
-  p.buildExploreQuery = function(type, withKey) {
+  p.buildExploreQuery = function(type, withKey, withMeasurementFilter) {
     var query;
     var measurement;
 
@@ -51,9 +51,16 @@ function (_) {
       measurement = this.target.measurement;
     } else if (type === 'MEASUREMENTS') {
       query = 'SHOW MEASUREMENTS';
+      if (withMeasurementFilter)
+      {
+        query += ' WITH MEASUREMENT =~ /' + withMeasurementFilter +'/';
+      }
     } else if (type === 'FIELDS') {
-      query = 'SHOW FIELD KEYS FROM "' + this.target.measurement + '"';
-      return query;
+      if (!this.target.measurement.match('^/.*/')) {
+        return 'SHOW FIELD KEYS FROM "' + this.target.measurement + '"';
+      } else {
+        return 'SHOW FIELD KEYS FROM ' + this.target.measurement;
+      }
     } else if (type === 'RETENTION POLICIES') {
       query = 'SHOW RETENTION POLICIES on "' + this.database + '"';
       return query;
@@ -84,7 +91,13 @@ function (_) {
         query +=  ' WHERE ' + whereConditions.join(' ');
       }
     }
-
+    if (type === 'MEASUREMENTS')
+    {
+      query += ' LIMIT 100';
+      //Solve issue #2524 by limiting the number of measurements returned
+      //LIMIT must be after WITH MEASUREMENT and WHERE clauses
+      //This also could be used for TAG KEYS and TAG VALUES, if desired
+    }
     return query;
   };
 

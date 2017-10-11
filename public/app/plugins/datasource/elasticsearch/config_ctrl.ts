@@ -1,6 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 
 export class ElasticConfigCtrl {
@@ -22,12 +21,12 @@ export class ElasticConfigCtrl {
   ];
 
   esVersions = [
-    {name: '1.x', value: 1},
     {name: '2.x', value: 2},
+    {name: '5.x', value: 5},
   ];
 
   indexPatternTypeChanged() {
-    var def = _.findWhere(this.indexPatternTypes, {value: this.current.jsonData.interval});
+    var def = _.find(this.indexPatternTypes, {value: this.current.jsonData.interval});
     this.current.database = def.example || 'es-index-name';
   }
 }

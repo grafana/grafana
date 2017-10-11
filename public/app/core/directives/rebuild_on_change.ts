@@ -1,9 +1,4 @@
-///<reference path="../../headers/common.d.ts" />
-
-import angular from 'angular';
-import _ from 'lodash';
 import $ from 'jquery';
-
 import coreModule from '../core_module';
 
 function getBlockNodes(nodes) {
@@ -23,6 +18,7 @@ function getBlockNodes(nodes) {
   return blockNodes || nodes;
 }
 
+/** @ngInject **/
 function rebuildOnChange($animate) {
 
   return {

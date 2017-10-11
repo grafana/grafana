@@ -1,9 +1,13 @@
 {
   "type": "datasource",
-  "name": "Mixed datasource",
+  "name": "-- Mixed --",
   "id": "mixed",
 
   "builtIn": true,
   "mixed": true,
-  "metrics": true
+  "metrics": true,
+
+  "queryOptions": {
+    "minInterval": true
+  }
 }

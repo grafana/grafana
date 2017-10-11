@@ -10,15 +10,22 @@ describe('InfluxDBQueryCtrl', function() {
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.controllers'));
   beforeEach(angularMocks.module('grafana.services'));
+  beforeEach(angularMocks.module(function($compileProvider) {
+    $compileProvider.preAssignBindingsEnabled(true);
+  }));
   beforeEach(ctx.providePhase());
 
   beforeEach(angularMocks.inject(($rootScope, $controller, $q) => {
     ctx.$q = $q;
     ctx.scope = $rootScope.$new();
     ctx.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
-    ctx.panelCtrl = {panel: {}};
-    ctx.panelCtrl.refresh = sinon.spy();
     ctx.target = {target: {}};
+    ctx.panelCtrl = {
+      panel: {
+        targets: [ctx.target]
+      }
+    };
+    ctx.panelCtrl.refresh = sinon.spy();
     ctx.ctrl = $controller(InfluxQueryCtrl, {$scope: ctx.scope}, {
       panelCtrl: ctx.panelCtrl,
       target: ctx.target,

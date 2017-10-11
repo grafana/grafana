@@ -1,85 +1,109 @@
----
-page_title: Export & Import Guide
-page_description: Export & Import Guide for Grafana
-page_keywords: grafana, export, import, documentation
----
++++
+title = "Export & Import"
+keywords = ["grafana", "dashboard", "documentation", "export", "import"]
+type = "docs"
+[menu.docs]
+parent = "dashboard_features"
+weight = 8
++++
 
 # Export and Import
 
+Grafana Dashboards can easily be exported and imported, either from the UI or from the HTTP API.
+
 ## Exporting a dashboard
 
-Dashboards are exported in Grafana JSON format, and contain everything you need (layout, variables, styles, data sources, queries, etc)to import the dashboard at a later time. 
+Dashboards are exported in Grafana JSON format, and contain everything you need (layout, variables, styles, data sources, queries, etc)to import the dashboard at a later time.
 
-#### Export to file
+The export feature is accessed from the share menu.
 
-To export a dashboard, locate the settings menu within the desired dashboard and click the gear icon. The export option will always be available, and will open a browser save-as dialog window. 
+<img src="/img/docs/v31/export_menu.png">
 
-<img class="no-shadow" src="/img/v2/export.gif">
+### Making a dashboard portable
 
-#### Copy JSON
+If you want to export a dashboard for others to use then it could be a good idea to
+add template variables for things like a metric prefix (use constant variable) and server name.
 
-The raw JSON may be accessed directly from within the interface and copy/pasted into an editor of your choice to be saved later. To view this JSON, locate the settings menu within the desired dashboard and click the gear icon. The View JSON option will always be available, and will open the raw JSON in a text area. To copy the entire JSON file, click into the text area, the select all `CTRL`+`A` (PC, Linux) or `⌘`+`A` (Mac).
-
-<img class="no-shadow" src="/img/v2/export-2.gif">
+A template variable of the type `Constant` will automatically be hidden in
+the dashboard, and will also be added as an required input when the dashboard is imported.
 
 ## Importing a dashboard
 
-Grafana 2.0 now has integrated dashboard storage engine that can be configured to use an internal sqlite3 database, MySQL, or Postgres. This eliminates the need to use Elasticsearch for dashboard storage for Graphite users. Grafana 2.0 does not support storing dashboards in InfluxDB.
+To import a dashboard open dashboard search and then hit the import button.
 
-The import view can be found at the Dashboard Picker dropdown, next to the New Dashboard and Playlist buttons. 
+<img src="/img/docs/v31/import_step1.png">
 
-<img class="no-shadow" src="/img/v2/import.gif">
+From here you can upload a dashboard json file, paste a [Grafana.com](https://grafana.com) dashboard
+url or paste dashboard json text directly into the text area.
 
+<img src="/img/docs/v31/import_step2.png">
 
-#### Import from a file
+In step 2 of the import process Grafana will let you change the name of the dashboard, pick what
+data source you want the dashboard to use and specify any metric prefixes (if the dashboard use any).
 
-To import a dashboard through a local JSON file, click the 'Choose file' button in the Import from File section. Note that JSON is not linted or validated prior during upload, so we recommend validating locally if you're editing. In a pinch, you can use http://jsonlint.com/, and if you are editing dashboard JSON frequently, there are linter plugins for popular text editors.
+## Discover dashboards on Grafana.com
 
+Find dashboards for common server applications at [Grafana.com/dashboards](https://grafana.com/dashboards).
 
-#### Importing dashboards from Elasticsearch
+<img src="/img/docs/v31/gnet_dashboards_list.png">
 
-Start by going to the `Data Sources` view (via the side menu), and make sure your Elasticsearch data source is added. Specify the Elasticsearch index name where your existing Grafana v1.x dashboards are stored (the default is `grafana-dash`).
+## Import & Sharing with Grafana 2.x or 3.0
 
-![](/img/v2/datasource_edit_elastic.jpg)
+Dashboards on Grafana.com use a new feature in Grafana 3.1 that allows the import process
+to update each panel so that they are using a data source of your choosing. If you are running a
+Grafana version older than 3.1 then you might need to do some manual steps either
+before or after import in order for the dashboard to work properly.
 
-#### Importing dashboards from InfluxDB
+Dashboards exported from Grafana 3.1+ have a new json section `__inputs`
+that define what data sources and metric prefixes the dashboard uses.
 
-Start by going to the `Data Sources` view (via the side menu), and make sure your InfluxDB data source is added. Specify the database name where your Grafana v1.x dashboards are stored, the default is `grafana`.
+Example:
+```json
+{
+  "__inputs": [
+    {
+      "name": "DS_GRAPHITE",
+      "label": "graphite",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "graphite",
+      "pluginName": "Graphite"
+    },
+    {
+      "name": "VAR_PREFIX",
+      "type": "constant",
+      "label": "prefix",
+      "value": "collectd",
+      "description": ""
+    }
+  ],
+}
 
-### Import view
+```
 
-In the Import view you find the section `Migrate dashboards`. Pick the data source you added (from Elasticsearch or InfluxDB), and click the `Import` button.
+These are then referenced in the dashboard panels like this:
 
-![](/img/v2/migrate_dashboards.jpg)
+```json
+{
+  "rows": [
+      {
+        "panels": [
+          {
+            "type": "graph",
+            "datasource": "${DS_GRAPHITE}",
+          }
+        ]
+      }
+  ]
+}
+```
 
-Your dashboards should be automatically imported into the Grafana 2.0 back-end. Dashboards will no longer be stored in your previous Elasticsearch or InfluxDB databases.
+These inputs and their usage in data source properties are automatically added during export in Grafana 3.1.
+If you run an older version of Grafana and want to share a dashboard on Grafana.com you need to manually
+add the inputs and templatize the datasource properties like above.
 
+If you want to import a dashboard from Grafana.com into an older version of Grafana then you can either import
+it as usual and then update the data source option in the metrics tab so that the panel is using the correct
+data source. Another alternative is to open the json file in a a text editor and update the data source properties
+to value that matches a name of your data source.
 
-## Troubleshooting
-
-### Template variables could not be initialized.
-
-When importing a dashboard, keep an eye out for template variables in your JSON that may not exist in your instance of Grafana. For example, 
-
-    "templating": {
-      "list": [
-        {
-          "allFormat": "glob",
-          "current": {
-            "tags": [],
-            "text": "google_com + monkey_id_au",
-            "value": [
-              "google_com",
-              "monkey_id_au"
-            ]
-          },
-          "datasource": null,
-
-To resolve this, remove any unnecessary JSON that may be specific to the instance you are exporting from. In this case, we can remove the entire "current" section entirely, and Grafana will populate default. 
-
-    "templating": {
-      "list": [
-        {
-          "allFormat": "glob",
-          "datasource": null,
-          

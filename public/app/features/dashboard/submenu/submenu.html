@@ -1,27 +1,27 @@
 <div class="submenu-controls">
-	<ul ng-if="ctrl.dashboard.templating.list.length > 0">
-		<li ng-repeat="variable in ctrl.variables" ng-show="!variable.hideVariable" class="submenu-item">
-			<span class="submenu-item-label template-variable " ng-show="!variable.hideLabel">
-				{{variable.label || variable.name}}:
-			</span>
-			<value-select-dropdown variable="variable" on-updated="ctrl.variableUpdated(variable)" get-values-for-tag="ctrl.getValuesForTag(variable, tagKey)"></value-select-dropdown>
-		</li>
-	</ul>
 
-	<ul ng-if="ctrl.dashboard.annotations.list.length > 0">
-		<li ng-repeat="annotation in ctrl.dashboard.annotations.list" class="submenu-item annotation-segment" ng-class="{'annotation-disabled': !annotation.enable}">
-			<a ng-click="ctrl.disableAnnotation(annotation)">
-				<i class="fa fa-bolt" style="color:{{annotation.iconColor}}"></i>
-				{{annotation.name}}
-				<input class="cr1" id="hideYAxis" type="checkbox" ng-model="annotation.enable" ng-checked="annotation.enable">
-				<label for="hideYAxis" class="cr1"></label>
-			</a>
-		</li>
-	</ul>
+  <div ng-repeat="variable in ctrl.variables" ng-hide="variable.hide === 2" class="submenu-item gf-form-inline">
+    <div class="gf-form">
+      <label class="gf-form-label template-variable" ng-hide="variable.hide === 1">
+        {{variable.label || variable.name}}
+      </label>
+      <value-select-dropdown ng-if="variable.type !== 'adhoc'" variable="variable" on-updated="ctrl.variableUpdated(variable)"></value-select-dropdown>
+    </div>
+    <ad-hoc-filters ng-if="variable.type === 'adhoc'" variable="variable"></ad-hoc-filters>
+  </div>
 
-	<ul class="pull-right" ng-if="ctrl.dashboard.links.length > 0">
-		<dash-links-container links="ctrl.dashboard.links"></dash-links-container>
-	</ul>
+  <div ng-if="ctrl.dashboard.annotations.list.length > 0">
+    <div ng-repeat="annotation in ctrl.dashboard.annotations.list" ng-hide="annotation.hide" class="submenu-item" ng-class="{'annotation-disabled': !annotation.enable}">
+			<gf-form-switch class="gf-form" label="{{annotation.name}}" checked="annotation.enable" on-change="ctrl.annotationStateChanged()"></gf-form-switch>
+    </div>
+  </div>
 
-	<div class="clearfix"></div>
+  <div class="gf-form gf-form--grow">
+  </div>
+
+  <div ng-if="ctrl.dashboard.links.length > 0" >
+    <dash-links-container links="ctrl.dashboard.links" class="gf-form-inline"></dash-links-container>
+  </div>
+
+  <div class="clearfix"></div>
 </div>

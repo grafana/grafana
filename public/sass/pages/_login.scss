@@ -36,6 +36,7 @@
 .login-inner-box {
   background: $panel-bg;
   text-align: center;
+  padding-bottom: 3rem;
 }
 
 .login-tab-header {
@@ -97,7 +98,6 @@
 }
 
 .login-oauth {
-  margin-bottom: 15px;
 
   .btn {
     margin: 5px;
@@ -112,11 +112,20 @@
     background: #555;
     color: white;
   }
+
+  .btn-grafana-com {
+    @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
+    box-shadow: $card-shadow;
+
+    img {
+      width: 19px;
+      vertical-align: sub;
+    }
+  }
 }
 
 .password-recovery {
   background: $tight-form-bg;
-  margin-top: 10px;
   padding: 10px;
   a {
     color: $gray-2;
@@ -134,7 +143,7 @@
     border-bottom: 1px solid $gray-1;
 
     .login-divider-text {
-      background-color: $dark-3;
+      background-color: $panel-bg;
       color: $gray-2;
       padding: 0 10px;
     }
@@ -157,7 +166,7 @@
 .invite-box {
   text-align: center;
   border: 1px solid $tight-form-func-bg;
-	background-color: $panel-bg;
+  background-color: $panel-bg;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
@@ -192,4 +201,3 @@
     }
   }
 }
-

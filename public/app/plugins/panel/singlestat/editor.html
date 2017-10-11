@@ -1,189 +1,122 @@
 <div class="editor-row">
-	<div class="section tight-form-container" style="margin-bottom: 20px">
-		<div class="tight-form">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 80px">
-					<strong>Big value</strong>
-				</li>
-				<li class="tight-form-item">
-					Prefix
-				</li>
-				<li>
-					<input type="text" class="input-small tight-form-input"
-					ng-model="ctrl.panel.prefix" ng-change="ctrl.render()" ng-model-onblur>
-				</li>
-				<li class="tight-form-item">
-					Value
-				</li>
-				<li>
-					<select class="input-small tight-form-input" ng-model="ctrl.panel.valueName" ng-options="f for f in ['min','max','avg', 'current', 'total']" ng-change="ctrl.render()"></select>
-				</li>
-				<li class="tight-form-item">
-					Postfix
-				</li>
-				<li>
-					<input type="text" class="input-small tight-form-input last"
-					ng-model="ctrl.panel.postfix" ng-change="ctrl.render()" ng-model-onblur>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-		<div class="tight-form">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 80px">
-					<strong>Font size</strong>
-				</li>
-				<li class="tight-form-item">
-					Prefix
-				</li>
-				<li>
-					<select class="input-small tight-form-input" ng-model="ctrl.panel.prefixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
-				</li>
-				<li class="tight-form-item">
-					Value
-				</li>
-				<li>
-					<select class="input-small tight-form-input" ng-model="ctrl.panel.valueFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
-				</li>
-				<li class="tight-form-item">
-					Postfix
-				</li>
-				<li>
-					<select class="input-small tight-form-input last" ng-model="ctrl.panel.postfixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-		<div class="tight-form">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 80px">
-					<strong>Unit</strong>
-				</li>
-				<li class="dropdown" style="width: 266px;"
-					ng-model="ctrl.panel.format"
-					dropdown-typeahead="ctrl.unitFormats"
-					dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)">
-				</li>
-				<li class="tight-form-item">
-					Decimals
-				</li>
-				<li>
-					<input type="number" class="input-small tight-form-input last" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right"
-					ng-model="ctrl.panel.decimals" ng-change="ctrl.render()" ng-model-onblur>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-	</div>
-</div>
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Value</h5>
 
-<div class="editor-row">
-	<div class="section" style="margin-bottom: 20px">
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 80px">
-					<strong>Coloring</strong>
-				</li>
-				<li class="tight-form-item">
-					Background&nbsp;
-					<input class="cr1" id="ctrl.panel.colorBackground" type="checkbox"
-					ng-model="ctrl.panel.colorBackground" ng-checked="ctrl.panel.colorBackground" ng-change="ctrl.render()">
-					<label for="ctrl.panel.colorBackground" class="cr1"></label>
-				</li>
-				<li class="tight-form-item">
-					Value&nbsp;
-					<input class="cr1" id="ctrl.panel.colorValue" type="checkbox"
-					ng-model="ctrl.panel.colorValue" ng-checked="ctrl.panel.colorValue" ng-change="ctrl.render()">
-					<label for="ctrl.panel.colorValue" class="cr1"></label>
-				</li>
-				<li class="tight-form-item">
-					Thresholds<tip>Define two threshold values&lt;br /&gt; 50,80 will produce: &lt;50 = Green, 50:80 = Yellow, &gt;80 = Red</tip>
-				</li>
-				<li>
-					<input type="text" class="input-large tight-form-input" ng-model="ctrl.panel.thresholds" ng-blur="ctrl.render()" placeholder="50,80"></input>
-				</li>
-				<li class="tight-form-item">
-					Colors
-				</li>
-				<li class="tight-form-item">
-					<spectrum-picker ng-model="ctrl.panel.colors[0]" ng-change="ctrl.render()" ></spectrum-picker>
-					<spectrum-picker ng-model="ctrl.panel.colors[1]" ng-change="ctrl.render()" ></spectrum-picker>
-					<spectrum-picker ng-model="ctrl.panel.colors[2]" ng-change="ctrl.render()" ></spectrum-picker>
-				</li>
-				<li class="tight-form-item last">
-					<a class="pointer" ng-click="ctrl.invertColorOrder()">invert order</a>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
+    <div class="gf-form-inline">
+      <div class="gf-form" ng-show="ctrl.dataType === 'timeseries'">
+        <label class="gf-form-label width-6">Stat</label>
+        <div class="gf-form-select-wrapper width-12">
+          <select class="gf-form-input" ng-model="ctrl.panel.valueName" ng-options="f.value as f.text for f in ctrl.valueNameOptions" ng-change="ctrl.refresh()"></select>
+        </div>
+      </div>
+      <div class="gf-form" ng-show="ctrl.dataType === 'table'">
+        <label class="gf-form-label width-6">Column</label>
+        <div class="gf-form-select-wrapper width-12">
+          <select class="gf-form-input" ng-model="ctrl.panel.tableColumn" ng-options="f for f in ctrl.tableColumnOptions" ng-change="ctrl.refresh()"></select>
+        </div>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-6">Font size</label>
+        <div class="gf-form-select-wrapper">
+          <select class="gf-form-input" ng-model="ctrl.panel.valueFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label width-6">Prefix</label>
+        <input type="text" class="gf-form-input width-12" ng-model="ctrl.panel.prefix" ng-change="ctrl.render()" ng-model-onblur>
+        <label class="gf-form-label width-6">Font size</label>
+        <div class="gf-form-select-wrapper">
+          <select class="gf-form-input" ng-model="ctrl.panel.prefixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Postfix</label>
+      <input type="text" class="gf-form-input width-12" ng-model="ctrl.panel.postfix" ng-change="ctrl.render()" ng-model-onblur>
+      <label class="gf-form-label width-6">Font size</label>
+      <div class="gf-form-select-wrapper">
+        <select class="input-small gf-form-input" ng-model="ctrl.panel.postfixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
+      </div>
+    </div>
+		<div class="gf-form">
+			<label class="gf-form-label width-6">Unit</label>
+			<div class="gf-form-dropdown-typeahead width-18" ng-model="ctrl.panel.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)"></div>
 		</div>
-	</div>
-</div>
-
-<div class="editor-row">
-	<div class="section" style="margin-bottom: 20px">
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 80px">
-					<strong>Spark lines</strong>
-				</li>
-				<li class="tight-form-item">
-					Show&nbsp;
-					<input class="cr1" id="ctrl.panel.sparkline.show" type="checkbox"
-					ng-model="ctrl.panel.sparkline.show" ng-checked="ctrl.panel.sparkline.show" ng-change="ctrl.render()">
-					<label for="ctrl.panel.sparkline.show" class="cr1"></label>
-				</li>
-				<li class="tight-form-item">
-					Background mode&nbsp;
-					<input class="cr1" id="ctrl.panel.sparkline.full" type="checkbox"
-					ng-model="ctrl.panel.sparkline.full" ng-checked="ctrl.panel.sparkline.full" ng-change="ctrl.render()">
-					<label for="ctrl.panel.sparkline.full" class="cr1"></label>
-				</li>
-				<li class="tight-form-item">
-					Line Color
-				</li>
-				<li class="tight-form-item">
-					<spectrum-picker ng-model="ctrl.panel.sparkline.lineColor" ng-change="ctrl.render()" ></spectrum-picker>
-				</li>
-				<li class="tight-form-item">
-					Fill Color
-				</li>
-				<li class="tight-form-item last">
-					<spectrum-picker ng-model="ctrl.panel.sparkline.fillColor" ng-change="ctrl.render()" ></spectrum-picker>
-				</li>
-			</ul>
-			<div class="clearfix"></div>
+		<div class="gf-form">
+			<label class="gf-form-label width-6">Decimals</label>
+			<input type="number" class="gf-form-input width-18" placeholder="auto" data-placement="right" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" ng-model="ctrl.panel.decimals" ng-change="ctrl.refresh()" ng-model-onblur>
 		</div>
-	</div>
-</div>
+  </div>
 
-<div class="editor-row">
-	<div class="section" style="margin-bottom: 20px">
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item">
-					<strong>Value to text mapping</strong>
-				</li>
-				<li class="tight-form-item"  ng-repeat-start="map in ctrl.panel.valueMaps">
-					<i class="fa fa-remove pointer" ng-click="ctrl.removeValueMap(map)"></i>
-				</li>
-				<li>
-					<input type="text" ng-model="map.value" placeholder="value" class="input-mini tight-form-input" ng-blur="ctrl.render()">
-				</li>
-				<li class="tight-form-item">
-					<i class="fa fa-arrow-right"></i>
-				</li>
-				<li ng-repeat-end>
-					<input type="text" placeholder="text" ng-model="map.text" class="input-mini tight-form-input" ng-blur="ctrl.render()">
-				</li>
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Coloring</h5>
+    <div class="gf-form-inline">
+      <gf-form-switch class="gf-form" label-class="width-8" label="Background" checked="ctrl.panel.colorBackground" on-change="ctrl.render()"></gf-form-switch>
+      <gf-form-switch class="gf-form" label-class="width-4" label="Value" checked="ctrl.panel.colorValue" on-change="ctrl.render()"></gf-form-switch>
+    </div>
+    <div class="gf-form-inline">
+      <div class="gf-form max-width-21">
+        <label class="gf-form-label width-8">Thresholds
+          <tip>Define two threshold values&lt;br /&gt; 50,80 will produce: &lt;50 = Green, 50:80 = Yellow, &gt;80 = Red</tip>
+        </label>
+        <input type="text" class="gf-form-input" ng-model="ctrl.panel.thresholds" ng-blur="ctrl.render()" placeholder="50,80"></input>
+      </div>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-8">Colors</label>
+      <span class="gf-form-label" ng-repeat="color in ctrl.panel.colors track by $index">
+        <color-picker color="color" onChange="ctrl.onColorChange($index)"></color-picker>
+      </span>
+      <span class="gf-form-label">
+        <a  ng-click="ctrl.invertColorOrder()">
+          Invert
+        </a>
+      </span>
+    </div>
+  </div>
 
-				<li>
-					<a class="pointer tight-form-item last" ng-click="ctrl.addValueMap();">
-						<i class="fa fa-plus"></i>
-					</a>
-				</li>
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Spark lines</h5>
+    <gf-form-switch class="gf-form" label-class="width-9" label="Show" checked="ctrl.panel.sparkline.show" on-change="ctrl.render()"></gf-form-switch>
+    <div ng-if="ctrl.panel.sparkline.show">
+      <gf-form-switch class="gf-form" label-class="width-9" label="Full height" checked="ctrl.panel.sparkline.full" on-change="ctrl.render()"></gf-form-switch>
+      <div class="gf-form">
+        <label class="gf-form-label width-9">Line Color</label>
+        <span class="gf-form-label">
+          <color-picker color="ctrl.panel.sparkline.lineColor" onChange="ctrl.onSparklineColorChange"></color-picker>
+        </span>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-9">Fill Color</label>
+        <span class="gf-form-label">
+          <color-picker color="ctrl.panel.sparkline.fillColor" onChange="ctrl.onSparklineFillChange"></color-picker>
+        </span>
+      </div>
+    </div>
+  </div>
 
-			</ul>
-			<div class="clearfix"></div>
-		</div>
-	</div>
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Gauge</h5>
+    <gf-form-switch class="gf-form" label-class="width-10" switch-class="max-width-6" label="Show" checked="ctrl.panel.gauge.show" on-change="ctrl.render()"></gf-form-switch>
+    <div ng-if="ctrl.panel.gauge.show">
+      <div class="gf-form">
+        <label class="gf-form-label width-10">Min</label>
+        <input type="number" class="gf-form-input width-6" placeholder="0" data-placement="right" ng-model="ctrl.panel.gauge.minValue" ng-change="ctrl.refresh()" ng-model-onblur>
+        <label class="gf-form-label alert-state-critical" ng-show="ctrl.invalidGaugeRange">
+          &nbsp; <i class="fa fa-warning"></i>
+          Min value is bigger than max.
+        </label>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-10">Max</label>
+        <input type="number" class="gf-form-input width-6" placeholder="0" data-placement="right" ng-model="ctrl.panel.gauge.maxValue" ng-change="ctrl.refresh()" ng-model-onblur>
+      </div>
+      <gf-form-switch class="gf-form" label-class="width-10" switch-class="max-width-6" label="Threshold labels" checked="ctrl.panel.gauge.thresholdLabels" on-change="ctrl.render()"></gf-form-switch>
+      <gf-form-switch class="gf-form" label-class="width-10" switch-class="max-width-6" label="Threshold markers" checked="ctrl.panel.gauge.thresholdMarkers" on-change="ctrl.render()"></gf-form-switch>
+    </div>
+  </div>
 </div>

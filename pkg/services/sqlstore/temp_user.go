@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -13,10 +12,11 @@ func init() {
 	bus.AddHandler("sql", GetTempUsersQuery)
 	bus.AddHandler("sql", UpdateTempUserStatus)
 	bus.AddHandler("sql", GetTempUserByCode)
+	bus.AddHandler("sql", UpdateTempUserWithEmailSent)
 }
 
 func UpdateTempUserStatus(cmd *m.UpdateTempUserStatusCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "UPDATE temp_user SET status=? WHERE code=?"
 		_, err := sess.Exec(rawSql, string(cmd.Status), cmd.Code)
 		return err
@@ -24,7 +24,7 @@ func UpdateTempUserStatus(cmd *m.UpdateTempUserStatusCommand) error {
 }
 
 func CreateTempUser(cmd *m.CreateTempUserCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		// create user
 		user := &m.TempUser{
@@ -36,6 +36,7 @@ func CreateTempUser(cmd *m.CreateTempUserCommand) error {
 			Status:          cmd.Status,
 			RemoteAddr:      cmd.RemoteAddr,
 			InvitedByUserId: cmd.InvitedByUserId,
+			EmailSentOn:     time.Now(),
 			Created:         time.Now(),
 			Updated:         time.Now(),
 		}
@@ -46,6 +47,19 @@ func CreateTempUser(cmd *m.CreateTempUserCommand) error {
 
 		cmd.Result = user
 		return nil
+	})
+}
+
+func UpdateTempUserWithEmailSent(cmd *m.UpdateTempUserWithEmailSentCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		user := &m.TempUser{
+			EmailSent:   true,
+			EmailSentOn: time.Now(),
+		}
+
+		_, err := sess.Where("code = ?", cmd.Code).Cols("email_sent", "email_sent_on").Update(user)
+
+		return err
 	})
 }
 

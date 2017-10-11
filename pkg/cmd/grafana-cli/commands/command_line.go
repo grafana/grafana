@@ -16,6 +16,10 @@ type CommandLine interface {
 	GlobalString(name string) string
 	FlagNames() (names []string)
 	Generic(name string) interface{}
+
+	PluginDirectory() string
+	RepoDirectory() string
+	PluginURL() string
 }
 
 type contextCommandLine struct {
@@ -32,4 +36,16 @@ func (c *contextCommandLine) ShowVersion() {
 
 func (c *contextCommandLine) Application() *cli.App {
 	return c.App
+}
+
+func (c *contextCommandLine) PluginDirectory() string {
+	return c.GlobalString("pluginsDir")
+}
+
+func (c *contextCommandLine) RepoDirectory() string {
+	return c.GlobalString("repo")
+}
+
+func (c *contextCommandLine) PluginURL() string {
+	return c.GlobalString("pluginUrl")
 }

@@ -3,201 +3,150 @@
 import _ from 'lodash';
 import moment from 'moment';
 import angular from 'angular';
+import {appEvents, NavModel} from 'app/core/core';
+import {DashboardModel} from '../model';
 
 export class DashNavCtrl {
+  dashboard: DashboardModel;
+  navModel: NavModel;
+  titleTooltip: string;
 
   /** @ngInject */
-  constructor($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, $timeout) {
+  constructor(
+    private $scope,
+    private $rootScope,
+    private dashboardSrv,
+    private $location,
+    private backendSrv,
+    private contextSrv,
+    navModelSrv) {
+      this.navModel = navModelSrv.getDashboardNav(this.dashboard, this);
 
-    $scope.init = function() {
-      $scope.onAppEvent('save-dashboard', $scope.saveDashboard);
-      $scope.onAppEvent('delete-dashboard', $scope.deleteDashboard);
-      $scope.onAppEvent('export-dashboard', $scope.snapshot);
-      $scope.onAppEvent('quick-snapshot', $scope.quickSnapshot);
+      appEvents.on('save-dashboard', this.saveDashboard.bind(this), $scope);
+      appEvents.on('delete-dashboard', this.deleteDashboard.bind(this), $scope);
 
-      $scope.showSettingsMenu = $scope.dashboardMeta.canEdit || $scope.contextSrv.isEditor;
-
-      if ($scope.dashboardMeta.isSnapshot) {
-        $scope.showSettingsMenu = false;
-        var meta = $scope.dashboardMeta;
-        $scope.titleTooltip = 'Created: &nbsp;' + moment(meta.created).calendar();
+      if (this.dashboard.meta.isSnapshot) {
+        var meta = this.dashboard.meta;
+        this.titleTooltip = 'Created: &nbsp;' + moment(meta.created).calendar();
         if (meta.expires) {
-          $scope.titleTooltip += '<br>Expires: &nbsp;' + moment(meta.expires).fromNow() + '<br>';
+          this.titleTooltip += '<br>Expires: &nbsp;' + moment(meta.expires).fromNow() + '<br>';
         }
       }
-    };
+    }
 
-    $scope.openEditView = function(editview) {
-      var search = _.extend($location.search(), {editview: editview});
-      $location.search(search);
-    };
+    toggleSideMenu() {
+      this.contextSrv.toggleSideMenu();
+    }
 
-    $scope.starDashboard = function() {
-      if ($scope.dashboardMeta.isStarred) {
-        backendSrv.delete('/api/user/stars/dashboard/' + $scope.dashboard.id).then(function() {
-          $scope.dashboardMeta.isStarred = false;
-        });
-      } else {
-        backendSrv.post('/api/user/stars/dashboard/' + $scope.dashboard.id).then(function() {
-          $scope.dashboardMeta.isStarred = true;
+    openEditView(editview) {
+      var search = _.extend(this.$location.search(), {editview: editview});
+      this.$location.search(search);
+    }
+
+    showHelpModal() {
+      appEvents.emit('show-modal', {templateHtml: '<help-modal></help-modal>'});
+    }
+
+    starDashboard() {
+      if (this.dashboard.meta.isStarred) {
+        return this.backendSrv.delete('/api/user/stars/dashboard/' + this.dashboard.id).then(() =>  {
+          this.dashboard.meta.isStarred = false;
         });
       }
-    };
 
-    $scope.shareDashboard = function(tabIndex) {
-      var modalScope = $scope.$new();
+      this.backendSrv.post('/api/user/stars/dashboard/' + this.dashboard.id).then(() => {
+        this.dashboard.meta.isStarred = true;
+      });
+    }
+
+    shareDashboard(tabIndex) {
+      var modalScope = this.$scope.$new();
       modalScope.tabIndex = tabIndex;
+      modalScope.dashboard = this.dashboard;
 
-      $scope.appEvent('show-modal', {
+      appEvents.emit('show-modal', {
         src: 'public/app/features/dashboard/partials/shareModal.html',
         scope: modalScope
       });
-    };
+    }
 
-    $scope.quickSnapshot = function() {
-      $scope.shareDashboard(1);
-    };
-
-    $scope.openSearch = function() {
-      $scope.appEvent('show-dash-search');
-    };
-
-    $scope.hideTooltip = function(evt) {
+    hideTooltip(evt) {
       angular.element(evt.currentTarget).tooltip('hide');
-      $scope.appEvent('hide-dash-search');
-    };
+    }
 
-    $scope.makeEditable = function() {
-      $scope.dashboard.editable = true;
+    makeEditable() {
+      this.dashboard.editable = true;
 
-      var clone = $scope.dashboard.getSaveModelClone();
-
-      backendSrv.saveDashboard(clone, {overwrite: false}).then(function(data) {
-        $scope.dashboard.version = data.version;
-        $scope.appEvent('dashboard-saved', $scope.dashboard);
-        $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
-
+      return this.dashboardSrv.saveDashboard({makeEditable: true, overwrite: false}).then(() => {
         // force refresh whole page
         window.location.href = window.location.href;
-      }, $scope.handleSaveDashError);
-    };
+      });
+    }
 
-    $scope.saveDashboard = function(options) {
-      if ($scope.dashboardMeta.canSave === false) {
-        return;
+    exitFullscreen() {
+      this.$rootScope.appEvent('panel-change-view', {fullscreen: false, edit: false});
+    }
+
+    saveDashboard() {
+      return this.dashboardSrv.saveDashboard();
+    }
+
+    deleteDashboard() {
+      var confirmText = "";
+      var text2 = this.dashboard.title;
+      var alerts = this.dashboard.rows.reduce((memo, row) => {
+        memo += row.panels.filter(panel => panel.alert).length;
+        return memo;
+      }, 0);
+
+      if (alerts > 0) {
+        confirmText = 'DELETE';
+        text2 = `This dashboad contains ${alerts} alerts. Deleting this dashboad will also delete those alerts`;
       }
 
-      var clone = $scope.dashboard.getSaveModelClone();
-
-      backendSrv.saveDashboard(clone, options).then(function(data) {
-        $scope.dashboard.version = data.version;
-        $scope.appEvent('dashboard-saved', $scope.dashboard);
-
-        var dashboardUrl = '/dashboard/db/' + data.slug;
-
-        if (dashboardUrl !== $location.path()) {
-          $location.url(dashboardUrl);
-        }
-
-        $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
-      }, $scope.handleSaveDashError);
-    };
-
-    $scope.handleSaveDashError = function(err) {
-      if (err.data && err.data.status === "version-mismatch") {
-        err.isHandled = true;
-
-        $scope.appEvent('confirm-modal', {
-          title: 'Conflict',
-          text: 'Someone else has updated this dashboard.',
-          text2: 'Would you still like to save this dashboard?',
-          yesText: "Save & Overwrite",
-          icon: "fa-warning",
-          onConfirm: function() {
-            $scope.saveDashboard({overwrite: true});
-          }
-        });
-      }
-
-      if (err.data && err.data.status === "name-exists") {
-        err.isHandled = true;
-
-        $scope.appEvent('confirm-modal', {
-          title: 'Conflict',
-          text: 'Dashboard with the same name exists.',
-          text2: 'Would you still like to save this dashboard?',
-          yesText: "Save & Overwrite",
-          icon: "fa-warning",
-          onConfirm: function() {
-            $scope.saveDashboard({overwrite: true});
-          }
-        });
-      }
-    };
-
-    $scope.deleteDashboard = function() {
-      $scope.appEvent('confirm-modal', {
-        title: 'Delete dashboard',
-        text: 'Do you want to delete dashboard?',
-        text2: $scope.dashboard.title,
+      appEvents.emit('confirm-modal', {
+        title: 'Delete',
+        text: 'Do you want to delete this dashboard?',
+        text2: text2,
         icon: 'fa-trash',
+        confirmText: confirmText,
         yesText: 'Delete',
-        onConfirm: function() {
-          $scope.deleteDashboardConfirmed();
+        onConfirm: () => {
+          this.dashboard.meta.canSave = false;
+          this.deleteDashboardConfirmed();
         }
       });
-    };
+    }
 
-    $scope.deleteDashboardConfirmed = function() {
-      backendSrv.delete('/api/dashboards/db/' + $scope.dashboardMeta.slug).then(function() {
-        $scope.appEvent('alert-success', ['Dashboard Deleted', $scope.dashboard.title + ' has been deleted']);
-        $location.url('/');
+    deleteDashboardConfirmed() {
+      this.backendSrv.delete('/api/dashboards/db/' + this.dashboard.meta.slug).then(() => {
+        appEvents.emit('alert-success', ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
+        this.$location.url('/');
       });
-    };
+    }
 
-    $scope.saveDashboardAs = function() {
-      var newScope = $rootScope.$new();
-      newScope.clone = $scope.dashboard.getSaveModelClone();
-      newScope.clone.editable = true;
-      newScope.clone.hideControls = false;
+    saveDashboardAs() {
+      return this.dashboardSrv.showSaveAsModal();
+    }
 
-      $scope.appEvent('show-modal', {
-        src: 'public/app/features/dashboard/partials/saveDashboardAs.html',
-        scope: newScope,
-        modalClass: 'modal--narrow'
+    viewJson() {
+      var clone = this.dashboard.getSaveModelClone();
+
+      this.$rootScope.appEvent('show-json-editor', {
+        object: clone,
       });
-    };
+    }
 
-    $scope.exportDashboard = function() {
-      var clone = $scope.dashboard.getSaveModelClone();
-      var blob = new Blob([angular.toJson(clone, true)], { type: "application/json;charset=utf-8" });
-      var wnd: any = window;
-      wnd.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime());
-    };
+    showSearch() {
+      this.$rootScope.appEvent('show-dash-search');
+    }
 
-    $scope.snapshot = function() {
-      $scope.dashboard.snapshot = true;
-      $rootScope.$broadcast('refresh');
-
-      $timeout(function() {
-        $scope.exportDashboard();
-        $scope.dashboard.snapshot = false;
-        $scope.appEvent('dashboard-snapshot-cleanup');
-      }, 1000);
-
-    };
-
-    $scope.editJson = function() {
-      var clone = $scope.dashboard.getSaveModelClone();
-      $scope.appEvent('show-json-editor', { object: clone });
-    };
-
-    $scope.stopPlaylist = function() {
-      playlistSrv.stop(1);
-    };
-
-    $scope.init();
-  }
+    navItemClicked(navItem, evt) {
+      if (navItem.clickHandler) {
+        navItem.clickHandler();
+        evt.preventDefault();
+      }
+    }
 }
 
 export function dashNavDirective() {
@@ -205,7 +154,10 @@ export function dashNavDirective() {
     restrict: 'E',
     templateUrl: 'public/app/features/dashboard/dashnav/dashnav.html',
     controller: DashNavCtrl,
+    bindToController: true,
+    controllerAs: 'ctrl',
     transclude: true,
+    scope: { dashboard: "=" }
   };
 }
 
