@@ -1,8 +1,6 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
-import {DashboardModel} from '../model';
+import {DashboardModel} from '../DashboardModel';
 
 export interface HistoryListOpts {
   limit: number;

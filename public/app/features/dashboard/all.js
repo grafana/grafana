@@ -15,7 +15,6 @@ define([
   './unsavedChangesSrv',
   './unsaved_changes_modal',
   './timepicker/timepicker',
-  './graphiteImportCtrl',
   './impression_store',
   './upload',
   './import/dash_import',
@@ -23,7 +22,9 @@ define([
   './export_data/export_data_modal',
   './ad_hoc_filters',
   './repeat_option/repeat_option',
-  './dashgrid/dashgrid',
+  './dashgrid/DashboardGrid',
+  './dashgrid/PanelLoader',
+  './row/add_panel',
   './acl/acl',
   './folder_picker/picker',
   './folder_modal/folder'

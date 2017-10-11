@@ -1,0 +1,24 @@
+@import "~react-grid-layout/css/styles.css";
+@import "~react-resizable/css/styles.css";
+
+.panel-in-fullscreen {
+
+  .react-grid-layout {
+    height: 100% !important;
+  }
+
+  .react-grid-item {
+    display: none;
+    transition-property: none !important;
+  }
+
+  .panel--fullscreen {
+    display: block !important;
+    position: unset !important;
+    width: 100% !important;
+    height: 100% !important;
+    transform: translate(0px, 0px) !important;
+  }
+}
+
+

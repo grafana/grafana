@@ -1,7 +1,5 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
-import {DashboardModel} from './model';
+import {DashboardModel} from './DashboardModel';
 
 export class DashboardSrv {
   dash: any;

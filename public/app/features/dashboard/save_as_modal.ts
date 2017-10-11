@@ -55,11 +55,9 @@ export class SaveDashboardAsModalCtrl {
     // remove alerts if source dashboard is already persisted
     // do not want to create alert dupes
     if (dashboard.id > 0) {
-      this.clone.rows.forEach(row => {
-        row.panels.forEach(panel => {
-          delete panel.thresholds;
-          delete panel.alert;
-        });
+      this.clone.panels.forEach(panel => {
+        delete panel.thresholds;
+        delete panel.alert;
       });
     }
 

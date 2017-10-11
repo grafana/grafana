@@ -68,7 +68,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     var componentInfo: any = {
       name: 'panel-plugin-' + scope.panel.type,
       bindings: {dashboard: "=", panel: "=", row: "="},
-      attrs: {dashboard: "ctrl.dashboard", panel: "panel", row: "ctrl.row"},
+      attrs: {dashboard: "dashboard", panel: "panel"},
     };
 
     let panelInfo = config.panels[scope.panel.type];

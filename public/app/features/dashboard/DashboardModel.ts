@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import moment from 'moment';
 import _ from 'lodash';
@@ -8,20 +6,11 @@ import $ from 'jquery';
 import {DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
 import {Emitter, contextSrv, appEvents} from 'app/core/core';
 import {DashboardRow} from './row/row_model';
+import {PanelModel} from './PanelModel';
 import sortByKeys from 'app/core/utils/sort_by_keys';
 
-export interface Panel {
-  id: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  type: string;
-  title: string;
-}
-
 export const CELL_HEIGHT = 30;
-export const CELL_VMARGIN = 15;
+export const CELL_VMARGIN = 10;
 
 export class DashboardModel {
   id: any;
@@ -50,7 +39,7 @@ export class DashboardModel {
   events: any;
   editMode: boolean;
   folderId: number;
-  panels: Panel[];
+  panels: PanelModel[];
 
   constructor(data, meta?) {
     if (!data) {
@@ -80,8 +69,7 @@ export class DashboardModel {
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
     this.folderId = data.folderId || null;
-    this.panels = data.panels || [];
-    this.rows = [];
+    this.panels = _.map(data.panels || [], panelData => new PanelModel(panelData));
 
     this.addBuiltInAnnotationQuery();
     this.initMeta(meta);
@@ -134,32 +122,39 @@ export class DashboardModel {
     // temp remove stuff
     var events = this.events;
     var meta = this.meta;
-    var rows = this.rows;
     var variables = this.templating.list;
+    var panels = this.panels;
 
     delete this.events;
     delete this.meta;
+    delete this.panels;
 
     // prepare save model
-    this.rows = _.map(rows, row => row.getSaveModel());
     this.templating.list = _.map(variables, variable => variable.getSaveModel ? variable.getSaveModel() : variable);
+    this.panels = _.map(panels, panel => panel.getSaveModel());
 
     // make clone
     var copy = $.extend(true, {}, this);
     //  sort clone
     copy = sortByKeys(copy);
+    console.log(copy.panels);
 
     // restore properties
     this.events = events;
     this.meta = meta;
-    this.rows = rows;
     this.templating.list = variables;
+    this.panels = panels;
 
     return copy;
   }
 
-  addEmptyRow() {
-    this.rows.push(new DashboardRow({isNew: true}));
+  setViewMode(panel: PanelModel, fullscreen: boolean, isEditing: boolean) {
+    this.meta.fullscreen = fullscreen;
+    this.meta.isEditing = isEditing && this.meta.canEdit;
+
+    panel.setViewMode(fullscreen, this.meta.isEditing);
+
+    this.events.emit('view-mode-changed', panel);
   }
 
   private ensureListExist(data) {
@@ -194,7 +189,8 @@ export class DashboardModel {
 
   addPanel(panel) {
     panel.id = this.getNextPanelId();
-    this.panels.push(panel);
+    this.panels.unshift(new PanelModel(panel));
+    this.events.emit('panel-added', panel);
   }
 
   removePanel(panel, ask?) {
@@ -296,6 +292,14 @@ export class DashboardModel {
     }
   }
 
+  on(eventName, callback) {
+    this.events.on(eventName, callback);
+  }
+
+  off(eventName, callback?) {
+    this.events.off(eventName, callback);
+  }
+
   cycleGraphTooltip() {
     this.graphTooltip = (this.graphTooltip + 1) % 3;
   }
@@ -338,7 +342,7 @@ export class DashboardModel {
     var i, j, k;
     var oldVersion = this.schemaVersion;
     var panelUpgrades = [];
-    this.schemaVersion = 15;
+    this.schemaVersion = 16;
 
     if (oldVersion === this.schemaVersion) {
       return;
@@ -647,7 +651,7 @@ export class DashboardModel {
         this.graphTooltip = old.sharedCrosshair ? 1 : 0;
       }
 
-      if (oldVersion < 15) {
+      if (oldVersion < 16) {
         this.upgradeToGridLayout(old);
       }
 
@@ -655,60 +659,59 @@ export class DashboardModel {
         return;
       }
 
-      for (i = 0; i < this.rows.length; i++) {
-        var row = this.rows[i];
-        for (j = 0; j < row.panels.length; j++) {
-          for (k = 0; k < panelUpgrades.length; k++) {
-            panelUpgrades[k].call(this, row.panels[j]);
-          }
+      for (j = 0; j < this.panels.length; j++) {
+        for (k = 0; k < panelUpgrades.length; k++) {
+          panelUpgrades[k].call(this, this.panels[j]);
         }
       }
     }
 
     upgradeToGridLayout(old) {
       let yPos = 0;
-      let rowIds = 1000;
+      //let rowIds = 1000;
+      //
+
+      if (!old.rows) {
+        return;
+      }
 
       for (let row of old.rows) {
         let xPos = 0;
-        let height: any = row.height;
+        let height: any = row.height || 250;
 
-        if (this.meta.keepRows) {
-          this.panels.push({
-            id: rowIds++,
-            type: 'row',
-            title: row.title,
-            x: 0,
-            y: yPos,
-            height: 1,
-            width: 12
-          });
-
-          yPos += 1;
-        }
+        // if (this.meta.keepRows) {
+        //   this.panels.push({
+        //     id: rowIds++,
+        //     type: 'row',
+        //     title: row.title,
+        //     x: 0,
+        //     y: yPos,
+        //     height: 1,
+        //     width: 12
+        //   });
+        //
+        //   yPos += 1;
+        // }
 
         if (_.isString(height)) {
           height = parseInt(height.replace('px', ''), 10);
         }
 
-        height = Math.ceil(height / CELL_HEIGHT);
+        const rowGridHeight = Math.ceil(height / CELL_HEIGHT);
 
         for (let panel of row.panels) {
           // should wrap to next row?
           if (xPos + panel.span >= 12) {
-            yPos += height;
+            yPos += rowGridHeight;
           }
 
-          panel.x = xPos;
-          panel.y = yPos;
-          panel.width = panel.span;
-          panel.height = height;
+          panel.gridPos = { x: xPos, y: yPos, w: panel.span, h: rowGridHeight };
 
           delete panel.span;
 
-          xPos += panel.width;
+          xPos += rowGridHeight;
 
-          this.panels.push(panel);
+          this.panels.push(new PanelModel(panel));
         }
 
         yPos += height;

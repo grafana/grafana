@@ -88,7 +88,7 @@ function panelHeader($compile) {
       let menuScope;
 
       elem.click(function(evt) {
-        const targetClass = evt.target.className;
+        //const targetClass = evt.target.className;
 
         // remove existing scope
         if (menuScope) {
@@ -100,10 +100,10 @@ function panelHeader($compile) {
         menuElem.html(menuHtml);
         $compile(menuElem)(menuScope);
 
-        if (targetClass === 'panel-title-text' || targetClass === 'panel-title') {
-          evt.stopPropagation();
-          elem.find('[data-toggle=dropdown]').dropdown('toggle');
-        }
+        // if (targetClass === 'panel-title-text' || targetClass === 'panel-title') {
+        //   evt.stopPropagation();
+        //   elem.find('[data-toggle=dropdown]').dropdown('toggle');
+        // }
       });
     }
   };

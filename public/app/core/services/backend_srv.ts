@@ -235,42 +235,54 @@ export class BackendSrv {
 
   createDashboardFolder(name) {
     const dash = {
+      schemaVersion: 16,
       title: name,
       editable: true,
       hideControls: true,
-      rows: [
+      panels: [
         {
-          panels: [
-            {
-              folderId: 0,
-              headings: false,
-              limit: 1000,
-              links: [],
-              query: '',
-              recent: false,
-              search: true,
-              span: 4,
-              starred: false,
-              tags: [],
-              title: 'Dashboards in this folder',
-              type: 'dashlist'
-            },
-            {
-              onlyAlertsOnDashboard: true,
-              span: 4,
-              title: 'Alerts in this folder',
-              type: 'alertlist'
-            },
-            {
-              span: 4,
-              title: 'Permissions for this folder',
-              type: 'permissionlist',
-              folderId: 0
-            }
-          ],
-          showTitle: true,
-          title: name,
-          titleSize: 'h1'
+          id: 1,
+          folderId: 0,
+          headings: false,
+          limit: 1000,
+          links: [],
+          query: '',
+          recent: false,
+          search: true,
+          starred: false,
+          tags: [],
+          title: 'Dashboards in this folder',
+          type: 'dashlist',
+          gridPos: {
+            x: 0,
+            y: 0,
+            w: 4,
+            h: 10
+          }
+        },
+        {
+          id: 2,
+          onlyAlertsOnDashboard: true,
+          title: 'Alerts in this folder',
+          type: 'alertlist',
+          gridPos: {
+            x: 4,
+            y: 0,
+            w: 4,
+            h: 10
+          }
+        },
+        {
+          id: 3,
+          title: 'Permissions for this folder',
+          type: 'permissionlist',
+          folderId: 0,
+          gridPos: {
+            x: 8,
+            y: 0,
+            w: 4,
+            h: 10
+          }
         }
       ]
     };
@@ -280,8 +292,8 @@ export class BackendSrv {
       return this.getDashboard('db', res.slug);
     })
     .then(res => {
-      res.dashboard.rows[0].panels[0].folderId = res.dashboard.id;
-      res.dashboard.rows[0].panels[2].folderId = res.dashboard.id;
+      res.dashboard.panels[0].folderId = res.dashboard.id;
+      res.dashboard.panels[2].folderId = res.dashboard.id;
       return this.saveDashboard(res.dashboard, {overwrite: false});
     });
   }

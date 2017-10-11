@@ -6,7 +6,7 @@ import _ from 'lodash';
 import angular from 'angular';
 import moment from 'moment';
 
-import {DashboardModel} from '../model';
+import {DashboardModel} from '../DashboardModel';
 import {HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv} from './history_srv';
 
 export class HistoryListCtrl {

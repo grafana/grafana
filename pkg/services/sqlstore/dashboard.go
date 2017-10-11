@@ -189,13 +189,12 @@ type DashboardSearchProjection struct {
 }
 
 func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
+	var sql bytes.Buffer
+	params := make([]interface{}, 0)
 	limit := query.Limit
 	if limit == 0 {
 		limit = 1000
 	}
-
-	var sql bytes.Buffer
-	params := make([]interface{}, 0)
 
 	sql.WriteString(`
 	SELECT
@@ -207,36 +206,69 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		dashboard.folder_id,
 		folder.slug as folder_slug,
 		folder.title as folder_title
-	FROM (
-		SELECT
-			dashboard.id FROM dashboard
-			LEFT OUTER JOIN dashboard_tag ON dashboard_tag.dashboard_id = dashboard.id
-	`)
+	FROM `)
 
 	// add tags filter
 	if len(query.Tags) > 0 {
-		sql.WriteString(` WHERE dashboard_tag.term IN (?` + strings.Repeat(",?", len(query.Tags)-1) + `)`)
+		sql.WriteString(
+			`(
+		SELECT
+			dashboard.id FROM dashboard
+			LEFT OUTER JOIN dashboard_tag ON dashboard_tag.dashboard_id = dashboard.id
+		`)
+		if query.IsStarred {
+			sql.WriteString(" INNER JOIN star on star.dashboard_id = dashboard.id")
+		}
+
+		sql.WriteString(` WHERE dashboard_tag.term IN (?` + strings.Repeat(",?", len(query.Tags)-1) + `) AND `)
 		for _, tag := range query.Tags {
 			params = append(params, tag)
 		}
+		params = createSearchWhereClause(query, &sql, params)
+		fmt.Printf("params2 %v", params)
+
+		// this ends the inner select (tag filtered part)
+		sql.WriteString(`
+			GROUP BY dashboard.id HAVING COUNT(dashboard.id) >= ?
+			LIMIT ?) as ids
+			INNER JOIN dashboard on ids.id = dashboard.id
+		`)
+
+		params = append(params, len(query.Tags))
+		params = append(params, limit)
+	} else {
+		sql.WriteString(`( SELECT dashboard.id FROM dashboard `)
+		if query.IsStarred {
+			sql.WriteString(" INNER JOIN star on star.dashboard_id = dashboard.id")
+		}
+		sql.WriteString(` WHERE `)
+		params = createSearchWhereClause(query, &sql, params)
+
+		sql.WriteString(`
+			LIMIT ?) as ids
+		INNER JOIN dashboard on ids.id = dashboard.id
+		`)
+		params = append(params, limit)
 	}
 
-	// this ends the inner select (tag filtered part)
 	sql.WriteString(`
-		  GROUP BY dashboard.id HAVING COUNT(dashboard.id) >= ?
-		  ORDER BY dashboard.title ASC LIMIT ?) as ids`)
-	params = append(params, len(query.Tags))
-	params = append(params, limit)
-
-	sql.WriteString(`
-		INNER JOIN dashboard on ids.id = dashboard.id
 		LEFT OUTER JOIN dashboard folder on folder.id = dashboard.folder_id
 		LEFT OUTER JOIN dashboard_tag on dashboard.id = dashboard_tag.dashboard_id`)
-	if query.IsStarred {
-		sql.WriteString(" INNER JOIN star on star.dashboard_id = dashboard.id")
+
+	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 5000"))
+
+	var res []DashboardSearchProjection
+
+	err := x.Sql(sql.String(), params...).Find(&res)
+	if err != nil {
+		return nil, err
 	}
 
-	sql.WriteString(` WHERE dashboard.org_id=?`)
+	return res, nil
+}
+
+func createSearchWhereClause(query *search.FindPersistedDashboardsQuery, sql *bytes.Buffer, params []interface{}) []interface{} {
+	sql.WriteString(` dashboard.org_id=?`)
 	params = append(params, query.SignedInUser.OrgId)
 
 	if query.IsStarred {
@@ -253,16 +285,17 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 
 	if query.SignedInUser.OrgRole != m.ROLE_ADMIN {
 		allowedDashboardsSubQuery := ` AND (dashboard.has_acl = 0 OR dashboard.id in (
-		SELECT distinct d.id AS DashboardId
+			SELECT distinct d.id AS DashboardId
 			FROM dashboard AS d
-	      LEFT JOIN dashboard_acl as da on d.folder_id = da.dashboard_id or d.id = da.dashboard_id
-	      LEFT JOIN user_group_member as ugm on ugm.user_group_id =  da.user_group_id
-	      LEFT JOIN org_user ou on ou.role = da.role
+	      		LEFT JOIN dashboard_acl as da on d.folder_id = da.dashboard_id or d.id = da.dashboard_id
+	      		LEFT JOIN user_group_member as ugm on ugm.user_group_id =  da.user_group_id
+	      		LEFT JOIN org_user ou on ou.role = da.role
 			WHERE
 			  d.has_acl = 1 and
 				(da.user_id = ? or ugm.user_id = ? or ou.id is not null)
 			  and d.org_id = ?
-			  ))`
+			)
+		)`
 
 		sql.WriteString(allowedDashboardsSubQuery)
 		params = append(params, query.SignedInUser.UserId, query.SignedInUser.UserId, query.SignedInUser.OrgId)
@@ -286,16 +319,7 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		params = append(params, query.FolderId)
 	}
 
-	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 1000"))
-
-	var res []DashboardSearchProjection
-
-	err := x.Sql(sql.String(), params...).Find(&res)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
+	return params
 }
 
 func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {

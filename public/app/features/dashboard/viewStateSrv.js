@@ -9,7 +9,7 @@ function (angular, _, $, config) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardViewStateSrv', function($location, $timeout) {
+  module.factory('dashboardViewStateSrv', function($location, $timeout, $rootScope) {
 
     // represents the transient view state
     // like fullscreen panel & edit
@@ -154,7 +154,8 @@ function (angular, _, $, config) {
 
       ctrl.editMode = false;
       ctrl.fullscreen = false;
-      ctrl.dashboard.editMode = this.oldDashboardEditMode;
+
+      this.dashboard.setViewMode(ctrl.panel, false, false);
 
       this.$scope.appEvent('panel-fullscreen-exit', {panelId: ctrl.panel.id});
 
@@ -162,9 +163,9 @@ function (angular, _, $, config) {
 
       $timeout(function() {
         if (self.oldTimeRange !== ctrl.range) {
-          self.$scope.broadcastRefresh();
+          $rootScope.$broadcast('refresh');
         } else {
-          self.$scope.$broadcast('render');
+          $rootScope.$broadcast('render');
         }
         delete self.fullscreenPanel;
       });
@@ -176,18 +177,11 @@ function (angular, _, $, config) {
       ctrl.editMode = this.state.edit && this.dashboard.meta.canEdit;
       ctrl.fullscreen = true;
 
-      this.oldDashboardEditMode = this.dashboard.editMode;
       this.oldTimeRange = ctrl.range;
       this.fullscreenPanel = panelScope;
-      this.dashboard.editMode = false;
 
-      $(window).scrollTop(0);
-
+      this.dashboard.setViewMode(ctrl.panel, true, ctrl.editMode);
       this.$scope.appEvent('panel-fullscreen-enter', {panelId: ctrl.panel.id});
-
-      $timeout(function() {
-        ctrl.render();
-      });
     };
 
     DashboardViewState.prototype.registerPanel = function(panelScope) {

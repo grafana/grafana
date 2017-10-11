@@ -123,7 +123,7 @@ function ($, angular, coreModule, _) {
           }, 10);
         }
 
-        scope.$watch("dashboardViewState.state.editview", function(newValue, oldValue) {
+        scope.$watch("ctrl.dashboardViewState.state.editview", function(newValue, oldValue) {
           if (newValue) {
             showEditorPane(null, {editview: newValue});
           } else if (oldValue) {

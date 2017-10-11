@@ -1,7 +1,7 @@
 import {describe, beforeEach, it, expect} from 'test/lib/common';
 
 import _ from 'lodash';
-import {DashboardModel} from '../model';
+import {DashboardModel} from '../DashboardModel';
 
 describe('DashboardModel', function() {
 
