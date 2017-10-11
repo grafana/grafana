@@ -669,6 +669,11 @@ export class DashboardModel {
     upgradeToGridLayout(old) {
       let yPos = 0;
       //let rowIds = 1000;
+      //
+
+      if (!old.rows) {
+        return;
+      }
 
       for (let row of old.rows) {
         let xPos = 0;
