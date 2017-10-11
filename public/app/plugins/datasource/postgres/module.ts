@@ -7,6 +7,8 @@ class PostgresConfigCtrl {
   static templateUrl = 'partials/config.html';
 
   current: any;
+
+   /** @ngInject **/
   constructor($scope) {
     this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'require';
   }
