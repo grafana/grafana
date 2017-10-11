@@ -54,7 +54,6 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       });
 
       ctrl.events.on('render', function(renderData) {
-        console.log('graph render');
         data = renderData || data;
         if (!data) {
           return;

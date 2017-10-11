@@ -65,7 +65,7 @@ describe('grafanaGraph', function() {
 
           var scope = $rootScope.$new();
           scope.ctrl = ctrl;
-
+          scope.ctrl.events = ctrl.panel.events;
 
           $rootScope.onAppEvent = sinon.spy();
 

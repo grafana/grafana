@@ -72,7 +72,9 @@ export class PanelCtrl {
   }
 
   changeView(fullscreen, edit) {
-    this.dashboard.setViewMode(this.panel, fullscreen, edit);
+    this.publishAppEvent('panel-change-view', {
+      fullscreen: fullscreen, edit: edit, panelId: this.panel.id
+    });
   }
 
   viewPanel() {
