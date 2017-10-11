@@ -11,11 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 )
 
-func InitTestDB(t *testing.T) {
+func InitTestDB(t *testing.T) *xorm.Engine {
 	x, err := xorm.NewEngine(sqlutil.TestDB_Sqlite3.DriverName, sqlutil.TestDB_Sqlite3.ConnStr)
 	//x, err := xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, sqlutil.TestDB_Mysql.ConnStr)
 	//x, err := xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, sqlutil.TestDB_Postgres.ConnStr)
-	// x.ShowSQL()
 
 	// x.ShowSQL()
 
@@ -28,6 +27,8 @@ func InitTestDB(t *testing.T) {
 	if err := SetEngine(x); err != nil {
 		t.Fatal(err)
 	}
+
+	return x
 }
 
 type Test struct {
