@@ -1,11 +1,11 @@
 import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 import moment from 'moment';
 import helpers from 'test/specs/helpers';
-import {MysqlDatasource} from '../datasource';
+import {PostgresDatasource} from '../datasource';
 
-describe('MySQLDatasource', function() {
+describe('PostgreSQLDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
-  var instanceSettings = {name: 'mysql'};
+  var instanceSettings = {name: 'postgresql'};
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
@@ -15,7 +15,7 @@ describe('MySQLDatasource', function() {
     ctx.$q = $q;
     ctx.$httpBackend =  $httpBackend;
     ctx.$rootScope = $rootScope;
-    ctx.ds = $injector.instantiate(MysqlDatasource, {instanceSettings: instanceSettings});
+    ctx.ds = $injector.instantiate(PostgresDatasource, {instanceSettings: instanceSettings});
     $httpBackend.when('GET', /\.html$/).respond('');
   }));
 
@@ -27,7 +27,7 @@ describe('MySQLDatasource', function() {
     const options = {
       annotation: {
         name: annotationName,
-        rawQuery: 'select time_sec, text, tags from table;'
+        rawQuery: 'select time, title, text, tags from table;'
       },
       range: {
         from: moment(1432288354),
@@ -41,7 +41,7 @@ describe('MySQLDatasource', function() {
           refId: annotationName,
           tables: [
             {
-              columns: [{text: 'time_sec'}, {text: 'text'}, {text: 'tags'}],
+              columns: [{text: 'time'}, {text: 'text'}, {text: 'tags'}],
               rows: [
                 [1432288355, 'some text', 'TagA,TagB'],
                 [1432288390, 'some text2', ' TagB , TagC'],
@@ -191,26 +191,6 @@ describe('MySQLDatasource', function() {
       expect(results.length).to.be(1);
       expect(results[0].text).to.be('aTitle');
       expect(results[0].value).to.be('same');
-    });
-  });
-
-  describe('When interpolating variables', () => {
-    describe('and value is a string', () => {
-      it('should return a quoted value', () => {
-        expect(ctx.ds.interpolateVariable('abc')).to.eql('\'abc\'');
-      });
-    });
-
-    describe('and value is a number', () => {
-      it('should return an unquoted value', () => {
-        expect(ctx.ds.interpolateVariable(1000)).to.eql(1000);
-      });
-    });
-
-    describe('and value is an array of strings', () => {
-      it('should return comma separated quoted values', () => {
-        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'])).to.eql('\'a\',\'b\',\'c\'');
-      });
     });
   });
 });

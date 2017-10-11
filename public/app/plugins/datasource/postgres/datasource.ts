@@ -3,7 +3,7 @@
 import _ from 'lodash';
 import ResponseParser from './response_parser';
 
-export class MysqlDatasource {
+export class PostgresDatasource {
   id: any;
   name: any;
   responseParser: ResponseParser;
@@ -20,15 +20,7 @@ export class MysqlDatasource {
       return '\'' + value + '\'';
     }
 
-    if (typeof value === 'number') {
-      return value;
-    }
-
     var quotedValues = _.map(value, function(val) {
-      if (typeof value === 'number') {
-        return value;
-      }
-
       return '\'' + val + '\'';
     });
     return  quotedValues.join(',');

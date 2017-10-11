@@ -6,142 +6,57 @@ import (
 	"database/sql"
 	"fmt"
 	"strconv"
-	"sync"
 
 	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/null"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type MysqlExecutor struct {
-	engine *xorm.Engine
-	log    log.Logger
-}
-
-type engineCacheType struct {
-	cache    map[int64]*xorm.Engine
-	versions map[int64]int
-	sync.Mutex
-}
-
-var engineCache = engineCacheType{
-	cache:    make(map[int64]*xorm.Engine),
-	versions: make(map[int64]int),
+type MysqlQueryEndpoint struct {
+	sqlEngine tsdb.SqlEngine
+	log       log.Logger
 }
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("mysql", NewMysqlExecutor)
+	tsdb.RegisterTsdbQueryEndpoint("mysql", NewMysqlQueryEndpoint)
 }
 
-func NewMysqlExecutor(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-	executor := &MysqlExecutor{
+func NewMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+	endpoint := &MysqlQueryEndpoint{
 		log: log.New("tsdb.mysql"),
 	}
 
-	err := executor.initEngine(datasource)
-	if err != nil {
-		return nil, err
-	}
-
-	return executor, nil
-}
-
-func (e *MysqlExecutor) initEngine(dsInfo *models.DataSource) error {
-	engineCache.Lock()
-	defer engineCache.Unlock()
-
-	if engine, present := engineCache.cache[dsInfo.Id]; present {
-		if version, _ := engineCache.versions[dsInfo.Id]; version == dsInfo.Version {
-			e.engine = engine
-			return nil
-		}
+	endpoint.sqlEngine = &tsdb.DefaultSqlEngine{
+		MacroEngine: NewMysqlMacroEngine(),
 	}
 
 	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC",
-		dsInfo.User,
-		dsInfo.Password,
+		datasource.User,
+		datasource.Password,
 		"tcp",
-		dsInfo.Url,
-		dsInfo.Database)
+		datasource.Url,
+		datasource.Database,
+	)
+	endpoint.log.Debug("getEngine", "connection", cnnstr)
 
-	e.log.Debug("getEngine", "connection", cnnstr)
-
-	engine, err := xorm.NewEngine("mysql", cnnstr)
-	engine.SetMaxOpenConns(10)
-	engine.SetMaxIdleConns(10)
-	if err != nil {
-		return err
+	if err := endpoint.sqlEngine.InitEngine("mysql", datasource, cnnstr); err != nil {
+		return nil, err
 	}
 
-	engineCache.cache[dsInfo.Id] = engine
-	e.engine = engine
-	return nil
+	return endpoint, nil
 }
 
-func (e *MysqlExecutor) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	result := &tsdb.Response{
-		Results: make(map[string]*tsdb.QueryResult),
-	}
-
-	macroEngine := NewMysqlMacroEngine(tsdbQuery.TimeRange)
-	session := e.engine.NewSession()
-	defer session.Close()
-	db := session.DB()
-
-	for _, query := range tsdbQuery.Queries {
-		rawSql := query.Model.Get("rawSql").MustString()
-		if rawSql == "" {
-			continue
-		}
-
-		queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefId}
-		result.Results[query.RefId] = queryResult
-
-		rawSql, err := macroEngine.Interpolate(rawSql)
-		if err != nil {
-			queryResult.Error = err
-			continue
-		}
-
-		queryResult.Meta.Set("sql", rawSql)
-
-		rows, err := db.Query(rawSql)
-		if err != nil {
-			queryResult.Error = err
-			continue
-		}
-
-		defer rows.Close()
-
-		format := query.Model.Get("format").MustString("time_series")
-
-		switch format {
-		case "time_series":
-			err := e.TransformToTimeSeries(query, rows, queryResult)
-			if err != nil {
-				queryResult.Error = err
-				continue
-			}
-		case "table":
-			err := e.TransformToTable(query, rows, queryResult)
-			if err != nil {
-				queryResult.Error = err
-				continue
-			}
-		}
-	}
-
-	return result, nil
+// Query is the main function for the MysqlExecutor
+func (e *MysqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	return e.sqlEngine.Query(ctx, dsInfo, tsdbQuery, e.transformToTimeSeries, e.transformToTable)
 }
 
-func (e MysqlExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
+func (e MysqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 	columnNames, err := rows.Columns()
 	columnCount := len(columnNames)
 
@@ -166,7 +81,7 @@ func (e MysqlExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows, resu
 	rowLimit := 1000000
 	rowCount := 0
 
-	for ; rows.Next(); rowCount += 1 {
+	for ; rows.Next(); rowCount++ {
 		if rowCount > rowLimit {
 			return fmt.Errorf("MySQL query row limit exceeded, limit %d", rowLimit)
 		}
@@ -184,7 +99,7 @@ func (e MysqlExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows, resu
 	return nil
 }
 
-func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+func (e MysqlQueryEndpoint) getTypedRowData(types []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
 	values := make([]interface{}, len(types))
 
 	for i, stype := range types {
@@ -248,7 +163,7 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 	return values, nil
 }
 
-func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
+func (e MysqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 	pointsBySeries := make(map[string]*tsdb.TimeSeries)
 	seriesByQueryOrder := list.New()
 	columnNames, err := rows.Columns()
@@ -261,7 +176,7 @@ func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows,
 	rowLimit := 1000000
 	rowCount := 0
 
-	for ; rows.Next(); rowCount += 1 {
+	for ; rows.Next(); rowCount++ {
 		if rowCount > rowLimit {
 			return fmt.Errorf("MySQL query row limit exceeded, limit %d", rowLimit)
 		}
