@@ -164,13 +164,12 @@ export class SearchCtrl {
   starDashboard(row, evt) {
     this.dashboardSrv.starDashboard(row.id, row.isStarred).then(newState => {
       row.isStarred = newState;
-  });
-  if (evt) {
-    evt.stopPropagation();
-    evt.preventDefault();
+    });
+    if (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+    }
   }
-  }
-
 }
 
 export function searchDirective() {

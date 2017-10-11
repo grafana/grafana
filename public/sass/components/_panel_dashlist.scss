@@ -13,8 +13,10 @@
   padding: 7px;
   background-color: $tight-form-bg;
   .fa {
-    float: right;
     padding-top: 3px;
+  }
+  .dashlist-star {
+    float: right;
   }
   .fa-star {
     color: $orange;

@@ -133,15 +133,25 @@ export class DashboardSrv {
   }
 
   starDashboard(dashboardId, isStarred) {
+    let promise;
+
     if (isStarred) {
-      return this.backendSrv.delete('/api/user/stars/dashboard/' + dashboardId).then(() =>  {
+      promise = this.backendSrv.delete('/api/user/stars/dashboard/' + dashboardId).then(() =>  {
         return false;
+      });
+    } else {
+      promise = this.backendSrv.post('/api/user/stars/dashboard/' + dashboardId).then(() => {
+        return true;
       });
     }
 
-    return this.backendSrv.post('/api/user/stars/dashboard/' + dashboardId).then(() => {
-      return true;
+    return promise.then(res => {
+      if(this.dash && this.dash.id == dashboardId){
+        this.dash.meta.isStarred = res;
+      }
+      return res;
     });
+
   }
 }
 
