@@ -10,17 +10,14 @@
 
 		<base href="[[.AppSubUrl]]/" />
 
-		[[if .User.LightTheme]]
-		  <link rel="stylesheet" href="public/build/grafana.light.css?v[[ .BuildVersion ]]">
-		[[else]]
-		  <link rel="stylesheet" href="public/build/grafana.dark.css?v[[ .BuildVersion ]]">
-		[[end]]
+		<link rel="stylesheet" href="public/build/grafana.[[ .Theme ]].css?v[[ .BuildVersion ]]">
 
     <link rel="icon" type="image/png" href="public/img/fav32.png">
     <link rel="mask-icon" href="public/img/grafana_mask_icon.svg" color="#F05A28">
+
 	</head>
 
-	<body ng-cloak>
+	<body ng-cloak class="theme-[[ .Theme ]]">
 		<grafana-app class="grafana-app">
 
       <sidemenu class="sidemenu"></sidemenu>

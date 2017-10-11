@@ -173,63 +173,11 @@ div.flot-text {
   }
 }
 
-.panel-full-edit {
-}
-
-.panel-highlight  {
-  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236,10.8)
-}
-
 .panel-hover-highlight  {
   .panel-menu-toggle {
     visibility: visible;
     transition: opacity 0.1s ease-in 0.2s;
     opacity: 1;
-  }
-
-  .resize-panel-handle {
-    visibility: visible;
-    transition: opacity 0.1s ease-in 0.2s;
-    opacity: 1;
-  }
-}
-
-.on-drag-hover {
-  .panel-container {
-    box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 5px rgba(82,168,236,10.8)
-  }
-}
-
-.panel-drop-zone {
-  display: none;
-
-  .panel-container {
-    border: $panel-border;
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-    text-align: center;
-    color: $text-color-faint;
-    font-weight: bold;
-    background: $panel-drop-zone-bg;
-  }
-}
-
-.panel-in-fullscreen {
-  .panel-drop-zone {
-    display: none !important;
-  }
-
-  .grid-stack > .grid-stack-item  {
-    position: unset;
-    display: none;
-  }
-
-  .panel-fullscreen {
-    display: block !important;
-    > .ui-resizable-handle {
-      display: none !important;
-    }
   }
 }
 

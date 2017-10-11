@@ -70,5 +70,9 @@ export class PanelModel {
       this.events.emit('panel-size-changed');
     }
   }
+
+  resizeDone() {
+    this.events.emit('panel-size-changed');
+  }
 }
 

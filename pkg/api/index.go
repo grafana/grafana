@@ -62,6 +62,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			HelpFlags1:     c.HelpFlags1,
 		},
 		Settings:                settings,
+		Theme:                   prefs.Theme,
 		AppUrl:                  appUrl,
 		AppSubUrl:               appSubUrl,
 		GoogleAnalyticsId:       setting.GoogleAnalyticsId,

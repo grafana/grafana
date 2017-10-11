@@ -10,6 +10,7 @@ type IndexViewData struct {
 	NavTree                 []*NavLink
 	BuildVersion            string
 	BuildCommit             string
+	Theme                   string
 	NewGrafanaVersionExists bool
 	NewGrafanaVersion       string
 }

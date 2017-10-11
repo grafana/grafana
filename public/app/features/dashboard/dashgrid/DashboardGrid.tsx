@@ -10,17 +10,22 @@ import classNames from 'classnames';
 import sizeMe from 'react-sizeme';
 
 const COLUMN_COUNT = 12;
+let lastGridWidth = 1200;
 
-function GridWrapper({size, layout, onLayoutChange, children, onResize}) {
+function GridWrapper({size, layout, onLayoutChange, children, onResize, onResizeStop, onWidthChange}) {
   if (size.width === 0) {
     console.log('size is zero!');
   }
 
-  const gridWidth = size.width > 0 ? size.width : 1200;
+  const width = size.width > 0 ? size.width : lastGridWidth;
+  if (width !== lastGridWidth) {
+    onWidthChange();
+    lastGridWidth = width;
+  }
 
   return (
     <ReactGridLayout
-      width={gridWidth}
+      width={lastGridWidth}
       className="layout"
       isDraggable={true}
       isResizable={true}
@@ -33,6 +38,7 @@ function GridWrapper({size, layout, onLayoutChange, children, onResize}) {
       draggableHandle=".grid-drag-handle"
       layout={layout}
       onResize={onResize}
+      onResizeStop={onResizeStop}
       onLayoutChange={onLayoutChange}>
       {children}
     </ReactGridLayout>
@@ -56,6 +62,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.panelContainer = this.props.getPanelContainer();
     this.onLayoutChange = this.onLayoutChange.bind(this);
     this.onResize = this.onResize.bind(this);
+    this.onResizeStop = this.onResizeStop.bind(this);
+    this.onWidthChange = this.onWidthChange.bind(this);
 
     // subscribe to dashboard events
     this.dashboard = this.panelContainer.getDashboard();
@@ -98,8 +106,19 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.forceUpdate();
   }
 
+  onWidthChange() {
+    console.log('width change');
+    for (const panel of this.dashboard.panels) {
+      panel.resizeDone();
+    }
+  }
+
   onResize(layout, oldItem, newItem) {
     this.panelMap[newItem.i].updateGridPos(newItem);
+  }
+
+  onResizeStop(layout, oldItem, newItem) {
+    this.panelMap[newItem.i].resizeDone();
   }
 
   renderPanels() {
@@ -119,7 +138,12 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
 
   render() {
     return (
-      <SizedReactLayoutGrid layout={this.buildLayout()} onLayoutChange={this.onLayoutChange} onResize={this.onResize}>
+      <SizedReactLayoutGrid
+        layout={this.buildLayout()}
+        onLayoutChange={this.onLayoutChange}
+        onWidthChange={this.onWidthChange}
+        onResize={this.onResize}
+        onResizeStop={this.onResizeStop}>
         {this.renderPanels()}
       </SizedReactLayoutGrid>
     );

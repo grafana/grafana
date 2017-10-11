@@ -21,4 +21,13 @@
   }
 }
 
+.react-grid-item {
+  // overflow: auto;
+}
+
+.theme-dark {
+  .react-grid-item > .react-resizable-handle {
+    background-image: url('../img/resize-handle-white.svg');
+  }
+}
 
