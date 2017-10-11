@@ -14,7 +14,6 @@ var logger log.Logger = log.New("fake.logger")
 func TestDatasourceAsConfig(t *testing.T) {
 	Convey("Testing datasource as configuration", t, func() {
 		fakeCfg := &fakeConfig{}
-
 		fakeRepo := &fakeRepository{}
 
 		Convey("One configured datasource", func() {
@@ -101,6 +100,37 @@ func TestDatasourceAsConfig(t *testing.T) {
 					So(len(fakeRepo.updated), ShouldEqual, 0)
 				})
 			})
+
+		})
+
+		Convey("Two configured datasource and purge others = false", func() {
+			fakeCfg.cfg = &DatasourcesAsConfig{
+				PurgeOtherDatasources: false,
+				Datasources: []models.DataSource{
+					models.DataSource{Name: "graphite", OrgId: 1},
+					models.DataSource{Name: "prometheus", OrgId: 1},
+				},
+			}
+
+			Convey("two other datasources in database", func() {
+				fakeRepo.loadAll = []*models.DataSource{
+					&models.DataSource{Name: "old-graphite", OrgId: 1, Id: 1},
+					&models.DataSource{Name: "old-graphite2", OrgId: 1, Id: 2},
+				}
+
+				Convey("should have two new datasources", func() {
+					dc := newDatasourceConfiguration(logger, fakeCfg, fakeRepo)
+					err := dc.applyChanges("mock/config.yaml")
+					if err != nil {
+						t.Fatalf("applyChanges return an error %v", err)
+					}
+
+					So(len(fakeRepo.deleted), ShouldEqual, 0)
+					So(len(fakeRepo.inserted), ShouldEqual, 2)
+					So(len(fakeRepo.updated), ShouldEqual, 0)
+				})
+			})
+
 		})
 	})
 }

@@ -1,7 +1,6 @@
 package datasources
 
 import (
-	"io"
 	"io/ioutil"
 	"path/filepath"
 
@@ -14,18 +13,16 @@ import (
 
 // TODO: secure jsonData
 // TODO: auto reload on file changes
+// TODO: remove get method since all datasources is in memory
 
 type DatasourcesAsConfig struct {
 	PurgeOtherDatasources bool
 	Datasources           []models.DataSource
 }
 
-func Init(configPath string) (error, io.Closer) {
-
+func Init(configPath string) error {
 	dc := NewDatasourceConfiguration()
-	dc.applyChanges(configPath)
-
-	return nil, ioutil.NopCloser(nil)
+	return dc.applyChanges(configPath)
 }
 
 type DatasourceConfigurator struct {
@@ -47,18 +44,39 @@ func newDatasourceConfiguration(log log.Logger, cfgProvider configProvider, repo
 }
 
 func (dc *DatasourceConfigurator) applyChanges(configPath string) error {
-	datasources, err := dc.cfgProvider.readConfig(configPath)
+	cfg, err := dc.cfgProvider.readConfig(configPath)
 	if err != nil {
 		return err
 	}
 
-	//read all datasources
-	//delete datasources not in list
+	all, err := dc.repository.loadAllDatasources()
+	if err != nil {
+		return err
+	}
 
-	for _, ds := range datasources.Datasources {
-		if ds.OrgId == 0 {
-			ds.OrgId = 1
+	for i, _ := range cfg.Datasources {
+		if cfg.Datasources[i].OrgId == 0 {
+			cfg.Datasources[i].OrgId = 1
 		}
+	}
+
+	if cfg.PurgeOtherDatasources {
+		for _, dbDatasource := range all {
+			delete := true
+			for _, cfgDatasource := range cfg.Datasources {
+				if dbDatasource.Name == cfgDatasource.Name && dbDatasource.OrgId == cfgDatasource.OrgId {
+					delete = false
+				}
+			}
+
+			if delete {
+				dc.log.Info("deleting datasource since PurgeOtherDatasource is enabled", "name", dbDatasource.Name)
+				dc.repository.delete(&models.DeleteDataSourceByIdCommand{Id: dbDatasource.Id, OrgId: dbDatasource.OrgId})
+			}
+		}
+	}
+
+	for _, ds := range cfg.Datasources {
 
 		query := &models.GetDataSourceByNameQuery{Name: ds.Name, OrgId: ds.OrgId}
 		err := dc.repository.get(query)
