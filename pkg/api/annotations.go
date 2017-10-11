@@ -1,6 +1,9 @@
 package api
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -76,6 +79,33 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 	}
 
 	return ApiSuccess("Annotation added")
+}
+
+func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotationsCmd) Response {
+	repo := annotations.GetRepository()
+
+	if cmd.When == 0 {
+		cmd.When = time.Now().Unix()
+	}
+	text := formatGraphiteAnnotation(cmd.What, cmd.Data)
+
+	item := annotations.Item{
+		OrgId:  c.OrgId,
+		UserId: c.UserId,
+		Epoch:  cmd.When,
+		Text:   text,
+		Tags:   cmd.Tags,
+	}
+
+	if err := repo.Save(&item); err != nil {
+		return ApiError(500, "Failed to save Graphite annotation", err)
+	}
+
+	return ApiSuccess("Graphite Annotation added")
+}
+
+func formatGraphiteAnnotation(what string, data string) string {
+	return fmt.Sprintf("%s\n%s", what, data)
 }
 
 func UpdateAnnotation(c *middleware.Context, cmd dtos.UpdateAnnotationsCmd) Response {
