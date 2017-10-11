@@ -92,16 +92,16 @@ export class DashNavCtrl {
     }
 
     deleteDashboard() {
-      var confirmText = "";
+      var confirmText = '';
       var text2 = this.dashboard.title;
-      var alerts = this.dashboard.rows.reduce((memo, row) => {
-        memo += row.panels.filter(panel => panel.alert).length;
-        return memo;
-      }, 0);
+
+      const alerts = _.sumBy(this.dashboard.panels, panel => {
+         return panel.alert ? 1 : 0;
+      });
 
       if (alerts > 0) {
         confirmText = 'DELETE';
-        text2 = `This dashboard contains ${alerts} alerts. Deleting this dashboad will also delete those alerts`;
+        text2 = `This dashboard contains ${alerts} alerts. Deleting this dashboard will also delete those alerts`;
       }
 
       appEvents.emit('confirm-modal', {
