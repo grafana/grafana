@@ -210,4 +210,113 @@ describe('GraphiteQueryCtrl', function() {
     });
   });
 
+  describe('when adding seriesByTag function', function() {
+    beforeEach(function() {
+      ctx.ctrl.target.target = '';
+      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.parseTarget();
+      ctx.ctrl.addFunction(gfunc.getFuncDef('seriesByTag'));
+    });
+
+    it('should update functions', function() {
+      expect(ctx.ctrl.getSeriesByTagFuncIndex()).to.be(0);
+    });
+
+    it('should update seriesByTagUsed flag', function() {
+      expect(ctx.ctrl.seriesByTagUsed).to.be(true);
+    });
+
+    it('should update target', function() {
+      expect(ctx.ctrl.target.target).to.be('seriesByTag()');
+    });
+
+    it('should call refresh', function() {
+      expect(ctx.panelCtrl.refresh.called).to.be(true);
+    });
+  });
+
+  describe('when parsing seriesByTag function', function() {
+    beforeEach(function() {
+      ctx.ctrl.target.target = "seriesByTag('tag1=value1', 'tag2!=~value2')";
+      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.parseTarget();
+    });
+
+    it('should add tags', function() {
+      const expected = [
+        {key: 'tag1', operator: '=', value: 'value1'},
+        {key: 'tag2', operator: '!=~', value: 'value2'}
+      ];
+      expect(ctx.ctrl.tags).to.eql(expected);
+    });
+
+    it('should add plus button', function() {
+      expect(ctx.ctrl.addTagSegments.length).to.be(1);
+    });
+  });
+
+  describe('when tag added', function() {
+    beforeEach(function() {
+      ctx.ctrl.target.target = "seriesByTag()";
+      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.parseTarget();
+      ctx.ctrl.addNewTag({value: 'tag1'});
+    });
+
+    it('should update tags with default value', function() {
+      const expected = [
+        {key: 'tag1', operator: '=', value: 'select tag value'}
+      ];
+      expect(ctx.ctrl.tags).to.eql(expected);
+    });
+
+    it('should update target', function() {
+      const expected = "seriesByTag('tag1=select tag value')";
+      expect(ctx.ctrl.target.target).to.eql(expected);
+    });
+  });
+
+  describe('when tag changed', function() {
+    beforeEach(function() {
+      ctx.ctrl.target.target = "seriesByTag('tag1=value1', 'tag2!=~value2')";
+      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.parseTarget();
+      ctx.ctrl.tagChanged({key: 'tag1', operator: '=', value: 'new_value'}, 0);
+    });
+
+    it('should update tags', function() {
+      const expected = [
+        {key: 'tag1', operator: '=', value: 'new_value'},
+        {key: 'tag2', operator: '!=~', value: 'value2'}
+      ];
+      expect(ctx.ctrl.tags).to.eql(expected);
+    });
+
+    it('should update target', function() {
+      const expected = "seriesByTag('tag1=new_value', 'tag2!=~value2')";
+      expect(ctx.ctrl.target.target).to.eql(expected);
+    });
+  });
+
+  describe('when tag removed', function() {
+    beforeEach(function() {
+      ctx.ctrl.target.target = "seriesByTag('tag1=value1', 'tag2!=~value2')";
+      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.parseTarget();
+      ctx.ctrl.removeTag(0);
+    });
+
+    it('should update tags', function() {
+      const expected = [
+        {key: 'tag2', operator: '!=~', value: 'value2'}
+      ];
+      expect(ctx.ctrl.tags).to.eql(expected);
+    });
+
+    it('should update target', function() {
+      const expected = "seriesByTag('tag2!=~value2')";
+      expect(ctx.ctrl.target.target).to.eql(expected);
+    });
+  });
+
 });

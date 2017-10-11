@@ -7,11 +7,17 @@ import {Parser} from './parser';
 import {QueryCtrl} from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
 
+const GRAPHITE_TAG_OPERATORS = ['=', '!=', '=~', '!=~'];
+
 export class GraphiteQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
   functions: any[];
   segments: any[];
+  addTagSegments: any[];
+  tags: any[];
+  seriesByTagUsed: boolean;
+  removeTagValue: string;
 
   /** @ngInject **/
   constructor($scope, $injector, private uiSegmentSrv, private templateSrv) {
@@ -21,6 +27,8 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       this.target.target = this.target.target || '';
       this.parseTarget();
     }
+
+    this.removeTagValue = '-- remove tag --';
   }
 
   toggleEditorMode() {
@@ -59,6 +67,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     }
 
     this.checkOtherSegments(this.segments.length - 1);
+    this.checkForSeriesByTag();
   }
 
   addFunctionParameter(func, value, index, shiftBack) {
@@ -304,6 +313,10 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     if (!newFunc.params.length && newFunc.added) {
       this.targetChanged();
     }
+
+    if (newFunc.def.name === 'seriesByTag') {
+      this.parseTarget();
+    }
   }
 
   moveAliasFuncLast() {
@@ -333,4 +346,126 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       }
     }
   }
+
+  //////////////////////////////////
+  // Graphite seriesByTag support //
+  //////////////////////////////////
+
+  checkForSeriesByTag() {
+    let seriesByTagFunc = _.find(this.functions, (func) => func.def.name === 'seriesByTag');
+    if (seriesByTagFunc) {
+      this.seriesByTagUsed = true;
+      let tags = this.splitSeriesByTagParams(seriesByTagFunc);
+      this.tags = tags;
+      this.fixTagSegments();
+    }
+  }
+
+  splitSeriesByTagParams(func) {
+    const tagPattern = /([^\!=~]+)([\!=~]+)([^\!=~]+)/;
+    return _.flatten(_.map(func.params, (param: string) => {
+      let matches = tagPattern.exec(param);
+      if (matches) {
+        let tag = matches.slice(1);
+        if (tag.length === 3) {
+          return {
+            key: tag[0],
+            operator: tag[1],
+            value: tag[2]
+          }
+        }
+      }
+      return [];
+    }));
+  }
+
+  getTags() {
+    return this.datasource.getTags().then((values) => {
+      let altTags = _.map(values, 'text');
+      altTags.splice(0, 0, this.removeTagValue);
+      return mapToDropdownOptions(altTags);
+    });
+  }
+
+  getTagsAsSegments() {
+    return this.datasource.getTags().then((values) => {
+      return _.map(values, (val) => {
+        return this.uiSegmentSrv.newSegment(val.text);
+      });
+    });
+  }
+
+  getTagOperators() {
+    return mapToDropdownOptions(GRAPHITE_TAG_OPERATORS);
+  }
+
+  getTagValues(tag) {
+    let tagKey = tag.key;
+    return this.datasource.getTagValues(tagKey).then((values) => {
+      let altValues = _.map(values, 'text');
+      return mapToDropdownOptions(altValues);
+    });
+  }
+
+  tagChanged(tag, tagIndex) {
+    this.error = null;
+
+    if (tag.key === this.removeTagValue) {
+      this.removeTag(tagIndex);
+      return;
+    }
+
+    let newTagParam = renderTagString(tag);
+    this.getSeriesByTagFunc().params[tagIndex] = newTagParam;
+    this.tags[tagIndex] = tag;
+    this.targetChanged();
+  }
+
+  getSeriesByTagFuncIndex() {
+    return _.findIndex(this.functions, (func) => func.def.name === 'seriesByTag');
+  }
+
+  getSeriesByTagFunc() {
+    let seriesByTagFuncIndex = this.getSeriesByTagFuncIndex();
+    if (seriesByTagFuncIndex >= 0) {
+      return this.functions[seriesByTagFuncIndex];
+    } else {
+      return undefined;
+    }
+  }
+
+  addNewTag(segment) {
+    let newTagKey = segment.value;
+    let newTag = {key: newTagKey, operator: '=', value: 'select tag value'};
+    let newTagParam = renderTagString(newTag);
+    this.getSeriesByTagFunc().params.push(newTagParam);
+    this.tags.push(newTag);
+    this.targetChanged();
+    this.fixTagSegments();
+  }
+
+  removeTag(index) {
+    this.getSeriesByTagFunc().params.splice(index, 1);
+    this.tags.splice(index, 1);
+    this.targetChanged();
+  }
+
+  fixTagSegments() {
+    // Adding tag with the same name as just removed works incorrectly if single segment is used (instead of array)
+    this.addTagSegments = [this.uiSegmentSrv.newPlusButton()];
+  }
+
+  showDelimiter(index) {
+    return index !== this.tags.length - 1;
+  }
+}
+
+function renderTagString(tag) {
+  return tag.key + tag.operator + tag.value;
+}
+
+function mapToDropdownOptions(results) {
+  return _.map(results, (value) => {
+    return {text: value, value: value};
+  });
 }
