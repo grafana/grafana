@@ -108,7 +108,8 @@ class DashListCtrl extends PanelCtrl {
   starDashboard(dash, evt) {
     this.dashboardSrv.starDashboard(dash.id, dash.isStarred).then(newState => {
       dash.isStarred = newState;
-  });
+    });
+
     if (evt) {
       evt.stopPropagation();
       evt.preventDefault();
