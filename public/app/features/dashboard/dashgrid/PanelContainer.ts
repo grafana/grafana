@@ -1,4 +1,4 @@
-import {DashboardModel}  from '../model';
+import {DashboardModel}  from '../DashboardModel';
 import {PanelLoader} from './PanelLoader';
 
 export interface PanelContainer {

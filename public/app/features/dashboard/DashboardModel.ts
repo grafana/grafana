@@ -10,7 +10,7 @@ import {PanelModel} from './PanelModel';
 import sortByKeys from 'app/core/utils/sort_by_keys';
 
 export const CELL_HEIGHT = 30;
-export const CELL_VMARGIN = 15;
+export const CELL_VMARGIN = 10;
 
 export class DashboardModel {
   id: any;
@@ -146,6 +146,15 @@ export class DashboardModel {
     this.panels = panels;
 
     return copy;
+  }
+
+  setViewMode(panel: PanelModel, fullscreen: boolean, isEditing: boolean) {
+    this.meta.fullscreen = fullscreen;
+    this.meta.isEditing = isEditing && this.meta.canEdit;
+
+    panel.setViewMode(fullscreen, this.meta.isEditing);
+
+    this.events.emit('view-mode-changed', panel);
   }
 
   private ensureListExist(data) {

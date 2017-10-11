@@ -4,7 +4,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import angular from 'angular';
 import {appEvents, NavModel} from 'app/core/core';
-import {DashboardModel} from '../model';
+import {DashboardModel} from '../DashboardModel';
 
 export class DashNavCtrl {
   dashboard: DashboardModel;

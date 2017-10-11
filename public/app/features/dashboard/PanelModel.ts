@@ -9,6 +9,8 @@ export interface GridPos {
 
 const notPersistedProperties: {[str: string]: boolean} = {
   "events": true,
+  "fullscreen": true,
+  "isEditing": true,
 };
 
 export class PanelModel {
@@ -16,6 +18,10 @@ export class PanelModel {
   gridPos:  GridPos;
   type: string;
   title: string;
+
+  // non persisted
+  fullscreen: boolean;
+  isEditing: boolean;
   events: Emitter;
 
   constructor(model) {
@@ -38,6 +44,11 @@ export class PanelModel {
     }
 
     return model;
+  }
+
+  setViewMode(fullscreen: boolean, isEditing: boolean) {
+    this.fullscreen = fullscreen;
+    this.isEditing = isEditing;
   }
 
   updateGridPos(newPos: GridPos) {

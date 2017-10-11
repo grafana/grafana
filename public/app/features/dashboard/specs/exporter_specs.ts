@@ -3,7 +3,7 @@ import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 import _ from 'lodash';
 import config from 'app/core/config';
 import {DashboardExporter} from '../export/exporter';
-import {DashboardModel} from '../model';
+import {DashboardModel} from '../DashboardModel';
 
 describe('given dashboard with repeated panels', function() {
   var dash, exported;

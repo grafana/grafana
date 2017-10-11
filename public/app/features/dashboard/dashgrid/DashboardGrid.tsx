@@ -1,11 +1,12 @@
 import React from 'react';
 import coreModule from 'app/core/core_module';
 import ReactGridLayout from 'react-grid-layout';
-import {CELL_HEIGHT, CELL_VMARGIN} from '../model';
+import {CELL_HEIGHT, CELL_VMARGIN} from '../DashboardModel';
 import {DashboardPanel} from './DashboardPanel';
-import {DashboardModel} from '../model';
+import {DashboardModel} from '../DashboardModel';
 import {PanelContainer} from './PanelContainer';
 import {PanelModel} from '../PanelModel';
+import classNames from 'classnames';
 import sizeMe from 'react-sizeme';
 
 const COLUMN_COUNT = 12;
@@ -104,8 +105,9 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     const panelElements = [];
 
     for (let panel of this.dashboard.panels) {
+      const panelClasses = classNames({panel: true, 'panel--fullscreen': panel.fullscreen});
       panelElements.push(
-        <div key={panel.id.toString()} className="panel">
+        <div key={panel.id.toString()} className={panelClasses}>
           <DashboardPanel panel={panel} getPanelContainer={this.props.getPanelContainer} />
         </div>,
       );

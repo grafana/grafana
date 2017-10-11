@@ -222,8 +222,8 @@ $btn-border-radius:              3px;
 $side-menu-width:  60px;
 
 // dashboard
-$panel-margin: 0.4rem;
-$dashboard-padding: ($panel-margin * 2) $panel-margin $panel-margin $panel-margin;
+$panel-margin: 10px;
+$dashboard-padding: $panel-margin * 2;
 
 // tabs
 $tabs-padding-top: 0.6rem;

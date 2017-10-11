@@ -5,6 +5,7 @@
   flex-direction: column;
   width: $side-menu-width;
   background: $navbarBackground;
+  overflow: hidden;
   z-index: 10;
 
   a:focus {

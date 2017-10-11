@@ -1,6 +1,4 @@
-///<reference path="../../headers/common.d.ts" />
-
-import {DashboardModel} from '../dashboard/model';
+import {DashboardModel} from '../dashboard/DashboardModel';
 import Remarkable from 'remarkable';
 
 export class MetricsTabCtrl {
