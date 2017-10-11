@@ -28,9 +28,9 @@ var panelTemplate = `
   <div class="panel-full-edit" ng-if="ctrl.editMode">
     <div class="tabbed-view tabbed-view--panel-edit">
       <div class="tabbed-view-header">
-        <h2 class="tabbed-view-title">
+        <h3 class="tabbed-view-panel-title">
           {{ctrl.pluginName}}
-        </h2>
+        </h3>
 
         <ul class="gf-tabs">
           <li class="gf-tabs-item" ng-repeat="tab in ::ctrl.editorTabs">

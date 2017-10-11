@@ -1,5 +1,4 @@
 .tabbed-view {
-  background-color: $panel-bg;
   padding: $spacer*3;
   margin-bottom: $dashboard-padding;
 
@@ -7,9 +6,9 @@
     padding: 0;
 
     .tabbed-view-header {
-      background-color: $body-bg;
       padding: 1.5em 1rem 0 1rem;
     }
+
     .gf-tabs-link.active {
       background-color: $panel-bg;
     }
@@ -23,9 +22,14 @@
 
 .tabbed-view-title {
   float: left;
-  font-style: italic;
   padding-top: 0.5rem;
   margin: 0 $spacer*3 0 $spacer*1;
+}
+
+.tabbed-view-panel-title {
+  float: left;
+  padding-top: 1rem;
+  margin: 0 2rem 0 0;
 }
 
 .tabbed-view-close-btn {
@@ -45,6 +49,7 @@
 }
 
 .tabbed-view-body {
+  background-color: $panel-bg;
   padding: $spacer*2 $spacer;
   min-height: 250px;
 
