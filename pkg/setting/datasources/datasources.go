@@ -11,13 +11,9 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// TODO: secure jsonData
-// TODO: auto reload on file changes
-// TODO: remove get method since all datasources is in memory
-
 type DatasourcesAsConfig struct {
 	PurgeOtherDatasources bool
-	Datasources           []models.DataSource
+	Datasources           []DataSourceFromConfig
 }
 
 func Init(configPath string) error {
@@ -49,50 +45,39 @@ func (dc *DatasourceConfigurator) applyChanges(configPath string) error {
 		return err
 	}
 
-	all, err := dc.repository.loadAllDatasources()
+	allDatasources, err := dc.repository.loadAllDatasources()
 	if err != nil {
 		return err
 	}
 
-	for i, _ := range cfg.Datasources {
+	for i := range cfg.Datasources {
 		if cfg.Datasources[i].OrgId == 0 {
 			cfg.Datasources[i].OrgId = 1
 		}
 	}
 
-	if cfg.PurgeOtherDatasources {
-		for _, dbDatasource := range all {
-			delete := true
-			for _, cfgDatasource := range cfg.Datasources {
-				if dbDatasource.Name == cfgDatasource.Name && dbDatasource.OrgId == cfgDatasource.OrgId {
-					delete = false
-				}
-			}
-
-			if delete {
-				dc.log.Info("deleting datasource since PurgeOtherDatasource is enabled", "name", dbDatasource.Name)
-				dc.repository.delete(&models.DeleteDataSourceByIdCommand{Id: dbDatasource.Id, OrgId: dbDatasource.OrgId})
-			}
-		}
+	if err := dc.deleteDatasourcesNotInConfiguration(cfg, allDatasources); err != nil {
+		return err
 	}
 
 	for _, ds := range cfg.Datasources {
-
-		query := &models.GetDataSourceByNameQuery{Name: ds.Name, OrgId: ds.OrgId}
-		err := dc.repository.get(query)
-		if err != nil && err != models.ErrDataSourceNotFound {
-			return err
+		var dbDatasource *models.DataSource
+		for _, ddd := range allDatasources {
+			if ddd.Name == ds.Name && ddd.OrgId == ds.OrgId {
+				dbDatasource = ddd
+				break
+			}
 		}
 
-		if query.Result == nil {
-			dc.log.Info("inserting ", "name", ds.Name)
+		if dbDatasource == nil {
+			dc.log.Info("inserting datasource from configuration ", "name", ds.Name)
 			insertCmd := createInsertCommand(ds)
 			if err := dc.repository.insert(insertCmd); err != nil {
 				return err
 			}
 		} else {
-			dc.log.Info("updating", "name", ds.Name)
-			updateCmd := createUpdateCommand(ds, query.Result.Id)
+			dc.log.Info("updating datasource from configuration", "name", ds.Name)
+			updateCmd := createUpdateCommand(ds, dbDatasource.Id)
 			if err := dc.repository.update(updateCmd); err != nil {
 				return err
 			}
@@ -102,43 +87,27 @@ func (dc *DatasourceConfigurator) applyChanges(configPath string) error {
 	return nil
 }
 
-func createInsertCommand(ds models.DataSource) *models.AddDataSourceCommand {
-	return &models.AddDataSourceCommand{
-		OrgId:             ds.OrgId,
-		Name:              ds.Name,
-		Type:              ds.Type,
-		Access:            ds.Access,
-		Url:               ds.Url,
-		Password:          ds.Password,
-		User:              ds.User,
-		Database:          ds.Database,
-		BasicAuth:         ds.BasicAuth,
-		BasicAuthUser:     ds.BasicAuthUser,
-		BasicAuthPassword: ds.BasicAuthPassword,
-		WithCredentials:   ds.WithCredentials,
-		IsDefault:         ds.IsDefault,
-		JsonData:          ds.JsonData,
-	}
-}
+func (dc *DatasourceConfigurator) deleteDatasourcesNotInConfiguration(cfg *DatasourcesAsConfig, allDatasources []*models.DataSource) error {
+	if cfg.PurgeOtherDatasources {
+		for _, dbDS := range allDatasources {
+			delete := true
+			for _, cfgDS := range cfg.Datasources {
+				if dbDS.Name == cfgDS.Name && dbDS.OrgId == cfgDS.OrgId {
+					delete = false
+				}
+			}
 
-func createUpdateCommand(ds models.DataSource, id int64) *models.UpdateDataSourceCommand {
-	return &models.UpdateDataSourceCommand{
-		Id:                id,
-		OrgId:             ds.OrgId,
-		Name:              ds.Name,
-		Type:              ds.Type,
-		Access:            ds.Access,
-		Url:               ds.Url,
-		Password:          ds.Password,
-		User:              ds.User,
-		Database:          ds.Database,
-		BasicAuth:         ds.BasicAuth,
-		BasicAuthUser:     ds.BasicAuthUser,
-		BasicAuthPassword: ds.BasicAuthPassword,
-		WithCredentials:   ds.WithCredentials,
-		IsDefault:         ds.IsDefault,
-		JsonData:          ds.JsonData,
+			if delete {
+				dc.log.Info("deleting datasource from configuration", "name", dbDS.Name)
+				cmd := &models.DeleteDataSourceByIdCommand{Id: dbDS.Id, OrgId: dbDS.OrgId}
+				if err := dc.repository.delete(cmd); err != nil {
+					return err
+				}
+			}
+		}
 	}
+
+	return nil
 }
 
 type datasourceRepository interface {

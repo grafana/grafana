@@ -19,8 +19,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 		Convey("One configured datasource", func() {
 			fakeCfg.cfg = &DatasourcesAsConfig{
 				PurgeOtherDatasources: false,
-				Datasources: []models.DataSource{
-					models.DataSource{Name: "graphite", OrgId: 1},
+				Datasources: []DataSourceFromConfig{
+					{Name: "graphite", OrgId: 1},
 				},
 			}
 
@@ -38,7 +38,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 			Convey("One datasource in database with same name", func() {
 				fakeRepo.loadAll = []*models.DataSource{
-					&models.DataSource{Name: "graphite", OrgId: 1, Id: 1},
+					{Name: "graphite", OrgId: 1, Id: 1},
 				}
 
 				Convey("should update one datasource", func() {
@@ -56,7 +56,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 			Convey("One datasource in database with new name", func() {
 				fakeRepo.loadAll = []*models.DataSource{
-					&models.DataSource{Name: "old-graphite", OrgId: 1, Id: 1},
+					{Name: "old-graphite", OrgId: 1, Id: 1},
 				}
 
 				Convey("should update one datasource", func() {
@@ -76,16 +76,16 @@ func TestDatasourceAsConfig(t *testing.T) {
 		Convey("Two configured datasource and purge others ", func() {
 			fakeCfg.cfg = &DatasourcesAsConfig{
 				PurgeOtherDatasources: true,
-				Datasources: []models.DataSource{
-					models.DataSource{Name: "graphite", OrgId: 1},
-					models.DataSource{Name: "prometheus", OrgId: 1},
+				Datasources: []DataSourceFromConfig{
+					{Name: "graphite", OrgId: 1},
+					{Name: "prometheus", OrgId: 1},
 				},
 			}
 
 			Convey("two other datasources in database", func() {
 				fakeRepo.loadAll = []*models.DataSource{
-					&models.DataSource{Name: "old-graphite", OrgId: 1, Id: 1},
-					&models.DataSource{Name: "old-graphite2", OrgId: 1, Id: 2},
+					{Name: "old-graphite", OrgId: 1, Id: 1},
+					{Name: "old-graphite2", OrgId: 1, Id: 2},
 				}
 
 				Convey("should have two new datasources", func() {
@@ -100,22 +100,21 @@ func TestDatasourceAsConfig(t *testing.T) {
 					So(len(fakeRepo.updated), ShouldEqual, 0)
 				})
 			})
-
 		})
 
 		Convey("Two configured datasource and purge others = false", func() {
 			fakeCfg.cfg = &DatasourcesAsConfig{
 				PurgeOtherDatasources: false,
-				Datasources: []models.DataSource{
-					models.DataSource{Name: "graphite", OrgId: 1},
-					models.DataSource{Name: "prometheus", OrgId: 1},
+				Datasources: []DataSourceFromConfig{
+					{Name: "graphite", OrgId: 1},
+					{Name: "prometheus", OrgId: 1},
 				},
 			}
 
 			Convey("two other datasources in database", func() {
 				fakeRepo.loadAll = []*models.DataSource{
-					&models.DataSource{Name: "old-graphite", OrgId: 1, Id: 1},
-					&models.DataSource{Name: "old-graphite2", OrgId: 1, Id: 2},
+					{Name: "graphite", OrgId: 1, Id: 1},
+					{Name: "old-graphite2", OrgId: 1, Id: 2},
 				}
 
 				Convey("should have two new datasources", func() {
@@ -126,11 +125,10 @@ func TestDatasourceAsConfig(t *testing.T) {
 					}
 
 					So(len(fakeRepo.deleted), ShouldEqual, 0)
-					So(len(fakeRepo.inserted), ShouldEqual, 2)
-					So(len(fakeRepo.updated), ShouldEqual, 0)
+					So(len(fakeRepo.inserted), ShouldEqual, 1)
+					So(len(fakeRepo.updated), ShouldEqual, 1)
 				})
 			})
-
 		})
 	})
 }
