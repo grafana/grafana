@@ -51,8 +51,10 @@ import {userGroupPicker} from './components/user_group_picker';
 import {geminiScrollbar} from './components/scroll/scroll';
 import {gfPageDirective} from './components/gf_page';
 import {orgSwitcher} from './components/org_switcher';
+import {profiler} from './profiler';
 
 export {
+  profiler,
   arrayJoin,
   coreModule,
   grafanaAppDirective,

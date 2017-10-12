@@ -24,6 +24,12 @@
 				<option value=""></option>
 			</select>
 		</div>
+    <div class="gf-form">
+			<span class="gf-form-label width-8">Direction</span>
+			<select class="gf-form-input" ng-model="ctrl.panel.repeatDirection" ng-options="f for f in ['X', 'Y']">
+				<option value=""></option>
+			</select>
+		</div>
 	</div>
 
 	<panel-links-editor panel="ctrl.panel"></panel-links-editor>

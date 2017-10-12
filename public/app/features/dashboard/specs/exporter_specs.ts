@@ -10,7 +10,6 @@ describe('given dashboard with repeated panels', function() {
 
   beforeEach(done => {
     dash = {
-      rows: [],
       templating: { list: [] },
       annotations: { list: [] },
     };
@@ -47,26 +46,6 @@ describe('given dashboard with repeated panels', function() {
       datasource: 'gfdb',
     });
 
-    dash.rows.push({
-      repeat: 'test',
-      panels: [
-        {id: 2, repeat: 'apps', datasource: 'gfdb', type: 'graph'},
-        {id: 3, repeat: null, repeatPanelId: 2},
-        {
-          id: 4,
-          datasource: '-- Mixed --',
-          targets: [{datasource: 'other'}],
-        },
-        {id: 5, datasource: '$ds'},
-      ]
-    });
-
-    dash.rows.push({
-      repeat: null,
-      repeatRowId: 1,
-      panels: [],
-    });
-
     dash.panels = [
       {id: 6, datasource: 'gfdb', type: 'graph'},
       {id: 7},
@@ -77,6 +56,9 @@ describe('given dashboard with repeated panels', function() {
       },
       {id: 9, datasource: '$ds'},
     ];
+
+    dash.panels.push({id: 2, repeat: 'apps', datasource: 'gfdb', type: 'graph'});
+    dash.panels.push({id: 3, repeat: null, repeatPanelId: 2});
 
     var datasourceSrvStub = {get: sinon.stub()};
     datasourceSrvStub.get.withArgs('gfdb').returns(Promise.resolve({
@@ -108,14 +90,6 @@ describe('given dashboard with repeated panels', function() {
       exported = clean;
       done();
     });
-  });
-
-  it.skip('exported dashboard should not contain repeated panels', function() {
-    expect(exported.rows[0].panels.length).to.be(3);
-  });
-
-  it.skip('exported dashboard should not contain repeated rows', function() {
-    expect(exported.rows.length).to.be(1);
   });
 
   it('should replace datasource refs', function() {

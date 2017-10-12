@@ -1,4 +1,5 @@
 import {Emitter} from 'app/core/core';
+import _ from 'lodash';
 
 export interface GridPos {
   x: number;
@@ -21,6 +22,9 @@ export class PanelModel {
   alert?: any;
   scopedVars?: any;
   repeat?: any;
+  repeatIteration?: any;
+  repeatPanelId?: any;
+  repeatDirection?: any;
 
   // non persisted
   fullscreen: boolean;
@@ -34,6 +38,10 @@ export class PanelModel {
     for (var property in model) {
       this[property] = model[property];
     }
+
+    if (!this.gridPos) {
+      this.gridPos = {x: 0, y: 0, h: 3, w: 6};
+    }
   }
 
   getSaveModel() {
@@ -43,7 +51,7 @@ export class PanelModel {
         continue;
       }
 
-      model[property] = this[property];
+      model[property] = _.cloneDeep(this[property]);
     }
 
     return model;

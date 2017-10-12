@@ -1,7 +1,7 @@
 import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
-import {profiler} from 'app/core/profiler';
+import {appEvents, profiler} from 'app/core/core';
 import Remarkable from 'remarkable';
 import {CELL_HEIGHT, CELL_VMARGIN} from '../dashboard/dashboard_model';
 
@@ -188,7 +188,30 @@ export class PanelCtrl {
     });
   }
 
-  removePanel() {
+  removePanel(ask: boolean) {
+    // confirm deletion
+    if (ask !== false) {
+      var text2, confirmText;
+
+      if (this.panel.alert) {
+        text2 = "Panel includes an alert rule, removing panel will also remove alert rule";
+        confirmText = "YES";
+      }
+
+      appEvents.emit('confirm-modal', {
+        title: 'Remove Panel',
+        text: 'Are you sure you want to remove this panel?',
+        text2: text2,
+        icon: 'fa-trash',
+        confirmText: confirmText,
+        yesText: 'Remove',
+        onConfirm: () => {
+          this.removePanel(false);
+        }
+      });
+      return;
+    }
+
     this.dashboard.removePanel(this.panel);
   }
 

@@ -1,29 +1,24 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import _ from 'lodash';
-import {DynamicDashboardSrv} from '../dynamic_dashboard_srv';
+import {DashboardModel} from '../dashboard_model';
 
 export class DashboardExporter {
 
   constructor(private datasourceSrv) {
   }
 
-  makeExportable(dashboard) {
-    var dynSrv = new DynamicDashboardSrv();
-
+  makeExportable(dashboard: DashboardModel) {
     // clean up repeated rows and panels,
     // this is done on the live real dashboard instance, not on a clone
     // so we need to undo this
     // this is pretty hacky and needs to be changed
-    dynSrv.init(dashboard);
-    dynSrv.process({cleanUpOnly: true});
+    dashboard.cleanUpRepeats();
 
     var saveModel = dashboard.getSaveModelClone();
     saveModel.id = null;
 
     // undo repeat cleanup
-    dynSrv.process();
+    dashboard.processRepeats();
 
     var inputs = [];
     var requires = {};

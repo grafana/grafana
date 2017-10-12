@@ -2,7 +2,7 @@ import moment from 'moment';
 import _ from 'lodash';
 
 import {DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
-import {Emitter, contextSrv, appEvents} from 'app/core/core';
+import {Emitter, contextSrv} from 'app/core/core';
 import {DashboardRow} from './row/row_model';
 import {PanelModel} from './panel_model';
 import sortByKeys from 'app/core/utils/sort_by_keys';
@@ -34,11 +34,18 @@ export class DashboardModel {
   revision: number;
   links: any;
   gnetId: any;
-  meta: any;
-  events: any;
   editMode: boolean;
   folderId: number;
   panels: PanelModel[];
+
+  // ------------------
+  // not persisted
+  // ------------------
+
+  // repeat process cycles
+  iteration: number;
+  meta: any;
+  events: Emitter;
 
   static nonPersistedProperties: {[str: string]: boolean} = {
     "events": true,
@@ -193,7 +200,12 @@ export class DashboardModel {
 
     this.panels.unshift(new PanelModel(panel));
 
-    // make sure it's sorted by pos
+    this.sortPanelsByGridPos();
+
+    this.events.emit('panel-added', panel);
+  }
+
+  private sortPanelsByGridPos() {
     this.panels.sort(function(panelA, panelB) {
       if (panelA.gridPos.y === panelB.gridPos.y) {
         return panelA.gridPos.x - panelB.gridPos.x;
@@ -201,33 +213,86 @@ export class DashboardModel {
         return panelA.gridPos.y - panelB.gridPos.y;
       }
     });
-
-    this.events.emit('panel-added', panel);
   }
 
-  removePanel(panel, ask?) {
-    // confirm deletion
-    if (ask !== false) {
-      var text2, confirmText;
-      if (panel.alert) {
-        text2 = "Panel includes an alert rule, removing panel will also remove alert rule";
-        confirmText = "YES";
-      }
+  cleanUpRepeats() {
+    this.processRepeats(true);
+  }
 
-      appEvents.emit('confirm-modal', {
-        title: 'Remove Panel',
-        text: 'Are you sure you want to remove this panel?',
-        text2: text2,
-        icon: 'fa-trash',
-        confirmText: confirmText,
-        yesText: 'Remove',
-        onConfirm: () => {
-          this.removePanel(panel, false);
-        }
-      });
+  processRepeats(cleanUpOnly?: boolean) {
+    if (this.snapshot || this.templating.list.length === 0) {
       return;
     }
 
+    this.iteration = (this.iteration || new Date().getTime()) + 1;
+
+    let panelsToRemove = [];
+
+    for (let panel of this.panels) {
+      if (panel.repeat) {
+        if (!cleanUpOnly) {
+          this.repeatPanel(panel);
+        }
+      } else if (panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
+        panelsToRemove.push(panel);
+      }
+    }
+
+    // remove panels
+    _.pull(this.panels, ...panelsToRemove);
+
+    this.sortPanelsByGridPos();
+    this.events.emit('repeats-processed');
+  }
+
+  getRepeatClone(sourcePanel, index) {
+    // if first clone return source
+    if (index === 0) {
+      return sourcePanel;
+    }
+
+    var clone = new PanelModel(sourcePanel.getSaveModel());
+    clone.id = this.getNextPanelId();
+    this.panels.push(clone);
+
+    clone.repeatIteration = this.iteration;
+    clone.repeatPanelId = sourcePanel.id;
+    clone.repeat = null;
+    return clone;
+  }
+
+  repeatPanel(panel: PanelModel) {
+    var variable = _.find(this.templating.list, {name: panel.repeat});
+    if (!variable) { return; }
+
+    var selected;
+    if (variable.current.text === 'All') {
+      selected = variable.options.slice(1, variable.options.length);
+    } else {
+      selected = _.filter(variable.options, {selected: true});
+    }
+
+    for (let index = 0; index < selected.length; index++) {
+      var option = selected[index];
+      var copy = this.getRepeatClone(panel, index);
+
+      copy.scopedVars = copy.scopedVars || {};
+      copy.scopedVars[variable.name] = option;
+
+      // souce panel uses original possition
+      if (index === 0) {
+        continue;
+      }
+
+      if (panel.repeatDirection === 'Y') {
+        copy.gridPos.y = panel.gridPos.y + (panel.gridPos.h*index);
+      } else {
+        copy.gridPos.x = panel.gridPos.x + (panel.gridPos.w*index);
+      }
+    }
+  }
+
+  removePanel(panel: PanelModel) {
     var index = _.indexOf(this.panels, panel);
     this.panels.splice(index, 1);
     this.events.emit('panel-removed', panel);

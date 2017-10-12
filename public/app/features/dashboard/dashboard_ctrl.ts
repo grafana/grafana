@@ -20,7 +20,6 @@ export class DashboardCtrl implements PanelContainer {
     private alertingSrv,
     private dashboardSrv,
     private unsavedChangesSrv,
-    private dynamicDashboardSrv,
     private dashboardViewStateSrv,
     private panelLoader) {
       // temp hack due to way dashboards are loaded
@@ -57,10 +56,9 @@ export class DashboardCtrl implements PanelContainer {
       .catch(this.onInitFailed.bind(this, 'Templating init failed', false))
       // continue
       .finally(() => {
-        this.dashboard = dashboard;
 
-        this.dynamicDashboardSrv.init(dashboard);
-        this.dynamicDashboardSrv.process();
+        this.dashboard = dashboard;
+        this.dashboard.processRepeats();
 
         this.unsavedChangesSrv.init(dashboard, this.$scope);
 
@@ -97,7 +95,7 @@ export class DashboardCtrl implements PanelContainer {
     }
 
     templateVariableUpdated() {
-      this.dynamicDashboardSrv.process();
+      this.dashboard.processRepeats();
     }
 
     setWindowTitleAndTheme() {

@@ -69,6 +69,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.dashboard = this.panelContainer.getDashboard();
     this.dashboard.on('panel-added', this.triggerForceUpdate.bind(this));
     this.dashboard.on('panel-removed', this.triggerForceUpdate.bind(this));
+    this.dashboard.on('repeats-processed', this.triggerForceUpdate.bind(this));
     this.dashboard.on('view-mode-changed', this.triggerForceUpdate.bind(this));
   }
 
