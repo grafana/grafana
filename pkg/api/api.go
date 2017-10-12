@@ -304,6 +304,7 @@ func (hs *HttpServer) registerRoutes() {
 			annotationsRoute.Delete("/:annotationId", wrap(DeleteAnnotationById))
 			annotationsRoute.Put("/:annotationId", bind(dtos.UpdateAnnotationsCmd{}), wrap(UpdateAnnotation))
 			annotationsRoute.Delete("/region/:regionId", wrap(DeleteAnnotationRegion))
+			annotationsRoute.Post("/graphite", bind(dtos.PostGraphiteAnnotationsCmd{}), wrap(PostGraphiteAnnotation))
 		}, reqEditorRole)
 
 		// error test

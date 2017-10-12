@@ -135,6 +135,5 @@ Name | Description
 ------------ | -------------
 Query | You can leave the search query blank or specify a lucene query
 Time | The name of the time field, needs to be date field.
-Title | The name of the field to use for the event title.
+Text | Event description field.
 Tags | Optional field name to use for event tags (can be an array or a CSV string).
-Text | Optional field name to use event text body.

@@ -17,6 +17,7 @@ import './components/code_editor/code_editor';
 import './utils/outline';
 import './components/colorpicker/ColorPicker';
 import './components/colorpicker/SeriesColorPicker';
+import './components/colorpicker/spectrum_picker';
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';
