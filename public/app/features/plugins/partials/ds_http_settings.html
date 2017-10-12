@@ -46,7 +46,7 @@
       </div>
       <div class="gf-form-inline">
         <gf-form-switch class="gf-form" ng-if="current.access=='proxy'" label="TLS Client Auth" label-class="width-8" checked="current.jsonData.tlsAuth" switch-class="max-width-6"></gf-form-switch>
-        <gf-form-switch class="gf-form" ng-if="current.access=='proxy'" label="With CA Cert" tooltip="Optional. Needed for self-signed TLS Certs." checked="current.jsonData.tlsAuthWithCACert" label-class="width-11" switch-class="max-width-6"></gf-form-switch>
+        <gf-form-switch class="gf-form" ng-if="current.access=='proxy'" label="With CA Cert" tooltip="Needed for verifing self-signed TLS Certs" checked="current.jsonData.tlsAuthWithCACert" label-class="width-11" switch-class="max-width-6"></gf-form-switch>
       </div>
     </div>
 
@@ -84,7 +84,7 @@
         <label class="gf-form-label width-7">CA Cert</label>
       </div>
       <div class="gf-form gf-form--grow" ng-if="!current.secureJsonFields.tlsCACert">
-        <textarea rows="7" class="gf-form-input gf-form-textarea" ng-model="current.secureJsonData.tlsCACert" placeholder="Begins with -----BEGIN CERTIFICATE-----. The CA Certificate is necessary if you are using self-signed certificates."></textarea>
+        <textarea rows="7" class="gf-form-input gf-form-textarea" ng-model="current.secureJsonData.tlsCACert" placeholder="Begins with -----BEGIN CERTIFICATE-----"></textarea>
       </div>
 
       <div class="gf-form" ng-if="current.secureJsonFields.tlsCACert">
