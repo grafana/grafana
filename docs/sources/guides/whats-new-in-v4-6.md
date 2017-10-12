@@ -12,24 +12,32 @@ weight = -5
 
 # What's New in Grafana v4.6
 
-## Hightlights
+Grafana v4.6 brings many enhancements to Annotations, Cloudwatch & Prometheus. It also adds support for Postgres as metric & table data source!
 
 ### Annotations
 
-Annotations provide a way to mark points on the graph with rich events. When you hover over an annotation you can get event description and event tags. The text field can include links to other systems with more detail.
+{{< docs-imagebox img="/img/docs/v46/add_annotation_region.png"  max-width= "800px" >}}
+
+You can now add annotation events and regions right from the graph panel! Just hold CTRL/CMD + click or drag region to open the **Add Annotation** view. The
+[Annotations]({{< relref "reference/annotations.md" >}}) documentation is updated to include details on this new exciting feature.
 
 ### Cloudwatch
 
-{{< docs-imagebox img="/img/docs/v46/cloudwatch_alerting.png"  max-width= "600px" >}}
+Cloudwatch now supports alerting. Setup alert rules for any Cloudwatch metric!
+
+{{< docs-imagebox img="/img/docs/v46/cloudwatch_alerting.png"  max-width= "800px" >}}
 
 ### Postgres
 
-{{< docs-imagebox img="/img/docs/v46/postgres_table_query.png"  max-width= "600px" >}}
-{{< docs-imagebox img="/img/docs/v46/postgres_table.png"  max-width= "600px" >}}
+Grafana v4.6 now ships with a built-in datasource plugin for Postgres. Have logs or metric data in Postgres? You can now visualize that data and
+define alert rules on it like any of our other data sources.
+
+{{< docs-imagebox img="/img/docs/v46/postgres_table_query.png"  max-width= "800px" >}}
 
 ### Prometheus
 
-With the new features instant queries and autocomplete label name and value makes quering with Prometheus a lot easier.
+New enhancements include support for **instant queries** and improvements to query editor in the form of autocomplete for label names and label values.
+This makes exploring and filtering Prometheus data much easier.
 
 ## Changelog
 
