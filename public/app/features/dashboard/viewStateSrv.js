@@ -39,17 +39,7 @@ function (angular, _, $, config) {
       // dont want url changes like adding orgId to add browser history
       $location.replace();
       this.update(this.getQueryStringState());
-      this.expandRowForPanel();
     }
-
-    DashboardViewState.prototype.expandRowForPanel = function() {
-      if (!this.state.panelId) { return; }
-
-      var panelInfo = this.$scope.dashboard.getPanelInfoById(this.state.panelId);
-      if (panelInfo) {
-        panelInfo.row.collapse = false;
-      }
-    };
 
     DashboardViewState.prototype.needsSync = function(urlState) {
       return _.isEqual(this.state, urlState) === false;

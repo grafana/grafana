@@ -194,7 +194,7 @@ export class PanelCtrl {
 
   editPanelJson() {
     this.publishAppEvent('show-json-editor', {
-      object: this.panel,
+      object: this.panel.getSaveModel(),
       updateHandler: this.replacePanel.bind(this)
     });
   }

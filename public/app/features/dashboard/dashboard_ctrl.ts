@@ -135,8 +135,8 @@ export class DashboardCtrl implements PanelContainer {
     }
 
     init(dashboard) {
-      this.$scope.onAppEvent('show-json-editor', this.$scope.showJsonEditor);
-      this.$scope.onAppEvent('template-variable-value-updated', this.$scope.templateVariableUpdated);
+      this.$scope.onAppEvent('show-json-editor', this.showJsonEditor.bind(this));
+      this.$scope.onAppEvent('template-variable-value-updated', this.templateVariableUpdated.bind(this));
       this.setupDashboard(dashboard);
     }
 }

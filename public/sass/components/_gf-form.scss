@@ -1,4 +1,4 @@
-$gf-form-margin: 1px;
+$gf-form-margin: 3px;
 
 .gf-form {
   margin-bottom: $gf-form-margin;
@@ -55,6 +55,7 @@ $gf-form-margin: 1px;
 
 .gf-form-label {
   padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
   flex-shrink: 0;
   font-weight: $font-weight-semi-bold;
 
@@ -107,6 +108,7 @@ $gf-form-margin: 1px;
   display: block;
   width: 100%;
   padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
   font-size: $font-size-base;
   line-height: $input-line-height;
   color: $input-color;
@@ -114,8 +116,6 @@ $gf-form-margin: 1px;
   background-image: none;
   background-clip: padding-box;
   border: 1px solid $input-border-color;
-  border-bottom: none;
-  border-left: none;
   @include border-radius($input-border-radius-sm);
   @include box-shadow($input-box-shadow);
   white-space: nowrap;

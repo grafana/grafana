@@ -724,6 +724,5 @@ export class DashboardModel {
         yPos += rowGridHeight;
       }
 
-      console.log('panels', this.panels);
     }
 }
