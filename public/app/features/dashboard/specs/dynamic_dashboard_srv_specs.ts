@@ -5,7 +5,7 @@ import {DynamicDashboardSrv} from '../dynamic_dashboard_srv';
 
 function dynamicDashScenario(desc, func)  {
 
-  describe(desc, function() {
+  describe.skip(desc, function() {
     var ctx: any = {};
 
     ctx.setup = function (setupFunc) {

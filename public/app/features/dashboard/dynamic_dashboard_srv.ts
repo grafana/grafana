@@ -27,46 +27,48 @@ export class DynamicDashboardSrv {
     var cleanUpOnly = options.cleanUpOnly;
     var i, j, row, panel;
 
-    // cleanup scopedVars
-    for (i = 0; i < this.dashboard.rows.length; i++) {
-      row = this.dashboard.rows[i];
-      delete row.scopedVars;
+    if (this.dashboard.rows) {
+      // cleanup scopedVars
+      for (i = 0; i < this.dashboard.rows.length; i++) {
+        row = this.dashboard.rows[i];
+        delete row.scopedVars;
 
-      for (j = 0; j < row.panels.length; j++) {
-        delete row.panels[j].scopedVars;
-      }
-    }
-
-    for (i = 0; i < this.dashboard.rows.length; i++) {
-      row = this.dashboard.rows[i];
-
-      // handle row repeats
-      if (row.repeat) {
-        if (!cleanUpOnly) {
-          this.repeatRow(row, i);
+        for (j = 0; j < row.panels.length; j++) {
+          delete row.panels[j].scopedVars;
         }
-      } else if (row.repeatRowId && row.repeatIteration !== this.iteration) {
-        // clean up old left overs
-        this.dashboard.removeRow(row, true);
-        i = i - 1;
-        continue;
       }
 
-      // repeat panels
-      for (j = 0; j < row.panels.length; j++) {
-        panel = row.panels[j];
-        if (panel.repeat) {
+      for (i = 0; i < this.dashboard.rows.length; i++) {
+        row = this.dashboard.rows[i];
+
+        // handle row repeats
+        if (row.repeat) {
           if (!cleanUpOnly) {
-            this.repeatPanel(panel, row);
+            this.repeatRow(row, i);
           }
-        } else if (panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
+        } else if (row.repeatRowId && row.repeatIteration !== this.iteration) {
           // clean up old left overs
-          row.panels = _.without(row.panels, panel);
-          j = j - 1;
+          this.dashboard.removeRow(row, true);
+          i = i - 1;
+          continue;
         }
-      }
 
-      row.panelSpanChanged();
+        // repeat panels
+        for (j = 0; j < row.panels.length; j++) {
+          panel = row.panels[j];
+          if (panel.repeat) {
+            if (!cleanUpOnly) {
+              this.repeatPanel(panel, row);
+            }
+          } else if (panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
+            // clean up old left overs
+            row.panels = _.without(row.panels, panel);
+            j = j - 1;
+          }
+        }
+
+        row.panelSpanChanged();
+      }
     }
   }
 
