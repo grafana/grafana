@@ -12,6 +12,9 @@ import {coreModule, appEvents, contextSrv} from 'app/core/core';
 import {Observable} from 'rxjs/Observable';
 import {Subject} from 'rxjs/Subject';
 import * as datemath from 'app/core/utils/datemath';
+import * as fileExport from 'app/core/utils/file_export';
+import * as flatten from 'app/core/utils/flatten';
+import * as ticks from 'app/core/utils/ticks';
 import builtInPlugins from './buit_in_plugins';
 import d3 from 'vendor/d3/d3';
 
@@ -54,19 +57,24 @@ exposeToPlugin('rxjs/Observable', Observable);
 exposeToPlugin('d3', d3);
 
 exposeToPlugin('app/plugins/sdk', sdk);
+
 exposeToPlugin('app/core/utils/datemath', datemath);
+exposeToPlugin('app/core/utils/file_export', fileExport);
+exposeToPlugin('app/core/utils/flatten', flatten);
 exposeToPlugin('app/core/utils/kbn', kbn);
+exposeToPlugin('app/core/utils/ticks', ticks);
+
 exposeToPlugin('app/core/config', config);
 exposeToPlugin('app/core/time_series', TimeSeries);
 exposeToPlugin('app/core/time_series2', TimeSeries);
 exposeToPlugin('app/core/table_model', TableModel);
 exposeToPlugin('app/core/app_events', appEvents);
 exposeToPlugin('app/core/core_module', coreModule);
-exposeToPlugin('app/core/core_module', coreModule);
 exposeToPlugin('app/core/core', {
   coreModule: coreModule,
   appEvents: appEvents,
   contextSrv: contextSrv,
+  __esModule: true
 });
 
 import 'vendor/flot/jquery.flot';
@@ -79,7 +87,11 @@ import 'vendor/flot/jquery.flot.fillbelow';
 import 'vendor/flot/jquery.flot.crosshair';
 import 'vendor/flot/jquery.flot.dashes';
 
-for (let flotDep of ['jquery.flot', 'jquery.flot.pie', 'jquery.flot.time']) {
+const flotDeps = [
+  'jquery.flot', 'jquery.flot.pie', 'jquery.flot.time', 'jquery.flot.fillbelow', 'jquery.flot.crosshair',
+  'jquery.flot.stack', 'jquery.flot.selection', 'jquery.flot.stackpercent', 'jquery.flot.events'
+];
+for (let flotDep of flotDeps) {
   exposeToPlugin(flotDep, {fakeDep: 1});
 }
 
