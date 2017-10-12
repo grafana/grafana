@@ -3,7 +3,7 @@ import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 import _ from 'lodash';
 import config from 'app/core/config';
 import {DashboardExporter} from '../export/exporter';
-import {DashboardModel} from '../DashboardModel';
+import {DashboardModel} from '../dashboard_model';
 
 describe('given dashboard with repeated panels', function() {
   var dash, exported;
@@ -103,7 +103,6 @@ describe('given dashboard with repeated panels', function() {
     };
 
     dash = new DashboardModel(dash, {});
-    dash.getSaveModelClone();
     var exporter = new DashboardExporter(datasourceSrvStub);
     exporter.makeExportable(dash).then(clean => {
       exported = clean;

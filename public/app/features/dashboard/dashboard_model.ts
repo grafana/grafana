@@ -4,7 +4,7 @@ import _ from 'lodash';
 import {DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
 import {Emitter, contextSrv, appEvents} from 'app/core/core';
 import {DashboardRow} from './row/row_model';
-import {PanelModel} from './PanelModel';
+import {PanelModel} from './panel_model';
 import sortByKeys from 'app/core/utils/sort_by_keys';
 
 export const CELL_HEIGHT = 30;

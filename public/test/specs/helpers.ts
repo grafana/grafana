@@ -2,7 +2,7 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import * as dateMath from 'app/core/utils/datemath';
 import {angularMocks, sinon} from '../lib/common';
-import {PanelModel} from 'app/features/dashboard/PanelModel';
+import {PanelModel} from 'app/features/dashboard/panel_model';
 
 export function ControllerTestContext() {
   var self = this;

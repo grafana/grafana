@@ -3,7 +3,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import {profiler} from 'app/core/profiler';
 import Remarkable from 'remarkable';
-import {CELL_HEIGHT, CELL_VMARGIN} from '../dashboard/DashboardModel';
+import {CELL_HEIGHT, CELL_VMARGIN} from '../dashboard/dashboard_model';
 
 const TITLE_HEIGHT = 25;
 const EMPTY_TITLE_HEIGHT = 9;

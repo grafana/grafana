@@ -1,11 +1,11 @@
 import React from 'react';
 import coreModule from 'app/core/core_module';
 import ReactGridLayout from 'react-grid-layout';
-import {CELL_HEIGHT, CELL_VMARGIN} from '../DashboardModel';
+import {CELL_HEIGHT, CELL_VMARGIN} from '../dashboard_model';
 import {DashboardPanel} from './DashboardPanel';
-import {DashboardModel} from '../DashboardModel';
+import {DashboardModel} from '../dashboard_model';
 import {PanelContainer} from './PanelContainer';
-import {PanelModel} from '../PanelModel';
+import {PanelModel} from '../panel_model';
 import classNames from 'classnames';
 import sizeMe from 'react-sizeme';
 

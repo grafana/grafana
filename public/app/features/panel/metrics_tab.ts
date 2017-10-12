@@ -1,4 +1,4 @@
-import {DashboardModel} from '../dashboard/DashboardModel';
+import {DashboardModel} from '../dashboard/dashboard_model';
 import Remarkable from 'remarkable';
 
 export class MetricsTabCtrl {

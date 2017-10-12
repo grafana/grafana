@@ -1,5 +1,5 @@
 import React from 'react';
-import {PanelModel} from '../PanelModel';
+import {PanelModel} from '../panel_model';
 import {PanelContainer} from './PanelContainer';
 import {AttachedPanel} from './PanelLoader';
 

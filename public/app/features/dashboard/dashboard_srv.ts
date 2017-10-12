@@ -1,5 +1,5 @@
 import coreModule from 'app/core/core_module';
-import {DashboardModel} from './DashboardModel';
+import {DashboardModel} from './dashboard_model';
 
 export class DashboardSrv {
   dash: any;

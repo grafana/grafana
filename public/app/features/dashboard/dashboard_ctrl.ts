@@ -2,7 +2,7 @@ import config from 'app/core/config';
 
 import coreModule from 'app/core/core_module';
 import {PanelContainer} from './dashgrid/PanelContainer';
-import {DashboardModel} from './DashboardModel';
+import {DashboardModel} from './dashboard_model';
 
 export class DashboardCtrl implements PanelContainer {
   dashboard: DashboardModel;
