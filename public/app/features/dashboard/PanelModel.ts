@@ -19,12 +19,13 @@ export class PanelModel {
   type: string;
   title: string;
   alert?: any;
+  scopedVars?: any;
+  repeat?: any;
 
   // non persisted
   fullscreen: boolean;
   isEditing: boolean;
   events: Emitter;
-  scopedVars: any;
 
   constructor(model) {
     this.events = new Emitter();

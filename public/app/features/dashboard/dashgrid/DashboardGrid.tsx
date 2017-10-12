@@ -31,7 +31,7 @@ function GridWrapper({size, layout, onLayoutChange, children, onResize, onResize
       isResizable={true}
       measureBeforeMount={false}
       containerPadding={[0, 0]}
-      useCSSTransforms={true}
+      useCSSTransforms={false}
       margin={[CELL_VMARGIN, CELL_VMARGIN]}
       cols={COLUMN_COUNT}
       rowHeight={CELL_HEIGHT}
@@ -68,6 +68,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     // subscribe to dashboard events
     this.dashboard = this.panelContainer.getDashboard();
     this.dashboard.on('panel-added', this.triggerForceUpdate.bind(this));
+    this.dashboard.on('panel-removed', this.triggerForceUpdate.bind(this));
     this.dashboard.on('view-mode-changed', this.triggerForceUpdate.bind(this));
   }
 

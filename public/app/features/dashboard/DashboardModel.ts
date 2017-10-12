@@ -1,7 +1,5 @@
-import angular from 'angular';
 import moment from 'moment';
 import _ from 'lodash';
-import $ from 'jquery';
 
 import {DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
 import {Emitter, contextSrv, appEvents} from 'app/core/core';
@@ -11,6 +9,7 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 
 export const CELL_HEIGHT = 30;
 export const CELL_VMARGIN = 10;
+export const COL_COUNT = 12;
 
 export class DashboardModel {
   id: any;
@@ -134,10 +133,9 @@ export class DashboardModel {
     this.panels = _.map(panels, panel => panel.getSaveModel());
 
     // make clone
-    var copy = $.extend(true, {}, this);
+    var copy = _.cloneDeep(this);
     //  sort clone
     copy = sortByKeys(copy);
-    console.log(copy.panels);
 
     // restore properties
     this.events = events;
@@ -189,7 +187,18 @@ export class DashboardModel {
 
   addPanel(panel) {
     panel.id = this.getNextPanelId();
-    this.panels.unshift(new PanelModel(panel));
+
+    this.panels.push(new PanelModel(panel));
+
+    // make sure it's sorted by pos
+    this.panels.sort(function(panelA, panelB) {
+      if (panelA.gridPos.y === panelB.gridPos.y) {
+        return panelA.gridPos.x - panelB.gridPos.x;
+      } else {
+        return panelA.gridPos.y - panelB.gridPos.y;
+      }
+    });
+
     this.events.emit('panel-added', panel);
   }
 
@@ -265,8 +274,8 @@ export class DashboardModel {
     return result;
   }
 
-  duplicatePanel(panel, row) {
-    var newPanel = angular.copy(panel);
+  duplicatePanel(panel) {
+    const newPanel = _.cloneDeep(panel.getSaveModel());
     newPanel.id = this.getNextPanelId();
 
     delete newPanel.repeat;
@@ -278,7 +287,15 @@ export class DashboardModel {
     }
     delete newPanel.alert;
 
-    row.addPanel(newPanel);
+    // does it fit to the right?
+    if (panel.gridPos.x + (panel.gridPos.w*2) <= COL_COUNT) {
+      newPanel.gridPos.x += panel.gridPos.w;
+    } else {
+      // add bellow
+      newPanel.gridPos.y += panel.gridPos.h;
+    }
+
+    this.addPanel(newPanel);
     return newPanel;
   }
 

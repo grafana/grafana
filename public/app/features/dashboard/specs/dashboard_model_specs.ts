@@ -2,6 +2,7 @@ import {describe, beforeEach, it, expect} from 'test/lib/common';
 
 import _ from 'lodash';
 import {DashboardModel} from '../DashboardModel';
+import {PanelModel} from '../PanelModel';
 
 describe('DashboardModel', function() {
 
@@ -46,51 +47,42 @@ describe('DashboardModel', function() {
       var saveModel = model.getSaveModelClone();
       var keys = _.keys(saveModel);
 
-      expect(keys[0]).to.be('addBuiltInAnnotationQuery');
-      expect(keys[1]).to.be('addPanel');
+      expect(keys[0]).to.be('autoUpdate');
+      expect(keys[1]).to.be('revision');
     });
   });
 
-  describe.skip('row and panel manipulation', function() {
+  describe('row and panel manipulation', function() {
     var dashboard;
 
     beforeEach(function() {
       dashboard = new DashboardModel({});
     });
 
-    it('adding default should split span in half', function() {
-      dashboard.addEmptyRow();
-      dashboard.rows[0].addPanel({span: 12});
-      dashboard.rows[0].addPanel({span: 12});
+    it('adding panel should new up panel model', function() {
+      dashboard.addPanel({type: 'test', title: 'test'});
 
-      expect(dashboard.rows[0].panels[0].span).to.be(6);
-      expect(dashboard.rows[0].panels[1].span).to.be(6);
+      expect(dashboard.panels[0] instanceof PanelModel).to.be(true);
     });
 
-    it('duplicate panel should try to add it to same row', function() {
-      var panel = { span: 4, attr: '123', id: 10 };
+    it('duplicate panel should try to add to the right if there is space', function() {
+      var panel = {id: 10, gridPos: {x: 0, y: 0, w: 6, h: 2}};
 
-      dashboard.addEmptyRow();
-      dashboard.rows[0].addPanel(panel);
-      dashboard.duplicatePanel(panel, dashboard.rows[0]);
+      dashboard.addPanel(panel);
+      dashboard.duplicatePanel(dashboard.panels[0]);
 
-      expect(dashboard.rows[0].panels[0].span).to.be(4);
-      expect(dashboard.rows[0].panels[1].span).to.be(4);
-      expect(dashboard.rows[0].panels[1].attr).to.be('123');
-      expect(dashboard.rows[0].panels[1].id).to.be(11);
+      expect(dashboard.panels[1].gridPos).to.eql({x: 6, y: 0, h: 2, w: 6});
     });
 
     it('duplicate panel should remove repeat data', function() {
-      var panel = { span: 4, attr: '123', id: 10, repeat: 'asd', scopedVars: { test: 'asd' }};
+      var panel = {id: 10, gridPos: {x: 0, y: 0, w: 6, h: 2}, repeat: 'asd', scopedVars: {test: 'asd'}};
 
-      dashboard.addEmptyRow();
-      dashboard.rows[0].addPanel(panel);
-      dashboard.duplicatePanel(panel, dashboard.rows[0]);
+      dashboard.addPanel(panel);
+      dashboard.duplicatePanel(dashboard.panels[0]);
 
-      expect(dashboard.rows[0].panels[1].repeat).to.be(undefined);
-      expect(dashboard.rows[0].panels[1].scopedVars).to.be(undefined);
+      expect(dashboard.panels[1].repeat).to.be(undefined);
+      expect(dashboard.panels[1].scopedVars).to.be(undefined);
     });
-
   });
 
   describe('when creating dashboard with old schema', function() {
