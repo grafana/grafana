@@ -78,16 +78,25 @@ func OAuthLogin(ctx *middleware.Context) {
 	}
 
 	// handle call back
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: setting.OAuthService.OAuthInfos[name].TlsSkipVerify,
+		},
+	}
+	oauthClient := &http.Client{
+		Transport: tr,
+	}
 
-	// initialize oauth2 context
-	oauthCtx := oauth2.NoContext
-	if setting.OAuthService.OAuthInfos[name].TlsClientCert != "" {
+	if setting.OAuthService.OAuthInfos[name].TlsClientCert != "" || setting.OAuthService.OAuthInfos[name].TlsClientKey != "" {
 		cert, err := tls.LoadX509KeyPair(setting.OAuthService.OAuthInfos[name].TlsClientCert, setting.OAuthService.OAuthInfos[name].TlsClientKey)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		// Load CA cert
+		tr.TLSClientConfig.Certificates = append(tr.TLSClientConfig.Certificates, cert)
+	}
+
+	if setting.OAuthService.OAuthInfos[name].TlsClientCa != "" {
 		caCert, err := ioutil.ReadFile(setting.OAuthService.OAuthInfos[name].TlsClientCa)
 		if err != nil {
 			log.Fatal(err)
@@ -95,18 +104,10 @@ func OAuthLogin(ctx *middleware.Context) {
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
 
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-				Certificates:       []tls.Certificate{cert},
-				RootCAs:            caCertPool,
-			},
-		}
-		sslcli := &http.Client{Transport: tr}
-
-		oauthCtx = context.Background()
-		oauthCtx = context.WithValue(oauthCtx, oauth2.HTTPClient, sslcli)
+		tr.TLSClientConfig.RootCAs = caCertPool
 	}
+
+	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, oauthClient)
 
 	// get token from provider
 	token, err := connect.Exchange(oauthCtx, code)
