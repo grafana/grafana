@@ -66,7 +66,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       tooltip += '<div class="graph-annotation__body">';
 
       if (text) {
-        tooltip += '<div>' + sanitizeString(text).replace(/\n/g, '<br>') + '</div>';
+        tooltip += '<div>' + sanitizeString(text.replace(/\n/g, '<br>')) + '</div>';
       }
 
       var tags = event.tags;
