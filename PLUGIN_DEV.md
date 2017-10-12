@@ -22,7 +22,7 @@ set of plugins could encounter issues when importing a Grafana dependency.
 
 If you think we missed exposing a crucial lib or Grafana component let us know by opening an issue.  
 
-### Depricated components 
+### Deprecated components 
 
 The angular directive `<spectrum-picker>` is no depricated (will still work for a version more) but we recommend plugin authors
 to upgrade to new `<color-picker color="ctrl.color" onChange="ctrl.onSparklineColorChange"></color-picker>`
