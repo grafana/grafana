@@ -251,6 +251,13 @@ export class DashboardModel {
       });
     });
 
+    _.each(this.panels, function(panel, index) {
+      if (panel.id === panelId) {
+        result.panel = panel;
+        result.index = index;
+      }
+    });
+
     if (!result.panel) {
       return null;
     }

@@ -69,29 +69,27 @@ export class DashboardExporter {
     };
 
     // check up panel data sources
-    for (let row of saveModel.rows) {
-      for (let panel of row.panels) {
-        if (panel.datasource !== undefined) {
-          templateizeDatasourceUsage(panel);
-        }
+    for (let panel of saveModel.panels) {
+      if (panel.datasource !== undefined) {
+        templateizeDatasourceUsage(panel);
+      }
 
-        if (panel.targets) {
-          for (let target of panel.targets) {
-            if (target.datasource !== undefined) {
-              templateizeDatasourceUsage(target);
-            }
+      if (panel.targets) {
+        for (let target of panel.targets) {
+          if (target.datasource !== undefined) {
+            templateizeDatasourceUsage(target);
           }
         }
+      }
 
-        var panelDef = config.panels[panel.type];
-        if (panelDef) {
-          requires['panel' + panelDef.id] = {
-            type: 'panel',
-            id: panelDef.id,
-            name: panelDef.name,
-            version: panelDef.info.version,
-          };
-        }
+      var panelDef = config.panels[panel.type];
+      if (panelDef) {
+        requires['panel' + panelDef.id] = {
+          type: 'panel',
+          id: panelDef.id,
+          name: panelDef.name,
+          version: panelDef.info.version,
+        };
       }
     }
 

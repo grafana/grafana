@@ -24,6 +24,7 @@ export class PanelModel {
   fullscreen: boolean;
   isEditing: boolean;
   events: Emitter;
+  scopedVars: any;
 
   constructor(model) {
     this.events = new Emitter();

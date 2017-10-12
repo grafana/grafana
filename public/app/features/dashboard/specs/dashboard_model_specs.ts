@@ -22,7 +22,7 @@ describe('DashboardModel', function() {
     });
 
     it('should have default properties', function() {
-      expect(model.rows.length).to.be(0);
+      expect(model.panels.length).to.be(0);
     });
   });
 
@@ -31,7 +31,7 @@ describe('DashboardModel', function() {
 
     beforeEach(function() {
       model = new DashboardModel({
-        rows: [{ panels: [{ id: 5 }]}]
+        panels: [{ id: 5 }]
       });
     });
 
@@ -47,11 +47,11 @@ describe('DashboardModel', function() {
       var keys = _.keys(saveModel);
 
       expect(keys[0]).to.be('addBuiltInAnnotationQuery');
-      expect(keys[1]).to.be('addEmptyRow');
+      expect(keys[1]).to.be('addPanel');
     });
   });
 
-  describe('row and panel manipulation', function() {
+  describe.skip('row and panel manipulation', function() {
     var dashboard;
 
     beforeEach(function() {
@@ -106,43 +106,39 @@ describe('DashboardModel', function() {
           {type: 'filtering', enable: true},
           {type: 'annotations', enable: true, annotations: [{name: 'old'}]}
         ],
-        rows: [
+        panels: [
           {
-            panels: [
-              {
-                type: 'graph', legend: true, aliasYAxis: { test: 2 },
-                y_formats: ['kbyte', 'ms'],
-                grid: {
-                  min: 1,
-                  max: 10,
-                  rightMin: 5,
-                  rightMax: 15,
-                  leftLogBase: 1,
-                  rightLogBase: 2,
-                  threshold1: 200,
-                  threshold2: 400,
-                  threshold1Color: 'yellow',
-                  threshold2Color: 'red',
-                },
-                leftYAxisLabel: 'left label',
-                targets: [{refId: 'A'}, {}],
-              },
-              {
-                type: 'singlestat', legend: true, thresholds: '10,20,30', aliasYAxis: { test: 2 }, grid: { min: 1, max: 10 },
-                targets: [{refId: 'A'}, {}],
-              },
-              {
-                type: 'table', legend: true, styles: [{ thresholds: ["10", "20", "30"]}, { thresholds: ["100", "200", "300"]}],
-                targets: [{refId: 'A'}, {}],
-              }
-            ]
+            type: 'graph', legend: true, aliasYAxis: { test: 2 },
+            y_formats: ['kbyte', 'ms'],
+            grid: {
+              min: 1,
+              max: 10,
+              rightMin: 5,
+              rightMax: 15,
+              leftLogBase: 1,
+              rightLogBase: 2,
+              threshold1: 200,
+              threshold2: 400,
+              threshold1Color: 'yellow',
+              threshold2Color: 'red',
+            },
+            leftYAxisLabel: 'left label',
+            targets: [{refId: 'A'}, {}],
+          },
+          {
+            type: 'singlestat', legend: true, thresholds: '10,20,30', aliasYAxis: { test: 2 }, grid: { min: 1, max: 10 },
+            targets: [{refId: 'A'}, {}],
+          },
+          {
+            type: 'table', legend: true, styles: [{ thresholds: ["10", "20", "30"]}, { thresholds: ["100", "200", "300"]}],
+            targets: [{refId: 'A'}, {}],
           }
         ]
       });
 
-      graph = model.rows[0].panels[0];
-      singlestat = model.rows[0].panels[1];
-      table = model.rows[0].panels[2];
+      graph = model.panels[0];
+      singlestat = model.panels[1];
+      table = model.panels[2];
     });
 
     it('should have title', function() {
@@ -207,7 +203,7 @@ describe('DashboardModel', function() {
     });
 
     it('dashboard schema version should be set to latest', function() {
-      expect(model.schemaVersion).to.be(14);
+      expect(model.schemaVersion).to.be(16);
     });
 
     it('graph thresholds should be migrated', function() {
@@ -244,52 +240,50 @@ describe('DashboardModel', function() {
 
     beforeEach(function() {
       model = new DashboardModel({
-        rows: [{
-          panels: [{
-            type: 'graph',
-            grid: {},
-            yaxes: [{}, {}],
-            targets: [{
-              "alias": "$tag_datacenter $tag_source $col",
-              "column": "value",
-              "measurement": "logins.count",
-              "fields": [
-                {
-                  "func": "mean",
-                  "name": "value",
-                  "mathExpr": "*2",
-                  "asExpr": "value"
-                },
-                {
-                  "name": "one-minute",
-                  "func": "mean",
-                  "mathExpr": "*3",
-                  "asExpr": "one-minute"
-                }
-              ],
-              "tags": [],
-              "fill": "previous",
-              "function": "mean",
-              "groupBy": [
-                {
-                  "interval": "auto",
-                  "type": "time"
-                },
-                {
-                  "key": "source",
-                  "type": "tag"
-                },
-                {
-                  "type": "tag",
-                  "key": "datacenter"
-                }
-              ],
-            }]
+        panels: [{
+          type: 'graph',
+          grid: {},
+          yaxes: [{}, {}],
+          targets: [{
+            "alias": "$tag_datacenter $tag_source $col",
+            "column": "value",
+            "measurement": "logins.count",
+            "fields": [
+              {
+                "func": "mean",
+                "name": "value",
+                "mathExpr": "*2",
+                "asExpr": "value"
+              },
+              {
+                "name": "one-minute",
+                "func": "mean",
+                "mathExpr": "*3",
+                "asExpr": "one-minute"
+              }
+            ],
+            "tags": [],
+            "fill": "previous",
+            "function": "mean",
+            "groupBy": [
+              {
+                "interval": "auto",
+                "type": "time"
+              },
+              {
+                "key": "source",
+                "type": "tag"
+              },
+              {
+                "type": "tag",
+                "key": "datacenter"
+              }
+            ],
           }]
         }]
       });
 
-      target = model.rows[0].panels[0].targets[0];
+      target = model.panels[0].targets[0];
     });
 
     it('should update query schema', function() {
