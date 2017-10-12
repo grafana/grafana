@@ -94,6 +94,7 @@ export class AlertTabCtrl {
       case "opsgenie": return "fa fa-bell";
       case "hipchat": return "fa fa-mail-forward";
       case "pushover": return "fa fa-mobile";
+      case "kafka": return "fa fa-random";
     }
     return 'fa fa-bell';
   }
