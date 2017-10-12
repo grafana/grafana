@@ -47,8 +47,8 @@ describe('DashboardModel', function() {
       var saveModel = model.getSaveModelClone();
       var keys = _.keys(saveModel);
 
-      expect(keys[0]).to.be('autoUpdate');
-      expect(keys[1]).to.be('revision');
+      expect(keys[0]).to.be('annotations');
+      expect(keys[1]).to.be('autoUpdate');
     });
   });
 

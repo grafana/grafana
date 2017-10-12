@@ -103,6 +103,7 @@ describe('given dashboard with repeated panels', function() {
     };
 
     dash = new DashboardModel(dash, {});
+    dash.getSaveModelClone();
     var exporter = new DashboardExporter(datasourceSrvStub);
     exporter.makeExportable(dash).then(clean => {
       exported = clean;

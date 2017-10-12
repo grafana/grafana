@@ -40,6 +40,13 @@ export class DashboardModel {
   folderId: number;
   panels: PanelModel[];
 
+  static nonPersistedProperties: {[str: string]: boolean} = {
+    "events": true,
+    "meta": true,
+    "panels": true, // needs special handling
+    "templating": true, // needs special handling
+  };
+
   constructor(data, meta?) {
     if (!data) {
       data = {};
@@ -118,30 +125,26 @@ export class DashboardModel {
 
   // cleans meta data and other non peristent state
   getSaveModelClone() {
-    // temp remove stuff
-    var events = this.events;
-    var meta = this.meta;
-    var variables = this.templating.list;
-    var panels = this.panels;
-
-    delete this.events;
-    delete this.meta;
-    delete this.panels;
-
-    // prepare save model
-    this.templating.list = _.map(variables, variable => variable.getSaveModel ? variable.getSaveModel() : variable);
-    this.panels = _.map(panels, panel => panel.getSaveModel());
-
     // make clone
-    var copy = _.cloneDeep(this);
-    //  sort clone
-    copy = sortByKeys(copy);
+    var copy: any = {};
+    for (var property in this) {
+      if (DashboardModel.nonPersistedProperties[property] || !this.hasOwnProperty(property)) {
+        continue;
+      }
 
-    // restore properties
-    this.events = events;
-    this.meta = meta;
-    this.templating.list = variables;
-    this.panels = panels;
+      copy[property] = _.cloneDeep(this[property]);
+    }
+
+    // get variable save models
+    copy.templating = {
+      list: _.map(this.templating.list, variable => variable.getSaveModel ? variable.getSaveModel() : variable),
+    };
+
+    // get panel save models
+    copy.panels = _.map(this.panels, panel => panel.getSaveModel());
+
+    //  sort by keys
+    copy = sortByKeys(copy);
 
     return copy;
   }
@@ -188,7 +191,7 @@ export class DashboardModel {
   addPanel(panel) {
     panel.id = this.getNextPanelId();
 
-    this.panels.push(new PanelModel(panel));
+    this.panels.unshift(new PanelModel(panel));
 
     // make sure it's sorted by pos
     this.panels.sort(function(panelA, panelB) {
