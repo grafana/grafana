@@ -71,8 +71,12 @@ func OAuthLogin(ctx *middleware.Context) {
 		return
 	}
 
-	// verify state string
-	savedState := ctx.Session.Get(middleware.SESS_KEY_OAUTH_STATE).(string)
+	savedState, ok := ctx.Session.Get(middleware.SESS_KEY_OAUTH_STATE).(string)
+	if !ok {
+		ctx.Handle(500, "login.OAuthLogin(missing saved state)", nil)
+		return
+	}
+
 	queryState := ctx.Query("state")
 	if savedState != queryState {
 		ctx.Handle(500, "login.OAuthLogin(state mismatch)", nil)
