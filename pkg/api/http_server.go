@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/live"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -155,7 +154,7 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 
 	for _, route := range plugins.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
-		logger.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
+		hs.log.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
 		hs.mapStatic(m, route.Directory, "", pluginRoute)
 	}
 
