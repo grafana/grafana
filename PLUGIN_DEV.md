@@ -15,8 +15,7 @@ upgrading Grafana please check here before creating an issue.
 This version of Grafana has big changes that will impact a limited set of plugins. We moved from systemjs to webpack
 for built-in plugins & everything internal. External plugins still use systemjs but now with a limited 
 set of Grafana components they can import. Plugins can depend on libs like lodash & moment and internal components 
-like before using the same import paths. Hover since everything in Grafana is no longer accessable some limited 
-set of plugins could encounter issues when importing a Grafana dependency. 
+like before using the same import paths. However since everything in Grafana is no longer accessible, a few plugins could encounter issues when importing a Grafana dependency. 
 
 [List of exposed components plugins can import/require](https://github.com/grafana/grafana/blob/master/public/app/features/plugins/plugin_loader.ts#L48)
 
@@ -24,6 +23,6 @@ If you think we missed exposing a crucial lib or Grafana component let us know b
 
 ### Deprecated components 
 
-The angular directive `<spectrum-picker>` is no depricated (will still work for a version more) but we recommend plugin authors
+The angular directive `<spectrum-picker>` is no deprecated (will still work for a version more) but we recommend plugin authors
 to upgrade to new `<color-picker color="ctrl.color" onChange="ctrl.onSparklineColorChange"></color-picker>`
 
