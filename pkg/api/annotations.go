@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -81,6 +82,18 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 	return ApiSuccess("Annotation added")
 }
 
+type GraphiteAnnotationError struct {
+	message string
+}
+
+func (e *GraphiteAnnotationError) Error() string {
+	return e.message
+}
+
+func formatGraphiteAnnotation(what string, data string) string {
+	return fmt.Sprintf("%s\n%s", what, data)
+}
+
 func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
 
@@ -89,12 +102,31 @@ func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotati
 	}
 	text := formatGraphiteAnnotation(cmd.What, cmd.Data)
 
+	// Support tags in prior to Graphite 0.10.0 format (string of tags separated by space)
+	var tagsArray []string
+	switch tags := cmd.Tags.(type) {
+	case string:
+		tagsArray = strings.Split(tags, " ")
+	case []interface{}:
+		for _, t := range tags {
+			if tagStr, ok := t.(string); ok {
+				tagsArray = append(tagsArray, tagStr)
+			} else {
+				err := &GraphiteAnnotationError{"tag should be a string"}
+				return ApiError(500, "Failed to save Graphite annotation", err)
+			}
+		}
+	default:
+		err := &GraphiteAnnotationError{"unsupported tags format"}
+		return ApiError(500, "Failed to save Graphite annotation", err)
+	}
+
 	item := annotations.Item{
 		OrgId:  c.OrgId,
 		UserId: c.UserId,
 		Epoch:  cmd.When,
 		Text:   text,
-		Tags:   cmd.Tags,
+		Tags:   tagsArray,
 	}
 
 	if err := repo.Save(&item); err != nil {
@@ -102,10 +134,6 @@ func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotati
 	}
 
 	return ApiSuccess("Graphite Annotation added")
-}
-
-func formatGraphiteAnnotation(what string, data string) string {
-	return fmt.Sprintf("%s\n%s", what, data)
 }
 
 func UpdateAnnotation(c *middleware.Context, cmd dtos.UpdateAnnotationsCmd) Response {
