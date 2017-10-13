@@ -21,14 +21,14 @@ Grafana v4.6+ comes with a native annotation store and the ability to add annota
 
 ## Adding annotations
 
-By holding down CTRL/CMD + mouse click. Add tags to the annotation will make it searchable from other dashboards.
+By holding down **CTRL** or **CMD** + Click. Add tags to the annotation will make it searchable from other dashboards.
 
 {{< docs-imagebox img="/img/docs/annotations/annotation-still.png"
 max-width="600px" animated-gif="/img/docs/annotations/annotation.gif" >}}
 
 ### Adding regions events
 
-You can also hold down CTRL/CMD and select region to create a region annotation.
+You can also hold down **CTRL** or **CMD** and select region to create a region annotation.
 
 {{< docs-imagebox img="/img/docs/annotations/region-annotation-still.png"
 max-width="600px" animated-gif="/img/docs/annotations/region-annotation.gif" >}}
