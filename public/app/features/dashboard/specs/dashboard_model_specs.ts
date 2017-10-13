@@ -416,12 +416,12 @@ describe('DashboardModel', function() {
     });
   });
 
-  describe('given dashboard with panel repeat', function(ctx) {
+  describe('given dashboard with panel repeat in horizontal direction', function(ctx) {
     var dashboard;
 
     beforeEach(function() {
       dashboard = new DashboardModel({
-        panels: [{id: 2, repeat: 'apps'}],
+        panels: [{id: 2, repeat: 'apps', repeatDirection: 'h', gridPos: {x: 0, y: 0, h: 2, w: 24}}],
         templating:  {
           list: [{
             name: 'apps',
@@ -454,6 +454,12 @@ describe('DashboardModel', function() {
       expect(dashboard.panels[0].scopedVars.apps.value).to.be('se1');
       expect(dashboard.panels[1].scopedVars.apps.value).to.be('se2');
       expect(dashboard.panels[2].scopedVars.apps.value).to.be('se3');
+    });
+
+    it('should place on first row and adjust width so all fit', function() {
+      expect(dashboard.panels[0].gridPos).to.eql({x: 0, y: 0, h: 2, w: 8});
+      expect(dashboard.panels[1].gridPos).to.eql({x: 8, y: 0, h: 2, w: 8});
+      expect(dashboard.panels[2].gridPos).to.eql({x: 16, y: 0, h: 2, w: 8});
     });
 
     describe('After a second iteration', function() {
@@ -520,6 +526,38 @@ describe('DashboardModel', function() {
       });
     });
 
+  });
+
+  describe('given dashboard with panel repeat in vertical direction', function(ctx) {
+    var dashboard;
+
+    beforeEach(function() {
+      dashboard = new DashboardModel({
+        panels: [{id: 2, repeat: 'apps', repeatDirection: 'v', gridPos: {x: 5, y: 0, h: 2, w: 8}}],
+        templating:  {
+          list: [{
+            name: 'apps',
+            current: {
+              text: 'se1, se2, se3',
+              value: ['se1', 'se2', 'se3']
+            },
+            options: [
+              {text: 'se1', value: 'se1', selected: true},
+              {text: 'se2', value: 'se2', selected: true},
+              {text: 'se3', value: 'se3', selected: true},
+              {text: 'se4', value: 'se4', selected: false}
+            ]
+          }]
+        }
+      });
+      dashboard.processRepeats();
+    });
+
+    it('should place on items on top of each other and keep witdh', function() {
+      expect(dashboard.panels[0].gridPos).to.eql({x: 5, y: 0, h: 2, w: 8});
+      expect(dashboard.panels[1].gridPos).to.eql({x: 5, y: 2, h: 2, w: 8});
+      expect(dashboard.panels[2].gridPos).to.eql({x: 5, y: 4, h: 2, w: 8});
+    });
   });
 
 });

@@ -1,7 +1,7 @@
 import moment from 'moment';
 import _ from 'lodash';
 
-import {GRID_COLUMN_COUNT, GRID_CELL_HEIGHT} from 'app/core/constants';
+import {GRID_COLUMN_COUNT, GRID_CELL_HEIGHT, REPEAT_DIR_VERTICAL} from 'app/core/constants';
 import {DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
 import {Emitter, contextSrv} from 'app/core/core';
 import sortByKeys from 'app/core/utils/sort_by_keys';
@@ -283,6 +283,9 @@ export class DashboardModel {
       selected = _.filter(variable.options, {selected: true});
     }
 
+    let minWidth = panel.minSpan || 6;
+    let xIndex = 0;
+
     for (let index = 0; index < selected.length; index++) {
       var option = selected[index];
       var copy = this.getRepeatClone(panel, index);
@@ -290,15 +293,26 @@ export class DashboardModel {
       copy.scopedVars = {};
       copy.scopedVars[variable.name] = option;
 
-      // souce panel uses original possition
-      if (index === 0) {
-        continue;
-      }
+      if (panel.repeatDirection === REPEAT_DIR_VERTICAL) {
+        if (index === 0) {
+          continue;
+        }
 
-      if (panel.repeatDirection === 'Y') {
         copy.gridPos.y = panel.gridPos.y + panel.gridPos.h * index;
       } else {
-        copy.gridPos.x = panel.gridPos.x + panel.gridPos.w * index;
+        // set width based on how many are selected
+        // assumed the repeated panels should take up full row width
+
+        copy.gridPos.w = Math.max(GRID_COLUMN_COUNT / selected.length, minWidth);
+        copy.gridPos.x = copy.gridPos.w * xIndex;
+
+        // handle overflow by pushing down one row
+        if (copy.gridPos.x + copy.gridPos.w > GRID_COLUMN_COUNT) {
+          copy.gridPos.x = 0;
+          xIndex = 0;
+        } else {
+          xIndex += 1;
+        }
       }
     }
   }

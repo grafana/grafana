@@ -21,10 +21,11 @@ export class PanelModel {
   title: string;
   alert?: any;
   scopedVars?: any;
-  repeat?: any;
-  repeatIteration?: any;
-  repeatPanelId?: any;
-  repeatDirection?: any;
+  repeat?: string;
+  repeatIteration?: number;
+  repeatPanelId?: number;
+  repeatDirection?: string;
+  minSpan?: number;
 
   // non persisted
   fullscreen: boolean;
