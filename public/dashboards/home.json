@@ -21,8 +21,8 @@
       "transparent": true,
       "type": "text",
       "gridPos": {
-        "w": 12,
-        "h": 2,
+        "w": 24,
+        "h": 3,
         "x": 0,
         "y": 0
       }
@@ -42,7 +42,7 @@
       "transparent": false,
       "type": "dashlist",
       "gridPos": {
-        "w": 7,
+        "w": 12,
         "h": 17,
         "x": 0,
         "y": 6
@@ -57,9 +57,9 @@
       "transparent": false,
       "type": "pluginlist",
       "gridPos": {
-        "w": 5,
+        "w": 12,
         "h": 17,
-        "x": 7,
+        "x": 12,
         "y": 6
       }
     }

@@ -400,20 +400,126 @@ describe('DashboardModel', function() {
   });
 
   describe('updateSubmenuVisibility with hidden annotation toggle', function() {
-    var model;
+    var dashboard;
 
     beforeEach(function() {
-      model = new DashboardModel({
+      dashboard = new DashboardModel({
         annotations: {
           list: [{hide: true}]
         }
       });
-      model.updateSubmenuVisibility();
+      dashboard.updateSubmenuVisibility();
     });
 
     it('should not enable submmenu', function() {
-      expect(model.meta.submenuEnabled).to.be(false);
+      expect(dashboard.meta.submenuEnabled).to.be(false);
     });
+  });
+
+  describe('given dashboard with panel repeat', function(ctx) {
+    var dashboard;
+
+    beforeEach(function() {
+      dashboard = new DashboardModel({
+        panels: [{id: 2, repeat: 'apps'}],
+        templating:  {
+          list: [{
+            name: 'apps',
+            current: {
+              text: 'se1, se2, se3',
+              value: ['se1', 'se2', 'se3']
+            },
+            options: [
+              {text: 'se1', value: 'se1', selected: true},
+              {text: 'se2', value: 'se2', selected: true},
+              {text: 'se3', value: 'se3', selected: true},
+              {text: 'se4', value: 'se4', selected: false}
+            ]
+          }]
+        }
+      });
+      dashboard.processRepeats();
+    });
+
+    it('should repeat panel 3 times', function() {
+      expect(dashboard.panels.length).to.be(3);
+    });
+
+    it('should mark panel repeated', function() {
+      expect(dashboard.panels[0].repeat).to.be('apps');
+      expect(dashboard.panels[1].repeatPanelId).to.be(2);
+    });
+
+    it('should set scopedVars on panels', function() {
+      expect(dashboard.panels[0].scopedVars.apps.value).to.be('se1');
+      expect(dashboard.panels[1].scopedVars.apps.value).to.be('se2');
+      expect(dashboard.panels[2].scopedVars.apps.value).to.be('se3');
+    });
+
+    describe('After a second iteration', function() {
+      var repeatedPanelAfterIteration1;
+
+      beforeEach(function() {
+        repeatedPanelAfterIteration1 = dashboard.panels[1];
+        dashboard.panels[0].fill = 10;
+        dashboard.processRepeats();
+      });
+
+      it('reused panel should copy properties from source', function() {
+        expect(dashboard.panels[1].fill).to.be(10);
+      });
+
+      it('should have same panel count', function() {
+        expect(dashboard.panels.length).to.be(3);
+      });
+    });
+
+    describe('After a second iteration with different variable', function() {
+      beforeEach(function() {
+        dashboard.templating.list.push({
+          name: 'server',
+          current: { text: 'se1, se2, se3', value: ['se1']},
+          options: [{text: 'se1', value: 'se1', selected: true}]
+        });
+        dashboard.panels[0].repeat = "server";
+        dashboard.processRepeats();
+      });
+
+      it('should remove scopedVars value for last variable', function() {
+        expect(dashboard.panels[0].scopedVars.apps).to.be(undefined);
+      });
+
+      it('should have new variable value in scopedVars', function() {
+        expect(dashboard.panels[0].scopedVars.server.value).to.be("se1");
+      });
+    });
+
+    describe('After a second iteration and selected values reduced', function() {
+      beforeEach(function() {
+        dashboard.templating.list[0].options[1].selected = false;
+        dashboard.processRepeats();
+      });
+
+      it('should clean up repeated panel', function() {
+        expect(dashboard.panels.length).to.be(2);
+      });
+    });
+
+    describe('After a second iteration and panel repeat is turned off', function() {
+      beforeEach(function() {
+        dashboard.panels[0].repeat = null;
+        dashboard.processRepeats();
+      });
+
+      it('should clean up repeated panel', function() {
+        expect(dashboard.panels.length).to.be(1);
+      });
+
+      it('should remove scoped vars from reused panel', function() {
+        expect(dashboard.panels[0].scopedVars).to.be(undefined);
+      });
+    });
+
   });
 
 });
