@@ -72,7 +72,8 @@ func (dc *DatasourceConfigurator) applyChanges(configPath string) error {
 		if dbDatasource == nil {
 			dc.log.Info("inserting datasource from configuration ", "name", ds.Name)
 			insertCmd := createInsertCommand(ds)
-			if err := dc.repository.insert(insertCmd); err != nil {
+			err := dc.repository.insert(insertCmd)
+			if err != nil && err != models.ErrDataSourceNameExists {
 				return err
 			}
 		} else {
