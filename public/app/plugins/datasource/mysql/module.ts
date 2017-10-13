@@ -9,7 +9,6 @@ class MysqlConfigCtrl {
 
 const defaultQuery = `SELECT
     UNIX_TIMESTAMP(<time_column>) as time_sec,
-    <title_column> as title,
     <text_column> as text,
     <tags_column> as tags
   FROM <table name>

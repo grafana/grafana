@@ -1,0 +1,52 @@
+
+<h3 class="page-heading">PostgreSQL Connection</h3>
+
+<div class="gf-form-group">
+	<div class="gf-form max-width-30">
+		<span class="gf-form-label width-7">Host</span>
+		<input type="text" class="gf-form-input" ng-model='ctrl.current.url' placeholder="localhost:5432" bs-typeahead="{{['localhost:5432', 'localhost:5433']}}" required></input>
+	</div>
+
+	<div class="gf-form max-width-30">
+		<span class="gf-form-label width-7">Database</span>
+		<input type="text" class="gf-form-input" ng-model='ctrl.current.database' placeholder="database name" required></input>
+	</div>
+
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-15">
+			<span class="gf-form-label width-7">User</span>
+			<input type="text" class="gf-form-input" ng-model='ctrl.current.user' placeholder="user"></input>
+		</div>
+		<div class="gf-form max-width-15" ng-if="!ctrl.current.secureJsonFields.password">
+			<span class="gf-form-label width-7">Password</span>
+			<input type="password" class="gf-form-input" ng-model='ctrl.current.secureJsonData.password' placeholder="password"></input>
+    </div>
+    <div class="gf-form max-width-19" ng-if="ctrl.current.secureJsonFields.password">
+      <span class="gf-form-label width-7">Password</span>
+      <input type="text" class="gf-form-input" disabled="disabled" value="configured">
+      <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.current.secureJsonFields.password = false">reset</a>
+    </div>
+	</div>
+	<div class="gf-form">
+		<label class="gf-form-label width-7">SSL Mode</label>
+		<div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
+			<select class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode" ng-options="mode for mode in ['disable', 'require', 'verify-ca', 'verify-full']" ng-init="ctrl.current.jsonData.sslmode"></select>
+			<info-popover mode="right-absolute">
+				This option determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+			</info-popover>
+		</div>
+	</div>
+</div>
+
+<div class="gf-form-group">
+	<div class="grafana-info-box">
+		<h5>User Permission</h5>
+		<p>
+			The database user should only be granted SELECT permissions on the specified database &amp; tables you want to query.
+			Grafana does not validate that queries are safe so queries can contain any SQL statement. For example, statements
+			like <code>DELETE FROM user;</code> and <code>DROP TABLE user;</code> would be executed. To protect against this we
+			<strong>Highly</strong> recommmend you create a specific PostgreSQL user with restricted permissions.
+		</p>
+	</div>
+</div>
+

@@ -18,7 +18,7 @@ The alert list panel allows you to display your dashbords alerts. The list can b
 
 ## Alert List Options
 
-{{< docs-imagebox img="/img/docs/v45/alert-list-options.png" max-width="600px" class="docs-image--no-shadow docs-image--right">}}
+{{< docs-imagebox img="/img/docs/v45/alert-list-options.png" max-width="600px" class="docs-image--no-shadow docs-image--right" >}}
 
 1. **Show**: Lets you choose between current state or recent state changes.
 2. **Max Items**: Max items set the maximum of items in a list.

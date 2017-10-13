@@ -66,6 +66,7 @@ func NewOAuthService() {
 			TlsClientCert:  sec.Key("tls_client_cert").String(),
 			TlsClientKey:   sec.Key("tls_client_key").String(),
 			TlsClientCa:    sec.Key("tls_client_ca").String(),
+			TlsSkipVerify:  sec.Key("tls_skip_verify_insecure").MustBool(),
 		}
 
 		if !info.Enabled {

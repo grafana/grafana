@@ -21,12 +21,14 @@ RUN gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A170311380
 RUN curl --silent --location https://rpm.nodesource.com/setup_6.x | bash - && \
     yum install -y nodejs --nogpgcheck
 
+ENV GOLANG_VERSION 1.9.1
+
 RUN wget https://dl.yarnpkg.com/rpm/yarn.repo -O /etc/yum.repos.d/yarn.repo && \
     yum install -y yarn --nogpgcheck && \
-    wget https://storage.googleapis.com/golang/go1.9.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go1.9.linux-amd64.tar.gz
+    wget https://storage.googleapis.com/golang/go${GOLANG_VERSION}.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-amd64.tar.gz
 
-ENV GOLANG_VERSION 1.9
+
 ENV PATH /usr/local/go/bin:$PATH
 
 RUN mkdir -p /go/src /go/bin && chmod -R 777 /go

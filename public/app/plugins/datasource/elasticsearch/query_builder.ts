@@ -167,7 +167,7 @@ export class ElasticQueryBuilder {
           break;
       }
     }
-  };
+  }
 
   build(target, adhocFilters?, queryString?) {
     // make sure query has defaults;

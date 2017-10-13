@@ -92,7 +92,7 @@ org_role = "Viewer"
 By default the configuration expects you to specify a bind DN and bind password. This should be a read only user that can perform LDAP searches.
 When the user DN is found a second bind is performed with the user provided username & password (in the normal Grafana login form).
 
-```
+```bash
 bind_dn = "cn=admin,dc=grafana,dc=org"
 bind_password = "grafana"
 ```
@@ -102,7 +102,7 @@ bind_password = "grafana"
 If you can provide a single bind expression that matches all possible users, you can skip the second bind and bind against the user DN directly.
 This allows you to not specify a bind_password in the configuration file.
 
-```
+```bash
 bind_dn = "cn=%s,o=users,dc=grafana,dc=org"
 ```
 

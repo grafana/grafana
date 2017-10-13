@@ -4,7 +4,7 @@
     "company": "Grafana Labs"
   },
   "name": "grafana",
-  "version": "4.6.0-pre1",
+  "version": "4.6.0-beta1",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -66,7 +66,7 @@
     "karma-webpack": "^2.0.4",
     "lint-staged": "^4.2.3",
     "load-grunt-tasks": "3.5.2",
-    "mocha": "3.5.0",
+    "mocha": "^4.0.1",
     "ng-annotate-loader": "^0.6.1",
     "ng-annotate-webpack-plugin": "^0.2.1-pre",
     "ngtemplate-loader": "^2.0.1",
@@ -97,13 +97,14 @@
     "watch": "./node_modules/.bin/webpack --progress --colors --watch --config scripts/webpack/webpack.dev.js",
     "build": "./node_modules/.bin/grunt build",
     "test": "./node_modules/.bin/grunt test",
-    "lint" : "./node_modules/.bin/tslint -c tslint.json --project ./tsconfig.json --type-check",
+    "lint": "./node_modules/.bin/tslint -c tslint.json --project tsconfig.json --type-check",
     "watch-test": "./node_modules/grunt-cli/bin/grunt karma:dev"
   },
   "license": "Apache-2.0",
   "dependencies": {
     "angular": "^1.6.6",
     "angular-bindonce": "^0.3.1",
+    "angular-mocks": "^1.6.6",
     "angular-native-dragdrop": "^1.2.2",
     "angular-route": "^1.6.6",
     "angular-sanitize": "^1.6.6",
@@ -118,10 +119,11 @@
     "mousetrap": "^1.6.0",
     "ngreact": "^0.4.1",
     "react": "^16.0.0",
-    "rxjs": "^5.4.3",
     "react-dom": "^16.0.0",
     "remarkable": "^1.7.1",
+    "rxjs": "^5.4.3",
     "tether": "^1.4.0",
-    "tether-drop": "https://github.com/torkelo/drop"
+    "tether-drop": "https://github.com/torkelo/drop",
+    "tinycolor2": "^1.4.1"
   }
 }

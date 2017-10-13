@@ -27,6 +27,8 @@ export function infoPopover() {
 
       transclude(function(clone, newScope) {
         var content = document.createElement("div");
+        content.className = 'markdown-html';
+
         _.each(clone, (node) => {
           content.appendChild(node);
         });

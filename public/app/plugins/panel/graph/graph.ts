@@ -22,7 +22,7 @@ import {EventManager} from 'app/features/annotations/all';
 import {convertValuesToHistogram, getSeriesValues} from './histogram';
 
 /** @ngInject **/
-function graphDirective($rootScope, timeSrv, popoverSrv) {
+function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
   return {
     restrict: 'A',
     template: '',
@@ -37,7 +37,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv) {
       var legendSideLastValue = null;
       var rootScope = scope.$root;
       var panelWidth = 0;
-      var eventManager = new EventManager(ctrl, elem, popoverSrv);
+      var eventManager = new EventManager(ctrl);
       var thresholdManager = new ThresholdManager(ctrl);
       var tooltip = new GraphTooltip(elem, dashboard, scope, function() {
         return sortedSeries;
@@ -268,6 +268,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv) {
             clickable: true,
             color: '#c8c8c8',
             margin: { left: 0, right: 0 },
+            labelMarginX: 0,
           },
           selection: {
             mode: "x",
@@ -496,8 +497,8 @@ function graphDirective($rootScope, timeSrv, popoverSrv) {
           show: panel.yaxes[0].show,
           index: 1,
           logBase: panel.yaxes[0].logBase || 1,
-          min: panel.yaxes[0].min ? _.toNumber(panel.yaxes[0].min) : null,
-          max: panel.yaxes[0].max ? _.toNumber(panel.yaxes[0].max) : null,
+          min: parseNumber(panel.yaxes[0].min),
+          max: parseNumber(panel.yaxes[0].max),
           tickDecimals: panel.yaxes[0].decimals
         };
 
@@ -509,9 +510,9 @@ function graphDirective($rootScope, timeSrv, popoverSrv) {
           secondY.show = panel.yaxes[1].show;
           secondY.logBase = panel.yaxes[1].logBase || 1;
           secondY.position = 'right';
-          secondY.min = panel.yaxes[1].min ? _.toNumber(panel.yaxes[1].min) : null;
-          secondY.max = panel.yaxes[1].max ? _.toNumber(panel.yaxes[1].max) : null;
-          secondY.tickDecimals = panel.yaxes[1].decimals !== null ? _.toNumber(panel.yaxes[1].decimals): null;
+          secondY.min = parseNumber(panel.yaxes[1].min);
+          secondY.max = parseNumber(panel.yaxes[1].max);
+          secondY.tickDecimals = panel.yaxes[1].decimals;
           options.yaxes.push(secondY);
 
           applyLogScale(options.yaxes[1], data);
@@ -519,6 +520,14 @@ function graphDirective($rootScope, timeSrv, popoverSrv) {
         }
         applyLogScale(options.yaxes[0], data);
         configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? "percent" : panel.yaxes[0].format);
+      }
+
+      function parseNumber(value: any) {
+        if (value === null || typeof value === 'undefined') {
+          return null;
+        }
+
+        return _.toNumber(value);
       }
 
       function applyLogScale(axis, data) {
@@ -651,10 +660,10 @@ function graphDirective($rootScope, timeSrv, popoverSrv) {
       }
 
       elem.bind("plotselected", function (event, ranges) {
-        if (ranges.ctrlKey || ranges.metaKey)  {
-          // scope.$apply(() => {
-          //   eventManager.updateTime(ranges.xaxis);
-          // });
+        if ((ranges.ctrlKey || ranges.metaKey) && contextSrv.isEditor) {
+          setTimeout(() => {
+            eventManager.updateTime(ranges.xaxis);
+          }, 100);
         } else {
           scope.$apply(function() {
             timeSrv.setTime({
@@ -666,13 +675,13 @@ function graphDirective($rootScope, timeSrv, popoverSrv) {
       });
 
       elem.bind("plotclick", function (event, pos, item) {
-        if (pos.ctrlKey || pos.metaKey || eventManager.event)  {
+        if ((pos.ctrlKey || pos.metaKey) && contextSrv.isEditor) {
           // Skip if range selected (added in "plotselected" event handler)
           let isRangeSelection = pos.x !== pos.x1;
           if (!isRangeSelection) {
-            // scope.$apply(() => {
-            //   eventManager.updateTime({from: pos.x, to: null});
-            // });
+            setTimeout(() => {
+              eventManager.updateTime({from: pos.x, to: null});
+            }, 100);
           }
         }
       });

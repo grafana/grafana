@@ -49,6 +49,7 @@ Macros:
 - $__time(column) -&gt; UNIX_TIMESTAMP(column) as time_sec
 - $__timeFilter(column) -&gt;  UNIX_TIMESTAMP(time_date_time) &ge; 1492750877 AND UNIX_TIMESTAMP(time_date_time) &le; 1492750877
 - $__unixEpochFilter(column) -&gt;  time_unix_epoch &gt; 1492750877 AND time_unix_epoch &lt; 1492750877
+- $__timeGroup(column,'5m') -&gt; (extract(epoch from "dateColumn")/extract(epoch from '5m'::interval))::int
 
 Or build your own conditionals using these macros which just return the values:
 - $__timeFrom() -&gt;  FROM_UNIXTIME(1492750877)

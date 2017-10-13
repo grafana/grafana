@@ -45,7 +45,7 @@ yarn install --pure-lockfile
 npm run build
 ```
 
-To rebuild frontend assets (typesript, sass etc) as you change them start the watcher via.
+To rebuild frontend assets (typescript, sass etc) as you change them start the watcher via.
 
 ```bash
 npm run watch
@@ -82,10 +82,17 @@ You only need to add the options you want to override. Config files are applied 
 In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = development`.
 
 ## Contribute
+
 If you have any idea for an improvement or found a bug do not hesitate to open an issue.
 And if you have time clone this repo and submit a pull request and help me make Grafana
 the kickass metrics & devops dashboard we all dream about!
 
+## Plugin development
+
+Checkout the [Plugin Development Guide](http://docs.grafana.org/plugins/developing/development/) and checkout the [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) file for changes in Grafana that relate to 
+plugin development. 
+
 ## License
+
 Grafana is distributed under Apache 2.0 License.
-Work in progress Grafana 2.0 (with included Grafana backend)
+

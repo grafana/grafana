@@ -46,8 +46,8 @@ describe('DashboardModel', function() {
       var saveModel = model.getSaveModelClone();
       var keys = _.keys(saveModel);
 
-      expect(keys[0]).to.be('addEmptyRow');
-      expect(keys[1]).to.be('addPanel');
+      expect(keys[0]).to.be('addBuiltInAnnotationQuery');
+      expect(keys[1]).to.be('addEmptyRow');
     });
   });
 
@@ -220,26 +220,6 @@ describe('DashboardModel', function() {
     });
   });
 
-  describe('when creating dashboard model with missing list for annoations or templating', function() {
-    var model;
-
-    beforeEach(function() {
-      model = new DashboardModel({
-        annotations: {
-          enable: true,
-        },
-        templating: {
-          enable: true
-        }
-      });
-    });
-
-    it('should add empty list', function() {
-      expect(model.annotations.list.length).to.be(0);
-      expect(model.templating.list.length).to.be(0);
-    });
-  });
-
   describe('Given editable false dashboard', function() {
     var model;
 
@@ -339,7 +319,12 @@ describe('DashboardModel', function() {
     });
 
     it('should add empty list', function() {
-      expect(model.annotations.list.length).to.be(0);
+      expect(model.annotations.list.length).to.be(1);
+      expect(model.templating.list.length).to.be(0);
+    });
+
+    it('should add builtin annotation query', function() {
+      expect(model.annotations.list[0].builtIn).to.be(1);
       expect(model.templating.list.length).to.be(0);
     });
   });

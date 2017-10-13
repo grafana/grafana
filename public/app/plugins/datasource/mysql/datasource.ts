@@ -20,7 +20,15 @@ export class MysqlDatasource {
       return '\'' + value + '\'';
     }
 
+    if (typeof value === 'number') {
+      return value;
+    }
+
     var quotedValues = _.map(value, function(val) {
+      if (typeof value === 'number') {
+        return value;
+      }
+
       return '\'' + val + '\'';
     });
     return  quotedValues.join(',');
