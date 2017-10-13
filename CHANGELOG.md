@@ -7,7 +7,7 @@
 - UX changes to nav & side menu
 - New dashboard grid layout system
 
-# 4.6.0 (unreleased)
+# 4.6.0-beta1 (2017-10-13)
 
 ## New Features
 * **GCS**: Adds support for Google Cloud Storage [#8370](https://github.com/grafana/grafana/issues/8370) thx [@chuhlomin](https://github.com/chuhlomin)
