@@ -36,6 +36,7 @@
 * **Table**: Add support for displaying the timestamp with milliseconds [#9429](https://github.com/grafana/grafana/pull/9429), thx [@s1061123](https://github.com/s1061123)
 * **Hipchat**: Add metrics, message and image to hipchat notifications [#9110](https://github.com/grafana/grafana/issues/9110), thx [@eloo](https://github.com/eloo)
 * **Kafka**: Add support for sending alert notifications to kafka [#7104](https://github.com/grafana/grafana/issues/7104), thx [@utkarshcmu](https://github.com/utkarshcmu)
+* **Alerting**: add count_non_null as series reducer [#9516](https://github.com/grafana/grafana/issues/9516)
 
 ## Tech
 * **Go**: Grafana is now built using golang 1.9
