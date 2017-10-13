@@ -71,40 +71,6 @@
   color: darken($link-color, 5%);
   font-size: $font-size-lg;
   padding: 1rem 1rem 0.75rem 1rem;
-  min-height:: $navbarHeight;
-
-  .fa-caret-down {
-    font-size: 60%;
-    padding-left: 0.2rem;
-  }
-
-  .icon-gf {
-    position: relative;
-    top: 2px;
-    font-size: 20px;
-    line-height: 8px;
-    margin-right: 0.5rem;
-  }
-
-  > img {
-    max-width: 27px;
-    max-height: 27px;
-  }
-
-  &--search {
-    padding: 1rem 1.5rem 0.75rem 1.5rem;
-  }
-}
-
-.navbar-page-btn {
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-  display: block;
-  margin: 0;
-  color: darken($link-color, 5%);
-  font-size: $font-size-lg;
-  padding: 1rem 1rem 0.75rem 1rem;
   min-height: $navbarHeight;
 
   .fa-caret-down {

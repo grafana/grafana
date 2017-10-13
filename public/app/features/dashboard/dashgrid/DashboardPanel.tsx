@@ -31,6 +31,8 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
     }
   }
 
+
+
   render() {
     return (
       <div ref={element => this.element = element} />
