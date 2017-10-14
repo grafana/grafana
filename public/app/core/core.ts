@@ -17,6 +17,7 @@ import './components/code_editor/code_editor';
 import './utils/outline';
 import './components/colorpicker/ColorPicker';
 import './components/colorpicker/SeriesColorPicker';
+import './components/colorpicker/spectrum_picker';
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';
@@ -50,8 +51,10 @@ import {userGroupPicker} from './components/user_group_picker';
 import {geminiScrollbar} from './components/scroll/scroll';
 import {gfPageDirective} from './components/gf_page';
 import {orgSwitcher} from './components/org_switcher';
+import {profiler} from './profiler';
 
 export {
+  profiler,
   arrayJoin,
   coreModule,
   grafanaAppDirective,

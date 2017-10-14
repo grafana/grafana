@@ -10,34 +10,37 @@ weight = 2
 
 # Annotations
 
+{{< docs-imagebox img="/img/docs/v46/annotations.png" max-width="800px" >}}
+
 Annotations provide a way to mark points on the graph with rich events. When you hover over an annotation
 you can get event description and event tags. The text field can include links to other systems with more detail.
 
-![](/img/docs/annotations/toggles.png)
-
 ## Native annotations
 
-Grafana v4.6+ comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the [HTTP API]({{< relref "http_api/annotations.md" >}})
+Grafana v4.6+ comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the [HTTP API]({{< relref "http_api/annotations.md" >}}).
 
 ## Adding annotations
 
-by holding down CTRL/CMD + mouse click. Add tags to the annotation will make it searchable from other dashboards.
+By holding down **CTRL** or **CMD** + Click. Add tags to the annotation will make it searchable from other dashboards.
 
-<!-- adding annoation gif animation -->
+{{< docs-imagebox img="/img/docs/annotations/annotation-still.png"
+max-width="600px" animated-gif="/img/docs/annotations/annotation.gif" >}}
 
 ### Adding regions events
 
-You can also hold down CTRL/CMD and select region to create a region annotation.
+You can also hold down **CTRL** or **CMD** and select region to create a region annotation.
 
-<!-- region image/gif animation -->
+{{< docs-imagebox img="/img/docs/annotations/region-annotation-still.png"
+max-width="600px" animated-gif="/img/docs/annotations/region-annotation.gif" >}}
 
 ### Built in query
 
-After you added an an annotation they will be still be visible. This is due to the built in annotation query that exists on all dashboards. This annotation query will
+After you added an annotation they will still be visible. This is due to the built in annotation query that exists on all dashboards. This annotation query will
 fetch all annotation events that originate from the current dashboard and show them on the panel where they where created. This includes alert state history annotations. You can
 stop annotations from being fetched & drawn by opening the **Annotations** settings (via Dashboard cogs menu) and modifying the query named `Annotations & Alerts (Built-in)`.
 
-<!-- image of built in query -->
+When you copy a dashboard using the **Save As** feature it will get a new dashboard id so annotations created on source dashboard will no longer be visible on the copy. You
+can still show them if you add a new **Annotation Query** and filter by tags. But this only works if the annotations on the source dashboard had tags to filter by.
 
 ### Query by tag
 

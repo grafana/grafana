@@ -4,7 +4,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import angular from 'angular';
 import {appEvents, NavModel} from 'app/core/core';
-import {DashboardModel} from '../DashboardModel';
+import {DashboardModel} from '../dashboard_model';
 
 export class DashNavCtrl {
   dashboard: DashboardModel;
@@ -148,7 +148,7 @@ export class DashNavCtrl {
     addPanel() {
       this.dashboard.addPanel({
         type: 'graph',
-        gridPos: {x: 0, y: 0, w: 6, h: 5},
+        gridPos: {x: 0, y: 0, w: 12, h: 9},
         title: 'New Graph',
       });
     }

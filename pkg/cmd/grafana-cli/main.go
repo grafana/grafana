@@ -17,8 +17,6 @@ var version = "master"
 func main() {
 	setupLogging()
 
-	services.Init(version)
-
 	app := cli.NewApp()
 	app.Name = "Grafana cli"
 	app.Usage = ""
@@ -45,11 +43,19 @@ func main() {
 			EnvVar: "GF_PLUGIN_URL",
 		},
 		cli.BoolFlag{
+			Name:  "insecure",
+			Usage: "Skip TLS verification (insecure)",
+		},
+		cli.BoolFlag{
 			Name:  "debug, d",
 			Usage: "enable debug logging",
 		},
 	}
 
+	app.Before = func(c *cli.Context) error {
+		services.Init(version, c.GlobalBool("insecure"))
+		return nil
+	}
 	app.Commands = commands.Commands
 	app.CommandNotFound = cmdNotFound
 

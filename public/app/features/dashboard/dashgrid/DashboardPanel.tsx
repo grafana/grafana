@@ -1,5 +1,5 @@
 import React from 'react';
-import {PanelModel} from '../PanelModel';
+import {PanelModel} from '../panel_model';
 import {PanelContainer} from './PanelContainer';
 import {AttachedPanel} from './PanelLoader';
 
@@ -30,6 +30,8 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
       this.attachedPanel.destroy();
     }
   }
+
+
 
   render() {
     return (

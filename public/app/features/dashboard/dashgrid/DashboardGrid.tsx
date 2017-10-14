@@ -1,15 +1,14 @@
 import React from 'react';
 import coreModule from 'app/core/core_module';
 import ReactGridLayout from 'react-grid-layout';
-import {CELL_HEIGHT, CELL_VMARGIN} from '../DashboardModel';
+import {GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT} from 'app/core/constants';
 import {DashboardPanel} from './DashboardPanel';
-import {DashboardModel} from '../DashboardModel';
+import {DashboardModel} from '../dashboard_model';
 import {PanelContainer} from './PanelContainer';
-import {PanelModel} from '../PanelModel';
+import {PanelModel} from '../panel_model';
 import classNames from 'classnames';
 import sizeMe from 'react-sizeme';
 
-const COLUMN_COUNT = 12;
 let lastGridWidth = 1200;
 
 function GridWrapper({size, layout, onLayoutChange, children, onResize, onResizeStop, onWidthChange}) {
@@ -31,10 +30,10 @@ function GridWrapper({size, layout, onLayoutChange, children, onResize, onResize
       isResizable={true}
       measureBeforeMount={false}
       containerPadding={[0, 0]}
-      useCSSTransforms={true}
-      margin={[CELL_VMARGIN, CELL_VMARGIN]}
-      cols={COLUMN_COUNT}
-      rowHeight={CELL_HEIGHT}
+      useCSSTransforms={false}
+      margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
+      cols={GRID_COLUMN_COUNT}
+      rowHeight={GRID_CELL_HEIGHT}
       draggableHandle=".grid-drag-handle"
       layout={layout}
       onResize={onResize}
@@ -68,6 +67,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     // subscribe to dashboard events
     this.dashboard = this.panelContainer.getDashboard();
     this.dashboard.on('panel-added', this.triggerForceUpdate.bind(this));
+    this.dashboard.on('panel-removed', this.triggerForceUpdate.bind(this));
+    this.dashboard.on('repeats-processed', this.triggerForceUpdate.bind(this));
     this.dashboard.on('view-mode-changed', this.triggerForceUpdate.bind(this));
   }
 

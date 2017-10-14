@@ -256,7 +256,7 @@ export class BackendSrv {
           gridPos: {
             x: 0,
             y: 0,
-            w: 4,
+            w: 8,
             h: 10
           }
         },
@@ -268,7 +268,7 @@ export class BackendSrv {
           gridPos: {
             x: 4,
             y: 0,
-            w: 4,
+            w: 8,
             h: 10
           }
         },
@@ -280,7 +280,7 @@ export class BackendSrv {
           gridPos: {
             x: 8,
             y: 0,
-            w: 4,
+            w: 8,
             h: 10
           }
         }

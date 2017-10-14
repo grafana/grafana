@@ -1,11 +1,9 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import {coreModule} from 'app/core/core';
 
 var template = `
 <div class="gf-form-select-wrapper max-width-13">
-<select class="gf-form-input" ng-model="model.repeat" ng-options="f.value as f.text for f in variables">
-<option value=""></option>
+  <select class="gf-form-input" ng-model="model.repeat" ng-options="f.value as f.text for f in variables" ng-change="optionChanged()">
+  <option value=""></option>
 </div>
 `;
 
@@ -29,6 +27,17 @@ function dashRepeatOptionDirective(variableSrv) {
       }
 
       scope.variables.unshift({text: 'Disabled', value: null});
+
+      // if repeat is set and no direction set to horizontal
+      if (scope.panel.repeat && !scope.panel.repeatDirection) {
+        scope.panel.repeatDirection = 'h';
+      }
+
+      scope.optionChanged = function() {
+        if (scope.panel.repeat) {
+          scope.panel.repeatDirection = 'h';
+        }
+      };
     }
   };
 }

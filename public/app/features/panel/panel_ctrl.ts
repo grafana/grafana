@@ -1,9 +1,9 @@
 import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
-import {profiler} from 'app/core/profiler';
+import {appEvents, profiler} from 'app/core/core';
 import Remarkable from 'remarkable';
-import {CELL_HEIGHT, CELL_VMARGIN} from '../dashboard/DashboardModel';
+import {GRID_CELL_HEIGHT, GRID_CELL_VMARGIN} from 'app/core/constants';
 
 const TITLE_HEIGHT = 25;
 const EMPTY_TITLE_HEIGHT = 9;
@@ -163,7 +163,7 @@ export class PanelCtrl {
        var fullscreenHeight = Math.floor(docHeight * 0.8);
        this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
     } else {
-      this.containerHeight = this.panel.gridPos.h * CELL_HEIGHT + ((this.panel.gridPos.h-1) * CELL_VMARGIN);
+      this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + ((this.panel.gridPos.h-1) * GRID_CELL_VMARGIN);
     }
 
     this.height = this.containerHeight - (PANEL_BORDER + PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
@@ -188,13 +188,36 @@ export class PanelCtrl {
     });
   }
 
-  removePanel() {
+  removePanel(ask: boolean) {
+    // confirm deletion
+    if (ask !== false) {
+      var text2, confirmText;
+
+      if (this.panel.alert) {
+        text2 = "Panel includes an alert rule, removing panel will also remove alert rule";
+        confirmText = "YES";
+      }
+
+      appEvents.emit('confirm-modal', {
+        title: 'Remove Panel',
+        text: 'Are you sure you want to remove this panel?',
+        text2: text2,
+        icon: 'fa-trash',
+        confirmText: confirmText,
+        yesText: 'Remove',
+        onConfirm: () => {
+          this.removePanel(false);
+        }
+      });
+      return;
+    }
+
     this.dashboard.removePanel(this.panel);
   }
 
   editPanelJson() {
     this.publishAppEvent('show-json-editor', {
-      object: this.panel,
+      object: this.panel.getSaveModel(),
       updateHandler: this.replacePanel.bind(this)
     });
   }

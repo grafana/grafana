@@ -18,13 +18,13 @@ const  template = `
   <div class="modal-content text-center">
 
     <div class="confirm-modal-text">
-      Do you want to save you changes?
+      Do you want to save your changes?
     </div>
 
     <div class="confirm-modal-buttons">
-      <button type="button" class="btn btn-inverse" ng-click="ctrl.dismiss()">Cancel</button>
-      <button type="button" class="btn btn-danger" ng-click="ctrl.discard()">Discard</button>
       <button type="button" class="btn btn-success" ng-click="ctrl.save()">Save</button>
+      <button type="button" class="btn btn-danger" ng-click="ctrl.discard()">Discard</button>
+      <button type="button" class="btn btn-inverse" ng-click="ctrl.dismiss()">Cancel</button>
     </div>
   </div>
 </div>

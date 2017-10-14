@@ -2,7 +2,7 @@ import config from 'app/core/config';
 
 import coreModule from 'app/core/core_module';
 import {PanelContainer} from './dashgrid/PanelContainer';
-import {DashboardModel} from './DashboardModel';
+import {DashboardModel} from './dashboard_model';
 
 export class DashboardCtrl implements PanelContainer {
   dashboard: DashboardModel;
@@ -20,7 +20,6 @@ export class DashboardCtrl implements PanelContainer {
     private alertingSrv,
     private dashboardSrv,
     private unsavedChangesSrv,
-    private dynamicDashboardSrv,
     private dashboardViewStateSrv,
     private panelLoader) {
       // temp hack due to way dashboards are loaded
@@ -57,10 +56,9 @@ export class DashboardCtrl implements PanelContainer {
       .catch(this.onInitFailed.bind(this, 'Templating init failed', false))
       // continue
       .finally(() => {
-        this.dashboard = dashboard;
 
-        this.dynamicDashboardSrv.init(dashboard);
-        this.dynamicDashboardSrv.process();
+        this.dashboard = dashboard;
+        this.dashboard.processRepeats();
 
         this.unsavedChangesSrv.init(dashboard, this.$scope);
 
@@ -97,7 +95,7 @@ export class DashboardCtrl implements PanelContainer {
     }
 
     templateVariableUpdated() {
-      this.dynamicDashboardSrv.process();
+      this.dashboard.processRepeats();
     }
 
     setWindowTitleAndTheme() {
@@ -135,8 +133,8 @@ export class DashboardCtrl implements PanelContainer {
     }
 
     init(dashboard) {
-      this.$scope.onAppEvent('show-json-editor', this.$scope.showJsonEditor);
-      this.$scope.onAppEvent('template-variable-value-updated', this.$scope.templateVariableUpdated);
+      this.$scope.onAppEvent('show-json-editor', this.showJsonEditor.bind(this));
+      this.$scope.onAppEvent('template-variable-value-updated', this.templateVariableUpdated.bind(this));
       this.setupDashboard(dashboard);
     }
 }

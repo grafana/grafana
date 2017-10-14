@@ -1,7 +1,8 @@
 import {describe, beforeEach, it, expect} from 'test/lib/common';
 
 import _ from 'lodash';
-import {DashboardModel} from '../DashboardModel';
+import {DashboardModel} from '../dashboard_model';
+import {PanelModel} from '../panel_model';
 
 describe('DashboardModel', function() {
 
@@ -22,7 +23,7 @@ describe('DashboardModel', function() {
     });
 
     it('should have default properties', function() {
-      expect(model.rows.length).to.be(0);
+      expect(model.panels.length).to.be(0);
     });
   });
 
@@ -31,7 +32,7 @@ describe('DashboardModel', function() {
 
     beforeEach(function() {
       model = new DashboardModel({
-        rows: [{ panels: [{ id: 5 }]}]
+        panels: [{ id: 5 }]
       });
     });
 
@@ -46,8 +47,8 @@ describe('DashboardModel', function() {
       var saveModel = model.getSaveModelClone();
       var keys = _.keys(saveModel);
 
-      expect(keys[0]).to.be('addBuiltInAnnotationQuery');
-      expect(keys[1]).to.be('addEmptyRow');
+      expect(keys[0]).to.be('annotations');
+      expect(keys[1]).to.be('autoUpdate');
     });
   });
 
@@ -58,39 +59,30 @@ describe('DashboardModel', function() {
       dashboard = new DashboardModel({});
     });
 
-    it('adding default should split span in half', function() {
-      dashboard.addEmptyRow();
-      dashboard.rows[0].addPanel({span: 12});
-      dashboard.rows[0].addPanel({span: 12});
+    it('adding panel should new up panel model', function() {
+      dashboard.addPanel({type: 'test', title: 'test'});
 
-      expect(dashboard.rows[0].panels[0].span).to.be(6);
-      expect(dashboard.rows[0].panels[1].span).to.be(6);
+      expect(dashboard.panels[0] instanceof PanelModel).to.be(true);
     });
 
-    it('duplicate panel should try to add it to same row', function() {
-      var panel = { span: 4, attr: '123', id: 10 };
+    it('duplicate panel should try to add to the right if there is space', function() {
+      var panel = {id: 10, gridPos: {x: 0, y: 0, w: 6, h: 2}};
 
-      dashboard.addEmptyRow();
-      dashboard.rows[0].addPanel(panel);
-      dashboard.duplicatePanel(panel, dashboard.rows[0]);
+      dashboard.addPanel(panel);
+      dashboard.duplicatePanel(dashboard.panels[0]);
 
-      expect(dashboard.rows[0].panels[0].span).to.be(4);
-      expect(dashboard.rows[0].panels[1].span).to.be(4);
-      expect(dashboard.rows[0].panels[1].attr).to.be('123');
-      expect(dashboard.rows[0].panels[1].id).to.be(11);
+      expect(dashboard.panels[1].gridPos).to.eql({x: 6, y: 0, h: 2, w: 6});
     });
 
     it('duplicate panel should remove repeat data', function() {
-      var panel = { span: 4, attr: '123', id: 10, repeat: 'asd', scopedVars: { test: 'asd' }};
+      var panel = {id: 10, gridPos: {x: 0, y: 0, w: 6, h: 2}, repeat: 'asd', scopedVars: {test: 'asd'}};
 
-      dashboard.addEmptyRow();
-      dashboard.rows[0].addPanel(panel);
-      dashboard.duplicatePanel(panel, dashboard.rows[0]);
+      dashboard.addPanel(panel);
+      dashboard.duplicatePanel(dashboard.panels[0]);
 
-      expect(dashboard.rows[0].panels[1].repeat).to.be(undefined);
-      expect(dashboard.rows[0].panels[1].scopedVars).to.be(undefined);
+      expect(dashboard.panels[1].repeat).to.be(undefined);
+      expect(dashboard.panels[1].scopedVars).to.be(undefined);
     });
-
   });
 
   describe('when creating dashboard with old schema', function() {
@@ -106,43 +98,39 @@ describe('DashboardModel', function() {
           {type: 'filtering', enable: true},
           {type: 'annotations', enable: true, annotations: [{name: 'old'}]}
         ],
-        rows: [
+        panels: [
           {
-            panels: [
-              {
-                type: 'graph', legend: true, aliasYAxis: { test: 2 },
-                y_formats: ['kbyte', 'ms'],
-                grid: {
-                  min: 1,
-                  max: 10,
-                  rightMin: 5,
-                  rightMax: 15,
-                  leftLogBase: 1,
-                  rightLogBase: 2,
-                  threshold1: 200,
-                  threshold2: 400,
-                  threshold1Color: 'yellow',
-                  threshold2Color: 'red',
-                },
-                leftYAxisLabel: 'left label',
-                targets: [{refId: 'A'}, {}],
-              },
-              {
-                type: 'singlestat', legend: true, thresholds: '10,20,30', aliasYAxis: { test: 2 }, grid: { min: 1, max: 10 },
-                targets: [{refId: 'A'}, {}],
-              },
-              {
-                type: 'table', legend: true, styles: [{ thresholds: ["10", "20", "30"]}, { thresholds: ["100", "200", "300"]}],
-                targets: [{refId: 'A'}, {}],
-              }
-            ]
+            type: 'graph', legend: true, aliasYAxis: { test: 2 },
+            y_formats: ['kbyte', 'ms'],
+            grid: {
+              min: 1,
+              max: 10,
+              rightMin: 5,
+              rightMax: 15,
+              leftLogBase: 1,
+              rightLogBase: 2,
+              threshold1: 200,
+              threshold2: 400,
+              threshold1Color: 'yellow',
+              threshold2Color: 'red',
+            },
+            leftYAxisLabel: 'left label',
+            targets: [{refId: 'A'}, {}],
+          },
+          {
+            type: 'singlestat', legend: true, thresholds: '10,20,30', aliasYAxis: { test: 2 }, grid: { min: 1, max: 10 },
+            targets: [{refId: 'A'}, {}],
+          },
+          {
+            type: 'table', legend: true, styles: [{ thresholds: ["10", "20", "30"]}, { thresholds: ["100", "200", "300"]}],
+            targets: [{refId: 'A'}, {}],
           }
         ]
       });
 
-      graph = model.rows[0].panels[0];
-      singlestat = model.rows[0].panels[1];
-      table = model.rows[0].panels[2];
+      graph = model.panels[0];
+      singlestat = model.panels[1];
+      table = model.panels[2];
     });
 
     it('should have title', function() {
@@ -207,7 +195,7 @@ describe('DashboardModel', function() {
     });
 
     it('dashboard schema version should be set to latest', function() {
-      expect(model.schemaVersion).to.be(14);
+      expect(model.schemaVersion).to.be(16);
     });
 
     it('graph thresholds should be migrated', function() {
@@ -244,52 +232,50 @@ describe('DashboardModel', function() {
 
     beforeEach(function() {
       model = new DashboardModel({
-        rows: [{
-          panels: [{
-            type: 'graph',
-            grid: {},
-            yaxes: [{}, {}],
-            targets: [{
-              "alias": "$tag_datacenter $tag_source $col",
-              "column": "value",
-              "measurement": "logins.count",
-              "fields": [
-                {
-                  "func": "mean",
-                  "name": "value",
-                  "mathExpr": "*2",
-                  "asExpr": "value"
-                },
-                {
-                  "name": "one-minute",
-                  "func": "mean",
-                  "mathExpr": "*3",
-                  "asExpr": "one-minute"
-                }
-              ],
-              "tags": [],
-              "fill": "previous",
-              "function": "mean",
-              "groupBy": [
-                {
-                  "interval": "auto",
-                  "type": "time"
-                },
-                {
-                  "key": "source",
-                  "type": "tag"
-                },
-                {
-                  "type": "tag",
-                  "key": "datacenter"
-                }
-              ],
-            }]
+        panels: [{
+          type: 'graph',
+          grid: {},
+          yaxes: [{}, {}],
+          targets: [{
+            "alias": "$tag_datacenter $tag_source $col",
+            "column": "value",
+            "measurement": "logins.count",
+            "fields": [
+              {
+                "func": "mean",
+                "name": "value",
+                "mathExpr": "*2",
+                "asExpr": "value"
+              },
+              {
+                "name": "one-minute",
+                "func": "mean",
+                "mathExpr": "*3",
+                "asExpr": "one-minute"
+              }
+            ],
+            "tags": [],
+            "fill": "previous",
+            "function": "mean",
+            "groupBy": [
+              {
+                "interval": "auto",
+                "type": "time"
+              },
+              {
+                "key": "source",
+                "type": "tag"
+              },
+              {
+                "type": "tag",
+                "key": "datacenter"
+              }
+            ],
           }]
         }]
       });
 
-      target = model.rows[0].panels[0].targets[0];
+      target = model.panels[0].targets[0];
     });
 
     it('should update query schema', function() {
@@ -414,19 +400,163 @@ describe('DashboardModel', function() {
   });
 
   describe('updateSubmenuVisibility with hidden annotation toggle', function() {
-    var model;
+    var dashboard;
 
     beforeEach(function() {
-      model = new DashboardModel({
+      dashboard = new DashboardModel({
         annotations: {
           list: [{hide: true}]
         }
       });
-      model.updateSubmenuVisibility();
+      dashboard.updateSubmenuVisibility();
     });
 
     it('should not enable submmenu', function() {
-      expect(model.meta.submenuEnabled).to.be(false);
+      expect(dashboard.meta.submenuEnabled).to.be(false);
+    });
+  });
+
+  describe('given dashboard with panel repeat in horizontal direction', function(ctx) {
+    var dashboard;
+
+    beforeEach(function() {
+      dashboard = new DashboardModel({
+        panels: [{id: 2, repeat: 'apps', repeatDirection: 'h', gridPos: {x: 0, y: 0, h: 2, w: 24}}],
+        templating:  {
+          list: [{
+            name: 'apps',
+            current: {
+              text: 'se1, se2, se3',
+              value: ['se1', 'se2', 'se3']
+            },
+            options: [
+              {text: 'se1', value: 'se1', selected: true},
+              {text: 'se2', value: 'se2', selected: true},
+              {text: 'se3', value: 'se3', selected: true},
+              {text: 'se4', value: 'se4', selected: false}
+            ]
+          }]
+        }
+      });
+      dashboard.processRepeats();
+    });
+
+    it('should repeat panel 3 times', function() {
+      expect(dashboard.panels.length).to.be(3);
+    });
+
+    it('should mark panel repeated', function() {
+      expect(dashboard.panels[0].repeat).to.be('apps');
+      expect(dashboard.panels[1].repeatPanelId).to.be(2);
+    });
+
+    it('should set scopedVars on panels', function() {
+      expect(dashboard.panels[0].scopedVars.apps.value).to.be('se1');
+      expect(dashboard.panels[1].scopedVars.apps.value).to.be('se2');
+      expect(dashboard.panels[2].scopedVars.apps.value).to.be('se3');
+    });
+
+    it('should place on first row and adjust width so all fit', function() {
+      expect(dashboard.panels[0].gridPos).to.eql({x: 0, y: 0, h: 2, w: 8});
+      expect(dashboard.panels[1].gridPos).to.eql({x: 8, y: 0, h: 2, w: 8});
+      expect(dashboard.panels[2].gridPos).to.eql({x: 16, y: 0, h: 2, w: 8});
+    });
+
+    describe('After a second iteration', function() {
+      var repeatedPanelAfterIteration1;
+
+      beforeEach(function() {
+        repeatedPanelAfterIteration1 = dashboard.panels[1];
+        dashboard.panels[0].fill = 10;
+        dashboard.processRepeats();
+      });
+
+      it('reused panel should copy properties from source', function() {
+        expect(dashboard.panels[1].fill).to.be(10);
+      });
+
+      it('should have same panel count', function() {
+        expect(dashboard.panels.length).to.be(3);
+      });
+    });
+
+    describe('After a second iteration with different variable', function() {
+      beforeEach(function() {
+        dashboard.templating.list.push({
+          name: 'server',
+          current: { text: 'se1, se2, se3', value: ['se1']},
+          options: [{text: 'se1', value: 'se1', selected: true}]
+        });
+        dashboard.panels[0].repeat = "server";
+        dashboard.processRepeats();
+      });
+
+      it('should remove scopedVars value for last variable', function() {
+        expect(dashboard.panels[0].scopedVars.apps).to.be(undefined);
+      });
+
+      it('should have new variable value in scopedVars', function() {
+        expect(dashboard.panels[0].scopedVars.server.value).to.be("se1");
+      });
+    });
+
+    describe('After a second iteration and selected values reduced', function() {
+      beforeEach(function() {
+        dashboard.templating.list[0].options[1].selected = false;
+        dashboard.processRepeats();
+      });
+
+      it('should clean up repeated panel', function() {
+        expect(dashboard.panels.length).to.be(2);
+      });
+    });
+
+    describe('After a second iteration and panel repeat is turned off', function() {
+      beforeEach(function() {
+        dashboard.panels[0].repeat = null;
+        dashboard.processRepeats();
+      });
+
+      it('should clean up repeated panel', function() {
+        expect(dashboard.panels.length).to.be(1);
+      });
+
+      it('should remove scoped vars from reused panel', function() {
+        expect(dashboard.panels[0].scopedVars).to.be(undefined);
+      });
+    });
+
+  });
+
+  describe('given dashboard with panel repeat in vertical direction', function(ctx) {
+    var dashboard;
+
+    beforeEach(function() {
+      dashboard = new DashboardModel({
+        panels: [{id: 2, repeat: 'apps', repeatDirection: 'v', gridPos: {x: 5, y: 0, h: 2, w: 8}}],
+        templating:  {
+          list: [{
+            name: 'apps',
+            current: {
+              text: 'se1, se2, se3',
+              value: ['se1', 'se2', 'se3']
+            },
+            options: [
+              {text: 'se1', value: 'se1', selected: true},
+              {text: 'se2', value: 'se2', selected: true},
+              {text: 'se3', value: 'se3', selected: true},
+              {text: 'se4', value: 'se4', selected: false}
+            ]
+          }]
+        }
+      });
+      dashboard.processRepeats();
+    });
+
+    it('should place on items on top of each other and keep witdh', function() {
+      expect(dashboard.panels[0].gridPos).to.eql({x: 5, y: 0, h: 2, w: 8});
+      expect(dashboard.panels[1].gridPos).to.eql({x: 5, y: 2, h: 2, w: 8});
+      expect(dashboard.panels[2].gridPos).to.eql({x: 5, y: 4, h: 2, w: 8});
     });
   });
 
