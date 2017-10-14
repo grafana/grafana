@@ -1,13 +1,13 @@
 <div class="navbar">
 	<div class="navbar-inner">
+		<a class="navbar-page-icon" ng-click="ctrl.starDashboard()">
+			<i class="gicon gicon-dashboard-starred"></i>
+		</a>
 
-		<div class="navbar-section-wrapper">
-			<a class="navbar-page-btn" ng-click="ctrl.showSearch()">
-				<i class="icon-gf icon-gf-dashboard"></i>
-				{{ctrl.dashboard.title}}
-				<i class="fa fa-caret-down"></i>
-			</a>
-		</div>
+		<a class="navbar-page-btn" ng-click="ctrl.showSearch()">
+			{{ctrl.dashboard.title}}
+			<i class="fa fa-caret-down"></i>
+		</a>
 
 		<ul class="nav dash-playlist-actions" ng-if="ctrl.playlistSrv.isPlaying">
 			<li>
@@ -21,12 +21,7 @@
 			</li>
 		</ul>
 
-		<ul class="nav pull-left dashnav-action-icons">
-			<li ng-show="::ctrl.dashboard.meta.canStar">
-				<a class="pointer" ng-click="ctrl.starDashboard()">
-					<i class="fa" ng-class="{'fa-star-o': !ctrl.dashboard.meta.isStarred, 'fa-star': ctrl.dashboard.meta.isStarred}" style="color: orange;"></i>
-				</a>
-			</li>
+		<ul class="nav dashnav-action-icons">
 			<li ng-show="::ctrl.dashboard.meta.canShare" class="dropdown">
 				<a class="pointer" ng-click="ctrl.hideTooltip($event)" bs-tooltip="'Share dashboard'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-share-square-o"></i></a>
 				<ul class="dropdown-menu">
@@ -75,6 +70,9 @@
 				</button>
 			</li>
 		</ul>
+
+		<div class="nav nav--grow">
+		</div>
 
 		<ul class="nav pull-right">
 			<li ng-show="ctrl.dashboard.meta.fullscreen" class="dashnav-back-to-dashboard">

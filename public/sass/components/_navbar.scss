@@ -12,6 +12,7 @@
   min-height: $navbarHeight;
   padding-right: $spacer;
   background-color: $navbarBackground;
+  display: flex;
   @include clearfix();
 }
 
@@ -25,12 +26,12 @@
   position: relative;
   left: 0;
   float: left;
+
+  &--grow {
+    flex-grow: 1;
+  }
 }
 
-.navbar .nav.pull-right {
-  float: right; // redeclare due to specificity
-  margin-right: 0; // remove margin on float right nav
-}
 
 .navbar .nav > li {
   float: left;
@@ -62,6 +63,19 @@
   background-color: $navbarLinkBackgroundActive;
 }
 
+.navbar-page-icon {
+  font-size: $font-size-lg;
+  padding: 1rem 0rem 0.75rem 1rem;
+  min-height: $navbarHeight;
+
+  .gicon {
+    position: relative;
+    top: -1px;
+    font-size: 20px;
+    line-height: 8px;
+  }
+}
+
 .navbar-page-btn {
   text-overflow: ellipsis;
   overflow: hidden;
@@ -76,19 +90,6 @@
   .fa-caret-down {
     font-size: 60%;
     padding-left: 0.2rem;
-  }
-
-  .icon-gf {
-    position: relative;
-    top: 2px;
-    font-size: 20px;
-    line-height: 8px;
-    margin-right: 0.5rem;
-  }
-
-  > img {
-    max-width: 27px;
-    max-height: 27px;
   }
 
   &--search {

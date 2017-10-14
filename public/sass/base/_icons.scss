@@ -1,0 +1,38 @@
+.gicon {
+  line-height: 1;
+  display: inline-block;
+  width: 1.2057142857em;
+  height: 1.2057142857em;
+  text-align: center;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.gicon-alert {
+  background-image: url('../img/icons_dark_theme/icon_alert.svg');
+}
+
+.gicon-dashboard {
+  background-image: url('../img/icons_dark_theme/icon_dashboard.svg');
+}
+
+.gicon-dashboard-starred {
+  background-image: url('../img/icons_dark_theme/icon_dashboard_fav.svg');
+}
+
+.gicon-dashboard-new {
+  background-image: url('../img/icons_dark_theme/icon_new_dashboard.svg');
+}
+
+.gicon-folder-new {
+  background-image: url('../img/icons_dark_theme/icon_add_folder.svg');
+}
+
+.gicon-dashboard-import {
+  background-image: url('../img/icons_dark_theme/icon_import_dashboard.svg');
+}
+
+

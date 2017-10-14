@@ -92,9 +92,9 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Icon: "fa fa-fw fa-plus",
 			Url:  "#",
 			Children: []*dtos.NavLink{
-				{Text: "Dashboard", Icon: "fa fa-fw fa-plus", Url: setting.AppSubUrl + "/dashboard/new"},
-				{Text: "Folder", Icon: "fa fa-fw fa-plus", Url: setting.AppSubUrl + "/dashboard/new/?editview=new-folder"},
-				{Text: "Import", Icon: "fa fa-fw fa-plus", Url: setting.AppSubUrl + "/dashboard/new/?editview=import"},
+				{Text: "Dashboard", Icon: "gicon gicon-dashboard-new", Url: setting.AppSubUrl + "/dashboard/new"},
+				{Text: "Folder", Icon: "gicon gicon-folder-new", Url: setting.AppSubUrl + "/dashboard/new/?editview=new-folder"},
+				{Text: "Import", Icon: "gicon gicon-dashboard-import", Url: setting.AppSubUrl + "/dashboard/new/?editview=import"},
 			},
 		})
 	}
@@ -108,7 +108,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
 		Text:     "Dashboards",
 		Id:       "dashboards",
-		Icon:     "icon-gf icon-gf-dashboard",
+		Icon:     "gicon gicon-dashboard",
 		Url:      setting.AppSubUrl + "/",
 		Children: dashboardChildNavs,
 	})
@@ -145,7 +145,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
 			Text:     "Alerting",
 			Id:       "alerting",
-			Icon:     "icon-gf icon-gf-alert",
+			Icon:     "gicon gicon-alert",
 			Url:      setting.AppSubUrl + "/alerting/list",
 			Children: alertChildNavs,
 		})

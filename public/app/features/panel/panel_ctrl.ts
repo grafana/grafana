@@ -133,11 +133,6 @@ export class PanelCtrl {
     menu.push({text: 'Edit', click: 'ctrl.editPanel();', role: 'Editor', icon: "fa fa-fw fa-edit", shortcut: "e"});
     menu.push({text: 'Share', click: 'ctrl.sharePanel();', icon: "fa fa-fw fa-share", shortcut: "p s"});
 
-    if (!this.fullscreen) {
-      menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor', icon: "fa fa-fw fa-copy" });
-    }
-
-    menu.push({divider: true});
     let extendedMenu = this.getExtendedMenu();
     menu.push({text: 'More ...', click: 'ctrl.removePanel();', icon: "fa fa-fw fa-cube", submenu: extendedMenu});
 
@@ -147,9 +142,13 @@ export class PanelCtrl {
   }
 
   getExtendedMenu() {
-    var actions = [{text: 'Panel JSON', click: 'ctrl.editPanelJson(); dismiss();'}];
-    this.events.emit('init-panel-actions', actions);
-    return actions;
+    let menu = [];
+    if (!this.fullscreen) {
+      menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
+    }
+    menu.push({text: 'Panel JSON', click: 'ctrl.editPanelJson(); dismiss();' });
+    this.events.emit('init-panel-actions', menu);
+    return menu;
   }
 
   otherPanelInFullscreenMode() {

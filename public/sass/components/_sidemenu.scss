@@ -73,6 +73,7 @@
   position: relative;
   font-size: 16px;
   border: 1px solid transparent;
+  text-align: center;
 
   img {
     border-radius: 50%;
@@ -97,16 +98,17 @@
   width: 35px;
   height: 35px;
   display: inline-block;
-  i {
+
+  .fa, .icon-gf, .gicon {
     color: $link-color;
-    opacity: .7;
     position: relative;
-    left: 3px;
+    opacity: .7;
     font-size: 130%;
   }
 
   .fa {
     top: 2px;
+    position: relative;
   }
 
   .icon-gf {
@@ -114,7 +116,6 @@
   }
 
   img {
-    left: 3px;
     position: relative;
   }
 }

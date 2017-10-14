@@ -27,8 +27,8 @@ $white:            #fff;
 // -------------------------
 $blue:                  #33B5E5;
 $blue-dark:             #005f81;
-$green:                 #609000;
-$red:                   #CC3900;
+$green:                 #3aa655;
+$red:                   #d44939;
 $yellow:                #ECBB13;
 $pink:                  #FF4444;
 $purple:                #9933CC;
@@ -139,7 +139,7 @@ $btn-primary-bg-hl:           #bc3e06;
 $btn-secondary-bg:            $blue-dark;
 $btn-secondary-bg-hl:     		lighten($blue-dark, 5%);
 
-$btn-success-bg:              lighten($green, 3%);
+$btn-success-bg:              $green;
 $btn-success-bg-hl:     	    darken($green, 3%);
 
 $btn-warning-bg:              $brand-warning;
