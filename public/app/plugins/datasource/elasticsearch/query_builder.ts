@@ -222,6 +222,10 @@ export class ElasticQueryBuilder {
           esAgg["histogram"] = this.getHistogramAgg(aggDef);
           break;
         }
+        case 'avg_bucket': {
+          esAgg["avg_bucket"] = {bucket_path: aggDef.settings.bucket_path};
+          break;
+        }
         case 'filters': {
           esAgg["filters"] = {filters: this.getFiltersAgg(aggDef)};
           break;
