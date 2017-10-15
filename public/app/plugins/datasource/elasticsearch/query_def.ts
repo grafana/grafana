@@ -3,7 +3,7 @@
 import _ from 'lodash';
 
 export const metricAggTypes = [
-  {text: "Count",   value: 'count', requiresField: false},
+  {text: "Count",   value: 'count', requiresField: false, supportsInlineScript: true},
   {text: "Average",  value: 'avg', requiresField: true, supportsInlineScript: true, supportsMissing: true},
   {text: "Sum",  value: 'sum', requiresField: true, supportsInlineScript: true, supportsMissing: true},
   {text: "Max",  value: 'max', requiresField: true, supportsInlineScript: true, supportsMissing: true},
@@ -18,6 +18,7 @@ export const metricAggTypes = [
 
 export const bucketAggTypes = [
   {text: "Terms",           value: 'terms', requiresField: true},
+  {text: "Avg Bucket",      value: 'avg_bucket' },
   {text: "Filters",         value: 'filters' },
   {text: "Geo Hash Grid",   value: 'geohash_grid', requiresField: true},
   {text: "Date Histogram",  value: 'date_histogram', requiresField: true},

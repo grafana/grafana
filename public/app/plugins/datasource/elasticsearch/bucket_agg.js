@@ -59,6 +59,11 @@ function (angular, _, queryDef) {
       switch($scope.agg.type) {
         case 'date_histogram':
         case 'histogram':
+        case 'avg_bucket':  {
+          delete $scope.agg.query;
+          $scope.agg.bucket_path = 'select bucket path';
+          break;
+        }
         case 'terms':  {
           delete $scope.agg.query;
           $scope.agg.field = 'select field';
@@ -139,6 +144,10 @@ function (angular, _, queryDef) {
           if (settings.trimEdges && settings.trimEdges > 0) {
             settingsLinkText += ', Trim edges: ' + settings.trimEdges;
           }
+          break;
+        }
+        case 'avg_bucket': {
+          settingsLinkText = 'Bucket Path: ' + settings.bucket_path;
           break;
         }
         case 'histogram': {
