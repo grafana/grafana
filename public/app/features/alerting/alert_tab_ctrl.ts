@@ -383,6 +383,7 @@ export class AlertTabCtrl {
 
   test() {
     this.testing = true;
+    this.testResult = false;
 
     var payload = {
       dashboard: this.dashboardSrv.getCurrent().getSaveModelClone(),
