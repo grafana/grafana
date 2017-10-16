@@ -37,7 +37,7 @@ describe('CloudWatchDatasource', function() {
             InstanceId: 'i-12345678'
           },
           statistics: ['Average'],
-          period: 300
+          period: '300'
         }
       ]
     };
@@ -109,7 +109,7 @@ describe('CloudWatchDatasource', function() {
 
       ctx.ds.query(query).then(function() {
         var params = requestParams.queries[0];
-        expect(params.period).to.be(600);
+        expect(params.period).to.be('600');
         done();
       });
       ctx.$rootScope.$apply();
