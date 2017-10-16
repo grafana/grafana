@@ -248,9 +248,9 @@ func (hs *HttpServer) registerRoutes() {
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
 
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute RouteRegister) {
-				dashIdRoute.Get("/id/:dashboardId/versions", wrap(GetDashboardVersions))
-				dashIdRoute.Get("/id/:dashboardId/versions/:id", wrap(GetDashboardVersion))
-				dashIdRoute.Post("/id/:dashboardId/restore", reqEditorRole, bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
+				dashIdRoute.Get("/versions", wrap(GetDashboardVersions))
+				dashIdRoute.Get("/versions/:id", wrap(GetDashboardVersion))
+				dashIdRoute.Post("/restore", reqEditorRole, bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
 
 				dashIdRoute.Group("/acl", func(aclRoute RouteRegister) {
 					aclRoute.Get("/", wrap(GetDashboardAclList))
