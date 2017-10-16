@@ -12,27 +12,27 @@
 }
 
 .gicon-alert {
-  background-image: url('../img/icons_dark_theme/icon_alert.svg');
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_alert.svg');
 }
 
 .gicon-dashboard {
-  background-image: url('../img/icons_dark_theme/icon_dashboard.svg');
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_dashboard.svg');
 }
 
 .gicon-dashboard-starred {
-  background-image: url('../img/icons_dark_theme/icon_dashboard_fav.svg');
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_dashboard_fav.svg');
 }
 
 .gicon-dashboard-new {
-  background-image: url('../img/icons_dark_theme/icon_new_dashboard.svg');
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_new_dashboard.svg');
 }
 
 .gicon-folder-new {
-  background-image: url('../img/icons_dark_theme/icon_add_folder.svg');
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_add_folder.svg');
 }
 
 .gicon-dashboard-import {
-  background-image: url('../img/icons_dark_theme/icon_import_dashboard.svg');
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_import_dashboard.svg');
 }
 
 

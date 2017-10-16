@@ -6,6 +6,7 @@
 // Global values
 // --------------------------------------------------
 
+$theme-name: light;
 
 // Grays
 // -------------------------
@@ -32,8 +33,10 @@ $white:            #fff;
 // -------------------------
 $blue:             	   	#2AB2E4;
 $blue-dark:             #3CAAD6;
-$green:                 #28B62C;
-$red:                   #FF4136;
+//$green:                 #28B62C;
+$green:                 #3aa655;
+//$red:                   #FF4136;
+$red:                   #fa5343;
 $yellow:                #FF851B;
 $orange:                #Ff7941;
 $pink:                  #E671B8;
@@ -68,8 +71,8 @@ $text-shadow-faint: none;
 
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255,213,0,1.0) 0%, rgba(255,68,0,1.0) 99%, rgba(255,68,0,1.0) 100%);
-$page-gradient: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%);
-$dashboard-gradient: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%);
+$page-gradient: linear-gradient(-60deg, transparent 70%, darken($page-bg, 4%) 98%);
+$dashboard-gradient: linear-gradient(-60deg, transparent 70%, darken($page-bg, 4%) 98%);
 
 // Links
 // -------------------------
@@ -278,9 +281,9 @@ $error-text-color:              lighten($red, 10%);
 $success-text-color:            lighten($green, 10%);
 $info-text-color:                     $blue;
 
-$alert-error-bg:          linear-gradient(90deg, #d44939, #e0603d);
+$alert-error-bg:          linear-gradient(90deg, #d44939, #e04d3d);
 $alert-success-bg:        linear-gradient(90deg, #3aa655, #47b274);
-$alert-warning-bg:        linear-gradient(90deg, #d44939, #e0603d);
+$alert-warning-bg:        linear-gradient(90deg, #d44939, #e04d3d);
 $alert-info-bg:           $blue-dark;
 
 // popover
