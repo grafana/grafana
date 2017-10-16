@@ -48,7 +48,7 @@ Macro example | Description
 *$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn > to_timestamp(1494410783) AND dateColumn < to_timestamp(1494497183)*
 *$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *to_timestamp(1494410783)*
 *$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *to_timestamp(1494497183)*
-*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *(extract(epoch from "dateColumn")/extract(epoch from '5m'::interval))::int*
+*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *(extract(epoch from "dateColumn")/extract(epoch from '5m'::interval))::int*extract(epoch from '5m'::interval)*
 *$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
 *$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
 *$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
@@ -94,26 +94,26 @@ Example with `metric` column
 
 ```sql
 SELECT
-  min(time_date_time) as time,
+  $__timeGroup(time_date_time,'5m') as time,
   min(value_double),
   'min' as metric
 FROM test_data
 WHERE $__timeFilter(time_date_time)
-GROUP BY metric1, (extract(epoch from time_date_time)/extract(epoch from $__interval::interval))::int
-ORDER BY time asc
+GROUP BY time
+ORDER BY time
 ```
 
 Example with multiple columns:
 
 ```sql
 SELECT
-  min(time_date_time) as time,
+  $__timeGroup(time_date_time,'5m') as time,
   min(value_double) as min_value,
   max(value_double) as max_value
 FROM test_data
 WHERE $__timeFilter(time_date_time)
-GROUP BY metric1, (extract(epoch from time_date_time)/extract(epoch from $__interval::interval))::int
-ORDER BY time asc
+GROUP BY time
+ORDER BY time
 ```
 
 ## Templating
