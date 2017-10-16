@@ -1,8 +1,10 @@
 import React from 'react';
+import _ from 'lodash';
+
 import config from 'app/core/config';
 import {PanelModel} from '../panel_model';
 import {PanelContainer} from './PanelContainer';
-import _ from 'lodash';
+import {GRID_COLUMN_COUNT} from 'app/core/constants';
 
 export interface AddPanelPanelProps {
   panel: PanelModel;
@@ -27,30 +29,38 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
   }
 
   getPanelPlugins() {
-    return _.chain(config.panels)
+    let panels = _.chain(config.panels)
       .filter({hideFromList: false})
       .map(item => item)
-      .orderBy('sort')
       .value();
+
+    // add special row type
+    panels.push({id: 'row', name: 'Row', sort: 8, info: {logos: {small: 'public/img/icn-panel.svg'}}});
+
+    // add sort by sort property
+    return _.sortBy(panels, 'sort');
   }
 
   onPanelSelected(panelPluginInfo) {
     const panelContainer = this.props.getPanelContainer();
     const dashboard = panelContainer.getDashboard();
+    const {gridPos} = this.props.panel;
 
     // remove add-panel panel
     dashboard.removePanel(this.props.panel);
 
-    dashboard.addPanel({
+    var newPanel: any = {
       type: panelPluginInfo.id,
       title: 'Panel Title',
-      gridPos: {
-        x: this.props.panel.gridPos.x,
-        y: this.props.panel.gridPos.y,
-        w: this.props.panel.gridPos.w,
-        h: this.props.panel.gridPos.h
-      }
-    });
+      gridPos: {x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h}
+    };
+
+    if (panelPluginInfo.id === 'row') {
+      newPanel.title = 'Row title';
+      newPanel.gridPos = {x: 0, y: 0, w: GRID_COLUMN_COUNT, h: 1, static: true};
+    }
+
+    dashboard.addPanel(newPanel);
   }
 
   renderPanelItem(panel) {
