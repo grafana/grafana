@@ -318,6 +318,8 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
 
       return this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions).then(function () {
         return { status: 'success', message: 'Data source is working' };
+      }, function (err) {
+        return { status: 'error', message: err.message };
       });
     };
 
