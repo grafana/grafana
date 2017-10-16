@@ -19,20 +19,15 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
 
   render() {
     return (
-      <div>
-        <div className="dashboard-row__center">
-          <div className="dashboard-row__actions-left">
-            <i className="fa fa-chevron-down" />
-            <i className="fa fa-chevron-right" />
-          </div>
-          <a className="dashboard-row__title pointer" onClick={this.toggle}>
-            <span className="dashboard-row__title-text">{this.props.panel.title}</span>
+      <div className="dashboard-row">
+        <a className="dashboard-row__title pointer" onClick={this.toggle}>
+          <i className="fa fa-chevron-down" />
+          {this.props.panel.title}
+        </a>
+        <div className="dashboard-row__actions">
+          <a className="pointer" onClick={this.openSettings}>
+            <i className="fa fa-cog" />
           </a>
-          <div className="dashboard-row__actions-right">
-            <a className="pointer" onClick={this.openSettings}>
-              <i className="fa fa-cog" />
-            </a>
-          </div>
         </div>
         <div className="dashboard-row__panel_count">(0 hidden panels)</div>
         <div className="dashboard-row__drag grid-drag-handle" />

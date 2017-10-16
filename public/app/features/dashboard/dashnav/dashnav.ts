@@ -146,6 +146,11 @@ export class DashNavCtrl {
     }
 
     addPanel() {
+      if (this.dashboard.panels[0].type === 'add-panel') {
+        this.dashboard.removePanel(this.dashboard.panels[0]);
+        return;
+      }
+
       this.dashboard.addPanel({
         type: 'add-panel',
         gridPos: {x: 0, y: 0, w: 12, h: 9, static: true},

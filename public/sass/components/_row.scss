@@ -2,11 +2,7 @@ $dashboard-row-height: 30px;
 
 .dashboard-row {
   display: flex;
-  height: $dashboard-row-height;
-  line-height: $dashboard-row-height;
-  align-items: center;
-  align-content: center;
-  justify-content: center;
+  height: 100%;
 
   &--collapse {
     background: $panel-bg;
@@ -23,8 +19,7 @@ $dashboard-row-height: 30px;
   }
 
   &:hover {
-    .dashboard-row__actions-left,
-    .dashboard-row__actions-right {
+    .dashboard-row__actions {
       visibility: visible;
       opacity: 1;
       transition: opacity 200ms ease-in-out 100ms;
@@ -32,38 +27,24 @@ $dashboard-row-height: 30px;
   }
 }
 
-.dashboard-row__center {
-  position: relative;
-}
-
 .dashboard-row__title {
-  @include brand-bottom-border();
-
-  position: relative;
   flex-grow: 0;
   font-size: 1.15rem;
   font-weight: $font-weight-semi-bold;
   padding: 0rem 1rem 0.3rem 1rem;
+  color: $text-color;
+
+  .fa {
+    color: $text-muted;
+    font-size: $font-size-sm;
+    padding-right: 0.5rem;
+  }
 }
 
-.dashboard-row__actions-left {
-  position: absolute;
-  left: -23px;
-  font-size: $font-size-xs;
+.dashboard-row__actions {
   color: $text-muted;
-  top: 1px;
   visibility: hidden;
   opacity: 0;
-}
-
-.dashboard-row__actions-right {
-  position: absolute;
-  right: -40px;
-  padding-right: 1rem;
-  font-size: $font-size-sm;
-  visibility: hidden;
-  opacity: 0;
-  top: 0px;
 
   a {
     color: $text-color-weak;
@@ -72,10 +53,6 @@ $dashboard-row-height: 30px;
       color: $link-hover-color;
     }
   }
-}
-
-.dashboard-row__title-text {
-  color: $text-color;
 }
 
 .dashboard-row__panel_count {
