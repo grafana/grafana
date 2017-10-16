@@ -16,8 +16,8 @@ class PostgresConfigCtrl {
 
 const defaultQuery = `SELECT
   extract(epoch from time_column) AS time,
-  title_column as title,
-  description_column as text
+  text_column as text,
+  tags_column as tags
 FROM
   metric_table
 WHERE
