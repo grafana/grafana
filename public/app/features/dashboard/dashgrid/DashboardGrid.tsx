@@ -91,6 +91,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
         y: panel.gridPos.y,
         w: panel.gridPos.w,
         h: panel.gridPos.h,
+        static: panel.gridPos.static,
       });
     }
 

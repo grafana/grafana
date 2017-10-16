@@ -5,7 +5,7 @@ export interface DashboardRowProps {
   panel: PanelModel;
 }
 
-export class DashboardPanel extends React.Component<DashboardRowProps, any> {
+export class DashboardRow extends React.Component<DashboardRowProps, any> {
   constructor(props) {
     super(props);
 

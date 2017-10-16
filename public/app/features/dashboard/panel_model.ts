@@ -6,6 +6,7 @@ export interface GridPos {
   y: number;
   w: number;
   h: number;
+  static?: boolean;
 }
 
 const notPersistedProperties: {[str: string]: boolean} = {
