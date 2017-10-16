@@ -158,7 +158,9 @@ func GetPluginMarkdown(c *middleware.Context) Response {
 
 		return ApiError(500, "Could not get markdown file", err)
 	} else {
-		return Respond(200, content)
+		resp := Respond(200, content)
+		resp.Header("Content-Type", "text/plain; charset=utf-8")
+		return resp
 	}
 }
 

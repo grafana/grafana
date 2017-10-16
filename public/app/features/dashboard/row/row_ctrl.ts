@@ -113,7 +113,8 @@ export class DashRowCtrl {
   }
 }
 
-coreModule.directive('dashRow', function($rootScope) {
+/** @ngInject */
+function dashRowDirective($rootScope) {
   return {
     restrict: 'E',
     templateUrl: 'public/app/features/dashboard/row/row.html',
@@ -142,9 +143,10 @@ coreModule.directive('dashRow', function($rootScope) {
       }, scope);
     }
   };
-});
+}
 
-coreModule.directive('panelWidth', function($rootScope) {
+/** @ngInject */
+function panelWidthDirective($rootScope) {
   return function(scope, element) {
     var fullscreen = false;
 
@@ -180,10 +182,10 @@ coreModule.directive('panelWidth', function($rootScope) {
       element.hide();
     }
   };
-});
+}
 
-
-coreModule.directive('panelDropZone', function($timeout) {
+/** @ngInject */
+function panelDropZoneDirective($timeout) {
   return function(scope, element) {
     var row = scope.ctrl.row;
     var indrag = false;
@@ -237,5 +239,9 @@ coreModule.directive('panelDropZone', function($timeout) {
 
     updateState();
   };
-});
+}
+
+coreModule.directive('dashRow', dashRowDirective);
+coreModule.directive('panelWidth', panelWidthDirective);
+coreModule.directive('panelDropZone', panelDropZoneDirective);
 

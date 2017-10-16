@@ -17,6 +17,7 @@ npm install -g yarn --quiet
 yarn install --pure-lockfile --no-progress
 
 exit_if_fail npm test
+exit_if_fail npm build
 
 echo "running go fmt"
 exit_if_fail test -z "$(gofmt -s -l ./pkg | tee /dev/stderr)"

@@ -1,14 +1,11 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import moment from 'moment';
 
 import kbn from 'app/core/utils/kbn';
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
 import TableModel from 'app/core/table_model';
-
-var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
 function prometheusSpecialRegexEscape(value) {
   return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\\\$&');
@@ -83,6 +80,7 @@ export class PrometheusDatasource {
     var self = this;
     var start = this.getPrometheusTime(options.range.from, false);
     var end = this.getPrometheusTime(options.range.to, true);
+    var range = Math.ceil(end - start);
 
     var queries = [];
     var activeTargets = [];
@@ -95,17 +93,7 @@ export class PrometheusDatasource {
       }
 
       activeTargets.push(target);
-
-      var query: any = {};
-      query.expr = this.templateSrv.replace(target.expr, options.scopedVars, self.interpolateQueryExpr);
-      query.requestId = options.panelId + target.refId;
-
-      var interval = this.templateSrv.replace(target.interval, options.scopedVars) || options.interval;
-      var intervalFactor = target.intervalFactor || 1;
-      target.step = query.step = this.calculateInterval(interval, intervalFactor);
-      var range = Math.ceil(end - start);
-      target.step = query.step = this.adjustStep(query.step, this.intervalSeconds(options.interval), range);
-      queries.push(query);
+      queries.push(this.createQuery(target, options, range));
     }
 
     // No valid targets, return the empty result to save a round trip.
@@ -114,7 +102,11 @@ export class PrometheusDatasource {
     }
 
     var allQueryPromise = _.map(queries, query => {
-      return this.performTimeSeriesQuery(query, start, end);
+      if (!query.instant) {
+        return this.performTimeSeriesQuery(query, start, end);
+      } else {
+        return this.performInstantQuery(query, end);
+      }
     });
 
     return this.$q.all(allQueryPromise).then(responseList => {
@@ -129,7 +121,11 @@ export class PrometheusDatasource {
           result.push(self.transformMetricDataToTable(response.data.data.result));
         } else {
           for (let metricData of response.data.data.result) {
-            result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
+            if (response.data.data.resultType === 'matrix') {
+              result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
+            } else if (response.data.data.resultType === 'vector') {
+              result.push(self.transformInstantMetricData(metricData, activeTargets[index]));
+            }
           }
         }
       });
@@ -138,13 +134,41 @@ export class PrometheusDatasource {
     });
   }
 
-  adjustStep(step, autoStep, range) {
-    // Prometheus drop query if range/step > 11000
-    // calibrate step if it is too big
-    if (step !== 0 && range / step > 11000) {
-      step = Math.ceil(range / 11000);
+  createQuery(target, options, range) {
+    var query: any = {};
+    query.instant = target.instant;
+
+    var interval = kbn.interval_to_seconds(options.interval);
+    // Minimum interval ("Min step"), if specified for the query. or same as interval otherwise
+    var minInterval = kbn.interval_to_seconds(this.templateSrv.replace(target.interval, options.scopedVars) || options.interval);
+    var intervalFactor = target.intervalFactor || 1;
+    // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
+    var adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
+
+    var scopedVars = options.scopedVars;
+    // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
+    if (interval !== adjustedInterval) {
+      interval = adjustedInterval;
+      scopedVars = Object.assign({}, options.scopedVars, {
+        "__interval":     {text: interval + "s",  value: interval + "s"},
+        "__interval_ms":  {text: interval * 1000, value: interval * 1000},
+      });
     }
-    return Math.max(step, autoStep);
+    target.step = query.step = interval;
+
+    // Only replace vars in expression after having (possibly) updated interval vars
+    query.expr = this.templateSrv.replace(target.expr, scopedVars, this.interpolateQueryExpr);
+    query.requestId = options.panelId + target.refId;
+    return query;
+  }
+
+  adjustInterval(interval, minInterval, range, intervalFactor) {
+    // Prometheus will drop queries that might return more than 11000 data points.
+    // Calibrate interval if it is too small.
+    if (interval !== 0 && range / intervalFactor / interval > 11000) {
+      interval = Math.ceil(range / intervalFactor / 11000);
+    }
+    return Math.max(interval * intervalFactor, minInterval);
   }
 
   performTimeSeriesQuery(query, start, end) {
@@ -153,6 +177,11 @@ export class PrometheusDatasource {
     }
 
     var url = '/api/v1/query_range?query=' + encodeURIComponent(query.expr) + '&start=' + start + '&end=' + end + '&step=' + query.step;
+    return this._request('GET', url, query.requestId);
+  }
+
+  performInstantQuery(query, time) {
+    var url = '/api/v1/query?query=' + encodeURIComponent(query.expr) + '&time=' + time;
     return this._request('GET', url, query.requestId);
   }
 
@@ -204,7 +233,7 @@ export class PrometheusDatasource {
     var end = this.getPrometheusTime(options.range.to, true);
     var query = {
       expr: interpolated,
-      step: this.adjustStep(kbn.interval_to_seconds(step), 0, Math.ceil(end - start)) + 's'
+      step: this.adjustInterval(kbn.interval_to_seconds(step), 0, Math.ceil(end - start), 1) + 's'
     };
 
     var self = this;
@@ -241,21 +270,6 @@ export class PrometheusDatasource {
     return this.metricFindQuery('metrics(.*)').then(function() {
       return { status: 'success', message: 'Data source is working'};
     });
-  }
-
-  calculateInterval(interval, intervalFactor) {
-    return Math.ceil(this.intervalSeconds(interval) * intervalFactor);
-  }
-
-  intervalSeconds(interval) {
-    var m = interval.match(durationSplitRegexp);
-    var dur = moment.duration(parseInt(m[1]), m[2]);
-    var sec = dur.asSeconds();
-    if (sec < 1) {
-      sec = 1;
-    }
-
-    return sec;
   }
 
   transformMetricData(md, options, start, end) {
@@ -317,6 +331,9 @@ export class PrometheusDatasource {
 
     // Populate rows, set value to empty string when label not present.
     _.each(md, function(series) {
+      if (series.value) {
+        series.values = [series.value];
+      }
       if (series.values) {
         for (i = 0; i < series.values.length; i++) {
           var values = series.values[i];
@@ -338,6 +355,13 @@ export class PrometheusDatasource {
     });
 
     return table;
+  }
+
+  transformInstantMetricData(md, options) {
+    var dps = [], metricLabel = null;
+    metricLabel = this.createMetricLabel(md.metric, options);
+    dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
+    return { target: metricLabel, datapoints: dps };
   }
 
   createMetricLabel(labelData, options) {

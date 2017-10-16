@@ -91,9 +91,8 @@ function (angular, _, dateMath) {
           if(annotationObject) {
             _.each(annotationObject, function(annotation) {
               var event = {
-                title: annotation.description,
+                text: annotation.description,
                 time: Math.floor(annotation.startTime) * 1000,
-                text: annotation.notes,
                 annotation: options.annotation
               };
 
@@ -472,7 +471,5 @@ function (angular, _, dateMath) {
     }
   }
 
-  return {
-    OpenTsDatasource: OpenTsDatasource
-  };
+  return OpenTsDatasource;
 });

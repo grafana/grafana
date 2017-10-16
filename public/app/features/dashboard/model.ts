@@ -5,6 +5,7 @@ import moment from 'moment';
 import _ from 'lodash';
 import $ from 'jquery';
 
+import {DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
 import {Emitter, contextSrv, appEvents} from 'app/core/core';
 import {DashboardRow} from './row/row_model';
 import sortByKeys from 'app/core/utils/sort_by_keys';
@@ -71,8 +72,33 @@ export class DashboardModel {
       }
     }
 
+    this.addBuiltInAnnotationQuery();
     this.updateSchema(data);
     this.initMeta(meta);
+  }
+
+  addBuiltInAnnotationQuery() {
+    let found = false;
+    for (let item of this.annotations.list) {
+      if (item.builtIn === 1) {
+        found = true;
+        break;
+      }
+    }
+
+    if (found) {
+      return;
+    }
+
+    this.annotations.list.unshift({
+      datasource: '-- Grafana --',
+      name: 'Annotations & Alerts',
+      type: 'dashboard',
+      iconColor: DEFAULT_ANNOTATION_COLOR,
+      enable: true,
+      hide: true,
+      builtIn: 1,
+    });
   }
 
   private initMeta(meta) {

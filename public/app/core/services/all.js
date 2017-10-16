@@ -1,7 +1,6 @@
 define([
   './alert_srv',
   './util_srv',
-  './datasource_srv',
   './context_srv',
   './timer',
   './keyboard_manager',

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"crypto/tls"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -14,11 +13,11 @@ import (
 )
 
 var grafanaComProxyTransport = &http.Transport{
-	TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
-	Proxy:           http.ProxyFromEnvironment,
+	Proxy: http.ProxyFromEnvironment,
 	Dial: (&net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
+		DualStack: true,
 	}).Dial,
 	TLSHandshakeTimeout: 10 * time.Second,
 }

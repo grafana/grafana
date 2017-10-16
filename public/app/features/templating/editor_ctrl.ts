@@ -54,7 +54,7 @@ export class VariableEditorCtrl {
 
     $scope.isValid = function() {
       if (!$scope.ctrl.form.$valid) {
-        return;
+        return false;
       }
 
       if (!$scope.current.name.match(/^\w+$/)) {

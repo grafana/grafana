@@ -28,15 +28,27 @@ func NewImageUploader() (ImageUploader, error) {
 			return nil, err
 		}
 
+		bucket := s3sec.Key("bucket").MustString("")
+		region := s3sec.Key("region").MustString("")
+		path := s3sec.Key("path").MustString("")
 		bucketUrl := s3sec.Key("bucket_url").MustString("")
 		accessKey := s3sec.Key("access_key").MustString("")
 		secretKey := s3sec.Key("secret_key").MustString("")
-		info, err := getRegionAndBucketFromUrl(bucketUrl)
-		if err != nil {
-			return nil, err
+
+		if path != "" && path[len(path)-1:] != "/" {
+			path += "/"
 		}
 
-		return NewS3Uploader(info.region, info.bucket, "public-read", accessKey, secretKey), nil
+		if bucket == "" || region == "" {
+			info, err := getRegionAndBucketFromUrl(bucketUrl)
+			if err != nil {
+				return nil, err
+			}
+			bucket = info.bucket
+			region = info.region
+		}
+
+		return NewS3Uploader(region, bucket, path, "public-read", accessKey, secretKey), nil
 	case "webdav":
 		webdavSec, err := setting.Cfg.GetSection("external_image_storage.webdav")
 		if err != nil {

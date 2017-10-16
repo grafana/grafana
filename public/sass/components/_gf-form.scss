@@ -121,6 +121,7 @@ $gf-form-margin: 0.25rem;
   // text areas should be scrollable
   @at-root textarea#{&} {
     overflow: auto;
+    white-space: pre-wrap;
   }
 
   // Unstyle the caret on `<select>`s in IE10+.
@@ -170,6 +171,12 @@ $gf-form-margin: 0.25rem;
       content: '\f0d7';
       pointer-events: none;
     }
+  }
+
+  &--small {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: $font-size-sm;
   }
 }
 

@@ -1,3 +1,7 @@
+// vendor
+@import "../vendor/css/timepicker.css";
+@import "../vendor/css/spectrum.css";
+
 // MIXINS
 @import "mixins/mixins";
 @import "mixins/animations";
@@ -15,8 +19,7 @@
 @import "base/type";
 @import "base/forms";
 @import "base/grid";
-@import "base/font_awesome";
-@import "base/grafana_icons";
+@import "base/fonts";
 @import "base/code";
 
 // UTILS
@@ -75,6 +78,7 @@
 @import "components/jsontree";
 @import "components/edit_sidemenu.scss";
 @import "components/row.scss";
+@import "components/icon-picker.scss";
 @import "components/json_explorer.scss";
 @import "components/code_editor.scss";
 

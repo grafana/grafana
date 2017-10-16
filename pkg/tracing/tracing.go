@@ -80,8 +80,8 @@ func internalInit(settings *TracingSettings) (io.Closer, error) {
 		return nil, err
 	}
 
-	logger.Info("Initialized jaeger tracer", "address", settings.Address)
 	opentracing.InitGlobalTracer(tracer)
+	logger.Info("Initializing Jaeger tracer", "address", settings.Address)
 	return closer, nil
 }
 

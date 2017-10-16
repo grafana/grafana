@@ -35,13 +35,15 @@
 
       <div class="gf-form">
         <label class="gf-form-label width-11">Type</label>
-        <div class="gf-form-select-wrapper width-10">
+        <div class="gf-form-select-wrapper width-16">
           <select class="gf-form-input" ng-model="style.type" ng-options="c.value as c.text for c in editor.columnTypes" ng-change="editor.render()"></select>
         </div>
       </div>
       <div class="gf-form"  ng-if="style.type === 'date'">
         <label class="gf-form-label width-11">Date Format</label>
-        <metric-segment-model property="style.dateFormat" options="editor.dateFormats" on-change="editor.render()" custom="true"></metric-segment-model>
+        <div class="gf-form-select-wrapper width-16">
+          <select class="gf-form-input" ng-model="style.dateFormat" ng-options="c.value as c.text for c in editor.dateFormats" ng-change="editor.render()"></select>
+        </div>
       </div>
 
       <div ng-if="style.type === 'string'">
@@ -54,7 +56,7 @@
       <div ng-if="style.type === 'number'">
         <div class="gf-form">
           <label class="gf-form-label width-11">Unit</label>
-          <div class="gf-form-dropdown-typeahead width-10" ng-model="style.unit" dropdown-typeahead2="editor.unitFormats" dropdown-typeahead-on-select="editor.setUnitFormat(style, $subItem)"></div>
+          <div class="gf-form-dropdown-typeahead width-16" ng-model="style.unit" dropdown-typeahead2="editor.unitFormats" dropdown-typeahead-on-select="editor.setUnitFormat(style, $subItem)"></div>
         </div>
         <div class="gf-form">
           <label class="gf-form-label width-11">Decimals</label>
@@ -67,7 +69,7 @@
       <h5 class="section-heading">Thresholds</h5>
       <div class="gf-form">
         <label class="gf-form-label width-8">Thresholds<tip>Comma separated values</tip></label>
-        <input type="text" class="gf-form-input width-10" ng-model="style.thresholds" placeholder="50,80" ng-blur="editor.render()" array-join ng-model-onblur>
+        <input type="text" class="gf-form-input width-10" ng-model="style.thresholds" placeholder="50,80" ng-blur="editor.render()" array-join>
       </div>
       <div class="gf-form">
         <label class="gf-form-label width-8">Color Mode</label>
@@ -78,13 +80,13 @@
       <div class="gf-form">
         <label class="gf-form-label width-8">Colors</label>
         <span class="gf-form-label">
-          <spectrum-picker ng-model="style.colors[0]" ng-change="editor.render()"></spectrum-picker>
+          <color-picker color="style.colors[0]" onChange="editor.onColorChange($index, 0)"></color-picker>
         </span>
         <span class="gf-form-label">
-          <spectrum-picker ng-model="style.colors[1]" ng-change="editor.render()"></spectrum-picker>
+          <color-picker color="style.colors[1]" onChange="editor.onColorChange($index, 1)"></color-picker>
         </span>
         <span class="gf-form-label">
-          <spectrum-picker ng-model="style.colors[2]" ng-change="editor.render()"></spectrum-picker>
+          <color-picker color="style.colors[2]" onChange="editor.onColorChange($index, 2)"></color-picker>
         </span>
         <div class="gf-form-label">
           <a class="pointer" ng-click="editor.invertColorOrder($index)">Invert</a>
