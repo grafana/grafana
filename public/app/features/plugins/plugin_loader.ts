@@ -8,7 +8,7 @@ import jquery from 'jquery';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
-import {coreModule, appEvents, contextSrv} from 'app/core/core';
+import {coreModule, appEvents, contextSrv, Emitter} from 'app/core/core';
 import {Observable} from 'rxjs/Observable';
 import {Subject} from 'rxjs/Subject';
 import * as datemath from 'app/core/utils/datemath';
@@ -74,6 +74,7 @@ exposeToPlugin('app/core/core', {
   coreModule: coreModule,
   appEvents: appEvents,
   contextSrv: contextSrv,
+  Emitter: Emitter,
   __esModule: true
 });
 
@@ -110,4 +111,3 @@ export function loadPluginCss(options) {
     System.import(options.dark + '!css');
   }
 }
-
