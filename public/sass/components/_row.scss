@@ -1,5 +1,3 @@
-$dashboard-row-height: 30px;
-
 .dashboard-row {
   display: flex;
   height: 100%;
@@ -31,7 +29,6 @@ $dashboard-row-height: 30px;
   flex-grow: 0;
   font-size: 1.15rem;
   font-weight: $font-weight-semi-bold;
-  padding: 0rem 1rem 0.3rem 1rem;
   color: $text-color;
 
   .fa {
@@ -53,6 +50,8 @@ $dashboard-row-height: 30px;
       color: $link-hover-color;
     }
   }
+
+  flex-grow: 1;
 }
 
 .dashboard-row__panel_count {
@@ -61,15 +60,12 @@ $dashboard-row-height: 30px;
   font-size: $font-size-sm;
   font-weight: normal;
   display: none;
-  position: absolute;
-  right: 30px;
-  top: 0;
 }
 
 .dashboard-row__drag {
   cursor: move;
   width: 1rem;
-  height: $dashboard-row-height;
+  height: 100%;
   background: url("../img/grab_dark.svg") no-repeat 50% 50%;
   background-size: 8px;
   visibility: hidden;

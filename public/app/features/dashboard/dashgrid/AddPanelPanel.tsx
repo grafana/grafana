@@ -4,7 +4,6 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import {PanelModel} from '../panel_model';
 import {PanelContainer} from './PanelContainer';
-import {GRID_COLUMN_COUNT} from 'app/core/constants';
 
 export interface AddPanelPanelProps {
   panel: PanelModel;
@@ -46,9 +45,6 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
     const dashboard = panelContainer.getDashboard();
     const {gridPos} = this.props.panel;
 
-    // remove add-panel panel
-    dashboard.removePanel(this.props.panel);
-
     var newPanel: any = {
       type: panelPluginInfo.id,
       title: 'Panel Title',
@@ -57,10 +53,11 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
 
     if (panelPluginInfo.id === 'row') {
       newPanel.title = 'Row title';
-      newPanel.gridPos = {x: 0, y: 0, w: GRID_COLUMN_COUNT, h: 1, static: true};
+      newPanel.gridPos = {x: 0, y: 0};
     }
 
     dashboard.addPanel(newPanel);
+    dashboard.removePanel(this.props.panel);
   }
 
   renderPanelItem(panel) {

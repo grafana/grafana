@@ -70,6 +70,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.dashboard.on('panel-removed', this.triggerForceUpdate.bind(this));
     this.dashboard.on('repeats-processed', this.triggerForceUpdate.bind(this));
     this.dashboard.on('view-mode-changed', this.triggerForceUpdate.bind(this));
+    this.dashboard.on('row-collapse-changed', this.triggerForceUpdate.bind(this));
   }
 
   buildLayout() {
@@ -85,14 +86,22 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
         continue;
       }
 
-      layout.push({
+      let panelPos: any = {
         i: stringId,
         x: panel.gridPos.x,
         y: panel.gridPos.y,
         w: panel.gridPos.w,
         h: panel.gridPos.h,
-        static: panel.gridPos.static,
-      });
+      };
+
+      if (panel.type === 'row') {
+        panelPos.w = GRID_COLUMN_COUNT;
+        panelPos.h = 1;
+        panelPos.isResizable = false;
+        panelPos.isDraggable = panel.collapse;
+      }
+
+      layout.push(panelPos);
     }
 
     return layout;
@@ -109,7 +118,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   }
 
   onWidthChange() {
-    console.log('width change');
     for (const panel of this.dashboard.panels) {
       panel.resizeDone();
     }

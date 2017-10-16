@@ -27,6 +27,7 @@ export class PanelModel {
   repeatPanelId?: number;
   repeatDirection?: string;
   minSpan?: number;
+  collapse?: boolean;
 
   // non persisted
   fullscreen: boolean;
@@ -85,6 +86,10 @@ export class PanelModel {
 
   resizeDone() {
     this.events.emit('panel-size-changed');
+  }
+
+  destroy() {
+    this.events.removeAllListeners();
   }
 }
 

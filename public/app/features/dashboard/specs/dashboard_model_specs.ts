@@ -168,7 +168,7 @@ describe('DashboardModel', function() {
     });
 
     it('should move pulldowns to new schema', function() {
-      expect(model.annotations.list[0].name).to.be('old');
+      expect(model.annotations.list[1].name).to.be('old');
     });
 
     it('table panel should only have two thresholds values', function() {
@@ -558,6 +558,29 @@ describe('DashboardModel', function() {
       expect(dashboard.panels[1].gridPos).to.eql({x: 5, y: 2, h: 2, w: 8});
       expect(dashboard.panels[2].gridPos).to.eql({x: 5, y: 4, h: 2, w: 8});
     });
+  });
+
+  describe('When collapsing row', function(ctx) {
+    var dashboard;
+
+    beforeEach(function() {
+      dashboard = new DashboardModel({
+        panels: [
+          {id: 1, type: 'graph', gridPos: {x: 0, y: 0, w: 24, h: 2}},
+          {id: 2, type: 'row', gridPos: {x: 0, y: 2, w: 24, h: 2}},
+          {id: 3, type: 'graph', gridPos: {x: 0, y: 4, w: 12, h: 2}},
+          {id: 4, type: 'graph', gridPos: {x: 12, y: 4, w: 12, h: 2}},
+          {id: 5, type: 'row', gridPos: {x: 0, y: 6, w: 24, h: 2}},
+        ],
+      });
+      dashboard.toggleRow(dashboard.panels[1]);
+    });
+
+    it('should remove panels and put them inside collapsed row', function() {
+      expect(dashboard.panels.length).to.eql(3);
+      expect(dashboard.panels[1].panels.length).to.eql(2);
+    });
+
   });
 
 });

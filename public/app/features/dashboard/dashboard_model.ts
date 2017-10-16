@@ -82,9 +82,11 @@ export class DashboardModel {
     this.folderId = data.folderId || null;
     this.panels = _.map(data.panels || [], panelData => new PanelModel(panelData));
 
-    this.addBuiltInAnnotationQuery();
     this.initMeta(meta);
     this.updateSchema(data);
+
+    this.addBuiltInAnnotationQuery();
+    this.sortPanelsByGridPos();
   }
 
   addBuiltInAnnotationQuery() {
@@ -200,10 +202,12 @@ export class DashboardModel {
     return null;
   }
 
-  addPanel(panel) {
-    panel.id = this.getNextPanelId();
+  addPanel(panelData) {
+    panelData.id = this.getNextPanelId();
 
-    this.panels.unshift(new PanelModel(panel));
+    let panel = new PanelModel(panelData);
+
+    this.panels.unshift(panel);
 
     this.sortPanelsByGridPos();
 
@@ -395,9 +399,51 @@ export class DashboardModel {
 
   destroy() {
     this.events.removeAllListeners();
-    for (let row of this.rows) {
-      row.destroy();
+    for (let panel of this.panels) {
+      panel.destroy();
     }
+  }
+
+  toggleRow(row) {
+    let rowPanels = [];
+    let rowFound = false;
+
+    // if already collapsed
+    if (row.collapse) {
+      row.collapse = false;
+
+      for (let panel of row.panels) {
+        this.panels.push(new PanelModel(panel));
+      }
+
+      row.panels = [];
+
+    } else {
+
+      for (let index = 0; index < this.panels.length; index++) {
+        let panel = this.panels[index];
+
+        if (rowFound) {
+          // break when encountering another row
+          if (panel.type === 'row') {
+            break;
+          }
+
+          // this panel must belong to row
+          rowPanels.push(panel);
+        } else if (panel === row) {
+          rowFound = true;
+        }
+      }
+      // remove panels
+      _.pull(this.panels, ...rowPanels);
+      // save panel models inside row panel
+      row.panels = _.map(rowPanels, panel => panel.getSaveModel());
+      row.collapse = true;
+    }
+
+    // emit change event
+    this.events.emit('row-collapse-changed');
   }
 
   on(eventName, callback) {
