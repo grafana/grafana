@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import moment from 'moment';
-
-declare var window: any;
+import {saveAs} from 'file-saver';
 
 const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
 
@@ -69,5 +68,5 @@ export function exportTableDataToCsv(table, excel = false) {
 
 export function saveSaveBlob(payload, fname) {
     var blob = new Blob([payload], { type: "text/csv;charset=utf-8" });
-    window.saveAs(blob, fname);
+    saveAs(blob, fname);
 }
