@@ -1,6 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import angular from 'angular';
+import appEvents from 'app/core/app_events';
+
 
 var module = angular.module('grafana.directives');
 
@@ -72,11 +74,20 @@ export class QueryRowCtrl {
   }
 
   removeQuery() {
-    if (this.panelCtrl.__collapsedQueryCache) {
-      delete this.panelCtrl.__collapsedQueryCache[this.target.refId];
-    }
+    appEvents.emit('confirm-modal', {
+      title: 'Delete Query',
+      text: 'Are you sure you want to delete this query?',
+      text2: 'It will be replaced in alert rule as well.',
+      icon: 'fa-trash',
+      yesText: 'Delete',
+      onConfirm: () => {
+        if (this.panelCtrl.__collapsedQueryCache) {
+          delete this.panelCtrl.__collapsedQueryCache[this.target.refId];
+        }
 
-    this.panelCtrl.removeQuery(this.target);
+        this.panelCtrl.removeQuery(this.target);
+      }
+    });
   }
 
   duplicateQuery() {
