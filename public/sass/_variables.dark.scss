@@ -173,7 +173,8 @@ $input-box-shadow:               inset 1px 0px 0.3rem 0px rgba(150, 150, 150, 0.
 $input-border-focus:             $input-border-color !default;
 $input-box-shadow-focus:         rgba(102,175,233,.6) !default;
 $input-color-placeholder:        $gray-1 !default;
-$input-label-bg:				         $dark-3;
+$input-label-bg:				 #292a2d;
+$input-label-border-color:       transparent;
 $input-invalid-border-color:     lighten($red, 5%);
 
 // Search
@@ -217,6 +218,7 @@ $navbarHeight:                    52px;
 $navbarBackgroundHighlight:       $dark-3;
 $navbarBackground:                $panel-bg;
 $navbarBorder:                    1px solid $body-bg;
+$navbarShadow:                    0 0 20px black;
 
 $navbarText:                      $gray-4;
 $navbarLinkColor:                 $gray-4;
@@ -234,6 +236,7 @@ $navbarButtonBackgroundHighlight: $body-bg;
 // -------------------------
 $side-menu-bg:            $black;
 $side-menu-item-hover-bg: $dark-2;
+$side-menu-shadow:        0 0 20px black;
 
 // Menu dropdowns
 // -------------------------

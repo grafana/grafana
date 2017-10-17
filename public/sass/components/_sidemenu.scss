@@ -17,9 +17,9 @@
     background: $side-menu-bg;
     position: initial;
     height: auto;
-    box-shadow: 0 0 20px black;
+    box-shadow: $side-menu-shadow;
     position: relative;
-    z-index: 1;
+    z-index: 2;
   }
   .sidemenu__top,
   .sidemenu__bottom {
