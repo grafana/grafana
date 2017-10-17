@@ -149,6 +149,60 @@ func TestDSRouteRule(t *testing.T) {
 			})
 		})
 
+		Convey("When proxying a data source with no keepCookies specified", func() {
+			plugin := &plugins.DataSourcePlugin{}
+
+			json := simplejson.New()
+			json.Set("keepCookies", []string{})
+
+			ds := &m.DataSource{
+				Type:     m.DS_GRAPHITE,
+				Url:      "http://graphite:8086",
+				JsonData: json,
+			}
+
+			ctx := &middleware.Context{}
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
+
+			requestUrl, _ := url.Parse("http://grafana.com/sub")
+			req := http.Request{URL: requestUrl, Header: make(http.Header)}
+			cookies := "grafana_user=admin; grafana_remember=99; grafana_sess=11; JSESSION_ID=test"
+			req.Header.Set("Cookie", cookies)
+
+			proxy.getDirector()(&req)
+
+			Convey("Should clear all cookies", func() {
+				So(req.Header.Get("Cookie"), ShouldEqual, "")
+			})
+		})
+
+		Convey("When proxying a data source with keep cookies specified", func() {
+			plugin := &plugins.DataSourcePlugin{}
+
+			json := simplejson.New()
+			json.Set("keepCookies", []string{"JSESSION_ID"})
+
+			ds := &m.DataSource{
+				Type:     m.DS_GRAPHITE,
+				Url:      "http://graphite:8086",
+				JsonData: json,
+			}
+
+			ctx := &middleware.Context{}
+			proxy := NewDataSourceProxy(ds, plugin, ctx, "")
+
+			requestUrl, _ := url.Parse("http://grafana.com/sub")
+			req := http.Request{URL: requestUrl, Header: make(http.Header)}
+			cookies := "grafana_user=admin; grafana_remember=99; grafana_sess=11; JSESSION_ID=test"
+			req.Header.Set("Cookie", cookies)
+
+			proxy.getDirector()(&req)
+
+			Convey("Should keep named cookies", func() {
+				So(req.Header.Get("Cookie"), ShouldEqual, "JSESSION=test")
+			})
+		})
+
 		Convey("When interpolating string", func() {
 			data := templateData{
 				SecureJsonData: map[string]string{
