@@ -15,16 +15,16 @@ describe('grafanaGraph', function() {
   beforeEach(angularMocks.module('grafana.core'));
 
   function graphScenario(desc, func, elementWidth = 500)  {
-    describe(desc, function() {
+    describe(desc, () => {
       var ctx: any = {};
 
-      ctx.setup = function(setupFunc) {
+      ctx.setup = (setupFunc) => {
 
-        beforeEach(angularMocks.module(function($provide) {
+        beforeEach(angularMocks.module(($provide) => {
           $provide.value("timeSrv", new helpers.TimeSrvStub());
         }));
 
-        beforeEach(angularMocks.inject(function($rootScope, $compile) {
+        beforeEach(angularMocks.inject(($rootScope, $compile) => {
           var ctrl: any = {
             events: new Emitter(),
             height: 200,
@@ -96,15 +96,15 @@ describe('grafanaGraph', function() {
     });
   }
 
-  graphScenario('simple lines options', function(ctx) {
-    ctx.setup(function(ctrl) {
+  graphScenario('simple lines options', (ctx) => {
+    ctx.setup((ctrl) => {
       ctrl.panel.lines = true;
       ctrl.panel.fill = 5;
       ctrl.panel.linewidth = 3;
       ctrl.panel.steppedLine = true;
     });
 
-    it('should configure plot with correct options', function() {
+    it('should configure plot with correct options', () => {
       expect(ctx.plotOptions.series.lines.show).to.be(true);
       expect(ctx.plotOptions.series.lines.fill).to.be(0.5);
       expect(ctx.plotOptions.series.lines.lineWidth).to.be(3);
@@ -112,9 +112,9 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('sort series as legend', function(ctx) {
+  graphScenario('sort series as legend', (ctx) => {
     describe("with sort as legend undefined", () => {
-      ctx.setup(function(ctrl) {
+      ctx.setup((ctrl) => {
         ctrl.panel.legend.sort = undefined;
       });
 
@@ -125,7 +125,7 @@ describe('grafanaGraph', function() {
     });
 
     describe("with sort as legend set to min. descending order", () => {
-      ctx.setup(function(ctrl) {
+      ctx.setup((ctrl) => {
         ctrl.panel.legend.sort = 'min';
         ctrl.panel.legend.sortDesc = true;
       });
@@ -137,7 +137,7 @@ describe('grafanaGraph', function() {
     });
 
     describe("with sort as legend set to min. ascending order", () => {
-      ctx.setup(function(ctrl) {
+      ctx.setup((ctrl) => {
         ctrl.panel.legend.sort = 'min';
         ctrl.panel.legend.sortDesc = true;
       });
@@ -149,7 +149,7 @@ describe('grafanaGraph', function() {
     });
 
     describe("with sort as legend set to current. ascending order", () => {
-      ctx.setup(function(ctrl) {
+      ctx.setup((ctrl) => {
         ctrl.panel.legend.sort = 'current';
         ctrl.panel.legend.sortDesc = false;
       });
