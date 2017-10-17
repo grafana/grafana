@@ -77,8 +77,12 @@ func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		return fmt.Sprintf("%s >= to_timestamp(%d) AND %s <= to_timestamp(%d)", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
 	case "__timeFrom":
 		return fmt.Sprintf("to_timestamp(%d)", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
+	case "__timeFromRFC3339":
+		return m.TimeRange.GetFromAsRFC3339(), nil
 	case "__timeTo":
 		return fmt.Sprintf("to_timestamp(%d)", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+	case "__timeToRFC3339":
+		return m.TimeRange.GetToAsRFC3339(), nil
 	case "__timeGroup":
 		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)

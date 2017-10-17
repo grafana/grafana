@@ -47,7 +47,9 @@ Macro example | Description
 *$__timeSec(dateColumn)* | Will be replaced by an expression to rename the column to `time` and converting the value to unix timestamp. For example, *extract(epoch from dateColumn) as time*
 *$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn > to_timestamp(1494410783) AND dateColumn < to_timestamp(1494497183)*
 *$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *to_timestamp(1494410783)*
+*$__timeFromRFC3339()* | Will be replaced by the start of the currently active time selection, in RFC3339 format. For example, *2017-05-10T10:06:23Z*.
 *$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *to_timestamp(1494497183)*
+*$__timeToRFC3339()* | Will be replaced by the end of the currently active time selection, in RFC3339 format. For example, *2017-05-10T10:06:23Z*.
 *$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *(extract(epoch from "dateColumn")/extract(epoch from '5m'::interval))::int*
 *$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
 *$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
