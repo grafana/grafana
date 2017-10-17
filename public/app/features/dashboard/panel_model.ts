@@ -27,7 +27,7 @@ export class PanelModel {
   repeatPanelId?: number;
   repeatDirection?: string;
   minSpan?: number;
-  collapse?: boolean;
+  collapsed?: boolean;
   panels?: any;
 
   // non persisted

@@ -13,7 +13,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     super(props);
 
     this.state = {
-      collapse: this.props.panel.collapse,
+      collapsed: this.props.panel.collapsed,
     };
 
     this.toggle = this.toggle.bind(this);
@@ -27,15 +27,15 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     dashboard.toggleRow(this.props.panel);
 
     this.setState(prevState => {
-      return {collapse: !prevState.collapse};
+      return {collapsed: !prevState.collapsed};
     });
   }
 
   openSettings() {}
 
   render() {
-    const classes = classNames({'dashboard-row': true, 'dashboard-row--collapse': this.state.collapse});
-    const chevronClass = classNames({'fa': true, 'fa-chevron-down': !this.state.collapse, 'fa-chevron-right': this.state.collapse});
+    const classes = classNames({'dashboard-row': true, 'dashboard-row--collapsed': this.state.collapsed});
+    const chevronClass = classNames({'fa': true, 'fa-chevron-down': !this.state.collapsed, 'fa-chevron-right': this.state.collapsed});
     const hiddenPanels = this.props.panel.panels ? this.props.panel.panels.length : 0;
 
     return (

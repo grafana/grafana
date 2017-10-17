@@ -583,4 +583,41 @@ describe('DashboardModel', function() {
 
   });
 
+  describe('When expanding row', function(ctx) {
+    var dashboard;
+
+    beforeEach(function() {
+      dashboard = new DashboardModel({
+        panels: [
+          {id: 1, type: 'graph', gridPos: {x: 0, y: 0, w: 24, h: 6}},
+          {
+            id: 2,
+            type: 'row',
+            gridPos: {x: 0, y: 6, w: 24, h: 2},
+            collapsed: true,
+            panels: [
+              {id: 3, type: 'graph', gridPos: {x: 0, y: 2, w: 12, h: 2}},
+              {id: 4, type: 'graph', gridPos: {x: 12, y: 2, w: 12, h: 2}},
+            ]
+          },
+        ],
+      });
+      dashboard.toggleRow(dashboard.panels[1]);
+    });
+
+    it('should add panels back', function() {
+      expect(dashboard.panels.length).to.eql(4);
+    });
+
+    it('should add them below row in array', function() {
+      expect(dashboard.panels[2].id).to.eql(3);
+      expect(dashboard.panels[3].id).to.eql(4);
+    });
+
+    it('should position them below row', function() {
+      expect(dashboard.panels[2].gridPos).to.eql({x: 0, y: 8, w: 12, h: 2});
+    });
+
+  });
+
 });

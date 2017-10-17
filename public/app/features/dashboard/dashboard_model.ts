@@ -404,46 +404,60 @@ export class DashboardModel {
     }
   }
 
-  toggleRow(row) {
-    let rowPanels = [];
-    let rowFound = false;
+  toggleRow(row: PanelModel) {
+    let rowIndex = _.indexOf(this.panels, row);
 
-    // if already collapsed
-    if (row.collapse) {
-      row.collapse = false;
+    if (row.collapsed) {
+      row.collapsed = false;
 
-      for (let panel of row.panels) {
-        this.panels.push(new PanelModel(panel));
-      }
+      if (row.panels.length > 0) {
+        // Use first panel to figure out if it was moved or pushed
+        let firstPanel = row.panels[0];
+        let yDiff = firstPanel.gridPos.y - (row.gridPos.y + row.gridPos.h);
+        // start inserting after row
+        let insertPos = rowIndex+1;
 
-      row.panels = [];
-
-    } else {
-
-      for (let index = 0; index < this.panels.length; index++) {
-        let panel = this.panels[index];
-
-        if (rowFound) {
-          // break when encountering another row
-          if (panel.type === 'row') {
-            break;
-          }
-
-          // this panel must belong to row
-          rowPanels.push(panel);
-        } else if (panel === row) {
-          rowFound = true;
+        for (let panel of row.panels) {
+          // make sure y is adjusted (in case row moved while collapsed)
+          panel.gridPos.y -= yDiff;
+          // insert after row
+          this.panels.splice(insertPos, 0, new PanelModel(panel));
+          insertPos += 1;
         }
+
+        row.panels = [];
       }
-      // remove panels
-      _.pull(this.panels, ...rowPanels);
-      // save panel models inside row panel
-      row.panels = _.map(rowPanels, panel => panel.getSaveModel());
-      row.collapse = true;
+
+      // sort panels
+      this.sortPanelsByGridPos();
+
+      // emit change event
+      this.events.emit('row-expanded');
+      return;
     }
 
+    let rowPanels = [];
+
+    for (let index = rowIndex+1; index < this.panels.length; index++) {
+      let panel = this.panels[index];
+
+      // break when encountering another row
+      if (panel.type === 'row') {
+        break;
+      }
+
+      // this panel must belong to row
+      rowPanels.push(panel);
+    }
+
+    // remove panels
+    _.pull(this.panels, ...rowPanels);
+    // save panel models inside row panel
+    row.panels = _.map(rowPanels, panel => panel.getSaveModel());
+    row.collapsed = true;
+
     // emit change event
-    this.events.emit('row-collapse-changed');
+    this.events.emit('row-collapsed');
   }
 
   on(eventName, callback) {
