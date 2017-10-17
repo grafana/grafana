@@ -1,7 +1,6 @@
 import React from 'react';
 import $ from 'jquery';
 import tinycolor from 'tinycolor2';
-import coreModule from 'app/core/core_module';
 import { GfColorPalette } from './ColorPalette';
 import { GfSpectrumPicker } from './SpectrumPicker';
 
@@ -115,7 +114,3 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
     );
   }
 }
-
-coreModule.directive('gfColorPickerPopover', function (reactDirective) {
-  return reactDirective(ColorPickerPopover, ['color', 'onColorSelect']);
-});
