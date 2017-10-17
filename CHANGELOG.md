@@ -11,6 +11,7 @@
 
 ## Fixes
 * **ColorPicker**: Fix for color picker not showing [#9549](https://github.com/grafana/grafana/issues/9549)
+* **Alerting**: Fix for broken test rule button in alert tab [#9539](https://github.com/grafana/grafana/issues/9539)
 
 # 4.6.0-beta1 (2017-10-13)
 
