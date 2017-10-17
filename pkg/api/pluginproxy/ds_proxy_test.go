@@ -152,8 +152,7 @@ func TestDSRouteRule(t *testing.T) {
 		Convey("When proxying a data source with no keepCookies specified", func() {
 			plugin := &plugins.DataSourcePlugin{}
 
-			json := simplejson.New()
-			json.Set("keepCookies", []string{})
+			json, _ := simplejson.NewJson([]byte(`{"keepCookies": []}`))
 
 			ds := &m.DataSource{
 				Type:     m.DS_GRAPHITE,
@@ -179,8 +178,7 @@ func TestDSRouteRule(t *testing.T) {
 		Convey("When proxying a data source with keep cookies specified", func() {
 			plugin := &plugins.DataSourcePlugin{}
 
-			json := simplejson.New()
-			json.Set("keepCookies", []string{"JSESSION_ID"})
+			json, _ := simplejson.NewJson([]byte(`{"keepCookies": ["JSESSION_ID"]}`))
 
 			ds := &m.DataSource{
 				Type:     m.DS_GRAPHITE,
@@ -199,7 +197,7 @@ func TestDSRouteRule(t *testing.T) {
 			proxy.getDirector()(&req)
 
 			Convey("Should keep named cookies", func() {
-				So(req.Header.Get("Cookie"), ShouldEqual, "JSESSION=test")
+				So(req.Header.Get("Cookie"), ShouldEqual, "JSESSION_ID=test")
 			})
 		})
 
