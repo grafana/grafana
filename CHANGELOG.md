@@ -15,7 +15,9 @@
 * **Cloudwatch**: Provide error message when failing to add cloudwatch datasource [#9534](https://github.com/grafana/grafana/pull/9534), thx [@mtanda](https://github.com/mtanda)
 * **Cloudwatch**: Fix unused period parameter [#9536](https://github.com/grafana/grafana/pull/9536), thx [@mtanda](https://github.com/mtanda)
 * **CSV Export**: Fix for broken CSV export [#9525](https://github.com/grafana/grafana/issues/9525)
-* **Text panel**: Fixes issue with break lines in Firefox [#9491](https://github.com/grafana/grafana/issues/9491)
+* **Text panel**: Fix for issue with break lines in Firefox [#9491](https://github.com/grafana/grafana/issues/9491)
+* **Annotations**: Fix for issue saving annotation event in MySQL DB [#9550](https://github.com/grafana/grafana/issues/9550), thanks [@krise3k](https://github.com/krise3k)
+
 
 # 4.6.0-beta1 (2017-10-13)
 
