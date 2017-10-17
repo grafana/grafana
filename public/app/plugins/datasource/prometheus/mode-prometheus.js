@@ -75,8 +75,7 @@ var PrometheusHighlightRules = function() {
       regex : '"[^"]*"|\'[^\']*\''
     }, {
       token : "punctuation.operator",
-      regex : ",",
-      push  : 'start-label-matcher'
+      regex : ","
     }, {
       token : "paren.rparen",
       regex : "}",
