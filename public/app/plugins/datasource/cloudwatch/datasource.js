@@ -354,6 +354,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
         var t = angular.copy(target);
         var scopedVar = {};
         scopedVar[variable.name] = v;
+        t.refId = target.refId + '_' + v.value;
         t.dimensions[dimensionKey] = templateSrv.replace(t.dimensions[dimensionKey], scopedVar);
         return t;
       }).value();
