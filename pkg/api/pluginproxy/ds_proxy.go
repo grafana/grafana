@@ -135,9 +135,24 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			req.Header.Add("Authorization", dsAuth)
 		}
 
-		// clear cookie headers
+		// clear cookie header, except for whitelisted cookies
+		var keptCookies []*http.Cookie
+		if proxy.ds.JsonData != nil {
+			if keepCookies := proxy.ds.JsonData.Get("keepCookies"); keepCookies != nil {
+				keepCookieNames := keepCookies.MustStringArray()
+				for _, c := range req.Cookies() {
+					for _, v := range keepCookieNames {
+						if c.Name == v {
+							keptCookies = append(keptCookies, c)
+						}
+					}
+				}
+			}
+		}
 		req.Header.Del("Cookie")
-		req.Header.Del("Set-Cookie")
+		for _, c := range keptCookies {
+			req.AddCookie(c)
+		}
 
 		// clear X-Forwarded Host/Port/Proto headers
 		req.Header.Del("X-Forwarded-Host")
