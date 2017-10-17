@@ -75,7 +75,7 @@ describe('grafanaGraph', function() {
             alias: 'series1'
           }));
           ctx.data.push(new TimeSeries({
-            datapoints: [[1,1],[2,2]],
+            datapoints: [[1,10],[2,20]],
             alias: 'series2'
           }));
 
@@ -109,6 +109,55 @@ describe('grafanaGraph', function() {
       expect(ctx.plotOptions.series.lines.fill).to.be(0.5);
       expect(ctx.plotOptions.series.lines.lineWidth).to.be(3);
       expect(ctx.plotOptions.series.lines.steps).to.be(true);
+    });
+  });
+
+  graphScenario('sort series as legend', function(ctx) {
+    describe("with sort as legend undefined", () => {
+      ctx.setup(function(ctrl) {
+        ctrl.panel.legend.sort = undefined;
+      });
+
+      it("should not modify order of time series", () => {
+        expect(ctx.plotData[0].alias).to.be('series1');
+        expect(ctx.plotData[1].alias).to.be('series2');
+      });
+    });
+
+    describe("with sort as legend set to min. descending order", () => {
+      ctx.setup(function(ctrl) {
+        ctrl.panel.legend.sort = 'min';
+        ctrl.panel.legend.sortDesc = true;
+      });
+
+      it("highest value should be first", () => {
+        expect(ctx.plotData[1].alias).to.be('series2');
+        expect(ctx.plotData[0].alias).to.be('series1');
+      });
+    });
+
+    describe("with sort as legend set to min. ascending order", () => {
+      ctx.setup(function(ctrl) {
+        ctrl.panel.legend.sort = 'min';
+        ctrl.panel.legend.sortDesc = true;
+      });
+
+      it("lowest value should be first", () => {
+        expect(ctx.plotData[0].alias).to.be('series1');
+        expect(ctx.plotData[1].alias).to.be('series2');
+      });
+    });
+
+    describe("with sort as legend set to current. ascending order", () => {
+      ctx.setup(function(ctrl) {
+        ctrl.panel.legend.sort = 'current';
+        ctrl.panel.legend.sortDesc = false;
+      });
+
+      it("highest last value should be first", () => {
+        expect(ctx.plotData[1].alias).to.be('series2');
+        expect(ctx.plotData[0].alias).to.be('series1');
+      });
     });
   });
 
@@ -251,7 +300,7 @@ describe('grafanaGraph', function() {
     });
 
     it('should set barWidth', function() {
-      expect(ctx.plotOptions.series.bars.barWidth).to.be(1/1.5);
+      expect(ctx.plotOptions.series.bars.barWidth).to.be(10/1.5);
     });
   });
 

@@ -80,13 +80,13 @@ function (angular, _, $) {
           if (panel.legend.sortDesc === false) {
             panel.legend.sort = null;
             panel.legend.sortDesc = null;
-            render();
+            ctrl.render();
             return;
           }
 
           panel.legend.sortDesc = !panel.legend.sortDesc;
           panel.legend.sort = stat;
-          render();
+          ctrl.render();
         }
 
         function getTableHeaderHtml(statName) {

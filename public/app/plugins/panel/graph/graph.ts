@@ -343,7 +343,8 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         eventManager.addFlotEvents(annotations, options);
         configureAxisOptions(data, options);
 
-        sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
+        sortedSeries = _.sortBy(data, (series) => { return series.zindex; });
+        sortSeries(sortedSeries, data, ctrl.panel);
 
         function callPlot(incrementRenderCounter) {
           try {
@@ -371,6 +372,26 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
           legendSideLastValue = panel.legend.rightSide;
         } else {
           callPlot(true);
+        }
+      }
+
+      function sortSeries(sortedSeries, data, panel) {
+        var sortBy = panel.legend.sort;
+        var sortOrder = panel.legend.sortDesc;
+        var sortAsLegend = panel.sortAsLegend;
+
+        if (sortAsLegend && !!sortBy && !!sortOrder) {
+          var desc = desc = panel.legend.sortDesc === true ? 1 : -1;
+          sortedSeries.sort((x, y) => {
+            if (x.stats[sortBy] > y.stats[sortBy]) {
+              return 1 * desc;
+            }
+            if (x.stats[sortBy] < y.stats[sortBy]) {
+              return -1 * desc;
+            }
+
+            return 0;
+          });
         }
       }
 
