@@ -7,6 +7,11 @@
 - UX changes to nav & side menu
 - New dashboard grid layout system
 
+# 4.6.0-beta2 (2017-10-17)
+
+## Fixes
+* **ColorPicker**: Fix for color picker not showing [#9549](https://github.com/grafana/grafana/issues/9549)
+
 # 4.6.0-beta1 (2017-10-13)
 
 ## New Features
@@ -41,7 +46,7 @@
 
 ## Tech
 * **Go**: Grafana is now built using golang 1.9
-* **Webpack**: Changed from systemjs to webpack (see readme or building from source guide for new build instructions). Systemjs is still used to load plugins but now plugins can only import a limited set of dependencies. See [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) for more details on how this can effect some plugins. 
+* **Webpack**: Changed from systemjs to webpack (see readme or building from source guide for new build instructions). Systemjs is still used to load plugins but now plugins can only import a limited set of dependencies. See [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) for more details on how this can effect some plugins.
 
 # 4.5.2 (2017-09-22)
 
