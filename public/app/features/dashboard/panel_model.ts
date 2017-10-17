@@ -28,6 +28,7 @@ export class PanelModel {
   repeatDirection?: string;
   minSpan?: number;
   collapse?: boolean;
+  panels?: any;
 
   // non persisted
   fullscreen: boolean;

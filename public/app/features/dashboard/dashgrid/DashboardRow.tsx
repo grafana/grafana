@@ -36,19 +36,20 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
   render() {
     const classes = classNames({'dashboard-row': true, 'dashboard-row--collapse': this.state.collapse});
     const chevronClass = classNames({'fa': true, 'fa-chevron-down': !this.state.collapse, 'fa-chevron-right': this.state.collapse});
+    const hiddenPanels = this.props.panel.panels ? this.props.panel.panels.length : 0;
 
     return (
       <div className={classes}>
         <a className="dashboard-row__title pointer" onClick={this.toggle}>
           <i className={chevronClass} />
           {this.props.panel.title}
+          <span className="dashboard-row__panel_count">({hiddenPanels} hidden panels)</span>
         </a>
         <div className="dashboard-row__actions">
           <a className="pointer" onClick={this.openSettings}>
             <i className="fa fa-cog" />
           </a>
         </div>
-        <div className="dashboard-row__panel_count">(0 hidden panels)</div>
         <div className="dashboard-row__drag grid-drag-handle" />
       </div>
     );

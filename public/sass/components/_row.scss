@@ -1,12 +1,14 @@
 .dashboard-row {
   display: flex;
+  align-items: center;
+
   height: 100%;
 
   &--collapse {
     background: $panel-bg;
 
     .dashboard-row__panel_count {
-      display: block;
+      display: inline-block;
     }
 
     .dashboard-row__drag,
@@ -33,8 +35,8 @@
 
   .fa {
     color: $text-muted;
-    font-size: $font-size-sm;
-    padding-right: 0.5rem;
+    font-size: $font-size-xs;
+    padding: 0 0.5rem;
   }
 }
 
@@ -55,6 +57,7 @@
 }
 
 .dashboard-row__panel_count {
+  padding-left: $spacer;
   color: $text-color-weak;
   font-style: italic;
   font-size: $font-size-sm;
