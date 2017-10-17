@@ -125,6 +125,7 @@ $gf-form-margin: 3px;
   // text areas should be scrollable
   @at-root textarea#{&} {
     overflow: auto;
+    white-space: pre-wrap;
   }
 
   // Unstyle the caret on `<select>`s in IE10+.

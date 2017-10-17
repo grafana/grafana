@@ -1,5 +1,4 @@
 import React from 'react';
-import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 import $ from 'jquery';
 import 'vendor/spectrum';
@@ -71,6 +70,3 @@ export class GfSpectrumPicker extends React.Component<IProps, any> {
   }
 }
 
-coreModule.directive('gfSpectrumPicker', function (reactDirective) {
-  return reactDirective(GfSpectrumPicker, ['color', 'options', 'onColorSelect']);
-});

@@ -5,6 +5,7 @@
  */
 import coreModule from '../../core_module';
 
+/** @ngInject */
 export function spectrumPicker() {
   return {
     restrict: 'E',
