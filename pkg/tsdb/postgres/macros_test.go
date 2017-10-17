@@ -33,6 +33,13 @@ func TestMacroEngine(t *testing.T) {
 			So(sql, ShouldEqual, "WHERE time_column >= to_timestamp(18446744066914186738) AND time_column <= to_timestamp(18446744066914187038)")
 		})
 
+		Convey("interpolate __timeFromRFC3339 function", func() {
+			sql, err := engine.Interpolate(timeRange, "select '$__timeFromRFC3339()'")
+			So(err, ShouldBeNil)
+
+			So(sql, ShouldEqual, "select '0000-12-31T23:55:00Z'")
+		})
+
 		Convey("interpolate __timeFrom function", func() {
 			sql, err := engine.Interpolate(timeRange, "select $__timeFrom(time_column)")
 			So(err, ShouldBeNil)
@@ -53,6 +60,13 @@ func TestMacroEngine(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			So(sql, ShouldEqual, "select to_timestamp(18446744066914187038)")
+		})
+
+		Convey("interpolate __timeToRFC3339 function", func() {
+			sql, err := engine.Interpolate(timeRange, "select '$__timeToRFC3339()'")
+			So(err, ShouldBeNil)
+
+			So(sql, ShouldEqual, "select '0001-01-01T00:00:00Z'")
 		})
 
 		Convey("interpolate __unixEpochFilter function", func() {

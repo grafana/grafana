@@ -21,6 +21,14 @@ type TimeRange struct {
 	Now  time.Time
 }
 
+func (tr *TimeRange) GetFromAsRFC3339() string {
+	return tr.MustGetFrom().Format(time.RFC3339)
+}
+
+func (tr *TimeRange) GetToAsRFC3339() string {
+	return tr.MustGetTo().Format(time.RFC3339)
+}
+
 func (tr *TimeRange) GetFromAsMsEpoch() int64 {
 	return tr.MustGetFrom().UnixNano() / int64(time.Millisecond)
 }
