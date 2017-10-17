@@ -117,11 +117,6 @@ var prometheusFunctions = [
     docText: 'Returns the input vector with all sample values converted to their absolute value.'
   },
   {
-    name: 'abs()', value: 'abs',
-    def: 'abs(v instant-vector)',
-    docText: 'Returns the input vector with all sample values converted to their absolute value.'
-  },
-  {
     name: 'absent()', value: 'absent',
     def: 'absent(v instant-vector)',
     docText: 'Returns an empty vector if the vector passed to it has any elements and a 1-element vector with the value 1 if the vector passed to it has no elements. This is useful for alerting on when no time series exist for a given metric name and label combination.'
