@@ -8,7 +8,7 @@ export class PromCompleter {
   labelNameCache: any;
   labelValueCache: any;
 
-  identifierRegexps = [/[\[\]a-zA-Z_0-9=]/];
+  identifierRegexps = [/[\[\]a-zA-Z0-9_:=]/];
 
   constructor(private datasource: PrometheusDatasource) {
     this.labelQueryCache = {};
