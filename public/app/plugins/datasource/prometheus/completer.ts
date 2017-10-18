@@ -8,7 +8,7 @@ export class PromCompleter {
   labelNameCache: any;
   labelValueCache: any;
 
-  identifierRegexps = [/[\[\]a-zA-Z0-9_:=]/];
+  identifierRegexps = [/\[/, /[a-zA-Z0-9_:]/];
 
   constructor(private datasource: PrometheusDatasource) {
     this.labelQueryCache = {};
@@ -73,7 +73,7 @@ export class PromCompleter {
         });
     }
 
-    if (prefix === '[') {
+    if (token.type === 'paren.lparen' && token.value === '[') {
       var vectors = [];
       for (let unit of ['s', 'm', 'h']) {
         for (let value of [1,5,10,30]) {
