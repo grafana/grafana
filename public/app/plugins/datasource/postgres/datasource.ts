@@ -20,6 +20,10 @@ export class PostgresDatasource {
       return '\'' + value + '\'';
     }
 
+    if (typeof value === 'number') {
+      return value.toString();
+    }
+
     var quotedValues = _.map(value, function(val) {
       return '\'' + val + '\'';
     });
