@@ -40,6 +40,14 @@ func GetAnnotations(c *middleware.Context) Response {
 	return Json(200, items)
 }
 
+type CreateAnnotationError struct {
+	message string
+}
+
+func (e *CreateAnnotationError) Error() string {
+	return e.message
+}
+
 func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
 
@@ -90,14 +98,6 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 	return ApiSuccess("Annotation added")
 }
 
-type CreateAnnotationError struct {
-	message string
-}
-
-func (e *CreateAnnotationError) Error() string {
-	return e.message
-}
-
 func formatGraphiteAnnotation(what string, data string) string {
 	text := what
 	if data != "" {
@@ -123,7 +123,11 @@ func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotati
 	var tagsArray []string
 	switch tags := cmd.Tags.(type) {
 	case string:
-		tagsArray = strings.Split(tags, " ")
+		if tags != "" {
+			tagsArray = strings.Split(tags, " ")
+		} else {
+			tagsArray = []string{}
+		}
 	case []interface{}:
 		for _, t := range tags {
 			if tagStr, ok := t.(string); ok {
@@ -150,7 +154,7 @@ func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotati
 		return ApiError(500, "Failed to save Graphite annotation", err)
 	}
 
-	return ApiSuccess("Graphite Annotation added")
+	return ApiSuccess("Graphite annotation added")
 }
 
 func UpdateAnnotation(c *middleware.Context, cmd dtos.UpdateAnnotationsCmd) Response {
