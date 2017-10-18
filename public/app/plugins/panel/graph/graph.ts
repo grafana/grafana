@@ -343,8 +343,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         eventManager.addFlotEvents(annotations, options);
         configureAxisOptions(data, options);
 
-        sortedSeries = data;
-        sortSeries(sortedSeries, ctrl.panel);
+        sortedSeries = sortSeries(data, ctrl.panel);
 
         function callPlot(incrementRenderCounter) {
           try {
@@ -375,7 +374,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         }
       }
 
-      function sortSeries(sortedSeries, panel) {
+      function sortSeries(series, panel) {
         var sortBy = panel.legend.sort;
         var sortOrder = panel.legend.sortDesc;
         var haveSortBy = sortBy !== null || sortBy !== undefined;
@@ -383,7 +382,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
 
         if (panel.stack && haveSortBy && haveSortOrder) {
           var desc = desc = panel.legend.sortDesc === true ? 1 : -1;
-          sortedSeries.sort((x, y) => {
+          series.sort((x, y) => {
             if (x.stats[sortBy] > y.stats[sortBy]) {
               return 1 * desc;
             }
@@ -395,7 +394,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
           });
         }
 
-        sortedSeries.sort((x, y) => {
+        series.sort((x, y) => {
           if (x.zindex > y.zindex) {
             return 1;
           }
@@ -406,6 +405,8 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
 
           return 0;
         });
+
+        return series;
       }
 
       function translateFillOption(fill) {
