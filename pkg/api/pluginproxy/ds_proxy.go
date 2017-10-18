@@ -166,8 +166,8 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 func (proxy *DataSourceProxy) validateRequest() error {
 	if proxy.ds.Type == m.DS_INFLUXDB {
 		if proxy.ctx.Query("db") != proxy.ds.Database {
-			if(!proxy.ds.JsonData.Get("allowDatabaseQuery").MustBool(false)) {
-				return errors.New("Datasource is not configured to allow this database");
+			if !proxy.ds.JsonData.Get("allowDatabaseQuery").MustBool(false) {
+				return errors.New("Datasource is not configured to allow this database")
 			}
 		}
 	}
