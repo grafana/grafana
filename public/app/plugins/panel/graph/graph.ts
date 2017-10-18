@@ -343,8 +343,8 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         eventManager.addFlotEvents(annotations, options);
         configureAxisOptions(data, options);
 
-        sortedSeries = _.sortBy(data);
-        sortSeries(sortedSeries, data, ctrl.panel);
+        sortedSeries = data;
+        sortSeries(sortedSeries, ctrl.panel);
 
         function callPlot(incrementRenderCounter) {
           try {
@@ -375,7 +375,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         }
       }
 
-      function sortSeries(sortedSeries, data, panel) {
+      function sortSeries(sortedSeries, panel) {
         var sortBy = panel.legend.sort;
         var sortOrder = panel.legend.sortDesc;
         var haveSortBy = sortBy !== null || sortBy !== undefined;
