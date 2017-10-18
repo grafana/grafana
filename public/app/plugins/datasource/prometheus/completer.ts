@@ -80,6 +80,8 @@ export class PromCompleter {
          vectors.push({caption: value+unit, value: '['+value+unit, meta: 'range vector'});
         }
       }
+      vectors.push({caption: '$__interval', value: '[$__interval', meta: 'range vector'});
+      vectors.push({caption: '$__interval_ms', value: '[$__interval_ms', meta: 'range vector'});
       callback(null, vectors);
       return;
     }
