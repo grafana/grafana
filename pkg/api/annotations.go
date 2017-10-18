@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -44,6 +43,11 @@ func GetAnnotations(c *middleware.Context) Response {
 func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
 
+	if cmd.Text == "" {
+		err := &CreateAnnotationError{"text field should not be empty"}
+		return ApiError(500, "Failed to save annotation", err)
+	}
+
 	item := annotations.Item{
 		OrgId:       c.OrgId,
 		UserId:      c.UserId,
@@ -53,6 +57,10 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 		Text:        cmd.Text,
 		Data:        cmd.Data,
 		Tags:        cmd.Tags,
+	}
+
+	if item.Epoch == 0 {
+		item.Epoch = time.Now().Unix()
 	}
 
 	if err := repo.Save(&item); err != nil {
@@ -82,20 +90,29 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 	return ApiSuccess("Annotation added")
 }
 
-type GraphiteAnnotationError struct {
+type CreateAnnotationError struct {
 	message string
 }
 
-func (e *GraphiteAnnotationError) Error() string {
+func (e *CreateAnnotationError) Error() string {
 	return e.message
 }
 
 func formatGraphiteAnnotation(what string, data string) string {
-	return fmt.Sprintf("%s\n%s", what, data)
+	text := what
+	if data != "" {
+		text = text + "\n" + data
+	}
+	return text
 }
 
 func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
+
+	if cmd.What == "" {
+		err := &CreateAnnotationError{"what field should not be empty"}
+		return ApiError(500, "Failed to save Graphite annotation", err)
+	}
 
 	if cmd.When == 0 {
 		cmd.When = time.Now().Unix()
@@ -112,12 +129,12 @@ func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotati
 			if tagStr, ok := t.(string); ok {
 				tagsArray = append(tagsArray, tagStr)
 			} else {
-				err := &GraphiteAnnotationError{"tag should be a string"}
+				err := &CreateAnnotationError{"tag should be a string"}
 				return ApiError(500, "Failed to save Graphite annotation", err)
 			}
 		}
 	default:
-		err := &GraphiteAnnotationError{"unsupported tags format"}
+		err := &CreateAnnotationError{"unsupported tags format"}
 		return ApiError(500, "Failed to save Graphite annotation", err)
 	}
 
