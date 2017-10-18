@@ -29,7 +29,7 @@ Name | Description
 ------------ | -------------
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
-*Credentials* profile name | Specify the name of the profile to use (if you use `~/aws/credentials` file), leave blank for default.
+*Credentials* profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.
 *Default Region* | Used in query editor to set region (can be changed on per query basis)
 *Custom Metrics namespace* | Specify the CloudWatch namespace of Custom metrics
 *Assume Role Arn* | Specify the ARN of the role to assume
@@ -50,11 +50,12 @@ Create a file at `~/.aws/credentials`. That is the `HOME` path for user running 
 
 Example content:
 
-    [default]
-    aws_access_key_id = asdsadasdasdasd
-    aws_secret_access_key = dasdasdsadasdasdasdsa
-    region = us-west-2
-
+```bash
+[default]
+aws_access_key_id = asdsadasdasdasd
+aws_secret_access_key = dasdasdsadasdasdasdsa
+region = us-west-2
+```
 
 ## Metric Query Editor
 
@@ -117,7 +118,9 @@ Filters syntax:
 
 Example `ec2_instance_attribute()` query
 
-    ec2_instance_attribute(us-east-1, InstanceId, { "tag:Environment": [ "production" ] })
+```javascript
+ec2_instance_attribute(us-east-1, InstanceId, { "tag:Environment": [ "production" ] })
+```
 
 ### Selecting Attributes
 
@@ -156,7 +159,9 @@ Tags can be selected by prepending the tag name with `Tags.`
 
 Example `ec2_instance_attribute()` query
 
-    ec2_instance_attribute(us-east-1, Tags.Name, { "tag:Team": [ "sysops" ] })
+```javascript
+ec2_instance_attribute(us-east-1, Tags.Name, { "tag:Team": [ "sysops" ] })
+```
 
 ## Cost
 

@@ -27,7 +27,7 @@ describe('MySQLDatasource', function() {
     const options = {
       annotation: {
         name: annotationName,
-        rawQuery: 'select time_sec, title, text, tags from table;'
+        rawQuery: 'select time_sec, text, tags from table;'
       },
       range: {
         from: moment(1432288354),
@@ -41,11 +41,11 @@ describe('MySQLDatasource', function() {
           refId: annotationName,
           tables: [
             {
-              columns: [{text: 'time_sec'}, {text: 'title'}, {text: 'text'}, {text: 'tags'}],
+              columns: [{text: 'time_sec'}, {text: 'text'}, {text: 'tags'}],
               rows: [
-                [1432288355, 'aTitle', 'some text', 'TagA,TagB'],
-                [1432288390, 'aTitle2', 'some text2', ' TagB , TagC'],
-                [1432288400, 'aTitle3', 'some text3']
+                [1432288355, 'some text', 'TagA,TagB'],
+                [1432288390, 'some text2', ' TagB , TagC'],
+                [1432288400, 'some text3']
               ]
             }
           ]
@@ -64,7 +64,6 @@ describe('MySQLDatasource', function() {
     it('should return annotation list', function() {
       expect(results.length).to.be(3);
 
-      expect(results[0].title).to.be('aTitle');
       expect(results[0].text).to.be('some text');
       expect(results[0].tags[0]).to.be('TagA');
       expect(results[0].tags[1]).to.be('TagB');
@@ -192,6 +191,26 @@ describe('MySQLDatasource', function() {
       expect(results.length).to.be(1);
       expect(results[0].text).to.be('aTitle');
       expect(results[0].value).to.be('same');
+    });
+  });
+
+  describe('When interpolating variables', () => {
+    describe('and value is a string', () => {
+      it('should return a quoted value', () => {
+        expect(ctx.ds.interpolateVariable('abc')).to.eql('\'abc\'');
+      });
+    });
+
+    describe('and value is a number', () => {
+      it('should return an unquoted value', () => {
+        expect(ctx.ds.interpolateVariable(1000)).to.eql(1000);
+      });
+    });
+
+    describe('and value is an array of strings', () => {
+      it('should return comma separated quoted values', () => {
+        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'])).to.eql('\'a\',\'b\',\'c\'');
+      });
     });
   });
 });

@@ -32,8 +32,8 @@ $white:            #fff;
 // -------------------------
 $blue:             	   	#2AB2E4;
 $blue-dark:             #3CAAD6;
-$green:                 #28B62C;
-$red:                   #FF4136;
+$green:                 #3aa655;
+$red:                   #d44939;
 $yellow:                #FF851B;
 $orange:                #Ff7941;
 $pink:                  #E671B8;
@@ -270,9 +270,11 @@ $alert-warning-bg:        linear-gradient(90deg, #d44939, #e0603d);
 $alert-info-bg:           $blue-dark;
 
 // popover
-$popover-bg:              $gray-5;
+$popover-bg:              $panel-bg;
 $popover-color:           $text-color;
-$popover-border-color:    $gray-3;
+$popover-border-color:    $gray-5;
+$popover-shadow:          0 0 20px $white;
+
 $popover-help-bg:         $blue-dark;
 $popover-help-color:      $gray-6;
 $popover-error-bg:        $btn-danger-bg;

@@ -38,6 +38,8 @@ export class DashImportListCtrl {
             });
           }, 500);
         });
+      } else {
+        return Promise.resolve();
       }
     });
   }

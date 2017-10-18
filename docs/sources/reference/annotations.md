@@ -10,12 +10,45 @@ weight = 2
 
 # Annotations
 
+{{< docs-imagebox img="/img/docs/v46/annotations.png" max-width="800px" >}}
+
 Annotations provide a way to mark points on the graph with rich events. When you hover over an annotation
-you can get title, tags, and text information for the event.
+you can get event description and event tags. The text field can include links to other systems with more detail.
 
-![](/img/docs/annotations/toggles.png)
+## Native annotations
 
-## Queries
+Grafana v4.6+ comes with a native annotation store and the ability to add annotation events directly from the graph panel or via the [HTTP API]({{< relref "http_api/annotations.md" >}}).
+
+## Adding annotations
+
+By holding down **CTRL** or **CMD** + Click. Add tags to the annotation will make it searchable from other dashboards.
+
+{{< docs-imagebox img="/img/docs/annotations/annotation-still.png"
+max-width="600px" animated-gif="/img/docs/annotations/annotation.gif" >}}
+
+### Adding regions events
+
+You can also hold down **CTRL** or **CMD** and select region to create a region annotation.
+
+{{< docs-imagebox img="/img/docs/annotations/region-annotation-still.png"
+max-width="600px" animated-gif="/img/docs/annotations/region-annotation.gif" >}}
+
+### Built in query
+
+After you added an annotation they will still be visible. This is due to the built in annotation query that exists on all dashboards. This annotation query will
+fetch all annotation events that originate from the current dashboard and show them on the panel where they where created. This includes alert state history annotations. You can
+stop annotations from being fetched & drawn by opening the **Annotations** settings (via Dashboard cogs menu) and modifying the query named `Annotations & Alerts (Built-in)`.
+
+When you copy a dashboard using the **Save As** feature it will get a new dashboard id so annotations created on source dashboard will no longer be visible on the copy. You
+can still show them if you add a new **Annotation Query** and filter by tags. But this only works if the annotations on the source dashboard had tags to filter by.
+
+### Query by tag
+
+You can create new annotation queries that fetch annotations from the native annotation store via the `-- Grafana --` data source and by setting *Filter by* to `Tags`. Specify at least
+one tag. For example create an annotation query name `outages` and specify a tag named `outage`. This query will show all annotations you create (from any dashboard or via API) that
+have the `outage` tag.
+
+## Querying other data sources
 
 Annotation events are fetched via annotation queries. To add a new annotation query to a dashboard
 open the dashboard settings menu, then select `Annotations`. This will open the dashboard annotations

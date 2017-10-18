@@ -1,12 +1,10 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import $ from 'jquery';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import {appEvents, contextSrv} from 'app/core/core';
 import {tickStep, getScaledDecimals, getFlotTickSize} from 'app/core/utils/ticks';
-import d3 from 'd3';
+import d3 from 'vendor/d3/d3';
 import {HeatmapTooltip} from './heatmap_tooltip';
 import {mergeZeroBuckets} from './heatmap_data_converter';
 
@@ -73,9 +71,8 @@ export default function link(scope, elem, attrs, ctrl) {
   function getYAxisWidth(elem) {
     let axis_text = elem.selectAll(".axis-y text").nodes();
     let max_text_width = _.max(_.map(axis_text, text => {
-      let el = $(text);
-      // Use JQuery outerWidth() to compute full element width
-      return el.outerWidth();
+      // Use SVG getBBox method
+      return text.getBBox().width;
     }));
 
     return max_text_width;

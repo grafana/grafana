@@ -48,12 +48,15 @@ external image destination if available or fallback to attaching the image in th
 
 To set up slack you need to configure an incoming webhook url at slack. You can follow their guide for how
 to do that https://api.slack.com/incoming-webhooks If you want to include screenshots of the firing alerts
-in the slack messages you have to configure the [external image destination](#external-image-store) in Grafana.
+in the slack messages you have to configure either the [external image destination](#external-image-store) in Grafana,
+or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token provided
+https://api.slack.com/bot-users, which starts with "xoxb".
 
 Setting | Description
 ---------- | -----------
 Recipient | allows you to override the slack recipient.
 Mention | make it possible to include a mention in the slack notification sent by Grafana. Ex @here or @channel
+Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination.
 
 ### PagerDuty
 
@@ -111,6 +114,17 @@ In DingTalk PC Client:
 6. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the grafana Dingtalk setting page and then click "finish".
 
 Dingtalk supports the following "message type": `text`, `link` and `markdown`. Only the `text` message type is supported.
+
+### Kafka
+
+Notifications can be sent to a Kafka topic from Grafana using [Kafka REST Proxy](https://docs.confluent.io/1.0/kafka-rest/docs/index.html).
+There are couple of configurations options which need to be set in Grafana UI under Kafka Settings:
+
+1. Kafka REST Proxy endpoint.
+
+2. Kafka Topic.
+
+Once these two properties are set, you can send the alerts to Kafka for further processing or throttling them.
 
 ### Other Supported Notification Channels
 

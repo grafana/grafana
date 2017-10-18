@@ -84,7 +84,7 @@ export class AlertTabCtrl {
     });
   }
 
-  getNotificationIcon(type) {
+  getNotificationIcon(type): string {
     switch (type) {
       case "email": return "fa fa-envelope";
       case "slack": return "fa fa-slack";
@@ -94,7 +94,9 @@ export class AlertTabCtrl {
       case "opsgenie": return "fa fa-bell";
       case "hipchat": return "fa fa-mail-forward";
       case "pushover": return "fa fa-mobile";
+      case "kafka": return "fa fa-random";
     }
+    return 'fa fa-bell';
   }
 
   getNotifications() {
@@ -381,6 +383,7 @@ export class AlertTabCtrl {
 
   test() {
     this.testing = true;
+    this.testResult = false;
 
     var payload = {
       dashboard: this.dashboardSrv.getCurrent().getSaveModelClone(),

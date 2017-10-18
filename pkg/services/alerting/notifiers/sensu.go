@@ -112,7 +112,7 @@ func (this *SensuNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	if evalContext.Rule.Message != "" {
-		bodyJSON.Set("message", evalContext.Rule.Message)
+		bodyJSON.Set("output", evalContext.Rule.Message)
 	}
 
 	body, _ := bodyJSON.MarshalJSON()

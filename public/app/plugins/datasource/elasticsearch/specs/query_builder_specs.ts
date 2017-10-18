@@ -1,6 +1,6 @@
 
 import {describe, beforeEach, it, expect} from 'test/lib/common';
-import ElasticQueryBuilder from '../query_builder';
+import {ElasticQueryBuilder} from '../query_builder';
 
 describe('ElasticQueryBuilder', function() {
   var builder;

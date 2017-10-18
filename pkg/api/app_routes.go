@@ -6,27 +6,33 @@ import (
 	"net/http"
 	"time"
 
-	"gopkg.in/macaron.v1"
-
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	macaron "gopkg.in/macaron.v1"
 )
 
-var pluginProxyTransport = &http.Transport{
-	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	Proxy:           http.ProxyFromEnvironment,
-	Dial: (&net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: 30 * time.Second,
-	}).Dial,
-	TLSHandshakeTimeout: 10 * time.Second,
-}
+var pluginProxyTransport *http.Transport
 
 func InitAppPluginRoutes(r *macaron.Macaron) {
+	pluginProxyTransport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: setting.PluginAppsSkipVerifyTLS,
+			Renegotiation:      tls.RenegotiateFreelyAsClient,
+		},
+		Proxy: http.ProxyFromEnvironment,
+		Dial: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).Dial,
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
+
 	for _, plugin := range plugins.Apps {
 		for _, route := range plugin.Routes {
 			url := util.JoinUrlFragments("/api/plugin-proxy/"+plugin.Id, route.Path)

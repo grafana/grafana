@@ -96,6 +96,7 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			EmailVerified: cmd.EmailVerified,
 			Created:       time.Now(),
 			Updated:       time.Now(),
+			LastSeenAt:    time.Now().AddDate(-10, 0, 0),
 		}
 
 		if len(cmd.Password) > 0 {

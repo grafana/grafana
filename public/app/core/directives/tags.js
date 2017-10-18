@@ -2,7 +2,7 @@ define([
   'angular',
   'jquery',
   '../core_module',
-  'bootstrap-tagsinput',
+  'vendor/tagsinput/bootstrap-tagsinput.js',
 ],
 function (angular, $, coreModule) {
   'use strict';
@@ -88,6 +88,7 @@ function (angular, $, coreModule) {
           typeahead: {
             source: angular.isFunction(scope.$parent[attrs.typeaheadSource]) ? scope.$parent[attrs.typeaheadSource] : null
           },
+          widthClass: attrs.widthClass,
           itemValue: getItemProperty(scope, attrs.itemvalue),
           itemText : getItemProperty(scope, attrs.itemtext),
           tagClass : angular.isFunction(scope.$parent[attrs.tagclass]) ?

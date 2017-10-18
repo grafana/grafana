@@ -14,7 +14,9 @@ weight = 4
 
 Grafana is very easy to install and run using the offical docker container.
 
-    $ docker run -d -p 3000:3000 grafana/grafana
+```bash
+$ docker run -d -p 3000:3000 grafana/grafana
+```
 
 All Grafana configuration settings can be defined using environment
 variables, this is especially useful when using the above container.
@@ -26,10 +28,12 @@ folder `/var/lib/grafana` and configuration files is in `/etc/grafana/`
 folder. You can map these volumes to host folders when you start the
 container:
 
-    $ docker run -d -p 3000:3000 \
-        -v /var/lib/grafana:/var/lib/grafana \
-        -e "GF_SECURITY_ADMIN_PASSWORD=secret" \
-        grafana/grafana
+```bash
+$ docker run -d -p 3000:3000 \
+    -v /var/lib/grafana:/var/lib/grafana \
+    -e "GF_SECURITY_ADMIN_PASSWORD=secret" \
+    grafana/grafana
+```
 
 In the above example I map the data folder and sets a configuration option via
 an `ENV` instruction.
