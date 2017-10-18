@@ -38,6 +38,9 @@ System.config({
     text: 'vendor/plugin-text/text.js',
     css: 'vendor/plugin-css/css.js'
   },
+  meta: {
+    '*': {esModule: true}
+  }
 });
 
 // add cache busting
