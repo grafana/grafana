@@ -36,18 +36,6 @@
         </div>
       </div>
     </div>
-
-    <div class="gf-form-inline" ng-if="current.access=='proxy'">
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-7">Cookies</span>
-        <bootstrap-tagsinput ng-model="current.jsonData.keepCookies" tagclass="label label-tag" placeholder="Add Name">
-        </bootstrap-tagsinput>
-        <info-popover mode="right-absolute">
-          Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.
-        </info-popover>
-      </div>
-    </div>
-
   </div>
 
   <h3 class="page-heading">HTTP Auth</h3>
@@ -131,6 +119,20 @@
         <input type="text" class="gf-form-input max-width-12" disabled="disabled" value="configured">
         <a class="btn btn-secondary gf-form-btn" href="#" ng-click="current.secureJsonFields.tlsClientKey = false">reset</a>
       </div>
+    </div>
+  </div>
+</div>
+
+<h3 class="page-heading" ng-if="current.access=='proxy'">Advanced HTTP Settings</h3>
+<div class="gf-form-group" ng-if="current.access=='proxy'">
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-10">Whitelisted Cookies</span>
+      <bootstrap-tagsinput ng-model="current.jsonData.keepCookies" tagclass="label label-tag" placeholder="Add Name">
+      </bootstrap-tagsinput>
+      <info-popover mode="right-absolute">
+        Grafana Proxy deletes forwarded cookies by default. Specify cookies by name that should be forwarded to the data source.
+      </info-popover>
     </div>
   </div>
 </div>
