@@ -7,6 +7,11 @@
 - UX changes to nav & side menu
 - New dashboard grid layout system
 
+# 4.7.0 (unreleased)
+
+## Fixes 
+* **Sensu**: Send alert message to sensu output [#9551](https://github.com/grafana/grafana/issues/9551), thx [@cjchand](https://github.com/cjchand)
+
 # 4.6.0-beta2 (2017-10-17)
 
 ## Fixes
