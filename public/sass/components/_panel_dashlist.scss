@@ -12,6 +12,7 @@
   margin: 5px;
   padding: 7px;
   background-color: $tight-form-bg;
+  border: $input-btn-border-width solid $input-label-border-color;
   .fa {
     float: right;
     padding-top: 3px;

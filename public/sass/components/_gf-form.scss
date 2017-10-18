@@ -59,11 +59,11 @@ $gf-form-margin: 3px;
   flex-shrink: 0;
   font-weight: $font-weight-semi-bold;
 
-  background-color: #292a2d; //$input-label-bg;
+  background-color: $input-label-bg;
   display: block;
   font-size: $font-size-sm;
 
-  border: $input-btn-border-width solid transparent;
+  border: $input-btn-border-width solid $input-label-border-color;
   @include border-radius($label-border-radius-sm);
 
 

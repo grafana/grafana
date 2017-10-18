@@ -111,6 +111,7 @@
   padding: 3px 10px;
   white-space: nowrap;
   background-color: $tight-form-bg;
+  border: $input-btn-border-width solid $input-label-border-color;;
   margin-bottom: 4px;
   @include left-brand-border();
 

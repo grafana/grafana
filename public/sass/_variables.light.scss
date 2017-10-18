@@ -6,6 +6,7 @@
 // Global values
 // --------------------------------------------------
 
+$theme-name: light;
 
 // Grays
 // -------------------------
@@ -68,8 +69,8 @@ $text-shadow-faint: none;
 
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255,213,0,1.0) 0%, rgba(255,68,0,1.0) 99%, rgba(255,68,0,1.0) 100%);
-$page-gradient: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%);
-$dashboard-gradient: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%);
+$page-gradient: linear-gradient(-60deg, transparent 70%, darken($page-bg, 4%) 98%);
+$dashboard-gradient: linear-gradient(-60deg, transparent 70%, darken($page-bg, 4%) 98%);
 
 // Links
 // -------------------------
@@ -106,8 +107,8 @@ $panel-header-menu-hover-bg:  $gray-4;
 $divider-border-color:	      $gray-2;
 
 // Graphite Target Editor
-$tight-form-border:   $gray-4;
-$tight-form-bg:    		$gray-6;
+$tight-form-border:     $gray-4;
+$tight-form-bg:    	    #eaebee;
 
 $tight-form-func-bg:            $gray-5;
 $tight-form-func-highlight-bg:  $gray-6;
@@ -117,7 +118,7 @@ $code-tag-bg:       $gray-6;
 $code-tag-border:   darken($code-tag-bg, 3%);
 
 // Lists
-$grafanaListBackground:    	   $gray-6;
+$grafanaListBackground:    	   #eaebee;
 $grafanaListAccent:            $gray-5;
 $grafanaListBorderTop:         $gray-3;
 $grafanaListBorderBottom:      $gray-3;
@@ -178,13 +179,15 @@ $input-box-shadow:               none;
 $input-border-focus:             $blue !default;
 $input-box-shadow-focus:         $blue !default;
 $input-color-placeholder:        $gray-4 !default;
-$input-label-bg:	        	     $gray-6;
+$input-label-bg:	        	 #eaebee;
+$input-label-border-color:       #e3e4e7;
 $input-invalid-border-color:     lighten($red, 5%);
 
 // Sidemenu
 // -------------------------
 $side-menu-bg:            $body-bg;
 $side-menu-item-hover-bg: $gray-6;
+$side-menu-shadow:        0 0 5px #c2c2c2;
 
 // Menu dropdowns
 // -------------------------
@@ -195,9 +198,10 @@ $menu-dropdown-shadow: 5px 5px 20px -5px $gray-4;
 
 // Breadcrumb
 // -------------------------
-$page-nav-bg: $white;
-$page-nav-shadow: 5px 5px 20px -5px $gray-4;
+$page-nav-bg:               #eaebee;
+$page-nav-shadow:           5px 5px 20px -5px $gray-4;
 $page-nav-breadcrumb-color: $black;
+$breadcrumb-hover-hl:       #d9dadd;
 
 // search
 $search-shadow: 0 5px 30px 0 $gray-4;
@@ -247,13 +251,14 @@ $wellBackground:                  $gray-3;
 
 $navbarHeight:                    52px;
 $navbarBackgroundHighlight:       #f8f8f8;
-$navbarBackground:                #f8f8f8;
+$navbarBackground:                #f2f3f7;
 $navbarBorder:                    1px solid $tight-form-border;
+$navbarShadow:                    0 0 3px #c1c1c1;
 
-$navbarText:                      #666;
-$navbarLinkColor:                 #666;
-$navbarLinkColorHover:            #333;
-$navbarLinkColorActive:           #555;
+$navbarText:                      #444;
+$navbarLinkColor:                 #444;
+$navbarLinkColorHover:            #000;
+$navbarLinkColorActive:           #333;
 $navbarLinkBackgroundHover:       transparent;
 $navbarLinkBackgroundActive:      darken($navbarBackground, 6.5%);
 $navbarDropdownShadow:            inset 0px 4px 7px -4px darken($body-bg, 20%);
@@ -278,9 +283,9 @@ $error-text-color:              lighten($red, 10%);
 $success-text-color:            lighten($green, 10%);
 $info-text-color:                     $blue;
 
-$alert-error-bg:          linear-gradient(90deg, #d44939, #e0603d);
+$alert-error-bg:          linear-gradient(90deg, #d44939, #e04d3d);
 $alert-success-bg:        linear-gradient(90deg, #3aa655, #47b274);
-$alert-warning-bg:        linear-gradient(90deg, #d44939, #e0603d);
+$alert-warning-bg:        linear-gradient(90deg, #d44939, #e04d3d);
 $alert-info-bg:           $blue-dark;
 
 // popover

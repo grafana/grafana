@@ -4,14 +4,14 @@
   overflow: visible;
   position: relative;
   padding-left: $side-menu-width;
-  box-shadow: 0 0 20px black;
+  box-shadow: $navbarShadow;
   z-index: 1;
+  background-color: $navbarBackground;
 }
 
 .navbar-inner {
   min-height: $navbarHeight;
   padding-right: $spacer;
-  background-color: $navbarBackground;
   display: flex;
   @include clearfix();
 }
