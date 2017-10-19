@@ -120,4 +120,10 @@ func addDataSourceMigration(mg *Migrator) {
 		{Name: "json_data", Type: DB_Text, Nullable: true},
 		{Name: "secure_json_data", Type: DB_Text, Nullable: true},
 	}))
+
+	const setVersionToOneWhereZero = `UPDATE data_source SET version = 1 WHERE version = 0`
+	mg.AddMigration("Update initial version to 1", new(RawSqlMigration).
+		Sqlite(setVersionToOneWhereZero).
+		Postgres(setVersionToOneWhereZero).
+		Mysql(setVersionToOneWhereZero))
 }
