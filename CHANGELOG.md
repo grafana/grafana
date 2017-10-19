@@ -20,6 +20,7 @@
 # 4.6.0-beta3 (unreleased)
 * **Prometheus**: Fix for browser crash for short time ranges. [#9575](https://github.com/grafana/grafana/issues/9575)
 * **Heatmap**: Fix for y-axis not showing. [#9576](https://github.com/grafana/grafana/issues/9576)
+* **Save to file**: Fix for save to file in export modal. [#9586](https://github.com/grafana/grafana/issues/9586)
 
 # 4.6.0-beta2 (2017-10-17)
 
