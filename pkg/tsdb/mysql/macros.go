@@ -3,6 +3,8 @@ package mysql
 import (
 	"fmt"
 	"regexp"
+	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -25,7 +27,7 @@ func (m *MySqlMacroEngine) Interpolate(timeRange *tsdb.TimeRange, sql string) (s
 	var macroError error
 
 	sql = replaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
-		res, err := m.evaluateMacro(groups[1], groups[2:])
+		res, err := m.evaluateMacro(groups[1], strings.Split(groups[2], ","))
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -73,6 +75,15 @@ func (m *MySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 		return fmt.Sprintf("FROM_UNIXTIME(%d)", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
 	case "__timeTo":
 		return fmt.Sprintf("FROM_UNIXTIME(%d)", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+	case "__timeGroup":
+		if len(args) != 2 {
+			return "", fmt.Errorf("macro %v needs time column and interval", name)
+		}
+		interval, err := time.ParseDuration(strings.Replace(args[1], "'", "", -1))
+		if err != nil {
+			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		return fmt.Sprintf("cast(cast(UNIX_TIMESTAMP(%s)/(%.0f) as signed)*%.0f as signed)", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
