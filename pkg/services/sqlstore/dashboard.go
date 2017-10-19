@@ -281,7 +281,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 }
 
 func UpdateDashboard(cmd *m.UpdateDashboardCommand) error {
-  return inTransaction(func(sess *xorm.Session) error {
+  return inTransaction(func(sess *DBSession) error {
     dashboard := cmd.Dashboard
     _, err := sess.Id(dashboard.Id).Update(dashboard)
     return err
