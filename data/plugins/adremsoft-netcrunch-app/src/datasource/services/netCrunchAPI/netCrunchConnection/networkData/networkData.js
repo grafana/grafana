@@ -10,9 +10,10 @@
 
 import { NetCrunchNetworkAtlas } from './networkAtlas';
 
-function NetCrunchNetworkData(adremClient, netCrunchServerConnection) {
+function NetCrunchNetworkData(adremClient, netCrunchConnection) {
 
   const
+    netCrunchServerConnection = netCrunchConnection.serverConnection,
     networkAtlas = new NetCrunchNetworkAtlas(netCrunchServerConnection),
     nodesReady = {},
     networksReady = {};
@@ -56,6 +57,18 @@ function NetCrunchNetworkData(adremClient, netCrunchServerConnection) {
     networkAtlas.addMap(mapRec);
   }
 
+  function getAccessRightsParameters(userProfile) {
+    return userProfile.$children.reduce((result, current) => {
+      if (current.$tag === 'User') {
+        return {
+          accessProfileId: current.ACProfileId,
+          orgId: current.orgId
+        };
+      }
+      return result;
+    }, {});
+  }
+
   return {
     nodes: () => nodesReady.promise,
     networks: () => networksReady.promise,
@@ -65,13 +78,16 @@ function NetCrunchNetworkData(adremClient, netCrunchServerConnection) {
 
     init: function() {
       const
+        self = this,
+        { accessProfileId, orgId } = getAccessRightsParameters(netCrunchConnection.userProfile),
+
         PERFORMANCE_VIEWS_NET_INT_ID = 2,
-        HOSTS_QUERY = 'Select Id, Name, Address, DeviceType, GlobalDataNode ',
+        HOSTS_QUERY = 'Select Id, Name, Address, DeviceType, GlobalDataNode' +
+                      ' where CanAccessNode(Id, \'' + accessProfileId + ':' + orgId + '\')',
         NETWORKS_QUERY = 'Select NetIntId, DisplayName, HostMapData, IconId, MapType, NetworkData, MapClassTag ' +
                          'where (MapClassTag != \'pnet\') && (MapClassTag != \'dependencynet\') && ' +
                                '(MapClassTag != \'issuesnet\') && (MapClassTag != \'all\') && ' +
-                               '(NetIntId != ' + PERFORMANCE_VIEWS_NET_INT_ID + ')',
-        self = this;
+                               '(NetIntId != ' + PERFORMANCE_VIEWS_NET_INT_ID + ')';
 
       let
         hostsData,
