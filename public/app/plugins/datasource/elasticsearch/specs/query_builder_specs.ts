@@ -156,12 +156,21 @@ describe('ElasticQueryBuilder', function() {
 
   it('with raw_document metric', function() {
     var query = builder.build({
-      metrics: [{type: 'raw_document', id: '1'}],
+      metrics: [{type: 'raw_document', id: '1',settings: {}}],
       timeField: '@timestamp',
       bucketAggs: [],
     });
 
     expect(query.size).to.be(500);
+  });
+  it('with raw_document metric size set', function() {
+    var query = builder.build({
+      metrics: [{type: 'raw_document', id: '1',settings: {size: 1337}}],
+      timeField: '@timestamp',
+      bucketAggs: [],
+    });
+
+    expect(query.size).to.be(1337);
   });
 
   it('with moving average', function() {
@@ -247,6 +256,23 @@ describe('ElasticQueryBuilder', function() {
     expect(firstLevel.aggs["2"]).not.to.be(undefined);
     expect(firstLevel.aggs["2"].derivative).not.to.be(undefined);
     expect(firstLevel.aggs["2"].derivative.buckets_path).to.be("3");
+  });
+
+  it('with histogram', function() {
+    var query = builder.build({
+      metrics: [
+        {id: '1', type: 'count' },
+      ],
+      bucketAggs: [
+        {type: 'histogram', field: 'bytes', id: '3', settings: {interval: 10, min_doc_count: 2, missing: 5}}
+      ],
+    });
+
+    var firstLevel = query.aggs["3"];
+    expect(firstLevel.histogram.field).to.be('bytes');
+    expect(firstLevel.histogram.interval).to.be(10);
+    expect(firstLevel.histogram.min_doc_count).to.be(2);
+    expect(firstLevel.histogram.missing).to.be(5);
   });
 
   it('with adhoc filters', function() {

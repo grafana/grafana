@@ -124,7 +124,7 @@ func (m *StandardMeter) Count() int64 {
 	return count
 }
 
-// Mark records the occurance of n events.
+// Mark records the occurrence of n events.
 func (m *StandardMeter) Mark(n int64) {
 	m.lock.Lock()
 	defer m.lock.Unlock()

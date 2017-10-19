@@ -1,16 +1,13 @@
-[Grafana](http://grafana.org) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) 
+[Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana)
 ================
-[Website](http://grafana.org) |
+[Website](https://grafana.com) |
 [Twitter](https://twitter.com/grafana) |
-[IRC](https://webchat.freenode.net/?channels=grafana) |
-[![Slack](https://brandfolder.com/api/favicon/icon?size=16&domain=www.slack.com)](http://slack.raintank.io)
-[Slack](http://slack.raintank.io) |
-[Email](mailto:contact@grafana.org)
+[Community & Forum](https://community.grafana.com)
 
 Grafana is an open source, feature rich metrics dashboard and graph editor for
 Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
-![](http://grafana.org/assets/img/features/dashboard_ex1.png)
+![](http://docs.grafana.org/assets/img/features/dashboard_ex1.png)
 
 - [Install instructions](http://docs.grafana.org/installation/)
 - [What's New in Grafana 2.0](http://docs.grafana.org/guides/whats-new-in-v2/)
@@ -19,14 +16,11 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 - [What's New in Grafana 3.0](http://docs.grafana.org/guides/whats-new-in-v3/)
 - [What's New in Grafana 4.0](http://docs.grafana.org/guides/whats-new-in-v4/)
 - [What's New in Grafana 4.1](http://docs.grafana.org/guides/whats-new-in-v4-1/)
+- [What's New in Grafana 4.2](http://docs.grafana.org/guides/whats-new-in-v4-2/)
+- [What's New in Grafana 4.3](http://docs.grafana.org/guides/whats-new-in-v4-3/)
+- [What's New in Grafana 4.4](http://docs.grafana.org/guides/whats-new-in-v4-4/)
 
 ## Features
-### Graphite Target Editor
-- Graphite target expression parser
-- Feature rich query composer
-- Quickly add and edit functions & parameters
-- Templated queries
-- [See it in action](http://docs.grafana.org/datasources/graphite/)
 
 ### Graphing
 - Fast rendering, even over large timespans
@@ -50,16 +44,23 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 - [Time range controls](http://docs.grafana.org/reference/timerange/)
 - [Share snapshots publicly](http://docs.grafana.org/v2.0/reference/sharing/)
 
-### Elasticsearch
-- Feature rich query editor UI
-
 ### InfluxDB
 - Use InfluxDB as a metric data source, annotation source
-- Query editor with series and column typeahead, easy group by and function selection
+- Query editor with field and tag typeahead, easy group by and function selection
 
-### OpenTSDB
-- Use as metric data source
-- Query editor with metric name typeahead and tag filtering
+### Graphite
+- Graphite target expression parser
+- Feature rich query composer
+- Quickly add and edit functions & parameters
+- Templated queries
+- [See it in action](http://docs.grafana.org/datasources/graphite/)
+
+### Elasticsearch, Prometheus & OpenTSDB
+- Feature rich query editor UI
+
+### Alerting
+- Define alert rules using graphs & query conditions
+- Schedule & evalute alert rules, send notifications to Slack, Hipchat, Email, PagerDuty, etc.
 
 ## Requirements
 There are no dependencies except an external time series data store. For dashboards and user accounts Grafana can use an embedded
@@ -76,12 +77,12 @@ Be sure to read the [getting started guide](http://docs.grafana.org/guides/getti
 
 ## Run from master
 If you want to build a package yourself, or contribute. Here is a guide for how to do that. You can always find
-the latest master builds [here](http://grafana.org/builds)
+the latest master builds [here](https://grafana.com/grafana/download)
 
 ### Dependencies
 
-- Go 1.8
-- NodeJS v4+
+- Go 1.8.1
+- NodeJS LTS
 
 ### Get Code
 
@@ -146,8 +147,7 @@ Create a custom.ini in the conf directory to override default configuration opti
 You only need to add the options you want to override. Config files are applied in the order of:
 
 1. grafana.ini
-2. dev.ini (if found)
-3. custom.ini
+1. custom.ini
 
 ## Create a pull request
 Before or after you create a pull request, sign the [contributor license agreement](http://docs.grafana.org/project/cla/).

@@ -7,9 +7,9 @@ import coreModule from 'app/core/core_module';
 import Drop from 'tether-drop';
 
 var template = `
-<label for="check-{{ctrl.id}}" class="gf-form-label {{ctrl.labelClass}} pointer">
+<label for="check-{{ctrl.id}}" class="gf-form-label {{ctrl.labelClass}} pointer" ng-show="ctrl.label">
   {{ctrl.label}}
-  <info-popover mode="right-normal" ng-if="ctrl.tooltip">
+  <info-popover mode="right-normal" ng-if="ctrl.tooltip" position="top center">
     {{ctrl.tooltip}}
   </info-popover>
 </label>
@@ -24,6 +24,7 @@ export class SwitchCtrl {
   checked: any;
   show: any;
   id: any;
+  label: string;
 
   /** @ngInject */
   constructor($scope, private $timeout) {

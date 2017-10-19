@@ -287,10 +287,29 @@
     margin-top: 8px;
   }
 
+  .graph-annotation-header {
+    background-color: $input-label-bg;
+    padding: 0.40rem 0.65rem;
+  }
+
   .graph-annotation-title {
     font-weight: $font-weight-semi-bold;
+    padding-right: $spacer;
     position: relative;
-    top: -0.4rem;
+    top: 2px;
+  }
+
+  .graph-annotation-time {
+    color: $text-muted;
+    font-style: italic;
+    font-weight: normal;
+    display: inline-block;
+    position: relative;
+    top: 1px;
+  }
+
+  .graph-annotation-body {
+    padding: 0.65rem;
   }
 
   a {
@@ -298,11 +317,6 @@
     text-decoration: underline;
   }
 
-  .graph-annotation-time {
-    position: relative;
-    text-align: center;
-    top: 0.6rem;
-  }
 }
 
 .left-yaxis-label {
@@ -324,7 +338,7 @@
 .axisLabel {
   color: $text-color;
   font-size: $font-size-sm;
-  position: absolute;
+  position: relative;
   text-align: center;
   font-size: 12px;
 }

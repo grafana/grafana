@@ -15,24 +15,28 @@ weight = 1
 
 Description | Download
 ------------ | -------------
-Stable for Debian-based Linux | [4.1.2 (x86-64 deb)](https://grafanarel.s3.amazonaws.com/builds/grafana_4.1.2-1486989747_amd64.deb)
-Beta for Debian-based Linux | [4.2.0-beta1 (x86-64 deb)](https://grafanarel.s3.amazonaws.com/builds/grafana_4.2.0-beta1_amd64.deb)
+Stable for Debian-based Linux | [grafana_4.4.0_amd64.deb](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.4.0_amd64.deb)
+
+Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
+installation.
 
 ## Install Stable
 
-```
-$ wget https://grafanarel.s3.amazonaws.com/builds/grafana_4.1.2-1486989747_amd64.deb
-$ sudo apt-get install -y adduser libfontconfig
-$ sudo dpkg -i grafana_4.1.2-1486989747_amd64.deb
+```bash
+wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.4.0_amd64.deb
+sudo apt-get install -y adduser libfontconfig
+sudo dpkg -i grafana_4.4.0_amd64.deb
 ```
 
+<!--
 ## Install Beta
 
+```bash
+wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.3.0-beta1_amd64.deb
+sudo apt-get install -y adduser libfontconfig
+sudo dpkg -i grafana_4.3.0-beta1_amd64.deb
 ```
-$ wget https://grafanarel.s3.amazonaws.com/builds/grafana_4.2.0-beta1_amd64.deb
-$ sudo apt-get install -y adduser libfontconfig
-$ sudo dpkg -i grafana_4.2.0-beta1_amd64.deb
-```
+-->
 
 ## APT Repository
 
@@ -49,18 +53,24 @@ candidates.
 Then add the [Package Cloud](https://packagecloud.io/grafana) key. This
 allows you to install signed packages.
 
-    $ curl https://packagecloud.io/gpg.key | sudo apt-key add -
+```bash
+curl https://packagecloud.io/gpg.key | sudo apt-key add -
+```
 
 Update your Apt repositories and install Grafana
 
-    $ sudo apt-get update
-    $ sudo apt-get install grafana
+```bash
+sudo apt-get update
+sudo apt-get install grafana
+```
 
 On some older versions of Ubuntu and Debian you may need to install the
 `apt-transport-https` package which is needed to fetch packages over
 HTTPS.
 
-    $ sudo apt-get install -y apt-transport-https
+```bash
+sudo apt-get install -y apt-transport-https
+```
 
 ## Package details
 
@@ -71,12 +81,15 @@ HTTPS.
 - Installs systemd service (if systemd is available) name `grafana-server.service`
 - The default configuration sets the log file at `/var/log/grafana/grafana.log`
 - The default configuration specifies an sqlite3 db at `/var/lib/grafana/grafana.db`
+- Installs HTML/JS/CSS and other Grafana files at `/usr/share/grafana`
 
 ## Start the server (init.d service)
 
 Start Grafana by running:
 
-    $ sudo service grafana-server start
+```bash
+sudo service grafana-server start
+```
 
 This will start the `grafana-server` process as the `grafana` user,
 which was created during the package installation. The default HTTP port
@@ -84,19 +97,25 @@ is `3000` and default user and group is `admin`.
 
 To configure the Grafana server to start at boot time:
 
-    $ sudo update-rc.d grafana-server defaults
+```bash
+sudo update-rc.d grafana-server defaults
+```
 
 ## Start the server (via systemd)
 
 To start the service using systemd:
 
-    $ systemctl daemon-reload
-    $ systemctl start grafana-server
-    $ systemctl status grafana-server
+```bash
+systemctl daemon-reload
+systemctl start grafana-server
+systemctl status grafana-server
+```
 
 Enable the systemd service so that Grafana starts at boot.
 
-    sudo systemctl enable grafana-server.service
+```bash
+sudo systemctl enable grafana-server.service
+```
 
 ## Environment file
 

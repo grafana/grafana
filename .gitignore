@@ -45,10 +45,10 @@ build-windows.cmd
 /public/vendor/npm
 /tmp
 vendor/phantomjs/phantomjs
+vendor/phantomjs/phantomjs.exe
 
 docs/AWS_S3_BUCKET
 docs/GIT_BRANCH
-docs/VERSION
 docs/GITCOMMIT
 docs/changed-files
 
@@ -60,6 +60,7 @@ public/css/*.min.css
 *.swp
 .idea/
 *.iml
+*.tmp
 .vscode/
 
 /data/*

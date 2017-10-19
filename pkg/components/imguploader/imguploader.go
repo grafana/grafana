@@ -47,10 +47,11 @@ func NewImageUploader() (ImageUploader, error) {
 			return nil, fmt.Errorf("Could not find url key for image.uploader.webdav")
 		}
 
+		public_url := webdavSec.Key("public_url").String()
 		username := webdavSec.Key("username").String()
 		password := webdavSec.Key("password").String()
 
-		return NewWebdavImageUploader(url, username, password)
+		return NewWebdavImageUploader(url, username, password, public_url)
 	}
 
 	return NopImageUploader{}, nil

@@ -1,0 +1,59 @@
+<query-editor-row query-ctrl="ctrl" can-collapse="false">
+  <div class="gf-form-inline">
+		<div class="gf-form gf-form--grow">
+			<textarea rows="10" class="gf-form-input" ng-model="ctrl.target.rawSql" spellcheck="false" placeholder="query expression" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.panelCtrl.refresh()"></textarea>
+		</div>
+	</div>
+
+  <div class="gf-form-inline">
+    <div class="gf-form">
+			<label class="gf-form-label query-keyword">Format as</label>
+			<div class="gf-form-select-wrapper">
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()"></select>
+			</div>
+		</div>
+		<div class="gf-form">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
+        Show Help
+        <i class="fa fa-caret-down" ng-show="ctrl.showHelp"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showHelp"></i>
+      </label>
+		</div>
+		<div class="gf-form" ng-show="ctrl.lastQueryMeta">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.showLastQuerySQL = !ctrl.showLastQuerySQL">
+        Generated SQL
+        <i class="fa fa-caret-down" ng-show="ctrl.showLastQuerySQL"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showLastQuerySQL"></i>
+      </label>
+		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+	<div class="gf-form" ng-show="ctrl.showLastQuerySQL">
+		<pre class="gf-form-pre">{{ctrl.lastQueryMeta.sql}}</pre>
+	</div>
+
+	<div class="gf-form"  ng-show="ctrl.showHelp">
+		<pre class="gf-form-pre alert alert-info">Time series:
+- return column named time_sec (UTC in seconds), use UNIX_TIMESTAMP(column)
+- return column named value for the time point value
+- return column named metric to represent the series name
+
+Table:
+- return any set of columns
+
+Macros:
+- $__time(column) -&gt; UNIX_TIMESTAMP(column) as time_sec
+- $__timeFilter(column) -&gt;  UNIX_TIMESTAMP(time_date_time) &ge; from AND UNIX_TIMESTAMP(time_date_time) &le; 1492750877
+		</pre>
+	</div>
+
+	</div>
+
+	<div class="gf-form" ng-show="ctrl.lastQueryError">
+		<pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
+	</div>
+
+</query-editor-row>

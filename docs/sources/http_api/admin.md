@@ -237,12 +237,14 @@ Change password for specific user
     Accept: application/json
     Content-Type: application/json
 
+    {"password":"userpassword"}
+
 **Example Response**:
 
     HTTP/1.1 200
     Content-Type: application/json
 
-    {"password":"userpassword"}
+    {"message": "User password updated"}
 
 ## Permissions
 
@@ -253,6 +255,8 @@ Change password for specific user
     PUT /api/admin/users/2/permissions HTTP/1.1
     Accept: application/json
     Content-Type: application/json
+
+    {"isGrafanaAdmin": true}
 
 **Example Response**:
 
@@ -280,13 +284,21 @@ Change password for specific user
 
 ## Pause all alerts
 
-`DELETE /api/admin/pause-all-alerts`
+`POST /api/admin/pause-all-alerts`
 
 **Example Request**:
 
-    DELETE /api/admin/pause-all-alerts HTTP/1.1
+    POST /api/admin/pause-all-alerts HTTP/1.1
     Accept: application/json
     Content-Type: application/json
+
+    {
+      "paused": true
+    }
+
+JSON Body schema:
+
+- **paused** – If true then all alerts are to be paused, false unpauses all alerts.
 
 **Example Response**:
 

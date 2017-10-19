@@ -3,9 +3,6 @@ title = "Migrating from older versions"
 description = "Upgrading & Migrating Grafana from older versions"
 keywords = ["grafana", "configuration", "documentation", "migration"]
 type = "docs"
-[menu.docs]
-parent = "installation"
-weight = 10
 +++
 
 # Migrating from older versions

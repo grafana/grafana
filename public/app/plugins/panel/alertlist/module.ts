@@ -106,7 +106,7 @@ class AlertListPanel extends PanelCtrl {
         this.alertHistory = _.map(res, al => {
           al.time = moment(al.time).format('MMM D, YYYY HH:mm:ss');
           al.stateModel = alertDef.getStateDisplayModel(al.newState);
-          al.metrics = alertDef.joinEvalMatches(al.data, ', ');
+          al.info = alertDef.getAlertAnnotationInfo(al);
           return al;
         });
       });
@@ -139,4 +139,4 @@ class AlertListPanel extends PanelCtrl {
 export {
   AlertListPanel,
   AlertListPanel as PanelCtrl
-}
+};

@@ -34,10 +34,10 @@ func (query *Query) Build(queryContext *tsdb.QueryContext) (string, error) {
 		return "", err
 	}
 
-	res = strings.Replace(res, "$timeFilter", query.renderTimeFilter(queryContext), 1)
-	res = strings.Replace(res, "$interval", interval.Text, 1)
-	res = strings.Replace(res, "$__interval_ms", strconv.FormatInt(interval.Value.Nanoseconds()/int64(time.Millisecond), 10), 1)
-	res = strings.Replace(res, "$__interval", interval.Text, 1)
+	res = strings.Replace(res, "$timeFilter", query.renderTimeFilter(queryContext), -1)
+	res = strings.Replace(res, "$interval", interval.Text, -1)
+	res = strings.Replace(res, "$__interval_ms", strconv.FormatInt(interval.Value.Nanoseconds()/int64(time.Millisecond), 10), -1)
+	res = strings.Replace(res, "$__interval", interval.Text, -1)
 	return res, nil
 }
 

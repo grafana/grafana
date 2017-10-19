@@ -11,7 +11,6 @@ import moment from 'moment';
 import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
-import * as fileExport from 'app/core/utils/file_export';
 import {MetricsPanelCtrl, alertTab} from 'app/plugins/sdk';
 import {DataProcessor} from './data_processor';
 import {axesEditorComponent} from './axes_editor';
@@ -59,6 +58,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       mode: 'time',
       name: null,
       values: [],
+      buckets: null
     },
     // show/hide lines
     lines         : true,
@@ -66,6 +66,12 @@ class GraphCtrl extends MetricsPanelCtrl {
     fill          : 1,
     // line width in pixels
     linewidth     : 1,
+    // show/hide dashed line
+    dashes        : false,
+    // length of a dash
+    dashLength    : 10,
+    // length of space between two dashes
+    spaceLength   : 10,
     // show hide points
     points        : true,
     // point radius in pixels
@@ -140,8 +146,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitPanelActions(actions) {
-    actions.push({text: 'Export CSV (series as rows)', click: 'ctrl.exportCsv()'});
-    actions.push({text: 'Export CSV (series as columns)', click: 'ctrl.exportCsvColumns()'});
+    actions.push({text: 'Export CSV', click: 'ctrl.exportCsv()'});
     actions.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
   }
 
@@ -283,7 +288,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
     info.yaxis = override.yaxis = info.yaxis === 2 ? 1 : 2;
     this.render();
-  };
+  }
 
   addSeriesOverride(override) {
     this.panel.seriesOverrides.push(override || {});
@@ -306,13 +311,14 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   exportCsv() {
-    fileExport.exportSeriesListToCsv(this.seriesList);
+    var scope = this.$scope.$new(true);
+    scope.seriesList = this.seriesList;
+    this.publishAppEvent('show-modal', {
+      templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',
+      scope,
+      modalClass: 'modal--narrow'
+    });
   }
-
-  exportCsvColumns() {
-    fileExport.exportSeriesListToCsvColumns(this.seriesList);
-  }
-
 }
 
-export {GraphCtrl, GraphCtrl as PanelCtrl}
+export {GraphCtrl, GraphCtrl as PanelCtrl};

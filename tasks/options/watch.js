@@ -8,6 +8,10 @@ module.exports = function(config, grunt) {
   var lastTime;
 
   grunt.registerTask('watch', function() {
+    if (!grunt.option('skip-ts-compile')) {
+      grunt.log.writeln('We recommoned starting with: grunt watch --force --skip-ts-compile')
+      grunt.log.writeln('Then do incremental typescript builds with: grunt exec:tswatch')
+    }
 
     done = this.async();
     lastTime = new Date().getTime();
@@ -59,13 +63,14 @@ module.exports = function(config, grunt) {
           grunt.log.writeln('Copying to ' + newPath);
           grunt.file.copy(filepath, newPath);
 
-          // copy ts file also used by source maps
-          //changes changed file source to that of the changed file
-          grunt.config('typescript.build.src', filepath);
-          grunt.config('tslint.source.files.src', filepath);
+          if (grunt.option('skip-ts-compile')) {
+            grunt.log.writeln('Skipping ts compile, run grunt exec:tswatch to start typescript watcher')
+          } else {
+            grunt.task.run('exec:tscompile');
+          }
 
-          grunt.task.run('exec:tscompile');
-          grunt.task.run('exec:tslint');
+          grunt.config('tslint.source.files.src', filepath);
+          grunt.task.run('exec:tslintfile');
         }
 
         done();

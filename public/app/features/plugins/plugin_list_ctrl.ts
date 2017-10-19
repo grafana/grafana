@@ -5,10 +5,12 @@ import angular from 'angular';
 export class PluginListCtrl {
   plugins: any[];
   tabIndex: number;
+  navModel: any;
 
   /** @ngInject */
-  constructor(private backendSrv: any, $location) {
+  constructor(private backendSrv: any, $location, navModelSrv) {
     this.tabIndex = 0;
+    this.navModel = navModelSrv.getPluginsNav();
 
     var pluginType = $location.search().type || 'panel';
     switch (pluginType) {

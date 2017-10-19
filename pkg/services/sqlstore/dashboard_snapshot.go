@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,7 +17,7 @@ func init() {
 }
 
 func DeleteExpiredSnapshots(cmd *m.DeleteExpiredSnapshotsCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var expiredCount int64 = 0
 
 		if setting.SnapShotRemoveExpired {
@@ -36,7 +35,7 @@ func DeleteExpiredSnapshots(cmd *m.DeleteExpiredSnapshotsCommand) error {
 }
 
 func CreateDashboardSnapshot(cmd *m.CreateDashboardSnapshotCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		// never
 		var expires = time.Now().Add(time.Hour * 24 * 365 * 50)
@@ -65,7 +64,7 @@ func CreateDashboardSnapshot(cmd *m.CreateDashboardSnapshotCommand) error {
 }
 
 func DeleteDashboardSnapshot(cmd *m.DeleteDashboardSnapshotCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "DELETE FROM dashboard_snapshot WHERE delete_key=?"
 		_, err := sess.Exec(rawSql, cmd.DeleteKey)
 		return err

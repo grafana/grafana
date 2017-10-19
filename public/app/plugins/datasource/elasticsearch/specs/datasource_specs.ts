@@ -42,7 +42,7 @@ describe('ElasticDatasource', function() {
       ctx.$rootScope.$apply();
 
       var today = moment.utc().format("YYYY.MM.DD");
-      expect(requestOptions.url).to.be("http://es.com/asd-" + today + '/_stats');
+      expect(requestOptions.url).to.be("http://es.com/asd-" + today + '/_mapping');
     });
   });
 
@@ -62,7 +62,7 @@ describe('ElasticDatasource', function() {
           from: moment.utc([2015, 4, 30, 10]),
           to: moment.utc([2015, 5, 1, 10])
         },
-        targets: [{ bucketAggs: [], metrics: [], query: 'escape\\:test' }]
+        targets: [{ bucketAggs: [], metrics: [{type: 'raw_document'}], query: 'escape\\:test' }]
       });
 
       ctx.$rootScope.$apply();

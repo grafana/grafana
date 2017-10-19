@@ -180,7 +180,7 @@ func MatchFilterHandler(key string, value interface{}, h Handler) Handler {
 // level to the wrapped Handler. For example, to only
 // log Error/Crit records:
 //
-//     log.LvlFilterHandler(log.Error, log.StdoutHandler)
+//     log.LvlFilterHandler(log.LvlError, log.StdoutHandler)
 //
 func LvlFilterHandler(maxLvl Lvl, h Handler) Handler {
 	return FilterHandler(func(r *Record) (pass bool) {

@@ -24,9 +24,13 @@ define([
           type: 'test-db',
           meta: { metrics: {m: 1} }
         },
+        '--Grafana--': {
+          type: 'grafana',
+          meta: {builtIn: true, metrics: {m: 1}, id: "grafana"}
+        },
         '--Mixed--': {
           type: 'test-db',
-          meta: {builtIn: true, metrics: {m: 1} }
+          meta: {builtIn: true, metrics: {m: 1}, id: "mixed"}
         },
         'ZZZ': {
           type: 'test-db',
@@ -51,7 +55,8 @@ define([
         expect(metricSources[1].name).to.be('BBB');
         expect(metricSources[2].name).to.be('mmm');
         expect(metricSources[3].name).to.be('ZZZ');
-        expect(metricSources[4].name).to.be('--Mixed--');
+        expect(metricSources[4].name).to.be('--Grafana--');
+        expect(metricSources[5].name).to.be('--Mixed--');
       });
     });
   });

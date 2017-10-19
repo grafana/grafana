@@ -125,4 +125,4 @@ class DashListCtrl extends PanelCtrl {
   }
 }
 
-export {DashListCtrl, DashListCtrl as PanelCtrl}
+export {DashListCtrl, DashListCtrl as PanelCtrl};

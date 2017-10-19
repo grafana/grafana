@@ -60,6 +60,10 @@ type UpdateTempUserStatusCommand struct {
 	Status TempUserStatus
 }
 
+type UpdateTempUserWithEmailSentCommand struct {
+	Code string
+}
+
 type GetTempUsersQuery struct {
 	OrgId  int64
 	Email  string

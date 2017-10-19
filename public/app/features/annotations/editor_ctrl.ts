@@ -17,8 +17,15 @@ export class AnnotationsEditorCtrl {
     name: '',
     datasource: null,
     iconColor: 'rgba(255, 96, 96, 1)',
-    enable: true
+    enable: true,
+    showIn: 0,
+    hide: false,
   };
+
+  showOptions: any = [
+    {text: 'All Panels', value: 0},
+    {text: 'Specific Panels', value: 1},
+  ];
 
   /** @ngInject */
   constructor(private $scope, private datasourceSrv) {
@@ -44,6 +51,7 @@ export class AnnotationsEditorCtrl {
 
   edit(annotation) {
     this.currentAnnotation = annotation;
+    this.currentAnnotation.showIn = this.currentAnnotation.showIn || 0;
     this.currentIsNew = false;
     this.datasourceChanged();
     this.mode = 'edit';
@@ -61,7 +69,7 @@ export class AnnotationsEditorCtrl {
     this.reset();
     this.mode = 'list';
     this.$scope.broadcastRefresh();
-  };
+  }
 
   add() {
     this.annotations.push(this.currentAnnotation);
@@ -69,12 +77,12 @@ export class AnnotationsEditorCtrl {
     this.mode = 'list';
     this.$scope.broadcastRefresh();
     this.$scope.dashboard.updateSubmenuVisibility();
-  };
+  }
 
   removeAnnotation(annotation) {
     var index = _.indexOf(this.annotations, annotation);
     this.annotations.splice(index, 1);
-    this.$scope.updateSubmenuVisibility();
+    this.$scope.dashboard.updateSubmenuVisibility();
     this.$scope.broadcastRefresh();
   }
 }

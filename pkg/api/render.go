@@ -18,14 +18,18 @@ func RenderToPng(c *middleware.Context) {
 		Width:    queryReader.Get("width", "800"),
 		Height:   queryReader.Get("height", "400"),
 		OrgId:    c.OrgId,
-		Timeout:  queryReader.Get("timeout", "30"),
+		Timeout:  queryReader.Get("timeout", "60"),
 		Timezone: queryReader.Get("tz", ""),
 	}
 
 	pngPath, err := renderer.RenderToPng(renderOpts)
 
 	if err != nil {
-		c.Handle(500, "Failed to render to png", err)
+		if err == renderer.ErrTimeout {
+			c.Handle(500, err.Error(), err)
+		}
+
+		c.Handle(500, "Rendering failed.", err)
 		return
 	}
 

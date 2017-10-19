@@ -216,7 +216,6 @@ coreModule.directive('panelDropZone', function($timeout) {
       }
 
       if (indrag === true) {
-        var dropZoneSpan = 12 - row.span;
         if (dropZoneSpan > 1) {
           return showPanel(dropZoneSpan, 'Drop Here');
         }

@@ -11,48 +11,24 @@ weight = 8
 
 # Troubleshooting
 
-This page is dedicated to helping you solve any problem you have getting
-Grafana to work. Please review it before opening a new [GitHub
-issue](https://github.com/grafana/grafana/issues/new) or asking a
-question in the `#grafana` IRC channel on freenode.
+## visualization & query issues
 
-## General connection issues
+The most common problems are related to the query & response from you data source. Even if it looks
+like a bug or visualization issue in Grafana it is 99% of time a problem with the data source query or
+the data source response.
 
-When setting up Grafana for the first time you might experience issues
-with Grafana being unable to query Graphite, OpenTSDB or InfluxDB.  You
-might not be able to get metric name completion or the graph might show
-an error like this:
+So make sure to check the query sent and the raw response, learn how in this guide: [How to troubleshoot metric query issues](https://community.grafana.com/t/how-to-troubleshoot-metric-query-issues/50)
 
-![](/img/docs/v1/graph_timestore_error.png)
+## Logging
 
-For some types of errors, the `View details` link will show you error
-details. For many types of HTTP connection errors, however, there is very
-little information. The best way to troubleshoot these issues is use
-the [Chrome developer tools](https://developer.chrome.com/devtools/index).
-By pressing `F12` you can bring up the chrome dev tools.
+If you encounter an error or problem it is a good idea to check the grafana server log. Usually
+located at `/var/log/grafana/grafana.log` on unix systems or in `<grafana_install_dir>/data/log` on
+other platforms & manual installs.
 
-![](/img/docs/v1/toubleshooting_chrome_dev_tools.png)
+You can enable more logging by changing log level in you grafana configuration file.
 
-There are two important tabs in the Chrome developer tools: `Network`
-and `Console`. The `Console` tab will show you Javascript errors and
-HTTP request errors. In the Network tab you will be able to identify the
-request that failed and review request and response parameters. This
-information will be of great help in finding the cause of the error.
+## FAQ
 
-If you are unable to solve the issue, even after reading the remainder
-of this troubleshooting guide, you should open a [GitHub support
-issue](https://github.com/grafana/grafana/issues).  Before you do that
-please search the existing closed or open issues. Also if you need to
-create a support issue, screen shots and or text information about the
-chrome console error, request and response information from the
-`Network` tab in Chrome developer tools are of great help.
-
-### Inspecting Grafana metric requests
-
-![](/img/docs/v1/toubleshooting_chrome_dev_tools_network.png)
-
-After opening the Chrome developer tools for the first time the
-`Network` tab is empty. You will need to refresh the page to get
-requests to show.  For some type of errors, especially CORS-related,
-there might not be a response at all.
+Checkout the [FAQ](https://community.grafana.com/c/howto/faq) section on our community page for frequently
+asked questions.
 

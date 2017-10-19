@@ -17,7 +17,7 @@ There are two blog posts about authoring a plugin that might also be of interest
 ## Short version
 
 1. [Setup grafana](http://docs.grafana.org/project/building_from_source/)
-2. Clone an example plugin into ```/var/lib/grafana/plugins```  or `data/plugins` (relative to grafana git repo if your running development version from source dir)
+2. Clone an example plugin into ```/var/lib/grafana/plugins```  or `data/plugins` (relative to grafana git repo if you're running development version from source dir)
 3. Code away!
 
 ## What languages?

@@ -50,15 +50,27 @@
 
 .panel-alert-state {
   &--alerting {
-    animation: alerting-panel 1.6s cubic-bezier(1,.1,.73,1) 0s infinite alternate;
     box-shadow: 0 0 10px rgba($critical,0.5);
-    opacity: 1;
+    position: relative;
 
     .panel-alert-icon:before {
       color: $critical;
       content: "\e610";
     }
   }
+
+  &--alerting::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    box-shadow: 0 0 10px rgba($critical,1);
+    opacity: 0;
+    animation: alerting-panel 1.6s cubic-bezier(1,.1,.73,1) 0s infinite alternate;
+  }
+
 
   &--ok {
     .panel-alert-icon:before {
@@ -70,6 +82,6 @@
 
 @keyframes alerting-panel {
   100% {
-    box-shadow: 0 0 15px $critical;
+    opacity: 1;
   }
 }

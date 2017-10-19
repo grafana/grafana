@@ -71,6 +71,30 @@ define([
         expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&orgId=1&theme=light');
       });
 
+      it('should remove fullscreen from image url when is first param in querystring and modeSharePanel is true', function() {
+        ctx.$location.url('/test?fullscreen&edit');
+        ctx.scope.modeSharePanel = true;
+        ctx.scope.panel = { id: 1 };
+
+        ctx.scope.buildUrl();
+
+        expect(ctx.scope.shareUrl).to.contain('?fullscreen&edit&from=1000&to=2000&orgId=1&panelId=1');
+        expect(ctx.scope.imageUrl).to.contain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
+
+      });
+
+      it('should remove edit from image url when is first param in querystring and modeSharePanel is true', function() {
+        ctx.$location.url('/test?edit&fullscreen');
+        ctx.scope.modeSharePanel = true;
+        ctx.scope.panel = { id: 1 };
+
+        ctx.scope.buildUrl();
+
+        expect(ctx.scope.shareUrl).to.contain('?edit&fullscreen&from=1000&to=2000&orgId=1&panelId=1');
+        expect(ctx.scope.imageUrl).to.contain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
+
+      });
+
       it('should include template variables in url', function() {
         ctx.$location.path('/test');
         ctx.scope.options.includeTemplateVars = true;
@@ -83,7 +107,6 @@ define([
         ctx.scope.buildUrl();
         expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&orgId=1&var-app=mupp&var-server=srv-01');
       });
-
     });
 
   });

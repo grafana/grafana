@@ -54,10 +54,15 @@ func TestDataSourceCache(t *testing.T) {
 		})
 
 		ds.JsonData = json
+
+		tlsCaCert, _ := util.Encrypt([]byte(caCert), "password")
+		tlsClientCert, _ := util.Encrypt([]byte(clientCert), "password")
+		tlsClientKey, _ := util.Encrypt([]byte(clientKey), "password")
+
 		ds.SecureJsonData = map[string][]byte{
-			"tlsCACert":     util.Encrypt([]byte(caCert), "password"),
-			"tlsClientCert": util.Encrypt([]byte(clientCert), "password"),
-			"tlsClientKey":  util.Encrypt([]byte(clientKey), "password"),
+			"tlsCACert":     tlsCaCert,
+			"tlsClientCert": tlsClientCert,
+			"tlsClientKey":  tlsClientKey,
 		}
 		ds.Updated = t.Add(-1 * time.Minute)
 

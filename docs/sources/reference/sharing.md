@@ -22,7 +22,7 @@ A dashboard snapshot is an instant way to share an interactive dashboard publicl
 (metric, template and annotation) and panel links, leaving only the visible metric data and series names embedded into your dashboard. Dashboard
 snapshots can be accessed by anyone who has the link and can reach the URL.
 
-![](/img/docs/v2/dashboard_snapshot_dialog.png)
+![](/img/docs/v4/share_panel_modal.png)
 
 ### Publish snapshots
 You can publish snapshots to you local instance or to [snapshot.raintank.io](http://snapshot.raintank.io). The later is a free service
@@ -42,8 +42,8 @@ You can embed a panel using an iframe on another web site. This tab will show yo
 Example:
 
 ```html
-<iframe src="http://snapshot.raintank.io/dashboard/solo/snapshot/UtvRYDv650fHOV2jV5QlAQhLnNOhB5ZN?panelId=4&fullscreen&from=1427385145990&to=1427388745990" width="650" height="300" frameborder="0"></iframe>
+<iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4" width="650" height="300" frameborder="0"></iframe>
 ```
 
 Below there should be an interactive Grafana graph embedded in an iframe:
-<iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/4IKyWYNEQll1B9FXcN3RIgx4M2VGgU8d?panelId=4&fullscreen" width="650" height="300" frameborder="0"></iframe>
+<iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4" width="650" height="300" frameborder="0"></iframe>

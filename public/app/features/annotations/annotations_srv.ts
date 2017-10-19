@@ -36,6 +36,18 @@ export class AnnotationsSrv {
       // combine the annotations and flatten results
       var annotations = _.flattenDeep([results[0], results[1]]);
 
+      // filter out annotations that do not belong to requesting panel
+      annotations = _.filter(annotations, item => {
+        // shownIn === 1 requires annotation matching panel id
+        if (item.source.showIn === 1) {
+          if (item.panelId && options.panel.id === item.panelId) {
+            return true;
+          }
+          return false;
+        }
+        return true;
+      });
+
       // look for alert state for this panel
       var alertState = _.find(results[2], {panelId: options.panel.id});
 
@@ -45,7 +57,12 @@ export class AnnotationsSrv {
       };
 
     }).catch(err => {
-      this.$rootScope.appEvent('alert-error', ['Annotations failed', (err.message || err)]);
+      if (!err.message && err.data && err.data.message) {
+        err.message = err.data.message;
+      }
+      this.$rootScope.appEvent('alert-error', ['Annotation Query Failed', (err.message || err)]);
+
+      return [];
     });
   }
 
@@ -53,7 +70,7 @@ export class AnnotationsSrv {
     var panel = options.panel;
     var dashboard = options.dashboard;
 
-    if (panel && panel.alert) {
+    if (dashboard.id && panel && panel.alert) {
       return this.backendSrv.get('/api/annotations', {
         from: options.range.from.valueOf(),
         to: options.range.to.valueOf(),
@@ -61,6 +78,8 @@ export class AnnotationsSrv {
         panelId: panel.id,
         dashboardId: dashboard.id,
       }).then(results => {
+        // this built in annotation source name `panel-alert` is used in annotation tooltip
+        // to know that this annotation is from panel alert
         return this.translateQueryResult({iconColor: '#AA0000', name: 'panel-alert'}, results);
       });
     }
@@ -126,7 +145,19 @@ export class AnnotationsSrv {
     return this.globalAnnotationsPromise;
   }
 
+  saveAnnotationEvent(annotation) {
+    this.globalAnnotationsPromise = null;
+    return this.backendSrv.post('/api/annotations', annotation);
+  }
+
   translateQueryResult(annotation, results) {
+    // if annotation has snapshotData
+    // make clone and remove it
+    if (annotation.snapshotData) {
+      annotation = angular.copy(annotation);
+      delete annotation.snapshotData;
+    }
+
     for (var item of results) {
       item.source = annotation;
       item.min = item.time;

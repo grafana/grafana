@@ -23,16 +23,18 @@ domain = foo.bar
 To use sub *path* ex `http://foo.bar/grafana` make sure to include `/grafana` in the end of root_url.
 Otherwise Grafana will not behave correctly. See example below.
 
-# Examples
+## Examples
 Here are some example configurations for running Grafana behind a reverse proxy.
 
-## Grafana configuration (ex http://foo.bar.com)
+### Grafana configuration (ex http://foo.bar.com)
+
 ```
 [server]
 domain = foo.bar
 ```
 
-## Nginx configuration
+### Nginx configuration
+
 ```
 server {
   listen 80;
@@ -45,16 +47,16 @@ server {
 }
 ```
 
-# Examples with **sub path** (ex http://foo.bar.com/grafana)
+### Examples with **sub path** (ex http://foo.bar.com/grafana)
 
-## Grafana configuration with sub path
+#### Grafana configuration with sub path
 ```
 [server]
 domain = foo.bar
 root_url = %(protocol)s://%(domain)s:/grafana
 ```
 
-## Nginx configuration with sub path
+#### Nginx configuration with sub path
 ```
 server {
   listen 80;

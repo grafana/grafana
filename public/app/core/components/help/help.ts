@@ -27,7 +27,7 @@ export class HelpCtrl {
         {keys: ['d', 'v'], description: 'Toggle in-active / view mode'},
         {keys: ['d', 'k'], description: 'Toggle kiosk mode (hides top nav)'},
         {keys: ['d', 'E'], description: 'Expand all rows'},
-        {keys: ['d', 'C'], description: 'Collapse all ros'},
+        {keys: ['d', 'C'], description: 'Collapse all rows'},
         {keys: ['mod+o'], description: 'Toggle shared graph crosshair'},
       ],
       'Focused Panel': [

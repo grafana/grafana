@@ -48,6 +48,7 @@ func GetPluginList(c *middleware.Context) Response {
 			LatestVersion: pluginDef.GrafanaNetVersion,
 			HasUpdate:     pluginDef.GrafanaNetHasUpdate,
 			DefaultNavUrl: pluginDef.DefaultNavUrl,
+			State:         pluginDef.State,
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
@@ -97,6 +98,7 @@ func GetPluginSettingById(c *middleware.Context) Response {
 			DefaultNavUrl: def.DefaultNavUrl,
 			LatestVersion: def.GrafanaNetVersion,
 			HasUpdate:     def.GrafanaNetHasUpdate,
+			State:         def.State,
 		}
 
 		query := m.GetPluginSettingByIdQuery{PluginId: pluginId, OrgId: c.OrgId}

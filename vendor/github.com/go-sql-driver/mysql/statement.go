@@ -11,6 +11,7 @@ package mysql
 import (
 	"database/sql/driver"
 	"fmt"
+	"io"
 	"reflect"
 	"strconv"
 )
@@ -19,12 +20,15 @@ type mysqlStmt struct {
 	mc         *mysqlConn
 	id         uint32
 	paramCount int
-	columns    []mysqlField // cached from the first query
+	columns    [][]mysqlField // cached from the first query
 }
 
 func (stmt *mysqlStmt) Close() error {
 	if stmt.mc == nil || stmt.mc.netConn == nil {
-		errLog.Print(ErrInvalidConn)
+		// driver.Stmt.Close can be called more than once, thus this function
+		// has to be idempotent.
+		// See also Issue #450 and golang/go#16019.
+		//errLog.Print(ErrInvalidConn)
 		return driver.ErrBadConn
 	}
 
@@ -59,26 +63,30 @@ func (stmt *mysqlStmt) Exec(args []driver.Value) (driver.Result, error) {
 
 	// Read Result
 	resLen, err := mc.readResultSetHeaderPacket()
-	if err == nil {
-		if resLen > 0 {
-			// Columns
-			err = mc.readUntilEOF()
-			if err != nil {
-				return nil, err
-			}
+	if err != nil {
+		return nil, err
+	}
 
-			// Rows
-			err = mc.readUntilEOF()
+	if resLen > 0 {
+		// Columns
+		if err = mc.readUntilEOF(); err != nil {
+			return nil, err
 		}
-		if err == nil {
-			return &mysqlResult{
-				affectedRows: int64(mc.affectedRows),
-				insertId:     int64(mc.insertId),
-			}, nil
+
+		// Rows
+		if err := mc.readUntilEOF(); err != nil {
+			return nil, err
 		}
 	}
 
-	return nil, err
+	if err := mc.discardResults(); err != nil {
+		return nil, err
+	}
+
+	return &mysqlResult{
+		affectedRows: int64(mc.affectedRows),
+		insertId:     int64(mc.insertId),
+	}, nil
 }
 
 func (stmt *mysqlStmt) Query(args []driver.Value) (driver.Rows, error) {
@@ -101,17 +109,28 @@ func (stmt *mysqlStmt) Query(args []driver.Value) (driver.Rows, error) {
 	}
 
 	rows := new(binaryRows)
+	rows.stmtCols = &stmt.columns
 
 	if resLen > 0 {
 		rows.mc = mc
+		rows.i++
 		// Columns
 		// If not cached, read them and cache them
-		if stmt.columns == nil {
-			rows.columns, err = mc.readColumns(resLen)
-			stmt.columns = rows.columns
+		if len(stmt.columns) == 0 {
+			rows.rs.columns, err = mc.readColumns(resLen)
+			stmt.columns = append(stmt.columns, rows.rs.columns)
 		} else {
-			rows.columns = stmt.columns
+			rows.rs.columns = stmt.columns[0]
 			err = mc.readUntilEOF()
+		}
+	} else {
+		rows.rs.done = true
+
+		switch err := rows.NextResultSet(); err {
+		case nil, io.EOF:
+			return rows, nil
+		default:
+			return nil, err
 		}
 	}
 

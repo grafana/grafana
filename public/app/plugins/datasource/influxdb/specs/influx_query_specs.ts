@@ -123,8 +123,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter ' +
-                          'GROUP BY time($__interval), "host"');
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($__interval), "host"');
     });
   });
 

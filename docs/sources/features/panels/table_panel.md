@@ -2,6 +2,7 @@
 title = "Table Panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "table panel"]
 type = "docs"
+aliases = ["/reference/table/"]
 [menu.docs]
 name = "Table"
 parent = "panels"
@@ -84,8 +85,9 @@ The column styles allow you control how dates and numbers are formatted.
 
 1. `Name or regex`: The Name or Regex field controls what columns the rule should be applied to. The regex or name filter will be matched against the column name not against column values.
 2. `Type`: The three supported types of types are `Number`, `String` and `Date`.
-3. `Format`: Specify date format. Only available when `Type` is set to `Date`.
-4. `Coloring` and `Thresholds`: Specify color mode and thresholds limits.
-5. `Unit` and `Decimals`: Specify unit and decimal precision for numbers.
-6.  `Add column style rule`: Add new column rule.
+3. `Title`: Title for the column, when using a Regex the title can include replacement strings like `$1`.
+4. `Format`: Specify date format. Only available when `Type` is set to `Date`.
+5. `Coloring` and `Thresholds`: Specify color mode and thresholds limits.
+6. `Unit` and `Decimals`: Specify unit and decimal precision for numbers.
+7.  `Add column style rule`: Add new column rule.
 

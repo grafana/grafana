@@ -47,9 +47,9 @@ describe('DashImportCtrl', function() {
     });
   });
 
-  describe('when specifing grafana.net url', function() {
+  describe('when specifing grafana.com url', function() {
     beforeEach(function() {
-      ctx.ctrl.gnetUrl = 'http://grafana.net/dashboards/123';
+      ctx.ctrl.gnetUrl = 'http://grafana.com/dashboards/123';
       // setup api mock
       backendSrv.get = sinon.spy(() => {
         return Promise.resolve({

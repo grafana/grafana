@@ -7,13 +7,6 @@ define([
 function (angular, _, coreModule, config) {
   'use strict';
 
-  var failCodes = {
-    "1000": "Required team membership not fulfilled",
-    "1001": "Required organization membership not fulfilled",
-    "1002": "Required email domain not fulfilled",
-    "1003": "Login provider denied login request",
-  };
-
   coreModule.default.controller('LoginCtrl', function($scope, backendSrv, contextSrv, $location) {
     $scope.formModel = {
       user: '',
@@ -36,11 +29,8 @@ function (angular, _, coreModule, config) {
     $scope.init = function() {
       $scope.$watch("loginMode", $scope.loginModeChanged);
 
-      var params = $location.search();
-      if (params.failCode) {
-        $scope.appEvent('alert-warning', ['Login Failed', failCodes[params.failCode]]);
-        delete params.failedMsg;
-        $location.search(params);
+      if (config.loginError) {
+        $scope.appEvent('alert-warning', ['Login Failed', config.loginError]);
       }
     };
 

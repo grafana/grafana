@@ -18,4 +18,4 @@ export {
   MetricsPanelCtrl,
   QueryCtrl,
   alertTab,
-}
+};

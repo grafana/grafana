@@ -2,7 +2,6 @@ package social
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -21,11 +20,8 @@ type SocialGithub struct {
 }
 
 var (
-	ErrMissingTeamMembership = errors.New("User not a member of one of the required teams")
-)
-
-var (
-	ErrMissingOrganizationMembership = errors.New("User not a member of one of the required organizations")
+	ErrMissingTeamMembership         = &Error{"User not a member of one of the required teams"}
+	ErrMissingOrganizationMembership = &Error{"User not a member of one of the required organizations"}
 )
 
 func (s *SocialGithub) Type() int {
@@ -89,18 +85,16 @@ func (s *SocialGithub) FetchPrivateEmail(client *http.Client) (string, error) {
 		Verified bool   `json:"verified"`
 	}
 
-	emailsUrl := fmt.Sprintf(s.apiUrl + "/emails")
-	r, err := client.Get(emailsUrl)
+	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
-
-	defer r.Body.Close()
 
 	var records []Record
 
-	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
-		return "", err
+	err = json.Unmarshal(body, &records)
+	if err != nil {
+		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
 
 	var email = ""
@@ -118,18 +112,16 @@ func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]int, error) 
 		Id int `json:"id"`
 	}
 
-	membershipUrl := fmt.Sprintf(s.apiUrl + "/teams")
-	r, err := client.Get(membershipUrl)
+	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting team memberships: %s", err)
 	}
-
-	defer r.Body.Close()
 
 	var records []Record
 
-	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
-		return nil, err
+	err = json.Unmarshal(body, &records)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting team memberships: %s", err)
 	}
 
 	var ids = make([]int, len(records))
@@ -145,18 +137,16 @@ func (s *SocialGithub) FetchOrganizations(client *http.Client) ([]string, error)
 		Login string `json:"login"`
 	}
 
-	url := fmt.Sprintf(s.apiUrl + "/orgs")
-	r, err := client.Get(url)
+	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/orgs"))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting organizations: %s", err)
 	}
-
-	defer r.Body.Close()
 
 	var records []Record
 
-	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
-		return nil, err
+	err = json.Unmarshal(body, &records)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting organizations: %s", err)
 	}
 
 	var logins = make([]string, len(records))
@@ -174,16 +164,14 @@ func (s *SocialGithub) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 		Email string `json:"email"`
 	}
 
-	var err error
-	r, err := client.Get(s.apiUrl)
+	body, err := HttpGet(client, s.apiUrl)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
-	defer r.Body.Close()
-
-	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
-		return nil, err
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
 	userInfo := &BasicUserInfo{

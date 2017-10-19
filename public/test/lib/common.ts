@@ -21,4 +21,4 @@ export {
   sinon,
   expect,
   angularMocks,
-}
+};

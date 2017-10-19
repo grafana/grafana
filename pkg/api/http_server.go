@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -13,9 +14,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/live"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -46,7 +50,7 @@ func (hs *HttpServer) Start(ctx context.Context) error {
 	hs.streamManager.Run(ctx)
 
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
-	hs.log.Info("Initializing HTTP Server", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl)
+	hs.log.Info("Initializing HTTP Server", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
 
 	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
 	switch setting.Protocol {
@@ -57,8 +61,20 @@ func (hs *HttpServer) Start(ctx context.Context) error {
 			return nil
 		}
 	case setting.HTTPS:
-		err = hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
+		err = hs.listenAndServeTLS(setting.CertFile, setting.KeyFile)
 		if err == http.ErrServerClosed {
+			hs.log.Debug("server was shutdown gracefully")
+			return nil
+		}
+	case setting.SOCKET:
+		ln, err := net.Listen("unix", setting.SocketPath)
+		if err != nil {
+			hs.log.Debug("server was shutdown gracefully")
+			return nil
+		}
+
+		err = hs.httpSrv.Serve(ln)
+		if err != nil {
 			hs.log.Debug("server was shutdown gracefully")
 			return nil
 		}
@@ -76,7 +92,7 @@ func (hs *HttpServer) Shutdown(ctx context.Context) error {
 	return err
 }
 
-func (hs *HttpServer) listenAndServeTLS(listenAddr, certfile, keyfile string) error {
+func (hs *HttpServer) listenAndServeTLS(certfile, keyfile string) error {
 	if certfile == "" {
 		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
 	}
@@ -111,14 +127,11 @@ func (hs *HttpServer) listenAndServeTLS(listenAddr, certfile, keyfile string) er
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 		},
 	}
-	srv := &http.Server{
-		Addr:         listenAddr,
-		Handler:      hs.macaron,
-		TLSConfig:    tlsCfg,
-		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
-	}
 
-	return srv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
+	hs.httpSrv.TLSConfig = tlsCfg
+	hs.httpSrv.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0)
+
+	return hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
 }
 
 func (hs *HttpServer) newMacaron() *macaron.Macaron {
@@ -147,6 +160,7 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
+	m.Use(hs.healthHandler)
 	m.Use(middleware.GetContextHandler())
 	m.Use(middleware.Sessioner(&setting.SessionOptions))
 	m.Use(middleware.RequestMetrics())
@@ -157,7 +171,32 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 		m.Use(middleware.ValidateHostHeader(setting.Domain))
 	}
 
+	m.Use(middleware.AddDefaultResponseHeaders())
+
 	return m
+}
+
+func (hs *HttpServer) healthHandler(ctx *macaron.Context) {
+	if ctx.Req.Method != "GET" || ctx.Req.URL.Path != "/api/health" {
+		return
+	}
+
+	data := simplejson.New()
+	data.Set("database", "ok")
+	data.Set("version", setting.BuildVersion)
+	data.Set("commit", setting.BuildCommit)
+
+	if err := bus.Dispatch(&models.GetDBHealthQuery{}); err != nil {
+		data.Set("database", "failing")
+		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		ctx.Resp.WriteHeader(503)
+	} else {
+		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		ctx.Resp.WriteHeader(200)
+	}
+
+	dataBytes, _ := data.EncodePretty()
+	ctx.Resp.Write(dataBytes)
 }
 
 func (hs *HttpServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {

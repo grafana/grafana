@@ -1,3 +1,5 @@
+var path = require('path');
+
 module.exports = function(grunt) {
   "use strict";
 
@@ -6,10 +8,10 @@ module.exports = function(grunt) {
     'jshint:source',
     'jshint:tests',
     'jscs',
-    'exec:tslint',
     'clean:release',
     'copy:node_modules',
     'copy:public_to_gen',
+    'exec:tslint',
     'exec:tscompile',
     'karma:test',
     'phantomjs',
@@ -82,6 +84,8 @@ module.exports = function(grunt) {
     grunt.task.run('copy:backend_files');
     grunt.task.run('copy:netcrunch_plugin');
     grunt.task.run('copy:windows_installer');
+
+    grunt.file.write(path.join(grunt.config('tempDir'), 'VERSION'), grunt.config('pkg.version'));
   });
 
 };

@@ -24,6 +24,8 @@ func AddMigrations(mg *Migrator) {
 	addPreferencesMigrations(mg)
 	addAlertMigrations(mg)
 	addAnnotationMig(mg)
+	addTestDataMigrations(mg)
+	addDashboardVersionMigration(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

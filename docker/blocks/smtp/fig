@@ -1,4 +1,4 @@
 snmpd:
-  build: blocks/snmpd
+  image: namshi/smtp
   ports:
-    - "161:161"
+    - "25:25"

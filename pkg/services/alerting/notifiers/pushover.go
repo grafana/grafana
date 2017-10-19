@@ -139,8 +139,12 @@ func (this *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 	}
 	if evalContext.Error != nil {
-		message += fmt.Sprintf("\n<b>Error message</b> %s", evalContext.Error.Error())
+		message += fmt.Sprintf("\n<b>Error message:</b> %s", evalContext.Error.Error())
 	}
+	if evalContext.ImagePublicUrl != "" {
+		message += fmt.Sprintf("\n<a href=\"%s\">Show graph image</a>", evalContext.ImagePublicUrl)
+	}
+
 	q := url.Values{}
 	q.Add("user", this.UserKey)
 	q.Add("token", this.ApiToken)

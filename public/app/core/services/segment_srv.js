@@ -13,6 +13,7 @@ function (angular, _, coreModule) {
       if (options === '*' || options.value === '*') {
         this.value = '*';
         this.html = $sce.trustAsHtml('<i class="fa fa-asterisk"><i>');
+        this.type = options.type;
         this.expandable = true;
         return;
       }

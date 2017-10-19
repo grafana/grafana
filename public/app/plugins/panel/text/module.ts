@@ -79,4 +79,4 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 }
 
-export {TextPanelCtrl as PanelCtrl}
+export {TextPanelCtrl as PanelCtrl};

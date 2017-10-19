@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/netcrunch"
 )
 
@@ -35,6 +34,11 @@ func LoginView(c *middleware.Context) {
 	viewData.Settings["disableUserSignUp"] = !setting.AllowUserSignUp
 	viewData.Settings["loginHint"] = setting.LoginHint
 	viewData.Settings["disableLoginForm"] = setting.DisableLoginForm
+
+	if loginError, ok := c.Session.Get("loginError").(string); ok {
+		c.Session.Delete("loginError")
+		viewData.Settings["loginError"] = loginError
+	}
 
 	if !tryLoginUsingRememberCookie(c) {
 		c.HTML(200, VIEW_INDEX, viewData)
@@ -75,8 +79,7 @@ func tryLoginUsingRememberCookie(c *middleware.Context) bool {
 	user := userQuery.Result
 
 	// validate remember me cookie
-	if val, _ := c.GetSuperSecureCookie(
-		util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName); val != user.Login {
+	if val, _ := c.GetSuperSecureCookie(user.Rands+user.Password, setting.CookieRememberName); val != user.Login {
 		return false
 	}
 
@@ -144,9 +147,10 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 	days := 86400 * setting.LogInRememberDays
 	if days > 0 {
 		c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
-		c.SetSuperSecureCookie(util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
+		c.SetSuperSecureCookie(user.Rands+user.Password, setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
 	}
 
+	c.Session.RegenerateId(c)
 	c.Session.Set(middleware.SESS_KEY_USERID, user.Id)
 }
 

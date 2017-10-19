@@ -129,7 +129,7 @@
 			</div>
 			<div class="gf-form gf-form--v-stretch">
 				<span class="gf-form-label width-8">Message</span>
-				<textarea class="gf-form-input width-20" rows="10" ng-model="ctrl.alert.message"  placeholder="Notification message details..."></textarea>
+				<textarea class="gf-form-input" rows="10" ng-model="ctrl.alert.message"  placeholder="Notification message details..."></textarea>
 			</div>
 		</div>
 
@@ -148,16 +148,20 @@
 				<ol class="card-list" >
 					<li class="card-item-wrapper" ng-repeat="ah in ctrl.alertHistory">
 						<div class="card-item card-item--alert">
+              <div class="card-item-header">
+                <div class="card-item-type">
+                </div>
+              </div>
 							<div class="card-item-body">
 								<div class="card-item-details">
 									<div class="card-item-sub-name">
 										<span class="alert-list-item-state {{ah.stateModel.stateClass}}">
 											<i class="{{ah.stateModel.iconClass}}"></i>
-											{{ah.stateModel.text}}
-										</span> {{ah.metrics}}
+                      {{ah.stateModel.text}}
+                    </span> {{ah.time}}
 									</div>
 									<div class="card-item-sub-name">
-										{{ah.time}}
+										{{ah.info}}
 									</div>
 								</div>
 							</div>

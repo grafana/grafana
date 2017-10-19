@@ -44,7 +44,7 @@ export class SignUpCtrl {
         window.location.href = config.appSubUrl + '/';
       }
     });
-  };
+  }
 }
 
 coreModule.controller('SignUpCtrl', SignUpCtrl);

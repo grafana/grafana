@@ -5,7 +5,13 @@ import (
 	"sync"
 )
 
-// ReadSeekCloser wraps a io.Reader returning a ReaderSeekerCloser
+// ReadSeekCloser wraps a io.Reader returning a ReaderSeekerCloser. Should
+// only be used with an io.Reader that is also an io.Seeker. Doing so may
+// cause request signature errors, or request body's not sent for GET, HEAD
+// and DELETE HTTP methods.
+//
+// Deprecated: Should only be used with io.ReadSeeker. If using for
+// S3 PutObject to stream content use s3manager.Uploader instead.
 func ReadSeekCloser(r io.Reader) ReaderSeekerCloser {
 	return ReaderSeekerCloser{r}
 }
@@ -42,6 +48,12 @@ func (r ReaderSeekerCloser) Seek(offset int64, whence int) (int64, error) {
 		return t.Seek(offset, whence)
 	}
 	return int64(0), nil
+}
+
+// IsSeeker returns if the underlying reader is also a seeker.
+func (r ReaderSeekerCloser) IsSeeker() bool {
+	_, ok := r.r.(io.Seeker)
+	return ok
 }
 
 // Close closes the ReaderSeekerCloser.
@@ -102,5 +114,5 @@ func (b *WriteAtBuffer) WriteAt(p []byte, pos int64) (n int, err error) {
 func (b *WriteAtBuffer) Bytes() []byte {
 	b.m.Lock()
 	defer b.m.Unlock()
-	return b.buf[:len(b.buf):len(b.buf)]
+	return b.buf
 }

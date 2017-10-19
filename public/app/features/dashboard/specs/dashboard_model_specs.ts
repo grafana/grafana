@@ -364,4 +364,85 @@ describe('DashboardModel', function() {
     });
   });
 
+  describe('updateSubmenuVisibility with empty lists', function() {
+    var model;
+
+    beforeEach(function() {
+      model = new DashboardModel({});
+      model.updateSubmenuVisibility();
+    });
+
+    it('should not enable submmenu', function() {
+      expect(model.meta.submenuEnabled).to.be(false);
+    });
+  });
+
+  describe('updateSubmenuVisibility with annotation', function() {
+    var model;
+
+    beforeEach(function() {
+      model = new DashboardModel({
+        annotations: {
+          list: [{}]
+        }
+      });
+      model.updateSubmenuVisibility();
+    });
+
+    it('should enable submmenu', function() {
+      expect(model.meta.submenuEnabled).to.be(true);
+    });
+  });
+
+  describe('updateSubmenuVisibility with template var', function() {
+    var model;
+
+    beforeEach(function() {
+      model = new DashboardModel({
+        templating: {
+          list: [{}]
+        }
+      });
+      model.updateSubmenuVisibility();
+    });
+
+    it('should enable submmenu', function() {
+      expect(model.meta.submenuEnabled).to.be(true);
+    });
+  });
+
+  describe('updateSubmenuVisibility with hidden template var', function() {
+    var model;
+
+    beforeEach(function() {
+      model = new DashboardModel({
+        templating: {
+          list: [{hide: 2}]
+        }
+      });
+      model.updateSubmenuVisibility();
+    });
+
+    it('should not enable submmenu', function() {
+      expect(model.meta.submenuEnabled).to.be(false);
+    });
+  });
+
+  describe('updateSubmenuVisibility with hidden annotation toggle', function() {
+    var model;
+
+    beforeEach(function() {
+      model = new DashboardModel({
+        annotations: {
+          list: [{hide: true}]
+        }
+      });
+      model.updateSubmenuVisibility();
+    });
+
+    it('should not enable submmenu', function() {
+      expect(model.meta.submenuEnabled).to.be(false);
+    });
+  });
+
 });

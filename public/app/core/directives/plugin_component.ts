@@ -61,7 +61,6 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       attrs: {dashboard: "ctrl.dashboard", panel: "panel", row: "ctrl.row"},
     };
 
-    var panelElemName = 'panel-' + scope.panel.type;
     let panelInfo = config.panels[scope.panel.type];
     var panelCtrlPromise = Promise.resolve(UnknownPanelCtrl);
     if (panelInfo) {
@@ -75,7 +74,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
       if (!PanelCtrl || PanelCtrl.registered) {
         return componentInfo;
-      };
+      }
 
       if (PanelCtrl.templatePromise) {
         return PanelCtrl.templatePromise.then(res => {
@@ -110,7 +109,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
               baseUrl: ds.meta.baseUrl,
               name: 'query-ctrl-' + ds.meta.id,
               bindings: {target: "=", panelCtrl: "=", datasource: "="},
-              attrs: {"target": "target", "panel-ctrl": "ctrl", datasource: "datasource"},
+              attrs: {"target": "target", "panel-ctrl": "ctrl.panelCtrl", datasource: "datasource"},
               Component: dsModule.QueryCtrl
             };
           });
@@ -128,7 +127,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
               baseUrl: ds.meta.baseUrl,
               name: 'query-options-ctrl-' + ds.meta.id,
               bindings: {panelCtrl: "="},
-              attrs: {"panel-ctrl": "ctrl"},
+              attrs: {"panel-ctrl": "ctrl.panelCtrl"},
               Component: dsModule.QueryOptionsCtrl
             };
           });
@@ -182,7 +181,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         return System.import(appModel.module).then(function(appModule) {
           return {
             baseUrl: appModel.baseUrl,
-            name: 'app-page-' + appModel.appId + '-' + scope.ctrl.page.slug,
+            name: 'app-page-' + appModel.id + '-' + scope.ctrl.page.slug,
             bindings: {appModel: "="},
             attrs: {"app-model": "ctrl.appModel"},
             Component: appModule[scope.ctrl.page.component],

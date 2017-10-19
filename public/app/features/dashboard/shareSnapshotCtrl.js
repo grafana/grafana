@@ -96,6 +96,10 @@ function (angular, _) {
       });
     };
 
+    $scope.getSnapshotUrl = function() {
+      return $scope.snapshotUrl;
+    };
+
     $scope.scrubDashboard = function(dash) {
       // change title
       dash.title = $scope.snapshot.name;
@@ -116,6 +120,7 @@ function (angular, _) {
         return {
           name: annotation.name,
           enable: annotation.enable,
+          iconColor: annotation.iconColor,
           snapshotData: annotation.snapshotData
         };
       }).value();

@@ -394,6 +394,10 @@ function($, _) {
     return "0x" + hexString;
   };
 
+  kbn.valueFormats.sci = function(value, decimals) {
+    return value.toExponential(decimals);
+  };
+
   // Currencies
   kbn.valueFormats.currencyUSD = kbn.formatBuilders.currency('$');
   kbn.valueFormats.currencyGBP = kbn.formatBuilders.currency('£');
@@ -703,15 +707,16 @@ function($, _) {
       {
         text: 'none',
         submenu: [
-          {text: 'none' ,             value: 'none'       },
-          {text: 'short',             value: 'short'      },
-          {text: 'percent (0-100)',   value: 'percent'    },
-          {text: 'percent (0.0-1.0)', value: 'percentunit'},
-          {text: 'Humidity (%H)',     value: 'humidity'   },
-          {text: 'ppm',               value: 'ppm'        },
-          {text: 'decibel',           value: 'dB'         },
-          {text: 'hexadecimal (0x)',  value: 'hex0x'      },
-          {text: 'hexadecimal',       value: 'hex'        },
+          {text: 'none' ,               value: 'none'       },
+          {text: 'short',               value: 'short'      },
+          {text: 'percent (0-100)',     value: 'percent'    },
+          {text: 'percent (0.0-1.0)',   value: 'percentunit'},
+          {text: 'Humidity (%H)',       value: 'humidity'   },
+          {text: 'ppm',                 value: 'ppm'        },
+          {text: 'decibel',             value: 'dB'         },
+          {text: 'hexadecimal (0x)',    value: 'hex0x'      },
+          {text: 'hexadecimal',         value: 'hex'        },
+          {text: 'scientific notation', value: 'sci'        },
         ]
       },
       {
@@ -836,7 +841,7 @@ function($, _) {
       {
         text: 'temperature',
         submenu: [
-          {text: 'Celcius (°C)',    value: 'celsius'     },
+          {text: 'Celsius (°C)',    value: 'celsius'     },
           {text: 'Farenheit (°F)',  value: 'farenheit'   },
           {text: 'Kelvin (K)',      value: 'kelvin'      },
         ]

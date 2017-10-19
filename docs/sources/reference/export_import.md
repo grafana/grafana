@@ -33,7 +33,7 @@ To import a dashboard open dashboard search and then hit the import button.
 
 <img src="/img/docs/v31/import_step1.png">
 
-From here you can upload a dashboard json file, paste a [Grafana.net](https://grafana.net) dashboard
+From here you can upload a dashboard json file, paste a [Grafana.com](https://grafana.com) dashboard
 url or paste dashboard json text directly into the text area.
 
 <img src="/img/docs/v31/import_step2.png">
@@ -41,15 +41,15 @@ url or paste dashboard json text directly into the text area.
 In step 2 of the import process Grafana will let you change the name of the dashboard, pick what
 data source you want the dashboard to use and specify any metric prefixes (if the dashboard use any).
 
-## Discover dashboards on Grafana.net
+## Discover dashboards on Grafana.com
 
-Find dashboards for common server applications at [Grafana.net/dashboards](https://grafana.net/dashboards).
+Find dashboards for common server applications at [Grafana.com/dashboards](https://grafana.com/dashboards).
 
 <img src="/img/docs/v31/gnet_dashboards_list.png">
 
 ## Import & Sharing with Grafana 2.x or 3.0
 
-Dashboards on Grafana.net use a new feature in Grafana 3.1 that allows the import process
+Dashboards on Grafana.com use a new feature in Grafana 3.1 that allows the import process
 to update each panel so that they are using a data source of your choosing. If you are running a
 Grafana version older than 3.1 then you might need to do some manual steps either
 before or after import in order for the dashboard to work properly.
@@ -99,10 +99,10 @@ These are then referenced in the dashboard panels like this:
 ```
 
 These inputs and their usage in data source properties are automatically added during export in Grafana 3.1.
-If you run an older version of Grafana and want to share a dashboard on Grafana.net you need to manually
+If you run an older version of Grafana and want to share a dashboard on Grafana.com you need to manually
 add the inputs and templatize the datasource properties like above.
 
-If you want to import a dashboard from Grafana.net into an older version of Grafana then you can either import
+If you want to import a dashboard from Grafana.com into an older version of Grafana then you can either import
 it as usual and then update the data source option in the metrics tab so that the panel is using the correct
 data source. Another alternative is to open the json file in a a text editor and update the data source properties
 to value that matches a name of your data source.

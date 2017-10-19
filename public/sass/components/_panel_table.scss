@@ -72,6 +72,10 @@
     &:last-child {
       border-right: none;
     }
+
+    &.table-panel-cell-pre {
+      white-space: pre;
+    }
   }
 }
 

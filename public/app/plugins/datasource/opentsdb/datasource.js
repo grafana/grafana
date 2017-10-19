@@ -28,8 +28,8 @@ function (angular, _, dateMath) {
 
       _.each(options.targets, function(target) {
         if (!target.metric) { return; }
-        qs.push(convertTargetToQuery(target, options));
-      });
+        qs.push(convertTargetToQuery(target, options, this.tsdbVersion));
+      }.bind(this));
 
       var queries = _.compact(qs);
 
@@ -366,13 +366,13 @@ function (angular, _, dateMath) {
       return label;
     }
 
-    function convertTargetToQuery(target, options) {
+    function convertTargetToQuery(target, options, tsdbVersion) {
       if (!target.metric || target.hide) {
         return null;
       }
 
       var query = {
-        metric: templateSrv.replace(target.metric, options.scopedVars),
+        metric: templateSrv.replace(target.metric, options.scopedVars, 'pipe'),
         aggregator: "avg"
       };
 
@@ -393,6 +393,11 @@ function (angular, _, dateMath) {
         if (target.counterResetValue && target.counterResetValue.length) {
           query.rateOptions.resetValue = parseInt(target.counterResetValue);
         }
+
+        if(tsdbVersion >= 2) {
+          query.rateOptions.dropResets = !query.rateOptions.counterMax &&
+                (!query.rateOptions.ResetValue || query.rateOptions.ResetValue === 0);
+        }
       }
 
       if (!target.disableDownsampling) {
@@ -411,15 +416,15 @@ function (angular, _, dateMath) {
 
       if (target.filters && target.filters.length > 0) {
         query.filters = angular.copy(target.filters);
-        if(query.filters){
-          for(var filter_key in query.filters){
+        if (query.filters){
+          for (var filter_key in query.filters) {
             query.filters[filter_key].filter = templateSrv.replace(query.filters[filter_key].filter, options.scopedVars, 'pipe');
           }
         }
       } else {
         query.tags = angular.copy(target.tags);
-        if(query.tags){
-          for(var tag_key in query.tags){
+        if (query.tags){
+          for (var tag_key in query.tags) {
             query.tags[tag_key] = templateSrv.replace(query.tags[tag_key], options.scopedVars, 'pipe');
           }
         }

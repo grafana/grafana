@@ -4,16 +4,45 @@ package api
 
 import (
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 )
 
+type service struct {
+	srcName string
+	dstName string
+
+	serviceVersion string
+}
+
+var mergeServices = map[string]service{
+	"dynamodbstreams": service{
+		dstName: "dynamodb",
+		srcName: "streams.dynamodb",
+	},
+	"wafregional": service{
+		dstName:        "waf",
+		srcName:        "waf-regional",
+		serviceVersion: "2015-08-24",
+	},
+}
+
 // customizationPasses Executes customization logic for the API by package name.
 func (a *API) customizationPasses() {
 	var svcCustomizations = map[string]func(*API){
-		"s3":              s3Customizations,
-		"cloudfront":      cloudfrontCustomizations,
-		"dynamodbstreams": dynamodbstreamsCustomizations,
+		"s3":         s3Customizations,
+		"cloudfront": cloudfrontCustomizations,
+		"rds":        rdsCustomizations,
+
+		// Disable endpoint resolving for services that require customer
+		// to provide endpoint them selves.
+		"cloudsearchdomain": disableEndpointResolving,
+		"iotdataplane":      disableEndpointResolving,
+	}
+
+	for k, _ := range mergeServices {
+		svcCustomizations[k] = mergeServicesCustomizations
 	}
 
 	if fn := svcCustomizations[a.PackageName()]; fn != nil {
@@ -89,18 +118,59 @@ func cloudfrontCustomizations(a *API) {
 	}
 }
 
-// dynamodbstreamsCustomizations references any duplicate shapes from DynamoDB
-func dynamodbstreamsCustomizations(a *API) {
-	p := strings.Replace(a.path, "streams.dynamodb", "dynamodb", -1)
+// mergeServicesCustomizations references any duplicate shapes from DynamoDB
+func mergeServicesCustomizations(a *API) {
+	info := mergeServices[a.PackageName()]
+
+	p := strings.Replace(a.path, info.srcName, info.dstName, -1)
+
+	if info.serviceVersion != "" {
+		index := strings.LastIndex(p, "/")
+		files, _ := ioutil.ReadDir(p[:index])
+		if len(files) > 1 {
+			panic("New version was introduced")
+		}
+		p = p[:index] + "/" + info.serviceVersion
+	}
+
 	file := filepath.Join(p, "api-2.json")
 
-	dbAPI := API{}
-	dbAPI.Attach(file)
-	dbAPI.Setup()
+	serviceAPI := API{}
+	serviceAPI.Attach(file)
+	serviceAPI.Setup()
 
 	for n := range a.Shapes {
-		if _, ok := dbAPI.Shapes[n]; ok {
-			a.Shapes[n].resolvePkg = "github.com/aws/aws-sdk-go/service/dynamodb"
+		if _, ok := serviceAPI.Shapes[n]; ok {
+			a.Shapes[n].resolvePkg = "github.com/aws/aws-sdk-go/service/" + info.dstName
 		}
 	}
+}
+
+// rdsCustomizations are customization for the service/rds. This adds non-modeled fields used for presigning.
+func rdsCustomizations(a *API) {
+	inputs := []string{
+		"CopyDBSnapshotInput",
+		"CreateDBInstanceReadReplicaInput",
+		"CopyDBClusterSnapshotInput",
+		"CreateDBClusterInput",
+	}
+	for _, input := range inputs {
+		if ref, ok := a.Shapes[input]; ok {
+			ref.MemberRefs["SourceRegion"] = &ShapeRef{
+				Documentation: docstring(`SourceRegion is the source region where the resource exists. This is not sent over the wire and is only used for presigning. This value should always have the same region as the source ARN.`),
+				ShapeName:     "String",
+				Shape:         a.Shapes["String"],
+				Ignore:        true,
+			}
+			ref.MemberRefs["DestinationRegion"] = &ShapeRef{
+				Documentation: docstring(`DestinationRegion is used for presigning the request to a given region.`),
+				ShapeName:     "String",
+				Shape:         a.Shapes["String"],
+			}
+		}
+	}
+}
+
+func disableEndpointResolving(a *API) {
+	a.Metadata.NoResolveEndpoint = true
 }

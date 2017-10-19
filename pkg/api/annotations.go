@@ -39,10 +39,51 @@ func GetAnnotations(c *middleware.Context) Response {
 			Text:      item.Text,
 			Metric:    item.Metric,
 			Title:     item.Title,
+			PanelId:   item.PanelId,
+			RegionId:  item.RegionId,
+			Type:      string(item.Type),
 		})
 	}
 
 	return Json(200, result)
+}
+
+func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response {
+	repo := annotations.GetRepository()
+
+	item := annotations.Item{
+		OrgId:       c.OrgId,
+		DashboardId: cmd.DashboardId,
+		PanelId:     cmd.PanelId,
+		Epoch:       cmd.Time / 1000,
+		Title:       cmd.Title,
+		Text:        cmd.Text,
+		CategoryId:  cmd.CategoryId,
+		NewState:    cmd.FillColor,
+		Type:        annotations.EventType,
+	}
+
+	if err := repo.Save(&item); err != nil {
+		return ApiError(500, "Failed to save annotation", err)
+	}
+
+	// handle regions
+	if cmd.IsRegion {
+		item.RegionId = item.Id
+
+		if err := repo.Update(&item); err != nil {
+			return ApiError(500, "Failed set regionId on annotation", err)
+		}
+
+		item.Id = 0
+		item.Epoch = cmd.TimeEnd
+
+		if err := repo.Save(&item); err != nil {
+			return ApiError(500, "Failed save annotation for region end time", err)
+		}
+	}
+
+	return ApiSuccess("Annotation added")
 }
 
 func DeleteAnnotations(c *middleware.Context, cmd dtos.DeleteAnnotationsCmd) Response {

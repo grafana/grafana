@@ -91,7 +91,13 @@ function (_) {
         query +=  ' WHERE ' + whereConditions.join(' ');
       }
     }
-
+    if (type === 'MEASUREMENTS')
+    {
+      query += ' LIMIT 100';
+      //Solve issue #2524 by limiting the number of measurements returned
+      //LIMIT must be after WITH MEASUREMENT and WHERE clauses
+      //This also could be used for TAG KEYS and TAG VALUES, if desired
+    }
     return query;
   };
 

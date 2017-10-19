@@ -8,9 +8,11 @@ export default class AdminListUsersCtrl {
   totalPages: number;
   showPaging = false;
   query: any;
+  navModel: any;
 
   /** @ngInject */
-  constructor(private $scope, private backendSrv) {
+  constructor(private $scope, private backendSrv, private navModelSrv) {
+    this.navModel = navModelSrv.getAdminNav();
     this.query = '';
     this.getUsers();
   }

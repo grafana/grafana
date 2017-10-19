@@ -4,13 +4,14 @@ import angular from 'angular';
 import _ from 'lodash';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
+import appEvents from 'app/core/app_events';
 
 export class BackendSrv {
   inFlightRequests = {};
   HTTP_REQUEST_CANCELLED = -1;
 
-    /** @ngInject */
-  constructor(private $http, private alertSrv, private $rootScope, private $q, private $timeout) {
+  /** @ngInject */
+  constructor(private $http, private alertSrv, private $rootScope, private $q, private $timeout, private contextSrv) {
   }
 
   get(url, params?) {
@@ -23,7 +24,7 @@ export class BackendSrv {
 
   post(url, data) {
     return this.request({ method: 'POST', url: url, data: data });
-  };
+  }
 
   patch(url, data) {
     return this.request({ method: 'PATCH', url: url, data: data });
@@ -63,12 +64,18 @@ export class BackendSrv {
 
   request(options) {
     options.retry = options.retry || 0;
-    var requestIsLocal = options.url.indexOf('/') === 0;
+    var requestIsLocal = !options.url.match(/^http/);
     var firstAttempt = options.retry === 0;
 
-    if (requestIsLocal && !options.hasSubUrl) {
-      options.url = config.appSubUrl + options.url;
-      options.hasSubUrl = true;
+    if (requestIsLocal) {
+      if (this.contextSrv.user && this.contextSrv.user.orgId) {
+        options.headers = options.headers || {};
+        options.headers['X-Grafana-Org-Id'] = this.contextSrv.user.orgId;
+      }
+
+      if (options.url.indexOf("/") === 0) {
+        options.url = options.url.substring(1);
+      }
     }
 
     return this.$http(options).then(results => {
@@ -92,7 +99,7 @@ export class BackendSrv {
       this.$timeout(this.requestErrorHandler.bind(this, err), 50);
       throw err;
     });
-  };
+  }
 
   addCanceler(requestId, canceler) {
     if (requestId in this.inFlightRequests) {
@@ -125,19 +132,29 @@ export class BackendSrv {
       this.addCanceler(requestId, canceler);
     }
 
-    var requestIsLocal = options.url.indexOf('/') === 0;
+    var requestIsLocal = !options.url.match(/^http/);
     var firstAttempt = options.retry === 0;
 
-    if (requestIsLocal && !options.hasSubUrl && options.retry === 0) {
-      options.url = config.appSubUrl + options.url;
+    if (requestIsLocal) {
+      if (this.contextSrv.user && this.contextSrv.user.orgId) {
+        options.headers = options.headers || {};
+        options.headers['X-Grafana-Org-Id'] = this.contextSrv.user.orgId;
+      }
+
+      if (options.url.indexOf("/") === 0) {
+        options.url = options.url.substring(1);
+      }
+
+      if (options.headers && options.headers.Authorization) {
+        options.headers['X-DS-Authorization'] = options.headers.Authorization;
+        delete options.headers.Authorization;
+      }
     }
 
-    if (requestIsLocal && options.headers && options.headers.Authorization) {
-      options.headers['X-DS-Authorization'] = options.headers.Authorization;
-      delete options.headers.Authorization;
-    }
-
-    return this.$http(options).catch(err => {
+    return this.$http(options).then(response => {
+      appEvents.emit('ds-request-response', response);
+      return response;
+    }).catch(err => {
       if (err.status === this.HTTP_REQUEST_CANCELLED) {
         throw {err, cancelled: true};
       }
@@ -153,7 +170,7 @@ export class BackendSrv {
         });
       }
 
-      //populate error obj on Internal Error
+      // populate error obj on Internal Error
       if (_.isString(err.data) && err.status === 500) {
         err.data = {
           error: err.statusText,
@@ -162,18 +179,20 @@ export class BackendSrv {
       }
 
       // for Prometheus
-      if (!err.data.message && _.isString(err.data.error)) {
+      if (err.data && !err.data.message && _.isString(err.data.error)) {
         err.data.message = err.data.error;
       }
 
+      appEvents.emit('ds-request-error', err);
       throw err;
+
     }).finally(() => {
       // clean up
       if (options.requestId) {
         this.inFlightRequests[options.requestId].shift();
       }
     });
-  };
+  }
 
   loginPing() {
     return this.request({url: '/api/login/ping', method: 'GET', retry: 1 });
@@ -189,7 +208,12 @@ export class BackendSrv {
 
   saveDashboard(dash, options) {
     options = (options || {});
-    return this.post('/api/dashboards/db/', {dashboard: dash, overwrite: options.overwrite === true});
+
+    return this.post('/api/dashboards/db/', {
+      dashboard: dash,
+      overwrite: options.overwrite === true,
+      message: options.message || '',
+    });
   }
 }
 

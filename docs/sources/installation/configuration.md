@@ -203,6 +203,12 @@ For MySQL, use either `true`, `false`, or `skip-verify`.
 
 (MySQL only) The common name field of the certificate used by the `mysql` server. Not necessary if `ssl_mode` is set to `skip-verify`.
 
+### max_idle_conn
+The maximum number of connections in the idle connection pool.
+
+### max_open_conn
+The maximum number of open connections to the database.
+
 <hr />
 
 ## [security]
@@ -229,6 +235,10 @@ Used for signing keep me logged in / remember me cookies.
 Set to `true` to disable the use of Gravatar for user profile images.
 Default is `false`.
 
+### data_source_proxy_whitelist
+
+Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces
+
 <hr />
 
 ## [users]
@@ -236,13 +246,13 @@ Default is `false`.
 ### allow_sign_up
 
 Set to `false` to prohibit users from being able to sign up / create
-user accounts. Defaults to `true`.  The admin user can still create
+user accounts. Defaults to `false`.  The admin user can still create
 users from the [Grafana Admin Pages](../../reference/admin)
 
 ### allow_org_create
 
 Set to `false` to prohibit users from creating new organizations.
-Defaults to `true`.
+Defaults to `false`.
 
 ### auto_assign_org
 
@@ -266,6 +276,10 @@ options are `Admin` and `Editor` and `Read Only Editor`. e.g. :
 ### disable_login_form
 
 Set to true to disable (hide) the login form, useful if you use OAuth, defaults to false.
+
+### disable_signout_menu
+
+Set to true to disable the signout link in the side menu. useful if you use auth.proxy, defaults to false.
 
 <hr>
 
@@ -309,7 +323,6 @@ example:
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
     api_url = https://api.github.com/user
-    allow_sign_up = false
     team_ids =
     allowed_organizations =
 
@@ -410,7 +423,7 @@ browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
     allowed_domains = mycompany.com mycompany.org
     allow_sign_up = true
 
-Set api_url to the resource that returns basic user info.
+Set api_url to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
 
 <hr>
 
@@ -427,24 +440,38 @@ Set to `true` to enable LDAP integration (default: `false`)
 ### config_file
 Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
 
+### allow_sign_up
+
+Allow sign up should almost always be true (default) to allow new Grafana users to be created (if ldap authentication is ok). If set to
+false only pre-existing Grafana users will be able to login (if ldap authentication is ok).
+
 > For details on LDAP Configuration, go to the [LDAP Integration]({{< relref "ldap.md" >}}) page.
 
 <hr>
 
 ## [auth.proxy]
+
 This feature allows you to handle authentication in a http reverse proxy.
 
 ### enabled
+
 Defaults to `false`
 
 ### header_name
+
 Defaults to X-WEBAUTH-USER
 
 #### header_property
+
 Defaults to username but can also be set to email
 
 ### auto_sign_up
+
 Set to `true` to enable auto sign up of users who do not exist in Grafana DB. Defaults to `true`.
+
+### whitelist
+
+Limit where auth proxy requests come from by configuring a list of IP addresses. This can be used to prevent users spoofing the X-WEBAUTH-USER header.
 
 <hr>
 
@@ -634,6 +661,9 @@ Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 ### url
 Url to where Grafana will send PUT request with images
+
+### public_url
+Optional parameter. Url to send to users in notifications, directly appended with the resulting uploaded file name.
 
 ### username
 basic auth username

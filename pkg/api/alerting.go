@@ -255,6 +255,9 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 	}
 
 	if err := bus.Dispatch(cmd); err != nil {
+		if err == models.ErrSmtpNotEnabled {
+			return ApiError(412, err.Error(), err)
+		}
 		return ApiError(500, "Failed to send alert notifications", err)
 	}
 

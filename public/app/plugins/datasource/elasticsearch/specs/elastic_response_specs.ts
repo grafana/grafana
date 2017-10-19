@@ -361,6 +361,39 @@ describe('ElasticResponse', function() {
     });
   });
 
+  describe('histogram response', function() {
+    var result;
+
+    beforeEach(function() {
+      targets = [{
+        refId: 'A',
+        metrics: [{type: 'count', id: '1'}],
+        bucketAggs: [{type: 'histogram', field: 'bytes', id: '3'}],
+      }];
+      response =  {
+        responses: [{
+          aggregations: {
+            "3": {
+              buckets: [
+                {doc_count: 1, key: 1000},
+                {doc_count: 3, key: 2000},
+                {doc_count: 2, key: 1000},
+              ]
+            }
+          }
+        }]
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should return docs with byte and count', function() {
+      expect(result.data[0].datapoints.length).to.be(3);
+      expect(result.data[0].datapoints[0].Count).to.be(1);
+      expect(result.data[0].datapoints[0].bytes).to.be(1000);
+    });
+  });
+
   describe('with two filters agg', function() {
     var result;
 
@@ -507,6 +540,46 @@ describe('ElasticResponse', function() {
       expect(result.data[0].datapoints[1].Average).to.be(2000);
     });
   });
+
+  describe('Multiple metrics of same type', function() {
+    beforeEach(function() {
+      targets = [{
+        refId: 'A',
+        metrics: [
+          {type: 'avg', id: '1', field: 'test'},
+          {type: 'avg', id: '2', field: 'test2'}
+        ],
+        bucketAggs: [{id: '2', type: 'terms', field: 'host'}],
+      }];
+
+      response =  {
+        responses: [{
+          aggregations: {
+            "2": {
+              buckets: [
+                {
+                  "1": { value: 1000},
+                  "2": { value: 3000},
+                  key: "server-1",
+                  doc_count: 369,
+                }
+              ]
+            }
+          }
+        }]
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should include field in metric name', function() {
+      expect(result.data[0].type).to.be('docs');
+      expect(result.data[0].datapoints[0].Average).to.be(undefined);
+      expect(result.data[0].datapoints[0]['Average test']).to.be(1000);
+      expect(result.data[0].datapoints[0]['Average test2']).to.be(3000);
+    });
+  });
+
 
   describe('Raw documents query', function() {
     beforeEach(function() {

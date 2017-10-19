@@ -1,8 +1,25 @@
 <query-editor-row query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
 
-	<div class="gf-form" ng-if="ctrl.target.rawQuery">
-		<input type="text" class="gf-form-input" ng-model="ctrl.target.query" spellcheck="false" ng-blur="ctrl.refresh()"></input>
-	</div>
+	<div ng-if="ctrl.target.rawQuery">
+    <div class="gf-form">
+      <textarea rows="3" class="gf-form-input" ng-model="ctrl.target.query" spellcheck="false" placeholder="InfuxDB Query" ng-model-onblur ng-change="ctrl.refresh()"></textarea>
+    </div>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword">FORMAT AS</label>
+        <div class="gf-form-select-wrapper">
+          <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.resultFormat" ng-options="f.value as f.text for f in ctrl.resultFormats" ng-change="ctrl.refresh()"></select>
+        </div>
+      </div>
+      <div class="gf-form max-width-25"  ng-hide="ctrl.target.resultFormat === 'table'">
+        <label class="gf-form-label query-keyword">ALIAS BY</label>
+        <input type="text" class="gf-form-input" ng-model="ctrl.target.alias" spellcheck='false' placeholder="Naming pattern" ng-blur="ctrl.refresh()">
+      </div>
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+    </div>
+  </div>
 
 	<div ng-if="!ctrl.target.rawQuery">
 
@@ -11,7 +28,7 @@
 				<label class="gf-form-label query-keyword width-7">FROM</label>
 
 				<metric-segment segment="ctrl.policySegment" get-options="ctrl.getPolicySegments()" on-change="ctrl.policyChanged()"></metric-segment>
-				<metric-segment segment="ctrl.measurementSegment" get-options="ctrl.getMeasurements(measurementFilter)" on-change="ctrl.measurementChanged()"></metric-segment>
+				<metric-segment segment="ctrl.measurementSegment" get-options="ctrl.getMeasurements($query)" on-change="ctrl.measurementChanged()"></metric-segment>
 			</div>
 
 			<div class="gf-form">
@@ -72,22 +89,57 @@
 			</div>
 		</div>
 
-	</div>
-
-	<div class="gf-form-inline">
-		<div class="gf-form max-width-30">
-			<label class="gf-form-label query-keyword width-7">ALIAS BY</label>
-			<input type="text" class="gf-form-input" ng-model="ctrl.target.alias" spellcheck='false' placeholder="Naming pattern" ng-blur="ctrl.refresh()">
-		</div>
-		<div class="gf-form">
-			<label class="gf-form-label">Format as</label>
-			<div class="gf-form-select-wrapper">
-				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.resultFormat" ng-options="f.value as f.text for f in ctrl.resultFormats" ng-change="ctrl.refresh()"></select>
+    <div class="gf-form-inline" ng-if="ctrl.target.orderByTime === 'DESC'">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-7">ORDER BY</label>
+        <label class="gf-form-label pointer" ng-click="ctrl.removeOrderByTime()">time <span classs="query-keyword">DESC</span> <i class="fa fa-remove"></i></label>
+      </div>
+      <div class="gf-form gf-form--grow">
+				<div class="gf-form-label gf-form-label--grow"></div>
 			</div>
-		</div>
-		<div class="gf-form gf-form--grow">
-			<div class="gf-form-label gf-form-label--grow"></div>
-		</div>
-	</div>
+    </div>
+
+    <div class="gf-form-inline" ng-if="ctrl.target.limit">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-7">LIMIT</label>
+        <input type="text" class="gf-form-input width-9" ng-model="ctrl.target.limit" spellcheck='false' placeholder="No Limit" ng-blur="ctrl.refresh()">
+      </div>
+      <div class="gf-form gf-form--grow">
+				<div class="gf-form-label gf-form-label--grow"></div>
+			</div>
+    </div>
+
+    <div class="gf-form-inline" ng-if="ctrl.target.slimit">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-7">SLIMIT</label>
+        <input type="text" class="gf-form-input width-9" ng-model="ctrl.target.slimit" spellcheck='false' placeholder="No Limit" ng-blur="ctrl.refresh()">
+      </div>
+      <div class="gf-form gf-form--grow">
+				<div class="gf-form-label gf-form-label--grow"></div>
+			</div>
+    </div>
+
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-7">FORMAT AS</label>
+        <div class="gf-form-select-wrapper">
+          <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.resultFormat" ng-options="f.value as f.text for f in ctrl.resultFormats" ng-change="ctrl.refresh()"></select>
+        </div>
+      </div>
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+    </div>
+
+    <div class="gf-form-inline"  ng-hide="ctrl.target.resultFormat === 'table'">
+      <div class="gf-form max-width-30">
+        <label class="gf-form-label query-keyword width-7">ALIAS BY</label>
+        <input type="text" class="gf-form-input" ng-model="ctrl.target.alias" spellcheck='false' placeholder="Naming pattern" ng-blur="ctrl.refresh()">
+      </div>
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+    </div>
+  </div>
 
 </query-editor-row>

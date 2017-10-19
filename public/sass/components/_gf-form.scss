@@ -64,25 +64,20 @@ $gf-form-margin: 0.25rem;
     flex-grow: 1;
     min-height: 2.60rem;
   }
+
+  &--error {
+    color: $critical;
+  }
 }
 
-.gf-form-error {
-  padding: $input-padding-y $input-padding-x;
-  margin-right: $gf-form-margin;
-  flex-shrink: 0;
-
-  background-color: $input-label-bg;
+.gf-form-pre {
   display: block;
+  flex-grow: 1;
   font-size: $font-size-sm;
+  margin: 0;
   margin-right: $gf-form-margin;
-
-  border: $input-btn-border-width solid $red;
+  border: $input-btn-border-width solid transparent;
   @include border-radius($label-border-radius-sm);
-
-  &--grow {
-    flex-grow: 1;
-    min-height: 2.60rem;
-  }
 }
 
 .gf-form-checkbox {
@@ -108,6 +103,7 @@ $gf-form-margin: 0.25rem;
   padding: $input-padding-y $input-padding-x;
   margin-right: $gf-form-margin;
   font-size: $font-size-base;
+  margin-right: $gf-form-margin;
   line-height: $input-line-height;
   color: $input-color;
   background-color: $input-bg;
@@ -117,6 +113,14 @@ $gf-form-margin: 0.25rem;
   @include border-radius($input-border-radius-sm);
   @include box-shadow($input-box-shadow);
   transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  // text areas should be scrollable
+  @at-root textarea#{&} {
+    overflow: auto;
+  }
 
   // Unstyle the caret on `<select>`s in IE10+.
   &::-ms-expand {
@@ -166,6 +170,16 @@ $gf-form-margin: 0.25rem;
       pointer-events: none;
     }
   }
+}
+
+.gf-form-hint {
+  width: 100%;
+}
+
+.gf-form-hint-text {
+  display: block;
+  text-align: right;
+  padding-top: 0.5em;
 }
 
 .gf-form-select-wrapper {
@@ -225,10 +239,6 @@ $gf-form-margin: 0.25rem;
 
   flex-shrink: 0;
   flex-grow: 0;
-}
-
-.gf-form-switch {
-  margin-right: $gf-form-margin;
 }
 
 .natural-language-input {

@@ -185,9 +185,9 @@ div.flot-text {
   box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236,10.8)
 }
 
-.panel-hover-highlight  {
-  box-shadow: inset 0 1px 1px rgba(0,0,0,0.025), 0 0 1px rgba(82,168,236,0.5)
-}
+// .panel-hover-highlight  {
+//   box-shadow: inset 0 1px 1px rgba(0,0,0,0.025), 0 0 1px rgba(82,168,236,0.5)
+// }
 
 .on-drag-hover {
   .panel-container {
@@ -256,3 +256,11 @@ div.flot-text {
   }
 }
 
+.dash-edit-view {
+  opacity: 0;
+
+  &--open{
+    opacity: 1;
+    transition: opacity 200ms ease-in-out;
+  }
+}

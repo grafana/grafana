@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -62,6 +63,27 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 		// clear cookie headers
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
+
+		// clear X-Forwarded Host/Port/Proto headers
+		req.Header.Del("X-Forwarded-Host")
+		req.Header.Del("X-Forwarded-Port")
+		req.Header.Del("X-Forwarded-Proto")
+
+		// set X-Forwarded-For header
+		if req.RemoteAddr != "" {
+			remoteAddr, _, err := net.SplitHostPort(req.RemoteAddr)
+			if err != nil {
+				remoteAddr = req.RemoteAddr
+			}
+			if req.Header.Get("X-Forwarded-For") != "" {
+				req.Header.Set("X-Forwarded-For", req.Header.Get("X-Forwarded-For")+", "+remoteAddr)
+			} else {
+				req.Header.Set("X-Forwarded-For", remoteAddr)
+			}
+		}
+
+		// reqBytes, _ := httputil.DumpRequestOut(req, true);
+		// log.Trace("Proxying datasource request: %s", string(reqBytes))
 	}
 
 	return &httputil.ReverseProxy{Director: director, FlushInterval: time.Millisecond * 200}
@@ -86,11 +108,6 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
-	if ds.Type == m.DS_CLOUDWATCH {
-		cloudwatch.HandleRequest(c, ds)
-		return
-	}
-
 	if ds.Type == m.DS_INFLUXDB {
 		if c.Query("db") != ds.Database {
 			c.JsonApiErr(403, "Datasource is not configured to allow this database", nil)
@@ -98,12 +115,14 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		}
 	}
 
+	if ds.Type == m.DS_CLOUDWATCH {
+		cloudwatch.HandleRequest(c, ds)
+		return
+	}
+
 	targetUrl, _ := url.Parse(ds.Url)
-	if len(setting.DataProxyWhiteList) > 0 {
-		if _, exists := setting.DataProxyWhiteList[targetUrl.Host]; !exists {
-			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
-			return
-		}
+	if !checkWhiteList(c, targetUrl.Host) {
+		return
 	}
 
 	proxyPath := c.Params("*")
@@ -164,4 +183,15 @@ func logProxyRequest(dataSourceType string, c *middleware.Context) {
 		"uri", c.Req.RequestURI,
 		"method", c.Req.Request.Method,
 		"body", body)
+}
+
+func checkWhiteList(c *middleware.Context, host string) bool {
+	if host != "" && len(setting.DataProxyWhiteList) > 0 {
+		if _, exists := setting.DataProxyWhiteList[host]; !exists {
+			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
+			return false
+		}
+	}
+
+	return true
 }

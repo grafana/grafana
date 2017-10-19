@@ -32,6 +32,15 @@ func init() {
 	renders["median"] = QueryDefinition{Renderer: functionRenderer}
 	renders["sum"] = QueryDefinition{Renderer: functionRenderer}
 
+	renders["holt_winters"] = QueryDefinition{
+		Renderer: functionRenderer,
+		Params:   []DefinitionParameters{{Name: "number", Type: "number"}, {Name: "season", Type: "number"}},
+	}
+	renders["holt_winters_with_fit"] = QueryDefinition{
+		Renderer: functionRenderer,
+		Params:   []DefinitionParameters{{Name: "number", Type: "number"}, {Name: "season", Type: "number"}},
+	}
+
 	renders["derivative"] = QueryDefinition{
 		Renderer: functionRenderer,
 		Params:   []DefinitionParameters{{Name: "duration", Type: "interval"}},
@@ -49,7 +58,7 @@ func init() {
 	renders["stddev"] = QueryDefinition{Renderer: functionRenderer}
 	renders["time"] = QueryDefinition{
 		Renderer: functionRenderer,
-		Params:   []DefinitionParameters{{Name: "interval", Type: "time"}},
+		Params:   []DefinitionParameters{{Name: "interval", Type: "time"}, {Name: "offset", Type: "time"}},
 	}
 	renders["fill"] = QueryDefinition{
 		Renderer: functionRenderer,

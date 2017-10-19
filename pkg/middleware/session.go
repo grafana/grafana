@@ -93,6 +93,8 @@ type SessionStore interface {
 	Set(interface{}, interface{}) error
 	// Get gets value by given key in session.
 	Get(interface{}) interface{}
+	// Delete deletes a key from session.
+	Delete(interface{}) interface{}
 	// ID returns current session ID.
 	ID() string
 	// Release releases session resource and save data to provider.
@@ -101,6 +103,8 @@ type SessionStore interface {
 	Destory(*Context) error
 	// init
 	Start(*Context) error
+	// RegenerateId regenerates the session id
+	RegenerateId(*Context) error
 }
 
 type SessionWrapper struct {
@@ -114,6 +118,12 @@ func (s *SessionWrapper) Start(c *Context) error {
 	return err
 }
 
+func (s *SessionWrapper) RegenerateId(c *Context) error {
+	var err error
+	s.session, err = s.manager.RegenerateId(c.Context)
+	return err
+}
+
 func (s *SessionWrapper) Set(k interface{}, v interface{}) error {
 	if s.session != nil {
 		return s.session.Set(k, v)
@@ -124,6 +134,13 @@ func (s *SessionWrapper) Set(k interface{}, v interface{}) error {
 func (s *SessionWrapper) Get(k interface{}) interface{} {
 	if s.session != nil {
 		return s.session.Get(k)
+	}
+	return nil
+}
+
+func (s *SessionWrapper) Delete(k interface{}) interface{} {
+	if s.session != nil {
+		return s.session.Delete(k)
 	}
 	return nil
 }

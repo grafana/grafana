@@ -4,7 +4,7 @@
     "company": "AdRem Software"
   },
   "name": "GrafCrunch",
-  "version": "4.2.0",
+  "version": "4.4.3",
   "repository": {
     "type": "git",
     "url": "https://github.com/adremsoft/NetCrunch-grafana"
@@ -79,8 +79,8 @@
     "systemjs-builder": "^0.15.34",
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop",
-    "tslint": "^4.0.2",
-    "typescript": "^2.1.4",
+    "tslint": "^5.1.0",
+    "typescript": "^2.2.2",
     "virtual-scroll": "^1.1.1"
   }
 }

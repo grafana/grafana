@@ -1,12 +1,7 @@
-<query-editor-row query-ctrl="ctrl" can-collapse="false">
+<query-editor-row query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
 	<div class="gf-form-inline">
 		<div class="gf-form gf-form--grow">
-			<label class="gf-form-label width-8">Query</label>
-			<input type="text" class="gf-form-input" ng-model="ctrl.target.expr" spellcheck='false' placeholder="query expression" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.refreshMetricData()">
-		</div>
-		<div class="gf-form max-width-22">
-			<label class="gf-form-label">Metric lookup</label>
-			<input type="text" class="gf-form-input" ng-model="ctrl.target.metric" spellcheck='false' bs-typeahead="ctrl.suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100>
+			<textarea rows="3" class="gf-form-input" ng-model="ctrl.target.expr" spellcheck="false" placeholder="query expression" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.refreshMetricData()"></textarea>
 		</div>
 	</div>
 
@@ -18,9 +13,10 @@
 			ng-model-onblur ng-change="ctrl.refreshMetricData()">
 			</input>
 		</div>
+
 		<div class="gf-form">
-			<label class="gf-form-label width-5">Step</label>
-			<input type="text" class="gf-form-input max-width-5" ng-model="ctrl.target.interval"
+			<label class="gf-form-label width-6">Min step</label>
+			<input type="text" class="gf-form-input width-8" ng-model="ctrl.target.interval"
 					   data-placement="right"
 			       spellcheck='false'
 			       placeholder="{{ctrl.panelCtrl.interval}}"
@@ -31,6 +27,7 @@
 				Leave blank for auto handling based on time range and panel width
 			</info-popover>
 		</div>
+
 		<div class="gf-form">
 			<label class="gf-form-label">Resolution</label>
 			<div class="gf-form-select-wrapper max-width-15">
@@ -38,6 +35,24 @@
 					ng-options="r.factor as r.label for r in ctrl.resolutions"
 					ng-change="ctrl.refreshMetricData()">
 				</select>
+			</div>
+		</div>
+
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-26">
+			<label class="gf-form-label width-8">Metric lookup</label>
+			<input type="text" class="gf-form-input" ng-model="ctrl.target.metric" spellcheck='false' bs-typeahead="ctrl.suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100>
+		</div>
+
+		<div class="gf-form">
+			<label class="gf-form-label width-6">Format as</label>
+			<div class="gf-form-select-wrapper width-8">
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()"></select>
 			</div>
 			<label class="gf-form-label">
 				<a href="{{ctrl.linkToPrometheus}}" target="_blank" bs-tooltip="'Link to Graph in Prometheus'">

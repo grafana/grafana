@@ -45,7 +45,9 @@ export class AdhocVariable implements Variable {
     }
 
     this.filters = urlValue.map(item => {
-      var values = item.split('|');
+      var values = item.split('|').map(value => {
+        return this.unescapeDelimiter(value);
+      });
       return {
         key: values[0],
         operator: values[1],
@@ -58,8 +60,18 @@ export class AdhocVariable implements Variable {
 
   getValueForUrl() {
     return this.filters.map(filter => {
-      return filter.key + '|' + filter.operator + '|' + filter.value;
+      return [filter.key, filter.operator, filter.value].map(value => {
+        return this.escapeDelimiter(value);
+      }).join('|');
     });
+  }
+
+  escapeDelimiter(value) {
+    return value.replace('|', '__gfp__');
+  }
+
+  unescapeDelimiter(value) {
+    return value.replace('__gfp__', '|');
   }
 
   setFilters(filters: any[]) {

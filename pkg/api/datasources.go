@@ -20,7 +20,7 @@ func GetDataSources(c *middleware.Context) Response {
 
 	result := make(dtos.DataSourceList, 0)
 	for _, ds := range query.Result {
-		dsItem := dtos.DataSource{
+		dsItem := dtos.DataSourceListItemDTO{
 			Id:        ds.Id,
 			OrgId:     ds.OrgId,
 			Name:      ds.Name,
@@ -149,8 +149,8 @@ func fillWithSecureJsonData(cmd *m.UpdateDataSourceCommand) error {
 	if err != nil {
 		return err
 	}
-	secureJsonData := ds.SecureJsonData.Decrypt()
 
+	secureJsonData := ds.SecureJsonData.Decrypt()
 	for k, v := range secureJsonData {
 
 		if _, ok := cmd.SecureJsonData[k]; !ok {
@@ -158,6 +158,8 @@ func fillWithSecureJsonData(cmd *m.UpdateDataSourceCommand) error {
 		}
 	}
 
+	// set version from db
+	cmd.Version = ds.Version
 	return nil
 }
 

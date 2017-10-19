@@ -30,6 +30,7 @@ export class AxesEditorCtrl {
     this.xAxisModes = {
       'Time': 'time',
       'Series': 'series',
+      'Histogram': 'histogram'
       // 'Data field': 'field',
     };
 

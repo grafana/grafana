@@ -6,20 +6,22 @@ import coreModule from '../../core/core_module';
 
 export class PlaylistsCtrl {
   playlists: any;
+  navModel: any;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private backendSrv) {
-    backendSrv.get('/api/playlists')
-      .then((result) => {
-        this.playlists = result;
-      });
+  constructor(private $scope, private $location, private backendSrv, private navModelSrv) {
+    this.navModel = navModelSrv.getPlaylistsNav(0);
+
+    backendSrv.get('/api/playlists').then(result => {
+      this.playlists = result;
+    });
   }
 
   removePlaylistConfirmed(playlist) {
     _.remove(this.playlists, { id: playlist.id });
 
     this.backendSrv.delete('/api/playlists/' + playlist.id)
-      .then(() => {
+    .then(() => {
         this.$scope.appEvent('alert-success', ['Playlist deleted', '']);
       }, () => {
         this.$scope.appEvent('alert-error', ['Unable to delete playlist', '']);

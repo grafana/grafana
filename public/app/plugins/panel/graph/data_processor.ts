@@ -29,6 +29,7 @@ export class DataProcessor {
 
     switch (this.panel.xaxis.mode) {
       case 'series':
+      case 'histogram':
       case 'time': {
         return options.dataList.map((item, index) => {
           return this.timeSeriesHandler(item, index, options);
@@ -47,6 +48,9 @@ export class DataProcessor {
       default: {
         if (this.panel.xaxis.mode === 'series') {
           return 'series';
+        }
+        if (this.panel.xaxis.mode === 'histogram') {
+          return 'histogram';
         }
         return 'time';
       }
@@ -72,6 +76,15 @@ export class DataProcessor {
         this.panel.legend.show = false;
         this.panel.tooltip.shared = false;
         this.panel.xaxis.values = ['total'];
+        break;
+      }
+      case 'histogram': {
+        this.panel.bars = true;
+        this.panel.lines = false;
+        this.panel.points = false;
+        this.panel.stack = false;
+        this.panel.legend.show = false;
+        this.panel.tooltip.shared = false;
         break;
       }
     }

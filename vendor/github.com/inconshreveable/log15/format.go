@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -108,7 +109,9 @@ func logfmt(buf *bytes.Buffer, ctx []interface{}, color int) {
 		if color > 0 {
 			fmt.Fprintf(buf, "\x1b[%dm%s\x1b[0m=%s", color, k, v)
 		} else {
-			fmt.Fprintf(buf, "%s=%s", k, v)
+			buf.WriteString(k)
+			buf.WriteByte('=')
+			buf.WriteString(v)
 		}
 	}
 
@@ -205,6 +208,12 @@ func formatLogfmtValue(value interface{}) string {
 		return "nil"
 	}
 
+	if t, ok := value.(time.Time); ok {
+		// Performance optimization: No need for escaping since the provided
+		// timeFormat doesn't have any escape characters, and escaping is
+		// expensive.
+		return t.Format(timeFormat)
+	}
 	value = formatShared(value)
 	switch v := value.(type) {
 	case bool:
@@ -222,36 +231,49 @@ func formatLogfmtValue(value interface{}) string {
 	}
 }
 
+var stringBufPool = sync.Pool{
+	New: func() interface{} { return new(bytes.Buffer) },
+}
+
 func escapeString(s string) string {
-	needQuotes := false
-	e := bytes.Buffer{}
-	e.WriteByte('"')
+	needsQuotes := false
+	needsEscape := false
 	for _, r := range s {
 		if r <= ' ' || r == '=' || r == '"' {
-			needQuotes = true
+			needsQuotes = true
 		}
-
+		if r == '\\' || r == '"' || r == '\n' || r == '\r' || r == '\t' {
+			needsEscape = true
+		}
+	}
+	if needsEscape == false && needsQuotes == false {
+		return s
+	}
+	e := stringBufPool.Get().(*bytes.Buffer)
+	e.WriteByte('"')
+	for _, r := range s {
 		switch r {
 		case '\\', '"':
 			e.WriteByte('\\')
 			e.WriteByte(byte(r))
 		case '\n':
-			e.WriteByte('\\')
-			e.WriteByte('n')
+			e.WriteString("\\n")
 		case '\r':
-			e.WriteByte('\\')
-			e.WriteByte('r')
+			e.WriteString("\\r")
 		case '\t':
-			e.WriteByte('\\')
-			e.WriteByte('t')
+			e.WriteString("\\t")
 		default:
 			e.WriteRune(r)
 		}
 	}
 	e.WriteByte('"')
-	start, stop := 0, e.Len()
-	if !needQuotes {
-		start, stop = 1, stop-1
+	var ret string
+	if needsQuotes {
+		ret = e.String()
+	} else {
+		ret = string(e.Bytes()[1 : e.Len()-1])
 	}
-	return string(e.Bytes()[start:stop])
+	e.Reset()
+	stringBufPool.Put(e)
+	return ret
 }

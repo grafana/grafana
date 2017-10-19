@@ -67,3 +67,8 @@ declare module 'remarkable' {
   var config: any;
   export default config;
 }
+
+declare module 'd3' {
+  var d3: any;
+  export default d3;
+}

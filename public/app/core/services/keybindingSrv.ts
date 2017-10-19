@@ -74,7 +74,7 @@ export class KeybindingSrv {
       evt.stopPropagation();
       evt.returnValue = false;
       return this.$rootScope.$apply(fn.bind(this));
-    });
+    }, 'keydown');
   }
 
   showDashEditView(view) {
@@ -83,10 +83,6 @@ export class KeybindingSrv {
   }
 
   setupDashboardBindings(scope, dashboard) {
-    // this.bind('b', () => {
-    //   dashboard.toggleEditMode();
-    // });
-
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit('graph-hover-clear');
@@ -115,10 +111,6 @@ export class KeybindingSrv {
 
     this.bind('t right', () => {
       scope.appEvent('shift-time-forward');
-    });
-
-    this.bind('mod+i', () => {
-      scope.appEvent('quick-snapshot');
     });
 
     // edit panel
@@ -222,14 +214,10 @@ export class KeybindingSrv {
       if (popups.length > 0) {
         return;
       }
-      // close modals
-      var modalData = $(".modal").data();
-      if (modalData && modalData.$scope && modalData.$scope.dismiss) {
-        modalData.$scope.dismiss();
-      }
 
+      scope.appEvent('hide-modal');
       scope.appEvent('hide-dash-editor');
-      scope.exitFullscreen();
+      scope.appEvent('panel-change-view', {fullscreen: false, edit: false});
     });
   }
 }

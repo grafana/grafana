@@ -1,0 +1,48 @@
+.heatmap-canvas-wrapper {
+  // position: relative;
+  cursor: crosshair;
+}
+
+.heatmap-panel {
+  position: relative;
+
+  .axis .tick {
+    text {
+      fill: $text-color;
+      color: $text-color;
+      font-size: $font-size-sm;
+    }
+
+    line {
+      opacity: 0.4;
+      stroke: $text-color-weak;
+    }
+  }
+
+  // This hack prevents mouseenter/mouseleave events get fired too often
+  svg {
+    pointer-events: none;
+
+    rect {
+      pointer-events: visiblePainted;
+    }
+  }
+}
+
+.heatmap-tooltip {
+  white-space: nowrap;
+  font-size: $font-size-sm;
+  background-color: $graph-tooltip-bg;
+  color: $text-color;
+}
+
+.heatmap-histogram rect {
+  fill: $text-color-weak;
+}
+
+.heatmap-crosshair {
+  line {
+    stroke: darken($red,15%);
+    stroke-width: 1;
+  }
+}
