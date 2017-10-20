@@ -1,8 +1,9 @@
 define([
   'lodash',
-  'jquery'
+  'jquery',
+  'app/core/utils/version'
 ],
-function (_, $) {
+function (_, $, version) {
   'use strict';
 
   var index = [];
@@ -944,13 +945,7 @@ function (_, $) {
   };
 
   function isVersionRelatedFunction(func, graphiteVersion) {
-    return isVersionGreaterOrEqual(graphiteVersion, func.version) || !func.version;
-  }
-
-  function isVersionGreaterOrEqual(a, b) {
-    var a_num = Number(a);
-    var b_num = Number(b);
-    return a_num >= b_num;
+    return version.isVersionGtOrEq(graphiteVersion, func.version) || !func.version;
   }
 
   return {

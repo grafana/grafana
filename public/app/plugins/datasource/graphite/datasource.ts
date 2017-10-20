@@ -2,6 +2,7 @@
 
 import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
+import {isVersionGtOrEq} from 'app/core/utils/version';
 
 /** @ngInject */
 export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv) {
@@ -360,5 +361,5 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 }
 
 function supportsTags(version: string): boolean {
-  return version >= '1.1';
+  return isVersionGtOrEq(version, '1.1');
 }
