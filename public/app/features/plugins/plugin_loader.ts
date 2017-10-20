@@ -13,7 +13,8 @@ import * as datemath from 'app/core/utils/datemath';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
-import builtInPlugins from './buit_in_plugins';
+import {impressions} from 'app/features/dashboard/impression_store';
+import builtInPlugins from './built_in_plugins';
 import d3 from 'vendor/d3/d3';
 
 // rxjs
@@ -66,6 +67,12 @@ exposeToPlugin('angular', angular);
 exposeToPlugin('rxjs/Subject', Subject);
 exposeToPlugin('rxjs/Observable', Observable);
 exposeToPlugin('d3', d3);
+
+exposeToPlugin('app/features/dashboard/impression_store', {
+  impressions: impressions,
+  __esModule: true
+});
+
 
 exposeToPlugin('app/plugins/sdk', sdk);
 exposeToPlugin('app/core/utils/datemath', datemath);
