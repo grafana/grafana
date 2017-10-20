@@ -72,13 +72,10 @@ function ($, core) {
       for (i = 0; i < seriesList.length; i++) {
         series = seriesList[i];
 
-        if (!series.data.length || (panel.legend.hideEmpty && series.allIsNull)) {
-          // Init value so that it does not brake series sorting
-          results[0].push({ hidden: true, value: 0 });
-          continue;
-        }
-
-        if (!series.data.length || (panel.legend.hideZero && series.allIsZero)) {
+        if (!series.tooltip
+            || !series.data.length
+            || (panel.legend.hideEmpty && series.allIsNull)
+            || (panel.legend.hideZero && series.allIsZero)) {
           // Init value so that it does not brake series sorting
           results[0].push({ hidden: true, value: 0 });
           continue;

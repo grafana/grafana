@@ -27,6 +27,7 @@ export default class TimeSeries {
   valueFormater: any;
   stats: any;
   legend: boolean;
+  tooltip: boolean;
   allIsNull: boolean;
   allIsZero: boolean;
   decimals: number;
@@ -56,6 +57,7 @@ export default class TimeSeries {
     this.valueFormater = kbn.valueFormats.none;
     this.stats = {};
     this.legend = true;
+    this.tooltip = true;
     this.unit = opts.unit;
     this.hasMsResolution = this.isMsResolutionNeeded();
   }
@@ -100,7 +102,7 @@ export default class TimeSeries {
       if (override.color !== void 0) { this.color = override.color; }
       if (override.transform !== void 0) { this.transform = override.transform; }
       if (override.legend !== void 0) { this.legend = override.legend; }
-
+      if (override.tooltip !== void 0) { this.tooltip = override.tooltip; }
       if (override.yaxis !== void 0) {
         this.yaxis = override.yaxis;
       }
