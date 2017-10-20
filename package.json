@@ -22,8 +22,8 @@
     "babel-loader": "^7.1.2",
     "babel-preset-es2015": "^6.24.1",
     "css-loader": "^0.28.7",
-    "enzyme": "^3.0.0",
-    "enzyme-adapter-react-16": "^1.0.0",
+    "enzyme": "^3.1.0",
+    "enzyme-adapter-react-16": "^1.0.1",
     "es6-promise": "^3.0.2",
     "es6-shim": "^0.35.3",
     "expect.js": "~0.2.0",
@@ -53,6 +53,9 @@
     "html-loader": "^0.5.1",
     "html-webpack-plugin": "^2.30.1",
     "husky": "^0.14.3",
+    "jest": "^21.2.1",
+    "jest-enzyme": "^4.0.1",
+    "jest-webpack-resolver": "^0.1.2",
     "jshint-stylish": "~2.2.1",
     "json-loader": "^0.5.7",
     "karma": "1.7.0",
@@ -102,6 +105,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "@types/jest": "^21.1.4",
     "angular": "^1.6.6",
     "angular-bindonce": "^0.3.1",
     "angular-mocks": "^1.6.6",
@@ -124,6 +128,7 @@
     "rxjs": "^5.4.3",
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop",
-    "tinycolor2": "^1.4.1"
+    "tinycolor2": "^1.4.1",
+    "ts-jest": "^21.1.3"
   }
 }
