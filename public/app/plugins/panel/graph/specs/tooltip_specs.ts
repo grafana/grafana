@@ -193,3 +193,36 @@ describeSharedTooltip("steppedLine false, stack true, individual true", function
     expect(ctx.results[1].value).to.be(2);
   });
 });
+
+describeSharedTooltip("series with hidden lines are displayed when hide_invisible_series is set to false", function(ctx) {
+  ctx.setup(function() {
+    ctx.data = [
+      {data: [[10, 15], [12, 20]], lines: {show: false}},
+      {data: [[10, 2], [12, 3]], lines: {show: true}}
+    ];
+    ctx.ctrl.panel.show = true;
+    ctx.ctrl.panel.tooltip.hide_invisible_series = false;
+    ctx.pos = { x: 11 };
+  });
+
+  it('should show 2 series', function() {
+    expect(ctx.results.length).to.be(2);
+  });
+});
+
+describeSharedTooltip("series with hidden lines are not displayed when hide_invisible_series is set to true", function(ctx) {
+  ctx.setup(function() {
+    ctx.data = [
+      {data: [[10, 15], [12, 20]], lines: {show: false}},
+      {data: [[10, 2], [12, 3]], lines: {show: true}}
+    ];
+    ctx.ctrl.panel.show = true;
+    ctx.ctrl.panel.tooltip.hide_invisible_series = true;
+    ctx.pos = { x: 11 };
+  });
+
+  it('should show 2 series', function() {
+    expect(ctx.results.length).to.be(1);
+    expect(ctx.results[0].value).to.be(2);
+  });
+});

@@ -50,23 +50,25 @@
 		<div class="section gf-form-group">
 			<h5 class="section-heading">Hover tooltip</h5>
 			<div class="gf-form">
-				<label class="gf-form-label width-9">Mode</label>
+				<label class="gf-form-label width-10">Mode</label>
 				<div class="gf-form-select-wrapper max-width-8">
 					<select class="gf-form-input" ng-model="ctrl.panel.tooltip.shared" ng-options="f.value as f.text for f in [{text: 'All series', value: true}, {text: 'Single', value: false}]" ng-change="ctrl.render()"></select>
 				</div>
 			</div>
 			<div class="gf-form">
-				<label class="gf-form-label width-9">Sort order</label>
+				<label class="gf-form-label width-10">Sort order</label>
 				<div class="gf-form-select-wrapper max-width-8">
 					<select class="gf-form-input" ng-model="ctrl.panel.tooltip.sort" ng-options="f.value as f.text for f in [{text: 'None', value: 0}, {text: 'Increasing', value: 1}, {text: 'Decreasing', value: 2}]" ng-change="ctrl.render()"></select>
 				</div>
 			</div>
 			<div class="gf-form" ng-show="ctrl.panel.stack">
-				<label class="gf-form-label width-9">Stacked value</label>
+				<label class="gf-form-label width-10">Stacked value</label>
 				<div class="gf-form-select-wrapper max-width-8">
 					<select class="gf-form-input" ng-model="ctrl.panel.tooltip.value_type" ng-options="f for f in ['cumulative','individual']" ng-change="ctrl.render()"></select>
 				</div>
 			</div>
+			<gf-form-switch class="gf-form" label="Hide invisible series" label-class="width-10" checked="ctrl.panel.tooltip.hide_invisible_series" on-change="ctrl.render()">
+			</gf-form-switch>
 		</div>
 
 		<div class="section gf-form-group">

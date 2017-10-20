@@ -59,6 +59,20 @@ function ($, core) {
       $tooltip.html(innerHtml).place_tt(pos.pageX + 20, pos.pageY);
     };
 
+    this.isSeriesInvisible = function(series) {
+      // returns true if series is not displayed in any way and it's legend
+      // is not shown
+      var seriesDisplayed = [
+        series.points,
+        series.dashes,
+        series.lines,
+        series.bars,
+        series.pie,
+        series.gauges,
+      ].some(function(v) { return v && v.show === true; });
+      return !(series.legend || seriesDisplayed);
+    };
+
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
       var value, i, series, hoverIndex, hoverDistance, pointTime, yaxis;
       // 3 sub-arrays, 1st for hidden series, 2nd for left yaxis, 3rd for right yaxis.
@@ -72,12 +86,16 @@ function ($, core) {
       for (i = 0; i < seriesList.length; i++) {
         series = seriesList[i];
 
+        // if series is not visible, don't show it in tooltip
+        if (panel.tooltip.hide_invisible_series && this.isSeriesInvisible(series)) {
+          continue;
+        }
+
         if (!series.data.length || (panel.legend.hideEmpty && series.allIsNull)) {
           // Init value so that it does not brake series sorting
           results[0].push({ hidden: true, value: 0 });
           continue;
         }
-
         if (!series.data.length || (panel.legend.hideZero && series.allIsZero)) {
           // Init value so that it does not brake series sorting
           results[0].push({ hidden: true, value: 0 });

@@ -98,6 +98,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       value_type: 'individual',
       shared: true,
       sort: 0,
+      hide_invisible_series: false,
     },
     // time overrides
     timeFrom: null,
