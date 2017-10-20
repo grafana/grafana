@@ -165,9 +165,9 @@ In the InfluxDB data source, the legacy variable `$interval` is the same variabl
 
 The InfluxDB and Elasticsearch data sources have `Group by time interval` fields that are used to hard code the interval or to set the minimum limit for the `$__interval` variable (by using the `>` syntax -> `>10m`).
 
-### The $__interval_ms Variable
+### The $__interval_ms, $__interval_s, $__interval_m, and $__interval_h Variable
 
-This variable is the `$__interval` variable in milliseconds (and not a time interval formatted string). For example, if the `$__interval` is `20m` then the `$__interval_ms` is `1200000`.
+This variable is the `$__interval` variable in milliseconds, seconds, minutes, or hours (and not a time interval formatted string). For example, if the `$__interval` is `20m` then the `$__interval_ms` is `1200000`.
 
 ### The $timeFilter or $__timeFilter Variable
 

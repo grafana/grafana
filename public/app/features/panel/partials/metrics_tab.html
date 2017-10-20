@@ -41,7 +41,7 @@
 				<info-popover mode="right-absolute">
 					A lower limit for the auto group by time interval. Recommended to be set to write frequency,
 					for example <code>1m</code> if your data is written every minute. Access auto interval via variable <code>$__interval</code> for time range
-					string and <code>$__interval_ms</code> for numeric variable that can be used in math expressions.
+					string and <code>$__interval_ms</code>, <code>$__interval_s</code>, <code>$__interval_m</code>, <code>$__interval_h</code> for numeric variable that can be used in math expressions.
 				</info-popover>
 			</div>
 			<div class="gf-form gf-form--flex-end" ng-if="ctrl.queryOptions.cacheTimeout">
