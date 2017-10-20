@@ -9,6 +9,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.url = instanceSettings.url;
   this.name = instanceSettings.name;
   this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || '0.9';
+  this.supportsTags = supportsTags(this.graphiteVersion);
   this.cacheTimeout = instanceSettings.cacheTimeout;
   this.withCredentials = instanceSettings.withCredentials;
   this.render_method = instanceSettings.render_method || 'POST';
@@ -356,4 +357,8 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 
     return clean_options;
   };
+}
+
+function supportsTags(version: string): boolean {
+  return version >= '1.1';
 }

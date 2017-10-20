@@ -8,6 +8,7 @@ import {QueryCtrl} from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
 
 const GRAPHITE_TAG_OPERATORS = ['=', '!=', '=~', '!=~'];
+const TAG_PREFIX = 'tag: ';
 
 export class GraphiteQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -16,10 +17,12 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   segments: any[];
   addTagSegments: any[];
   removeTagValue: string;
+  supportsTags: boolean;
 
   /** @ngInject **/
   constructor($scope, $injector, private uiSegmentSrv, private templateSrv) {
     super($scope, $injector);
+    this.supportsTags = this.datasource.supportsTags;
 
     if (this.target) {
       this.target.target = this.target.target || '';
@@ -94,7 +97,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   getAltSegments(index) {
-    var query = index === 0 ?  '*' : this.queryModel.getSegmentPathUpTo(index) + '.*';
+    var query = index === 0 ? '*' : this.queryModel.getSegmentPathUpTo(index) + '.*';
     var options = {range: this.panelCtrl.range, requestId: "get-alt-segments"};
 
     return this.datasource.metricFindQuery(query, options).then(segments => {
@@ -115,10 +118,30 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
       // add wildcard option
       altSegments.unshift(this.uiSegmentSrv.newSegment('*'));
-      return altSegments;
+
+      if (this.supportsTags && index === 0) {
+        this.removeTaggedEntry(altSegments);
+        return this.addAltTagSegments(index, altSegments);
+      } else {
+        return altSegments;
+      }
     }).catch(err => {
       return [];
     });
+  }
+
+  addAltTagSegments(index, altSegments) {
+    return this.getTagsAsSegments().then((tagSegments) => {
+      tagSegments = _.map(tagSegments, (segment) => {
+        segment.value = TAG_PREFIX + segment.value;
+        return segment;
+      });
+      return altSegments.concat(...tagSegments);
+    });
+  }
+
+  removeTaggedEntry(altSegments) {
+    altSegments = _.remove(altSegments, (s) => s.value === '_tagged');
   }
 
   segmentValueChanged(segment, segmentIndex) {
@@ -127,6 +150,12 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
     if (this.queryModel.functions.length > 0 && this.queryModel.functions[0].def.fake) {
       this.queryModel.functions = [];
+    }
+
+    if (segment.type === 'tag') {
+      let tag = removeTagPrefix(segment.value);
+      this.addSeriesByTagFunc(tag);
+      return;
     }
 
     if (segment.expandable) {
@@ -201,6 +230,19 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.targetChanged();
   }
 
+  addSeriesByTagFunc(tag) {
+    let funcDef = gfunc.getFuncDef('seriesByTag');
+    let newFunc = gfunc.createFuncInstance(funcDef, { withDefaultParams: false });
+    let tagParam = `${tag}=select tag value`;
+    newFunc.params = [tagParam];
+    this.queryModel.addFunction(newFunc);
+    newFunc.added = true;
+
+    this.emptySegments();
+    this.targetChanged();
+    this.parseTarget();
+  }
+
   smartlyHandleNewAliasByNode(func) {
     if (func.def.name !== 'aliasByNode') {
       return;
@@ -227,7 +269,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   getTagsAsSegments() {
     return this.datasource.getTags().then((values) => {
       return _.map(values, (val) => {
-        return this.uiSegmentSrv.newSegment(val.text);
+        return this.uiSegmentSrv.newSegment({value: val.text, type: 'tag', expandable: false});
       });
     });
   }
@@ -276,4 +318,8 @@ function mapToDropdownOptions(results) {
   return _.map(results, (value) => {
     return {text: value, value: value};
   });
+}
+
+function removeTagPrefix(value: string): string {
+  return value.replace(TAG_PREFIX, '');
 }
