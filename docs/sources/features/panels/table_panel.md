@@ -52,6 +52,12 @@ In the most simple mode you can turn time series to rows. This means you get a *
 
 This transform allows you to take multiple time series and group them by time. Which will result in the primary column being **Time** and a column for each time series.
 
+### Grouping to matrix
+
+![](/img/docs/v2/table_grouping_to_matrix.png)
+
+This table transformation will represent the groupings as a matrix. The first grouping will be set to the columns and the second grouping to the rows.
+
 ### Time series aggregations
 
 {{< docs-imagebox img="/img/docs/v45/table_ts_to_aggregations.png" >}}

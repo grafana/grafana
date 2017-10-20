@@ -71,6 +71,60 @@ transformers['timeseries_to_columns'] = {
   }
 };
 
+transformers['grouping_to_matrix'] = {
+  description: 'Grouping to matrix',
+  getColumns: function() {
+    return [];
+  },
+  transform: function(data, panel, model) {
+    // Getting the columns
+    const points = new Map<string, Map<string, any>>();
+
+    const columns = new Set<string>();
+    const rows = new Set<string>();
+
+    for (let series of data) {
+      const columnsString = series.target.slice(
+        series.target.indexOf('{') + 1, -1);
+      const columnsArray = columnsString.split(', ');
+      const column = columnsArray[0].split(': ')[1];
+      const row = columnsArray[1].split(': ')[1];
+      columns.add(column);
+      rows.add(row);
+
+      if (!points.has(column)) {
+        points.set(column, new Map<string, any>());
+      }
+
+      // We take only the first measure reported (datapoints[0]) and
+      // we don't care about the timestamp of that measure (datapoints[0][0])
+      points.get(column).set(row, series.datapoints[0][0]);
+    }
+
+    // Removing the empty or 0-only rows and columns
+    /*const filteredRows = Array.from(rows.values()).filter(
+      r => points.has(r) && Array.from(points.get(r).values()).reduce(
+        (p, c) => p || c !== 0, false));
+
+    const filteredColumns = Array.from(columns.values()).filter(
+      c => Array.from(points.values()).reduce(
+        (p, r) => p || (r.has(c) && r.get(c) !== 0), false));*/
+
+    const filteredRows = Array.from(rows.values()).sort((a, b) => a.localeCompare(b));
+    const filteredColumns = Array.from(columns.values()).sort((a, b) => a.localeCompare(b));
+
+    // Addition of columns and rows to the model.
+    model.columns.push({text: ''});
+    filteredColumns.forEach(c => model.columns.push({text: c}));
+
+    filteredRows.forEach(r =>
+      model.rows.push([r].concat(filteredColumns.map(
+        c => points.has(c) && points.get(c).has(r) ?
+          points.get(c).get(r) : undefined)))
+    );
+  }
+};
+
 transformers['timeseries_aggregations'] = {
   description: 'Time series aggregations',
   getColumns: function() {

@@ -71,6 +71,65 @@ describe('when transforming time series table', () => {
       });
     });
 
+    describe('grouping_to_matrix', () => {
+      var panel = {
+        transform: 'grouping_to_matrix'
+      };
+
+      var timeSeries = [
+        {
+          target: 'measure {x: a, y: i}',
+          datapoints: [[1, 7]]
+        },
+        {
+          target: 'measure {x: a, y: j}',
+          datapoints: [[2, 7]]
+        },
+        {
+          target: 'measure {x: a, y: k}',
+          datapoints: [[3, 7]]
+        },
+        {
+          target: 'measure {x: b, y: i}',
+          datapoints: [[4, 7]]
+        },
+        {
+          target: 'measure {x: b, y: k}',
+          datapoints: [[5, 7]]
+        }
+      ];
+
+      beforeEach(() => {
+        table = transformDataToTable(timeSeries, panel);
+      });
+
+      it ('should return 2 columns', () => {
+        expect(table.columns.length).to.be(3);
+        expect(table.columns[0].text).to.be('');
+        expect(table.columns[1].text).to.be('a');
+        expect(table.columns[2].text).to.be('b');
+      });
+
+      it ('should return 3 rows', () => {
+        expect(table.rows.length).to.be(3);
+        expect(table.rows[0][0]).to.be("i");
+        expect(table.rows[0][1]).to.be(1);
+        expect(table.rows[0][2]).to.be(4);
+
+        expect(table.rows[1][0]).to.be("j");
+        expect(table.rows[1][1]).to.be(2);
+
+        expect(table.rows[2][0]).to.be("k");
+        expect(table.rows[2][1]).to.be(3);
+        expect(table.rows[2][2]).to.be(5);
+
+      });
+
+      it ('should be undefined when no value that grouping', () => {
+        expect(table.rows[1][2]).to.be(undefined);
+      });
+    });
+
     describe('timeseries_aggregations', () => {
       var panel = {
         transform: 'timeseries_aggregations',
