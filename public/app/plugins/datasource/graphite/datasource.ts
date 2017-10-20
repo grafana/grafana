@@ -2,7 +2,7 @@
 
 import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
-import {isVersionGtOrEq} from 'app/core/utils/version';
+import {isVersionGtOrEq, SemVersion} from 'app/core/utils/version';
 
 /** @ngInject */
 export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv) {
@@ -270,6 +270,23 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       } else {
         return [];
       }
+    });
+  };
+
+  this.getVersion = function() {
+    let httpOptions = {
+      method: 'GET',
+      url: '/version/_', // Prevent last / trimming
+    };
+
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      if (results.data) {
+        let semver = new SemVersion(results.data);
+        return semver.isValid() ? results.data : '';
+      }
+      return '';
+    }).catch(() => {
+      return '';
     });
   };
 
