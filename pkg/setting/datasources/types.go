@@ -3,25 +3,29 @@ package datasources
 import "github.com/grafana/grafana/pkg/models"
 import "github.com/grafana/grafana/pkg/components/simplejson"
 
-type DataSourceFromConfig struct {
-	Id      int64
-	OrgId   int64
-	Version int
+type DatasourcesAsConfig struct {
+	PurgeOtherDatasources bool                   `json:"purge_other_datasources" yaml:"purge_other_datasources"`
+	Datasources           []DataSourceFromConfig `json:"datasources" yaml:"datasources"`
+}
 
-	Name              string
-	Type              string
-	Access            string
-	Url               string
-	Password          string
-	User              string
-	Database          string
-	BasicAuth         bool
-	BasicAuthUser     string
-	BasicAuthPassword string
-	WithCredentials   bool
-	IsDefault         bool
-	JsonData          string
-	SecureJsonData    map[string]string
+type DataSourceFromConfig struct {
+	OrgId   int64 `json:"org_id" yaml:"org_id"`
+	Version int   `json:"version" yaml:"version"`
+
+	Name              string            `json:"name" yaml:"name"`
+	Type              string            `json:"type" yaml:"type"`
+	Access            string            `json:"access" yaml:"access"`
+	Url               string            `json:"url" yaml:"url"`
+	Password          string            `json:"password" yaml:"password"`
+	User              string            `json:"user" yaml:"user"`
+	Database          string            `json:"database" yaml:"database"`
+	BasicAuth         bool              `json:"basic_auth" yaml:"basic_auth"`
+	BasicAuthUser     string            `json:"basic_auth_user" yaml:"basic_auth_user"`
+	BasicAuthPassword string            `json:"basic_auth_password" yaml:"basic_auth_password"`
+	WithCredentials   bool              `json:"with_credentials" yaml:"with_credentials"`
+	IsDefault         bool              `json:"is_default" yaml:"is_default"`
+	JsonData          string            `json:"json_data" yaml:"json_data"`
+	SecureJsonData    map[string]string `json:"secure_json_data" yaml:"secure_json_data"`
 }
 
 func createInsertCommand(ds DataSourceFromConfig) *models.AddDataSourceCommand {

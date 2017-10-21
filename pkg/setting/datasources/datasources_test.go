@@ -9,79 +9,59 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-var logger log.Logger = log.New("fake.logger")
+var (
+	logger                          log.Logger = log.New("fake.logger")
+	oneDatasourcesConfig            string     = ""
+	twoDatasourcesConfig            string     = "./test-configs/two-datasources.yaml"
+	twoDatasourcesConfigPurgeOthers string     = "./test-configs/two-datasources-purge-others.yaml"
+	doubleDatasourcesConfig         string     = "./test-configs/double-default-datasources.yaml"
+)
 
 func TestDatasourceAsConfig(t *testing.T) {
 	Convey("Testing datasource as configuration", t, func() {
-		fakeCfg := &fakeConfig{}
 		fakeRepo := &fakeRepository{}
 
 		Convey("One configured datasource", func() {
-			fakeCfg.cfg = &DatasourcesAsConfig{
-				PurgeOtherDatasources: false,
-				Datasources: []DataSourceFromConfig{
-					{Name: "graphite", OrgId: 1},
-				},
-			}
-
 			Convey("no datasource in database", func() {
-				dc := newDatasourceConfiguration(logger, fakeCfg, fakeRepo)
-				err := dc.applyChanges("mock/config.yaml")
+				dc := newDatasourceConfiguration(logger, fakeRepo)
+				err := dc.applyChanges(twoDatasourcesConfig)
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
 				}
 
 				So(len(fakeRepo.deleted), ShouldEqual, 0)
-				So(len(fakeRepo.inserted), ShouldEqual, 1)
+				So(len(fakeRepo.inserted), ShouldEqual, 2)
 				So(len(fakeRepo.updated), ShouldEqual, 0)
 			})
 
 			Convey("One datasource in database with same name", func() {
 				fakeRepo.loadAll = []*models.DataSource{
-					{Name: "graphite", OrgId: 1, Id: 1},
+					{Name: "Graphite", OrgId: 1, Id: 1},
 				}
 
 				Convey("should update one datasource", func() {
-					dc := newDatasourceConfiguration(logger, fakeCfg, fakeRepo)
-					err := dc.applyChanges("mock/config.yaml")
-					if err != nil {
-						t.Fatalf("applyChanges return an error %v", err)
-					}
-
-					So(len(fakeRepo.deleted), ShouldEqual, 0)
-					So(len(fakeRepo.inserted), ShouldEqual, 0)
-					So(len(fakeRepo.updated), ShouldEqual, 1)
-				})
-			})
-
-			Convey("One datasource in database with new name", func() {
-				fakeRepo.loadAll = []*models.DataSource{
-					{Name: "old-graphite", OrgId: 1, Id: 1},
-				}
-
-				Convey("should update one datasource", func() {
-					dc := newDatasourceConfiguration(logger, fakeCfg, fakeRepo)
-					err := dc.applyChanges("mock/config.yaml")
+					dc := newDatasourceConfiguration(logger, fakeRepo)
+					err := dc.applyChanges(twoDatasourcesConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
 					}
 
 					So(len(fakeRepo.deleted), ShouldEqual, 0)
 					So(len(fakeRepo.inserted), ShouldEqual, 1)
-					So(len(fakeRepo.updated), ShouldEqual, 0)
+					So(len(fakeRepo.updated), ShouldEqual, 1)
+				})
+			})
+
+			Convey("Two datasources with is_default", func() {
+				dc := newDatasourceConfiguration(logger, fakeRepo)
+				err := dc.applyChanges(doubleDatasourcesConfig)
+				Convey("should raise error", func() {
+					So(err, ShouldEqual, ErrInvalidConfigToManyDefault)
 				})
 			})
 		})
 
 		Convey("Two configured datasource and purge others ", func() {
-			fakeCfg.cfg = &DatasourcesAsConfig{
-				PurgeOtherDatasources: true,
-				Datasources: []DataSourceFromConfig{
-					{Name: "graphite", OrgId: 1},
-					{Name: "prometheus", OrgId: 1},
-				},
-			}
-
 			Convey("two other datasources in database", func() {
 				fakeRepo.loadAll = []*models.DataSource{
 					{Name: "old-graphite", OrgId: 1, Id: 1},
@@ -89,8 +69,8 @@ func TestDatasourceAsConfig(t *testing.T) {
 				}
 
 				Convey("should have two new datasources", func() {
-					dc := newDatasourceConfiguration(logger, fakeCfg, fakeRepo)
-					err := dc.applyChanges("mock/config.yaml")
+					dc := newDatasourceConfiguration(logger, fakeRepo)
+					err := dc.applyChanges(twoDatasourcesConfigPurgeOthers)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
 					}
@@ -103,23 +83,15 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("Two configured datasource and purge others = false", func() {
-			fakeCfg.cfg = &DatasourcesAsConfig{
-				PurgeOtherDatasources: false,
-				Datasources: []DataSourceFromConfig{
-					{Name: "graphite", OrgId: 1},
-					{Name: "prometheus", OrgId: 1},
-				},
-			}
-
 			Convey("two other datasources in database", func() {
 				fakeRepo.loadAll = []*models.DataSource{
-					{Name: "graphite", OrgId: 1, Id: 1},
+					{Name: "Graphite", OrgId: 1, Id: 1},
 					{Name: "old-graphite2", OrgId: 1, Id: 2},
 				}
 
 				Convey("should have two new datasources", func() {
-					dc := newDatasourceConfiguration(logger, fakeCfg, fakeRepo)
-					err := dc.applyChanges("mock/config.yaml")
+					dc := newDatasourceConfiguration(logger, fakeRepo)
+					err := dc.applyChanges(twoDatasourcesConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
 					}
@@ -139,14 +111,6 @@ type fakeRepository struct {
 	updated  []*models.UpdateDataSourceCommand
 
 	loadAll []*models.DataSource
-}
-
-type fakeConfig struct {
-	cfg *DatasourcesAsConfig
-}
-
-func (fc *fakeConfig) readConfig(path string) (*DatasourcesAsConfig, error) {
-	return fc.cfg, nil
 }
 
 func (fc *fakeRepository) delete(cmd *models.DeleteDataSourceByIdCommand) error {

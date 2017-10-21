@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"errors"
 	"io/ioutil"
 	"path/filepath"
 
@@ -11,10 +12,9 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-type DatasourcesAsConfig struct {
-	PurgeOtherDatasources bool
-	Datasources           []DataSourceFromConfig
-}
+var (
+	ErrInvalidConfigToManyDefault = errors.New("datasource.yaml config is invalid. Only one datasource can be marked as default")
+)
 
 func Init(configPath string) error {
 	dc := NewDatasourceConfiguration()
@@ -28,14 +28,14 @@ type DatasourceConfigurator struct {
 }
 
 func NewDatasourceConfiguration() DatasourceConfigurator {
-	return newDatasourceConfiguration(log.New("setting.datasource"), diskConfigReader{}, sqlDatasourceRepository{})
+	return newDatasourceConfiguration(log.New("setting.datasource"), sqlDatasourceRepository{})
 }
 
-func newDatasourceConfiguration(log log.Logger, cfgProvider configProvider, repo datasourceRepository) DatasourceConfigurator {
+func newDatasourceConfiguration(log log.Logger, repo datasourceRepository) DatasourceConfigurator {
 	return DatasourceConfigurator{
-		log:         log.New("setting.datasource"),
+		log:         log,
 		repository:  repo,
-		cfgProvider: cfgProvider,
+		cfgProvider: configProvider{},
 	}
 }
 
@@ -45,15 +45,23 @@ func (dc *DatasourceConfigurator) applyChanges(configPath string) error {
 		return err
 	}
 
-	allDatasources, err := dc.repository.loadAllDatasources()
-	if err != nil {
-		return err
-	}
-
+	defaultCount := 0
 	for i := range cfg.Datasources {
 		if cfg.Datasources[i].OrgId == 0 {
 			cfg.Datasources[i].OrgId = 1
 		}
+
+		if cfg.Datasources[i].IsDefault {
+			defaultCount++
+			if defaultCount > 1 {
+				return ErrInvalidConfigToManyDefault
+			}
+		}
+	}
+
+	allDatasources, err := dc.repository.loadAllDatasources()
+	if err != nil {
+		return err
 	}
 
 	if err := dc.deleteDatasourcesNotInConfiguration(cfg, allDatasources); err != nil {
@@ -73,11 +81,11 @@ func (dc *DatasourceConfigurator) applyChanges(configPath string) error {
 			dc.log.Info("inserting datasource from configuration ", "name", ds.Name)
 			insertCmd := createInsertCommand(ds)
 			err := dc.repository.insert(insertCmd)
-			if err != nil && err != models.ErrDataSourceNameExists {
+			if err != nil {
 				return err
 			}
 		} else {
-			dc.log.Info("updating datasource from configuration", "name", ds.Name)
+			dc.log.Debug("updating datasource from configuration", "name", ds.Name)
 			updateCmd := createUpdateCommand(ds, dbDatasource.Id)
 			if err := dc.repository.update(updateCmd); err != nil {
 				return err
@@ -119,14 +127,10 @@ type datasourceRepository interface {
 	loadAllDatasources() ([]*models.DataSource, error)
 }
 
-type configProvider interface {
-	readConfig(string) (*DatasourcesAsConfig, error)
-}
-
 type sqlDatasourceRepository struct{}
-type diskConfigReader struct{}
+type configProvider struct{}
 
-func (diskConfigReader) readConfig(path string) (*DatasourcesAsConfig, error) {
+func (configProvider) readConfig(path string) (*DatasourcesAsConfig, error) {
 	filename, _ := filepath.Abs(path)
 	yamlFile, err := ioutil.ReadFile(filename)
 
