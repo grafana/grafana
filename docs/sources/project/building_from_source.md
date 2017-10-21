@@ -84,6 +84,20 @@ bra run
 
 You'll also need to run `npm run watch` to watch for changes to the front-end (typescript, html, sass)
 
+### Running tests
+
+- You can run backend Golang tests using "go test ./pkg/...".
+- Execute all frontend tests with "npm run test"
+
+Writing & watching frontend tests (we have two test runners)
+
+- jest for all new tests that do not require browser context (React+more)
+   - Start watcher: `npm run jest`
+   - Jest will run all test files that end with the name ".jest.ts"
+- karma + mocha is used for testing angularjs components. We do want to migrate these test to jest over time (if possible).
+  - Start watcher: `npm run karma`
+  - Karma+Mocha runs all files that end with the name "_specs.ts".
+
 ## Creating optimized release packages
 
 This step builds linux packages and requires that fpm is installed. Install fpm via `gem install fpm`.

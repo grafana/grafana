@@ -10,9 +10,9 @@ export class TemplateSrv {
 
   private regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
   private index = {};
-  private texts = {};
   private grafanaVariables = {};
   private builtIns = {};
+  private filters = {};
 
   constructor() {
     this.builtIns['__interval'] = {text: '1s', value: '1s'};
@@ -94,7 +94,7 @@ export class TemplateSrv {
         return '(' + escapedValues.join('|') + ')';
       }
       case "lucene": {
-        return this.luceneFormat(value, format, variable);
+        return this.luceneFormat(value);
       }
       case "pipe": {
         if (typeof value === 'string') {
@@ -159,7 +159,7 @@ export class TemplateSrv {
     return values;
   }
 
-  replace(target, scopedVars, format) {
+  replace(target, scopedVars?, format?) {
     if (!target) { return target; }
 
     var variable, systemValue, value;
