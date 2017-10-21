@@ -89,9 +89,11 @@ In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = 
 Writing & watching frontend tests (we have two test runners)
 
 - jest for all new tests that do not require browser context (React+more)
-   - start watcher: `npm run jest`
-- karma + mocha is used for testing angularjs components.
-  - start watcher: `npm run karma`
+   - Start watcher: `npm run jest`
+   - Jest will run all test files that end with the name ".jest.ts"
+- karma + mocha is used for testing angularjs components. We do want to migrate these test to jest over time (if possible).
+  - Start watcher: `npm run karma`
+  - Karma+Mocha runs all files that end with the name "_specs.ts".
 
 ## Contribute
 
