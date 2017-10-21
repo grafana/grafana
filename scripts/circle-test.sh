@@ -37,7 +37,6 @@ echo "building binaries"
 exit_if_fail go run build.go build
 
 echo "running go test"
-exit_if_fail go test -v -coverprofile=coverage.txt -covermode=atomic ./pkg/...
 
 set -e
 echo "" > coverage.txt
