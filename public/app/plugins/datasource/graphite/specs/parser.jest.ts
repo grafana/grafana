@@ -7,7 +7,7 @@ describe('when parsing', function() {
     var rootNode = parser.getAst();
 
     expect(rootNode.type).toBe('metric');
-    expect(rootNode.segments.length).toBe(6);
+    expect(rootNode.segments.length).toBe(5);
     expect(rootNode.segments[0].value).toBe('metric');
   });
 
