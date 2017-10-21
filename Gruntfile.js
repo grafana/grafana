@@ -27,7 +27,6 @@ module.exports = function (grunt) {
   config.pkg.version = grunt.option('pkgVer') || config.pkg.version;
 
   console.log('Version', config.pkg.version);
-  console.log('Code Coverage Enabled', config.coverage);
 
   // load plugins
   require('load-grunt-tasks')(grunt);

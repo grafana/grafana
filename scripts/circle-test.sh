@@ -22,6 +22,7 @@ exit_if_fail npm run build
 # publish code coverage
 echo "Publishing javascript code coverage"
 bash <(curl -s https://codecov.io/bash) -cF javascript
+rm -rf coverage
 # npm install -g codecov
 # codecov
 # cat ./coverage/lcov.info | node ./node_modules/coveralls/bin/coveralls.js
@@ -37,6 +38,17 @@ exit_if_fail go run build.go build
 
 echo "running go test"
 exit_if_fail go test -v -coverprofile=coverage.txt -covermode=atomic ./pkg/...
+
+set -e
+echo "" > coverage.txt
+
+for d in $(go list .pkg/... | grep -v vendor); do
+  exit_if_fail go test -race -coverprofile=profile.out -covermode=atomic $d
+  if [ -f profile.out ]; then
+    cat profile.out >> coverage.txt
+    rm profile.out
+  fi
+done
 
 echo "Publishing go code coverage"
 bash <(curl -s https://codecov.io/bash) -cF go
