@@ -17,11 +17,11 @@ export class PostgresDatasource {
 
   interpolateVariable(value) {
     if (typeof value === 'string') {
-      return '\'' + value + '\'';
+      return value;
     }
 
     if (typeof value === 'number') {
-      return value.toString();
+      return value;
     }
 
     var quotedValues = _.map(value, function(val) {
