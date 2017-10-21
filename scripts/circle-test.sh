@@ -20,7 +20,11 @@ exit_if_fail npm test-ci
 exit_if_fail npm build
 
 # publish code coverage
-cat ./coverage/lcov.info | node ./node_modules/coveralls/bin/coveralls.js
+echo "Publishing javascript code coverage"
+bash <(curl -s https://codecov.io/bash) -cF javascript
+# npm install -g codecov
+# codecov
+# cat ./coverage/lcov.info | node ./node_modules/coveralls/bin/coveralls.js
 
 echo "running go fmt"
 exit_if_fail test -z "$(gofmt -s -l ./pkg | tee /dev/stderr)"
@@ -32,4 +36,7 @@ echo "building binaries"
 exit_if_fail go run build.go build
 
 echo "running go test"
-exit_if_fail go test -v ./pkg/...
+exit_if_fail go test -v -coverprofile=coverage.txt -covermode=atomic ./pkg/...
+
+echo "Publishing go code coverage"
+bash <(curl -s https://codecov.io/bash) -cF go
