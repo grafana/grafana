@@ -320,12 +320,6 @@ function convertToLogScaleValueBuckets(xBucket, yBucketSplitFactor, logBase) {
   return buckets;
 }
 
-// Get minimum non zero value.
-function getMinLog(series) {
-  let values = _.compact(_.map(series.datapoints, p => p[0]));
-  return _.min(values);
-}
-
 /**
  * Logarithm for custom base
  * @param value
@@ -432,7 +426,6 @@ export {
   elasticHistogramToHeatmap,
   convertToCards,
   mergeZeroBuckets,
-  getMinLog,
   getValueBucketBound,
   isHeatmapDataEqual,
   calculateBucketSize
