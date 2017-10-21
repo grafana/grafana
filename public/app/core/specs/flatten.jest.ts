@@ -1,5 +1,3 @@
-import {describe, it, expect} from 'test/lib/common';
-
 import flatten from 'app/core/utils/flatten';
 
 describe("flatten", () => {
@@ -15,9 +13,9 @@ describe("flatten", () => {
       }
     }, null);
 
-    expect(flattened['level1']).to.be('level1-value');
-    expect(flattened['deeper.level2']).to.be('level2-value');
-    expect(flattened['deeper.deeper.level3']).to.be('level3-value');
+    expect(flattened['level1']).toBe('level1-value');
+    expect(flattened['deeper.level2']).toBe('level2-value');
+    expect(flattened['deeper.deeper.level3']).toBe('level3-value');
   });
 
 });

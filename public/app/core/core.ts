@@ -73,5 +73,4 @@ export {
   JsonExplorer,
   NavModelSrv,
   NavModel,
-  PasswordStrength,
 };

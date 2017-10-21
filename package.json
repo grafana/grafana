@@ -15,6 +15,7 @@
     "@types/node": "^8.0.31",
     "@types/react": "^16.0.5",
     "@types/react-dom": "^15.5.4",
+    "@types/jest": "^21.1.4",
     "angular-mocks": "^1.6.6",
     "autoprefixer": "^6.4.0",
     "awesome-typescript-loader": "^3.2.3",
@@ -54,8 +55,6 @@
     "html-webpack-plugin": "^2.30.1",
     "husky": "^0.14.3",
     "jest": "^21.2.1",
-    "jest-enzyme": "^4.0.1",
-    "jest-webpack-resolver": "^0.1.2",
     "jshint-stylish": "~2.2.1",
     "json-loader": "^0.5.7",
     "karma": "1.7.0",
@@ -93,7 +92,8 @@
     "webpack-bundle-analyzer": "^2.9.0",
     "webpack-cleanup-plugin": "^0.5.1",
     "webpack-merge": "^4.1.0",
-    "zone.js": "^0.7.2"
+    "zone.js": "^0.7.2",
+    "ts-jest": "^21.1.3"
   },
   "scripts": {
     "dev": "./node_modules/.bin/webpack --progress --colors --config scripts/webpack/webpack.dev.js",
@@ -101,11 +101,11 @@
     "build": "./node_modules/.bin/grunt build",
     "test": "./node_modules/.bin/grunt test",
     "lint": "./node_modules/.bin/tslint -c tslint.json --project tsconfig.json --type-check",
-    "watch-test": "./node_modules/grunt-cli/bin/grunt karma:dev"
+    "karma": "./node_modules/grunt-cli/bin/grunt karma:dev",
+    "jest": "./node_modules/jest-cli/bin/jest --notify --watch"
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@types/jest": "^21.1.4",
     "angular": "^1.6.6",
     "angular-bindonce": "^0.3.1",
     "angular-mocks": "^1.6.6",
@@ -128,7 +128,6 @@
     "rxjs": "^5.4.3",
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop",
-    "tinycolor2": "^1.4.1",
-    "ts-jest": "^21.1.3"
+    "tinycolor2": "^1.4.1"
   }
 }

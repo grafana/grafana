@@ -6,6 +6,8 @@ define([
 function (angular, _, kbn) {
   'use strict';
 
+  kbn = kbn.default;
+
   var module = angular.module('grafana.services');
 
   module.service('templateSrv', function() {

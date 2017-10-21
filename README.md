@@ -81,6 +81,18 @@ You only need to add the options you want to override. Config files are applied 
 
 In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = development`.
 
+### Running tests
+
+- You can run backend Golang tests using "go test ./pkg/...".
+- Execute all frontend tests with "npm run test"
+
+Writing & watching frontend tests (we have two test runners)
+
+- jest for all new tests that do not require browser context (React+more)
+   - start watcher: `npm run jest`
+- karma + mocha is used for testing angularjs components.
+  - start watcher: `npm run karma`
+
 ## Contribute
 
 If you have any idea for an improvement or found a bug do not hesitate to open an issue.
@@ -89,8 +101,8 @@ the kickass metrics & devops dashboard we all dream about!
 
 ## Plugin development
 
-Checkout the [Plugin Development Guide](http://docs.grafana.org/plugins/developing/development/) and checkout the [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) file for changes in Grafana that relate to 
-plugin development. 
+Checkout the [Plugin Development Guide](http://docs.grafana.org/plugins/developing/development/) and checkout the [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) file for changes in Grafana that relate to
+plugin development.
 
 ## License
 

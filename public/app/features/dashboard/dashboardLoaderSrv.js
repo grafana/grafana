@@ -11,6 +11,8 @@ define([
 function (angular, moment, _, $, kbn, dateMath, impressionStore) {
   'use strict';
 
+  kbn = kbn.default;
+
   var module = angular.module('grafana.services');
 
   module.service('dashboardLoaderSrv', function(backendSrv,

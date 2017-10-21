@@ -9,6 +9,8 @@ define([
 function (angular, _, moment, dateMath, kbn, templatingVariable) {
   'use strict';
 
+  kbn = kbn.default;
+
   /** @ngInject */
   function CloudWatchDatasource(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
     this.type = 'cloudwatch';

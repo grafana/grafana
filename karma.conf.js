@@ -11,7 +11,7 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      { pattern: 'public/tests/index.ts', watched: false }
+      { pattern: 'public/test/index.ts', watched: false }
     ],
 
     preprocessors: {

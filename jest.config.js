@@ -1,6 +1,6 @@
 
 module.exports = {
-  verbose: true,
+  verbose: false,
   "transform": {
     "^.+\\.tsx?$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
   },
