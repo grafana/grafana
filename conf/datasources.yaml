@@ -1,30 +1,20 @@
-purgeOtherDatasources: false
+purge_other_datasources: false
 datasources:
-  - name: Graphite202
+  - name: Graphite
     type: graphite
     access: proxy
     url: http://localhost:8080
-    password:
-    user: 
-    database:
-    basicAuth:
-    basicAuthUser:
-    basicAuthPassword:
-    withCredentials:
-    isDefault: true
-    jsonData: {}
-    secureJsonFields: {}
+    password:  #string
+    user:  #string
+    database:  #string
+    basic_auth: #bool
+    basic_authUser: #string
+    basic_auth_password: #string
+    with_credentials: #bool
+    is_default: true #bool
+    json_data: '{"graphiteVersion":"0.9"}' # string json
+    secure_json_fields: '' #string json
   - name: Prometheus
     type: prometheus
     access: proxy
     url: http://localhost:9090
-    password:
-    user: 
-    database:
-    basicAuth:
-    basicAuthUser:
-    basicAuthPassword:
-    withCredentials:
-    isDefault: true
-    jsonData: {}
-    secureJsonFields: {}
