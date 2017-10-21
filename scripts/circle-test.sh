@@ -16,8 +16,8 @@ rm -rf node_modules
 npm install -g yarn --quiet
 yarn install --pure-lockfile --no-progress
 
-exit_if_fail npm test-ci
-exit_if_fail npm build
+exit_if_fail npm run test-ci
+exit_if_fail npm run build
 
 # publish code coverage
 echo "Publishing javascript code coverage"
