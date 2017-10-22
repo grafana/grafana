@@ -1,5 +1,3 @@
-import {describe, beforeEach, it, expect} from 'test/lib/common';
-
 import {transformers, transformDataToTable} from '../transformers';
 
 describe('when transforming time series table', () => {
@@ -29,18 +27,18 @@ describe('when transforming time series table', () => {
       });
 
       it('should return 3 rows', () => {
-        expect(table.rows.length).to.be(3);
-        expect(table.rows[0][1]).to.be('series1');
-        expect(table.rows[1][1]).to.be('series1');
-        expect(table.rows[2][1]).to.be('series2');
-        expect(table.rows[0][2]).to.be(12.12);
+        expect(table.rows.length).toBe(3);
+        expect(table.rows[0][1]).toBe('series1');
+        expect(table.rows[1][1]).toBe('series1');
+        expect(table.rows[2][1]).toBe('series2');
+        expect(table.rows[0][2]).toBe(12.12);
       });
 
       it('should return 3 rows', () => {
-        expect(table.columns.length).to.be(3);
-        expect(table.columns[0].text).to.be('Time');
-        expect(table.columns[1].text).to.be('Metric');
-        expect(table.columns[2].text).to.be('Value');
+        expect(table.columns.length).toBe(3);
+        expect(table.columns[0].text).toBe('Time');
+        expect(table.columns[1].text).toBe('Metric');
+        expect(table.columns[2].text).toBe('Value');
       });
     });
 
@@ -54,20 +52,20 @@ describe('when transforming time series table', () => {
       });
 
       it ('should return 3 columns', () => {
-        expect(table.columns.length).to.be(3);
-        expect(table.columns[0].text).to.be('Time');
-        expect(table.columns[1].text).to.be('series1');
-        expect(table.columns[2].text).to.be('series2');
+        expect(table.columns.length).toBe(3);
+        expect(table.columns[0].text).toBe('Time');
+        expect(table.columns[1].text).toBe('series1');
+        expect(table.columns[2].text).toBe('series2');
       });
 
       it ('should return 2 rows', () => {
-        expect(table.rows.length).to.be(2);
-        expect(table.rows[0][1]).to.be(12.12);
-        expect(table.rows[0][2]).to.be(16.12);
+        expect(table.rows.length).toBe(2);
+        expect(table.rows[0][1]).toBe(12.12);
+        expect(table.rows[0][2]).toBe(16.12);
       });
 
       it ('should be undefined when no value for timestamp', () => {
-        expect(table.rows[1][2]).to.be(undefined);
+        expect(table.rows[1][2]).toBe(undefined);
       });
     });
 
@@ -83,17 +81,17 @@ describe('when transforming time series table', () => {
       });
 
       it('should return 2 rows', () => {
-        expect(table.rows.length).to.be(2);
-        expect(table.rows[0][0]).to.be('series1');
-        expect(table.rows[0][1]).to.be(14.44);
-        expect(table.rows[0][2]).to.be(12.12);
+        expect(table.rows.length).toBe(2);
+        expect(table.rows[0][0]).toBe('series1');
+        expect(table.rows[0][1]).toBe(14.44);
+        expect(table.rows[0][2]).toBe(12.12);
       });
 
       it('should return 2 columns', () => {
-        expect(table.columns.length).to.be(3);
-        expect(table.columns[0].text).to.be('Metric');
-        expect(table.columns[1].text).to.be('Max');
-        expect(table.columns[2].text).to.be('Min');
+        expect(table.columns.length).toBe(3);
+        expect(table.columns[0].text).toBe('Metric');
+        expect(table.columns[1].text).toBe('Max');
+        expect(table.columns[2].text).toBe('Min');
       });
     });
 
@@ -124,9 +122,9 @@ describe('when transforming time series table', () => {
       describe('getColumns', function() {
         it('should return nested properties', function() {
           var columns = transformers['json'].getColumns(rawData);
-          expect(columns[0].text).to.be('timestamp');
-          expect(columns[1].text).to.be('message');
-          expect(columns[2].text).to.be('nested.level2');
+          expect(columns[0].text).toBe('timestamp');
+          expect(columns[1].text).toBe('message');
+          expect(columns[2].text).toBe('nested.level2');
         });
       });
 
@@ -136,17 +134,17 @@ describe('when transforming time series table', () => {
         });
 
         it ('should return 2 columns', () => {
-          expect(table.columns.length).to.be(3);
-          expect(table.columns[0].text).to.be('Timestamp');
-          expect(table.columns[1].text).to.be('Message');
-          expect(table.columns[2].text).to.be('nested.level2');
+          expect(table.columns.length).toBe(3);
+          expect(table.columns[0].text).toBe('Timestamp');
+          expect(table.columns[1].text).toBe('Message');
+          expect(table.columns[2].text).toBe('nested.level2');
         });
 
         it ('should return 2 rows', () => {
-          expect(table.rows.length).to.be(1);
-          expect(table.rows[0][0]).to.be('time');
-          expect(table.rows[0][1]).to.be('message');
-          expect(table.rows[0][2]).to.be('level2-value');
+          expect(table.rows.length).toBe(1);
+          expect(table.rows[0][0]).toBe('time');
+          expect(table.rows[0][1]).toBe('message');
+          expect(table.rows[0][2]).toBe('level2-value');
         });
       });
     });
@@ -169,16 +167,16 @@ describe('when transforming time series table', () => {
       });
 
       it ('should return 4 columns', () => {
-        expect(table.columns.length).to.be(4);
-        expect(table.columns[0].text).to.be('Time');
-        expect(table.columns[1].text).to.be('Title');
-        expect(table.columns[2].text).to.be('Text');
-        expect(table.columns[3].text).to.be('Tags');
+        expect(table.columns.length).toBe(4);
+        expect(table.columns[0].text).toBe('Time');
+        expect(table.columns[1].text).toBe('Title');
+        expect(table.columns[2].text).toBe('Text');
+        expect(table.columns[3].text).toBe('Tags');
       });
 
       it ('should return 1 rows', () => {
-        expect(table.rows.length).to.be(1);
-        expect(table.rows[0][0]).to.be(1000);
+        expect(table.rows.length).toBe(1);
+        expect(table.rows[0][0]).toBe(1000);
       });
     });
 

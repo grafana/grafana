@@ -1,5 +1,3 @@
-import {describe, it, expect} from 'test/lib/common';
-
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
 import {TableRenderer} from '../renderer';
@@ -92,84 +90,84 @@ describe('when rendering table', () => {
 
     it('time column should be formated', () => {
       var html = renderer.renderCell(0, 0, 1388556366666);
-      expect(html).to.be('<td>2014-01-01T06:06:06Z</td>');
+      expect(html).toBe('<td>2014-01-01T06:06:06Z</td>');
     });
 
     it('undefined time column should be rendered as -', () => {
       var html = renderer.renderCell(0, 0, undefined);
-      expect(html).to.be('<td>-</td>');
+      expect(html).toBe('<td>-</td>');
     });
 
     it('null time column should be rendered as -', () => {
       var html = renderer.renderCell(0, 0, null);
-      expect(html).to.be('<td>-</td>');
+      expect(html).toBe('<td>-</td>');
     });
 
     it('number column with unit specified should ignore style unit', () => {
       var html = renderer.renderCell(5, 0, 1230);
-      expect(html).to.be('<td>1.23 kbps</td>');
+      expect(html).toBe('<td>1.23 kbps</td>');
     });
 
     it('number column should be formated', () => {
       var html = renderer.renderCell(1, 0, 1230);
-      expect(html).to.be('<td>1.230 s</td>');
+      expect(html).toBe('<td>1.230 s</td>');
     });
 
     it('number style should ignore string values', () => {
       var html = renderer.renderCell(1, 0, 'asd');
-      expect(html).to.be('<td>asd</td>');
+      expect(html).toBe('<td>asd</td>');
     });
 
     it('colored cell should have style', () => {
       var html = renderer.renderCell(2, 0, 40);
-      expect(html).to.be('<td style="color:green">40.0</td>');
+      expect(html).toBe('<td style="color:green">40.0</td>');
     });
 
     it('colored cell should have style', () => {
       var html = renderer.renderCell(2, 0, 55);
-      expect(html).to.be('<td style="color:orange">55.0</td>');
+      expect(html).toBe('<td style="color:orange">55.0</td>');
     });
 
     it('colored cell should have style', () => {
       var html = renderer.renderCell(2, 0, 85);
-      expect(html).to.be('<td style="color:red">85.0</td>');
+      expect(html).toBe('<td style="color:red">85.0</td>');
     });
 
     it('unformated undefined should be rendered as string', () => {
       var html = renderer.renderCell(3, 0, 'value');
-      expect(html).to.be('<td>value</td>');
+      expect(html).toBe('<td>value</td>');
     });
 
     it('string style with escape html should return escaped html', () => {
       var html = renderer.renderCell(4, 0, "&breaking <br /> the <br /> row");
-      expect(html).to.be('<td>&amp;breaking &lt;br /&gt; the &lt;br /&gt; row</td>');
+      expect(html).toBe('<td>&amp;breaking &lt;br /&gt; the &lt;br /&gt; row</td>');
     });
 
     it('undefined formater should return escaped html', () => {
       var html = renderer.renderCell(3, 0, "&breaking <br /> the <br /> row");
-      expect(html).to.be('<td>&amp;breaking &lt;br /&gt; the &lt;br /&gt; row</td>');
+      expect(html).toBe('<td>&amp;breaking &lt;br /&gt; the &lt;br /&gt; row</td>');
     });
 
     it('undefined value should render as -', () => {
       var html = renderer.renderCell(3, 0, undefined);
-      expect(html).to.be('<td></td>');
+      expect(html).toBe('<td></td>');
     });
 
     it('sanitized value should render as', () => {
       var html = renderer.renderCell(6, 0, 'text <a href="http://google.com">link</a>');
-      expect(html).to.be('<td>sanitized</td>');
+      expect(html).toBe('<td>sanitized</td>');
     });
 
     it('Time column title should be Timestamp', () => {
-      expect(table.columns[0].title).to.be('Timestamp');
+      expect(table.columns[0].title).toBe('Timestamp');
     });
 
     it('Value column title should be Val', () => {
-      expect(table.columns[1].title).to.be('Val');
+      expect(table.columns[1].title).toBe('Val');
     });
 
     it('Colored column title should be Colored', () => {
-      expect(table.columns[2].title).to.be('Colored');
+      expect(table.columns[2].title).toBe('Colored');
     });
 
     it('link should render as', () => {
@@ -182,7 +180,7 @@ describe('when rendering table', () => {
           </a>
         </td>
       `;
-      expect(normalize(html)).to.be(normalize(expectedHtml));
+      expect(normalize(html)).toBe(normalize(expectedHtml));
     });
   });
 });

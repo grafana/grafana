@@ -7,6 +7,8 @@ define([
 function (angular, _, $, gfunc) {
   'use strict';
 
+  gfunc = gfunc.default;
+
   angular
     .module('grafana.directives')
     .directive('graphiteAddFunc', function($compile) {

@@ -1,4 +1,3 @@
-import {describe, beforeEach, it, expect} from 'test/lib/common';
 import TimeSeries from 'app/core/time_series2';
 
 describe("TimeSeries", function() {
@@ -19,14 +18,14 @@ describe("TimeSeries", function() {
     it('with connected style, should ignore nulls', function() {
       series = new TimeSeries(testData);
       points = series.getFlotPairs('connected', yAxisFormats);
-      expect(points.length).to.be(3);
+      expect(points.length).toBe(3);
     });
 
     it('with null as zero style, should replace nulls with zero', function() {
       series = new TimeSeries(testData);
       points = series.getFlotPairs('null as zero', yAxisFormats);
-      expect(points.length).to.be(4);
-      expect(points[1][1]).to.be(0);
+      expect(points.length).toBe(4);
+      expect(points[1][1]).toBe(0);
     });
 
     it('if last is null current should pick next to last', function() {
@@ -34,7 +33,7 @@ describe("TimeSeries", function() {
         datapoints: [[10,1], [null, 2]]
       });
       series.getFlotPairs('null', yAxisFormats);
-      expect(series.stats.current).to.be(10);
+      expect(series.stats.current).toBe(10);
     });
 
     it('max value should work for negative values', function() {
@@ -42,13 +41,13 @@ describe("TimeSeries", function() {
         datapoints: [[-10,1], [-4, 2]]
       });
       series.getFlotPairs('null', yAxisFormats);
-      expect(series.stats.max).to.be(-4);
+      expect(series.stats.max).toBe(-4);
     });
 
     it('average value should ignore nulls', function() {
       series = new TimeSeries(testData);
       series.getFlotPairs('null', yAxisFormats);
-      expect(series.stats.avg).to.be(6.333333333333333);
+      expect(series.stats.avg).toBe(6.333333333333333);
     });
 
     it('the delta value should account for nulls', function() {
@@ -56,7 +55,7 @@ describe("TimeSeries", function() {
         datapoints: [[1,2],[3,3],[null,4],[10,5],[15,6]]
       });
       series.getFlotPairs('null', yAxisFormats);
-      expect(series.stats.delta).to.be(14);
+      expect(series.stats.delta).toBe(14);
     });
 
     it('the delta value should account for nulls on first', function() {
@@ -64,7 +63,7 @@ describe("TimeSeries", function() {
         datapoints: [[null,2],[1,3],[10,4],[15,5]]
       });
       series.getFlotPairs('null', yAxisFormats);
-      expect(series.stats.delta).to.be(14);
+      expect(series.stats.delta).toBe(14);
     });
 
     it('the delta value should account for nulls on last', function() {
@@ -72,7 +71,7 @@ describe("TimeSeries", function() {
         datapoints: [[1,2],[5,3],[10,4],[null,5]]
       });
       series.getFlotPairs('null', yAxisFormats);
-      expect(series.stats.delta).to.be(9);
+      expect(series.stats.delta).toBe(9);
     });
 
     it('the delta value should account for resets', function() {
@@ -80,7 +79,7 @@ describe("TimeSeries", function() {
         datapoints: [[1,2],[5,3],[10,4],[0,5],[10,6]]
       });
       series.getFlotPairs('null', yAxisFormats);
-      expect(series.stats.delta).to.be(19);
+      expect(series.stats.delta).toBe(19);
     });
 
     it('the delta value should account for resets on last', function() {
@@ -88,30 +87,30 @@ describe("TimeSeries", function() {
         datapoints: [[1,2],[2,3],[10,4],[8,5]]
       });
       series.getFlotPairs('null', yAxisFormats);
-      expect(series.stats.delta).to.be(17);
+      expect(series.stats.delta).toBe(17);
     });
 
     it('the range value should be max - min', function() {
       series = new TimeSeries(testData);
       series.getFlotPairs('null', yAxisFormats);
-      expect(series.stats.range).to.be(9);
+      expect(series.stats.range).toBe(9);
     });
 
     it('first value should ingone nulls', function() {
       series = new TimeSeries(testData);
       series.getFlotPairs('null', yAxisFormats);
-      expect(series.stats.first).to.be(1);
+      expect(series.stats.first).toBe(1);
       series = new TimeSeries({
         datapoints: [[null,2],[1,3],[10,4],[8,5]]
       });
       series.getFlotPairs('null', yAxisFormats);
-      expect(series.stats.first).to.be(1);
+      expect(series.stats.first).toBe(1);
     });
 
     it('with null as zero style, average value should treat nulls as 0', function() {
       series = new TimeSeries(testData);
       series.getFlotPairs('null as zero', yAxisFormats);
-      expect(series.stats.avg).to.be(4.75);
+      expect(series.stats.avg).toBe(4.75);
     });
 
     it('average value should be null if all values is null', function() {
@@ -119,7 +118,7 @@ describe("TimeSeries", function() {
         datapoints: [[null,2],[null,3],[null,4],[null,5]]
       });
       series.getFlotPairs('null');
-      expect(series.stats.avg).to.be(null);
+      expect(series.stats.avg).toBe(null);
     });
   });
 
@@ -130,7 +129,7 @@ describe("TimeSeries", function() {
       });
 
       it('should set hasMsResolution to false', function() {
-        expect(series.hasMsResolution).to.be(false);
+        expect(series.hasMsResolution).toBe(false);
       });
     });
 
@@ -140,7 +139,7 @@ describe("TimeSeries", function() {
       });
 
       it('should show millisecond resolution tooltip', function() {
-        expect(series.hasMsResolution).to.be(true);
+        expect(series.hasMsResolution).toBe(true);
       });
     });
 
@@ -150,7 +149,7 @@ describe("TimeSeries", function() {
       });
 
       it('should not show millisecond resolution tooltip', function() {
-        expect(series.hasMsResolution).to.be(false);
+        expect(series.hasMsResolution).toBe(false);
       });
     });
   });
@@ -165,13 +164,13 @@ describe("TimeSeries", function() {
     it('missing datapoint with ms precision', function() {
       fakedata.datapoints[0] = [1337, 1234567890000];
       series = new TimeSeries(fakedata);
-      expect(series.isMsResolutionNeeded()).to.be(false);
+      expect(series.isMsResolutionNeeded()).toBe(false);
     });
 
     it('contains datapoint with ms precision', function() {
       fakedata.datapoints[0] = [1337, 1236547890001];
       series = new TimeSeries(fakedata);
-      expect(series.isMsResolutionNeeded()).to.be(true);
+      expect(series.isMsResolutionNeeded()).toBe(true);
     });
   });
 
@@ -188,8 +187,8 @@ describe("TimeSeries", function() {
       });
 
       it('should set fill zero, and enable points', function() {
-        expect(series.lines.fill).to.be(0.001);
-        expect(series.points.show).to.be(true);
+        expect(series.lines.fill).toBe(0.001);
+        expect(series.points.show).toBe(true);
       });
     });
 
@@ -200,8 +199,8 @@ describe("TimeSeries", function() {
       });
 
       it('should disable lines, and enable bars', function() {
-        expect(series.lines.show).to.be(false);
-        expect(series.bars.show).to.be(true);
+        expect(series.lines.show).toBe(false);
+        expect(series.bars.show).toBe(true);
       });
     });
 
@@ -212,8 +211,8 @@ describe("TimeSeries", function() {
       });
 
       it('should disable stack, and set lineWidth', function() {
-        expect(series.stack).to.be(false);
-        expect(series.lines.lineWidth).to.be(5);
+        expect(series.stack).toBe(false);
+        expect(series.lines.lineWidth).toBe(5);
       });
     });
 
@@ -224,9 +223,9 @@ describe("TimeSeries", function() {
       });
 
       it('should enable dashes, set dashes lineWidth to 5 and lines lineWidth to 0', function() {
-        expect(series.dashes.show).to.be(true);
-        expect(series.dashes.lineWidth).to.be(5);
-        expect(series.lines.lineWidth).to.be(0);
+        expect(series.dashes.show).toBe(true);
+        expect(series.dashes.lineWidth).toBe(5);
+        expect(series.lines.lineWidth).toBe(0);
       });
     });
 
@@ -237,7 +236,7 @@ describe("TimeSeries", function() {
       });
 
       it('should disable line fill and add fillBelowTo', function() {
-        expect(series.fillBelowTo).to.be('min');
+        expect(series.fillBelowTo).toBe('min');
       });
     });
 
@@ -248,8 +247,8 @@ describe("TimeSeries", function() {
       });
 
       it('should set pointradius, and set steppedLine', function() {
-        expect(series.points.radius).to.be(5);
-        expect(series.lines.steps).to.be(true);
+        expect(series.points.radius).toBe(5);
+        expect(series.lines.steps).toBe(true);
       });
     });
 
@@ -260,7 +259,7 @@ describe("TimeSeries", function() {
       });
 
       it('should match second series', function() {
-        expect(series.lines.show).to.be(false);
+        expect(series.lines.show).toBe(false);
       });
     });
 
@@ -271,11 +270,11 @@ describe("TimeSeries", function() {
       });
 
       it('should set yaxis', function() {
-        expect(series.yaxis).to.be(2);
+        expect(series.yaxis).toBe(2);
       });
 
       it('should set zindex', function() {
-        expect(series.zindex).to.be(2);
+        expect(series.zindex).toBe(2);
       });
     });
 
@@ -288,11 +287,11 @@ describe("TimeSeries", function() {
     });
 
     it('should format non-numeric values as empty string', function() {
-      expect(series.formatValue(null)).to.be("");
-      expect(series.formatValue(undefined)).to.be("");
-      expect(series.formatValue(NaN)).to.be("");
-      expect(series.formatValue(Infinity)).to.be("");
-      expect(series.formatValue(-Infinity)).to.be("");
+      expect(series.formatValue(null)).toBe("");
+      expect(series.formatValue(undefined)).toBe("");
+      expect(series.formatValue(NaN)).toBe("");
+      expect(series.formatValue(Infinity)).toBe("");
+      expect(series.formatValue(-Infinity)).toBe("");
     });
   });
 
