@@ -1,7 +1,7 @@
 import React from 'react';
 import {shallow} from 'enzyme';
 
-import {PasswordStrength} from '../ui/PasswordStrength';
+import {PasswordStrength} from '../components/PasswordStrength';
 
 describe('PasswordStrength', () => {
 

@@ -47,9 +47,8 @@ import {JsonExplorer} from './components/json_explorer/json_explorer';
 import {NavModelSrv, NavModel} from './nav_model_srv';
 import {registerAngularDirectives} from './angular_wrappers';
 
-registerAngularDirectives();
-
 export {
+  registerAngularDirectives,
   arrayJoin,
   coreModule,
   grafanaAppDirective,

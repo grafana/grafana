@@ -1,5 +1,5 @@
 import { react2AngularDirective } from 'app/core/utils/react2angular';
-import { PasswordStrength } from './ui/PasswordStrength';
+import { PasswordStrength } from './components/PasswordStrength';
 
 export function registerAngularDirectives() {
 

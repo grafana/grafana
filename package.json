@@ -102,7 +102,7 @@
     "test-ci": "./node_modules/.bin/grunt test --coverage=true",
     "lint": "./node_modules/.bin/tslint -c tslint.json --project tsconfig.json --type-check",
     "karma": "./node_modules/grunt-cli/bin/grunt karma:dev",
-    "jest": "./node_modules/jest-cli/bin/jest --notify --watch"
+    "jest": "./node_modules/jest-cli/bin/jest.js --notify --watch"
   },
   "license": "Apache-2.0",
   "dependencies": {
