@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
-import {colors} from 'app/core/utils/colors';
+import colors from 'app/core/utils/colors';
 
 export class DataProcessor {
 
