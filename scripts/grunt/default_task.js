@@ -19,6 +19,13 @@ module.exports = function(grunt) {
     'no-only-tests'
   ]);
 
+  grunt.registerTask('precommit', [
+    'sasslint',
+    'exec:tslint',
+    "exec:jest",
+    'no-only-tests'
+  ]);
+
   grunt.registerTask('no-only-tests', function() {
     var files = grunt.file.expand('public/**/*_specs\.ts', 'public/**/*_specs\.js');
 

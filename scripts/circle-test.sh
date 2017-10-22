@@ -16,7 +16,7 @@ rm -rf node_modules
 npm install -g yarn --quiet
 yarn install --pure-lockfile --no-progress
 
-exit_if_fail npm run test-ci
+exit_if_fail npm run test:coverage
 exit_if_fail npm run build
 
 # publish code coverage

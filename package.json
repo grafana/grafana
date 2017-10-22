@@ -99,10 +99,11 @@
     "watch": "./node_modules/.bin/webpack --progress --colors --watch --config scripts/webpack/webpack.dev.js",
     "build": "./node_modules/.bin/grunt build",
     "test": "./node_modules/.bin/grunt test",
-    "test-ci": "./node_modules/.bin/grunt test --coverage=true",
+    "test:coverage": "./node_modules/.bin/grunt test --coverage=true",
     "lint": "./node_modules/.bin/tslint -c tslint.json --project tsconfig.json --type-check",
     "karma": "./node_modules/grunt-cli/bin/grunt karma:dev",
-    "jest": "./node_modules/jest-cli/bin/jest.js --notify --watch"
+    "jest": "./node_modules/jest-cli/bin/jest.js --notify --watch",
+    "precommit": "grunt precommit"
   },
   "license": "Apache-2.0",
   "dependencies": {
