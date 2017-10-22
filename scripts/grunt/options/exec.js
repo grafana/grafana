@@ -3,7 +3,7 @@ module.exports = function(config, grunt) {
 
   var coverage = '';
   if (config.coverage) {
-    coverage = '--coverage';
+    coverage = '--coverage --runInBand --logHeapUsage';
   }
 
   return {

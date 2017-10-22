@@ -1,6 +1,6 @@
 machine:
   node:
-    version: 6.9.2
+    version: 6.11.4
   python:
     version: 2.7.3
   services:
@@ -29,7 +29,6 @@ dependencies:
     - pip install awscli
     - sudo apt-get update; sudo apt-get install rpm; sudo apt-get install expect
     - ./scripts/build/build_container.sh
-
 
 test:
   override:
