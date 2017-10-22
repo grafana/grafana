@@ -16,7 +16,7 @@ var (
 	ErrInvalidConfigToManyDefault = errors.New("datasource.yaml config is invalid. Only one datasource can be marked as default")
 )
 
-func Init(configPath string) error {
+func Apply(configPath string) error {
 	dc := NewDatasourceConfiguration()
 	return dc.applyChanges(configPath)
 }

@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	dsSettings "github.com/grafana/grafana/pkg/setting/datasources"
+	datasourcesFromConfig "github.com/grafana/grafana/pkg/setting/datasources"
 	"github.com/grafana/grafana/pkg/social"
 	"github.com/grafana/grafana/pkg/tracing"
 )
@@ -56,9 +56,9 @@ func (g *GrafanaServerImpl) Start() {
 	g.writePIDFile()
 
 	initSql()
-	err := dsSettings.Init(filepath.Join(setting.HomePath, "conf/datasources.yaml"))
+	err := datasourcesFromConfig.Apply(filepath.Join(setting.HomePath, "conf/datasources.yaml"))
 	if err != nil {
-		g.log.Error("Failed to load datasources from config", "error", err)
+		g.log.Error("Failed to configure datasources from config", "error", err)
 		g.Shutdown(1, "Startup failed")
 		return
 	}
