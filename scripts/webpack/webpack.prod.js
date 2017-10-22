@@ -27,7 +27,10 @@ module.exports = merge(common, {
   },
 
   devServer: {
-    stats: 'errors-only',
+    noInfo: true,
+    stats: {
+      chunks: false,
+    },
   },
 
   plugins: [
