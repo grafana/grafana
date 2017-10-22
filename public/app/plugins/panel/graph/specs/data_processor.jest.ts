@@ -1,7 +1,3 @@
-///<reference path="../../../../headers/common.d.ts" />
-
-import {describe, beforeEach, it, expect} from '../../../../../test/lib/common';
-
 import {DataProcessor} from '../data_processor';
 
 describe('Graph DataProcessor', function() {
@@ -29,7 +25,7 @@ describe('Graph DataProcessor', function() {
     });
 
     it('Should automatically set xaxis mode to field', () => {
-      expect(panel.xaxis.mode).to.be('field');
+      expect(panel.xaxis.mode).toBe('field');
     });
 
   });
@@ -48,16 +44,16 @@ describe('Graph DataProcessor', function() {
 
     it('Should return all field names', () => {
       var fields = processor.getDataFieldNames(dataList, false);
-      expect(fields).to.contain('hostname');
-      expect(fields).to.contain('valueField');
-      expect(fields).to.contain('nested.prop1');
-      expect(fields).to.contain('nested.value2');
+      expect(fields).toContain('hostname');
+      expect(fields).toContain('valueField');
+      expect(fields).toContain('nested.prop1');
+      expect(fields).toContain('nested.value2');
     });
 
     it('Should return all number fields', () => {
       var fields = processor.getDataFieldNames(dataList, true);
-      expect(fields).to.contain('valueField');
-      expect(fields).to.contain('nested.value2');
+      expect(fields).toContain('valueField');
+      expect(fields).toContain('nested.value2');
     });
   });
 });

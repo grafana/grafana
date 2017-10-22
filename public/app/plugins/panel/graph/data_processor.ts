@@ -1,8 +1,6 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
-import {colors} from 'app/core/core';
+import {colors} from 'app/core/utils/colors';
 
 export class DataProcessor {
 
