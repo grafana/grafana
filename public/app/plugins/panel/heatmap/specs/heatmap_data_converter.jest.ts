@@ -1,5 +1,3 @@
-///<reference path="../../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import { describe, beforeEach, it, expect } from '../../../../../test/lib/common';
 import TimeSeries from 'app/core/time_series2';
@@ -45,23 +43,23 @@ describe('isHeatmapDataEqual', () => {
     let emptyValues = _.cloneDeep(ctx.heatmapA);
     emptyValues['1422774000000'].buckets['1'].values = [];
 
-    expect(isHeatmapDataEqual(ctx.heatmapA, ctx.heatmapB)).to.be(true);
-    expect(isHeatmapDataEqual(ctx.heatmapB, ctx.heatmapA)).to.be(true);
+    expect(isHeatmapDataEqual(ctx.heatmapA, ctx.heatmapB)).toBe(true);
+    expect(isHeatmapDataEqual(ctx.heatmapB, ctx.heatmapA)).toBe(true);
 
-    expect(isHeatmapDataEqual(ctx.heatmapA, heatmapC)).to.be(true);
-    expect(isHeatmapDataEqual(heatmapC, ctx.heatmapA)).to.be(true);
+    expect(isHeatmapDataEqual(ctx.heatmapA, heatmapC)).toBe(true);
+    expect(isHeatmapDataEqual(heatmapC, ctx.heatmapA)).toBe(true);
 
-    expect(isHeatmapDataEqual(ctx.heatmapA, heatmapD)).to.be(false);
-    expect(isHeatmapDataEqual(heatmapD, ctx.heatmapA)).to.be(false);
+    expect(isHeatmapDataEqual(ctx.heatmapA, heatmapD)).toBe(false);
+    expect(isHeatmapDataEqual(heatmapD, ctx.heatmapA)).toBe(false);
 
-    expect(isHeatmapDataEqual(ctx.heatmapA, heatmapE)).to.be(false);
-    expect(isHeatmapDataEqual(heatmapE, ctx.heatmapA)).to.be(false);
+    expect(isHeatmapDataEqual(ctx.heatmapA, heatmapE)).toBe(false);
+    expect(isHeatmapDataEqual(heatmapE, ctx.heatmapA)).toBe(false);
 
-    expect(isHeatmapDataEqual(empty, ctx.heatmapA)).to.be(false);
-    expect(isHeatmapDataEqual(ctx.heatmapA, empty)).to.be(false);
+    expect(isHeatmapDataEqual(empty, ctx.heatmapA)).toBe(false);
+    expect(isHeatmapDataEqual(ctx.heatmapA, empty)).toBe(false);
 
-    expect(isHeatmapDataEqual(emptyValues, ctx.heatmapA)).to.be(false);
-    expect(isHeatmapDataEqual(ctx.heatmapA, emptyValues)).to.be(false);
+    expect(isHeatmapDataEqual(emptyValues, ctx.heatmapA)).toBe(false);
+    expect(isHeatmapDataEqual(ctx.heatmapA, emptyValues)).toBe(false);
   });
 });
 
@@ -87,7 +85,7 @@ describe('calculateBucketSize', () => {
     it('should properly calculate bucket size', () => {
       _.each(ctx.bounds_set, (b) => {
         let bucketSize = calculateBucketSize(b.bounds, ctx.logBase);
-        expect(bucketSize).to.be(b.size);
+        expect(bucketSize).toBe(b.size);
       });
     });
   });
@@ -108,7 +106,7 @@ describe('calculateBucketSize', () => {
     it('should properly calculate bucket size', () => {
       _.each(ctx.bounds_set, (b) => {
         let bucketSize = calculateBucketSize(b.bounds, ctx.logBase);
-        expect(isEqual(bucketSize, b.size)).to.be(true);
+        expect(isEqual(bucketSize, b.size)).toBe(true);
       });
     });
   });
@@ -162,7 +160,7 @@ describe('HeatmapDataConverter', () => {
       };
 
       let heatmap = convertToHeatMap(ctx.series, ctx.yBucketSize, ctx.xBucketSize, ctx.logBase);
-      expect(isHeatmapDataEqual(heatmap, expectedHeatmap)).to.be(true);
+      expect(isHeatmapDataEqual(heatmap, expectedHeatmap)).toBe(true);
     });
   });
 
@@ -190,7 +188,7 @@ describe('HeatmapDataConverter', () => {
       };
 
       let heatmap = convertToHeatMap(ctx.series, ctx.yBucketSize, ctx.xBucketSize, ctx.logBase);
-      expect(isHeatmapDataEqual(heatmap, expectedHeatmap)).to.be(true);
+      expect(isHeatmapDataEqual(heatmap, expectedHeatmap)).toBe(true);
     });
   });
 });
@@ -240,7 +238,7 @@ describe('ES Histogram converter', () => {
       };
 
       let heatmap = elasticHistogramToHeatmap(ctx.series);
-      expect(heatmap).to.eql(expectedHeatmap);
+      expect(heatmap).toMatchObject(expectedHeatmap);
     });
   });
 });
@@ -273,13 +271,13 @@ describe('convertToCards', () => {
       {x: 1422774060000, y: 2, count: 2, values: [2, 3], yBounds: {}}
     ];
     let res = convertToCards(buckets);
-    expect(res.cards).to.eql(expectedCards);
+    expect(res.cards).toMatchObject(expectedCards);
   });
 
   it('should build proper cards stats', () => {
     let expectedStats = {min: 1, max: 2};
     let res = convertToCards(buckets);
-    expect(res.cardStats).to.eql(expectedStats);
+    expect(res.cardStats).toMatchObject(expectedStats);
   });
 });
 

@@ -71,9 +71,8 @@ export default function link(scope, elem, attrs, ctrl) {
   function getYAxisWidth(elem) {
     let axis_text = elem.selectAll(".axis-y text").nodes();
     let max_text_width = _.max(_.map(axis_text, text => {
-      let el = $(text);
-      // Use JQuery outerWidth() to compute full element width
-      return el.outerWidth();
+      // Use SVG getBBox method
+      return text.getBBox().width;
     }));
 
     return max_text_width;

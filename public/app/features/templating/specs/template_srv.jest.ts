@@ -1,28 +1,11 @@
-import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
-
-import '../all';
-import {Emitter} from 'app/core/core';
+import { TemplateSrv } from '../template_srv';
 
 describe('templateSrv', function() {
-  var _templateSrv, _variableSrv;
-
-  beforeEach(angularMocks.module('grafana.core'));
-  beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(angularMocks.module($provide => {
-    $provide.value('timeSrv', {});
-    $provide.value('datasourceSrv', {});
-  }));
-
-  beforeEach(angularMocks.inject(function(variableSrv, templateSrv) {
-    _templateSrv = templateSrv;
-    _variableSrv = variableSrv;
-  }));
+  var _templateSrv;
 
   function initTemplateSrv(variables) {
-    _variableSrv.init({
-      templating: {list: variables},
-      events: new Emitter(),
-    });
+    _templateSrv = new TemplateSrv();
+    _templateSrv.init(variables);
   }
 
   describe('init', function() {
@@ -32,7 +15,7 @@ describe('templateSrv', function() {
 
     it('should initialize template data', function() {
       var target = _templateSrv.replace('this.[[test]].filters');
-      expect(target).to.be('this.oogle.filters');
+      expect(target).toBe('this.oogle.filters');
     });
   });
 
@@ -43,12 +26,12 @@ describe('templateSrv', function() {
 
     it('should replace $test with scoped value', function() {
       var target = _templateSrv.replace('this.$test.filters', {'test': {value: 'mupp', text: 'asd'}});
-      expect(target).to.be('this.mupp.filters');
+      expect(target).toBe('this.mupp.filters');
     });
 
     it('should replace $test with scoped text', function() {
       var target = _templateSrv.replaceWithText('this.$test.filters', {'test': {value: 'mupp', text: 'asd'}});
-      expect(target).to.be('this.asd.filters');
+      expect(target).toBe('this.asd.filters');
     });
   });
 
@@ -63,17 +46,17 @@ describe('templateSrv', function() {
 
     it('should return filters if datasourceName match', function() {
       var filters = _templateSrv.getAdhocFilters('oogle');
-      expect(filters).to.eql([1]);
+      expect(filters).toMatchObject([1]);
     });
 
     it('should return empty array if datasourceName does not match', function() {
       var filters = _templateSrv.getAdhocFilters('oogleasdasd');
-      expect(filters).to.eql([]);
+      expect(filters).toMatchObject([]);
     });
 
     it('should return filters when datasourceName match via data source variable', function() {
       var filters = _templateSrv.getAdhocFilters('logstash');
-      expect(filters).to.eql([2]);
+      expect(filters).toMatchObject([2]);
     });
   });
 
@@ -84,17 +67,17 @@ describe('templateSrv', function() {
 
     it('should replace $test with globbed value', function() {
       var target = _templateSrv.replace('this.$test.filters', {}, 'glob');
-      expect(target).to.be('this.{value1,value2}.filters');
+      expect(target).toBe('this.{value1,value2}.filters');
     });
 
     it('should replace $test with piped value', function() {
       var target = _templateSrv.replace('this=$test', {}, 'pipe');
-      expect(target).to.be('this=value1|value2');
+      expect(target).toBe('this=value1|value2');
     });
 
     it('should replace $test with piped value', function() {
       var target = _templateSrv.replace('this=$test', {}, 'pipe');
-      expect(target).to.be('this=value1|value2');
+      expect(target).toBe('this=value1|value2');
     });
   });
 
@@ -112,7 +95,7 @@ describe('templateSrv', function() {
 
     it('should replace $test with formatted all value', function() {
       var target = _templateSrv.replace('this.$test.filters', {}, 'glob');
-      expect(target).to.be('this.{value1,value2}.filters');
+      expect(target).toBe('this.{value1,value2}.filters');
     });
   });
 
@@ -131,12 +114,12 @@ describe('templateSrv', function() {
 
     it('should replace $test with formatted all value', function() {
       var target = _templateSrv.replace('this.$test.filters', {}, 'glob');
-      expect(target).to.be('this.*.filters');
+      expect(target).toBe('this.*.filters');
     });
 
     it('should not escape custom all value', function() {
       var target = _templateSrv.replace('this.$test', {}, 'regex');
-      expect(target).to.be('this.*');
+      expect(target).toBe('this.*');
     });
   });
 
@@ -144,49 +127,49 @@ describe('templateSrv', function() {
     it('should properly escape $test with lucene escape sequences', function() {
       initTemplateSrv([{type: 'query', name: 'test', current: {value: 'value/4' }}]);
       var target = _templateSrv.replace('this:$test', {}, 'lucene');
-      expect(target).to.be("this:value\\\/4");
+      expect(target).toBe("this:value\\\/4");
     });
   });
 
   describe('format variable to string values', function() {
     it('single value should return value', function() {
       var result = _templateSrv.formatValue('test');
-      expect(result).to.be('test');
+      expect(result).toBe('test');
     });
 
     it('multi value and glob format should render glob string', function() {
       var result = _templateSrv.formatValue(['test','test2'], 'glob');
-      expect(result).to.be('{test,test2}');
+      expect(result).toBe('{test,test2}');
     });
 
     it('multi value and lucene should render as lucene expr', function() {
       var result = _templateSrv.formatValue(['test','test2'], 'lucene');
-      expect(result).to.be('("test" OR "test2")');
+      expect(result).toBe('("test" OR "test2")');
     });
 
     it('multi value and regex format should render regex string', function() {
       var result = _templateSrv.formatValue(['test.','test2'], 'regex');
-      expect(result).to.be('(test\\.|test2)');
+      expect(result).toBe('(test\\.|test2)');
     });
 
     it('multi value and pipe should render pipe string', function() {
       var result = _templateSrv.formatValue(['test','test2'], 'pipe');
-      expect(result).to.be('test|test2');
+      expect(result).toBe('test|test2');
     });
 
     it('multi value and distributed should render distributed string', function() {
       var result = _templateSrv.formatValue(['test','test2'], 'distributed', { name: 'build' });
-      expect(result).to.be('test,build=test2');
+      expect(result).toBe('test,build=test2');
     });
 
     it('multi value and distributed should render when not string', function() {
       var result = _templateSrv.formatValue(['test'], 'distributed', { name: 'build' });
-      expect(result).to.be('test');
+      expect(result).toBe('test');
     });
 
     it('slash should be properly escaped in regex format', function() {
       var result = _templateSrv.formatValue('Gi3/14', 'regex');
-      expect(result).to.be('Gi3\\/14');
+      expect(result).toBe('Gi3\\/14');
     });
 
   });
@@ -198,7 +181,7 @@ describe('templateSrv', function() {
 
     it('should return true if exists', function() {
       var result = _templateSrv.variableExists('$test');
-      expect(result).to.be(true);
+      expect(result).toBe(true);
     });
   });
 
@@ -209,17 +192,17 @@ describe('templateSrv', function() {
 
     it('should insert html', function() {
       var result = _templateSrv.highlightVariablesAsHtml('$test');
-      expect(result).to.be('<span class="template-variable">$test</span>');
+      expect(result).toBe('<span class="template-variable">$test</span>');
     });
 
     it('should insert html anywhere in string', function() {
       var result = _templateSrv.highlightVariablesAsHtml('this $test ok');
-      expect(result).to.be('this <span class="template-variable">$test</span> ok');
+      expect(result).toBe('this <span class="template-variable">$test</span> ok');
     });
 
     it('should ignore if variables does not exist', function() {
       var result = _templateSrv.highlightVariablesAsHtml('this $google ok');
-      expect(result).to.be('this $google ok');
+      expect(result).toBe('this $google ok');
     });
   });
 
@@ -230,19 +213,28 @@ describe('templateSrv', function() {
 
     it('should set current value and update template data', function() {
       var target = _templateSrv.replace('this.[[test]].filters');
-      expect(target).to.be('this.muuuu.filters');
+      expect(target).toBe('this.muuuu.filters');
     });
   });
 
   describe('fillVariableValuesForUrl with multi value', function() {
     beforeEach(function() {
-      initTemplateSrv([{type: 'query', name: 'test', current: { value: ['val1', 'val2'] }}]);
+      initTemplateSrv([
+        {
+          type: 'query',
+          name: 'test',
+          current: { value: ['val1', 'val2'] },
+          getValueForUrl: function() {
+            return this.current.value;
+          }
+        }
+      ]);
     });
 
     it('should set multiple url params', function() {
       var params = {};
       _templateSrv.fillVariableValuesForUrl(params);
-      expect(params['var-test']).to.eql(['val1', 'val2']);
+      expect(params['var-test']).toMatchObject(['val1', 'val2']);
     });
   });
 
@@ -254,7 +246,7 @@ describe('templateSrv', function() {
     it('should set scoped value as url params', function() {
       var params = {};
       _templateSrv.fillVariableValuesForUrl(params, {'test': {value: 'val1'}});
-      expect(params['var-test']).to.eql('val1');
+      expect(params['var-test']).toBe('val1');
     });
   });
 
@@ -270,7 +262,7 @@ describe('templateSrv', function() {
 
     it('should replace with text except for grafanaVariables', function() {
       var target = _templateSrv.replaceWithText('Server: $server, period: $period');
-      expect(target).to.be('Server: All, period: 13m');
+      expect(target).toBe('Server: All, period: 13m');
     });
   });
 
@@ -281,7 +273,7 @@ describe('templateSrv', function() {
 
     it('should replace $__interval_ms with interval milliseconds', function() {
       var target = _templateSrv.replace('10 * $__interval_ms', {"__interval_ms": {text: "100", value: "100"}});
-      expect(target).to.be('10 * 100');
+      expect(target).toBe('10 * 100');
     });
 
   });

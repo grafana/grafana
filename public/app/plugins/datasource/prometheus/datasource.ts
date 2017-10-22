@@ -168,7 +168,7 @@ export class PrometheusDatasource {
     if (interval !== 0 && range / intervalFactor / interval > 11000) {
       interval = Math.ceil(range / intervalFactor / 11000);
     }
-    return Math.max(interval * intervalFactor, minInterval);
+    return Math.max(interval * intervalFactor, minInterval, 1);
   }
 
   performTimeSeriesQuery(query, start, end) {

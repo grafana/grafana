@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import flatten from '../../../core/utils/flatten';
 import TimeSeries from '../../../core/time_series2';

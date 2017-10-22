@@ -12,6 +12,8 @@ awsconfig
 /tmp
 vendor/phantomjs/phantomjs
 vendor/phantomjs/phantomjs.exe
+profile.out
+coverage.txt
 
 docs/AWS_S3_BUCKET
 docs/GIT_BRANCH

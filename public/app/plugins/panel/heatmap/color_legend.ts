@@ -152,7 +152,7 @@ function drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minVal
     .tickSize(2);
 
   let colorRect = legendElem.find(":first-child");
-  let posY = colorRect.height() + 2;
+  let posY = getSvgElemHeight(legendElem) + 2;
   let posX = getSvgElemX(colorRect);
 
   d3.select(legendElem.get(0)).append("g")
@@ -256,7 +256,16 @@ function getOpacityScale(options, maxValue, minValue = 0) {
 function getSvgElemX(elem) {
   let svgElem = elem.get(0);
   if (svgElem && svgElem.x && svgElem.x.baseVal) {
-    return elem.get(0).x.baseVal.value;
+    return svgElem.x.baseVal.value;
+  } else {
+    return 0;
+  }
+}
+
+function getSvgElemHeight(elem) {
+  let svgElem = elem.get(0);
+  if (svgElem && svgElem.height && svgElem.height.baseVal) {
+    return svgElem.height.baseVal.value;
   } else {
     return 0;
   }

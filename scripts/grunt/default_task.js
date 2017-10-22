@@ -14,6 +14,7 @@ module.exports = function(grunt) {
     'jshint',
     'sasslint',
     'exec:tslint',
+    "exec:jest",
     'karma:test',
     'no-only-tests'
   ]);
