@@ -103,7 +103,7 @@
     "lint": "./node_modules/.bin/tslint -c tslint.json --project tsconfig.json --type-check",
     "karma": "./node_modules/grunt-cli/bin/grunt karma:dev",
     "jest": "./node_modules/jest-cli/bin/jest.js --notify --watch",
-    "precommit": "grunt precommit"
+    "precommit": "./node_modules/grunt-cli/bin/grunt precommit"
   },
   "license": "Apache-2.0",
   "dependencies": {
