@@ -21,11 +21,8 @@ const template = `
     <div class="query-troubleshooter-json"></div>
   </div>
   <div class="query-troubleshooter__body" ng-show="ctrl.isMocking">
-    <div class="gf-form p-l-1">
-      <div class="gf-form gf-form--v-stretch">
-				<span class="gf-form-label width-10">Response JSON</span>
-				<textarea class="gf-form-input width-25" rows="10" ng-model="ctrl.mockedResponse"  placeholder="JSON"></textarea>
-			</div>
+    <div class="gf-form p-l-1 gf-form--v-stretch">
+			<textarea class="gf-form-input" style="width: 95%" rows="10" ng-model="ctrl.mockedResponse"  placeholder="JSON"></textarea>
     </div>
   </div>
 </div>

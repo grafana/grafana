@@ -1,5 +1,3 @@
-///<reference path="../headers/common.d.ts" />
-
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 
@@ -23,6 +21,7 @@ export default class TimeSeries {
   id: string;
   label: string;
   alias: string;
+  aliasEscaped: string;
   color: string;
   valueFormater: any;
   stats: any;
@@ -52,6 +51,7 @@ export default class TimeSeries {
     this.label = opts.alias;
     this.id = opts.alias;
     this.alias = opts.alias;
+    this.aliasEscaped = _.escape(opts.alias);
     this.color = opts.color;
     this.valueFormater = kbn.valueFormats.none;
     this.stats = {};
