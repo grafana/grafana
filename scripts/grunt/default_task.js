@@ -22,7 +22,6 @@ module.exports = function(grunt) {
   grunt.registerTask('precommit', [
     'sasslint',
     'exec:tslint',
-    "exec:jest",
     'no-only-tests'
   ]);
 
