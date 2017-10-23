@@ -1,5 +1,3 @@
-import {describe, beforeEach, it, expect} from 'test/lib/common';
-
 import {makeRegions, dedupAnnotations} from '../events_processing';
 
 describe('Annotations', () => {

@@ -1,14 +1,15 @@
-// +build darwin freebsd openbsd netbsd dragonfly
-// +build !appengine
+// +build linux
+// +build ppc64 ppc64le
 
 package isatty
 
 import (
-	"syscall"
 	"unsafe"
+
+	syscall "golang.org/x/sys/unix"
 )
 
-const ioctlReadTermios = syscall.TIOCGETA
+const ioctlReadTermios = syscall.TCGETS
 
 // IsTerminal return true if the file descriptor is terminal.
 func IsTerminal(fd uintptr) bool {

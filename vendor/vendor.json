@@ -443,10 +443,10 @@
 			"revisionTime": "2016-12-15T22:53:35Z"
 		},
 		{
-			"checksumSHA1": "mrmfY0cVu7jvgoIuTRaR8yVVh/M=",
+			"checksumSHA1": "W7WyVSrJNaQNQt2R9O4DxrK58cs=",
 			"path": "github.com/inconshreveable/log15",
-			"revision": "39bacc234bf1afd0b68573e95b45871f67ba2cd4",
-			"revisionTime": "2017-02-16T22:56:31Z"
+			"revision": "0decfc6c20d9ca0ad143b0e89dcaa20f810b4fb3",
+			"revisionTime": "2016-11-12T20:41:34Z"
 		},
 		{
 			"checksumSHA1": "oVIIInZXKkcRozJfuH2vWJsAS7s=",
@@ -468,24 +468,28 @@
 		},
 		{
 			"checksumSHA1": "jaCQF1par6Jl8g+V2Cgp0n/0wSc=",
-			"origin": "github.com/grafana/grafana/vendor/github.com/lib/pq/hstore",
 			"path": "github.com/lib/pq/hstore",
 			"revision": "23da1db4f16d9658a86ae9b717c245fc078f10f1",
 			"revisionTime": "2017-09-18T17:50:43Z"
 		},
 		{
 			"checksumSHA1": "mJHrY33tDs2MRhHt+XunkRF/5ek=",
-			"origin": "github.com/grafana/grafana/vendor/github.com/lib/pq/listen_example",
 			"path": "github.com/lib/pq/listen_example",
 			"revision": "23da1db4f16d9658a86ae9b717c245fc078f10f1",
 			"revisionTime": "2017-09-18T17:50:43Z"
 		},
 		{
 			"checksumSHA1": "AU3fA8Sm33Vj9PBoRPSeYfxLRuE=",
-			"origin": "github.com/grafana/grafana/vendor/github.com/lib/pq/oid",
 			"path": "github.com/lib/pq/oid",
 			"revision": "23da1db4f16d9658a86ae9b717c245fc078f10f1",
 			"revisionTime": "2017-09-18T17:50:43Z"
+		},
+		{
+			"checksumSHA1": "y/A5iuvwjytQE2CqVuphQRXR2nI=",
+			"origin": "github.com/grafana/grafana/vendor/github.com/mattn/go-isatty",
+			"path": "github.com/mattn/go-isatty",
+			"revision": "a5cdd64afdee435007ee3e9f6ed4684af949d568",
+			"revisionTime": "2017-09-25T05:49:04Z"
 		},
 		{
 			"checksumSHA1": "bKMZjd2wPw13VwoE7mBeSv5djFA=",
