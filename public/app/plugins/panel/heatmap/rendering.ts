@@ -4,9 +4,12 @@ import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import {appEvents, contextSrv} from 'app/core/core';
 import {tickStep, getScaledDecimals, getFlotTickSize} from 'app/core/utils/ticks';
-import d3 from 'vendor/d3/d3';
 import {HeatmapTooltip} from './heatmap_tooltip';
 import {mergeZeroBuckets} from './heatmap_data_converter';
+
+import * as d3Core from 'd3';
+import * as d3ScaleChromatic from 'd3-scale-chromatic';
+let d3 = Object.assign({}, d3Core, d3ScaleChromatic);
 
 let MIN_CARD_SIZE = 1,
     CARD_PADDING = 1,
@@ -422,8 +425,8 @@ export default function link(scope, elem, attrs, ctrl) {
     let strokeColor = d3.color(color).brighter(4);
     let current_card = d3.select(event.target);
     tooltip.originalFillColor = color;
-    current_card.style("fill", highlightColor)
-    .style("stroke", strokeColor)
+    current_card.style("fill", highlightColor.toString())
+    .style("stroke", strokeColor.toString())
     .style("stroke-width", 1);
   }
 

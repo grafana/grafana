@@ -1,9 +1,12 @@
 import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
-import d3 from 'vendor/d3/d3';
 import {contextSrv} from 'app/core/core';
 import {tickStep} from 'app/core/utils/ticks';
+
+import * as d3Core from 'd3';
+import * as d3ScaleChromatic from 'd3-scale-chromatic';
+let d3 = Object.assign({}, d3Core, d3ScaleChromatic);
 
 let module = angular.module('grafana.directives');
 
