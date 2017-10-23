@@ -1,4 +1,4 @@
-import * as d3 from 'd3';
+import * as d3Scale from 'd3-scale';
 import * as d3ScaleChromatic from 'd3-scale-chromatic';
 
 export function getColorScale(colorScheme: any, lightTheme: boolean, maxValue: number, minValue = 0): (d: any) => any {
@@ -9,17 +9,17 @@ export function getColorScale(colorScheme: any, lightTheme: boolean, maxValue: n
   let start = colorScaleInverted ? maxValue : minValue;
   let end = colorScaleInverted ? minValue : maxValue;
 
-  return d3.scaleSequential(colorInterpolator).domain([start, end]);
+  return d3Scale.scaleSequential(colorInterpolator).domain([start, end]);
 }
 
 export function getOpacityScale(options, maxValue, minValue = 0) {
   let legendOpacityScale;
   if (options.colorScale === 'linear') {
-    legendOpacityScale = d3.scaleLinear()
+    legendOpacityScale = d3Scale.scaleLinear()
     .domain([minValue, maxValue])
     .range([0, 1]);
   } else if (options.colorScale === 'sqrt') {
-    legendOpacityScale = d3.scalePow().exponent(options.exponent)
+    legendOpacityScale = d3Scale.scalePow().exponent(options.exponent)
     .domain([minValue, maxValue])
     .range([0, 1]);
   }

@@ -130,7 +130,12 @@
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop",
     "tinycolor2": "^1.4.1",
-    "d3": "^4.11.0",
-    "d3-scale-chromatic": "^1.1.1"
+    "d3-array": "^1.2.1",
+    "d3-axis": "^1.0.8",
+    "d3-color": "^1.0.3",
+    "d3-scale": "^1.0.6",
+    "d3-selection": "^1.1.0",
+    "d3-scale-chromatic": "^1.1.1",
+    "d3-time-format": "^2.1.0"
   }
 }
