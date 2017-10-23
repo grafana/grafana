@@ -9,6 +9,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/services/provisioning"
+
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -23,7 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	datasourcesFromConfig "github.com/grafana/grafana/pkg/setting/datasources"
+
 	"github.com/grafana/grafana/pkg/social"
 	"github.com/grafana/grafana/pkg/tracing"
 )
@@ -56,17 +59,18 @@ func (g *GrafanaServerImpl) Start() {
 	g.writePIDFile()
 
 	initSql()
-	err := datasourcesFromConfig.Apply(filepath.Join(setting.HomePath, "conf/datasources.yaml"))
-	if err != nil {
-		g.log.Error("Failed to configure datasources from config", "error", err)
-		g.Shutdown(1, "Startup failed")
-		return
-	}
+
 	metrics.Init(setting.Cfg)
 	search.Init()
 	login.Init()
 	social.NewOAuthService()
 	plugins.Init()
+
+	if err := provisioning.StartUp(setting.HomePath); err != nil {
+		logger.Error("Failed to provision Grafana from config", "error", err)
+		g.Shutdown(1, "Startup failed")
+		return
+	}
 
 	closer, err := tracing.Init(setting.Cfg)
 	if err != nil {
