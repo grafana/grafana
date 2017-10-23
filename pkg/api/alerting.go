@@ -22,8 +22,7 @@ func ValidateOrgAlert(c *middleware.Context) {
 	if c.OrgId != query.Result.OrgId {
 		c.JsonApiErr(403, "You are not allowed to edit/view alert", nil)
 		return
-		}
-
+	}
 }
 
 func GetAlertStatesForDashboard(c *middleware.Context) Response {
