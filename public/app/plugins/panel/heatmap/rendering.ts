@@ -1,12 +1,13 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import moment from 'moment';
+import * as d3 from 'd3';
 import kbn from 'app/core/utils/kbn';
 import {appEvents, contextSrv} from 'app/core/core';
 import {tickStep, getScaledDecimals, getFlotTickSize} from 'app/core/utils/ticks';
-import d3 from 'vendor/d3/d3';
 import {HeatmapTooltip} from './heatmap_tooltip';
 import {mergeZeroBuckets} from './heatmap_data_converter';
+import {getColorScale, getOpacityScale} from './color_scale';
 
 let MIN_CARD_SIZE = 1,
     CARD_PADDING = 1,
@@ -386,8 +387,9 @@ export default function link(scope, elem, attrs, ctrl) {
     let maxValue = panel.color.max || maxValueAuto;
     let minValue = panel.color.min || 0;
 
-    colorScale = getColorScale(maxValue, minValue);
-    setOpacityScale(maxValue);
+    let colorScheme = _.find(ctrl.colorSchemes, {value: panel.color.colorScheme});
+    colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme,  maxValue, minValue);
+    opacityScale = getOpacityScale(panel.color, maxValue);
     setCardSize();
 
     let cards = heatmap.selectAll(".heatmap-card").data(cardsData);
@@ -422,8 +424,8 @@ export default function link(scope, elem, attrs, ctrl) {
     let strokeColor = d3.color(color).brighter(4);
     let current_card = d3.select(event.target);
     tooltip.originalFillColor = color;
-    current_card.style("fill", highlightColor)
-    .style("stroke", strokeColor)
+    current_card.style("fill", highlightColor.toString())
+    .style("stroke", strokeColor.toString())
     .style("stroke-width", 1);
   }
 
@@ -431,30 +433,6 @@ export default function link(scope, elem, attrs, ctrl) {
     d3.select(event.target).style("fill", tooltip.originalFillColor)
     .style("stroke", tooltip.originalFillColor)
     .style("stroke-width", 0);
-  }
-
-  function getColorScale(maxValue, minValue = 0) {
-    let colorScheme = _.find(ctrl.colorSchemes, {value: panel.color.colorScheme});
-    let colorInterpolator = d3[colorScheme.value];
-    let colorScaleInverted = colorScheme.invert === 'always' ||
-      (colorScheme.invert === 'dark' && !contextSrv.user.lightTheme);
-
-    let start = colorScaleInverted ? maxValue : minValue;
-    let end = colorScaleInverted ? minValue : maxValue;
-
-    return d3.scaleSequential(colorInterpolator).domain([start, end]);
-  }
-
-  function setOpacityScale(maxValue) {
-    if (panel.color.colorScale === 'linear') {
-      opacityScale = d3.scaleLinear()
-      .domain([0, maxValue])
-      .range([0, 1]);
-    } else if (panel.color.colorScale === 'sqrt') {
-      opacityScale = d3.scalePow().exponent(panel.color.exponent)
-      .domain([0, maxValue])
-      .range([0, 1]);
-    }
   }
 
   function setCardSize() {
