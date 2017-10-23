@@ -88,9 +88,11 @@ func main() {
 	server.Start()
 }
 
-func initSql() {
+func initSql() (string) {
 	sqlstore.NewEngine()
 	sqlstore.EnsureAdminUser()
+
+	return sqlstore.ConnString()
 }
 
 func listenToSystemSignals(server models.GrafanaServer) {

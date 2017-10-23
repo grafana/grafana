@@ -585,7 +585,6 @@ func NewConfigContext(args *CommandLineArgs) error {
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
 
-	readSessionConfig()
 	readSmtpSettings()
 	readQuotaSettings()
 
@@ -604,16 +603,25 @@ func NewConfigContext(args *CommandLineArgs) error {
 	return nil
 }
 
-func readSessionConfig() {
+func ReadSessionConfig(connStr string) {
 	sec := Cfg.Section("session")
 	SessionOptions = session.Options{}
 	SessionOptions.Provider = sec.Key("provider").In("memory", []string{"memory", "file", "redis", "mysql", "postgres", "memcache"})
-	SessionOptions.ProviderConfig = strings.Trim(sec.Key("provider_config").String(), "\" ")
+	providerCfg := sec.Key("provider_config").String()
+
+	// if supported database is set as provider and config is left as default, use the already-configured database
+	if inSlice(SessionOptions.Provider, []string{"mysql", "postgres"}) && providerCfg == "sessions" {
+		logger.Info("Using configured database as session store")
+		SessionOptions.ProviderConfig = connStr
+	} else {
+		SessionOptions.ProviderConfig = strings.Trim(providerCfg, "\" ")
+	}
+
 	SessionOptions.CookieName = sec.Key("cookie_name").MustString("grafana_sess")
 	SessionOptions.CookiePath = AppSubUrl
 	SessionOptions.Secure = sec.Key("cookie_secure").MustBool()
-	SessionOptions.Gclifetime = Cfg.Section("session").Key("gc_interval_time").MustInt64(86400)
-	SessionOptions.Maxlifetime = Cfg.Section("session").Key("session_life_time").MustInt64(86400)
+	SessionOptions.Gclifetime = sec.Key("gc_interval_time").MustInt64(86400)
+	SessionOptions.Maxlifetime = sec.Key("session_life_time").MustInt64(86400)
 	SessionOptions.IDLength = 16
 
 	if SessionOptions.Provider == "file" {
@@ -662,4 +670,13 @@ func LogConfigurationInfo() {
 	logger.Info("Path Logs", "path", LogsPath)
 	logger.Info("Path Plugins", "path", PluginsPath)
 	logger.Info("App mode " + Env)
+}
+
+func inSlice(str string, s []string) bool {
+  for _, v := range s {
+    if str == v {
+      return true
+    }
+  }
+  return false
 }

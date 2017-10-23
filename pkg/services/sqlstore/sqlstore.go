@@ -25,6 +25,7 @@ import (
 
 type DatabaseConfig struct {
 	Type, Host, Name, User, Pwd, Path, SslMode string
+	ConnString                                 string
 	CaCertPath                                 string
 	ClientKeyPath                              string
 	ClientCertPath                             string
@@ -106,7 +107,6 @@ func SetEngine(engine *xorm.Engine) (err error) {
 func getEngine() (*xorm.Engine, error) {
 	LoadConfig()
 
-	cnnstr := ""
 	switch DbCfg.Type {
 	case "mysql":
 		protocol := "tcp"
@@ -114,7 +114,7 @@ func getEngine() (*xorm.Engine, error) {
 			protocol = "unix"
 		}
 
-		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
+		DbCfg.ConnString = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
 			DbCfg.User, DbCfg.Pwd, protocol, DbCfg.Host, DbCfg.Name)
 
 		if DbCfg.SslMode == "true" || DbCfg.SslMode == "skip-verify" {
@@ -123,7 +123,7 @@ func getEngine() (*xorm.Engine, error) {
 				return nil, err
 			}
 			mysql.RegisterTLSConfig("custom", tlsCert)
-			cnnstr += "&tls=custom"
+			DbCfg.ConnString += "&tls=custom"
 		}
 	case "postgres":
 		var host, port = "127.0.0.1", "5432"
@@ -140,19 +140,19 @@ func getEngine() (*xorm.Engine, error) {
 		if DbCfg.User == "" {
 			DbCfg.User = "''"
 		}
-		cnnstr = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", DbCfg.User, DbCfg.Pwd, host, port, DbCfg.Name, DbCfg.SslMode, DbCfg.ClientCertPath, DbCfg.ClientKeyPath, DbCfg.CaCertPath)
+		DbCfg.ConnString = fmt.Sprintf("user=%s password=%s host=%s port=%s dbname=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s", DbCfg.User, DbCfg.Pwd, host, port, DbCfg.Name, DbCfg.SslMode, DbCfg.ClientCertPath, DbCfg.ClientKeyPath, DbCfg.CaCertPath)
 	case "sqlite3":
 		if !filepath.IsAbs(DbCfg.Path) {
 			DbCfg.Path = filepath.Join(setting.DataPath, DbCfg.Path)
 		}
 		os.MkdirAll(path.Dir(DbCfg.Path), os.ModePerm)
-		cnnstr = "file:" + DbCfg.Path + "?cache=shared&mode=rwc"
+		DbCfg.ConnString = "file:" + DbCfg.Path + "?cache=shared&mode=rwc"
 	default:
 		return nil, fmt.Errorf("Unknown database type: %s", DbCfg.Type)
 	}
 
 	sqlog.Info("Initializing DB", "dbtype", DbCfg.Type)
-	engine, err := xorm.NewEngine(DbCfg.Type, cnnstr)
+	engine, err := xorm.NewEngine(DbCfg.Type, DbCfg.ConnString)
 	if err != nil {
 		return nil, err
 	} else {
@@ -209,4 +209,8 @@ func LoadConfig() {
 	DbCfg.ClientCertPath = sec.Key("client_cert_path").String()
 	DbCfg.ServerCertName = sec.Key("server_cert_name").String()
 	DbCfg.Path = sec.Key("path").MustString("data/grafana.db")
+}
+
+func ConnString() (string) {
+  return DbCfg.ConnString
 }
