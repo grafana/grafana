@@ -226,7 +226,8 @@ class NetCrunchConnection {
 
     function tryAuthenticate(userName, password, attempt) {           // eslint-disable-line
       return new Promise((resolve, reject) => {
-        netCrunchClient.login(userName, password, (status) => {
+        const applicationLogin = JSON.stringify({ user: userName, application: 'GrafCrunch' });
+        netCrunchClient.login(applicationLogin, password, (status) => {
           if (status === true) {
             resolve();
           } else if (attempt > 1) {

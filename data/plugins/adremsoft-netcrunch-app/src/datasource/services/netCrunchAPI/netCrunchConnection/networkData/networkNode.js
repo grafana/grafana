@@ -111,7 +111,7 @@ class NetCrunchNetworkNode {
   }
 
   static getIconUrl(iconId, serverConnection) {
-    const iconUrl = serverConnection.ncSrv.IMapIcons.GetIcon.asURL(iconId, ICON_SIZE);
+    const iconUrl = serverConnection.ncSrv.IMapIcons.GetIcon.asURL(iconId, ICON_SIZE, 'ok');
     return serverConnection.Client.urlFilter(iconUrl);
   }
 
