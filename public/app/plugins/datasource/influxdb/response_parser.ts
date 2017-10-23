@@ -13,24 +13,25 @@ export default class ResponseParser {
     }
 
     var influxdb11format = query.toLowerCase().indexOf('show tag values') >= 0;
+    var isSelectQuery = query.toLowerCase().trim().indexOf('select') === 0;
 
     var res = {};
     _.each(influxResults.series, serie => {
       _.each(serie.values, value => {
-        if (_.isArray(value)) {
-          if (influxdb11format) {
-            addUnique(res, value[1] || value[0]);
-          } else {
-            addUnique(res, value[0]);
-          }
+      if (_.isArray(value)) {
+        if (influxdb11format || isSelectQuery) {
+          addUnique(res, value[1] || value[0]);
         } else {
+          addUnique(res, value[0]);
+        }
+      } else {
           addUnique(res, value);
         }
       });
     });
 
     return _.map(res, value => {
-      return { text: value};
+      return { text: value };
     });
   }
 }
