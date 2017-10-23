@@ -116,7 +116,10 @@ function drawOpacityLegend(elem, options, rangeFrom, rangeTo, maxValue, minValue
   let legendWidth = Math.floor(legendElem.outerWidth()) - 30;
   let legendHeight = legendElem.attr("height");
 
-  let rangeStep = 10;
+  let rangeStep = 1;
+  if (rangeTo - rangeFrom > legendWidth) {
+    rangeStep = Math.floor((rangeTo - rangeFrom) / legendWidth);
+  }
   let widthFactor = legendWidth / (rangeTo - rangeFrom);
   let valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
