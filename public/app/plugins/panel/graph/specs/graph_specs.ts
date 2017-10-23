@@ -75,7 +75,7 @@ describe('grafanaGraph', function() {
             alias: 'series1'
           }));
           ctx.data.push(new TimeSeries({
-            datapoints: [[1,10],[2,20]],
+            datapoints: [[10,1],[20,2]],
             alias: 'series2'
           }));
 
@@ -112,52 +112,67 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('sort series as legend', (ctx) => {
-    describe("with sort as legend undefined", () => {
-      ctx.setup((ctrl) => {
-        ctrl.panel.legend.sort = undefined;
-      });
-
-      it("should not modify order of time series", () => {
-        expect(ctx.plotData[0].alias).to.be('series1');
-        expect(ctx.plotData[1].alias).to.be('series2');
-      });
+  graphScenario('sorting stacked series as legend. disabled', (ctx) => {
+    ctx.setup((ctrl) => {
+      ctrl.panel.legend.sort = undefined;
+      ctrl.panel.stack = false;
     });
 
-    describe("with sort as legend set to min. descending order", () => {
-      ctx.setup((ctrl) => {
-        ctrl.panel.legend.sort = 'min';
-        ctrl.panel.legend.sortDesc = true;
-      });
+    it("should not modify order of time series", () => {
+      expect(ctx.plotData[0].alias).to.be('series1');
+      expect(ctx.plotData[1].alias).to.be('series2');
+    });
+  });
 
-      it("highest value should be first", () => {
-        expect(ctx.plotData[1].alias).to.be('series2');
-        expect(ctx.plotData[0].alias).to.be('series1');
-      });
+  graphScenario("sorting stacked series as legend. min descending order", (ctx) => {
+    ctx.setup(ctrl => {
+      ctrl.panel.legend.sort = 'min';
+      ctrl.panel.legend.sortDesc = true;
+      ctrl.panel.stack = true;
     });
 
-    describe("with sort as legend set to min. ascending order", () => {
-      ctx.setup((ctrl) => {
-        ctrl.panel.legend.sort = 'min';
-        ctrl.panel.legend.sortDesc = true;
-      });
+    it("highest value should be first", () => {
+      expect(ctx.plotData[0].alias).to.be('series2');
+      expect(ctx.plotData[1].alias).to.be('series1');
+    });
+  });
 
-      it("lowest value should be first", () => {
-        expect(ctx.plotData[0].alias).to.be('series1');
-        expect(ctx.plotData[1].alias).to.be('series2');
-      });
+  graphScenario("sorting stacked series as legend. min ascending order", (ctx) => {
+    ctx.setup((ctrl, data) => {
+      ctrl.panel.legend.sort = 'min';
+      ctrl.panel.legend.sortDesc = false;
+      ctrl.panel.stack = true;
     });
 
-    describe("with sort as legend set to current. ascending order", () => {
-      ctx.setup((ctrl) => {
-        ctrl.panel.legend.sort = 'current';
-        ctrl.panel.legend.sortDesc = false;
-      });
+    it("lowest value should be first", () => {
+      expect(ctx.plotData[0].alias).to.be('series1');
+      expect(ctx.plotData[1].alias).to.be('series2');
+    });
+  });
 
-      it("highest last value should be first", () => {
-        expect(ctx.plotData[1].alias).to.be('series2');
-        expect(ctx.plotData[0].alias).to.be('series1');
-      });
+  graphScenario("sorting stacked series as legend. stacking disabled", (ctx) => {
+    ctx.setup((ctrl) => {
+      ctrl.panel.legend.sort = 'min';
+      ctrl.panel.legend.sortDesc = true;
+      ctrl.panel.stack = false;
+    });
+
+    it("highest value should be first", () => {
+      expect(ctx.plotData[0].alias).to.be('series1');
+      expect(ctx.plotData[1].alias).to.be('series2');
+    });
+  });
+
+  graphScenario("sorting stacked series as legend. current descending order", (ctx) => {
+    ctx.setup((ctrl) => {
+      ctrl.panel.legend.sort = 'current';
+      ctrl.panel.legend.sortDesc = true;
+      ctrl.panel.stack = true;
+    });
+
+    it("highest last value should be first", () => {
+      expect(ctx.plotData[0].alias).to.be('series2');
+      expect(ctx.plotData[1].alias).to.be('series1');
     });
   });
 
@@ -300,7 +315,7 @@ describe('grafanaGraph', function() {
     });
 
     it('should set barWidth', function() {
-      expect(ctx.plotOptions.series.bars.barWidth).to.be(10/1.5);
+      expect(ctx.plotOptions.series.bars.barWidth).to.be(1/1.5);
     });
   });
 
