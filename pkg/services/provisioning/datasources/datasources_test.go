@@ -3,6 +3,7 @@ package datasources
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 
@@ -16,15 +17,23 @@ var (
 	twoDatasourcesConfigPurgeOthers string     = "./test-configs/two-datasources-purge-others.yaml"
 	doubleDatasourcesConfig         string     = "./test-configs/double-default-datasources.yaml"
 	allProperties                   string     = "./test-configs/all-properties.yaml"
+
+	fakeRepo *fakeRepository
 )
 
 func TestDatasourceAsConfig(t *testing.T) {
 	Convey("Testing datasource as configuration", t, func() {
-		fakeRepo := &fakeRepository{}
+		fakeRepo = &fakeRepository{}
+		bus.ClearBusHandlers()
+		bus.AddHandler("test", mockDelete)
+		bus.AddHandler("test", mockInsert)
+		bus.AddHandler("test", mockUpdate)
+		bus.AddHandler("test", mockGet)
+		bus.AddHandler("test", mockGetAll)
 
 		Convey("One configured datasource", func() {
 			Convey("no datasource in database", func() {
-				dc := newDatasourceConfiguration(logger, fakeRepo)
+				dc := newDatasourceConfiguration(logger)
 				err := dc.applyChanges(twoDatasourcesConfig)
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
@@ -41,7 +50,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 				}
 
 				Convey("should update one datasource", func() {
-					dc := newDatasourceConfiguration(logger, fakeRepo)
+					dc := newDatasourceConfiguration(logger)
 					err := dc.applyChanges(twoDatasourcesConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
@@ -54,7 +63,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 			})
 
 			Convey("Two datasources with is_default", func() {
-				dc := newDatasourceConfiguration(logger, fakeRepo)
+				dc := newDatasourceConfiguration(logger)
 				err := dc.applyChanges(doubleDatasourcesConfig)
 				Convey("should raise error", func() {
 					So(err, ShouldEqual, ErrInvalidConfigToManyDefault)
@@ -70,7 +79,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 				}
 
 				Convey("should have two new datasources", func() {
-					dc := newDatasourceConfiguration(logger, fakeRepo)
+					dc := newDatasourceConfiguration(logger)
 					err := dc.applyChanges(twoDatasourcesConfigPurgeOthers)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
@@ -91,7 +100,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 				}
 
 				Convey("should have two new datasources", func() {
-					dc := newDatasourceConfiguration(logger, fakeRepo)
+					dc := newDatasourceConfiguration(logger)
 					err := dc.applyChanges(twoDatasourcesConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
@@ -140,27 +149,28 @@ type fakeRepository struct {
 	loadAll []*models.DataSource
 }
 
-func (fc *fakeRepository) delete(cmd *models.DeleteDataSourceByIdCommand) error {
-	fc.deleted = append(fc.deleted, cmd)
+func mockDelete(cmd *models.DeleteDataSourceByIdCommand) error {
+	fakeRepo.deleted = append(fakeRepo.deleted, cmd)
 	return nil
 }
 
-func (fc *fakeRepository) update(cmd *models.UpdateDataSourceCommand) error {
-	fc.updated = append(fc.updated, cmd)
+func mockUpdate(cmd *models.UpdateDataSourceCommand) error {
+	fakeRepo.updated = append(fakeRepo.updated, cmd)
 	return nil
 }
 
-func (fc *fakeRepository) insert(cmd *models.AddDataSourceCommand) error {
-	fc.inserted = append(fc.inserted, cmd)
+func mockInsert(cmd *models.AddDataSourceCommand) error {
+	fakeRepo.inserted = append(fakeRepo.inserted, cmd)
 	return nil
 }
 
-func (fc *fakeRepository) loadAllDatasources() ([]*models.DataSource, error) {
-	return fc.loadAll, nil
+func mockGetAll(cmd *models.GetAllDataSourcesQuery) error {
+	cmd.Result = fakeRepo.loadAll
+	return nil
 }
 
-func (fc *fakeRepository) get(cmd *models.GetDataSourceByNameQuery) error {
-	for _, v := range fc.loadAll {
+func mockGet(cmd *models.GetDataSourceByNameQuery) error {
+	for _, v := range fakeRepo.loadAll {
 		if cmd.Name == v.Name && cmd.OrgId == v.OrgId {
 			cmd.Result = v
 			return nil
