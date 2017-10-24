@@ -106,6 +106,7 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			Created:           time.Now(),
 			Updated:           time.Now(),
 			Version:           1,
+			ReadOnly:          cmd.ReadOnly,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -151,6 +152,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			JsonData:          cmd.JsonData,
 			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
 			Updated:           time.Now(),
+			ReadOnly:          cmd.ReadOnly,
 			Version:           cmd.Version + 1,
 		}
 

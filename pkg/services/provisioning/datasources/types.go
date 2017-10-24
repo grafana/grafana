@@ -50,6 +50,7 @@ func createInsertCommand(ds DataSourceFromConfig) *models.AddDataSourceCommand {
 		IsDefault:         ds.IsDefault,
 		JsonData:          jsonData,
 		SecureJsonData:    ds.SecureJsonData,
+		ReadOnly:          true,
 	}
 }
 
@@ -76,5 +77,6 @@ func createUpdateCommand(ds DataSourceFromConfig, id int64) *models.UpdateDataSo
 		IsDefault:         ds.IsDefault,
 		JsonData:          jsonData,
 		SecureJsonData:    ds.SecureJsonData,
+		ReadOnly:          true,
 	}
 }

@@ -149,6 +149,10 @@ export class DataSourceEditCtrl {
       return;
     }
 
+    if (this.current.readOnly) {
+      return;
+    }
+
     if (this.current.id) {
       return this.backendSrv.put('/api/datasources/' + this.current.id, this.current).then((result) => {
         this.current = result.datasource;
