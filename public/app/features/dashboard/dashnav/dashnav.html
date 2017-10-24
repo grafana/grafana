@@ -23,32 +23,33 @@
 		</ul>
 
 		<ul class="nav dashnav-action-icons">
-		<!-- 	<li ng&#45;show="::ctrl.dashboard.meta.canShare" class="dropdown"> -->
-		<!-- 		<a class="pointer" ng&#45;click="ctrl.hideTooltip($event)" bs&#45;tooltip="'Share dashboard'" data&#45;placement="bottom" data&#45;toggle="dropdown"><i class="fa fa&#45;share&#45;square&#45;o"></i></a> -->
-		<!-- 		<ul class="dropdown&#45;menu"> -->
-		<!-- 			<li> -->
-		<!-- 				<a class="pointer" ng&#45;click="ctrl.shareDashboard(0)"> -->
-		<!-- 					<i class="fa fa&#45;link"></i> Link to Dashboard -->
-		<!-- 					<div class="dropdown&#45;desc">Share an internal link to the current dashboard. Some configuration options available.</div> -->
-		<!-- 				</a> -->
-		<!-- 			</li> -->
-		<!-- 			<li> -->
-		<!-- 				<a class="pointer" ng&#45;click="ctrl.shareDashboard(1)"> -->
-		<!-- 					<i class="icon&#45;gf icon&#45;gf&#45;snapshot"></i>Snapshot -->
-		<!-- 					<div class="dropdown&#45;desc">Interactive, publically accessible dashboard. Sensitive data is stripped out.</div> -->
-		<!-- 				</a> -->
-		<!-- 			</li> -->
-		<!-- 			<li> -->
-		<!-- 				<a class="pointer" ng&#45;click="ctrl.shareDashboard(2)"> -->
-		<!-- 					<i class="fa fa&#45;cloud&#45;upload"></i>Export -->
-		<!-- 					<div class="dropdown&#45;desc">Export the dashboard to a JSON file for others and to share on Grafana.com</div> -->
-		<!-- 				</a> -->
-		<!-- 			</li> -->
-		<!-- 		</ul> -->
-		<!-- 	</li> -->
-		<!-- 	<li ng&#45;show="::ctrl.dashboard.meta.canSave"> -->
-		<!-- 		<a ng&#45;click="ctrl.saveDashboard()" bs&#45;tooltip="'Save dashboard <br> CTRL+S'" data&#45;placement="bottom"><i class="fa fa&#45;save"></i></a> -->
-		<!-- 	</li> -->
+			<li ng-show="::ctrl.dashboard.meta.canShare" class="dropdown">
+				<a class="pointer" ng-click="ctrl.hideTooltip($event)" bs-tooltip="'Share dashboard'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-share-square-o"></i></a>
+				<ul class="dropdown-menu">
+					<li>
+						<a class="pointer" ng-click="ctrl.shareDashboard(0)">
+							<i class="fa fa-link"></i> Link to Dashboard
+							<div class="dropdown-desc">Share an internal link to the current dashboard. Some configuration options available.</div>
+						</a>
+					</li>
+					<li>
+						<a class="pointer" ng-click="ctrl.shareDashboard(1)">
+							<i class="icon-gf icon-gf-snapshot"></i>Snapshot
+							<div class="dropdown-desc">Interactive, publically accessible dashboard. Sensitive data is stripped out.</div>
+						</a>
+					</li>
+					<li>
+						<a class="pointer" ng-click="ctrl.shareDashboard(2)">
+							<i class="fa fa-cloud-upload"></i>Export
+							<div class="dropdown-desc">Export the dashboard to a JSON file for others and to share on Grafana.com</div>
+						</a>
+					</li>
+				</ul>
+			</li>
+
+			<li ng-show="::ctrl.dashboard.meta.canSave">
+				<a ng-click="ctrl.saveDashboard()" bs-tooltip="'Save dashboard <br> CTRL+S'" data-placement="bottom"><i class="fa fa-save"></i></a>
+			</li>
 
 			<li ng-if="::ctrl.dashboard.snapshot.originalUrl">
 				<a ng-href="{{ctrl.dashboard.snapshot.originalUrl}}" bs-tooltip="'Open original dashboard'" data-placement="bottom"><i class="fa fa-link"></i></a>

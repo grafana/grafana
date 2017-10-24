@@ -2,6 +2,10 @@ import _ from 'lodash';
 import {DashboardModel} from '../dashboard_model';
 import {PanelModel} from '../panel_model';
 
+jest.mock('app/core/services/context_srv', () => ({
+
+}));
+
 describe('DashboardModel', function() {
 
   describe('when creating new dashboard model defaults only', function() {
@@ -69,7 +73,7 @@ describe('DashboardModel', function() {
       dashboard.addPanel(panel);
       dashboard.duplicatePanel(dashboard.panels[0]);
 
-      expect(dashboard.panels[1].gridPos).to.eql({x: 6, y: 0, h: 2, w: 6});
+      expect(dashboard.panels[1].gridPos).toMatchObject({x: 6, y: 0, h: 2, w: 6});
     });
 
     it('duplicate panel should remove repeat data', function() {
@@ -414,7 +418,7 @@ describe('DashboardModel', function() {
     });
   });
 
-  describe('given dashboard with panel repeat in horizontal direction', function(ctx) {
+  describe('given dashboard with panel repeat in horizontal direction', function() {
     var dashboard;
 
     beforeEach(function() {
@@ -455,9 +459,9 @@ describe('DashboardModel', function() {
     });
 
     it('should place on first row and adjust width so all fit', function() {
-      expect(dashboard.panels[0].gridPos).to.eql({x: 0, y: 0, h: 2, w: 8});
-      expect(dashboard.panels[1].gridPos).to.eql({x: 8, y: 0, h: 2, w: 8});
-      expect(dashboard.panels[2].gridPos).to.eql({x: 16, y: 0, h: 2, w: 8});
+      expect(dashboard.panels[0].gridPos).toMatchObject({x: 0, y: 0, h: 2, w: 8});
+      expect(dashboard.panels[1].gridPos).toMatchObject({x: 8, y: 0, h: 2, w: 8});
+      expect(dashboard.panels[2].gridPos).toMatchObject({x: 16, y: 0, h: 2, w: 8});
     });
 
     describe('After a second iteration', function() {
@@ -526,7 +530,7 @@ describe('DashboardModel', function() {
 
   });
 
-  describe('given dashboard with panel repeat in vertical direction', function(ctx) {
+  describe('given dashboard with panel repeat in vertical direction', function() {
     var dashboard;
 
     beforeEach(function() {
@@ -552,13 +556,13 @@ describe('DashboardModel', function() {
     });
 
     it('should place on items on top of each other and keep witdh', function() {
-      expect(dashboard.panels[0].gridPos).to.eql({x: 5, y: 0, h: 2, w: 8});
-      expect(dashboard.panels[1].gridPos).to.eql({x: 5, y: 2, h: 2, w: 8});
-      expect(dashboard.panels[2].gridPos).to.eql({x: 5, y: 4, h: 2, w: 8});
+      expect(dashboard.panels[0].gridPos).toMatchObject({x: 5, y: 0, h: 2, w: 8});
+      expect(dashboard.panels[1].gridPos).toMatchObject({x: 5, y: 2, h: 2, w: 8});
+      expect(dashboard.panels[2].gridPos).toMatchObject({x: 5, y: 4, h: 2, w: 8});
     });
   });
 
-  describe('When collapsing row', function(ctx) {
+  describe('When collapsing row', function() {
     var dashboard;
 
     beforeEach(function() {
@@ -575,13 +579,13 @@ describe('DashboardModel', function() {
     });
 
     it('should remove panels and put them inside collapsed row', function() {
-      expect(dashboard.panels.length).to.eql(3);
-      expect(dashboard.panels[1].panels.length).to.eql(2);
+      expect(dashboard.panels.length).toBe(3);
+      expect(dashboard.panels[1].panels.length).toBe(2);
     });
 
   });
 
-  describe('When expanding row', function(ctx) {
+  describe('When expanding row', function() {
     var dashboard;
 
     beforeEach(function() {
@@ -598,24 +602,27 @@ describe('DashboardModel', function() {
               {id: 4, type: 'graph', gridPos: {x: 12, y: 2, w: 12, h: 2}},
             ]
           },
+          {id: 5, type: 'graph', gridPos: {x: 0, y: 6, w: 1, h: 1}},
         ],
       });
       dashboard.toggleRow(dashboard.panels[1]);
     });
 
     it('should add panels back', function() {
-      expect(dashboard.panels.length).to.eql(4);
+      expect(dashboard.panels.length).toBe(5);
     });
 
     it('should add them below row in array', function() {
-      expect(dashboard.panels[2].id).to.eql(3);
-      expect(dashboard.panels[3].id).to.eql(4);
+      expect(dashboard.panels[2].id).toBe(3);
+      expect(dashboard.panels[3].id).toBe(4);
     });
 
     it('should position them below row', function() {
-      expect(dashboard.panels[2].gridPos).to.eql({x: 0, y: 8, w: 12, h: 2});
+      expect(dashboard.panels[2].gridPos).toMatchObject({x: 0, y: 8, w: 12, h: 2});
     });
 
+    it('should move panels below down', function() {
+      expect(dashboard.panels[4].gridPos).toMatchObject({x: 0, y: 10, w: 1, h: 1});
+    });
   });
-
 });

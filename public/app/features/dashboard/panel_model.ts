@@ -1,4 +1,4 @@
-import {Emitter} from 'app/core/core';
+import {Emitter} from 'app/core/utils/emitter';
 import _ from 'lodash';
 
 export interface GridPos {

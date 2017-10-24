@@ -112,6 +112,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     for (const newPos of newLayout) {
       this.panelMap[newPos.i].updateGridPos(newPos);
     }
+
+    this.dashboard.sortPanelsByGridPos();
   }
 
   triggerForceUpdate() {

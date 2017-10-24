@@ -215,7 +215,7 @@ export class DashboardModel {
     this.events.emit('panel-added', panel);
   }
 
-  private sortPanelsByGridPos() {
+  sortPanelsByGridPos() {
     this.panels.sort(function(panelA, panelB) {
       if (panelA.gridPos.y === panelB.gridPos.y) {
         return panelA.gridPos.x - panelB.gridPos.x;
@@ -415,15 +415,28 @@ export class DashboardModel {
         // Use first panel to figure out if it was moved or pushed
         let firstPanel = row.panels[0];
         let yDiff = firstPanel.gridPos.y - (row.gridPos.y + row.gridPos.h);
+
         // start inserting after row
         let insertPos = rowIndex+1;
+        // y max will represent the bottom y pos after all panels have been added
+        // needed to know home much panels below should be pushed down
+        let yMax = row.gridPos.y;
 
         for (let panel of row.panels) {
           // make sure y is adjusted (in case row moved while collapsed)
           panel.gridPos.y -= yDiff;
           // insert after row
           this.panels.splice(insertPos, 0, new PanelModel(panel));
+          // update insert post and y max
           insertPos += 1;
+          yMax = Math.max(yMax, panel.gridPos.y + panel.gridPos.h);
+        }
+
+        const pushDownAmount = yMax - row.gridPos.y;
+
+        // push panels below down
+        for (let panelIndex = insertPos; panelIndex < this.panels.length; panelIndex++) {
+          this.panels[panelIndex].gridPos.y += pushDownAmount;
         }
 
         row.panels = [];

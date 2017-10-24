@@ -44,16 +44,16 @@
   color: $text-muted;
   visibility: hidden;
   opacity: 0;
+  flex-grow: 1;
 
   a {
     color: $text-color-weak;
     padding-left: $spacer;
+
     &:hover {
       color: $link-hover-color;
     }
   }
-
-  flex-grow: 1;
 }
 
 .dashboard-row__panel_count {
