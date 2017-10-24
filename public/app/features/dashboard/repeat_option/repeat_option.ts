@@ -2,7 +2,7 @@ import {coreModule} from 'app/core/core';
 
 var template = `
 <div class="gf-form-select-wrapper max-width-13">
-  <select class="gf-form-input" ng-model="model.repeat" ng-options="f.value as f.text for f in variables" ng-change="optionChanged()">
+  <select class="gf-form-input" ng-model="panel.repeat" ng-options="f.value as f.text for f in variables" ng-change="optionChanged()">
   <option value=""></option>
 </div>
 `;
@@ -13,7 +13,7 @@ function dashRepeatOptionDirective(variableSrv) {
     restrict: 'E',
     template: template,
     scope: {
-      model: "=",
+      panel: "=",
     },
     link: function(scope, element) {
       element.css({display: 'block', width: '100%'});

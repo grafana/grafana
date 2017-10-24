@@ -1,7 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
-import {PanelModel} from '../panel_model';
-import {PanelContainer} from './PanelContainer';
+import { PanelModel } from '../panel_model';
+import { PanelContainer } from './PanelContainer';
 import appEvents from 'app/core/app_events';
 
 export interface DashboardRowProps {
@@ -28,20 +28,49 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     dashboard.toggleRow(this.props.panel);
 
     this.setState(prevState => {
-      return {collapsed: !prevState.collapsed};
+      return { collapsed: !prevState.collapsed };
     });
   }
 
   openSettings() {
     appEvents.emit('show-modal', {
-      src: 'public/app/features/dashboard/partials/shareModal.html',
-      scope: shareScope
+      templateHtml: `<row-options row="model.row" on-updated="model.onUpdated()" on-delete="model.onDelete()" dismiss="dismiss()"></row-options>`,
+      modalClass: 'modal--narrow',
+      model: {
+        row: this.props.panel,
+        onUpdated: this.forceUpdate.bind(this),
+        onDelete: this.onDelete.bind(this),
+      },
+    });
+  }
+
+  onDelete() {
+    let text2 = '';
+
+    if (this.props.panel.panels.length) {
+      text2 = 'This will also remove ' + this.props.panel.panels.length + ' panels';
+    }
+
+    appEvents.emit('confirm-modal', {
+      title: 'Delete Row',
+      text: 'Are you sure you want to remove this row?',
+      text2: text2,
+      icon: 'fa-trash',
+      onConfirm: () => {
+        const panelContainer = this.props.getPanelContainer();
+        const dashboard = panelContainer.getDashboard();
+        dashboard.removePanel(this.props.panel);
+      },
     });
   }
 
   render() {
-    const classes = classNames({'dashboard-row': true, 'dashboard-row--collapsed': this.state.collapsed});
-    const chevronClass = classNames({'fa': true, 'fa-chevron-down': !this.state.collapsed, 'fa-chevron-right': this.state.collapsed});
+    const classes = classNames({ 'dashboard-row': true, 'dashboard-row--collapsed': this.state.collapsed });
+    const chevronClass = classNames({
+      fa: true,
+      'fa-chevron-down': !this.state.collapsed,
+      'fa-chevron-right': this.state.collapsed,
+    });
     const hiddenPanels = this.props.panel.panels ? this.props.panel.panels.length : 0;
 
     return (

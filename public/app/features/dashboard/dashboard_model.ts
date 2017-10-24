@@ -7,7 +7,6 @@ import {Emitter} from 'app/core/utils/emitter';
 import {contextSrv} from 'app/core/services/context_srv';
 import sortByKeys from 'app/core/utils/sort_by_keys';
 
-import {DashboardRow} from './row/row_model';
 import {PanelModel} from './panel_model';
 
 export class DashboardModel {
@@ -20,7 +19,6 @@ export class DashboardModel {
   timezone: any;
   editable: any;
   graphTooltip: any;
-  rows: DashboardRow[];
   time: any;
   timepicker: any;
   hideControls: any;
