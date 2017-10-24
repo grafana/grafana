@@ -79,7 +79,7 @@ func (m *MySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 		if len(args) != 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
 		}
-		interval, err := time.ParseDuration(strings.Trim(args[1], `'"`))
+		interval, err := time.ParseDuration(strings.Trim(args[1], `'" `))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
