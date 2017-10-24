@@ -75,6 +75,12 @@ export class ElasticDatasource {
     return this.request('POST', url, data).then(function(results) {
       results.data.$$config = results.config;
       return results.data;
+    }).catch(err => {
+      if (err.data && err.data.error) {
+        throw {message: 'Elasticsearch error: ' + err.data.error.reason, error: err.data.error};
+      }
+
+      throw err;
     });
   }
 

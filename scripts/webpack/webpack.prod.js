@@ -26,6 +26,13 @@ module.exports = merge(common, {
     ]
   },
 
+  devServer: {
+    noInfo: true,
+    stats: {
+      chunks: false,
+    },
+  },
+
   plugins: [
     new ExtractTextPlugin({
       filename: 'grafana.[name].css',

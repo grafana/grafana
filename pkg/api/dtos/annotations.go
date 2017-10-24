@@ -29,3 +29,10 @@ type DeleteAnnotationsCmd struct {
 	AnnotationId int64 `json:"annotationId"`
 	RegionId     int64 `json:"regionId"`
 }
+
+type PostGraphiteAnnotationsCmd struct {
+	When int64       `json:"when"`
+	What string      `json:"what"`
+	Data string      `json:"data"`
+	Tags interface{} `json:"tags"`
+}

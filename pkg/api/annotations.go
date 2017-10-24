@@ -1,6 +1,9 @@
 package api
 
 import (
+	"strings"
+	"time"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -37,8 +40,21 @@ func GetAnnotations(c *middleware.Context) Response {
 	return Json(200, items)
 }
 
+type CreateAnnotationError struct {
+	message string
+}
+
+func (e *CreateAnnotationError) Error() string {
+	return e.message
+}
+
 func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
+
+	if cmd.Text == "" {
+		err := &CreateAnnotationError{"text field should not be empty"}
+		return ApiError(500, "Failed to save annotation", err)
+	}
 
 	item := annotations.Item{
 		OrgId:       c.OrgId,
@@ -49,6 +65,10 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 		Text:        cmd.Text,
 		Data:        cmd.Data,
 		Tags:        cmd.Tags,
+	}
+
+	if item.Epoch == 0 {
+		item.Epoch = time.Now().Unix()
 	}
 
 	if err := repo.Save(&item); err != nil {
@@ -76,6 +96,65 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 	}
 
 	return ApiSuccess("Annotation added")
+}
+
+func formatGraphiteAnnotation(what string, data string) string {
+	text := what
+	if data != "" {
+		text = text + "\n" + data
+	}
+	return text
+}
+
+func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotationsCmd) Response {
+	repo := annotations.GetRepository()
+
+	if cmd.What == "" {
+		err := &CreateAnnotationError{"what field should not be empty"}
+		return ApiError(500, "Failed to save Graphite annotation", err)
+	}
+
+	if cmd.When == 0 {
+		cmd.When = time.Now().Unix()
+	}
+	text := formatGraphiteAnnotation(cmd.What, cmd.Data)
+
+	// Support tags in prior to Graphite 0.10.0 format (string of tags separated by space)
+	var tagsArray []string
+	switch tags := cmd.Tags.(type) {
+	case string:
+		if tags != "" {
+			tagsArray = strings.Split(tags, " ")
+		} else {
+			tagsArray = []string{}
+		}
+	case []interface{}:
+		for _, t := range tags {
+			if tagStr, ok := t.(string); ok {
+				tagsArray = append(tagsArray, tagStr)
+			} else {
+				err := &CreateAnnotationError{"tag should be a string"}
+				return ApiError(500, "Failed to save Graphite annotation", err)
+			}
+		}
+	default:
+		err := &CreateAnnotationError{"unsupported tags format"}
+		return ApiError(500, "Failed to save Graphite annotation", err)
+	}
+
+	item := annotations.Item{
+		OrgId:  c.OrgId,
+		UserId: c.UserId,
+		Epoch:  cmd.When,
+		Text:   text,
+		Tags:   tagsArray,
+	}
+
+	if err := repo.Save(&item); err != nil {
+		return ApiError(500, "Failed to save Graphite annotation", err)
+	}
+
+	return ApiSuccess("Graphite annotation added")
 }
 
 func UpdateAnnotation(c *middleware.Context, cmd dtos.UpdateAnnotationsCmd) Response {

@@ -20,7 +20,7 @@
       <form name="loginForm" class="login-form gf-form-group" ng-hide="disableLoginForm">
 				<div class="gf-form" ng-if="loginMode">
 					<span class="gf-form-label width-7">User</span>
-					<input type="text" name="username" class="gf-form-input max-width-14" required ng-model='formModel.user' placeholder={{loginHint}}>
+					<input type="text" name="username" class="gf-form-input max-width-14" required ng-model='formModel.user' placeholder={{loginHint}} autofocus>
 				</div>
 				<div class="gf-form" ng-if="loginMode">
 					<span class="gf-form-label width-7">Password</span>

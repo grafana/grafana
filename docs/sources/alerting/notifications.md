@@ -115,6 +115,17 @@ In DingTalk PC Client:
 
 Dingtalk supports the following "message type": `text`, `link` and `markdown`. Only the `text` message type is supported.
 
+### Kafka
+
+Notifications can be sent to a Kafka topic from Grafana using [Kafka REST Proxy](https://docs.confluent.io/1.0/kafka-rest/docs/index.html).
+There are couple of configurations options which need to be set in Grafana UI under Kafka Settings:
+
+1. Kafka REST Proxy endpoint.
+
+2. Kafka Topic.
+
+Once these two properties are set, you can send the alerts to Kafka for further processing or throttling them.
+
 ### Other Supported Notification Channels
 
 Grafana also supports the following Notification Channels:

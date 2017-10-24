@@ -130,7 +130,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   seriesHandler(seriesData) {
     var series = new TimeSeries({
-      datapoints: seriesData.datapoints,
+      datapoints: seriesData.datapoints || [],
       alias: seriesData.target,
     });
 
@@ -606,7 +606,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       var body = panel.gauge.show ? '' : getBigValueHtml();
 
-      if (panel.colorBackground && !isNaN(data.value)) {
+      if (panel.colorBackground) {
         var color = getColorForValue(data, data.value);
         if (color) {
           $panelContainer.css('background-color', color);
@@ -690,6 +690,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 }
 
 function getColorForValue(data, value) {
+  if (!_.isFinite(value)) {
+    return null;
+  }
   for (var i = data.thresholds.length; i > 0; i--) {
     if (value >= data.thresholds[i-1]) {
       return data.colorMap[i];

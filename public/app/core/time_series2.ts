@@ -1,5 +1,3 @@
-///<reference path="../headers/common.d.ts" />
-
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 
@@ -23,6 +21,7 @@ export default class TimeSeries {
   id: string;
   label: string;
   alias: string;
+  aliasEscaped: string;
   color: string;
   valueFormater: any;
   stats: any;
@@ -52,6 +51,7 @@ export default class TimeSeries {
     this.label = opts.alias;
     this.id = opts.alias;
     this.alias = opts.alias;
+    this.aliasEscaped = _.escape(opts.alias);
     this.color = opts.color;
     this.valueFormater = kbn.valueFormats.none;
     this.stats = {};
@@ -203,7 +203,7 @@ export default class TimeSeries {
     if (this.stats.max === -Number.MAX_VALUE) { this.stats.max = null; }
     if (this.stats.min === Number.MAX_VALUE) { this.stats.min = null; }
 
-    if (result.length) {
+    if (result.length && !this.allIsNull) {
       this.stats.avg = (this.stats.total / nonNulls);
       this.stats.current = result[result.length-1][1];
       if (this.stats.current === null && result.length > 1) {
@@ -228,6 +228,9 @@ export default class TimeSeries {
   }
 
   formatValue(value) {
+    if (!_.isFinite(value)) {
+      value = null; // Prevent NaN formatting
+    }
     return this.valueFormater(value, this.decimals, this.scaledDecimals);
   }
 

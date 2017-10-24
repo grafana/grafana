@@ -122,6 +122,9 @@ var (
 	// Basic Auth
 	BasicAuthEnabled bool
 
+	// Plugin settings
+	PluginAppsSkipVerifyTLS bool
+
 	// Session settings.
 	SessionOptions session.Options
 
@@ -559,6 +562,9 @@ func NewConfigContext(args *CommandLineArgs) error {
 	// basic auth
 	authBasic := Cfg.Section("auth.basic")
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
+
+	// global plugin settings
+	PluginAppsSkipVerifyTLS = Cfg.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)
 
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")

@@ -29,7 +29,7 @@ Name | Description
 ------------ | -------------
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
-*Credentials* profile name | Specify the name of the profile to use (if you use `~/aws/credentials` file), leave blank for default.
+*Credentials* profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.
 *Default Region* | Used in query editor to set region (can be changed on per query basis)
 *Custom Metrics namespace* | Specify the CloudWatch namespace of Custom metrics
 *Assume Role Arn* | Specify the ARN of the role to assume

@@ -18,14 +18,16 @@ func TestMySQL(t *testing.T) {
 	SkipConvey("MySQL", t, func() {
 		x := InitMySQLTestDB(t)
 
-		executor := &MysqlExecutor{
-			engine: x,
-			log:    log.New("tsdb.mysql"),
+		endpoint := &MysqlQueryEndpoint{
+			sqlEngine: &tsdb.DefaultSqlEngine{
+				MacroEngine: NewMysqlMacroEngine(),
+				XormEngine:  x,
+			},
+			log: log.New("tsdb.mysql"),
 		}
 
 		sess := x.NewSession()
 		defer sess.Close()
-		db := sess.DB()
 
 		sql := "CREATE TABLE `mysql_types` ("
 		sql += "`atinyint` tinyint(1),"
@@ -70,14 +72,23 @@ func TestMySQL(t *testing.T) {
 		_, err = sess.Exec(sql)
 		So(err, ShouldBeNil)
 
-		Convey("TransformToTable should map MySQL column types to Go types", func() {
-			rows, err := db.Query("SELECT * FROM mysql_types")
-			defer rows.Close()
+		Convey("Query with Table format should map MySQL column types to Go types", func() {
+			query := &tsdb.TsdbQuery{
+				Queries: []*tsdb.Query{
+					{
+						Model: simplejson.NewFromAny(map[string]interface{}{
+							"rawSql": "SELECT * FROM mysql_types",
+							"format": "table",
+						}),
+						RefId: "A",
+					},
+				},
+			}
+
+			resp, err := endpoint.Query(nil, nil, query)
+			queryResult := resp.Results["A"]
 			So(err, ShouldBeNil)
 
-			queryResult := &tsdb.QueryResult{Meta: simplejson.New()}
-			err = executor.TransformToTable(nil, rows, queryResult)
-			So(err, ShouldBeNil)
 			column := queryResult.Tables[0].Rows[0]
 			So(*column[0].(*int8), ShouldEqual, 1)
 			So(*column[1].(*string), ShouldEqual, "abc")

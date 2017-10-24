@@ -2,7 +2,7 @@
 
 <div class="page-container">
 
-  <div class="page-header">
+  	<div class="page-header">
 		<h1 ng-show="ctrl.isNew">Add data source</h1>
 		<h1 ng-hide="ctrl.isNew">Edit data source</h1>
 
@@ -22,11 +22,11 @@
 		</div>
 	</div>
 
-  <div ng-if="ctrl.tabIndex === 0" class="tab-content">
+  	<div ng-if="ctrl.tabIndex === 0" class="tab-content">
 
-    <form name="ctrl.editForm" ng-if="ctrl.current">
-      <div class="gf-form-group">
-        <div class="gf-form-inline">
+    	<form name="ctrl.editForm" ng-if="ctrl.current">
+      		<div class="gf-form-group">
+        		<div class="gf-form-inline">
 					<div class="gf-form max-width-30">
 						<span class="gf-form-label width-7">Name</span>
 						<input class="gf-form-input max-width-23" type="text" ng-model="ctrl.current.name" placeholder="name" required>
@@ -39,7 +39,7 @@
 					<gf-form-switch class="gf-form" label="Default" checked="ctrl.current.isDefault" switch-class="max-width-6"></gf-form-switch>
 				</div>
 
-				<div class="gf-form">
+				<div class="gf-form max-width-30">
 					<span class="gf-form-label width-7">Type</span>
 					<div class="gf-form-select-wrapper max-width-23">
 						<select class="gf-form-input" ng-model="ctrl.current.type" ng-options="v.id as v.name for v in ctrl.types" ng-change="ctrl.userChangedType()"></select>
@@ -61,8 +61,8 @@
 				<h5 ng-show="!ctrl.testing.done">Testing.... <i class="fa fa-spiner fa-spin"></i></h5>
 				<div class="alert-{{ctrl.testing.status}} alert" ng-show="ctrl.testing.done">
 					<div class="alert-icon">
-							<i class="fa fa-exclamation-triangle" ng-show="ctrl.testing.status === 'error'"></i>
-							<i class="fa fa-check" ng-show="ctrl.testing.status !== 'error'"></i>
+						<i class="fa fa-exclamation-triangle" ng-show="ctrl.testing.status === 'error'"></i>
+						<i class="fa fa-check" ng-show="ctrl.testing.status !== 'error'"></i>
 					</div>
 					<div class="alert-body">
 						<div class="alert-title">{{ctrl.testing.message}}</div>
@@ -71,9 +71,9 @@
 			</div>
 
 			<div class="gf-form-button-row">
-				<button type="submit" class="btn btn-success" ng-show="ctrl.isNew" ng-click="ctrl.saveChanges()">Add</button>
-				<button type="submit" class="btn btn-success" ng-show="!ctrl.isNew" ng-click="ctrl.saveChanges()">Save &amp; Test</button>
-				<button type="submit" class="btn btn-danger" ng-show="!ctrl.isNew" ng-click="ctrl.delete()">
+				<button type="submit" class="btn btn-success width-6" ng-show="ctrl.isNew" ng-click="ctrl.saveChanges()">Add</button>
+				<button type="submit" class="btn btn-success width-8" ng-show="!ctrl.isNew" ng-click="ctrl.saveChanges()">Save &amp; Test</button>
+				<button type="submit" class="btn btn-danger width-6" ng-show="!ctrl.isNew" ng-click="ctrl.delete()">
 					Delete
 				</button>
 				<a class="btn btn-link" href="datasources">Cancel</a>

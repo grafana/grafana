@@ -113,7 +113,7 @@ export default class ResponseParser {
       if (table.columns[i].text === 'time_sec') {
         timeColumnIndex = i;
       } else if (table.columns[i].text === 'title') {
-        return this.$q.reject({message: 'Title return column on annotations are depricated, return only a column named text'});
+        return this.$q.reject({message: 'The title column for annotations is deprecated, now only a column named text is returned'});
       } else if (table.columns[i].text === 'text') {
         textColumnIndex = i;
       } else if (table.columns[i].text === 'tags') {

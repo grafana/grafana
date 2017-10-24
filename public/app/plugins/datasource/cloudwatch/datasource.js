@@ -9,6 +9,8 @@ define([
 function (angular, _, moment, dateMath, kbn, templatingVariable) {
   'use strict';
 
+  kbn = kbn.default;
+
   /** @ngInject */
   function CloudWatchDatasource(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
     this.type = 'cloudwatch';
@@ -41,7 +43,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
         item.namespace = templateSrv.replace(item.namespace, options.scopedVars);
         item.metricName = templateSrv.replace(item.metricName, options.scopedVars);
         item.dimensions = self.convertDimensionFormat(item.dimensions, options.scopeVars);
-        item.period = self.getPeriod(item, options);
+        item.period = String(self.getPeriod(item, options)); // use string format for period in graph query, and alerting
 
         return _.extend({
           refId: item.refId,
@@ -318,6 +320,8 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
 
       return this.getDimensionValues(region, namespace, metricName, 'ServiceName', dimensions).then(function () {
         return { status: 'success', message: 'Data source is working' };
+      }, function (err) {
+        return { status: 'error', message: err.message };
       });
     };
 
@@ -352,6 +356,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
         var t = angular.copy(target);
         var scopedVar = {};
         scopedVar[variable.name] = v;
+        t.refId = target.refId + '_' + v.value;
         t.dimensions[dimensionKey] = templateSrv.replace(t.dimensions[dimensionKey], scopedVar);
         return t;
       }).value();

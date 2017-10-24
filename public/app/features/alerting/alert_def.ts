@@ -51,6 +51,7 @@ var reducerTypes = [
   {text: 'median()', value: 'median'},
   {text: 'diff()', value: 'diff'},
   {text: 'percent_diff()', value: 'percent_diff'},
+  {text: 'count_non_null()', value: 'count_non_null'},
 ];
 
 var noDataModes = [
