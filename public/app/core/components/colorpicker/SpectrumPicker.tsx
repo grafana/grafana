@@ -9,7 +9,7 @@ export interface IProps {
   onColorSelect: (c: string) => void;
 }
 
-export class GfSpectrumPicker extends React.Component<IProps, any> {
+export class SpectrumPicker extends React.Component<IProps, any> {
   elem: any;
   isMoving: boolean;
 

@@ -27,7 +27,7 @@ _.move = function (array, fromIndex, toIndex) {
   return array;
 };
 
-import {coreModule} from './core/core';
+import {coreModule, registerAngularDirectives} from './core/core';
 
 export class GrafanaApp {
   registerFunctions: any;
@@ -108,6 +108,9 @@ export class GrafanaApp {
 
     // makes it possible to add dynamic stuff
     this.useModule(coreModule);
+
+    // register react angular wrappers
+    registerAngularDirectives();
 
     var preBootRequires = [System.import('app/features/all')];
 

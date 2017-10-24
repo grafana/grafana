@@ -5,7 +5,7 @@ module.exports = function() {
   'use strict';
   return {
     options: {
-      stats: !process.env.NODE_ENV || process.env.NODE_ENV === 'development'
+      stats: false,
     },
     dev: dev,
     prod: prod

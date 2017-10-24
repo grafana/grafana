@@ -6,7 +6,7 @@ export interface IProps {
   onColorSelect: (c: string) => void;
 }
 
-export class GfColorPalette extends React.Component<IProps, any> {
+export class ColorPalette extends React.Component<IProps, any> {
   paletteColors: string[];
 
   constructor(props) {

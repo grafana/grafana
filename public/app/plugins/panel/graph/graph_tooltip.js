@@ -127,7 +127,7 @@ function ($, core) {
           value: value,
           hoverIndex: hoverIndex,
           color: series.color,
-          label: series.label,
+          label: series.aliasEscaped,
           time: pointTime,
           distance: hoverDistance,
           index: i
@@ -264,7 +264,7 @@ function ($, core) {
       else if (item) {
         series = seriesList[item.seriesIndex];
         group = '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
-        group += '<i class="fa fa-minus" style="color:' + item.series.color +';"></i> ' + series.label + ':</div>';
+        group += '<i class="fa fa-minus" style="color:' + item.series.color +';"></i> ' + series.aliasEscaped + ':</div>';
 
         if (panel.stack && panel.tooltip.value_type === 'individual') {
           value = item.datapoint[1] - item.datapoint[2];

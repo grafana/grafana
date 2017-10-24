@@ -1,7 +1,3 @@
-///<reference path="../../../../headers/common.d.ts" />
-
-import { describe, beforeEach, it, expect } from '../../../../../test/lib/common';
-
 import { convertValuesToHistogram, getSeriesValues } from '../histogram';
 
 describe('Graph Histogam Converter', function () {
@@ -21,7 +17,7 @@ describe('Graph Histogam Converter', function () {
       ];
 
       let histogram = convertValuesToHistogram(values, bucketSize);
-      expect(histogram).to.eql(expected);
+      expect(histogram).toMatchObject(expected);
     });
 
     it('Should not add empty buckets', () => {
@@ -31,7 +27,7 @@ describe('Graph Histogam Converter', function () {
       ];
 
       let histogram = convertValuesToHistogram(values, bucketSize);
-      expect(histogram).to.eql(expected);
+      expect(histogram).toMatchObject(expected);
     });
   });
 
@@ -50,7 +46,7 @@ describe('Graph Histogam Converter', function () {
       let expected = [1, 2, 10, 11, 17, 20, 29];
 
       let values = getSeriesValues(data);
-      expect(values).to.eql(expected);
+      expect(values).toMatchObject(expected);
     });
 
     it('Should skip null values', () => {
@@ -59,7 +55,7 @@ describe('Graph Histogam Converter', function () {
       let expected = [1, 2, 10, 11, 17, 20, 29];
 
       let values = getSeriesValues(data);
-      expect(values).to.eql(expected);
+      expect(values).toMatchObject(expected);
     });
   });
 });

@@ -15,7 +15,7 @@ import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
 import {impressions} from 'app/features/dashboard/impression_store';
 import builtInPlugins from './built_in_plugins';
-import d3 from 'vendor/d3/d3';
+import * as d3 from 'd3';
 
 // rxjs
 import {Observable} from 'rxjs/Observable';

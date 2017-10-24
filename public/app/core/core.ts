@@ -53,10 +53,9 @@ import {orgSwitcher} from './components/org_switcher';
 import {profiler} from './profiler';
 import {registerAngularDirectives} from './angular_wrappers';
 
-registerAngularDirectives();
-
 export {
   profiler,
+  registerAngularDirectives,
   arrayJoin,
   coreModule,
   grafanaAppDirective,

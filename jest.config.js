@@ -4,7 +4,7 @@ module.exports = {
   "transform": {
     "^.+\\.tsx?$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
   },
-  "moduleDirectories": ["<rootDir>node_modules", "<rootDir>/public"],
+  "moduleDirectories": ["<rootDir>/node_modules", "<rootDir>/public"],
   "roots": [
     "<rootDir>/public"
   ],

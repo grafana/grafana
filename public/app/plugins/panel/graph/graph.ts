@@ -381,7 +381,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         var haveSortOrder = sortOrder !== null || sortOrder !== undefined;
 
         if (panel.stack && haveSortBy && haveSortOrder) {
-          var desc = desc = panel.legend.sortDesc === true ? 1 : -1;
+          var desc = desc = panel.legend.sortDesc === true ? -1 : 1;
           series.sort((x, y) => {
             if (x.stats[sortBy] > y.stats[sortBy]) {
               return 1 * desc;
