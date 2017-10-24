@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 export default class AdminListUsersCtrl {
   users: any;
   pages = [];

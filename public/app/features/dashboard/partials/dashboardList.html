@@ -1,0 +1,88 @@
+<div class="scroll-canvas">
+  <div gemini-scrollbar>
+    <navbar model="ctrl.navModel"></navbar>
+    <div class="page-container" style="height: 95%">
+      <div class="page-header">
+        <h1>Dashboards</h1>
+
+        <a class="btn btn-success" href="/dashboard/new">
+          <i class="fa fa-plus"></i>
+          Create Dashboard
+        </a>
+        <a class="btn btn-success" href="/dashboard/new/?editview=new-folder">
+          <i class="fa fa-plus"></i>
+          Create Folder
+        </a>
+      </div>
+      <div class="gf-form width-15 gf-form-group">
+        <span style="position: relative;">
+          <input type="text" class="gf-form-input" placeholder="Find Dashboard by name" tabindex="1" give-focus="true"
+            ng-model="ctrl.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.getDashboards()" />
+        </span>
+      </div>
+
+      <div class="gf-form-group" ng-if="ctrl.dashboards.length > 1">
+        <div class="gf-form-button-row">
+          <button	type="button"
+              class="btn gf-form-button btn-secondary"
+              ng-disabled="!ctrl.canMove"
+              ng-click="ctrl.moveTo()"
+              bs-tooltip="ctrl.canMove ? '' : 'Select a dashboard to move (cannot move folders)'" data-placement="bottom">
+            <i class="fa fa-exchange"></i>&nbsp;&nbsp;Move to...
+          </button>
+          <button  type="button"
+              class="btn gf-form-button btn-inverse"
+              ng-click="ctrl.delete()"
+              ng-disabled="!ctrl.canDelete">
+              <i class="fa fa-trash"></i>&nbsp;&nbsp;Delete
+          </button>
+        </div>
+      </div>
+
+        <div class="admin-list-table" style="height: 80%">
+          <div gemini-scrollbar>
+            <table class="filter-table form-inline" ng-show="ctrl.dashboards.length > 0">
+              <thead>
+                <tr>
+                  <th class="width-4"></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr bindonce ng-repeat="dashboard in ctrl.dashboards">
+                  <td class="filter-table__switch-cell" bs-tooltip="" data-placement="right">
+                    <gf-form-switch
+                        switch-class="gf-form-switch--table-cell"
+                        on-change="ctrl.selectionChanged()"
+                        checked="dashboard.checked">
+                    </gf-form-switch>
+                  </td>
+                  <td>
+                    <a class="search-item pointer search-item--{{dashboard.type}}"
+                      bo-href-i="{{dashboard.url}}">
+                      <span class="search-result-tags">
+                        <span ng-click="ctrl.filterByTag(tag, $event)" bindonce ng-repeat="tag in dashboard.tags" tag-color-from-name="tag"  class="label label-tag">
+                          {{tag}}
+                        </span>
+                        <i class="fa" bo-class="{'fa-star': dashboard.isStarred, 'fa-star-o': !dashboard.isStarred}"></i>
+                      </span>
+                      <span class="search-result-link">
+                        <i class="fa search-result-icon"></i>
+                        <span bo-text="dashboard.title"></span>
+                      </span>
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      <em class="muted" ng-hide="ctrl.dashboards.length > 0">
+        No Dashboards or Folders found.
+      </em>
+    </div>
+
+  </div>
+</div>
+

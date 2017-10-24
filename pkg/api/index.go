@@ -218,6 +218,12 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 					},
 				},
 				{
+					Text:        "Dashboard List",
+					Description: "Manage Dashboards And Folders",
+					Id:          "dashboards",
+					Url:         setting.AppSubUrl + "/dashboards",
+				},
+				{
 					Text:        "Preferences",
 					Id:          "org",
 					Description: "Organization preferences",
