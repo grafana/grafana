@@ -1,5 +1,4 @@
 import React from 'react';
-import coreModule from 'app/core/core_module';
 import { sortedColors } from 'app/core/utils/colors';
 
 export interface IProps {
@@ -7,7 +6,7 @@ export interface IProps {
   onColorSelect: (c: string) => void;
 }
 
-export class GfColorPalette extends React.Component<IProps, any> {
+export class ColorPalette extends React.Component<IProps, any> {
   paletteColors: string[];
 
   constructor(props) {
@@ -23,12 +22,15 @@ export class GfColorPalette extends React.Component<IProps, any> {
   }
 
   render() {
-    const colorPaletteItems = this.paletteColors.map((paletteColor) => {
+    const colorPaletteItems = this.paletteColors.map(paletteColor => {
       const cssClass = paletteColor.toLowerCase() === this.props.color.toLowerCase() ? 'fa-circle-o' : 'fa-circle';
       return (
-        <i key={paletteColor} className={"pointer fa " + cssClass}
-          style={{'color': paletteColor}}
-          onClick={this.onColorSelect(paletteColor)}>&nbsp;
+        <i
+          key={paletteColor}
+          className={'pointer fa ' + cssClass}
+          style={{ color: paletteColor }}
+          onClick={this.onColorSelect(paletteColor)}>
+          &nbsp;
         </i>
       );
     });
@@ -40,6 +42,3 @@ export class GfColorPalette extends React.Component<IProps, any> {
   }
 }
 
-coreModule.directive('gfColorPalette', function (reactDirective) {
-  return reactDirective(GfColorPalette, ['color', 'onColorSelect']);
-});

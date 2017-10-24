@@ -1,6 +1,6 @@
 import React from 'react';
-import coreModule from 'app/core/core_module';
-import {ColorPickerPopover} from './ColorPickerPopover';
+import { ColorPickerPopover } from './ColorPickerPopover';
+import { react2AngularDirective } from 'app/core/utils/react2angular';
 
 export interface IProps {
   series: any;
@@ -50,6 +50,4 @@ export class SeriesColorPicker extends React.Component<IProps, any> {
   }
 }
 
-coreModule.directive('seriesColorPicker', function(reactDirective) {
-  return reactDirective(SeriesColorPicker, ['series', 'onColorChange', 'onToggleAxis']);
-});
+react2AngularDirective('seriesColorPicker', SeriesColorPicker, ['series', 'onColorChange', 'onToggleAxis']);

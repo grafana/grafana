@@ -9,6 +9,8 @@ define([
 function (angular, _, moment, dateMath, kbn, templatingVariable) {
   'use strict';
 
+  kbn = kbn.default;
+
   /** @ngInject */
   function CloudWatchDatasource(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
     this.type = 'cloudwatch';
@@ -354,6 +356,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
         var t = angular.copy(target);
         var scopedVar = {};
         scopedVar[variable.name] = v;
+        t.refId = target.refId + '_' + v.value;
         t.dimensions[dimensionKey] = templateSrv.replace(t.dimensions[dimensionKey], scopedVar);
         return t;
       }).value();

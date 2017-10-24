@@ -43,11 +43,12 @@ import {assignModelProperties} from './utils/model_utils';
 import {contextSrv} from './services/context_srv';
 import {KeybindingSrv} from './services/keybindingSrv';
 import {helpModal} from './components/help/help';
-import {PasswordStrength} from './components/PasswordStrength';
 import {JsonExplorer} from './components/json_explorer/json_explorer';
 import {NavModelSrv, NavModel} from './nav_model_srv';
+import {registerAngularDirectives} from './angular_wrappers';
 
 export {
+  registerAngularDirectives,
   arrayJoin,
   coreModule,
   grafanaAppDirective,
@@ -71,5 +72,4 @@ export {
   JsonExplorer,
   NavModelSrv,
   NavModel,
-  PasswordStrength,
 };

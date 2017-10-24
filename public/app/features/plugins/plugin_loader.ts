@@ -9,14 +9,23 @@ import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
 import {coreModule, appEvents, contextSrv} from 'app/core/core';
-import {Observable} from 'rxjs/Observable';
-import {Subject} from 'rxjs/Subject';
 import * as datemath from 'app/core/utils/datemath';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
-import builtInPlugins from './buit_in_plugins';
-import d3 from 'vendor/d3/d3';
+import {impressions} from 'app/features/dashboard/impression_store';
+import builtInPlugins from './built_in_plugins';
+import * as d3 from 'd3';
+
+// rxjs
+import {Observable} from 'rxjs/Observable';
+import {Subject} from 'rxjs/Subject';
+
+// these imports add functions to Observable
+import 'rxjs/add/observable/empty';
+import 'rxjs/add/observable/from';
+import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/combineAll';
 
 System.config({
   baseURL: 'public',
@@ -30,6 +39,9 @@ System.config({
     text: 'vendor/plugin-text/text.js',
     css: 'vendor/plugin-css/css.js'
   },
+  meta: {
+    '*': {esModule: true}
+  }
 });
 
 // add cache busting
@@ -56,8 +68,13 @@ exposeToPlugin('rxjs/Subject', Subject);
 exposeToPlugin('rxjs/Observable', Observable);
 exposeToPlugin('d3', d3);
 
-exposeToPlugin('app/plugins/sdk', sdk);
+exposeToPlugin('app/features/dashboard/impression_store', {
+  impressions: impressions,
+  __esModule: true
+});
 
+
+exposeToPlugin('app/plugins/sdk', sdk);
 exposeToPlugin('app/core/utils/datemath', datemath);
 exposeToPlugin('app/core/utils/file_export', fileExport);
 exposeToPlugin('app/core/utils/flatten', flatten);
