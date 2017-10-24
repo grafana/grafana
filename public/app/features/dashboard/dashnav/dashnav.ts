@@ -19,6 +19,7 @@ export class DashNavCtrl {
     private $location,
     private backendSrv,
     private contextSrv,
+    public playlistSrv,
     navModelSrv) {
       this.navModel = navModelSrv.getDashboardNav(this.dashboard, this);
 
