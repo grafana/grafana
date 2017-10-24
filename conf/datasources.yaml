@@ -6,36 +6,36 @@ purge_other_datasources: false
 # list of datasources to insert/update depending 
 # whats available in the datbase
 datasources:
-    # <string, required> name of the datasource. Required
-  - name: Graphite
-    # <string, required> datasource type. Required
-    type: graphite
-    # <string, required> access mode. direct or proxy. Required
-    access: proxy
-    # <string, required> url
-    url: http://localhost:8080
-    # <string> database password, if used
-    password:
-    # <string> database user, if used
-    user:
-    # <string> database name, if used
-    database:
-    # <bool> enable/disable basic auth
-    basic_auth:
-    # <string> basic auth username
-    basic_authUser:
-    # <string> basic auth password
-    basic_auth_password:
-    # <bool> enable/disable with credentials headers
-    with_credentials:
-    # <bool> mark as default datasource. Max one per org
-    is_default:
-    # <string> json data
-    json_data: '{"graphiteVersion":"0.9"}'
-    # <string> json object of data that will be encrypted in UI.
-    secure_json_fields: ''
-  - name: Prometheus
-    type: prometheus
-    access: proxy
-    url: http://localhost:9090
+#     # <string, required> name of the datasource. Required
+#   - name: Graphite
+#     # <string, required> datasource type. Required
+#     type: graphite
+#     # <string, required> access mode. direct or proxy. Required
+#     access: proxy
+#     # <string, required> url
+#     url: http://localhost:8080
+#     # <string> database password, if used
+#     password:
+#     # <string> database user, if used
+#     user:
+#     # <string> database name, if used
+#     database:
+#     # <bool> enable/disable basic auth
+#     basic_auth:
+#     # <string> basic auth username
+#     basic_auth_user:
+#     # <string> basic auth password
+#     basic_auth_password:
+#     # <bool> enable/disable with credentials headers
+#     with_credentials:
+#     # <bool> mark as default datasource. Max one per org
+#     is_default:
+#     # <string> json data
+#     json_data: '{"graphiteVersion":"0.9"}'
+#     # <string> json object of data that will be encrypted in UI.
+#     secure_json_fields: ''
+#   - name: Prometheus
+#     type: prometheus
+#     access: proxy
+#     url: http://localhost:9090
 

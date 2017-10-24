@@ -15,6 +15,7 @@ var (
 	twoDatasourcesConfig            string     = "./test-configs/two-datasources.yaml"
 	twoDatasourcesConfigPurgeOthers string     = "./test-configs/two-datasources-purge-others.yaml"
 	doubleDatasourcesConfig         string     = "./test-configs/double-default-datasources.yaml"
+	allProperties                   string     = "./test-configs/all-properties.yaml"
 )
 
 func TestDatasourceAsConfig(t *testing.T) {
@@ -101,6 +102,32 @@ func TestDatasourceAsConfig(t *testing.T) {
 					So(len(fakeRepo.updated), ShouldEqual, 1)
 				})
 			})
+		})
+
+		Convey("can read all properties", func() {
+
+			cfgProvifer := configProvider{}
+			cfg, err := cfgProvifer.readConfig(allProperties)
+			if err != nil {
+				t.Fatalf("readConfig return an error %v", err)
+			}
+
+			So(cfg.PurgeOtherDatasources, ShouldBeTrue)
+			ds := cfg.Datasources[0]
+
+			So(ds.Name, ShouldEqual, "name")
+			So(ds.Type, ShouldEqual, "type")
+			So(ds.Access, ShouldEqual, models.DS_ACCESS_PROXY)
+			So(ds.OrgId, ShouldEqual, 2)
+			So(ds.Url, ShouldEqual, "url")
+			So(ds.User, ShouldEqual, "user")
+			So(ds.Password, ShouldEqual, "password")
+			So(ds.Database, ShouldEqual, "database")
+			So(ds.BasicAuth, ShouldBeTrue)
+			So(ds.BasicAuthUser, ShouldEqual, "basic_auth_user")
+			So(ds.BasicAuthPassword, ShouldEqual, "basic_auth_password")
+			So(ds.WithCredentials, ShouldBeTrue)
+			So(ds.IsDefault, ShouldBeTrue)
 		})
 	})
 }
