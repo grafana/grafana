@@ -103,7 +103,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	dashboardChildNavs := []*dtos.NavLink{
 		{Text: "Home", Url: setting.AppSubUrl + "/", Icon: "fa fa-fw fa-home"},
 		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "fa fa-fw fa-film"},
-		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "icon-gf icon-gf-snapshot"},
+		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "icon-gf icon-gf-fw icon-gf-snapshot"},
 	}
 
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
@@ -190,7 +190,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 			if len(appLink.Children) > 0 && c.OrgRole == m.ROLE_ADMIN {
 				appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
-				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "fa fa-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit"})
+				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "fa fa-fw fa-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit"})
 			}
 
 			if len(appLink.Children) > 0 {
@@ -208,7 +208,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Children: []*dtos.NavLink{
 				{
 					Text:        "Data Sources",
-					Icon:        "icon-gf icon-gf-datasources",
+					Icon:        "icon-gf icon-gf-fw icon-gf-datasources",
 					Description: "Add and configure data sources",
 					Id:          "datasources",
 					Url:         setting.AppSubUrl + "/datasources",
@@ -228,7 +228,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 					Text:        "Plugins",
 					Id:          "plugins",
 					Description: "View and configure plugins",
-					Icon:        "icon-gf icon-gf-apps",
+					Icon:        "icon-gf icon-gf-fw icon-gf-apps",
 					Url:         setting.AppSubUrl + "/plugins",
 					Children: []*dtos.NavLink{
 						{Text: "Panels", Url: setting.AppSubUrl + "/plugins?type=panel", Icon: "fa fa-fw fa-stop"},
@@ -240,7 +240,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 					Text:        "Members",
 					Id:          "users",
 					Description: "Manage org members",
-					Icon:        "icon-gf icon-gf-users",
+					Icon:        "icon-gf icon-gf-fw icon-gf-users",
 					Url:         setting.AppSubUrl + "/org/users",
 				},
 				{

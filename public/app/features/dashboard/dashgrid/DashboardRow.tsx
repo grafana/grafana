@@ -48,7 +48,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     let text2 = '';
 
     if (this.props.panel.panels.length) {
-      text2 = 'This will also remove ' + this.props.panel.panels.length + ' panels';
+      text2 = `This will also remove row's ${this.props.panel.panels.length} hidden panels`;
     }
 
     appEvents.emit('confirm-modal', {
