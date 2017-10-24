@@ -7,6 +7,8 @@ define(['angular',
 function (angular, _, $, moment, config) {
   'use strict';
 
+  config = config.default;
+
   var module = angular.module('grafana.controllers');
 
   module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, templateSrv, linkSrv) {

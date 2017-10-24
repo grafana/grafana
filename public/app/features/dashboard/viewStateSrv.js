@@ -7,6 +7,7 @@ define([
 function (angular, _, $, config) {
   'use strict';
 
+  config = config.default;
   var module = angular.module('grafana.services');
 
   module.factory('dashboardViewStateSrv', function($location, $timeout) {

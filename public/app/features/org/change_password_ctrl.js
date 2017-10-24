@@ -5,6 +5,8 @@ define([
 function (angular, config) {
   'use strict';
 
+  config = config.default;
+
   var module = angular.module('grafana.controllers');
 
   module.controller('ChangePasswordCtrl', function($scope, backendSrv, $location, navModelSrv) {

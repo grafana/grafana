@@ -5,8 +5,7 @@ define([
   'jquery',
   'app/core/utils/kbn',
   'app/core/utils/datemath',
-  './impression_store',
-  'app/core/config',
+  './impression_store'
 ],
 function (angular, moment, _, $, kbn, dateMath, impressionStore) {
   'use strict';
