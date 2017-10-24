@@ -130,7 +130,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   seriesHandler(seriesData) {
     var series = new TimeSeries({
-      datapoints: seriesData.datapoints,
+      datapoints: seriesData.datapoints || [],
       alias: seriesData.target,
     });
 
