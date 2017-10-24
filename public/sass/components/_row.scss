@@ -17,14 +17,6 @@
       opacity: 1;
     }
   }
-
-  &:hover {
-    .dashboard-row__actions {
-      visibility: visible;
-      opacity: 1;
-      transition: opacity 200ms ease-in-out 100ms;
-    }
-  }
 }
 
 .dashboard-row__title {

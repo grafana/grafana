@@ -2,6 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import {PanelModel} from '../panel_model';
 import {PanelContainer} from './PanelContainer';
+import appEvents from 'app/core/app_events';
 
 export interface DashboardRowProps {
   panel: PanelModel;
@@ -31,7 +32,12 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
   }
 
-  openSettings() {}
+  openSettings() {
+    appEvents.emit('show-modal', {
+      src: 'public/app/features/dashboard/partials/shareModal.html',
+      scope: shareScope
+    });
+  }
 
   render() {
     const classes = classNames({'dashboard-row': true, 'dashboard-row--collapsed': this.state.collapsed});
