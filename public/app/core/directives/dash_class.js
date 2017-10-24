@@ -31,8 +31,8 @@ function (_, $, coreModule) {
           }
         });
 
-        $scope.$watch('playlistSrv', function(newValue) {
-          elem.toggleClass('playlist-active', _.isObject(newValue));
+        $scope.$watch('playlistSrv.isPlaying', function(newValue) {
+          elem.toggleClass('playlist-active', newValue);
         });
       }
     };
