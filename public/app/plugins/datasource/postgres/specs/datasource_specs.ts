@@ -193,4 +193,24 @@ describe('PostgreSQLDatasource', function() {
       expect(results[0].value).to.be('same');
     });
   });
+
+  describe('When interpolating variables', () => {
+    describe('and value is a string', () => {
+      it('should return an unquoted value', () => {
+        expect(ctx.ds.interpolateVariable('abc')).to.eql('abc');
+      });
+    });
+
+    describe('and value is a number', () => {
+      it('should return an unquoted value', () => {
+        expect(ctx.ds.interpolateVariable(1000)).to.eql(1000);
+      });
+    });
+
+    describe('and value is an array of strings', () => {
+      it('should return comma separated quoted values', () => {
+        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'])).to.eql('\'a\',\'b\',\'c\'');
+      });
+    });
+  });
 });
