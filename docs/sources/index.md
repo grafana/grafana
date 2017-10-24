@@ -35,17 +35,19 @@ The back-end web server has a number of configuration options. Go the
 those options.
 
 
-## Getting started
+## Getting Started
 
 - [Getting Started]({{< relref "guides/getting_started.md" >}})
 - [Basic Concepts]({{< relref "guides/basic_concepts.md" >}})
 - [Screencasts]({{< relref "tutorials/screencasts.md" >}})
 
-## Data sources guides
+## Data Source Guides
 
 - [Graphite]({{< relref "features/datasources/graphite.md" >}})
 - [Elasticsearch]({{< relref "features/datasources/elasticsearch.md" >}})
 - [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
-- [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
-
-
+- [Prometheus]({{< relref "features/datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "features/datasources/prometheus.md" >}})
+- [MySQL]({{< relref "features/datasources/mysql.md" >}})
+- [Postgres]({{< relref "features/datasources/postgres.md" >}})
+- [Cloudwatch]({{< relref "features/datasources/cloudwatch.md" >}})
