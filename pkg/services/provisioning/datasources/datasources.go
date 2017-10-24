@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/bus"
+
 	"github.com/grafana/grafana/pkg/log"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -24,17 +25,15 @@ func Apply(configPath string) error {
 type DatasourceConfigurator struct {
 	log         log.Logger
 	cfgProvider configProvider
-	repository  datasourceRepository
 }
 
 func NewDatasourceConfiguration() DatasourceConfigurator {
-	return newDatasourceConfiguration(log.New("setting.datasource"), sqlDatasourceRepository{})
+	return newDatasourceConfiguration(log.New("setting.datasource"))
 }
 
-func newDatasourceConfiguration(log log.Logger, repo datasourceRepository) DatasourceConfigurator {
+func newDatasourceConfiguration(log log.Logger) DatasourceConfigurator {
 	return DatasourceConfigurator{
 		log:         log,
-		repository:  repo,
 		cfgProvider: configProvider{},
 	}
 }
@@ -59,10 +58,11 @@ func (dc *DatasourceConfigurator) applyChanges(configPath string) error {
 		}
 	}
 
-	allDatasources, err := dc.repository.loadAllDatasources()
-	if err != nil {
+	cmd := &models.GetAllDataSourcesQuery{}
+	if err = bus.Dispatch(cmd); err != nil {
 		return err
 	}
+	allDatasources := cmd.Result
 
 	if err := dc.deleteDatasourcesNotInConfiguration(cfg, allDatasources); err != nil {
 		return err
@@ -80,14 +80,13 @@ func (dc *DatasourceConfigurator) applyChanges(configPath string) error {
 		if dbDatasource == nil {
 			dc.log.Info("inserting datasource from configuration ", "name", ds.Name)
 			insertCmd := createInsertCommand(ds)
-			err := dc.repository.insert(insertCmd)
-			if err != nil {
+			if err := bus.Dispatch(insertCmd); err != nil {
 				return err
 			}
 		} else {
 			dc.log.Debug("updating datasource from configuration", "name", ds.Name)
 			updateCmd := createUpdateCommand(ds, dbDatasource.Id)
-			if err := dc.repository.update(updateCmd); err != nil {
+			if err := bus.Dispatch(updateCmd); err != nil {
 				return err
 			}
 		}
@@ -109,7 +108,7 @@ func (dc *DatasourceConfigurator) deleteDatasourcesNotInConfiguration(cfg *Datas
 			if delete {
 				dc.log.Info("deleting datasource from configuration", "name", dbDS.Name)
 				cmd := &models.DeleteDataSourceByIdCommand{Id: dbDS.Id, OrgId: dbDS.OrgId}
-				if err := dc.repository.delete(cmd); err != nil {
+				if err := bus.Dispatch(cmd); err != nil {
 					return err
 				}
 			}
@@ -119,15 +118,6 @@ func (dc *DatasourceConfigurator) deleteDatasourcesNotInConfiguration(cfg *Datas
 	return nil
 }
 
-type datasourceRepository interface {
-	insert(*models.AddDataSourceCommand) error
-	update(*models.UpdateDataSourceCommand) error
-	delete(*models.DeleteDataSourceByIdCommand) error
-	get(*models.GetDataSourceByNameQuery) error
-	loadAllDatasources() ([]*models.DataSource, error)
-}
-
-type sqlDatasourceRepository struct{}
 type configProvider struct{}
 
 func (configProvider) readConfig(path string) (*DatasourcesAsConfig, error) {
@@ -146,29 +136,4 @@ func (configProvider) readConfig(path string) (*DatasourcesAsConfig, error) {
 	}
 
 	return datasources, nil
-}
-
-func (sqlDatasourceRepository) delete(cmd *models.DeleteDataSourceByIdCommand) error {
-	return bus.Dispatch(cmd)
-}
-
-func (sqlDatasourceRepository) update(cmd *models.UpdateDataSourceCommand) error {
-	return bus.Dispatch(cmd)
-}
-
-func (sqlDatasourceRepository) insert(cmd *models.AddDataSourceCommand) error {
-	return bus.Dispatch(cmd)
-}
-
-func (sqlDatasourceRepository) get(cmd *models.GetDataSourceByNameQuery) error {
-	return bus.Dispatch(cmd)
-}
-
-func (sqlDatasourceRepository) loadAllDatasources() ([]*models.DataSource, error) {
-	dss := &models.GetAllDataSourcesQuery{}
-	if err := bus.Dispatch(dss); err != nil {
-		return nil, err
-	}
-
-	return dss.Result, nil
 }
