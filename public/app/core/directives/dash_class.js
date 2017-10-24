@@ -32,7 +32,7 @@ function (_, $, coreModule) {
         });
 
         $scope.$watch('playlistSrv.isPlaying', function(newValue) {
-          elem.toggleClass('playlist-active', newValue);
+          elem.toggleClass('playlist-active', newValue === true);
         });
       }
     };
