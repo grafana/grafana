@@ -254,9 +254,9 @@ describe('templateSrv', function() {
     beforeEach(function() {
       initTemplateSrv([
         {type: 'query', name: 'server', current: { value: '{asd,asd2}', text: 'All' } },
-        {type: 'interval', name: 'period', current: { value: '$__auto_interval', text: 'auto' } }
+        {type: 'interval', name: 'period', current: { value: '$__auto_interval_interval', text: 'auto' } }
       ]);
-      _templateSrv.setGrafanaVariable('$__auto_interval', '13m');
+      _templateSrv.setGrafanaVariable('$__auto_interval_interval', '13m');
       _templateSrv.updateTemplateData();
     });
 
