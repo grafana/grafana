@@ -184,6 +184,29 @@ WHERE $__timeFilter(atimestamp) and hostname in([[hostname]])
 ORDER BY atimestamp ASC
 ```
 
+## Annotations
+
+[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+
+An example query:
+
+```sql
+SELECT
+  extract(epoch from time_date_time) AS time,
+ metric1 as text,
+  concat_ws(', ', metric1::text, metric2::text) as tags
+FROM
+  public.test_data
+WHERE
+  $__timeFilter(time_date_time)
+```
+
+Name | Description
+------------ | -------------
+time | The name of the date/time field.
+text | Event description field.
+tags | Optional field name to use for event tags as a comma separated string.
+
 ## Alerting
 
 Time series queries should work in alerting conditions. Table formatted queries is not yet supported in alert rule
