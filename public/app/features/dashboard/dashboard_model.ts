@@ -3,7 +3,8 @@ import _ from 'lodash';
 
 import {GRID_COLUMN_COUNT, GRID_CELL_HEIGHT, REPEAT_DIR_VERTICAL} from 'app/core/constants';
 import {DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
-import {Emitter, contextSrv} from 'app/core/core';
+import {Emitter} from 'app/core/utils/emitter';
+import {contextSrv} from 'app/core/services/context_srv';
 import sortByKeys from 'app/core/utils/sort_by_keys';
 
 import {DashboardRow} from './row/row_model';

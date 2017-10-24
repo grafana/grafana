@@ -1,5 +1,3 @@
-import {describe, beforeEach, it, expect} from 'test/lib/common';
-
 import _ from 'lodash';
 import {DashboardModel} from '../dashboard_model';
 import {PanelModel} from '../panel_model';
@@ -14,16 +12,16 @@ describe('DashboardModel', function() {
     });
 
     it('should have title', function() {
-      expect(model.title).to.be('No Title');
+      expect(model.title).toBe('No Title');
     });
 
     it('should have meta', function() {
-      expect(model.meta.canSave).to.be(true);
-      expect(model.meta.canShare).to.be(true);
+      expect(model.meta.canSave).toBe(true);
+      expect(model.meta.canShare).toBe(true);
     });
 
     it('should have default properties', function() {
-      expect(model.panels.length).to.be(0);
+      expect(model.panels.length).toBe(0);
     });
   });
 
@@ -37,7 +35,7 @@ describe('DashboardModel', function() {
     });
 
     it('should return max id + 1', function() {
-      expect(model.getNextPanelId()).to.be(6);
+      expect(model.getNextPanelId()).toBe(6);
     });
   });
 
@@ -47,8 +45,8 @@ describe('DashboardModel', function() {
       var saveModel = model.getSaveModelClone();
       var keys = _.keys(saveModel);
 
-      expect(keys[0]).to.be('annotations');
-      expect(keys[1]).to.be('autoUpdate');
+      expect(keys[0]).toBe('annotations');
+      expect(keys[1]).toBe('autoUpdate');
     });
   });
 
@@ -62,7 +60,7 @@ describe('DashboardModel', function() {
     it('adding panel should new up panel model', function() {
       dashboard.addPanel({type: 'test', title: 'test'});
 
-      expect(dashboard.panels[0] instanceof PanelModel).to.be(true);
+      expect(dashboard.panels[0] instanceof PanelModel).toBe(true);
     });
 
     it('duplicate panel should try to add to the right if there is space', function() {
@@ -80,8 +78,8 @@ describe('DashboardModel', function() {
       dashboard.addPanel(panel);
       dashboard.duplicatePanel(dashboard.panels[0]);
 
-      expect(dashboard.panels[1].repeat).to.be(undefined);
-      expect(dashboard.panels[1].scopedVars).to.be(undefined);
+      expect(dashboard.panels[1].repeat).toBe(undefined);
+      expect(dashboard.panels[1].scopedVars).toBe(undefined);
     });
   });
 
@@ -134,77 +132,77 @@ describe('DashboardModel', function() {
     });
 
     it('should have title', function() {
-      expect(model.title).to.be('No Title');
+      expect(model.title).toBe('No Title');
     });
 
     it('should have panel id', function() {
-      expect(graph.id).to.be(1);
+      expect(graph.id).toBe(1);
     });
 
     it('should move time and filtering list', function() {
-      expect(model.time.from).to.be('now-1d');
-      expect(model.templating.list[0].allFormat).to.be('glob');
+      expect(model.time.from).toBe('now-1d');
+      expect(model.templating.list[0].allFormat).toBe('glob');
     });
 
     it('graphite panel should change name too graph', function() {
-      expect(graph.type).to.be('graph');
+      expect(graph.type).toBe('graph');
     });
 
     it('single stat panel should have two thresholds', function() {
-      expect(singlestat.thresholds).to.be('20,30');
+      expect(singlestat.thresholds).toBe('20,30');
     });
 
     it('queries without refId should get it', function() {
-      expect(graph.targets[1].refId).to.be('B');
+      expect(graph.targets[1].refId).toBe('B');
     });
 
     it('update legend setting', function() {
-      expect(graph.legend.show).to.be(true);
+      expect(graph.legend.show).toBe(true);
     });
 
     it('move aliasYAxis to series override', function() {
-      expect(graph.seriesOverrides[0].alias).to.be("test");
-      expect(graph.seriesOverrides[0].yaxis).to.be(2);
+      expect(graph.seriesOverrides[0].alias).toBe("test");
+      expect(graph.seriesOverrides[0].yaxis).toBe(2);
     });
 
     it('should move pulldowns to new schema', function() {
-      expect(model.annotations.list[1].name).to.be('old');
+      expect(model.annotations.list[1].name).toBe('old');
     });
 
     it('table panel should only have two thresholds values', function() {
-      expect(table.styles[0].thresholds[0]).to.be("20");
-      expect(table.styles[0].thresholds[1]).to.be("30");
-      expect(table.styles[1].thresholds[0]).to.be("200");
-      expect(table.styles[1].thresholds[1]).to.be("300");
+      expect(table.styles[0].thresholds[0]).toBe("20");
+      expect(table.styles[0].thresholds[1]).toBe("30");
+      expect(table.styles[1].thresholds[0]).toBe("200");
+      expect(table.styles[1].thresholds[1]).toBe("300");
     });
 
     it('graph grid to yaxes options', function() {
-      expect(graph.yaxes[0].min).to.be(1);
-      expect(graph.yaxes[0].max).to.be(10);
-      expect(graph.yaxes[0].format).to.be('kbyte');
-      expect(graph.yaxes[0].label).to.be('left label');
-      expect(graph.yaxes[0].logBase).to.be(1);
-      expect(graph.yaxes[1].min).to.be(5);
-      expect(graph.yaxes[1].max).to.be(15);
-      expect(graph.yaxes[1].format).to.be('ms');
-      expect(graph.yaxes[1].logBase).to.be(2);
+      expect(graph.yaxes[0].min).toBe(1);
+      expect(graph.yaxes[0].max).toBe(10);
+      expect(graph.yaxes[0].format).toBe('kbyte');
+      expect(graph.yaxes[0].label).toBe('left label');
+      expect(graph.yaxes[0].logBase).toBe(1);
+      expect(graph.yaxes[1].min).toBe(5);
+      expect(graph.yaxes[1].max).toBe(15);
+      expect(graph.yaxes[1].format).toBe('ms');
+      expect(graph.yaxes[1].logBase).toBe(2);
 
-      expect(graph.grid.rightMax).to.be(undefined);
-      expect(graph.grid.rightLogBase).to.be(undefined);
-      expect(graph.y_formats).to.be(undefined);
+      expect(graph.grid.rightMax).toBe(undefined);
+      expect(graph.grid.rightLogBase).toBe(undefined);
+      expect(graph.y_formats).toBe(undefined);
     });
 
     it('dashboard schema version should be set to latest', function() {
-      expect(model.schemaVersion).to.be(16);
+      expect(model.schemaVersion).toBe(16);
     });
 
     it('graph thresholds should be migrated', function() {
-      expect(graph.thresholds.length).to.be(2);
-      expect(graph.thresholds[0].op).to.be('gt');
-      expect(graph.thresholds[0].value).to.be(200);
-      expect(graph.thresholds[0].fillColor).to.be('yellow');
-      expect(graph.thresholds[1].value).to.be(400);
-      expect(graph.thresholds[1].fillColor).to.be('red');
+      expect(graph.thresholds.length).toBe(2);
+      expect(graph.thresholds[0].op).toBe('gt');
+      expect(graph.thresholds[0].value).toBe(200);
+      expect(graph.thresholds[0].fillColor).toBe('yellow');
+      expect(graph.thresholds[1].value).toBe(400);
+      expect(graph.thresholds[1].fillColor).toBe('red');
     });
   });
 
@@ -216,13 +214,13 @@ describe('DashboardModel', function() {
     });
 
     it('Should set meta canEdit and canSave to false', function() {
-      expect(model.meta.canSave).to.be(false);
-      expect(model.meta.canEdit).to.be(false);
+      expect(model.meta.canSave).toBe(false);
+      expect(model.meta.canEdit).toBe(false);
     });
 
     it('getSaveModelClone should remove meta', function() {
       var clone = model.getSaveModelClone();
-      expect(clone.meta).to.be(undefined);
+      expect(clone.meta).toBe(undefined);
     });
   });
 
@@ -279,13 +277,13 @@ describe('DashboardModel', function() {
     });
 
     it('should update query schema', function() {
-      expect(target.fields).to.be(undefined);
-      expect(target.select.length).to.be(2);
-      expect(target.select[0].length).to.be(4);
-      expect(target.select[0][0].type).to.be('field');
-      expect(target.select[0][1].type).to.be('mean');
-      expect(target.select[0][2].type).to.be('math');
-      expect(target.select[0][3].type).to.be('alias');
+      expect(target.fields).toBe(undefined);
+      expect(target.select.length).toBe(2);
+      expect(target.select[0].length).toBe(4);
+      expect(target.select[0][0].type).toBe('field');
+      expect(target.select[0][1].type).toBe('mean');
+      expect(target.select[0][2].type).toBe('math');
+      expect(target.select[0][3].type).toBe('alias');
     });
 
   });
@@ -305,13 +303,13 @@ describe('DashboardModel', function() {
     });
 
     it('should add empty list', function() {
-      expect(model.annotations.list.length).to.be(1);
-      expect(model.templating.list.length).to.be(0);
+      expect(model.annotations.list.length).toBe(1);
+      expect(model.templating.list.length).toBe(0);
     });
 
     it('should add builtin annotation query', function() {
-      expect(model.annotations.list[0].builtIn).to.be(1);
-      expect(model.templating.list.length).to.be(0);
+      expect(model.annotations.list[0].builtIn).toBe(1);
+      expect(model.templating.list.length).toBe(0);
     });
   });
 
@@ -323,15 +321,15 @@ describe('DashboardModel', function() {
     });
 
     it('Should format timestamp with second resolution by default', function() {
-      expect(dashboard.formatDate(1234567890000)).to.be('2009-02-13 23:31:30');
+      expect(dashboard.formatDate(1234567890000)).toBe('2009-02-13 23:31:30');
     });
 
     it('Should format timestamp with second resolution even if second format is passed as parameter', function() {
-      expect(dashboard.formatDate(1234567890007,'YYYY-MM-DD HH:mm:ss')).to.be('2009-02-13 23:31:30');
+      expect(dashboard.formatDate(1234567890007,'YYYY-MM-DD HH:mm:ss')).toBe('2009-02-13 23:31:30');
     });
 
     it('Should format timestamp with millisecond resolution if format is passed as parameter', function() {
-      expect(dashboard.formatDate(1234567890007,'YYYY-MM-DD HH:mm:ss.SSS')).to.be('2009-02-13 23:31:30.007');
+      expect(dashboard.formatDate(1234567890007,'YYYY-MM-DD HH:mm:ss.SSS')).toBe('2009-02-13 23:31:30.007');
     });
   });
 
@@ -344,7 +342,7 @@ describe('DashboardModel', function() {
     });
 
     it('should not enable submmenu', function() {
-      expect(model.meta.submenuEnabled).to.be(false);
+      expect(model.meta.submenuEnabled).toBe(false);
     });
   });
 
@@ -361,7 +359,7 @@ describe('DashboardModel', function() {
     });
 
     it('should enable submmenu', function() {
-      expect(model.meta.submenuEnabled).to.be(true);
+      expect(model.meta.submenuEnabled).toBe(true);
     });
   });
 
@@ -378,7 +376,7 @@ describe('DashboardModel', function() {
     });
 
     it('should enable submmenu', function() {
-      expect(model.meta.submenuEnabled).to.be(true);
+      expect(model.meta.submenuEnabled).toBe(true);
     });
   });
 
@@ -395,7 +393,7 @@ describe('DashboardModel', function() {
     });
 
     it('should not enable submmenu', function() {
-      expect(model.meta.submenuEnabled).to.be(false);
+      expect(model.meta.submenuEnabled).toBe(false);
     });
   });
 
@@ -412,7 +410,7 @@ describe('DashboardModel', function() {
     });
 
     it('should not enable submmenu', function() {
-      expect(dashboard.meta.submenuEnabled).to.be(false);
+      expect(dashboard.meta.submenuEnabled).toBe(false);
     });
   });
 
@@ -442,18 +440,18 @@ describe('DashboardModel', function() {
     });
 
     it('should repeat panel 3 times', function() {
-      expect(dashboard.panels.length).to.be(3);
+      expect(dashboard.panels.length).toBe(3);
     });
 
     it('should mark panel repeated', function() {
-      expect(dashboard.panels[0].repeat).to.be('apps');
-      expect(dashboard.panels[1].repeatPanelId).to.be(2);
+      expect(dashboard.panels[0].repeat).toBe('apps');
+      expect(dashboard.panels[1].repeatPanelId).toBe(2);
     });
 
     it('should set scopedVars on panels', function() {
-      expect(dashboard.panels[0].scopedVars.apps.value).to.be('se1');
-      expect(dashboard.panels[1].scopedVars.apps.value).to.be('se2');
-      expect(dashboard.panels[2].scopedVars.apps.value).to.be('se3');
+      expect(dashboard.panels[0].scopedVars.apps.value).toBe('se1');
+      expect(dashboard.panels[1].scopedVars.apps.value).toBe('se2');
+      expect(dashboard.panels[2].scopedVars.apps.value).toBe('se3');
     });
 
     it('should place on first row and adjust width so all fit', function() {
@@ -472,11 +470,11 @@ describe('DashboardModel', function() {
       });
 
       it('reused panel should copy properties from source', function() {
-        expect(dashboard.panels[1].fill).to.be(10);
+        expect(dashboard.panels[1].fill).toBe(10);
       });
 
       it('should have same panel count', function() {
-        expect(dashboard.panels.length).to.be(3);
+        expect(dashboard.panels.length).toBe(3);
       });
     });
 
@@ -492,11 +490,11 @@ describe('DashboardModel', function() {
       });
 
       it('should remove scopedVars value for last variable', function() {
-        expect(dashboard.panels[0].scopedVars.apps).to.be(undefined);
+        expect(dashboard.panels[0].scopedVars.apps).toBe(undefined);
       });
 
       it('should have new variable value in scopedVars', function() {
-        expect(dashboard.panels[0].scopedVars.server.value).to.be("se1");
+        expect(dashboard.panels[0].scopedVars.server.value).toBe("se1");
       });
     });
 
@@ -507,7 +505,7 @@ describe('DashboardModel', function() {
       });
 
       it('should clean up repeated panel', function() {
-        expect(dashboard.panels.length).to.be(2);
+        expect(dashboard.panels.length).toBe(2);
       });
     });
 
@@ -518,11 +516,11 @@ describe('DashboardModel', function() {
       });
 
       it('should clean up repeated panel', function() {
-        expect(dashboard.panels.length).to.be(1);
+        expect(dashboard.panels.length).toBe(1);
       });
 
       it('should remove scoped vars from reused panel', function() {
-        expect(dashboard.panels[0].scopedVars).to.be(undefined);
+        expect(dashboard.panels[0].scopedVars).toBe(undefined);
       });
     });
 
