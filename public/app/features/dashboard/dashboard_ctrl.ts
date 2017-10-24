@@ -21,6 +21,7 @@ export class DashboardCtrl implements PanelContainer {
     private dashboardSrv,
     private unsavedChangesSrv,
     private dashboardViewStateSrv,
+    public  playlistSrv,
     private panelLoader) {
       // temp hack due to way dashboards are loaded
       // can't use controllerAs on route yet

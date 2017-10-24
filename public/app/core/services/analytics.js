@@ -7,6 +7,8 @@ define([
 function(angular, $, coreModule, config) {
   'use strict';
 
+  config = config.default;
+
   coreModule.default.service('googleAnalyticsSrv', function($rootScope, $location) {
 
     function gaInit() {
