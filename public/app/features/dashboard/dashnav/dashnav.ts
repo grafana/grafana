@@ -51,7 +51,7 @@ export class DashNavCtrl {
       this.dashboardSrv.starDashboard(this.dashboard.id, this.dashboard.meta.isStarred)
         .then(newState => {
           this.dashboard.meta.isStarred = newState;
-      })
+      });
     }
 
     shareDashboard(tabIndex) {

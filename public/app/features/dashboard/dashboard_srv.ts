@@ -146,12 +146,11 @@ export class DashboardSrv {
     }
 
     return promise.then(res => {
-      if(this.dash && this.dash.id == dashboardId){
+      if (this.dash && this.dash.id === dashboardId) {
         this.dash.meta.isStarred = res;
       }
       return res;
     });
-
   }
 }
 
