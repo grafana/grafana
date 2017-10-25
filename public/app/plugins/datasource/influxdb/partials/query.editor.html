@@ -28,7 +28,16 @@
 				<label class="gf-form-label query-keyword width-7">FROM</label>
 
 				<metric-segment segment="ctrl.policySegment" get-options="ctrl.getPolicySegments()" on-change="ctrl.policyChanged()"></metric-segment>
-				<metric-segment segment="ctrl.measurementSegment" get-options="ctrl.getMeasurements($query)" on-change="ctrl.measurementChanged()"></metric-segment>
+        <metric-segment segment="ctrl.measurementSegment" get-options="ctrl.getMeasurements($query)" on-change="ctrl.measurementChanged()"></metric-segment>
+
+        <gf-form-dropdown-react value="ctrl.target.policy" css-class="'width-8'" label-mode="true"
+          getOptions="ctrl.getPolicySegmentsReact()"
+          onChange="ctrl.policyChangedReact()">
+        </gf-form-dropdown-react>
+        <gf-form-dropdown-react value="ctrl.target.measurement" css-class="'width-8'" label-mode="true"
+          getOptions="ctrl.getMeasurementsReact()"
+          onChange="ctrl.measurementChangedReact()">
+        </gf-form-dropdown-react>
 			</div>
 
 			<div class="gf-form">

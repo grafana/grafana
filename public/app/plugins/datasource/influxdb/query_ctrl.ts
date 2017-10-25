@@ -200,11 +200,34 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
+  measurementChangedReact() {
+    return (newValue) => {
+      this.target.measurement = newValue.value;
+      this.panelCtrl.refresh();
+    };
+  }
+
   getPolicySegments() {
     var policiesQuery = this.queryBuilder.buildExploreQuery('RETENTION POLICIES');
     return this.datasource.metricFindQuery(policiesQuery)
     .then(this.transformToSegments(false))
     .catch(this.handleQueryError.bind(this));
+  }
+
+  getPolicySegmentsReact() {
+    return () => {
+      var policiesQuery = this.queryBuilder.buildExploreQuery('RETENTION POLICIES');
+      return this.datasource.metricFindQuery(policiesQuery)
+      .then(this.transformToOptions(false))
+      .catch(this.handleQueryError.bind(this));
+    };
+  }
+
+  policyChangedReact() {
+    return (newPolicy) => {
+      this.target.policy = newPolicy.value;
+      this.panelCtrl.refresh();
+    };
   }
 
   policyChanged() {
@@ -228,6 +251,15 @@ export class InfluxQueryCtrl extends QueryCtrl {
       .catch(this.handleQueryError.bind(this));
   }
 
+  getMeasurementsReact() {
+    return (measurementFilter) => {
+      var query = this.queryBuilder.buildExploreQuery('MEASUREMENTS', undefined, measurementFilter);
+      return this.datasource.metricFindQuery(query)
+      .then(this.transformToOptions(true))
+      .catch(this.handleQueryError.bind(this));
+    };
+  }
+
   handleQueryError(err) {
     this.error = err.message || 'Failed to issue metric query';
     return [];
@@ -246,6 +278,22 @@ export class InfluxQueryCtrl extends QueryCtrl {
       }
 
       return segments;
+    };
+  }
+
+  transformToOptions(addTemplateVars) {
+    return (results) => {
+      let options = _.map(results, (opt) => {
+        return { value: opt.text, text: opt.text };
+      });
+
+      if (addTemplateVars) {
+        for (let variable of this.templateSrv.variables) {
+          options.unshift({ type: 'template', value: '/^$' + variable.name + '$/'});
+        }
+      }
+
+      return options;
     };
   }
 
