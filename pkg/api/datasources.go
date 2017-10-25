@@ -139,7 +139,7 @@ func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) Resp
 
 	err = bus.Dispatch(&cmd)
 	if err != nil {
-		if err == m.ErrDataSouceUpdatingOldVersion {
+		if err == m.ErrDataSourceUpdatingOldVersion {
 			return ApiError(500, "Failed to update datasource. Reload new version and try again", err)
 		} else {
 			return ApiError(500, "Failed to update datasource", err)

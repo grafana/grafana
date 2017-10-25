@@ -23,11 +23,10 @@ const (
 	DS_ACCESS_PROXY  = "proxy"
 )
 
-// Typed errors
 var (
-	ErrDataSourceNotFound          = errors.New("Data source not found")
-	ErrDataSourceNameExists        = errors.New("Data source with same name already exists")
-	ErrDataSouceUpdatingOldVersion = errors.New("Trying to update old version of datasouce")
+	ErrDataSourceNotFound           = errors.New("Data source not found")
+	ErrDataSourceNameExists         = errors.New("Data source with same name already exists")
+	ErrDataSourceUpdatingOldVersion = errors.New("Trying to update old version of datasource")
 )
 
 type DsAccess string

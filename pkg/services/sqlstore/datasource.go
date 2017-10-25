@@ -167,7 +167,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 		}
 
 		if affected == 0 {
-			return m.ErrDataSouceUpdatingOldVersion
+			return m.ErrDataSourceUpdatingOldVersion
 		}
 
 		err = updateIsDefaultFlag(ds, sess)
