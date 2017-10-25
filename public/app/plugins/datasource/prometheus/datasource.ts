@@ -113,13 +113,7 @@ export class PrometheusDatasource {
       var result = [];
 
       _.each(responseList, (response, index) => {
-        if (response.status === 'error') {
-          throw response.error;
-        }
-
-        if (activeTargets[index].format === "table") {
-          result.push(self.transformMetricDataToTable(response.data.data.result));
-        } else {
+        if (activeTargets[index].format !== "table") {
           for (let metricData of response.data.data.result) {
             if (response.data.data.resultType === 'matrix') {
               result.push(self.transformMetricData(metricData, activeTargets[index], start, end, queries[index].step));
@@ -130,7 +124,18 @@ export class PrometheusDatasource {
         }
       });
 
+      var tableResponses = _.filter(responseList, (response, index) => {
+        return activeTargets[index].format === "table";
+      })
+      .map((response) => {
+        return response.data.data.result;
+      })
+      .flatten();
+      result.push(self.transformMetricDataToTable(tableResponses));
+
       return { data: result };
+    }, (err) => {
+      return this.$q.reject(err);
     });
   }
 
