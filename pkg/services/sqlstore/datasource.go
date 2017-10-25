@@ -152,7 +152,11 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {
-			updateSession = sess.Where("id=? and org_id=? and (version = ? or version < ?)", ds.Id, ds.OrgId, cmd.Version, cmd.Version)
+			// the reason we allow cmd.version > db.version is make it possible for people to force
+			// updates to datasources using the datasource.yaml file without knowing exactly what version
+			// a datasource have in the db.
+			updateSession = sess.Where("id=? and org_id=? and version < ?", ds.Id, ds.OrgId, ds.Version)
+
 		} else {
 			updateSession = sess.Where("id=? and org_id=?", ds.Id, ds.OrgId)
 		}
