@@ -1,6 +1,7 @@
-import * as d3 from 'd3';
 import $ from 'jquery';
 import _ from 'lodash';
+import * as d3Scale from 'd3-scale';
+import * as d3Selection from 'd3-selection';
 import kbn from 'app/core/utils/kbn';
 import {getValueBucketBound} from './heatmap_data_converter';
 
@@ -52,7 +53,7 @@ export class HeatmapTooltip {
   }
 
   add() {
-    this.tooltip = d3.select("body")
+    this.tooltip = d3Selection.select("body")
       .append("div")
       .attr("class", "heatmap-tooltip graph-tooltip grafana-tooltip");
   }
@@ -190,7 +191,7 @@ export class HeatmapTooltip {
 
     // Normalize histogram Y axis
     let histogramDomain = _.reduce(_.map(histogramData, d => d[1]), (sum, val) => sum + val, 0);
-    let histYScale = d3.scaleLinear()
+    let histYScale = d3Scale.scaleLinear()
       .domain([0, histogramDomain])
       .range([0, HISTOGRAM_HEIGHT]);
 

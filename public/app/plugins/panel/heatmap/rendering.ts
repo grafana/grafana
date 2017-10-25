@@ -1,7 +1,11 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import moment from 'moment';
-import * as d3 from 'd3';
+import * as d3Axis from 'd3-axis';
+import * as d3Color from 'd3-color';
+import * as d3Scale from 'd3-scale';
+import * as d3Selection from 'd3-selection';
+import * as d3TimeFormat from 'd3-time-format';
 import kbn from 'app/core/utils/kbn';
 import {appEvents, contextSrv} from 'app/core/core';
 import {tickStep, getScaledDecimals, getFlotTickSize} from 'app/core/utils/ticks';
@@ -92,7 +96,7 @@ export default function link(scope, elem, attrs, ctrl) {
   }
 
   function addXAxis() {
-    scope.xScale = xScale = d3.scaleTime()
+    scope.xScale = xScale = d3Scale.scaleTime()
       .domain([timeRange.from, timeRange.to])
       .range([0, chartWidth]);
 
@@ -101,12 +105,12 @@ export default function link(scope, elem, attrs, ctrl) {
     let timeFormat;
     let dashboardTimeZone = ctrl.dashboard.getTimezone();
     if (dashboardTimeZone === 'utc') {
-      timeFormat = d3.utcFormat(grafanaTimeFormatter);
+      timeFormat = d3TimeFormat.utcFormat(grafanaTimeFormatter);
     } else {
-      timeFormat = d3.timeFormat(grafanaTimeFormatter);
+      timeFormat = d3TimeFormat.timeFormat(grafanaTimeFormatter);
     }
 
-    let xAxis = d3.axisBottom(xScale)
+    let xAxis = d3Axis.axisBottom(xScale)
       .ticks(ticks)
       .tickFormat(timeFormat)
       .tickPadding(X_AXIS_TICK_PADDING)
@@ -158,11 +162,11 @@ export default function link(scope, elem, attrs, ctrl) {
       ticks: ticks
     };
 
-    scope.yScale = yScale = d3.scaleLinear()
+    scope.yScale = yScale = d3Scale.scaleLinear()
       .domain([y_min, y_max])
       .range([chartHeight, 0]);
 
-    let yAxis = d3.axisLeft(yScale)
+    let yAxis = d3Axis.axisLeft(yScale)
       .ticks(ticks)
       .tickFormat(tickValueFormatter(decimals, scaledDecimals))
       .tickSizeInner(0 - width)
@@ -217,7 +221,7 @@ export default function link(scope, elem, attrs, ctrl) {
       y_min = 1;
     }
 
-    scope.yScale = yScale = d3.scaleLog()
+    scope.yScale = yScale = d3Scale.scaleLog()
       .base(panel.yAxis.logBase)
       .domain([y_min, y_max])
       .range([chartHeight, 0]);
@@ -240,7 +244,7 @@ export default function link(scope, elem, attrs, ctrl) {
       ticks: tick_values.length
     };
 
-    let yAxis = d3.axisLeft(yScale)
+    let yAxis = d3Axis.axisLeft(yScale)
       .tickValues(tick_values)
       .tickFormat(tickValueFormatter(decimals, scaledDecimals))
       .tickSizeInner(0 - width)
@@ -365,7 +369,7 @@ export default function link(scope, elem, attrs, ctrl) {
       heatmap.remove();
     }
 
-    heatmap = d3.select(heatmap_elem)
+    heatmap = d3Selection.select(heatmap_elem)
       .append("svg")
       .attr("width", width)
       .attr("height", height);
@@ -419,10 +423,10 @@ export default function link(scope, elem, attrs, ctrl) {
   }
 
   function highlightCard(event) {
-    let color = d3.select(event.target).style("fill");
-    let highlightColor = d3.color(color).darker(2);
-    let strokeColor = d3.color(color).brighter(4);
-    let current_card = d3.select(event.target);
+    let color = d3Selection.select(event.target).style("fill");
+    let highlightColor = d3Color.color(color).darker(2);
+    let strokeColor = d3Color.color(color).brighter(4);
+    let current_card = d3Selection.select(event.target);
     tooltip.originalFillColor = color;
     current_card.style("fill", highlightColor.toString())
     .style("stroke", strokeColor.toString())
@@ -430,7 +434,7 @@ export default function link(scope, elem, attrs, ctrl) {
   }
 
   function resetCardHighLight(event) {
-    d3.select(event.target).style("fill", tooltip.originalFillColor)
+    d3Selection.select(event.target).style("fill", tooltip.originalFillColor)
     .style("stroke", tooltip.originalFillColor)
     .style("stroke-width", 0);
   }

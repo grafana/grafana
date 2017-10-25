@@ -15,7 +15,13 @@ import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
 import {impressions} from 'app/features/dashboard/impression_store';
 import builtInPlugins from './built_in_plugins';
-import * as d3 from 'd3';
+import * as d3Array from 'd3-array';
+import * as d3Axis from 'd3-axis';
+import * as d3Color from 'd3-color';
+import * as d3Scale from 'd3-scale';
+import * as d3Selection from 'd3-selection';
+import * as d3ScaleChromatic from 'd3-scale-chromatic';
+import * as d3TimeFormat from 'd3-time-format';
 
 // rxjs
 import {Observable} from 'rxjs/Observable';
@@ -66,7 +72,13 @@ exposeToPlugin('jquery', jquery);
 exposeToPlugin('angular', angular);
 exposeToPlugin('rxjs/Subject', Subject);
 exposeToPlugin('rxjs/Observable', Observable);
-exposeToPlugin('d3', d3);
+exposeToPlugin('d3-array', d3Array);
+exposeToPlugin('d3-axis', d3Axis);
+exposeToPlugin('d3-color', d3Color);
+exposeToPlugin('d3-scale', d3Scale);
+exposeToPlugin('d3-selection', d3Selection);
+exposeToPlugin('d3-scale-chromatic', d3ScaleChromatic);
+exposeToPlugin('d3-time-format', d3TimeFormat);
 
 exposeToPlugin('app/features/dashboard/impression_store', {
   impressions: impressions,
