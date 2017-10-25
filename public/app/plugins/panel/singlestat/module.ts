@@ -15,6 +15,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   dataType = 'timeseries';
   series: any[];
   data: any;
+  alertState: any;
+  annotationsPromise: any;
   fontSizes: any[];
   unitFormats: any[];
   invalidGaugeRange: boolean;
@@ -84,7 +86,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private $location, private linkSrv) {
+  constructor($scope, $injector, private $location, private linkSrv, private annotationsSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
@@ -128,7 +130,19 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       this.setValues(data);
     }
     this.data = data;
-    this.render();
+    this.annotationsPromise = this.annotationsSrv.getAnnotations({
+      dashboard: this.dashboard,
+      panel: this.panel,
+      range: this.range,
+    });
+    this.annotationsPromise.then(result => {
+      this.loading = false;
+      this.alertState = result.alertState;
+      this.render();
+    }, () => {
+      this.loading = false;
+      this.render();
+    });
   }
 
   seriesHandler(seriesData) {
