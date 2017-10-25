@@ -229,13 +229,13 @@ describe('PrometheusDatasource', function() {
     });
   });
   describe('When resultFormat is table and instant = true', function() {
-    var results;
+    var results, results2;
     var urlExpected = 'proxied/api/v1/query?query=' +
       encodeURIComponent('test{job="testjob"}') +
       '&time=1443460275';
     var query = {
       range: { from: moment(1443438674760), to: moment(1443460274760) },
-      targets: [{ expr: 'test{job="testjob"}', format: 'time_series', instant: true }],
+      targets: [{ expr: 'test{job="testjob"}', format: 'table', instant: true }],
       interval: '60s'
     };
     var response = {
@@ -248,21 +248,43 @@ describe('PrometheusDatasource', function() {
         }]
       }
     };
+    var urlExpected2 = 'proxied/api/v1/query?query=' +
+      encodeURIComponent('test2{job="testjob"}') +
+      '&time=1443460275';
+    var query2 = {
+      range: { from: moment(1443438674760), to: moment(1443460274760) },
+      targets: [{ expr: 'test2{job="testjob"}', format: 'table', instant: true }],
+      interval: '60s'
+    };
+    var response2 = {
+      status: "success",
+      data: {
+        resultType: "vector",
+        result: [{
+          metric: { "__name__": "test", job: "testjob", instance: "testinstance" },
+          value: [1443454528, "3846"]
+        }]
+      }
+    };
     beforeEach(function () {
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.$httpBackend.expect('GET', urlExpected2).respond(response2);
       ctx.ds.query(query).then(function (data) { results = data; });
+      ctx.ds.query(query2).then(function (data) { results2 = data; });
       ctx.$httpBackend.flush();
     });
     it('should return table model', function() {
-      var table = ctx.ds.transformMetricDataToTable(response.data.result);
+      var table = ctx.ds.transformMetricDataToTable(response.data.result.concat(response2.data.result));
       expect(table.type).to.be('table');
       expect(table.rows).to.eql(
         [
-          [ 1443454528000, 'test', 'testjob', 3846]
+          [ 1443454528000, 'test', '', 'testjob', 3846],
+          [ 1443454528000, 'test', 'testinstance', 'testjob', 3846]
         ]);
       expect(table.columns).to.eql(
         [ { text: 'Time', type: 'time' },
           { text: '__name__' },
+          { text: 'instance' },
           { text: 'job' },
           { text: 'Value' }
         ]
@@ -284,7 +306,8 @@ describe('PrometheusDatasource', function() {
         range: { from: moment(1443438674760), to: moment(1443460274760) },
         targets: [{
           expr: 'test',
-          interval: '10s'
+          interval: '10s',
+          format: 'time_series'
         }],
         interval: '5s'
       };
@@ -299,7 +322,7 @@ describe('PrometheusDatasource', function() {
       var query = {
         // 6 hour range
         range: { from: moment(1508318768202), to: moment(1508318770118) },
-        targets: [{expr: 'test'}],
+        targets: [{expr: 'test', format: 'time_series' }],
         interval: '100ms'
       };
       var urlExpected = 'proxied/api/v1/query_range?query=test&start=1508318769&end=1508318771&step=1';
@@ -314,7 +337,8 @@ describe('PrometheusDatasource', function() {
         range: { from: moment(1443438674760), to: moment(1443460274760) },
         targets: [{
           expr: 'test',
-          interval: '5s'
+          interval: '5s',
+          format: 'time_series'
         }],
         interval: '10s'
       };
@@ -328,7 +352,7 @@ describe('PrometheusDatasource', function() {
       var query = {
         // 6 hour range
         range: { from: moment(1443438674760), to: moment(1443460274760) },
-        targets: [{ expr: 'test' }],
+        targets: [{ expr: 'test', format: 'time_series' }],
         interval: '1s'
       };
       var urlExpected = 'proxied/api/v1/query_range?query=test' +
@@ -344,7 +368,8 @@ describe('PrometheusDatasource', function() {
         targets: [{
           expr: 'test',
           interval: '10s',
-          intervalFactor: 10
+          intervalFactor: 10,
+          format: 'time_series'
         }],
         interval: '5s'
       };
@@ -361,7 +386,8 @@ describe('PrometheusDatasource', function() {
         targets: [{
           expr: 'test',
           interval: '15s',
-          intervalFactor: 2
+          intervalFactor: 2,
+          format: 'time_series'
         }],
         interval: '5s'
       };
@@ -378,7 +404,8 @@ describe('PrometheusDatasource', function() {
         targets: [{
           expr: 'test',
           interval: '5s',
-          intervalFactor: 10
+          intervalFactor: 10,
+          format: 'time_series'
         }],
         interval: '10s'
       };
@@ -394,7 +421,8 @@ describe('PrometheusDatasource', function() {
         range: { from: moment(1443438674760), to: moment(1444043474760) },
         targets: [{
           expr: 'test',
-          intervalFactor: 10
+          intervalFactor: 10,
+          format: 'time_series'
         }],
         interval: '10s'
       };
@@ -410,7 +438,8 @@ describe('PrometheusDatasource', function() {
         range: { from: moment(1443438674760), to: moment(1444043474760) },
         targets: [{
           expr: 'test',
-          intervalFactor: 10
+          intervalFactor: 10,
+          format: 'time_series'
         }],
         interval: '5s'
       };
@@ -436,7 +465,8 @@ describe('PrometheusDatasource', function() {
         range: { from: moment(1443438674760), to: moment(1443460274760) },
         targets: [{
           expr: 'rate(test[$__interval])',
-          interval: '5s'
+          interval: '5s',
+          format: 'time_series'
         }],
         interval: '10s',
         scopedVars: {
@@ -462,7 +492,8 @@ describe('PrometheusDatasource', function() {
         range: { from: moment(1443438674760), to: moment(1443460274760) },
         targets: [{
           expr: 'rate(test[$__interval])',
-          interval: '10s'
+          interval: '10s',
+          format: 'time_series'
         }],
         interval: '5s',
         scopedVars: {
@@ -489,7 +520,8 @@ describe('PrometheusDatasource', function() {
         targets: [{
           expr: 'rate(test[$__interval])',
           interval: '5s',
-          intervalFactor: 10
+          intervalFactor: 10,
+          format: 'time_series'
         }],
         interval: '10s',
         scopedVars: {
@@ -516,7 +548,8 @@ describe('PrometheusDatasource', function() {
         targets: [{
           expr: 'rate(test[$__interval])',
           interval: '10s',
-          intervalFactor: 10
+          intervalFactor: 10,
+          format: 'time_series'
         }],
         interval: '5s',
         scopedVars: {
@@ -543,7 +576,8 @@ describe('PrometheusDatasource', function() {
         targets: [{
           expr: 'rate(test[$__interval])',
           interval: '15s',
-          intervalFactor: 2
+          intervalFactor: 2,
+          format: 'time_series'
         }],
         interval: '5s',
         scopedVars: {
@@ -569,7 +603,8 @@ describe('PrometheusDatasource', function() {
         range: { from: moment(1443438674760), to: moment(1444043474760) },
         targets: [{
           expr: 'rate(test[$__interval])',
-          intervalFactor: 10
+          intervalFactor: 10,
+          format: 'time_series'
         }],
         interval: '5s',
         scopedVars: {

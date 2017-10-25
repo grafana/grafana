@@ -131,7 +131,9 @@ export class PrometheusDatasource {
         return response.data.data.result;
       })
       .flatten();
-      result.push(self.transformMetricDataToTable(tableResponses));
+      if (tableResponses.length > 0) {
+        result.push(self.transformMetricDataToTable(tableResponses));
+      }
 
       return { data: result };
     }, (err) => {
