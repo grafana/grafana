@@ -98,7 +98,6 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       }
 
       ctrl.events.on('render', () => {
-        console.log('panelDirective::render!');
         if (lastHeight !== ctrl.containerHeight) {
           panelContainer.css({minHeight: ctrl.containerHeight});
           lastHeight = ctrl.containerHeight;

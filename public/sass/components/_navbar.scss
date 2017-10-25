@@ -18,7 +18,7 @@
 
 .sidemenu-open {
   .navbar {
-    padding-left: $panel-margin;
+    padding-left: 15px;
   }
 }
 
@@ -63,19 +63,6 @@
   background-color: $navbarLinkBackgroundActive;
 }
 
-.navbar-page-icon {
-  font-size: $font-size-lg;
-  padding: 1rem 0rem 0.75rem 1rem;
-  min-height: $navbarHeight;
-
-  .gicon {
-    position: relative;
-    top: -1px;
-    font-size: 20px;
-    line-height: 8px;
-  }
-}
-
 .navbar-page-btn {
   text-overflow: ellipsis;
   overflow: hidden;
@@ -94,6 +81,15 @@
 
   &--search {
     padding: 1rem 1.5rem 0.75rem 1.5rem;
+  }
+
+  .gicon {
+    position: relative;
+    top: -1px;
+    font-size: 19px;
+    line-height: 8px;
+    opacity: 0.75;
+    margin-right: 8px;
   }
 }
 

@@ -48,7 +48,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     let text2 = '';
 
     if (this.props.panel.panels.length) {
-      text2 = `This will also remove row's ${this.props.panel.panels.length} hidden panels`;
+      text2 = `This will also remove the row's ${this.props.panel.panels.length} panels`;
     }
 
     appEvents.emit('confirm-modal', {
@@ -71,6 +71,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       'fa-chevron-down': !this.state.collapsed,
       'fa-chevron-right': this.state.collapsed,
     });
+
     const hiddenPanels = this.props.panel.panels ? this.props.panel.panels.length : 0;
 
     return (
