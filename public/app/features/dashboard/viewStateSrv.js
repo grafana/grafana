@@ -154,7 +154,6 @@ function (angular, _, $, config) {
 
       ctrl.editMode = false;
       ctrl.fullscreen = false;
-      ctrl.dashboard.editMode = this.oldDashboardEditMode;
 
       this.$scope.appEvent('panel-fullscreen-exit', {panelId: ctrl.panel.id});
 
@@ -176,10 +175,8 @@ function (angular, _, $, config) {
       ctrl.editMode = this.state.edit && this.dashboard.meta.canEdit;
       ctrl.fullscreen = true;
 
-      this.oldDashboardEditMode = this.dashboard.editMode;
       this.oldTimeRange = ctrl.range;
       this.fullscreenPanel = panelScope;
-      this.dashboard.editMode = false;
 
       $(window).scrollTop(0);
 
