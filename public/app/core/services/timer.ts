@@ -6,7 +6,7 @@ import coreModule from 'app/core/core_module';
 export class Timer {
   timers = [];
 
-   /** @ngInject */
+  /** @ngInject */
   constructor(private $timeout) {
   }
 
