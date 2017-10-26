@@ -64,15 +64,20 @@ exposeToPlugin('lodash', _);
 exposeToPlugin('moment', moment);
 exposeToPlugin('jquery', jquery);
 exposeToPlugin('angular', angular);
+exposeToPlugin('d3', d3);
 exposeToPlugin('rxjs/Subject', Subject);
 exposeToPlugin('rxjs/Observable', Observable);
-exposeToPlugin('d3', d3);
+
+// backward compatible path
+exposeToPlugin('vendor/npm/rxjs/Rx', {
+  Subject: Subject,
+  Observable: Observable
+});
 
 exposeToPlugin('app/features/dashboard/impression_store', {
   impressions: impressions,
   __esModule: true
 });
-
 
 exposeToPlugin('app/plugins/sdk', sdk);
 exposeToPlugin('app/core/utils/datemath', datemath);
