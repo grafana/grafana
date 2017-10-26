@@ -1,6 +1,8 @@
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 
+// This service really just tracks a list of $timeout promises to give us a
+// method for cancelling them all when we need to
 export class Timer {
   timers = [];
 
@@ -14,7 +16,6 @@ export class Timer {
   }
 
   cancel(promise) {
-    console.log(promise);
     this.timers = _.without(this.timers, promise);
     this.$timeout.cancel(promise);
   }
@@ -28,5 +29,3 @@ export class Timer {
 }
 
 coreModule.service('timer', Timer);
-// This service really just tracks a list of $timeout promises to give us a
-// method for cancelling them all when we need to
