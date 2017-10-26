@@ -1,5 +1,5 @@
 import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
-import 'app/features/panellinks/linkSrv';
+import 'app/features/panellinks/link_srv';
 import _ from  'lodash';
 
 describe('linkSrv', function() {
