@@ -1,10 +1,9 @@
-define([
-  '../core_module',
-],
-function (coreModule) {
-  "use strict";
+import coreModule from '../core_module';
 
-  coreModule.default.controller('LoadDashboardCtrl', function($scope, $routeParams, dashboardLoaderSrv, backendSrv, $location) {
+export class LoadDashboardCtrl {
+
+  /** @ngInject */
+  constructor($scope, $routeParams, dashboardLoaderSrv, backendSrv, $location) {
     $scope.appEvent("dashboard-fetch-start");
 
     if (!$routeParams.slug) {
@@ -23,10 +22,13 @@ function (coreModule) {
     dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
       $scope.initDashboard(result, $scope);
     });
+  }
+}
 
-  });
+export class NewDashboardCtrl {
 
-  coreModule.default.controller('NewDashboardCtrl', function($scope) {
+  /** @ngInject */
+  constructor($scope) {
     $scope.initDashboard({
       meta: { canStar: false, canShare: false, isNew: true },
       dashboard: {
@@ -35,12 +37,14 @@ function (coreModule) {
           {
             title: 'Dashboard Row',
             height: '250px',
-            panels:[],
+            panels: [],
             isNew: true,
           }
         ]
       },
     }, $scope);
-  });
+  }
+}
 
-});
+coreModule.controller('LoadDashboardCtrl', LoadDashboardCtrl);
+coreModule.controller('NewDashboardCtrl', NewDashboardCtrl);
