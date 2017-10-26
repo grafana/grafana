@@ -31,7 +31,6 @@ export class DashboardModel {
   revision: number;
   links: any;
   gnetId: any;
-  editMode: boolean;
   folderId: number;
   panels: PanelModel[];
 

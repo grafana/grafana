@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
-	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
@@ -59,7 +58,6 @@ func (g *GrafanaServerImpl) Start() {
 	search.Init()
 	login.Init()
 	social.NewOAuthService()
-	eventpublisher.Init()
 	plugins.Init()
 
 	closer, err := tracing.Init(setting.Cfg)

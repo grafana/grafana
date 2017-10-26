@@ -102,11 +102,6 @@ Content-Type: application/json
     "templates_pattern":"emails/*.html",
     "welcome_email_on_sign_up":"false"
   },
-  "event_publisher":{
-    "enabled":"false",
-    "exchange":"grafana_events",
-      "rabbitmq_url":"amqp://localhost/"
-  },
   "log":{
     "buffer_len":"10000",
     "level":"Info",

@@ -287,7 +287,7 @@ func (hs *HttpServer) registerRoutes() {
 
 		apiRoute.Group("/alerts", func(alertsRoute RouteRegister) {
 			alertsRoute.Post("/test", bind(dtos.AlertTestCommand{}), wrap(AlertTest))
-			alertsRoute.Post("/:alertId/pause", bind(dtos.PauseAlertCommand{}), wrap(PauseAlert), reqEditorRole)
+			alertsRoute.Post("/:alertId/pause", reqEditorRole, bind(dtos.PauseAlertCommand{}), wrap(PauseAlert))
 			alertsRoute.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
 			alertsRoute.Get("/", wrap(GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", wrap(GetAlertStatesForDashboard))

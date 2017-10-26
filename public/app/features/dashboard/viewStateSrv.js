@@ -147,7 +147,6 @@ function (angular, _, $, config) {
       ctrl.fullscreen = false;
 
       this.dashboard.setViewMode(ctrl.panel, false, false);
-
       this.$scope.appEvent('panel-fullscreen-exit', {panelId: ctrl.panel.id});
 
       if (!render) { return false;}

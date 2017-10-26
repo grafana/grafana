@@ -196,8 +196,8 @@ describe('MySQLDatasource', function() {
 
   describe('When interpolating variables', () => {
     describe('and value is a string', () => {
-      it('should return a quoted value', () => {
-        expect(ctx.ds.interpolateVariable('abc')).to.eql('\'abc\'');
+      it('should return an unquoted value', () => {
+        expect(ctx.ds.interpolateVariable('abc')).to.eql('abc');
       });
     });
 
