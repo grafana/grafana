@@ -1,7 +1,8 @@
 import coreModule from '../core_module';
 
-export class LoadDashboard {
+export class LoadDashboardCtrl {
 
+  /** @ngInject */
   constructor($scope, $routeParams, dashboardLoaderSrv, backendSrv, $location) {
     $scope.appEvent("dashboard-fetch-start");
 
@@ -24,8 +25,9 @@ export class LoadDashboard {
   }
 }
 
-export class NewDashboard {
+export class NewDashboardCtrl {
 
+  /** @ngInject */
   constructor($scope) {
     $scope.initDashboard({
       meta: { canStar: false, canShare: false, isNew: true },
@@ -44,5 +46,5 @@ export class NewDashboard {
   }
 }
 
-coreModule.controller('LoadDashboardCtrl', LoadDashboard);
-coreModule.controller('NewDashboardCtrl', NewDashboard);
+coreModule.controller('LoadDashboardCtrl', LoadDashboardCtrl);
+coreModule.controller('NewDashboardCtrl', NewDashboardCtrl);
