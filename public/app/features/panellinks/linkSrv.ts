@@ -66,26 +66,26 @@ export class LinkSrv {
   }
 
   getAnchorInfo(link) {
-    var info = {};
-    (<any>info).href = this.getLinkUrl(link);
-    (<any>info).title = this.templateSrv.replace(link.title || '');
+    var info: any = {};
+    info.href = this.getLinkUrl(link);
+    info.title = this.templateSrv.replace(link.title || '');
     return info;
   }
 
   getPanelLinkAnchorInfo(link, scopedVars) {
-    var info = {};
+    var info: any = {};
     if (link.type === 'absolute') {
-      (<any>info).target = link.targetBlank ? '_blank' : '_self';
-      (<any>info).href = this.templateSrv.replace(link.url || '', scopedVars);
-      (<any>info).title = this.templateSrv.replace(link.title || '', scopedVars);
+      info.target = link.targetBlank ? '_blank' : '_self';
+      info.href = this.templateSrv.replace(link.url || '', scopedVars);
+      info.title = this.templateSrv.replace(link.title || '', scopedVars);
     } else if (link.dashUri) {
-      (<any>info).href = 'dashboard/' + link.dashUri + '?';
-      (<any>info).title = this.templateSrv.replace(link.title || '', scopedVars);
-      (<any>info).target = link.targetBlank ? '_blank' : '';
+      info.href = 'dashboard/' + link.dashUri + '?';
+      info.title = this.templateSrv.replace(link.title || '', scopedVars);
+      info.target = link.targetBlank ? '_blank' : '';
     } else {
-      (<any>info).title = this.templateSrv.replace(link.title || '', scopedVars);
+      info.title = this.templateSrv.replace(link.title || '', scopedVars);
       var slug = kbn.slugifyForUrl(link.dashboard || '');
-      (<any>info).href = 'dashboard/db/' + slug + '?';
+      info.href = 'dashboard/db/' + slug + '?';
     }
 
     var params = {};
@@ -100,10 +100,10 @@ export class LinkSrv {
       this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
     }
 
-    (<any>info).href = this.addParamsToUrl((<any>info).href, params);
+    info.href = this.addParamsToUrl(info.href, params);
 
     if (link.params) {
-      (<any>info).href = this.appendToQueryString((<any>info).href, this.templateSrv.replace(link.params, scopedVars));
+      info.href = this.appendToQueryString(info.href, this.templateSrv.replace(link.params, scopedVars));
     }
 
     return info;
