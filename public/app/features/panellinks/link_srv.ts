@@ -2,7 +2,6 @@ import angular from 'angular';
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 
-
 export class LinkSrv {
 
   /** @ngInject */
