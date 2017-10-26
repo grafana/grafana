@@ -1,10 +1,7 @@
-define([
-  '../core_module',
-],
-function (coreModule) {
-  'use strict';
+import coreModule from '../core_module';
 
-  coreModule.default.directive('confirmClick', function() {
+export class ConfirmClick {
+  constructor() {
     return {
       restrict: 'A',
       link: function(scope, elem, attrs) {
@@ -19,5 +16,7 @@ function (coreModule) {
         });
       },
     };
-  });
-});
+  }
+}
+
+coreModule.directive('confirmClick', ConfirmClick);
