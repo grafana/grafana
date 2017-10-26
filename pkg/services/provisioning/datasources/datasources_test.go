@@ -137,6 +137,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 			So(ds.BasicAuthPassword, ShouldEqual, "basic_auth_password")
 			So(ds.WithCredentials, ShouldBeTrue)
 			So(ds.IsDefault, ShouldBeTrue)
+			So(ds.Editable, ShouldBeTrue)
 		})
 	})
 }

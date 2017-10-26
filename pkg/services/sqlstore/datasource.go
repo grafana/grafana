@@ -159,6 +159,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 		sess.UseBool("is_default")
 		sess.UseBool("basic_auth")
 		sess.UseBool("with_credentials")
+		sess.UseBool("read_only")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

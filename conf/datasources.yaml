@@ -39,6 +39,10 @@ datasources:
 #   # <int> including this value garantees that instance with old configs cannot
 #   #       overwrite your last change.
 #   version: 1
+#   # <bool> allow users to edit datasources from the UI.
+#   editable: true
+
+
 # - name: Prometheus
 #   type: prometheus
 #   access: proxy

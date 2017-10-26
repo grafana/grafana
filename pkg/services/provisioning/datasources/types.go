@@ -26,6 +26,7 @@ type DataSourceFromConfig struct {
 	IsDefault         bool              `json:"is_default" yaml:"is_default"`
 	JsonData          string            `json:"json_data" yaml:"json_data"`
 	SecureJsonData    map[string]string `json:"secure_json_data" yaml:"secure_json_data"`
+	Editable          bool              `json:"editable" yaml:"editable"`
 }
 
 func createInsertCommand(ds DataSourceFromConfig) *models.AddDataSourceCommand {
@@ -50,7 +51,7 @@ func createInsertCommand(ds DataSourceFromConfig) *models.AddDataSourceCommand {
 		IsDefault:         ds.IsDefault,
 		JsonData:          jsonData,
 		SecureJsonData:    ds.SecureJsonData,
-		ReadOnly:          true,
+		ReadOnly:          !ds.Editable,
 	}
 }
 
@@ -77,6 +78,6 @@ func createUpdateCommand(ds DataSourceFromConfig, id int64) *models.UpdateDataSo
 		IsDefault:         ds.IsDefault,
 		JsonData:          jsonData,
 		SecureJsonData:    ds.SecureJsonData,
-		ReadOnly:          true,
+		ReadOnly:          !ds.Editable,
 	}
 }
