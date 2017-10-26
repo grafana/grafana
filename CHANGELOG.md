@@ -25,6 +25,7 @@
 
 ## Fixes
 * **Alerting**: Viewer can no longer pause alert rules [#9640](https://github.com/grafana/grafana/issues/9640)
+* **Playlist**: Bug where playlist controls was missing [#9639](https://github.com/grafana/grafana/issues/9639)
 
 # 4.6.0-beta3 (2017-10-23)
 
