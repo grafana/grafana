@@ -1,8 +1,3 @@
-# purge data source not listed in configuration.
-# not recommended in HA setups if config can
-# can differ between instances.
-purge_other_datasources: false
-
 # list of datasources to insert/update depending 
 # whats available in the datbase
 datasources:
@@ -42,9 +37,6 @@ datasources:
 #   # <bool> allow users to edit datasources from the UI.
 #   editable: true
 
-
-# - name: Prometheus
-#   type: prometheus
-#   access: proxy
-#   url: http://localhost:9090
-
+delete_datasources:
+  # - name: Graphite
+  #   org_id: 1

@@ -65,7 +65,9 @@ func GetAllDataSources(query *m.GetAllDataSourcesQuery) error {
 func DeleteDataSourceById(cmd *m.DeleteDataSourceByIdCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "DELETE FROM data_source WHERE id=? and org_id=?"
-		_, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
+		result, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
+		affected, _ := result.RowsAffected()
+		cmd.DeletedDatasourcesCount = affected
 		return err
 	})
 }
@@ -73,7 +75,9 @@ func DeleteDataSourceById(cmd *m.DeleteDataSourceByIdCommand) error {
 func DeleteDataSourceByName(cmd *m.DeleteDataSourceByNameCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "DELETE FROM data_source WHERE name=? and org_id=?"
-		_, err := sess.Exec(rawSql, cmd.Name, cmd.OrgId)
+		result, err := sess.Exec(rawSql, cmd.Name, cmd.OrgId)
+		affected, _ := result.RowsAffected()
+		cmd.DeletedDatasourcesCount = affected
 		return err
 	})
 }

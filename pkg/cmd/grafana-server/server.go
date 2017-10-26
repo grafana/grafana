@@ -66,7 +66,8 @@ func (g *GrafanaServerImpl) Start() {
 	social.NewOAuthService()
 	plugins.Init()
 
-	if err := provisioning.StartUp(setting.HomePath); err != nil {
+	//if err := provisioning.StartUp(setting.HomePath); err != nil {
+	if err := provisioning.StartUp(setting.DatasourcesPath); err != nil {
 		logger.Error("Failed to provision Grafana from config", "error", err)
 		g.Shutdown(1, "Startup failed")
 		return

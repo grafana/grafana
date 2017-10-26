@@ -146,11 +146,15 @@ type UpdateDataSourceCommand struct {
 type DeleteDataSourceByIdCommand struct {
 	Id    int64
 	OrgId int64
+
+	DeletedDatasourcesCount int64
 }
 
 type DeleteDataSourceByNameCommand struct {
 	Name  string
 	OrgId int64
+
+	DeletedDatasourcesCount int64
 }
 
 // ---------------------

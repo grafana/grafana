@@ -1,4 +1,3 @@
-purge_other_datasources: true
 datasources:
   - name: name
     type: type

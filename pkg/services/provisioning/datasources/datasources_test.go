@@ -13,10 +13,11 @@ import (
 var (
 	logger                          log.Logger = log.New("fake.logger")
 	oneDatasourcesConfig            string     = ""
-	twoDatasourcesConfig            string     = "./test-configs/two-datasources.yaml"
-	twoDatasourcesConfigPurgeOthers string     = "./test-configs/two-datasources-purge-others.yaml"
-	doubleDatasourcesConfig         string     = "./test-configs/double-default-datasources.yaml"
-	allProperties                   string     = "./test-configs/all-properties.yaml"
+	twoDatasourcesConfig            string     = "./test-configs/two-datasources"
+	twoDatasourcesConfigPurgeOthers string     = "./test-configs/insert-two-delete-two"
+	doubleDatasourcesConfig         string     = "./test-configs/double-default"
+	allProperties                   string     = "./test-configs/all-properties"
+	brokenYaml                      string     = "./test-configs/broken-yaml"
 
 	fakeRepo *fakeRepository
 )
@@ -33,7 +34,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 
 		Convey("One configured datasource", func() {
 			Convey("no datasource in database", func() {
-				dc := newDatasourceConfiguration(logger)
+				dc := newDatasourceProvisioner(logger)
 				err := dc.applyChanges(twoDatasourcesConfig)
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
@@ -50,7 +51,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 				}
 
 				Convey("should update one datasource", func() {
-					dc := newDatasourceConfiguration(logger)
+					dc := newDatasourceProvisioner(logger)
 					err := dc.applyChanges(twoDatasourcesConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
@@ -63,7 +64,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 			})
 
 			Convey("Two datasources with is_default", func() {
-				dc := newDatasourceConfiguration(logger)
+				dc := newDatasourceProvisioner(logger)
 				err := dc.applyChanges(doubleDatasourcesConfig)
 				Convey("should raise error", func() {
 					So(err, ShouldEqual, ErrInvalidConfigToManyDefault)
@@ -79,7 +80,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 				}
 
 				Convey("should have two new datasources", func() {
-					dc := newDatasourceConfiguration(logger)
+					dc := newDatasourceProvisioner(logger)
 					err := dc.applyChanges(twoDatasourcesConfigPurgeOthers)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
@@ -100,7 +101,7 @@ func TestDatasourceAsConfig(t *testing.T) {
 				}
 
 				Convey("should have two new datasources", func() {
-					dc := newDatasourceConfiguration(logger)
+					dc := newDatasourceProvisioner(logger)
 					err := dc.applyChanges(twoDatasourcesConfig)
 					if err != nil {
 						t.Fatalf("applyChanges return an error %v", err)
@@ -113,16 +114,22 @@ func TestDatasourceAsConfig(t *testing.T) {
 			})
 		})
 
-		Convey("can read all properties", func() {
+		Convey("broken yaml should return error", func() {
+			_, err := configReader{}.readConfig(brokenYaml)
+			So(err, ShouldNotBeNil)
+		})
 
-			cfgProvifer := configProvider{}
+		Convey("can read all properties", func() {
+			cfgProvifer := configReader{}
 			cfg, err := cfgProvifer.readConfig(allProperties)
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
 
-			So(cfg.PurgeOtherDatasources, ShouldBeTrue)
-			ds := cfg.Datasources[0]
+			So(len(cfg), ShouldEqual, 2)
+
+			dsCfg := cfg[0]
+			ds := dsCfg.Datasources[0]
 
 			So(ds.Name, ShouldEqual, "name")
 			So(ds.Type, ShouldEqual, "type")
@@ -138,19 +145,22 @@ func TestDatasourceAsConfig(t *testing.T) {
 			So(ds.WithCredentials, ShouldBeTrue)
 			So(ds.IsDefault, ShouldBeTrue)
 			So(ds.Editable, ShouldBeTrue)
+
+			dstwo := cfg[1].Datasources[0]
+			So(dstwo.Name, ShouldEqual, "name2")
 		})
 	})
 }
 
 type fakeRepository struct {
 	inserted []*models.AddDataSourceCommand
-	deleted  []*models.DeleteDataSourceByIdCommand
+	deleted  []*models.DeleteDataSourceByNameCommand
 	updated  []*models.UpdateDataSourceCommand
 
 	loadAll []*models.DataSource
 }
 
-func mockDelete(cmd *models.DeleteDataSourceByIdCommand) error {
+func mockDelete(cmd *models.DeleteDataSourceByNameCommand) error {
 	fakeRepo.deleted = append(fakeRepo.deleted, cmd)
 	return nil
 }

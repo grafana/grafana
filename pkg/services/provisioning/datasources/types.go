@@ -4,8 +4,13 @@ import "github.com/grafana/grafana/pkg/models"
 import "github.com/grafana/grafana/pkg/components/simplejson"
 
 type DatasourcesAsConfig struct {
-	PurgeOtherDatasources bool                   `json:"purge_other_datasources" yaml:"purge_other_datasources"`
-	Datasources           []DataSourceFromConfig `json:"datasources" yaml:"datasources"`
+	Datasources       []*DataSourceFromConfig   `json:"datasources" yaml:"datasources"`
+	DeleteDatasources []*DeleteDatasourceConfig `json:"delete_datasources" yaml:"delete_datasources"`
+}
+
+type DeleteDatasourceConfig struct {
+	OrgId int64  `json:"org_id" yaml:"org_id"`
+	Name  string `json:"name" yaml:"name"`
 }
 
 type DataSourceFromConfig struct {
@@ -29,7 +34,7 @@ type DataSourceFromConfig struct {
 	Editable          bool              `json:"editable" yaml:"editable"`
 }
 
-func createInsertCommand(ds DataSourceFromConfig) *models.AddDataSourceCommand {
+func createInsertCommand(ds *DataSourceFromConfig) *models.AddDataSourceCommand {
 	jsonData, err := simplejson.NewJson([]byte(ds.JsonData))
 	if err != nil {
 		jsonData = simplejson.New()
@@ -55,7 +60,7 @@ func createInsertCommand(ds DataSourceFromConfig) *models.AddDataSourceCommand {
 	}
 }
 
-func createUpdateCommand(ds DataSourceFromConfig, id int64) *models.UpdateDataSourceCommand {
+func createUpdateCommand(ds *DataSourceFromConfig, id int64) *models.UpdateDataSourceCommand {
 	jsonData, err := simplejson.NewJson([]byte(ds.JsonData))
 	if err != nil {
 		jsonData = simplejson.New()

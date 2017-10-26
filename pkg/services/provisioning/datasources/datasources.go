@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
 
@@ -17,67 +18,36 @@ var (
 	ErrInvalidConfigToManyDefault = errors.New("datasource.yaml config is invalid. Only one datasource can be marked as default")
 )
 
-func Apply(configPath string) error {
-	dc := NewDatasourceConfiguration()
-	return dc.applyChanges(configPath)
+func Provision(configDirectory string) error {
+	dc := newDatasourceProvisioner(log.New("provisioning.datasources"))
+	return dc.applyChanges(configDirectory)
 }
 
-type DatasourceConfigurator struct {
+type DatasourceProvisioner struct {
 	log         log.Logger
-	cfgProvider configProvider
+	cfgProvider configReader
 }
 
-func NewDatasourceConfiguration() DatasourceConfigurator {
-	return newDatasourceConfiguration(log.New("setting.datasource"))
-}
-
-func newDatasourceConfiguration(log log.Logger) DatasourceConfigurator {
-	return DatasourceConfigurator{
+func newDatasourceProvisioner(log log.Logger) DatasourceProvisioner {
+	return DatasourceProvisioner{
 		log:         log,
-		cfgProvider: configProvider{},
+		cfgProvider: configReader{},
 	}
 }
 
-func (dc *DatasourceConfigurator) applyChanges(configPath string) error {
-	cfg, err := dc.cfgProvider.readConfig(configPath)
-	if err != nil {
-		return err
-	}
-
-	defaultCount := 0
-	for i := range cfg.Datasources {
-		if cfg.Datasources[i].OrgId == 0 {
-			cfg.Datasources[i].OrgId = 1
-		}
-
-		if cfg.Datasources[i].IsDefault {
-			defaultCount++
-			if defaultCount > 1 {
-				return ErrInvalidConfigToManyDefault
-			}
-		}
-	}
-
-	cmd := &models.GetAllDataSourcesQuery{}
-	if err = bus.Dispatch(cmd); err != nil {
-		return err
-	}
-	allDatasources := cmd.Result
-
-	if err := dc.deleteDatasourcesNotInConfiguration(cfg, allDatasources); err != nil {
+func (dc *DatasourceProvisioner) apply(cfg *DatasourcesAsConfig) error {
+	if err := dc.deleteDatasources(cfg.DeleteDatasources); err != nil {
 		return err
 	}
 
 	for _, ds := range cfg.Datasources {
-		var dbDatasource *models.DataSource
-		for _, ddd := range allDatasources {
-			if ddd.Name == ds.Name && ddd.OrgId == ds.OrgId {
-				dbDatasource = ddd
-				break
-			}
+		cmd := &models.GetDataSourceByNameQuery{OrgId: ds.OrgId, Name: ds.Name}
+		err := bus.Dispatch(cmd)
+		if err != nil && err != models.ErrDataSourceNotFound {
+			return err
 		}
 
-		if dbDatasource == nil {
+		if err == models.ErrDataSourceNotFound {
 			dc.log.Info("inserting datasource from configuration ", "name", ds.Name)
 			insertCmd := createInsertCommand(ds)
 			if err := bus.Dispatch(insertCmd); err != nil {
@@ -85,7 +55,7 @@ func (dc *DatasourceConfigurator) applyChanges(configPath string) error {
 			}
 		} else {
 			dc.log.Debug("updating datasource from configuration", "name", ds.Name)
-			updateCmd := createUpdateCommand(ds, dbDatasource.Id)
+			updateCmd := createUpdateCommand(ds, cmd.Result.Id)
 			if err := bus.Dispatch(updateCmd); err != nil {
 				return err
 			}
@@ -95,44 +65,83 @@ func (dc *DatasourceConfigurator) applyChanges(configPath string) error {
 	return nil
 }
 
-func (dc *DatasourceConfigurator) deleteDatasourcesNotInConfiguration(cfg *DatasourcesAsConfig, allDatasources []*models.DataSource) error {
-	if cfg.PurgeOtherDatasources {
-		for _, dbDS := range allDatasources {
-			delete := true
-			for _, cfgDS := range cfg.Datasources {
-				if dbDS.Name == cfgDS.Name && dbDS.OrgId == cfgDS.OrgId {
-					delete = false
-				}
-			}
+func (dc *DatasourceProvisioner) applyChanges(configPath string) error {
+	configs, err := dc.cfgProvider.readConfig(configPath)
+	if err != nil {
+		return err
+	}
 
-			if delete {
-				dc.log.Info("deleting datasource from configuration", "name", dbDS.Name)
-				cmd := &models.DeleteDataSourceByIdCommand{Id: dbDS.Id, OrgId: dbDS.OrgId}
-				if err := bus.Dispatch(cmd); err != nil {
-					return err
-				}
-			}
+	for _, cfg := range configs {
+		if err := dc.apply(cfg); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-type configProvider struct{}
+func (dc *DatasourceProvisioner) deleteDatasources(dsToDelete []*DeleteDatasourceConfig) error {
+	for _, ds := range dsToDelete {
+		cmd := &models.DeleteDataSourceByNameCommand{OrgId: ds.OrgId, Name: ds.Name}
+		if err := bus.Dispatch(cmd); err != nil {
+			return err
+		}
 
-func (configProvider) readConfig(path string) (*DatasourcesAsConfig, error) {
-	filename, _ := filepath.Abs(path)
-	yamlFile, err := ioutil.ReadFile(filename)
+		if cmd.DeletedDatasourcesCount > 0 {
+			dc.log.Info("deleted datasource based on configuration", "name", ds.Name)
+		}
+	}
 
+	return nil
+}
+
+type configReader struct{}
+
+func (configReader) readConfig(path string) ([]*DatasourcesAsConfig, error) {
+	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
 
-	var datasources *DatasourcesAsConfig
+	var datasources []*DatasourcesAsConfig
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml") {
+			filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
+			yamlFile, err := ioutil.ReadFile(filename)
 
-	err = yaml.Unmarshal(yamlFile, &datasources)
-	if err != nil {
-		return nil, err
+			if err != nil {
+				return nil, err
+			}
+			var datasource *DatasourcesAsConfig
+			err = yaml.Unmarshal(yamlFile, &datasource)
+			if err != nil {
+				return nil, err
+			}
+
+			datasources = append(datasources, datasource)
+		}
+	}
+
+	defaultCount := 0
+	for _, cfg := range datasources {
+		for _, ds := range cfg.Datasources {
+			if ds.OrgId == 0 {
+				ds.OrgId = 1
+			}
+
+			if ds.IsDefault {
+				defaultCount++
+				if defaultCount > 1 {
+					return nil, ErrInvalidConfigToManyDefault
+				}
+			}
+		}
+
+		for _, ds := range cfg.DeleteDatasources {
+			if ds.OrgId == 0 {
+				ds.OrgId = 1
+			}
+		}
 	}
 
 	return datasources, nil
