@@ -148,7 +148,7 @@ describe('given dashboard with panel repeat in vertical direction', function() {
   });
 });
 
-describe('given dashboard with row repeat', function() {
+describe.skip('given dashboard with row repeat', function() {
   var dashboard;
 
   beforeEach(function() {
@@ -178,9 +178,9 @@ describe('given dashboard with row repeat', function() {
     dashboard.processRepeats();
   });
 
-  // it('should not repeat only row', function() {
-  //   expect(dashboard.panels[1].type).toBe('graph')
-  // });
+  it('should not repeat only row', function() {
+    expect(dashboard.panels[1].type).toBe('graph');
+  });
   //
   // it('should set scopedVars on panels', function() {
   //   expect(dashboard.panels[1].scopedVars).toMatchObject({apps: {text: 'se1', value: 'se1'}})
