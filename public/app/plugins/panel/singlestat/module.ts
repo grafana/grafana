@@ -89,7 +89,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   constructor($scope, $injector, private $location, private linkSrv, private annotationsSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
-
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
@@ -118,6 +117,22 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.onDataReceived([]);
   }
 
+  issueQueries(datasource) {
+    this.annotationsPromise = this.annotationsSrv.getAnnotations({
+      dashboard: this.dashboard,
+      panel: this.panel,
+      range: this.range,
+    });
+    return super.issueQueries(datasource);
+  }
+  onDataSnapshotLoad(snapshotData) {
+    this.annotationsPromise = this.annotationsSrv.getAnnotations({
+      dashboard: this.dashboard,
+      panel: this.panel,
+      range: this.range,
+    });
+    this.onDataReceived(snapshotData);
+  }
   onDataReceived(dataList) {
     const data: any = {};
     if (dataList.length > 0 && dataList[0].type === 'table') {
@@ -129,20 +144,15 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       this.series = dataList.map(this.seriesHandler.bind(this));
       this.setValues(data);
     }
+    if (this.annotationsPromise) {
+      this.annotationsPromise.then(result => {
+        this.alertState = result.alertState;
+        this.render();
+      }, () => {
+        this.render();
+      });
+    }
     this.data = data;
-    this.annotationsPromise = this.annotationsSrv.getAnnotations({
-      dashboard: this.dashboard,
-      panel: this.panel,
-      range: this.range,
-    });
-    this.annotationsPromise.then(result => {
-      this.loading = false;
-      this.alertState = result.alertState;
-      this.render();
-    }, () => {
-      this.loading = false;
-      this.render();
-    });
   }
 
   seriesHandler(seriesData) {
