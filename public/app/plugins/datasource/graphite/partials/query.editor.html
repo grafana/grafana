@@ -12,7 +12,7 @@
 
       <div ng-repeat="tag in ctrl.queryModel.tags" class="gf-form">
         <gf-form-dropdown model="tag.key" lookup-text="false" allow-custom="false" label-mode="true" css-class="query-segment-key"
-          get-options="ctrl.getTags()"
+          get-options="ctrl.getTags($index, $query)"
           on-change="ctrl.tagChanged(tag, $index)">
         </gf-form-dropdown>
         <gf-form-dropdown model="tag.operator" lookup-text="false" allow-custom="false" label-mode="true" css-class="query-segment-operator"
@@ -20,7 +20,7 @@
           on-change="ctrl.tagChanged(tag, $index)">
         </gf-form-dropdown>
         <gf-form-dropdown model="tag.value" lookup-text="false" allow-custom="false" label-mode="true" css-class="query-segment-value"
-          get-options="ctrl.getTagValues(tag)"
+          get-options="ctrl.getTagValues(tag, $index, $query)"
           on-change="ctrl.tagChanged(tag, $index)">
         </gf-form-dropdown>
         <label class="gf-form-label query-keyword" ng-if="ctrl.showDelimiter($index)">,</label>

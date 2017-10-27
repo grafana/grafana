@@ -263,6 +263,15 @@ export default class GraphiteQuery {
     this.getSeriesByTagFunc().params[tagIndex] = newTagParam;
     this.tags[tagIndex] = tag;
   }
+
+  renderTagExpressions(excludeIndex = -1) {
+    return _.compact(_.map(this.tags, (tagExpr, index) => {
+      // Don't render tag that we want to lookup
+      if (index !== excludeIndex) {
+        return tagExpr.key + tagExpr.operator + tagExpr.value;
+      }
+    }));
+  }
 }
 
 function wrapFunction(target, func) {

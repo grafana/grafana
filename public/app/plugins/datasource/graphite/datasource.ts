@@ -247,7 +247,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.getTagValues = function(tag, optionalOptions) {
     let options = optionalOptions || {};
 
-    let httpOptions: any =  {
+    let httpOptions: any = {
       method: 'GET',
       url: '/tags/' + tag,
       // for cancellations
@@ -266,6 +266,57 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
             text: value.value,
             id: value.id
           };
+        });
+      } else {
+        return [];
+      }
+    });
+  };
+
+  this.getTagsAutoComplete = (expression, tagPrefix) => {
+    let httpOptions: any = {
+      method: 'GET',
+      url: '/tags/autoComplete/tags',
+      params: {
+        expr: expression
+      }
+    };
+
+    if (tagPrefix) {
+      httpOptions.params.tagPrefix = tagPrefix;
+    }
+
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      if (results.data) {
+        return _.map(results.data, (tag) => {
+          return { text: tag };
+        });
+      } else {
+        return [];
+      }
+    });
+  };
+
+  this.getTagValuesAutoComplete = (expression, tag, valuePrefix) => {
+    let httpOptions: any = {
+      method: 'GET',
+      url: '/tags/autoComplete/values',
+      params: {
+        expr: expression
+      }
+    };
+
+    if (tag) {
+      httpOptions.params.tag = tag;
+    }
+    if (valuePrefix) {
+      httpOptions.params.valuePrefix = valuePrefix;
+    }
+
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      if (results.data) {
+        return _.map(results.data, (value) => {
+          return { text: value };
         });
       } else {
         return [];
