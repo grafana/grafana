@@ -34,7 +34,7 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
       .value();
 
     // add special row type
-    panels.push({id: 'row', name: 'Row', sort: 8, info: {logos: {small: 'public/img/icn-panel.svg'}}});
+    panels.push({id: 'row', name: 'Row', sort: 8, info: {logos: {small: 'public/img/icn-row.svg'}}});
 
     // add sort by sort property
     return _.sortBy(panels, 'sort');
