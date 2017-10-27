@@ -1,3 +1,8 @@
+# list of datasources that should be deleted from the database
+delete_datasources:
+  # - name: Graphite
+  #   org_id: 1
+
 # list of datasources to insert/update depending 
 # whats available in the datbase
 datasources:
@@ -37,6 +42,3 @@ datasources:
 #   # <bool> allow users to edit datasources from the UI.
 #   editable: true
 
-delete_datasources:
-  # - name: Graphite
-  #   org_id: 1
