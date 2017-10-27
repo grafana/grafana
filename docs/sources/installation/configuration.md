@@ -87,6 +87,14 @@ command line in the init.d script or the systemd service file.  It can
 be overridden in the configuration file or in the default environment variable
 file.
 
+### plugins 
+
+Directory where grafana will automatically scan and look for plugins
+
+### datasources
+
+Config files containing datasources that will be configured at startup
+
 ## [server]
 
 ### http_addr
