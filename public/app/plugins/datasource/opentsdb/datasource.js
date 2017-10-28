@@ -441,7 +441,7 @@ function (angular, _, dateMath) {
     }
 
     function mapMetricsToTargets(metrics, options, tsdbVersion) {
-      var interpolatedTagValue;
+      var interpolatedTagValue, arrTagV;
       return _.map(metrics, function(metricData) {
         if (tsdbVersion === 3) {
           return metricData.query.index;
@@ -453,7 +453,8 @@ function (angular, _, dateMath) {
               return target.metric === metricData.metric &&
               _.every(target.tags, function(tagV, tagK) {
                 interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars, 'pipe');
-                return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
+                arrTagV = interpolatedTagValue.split('|');
+                return _.includes(arrTagV, metricData.tags[tagK]) || interpolatedTagValue === "*";
               });
             }
           });
