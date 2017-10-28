@@ -39,7 +39,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
           text = text + '<br />' + event.text;
         }
       } else if (title) {
-        text = title + '<br />' + text;
+        text = title + '<br />' + (_.isString(text) ? text : '');
         title = '';
       }
 
