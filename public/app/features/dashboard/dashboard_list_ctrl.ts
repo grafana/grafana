@@ -81,8 +81,28 @@ export class DashboardListCtrl {
     this.canMove = selectedDashboards > 0 && selectedFolders === 0;
   }
 
+  getDashboardsToDelete() {
+    const selectedFolderIds = this.getFolderIds(this.dashboards);
+    return _.filter(this.dashboards, o => {
+      return o.checked && (
+        o.type !== 'dash-child' ||
+        (o.type === 'dash-child' && !_.includes(selectedFolderIds, o.folderId))
+      );
+    });
+  }
+
+  getFolderIds(dashboards) {
+    const ids = [];
+    for (let dash of dashboards) {
+      if (dash.type === 'dash-folder') {
+        ids.push(dash.id);
+      }
+    }
+    return ids;
+  }
+
   delete() {
-    const selectedDashboards =  _.filter(this.dashboards, {checked: true});
+    const selectedDashboards =  this.getDashboardsToDelete();
 
     appEvents.emit('confirm-modal', {
       title: 'Delete',

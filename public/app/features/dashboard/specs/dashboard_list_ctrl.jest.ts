@@ -2,9 +2,9 @@ import {DashboardListCtrl} from '../dashboard_list_ctrl';
 import q from 'q';
 
 describe('DashboardListCtrl', () => {
-  describe('when fetching dashboards', () => {
-    let ctrl;
+  let ctrl;
 
+  describe('when fetching dashboards', () => {
     describe('and dashboard has parent that is not in search result', () => {
       beforeEach(() => {
         const response = [
@@ -169,6 +169,24 @@ describe('DashboardListCtrl', () => {
       it('should enable delete button', () => {
         expect(ctrl.canDelete).toBeTruthy();
       });
+    });
+  });
+
+  describe('when deleting dashboards', () => {
+    beforeEach(() => {
+      ctrl = new DashboardListCtrl({get: () => q.resolve([])}, {getNav: () => {}}, q);
+      ctrl.dashboards = [
+        {id: 1, type: 'dash-folder', checked: true},
+        {id: 2, type: 'dash-child', checked: true, folderId: 1},
+        {id: 3, type: 'dash-db', checked: true}
+      ];
+    });
+
+    it('should filter out children if parent is selected', () => {
+      const toBeDeleted = ctrl.getDashboardsToDelete();
+      expect(toBeDeleted.length).toEqual(2);
+      expect(toBeDeleted[0].id).toEqual(1);
+      expect(toBeDeleted[1].id).toEqual(3);
     });
   });
 });
