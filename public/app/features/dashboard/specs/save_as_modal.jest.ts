@@ -1,5 +1,5 @@
 import {SaveDashboardAsModalCtrl} from '../save_as_modal';
-import {describe, expect} from 'test/lib/common';
+import {describe, it, expect} from 'test/lib/common';
 
 describe('saving dashboard as', () => {
     function scenario(name, panel, verify) {
