@@ -17,7 +17,7 @@ export class MysqlDatasource {
 
   interpolateVariable(value, variable) {
     if (typeof value === 'string') {
-      if (variable.multi) {
+      if (variable.multi || variable.includeAll) {
         return '\'' + value + '\'';
       } else {
         return value;
