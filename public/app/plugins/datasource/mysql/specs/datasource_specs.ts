@@ -218,16 +218,16 @@ describe('MySQLDatasource', function() {
       });
     });
 
-    describe(' and variable allows multi-value and value is a string', () => {
+    describe('and variable allows multi-value and value is a string', () => {
       it('should return a quoted value', () => {
         ctx.variable.multi = true;
         expect(ctx.ds.interpolateVariable('abc', ctx.variable)).to.eql('\'abc\'');
       });
     });
 
-    describe(' and variable allows all and value is a string', () => {
+    describe('and variable allows all and value is a string', () => {
       it('should return a quoted value', () => {
-        ctx.variable.multi = true;
+        ctx.variable.includeAll = true;
         expect(ctx.ds.interpolateVariable('abc', ctx.variable)).to.eql('\'abc\'');
       });
     });
