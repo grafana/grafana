@@ -2,6 +2,8 @@
 
 import _ from 'lodash';
 import ResponseParser from './response_parser';
+import { QueryVariable } from 'app/features/templating/query_variable';
+import { CustomVariable } from 'app/features/templating/custom_variable';
 
 export class MysqlDatasource {
   id: any;
@@ -15,7 +17,7 @@ export class MysqlDatasource {
     this.responseParser = new ResponseParser(this.$q);
   }
 
-  interpolateVariable(value, variable) {
+  interpolateVariable(value, variable: QueryVariable | CustomVariable) {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
         return '\'' + value + '\'';
