@@ -2,6 +2,7 @@ import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 import moment from 'moment';
 import helpers from 'test/specs/helpers';
 import {MysqlDatasource} from '../datasource';
+import {CustomVariable} from 'app/features/templating/custom_variable';
 
 describe('MySQLDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
@@ -195,22 +196,41 @@ describe('MySQLDatasource', function() {
   });
 
   describe('When interpolating variables', () => {
+    beforeEach(function() {
+      ctx.variable = new CustomVariable({},{});
+    });
+
     describe('and value is a string', () => {
       it('should return an unquoted value', () => {
-        expect(ctx.ds.interpolateVariable('abc')).to.eql('abc');
+        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).to.eql('abc');
       });
     });
 
     describe('and value is a number', () => {
       it('should return an unquoted value', () => {
-        expect(ctx.ds.interpolateVariable(1000)).to.eql(1000);
+        expect(ctx.ds.interpolateVariable(1000, ctx.variable)).to.eql(1000);
       });
     });
 
     describe('and value is an array of strings', () => {
       it('should return comma separated quoted values', () => {
-        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'])).to.eql('\'a\',\'b\',\'c\'');
+        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'], ctx.variable)).to.eql('\'a\',\'b\',\'c\'');
       });
     });
+
+    describe(' and variable allows multi-value and value is a string', () => {
+      it('should return a quoted value', () => {
+        ctx.variable.multi = true;
+        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).to.eql('\'abc\'');
+      });
+    });
+
+    describe(' and variable allows all and value is a string', () => {
+      it('should return a quoted value', () => {
+        ctx.variable.multi = true;
+        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).to.eql('\'abc\'');
+      });
+    });
+
   });
 });
