@@ -373,14 +373,16 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 
 	var filters []*ec2.Filter
 	for k, v := range filterJson {
-		if vv, ok := v.([]string); ok {
-			var vvvv []*string
+		if vv, ok := v.([]interface{}); ok {
+			var vvvvv []*string
 			for _, vvv := range vv {
-				vvvv = append(vvvv, &vvv)
+				if vvvv, ok := vvv.(string); ok {
+					vvvvv = append(vvvvv, &vvvv)
+				}
 			}
 			filters = append(filters, &ec2.Filter{
 				Name:   aws.String(k),
-				Values: vvvv,
+				Values: vvvvv,
 			})
 		}
 	}
