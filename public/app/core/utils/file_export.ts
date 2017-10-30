@@ -24,28 +24,44 @@ export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAUL
     text += '\n';
 
     // process data
-    var dataArr = [[]];
+    var dataArr = [[[]]];
+	var timeArr = [];
     var sIndex = 1;
+	var timeIndex = 0;
     _.each(seriesList, function(series) {
         var cIndex = 0;
         dataArr.push([]);
         _.each(series.datapoints, function(dp) {
-            dataArr[0][cIndex] = moment(dp[1]).format(dateTimeFormat);
-            dataArr[sIndex][cIndex] = dp[0];
-            cIndex++;
+			dataArr[sIndex].push([]);
+			dataArr[sIndex][cIndex].push([]);
+			dataArr[sIndex][cIndex][0] = dp[0];
+			dataArr[sIndex][cIndex][1] = dp[1];
+			timeArr[timeIndex] = dp[1];
+			timeIndex++;
+			cIndex++;
         });
         sIndex++;
     });
 
+	// Merge and sort time points accross series.
+    var timearray = _.sortBy(_.uniq(timeArr), [function(time) { return time; }]);
+																													
     // make text
-    for (var i = 0; i < dataArr[0].length; i++) {
-        text += dataArr[0][i] + ';';
-        for (var j = 1; j < dataArr.length; j++) {
-            text += dataArr[j][i] + ';';
-        }
-        text = text.substring(0,text.length-1);
-        text += '\n';
-    }
+	for(var i = 0; i < (timearray.length - 1); i++) {
+		text += h.default(timearray[i]).format(dateTimeFormat) + ';';
+		for (var j = 1; j < dataArr.length; j++) {
+			var reading = 'undefined;';
+			for(var k = 0; k < dataArr[j].length; k++) {
+			  if(timearray[i] == dataArr[j][k][1]) {
+				  reading = dataArr[j][k][0] + ';';
+				  break;
+			  }
+			}
+			text += reading;
+		}
+		text = text.substring(0, text.length - 1);
+		text += '\n';
+	}
     saveSaveBlob(text, 'grafana_data_export.csv');
 }
 
