@@ -48,7 +48,7 @@ export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAUL
 
     // make text
     for (var i = 0; i < (timearray.length - 1); i++) {
-        text += h.default(timearray[i]).format(dateTimeFormat) + ';';
+        text += moment(timearray[i]).format(dateTimeFormat) + ';';
         for (var j = 1; j < dataArr.length; j++) {
             var reading = 'undefined;';
             for (var k = 0; k < dataArr[j].length; k++) {
