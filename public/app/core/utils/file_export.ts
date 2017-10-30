@@ -45,14 +45,14 @@ export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAUL
 
     // Merge and sort time points accross series.
     var timearray = _.sortBy(_.uniq(timeArr), [function(time) { return time; }]);
-    
+
     // make text
-    for(var i = 0; i < (timearray.length - 1); i++) {
+    for (var i = 0; i < (timearray.length - 1); i++) {
         text += h.default(timearray[i]).format(dateTimeFormat) + ';';
         for (var j = 1; j < dataArr.length; j++) {
             var reading = 'undefined;';
-            for(var k = 0; k < dataArr[j].length; k++) {
-              if(timearray[i] === dataArr[j][k][1]) {
+            for (var k = 0; k < dataArr[j].length; k++) {
+              if (timearray[i] === dataArr[j][k][1]) {
                   reading = dataArr[j][k][0] + ';';
                   break;
               }
