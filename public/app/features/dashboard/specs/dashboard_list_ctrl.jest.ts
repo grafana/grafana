@@ -21,7 +21,7 @@ describe('DashboardListCtrl', () => {
           }
         ];
 
-        ctrl = new DashboardListCtrl({get: () => q.resolve(response)}, {getNav: () => {}}, q);
+        ctrl = new DashboardListCtrl({search: () => q.resolve(response)}, {getNav: () => {}}, q);
         return ctrl.getDashboards();
       });
 
@@ -62,7 +62,7 @@ describe('DashboardListCtrl', () => {
           folderSlug: "afolder"
         }
       ];
-      ctrl = new DashboardListCtrl({get: () => q.resolve(response)}, {getNav: () => {}}, null);
+      ctrl = new DashboardListCtrl({search: () => q.resolve(response)}, {getNav: () => {}}, null);
       return ctrl.getDashboards();
     });
 
@@ -78,7 +78,7 @@ describe('DashboardListCtrl', () => {
     let ctrl;
 
     beforeEach(() => {
-      ctrl = new DashboardListCtrl({get: () => q.resolve([])}, {getNav: () => {}}, null);
+      ctrl = new DashboardListCtrl({search: () => q.resolve([])}, {getNav: () => {}}, null);
     });
 
     describe('and no dashboards are selected', () => {
@@ -174,7 +174,7 @@ describe('DashboardListCtrl', () => {
 
   describe('when deleting dashboards', () => {
     beforeEach(() => {
-      ctrl = new DashboardListCtrl({get: () => q.resolve([])}, {getNav: () => {}}, q);
+      ctrl = new DashboardListCtrl({search: () => q.resolve([])}, {getNav: () => {}}, q);
       ctrl.dashboards = [
         {id: 1, type: 'dash-folder', checked: true},
         {id: 2, type: 'dash-child', checked: true, folderId: 1},
