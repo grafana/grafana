@@ -10,6 +10,63 @@ weight = 8
 
 # Provisioning Grafana
 
+## Config file
+
+Checkout the [configuration](/installation/configuration) page for more information about what you can configure in `grafana.ini`
+
+### Config file locations
+
+- Default configuration from `$WORKING_DIR/conf/defaults.ini`
+- Custom configuration from `$WORKING_DIR/conf/custom.ini`
+- The custom configuration file path can be overridden using the `--config` parameter
+
+> **Note.** If you have installed Grafana using the `deb` or `rpm`
+> packages, then your configuration file is located at
+> `/etc/grafana/grafana.ini`. This path is specified in the Grafana
+> init.d script using `--config` file parameter.
+
+### Using environment variables
+
+All options in the configuration file (listed below) can be overridden
+using environment variables using the syntax:
+
+```bash
+GF_<SectionName>_<KeyName>
+```
+
+Where the section name is the text within the brackets. Everything
+should be upper case, `.` should be replaced by `_`. For example, given these configuration settings:
+
+```bash
+# default section
+instance_name = ${HOSTNAME}
+
+[security]
+admin_user = admin
+
+[auth.google]
+client_secret = 0ldS3cretKey
+```
+
+Then you can override them using:
+
+```bash
+export GF_DEFAULT_INSTANCE_NAME=my-instance
+export GF_SECURITY_ADMIN_USER=true
+export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
+```
+
+<hr />
+
+## Configuration management tools
+
+Currently we do not provide any scripts/manifests for configuring Grafana. Rather then spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefor, we heavily relay on the expertise of he community. 
+
+[Puppet](https://forge.puppet.com/puppet/grafana)
+[Ansible](https://github.com/picotrading/ansible-grafana)
+[Chef](https://github.com/JonathanTron/chef-grafana)
+[Saltstack](https://github.com/salt-formulas/salt-formula-grafana)
+
 ## Datasources 
 
 > This feature is available from v4.7
@@ -65,4 +122,3 @@ datasources:
   # <bool> allow users to edit datasources from the UI.
   editable: true
 ```
-
