@@ -25,43 +25,43 @@ export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAUL
 
     // process data
     var dataArr = [[[]]];
-	var timeArr = [];
+    var timeArr = [];
     var sIndex = 1;
-	var timeIndex = 0;
+    var timeIndex = 0;
     _.each(seriesList, function(series) {
         var cIndex = 0;
         dataArr.push([]);
         _.each(series.datapoints, function(dp) {
-			dataArr[sIndex].push([]);
-			dataArr[sIndex][cIndex].push([]);
-			dataArr[sIndex][cIndex][0] = dp[0];
-			dataArr[sIndex][cIndex][1] = dp[1];
-			timeArr[timeIndex] = dp[1];
-			timeIndex++;
-			cIndex++;
+            dataArr[sIndex].push([]);
+            dataArr[sIndex][cIndex].push([]);
+            dataArr[sIndex][cIndex][0] = dp[0];
+            dataArr[sIndex][cIndex][1] = dp[1];
+            timeArr[timeIndex] = dp[1];
+            timeIndex++;
+            cIndex++;
         });
         sIndex++;
     });
 
-	// Merge and sort time points accross series.
+    // Merge and sort time points accross series.
     var timearray = _.sortBy(_.uniq(timeArr), [function(time) { return time; }]);
-																													
+    
     // make text
-	for(var i = 0; i < (timearray.length - 1); i++) {
-		text += h.default(timearray[i]).format(dateTimeFormat) + ';';
-		for (var j = 1; j < dataArr.length; j++) {
-			var reading = 'undefined;';
-			for(var k = 0; k < dataArr[j].length; k++) {
-			  if(timearray[i] == dataArr[j][k][1]) {
-				  reading = dataArr[j][k][0] + ';';
-				  break;
-			  }
-			}
-			text += reading;
-		}
-		text = text.substring(0, text.length - 1);
-		text += '\n';
-	}
+    for(var i = 0; i < (timearray.length - 1); i++) {
+        text += h.default(timearray[i]).format(dateTimeFormat) + ';';
+        for (var j = 1; j < dataArr.length; j++) {
+            var reading = 'undefined;';
+            for(var k = 0; k < dataArr[j].length; k++) {
+              if(timearray[i] === dataArr[j][k][1]) {
+                  reading = dataArr[j][k][0] + ';';
+                  break;
+              }
+            }
+            text += reading;
+        }
+        text = text.substring(0, text.length - 1);
+        text += '\n';
+    }
     saveSaveBlob(text, 'grafana_data_export.csv');
 }
 
