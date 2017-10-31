@@ -13,7 +13,7 @@ dev environment. Grafana ships with its own required backend server; also comple
 
 ## Dependencies
 
-- [Go 1.9.1](https://golang.org/dl/)
+- [Go 1.9.2](https://golang.org/dl/)
 - [NodeJS LTS](https://nodejs.org/download/)
 - [Git](https://git-scm.com/downloads)
 
