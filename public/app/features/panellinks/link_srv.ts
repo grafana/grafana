@@ -5,8 +5,7 @@ import kbn from 'app/core/utils/kbn';
 export class LinkSrv {
 
   /** @ngInject */
-  constructor(private templateSrv, private timeSrv) {
-  }
+  constructor(private templateSrv, private timeSrv) {}
 
   getLinkUrl(link) {
     var url = this.templateSrv.replace(link.url || '');
@@ -29,7 +28,9 @@ export class LinkSrv {
     var paramsArray = [];
 
     _.each(params, function(value, key) {
-      if (value === null) { return; }
+      if (value === null) {
+        return;
+      }
       if (value === true) {
         paramsArray.push(key);
       } else if (_.isArray(value)) {
@@ -107,7 +108,6 @@ export class LinkSrv {
 
     return info;
   }
-
 }
 
 angular.module('grafana.services').service('linkSrv', LinkSrv);
