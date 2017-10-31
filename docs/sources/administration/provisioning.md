@@ -62,10 +62,12 @@ export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
 Currently we do not provide any scripts/manifests for configuring Grafana. Rather then spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefor, we heavily relay on the expertise of he community. 
 
-[Puppet](https://forge.puppet.com/puppet/grafana)
-[Ansible](https://github.com/picotrading/ansible-grafana)
-[Chef](https://github.com/JonathanTron/chef-grafana)
-[Saltstack](https://github.com/salt-formulas/salt-formula-grafana)
+Tool | Project
+-----|------------
+Puppet | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/puppet/grafana)
+Ansible | [https://github.com/picotrading/ansible-grafana](https://github.com/picotrading/ansible-grafana)
+Chef | [https://github.com/JonathanTron/chef-grafana](https://github.com/JonathanTron/chef-grafana)
+Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana)
 
 ## Datasources 
 
