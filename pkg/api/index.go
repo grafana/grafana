@@ -104,6 +104,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		{Text: "Home", Url: setting.AppSubUrl + "/", Icon: "fa fa-fw fa-home"},
 		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "fa fa-fw fa-film"},
 		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "icon-gf icon-gf-fw icon-gf-snapshot"},
+		{Text: "Dashboard List", Description: "Manage Dashboards And Folders", Id: "dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "fa fa-fw fa-bars"},
 	}
 
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
@@ -208,12 +209,12 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Children: []*dtos.NavLink{
 				{
 					Text:        "Data Sources",
-					Icon:        "icon-gf icon-gf-fw icon-gf-datasources",
+					Icon:        "gicon gicon-datasources",
 					Description: "Add and configure data sources",
 					Id:          "datasources",
 					Url:         setting.AppSubUrl + "/datasources",
 					Children: []*dtos.NavLink{
-						{Text: "List", Url: setting.AppSubUrl + "/datasources", Icon: "icon-gf icon-gf-datasources"},
+						{Text: "List", Url: setting.AppSubUrl + "/datasources", Icon: "gicon gicon-datasources"},
 						{Text: "New", Url: setting.AppSubUrl + "/datasources", Icon: "fa fa-fw fa-plus"},
 					},
 				},

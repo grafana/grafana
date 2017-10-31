@@ -11,12 +11,12 @@ export class DashboardListCtrl {
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private $q) {
     this.navModel = navModelSrv.getNav('cfg', 'dashboards');
-    this.query = '';
+    this.query = {query: '', mode: 'tree', tag: []};
     this.getDashboards();
   }
 
   getDashboards() {
-    return this.backendSrv.get(`/api/search?query=${this.query}&mode=tree`).then((result) => {
+    return this.backendSrv.search(this.query).then((result) => {
 
       this.dashboards = this.groupDashboardsInFolders(result);
 
@@ -81,8 +81,28 @@ export class DashboardListCtrl {
     this.canMove = selectedDashboards > 0 && selectedFolders === 0;
   }
 
+  getDashboardsToDelete() {
+    const selectedFolderIds = this.getFolderIds(this.dashboards);
+    return _.filter(this.dashboards, o => {
+      return o.checked && (
+        o.type !== 'dash-child' ||
+        (o.type === 'dash-child' && !_.includes(selectedFolderIds, o.folderId))
+      );
+    });
+  }
+
+  getFolderIds(dashboards) {
+    const ids = [];
+    for (let dash of dashboards) {
+      if (dash.type === 'dash-folder') {
+        ids.push(dash.id);
+      }
+    }
+    return ids;
+  }
+
   delete() {
-    const selectedDashboards =  _.filter(this.dashboards, {checked: true});
+    const selectedDashboards =  this.getDashboardsToDelete();
 
     appEvents.emit('confirm-modal', {
       title: 'Delete',
@@ -113,5 +133,23 @@ export class DashboardListCtrl {
       modalClass: 'modal--narrow',
       model: {dashboards: selectedDashboards, afterSave: this.getDashboards.bind(this)}
     });
+  }
+
+  filterByTag(tag, evt) {
+    this.query.tag.push(tag);
+    this.getDashboards();
+    if (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+    }
+  }
+
+  removeTag(tag, evt) {
+    this.query.tag = _.without(this.query.tag, tag);
+    this.getDashboards();
+    if (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+    }
   }
 }

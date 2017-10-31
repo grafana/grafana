@@ -2,9 +2,9 @@ import {DashboardListCtrl} from '../dashboard_list_ctrl';
 import q from 'q';
 
 describe('DashboardListCtrl', () => {
-  describe('when fetching dashboards', () => {
-    let ctrl;
+  let ctrl;
 
+  describe('when fetching dashboards', () => {
     describe('and dashboard has parent that is not in search result', () => {
       beforeEach(() => {
         const response = [
@@ -21,7 +21,7 @@ describe('DashboardListCtrl', () => {
           }
         ];
 
-        ctrl = new DashboardListCtrl({get: () => q.resolve(response)}, {getNav: () => {}}, q);
+        ctrl = new DashboardListCtrl({search: () => q.resolve(response)}, {getNav: () => {}}, q);
         return ctrl.getDashboards();
       });
 
@@ -62,7 +62,7 @@ describe('DashboardListCtrl', () => {
           folderSlug: "afolder"
         }
       ];
-      ctrl = new DashboardListCtrl({get: () => q.resolve(response)}, {getNav: () => {}}, null);
+      ctrl = new DashboardListCtrl({search: () => q.resolve(response)}, {getNav: () => {}}, null);
       return ctrl.getDashboards();
     });
 
@@ -78,7 +78,7 @@ describe('DashboardListCtrl', () => {
     let ctrl;
 
     beforeEach(() => {
-      ctrl = new DashboardListCtrl({get: () => q.resolve([])}, {getNav: () => {}}, null);
+      ctrl = new DashboardListCtrl({search: () => q.resolve([])}, {getNav: () => {}}, null);
     });
 
     describe('and no dashboards are selected', () => {
@@ -169,6 +169,24 @@ describe('DashboardListCtrl', () => {
       it('should enable delete button', () => {
         expect(ctrl.canDelete).toBeTruthy();
       });
+    });
+  });
+
+  describe('when deleting dashboards', () => {
+    beforeEach(() => {
+      ctrl = new DashboardListCtrl({search: () => q.resolve([])}, {getNav: () => {}}, q);
+      ctrl.dashboards = [
+        {id: 1, type: 'dash-folder', checked: true},
+        {id: 2, type: 'dash-child', checked: true, folderId: 1},
+        {id: 3, type: 'dash-db', checked: true}
+      ];
+    });
+
+    it('should filter out children if parent is selected', () => {
+      const toBeDeleted = ctrl.getDashboardsToDelete();
+      expect(toBeDeleted.length).toEqual(2);
+      expect(toBeDeleted[0].id).toEqual(1);
+      expect(toBeDeleted[1].id).toEqual(3);
     });
   });
 });

@@ -14,11 +14,24 @@
           Create Folder
         </a>
       </div>
-      <div class="gf-form width-15 gf-form-group">
-        <span style="position: relative;">
-          <input type="text" class="gf-form-input" placeholder="Find Dashboard by name" tabindex="1" give-focus="true"
-            ng-model="ctrl.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.getDashboards()" />
-        </span>
+      <div class="gf-form-group">
+        <div class="gf-form-inline">
+          <div class="gf-form width-15">
+            <span style="position: relative;">
+              <input type="text" class="gf-form-input" placeholder="Find Dashboard by name" tabindex="1" give-focus="true"
+                ng-model="ctrl.query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.getDashboards()" />
+            </span>
+          </div>
+          <div class="gf-form" ng-if="ctrl.query.tag.length">
+            Filtered by Tags:
+            <span ng-repeat="tagName in ctrl.query.tag">
+              <a ng-click="ctrl.removeTag(tagName, $event)" tag-color-from-name="tagName" class="label label-tag">
+                <i class="fa fa-remove"></i>
+                {{tagName}}
+              </a>
+            </span>
+          </div>
+        </div>
       </div>
 
       <div class="gf-form-group" ng-if="ctrl.dashboards.length > 1">
@@ -68,7 +81,7 @@
                       </span>
                       <span class="search-result-link">
                         <i class="fa search-result-icon"></i>
-                        <span bo-text="dashboard.title"></span>
+                        <span bo-text="dashboard.title" />
                       </span>
                     </a>
                   </td>
