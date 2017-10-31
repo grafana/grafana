@@ -302,13 +302,11 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       method: 'GET',
       url: '/tags/autoComplete/values',
       params: {
-        expr: expression
+        expr: expression,
+        tag: tag
       }
     };
 
-    if (tag) {
-      httpOptions.params.tag = tag;
-    }
     if (valuePrefix) {
       httpOptions.params.valuePrefix = valuePrefix;
     }
