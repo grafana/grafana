@@ -1,8 +1,14 @@
-----
-page_title: Data source API
-page_description: Grafana Data source API Reference
-page_keywords: grafana, admin, http, api, documentation, datasource
----
++++
+title = "Data source HTTP API "
+description = "Grafana Data source HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "data source"]
+aliases = ["/http_api/datasource/"]
+type = "docs"
+[menu.docs]
+name = "Data source"
+parent = "http_api"
++++
+
 
 # Data source API
 
@@ -12,34 +18,38 @@ page_keywords: grafana, admin, http, api, documentation, datasource
 
 **Example Request**:
 
-    GET /api/datasources HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+GET /api/datasources HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-    [
-      {
-        "id":1,
-        "orgId":1,
-        "name":"datasource_elastic",
-        "type":"elasticsearch",
-        "access":"proxy",
-        "url":"http://mydatasource.com",
-        "password":"",
-        "user":"",
-        "database":"grafana-dash",
-        "basicAuth":false,
-        "basicAuthUser":"",
-        "basicAuthPassword":"",
-        "isDefault":false,
-        "jsonData":null
-      }
-    ]
+[
+  {
+    "id":1,
+    "orgId":1,
+    "name":"datasource_elastic",
+    "type":"elasticsearch",
+    "access":"proxy",
+    "url":"http://mydatasource.com",
+    "password":"",
+    "user":"",
+    "database":"grafana-dash",
+    "basicAuth":false,
+    "basicAuthUser":"",
+    "basicAuthPassword":"",
+    "isDefault":false,
+    "jsonData":null
+  }
+]
+```
 
 ## Get a single data sources by Id
 
@@ -47,32 +57,36 @@ page_keywords: grafana, admin, http, api, documentation, datasource
 
 **Example Request**:
 
-    GET /api/datasources/1 HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+GET /api/datasources/1 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-    {
-      "id":1,
-      "orgId":1,
-      "name":"test_datasource",
-      "type":"graphite",
-      "access":"proxy",
-      "url":"http://mydatasource.com",
-      "password":"",
-      "user":"",
-      "database":"",
-      "basicAuth":false,
-      "basicAuthUser":"",
-      "basicAuthPassword":"",
-      "isDefault":false,
-      "jsonData":null
-    }
+{
+  "id":1,
+  "orgId":1,
+  "name":"test_datasource",
+  "type":"graphite",
+  "access":"proxy",
+  "url":"http://mydatasource.com",
+  "password":"",
+  "user":"",
+  "database":"",
+  "basicAuth":false,
+  "basicAuthUser":"",
+  "basicAuthPassword":"",
+  "isDefault":false,
+  "jsonData":null
+}
+```
 
 ## Get a single data source by Name
 
@@ -80,32 +94,36 @@ page_keywords: grafana, admin, http, api, documentation, datasource
 
 **Example Request**:
 
-    GET /api/datasources/name/test_datasource HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+GET /api/datasources/name/test_datasource HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-    {
-      "id":1,
-      "orgId":1,
-      "name":"test_datasource",
-      "type":"graphite",
-      "access":"proxy",
-      "url":"http://mydatasource.com",
-      "password":"",
-      "user":"",
-      "database":"",
-      "basicAuth":false,
-      "basicAuthUser":"",
-      "basicAuthPassword":"",
-      "isDefault":false,
-      "jsonData":null
-    }
+{
+  "id":1,
+  "orgId":1,
+  "name":"test_datasource",
+  "type":"graphite",
+  "access":"proxy",
+  "url":"http://mydatasource.com",
+  "password":"",
+  "user":"",
+  "database":"",
+  "basicAuth":false,
+  "basicAuthUser":"",
+  "basicAuthPassword":"",
+  "isDefault":false,
+  "jsonData":null
+}
+```
 
 ## Get data source Id by Name
 
@@ -113,46 +131,77 @@ page_keywords: grafana, admin, http, api, documentation, datasource
 
 **Example Request**:
 
-    GET /api/datasources/id/test_datasource HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+GET /api/datasources/id/test_datasource HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-    {
-      "id":1
-    }
+{
+  "id":1
+}
+```
 
 ## Create data source
 
 `POST /api/datasources`
 
-**Example Request**:
+**Example Graphite Request**:
 
-    POST /api/datasources HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+POST /api/datasources HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
-    {
-      "name":"test_datasource",
-      "type":"graphite",
-      "url":"http://mydatasource.com",
-      "access":"proxy",
-      "basicAuth":false
-    }
+{
+  "name":"test_datasource",
+  "type":"graphite",
+  "url":"http://mydatasource.com",
+  "access":"proxy",
+  "basicAuth":false
+}
+```
 
+**Example CloudWatch Request**:
+
+```http
+POST /api/datasources HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "name": "test_datasource",
+  "type": "cloudwatch",
+  "url": "http://monitoring.us-west-1.amazonaws.com",
+  "access": "proxy",
+  "jsonData": {
+    "authType": "keys",
+    "defaultRegion": "us-west-1"
+  },
+  "secureJsonData": {
+    "accessKey": "Ol4pIDpeKSA6XikgOl4p",
+    "secretKey": "dGVzdCBrZXkgYmxlYXNlIGRvbid0IHN0ZWFs"
+  }
+}
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-    {"id":1,"message":"Datasource added"}
+{"id":1,"message":"Datasource added", "name": "test_datasource"}
+```
 
 ## Update an existing data source
 
@@ -160,52 +209,82 @@ page_keywords: grafana, admin, http, api, documentation, datasource
 
 **Example Request**:
 
-    PUT /api/datasources/1 HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+PUT /api/datasources/1 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
-    {
-      "id":1,
-      "orgId":1,
-      "name":"test_datasource",
-      "type":"graphite",
-      "access":"proxy",
-      "url":"http://mydatasource.com",
-      "password":"",
-      "user":"",
-      "database":"",
-      "basicAuth":true,
-      "basicAuthUser":"basicuser",
-      "basicAuthPassword":"basicuser",
-      "isDefault":false,
-      "jsonData":null
-    }
+{
+  "id":1,
+  "orgId":1,
+  "name":"test_datasource",
+  "type":"graphite",
+  "access":"proxy",
+  "url":"http://mydatasource.com",
+  "password":"",
+  "user":"",
+  "database":"",
+  "basicAuth":true,
+  "basicAuthUser":"basicuser",
+  "basicAuthPassword":"basicuser",
+  "isDefault":false,
+  "jsonData":null
+}
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-    {"message":"Datasource updated"}
+{"message":"Datasource updated", "id": 1, "name": "test_datasource"}
+```
 
-## Delete an existing data source
+## Delete an existing data source by id
 
 `DELETE /api/datasources/:datasourceId`
 
 **Example Request**:
 
-    DELETE /api/datasources/1 HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+DELETE /api/datasources/1 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-    {"message":"Data source deleted"}
+{"message":"Data source deleted"}
+```
+
+## Delete an existing data source by name
+
+`DELETE /api/datasources/name/:datasourceName`
+
+**Example Request**:
+
+```http
+DELETE /api/datasources/name/test_datasource HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{"message":"Data source deleted"}
+```
 
 ## Data source proxy calls
 

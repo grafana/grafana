@@ -171,7 +171,7 @@ function (angular, _) {
 
     $scope.addLink = function() {
       $scope.dashboard.links.push({ type: 'dashboards', icon: 'external link' });
-      $scope.updateSubmenuVisibility();
+      $scope.dashboard.updateSubmenuVisibility();
       $scope.updated();
     };
 
@@ -186,7 +186,7 @@ function (angular, _) {
 
     $scope.deleteLink = function(index) {
       $scope.dashboard.links.splice(index, 1);
-      $scope.updateSubmenuVisibility();
+      $scope.dashboard.updateSubmenuVisibility();
       $scope.updated();
     };
 

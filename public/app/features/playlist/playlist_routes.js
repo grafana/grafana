@@ -1,6 +1,5 @@
-  define([
+define([
   'angular',
-  'app/core/config',
   'lodash'
 ],
 function (angular) {

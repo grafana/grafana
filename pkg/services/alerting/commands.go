@@ -11,8 +11,25 @@ type UpdateDashboardAlertsCommand struct {
 	Dashboard *m.Dashboard
 }
 
+type ValidateDashboardAlertsCommand struct {
+	UserId    int64
+	OrgId     int64
+	Dashboard *m.Dashboard
+}
+
 func init() {
 	bus.AddHandler("alerting", updateDashboardAlerts)
+	bus.AddHandler("alerting", validateDashboardAlerts)
+}
+
+func validateDashboardAlerts(cmd *ValidateDashboardAlertsCommand) error {
+	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId)
+
+	if _, err := extractor.GetAlerts(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func updateDashboardAlerts(cmd *UpdateDashboardAlertsCommand) error {

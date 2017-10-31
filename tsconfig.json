@@ -1,18 +1,32 @@
 {
     "compilerOptions": {
-        "sourceMap": true,
-        "declaration": true,
-        "outDir": "public_gen",
-        "noImplicitAny": false,
-        "target": "es5",
-        "rootDir": "public/",
-        "sourceRoot": "public/",
-        "module": "system",
-        "noEmitOnError": true,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true
+      "moduleResolution": "node",
+      "outDir": "public/dist",
+      "target": "es5",
+      "lib": ["es6", "dom"],
+      "rootDir": "public/",
+      "jsx": "react",
+      "module": "esnext",
+      "declaration": false,
+      "allowSyntheticDefaultImports": true,
+      "inlineSourceMap": false,
+      "sourceMap": true,
+      "noEmitOnError": false,
+      "emitDecoratorMetadata": false,
+      "experimentalDecorators": false,
+      "noImplicitReturns": true,
+      "noImplicitThis": false,
+      "noImplicitUseStrict":false,
+      "noImplicitAny": false,
+      "noUnusedLocals": true,
+      "baseUrl": "public",
+      "paths": {
+        "app": ["app"]
+      }
     },
-    "files": [
-        "public/app/**/*.ts"
+    "include": [
+      "public/app/**/*.ts",
+      "public/app/**/*.tsx",
+      "public/test/**/*.ts"
     ]
 }

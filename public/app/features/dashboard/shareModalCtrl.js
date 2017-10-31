@@ -1,10 +1,13 @@
 define(['angular',
   'lodash',
-  'require',
+  'jquery',
+  'moment',
   'app/core/config',
 ],
-function (angular, _, require, config) {
+function (angular, _, $, moment, config) {
   'use strict';
+
+  config = config.default;
 
   var module = angular.module('grafana.controllers');
 
@@ -29,7 +32,7 @@ function (angular, _, require, config) {
         $scope.tabs.push({title: 'Snapshot', src: 'shareSnapshot.html'});
       }
 
-      if (!$scope.dashboard.meta.isSnapshot) {
+      if (!$scope.dashboard.meta.isSnapshot && !$scope.modeSharePanel) {
         $scope.tabs.push({title: 'Export', src: 'shareExport.html'});
       }
 
@@ -49,6 +52,7 @@ function (angular, _, require, config) {
       var range = timeSrv.timeRange();
       params.from = range.from.valueOf();
       params.to = range.to.valueOf();
+      params.orgId = config.bootData.user.orgId;
 
       if ($scope.options.includeTemplateVars) {
         templateSrv.fillVariableValuesForUrl(params);
@@ -73,28 +77,23 @@ function (angular, _, require, config) {
 
       $scope.shareUrl = linkSrv.addParamsToUrl(baseUrl, params);
 
-      var soloUrl = $scope.shareUrl;
-      soloUrl = soloUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
-      soloUrl = soloUrl.replace("&fullscreen", "").replace("&edit", "");
+      var soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
+      delete params.fullscreen;
+      delete params.edit;
+      soloUrl = linkSrv.addParamsToUrl(soloUrl, params);
 
       $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
 
       $scope.imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
+      $scope.imageUrl += '&tz=UTC' + encodeURIComponent(moment().format("Z"));
     };
 
-  });
-
-  module.directive('clipboardButton',function() {
-    return function(scope, elem) {
-      require(['vendor/zero_clipboard'], function(ZeroClipboard) {
-        ZeroClipboard.config({
-          swfPath: config.appSubUrl + '/public/vendor/zero_clipboard.swf'
-        });
-        new ZeroClipboard(elem[0]);
-      });
+    $scope.getShareUrl = function() {
+      return $scope.shareUrl;
     };
+
   });
 
 });

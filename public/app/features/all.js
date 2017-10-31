@@ -1,8 +1,9 @@
 define([
   './panellinks/module',
   './dashlinks/module',
-  './annotations/annotations_srv',
+  './annotations/all',
   './templating/all',
+  './plugins/all',
   './dashboard/all',
   './playlist/all',
   './snapshot/all',

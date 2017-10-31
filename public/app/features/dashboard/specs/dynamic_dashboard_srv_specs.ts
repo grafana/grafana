@@ -1,6 +1,6 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 
-import {DashboardSrv} from '../dashboard_srv';
+import '../dashboard_srv';
 import {DynamicDashboardSrv} from '../dynamic_dashboard_srv';
 
 function dynamicDashScenario(desc, func)  {
@@ -20,7 +20,6 @@ function dynamicDashScenario(desc, func)  {
 
       beforeEach(angularMocks.inject(function(dashboardSrv) {
         ctx.dashboardSrv = dashboardSrv;
-        ctx.variableSrv = {};
 
         var model = {
           rows: [],
@@ -29,9 +28,8 @@ function dynamicDashScenario(desc, func)  {
 
         setupFunc(model);
         ctx.dash = ctx.dashboardSrv.create(model);
-        ctx.variableSrv.variables = ctx.dash.templating.list;
         ctx.dynamicDashboardSrv = new DynamicDashboardSrv();
-        ctx.dynamicDashboardSrv.init(ctx.dash, ctx.variableSrv);
+        ctx.dynamicDashboardSrv.init(ctx.dash);
         ctx.dynamicDashboardSrv.process();
         ctx.rows = ctx.dash.rows;
       }));

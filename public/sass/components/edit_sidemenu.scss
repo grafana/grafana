@@ -6,10 +6,11 @@
 
 .edit-tab-content {
   flex-grow: 1;
+  min-width: 0;
 }
 
 .edit-sidemenu-aside {
-  width: 16rem;
+  margin-right: $spacer*2;
 }
 
 .edit-sidemenu {
@@ -24,6 +25,7 @@
     display: block;
     color: $text-color;
     margin: 0 0 1.5rem 1rem;
+    white-space: nowrap;
   }
 }
 

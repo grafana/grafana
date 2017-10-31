@@ -1,7 +1,7 @@
 <query-editor-row query-ctrl="ctrl" has-text-edit-mode="true">
 
 	<div class="gf-form" ng-show="ctrl.target.textEditor">
-		<input type="text" class="gf-form-input" ng-model="ctrl.target.target" spellcheck="false" ng-blur="ctrl.refresh()"></input>
+		<input type="text" class="gf-form-input" ng-model="ctrl.target.target" spellcheck="false" ng-blur="ctrl.targetTextChanged()"></input>
 	</div>
 
   <div ng-hide="ctrl.target.textEditor">

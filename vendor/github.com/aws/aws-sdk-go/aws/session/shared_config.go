@@ -2,7 +2,7 @@ package session
 
 import (
 	"fmt"
-	"os"
+	"io/ioutil"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -105,14 +105,15 @@ func loadSharedConfigIniFiles(filenames []string) ([]sharedConfigFile, error) {
 	files := make([]sharedConfigFile, 0, len(filenames))
 
 	for _, filename := range filenames {
-		if _, err := os.Stat(filename); os.IsNotExist(err) {
-			// Trim files from the list that don't exist.
+		b, err := ioutil.ReadFile(filename)
+		if err != nil {
+			// Skip files which can't be opened and read for whatever reason
 			continue
 		}
 
-		f, err := ini.Load(filename)
+		f, err := ini.Load(b)
 		if err != nil {
-			return nil, SharedConfigLoadError{Filename: filename}
+			return nil, SharedConfigLoadError{Filename: filename, Err: err}
 		}
 
 		files = append(files, sharedConfigFile{

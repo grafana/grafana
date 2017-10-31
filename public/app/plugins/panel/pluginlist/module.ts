@@ -1,7 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import config from 'app/core/config';
 import {PanelCtrl} from '../../../features/panel/panel_ctrl';
 
 class PluginListCtrl extends PanelCtrl {
@@ -11,8 +10,7 @@ class PluginListCtrl extends PanelCtrl {
   viewModel: any;
 
   // Set and populate defaults
-  panelDefaults = {
-  };
+  panelDefaults = {};
 
   /** @ngInject */
   constructor($scope, $injector, private backendSrv, private $location) {
@@ -71,4 +69,4 @@ class PluginListCtrl extends PanelCtrl {
   }
 }
 
-export {PluginListCtrl, PluginListCtrl as PanelCtrl}
+export {PluginListCtrl, PluginListCtrl as PanelCtrl};

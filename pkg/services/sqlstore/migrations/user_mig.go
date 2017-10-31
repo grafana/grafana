@@ -8,8 +8,8 @@ func addUserMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "version", Type: DB_Int, Nullable: false},
-			{Name: "login", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "email", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "login", Type: DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "email", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "password", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "salt", Type: DB_NVarchar, Length: 50, Nullable: true},
@@ -47,8 +47,8 @@ func addUserMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "version", Type: DB_Int, Nullable: false},
-			{Name: "login", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "email", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "login", Type: DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "email", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "password", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "salt", Type: DB_NVarchar, Length: 50, Nullable: true},
@@ -88,4 +88,23 @@ func addUserMigrations(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Drop old table user_v1", NewDropTableMigration("user_v1"))
+
+	mg.AddMigration("Add column help_flags1 to user table", NewAddColumnMigration(userV2, &Column{
+		Name: "help_flags1", Type: DB_BigInt, Nullable: false, Default: "0",
+	}))
+
+	mg.AddMigration("Update user table charset", NewTableCharsetMigration("user", []*Column{
+		{Name: "login", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "email", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "password", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "salt", Type: DB_NVarchar, Length: 50, Nullable: true},
+		{Name: "rands", Type: DB_NVarchar, Length: 50, Nullable: true},
+		{Name: "company", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "theme", Type: DB_NVarchar, Length: 255, Nullable: true},
+	}))
+
+	mg.AddMigration("Add last_seen_at column to user", NewAddColumnMigration(userV2, &Column{
+		Name: "last_seen_at", Type: DB_DateTime, Nullable: true,
+	}))
 }

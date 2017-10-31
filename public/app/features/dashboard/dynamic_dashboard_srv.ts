@@ -1,22 +1,22 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import config from 'app/core/config';
 import angular from 'angular';
 import _ from 'lodash';
 
 import coreModule from 'app/core/core_module';
+import {DashboardRow} from './row/row_model';
 
 export class DynamicDashboardSrv {
   iteration: number;
   dashboard: any;
   variables: any;
 
-  init(dashboard, variableSrv) {
+  init(dashboard) {
     this.dashboard = dashboard;
-    this.variables = variableSrv.variables;
+    this.variables = dashboard.templating.list;
   }
 
-  process(options) {
+  process(options?) {
     if (this.dashboard.snapshot || this.variables.length === 0) {
       return;
     }
@@ -30,6 +30,8 @@ export class DynamicDashboardSrv {
     // cleanup scopedVars
     for (i = 0; i < this.dashboard.rows.length; i++) {
       row = this.dashboard.rows[i];
+      delete row.scopedVars;
+
       for (j = 0; j < row.panels.length; j++) {
         delete row.panels[j].scopedVars;
       }
@@ -45,7 +47,7 @@ export class DynamicDashboardSrv {
         }
       } else if (row.repeatRowId && row.repeatIteration !== this.iteration) {
         // clean up old left overs
-        this.dashboard.rows.splice(i, 1);
+        this.dashboard.removeRow(row, true);
         i = i - 1;
         continue;
       }
@@ -63,6 +65,8 @@ export class DynamicDashboardSrv {
           j = j - 1;
         }
       }
+
+      row.panelSpanChanged();
     }
   }
 
@@ -80,12 +84,14 @@ export class DynamicDashboardSrv {
       row = this.dashboard.rows[i];
       if (row.repeatRowId === sourceRowId && row.repeatIteration !== this.iteration) {
         copy = row;
+        copy.copyPropertiesFromRowSource(sourceRow);
         break;
       }
     }
 
     if (!copy) {
-      copy = angular.copy(sourceRow);
+      var modelCopy = angular.copy(sourceRow.getSaveModel());
+      copy = new DashboardRow(modelCopy);
       this.dashboard.rows.splice(sourceRowIndex + repeatIndex, 0, copy);
 
       // set new panel ids

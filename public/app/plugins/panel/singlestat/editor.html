@@ -3,11 +3,19 @@
     <h5 class="section-heading">Value</h5>
 
     <div class="gf-form-inline">
-      <div class="gf-form">
-        <label class="gf-form-label width-4">Stat</label>
-        <div class="gf-form-select-wrapper width-7">
-          <select class="gf-form-input" ng-model="ctrl.panel.valueName" ng-options="f for f in ctrl.valueNameOptions" ng-change="ctrl.render()"></select>
+      <div class="gf-form" ng-show="ctrl.dataType === 'timeseries'">
+        <label class="gf-form-label width-6">Stat</label>
+        <div class="gf-form-select-wrapper width-12">
+          <select class="gf-form-input" ng-model="ctrl.panel.valueName" ng-options="f.value as f.text for f in ctrl.valueNameOptions" ng-change="ctrl.refresh()"></select>
         </div>
+      </div>
+      <div class="gf-form" ng-show="ctrl.dataType === 'table'">
+        <label class="gf-form-label width-6">Column</label>
+        <div class="gf-form-select-wrapper width-12">
+          <select class="gf-form-input" ng-model="ctrl.panel.tableColumn" ng-options="f for f in ctrl.tableColumnOptions" ng-change="ctrl.refresh()"></select>
+        </div>
+      </div>
+      <div class="gf-form">
         <label class="gf-form-label width-6">Font size</label>
         <div class="gf-form-select-wrapper">
           <select class="gf-form-input" ng-model="ctrl.panel.valueFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
@@ -17,8 +25,8 @@
 
     <div class="gf-form-inline">
       <div class="gf-form">
-        <label class="gf-form-label width-4">Prefix</label>
-        <input type="text" class="gf-form-input width-7" ng-model="ctrl.panel.prefix" ng-change="ctrl.render()" ng-model-onblur>
+        <label class="gf-form-label width-6">Prefix</label>
+        <input type="text" class="gf-form-input width-12" ng-model="ctrl.panel.prefix" ng-change="ctrl.render()" ng-model-onblur>
         <label class="gf-form-label width-6">Font size</label>
         <div class="gf-form-select-wrapper">
           <select class="gf-form-input" ng-model="ctrl.panel.prefixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
@@ -27,25 +35,20 @@
     </div>
 
     <div class="gf-form">
-      <label class="gf-form-label width-4">Postfix</label>
-      <input type="text" class="gf-form-input width-7" ng-model="ctrl.panel.postfix" ng-change="ctrl.render()" ng-model-onblur>
+      <label class="gf-form-label width-6">Postfix</label>
+      <input type="text" class="gf-form-input width-12" ng-model="ctrl.panel.postfix" ng-change="ctrl.render()" ng-model-onblur>
       <label class="gf-form-label width-6">Font size</label>
       <div class="gf-form-select-wrapper">
         <select class="input-small gf-form-input" ng-model="ctrl.panel.postfixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
       </div>
     </div>
-  </div>
-
-  <div class="section gf-form-group">
-    <h5 class="section-heading">Unit</h5>
-    <div class="gf-form-inline">
-      <div class="gf-form">
-        <div class="gf-form-dropdown-typeahead" ng-model="ctrl.panel.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)"></div>
-      </div>
-      <div class="gf-form">
-        <label class="gf-form-label">Decimals</label>
-        <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" ng-model="ctrl.panel.decimals" ng-change="ctrl.refresh()" ng-model-onblur>
-      </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Unit</label>
+      <div class="gf-form-dropdown-typeahead width-18" ng-model="ctrl.panel.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)"></div>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Decimals</label>
+      <input type="number" class="gf-form-input width-18" placeholder="auto" data-placement="right" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" ng-model="ctrl.panel.decimals" ng-change="ctrl.refresh()" ng-model-onblur>
     </div>
   </div>
 
@@ -65,14 +68,8 @@
     </div>
     <div class="gf-form">
       <label class="gf-form-label width-8">Colors</label>
-      <span class="gf-form-label">
-        <spectrum-picker ng-model="ctrl.panel.colors[0]" ng-change="ctrl.render()" ></spectrum-picker>
-      </span>
-      <span class="gf-form-label">
-        <spectrum-picker ng-model="ctrl.panel.colors[1]" ng-change="ctrl.render()" ></spectrum-picker>
-      </span>
-      <span class="gf-form-label">
-        <spectrum-picker ng-model="ctrl.panel.colors[2]" ng-change="ctrl.render()" ></spectrum-picker>
+      <span class="gf-form-label" ng-repeat="color in ctrl.panel.colors track by $index">
+        <color-picker color="color" onChange="ctrl.onColorChange($index)"></color-picker>
       </span>
       <span class="gf-form-label">
         <a  ng-click="ctrl.invertColorOrder()">
@@ -86,17 +83,17 @@
     <h5 class="section-heading">Spark lines</h5>
     <gf-form-switch class="gf-form" label-class="width-9" label="Show" checked="ctrl.panel.sparkline.show" on-change="ctrl.render()"></gf-form-switch>
     <div ng-if="ctrl.panel.sparkline.show">
-      <gf-form-switch class="gf-form" label-class="width-9" label="Background mode" checked="ctrl.panel.sparkline.full" on-change="ctrl.render()"></gf-form-switch>
+      <gf-form-switch class="gf-form" label-class="width-9" label="Full height" checked="ctrl.panel.sparkline.full" on-change="ctrl.render()"></gf-form-switch>
       <div class="gf-form">
         <label class="gf-form-label width-9">Line Color</label>
         <span class="gf-form-label">
-          <spectrum-picker ng-model="ctrl.panel.sparkline.lineColor" ng-change="ctrl.render()" ></spectrum-picker>
+          <color-picker color="ctrl.panel.sparkline.lineColor" onChange="ctrl.onSparklineColorChange"></color-picker>
         </span>
       </div>
       <div class="gf-form">
         <label class="gf-form-label width-9">Fill Color</label>
         <span class="gf-form-label">
-          <spectrum-picker ng-model="ctrl.panel.sparkline.fillColor" ng-change="ctrl.render()" ></spectrum-picker>
+          <color-picker color="ctrl.panel.sparkline.fillColor" onChange="ctrl.onSparklineFillChange"></color-picker>
         </span>
       </div>
     </div>
@@ -104,10 +101,10 @@
 
   <div class="section gf-form-group">
     <h5 class="section-heading">Gauge</h5>
-    <gf-form-switch class="gf-form" label-class="width-9" label="Show" checked="ctrl.panel.gauge.show" on-change="ctrl.render()"></gf-form-switch>
+    <gf-form-switch class="gf-form" label-class="width-10" switch-class="max-width-6" label="Show" checked="ctrl.panel.gauge.show" on-change="ctrl.render()"></gf-form-switch>
     <div ng-if="ctrl.panel.gauge.show">
       <div class="gf-form">
-        <label class="gf-form-label width-9">Min</label>
+        <label class="gf-form-label width-10">Min</label>
         <input type="number" class="gf-form-input width-6" placeholder="0" data-placement="right" ng-model="ctrl.panel.gauge.minValue" ng-change="ctrl.refresh()" ng-model-onblur>
         <label class="gf-form-label alert-state-critical" ng-show="ctrl.invalidGaugeRange">
           &nbsp; <i class="fa fa-warning"></i>
@@ -115,11 +112,11 @@
         </label>
       </div>
       <div class="gf-form">
-        <label class="gf-form-label width-9">Max</label>
+        <label class="gf-form-label width-10">Max</label>
         <input type="number" class="gf-form-input width-6" placeholder="0" data-placement="right" ng-model="ctrl.panel.gauge.maxValue" ng-change="ctrl.refresh()" ng-model-onblur>
       </div>
-      <gf-form-switch class="gf-form" label-class="width-9" label="Threshold labels" checked="ctrl.panel.gauge.thresholdLabels" on-change="ctrl.render()"></gf-form-switch>
-      <gf-form-switch class="gf-form" label-class="width-9" label="Threshold markers" checked="ctrl.panel.gauge.thresholdMarkers" on-change="ctrl.render()"></gf-form-switch>
+      <gf-form-switch class="gf-form" label-class="width-10" switch-class="max-width-6" label="Threshold labels" checked="ctrl.panel.gauge.thresholdLabels" on-change="ctrl.render()"></gf-form-switch>
+      <gf-form-switch class="gf-form" label-class="width-10" switch-class="max-width-6" label="Threshold markers" checked="ctrl.panel.gauge.thresholdMarkers" on-change="ctrl.render()"></gf-form-switch>
     </div>
   </div>
 </div>

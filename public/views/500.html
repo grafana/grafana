@@ -4,29 +4,36 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width">
+    <title>Grafana - Error</title>
 
-    <title>Grafana</title>
+    <base href="[[.AppSubUrl]]/" />
 
-    <link rel="stylesheet" href="[[.AppSubUrl]]/public/css/grafana.dark.min.css" title="Dark">
-    <link rel="icon" type="image/png" href="[[.AppSubUrl]]/public/img/fav32.png">
-
+    <link href='public/css/fonts.min.css' rel='stylesheet' type='text/css'>
+		<link rel="stylesheet" href="public/build/grafana.dark.min.css">
+    <link rel="icon" type="image/png" href="public/img/fav32.png">
   </head>
 
-	<body>
-
-		<div class="gf-box" style="margin: 200px auto 0 auto; width: 500px;">
-			<div class="gf-box-header">
-				<span class="gf-box-title">
-					Server side error :(
-				</span>
-			</div>
-
-			<div class="gf-box-body">
-				<h4>[[.Title]]</h4>
-				[[.ErrorMsg]]
-			</div>
-		</div>
-
+  <body>
+    <div class="page-container">
+      <div class="page-header">
+        <h1>Server side error :(</h1>
+      </div>
+      <div class="panel-container" style="padding: 2rem">
+        <div class="alert">
+          <div class="alert-icon"><i class="fa fa-exclamation-triangle"></i></div>
+					<div class="alert-body">
+						<div class="alert-title">[[.Title]]</div>
+						<div class="alert-text">
+              [[if .ErrorMsg]]
+                <pre>[[.ErrorMsg]]</pre>
+              [[end]]
+            </div>
+					</div>
+        </div>
+        <div style="padding: 2rem 0 0">
+          <p>Check the Grafana server logs for the detailed error message.</p>
+        </div>
+      </div>
+    </div>
   </body>
-
 </html>

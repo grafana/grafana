@@ -11,25 +11,47 @@ import (
 )
 
 type Rule struct {
-	Id            int64
-	OrgId         int64
-	DashboardId   int64
-	PanelId       int64
-	Frequency     int64
-	Name          string
-	Message       string
-	NoDataState   m.AlertStateType
-	State         m.AlertStateType
-	Conditions    []Condition
-	Notifications []int64
+	Id                  int64
+	OrgId               int64
+	DashboardId         int64
+	PanelId             int64
+	Frequency           int64
+	Name                string
+	Message             string
+	NoDataState         m.NoDataOption
+	ExecutionErrorState m.ExecutionErrorOption
+	State               m.AlertStateType
+	Conditions          []Condition
+	Notifications       []int64
 }
 
 type ValidationError struct {
-	Reason string
+	Reason      string
+	Err         error
+	Alertid     int64
+	DashboardId int64
+	PanelId     int64
 }
 
 func (e ValidationError) Error() string {
-	return e.Reason
+	extraInfo := ""
+	if e.Alertid != 0 {
+		extraInfo = fmt.Sprintf("%s AlertId: %v", extraInfo, e.Alertid)
+	}
+
+	if e.PanelId != 0 {
+		extraInfo = fmt.Sprintf("%s PanelId: %v ", extraInfo, e.PanelId)
+	}
+
+	if e.DashboardId != 0 {
+		extraInfo = fmt.Sprintf("%s DashboardId: %v", extraInfo, e.DashboardId)
+	}
+
+	if e.Err != nil {
+		return fmt.Sprintf("%s %s%s", e.Err.Error(), e.Reason, extraInfo)
+	}
+
+	return fmt.Sprintf("Failed to extract alert.Reason: %s %s", e.Reason, extraInfo)
 }
 
 var (
@@ -76,12 +98,13 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.Message = ruleDef.Message
 	model.Frequency = ruleDef.Frequency
 	model.State = ruleDef.State
-	model.NoDataState = m.AlertStateType(ruleDef.Settings.Get("noDataState").MustString("no_data"))
+	model.NoDataState = m.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
+	model.ExecutionErrorState = m.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)
 		if id, err := jsonModel.Get("id").Int64(); err != nil {
-			return nil, ValidationError{Reason: "Invalid notification schema"}
+			return nil, ValidationError{Reason: "Invalid notification schema", DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
 		} else {
 			model.Notifications = append(model.Notifications, id)
 		}
@@ -91,10 +114,10 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 		conditionModel := simplejson.NewFromAny(condition)
 		conditionType := conditionModel.Get("type").MustString()
 		if factory, exist := conditionFactories[conditionType]; !exist {
-			return nil, ValidationError{Reason: "Unknown alert condition: " + conditionType}
+			return nil, ValidationError{Reason: "Unknown alert condition: " + conditionType, DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
 		} else {
 			if queryCondition, err := factory(conditionModel, index); err != nil {
-				return nil, err
+				return nil, ValidationError{Err: err, DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
 			} else {
 				model.Conditions = append(model.Conditions, queryCondition)
 			}

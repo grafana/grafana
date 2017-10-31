@@ -29,7 +29,7 @@ define([
     $scope.setOverride = function(item, subItem) {
       // handle color overrides
       if (item.propertyName === 'color') {
-        $scope.openColorSelector();
+        $scope.openColorSelector($scope.override['color']);
         return;
       }
 
@@ -39,7 +39,7 @@ define([
       // can be removed by the user if they still want lines
       if (item.propertyName === 'fillBelowTo') {
         $scope.override['lines'] = false;
-        $scope.addSeriesOverride({ alias: subItem.value, lines: false });
+        $scope.ctrl.addSeriesOverride({alias: subItem.value, lines: false });
       }
 
       $scope.updateCurrentOverrides();
@@ -52,15 +52,17 @@ define([
       $scope.ctrl.render();
     };
 
-    $scope.openColorSelector = function() {
+    $scope.openColorSelector = function(color) {
+      var fakeSeries = {color: color};
       popoverSrv.show({
         element: $element.find(".dropdown")[0],
         position: 'top center',
         openOn: 'click',
-        template: '<gf-color-picker></gf-color-picker>',
+        template: '<series-color-picker series="series" onColorChange="colorSelected" />',
         model: {
           autoClose: true,
           colorSelected: $scope.colorSelected,
+          series: fakeSeries
         },
         onClose: function() {
           $scope.ctrl.render();
@@ -100,6 +102,9 @@ define([
     $scope.addOverrideOption('Null point mode', 'nullPointMode', ['connected', 'null', 'null as zero']);
     $scope.addOverrideOption('Fill below to', 'fillBelowTo', $scope.getSeriesNames());
     $scope.addOverrideOption('Staircase line', 'steppedLine', [true, false]);
+    $scope.addOverrideOption('Dashes', 'dashes', [true, false]);
+    $scope.addOverrideOption('Dash Length', 'dashLength', [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]);
+    $scope.addOverrideOption('Dash Space', 'spaceLength', [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]);
     $scope.addOverrideOption('Points', 'points', [true, false]);
     $scope.addOverrideOption('Points Radius', 'pointradius', [1,2,3,4,5]);
     $scope.addOverrideOption('Stack', 'stack', [true, false, 'A', 'B', 'C', 'D']);

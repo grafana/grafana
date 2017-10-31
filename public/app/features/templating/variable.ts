@@ -1,7 +1,5 @@
-///<reference path="../../headers/common.d.ts" />
-
-import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
+import {assignModelProperties} from 'app/core/utils/model_utils';
 
 export interface Variable {
   setValue(option);
@@ -9,23 +7,20 @@ export interface Variable {
   dependsOn(variable);
   setValueFromUrl(urlValue);
   getValueForUrl();
-  getModel();
+  getSaveModel();
 }
 
 export var variableTypes = {};
-
-export function assignModelProperties(target, source, defaults) {
-  _.forEach(defaults, function(value, key) {
-    target[key] = source[key] === undefined ? value : source[key];
-  });
-}
+export {
+  assignModelProperties
+};
 
 export function containsVariable(...args: any[]) {
   var variableName = args[args.length-1];
   var str = args[0] || '';
 
   for (var i = 1; i < args.length-1; i++) {
-    str += args[i] || '';
+    str += ' ' + args[i] || '';
   }
 
   variableName = kbn.regexEscape(variableName);

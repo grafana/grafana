@@ -1,5 +1,4 @@
-<navbar title="Plugins" title-url="plugins" icon="icon-gf icon-gf-apps">
-</navbar>
+<navbar model="ctrl.navModel"></navbar>
 
 <div class="page-container" ng-init="ctrl.init()">
   <div class="page-header">
@@ -31,7 +30,7 @@
 
   <div class="page-body">
     <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabs[ctrl.tabIndex] === 'Readme'">
-      <div ng-bind-html="ctrl.readmeHtml" class="plugin-markdown-readme">
+      <div ng-bind-html="ctrl.readmeHtml" class="markdown-html">
       </div>
     </div>
 

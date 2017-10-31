@@ -1,0 +1,20 @@
+{
+  "type": "datasource",
+  "name": "MySQL",
+  "id": "mysql",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/mysql_logo.svg",
+      "large": "img/mysql_logo.svg"
+    }
+  },
+
+  "alerting": true,
+  "annotations": true,
+  "metrics": true
+}

@@ -10,7 +10,7 @@ import (
 func TestInfluxdbQueryPart(t *testing.T) {
 	Convey("Influxdb query parts", t, func() {
 
-		queryContext := &tsdb.QueryContext{TimeRange: tsdb.NewTimeRange("5m", "now")}
+		queryContext := &tsdb.TsdbQuery{TimeRange: tsdb.NewTimeRange("5m", "now")}
 		query := &Query{}
 
 		Convey("render field ", func() {
@@ -37,33 +37,20 @@ func TestInfluxdbQueryPart(t *testing.T) {
 			So(res, ShouldEqual, "bottom(value, 3)")
 		})
 
-		Convey("render time", func() {
+		Convey("render time with $interval", func() {
 			part, err := NewQueryPart("time", []string{"$interval"})
 			So(err, ShouldBeNil)
 
 			res := part.Render(query, queryContext, "")
-			So(res, ShouldEqual, "time(200ms)")
+			So(res, ShouldEqual, "time($interval)")
 		})
 
-		Convey("render time interval >10s", func() {
-			part, err := NewQueryPart("time", []string{"$interval"})
+		Convey("render time with auto", func() {
+			part, err := NewQueryPart("time", []string{"auto"})
 			So(err, ShouldBeNil)
 
-			query.Interval = ">10s"
-
 			res := part.Render(query, queryContext, "")
-			So(res, ShouldEqual, "time(10s)")
-		})
-
-		Convey("render time interval >1s and higher interval calculation", func() {
-			part, err := NewQueryPart("time", []string{"$interval"})
-			queryContext := &tsdb.QueryContext{TimeRange: tsdb.NewTimeRange("1y", "now")}
-			So(err, ShouldBeNil)
-
-			query.Interval = ">1s"
-
-			res := part.Render(query, queryContext, "")
-			So(res, ShouldEqual, "time(168h)")
+			So(res, ShouldEqual, "time($__interval)")
 		})
 
 		Convey("render spread", func() {

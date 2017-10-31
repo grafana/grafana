@@ -1,12 +1,14 @@
-----
-page_title: Dashboard JSON
-page_description: Dashboard JSON Reference
-page_keywords: grafana, dashboard, json, documentation
----
++++
+title = "JSON Model"
+keywords = ["grafana", "dashboard", "documentation", "json", "model"]
+type = "docs"
+[menu.docs]
+name = "JSON Model"
+parent = "dashboard_features"
+weight = 100
++++
 
 # Dashboard JSON
-
-## Overview
 
 A dashboard in Grafana is represented by a JSON object, which stores metadata of its dashboard. Dashboard metadata includes dashboard properties, metadata from rows, panels, template variables, panel queries, etc.
 
@@ -22,7 +24,7 @@ When a user creates a new dashboard, a new dashboard JSON object is initialized 
 
 > Note: In the following JSON, id is shown as null which is the default value assigned to it until a dashboard is saved. Once a dashboard is saved, an integer value is assigned to the `id` field.
 
-```
+```json
 {
   "id": null,
   "title": "New dashboard",
@@ -31,7 +33,7 @@ When a user creates a new dashboard, a new dashboard JSON object is initialized 
   "timezone": "browser",
   "editable": true,
   "hideControls": false,
-  "sharedCrosshair": false,
+  "graphTooltip": 1,
   "rows": [],
   "time": {
     "from": "now-6h",
@@ -63,12 +65,12 @@ Each field in the dashboard JSON is explained below with its usage:
 | **timezone** | timezone of dashboard, i.e. `utc` or `browser` |
 | **editable** | whether a dashboard is editable or not |
 | **hideControls** | whether row controls on the left in green are hidden or not |
-| **sharedCrosshair** | TODO |
-| **rows** | row metadata, see [rows section](/docs/sources/reference/dashboard.md/#rows) for details |
+| **graphTooltip** | 0 for no shared crosshair or tooltip (default), 1 for shared crosshair, 2 for shared crosshair AND shared tooltip |
+| **rows** | row metadata, see [rows section](#rows) for details |
 | **time** | time range for dashboard, i.e. last 6 hours, last 7 days, etc |
-| **timepicker** | timepicker metadata, see [timepicker section](/docs/sources/reference/dashboard.md/#timepicker) for details |
-| **templating** | templating metadata, see [templating section](/docs/sources/reference/dashboard.md/#templating) for details |
-| **annotations** | annotations metadata, see [annotations section](/docs/sources/reference/dashboard.md/#annotations) for details |
+| **timepicker** | timepicker metadata, see [timepicker section](#timepicker) for details |
+| **templating** | templating metadata, see [templating section](#templating) for details |
+| **annotations** | annotations metadata, see [annotations section](#annotations) for details |
 | **schemaVersion** | TODO |
 | **version** | TODO |
 | **links** | TODO |
@@ -77,7 +79,7 @@ Each field in the dashboard JSON is explained below with its usage:
 
 `rows` field consists of an array of JSON object representing each row in a dashboard, such as shown below:
 
-```
+```json
  "rows": [
     {
       "collapse": false,
@@ -103,14 +105,14 @@ Usage of the fields is explained below:
 | **collapse** | whether row is collapsed or not |
 | **editable** | whether a row is editable or not |
 | **height** | height of the row in pixels |
-| **panels** | panels metadata, see [panels section](/docs/sources/reference/dashboard.md/#panels) for details |
+| **panels** | panels metadata, see [panels section](#panels) for details |
 | **title** | title of row |
 
 #### panels
 
 Panels are the building blocks a dashboard. It consists of datasource queries, type of graphs, aliases, etc. Panel JSON consists of an array of JSON objects, each representing a different panel in a row. Most of the fields are common for all panels but some fields depends on the panel type. Following is an example of panel JSON representing a `graph` panel type:
 
-```
+```json
 "panels": [
         {
           "aliasColors": {},
@@ -274,7 +276,7 @@ Usage of each field is explained below:
 
 Description: TODO
 
-```
+```json
 "timepicker": {
     "collapse": false,
     "enable": true,
@@ -328,7 +330,7 @@ Usage of the fields is explained below:
 
 `templating` fields contains array of template variables with their saved values along with some other metadata, for example:
 
-```
+```json
  "templating": {
     "enable": true,
     "list": [

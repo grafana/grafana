@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -24,7 +23,7 @@ func GetApiKeys(query *m.GetApiKeysQuery) error {
 }
 
 func DeleteApiKey(cmd *m.DeleteApiKeyCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "DELETE FROM api_key WHERE id=? and org_id=?"
 		_, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
 		return err
@@ -32,7 +31,7 @@ func DeleteApiKey(cmd *m.DeleteApiKeyCommand) error {
 }
 
 func AddApiKey(cmd *m.AddApiKeyCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		t := m.ApiKey{
 			OrgId:   cmd.OrgId,
 			Name:    cmd.Name,

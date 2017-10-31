@@ -1,12 +1,15 @@
 package live
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 )
 
 type hub struct {
+	log         log.Logger
 	connections map[*connection]bool
 	streams     map[string]map[*connection]bool
 
@@ -22,35 +25,39 @@ type streamSubscription struct {
 	remove bool
 }
 
-var h = hub{
-	connections:   make(map[*connection]bool),
-	streams:       make(map[string]map[*connection]bool),
-	register:      make(chan *connection),
-	unregister:    make(chan *connection),
-	streamChannel: make(chan *dtos.StreamMessage),
-	subChannel:    make(chan *streamSubscription),
+func newHub() *hub {
+	return &hub{
+		connections:   make(map[*connection]bool),
+		streams:       make(map[string]map[*connection]bool),
+		register:      make(chan *connection),
+		unregister:    make(chan *connection),
+		streamChannel: make(chan *dtos.StreamMessage),
+		subChannel:    make(chan *streamSubscription),
+		log:           log.New("stream.hub"),
+	}
 }
 
 func (h *hub) removeConnection() {
-
 }
 
-func (h *hub) run() {
+func (h *hub) run(ctx context.Context) {
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case c := <-h.register:
 			h.connections[c] = true
-			log.Info("Live: New connection (Total count: %v)", len(h.connections))
+			h.log.Info("New connection", "total", len(h.connections))
 
 		case c := <-h.unregister:
 			if _, ok := h.connections[c]; ok {
-				log.Info("Live: Closing Connection (Total count: %v)", len(h.connections))
+				h.log.Info("Closing connection", "total", len(h.connections))
 				delete(h.connections, c)
 				close(c.send)
 			}
-		// hand stream subscriptions
+			// hand stream subscriptions
 		case sub := <-h.subChannel:
-			log.Info("Live: Subscribing to: %v, remove: %v", sub.name, sub.remove)
+			h.log.Info("Subscribing", "channel", sub.name, "remove", sub.remove)
 			subscribers, exists := h.streams[sub.name]
 
 			// handle unsubscribe
@@ -63,13 +70,14 @@ func (h *hub) run() {
 				subscribers = make(map[*connection]bool)
 				h.streams[sub.name] = subscribers
 			}
+
 			subscribers[sub.conn] = true
 
 			// handle stream messages
 		case message := <-h.streamChannel:
 			subscribers, exists := h.streams[message.Stream]
 			if !exists || len(subscribers) == 0 {
-				log.Info("Live: Message to stream without subscribers: %v", message.Stream)
+				h.log.Info("Message to stream without subscribers", "stream", message.Stream)
 				continue
 			}
 

@@ -1,8 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from 'lodash';
 import {Variable, assignModelProperties, variableTypes} from './variable';
-import {VariableSrv} from './variable_srv';
 
 export class ConstantVariable implements Variable {
   query: string;
@@ -16,6 +14,7 @@ export class ConstantVariable implements Variable {
     label: '',
     query: '',
     current: {},
+    options: [],
   };
 
   /** @ngInject **/
@@ -23,7 +22,7 @@ export class ConstantVariable implements Variable {
     assignModelProperties(this, model, this.defaults);
   }
 
-  getModel() {
+  getSaveModel() {
     assignModelProperties(this.model, this, this.defaults);
     return this.model;
   }

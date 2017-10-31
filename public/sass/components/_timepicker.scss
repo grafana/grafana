@@ -65,15 +65,17 @@
 }
 
 .gf-timepicker-component {
-  margin-bottom: 10px;
+  padding: $spacer/2 0 $spacer 0;
+
   td {
     padding: 1px;
   }
   button.btn-sm {
     @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl);
+    font-size: $font-size-sm;
     background-image: none;
     border: none;
-    padding: 6px 10px;
+    padding: 5px 11px;
     color: $text-color;
     &.active span {
       color: $blue;

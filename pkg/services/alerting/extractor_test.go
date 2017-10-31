@@ -110,6 +110,34 @@ func TestAlertRuleExtraction(t *testing.T) {
       ]
       }`
 
+		Convey("Extractor should not modify the original json", func() {
+			dashJson, err := simplejson.NewJson([]byte(json))
+			So(err, ShouldBeNil)
+
+			dash := m.NewDashboardFromJson(dashJson)
+
+			getTarget := func(j *simplejson.Json) string {
+				rowObj := j.Get("rows").MustArray()[0]
+				row := simplejson.NewFromAny(rowObj)
+				panelObj := row.Get("panels").MustArray()[0]
+				panel := simplejson.NewFromAny(panelObj)
+				conditionObj := panel.Get("alert").Get("conditions").MustArray()[0]
+				condition := simplejson.NewFromAny(conditionObj)
+				return condition.Get("query").Get("model").Get("target").MustString()
+			}
+
+			Convey("Dashboard json rows.panels.alert.query.model.target should be empty", func() {
+				So(getTarget(dashJson), ShouldEqual, "")
+			})
+
+			extractor := NewDashAlertExtractor(dash, 1)
+			_, _ = extractor.GetAlerts()
+
+			Convey("Dashboard json should not be updated after extracting rules", func() {
+				So(getTarget(dashJson), ShouldEqual, "")
+			})
+		})
+
 		Convey("Parsing and validating dashboard containing graphite alerts", func() {
 
 			dashJson, err := simplejson.NewJson([]byte(json))
@@ -169,6 +197,83 @@ func TestAlertRuleExtraction(t *testing.T) {
 					model := condition.Get("query").Get("model")
 					So(model.Get("target").MustString(), ShouldEqual, "aliasByNode(statsd.fakesite.counters.session_start.desktop.count, 4)")
 				})
+			})
+		})
+
+		Convey("Panels missing id should return error", func() {
+			panelWithoutId := `
+      {
+        "id": 57,
+        "title": "Graphite 4",
+        "originalTitle": "Graphite 4",
+        "tags": ["graphite"],
+        "rows": [
+        {
+          "panels": [
+          {
+            "title": "Active desktop users",
+            "editable": true,
+            "type": "graph",
+            "targets": [
+            {
+              "refId": "A",
+              "target": "aliasByNode(statsd.fakesite.counters.session_start.desktop.count, 4)"
+            }
+            ],
+            "datasource": null,
+            "alert": {
+              "name": "name1",
+              "message": "desc1",
+              "handler": 1,
+              "frequency": "60s",
+              "conditions": [
+              {
+                "type": "query",
+                "query": {"params": ["A", "5m", "now"]},
+                "reducer": {"type": "avg", "params": []},
+                "evaluator": {"type": ">", "params": [100]}
+              }
+              ]
+            }
+          },
+          {
+            "title": "Active mobile users",
+            "id": 4,
+            "targets": [
+              {"refId": "A", "target": ""},
+              {"refId": "B", "target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}
+            ],
+            "datasource": "graphite2",
+            "alert": {
+              "name": "name2",
+              "message": "desc2",
+              "handler": 0,
+              "frequency": "60s",
+              "severity": "warning",
+              "conditions": [
+              {
+                "type": "query",
+                "query":  {"params": ["B", "5m", "now"]},
+                "reducer": {"type": "avg", "params": []},
+                "evaluator": {"type": ">", "params": [100]}
+              }
+              ]
+            }
+          }
+          ]
+        }
+      ]
+			}`
+
+			dashJson, err := simplejson.NewJson([]byte(panelWithoutId))
+			So(err, ShouldBeNil)
+			dash := m.NewDashboardFromJson(dashJson)
+			extractor := NewDashAlertExtractor(dash, 1)
+
+			_, err = extractor.GetAlerts()
+
+			Convey("panels without Id should return error", func() {
+				So(err, ShouldNotBeNil)
 			})
 		})
 

@@ -1,0 +1,95 @@
+<div class="editor-row">
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Colors</h5>
+    <div class="gf-form">
+      <label class="gf-form-label width-9">Mode</label>
+      <div class="gf-form-select-wrapper width-8">
+        <select class="input-small gf-form-input" ng-model="ctrl.panel.color.mode" ng-options="s for s in ctrl.colorModes" ng-change="ctrl.render()"></select>
+      </div>
+    </div>
+
+    <div ng-show="ctrl.panel.color.mode === 'opacity'">
+      <div class="gf-form">
+        <label class="gf-form-label width-9">Color</label>
+        <span class="gf-form-label">
+          <color-picker color="ctrl.panel.color.cardColor" onChange="ctrl.onCardColorChange"></color-picker>
+        </span>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-9">Scale</label>
+        <div class="gf-form-select-wrapper width-8">
+          <select class="input-small gf-form-input" ng-model="ctrl.panel.color.colorScale" ng-options="s for s in ctrl.opacityScales" ng-change="ctrl.render()"></select>
+        </div>
+      </div>
+      <div class="gf-form" ng-if="ctrl.panel.color.colorScale === 'sqrt'">
+        <label class="gf-form-label width-9">Exponent</label>
+        <input type="number" class="gf-form-input width-8" placeholder="auto" data-placement="right" bs-tooltip="''" ng-model="ctrl.panel.color.exponent" ng-change="ctrl.refresh()" ng-model-onblur>
+      </div>
+    </div>
+
+    <div ng-show="ctrl.panel.color.mode === 'spectrum'">
+      <div class="gf-form">
+        <label class="gf-form-label width-9">Scheme</label>
+        <div class="gf-form-select-wrapper width-8">
+          <select class="input-small gf-form-input" ng-model="ctrl.panel.color.colorScheme" ng-options="s.value as s.name for s in ctrl.colorSchemes" ng-change="ctrl.render()"></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="gf-form">
+      <color-legend></color-legend>
+    </div>
+  </div>
+
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Color scale</h5>
+    <div class="gf-form">
+      <label class="gf-form-label width-8">Min</label>
+      <input type="number" ng-model="ctrl.panel.color.min" class="gf-form-input width-5" placeholder="auto" data-placement="right" bs-tooltip="''" ng-change="ctrl.refresh()" ng-model-onblur>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-8">Max</label>
+      <input type="number" ng-model="ctrl.panel.color.max" class="gf-form-input width-5" placeholder="auto" data-placement="right" bs-tooltip="''" ng-change="ctrl.refresh()" ng-model-onblur>
+    </div>
+  </div>
+
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Legend</h5>
+    <gf-form-switch class="gf-form" label-class="width-8"
+      label="Show legend"
+      checked="ctrl.panel.legend.show" on-change="ctrl.render()">
+    </gf-form-switch>
+  </div>
+
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Buckets</h5>
+    <div class="gf-form">
+      <label class="gf-form-label width-8">Space</label>
+      <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right" bs-tooltip="''" ng-model="ctrl.panel.cards.cardPadding" ng-change="ctrl.refresh()" ng-model-onblur>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-8">Round</label>
+      <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right" bs-tooltip="''" ng-model="ctrl.panel.cards.cardRound" ng-change="ctrl.refresh()" ng-model-onblur>
+    </div>
+  </div>
+
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Tooltip</h5>
+    <gf-form-switch class="gf-form" label-class="width-8"
+      label="Show tooltip"
+      checked="ctrl.panel.tooltip.show" on-change="ctrl.render()">
+    </gf-form-switch>
+    <div ng-if="ctrl.panel.tooltip.show">
+      <gf-form-switch class="gf-form" label-class="width-8"
+        label="Histogram"
+        checked="ctrl.panel.tooltip.showHistogram" on-change="ctrl.render()">
+      </gf-form-switch>
+      <div class="gf-form">
+        <label class="gf-form-label width-8">Decimals</label>
+        <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right"
+          bs-tooltip="'Max decimal precision for tooltip.'"
+          ng-model="ctrl.panel.tooltipDecimals" ng-change="ctrl.render()" ng-model-onblur>
+      </div>
+    </div>
+  </div>
+</div>

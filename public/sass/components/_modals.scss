@@ -21,6 +21,7 @@
 // Base modal
 .modal {
   position: fixed;
+  overflow: hidden;
   z-index: $zindex-modal;
   width: 100%;
 	background-color: $panel-bg;
@@ -33,7 +34,7 @@
   right: 0;
   margin-left: auto;
   margin-right: auto;
-  top: 20%;
+  top: 10%;
 }
 
 .modal-header {
@@ -173,3 +174,5 @@
     text-overflow: ellipsis;
   }
 }
+
+

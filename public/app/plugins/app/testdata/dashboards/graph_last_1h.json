@@ -1,18 +1,17 @@
 {
-  "revision": 5,
-  "title": "TestData - Graph Panel Last 1h",
-  "tags": [
-    "grafana-test"
-  ],
-  "style": "dark",
-  "timezone": "browser",
+  "annotations": {
+    "list": []
+  },
   "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
   "hideControls": false,
-  "sharedCrosshair": false,
+  "links": [],
+  "refresh": false,
+  "revision": 8,
   "rows": [
     {
       "collapse": false,
-      "editable": true,
       "height": "250px",
       "panels": [
         {
@@ -23,7 +22,6 @@
           "error": false,
           "fill": 1,
           "id": 1,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -97,7 +95,6 @@
           "error": false,
           "fill": 1,
           "id": 2,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -171,7 +168,6 @@
           "error": false,
           "fill": 1,
           "id": 3,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -238,11 +234,15 @@
           ]
         }
       ],
-      "title": "New row"
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "New row",
+      "titleSize": "h6"
     },
     {
       "collapse": false,
-      "editable": true,
       "height": "250px",
       "panels": [
         {
@@ -253,7 +253,6 @@
           "error": false,
           "fill": 1,
           "id": 4,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -324,7 +323,6 @@
           "editable": true,
           "error": false,
           "id": 6,
-          "isNew": true,
           "links": [],
           "mode": "markdown",
           "span": 4,
@@ -332,11 +330,15 @@
           "type": "text"
         }
       ],
-      "title": "New row"
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "New row",
+      "titleSize": "h6"
     },
     {
       "collapse": false,
-      "editable": true,
       "height": 336,
       "panels": [
         {
@@ -347,7 +349,6 @@
           "error": false,
           "fill": 1,
           "id": 5,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -371,7 +372,7 @@
               "yaxis": 2
             }
           ],
-          "span": 7.99561403508772,
+          "span": 8,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -429,19 +430,22 @@
           "editable": true,
           "error": false,
           "id": 7,
-          "isNew": true,
           "links": [],
           "mode": "markdown",
-          "span": 4.00438596491228,
+          "span": 4,
           "title": "",
           "type": "text"
         }
       ],
-      "title": "New row"
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "New row",
+      "titleSize": "h6"
     },
     {
       "collapse": false,
-      "editable": true,
       "height": "250px",
       "panels": [
         {
@@ -452,7 +456,6 @@
           "error": false,
           "fill": 1,
           "id": 8,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -526,7 +529,6 @@
           "error": false,
           "fill": 1,
           "id": 10,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -545,7 +547,7 @@
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "span": 3,
+          "span": 4,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -593,6 +595,29 @@
           ]
         },
         {
+          "content": "Should be a long line connecting the null region in the `connected`  mode, and in zero it should just be a line with zero value at the null points. ",
+          "editable": true,
+          "error": false,
+          "id": 13,
+          "links": [],
+          "mode": "markdown",
+          "span": 4,
+          "title": "",
+          "type": "text"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "New row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": 250,
+      "panels": [
+        {
           "aliasColors": {},
           "bars": false,
           "datasource": "Grafana TestData",
@@ -600,7 +625,6 @@
           "error": false,
           "fill": 1,
           "id": 9,
-          "isNew": true,
           "legend": {
             "avg": false,
             "current": false,
@@ -624,7 +648,7 @@
               "zindex": -3
             }
           ],
-          "span": 5,
+          "span": 8,
           "stack": true,
           "steppedLine": false,
           "targets": [
@@ -687,11 +711,708 @@
               "show": true
             }
           ]
+        },
+        {
+          "content": "Stacking values on top of nulls, should treat the null values as zero. ",
+          "editable": true,
+          "error": false,
+          "id": 14,
+          "links": [],
+          "mode": "markdown",
+          "span": 4,
+          "title": "",
+          "type": "text"
         }
       ],
-      "title": "New row"
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Dashboard Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "Grafana TestData",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "id": 12,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "B-series",
+              "zindex": -3
+            }
+          ],
+          "span": 8,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "",
+              "hide": false,
+              "refId": "B",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,40,null,null,null,null,null,null,100,10,10,20,30,40,10",
+              "target": ""
+            },
+            {
+              "alias": "",
+              "hide": false,
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,40,null,null,null,null,null,null,100,10,10,20,30,40,10",
+              "target": ""
+            },
+            {
+              "alias": "",
+              "hide": false,
+              "refId": "C",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,40,null,null,null,null,null,null,100,10,10,20,30,40,10",
+              "target": ""
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Stacking all series null segment",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "content": "Stacking when all values are null should leave a gap in the graph",
+          "editable": true,
+          "error": false,
+          "id": 15,
+          "links": [],
+          "mode": "markdown",
+          "span": 4,
+          "title": "",
+          "type": "text"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Dashboard Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "Grafana TestData",
+          "decimals": 3,
+          "fill": 1,
+          "id": 20,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
+            "show": true,
+            "total": true,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Legend Table Single Series Should Take Minium Height",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Dashboard Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "Grafana TestData",
+          "decimals": 3,
+          "fill": 1,
+          "id": 16,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
+            "show": true,
+            "total": true,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "B",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "C",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "D",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Legend Table No Scroll Visible",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "Grafana TestData",
+          "decimals": 3,
+          "fill": 1,
+          "id": 17,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
+            "show": true,
+            "total": true,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "B",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "C",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "D",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "E",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "F",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "G",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "H",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "I",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "J",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Legend Table Should Scroll",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Dashboard Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "Grafana TestData",
+          "decimals": 3,
+          "fill": 1,
+          "id": 18,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
+            "rightSide": true,
+            "show": true,
+            "total": true,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "B",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "C",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "D",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Legend Table No Scroll Visible",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "Grafana TestData",
+          "decimals": 3,
+          "fill": 1,
+          "id": 19,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
+            "rightSide": true,
+            "show": true,
+            "total": true,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "B",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "C",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "D",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "E",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "F",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "G",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "H",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "I",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "J",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "K",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "L",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Legend Table No Scroll Visible",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Dashboard Row",
+      "titleSize": "h6"
     }
   ],
+  "schemaVersion": 14,
+  "style": "dark",
+  "tags": [
+    "grafana-test"
+  ],
+  "templating": {
+    "list": []
+  },
   "time": {
     "from": "now-1h",
     "to": "now"
@@ -721,15 +1442,7 @@
       "30d"
     ]
   },
-  "templating": {
-    "list": []
-  },
-  "annotations": {
-    "list": []
-  },
-  "refresh": false,
-  "schemaVersion": 13,
-  "version": 13,
-  "links": [],
-  "gnetId": null
+  "timezone": "browser",
+  "title": "TestData - Graph Panel Last 1h",
+  "version": 2
 }

@@ -10,7 +10,9 @@ import (
 
 type FakeCondition struct{}
 
-func (f *FakeCondition) Eval(context *EvalContext) {}
+func (f *FakeCondition) Eval(context *EvalContext) (*ConditionResult, error) {
+	return &ConditionResult{}, nil
+}
 
 func TestAlertRuleModel(t *testing.T) {
 	Convey("Testing alert rule", t, func() {
@@ -86,11 +88,6 @@ func TestAlertRuleModel(t *testing.T) {
 			Convey("Can read notifications", func() {
 				So(len(alertRule.Notifications), ShouldEqual, 2)
 			})
-			/*
-				Convey("Can read noDataMode", func() {
-					So(len(alertRule.NoDataMode), ShouldEqual, m.AlertStateCritical)
-				})
-			*/
 		})
 	})
 }

@@ -59,26 +59,11 @@ func (arr *DefaultRuleReader) Fetch() []*Rule {
 		}
 	}
 
-	metrics.M_Alerting_Active_Alerts.Inc(int64(len(res)))
+	metrics.M_Alerting_Active_Alerts.Set(float64(len(res)))
 	return res
 }
 
 func (arr *DefaultRuleReader) heartbeat() {
-
-	//Lets cheat on this until we focus on clustering
-	//log.Info("Heartbeat: Sending heartbeat from " + this.serverId)
 	arr.clusterSize = 1
 	arr.serverPosition = 1
-
-	/*
-		cmd := &m.HeartBeatCommand{ServerId: this.serverId}
-		err := bus.Dispatch(cmd)
-
-		if err != nil {
-			log.Error(1, "Failed to send heartbeat.")
-		} else {
-			this.clusterSize = cmd.Result.ClusterSize
-			this.serverPosition = cmd.Result.UptimePosition
-		}
-	*/
 }

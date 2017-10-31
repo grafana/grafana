@@ -1,10 +1,15 @@
----
-page_title: Export & Import Guide
-page_description: Export & Import Guide for Grafana
-page_keywords: grafana, export, import, documentation
----
++++
+title = "Export & Import"
+keywords = ["grafana", "dashboard", "documentation", "export", "import"]
+type = "docs"
+[menu.docs]
+parent = "dashboard_features"
+weight = 8
++++
 
 # Export and Import
+
+Grafana Dashboards can easily be exported and imported, either from the UI or from the HTTP API.
 
 ## Exporting a dashboard
 
@@ -12,39 +17,39 @@ Dashboards are exported in Grafana JSON format, and contain everything you need 
 
 The export feature is accessed from the share menu.
 
-<img src="/img/v31/export_menu.png">
+<img src="/img/docs/v31/export_menu.png">
 
 ### Making a dashboard portable
 
 If you want to export a dashboard for others to use then it could be a good idea to
-add template variables for things like a metric prefix (use contant variable) and server name.
+add template variables for things like a metric prefix (use constant variable) and server name.
 
-A template varible of the type `Constant` will automatically be hidden in
+A template variable of the type `Constant` will automatically be hidden in
 the dashboard, and will also be added as an required input when the dashboard is imported.
 
 ## Importing a dashboard
 
 To import a dashboard open dashboard search and then hit the import button.
 
-<img src="/img/v31/import_step1.png">
+<img src="/img/docs/v31/import_step1.png">
 
-From here you can upload a dashboard json file, paste a [Grafana.net](https://grafana.net) dashboard
+From here you can upload a dashboard json file, paste a [Grafana.com](https://grafana.com) dashboard
 url or paste dashboard json text directly into the text area.
 
-<img src="/img/v31/import_step2.png">
+<img src="/img/docs/v31/import_step2.png">
 
 In step 2 of the import process Grafana will let you change the name of the dashboard, pick what
 data source you want the dashboard to use and specify any metric prefixes (if the dashboard use any).
 
-## Discover dashboards on Grafana.net
+## Discover dashboards on Grafana.com
 
-Find dashboads for common server applications at [Grafana.net/dashboards](https://grafana.net/dashboards).
+Find dashboards for common server applications at [Grafana.com/dashboards](https://grafana.com/dashboards).
 
-<img src="/img/v31/gnet_dashboards_list.png">
+<img src="/img/docs/v31/gnet_dashboards_list.png">
 
 ## Import & Sharing with Grafana 2.x or 3.0
 
-Dashboards on Grafana.net use a new feature in Grafana 3.1 that allows the import process
+Dashboards on Grafana.com use a new feature in Grafana 3.1 that allows the import process
 to update each panel so that they are using a data source of your choosing. If you are running a
 Grafana version older than 3.1 then you might need to do some manual steps either
 before or after import in order for the dashboard to work properly.
@@ -94,10 +99,10 @@ These are then referenced in the dashboard panels like this:
 ```
 
 These inputs and their usage in data source properties are automatically added during export in Grafana 3.1.
-If you run an older version of Grafana and want to share a dashboard on Grafana.net you need to manually
+If you run an older version of Grafana and want to share a dashboard on Grafana.com you need to manually
 add the inputs and templatize the datasource properties like above.
 
-If you want to import a dashboard from Grafana.net into an older version of Grafana then you can either import
+If you want to import a dashboard from Grafana.com into an older version of Grafana then you can either import
 it as usual and then update the data source option in the metrics tab so that the panel is using the correct
 data source. Another alternative is to open the json file in a a text editor and update the data source properties
 to value that matches a name of your data source.

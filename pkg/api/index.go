@@ -58,6 +58,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			LightTheme:     prefs.Theme == "light",
 			Timezone:       prefs.Timezone,
 			Locale:         locale,
+			HelpFlags1:     c.HelpFlags1,
 		},
 		Settings:                settings,
 		AppUrl:                  appUrl,
@@ -102,10 +103,10 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		Children: dashboardChildNavs,
 	})
 
-	if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
+	if setting.AlertingEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR) {
 		alertChildNavs := []*dtos.NavLink{
 			{Text: "Alert List", Url: setting.AppSubUrl + "/alerting/list"},
-			{Text: "Notifications", Url: setting.AppSubUrl + "/alerting/notifications"},
+			{Text: "Notification channels", Url: setting.AppSubUrl + "/alerting/notifications"},
 		}
 
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{

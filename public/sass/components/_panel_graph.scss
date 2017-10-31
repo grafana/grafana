@@ -85,8 +85,12 @@
 }
 
 .graph-legend-table {
-  overflow-y: auto;
-  overflow-x: hidden;
+  tbody {
+    display: block;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 1px;
+  }
 
   .graph-legend-series {
     display: table-row;
@@ -129,6 +133,9 @@
     padding-left: 7px;
     text-align: left;
     width: 95%;
+    max-width: 650px;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 
   .graph-legend-series:nth-child(odd) {
@@ -174,7 +181,7 @@
   }
 
   .graph-legend {
-    margin: 0;
+    margin: 0 0 0 1rem;
   }
 
   .graph-legend-series {
@@ -203,15 +210,6 @@
     padding: 1px 3px;
     margin-right: 0px;
     line-height: initial;
-  }
-  .close {
-    margin-right: 5px;
-    color: $link-color;
-    opacity: 0.7;
-    text-shadow: none;
-  }
-  .editor-row {
-    padding: 5px;
   }
 }
 
@@ -244,6 +242,8 @@
     position: relative;
     top: -3px;
     padding: 0.2rem;
+    font-weight: bold;
+    color: $text-color;
   }
 
   .graph-tooltip-list-item {
@@ -258,7 +258,10 @@
   .graph-tooltip-series-name {
     display: table-cell;
     padding: 0.15rem;
-  }
+    max-width: 650px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+   }
 
   .graph-tooltip-value {
     display: table-cell;
@@ -275,39 +278,71 @@
     margin-top: 8px;
   }
 
-  .graph-annotation-title {
-    font-weight: $font-weight-semi-bold;
-    position: relative;
-    top: -0.4rem;
+  .graph-annotation__header {
+    background-color: $popover-border-color;
+    padding: 0.40rem 0.65rem;
+    display: flex;
   }
 
-  a {
+  .graph-annotation__title {
+    font-weight: $font-weight-semi-bold;
+    padding-right: $spacer;
+    overflow: hidden;
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+  }
+
+  .graph-annotation__edit-icon {
+    padding-left: $spacer;
+  }
+
+  .graph-annotation__time {
+    color: $text-muted;
+    font-style: italic;
+    font-weight: normal;
+    display: inline-block;
+    position: relative;
+    top: 1px;
+  }
+
+  .graph-annotation__body {
+    padding: 0.65rem;
+  }
+
+  .graph-annotation__user {
+    img {
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  a[href] {
     color: $blue;
     text-decoration: underline;
-  }
-
-  .graph-annotation-time {
-    position: relative;
-    text-align: center;
-    top: 0.6rem;
   }
 }
 
 .left-yaxis-label {
   top: 50%;
-  left: -5px;
-  transform: rotate(-90deg);
-  transform-origin: left top;
+  left: 2px;
+  transform: translateX(-50%) translateY(-50%) rotate(-90deg);
+  // this is needed for phantomsjs 2.1
+  -webkit-transform: translateX(-50%) translateY(-50%) rotate(-90deg);
 }
 
 .right-yaxis-label {
   top: 50%;
-  right: -5px;
-  transform: rotate(90deg);
-  transform-origin: right top;
+  right: 2px;
+  transform: translateX(50%) translateY(-50%) rotate(90deg);
+  // this is needed for phantomsjs 2.1
+  -webkit-transform: translateX(50%) translateY(-50%) rotate(90deg);
 }
 
 .axisLabel {
+  display: inline-block;
   color: $text-color;
   font-size: $font-size-sm;
   position: absolute;
@@ -371,8 +406,8 @@
   }
 
   &--T0{
-    right: -105px;
-    width: 128px;
+    right: -104px;
+    width: 129px;
 
     .alert-handle-line {
       width: 28px;

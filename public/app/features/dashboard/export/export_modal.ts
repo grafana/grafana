@@ -1,43 +1,38 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import kbn from 'app/core/utils/kbn';
 import angular from 'angular';
-import coreModule from 'app/core/core_module';
-import appEvents from 'app/core/app_events';
-import config from 'app/core/config';
-import _ from 'lodash';
+import {saveAs} from 'file-saver';
 
+import coreModule from 'app/core/core_module';
 import {DashboardExporter} from './exporter';
 
 export class DashExportCtrl {
   dash: any;
   exporter: DashboardExporter;
+  dismiss: () => void;
 
   /** @ngInject */
-  constructor(private backendSrv, dashboardSrv, datasourceSrv, $scope) {
+  constructor(private dashboardSrv, datasourceSrv, private $scope) {
     this.exporter = new DashboardExporter(datasourceSrv);
 
-    var current = dashboardSrv.getCurrent().getSaveModelClone();
-
-    this.exporter.makeExportable(current).then(dash => {
-      $scope.$apply(() => {
+    this.exporter.makeExportable(this.dashboardSrv.getCurrent()).then(dash => {
+      this.$scope.$apply(() => {
         this.dash = dash;
       });
     });
   }
 
   save() {
-    var blob = new Blob([angular.toJson(this.dash, true)], { type: "application/json;charset=utf-8" });
-    var wnd: any = window;
-    wnd.saveAs(blob, this.dash.title + '-' + new Date().getTime() + '.json');
+    var blob = new Blob([angular.toJson(this.dash, true)], {type: 'application/json;charset=utf-8'});
+    saveAs(blob, this.dash.title + '-' + new Date().getTime() + '.json');
   }
 
   saveJson() {
-    var html = angular.toJson(this.dash, true);
-    var uri = "data:application/json," + encodeURIComponent(html);
-    var newWindow = window.open(uri);
-  }
+    var clone = this.dashboardSrv.getCurrent().getSaveModelClone();
 
+    this.$scope.$root.appEvent('show-json-editor', {
+      object: clone,
+    });
+    this.dismiss();
+  }
 }
 
 export function dashExportDirective() {
@@ -47,6 +42,7 @@ export function dashExportDirective() {
     controller: DashExportCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
+    scope: {dismiss: '&'},
   };
 }
 

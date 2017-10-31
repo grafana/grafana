@@ -1,3 +1,5 @@
+// +build codegen
+
 package api
 
 import "strings"

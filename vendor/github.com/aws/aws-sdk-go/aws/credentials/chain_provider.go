@@ -13,7 +13,7 @@ var (
 	//
 	// @readonly
 	ErrNoValidProvidersFoundInChain = awserr.New("NoCredentialProviders",
-		`no valid providers in chain. Deprecated. 
+		`no valid providers in chain. Deprecated.
 	For verbose messaging see aws.Config.CredentialsChainVerboseErrors`,
 		nil)
 )
@@ -34,21 +34,23 @@ var (
 //
 // Example of ChainProvider to be used with an EnvProvider and EC2RoleProvider.
 // In this example EnvProvider will first check if any credentials are available
-// vai the environment variables. If there are none ChainProvider will check
+// via the environment variables. If there are none ChainProvider will check
 // the next Provider in the list, EC2RoleProvider in this case. If EC2RoleProvider
 // does not return any credentials ChainProvider will return the error
 // ErrNoValidProvidersFoundInChain
 //
-//     creds := NewChainCredentials(
-//         []Provider{
-//             &EnvProvider{},
-//             &EC2RoleProvider{
+//     creds := credentials.NewChainCredentials(
+//         []credentials.Provider{
+//             &credentials.EnvProvider{},
+//             &ec2rolecreds.EC2RoleProvider{
 //                 Client: ec2metadata.New(sess),
 //             },
 //         })
 //
 //     // Usage of ChainCredentials with aws.Config
-//     svc := ec2.New(&aws.Config{Credentials: creds})
+//     svc := ec2.New(session.Must(session.NewSession(&aws.Config{
+//       Credentials: creds,
+//     })))
 //
 type ChainProvider struct {
 	Providers     []Provider

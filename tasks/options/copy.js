@@ -19,6 +19,7 @@ module.exports = function(config) {
       cwd: './node_modules',
       expand: true,
       src: [
+        'ace-builds/src-noconflict/**/*',
         'eventemitter3/*.js',
         'systemjs/dist/*.js',
         'es6-promise/**/*',
@@ -31,6 +32,11 @@ module.exports = function(config) {
         'tether-drop/**/*',
         'tether-drop/**/*',
         'remarkable/dist/*',
+        'remarkable/dist/*',
+        'virtual-scroll/**/*',
+        'mousetrap/**/*',
+        'twemoji/2/twemoji.amd*',
+        'twemoji/2/svg/*.svg',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }

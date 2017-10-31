@@ -22,7 +22,7 @@
   phantom.addCookie({
     'name': 'renderKey',
     'value': params.renderKey,
-    'domain': 'localhost',
+    'domain': params.domain,
   });
 
   page.viewportSize = {
@@ -30,10 +30,12 @@
     height: params.height || '400'
   };
 
-  var tries = 0;
+  var timeoutMs = (parseInt(params.timeout) || 10) * 1000;
+  var waitBetweenReadyCheckMs = 50;
+  var totalWaitMs = 0;
 
   page.open(params.url, function (status) {
-    // console.log('Loading a web page: ' + params.url + ' status: ' + status);
+    console.log('Loading a web page: ' + params.url + ' status: ' + status, timeoutMs);
 
     page.onError = function(msg, trace) {
       var msgStack = ['ERROR: ' + msg];
@@ -55,10 +57,11 @@
 
         var rootScope = body.injector().get('$rootScope');
         if (!rootScope) {return false;}
-        return rootScope.panelsRendered;
+        var panels = angular.element('div.panel:visible').length;
+        return rootScope.panelsRendered >= panels;
       });
 
-      if (panelsRendered || tries === 1000) {
+      if (panelsRendered || totalWaitMs > timeoutMs) {
         var bb = page.evaluate(function () {
           return document.getElementsByClassName("main-view")[0].getBoundingClientRect();
         });
@@ -72,13 +75,12 @@
 
         page.render(params.png);
         phantom.exit();
-      }
-      else {
-        tries++;
-        setTimeout(checkIsReady, 10);
+      } else {
+        totalWaitMs += waitBetweenReadyCheckMs;
+        setTimeout(checkIsReady, waitBetweenReadyCheckMs);
       }
     }
 
-    setTimeout(checkIsReady, 200);
+    setTimeout(checkIsReady, waitBetweenReadyCheckMs);
   });
 })();

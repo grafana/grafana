@@ -11,8 +11,7 @@ import (
 )
 
 type LdapConfig struct {
-	Servers        []*LdapServerConf `toml:"servers"`
-	VerboseLogging bool              `toml:"verbose_logging"`
+	Servers []*LdapServerConf `toml:"servers"`
 }
 
 type LdapServerConf struct {
@@ -50,7 +49,7 @@ type LdapGroupToOrgRole struct {
 	OrgRole m.RoleType `toml:"org_role"`
 }
 
-var ldapCfg LdapConfig
+var LdapCfg LdapConfig
 var ldapLogger log.Logger = log.New("ldap")
 
 func loadLdapConfig() {
@@ -60,19 +59,19 @@ func loadLdapConfig() {
 
 	ldapLogger.Info("Ldap enabled, reading config file", "file", setting.LdapConfigFile)
 
-	_, err := toml.DecodeFile(setting.LdapConfigFile, &ldapCfg)
+	_, err := toml.DecodeFile(setting.LdapConfigFile, &LdapCfg)
 	if err != nil {
 		ldapLogger.Crit("Failed to load ldap config file", "error", err)
 		os.Exit(1)
 	}
 
-	if len(ldapCfg.Servers) == 0 {
+	if len(LdapCfg.Servers) == 0 {
 		ldapLogger.Crit("ldap enabled but no ldap servers defined in config file")
 		os.Exit(1)
 	}
 
 	// set default org id
-	for _, server := range ldapCfg.Servers {
+	for _, server := range LdapCfg.Servers {
 		assertNotEmptyCfg(server.SearchFilter, "search_filter")
 		assertNotEmptyCfg(server.SearchBaseDNs, "search_base_dns")
 

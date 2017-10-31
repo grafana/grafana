@@ -1,17 +1,18 @@
-<div class="submenu-controls gf-form-query">
+<div class="submenu-controls">
+
   <div ng-repeat="variable in ctrl.variables" ng-hide="variable.hide === 2" class="submenu-item gf-form-inline">
     <div class="gf-form">
       <label class="gf-form-label template-variable" ng-hide="variable.hide === 1">
         {{variable.label || variable.name}}
       </label>
-      <value-select-dropdown ng-if="variable.type !== 'adhoc'" variable="variable" on-updated="ctrl.variableUpdated(variable)" get-values-for-tag="ctrl.getValuesForTag(variable, tagKey)"></value-select-dropdown>
+      <value-select-dropdown ng-if="variable.type !== 'adhoc'" variable="variable" on-updated="ctrl.variableUpdated(variable)"></value-select-dropdown>
     </div>
     <ad-hoc-filters ng-if="variable.type === 'adhoc'" variable="variable"></ad-hoc-filters>
   </div>
 
   <div ng-if="ctrl.dashboard.annotations.list.length > 0">
-    <div ng-repeat="annotation in ctrl.dashboard.annotations.list" class="submenu-item" ng-class="{'annotation-disabled': !annotation.enable}">
-      <gf-form-switch class="gf-form" label="{{annotation.name}}" checked="annotation.enable" on-change="ctrl.annotationStateChanged()"></gf-form-switch>
+    <div ng-repeat="annotation in ctrl.dashboard.annotations.list" ng-hide="annotation.hide" class="submenu-item" ng-class="{'annotation-disabled': !annotation.enable}">
+			<gf-form-switch class="gf-form" label="{{annotation.name}}" checked="annotation.enable" on-change="ctrl.annotationStateChanged()"></gf-form-switch>
     </div>
   </div>
 

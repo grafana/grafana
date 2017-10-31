@@ -7,6 +7,10 @@ describe('OpenTsQueryCtrl', function() {
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
+  beforeEach(angularMocks.module(function($compileProvider) {
+    $compileProvider.preAssignBindingsEnabled(true);
+  }));
+
   beforeEach(ctx.providePhase(['backendSrv','templateSrv']));
 
   beforeEach(ctx.providePhase());
@@ -14,7 +18,11 @@ describe('OpenTsQueryCtrl', function() {
     ctx.$q = $q;
     ctx.scope = $rootScope.$new();
     ctx.target = {target: ''};
-    ctx.panelCtrl = {panel: {}};
+    ctx.panelCtrl = {
+      panel: {
+        targets: [ctx.target]
+      }
+    };
     ctx.panelCtrl.refresh = sinon.spy();
     ctx.datasource.getAggregators = sinon.stub().returns(ctx.$q.when([]));
     ctx.datasource.getFilterTypes = sinon.stub().returns(ctx.$q.when([]));

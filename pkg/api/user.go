@@ -13,7 +13,7 @@ func GetSignedInUser(c *middleware.Context) Response {
 	return getUserUserProfile(c.UserId)
 }
 
-// GET /api/user/:id
+// GET /api/users/:id
 func GetUserById(c *middleware.Context) Response {
 	return getUserUserProfile(c.ParamsInt64(":id"))
 }
@@ -22,14 +22,47 @@ func getUserUserProfile(userId int64) Response {
 	query := m.GetUserProfileQuery{UserId: userId}
 
 	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrUserNotFound {
+			return ApiError(404, m.ErrUserNotFound.Error(), nil)
+		}
 		return ApiError(500, "Failed to get user", err)
 	}
 
 	return Json(200, query.Result)
 }
 
+// GET /api/users/lookup
+func GetUserByLoginOrEmail(c *middleware.Context) Response {
+	query := m.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
+	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrUserNotFound {
+			return ApiError(404, m.ErrUserNotFound.Error(), nil)
+		}
+		return ApiError(500, "Failed to get user", err)
+	}
+	user := query.Result
+	result := m.UserProfileDTO{
+		Id:             user.Id,
+		Name:           user.Name,
+		Email:          user.Email,
+		Login:          user.Login,
+		Theme:          user.Theme,
+		IsGrafanaAdmin: user.IsAdmin,
+		OrgId:          user.OrgId,
+	}
+	return Json(200, &result)
+}
+
 // POST /api/user
 func UpdateSignedInUser(c *middleware.Context, cmd m.UpdateUserCommand) Response {
+	if setting.AuthProxyEnabled {
+		if setting.AuthProxyHeaderProperty == "email" && cmd.Email != c.Email {
+			return ApiError(400, "Not allowed to change email when auth proxy is using email property", nil)
+		}
+		if setting.AuthProxyHeaderProperty == "username" && cmd.Login != c.Login {
+			return ApiError(400, "Not allowed to change username when auth proxy is using username property", nil)
+		}
+	}
 	cmd.UserId = c.UserId
 	return handleUpdateUser(cmd)
 }
@@ -52,7 +85,7 @@ func UpdateUserActiveOrg(c *middleware.Context) Response {
 	cmd := m.SetUsingOrgCommand{UserId: userId, OrgId: orgId}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed change active organization", err)
+		return ApiError(500, "Failed to change active organization", err)
 	}
 
 	return ApiSuccess("Active organization changed")
@@ -62,12 +95,12 @@ func handleUpdateUser(cmd m.UpdateUserCommand) Response {
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
 		if len(cmd.Login) == 0 {
-			return ApiError(400, "Validation error, need specify either username or email", nil)
+			return ApiError(400, "Validation error, need to specify either username or email", nil)
 		}
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "failed to update user", err)
+		return ApiError(500, "Failed to update user", err)
 	}
 
 	return ApiSuccess("User updated")
@@ -87,7 +120,7 @@ func getUserOrgList(userId int64) Response {
 	query := m.GetUserOrgListQuery{UserId: userId}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Faile to get user organziations", err)
+		return ApiError(500, "Failed to get user organizations", err)
 	}
 
 	return Json(200, query.Result)
@@ -122,7 +155,7 @@ func UserSetUsingOrg(c *middleware.Context) Response {
 	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgId}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed change active organization", err)
+		return ApiError(500, "Failed to change active organization", err)
 	}
 
 	return ApiSuccess("Active organization changed")
@@ -146,6 +179,10 @@ func ChangeActiveOrgAndRedirectToHome(c *middleware.Context) {
 }
 
 func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) Response {
+	if setting.LdapEnabled || setting.AuthProxyEnabled {
+		return ApiError(400, "Not allowed to change password when LDAP or Auth Proxy is enabled", nil)
+	}
+
 	userQuery := m.GetUserByIdQuery{Id: c.UserId}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
@@ -157,8 +194,9 @@ func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) 
 		return ApiError(401, "Invalid old password", nil)
 	}
 
-	if len(cmd.NewPassword) < 4 {
-		return ApiError(400, "New password too short", nil)
+	password := m.Password(cmd.NewPassword)
+	if password.IsWeak() {
+		return ApiError(400, "New password is too short", nil)
 	}
 
 	cmd.UserId = c.UserId
@@ -173,10 +211,75 @@ func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) 
 
 // GET /api/users
 func SearchUsers(c *middleware.Context) Response {
-	query := m.SearchUsersQuery{Query: "", Page: 0, Limit: 1000}
-	if err := bus.Dispatch(&query); err != nil {
+	query, err := searchUser(c)
+	if err != nil {
+		return ApiError(500, "Failed to fetch users", err)
+	}
+
+	return Json(200, query.Result.Users)
+}
+
+// GET /api/search
+func SearchUsersWithPaging(c *middleware.Context) Response {
+	query, err := searchUser(c)
+	if err != nil {
 		return ApiError(500, "Failed to fetch users", err)
 	}
 
 	return Json(200, query.Result)
+}
+
+func searchUser(c *middleware.Context) (*m.SearchUsersQuery, error) {
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+
+	if page < 1 {
+		page = 1
+	}
+
+	searchQuery := c.Query("query")
+
+	query := &m.SearchUsersQuery{Query: searchQuery, Page: page, Limit: perPage}
+	if err := bus.Dispatch(query); err != nil {
+		return nil, err
+	}
+
+	query.Result.Page = page
+	query.Result.PerPage = perPage
+
+	return query, nil
+}
+
+func SetHelpFlag(c *middleware.Context) Response {
+	flag := c.ParamsInt64(":id")
+
+	bitmask := &c.HelpFlags1
+	bitmask.AddFlag(m.HelpFlags1(flag))
+
+	cmd := m.SetUserHelpFlagCommand{
+		UserId:     c.UserId,
+		HelpFlags1: *bitmask,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to update help flag", err)
+	}
+
+	return Json(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+}
+
+func ClearHelpFlags(c *middleware.Context) Response {
+	cmd := m.SetUserHelpFlagCommand{
+		UserId:     c.UserId,
+		HelpFlags1: m.HelpFlags1(0),
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to update help flag", err)
+	}
+
+	return Json(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
 }

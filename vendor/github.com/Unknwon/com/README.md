@@ -1,7 +1,7 @@
-Common functions
-===
+Common Functions
+================
 
-[![Build Status](https://drone.io/github.com/Unknwon/com/status.png)](https://drone.io/github.com/Unknwon/com/latest) [![Go Walker](http://gowalker.org/api/v1/badge)](http://gowalker.org/github.com/Unknwon/com)
+[![Build Status](https://travis-ci.org/Unknwon/com.svg)](https://travis-ci.org/Unknwon/com) [![Go Walker](http://gowalker.org/api/v1/badge)](http://gowalker.org/github.com/Unknwon/com)
 
 This is an open source project for commonly used functions for the Go programming language.
 
@@ -17,8 +17,4 @@ Your contribute is welcome, but you have to check following steps after you adde
 2. Make sure you wrote test cases with any possible condition for **all functions** in file `*_test.go`.
 3. Make sure you wrote benchmarks for **all functions** in file `*_test.go`.
 4. Make sure you wrote useful examples for **all functions** in file `example_test.go`.
-5. Make sure you ran `go test -bench="."` and got **PASS** .
-
-## Performance
-
-See results on [drone.io](https://drone.io/github.com/Unknwon/com/latest) by `go test -bench="."`.
+5. Make sure you ran `go test` and got **PASS** .

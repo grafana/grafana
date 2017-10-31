@@ -1,9 +1,8 @@
 define([
   '../core_module',
-  'app/core/utils/kbn',
   'app/core/utils/rangeutil',
 ],
-function (coreModule, kbn, rangeUtil) {
+function (coreModule, rangeUtil) {
   'use strict';
 
   coreModule.default.directive('ngModelOnblur', function() {
@@ -47,7 +46,7 @@ function (coreModule, kbn, rangeUtil) {
           if (ctrl.$isEmpty(modelValue)) {
             return true;
           }
-          if (viewValue.indexOf('$') === 0) {
+          if (viewValue.indexOf('$') === 0 || viewValue.indexOf('+$') === 0) {
             return true; // allow template variable
           }
           var info = rangeUtil.describeTextRange(viewValue);

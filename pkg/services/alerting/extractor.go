@@ -3,6 +3,8 @@ package alerting
 import (
 	"errors"
 
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -58,12 +60,25 @@ func findPanelQueryByRefId(panel *simplejson.Json, refId string) *simplejson.Jso
 	return nil
 }
 
+func copyJson(in *simplejson.Json) (*simplejson.Json, error) {
+	rawJson, err := in.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	return simplejson.NewJson(rawJson)
+}
+
 func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 	e.log.Debug("GetAlerts")
 
-	alerts := make([]*m.Alert, 0)
+	dashboardJson, err := copyJson(e.Dash.Data)
+	if err != nil {
+		return nil, err
+	}
 
-	for _, rowObj := range e.Dash.Data.Get("rows").MustArray() {
+	alerts := make([]*m.Alert, 0)
+	for _, rowObj := range dashboardJson.Get("rows").MustArray() {
 		row := simplejson.NewFromAny(rowObj)
 
 		for _, panelObj := range row.Get("panels").MustArray() {
@@ -74,7 +89,12 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				continue
 			}
 
-			// backward compatability check, can be removed later
+			panelId, err := panel.Get("id").Int64()
+			if err != nil {
+				return nil, fmt.Errorf("panel id is required. err %v", err)
+			}
+
+			// backward compatibility check, can be removed later
 			enabled, hasEnabled := jsonAlert.CheckGet("enabled")
 			if hasEnabled && enabled.MustBool() == false {
 				continue
@@ -88,7 +108,7 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 			alert := &m.Alert{
 				DashboardId: e.Dash.Id,
 				OrgId:       e.OrgId,
-				PanelId:     panel.Get("id").MustInt64(),
+				PanelId:     panelId,
 				Id:          jsonAlert.Get("id").MustInt64(),
 				Name:        jsonAlert.Get("name").MustString(),
 				Handler:     jsonAlert.Get("handler").MustInt64(),
@@ -104,7 +124,8 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				panelQuery := findPanelQueryByRefId(panel, queryRefId)
 
 				if panelQuery == nil {
-					return nil, ValidationError{Reason: "Alert refes to query that cannot be found"}
+					reason := fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found", alert.PanelId, queryRefId)
+					return nil, ValidationError{Reason: reason}
 				}
 
 				dsName := ""
@@ -134,7 +155,6 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 			if err == nil && alert.ValidToSave() {
 				alerts = append(alerts, alert)
 			} else {
-				e.log.Error("Failed to extract alerts from dashboard", "error", err)
 				return nil, err
 			}
 		}

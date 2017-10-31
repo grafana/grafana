@@ -1,16 +1,12 @@
-<navbar icon="icon-gf icon-gf-alert" title="Alerting" title-url="alerting">
-	<a href="alerting/notifications" class="navbar-page-btn">
-		<i class="fa fa-fw fa-envelope-o"></i>
-		Notifications
-	</a>
-</navbar>
+<navbar model="ctrl.navModel"></navbar>
 
-<div class="page-container" >
+<div class="page-container">
   <div class="page-header">
-    <h1>Alert notification</h1>
+    <h1 ng-show="ctrl.model.id">Edit Channel</h1>
+    <h1 ng-show="!ctrl.model.id">New Channel</h1>
   </div>
 
-  <form name="ctrl.theForm">
+  <form name="ctrl.theForm" ng-if="ctrl.notifiers">
     <div class="gf-form-group">
       <div class="gf-form">
         <span class="gf-form-label width-12">Name</span>
@@ -19,71 +15,36 @@
       <div class="gf-form">
         <span class="gf-form-label width-12">Type</span>
         <div class="gf-form-select-wrapper width-15">
-          <select class="gf-form-input" ng-model="ctrl.model.type" ng-options="t for t in ['webhook', 'email', 'slack']" ng-change="ctrl.typeChanged(notification, $index)">
+          <select class="gf-form-input" ng-model="ctrl.model.type" ng-options="t.type as t.name for t in ctrl.notifiers" ng-change="ctrl.typeChanged(notification, $index)">
           </select>
         </div>
       </div>
-      <div class="gf-form">
-        <gf-form-switch
-           class="gf-form"
-           label="Send on all alerts"
-           label-class="width-12"
-           checked="ctrl.model.isDefault"
-           tooltip="Use this notification for all alerts">
-        </gf-form-switch>
-      </div>
+      <gf-form-switch
+          class="gf-form"
+          label="Send on all alerts"
+          label-class="width-12"
+          checked="ctrl.model.isDefault"
+          tooltip="Use this notification for all alerts">
+      </gf-form-switch>
+      <gf-form-switch
+          class="gf-form"
+          label="Include image"
+          label-class="width-12"
+          checked="ctrl.model.settings.uploadImage"
+          tooltip="Captures an image and include it in the notification">
+      </gf-form-switch>
     </div>
 
-    <div class="gf-form-group" ng-if="ctrl.model.type === 'webhook'">
-      <h3 class="page-heading">Webhook settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Url</span>
-        <input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Http Method</span>
-        <div class="gf-form-select-wrapper width-14">
-          <select class="gf-form-input" ng-model="ctrl.model.settings.httpMethod" ng-options="t for t in ['POST', 'PUT']">
-          </select>
-        </div>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Username</span>
-        <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.username"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Password</span>
-        <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.password"></input>
-      </div>
-    </div>
-
-    <div class="gf-form-group" ng-if="ctrl.model.type === 'slack'">
-      <h3 class="page-heading">Slack settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-6">Url</span>
-        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Slack incoming webhook url"></input>
-      </div>
-    </div>
-
-    <div class="gf-form-group section" ng-if="ctrl.model.type === 'email'">
-      <h3 class="page-heading">Email addresses</h3>
-      <div class="gf-form">
-        <textarea rows="7" class="gf-form-input width-25" required ng-model="ctrl.model.settings.addresses"></textarea>
-      </div>
-      <div class="gf-form">
-        <span>You can enter multiple email addresses using a ";" separator</span>
-      </div>
+    <div class="gf-form-group" ng-include src="ctrl.notifierTemplateId">
     </div>
 
     <div class="gf-form-group">
       <div class="gf-form-inline">
-        <div class="gf-form width-6">
-          <button type="submit" ng-click="ctrl.save()" class="btn btn-success">Save</button>
+        <div class="gf-form width-8">
+          <button type="submit" ng-click="ctrl.save()" class="btn btn-success width-7">Save</button>
         </div>
-        <div class="gf-form width-20">
-          <div class="gf-form">
-            <button type="submit" ng-click="ctrl.testNotification()" class="btn btn-secondary">Send Test</button>
-          </div>
+        <div class="gf-form width-8">
+          <button type="submit" ng-click="ctrl.testNotification()" class="btn btn-secondary width-7">Send Test</button>
         </div>
       </div>
     </div>

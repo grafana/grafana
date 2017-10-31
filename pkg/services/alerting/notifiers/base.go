@@ -6,18 +6,22 @@ import (
 )
 
 type NotifierBase struct {
-	Name     string
-	Type     string
-	Id       int64
-	IsDeault bool
+	Name        string
+	Type        string
+	Id          int64
+	IsDeault    bool
+	UploadImage bool
 }
 
 func NewNotifierBase(id int64, isDefault bool, name, notifierType string, model *simplejson.Json) NotifierBase {
+	uploadImage := model.Get("uploadImage").MustBool(true)
+
 	return NotifierBase{
-		Id:       id,
-		Name:     name,
-		IsDeault: isDefault,
-		Type:     notifierType,
+		Id:          id,
+		Name:        name,
+		IsDeault:    isDefault,
+		Type:        notifierType,
+		UploadImage: uploadImage,
 	}
 }
 
@@ -30,7 +34,7 @@ func (n *NotifierBase) GetType() string {
 }
 
 func (n *NotifierBase) NeedsImage() bool {
-	return true
+	return n.UploadImage
 }
 
 func (n *NotifierBase) GetNotifierId() int64 {

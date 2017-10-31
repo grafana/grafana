@@ -32,8 +32,8 @@ $white:            #fff;
 // -------------------------
 $blue:             	   	#2AB2E4;
 $blue-dark:             #3CAAD6;
-$green:                 #28B62C;
-$red:                   #FF4136;
+$green:                 #3aa655;
+$red:                   #d44939;
 $yellow:                #FF851B;
 $orange:                #Ff7941;
 $pink:                  #E671B8;
@@ -95,8 +95,10 @@ $component-active-bg:    $brand-primary !default;
 // Panel
 // -------------------------
 
-$panel-bg: 		  $gray-7;
-$panel-border:  solid 1px $gray-6;
+$panel-bg: 		       $gray-7;
+$panel-border:       solid 1px $gray-6;
+$panel-drop-zone-bg: repeating-linear-gradient(-128deg, $body-bg, $body-bg 10px, $gray-6 10px, $gray-6 20px);
+$panel-menu-border:  solid 1px white;
 
 $divider-border-color:	      $gray-2;
 
@@ -257,28 +259,25 @@ $paginationActiveBackground:          $blue;
 
 // Form states and alerts
 // -------------------------
-$state-warning-text:             lighten($orange, 10%);
-$state-warning-bg:       $orange;
-$warningBorder:           transparent;
+$warning-text-color:            lighten($orange, 10%);
+$error-text-color:              lighten($red, 10%);
+$success-text-color:            lighten($green, 10%);
+$info-text-color:                     $blue;
 
-$errorText:               lighten($red, 10%);
-$errorBackground:         $red;
-$errorBorder:             transparent;
-
-$successText:             lighten($green, 10%);
-$successBackground:       $green;
-$successBorder:           transparent;
-
-$infoText:                $blue;
-$infoBackground:          $blue-dark;
-$infoBorder:              transparent;
+$alert-error-bg:          linear-gradient(90deg, #d44939, #e0603d);
+$alert-success-bg:        linear-gradient(90deg, #3aa655, #47b274);
+$alert-warning-bg:        linear-gradient(90deg, #d44939, #e0603d);
+$alert-info-bg:           $blue-dark;
 
 // popover
-$popover-bg:              $gray-5;
+$popover-bg:              $panel-bg;
 $popover-color:           $text-color;
+$popover-border-color:    $gray-5;
+$popover-shadow:          0 0 20px $white;
 
 $popover-help-bg:         $blue-dark;
 $popover-help-color:      $gray-6;
+$popover-error-bg:        $btn-danger-bg;
 
 // Tooltips and popovers
 // -------------------------
@@ -297,6 +296,52 @@ $card-background: linear-gradient(135deg, $gray-5, $gray-6);
 $card-background-hover: linear-gradient(135deg, $gray-6, $gray-7);
 $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .1);
 
+// info box
+$info-box-background: linear-gradient(135deg, #f1fbff, #d7ebff);
+
 // footer
 $footer-link-color:   $gray-3;
 $footer-link-hover:   $dark-5;
+
+// collapse box
+$collapse-box-body-border: $gray-4;
+$collapse-box-body-error-border: $red;
+
+// json explorer
+$json-explorer-default-color: black;
+$json-explorer-string-color: green;
+$json-explorer-number-color: blue;
+$json-explorer-boolean-color: red;
+$json-explorer-null-color: #855A00;
+$json-explorer-undefined-color: rgb(202, 11, 105);
+$json-explorer-function-color: #FF20ED;
+$json-explorer-rotate-time: 100ms;
+$json-explorer-toggler-opacity: 0.6;
+$json-explorer-toggler-color: #45376F;
+$json-explorer-bracket-color: blue;
+$json-explorer-key-color: #00008B;
+$json-explorer-url-color: blue;
+
+// Changelog and diff
+// -------------------------
+$diff-label-bg:         $gray-5;
+$diff-label-fg:         $gray-2;
+
+$diff-switch-bg:        $gray-7;
+$diff-switch-disabled:  $gray-5;
+
+$diff-arrow-color:      $dark-3;
+$diff-group-bg:         $gray-7;
+
+$diff-json-bg:          $gray-5;
+$diff-json-fg:          $gray-2;
+
+$diff-json-added:       lighten(desaturate($green, 30%), 10%);
+$diff-json-deleted:     desaturate($red, 35%);
+
+$diff-json-old:       #5a372a;
+$diff-json-new:       #664e33;
+
+$diff-json-changed-fg:  $gray-6;
+$diff-json-changed-num: $gray-4;
+$diff-json-icon:        $gray-4;

@@ -3,9 +3,9 @@ package opentsdb
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestOpenTsdbExecutor(t *testing.T) {
@@ -23,8 +23,8 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			query.Model.Set("aggregator", "avg")
 			query.Model.Set("disableDownsampling", false)
 			query.Model.Set("downsampleInterval", "")
-			query.Model.Set("downsampleAggregator","avg")
-			query.Model.Set("downsampleFillPolicy","none")
+			query.Model.Set("downsampleAggregator", "avg")
+			query.Model.Set("downsampleFillPolicy", "none")
 
 			metric := exec.buildMetric(query)
 
@@ -45,15 +45,15 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			query.Model.Set("aggregator", "avg")
 			query.Model.Set("disableDownsampling", true)
 			query.Model.Set("downsampleInterval", "")
-			query.Model.Set("downsampleAggregator","avg")
-			query.Model.Set("downsampleFillPolicy","none")
+			query.Model.Set("downsampleAggregator", "avg")
+			query.Model.Set("downsampleFillPolicy", "none")
 
 			metric := exec.buildMetric(query)
 
 			So(len(metric), ShouldEqual, 2)
 			So(metric["metric"], ShouldEqual, "cpu.average.percent")
 			So(metric["aggregator"], ShouldEqual, "avg")
-			
+
 		})
 
 		Convey("Build metric with downsampling enabled with params", func() {
@@ -66,8 +66,8 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			query.Model.Set("aggregator", "avg")
 			query.Model.Set("disableDownsampling", false)
 			query.Model.Set("downsampleInterval", "5m")
-			query.Model.Set("downsampleAggregator","sum")
-			query.Model.Set("downsampleFillPolicy","null")
+			query.Model.Set("downsampleAggregator", "sum")
+			query.Model.Set("downsampleFillPolicy", "null")
 
 			metric := exec.buildMetric(query)
 
@@ -87,8 +87,8 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			query.Model.Set("aggregator", "avg")
 			query.Model.Set("disableDownsampling", true)
 			query.Model.Set("downsampleInterval", "5m")
-			query.Model.Set("downsampleAggregator","sum")
-			query.Model.Set("downsampleFillPolicy","null")
+			query.Model.Set("downsampleAggregator", "sum")
+			query.Model.Set("downsampleFillPolicy", "null")
 
 			tags := simplejson.New()
 			tags.Set("env", "prod")
@@ -117,8 +117,8 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			query.Model.Set("aggregator", "avg")
 			query.Model.Set("disableDownsampling", true)
 			query.Model.Set("shouldComputeRate", true)
-			query.Model.Set("isCounter",false)
-			
+			query.Model.Set("isCounter", false)
+
 			tags := simplejson.New()
 			tags.Set("env", "prod")
 			tags.Set("app", "grafana")
@@ -147,9 +147,9 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			query.Model.Set("aggregator", "avg")
 			query.Model.Set("disableDownsampling", true)
 			query.Model.Set("shouldComputeRate", true)
-			query.Model.Set("isCounter",true)
-			query.Model.Set("counterMax",45)
-			query.Model.Set("counterResetValue",60)
+			query.Model.Set("isCounter", true)
+			query.Model.Set("counterMax", 45)
+			query.Model.Set("counterResetValue", 60)
 
 			tags := simplejson.New()
 			tags.Set("env", "prod")

@@ -1,61 +1,72 @@
 # Building The Docs
 
 To build the docs locally, you need to have docker installed.  The
-docs are built using a custom [docker](https://www.docker.com/) image
-and the [mkdocs](http://www.mkdocs.org/) tool.
+docs are built using [Hugo](http://gohugo.io/) - a static site generator.
 
 **Prepare the Docker Image**:
 
-Build the `grafana/docs-base:latest` image. Run these commands in the
-same directory this file is in. **Note** that you may require ``sudo``
+Git clone `grafana/grafana.org` repo. Run these commands in the root of that repo. **Note** that you may require ``sudo``
 when running ``make docs-build`` depending on how your system's docker
 service is configured):
 
 ```
-$ git clone https://github.com/grafana/docs-base
-$ cd docs-base
-$ make docs-build
+git clone https://github.com/grafana/grafana.org
+cd grafana.org
+make docs-build
 ```
 
 **Build the Documentation**:
 
 Now that the docker image has been prepared we can build the
-docs. Switch your working directory back to the directory this file
-(README.md) is in and run (possibly with ``sudo``):
+grafana docs and start a docs server. 
+
+If you have not cloned the Grafana repository already then:
 
 ```
-$ make docs
+cd ..
+git clone https://github.com/grafana/grafana
+```
+
+Switch your working directory to the directory this file
+(README.md) is in.
+
+```
+cd grafana/docs
+```
+
+An AWS config file is required to build the docs Docker image and to publish the site to AWS. If you are building locally only and do not have any AWS credentials for docs.grafana.org then create an empty file named `awsconfig` in the current directory.
+
+```
+touch awsconfig
+```
+
+Then run (possibly with ``sudo``):
+
+```
+make watch
 ```
 
 This command will not return control of the shell to the user. Instead
 the command is now running a new docker container built from the image
 we created in the previous step.
 
-Open [localhost:8180](http://localhost:8180) to view the docs.
+Open [localhost:3004](http://localhost:3004) to view the docs.
 
-**Note** that after running ``make docs`` you may notice a message
-like this in the console output
+### Images & Content
 
-> Running at: http://0.0.0.0:8000/
+All markdown files are located in this repo (main grafana repo). But all images are added to the https://github.com/grafana/grafana.org repo. So the process of adding images is a bit complicated. 
 
-This is misleading. That is **not** the port the documentation is
-served from. You must browse to port **8180** to view the new
-documentation.
+First you need create a feature (PR) branch of https://github.com/grafana/grafana.org so you can make change. Then add the image to the `/static/img/docs` directory. Then make a commit that adds the image. 
 
-
-# Adding a New Page
-
-Adding a new page requires updating the ``mkdocs.yml`` file which is
-located in this directory.
-
-For example, if you are adding documentation for a new HTTP API called
-``preferences`` you would:
-
-1. Create the file ``docs/sources/http_api/preferences.md``
-1. Add a reference to it in ``docs/sources/http_api/overview.md``
-1. Update the list under the **pages** key in the ``docs/mkdocs.yml`` file with a reference to your new page:
-
-
-```yaml
-- ['http_api/preferences.md', 'API', 'Preferences API']
+Then run:
 ```
+make docs-build
+```
+
+This will rebuild the docs docker container. 
+
+To be able to use the image your have to quit  (CTRL-C) the `make watch` command (that you run in the same directory as this README). Then simply rerun `make watch`, it will restart the docs server but now with access to your image. 
+
+### Editing content
+
+Changes to the markdown files should automatically cause a docs rebuild and live reload should reload the page in your browser. 

@@ -23,11 +23,20 @@ export class TextPanelCtrl extends PanelCtrl {
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('refresh', this.onRefresh.bind(this));
     this.events.on('render', this.onRender.bind(this));
+    $scope.$watch('ctrl.panel.content',
+     _.throttle(() => {
+       this.render();
+     }, 1000)
+    );
   }
 
   onInitEditMode() {
     this.addEditorTab('Options', 'public/app/plugins/panel/text/editor.html');
     this.editorTabIndex = 1;
+
+    if (this.panel.mode === 'text') {
+      this.panel.mode = 'markdown';
+    }
   }
 
   onRefresh() {
@@ -39,8 +48,6 @@ export class TextPanelCtrl extends PanelCtrl {
       this.renderMarkdown(this.panel.content);
     } else if (this.panel.mode === 'html') {
       this.updateContent(this.panel.content);
-    } else if (this.panel.mode === 'text') {
-      this.renderText(this.panel.content);
     }
     this.renderingCompleted();
   }
@@ -64,7 +71,9 @@ export class TextPanelCtrl extends PanelCtrl {
       });
     }
 
-    this.updateContent(this.remarkable.render(content));
+    this.$scope.$applyAsync(() => {
+      this.updateContent(this.remarkable.render(content));
+    });
   }
 
   updateContent(html) {
@@ -77,4 +86,4 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 }
 
-export {TextPanelCtrl as PanelCtrl}
+export {TextPanelCtrl as PanelCtrl};

@@ -145,12 +145,16 @@ The plugin allso adds the following methods to the plot object:
             updateSelection(e);
 
             if (selectionIsSane())
-                triggerSelectedEvent();
+                triggerSelectedEvent(e);
             else {
                 // this counts as a clear
                 plot.getPlaceholder().trigger("plotunselected", [ ]);
                 plot.getPlaceholder().trigger("plotselecting", [ null ]);
             }
+
+            setTimeout(function() {
+              plot.isSelecting = false;
+            }, 10);
 
             return false;
         }
@@ -180,8 +184,12 @@ The plugin allso adds the following methods to the plot object:
             return r;
         }
 
-        function triggerSelectedEvent() {
+        function triggerSelectedEvent(event) {
             var r = getSelection();
+
+            // Add ctrlKey and metaKey to event
+            r.ctrlKey = event.ctrlKey;
+            r.metaKey = event.metaKey;
 
             plot.getPlaceholder().trigger("plotselected", [ r ]);
 
@@ -214,6 +222,7 @@ The plugin allso adds the following methods to the plot object:
 
             setSelectionPos(selection.second, pos);
             if (selectionIsSane()) {
+                plot.isSelecting = true;
                 selection.show = true;
                 plot.triggerRedrawOverlay();
             }

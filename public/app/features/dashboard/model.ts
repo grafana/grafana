@@ -1,13 +1,14 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import config from 'app/core/config';
 import angular from 'angular';
 import moment from 'moment';
 import _ from 'lodash';
 import $ from 'jquery';
 
-import {Emitter} from 'app/core/core';
-import {contextSrv} from 'app/core/services/context_srv';
+import {DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
+import {Emitter, contextSrv, appEvents} from 'app/core/core';
+import {DashboardRow} from './row/row_model';
+import sortByKeys from 'app/core/utils/sort_by_keys';
 
 export class DashboardModel {
   id: any;
@@ -18,11 +19,11 @@ export class DashboardModel {
   style: any;
   timezone: any;
   editable: any;
-  hideControls: any;
-  sharedCrosshair: any;
-  rows: any;
+  graphTooltip: any;
+  rows: DashboardRow[];
   time: any;
   timepicker: any;
+  hideControls: any;
   templating: any;
   annotations: any;
   refresh: any;
@@ -35,7 +36,7 @@ export class DashboardModel {
   meta: any;
   events: any;
 
-  constructor(data, meta) {
+  constructor(data, meta?) {
     if (!data) {
       data = {};
     }
@@ -50,9 +51,8 @@ export class DashboardModel {
     this.style = data.style || "dark";
     this.timezone = data.timezone || '';
     this.editable = data.editable !== false;
+    this.graphTooltip = data.graphTooltip || 0;
     this.hideControls = data.hideControls || false;
-    this.sharedCrosshair = data.sharedCrosshair || false;
-    this.rows = data.rows || [];
     this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};
     this.templating = this.ensureListExist(data.templating);
@@ -64,8 +64,40 @@ export class DashboardModel {
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
 
+    this.rows = [];
+    if (data.rows) {
+      for (let row of data.rows) {
+        this.rows.push(new DashboardRow(row));
+      }
+    }
+
+    this.addBuiltInAnnotationQuery();
     this.updateSchema(data);
     this.initMeta(meta);
+  }
+
+  addBuiltInAnnotationQuery() {
+    let found = false;
+    for (let item of this.annotations.list) {
+      if (item.builtIn === 1) {
+        found = true;
+        break;
+      }
+    }
+
+    if (found) {
+      return;
+    }
+
+    this.annotations.list.unshift({
+      datasource: '-- Grafana --',
+      name: 'Annotations & Alerts',
+      type: 'dashboard',
+      iconColor: DEFAULT_ANNOTATION_COLOR,
+      enable: true,
+      hide: true,
+      builtIn: 1,
+    });
   }
 
   private initMeta(meta) {
@@ -80,7 +112,6 @@ export class DashboardModel {
       meta.canEdit = false;
       meta.canDelete = false;
       meta.canSave = false;
-      this.hideControls = true;
     }
 
     this.meta = meta;
@@ -91,16 +122,32 @@ export class DashboardModel {
     // temp remove stuff
     var events = this.events;
     var meta = this.meta;
+    var rows = this.rows;
+    var variables = this.templating.list;
+
     delete this.events;
     delete this.meta;
 
-    events.emit('prepare-save-model');
+    // prepare save model
+    this.rows = _.map(rows, row => row.getSaveModel());
+    this.templating.list = _.map(variables, variable => variable.getSaveModel ? variable.getSaveModel() : variable);
+
+    // make clone
     var copy = $.extend(true, {}, this);
+    //  sort clone
+    copy = sortByKeys(copy);
 
     // restore properties
     this.events = events;
     this.meta = meta;
+    this.rows = rows;
+    this.templating.list = variables;
+
     return copy;
+  }
+
+  addEmptyRow() {
+    this.rows.push(new DashboardRow({isNew: true}));
   }
 
   private ensureListExist(data) {
@@ -144,39 +191,48 @@ export class DashboardModel {
     return null;
   }
 
-  rowSpan(row) {
-    return _.reduce(row.panels, function(p,v) {
-      return p + v.span;
-    },0);
-  };
-
   addPanel(panel, row) {
-    var rowSpan = this.rowSpan(row);
-    var panelCount = row.panels.length;
-    var space = (12 - rowSpan) - panel.span;
     panel.id = this.getNextPanelId();
-
-    // try to make room of there is no space left
-    if (space <= 0) {
-      if (panelCount === 1) {
-        row.panels[0].span = 6;
-        panel.span = 6;
-      } else if (panelCount === 2) {
-        row.panels[0].span = 4;
-        row.panels[1].span = 4;
-        panel.span = 4;
-      }
-    }
-
-    row.panels.push(panel);
+    row.addPanel(panel);
   }
 
-  isSubmenuFeaturesEnabled() {
-    var visableTemplates = _.filter(this.templating.list, function(template) {
-      return template.hideVariable === undefined || template.hideVariable === false;
-    });
+  removeRow(row, force?) {
+    var index = _.indexOf(this.rows, row);
 
-    return visableTemplates.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
+    if (!row.panels.length || force) {
+      this.rows.splice(index, 1);
+      row.destroy();
+      return;
+    }
+
+    appEvents.emit('confirm-modal', {
+      title: 'Remove Row',
+      text: 'Are you sure you want to remove this row?',
+      icon: 'fa-trash',
+      yesText: 'Delete',
+      onConfirm: () => {
+        this.rows.splice(index, 1);
+        row.destroy();
+      }
+    });
+  }
+
+  setPanelFocus(id) {
+    this.meta.focusPanelId = id;
+  }
+
+  updateSubmenuVisibility() {
+    this.meta.submenuEnabled = (() => {
+      if (this.links.length > 0) { return true; }
+
+      var visibleVars = _.filter(this.templating.list, variable => variable.hide !== 2);
+      if (visibleVars.length > 0) { return true; }
+
+      var visibleAnnotations = _.filter(this.annotations.list, annotation => annotation.hide !== true);
+      if (visibleAnnotations.length > 0) { return true; }
+
+      return false;
+    })();
   }
 
   getPanelInfoById(panelId) {
@@ -199,7 +255,6 @@ export class DashboardModel {
   }
 
   duplicatePanel(panel, row) {
-    var rowIndex = _.indexOf(this.rows, row);
     var newPanel = angular.copy(panel);
     newPanel.id = this.getNextPanelId();
 
@@ -207,20 +262,42 @@ export class DashboardModel {
     delete newPanel.repeatIteration;
     delete newPanel.repeatPanelId;
     delete newPanel.scopedVars;
+    if (newPanel.alert) {
+      delete newPanel.thresholds;
+    }
+    delete newPanel.alert;
 
-    var currentRow = this.rows[rowIndex];
-    currentRow.panels.push(newPanel);
+    row.addPanel(newPanel);
     return newPanel;
   }
 
-  formatDate(date, format) {
+  formatDate(date, format?) {
     date = moment.isMoment(date) ? date : moment(date);
     format = format || 'YYYY-MM-DD HH:mm:ss';
-    this.timezone = this.getTimezone();
+    let timezone = this.getTimezone();
 
-    return this.timezone === 'browser' ?
+    return timezone === 'browser' ?
       moment(date).format(format) :
       moment.utc(date).format(format);
+  }
+
+  destroy() {
+    this.events.removeAllListeners();
+    for (let row of this.rows) {
+      row.destroy();
+    }
+  }
+
+  cycleGraphTooltip() {
+    this.graphTooltip = (this.graphTooltip + 1) % 3;
+  }
+
+  sharedTooltipModeEnabled() {
+    return this.graphTooltip > 0;
+  }
+
+  sharedCrosshairModeOnly() {
+    return this.graphTooltip === 1;
   }
 
   getRelativeTime(date) {
@@ -253,7 +330,7 @@ export class DashboardModel {
     var i, j, k;
     var oldVersion = this.schemaVersion;
     var panelUpgrades = [];
-    this.schemaVersion = 13;
+    this.schemaVersion = 14;
 
     if (oldVersion === this.schemaVersion) {
       return;
@@ -449,8 +526,6 @@ export class DashboardModel {
             templateVariable.hide = 2;
           } else if (templateVariable.hideLabel) {
             templateVariable.hide = 1;
-          } else {
-            templateVariable.hide = 0;
           }
         });
       }
@@ -504,6 +579,7 @@ export class DashboardModel {
         // update graph yaxes changes
         panelUpgrades.push(function(panel) {
           if (panel.type !== 'graph') { return; }
+          if (!panel.grid) { return; }
 
           panel.thresholds = [];
           var t1: any = {}, t2: any = {};
@@ -557,6 +633,10 @@ export class DashboardModel {
           delete panel.grid.threshold2Color;
           delete panel.grid.thresholdLine;
         });
+      }
+
+      if (oldVersion < 14) {
+        this.graphTooltip = old.sharedCrosshair ? 1 : 0;
       }
 
       if (panelUpgrades.length === 0) {

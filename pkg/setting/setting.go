@@ -14,8 +14,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/go-macaron/session"
 	"gopkg.in/ini.v1"
+
+	"github.com/go-macaron/session"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
@@ -24,8 +25,10 @@ import (
 type Scheme string
 
 const (
-	HTTP  Scheme = "http"
-	HTTPS Scheme = "https"
+	HTTP              Scheme = "http"
+	HTTPS             Scheme = "https"
+	SOCKET            Scheme = "socket"
+	DEFAULT_HTTP_ADDR string = "0.0.0.0"
 )
 
 const (
@@ -63,7 +66,9 @@ var (
 	HttpAddr, HttpPort string
 	SshPort            int
 	CertFile, KeyFile  string
+	SocketPath         string
 	RouterLogging      bool
+	DataProxyLogging   bool
 	StaticRootPath     string
 	EnableGzip         bool
 	EnforceDomain      bool
@@ -85,14 +90,18 @@ var (
 	SnapShotRemoveExpired bool
 
 	// User settings
-	AllowUserSignUp    bool
-	AllowUserOrgCreate bool
-	AutoAssignOrg      bool
-	AutoAssignOrgRole  string
-	VerifyEmailEnabled bool
-	LoginHint          string
-	DefaultTheme       string
-	DisableLoginForm   bool
+	AllowUserSignUp         bool
+	AllowUserOrgCreate      bool
+	AutoAssignOrg           bool
+	AutoAssignOrgRole       string
+	VerifyEmailEnabled      bool
+	LoginHint               string
+	DefaultTheme            string
+	DisableLoginForm        bool
+	DisableSignoutMenu      bool
+	ExternalUserMngLinkUrl  string
+	ExternalUserMngLinkName string
+	ExternalUserMngInfo     string
 
 	// Http auth
 	AdminUser     string
@@ -107,9 +116,14 @@ var (
 	AuthProxyHeaderName     string
 	AuthProxyHeaderProperty string
 	AuthProxyAutoSignUp     bool
+	AuthProxyLdapSyncTtl    int
+	AuthProxyWhitelist      string
 
 	// Basic Auth
 	BasicAuthEnabled bool
+
+	// Plugin settings
+	PluginAppsSkipVerifyTLS bool
 
 	// Session settings.
 	SessionOptions session.Options
@@ -145,13 +159,14 @@ var (
 	Quota QuotaSettings
 
 	// Alerting
-	ExecuteAlerts bool
+	AlertingEnabled bool
+	ExecuteAlerts   bool
 
 	// logger
 	logger log.Logger
 
 	// Grafana.NET URL
-	GrafanaNetUrl string
+	GrafanaComUrl string
 
 	// S3 temp image store
 	S3TempImageStoreBucketUrl string
@@ -252,12 +267,16 @@ func applyCommandLineDefaultProperties(props map[string]string) {
 
 func applyCommandLineProperties(props map[string]string) {
 	for _, section := range Cfg.Sections() {
+		sectionName := section.Name() + "."
+		if section.Name() == ini.DEFAULT_SECTION {
+			sectionName = ""
+		}
 		for _, key := range section.Keys() {
-			keyString := fmt.Sprintf("%s.%s", section.Name(), key.Name())
+			keyString := sectionName + key.Name()
 			value, exists := props[keyString]
 			if exists {
-				key.SetValue(value)
 				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
+				key.SetValue(value)
 			}
 		}
 	}
@@ -297,7 +316,7 @@ func evalEnvVarExpression(value string) string {
 		envVar = strings.TrimSuffix(envVar, "}")
 		envValue := os.Getenv(envVar)
 
-		// if env variable is hostname and it is emtpy use os.Hostname as default
+		// if env variable is hostname and it is empty use os.Hostname as default
 		if envVar == "HOSTNAME" && envValue == "" {
 			envValue, _ = os.Hostname()
 		}
@@ -324,10 +343,11 @@ func loadSpecifedConfigFile(configFile string) error {
 	}
 
 	userConfig, err := ini.Load(configFile)
-	userConfig.BlockMode = false
 	if err != nil {
 		return fmt.Errorf("Failed to parse %v, %v", configFile, err)
 	}
+
+	userConfig.BlockMode = false
 
 	for _, section := range userConfig.Sections() {
 		for _, key := range section.Keys() {
@@ -358,12 +378,21 @@ func loadConfiguration(args *CommandLineArgs) {
 	defaultConfigFile := path.Join(HomePath, "conf/defaults.ini")
 	configFiles = append(configFiles, defaultConfigFile)
 
-	Cfg, err = ini.Load(defaultConfigFile)
-	Cfg.BlockMode = false
-
-	if err != nil {
-		log.Fatal(3, "Failed to parse defaults.ini, %v", err)
+	// check if config file exists
+	if _, err := os.Stat(defaultConfigFile); os.IsNotExist(err) {
+		fmt.Println("Grafana-server Init Failed: Could not find config defaults, make sure homepath command line parameter is set or working directory is homepath")
+		os.Exit(1)
 	}
+
+	// load defaults
+	Cfg, err = ini.Load(defaultConfigFile)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("Failed to parse defaults.ini, %v", err))
+		os.Exit(1)
+		return
+	}
+
+	Cfg.BlockMode = false
 
 	// command line props
 	commandLineProps := getCommandLineProperties(args.Args)
@@ -427,33 +456,12 @@ func validateStaticRootPath() error {
 		return nil
 	}
 
-	if _, err := os.Stat(path.Join(StaticRootPath, "css")); err == nil {
-		return nil
+	if _, err := os.Stat(path.Join(StaticRootPath, "build")); err != nil {
+		logger.Error("Failed to detect generated javascript files in public/build")
 	}
 
-	if _, err := os.Stat(StaticRootPath + "_gen/css"); err == nil {
-		StaticRootPath = StaticRootPath + "_gen"
-		return nil
-	}
-
-	return fmt.Errorf("Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?", StaticRootPath)
+	return nil
 }
-
-// func readInstanceName() string {
-// 	hostname, _ := os.Hostname()
-// 	if hostname == "" {
-// 		hostname = "hostname_unknown"
-// 	}
-//
-// 	instanceName := Cfg.Section("").Key("instance_name").MustString("")
-// 	if instanceName = "" {
-// 		// set value as it might be used in other places
-// 		Cfg.Section("").Key("instance_name").SetValue(hostname)
-// 		instanceName = hostname
-// 	}
-//
-// 	return
-// }
 
 func NewConfigContext(args *CommandLineArgs) error {
 	setHomePath(args)
@@ -472,11 +480,16 @@ func NewConfigContext(args *CommandLineArgs) error {
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
 	}
+	if server.Key("protocol").MustString("http") == "socket" {
+		Protocol = SOCKET
+		SocketPath = server.Key("socket").String()
+	}
 
 	Domain = server.Key("domain").MustString("localhost")
-	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
+	HttpAddr = server.Key("http_addr").MustString(DEFAULT_HTTP_ADDR)
 	HttpPort = server.Key("http_port").MustString("3000")
 	RouterLogging = server.Key("router_logging").MustBool(false)
+
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
 	EnforceDomain = server.Key("enforce_domain").MustBool(false)
 	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)
@@ -484,6 +497,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 	if err := validateStaticRootPath(); err != nil {
 		return err
 	}
+
+	// read data proxy settings
+	dataproxy := Cfg.Section("dataproxy")
+	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
 
 	// read security settings
 	security := Cfg.Section("security")
@@ -503,7 +520,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
-	for _, hostAndIp := range security.Key("data_source_proxy_whitelist").Strings(" ") {
+	for _, hostAndIp := range util.SplitString(security.Key("data_source_proxy_whitelist").String()) {
 		DataProxyWhiteList[hostAndIp] = true
 	}
 
@@ -519,10 +536,14 @@ func NewConfigContext(args *CommandLineArgs) error {
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 	LoginHint = users.Key("login_hint").String()
 	DefaultTheme = users.Key("default_theme").String()
+	ExternalUserMngLinkUrl = users.Key("external_manage_link_url").String()
+	ExternalUserMngLinkName = users.Key("external_manage_link_name").String()
+	ExternalUserMngInfo = users.Key("external_manage_info").String()
 
 	// auth
 	auth := Cfg.Section("auth")
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
+	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -535,9 +556,15 @@ func NewConfigContext(args *CommandLineArgs) error {
 	AuthProxyHeaderName = authProxy.Key("header_name").String()
 	AuthProxyHeaderProperty = authProxy.Key("header_property").String()
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
+	AuthProxyLdapSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
+	AuthProxyWhitelist = authProxy.Key("whitelist").String()
 
+	// basic auth
 	authBasic := Cfg.Section("auth.basic")
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
+
+	// global plugin settings
+	PluginAppsSkipVerifyTLS = Cfg.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)
 
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
@@ -555,6 +582,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 
 	alerting := Cfg.Section("alerting")
+	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
 
 	readSessionConfig()
@@ -565,7 +593,11 @@ func NewConfigContext(args *CommandLineArgs) error {
 		log.Warn("require_email_validation is enabled but smpt is disabled")
 	}
 
-	GrafanaNetUrl = Cfg.Section("grafana_net").Key("url").MustString("https://grafana.net")
+	// check old key  name
+	GrafanaComUrl = Cfg.Section("grafana_net").Key("url").MustString("")
+	if GrafanaComUrl == "" {
+		GrafanaComUrl = Cfg.Section("grafana_com").Key("url").MustString("https://grafana.com")
+	}
 
 	imageUploadingSection := Cfg.Section("external_image_storage")
 	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("internal")
@@ -614,14 +646,14 @@ func LogConfigurationInfo() {
 
 	if len(appliedCommandLineProperties) > 0 {
 		for _, prop := range appliedCommandLineProperties {
-			logger.Info("Config overriden from command line", "arg", prop)
+			logger.Info("Config overridden from command line", "arg", prop)
 		}
 	}
 
 	if len(appliedEnvOverrides) > 0 {
 		text.WriteString("\tEnvironment variables used:\n")
 		for _, prop := range appliedEnvOverrides {
-			logger.Info("Config overriden from Environment variable", "var", prop)
+			logger.Info("Config overridden from Environment variable", "var", prop)
 		}
 	}
 
@@ -629,4 +661,5 @@ func LogConfigurationInfo() {
 	logger.Info("Path Data", "path", DataPath)
 	logger.Info("Path Logs", "path", LogsPath)
 	logger.Info("Path Plugins", "path", PluginsPath)
+	logger.Info("App mode " + Env)
 }

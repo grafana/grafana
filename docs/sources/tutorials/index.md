@@ -1,8 +1,9 @@
----
-page_title: Grafana Tutorials
-page_description: Tutorials
-page_keywords: grafana, tutorials
----
++++
+title = "Tutorials"
+[menu.docs]
+identifier = "tutorials"
+weight = 6
++++
 
 # Tutorials
 

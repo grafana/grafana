@@ -1,24 +1,44 @@
 package api
 
 import (
-	"gopkg.in/macaron.v1"
+	"crypto/tls"
+	"net"
+	"net/http"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	macaron "gopkg.in/macaron.v1"
 )
 
+var pluginProxyTransport *http.Transport
+
 func InitAppPluginRoutes(r *macaron.Macaron) {
+	pluginProxyTransport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: setting.PluginAppsSkipVerifyTLS,
+			Renegotiation:      tls.RenegotiateFreelyAsClient,
+		},
+		Proxy: http.ProxyFromEnvironment,
+		Dial: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).Dial,
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
+
 	for _, plugin := range plugins.Apps {
 		for _, route := range plugin.Routes {
 			url := util.JoinUrlFragments("/api/plugin-proxy/"+plugin.Id, route.Path)
 			handlers := make([]macaron.Handler, 0)
 			handlers = append(handlers, middleware.Auth(&middleware.AuthOptions{
-				ReqSignedIn:     true,
-				ReqGrafanaAdmin: route.ReqGrafanaAdmin,
+				ReqSignedIn: true,
 			}))
 
 			if route.ReqRole != "" {
@@ -40,7 +60,7 @@ func AppPluginRoute(route *plugins.AppPluginRoute, appId string) macaron.Handler
 		path := c.Params("*")
 
 		proxy := pluginproxy.NewApiPluginProxy(c, path, route, appId)
-		proxy.Transport = dataProxyTransport
+		proxy.Transport = pluginProxyTransport
 		proxy.ServeHTTP(c.Resp, c.Req.Request)
 	}
 }

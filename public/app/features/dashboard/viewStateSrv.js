@@ -2,13 +2,15 @@ define([
   'angular',
   'lodash',
   'jquery',
+  'app/core/config'
 ],
-function (angular, _, $) {
+function (angular, _, $, config) {
   'use strict';
 
+  config = config.default;
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardViewStateSrv', function($location, $timeout, templateSrv, contextSrv, timeSrv) {
+  module.factory('dashboardViewStateSrv', function($location, $timeout) {
 
     // represents the transient view state
     // like fullscreen panel & edit
@@ -18,21 +20,6 @@ function (angular, _, $) {
       self.panelScopes = [];
       self.$scope = $scope;
       self.dashboard = $scope.dashboard;
-
-      $scope.exitFullscreen = function() {
-        if (self.state.fullscreen) {
-          self.update({ fullscreen: false });
-        }
-      };
-
-      // update url on time range change
-      $scope.onAppEvent('time-range-changed', function() {
-        var urlParams = $location.search();
-        var urlRange = timeSrv.timeRangeForUrl();
-        urlParams.from = urlRange.from;
-        urlParams.to = urlRange.to;
-        $location.search(urlParams);
-      });
 
       $scope.onAppEvent('$routeUpdate', function() {
         var urlState = self.getQueryStringState();
@@ -49,6 +36,9 @@ function (angular, _, $) {
         self.registerPanel(payload.scope);
       });
 
+      // this marks changes to location during this digest cycle as not to add history item
+      // dont want url changes like adding orgId to add browser history
+      $location.replace();
       this.update(this.getQueryStringState());
       this.expandRowForPanel();
     }
@@ -72,6 +62,7 @@ function (angular, _, $) {
       state.fullscreen = state.fullscreen ? true : null;
       state.edit =  (state.edit === "true" || state.edit === true) || null;
       state.editview = state.editview || null;
+      state.orgId = config.bootData.user.orgId;
       return state;
     };
 
@@ -82,7 +73,17 @@ function (angular, _, $) {
       return urlState;
     };
 
-    DashboardViewState.prototype.update = function(state) {
+    DashboardViewState.prototype.update = function(state, fromRouteUpdated) {
+      // implement toggle logic
+      if (state.toggle) {
+        delete state.toggle;
+        if (this.state.fullscreen && state.fullscreen) {
+          if (this.state.edit === state.edit) {
+            state.fullscreen = !state.fullscreen;
+          }
+        }
+      }
+
       // remember if editStateChanged
       this.editStateChanged = state.edit !== this.state.edit;
 
@@ -103,7 +104,12 @@ function (angular, _, $) {
         delete this.state.tab;
       }
 
-      $location.search(this.serializeToUrl());
+      // do not update url params if we are here
+      // from routeUpdated event
+      if (fromRouteUpdated !== true) {
+        $location.search(this.serializeToUrl());
+      }
+
       this.syncState();
     };
 
@@ -157,9 +163,8 @@ function (angular, _, $) {
       $timeout(function() {
         if (self.oldTimeRange !== ctrl.range) {
           self.$scope.broadcastRefresh();
-        }
-        else {
-          ctrl.render();
+        } else {
+          self.$scope.$broadcast('render');
         }
         delete self.fullscreenPanel;
       });
@@ -197,8 +202,9 @@ function (angular, _, $) {
         }
       }
 
-      panelScope.$on('$destroy', function() {
+      var unbind = panelScope.$on('$destroy', function() {
         self.panelScopes = _.without(self.panelScopes, panelScope);
+        unbind();
       });
     };
 

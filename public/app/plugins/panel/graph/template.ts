@@ -2,17 +2,8 @@ var template = `
 <div class="graph-wrapper" ng-class="{'graph-legend-rightside': ctrl.panel.legend.rightSide}">
   <div class="graph-canvas-wrapper">
 
-    <div class="datapoints-warning" ng-show="ctrl.datapointsCount===0">
-      <span class="small" >
-        No datapoints <tip>No datapoints returned from metric query</tip>
-      </span>
-    </div>
-
-    <div class="datapoints-warning" ng-show="ctrl.datapointsOutside">
-      <span class="small">
-        Datapoints outside time range
-        <tip>Can be caused by timezone mismatch between browser and graphite server</tip>
-      </span>
+    <div class="datapoints-warning" ng-if="ctrl.dataWarning">
+      <span class="small" bs-tooltip="ctrl.dataWarning.tip">{{ctrl.dataWarning.title}}</span>
     </div>
 
     <div grafana-graph class="histogram-chart" ng-dblclick="ctrl.zoomOut()">

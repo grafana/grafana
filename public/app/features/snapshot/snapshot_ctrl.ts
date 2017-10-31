@@ -4,11 +4,20 @@ import angular from 'angular';
 import _ from 'lodash';
 
 export class SnapshotsCtrl {
-
+  navModel: any;
   snapshots: any;
 
   /** @ngInject */
   constructor(private $rootScope, private backendSrv) {
+    this.navModel = {
+      section: {
+        title: 'Snapshots',
+        icon:  'icon-gf icon-gf-snapshot',
+        url: 'dashboard/snapshots',
+      },
+      menu: [],
+    };
+
     this.backendSrv.get('/api/dashboard/snapshots').then(result => {
       this.snapshots = result;
     });

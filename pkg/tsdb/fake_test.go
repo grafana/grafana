@@ -1,33 +1,37 @@
 package tsdb
 
-import "context"
+import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/models"
+)
 
 type FakeExecutor struct {
 	results   map[string]*QueryResult
 	resultsFn map[string]ResultsFn
 }
 
-type ResultsFn func(context *QueryContext) *QueryResult
+type ResultsFn func(context *TsdbQuery) *QueryResult
 
-func NewFakeExecutor(dsInfo *DataSourceInfo) *FakeExecutor {
+func NewFakeExecutor(dsInfo *models.DataSource) (*FakeExecutor, error) {
 	return &FakeExecutor{
 		results:   make(map[string]*QueryResult),
 		resultsFn: make(map[string]ResultsFn),
-	}
+	}, nil
 }
 
-func (e *FakeExecutor) Execute(ctx context.Context, queries QuerySlice, context *QueryContext) *BatchResult {
-	result := &BatchResult{QueryResults: make(map[string]*QueryResult)}
-	for _, query := range queries {
+func (e *FakeExecutor) Query(ctx context.Context, dsInfo *models.DataSource, context *TsdbQuery) (*Response, error) {
+	result := &Response{Results: make(map[string]*QueryResult)}
+	for _, query := range context.Queries {
 		if results, has := e.results[query.RefId]; has {
-			result.QueryResults[query.RefId] = results
+			result.Results[query.RefId] = results
 		}
 		if testFunc, has := e.resultsFn[query.RefId]; has {
-			result.QueryResults[query.RefId] = testFunc(context)
+			result.Results[query.RefId] = testFunc(context)
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 func (e *FakeExecutor) Return(refId string, series TimeSeriesSlice) {

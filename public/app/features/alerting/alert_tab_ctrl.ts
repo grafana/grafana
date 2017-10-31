@@ -5,7 +5,6 @@ import {ThresholdMapper} from './threshold_mapper';
 import {QueryPart} from 'app/core/components/query_part/query_part';
 import alertDef from './alert_def';
 import config from 'app/core/config';
-import moment from 'moment';
 import appEvents from 'app/core/app_events';
 
 export class AlertTabCtrl {
@@ -18,7 +17,9 @@ export class AlertTabCtrl {
   alert: any;
   conditionModels: any;
   evalFunctions: any;
+  evalOperators: any;
   noDataModes: any;
+  executionErrorModes: any;
   addNotificationSegment;
   notifications;
   alertNotifications;
@@ -28,20 +29,20 @@ export class AlertTabCtrl {
 
   /** @ngInject */
   constructor(private $scope,
-              private $timeout,
               private backendSrv,
               private dashboardSrv,
               private uiSegmentSrv,
               private $q,
-              private datasourceSrv,
-              private templateSrv) {
+              private datasourceSrv) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
     this.subTabIndex = 0;
     this.evalFunctions = alertDef.evalFunctions;
+    this.evalOperators = alertDef.evalOperators;
     this.conditionTypes = alertDef.conditionTypes;
     this.noDataModes = alertDef.noDataModes;
+    this.executionErrorModes = alertDef.executionErrorModes;
     this.appSubUrl = config.appSubUrl;
   }
 
@@ -52,7 +53,7 @@ export class AlertTabCtrl {
     var thresholdChangedEventHandler = this.graphThresholdChanged.bind(this);
     this.panelCtrl.events.on('threshold-changed', thresholdChangedEventHandler);
 
-   // set panel alert edit mode
+    // set panel alert edit mode
     this.$scope.$on("$destroy", () => {
       this.panelCtrl.events.off("threshold-changed", thresholdChangedEventHandler);
       this.panelCtrl.editingThresholds = false;
@@ -75,20 +76,27 @@ export class AlertTabCtrl {
   getAlertHistory() {
     this.backendSrv.get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50`).then(res => {
       this.alertHistory = _.map(res, ah => {
-        ah.time = moment(ah.time).format('MMM D, YYYY HH:mm:ss');
+        ah.time = this.dashboardSrv.getCurrent().formatDate(ah.time, 'MMM D, YYYY HH:mm:ss');
         ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
-        ah.metrics = alertDef.joinEvalMatches(ah.data, ', ');
+        ah.info = alertDef.getAlertAnnotationInfo(ah);
         return ah;
       });
     });
   }
 
-  getNotificationIcon(type) {
+  getNotificationIcon(type): string {
     switch (type) {
       case "email": return "fa fa-envelope";
       case "slack": return "fa fa-slack";
+      case "victorops": return "fa fa-pagelines";
       case "webhook": return "fa fa-cubes";
+      case "pagerduty": return "fa fa-bullhorn";
+      case "opsgenie": return "fa fa-bell";
+      case "hipchat": return "fa fa-mail-forward";
+      case "pushover": return "fa fa-mobile";
+      case "kafka": return "fa fa-random";
     }
+    return 'fa fa-bell';
   }
 
   getNotifications() {
@@ -140,6 +148,7 @@ export class AlertTabCtrl {
     }
 
     alert.noDataState = alert.noDataState || 'no_data';
+    alert.executionErrorState = alert.executionErrorState || 'alerting';
     alert.frequency = alert.frequency || '60s';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
@@ -190,6 +199,7 @@ export class AlertTabCtrl {
       query: {params: ['A', '5m', 'now']},
       reducer: {type: 'avg', params: []},
       evaluator: {type: 'gt', params: [null]},
+      operator: {type: 'and'},
     };
   }
 
@@ -246,6 +256,7 @@ export class AlertTabCtrl {
     cm.queryPart = new QueryPart(source.query, alertDef.alertQueryDef);
     cm.reducerPart = alertDef.createReducerPart(source.reducer);
     cm.evaluator = source.evaluator;
+    cm.operator = source.operator;
 
     return cm;
   }
@@ -372,6 +383,7 @@ export class AlertTabCtrl {
 
   test() {
     this.testing = true;
+    this.testResult = false;
 
     var payload = {
       dashboard: this.dashboardSrv.getCurrent().getSaveModelClone(),

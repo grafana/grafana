@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -12,7 +12,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
 	Convey("Influxdb query parser", t, func() {
 
 		parser := &InfluxdbQueryParser{}
-		dsInfo := &tsdb.DataSourceInfo{
+		dsInfo := &models.DataSource{
 			JsonData: simplejson.New(),
 		}
 
@@ -90,6 +90,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
             }
           ]
         ],
+        "alias": "serie alias",
         "tags": [
           {
             "key": "datacenter",
@@ -115,6 +116,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
 			So(len(res.Selects), ShouldEqual, 3)
 			So(len(res.Tags), ShouldEqual, 2)
 			So(res.Interval, ShouldEqual, ">20s")
+			So(res.Alias, ShouldEqual, "serie alias")
 		})
 
 		Convey("can part raw query json model", func() {

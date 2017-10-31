@@ -47,15 +47,16 @@ describe('DashImportCtrl', function() {
     });
   });
 
-  describe('when specifing grafana.net url', function() {
+  describe('when specifing grafana.com url', function() {
     beforeEach(function() {
-      ctx.ctrl.gnetUrl = 'http://grafana.net/dashboards/123';
+      ctx.ctrl.gnetUrl = 'http://grafana.com/dashboards/123';
       // setup api mock
       backendSrv.get = sinon.spy(() => {
         return Promise.resolve({
+          json: {}
         });
       });
-      ctx.ctrl.checkGnetDashboard();
+      return ctx.ctrl.checkGnetDashboard();
     });
 
     it('should call gnet api with correct dashboard id', function() {
@@ -69,9 +70,10 @@ describe('DashImportCtrl', function() {
       // setup api mock
       backendSrv.get = sinon.spy(() => {
         return Promise.resolve({
+          json: {}
         });
       });
-      ctx.ctrl.checkGnetDashboard();
+      return ctx.ctrl.checkGnetDashboard();
     });
 
     it('should call gnet api with correct dashboard id', function() {

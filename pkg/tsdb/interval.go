@@ -12,14 +12,19 @@ var (
 	day         time.Duration = time.Hour * 24 * 365
 )
 
-func CalculateInterval(timerange *TimeRange) string {
+type Interval struct {
+	Text  string
+	Value time.Duration
+}
+
+func CalculateInterval(timerange *TimeRange) Interval {
 	interval := time.Duration((timerange.MustGetTo().UnixNano() - timerange.MustGetFrom().UnixNano()) / defaultRes)
 
 	if interval < minInterval {
-		return formatDuration(minInterval)
+		return Interval{Text: formatDuration(minInterval), Value: interval}
 	}
 
-	return formatDuration(roundInterval(interval))
+	return Interval{Text: formatDuration(roundInterval(interval)), Value: interval}
 }
 
 func formatDuration(inter time.Duration) string {

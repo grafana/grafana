@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"net/http"
+	"flag"
+	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strconv"
 	"time"
-
-	"gopkg.in/macaron.v1"
 
 	"golang.org/x/sync/errgroup"
 
@@ -19,11 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
-	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
+	"github.com/grafana/grafana/pkg/tracing"
 )
 
 func NewGrafanaServer() models.GrafanaServer {
@@ -43,23 +43,33 @@ type GrafanaServerImpl struct {
 	shutdownFn    context.CancelFunc
 	childRoutines *errgroup.Group
 	log           log.Logger
+
+	httpServer *api.HttpServer
 }
 
 func (g *GrafanaServerImpl) Start() {
 	go listenToSystemSignals(g)
 
-	writePIDFile()
-	initRuntime()
+	g.initLogging()
+	g.writePIDFile()
+
 	initSql()
-	metrics.Init()
+	metrics.Init(setting.Cfg)
 	search.Init()
 	login.Init()
 	social.NewOAuthService()
-	eventpublisher.Init()
 	plugins.Init()
 
+	closer, err := tracing.Init(setting.Cfg)
+	if err != nil {
+		g.log.Error("Tracing settings is not valid", "error", err)
+		g.Shutdown(1, "Startup failed")
+		return
+	}
+	defer closer.Close()
+
 	// init alerting
-	if setting.ExecuteAlerts {
+	if setting.AlertingEnabled && setting.ExecuteAlerts {
 		engine := alerting.NewEngine()
 		g.childRoutines.Go(func() error { return engine.Run(g.context) })
 	}
@@ -68,8 +78,8 @@ func (g *GrafanaServerImpl) Start() {
 	cleanUpService := cleanup.NewCleanUpService()
 	g.childRoutines.Go(func() error { return cleanUpService.Run(g.context) })
 
-	if err := notifications.Init(); err != nil {
-		g.log.Error("Notification service failed to initialize", "erro", err)
+	if err = notifications.Init(); err != nil {
+		g.log.Error("Notification service failed to initialize", "error", err)
 		g.Shutdown(1, "Startup failed")
 		return
 	}
@@ -77,25 +87,26 @@ func (g *GrafanaServerImpl) Start() {
 	g.startHttpServer()
 }
 
-func (g *GrafanaServerImpl) startHttpServer() {
-	logger = log.New("http.server")
+func (g *GrafanaServerImpl) initLogging() {
+	err := setting.NewConfigContext(&setting.CommandLineArgs{
+		Config:   *configFile,
+		HomePath: *homePath,
+		Args:     flag.Args(),
+	})
 
-	var err error
-	m := newMacaron()
-	api.Register(m)
-
-	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
-	g.log.Info("Initializing HTTP Server", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl)
-
-	switch setting.Protocol {
-	case setting.HTTP:
-		err = http.ListenAndServe(listenAddr, m)
-	case setting.HTTPS:
-		err = ListenAndServeTLS(listenAddr, setting.CertFile, setting.KeyFile, m)
-	default:
-		g.log.Error("Invalid protocol", "protocol", setting.Protocol)
-		g.Shutdown(1, "Startup failed")
+	if err != nil {
+		g.log.Error(err.Error())
+		os.Exit(1)
 	}
+
+	g.log.Info("Starting Grafana", "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
+	setting.LogConfigurationInfo()
+}
+
+func (g *GrafanaServerImpl) startHttpServer() {
+	g.httpServer = api.NewHttpServer()
+
+	err := g.httpServer.Start(g.context)
 
 	if err != nil {
 		g.log.Error("Fail to start server", "error", err)
@@ -107,44 +118,37 @@ func (g *GrafanaServerImpl) startHttpServer() {
 func (g *GrafanaServerImpl) Shutdown(code int, reason string) {
 	g.log.Info("Shutdown started", "code", code, "reason", reason)
 
+	err := g.httpServer.Shutdown(g.context)
+	if err != nil {
+		g.log.Error("Failed to shutdown server", "error", err)
+	}
+
 	g.shutdownFn()
-	err := g.childRoutines.Wait()
+	err = g.childRoutines.Wait()
 
 	g.log.Info("Shutdown completed", "reason", err)
 	log.Close()
 	os.Exit(code)
 }
 
-func ListenAndServeTLS(listenAddr, certfile, keyfile string, m *macaron.Macaron) error {
-	if certfile == "" {
-		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
+func (g *GrafanaServerImpl) writePIDFile() {
+	if *pidFile == "" {
+		return
 	}
 
-	if keyfile == "" {
-		return fmt.Errorf("cert_key cannot be empty when using HTTPS")
+	// Ensure the required directory structure exists.
+	err := os.MkdirAll(filepath.Dir(*pidFile), 0700)
+	if err != nil {
+		g.log.Error("Failed to verify pid directory", "error", err)
+		os.Exit(1)
 	}
 
-	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`Cannot find SSL cert_file at %v`, setting.CertFile)
+	// Retrieve the PID and write it.
+	pid := strconv.Itoa(os.Getpid())
+	if err := ioutil.WriteFile(*pidFile, []byte(pid), 0644); err != nil {
+		g.log.Error("Failed to write pidfile", "error", err)
+		os.Exit(1)
 	}
 
-	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`Cannot find SSL key_file at %v`, setting.KeyFile)
-	}
-
-	return http.ListenAndServeTLS(listenAddr, setting.CertFile, setting.KeyFile, m)
-}
-
-// implement context.Context
-func (g *GrafanaServerImpl) Deadline() (deadline time.Time, ok bool) {
-	return g.context.Deadline()
-}
-func (g *GrafanaServerImpl) Done() <-chan struct{} {
-	return g.context.Done()
-}
-func (g *GrafanaServerImpl) Err() error {
-	return g.context.Err()
-}
-func (g *GrafanaServerImpl) Value(key interface{}) interface{} {
-	return g.context.Value(key)
+	g.log.Info("Writing PID file", "path", *pidFile, "pid", pid)
 }

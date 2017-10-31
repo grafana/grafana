@@ -40,12 +40,12 @@ func TestWebhookNotifier(t *testing.T) {
 				}
 
 				not, err := NewWebHookNotifier(model)
-				emailNotifier := not.(*WebhookNotifier)
+				webhookNotifier := not.(*WebhookNotifier)
 
 				So(err, ShouldBeNil)
-				So(emailNotifier.Name, ShouldEqual, "ops")
-				So(emailNotifier.Type, ShouldEqual, "email")
-				So(emailNotifier.Url, ShouldEqual, "http://google.com")
+				So(webhookNotifier.Name, ShouldEqual, "ops")
+				So(webhookNotifier.Type, ShouldEqual, "email")
+				So(webhookNotifier.Url, ShouldEqual, "http://google.com")
 			})
 		})
 	})

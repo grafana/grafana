@@ -7,21 +7,20 @@ function(angular, _) {
 
   var module = angular.module('grafana.services');
 
-  module.service('unsavedChangesSrv', function($rootScope, $q, $location, $timeout, contextSrv, $window) {
+  module.service('unsavedChangesSrv', function($rootScope, $q, $location, $timeout, contextSrv, dashboardSrv, $window) {
 
-    function Tracker(dashboard, scope) {
+    function Tracker(dashboard, scope, originalCopyDelay) {
       var self = this;
 
-      this.original = dashboard.getSaveModelClone();
       this.current = dashboard;
       this.originalPath = $location.path();
       this.scope = scope;
 
       // register events
       scope.onAppEvent('dashboard-saved', function() {
-        self.original = self.current.getSaveModelClone();
-        self.originalPath = $location.path();
-      });
+        this.original = this.current.getSaveModelClone();
+        this.originalPath = $location.path();
+      }.bind(this));
 
       $window.onbeforeunload = function() {
         if (self.ignoreChanges()) { return; }
@@ -44,6 +43,15 @@ function(angular, _) {
           });
         }
       });
+
+      if (originalCopyDelay) {
+        $timeout(function() {
+          // wait for different services to patch the dashboard (missing properties)
+          self.original = dashboard.getSaveModelClone();
+        }, originalCopyDelay);
+      } else {
+        self.original = dashboard.getSaveModelClone();
+      }
     }
 
     var p = Tracker.prototype;
@@ -101,6 +109,7 @@ function(angular, _) {
       _.each(dash.templating.list, function(value) {
         value.current = null;
         value.options = null;
+        value.filters = null;
       });
     };
 
@@ -124,27 +133,31 @@ function(angular, _) {
       return currentJson !== originalJson;
     };
 
+    p.discardChanges = function() {
+      this.original = null;
+      this.gotoNext();
+    };
+
     p.open_modal = function() {
-      var tracker = this;
-
-      var modalScope = this.scope.$new();
-      modalScope.ignore = function() {
-        tracker.original = null;
-        tracker.goto_next();
-      };
-
-      modalScope.save = function() {
-        tracker.scope.$emit('save-dashboard');
-      };
-
       $rootScope.appEvent('show-modal', {
-        src: 'public/app/partials/unsaved-changes.html',
-        modalClass: 'confirm-modal',
-        scope: modalScope,
+        templateHtml: '<unsaved-changes-modal dismiss="dismiss()"></unsaved-changes-modal>',
+        modalClass: 'modal--narrow confirm-modal'
       });
     };
 
-    p.goto_next = function() {
+    p.saveChanges = function() {
+      var self = this;
+      var cancel = $rootScope.$on('dashboard-saved', function() {
+        cancel();
+        $timeout(function() {
+          self.gotoNext();
+        });
+      });
+
+      $rootScope.appEvent('save-dashboard');
+    };
+
+    p.gotoNext = function() {
       var baseLen = $location.absUrl().length - $location.url().length;
       var nextUrl = this.next.substring(baseLen);
       $location.url(nextUrl);
@@ -152,8 +165,8 @@ function(angular, _) {
 
     this.Tracker = Tracker;
     this.init = function(dashboard, scope) {
-      // wait for different services to patch the dashboard (missing properties)
-      $timeout(function() { new Tracker(dashboard, scope); }, 1200);
+      this.tracker = new Tracker(dashboard, scope, 1000);
+      return this.tracker;
     };
   });
 });

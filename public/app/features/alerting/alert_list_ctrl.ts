@@ -1,29 +1,29 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
-import coreModule from '../../core/core_module';
-import appEvents from '../../core/app_events';
 import moment from 'moment';
+
+import {coreModule, appEvents} from  'app/core/core';
 import alertDef from './alert_def';
 
 export class AlertListCtrl {
-
   alerts: any;
   stateFilters = [
     {text: 'All', value: null},
     {text: 'OK', value: 'ok'},
     {text: 'Alerting', value: 'alerting'},
     {text: 'No Data', value: 'no_data'},
-    {text: 'Execution Error', value: 'execution_error'},
+    {text: 'Paused', value: 'paused'},
   ];
-
   filters = {
     state: 'ALL'
   };
+  navModel: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $location, private $scope) {
+  constructor(private backendSrv, private $location, navModelSrv) {
+    this.navModel = navModelSrv.getAlertingNav(0);
+
     var params = $location.search();
     this.filters.state = params.state || null;
     this.loadAlerts();
@@ -38,6 +38,9 @@ export class AlertListCtrl {
       this.alerts = _.map(result, alert => {
         alert.stateModel = alertDef.getStateDisplayModel(alert.state);
         alert.newStateDateAgo = moment(alert.newStateDate).fromNow().replace(" ago", "");
+        if (alert.evalData && alert.evalData.no_data) {
+          alert.no_data = true;
+        }
         return alert;
       });
     });

@@ -1,73 +1,56 @@
 package tsdb
 
 import (
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"gopkg.in/guregu/null.v3"
+	"github.com/grafana/grafana/pkg/models"
 )
+
+type TsdbQuery struct {
+	TimeRange *TimeRange
+	Queries   []*Query
+}
 
 type Query struct {
 	RefId         string
 	Model         *simplejson.Json
 	Depends       []string
-	DataSource    *DataSourceInfo
+	DataSource    *models.DataSource
 	Results       []*TimeSeries
-	Exclude       bool
 	MaxDataPoints int64
 	IntervalMs    int64
 }
 
-type QuerySlice []*Query
-
-type Request struct {
-	TimeRange *TimeRange
-	Queries   QuerySlice
-}
-
 type Response struct {
-	BatchTimings []*BatchTiming          `json:"timings"`
-	Results      map[string]*QueryResult `json:"results"`
-}
-
-type DataSourceInfo struct {
-	Id                int64
-	Name              string
-	PluginId          string
-	Url               string
-	Password          string
-	User              string
-	Database          string
-	BasicAuth         bool
-	BasicAuthUser     string
-	BasicAuthPassword string
-	JsonData          *simplejson.Json
-}
-
-type BatchTiming struct {
-	TimeElapsed int64
-}
-
-type BatchResult struct {
-	Error        error
-	QueryResults map[string]*QueryResult
-	Timings      *BatchTiming
-}
-
-func (br *BatchResult) WithError(err error) *BatchResult {
-	br.Error = err
-	return br
+	Results map[string]*QueryResult `json:"results"`
+	Message string                  `json:"message,omitempty"`
 }
 
 type QueryResult struct {
-	Error  error           `json:"error"`
-	RefId  string          `json:"refId"`
-	Series TimeSeriesSlice `json:"series"`
+	Error       error            `json:"-"`
+	ErrorString string           `json:"error,omitempty"`
+	RefId       string           `json:"refId"`
+	Meta        *simplejson.Json `json:"meta,omitempty"`
+	Series      TimeSeriesSlice  `json:"series"`
+	Tables      []*Table         `json:"tables"`
 }
 
 type TimeSeries struct {
-	Name   string           `json:"name"`
-	Points TimeSeriesPoints `json:"points"`
+	Name   string            `json:"name"`
+	Points TimeSeriesPoints  `json:"points"`
+	Tags   map[string]string `json:"tags,omitempty"`
 }
 
+type Table struct {
+	Columns []TableColumn `json:"columns"`
+	Rows    []RowValues   `json:"rows"`
+}
+
+type TableColumn struct {
+	Text string `json:"text"`
+}
+
+type RowValues []interface{}
 type TimePoint [2]null.Float
 type TimeSeriesPoints []TimePoint
 type TimeSeriesSlice []*TimeSeries

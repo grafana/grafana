@@ -15,6 +15,7 @@ var (
 	ErrDashboardSnapshotNotFound   = errors.New("Dashboard snapshot not found")
 	ErrDashboardWithSameNameExists = errors.New("A dashboard with the same name already exists")
 	ErrDashboardVersionMismatch    = errors.New("The dashboard has been changed by someone else")
+	ErrDashboardTitleEmpty         = errors.New("Dashboard title cannot be empty")
 )
 
 type UpdatePluginDashboardError struct {
@@ -97,12 +98,17 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 // GetDashboardModel turns the command into the savable model
 func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash := NewDashboardFromJson(cmd.Dashboard)
+	userId := cmd.UserId
 
-	if dash.Data.Get("version").MustInt(0) == 0 {
-		dash.CreatedBy = cmd.UserId
+	if userId == 0 {
+		userId = -1
 	}
 
-	dash.UpdatedBy = cmd.UserId
+	if dash.Data.Get("version").MustInt(0) == 0 {
+		dash.CreatedBy = userId
+	}
+
+	dash.UpdatedBy = userId
 	dash.OrgId = cmd.OrgId
 	dash.PluginId = cmd.PluginId
 	dash.UpdateSlug()
@@ -125,11 +131,13 @@ func (dash *Dashboard) UpdateSlug() {
 //
 
 type SaveDashboardCommand struct {
-	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
-	UserId    int64            `json:"userId"`
-	OrgId     int64            `json:"-"`
-	Overwrite bool             `json:"overwrite"`
-	PluginId  string           `json:"-"`
+	Dashboard    *simplejson.Json `json:"dashboard" binding:"Required"`
+	UserId       int64            `json:"userId"`
+	Overwrite    bool             `json:"overwrite"`
+	Message      string           `json:"message"`
+	OrgId        int64            `json:"-"`
+	RestoredFrom int              `json:"-"`
+	PluginId     string           `json:"-"`
 
 	Result *Dashboard
 }
@@ -144,7 +152,8 @@ type DeleteDashboardCommand struct {
 //
 
 type GetDashboardQuery struct {
-	Slug  string
+	Slug  string // required if no Id is specified
+	Id    int64  // optional if slug is set
 	OrgId int64
 
 	Result *Dashboard
