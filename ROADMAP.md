@@ -8,7 +8,7 @@ But it will give you an idea of our current vision and plan.
  - Release Grafana v5
   - User groups
   - Dashboard folders
-  - Dashboard permissions (on folders as well), permissions on groups or users
+  - Dashboard & folder permissions (assigned to users or groups)
   - New Dashboard layout engine
   - New sidemenu & nav UX
   - Elasticsearch alerting
