@@ -29,6 +29,7 @@
 
 * **Singlestat**: Lost thresholds when using save dashboard as [#9681](https://github.com/grafana/grafana/issues/9681)
 * **Graph**: Fix for series override color picker [#9715](https://github.com/grafana/grafana/issues/9715)
+* **Go**: build using golang 1.9.2 [#9713](https://github.com/grafana/grafana/issues/9713)
 
 # 4.6.0 (2017-10-26)
 
