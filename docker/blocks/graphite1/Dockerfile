@@ -1,5 +1,5 @@
 FROM phusion/baseimage:0.9.22
-MAINTAINER Denys Zhdanov <denis.zhdanov@gmail.com>
+LABEL maintainer="Denys Zhdanov <denis.zhdanov@gmail.com>"
 
 RUN apt-get -y update \
   && apt-get -y upgrade \
