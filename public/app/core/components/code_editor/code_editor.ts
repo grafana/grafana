@@ -36,6 +36,8 @@ import 'brace/mode/text';
 import 'brace/snippets/text';
 import 'brace/mode/sql';
 import 'brace/snippets/sql';
+import 'brace/mode/markdown';
+import 'brace/snippets/markdown';
 
 const DEFAULT_THEME_DARK = "ace/theme/grafana-dark";
 const DEFAULT_THEME_LIGHT = "ace/theme/textmate";

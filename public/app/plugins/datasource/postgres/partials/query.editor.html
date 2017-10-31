@@ -50,17 +50,15 @@ Macros:
 - $__timeEpoch -&gt; extract(epoch from column) as "time"
 - $__timeFilter(column) -&gt;  column &ge; to_timestamp(1492750877) AND column &le; to_timestamp(1492750877)
 - $__unixEpochFilter(column) -&gt;  column &gt; 1492750877 AND column &lt; 1492750877
-
-To group by time use $__timeGroup:
--&gt; (extract(epoch from column)/extract(epoch from column::interval))::int
+- $__timeGroup(column,'5m') -&gt; (extract(epoch from "dateColumn")/extract(epoch from '5m'::interval))::int
 
 Example of group by and order by with $__timeGroup:
 SELECT
-  min(date_time_col) AS time_sec,
-  sum(value_double) as value
+  $__timeGroup(date_time_col, '1h') AS time,
+  sum(value) as value
 FROM yourtable
-group by $__timeGroup(date_time_col, '1h')
-order by $__timeGroup(date_time_col, '1h') ASC
+GROUP BY time
+ORDER BY time
 
 Or build your own conditionals using these macros which just return the values:
 - $__timeFrom() -&gt;  to_timestamp(1492750877)

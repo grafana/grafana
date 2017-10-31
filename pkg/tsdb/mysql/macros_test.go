@@ -40,6 +40,14 @@ func TestMacroEngine(t *testing.T) {
 			So(sql, ShouldEqual, "select FROM_UNIXTIME(18446744066914186738)")
 		})
 
+		Convey("interpolate __timeGroup function", func() {
+
+			sql, err := engine.Interpolate(timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
+			So(err, ShouldBeNil)
+
+			So(sql, ShouldEqual, "GROUP BY cast(cast(UNIX_TIMESTAMP(time_column)/(300) as signed)*300 as signed)")
+		})
+
 		Convey("interpolate __timeTo function", func() {
 			sql, err := engine.Interpolate(timeRange, "select $__timeTo(time_column)")
 			So(err, ShouldBeNil)
