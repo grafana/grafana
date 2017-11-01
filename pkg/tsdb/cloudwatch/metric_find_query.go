@@ -183,6 +183,18 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 		data, err = e.handleGetEbsVolumeIds(ctx, parameters, queryContext)
 		break
 	case "ec2_instance_attribute":
+		region := parameters.Get("region").MustString()
+		dsInfo := e.getDsInfo(region)
+		cfg, err := e.getAwsConfig(dsInfo)
+		if err != nil {
+			return nil, errors.New("Failed to call ec2:DescribeInstances")
+		}
+		sess, err := session.NewSession(cfg)
+		if err != nil {
+			return nil, errors.New("Failed to call ec2:DescribeInstances")
+		}
+		e.ec2Svc = ec2.New(sess, cfg)
+
 		data, err = e.handleGetEc2InstanceAttribute(ctx, parameters, queryContext)
 		break
 	}
@@ -469,24 +481,13 @@ func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace stri
 }
 
 func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
-	dsInfo := e.getDsInfo(region)
-	cfg, err := e.getAwsConfig(dsInfo)
-	if err != nil {
-		return nil, errors.New("Failed to call ec2:DescribeInstances")
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, errors.New("Failed to call ec2:DescribeInstances")
-	}
-	svc := ec2.New(sess, cfg)
-
 	params := &ec2.DescribeInstancesInput{
 		Filters:     filters,
 		InstanceIds: instanceIds,
 	}
 
 	var resp ec2.DescribeInstancesOutput
-	err = svc.DescribeInstancesPages(params,
+	err := e.ec2Svc.DescribeInstancesPages(params,
 		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
 			reservations, _ := awsutil.ValuesAtPath(page, "Reservations")
 			for _, reservation := range reservations {
