@@ -1,7 +1,6 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import coreModule from '../../core_module';
+import {impressions} from 'app/features/dashboard/impression_store';
 
 export class SearchCtrl {
   isOpen: boolean;
@@ -105,46 +104,45 @@ export class SearchCtrl {
     return this.backendSrv.search(this.query).then(results => {
       if (localSearchId < this.currentSearchId) { return; }
 
-      let byId = _.groupBy(results, 'id');
-      let byFolderId = _.groupBy(results, 'folderId');
-      let finalList = [];
+      let sections: any = {};
 
-      // add missing parent folders
-      _.each(results, (hit, index) => {
-        if (hit.folderId && !byId[hit.folderId]) {
-          const folder = {
-            id: hit.folderId,
-            uri: `db/${hit.folderSlug}`,
-            title: hit.folderTitle,
-            type: 'dash-folder'
-          };
-          byId[hit.folderId] = folder;
-          results.splice(index, 0, folder);
-        }
-      });
+      sections["starred"] = {
+        score: 0,
+        icon: 'fa fa-star-o',
+        title: "Starred dashboards",
+        items: [
+          {title: 'Frontend Nginx'},
+          {title: 'Cassandra overview'}
+        ]
+      };
 
-      // group by folder
+      sections["recent"] = {
+        score: 1,
+        icon: 'fa fa-clock-o',
+        title: "Recent dashboards",
+        items: [
+          {title: 'Frontend Nginx'},
+          {title: 'Cassandra overview'}
+        ]
+      };
+
+      // create folder index
       for (let hit of results) {
-        if (hit.folderId) {
-          hit.type = "dash-child";
-        } else {
-          finalList.push(hit);
+        let section = sections[hit.folderId];
+        if (!section) {
+          section = {
+            id: hit.folderId,
+            title: hit.folderTitle, items: [],
+            icon: 'fa fa-folder-open'
+          };
+          sections[hit.folderId] = section;
         }
 
         hit.url = 'dashboard/' + hit.uri;
-
-        if (hit.type === 'dash-folder') {
-          if (!byFolderId[hit.id]) {
-            continue;
-          }
-
-          for (let child of byFolderId[hit.id]) {
-            finalList.push(child);
-          }
-        }
+        section.items.push(hit);
       }
 
-      this.results = finalList;
+      this.results = _.sortBy(_.values(sections), 'score');
     });
   }
 
