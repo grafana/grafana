@@ -10,7 +10,7 @@ export class DashboardListCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private $q) {
-    this.navModel = navModelSrv.getNav('cfg', 'dashboards');
+    this.navModel = navModelSrv.getNav('dashboards', 'dashboards');
     this.query = {query: '', mode: 'tree', tag: []};
     this.getDashboards();
   }
