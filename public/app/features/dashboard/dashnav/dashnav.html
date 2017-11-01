@@ -21,7 +21,7 @@
 		<ul class="nav dashnav-action-icons">
 			<li ng-show="::ctrl.dashboard.meta.canStar">
 				<a class="pointer" ng-click="ctrl.starDashboard()">
-					<i class="fa" ng-class="{'fa-star-o': !ctrl.dashboard.meta.isStarred, 'fa-star': ctrl.dashboard.meta.isStarred}"></i>
+					<i class="fa" ng-class="{'fa-star-o': !ctrl.dashboard.meta.isStarred, 'fa-star': ctrl.dashboard.meta.isStarred}" style="color: orange;"></i>
 				</a>
 			</li>
 			<li ng-show="::ctrl.dashboard.meta.canShare" class="dropdown">

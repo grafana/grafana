@@ -157,13 +157,10 @@ li.sidemenu-org-switcher {
   display: block;
   padding: 0.4rem 1.0rem 0.4rem 0.65rem;
   min-height: $navbarHeight;
+  position: relative;
 
   &:hover {
     background: $navbarButtonBackgroundHighlight;
-
-    .sidemenu__logo-expand {
-      display: block;
-    }
   }
 
   img {
