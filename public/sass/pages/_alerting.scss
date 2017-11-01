@@ -132,6 +132,13 @@
   }
 }
 
+.no-alert {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
 @keyframes alerting-panel {
   100% {
     opacity: 1;
