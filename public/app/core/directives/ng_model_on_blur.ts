@@ -1,5 +1,5 @@
 import coreModule from '../core_module';
-import rangeUtil from 'app/core/utils/rangeutil';
+import * as rangeUtil from 'app/core/utils/rangeutil';
 
 export class NgModelOnBlur {
   constructor() {
