@@ -166,7 +166,7 @@ export class ElasticDatasource {
 
         var event = {
           annotation: annotation,
-          time: moment.utc(time).valueOf(),
+          time: moment.utc(parseInt(time, 10)).valueOf(),
           text: getFieldFromSource(source, textField),
           tags: getFieldFromSource(source, tagsField),
         };
