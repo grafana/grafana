@@ -287,6 +287,7 @@ func formatAlias(query *CloudWatchQuery, stat string, dimensions map[string]stri
 	data["namespace"] = query.Namespace
 	data["metric"] = query.MetricName
 	data["stat"] = stat
+	data["period"] = strconv.Itoa(query.Period)
 	for k, v := range dimensions {
 		data[k] = v
 	}
