@@ -202,7 +202,6 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		dashboard.title,
 		dashboard.slug,
 		dashboard_tag.term,
-		dashboard.is_folder,
 		dashboard.folder_id,
 		folder.slug as folder_slug,
 		folder.title as folder_title

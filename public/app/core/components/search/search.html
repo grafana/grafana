@@ -59,7 +59,8 @@
 					<a class="search-section__header pointer" ng-show="::section.title" ng-click="section.collapsed = !section.collapsed">
 						<i class="search-section__header__icon" ng-class="section.icon"></i>
 						<span class="search-section__header__text">{{::section.title}}</span>
-						<i class="fa fa-minus search-section__header__toggle"></i>
+						<i class="fa fa-minus search-section__header__toggle" ng-hide="section.collapsed"></i>
+						<i class="fa fa-plus search-section__header__toggle" ng-show="section.collapsed"></i>
 					</a>
 
 					<div ng-if="!section.collapsed">
