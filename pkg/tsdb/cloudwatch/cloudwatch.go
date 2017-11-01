@@ -269,7 +269,10 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 		period = int(d.Seconds())
 	}
 
-	alias := model.Get("alias").MustString("{{metric}}_{{stat}}")
+	alias := model.Get("alias").MustString()
+	if alias == "" {
+		alias = "{{metric}}_{{stat}}"
+	}
 
 	return &CloudWatchQuery{
 		Region:             region,
