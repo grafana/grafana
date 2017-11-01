@@ -40,7 +40,10 @@ System.config({
     css: 'vendor/plugin-css/css.js'
   },
   meta: {
-    '*': {esModule: true}
+    '*': {
+      esModule: true,
+      authorization: true,
+    }
   }
 });
 
