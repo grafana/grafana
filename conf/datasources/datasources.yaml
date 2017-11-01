@@ -36,9 +36,9 @@ datasources:
 #   json_data: '{"graphiteVersion":"0.9"}'
 #   # <string> json object of data that will be encrypted in UI.
 #   secure_json_fields: ''
-#   # <int> including this value garantees that instance with old configs cannot
+#   # <int> including this value guarantees that instance with old configs cannot
 #   #       overwrite your last change.
 #   version: 1
 #   # <bool> allow users to edit datasources from the UI.
-#   editable: true
+#   editable: false
 
