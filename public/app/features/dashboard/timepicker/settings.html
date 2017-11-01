@@ -1,15 +1,14 @@
 <div class="editor-row">
-<div class="gf-form-group">
-	<div class="gf-form">
-		<span class="gf-form-label width-10">Auto-refresh</span>
-		<input type="text" class="gf-form-input max-width-25" ng-model="ctrl.panel.refresh_intervals" array-join>
-	</div>
-	<div class="gf-form">
-		<span class="gf-form-label width-10">Now delay now-</span>
-		<input type="text" class="gf-form-input max-width-25"
-				ng-model="ctrl.panel.nowDelay" placeholder="0m"
-				valid-time-span
-				bs-tooltip="'Enter 1m to ignore the last minute (because it can contain incomplete metrics)'"
-				data-placement="right">
-	</div>
+  <div class="gf-form-group">
+    <div class="gf-form">
+      <span class="gf-form-label width-10">Auto-refresh</span>
+      <input type="text" class="gf-form-input max-width-25" ng-model="ctrl.panel.refresh_intervals" array-join>
+    </div>
+    <div class="gf-form">
+      <span class="gf-form-label width-10">Now delay now-</span>
+      <input type="text" class="gf-form-input max-width-25" ng-model="ctrl.panel.nowDelay" placeholder="0m" valid-time-span bs-tooltip="'Enter 1m to ignore the last minute (because it can contain incomplete metrics)'"
+        data-placement="right">
+    </div>
+    <gf-form-switch class="gf-form" label="Disable Time picker" checked="ctrl.panel.disableTimePicker" label-class="width-10"></gf-form-switch>
+  </div>
 </div>
