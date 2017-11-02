@@ -21,7 +21,6 @@
 // Base modal
 .modal {
   position: fixed;
-  overflow: hidden;
   z-index: $zindex-modal;
   width: 100%;
 	background-color: $panel-bg;

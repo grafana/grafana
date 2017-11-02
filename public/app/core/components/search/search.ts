@@ -132,9 +132,15 @@ export class SearchCtrl {
         if (!section) {
           section = {
             id: hit.folderId,
-            title: hit.folderTitle, items: [],
+            title: hit.folderTitle,
+            items: [],
             icon: 'fa fa-folder-open'
           };
+          // handle root
+          if (!hit.folderId) {
+            section.title = "Dashboards";
+            section.icon = "fa fa-circle-o";
+          }
           sections[hit.folderId] = section;
         }
 
