@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import coreModule from '../../core_module';
-import {impressions} from 'app/features/dashboard/impression_store';
+import { SearchSrv } from 'app/core/services/search_srv';
 
 export class SearchCtrl {
   isOpen: boolean;
@@ -17,7 +17,7 @@ export class SearchCtrl {
   openCompleted: boolean;
 
   /** @ngInject */
-  constructor($scope, private $location, private $timeout, private backendSrv, public contextSrv, $rootScope) {
+  constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv, $rootScope) {
     $rootScope.onAppEvent('show-dash-search', this.openSearch.bind(this), $scope);
     $rootScope.onAppEvent('hide-dash-search', this.closeSearch.bind(this), $scope);
   }
@@ -25,7 +25,6 @@ export class SearchCtrl {
   closeSearch() {
     this.isOpen = this.ignoreClose;
     this.openCompleted = false;
-    this.contextSrv.isSearching = this.isOpen;
   }
 
   openSearch(evt, payload) {
@@ -35,7 +34,6 @@ export class SearchCtrl {
     }
 
     this.isOpen = true;
-    this.contextSrv.isSearching = true;
     this.giveSearchFocus = 0;
     this.selectedIndex = -1;
     this.results = [];
@@ -101,54 +99,9 @@ export class SearchCtrl {
     this.currentSearchId = this.currentSearchId + 1;
     var localSearchId = this.currentSearchId;
 
-    return this.backendSrv.search(this.query).then(results => {
+    return this.searchSrv.search(this.query).then(results => {
       if (localSearchId < this.currentSearchId) { return; }
-
-      let sections: any = {};
-
-      sections["starred"] = {
-        score: 0,
-        icon: 'fa fa-star-o',
-        title: "Starred dashboards",
-        items: [
-          {title: 'Frontend Nginx'},
-          {title: 'Cassandra overview'}
-        ]
-      };
-
-      sections["recent"] = {
-        score: 1,
-        icon: 'fa fa-clock-o',
-        title: "Recent dashboards",
-        items: [
-          {title: 'Frontend Nginx'},
-          {title: 'Cassandra overview'}
-        ]
-      };
-
-      // create folder index
-      for (let hit of results) {
-        let section = sections[hit.folderId];
-        if (!section) {
-          section = {
-            id: hit.folderId,
-            title: hit.folderTitle,
-            items: [],
-            icon: 'fa fa-folder-open'
-          };
-          // handle root
-          if (!hit.folderId) {
-            section.title = "Dashboards";
-            section.icon = "fa fa-circle-o";
-          }
-          sections[hit.folderId] = section;
-        }
-
-        hit.url = 'dashboard/' + hit.uri;
-        section.items.push(hit);
-      }
-
-      this.results = _.sortBy(_.values(sections), 'score');
+      this.results = results;
     });
   }
 
@@ -176,7 +129,7 @@ export class SearchCtrl {
   }
 
   getTags() {
-    return this.backendSrv.get('/api/dashboards/tags').then((results) => {
+    return this.searchSrv.getDashboardTags().then((results) => {
       this.tagsMode = !this.tagsMode;
       this.results = results;
       this.giveSearchFocus = this.giveSearchFocus + 1;
