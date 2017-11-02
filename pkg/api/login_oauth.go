@@ -188,6 +188,18 @@ func OAuthLogin(ctx *middleware.Context) {
 		userQuery.Result = &cmd.Result
 	} else if err != nil {
 		ctx.Handle(500, "Unexpected error", err)
+	} else if role := m.RoleType(userInfo.Role); role.IsValid() {
+		// Update the user
+		cmd := m.UpdateOrgUserCommand{
+			Role:   role,
+			OrgId:  userQuery.Result.OrgId,
+			UserId: userQuery.Result.Id,
+		}
+
+		if err = bus.Dispatch(&cmd); err != nil {
+			ctx.Handle(500, "Failed to update account", err)
+			return
+		}
 	}
 
 	// login

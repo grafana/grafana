@@ -7,6 +7,7 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -115,6 +116,17 @@ func NewOAuthService() {
 
 		// Generic - Uses the same scheme as Github.
 		if name == "generic_oauth" {
+			groups := make(map[string]models.RoleType)
+			for _, v := range util.SplitString(sec.Key("group_mappings").String()) {
+				list := strings.Split(v, ":")
+				if len(list) == 2 {
+					role := models.RoleType(list[1])
+					if role.IsValid() {
+						groups[list[0]] = role
+					}
+				}
+			}
+
 			SocialMap["generic_oauth"] = &GenericOAuth{
 				Config:               &config,
 				allowedDomains:       info.AllowedDomains,
@@ -122,6 +134,8 @@ func NewOAuthService() {
 				allowSignup:          info.AllowSignup,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				groupsField:          sec.Key("group_field").String(),
+				groups:               groups,
 			}
 		}
 
