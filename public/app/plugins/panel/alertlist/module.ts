@@ -64,6 +64,7 @@ class AlertListPanel extends PanelCtrl {
 
   notOkStateFilter() {
     if (this.notOkFilter['notOk']) {
+      this.stateFilter = {};
       this.panel.stateFilter = ['paused', 'no_data', 'execution_error', 'alerting'];
       this.onRender();
     } else {
@@ -73,6 +74,9 @@ class AlertListPanel extends PanelCtrl {
 
 
   updateStateFilter() {
+    if (this.notOkFilter['notOk']) {
+      this.notOkFilter = {};
+    }
     var result = [];
     for (let key in this.stateFilter) {
       if (this.stateFilter[key]) {
