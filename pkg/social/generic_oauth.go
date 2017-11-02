@@ -18,6 +18,8 @@ type GenericOAuth struct {
 	apiUrl               string
 	allowSignup          bool
 	teamIds              []int
+	groupsField          string
+	groups               map[string]models.RoleType
 }
 
 func (s *GenericOAuth) Type() int {
@@ -191,6 +193,26 @@ func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 		Email: data.Email,
 	}
 
+	// https://github.com/golang/go/issues/6213
+	if s.groupsField != "" {
+		fmt.Println("Found me some groups")
+		mapData := make(map[string]interface{})
+		err := json.Unmarshal(response.Body, &mapData)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting user info: %s", err)
+		}
+		fmt.Println(mapData)
+
+		if groups, ok := mapData[s.groupsField].([]interface{}); ok && len(groups) > 0 {
+			role := models.ROLE_VIEWER
+			for _, v := range groups {
+				if newRole := s.groups[v.(string)]; newRole.IsValid() && newRole.Includes(role) {
+					role = newRole
+				}
+			}
+			userInfo.Role = string(role)
+		}
+	}
 	if userInfo.Email == "" && data.Attributes["email:primary"] != nil {
 		userInfo.Email = data.Attributes["email:primary"][0]
 	}
@@ -221,6 +243,5 @@ func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	if !s.IsOrganizationMember(client) {
 		return nil, errors.New("User not a member of one of the required organizations")
 	}
-
 	return userInfo, nil
 }
