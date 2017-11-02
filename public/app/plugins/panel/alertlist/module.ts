@@ -3,7 +3,7 @@
 import _ from 'lodash';
 import moment from 'moment';
 import alertDef from '../../../features/alerting/alert_def';
-import {PanelCtrl} from 'app/plugins/sdk';
+import { PanelCtrl } from 'app/plugins/sdk';
 
 import * as dateMath from 'app/core/utils/datemath';
 
@@ -11,18 +11,19 @@ class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
 
   showOptions = [
-    {text: 'Current state', value: 'current'},
-    {text: 'Recent state changes', value: 'changes'}
+    { text: 'Current state', value: 'current' },
+    { text: 'Recent state changes', value: 'changes' }
   ];
 
   sortOrderOptions = [
-    {text: 'Alphabetical (asc)', value: 1},
-    {text: 'Alphabetical (desc)', value: 2},
-    {text: 'Importance', value: 3},
+    { text: 'Alphabetical (asc)', value: 1 },
+    { text: 'Alphabetical (desc)', value: 2 },
+    { text: 'Importance', value: 3 },
   ];
 
   contentHeight: string;
   stateFilter: any = {};
+  notOkFilter: any = {};
   currentAlerts: any = [];
   alertHistory: any = [];
   // Set and populate defaults
@@ -40,7 +41,7 @@ class AlertListPanel extends PanelCtrl {
     _.defaults(this.panel, this.panelDefaults);
 
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
-    this.events.on('render',  this.onRender.bind(this));
+    this.events.on('render', this.onRender.bind(this));
     this.events.on('refresh', this.onRender.bind(this));
 
     for (let key in this.panel.stateFilter) {
@@ -53,7 +54,7 @@ class AlertListPanel extends PanelCtrl {
       return _.sortBy(alerts, a => { return alertDef.alertStateSortScore[a.state]; });
     }
 
-    var result = _.sortBy(alerts, a => { return a.name.toLowerCase();});
+    var result = _.sortBy(alerts, a => { return a.name.toLowerCase(); });
     if (this.panel.sortOrder === 2) {
       result.reverse();
     }
@@ -61,9 +62,21 @@ class AlertListPanel extends PanelCtrl {
     return result;
   }
 
-  updateStateFilter() {
-    var result = [];
+  notOkStateFilter() {
+    if (this.notOkFilter['notOk']) {
+      this.stateFilter = {};
+      this.panel.stateFilter = ['paused', 'no_data', 'execution_error', 'alerting'];
+      this.onRender();
+    } else {
+      this.updateStateFilter();
+    }
+  }
 
+  updateStateFilter() {
+    if (this.notOkFilter['notOk']) {
+      this.notOkFilter = {};
+    }
+    var result = [];
     for (let key in this.stateFilter) {
       if (this.stateFilter[key]) {
         result.push(key);
@@ -132,6 +145,7 @@ class AlertListPanel extends PanelCtrl {
   onInitEditMode() {
     this.addEditorTab('Options', 'public/app/plugins/panel/alertlist/editor.html');
   }
+
 }
 
 export {
