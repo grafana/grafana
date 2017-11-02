@@ -51,7 +51,7 @@ func generateConnectionString(datasource *models.DataSource) string {
 		}
 	}
 
-	sslmode := datasource.JsonData.Get("sslmode").MustString("require")
+	sslmode := datasource.JsonData.Get("sslmode").MustString("verify-full")
 	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", datasource.User, password, datasource.Url, datasource.Database, sslmode)
 }
 

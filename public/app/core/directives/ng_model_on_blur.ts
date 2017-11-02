@@ -1,11 +1,8 @@
-define([
-  '../core_module',
-  'app/core/utils/rangeutil',
-],
-function (coreModule, rangeUtil) {
-  'use strict';
+import coreModule from '../core_module';
+import * as rangeUtil from 'app/core/utils/rangeutil';
 
-  coreModule.default.directive('ngModelOnblur', function() {
+export class NgModelOnBlur {
+  constructor() {
     return {
       restrict: 'A',
       priority: 1,
@@ -23,22 +20,27 @@ function (coreModule, rangeUtil) {
         });
       }
     };
-  });
+  }
+}
 
-  coreModule.default.directive('emptyToNull', function () {
+
+export class EmptyToNull {
+  constructor() {
     return {
       restrict: 'A',
       require: 'ngModel',
       link: function (scope, elm, attrs, ctrl) {
         ctrl.$parsers.push(function (viewValue) {
-          if(viewValue === "") { return null; }
+          if (viewValue === "") { return null; }
           return viewValue;
         });
       }
     };
-  });
+  }
+}
 
-  coreModule.default.directive('validTimeSpan', function() {
+export class ValidTimeSpan {
+  constructor() {
     return {
       require: 'ngModel',
       link: function(scope, elm, attrs, ctrl) {
@@ -54,5 +56,9 @@ function (coreModule, rangeUtil) {
         };
       }
     };
-  });
-});
+  }
+}
+
+coreModule.directive('ngModelOnblur', NgModelOnBlur);
+coreModule.directive('emptyToNull', EmptyToNull);
+coreModule.directive('validTimeSpan', ValidTimeSpan);

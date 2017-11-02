@@ -9,7 +9,7 @@ machine:
     GOPATH: "/home/ubuntu/.go_workspace"
     ORG_PATH: "github.com/grafana"
     REPO_PATH: "${ORG_PATH}/grafana"
-    GODIST: "go1.9.1.linux-amd64.tar.gz"
+    GODIST: "go1.9.2.linux-amd64.tar.gz"
   post:
     - mkdir -p ~/download
     - mkdir -p ~/docker

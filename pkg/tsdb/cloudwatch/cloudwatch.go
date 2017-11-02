@@ -267,7 +267,10 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 		period = int(d.Seconds())
 	}
 
-	alias := model.Get("alias").MustString("{{metric}}_{{stat}}")
+	alias := model.Get("alias").MustString()
+	if alias == "" {
+		alias = "{{metric}}_{{stat}}"
+	}
 
 	return &CloudWatchQuery{
 		Region:             region,
@@ -287,6 +290,7 @@ func formatAlias(query *CloudWatchQuery, stat string, dimensions map[string]stri
 	data["namespace"] = query.Namespace
 	data["metric"] = query.MetricName
 	data["stat"] = stat
+	data["period"] = strconv.Itoa(query.Period)
 	for k, v := range dimensions {
 		data[k] = v
 	}
