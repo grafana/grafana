@@ -1,0 +1,100 @@
+# This source file refers to The gocql Authors for copyright purposes.
+
+Christoph Hack <christoph@tux21b.org>
+Jonathan Rudenberg <jonathan@titanous.com>
+Thorsten von Eicken <tve@rightscale.com>
+Matt Robenolt <mattr@disqus.com>
+Phillip Couto <phillip.couto@stemstudios.com>
+Niklas Korz <korz.niklask@gmail.com>
+Nimi Wariboko Jr <nimi@channelmeter.com>
+Ghais Issa <ghais.issa@gmail.com>
+Sasha Klizhentas <klizhentas@gmail.com>
+Konstantin Cherkasov <k.cherkasoff@gmail.com>
+Ben Hood <0x6e6562@gmail.com>
+Pete Hopkins <phopkins@gmail.com>
+Chris Bannister <c.bannister@gmail.com>
+Maxim Bublis <b@codemonkey.ru>
+Alex Zorin <git@zor.io>
+Kasper Middelboe Petersen <me@phant.dk>
+Harpreet Sawhney <harpreet.sawhney@gmail.com>
+Charlie Andrews <charlieandrews.cwa@gmail.com>
+Stanislavs Koikovs <stanislavs.koikovs@gmail.com>
+Dan Forest <bonjour@dan.tf>
+Miguel Serrano <miguelvps@gmail.com>
+Stefan Radomski <gibheer@zero-knowledge.org>
+Josh Wright <jshwright@gmail.com>
+Jacob Rhoden <jacob.rhoden@gmail.com>
+Ben Frye <benfrye@gmail.com>
+Fred McCann <fred@sharpnoodles.com>
+Dan Simmons <dan@simmons.io>
+Muir Manders <muir@retailnext.net>
+Sankar P <sankar.curiosity@gmail.com>
+Julien Da Silva <julien.dasilva@gmail.com>
+Dan Kennedy <daniel@firstcs.co.uk>
+Nick Dhupia<nick.dhupia@gmail.com>
+Yasuharu Goto <matope.ono@gmail.com>
+Jeremy Schlatter <jeremy.schlatter@gmail.com>
+Matthias Kadenbach <matthias.kadenbach@gmail.com>
+Dean Elbaz <elbaz.dean@gmail.com>
+Mike Berman <evencode@gmail.com>
+Dmitriy Fedorenko <c0va23@gmail.com>
+Zach Marcantel <zmarcantel@gmail.com>
+James Maloney <jamessagan@gmail.com>
+Ashwin Purohit <purohit@gmail.com>
+Dan Kinder <dkinder.is.me@gmail.com>
+Oliver Beattie <oliver@obeattie.com>
+Justin Corpron <jncorpron@gmail.com>
+Miles Delahunty <miles.delahunty@gmail.com>
+Zach Badgett <zach.badgett@gmail.com>
+Maciek Sakrejda <maciek@heroku.com>
+Jeff Mitchell <jeffrey.mitchell@gmail.com>
+Baptiste Fontaine <b@ptistefontaine.fr>
+Matt Heath <matt@mattheath.com>
+Jamie Cuthill <jamie.cuthill@gmail.com>
+Adrian Casajus <adriancasajus@gmail.com>
+John Weldon <johnweldon4@gmail.com>
+Adrien Bustany <adrien@bustany.org>
+Andrey Smirnov <smirnov.andrey@gmail.com>
+Adam Weiner <adamsweiner@gmail.com>
+Daniel Cannon <daniel@danielcannon.co.uk>
+Johnny Bergström <johnny@joonix.se>
+Adriano Orioli <orioli.adriano@gmail.com>
+Claudiu Raveica <claudiu.raveica@gmail.com>
+Artem Chernyshev <artem.0xD2@gmail.com>
+Ference Fu <fym201@msn.com>
+LOVOO <opensource@lovoo.com>
+nikandfor <nikandfor@gmail.com>
+Anthony Woods <awoods@raintank.io>
+Alexander Inozemtsev <alexander.inozemtsev@gmail.com>
+Rob McColl <rob@robmccoll.com>; <rmccoll@ionicsecurity.com>
+Viktor Tönköl <viktor.toenkoel@motionlogic.de>
+Ian Lozinski <ian.lozinski@gmail.com>
+Michael Highstead <highstead@gmail.com>
+Sarah Brown <esbie.is@gmail.com>
+Caleb Doxsey <caleb@datadoghq.com>
+Frederic Hemery <frederic.hemery@datadoghq.com>
+Pekka Enberg <penberg@scylladb.com>
+Mark M <m.mim95@gmail.com>
+Bartosz Burclaf <burclaf@gmail.com>
+Marcus King <marcusking01@gmail.com>
+Andrew de Andrade <andrew@deandrade.com.br>
+Robert Nix <robert@nicerobot.org>
+Nathan Youngman <git@nathany.com>
+Charles Law <charles.law@gmail.com>; <claw@conduce.com>
+Nathan Davies <nathanjamesdavies@gmail.com>
+Bo Blanton <bo.blanton@gmail.com>
+Vincent Rischmann <me@vrischmann.me>
+Jesse Claven <jesse.claven@gmail.com>
+Derrick Wippler <thrawn01@gmail.com>
+Leigh McCulloch <leigh@leighmcculloch.com>
+Ron Kuris <swcafe@gmail.com>
+Raphael Gavache <raphael.gavache@gmail.com>
+Yasser Abdolmaleki <yasser@yasser.ca>
+Krishnanand Thommandra <devtkrishna@gmail.com>
+Blake Atkinson <me@blakeatkinson.com>
+Dharmendra Parsaila <d4dharmu@gmail.com>
+Nayef Ghattas <nayef.ghattas@datadoghq.com>
+Michał Matczuk <mmatczuk@gmail.com>
+Ben Krebsbach <ben.krebsbach@gmail.com>
+Vivian Mathews <vivian.mathews.3@gmail.com>
+Sascha Steinbiss <satta@debian.org>

@@ -50,4 +50,5 @@ those options.
 - [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
 - [MySQL]({{< relref "features/datasources/mysql.md" >}})
 - [Postgres]({{< relref "features/datasources/postgres.md" >}})
+- [Cassandra]({{< relref "features/datasources/cassandra.md" >}})
 - [Cloudwatch]({{< relref "features/datasources/cloudwatch.md" >}})
