@@ -72,7 +72,6 @@ class AlertListPanel extends PanelCtrl {
     }
   }
 
-
   updateStateFilter() {
     if (this.notOkFilter['notOk']) {
       this.notOkFilter = {};
