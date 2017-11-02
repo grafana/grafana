@@ -1,13 +1,18 @@
 import React from 'react';
 // import ReactDOM from 'react-dom';
 import Select from 'react-select';
+import { AsyncCreatable } from 'react-select';
+import _ from 'lodash';
 import $ from 'jquery';
 import 'react-select/scss/default.scss';
 import { react2AngularDirective } from 'app/core/utils/react2angular';
 
+const NULL_VALUE_PLACEHOLDER = 'default';
+const LABEL_KEY = 'text';
+
 interface IOptionsItem {
   value: string;
-  label: string;
+  text: string;
 }
 
 interface IProps {
@@ -15,19 +20,26 @@ interface IProps {
   options: IOptionsItem[];
   cssClass: any;
   labelMode: boolean;
+  allowCustom: boolean;
+  lookupText: boolean;
   getOptions: (input: string) => any;
   onChange: (val: any) => void;
 }
 
 export class FormDropdown extends React.Component<IProps, any> {
   selectControl: any;
+  selectComponent: any;
+  text: string;
+  cache: any;
 
   constructor(props) {
     super(props);
     this.state = {
+      value: convertToOption(this.props.value),
       labelMode: this.props.labelMode,
       cssClasses: ""
     };
+    this.cache = {};
 
     this.loadOptionsInternal = this.loadOptionsInternal.bind(this);
     this.onChangeInternal = this.onChangeInternal.bind(this);
@@ -36,9 +48,9 @@ export class FormDropdown extends React.Component<IProps, any> {
     this.setSelectElement = this.setSelectElement.bind(this);
   }
 
-  loadOptionsInternal(input: string, callback: (err, data) => any) {
-    return this.props.getOptions(input).then((options) => {
-      console.log('loadOptionsInternal', options);
+  loadOptionsInternal(input: string) {
+    return this.props.getOptions(input)
+    .then((options) => {
       return {
         options: options
       };
@@ -46,12 +58,13 @@ export class FormDropdown extends React.Component<IProps, any> {
   }
 
   onChangeInternal(newValue) {
-    console.log('onChangeInternal', newValue);
-    this.props.onChange(newValue);
+    this.setState({value: newValue});
+    this.props.onChange(newValue.value);
   }
 
   setSelectElement(component) {
     if (component) {
+      this.selectComponent = component.select;
       this.selectControl = $(component.select.control);
     } else {
       return null;
@@ -69,7 +82,20 @@ export class FormDropdown extends React.Component<IProps, any> {
 
   onClose() {
     // Set cleared label back to value
-    this.getValueLabel().text(this.props.value);
+    this.getValueLabel().text(this.state.value.value);
+  }
+
+  promptTextCreator(filterText: string): string {
+    return filterText;
+  }
+
+  // Fix issue 2125: if no items match entered text, value is selected only after second click/Enter press.
+  // https://github.com/JedWatson/react-select/issues/2125
+  isOptionUnique({ option, options, labelKey, valueKey }): boolean {
+    let values = _.map(options, valueKey);
+    let optionIndex = _.lastIndexOf(values, option[valueKey]);
+    let result = (values.length === 1 && optionIndex >= 0) || !(optionIndex > 0);
+    return result;
   }
 
   render() {
@@ -81,37 +107,72 @@ export class FormDropdown extends React.Component<IProps, any> {
 
     const formDropdown = (
       <Select name="form-field-name"
-        value={this.props.value}
+        value={this.state.value}
         options={this.props.options}
         onChange={this.onChangeInternal}
         onOpen={this.onOpen}
         onClose={this.onClose}
         clearable={false}
-        labelKey="text"
+        labelKey={LABEL_KEY}
+        placeholder={NULL_VALUE_PLACEHOLDER}
       />
     );
 
     const formDropdownAsync = (
       <Select.Async name="form-field-name" ref={this.setSelectElement}
-        value={this.props.value}
+        value={this.state.value}
         loadOptions={this.loadOptionsInternal}
         onChange={this.onChangeInternal}
         onOpen={this.onOpen}
         onClose={this.onClose}
         clearable={false}
-        labelKey="text"
-        placeholder="default"
-        closeOnSelect={false}
+        labelKey={LABEL_KEY}
+        placeholder={NULL_VALUE_PLACEHOLDER}
+        closeOnSelect={true}
       />
     );
 
-    console.log('render', this.props.value);
+    const formDropdownAsyncCreatable = (
+      <AsyncCreatable name="form-field-name" ref={this.setSelectElement}
+        value={this.state.value}
+        loadOptions={this.loadOptionsInternal}
+        onChange={this.onChangeInternal}
+        onOpen={this.onOpen}
+        onClose={this.onClose}
+        clearable={false}
+        labelKey={LABEL_KEY}
+        placeholder={NULL_VALUE_PLACEHOLDER}
+        promptTextCreator={this.promptTextCreator}
+        isOptionUnique={this.isOptionUnique}
+        closeOnSelect={true}
+      />
+    );
+
+    let formDropdownComponent;
+    if (this.props.getOptions) {
+      if (this.props.allowCustom) {
+        formDropdownComponent = formDropdownAsyncCreatable;
+      } else {
+        formDropdownComponent = formDropdownAsync;
+      }
+    } else {
+      formDropdownComponent = formDropdown;
+    }
+
     return (
       <div className={this.state.cssClasses}>
-        {this.props.getOptions ? formDropdownAsync : formDropdown}
+        {formDropdownComponent}
       </div>
     );
   }
+}
+
+function convertToOption(value) {
+  let option = {
+    value: value
+  };
+  option[LABEL_KEY] = value;
+  return option;
 }
 
 react2AngularDirective('gfFormDropdownReact', FormDropdown, [
@@ -119,6 +180,8 @@ react2AngularDirective('gfFormDropdownReact', FormDropdown, [
   'options',
   'cssClass',
   'labelMode',
+  'allowCustom',
+  'lookupText',
   ['getOptions', { watchDepth: 'reference', wrapApply: true }],
   ['onChange', { watchDepth: 'reference', wrapApply: true }],
 ]);

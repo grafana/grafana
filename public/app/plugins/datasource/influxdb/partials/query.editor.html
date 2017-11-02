@@ -30,11 +30,11 @@
 				<metric-segment segment="ctrl.policySegment" get-options="ctrl.getPolicySegments()" on-change="ctrl.policyChanged()"></metric-segment>
         <metric-segment segment="ctrl.measurementSegment" get-options="ctrl.getMeasurements($query)" on-change="ctrl.measurementChanged()"></metric-segment>
 
-        <gf-form-dropdown-react value="ctrl.target.policy" css-class="'width-8'" label-mode="true"
+        <gf-form-dropdown-react value="ctrl.target.policy" css-class="'width-10'" label-mode="true"
           getOptions="ctrl.getPolicySegmentsReact()"
           onChange="ctrl.policyChangedReact()">
         </gf-form-dropdown-react>
-        <gf-form-dropdown-react value="ctrl.target.measurement" css-class="'width-8'" label-mode="true"
+        <gf-form-dropdown-react value="ctrl.target.measurement" css-class="'width-10'" label-mode="true" allow-custom="true"
           getOptions="ctrl.getMeasurementsReact()"
           onChange="ctrl.measurementChangedReact()">
         </gf-form-dropdown-react>
