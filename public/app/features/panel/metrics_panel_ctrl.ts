@@ -226,7 +226,6 @@ class MetricsPanelCtrl extends PanelCtrl {
       interval: this.interval,
       intervalMs: this.intervalMs,
       targets: this.panel.targets,
-      format: this.panel.renderer === 'png' ? 'png' : 'json',
       maxDataPoints: this.resolution,
       scopedVars: scopedVars,
       cacheTimeout: this.panel.cacheTimeout

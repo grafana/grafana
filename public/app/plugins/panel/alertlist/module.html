@@ -1,6 +1,17 @@
 <div class="panel-alert-list" style="{{ctrl.contentHeight}}">
 	<section class="card-section card-list-layout-list" ng-if="ctrl.panel.show === 'current'">
 		<ol class="card-list">
+      <li class="card-item-wrapper" ng-show="!ctrl.currentAlerts.length">
+				<div class="alert-list card-item card-item--alert">
+					<div class="alert-list-body">
+						<div class="alert-list-main">
+							<p class="alert-list-title">
+								No alerts in selected interval
+							</p>
+						</div>
+					</div>
+				</div>
+			</li>
 			<li class="card-item-wrapper" ng-repeat="alert in ctrl.currentAlerts">
 				<div class="alert-list card-item card-item--alert">
 					<div class="alert-list-body">
