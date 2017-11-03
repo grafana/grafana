@@ -91,13 +91,6 @@
   align-items: flex-end;
 }
 
-.alert-list-no-alerts {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-}
-
 .panel-has-alert {
   .panel-alert-icon:before {
     content: "\e611";

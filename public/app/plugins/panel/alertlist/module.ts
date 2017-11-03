@@ -21,11 +21,10 @@ class AlertListPanel extends PanelCtrl {
     { text: 'Importance', value: 3 },
   ];
 
-  panelHeight: any;
-  contentHeight: string;
   stateFilter: any = {};
   currentAlerts: any = [];
   alertHistory: any = [];
+  noAlertsMessage: string;
   // Set and populate defaults
   panelDefaults = {
     show: 'current',
@@ -41,8 +40,7 @@ class AlertListPanel extends PanelCtrl {
     _.defaults(this.panel, this.panelDefaults);
 
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
-    this.events.on('render', this.onRender.bind(this));
-    this.events.on('refresh', this.onRender.bind(this));
+    this.events.on('refresh', this.onRefresh.bind(this));
 
     for (let key in this.panel.stateFilter) {
       this.stateFilter[this.panel.stateFilter[key]] = true;
@@ -72,12 +70,10 @@ class AlertListPanel extends PanelCtrl {
     }
 
     this.panel.stateFilter = result;
-    this.onRender();
+    this.onRefresh();
   }
 
-  onRender() {
-    this.panelHeight = this.height - 30;
-    this.contentHeight = "max-height: " + this.height + "px;";
+  onRefresh() {
     if (this.panel.show === 'current') {
       this.getCurrentAlertState();
     }
@@ -109,6 +105,7 @@ class AlertListPanel extends PanelCtrl {
           al.info = alertDef.getAlertAnnotationInfo(al);
           return al;
         });
+        this.noAlertsMessage = this.alertHistory.length === 0 ? 'No alerts in current time range' : '';
       });
   }
 
@@ -128,6 +125,7 @@ class AlertListPanel extends PanelCtrl {
           al.newStateDateAgo = moment(al.newStateDate).locale('en').fromNow(true);
           return al;
         }));
+        this.noAlertsMessage = this.currentAlerts.length === 0 ? 'No alerts' : '';
       });
   }
 
