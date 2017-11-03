@@ -56,10 +56,11 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
     let newColor = tinycolor(colorString);
     if (newColor.isValid()) {
       // Update only color state
+      let newColorString = newColor.toString();
       this.setState({
-        color: newColor.toString(),
+        color: newColorString,
       });
-      this.props.onColorSelect(newColor);
+      this.props.onColorSelect(newColorString);
     }
   }
 
