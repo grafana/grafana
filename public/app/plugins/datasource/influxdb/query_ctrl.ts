@@ -202,8 +202,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
   measurementChangedReact() {
     return (newValue) => {
-      console.log('measurementChangedReact', newValue);
-      this.target.measurement = newValue;
+      this.target.measurement = newValue.value;
       this.panelCtrl.refresh();
     };
   }

@@ -22,6 +22,7 @@ interface IProps {
   labelMode: boolean;
   allowCustom: boolean;
   lookupText: boolean;
+  cache: boolean;
   getOptions: (input: string) => any;
   onChange: (val: any) => void;
 }
@@ -30,16 +31,15 @@ export class FormDropdown extends React.Component<IProps, any> {
   selectControl: any;
   selectComponent: any;
   text: string;
-  cache: any;
+  optionsCache: any;
 
   constructor(props) {
     super(props);
     this.state = {
       value: convertToOption(this.props.value),
-      labelMode: this.props.labelMode,
       cssClasses: ""
     };
-    this.cache = {};
+    this.optionsCache = {};
 
     this.loadOptionsInternal = this.loadOptionsInternal.bind(this);
     this.onChangeInternal = this.onChangeInternal.bind(this);
@@ -59,7 +59,7 @@ export class FormDropdown extends React.Component<IProps, any> {
 
   onChangeInternal(newValue) {
     this.setState({value: newValue});
-    this.props.onChange(newValue.value);
+    this.props.onChange(newValue);
   }
 
   setSelectElement(component) {
@@ -76,15 +76,16 @@ export class FormDropdown extends React.Component<IProps, any> {
   }
 
   onOpen() {
-    // Clear label
+    // Clear input label
     this.getValueLabel().text("");
   }
 
   onClose() {
-    // Set cleared label back to value
+    // Set cleared input label back to current value
     this.getValueLabel().text(this.state.value.value);
   }
 
+  // Set label text for custom values instead of 'Create option "{label}"'
   promptTextCreator(filterText: string): string {
     return filterText;
   }
@@ -99,52 +100,43 @@ export class FormDropdown extends React.Component<IProps, any> {
   }
 
   render() {
-    if (this.state.labelMode) {
-      this.state.cssClasses = "gf-form-label gf-form-dropdown-react " + this.props.cssClass;
+    let cssClasses;
+    if (this.props.labelMode) {
+      cssClasses = "gf-form-label gf-form-dropdown-react " + this.props.cssClass;
     } else {
-      this.state.cssClasses = "gf-form-input gf-form-dropdown-react " + this.props.cssClass;
+      cssClasses = "gf-form-input gf-form-dropdown-react " + this.props.cssClass;
     }
 
+    const commonProps = {
+      value: this.state.value,
+      cache: this.props.cache !== false ? this.optionsCache : false, // enabled by default
+      name: "form-field-name",
+      clearable: false,
+      labelKey: LABEL_KEY,
+      placeholder: NULL_VALUE_PLACEHOLDER,
+      onChange: this.onChangeInternal,
+      onOpen: this.onOpen,
+      onClose: this.onClose,
+      ref: this.setSelectElement
+    };
+
     const formDropdown = (
-      <Select name="form-field-name"
-        value={this.state.value}
+      <Select {...commonProps}
         options={this.props.options}
-        onChange={this.onChangeInternal}
-        onOpen={this.onOpen}
-        onClose={this.onClose}
-        clearable={false}
-        labelKey={LABEL_KEY}
-        placeholder={NULL_VALUE_PLACEHOLDER}
       />
     );
 
     const formDropdownAsync = (
-      <Select.Async name="form-field-name" ref={this.setSelectElement}
-        value={this.state.value}
+      <Select.Async {...commonProps}
         loadOptions={this.loadOptionsInternal}
-        onChange={this.onChangeInternal}
-        onOpen={this.onOpen}
-        onClose={this.onClose}
-        clearable={false}
-        labelKey={LABEL_KEY}
-        placeholder={NULL_VALUE_PLACEHOLDER}
-        closeOnSelect={true}
       />
     );
 
     const formDropdownAsyncCreatable = (
-      <AsyncCreatable name="form-field-name" ref={this.setSelectElement}
-        value={this.state.value}
+      <AsyncCreatable {...commonProps}
         loadOptions={this.loadOptionsInternal}
-        onChange={this.onChangeInternal}
-        onOpen={this.onOpen}
-        onClose={this.onClose}
-        clearable={false}
-        labelKey={LABEL_KEY}
-        placeholder={NULL_VALUE_PLACEHOLDER}
         promptTextCreator={this.promptTextCreator}
         isOptionUnique={this.isOptionUnique}
-        closeOnSelect={true}
       />
     );
 
@@ -160,7 +152,7 @@ export class FormDropdown extends React.Component<IProps, any> {
     }
 
     return (
-      <div className={this.state.cssClasses}>
+      <div className={cssClasses}>
         {formDropdownComponent}
       </div>
     );
@@ -182,6 +174,7 @@ react2AngularDirective('gfFormDropdownReact', FormDropdown, [
   'labelMode',
   'allowCustom',
   'lookupText',
+  'cache',
   ['getOptions', { watchDepth: 'reference', wrapApply: true }],
   ['onChange', { watchDepth: 'reference', wrapApply: true }],
 ]);
