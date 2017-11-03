@@ -9,6 +9,7 @@ import { react2AngularDirective } from 'app/core/utils/react2angular';
 
 const NULL_VALUE_PLACEHOLDER = 'default';
 const LABEL_KEY = 'text';
+const VALUE_KEY = 'value';
 
 interface IOptionsItem {
   value: string;
@@ -46,6 +47,7 @@ export class FormDropdown extends React.Component<IProps, any> {
     this.onOpen = this.onOpen.bind(this);
     this.onClose = this.onClose.bind(this);
     this.setSelectElement = this.setSelectElement.bind(this);
+    this.valueRenderer = this.valueRenderer.bind(this);
   }
 
   loadOptionsInternal(input: string) {
@@ -99,6 +101,14 @@ export class FormDropdown extends React.Component<IProps, any> {
     return result;
   }
 
+  valueRenderer(option) {
+    if (this.props.lookupText) {
+      return option[LABEL_KEY];
+    } else {
+      return option[VALUE_KEY];
+    }
+  }
+
   render() {
     let cssClasses;
     if (this.props.labelMode) {
@@ -113,11 +123,13 @@ export class FormDropdown extends React.Component<IProps, any> {
       name: "form-field-name",
       clearable: false,
       labelKey: LABEL_KEY,
+      valueKey: VALUE_KEY,
       placeholder: NULL_VALUE_PLACEHOLDER,
       onChange: this.onChangeInternal,
       onOpen: this.onOpen,
       onClose: this.onClose,
-      ref: this.setSelectElement
+      ref: this.setSelectElement,
+      valueRenderer: this.valueRenderer
     };
 
     const formDropdown = (
