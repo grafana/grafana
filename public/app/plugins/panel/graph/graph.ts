@@ -313,11 +313,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
               let ticks = panel.xaxis.buckets || panelWidth / 50;
               bucketSize = tickStep(histMin, histMax, ticks);
               let histogram = convertValuesToHistogram(values, bucketSize);
-
               data[0].data = histogram;
-              data[0].alias = data[0].label = data[0].id = "count";
-              data = [data[0]];
-
               options.series.bars.barWidth = bucketSize * 0.8;
             } else {
               bucketSize = 0;
