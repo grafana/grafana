@@ -158,7 +158,7 @@ func getEngine() (*xorm.Engine, error) {
 	} else {
 		engine.SetMaxOpenConns(DbCfg.MaxOpenConn)
 		engine.SetMaxIdleConns(DbCfg.MaxIdleConn)
-		debugSql := setting.Cfg.Section("database").Key("debug").MustBool(false)
+		debugSql := setting.Cfg.Section("database").Key("log_queries").MustBool(false)
 		if !debugSql {
 			engine.SetLogger(&xorm.DiscardLogger{})
 		} else {

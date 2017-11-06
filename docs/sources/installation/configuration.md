@@ -224,7 +224,7 @@ The maximum number of connections in the idle connection pool.
 ### max_open_conn
 The maximum number of open connections to the database.
 
-### debug
+### log_queries
 Set to `true` to log the sql calls and execution times.
 
 <hr />
