@@ -375,20 +375,8 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         var sortOrder = panel.legend.sortDesc;
         var haveSortBy = sortBy !== null || sortBy !== undefined;
         var haveSortOrder = sortOrder !== null || sortOrder !== undefined;
-
-        if (panel.stack && haveSortBy && haveSortOrder) {
-          var desc = desc = panel.legend.sortDesc === true ? -1 : 1;
-          series.sort((x, y) => {
-            if (x.stats[sortBy] > y.stats[sortBy]) {
-              return 1 * desc;
-            }
-            if (x.stats[sortBy] < y.stats[sortBy]) {
-              return -1 * desc;
-            }
-
-            return 0;
-          });
-        }
+        var shouldSortBy = panel.stack && haveSortBy && haveSortOrder;
+        var sortDesc = panel.legend.sortDesc === true ? -1 : 1;
 
         series.sort((x, y) => {
           if (x.zindex > y.zindex) {
@@ -397,6 +385,15 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
 
           if (x.zindex < y.zindex) {
             return -1;
+          }
+
+          if (shouldSortBy) {
+            if (x.stats[sortBy] > y.stats[sortBy]) {
+              return 1 * sortDesc;
+            }
+            if (x.stats[sortBy] < y.stats[sortBy]) {
+              return -1 * sortDesc;
+            }
           }
 
           return 0;
