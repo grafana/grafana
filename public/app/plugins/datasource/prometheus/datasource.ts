@@ -113,6 +113,10 @@ export class PrometheusDatasource {
       var result = [];
 
       _.each(responseList, (response, index) => {
+        if (response.status === 'error') {
+          throw response.error;
+        }
+
         if (activeTargets[index].format !== "table") {
           for (let metricData of response.data.data.result) {
             if (response.data.data.resultType === 'matrix') {
