@@ -9,6 +9,7 @@ export class TablePanelEditorCtrl {
   panelCtrl: any;
   transformers: any;
   fontSizes: any;
+  paddingSizes: any;
   addColumnSegment: any;
   getColumnNames: any;
   canSetColumns: boolean;
@@ -21,6 +22,7 @@ export class TablePanelEditorCtrl {
     this.panel = this.panelCtrl.panel;
     this.transformers = transformers;
     this.fontSizes = ['80%', '90%', '100%', '110%', '120%', '130%', '150%', '160%', '180%', '200%', '220%', '250%'];
+    this.paddingSizes = ['Narrow', 'Normal'];
     this.addColumnSegment = uiSegmentSrv.newPlusButton();
     this.updateTransformHints();
   }

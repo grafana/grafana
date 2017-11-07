@@ -189,6 +189,9 @@ export class TableRenderer {
     } else {
       columnHtml += value;
     }
+    if (this.panel.paddingSize === "Narrow") {
+      cellClasses.push("table-panel-cell-narrow-padding");
+    }
 
     if (column.filterable) {
       cellClasses.push("table-panel-cell-filterable");
@@ -206,6 +209,7 @@ export class TableRenderer {
     if (cellClasses.length) {
       cellClass = ' class="' + cellClasses.join(' ') + '"';
     }
+
 
     columnHtml = '<td' + cellClass + style + '>' + columnHtml + '</td>';
     return columnHtml;

@@ -62,10 +62,14 @@
   }
 
   td {
-    padding: 0.45em 0 0.45em 1.1em;
     border-bottom: 2px solid $body-bg;
     border-right: 2px solid $body-bg;
-
+    &:not(.table-panel-cell-narrow-padding) {
+      padding: 0.45em 0 0.45em 1.1em;
+    }
+    &.table-panel-cell-narrow-padding{
+      padding: 2px 0 2px 1.1em;
+    }
     &:first-child {
       padding-left: 15px;
     }
