@@ -85,12 +85,12 @@ func TestCloudWatchMetrics(t *testing.T) {
 		executor := &CloudWatchExecutor{
 			ec2Svc: mockedEc2{Resp: ec2.DescribeInstancesOutput{
 				Reservations: []*ec2.Reservation{
-					&ec2.Reservation{
+					{
 						Instances: []*ec2.Instance{
-							&ec2.Instance{
+							{
 								InstanceId: aws.String("i-12345678"),
 								Tags: []*ec2.Tag{
-									&ec2.Tag{
+									{
 										Key:   aws.String("Environment"),
 										Value: aws.String("production"),
 									},
