@@ -25,12 +25,16 @@ enabled = true
 header_name = X-WEBAUTH-USER
 header_property = username
 auto_sign_up = true
+ldap_sync_ttl = 60
+whitelist =
 ```
 
 * **enabled**: this is to toggle the feature on or off
 * **header_name**: this is the HTTP header name that passes the username or email address of the authenticated user to Grafana. Grafana will trust what ever username is contained in this header and automatically log the user in.
 * **header_property**: this tells Grafana whether the value in the header_name is a username or an email address. (In Grafana you can log in using your account username or account email)
 * **auto_sign_up**: If set to true, Grafana will automatically create user accounts in the Grafana DB if one does not exist. If set to false, users who do not exist in the GrafanaDB won’t be able to log in, even though their username and password are valid.
+* **ldap_sync_ttl**: When both auth.proxy and auth.ldap are enabled, user's organisation and role are synchronised from ldap after the http proxy authentication. You can force ldap re-synchronisation after `ldap_sync_ttl` minutes.
+* **whitelist**: Comma separated list of trusted authentication proxies IP.
 
 With a fresh install of Grafana, using the above configuration for the authProxy feature, we can send a simple API call to list all users. The only user that will be present is the default “Admin” user that is added the first time Grafana starts up. As you can see all we need to do to authenticate the request is to provide the “X-WEBAUTH-USER” header.
 
