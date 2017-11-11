@@ -66,8 +66,8 @@ describe('CloudWatchDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.post = function(path, params) {
-        requestParams = params;
+      ctx.backendSrv.datasourceRequest = function(params) {
+        requestParams = params.data;
         return ctx.$q.when(response);
       };
     });
@@ -211,8 +211,8 @@ describe('CloudWatchDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.post = function(path, params) {
-        requestParams = params;
+      ctx.backendSrv.datasourceRequest = function(params) {
+        requestParams = params.data;
         return ctx.$q.when(response);
       };
     });
@@ -234,11 +234,7 @@ describe('CloudWatchDatasource', function() {
         beforeEach(() => {
           setupCallback();
           ctx.backendSrv.datasourceRequest = args => {
-            scenario.request = args;
-            return ctx.$q.when({ data: scenario.requestResponse });
-          };
-          ctx.backendSrv.post = (path, args) => {
-            scenario.request = args;
+            scenario.request = args.data;
             return ctx.$q.when(scenario.requestResponse);
           };
           ctx.ds.metricFindQuery(query).then(args => {
