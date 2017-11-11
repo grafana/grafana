@@ -315,7 +315,8 @@ func parseResponse(resp *cloudwatch.GetMetricStatisticsOutput, query *CloudWatch
 	var value float64
 	for _, s := range append(query.Statistics, query.ExtendedStatistics...) {
 		series := tsdb.TimeSeries{
-			Tags: map[string]string{},
+			Tags:   map[string]string{},
+			Points: make([]tsdb.TimePoint, 0),
 		}
 		for _, d := range query.Dimensions {
 			series.Tags[*d.Name] = *d.Value
