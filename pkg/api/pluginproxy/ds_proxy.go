@@ -189,8 +189,14 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	if proxy.ds.Type == m.DS_PROMETHEUS {
-		if proxy.ctx.Req.Request.Method != http.MethodGet || !strings.HasPrefix(proxy.proxyPath, "api/") {
-			return errors.New("GET is only allowed on proxied Prometheus datasource")
+		if proxy.ctx.Req.Request.Method == "DELETE" {
+			return errors.New("Deletes not allowed on proxied Prometheus datasource")
+		}
+		if proxy.ctx.Req.Request.Method == "PUT" {
+			return errors.New("Puts not allowed on proxied Prometheus datasource")
+		}
+		if proxy.ctx.Req.Request.Method == "POST" && !(proxy.proxyPath == "api/v1/query" || proxy.proxyPath == "api/v1/query_range") {
+			return errors.New("Posts not allowed on proxied Prometheus datasource except on /query and /query_range")
 		}
 	}
 
