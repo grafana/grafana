@@ -41,8 +41,6 @@ export class FormDropdown extends React.Component<IProps, any> {
 
     this.loadOptionsInternal = this.loadOptionsInternal.bind(this);
     this.onChangeInternal = this.onChangeInternal.bind(this);
-    this.onOpen = this.onOpen.bind(this);
-    this.onClose = this.onClose.bind(this);
     this.setSelectElement = this.setSelectElement.bind(this);
     this.valueRenderer = this.valueRenderer.bind(this);
   }
@@ -68,20 +66,6 @@ export class FormDropdown extends React.Component<IProps, any> {
     } else {
       return null;
     }
-  }
-
-  getValueLabel() {
-    return this.selectControl.find('.Select-value-label');
-  }
-
-  onOpen() {
-    // Clear input label
-    this.getValueLabel().text("");
-  }
-
-  onClose() {
-    // Set cleared input label back to current value
-    this.getValueLabel().text(this.state.value.value);
   }
 
   // Set label text for custom values instead of 'Create option "{label}"'
@@ -123,8 +107,6 @@ export class FormDropdown extends React.Component<IProps, any> {
       valueKey: VALUE_KEY,
       placeholder: NULL_VALUE_PLACEHOLDER,
       onChange: this.onChangeInternal,
-      onOpen: this.onOpen,
-      onClose: this.onClose,
       ref: this.setSelectElement,
       valueRenderer: this.valueRenderer
     };
