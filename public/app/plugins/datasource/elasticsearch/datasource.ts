@@ -164,6 +164,11 @@ export class ElasticDatasource {
           }
         }
 
+        var timeAsNumber = _.toNumber(time);
+        if (!_.isNaN(timeAsNumber)) {
+            time = timeAsNumber;
+        }
+
         var event = {
           annotation: annotation,
           time: moment.utc(time).valueOf(),
