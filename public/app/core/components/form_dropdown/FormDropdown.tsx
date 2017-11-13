@@ -1,11 +1,8 @@
 import React from 'react';
-// import ReactDOM from 'react-dom';
 import Select from 'react-select';
 import { AsyncCreatable } from 'react-select';
 import _ from 'lodash';
 import $ from 'jquery';
-import 'react-select/scss/default.scss';
-import { react2AngularDirective } from 'app/core/utils/react2angular';
 
 const NULL_VALUE_PLACEHOLDER = 'default';
 const LABEL_KEY = 'text';
@@ -178,15 +175,3 @@ function convertToOption(value) {
   option[LABEL_KEY] = value;
   return option;
 }
-
-react2AngularDirective('gfFormDropdownReact', FormDropdown, [
-  'value',
-  'options',
-  'cssClass',
-  'labelMode',
-  'allowCustom',
-  'lookupText',
-  'cache',
-  ['getOptions', { watchDepth: 'reference', wrapApply: true }],
-  ['onChange', { watchDepth: 'reference', wrapApply: true }],
-]);
