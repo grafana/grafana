@@ -224,17 +224,17 @@ describe('ES Histogram converter', () => {
         '1422774000000': {
           x: 1422774000000,
           buckets: {
-            '1': { y: 1, count: 1, values: [], points: [] },
-            '2': { y: 2, count: 5, values: [], points: [] },
-            '3': { y: 3, count: 0, values: [], points: [] }
+            '1': { y: 1, count: 1, values: [], points: [], bounds: {bottom: 1, top: null}},
+            '2': { y: 2, count: 5, values: [], points: [], bounds: {bottom: 2, top: null}},
+            '3': { y: 3, count: 0, values: [], points: [], bounds: {bottom: 3, top: null}}
           }
         },
         '1422774060000': {
           x: 1422774060000,
           buckets: {
-            '1': { y: 1, count: 0, values: [], points: [] },
-            '2': { y: 2, count: 3, values: [], points: [] },
-            '3': { y: 3, count: 1, values: [], points: [] }
+            '1': { y: 1, count: 0, values: [], points: [], bounds: {bottom: 1, top: null}},
+            '2': { y: 2, count: 3, values: [], points: [], bounds: {bottom: 2, top: null}},
+            '3': { y: 3, count: 1, values: [], points: [], bounds: {bottom: 3, top: null}}
           }
         },
       };

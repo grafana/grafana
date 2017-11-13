@@ -83,7 +83,7 @@ export class HeatmapTooltip {
     let xData = data.buckets[xBucketIndex];
     // Search in special 'zero' bucket also
     let yData = _.find(xData.buckets, (bucket, bucketIndex) => {
-      return bucket.bounds.bottom === yBucketIndex || bucketIndex === yBucketIndex;
+      return bucket.bounds.bottom === yBucketIndex || bucketIndex === yBucketIndex.toString();
     });
 
     let tooltipTimeFormat = 'YYYY-MM-DD HH:mm:ss';
@@ -168,7 +168,8 @@ export class HeatmapTooltip {
     let yBucketSize = this.scope.ctrl.data.yBucketSize;
     let {min, max, ticks} = this.scope.ctrl.data.yAxis;
     let histogramData = _.map(xBucket.buckets, bucket => {
-      return [bucket.bounds.bottom, bucket.values.length];
+      let count = bucket.count !== undefined ? bucket.count : bucket.values.length;
+      return [bucket.bounds.bottom, count];
     });
     histogramData = _.filter(histogramData, d => {
       return d[0] >= min && d[0] <= max;
