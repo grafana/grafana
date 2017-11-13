@@ -225,7 +225,7 @@ func init() {
 
 	M_DataSource_ProxyReq_Timer = prometheus.NewSummary(prometheus.SummaryOpts{
 		Name:      "api_dataproxy_request_all_milliseconds",
-		Help:      "summary for dashboard search duration",
+		Help:      "summary for dataproxy request duration",
 		Namespace: exporterName,
 	})
 

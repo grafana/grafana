@@ -85,7 +85,7 @@
 					Back to dashboard
 				</a>
 			</li>
-			<li>
+			<li ng-if="!ctrl.dashboard.timepicker.hidden">
 				<gf-time-picker dashboard="ctrl.dashboard"></gf-time-picker>
 			</li>
 		</ul>

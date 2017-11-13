@@ -27,8 +27,7 @@ and the conditions that need to be met for the alert to change state and trigger
 ## Execution
 
 The alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
-of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`,
-`InfluxDB` and `OpenTSDB`.
+of core Grafana. Only some data sources are supported right now. They include `Graphite`, `Prometheus`, `InfluxDB`, `OpenTSDB`, `MySQL`, `Postgres` and `Cloudwatch`.
 
 ### Clustering
 

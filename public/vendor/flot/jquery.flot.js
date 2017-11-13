@@ -2962,8 +2962,11 @@ Licensed under the MIT license.
         }
 
         function onClick(e) {
-            triggerClickHoverEvent("plotclick", e,
-                                   function (s) { return s["clickable"] != false; });
+          if (plot.isSelecting) {
+            return;
+          }
+
+          triggerClickHoverEvent("plotclick", e, function (s) { return s["clickable"] != false; });
         }
 
         // trigger click or hover event (they send the same parameters

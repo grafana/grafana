@@ -48,7 +48,7 @@ describe("DateMath", () => {
 
   it("now/d on a utc dashboard should be start of the current day in UTC time", () => {
     var today = new Date();
-    var expected = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0));
+    var expected = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0));
 
     var startOfDay = dateMath.parse('now/d', false, 'utc').valueOf();
     expect(startOfDay).toBe(expected.getTime());

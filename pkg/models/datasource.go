@@ -23,10 +23,10 @@ const (
 	DS_ACCESS_PROXY  = "proxy"
 )
 
-// Typed errors
 var (
-	ErrDataSourceNotFound   = errors.New("Data source not found")
-	ErrDataSourceNameExists = errors.New("Data source with same name already exists")
+	ErrDataSourceNotFound           = errors.New("Data source not found")
+	ErrDataSourceNameExists         = errors.New("Data source with same name already exists")
+	ErrDataSourceUpdatingOldVersion = errors.New("Trying to update old version of datasource")
 )
 
 type DsAccess string
@@ -131,10 +131,12 @@ type UpdateDataSourceCommand struct {
 	IsDefault         bool              `json:"isDefault"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
+	Version           int               `json:"version"`
 
-	OrgId   int64 `json:"-"`
-	Id      int64 `json:"-"`
-	Version int   `json:"-"`
+	OrgId int64 `json:"-"`
+	Id    int64 `json:"-"`
+
+	Result *DataSource
 }
 
 type DeleteDataSourceByIdCommand struct {

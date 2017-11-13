@@ -1,5 +1,5 @@
 FROM phusion/baseimage:0.9.22
-MAINTAINER Denys Zhdanov <denis.zhdanov@gmail.com>
+LABEL maintainer="Denys Zhdanov <denis.zhdanov@gmail.com>"
 
 RUN apt-get -y update \
   && apt-get -y upgrade \
@@ -90,4 +90,5 @@ EXPOSE 80 2003-2004 2023-2024 8125/udp 8126
 VOLUME ["/opt/graphite/conf", "/opt/graphite/storage", "/etc/nginx", "/opt/statsd", "/etc/logrotate.d", "/var/log"]
 WORKDIR /
 ENV HOME /root
+ENV STATSD_INTERFACE udp
 CMD ["/sbin/my_init"]

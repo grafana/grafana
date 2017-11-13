@@ -1,26 +1,13 @@
-define([
-  'angular',
-  'lodash',
-  'jquery',
-  '../core_module',
-],
-function (angular, _, $, coreModule) {
-  'use strict';
+import angular from 'angular';
+import _ from 'lodash';
+import $ from 'jquery';
+import coreModule from '../core_module';
 
-  coreModule.default.controller('InspectCtrl', function($scope, $sanitize) {
+export class InspectCtrl {
+
+  /** @ngInject */
+  constructor($scope, $sanitize) {
     var model = $scope.inspector;
-
-    function getParametersFromQueryString(queryString) {
-      var result = [];
-      var parameters = queryString.split("&");
-      for (var i = 0; i < parameters.length; i++) {
-        var keyValue = parameters[i].split("=");
-        if (keyValue[1].length > 0) {
-          result.push({ key: keyValue[0], value: window.unescape(keyValue[1]) });
-        }
-      }
-      return result;
-    }
 
     $scope.init = function () {
       $scope.editor = { index: 0 };
@@ -57,7 +44,7 @@ function (angular, _, $, coreModule) {
         $scope.editor.index = 2;
 
         if (_.isString(model.error.config.data)) {
-          $scope.request_parameters = getParametersFromQueryString(model.error.config.data);
+          $scope.request_parameters = this.getParametersFromQueryString(model.error.config.data);
         } else  {
           $scope.request_parameters = _.map(model.error.config.data, function(value, key) {
             return {key: key, value: angular.toJson(value, true)};
@@ -65,7 +52,18 @@ function (angular, _, $, coreModule) {
         }
       }
     };
+  }
+  getParametersFromQueryString(queryString) {
+    var result = [];
+    var parameters = queryString.split("&");
+    for (var i = 0; i < parameters.length; i++) {
+      var keyValue = parameters[i].split("=");
+      if (keyValue[1].length > 0) {
+        result.push({ key: keyValue[0], value: (<any>window).unescape(keyValue[1]) });
+      }
+    }
+    return result;
+  }
+}
 
-  });
-
-});
+coreModule.controller('InspectCtrl', InspectCtrl);
