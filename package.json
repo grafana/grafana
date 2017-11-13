@@ -95,12 +95,12 @@
     "zone.js": "^0.7.2"
   },
   "scripts": {
-    "dev": "node ./node_modules/.bin/webpack --progress --colors --config scripts/webpack/webpack.dev.js",
-    "watch": "node ./node_modules/.bin/webpack --progress --colors --watch --config scripts/webpack/webpack.dev.js",
-    "build": "node ./node_modules/.bin/grunt build",
-    "test": "node ./node_modules/.bin/grunt test",
-    "test:coverage": "node ./node_modules/.bin/grunt test --coverage=true",
-    "lint": "node ./node_modules/.bin/tslint -c tslint.json --project tsconfig.json --type-check",
+    "dev": "webpack --progress --colors --config scripts/webpack/webpack.dev.js",
+    "watch": "webpack --progress --colors --watch --config scripts/webpack/webpack.dev.js",
+    "build": "grunt build",
+    "test": "grunt test",
+    "test:coverage": "grunt test --coverage=true",
+    "lint": "tslint -c tslint.json --project tsconfig.json --type-check",
     "karma": "node ./node_modules/grunt-cli/bin/grunt karma:dev",
     "jest": "node ./node_modules/jest-cli/bin/jest.js --notify --watch",
     "precommit": "node ./node_modules/grunt-cli/bin/grunt precommit"
