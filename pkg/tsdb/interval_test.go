@@ -14,31 +14,33 @@ func TestInterval(t *testing.T) {
 			HomePath: "../../",
 		})
 
+		calculator := NewIntervalCalculator(&IntervalOptions{})
+
 		Convey("for 5min", func() {
 			tr := NewTimeRange("5m", "now")
 
-			interval := CalculateInterval(tr)
+			interval := calculator.Calculate(tr)
 			So(interval.Text, ShouldEqual, "200ms")
 		})
 
 		Convey("for 15min", func() {
 			tr := NewTimeRange("15m", "now")
 
-			interval := CalculateInterval(tr)
+			interval := calculator.Calculate(tr)
 			So(interval.Text, ShouldEqual, "500ms")
 		})
 
 		Convey("for 30min", func() {
 			tr := NewTimeRange("30m", "now")
 
-			interval := CalculateInterval(tr)
+			interval := calculator.Calculate(tr)
 			So(interval.Text, ShouldEqual, "1s")
 		})
 
 		Convey("for 1h", func() {
 			tr := NewTimeRange("1h", "now")
 
-			interval := CalculateInterval(tr)
+			interval := calculator.Calculate(tr)
 			So(interval.Text, ShouldEqual, "2s")
 		})
 

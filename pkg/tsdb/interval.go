@@ -6,10 +6,10 @@ import (
 )
 
 var (
-	defaultRes  int64         = 1500
-	minInterval time.Duration = 1 * time.Millisecond
-	year        time.Duration = time.Hour * 24 * 365
-	day         time.Duration = time.Hour * 24 * 365
+	defaultRes         int64         = 1500
+	defaultMinInterval time.Duration = 1 * time.Millisecond
+	year               time.Duration = time.Hour * 24 * 365
+	day                time.Duration = time.Hour * 24 * 365
 )
 
 type Interval struct {
@@ -17,14 +17,45 @@ type Interval struct {
 	Value time.Duration
 }
 
-func CalculateInterval(timerange *TimeRange) Interval {
-	interval := time.Duration((timerange.MustGetTo().UnixNano() - timerange.MustGetFrom().UnixNano()) / defaultRes)
+type intervalCalculator struct {
+	minInterval time.Duration
+}
 
-	if interval < minInterval {
-		return Interval{Text: formatDuration(minInterval), Value: interval}
+type IntervalCalculator interface {
+	Calculate(*TimeRange) Interval
+}
+
+type IntervalOptions struct {
+	MinInterval time.Duration
+}
+
+func NewIntervalCalculator(opt *IntervalOptions) *intervalCalculator {
+	if opt == nil {
+		opt = &IntervalOptions{}
 	}
 
-	return Interval{Text: formatDuration(roundInterval(interval)), Value: interval}
+	calc := &intervalCalculator{}
+
+	if opt.MinInterval == 0 {
+		calc.minInterval = defaultMinInterval
+	} else {
+		calc.minInterval = opt.MinInterval
+	}
+
+	return calc
+}
+
+func (ic *intervalCalculator) Calculate(timerange *TimeRange) Interval {
+	to := timerange.MustGetTo().UnixNano()
+	from := timerange.MustGetFrom().UnixNano()
+	interval := time.Duration((to - from) / defaultRes)
+
+	if interval < ic.minInterval {
+		return Interval{Text: formatDuration(ic.minInterval), Value: ic.minInterval}
+	}
+
+	rounded := roundInterval(interval)
+	return Interval{Text: formatDuration(rounded), Value: rounded}
 }
 
 func formatDuration(inter time.Duration) string {

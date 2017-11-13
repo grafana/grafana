@@ -42,7 +42,8 @@ func (query *Query) Build(queryContext *tsdb.TsdbQuery) (string, error) {
 }
 
 func getDefinedInterval(query *Query, queryContext *tsdb.TsdbQuery) (*tsdb.Interval, error) {
-	defaultInterval := tsdb.CalculateInterval(queryContext.TimeRange)
+	calculator := tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{})
+	defaultInterval := calculator.Calculate(queryContext.TimeRange)
 
 	if query.Interval == "" {
 		return &defaultInterval, nil

@@ -48,14 +48,16 @@ func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, e
 }
 
 var (
-	plog         log.Logger
-	legendFormat *regexp.Regexp
+	plog               log.Logger
+	legendFormat       *regexp.Regexp
+	intervalCalculator tsdb.IntervalCalculator
 )
 
 func init() {
 	plog = log.New("tsdb.prometheus")
 	tsdb.RegisterTsdbQueryEndpoint("prometheus", NewPrometheusExecutor)
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	intervalCalculator = tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{MinInterval: time.Second * 1})
 }
 
 func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, error) {
@@ -146,11 +148,6 @@ func parseQuery(queries []*tsdb.Query, queryContext *tsdb.TsdbQuery) (*Prometheu
 		return nil, err
 	}
 
-	step, err := queryModel.Model.Get("step").Int64()
-	if err != nil {
-		return nil, err
-	}
-
 	format := queryModel.Model.Get("legendFormat").MustString("")
 
 	start, err := queryContext.TimeRange.ParseFrom()
@@ -163,9 +160,13 @@ func parseQuery(queries []*tsdb.Query, queryContext *tsdb.TsdbQuery) (*Prometheu
 		return nil, err
 	}
 
+	intervalFactor := queryModel.Model.Get("intervalFactor").MustInt64(1)
+	interval := intervalCalculator.Calculate(queryContext.TimeRange)
+	step := time.Duration(int64(interval.Value) * intervalFactor)
+
 	return &PrometheusQuery{
 		Expr:         expr,
-		Step:         time.Second * time.Duration(step),
+		Step:         step,
 		LegendFormat: format,
 		Start:        start,
 		End:          end,
