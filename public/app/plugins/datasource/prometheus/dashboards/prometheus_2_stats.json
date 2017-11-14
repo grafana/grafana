@@ -159,7 +159,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "max(prometheus_target_interval_length_seconds{job=\"prometheus\", quantile!=\"0.01\", quantile!=\"0.05\"}) by (quantile)",
+              "expr": "max(scrape_duration_seconds{job=\"prometheus\"})",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
@@ -348,7 +348,7 @@
           "tableColumn": "",
           "targets": [
             {
-              "expr": "tsdb_wal_corruptions_total",
+              "expr": "tsdb_wal_corruptions_total{job=\"prometheus\"}",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "",
@@ -381,88 +381,6 @@
       "collapse": false,
       "height": "200",
       "panels": [
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "${DS_NAME}",
-          "decimals": null,
-          "editable": true,
-          "error": false,
-          "fill": 0,
-          "grid": {},
-          "id": 35,
-          "legend": {
-            "alignAsTable": false,
-            "avg": false,
-            "current": false,
-            "hideEmpty": true,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "spaceLength": 10,
-          "span": 3,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "max(prometheus_evaluator_duration_seconds{quantile!=\"0.01\", quantile!=\"0.05\"}) by (quantile)",
-              "format": "time_series",
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{quantile}}",
-              "refId": "A",
-              "step": 20
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Rule Eval Duration",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "s",
-              "label": "",
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            },
-            {
-              "format": "short",
-              "logBase": 1,
-              "max": null,
-              "min": null,
-              "show": true
-            }
-          ]
-        },
         {
           "aliasColors": {},
           "bars": false,
@@ -588,7 +506,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "prometheus_tsdb_blocks_loaded",
+              "expr": "prometheus_tsdb_blocks_loaded{job=\"prometheus\"}",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "blocks",
@@ -664,7 +582,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "prometheus_tsdb_head_chunks",
+              "expr": "prometheus_tsdb_head_chunks{job=\"prometheus\"}",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
@@ -706,6 +624,95 @@
               "max": null,
               "min": null,
               "show": false
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${DS_NAME}",
+          "fill": 1,
+          "id": 36,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "duration-p99",
+              "yaxis": 2
+            }
+          ],
+          "spaceLength": 10,
+          "span": 3,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "prometheus_tsdb_head_gc_duration_seconds{job=\"prometheus\",quantile=\"0.99\"}",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "duration-p99",
+              "refId": "A",
+              "step": 20
+            },
+            {
+              "expr": "irate(prometheus_tsdb_head_gc_duration_seconds_count{job=\"prometheus\"}[5m])",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "collections",
+              "refId": "B",
+              "step": 20
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Head Block GC Activity",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "format": "s",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
+              "show": true
             }
           ]
         }
@@ -755,12 +762,12 @@
             }
           ],
           "spaceLength": 10,
-          "span": 3,
+          "span": 4,
           "stack": false,
           "steppedLine": false,
           "targets": [
             {
-              "expr": "histogram_quantile(0.99, sum(rate(prometheus_tsdb_compaction_duration_bucket[5m])) by (le))",
+              "expr": "histogram_quantile(0.99, sum(rate(prometheus_tsdb_compaction_duration_bucket{job=\"prometheus\"}[5m])) by (le))",
               "format": "time_series",
               "hide": false,
               "interval": "",
@@ -770,7 +777,7 @@
               "step": 20
             },
             {
-              "expr": "irate(prometheus_tsdb_compactions_total[5m])",
+              "expr": "irate(prometheus_tsdb_compactions_total{job=\"prometheus\"}[5m])",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "compactions",
@@ -778,7 +785,7 @@
               "step": 20
             },
             {
-              "expr": "irate(prometheus_tsdb_compactions_failed_total[5m])",
+              "expr": "irate(prometheus_tsdb_compactions_failed_total{job=\"prometheus\"}[5m])",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "failed",
@@ -786,7 +793,7 @@
               "step": 20
             },
             {
-              "expr": "irate(prometheus_tsdb_compactions_triggered_total[5m])",
+              "expr": "irate(prometheus_tsdb_compactions_triggered_total{job=\"prometheus\"}[5m])",
               "format": "time_series",
               "intervalFactor": 2,
               "legendFormat": "triggered",
@@ -837,95 +844,6 @@
           "dashes": false,
           "datasource": "${DS_NAME}",
           "fill": 1,
-          "id": 36,
-          "legend": {
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 1,
-          "links": [],
-          "nullPointMode": "null",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [
-            {
-              "alias": "duration-p99",
-              "yaxis": 2
-            }
-          ],
-          "spaceLength": 10,
-          "span": 3,
-          "stack": false,
-          "steppedLine": false,
-          "targets": [
-            {
-              "expr": "prometheus_tsdb_head_gc_duration_seconds{quantile=\"0.99\"}",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "duration-p99",
-              "refId": "A",
-              "step": 20
-            },
-            {
-              "expr": "irate(prometheus_tsdb_head_gc_duration_seconds_count[5m])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "collections",
-              "refId": "B",
-              "step": 20
-            }
-          ],
-          "thresholds": [],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Head Block GC Activity",
-          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
-          },
-          "type": "graph",
-          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": []
-          },
-          "yaxes": [
-            {
-              "format": "short",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": "0",
-              "show": true
-            },
-            {
-              "format": "s",
-              "label": null,
-              "logBase": 1,
-              "max": null,
-              "min": "0",
-              "show": true
-            }
-          ]
-        },
-        {
-          "aliasColors": {},
-          "bars": false,
-          "dashLength": 10,
-          "dashes": false,
-          "datasource": "${DS_NAME}",
-          "fill": 1,
           "id": 32,
           "legend": {
             "avg": false,
@@ -946,7 +864,7 @@
           "renderer": "flot",
           "seriesOverrides": [],
           "spaceLength": 10,
-          "span": 3,
+          "span": 4,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -1031,7 +949,7 @@
           "renderer": "flot",
           "seriesOverrides": [],
           "spaceLength": 10,
-          "span": 3,
+          "span": 4,
           "stack": false,
           "steppedLine": false,
           "targets": [
@@ -1087,6 +1005,192 @@
       "showTitle": false,
       "title": "New row",
       "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${DS_NAME}",
+          "decimals": null,
+          "editable": true,
+          "error": false,
+          "fill": 0,
+          "grid": {},
+          "id": 35,
+          "legend": {
+            "alignAsTable": false,
+            "avg": false,
+            "current": false,
+            "hideEmpty": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "max(prometheus_evaluator_duration_seconds{job=\"prometheus\", quantile!=\"0.01\", quantile!=\"0.05\"}) by (quantile)",
+              "format": "time_series",
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{quantile}}",
+              "refId": "A",
+              "step": 10
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Rule Eval Duration",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "s",
+              "label": "",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${DS_NAME}",
+          "fill": 1,
+          "id": 39,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "span": 6,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "expr": "rate(prometheus_evaluator_iterations_missed_total{job=\"prometheus\"}[5m])",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "missed",
+              "refId": "B",
+              "step": 10
+            },
+            {
+              "expr": "rate(prometheus_evaluator_iterations_skipped_total{job=\"prometheus\"}[5m])",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "skipped",
+              "refId": "C",
+              "step": 10
+            },
+            {
+              "expr": "rate(prometheus_evaluator_iterations_total{job=\"prometheus\"}[5m])",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "iterations",
+              "refId": "A",
+              "step": 10
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Rule Eval Activity",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Dashboard Row",
+      "titleSize": "h6"
     }
   ],
   "schemaVersion": 14,
@@ -1129,5 +1233,5 @@
   },
   "timezone": "browser",
   "title": "Prometheus 2.0 Stats",
-  "version": 12
+  "version": 19
 }
