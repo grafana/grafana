@@ -159,6 +159,8 @@ export class FormDropdownCtrl {
   }
 
   updateValue(text) {
+    text = _.unescape(text);
+
     if (text === '' || this.text === text) {
       return;
     }
