@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -13,6 +14,10 @@ import (
 
 func TestPrometheus(t *testing.T) {
 	Convey("Prometheus", t, func() {
+		dsInfo := &models.DataSource{
+			JsonData: simplejson.New(),
+		}
+
 		Convey("converting metric name", func() {
 			metric := map[p.LabelName]p.LabelValue{
 				p.LabelName("app"):    p.LabelValue("backend"),
@@ -55,7 +60,7 @@ func TestPrometheus(t *testing.T) {
 			Convey("with 48h time range", func() {
 				queryContext.TimeRange = tsdb.NewTimeRange("12h", "now")
 
-				model, err := parseQuery(queryModels, queryContext)
+				model, err := parseQuery(dsInfo, queryModels, queryContext)
 
 				So(err, ShouldBeNil)
 				So(model.Step, ShouldEqual, time.Second*30)
@@ -78,7 +83,7 @@ func TestPrometheus(t *testing.T) {
 			Convey("with 48h time range", func() {
 				queryContext.TimeRange = tsdb.NewTimeRange("48h", "now")
 
-				model, err := parseQuery(queryModels, queryContext)
+				model, err := parseQuery(dsInfo, queryModels, queryContext)
 
 				So(err, ShouldBeNil)
 				So(model.Step, ShouldEqual, time.Minute*2)
@@ -87,10 +92,10 @@ func TestPrometheus(t *testing.T) {
 			Convey("with 1h time range", func() {
 				queryContext.TimeRange = tsdb.NewTimeRange("1h", "now")
 
-				model, err := parseQuery(queryModels, queryContext)
+				model, err := parseQuery(dsInfo, queryModels, queryContext)
 
 				So(err, ShouldBeNil)
-				So(model.Step, ShouldEqual, time.Second*2)
+				So(model.Step, ShouldEqual, time.Second*15)
 			})
 		})
 
@@ -111,7 +116,7 @@ func TestPrometheus(t *testing.T) {
 				Convey("with 48h time range", func() {
 					queryContext.TimeRange = tsdb.NewTimeRange("48h", "now")
 
-					model, err := parseQuery(queryModels, queryContext)
+					model, err := parseQuery(dsInfo, queryModels, queryContext)
 
 					So(err, ShouldBeNil)
 					So(model.Step, ShouldEqual, time.Minute*20)
@@ -134,7 +139,7 @@ func TestPrometheus(t *testing.T) {
 				Convey("with 48h time range", func() {
 					queryContext.TimeRange = tsdb.NewTimeRange("48h", "now")
 
-					model, err := parseQuery(queryModels, queryContext)
+					model, err := parseQuery(dsInfo, queryModels, queryContext)
 
 					So(err, ShouldBeNil)
 					So(model.Step, ShouldEqual, time.Minute*2)

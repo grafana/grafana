@@ -90,7 +90,7 @@ func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 		return nil, err
 	}
 
-	query, err := parseQuery(tsdbQuery.Queries, tsdbQuery)
+	query, err := parseQuery(dsInfo, tsdbQuery.Queries, tsdbQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +140,7 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 	return string(result)
 }
 
-func parseQuery(queries []*tsdb.Query, queryContext *tsdb.TsdbQuery) (*PrometheusQuery, error) {
+func parseQuery(dsInfo *models.DataSource, queries []*tsdb.Query, queryContext *tsdb.TsdbQuery) (*PrometheusQuery, error) {
 	queryModel := queries[0]
 
 	expr, err := queryModel.Model.Get("expr").String()
@@ -160,8 +160,13 @@ func parseQuery(queries []*tsdb.Query, queryContext *tsdb.TsdbQuery) (*Prometheu
 		return nil, err
 	}
 
+	dsInterval, err := tsdb.GetIntervalFrom(dsInfo, queryModel.Model, time.Second*15)
+	if err != nil {
+		return nil, err
+	}
+
 	intervalFactor := queryModel.Model.Get("intervalFactor").MustInt64(1)
-	interval := intervalCalculator.Calculate(queryContext.TimeRange)
+	interval := intervalCalculator.Calculate(queryContext.TimeRange, dsInterval)
 	step := time.Duration(int64(interval.Value) * intervalFactor)
 
 	return &PrometheusQuery{
