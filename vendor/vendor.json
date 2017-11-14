@@ -437,10 +437,46 @@
 			"revisionTime": "2017-03-30T09:59:41Z"
 		},
 		{
+			"checksumSHA1": "N+9OOuqxaYhDVjbIhoYmQq8nTdw=",
+			"path": "github.com/gocql/gocql",
+			"revision": "93711fb9002b469d61ae13ed615441c5e57c1da1",
+			"revisionTime": "2017-10-31T16:44:44Z"
+		},
+		{
+			"checksumSHA1": "7RlYIbPYgPkxDDCSEuE6bvYEEeU=",
+			"path": "github.com/gocql/gocql/internal/lru",
+			"revision": "93711fb9002b469d61ae13ed615441c5e57c1da1",
+			"revisionTime": "2017-10-31T16:44:44Z"
+		},
+		{
+			"checksumSHA1": "ctK9mwZKnt/8dHxx2Ef6nZTljZs=",
+			"path": "github.com/gocql/gocql/internal/murmur",
+			"revision": "93711fb9002b469d61ae13ed615441c5e57c1da1",
+			"revisionTime": "2017-10-31T16:44:44Z"
+		},
+		{
+			"checksumSHA1": "tZQDfMMTKrYMXqen0zjJWLtOf1A=",
+			"path": "github.com/gocql/gocql/internal/streams",
+			"revision": "93711fb9002b469d61ae13ed615441c5e57c1da1",
+			"revisionTime": "2017-10-31T16:44:44Z"
+		},
+		{
+			"checksumSHA1": "p/8vSviYF91gFflhrt5vkyksroo=",
+			"path": "github.com/golang/snappy",
+			"revision": "553a641470496b2327abcac10b36396bd98e45c9",
+			"revisionTime": "2017-02-15T23:32:05Z"
+		},
+		{
 			"checksumSHA1": "B4bk7vdV9aD7AhrtATXfgEacdqE=",
 			"path": "github.com/gorilla/websocket",
 			"revision": "3ab3a8b8831546bd18fd182c20687ca853b2bb13",
 			"revisionTime": "2016-12-15T22:53:35Z"
+		},
+		{
+			"checksumSHA1": "O0r0hj4YL+jSRNjnshkeH4GY+4s=",
+			"path": "github.com/hailocab/go-hostpool",
+			"revision": "e80d13ce29ede4452c43dea11e79b9bc8a15b478",
+			"revisionTime": "2016-01-25T11:53:50Z"
 		},
 		{
 			"checksumSHA1": "W7WyVSrJNaQNQt2R9O4DxrK58cs=",
@@ -706,6 +742,12 @@
 			"path": "gopkg.in/gomail.v2",
 			"revision": "81ebce5c23dfd25c6c67194b37d3dd3f338c98b1",
 			"revisionTime": "2016-04-11T21:29:32Z"
+		},
+		{
+			"checksumSHA1": "6f8MEU31llHM1sLM/GGH4/Qxu0A=",
+			"path": "gopkg.in/inf.v0",
+			"revision": "3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4",
+			"revisionTime": "2015-09-11T12:57:57Z"
 		},
 		{
 			"checksumSHA1": "1HJvJZheB5NNl3i1R9zZJpiJ1G0=",

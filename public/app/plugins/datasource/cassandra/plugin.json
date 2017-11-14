@@ -1,0 +1,20 @@
+{
+  "type": "datasource",
+  "name": "Cassandra",
+  "id": "cassandra",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/cassandra_logo.svg",
+      "large": "img/cassandra_logo.svg"
+    }
+  },
+
+  "alerting": true,
+  "annotations": true,
+  "metrics": true
+}
