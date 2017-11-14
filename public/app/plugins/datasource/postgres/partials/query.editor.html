@@ -48,9 +48,9 @@ Table:
 Macros:
 - $__time(column) -&gt; column as "time"
 - $__timeEpoch -&gt; extract(epoch from column) as "time"
-- $__timeFilter(column) -&gt;  column &ge; to_timestamp(1492750877) AND column &le; to_timestamp(1492750877)
+- $__timeFilter(column) -&gt;  extract(epoch from column) BETWEEN 1492750877 AND 1492750877
 - $__unixEpochFilter(column) -&gt;  column &gt; 1492750877 AND column &lt; 1492750877
-- $__timeGroup(column,'5m') -&gt; (extract(epoch from "dateColumn")/extract(epoch from '5m'::interval))::int
+- $__timeGroup(column,'5m') -&gt; (extract(epoch from "dateColumn")/300)::bigint*300
 
 Example of group by and order by with $__timeGroup:
 SELECT
