@@ -9,7 +9,7 @@ var (
 	defaultRes         int64         = 1500
 	defaultMinInterval time.Duration = 1 * time.Millisecond
 	year               time.Duration = time.Hour * 24 * 365
-	day                time.Duration = time.Hour * 24 * 365
+	day                time.Duration = time.Hour * 24
 )
 
 type Interval struct {

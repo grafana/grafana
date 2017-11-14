@@ -53,6 +53,7 @@ func TestInterval(t *testing.T) {
 			So(formatDuration(time.Second*61), ShouldEqual, "1m")
 			So(formatDuration(time.Millisecond*30), ShouldEqual, "30ms")
 			So(formatDuration(time.Hour*23), ShouldEqual, "23h")
+			So(formatDuration(time.Hour*24), ShouldEqual, "1d")
 			So(formatDuration(time.Hour*24*367), ShouldEqual, "1y")
 		})
 	})
