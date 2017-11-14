@@ -278,15 +278,17 @@ describe('templateSrv', function() {
 
   });
 
-  describe('variants', function() {
+  describe('getVariants', function() {
     it('should return empty array if no target', function() {
       initTemplateSrv([{type: 'query', name: 'test', current: {value: 'val1'}}]);
+
       var target = _templateSrv.getVariants(undefined, {});
       expect(target).toEqual([]);
     });
 
     it('should return array with the same value if no template vars found', function() {
       initTemplateSrv([{type: 'query', name: 'test', current: {value: 'val1'}}]);
+
       var target = _templateSrv.getVariants('this.is.filters', {});
       expect(target).toEqual(['this.is.filters']);
     });
