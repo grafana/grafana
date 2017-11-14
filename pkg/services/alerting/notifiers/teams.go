@@ -111,7 +111,6 @@ func (this *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	data, _ := json.Marshal(&body)
-	print(string(data))
 	cmd := &m.SendWebhookSync{Url: this.Url, Body: string(data)}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
