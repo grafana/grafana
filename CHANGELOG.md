@@ -34,7 +34,7 @@
 * **Cloudwatch**: Fix for cloudwatch templating query `ec2_instance_attribute` [#9667](https://github.com/grafana/grafana/issues/9667), thanks [@mtanda](https://github.com/mtanda)
 * **Heatmap**: Fixed tooltip for "time series buckets" mode [#9332](https://github.com/grafana/grafana/issues/9332)
 * **InfluxDB**: Fixed query editor issue when using `>` or `<` operators in WHERE clause [#9871](https://github.com/grafana/grafana/issues/9871)
-
+* **Prometheus**: Fixes bug with new prometheus alerts [#9777](https://github.com/grafana/grafana/issues/9777)
 
 # 4.6.1 (2017-11-01)
 
