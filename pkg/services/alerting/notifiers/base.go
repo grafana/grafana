@@ -2,6 +2,7 @@ package notifiers
 
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
@@ -25,7 +26,13 @@ func NewNotifierBase(id int64, isDefault bool, name, notifierType string, model 
 	}
 }
 
-func (n *NotifierBase) PassesFilter(rule *alerting.Rule) bool {
+func defaultShouldNotify(context *alerting.EvalContext) bool {
+	if context.PrevAlertState == context.Rule.State {
+		return false
+	}
+	if (context.PrevAlertState == m.AlertStatePending) && (context.Rule.State == m.AlertStateOK) {
+		return false
+	}
 	return true
 }
 

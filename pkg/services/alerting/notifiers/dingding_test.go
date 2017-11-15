@@ -9,7 +9,7 @@ import (
 )
 
 func TestDingDingNotifier(t *testing.T) {
-	Convey("Line notifier tests", t, func() {
+	Convey("Dingding notifier tests", t, func() {
 		Convey("empty settings should return error", func() {
 			json := `{ }`
 

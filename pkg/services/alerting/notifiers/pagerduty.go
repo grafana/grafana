@@ -63,6 +63,10 @@ type PagerdutyNotifier struct {
 	log         log.Logger
 }
 
+func (this *PagerdutyNotifier) ShouldNotify(context *alerting.EvalContext) bool {
+	return defaultShouldNotify(context)
+}
+
 func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	if evalContext.Rule.State == m.AlertStateOK && !this.AutoResolve {

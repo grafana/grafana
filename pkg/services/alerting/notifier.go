@@ -24,7 +24,7 @@ type NotifierPlugin struct {
 }
 
 type NotificationService interface {
-	Send(context *EvalContext) error
+	SendIfNeeded(context *EvalContext) error
 }
 
 func NewNotificationService() NotificationService {
@@ -41,8 +41,8 @@ func newNotificationService() *notificationService {
 	}
 }
 
-func (n *notificationService) Send(context *EvalContext) error {
-	notifiers, err := n.getNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
+func (n *notificationService) SendIfNeeded(context *EvalContext) error {
+	notifiers, err := n.getNeededNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	return nil
 }
 
-func (n *notificationService) getNotifiers(orgId int64, notificationIds []int64, context *EvalContext) (NotifierSlice, error) {
+func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []int64, context *EvalContext) (NotifierSlice, error) {
 	query := &m.GetAlertNotificationsToSendQuery{OrgId: orgId, Ids: notificationIds}
 
 	if err := bus.Dispatch(query); err != nil {
@@ -121,7 +121,7 @@ func (n *notificationService) getNotifiers(orgId int64, notificationIds []int64,
 		if not, err := n.createNotifierFor(notification); err != nil {
 			return nil, err
 		} else {
-			if shouldUseNotification(not, context) {
+			if not.ShouldNotify(context) {
 				result = append(result, not)
 			}
 		}
@@ -137,18 +137,6 @@ func (n *notificationService) createNotifierFor(model *m.AlertNotification) (Not
 	}
 
 	return notifierPlugin.Factory(model)
-}
-
-func shouldUseNotification(notifier Notifier, context *EvalContext) bool {
-	if !context.Firing {
-		return true
-	}
-
-	if context.Error != nil {
-		return true
-	}
-
-	return notifier.PassesFilter(context.Rule)
 }
 
 type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)

@@ -75,6 +75,10 @@ type HipChatNotifier struct {
 	log    log.Logger
 }
 
+func (this *HipChatNotifier) ShouldNotify(context *alerting.EvalContext) bool {
+	return defaultShouldNotify(context)
+}
+
 func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Executing hipchat notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
 
