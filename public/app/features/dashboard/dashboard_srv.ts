@@ -131,6 +131,27 @@ export class DashboardSrv {
       modalClass: 'modal--narrow'
     });
   }
+
+  starDashboard(dashboardId, isStarred) {
+    let promise;
+
+    if (isStarred) {
+      promise = this.backendSrv.delete('/api/user/stars/dashboard/' + dashboardId).then(() =>  {
+        return false;
+      });
+    } else {
+      promise = this.backendSrv.post('/api/user/stars/dashboard/' + dashboardId).then(() => {
+        return true;
+      });
+    }
+
+    return promise.then(res => {
+      if (this.dash && this.dash.id === dashboardId) {
+        this.dash.meta.isStarred = res;
+      }
+      return res;
+    });
+  }
 }
 
 coreModule.service('dashboardSrv', DashboardSrv);

@@ -21,7 +21,7 @@ class DashListCtrl extends PanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private backendSrv) {
+  constructor($scope, $injector, private backendSrv, private dashboardSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
@@ -103,6 +103,17 @@ class DashListCtrl extends PanelCtrl {
     return this.backendSrv.search(params).then(result => {
       this.groups[0].list = result;
     });
+  }
+
+  starDashboard(dash, evt) {
+    this.dashboardSrv.starDashboard(dash.id, dash.isStarred).then(newState => {
+      dash.isStarred = newState;
+    });
+
+    if (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+    }
   }
 
   getRecentDashboards() {

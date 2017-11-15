@@ -8,7 +8,7 @@
         <span class="dashlist-title">
           {{dash.title}}
         </span>
-        <span class="dashlist-star">
+        <span class="dashlist-star" ng-click="ctrl.starDashboard(dash, $event)">
           <i class="fa" ng-class="{'fa-star': dash.isStarred, 'fa-star-o': dash.isStarred === false}"></i>
         </span>
       </a>
