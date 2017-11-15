@@ -475,6 +475,7 @@ kbn.valueFormats.wpm = kbn.formatBuilders.simpleCountUnit('wpm');
 // Energy
 kbn.valueFormats.watt = kbn.formatBuilders.decimalSIPrefix('W');
 kbn.valueFormats.kwatt = kbn.formatBuilders.decimalSIPrefix('W', 1);
+kbn.valueFormats.mwatt = kbn.formatBuilders.decimalSIPrefix('W', -1);
 kbn.valueFormats.kwattm = kbn.formatBuilders.decimalSIPrefix('W/Min', 1);
 kbn.valueFormats.voltamp = kbn.formatBuilders.decimalSIPrefix('VA');
 kbn.valueFormats.kvoltamp = kbn.formatBuilders.decimalSIPrefix('VA', 1);
@@ -486,8 +487,10 @@ kbn.valueFormats.joule = kbn.formatBuilders.decimalSIPrefix('J');
 kbn.valueFormats.ev = kbn.formatBuilders.decimalSIPrefix('eV');
 kbn.valueFormats.amp = kbn.formatBuilders.decimalSIPrefix('A');
 kbn.valueFormats.kamp = kbn.formatBuilders.decimalSIPrefix('A', 1);
+kbn.valueFormats.mamp = kbn.formatBuilders.decimalSIPrefix('A', -1);
 kbn.valueFormats.volt = kbn.formatBuilders.decimalSIPrefix('V');
 kbn.valueFormats.kvolt = kbn.formatBuilders.decimalSIPrefix('V', 1);
+kbn.valueFormats.mvolt = kbn.formatBuilders.decimalSIPrefix('V', -1);
 kbn.valueFormats.dBm = kbn.formatBuilders.decimalSIPrefix('dBm');
 kbn.valueFormats.ohm = kbn.formatBuilders.decimalSIPrefix('Ω');
 
@@ -935,21 +938,24 @@ kbn.getUnitFormats = function() {
     {
       text: 'energy',
       submenu: [
-        { text: 'watt (W)', value: 'watt' },
-        { text: 'kilowatt (kW)', value: 'kwatt' },
-        { text: 'volt-ampere (VA)', value: 'voltamp' },
-        { text: 'kilovolt-ampere (kVA)', value: 'kvoltamp' },
-        { text: 'volt-ampere reactive (var)', value: 'voltampreact' },
-        { text: 'kilovolt-ampere reactive (kvar)', value: 'kvoltampreact' },
-        { text: 'watt-hour (Wh)', value: 'watth' },
-        { text: 'kilowatt-hour (kWh)', value: 'kwatth' },
-        { text: 'kilowatt-min (kWm)', value: 'kwattm' },
-        { text: 'joule (J)', value: 'joule' },
-        { text: 'electron volt (eV)', value: 'ev' },
+        { text: 'Watt (W)', value: 'watt' },
+        { text: 'Kilowatt (kW)', value: 'kwatt' },
+        { text: 'Milliwatt (mW)', value: 'mwatt' },
+        { text: 'Volt-ampere (VA)', value: 'voltamp' },
+        { text: 'Kilovolt-ampere (kVA)', value: 'kvoltamp' },
+        { text: 'Volt-ampere reactive (var)', value: 'voltampreact' },
+        { text: 'Kilovolt-ampere reactive (kvar)', value: 'kvoltampreact' },
+        { text: 'Watt-hour (Wh)', value: 'watth' },
+        { text: 'Kilowatt-hour (kWh)', value: 'kwatth' },
+        { text: 'Kilowatt-min (kWm)', value: 'kwattm' },
+        { text: 'Joule (J)', value: 'joule' },
+        { text: 'Electron volt (eV)', value: 'ev' },
         { text: 'Ampere (A)', value: 'amp' },
         { text: 'Kiloampere (kA)', value: 'kamp' },
+        { text: 'Milliampere (mA)', value: 'mamp' },
         { text: 'Volt (V)', value: 'volt' },
         { text: 'Kilovolt (kV)', value: 'kvolt' },
+        { text: 'Millivolt (mV)', value: 'mvolt' },
         { text: 'Decibel-milliwatt (dBm)', value: 'dBm' },
         { text: 'Ohm (Ω)', value: 'ohm' }
       ],
