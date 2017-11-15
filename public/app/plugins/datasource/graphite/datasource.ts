@@ -2,6 +2,7 @@
 
 import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
+import {isVersionGtOrEq, SemVersion} from 'app/core/utils/version';
 
 /** @ngInject */
 export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv) {
@@ -9,6 +10,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.url = instanceSettings.url;
   this.name = instanceSettings.name;
   this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || '0.9';
+  this.supportsTags = supportsTags(this.graphiteVersion);
   this.cacheTimeout = instanceSettings.cacheTimeout;
   this.withCredentials = instanceSettings.withCredentials;
   this.render_method = instanceSettings.render_method || 'POST';
@@ -245,7 +247,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.getTagValues = function(tag, optionalOptions) {
     let options = optionalOptions || {};
 
-    let httpOptions: any =  {
+    let httpOptions: any = {
       method: 'GET',
       url: '/tags/' + tag,
       // for cancellations
@@ -268,6 +270,72 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       } else {
         return [];
       }
+    });
+  };
+
+  this.getTagsAutoComplete = (expression, tagPrefix) => {
+    let httpOptions: any = {
+      method: 'GET',
+      url: '/tags/autoComplete/tags',
+      params: {
+        expr: expression
+      }
+    };
+
+    if (tagPrefix) {
+      httpOptions.params.tagPrefix = tagPrefix;
+    }
+
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      if (results.data) {
+        return _.map(results.data, (tag) => {
+          return { text: tag };
+        });
+      } else {
+        return [];
+      }
+    });
+  };
+
+  this.getTagValuesAutoComplete = (expression, tag, valuePrefix) => {
+    let httpOptions: any = {
+      method: 'GET',
+      url: '/tags/autoComplete/values',
+      params: {
+        expr: expression,
+        tag: tag
+      }
+    };
+
+    if (valuePrefix) {
+      httpOptions.params.valuePrefix = valuePrefix;
+    }
+
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      if (results.data) {
+        return _.map(results.data, (value) => {
+          return { text: value };
+        });
+      } else {
+        return [];
+      }
+    });
+  };
+
+  this.getVersion = function() {
+    let httpOptions = {
+      method: 'GET',
+      url: '/version/_', // Prevent last / trimming
+    };
+
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      if (results.data) {
+        let semver = new SemVersion(results.data);
+        return semver.isValid() ? results.data : '';
+      }
+      return '';
+    }).catch(() => {
+      return '';
     });
   };
 
@@ -356,4 +424,8 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 
     return clean_options;
   };
+}
+
+function supportsTags(version: string): boolean {
+  return isVersionGtOrEq(version, '1.1');
 }

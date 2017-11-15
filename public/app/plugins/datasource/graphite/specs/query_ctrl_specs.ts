@@ -48,7 +48,7 @@ describe('GraphiteQueryCtrl', function() {
     });
 
     it('should parse expression and build function model', function() {
-      expect(ctx.ctrl.functions.length).to.be(2);
+      expect(ctx.ctrl.queryModel.functions.length).to.be(2);
     });
   });
 
@@ -61,7 +61,7 @@ describe('GraphiteQueryCtrl', function() {
     });
 
     it('should add function with correct node number', function() {
-      expect(ctx.ctrl.functions[0].params[0]).to.be(2);
+      expect(ctx.ctrl.queryModel.functions[0].params[0]).to.be(2);
     });
 
     it('should update target', function() {
@@ -99,7 +99,7 @@ describe('GraphiteQueryCtrl', function() {
     });
 
     it('should add both series refs as params', function() {
-      expect(ctx.ctrl.functions[0].params.length).to.be(2);
+      expect(ctx.ctrl.queryModel.functions[0].params.length).to.be(2);
     });
   });
 
@@ -115,7 +115,7 @@ describe('GraphiteQueryCtrl', function() {
     });
 
     it('should add function param', function() {
-      expect(ctx.ctrl.functions[0].params.length).to.be(1);
+      expect(ctx.ctrl.queryModel.functions[0].params.length).to.be(1);
     });
   });
 
@@ -131,7 +131,7 @@ describe('GraphiteQueryCtrl', function() {
     });
 
     it('should have correct func params', function() {
-      expect(ctx.ctrl.functions[0].params.length).to.be(1);
+      expect(ctx.ctrl.queryModel.functions[0].params.length).to.be(1);
     });
   });
 
@@ -219,11 +219,11 @@ describe('GraphiteQueryCtrl', function() {
     });
 
     it('should update functions', function() {
-      expect(ctx.ctrl.getSeriesByTagFuncIndex()).to.be(0);
+      expect(ctx.ctrl.queryModel.getSeriesByTagFuncIndex()).to.be(0);
     });
 
     it('should update seriesByTagUsed flag', function() {
-      expect(ctx.ctrl.seriesByTagUsed).to.be(true);
+      expect(ctx.ctrl.queryModel.seriesByTagUsed).to.be(true);
     });
 
     it('should update target', function() {
@@ -247,7 +247,7 @@ describe('GraphiteQueryCtrl', function() {
         {key: 'tag1', operator: '=', value: 'value1'},
         {key: 'tag2', operator: '!=~', value: 'value2'}
       ];
-      expect(ctx.ctrl.tags).to.eql(expected);
+      expect(ctx.ctrl.queryModel.tags).to.eql(expected);
     });
 
     it('should add plus button', function() {
@@ -267,7 +267,7 @@ describe('GraphiteQueryCtrl', function() {
       const expected = [
         {key: 'tag1', operator: '=', value: 'select tag value'}
       ];
-      expect(ctx.ctrl.tags).to.eql(expected);
+      expect(ctx.ctrl.queryModel.tags).to.eql(expected);
     });
 
     it('should update target', function() {
@@ -289,7 +289,7 @@ describe('GraphiteQueryCtrl', function() {
         {key: 'tag1', operator: '=', value: 'new_value'},
         {key: 'tag2', operator: '!=~', value: 'value2'}
       ];
-      expect(ctx.ctrl.tags).to.eql(expected);
+      expect(ctx.ctrl.queryModel.tags).to.eql(expected);
     });
 
     it('should update target', function() {
@@ -310,7 +310,7 @@ describe('GraphiteQueryCtrl', function() {
       const expected = [
         {key: 'tag2', operator: '!=~', value: 'value2'}
       ];
-      expect(ctx.ctrl.tags).to.eql(expected);
+      expect(ctx.ctrl.queryModel.tags).to.eql(expected);
     });
 
     it('should update target', function() {

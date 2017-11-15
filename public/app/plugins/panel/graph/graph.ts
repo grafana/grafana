@@ -497,8 +497,8 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
           show: panel.yaxes[0].show,
           index: 1,
           logBase: panel.yaxes[0].logBase || 1,
-          min: panel.yaxes[0].min ? _.toNumber(panel.yaxes[0].min) : null,
-          max: panel.yaxes[0].max ? _.toNumber(panel.yaxes[0].max) : null,
+          min: parseNumber(panel.yaxes[0].min),
+          max: parseNumber(panel.yaxes[0].max),
           tickDecimals: panel.yaxes[0].decimals
         };
 
@@ -510,9 +510,9 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
           secondY.show = panel.yaxes[1].show;
           secondY.logBase = panel.yaxes[1].logBase || 1;
           secondY.position = 'right';
-          secondY.min = panel.yaxes[1].min ? _.toNumber(panel.yaxes[1].min) : null;
-          secondY.max = panel.yaxes[1].max ? _.toNumber(panel.yaxes[1].max) : null;
-          secondY.tickDecimals = panel.yaxes[1].decimals !== null ? _.toNumber(panel.yaxes[1].decimals): null;
+          secondY.min = parseNumber(panel.yaxes[1].min);
+          secondY.max = parseNumber(panel.yaxes[1].max);
+          secondY.tickDecimals = panel.yaxes[1].decimals;
           options.yaxes.push(secondY);
 
           applyLogScale(options.yaxes[1], data);
@@ -520,6 +520,14 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         }
         applyLogScale(options.yaxes[0], data);
         configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? "percent" : panel.yaxes[0].format);
+      }
+
+      function parseNumber(value: any) {
+        if (value === null || typeof value === 'undefined') {
+          return null;
+        }
+
+        return _.toNumber(value);
       }
 
       function applyLogScale(axis, data) {
