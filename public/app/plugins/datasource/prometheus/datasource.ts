@@ -19,6 +19,7 @@ export class PrometheusDatasource {
   basicAuth: any;
   withCredentials: any;
   metricsNameCache: any;
+  interval: string;
 
   /** @ngInject */
   constructor(instanceSettings,
@@ -34,6 +35,7 @@ export class PrometheusDatasource {
     this.directUrl = instanceSettings.directUrl;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
+    this.interval = instanceSettings.jsonData.timeInterval || '15s';
   }
 
   _request(method, url, requestId?) {
