@@ -26,7 +26,7 @@
         <label class="gf-form-label query-keyword" ng-if="ctrl.showDelimiter($index)">,</label>
       </div>
 
-			<div ng-repeat="segment in ctrl.segments" role="menuitem" class="gf-form">
+      <div ng-repeat="segment in ctrl.segments" role="menuitem" class="gf-form">
         <metric-segment segment="segment" get-options="ctrl.getAltSegments($index)" on-change="ctrl.segmentValueChanged(segment, $index)"></metric-segment>
       </div>
 
