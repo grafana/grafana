@@ -891,6 +891,7 @@ kbn.getUnitFormats = function() {
       submenu: [
         { text: 'millimetre (mm)', value: 'lengthmm' },
         { text: 'meter (m)', value: 'lengthm' },
+        { text: 'feet (ft)', value: 'lengthft' },
         { text: 'kilometer (km)', value: 'lengthkm' },
         { text: 'mile (mi)', value: 'lengthmi' },
       ],
