@@ -187,7 +187,7 @@ func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *co
 		case float64:
 			timestamp = columnValue * 1000
 		case time.Time:
-			timestamp = float64(columnValue.Unix() * 1000)
+			timestamp = float64(columnValue.UnixNano() / 1e6)
 		default:
 			return fmt.Errorf("Invalid type for column time, must be of type timestamp or unix timestamp")
 		}
