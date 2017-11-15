@@ -2,7 +2,7 @@
     build:
       context: blocks/graphite1
       args:
-        - version=master
+        version: master
     ports:
       - "8080:80"
       - "2003:2003"

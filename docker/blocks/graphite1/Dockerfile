@@ -1,6 +1,7 @@
 FROM phusion/baseimage:0.9.22
 MAINTAINER Denys Zhdanov <denis.zhdanov@gmail.com>
 
+
 RUN apt-get -y update \
   && apt-get -y upgrade \
   && apt-get -y install vim \
@@ -43,6 +44,8 @@ ARG whisper_version=${version}
 ARG carbon_version=${version}
 ARG graphite_version=${version}
 
+RUN echo "Building Version: $version"
+
 ARG whisper_repo=https://github.com/graphite-project/whisper.git
 ARG carbon_repo=https://github.com/graphite-project/carbon.git
 ARG graphite_repo=https://github.com/graphite-project/graphite-web.git
@@ -80,7 +83,7 @@ RUN mkdir -p /var/log/graphite/ \
   && PYTHONPATH=/opt/graphite/webapp django-admin.py collectstatic --noinput --settings=graphite.settings
 
 # config statsd
-ADD conf/opt/statsd/config_*.js /opt/statsd/
+ADD conf/opt/statsd/config.js /opt/statsd/
 
 # config nginx
 RUN rm /etc/nginx/sites-enabled/default
