@@ -53,7 +53,7 @@ func EnsureAdminUser() {
 		return
 	}
 
-	if statsQuery.Result.UserCount > 0 {
+	if statsQuery.Result.Users > 0 {
 		return
 	}
 
@@ -114,7 +114,7 @@ func getEngine() (*xorm.Engine, error) {
 			protocol = "unix"
 		}
 
-		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?charset=utf8mb4",
+		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&allowNativePasswords=true",
 			DbCfg.User, DbCfg.Pwd, protocol, DbCfg.Host, DbCfg.Name)
 
 		if DbCfg.SslMode == "true" || DbCfg.SslMode == "skip-verify" {
@@ -146,7 +146,7 @@ func getEngine() (*xorm.Engine, error) {
 			DbCfg.Path = filepath.Join(setting.DataPath, DbCfg.Path)
 		}
 		os.MkdirAll(path.Dir(DbCfg.Path), os.ModePerm)
-		cnnstr = "file:" + DbCfg.Path + "?cache=shared&mode=rwc&_loc=Local"
+		cnnstr = "file:" + DbCfg.Path + "?cache=shared&mode=rwc"
 	default:
 		return nil, fmt.Errorf("Unknown database type: %s", DbCfg.Type)
 	}
@@ -158,10 +158,14 @@ func getEngine() (*xorm.Engine, error) {
 	} else {
 		engine.SetMaxOpenConns(DbCfg.MaxOpenConn)
 		engine.SetMaxIdleConns(DbCfg.MaxIdleConn)
-		engine.SetLogger(&xorm.DiscardLogger{})
-		// engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
-		// engine.ShowSQL = true
-		// engine.ShowInfo = true
+		debugSql := setting.Cfg.Section("database").Key("log_queries").MustBool(false)
+		if !debugSql {
+			engine.SetLogger(&xorm.DiscardLogger{})
+		} else {
+			engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
+			engine.ShowSQL(true)
+			engine.ShowExecTime(true)
+		}
 	}
 	return engine, nil
 }
@@ -190,12 +194,12 @@ func LoadConfig() {
 		DbCfg.Host = sec.Key("host").String()
 		DbCfg.Name = sec.Key("name").String()
 		DbCfg.User = sec.Key("user").String()
-		DbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
-		DbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(0)
 		if len(DbCfg.Pwd) == 0 {
 			DbCfg.Pwd = sec.Key("password").String()
 		}
 	}
+	DbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
+	DbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(0)
 
 	if DbCfg.Type == "sqlite3" {
 		UseSQLite3 = true

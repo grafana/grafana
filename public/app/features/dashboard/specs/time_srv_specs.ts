@@ -1,14 +1,14 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, beforeEach, it, expect, sinon, angularMocks} from 'test/lib/common';
 
 import helpers from 'test/specs/helpers';
-import _ from 'lodash';
-import TimeSrv from '../time_srv';
+import '../time_srv';
 import moment from 'moment';
 
 describe('timeSrv', function() {
   var ctx = new helpers.ServiceTestContext();
   var _dashboard: any = {
     time: {from: 'now-6h', to: 'now'},
+    getTimezone: sinon.stub().returns('browser')
   };
 
   beforeEach(angularMocks.module('grafana.core'));

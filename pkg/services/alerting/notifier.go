@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/components/renderer"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
+
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -66,6 +68,7 @@ func (n *notificationService) sendNotifications(context *EvalContext, notifiers 
 	for _, notifier := range notifiers {
 		not := notifier //avoid updating scope variable in go routine
 		n.log.Info("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
+		metrics.M_Alerting_Notification_Sent.WithLabelValues(not.GetType()).Inc()
 		g.Go(func() error { return not.Notify(context) })
 	}
 
@@ -97,7 +100,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 		context.ImageOnDiskPath = imagePath
 	}
 
-	context.ImagePublicUrl, err = uploader.Upload(context.ImageOnDiskPath)
+	context.ImagePublicUrl, err = uploader.Upload(context.Ctx, context.ImageOnDiskPath)
 	if err != nil {
 		return err
 	}

@@ -29,7 +29,7 @@ Name | Description
 ------------ | -------------
 *Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
-*Credentials* profile name | Specify the name of the profile to use (if you use `~/aws/credentials` file), leave blank for default.
+*Credentials* profile name | Specify the name of the profile to use (if you use `~/.aws/credentials` file), leave blank for default.
 *Default Region* | Used in query editor to set region (can be changed on per query basis)
 *Custom Metrics namespace* | Specify the CloudWatch namespace of Custom metrics
 *Assume Role Arn* | Specify the ARN of the role to assume
@@ -50,11 +50,12 @@ Create a file at `~/.aws/credentials`. That is the `HOME` path for user running 
 
 Example content:
 
-    [default]
-    aws_access_key_id = asdsadasdasdasd
-    aws_secret_access_key = dasdasdsadasdasdasdsa
-    region = us-west-2
-
+```bash
+[default]
+aws_access_key_id = asdsadasdasdasd
+aws_secret_access_key = dasdasdsadasdasdasdsa
+region = us-west-2
+```
 
 ## Metric Query Editor
 
@@ -84,8 +85,8 @@ Name | Description
 *metrics(namespace, [region])* | Returns a list of metrics in the namespace. (specify region for custom metrics)
 *dimension_keys(namespace)* | Returns a list of dimension keys in the namespace.
 *dimension_values(region, namespace, metric, dimension_key)* | Returns a list of dimension values matching the specified `region`, `namespace`, `metric` and `dimension_key`.
-*ebs_volume_ids(region, instance_id)* | Returns a list of volume id matching the specified `region`, `instance_id`.
-*ec2_instance_attribute(region, attribute_name, filters)* | Returns a list of attribute matching the specified `region`, `attribute_name`, `filters`.
+*ebs_volume_ids(region, instance_id)* | Returns a list of volume ids matching the specified `region`, `instance_id`.
+*ec2_instance_attribute(region, attribute_name, filters)* | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
@@ -101,10 +102,13 @@ Query | Service
 *dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)* | RDS
 *dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)* | S3
 
-#### ec2_instance_attribute JSON filters
+## ec2_instance_attribute examples
 
-The `ec2_instance_attribute` query take `filters` in JSON format.
+### JSON filters
+
+The `ec2_instance_attribute` query takes `filters` in JSON format.
 You can specify [pre-defined filters of ec2:DescribeInstances](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html).
+Note that the actual filtering takes place on Amazon's servers, not in Grafana.
 
 Filters syntax:
 
@@ -114,7 +118,50 @@ Filters syntax:
 
 Example `ec2_instance_attribute()` query
 
-    ec2_instance_attribute(us-east-1, InstanceId, { "tag:Environment": [ "production" ] })
+```javascript
+ec2_instance_attribute(us-east-1, InstanceId, { "tag:Environment": [ "production" ] })
+```
+
+### Selecting Attributes
+
+Only 1 attribute per instance can be returned. Any flat attribute can be selected (i.e. if the attribute has a single value and isn't an object or array). Below is a list of available flat attributes:
+
+  * `AmiLaunchIndex`
+  * `Architecture`
+  * `ClientToken`
+  * `EbsOptimized`
+  * `EnaSupport`
+  * `Hypervisor`
+  * `IamInstanceProfile`
+  * `ImageId`
+  * `InstanceId`
+  * `InstanceLifecycle`
+  * `InstanceType`
+  * `KernelId`
+  * `KeyName`
+  * `LaunchTime`
+  * `Platform`
+  * `PrivateDnsName`
+  * `PrivateIpAddress`
+  * `PublicDnsName`
+  * `PublicIpAddress`
+  * `RamdiskId`
+  * `RootDeviceName`
+  * `RootDeviceType`
+  * `SourceDestCheck`
+  * `SpotInstanceRequestId`
+  * `SriovNetSupport`
+  * `SubnetId`
+  * `VirtualizationType`
+  * `VpcId`
+
+Tags can be selected by prepending the tag name with `Tags.`
+
+Example `ec2_instance_attribute()` query
+
+```javascript
+ec2_instance_attribute(us-east-1, Tags.Name, { "tag:Team": [ "sysops" ] })
+```
 
 ## Cost
 
@@ -122,5 +169,3 @@ Amazon provides 1 million CloudWatch API requests each month at no additional ch
 it costs $0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each query Grafana will
 issue a GetMetricStatistics request and every time you pick a dimension in the query editor
 Grafana will issue a ListMetrics request.
-
-

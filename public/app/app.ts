@@ -1,21 +1,33 @@
-///<reference path="headers/common.d.ts" />
-
-import 'bootstrap';
-import 'vendor/filesaver';
-import 'lodash-src';
-import 'angular-strap';
+import 'babel-polyfill';
+import 'file-saver';
+import 'lodash';
+import 'jquery';
+import 'angular';
 import 'angular-route';
 import 'angular-sanitize';
-import 'angular-dragdrop';
+import 'angular-native-dragdrop';
 import 'angular-bindonce';
-import 'angular-ui';
+import 'react';
+import 'react-dom';
+import 'ngreact';
+
+import 'vendor/bootstrap/bootstrap';
+import 'vendor/angular-ui/ui-bootstrap-tpls';
+import 'vendor/angular-other/angular-strap';
 
 import $ from 'jquery';
 import angular from 'angular';
 import config from 'app/core/config';
 import _ from 'lodash';
 import moment from 'moment';
-import {coreModule} from './core/core';
+
+// add move to lodash for backward compatabiltiy
+_.move = function (array, fromIndex, toIndex) {
+  array.splice(toIndex, 0, array.splice(fromIndex, 1)[0]);
+  return array;
+};
+
+import {coreModule, registerAngularDirectives} from './core/core';
 
 export class GrafanaApp {
   registerFunctions: any;
@@ -84,6 +96,7 @@ export class GrafanaApp {
       'pasvaz.bindonce',
       'ui.bootstrap',
       'ui.bootstrap.tpls',
+      'react'
     ];
 
     var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
@@ -95,6 +108,9 @@ export class GrafanaApp {
 
     // makes it possible to add dynamic stuff
     this.useModule(coreModule);
+
+    // register react angular wrappers
+    registerAngularDirectives();
 
     var preBootRequires = [System.import('app/features/all')];
 

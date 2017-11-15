@@ -1,10 +1,8 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
-import 'jquery.flot';
-import 'jquery.flot.gauge';
+import 'vendor/flot/jquery.flot';
+import 'vendor/flot/jquery.flot.gauge';
+import 'app/features/panellinks/link_srv';
 
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
@@ -22,7 +20,19 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   invalidGaugeRange: boolean;
   panel: any;
   events: any;
-  valueNameOptions: any[] = ['min','max','avg', 'current', 'total', 'name', 'first', 'delta', 'diff', 'range'];
+  valueNameOptions: any[] = [
+    {value : 'min', text: 'Min'},
+    {value : 'max', text: 'Max'},
+    {value : 'avg', text: 'Average'},
+    {value : 'current', text: 'Current'},
+    {value : 'total', text: 'Total'},
+    {value : 'name', text: 'Name'},
+    {value : 'first', text: 'First'},
+    {value : 'delta', text: 'Delta'},
+    {value : 'diff', text: 'Difference'},
+    {value : 'range', text: 'Range'},
+    {value : 'last_time', text: 'Time of last point'}
+  ];
   tableColumnOptions: any;
 
   // Set and populate defaults
@@ -56,7 +66,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     thresholds: '',
     colorBackground: false,
     colorValue: false,
-    colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+    colors: ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
     sparkline: {
       show: false,
       full: false,
@@ -82,6 +92,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+
+    this.onSparklineColorChange = this.onSparklineColorChange.bind(this);
+    this.onSparklineFillChange = this.onSparklineFillChange.bind(this);
   }
 
   onInitEditMode() {
@@ -93,7 +106,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   setUnitFormat(subItem) {
     this.panel.format = subItem.value;
-    this.render();
+    this.refresh();
   }
 
   onDataError(err) {
@@ -102,7 +115,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   onDataReceived(dataList) {
     const data: any = {};
-    if (dataList.length > 0 && dataList[0].type === 'table'){
+    if (dataList.length > 0 && dataList[0].type === 'table') {
       this.dataType = 'table';
       const tableData = dataList.map(this.tableHandler.bind(this));
       this.setTableValues(tableData, data);
@@ -117,7 +130,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   seriesHandler(seriesData) {
     var series = new TimeSeries({
-      datapoints: seriesData.datapoints,
+      datapoints: seriesData.datapoints || [],
       alias: seriesData.target,
     });
 
@@ -169,8 +182,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       return;
     }
 
-    let highestValue = 0;
-    let lowestValue = Number.MAX_VALUE;
     const datapoint = tableData[0][0];
     data.value = datapoint[this.panel.tableColumn];
 
@@ -203,6 +214,23 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var tmp = this.panel.colors[0];
     this.panel.colors[0] = this.panel.colors[2];
     this.panel.colors[2] = tmp;
+    this.render();
+  }
+
+  onColorChange(panelColorIndex) {
+    return (color) => {
+      this.panel.colors[panelColorIndex] = color;
+      this.render();
+    };
+  }
+
+  onSparklineColorChange(newColor) {
+    this.panel.sparkline.lineColor = newColor;
+    this.render();
+  }
+
+  onSparklineFillChange(newColor) {
+    this.panel.sparkline.fillColor = newColor;
     this.render();
   }
 
@@ -257,8 +285,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     if (this.series && this.series.length > 0) {
-      var lastPoint = _.last(this.series[0].datapoints);
-      var lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
+      let lastPoint = _.last(this.series[0].datapoints);
+      let lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
 
       if (this.panel.valueName === 'name') {
         data.value = 0;
@@ -268,12 +296,17 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.value = 0;
         data.valueFormatted = _.escape(lastValue);
         data.valueRounded = 0;
+      } else if (this.panel.valueName === 'last_time') {
+        let formatFunc = kbn.valueFormats[this.panel.format];
+        data.value = lastPoint[1];
+        data.valueRounded = data.value;
+        data.valueFormatted = formatFunc(data.value, 0, 0);
       } else {
         data.value = this.series[0].stats[this.panel.valueName];
         data.flotpairs = this.series[0].flotpairs;
 
-        var decimalInfo = this.getDecimalsForValue(data.value);
-        var formatFunc = kbn.valueFormats[this.panel.format];
+        let decimalInfo = this.getDecimalsForValue(data.value);
+        let formatFunc = kbn.valueFormats[this.panel.format];
         data.valueFormatted = formatFunc(data.value, decimalInfo.decimals, decimalInfo.scaledDecimals);
         data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
       }
@@ -402,9 +435,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function getValueText() {
-      var result = panel.prefix ? panel.prefix : '';
+      var result = panel.prefix ? templateSrv.replace(panel.prefix, data.scopedVars) : '';
       result += data.valueFormatted;
-      result += panel.postfix ? panel.postfix : '';
+      result += panel.postfix ? templateSrv.replace(panel.postfix, data.scopedVars) : '';
 
       return result;
     }
@@ -412,7 +445,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     function addGauge() {
       var width = elem.width();
       var height = elem.height();
-      var dimension = Math.min(width, height);
+      // Allow to use a bit more space for wide gauges
+      var dimension = Math.min(width, height * 1.3);
 
       ctrl.invalidGaugeRange = false;
       if (panel.gauge.minValue > panel.gauge.maxValue) {
@@ -449,8 +483,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       var fontScale = parseInt(panel.valueFontSize) / 100;
       var fontSize = Math.min(dimension/5, 100) * fontScale;
-      var gaugeWidth = Math.min(dimension/6, 60);
+      // Reduce gauge width if threshold labels enabled
+      var gaugeWidthReduceRatio = panel.gauge.thresholdLabels ? 1.5 : 1;
+      var gaugeWidth = Math.min(dimension/6, 60) / gaugeWidthReduceRatio;
       var thresholdMarkersWidth = gaugeWidth/5;
+      var thresholdLabelFontSize = fontSize / 2.5;
 
       var options = {
         series: {
@@ -471,8 +508,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
               values: thresholds,
               label: {
                 show: panel.gauge.thresholdLabels,
-                margin: 8,
-                font: { size: 18 }
+                margin: thresholdMarkersWidth + 1,
+                font: { size: thresholdLabelFontSize }
               },
               show: panel.gauge.thresholdMarkers,
               width: thresholdMarkersWidth,
@@ -569,7 +606,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       var body = panel.gauge.show ? '' : getBigValueHtml();
 
-      if (panel.colorBackground && !isNaN(data.value)) {
+      if (panel.colorBackground) {
         var color = getColorForValue(data, data.value);
         if (color) {
           $panelContainer.css('background-color', color);
@@ -620,8 +657,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         if ($(evt).parents('.panel-header').length > 0) { return; }
 
         if (linkInfo.target === '_blank') {
-          var redirectWindow = window.open(linkInfo.href, '_blank');
-          redirectWindow.location;
+          window.open(linkInfo.href, '_blank');
           return;
         }
 
@@ -654,6 +690,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 }
 
 function getColorForValue(data, value) {
+  if (!_.isFinite(value)) {
+    return null;
+  }
   for (var i = data.thresholds.length; i > 0; i--) {
     if (value >= data.thresholds[i-1]) {
       return data.colorMap[i];

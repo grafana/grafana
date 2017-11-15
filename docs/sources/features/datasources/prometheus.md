@@ -34,12 +34,14 @@ Name | Description
 *Basic Auth* | Enable basic authentication to the Prometheus data source.
 *User* | Name of your Prometheus user
 *Password* | Database user's password
+*Scrape interval* | This will be used as a lower limit for the Prometheus step query parameter. Default value is 15s. 
 
 ## Query editor
 
 Open a graph in edit mode by click the title > Edit (or by pressing `e` key while hovering over panel).
 
-![](/img/docs/v43/prometheus_query_editor.png)
+{{< docs-imagebox img="/img/docs/v45/prometheus_query_editor_still.png"
+                  animated-gif="/img/docs/v45/prometheus_query_editor.gif" >}}
 
 Name | Description
 ------- | --------
@@ -78,7 +80,7 @@ For details of *metric names*, *label names* and *label values* are please refer
 There are two syntaxes:
 
 - `$<varname>`  Example: rate(http_requests_total{job=~"$job"}[5m])
-- `[[varname]]` Example: rate(http_requests_total{job="my[[job]]"}[5m])
+- `[[varname]]` Example: rate(http_requests_total{job=~"[[job]]"}[5m])
 
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the *Multi-value* or *Include all value*
 options are enabled, Grafana converts the labels from plain text to a regex compatible string. Which means you have to use `=~` instead of `=`.
@@ -94,3 +96,7 @@ Prometheus supports two ways to query annotations.
 - A Prometheus query for pending and firing alerts (for details see [Inspecting alerts during runtime](https://prometheus.io/docs/alerting/rules/#inspecting-alerts-during-runtime))
 
 The step option is useful to limit the number of events returned from your query.
+
+## Getting Grafana metrics into Prometheus
+
+Since 4.6.0 Grafana exposes metrics for Prometheus on the `/metrics` endpoint. We also bundle a dashboard within Grafana so you can get started viewing your metrics faster. You can import the bundled dashboard by going to the data source edit page and click the dashboard tab. There you can find a dashboard for Grafana and one for Prometheus. Import and start viewing all the metrics!

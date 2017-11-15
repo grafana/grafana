@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
 import moment from 'moment';
 
@@ -12,6 +11,7 @@ export class AlertListCtrl {
   stateFilters = [
     {text: 'All', value: null},
     {text: 'OK', value: 'ok'},
+    {text: 'Not OK', value: 'not_ok'},
     {text: 'Alerting', value: 'alerting'},
     {text: 'No Data', value: 'no_data'},
     {text: 'Paused', value: 'paused'},
@@ -22,7 +22,7 @@ export class AlertListCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $location, private $scope, navModelSrv) {
+  constructor(private backendSrv, private $location, navModelSrv) {
     this.navModel = navModelSrv.getAlertingNav(0);
 
     var params = $location.search();

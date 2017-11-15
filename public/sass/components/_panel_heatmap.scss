@@ -18,6 +18,15 @@
       stroke: $text-color-weak;
     }
   }
+
+  // This hack prevents mouseenter/mouseleave events get fired too often
+  svg {
+    pointer-events: none;
+
+    rect {
+      pointer-events: visiblePainted;
+    }
+  }
 }
 
 .heatmap-tooltip {
@@ -35,5 +44,48 @@
   line {
     stroke: darken($red,15%);
     stroke-width: 1;
+  }
+}
+
+.heatmap-selection {
+  stroke-width: 1;
+  fill: rgba(102, 102, 102, 0.4);
+  stroke: rgba(102, 102, 102, 0.8);
+}
+
+.heatmap-legend-wrapper {
+  @include clearfix();
+  margin: 0 $spacer;
+  padding-top: 10px;
+
+  svg {
+    width: 100%;
+    max-width: 300px;
+    height: 33px;
+    float: left;
+    white-space: nowrap;
+    padding-left: 10px;
+  }
+
+  .heatmap-legend-values {
+    display: inline-block;
+  }
+
+  .axis .tick {
+    text {
+      fill: $text-color;
+      color: $text-color;
+      font-size: $font-size-sm;
+    }
+
+    line {
+      opacity: 0.4;
+      stroke: $text-color-weak;
+    }
+
+    .domain {
+      opacity: 0.4;
+      stroke: $text-color-weak;
+    }
   }
 }

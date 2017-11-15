@@ -3,8 +3,11 @@ package sqlstore
 import (
 	"time"
 
+	"github.com/go-xorm/xorm"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
+	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -19,6 +22,8 @@ func init() {
 }
 
 func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
+	metrics.M_DB_DataSource_QueryById.Inc()
+
 	datasource := m.DataSource{OrgId: query.OrgId, Id: query.Id}
 	has, err := x.Get(&datasource)
 
@@ -66,7 +71,6 @@ func DeleteDataSourceByName(cmd *m.DeleteDataSourceByNameCommand) error {
 }
 
 func AddDataSource(cmd *m.AddDataSourceCommand) error {
-
 	return inTransaction(func(sess *DBSession) error {
 		existing := m.DataSource{OrgId: cmd.OrgId, Name: cmd.Name}
 		has, _ := sess.Get(&existing)
@@ -93,6 +97,7 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
 			Created:           time.Now(),
 			Updated:           time.Now(),
+			Version:           1,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -119,7 +124,6 @@ func updateIsDefaultFlag(ds *m.DataSource, sess *DBSession) error {
 }
 
 func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
-
 	return inTransaction(func(sess *DBSession) error {
 		ds := &m.DataSource{
 			Id:                cmd.Id,
@@ -146,12 +150,29 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 		sess.UseBool("basic_auth")
 		sess.UseBool("with_credentials")
 
-		_, err := sess.Where("id=? and org_id=?", ds.Id, ds.OrgId).Update(ds)
+		var updateSession *xorm.Session
+		if cmd.Version != 0 {
+			// the reason we allow cmd.version > db.version is make it possible for people to force
+			// updates to datasources using the datasource.yaml file without knowing exactly what version
+			// a datasource have in the db.
+			updateSession = sess.Where("id=? and org_id=? and version < ?", ds.Id, ds.OrgId, ds.Version)
+
+		} else {
+			updateSession = sess.Where("id=? and org_id=?", ds.Id, ds.OrgId)
+		}
+
+		affected, err := updateSession.Update(ds)
 		if err != nil {
 			return err
 		}
 
+		if affected == 0 {
+			return m.ErrDataSourceUpdatingOldVersion
+		}
+
 		err = updateIsDefaultFlag(ds, sess)
+
+		cmd.Result = ds
 		return err
 	})
 }

@@ -36,12 +36,12 @@ Name | Description
 ### Proxy vs Direct access
 
 Proxy access means that the Grafana backend will proxy all requests from the browser. So requests to InfluxDB will be channeled through
-`grafana-server`. This means that the URL you specify needs to be accessable from the server you are running Grafana on. Proxy access
+`grafana-server`. This means that the URL you specify needs to be accessible from the server you are running Grafana on. Proxy access
 mode is also more secure as the username & password will never reach the browser.
 
 ## Query Editor
 
-![](/assets/img/blog/v2.6/influxdb_editor_v3.gif)
+{{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
 
 You find the InfluxDB editor in the metrics tab in Graph or Singlestat panel's edit mode. You enter edit mode by clicking the
 panel title, then edit. The editor allows you to select metrics and tags.
@@ -57,10 +57,8 @@ will automatically adjust the filter tag condition to use the InfluxDB regex mat
 
 ### Field & Aggregation functions
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
-group by time you need an aggregation function. Some functions like derivative require an aggregation function.
-
-The editor tries simplify and unify this part of the query. For example:
-![](/img/docs/influxdb/select_editor.png)
+group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries simplify and unify this part of the query. For example:<br>
+![](/img/docs/influxdb/select_editor.png)<br>
 
 The above will generate the following InfluxDB `SELECT` clause:
 
@@ -88,7 +86,7 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 - $m = replaced with measurement name
 - $measurement = replaced with measurement name
 - $col = replaced with column name
-- $tag_exampletag = replaced with the value of the `exampletag` tag. To use your tag as an alias in the ALIAS BY field then the tag must be used to group by in the query.
+- $tag_exampletag = replaced with the value of the `exampletag` tag. The syntax is `$tag_yourTagName` (must start with `$tag_`). To use your tag as an alias in the ALIAS BY field then the tag must be used to group by in the query.
 - You can also use [[tag_hostname]] pattern replacement syntax. For example, in the ALIAS BY field using this text `Host: [[tag_hostname]]` would substitute in the `hostname` tag value for each legend value and an example legend value would be: `Host: server1`.
 
 ### Table query / raw data
@@ -132,7 +130,7 @@ You can fetch key names for a given measurement.
 SHOW TAG KEYS [FROM <measurement_name>]
 ```
 
-If you have a variable with key names you can use this variable in a group by clause. This will allow you to change group by using the variable dropdown a the top
+If you have a variable with key names you can use this variable in a group by clause. This will allow you to change group by using the variable dropdown at the top
 of the dashboard.
 
 ### Using variables in queries
@@ -175,6 +173,4 @@ SELECT title, description from events WHERE $timeFilter order asc
 
 For InfluxDB you need to enter a query like in the above example. You need to have the ```where $timeFilter```
 part. If you only select one column you will not need to enter anything in the column mapping fields. The
-Tags field can be a comma seperated string.
-
-
+Tags field can be a comma separated string.

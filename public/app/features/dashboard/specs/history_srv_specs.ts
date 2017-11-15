@@ -1,8 +1,8 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 
 import helpers from 'test/specs/helpers';
-import HistorySrv from '../history/history_srv';
-import { versions, compare, restore } from 'test/mocks/history-mocks';
+import '../history/history_srv';
+import {versions, restore} from './history_mocks';
 
 describe('historySrv', function() {
   var ctx = new helpers.ServiceTestContext();
@@ -21,50 +21,48 @@ describe('historySrv', function() {
         return [200, restoreResponse(parsedData.version)];
       });
   }));
+
   beforeEach(ctx.createService('historySrv'));
 
+  function wrapPromise(ctx, angularPromise) {
+    return new Promise((resolve, reject) => {
+      angularPromise.then(resolve, reject);
+      ctx.$httpBackend.flush();
+    });
+  }
+
   describe('getHistoryList', function() {
-    it('should return a versions array for the given dashboard id', function(done) {
-      ctx.service.getHistoryList({ id: 1 }).then(function(versions) {
+    it('should return a versions array for the given dashboard id', function() {
+      return wrapPromise(ctx, ctx.service.getHistoryList({ id: 1 }).then(function(versions) {
         expect(versions).to.eql(versionsResponse);
-        done();
-      });
-      ctx.$httpBackend.flush();
+      }));
     });
 
-    it('should return an empty array when not given an id', function(done) {
-      ctx.service.getHistoryList({ }).then(function(versions) {
+    it('should return an empty array when not given an id', function() {
+      return wrapPromise(ctx, ctx.service.getHistoryList({ }).then(function(versions) {
         expect(versions).to.eql([]);
-        done();
-      });
-      ctx.$httpBackend.flush();
+      }));
     });
 
-    it('should return an empty array when not given a dashboard', function(done) {
-      ctx.service.getHistoryList().then(function(versions) {
+    it('should return an empty array when not given a dashboard', function() {
+      return wrapPromise(ctx, ctx.service.getHistoryList().then(function(versions) {
         expect(versions).to.eql([]);
-        done();
-      });
-      ctx.$httpBackend.flush();
+      }));
     });
   });
 
   describe('restoreDashboard', function() {
-    it('should return a success response given valid parameters', function(done) {
-      var version = 6;
-      ctx.service.restoreDashboard({ id: 1 }, version).then(function(response) {
+    it('should return a success response given valid parameters', function() {
+      let version = 6;
+      return wrapPromise(ctx, ctx.service.restoreDashboard({ id: 1 }, version).then(function(response) {
         expect(response).to.eql(restoreResponse(version));
-        done();
-      });
-      ctx.$httpBackend.flush();
+      }));
     });
 
-    it('should return an empty object when not given an id', function(done) {
-      ctx.service.restoreDashboard({}, 6).then(function(response) {
+    it('should return an empty object when not given an id', function() {
+      return wrapPromise(ctx, ctx.service.restoreDashboard({}, 6).then(function(response) {
         expect(response).to.eql({});
-        done();
-      });
-      ctx.$httpBackend.flush();
+      }));
     });
   });
 });

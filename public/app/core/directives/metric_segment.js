@@ -39,6 +39,8 @@ function (_, $, coreModule) {
             return;
           }
 
+          value = _.unescape(value);
+
           $scope.$apply(function() {
             var selected = _.find($scope.altSegments, {value: value});
             if (selected) {
@@ -79,7 +81,9 @@ function (_, $, coreModule) {
           $scope.$apply(function() {
             $scope.getOptions({ $query: query }).then(function(altSegments) {
               $scope.altSegments = altSegments;
-              options = _.map($scope.altSegments, function(alt) { return alt.value; });
+              options = _.map($scope.altSegments, function(alt) {
+                return _.escape(alt.value);
+              });
 
               // add custom values
               if (segment.custom !== 'false') {

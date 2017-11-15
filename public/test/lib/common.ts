@@ -1,7 +1,6 @@
-///<reference path="../../app/headers/common.d.ts" />
-
 var _global = <any>(window);
 var beforeEach = _global.beforeEach;
+var afterEach = _global.afterEach;
 var before = _global.before;
 var describe = _global.describe;
 var it = _global.it;
@@ -15,6 +14,7 @@ var angularMocks = {
 
 export {
   beforeEach,
+  afterEach,
   before,
   describe,
   it,

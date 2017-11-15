@@ -43,7 +43,7 @@ You also get a link to service side rendered PNG of the panel. Useful if you wan
 
 Example of a link to a server-side rendered PNG:
 
-```
+```bash
 http://play.grafana.org/render/dashboard-solo/db/grafana-play-home?orgId=1&panelId=4&from=1499272191563&to=1499279391563&width=1000&height=500&tz=UTC%2B02%3A00&timeout=5000
 ```
 
@@ -65,6 +65,7 @@ Example:
 ```
 
 Below there should be an interactive Grafana graph embedded in an iframe:
+
 <iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4" width="650" height="300" frameborder="0"></iframe>
 
 ### Export Panel Data

@@ -22,7 +22,7 @@ to add and configure a `notification` channel (can be email, Pagerduty or other 
 
 {{< imgbox max-width="40%" img="/img/docs/v43/alert_notifications_menu.png" caption="Alerting Notification Channels" >}}
 
-On the Notification Channels page hit the `New Channel` button to go the the page where you
+On the Notification Channels page hit the `New Channel` button to go the page where you
 can configure and setup a new Notification Channel.
 
 You specify name and type, and type specific options. You can also test the notification to make
@@ -48,12 +48,15 @@ external image destination if available or fallback to attaching the image in th
 
 To set up slack you need to configure an incoming webhook url at slack. You can follow their guide for how
 to do that https://api.slack.com/incoming-webhooks If you want to include screenshots of the firing alerts
-in the slack messages you have to configure the [external image destination](#external-image-store) in Grafana.
+in the slack messages you have to configure either the [external image destination](#external-image-store) in Grafana,
+or a bot integration via Slack Apps. Follow Slack's guide to set up a bot integration and use the token provided
+https://api.slack.com/bot-users, which starts with "xoxb".
 
 Setting | Description
 ---------- | -----------
 Recipient | allows you to override the slack recipient.
 Mention | make it possible to include a mention in the slack notification sent by Grafana. Ex @here or @channel
+Token | If provided, Grafana will upload the generated image via Slack's file.upload API method, not the external image destination.
 
 ### PagerDuty
 
@@ -92,6 +95,37 @@ Example json body:
 
 - **state** - The possible values for alert state are: `ok`, `paused`, `alerting`, `pending`, `no_data`.
 
+### DingDing/DingTalk
+
+[Instructions in Chinese](https://open-doc.dingtalk.com/docs/doc.htm?spm=a219a.7629140.0.0.p2lr6t&treeId=257&articleId=105733&docType=1).
+
+In DingTalk PC Client:
+
+1. Click "more" icon on left bottom of the panel.
+
+2. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
+
+3. In the  "Robot Manage" panel, select "customised: customised robot with Webhook".
+
+4. In the next new panel named "robot detail", click "Add" button.
+
+5. In "Add Robot" panel, input a nickname for the robot and select a "message group" which the robot will join in. click "next".
+
+6. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the grafana Dingtalk setting page and then click "finish".
+
+Dingtalk supports the following "message type": `text`, `link` and `markdown`. Only the `text` message type is supported.
+
+### Kafka
+
+Notifications can be sent to a Kafka topic from Grafana using [Kafka REST Proxy](https://docs.confluent.io/1.0/kafka-rest/docs/index.html).
+There are couple of configurations options which need to be set in Grafana UI under Kafka Settings:
+
+1. Kafka REST Proxy endpoint.
+
+2. Kafka Topic.
+
+Once these two properties are set, you can send the alerts to Kafka for further processing or throttling them.
+
 ### Other Supported Notification Channels
 
 Grafana also supports the following Notification Channels:
@@ -112,11 +146,9 @@ Grafana also supports the following Notification Channels:
 
 - LINE
 
-- DingDing
-
 # Enable images in notifications {#external-image-store}
 
-Grafana can render the panel associated with the alert rule and include that in the notification. Most Notification Channels require that this image be publicly accessable (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
+Grafana can render the panel associated with the alert rule and include that in the notification. Most Notification Channels require that this image be publicly accessible (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
 Amazon S3 and Webdav for this. So to set that up you need to configure the [external image uploader](/installation/configuration/#external-image-storage) in your grafana-server ini config file.
 
 Currently only the Email Channels attaches images if no external image store is specified. To include images in alert notifications for other channels then you need to set up an external image store.

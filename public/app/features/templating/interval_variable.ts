@@ -3,9 +3,9 @@
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import {Variable, assignModelProperties, variableTypes} from './variable';
-import {VariableSrv} from './variable_srv';
 
 export class IntervalVariable implements Variable {
+  name: string;
   auto_count: number;
   auto_min: number;
   options: any;
@@ -51,10 +51,12 @@ export class IntervalVariable implements Variable {
 
     // add auto option if missing
     if (this.options.length && this.options[0].text !== 'auto') {
-      this.options.unshift({ text: 'auto', value: '$__auto_interval' });
+      this.options.unshift({ text: 'auto', value: '$__auto_interval_' + this.name });
     }
 
-    var res = kbn.calculateInterval(this.timeSrv.timeRange(), this.auto_count, (this.auto_min ? ">"+this.auto_min : null));
+    var res = kbn.calculateInterval(this.timeSrv.timeRange(), this.auto_count, this.auto_min);
+    this.templateSrv.setGrafanaVariable('$__auto_interval_' + this.name, res.interval);
+    // for backward compatibility, to be removed eventually
     this.templateSrv.setGrafanaVariable('$__auto_interval', res.interval);
   }
 

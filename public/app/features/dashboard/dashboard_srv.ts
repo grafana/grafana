@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import {DashboardModel} from './model';
 
@@ -83,7 +82,7 @@ export class DashboardSrv {
     }
 
     this.$rootScope.appEvent('dashboard-saved', this.dash);
-    this.$rootScope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
+    this.$rootScope.appEvent('alert-success', ['Dashboard saved']);
   }
 
   save(clone, options) {

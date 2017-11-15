@@ -6,22 +6,30 @@ global:
 
 # Load and evaluate rules in this file every 'evaluation_interval' seconds.
 rule_files:
+  - "alert.rules"
   # - "first.rules"
   # - "second.rules"
 
-# A scrape configuration containing exactly one endpoint to scrape:
-# Here it's Prometheus itself.
-scrape_configs:
-  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-  - job_name: 'prometheus'
-
-    # Override the global default and scrape targets from this job every 5 seconds.
-    scrape_interval: 10s
-    scrape_timeout: 10s
-
-    # metrics_path defaults to '/metrics'
-    # scheme defaults to 'http'.
-
+alerting:
+  alertmanagers:
+  - scheme: http
     static_configs:
-      #- targets: ['localhost:9090', '172.17.0.1:9091', '172.17.0.1:9100', '172.17.0.1:9150']
-      - targets: ['localhost:9090', '127.0.0.1:9091', '127.0.0.1:9100', '127.0.0.1:9150']
+    - targets:
+      - "127.0.0.1:9093"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['127.0.0.1:9100']
+ 
+  - job_name: 'fake-data-gen'
+    static_configs:
+      - targets: ['127.0.0.1:9091']
+  
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['127.0.0.1:3000']

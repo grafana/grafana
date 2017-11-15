@@ -11,7 +11,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
   steps: any;
 
   /** @ngInject **/
-  constructor($scope, $injector, private backendSrv, private datasourceSrv, private $q) {
+  constructor($scope, $injector, private backendSrv, datasourceSrv, private $q) {
     super($scope, $injector);
 
     this.stepIndex = 0;
@@ -34,7 +34,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
       check: () => {
         return $q.when(
           datasourceSrv.getMetricSources().filter(item => {
-            return item.meta.builtIn === false;
+            return item.meta.builtIn !== true;
           }).length > 0
         );
       }

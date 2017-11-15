@@ -8,7 +8,7 @@ weight = 7
 
 # Keyboard shortcuts
 
-{{< docs-imagebox img="/img/docs/v4/shortcuts.png" max-width="20rem" >}}
+{{< docs-imagebox img="/img/docs/v4/shortcuts.png" max-width="20rem" class="docs-image--right" >}}
 
 Grafana v4 introduces a number of really powerful keyboard shortcuts. You can now focus a panel
 by hovering over it with your mouse. With a panel focused you can simple hit `e` to toggle panel

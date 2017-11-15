@@ -1,8 +1,7 @@
 ///<reference path="../../../../headers/common.d.ts" />
 
-import {describe, beforeEach, it, sinon, expect, angularMocks} from '../../../../../test/lib/common';
+import {describe, beforeEach, it, expect, angularMocks} from '../../../../../test/lib/common';
 
-import angular from 'angular';
 import moment from 'moment';
 import {HeatmapCtrl} from '../heatmap_ctrl';
 import helpers from '../../../../../test/specs/helpers';

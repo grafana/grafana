@@ -602,6 +602,7 @@ Licensed under the MIT license.
                     tickColor: null, // color for the ticks, e.g. "rgba(0,0,0,0.15)"
                     margin: 0, // distance from the canvas edge to the grid
                     labelMargin: 5, // in pixels
+                    eventSectionHeight: 0, // space for event section
                     axisMargin: 8, // in pixels
                     borderWidth: 2, // in pixels
                     minBorderMargin: null, // in pixels, null means taken from points radius
@@ -1450,6 +1451,7 @@ Licensed under the MIT license.
                 tickLength = axis.options.tickLength,
                 axisMargin = options.grid.axisMargin,
                 padding = options.grid.labelMargin,
+                eventSectionPadding = options.grid.eventSectionHeight,
                 innermost = true,
                 outermost = true,
                 first = true,
@@ -1490,7 +1492,9 @@ Licensed under the MIT license.
                 padding += +tickLength;
 
             if (isXAxis) {
+                // Add space for event section
                 lh += padding;
+                lh += eventSectionPadding;
 
                 if (pos == "bottom") {
                     plotOffset.bottom += lh + axisMargin;
@@ -1518,6 +1522,7 @@ Licensed under the MIT license.
             axis.position = pos;
             axis.tickLength = tickLength;
             axis.box.padding = padding;
+            axis.box.eventSectionPadding = eventSectionPadding;
             axis.innermost = innermost;
         }
 
@@ -2225,7 +2230,7 @@ Licensed under the MIT license.
                         halign = "center";
                         x = plotOffset.left + axis.p2c(tick.v);
                         if (axis.position == "bottom") {
-                            y = box.top + box.padding;
+                            y = box.top + box.padding + box.eventSectionPadding;
                         } else {
                             y = box.top + box.height - box.padding;
                             valign = "bottom";
@@ -2957,8 +2962,11 @@ Licensed under the MIT license.
         }
 
         function onClick(e) {
-            triggerClickHoverEvent("plotclick", e,
-                                   function (s) { return s["clickable"] != false; });
+          if (plot.isSelecting) {
+            return;
+          }
+
+          triggerClickHoverEvent("plotclick", e, function (s) { return s["clickable"] != false; });
         }
 
         // trigger click or hover event (they send the same parameters

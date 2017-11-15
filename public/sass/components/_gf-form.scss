@@ -16,6 +16,10 @@ $gf-form-margin: 0.25rem;
   &--grow {
     flex-grow: 1;
   }
+
+  &--flex-end {
+    justify-content: flex-end;
+  }
 }
 
 .gf-form-disabled {
@@ -54,7 +58,6 @@ $gf-form-margin: 0.25rem;
   background-color: $input-label-bg;
   display: block;
   font-size: $font-size-sm;
-  margin-right: $gf-form-margin;
 
   border: $input-btn-border-width solid transparent;
   @include border-radius($label-border-radius-sm);
@@ -103,7 +106,6 @@ $gf-form-margin: 0.25rem;
   padding: $input-padding-y $input-padding-x;
   margin-right: $gf-form-margin;
   font-size: $font-size-base;
-  margin-right: $gf-form-margin;
   line-height: $input-line-height;
   color: $input-color;
   background-color: $input-bg;
@@ -112,7 +114,6 @@ $gf-form-margin: 0.25rem;
   border: $input-btn-border-width solid $input-border-color;
   @include border-radius($input-border-radius-sm);
   @include box-shadow($input-box-shadow);
-  transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -120,6 +121,7 @@ $gf-form-margin: 0.25rem;
   // text areas should be scrollable
   @at-root textarea#{&} {
     overflow: auto;
+    white-space: pre-wrap;
   }
 
   // Unstyle the caret on `<select>`s in IE10+.
@@ -169,6 +171,12 @@ $gf-form-margin: 0.25rem;
       content: '\f0d7';
       pointer-events: none;
     }
+  }
+
+  &--small {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: $font-size-sm;
   }
 }
 
@@ -235,7 +243,6 @@ $gf-form-margin: 0.25rem;
   font-size: $font-size-sm;
   box-shadow: none;
   border: $input-btn-border-width solid transparent;
-  @include border-radius($label-border-radius-sm);
 
   flex-shrink: 0;
   flex-grow: 0;
@@ -281,7 +288,7 @@ $gf-form-margin: 0.25rem;
   &--right-absolute {
     position: absolute;
     right: $spacer;
-    top: 8px;
+    top: 10px;
   }
 
   &--right-normal {

@@ -5,6 +5,8 @@ define([
 ], function(_, config, dateMath) {
   'use strict';
 
+  config = config.default;
+
   function ControllerTestContext() {
     var self = this;
 
@@ -25,7 +27,7 @@ define([
     };
 
     this.providePhase = function(mocks) {
-      return module(function($provide) {
+      return window.module(function($provide) {
         $provide.value('datasourceSrv', self.datasourceSrv);
         $provide.value('annotationsSrv', self.annotationsSrv);
         $provide.value('timeSrv', self.timeSrv);
@@ -38,7 +40,7 @@ define([
     };
 
     this.createPanelController = function(Ctrl) {
-      return inject(function($controller, $rootScope, $q, $location, $browser) {
+      return window.inject(function($controller, $rootScope, $q, $location, $browser) {
         self.scope = $rootScope.$new();
         self.$location = $location;
         self.$browser = $browser;
@@ -60,7 +62,7 @@ define([
     };
 
     this.createControllerPhase = function(controllerName) {
-      return inject(function($controller, $rootScope, $q, $location, $browser) {
+      return window.inject(function($controller, $rootScope, $q, $location, $browser) {
         self.scope = $rootScope.$new();
         self.$location = $location;
         self.$browser = $browser;
@@ -95,7 +97,7 @@ define([
     self.$routeParams = {};
 
     this.providePhase = function(mocks) {
-      return module(function($provide) {
+      return window.module(function($provide) {
         _.each(mocks, function(key) {
           $provide.value(key, self[key]);
         });
@@ -103,7 +105,7 @@ define([
     };
 
     this.createService = function(name) {
-      return inject(function($q, $rootScope, $httpBackend, $injector, $location) {
+      return window.inject(function($q, $rootScope, $httpBackend, $injector, $location, $timeout) {
         self.$q = $q;
         self.$rootScope = $rootScope;
         self.$httpBackend =  $httpBackend;
@@ -111,6 +113,7 @@ define([
 
         self.$rootScope.onAppEvent = function() {};
         self.$rootScope.appEvent = function() {};
+        self.$timeout = $timeout;
 
         self.service = $injector.get(name);
       });

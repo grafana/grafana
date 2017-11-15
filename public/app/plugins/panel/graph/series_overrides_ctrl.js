@@ -29,7 +29,7 @@ define([
     $scope.setOverride = function(item, subItem) {
       // handle color overrides
       if (item.propertyName === 'color') {
-        $scope.openColorSelector();
+        $scope.openColorSelector($scope.override['color']);
         return;
       }
 
@@ -52,15 +52,17 @@ define([
       $scope.ctrl.render();
     };
 
-    $scope.openColorSelector = function() {
+    $scope.openColorSelector = function(color) {
+      var fakeSeries = {color: color};
       popoverSrv.show({
         element: $element.find(".dropdown")[0],
         position: 'top center',
         openOn: 'click',
-        template: '<gf-color-picker></gf-color-picker>',
+        template: '<series-color-picker series="series" onColorChange="colorSelected" />',
         model: {
           autoClose: true,
           colorSelected: $scope.colorSelected,
+          series: fakeSeries
         },
         onClose: function() {
           $scope.ctrl.render();

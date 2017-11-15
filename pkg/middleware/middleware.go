@@ -10,10 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/log"
 	l "github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Context struct {
@@ -62,6 +62,15 @@ func GetContextHandler() macaron.Handler {
 		ctx.Data["ctx"] = ctx
 
 		c.Map(ctx)
+
+		// update last seen at
+		// update last seen every 5min
+		if ctx.ShouldUpdateLastSeenAt() {
+			ctx.Logger.Debug("Updating last user_seen_at", "user_id", ctx.UserId)
+			if err := bus.Dispatch(&m.UpdateUserLastSeenAtCommand{UserId: ctx.UserId}); err != nil {
+				ctx.Logger.Error("Failed to update last_seen_at", "error", err)
+			}
+		}
 	}
 }
 
@@ -99,7 +108,7 @@ func initContextWithUserSessionCookie(ctx *Context, orgId int64) bool {
 
 	query := m.GetSignedInUserQuery{UserId: userId, OrgId: orgId}
 	if err := bus.Dispatch(&query); err != nil {
-		ctx.Logger.Error("Failed to get user with id", "userId", userId)
+		ctx.Logger.Error("Failed to get user with id", "userId", userId, "error", err)
 		return false
 	}
 
@@ -242,7 +251,7 @@ func (ctx *Context) HasHelpFlag(flag m.HelpFlags1) bool {
 	return ctx.HelpFlags1.HasFlag(flag)
 }
 
-func (ctx *Context) TimeRequest(timer metrics.Timer) {
+func (ctx *Context) TimeRequest(timer prometheus.Summary) {
 	ctx.Data["perfmon.timer"] = timer
 }
 

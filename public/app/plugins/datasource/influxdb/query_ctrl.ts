@@ -352,12 +352,13 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  getTagValueOperator(tagValue, tagOperator) {
+  getTagValueOperator(tagValue, tagOperator): string {
     if (tagOperator !== '=~' && tagOperator !== '!~' && /^\/.*\/$/.test(tagValue)) {
       return '=~';
     } else if ((tagOperator === '=~' || tagOperator === '!~') && /^(?!\/.*\/$)/.test(tagValue)) {
       return '=';
     }
+    return null;
   }
 
   getCollapsedText() {

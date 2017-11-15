@@ -88,7 +88,7 @@ The query expressions are different for each data source.
 - [Elasticsearch templating queries]({{< relref "features/datasources/elasticsearch.md#templating" >}})
 - [InfluxDB templating queries]({{< relref "features/datasources/influxdb.md#templating" >}})
 - [Prometheus templating queries]({{< relref "features/datasources/prometheus.md#templating" >}})
-- [OpenTSDB templating queries]({{< relref "features/datasources/prometheus.md#templating" >}})
+- [OpenTSDB templating queries]({{< relref "features/datasources/opentsdb.md#templating" >}})
 
 One thing to note is that query expressions can contain references to other variables and in effect create linked variables.
 Grafana will detect this and automatically refresh a variable when one of it's containing variables change.
@@ -97,7 +97,7 @@ Grafana will detect this and automatically refresh a variable when one of it's c
 
 Option | Description
 ------- | --------
-*Mulit-value* | If enabled, the variable will support the selection of multiple options at the same time.
+*Multi-value* | If enabled, the variable will support the selection of multiple options at the same time.
 *Include All option* | Add a special `All` option whose value includes all options.
 *Custom all value* | By default the `All` value will include all options in combined expression. This can become very long and can have performance problems. Many times it can be better to specify a custom all value, like a wildcard regex. To make it possible to have custom regex, globs or lucene syntax in the **Custom all value** option it is never escaped so you will have to think avbout what is a valid value for your data source.
 
@@ -176,6 +176,10 @@ The `$timeFilter` variable returns the currently selected time range as an expre
 This is used in the WHERE clause for the InfluxDB data source. Grafana adds it automatically to InfluxDB queries when in Query Editor Mode. It has to be added manually in Text Editor Mode: `WHERE $timeFilter`.
 
 The `$__timeFilter` is used in the MySQL data source.
+
+### The $__name Variable
+
+This variable is only available in the Singlestat panel and can be used in the prefix or suffix fields on the Options tab. The variable will be replaced with the series name or alias.
 
 ## Repeating Panels
 

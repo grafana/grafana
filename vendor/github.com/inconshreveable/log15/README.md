@@ -73,5 +73,12 @@ srvlog := log.New(log.Ctx{"module": "app/server"})
 srvlog.Warn("abnormal conn rate", log.Ctx{"rate": curRate, "low": lowRate, "high": highRate})
 ```
 
+### Regenerating the CONTRIBUTORS file
+
+```
+go get -u github.com/kevinburke/write_mailmap
+write_mailmap > CONTRIBUTORS
+```
+
 ## License
 Apache

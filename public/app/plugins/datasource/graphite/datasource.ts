@@ -1,9 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
-import moment from 'moment';
-
 import * as dateMath from 'app/core/utils/datemath';
 
 /** @ngInject */
@@ -11,9 +8,23 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.basicAuth = instanceSettings.basicAuth;
   this.url = instanceSettings.url;
   this.name = instanceSettings.name;
+  this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || '0.9';
   this.cacheTimeout = instanceSettings.cacheTimeout;
   this.withCredentials = instanceSettings.withCredentials;
   this.render_method = instanceSettings.render_method || 'POST';
+
+  this.getQueryOptionsInfo = function() {
+    return {
+      "maxDataPoints": true,
+      "cacheTimeout": true,
+      "links": [
+        {
+          text: "Help",
+          url: "http://docs.grafana.org/features/datasources/graphite/#using-graphite-in-grafana"
+        }
+      ]
+    };
+  };
 
   this.query = function(options) {
     var graphOptions = {
@@ -57,6 +68,18 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     return result;
   };
 
+  this.parseTags = function(tagString) {
+    let tags = [];
+    tags = tagString.split(',');
+    if (tags.length === 1) {
+      tags = tagString.split(' ');
+      if (tags[0] === '') {
+        tags = [];
+      }
+    }
+    return tags;
+  };
+
   this.annotationQuery = function(options) {
     // Graphite metric as annotation
     if (options.annotation.target) {
@@ -91,19 +114,25 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     } else {
       // Graphite event as annotation
       var tags = templateSrv.replace(options.annotation.tags);
-      return this.events({range: options.rangeRaw, tags: tags}).then(function(results) {
+      return this.events({range: options.rangeRaw, tags: tags}).then(results => {
         var list = [];
         for (var i = 0; i < results.data.length; i++) {
           var e = results.data[i];
+
+          var tags = e.tags;
+          if (_.isString(e.tags)) {
+            tags = this.parseTags(e.tags);
+          }
 
           list.push({
             annotation: options.annotation,
             time: e.when * 1000,
             title: e.what,
-            tags: e.tags,
+            tags: tags,
             text: e.data
           });
         }
+
         return list;
       });
     }
@@ -115,7 +144,6 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       if (options.tags) {
         tags = '&tags=' + options.tags;
       }
-
       return this.doGraphiteRequest({
         method: 'GET',
         url: '/events/get_data?from=' + this.translateTime(options.range.from, false) +
@@ -160,17 +188,27 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     return date.unix();
   };
 
-  this.metricFindQuery = function(query) {
-    var interpolated;
-    try {
-      interpolated = encodeURIComponent(templateSrv.replace(query));
-    } catch (err) {
-      return $q.reject(err);
+  this.metricFindQuery = function(query, optionalOptions) {
+    let options = optionalOptions || {};
+    let interpolatedQuery = templateSrv.replace(query);
+
+    let httpOptions: any =  {
+      method: 'GET',
+      url: '/metrics/find',
+      params: {
+        query: interpolatedQuery
+      },
+      // for cancellations
+      requestId: options.requestId,
+    };
+
+    if (options && options.range) {
+      httpOptions.params.from = this.translateTime(options.range.from, false);
+      httpOptions.params.until = this.translateTime(options.range.to, true);
     }
 
-    return this.doGraphiteRequest({method: 'GET', url: '/metrics/find/?query=' + interpolated })
-    .then(function(results) {
-      return _.map(results.data, function(metric) {
+    return this.doGraphiteRequest(httpOptions).then(results => {
+      return _.map(results.data, metric => {
         return {
           text: metric.text,
           expandable: metric.expandable ? true : false
@@ -181,7 +219,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 
   this.testDatasource = function() {
     return this.metricFindQuery('*').then(function () {
-      return { status: "success", message: "Data source is working", title: "Success" };
+      return { status: "success", message: "Data source is working"};
     });
   };
 

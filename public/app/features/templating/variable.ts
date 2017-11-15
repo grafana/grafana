@@ -1,8 +1,5 @@
-///<reference path="../../headers/common.d.ts" />
-
-import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {assignModelProperties} from 'app/core/core';
+import {assignModelProperties} from 'app/core/utils/model_utils';
 
 export interface Variable {
   setValue(option);

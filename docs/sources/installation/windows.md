@@ -13,7 +13,7 @@ weight = 3
 
 Description | Download
 ------------ | -------------
-Latest stable package for Windows | [grafana.4.4.1.windows-x64.zip](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.4.1.windows-x64.zip)
+Latest stable package for Windows | [grafana.4.6.1.windows-x64.zip](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.6.1.windows-x64.zip)
 
 Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
 installation.
@@ -27,7 +27,7 @@ this folder to anywhere you want Grafana to run from.  Go into the
 
 The default Grafana port is `3000`, this port requires extra permissions
 on windows. Edit `custom.ini` and uncomment the `http_port`
-configuration option and change it to something like `8080` or similar.
+configuration option (`;` is the comment character in ini files) and change it to something like `8080` or similar.
 That port should not require extra Windows privileges.
 
 Start Grafana by executing `grafana-server.exe`, preferably from the

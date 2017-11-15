@@ -46,6 +46,7 @@ JSON Body schema:
 
 - **dashboard** – The complete dashboard model, id = null to create a new dashboard
 - **overwrite** – Set to true if you want to overwrite existing dashboard with newer version or with same dashboard title.
+- **message** - Set a commit message for the version history.
 
 **Example Response**:
 
@@ -157,53 +158,57 @@ Will return the home dashboard.
 
 **Example Request**:
 
-    GET /api/dashboards/home HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+GET /api/dashboards/home HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
+{
+  "meta":	{
+    "isHome":true,
+    "canSave":false,
+    "canEdit":false,
+    "canStar":false,
+    "slug":"",
+    "expires":"0001-01-01T00:00:00Z",
+    "created":"0001-01-01T00:00:00Z"
+  },
+  "dashboard": {
+    "editable":false,
+    "hideControls":true,
+    "nav":[
     {
-      "meta":	{
-        "isHome":true,
-        "canSave":false,
-        "canEdit":false,
-        "canStar":false,
-        "slug":"",
-        "expires":"0001-01-01T00:00:00Z",
-        "created":"0001-01-01T00:00:00Z"
-      },
-      "dashboard": {
-        "editable":false,
-        "hideControls":true,
-        "nav":[
-        {
-          "enable":false,
-        "type":"timepicker"
-        }
-        ],
-        "rows": [
-          {
-
-          }
-        ],
-        "style":"dark",
-        "tags":[],
-        "templating":{
-          "list":[
-          ]
-        },
-        "time":{
-        },
-        "timezone":"browser",
-        "title":"Home",
-        "version":5
-      }
+      "enable":false,
+      "type":"timepicker"
     }
+    ],
+    "rows": [
+      {
+
+      }
+    ],
+    "style":"dark",
+    "tags":[],
+    "templating":{
+      "list":[
+      ]
+    },
+    "time":{
+    },
+    "timezone":"browser",
+    "title":"Home",
+    "version":5
+  }
+}
+```
 
 ## Tags for Dashboard
 
@@ -214,32 +219,36 @@ Get all tags of dashboards
 
 **Example Request**:
 
-    GET /api/dashboards/tags HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+GET /api/dashboards/tags HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-    [
-      {
-        "term":"tag1",
-        "count":1
-      },
-      {
-        "term":"tag2",
-        "count":4
-      }
-    ]
+[
+  {
+    "term":"tag1",
+    "count":1
+  },
+  {
+    "term":"tag2",
+    "count":4
+  }
+]
+```
 
 ## Search Dashboards
 
 `GET /api/search/`
 
-Status Codes:
+Query parameters:
 
 - **query** – Search Query
 - **tag** – Tag to use
@@ -248,29 +257,27 @@ Status Codes:
 
 **Example Request**:
 
-    GET /api/search?query=MyDashboard&starred=true&tag=prod HTTP/1.1
-    Accept: application/json
-    Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```http
+GET /api/search?query=Production%20Overview&starred=true&tag=prod HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+```
 
 **Example Response**:
 
-    HTTP/1.1 200
-    Content-Type: application/json
+```http
+HTTP/1.1 200
+Content-Type: application/json
 
-    [
-      {
-        "id":1,
-        "title":"Production Overview",
-        "uri":"db/production-overview",
-        "type":"dash-db",
-        "tags":[],
-        "isStarred":false
-      }
-    ]
-
-        "email":"admin@mygraf.com",
-        "login":"admin",
-        "role":"Admin"
-      }
-    ]
+[
+  {
+    "id":1,
+    "title":"Production Overview",
+    "uri":"db/production-overview",
+    "type":"dash-db",
+    "tags":[prod],
+    "isStarred":true
+  }
+]
+```

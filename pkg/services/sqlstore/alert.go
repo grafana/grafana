@@ -94,18 +94,23 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 			if i > 0 {
 				sql.WriteString(" OR ")
 			}
-			sql.WriteString("state = ? ")
+			if strings.HasPrefix(v, "not_") {
+				sql.WriteString("state <> ? ")
+				v = strings.TrimPrefix(v, "not_")
+			} else {
+				sql.WriteString("state = ? ")
+			}
 			params = append(params, v)
 		}
 		sql.WriteString(")")
 	}
 
+	sql.WriteString(" ORDER BY name ASC")
+
 	if query.Limit != 0 {
 		sql.WriteString(" LIMIT ?")
 		params = append(params, query.Limit)
 	}
-
-	sql.WriteString(" ORDER BY name ASC")
 
 	alerts := make([]*m.Alert, 0)
 	if err := x.Sql(sql.String(), params...).Find(&alerts); err != nil {

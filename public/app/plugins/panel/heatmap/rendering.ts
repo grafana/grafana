@@ -1,14 +1,13 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import $ from 'jquery';
 import moment from 'moment';
+import * as d3 from 'd3';
 import kbn from 'app/core/utils/kbn';
 import {appEvents, contextSrv} from 'app/core/core';
 import {tickStep, getScaledDecimals, getFlotTickSize} from 'app/core/utils/ticks';
-import d3 from 'd3';
 import {HeatmapTooltip} from './heatmap_tooltip';
-import {convertToCards, mergeZeroBuckets} from './heatmap_data_converter';
+import {mergeZeroBuckets} from './heatmap_data_converter';
+import {getColorScale, getOpacityScale} from './color_scale';
 
 let MIN_CARD_SIZE = 1,
     CARD_PADDING = 1,
@@ -73,9 +72,8 @@ export default function link(scope, elem, attrs, ctrl) {
   function getYAxisWidth(elem) {
     let axis_text = elem.selectAll(".axis-y text").nodes();
     let max_text_width = _.max(_.map(axis_text, text => {
-      let el = $(text);
-      // Use JQuery outerWidth() to compute full element width
-      return el.outerWidth();
+      // Use SVG getBBox method
+      return text.getBBox().width;
     }));
 
     return max_text_width;
@@ -210,7 +208,7 @@ export default function link(scope, elem, attrs, ctrl) {
     let log_base = panel.yAxis.logBase;
     let {y_min, y_max} = adjustLogRange(data.heatmapStats.minLog, data.heatmapStats.max, log_base);
 
-    y_min = panel.yAxis.min !== null ? adjustLogMin(panel.yAxis.min, log_base) : y_min;
+    y_min = panel.yAxis.min && panel.yAxis.min !== '0' ? adjustLogMin(panel.yAxis.min, log_base) : y_min;
     y_max = panel.yAxis.max !== null ? adjustLogMax(panel.yAxis.max, log_base) : y_max;
 
     // Set default Y min and max if no data
@@ -384,11 +382,14 @@ export default function link(scope, elem, attrs, ctrl) {
       data.buckets = mergeZeroBuckets(data.buckets, _.min(tick_values));
     }
 
-    let cardsData = convertToCards(data.buckets);
-    let maxValue = d3.max(cardsData, card => card.count);
+    let cardsData = data.cards;
+    let maxValueAuto = data.cardStats.max;
+    let maxValue = panel.color.max || maxValueAuto;
+    let minValue = panel.color.min || 0;
 
-    colorScale = getColorScale(maxValue);
-    setOpacityScale(maxValue);
+    let colorScheme = _.find(ctrl.colorSchemes, {value: panel.color.colorScheme});
+    colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme,  maxValue, minValue);
+    opacityScale = getOpacityScale(panel.color, maxValue);
     setCardSize();
 
     let cards = heatmap.selectAll(".heatmap-card").data(cardsData);
@@ -423,8 +424,8 @@ export default function link(scope, elem, attrs, ctrl) {
     let strokeColor = d3.color(color).brighter(4);
     let current_card = d3.select(event.target);
     tooltip.originalFillColor = color;
-    current_card.style("fill", highlightColor)
-    .style("stroke", strokeColor)
+    current_card.style("fill", highlightColor.toString())
+    .style("stroke", strokeColor.toString())
     .style("stroke-width", 1);
   }
 
@@ -432,30 +433,6 @@ export default function link(scope, elem, attrs, ctrl) {
     d3.select(event.target).style("fill", tooltip.originalFillColor)
     .style("stroke", tooltip.originalFillColor)
     .style("stroke-width", 0);
-  }
-
-  function getColorScale(maxValue) {
-    let colorScheme = _.find(ctrl.colorSchemes, {value: panel.color.colorScheme});
-    let colorInterpolator = d3[colorScheme.value];
-    let colorScaleInverted = colorScheme.invert === 'always' ||
-      (colorScheme.invert === 'dark' && !contextSrv.user.lightTheme);
-
-    let start = colorScaleInverted ? maxValue : 0;
-    let end = colorScaleInverted ? 0 : maxValue;
-
-    return d3.scaleSequential(colorInterpolator).domain([start, end]);
-  }
-
-  function setOpacityScale(maxValue) {
-    if (panel.color.colorScale === 'linear') {
-      opacityScale = d3.scaleLinear()
-      .domain([0, maxValue])
-      .range([0, 1]);
-    } else if (panel.color.colorScale === 'sqrt') {
-      opacityScale = d3.scalePow().exponent(panel.color.exponent)
-      .domain([0, maxValue])
-      .range([0, 1]);
-    }
   }
 
   function setCardSize() {
@@ -704,77 +681,10 @@ export default function link(scope, elem, attrs, ctrl) {
     }
   }
 
-  function drawColorLegend() {
-    d3.select("#heatmap-color-legend").selectAll("rect").remove();
-
-    let legend = d3.select("#heatmap-color-legend");
-    let legendWidth = Math.floor($(d3.select("#heatmap-color-legend").node()).outerWidth());
-    let legendHeight = d3.select("#heatmap-color-legend").attr("height");
-
-    let legendColorScale = getColorScale(legendWidth);
-
-    let rangeStep = 2;
-    let valuesRange = d3.range(0, legendWidth, rangeStep);
-    var legendRects = legend.selectAll(".heatmap-color-legend-rect").data(valuesRange);
-
-    legendRects.enter().append("rect")
-    .attr("x", d => d)
-    .attr("y", 0)
-    .attr("width", rangeStep + 1) // Overlap rectangles to prevent gaps
-    .attr("height", legendHeight)
-    .attr("stroke-width", 0)
-    .attr("fill", d => {
-      return legendColorScale(d);
-    });
-  }
-
-  function drawOpacityLegend() {
-    d3.select("#heatmap-opacity-legend").selectAll("rect").remove();
-
-    let legend = d3.select("#heatmap-opacity-legend");
-    let legendWidth = Math.floor($(d3.select("#heatmap-opacity-legend").node()).outerWidth());
-    let legendHeight = d3.select("#heatmap-opacity-legend").attr("height");
-
-    let legendOpacityScale;
-    if (panel.color.colorScale === 'linear') {
-      legendOpacityScale = d3.scaleLinear()
-      .domain([0, legendWidth])
-      .range([0, 1]);
-    } else if (panel.color.colorScale === 'sqrt') {
-      legendOpacityScale = d3.scalePow().exponent(panel.color.exponent)
-      .domain([0, legendWidth])
-      .range([0, 1]);
-    }
-
-    let rangeStep = 1;
-    let valuesRange = d3.range(0, legendWidth, rangeStep);
-    var legendRects = legend.selectAll(".heatmap-opacity-legend-rect").data(valuesRange);
-
-    legendRects.enter().append("rect")
-    .attr("x", d => d)
-    .attr("y", 0)
-    .attr("width", rangeStep)
-    .attr("height", legendHeight)
-    .attr("stroke-width", 0)
-    .attr("fill", panel.color.cardColor)
-    .style("opacity", d => {
-      return legendOpacityScale(d);
-    });
-  }
-
   function render() {
     data = ctrl.data;
     panel = ctrl.panel;
     timeRange = ctrl.range;
-
-    // Draw only if color editor is opened
-    if (!d3.select("#heatmap-color-legend").empty()) {
-      drawColorLegend();
-    }
-
-    if (!d3.select("#heatmap-opacity-legend").empty()) {
-      drawOpacityLegend();
-    }
 
     if (!setElementHeight() || !data) {
       return;
