@@ -30,7 +30,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(timeRange, "WHERE $__timeFilter(time_column)")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "WHERE time_column >= to_timestamp(18446744066914186738) AND time_column <= to_timestamp(18446744066914187038)")
+			So(sql, ShouldEqual, "WHERE extract(epoch from time_column) BETWEEN 18446744066914186738 AND 18446744066914187038")
 		})
 
 		Convey("interpolate __timeFrom function", func() {
@@ -45,7 +45,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(timeRange, "GROUP BY $__timeGroup(time_column,'5m')")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "GROUP BY (extract(epoch from \"time_column\")/extract(epoch from '5m'::interval))::int")
+			So(sql, ShouldEqual, "GROUP BY (extract(epoch from \"time_column\")/300)::bigint*300")
 		})
 
 		Convey("interpolate __timeTo function", func() {

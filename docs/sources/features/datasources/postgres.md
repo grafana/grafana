@@ -45,10 +45,10 @@ Macro example | Description
 ------------ | -------------
 *$__time(dateColumn)* | Will be replaced by an expression to rename the column to `time`. For example, *dateColumn as time*
 *$__timeSec(dateColumn)* | Will be replaced by an expression to rename the column to `time` and converting the value to unix timestamp. For example, *extract(epoch from dateColumn) as time*
-*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn > to_timestamp(1494410783) AND dateColumn < to_timestamp(1494497183)*
+*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *extract(epoch from dateColumn) BETWEEN 1494410783 AND 1494497183*
 *$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *to_timestamp(1494410783)*
 *$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *to_timestamp(1494497183)*
-*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *(extract(epoch from "dateColumn")/extract(epoch from '5m'::interval))::int*
+*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *(extract(epoch from "dateColumn")/300)::bigint*300*
 *$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
 *$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
 *$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
@@ -94,26 +94,26 @@ Example with `metric` column
 
 ```sql
 SELECT
-  min(time_date_time) as time,
+  $__timeGroup(time_date_time,'5m') as time,
   min(value_double),
   'min' as metric
 FROM test_data
 WHERE $__timeFilter(time_date_time)
-GROUP BY metric1, (extract(epoch from time_date_time)/extract(epoch from $__interval::interval))::int
-ORDER BY time asc
+GROUP BY time
+ORDER BY time
 ```
 
 Example with multiple columns:
 
 ```sql
 SELECT
-  min(time_date_time) as time,
+  $__timeGroup(time_date_time,'5m') as time,
   min(value_double) as min_value,
   max(value_double) as max_value
 FROM test_data
 WHERE $__timeFilter(time_date_time)
-GROUP BY metric1, (extract(epoch from time_date_time)/extract(epoch from $__interval::interval))::int
-ORDER BY time asc
+GROUP BY time
+ORDER BY time
 ```
 
 ## Templating
@@ -154,7 +154,11 @@ SELECT hostname FROM host  WHERE region IN($region)
 
 ### Using Variables in Queries
 
-Template variables are quoted automatically so if it is a string value do not wrap them in quotes in where clauses. If the variable is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values.
+From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically so if it is a string value do not wrap them in quotes in where clauses.
+
+From Grafana 4.7.0, template variable values are only quoted when the template variable is a `multi-value`.
+
+If the variable is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values.
 
 There are two syntaxes:
 
@@ -179,6 +183,29 @@ FROM table
 WHERE $__timeFilter(atimestamp) and hostname in([[hostname]])
 ORDER BY atimestamp ASC
 ```
+
+## Annotations
+
+[Annotations]({{< relref "reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+
+An example query:
+
+```sql
+SELECT
+  extract(epoch from time_date_time) AS time,
+ metric1 as text,
+  concat_ws(', ', metric1::text, metric2::text) as tags
+FROM
+  public.test_data
+WHERE
+  $__timeFilter(time_date_time)
+```
+
+Name | Description
+------------ | -------------
+time | The name of the date/time field.
+text | Event description field.
+tags | Optional field name to use for event tags as a comma separated string.
 
 ## Alerting
 

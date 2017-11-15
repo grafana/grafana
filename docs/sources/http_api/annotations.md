@@ -120,6 +120,37 @@ Content-Type: application/json
 {"message":"Annotation added"}
 ```
 
+## Create Annotation in Graphite format
+
+Creates an annotation by using Graphite-compatible event format. The `when` and `data` fields are optional. If `when` is not specified then the current time will be used as annotation's timestamp. The `tags` field can also be in prior to Graphite `0.10.0`
+format (string with multiple tags being separated by a space).
+
+`POST /api/annotations/graphite`
+
+**Example Request**:
+
+```json
+POST /api/annotations/graphite HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+
+{
+  "what": "Event - deploy",
+  "tags": ["deploy", "production"],
+  "when": 1467844481,
+  "data": "deploy of master branch happened at Wed Jul 6 22:34:41 UTC 2016"
+}
+```
+
+**Example Response**:
+
+```json
+HTTP/1.1 200
+Content-Type: application/json
+
+{"message":"Graphite annotation added"}
+```
+
 ## Update Annotation
 
 `PUT /api/annotations/:id`

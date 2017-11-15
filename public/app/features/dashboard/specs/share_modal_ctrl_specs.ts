@@ -2,7 +2,7 @@ import {describe, beforeEach, it, expect, sinon, angularMocks} from 'test/lib/co
 import helpers from 'test/specs/helpers';
 import '../shareModalCtrl';
 import config from 'app/core/config';
-import 'app/features/panellinks/linkSrv';
+import 'app/features/panellinks/link_srv';
 
 describe('ShareModalCtrl', function() {
   var ctx = new helpers.ControllerTestContext();

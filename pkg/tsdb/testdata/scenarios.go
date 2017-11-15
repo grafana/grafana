@@ -1,6 +1,7 @@
 package testdata
 
 import (
+	"encoding/json"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -136,6 +137,45 @@ func init() {
 			outsideTime := context.TimeRange.MustGetFrom().Add(-1*time.Hour).Unix() * 1000
 
 			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(10), float64(outsideTime)))
+			queryRes.Series = append(queryRes.Series, series)
+
+			return queryRes
+		},
+	})
+
+	registerScenario(&Scenario{
+		Id:   "manual_entry",
+		Name: "Manual Entry",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			queryRes := tsdb.NewQueryResult()
+
+			points := query.Model.Get("points").MustArray()
+
+			series := newSeriesForQuery(query)
+			startTime := context.TimeRange.GetFromAsMsEpoch()
+			endTime := context.TimeRange.GetToAsMsEpoch()
+
+			for _, val := range points {
+				pointValues := val.([]interface{})
+
+				var value null.Float
+				var time int64
+
+				if valueFloat, err := strconv.ParseFloat(string(pointValues[0].(json.Number)), 64); err == nil {
+					value = null.FloatFrom(valueFloat)
+				}
+
+				if timeInt, err := strconv.ParseInt(string(pointValues[1].(json.Number)), 10, 64); err != nil {
+					continue
+				} else {
+					time = timeInt
+				}
+
+				if time >= startTime && time <= endTime {
+					series.Points = append(series.Points, tsdb.NewTimePoint(value, float64(time)))
+				}
+			}
+
 			queryRes.Series = append(queryRes.Series, series)
 
 			return queryRes

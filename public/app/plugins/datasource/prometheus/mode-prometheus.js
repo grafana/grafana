@@ -43,10 +43,10 @@ var PrometheusHighlightRules = function() {
       regex : "\\d+[smhdwy]"
     }, {
       token : keywordMapper,
-      regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
+      regex : "[a-zA-Z_:][a-zA-Z0-9_:]*"
     }, {
       token : "keyword.operator",
-      regex : "\\+|\\-|\\*|\\/|%|\\^|=|==|!=|<=|>=|<|>|=\\~|!\\~"
+      regex : "\\+|\\-|\\*|\\/|%|\\^|==|!=|<=|>=|<|>"
     }, {
       token : "paren.lparen",
       regex : "[[(]"
@@ -75,8 +75,7 @@ var PrometheusHighlightRules = function() {
       regex : '"[^"]*"|\'[^\']*\''
     }, {
       token : "punctuation.operator",
-      regex : ",",
-      push  : 'start-label-matcher'
+      regex : ","
     }, {
       token : "paren.rparen",
       regex : "}",
@@ -112,11 +111,6 @@ var keyWordsCompletions = prometheusKeyWords.map(function(word) {
 });
 
 var prometheusFunctions = [
-  {
-    name: 'abs()', value: 'abs',
-    def: 'abs(v instant-vector)',
-    docText: 'Returns the input vector with all sample values converted to their absolute value.'
-  },
   {
     name: 'abs()', value: 'abs',
     def: 'abs(v instant-vector)',

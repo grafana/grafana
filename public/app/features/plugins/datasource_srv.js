@@ -8,6 +8,8 @@ define([
 function (angular, _, coreModule, config, pluginLoader) {
   'use strict';
 
+  config = config.default;
+
   coreModule.default.service('datasourceSrv', function($q, $injector, $rootScope, templateSrv) {
     var self = this;
 

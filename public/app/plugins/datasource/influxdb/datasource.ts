@@ -190,10 +190,13 @@ export default class InfluxDatasource {
   }
 
   testDatasource() {
-    return this.metricFindQuery('SHOW DATABASES').then(res => {
-      let found = _.find(res, {text: this.database});
-      if (!found) {
-        return { status: "error", message: "Could not find the specified database name." };
+    var queryBuilder = new InfluxQueryBuilder({measurement: '', tags: []}, this.database);
+    var query = queryBuilder.buildExploreQuery('RETENTION POLICIES');
+
+    return this._seriesQuery(query).then(res => {
+      let error = _.get(res, 'results[0].error');
+      if (error) {
+        return { status: "error", message: error };
       }
       return { status: "success", message: "Data source is working" };
     }).catch(err => {

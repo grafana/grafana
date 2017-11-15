@@ -95,6 +95,7 @@ export class AlertTabCtrl {
       case "hipchat": return "fa fa-mail-forward";
       case "pushover": return "fa fa-mobile";
       case "kafka": return "fa fa-random";
+      case "teams": return "fa fa-windows";
     }
     return 'fa fa-bell';
   }
@@ -383,6 +384,7 @@ export class AlertTabCtrl {
 
   test() {
     this.testing = true;
+    this.testResult = false;
 
     var payload = {
       dashboard: this.dashboardSrv.getCurrent().getSaveModelClone(),

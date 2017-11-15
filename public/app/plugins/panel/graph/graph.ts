@@ -313,11 +313,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
               let ticks = panel.xaxis.buckets || panelWidth / 50;
               bucketSize = tickStep(histMin, histMax, ticks);
               let histogram = convertValuesToHistogram(values, bucketSize);
-
               data[0].data = histogram;
-              data[0].alias = data[0].label = data[0].id = "count";
-              data = [data[0]];
-
               options.series.bars.barWidth = bucketSize * 0.8;
             } else {
               bucketSize = 0;
@@ -343,7 +339,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         eventManager.addFlotEvents(annotations, options);
         configureAxisOptions(data, options);
 
-        sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
+        sortedSeries = sortSeries(data, ctrl.panel);
 
         function callPlot(incrementRenderCounter) {
           try {
@@ -372,6 +368,38 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         } else {
           callPlot(true);
         }
+      }
+
+      function sortSeries(series, panel) {
+        var sortBy = panel.legend.sort;
+        var sortOrder = panel.legend.sortDesc;
+        var haveSortBy = sortBy !== null || sortBy !== undefined;
+        var haveSortOrder = sortOrder !== null || sortOrder !== undefined;
+        var shouldSortBy = panel.stack && haveSortBy && haveSortOrder;
+        var sortDesc = panel.legend.sortDesc === true ? -1 : 1;
+
+        series.sort((x, y) => {
+          if (x.zindex > y.zindex) {
+            return 1;
+          }
+
+          if (x.zindex < y.zindex) {
+            return -1;
+          }
+
+          if (shouldSortBy) {
+            if (x.stats[sortBy] > y.stats[sortBy]) {
+              return 1 * sortDesc;
+            }
+            if (x.stats[sortBy] < y.stats[sortBy]) {
+              return -1 * sortDesc;
+            }
+          }
+
+          return 0;
+        });
+
+        return series;
       }
 
       function translateFillOption(fill) {

@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
@@ -106,7 +104,7 @@ export class TableRenderer {
           return '-';
         }
 
-        if (_.isString(v)) {
+        if (_.isString(v) || _.isArray(v)) {
           return this.defaultCellFormatter(v, column.style);
         }
 

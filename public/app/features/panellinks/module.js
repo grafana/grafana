@@ -1,7 +1,7 @@
 define([
   'angular',
   'lodash',
-  './linkSrv',
+  './link_srv',
 ],
 function (angular, _) {
   'use strict';

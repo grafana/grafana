@@ -11,6 +11,7 @@ export class AlertListCtrl {
   stateFilters = [
     {text: 'All', value: null},
     {text: 'OK', value: 'ok'},
+    {text: 'Not OK', value: 'not_ok'},
     {text: 'Alerting', value: 'alerting'},
     {text: 'No Data', value: 'no_data'},
     {text: 'Paused', value: 'paused'},

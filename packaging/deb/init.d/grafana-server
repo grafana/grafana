@@ -91,7 +91,7 @@ case "$1" in
 	then
 	  sleep 1
 
-    # check if pid file has been written two
+    # check if pid file has been written to
 	  if ! [[ -s $PID_FILE ]]; then
 	    log_end_msg 1
 	    exit 1

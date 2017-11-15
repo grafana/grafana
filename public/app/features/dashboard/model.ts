@@ -35,7 +35,6 @@ export class DashboardModel {
   gnetId: any;
   meta: any;
   events: any;
-  editMode: boolean;
 
   constructor(data, meta?) {
     if (!data) {

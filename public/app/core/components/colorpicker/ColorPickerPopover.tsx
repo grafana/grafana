@@ -1,9 +1,8 @@
 import React from 'react';
 import $ from 'jquery';
 import tinycolor from 'tinycolor2';
-import coreModule from 'app/core/core_module';
-import { GfColorPalette } from './ColorPalette';
-import { GfSpectrumPicker } from './SpectrumPicker';
+import { ColorPalette } from './ColorPalette';
+import { SpectrumPicker } from './SpectrumPicker';
 
 const DEFAULT_COLOR = '#000000';
 
@@ -57,10 +56,11 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
     let newColor = tinycolor(colorString);
     if (newColor.isValid()) {
       // Update only color state
+      let newColorString = newColor.toString();
       this.setState({
-        color: newColor.toString(),
+        color: newColorString,
       });
-      this.props.onColorSelect(newColor);
+      this.props.onColorSelect(newColorString);
     }
   }
 
@@ -83,12 +83,12 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
   render() {
     const paletteTab = (
       <div id="palette">
-        <GfColorPalette color={this.state.color} onColorSelect={this.sampleColorSelected.bind(this)} />
+        <ColorPalette color={this.state.color} onColorSelect={this.sampleColorSelected.bind(this)} />
       </div>
     );
     const spectrumTab = (
       <div id="spectrum">
-        <GfSpectrumPicker color={this.state.color} onColorSelect={this.spectrumColorSelected.bind(this)} options={{}} />
+        <SpectrumPicker color={this.state.color} onColorSelect={this.spectrumColorSelected.bind(this)} options={{}} />
       </div>
     );
     const currentTab = this.state.tab === 'palette' ? paletteTab : spectrumTab;
@@ -115,7 +115,3 @@ export class ColorPickerPopover extends React.Component<IProps, any> {
     );
   }
 }
-
-coreModule.directive('gfColorPickerPopover', function (reactDirective) {
-  return reactDirective(ColorPickerPopover, ['color', 'onColorSelect']);
-});

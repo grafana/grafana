@@ -224,6 +224,9 @@ The maximum number of connections in the idle connection pool.
 ### max_open_conn
 The maximum number of open connections to the database.
 
+### log_queries
+Set to `true` to log the sql calls and execution times.
+
 <hr />
 
 ## [security]
@@ -551,7 +554,7 @@ session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
-- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=require
+- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full
 - **memcache:** ex:  127.0.0.1:11211
 - **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`
 
@@ -580,7 +583,7 @@ CREATE TABLE session (
 );
 ```
 
-Postgres valid `sslmode` are `disable`, `require` (default), `verify-ca`, and `verify-full`.
+Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
 
 ### cookie_name
 

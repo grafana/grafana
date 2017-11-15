@@ -43,7 +43,7 @@ func (r *SqlAnnotationRepo) ensureTagsExist(sess *DBSession, tags []*models.Tag)
 		var existingTag models.Tag
 
 		// check if it exists
-		if exists, err := sess.Table("tag").Where("key=? AND value=?", tag.Key, tag.Value).Get(&existingTag); err != nil {
+		if exists, err := sess.Table("tag").Where("`key`=? AND `value`=?", tag.Key, tag.Value).Get(&existingTag); err != nil {
 			return nil, err
 		} else if exists {
 			tag.Id = existingTag.Id

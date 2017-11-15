@@ -1,8 +1,6 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
-import {colors} from 'app/core/core';
+import colors from 'app/core/utils/colors';
 
 export class DataProcessor {
 
@@ -27,9 +25,17 @@ export class DataProcessor {
 
     switch (this.panel.xaxis.mode) {
       case 'series':
-      case 'histogram':
       case 'time': {
         return options.dataList.map((item, index) => {
+          return this.timeSeriesHandler(item, index, options);
+        });
+      }
+      case 'histogram': {
+        let histogramDataList = [{
+          target: 'count',
+          datapoints: _.concat([], _.flatten(_.map(options.dataList, 'datapoints')))
+        }];
+        return histogramDataList.map((item, index) => {
           return this.timeSeriesHandler(item, index, options);
         });
       }

@@ -1,4 +1,4 @@
-[Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) [![Go Report Card](https://goreportcard.com/badge/github.com/grafana/grafana)](https://goreportcard.com/report/github.com/grafana/grafana)
+[Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) [![Go Report Card](https://goreportcard.com/badge/github.com/grafana/grafana)](https://goreportcard.com/report/github.com/grafana/grafana) [![codecov](https://codecov.io/gh/grafana/grafana/branch/master/graph/badge.svg)](https://codecov.io/gh/grafana/grafana)
 ================
 [Website](https://grafana.com) |
 [Twitter](https://twitter.com/grafana) |
@@ -81,6 +81,20 @@ You only need to add the options you want to override. Config files are applied 
 
 In your custom.ini uncomment (remove the leading `;`) sign. And set `app_mode = development`.
 
+### Running tests
+
+- You can run backend Golang tests using "go test ./pkg/...".
+- Execute all frontend tests with "npm run test"
+
+Writing & watching frontend tests (we have two test runners)
+
+- jest for all new tests that do not require browser context (React+more)
+   - Start watcher: `npm run jest`
+   - Jest will run all test files that end with the name ".jest.ts"
+- karma + mocha is used for testing angularjs components. We do want to migrate these test to jest over time (if possible).
+  - Start watcher: `npm run karma`
+  - Karma+Mocha runs all files that end with the name "_specs.ts".
+
 ## Contribute
 
 If you have any idea for an improvement or found a bug do not hesitate to open an issue.
@@ -89,8 +103,8 @@ the kickass metrics & devops dashboard we all dream about!
 
 ## Plugin development
 
-Checkout the [Plugin Development Guide](http://docs.grafana.org/plugins/developing/development/) and checkout the [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) file for changes in Grafana that relate to 
-plugin development. 
+Checkout the [Plugin Development Guide](http://docs.grafana.org/plugins/developing/development/) and checkout the [PLUGIN_DEV.md](https://github.com/grafana/grafana/blob/master/PLUGIN_DEV.md) file for changes in Grafana that relate to
+plugin development.
 
 ## License
 

@@ -14,12 +14,12 @@ parent = "http_api"
 
 ## Get current Organisation
 
-`GET /api/org`
+`GET /api/org/`
 
 **Example Request**:
 
 ```http
-GET /api/org HTTP/1.1
+GET /api/org/ HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -49,6 +49,8 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
+Note: The api will only work when you pass the admin name and password
+to the request http url, like http://admin:admin@localhost:3000/api/orgs/1
 
 **Example Response**:
 
@@ -81,6 +83,8 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
+Note: The api will only work when you pass the admin name and password
+to the request http url, like http://admin:admin@localhost:3000/api/orgs/name/Main%20Org%2E
 
 **Example Response**:
 
@@ -118,6 +122,9 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "name":"New Org."
 }
 ```
+Note: The api will work in the following two ways
+1) Need to set GF_USERS_ALLOW_ORG_CREATE=true
+2) Set the config users.allow_org_create to true in ini file
 
 **Example Response**:
 
@@ -279,6 +286,8 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
+Note: The api will only work when you pass the admin name and password
+to the request http url, like http://admin:admin@localhost:3000/api/orgs
 
 **Example Response**:
 
@@ -334,6 +343,9 @@ Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
+Note: The api will only work when you pass the admin name and password
+to the request http url, like http://admin:admin@localhost:3000/api/orgs/1/users
+
 
 **Example Response**:
 

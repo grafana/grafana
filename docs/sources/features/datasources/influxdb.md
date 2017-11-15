@@ -173,6 +173,4 @@ SELECT title, description from events WHERE $timeFilter order asc
 
 For InfluxDB you need to enter a query like in the above example. You need to have the ```where $timeFilter```
 part. If you only select one column you will not need to enter anything in the column mapping fields. The
-Tags field can be a comma seperated string.
-
-
+Tags field can be a comma separated string.

@@ -14,7 +14,14 @@ module.exports = function(grunt) {
     'jshint',
     'sasslint',
     'exec:tslint',
+    "exec:jest",
     'karma:test',
+    'no-only-tests'
+  ]);
+
+  grunt.registerTask('precommit', [
+    'sasslint',
+    'exec:tslint',
     'no-only-tests'
   ]);
 

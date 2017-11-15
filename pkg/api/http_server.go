@@ -188,9 +188,8 @@ func (hs *HttpServer) metricsEndpoint(ctx *macaron.Context) {
 		return
 	}
 
-	promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{
-		DisableCompression: true,
-	}).ServeHTTP(ctx.Resp, ctx.Req.Request)
+	promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{}).
+		ServeHTTP(ctx.Resp, ctx.Req.Request)
 }
 
 func (hs *HttpServer) healthHandler(ctx *macaron.Context) {

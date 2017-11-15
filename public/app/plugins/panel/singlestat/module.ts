@@ -2,7 +2,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
-import 'app/features/panellinks/linkSrv';
+import 'app/features/panellinks/link_srv';
 
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
@@ -66,7 +66,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     thresholds: '',
     colorBackground: false,
     colorValue: false,
-    colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+    colors: ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
     sparkline: {
       show: false,
       full: false,
@@ -130,7 +130,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   seriesHandler(seriesData) {
     var series = new TimeSeries({
-      datapoints: seriesData.datapoints,
+      datapoints: seriesData.datapoints || [],
       alias: seriesData.target,
     });
 

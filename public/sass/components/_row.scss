@@ -61,6 +61,7 @@
   margin: 0 $panel-margin $panel-margin*2 $panel-margin;
   padding: $panel-margin*2;
   display: flex;
+  flex-direction: row;
 }
 
 .dash-row-dropview-close {
@@ -71,19 +72,10 @@
   height: 20px;
 }
 
-.add-panel-panels-scroll {
-  width: 100%;
-  overflow: auto;
-  -ms-overflow-style: none;
-
-  &::-webkit-scrollbar {
-    display: none
-  }
-}
-
 .add-panel-panels {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
 }
 
 .add-panel-item {

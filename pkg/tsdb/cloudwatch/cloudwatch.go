@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -24,6 +25,7 @@ import (
 
 type CloudWatchExecutor struct {
 	*models.DataSource
+	ec2Svc ec2iface.EC2API
 }
 
 type DatasourceInfo struct {
@@ -267,7 +269,10 @@ func parseQuery(model *simplejson.Json) (*CloudWatchQuery, error) {
 		period = int(d.Seconds())
 	}
 
-	alias := model.Get("alias").MustString("{{metric}}_{{stat}}")
+	alias := model.Get("alias").MustString()
+	if alias == "" {
+		alias = "{{metric}}_{{stat}}"
+	}
 
 	return &CloudWatchQuery{
 		Region:             region,
@@ -287,6 +292,7 @@ func formatAlias(query *CloudWatchQuery, stat string, dimensions map[string]stri
 	data["namespace"] = query.Namespace
 	data["metric"] = query.MetricName
 	data["stat"] = stat
+	data["period"] = strconv.Itoa(query.Period)
 	for k, v := range dimensions {
 		data[k] = v
 	}
@@ -311,7 +317,8 @@ func parseResponse(resp *cloudwatch.GetMetricStatisticsOutput, query *CloudWatch
 	var value float64
 	for _, s := range append(query.Statistics, query.ExtendedStatistics...) {
 		series := tsdb.TimeSeries{
-			Tags: map[string]string{},
+			Tags:   map[string]string{},
+			Points: make([]tsdb.TimePoint, 0),
 		}
 		for _, d := range query.Dimensions {
 			series.Tags[*d.Name] = *d.Value

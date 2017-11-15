@@ -2,7 +2,8 @@
   "rules": {
     "no-string-throw": true,
     "no-unused-expression": true,
-		"no-unused-variable": true,
+		"no-unused-variable": false,
+    "no-use-before-declare": false,
     "no-duplicate-variable": true,
     "curly": true,
     "class-name": true,
@@ -33,7 +34,6 @@
     "no-string-literal": false,
     "no-switch-case-fall-through": false,
     "no-trailing-whitespace": true,
-    "no-use-before-declare": true,
     "no-var-keyword": false,
     "object-literal-sort-keys": false,
     "one-line": [true,

@@ -1,13 +1,11 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import TimeSeries from 'app/core/time_series';
+import TimeSeries from 'app/core/time_series2';
 import {axesEditor} from './axes_editor';
 import {heatmapDisplayEditor} from './display_editor';
 import rendering from './rendering';
-import {convertToHeatMap, convertToCards, elasticHistogramToHeatmap, calculateBucketSize, getMinLog} from './heatmap_data_converter';
+import {convertToHeatMap, convertToCards, elasticHistogramToHeatmap, calculateBucketSize } from './heatmap_data_converter';
 
 let X_BUCKET_NUMBER_DEFAULT = 30;
 let Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -250,7 +248,6 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     });
 
     series.flotpairs = series.getFlotPairs(this.panel.nullPointMode);
-    series.minLog = getMinLog(series);
 
     let datapoints = seriesData.datapoints || [];
     if (datapoints && datapoints.length > 0) {
@@ -266,7 +263,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
   parseSeries(series) {
     let min = _.min(_.map(series, s => s.stats.min));
-    let minLog = _.min(_.map(series, s => s.minLog));
+    let minLog = _.min(_.map(series, s => s.stats.logmin));
     let max = _.max(_.map(series, s => s.stats.max));
 
     return {

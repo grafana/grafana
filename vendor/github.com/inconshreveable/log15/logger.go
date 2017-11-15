@@ -12,8 +12,10 @@ const lvlKey = "lvl"
 const msgKey = "msg"
 const errorKey = "LOG15_ERROR"
 
+// Lvl is a type for predefined log levels.
 type Lvl int
 
+// List of predefined log Levels
 const (
 	LvlCrit Lvl = iota
 	LvlError
@@ -40,7 +42,7 @@ func (l Lvl) String() string {
 	}
 }
 
-// Returns the appropriate Lvl from a string name.
+// LvlFromString returns the appropriate Lvl from a string name.
 // Useful for parsing command line args and configuration files.
 func LvlFromString(lvlString string) (Lvl, error) {
 	switch lvlString {
@@ -69,6 +71,7 @@ type Record struct {
 	KeyNames RecordKeyNames
 }
 
+// RecordKeyNames are the predefined names of the log props used by the Logger interface.
 type RecordKeyNames struct {
 	Time string
 	Msg  string

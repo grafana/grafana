@@ -141,6 +141,16 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 				break
 			}
 		}
+	case "count_non_null":
+		for _, v := range series.Points {
+			if v[0].Valid {
+				value++
+			}
+		}
+
+		if value > 0 {
+			allNull = false
+		}
 	}
 
 	if allNull {

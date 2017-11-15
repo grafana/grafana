@@ -15,9 +15,17 @@ export class PostgresDatasource {
     this.responseParser = new ResponseParser(this.$q);
   }
 
-  interpolateVariable(value) {
+  interpolateVariable(value, variable) {
     if (typeof value === 'string') {
-      return '\'' + value + '\'';
+      if (variable.multi || variable.includeAll) {
+        return '\'' + value + '\'';
+      } else {
+        return value;
+      }
+    }
+
+    if (typeof value === 'number') {
+      return value;
     }
 
     var quotedValues = _.map(value, function(val) {

@@ -34,7 +34,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
       check: () => {
         return $q.when(
           datasourceSrv.getMetricSources().filter(item => {
-            return item.meta.builtIn === false;
+            return item.meta.builtIn !== true;
           }).length > 0
         );
       }
