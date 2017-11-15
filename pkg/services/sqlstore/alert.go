@@ -94,9 +94,9 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 			if i > 0 {
 				sql.WriteString(" OR ")
 			}
-			if strings.HasPrefix(v, "not") {
+			if strings.HasPrefix(v, "not_") {
 				sql.WriteString("state <> ? ")
-				v = v[4:]
+				v = strings.TrimPrefix(v, "not_")
 			} else {
 				sql.WriteString("state = ? ")
 			}
