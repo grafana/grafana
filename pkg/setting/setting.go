@@ -523,7 +523,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	// read dashboard settings
 	dashboards := Cfg.Section("dashboards")
-	DashboardVersionsToKeep = dashboards.Key("snapshot_TTL_days").MustInt(20)
+	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
