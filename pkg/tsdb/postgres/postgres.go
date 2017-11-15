@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"context"
 	"fmt"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -52,7 +53,7 @@ func generateConnectionString(datasource *models.DataSource) string {
 	}
 
 	sslmode := datasource.JsonData.Get("sslmode").MustString("verify-full")
-	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", datasource.User, password, datasource.Url, datasource.Database, sslmode)
+	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", url.PathEscape(datasource.User), url.PathEscape(password), url.PathEscape(datasource.Url), url.PathEscape(datasource.Database), url.QueryEscape(sslmode))
 }
 
 func (e *PostgresQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
