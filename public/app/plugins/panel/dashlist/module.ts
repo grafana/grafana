@@ -32,6 +32,7 @@ class DashListCtrl extends PanelCtrl {
     }
 
     this.events.on('refresh', this.onRefresh.bind(this));
+    this.events.on('panel-size-changed', this.onPanelSizeChanged.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
 
     this.groups = [
@@ -58,12 +59,32 @@ class DashListCtrl extends PanelCtrl {
       }
       delete this.panel.mode;
     }
+
+    console.log(this);
   }
 
   onInitEditMode() {
     this.editorTabIndex = 1;
     this.modes = ['starred', 'search', 'recently viewed'];
     this.addEditorTab('Options', 'public/app/plugins/panel/dashlist/editor.html');
+  }
+
+  onPanelSizeChanged() {
+    this.setPanelHeight();
+  }
+
+  setPanelHeight() {
+    this.$scope.setPanelHeight();
+  }
+
+  link(scope, elem, attrs, ctrl: DashListCtrl) {
+    let panelContentElem = elem.find('.panel-content');
+    console.log(elem, panelContentElem);
+    panelContentElem.height(ctrl.height);
+
+    scope.setPanelHeight = () => {
+      panelContentElem.height(ctrl.height);
+    };
   }
 
   onRefresh() {
@@ -74,7 +95,10 @@ class DashListCtrl extends PanelCtrl {
     promises.push(this.getSearch());
 
     return Promise.all(promises)
-      .then(this.renderingCompleted.bind(this));
+    .then(() => {
+      this.setPanelHeight();
+      return this.renderingCompleted();
+    });
   }
 
   getSearch() {
