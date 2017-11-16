@@ -14,6 +14,7 @@
 * **Postgres/MySQL**: add __timeGroup macro for mysql [#9596](https://github.com/grafana/grafana/pull/9596), thanks [@svenklemm](https://github.com/svenklemm)
 * **Text**: Text panel are now edited in the ace editor. [#9698](https://github.com/grafana/grafana/pull/9698), thx [@mtanda](https://github.com/mtanda)
 * **Teams**: Add Microsoft Teams notifier as  [#8523](https://github.com/grafana/grafana/issues/8523), thx [@anthu](https://github.com/anthu)
+* **Datasources**: Its now possible to configure datasources with config files [#1789](https://github.com/grafana/grafana/issues/1789)
 
 ## Minor
 * **Alert panel**: Adds placeholder text when no alerts are within the time range [#9624](https://github.com/grafana/grafana/issues/9624), thx [@straend](https://github.com/straend)
