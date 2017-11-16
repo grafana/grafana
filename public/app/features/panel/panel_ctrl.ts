@@ -31,6 +31,7 @@ export class PanelCtrl {
   containerHeight: any;
   events: Emitter;
   timing: any;
+  scrollable: boolean;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
@@ -39,6 +40,7 @@ export class PanelCtrl {
     this.editorTabIndex = 0;
     this.events = this.panel.events;
     this.timing = {};
+    this.scrollable = false;
 
     var plugin = config.panels[this.panel.type];
     if (plugin) {
@@ -64,6 +66,7 @@ export class PanelCtrl {
   }
 
   refresh() {
+    this.setPanelHeight();
     this.events.emit('refresh', null);
   }
 
@@ -72,6 +75,7 @@ export class PanelCtrl {
   }
 
   changeView(fullscreen, edit) {
+    this.setPanelHeight();
     this.publishAppEvent('panel-change-view', {
       fullscreen: fullscreen, edit: edit, panelId: this.panel.id
     });
@@ -168,8 +172,15 @@ export class PanelCtrl {
     this.height = this.containerHeight - (PANEL_BORDER + PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
   }
 
+  setPanelHeight() {
+    if (this.scrollable) {
+      this.$scope.setPanelHeight();
+    }
+  }
+
   render(payload?) {
     this.timing.renderStart = new Date().getTime();
+    this.setPanelHeight();
     this.events.emit('render', payload);
   }
 

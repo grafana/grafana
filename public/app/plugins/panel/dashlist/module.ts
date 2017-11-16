@@ -25,6 +25,7 @@ class DashListCtrl extends PanelCtrl {
   constructor($scope, $injector, private backendSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
+    this.scrollable = true;
 
     if (this.panel.tag) {
       this.panel.tags = [this.panel.tag];
@@ -33,9 +34,6 @@ class DashListCtrl extends PanelCtrl {
 
     this.events.on('refresh', this.onRefresh.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
-    this.events.on('render', this.setPanelHeight.bind(this));
-    this.events.on('panel-size-changed', this.setPanelHeight.bind(this));
-    this.events.on('panel-change-view', this.setPanelHeight.bind(this));
 
     this.groups = [
       {list: [], show: false, header: "Starred dashboards",},
@@ -69,19 +67,6 @@ class DashListCtrl extends PanelCtrl {
     this.addEditorTab('Options', 'public/app/plugins/panel/dashlist/editor.html');
   }
 
-  setPanelHeight() {
-    this.$scope.setPanelHeight();
-  }
-
-  link(scope, elem, attrs, ctrl: DashListCtrl) {
-    let panelContentElem = elem.find('.panel-content');
-    panelContentElem.height(ctrl.height);
-
-    scope.setPanelHeight = () => {
-      panelContentElem.height(ctrl.height);
-    };
-  }
-
   onRefresh() {
     var promises = [];
 
@@ -90,10 +75,7 @@ class DashListCtrl extends PanelCtrl {
     promises.push(this.getSearch());
 
     return Promise.all(promises)
-    .then(() => {
-      this.setPanelHeight();
-      return this.renderingCompleted();
-    });
+      .then(this.renderingCompleted.bind(this));
   }
 
   getSearch() {

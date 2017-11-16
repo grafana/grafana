@@ -21,7 +21,6 @@ class AlertListPanel extends PanelCtrl {
     {text: 'Importance', value: 3},
   ];
 
-  contentHeight: string;
   stateFilter: any = {};
   currentAlerts: any = [];
   alertHistory: any = [];
@@ -38,6 +37,7 @@ class AlertListPanel extends PanelCtrl {
   constructor($scope, $injector, private backendSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
+    this.scrollable = true;
 
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('render',  this.onRender.bind(this));
@@ -75,7 +75,6 @@ class AlertListPanel extends PanelCtrl {
   }
 
   onRender() {
-    this.contentHeight = "max-height: " + this.height + "px;";
     if (this.panel.show === 'current') {
       this.getCurrentAlertState();
     }
