@@ -49,13 +49,12 @@ func (e *CreateAnnotationError) Error() string {
 	return e.message
 }
 
-func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) {
+func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
 
 	if cmd.Text == "" {
 		err := &CreateAnnotationError{"text field should not be empty"}
-		c.JsonApiErr(500, "Failed to save annotation", err)
-		return
+		return ApiError(500, "Failed to save annotation", err)
 	}
 
 	item := annotations.Item{
@@ -74,8 +73,7 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) {
 	}
 
 	if err := repo.Save(&item); err != nil {
-		c.JsonApiErr(500, "Failed to save annotation", err)
-		return
+		return ApiError(500, "Failed to save annotation", err)
 	}
 
 	startID := item.Id
@@ -89,27 +87,24 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) {
 		}
 
 		if err := repo.Update(&item); err != nil {
-			c.JsonApiErr(500, "Failed set regionId on annotation", err)
-			return
+			return ApiError(500, "Failed set regionId on annotation", err)
 		}
 
 		item.Id = 0
 		item.Epoch = cmd.TimeEnd / 1000
 
 		if err := repo.Save(&item); err != nil {
-			c.JsonApiErr(500, "Failed save annotation for region end time", err)
-			return
+			return ApiError(500, "Failed save annotation for region end time", err)
 		}
 
-		c.JSON(200, util.DynMap{
+		return Json(200, util.DynMap{
 			"message": "Annotation added",
 			"id":      startID,
 			"endId":   item.Id,
 		})
-		return
 	}
 
-	c.JSON(200, util.DynMap{
+	return Json(200, util.DynMap{
 		"message": "Annotation added",
 		"id":      startID,
 	})
@@ -123,13 +118,12 @@ func formatGraphiteAnnotation(what string, data string) string {
 	return text
 }
 
-func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotationsCmd) {
+func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
 
 	if cmd.What == "" {
 		err := &CreateAnnotationError{"what field should not be empty"}
-		c.JsonApiErr(500, "Failed to save Graphite annotation", err)
-		return
+		return ApiError(500, "Failed to save Graphite annotation", err)
 	}
 
 	if cmd.When == 0 {
@@ -152,14 +146,12 @@ func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotati
 				tagsArray = append(tagsArray, tagStr)
 			} else {
 				err := &CreateAnnotationError{"tag should be a string"}
-				c.JsonApiErr(500, "Failed to save Graphite annotation", err)
-				return
+				return ApiError(500, "Failed to save Graphite annotation", err)
 			}
 		}
 	default:
 		err := &CreateAnnotationError{"unsupported tags format"}
-		c.JsonApiErr(500, "Failed to save Graphite annotation", err)
-		return
+		return ApiError(500, "Failed to save Graphite annotation", err)
 	}
 
 	item := annotations.Item{
@@ -171,11 +163,10 @@ func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotati
 	}
 
 	if err := repo.Save(&item); err != nil {
-		c.JsonApiErr(500, "Failed to save Graphite annotation", err)
-		return
+		return ApiError(500, "Failed to save Graphite annotation", err)
 	}
 
-	c.JSON(200, util.DynMap{
+	return Json(200, util.DynMap{
 		"message": "Graphite annotation added",
 		"id":      item.Id,
 	})
