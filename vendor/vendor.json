@@ -11,6 +11,13 @@
 			"path": "cloud.google.com/go/compute/metadata",
 			"revision": "ef305dafe1fb55d8ee5fb61dd1e7b8f6a7d691e8",
 			"revisionTime": "2017-07-21T00:07:43Z"
+    },
+    {
+			"checksumSHA1": "NFloqOKPtdytzLGPdVIOHUYvUoc=",
+			"path": "github.com/ScaleFT/xjwt",
+			"revision": "85f82ef959761e9ae7fbbd20f3f8c7a6219b941c",
+			"revisionTime": "2017-09-06T20:51:19Z",
+			"tree": true
 		},
 		{
 			"checksumSHA1": "7HXb3cry6luicWeJM9Uxwzfo9Rs=",
@@ -496,6 +503,23 @@
 			"path": "github.com/matttproud/golang_protobuf_extensions/pbutil",
 			"revision": "c12348ce28de40eed0136aa2b644d0ee0650e56c",
 			"revisionTime": "2016-04-24T11:30:07Z"
+    },
+			"checksumSHA1": "hpXnjCM/a0edhWUb2+and0mnPyY=",
+			"path": "github.com/opentracing/opentracing-go",
+			"revision": "8ebe5d4e236eed9fd88e593c288bfb804d630b8c",
+			"revisionTime": "2017-08-06T19:21:16Z"
+		},
+		{
+			"checksumSHA1": "uhDxBvLEqRAMZKgpTZ8MFuLIIM8=",
+			"path": "github.com/opentracing/opentracing-go/ext",
+			"revision": "8ebe5d4e236eed9fd88e593c288bfb804d630b8c",
+			"revisionTime": "2017-08-06T19:21:16Z"
+		},
+		{
+			"checksumSHA1": "tnkdNJbJxNKuPZMWapP1xhKIIGw=",
+			"path": "github.com/opentracing/opentracing-go/log",
+			"revision": "8ebe5d4e236eed9fd88e593c288bfb804d630b8c",
+			"revisionTime": "2017-08-06T19:21:16Z"
 		},
 		{
 			"checksumSHA1": "JVGDxPn66bpe6xEiexs1r+y6jF0=",
@@ -508,6 +532,16 @@
 			"path": "github.com/prometheus/client_golang/api",
 			"revision": "967789050ba94deca04a5e84cce8ad472ce313c1",
 			"revisionTime": "2017-08-31T13:19:02Z"
+			"checksumSHA1": "KxkAlLxQkuSGHH46Dxu6wpAybO4=",
+			"path": "github.com/pquerna/cachecontrol",
+			"revision": "5475d973ea70916980bee28c2b674f3dc3eaed0a",
+			"revisionTime": "2017-07-06T04:52:24Z"
+		},
+		{
+			"checksumSHA1": "2eVIta46meS/si0XYJT8in44bx0=",
+			"path": "github.com/pquerna/cachecontrol/cacheobject",
+			"revision": "5475d973ea70916980bee28c2b674f3dc3eaed0a",
+			"revisionTime": "2017-07-06T04:52:24Z"
 		},
 		{
 			"checksumSHA1": "SMUvX2B8eoFd9wnPofwBKlN6btE=",
@@ -712,6 +746,24 @@
 			"path": "gopkg.in/macaron.v1",
 			"revision": "a325110f8b392bce3e5cdeb8c44bf98078ada3be",
 			"revisionTime": "2017-02-13T09:12:08Z"
+		},
+		{
+			"checksumSHA1": "kzRhtiKHuEtzVtb6xZZU4N9u0Fc=",
+			"path": "gopkg.in/square/go-jose.v2",
+			"revision": "b25e6cab129e4a54675b42ea49d38e9c33ade9e6",
+			"revisionTime": "2017-06-07T17:41:08Z"
+		},
+		{
+			"checksumSHA1": "j94zYNLTvPSnfnqVKJ4LUf++uX4=",
+			"path": "gopkg.in/square/go-jose.v2/cipher",
+			"revision": "b25e6cab129e4a54675b42ea49d38e9c33ade9e6",
+			"revisionTime": "2017-06-07T17:41:08Z"
+		},
+		{
+			"checksumSHA1": "JFun0lWY9eqd80Js2iWsehu1gc4=",
+			"path": "gopkg.in/square/go-jose.v2/json",
+			"revision": "b25e6cab129e4a54675b42ea49d38e9c33ade9e6",
+			"revisionTime": "2017-06-07T17:41:08Z"
 		}
 	],
 	"rootPath": "github.com/grafana/grafana"

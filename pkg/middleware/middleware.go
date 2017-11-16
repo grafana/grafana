@@ -54,6 +54,7 @@ func GetContextHandler() macaron.Handler {
 			initContextWithApiKey(ctx) ||
 			initContextWithBasicAuth(ctx, orgId) ||
 			initContextWithAuthProxy(ctx, orgId) ||
+			initContextWithJwtAuth(ctx, orgId) ||
 			initContextWithUserSessionCookie(ctx, orgId) ||
 			initContextWithAnonymousUser(ctx) {
 		}
