@@ -45,6 +45,13 @@ type AlertmanagerNotifier struct {
 	log log.Logger
 }
 
+func (this *AlertmanagerNotifier) ShouldNotify(evalContext *alerting.EvalContext) bool {
+	if evalContext.Rule.State == m.AlertStateAlerting {
+		return true
+	}
+	return false
+}
+
 func (this *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending alertmanager")
 
@@ -52,11 +59,8 @@ func (this *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) erro
 	for _, match := range evalContext.EvalMatches {
 		alertJSON := simplejson.New()
 		alertJSON.Set("startsAt", evalContext.StartTime.UTC().Format(time.RFC3339))
-		if evalContext.Rule.State == m.AlertStateAlerting {
-			alertJSON.Set("endsAt", "0001-01-01T00:00:00Z")
-		} else {
-			alertJSON.Set("endsAt", evalContext.EndTime.UTC().Format(time.RFC3339))
-		}
+		// Rule state should always be alerting if notifying.
+		alertJSON.Set("endsAt", "0001-01-01T00:00:00Z")
 
 		ruleUrl, err := evalContext.GetRuleUrl()
 		if err == nil {
