@@ -53,7 +53,7 @@ func (g *GrafanaServerImpl) Start() {
 	g.initLogging()
 	g.writePIDFile()
 
-	initSql()
+	setting.ReadSessionConfig(initSql())
 	metrics.Init(setting.Cfg)
 	search.Init()
 	login.Init()
