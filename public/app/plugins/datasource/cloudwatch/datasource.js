@@ -333,7 +333,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
       };
 
       return backendSrv.datasourceRequest(options).then(function(result) {
-        return result;
+        return result.data;
       });
     };
 
