@@ -288,11 +288,11 @@ func (hs *HttpServer) registerRoutes() {
 		apiRoute.Post("/annotations/mass-delete", reqOrgAdmin, bind(dtos.DeleteAnnotationsCmd{}), wrap(DeleteAnnotations))
 
 		apiRoute.Group("/annotations", func(annotationsRoute RouteRegister) {
-			annotationsRoute.Post("/", bind(dtos.PostAnnotationsCmd{}), wrap(PostAnnotation))
+			annotationsRoute.Post("/", bind(dtos.PostAnnotationsCmd{}), PostAnnotation)
 			annotationsRoute.Delete("/:annotationId", wrap(DeleteAnnotationById))
 			annotationsRoute.Put("/:annotationId", bind(dtos.UpdateAnnotationsCmd{}), wrap(UpdateAnnotation))
 			annotationsRoute.Delete("/region/:regionId", wrap(DeleteAnnotationRegion))
-			annotationsRoute.Post("/graphite", bind(dtos.PostGraphiteAnnotationsCmd{}), wrap(PostGraphiteAnnotation))
+			annotationsRoute.Post("/graphite", bind(dtos.PostGraphiteAnnotationsCmd{}), PostGraphiteAnnotation)
 		}, reqEditorRole)
 
 		// error test
