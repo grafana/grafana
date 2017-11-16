@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
@@ -86,11 +85,6 @@ func main() {
 
 	server := NewGrafanaServer()
 	server.Start()
-}
-
-func initSql() {
-	sqlstore.NewEngine()
-	sqlstore.EnsureAdminUser()
 }
 
 func listenToSystemSignals(server models.GrafanaServer) {
