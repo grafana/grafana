@@ -676,7 +676,7 @@ Ex `filters = sqlstore:debug`
 ## [metrics]
 
 ### enabled
-Enable metrics reporting. defaults true. Available via HTTP API `/api/metrics`.
+Enable metrics reporting. defaults true. Available via HTTP API `/metrics`.
 
 ### interval_seconds
 
