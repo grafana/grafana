@@ -33,6 +33,7 @@ func GetDataSources(c *middleware.Context) Response {
 			BasicAuth: ds.BasicAuth,
 			IsDefault: ds.IsDefault,
 			JsonData:  ds.JsonData,
+			ReadOnly:  ds.ReadOnly,
 		}
 
 		if plugin, exists := plugins.DataSources[ds.Type]; exists {
@@ -76,9 +77,20 @@ func DeleteDataSourceById(c *middleware.Context) {
 		return
 	}
 
+	ds, err := getRawDataSourceById(id, c.OrgId)
+	if err != nil {
+		c.JsonApiErr(400, "Failed to delete datasource", nil)
+		return
+	}
+
+	if ds.ReadOnly {
+		c.JsonApiErr(403, "Cannot delete read-only data source", nil)
+		return
+	}
+
 	cmd := &m.DeleteDataSourceByIdCommand{Id: id, OrgId: c.OrgId}
 
-	err := bus.Dispatch(cmd)
+	err = bus.Dispatch(cmd)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to delete datasource", err)
 		return
@@ -95,8 +107,18 @@ func DeleteDataSourceByName(c *middleware.Context) {
 		return
 	}
 
-	cmd := &m.DeleteDataSourceByNameCommand{Name: name, OrgId: c.OrgId}
+	getCmd := &m.GetDataSourceByNameQuery{Name: name, OrgId: c.OrgId}
+	if err := bus.Dispatch(getCmd); err != nil {
+		c.JsonApiErr(500, "Failed to delete datasource", err)
+		return
+	}
 
+	if getCmd.Result.ReadOnly {
+		c.JsonApiErr(403, "Cannot delete read-only data source", nil)
+		return
+	}
+
+	cmd := &m.DeleteDataSourceByNameCommand{Name: name, OrgId: c.OrgId}
 	err := bus.Dispatch(cmd)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to delete datasource", err)
@@ -160,9 +182,12 @@ func fillWithSecureJsonData(cmd *m.UpdateDataSourceCommand) error {
 	}
 
 	ds, err := getRawDataSourceById(cmd.Id, cmd.OrgId)
-
 	if err != nil {
 		return err
+	}
+
+	if ds.ReadOnly {
+		return m.ErrDatasourceIsReadOnly
 	}
 
 	secureJsonData := ds.SecureJsonData.Decrypt()
@@ -201,6 +226,7 @@ func GetDataSourceByName(c *middleware.Context) Response {
 	}
 
 	dtos := convertModelToDtos(query.Result)
+	dtos.ReadOnly = true
 	return Json(200, &dtos)
 }
 
@@ -242,6 +268,7 @@ func convertModelToDtos(ds *m.DataSource) dtos.DataSource {
 		JsonData:          ds.JsonData,
 		SecureJsonFields:  map[string]bool{},
 		Version:           ds.Version,
+		ReadOnly:          ds.ReadOnly,
 	}
 
 	for k, v := range ds.SecureJsonData {
