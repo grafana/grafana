@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from '../../core_module';
@@ -201,9 +199,9 @@ export class FormDropdownCtrl {
   }
 
   open() {
-    this.inputElement.show();
-
     this.inputElement.css('width', (Math.max(this.linkElement.width(), 80) + 16) + 'px');
+
+    this.inputElement.show();
     this.inputElement.focus();
 
     this.linkElement.hide();

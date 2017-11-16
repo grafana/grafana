@@ -7,7 +7,7 @@
   <div ng-hide="ctrl.target.textEditor">
     <div class="gf-form-inline">
       <div class="gf-form">
-        <label class="gf-form-label width-6 query-keyword">Metrics</label>
+        <label class="gf-form-label width-6 query-keyword">Series</label>
       </div>
 
       <div ng-repeat="tag in ctrl.queryModel.tags" class="gf-form">
@@ -17,13 +17,14 @@
         </gf-form-dropdown>
         <gf-form-dropdown model="tag.operator" lookup-text="false" allow-custom="false" label-mode="true" css-class="query-segment-operator"
           get-options="ctrl.getTagOperators()"
-          on-change="ctrl.tagChanged(tag, $index)">
+          on-change="ctrl.tagChanged(tag, $index)"
+					min-input-width="30">
         </gf-form-dropdown>
         <gf-form-dropdown model="tag.value" lookup-text="false" allow-custom="false" label-mode="true" css-class="query-segment-value"
           get-options="ctrl.getTagValues(tag, $index, $query)"
           on-change="ctrl.tagChanged(tag, $index)">
         </gf-form-dropdown>
-        <label class="gf-form-label query-keyword" ng-if="ctrl.showDelimiter($index)">,</label>
+        <label class="gf-form-label query-keyword" ng-if="ctrl.showDelimiter($index)">AND</label>
       </div>
 
       <div ng-repeat="segment in ctrl.segments" role="menuitem" class="gf-form">
@@ -31,9 +32,7 @@
       </div>
 
       <div ng-if="ctrl.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.addTagSegments" role="menuitem" class="gf-form">
-        <metric-segment segment="segment"
-          get-options="ctrl.getTagsAsSegments()"
-          on-change="ctrl.addNewTag(segment)">
+        <metric-segment segment="segment" get-options="ctrl.getTagsAsSegments()" on-change="ctrl.addNewTag(segment)">
         </metric-segment>
       </div>
 

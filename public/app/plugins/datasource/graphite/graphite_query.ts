@@ -25,6 +25,7 @@ export default class GraphiteQuery {
   parseTarget() {
     this.functions = [];
     this.segments = [];
+    this.tags = [];
     this.error = null;
 
     if (this.target.textEditor) {

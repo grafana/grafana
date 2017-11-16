@@ -103,7 +103,7 @@ function (angular, _, coreModule) {
     };
 
     this.newPlusButton = function() {
-      return new MetricSegment({fake: true, html: '<i class="fa fa-plus "></i>', type: 'plus-button' });
+      return new MetricSegment({fake: true, html: '<i class="fa fa-plus "></i>', type: 'plus-button', cssClass: 'query-part' });
     };
 
     this.newSelectTagValue = function() {

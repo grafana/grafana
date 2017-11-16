@@ -47,6 +47,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.segments = _.map(this.queryModel.segments, segment => {
       return this.uiSegmentSrv.newSegment(segment);
     });
+
     let checkOtherSegmentsIndex = this.queryModel.checkOtherSegmentsIndex || 0;
     this.checkOtherSegments(checkOtherSegmentsIndex);
 
