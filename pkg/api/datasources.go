@@ -69,80 +69,70 @@ func GetDataSourceById(c *middleware.Context) Response {
 	return Json(200, &dtos)
 }
 
-func DeleteDataSourceById(c *middleware.Context) {
+func DeleteDataSourceById(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
 
 	if id <= 0 {
-		c.JsonApiErr(400, "Missing valid datasource id", nil)
-		return
+		return ApiError(400, "Missing valid datasource id", nil)
 	}
 
 	ds, err := getRawDataSourceById(id, c.OrgId)
 	if err != nil {
-		c.JsonApiErr(400, "Failed to delete datasource", nil)
-		return
+		return ApiError(400, "Failed to delete datasource", nil)
 	}
 
 	if ds.ReadOnly {
-		c.JsonApiErr(403, "Cannot delete read-only data source", nil)
-		return
+		return ApiError(403, "Cannot delete read-only data source", nil)
 	}
 
 	cmd := &m.DeleteDataSourceByIdCommand{Id: id, OrgId: c.OrgId}
 
 	err = bus.Dispatch(cmd)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to delete datasource", err)
-		return
+		return ApiError(500, "Failed to delete datasource", err)
 	}
 
-	c.JsonOK("Data source deleted")
+	return ApiSuccess("Data source deleted")
 }
 
-func DeleteDataSourceByName(c *middleware.Context) {
+func DeleteDataSourceByName(c *middleware.Context) Response {
 	name := c.Params(":name")
 
 	if name == "" {
-		c.JsonApiErr(400, "Missing valid datasource name", nil)
-		return
+		return ApiError(400, "Missing valid datasource name", nil)
 	}
 
 	getCmd := &m.GetDataSourceByNameQuery{Name: name, OrgId: c.OrgId}
 	if err := bus.Dispatch(getCmd); err != nil {
-		c.JsonApiErr(500, "Failed to delete datasource", err)
-		return
+		return ApiError(500, "Failed to delete datasource", err)
 	}
 
 	if getCmd.Result.ReadOnly {
-		c.JsonApiErr(403, "Cannot delete read-only data source", nil)
-		return
+		return ApiError(403, "Cannot delete read-only data source", nil)
 	}
 
 	cmd := &m.DeleteDataSourceByNameCommand{Name: name, OrgId: c.OrgId}
 	err := bus.Dispatch(cmd)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to delete datasource", err)
-		return
+		return ApiError(500, "Failed to delete datasource", err)
 	}
 
-	c.JsonOK("Data source deleted")
+	return ApiSuccess("Data source deleted")
 }
 
-func AddDataSource(c *middleware.Context, cmd m.AddDataSourceCommand) {
+func AddDataSource(c *middleware.Context, cmd m.AddDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrDataSourceNameExists {
-			c.JsonApiErr(409, err.Error(), err)
-			return
+			return ApiError(409, err.Error(), err)
 		}
 
-		c.JsonApiErr(500, "Failed to add datasource", err)
-		return
+		return ApiError(500, "Failed to add datasource", err)
 	}
 
 	ds := convertModelToDtos(cmd.Result)
-	c.JSON(200, util.DynMap{
+	return Json(200, util.DynMap{
 		"message":    "Datasource added",
 		"id":         cmd.Result.Id,
 		"name":       cmd.Result.Name,
