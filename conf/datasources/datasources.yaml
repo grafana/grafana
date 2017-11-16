@@ -32,10 +32,13 @@ datasources:
 #   with_credentials:
 #   # <bool> mark as default datasource. Max one per org
 #   is_default:
-#   # <string> json data
-#   json_data: '{"graphiteVersion":"0.9"}'
-#   # <string> json object of data that will be encrypted in UI.
-#   secure_json_fields: ''
+#   # <map> fields that will be converted to json and stored in json_data
+#   json_data: 
+#      graphiteVersion: "1.1"
+#      tlsAuth: true
+#      tlsAuthWithCACert: true
+#   # <string> json object of data that will be encrypted.
+#   secure_json_data: ''
 #   # <int> including this value guarantees that instance with old configs cannot
 #   #       overwrite your last change.
 #   version: 1

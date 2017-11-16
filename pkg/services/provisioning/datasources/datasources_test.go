@@ -146,6 +146,16 @@ func TestDatasourceAsConfig(t *testing.T) {
 			So(ds.IsDefault, ShouldBeTrue)
 			So(ds.Editable, ShouldBeTrue)
 
+			So(len(ds.JsonData), ShouldBeGreaterThan, 2)
+			So(ds.JsonData["graphiteVersion"], ShouldEqual, "1.1")
+			So(ds.JsonData["tlsAuth"], ShouldEqual, true)
+			So(ds.JsonData["tlsAuthWithCACert"], ShouldEqual, true)
+
+			So(len(ds.SecureJsonData), ShouldBeGreaterThan, 2)
+			So(ds.SecureJsonData["tlsCACert"], ShouldEqual, "MjNOcW9RdkbUDHZmpco2HCYzVq9dE+i6Yi+gmUJotq5CDA==")
+			So(ds.SecureJsonData["tlsClientCert"], ShouldEqual, "ckN0dGlyMXN503YNfjTcf9CV+GGQneN+xmAclQ==")
+			So(ds.SecureJsonData["tlsClientKey"], ShouldEqual, "ZkN4aG1aNkja/gKAB1wlnKFIsy2SRDq4slrM0A==")
+
 			dstwo := cfg[1].Datasources[0]
 			So(dstwo.Name, ShouldEqual, "name2")
 		})
