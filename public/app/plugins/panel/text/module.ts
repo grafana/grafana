@@ -19,6 +19,7 @@ export class TextPanelCtrl extends PanelCtrl {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
+    this.scrollable = true;
 
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('refresh', this.onRefresh.bind(this));
