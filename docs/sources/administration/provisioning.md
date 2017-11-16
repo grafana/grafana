@@ -114,13 +114,53 @@ datasources:
   with_credentials:
   # <bool> mark as default datasource. Max one per org
   is_default:
-  # <string> json data
-  json_data: '{"graphiteVersion":"0.9"}'
-  # <string> json object of data that will be encrypted in UI.
-  secure_json_fields: ''
-  # <int> including this value garantees that instance with old configs cannot
-  #       overwrite your last change.
+  # <map> fields that will be converted to json and stored in json_data
+  json_data: 
+     graphiteVersion: "1.1"
+     tlsAuth: true
+     tlsAuthWithCACert: true
+  # <string> json object of data that will be encrypted.
+  secure_json_data:
+    tlsCACert: "..."
+    tlsClientCert: "..."
+    tlsClientKey: "..."
   version: 1
   # <bool> allow users to edit datasources from the UI.
-  editable: true
+  editable: false
 ```
+
+#### Json data
+
+Since all datasources dont have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `json_data` field. Here are the most common settings that the core datasources use. 
+
+| Name | Type | Datasource |Description |
+| ----| ---- | ---- | --- |
+| tlsAuth | boolean | *All* |  Enable TLS authentication using client cert configured in secure json data |
+| tlsAuthWithCACert | boolean | *All* | Enable TLS authtication using CA cert |
+| graphiteVersion | string | Graphite |  Graphite version  |
+| timeInterval | string | Elastic, Influxdb & Prometheus | Lowest interval/step value that should be used for this data source |
+| esVersion | string | Elastic | Elasticsearch version | 
+| timeField | string | Elastic | Which field that should be used as timestamp | 
+| interval | string | Elastic | Index date time format |
+| authType | string | Cloudwatch | Auth provider. keys/credentials/arn |
+| assumeRoleArn | string | Cloudwatch | ARN of Assume Role | 
+| defaultRegion | string | Cloudwatch | AWS region |
+| customMetricsNamespaces | string | Cloudwatch | Namespaces of Custom Metrics | 
+| tsdbVersion | string | OpenTsdb | Version |
+| tsdbResolution | string | OpenTsdb | Resolution |
+| sslmode | string | Postgre | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full' | 
+
+
+#### Secure Json data
+
+{"authType":"keys","defaultRegion":"us-west-2","timeField":"@timestamp"}
+
+Secure json data is a map of settings that will be encrypted with [secret key](/installation/configuration/#secret-key) from the grafana config. The purpose of this is only to hide content from the users of the application. This should be used for storing TLS Cert and password that Grafana will append to request on the server side. All these settings are optional.
+
+| Name | Type | Datasource | Description |
+| ----| ---- | ---- | --- |
+| tlsCACert | string | *All* |CA cert for out going requests |
+| tlsClientCert | string | *All* |TLS Client cert for outgoing requests |
+| tlsClientKey | string | *All* |TLS Client key for outgoing requests |
+| password | string | Postgre | password | 
+| user | string | Postgre | user | 

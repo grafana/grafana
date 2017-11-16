@@ -38,9 +38,10 @@ datasources:
 #      tlsAuth: true
 #      tlsAuthWithCACert: true
 #   # <string> json object of data that will be encrypted.
-#   secure_json_data: ''
-#   # <int> including this value guarantees that instance with old configs cannot
-#   #       overwrite your last change.
+#   secure_json_data:
+#     tlsCACert: "..."
+#     tlsClientCert: "..."
+#     tlsClientKey: "..."
 #   version: 1
 #   # <bool> allow users to edit datasources from the UI.
 #   editable: false
