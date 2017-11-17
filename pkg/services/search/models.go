@@ -54,15 +54,16 @@ type Query struct {
 }
 
 type FindPersistedDashboardsQuery struct {
-	Title        string
-	OrgId        int64
-	SignedInUser *models.SignedInUser
-	IsStarred    bool
-	DashboardIds []int64
-	Type         string
-	FolderId     int64
-	Tags         []string
-	Limit        int
+	Title           string
+	OrgId           int64
+	SignedInUser    *models.SignedInUser
+	IsStarred       bool
+	DashboardIds    []int64
+	Type            string
+	FolderId        int64
+	Tags            []string
+	ExpandedFolders []int64
+	Limit           int
 
 	Result HitList
 }

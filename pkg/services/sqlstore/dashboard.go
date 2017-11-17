@@ -191,7 +191,9 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		limit = 1000
 	}
 
-	sb := NewSearchBuilder(query.SignedInUser, limit).WithTags(query.Tags).WithDashboardIdsIn(query.DashboardIds)
+	sb := NewSearchBuilder(query.SignedInUser, limit).
+		WithTags(query.Tags).
+		WithDashboardIdsIn(query.DashboardIds)
 
 	if query.IsStarred {
 		sb.IsStarred()
@@ -207,6 +209,10 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 
 	if query.FolderId > 0 {
 		sb.WithFolderId(query.FolderId)
+	}
+
+	if len(query.ExpandedFolders) > 0 {
+		sb.WithExpandedFolders(query.ExpandedFolders)
 	}
 
 	var res []DashboardSearchProjection

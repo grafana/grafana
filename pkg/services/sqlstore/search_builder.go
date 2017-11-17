@@ -18,6 +18,7 @@ type SearchBuilder struct {
 	whereTypeFolder     bool
 	whereTypeDash       bool
 	whereFolderId       int64
+	expandedFolders     []int64
 	sql                 bytes.Buffer
 	params              []interface{}
 }
@@ -77,6 +78,12 @@ func (sb *SearchBuilder) WithFolderId(folderId int64) *SearchBuilder {
 	return sb
 }
 
+func (sb *SearchBuilder) WithExpandedFolders(expandedFolders []int64) *SearchBuilder {
+	sb.expandedFolders = expandedFolders
+	return sb
+}
+
+// ToSql builds the sql and returns it as a string, together with the params.
 func (sb *SearchBuilder) ToSql() (string, []interface{}) {
 	sb.params = make([]interface{}, 0)
 
@@ -208,5 +215,14 @@ func (sb *SearchBuilder) buildSearchWhereClause() {
 	if sb.whereFolderId > 0 {
 		sb.sql.WriteString(" AND dashboard.folder_id = ?")
 		sb.params = append(sb.params, sb.whereFolderId)
+	}
+
+	if len(sb.expandedFolders) > 0 {
+		sb.sql.WriteString(` AND (dashboard.folder_id IN (?` + strings.Repeat(",?", len(sb.expandedFolders)-1) + `) `)
+		sb.sql.WriteString(` OR dashboard.folder_id IS NULL OR dashboard.folder_id = 0)`)
+
+		for _, ef := range sb.expandedFolders {
+			sb.params = append(sb.params, ef)
+		}
 	}
 }
