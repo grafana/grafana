@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
 	"math"
 	"strings"
 
@@ -72,13 +71,12 @@ func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 
 		// Don't clean up if user set versions_to_keep to 2147483647 (MaxInt32)
 		if versionsToKeep := setting.DashboardVersionsToKeep; versionsToKeep < math.MaxInt32 {
-			// Get dashboard ids to clean up
-			affectedDashboardsQuery := fmt.Sprintf(`SELECT dashboard_id FROM dashboard_version
-				GROUP BY dashboard_id HAVING COUNT(dashboard_version.id)>%d`, versionsToKeep)
-
 			err := sess.Table("dashboard_version").
 				Select("dashboard_version.id, dashboard_version.version, dashboard_version.dashboard_id").
-				Where(fmt.Sprintf("dashboard_id IN (%s)", affectedDashboardsQuery)).
+				Where(`dashboard_id IN (
+					SELECT dashboard_id FROM dashboard_version
+					GROUP BY dashboard_id HAVING COUNT(dashboard_version.id) > ?
+				)`, versionsToKeep).
 				Desc("dashboard_version.dashboard_id", "dashboard_version.version").
 				Find(&versions)
 
