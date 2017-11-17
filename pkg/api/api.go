@@ -320,8 +320,8 @@ func (hs *HttpServer) registerRoutes() {
 	r.Any("/api/gnet/*", reqSignedIn, ProxyGnetRequest)
 
 	// Gravatar service.
-	avt := avatar.CacheServer()
-	r.Get("/avatar/:hash", avt.ServeHTTP)
+	avatarCacheServer := avatar.NewCacheServer()
+	r.Get("/avatar/:hash", avatarCacheServer.Handler)
 
 	// Websocket
 	r.Any("/ws", hs.streamManager.Serve)
