@@ -14,7 +14,7 @@ import (
 
 	"github.com/go-stack/stack"
 	"github.com/inconshreveable/log15"
-	"github.com/inconshreveable/log15/term"
+	isatty "github.com/mattn/go-isatty"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -157,7 +157,7 @@ func getFilters(filterStrArray []string) map[string]log15.Lvl {
 func getLogFormat(format string) log15.Format {
 	switch format {
 	case "console":
-		if term.IsTty(os.Stdout.Fd()) {
+		if isatty.IsTerminal(os.Stdout.Fd()) {
 			return log15.TerminalFormat()
 		}
 		return log15.LogfmtFormat()

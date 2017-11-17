@@ -121,7 +121,9 @@ func RenderToPng(params *RenderOpts) (string, error) {
 
 	done := make(chan error)
 	go func() {
-		cmd.Wait()
+		if err := cmd.Wait(); err != nil {
+			rendererLog.Error("failed to render an image", "error", err)
+		}
 		close(done)
 	}()
 

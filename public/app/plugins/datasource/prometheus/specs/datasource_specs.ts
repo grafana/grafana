@@ -5,7 +5,7 @@ import {PrometheusDatasource} from '../datasource';
 
 describe('PrometheusDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
-  var instanceSettings = {url: 'proxied', directUrl: 'direct', user: 'test', password: 'mupp' };
+  var instanceSettings = {url: 'proxied', directUrl: 'direct', user: 'test', password: 'mupp', jsonData: {}};
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
@@ -294,6 +294,20 @@ describe('PrometheusDatasource', function() {
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
     });
+
+    it('step should never go below 1', function() {
+      var query = {
+        // 6 hour range
+        range: { from: moment(1508318768202), to: moment(1508318770118) },
+        targets: [{expr: 'test'}],
+        interval: '100ms'
+      };
+      var urlExpected = 'proxied/api/v1/query_range?query=test&start=1508318769&end=1508318771&step=1';
+      ctx.$httpBackend.expect('GET', urlExpected).respond(response);
+      ctx.ds.query(query);
+      ctx.$httpBackend.verifyNoOutstandingExpectation();
+    });
+
     it('should be auto interval when greater than min interval', function() {
       var query = {
         // 6 hour range

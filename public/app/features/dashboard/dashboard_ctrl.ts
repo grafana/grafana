@@ -20,10 +20,12 @@ export class DashboardCtrl {
     dynamicDashboardSrv,
     dashboardViewStateSrv,
     contextSrv,
+    playlistSrv,
     alertSrv,
     $timeout) {
 
       $scope.editor = { index: 0 };
+      $scope.playlistSrv = playlistSrv;
 
       var resizeEventTimeout;
 

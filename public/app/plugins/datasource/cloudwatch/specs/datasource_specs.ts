@@ -37,7 +37,7 @@ describe('CloudWatchDatasource', function() {
             InstanceId: 'i-12345678'
           },
           statistics: ['Average'],
-          period: 300
+          period: '300'
         }
       ]
     };
@@ -66,9 +66,9 @@ describe('CloudWatchDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.post = function(path, params) {
-        requestParams = params;
-        return ctx.$q.when(response);
+      ctx.backendSrv.datasourceRequest = function(params) {
+        requestParams = params.data;
+        return ctx.$q.when({data: response});
       };
     });
 
@@ -109,7 +109,7 @@ describe('CloudWatchDatasource', function() {
 
       ctx.ds.query(query).then(function() {
         var params = requestParams.queries[0];
-        expect(params.period).to.be(600);
+        expect(params.period).to.be('600');
         done();
       });
       ctx.$rootScope.$apply();
@@ -211,9 +211,9 @@ describe('CloudWatchDatasource', function() {
     };
 
     beforeEach(function() {
-      ctx.backendSrv.post = function(path, params) {
-        requestParams = params;
-        return ctx.$q.when(response);
+      ctx.backendSrv.datasourceRequest = function(params) {
+        requestParams = params.data;
+        return ctx.$q.when({data: response});
       };
     });
 
@@ -234,12 +234,8 @@ describe('CloudWatchDatasource', function() {
         beforeEach(() => {
           setupCallback();
           ctx.backendSrv.datasourceRequest = args => {
-            scenario.request = args;
-            return ctx.$q.when({ data: scenario.requestResponse });
-          };
-          ctx.backendSrv.post = (path, args) => {
-            scenario.request = args;
-            return ctx.$q.when(scenario.requestResponse);
+            scenario.request = args.data;
+            return ctx.$q.when({data: scenario.requestResponse});
           };
           ctx.ds.metricFindQuery(query).then(args => {
             scenario.result = args;

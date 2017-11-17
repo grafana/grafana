@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -16,6 +15,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -29,6 +29,7 @@ var (
 	ErrSignUpNotAllowed      = errors.New("Signup is not allowed for this adapter")
 	ErrUsersQuotaReached     = errors.New("Users quota reached")
 	ErrNoEmail               = errors.New("Login provider didn't return an email address")
+	oauthLogger              = log.New("oauth.login")
 )
 
 func GenStateString() string {
@@ -50,10 +51,11 @@ func OAuthLogin(ctx *middleware.Context) {
 		return
 	}
 
-	error := ctx.Query("error")
-	if error != "" {
+	errorParam := ctx.Query("error")
+	if errorParam != "" {
 		errorDesc := ctx.Query("error_description")
-		redirectWithError(ctx, ErrProviderDeniedRequest, "error", error, "errorDesc", errorDesc)
+		oauthLogger.Error("failed to login ", "error", errorParam, "errorDesc", errorDesc)
+		redirectWithError(ctx, ErrProviderDeniedRequest, "error", errorParam, "errorDesc", errorDesc)
 		return
 	}
 
@@ -69,8 +71,12 @@ func OAuthLogin(ctx *middleware.Context) {
 		return
 	}
 
-	// verify state string
-	savedState := ctx.Session.Get(middleware.SESS_KEY_OAUTH_STATE).(string)
+	savedState, ok := ctx.Session.Get(middleware.SESS_KEY_OAUTH_STATE).(string)
+	if !ok {
+		ctx.Handle(500, "login.OAuthLogin(missing saved state)", nil)
+		return
+	}
+
 	queryState := ctx.Query("state")
 	if savedState != queryState {
 		ctx.Handle(500, "login.OAuthLogin(state mismatch)", nil)
@@ -78,35 +84,36 @@ func OAuthLogin(ctx *middleware.Context) {
 	}
 
 	// handle call back
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: setting.OAuthService.OAuthInfos[name].TlsSkipVerify,
+		},
+	}
+	oauthClient := &http.Client{
+		Transport: tr,
+	}
 
-	// initialize oauth2 context
-	oauthCtx := oauth2.NoContext
-	if setting.OAuthService.OAuthInfos[name].TlsClientCert != "" {
+	if setting.OAuthService.OAuthInfos[name].TlsClientCert != "" || setting.OAuthService.OAuthInfos[name].TlsClientKey != "" {
 		cert, err := tls.LoadX509KeyPair(setting.OAuthService.OAuthInfos[name].TlsClientCert, setting.OAuthService.OAuthInfos[name].TlsClientKey)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(1, "Failed to setup TlsClientCert", "oauth provider", name, "error", err)
 		}
 
-		// Load CA cert
+		tr.TLSClientConfig.Certificates = append(tr.TLSClientConfig.Certificates, cert)
+	}
+
+	if setting.OAuthService.OAuthInfos[name].TlsClientCa != "" {
 		caCert, err := ioutil.ReadFile(setting.OAuthService.OAuthInfos[name].TlsClientCa)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal(1, "Failed to setup TlsClientCa", "oauth provider", name, "error", err)
 		}
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
 
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-				Certificates:       []tls.Certificate{cert},
-				RootCAs:            caCertPool,
-			},
-		}
-		sslcli := &http.Client{Transport: tr}
-
-		oauthCtx = context.Background()
-		oauthCtx = context.WithValue(oauthCtx, oauth2.HTTPClient, sslcli)
+		tr.TLSClientConfig.RootCAs = caCertPool
 	}
+
+	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, oauthClient)
 
 	// get token from provider
 	token, err := connect.Exchange(oauthCtx, code)

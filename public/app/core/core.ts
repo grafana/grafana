@@ -1,11 +1,9 @@
 import "./directives/dash_class";
-import "./directives/confirm_click";
 import "./directives/dash_edit_link";
 import "./directives/dropdown_typeahead";
 import "./directives/metric_segment";
 import "./directives/misc";
 import "./directives/ng_model_on_blur";
-import "./directives/spectrum_picker";
 import "./directives/tags";
 import "./directives/value_select_dropdown";
 import "./directives/rebuild_on_change";
@@ -18,6 +16,7 @@ import './components/code_editor/code_editor';
 import './utils/outline';
 import './components/colorpicker/ColorPicker';
 import './components/colorpicker/SeriesColorPicker';
+import './components/colorpicker/spectrum_picker';
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';
@@ -43,11 +42,12 @@ import {assignModelProperties} from './utils/model_utils';
 import {contextSrv} from './services/context_srv';
 import {KeybindingSrv} from './services/keybindingSrv';
 import {helpModal} from './components/help/help';
-import {PasswordStrength} from './components/PasswordStrength';
 import {JsonExplorer} from './components/json_explorer/json_explorer';
 import {NavModelSrv, NavModel} from './nav_model_srv';
+import {registerAngularDirectives} from './angular_wrappers';
 
 export {
+  registerAngularDirectives,
   arrayJoin,
   coreModule,
   grafanaAppDirective,
@@ -71,5 +71,4 @@ export {
   JsonExplorer,
   NavModelSrv,
   NavModel,
-  PasswordStrength,
 };

@@ -199,10 +199,10 @@ func (hs *HttpServer) registerRoutes() {
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute RouteRegister) {
 			datasourceRoute.Get("/", wrap(GetDataSources))
-			datasourceRoute.Post("/", quota("data_source"), bind(m.AddDataSourceCommand{}), AddDataSource)
+			datasourceRoute.Post("/", quota("data_source"), bind(m.AddDataSourceCommand{}), wrap(AddDataSource))
 			datasourceRoute.Put("/:id", bind(m.UpdateDataSourceCommand{}), wrap(UpdateDataSource))
-			datasourceRoute.Delete("/:id", DeleteDataSourceById)
-			datasourceRoute.Delete("/name/:name", DeleteDataSourceByName)
+			datasourceRoute.Delete("/:id", wrap(DeleteDataSourceById))
+			datasourceRoute.Delete("/name/:name", wrap(DeleteDataSourceByName))
 			datasourceRoute.Get("/:id", wrap(GetDataSourceById))
 			datasourceRoute.Get("/name/:name", wrap(GetDataSourceByName))
 		}, reqOrgAdmin)
@@ -267,7 +267,7 @@ func (hs *HttpServer) registerRoutes() {
 
 		apiRoute.Group("/alerts", func(alertsRoute RouteRegister) {
 			alertsRoute.Post("/test", bind(dtos.AlertTestCommand{}), wrap(AlertTest))
-			alertsRoute.Post("/:alertId/pause", bind(dtos.PauseAlertCommand{}), wrap(PauseAlert), reqEditorRole)
+			alertsRoute.Post("/:alertId/pause", reqEditorRole, bind(dtos.PauseAlertCommand{}), wrap(PauseAlert))
 			alertsRoute.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
 			alertsRoute.Get("/", wrap(GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", wrap(GetAlertStatesForDashboard))
@@ -292,6 +292,7 @@ func (hs *HttpServer) registerRoutes() {
 			annotationsRoute.Delete("/:annotationId", wrap(DeleteAnnotationById))
 			annotationsRoute.Put("/:annotationId", bind(dtos.UpdateAnnotationsCmd{}), wrap(UpdateAnnotation))
 			annotationsRoute.Delete("/region/:regionId", wrap(DeleteAnnotationRegion))
+			annotationsRoute.Post("/graphite", bind(dtos.PostGraphiteAnnotationsCmd{}), wrap(PostGraphiteAnnotation))
 		}, reqEditorRole)
 
 		// error test

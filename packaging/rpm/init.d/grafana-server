@@ -96,7 +96,7 @@ case "$1" in
     if [ $return -eq 0 ]
     then
       sleep 1
-      # check if pid file has been written two
+      # check if pid file has been written to
       if ! [[ -s $PID_FILE ]]; then
         echo "FAILED"
         exit 1

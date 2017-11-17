@@ -258,7 +258,7 @@ Query parameters:
 **Example Request**:
 
 ```http
-GET /api/search?query=MyDashboard&starred=true&tag=prod HTTP/1.1
+GET /api/search?query=Production%20Overview&starred=true&tag=prod HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -276,8 +276,8 @@ Content-Type: application/json
     "title":"Production Overview",
     "uri":"db/production-overview",
     "type":"dash-db",
-    "tags":[],
-    "isStarred":false
+    "tags":[prod],
+    "isStarred":true
   }
 ]
 ```

@@ -19,7 +19,7 @@ export class SearchCtrl {
   openCompleted: boolean;
 
   /** @ngInject */
-  constructor($scope, private $location, private $timeout, private backendSrv, public contextSrv, $rootScope) {
+  constructor($scope, private $location, private $timeout, private backendSrv, private dashboardSrv, public contextSrv, $rootScope) {
     $rootScope.onAppEvent('show-dash-search', this.openSearch.bind(this), $scope);
     $rootScope.onAppEvent('hide-dash-search', this.closeSearch.bind(this), $scope);
   }
@@ -161,6 +161,15 @@ export class SearchCtrl {
     this.searchDashboards();
   }
 
+  starDashboard(row, evt) {
+    this.dashboardSrv.starDashboard(row.id, row.isStarred).then(newState => {
+      row.isStarred = newState;
+    });
+    if (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+    }
+  }
 }
 
 export function searchDirective() {

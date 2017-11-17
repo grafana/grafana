@@ -443,10 +443,10 @@
 			"revisionTime": "2016-12-15T22:53:35Z"
 		},
 		{
-			"checksumSHA1": "mrmfY0cVu7jvgoIuTRaR8yVVh/M=",
+			"checksumSHA1": "W7WyVSrJNaQNQt2R9O4DxrK58cs=",
 			"path": "github.com/inconshreveable/log15",
-			"revision": "39bacc234bf1afd0b68573e95b45871f67ba2cd4",
-			"revisionTime": "2017-02-16T22:56:31Z"
+			"revision": "0decfc6c20d9ca0ad143b0e89dcaa20f810b4fb3",
+			"revisionTime": "2016-11-12T20:41:34Z"
 		},
 		{
 			"checksumSHA1": "oVIIInZXKkcRozJfuH2vWJsAS7s=",
@@ -461,10 +461,35 @@
 			"revisionTime": "2017-02-10T14:05:23Z"
 		},
 		{
-			"checksumSHA1": "ZAj/o03zG8Ui4mZ4XmzU4yyKC04=",
+			"checksumSHA1": "3HVfwgLpCDH8JX211UWdrSi/GU4=",
 			"path": "github.com/lib/pq",
-			"revision": "dd1fe2071026ce53f36a39112e645b4d4f5793a4",
-			"revisionTime": "2017-07-07T05:36:02Z"
+			"revision": "b609790bd85edf8e9ab7e0f8912750a786177bcf",
+			"revisionTime": "2017-10-22T19:20:43Z"
+		},
+		{
+			"checksumSHA1": "jaCQF1par6Jl8g+V2Cgp0n/0wSc=",
+			"path": "github.com/lib/pq/hstore",
+			"revision": "23da1db4f16d9658a86ae9b717c245fc078f10f1",
+			"revisionTime": "2017-09-18T17:50:43Z"
+		},
+		{
+			"checksumSHA1": "mJHrY33tDs2MRhHt+XunkRF/5ek=",
+			"path": "github.com/lib/pq/listen_example",
+			"revision": "23da1db4f16d9658a86ae9b717c245fc078f10f1",
+			"revisionTime": "2017-09-18T17:50:43Z"
+		},
+		{
+			"checksumSHA1": "AU3fA8Sm33Vj9PBoRPSeYfxLRuE=",
+			"path": "github.com/lib/pq/oid",
+			"revision": "23da1db4f16d9658a86ae9b717c245fc078f10f1",
+			"revisionTime": "2017-09-18T17:50:43Z"
+		},
+		{
+			"checksumSHA1": "y/A5iuvwjytQE2CqVuphQRXR2nI=",
+			"origin": "github.com/grafana/grafana/vendor/github.com/mattn/go-isatty",
+			"path": "github.com/mattn/go-isatty",
+			"revision": "a5cdd64afdee435007ee3e9f6ed4684af949d568",
+			"revisionTime": "2017-09-25T05:49:04Z"
 		},
 		{
 			"checksumSHA1": "bKMZjd2wPw13VwoE7mBeSv5djFA=",
@@ -729,6 +754,12 @@
 			"path": "gopkg.in/olivere/elastic.v5/uritemplates",
 			"revision": "f5030c016b49a6fb0e1958bc765562246c0a912c",
 			"revisionTime": "2017-07-19T12:17:08Z"
+    },
+    {
+			"checksumSHA1": "RDJpJQwkF012L6m/2BJizyOksNw=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "eb3733d160e74a9c7e442f435eb3bea458e1d19f",
+			"revisionTime": "2017-08-12T16:00:11Z"
 		}
 	],
 	"rootPath": "github.com/grafana/grafana"

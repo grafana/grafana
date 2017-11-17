@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
@@ -27,7 +26,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/influxdb"
 	_ "github.com/grafana/grafana/pkg/tsdb/mysql"
 	_ "github.com/grafana/grafana/pkg/tsdb/opentsdb"
-
+	_ "github.com/grafana/grafana/pkg/tsdb/postgres"
 	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
 	_ "github.com/grafana/grafana/pkg/tsdb/testdata"
 )
@@ -87,11 +86,6 @@ func main() {
 
 	server := NewGrafanaServer()
 	server.Start()
-}
-
-func initSql() {
-	sqlstore.NewEngine()
-	sqlstore.EnsureAdminUser()
 }
 
 func listenToSystemSignals(server models.GrafanaServer) {

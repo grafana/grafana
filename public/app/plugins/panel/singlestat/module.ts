@@ -2,7 +2,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.gauge';
-import 'app/features/panellinks/linkSrv';
+import 'app/features/panellinks/link_srv';
 
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
@@ -66,7 +66,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     thresholds: '',
     colorBackground: false,
     colorValue: false,
-    colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+    colors: ["#299c46", "rgba(237, 129, 40, 0.89)", "#d44a3a"],
     sparkline: {
       show: false,
       full: false,
@@ -92,6 +92,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+
+    this.onSparklineColorChange = this.onSparklineColorChange.bind(this);
+    this.onSparklineFillChange = this.onSparklineFillChange.bind(this);
   }
 
   onInitEditMode() {
@@ -127,7 +130,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   seriesHandler(seriesData) {
     var series = new TimeSeries({
-      datapoints: seriesData.datapoints,
+      datapoints: seriesData.datapoints || [],
       alias: seriesData.target,
     });
 
@@ -219,6 +222,16 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       this.panel.colors[panelColorIndex] = color;
       this.render();
     };
+  }
+
+  onSparklineColorChange(newColor) {
+    this.panel.sparkline.lineColor = newColor;
+    this.render();
+  }
+
+  onSparklineFillChange(newColor) {
+    this.panel.sparkline.fillColor = newColor;
+    this.render();
   }
 
   getDecimalsForValue(value) {
@@ -593,7 +606,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       var body = panel.gauge.show ? '' : getBigValueHtml();
 
-      if (panel.colorBackground && !isNaN(data.value)) {
+      if (panel.colorBackground) {
         var color = getColorForValue(data, data.value);
         if (color) {
           $panelContainer.css('background-color', color);
@@ -677,6 +690,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 }
 
 function getColorForValue(data, value) {
+  if (!_.isFinite(value)) {
+    return null;
+  }
   for (var i = data.thresholds.length; i > 0; i--) {
     if (value >= data.thresholds[i-1]) {
       return data.colorMap[i];

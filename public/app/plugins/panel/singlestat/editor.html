@@ -42,14 +42,14 @@
         <select class="input-small gf-form-input" ng-model="ctrl.panel.postfixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
       </div>
     </div>
-		<div class="gf-form">
-			<label class="gf-form-label width-6">Unit</label>
-			<div class="gf-form-dropdown-typeahead width-18" ng-model="ctrl.panel.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)"></div>
-		</div>
-		<div class="gf-form">
-			<label class="gf-form-label width-6">Decimals</label>
-			<input type="number" class="gf-form-input width-18" placeholder="auto" data-placement="right" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" ng-model="ctrl.panel.decimals" ng-change="ctrl.refresh()" ng-model-onblur>
-		</div>
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Unit</label>
+      <div class="gf-form-dropdown-typeahead width-18" ng-model="ctrl.panel.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)"></div>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Decimals</label>
+      <input type="number" class="gf-form-input width-18" placeholder="auto" data-placement="right" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" ng-model="ctrl.panel.decimals" ng-change="ctrl.refresh()" ng-model-onblur>
+    </div>
   </div>
 
   <div class="section gf-form-group">
@@ -68,14 +68,8 @@
     </div>
     <div class="gf-form">
       <label class="gf-form-label width-8">Colors</label>
-      <span class="gf-form-label">
-        <color-picker color="ctrl.panel.colors[0]" onChange="ctrl.onColorChange(0)"></color-picker>
-      </span>
-      <span class="gf-form-label">
-        <color-picker color="ctrl.panel.colors[1]" onChange="ctrl.onColorChange(1)"></color-picker>
-      </span>
-      <span class="gf-form-label">
-        <color-picker color="ctrl.panel.colors[2]" onChange="ctrl.onColorChange(2)"></color-picker>
+      <span class="gf-form-label" ng-repeat="color in ctrl.panel.colors track by $index">
+        <color-picker color="color" onChange="ctrl.onColorChange($index)"></color-picker>
       </span>
       <span class="gf-form-label">
         <a  ng-click="ctrl.invertColorOrder()">
@@ -93,13 +87,13 @@
       <div class="gf-form">
         <label class="gf-form-label width-9">Line Color</label>
         <span class="gf-form-label">
-          <spectrum-picker ng-model="ctrl.panel.sparkline.lineColor" ng-change="ctrl.render()" ></spectrum-picker>
+          <color-picker color="ctrl.panel.sparkline.lineColor" onChange="ctrl.onSparklineColorChange"></color-picker>
         </span>
       </div>
       <div class="gf-form">
         <label class="gf-form-label width-9">Fill Color</label>
         <span class="gf-form-label">
-          <spectrum-picker ng-model="ctrl.panel.sparkline.fillColor" ng-change="ctrl.render()" ></spectrum-picker>
+          <color-picker color="ctrl.panel.sparkline.fillColor" onChange="ctrl.onSparklineFillChange"></color-picker>
         </span>
       </div>
     </div>

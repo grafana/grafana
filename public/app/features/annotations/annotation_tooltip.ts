@@ -39,7 +39,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
           text = text + '<br />' + event.text;
         }
       } else if (title) {
-        text = title + '<br />' + text;
+        text = title + '<br />' + (_.isString(text) ? text : '');
         title = '';
       }
 
@@ -66,7 +66,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, contextSrv, 
       tooltip += '<div class="graph-annotation__body">';
 
       if (text) {
-        tooltip += '<div>' + sanitizeString(text).replace(/\n/g, '<br>') + '</div>';
+        tooltip += '<div>' + sanitizeString(text.replace(/\n/g, '<br>')) + '</div>';
       }
 
       var tags = event.tags;

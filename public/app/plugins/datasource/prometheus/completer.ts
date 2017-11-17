@@ -8,7 +8,7 @@ export class PromCompleter {
   labelNameCache: any;
   labelValueCache: any;
 
-  identifierRegexps = [/[\[\]a-zA-Z_0-9=]/];
+  identifierRegexps = [/\[/, /[a-zA-Z0-9_:]/];
 
   constructor(private datasource: PrometheusDatasource) {
     this.labelQueryCache = {};
@@ -73,13 +73,15 @@ export class PromCompleter {
         });
     }
 
-    if (prefix === '[') {
+    if (token.type === 'paren.lparen' && token.value === '[') {
       var vectors = [];
       for (let unit of ['s', 'm', 'h']) {
         for (let value of [1,5,10,30]) {
          vectors.push({caption: value+unit, value: '['+value+unit, meta: 'range vector'});
         }
       }
+      vectors.push({caption: '$__interval', value: '[$__interval', meta: 'range vector'});
+      vectors.push({caption: '$__interval_ms', value: '[$__interval_ms', meta: 'range vector'});
       callback(null, vectors);
       return;
     }

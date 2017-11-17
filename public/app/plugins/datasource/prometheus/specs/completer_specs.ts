@@ -44,12 +44,18 @@ describe('Prometheus editor completer', function() {
   describe('When inside brackets', () => {
     it('Should return range vectors', () => {
       const session = getSessionStub({
-        currentToken: {},
-        tokens: [],
-        line: '',
+        currentToken: {type: 'paren.lparen', value: '[', index: 2, start: 9},
+        tokens: [
+          {type: 'identifier', value: 'node_cpu'},
+          {type: 'paren.lparen', value: '['}
+        ],
+        line: 'node_cpu[',
       });
-      completer.getCompletions(editor, session, {row: 0, column: 10}, '[', (s, res) => {
-        expect(res[0]).to.eql({caption: '1s', value: '[1s', meta: 'range vector'});
+
+      return completer.getCompletions(editor, session, {row: 0, column: 10}, '[', (s, res) => {
+        expect(res[0].caption).to.eql('1s');
+        expect(res[0].value).to.eql('[1s');
+        expect(res[0].meta).to.eql('range vector');
       });
     });
   });

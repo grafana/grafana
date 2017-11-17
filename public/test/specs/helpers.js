@@ -5,6 +5,8 @@ define([
 ], function(_, config, dateMath) {
   'use strict';
 
+  config = config.default;
+
   function ControllerTestContext() {
     var self = this;
 

@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 
 import kbn from 'app/core/utils/kbn';
@@ -21,6 +19,7 @@ export class PrometheusDatasource {
   basicAuth: any;
   withCredentials: any;
   metricsNameCache: any;
+  interval: string;
 
   /** @ngInject */
   constructor(instanceSettings,
@@ -36,6 +35,7 @@ export class PrometheusDatasource {
     this.directUrl = instanceSettings.directUrl;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
+    this.interval = instanceSettings.jsonData.timeInterval || '15s';
   }
 
   _request(method, url, requestId?) {
@@ -122,7 +122,7 @@ export class PrometheusDatasource {
         } else {
           for (let metricData of response.data.data.result) {
             if (response.data.data.resultType === 'matrix') {
-              result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
+              result.push(self.transformMetricData(metricData, activeTargets[index], start, end, queries[index].step));
             } else if (response.data.data.resultType === 'vector') {
               result.push(self.transformInstantMetricData(metricData, activeTargets[index]));
             }
@@ -144,7 +144,6 @@ export class PrometheusDatasource {
     var intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     var adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
-
     var scopedVars = options.scopedVars;
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
@@ -154,7 +153,7 @@ export class PrometheusDatasource {
         "__interval_ms":  {text: interval * 1000, value: interval * 1000},
       });
     }
-    target.step = query.step = interval;
+    query.step = interval;
 
     // Only replace vars in expression after having (possibly) updated interval vars
     query.expr = this.templateSrv.replace(target.expr, scopedVars, this.interpolateQueryExpr);
@@ -168,7 +167,7 @@ export class PrometheusDatasource {
     if (interval !== 0 && range / intervalFactor / interval > 11000) {
       interval = Math.ceil(range / intervalFactor / 11000);
     }
-    return Math.max(interval * intervalFactor, minInterval);
+    return Math.max(interval * intervalFactor, minInterval, 1);
   }
 
   performTimeSeriesQuery(query, start, end) {
@@ -272,13 +271,13 @@ export class PrometheusDatasource {
     });
   }
 
-  transformMetricData(md, options, start, end) {
+  transformMetricData(md, options, start, end, step) {
     var dps = [],
       metricLabel = null;
 
     metricLabel = this.createMetricLabel(md.metric, options);
 
-    var stepMs = parseInt(options.step) * 1000;
+    var stepMs = step * 1000;
     var baseTimestamp = start * 1000;
     for (let value of md.values) {
       var dp_value = parseFloat(value[1]);

@@ -48,14 +48,16 @@ func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, e
 }
 
 var (
-	plog         log.Logger
-	legendFormat *regexp.Regexp
+	plog               log.Logger
+	legendFormat       *regexp.Regexp
+	intervalCalculator tsdb.IntervalCalculator
 )
 
 func init() {
 	plog = log.New("tsdb.prometheus")
 	tsdb.RegisterTsdbQueryEndpoint("prometheus", NewPrometheusExecutor)
 	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	intervalCalculator = tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{MinInterval: time.Second * 1})
 }
 
 func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, error) {
@@ -88,7 +90,7 @@ func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 		return nil, err
 	}
 
-	query, err := parseQuery(tsdbQuery.Queries, tsdbQuery)
+	query, err := parseQuery(dsInfo, tsdbQuery.Queries, tsdbQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -138,15 +140,10 @@ func formatLegend(metric model.Metric, query *PrometheusQuery) string {
 	return string(result)
 }
 
-func parseQuery(queries []*tsdb.Query, queryContext *tsdb.TsdbQuery) (*PrometheusQuery, error) {
+func parseQuery(dsInfo *models.DataSource, queries []*tsdb.Query, queryContext *tsdb.TsdbQuery) (*PrometheusQuery, error) {
 	queryModel := queries[0]
 
 	expr, err := queryModel.Model.Get("expr").String()
-	if err != nil {
-		return nil, err
-	}
-
-	step, err := queryModel.Model.Get("step").Int64()
 	if err != nil {
 		return nil, err
 	}
@@ -163,9 +160,18 @@ func parseQuery(queries []*tsdb.Query, queryContext *tsdb.TsdbQuery) (*Prometheu
 		return nil, err
 	}
 
+	dsInterval, err := tsdb.GetIntervalFrom(dsInfo, queryModel.Model, time.Second*15)
+	if err != nil {
+		return nil, err
+	}
+
+	intervalFactor := queryModel.Model.Get("intervalFactor").MustInt64(1)
+	interval := intervalCalculator.Calculate(queryContext.TimeRange, dsInterval)
+	step := time.Duration(int64(interval.Value) * intervalFactor)
+
 	return &PrometheusQuery{
 		Expr:         expr,
-		Step:         time.Second * time.Duration(step),
+		Step:         step,
 		LegendFormat: format,
 		Start:        start,
 		End:          end,

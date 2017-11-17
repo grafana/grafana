@@ -80,13 +80,13 @@ function (angular, _, $) {
           if (panel.legend.sortDesc === false) {
             panel.legend.sort = null;
             panel.legend.sortDesc = null;
-            render();
+            ctrl.render();
             return;
           }
 
           panel.legend.sortDesc = !panel.legend.sortDesc;
           panel.legend.sort = stat;
-          render();
+          ctrl.render();
         }
 
         function getTableHeaderHtml(statName) {
@@ -169,7 +169,7 @@ function (angular, _, $) {
             html += '<i class="fa fa-minus pointer" style="color:' + series.color + '"></i>';
             html += '</div>';
 
-            html += '<a class="graph-legend-alias pointer" title="' + _.escape(series.label) + '">' + _.escape(series.label) + '</a>';
+            html += '<a class="graph-legend-alias pointer" title="' + series.aliasEscaped + '">' + series.aliasEscaped + '</a>';
 
             if (panel.legend.values) {
               var avg = series.formatValue(series.stats.avg);

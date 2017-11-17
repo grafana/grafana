@@ -33,6 +33,8 @@ export class AnnotationsEditorCtrl {
     this.datasources = datasourceSrv.getAnnotationSources();
     this.annotations = $scope.dashboard.annotations.list;
     this.reset();
+
+    this.onColorChange = this.onColorChange.bind(this);
   }
 
   datasourceChanged() {
@@ -81,6 +83,10 @@ export class AnnotationsEditorCtrl {
     this.annotations.splice(index, 1);
     this.$scope.dashboard.updateSubmenuVisibility();
     this.$scope.broadcastRefresh();
+  }
+
+  onColorChange(newColor) {
+    this.currentAnnotation.iconColor = newColor;
   }
 
   annotationEnabledChange() {

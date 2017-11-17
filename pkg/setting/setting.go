@@ -50,11 +50,12 @@ var (
 	BuildStamp   int64
 
 	// Paths
-	LogsPath       string
-	HomePath       string
-	DataPath       string
-	PluginsPath    string
-	CustomInitPath = "conf/custom.ini"
+	LogsPath        string
+	HomePath        string
+	DataPath        string
+	PluginsPath     string
+	DatasourcesPath string
+	CustomInitPath  = "conf/custom.ini"
 
 	// Log settings.
 	LogModes   []string
@@ -121,6 +122,9 @@ var (
 
 	// Basic Auth
 	BasicAuthEnabled bool
+
+	// Plugin settings
+	PluginAppsSkipVerifyTLS bool
 
 	// Session settings.
 	SessionOptions session.Options
@@ -467,6 +471,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
 	InstanceName = Cfg.Section("").Key("instance_name").MustString("unknown_instance_name")
 	PluginsPath = makeAbsolute(Cfg.Section("paths").Key("plugins").String(), HomePath)
+	DatasourcesPath = makeAbsolute(Cfg.Section("paths").Key("datasources").String(), HomePath)
 
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
@@ -559,6 +564,9 @@ func NewConfigContext(args *CommandLineArgs) error {
 	// basic auth
 	authBasic := Cfg.Section("auth.basic")
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
+
+	// global plugin settings
+	PluginAppsSkipVerifyTLS = Cfg.Section("plugins").Key("app_tls_skip_verify_insecure").MustBool(false)
 
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
@@ -655,5 +663,6 @@ func LogConfigurationInfo() {
 	logger.Info("Path Data", "path", DataPath)
 	logger.Info("Path Logs", "path", LogsPath)
 	logger.Info("Path Plugins", "path", PluginsPath)
+	logger.Info("Path Datasources", "path", DatasourcesPath)
 	logger.Info("App mode " + Env)
 }

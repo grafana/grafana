@@ -87,6 +87,14 @@ command line in the init.d script or the systemd service file.  It can
 be overridden in the configuration file or in the default environment variable
 file.
 
+### plugins 
+
+Directory where grafana will automatically scan and look for plugins
+
+### datasources
+
+Config files containing datasources that will be configured at startup
+
 ## [server]
 
 ### http_addr
@@ -223,6 +231,9 @@ The maximum number of connections in the idle connection pool.
 
 ### max_open_conn
 The maximum number of open connections to the database.
+
+### log_queries
+Set to `true` to log the sql calls and execution times.
 
 <hr />
 
@@ -454,6 +465,40 @@ allow_sign_up = true
 
 Set api_url to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
 
+### Set up oauth2 with Okta
+
+First set up Grafana as an OpenId client "webapplication" in Okta. Then set the Base URIs to `https://<grafana domain>/` and set the Login redirect URIs to `https://<grafana domain>/login/generic_oauth`.
+
+Finaly set up the generic oauth module like this:
+```bash
+[auth.generic_oauth]
+name = Okta
+enabled = true
+scopes = openid profile email
+client_id = <okta application Client ID>
+client_secret = <okta application Client Secret>
+auth_url = https://<okta domain>/oauth2/v1/authorize
+token_url = https://<okta domain>/oauth2/v1/token
+api_url = https://<okta domain>/oauth2/v1/userinfo
+```
+
+### Set up oauth2 with Bitbucket
+
+```bash
+[auth.generic_oauth]
+name = BitBucket
+enabled = true
+allow_sign_up = true
+client_id = <client id>
+client_secret = <secret>
+scopes = account email
+auth_url = https://bitbucket.org/site/oauth2/authorize
+token_url = https://bitbucket.org/site/oauth2/access_token
+api_url = https://api.bitbucket.org/2.0/user
+team_ids =
+allowed_organizations =
+```
+
 <hr>
 
 ## [auth.basic]
@@ -517,7 +562,7 @@ session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
-- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=require
+- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full
 - **memcache:** ex:  127.0.0.1:11211
 - **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`
 
@@ -546,7 +591,7 @@ CREATE TABLE session (
 );
 ```
 
-Postgres valid `sslmode` are `disable`, `require` (default), `verify-ca`, and `verify-full`.
+Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
 
 ### cookie_name
 
@@ -639,7 +684,7 @@ Ex `filters = sqlstore:debug`
 ## [metrics]
 
 ### enabled
-Enable metrics reporting. defaults true. Available via HTTP API `/api/metrics`.
+Enable metrics reporting. defaults true. Available via HTTP API `/metrics`.
 
 ### interval_seconds
 

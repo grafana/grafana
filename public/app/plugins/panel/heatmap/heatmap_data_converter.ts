@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 
 let VALUE_INDEX = 0;
@@ -37,7 +35,16 @@ function elasticHistogramToHeatmap(seriesList) {
         bucket = heatmap[time] = {x: time, buckets: {}};
       }
 
-      bucket.buckets[bound] = {y: bound, count: count, values: [], points: []};
+      bucket.buckets[bound] = {
+        y: bound,
+        count: count,
+        bounds: {
+          top: null,
+          bottom: bound
+        },
+        values: [],
+        points: []
+      };
     }
   }
 
@@ -320,12 +327,6 @@ function convertToLogScaleValueBuckets(xBucket, yBucketSplitFactor, logBase) {
   return buckets;
 }
 
-// Get minimum non zero value.
-function getMinLog(series) {
-  let values = _.compact(_.map(series.datapoints, p => p[0]));
-  return _.min(values);
-}
-
 /**
  * Logarithm for custom base
  * @param value
@@ -432,7 +433,6 @@ export {
   elasticHistogramToHeatmap,
   convertToCards,
   mergeZeroBuckets,
-  getMinLog,
   getValueBucketBound,
   isHeatmapDataEqual,
   calculateBucketSize

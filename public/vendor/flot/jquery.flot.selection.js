@@ -152,6 +152,10 @@ The plugin allso adds the following methods to the plot object:
                 plot.getPlaceholder().trigger("plotselecting", [ null ]);
             }
 
+            setTimeout(function() {
+              plot.isSelecting = false;
+            }, 10);
+
             return false;
         }
 
@@ -218,6 +222,7 @@ The plugin allso adds the following methods to the plot object:
 
             setSelectionPos(selection.second, pos);
             if (selectionIsSane()) {
+                plot.isSelecting = true;
                 selection.show = true;
                 plot.triggerRedrawOverlay();
             }

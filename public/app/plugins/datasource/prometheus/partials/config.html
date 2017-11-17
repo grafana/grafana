@@ -1,3 +1,16 @@
 <datasource-http-settings current="ctrl.current" suggest-url="http://localhost:9090">
 </datasource-http-settings>
 
+<div class="gf-form-group">
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label">Scrape interval</span>
+			<input type="text" class="gf-form-input width-6" ng-model="ctrl.current.jsonData.timeInterval" spellcheck='false' placeholder="15s"></input>
+			<info-popover mode="right-absolute">
+                Set this to your global scrape interval defined in your Prometheus config file. This will be used as a lower limit for 
+                the Prometheus step query parameter.
+			</info-popover>
+		</div>
+	</div>
+</div>
+
