@@ -7,7 +7,7 @@ function (angular, _, $) {
   'use strict';
 
   // Supported stats and the order they are displayed in
-  const stats = ['min','max','avg','first','current','diff','range','total'];
+  var stats = ['min','max','avg','first','current','diff','range','total'];
 
   var module = angular.module('grafana.directives');
 
