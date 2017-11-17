@@ -1,7 +1,6 @@
 FROM phusion/baseimage:0.9.22
 MAINTAINER Denys Zhdanov <denis.zhdanov@gmail.com>
 
-
 RUN apt-get -y update \
   && apt-get -y upgrade \
   && apt-get -y install vim \
@@ -44,37 +43,24 @@ ARG whisper_version=${version}
 ARG carbon_version=${version}
 ARG graphite_version=${version}
 
-RUN echo "Building Version: $version"
-
-ARG whisper_repo=https://github.com/graphite-project/whisper.git
-ARG carbon_repo=https://github.com/graphite-project/carbon.git
-ARG graphite_repo=https://github.com/graphite-project/graphite-web.git
-
-ARG statsd_version=v0.8.0
-
-ARG statsd_repo=https://github.com/etsy/statsd.git
+ARG statsd_version=v0.7.2
 
 # install whisper
-RUN git clone -b ${whisper_version} --depth 1 ${whisper_repo} /usr/local/src/whisper
+RUN git clone -b ${whisper_version} --depth 1 https://github.com/graphite-project/whisper.git /usr/local/src/whisper
 WORKDIR /usr/local/src/whisper
 RUN python ./setup.py install
 
 # install carbon
-RUN git clone -b ${carbon_version} --depth 1 ${carbon_repo} /usr/local/src/carbon
+RUN git clone -b ${carbon_version} --depth 1 https://github.com/graphite-project/carbon.git /usr/local/src/carbon
 WORKDIR /usr/local/src/carbon
 RUN pip install -r requirements.txt \
   && python ./setup.py install
 
 # install graphite
-RUN git clone -b ${graphite_version} --depth 1 ${graphite_repo} /usr/local/src/graphite-web
+RUN git clone -b ${graphite_version} --depth 1 https://github.com/graphite-project/graphite-web.git /usr/local/src/graphite-web
 WORKDIR /usr/local/src/graphite-web
 RUN pip install -r requirements.txt \
   && python ./setup.py install
-
-# install statsd
-RUN git clone -b ${statsd_version} ${statsd_repo} /opt/statsd
-
-# config graphite
 ADD conf/opt/graphite/conf/*.conf /opt/graphite/conf/
 ADD conf/opt/graphite/webapp/graphite/local_settings.py /opt/graphite/webapp/graphite/local_settings.py
 # ADD conf/opt/graphite/webapp/graphite/app_settings.py /opt/graphite/webapp/graphite/app_settings.py
@@ -82,8 +68,9 @@ WORKDIR /opt/graphite/webapp
 RUN mkdir -p /var/log/graphite/ \
   && PYTHONPATH=/opt/graphite/webapp django-admin.py collectstatic --noinput --settings=graphite.settings
 
-# config statsd
-ADD conf/opt/statsd/config.js /opt/statsd/
+# install statsd
+RUN git clone -b ${statsd_version} https://github.com/etsy/statsd.git /opt/statsd
+ADD conf/opt/statsd/config.js /opt/statsd/config.js
 
 # config nginx
 RUN rm /etc/nginx/sites-enabled/default
@@ -115,10 +102,8 @@ RUN apt-get clean\
  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # defaults
-EXPOSE 80 2003-2004 2023-2024 8125 8125/udp 8126
+EXPOSE 80 2003-2004 2023-2024 8125/udp 8126
 VOLUME ["/opt/graphite/conf", "/opt/graphite/storage", "/etc/nginx", "/opt/statsd", "/etc/logrotate.d", "/var/log"]
 WORKDIR /
 ENV HOME /root
-ENV STATSD_INTERFACE udp
-
 CMD ["/sbin/my_init"]

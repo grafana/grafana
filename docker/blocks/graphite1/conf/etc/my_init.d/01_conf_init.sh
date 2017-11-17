@@ -12,7 +12,7 @@ graphite_conf_dir_contents=$(find /opt/graphite/conf -mindepth 1 -print -quit)
 graphite_webapp_dir_contents=$(find /opt/graphite/webapp/graphite -mindepth 1 -print -quit)
 graphite_storage_dir_contents=$(find /opt/graphite/storage -mindepth 1 -print -quit)
 if [[ -z $graphite_dir_contents ]]; then
-  git clone -b 1.0.2 --depth 1 https://github.com/graphite-project/graphite-web.git /usr/local/src/graphite-web
+  # git clone -b 1.0.2 --depth 1 https://github.com/graphite-project/graphite-web.git /usr/local/src/graphite-web
   cd /usr/local/src/graphite-web && python ./setup.py install
 fi
 if [[ -z $graphite_storage_dir_contents ]]; then

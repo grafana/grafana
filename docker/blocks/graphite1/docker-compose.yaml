@@ -1,5 +1,8 @@
   graphite:
-    build: blocks/graphite1
+    build:
+      context: blocks/graphite1
+      args:
+        version: master
     ports:
       - "8080:80"
       - "2003:2003"
