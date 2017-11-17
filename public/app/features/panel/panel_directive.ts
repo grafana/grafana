@@ -22,7 +22,9 @@ var panelTemplate = `
 
     <div class="panel-content">
       <div gemini-scrollbar ng-if="ctrl.scrollable">
-        <ng-transclude></ng-transclude>
+        <div class="panel-content--scrollable">
+          <ng-transclude></ng-transclude>
+        </div>
       </div>
       <ng-transclude ng-if="!ctrl.scrollable"></ng-transclude>
     </div>

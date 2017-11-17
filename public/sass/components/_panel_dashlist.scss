@@ -7,12 +7,6 @@
   margin-bottom: $spacer;
 }
 
-.dashlist {
-  // Add space for scrollbar
-  margin-right: 6px;
-  margin-left: 4px;
-}
-
 .dashlist-link {
   display: block;
   margin: 5px;
@@ -31,5 +25,3 @@
     background-color: $tight-form-func-bg;
   }
 }
-
-
