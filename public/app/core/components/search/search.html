@@ -51,25 +51,27 @@
 					</a>
 				</div>
 			</div>
+		</div>
 
-			<div class="search-results-container" ng-if="!ctrl.tagsMode">
-				<h6 ng-hide="ctrl.results.length">No dashboards matching your query were found.</h6>
+		<div class="search-results-container" ng-if="!ctrl.tagsMode">
+			<h6 ng-hide="ctrl.results.length">No dashboards matching your query were found.</h6>
 
-				<div ng-repeat="row in ctrl.results">
-					<a class="search-item search-item--{{::row.type}}" ng-class="{'selected': $index == ctrl.selectedIndex}" ng-href="{{row.url}}">
-						<span class="search-result-tags">
-							<span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name="tag"  class="label label-tag">
-								{{tag}}
-							</span>
+			<div ng-repeat="row in ctrl.results">
+				<a class="search-item search-item--{{::row.type}}" ng-class="{'selected': $index == ctrl.selectedIndex}" ng-href="{{row.url}}">
+					<span class="search-result-tags">
+						<span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name="tag"  class="label label-tag">
+							{{tag}}
+						</span>
+						<span ng-click="ctrl.starDashboard(row, $event)">
 							<i class="fa" ng-class="{'fa-star': row.isStarred, 'fa-star-o': !row.isStarred}"></i>
 						</span>
+					</span>
 
-						<span class="search-result-link">
-							<i class="fa search-result-icon"></i>
-							{{::row.title}}
-						</span>
-					</a>
-				</div>
+					<span class="search-result-link">
+						<i class="fa search-result-icon"></i>
+						{{::row.title}}
+					</span>
+				</a>
 			</div>
 		</div>
 	</div>

@@ -461,10 +461,10 @@
 			"revisionTime": "2017-02-10T14:05:23Z"
 		},
 		{
-			"checksumSHA1": "RYMOEINLFNWIJk8aKNifSlPhg9U=",
+			"checksumSHA1": "3HVfwgLpCDH8JX211UWdrSi/GU4=",
 			"path": "github.com/lib/pq",
-			"revision": "23da1db4f16d9658a86ae9b717c245fc078f10f1",
-			"revisionTime": "2017-09-18T17:50:43Z"
+			"revision": "b609790bd85edf8e9ab7e0f8912750a786177bcf",
+			"revisionTime": "2017-10-22T19:20:43Z"
 		},
 		{
 			"checksumSHA1": "jaCQF1par6Jl8g+V2Cgp0n/0wSc=",
@@ -712,6 +712,12 @@
 			"path": "gopkg.in/macaron.v1",
 			"revision": "a325110f8b392bce3e5cdeb8c44bf98078ada3be",
 			"revisionTime": "2017-02-13T09:12:08Z"
+		},
+		{
+			"checksumSHA1": "RDJpJQwkF012L6m/2BJizyOksNw=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "eb3733d160e74a9c7e442f435eb3bea458e1d19f",
+			"revisionTime": "2017-08-12T16:00:11Z"
 		}
 	],
 	"rootPath": "github.com/grafana/grafana"

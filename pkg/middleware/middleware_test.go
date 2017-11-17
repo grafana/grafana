@@ -363,6 +363,7 @@ type scenarioContext struct {
 	respJson       map[string]interface{}
 	handlerFunc    handlerFunc
 	defaultHandler macaron.Handler
+	url            string
 
 	req *http.Request
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func GetAnnotations(c *middleware.Context) Response {
@@ -75,9 +76,11 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 		return ApiError(500, "Failed to save annotation", err)
 	}
 
+	startID := item.Id
+
 	// handle regions
 	if cmd.IsRegion {
-		item.RegionId = item.Id
+		item.RegionId = startID
 
 		if item.Data == nil {
 			item.Data = simplejson.New()
@@ -93,9 +96,18 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 		if err := repo.Save(&item); err != nil {
 			return ApiError(500, "Failed save annotation for region end time", err)
 		}
+
+		return Json(200, util.DynMap{
+			"message": "Annotation added",
+			"id":      startID,
+			"endId":   item.Id,
+		})
 	}
 
-	return ApiSuccess("Annotation added")
+	return Json(200, util.DynMap{
+		"message": "Annotation added",
+		"id":      startID,
+	})
 }
 
 func formatGraphiteAnnotation(what string, data string) string {
@@ -154,7 +166,10 @@ func PostGraphiteAnnotation(c *middleware.Context, cmd dtos.PostGraphiteAnnotati
 		return ApiError(500, "Failed to save Graphite annotation", err)
 	}
 
-	return ApiSuccess("Graphite annotation added")
+	return Json(200, util.DynMap{
+		"message": "Graphite annotation added",
+		"id":      item.Id,
+	})
 }
 
 func UpdateAnnotation(c *middleware.Context, cmd dtos.UpdateAnnotationsCmd) Response {

@@ -1,8 +1,6 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
-import InfluxQueryBuilder from './query_builder';
+import {InfluxQueryBuilder} from './query_builder';
 import InfluxQuery from './influx_query';
 import queryPart from './query_part';
 import {QueryCtrl} from 'app/plugins/sdk';

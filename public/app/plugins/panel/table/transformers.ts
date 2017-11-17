@@ -124,7 +124,7 @@ transformers['annotations'] = {
 
     for (var i = 0; i < data.annotations.length; i++) {
       var evt = data.annotations[i];
-      model.rows.push([evt.min, evt.title, evt.text, evt.tags]);
+      model.rows.push([evt.time, evt.title, evt.text, evt.tags]);
     }
   }
 };

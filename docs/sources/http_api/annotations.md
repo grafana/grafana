@@ -89,7 +89,7 @@ Content-Type: application/json
 
 ## Create Annotation
 
-Creates an annotation in the Grafana database. The `dashboardId` and `panelId` fields are optional. If they are not specified then a global annotation is created and can be queried in any dashboard that adds the Grafana annotations data source.
+Creates an annotation in the Grafana database. The `dashboardId` and `panelId` fields are optional. If they are not specified then a global annotation is created and can be queried in any dashboard that adds the Grafana annotations data source. When creating a region annotation the response will include both `id` and `endId`, if not only `id`.
 
 `POST /api/annotations`
 
@@ -117,7 +117,11 @@ Content-Type: application/json
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Annotation added"}
+{
+    "message":"Annotation added",
+    "id": 1,
+    "endId": 2
+}
 ```
 
 ## Create Annotation in Graphite format
@@ -148,7 +152,10 @@ Content-Type: application/json
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Graphite annotation added"}
+{
+    "message":"Graphite annotation added",
+    "id": 1
+}
 ```
 
 ## Update Annotation

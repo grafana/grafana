@@ -126,4 +126,8 @@ func addDataSourceMigration(mg *Migrator) {
 		Sqlite(setVersionToOneWhereZero).
 		Postgres(setVersionToOneWhereZero).
 		Mysql(setVersionToOneWhereZero))
+
+	mg.AddMigration("Add read_only data column", NewAddColumnMigration(tableV2, &Column{
+		Name: "read_only", Type: DB_Bool, Nullable: true,
+	}))
 }
