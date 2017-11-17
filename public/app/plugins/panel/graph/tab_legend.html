@@ -28,16 +28,27 @@
 				checked="ctrl.panel.legend.min" on-change="ctrl.legendValuesOptionChanged()">
 			</gf-form-switch>
 
-			<gf-form-switch class="gf-form max-width-12"
-				label="Max" label-class="width-6" switch-class="max-width-5"
-				checked="ctrl.panel.legend.max" on-change="ctrl.legendValuesOptionChanged()">
+			<gf-form-switch class="gf-form"
+				label="Total" label-class="width-4"
+				checked="ctrl.panel.legend.total" on-change="ctrl.legendValuesOptionChanged()">
 			</gf-form-switch>
+
+			<gf-form-switch class="gf-form"
+				label="First" label-class="width-6"
+				checked="ctrl.panel.legend.first" on-change="ctrl.legendValuesOptionChanged()">
+			</gf-form-switch>
+
 		</div>
 
 		<div class="gf-form-inline">
-			<gf-form-switch class="gf-form"
-				label="Avg" label-class="width-4"
-				checked="ctrl.panel.legend.avg" on-change="ctrl.legendValuesOptionChanged()">
+			<gf-form-switch class="gf-form max-width-12"
+				label="Max" label-class="width-4" switch-class="max-width-5"
+				checked="ctrl.panel.legend.max" on-change="ctrl.legendValuesOptionChanged()">
+			</gf-form-switch>
+
+			<gf-form-switch class="gf-form max-width-12"
+				label="Diff" label-class="width-4" switch-class="max-width-5"
+				checked="ctrl.panel.legend.diff" on-change="ctrl.legendValuesOptionChanged()">
 			</gf-form-switch>
 
 			<gf-form-switch class="gf-form max-width-12"
@@ -48,8 +59,13 @@
 
 		<div class="gf-form-inline">
 			<gf-form-switch class="gf-form"
-				label="Total" label-class="width-4"
-				checked="ctrl.panel.legend.total" on-change="ctrl.legendValuesOptionChanged()">
+				label="Avg" label-class="width-4"
+				checked="ctrl.panel.legend.avg" on-change="ctrl.legendValuesOptionChanged()">
+			</gf-form-switch>
+
+			<gf-form-switch class="gf-form"
+				label="Range" label-class="width-4"
+				checked="ctrl.panel.legend.range" on-change="ctrl.legendValuesOptionChanged()">
 			</gf-form-switch>
 
 			<div class="gf-form">
