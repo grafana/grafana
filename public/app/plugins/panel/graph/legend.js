@@ -173,7 +173,7 @@ function (angular, _, $) {
             html += '<a class="graph-legend-alias pointer" title="' + series.aliasEscaped + '">' + series.aliasEscaped + '</a>';
 
             if (panel.legend.values) {
-              _.forEach(stats, function( stat ) {
+              _.forEach(stats, function(stat) {
                 if(panel.legend[stat]) {
                   var val = series.formatValue(series.stats[stat]);
                   html += '<div class="graph-legend-value '+stat+'">' + val + '</div>';
