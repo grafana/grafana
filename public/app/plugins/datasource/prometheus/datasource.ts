@@ -117,7 +117,7 @@ export class PrometheusDatasource {
           throw response.error;
         }
 
-        if (activeTargets[index].format === "table") {
+        if (options.transform === "table") {
           result.push(self.transformMetricDataToTable(response.data.data.result));
         } else {
           for (let metricData of response.data.data.result) {
