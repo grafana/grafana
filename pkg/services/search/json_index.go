@@ -90,6 +90,9 @@ func (index *JsonDashIndex) updateIndex() error {
 			return err
 		}
 		if f.IsDir() {
+			if strings.HasPrefix(f.Name(), ".") {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 
