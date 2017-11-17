@@ -129,14 +129,15 @@ function (angular, _, $) {
 
           $container.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
 
+          var j=0;
           var tableHeaderElem;
           if (panel.legend.alignAsTable) {
             var header = '<tr style="text-transform: capitalize;">';
             header += '<th colspan="2" style="text-align:left"></th>';
             if (panel.legend.values) {
-              _.forEach(stats, function(s) {
-                header += getTableHeaderHtml(s);
-              });
+              for(j=0; j<stats.length; j++) {
+                header += getTableHeaderHtml(stats[j]);
+              }
             }
             header += '</tr>';
             tableHeaderElem = $(header);
@@ -173,12 +174,13 @@ function (angular, _, $) {
             html += '<a class="graph-legend-alias pointer" title="' + series.aliasEscaped + '">' + series.aliasEscaped + '</a>';
 
             if (panel.legend.values) {
-              _.forEach(stats, function(stat) {
+              for(j=0; j<stats.length; j++) {
+                var stat = stats[j];
                 if(panel.legend[stat]) {
                   var val = series.formatValue(series.stats[stat]);
                   html += '<div class="graph-legend-value '+stat+'">' + val + '</div>';
                 }
-              });
+              }
             }
 
             html += '</div>';
