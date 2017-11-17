@@ -90,6 +90,9 @@ var (
 	SnapShotTTLDays       int
 	SnapShotRemoveExpired bool
 
+	// Dashboard history
+	DashboardVersionsToKeep int
+
 	// User settings
 	AllowUserSignUp         bool
 	AllowUserOrgCreate      bool
@@ -519,6 +522,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
 	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
 	SnapShotTTLDays = snapshots.Key("snapshot_TTL_days").MustInt(90)
+
+	// read dashboard settings
+	dashboards := Cfg.Section("dashboards")
+	DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)

@@ -45,6 +45,7 @@ func (service *CleanUpService) start(ctx context.Context) error {
 		case <-ticker.C:
 			service.cleanUpTmpFiles()
 			service.deleteExpiredSnapshots()
+			service.deleteExpiredDashboardVersions()
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -82,4 +83,8 @@ func (service *CleanUpService) cleanUpTmpFiles() {
 
 func (service *CleanUpService) deleteExpiredSnapshots() {
 	bus.Dispatch(&m.DeleteExpiredSnapshotsCommand{})
+}
+
+func (service *CleanUpService) deleteExpiredDashboardVersions() {
+	bus.Dispatch(&m.DeleteExpiredVersionsCommand{})
 }
