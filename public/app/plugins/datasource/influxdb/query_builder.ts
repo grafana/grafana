@@ -49,16 +49,18 @@ export class InfluxQueryBuilder {
     } else if (type === 'FIELDS') {
       measurement = this.target.measurement;
       policy = this.target.policy;
+
       if (!measurement.match('^/.*/')) {
         measurement = '"' + measurement + '"';
-        if (policy) {
-          if (!policy.match('^/.*/')) {
-            policy = '"' + policy + '"';
-          }
+
+        if (policy && policy !== 'default') {
+          policy = '"' + policy + '"';
           measurement = policy + '.' + measurement;
         }
       }
+
       return 'SHOW FIELD KEYS FROM ' + measurement;
+
     } else if (type === 'RETENTION POLICIES') {
       query = 'SHOW RETENTION POLICIES on "' + this.database + '"';
       return query;
@@ -70,9 +72,7 @@ export class InfluxQueryBuilder {
       }
 
       if (policy && policy !== 'default') {
-        if (!policy.match('^/.*/') && !policy.match(/^merge\(.*\)/)) {
-          policy = '"' + policy + '"';
-        }
+        policy = '"' + policy + '"';
         measurement = policy + '.' + measurement;
       }
 
