@@ -39,7 +39,7 @@ func (service *CleanUpService) Run(ctx context.Context) error {
 func (service *CleanUpService) start(ctx context.Context) error {
 	service.cleanUpTmpFiles()
 
-	ticker := time.NewTicker(time.Hour * 1)
+	ticker := time.NewTicker(time.Minute * 10)
 	for {
 		select {
 		case <-ticker.C:

@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"math"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -66,37 +65,39 @@ func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
 
 func DeleteExpiredVersions(cmd *m.DeleteExpiredVersionsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var expiredCount int64 = 0
-		var versions []DashboardVersionExp
+		expiredCount := int64(0)
+		versions := []DashboardVersionExp{}
+		versionsToKeep := setting.DashboardVersionsToKeep
 
-		// Don't clean up if user set versions_to_keep to 2147483647 (MaxInt32)
-		if versionsToKeep := setting.DashboardVersionsToKeep; versionsToKeep < math.MaxInt32 {
-			err := sess.Table("dashboard_version").
-				Select("dashboard_version.id, dashboard_version.version, dashboard_version.dashboard_id").
-				Where(`dashboard_id IN (
-					SELECT dashboard_id FROM dashboard_version
-					GROUP BY dashboard_id HAVING COUNT(dashboard_version.id) > ?
-				)`, versionsToKeep).
-				Desc("dashboard_version.dashboard_id", "dashboard_version.version").
-				Find(&versions)
+		if versionsToKeep < 1 {
+			versionsToKeep = 1
+		}
 
+		err := sess.Table("dashboard_version").
+			Select("dashboard_version.id, dashboard_version.version, dashboard_version.dashboard_id").
+			Where(`dashboard_id IN (
+			SELECT dashboard_id FROM dashboard_version
+			GROUP BY dashboard_id HAVING COUNT(dashboard_version.id) > ?
+		)`, versionsToKeep).
+			Desc("dashboard_version.dashboard_id", "dashboard_version.version").
+			Find(&versions)
+
+		if err != nil {
+			return err
+		}
+
+		// Keep last versionsToKeep versions and delete other
+		versionIdsToDelete := getVersionIDsToDelete(versions, versionsToKeep)
+		if len(versionIdsToDelete) > 0 {
+			deleteExpiredSql := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`
+			expiredResponse, err := sess.Exec(deleteExpiredSql, versionIdsToDelete...)
 			if err != nil {
 				return err
 			}
-
-			// Keep last versionsToKeep versions and delete other
-			versionIdsToDelete := getVersionIDsToDelete(versions, versionsToKeep)
-			if len(versionIdsToDelete) > 0 {
-				deleteExpiredSql := `DELETE FROM dashboard_version WHERE id IN (?` + strings.Repeat(",?", len(versionIdsToDelete)-1) + `)`
-				expiredResponse, err := sess.Exec(deleteExpiredSql, versionIdsToDelete...)
-				if err != nil {
-					return err
-				}
-				expiredCount, _ = expiredResponse.RowsAffected()
-			}
+			expiredCount, _ = expiredResponse.RowsAffected()
+			sqlog.Debug("Deleted old/expired dashboard versions", "expired", expiredCount)
 		}
 
-		sqlog.Debug("Deleted old/expired dashboard versions", "expired", expiredCount)
 		return nil
 	})
 }
