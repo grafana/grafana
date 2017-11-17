@@ -150,7 +150,6 @@ export class SearchCtrl {
     this.selectedIndex = 0;
     this.searchDashboards();
   }
-
 }
 
 export function searchDirective() {

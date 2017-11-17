@@ -146,11 +146,12 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 	m := macaron.New()
 
 	m.Use(middleware.Logger())
-	m.Use(middleware.Recovery())
 
 	if setting.EnableGzip {
 		m.Use(middleware.Gziper())
 	}
+
+	m.Use(middleware.Recovery())
 
 	for _, route := range plugins.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)

@@ -45,6 +45,7 @@ profile.cov
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
+debug.test
 /examples/*/dist
 /packaging/**/*.rpm
 /packaging/**/*.deb

@@ -4,8 +4,7 @@ import * as dateMath from 'app/core/utils/datemath';
 import InfluxSeries from './influx_series';
 import InfluxQuery from './influx_query';
 import ResponseParser from './response_parser';
-import InfluxQueryBuilder from './query_builder';
-
+import {InfluxQueryBuilder} from './query_builder';
 
 export default class InfluxDatasource {
   type: string;
@@ -190,10 +189,13 @@ export default class InfluxDatasource {
   }
 
   testDatasource() {
-    return this.metricFindQuery('SHOW DATABASES').then(res => {
-      let found = _.find(res, {text: this.database});
-      if (!found) {
-        return { status: "error", message: "Could not find the specified database name." };
+    var queryBuilder = new InfluxQueryBuilder({measurement: '', tags: []}, this.database);
+    var query = queryBuilder.buildExploreQuery('RETENTION POLICIES');
+
+    return this._seriesQuery(query).then(res => {
+      let error = _.get(res, 'results[0].error');
+      if (error) {
+        return { status: "error", message: error };
       }
       return { status: "success", message: "Data source is working" };
     }).catch(err => {

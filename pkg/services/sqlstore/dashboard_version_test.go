@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func updateTestDashboard(dashboard *m.Dashboard, data map[string]interface{}) {
@@ -98,6 +99,47 @@ func TestGetDashboardVersions(t *testing.T) {
 
 			So(err, ShouldBeNil)
 			So(len(query.Result), ShouldEqual, 2)
+		})
+	})
+}
+
+func TestDeleteExpiredVersions(t *testing.T) {
+	Convey("Testing dashboard versions clean up", t, func() {
+		InitTestDB(t)
+		versionsToKeep := 5
+		versionsToWrite := 10
+		setting.DashboardVersionsToKeep = versionsToKeep
+
+		savedDash := insertTestDashboard("test dash 53", 1, "diff-all")
+		for i := 0; i < versionsToWrite-1; i++ {
+			updateTestDashboard(savedDash, map[string]interface{}{
+				"tags": "different-tag",
+			})
+		}
+
+		Convey("Clean up old dashboard versions", func() {
+			err := DeleteExpiredVersions(&m.DeleteExpiredVersionsCommand{})
+			So(err, ShouldBeNil)
+
+			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
+			GetDashboardVersions(&query)
+
+			So(len(query.Result), ShouldEqual, versionsToKeep)
+			// Ensure latest versions were kept
+			So(query.Result[versionsToKeep-1].Version, ShouldEqual, versionsToWrite-versionsToKeep+1)
+			So(query.Result[0].Version, ShouldEqual, versionsToWrite)
+		})
+
+		Convey("Don't delete anything if there're no expired versions", func() {
+			setting.DashboardVersionsToKeep = versionsToWrite
+
+			err := DeleteExpiredVersions(&m.DeleteExpiredVersionsCommand{})
+			So(err, ShouldBeNil)
+
+			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
+			GetDashboardVersions(&query)
+
+			So(len(query.Result), ShouldEqual, versionsToWrite)
 		})
 	})
 }

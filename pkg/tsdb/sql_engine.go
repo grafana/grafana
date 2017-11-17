@@ -57,11 +57,12 @@ func (e *DefaultSqlEngine) InitEngine(driverName string, dsInfo *models.DataSour
 	}
 
 	engine, err := xorm.NewEngine(driverName, cnnstr)
-	engine.SetMaxOpenConns(10)
-	engine.SetMaxIdleConns(10)
 	if err != nil {
 		return err
 	}
+
+	engine.SetMaxOpenConns(10)
+	engine.SetMaxIdleConns(10)
 
 	engineCache.cache[dsInfo.Id] = engine
 	e.XormEngine = engine
