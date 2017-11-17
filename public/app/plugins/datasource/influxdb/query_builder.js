@@ -42,13 +42,16 @@ function (_) {
   p.buildExploreQuery = function(type, withKey, withMeasurementFilter) {
     var query;
     var measurement;
+    var policy;
 
     if (type === 'TAG_KEYS') {
       query = 'SHOW TAG KEYS';
       measurement = this.target.measurement;
+      policy = this.target.policy;
     } else if (type === 'TAG_VALUES') {
       query = 'SHOW TAG VALUES';
       measurement = this.target.measurement;
+      policy = this.target.policy;
     } else if (type === 'MEASUREMENTS') {
       query = 'SHOW MEASUREMENTS';
       if (withMeasurementFilter)
@@ -56,11 +59,18 @@ function (_) {
         query += ' WITH MEASUREMENT =~ /' + withMeasurementFilter +'/';
       }
     } else if (type === 'FIELDS') {
-      if (!this.target.measurement.match('^/.*/')) {
-        return 'SHOW FIELD KEYS FROM "' + this.target.measurement + '"';
-      } else {
-        return 'SHOW FIELD KEYS FROM ' + this.target.measurement;
+      measurement = this.target.measurement;
+      policy = this.target.policy;
+      if (!measurement.match('^/.*/')) {
+        measurement = '"' + measurement + '"';
+        if (policy) {
+          if (!policy.match('^/.*/')) {
+            policy = '"' + policy + '"';
+          }
+          measurement = policy + '.' + measurement;
+        }
       }
+      return 'SHOW FIELD KEYS FROM ' + measurement;
     } else if (type === 'RETENTION POLICIES') {
       query = 'SHOW RETENTION POLICIES on "' + this.database + '"';
       return query;
@@ -69,6 +79,12 @@ function (_) {
     if (measurement) {
       if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
         measurement = '"' + measurement+ '"';
+      }
+      if (policy) {
+        if (!policy.match('^/.*/') && !policy.match(/^merge\(.*\)/)) {
+          policy = '"' + policy + '"';
+        }
+        measurement = policy + '.' + measurement;
       }
       query += ' FROM ' + measurement;
     }
