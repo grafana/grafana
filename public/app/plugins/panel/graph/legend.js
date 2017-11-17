@@ -131,7 +131,7 @@ function (angular, _, $) {
 
           var tableHeaderElem;
           if (panel.legend.alignAsTable) {
-            var header = '<tr>';
+            var header = '<tr style="text-transform: capitalize;">';
             header += '<th colspan="2" style="text-align:left"></th>';
             if (panel.legend.values) {
               _.forEach(stats, function(s) {
