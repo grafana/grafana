@@ -4,8 +4,7 @@ import * as dateMath from 'app/core/utils/datemath';
 import InfluxSeries from './influx_series';
 import InfluxQuery from './influx_query';
 import ResponseParser from './response_parser';
-import InfluxQueryBuilder from './query_builder';
-
+import {InfluxQueryBuilder} from './query_builder';
 
 export default class InfluxDatasource {
   type: string;
