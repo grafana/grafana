@@ -87,7 +87,7 @@ command line in the init.d script or the systemd service file.  It can
 be overridden in the configuration file or in the default environment variable
 file.
 
-### plugins 
+### plugins
 
 Directory where grafana will automatically scan and look for plugins
 
@@ -623,6 +623,12 @@ If you want to track Grafana usage via Google analytics specify *your* Universal
 Analytics ID here. By default this feature is disabled.
 
 <hr />
+
+## [dashboards]
+
+### versions_to_keep (introduced in v5.0)
+
+Number dashboard versions to keep (per dashboard). Default: 20, Minimum: 1.
 
 ## [dashboards.json]
 
