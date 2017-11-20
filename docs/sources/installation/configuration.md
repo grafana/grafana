@@ -778,6 +778,9 @@ Service Account should have "Storage Object Writer" role.
 ### bucket name
 Bucket Name on Google Cloud Storage.
 
+### path
+Optional extra path inside bucket
+
 ## [alerting]
 
 ### enabled
