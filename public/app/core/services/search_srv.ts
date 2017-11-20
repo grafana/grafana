@@ -10,6 +10,9 @@ export class SearchSrv {
   search(options) {
     if (!options.query) {
       options.folderIds = [0];
+    } else {
+      options.folderIds = [];
+      options.type = 'dash-db';
     }
 
     return this.backendSrv.search(options).then(results => {
@@ -36,14 +39,14 @@ export class SearchSrv {
       //   ]
       // };
 
-     // create folder index
+      // create folder index
       for (let hit of results) {
         if (hit.type === 'dash-folder') {
           sections[hit.id] = {
             id: hit.id,
             title: hit.title,
             items: [],
-            icon: 'fa fa-folder-open',
+            icon: 'fa fa-folder',
             score: _.keys(sections).length,
           };
         }
