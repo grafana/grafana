@@ -10,8 +10,8 @@ $black:                 #000;
 // -------------------------
 $black:            #000;
 $dark-1:           #141414;
-$dark-2:           #1f1d1d;
-$dark-3:           #292929;
+$dark-2:           #1f1f1d;
+$dark-3:           #262628;
 $dark-4:           #333333;
 $dark-5:           #444444;
 $gray-1:           #555555;
@@ -49,7 +49,7 @@ $critical:              #ed2e18;
 
 // Scaffolding
 // -------------------------
-$body-bg:  			   	    rgb(24,20,20);
+$body-bg:  			   	    rgb(23,24,25);
 $page-bg:  			   	    $dark-2;
 $body-color:   		 	    $gray-4;
 $text-color:   	   		  $gray-4;
@@ -63,8 +63,8 @@ $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255,213,0,0.7) 0%, rgba(255,68,0,0.7) 99%, rgba(255,68,0,0.7) 100%);
-$page-gradient: linear-gradient(180deg, rgb(36, 36, 36) 40px, rgba(178, 31, 31, 0.03) 100px, rgba(253, 187, 45, 0.03));
-$dashboard-gradient: linear-gradient(180deg, #242424 10px, rgba(15, 15, 15, 1) 100px, rgb(10, 10, 10));
+$page-gradient: linear-gradient(180deg, rgb(36, 36, 38) 40px, rgba(178, 31, 33, 0.03) 100px, rgba(253, 187, 47, 0.03));
+$dashboard-gradient: linear-gradient(180deg, #222426 10px, rgba(15, 15, 16, 1) 100px, rgb(10, 10, 11));
 
 // Links
 // -------------------------
@@ -90,8 +90,8 @@ $component-active-bg:    $brand-primary !default;
 
 // Panel
 // -------------------------
-$panel-bg: 				      $dark-2;
-$panel-border-color:    $dark-3;
+$panel-bg: 				      $black;
+$panel-border-color:    $black;
 $panel-border:          solid 1px $panel-border-color;
 $panel-drop-zone-bg:    repeating-linear-gradient(-128deg, #111, #111 10px, #191919 10px, #222 20px);
 $panel-header-hover-bg:       $dark-3;
@@ -103,10 +103,10 @@ $divider-border-color:        #555;
 $tight-form-border:   #050505;
 $tight-form-bg:     	$dark-3;
 
-$tight-form-func-bg: 		    #333;
-$tight-form-func-highlight-bg:  #444;
+$tight-form-func-bg: 		    #333334;
+$tight-form-func-highlight-bg:  #444445;
 
-$modal-backdrop-bg: #3a4754;
+$modal-backdrop-bg: #353c42	;
 $code-tag-bg:       $gray-1;
 $code-tag-border:   lighten($code-tag-bg, 2%);
 
@@ -295,8 +295,8 @@ $graph-tooltip-bg:        $dark-1;
 $checkboxImageUrl: '../img/checkbox.png';
 
 // cards
-$card-background: linear-gradient(135deg, #2f2f2f, #262626);
-$card-background-hover: linear-gradient(135deg, #343434, #262626);
+$card-background: linear-gradient(135deg, #2f2f32, #262628);
+$card-background-hover: linear-gradient(135deg, #343436, #262628);
 $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .3);
 
 // info box
