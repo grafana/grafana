@@ -18,7 +18,7 @@ func searchHandler(query *Query) error {
 		IsStarred:    query.IsStarred,
 		DashboardIds: query.DashboardIds,
 		Type:         query.Type,
-		FolderId:     query.FolderId,
+		FolderIds:    query.FolderIds,
 		Tags:         query.Tags,
 		Limit:        query.Limit,
 	}

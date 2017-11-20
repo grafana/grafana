@@ -384,7 +384,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("and one folder is expanded, the other collapsed", func() {
 				Convey("should return dashboards in root and expanded folder", func() {
-					query := &search.FindPersistedDashboardsQuery{ExpandedFolders: []int64{folder1.Id}, SignedInUser: &m.SignedInUser{UserId: currentUser.Id, OrgId: 1}, OrgId: 1}
+					query := &search.FindPersistedDashboardsQuery{FolderIds: []int64{folder1.Id}, SignedInUser: &m.SignedInUser{UserId: currentUser.Id, OrgId: 1}, OrgId: 1}
 					err := SearchDashboards(query)
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 4)

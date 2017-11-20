@@ -139,7 +139,7 @@ func addDashboardMigration(mg *Migrator) {
 
 	// add column to store folder_id for dashboard folder structure
 	mg.AddMigration("Add column folder_id in dashboard", NewAddColumnMigration(dashboardV2, &Column{
-		Name: "folder_id", Type: DB_BigInt, Nullable: true,
+		Name: "folder_id", Type: DB_BigInt, Nullable: false, Default: "0",
 	}))
 
 	mg.AddMigration("Add column isFolder in dashboard", NewAddColumnMigration(dashboardV2, &Column{

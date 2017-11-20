@@ -7,8 +7,12 @@ export class SearchSrv {
   constructor(private backendSrv) {
   }
 
-  search(query) {
-    return this.backendSrv.search(query).then(results => {
+  search(options) {
+    if (!options.query) {
+      options.folderIds = [0];
+    }
+
+    return this.backendSrv.search(options).then(results => {
 
       let sections: any = {};
 
@@ -34,22 +38,30 @@ export class SearchSrv {
 
      // create folder index
       for (let hit of results) {
-        let section = sections[hit.folderId];
-        if (!section) {
-          section = {
-            id: hit.folderId,
-            title: hit.folderTitle,
+        if (hit.type === 'dash-folder') {
+          sections[hit.id] = {
+            id: hit.id,
+            title: hit.title,
             items: [],
-            icon: 'fa fa-folder-open'
+            icon: 'fa fa-folder-open',
+            score: _.keys(sections).length,
           };
-          // handle root
-          if (!hit.folderId) {
-            section.title = "Dashboards";
-            section.icon = "fa fa-circle-o";
-          }
-          sections[hit.folderId] = section;
         }
+      }
 
+      sections[0] = {
+        id: 0,
+        title: 'Root',
+        items: [],
+        icon: 'fa fa-folder-open',
+        score: _.keys(sections).length,
+      };
+
+      for (let hit of results) {
+        if (hit.type === 'dash-folder') {
+          continue;
+        }
+        let section = sections[hit.folderId || 0];
         hit.url = 'dashboard/' + hit.uri;
         section.items.push(hit);
       }

@@ -17,8 +17,7 @@ type SearchBuilder struct {
 	whereTitle          string
 	whereTypeFolder     bool
 	whereTypeDash       bool
-	whereFolderId       int64
-	expandedFolders     []int64
+	whereFolderIds      []int64
 	sql                 bytes.Buffer
 	params              []interface{}
 }
@@ -72,14 +71,8 @@ func (sb *SearchBuilder) WithType(queryType string) *SearchBuilder {
 	return sb
 }
 
-func (sb *SearchBuilder) WithFolderId(folderId int64) *SearchBuilder {
-	sb.whereFolderId = folderId
-
-	return sb
-}
-
-func (sb *SearchBuilder) WithExpandedFolders(expandedFolders []int64) *SearchBuilder {
-	sb.expandedFolders = expandedFolders
+func (sb *SearchBuilder) WithFolderIds(folderIds []int64) *SearchBuilder {
+	sb.whereFolderIds = folderIds
 	return sb
 }
 
@@ -212,17 +205,10 @@ func (sb *SearchBuilder) buildSearchWhereClause() {
 		sb.sql.WriteString(" AND dashboard.is_folder = 0")
 	}
 
-	if sb.whereFolderId > 0 {
-		sb.sql.WriteString(" AND dashboard.folder_id = ?")
-		sb.params = append(sb.params, sb.whereFolderId)
-	}
-
-	if len(sb.expandedFolders) > 0 {
-		sb.sql.WriteString(` AND (dashboard.folder_id IN (?` + strings.Repeat(",?", len(sb.expandedFolders)-1) + `) `)
-		sb.sql.WriteString(` OR dashboard.folder_id IS NULL OR dashboard.folder_id = 0)`)
-
-		for _, ef := range sb.expandedFolders {
-			sb.params = append(sb.params, ef)
+	if len(sb.whereFolderIds) > 0 {
+		sb.sql.WriteString(` AND dashboard.folder_id IN (?` + strings.Repeat(",?", len(sb.whereFolderIds)-1) + `) `)
+		for _, id := range sb.whereFolderIds {
+			sb.params = append(sb.params, id)
 		}
 	}
 }

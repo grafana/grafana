@@ -207,12 +207,8 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		sb.WithType(query.Type)
 	}
 
-	if query.FolderId > 0 {
-		sb.WithFolderId(query.FolderId)
-	}
-
-	if len(query.ExpandedFolders) > 0 {
-		sb.WithExpandedFolders(query.ExpandedFolders)
+	if len(query.FolderIds) > 0 {
+		sb.WithFolderIds(query.FolderIds)
 	}
 
 	var res []DashboardSearchProjection
