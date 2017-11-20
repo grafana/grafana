@@ -1,7 +1,7 @@
 import moment from 'moment';
 import _ from 'lodash';
 
-import {GRID_COLUMN_COUNT, GRID_CELL_HEIGHT, REPEAT_DIR_VERTICAL} from 'app/core/constants';
+import {GRID_COLUMN_COUNT, GRID_CELL_HEIGHT, REPEAT_DIR_VERTICAL, GRID_CELL_VMARGIN} from 'app/core/constants';
 import {DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
 import {Emitter} from 'app/core/utils/emitter';
 import {contextSrv} from 'app/core/services/context_srv';
@@ -913,6 +913,7 @@ export class DashboardModel {
   }
 
   upgradeToGridLayout(old) {
+    const MIN_PANEL_HEIGHT = GRID_CELL_HEIGHT * 2;
     let yPos = 0;
     let widthFactor = GRID_COLUMN_COUNT / 12;
     //let rowIds = 1000;
@@ -944,7 +945,11 @@ export class DashboardModel {
         height = parseInt(height.replace('px', ''), 10);
       }
 
-      const rowGridHeight = Math.ceil(height / GRID_CELL_HEIGHT);
+      if (height < MIN_PANEL_HEIGHT) {
+        height = MIN_PANEL_HEIGHT;
+      }
+
+      const rowGridHeight = Math.ceil(height / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
 
       for (let panel of row.panels) {
         const panelWidth = Math.floor(panel.span) * widthFactor;
