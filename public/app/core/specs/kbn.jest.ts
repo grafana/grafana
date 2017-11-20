@@ -114,7 +114,7 @@ describe('date time formats', function() {
 
   it('should format as US date', function() {
     var str = kbn.valueFormats.dateTimeAsUS(1505634997920, 1);
-    expect(str).toBe(moment(1505634997920).format('MM/DD/YYYY H:mm:ss a'));
+    expect(str).toBe(moment(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
   });
 
   it('should format as US date and skip date when today', function() {

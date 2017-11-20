@@ -35,8 +35,12 @@ var (
 	errNoLastInsertID  = errors.New("no LastInsertId available after the empty statement")
 )
 
+// Driver is the Postgres database driver.
 type Driver struct{}
 
+// Open opens a new connection to the database. name is a connection string.
+// Most users should only use it through database/sql package from the standard
+// library.
 func (d *Driver) Open(name string) (driver.Conn, error) {
 	return Open(name)
 }
@@ -78,6 +82,8 @@ func (s transactionStatus) String() string {
 	panic("not reached")
 }
 
+// Dialer is the dialer interface. It can be used to obtain more control over
+// how pq creates network connections.
 type Dialer interface {
 	Dial(network, address string) (net.Conn, error)
 	DialTimeout(network, address string, timeout time.Duration) (net.Conn, error)
@@ -149,11 +155,7 @@ func (cn *conn) handleDriverSettings(o values) (err error) {
 	if err != nil {
 		return err
 	}
-	err = boolSetting("binary_parameters", &cn.binaryParameters)
-	if err != nil {
-		return err
-	}
-	return nil
+	return boolSetting("binary_parameters", &cn.binaryParameters)
 }
 
 func (cn *conn) handlePgpass(o values) {
@@ -165,11 +167,16 @@ func (cn *conn) handlePgpass(o values) {
 	if filename == "" {
 		// XXX this code doesn't work on Windows where the default filename is
 		// XXX %APPDATA%\postgresql\pgpass.conf
-		user, err := user.Current()
-		if err != nil {
-			return
+		// Prefer $HOME over user.Current due to glibc bug: golang.org/issue/13470
+		userHome := os.Getenv("HOME")
+		if userHome == "" {
+			user, err := user.Current()
+			if err != nil {
+				return
+			}
+			userHome = user.HomeDir
 		}
-		filename = filepath.Join(user.HomeDir, ".pgpass")
+		filename = filepath.Join(userHome, ".pgpass")
 	}
 	fileinfo, err := os.Stat(filename)
 	if err != nil {
@@ -237,10 +244,14 @@ func (cn *conn) writeBuf(b byte) *writeBuf {
 	}
 }
 
+// Open opens a new connection to the database. name is a connection string.
+// Most users should only use it through database/sql package from the standard
+// library.
 func Open(name string) (_ driver.Conn, err error) {
 	return DialOpen(defaultDialer{}, name)
 }
 
+// DialOpen opens a new connection to the database using a dialer.
 func DialOpen(d Dialer, name string) (_ driver.Conn, err error) {
 	// Handle any panics during connection initialization.  Note that we
 	// specifically do *not* want to use errRecover(), as that would turn any
@@ -1431,7 +1442,8 @@ func (rs *rows) NextResultSet() error {
 //
 //    tblname := "my_table"
 //    data := "my_data"
-//    err = db.Exec(fmt.Sprintf("INSERT INTO %s VALUES ($1)", pq.QuoteIdentifier(tblname)), data)
+//    quoted := pq.QuoteIdentifier(tblname)
+//    err := db.Exec(fmt.Sprintf("INSERT INTO %s VALUES ($1)", quoted), data)
 //
 // Any double quotes in name will be escaped.  The quoted identifier will be
 // case sensitive when used in a query.  If the input string contains a zero

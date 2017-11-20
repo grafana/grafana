@@ -87,6 +87,14 @@ command line in the init.d script or the systemd service file.  It can
 be overridden in the configuration file or in the default environment variable
 file.
 
+### plugins
+
+Directory where grafana will automatically scan and look for plugins
+
+### datasources
+
+Config files containing datasources that will be configured at startup
+
 ## [server]
 
 ### http_addr
@@ -223,6 +231,9 @@ The maximum number of connections in the idle connection pool.
 
 ### max_open_conn
 The maximum number of open connections to the database.
+
+### log_queries
+Set to `true` to log the sql calls and execution times.
 
 <hr />
 
@@ -551,7 +562,7 @@ session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
-- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=require
+- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full
 - **memcache:** ex:  127.0.0.1:11211
 - **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`
 
@@ -580,7 +591,7 @@ CREATE TABLE session (
 );
 ```
 
-Postgres valid `sslmode` are `disable`, `require` (default), `verify-ca`, and `verify-full`.
+Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
 
 ### cookie_name
 
@@ -612,6 +623,12 @@ If you want to track Grafana usage via Google analytics specify *your* Universal
 Analytics ID here. By default this feature is disabled.
 
 <hr />
+
+## [dashboards]
+
+### versions_to_keep (introduced in v5.0)
+
+Number dashboard versions to keep (per dashboard). Default: 20, Minimum: 1.
 
 ## [dashboards.json]
 
@@ -673,7 +690,7 @@ Ex `filters = sqlstore:debug`
 ## [metrics]
 
 ### enabled
-Enable metrics reporting. defaults true. Available via HTTP API `/api/metrics`.
+Enable metrics reporting. defaults true. Available via HTTP API `/metrics`.
 
 ### interval_seconds
 

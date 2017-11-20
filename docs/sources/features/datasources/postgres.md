@@ -45,10 +45,10 @@ Macro example | Description
 ------------ | -------------
 *$__time(dateColumn)* | Will be replaced by an expression to rename the column to `time`. For example, *dateColumn as time*
 *$__timeSec(dateColumn)* | Will be replaced by an expression to rename the column to `time` and converting the value to unix timestamp. For example, *extract(epoch from dateColumn) as time*
-*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn > to_timestamp(1494410783) AND dateColumn < to_timestamp(1494497183)*
+*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *extract(epoch from dateColumn) BETWEEN 1494410783 AND 1494497183*
 *$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *to_timestamp(1494410783)*
 *$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *to_timestamp(1494497183)*
-*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *(extract(epoch from "dateColumn")/extract(epoch from '5m'::interval))::int*extract(epoch from '5m'::interval)*
+*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *(extract(epoch from "dateColumn")/300)::bigint*300*
 *$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
 *$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
 *$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
@@ -186,7 +186,7 @@ ORDER BY atimestamp ASC
 
 ## Annotations
 
-[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
+[Annotations]({{< relref "reference/annotations.md" >}}) allow you to overlay rich event information on top of graphs. You add annotation queries via the Dashboard menu / Annotations view.
 
 An example query:
 

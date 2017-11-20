@@ -27,6 +27,7 @@ var (
 	ErrDataSourceNotFound           = errors.New("Data source not found")
 	ErrDataSourceNameExists         = errors.New("Data source with same name already exists")
 	ErrDataSourceUpdatingOldVersion = errors.New("Trying to update old version of datasource")
+	ErrDatasourceIsReadOnly         = errors.New("Data source is readonly. Can only be updated from configuration.")
 )
 
 type DsAccess string
@@ -50,6 +51,7 @@ type DataSource struct {
 	IsDefault         bool
 	JsonData          *simplejson.Json
 	SecureJsonData    securejsondata.SecureJsonData
+	ReadOnly          bool
 
 	Created time.Time
 	Updated time.Time
@@ -109,6 +111,7 @@ type AddDataSourceCommand struct {
 	IsDefault         bool              `json:"isDefault"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
+	ReadOnly          bool              `json:"readOnly"`
 
 	OrgId int64 `json:"-"`
 
@@ -132,6 +135,7 @@ type UpdateDataSourceCommand struct {
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
 	Version           int               `json:"version"`
+	ReadOnly          bool              `json:"readOnly"`
 
 	OrgId int64 `json:"-"`
 	Id    int64 `json:"-"`
@@ -142,11 +146,15 @@ type UpdateDataSourceCommand struct {
 type DeleteDataSourceByIdCommand struct {
 	Id    int64
 	OrgId int64
+
+	DeletedDatasourcesCount int64
 }
 
 type DeleteDataSourceByNameCommand struct {
 	Name  string
 	OrgId int64
+
+	DeletedDatasourcesCount int64
 }
 
 // ---------------------
@@ -154,6 +162,10 @@ type DeleteDataSourceByNameCommand struct {
 
 type GetDataSourcesQuery struct {
 	OrgId  int64
+	Result []*DataSource
+}
+
+type GetAllDataSourcesQuery struct {
 	Result []*DataSource
 }
 

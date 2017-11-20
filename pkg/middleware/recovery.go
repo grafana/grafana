@@ -123,23 +123,22 @@ func Recovery() macaron.Handler {
 					c.Data["ErrorMsg"] = string(stack)
 				}
 
-				c.HTML(500, "500")
+				ctx, ok := c.Data["ctx"].(*Context)
 
-				// // Lookup the current responsewriter
-				// val := c.GetVal(inject.InterfaceOf((*http.ResponseWriter)(nil)))
-				// res := val.Interface().(http.ResponseWriter)
-				//
-				// // respond with panic message while in development mode
-				// var body []byte
-				// if setting.Env == setting.DEV {
-				// 	res.Header().Set("Content-Type", "text/html")
-				// 	body = []byte(fmt.Sprintf(panicHtml, err, err, stack))
-				// }
-				//
-				// res.WriteHeader(http.StatusInternalServerError)
-				// if nil != body {
-				// 	res.Write(body)
-				// }
+				if ok && ctx.IsApiRequest() {
+					resp := make(map[string]interface{})
+					resp["message"] = "Internal Server Error - Check the Grafana server logs for the detailed error message."
+
+					if c.Data["ErrorMsg"] != nil {
+						resp["error"] = fmt.Sprintf("%v - %v", c.Data["Title"], c.Data["ErrorMsg"])
+					} else {
+						resp["error"] = c.Data["Title"]
+					}
+
+					c.JSON(500, resp)
+				} else {
+					c.HTML(500, "500")
+				}
 			}
 		}()
 

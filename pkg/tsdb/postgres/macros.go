@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -71,6 +72,7 @@ func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		}
 		return fmt.Sprintf("extract(epoch from %s) as \"time\"", args[0]), nil
 	case "__timeFilter":
+		// dont use to_timestamp in this macro for redshift compatibility #9566
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
@@ -80,10 +82,14 @@ func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string,
 	case "__timeTo":
 		return fmt.Sprintf("to_timestamp(%d)", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
 	case "__timeGroup":
-		if len(args) < 2 {
+		if len(args) != 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
 		}
-		return fmt.Sprintf("(extract(epoch from \"%s\")/extract(epoch from %s::interval))::int*extract(epoch from %s::interval)", args[0], args[1], args[1]), nil
+		interval, err := time.ParseDuration(strings.Trim(args[1], `' `))
+		if err != nil {
+			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		return fmt.Sprintf("(extract(epoch from \"%s\")/%v)::bigint*%v", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)

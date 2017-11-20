@@ -382,6 +382,19 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			currentUser := createUser("viewer", "Viewer", false)
 
+			Convey("and one folder is expanded, the other collapsed", func() {
+				Convey("should return dashboards in root and expanded folder", func() {
+					query := &search.FindPersistedDashboardsQuery{ExpandedFolders: []int64{folder1.Id}, SignedInUser: &m.SignedInUser{UserId: currentUser.Id, OrgId: 1}, OrgId: 1}
+					err := SearchDashboards(query)
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 4)
+					So(query.Result[0].Id, ShouldEqual, folder1.Id)
+					So(query.Result[1].Id, ShouldEqual, folder2.Id)
+					So(query.Result[2].Id, ShouldEqual, childDash1.Id)
+					So(query.Result[3].Id, ShouldEqual, dashInRoot.Id)
+				})
+			})
+
 			Convey("and acl is set for one dashboard folder", func() {
 				var otherUser int64 = 999
 				updateTestDashboardWithAcl(folder1.Id, otherUser, m.PERMISSION_EDIT)

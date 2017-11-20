@@ -1,31 +1,35 @@
-<div class="panel-alert-list">
-	<section class="card-section card-list-layout-list" ng-if="ctrl.panel.show === 'current'">
-		<ol class="card-list">
-			<li class="card-item-wrapper" ng-repeat="alert in ctrl.currentAlerts">
-				<div class="alert-list card-item card-item--alert">
-					<div class="alert-list-body">
-						<div class="alert-list-icon alert-list-item-state {{alert.stateModel.stateClass}}">
-							<i class="{{alert.stateModel.iconClass}}"></i>
-						</div>
-						<div class="alert-list-main">
-							<p class="alert-list-title">
-							<a href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert">
-								{{alert.name}}
-							</a>
-							</p>
-							<p class="alert-list-text">
-							<span class="alert-list-state {{alert.stateModel.stateClass}}">{{alert.stateModel.text}}</span>
-							for {{alert.newStateDateAgo}}
-							</p>
-						</div>
-					</div>
-				</div>
-			</li>
-		</ol>
-	</section>
+<div class="panel-alert-list" ng-style="{height: ctrl.height + 'px'}">
+	<div class="panel-alert-list__no-alerts" ng-show="ctrl.noAlertsMessage">
+		{{ctrl.noAlertsMessage}}
+	</div>
 
-	<section class="card-section card-list-layout-list" ng-if="ctrl.panel.show === 'changes'">
-		<ol class ="card-list">
+  <section class="card-section card-list-layout-list" ng-if="ctrl.panel.show === 'current'">
+    <ol class="card-list">
+			<li class="card-item-wrapper" ng-repeat="alert in ctrl.currentAlerts">
+        <div class="alert-list card-item card-item--alert">
+          <div class="alert-list-body">
+            <div class="alert-list-icon alert-list-item-state {{alert.stateModel.stateClass}}">
+              <i class="{{alert.stateModel.iconClass}}"></i>
+            </div>
+            <div class="alert-list-main">
+              <p class="alert-list-title">
+                <a href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert">
+                  {{alert.name}}
+                </a>
+              </p>
+              <p class="alert-list-text">
+                <span class="alert-list-state {{alert.stateModel.stateClass}}">{{alert.stateModel.text}}</span>
+                for {{alert.newStateDateAgo}}
+              </p>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="card-section card-list-layout-list" ng-if="ctrl.panel.show === 'changes'">
+		<ol class="card-list">
 			<li class="card-item-wrapper" ng-repeat="al in ctrl.alertHistory">
 				<div class="alert-list card-item card-item--alert">
 					<div class="alert-list-body">
@@ -42,7 +46,9 @@
 					</div>
 					<div class="alert-list-footer">
 						<span class="alert-list-text">{{al.time}}</span>
-						<span class="alert-list-text"><!--Img Link--></span>
+						<span class="alert-list-text">
+							<!--Img Link-->
+						</span>
 					</div>
 				</div>
 			</li>

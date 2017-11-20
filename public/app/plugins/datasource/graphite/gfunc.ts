@@ -1,4 +1,6 @@
 import _ from 'lodash';
+import {isVersionGtOrEq} from 'app/core/utils/version';
+
 
 var index = [];
 var categories = {
@@ -968,13 +970,7 @@ FuncInstance.prototype.updateText = function() {
 };
 
 function isVersionRelatedFunction(func, graphiteVersion) {
-  return isVersionGreaterOrEqual(graphiteVersion, func.version) || !func.version;
-}
-
-function isVersionGreaterOrEqual(a, b) {
-  var a_num = Number(a);
-  var b_num = Number(b);
-  return a_num >= b_num;
+  return isVersionGtOrEq(graphiteVersion, func.version) || !func.version;
 }
 
 export default {

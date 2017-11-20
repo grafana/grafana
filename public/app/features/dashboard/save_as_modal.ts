@@ -56,7 +56,9 @@ export class SaveDashboardAsModalCtrl {
     // do not want to create alert dupes
     if (dashboard.id > 0) {
       this.clone.panels.forEach(panel => {
-        delete panel.thresholds;
+        if (panel.type === "graph" && panel.alert) {
+          delete panel.thresholds;
+        }
         delete panel.alert;
       });
     }

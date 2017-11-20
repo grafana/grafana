@@ -95,6 +95,7 @@ export class AlertTabCtrl {
       case "hipchat": return "fa fa-mail-forward";
       case "pushover": return "fa fa-mobile";
       case "kafka": return "fa fa-random";
+      case "teams": return "fa fa-windows";
     }
     return 'fa fa-bell';
   }

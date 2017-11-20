@@ -14,8 +14,10 @@
   background-color: $tight-form-bg;
   border: $input-btn-border-width solid $input-label-border-color;
   .fa {
-    float: right;
     padding-top: 3px;
+  }
+  .dashlist-star {
+    float: right;
   }
   .fa-star {
     color: $orange;

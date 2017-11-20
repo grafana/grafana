@@ -37,7 +37,9 @@ describe('Graph Histogam Converter', function () {
     beforeEach(() => {
       data = [
         {
-          data: [[0, 1], [0, 2], [0, 10], [0, 11], [0, 17], [0, 20], [0, 29]]
+          datapoints: [
+            [1, 0], [2, 0], [10, 0], [11, 0], [17, 0], [20, 0], [29, 0]
+          ]
         }
       ];
     });
@@ -50,7 +52,7 @@ describe('Graph Histogam Converter', function () {
     });
 
     it('Should skip null values', () => {
-      data[0].data.push([0, null]);
+      data[0].datapoints.push([null, 0]);
 
       let expected = [1, 2, 10, 11, 17, 20, 29];
 

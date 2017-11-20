@@ -1,7 +1,4 @@
-///<reference path="../../../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import angular from 'angular';
 
 class TestDataDatasource {
   id: any;
@@ -21,7 +18,8 @@ class TestDataDatasource {
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
         stringInput: item.stringInput,
-        jsonInput: angular.fromJson(item.jsonInput),
+        points: item.points,
+        alias: item.alias,
         datasourceId: this.id,
       };
     });
