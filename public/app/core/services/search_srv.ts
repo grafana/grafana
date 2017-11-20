@@ -7,39 +7,15 @@ export class SearchSrv {
   constructor(private backendSrv) {
   }
 
-  search(options) {
-    if (!options.query) {
-      options.folderIds = [0];
-    } else {
-      options.folderIds = [];
-      options.type = 'dash-db';
-    }
+  browse() {
+    let query = {
+      folderIds: [0]
+    };
 
-    return this.backendSrv.search(options).then(results => {
+    return this.backendSrv.search(query).then(results => {
 
       let sections: any = {};
 
-      // sections["starred"] = {
-      //   score: 0,
-      //   icon: 'fa fa-star-o',
-      //   title: "Starred dashboards",
-      //   items: [
-      //     {title: 'Frontend Nginx'},
-      //     {title: 'Cassandra overview'}
-      //   ]
-      // };
-      //
-      // sections["recent"] = {
-      //   score: 1,
-      //   icon: 'fa fa-clock-o',
-      //   title: "Recent dashboards",
-      //   items: [
-      //     {title: 'Frontend Nginx'},
-      //     {title: 'Cassandra overview'}
-      //   ]
-      // };
-
-      // create folder index
       for (let hit of results) {
         if (hit.type === 'dash-folder') {
           sections[hit.id] = {
@@ -70,6 +46,33 @@ export class SearchSrv {
       }
 
       return _.sortBy(_.values(sections), 'score');
+    });
+  }
+
+  search(options) {
+    if (!options.query) {
+      return this.browse();
+    }
+
+    options.folderIds = [];
+    options.type = 'dash-db';
+
+    return this.backendSrv.search(options).then(results => {
+
+      let section = {
+        hideHeader: true,
+        items: [],
+      };
+
+      for (let hit of results) {
+        if (hit.type === 'dash-folder') {
+          continue;
+        }
+        hit.url = 'dashboard/' + hit.uri;
+        section.items.push(hit);
+      }
+
+      return [section];
     });
   }
 

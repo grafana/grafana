@@ -150,6 +150,10 @@ export class SearchCtrl {
     this.selectedIndex = 0;
     this.searchDashboards();
   }
+
+  // toggleFolder(section) {
+  //   this.searchSrv.toggleFolder(section);
+  // }
 }
 
 export function searchDirective() {

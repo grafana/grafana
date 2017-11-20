@@ -56,7 +56,7 @@
 				<h6 ng-hide="ctrl.results.length">No dashboards matching your query were found.</h6>
 
 				<div ng-repeat="section in ctrl.results" class="search-section">
-					<a class="search-section__header pointer" ng-show="::section.title" ng-click="section.collapsed = !section.collapsed">
+					<a class="search-section__header pointer" ng-show="::section.title" ng-click="ctrl.toggleFolder(section)">
 						<i class="search-section__header__icon" ng-class="section.icon"></i>
 						<span class="search-section__header__text">{{::section.title}}</span>
 						<i class="fa fa-minus search-section__header__toggle" ng-hide="section.collapsed"></i>
