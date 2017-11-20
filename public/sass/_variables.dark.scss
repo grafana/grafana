@@ -63,8 +63,8 @@ $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255,213,0,0.7) 0%, rgba(255,68,0,0.7) 99%, rgba(255,68,0,0.7) 100%);
-$page-gradient: linear-gradient(180deg, rgb(36, 36, 38) 40px, rgba(178, 31, 33, 0.03) 100px, rgba(253, 187, 47, 0.03));
-$dashboard-gradient: linear-gradient(180deg, #222426 10px, rgba(15, 15, 16, 1) 100px, rgb(10, 10, 11));
+$page-gradient: linear-gradient(180deg, #222426 10px, rgba(15, 15, 16, .03) 100px, rgba(10, 10, 11, .03));
+$dashboard-gradient: linear-gradient(180deg, #222426 10px, rgba(15, 15, 16, 0.3) 100px, rgb(10, 10, 0.3));
 
 // Links
 // -------------------------

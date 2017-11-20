@@ -62,7 +62,7 @@
   &.active:focus {
     @include border-radius(3px);
     border-color: rgba(216, 131, 40, 0.77);
-    border-bottom: 2px solid $panel-bg;
+    border-bottom: 2px solid #0a0a0a;
     color: $link-color;
     position: relative;
     top: 1px;
