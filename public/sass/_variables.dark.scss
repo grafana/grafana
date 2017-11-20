@@ -10,7 +10,7 @@ $black:                 #000;
 // -------------------------
 $black:            #000;
 $dark-1:           #141414;
-$dark-2:           #1f1f1d;
+$dark-2:           #1f1f20;
 $dark-3:           #262628;
 $dark-4:           #333333;
 $dark-5:           #444444;
@@ -90,8 +90,8 @@ $component-active-bg:    $brand-primary !default;
 
 // Panel
 // -------------------------
-$panel-bg: 				      $black;
-$panel-border-color:    $black;
+$panel-bg: 				      $dark-2;
+$panel-border-color:    $dark-2;
 $panel-border:          solid 1px $panel-border-color;
 $panel-drop-zone-bg:    repeating-linear-gradient(-128deg, #111, #111 10px, #191919 10px, #222 20px);
 $panel-header-hover-bg:       $dark-3;
