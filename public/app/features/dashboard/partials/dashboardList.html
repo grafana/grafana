@@ -15,26 +15,25 @@
         </a>
       </div>
       <div class="gf-form-group">
-        <div class="gf-form-inline">
-          <div class="gf-form width-15">
-            <span style="position: relative;">
-              <input type="text" class="gf-form-input" placeholder="Find Dashboard by name" tabindex="1" give-focus="true"
-                ng-model="ctrl.query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.getDashboards()" />
-            </span>
-          </div>
-          <div class="gf-form" ng-if="ctrl.query.tag.length">
-            Filtered by Tags:
-            <span ng-repeat="tagName in ctrl.query.tag">
-              <a ng-click="ctrl.removeTag(tagName, $event)" tag-color-from-name="tagName" class="label label-tag">
-                <i class="fa fa-remove"></i>
-                {{tagName}}
-              </a>
-            </span>
-          </div>
+        <div class="gf-form width-15">
+          <span style="position: relative;">
+            <input type="text" class="gf-form-input" placeholder="Find Dashboard by name" tabindex="1" give-focus="true"
+              ng-model="ctrl.query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.getDashboards()" />
+          </span>
         </div>
       </div>
 
-      <div class="gf-form-group" ng-if="ctrl.dashboards.length > 1">
+      <div class="gf-form" ng-if="ctrl.query.tag.length">
+        Filters:
+        <span ng-repeat="tagName in ctrl.query.tag">
+          <a ng-click="ctrl.removeTag(tagName, $event)" tag-color-from-name="tagName" class="label label-tag">
+            <i class="fa fa-remove"></i>
+            {{tagName}}
+          </a>
+        </span>
+      </div>
+
+      <div class="gf-form-group">
         <div class="gf-form-button-row">
           <button	type="button"
               class="btn gf-form-button btn-secondary"
@@ -54,40 +53,74 @@
 
         <div class="admin-list-table" style="height: 80%">
           <div gemini-scrollbar>
-            <table class="filter-table form-inline" ng-show="ctrl.dashboards.length > 0">
-              <thead>
-                <tr>
-                  <th class="width-4"></th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr bindonce ng-repeat="dashboard in ctrl.dashboards">
-                  <td class="filter-table__switch-cell" bs-tooltip="" data-placement="right">
+            <div ng-show="ctrl.sections.length > 0">
+              <!-- <div>
+                <select class="gf-form-input" ng-model="ctrl.query.tags" ng-options="t.term for t in ctrl.tags" />
+              </div> -->
+              <div ng-repeat="section in ctrl.sections" class="search-section">
+                <gf-form-switch
+                  switch-class="gf-form-switch--table-cell"
+                  on-change="ctrl.selectionChanged()"
+                  checked="section.checked">
+                </gf-form-switch>
+                <a class="search-section__header pointer" ng-show="::section.title" ng-click="section.collapsed = !section.collapsed">
+                  <i class="search-section__header__icon" ng-class="section.icon"></i>
+                  <span class="search-section__header__text">{{::section.title}}</span>
+                  <i class="fa fa-minus search-section__header__toggle" ng-hide="section.collapsed"></i>
+                  <i class="fa fa-plus search-section__header__toggle" ng-show="section.collapsed"></i>
+                </a>
+
+                <div ng-if="!section.collapsed">
+                  <div ng-repeat="item in section.items" class="search-item" ng-class="{'selected': item.selected}">
                     <gf-form-switch
-                        switch-class="gf-form-switch--table-cell"
-                        on-change="ctrl.selectionChanged()"
-                        checked="dashboard.checked">
-                    </gf-form-switch>
-                  </td>
-                  <td>
-                    <a class="search-item pointer search-item--{{dashboard.type}}"
-                      bo-href-i="{{dashboard.url}}">
-                      <span class="search-result-tags">
-                        <span ng-click="ctrl.filterByTag(tag, $event)" bindonce ng-repeat="tag in dashboard.tags" tag-color-from-name="tag"  class="label label-tag">
+                      switch-class="gf-form-switch--table-cell"
+                      on-change="ctrl.selectionChanged()"
+                      checked="item.checked" />
+                    <a ng-href="{{::item.url}}">
+                      <span class="search-item__icon">
+                        <i class="fa fa-th-large"></i>
+                      </span>
+                      <span class="search-item__title">
+                        {{::item.title}}
+                      </span>
+                      <span class="search-item__tags">
+                        <span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in item.tags" tag-color-from-name="tag"  class="label label-tag">
                           {{tag}}
                         </span>
-                        <i class="fa" bo-class="{'fa-star': dashboard.isStarred, 'fa-star-o': !dashboard.isStarred}"></i>
                       </span>
-                      <span class="search-result-link">
-                        <i class="fa search-result-icon"></i>
-                        <span bo-text="dashboard.title" />
+                      <span class="search-item__actions">
+                        <i class="fa" ng-class="{'fa-star': item.isStarred, 'fa-star-o': !item.isStarred}"></i>
                       </span>
                     </a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+              <!-- <div bindonce class="search-section" ng-repeat="dashboard in ctrl.dashboards">
+                  <gf-form-switch
+                      switch-class="gf-form-switch--table-cell"
+                      on-change="ctrl.selectionChanged()"
+                      checked="dashboard.checked">
+                  </gf-form-switch>
+                  <a class="search-item pointer "
+                    bo-href-i="{{dashboard.url}}">
+                    <span class="search-item__icon">
+                      <i class="fa fa-th-large"></i>
+                    </span>
+                    <span class="search-result-tags">
+                      <span ng-click="ctrl.filterByTag(tag, $event)" bindonce ng-repeat="tag in dashboard.tags" tag-color-from-name="tag"  class="label label-tag">
+                        {{tag}}
+                      </span>
+                      <i class="fa" bo-class="{'fa-star': dashboard.isStarred, 'fa-star-o': !dashboard.isStarred}"></i>
+                    </span>
+                    <span class="search-result-link">
+                      <i class="fa search-result-icon"></i>
+                      <span bo-text="dashboard.title" />
+                    </span>
+                  </a>
+              </div> -->
+            </div>
           </div>
         </div>
 

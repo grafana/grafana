@@ -24,6 +24,7 @@ export class SearchSrv {
             items: [],
             icon: 'fa fa-folder',
             score: _.keys(sections).length,
+            uri: hit.uri
           };
         }
       }
@@ -34,7 +35,7 @@ export class SearchSrv {
         items: [],
         icon: 'fa fa-folder-open',
         score: _.keys(sections).length,
-        expanded: true,
+        expanded: true
       };
 
       for (let hit of results) {
