@@ -34,6 +34,7 @@ export class SearchSrv {
         items: [],
         icon: 'fa fa-folder-open',
         score: _.keys(sections).length,
+        expanded: true,
       };
 
       for (let hit of results) {
@@ -54,14 +55,16 @@ export class SearchSrv {
       return this.browse();
     }
 
-    options.folderIds = [];
-    options.type = 'dash-db';
+    let query = _.clone(options);
+    query.folderIds = [];
+    query.type = 'dash-db';
 
-    return this.backendSrv.search(options).then(results => {
+    return this.backendSrv.search(query).then(results => {
 
       let section = {
         hideHeader: true,
         items: [],
+        expanded: true,
       };
 
       for (let hit of results) {
@@ -73,6 +76,25 @@ export class SearchSrv {
       }
 
       return [section];
+    });
+  }
+
+  toggleFolder(section) {
+    section.expanded = !section.expanded;
+
+    if (section.items.length) {
+      return;
+    }
+
+    let query = {
+      folderIds: [section.id]
+    };
+
+    return this.backendSrv.search(query).then(results => {
+      for (let hit of results) {
+        hit.url = 'dashboard/' + hit.uri;
+        section.items.push(hit);
+      }
     });
   }
 

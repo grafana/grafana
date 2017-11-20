@@ -151,9 +151,9 @@ export class SearchCtrl {
     this.searchDashboards();
   }
 
-  // toggleFolder(section) {
-  //   this.searchSrv.toggleFolder(section);
-  // }
+  toggleFolder(section) {
+    this.searchSrv.toggleFolder(section);
+  }
 }
 
 export function searchDirective() {
