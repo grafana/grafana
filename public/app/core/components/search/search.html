@@ -68,8 +68,12 @@
 							<span class="search-item__icon">
 								<i class="fa fa-th-large"></i>
 							</span>
-							<span class="search-item__title">
-								{{::item.title}}
+							<span class="search-item__body">
+								<div class="search-item__body-title">{{::item.title}}</div>
+								<div class="search-item__body-sub-title" ng-show="::section.hideHeader">
+									<i class="fa fa-folder-o"></i>
+									{{::item.folderTitle}}
+								</div>
 							</span>
 							<span class="search-item__tags">
 								<span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in item.tags" tag-color-from-name="tag"  class="label label-tag">

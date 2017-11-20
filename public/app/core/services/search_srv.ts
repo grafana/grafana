@@ -81,6 +81,7 @@ export class SearchSrv {
 
   toggleFolder(section) {
     section.expanded = !section.expanded;
+    section.icon = section.expanded ? 'fa fa-folder-open' : 'fa fa-folder';
 
     if (section.items.length) {
       return;

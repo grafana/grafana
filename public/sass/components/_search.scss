@@ -118,7 +118,7 @@
 
 .search-item {
   display: flex;
-  height: 35px;
+  height: 37px;
   padding: 0px;
   white-space: nowrap;
   background-color: $tight-form-bg;
@@ -142,12 +142,24 @@
   //   color: $orange;
   // }
 }
-
-.search-item__title {
-  color: $grafanaListMainLinkColor;
+.search-item__body {
   flex: 1 1 auto;
   overflow: hidden;
-  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 10px;
+}
+
+.search-item__body-title {
+  color: $grafanaListMainLinkColor;
+}
+
+.search-item__body-sub-title {
+  color: $grafanaListMainLinkColor;
+  color: $text-muted;
+  font-size: $font-size-sm;
+  line-height: 9pt;
 }
 
 .search-item__icon {
