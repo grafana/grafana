@@ -204,7 +204,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
   }
 
-  issueQueries(datasource) {
+  issueQueries(datasource, query = {}) {
     this.datasource = datasource;
 
     if (!this.panel.targets || this.panel.targets.length === 0) {
@@ -218,7 +218,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       "__interval_ms":  {text: this.intervalMs, value: this.intervalMs},
     });
 
-    var metricsQuery = {
+    var metricsQuery = Object.assign(query, {
       timezone: this.dashboard.getTimezone(),
       panelId: this.panel.id,
       range: this.range,
@@ -229,7 +229,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       maxDataPoints: this.resolution,
       scopedVars: scopedVars,
       cacheTimeout: this.panel.cacheTimeout
-    };
+    });
 
     return datasource.query(metricsQuery);
   }

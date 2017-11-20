@@ -87,7 +87,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       });
     }
 
-    return super.issueQueries(datasource);
+    return super.issueQueries(datasource, { transform: this.panel.transform });
   }
 
   onDataError(err) {
@@ -107,7 +107,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         if (this.dataRaw[0].type === 'docs') {
           this.panel.transform = 'json';
         } else {
-          if (this.panel.transform === 'table' || this.panel.transform === 'json') {
+          if (this.panel.transform === 'table') {
             this.panel.transform = 'timeseries_to_rows';
           }
         }

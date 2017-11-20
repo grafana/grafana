@@ -74,7 +74,7 @@ export class TablePanelEditorCtrl {
     }
 
     this.updateTransformHints();
-    this.render();
+    this.panelCtrl.refresh();
   }
 
   render() {
