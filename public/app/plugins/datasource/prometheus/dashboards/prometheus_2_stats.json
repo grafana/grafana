@@ -159,11 +159,11 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "max(scrape_duration_seconds{job=\"prometheus\"})",
+              "expr": "topk(5, max(scrape_duration_seconds) by (job))",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 2,
-              "legendFormat": "{{quantile}}",
+              "legendFormat": "{{job}}",
               "metric": "",
               "refId": "A",
               "step": 20
