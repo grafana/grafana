@@ -1,9 +1,10 @@
 import _ from 'lodash';
-import {describe, it, expect} from 'test/lib/common';
 import ResponseParser from '../response_parser';
 
-describe("influxdb response parser", () => {
-  this.parser = new ResponseParser();
+describe('influxdb response parser', () => {
+
+  const parser = new ResponseParser();
+
   describe("SHOW TAG response", () => {
     var query = 'SHOW TAG KEYS FROM "cpu"';
     var response = {
@@ -20,10 +21,10 @@ describe("influxdb response parser", () => {
       ]
     };
 
-    var result = this.parser.parse(query, response);
+    var result = parser.parse(query, response);
 
     it("expects three results", () => {
-      expect(_.size(result)).to.be(3);
+      expect(_.size(result)).toBe(3);
     });
   });
 
@@ -45,12 +46,12 @@ describe("influxdb response parser", () => {
         ]
       };
 
-      var result = this.parser.parse(query, response);
+      var result = parser.parse(query, response);
 
       it("should get two responses", () => {
-        expect(_.size(result)).to.be(2);
-        expect(result[0].text).to.be("server1");
-        expect(result[1].text).to.be("server2");
+        expect(_.size(result)).toBe(2);
+        expect(result[0].text).toBe("server1");
+        expect(result[1].text).toBe("server2");
       });
     });
 
@@ -80,13 +81,13 @@ describe("influxdb response parser", () => {
         ]
       };
 
-      var result = this.parser.parse(query, response);
+      var result = parser.parse(query, response);
 
       it("should get two responses", () => {
-        expect(_.size(result)).to.be(3);
-        expect(result[0].text).to.be('site');
-        expect(result[1].text).to.be('api');
-        expect(result[2].text).to.be('webapi');
+        expect(_.size(result)).toBe(3);
+        expect(result[0].text).toBe('site');
+        expect(result[1].text).toBe('api');
+        expect(result[2].text).toBe('webapi');
       });
     });
   });
@@ -110,9 +111,9 @@ describe("influxdb response parser", () => {
         ]
       };
 
-      var result = this.parser.parse(query, response);
+      var result = parser.parse(query, response);
       it("should get two responses", () => {
-        expect(_.size(result)).to.be(6);
+        expect(_.size(result)).toBe(6);
       });
     });
 
@@ -131,10 +132,10 @@ describe("influxdb response parser", () => {
         ]
       };
 
-      var result = this.parser.parse(query, response);
+      var result = parser.parse(query, response);
 
       it("should get two responses", () => {
-        expect(_.size(result)).to.be(1);
+        expect(_.size(result)).toBe(1);
       });
     });
   });
