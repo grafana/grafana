@@ -107,7 +107,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         if (this.dataRaw[0].type === 'docs') {
           this.panel.transform = 'json';
         } else {
-          if (this.panel.transform === 'table' || this.panel.transform === 'json') {
+          if (this.panel.transform === 'table') {
             this.panel.transform = 'timeseries_to_rows';
           }
         }

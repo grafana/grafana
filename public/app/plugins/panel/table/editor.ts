@@ -72,9 +72,13 @@ export class TablePanelEditorCtrl {
     if (this.panel.transform === 'timeseries_aggregations') {
       this.panel.columns.push({text: 'Avg', value: 'avg'});
     }
+    let targetFormat = this.panel.transform === 'table' ? 'table' : 'time_series';
+    _.each(this.panel.targets, function(target) {
+      target.format = targetFormat;
+    });
 
     this.updateTransformHints();
-    this.render();
+    this.panelCtrl.refresh();
   }
 
   render() {
