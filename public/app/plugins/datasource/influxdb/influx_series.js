@@ -63,6 +63,15 @@ function (_, TableModel) {
       var group = g1 || g2;
       var segIndex = parseInt(group, 10);
 
+      if(group==="t") {
+        var r='';
+        for(var k in series.tags) {
+          if (series.tags.hasOwnProperty(k)) {
+            r+=k+': '+series.tags[k]+', ';
+          }
+        }
+        return r.slice(0,-2);
+      }
       if (group === 'm' || group === 'measurement') { return series.name; }
       if (group === 'col') { return series.columns[index]; }
       if (!isNaN(segIndex)) { return segments[segIndex]; }
