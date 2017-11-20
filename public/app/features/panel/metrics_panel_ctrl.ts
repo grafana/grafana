@@ -11,7 +11,6 @@ import {metricsTabDirective} from './metrics_tab';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
-  loading: boolean;
   datasource: any;
   datasourceName: any;
   $q: any;
