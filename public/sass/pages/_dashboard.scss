@@ -23,6 +23,11 @@ div.flot-text {
   }
 }
 
+.panel-height-helper {
+  display: block;
+  height: 100%;
+}
+
 .panel-container {
   background-color: $panel-bg;
   border: $panel-border;
@@ -38,12 +43,11 @@ div.flot-text {
 
 .panel-content {
   padding: 0px 10px 5px 10px;
-  height: 100%;
+  height: calc(100% - 27px);
 
   &--scrollable {
     // Add space for scrollbar
     padding-right: 10px;
-    padding-left: 6px;
   }
 }
 

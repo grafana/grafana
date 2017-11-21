@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import GeminiScrollbar from 'gemini-scrollbar';
 import coreModule from 'app/core/core_module';
 

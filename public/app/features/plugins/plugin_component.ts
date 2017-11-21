@@ -68,7 +68,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     var componentInfo: any = {
       name: 'panel-plugin-' + scope.panel.type,
       bindings: {dashboard: "=", panel: "=", row: "="},
-      attrs: {dashboard: "dashboard", panel: "panel"},
+      attrs: {dashboard: "dashboard", panel: "panel", class: "panel-height-helper"},
     };
 
     let panelInfo = config.panels[scope.panel.type];
@@ -98,7 +98,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
       PanelCtrl.templatePromise = getTemplate(PanelCtrl).then(template => {
         PanelCtrl.templateUrl = null;
-        PanelCtrl.template = `<grafana-panel ctrl="ctrl">${template}</grafana-panel>`;
+        PanelCtrl.template = `<grafana-panel ctrl="ctrl" class="panel-height-helper">${template}</grafana-panel>`;
         return componentInfo;
       });
 

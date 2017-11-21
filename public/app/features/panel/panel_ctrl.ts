@@ -5,9 +5,7 @@ import {appEvents, profiler} from 'app/core/core';
 import Remarkable from 'remarkable';
 import {GRID_CELL_HEIGHT, GRID_CELL_VMARGIN} from 'app/core/constants';
 
-const TITLE_HEIGHT = 25;
-const EMPTY_TITLE_HEIGHT = 9;
-const PANEL_PADDING = 5;
+const TITLE_HEIGHT = 27;
 const PANEL_BORDER = 2;
 
 import {Emitter} from 'app/core/core';
@@ -31,7 +29,6 @@ export class PanelCtrl {
   containerHeight: any;
   events: Emitter;
   timing: any;
-  scrollable: boolean;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
@@ -40,7 +37,6 @@ export class PanelCtrl {
     this.editorTabIndex = 0;
     this.events = this.panel.events;
     this.timing = {};
-    this.scrollable = false;
 
     var plugin = config.panels[this.panel.type];
     if (plugin) {
@@ -66,7 +62,6 @@ export class PanelCtrl {
   }
 
   refresh() {
-    this.setPanelHeight();
     this.events.emit('refresh', null);
   }
 
@@ -75,7 +70,6 @@ export class PanelCtrl {
   }
 
   changeView(fullscreen, edit) {
-    this.setPanelHeight();
     this.publishAppEvent('panel-change-view', {
       fullscreen: fullscreen, edit: edit, panelId: this.panel.id
     });
@@ -169,18 +163,13 @@ export class PanelCtrl {
       this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + ((this.panel.gridPos.h-1) * GRID_CELL_VMARGIN);
     }
 
-    this.height = this.containerHeight - (PANEL_BORDER + PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
-  }
-
-  setPanelHeight() {
-    if (this.scrollable) {
-      this.$scope.setPanelHeight();
-    }
+    console.log(this.containerHeight);
+    this.height = this.containerHeight - (PANEL_BORDER + TITLE_HEIGHT);
+    console.log(PANEL_BORDER + TITLE_HEIGHT);
   }
 
   render(payload?) {
     this.timing.renderStart = new Date().getTime();
-    this.setPanelHeight();
     this.events.emit('render', payload);
   }
 

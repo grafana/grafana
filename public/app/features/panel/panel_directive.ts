@@ -1,7 +1,6 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import Drop from 'tether-drop';
+import GeminiScrollbar from 'gemini-scrollbar';
 
 var module = angular.module('grafana.directives');
 
@@ -21,12 +20,7 @@ var panelTemplate = `
     </div>
 
     <div class="panel-content">
-      <div gemini-scrollbar ng-if="ctrl.scrollable">
-        <div class="panel-content--scrollable">
-          <ng-transclude></ng-transclude>
-        </div>
-      </div>
-      <ng-transclude ng-if="!ctrl.scrollable"></ng-transclude>
+      <ng-transclude></ng-transclude>
     </div>
   </div>
 
@@ -78,7 +72,7 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       var lastHasAlertRule = false;
       var lastAlertState;
       var hasAlertRule;
-      var lastHeight = 0;
+      // var lastHeight = 0;
 
       function mouseEnter() {
         panelContainer.toggleClass('panel-hover-highlight', true);
@@ -90,16 +84,17 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         ctrl.dashboard.setPanelFocus(0);
       }
 
-      function setPanelHeight() {
-        panelContent.height(ctrl.height);
-      }
-      ctrl.$scope.setPanelHeight = setPanelHeight;
-
       // set initial height
-      if (!ctrl.containerHeight) {
+      if (!ctrl.height) {
         ctrl.calculatePanelHeight();
-        panelContainer.css({minHeight: ctrl.containerHeight});
-        lastHeight = ctrl.containerHeight;
+        if (ctrl.__proto__.constructor.scrollable) {
+          panelContent.addClass('panel-content--scrollable');
+
+          var myScrollbar = new GeminiScrollbar({
+            autoshow: false,
+            element: panelContent[0]
+          }).create();
+        }
       }
 
       // set initial transparency
@@ -109,10 +104,10 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       }
 
       ctrl.events.on('render', () => {
-        if (lastHeight !== ctrl.containerHeight) {
-          panelContainer.css({minHeight: ctrl.containerHeight});
-          lastHeight = ctrl.containerHeight;
-        }
+        // if (lastHeight !== ctrl.height) {
+        //   panelContent.css({'height': ctrl.height + 'px'});
+        //   lastHeight = ctrl.height;
+        // }
 
         if (transparentLastState !== ctrl.panel.transparent) {
           panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
@@ -201,11 +196,11 @@ module.directive('panelHelpCorner', function($rootScope) {
   return {
     restrict: 'E',
     template: `
-      <span class="alert-error panel-error small pointer" ng-if="ctrl.error" ng-click="ctrl.openInspector()">
-        <span data-placement="top" bs-tooltip="ctrl.error">
-          <i class="fa fa-exclamation"></i><span class="panel-error-arrow"></span>
-        </span>
-      </span>
+    <span class="alert-error panel-error small pointer" ng-if="ctrl.error" ng-click="ctrl.openInspector()">
+    <span data-placement="top" bs-tooltip="ctrl.error">
+    <i class="fa fa-exclamation"></i><span class="panel-error-arrow"></span>
+    </span>
+    </span>
     `,
     link: function(scope, elem) {
     }

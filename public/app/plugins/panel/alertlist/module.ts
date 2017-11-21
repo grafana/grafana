@@ -9,6 +9,7 @@ import * as dateMath from 'app/core/utils/datemath';
 
 class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
+  static scrollable = true;
 
   showOptions = [
     { text: 'Current state', value: 'current' },
@@ -38,7 +39,6 @@ class AlertListPanel extends PanelCtrl {
   constructor($scope, $injector, private backendSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
-    this.scrollable = true;
 
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('refresh', this.onRefresh.bind(this));

@@ -395,9 +395,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var data, linkInfo;
     var $panelContainer = elem.find('.panel-container');
     elem = elem.find('.singlestat-panel');
+    console.log('singlestat element', elem.length);
 
     function setElementHeight() {
-      elem.css('height', ctrl.height + 'px');
+      /// elem.css('height', ctrl.height + 'px');
     }
 
     function applyColoringThresholds(value, valueString) {
@@ -560,6 +561,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         plotCss.height = Math.floor(height * 0.25) + "px";
       }
 
+      console.log('singlestat height', ctrl.height);
+      console.log('singlestat plotCss', plotCss.height);
       plotCanvas.css(plotCss);
 
       var options = {
@@ -595,6 +598,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     function render() {
       if (!ctrl.data) { return; }
       data = ctrl.data;
+
+      console.log('singlestat', elem.html());
 
       // get thresholds
       data.thresholds = panel.thresholds.split(',').map(function(strVale) {
