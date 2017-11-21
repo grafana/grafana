@@ -914,7 +914,7 @@ export class DashboardModel {
 
   upgradeToGridLayout(old) {
     const DEFAULT_ROW_HEIGHT = 250;
-    const MIN_PANEL_HEIGHT = GRID_CELL_HEIGHT * 2;
+    const MIN_PANEL_HEIGHT = GRID_CELL_HEIGHT * 3;
     let yPos = 0;
     let widthFactor = GRID_COLUMN_COUNT / 12;
 
