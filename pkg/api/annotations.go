@@ -21,6 +21,7 @@ func GetAnnotations(c *middleware.Context) Response {
 		PanelId:     c.QueryInt64("panelId"),
 		Limit:       c.QueryInt64("limit"),
 		Tags:        c.QueryStrings("tags"),
+		Type:        c.Query("type"),
 	}
 
 	repo := annotations.GetRepository()

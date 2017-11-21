@@ -1,0 +1,77 @@
+version: "2"
+services:
+  graphite:
+    build:
+      context: blocks/graphite1
+      args:
+        version: master
+    ports:
+      - "8080:80"
+      - "2003:2003"
+      - "8125:8125/udp"
+      - "8126:8126"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+
+  fake-graphite-data:
+    image: grafana/fake-data-gen
+    network_mode: bridge
+    environment:
+      FD_DATASOURCE: graphite
+      FD_PORT: 2003
+
+
+  prometheus:
+    build: blocks/prometheus
+    network_mode: host
+    ports:
+      - "9090:9090"
+
+  node_exporter:
+    image: prom/node-exporter
+    network_mode: host
+    ports:
+      - "9100:9100"
+
+  fake-prometheus-data:
+    image: grafana/fake-data-gen
+    network_mode: host
+    ports:
+      - "9091:9091"
+    environment:
+      FD_DATASOURCE: prom
+
+  alertmanager:
+    image: quay.io/prometheus/alertmanager
+    network_mode: host
+    ports:
+      - "9093:9093"
+
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    ports:
+      - "2004:2004"
+      - "8083:8083"
+      - "8086:8086"
+    volumes:
+      - ./blocks/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf
+
+  fake-influxdb-data:
+    image: grafana/fake-data-gen
+    network_mode: bridge
+    environment:
+      FD_DATASOURCE: influxdb
+      FD_PORT: 8086
+
+
+# You need to run 'sysctl -w vm.max_map_count=262144' on the host machine
+
+  elasticsearch5:
+    image: elasticsearch:5
+    command: elasticsearch
+    ports:
+      - "10200:9200"
+      - "10300:9300"
+
