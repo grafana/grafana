@@ -1,28 +1,27 @@
-define([
-  'lodash',
-  'app/core/table_model',
-],
-function (_, TableModel) {
-  'use strict';
+import _ from 'lodash';
+import TableModel from 'app/core/table_model';
 
-  function InfluxSeries(options) {
+export default class InfluxSeries {
+
+  series: any;
+  alias: any;
+  annotation: any;
+
+  constructor(options) {
     this.series = options.series;
     this.alias = options.alias;
     this.annotation = options.annotation;
   }
 
-  var p = InfluxSeries.prototype;
-
-  p.getTimeSeries = function() {
+  getTimeSeries() {
     var output = [];
-    var self = this;
     var i, j;
 
-    if (self.series.length === 0) {
+    if (this.series.length === 0) {
       return output;
     }
 
-    _.each(self.series, function(series) {
+    _.each(this.series, (series) => {
       var columns = series.columns.length;
       var tags = _.map(series.tags, function(value, key) {
         return key + ': ' + value;
@@ -35,8 +34,8 @@ function (_, TableModel) {
           seriesName = seriesName + '.' + columnName;
         }
 
-        if (self.alias) {
-          seriesName = self._getSeriesName(series, j);
+        if (this.alias) {
+          seriesName = this._getSeriesName(series, j);
         } else if (series.tags) {
           seriesName = seriesName + ' {' + tags.join(', ') + '}';
         }
@@ -53,9 +52,9 @@ function (_, TableModel) {
     });
 
     return output;
-  };
+  }
 
-  p._getSeriesName = function(series, index) {
+  _getSeriesName(series, index) {
     var regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
     var segments = series.name.split('.');
 
@@ -72,30 +71,29 @@ function (_, TableModel) {
       if (!series.tags) { return match; }
       return series.tags[tag];
     });
-  };
+  }
 
-  p.getAnnotations = function () {
+  getAnnotations() {
     var list = [];
-    var self = this;
 
-    _.each(this.series, function (series) {
+    _.each(this.series, (series) => {
       var titleCol = null;
       var timeCol = null;
       var tagsCol = [];
       var textCol = null;
 
-      _.each(series.columns, function(column, index) {
+      _.each(series.columns, (column, index) => {
         if (column === 'time') { timeCol = index; return; }
         if (column === 'sequence_number') { return; }
         if (!titleCol) { titleCol = index; }
-        if (column === self.annotation.titleColumn) { titleCol = index; return; }
-        if (_.includes((self.annotation.tagsColumn || '').replace(' ', '').split(","), column)) { tagsCol.push(index); return; }
-        if (column === self.annotation.textColumn) { textCol = index; return; }
+        if (column === this.annotation.titleColumn) { titleCol = index; return; }
+        if (_.includes((this.annotation.tagsColumn || '').replace(' ', '').split(","), column)) { tagsCol.push(index); return; }
+        if (column === this.annotation.textColumn) { textCol = index; return; }
       });
 
-      _.each(series.values, function (value) {
+      _.each(series.values, (value) => {
         var data = {
-          annotation: self.annotation,
+          annotation: this.annotation,
           time: + new Date(value[timeCol]),
           title: value[titleCol],
           // Remove empty values, then split in different tags for comma separated values
@@ -108,18 +106,17 @@ function (_, TableModel) {
     });
 
     return list;
-  };
+  }
 
-  p.getTable = function() {
-    var table = new TableModel.default();
-    var self = this;
+  getTable() {
+    var table = new TableModel();
     var i, j;
 
-    if (self.series.length === 0) {
+    if (this.series.length === 0) {
       return table;
     }
 
-    _.each(self.series, function(series, seriesIndex) {
+    _.each(this.series, (series, seriesIndex) => {
 
       if (seriesIndex === 0) {
         table.columns.push({text: 'Time', type: 'time'});
@@ -151,7 +148,11 @@ function (_, TableModel) {
     });
 
     return table;
-  };
+  }
+}
 
-  return InfluxSeries;
-});
+
+
+
+
+
