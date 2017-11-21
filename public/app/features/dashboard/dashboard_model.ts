@@ -913,11 +913,15 @@ export class DashboardModel {
   }
 
   upgradeToGridLayout(old) {
+    const DEFAULT_ROW_HEIGHT = 250;
     const MIN_PANEL_HEIGHT = GRID_CELL_HEIGHT * 2;
     let yPos = 0;
     let widthFactor = GRID_COLUMN_COUNT / 12;
-    //let rowIds = 1000;
-    //
+
+    const maxPanelId = _.max(_.flattenDeep(_.map(old.rows, (row) => {
+      return _.map(row.panels, 'id');
+    })));
+    let nextRowId = maxPanelId + 1;
 
     if (!old.rows) {
       return;
@@ -925,21 +929,7 @@ export class DashboardModel {
 
     for (let row of old.rows) {
       let xPos = 0;
-      let height: any = row.height || 250;
-
-      // if (this.meta.keepRows) {
-      //   this.panels.push({
-      //     id: rowIds++,
-      //     type: 'row',
-      //     title: row.title,
-      //     x: 0,
-      //     y: yPos,
-      //     height: 1,
-      //     width: 12
-      //   });
-      //
-      //   yPos += 1;
-      // }
+      let height: any = row.height || DEFAULT_ROW_HEIGHT;
 
       if (_.isString(height)) {
         height = parseInt(height.replace('px', ''), 10);
@@ -950,6 +940,20 @@ export class DashboardModel {
       }
 
       const rowGridHeight = Math.ceil(height / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
+
+      let rowPanel: any = {};
+      let rowPanelModel: PanelModel;
+      if (row.collapse || row.showTitle) {
+        // add special row panel
+        rowPanel.id = nextRowId;
+        rowPanel.type = 'row';
+        rowPanel.title = row.title;
+        rowPanel.collapsed = row.collapse;
+        rowPanel.panels = [];
+        rowPanel.gridPos = {x: 0, y: yPos, w: GRID_COLUMN_COUNT, h: rowGridHeight};
+        rowPanelModel = new PanelModel(rowPanel);
+        nextRowId++;
+      }
 
       for (let panel of row.panels) {
         const panelWidth = Math.floor(panel.span) * widthFactor;
@@ -965,7 +969,15 @@ export class DashboardModel {
 
         xPos += panel.gridPos.w;
 
-        this.panels.push(new PanelModel(panel));
+        if (rowPanelModel && rowPanel.collapsed) {
+          rowPanelModel.panels.push(panel);
+        } else {
+          this.panels.push(new PanelModel(panel));
+        }
+      }
+
+      if (rowPanelModel) {
+        this.panels.push(rowPanelModel);
       }
 
       yPos += rowGridHeight;
