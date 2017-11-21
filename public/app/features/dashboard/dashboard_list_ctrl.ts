@@ -34,6 +34,11 @@ export class DashboardListCtrl {
   }
 
   initDashboardList(result: any) {
+    if (!result) {
+      this.sections = [];
+      return;
+    }
+
     this.sections = result;
 
     for (let section of this.sections) {
@@ -126,6 +131,10 @@ export class DashboardListCtrl {
       modalClass: 'modal--narrow',
       model: {dashboards: selectedDashboards, afterSave: this.getDashboards.bind(this)}
     });
+  }
+
+  toggleFolder(section) {
+    return this.searchSrv.toggleFolder(section);
   }
 
   // getTags() {
