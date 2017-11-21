@@ -6,6 +6,9 @@ define([
 function (angular, _, $) {
   'use strict';
 
+  // Supported stats and the order they are displayed in
+  var stats = ['min','max','avg','first','current','diff','range','total'];
+
   var module = angular.module('grafana.directives');
 
   module.directive('graphLegend', function(popoverSrv, $timeout) {
@@ -126,16 +129,15 @@ function (angular, _, $) {
 
           $container.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
 
+          var j=0;
           var tableHeaderElem;
           if (panel.legend.alignAsTable) {
-            var header = '<tr>';
+            var header = '<tr style="text-transform: capitalize;">';
             header += '<th colspan="2" style="text-align:left"></th>';
             if (panel.legend.values) {
-              header += getTableHeaderHtml('min');
-              header += getTableHeaderHtml('max');
-              header += getTableHeaderHtml('avg');
-              header += getTableHeaderHtml('current');
-              header += getTableHeaderHtml('total');
+              for(j=0; j<stats.length; j++) {
+                header += getTableHeaderHtml(stats[j]);
+              }
             }
             header += '</tr>';
             tableHeaderElem = $(header);
@@ -172,17 +174,13 @@ function (angular, _, $) {
             html += '<a class="graph-legend-alias pointer" title="' + series.aliasEscaped + '">' + series.aliasEscaped + '</a>';
 
             if (panel.legend.values) {
-              var avg = series.formatValue(series.stats.avg);
-              var current = series.formatValue(series.stats.current);
-              var min = series.formatValue(series.stats.min);
-              var max = series.formatValue(series.stats.max);
-              var total = series.formatValue(series.stats.total);
-
-              if (panel.legend.min) { html += '<div class="graph-legend-value min">' + min + '</div>'; }
-              if (panel.legend.max) { html += '<div class="graph-legend-value max">' + max + '</div>'; }
-              if (panel.legend.avg) { html += '<div class="graph-legend-value avg">' + avg + '</div>'; }
-              if (panel.legend.current) { html += '<div class="graph-legend-value current">' + current + '</div>'; }
-              if (panel.legend.total) { html += '<div class="graph-legend-value total">' + total + '</div>'; }
+              for(j=0; j<stats.length; j++) {
+                var stat = stats[j];
+                if(panel.legend[stat]) {
+                  var val = series.formatValue(series.stats[stat]);
+                  html += '<div class="graph-legend-value '+stat+'">' + val + '</div>';
+                }
+              }
             }
 
             html += '</div>';

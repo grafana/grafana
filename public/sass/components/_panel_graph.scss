@@ -62,6 +62,15 @@
   &.avg::before {
     content: "Avg: "
   }
+  &.first::before {
+    content: "First: "
+  }
+  &.diff::before {
+    content: "Diff: "
+  }
+  &.range::before {
+    content: "Range: "
+  }
 }
 
 .graph-legend-icon .fa {
