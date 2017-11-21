@@ -115,12 +115,3 @@ export class SeriesOverridesCtrl {
 }
 
 angular.module('grafana.controllers').controller('SeriesOverridesCtrl', SeriesOverridesCtrl);
-
-
-
-
-
-
-
-
-

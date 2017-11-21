@@ -198,6 +198,3 @@ export class CloudWatchQueryParameterCtrl {
 
 angular.module('grafana.controllers').directive('cloudwatchQueryParameter', CloudWatchQueryParameter);
 angular.module('grafana.controllers').controller('CloudWatchQueryParameterCtrl', CloudWatchQueryParameterCtrl);
-
-
-
