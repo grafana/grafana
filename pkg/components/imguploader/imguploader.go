@@ -73,8 +73,9 @@ func NewImageUploader() (ImageUploader, error) {
 
 		keyFile := gcssec.Key("key_file").MustString("")
 		bucketName := gcssec.Key("bucket").MustString("")
+		path := gcssec.Key("path").MustString("")
 
-		return NewGCSUploader(keyFile, bucketName), nil
+		return NewGCSUploader(keyFile, bucketName, path), nil
 	}
 
 	return NopImageUploader{}, nil
