@@ -37,6 +37,7 @@
 
 ## Fixes
 * **Gzip**: Fixes bug gravatar images when gzip was enabled [#5952](https://github.com/grafana/grafana/issues/5952)
+* **Alert list**: Now shows alert state changes even after adding manual annotations on dashboard [#9951](https://github.com/grafana/grafana/issues/9951)
 
 # 4.6.2 (2017-11-16)
 
