@@ -61,6 +61,63 @@ describe('DashboardListCtrl', () => {
     });
   });
 
+  describe('when searching dashboards', () => {
+    beforeEach(() => {
+      const response = [
+        {
+          id: 410,
+          title: "afolder",
+          type: "dash-folder",
+          items: [
+            {
+              id: 399,
+              title: "Dashboard Test",
+              url: "dashboard/db/dashboard-test",
+              icon: 'fa fa-folder',
+              tags: [],
+              isStarred: false,
+              folderId: 410,
+              folderTitle: "afolder",
+              folderSlug: "afolder"
+            }
+          ],
+          tags: [],
+          isStarred: false
+        },
+        {
+          id: 0,
+          title: "Root",
+          icon: 'fa fa-folder-open',
+          uri: "db/something-else",
+          type: "dash-db",
+          items: [
+            {
+              id: 500,
+              title: "Dashboard Test",
+              url: "dashboard/db/dashboard-test",
+              icon: 'fa fa-folder',
+              tags: [],
+              isStarred: false
+            }
+          ],
+          tags: [],
+          isStarred: false,
+        }
+      ];
+      ctrl = createCtrlWithStubs(response);
+      ctrl.query.query = 'd';
+      return ctrl.getDashboards();
+    });
+
+    it('should set checked to false on all sections and children', () => {
+      expect(ctrl.sections.length).toEqual(2);
+      expect(ctrl.sections[0].checked).toEqual(false);
+      expect(ctrl.sections[0].items[0].checked).toEqual(false);
+      expect(ctrl.sections[1].checked).toEqual(false);
+      expect(ctrl.sections[1].items[0].checked).toEqual(false);
+    });
+  });
+
   describe('when selecting dashboards', () => {
     let ctrl;
 

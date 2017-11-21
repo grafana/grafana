@@ -22,18 +22,27 @@ export class DashboardListCtrl {
   }
 
   getDashboards() {
-    return this.searchSrv.browse().then((result) => {
+    if (this.query.query.length === 0 && this.query.tag.length === 0) {
+      return this.searchSrv.browse().then((result) => {
+        return this.initDashboardList(result);
+      });
+    }
 
-      this.sections = result;
-
-      for (let section of this.sections) {
-        section.checked = false;
-
-        for (let dashboard of section.items) {
-          dashboard.checked = false;
-        }
-      }
+    return this.searchSrv.search(this.query).then((result) => {
+      return this.initDashboardList(result);
     });
+  }
+
+  initDashboardList(result: any) {
+    this.sections = result;
+
+    for (let section of this.sections) {
+      section.checked = false;
+
+      for (let dashboard of section.items) {
+        dashboard.checked = false;
+      }
+    }
   }
 
   selectionChanged() {
