@@ -39,6 +39,12 @@ div.flot-text {
 .panel-content {
   padding: 0px 10px 5px 10px;
   height: 100%;
+
+  &--scrollable {
+    // Add space for scrollbar
+    padding-right: 10px;
+    padding-left: 6px;
+  }
 }
 
 .panel-title-container {

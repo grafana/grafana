@@ -25,6 +25,7 @@ class DashListCtrl extends PanelCtrl {
   constructor($scope, $injector, private backendSrv, private dashboardSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
+    this.scrollable = true;
 
     if (this.panel.tag) {
       this.panel.tags = [this.panel.tag];

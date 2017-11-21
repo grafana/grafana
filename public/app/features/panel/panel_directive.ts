@@ -21,7 +21,12 @@ var panelTemplate = `
     </div>
 
     <div class="panel-content">
-      <ng-transclude></ng-transclude>
+      <div gemini-scrollbar ng-if="ctrl.scrollable">
+        <div class="panel-content--scrollable">
+          <ng-transclude></ng-transclude>
+        </div>
+      </div>
+      <ng-transclude ng-if="!ctrl.scrollable"></ng-transclude>
     </div>
   </div>
 
@@ -62,6 +67,7 @@ module.directive('grafanaPanel', function($rootScope, $document) {
     scope: { ctrl: "=" },
     link: function(scope, elem) {
       var panelContainer = elem.find('.panel-container');
+      var panelContent = elem.find('.panel-content');
       var cornerInfoElem = elem.find('.panel-info-corner');
       var ctrl = scope.ctrl;
       var infoDrop;
@@ -83,6 +89,11 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         panelContainer.toggleClass('panel-hover-highlight', false);
         ctrl.dashboard.setPanelFocus(0);
       }
+
+      function setPanelHeight() {
+        panelContent.height(ctrl.height);
+      }
+      ctrl.$scope.setPanelHeight = setPanelHeight;
 
       // set initial height
       if (!ctrl.containerHeight) {
