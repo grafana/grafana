@@ -114,7 +114,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			Convey("Should be able to search for a dashboard folder's children", func() {
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
-					FolderId:     savedFolder.Id,
+					FolderIds:    []int64{savedFolder.Id},
 					SignedInUser: &m.SignedInUser{OrgId: 1},
 				}
 
@@ -218,7 +218,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
-					FolderId:     savedFolder.Id,
+					FolderIds:    []int64{savedFolder.Id},
 					SignedInUser: &m.SignedInUser{},
 				}
 
