@@ -104,7 +104,7 @@ describe('SingleStatCtrl', function() {
     });
 
     it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).to.be(moment(1505634997920).format('MM/DD/YYYY H:mm:ss a'));
+      expect(ctx.data.valueFormatted).to.be(moment(1505634997920).format('MM/DD/YYYY h:mm:ss a'));
     });
   });
 

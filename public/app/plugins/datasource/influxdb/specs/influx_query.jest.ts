@@ -1,5 +1,3 @@
-import {describe, it, expect} from 'test/lib/common';
-
 import InfluxQuery from '../influx_query';
 
 describe('InfluxQuery', function() {
@@ -12,7 +10,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(null)');
+      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(null)');
     });
   });
 
@@ -24,7 +22,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "5m_avg"."cpu" WHERE $timeFilter GROUP BY time($__interval) fill(null)');
+      expect(queryText).toBe('SELECT mean("value") FROM "5m_avg"."cpu" WHERE $timeFilter GROUP BY time($__interval) fill(null)');
     });
   });
 
@@ -43,7 +41,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") /100 AS "text" FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(null)');
+      expect(queryText).toBe('SELECT mean("value") /100 AS "text" FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(null)');
     });
   });
 
@@ -57,7 +55,7 @@ describe('InfluxQuery', function() {
 
       var queryText = query.render();
 
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server\\\\1\') AND $timeFilter'
+      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server\\\\1\') AND $timeFilter'
                           + ' GROUP BY time($__interval)');
     });
 
@@ -69,7 +67,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("app" =~ /e.*/) AND $timeFilter GROUP BY time($__interval)');
+      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE ("app" =~ /e.*/) AND $timeFilter GROUP BY time($__interval)');
     });
   });
 
@@ -82,7 +80,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server1\' AND "app" = \'email\') AND ' +
+      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server1\' AND "app" = \'email\') AND ' +
                           '$timeFilter GROUP BY time($__interval)');
     });
   });
@@ -96,7 +94,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server1\' OR "hostname" = \'server2\') AND ' +
+      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE ("hostname" = \'server1\' OR "hostname" = \'server2\') AND ' +
                           '$timeFilter GROUP BY time($__interval)');
     });
   });
@@ -110,7 +108,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE ("value" > 5) AND $timeFilter');
+      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE ("value" > 5) AND $timeFilter');
     });
   });
 
@@ -123,7 +121,7 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       var queryText = query.render();
-      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($__interval), "host"');
+      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($__interval), "host"');
     });
   });
 
@@ -135,7 +133,7 @@ describe('InfluxQuery', function() {
         groupBy: [],
       }, templateSrv, {});
       var queryText = query.render();
-      expect(queryText).to.be('SELECT "value" FROM "cpu" WHERE $timeFilter');
+      expect(queryText).toBe('SELECT "value" FROM "cpu" WHERE $timeFilter');
     });
   });
 
@@ -147,7 +145,7 @@ describe('InfluxQuery', function() {
         groupBy: [{type: 'time'}, {type: 'fill', params: ['0']}],
       }, templateSrv, {});
       var queryText = query.render();
-      expect(queryText).to.be('SELECT "value" FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(0)');
+      expect(queryText).toBe('SELECT "value" FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(0)');
     });
   });
 
@@ -160,10 +158,10 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       query.addGroupBy('tag(host)');
-      expect(query.target.groupBy.length).to.be(3);
-      expect(query.target.groupBy[1].type).to.be('tag');
-      expect(query.target.groupBy[1].params[0]).to.be('host');
-      expect(query.target.groupBy[2].type).to.be('fill');
+      expect(query.target.groupBy.length).toBe(3);
+      expect(query.target.groupBy[1].type).toBe('tag');
+      expect(query.target.groupBy[1].params[0]).toBe('host');
+      expect(query.target.groupBy[2].type).toBe('fill');
     });
 
     it('should add tag last if no fill', function() {
@@ -173,8 +171,8 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       query.addGroupBy('tag(host)');
-      expect(query.target.groupBy.length).to.be(1);
-      expect(query.target.groupBy[0].type).to.be('tag');
+      expect(query.target.groupBy.length).toBe(1);
+      expect(query.target.groupBy[0].type).toBe('tag');
     });
 
   });
@@ -188,8 +186,8 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       query.addSelectPart(query.selectModels[0], 'mean');
-      expect(query.target.select[0].length).to.be(2);
-      expect(query.target.select[0][1].type).to.be('mean');
+      expect(query.target.select[0].length).toBe(2);
+      expect(query.target.select[0][1].type).toBe('mean');
     });
 
     it('should replace sum by mean', function() {
@@ -199,8 +197,8 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       query.addSelectPart(query.selectModels[0], 'sum');
-      expect(query.target.select[0].length).to.be(2);
-      expect(query.target.select[0][1].type).to.be('sum');
+      expect(query.target.select[0].length).toBe(2);
+      expect(query.target.select[0][1].type).toBe('sum');
     });
 
     it('should add math before alias', function() {
@@ -210,8 +208,8 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       query.addSelectPart(query.selectModels[0], 'math');
-      expect(query.target.select[0].length).to.be(4);
-      expect(query.target.select[0][2].type).to.be('math');
+      expect(query.target.select[0].length).toBe(4);
+      expect(query.target.select[0][2].type).toBe('math');
     });
 
     it('should add math last', function() {
@@ -221,8 +219,8 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       query.addSelectPart(query.selectModels[0], 'math');
-      expect(query.target.select[0].length).to.be(3);
-      expect(query.target.select[0][2].type).to.be('math');
+      expect(query.target.select[0].length).toBe(3);
+      expect(query.target.select[0][2].type).toBe('math');
     });
 
     it('should replace math', function() {
@@ -232,8 +230,8 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       query.addSelectPart(query.selectModels[0], 'math');
-      expect(query.target.select[0].length).to.be(3);
-      expect(query.target.select[0][2].type).to.be('math');
+      expect(query.target.select[0].length).toBe(3);
+      expect(query.target.select[0][2].type).toBe('math');
     });
 
     it('should add math when one only query part', function() {
@@ -243,8 +241,8 @@ describe('InfluxQuery', function() {
       }, templateSrv, {});
 
       query.addSelectPart(query.selectModels[0], 'math');
-      expect(query.target.select[0].length).to.be(2);
-      expect(query.target.select[0][1].type).to.be('math');
+      expect(query.target.select[0].length).toBe(2);
+      expect(query.target.select[0][1].type).toBe('math');
     });
 
     describe('when render adhoc filters', function() {
@@ -256,7 +254,7 @@ describe('InfluxQuery', function() {
           {key: 'key2', operator: '!=', value: 'value2'},
         ]);
 
-        expect(queryText).to.be('"key1" = \'value1\' AND "key2" != \'value2\'');
+        expect(queryText).toBe('"key1" = \'value1\' AND "key2" != \'value2\'');
       });
     });
 
