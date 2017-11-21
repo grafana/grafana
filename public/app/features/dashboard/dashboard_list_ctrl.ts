@@ -5,6 +5,7 @@ import { SearchSrv } from 'app/core/services/search_srv';
 export class DashboardListCtrl {
   public sections: any [];
   tags: any [];
+  selectedTagFilter: any;
   query: any;
   navModel: any;
   canDelete = false;
@@ -15,10 +16,9 @@ export class DashboardListCtrl {
     this.navModel = navModelSrv.getNav('dashboards', 'dashboards');
     this.query = {query: '', mode: 'tree', tag: []};
 
-    this.getDashboards();
-    // this.getDashboards().then(() => {
-    //   this.getTags();
-    // });
+    this.getDashboards().then(() => {
+      this.getTags();
+    });
   }
 
   getDashboards() {
@@ -137,11 +137,12 @@ export class DashboardListCtrl {
     return this.searchSrv.toggleFolder(section);
   }
 
-  // getTags() {
-  //   return this.backendSrv.get('/api/dashboards/tags').then((results) => {
-  //     this.tags = results;
-  //   });
-  // }
+  getTags() {
+    return this.searchSrv.getDashboardTags().then((results) => {
+      this.tags =  [{ term: 'Filter By Tag', disabled: true }].concat(results);
+      this.selectedTagFilter = this.tags[0];
+    });
+  }
 
   filterByTag(tag, evt) {
     this.query.tag.push(tag);
@@ -150,6 +151,12 @@ export class DashboardListCtrl {
       evt.stopPropagation();
       evt.preventDefault();
     }
+  }
+
+  filterChange() {
+    this.query.tag.push(this.selectedTagFilter.term);
+    this.selectedTagFilter = this.tags[0];
+    this.getDashboards();
   }
 
   removeTag(tag, evt) {

@@ -54,9 +54,14 @@
         <div class="admin-list-table" style="height: 80%">
           <div gemini-scrollbar>
             <div ng-show="ctrl.sections.length > 0">
-              <!-- <div>
-                <select class="gf-form-input" ng-model="ctrl.query.tags" ng-options="t.term for t in ctrl.tags" />
-              </div> -->
+              <div>
+                <select
+                  class="gf-form-input"
+                  ng-model="ctrl.selectedTagFilter"
+                  ng-options="t.term disable when t.disabled for t in ctrl.tags"
+                  ng-change="ctrl.filterChange(tag, $index)"
+                />
+              </div>
               <div ng-repeat="section in ctrl.sections" class="search-section">
 
                 <div class="search-section__header pointer" ng-show="::section.title">
