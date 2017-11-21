@@ -6,7 +6,7 @@ import Remarkable from 'remarkable';
 import {GRID_CELL_HEIGHT, GRID_CELL_VMARGIN} from 'app/core/constants';
 
 const TITLE_HEIGHT = 27;
-const PANEL_BORDER = 2;
+const PANEL_BORDER = 12;
 
 import {Emitter} from 'app/core/core';
 
@@ -62,6 +62,7 @@ export class PanelCtrl {
   }
 
   refresh() {
+    this.setPanelHeight();
     this.events.emit('refresh', null);
   }
 
@@ -70,6 +71,7 @@ export class PanelCtrl {
   }
 
   changeView(fullscreen, edit) {
+    this.setPanelHeight();
     this.publishAppEvent('panel-change-view', {
       fullscreen: fullscreen, edit: edit, panelId: this.panel.id
     });
@@ -168,8 +170,15 @@ export class PanelCtrl {
     console.log(PANEL_BORDER + TITLE_HEIGHT);
   }
 
+  setPanelHeight() {
+    if (this.$scope.setPanelHeight) {
+      this.$scope.setPanelHeight();
+    }
+  }
+
   render(payload?) {
     this.timing.renderStart = new Date().getTime();
+    this.setPanelHeight();
     this.events.emit('render', payload);
   }
 

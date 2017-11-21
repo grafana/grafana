@@ -65,6 +65,7 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       var cornerInfoElem = elem.find('.panel-info-corner');
       var ctrl = scope.ctrl;
       var infoDrop;
+      var panelScrollbar;
 
       // the reason for handling these classes this way is for performance
       // limit the watchers on panels etc
@@ -90,11 +91,22 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         if (ctrl.__proto__.constructor.scrollable) {
           panelContent.addClass('panel-content--scrollable');
 
-          var myScrollbar = new GeminiScrollbar({
+          panelScrollbar = new GeminiScrollbar({
             autoshow: false,
             element: panelContent[0]
           }).create();
         }
+      }
+
+      function setPanelHeight() {
+        panelContent.height(ctrl.height);
+        if (panelScrollbar) {
+          panelScrollbar.update();
+        }
+      }
+
+      if (ctrl.__proto__.constructor.scrollable) {
+        ctrl.$scope.setPanelHeight = setPanelHeight;
       }
 
       // set initial transparency
