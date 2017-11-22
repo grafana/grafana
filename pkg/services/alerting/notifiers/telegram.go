@@ -1,13 +1,13 @@
 package notifiers
 
 import (
+	"bytes"
 	"fmt"
-
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"mime/multipart"
 )
 
 var (
@@ -84,11 +84,6 @@ func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending alert notification to", "bot_token", this.BotToken)
 	this.log.Info("Sending alert notification to", "chat_id", this.ChatID)
 
-	bodyJSON := simplejson.New()
-
-	bodyJSON.Set("chat_id", this.ChatID)
-	bodyJSON.Set("parse_mode", "html")
-
 	message := fmt.Sprintf("<b>%s</b>\nState: %s\nMessage: %s\n", evalContext.GetNotificationTitle(), evalContext.Rule.Name, evalContext.Rule.Message)
 
 	ruleUrl, err := evalContext.GetRuleUrl()
@@ -111,15 +106,27 @@ func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 		message = message + fmt.Sprintf("\n<i>Metrics:</i>%s", metrics)
 	}
 
-	bodyJSON.Set("text", message)
+	var body bytes.Buffer
+	w := multipart.NewWriter(&body)
+	fw, _ := w.CreateFormField("chat_id")
+	fw.Write([]byte(this.ChatID))
+
+	fw, _ = w.CreateFormField("parse_mode")
+	fw.Write([]byte("html"))
+
+	fw, _ = w.CreateFormField("text")
+	fw.Write([]byte(message))
+
+	w.Close()
 
 	url := fmt.Sprintf(telegramApiUrl, this.BotToken, "sendMessage")
-	body, _ := bodyJSON.MarshalJSON()
-
 	cmd := &m.SendWebhookSync{
 		Url:        url,
-		Body:       string(body),
+		Body:       body.String(),
 		HttpMethod: "POST",
+		HttpHeader: map[string]string{
+			"Content-Type": w.FormDataContentType(),
+		},
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
