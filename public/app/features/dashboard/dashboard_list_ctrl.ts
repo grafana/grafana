@@ -1,101 +1,88 @@
 import _ from 'lodash';
 import appEvents from 'app/core/app_events';
+import { SearchSrv } from 'app/core/services/search_srv';
 
 export class DashboardListCtrl {
-  public dashboards: any [];
+  public sections: any [];
+  tags: any [];
+  selectedTagFilter: any;
   query: any;
   navModel: any;
   canDelete = false;
   canMove = false;
 
   /** @ngInject */
-  constructor(private backendSrv, navModelSrv, private $q) {
+  constructor(private backendSrv, navModelSrv, private $q, private searchSrv: SearchSrv) {
     this.navModel = navModelSrv.getNav('dashboards', 'dashboards');
     this.query = {query: '', mode: 'tree', tag: []};
-    this.getDashboards();
+
+    this.getDashboards().then(() => {
+      this.getTags();
+    });
   }
 
   getDashboards() {
-    return this.backendSrv.search(this.query).then((result) => {
+    if (this.query.query.length === 0 && this.query.tag.length === 0) {
+      return this.searchSrv.browse().then((result) => {
+        return this.initDashboardList(result);
+      });
+    }
 
-      this.dashboards = this.groupDashboardsInFolders(result);
-
-      for (let dash of this.dashboards) {
-        dash.checked = false;
-      }
+    return this.searchSrv.search(this.query).then((result) => {
+      return this.initDashboardList(result);
     });
   }
 
-  groupDashboardsInFolders(results) {
-    let byId = _.groupBy(results, 'id');
-    let byFolderId = _.groupBy(results, 'folderId');
-    let finalList = [];
-
-    // add missing parent folders
-    _.each(results, (hit, index) => {
-      if (hit.folderId && !byId[hit.folderId]) {
-        const folder = {
-          id: hit.folderId,
-          uri: `db/${hit.folderSlug}`,
-          title: hit.folderTitle,
-          type: 'dash-folder'
-        };
-        byId[hit.folderId] = folder;
-        results.splice(index, 0, folder);
-      }
-    });
-
-    // group by folder
-    for (let hit of results) {
-      if (hit.folderId) {
-        hit.type = "dash-child";
-      } else {
-        finalList.push(hit);
-      }
-
-      hit.url = 'dashboard/' + hit.uri;
-
-      if (hit.type === 'dash-folder') {
-        if (!byFolderId[hit.id]) {
-          continue;
-        }
-
-        for (let child of byFolderId[hit.id]) {
-          finalList.push(child);
-        }
-      }
+  initDashboardList(result: any) {
+    if (!result) {
+      this.sections = [];
+      return;
     }
 
-    return finalList;
+    this.sections = result;
+
+    for (let section of this.sections) {
+      section.checked = false;
+
+      for (let dashboard of section.items) {
+        dashboard.checked = false;
+      }
+    }
   }
 
   selectionChanged() {
-    const selected = _.filter(this.dashboards, {checked: true}).length;
-    this.canDelete = selected > 0;
 
-    const selectedDashboards = _.filter(this.dashboards, (o) => {
-      return o.checked && (o.type === 'dash-db' || o.type === 'dash-child');
-    }).length;
+    let selectedDashboards = 0;
 
-    const selectedFolders = _.filter(this.dashboards, {checked: true, type: 'dash-folder'}).length;
+    for (let section of this.sections) {
+      selectedDashboards += _.filter(section.items, {checked: true}).length;
+    }
+
+    const selectedFolders = _.filter(this.sections, {checked: true}).length;
     this.canMove = selectedDashboards > 0 && selectedFolders === 0;
+    this.canDelete = selectedDashboards > 0 || selectedFolders > 0;
   }
 
   getDashboardsToDelete() {
-    const selectedFolderIds = this.getFolderIds(this.dashboards);
-    return _.filter(this.dashboards, o => {
-      return o.checked && (
-        o.type !== 'dash-child' ||
-        (o.type === 'dash-child' && !_.includes(selectedFolderIds, o.folderId))
-      );
-    });
+    let selectedDashboards = [];
+
+    for (const section of this.sections) {
+      if (section.checked) {
+        selectedDashboards.push(section.uri);
+      } else {
+        const selected = _.filter(section.items, {checked: true});
+        selectedDashboards.push(... _.map(selected, 'uri'));
+      }
+    }
+
+    return selectedDashboards;
   }
 
-  getFolderIds(dashboards) {
+  getFolderIds(sections) {
     const ids = [];
-    for (let dash of dashboards) {
-      if (dash.type === 'dash-folder') {
-        ids.push(dash.id);
+    for (let s of sections) {
+      if (s.checked) {
+        ids.push(s.id);
       }
     }
     return ids;
@@ -112,7 +99,7 @@ export class DashboardListCtrl {
       onConfirm: () => {
         const promises = [];
         for (let dash of selectedDashboards) {
-          promises.push(this.backendSrv.delete(`/api/dashboards/${dash.uri}`));
+          promises.push(this.backendSrv.delete(`/api/dashboards/${dash}`));
         }
 
         this.$q.all(promises).then(() => {
@@ -122,8 +109,19 @@ export class DashboardListCtrl {
     });
   }
 
+  getDashboardsToMove() {
+    let selectedDashboards = [];
+
+    for (const section of this.sections) {
+      const selected = _.filter(section.items, {checked: true});
+      selectedDashboards.push(... _.map(selected, 'uri'));
+    }
+
+    return selectedDashboards;
+  }
+
   moveTo() {
-    const selectedDashboards =  _.filter(this.dashboards, {checked: true});
+    const selectedDashboards = this.getDashboardsToMove();
 
     const template = '<move-to-folder-modal dismiss="dismiss()" ' +
       'dashboards="model.dashboards" after-save="model.afterSave()">' +
@@ -135,6 +133,17 @@ export class DashboardListCtrl {
     });
   }
 
+  toggleFolder(section) {
+    return this.searchSrv.toggleFolder(section);
+  }
+
+  getTags() {
+    return this.searchSrv.getDashboardTags().then((results) => {
+      this.tags =  [{ term: 'Filter By Tag', disabled: true }].concat(results);
+      this.selectedTagFilter = this.tags[0];
+    });
+  }
+
   filterByTag(tag, evt) {
     this.query.tag.push(tag);
     this.getDashboards();
@@ -142,6 +151,12 @@ export class DashboardListCtrl {
       evt.stopPropagation();
       evt.preventDefault();
     }
+  }
+
+  filterChange() {
+    this.query.tag.push(this.selectedTagFilter.term);
+    this.selectedTagFilter = this.tags[0];
+    this.getDashboards();
   }
 
   removeTag(tag, evt) {

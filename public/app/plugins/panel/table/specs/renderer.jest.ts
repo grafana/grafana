@@ -14,9 +14,10 @@ describe('when rendering table', () => {
       {text: 'United', unit: 'bps'},
       {text: 'Sanitized'},
       {text: 'Link'},
+      {text: 'Array'},
     ];
     table.rows = [
-      [1388556366666, 1230, 40, undefined, "", "", "my.host.com", "host1"]
+      [1388556366666, 1230, 40, undefined, "", "", "my.host.com", "host1", ["value1", "value2"]]
     ];
 
     var panel = {
@@ -66,6 +67,12 @@ describe('when rendering table', () => {
           linkUrl: "/dashboard?param=$__cell&param_1=$__cell_1&param_2=$__cell_2",
           linkTooltip: "$__cell $__cell_1 $__cell_6",
           linkTargetBlank: true
+        },
+        {
+          pattern: 'Array',
+          type: 'number',
+          unit: 'ms',
+          decimals: 3
         }
       ]
     };
@@ -181,6 +188,11 @@ describe('when rendering table', () => {
         </td>
       `;
       expect(normalize(html)).toBe(normalize(expectedHtml));
+    });
+
+    it('Array column should not use number as formatter', () => {
+      var html = renderer.renderCell(8, 0, ['value1', 'value2']);
+      expect(html).toBe('<td>value1, value2</td>');
     });
   });
 });

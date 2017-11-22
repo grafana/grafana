@@ -2,6 +2,7 @@ package influxdb
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -115,7 +116,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
 			So(len(res.GroupBy), ShouldEqual, 3)
 			So(len(res.Selects), ShouldEqual, 3)
 			So(len(res.Tags), ShouldEqual, 2)
-			So(res.Interval, ShouldEqual, ">20s")
+			So(res.Interval, ShouldEqual, time.Second*20)
 			So(res.Alias, ShouldEqual, "serie alias")
 		})
 
@@ -174,7 +175,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
 			So(len(res.GroupBy), ShouldEqual, 2)
 			So(len(res.Selects), ShouldEqual, 1)
 			So(len(res.Tags), ShouldEqual, 0)
-			So(res.Interval, ShouldEqual, ">10s")
+			So(res.Interval, ShouldEqual, time.Second*10)
 		})
 	})
 }

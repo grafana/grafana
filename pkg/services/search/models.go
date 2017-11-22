@@ -48,7 +48,7 @@ type Query struct {
 	IsStarred    bool
 	Type         string
 	DashboardIds []int64
-	FolderId     int64
+	FolderIds    []int64
 
 	Result HitList
 }
@@ -60,7 +60,7 @@ type FindPersistedDashboardsQuery struct {
 	IsStarred    bool
 	DashboardIds []int64
 	Type         string
-	FolderId     int64
+	FolderIds    []int64
 	Tags         []string
 	Limit        int
 

@@ -47,6 +47,7 @@ func TestDataAccess(t *testing.T) {
 				Access:   m.DS_ACCESS_DIRECT,
 				Url:      "http://test",
 				Database: "site",
+				ReadOnly: true,
 			})
 
 			So(err, ShouldBeNil)
@@ -61,6 +62,7 @@ func TestDataAccess(t *testing.T) {
 
 			So(ds.OrgId, ShouldEqual, 10)
 			So(ds.Database, ShouldEqual, "site")
+			So(ds.ReadOnly, ShouldBeTrue)
 		})
 
 		Convey("Given a datasource", func() {

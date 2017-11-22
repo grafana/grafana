@@ -37,16 +37,19 @@ func TestAnnotations(t *testing.T) {
 		repo := SqlAnnotationRepo{}
 
 		Convey("Can save annotation", func() {
-			err := repo.Save(&annotations.Item{
+			annotation := &annotations.Item{
 				OrgId:       1,
 				UserId:      1,
 				DashboardId: 1,
 				Text:        "hello",
+				Type:        "alert",
 				Epoch:       10,
 				Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
-			})
+			}
+			err := repo.Save(annotation)
 
 			So(err, ShouldBeNil)
+			So(annotation.Id, ShouldBeGreaterThan, 0)
 
 			Convey("Can query for annotation", func() {
 				items, err := repo.Find(&annotations.ItemQuery{
@@ -83,6 +86,19 @@ func TestAnnotations(t *testing.T) {
 					From:        1,
 					To:          15,
 					Tags:        []string{"asd"},
+				})
+
+				So(err, ShouldBeNil)
+				So(items, ShouldHaveLength, 0)
+			})
+
+			Convey("Should not find one when type filter does not match", func() {
+				items, err := repo.Find(&annotations.ItemQuery{
+					OrgId:       1,
+					DashboardId: 1,
+					From:        1,
+					To:          15,
+					Type:        "alert",
 				})
 
 				So(err, ShouldBeNil)

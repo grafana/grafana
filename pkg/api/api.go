@@ -212,10 +212,10 @@ func (hs *HttpServer) registerRoutes() {
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute RouteRegister) {
 			datasourceRoute.Get("/", wrap(GetDataSources))
-			datasourceRoute.Post("/", quota("data_source"), bind(m.AddDataSourceCommand{}), AddDataSource)
+			datasourceRoute.Post("/", quota("data_source"), bind(m.AddDataSourceCommand{}), wrap(AddDataSource))
 			datasourceRoute.Put("/:id", bind(m.UpdateDataSourceCommand{}), wrap(UpdateDataSource))
-			datasourceRoute.Delete("/:id", DeleteDataSourceById)
-			datasourceRoute.Delete("/name/:name", DeleteDataSourceByName)
+			datasourceRoute.Delete("/:id", wrap(DeleteDataSourceById))
+			datasourceRoute.Delete("/name/:name", wrap(DeleteDataSourceByName))
 			datasourceRoute.Get("/:id", wrap(GetDataSourceById))
 			datasourceRoute.Get("/name/:name", wrap(GetDataSourceByName))
 		}, reqOrgAdmin)
@@ -340,8 +340,8 @@ func (hs *HttpServer) registerRoutes() {
 	r.Any("/api/gnet/*", reqSignedIn, ProxyGnetRequest)
 
 	// Gravatar service.
-	avt := avatar.CacheServer()
-	r.Get("/avatar/:hash", avt.ServeHTTP)
+	avatarCacheServer := avatar.NewCacheServer()
+	r.Get("/avatar/:hash", avatarCacheServer.Handler)
 
 	// Websocket
 	r.Any("/ws", hs.streamManager.Serve)

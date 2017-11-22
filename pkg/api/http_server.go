@@ -146,11 +146,12 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 	m := macaron.New()
 
 	m.Use(middleware.Logger())
-	m.Use(middleware.Recovery())
 
 	if setting.EnableGzip {
 		m.Use(middleware.Gziper())
 	}
+
+	m.Use(middleware.Recovery())
 
 	for _, route := range plugins.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
@@ -193,7 +194,8 @@ func (hs *HttpServer) metricsEndpoint(ctx *macaron.Context) {
 }
 
 func (hs *HttpServer) healthHandler(ctx *macaron.Context) {
-	if ctx.Req.Method != "GET" || ctx.Req.URL.Path != "/api/health" {
+	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
+	if notHeadOrGet || ctx.Req.URL.Path != "/api/health" {
 		return
 	}
 

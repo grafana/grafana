@@ -55,23 +55,44 @@
 			<div class="search-results-container" ng-if="!ctrl.tagsMode">
 				<h6 ng-hide="ctrl.results.length">No dashboards matching your query were found.</h6>
 
-				<div ng-repeat="row in ctrl.results">
-					<a class="search-item search-item--{{::row.type}}" ng-class="{'selected': $index == ctrl.selectedIndex}" ng-href="{{row.url}}">
-						<span class="search-result-tags">
-							<span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name="tag"  class="label label-tag">
-								{{tag}}
-							</span>
-							<i class="fa" ng-class="{'fa-star': row.isStarred, 'fa-star-o': !row.isStarred}"></i>
-						</span>
-
-						<span class="search-result-link">
-							<i class="fa search-result-icon"></i>
-							{{::row.title}}
-						</span>
+				<div ng-repeat="section in ctrl.results" class="search-section">
+					<a class="search-section__header pointer" ng-hide="section.hideHeader" ng-click="ctrl.toggleFolder(section)">
+						<i class="search-section__header__icon" ng-class="section.icon"></i>
+						<span class="search-section__header__text">{{::section.title}}</span>
+						<i class="fa fa-minus search-section__header__toggle" ng-show="section.expanded"></i>
+						<i class="fa fa-plus search-section__header__toggle" ng-hide="section.expanded"></i>
 					</a>
+
+					<div ng-if="section.expanded">
+						<a ng-repeat="item in section.items" class="search-item" ng-class="{'selected': item.selected}" ng-href="{{::item.url}}">
+							<span class="search-item__icon">
+								<i class="fa fa-th-large"></i>
+							</span>
+							<span class="search-item__body">
+								<div class="search-item__body-title">{{::item.title}}</div>
+								<div class="search-item__body-sub-title" ng-show="item.folderTitle && section.hideHeader">
+									<i class="fa fa-folder-o"></i>
+									{{::item.folderTitle}}
+								</div>
+							</span>
+							<span class="search-item__tags">
+								<span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in item.tags" tag-color-from-name="tag"  class="label label-tag">
+									{{tag}}
+								</span>
+							</span>
+							<span class="search-item__actions">
+								<i class="fa" ng-class="{'fa-star': item.isStarred, 'fa-star-o': !item.isStarred}"></i>
+							</span>
+						</a>
+					</div>
 				</div>
 			</div>
 		</div>
+
+		<div class="search-button-row">
+			<a class="search-button-row-explore-link" target="_blank" href="https://grafana.com/dashboards?utm_source=grafana_search">
+				Find <img src="public/img/icn-dashboard-tiny.svg" width="14" /> dashboards on Grafana.com
+			</a>
+		</div>
 	</div>
-</div>
 

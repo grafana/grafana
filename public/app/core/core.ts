@@ -1,5 +1,4 @@
 import "./directives/dash_class";
-import "./directives/confirm_click";
 import "./directives/dash_edit_link";
 import "./directives/dropdown_typeahead";
 import "./directives/metric_segment";
@@ -18,6 +17,7 @@ import './utils/outline';
 import './components/colorpicker/ColorPicker';
 import './components/colorpicker/SeriesColorPicker';
 import './components/colorpicker/spectrum_picker';
+import './services/search_srv';
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';

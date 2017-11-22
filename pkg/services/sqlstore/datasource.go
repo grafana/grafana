@@ -13,6 +13,7 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetDataSources)
+	bus.AddHandler("sql", GetAllDataSources)
 	bus.AddHandler("sql", AddDataSource)
 	bus.AddHandler("sql", DeleteDataSourceById)
 	bus.AddHandler("sql", DeleteDataSourceByName)
@@ -54,10 +55,19 @@ func GetDataSources(query *m.GetDataSourcesQuery) error {
 	return sess.Find(&query.Result)
 }
 
+func GetAllDataSources(query *m.GetAllDataSourcesQuery) error {
+	sess := x.Limit(1000, 0).Asc("name")
+
+	query.Result = make([]*m.DataSource, 0)
+	return sess.Find(&query.Result)
+}
+
 func DeleteDataSourceById(cmd *m.DeleteDataSourceByIdCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "DELETE FROM data_source WHERE id=? and org_id=?"
-		_, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
+		result, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
+		affected, _ := result.RowsAffected()
+		cmd.DeletedDatasourcesCount = affected
 		return err
 	})
 }
@@ -65,7 +75,9 @@ func DeleteDataSourceById(cmd *m.DeleteDataSourceByIdCommand) error {
 func DeleteDataSourceByName(cmd *m.DeleteDataSourceByNameCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "DELETE FROM data_source WHERE name=? and org_id=?"
-		_, err := sess.Exec(rawSql, cmd.Name, cmd.OrgId)
+		result, err := sess.Exec(rawSql, cmd.Name, cmd.OrgId)
+		affected, _ := result.RowsAffected()
+		cmd.DeletedDatasourcesCount = affected
 		return err
 	})
 }
@@ -98,6 +110,7 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			Created:           time.Now(),
 			Updated:           time.Now(),
 			Version:           1,
+			ReadOnly:          cmd.ReadOnly,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -143,12 +156,14 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			JsonData:          cmd.JsonData,
 			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
 			Updated:           time.Now(),
+			ReadOnly:          cmd.ReadOnly,
 			Version:           cmd.Version + 1,
 		}
 
 		sess.UseBool("is_default")
 		sess.UseBool("basic_auth")
 		sess.UseBool("with_credentials")
+		sess.UseBool("read_only")
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

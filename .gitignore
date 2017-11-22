@@ -38,12 +38,14 @@ public/css/*.min.css
 conf/custom.ini
 fig.yml
 docker-compose.yml
+docker-compose.yaml
 profile.cov
 /grafana
 .notouch
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
 /pkg/cmd/grafana-server/debug
+debug.test
 /examples/*/dist
 /packaging/**/*.rpm
 /packaging/**/*.deb

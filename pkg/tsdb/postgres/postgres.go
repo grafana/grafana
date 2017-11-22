@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"context"
 	"fmt"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -51,8 +52,8 @@ func generateConnectionString(datasource *models.DataSource) string {
 		}
 	}
 
-	sslmode := datasource.JsonData.Get("sslmode").MustString("require")
-	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", datasource.User, password, datasource.Url, datasource.Database, sslmode)
+	sslmode := datasource.JsonData.Get("sslmode").MustString("verify-full")
+	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", url.PathEscape(datasource.User), url.PathEscape(password), url.PathEscape(datasource.Url), url.PathEscape(datasource.Database), url.QueryEscape(sslmode))
 }
 
 func (e *PostgresQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource, tsdbQuery *tsdb.TsdbQuery) (*tsdb.Response, error) {
@@ -186,7 +187,7 @@ func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *co
 		case float64:
 			timestamp = columnValue * 1000
 		case time.Time:
-			timestamp = float64(columnValue.Unix() * 1000)
+			timestamp = float64(columnValue.UnixNano() / 1e6)
 		default:
 			return fmt.Errorf("Invalid type for column time, must be of type timestamp or unix timestamp")
 		}

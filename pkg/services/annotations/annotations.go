@@ -17,6 +17,7 @@ type ItemQuery struct {
 	DashboardId int64    `json:"dashboardId"`
 	PanelId     int64    `json:"panelId"`
 	Tags        []string `json:"tags"`
+	Type        string   `json:"type"`
 
 	Limit int64 `json:"limit"`
 }

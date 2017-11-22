@@ -62,11 +62,11 @@
 .search-dropdown {
   display: flex;
   flex-direction: column;
-  max-width: 1100px;
+  max-width: 800px;
   visibility: none;
   opacity: 0;
   background: $panel-bg;
-  height: 65%;
+  height: calc(100% - #{$navbarHeight});
 
   &--fade-in {
     visibility: visible;
@@ -78,7 +78,6 @@
 .search-results-container {
   height: 100%;
   display: block;
-  line-height: 28px;
   padding: $spacer;
   flex-grow: 10;
 
@@ -88,27 +87,39 @@
       color: white;
     }
   }
+}
 
-  .fa-star, .fa-star-o {
-    padding-left: 13px;
-  }
+.search-section__header {
+  font-size: $font-size-h6;
+  padding: 0.6rem 0;
+  color: $text-color-weak;
+  display: flex;
 
-  .fa-star {
-    color: $orange;
-  }
-
-  .search-result-link {
-    color: $grafanaListMainLinkColor;
-    .fa {
-      padding-right: 10px;
+  &:hover {
+    color: $text-color-weak;
+    .search-section__header__toggle {
+      background: $tight-form-func-bg;
+      color: $link-hover-color;
     }
   }
 }
 
-.search-item {
-  word-wrap: break-word;
-  display: block;
+.search-section__header__icon {
   padding: 3px 10px;
+}
+
+.search-section__header__toggle {
+  padding: 5px;
+}
+
+.search-section__header__text {
+  flex-grow: 1;
+}
+
+.search-item {
+  display: flex;
+  height: 37px;
+  padding: 0px;
   white-space: nowrap;
   background-color: $tight-form-bg;
   margin-bottom: 4px;
@@ -123,25 +134,50 @@
     background-color: $tight-form-func-bg;
   }
 
-  &--dash-db,
-  &--dash-child {
-    .search-result-icon::before {
-      content: "\f009";
-    }
-  }
-
-  &--dash-folder {
-    .search-result-icon::before {
-      content: "\f07c";
-    }
-  }
-
-  &--dash-child {
-    margin-left: 20px;
-  }
+  // .fa-star, .fa-star-o {
+  //   padding-left: 13px;
+  // }
+  //
+  // .fa-star {
+  //   color: $orange;
+  // }
+}
+.search-item__body {
+  flex: 1 1 auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 10px;
 }
 
-.search-result-tags {
-  float: right;
+.search-item__body-title {
+  color: $grafanaListMainLinkColor;
 }
 
+.search-item__body-sub-title {
+  color: $grafanaListMainLinkColor;
+  color: $text-muted;
+  font-size: $font-size-sm;
+  line-height: 9pt;
+}
+
+.search-item__icon {
+  padding: 5px;
+  flex: 0 0 auto;
+  font-size: 19px;
+  padding: 5px 2px 5px 10px;
+}
+
+.search-item__tags {
+  padding: 8px;
+}
+
+.search-item__actions {
+  visibility: hidden;
+}
+
+.search-button-row {
+  text-align: center;
+  padding: $spacer*2 $spacer;
+}

@@ -13,9 +13,10 @@ dev environment. Grafana ships with its own required backend server; also comple
 
 ## Dependencies
 
-- [Go 1.9.1](https://golang.org/dl/)
-- [NodeJS LTS](https://nodejs.org/download/)
+- [Go 1.9.2](https://golang.org/dl/)
 - [Git](https://git-scm.com/downloads)
+- [NodeJS LTS](https://nodejs.org/download/)
+- node-gyp is the Node.js native addon build tool and it requires extra dependencies: python 2.7, make and GCC. These are already installed for most Linux distros and MacOS. See the Building On Windows section or the [node-gyp installation instructions](https://github.com/nodejs/node-gyp#installation) for more details.
 
 ## Get Code
 Create a directory for the project and set your path accordingly (or use the [default Go workspace directory](https://golang.org/doc/code.html#GOPATH)). Then download and install Grafana into your $GOPATH directory:
@@ -40,8 +41,8 @@ go run build.go build              # (or 'go build ./pkg/cmd/grafana-server')
 ```
 
 #### Building on Windows
-The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on windows you need
-to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
+
+The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
 
 [node-gyp](https://github.com/nodejs/node-gyp#installation) is the Node.js native addon build tool and it requires extra dependencies to be installed on Windows. In a command prompt which is run as administrator, run:
 

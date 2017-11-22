@@ -18,7 +18,7 @@ export class MoveToFolderCtrl {
   save() {
     const promises = [];
     for (let dash of this.dashboards) {
-      const promise = this.backendSrv.get('/api/dashboards/' + dash.uri).then(fullDash => {
+      const promise = this.backendSrv.get('/api/dashboards/' + dash).then(fullDash => {
         const model = new DashboardModel(fullDash.dashboard, fullDash.meta);
         model.folderId = this.folder.id;
         model.meta.folderId = this.folder.id;

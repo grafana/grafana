@@ -1,7 +1,6 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import coreModule from '../../core_module';
+import { SearchSrv } from 'app/core/services/search_srv';
 
 export class SearchCtrl {
   isOpen: boolean;
@@ -18,7 +17,7 @@ export class SearchCtrl {
   openCompleted: boolean;
 
   /** @ngInject */
-  constructor($scope, private $location, private $timeout, private backendSrv, public contextSrv, $rootScope) {
+  constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv, $rootScope) {
     $rootScope.onAppEvent('show-dash-search', this.openSearch.bind(this), $scope);
     $rootScope.onAppEvent('hide-dash-search', this.closeSearch.bind(this), $scope);
   }
@@ -26,7 +25,6 @@ export class SearchCtrl {
   closeSearch() {
     this.isOpen = this.ignoreClose;
     this.openCompleted = false;
-    this.contextSrv.isSearching = this.isOpen;
   }
 
   openSearch(evt, payload) {
@@ -36,11 +34,10 @@ export class SearchCtrl {
     }
 
     this.isOpen = true;
-    this.contextSrv.isSearching = true;
     this.giveSearchFocus = 0;
     this.selectedIndex = -1;
     this.results = [];
-    this.query = { query: '', tag: [], starred: false, mode: 'tree' };
+    this.query = { query: '', tag: [], starred: false };
     this.currentSearchId = 0;
     this.ignoreClose = true;
 
@@ -102,49 +99,9 @@ export class SearchCtrl {
     this.currentSearchId = this.currentSearchId + 1;
     var localSearchId = this.currentSearchId;
 
-    return this.backendSrv.search(this.query).then(results => {
+    return this.searchSrv.search(this.query).then(results => {
       if (localSearchId < this.currentSearchId) { return; }
-
-      let byId = _.groupBy(results, 'id');
-      let byFolderId = _.groupBy(results, 'folderId');
-      let finalList = [];
-
-      // add missing parent folders
-      _.each(results, (hit, index) => {
-        if (hit.folderId && !byId[hit.folderId]) {
-          const folder = {
-            id: hit.folderId,
-            uri: `db/${hit.folderSlug}`,
-            title: hit.folderTitle,
-            type: 'dash-folder'
-          };
-          byId[hit.folderId] = folder;
-          results.splice(index, 0, folder);
-        }
-      });
-
-      // group by folder
-      for (let hit of results) {
-        if (hit.folderId) {
-          hit.type = "dash-child";
-        } else {
-          finalList.push(hit);
-        }
-
-        hit.url = 'dashboard/' + hit.uri;
-
-        if (hit.type === 'dash-folder') {
-          if (!byFolderId[hit.id]) {
-            continue;
-          }
-
-          for (let child of byFolderId[hit.id]) {
-            finalList.push(child);
-          }
-        }
-      }
-
-      this.results = finalList;
+      this.results = results;
     });
   }
 
@@ -172,7 +129,7 @@ export class SearchCtrl {
   }
 
   getTags() {
-    return this.backendSrv.get('/api/dashboards/tags').then((results) => {
+    return this.searchSrv.getDashboardTags().then((results) => {
       this.tagsMode = !this.tagsMode;
       this.results = results;
       this.giveSearchFocus = this.giveSearchFocus + 1;
@@ -194,6 +151,9 @@ export class SearchCtrl {
     this.searchDashboards();
   }
 
+  toggleFolder(section) {
+    this.searchSrv.toggleFolder(section);
+  }
 }
 
 export function searchDirective() {

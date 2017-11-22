@@ -76,7 +76,7 @@
     "to": "now"
   },
   "timepicker": {
-    "enable": false,
+    "hidden": true,
     "refresh_intervals": [
       "5s",
       "10s",

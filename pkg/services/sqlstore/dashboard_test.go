@@ -114,7 +114,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			Convey("Should be able to search for a dashboard folder's children", func() {
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
-					FolderId:     savedFolder.Id,
+					FolderIds:    []int64{savedFolder.Id},
 					SignedInUser: &m.SignedInUser{OrgId: 1},
 				}
 
@@ -218,7 +218,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 				query := search.FindPersistedDashboardsQuery{
 					OrgId:        1,
-					FolderId:     savedFolder.Id,
+					FolderIds:    []int64{savedFolder.Id},
 					SignedInUser: &m.SignedInUser{},
 				}
 
@@ -381,6 +381,20 @@ func TestDashboardDataAccess(t *testing.T) {
 			childDash2 := insertTestDashboard("child dash 2", 1, folder2.Id, false, "prod")
 
 			currentUser := createUser("viewer", "Viewer", false)
+			var rootFolderId int64 = 0
+
+			Convey("and one folder is expanded, the other collapsed", func() {
+				Convey("should return dashboards in root and expanded folder", func() {
+					query := &search.FindPersistedDashboardsQuery{FolderIds: []int64{rootFolderId, folder1.Id}, SignedInUser: &m.SignedInUser{UserId: currentUser.Id, OrgId: 1}, OrgId: 1}
+					err := SearchDashboards(query)
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 4)
+					So(query.Result[0].Id, ShouldEqual, folder1.Id)
+					So(query.Result[1].Id, ShouldEqual, folder2.Id)
+					So(query.Result[2].Id, ShouldEqual, childDash1.Id)
+					So(query.Result[3].Id, ShouldEqual, dashInRoot.Id)
+				})
+			})
 
 			Convey("and acl is set for one dashboard folder", func() {
 				var otherUser int64 = 999
