@@ -16,6 +16,7 @@ function panelLinksEditor() {
 }
 
 export class PanelLinksEditorCtrl {
+  /** @ngInject */
   constructor($scope, backendSrv) {
     $scope.panel.links = $scope.panel.links || [];
 

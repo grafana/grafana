@@ -33,6 +33,7 @@ function dashLinksContainer() {
   };
 }
 
+/** @ngInject */
 function dashLink($compile, linkSrv) {
   return {
     restrict: 'E',
@@ -81,6 +82,7 @@ function dashLink($compile, linkSrv) {
 }
 
 export class DashLinksContainerCtrl {
+  /** @ngInject */
   constructor($scope, $rootScope, $q, backendSrv, dashboardSrv, linkSrv) {
     var currentDashId = dashboardSrv.getCurrent().id;
 
@@ -161,6 +163,7 @@ export class DashLinksContainerCtrl {
 }
 
 export class DashLinkEditorCtrl {
+  /** @ngInject */
   constructor($scope, $rootScope) {
     $scope.iconMap = iconMap;
     $scope.dashboard.links = $scope.dashboard.links || [];
