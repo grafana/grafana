@@ -54,23 +54,31 @@
         <div class="admin-list-table" style="height: 80%">
           <div gemini-scrollbar>
             <div ng-show="ctrl.sections.length > 0">
-              <!-- <div>
-                <select class="gf-form-input" ng-model="ctrl.query.tags" ng-options="t.term for t in ctrl.tags" />
-              </div> -->
+              <div>
+                <select
+                  class="gf-form-input"
+                  ng-model="ctrl.selectedTagFilter"
+                  ng-options="t.term disable when t.disabled for t in ctrl.tags"
+                  ng-change="ctrl.filterChange(tag, $index)"
+                />
+              </div>
               <div ng-repeat="section in ctrl.sections" class="search-section">
-                <gf-form-switch
-                  switch-class="gf-form-switch--table-cell"
-                  on-change="ctrl.selectionChanged()"
-                  checked="section.checked">
-                </gf-form-switch>
-                <a class="search-section__header pointer" ng-show="::section.title" ng-click="section.collapsed = !section.collapsed">
-                  <i class="search-section__header__icon" ng-class="section.icon"></i>
-                  <span class="search-section__header__text">{{::section.title}}</span>
-                  <i class="fa fa-minus search-section__header__toggle" ng-hide="section.collapsed"></i>
-                  <i class="fa fa-plus search-section__header__toggle" ng-show="section.collapsed"></i>
-                </a>
 
-                <div ng-if="!section.collapsed">
+                <div class="search-section__header pointer" ng-show="::section.title">
+                  <gf-form-switch
+                    switch-class="gf-form-switch--table-cell"
+                    on-change="ctrl.selectionChanged()"
+                    checked="section.checked">
+                  </gf-form-switch>
+                  <a ng-click="ctrl.toggleFolder(section)">
+                    <i class="search-section__header__icon" ng-class="section.icon"></i>
+                    <span class="search-section__header__text">{{::section.title}}</span>
+                    <i class="fa fa-minus search-section__header__toggle" ng-show="section.expanded"></i>
+                    <i class="fa fa-plus search-section__header__toggle" ng-hide="section.expanded"></i>
+                  </a>
+                </div>
+
+                <div ng-if="section.expanded">
                   <div ng-repeat="item in section.items" class="search-item" ng-class="{'selected': item.selected}">
                     <gf-form-switch
                       switch-class="gf-form-switch--table-cell"
@@ -124,7 +132,7 @@
           </div>
         </div>
 
-      <em class="muted" ng-hide="ctrl.dashboards.length > 0">
+      <em class="muted" ng-hide="ctrl.sections.length > 0">
         No Dashboards or Folders found.
       </em>
     </div>
