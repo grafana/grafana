@@ -4,17 +4,20 @@ import { SearchSrv } from 'app/core/services/search_srv';
 
 export class DashboardListCtrl {
   public sections: any [];
-  tags: any [];
+  tagFilterOptions: any [];
   selectedTagFilter: any;
   query: any;
   navModel: any;
   canDelete = false;
   canMove = false;
+  starredFilterOptions = [{text: 'Filter by Starred', disabled: true}, {text: 'Yes'}, {text: 'No'}];
+  selectedStarredFilter: any;
 
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private $q, private searchSrv: SearchSrv) {
     this.navModel = navModelSrv.getNav('dashboards', 'dashboards');
     this.query = {query: '', mode: 'tree', tag: []};
+    this.selectedStarredFilter = this.starredFilterOptions[0];
 
     this.getDashboards().then(() => {
       this.getTags();
@@ -22,7 +25,9 @@ export class DashboardListCtrl {
   }
 
   getDashboards() {
-    if (this.query.query.length === 0 && this.query.tag.length === 0) {
+    if (this.query.query.length === 0 &&
+        this.query.tag.length === 0 &&
+        !this.query.starred) {
       return this.searchSrv.browse().then((result) => {
         return this.initDashboardList(result);
       });
@@ -139,24 +144,25 @@ export class DashboardListCtrl {
 
   getTags() {
     return this.searchSrv.getDashboardTags().then((results) => {
-      this.tags =  [{ term: 'Filter By Tag', disabled: true }].concat(results);
-      this.selectedTagFilter = this.tags[0];
+      this.tagFilterOptions =  [{ term: 'Filter By Tag', disabled: true }].concat(results);
+      this.selectedTagFilter = this.tagFilterOptions[0];
     });
   }
 
   filterByTag(tag, evt) {
     this.query.tag.push(tag);
-    this.getDashboards();
     if (evt) {
       evt.stopPropagation();
       evt.preventDefault();
     }
+
+    return this.getDashboards();
   }
 
-  filterChange() {
+  onTagFilterChange() {
     this.query.tag.push(this.selectedTagFilter.term);
-    this.selectedTagFilter = this.tags[0];
-    this.getDashboards();
+    this.selectedTagFilter = this.tagFilterOptions[0];
+    return this.getDashboards();
   }
 
   removeTag(tag, evt) {
@@ -166,5 +172,10 @@ export class DashboardListCtrl {
       evt.stopPropagation();
       evt.preventDefault();
     }
+  }
+
+  onStarredFilterChange() {
+    this.query.starred = this.selectedStarredFilter.text === 'Yes';
+    return this.getDashboards();
   }
 }

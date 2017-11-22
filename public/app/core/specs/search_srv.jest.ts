@@ -90,4 +90,30 @@ describe('SearchSrv', () => {
 
   });
 
+  describe("with tags", () => {
+    beforeEach(() => {
+      backendSrvMock.search = jest.fn();
+      backendSrvMock.search.mockReturnValue(Promise.resolve([]));
+
+      return searchSrv.search({tag: ['atag']}).then(() => {});
+    });
+
+    it("should send tags query to backend search", () => {
+      expect(backendSrvMock.search.mock.calls[0][0].tag).toHaveLength(1);
+    });
+  });
+
+  describe("with starred", () => {
+    beforeEach(() => {
+      backendSrvMock.search = jest.fn();
+      backendSrvMock.search.mockReturnValue(Promise.resolve([]));
+
+      return searchSrv.search({starred: true}).then(() => {});
+    });
+
+    it("should send starred query to backend search", () => {
+      expect(backendSrvMock.search.mock.calls[0][0].starred).toEqual(true);
+    });
+  });
+
 });

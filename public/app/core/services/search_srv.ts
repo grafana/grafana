@@ -8,8 +8,10 @@ export class SearchSrv {
   }
 
   browse() {
+    const rootFolderId = 0;
+
     let query = {
-      folderIds: [0]
+      folderIds: [rootFolderId]
     };
 
     return this.backendSrv.search(query).then(results => {
@@ -52,7 +54,9 @@ export class SearchSrv {
   }
 
   search(options) {
-    if (!options.query && !options.tag) {
+    if (!options.query &&
+      (!options.tag || options.tag.length === 0) &&
+      !options.starred) {
       return this.browse();
     }
 
