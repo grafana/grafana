@@ -221,6 +221,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     setTimeout(function() {
       elem.append(child);
       scope.$applyAsync(function() {
+        scope.$broadcast('component-did-mount');
         scope.$broadcast('refresh');
       });
     });

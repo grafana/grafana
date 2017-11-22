@@ -45,16 +45,24 @@ export class PanelCtrl {
     }
 
     $scope.$on("refresh", () => this.refresh());
+    $scope.$on("component-did-mount", () => this.panelDidMount());
+
     $scope.$on("$destroy", () => {
       this.events.emit('panel-teardown');
       this.events.removeAllListeners();
     });
+
+    this.calculatePanelHeight();
   }
 
   init() {
     this.events.on('panel-size-changed', this.onSizeChanged.bind(this));
-    this.publishAppEvent('panel-initialized', {scope: this.$scope});
     this.events.emit('panel-initialized');
+    this.publishAppEvent('panel-initialized', {scope: this.$scope});
+  }
+
+  panelDidMount() {
+    this.events.emit('component-did-mount');
   }
 
   renderingCompleted() {
@@ -62,7 +70,6 @@ export class PanelCtrl {
   }
 
   refresh() {
-    this.setPanelHeight();
     this.events.emit('refresh', null);
   }
 
@@ -171,14 +178,14 @@ export class PanelCtrl {
   }
 
   setPanelHeight() {
-    if (this.$scope.setPanelHeight) {
-      this.$scope.setPanelHeight();
-    }
+    // console.log('setPanelHeight');
+    // if (this.$scope.setPanelHeight) {
+    //   this.$scope.setPanelHeight();
+    // }
   }
 
   render(payload?) {
     this.timing.renderStart = new Date().getTime();
-    this.setPanelHeight();
     this.events.emit('render', payload);
   }
 

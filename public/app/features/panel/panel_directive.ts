@@ -73,7 +73,7 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       var lastHasAlertRule = false;
       var lastAlertState;
       var hasAlertRule;
-      // var lastHeight = 0;
+      var lastHeight = 0;
 
       function mouseEnter() {
         panelContainer.toggleClass('panel-hover-highlight', true);
@@ -85,28 +85,11 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         ctrl.dashboard.setPanelFocus(0);
       }
 
-      // set initial height
-      if (!ctrl.height) {
-        ctrl.calculatePanelHeight();
-        if (ctrl.__proto__.constructor.scrollable) {
-          panelContent.addClass('panel-content--scrollable');
-
-          panelScrollbar = new GeminiScrollbar({
-            autoshow: false,
-            element: panelContent[0]
-          }).create();
-        }
-      }
-
-      function setPanelHeight() {
-        panelContent.height(ctrl.height);
+      function panelHeightUpdated() {
         if (panelScrollbar) {
           panelScrollbar.update();
         }
-      }
-
-      if (ctrl.__proto__.constructor.scrollable) {
-        ctrl.$scope.setPanelHeight = setPanelHeight;
+        lastHeight = ctrl.height;
       }
 
       // set initial transparency
@@ -115,11 +98,20 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         panelContainer.addClass('panel-transparent', true);
       }
 
+      if (ctrl.__proto__.constructor.scrollable) {
+        panelContent.addClass('panel-content--scrollable');
+        panelScrollbar = new GeminiScrollbar({ autoshow: false, element: panelContent[0] }).create();
+      }
+
+      // update scrollbar after mounting
+      ctrl.events.on('component-did-mount', () => {
+        panelHeightUpdated();
+      });
+
       ctrl.events.on('render', () => {
-        // if (lastHeight !== ctrl.height) {
-        //   panelContent.css({'height': ctrl.height + 'px'});
-        //   lastHeight = ctrl.height;
-        // }
+        if (lastHeight !== ctrl.height) {
+          panelHeightUpdated();
+        }
 
         if (transparentLastState !== ctrl.panel.transparent) {
           panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);

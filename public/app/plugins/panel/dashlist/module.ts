@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import {PanelCtrl} from 'app/plugins/sdk';
 import {impressions} from 'app/features/dashboard/impression_store';
