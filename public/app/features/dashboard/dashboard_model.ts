@@ -9,6 +9,9 @@ import sortByKeys from 'app/core/utils/sort_by_keys';
 
 import {PanelModel} from './panel_model';
 
+const DEFAULT_ROW_HEIGHT = 250;
+const MIN_PANEL_HEIGHT = GRID_CELL_HEIGHT * 3;
+
 export class DashboardModel {
   id: any;
   title: any;
@@ -913,8 +916,6 @@ export class DashboardModel {
   }
 
   upgradeToGridLayout(old) {
-    const DEFAULT_ROW_HEIGHT = 250;
-    const MIN_PANEL_HEIGHT = GRID_CELL_HEIGHT * 3;
     let yPos = 0;
     let widthFactor = GRID_COLUMN_COUNT / 12;
 
@@ -930,16 +931,7 @@ export class DashboardModel {
     for (let row of old.rows) {
       let xPos = 0;
       let height: any = row.height || DEFAULT_ROW_HEIGHT;
-
-      if (_.isString(height)) {
-        height = parseInt(height.replace('px', ''), 10);
-      }
-
-      if (height < MIN_PANEL_HEIGHT) {
-        height = MIN_PANEL_HEIGHT;
-      }
-
-      const rowGridHeight = Math.ceil(height / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
+      const rowGridHeight = getGridHeight(height);
 
       let rowPanel: any = {};
       let rowPanelModel: PanelModel;
@@ -953,17 +945,19 @@ export class DashboardModel {
         rowPanel.gridPos = {x: 0, y: yPos, w: GRID_COLUMN_COUNT, h: rowGridHeight};
         rowPanelModel = new PanelModel(rowPanel);
         nextRowId++;
+        yPos++;
       }
+
+      let rowArea = new RowArea(rowGridHeight, GRID_COLUMN_COUNT, yPos);
 
       for (let panel of row.panels) {
         const panelWidth = Math.floor(panel.span) * widthFactor;
+        const panelHeight = panel.height ? getGridHeight(panel.height) : rowGridHeight;
 
-        // should wrap to next row?
-        if (xPos + panelWidth >= GRID_COLUMN_COUNT) {
-          yPos += rowGridHeight;
-        }
-
-        panel.gridPos = {x: xPos, y: yPos, w: panelWidth, h: rowGridHeight};
+        let panelPos = rowArea.getPanelPosition(panelHeight, panelWidth);
+        yPos = rowArea.yPos;
+        panel.gridPos = {x: panelPos.x, y: yPos + panelPos.y, w: panelWidth, h: panelHeight};
+        rowArea.addPanel(panel.gridPos);
 
         delete panel.span;
 
@@ -982,5 +976,91 @@ export class DashboardModel {
 
       yPos += rowGridHeight;
     }
+  }
+}
+
+function getGridHeight(height) {
+  if (_.isString(height)) {
+    height = parseInt(height.replace('px', ''), 10);
+  }
+
+  if (height < MIN_PANEL_HEIGHT) {
+    height = MIN_PANEL_HEIGHT;
+  }
+
+  const gridHeight = Math.ceil(height / (GRID_CELL_HEIGHT + GRID_CELL_VMARGIN));
+  return gridHeight;
+}
+
+/**
+ * RowArea represents dashboard row filled by panels
+ * area is an array of numbers represented filled column's cells like
+ *  -----------------------
+ * |******** ****
+ * |******** ****
+ * |********
+ *  -----------------------
+ *  33333333 2222 00000 ...
+ */
+class RowArea {
+  area: number[];
+  yPos: number;
+  height: number;
+
+  constructor(height, width = GRID_COLUMN_COUNT, rowYPos = 0) {
+    this.area = new Array(width).fill(0);
+    this.yPos = rowYPos;
+    this.height = height;
+  }
+
+  reset() {
+    this.area.fill(0);
+  }
+
+  /**
+   * Update area after adding the panel.
+   */
+  addPanel(gridPos) {
+    for (let i = gridPos.x; i < gridPos.x + gridPos.w; i++) {
+      if (!this.area[i] || gridPos.y + gridPos.h - this.yPos > this.area[i]) {
+        this.area[i] = gridPos.y + gridPos.h - this.yPos;
+      }
+    }
+    return this.area;
+  }
+
+  /**
+   * Calculate position for the new panel in the row.
+   */
+  getPanelPosition(panelHeight, panelWidth) {
+    let startPlace, endPlace;
+    let place;
+    for (let i = this.area.length - 1; i >= 0; i--) {
+      if (panelHeight <= this.height - this.area[i]) {
+        if (endPlace === undefined) {
+          endPlace = i;
+        } else {
+          if (i < this.area.length - 1 && this.area[i] <= this.area[i+1]) {
+            startPlace = i;
+          } else {
+            break;
+          }
+        }
+      }
+    }
+
+    if (startPlace !== undefined && endPlace !== undefined && endPlace - startPlace >= panelWidth - 1) {
+      place = {
+        x: startPlace,
+        y: this.area[startPlace]
+      };
+    } else {
+      // wrap to next row
+      this.yPos += this.height;
+      this.reset();
+      return this.getPanelPosition(panelHeight, panelWidth);
+    }
+
+    return place;
   }
 }
