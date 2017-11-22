@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	telegeramApiUrl string = "https://api.telegram.org/bot%s/%s"
+	telegramApiUrl string = "https://api.telegram.org/bot%s/%s"
 )
 
 func init() {
@@ -113,7 +113,7 @@ func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	bodyJSON.Set("text", message)
 
-	url := fmt.Sprintf(telegeramApiUrl, this.BotToken, "sendMessage")
+	url := fmt.Sprintf(telegramApiUrl, this.BotToken, "sendMessage")
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &m.SendWebhookSync{
