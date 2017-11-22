@@ -90,11 +90,11 @@ $component-active-bg:    $brand-primary !default;
 
 // Panel
 // -------------------------
-$panel-bg: 				      $dark-2;
-$panel-border-color:    $dark-2;
+$panel-bg: 				      #212124;
+$panel-border-color:    $dark-1;
 $panel-border:          solid 1px $panel-border-color;
 $panel-drop-zone-bg:    repeating-linear-gradient(-128deg, #111, #111 10px, #191919 10px, #222 20px);
-$panel-header-hover-bg:       $dark-3;
+$panel-header-hover-bg:       $dark-4;
 $panel-header-menu-hover-bg:  $dark-5;
 
 $divider-border-color:        #555;
