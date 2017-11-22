@@ -113,6 +113,7 @@ define([
     $scope.addOverrideOption('Z-index', 'zindex', [-3,-2,-1,0,1,2,3]);
     $scope.addOverrideOption('Transform', 'transform', ['negative-Y']);
     $scope.addOverrideOption('Legend', 'legend', [true, false]);
+    $scope.addOverrideOption('Tooltip', 'tooltip', [true, false]);
     $scope.updateCurrentOverrides();
   });
 });
