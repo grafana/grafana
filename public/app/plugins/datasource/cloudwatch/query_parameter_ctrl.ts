@@ -1,13 +1,9 @@
-define([
-  'angular',
-  'lodash',
-],
-function (angular, _) {
-  'use strict';
+import angular from 'angular';
+import _ from 'lodash';
 
-  var module = angular.module('grafana.controllers');
+export class CloudWatchQueryParameter {
 
-  module.directive('cloudwatchQueryParameter', function() {
+  constructor() {
     return {
       templateUrl: 'public/app/plugins/datasource/cloudwatch/partials/query.parameter.html',
       controller: 'CloudWatchQueryParameterCtrl',
@@ -18,9 +14,12 @@ function (angular, _) {
         onChange: "&",
       }
     };
-  });
+  }
+}
 
-  module.controller('CloudWatchQueryParameterCtrl', function($scope, templateSrv, uiSegmentSrv, datasourceSrv, $q) {
+export class CloudWatchQueryParameterCtrl {
+
+  constructor($scope, templateSrv, uiSegmentSrv, datasourceSrv, $q) {
 
     $scope.init = function() {
       var target = $scope.target;
@@ -120,8 +119,7 @@ function (angular, _) {
 
       if (segment.value === $scope.removeDimSegment.value) {
         $scope.dimSegments.splice(index, 3);
-      }
-      else if (segment.type === 'plus-button') {
+      } else if (segment.type === 'plus-button') {
         $scope.dimSegments.push(uiSegmentSrv.newOperator('='));
         $scope.dimSegments.push(uiSegmentSrv.newFake('select dimension value', 'value', 'query-segment-value'));
         segment.type = 'key';
@@ -195,7 +193,8 @@ function (angular, _) {
     };
 
     $scope.init();
+  }
+}
 
-  });
-
-});
+angular.module('grafana.controllers').directive('cloudwatchQueryParameter', CloudWatchQueryParameter);
+angular.module('grafana.controllers').controller('CloudWatchQueryParameterCtrl', CloudWatchQueryParameterCtrl);
