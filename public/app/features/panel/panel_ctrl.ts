@@ -78,7 +78,6 @@ export class PanelCtrl {
   }
 
   changeView(fullscreen, edit) {
-    this.setPanelHeight();
     this.publishAppEvent('panel-change-view', {
       fullscreen: fullscreen, edit: edit, panelId: this.panel.id
     });
