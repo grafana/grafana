@@ -6,7 +6,7 @@ import Remarkable from 'remarkable';
 import {GRID_CELL_HEIGHT, GRID_CELL_VMARGIN} from 'app/core/constants';
 
 const TITLE_HEIGHT = 27;
-const PANEL_BORDER = 12;
+const PANEL_BORDER = 2;
 
 import {Emitter} from 'app/core/core';
 
@@ -172,16 +172,7 @@ export class PanelCtrl {
       this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + ((this.panel.gridPos.h-1) * GRID_CELL_VMARGIN);
     }
 
-    console.log(this.containerHeight);
     this.height = this.containerHeight - (PANEL_BORDER + TITLE_HEIGHT);
-    console.log(PANEL_BORDER + TITLE_HEIGHT);
-  }
-
-  setPanelHeight() {
-    // console.log('setPanelHeight');
-    // if (this.$scope.setPanelHeight) {
-    //   this.$scope.setPanelHeight();
-    // }
   }
 
   render(payload?) {

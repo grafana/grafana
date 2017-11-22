@@ -1,6 +1,6 @@
 import angular from 'angular';
 import Drop from 'tether-drop';
-import GeminiScrollbar from 'gemini-scrollbar';
+import PerfectScrollbar from 'perfect-scrollbar';
 
 var module = angular.module('grafana.directives');
 
@@ -86,6 +86,7 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       }
 
       function panelHeightUpdated() {
+        panelContent.height(ctrl.height);
         if (panelScrollbar) {
           panelScrollbar.update();
         }
@@ -98,14 +99,13 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         panelContainer.addClass('panel-transparent', true);
       }
 
-      if (ctrl.__proto__.constructor.scrollable) {
-        panelContent.addClass('panel-content--scrollable');
-        panelScrollbar = new GeminiScrollbar({ autoshow: false, element: panelContent[0] }).create();
-      }
-
       // update scrollbar after mounting
       ctrl.events.on('component-did-mount', () => {
-        panelHeightUpdated();
+        if (ctrl.__proto__.constructor.scrollable) {
+          panelScrollbar = new PerfectScrollbar(panelContent[0], {
+            minScrollbarLength: 20
+          });
+        }
       });
 
       ctrl.events.on('render', () => {
