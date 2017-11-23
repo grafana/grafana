@@ -1,13 +1,10 @@
-define([
-  'angular',
-  'lodash',
-],
-function (angular, _) {
-  'use strict';
+import angular from 'angular';
+import _ from 'lodash';
 
-  var module = angular.module('grafana.controllers');
+export class AdminEditUserCtrl {
 
-  module.controller('AdminEditUserCtrl', function($scope, $routeParams, backendSrv, $location, navModelSrv) {
+  /** @ngInject */
+  constructor($scope, $routeParams, backendSrv, $location, navModelSrv) {
     $scope.user = {};
     $scope.newOrg = { name: '', role: 'Editor' };
     $scope.permissions = {};
@@ -106,6 +103,7 @@ function (angular, _) {
     };
 
     $scope.init();
+  }
+}
 
-  });
-});
+angular.module('grafana.controllers').controller('AdminEditUserCtrl', AdminEditUserCtrl);
