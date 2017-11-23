@@ -501,6 +501,8 @@ class RowArea {
             break;
           }
         }
+      } else {
+        break;
       }
     }
 
