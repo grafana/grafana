@@ -86,7 +86,7 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       }
 
       function panelHeightUpdated() {
-        panelContent.height(ctrl.height);
+        panelContent.css({height: ctrl.height + 'px'});
         if (panelScrollbar) {
           panelScrollbar.update();
         }

@@ -13,8 +13,7 @@ export class SearchCtrl {
   showImport: boolean;
   dismiss: any;
   ignoreClose: any;
-  // triggers fade animation class
-  openCompleted: boolean;
+  isLoading: boolean;
 
   /** @ngInject */
   constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv, $rootScope) {
@@ -24,7 +23,6 @@ export class SearchCtrl {
 
   closeSearch() {
     this.isOpen = this.ignoreClose;
-    this.openCompleted = false;
   }
 
   openSearch(evt, payload) {
@@ -40,6 +38,7 @@ export class SearchCtrl {
     this.query = { query: '', tag: [], starred: false };
     this.currentSearchId = 0;
     this.ignoreClose = true;
+    this.isLoading = true;
 
     if (payload && payload.starred) {
       this.query.starred = true;
@@ -54,7 +53,6 @@ export class SearchCtrl {
     }
 
     this.$timeout(() => {
-      this.openCompleted = true;
       this.ignoreClose = false;
       this.giveSearchFocus = this.giveSearchFocus + 1;
       this.search();
@@ -102,6 +100,7 @@ export class SearchCtrl {
     return this.searchSrv.search(this.query).then(results => {
       if (localSearchId < this.currentSearchId) { return; }
       this.results = results;
+      this.isLoading = false;
     });
   }
 

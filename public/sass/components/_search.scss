@@ -59,16 +59,8 @@
   display: flex;
   flex-direction: column;
   max-width: 800px;
-  visibility: none;
-  opacity: 0;
   background: $page-bg;
   height: calc(100% - #{$navbarHeight});
-
-  &--fade-in {
-    visibility: visible;
-    opacity: 1;
-    transition: opacity 0.3s;
-  }
 }
 
 .search-results-container {

@@ -52,7 +52,7 @@
 		</div>
 
 		<div class="search-results-container" ng-if="!ctrl.tagsMode" grafana-scrollbar>
-			<h6 ng-hide="ctrl.results.length">No dashboards matching your query were found.</h6>
+			<h6 ng-show="!ctrl.isLoading && results.length">No dashboards matching your query were found.</h6>
 
 			<div ng-repeat="section in ctrl.results" class="search-section">
 				<a class="search-section__header pointer" ng-hide="section.hideHeader" ng-click="ctrl.toggleFolder(section)">
