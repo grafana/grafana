@@ -140,9 +140,9 @@ Content-Type: application/json
 }
 ```
 
-## Delete Snapshot by Id
+## Delete Snapshot by deleteKey
 
-`GET /api/snapshots-delete/:key`
+`GET /api/snapshots-delete/:deleteKey`
 
 **Example Request**:
 
