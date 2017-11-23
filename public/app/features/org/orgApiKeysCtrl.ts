@@ -1,13 +1,9 @@
-define([
-  'angular',
-],
-function (angular) {
-  'use strict';
+import angular from 'angular';
 
-  var module = angular.module('grafana.controllers');
+export class OrgApiKeysCtrl {
 
-  module.controller('OrgApiKeysCtrl', function($scope, $http, backendSrv, navModelSrv) {
-
+  /** @ngInject **/
+  constructor ($scope, $http, backendSrv, navModelSrv) {
     $scope.navModel = navModelSrv.getOrgNav(0);
     $scope.roleTypes = ['Viewer', 'Editor', 'Admin'];
     $scope.token = { role: 'Viewer' };
@@ -43,6 +39,7 @@ function (angular) {
     };
 
     $scope.init();
+  }
+}
 
-  });
-});
+angular.module('grafana.controllers').controller('OrgApiKeysCtrl', OrgApiKeysCtrl);

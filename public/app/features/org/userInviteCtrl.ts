@@ -1,14 +1,10 @@
-define([
-  'angular',
-  'lodash',
-],
-function (angular, _) {
-  'use strict';
+import angular from 'angular';
+import _ from 'lodash';
 
-  var module = angular.module('grafana.controllers');
+export class UserInviteCtrl {
 
-  module.controller('UserInviteCtrl', function($scope, backendSrv) {
-
+  /** @ngInject **/
+  constructor($scope, backendSrv) {
     $scope.invites = [
       {name: '', email: '', role: 'Editor'},
     ];
@@ -44,5 +40,8 @@ function (angular, _) {
         }
       });
     };
-  });
-});
+  }
+}
+
+angular.module('grafana.controllers').controller('UserInviteCtrl', UserInviteCtrl);
+

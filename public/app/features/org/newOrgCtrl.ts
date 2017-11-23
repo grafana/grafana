@@ -1,16 +1,10 @@
-define([
-  'angular',
-  'app/core/config',
-],
-function (angular, config) {
-  'use strict';
+import angular from 'angular';
+import config from 'app/core/config';
 
-  config = config.default;
+export class NewOrgCtrl {
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('NewOrgCtrl', function($scope, $http, backendSrv, navModelSrv) {
-
+  /** @ngInject **/
+  constructor($scope, $http, backendSrv, navModelSrv) {
     $scope.navModel = navModelSrv.getOrgNav(0);
     $scope.newOrg = {name: ''};
 
@@ -21,6 +15,8 @@ function (angular, config) {
         });
       });
     };
+  }
+}
 
-  });
-});
+angular.module('grafana.controllers').controller('NewOrgCtrl', NewOrgCtrl);
+
