@@ -1,4 +1,4 @@
-import {DashboardListCtrl} from '../dashboard_list_ctrl';
+import { DashboardListCtrl } from '../dashboard_list_ctrl';
 import { SearchSrv } from 'app/core/services/search_srv';
 import q from 'q';
 
@@ -60,6 +60,94 @@ describe('DashboardListCtrl', () => {
       expect(ctrl.sections[1].items[0].checked).toEqual(false);
     });
   });
+
+  describe('when searching dashboards', () => {
+    beforeEach(() => {
+      const response = [
+        {
+          id: 410,
+          title: "afolder",
+          type: "dash-folder",
+          items: [
+            {
+              id: 399,
+              title: "Dashboard Test",
+              url: "dashboard/db/dashboard-test",
+              icon: 'fa fa-folder',
+              tags: [],
+              isStarred: false,
+              folderId: 410,
+              folderTitle: "afolder",
+              folderSlug: "afolder"
+            }
+          ],
+          tags: [],
+          isStarred: false
+        },
+        {
+          id: 0,
+          title: "Root",
+          icon: 'fa fa-folder-open',
+          uri: "db/something-else",
+          type: "dash-db",
+          items: [
+            {
+              id: 500,
+              title: "Dashboard Test",
+              url: "dashboard/db/dashboard-test",
+              icon: 'fa fa-folder',
+              tags: [],
+              isStarred: false
+            }
+          ],
+          tags: [],
+          isStarred: false,
+        }
+      ];
+      ctrl = createCtrlWithStubs([], response);
+    });
+
+    describe('with no filter', () => {
+      beforeEach(() => {
+        ctrl.query.query = 'd';
+        return ctrl.getDashboards();
+      });
+
+      it('should set checked to false on all sections and children', () => {
+        expect(ctrl.sections.length).toEqual(2);
+        expect(ctrl.sections[0].checked).toEqual(false);
+        expect(ctrl.sections[0].items[0].checked).toEqual(false);
+        expect(ctrl.sections[1].checked).toEqual(false);
+        expect(ctrl.sections[1].items[0].checked).toEqual(false);
+      });
+    });
+
+    describe('with tag filter', () => {
+      beforeEach(() => {
+        return ctrl.filterByTag('test');
+      });
+
+      it('should set tag filter', () => {
+        expect(ctrl.sections.length).toEqual(2);
+        expect(ctrl.query.tag[0]).toEqual('test');
+      });
+    });
+
+    describe('with starred filter', () => {
+      beforeEach(() => {
+        const yesOption: any = ctrl.starredFilterOptions[1];
+
+        ctrl.selectedStarredFilter = yesOption;
+        return ctrl.onStarredFilterChange();
+      });
+
+      it('should set starred filter', () => {
+        expect(ctrl.sections.length).toEqual(2);
+        expect(ctrl.query.starred).toEqual(true);
+      });
+    });
+  });
+
 
   describe('when selecting dashboards', () => {
     let ctrl;
@@ -305,21 +393,21 @@ describe('DashboardListCtrl', () => {
   });
 });
 
-function createCtrlWithStubs(response: any) {
+function createCtrlWithStubs(browseResponse: any, searchResponse?: any, tags?: any) {
   const searchSrvStub = {
     browse: () => {
-      return  q.resolve(response);
+      return q.resolve(browseResponse);
     },
     search: (options: any) => {
-      return  q.resolve(response);
+      return q.resolve(searchResponse);
     },
     toggleFolder: (section) => {
-      return  q.resolve(response);
+      return;
     },
     getDashboardTags: () => {
-      return  q.resolve([]);
+      return q.resolve(tags || []);
     }
   };
 
-  return new DashboardListCtrl({}, {getNav: () => {}}, q, <SearchSrv>searchSrvStub);
+  return new DashboardListCtrl({}, { getNav: () => { } }, q, <SearchSrv>searchSrvStub);
 }

@@ -110,7 +110,7 @@ func TestDeleteExpiredVersions(t *testing.T) {
 		versionsToWrite := 10
 		setting.DashboardVersionsToKeep = versionsToKeep
 
-		savedDash := insertTestDashboard("test dash 53", 1, "diff-all")
+		savedDash := insertTestDashboard("test dash 53", 1, 0, false, "diff-all")
 		for i := 0; i < versionsToWrite-1; i++ {
 			updateTestDashboard(savedDash, map[string]interface{}{
 				"tags": "different-tag",

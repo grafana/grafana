@@ -12,7 +12,7 @@ export class PanelLoader {
   }
 
   load(elem, panel, dashboard): AttachedPanel {
-    var template = '<plugin-component type="panel"></plugin-component>';
+    var template = '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
     var panelScope = this.$rootScope.$new();
     panelScope.panel = panel;
     panelScope.dashboard = dashboard;

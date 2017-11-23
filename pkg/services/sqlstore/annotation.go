@@ -158,6 +158,10 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		params = append(params, query.From, query.To)
 	}
 
+	if query.Type == "alert" {
+		sql.WriteString(` AND annotation.alert_id > 0`)
+	}
+
 	if len(query.Tags) > 0 {
 		keyValueFilters := []string{}
 

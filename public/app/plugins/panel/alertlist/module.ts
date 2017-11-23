@@ -9,6 +9,7 @@ import * as dateMath from 'app/core/utils/datemath';
 
 class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
+  static scrollable = true;
 
   showOptions = [
     { text: 'Current state', value: 'current' },

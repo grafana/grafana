@@ -79,6 +79,7 @@
   height: 100%;
   display: block;
   padding: $spacer;
+  position: relative;
   flex-grow: 10;
 
   .selected {

@@ -1,4 +1,3 @@
-import {describe, it, expect} from 'test/lib/common';
 import InfluxSeries from '../influx_series';
 
 describe('when generating timeseries from influxdb response', function() {
@@ -19,24 +18,24 @@ describe('when generating timeseries from influxdb response', function() {
         var series = new InfluxSeries(options);
         var result = series.getTimeSeries();
 
-        expect(result.length).to.be(3);
-        expect(result[0].target).to.be('cpu.mean {app: test, server: server1}');
-        expect(result[0].datapoints[0][0]).to.be(10);
-        expect(result[0].datapoints[0][1]).to.be(1431946625000);
-        expect(result[0].datapoints[1][0]).to.be(20);
-        expect(result[0].datapoints[1][1]).to.be(1431946626000);
+        expect(result.length).toBe(3);
+        expect(result[0].target).toBe('cpu.mean {app: test, server: server1}');
+        expect(result[0].datapoints[0][0]).toBe(10);
+        expect(result[0].datapoints[0][1]).toBe(1431946625000);
+        expect(result[0].datapoints[1][0]).toBe(20);
+        expect(result[0].datapoints[1][1]).toBe(1431946626000);
 
-        expect(result[1].target).to.be('cpu.max {app: test, server: server1}');
-        expect(result[1].datapoints[0][0]).to.be(11);
-        expect(result[1].datapoints[0][1]).to.be(1431946625000);
-        expect(result[1].datapoints[1][0]).to.be(21);
-        expect(result[1].datapoints[1][1]).to.be(1431946626000);
+        expect(result[1].target).toBe('cpu.max {app: test, server: server1}');
+        expect(result[1].datapoints[0][0]).toBe(11);
+        expect(result[1].datapoints[0][1]).toBe(1431946625000);
+        expect(result[1].datapoints[1][0]).toBe(21);
+        expect(result[1].datapoints[1][1]).toBe(1431946626000);
 
-        expect(result[2].target).to.be('cpu.min {app: test, server: server1}');
-        expect(result[2].datapoints[0][0]).to.be(9);
-        expect(result[2].datapoints[0][1]).to.be(1431946625000);
-        expect(result[2].datapoints[1][0]).to.be(19);
-        expect(result[2].datapoints[1][1]).to.be(1431946626000);
+        expect(result[2].target).toBe('cpu.min {app: test, server: server1}');
+        expect(result[2].datapoints[0][0]).toBe(9);
+        expect(result[2].datapoints[0][1]).toBe(1431946625000);
+        expect(result[2].datapoints[1][0]).toBe(19);
+        expect(result[2].datapoints[1][1]).toBe(1431946626000);
 
       });
     });
@@ -47,9 +46,9 @@ describe('when generating timeseries from influxdb response', function() {
         var series = new InfluxSeries(options);
         var result = series.getTimeSeries();
 
-        expect(result[0].target).to.be('new series');
-        expect(result[1].target).to.be('new series');
-        expect(result[2].target).to.be('new series');
+        expect(result[0].target).toBe('new series');
+        expect(result[1].target).toBe('new series');
+        expect(result[2].target).toBe('new series');
       });
 
     });
@@ -60,9 +59,9 @@ describe('when generating timeseries from influxdb response', function() {
         var series = new InfluxSeries(options);
         var result = series.getTimeSeries();
 
-        expect(result[0].target).to.be('alias: cpu -> server1 (cpu)');
-        expect(result[1].target).to.be('alias: cpu -> server1 (cpu)');
-        expect(result[2].target).to.be('alias: cpu -> server1 (cpu)');
+        expect(result[0].target).toBe('alias: cpu -> server1 (cpu)');
+        expect(result[1].target).toBe('alias: cpu -> server1 (cpu)');
+        expect(result[2].target).toBe('alias: cpu -> server1 (cpu)');
       });
 
     });
@@ -90,8 +89,8 @@ describe('when generating timeseries from influxdb response', function() {
         var series = new InfluxSeries(options);
         var result = series.getTimeSeries();
 
-        expect(result[0].target).to.be('cpu {app: test, server: server1}');
-        expect(result[1].target).to.be('cpu {app: test2, server: server2}');
+        expect(result[0].target).toBe('cpu {app: test, server: server1}');
+        expect(result[1].target).toBe('cpu {app: test2, server: server2}');
       });
     });
 
@@ -122,18 +121,18 @@ describe('when generating timeseries from influxdb response', function() {
         var series = new InfluxSeries(options);
         var result = series.getTimeSeries();
 
-        expect(result.length).to.be(2);
-        expect(result[0].target).to.be('cpu.mean {app: test, server: server1}');
-        expect(result[0].datapoints[0][0]).to.be(10);
-        expect(result[0].datapoints[0][1]).to.be(1431946625000);
-        expect(result[0].datapoints[1][0]).to.be(12);
-        expect(result[0].datapoints[1][1]).to.be(1431946626000);
+        expect(result.length).toBe(2);
+        expect(result[0].target).toBe('cpu.mean {app: test, server: server1}');
+        expect(result[0].datapoints[0][0]).toBe(10);
+        expect(result[0].datapoints[0][1]).toBe(1431946625000);
+        expect(result[0].datapoints[1][0]).toBe(12);
+        expect(result[0].datapoints[1][1]).toBe(1431946626000);
 
-        expect(result[1].target).to.be('cpu.mean {app: test2, server: server2}');
-        expect(result[1].datapoints[0][0]).to.be(15);
-        expect(result[1].datapoints[0][1]).to.be(1431946625000);
-        expect(result[1].datapoints[1][0]).to.be(16);
-        expect(result[1].datapoints[1][1]).to.be(1431946626000);
+        expect(result[1].target).toBe('cpu.mean {app: test2, server: server2}');
+        expect(result[1].datapoints[0][0]).toBe(15);
+        expect(result[1].datapoints[0][1]).toBe(1431946625000);
+        expect(result[1].datapoints[1][0]).toBe(16);
+        expect(result[1].datapoints[1][1]).toBe(1431946626000);
       });
     });
 
@@ -143,7 +142,7 @@ describe('when generating timeseries from influxdb response', function() {
         var series = new InfluxSeries(options);
         var result = series.getTimeSeries();
 
-        expect(result[0].target).to.be('new series');
+        expect(result[0].target).toBe('new series');
       });
 
     });
@@ -154,8 +153,8 @@ describe('when generating timeseries from influxdb response', function() {
         var series = new InfluxSeries(options);
         var result = series.getTimeSeries();
 
-        expect(result[0].target).to.be('alias: cpu -> server1 (cpu)');
-        expect(result[1].target).to.be('alias: cpu -> server2 (cpu)');
+        expect(result[0].target).toBe('alias: cpu -> server1 (cpu)');
+        expect(result[1].target).toBe('alias: cpu -> server2 (cpu)');
       });
 
     });
@@ -180,7 +179,7 @@ describe('when generating timeseries from influxdb response', function() {
       var series = new InfluxSeries(options);
       var result = series.getTimeSeries();
 
-      expect(result[0].target).to.be('alias: prod -> count');
+      expect(result[0].target).toBe('alias: prod -> count');
     });
   });
 
@@ -201,9 +200,9 @@ describe('when generating timeseries from influxdb response', function() {
       var series = new InfluxSeries(options);
       var table = series.getTable();
 
-      expect(table.type).to.be('table');
-      expect(table.columns.length).to.be(5);
-      expect(table.rows[0]).to.eql([1431946625000, 'Africa', 'server2', 23, 10]);
+      expect(table.type).toBe('table');
+      expect(table.columns.length).toBe(5);
+      expect(table.rows[0]).toEqual([1431946625000, 'Africa', 'server2', 23, 10]);
     });
   });
 
@@ -228,7 +227,7 @@ describe('when generating timeseries from influxdb response', function() {
         var series = new InfluxSeries(options);
         var annotations = series.getAnnotations();
 
-        expect(annotations[0].tags.length).to.be(0);
+        expect(annotations[0].tags.length).toBe(0);
       });
     });
 
@@ -254,9 +253,9 @@ describe('when generating timeseries from influxdb response', function() {
         var series = new InfluxSeries(options);
         var annotations = series.getAnnotations();
 
-        expect(annotations[0].tags.length).to.be(2);
-        expect(annotations[0].tags[0]).to.be('America');
-        expect(annotations[0].tags[1]).to.be('backend');
+        expect(annotations[0].tags.length).toBe(2);
+        expect(annotations[0].tags[0]).toBe('America');
+        expect(annotations[0].tags[1]).toBe('backend');
       });
     });
   });

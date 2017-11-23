@@ -1,3 +1,23 @@
+@import "~perfect-scrollbar/css/perfect-scrollbar.css";
+
+.ps__rail-x:hover,
+.ps__rail-y:hover,
+.ps__rail-x:focus,
+.ps__rail-y:focus {
+  background-color: transparent;
+  opacity: 0.9;
+}
+
+.ps__thumb-y {
+  @include gradient-vertical($blue, lighten($blue, 20%));
+}
+
+.ps__rail-y:hover > .ps__thumb-y,
+.ps__rail-y:focus > .ps__thumb-y {
+  background-color: #999;
+  width: 6px;
+}
+
 /**
  * gemini-scrollbar
  * @version 1.5.2
