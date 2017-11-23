@@ -55,6 +55,7 @@ var (
 	DataPath        string
 	PluginsPath     string
 	DatasourcesPath string
+	DashboardsPath  string
 	CustomInitPath  = "conf/custom.ini"
 
 	// Log settings.
@@ -475,6 +476,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	InstanceName = Cfg.Section("").Key("instance_name").MustString("unknown_instance_name")
 	PluginsPath = makeAbsolute(Cfg.Section("paths").Key("plugins").String(), HomePath)
 	DatasourcesPath = makeAbsolute(Cfg.Section("paths").Key("datasources").String(), HomePath)
+	DashboardsPath = makeAbsolute(Cfg.Section("paths").Key("dashboards").String(), HomePath)
 
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
