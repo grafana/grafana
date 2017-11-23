@@ -121,81 +121,88 @@
   margin-bottom: $spacer*2;
 }
 
-.page-breadcrumb {
+.page-breadcrumbs {
   display: flex;
-  padding: 0 $spacer;
+  padding: 3px 1.5rem 1.5rem 1.5rem;
   line-height: 0.5;
 }
 
-$page-breadcrumb__angle-1: 39px;
-$page-breadcrumb__angle-ul: 31px;
-$page-breadcrumb__angle-a: 30px;
+.breadcrumb {
+  display: inline-block;
+  box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  border-radius: 5px;
+  counter-reset: flag;
+}
 
-.page-breadcrumb__item {
-  background: $page-nav-bg;
-  box-shadow: $page-nav-shadow;
-
-  > a {
-    color: $page-nav-breadcrumb-color;
-    font-size: $font-size-sm;
-    display: block;
-    padding: 0.6rem 1rem 0.6rem 3rem;;
-    position: relative;
-
-    &::after {
-      content: '';
-      position: absolute;
-      top: -53px;
-      left: 100%;
-      content: '';
-      height: 0;
-      width: 0;
-      border: $page-breadcrumb__angle-1 solid transparent;
-      border-right-width: 0;
-      border-left-width: $page-breadcrumb__angle-a;
-      z-index: 2;
-      border-left-color: $page-nav-bg;
-    }
-  }
+.breadcrumb-item {
+  text-decoration: none;
+  outline: none;
+  display: block;
+  float: left;
+  font-size: 12px;
+  line-height: 36px;
+  padding: 0 7px 0 37px;
+  @include gradientBar($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
+  position: relative;
+  box-shadow: $card-shadow;
 
   &:first-child {
-    a {
-      padding-left: 1rem;
-    }
+    padding-left: 13px;
+    border-radius: 5px 0 0 5px; /*to match with the parent's radius*/
+    font-size: 20px;
   }
 
-  &::after {
+  &:first-child:before {
+    left: 14px;
+  }
+
+  &:last-child {
+    border-radius: 0 5px 5px 0; /*this was to prevent glitches on hover*/
+    padding-right: 20px;
+  }
+
+  &.active,
+  &:hover {
+    background: #333;
+    background: linear-gradient(#333, #000);
+  }
+
+  &.active:after,
+  &:hover:after {
+    background: #333;
+    background: linear-gradient(135deg, #333, #000);
+  }
+
+  &:after {
     content: '';
     position: absolute;
-    top: -53px;
-    left: 100%;
-    content: '';
-    height: 0;
-    width: 0;
-    border: $page-breadcrumb__angle-1 solid transparent;
-    border-right-width: 0;
-    border-left-width: $page-breadcrumb__angle-ul;
+    top: 0;
+    right: -18px; // half of square's length
+
+    // same dimension as the line-height of .breadcrumb-item
+    width: 36px;
+    height: 36px;
+
+    transform: scale(0.707) rotate(45deg);
+    // we need to prevent the arrows from getting buried under the next link
     z-index: 1;
-    transform: translateX(4px);
-    border-left-color: #282020;
-    margin: 0;
+
+    // background same as links but the gradient will be rotated to compensate with the transform applied
+    background: linear-gradient(135deg, $btn-inverse-bg, $btn-inverse-bg-hl);
+
+    // stylish arrow design using box shadow
+    box-shadow: 2px -2px 0 2px rgb(35, 31, 31), 3px -3px 0 2px rgba(255, 255, 255, 0.1);
+
+    // 5px - for rounded arrows and
+    // 50px - to prevent hover glitches on the border created using shadows*/
+    border-radius: 0 5px 0 50px;
   }
 
-  &:hover {
-    background: $breadcrumb-hover-hl;
-
-    .page-breadcrumb__caret {
-      opacity: 1;
-    }
-
-    > a {
-      color: $text-color;
-
-      &::after {
-        border-left-color: $breadcrumb-hover-hl;
-        color: $text-color;
-      }
-    }
+  // we dont need an arrow after the last link
+  &:last-child:after {
+    content: none;
   }
 }
+
 

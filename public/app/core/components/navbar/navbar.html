@@ -1,19 +1,12 @@
 <div class="page-nav">
   <div class="container">
-    <div class="page-breadcrumb">
-      <div class="page-breadcrumb__item dropdown" ng-repeat="item in ctrl.model.breadcrumbs">
-        <a class="pointer" ng-href="{{::item.url}}">
-          {{::item.text}}
-        </a>
-
-        <ul class="dropdown-menu dropdown-menu--navbar">
-          <li ng-repeat="subItem in ::item.children">
-            <a class="pointer" ng-href="{{::subItem.url}}" ng-click="ctrl.navItemClicked(subItem, $event)">
-              {{::subItem.text}}
-            </a>
-          </li>
-        </ul>
-      </div>
+    <div class="page-breadcrumbs">
+      <a class="breadcrumb-item active" href="/">
+        <i class="fa fa-home"></i>
+      </a>
+      <a class="breadcrumb-item" ng-href="{{::item.url}}" ng-repeat="item in ctrl.model.breadcrumbs">
+        {{::item.text}}
+      </a>
     </div>
   </div>
 </div>

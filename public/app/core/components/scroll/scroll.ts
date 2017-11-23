@@ -7,7 +7,6 @@ export function geminiScrollbar() {
     link: function(scope, elem, attrs) {
 
       let scrollbar = new PerfectScrollbar(elem[0]);
-      console.log('scrllbar!');
 
       scope.$on('$destroy', () => {
         scrollbar.destroy();

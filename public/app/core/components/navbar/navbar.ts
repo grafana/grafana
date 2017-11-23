@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import coreModule from '../../core_module';
 import {NavModel}  from '../../nav_model_srv';
 
