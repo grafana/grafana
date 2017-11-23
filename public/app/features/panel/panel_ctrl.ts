@@ -5,9 +5,7 @@ import {appEvents, profiler} from 'app/core/core';
 import Remarkable from 'remarkable';
 import {GRID_CELL_HEIGHT, GRID_CELL_VMARGIN} from 'app/core/constants';
 
-const TITLE_HEIGHT = 25;
-const EMPTY_TITLE_HEIGHT = 9;
-const PANEL_PADDING = 5;
+const TITLE_HEIGHT = 27;
 const PANEL_BORDER = 2;
 
 import {Emitter} from 'app/core/core';
@@ -48,16 +46,24 @@ export class PanelCtrl {
     }
 
     $scope.$on("refresh", () => this.refresh());
+    $scope.$on("component-did-mount", () => this.panelDidMount());
+
     $scope.$on("$destroy", () => {
       this.events.emit('panel-teardown');
       this.events.removeAllListeners();
     });
+
+    this.calculatePanelHeight();
   }
 
   init() {
     this.events.on('panel-size-changed', this.onSizeChanged.bind(this));
-    this.publishAppEvent('panel-initialized', {scope: this.$scope});
     this.events.emit('panel-initialized');
+    this.publishAppEvent('panel-initialized', {scope: this.$scope});
+  }
+
+  panelDidMount() {
+    this.events.emit('component-did-mount');
   }
 
   renderingCompleted() {
@@ -166,7 +172,7 @@ export class PanelCtrl {
       this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + ((this.panel.gridPos.h-1) * GRID_CELL_VMARGIN);
     }
 
-    this.height = this.containerHeight - (PANEL_BORDER + PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
+    this.height = this.containerHeight - (PANEL_BORDER + TITLE_HEIGHT);
   }
 
   render(payload?) {

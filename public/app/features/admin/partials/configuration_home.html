@@ -1,35 +1,33 @@
-<div class="scroll-canvas">
-  <div gemini-scrollbar>
-    <navbar model="ctrl.navModel"></navbar>
-    <div class="page-container">
-      <div class="page-header">
-        <page-h1 model="ctrl.navModel"></page-h1>
-      </div>
+<div class="scroll-canvas" grafana-scrollbar>
+	<navbar model="ctrl.navModel"></navbar>
+	<div class="page-container">
+		<div class="page-header">
+			<page-h1 model="ctrl.navModel"></page-h1>
+		</div>
 
-      <section class="card-section card-list-layout-grid">
-        <ol class="card-list" >
-          <li class="card-item-wrapper" ng-repeat="navItem in ctrl.navModel.node.children">
-            <a class="card-item" ng-href="{{::navItem.url}}">
-              <div class="card-item-header">
-                <div class="card-item-type">
-                </div>
-              </div>
-              <div class="card-item-body">
-                <figure class="card-item-figure">
-                  <i class="{{navItem.icon}}"></i>
-                </figure>
-                <div class="card-item-details">
-                  <div class="card-item-name">
-                    {{navItem.text}}
-                  </div>
-                  <div class="card-item-sub-name">
-                    {{navItem.description}}
-                  </div>
-                </div>
-              </div>
-            </a>
-          </li>
-        </ol>
-      </section>
-    </div>
-  </div>
+		<section class="card-section card-list-layout-grid">
+			<ol class="card-list" >
+				<li class="card-item-wrapper" ng-repeat="navItem in ctrl.navModel.node.children">
+					<a class="card-item" ng-href="{{::navItem.url}}">
+						<div class="card-item-header">
+							<div class="card-item-type">
+							</div>
+						</div>
+						<div class="card-item-body">
+							<figure class="card-item-figure">
+								<i class="{{navItem.icon}}"></i>
+							</figure>
+							<div class="card-item-details">
+								<div class="card-item-name">
+									{{navItem.text}}
+								</div>
+								<div class="card-item-sub-name">
+									{{navItem.description}}
+								</div>
+							</div>
+						</div>
+					</a>
+				</li>
+			</ol>
+		</section>
+	</div>
