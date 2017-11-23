@@ -330,8 +330,8 @@
   background-image: linear-gradient($angle, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
 }
 
-@mixin left-brand-border() {
-  border-left: 2px solid transparent;
+@mixin left-brand-border($color: transparent) {
+  border-left: 2px solid $color;
 }
 
 @mixin left-brand-border-gradient() {
@@ -355,4 +355,16 @@
   border-bottom-width: 1px;
 }
 
+@mixin list-item() {
+  display: block;
+  margin: 3px;
+  padding: 7px;
+  background: $list-item-bg;
+  box-shadow: $list-item-shadow;
+  color: $list-item-link-color;
+
+  &:hover {
+    background-color: $list-item-hover-bg;
+  }
+}
 

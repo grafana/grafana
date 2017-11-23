@@ -8,14 +8,7 @@
 }
 
 .pluginlist-link {
-  display: block;
-  margin: 5px;
-  padding: 7px;
-  background-color: $tight-form-bg;
-
-  &:hover {
-    background-color: $tight-form-func-bg;
-  }
+  @include list-item();
 }
 
 .pluginlist-icon {

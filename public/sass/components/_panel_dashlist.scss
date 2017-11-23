@@ -8,22 +8,17 @@
 }
 
 .dashlist-link {
-  display: block;
-  margin: 5px;
-  padding: 7px;
-  background-color: $tight-form-bg;
-  border: $input-btn-border-width solid $input-label-border-color;
+  @include list-item();
+
   .fa {
     padding-top: 3px;
   }
+
   .dashlist-star {
     float: right;
   }
+
   .fa-star {
     color: $orange;
-  }
-
-  &:hover {
-    background-color: $tight-form-func-bg;
   }
 }

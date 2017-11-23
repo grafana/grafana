@@ -14,11 +14,10 @@
 .filter-table {
   width: 100%;
   border-collapse: collapse;
-  // table-layout: fixed;
 }
 
 .filter-table tr {
-  background: $grafanaListBackground;
+  background-color: $list-item-bg;
   border-bottom: 3px solid $page-bg;
 }
 

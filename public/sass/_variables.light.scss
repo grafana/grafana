@@ -115,14 +115,16 @@ $modal-backdrop-bg: $body-bg;
 $code-tag-bg:       $gray-6;
 $code-tag-border:   darken($code-tag-bg, 3%);
 
-// Lists
-$grafanaListBackground:    	   #eaebee;
-$grafanaListAccent:            $gray-5;
-$grafanaListBorderTop:         $gray-3;
-$grafanaListBorderBottom:      $gray-3;
-$grafanaListHighlight:         $gray-5;
-$grafanaListMainLinkColor:     $text-color;
+// cards
+$card-background: linear-gradient(135deg, $gray-5, $gray-6);
+$card-background-hover: linear-gradient(135deg, $gray-6, $gray-7);
+$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .1);
 
+// Lists
+$list-item-bg:         $card-background;
+$list-item-hover-bg:   darken($gray-5, 5%);
+$list-item-link-color: $text-color;
+$list-item-shadow:     $card-shadow;
 
 // Tables
 // -------------------------
@@ -307,11 +309,6 @@ $graph-tooltip-bg:        $gray-5;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
-
-// cards
-$card-background: linear-gradient(135deg, $gray-5, $gray-6);
-$card-background-hover: linear-gradient(135deg, $gray-6, $gray-7);
-$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .1);
 
 // info box
 $info-box-background: linear-gradient(135deg, #f1fbff, #d7ebff);
