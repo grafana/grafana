@@ -16,12 +16,6 @@
   bottom: 0;
   z-index: ($zindex-modal-backdrop + 10);
   position: fixed;
-
-  .label-tag {
-    margin-left: 6px;
-    font-size: 11px;
-    padding: 2px 6px;
-  }
 }
 
 // Search
@@ -84,6 +78,12 @@
   position: relative;
   flex-grow: 10;
 
+  .label-tag {
+    margin-left: 6px;
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+
   .selected {
     .search-result-tag {
       opacity: 0.70;
@@ -97,6 +97,7 @@
   padding: 0.6rem 0;
   color: $text-color-weak;
   display: flex;
+  flex-grow: 1;
 
   &:hover {
     color: $text-color-weak;
@@ -105,6 +106,10 @@
       color: $link-hover-color;
     }
   }
+}
+
+.search-section__header__with-checkbox {
+  display: flex;
 }
 
 .search-section__header__icon {
@@ -119,8 +124,13 @@
   flex-grow: 1;
 }
 
+.search-item__with-checkbox {
+  display: flex;
+}
+
 .search-item {
   display: flex;
+  flex-grow: 1;
   height: 37px;
   padding: 0px;
   white-space: nowrap;
