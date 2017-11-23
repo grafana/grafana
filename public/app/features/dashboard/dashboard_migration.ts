@@ -507,9 +507,10 @@ class RowArea {
     }
 
     if (startPlace !== undefined && endPlace !== undefined && endPlace - startPlace >= panelWidth - 1) {
+      const yPos = _.max(this.area.slice(startPlace));
       place = {
         x: startPlace,
-        y: this.area[startPlace]
+        y: yPos
       };
     } else {
       // wrap to next row
