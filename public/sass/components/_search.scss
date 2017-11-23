@@ -139,7 +139,7 @@
   padding: 0px;
 
   &:hover {
-    @include left-brand-border-gradient($gray-blue);
+    @include left-brand-border-gradient();
   }
 
   &.selected {
