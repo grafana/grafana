@@ -1,16 +1,10 @@
-define([
-  'angular',
-  'app/core/config',
-],
-function (angular, config) {
-  'use strict';
+import angular from 'angular';
+import config from 'app/core/config';
 
-  config = config.default;
+export class SelectOrgCtrl {
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('SelectOrgCtrl', function($scope, backendSrv, contextSrv) {
-
+  /** @ngInject **/
+  constructor($scope, backendSrv, contextSrv) {
     contextSrv.sidemenu = false;
 
     $scope.init = function() {
@@ -30,6 +24,7 @@ function (angular, config) {
     };
 
     $scope.init();
+  }
+}
 
-  });
-});
+angular.module('grafana.controllers').controller('SelectOrgCtrl', SelectOrgCtrl);
