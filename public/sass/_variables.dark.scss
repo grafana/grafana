@@ -64,7 +64,6 @@ $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255,213,0,0.7) 0%, rgba(255,68,0,0.7) 99%, rgba(255,68,0,0.7) 100%);
 $page-gradient: linear-gradient(180deg, #222426 10px, rgba(15, 15, 16, .03) 100px, rgba(10, 10, 11, .03));
-$dashboard-gradient: linear-gradient(180deg, #222426 10px, rgba(15, 15, 16, 0.3) 100px, rgb(10, 10, 0.3));
 
 // Links
 // -------------------------
@@ -100,7 +99,6 @@ $panel-header-menu-hover-bg:  $dark-5;
 $divider-border-color:        #555;
 
 // Graphite Target Editor
-$tight-form-border:   #050505;
 $tight-form-bg:     	$dark-3;
 
 $tight-form-func-bg: 		    #333334;
@@ -112,7 +110,7 @@ $code-tag-border:   lighten($code-tag-bg, 2%);
 
 
 // Lists
-$grafanaListBackground:  	  $dark-3;
+$grafanaListBackground:  	  $dark-4;
 $grafanaListAccent:      	  lighten($dark-2, 2%);
 $grafanaListBorderTop:      $dark-3;
 $grafanaListBorderBottom:   $black;
@@ -173,7 +171,7 @@ $input-box-shadow:               inset 1px 0px 0.3rem 0px rgba(150, 150, 150, 0.
 $input-border-focus:             $input-border-color !default;
 $input-box-shadow-focus:         rgba(102,175,233,.6) !default;
 $input-color-placeholder:        $gray-1 !default;
-$input-label-bg:				 #292a2d;
+$input-label-bg:				         #292a2d;
 $input-label-border-color:       transparent;
 $input-invalid-border-color:     lighten($red, 5%);
 

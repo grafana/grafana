@@ -70,7 +70,6 @@ $text-shadow-faint: none;
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255,213,0,1.0) 0%, rgba(255,68,0,1.0) 99%, rgba(255,68,0,1.0) 100%);
 $page-gradient: linear-gradient(-60deg, transparent 70%, darken($page-bg, 4%) 98%);
-$dashboard-gradient: linear-gradient(-60deg, transparent 70%, darken($page-bg, 4%) 98%);
 
 // Links
 // -------------------------
@@ -107,7 +106,6 @@ $panel-header-menu-hover-bg:  $gray-4;
 $divider-border-color:	      $gray-2;
 
 // Graphite Target Editor
-$tight-form-border:     $gray-4;
 $tight-form-bg:    	    #eaebee;
 
 $tight-form-func-bg:            $gray-5;
@@ -193,8 +191,8 @@ $side-menu-shadow:        0 0 5px #c2c2c2;
 // -------------------------
 $menu-dropdown-bg:            $white;
 $menu-dropdown-hover-bg:      $gray-6;
-$menu-dropdown-border-color:  $tight-form-border;
-$menu-dropdown-shadow: 5px 5px 20px -5px $gray-4;
+$menu-dropdown-border-color:  $gray-4;
+$menu-dropdown-shadow:        5px 5px 20px -5px $gray-4;
 
 // Breadcrumb
 // -------------------------
@@ -209,7 +207,7 @@ $search-shadow: 0 5px 30px 0 $gray-4;
 // Dropdowns
 // -------------------------
 $dropdownBackground:            $white;
-$dropdownBorder:                $tight-form-border;
+$dropdownBorder:                $gray-4;
 $dropdownDividerTop:            $gray-6;
 $dropdownDividerBottom:         $white;
 $dropdownDivider:               $dropdownDividerTop;
@@ -252,7 +250,7 @@ $wellBackground:                  $gray-3;
 $navbarHeight:                    52px;
 $navbarBackgroundHighlight:       #f8f8f8;
 $navbarBackground:                #f2f3f7;
-$navbarBorder:                    1px solid $tight-form-border;
+$navbarBorder:                    1px solid $gray-4;
 $navbarShadow:                    0 0 3px #c1c1c1;
 
 $navbarText:                      #444;

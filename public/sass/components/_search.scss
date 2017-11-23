@@ -28,7 +28,9 @@
 .search-field-wrapper {
   width: 100%;
   display: flex;
-  background-color: $navbarButtonBackground;
+  background-color: $navbarBackground;
+  box-shadow: $navbarShadow;
+  position: relative;
 
   input {
     max-width: 653px;
@@ -65,7 +67,7 @@
   max-width: 800px;
   visibility: none;
   opacity: 0;
-  background: $panel-bg;
+  background: $page-bg;
   height: calc(100% - #{$navbarHeight});
 
   &--fade-in {
@@ -143,6 +145,7 @@
   //   color: $orange;
   // }
 }
+
 .search-item__body {
   flex: 1 1 auto;
   overflow: hidden;
