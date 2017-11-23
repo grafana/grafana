@@ -110,6 +110,8 @@ describe('DashboardListCtrl', () => {
     describe('with no filter', () => {
       beforeEach(() => {
         ctrl.query.query = 'd';
+        ctrl.canMove = true;
+        ctrl.canDelete = true;
         return ctrl.getDashboards();
       });
 
@@ -119,6 +121,14 @@ describe('DashboardListCtrl', () => {
         expect(ctrl.sections[0].items[0].checked).toEqual(false);
         expect(ctrl.sections[1].checked).toEqual(false);
         expect(ctrl.sections[1].items[0].checked).toEqual(false);
+      });
+
+      it('should disable Move To button', () => {
+        expect(ctrl.canMove).toBeFalsy();
+      });
+
+      it('should disable delete button', () => {
+        expect(ctrl.canDelete).toBeFalsy();
       });
     });
 

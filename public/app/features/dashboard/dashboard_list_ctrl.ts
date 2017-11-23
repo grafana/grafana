@@ -39,6 +39,9 @@ export class DashboardListCtrl {
   }
 
   initDashboardList(result: any) {
+    this.canMove = false;
+    this.canDelete = false;
+
     if (!result) {
       this.sections = [];
       return;
@@ -156,6 +159,10 @@ export class DashboardListCtrl {
       evt.preventDefault();
     }
 
+    return this.getDashboards();
+  }
+
+  onQueryChange() {
     return this.getDashboards();
   }
 

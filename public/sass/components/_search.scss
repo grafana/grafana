@@ -126,6 +126,10 @@
 
 .search-item__with-checkbox {
   display: flex;
+
+  .search-item {
+    margin: 1px 3px;
+  }
 }
 
 .search-item {
