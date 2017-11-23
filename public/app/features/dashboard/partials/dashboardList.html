@@ -51,8 +51,8 @@
         </div>
       </div>
 
-        <div class="admin-list-table" style="height: 80%">
-          <div>
+        <div style="height: 80%">
+          <div style="width: 40%; display: flex; float: right;">
             <select
               class="gf-form-input"
               ng-model="ctrl.selectedStarredFilter"
@@ -67,16 +67,15 @@
             />
           </div>
           <div gemini-scrollbar>
-            <div ng-show="ctrl.sections.length > 0">
+            <div class="search-results-container" ng-show="ctrl.sections.length > 0">
               <div ng-repeat="section in ctrl.sections" class="search-section">
 
-                <div class="search-section__header pointer" ng-show="::section.title">
+                <div class="search-section__header__with-checkbox" ng-hide="section.hideHeader">
                   <gf-form-switch
-                    switch-class="gf-form-switch--table-cell"
                     on-change="ctrl.selectionChanged()"
                     checked="section.checked">
                   </gf-form-switch>
-                  <a ng-click="ctrl.toggleFolder(section)">
+                  <a  class="search-section__header pointer" ng-click="ctrl.toggleFolder(section)" ng-hide="section.hideHeader">
                     <i class="search-section__header__icon" ng-class="section.icon"></i>
                     <span class="search-section__header__text">{{::section.title}}</span>
                     <i class="fa fa-minus search-section__header__toggle" ng-show="section.expanded"></i>
@@ -85,17 +84,20 @@
                 </div>
 
                 <div ng-if="section.expanded">
-                  <div ng-repeat="item in section.items" class="search-item" ng-class="{'selected': item.selected}">
+                  <div ng-repeat="item in section.items" class="search-item__with-checkbox" ng-class="{'selected': item.selected}">
                     <gf-form-switch
-                      switch-class="gf-form-switch--table-cell"
                       on-change="ctrl.selectionChanged()"
                       checked="item.checked" />
-                    <a ng-href="{{::item.url}}">
+                    <a ng-href="{{::item.url}}" class="search-item">
                       <span class="search-item__icon">
                         <i class="fa fa-th-large"></i>
                       </span>
-                      <span class="search-item__title">
-                        {{::item.title}}
+                      <span class="search-item__body">
+                        <div class="search-item__body-title">{{::item.title}}</div>
+                        <div class="search-item__body-sub-title" ng-show="item.folderTitle && section.hideHeader">
+                          <i class="fa fa-folder-o"></i>
+                          {{::item.folderTitle}}
+                        </div>
                       </span>
                       <span class="search-item__tags">
                         <span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in item.tags" tag-color-from-name="tag"  class="label label-tag">
