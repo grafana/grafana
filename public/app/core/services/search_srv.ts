@@ -52,7 +52,7 @@ export class SearchSrv {
   }
 
   search(options) {
-    if (!options.query) {
+    if (!options.query && !options.tag) {
       return this.browse();
     }
 

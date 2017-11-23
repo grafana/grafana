@@ -5,6 +5,7 @@ import { SearchSrv } from 'app/core/services/search_srv';
 export class DashboardListCtrl {
   public sections: any [];
   tags: any [];
+  selectedTagFilter: any;
   query: any;
   navModel: any;
   canDelete = false;
@@ -15,25 +16,38 @@ export class DashboardListCtrl {
     this.navModel = navModelSrv.getNav('dashboards', 'dashboards');
     this.query = {query: '', mode: 'tree', tag: []};
 
-    this.getDashboards();
-    // this.getDashboards().then(() => {
-    //   this.getTags();
-    // });
+    this.getDashboards().then(() => {
+      this.getTags();
+    });
   }
 
   getDashboards() {
-    return this.searchSrv.browse().then((result) => {
+    if (this.query.query.length === 0 && this.query.tag.length === 0) {
+      return this.searchSrv.browse().then((result) => {
+        return this.initDashboardList(result);
+      });
+    }
 
-      this.sections = result;
-
-      for (let section of this.sections) {
-        section.checked = false;
-
-        for (let dashboard of section.items) {
-          dashboard.checked = false;
-        }
-      }
+    return this.searchSrv.search(this.query).then((result) => {
+      return this.initDashboardList(result);
     });
+  }
+
+  initDashboardList(result: any) {
+    if (!result) {
+      this.sections = [];
+      return;
+    }
+
+    this.sections = result;
+
+    for (let section of this.sections) {
+      section.checked = false;
+
+      for (let dashboard of section.items) {
+        dashboard.checked = false;
+      }
+    }
   }
 
   selectionChanged() {
@@ -119,11 +133,16 @@ export class DashboardListCtrl {
     });
   }
 
-  // getTags() {
-  //   return this.backendSrv.get('/api/dashboards/tags').then((results) => {
-  //     this.tags = results;
-  //   });
-  // }
+  toggleFolder(section) {
+    return this.searchSrv.toggleFolder(section);
+  }
+
+  getTags() {
+    return this.searchSrv.getDashboardTags().then((results) => {
+      this.tags =  [{ term: 'Filter By Tag', disabled: true }].concat(results);
+      this.selectedTagFilter = this.tags[0];
+    });
+  }
 
   filterByTag(tag, evt) {
     this.query.tag.push(tag);
@@ -132,6 +151,12 @@ export class DashboardListCtrl {
       evt.stopPropagation();
       evt.preventDefault();
     }
+  }
+
+  filterChange() {
+    this.query.tag.push(this.selectedTagFilter.term);
+    this.selectedTagFilter = this.tags[0];
+    this.getDashboards();
   }
 
   removeTag(tag, evt) {

@@ -688,7 +688,14 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       }
 
       elem.bind("plotselected", function (event, ranges) {
+        if (panel.xaxis.mode !== 'time') {
+          // Skip if panel in histogram or series mode
+          plot.clearSelection();
+          return;
+        }
+
         if ((ranges.ctrlKey || ranges.metaKey) && contextSrv.isEditor) {
+          // Add annotation
           setTimeout(() => {
             eventManager.updateTime(ranges.xaxis);
           }, 100);
@@ -703,6 +710,11 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       });
 
       elem.bind("plotclick", function (event, pos, item) {
+        if (panel.xaxis.mode !== 'time') {
+          // Skip if panel in histogram or series mode
+          return;
+        }
+
         if ((pos.ctrlKey || pos.metaKey) && contextSrv.isEditor) {
           // Skip if range selected (added in "plotselected" event handler)
           let isRangeSelection = pos.x !== pos.x1;
