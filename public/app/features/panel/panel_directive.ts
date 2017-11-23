@@ -102,9 +102,7 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       // update scrollbar after mounting
       ctrl.events.on('component-did-mount', () => {
         if (ctrl.__proto__.constructor.scrollable) {
-          panelScrollbar = new PerfectScrollbar(panelContent[0], {
-            minScrollbarLength: 20
-          });
+          panelScrollbar = new PerfectScrollbar(panelContent[0]);
         }
       });
 
@@ -190,6 +188,10 @@ module.directive('grafanaPanel', function($rootScope, $document) {
 
         if (infoDrop) {
           infoDrop.destroy();
+        }
+
+        if (panelScrollbar) {
+          panelScrollbar.update();
         }
       });
     }
