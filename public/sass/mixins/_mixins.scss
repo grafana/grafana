@@ -364,7 +364,8 @@
   color: $list-item-link-color;
 
   &:hover {
-    background-color: $list-item-hover-bg;
+    background: $list-item-hover-bg;
+    color: $list-item-link-color;
   }
 }
 

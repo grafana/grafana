@@ -116,7 +116,7 @@ $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .3)
 
 // Lists
 $list-item-bg:         $card-background;
-$list-item-hover-bg:   lighten($gray-blue, 5%);
+$list-item-hover-bg:   lighten($gray-blue, 2%);
 $list-item-link-color: $text-color;
 $list-item-shadow:     $card-shadow;
 
