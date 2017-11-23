@@ -1,16 +1,9 @@
-define([
-  'angular',
-  'app/core/config',
-],
-function (angular, config) {
-  'use strict';
+import angular from 'angular';
+import config from 'app/core/config';
 
-  config = config.default;
+export class ChangePasswordCtrl {
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('ChangePasswordCtrl', function($scope, backendSrv, $location, navModelSrv) {
-
+  constructor($scope, backendSrv, $location, navModelSrv) {
     $scope.command = {};
     $scope.authProxyEnabled = config.authProxyEnabled;
     $scope.ldapEnabled = config.ldapEnabled;
@@ -28,6 +21,7 @@ function (angular, config) {
         $location.path("profile");
       });
     };
+  }
+}
 
-  });
-});
+angular.module('grafana.controllers').controller('ChangePasswordCtrl', ChangePasswordCtrl);

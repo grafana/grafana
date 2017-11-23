@@ -44,4 +44,3 @@ export class UserInviteCtrl {
 }
 
 angular.module('grafana.controllers').controller('UserInviteCtrl', UserInviteCtrl);
-
