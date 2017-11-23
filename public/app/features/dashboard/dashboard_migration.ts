@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import {GRID_COLUMN_COUNT, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN,
-        DEFAULT_ROW_HEIGHT, MIN_PANEL_HEIGHT} from 'app/core/constants';
+        DEFAULT_ROW_HEIGHT, MIN_PANEL_HEIGHT, DEFAULT_PANEL_SPAN} from 'app/core/constants';
 import {PanelModel} from './panel_model';
 import {DashboardModel} from './dashboard_model';
 
@@ -406,6 +406,7 @@ export class DashboardMigrator {
       let rowArea = new RowArea(rowGridHeight, GRID_COLUMN_COUNT, yPos);
 
       for (let panel of row.panels) {
+        panel.span = panel.span || DEFAULT_PANEL_SPAN;
         const panelWidth = Math.floor(panel.span) * widthFactor;
         const panelHeight = panel.height ? getGridHeight(panel.height) : rowGridHeight;
 
