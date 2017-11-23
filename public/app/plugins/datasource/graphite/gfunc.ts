@@ -2,92 +2,6 @@ import _ from "lodash";
 import $ from "jquery";
 import {isVersionGtOrEq} from "app/core/utils/version";
 
-export class FuncInstance {
-  def: any;
-  params: any;
-  text: any;
-
-  constructor(funcDef, options) {
-    this.def = funcDef;
-    this.params = [];
-
-    if (options && options.withDefaultParams) {
-      this.params = funcDef.defaultParams.slice(0);
-    }
-
-    this.updateText();
-  }
-
-  render(metricExp) {
-    var str = this.def.name + "(";
-    var parameters = _.map(
-      this.params,
-      function(value, index) {
-        var paramType = this.def.params[index].type;
-        if (
-          paramType === "int" ||
-          paramType === "value_or_series" ||
-          paramType === "boolean"
-        ) {
-          return value;
-        } else if (paramType === "int_or_interval" && $.isNumeric(value)) {
-          return value;
-        }
-
-        return "'" + value + "'";
-      }.bind(this)
-    );
-
-    if (metricExp) {
-      parameters.unshift(metricExp);
-    }
-
-    return str + parameters.join(", ") + ")";
-  }
-
-  _hasMultipleParamsInString(strValue, index) {
-    if (strValue.indexOf(",") === -1) {
-      return false;
-    }
-
-    return this.def.params[index + 1] && this.def.params[index + 1].optional;
-  }
-
-  updateParam(strValue, index) {
-    // handle optional parameters
-    // if string contains ',' and next param is optional, split and update both
-    if (this._hasMultipleParamsInString(strValue, index)) {
-      _.each(
-        strValue.split(","),
-        function(partVal, idx) {
-          this.updateParam(partVal.trim(), index + idx);
-        }.bind(this)
-      );
-      return;
-    }
-
-    if (strValue === "" && this.def.params[index].optional) {
-      this.params.splice(index, 1);
-    } else {
-      this.params[index] = strValue;
-    }
-
-    this.updateText();
-  }
-
-  updateText() {
-    if (this.params.length === 0) {
-      this.text = this.def.name + "()";
-      return;
-    }
-
-    var text = this.def.name + "(";
-    text += this.params.join(", ");
-    text += ")";
-    this.text = text;
-  }
-}
-
 var index = [];
 var categories = {
   Combine: [],
@@ -1141,6 +1055,93 @@ function isVersionRelatedFunction(func, graphiteVersion) {
   );
 }
 
+export class FuncInstance {
+  def: any;
+  params: any;
+  text: any;
+  added: boolean;
+
+  constructor(funcDef, options) {
+    this.def = funcDef;
+    this.params = [];
+
+    if (options && options.withDefaultParams) {
+      this.params = funcDef.defaultParams.slice(0);
+    }
+
+    this.updateText();
+  }
+
+  render(metricExp) {
+    var str = this.def.name + "(";
+    var parameters = _.map(
+      this.params,
+      function(value, index) {
+        var paramType = this.def.params[index].type;
+        if (
+          paramType === "int" ||
+          paramType === "value_or_series" ||
+          paramType === "boolean"
+        ) {
+          return value;
+        } else if (paramType === "int_or_interval" && $.isNumeric(value)) {
+          return value;
+        }
+
+        return "'" + value + "'";
+      }.bind(this)
+    );
+
+    if (metricExp) {
+      parameters.unshift(metricExp);
+    }
+
+    return str + parameters.join(", ") + ")";
+  }
+
+  _hasMultipleParamsInString(strValue, index) {
+    if (strValue.indexOf(",") === -1) {
+      return false;
+    }
+
+    return this.def.params[index + 1] && this.def.params[index + 1].optional;
+  }
+
+  updateParam(strValue, index) {
+    // handle optional parameters
+    // if string contains ',' and next param is optional, split and update both
+    if (this._hasMultipleParamsInString(strValue, index)) {
+      _.each(
+        strValue.split(","),
+        function(partVal, idx) {
+          this.updateParam(partVal.trim(), index + idx);
+        }.bind(this)
+      );
+      return;
+    }
+
+    if (strValue === "" && this.def.params[index].optional) {
+      this.params.splice(index, 1);
+    } else {
+      this.params[index] = strValue;
+    }
+
+    this.updateText();
+  }
+
+  updateText() {
+    if (this.params.length === 0) {
+      this.text = this.def.name + "()";
+      return;
+    }
+
+    var text = this.def.name + "(";
+    text += this.params.join(", ");
+    text += ")";
+    this.text = text;
+  }
+}
+
 export default {
   createFuncInstance: function(funcDef, options?) {
     if (_.isString(funcDef)) {
@@ -1157,7 +1158,7 @@ export default {
   },
 
   getCategories: function(graphiteVersion) {
-    var filteredCategories = {};
+    var filteredCategories: any = {};
     _.each(categories, function(functions, category) {
       var filteredFuncs = _.filter(functions, function(func) {
         return isVersionRelatedFunction(func, graphiteVersion);
