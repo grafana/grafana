@@ -65,9 +65,9 @@ describe('DashboardListCtrl', () => {
     beforeEach(() => {
       const response = [
         {
-          id: 410,
-          title: "afolder",
-          type: "dash-folder",
+          checked: false,
+          expanded: true,
+          hideHeader: true,
           items: [
             {
               id: 399,
@@ -79,48 +79,41 @@ describe('DashboardListCtrl', () => {
               folderId: 410,
               folderTitle: "afolder",
               folderSlug: "afolder"
-            }
-          ],
-          tags: [],
-          isStarred: false
-        },
-        {
-          id: 0,
-          title: "Root",
-          icon: 'fa fa-folder-open',
-          uri: "db/something-else",
-          type: "dash-db",
-          items: [
+            },
             {
               id: 500,
               title: "Dashboard Test",
               url: "dashboard/db/dashboard-test",
               icon: 'fa fa-folder',
               tags: [],
+              folderId: 499,
               isStarred: false
             }
-          ],
-          tags: [],
-          isStarred: false,
+          ]
         }
       ];
+
       ctrl = createCtrlWithStubs([], response);
     });
 
-    describe('with no filter', () => {
+    describe('with query filter', () => {
       beforeEach(() => {
         ctrl.query.query = 'd';
         ctrl.canMove = true;
         ctrl.canDelete = true;
+        ctrl.selectAllChecked = true;
         return ctrl.getDashboards();
       });
 
       it('should set checked to false on all sections and children', () => {
-        expect(ctrl.sections.length).toEqual(2);
+        expect(ctrl.sections.length).toEqual(1);
         expect(ctrl.sections[0].checked).toEqual(false);
         expect(ctrl.sections[0].items[0].checked).toEqual(false);
-        expect(ctrl.sections[1].checked).toEqual(false);
-        expect(ctrl.sections[1].items[0].checked).toEqual(false);
+        expect(ctrl.sections[0].items[1].checked).toEqual(false);
+      });
+
+      it('should uncheck select all', () => {
+        expect(ctrl.selectAllChecked).toBeFalsy();
       });
 
       it('should disable Move To button', () => {
@@ -130,6 +123,27 @@ describe('DashboardListCtrl', () => {
       it('should disable delete button', () => {
         expect(ctrl.canDelete).toBeFalsy();
       });
+
+      describe('when select all is checked', () => {
+        beforeEach(() => {
+          ctrl.selectAllChecked = true;
+          ctrl.onSelectAllChanged();
+        });
+
+        it('should select all dashboards', () => {
+          expect(ctrl.sections[0].checked).toBeFalsy();
+          expect(ctrl.sections[0].items[0].checked).toBeTruthy();
+          expect(ctrl.sections[0].items[1].checked).toBeTruthy();
+        });
+
+        it('should enable Move To button', () => {
+          expect(ctrl.canMove).toBeTruthy();
+        });
+
+        it('should enable delete button', () => {
+          expect(ctrl.canDelete).toBeTruthy();
+        });
+      });
     });
 
     describe('with tag filter', () => {
@@ -138,7 +152,7 @@ describe('DashboardListCtrl', () => {
       });
 
       it('should set tag filter', () => {
-        expect(ctrl.sections.length).toEqual(2);
+        expect(ctrl.sections.length).toEqual(1);
         expect(ctrl.query.tag[0]).toEqual('test');
       });
     });
@@ -152,12 +166,11 @@ describe('DashboardListCtrl', () => {
       });
 
       it('should set starred filter', () => {
-        expect(ctrl.sections.length).toEqual(2);
+        expect(ctrl.sections.length).toEqual(1);
         expect(ctrl.query.starred).toEqual(true);
       });
     });
   });
-
 
   describe('when selecting dashboards', () => {
     let ctrl;
@@ -193,6 +206,80 @@ describe('DashboardListCtrl', () => {
 
       it('should disable delete button', () => {
         expect(ctrl.canDelete).toBeFalsy();
+      });
+
+      describe('when select all is checked', () => {
+        beforeEach(() => {
+          ctrl.selectAllChecked = true;
+          ctrl.onSelectAllChanged();
+        });
+
+        it('should select all folders and dashboards', () => {
+          expect(ctrl.sections[0].checked).toBeTruthy();
+          expect(ctrl.sections[0].items[0].checked).toBeTruthy();
+          expect(ctrl.sections[1].checked).toBeTruthy();
+          expect(ctrl.sections[1].items[0].checked).toBeTruthy();
+        });
+
+        it('should disable Move To button', () => {
+          expect(ctrl.canMove).toBeFalsy();
+        });
+
+        it('should enable delete button', () => {
+          expect(ctrl.canDelete).toBeTruthy();
+        });
+      });
+    });
+
+    describe('and all folders and dashboards are selected', () => {
+      beforeEach(() => {
+        ctrl.sections = [
+          {
+            id: 1,
+            items: [
+              { id: 2, checked: true }
+            ],
+            checked: true
+          },
+          {
+            id: 0,
+            items: [
+              { id: 3, checked: true }
+            ],
+            checked: true
+          }
+        ];
+        ctrl.selectionChanged();
+      });
+
+      it('should disable Move To button', () => {
+        expect(ctrl.canMove).toBeFalsy();
+      });
+
+      it('should enable delete button', () => {
+        expect(ctrl.canDelete).toBeTruthy();
+      });
+
+      describe('when select all is unchecked', () => {
+        beforeEach(() => {
+          ctrl.selectAllChecked = false;
+          ctrl.onSelectAllChanged();
+        });
+
+        it('should uncheck all checked folders and dashboards', () => {
+          expect(ctrl.sections[0].checked).toBeFalsy();
+          expect(ctrl.sections[0].items[0].checked).toBeFalsy();
+          expect(ctrl.sections[1].checked).toBeFalsy();
+          expect(ctrl.sections[1].items[0].checked).toBeFalsy();
+        });
+
+        it('should disable Move To button', () => {
+          expect(ctrl.canMove).toBeFalsy();
+        });
+
+        it('should disable delete button', () => {
+          expect(ctrl.canDelete).toBeFalsy();
+        });
       });
     });
 

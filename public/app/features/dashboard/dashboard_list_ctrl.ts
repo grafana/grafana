@@ -10,6 +10,7 @@ export class DashboardListCtrl {
   navModel: any;
   canDelete = false;
   canMove = false;
+  selectAllChecked = false;
   starredFilterOptions = [{text: 'Filter by Starred', disabled: true}, {text: 'Yes'}, {text: 'No'}];
   selectedStarredFilter: any;
 
@@ -41,6 +42,7 @@ export class DashboardListCtrl {
   initDashboardList(result: any) {
     this.canMove = false;
     this.canDelete = false;
+    this.selectAllChecked = false;
 
     if (!result) {
       this.sections = [];
@@ -184,5 +186,20 @@ export class DashboardListCtrl {
   onStarredFilterChange() {
     this.query.starred = this.selectedStarredFilter.text === 'Yes';
     return this.getDashboards();
+  }
+
+  onSelectAllChanged() {
+    for (let section of this.sections) {
+      if (!section.hideHeader) {
+        section.checked = this.selectAllChecked;
+      }
+
+      section.items = _.map(section.items, (item) => {
+        item.checked = this.selectAllChecked;
+        return item;
+      });
+    }
+
+    this.selectionChanged();
   }
 }

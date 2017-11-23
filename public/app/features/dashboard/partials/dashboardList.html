@@ -50,22 +50,26 @@
       </div>
     </div>
 
-      <div style="height: 75%">
-        <div style="display: flex; justify-content: flex-end">
-          <select
-            style="width: 150px;"
-            class="gf-form-input"
-            ng-model="ctrl.selectedStarredFilter"
-            ng-options="t.text disable when t.disabled for t in ctrl.starredFilterOptions"
-            ng-change="ctrl.onStarredFilterChange()"
-          />
-          <select
-            style="width: 150px;"
-            class="gf-form-input"
-            ng-model="ctrl.selectedTagFilter"
-            ng-options="t.term disable when t.disabled for t in ctrl.tagFilterOptions"
-            ng-change="ctrl.onTagFilterChange()"
-          />
+      <div class="dashboard-list">
+        <div class="search-results-filter-row">
+            <gf-form-switch
+              on-change="ctrl.onSelectAllChanged()"
+              checked="ctrl.selectAllChecked"
+            />
+          <div class="search-results-filter-row__filters">
+            <select
+              class="search-results-filter-row__filters-item gf-form-input"
+              ng-model="ctrl.selectedStarredFilter"
+              ng-options="t.text disable when t.disabled for t in ctrl.starredFilterOptions"
+              ng-change="ctrl.onStarredFilterChange()"
+            />
+            <select
+              class="search-results-filter-row__filters-item gf-form-input"
+              ng-model="ctrl.selectedTagFilter"
+              ng-options="t.term disable when t.disabled for t in ctrl.tagFilterOptions"
+              ng-change="ctrl.onTagFilterChange()"
+            />
+          </div>
         </div>
         <div class="search-results-container" ng-show="ctrl.sections.length > 0" grafana-scrollbar>
           <div ng-repeat="section in ctrl.sections" class="search-section">
