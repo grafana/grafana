@@ -2,6 +2,7 @@ import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import impressionSrv from 'app/core/services/impression_srv';
 import store from 'app/core/store';
+import { contextSrv } from 'app/core/services/context_srv';
 
 export class SearchSrv {
   recentIsOpen: boolean;
@@ -20,6 +21,7 @@ export class SearchSrv {
           title: 'Recent Boards',
           icon: 'fa fa-clock-o',
           score: -1,
+          removable: true,
           expanded: this.recentIsOpen,
           toggle: this.toggleRecent.bind(this),
           items: result,
@@ -60,6 +62,10 @@ export class SearchSrv {
   }
 
   private getStarred(sections) {
+    if (!contextSrv.isSignedIn) {
+      return Promise.resolve();
+    }
+
     return this.backendSrv.search({starred: true, limit: 5}).then(result => {
       if (result.length > 0) {
         sections['starred'] = {

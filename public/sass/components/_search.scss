@@ -141,14 +141,6 @@
   &.selected {
     background: $list-item-hover-bg;
   }
-
-  // .fa-star, .fa-star-o {
-  //   padding-left: 13px;
-  // }
-  //
-  // .fa-star {
-  //   color: $orange;
-  // }
 }
 
 .search-item__body {
@@ -182,7 +174,17 @@
 }
 
 .search-item__actions {
-  visibility: hidden;
+  flex: 0 0 auto;
+}
+
+.search-item__actions__item {
+  display: none;
+}
+
+.search-item:hover {
+  .search-item__actions__item {
+    opacity: 0.8;
+  }
 }
 
 .search-button-row {

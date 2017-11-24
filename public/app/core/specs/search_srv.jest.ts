@@ -1,6 +1,7 @@
 import { SearchSrv } from 'app/core/services/search_srv';
 import { BackendSrvMock } from 'test/mocks/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 
 jest.mock('app/core/store', () => {
   return {
@@ -22,6 +23,7 @@ describe('SearchSrv', () => {
     backendSrvMock = new BackendSrvMock();
     searchSrv = new SearchSrv(backendSrvMock, Promise);
 
+    contextSrv.isSignedIn = true;
     impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([]);
   });
 

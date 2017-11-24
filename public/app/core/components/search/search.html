@@ -80,7 +80,9 @@
 							</span>
 						</span>
 						<span class="search-item__actions">
-							<i class="fa" ng-class="{'fa-star': item.isStarred, 'fa-star-o': !item.isStarred}"></i>
+              <span class="search-item__actions__item" ng-click="ctrl.toggleStar()">
+                <i class="fa" ng-class="{'fa-star': item.isStarred, 'fa-star-o': !item.isStarred}"></i>
+              </span>
 						</span>
 					</a>
 				</div>
