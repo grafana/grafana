@@ -1,12 +1,10 @@
-define([
-  'angular',
-  '../core_module',
-],
-function (angular, coreModule) {
-  'use strict';
+import angular from 'angular';
+import coreModule from '../core_module';
 
-  coreModule.default.controller('JsonEditorCtrl', function($scope) {
+export class JsonEditorCtrl {
 
+  /** @ngInject */
+  constructor($scope) {
     $scope.json = angular.toJson($scope.object, true);
     $scope.canUpdate = $scope.updateHandler !== void 0 && $scope.contextSrv.isEditor;
 
@@ -14,7 +12,7 @@ function (angular, coreModule) {
       var newObject = angular.fromJson($scope.json);
       $scope.updateHandler(newObject, $scope.object);
     };
+  }
+}
 
-  });
-
-});
+coreModule.controller('JsonEditorCtrl', JsonEditorCtrl);
