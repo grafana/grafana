@@ -430,7 +430,9 @@ export class DashboardMigrator {
         this.dashboard.panels.push(rowPanelModel);
       }
 
-      yPos += rowGridHeight;
+      if (!(rowPanelModel && rowPanel.collapsed)) {
+        yPos += rowGridHeight;
+      }
     }
   }
 }

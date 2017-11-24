@@ -161,12 +161,14 @@ describe('DashboardModel', function() {
 
     it('should add special "row" panel if row is collapsed', function() {
       model.rows = [
-        createRow({collapse: true, height: 8}, [[6], [6]])
+        createRow({collapse: true, height: 8}, [[6], [6]]),
+        createRow({height: 8}, [[12]])
       ];
       let dashboard = new DashboardModel(model);
       let panelGridPos = getGridPositions(dashboard);
       let expectedGrid = [
-        {x: 0, y: 0, w: 24, h: 8}
+        {x: 0, y: 0, w: 24, h: 8},
+        {x: 0, y: 1, w: 24, h: 8}
       ];
 
       expect(panelGridPos).toEqual(expectedGrid);
@@ -183,6 +185,26 @@ describe('DashboardModel', function() {
         {x: 0, y: 0, w: 24, h: 8},
         {x: 0, y: 1, w: 12, h: 8}, {x: 12, y: 1, w: 12, h: 8},
         {x: 0, y: 9, w: 24, h: 8},
+      ];
+
+      expect(panelGridPos).toEqual(expectedGrid);
+    });
+
+    it('should not add "row" panel if row has not visible title or not collapsed', function() {
+      model.rows = [
+        createRow({collapse: true, height: 8}, [[12]]),
+        createRow({height: 8}, [[12]]),
+        createRow({height: 8}, [[12], [6], [6]]),
+        createRow({collapse: true, height: 8}, [[12]])
+      ];
+      let dashboard = new DashboardModel(model);
+      let panelGridPos = getGridPositions(dashboard);
+      let expectedGrid = [
+        {x: 0, y: 0, w: 24, h: 8},
+        {x: 0, y: 1, w: 24, h: 8},
+        {x: 0, y: 9, w: 24, h: 8},
+        {x: 0, y: 17, w: 12, h: 8}, {x: 12, y: 17, w: 12, h: 8},
+        {x: 0, y: 25, w: 24, h: 8},
       ];
 
       expect(panelGridPos).toEqual(expectedGrid);
