@@ -17,6 +17,10 @@ class Settings {
     alertingEnabled: boolean;
     authProxyEnabled: boolean;
     ldapEnabled: boolean;
+    oauth: any;
+    disableUserSignUp: boolean;
+    loginHint: any;
+    loginError: any;
 
     constructor(options) {
         var defaults = {
