@@ -6,7 +6,7 @@ import PrometheusMetricFindQuery from './metric_find_query';
 import TableModel from 'app/core/table_model';
 
 function prometheusSpecialRegexEscape(value) {
-  return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\\\$&');
+  return value.replace(/[\\^$*+?()|[\]{}]/g, '\\\\$&');
 }
 
 export class PrometheusDatasource {
