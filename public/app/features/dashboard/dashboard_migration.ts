@@ -383,6 +383,9 @@ export class DashboardMigrator {
       return;
     }
 
+    // Add special "row" panels if even one row is collapsed or has visible title
+    const showRows = _.some(old.rows, (row) => row.collapse || row.showTitle);
+
     for (let row of old.rows) {
       let xPos = 0;
       let height: any = row.height || DEFAULT_ROW_HEIGHT;
@@ -390,7 +393,7 @@ export class DashboardMigrator {
 
       let rowPanel: any = {};
       let rowPanelModel: PanelModel;
-      if (row.collapse || row.showTitle) {
+      if (showRows) {
         // add special row panel
         rowPanel.id = nextRowId;
         rowPanel.type = 'row';

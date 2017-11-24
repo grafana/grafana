@@ -167,8 +167,9 @@ describe('DashboardModel', function() {
       let dashboard = new DashboardModel(model);
       let panelGridPos = getGridPositions(dashboard);
       let expectedGrid = [
-        {x: 0, y: 0, w: 24, h: 8},
-        {x: 0, y: 1, w: 24, h: 8}
+        {x: 0, y: 0, w: 24, h: 8}, // row
+        {x: 0, y: 1, w: 24, h: 8}, // row
+        {x: 0, y: 2, w: 24, h: 8}
       ];
 
       expect(panelGridPos).toEqual(expectedGrid);
@@ -182,9 +183,10 @@ describe('DashboardModel', function() {
       let dashboard = new DashboardModel(model);
       let panelGridPos = getGridPositions(dashboard);
       let expectedGrid = [
-        {x: 0, y: 0, w: 24, h: 8},
+        {x: 0, y: 0, w: 24, h: 8}, // row
         {x: 0, y: 1, w: 12, h: 8}, {x: 12, y: 1, w: 12, h: 8},
-        {x: 0, y: 9, w: 24, h: 8},
+        {x: 0, y: 9, w: 24, h: 8}, // row
+        {x: 0, y: 10, w: 24, h: 8},
       ];
 
       expect(panelGridPos).toEqual(expectedGrid);
@@ -200,11 +202,29 @@ describe('DashboardModel', function() {
       let dashboard = new DashboardModel(model);
       let panelGridPos = getGridPositions(dashboard);
       let expectedGrid = [
-        {x: 0, y: 0, w: 24, h: 8},
-        {x: 0, y: 1, w: 24, h: 8},
-        {x: 0, y: 9, w: 24, h: 8},
-        {x: 0, y: 17, w: 12, h: 8}, {x: 12, y: 17, w: 12, h: 8},
-        {x: 0, y: 25, w: 24, h: 8},
+        {x: 0, y: 0, w: 24, h: 8}, // row
+        {x: 0, y: 1, w: 24, h: 8}, // row
+        {x: 0, y: 2, w: 24, h: 8},
+        {x: 0, y: 10, w: 24, h: 8}, // row
+        {x: 0, y: 11, w: 24, h: 8},
+        {x: 0, y: 19, w: 12, h: 8}, {x: 12, y: 19, w: 12, h: 8},
+        {x: 0, y: 27, w: 24, h: 8}, // row
+      ];
+
+      expect(panelGridPos).toEqual(expectedGrid);
+    });
+
+    it('should add all rows if even one collapsed or titled row is present', function() {
+      model.rows = [
+        createRow({collapse: true, height: 8}, [[6], [6]]),
+        createRow({height: 8}, [[12]])
+      ];
+      let dashboard = new DashboardModel(model);
+      let panelGridPos = getGridPositions(dashboard);
+      let expectedGrid = [
+        {x: 0, y: 0, w: 24, h: 8}, // row
+        {x: 0, y: 1, w: 24, h: 8}, // row
+        {x: 0, y: 2, w: 24, h: 8}
       ];
 
       expect(panelGridPos).toEqual(expectedGrid);
