@@ -78,6 +78,15 @@ func (e PostgresQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Ro
 
 	rowLimit := 1000000
 	rowCount := 0
+	timeIndex := -1
+
+	// check if there is a column named time
+	for i, col := range columnNames {
+		switch col {
+		case "time":
+			timeIndex = i
+		}
+	}
 
 	for ; rows.Next(); rowCount++ {
 		if rowCount > rowLimit {
@@ -87,6 +96,15 @@ func (e PostgresQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Ro
 		values, err := e.getTypedRowData(rows)
 		if err != nil {
 			return err
+		}
+
+		// convert column named time to unix timestamp to make
+		// native datetime postgres types work in annotation queries
+		if timeIndex != -1 {
+			switch value := values[timeIndex].(type) {
+			case time.Time:
+				values[timeIndex] = float64(value.UnixNano() / 1e9)
+			}
 		}
 
 		table.Rows = append(table.Rows, values)
