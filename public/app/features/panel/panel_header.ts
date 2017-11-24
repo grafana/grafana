@@ -86,9 +86,10 @@ function panelHeader($compile) {
 
       let menuElem = elem.find('.panel-menu');
       let menuScope;
+      let isDragged;
 
       elem.click(function(evt) {
-        //const targetClass = evt.target.className;
+        const targetClass = evt.target.className;
 
         // remove existing scope
         if (menuScope) {
@@ -100,10 +101,30 @@ function panelHeader($compile) {
         menuElem.html(menuHtml);
         $compile(menuElem)(menuScope);
 
-        // if (targetClass === 'panel-title-text' || targetClass === 'panel-title') {
-        //   evt.stopPropagation();
-        //   elem.find('[data-toggle=dropdown]').dropdown('toggle');
-        // }
+        if (targetClass.indexOf('panel-title-text') >= 0 || targetClass.indexOf('panel-title') >= 0) {
+          togglePanelMenu(evt);
+        }
+      });
+
+      function togglePanelMenu(e) {
+        if (!isDragged) {
+          e.stopPropagation();
+          elem.find('[data-toggle=dropdown]').dropdown('toggle');
+        }
+      }
+
+      let mouseX, mouseY;
+      elem.mousedown((e) => {
+        mouseX = e.pageX;
+        mouseY = e.pageY;
+      });
+
+      elem.mouseup((e) => {
+        if (mouseX === e.pageX && mouseY === e.pageY) {
+          isDragged = false;
+        } else {
+          isDragged = true;
+        }
       });
     }
   };
