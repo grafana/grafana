@@ -1,18 +1,11 @@
-define(['angular',
-  'lodash',
-  'jquery',
-  'moment',
-  'app/core/config',
-],
-function (angular, _, $, moment, config) {
-  'use strict';
+import angular from 'angular';
+import moment from 'moment';
+import config from 'app/core/config';
 
-  config = config.default;
+export class ShareModalCtrl {
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, templateSrv, linkSrv) {
-
+  /** @ngInject */
+  constructor($scope, $rootScope, $location, $timeout, timeSrv, templateSrv, linkSrv) {
     $scope.options = { forCurrent: true, includeTemplateVars: true, theme: 'current' };
     $scope.editor = { index: $scope.tabIndex || 0};
 
@@ -93,7 +86,7 @@ function (angular, _, $, moment, config) {
     $scope.getShareUrl = function() {
       return $scope.shareUrl;
     };
+  }
+}
 
-  });
-
-});
+angular.module('grafana.controllers').controller('ShareModalCtrl', ShareModalCtrl);

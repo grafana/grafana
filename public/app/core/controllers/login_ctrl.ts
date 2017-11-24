@@ -1,15 +1,11 @@
-define([
-  'angular',
-  'lodash',
-  '../core_module',
-  'app/core/config',
-],
-function (angular, _, coreModule, config) {
-  'use strict';
+import _ from 'lodash';
+import coreModule from '../core_module';
+import config from 'app/core/config';
 
-  config = config.default;
+export class LoginCtrl {
 
-  coreModule.default.controller('LoginCtrl', function($scope, backendSrv, contextSrv, $location) {
+  /** @ngInject */
+  constructor($scope, backendSrv, contextSrv, $location) {
     $scope.formModel = {
       user: '',
       email: '',
@@ -74,8 +70,7 @@ function (angular, _, coreModule, config) {
 
         if (params.redirect && params.redirect[0] === '/') {
           window.location.href = config.appSubUrl + params.redirect;
-        }
-        else if (result.redirectUrl) {
+        } else if (result.redirectUrl) {
           window.location.href = result.redirectUrl;
         } else {
           window.location.href = config.appSubUrl + '/';
@@ -84,5 +79,7 @@ function (angular, _, coreModule, config) {
     };
 
     $scope.init();
-  });
-});
+  }
+}
+
+coreModule.controller('LoginCtrl', LoginCtrl);
