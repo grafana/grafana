@@ -142,8 +142,13 @@ func (e PostgresQueryEndpoint) getTypedRowData(rows *core.Rows) (tsdb.RowValues,
 func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 	pointsBySeries := make(map[string]*tsdb.TimeSeries)
 	seriesByQueryOrder := list.New()
-	columnNames, err := rows.Columns()
 
+	columnNames, err := rows.Columns()
+	if err != nil {
+		return err
+	}
+
+	columnTypes, err := rows.ColumnTypes()
 	if err != nil {
 		return err
 	}
@@ -153,13 +158,21 @@ func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *co
 	timeIndex := -1
 	metricIndex := -1
 
-	// check columns of resultset
+	// check columns of resultset: a column named time is mandatory
+	// the first text column is treated as metric name unless a column named metric is present
 	for i, col := range columnNames {
 		switch col {
 		case "time":
 			timeIndex = i
 		case "metric":
 			metricIndex = i
+		default:
+			if metricIndex == -1 {
+				switch columnTypes[i].DatabaseTypeName() {
+				case "UNKNOWN", "TEXT", "VARCHAR", "CHAR":
+					metricIndex = i
+				}
+			}
 		}
 	}
 
