@@ -151,7 +151,7 @@ export class SearchCtrl {
   }
 
   toggleFolder(section) {
-    this.searchSrv.toggleFolder(section);
+    this.searchSrv.toggleSection(section);
   }
 }
 

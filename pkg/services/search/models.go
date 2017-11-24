@@ -63,6 +63,7 @@ type FindPersistedDashboardsQuery struct {
 	FolderIds    []int64
 	Tags         []string
 	Limit        int
+	IsBrowse     bool
 
 	Result HitList
 }

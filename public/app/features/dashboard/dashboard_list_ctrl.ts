@@ -26,14 +26,6 @@ export class DashboardListCtrl {
   }
 
   getDashboards() {
-    if (this.query.query.length === 0 &&
-        this.query.tag.length === 0 &&
-        !this.query.starred) {
-      return this.searchSrv.browse().then((result) => {
-        return this.initDashboardList(result);
-      });
-    }
-
     return this.searchSrv.search(this.query).then((result) => {
       return this.initDashboardList(result);
     });
@@ -144,7 +136,7 @@ export class DashboardListCtrl {
   }
 
   toggleFolder(section) {
-    return this.searchSrv.toggleFolder(section);
+    return this.searchSrv.toggleSection(section);
   }
 
   getTags() {

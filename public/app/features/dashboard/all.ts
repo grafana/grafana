@@ -1,4 +1,3 @@
-
 import './dashboard_ctrl';
 import './alerting_srv';
 import './history/history';
@@ -15,7 +14,6 @@ import './time_srv';
 import './unsavedChangesSrv';
 import './unsaved_changes_modal';
 import './timepicker/timepicker';
-import './impression_store';
 import './upload';
 import './import/dash_import';
 import './export/export_modal';

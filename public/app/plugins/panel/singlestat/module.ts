@@ -592,8 +592,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       if (!ctrl.data) { return; }
       data = ctrl.data;
 
-      console.log('singlestat', elem.html());
-
       // get thresholds
       data.thresholds = panel.thresholds.split(',').map(function(strVale) {
         return Number(strVale.trim());

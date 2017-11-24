@@ -2,7 +2,7 @@ import store from 'app/core/store';
 import _ from 'lodash';
 import config from 'app/core/config';
 
-export class ImpressionsStore {
+export class ImpressionSrv {
   constructor() {}
 
   addDashboardImpression(dashboardId) {
@@ -44,8 +44,5 @@ export class ImpressionsStore {
   }
 }
 
-var impressions = new ImpressionsStore();
-
-export {
-  impressions
-};
+const impressionSrv = new ImpressionSrv();
+export default impressionSrv;

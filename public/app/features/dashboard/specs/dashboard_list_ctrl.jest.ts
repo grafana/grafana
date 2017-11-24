@@ -93,7 +93,7 @@ describe('DashboardListCtrl', () => {
         }
       ];
 
-      ctrl = createCtrlWithStubs([], response);
+      ctrl = createCtrlWithStubs(response);
     });
 
     describe('with query filter', () => {
@@ -490,15 +490,12 @@ describe('DashboardListCtrl', () => {
   });
 });
 
-function createCtrlWithStubs(browseResponse: any, searchResponse?: any, tags?: any) {
+function createCtrlWithStubs(searchResponse: any, tags?: any) {
   const searchSrvStub = {
-    browse: () => {
-      return q.resolve(browseResponse);
-    },
     search: (options: any) => {
       return q.resolve(searchResponse);
     },
-    toggleFolder: (section) => {
+    toggleSection: (section) => {
       return;
     },
     getDashboardTags: () => {
