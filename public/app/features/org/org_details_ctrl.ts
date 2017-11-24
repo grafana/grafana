@@ -1,13 +1,9 @@
-define([
-  'angular',
-],
-function (angular) {
-  'use strict';
+import angular from 'angular';
 
-  var module = angular.module('grafana.controllers');
+export class OrgDetailsCtrl {
 
-  module.controller('OrgDetailsCtrl', function($scope, $http, backendSrv, contextSrv, navModelSrv) {
-
+  /** @ngInject **/
+  constructor($scope, $http, backendSrv, contextSrv, navModelSrv) {
     $scope.init = function() {
       $scope.getOrgInfo();
       $scope.navModel = navModelSrv.getNav('cfg', 'org');
@@ -33,6 +29,7 @@ function (angular) {
     };
 
     $scope.init();
+  }
+}
 
-  });
-});
+angular.module('grafana.controllers').controller('OrgDetailsCtrl', OrgDetailsCtrl);

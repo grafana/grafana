@@ -16,6 +16,7 @@ export class ElasticDatasource {
   timeField: string;
   esVersion: number;
   interval: string;
+  maxConcurrentShardRequests: number;
   queryBuilder: ElasticQueryBuilder;
   indexPattern: IndexPattern;
 
@@ -30,6 +31,7 @@ export class ElasticDatasource {
     this.esVersion = instanceSettings.jsonData.esVersion;
     this.indexPattern = new IndexPattern(instanceSettings.index, instanceSettings.jsonData.interval);
     this.interval = instanceSettings.jsonData.timeInterval;
+    this.maxConcurrentShardRequests = instanceSettings.jsonData.maxConcurrentShardRequests;
     this.queryBuilder = new ElasticQueryBuilder({
       timeField: this.timeField,
       esVersion: this.esVersion,
@@ -213,11 +215,15 @@ export class ElasticDatasource {
   }
 
   getQueryHeader(searchType, timeFrom, timeTo) {
-    return angular.toJson({
-        search_type: searchType,
-        "ignore_unavailable": true,
-        index: this.indexPattern.getIndexList(timeFrom, timeTo),
-    });
+    var query_header: any = {
+            search_type: searchType,
+            "ignore_unavailable": true,
+            index: this.indexPattern.getIndexList(timeFrom, timeTo),
+        };
+    if (this.esVersion >= 56) {
+        query_header["max_concurrent_shard_requests"] = this.maxConcurrentShardRequests;
+    }
+    return angular.toJson(query_header);
   }
 
   query(options) {

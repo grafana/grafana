@@ -1,7 +1,7 @@
 import  AdminListUsersCtrl from './admin_list_users_ctrl';
-import  './adminListOrgsCtrl';
-import  './adminEditOrgCtrl';
-import  './adminEditUserCtrl';
+import  './admin_list_orgs_ctrl';
+import  './admin_edit_org_ctrl';
+import  './admin_edit_user_ctrl';
 
 import coreModule from 'app/core/core_module';
 

@@ -1,13 +1,9 @@
-define([
-  'angular',
-],
-function (angular) {
-  'use strict';
+import angular from 'angular';
 
-  var module = angular.module('grafana.controllers');
+export class AdminEditOrgCtrl {
 
-  module.controller('AdminEditOrgCtrl', function($scope, $routeParams, backendSrv, $location, navModelSrv) {
-
+  /** @ngInject */
+  constructor($scope, $routeParams, backendSrv, $location, navModelSrv) {
     $scope.init = function() {
       $scope.navModel = navModelSrv.getNav('cfg', 'admin', 'global-orgs');
 
@@ -48,7 +44,7 @@ function (angular) {
     };
 
     $scope.init();
+  }
+}
 
-  });
-
-});
+angular.module('grafana.controllers').controller('AdminEditOrgCtrl', AdminEditOrgCtrl);
