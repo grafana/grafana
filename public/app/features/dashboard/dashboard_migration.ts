@@ -488,11 +488,11 @@ class RowArea {
   /**
    * Calculate position for the new panel in the row.
    */
-  getPanelPosition(panelHeight, panelWidth) {
+  getPanelPosition(panelHeight, panelWidth, callOnce = false) {
     let startPlace, endPlace;
     let place;
     for (let i = this.area.length - 1; i >= 0; i--) {
-      if (panelHeight <= this.height - this.area[i]) {
+      if (this.height - this.area[i] > 0) {
         if (endPlace === undefined) {
           endPlace = i;
         } else {
@@ -513,11 +513,13 @@ class RowArea {
         x: startPlace,
         y: yPos
       };
-    } else {
+    } else if (!callOnce) {
       // wrap to next row
       this.yPos += this.height;
       this.reset();
-      return this.getPanelPosition(panelHeight, panelWidth);
+      return this.getPanelPosition(panelHeight, panelWidth, true);
+    } else {
+      return null;
     }
 
     return place;

@@ -231,6 +231,34 @@ describe('DashboardModel', function() {
       expect(panelGridPos).toEqual(expectedGrid);
     });
 
+    it('should fill current row if it possible (2)', function() {
+      model.rows = [
+        createRow({height: 8}, [[4], [2, 3], [4, 6], [2, 3], [2, 3], [8, 3]])
+      ];
+      let dashboard = new DashboardModel(model);
+      let panelGridPos = getGridPositions(dashboard);
+      let expectedGrid = [
+        {x: 0, y: 0, w: 8, h: 8}, {x: 8, y: 0, w: 4, h: 3}, {x: 12, y: 0, w: 8, h: 6},
+        {x: 20, y: 0, w: 4, h: 3}, {x: 20, y: 3, w: 4, h: 3}, {x: 8, y: 6, w: 16, h: 3}
+      ];
+
+      expect(panelGridPos).toEqual(expectedGrid);
+    });
+
+    it('should fill current row if panel height more than row height', function() {
+      model.rows = [
+        createRow({height: 6}, [[4], [2, 3], [4, 8], [2, 3], [2, 3]])
+      ];
+      let dashboard = new DashboardModel(model);
+      let panelGridPos = getGridPositions(dashboard);
+      let expectedGrid = [
+        {x: 0, y: 0, w: 8, h: 6}, {x: 8, y: 0, w: 4, h: 3},
+        {x: 12, y: 0, w: 8, h: 8}, {x: 20, y: 0, w: 4, h: 3}, {x: 20, y: 3, w: 4, h: 3}
+      ];
+
+      expect(panelGridPos).toEqual(expectedGrid);
+    });
+
     it('should wrap panels to multiple rows', function() {
       model.rows = [
         createRow({height: 6}, [[6], [6], [12], [6], [3], [3]])
