@@ -9,7 +9,7 @@ import './save_modal';
 import './shareModalCtrl';
 import './shareSnapshotCtrl';
 import './dashboard_srv';
-import './viewStateSrv';
+import './view_state_srv';
 import './time_srv';
 import './unsavedChangesSrv';
 import './unsaved_changes_modal';
