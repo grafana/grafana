@@ -387,7 +387,6 @@ export class DashboardMigrator {
     const showRows = _.some(old.rows, (row) => row.collapse || row.showTitle);
 
     for (let row of old.rows) {
-      let xPos = 0;
       let height: any = row.height || DEFAULT_ROW_HEIGHT;
       const rowGridHeight = getGridHeight(height);
 
@@ -419,8 +418,6 @@ export class DashboardMigrator {
         rowArea.addPanel(panel.gridPos);
 
         delete panel.span;
-
-        xPos += panel.gridPos.w;
 
         if (rowPanelModel && rowPanel.collapsed) {
           rowPanelModel.panels.push(panel);
