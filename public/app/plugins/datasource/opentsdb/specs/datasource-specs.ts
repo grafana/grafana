@@ -35,6 +35,7 @@ describe('opentsdb', function() {
       expect(requestOptions.url).to.be('/api/suggest');
       expect(requestOptions.params.type).to.be('metrics');
       expect(requestOptions.params.q).to.be('pew');
+      expect(results).not.to.be(null);
     });
 
     it('tag_names(cpu) should generate lookup query', function() {

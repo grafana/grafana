@@ -32,6 +32,18 @@
       </span>
     </div>
 
+    <div class="gf-form">
+        <div class="gf-form-button-row"
+          ng-show="ctrl.hasFilters">
+          <button
+            type="button"
+            class="btn gf-form-button btn-inverse btn-small"
+            ng-click="ctrl.clearFilters()">
+            <i class="fa fa-close"></i> Clear current search query and filters
+        </button>
+        </div>
+    </div>
+
     <div class="gf-form-group">
       <div class="gf-form-button-row">
         <button	type="button"

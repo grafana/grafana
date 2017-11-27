@@ -166,8 +166,6 @@ describe('CloudWatchDatasource', function() {
   });
 
   describe('When performing CloudWatch query for extended statistics', function() {
-    var requestParams;
-
     var query = {
       range: { from: 'now-1h', to: 'now' },
       rangeRaw: { from: 1483228800, to: 1483232400 },
@@ -212,7 +210,6 @@ describe('CloudWatchDatasource', function() {
 
     beforeEach(function() {
       ctx.backendSrv.datasourceRequest = function(params) {
-        requestParams = params.data;
         return ctx.$q.when({data: response});
       };
     });

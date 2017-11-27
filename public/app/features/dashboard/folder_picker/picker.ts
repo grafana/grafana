@@ -9,8 +9,7 @@ export class FolderPickerCtrl {
   labelClass: string;
   onChange: any;
   rootName = 'Root';
-
-  private folder: any;
+  folder: any;
 
   /** @ngInject */
   constructor(private backendSrv) {

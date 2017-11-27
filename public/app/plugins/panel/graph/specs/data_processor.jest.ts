@@ -4,8 +4,8 @@ describe('Graph DataProcessor', function() {
   var panel: any = {
     xaxis: {}
   };
+
   var processor = new DataProcessor(panel);
-  var seriesList;
 
   describe('Given default xaxis options and query that returns docs', () => {
 
@@ -14,7 +14,7 @@ describe('Graph DataProcessor', function() {
       panel.xaxis.name = 'hostname';
       panel.xaxis.values = [];
 
-      seriesList = processor.getSeriesList({
+      processor.getSeriesList({
         dataList: [
           {
             type: 'docs',
