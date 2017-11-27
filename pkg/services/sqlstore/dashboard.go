@@ -340,7 +340,7 @@ func GetDashboards(query *m.GetDashboardsQuery) error {
 func GetDashboardsByPluginId(query *m.GetDashboardsByPluginIdQuery) error {
 	var dashboards = make([]*m.Dashboard, 0)
 
-	err := x.Where("org_id=? AND plugin_id=?", query.OrgId, query.PluginId).Find(&dashboards)
+	err := x.Where("org_id=? AND plugin_id=? AND is_folder=0", query.OrgId, query.PluginId).Find(&dashboards)
 	query.Result = dashboards
 
 	if err != nil {

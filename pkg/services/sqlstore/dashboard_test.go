@@ -458,6 +458,25 @@ func TestDashboardDataAccess(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("Given a plugin with imported dashboards", func() {
+			pluginId := "test-app"
+
+			appFolder := insertTestDashboardForPlugin("app-test", 1, 0, true, pluginId)
+			insertTestDashboardForPlugin("app-dash1", 1, appFolder.Id, false, pluginId)
+			insertTestDashboardForPlugin("app-dash2", 1, appFolder.Id, false, pluginId)
+
+			Convey("Should return imported dashboard", func() {
+				query := m.GetDashboardsByPluginIdQuery{
+					PluginId: pluginId,
+					OrgId:    1,
+				}
+
+				err := GetDashboardsByPluginId(&query)
+				So(err, ShouldBeNil)
+				So(len(query.Result), ShouldEqual, 2)
+			})
+		})
 	})
 }
 
@@ -471,6 +490,24 @@ func insertTestDashboard(title string, orgId int64, folderId int64, isFolder boo
 			"title": title,
 			"tags":  tags,
 		}),
+	}
+
+	err := SaveDashboard(&cmd)
+	So(err, ShouldBeNil)
+
+	return cmd.Result
+}
+
+func insertTestDashboardForPlugin(title string, orgId int64, folderId int64, isFolder bool, pluginId string) *m.Dashboard {
+	cmd := m.SaveDashboardCommand{
+		OrgId:    orgId,
+		FolderId: folderId,
+		IsFolder: isFolder,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"id":    nil,
+			"title": title,
+		}),
+		PluginId: pluginId,
 	}
 
 	err := SaveDashboard(&cmd)

@@ -22,10 +22,19 @@ func TestDashboardImport(t *testing.T) {
 
 		So(err, ShouldBeNil)
 
+		folderId := int64(1000)
 		var importedDash *m.Dashboard
+		var createdFolder *m.Dashboard
 		bus.AddHandler("test", func(cmd *m.SaveDashboardCommand) error {
-			importedDash = cmd.GetDashboardModel()
-			cmd.Result = importedDash
+			if cmd.IsFolder {
+				createdFolder = cmd.GetDashboardModel()
+				createdFolder.Id = folderId
+				cmd.Result = createdFolder
+			} else {
+				importedDash = cmd.GetDashboardModel()
+				cmd.Result = importedDash
+			}
+
 			return nil
 		})
 
@@ -54,21 +63,28 @@ func TestDashboardImport(t *testing.T) {
 
 			panel := importedDash.Data.Get("rows").GetIndex(0).Get("panels").GetIndex(0)
 			So(panel.Get("datasource").MustString(), ShouldEqual, "graphite")
+
+			So(importedDash.FolderId, ShouldEqual, folderId)
+		})
+
+		Convey("should create app folder", func() {
+			So(createdFolder.Title, ShouldEqual, "Test App")
+			So(createdFolder.Id, ShouldEqual, folderId)
 		})
 	})
 
 	Convey("When evaling dashboard template", t, func() {
 		template, _ := simplejson.NewJson([]byte(`{
-      "__inputs": [
-        {
-					"name": "DS_NAME",
-          "type": "datasource"
-        }
-      ],
-      "test": {
-        "prop": "${DS_NAME}"
-      }
-    }`))
+		"__inputs": [
+			{
+						"name": "DS_NAME",
+			"type": "datasource"
+			}
+		],
+		"test": {
+			"prop": "${DS_NAME}"
+		}
+		}`))
 
 		evaluator := &DashTemplateEvaluator{
 			template: template,

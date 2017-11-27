@@ -49,6 +49,30 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		if dashboard, err = loadPluginDashboard(cmd.PluginId, cmd.Path); err != nil {
 			return err
 		}
+
+		var plugin *PluginBase
+
+		if plugin, err = getPlugin(cmd.PluginId); err != nil {
+			return err
+		}
+
+		folderDash := simplejson.NewFromAny(map[string]interface{}{
+			"title": plugin.Name,
+		})
+
+		saveCmd := m.SaveDashboardCommand{
+			Dashboard: folderDash,
+			OrgId:     cmd.OrgId,
+			UserId:    cmd.UserId,
+			PluginId:  cmd.PluginId,
+			IsFolder:  true,
+		}
+
+		if err := bus.Dispatch(&saveCmd); err != nil {
+			return err
+		}
+
+		dashboard.FolderId = saveCmd.Result.Id
 	} else {
 		dashboard = m.NewDashboardFromJson(cmd.Dashboard)
 	}
@@ -69,6 +93,7 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		UserId:    cmd.UserId,
 		Overwrite: cmd.Overwrite,
 		PluginId:  cmd.PluginId,
+		FolderId:  dashboard.FolderId,
 	}
 
 	if err := bus.Dispatch(&saveCmd); err != nil {
