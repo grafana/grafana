@@ -83,6 +83,9 @@
 				<br />
 
 			</form>
-		</div>
-	</div>
+    </div>
+    <div ng-if="ctrl.tabIndex === 1" class="tab-content">
+      <dashboard-import-list plugin="ctrl.datasourceMeta" datasource="ctrl.current"></dashboard-import-list>
+    </div>
+  </div>
 </div>

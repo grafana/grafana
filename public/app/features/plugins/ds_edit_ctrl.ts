@@ -114,7 +114,7 @@ export class DataSourceEditCtrl {
     this.hasDashboards = false;
     return this.backendSrv.get('/api/plugins/' + this.current.type + '/settings').then(pluginInfo => {
       this.datasourceMeta = pluginInfo;
-      this.hasDashboards = _.find(pluginInfo.includes, {type: 'dashboard'});
+      this.hasDashboards = _.find(pluginInfo.includes, {type: 'dashboard'}) !== undefined;
     });
   }
 
