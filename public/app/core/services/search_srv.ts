@@ -74,7 +74,7 @@ export class SearchSrv {
           score: -2,
           expanded: this.starredIsOpen,
           toggle: this.toggleStarred.bind(this),
-          items: this.transformToViewModel(result),
+          items: result.map(this.transformToViewModel),
         };
       }
     });
