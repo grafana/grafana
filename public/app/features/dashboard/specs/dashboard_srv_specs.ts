@@ -1,4 +1,4 @@
-import {describe, beforeEach} from 'test/lib/common';
+import {describe, beforeEach, expect} from 'test/lib/common';
 
 import {DashboardSrv} from '../dashboard_srv';
 
