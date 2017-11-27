@@ -50,29 +50,9 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 			return err
 		}
 
-		var plugin *PluginBase
-
-		if plugin, err = getPlugin(cmd.PluginId); err != nil {
+		if err = createDashboardFolderForPlugin(cmd, dashboard); err != nil {
 			return err
 		}
-
-		folderDash := simplejson.NewFromAny(map[string]interface{}{
-			"title": plugin.Name,
-		})
-
-		saveCmd := m.SaveDashboardCommand{
-			Dashboard: folderDash,
-			OrgId:     cmd.OrgId,
-			UserId:    cmd.UserId,
-			PluginId:  cmd.PluginId,
-			IsFolder:  true,
-		}
-
-		if err := bus.Dispatch(&saveCmd); err != nil {
-			return err
-		}
-
-		dashboard.FolderId = saveCmd.Result.Id
 	} else {
 		dashboard = m.NewDashboardFromJson(cmd.Dashboard)
 	}
@@ -110,6 +90,63 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		Imported:         true,
 	}
 
+	return nil
+}
+
+func createDashboardFolderForPlugin(cmd *ImportDashboardCommand, dashboard *m.Dashboard) error {
+	var err error
+	var plugin *PluginBase
+
+	if plugin, err = getPlugin(cmd.PluginId); err != nil {
+		return err
+	}
+
+	var pluginType string
+
+	if plugin.Type == "datasource" {
+		pluginType = "Datasource"
+	} else if plugin.Type == "app" {
+		pluginType = "App"
+	}
+
+	folderTitle := fmt.Sprint(pluginType, ": ", plugin.Name)
+
+	folderDash := simplejson.NewFromAny(map[string]interface{}{
+		"schemaVersion": 16,
+		"title":         folderTitle,
+		"editable":      true,
+		"hideControls":  true,
+	})
+
+	saveCmd := m.SaveDashboardCommand{
+		Dashboard: folderDash,
+		OrgId:     cmd.OrgId,
+		UserId:    cmd.UserId,
+		PluginId:  cmd.PluginId,
+		IsFolder:  true,
+	}
+
+	dashModel := saveCmd.GetDashboardModel()
+
+	getDashboardQuery := m.GetDashboardQuery{
+		OrgId: cmd.OrgId,
+		Slug:  dashModel.Slug,
+	}
+
+	if err := bus.Dispatch(&getDashboardQuery); err != nil {
+		return err
+	}
+
+	if getDashboardQuery.Result != nil {
+		dashboard.FolderId = getDashboardQuery.Result.Id
+		return nil
+	}
+
+	if err := bus.Dispatch(&saveCmd); err != nil {
+		return err
+	}
+
+	dashboard.FolderId = saveCmd.Result.Id
 	return nil
 }
 
