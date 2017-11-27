@@ -172,6 +172,10 @@ export class PanelCtrl {
       this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + ((this.panel.gridPos.h-1) * GRID_CELL_VMARGIN);
     }
 
+    if (this.panel.soloMode) {
+      this.containerHeight = $(window).height();
+    }
+
     this.height = this.containerHeight - (PANEL_BORDER + TITLE_HEIGHT);
   }
 
