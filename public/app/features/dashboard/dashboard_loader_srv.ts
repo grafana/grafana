@@ -21,7 +21,6 @@ export class DashboardLoaderSrv {
     private $rootScope
   ) {}
 
-
   _dashboardLoadFailed(title, snapshot?) {
     snapshot = snapshot || false;
     return {

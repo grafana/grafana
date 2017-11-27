@@ -40,7 +40,7 @@ export class Tracker {
       if (this.hasChanges()) {
         return "There are unsaved changes to this dashboard";
       }
-      return ""; //Patrick kod
+      return "";
     };
 
     scope.$on("$locationChangeStart", (event, next) => {
@@ -60,7 +60,7 @@ export class Tracker {
           this.open_modal();
         });
       }
-      return false; //Patrick kod
+      return false;
     });
 
     if (originalCopyDelay) {
