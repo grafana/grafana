@@ -1,44 +1,38 @@
-define([
-  'angular',
-  'lodash',
-],
-function (angular, _) {
-  'use strict';
+import angular from "angular";
+import _ from "lodash";
 
-  var module = angular.module('grafana.controllers');
-
-  module.controller('ShareSnapshotCtrl', function($scope, $rootScope, $location, backendSrv, $timeout, timeSrv) {
-
+export class ShareSnapshotCtrl {
+  constructor($scope, $rootScope, $location, backendSrv, $timeout, timeSrv) {
     $scope.snapshot = {
       name: $scope.dashboard.title,
       expires: 0,
-      timeoutSeconds: 4,
+      timeoutSeconds: 4
     };
 
     $scope.step = 1;
 
     $scope.expireOptions = [
-      {text: '1 Hour', value: 60*60},
-      {text: '1 Day',  value: 60*60*24},
-      {text: '7 Days', value: 60*60*24*7},
-      {text: 'Never',  value: 0},
+      { text: "1 Hour", value: 60 * 60 },
+      { text: "1 Day", value: 60 * 60 * 24 },
+      { text: "7 Days", value: 60 * 60 * 24 * 7 },
+      { text: "Never", value: 0 }
     ];
 
     $scope.accessOptions = [
-      {text: 'Anyone with the link', value: 1},
-      {text: 'Organization users',  value: 2},
-      {text: 'Public on the web', value: 3},
+      { text: "Anyone with the link", value: 1 },
+      { text: "Organization users", value: 2 },
+      { text: "Public on the web", value: 3 }
     ];
 
     $scope.init = function() {
-      backendSrv.get('/api/snapshot/shared-options').then(function(options) {
-        $scope.externalUrl = options['externalSnapshotURL'];
-        $scope.sharingButtonText = options['externalSnapshotName'];
-        $scope.externalEnabled = options['externalEnabled'];
+      backendSrv.get("/api/snapshot/shared-options").then(function(options) {
+        $scope.externalUrl = options["externalSnapshotURL"];
+        $scope.sharingButtonText = options["externalSnapshotName"];
+        $scope.externalEnabled = options["externalEnabled"];
       });
     };
 
-    $scope.apiUrl = '/api/snapshots';
+    $scope.apiUrl = "/api/snapshots";
 
     $scope.createSnapshot = function(external) {
       $scope.dashboard.snapshot = {
@@ -52,7 +46,7 @@ function (angular, _) {
       $scope.loading = true;
       $scope.snapshot.external = external;
 
-      $rootScope.$broadcast('refresh');
+      $rootScope.$broadcast("refresh");
 
       $timeout(function() {
         $scope.saveSnapshot(external);
@@ -66,34 +60,40 @@ function (angular, _) {
       var cmdData = {
         dashboard: dash,
         name: dash.title,
-        expires: $scope.snapshot.expires,
+        expires: $scope.snapshot.expires
       };
 
-      var postUrl = external ? $scope.externalUrl + $scope.apiUrl : $scope.apiUrl;
+      var postUrl = external
+        ? $scope.externalUrl + $scope.apiUrl
+        : $scope.apiUrl;
 
-      backendSrv.post(postUrl, cmdData).then(function(results) {
-        $scope.loading = false;
+      backendSrv.post(postUrl, cmdData).then(
+        function(results) {
+          $scope.loading = false;
 
-        if (external) {
-          $scope.deleteUrl = results.deleteUrl;
-          $scope.snapshotUrl = results.url;
-          $scope.saveExternalSnapshotRef(cmdData, results);
-        } else {
-          var url = $location.url();
-          var baseUrl = $location.absUrl();
+          if (external) {
+            $scope.deleteUrl = results.deleteUrl;
+            $scope.snapshotUrl = results.url;
+            $scope.saveExternalSnapshotRef(cmdData, results);
+          } else {
+            var url = $location.url();
+            var baseUrl = $location.absUrl();
 
-          if (url !== '/') {
-            baseUrl = baseUrl.replace(url, '') + '/';
+            if (url !== "/") {
+              baseUrl = baseUrl.replace(url, "") + "/";
+            }
+
+            $scope.snapshotUrl = baseUrl + "dashboard/snapshot/" + results.key;
+            $scope.deleteUrl =
+              baseUrl + "api/snapshots-delete/" + results.deleteKey;
           }
 
-          $scope.snapshotUrl = baseUrl + 'dashboard/snapshot/' + results.key;
-          $scope.deleteUrl = baseUrl + 'api/snapshots-delete/' + results.deleteKey;
+          $scope.step = 2;
+        },
+        function() {
+          $scope.loading = false;
         }
-
-        $scope.step = 2;
-      }, function() {
-        $scope.loading = false;
-      });
+      );
     };
 
     $scope.getSnapshotUrl = function() {
@@ -113,17 +113,18 @@ function (angular, _) {
       });
       // remove annotation queries
       dash.annotations.list = _.chain(dash.annotations.list)
-      .filter(function(annotation) {
-        return annotation.enable;
-      })
-      .map(function(annotation) {
-        return {
-          name: annotation.name,
-          enable: annotation.enable,
-          iconColor: annotation.iconColor,
-          snapshotData: annotation.snapshotData
-        };
-      }).value();
+        .filter(function(annotation) {
+          return annotation.enable;
+        })
+        .map(function(annotation) {
+          return {
+            name: annotation.name,
+            enable: annotation.enable,
+            iconColor: annotation.iconColor,
+            snapshotData: annotation.snapshotData
+          };
+        })
+        .value();
       // remove template queries
       _.each(dash.templating.list, function(variable) {
         variable.query = "";
@@ -135,7 +136,7 @@ function (angular, _) {
       if ($scope.modeSharePanel) {
         var singlePanel = dash.getPanelById($scope.panel.id);
         singlePanel.span = 12;
-        dash.rows = [{ height: '500px', span: 12, panels: [singlePanel] }];
+        dash.rows = [{ height: "500px", span: 12, panels: [singlePanel] }];
       }
 
       // cleanup snapshotData
@@ -159,9 +160,11 @@ function (angular, _) {
       cmdData.external = true;
       cmdData.key = results.key;
       cmdData.deleteKey = results.deleteKey;
-      backendSrv.post('/api/snapshots/', cmdData);
+      backendSrv.post("/api/snapshots/", cmdData);
     };
+  }
+}
 
-  });
-
-});
+angular
+  .module("grafana.controllers")
+  .controller("ShareSnapshotCtrl", ShareSnapshotCtrl);
