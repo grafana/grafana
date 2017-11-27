@@ -1,5 +1,5 @@
 import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
-import 'app/features/dashboard/viewStateSrv';
+import 'app/features/dashboard/view_state_srv';
 import config from  'app/core/config';
 
 describe('when updating view state', function() {
