@@ -124,6 +124,10 @@ describe('DashboardListCtrl', () => {
         expect(ctrl.canDelete).toBeFalsy();
       });
 
+      it('should have active filters', () => {
+        expect(ctrl.hasFilters).toBeTruthy();
+      });
+
       describe('when select all is checked', () => {
         beforeEach(() => {
           ctrl.selectAllChecked = true;
@@ -143,6 +147,16 @@ describe('DashboardListCtrl', () => {
         it('should enable delete button', () => {
           expect(ctrl.canDelete).toBeTruthy();
         });
+
+        describe('when clearing filters', () => {
+          beforeEach(() => {
+            return ctrl.clearFilters();
+          });
+
+          it('should reset query filter', () => {
+            expect(ctrl.query.query).toEqual('');
+          });
+        });
       });
     });
 
@@ -154,6 +168,20 @@ describe('DashboardListCtrl', () => {
       it('should set tag filter', () => {
         expect(ctrl.sections.length).toEqual(1);
         expect(ctrl.query.tag[0]).toEqual('test');
+      });
+
+      it('should have active filters', () => {
+        expect(ctrl.hasFilters).toBeTruthy();
+      });
+
+      describe('when clearing filters', () => {
+        beforeEach(() => {
+          return ctrl.clearFilters();
+        });
+
+        it('should reset tag filter', () => {
+          expect(ctrl.query.tag.length).toEqual(0);
+        });
       });
     });
 
@@ -168,6 +196,20 @@ describe('DashboardListCtrl', () => {
       it('should set starred filter', () => {
         expect(ctrl.sections.length).toEqual(1);
         expect(ctrl.query.starred).toEqual(true);
+      });
+
+      it('should have active filters', () => {
+        expect(ctrl.hasFilters).toBeTruthy();
+      });
+
+      describe('when clearing filters', () => {
+        beforeEach(() => {
+          return ctrl.clearFilters();
+        });
+
+        it('should reset starred filter', () => {
+          expect(ctrl.query.starred).toEqual(false);
+        });
       });
     });
   });

@@ -10,6 +10,7 @@ export class DashboardListCtrl {
   navModel: any;
   canDelete = false;
   canMove = false;
+  hasFilters = false;
   selectAllChecked = false;
   starredFilterOptions = [{text: 'Filter by Starred', disabled: true}, {text: 'Yes'}, {text: 'No'}];
   selectedStarredFilter: any;
@@ -17,7 +18,7 @@ export class DashboardListCtrl {
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private $q, private searchSrv: SearchSrv) {
     this.navModel = navModelSrv.getNav('dashboards', 'dashboards');
-    this.query = {query: '', mode: 'tree', tag: []};
+    this.query = {query: '', mode: 'tree', tag: [], starred: false};
     this.selectedStarredFilter = this.starredFilterOptions[0];
 
     this.getDashboards().then(() => {
@@ -35,6 +36,7 @@ export class DashboardListCtrl {
     this.canMove = false;
     this.canDelete = false;
     this.selectAllChecked = false;
+    this.hasFilters = this.query.query.length > 0 || this.query.tag.length > 0 || this.query.starred;
 
     if (!result) {
       this.sections = [];
@@ -193,5 +195,12 @@ export class DashboardListCtrl {
     }
 
     this.selectionChanged();
+  }
+
+  clearFilters() {
+    this.query.query = '';
+    this.query.tag = [];
+    this.query.starred = false;
+    this.getDashboards();
   }
 }
