@@ -1,21 +1,10 @@
 <div class="navbar">
 	<div class="navbar-inner">
-		<a class="navbar-brand-btn pointer" ng-click="ctrl.toggleSideMenu()">
-			<span class="navbar-brand-btn-background">
-				<img src="public/img/grafana_icon.svg"></img>
-			</span>
-			<i class="icon-gf icon-gf-grafana_wordmark"></i>
+		<a class="navbar-page-btn" ng-click="ctrl.showSearch()">
+			<i class="gicon gicon-dashboard"></i>
+			{{ctrl.dashboard.title}}
 			<i class="fa fa-caret-down"></i>
-			<i class="fa fa-chevron-left"></i>
 		</a>
-
-		<div class="navbar-section-wrapper">
-			<a class="navbar-page-btn" ng-click="ctrl.showSearch()">
-				<i class="icon-gf icon-gf-dashboard"></i>
-				{{ctrl.dashboard.title}}
-				<i class="fa fa-caret-down"></i>
-			</a>
-		</div>
 
 		<ul class="nav dash-playlist-actions" ng-if="ctrl.playlistSrv.isPlaying">
 			<li>
@@ -29,7 +18,7 @@
 			</li>
 		</ul>
 
-		<ul class="nav pull-left dashnav-action-icons">
+		<ul class="nav dashnav-action-icons">
 			<li ng-show="::ctrl.dashboard.meta.canStar">
 				<a class="pointer" ng-click="ctrl.starDashboard()">
 					<i class="fa" ng-class="{'fa-star-o': !ctrl.dashboard.meta.isStarred, 'fa-star': ctrl.dashboard.meta.isStarred}" style="color: orange;"></i>
@@ -58,9 +47,11 @@
 					</li>
 				</ul>
 			</li>
+
 			<li ng-show="::ctrl.dashboard.meta.canSave">
 				<a ng-click="ctrl.saveDashboard()" bs-tooltip="'Save dashboard <br> CTRL+S'" data-placement="bottom"><i class="fa fa-save"></i></a>
 			</li>
+
 			<li ng-if="::ctrl.dashboard.snapshot.originalUrl">
 				<a ng-href="{{ctrl.dashboard.snapshot.originalUrl}}" bs-tooltip="'Open original dashboard'" data-placement="bottom"><i class="fa fa-link"></i></a>
 			</li>
@@ -77,7 +68,15 @@
 					</li>
 				</ul>
 			</li>
+			<li class="navbar-mini-btn-wrapper" ng-show="::ctrl.dashboard.meta.canSave">
+				<button class="btn btn-secondary btn-mini" ng-click="ctrl.addPanel()">
+					<i class="fa fa-plus-circle"></i> Add Panel
+				</button>
+			</li>
 		</ul>
+
+		<div class="nav nav--grow">
+		</div>
 
 		<ul class="nav pull-right">
 			<li ng-show="ctrl.dashboard.meta.fullscreen" class="dashnav-back-to-dashboard">
@@ -90,6 +89,7 @@
 			</li>
 		</ul>
 	</div>
+
 </div>
 
 <dashboard-search></dashboard-search>

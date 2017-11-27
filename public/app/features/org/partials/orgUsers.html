@@ -2,18 +2,17 @@
 
 <div class="page-container">
 	<div class="page-header">
-		<h1>Organization users</h1>
+		<page-h1 model="ctrl.navModel"></page-h1>
+
+		<button class="btn btn-success" ng-click="ctrl.openAddUsersView()" ng-hide="ctrl.externalUserMngLinkUrl">
+			<span>{{ctrl.addUsersBtnName}}</span>
+		</button>
 
 		<div class="page-header-tabs">
 
-			<button class="btn btn-success" ng-click="ctrl.openAddUsersView()" ng-hide="ctrl.externalUserMngLinkUrl">
-				<i class="fa fa-plus"></i>
-        <span>{{ctrl.addUsersBtnName}}</span>
-			</button>
-
-      <a class="btn btn-inverse" ng-href="{{ctrl.externalUserMngLinkUrl}}" target="_blank" ng-if="ctrl.externalUserMngLinkUrl">
+			<a class="btn btn-inverse" ng-href="{{ctrl.externalUserMngLinkUrl}}" target="_blank" ng-if="ctrl.externalUserMngLinkUrl">
 				<i class="fa fa-external-link-square"></i>
-        {{ctrl.addUsersBtnName}}
+				{{ctrl.addUsersBtnName}}
       </a>
 
 			<ul class="gf-tabs">
@@ -24,7 +23,7 @@
 				</li>
 				<li class="gf-tabs-item" ng-show="ctrl.pendingInvites.length">
 					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 1" ng-class="{active: ctrl.editor.index === 1}">
-						Pending Invitations ({{ctrl.pendingInvites.length}})
+						Pending Invites ({{ctrl.pendingInvites.length}})
 					</a>
 				</li>
 			</ul>
@@ -39,6 +38,7 @@
     <table class="filter-table form-inline">
       <thead>
         <tr>
+          <th></th>
           <th>Login</th>
           <th>Email</th>
 					<th>
@@ -50,12 +50,17 @@
         </tr>
       </thead>
       <tr ng-repeat="user in ctrl.users">
+        <td class="width-4 text-center">
+					<img class="filter-table__avatar" ng-src="{{user.avatarUrl}}"></img>
+				</td>
         <td>{{user.login}}</td>
         <td><span class="ellipsis">{{user.email}}</span></td>
 				<td>{{user.lastSeenAtAge}}</td>
         <td>
-          <select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="ctrl.updateOrgUser(user)">
-          </select>
+					<div class="gf-form-select-wrapper width-9">
+						<select type="text" ng-model="user.role" class="gf-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="ctrl.updateOrgUser(user)">
+						</select>
+					</div>
         </td>
         <td>
           <a ng-click="ctrl.removeUser(user)" class="btn btn-danger btn-mini">

@@ -1,47 +1,39 @@
 .dashboard-container {
   padding: $dashboard-padding;
   width: 100%;
-}
-
-.page-dashboard {
-  .main-view {
-    background-image: none;
-  }
+  min-height: 100%;
+  // background: $dashboard-gradient;
 }
 
 .template-variable {
   color: $variable;
 }
 
-
-
 div.flot-text {
   color: $text-color !important;
 }
 
 .panel {
-  display: inline-block;
-  float: left;
+  height: 100%;
 
   &--solo {
-    .resize-panel-handle {
-      display: none;
-    }
     .panel-container {
       border: none;
     }
   }
 }
 
-.panel-margin {
-  margin: 0 0.4rem 0.8rem 0.4rem;
+.panel-height-helper {
   display: block;
+  height: 100%;
 }
 
 .panel-container {
   background-color: $panel-bg;
-  position: relative;
   border: $panel-border;
+  position: relative;
+  border-radius: 3px;
+  height: 100%;
 
   &.panel-transparent {
     background-color: transparent;
@@ -51,22 +43,57 @@ div.flot-text {
 
 .panel-content {
   padding: 0px 10px 5px 10px;
+  height: calc(100% - 27px);
+  position: relative;
+  overflow: hidden;
 }
 
 .panel-title-container {
   min-height: 9px;
-  padding-top: 4px;
-  cursor: pointer;
+  cursor: move;
   word-wrap: break-word;
+  display: block;
 }
 
 .panel-title {
   border: 0px;
   font-weight: $font-weight-semi-bold;
   position: relative;
-  cursor: pointer;
   width: 100%;
   display: block;
+  padding-bottom: 2px;
+}
+
+.panel-title-text {
+  cursor: pointer;
+  font-weight: $font-weight-semi-bold;
+
+  &:hover {
+    color: $link-hover-color;
+  }
+}
+
+.panel-menu-container {
+  width: 1px;
+  height: 19px;
+  display: inline-block;
+}
+
+.panel-menu-toggle {
+  color: $text-color-weak;
+  cursor: pointer;
+  padding: 3px 5px;
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 1px;
+  top: 4px;
+
+  &:hover {
+    color: $link-hover-color;
+  }
 }
 
 .panel-loading {
@@ -74,12 +101,23 @@ div.flot-text {
   top: -3px;
   right: 0px;
   z-index: 800;
+  font-size: $font-size-sm;
+  color: $text-color-weak;
 }
 
 .panel-header {
   text-align: center;
+
+  &:hover {
+    transition: background-color 0.1s ease-in-out;
+    background-color: $panel-header-hover-bg;
+  }
 }
 
+.panel-menu {
+  top: 25px;
+  left: -100px;
+}
 
 .panel-info-corner-inner {
   width: 0;
@@ -145,73 +183,11 @@ div.flot-text {
   }
 }
 
-.panel-full-edit {
-  margin-top: 20px;
-  margin-bottom: 20px;
-}
-
-.panel-menu {
-  z-index: 500;
-  position: absolute;
-  background: $tight-form-func-bg;
-  border: $panel-menu-border;
-
-  .panel-menu-row {
-    white-space: nowrap;
-    border-bottom: $panel-menu-border;
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-
-  .panel-menu-link, .panel-menu-icon {
-    padding: 5px 10px;
-  }
-
-  .panel-menu-link {
-    display: inline-block;
-    border-right: $panel-menu-border;
-    &:last-child {
-      border: none;
-    }
-  }
-
-  .dropdown-menu {
-    text-align: left;
-  }
-}
-
-.panel-highlight  {
-  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236,10.8)
-}
-
-// .panel-hover-highlight  {
-//   box-shadow: inset 0 1px 1px rgba(0,0,0,0.025), 0 0 1px rgba(82,168,236,0.5)
-// }
-
-.on-drag-hover {
-  .panel-container {
-    box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 5px rgba(82,168,236,10.8)
-  }
-}
-
-.panel-drop-zone {
-  display: none;
-  .panel-container {
-    border: $panel-border;
-    display: flex;
-    justify-content: center;
-    flex-direction: column;
-    text-align: center;
-    color: $text-color-faint;
-    font-weight: bold;
-    background: $panel-drop-zone-bg;
-  }
-}
-
-.panel-in-fullscreen {
-  .panel-drop-zone {
-    display: none !important;
+.panel-hover-highlight  {
+  .panel-menu-toggle {
+    visibility: visible;
+    transition: opacity 0.1s ease-in 0.2s;
+    opacity: 1;
   }
 }
 
@@ -222,33 +198,17 @@ div.flot-text {
   color: $blue;
   font-size: 85%;
   position: absolute;
-  top: 0;
+  top: 4px;
   right: 0;
-}
-
-.resize-panel-handle {
-  cursor: nwse-resize;
-  position: absolute;
-  font-size: 10px;
-  bottom: 0;
-  right: 0;
-  width: 15px;
-  height: 15px;
-  display: block;
-  color: $text-color-faint;
-
-  &:before {
-    left: initial;
-    right: -1px;
-    bottom: 0px;
-    position: absolute;
-  }
 }
 
 .dashboard-header {
   font-family: $headings-font-family;
   font-size: $font-size-h3;
   text-align: center;
+  overflow: hidden;
+  position: relative;
+  top: -10px;
   span {
     display: inline-block;
     @include brand-bottom-border();
@@ -263,4 +223,13 @@ div.flot-text {
     opacity: 1;
     transition: opacity 200ms ease-in-out;
   }
+}
+
+.dashboard-nav-shadow {
+  box-shadow: 0 0 20px black;
+  height: 10px;
+  position: absolute;
+  width: 100%;
+  z-index: 1;
+  top: -10px;
 }

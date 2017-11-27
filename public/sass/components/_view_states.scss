@@ -3,7 +3,6 @@
   .dash-row-menu-container {
     display: none;
   }
-  .resize-panel-handle,
   .panel-drop-zone {
     visibility: hidden;
   }
@@ -24,10 +23,10 @@
 .user-activity-low {
   .add-row-panel-hint,
   .dash-row-menu-container,
-  .resize-panel-handle,
   .panel-drop-zone
   .dashnav-refresh-action,
   .dashnav-zoom-out,
+  .panel-menu-container,
   .dashnav-action-icons,
   .panel-info-corner--info,
   .panel-info-corner--links,
@@ -37,8 +36,7 @@
   }
 
   // navbar buttons
-  .navbar-brand-btn,
-  .navbar-inner {
+  .navbar {
     border-color: transparent;
     background: transparent;
     transition: all 1.5s ease-in-out 1s;
@@ -48,10 +46,14 @@
     }
   }
 
+  .navbar {
+    box-shadow: none;
+  }
+
   .navbar-page-btn {
     border-color: transparent;
     background: transparent;
-    transform: translate3d(-50px, 0, 0);
+    transform: translate3d(-40px, 0, 0);
     transition: all 1.5s ease-in-out 1s;
     .icon-gf {
       opacity: 0;

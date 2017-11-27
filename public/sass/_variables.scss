@@ -65,7 +65,7 @@ $container-max-widths: (
   sm: 576px,
   md: 720px,
   lg: 940px,
-  xl: 1140px
+  xl: 1080px
 ) !default;
 
 // Grid columns
@@ -80,7 +80,7 @@ $enable-flex: false;
 // Typography
 // -------------------------
 
-$font-family-sans-serif:   "Open Sans", Helvetica, Arial, sans-serif;
+$font-family-sans-serif:   "Roboto", Helvetica, Arial, sans-serif;
 $font-family-serif:        Georgia, "Times New Roman", Times, serif;
 $font-family-monospace:    Menlo, Monaco, Consolas, "Courier New", monospace;
 $font-family-base:         $font-family-sans-serif !default;
@@ -93,7 +93,7 @@ $font-size-sm:   .875rem !default;
 $font-size-xs:   .75rem !default;
 
 $line-height-base: 1.5 !default;
-$font-weight-semi-bold: 600;
+$font-weight-semi-bold: 500;
 
 $font-size-h1: 2.0rem !default;
 $font-size-h2: 1.75rem !default;
@@ -116,7 +116,7 @@ $lead-font-size:   1.25rem !default;
 $lead-font-weight: 300 !default;
 
 $headings-margin-bottom: ($spacer / 2) !default;
-$headings-font-family:  "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+$headings-font-family:  "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 $headings-font-weight:   400 !default;
 $headings-line-height:   1.1 !default;
 
@@ -155,7 +155,7 @@ $link-hover-decoration:   none !default;
 //
 // Customizes the `.table` component with basic values, each used across all table variations.
 
-$table-cell-padding:            .75rem !default;
+$table-cell-padding:            4px 10px !default;
 $table-sm-cell-padding:         .3rem !default;
 
 // Forms
@@ -206,9 +206,9 @@ $zindex-modal:             1050;
 //
 
 $btn-padding-x:                  1rem !default;
-$btn-padding-y:                  .6rem !default;
-$btn-line-height:                1.25 !default;
-$btn-font-weight:                normal !default;
+$btn-padding-y:                  .7rem !default;
+$btn-line-height:                1 !default;
+$btn-font-weight:                500 !default;
 
 $btn-padding-x-sm:               .5rem !default;
 $btn-padding-y-sm:               .25rem !default;
@@ -216,14 +216,14 @@ $btn-padding-y-sm:               .25rem !default;
 $btn-padding-x-lg:               1.5rem !default;
 $btn-padding-y-lg:               .75rem !default;
 
-$btn-border-radius:              2px;
+$btn-border-radius:              3px;
 
 // sidemenu
-$side-menu-width:  14rem;
+$side-menu-width:  60px;
 
 // dashboard
-$panel-margin: 0.4rem;
-$dashboard-padding: ($panel-margin * 2) $panel-margin $panel-margin $panel-margin;
+$panel-margin: 10px;
+$dashboard-padding: $panel-margin * 2;
 
 // tabs
 $tabs-padding-top: 0.6rem;

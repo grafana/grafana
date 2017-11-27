@@ -4,9 +4,7 @@
 <div class="search-container" ng-if="ctrl.isOpen">
 
 	<div class="search-field-wrapper">
-		<div class="search-field-icon pointer" ng-click="ctrl.closeSearch()">
-			<i class="fa fa-search"></i>
-		</div>
+		<div class="search-field-icon pointer" ng-click="ctrl.closeSearch()"><i class="fa fa-search"></i></div>
 
 		<input type="text" placeholder="Find dashboards by name" give-focus="ctrl.giveSearchFocus" tabindex="1"
 						ng-keydown="ctrl.keyDown($event)"
@@ -44,8 +42,8 @@
 	<div class="search-dropdown" ng-class="{'search-dropdown--fade-in': ctrl.openCompleted}">
 		<div class="search-results-container" ng-if="ctrl.tagsMode">
 			<div ng-repeat="tag in ctrl.results" class="pointer" style="width: 180px; float: left;"
-				ng-class="{'selected': $index === ctrl.selectedIndex }"
-				ng-click="ctrl.filterByTag(tag.term, $event)">
+																												ng-class="{'selected': $index === ctrl.selectedIndex }"
+														ng-click="ctrl.filterByTag(tag.term, $event)">
 				<a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
 					<i class="fa fa-tag"></i>
 					<span>{{tag.term}} &nbsp;({{tag.count}})</span>
@@ -53,37 +51,44 @@
 			</div>
 		</div>
 
-		<div class="search-results-container" ng-if="!ctrl.tagsMode">
-			<h6 ng-hide="ctrl.results.length">No dashboards matching your query were found.</h6>
+		<div class="search-results-container" ng-if="!ctrl.tagsMode" grafana-scrollbar>
+			<h6 ng-show="!ctrl.isLoading && results.length">No dashboards matching your query were found.</h6>
 
-			<a class="search-item pointer search-item-{{row.type}}" bindonce ng-repeat="row in ctrl.results"
-				ng-class="{'selected': $index == ctrl.selectedIndex}" ng-href="{{row.url}}">
+			<div ng-repeat="section in ctrl.results" class="search-section">
+				<a class="search-section__header pointer" ng-hide="section.hideHeader" ng-click="ctrl.toggleFolder(section)">
+					<i class="search-section__header__icon" ng-class="section.icon"></i>
+					<span class="search-section__header__text">{{::section.title}}</span>
+					<i class="fa fa-minus search-section__header__toggle" ng-show="section.expanded"></i>
+					<i class="fa fa-plus search-section__header__toggle" ng-hide="section.expanded"></i>
+				</a>
 
-				<span class="search-result-tags">
-					<span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name="tag"  class="label label-tag">
-						{{tag}}
-					</span>
-					<span ng-click="ctrl.starDashboard(row, $event)">
-						<i class="fa" ng-class="{'fa-star': row.isStarred, 'fa-star-o': !row.isStarred}"></i>
-					</span>
-				</span>
-
-				<span class="search-result-link">
-					<i class="fa search-result-icon"></i>
-					<span bo-text="row.title"></span>
-				</span>
-			</a>
+				<div ng-if="section.expanded">
+					<a ng-repeat="item in section.items" class="search-item" ng-class="{'selected': item.selected}" ng-href="{{::item.url}}">
+						<span class="search-item__icon">
+							<i class="fa fa-th-large"></i>
+						</span>
+						<span class="search-item__body">
+							<div class="search-item__body-title">{{::item.title}}</div>
+							<div class="search-item__body-sub-title" ng-show="item.folderTitle && section.hideHeader">
+								{{::item.folderTitle}}
+							</div>
+						</span>
+						<span class="search-item__tags">
+							<span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in item.tags" tag-color-from-name="tag"  class="label label-tag">
+								{{tag}}
+							</span>
+						</span>
+						<span class="search-item__actions">
+              <span class="search-item__actions__item" ng-click="ctrl.toggleStar()">
+                <i class="fa" ng-class="{'fa-star': item.isStarred, 'fa-star-o': !item.isStarred}"></i>
+              </span>
+						</span>
+					</a>
+				</div>
+			</div>
 		</div>
 
 		<div class="search-button-row">
-			<a class="btn btn-secondary" href="dashboard/new" ng-show="ctrl.contextSrv.isEditor" ng-click="ctrl.isOpen = false;">
-				<i class="fa fa-plus"></i>&nbsp; New Dashboard
-			</a>
-
-			<a class="btn btn-inverse" href="dashboard/new/?editview=import" ng-show="ctrl.contextSrv.isEditor" ng-click="ctrl.isOpen = false;">
-				<i class="fa fa-upload"></i>&nbsp; Import Dashboard
-			</a>
-
 			<a class="search-button-row-explore-link" target="_blank" href="https://grafana.com/dashboards?utm_source=grafana_search">
 				Find <img src="public/img/icn-dashboard-tiny.svg" width="14" /> dashboards on Grafana.com
 			</a>

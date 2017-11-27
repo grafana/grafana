@@ -19,7 +19,7 @@ function (_, $, coreModule) {
         });
 
         var lastHideControlsVal;
-        $scope.$watch('dashboard.hideControls', function() {
+        $scope.$watch('ctrl.dashboard.hideControls', function() {
           if (!$scope.dashboard) {
             return;
           }
@@ -31,7 +31,7 @@ function (_, $, coreModule) {
           }
         });
 
-        $scope.$watch('playlistSrv.isPlaying', function(newValue) {
+        $scope.$watch('ctrl.playlistSrv.isPlaying', function(newValue) {
           elem.toggleClass('playlist-active', newValue === true);
         });
       }

@@ -1,12 +1,11 @@
 import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
-import {profiler} from 'app/core/profiler';
+import {appEvents, profiler} from 'app/core/core';
 import Remarkable from 'remarkable';
+import {GRID_CELL_HEIGHT, GRID_CELL_VMARGIN} from 'app/core/constants';
 
-const TITLE_HEIGHT = 25;
-const EMPTY_TITLE_HEIGHT = 9;
-const PANEL_PADDING = 5;
+const TITLE_HEIGHT = 27;
 const PANEL_BORDER = 2;
 
 import {Emitter} from 'app/core/core';
@@ -14,7 +13,6 @@ import {Emitter} from 'app/core/core';
 export class PanelCtrl {
   panel: any;
   error: any;
-  row: any;
   dashboard: any;
   editorTabIndex: number;
   pluginName: string;
@@ -38,7 +36,7 @@ export class PanelCtrl {
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
     this.editorTabIndex = 0;
-    this.events = new Emitter();
+    this.events = this.panel.events;
     this.timing = {};
 
     var plugin = config.panels[this.panel.type];
@@ -48,23 +46,24 @@ export class PanelCtrl {
     }
 
     $scope.$on("refresh", () => this.refresh());
-    $scope.$on("render", () => this.render());
+    $scope.$on("component-did-mount", () => this.panelDidMount());
+
     $scope.$on("$destroy", () => {
       this.events.emit('panel-teardown');
       this.events.removeAllListeners();
     });
 
-    // we should do something interesting
-    // with newly added panels
-    if (this.panel.isNew) {
-      delete this.panel.isNew;
-    }
+    this.calculatePanelHeight();
   }
 
   init() {
-    this.calculatePanelHeight();
-    this.publishAppEvent('panel-initialized', {scope: this.$scope});
+    this.events.on('panel-size-changed', this.onSizeChanged.bind(this));
     this.events.emit('panel-initialized');
+    this.publishAppEvent('panel-initialized', {scope: this.$scope});
+  }
+
+  panelDidMount() {
+    this.events.emit('component-did-mount');
   }
 
   renderingCompleted() {
@@ -72,7 +71,7 @@ export class PanelCtrl {
   }
 
   refresh() {
-   this.events.emit('refresh', null);
+    this.events.emit('refresh', null);
   }
 
   publishAppEvent(evtName, evt) {
@@ -137,19 +136,26 @@ export class PanelCtrl {
 
   getMenu() {
     let menu = [];
-    menu.push({text: 'View', click: 'ctrl.viewPanel(); dismiss();'});
-    menu.push({text: 'Edit', click: 'ctrl.editPanel(); dismiss();', role: 'Editor'});
-    if (!this.fullscreen) { //  duplication is not supported in fullscreen mode
-      menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
-    }
-    menu.push({text: 'Share', click: 'ctrl.sharePanel(); dismiss();'});
+    menu.push({text: 'View', click: 'ctrl.viewPanel();', icon: "fa fa-fw fa-eye", shortcut: "v"});
+    menu.push({text: 'Edit', click: 'ctrl.editPanel();', role: 'Editor', icon: "fa fa-fw fa-edit", shortcut: "e"});
+    menu.push({text: 'Share', click: 'ctrl.sharePanel();', icon: "fa fa-fw fa-share", shortcut: "p s"});
+
+    let extendedMenu = this.getExtendedMenu();
+    menu.push({text: 'More ...', click: 'ctrl.removePanel();', icon: "fa fa-fw fa-cube", submenu: extendedMenu});
+
+    menu.push({divider: true, role: 'Editor'});
+    menu.push({text: 'Remove', click: 'ctrl.removePanel();', role: 'Editor', icon: "fa fa-fw fa-trash", shortcut: "p r"});
     return menu;
   }
 
   getExtendedMenu() {
-    var actions = [{text: 'Panel JSON', click: 'ctrl.editPanelJson(); dismiss();'}];
-    this.events.emit('init-panel-actions', actions);
-    return actions;
+    let menu = [];
+    if (!this.fullscreen) {
+      menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
+    }
+    menu.push({text: 'Panel JSON', click: 'ctrl.editPanelJson(); dismiss();' });
+    this.events.emit('init-panel-actions', menu);
+    return menu;
   }
 
   otherPanelInFullscreenMode() {
@@ -158,67 +164,79 @@ export class PanelCtrl {
 
   calculatePanelHeight() {
     if (this.fullscreen) {
-      var docHeight = $(window).height();
-      var editHeight = Math.floor(docHeight * 0.4);
-      var fullscreenHeight = Math.floor(docHeight * 0.8);
-      this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
+       var docHeight = $(window).height();
+       var editHeight = Math.floor(docHeight * 0.4);
+       var fullscreenHeight = Math.floor(docHeight * 0.8);
+       this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
     } else {
-      this.containerHeight = this.panel.height || this.row.height;
-      if (_.isString(this.containerHeight)) {
-        this.containerHeight = parseInt(this.containerHeight.replace('px', ''), 10);
-      }
+      this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + ((this.panel.gridPos.h-1) * GRID_CELL_VMARGIN);
     }
 
-    this.height = this.containerHeight - (PANEL_BORDER + PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
+    this.height = this.containerHeight - (PANEL_BORDER + TITLE_HEIGHT);
   }
 
   render(payload?) {
-    // ignore if other panel is in fullscreen mode
-    if (this.otherPanelInFullscreenMode()) {
-      return;
-    }
-
-    this.calculatePanelHeight();
     this.timing.renderStart = new Date().getTime();
     this.events.emit('render', payload);
   }
 
+  private onSizeChanged() {
+    this.calculatePanelHeight();
+    this.$timeout(() => {
+      this.render();
+    }, 100);
+  }
+
   duplicate() {
-    this.dashboard.duplicatePanel(this.panel, this.row);
+    this.dashboard.duplicatePanel(this.panel);
     this.$timeout(() => {
       this.$scope.$root.$broadcast('render');
     });
   }
 
-  updateColumnSpan(span) {
-    this.panel.span = Math.min(Math.max(Math.floor(this.panel.span + span), 1), 12);
-    this.row.panelSpanChanged();
+  removePanel(ask: boolean) {
+    // confirm deletion
+    if (ask !== false) {
+      var text2, confirmText;
 
-    this.$timeout(() => {
-      this.render();
-    });
-  }
+      if (this.panel.alert) {
+        text2 = "Panel includes an alert rule, removing panel will also remove alert rule";
+        confirmText = "YES";
+      }
 
-  removePanel() {
-    this.row.removePanel(this.panel);
+      appEvents.emit('confirm-modal', {
+        title: 'Remove Panel',
+        text: 'Are you sure you want to remove this panel?',
+        text2: text2,
+        icon: 'fa-trash',
+        confirmText: confirmText,
+        yesText: 'Remove',
+        onConfirm: () => {
+          this.removePanel(false);
+        }
+      });
+      return;
+    }
+
+    this.dashboard.removePanel(this.panel);
   }
 
   editPanelJson() {
     this.publishAppEvent('show-json-editor', {
-      object: this.panel,
+      object: this.panel.getSaveModel(),
       updateHandler: this.replacePanel.bind(this)
     });
   }
 
   replacePanel(newPanel, oldPanel) {
-    var index = _.indexOf(this.row.panels, oldPanel);
-    this.row.panels.splice(index, 1);
+    var index = _.indexOf(this.dashboard.panels, oldPanel);
+    this.dashboard.panels.splice(index, 1);
 
     // adding it back needs to be done in next digest
     this.$timeout(() => {
       newPanel.id = oldPanel.id;
-      newPanel.span = oldPanel.span;
-      this.row.panels.splice(index, 0, newPanel);
+      newPanel.width = oldPanel.width;
+      this.dashboard.panels.splice(index, 0, newPanel);
     });
   }
 

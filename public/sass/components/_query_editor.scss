@@ -1,6 +1,12 @@
 .query-keyword {
-  font-weight: bold;
+  font-weight: $font-weight-semi-bold;
   color: $blue;
+}
+
+.gf-form-disabled {
+  .query-keyword {
+    color: darken($blue, 20%);
+  }
 }
 
 .query-segment-operator {

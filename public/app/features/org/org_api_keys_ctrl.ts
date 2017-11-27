@@ -4,7 +4,8 @@ export class OrgApiKeysCtrl {
 
   /** @ngInject **/
   constructor ($scope, $http, backendSrv, navModelSrv) {
-    $scope.navModel = navModelSrv.getOrgNav(0);
+    $scope.navModel = navModelSrv.getNav('cfg', 'apikeys');
+
     $scope.roleTypes = ['Viewer', 'Editor', 'Admin'];
     $scope.token = { role: 'Viewer' };
 

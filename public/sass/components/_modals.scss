@@ -10,7 +10,7 @@
   bottom: 0;
   left: 0;
   z-index: $zindex-modal-backdrop;
-  background-color: $black;
+  background-color: $modal-backdrop-bg;
 }
 
 .modal-backdrop,
@@ -21,7 +21,6 @@
 // Base modal
 .modal {
   position: fixed;
-  overflow: hidden;
   z-index: $zindex-modal;
   width: 100%;
 	background-color: $panel-bg;
@@ -48,7 +47,6 @@
 }
 
 .modal-header-title {
-  font-style: italic;
   font-size: $font-size-h3;
   float: left;
   padding-top: $spacer * 0.75;
@@ -63,7 +61,6 @@
 // Body (where all modal content resides)
 .modal-body {
   position: relative;
-  overflow-y: auto;
 }
 
 .modal-content {

@@ -139,7 +139,7 @@
   }
 
   .graph-legend-series:nth-child(odd) {
-    background-color: $grafanaListAccent;
+    background: $table-bg-accent;
   }
 
   .graph-legend-value {

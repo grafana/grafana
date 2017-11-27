@@ -2,7 +2,7 @@
 
 <div class="page-container">
 	<div class="page-header">
-		<h1>User Profile</h1>
+		<page-h1 model="ctrl.navModel"></page-h1>
 	</div>
 
 	<form name="ctrl.userForm" class="gf-form-group">
@@ -23,7 +23,7 @@
       <i ng-if="ctrl.readonlyLoginFields" class="fa fa-lock gf-form-icon--right-absolute" bs-tooltip="'Login Details Locked - managed in another system.'"></i>
     </div>
 		<div class="gf-form-button-row">
-			<button type="submit" class="btn btn-success" ng-click="ctrl.update()">Update</button>
+			<button type="submit" class="btn btn-success" ng-click="ctrl.update()">Save</button>
 		</div>
 	</form>
 

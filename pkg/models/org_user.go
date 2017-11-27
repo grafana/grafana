@@ -32,11 +32,20 @@ func (r RoleType) Includes(other RoleType) bool {
 	if r == ROLE_ADMIN {
 		return true
 	}
-	if r == ROLE_EDITOR || r == ROLE_READ_ONLY_EDITOR {
-		return other != ROLE_ADMIN
+
+	if other == ROLE_READ_ONLY_EDITOR {
+		return r == ROLE_EDITOR || r == ROLE_READ_ONLY_EDITOR
 	}
 
-	return r == other
+	if other == ROLE_EDITOR {
+		return r == ROLE_EDITOR
+	}
+
+	if other == ROLE_VIEWER {
+		return r == ROLE_READ_ONLY_EDITOR || r == ROLE_EDITOR || r == ROLE_VIEWER
+	}
+
+	return false
 }
 
 func (r *RoleType) UnmarshalJSON(data []byte) error {
@@ -106,6 +115,7 @@ type OrgUserDTO struct {
 	OrgId         int64     `json:"orgId"`
 	UserId        int64     `json:"userId"`
 	Email         string    `json:"email"`
+	AvatarUrl     string    `json:"avatarUrl"`
 	Login         string    `json:"login"`
 	Role          string    `json:"role"`
 	LastSeenAt    time.Time `json:"lastSeenAt"`

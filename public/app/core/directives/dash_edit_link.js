@@ -2,8 +2,9 @@ define([
   'jquery',
   'angular',
   '../core_module',
+  'lodash',
 ],
-function ($, angular, coreModule) {
+function ($, angular, coreModule, _) {
   'use strict';
 
   var editViewMap = {
@@ -12,7 +13,14 @@ function ($, angular, coreModule) {
     'templating':  { src: 'public/app/features/templating/partials/editor.html'},
     'history':     { html: '<gf-dashboard-history dashboard="dashboard"></gf-dashboard-history>'},
     'timepicker':  { src: 'public/app/features/dashboard/timepicker/dropdown.html' },
-    'import':      { html: '<dash-import></dash-import>' }
+    'add-panel':    { html: '<add-panel></add-panel>' },
+    'import':      { html: '<dash-import dismiss="dismiss()"></dash-import>', isModal: true },
+    'permissions': { html: '<dash-acl-modal dismiss="dismiss()"></dash-acl-modal>', isModal: true },
+    'new-folder':  {
+      isModal: true,
+      html: '<folder-modal dismiss="dismiss()"></folder-modal>',
+      modalClass: 'modal--narrow'
+    }
   };
 
   coreModule.default.directive('dashEditorView', function($compile, $location, $rootScope) {
@@ -20,6 +28,7 @@ function ($, angular, coreModule) {
       restrict: 'A',
       link: function(scope, elem) {
         var editorScope;
+        var modalScope;
         var lastEditView;
 
         function hideEditorPane(hideToShowOtherView) {
@@ -30,8 +39,7 @@ function ($, angular, coreModule) {
 
         function showEditorPane(evt, options) {
           if (options.editview) {
-            options.src = editViewMap[options.editview].src;
-            options.html = editViewMap[options.editview].html;
+            _.defaults(options, editViewMap[options.editview]);
           }
 
           if (lastEditView && lastEditView === options.editview) {
@@ -45,6 +53,11 @@ function ($, angular, coreModule) {
           editorScope = options.scope ? options.scope.$new() : scope.$new();
 
           editorScope.dismiss = function(hideToShowOtherView) {
+            if (modalScope) {
+              modalScope.dismiss();
+              modalScope = null;
+            }
+
             editorScope.$destroy();
             lastEditView = null;
             editorScope = null;
@@ -73,16 +86,17 @@ function ($, angular, coreModule) {
             }
           };
 
-          if (options.editview === 'import') {
-            var modalScope = $rootScope.$new();
+          if (options.isModal) {
+            modalScope = $rootScope.$new();
             modalScope.$on("$destroy", function() {
               editorScope.dismiss();
             });
 
             $rootScope.appEvent('show-modal', {
-              templateHtml: '<dash-import></dash-import>',
+              templateHtml: options.html,
               scope: modalScope,
-              backdrop: 'static'
+              backdrop: 'static',
+              modalClass: options.modalClass,
             });
 
             return;
@@ -109,7 +123,7 @@ function ($, angular, coreModule) {
           }, 10);
         }
 
-        scope.$watch("dashboardViewState.state.editview", function(newValue, oldValue) {
+        scope.$watch("ctrl.dashboardViewState.state.editview", function(newValue, oldValue) {
           if (newValue) {
             showEditorPane(null, {editview: newValue});
           } else if (oldValue) {

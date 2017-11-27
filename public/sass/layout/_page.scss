@@ -1,19 +1,33 @@
 .grafana-app {
-  display: block;
+  display: flex;
+  align-items: stretch;
+  position: absolute;
+  width: 100%;
   height: 100%;
+  top: 0;
+  left: 0;
 }
 
 .main-view {
-  // height: 100%; REMOVED FOR FOOTER TRW
+  position: relative;
+  flex-grow: 1;
+  background: $page-gradient;
 }
 
 .page-container {
-  background-color: $page-bg;
-  padding: ($spacer * 2) ($spacer * 4);
-  max-width: 1060px;
-  min-height: calc(100% - 54px);
-  padding-bottom: $spacer * 5;
-  background-image: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%)
+  @extend .container;
+  padding: $spacer $spacer $spacer $spacer*3;
+}
+
+.scroll-canvas {
+  position: absolute;
+  width: 100%;
+  overflow: auto;
+  height: 100%;
+
+  &--dashboard {
+    height: calc(100% - 54px);
+  }
 }
 
 .page-body {
@@ -36,22 +50,40 @@
 }
 
 .page-header {
-  padding: $spacer 0 0 0;
+  padding: 2rem 0 0 0;
   margin-bottom: 2rem;
   @include brand-bottom-border();
   @include clearfix();
 
   h1 {
+    font-size: $font-size-h2;
     flex-grow: 1;
     display: inline-block;
-    margin-bottom: $spacer*1.5;
+    margin-bottom: 1rem;
+
+    img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+      position: relative;
+      top: -3px;
+    }
   }
 
-  button, a {
+  a, button {
     float: right;
     margin-left: $spacer;
+
+    // better align icons
+    .fa {
+      position: relative;
+      top: 1px;
+    }
   }
 }
+
+
 
 .page-heading {
   font-size: 1.25rem;
@@ -88,3 +120,89 @@
 .page-sidebar-section {
   margin-bottom: $spacer*2;
 }
+
+.page-breadcrumbs {
+  display: flex;
+  padding: 10px 25px;
+  line-height: 0.5;
+}
+
+.breadcrumb {
+  display: inline-block;
+  box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  border-radius: 5px;
+  counter-reset: flag;
+}
+
+.breadcrumb-item {
+  text-decoration: none;
+  outline: none;
+  display: block;
+  float: left;
+  font-size: 12px;
+  line-height: 36px;
+  padding: 0 7px 0 37px;
+  @include gradientBar($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
+  position: relative;
+  box-shadow: $card-shadow;
+
+  &:first-child {
+    padding-left: 13px;
+    border-radius: 5px 0 0 5px; /*to match with the parent's radius*/
+    font-size: 20px;
+  }
+
+  &:first-child:before {
+    left: 14px;
+  }
+
+  &:last-child {
+    border-radius: 0 5px 5px 0; /*this was to prevent glitches on hover*/
+    padding-right: 20px;
+  }
+
+  &.active,
+  &:hover {
+    background: #333;
+    background: linear-gradient(#333, #000);
+  }
+
+  &.active:after,
+  &:hover:after {
+    background: #333;
+    background: linear-gradient(135deg, #333, #000);
+  }
+
+  &:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -18px; // half of square's length
+
+    // same dimension as the line-height of .breadcrumb-item
+    width: 36px;
+    height: 36px;
+
+    transform: scale(0.707) rotate(45deg);
+    // we need to prevent the arrows from getting buried under the next link
+    z-index: 1;
+
+    // background same as links but the gradient will be rotated to compensate with the transform applied
+    background: linear-gradient(135deg, $btn-inverse-bg, $btn-inverse-bg-hl);
+
+    // stylish arrow design using box shadow
+    box-shadow: 2px -2px 0 2px rgb(35, 31, 31), 3px -3px 0 2px rgba(255, 255, 255, 0.1);
+
+    // 5px - for rounded arrows and
+    // 50px - to prevent hover glitches on the border created using shadows*/
+    border-radius: 0 5px 0 50px;
+  }
+
+  // we dont need an arrow after the last link
+  &:last-child:after {
+    content: none;
+  }
+}
+
+

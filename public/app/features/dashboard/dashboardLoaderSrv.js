@@ -5,12 +5,13 @@ define([
   'jquery',
   'app/core/utils/kbn',
   'app/core/utils/datemath',
-  './impression_store'
+  'app/core/services/impression_srv'
 ],
-function (angular, moment, _, $, kbn, dateMath, impressionStore) {
+function (angular, moment, _, $, kbn, dateMath, impressionSrv) {
   'use strict';
 
   kbn = kbn.default;
+  impressionSrv = impressionSrv.default;
 
   var module = angular.module('grafana.services');
 
@@ -50,7 +51,7 @@ function (angular, moment, _, $, kbn, dateMath, impressionStore) {
       promise.then(function(result) {
 
         if (result.meta.dashboardNotFound !== true) {
-          impressionStore.impressions.addDashboardImpression(result.dashboard.id);
+          impressionSrv.addDashboardImpression(result.dashboard.id);
         }
 
         return result;

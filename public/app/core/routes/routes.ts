@@ -48,9 +48,11 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     reloadOnSearch: false,
     pageClass: 'page-dashboard',
   })
-  .when('/dashboards/list', {
-    templateUrl: 'public/app/features/dashboard/partials/dash_list.html',
-    controller : 'DashListCtrl',
+  .when('/configuration', {
+    templateUrl: 'public/app/features/admin/partials/configuration_home.html',
+    controller : 'ConfigurationHomeCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadAdminBundle,
   })
   .when('/datasources', {
     templateUrl: 'public/app/features/plugins/partials/ds_list.html',
@@ -65,6 +67,11 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/datasources/new', {
     templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
     controller : 'DataSourceEditCtrl',
+    controllerAs: 'ctrl',
+  })
+  .when('/dashboards', {
+    templateUrl: 'public/app/features/dashboard/partials/dashboardList.html',
+    controller : 'DashboardListCtrl',
     controllerAs: 'ctrl',
   })
   .when('/org', {
@@ -86,6 +93,18 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/org/apikeys', {
     templateUrl: 'public/app/features/org/partials/orgApiKeys.html',
     controller : 'OrgApiKeysCtrl',
+    resolve: loadOrgBundle,
+  })
+  .when('/org/user-groups', {
+    templateUrl: 'public/app/features/org/partials/user_groups.html',
+    controller : 'UserGroupsCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadOrgBundle,
+  })
+  .when('/org/user-groups/edit/:id', {
+    templateUrl: 'public/app/features/org/partials/user_group_details.html',
+    controller : 'UserGroupDetailsCtrl',
+    controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })
   .when('/profile', {
@@ -155,6 +174,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/login', {
     templateUrl: 'public/app/partials/login.html',
     controller : 'LoginCtrl',
+    pageClass: 'page-login',
   })
   .when('/invite/:code', {
     templateUrl: 'public/app/partials/signup_invited.html',

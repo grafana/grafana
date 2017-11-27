@@ -5,6 +5,7 @@ import {PanelCtrl} from 'app/plugins/sdk';
 
 export class TextPanelCtrl extends PanelCtrl {
   static templateUrl = `public/app/plugins/panel/text/module.html`;
+  static scrollable = true;
 
   remarkable: any;
   content: string;
@@ -23,6 +24,7 @@ export class TextPanelCtrl extends PanelCtrl {
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('refresh', this.onRefresh.bind(this));
     this.events.on('render', this.onRender.bind(this));
+
     $scope.$watch('ctrl.panel.content',
      _.throttle(() => {
        this.render();

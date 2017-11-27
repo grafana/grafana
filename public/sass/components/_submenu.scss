@@ -5,7 +5,7 @@
   align-content: flex-start;
   align-items: flex-start;
 
-  margin: 0 $panel-margin ($panel-margin*2) $panel-margin;
+  margin: 0 0 $panel-margin 0;
 }
 
 .annotation-disabled, .annotation-disabled a {
@@ -51,15 +51,6 @@
 .variable-link-wrapper  {
   display: inline-block;
   position: relative;
-
-  .hidden-input {
-    padding: 8px 7px;
-    border: none;
-    margin: 0px;
-    background: transparent;
-    border-radius: 0;
-    border-right: 1px solid $tight-form-border;
-  }
 }
 
 .variable-value-dropdown {

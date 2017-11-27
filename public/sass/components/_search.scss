@@ -1,8 +1,8 @@
 .search-backdrop {
   position: fixed;
   right: 0;
-  bottom: 0;
   left: 0;
+  bottom: 0;
   top: $navbarHeight;
   z-index: $zindex-modal-backdrop;
   background-color: $black;
@@ -10,25 +10,21 @@
 }
 
 .search-container {
-  left: 0;
+  left: $side-menu-width;
   top: 0;
   right: 0;
   bottom: 0;
   z-index: ($zindex-modal-backdrop + 10);
   position: fixed;
-
-  .label-tag {
-    margin-left: 6px;
-    font-size: 11px;
-    padding: 2px 6px;
-  }
 }
 
 // Search
 .search-field-wrapper {
   width: 100%;
   display: flex;
-  background-color: $navbarButtonBackground;
+  background-color: $navbarBackground;
+  box-shadow: $navbarShadow;
+  position: relative;
 
   input {
     max-width: 653px;
@@ -62,26 +58,23 @@
 .search-dropdown {
   display: flex;
   flex-direction: column;
-  max-width: 1100px;
-  visibility: none;
-  opacity: 0;
-  height: 100%;
-
-  &--fade-in {
-    visibility: visible;
-    opacity: 1;
-    transition: opacity 0.3s;
-  }
+  max-width: 800px;
+  background: $page-bg;
+  height: calc(100% - #{$navbarHeight});
 }
 
 .search-results-container {
-  height: 90%;
-  overflow: auto;
+  height: 100%;
   display: block;
-  line-height: 28px;
   padding: $spacer;
-  background: $panel-bg;
+  position: relative;
   flex-grow: 10;
+
+  .label-tag {
+    margin-left: 6px;
+    font-size: 11px;
+    padding: 2px 6px;
+  }
 
   .selected {
     .search-result-tag {
@@ -89,95 +82,112 @@
       color: white;
     }
   }
-
-  .fa-star, .fa-star-o {
-    padding-left: 13px;
-  }
-
-  .fa-star {
-    color: $orange;
-  }
-
-  .search-result-link {
-    color: $grafanaListMainLinkColor;
-    .fa {
-      padding-right: 10px;
-    }
-  }
-
-  .search-item {
-    word-wrap: break-word;
-    display: block;
-    padding: 3px 10px;
-    white-space: nowrap;
-    background-color: $tight-form-bg;
-    margin-bottom: 4px;
-    @include left-brand-border();
-
-    .search-result-icon::before {
-      content: "\f009";
-    }
-
-    &.search-item-dash-home .search-result-icon::before {
-      content: "\f015";
-    }
-
-    &:hover,
-    &.selected {
-      background-color: $tight-form-func-bg;
-      @include left-brand-border-gradient();
-    }
-  }
-
-  .search-result-tags {
-    float: right;
-  }
-
-  .search-result-actions {
-    float: right;
-    padding-left: 20px;
-  }
 }
 
-
-.search-button-row {
-  padding: $spacer*2;
+.search-section__header {
+  font-size: $font-size-h6;
+  padding: 0.6rem 0;
+  color: $text-color-weak;
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: space-around;
-  height: 30%;
+  flex-grow: 1;
 
-  button, a {
-    margin-bottom: $spacer;
-  }
-
-  .search-button-row-explore-link {
-    color: $gray-3;
-    font-size: $font-size-sm;
-    position: relative;
-    top: 1.0rem;
-    &:hover {
+  &:hover {
+    color: $text-color-weak;
+    .search-section__header__toggle {
+      background: $tight-form-func-bg;
       color: $link-hover-color;
     }
-    img {
-      vertical-align: text-bottom;
-    }
   }
 }
 
-@include media-breakpoint-up(lg) {
-  .search-dropdown {
-    flex-direction: row;
-  }
-  .search-button-row {
-    flex-direction: column;
-    justify-content: flex-start;
+.search-section__header__with-checkbox {
+  display: flex;
+}
+
+.search-section__header__icon {
+  padding: 3px 10px;
+}
+
+.search-section__header__toggle {
+  padding: 5px;
+}
+
+.search-section__header__text {
+  flex-grow: 1;
+}
+
+.search-item__with-checkbox {
+  display: flex;
+
+  .search-item {
+    margin: 1px 3px;
   }
 }
 
-@include media-breakpoint-up(md) {
-  .search-container {
-    left: 78px;
+.search-item {
+  @include list-item();
+  @include left-brand-border();
+
+  display: flex;
+  flex-grow: 1;
+  height: 37px;
+  white-space: nowrap;
+  padding: 0px;
+
+  &:hover {
+    @include left-brand-border-gradient();
   }
+
+  &.selected {
+    background: $list-item-hover-bg;
+  }
+}
+
+.search-item__body {
+  flex: 1 1 auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 10px;
+}
+
+.search-item__body-title {
+  color: $list-item-link-color;
+}
+
+.search-item__body-sub-title {
+  color: $text-muted;
+  font-size: $font-size-sm;
+  line-height: 9pt;
+}
+
+.search-item__icon {
+  padding: 5px;
+  flex: 0 0 auto;
+  font-size: 19px;
+  padding: 5px 2px 5px 10px;
+}
+
+.search-item__tags {
+  padding: 8px;
+}
+
+.search-item__actions {
+  flex: 0 0 auto;
+}
+
+.search-item__actions__item {
+  display: none;
+}
+
+.search-item:hover {
+  .search-item__actions__item {
+    opacity: 0.8;
+  }
+}
+
+.search-button-row {
+  text-align: center;
+  padding: $spacer*2 $spacer;
 }

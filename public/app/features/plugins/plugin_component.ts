@@ -6,6 +6,7 @@ import coreModule from 'app/core/core_module';
 import {importPluginModule}  from './plugin_loader';
 
 import {UnknownPanelCtrl} from 'app/plugins/panel/unknown/module';
+import {DashboardRowCtrl} from './row_ctrl';
 
 /** @ngInject **/
 function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
@@ -55,10 +56,19 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
   }
 
   function loadPanelComponentInfo(scope, attrs) {
+    if (scope.panel.type === 'row') {
+      return $q.when({
+        name: 'dashboard-row',
+        bindings: {dashboard: "=", panel: "="},
+        attrs: {dashboard: "ctrl.dashboard", panel: "panel"},
+        Component: DashboardRowCtrl,
+      });
+    }
+
     var componentInfo: any = {
       name: 'panel-plugin-' + scope.panel.type,
       bindings: {dashboard: "=", panel: "=", row: "="},
-      attrs: {dashboard: "ctrl.dashboard", panel: "panel", row: "ctrl.row"},
+      attrs: {dashboard: "dashboard", panel: "panel", class: "panel-height-helper"},
     };
 
     let panelInfo = config.panels[scope.panel.type];
@@ -88,7 +98,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
       PanelCtrl.templatePromise = getTemplate(PanelCtrl).then(template => {
         PanelCtrl.templateUrl = null;
-        PanelCtrl.template = `<grafana-panel ctrl="ctrl">${template}</grafana-panel>`;
+        PanelCtrl.template = `<grafana-panel ctrl="ctrl" class="panel-height-helper">${template}</grafana-panel>`;
         return componentInfo;
       });
 
@@ -211,6 +221,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     setTimeout(function() {
       elem.append(child);
       scope.$applyAsync(function() {
+        scope.$broadcast('component-did-mount');
         scope.$broadcast('refresh');
       });
     });

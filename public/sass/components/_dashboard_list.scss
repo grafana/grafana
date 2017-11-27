@@ -1,0 +1,21 @@
+.dashboard-list {
+    height: 75%;
+
+    .search-results-container {
+        padding-left: 0;
+    }
+}
+
+.search-results-filter-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.search-results-filter-row__filters {
+    display: flex;
+    width: 300px;
+}
+
+.search-results-filter-row__filters-item {
+    width: 150px;
+}

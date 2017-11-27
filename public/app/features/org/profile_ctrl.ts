@@ -14,7 +14,7 @@ export class ProfileCtrl {
   constructor(private backendSrv, private contextSrv, private $location, navModelSrv) {
     this.getUser();
     this.getUserOrgs();
-    this.navModel = navModelSrv.getProfileNav();
+    this.navModel = navModelSrv.getNav('profile');
   }
 
   getUser() {

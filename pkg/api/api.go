@@ -43,6 +43,7 @@ func (hs *HttpServer) registerRoutes() {
 	r.Get("/org/users/", reqSignedIn, Index)
 	r.Get("/org/apikeys/", reqSignedIn, Index)
 	r.Get("/dashboard/import/", reqSignedIn, Index)
+	r.Get("/configuration", reqGrafanaAdmin, Index)
 	r.Get("/admin", reqGrafanaAdmin, Index)
 	r.Get("/admin/settings", reqGrafanaAdmin, Index)
 	r.Get("/admin/users", reqGrafanaAdmin, Index)
@@ -134,6 +135,18 @@ func (hs *HttpServer) registerRoutes() {
 			usersRoute.Post("/:id/using/:orgId", wrap(UpdateUserActiveOrg))
 		}, reqGrafanaAdmin)
 
+		// user group (admin permission required)
+		apiRoute.Group("/user-groups", func(userGroupsRoute RouteRegister) {
+			userGroupsRoute.Get("/:userGroupId", wrap(GetUserGroupById))
+			userGroupsRoute.Get("/search", wrap(SearchUserGroups))
+			userGroupsRoute.Post("/", quota("user-groups"), bind(m.CreateUserGroupCommand{}), wrap(CreateUserGroup))
+			userGroupsRoute.Put("/:userGroupId", bind(m.UpdateUserGroupCommand{}), wrap(UpdateUserGroup))
+			userGroupsRoute.Delete("/:userGroupId", wrap(DeleteUserGroupById))
+			userGroupsRoute.Get("/:userGroupId/members", wrap(GetUserGroupMembers))
+			userGroupsRoute.Post("/:userGroupId/members", quota("user-groups"), bind(m.AddUserGroupMemberCommand{}), wrap(AddUserGroupMember))
+			userGroupsRoute.Delete("/:userGroupId/members/:userId", wrap(RemoveUserGroupMember))
+		}, reqOrgAdmin)
+
 		// org information available to all users.
 		apiRoute.Group("/org", func(orgRoute RouteRegister) {
 			orgRoute.Get("/", wrap(GetOrgCurrent))
@@ -224,20 +237,27 @@ func (hs *HttpServer) registerRoutes() {
 
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute RouteRegister) {
-			dashboardRoute.Get("/db/:slug", GetDashboard)
-			dashboardRoute.Delete("/db/:slug", reqEditorRole, DeleteDashboard)
-
-			dashboardRoute.Get("/id/:dashboardId/versions", wrap(GetDashboardVersions))
-			dashboardRoute.Get("/id/:dashboardId/versions/:id", wrap(GetDashboardVersion))
-			dashboardRoute.Post("/id/:dashboardId/restore", reqEditorRole, bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
+			dashboardRoute.Get("/db/:slug", wrap(GetDashboard))
+			dashboardRoute.Delete("/db/:slug", reqEditorRole, wrap(DeleteDashboard))
 
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), wrap(CalculateDashboardDiff))
 
 			dashboardRoute.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
-			dashboardRoute.Get("/file/:file", GetDashboardFromJsonFile)
 			dashboardRoute.Get("/home", wrap(GetHomeDashboard))
 			dashboardRoute.Get("/tags", GetDashboardTags)
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
+
+			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute RouteRegister) {
+				dashIdRoute.Get("/versions", wrap(GetDashboardVersions))
+				dashIdRoute.Get("/versions/:id", wrap(GetDashboardVersion))
+				dashIdRoute.Post("/restore", reqEditorRole, bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
+
+				dashIdRoute.Group("/acl", func(aclRoute RouteRegister) {
+					aclRoute.Get("/", wrap(GetDashboardAclList))
+					aclRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), wrap(UpdateDashboardAcl))
+					aclRoute.Delete("/:aclId", wrap(DeleteDashboardAcl))
+				})
+			})
 		})
 
 		// Dashboard snapshots

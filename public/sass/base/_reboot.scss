@@ -79,6 +79,8 @@ body {
   // By default, `<body>` has no `background-color` so we set one as a best practice.
   background-color: $body-bg;
   height: 100%;
+  width: 100%;
+  position: absolute;
 }
 
 // Suppress the focus outline on elements that cannot be accessed via keyboard.

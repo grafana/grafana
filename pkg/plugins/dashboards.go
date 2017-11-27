@@ -15,6 +15,7 @@ type PluginDashboardInfoDTO struct {
 	Imported         bool   `json:"imported"`
 	ImportedUri      string `json:"importedUri"`
 	Slug             string `json:"slug"`
+	DashboardId      int64  `json:"dashboardId"`
 	ImportedRevision int64  `json:"importedRevision"`
 	Revision         int64  `json:"revision"`
 	Description      string `json:"description"`
@@ -60,6 +61,7 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 		// find existing dashboard
 		for _, existingDash := range query.Result {
 			if existingDash.Slug == dashboard.Slug {
+				res.DashboardId = existingDash.Id
 				res.Imported = true
 				res.ImportedUri = "db/" + existingDash.Slug
 				res.ImportedRevision = existingDash.Data.Get("revision").MustInt64(1)
@@ -74,8 +76,9 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 	for _, dash := range query.Result {
 		if _, exists := existingMatches[dash.Id]; !exists {
 			result = append(result, &PluginDashboardInfoDTO{
-				Slug:    dash.Slug,
-				Removed: true,
+				Slug:        dash.Slug,
+				DashboardId: dash.Id,
+				Removed:     true,
 			})
 		}
 	}

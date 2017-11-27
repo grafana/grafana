@@ -24,19 +24,23 @@ export class PlaylistEditCtrl {
     $route,
     navModelSrv
   ) {
-
-    this.navModel = navModelSrv.getPlaylistsNav(0);
+    this.navModel = navModelSrv.getNav('dashboards', 'playlists');
 
     if ($route.current.params.id) {
       var playlistId = $route.current.params.id;
 
       backendSrv.get('/api/playlists/' + playlistId).then(result => {
         this.playlist = result;
+        this.navModel.node = {text: result.name, icon: this.navModel.node.icon};
+        this.navModel.breadcrumbs.push(this.navModel.node);
       });
 
       backendSrv.get('/api/playlists/' + playlistId + '/items').then(result => {
         this.playlistItems = result;
       });
+    }  else {
+      this.navModel.node = {text: "New playlist", icon: this.navModel.node.icon};
+      this.navModel.breadcrumbs.push(this.navModel.node);
     }
   }
 

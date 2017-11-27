@@ -17,6 +17,7 @@ import './utils/outline';
 import './components/colorpicker/ColorPicker';
 import './components/colorpicker/SeriesColorPicker';
 import './components/colorpicker/spectrum_picker';
+import './services/search_srv';
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';
@@ -44,9 +45,16 @@ import {KeybindingSrv} from './services/keybindingSrv';
 import {helpModal} from './components/help/help';
 import {JsonExplorer} from './components/json_explorer/json_explorer';
 import {NavModelSrv, NavModel} from './nav_model_srv';
+import {userPicker} from './components/user_picker';
+import {userGroupPicker} from './components/user_group_picker';
+import {geminiScrollbar} from './components/scroll/scroll';
+import {gfPageDirective} from './components/gf_page';
+import {orgSwitcher} from './components/org_switcher';
+import {profiler} from './profiler';
 import {registerAngularDirectives} from './angular_wrappers';
 
 export {
+  profiler,
   registerAngularDirectives,
   arrayJoin,
   coreModule,
@@ -71,4 +79,9 @@ export {
   JsonExplorer,
   NavModelSrv,
   NavModel,
+  userPicker,
+  userGroupPicker,
+  geminiScrollbar,
+  gfPageDirective,
+  orgSwitcher
 };

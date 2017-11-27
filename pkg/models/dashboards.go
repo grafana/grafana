@@ -11,11 +11,12 @@ import (
 
 // Typed errors
 var (
-	ErrDashboardNotFound           = errors.New("Dashboard not found")
-	ErrDashboardSnapshotNotFound   = errors.New("Dashboard snapshot not found")
-	ErrDashboardWithSameNameExists = errors.New("A dashboard with the same name already exists")
-	ErrDashboardVersionMismatch    = errors.New("The dashboard has been changed by someone else")
-	ErrDashboardTitleEmpty         = errors.New("Dashboard title cannot be empty")
+	ErrDashboardNotFound               = errors.New("Dashboard not found")
+	ErrDashboardSnapshotNotFound       = errors.New("Dashboard snapshot not found")
+	ErrDashboardWithSameNameExists     = errors.New("A dashboard with the same name already exists")
+	ErrDashboardVersionMismatch        = errors.New("The dashboard has been changed by someone else")
+	ErrDashboardTitleEmpty             = errors.New("Dashboard title cannot be empty")
+	ErrDashboardFolderCannotHaveParent = errors.New("A Dashboard Folder cannot be added to another folder")
 )
 
 type UpdatePluginDashboardError struct {
@@ -47,6 +48,9 @@ type Dashboard struct {
 
 	UpdatedBy int64
 	CreatedBy int64
+	FolderId  int64
+	IsFolder  bool
+	HasAcl    bool
 
 	Title string
 	Data  *simplejson.Json
@@ -111,6 +115,8 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.UpdatedBy = userId
 	dash.OrgId = cmd.OrgId
 	dash.PluginId = cmd.PluginId
+	dash.IsFolder = cmd.IsFolder
+	dash.FolderId = cmd.FolderId
 	dash.UpdateSlug()
 	return dash
 }
@@ -138,12 +144,14 @@ type SaveDashboardCommand struct {
 	OrgId        int64            `json:"-"`
 	RestoredFrom int              `json:"-"`
 	PluginId     string           `json:"-"`
+	FolderId     int64            `json:"folderId"`
+	IsFolder     bool             `json:"isFolder"`
 
 	Result *Dashboard
 }
 
 type DeleteDashboardCommand struct {
-	Slug  string
+	Id    int64
 	OrgId int64
 }
 

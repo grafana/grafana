@@ -1,43 +1,14 @@
-<div class="navbar-inner">
-	<a class="navbar-brand-btn pointer" ng-click="ctrl.toggleSideMenu()">
-		<span class="navbar-brand-btn-background">
-			<img src="public/img/grafana_icon.svg"></img>
-		</span>
-		<i class="icon-gf icon-gf-grafana_wordmark"></i>
-		<i class="fa fa-caret-down"></i>
-		<i class="fa fa-chevron-left"></i>
-	</a>
-
-  <!-- <a class="navbar&#45;page&#45;btn navbar&#45;page&#45;btn&#45;&#45;search" ng&#45;click="ctrl.showSearch()"> -->
-	<!-- 	<i class="fa fa&#45;search"></i> -->
-	<!-- </a> -->
-
-	<div ng-if="::!ctrl.hasMenu">
-		<a href="{{::ctrl.section.url}}" class="navbar-page-btn">
-      <i class="{{::ctrl.section.icon}}" ng-show="::ctrl.section.icon"></i>
-      <img ng-src="{{::ctrl.section.iconUrl}}" ng-show="::ctrl.section.iconUrl"></i>
-      {{::ctrl.section.title}}
-    </a>
-	</div>
-
-  <div class="dropdown navbar-section-wrapper"  ng-if="::ctrl.hasMenu">
-    <a href="{{::ctrl.section.url}}" class="navbar-page-btn" data-toggle="dropdown">
-      <i class="{{::ctrl.section.icon}}" ng-show="::ctrl.section.icon"></i>
-      <img ng-src="{{::ctrl.section.iconUrl}}" ng-show="::ctrl.section.iconUrl"></i>
-      {{::ctrl.section.title}}
-      <i class="fa fa-caret-down"></i>
-    </a>
-    <ul class="dropdown-menu dropdown-menu--navbar">
-      <li ng-repeat="navItem in ::ctrl.model.menu" ng-class="{active: navItem.active}">
-        <a class="pointer" ng-href="{{::navItem.url}}" ng-click="ctrl.navItemClicked(navItem, $event)">
-          <i class="{{::navItem.icon}}" ng-show="::navItem.icon"></i>
-          {{::navItem.title}}
-        </a>
-      </li>
-    </ul>
+<div class="page-nav">
+  <div class="container">
+    <div class="page-breadcrumbs">
+      <a class="breadcrumb-item active" href="/">
+        <i class="fa fa-home"></i>
+      </a>
+      <a class="breadcrumb-item" ng-href="{{::item.url}}" ng-repeat="item in ctrl.model.breadcrumbs">
+        {{::item.text}}
+      </a>
+    </div>
   </div>
-
-  <div ng-transclude></div>
 </div>
 
 <dashboard-search></dashboard-search>

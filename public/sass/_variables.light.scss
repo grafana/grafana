@@ -6,6 +6,7 @@
 // Global values
 // --------------------------------------------------
 
+$theme-name: light;
 
 // Grays
 // -------------------------
@@ -14,8 +15,8 @@ $black:                 #000;
 // -------------------------
 $black:            #000;
 $dark-1:           #141414;
-$dark-2:           #1f1d1d;
-$dark-3:           #292929;
+$dark-2:           #1d1d1f;
+$dark-3:           #262628;
 $dark-4:           #373737;
 $dark-5:           #444444;
 $gray-1:           #555555;
@@ -68,7 +69,7 @@ $text-shadow-faint: none;
 
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255,213,0,1.0) 0%, rgba(255,68,0,1.0) 99%, rgba(255,68,0,1.0) 100%);
-$page-gradient: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%);
+$page-gradient: linear-gradient(-60deg, transparent 70%, darken($page-bg, 4%) 98%);
 
 // Links
 // -------------------------
@@ -96,31 +97,34 @@ $component-active-bg:    $brand-primary !default;
 // -------------------------
 
 $panel-bg: 		       $gray-7;
-$panel-border:       solid 1px $gray-6;
+$panel-border-color: $gray-5;
+$panel-border:       solid 1px $panel-border-color;
 $panel-drop-zone-bg: repeating-linear-gradient(-128deg, $body-bg, $body-bg 10px, $gray-6 10px, $gray-6 20px);
-$panel-menu-border:  solid 1px white;
+$panel-header-hover-bg:       $gray-6;
+$panel-header-menu-hover-bg:  $gray-4;
 
 $divider-border-color:	      $gray-2;
 
 // Graphite Target Editor
-$tight-form-border:   $gray-4;
-$tight-form-bg:    		$gray-6;
+$tight-form-bg:    	    #eaebee;
 
 $tight-form-func-bg:            $gray-5;
 $tight-form-func-highlight-bg:  $gray-6;
 
-$modal-background: $body-bg;
-$code-tag-bg:      $gray-6;
-$code-tag-border:  darken($code-tag-bg, 3%);
+$modal-backdrop-bg: $body-bg;
+$code-tag-bg:       $gray-6;
+$code-tag-border:   darken($code-tag-bg, 3%);
+
+// cards
+$card-background: linear-gradient(135deg, $gray-5, $gray-6);
+$card-background-hover: linear-gradient(135deg, $gray-6, $gray-7);
+$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .1);
 
 // Lists
-$grafanaListBackground:    	   $gray-6;
-$grafanaListAccent:            $gray-5;
-$grafanaListBorderTop:         $gray-3;
-$grafanaListBorderBottom:      $gray-3;
-$grafanaListHighlight:         $gray-5;
-$grafanaListMainLinkColor:     $text-color;
-
+$list-item-bg:         $card-background;
+$list-item-hover-bg:   darken($gray-5, 5%);
+$list-item-link-color: $text-color;
+$list-item-shadow:     $card-shadow;
 
 // Tables
 // -------------------------
@@ -175,22 +179,37 @@ $input-box-shadow:               none;
 $input-border-focus:             $blue !default;
 $input-box-shadow-focus:         $blue !default;
 $input-color-placeholder:        $gray-4 !default;
-$input-label-bg:	        	     $gray-6;
+$input-label-bg:	        	 #eaebee;
+$input-label-border-color:       #e3e4e7;
 $input-invalid-border-color:     lighten($red, 5%);
 
 // Sidemenu
 // -------------------------
 $side-menu-bg:            $body-bg;
 $side-menu-item-hover-bg: $gray-6;
-$side-menu-opacity:		  0.97;
+$side-menu-shadow:        0 0 5px #c2c2c2;
+
+// Menu dropdowns
+// -------------------------
+$menu-dropdown-bg:            $white;
+$menu-dropdown-hover-bg:      $gray-6;
+$menu-dropdown-border-color:  $gray-4;
+$menu-dropdown-shadow:        5px 5px 20px -5px $gray-4;
+
+// Breadcrumb
+// -------------------------
+$page-nav-bg:               #eaebee;
+$page-nav-shadow:           5px 5px 20px -5px $gray-4;
+$page-nav-breadcrumb-color: $black;
+$breadcrumb-hover-hl:       #d9dadd;
 
 // search
-$search-shadow: 0 5px 30px 0 lighten($gray-2, 30%);
+$search-shadow: 0 5px 30px 0 $gray-4;
 
 // Dropdowns
 // -------------------------
 $dropdownBackground:            $white;
-$dropdownBorder:                $tight-form-border;
+$dropdownBorder:                $gray-4;
 $dropdownDividerTop:            $gray-6;
 $dropdownDividerBottom:         $white;
 $dropdownDivider:               $dropdownDividerTop;
@@ -202,7 +221,6 @@ $dropdownLinkColorActive:       $link-color;
 
 $dropdownLinkBackgroundActive:  $gray-6;
 $dropdownLinkBackgroundHover:   $gray-6;
-
 
 // COMPONENT VARIABLES
 // --------------------------------------------------
@@ -233,13 +251,14 @@ $wellBackground:                  $gray-3;
 
 $navbarHeight:                    52px;
 $navbarBackgroundHighlight:       #f8f8f8;
-$navbarBackground:                #f8f8f8;
-$navbarBorder:                    1px solid $tight-form-border;
+$navbarBackground:                #f2f3f7;
+$navbarBorder:                    1px solid $gray-4;
+$navbarShadow:                    0 0 3px #c1c1c1;
 
-$navbarText:                      #666;
-$navbarLinkColor:                 #666;
-$navbarLinkColorHover:            #333;
-$navbarLinkColorActive:           #555;
+$navbarText:                      #444;
+$navbarLinkColor:                 #444;
+$navbarLinkColorHover:            #000;
+$navbarLinkColorActive:           #333;
 $navbarLinkBackgroundHover:       transparent;
 $navbarLinkBackgroundActive:      darken($navbarBackground, 6.5%);
 $navbarDropdownShadow:            inset 0px 4px 7px -4px darken($body-bg, 20%);
@@ -264,9 +283,9 @@ $error-text-color:              lighten($red, 10%);
 $success-text-color:            lighten($green, 10%);
 $info-text-color:                     $blue;
 
-$alert-error-bg:          linear-gradient(90deg, #d44939, #e0603d);
+$alert-error-bg:          linear-gradient(90deg, #d44939, #e04d3d);
 $alert-success-bg:        linear-gradient(90deg, #3aa655, #47b274);
-$alert-warning-bg:        linear-gradient(90deg, #d44939, #e0603d);
+$alert-warning-bg:        linear-gradient(90deg, #d44939, #e04d3d);
 $alert-info-bg:           $blue-dark;
 
 // popover
@@ -290,11 +309,6 @@ $graph-tooltip-bg:        $gray-5;
 
 // images
 $checkboxImageUrl: '../img/checkbox_white.png';
-
-// cards
-$card-background: linear-gradient(135deg, $gray-5, $gray-6);
-$card-background-hover: linear-gradient(135deg, $gray-6, $gray-7);
-$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .1);
 
 // info box
 $info-box-background: linear-gradient(135deg, #f1fbff, #d7ebff);

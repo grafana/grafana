@@ -1,8 +1,6 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import config from 'app/core/config';
 import _ from 'lodash';
 import coreModule from '../../core_module';
+import { SearchSrv } from 'app/core/services/search_srv';
 
 export class SearchCtrl {
   isOpen: boolean;
@@ -15,23 +13,21 @@ export class SearchCtrl {
   showImport: boolean;
   dismiss: any;
   ignoreClose: any;
-  // triggers fade animation class
-  openCompleted: boolean;
+  isLoading: boolean;
 
   /** @ngInject */
-  constructor($scope, private $location, private $timeout, private backendSrv, private dashboardSrv, public contextSrv, $rootScope) {
+  constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv, $rootScope) {
     $rootScope.onAppEvent('show-dash-search', this.openSearch.bind(this), $scope);
     $rootScope.onAppEvent('hide-dash-search', this.closeSearch.bind(this), $scope);
   }
 
   closeSearch() {
     this.isOpen = this.ignoreClose;
-    this.openCompleted = false;
   }
 
   openSearch(evt, payload) {
     if (this.isOpen) {
-      this.isOpen = false;
+      this.closeSearch();
       return;
     }
 
@@ -42,6 +38,7 @@ export class SearchCtrl {
     this.query = { query: '', tag: [], starred: false };
     this.currentSearchId = 0;
     this.ignoreClose = true;
+    this.isLoading = true;
 
     if (payload && payload.starred) {
       this.query.starred = true;
@@ -56,7 +53,6 @@ export class SearchCtrl {
     }
 
     this.$timeout(() => {
-      this.openCompleted = true;
       this.ignoreClose = false;
       this.giveSearchFocus = this.giveSearchFocus + 1;
       this.search();
@@ -101,17 +97,10 @@ export class SearchCtrl {
     this.currentSearchId = this.currentSearchId + 1;
     var localSearchId = this.currentSearchId;
 
-    return this.backendSrv.search(this.query).then((results) => {
+    return this.searchSrv.search(this.query).then(results => {
       if (localSearchId < this.currentSearchId) { return; }
-
-      this.results = _.map(results, function(dash) {
-        dash.url = 'dashboard/' + dash.uri;
-        return dash;
-      });
-
-      if (this.queryHasNoFilters()) {
-        this.results.unshift({ title: 'Home', url: config.appSubUrl + '/', type: 'dash-home' });
-      }
+      this.results = results;
+      this.isLoading = false;
     });
   }
 
@@ -139,7 +128,7 @@ export class SearchCtrl {
   }
 
   getTags() {
-    return this.backendSrv.get('/api/dashboards/tags').then((results) => {
+    return this.searchSrv.getDashboardTags().then((results) => {
       this.tagsMode = !this.tagsMode;
       this.results = results;
       this.giveSearchFocus = this.giveSearchFocus + 1;
@@ -161,14 +150,8 @@ export class SearchCtrl {
     this.searchDashboards();
   }
 
-  starDashboard(row, evt) {
-    this.dashboardSrv.starDashboard(row.id, row.isStarred).then(newState => {
-      row.isStarred = newState;
-    });
-    if (evt) {
-      evt.stopPropagation();
-      evt.preventDefault();
-    }
+  toggleFolder(section) {
+    this.searchSrv.toggleSection(section);
   }
 }
 

@@ -20,6 +20,9 @@ export class LoadDashboardCtrl {
     }
 
     dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
+      if ($routeParams.keepRows) {
+        result.meta.keepRows = true;
+      }
       $scope.initDashboard(result, $scope);
     });
   }
@@ -36,7 +39,7 @@ export class NewDashboardCtrl {
         rows: [
           {
             title: 'Dashboard Row',
-            height: '250px',
+            height: '350px',
             panels: [],
             isNew: true,
           }

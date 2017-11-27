@@ -8,6 +8,12 @@
   padding-top: $spacer * 5; /* BAD HACK - experiement to see how it looks */
 }
 
+.page-login {
+  .sidemenu {
+    display: none;
+  }
+}
+
 .login-form {
   display: inline-block;
   max-width: 24rem;
