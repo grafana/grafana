@@ -51,10 +51,8 @@ describe('given dashboard with panel repeat in horizontal direction', function()
   });
 
   describe('After a second iteration', function() {
-    var repeatedPanelAfterIteration1;
 
     beforeEach(function() {
-      repeatedPanelAfterIteration1 = dashboard.panels[1];
       dashboard.panels[0].fill = 10;
       dashboard.processRepeats();
     });

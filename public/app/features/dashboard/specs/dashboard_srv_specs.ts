@@ -9,4 +9,7 @@ describe('dashboardSrv', function() {
     _dashboardSrv = new DashboardSrv({}, {}, {});
   });
 
+  it("should do something", () => {
+    expect(_dashboardSrv).not.to.be(null);
+  });
 });

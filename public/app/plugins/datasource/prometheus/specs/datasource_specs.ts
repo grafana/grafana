@@ -228,6 +228,7 @@ describe('PrometheusDatasource', function() {
       );
     });
   });
+
   describe('When resultFormat is table and instant = true', function() {
     var results;
     var urlExpected = 'proxied/api/v1/query?query=' +
@@ -248,11 +249,17 @@ describe('PrometheusDatasource', function() {
         }]
       }
     };
+
     beforeEach(function () {
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query).then(function (data) { results = data; });
       ctx.$httpBackend.flush();
     });
+
+    it("should return result", () => {
+      expect(results).not.to.be(null);
+    });
+
     it('should return table model', function() {
       var table = ctx.ds.transformMetricDataToTable(response.data.result);
       expect(table.type).to.be('table');
