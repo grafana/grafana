@@ -9,6 +9,7 @@ export class Tracker {
   next: any;
   $window: any;
 
+   /** @ngInject */
   constructor(
     dashboard,
     scope,
@@ -188,6 +189,7 @@ export class Tracker {
   }
 }
 
+/** @ngInject */
 export function unsavedChangesSrv(
   $rootScope,
   $q,

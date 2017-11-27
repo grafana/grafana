@@ -1,5 +1,5 @@
 import {describe, beforeEach, it, expect, sinon, angularMocks} from 'test/lib/common';
-import 'app/features/dashboard/unsavedChangesSrv';
+import 'app/features/dashboard/unsaved_changes_srv';
 import 'app/features/dashboard/dashboard_srv';
 
 describe("unsavedChangesSrv", function() {
