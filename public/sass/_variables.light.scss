@@ -13,7 +13,7 @@ $theme-name: light;
 $black:                 #000;
 
 // -------------------------
-$black:            #000;
+/*$black:            #000;
 $dark-1:           #141414;
 $dark-2:           #1d1d1f;
 $dark-3:           #262628;
@@ -25,7 +25,21 @@ $gray-3:           #b3b3b3;
 $gray-4:           #D8D9DA;
 $gray-5:           #ECECEC;
 $gray-6:           #f4f5f8;
-$gray-7:           #fbfbfb;
+$gray-7:           #fbfbfb;*/
+
+$black:            #000;
+$dark-1:           #121314;
+$dark-2:           #1d1d1f;
+$dark-3:           #272729;
+$dark-4:           #38383b;
+$dark-5:           #444547;
+$gray-1:           #525357;
+$gray-2:           #7a7c80;
+$gray-3:           #b2b3b8;
+$gray-4:           #d5d6db;
+$gray-5:           #e9eaf0;
+$gray-6:           #f4f5f8;
+$gray-7:           #fafbfc;
 
 $white:            #fff;
 
@@ -185,8 +199,8 @@ $input-invalid-border-color:     lighten($red, 5%);
 
 // Sidemenu
 // -------------------------
-$side-menu-bg:            $body-bg;
-$side-menu-item-hover-bg: $gray-6;
+$side-menu-bg:            $gray-7;
+$side-menu-item-hover-bg: $gray-5;
 $side-menu-shadow:        0 0 5px #c2c2c2;
 
 // Menu dropdowns
@@ -198,7 +212,7 @@ $menu-dropdown-shadow:        5px 5px 20px -5px $gray-4;
 
 // Breadcrumb
 // -------------------------
-$page-nav-bg:               #eaebee;
+$page-nav-bg:               $gray-5;
 $page-nav-shadow:           5px 5px 20px -5px $gray-4;
 $page-nav-breadcrumb-color: $black;
 $breadcrumb-hover-hl:       #d9dadd;
@@ -250,8 +264,8 @@ $wellBackground:                  $gray-3;
 // -------------------------
 
 $navbarHeight:                    52px;
-$navbarBackgroundHighlight:       #f8f8f8;
-$navbarBackground:                #f2f3f7;
+$navbarBackgroundHighlight:       white;
+$navbarBackground:                $white;
 $navbarBorder:                    1px solid $gray-4;
 $navbarShadow:                    0 0 3px #c1c1c1;
 

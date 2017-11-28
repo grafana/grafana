@@ -17,7 +17,8 @@
 
   tbody {
     tr:nth-child(odd) {
-      background: $dark-2;
+      //background: $dark-2;
+      background: $gray-6;
     }
   }
 
@@ -34,7 +35,8 @@
     padding: $table-cell-padding;
     line-height: 30px;
     height: 30px;
-    border-bottom: 1px solid black;
+    //border-bottom: 1px solid black;
+    border-bottom: 1px solid #ECECEC;
     white-space: nowrap;
 
     &.filter-table__switch-cell {

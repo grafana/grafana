@@ -144,6 +144,7 @@
   line-height: 36px;
   padding: 0 7px 0 37px;
   @include gradientBar($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
+  //background:linear-gradient(#edeff2, #e3e4e7);
   position: relative;
   box-shadow: $card-shadow;
 
@@ -164,14 +165,14 @@
 
   &.active,
   &:hover {
-    background: #333;
-    background: linear-gradient(#333, #000);
+    background: #fff;//#333;
+    background: linear-gradient($gray-4, darken($gray-4, 5%)); //linear-gradient(#333, #000);
   }
 
   &.active:after,
   &:hover:after {
-    background: #333;
-    background: linear-gradient(135deg, #333, #000);
+    background: #fff;//#333;
+    background: linear-gradient(135deg, $gray-4,darken($gray-4, 5%));////linear-gradient(135deg, #333, #000);
   }
 
   &:after {
@@ -192,7 +193,7 @@
     background: linear-gradient(135deg, $btn-inverse-bg, $btn-inverse-bg-hl);
 
     // stylish arrow design using box shadow
-    box-shadow: 2px -2px 0 2px rgb(35, 31, 31), 3px -3px 0 2px rgba(255, 255, 255, 0.1);
+    box-shadow: 2px -2px 0 2px rgb(250, 250, 250), 3px -3px 0 2px rgba(255, 255, 255, 0.1);
 
     // 5px - for rounded arrows and
     // 50px - to prevent hover glitches on the border created using shadows*/
