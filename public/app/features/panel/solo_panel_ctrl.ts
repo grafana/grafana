@@ -1,14 +1,9 @@
-define([
-  'angular',
-  'jquery',
-],
-function (angular, $) {
-  "use strict";
+import angular from 'angular';
 
-  var module = angular.module('grafana.routes');
+export class SoloPanelCtrl{
 
-  module.controller('SoloPanelCtrl', function($scope, $routeParams, $location, dashboardLoaderSrv, contextSrv) {
-
+  /** @ngInject */
+  constructor($scope, $routeParams, $location, dashboardLoaderSrv, contextSrv) {
     var panelId;
 
     $scope.init = function() {
@@ -26,26 +21,25 @@ function (angular, $) {
     };
 
     $scope.initPanelScope = function() {
-      var panelInfo = $scope.dashboard.getPanelInfoById(panelId);
+      let panelInfo = $scope.dashboard.getPanelInfoById(panelId);
 
       // fake row ctrl scope
       $scope.ctrl = {
-        row: panelInfo.row,
         dashboard: $scope.dashboard,
       };
 
-      $scope.ctrl.row.height = $(window).height();
       $scope.panel = panelInfo.panel;
+      $scope.panel.soloMode = true;
       $scope.$index = 0;
 
       if (!$scope.panel) {
         $scope.appEvent('alert-error', ['Panel not found', '']);
         return;
       }
-
-      $scope.panel.span = 12;
     };
 
     $scope.init();
-  });
-});
+  }
+}
+
+angular.module('grafana.routes').controller('SoloPanelCtrl', SoloPanelCtrl);
