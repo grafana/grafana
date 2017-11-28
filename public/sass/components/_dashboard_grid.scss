@@ -21,6 +21,26 @@
   }
 }
 
+@include media-breakpoint-down(md) {
+  .react-grid-layout {
+    height: 100% !important;
+  }
+
+  .react-grid-item {
+    display: none;
+    transition-property: none !important;
+  }
+
+  .panel {
+    display: block !important;
+    position: unset !important;
+    width: 100% !important;
+    transform: translate(0px, 0px) !important;
+    margin-bottom: 1rem;
+  }
+}
+
+
 .theme-dark {
   .react-grid-item > .react-resizable-handle {
     background-image: url('../img/resize-handle-white.svg');
