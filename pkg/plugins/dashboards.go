@@ -108,13 +108,3 @@ func loadPluginDashboard(pluginId, path string) (*m.Dashboard, error) {
 
 	return m.NewDashboardFromJson(data), nil
 }
-
-func getPlugin(pluginId string) (*PluginBase, error) {
-	plugin, exists := Plugins[pluginId]
-
-	if !exists {
-		return nil, PluginNotFoundError{pluginId}
-	}
-
-	return plugin, nil
-}
