@@ -1,4 +1,4 @@
-package datasources
+package datasource
 
 import (
 	"errors"

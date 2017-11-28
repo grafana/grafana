@@ -30,19 +30,15 @@ func (provider *DashboardProvisioner) Init(ctx context.Context) error {
 	}
 
 	for _, cfg := range cfgs {
-		if cfg.Type == "file" {
+		switch cfg.Type {
+		case "file":
 			fileReader, err := NewDashboardFilereader(cfg, provider.log.New("type", cfg.Type, "name", cfg.Name))
 			if err != nil {
 				return err
 			}
 
-			// err = fileReader.Init()
-			// if err != nil {
-			// 	provider.log.Error("Failed to load dashboards", "error", err)
-			// }
-
-			go fileReader.Listen(ctx)
-		} else {
+			go fileReader.ReadAndListen(ctx)
+		default:
 			return fmt.Errorf("type %s is not supported", cfg.Type)
 		}
 	}

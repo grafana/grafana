@@ -67,8 +67,8 @@ func NewDashboardFilereader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 	}, nil
 }
 
-func (fr *fileReader) Listen(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second * 1)
+func (fr *fileReader) ReadAndListen(ctx context.Context) error {
+	ticker := time.NewTicker(time.Second * 10)
 
 	if err := fr.walkFolder(); err != nil {
 		fr.log.Error("failed to search for dashboards", "error", err)
