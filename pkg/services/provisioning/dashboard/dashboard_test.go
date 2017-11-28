@@ -29,6 +29,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 			So(ds.Type, ShouldEqual, "file")
 			So(ds.OrgId, ShouldEqual, 2)
 			So(ds.Folder, ShouldEqual, "developers")
+			So(ds.Editable, ShouldBeTrue)
 
 			So(len(ds.Options), ShouldEqual, 1)
 			So(ds.Options["folder"], ShouldEqual, "/var/lib/grafana/dashboards")
@@ -39,6 +40,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 			So(ds2.Type, ShouldEqual, "file")
 			So(ds2.OrgId, ShouldEqual, 1)
 			So(ds2.Folder, ShouldEqual, "")
+			So(ds2.Editable, ShouldBeFalse)
 
 			So(len(ds2.Options), ShouldEqual, 1)
 			So(ds2.Options["folder"], ShouldEqual, "/var/lib/grafana/dashboards")

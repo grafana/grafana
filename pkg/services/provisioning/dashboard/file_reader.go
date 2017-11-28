@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -22,31 +21,6 @@ type fileReader struct {
 	Path           string
 	log            log.Logger
 	dashboardCache *dashboardCache
-}
-
-type dashboardCache struct {
-	mutex      *sync.Mutex
-	dashboards map[string]*DashboardJson
-}
-
-func newDashboardCache() *dashboardCache {
-	return &dashboardCache{
-		dashboards: map[string]*DashboardJson{},
-		mutex:      &sync.Mutex{},
-	}
-}
-
-func (dc *dashboardCache) addCache(json *DashboardJson) {
-	dc.mutex.Lock()
-	defer dc.mutex.Unlock()
-	dc.dashboards[json.Path] = json
-}
-
-func (dc *dashboardCache) getCache(path string) (*DashboardJson, bool) {
-	dc.mutex.Lock()
-	defer dc.mutex.Unlock()
-	v, exist := dc.dashboards[path]
-	return v, exist
 }
 
 func NewDashboardFilereader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
@@ -152,20 +126,17 @@ func (fr *fileReader) readDashboardFromFile(path string) (*DashboardJson, error)
 		return nil, err
 	}
 
-	stat, _ := os.Stat(path)
-	dash := &DashboardJson{}
-	dash.Dashboard = models.NewDashboardFromJson(data)
-	dash.TitleLower = strings.ToLower(dash.Dashboard.Title)
-	dash.Path = path
-	dash.ModTime = stat.ModTime()
-	dash.OrgId = fr.Cfg.OrgId
-	dash.Folder = fr.Cfg.Folder
-
-	if dash.Dashboard.Title == "" {
-		return nil, models.ErrDashboardTitleEmpty
+	stat, err := os.Stat(path)
+	if err != nil {
+		return nil, err
 	}
 
-	fr.dashboardCache.addCache(dash)
+	dash, err := createDashboardJson(data, stat.ModTime(), fr.Cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	fr.dashboardCache.addCache(path, dash)
 
 	return dash, nil
 }
