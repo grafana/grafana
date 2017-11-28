@@ -38,8 +38,11 @@ export class SearchSrv {
 
     return this.backendSrv.search({ dashboardIds: dashIds }).then(result => {
       return dashIds.map(orderId => {
-        return this.transformToViewModel(_.find(result, { id: orderId }));
-      }).filter(item => !item.isStarred);
+        return _.find(result, { id: orderId });
+      }).filter(hit => hit && !hit.isStarred)
+        .map(hit => {
+          return this.transformToViewModel(hit);
+        });
     });
   }
 

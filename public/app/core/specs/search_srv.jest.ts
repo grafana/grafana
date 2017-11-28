@@ -53,6 +53,31 @@ describe('SearchSrv', () => {
       expect(results[0].items[0].title).toBe('first but second');
       expect(results[0].items[1].title).toBe('second but first');
     });
+
+    describe('and 3 recent dashboards removed in backend', () => {
+      let results;
+
+      beforeEach(() => {
+        backendSrvMock.search = jest
+          .fn()
+          .mockReturnValueOnce(
+            Promise.resolve([{ id: 2, title: 'two' }, { id: 1, title: 'one' }]),
+          )
+          .mockReturnValue(Promise.resolve([]));
+
+        impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([4, 5, 1, 2, 3]);
+
+        return searchSrv.search({ query: '' }).then(res => {
+          results = res;
+        });
+      });
+
+      it('should return 2 dashboards', () => {
+        expect(results[0].items.length).toBe(2);
+        expect(results[0].items[0].id).toBe(1);
+        expect(results[0].items[1].id).toBe(2);
+      });
+    });
   });
 
   describe('With starred dashboards', () => {
