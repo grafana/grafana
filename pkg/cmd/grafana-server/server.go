@@ -29,6 +29,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/social"
 	"github.com/grafana/grafana/pkg/tracing"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func NewGrafanaServer() models.GrafanaServer {
@@ -96,6 +97,7 @@ func (g *GrafanaServerImpl) Start() {
 		return
 	}
 
+	util.SdNotify("READY=1")
 	g.startHttpServer()
 }
 
