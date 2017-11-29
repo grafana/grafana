@@ -74,14 +74,9 @@
 							</div>
 						</span>
 						<span class="search-item__tags">
-							<span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in item.tags" tag-color-from-name="tag"  class="label label-tag">
+							<span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in item.tags" tag-color-from-name="tag" class="label label-tag">
 								{{tag}}
 							</span>
-						</span>
-						<span class="search-item__actions">
-              <span class="search-item__actions__item" ng-click="ctrl.toggleStar()">
-                <i class="fa" ng-class="{'fa-star': item.isStarred, 'fa-star-o': !item.isStarred}"></i>
-              </span>
 						</span>
 					</a>
 				</div>

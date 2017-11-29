@@ -42,7 +42,7 @@ div.flot-text {
 }
 
 .panel-content {
-  padding: 0px 10px 5px 10px;
+  padding: $panel-padding;
   height: calc(100% - 27px);
   position: relative;
   overflow: hidden;

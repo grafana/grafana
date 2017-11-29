@@ -141,16 +141,16 @@
   display: block;
   float: left;
   font-size: 12px;
-  line-height: 36px;
+  line-height: 30px;
   padding: 0 7px 0 37px;
   @include gradientBar($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
   position: relative;
   box-shadow: $card-shadow;
 
   &:first-child {
-    padding-left: 13px;
+    padding-left: 10px;
     border-radius: 5px 0 0 5px; /*to match with the parent's radius*/
-    font-size: 20px;
+    font-size: 18px;
   }
 
   &:first-child:before {
@@ -178,11 +178,11 @@
     content: '';
     position: absolute;
     top: 0;
-    right: -18px; // half of square's length
+    right: -14px; // half of square's length
 
     // same dimension as the line-height of .breadcrumb-item
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
 
     transform: scale(0.707) rotate(45deg);
     // we need to prevent the arrows from getting buried under the next link
