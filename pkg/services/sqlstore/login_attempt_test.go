@@ -81,5 +81,45 @@ func TestLoginAttempts(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(query.Result, ShouldEqual, 1)
 		})
+
+		Convey("Should return deleted rows older than beginning of time", func() {
+			cmd := m.DeleteOldLoginAttemptsCommand{
+				OlderThan: beginningOfTime,
+			}
+			err := DeleteOldLoginAttempts(&cmd)
+
+			So(err, ShouldBeNil)
+			So(cmd.DeletedRows, ShouldEqual, 0)
+		})
+
+		Convey("Should return deleted rows older than beginning of time + 1min", func() {
+			cmd := m.DeleteOldLoginAttemptsCommand{
+				OlderThan: timePlusOneMinute,
+			}
+			err := DeleteOldLoginAttempts(&cmd)
+
+			So(err, ShouldBeNil)
+			So(cmd.DeletedRows, ShouldEqual, 1)
+		})
+
+		Convey("Should return deleted rows older than beginning of time + 2min", func() {
+			cmd := m.DeleteOldLoginAttemptsCommand{
+				OlderThan: timePlusTwoMinutes,
+			}
+			err := DeleteOldLoginAttempts(&cmd)
+
+			So(err, ShouldBeNil)
+			So(cmd.DeletedRows, ShouldEqual, 2)
+		})
+
+		Convey("Should return deleted rows older than beginning of time + 2min and 1s", func() {
+			cmd := m.DeleteOldLoginAttemptsCommand{
+				OlderThan: timePlusTwoMinutes.Add(time.Second * 1),
+			}
+			err := DeleteOldLoginAttempts(&cmd)
+
+			So(err, ShouldBeNil)
+			So(cmd.DeletedRows, ShouldEqual, 3)
+		})
 	})
 }

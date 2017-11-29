@@ -21,6 +21,11 @@ type CreateLoginAttemptCommand struct {
 	Result LoginAttempt
 }
 
+type DeleteOldLoginAttemptsCommand struct {
+	OlderThan   time.Time
+	DeletedRows int64
+}
+
 // ---------------------
 // QUERIES
 
