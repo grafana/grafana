@@ -380,9 +380,7 @@ export class ElasticDatasource {
     }
 
     if (query.find === 'terms') {
-      if ('field' in query) {
-        query.field = this.templateSrv.replace(query.field, {}, 'lucene');
-      }
+      query.field = this.templateSrv.replace(query.field, {}, 'lucene');
       query.query = this.templateSrv.replace(query.query || '*', {}, 'lucene');
       return this.getTerms(query);
     }
