@@ -187,6 +187,23 @@ describe('given dashboard with row repeat', function() {
     ]);
   });
 
+  it('should set scopedVars for each panel', function() {
+    dashboardJSON.templating.list[0].options[2].selected = true;
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+    const scopedVars = _.compact(_.map(dashboard.panels, (panel) => {
+      if (panel.scopedVars) {
+        return panel.scopedVars.apps.value;
+      }
+    }));
+
+    expect(scopedVars).toEqual([
+      'se1', 'se1', 'se1',
+      'se2', 'se2', 'se2',
+      'se3', 'se3', 'se3',
+    ]);
+  });
+
   it('should repeat only row if it is collapsed', function() {
     dashboardJSON.panels = [
         {

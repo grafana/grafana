@@ -274,7 +274,6 @@ export class DashboardModel {
 
     this.sortPanelsByGridPos();
     this.events.emit('repeats-processed');
-    console.log(this.panels);
   }
 
   getPanelRepeatClone(sourcePanel, valueIndex, sourcePanelIndex) {
@@ -286,25 +285,42 @@ export class DashboardModel {
     let clone = new PanelModel(sourcePanel.getSaveModel());
     clone.id = this.getNextPanelId();
 
-    if (sourcePanel.type === 'row') {
-      // for row clones we need to figure out panels under row to clone and where to insert clone
-      let rowPanels, insertPos;
-      if (sourcePanel.collapsed) {
-        rowPanels = sourcePanel.panels;
-        clone.panels = _.cloneDeep(rowPanels);
-        // insert copied row after preceding row
-        insertPos = sourcePanelIndex + valueIndex;
-      } else {
-        rowPanels = this.getRowPanels(sourcePanelIndex);
-        clone.panels = _.map(rowPanels, panel => panel.getSaveModel());
-        // insert copied row after preceding row's panels
-        insertPos = sourcePanelIndex + ((rowPanels.length + 1)*valueIndex);
+    // insert after source panel + value index
+    this.panels.splice(sourcePanelIndex+valueIndex, 0, clone);
+
+    clone.repeatIteration = this.iteration;
+    clone.repeatPanelId = sourcePanel.id;
+    clone.repeat = null;
+    return clone;
+  }
+
+  getRowRepeatClone(sourcePanel, valueIndex, sourcePanelIndex) {
+    // if first clone return source
+    if (valueIndex === 0) {
+      if (!sourcePanel.collapsed) {
+        let rowPanels = this.getRowPanels(sourcePanelIndex);
+        sourcePanel.panels = rowPanels;
       }
-      this.panels.splice(insertPos, 0, clone);
-    } else {
-      // insert after source panel + value index
-      this.panels.splice(sourcePanelIndex+valueIndex, 0, clone);
+      return sourcePanel;
     }
+
+    let clone = new PanelModel(sourcePanel.getSaveModel());
+    clone.id = this.getNextPanelId();
+
+    // for row clones we need to figure out panels under row to clone and where to insert clone
+    let rowPanels, insertPos;
+    if (sourcePanel.collapsed) {
+      rowPanels = _.cloneDeep(sourcePanel.panels);
+      clone.panels = rowPanels;
+      // insert copied row after preceding row
+      insertPos = sourcePanelIndex + valueIndex;
+    } else {
+      rowPanels = this.getRowPanels(sourcePanelIndex);
+      clone.panels = _.map(rowPanels, panel => panel.getSaveModel());
+      // insert copied row after preceding row's panels
+      insertPos = sourcePanelIndex + ((rowPanels.length + 1)*valueIndex);
+    }
+    this.panels.splice(insertPos, 0, clone);
 
     clone.repeatIteration = this.iteration;
     clone.repeatPanelId = sourcePanel.id;
@@ -334,32 +350,43 @@ export class DashboardModel {
 
     for (let index = 0; index < selected.length; index++) {
       let option = selected[index];
-      let copy = this.getPanelRepeatClone(panel, index, panelIndex);
+      let copy;
 
-      copy.scopedVars = {};
-      copy.scopedVars[variable.name] = option;
+      if (panel.type === 'row') {
+        copy = this.getRowRepeatClone(panel, index, panelIndex);
+        copy.scopedVars = {};
+        copy.scopedVars[variable.name] = option;
 
-      if (copy.type === 'row') {
         let rowHeight = this.getRowHeight(copy);
-        if (rowHeight) {
-          let panelsBelowIndex;
-          let rowPanels = copy.panels;
-          // insert after 'row' panel
-          let insertPos = panelIndex + ((rowPanels.length + 1) * index) + 1;
+        // if (rowHeight) {
+        let panelsBelowIndex;
+        let rowPanels = copy.panels || [];
+        // insert after 'row' panel
+        let insertPos = panelIndex + ((rowPanels.length + 1) * index) + 1;
 
-          if (copy.collapsed) {
-            copy.gridPos.y += index;
-            yPos += index;
-            panelsBelowIndex = panelIndex + index + 1;
-            _.each(copy.panels, (panel, i) => {
+        if (copy.collapsed) {
+          copy.gridPos.y += index;
+          yPos += index;
+          panelsBelowIndex = panelIndex + index + 1;
+
+          _.each(copy.panels, (panel, i) => {
+            panel.scopedVars = {};
+            panel.scopedVars[variable.name] = option;
+
+            if (index > 0) {
               panel.id = this.getNextPanelId();
               panel.repeatIteration = this.iteration;
               panel.repeatPanelId = rowPanels[i].id;
               panel.repeat = null;
               copy.panels[i] = panel;
-            });
-          } else {
-            _.each(rowPanels, (rowPanel, i) => {
+            }
+          });
+        } else {
+          _.each(rowPanels, (rowPanel, i) => {
+            rowPanel.scopedVars = {};
+            rowPanel.scopedVars[variable.name] = option;
+
+            if (index > 0) {
               let cloneRowPanel = new PanelModel(rowPanel);
               cloneRowPanel.id = this.getNextPanelId();
               cloneRowPanel.repeatIteration = this.iteration;
@@ -367,19 +394,23 @@ export class DashboardModel {
               cloneRowPanel.repeat = null;
               cloneRowPanel.gridPos.y += rowHeight * index;
               this.panels.splice(insertPos+i, 0, cloneRowPanel);
-            });
-            copy.panels = [];
-            copy.gridPos.y += rowHeight * index;
-            yPos += rowHeight;
-            panelsBelowIndex = insertPos+rowPanels.length;
-          }
+            }
+          });
+          copy.panels = [];
+          copy.gridPos.y += rowHeight * index;
+          yPos += rowHeight;
+          panelsBelowIndex = insertPos+rowPanels.length;
+        }
 
-          // Update gridPos for panels below
-          for (let i = panelsBelowIndex; i< this.panels.length; i++) {
-            this.panels[i].gridPos.y += yPos;
-          }
+        // Update gridPos for panels below
+        for (let i = panelsBelowIndex; i< this.panels.length; i++) {
+          this.panels[i].gridPos.y += yPos;
         }
       } else {
+        copy = this.getPanelRepeatClone(panel, index, panelIndex);
+        copy.scopedVars = {};
+        copy.scopedVars[variable.name] = option;
+
         if (panel.repeatDirection === REPEAT_DIR_VERTICAL) {
           copy.gridPos.y = yPos;
           yPos += copy.gridPos.h;
