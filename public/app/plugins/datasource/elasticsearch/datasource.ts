@@ -104,9 +104,7 @@ export class ElasticDatasource {
         "filter": [
           { "range": range },
           {
-            "query_string": {
-              "query": queryInterpolated
-            }
+            queryInterpolated
           }
         ]
       }
