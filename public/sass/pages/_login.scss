@@ -8,6 +8,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background-image: url(../img/heatmap_bg_test.svg);
+  background-size: 100%;
 }
 
 input:-webkit-autofill,
@@ -39,6 +41,7 @@ select:-webkit-autofill:focus {
 .login-form-input {
   border: 1px solid #fafafa !important;
   border-radius: 4px !important;
+  opacity: .6;
 }
 
 .login-button-group {
@@ -69,13 +72,13 @@ select:-webkit-autofill:focus {
   justify-content: center;
   border-right: 1px solid #fafafa;
   img {
-    width: 12rem;
+    width: 10rem;
   }
   .icon-gf-grafana_wordmark {
     color: $link-color;
     position: relative;
     font-size: 4rem;
-    text-shadow: 3px 3px 5px black;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
   }
 }
 
