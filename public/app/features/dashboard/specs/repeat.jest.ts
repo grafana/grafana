@@ -148,10 +148,10 @@ describe('given dashboard with panel repeat in vertical direction', function() {
 });
 
 describe('given dashboard with row repeat', function() {
-  var dashboard;
+  let dashboard, dashboardJSON;
 
   beforeEach(function() {
-    dashboard = new DashboardModel({
+    dashboardJSON = {
       panels: [
         {id: 1, type: 'row',   repeat: 'apps', gridPos: {x: 0, y: 0, h: 1 , w: 24}},
         {id: 2, type: 'graph', gridPos: {x: 0, y: 1, h: 1 , w: 6}},
@@ -173,7 +173,8 @@ describe('given dashboard with row repeat', function() {
           ]
         }]
       }
-    });
+    };
+    dashboard = new DashboardModel(dashboardJSON);
     dashboard.processRepeats();
   });
 
@@ -184,6 +185,55 @@ describe('given dashboard with row repeat', function() {
       'row', 'graph', 'graph',
       'row', 'graph'
     ]);
+  });
+
+  it('should repeat only row if it is collapsed', function() {
+    dashboardJSON.panels = [
+        {
+          id: 1, type: 'row', collapsed: true, repeat: 'apps', gridPos: {x: 0, y: 0, h: 1 , w: 24},
+          panels: [
+            {id: 2, type: 'graph', gridPos: {x: 0, y: 1, h: 1 , w: 6}},
+            {id: 3, type: 'graph', gridPos: {x: 6, y: 1, h: 1 , w: 6}},
+          ]
+        },
+        {id: 4, type: 'row',   gridPos: {x: 0, y: 1, h: 1 , w: 24}},
+        {id: 5, type: 'graph', gridPos: {x: 0, y: 2, h: 1 , w: 12}},
+    ];
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+
+    const panel_types = _.map(dashboard.panels, 'type');
+    expect(panel_types).toEqual([
+      'row', 'row', 'row', 'graph'
+    ]);
+    expect(dashboard.panels[0].panels).toHaveLength(2);
+    expect(dashboard.panels[1].panels).toHaveLength(2);
+  });
+
+  it('should assign unique ids for repeated panels', function() {
+    dashboardJSON.panels = [
+        {
+          id: 1, type: 'row', collapsed: true, repeat: 'apps', gridPos: {x: 0, y: 0, h: 1 , w: 24},
+          panels: [
+            {id: 2, type: 'graph', gridPos: {x: 0, y: 1, h: 1 , w: 6}},
+            {id: 3, type: 'graph', gridPos: {x: 6, y: 1, h: 1 , w: 6}},
+          ]
+        },
+        {id: 4, type: 'row',   gridPos: {x: 0, y: 1, h: 1 , w: 24}},
+        {id: 5, type: 'graph', gridPos: {x: 0, y: 2, h: 1 , w: 12}},
+    ];
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+
+    const panel_ids = _.flattenDeep(_.map(dashboard.panels, (panel) => {
+      let ids = [];
+      if (panel.panels && panel.panels.length) {
+        ids = _.map(panel.panels, 'id');
+      }
+      ids.push(panel.id);
+      return ids;
+    }));
+    expect(panel_ids.length).toEqual(_.uniq(panel_ids).length);
   });
 
   // it('should set scopedVars on panels', function() {
