@@ -21,3 +21,11 @@ type CreateLoginAttemptCommand struct {
 	Result LoginAttempt
 }
 
+// ---------------------
+// QUERIES
+
+type GetUserLoginAttemptCountQuery struct {
+	Username string
+	Since    time.Time
+	Result   int64
+}

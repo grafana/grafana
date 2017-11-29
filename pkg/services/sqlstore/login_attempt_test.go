@@ -42,5 +42,44 @@ func TestLoginAttempts(t *testing.T) {
 		})
 		So(err, ShouldBeNil)
 
+		Convey("Should return a total count of zero login attempts when comparing since beginning of time + 2min and 1s", func() {
+			query := m.GetUserLoginAttemptCountQuery{
+				Username: user,
+				Since:    timePlusTwoMinutes.Add(time.Second * 1),
+			}
+			err := GetUserLoginAttemptCount(&query)
+			So(err, ShouldBeNil)
+			So(query.Result, ShouldEqual, 0)
+		})
+
+		Convey("Should return the total count of login attempts since beginning of time", func() {
+			query := m.GetUserLoginAttemptCountQuery{
+				Username: user,
+				Since:    beginningOfTime,
+			}
+			err := GetUserLoginAttemptCount(&query)
+			So(err, ShouldBeNil)
+			So(query.Result, ShouldEqual, 3)
+		})
+
+		Convey("Should return the total count of login attempts since beginning of time + 1min", func() {
+			query := m.GetUserLoginAttemptCountQuery{
+				Username: user,
+				Since:    timePlusOneMinute,
+			}
+			err := GetUserLoginAttemptCount(&query)
+			So(err, ShouldBeNil)
+			So(query.Result, ShouldEqual, 2)
+		})
+
+		Convey("Should return the total count of login attempts since beginning of time + 2min", func() {
+			query := m.GetUserLoginAttemptCountQuery{
+				Username: user,
+				Since:    timePlusTwoMinutes,
+			}
+			err := GetUserLoginAttemptCount(&query)
+			So(err, ShouldBeNil)
+			So(query.Result, ShouldEqual, 1)
+		})
 	})
 }

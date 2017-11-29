@@ -12,6 +12,7 @@ var getTimeNow = time.Now
 
 func init() {
 	bus.AddHandler("sql", CreateLoginAttempt)
+	bus.AddHandler("sql", GetUserLoginAttemptCount)
 }
 
 func CreateLoginAttempt(cmd *m.CreateLoginAttemptCommand) error {
@@ -30,5 +31,20 @@ func CreateLoginAttempt(cmd *m.CreateLoginAttemptCommand) error {
 
 		return nil
 	})
+}
+
+func GetUserLoginAttemptCount(query *m.GetUserLoginAttemptCountQuery) error {
+	loginAttempt := new(m.LoginAttempt)
+	total, err := x.
+		Where("username = ?", query.Username).
+		And("created >="+dialect.DateTimeFunc("?"), query.Since).
+		Count(loginAttempt)
+
+	if err != nil {
+		return err
+	}
+
+	query.Result = total
+	return nil
 }
 
