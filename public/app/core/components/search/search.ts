@@ -9,16 +9,18 @@ export class SearchCtrl {
   selectedIndex: number;
   results: any;
   currentSearchId: number;
-  tagsMode: boolean;
   showImport: boolean;
   dismiss: any;
   ignoreClose: any;
   isLoading: boolean;
+  initialFolderFilterTitle: string;
 
   /** @ngInject */
   constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv, $rootScope) {
     $rootScope.onAppEvent('show-dash-search', this.openSearch.bind(this), $scope);
     $rootScope.onAppEvent('hide-dash-search', this.closeSearch.bind(this), $scope);
+
+    this.initialFolderFilterTitle = "All";
   }
 
   closeSearch() {
@@ -44,14 +46,6 @@ export class SearchCtrl {
       this.query.starred = true;
     }
 
-    if (payload && payload.tagsMode) {
-      return this.$timeout(() => {
-        this.ignoreClose = false;
-        this.giveSearchFocus = this.giveSearchFocus + 1;
-        this.getTags();
-      }, 100);
-    }
-
     this.$timeout(() => {
       this.ignoreClose = false;
       this.giveSearchFocus = this.giveSearchFocus + 1;
@@ -70,14 +64,6 @@ export class SearchCtrl {
       this.moveSelection(-1);
     }
     if (evt.keyCode === 13) {
-      if (this.tagsMode) {
-        var tag = this.results[this.selectedIndex];
-        if (tag) {
-          this.filterByTag(tag.term, null);
-        }
-        return;
-      }
-
       var selectedDash = this.results[this.selectedIndex];
       if (selectedDash) {
         this.$location.search({});
@@ -93,7 +79,6 @@ export class SearchCtrl {
   }
 
   searchDashboards() {
-    this.tagsMode = false;
     this.currentSearchId = this.currentSearchId + 1;
     var localSearchId = this.currentSearchId;
 
@@ -129,12 +114,8 @@ export class SearchCtrl {
 
   getTags() {
     return this.searchSrv.getDashboardTags().then((results) => {
-      this.tagsMode = !this.tagsMode;
       this.results = results;
       this.giveSearchFocus = this.giveSearchFocus + 1;
-      if ( !this.tagsMode ) {
-        this.search();
-      }
     });
   }
 

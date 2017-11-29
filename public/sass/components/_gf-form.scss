@@ -21,6 +21,15 @@ $input-border: 1px solid $input-border-color;
   &--flex-end {
     justify-content: flex-end;
   }
+
+  &--alt {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .gf-form-label {
+      padding: 4px 0;
+    }
+  }
 }
 
 .gf-form-disabled {
