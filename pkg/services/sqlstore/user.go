@@ -400,7 +400,7 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 	}
 
 	if query.Query != "" {
-		whereConditions = append(whereConditions, "(email LIKE ? OR name LIKE ? OR login like ?)")
+		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
 		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
 	}
 
