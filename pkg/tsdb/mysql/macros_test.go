@@ -3,6 +3,9 @@ package mysql
 import (
 	"testing"
 
+	"fmt"
+	"strings"
+
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -77,4 +80,44 @@ func TestMacroEngine(t *testing.T) {
 		})
 
 	})
+}
+
+func wherein(args []string) (string, error) {
+	if len(args) < 2 {
+		return "", fmt.Errorf("macro %v needs column and params", "wherein")
+	}
+	columnName := args[0]
+	if strings.HasPrefix(columnName, "'") {
+		columnName = strings.Trim(columnName, "'")
+	}
+	if (len(args) == 2) && (args[1] == "ALL" || args[1] == "'ALL'") {
+		return "1 = 1", nil
+	} else if len(args) == 2 && (args[1] == "NULL" || args[1] == "'NULL'") {
+		return fmt.Sprintf("%s IS NULL", columnName), nil
+	} else {
+		var params = make([]string, 0)
+		var hasNull = false
+		for _, arg := range args[1:] {
+			if arg == "NULL" || arg == "'NULL'" {
+				hasNull = true
+			} else {
+				if !strings.HasPrefix(arg, "'") {
+					params = append(params, "'"+arg+"'")
+					fmt.Println(strings.Join(params, ","))
+				} else {
+					params = append(params, arg)
+				}
+			}
+		}
+		if hasNull {
+			return fmt.Sprintf("%s in (%s) or %s IS NULL", columnName, strings.Join(params, ","), args[0]), nil
+		} else {
+			return fmt.Sprintf("%s in (%s)", columnName, strings.Join(params, ",")), nil
+		}
+	}
+}
+
+func TestWhereInMacroEngine(t *testing.T) {
+	sql, _ := wherein([]string{"sdfsdfd", "净水器"})
+	fmt.Println(sql)
 }

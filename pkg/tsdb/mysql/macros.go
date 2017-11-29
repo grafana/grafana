@@ -93,6 +93,38 @@ func (m *MySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 		return fmt.Sprintf("%d", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
 	case "__unixEpochTo":
 		return fmt.Sprintf("%d", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+	case "__wherein":
+		if len(args) < 2 {
+			return "", fmt.Errorf("macro %v needs column and params", name)
+		}
+		columnName := args[0]
+		if strings.HasPrefix(columnName, "'") {
+			columnName = strings.Trim(columnName, "'")
+		}
+		if (len(args) == 2) && (args[1] == "ALL" || args[1] == "'ALL'") {
+			return "1 = 1", nil
+		} else if len(args) == 2 && (args[1] == "NULL" || args[1] == "'NULL'") {
+			return fmt.Sprintf("%s IS NULL", columnName), nil
+		} else {
+			var params = make([]string, 0)
+			var hasNull = false
+			for _, arg := range args[1:] {
+				if arg == "NULL" || arg == "'NULL'" {
+					hasNull = true
+				} else {
+					if !strings.HasPrefix(arg, "'") {
+						params = append(params, "'"+arg+"'")
+					} else {
+						params = append(params, arg)
+					}
+				}
+			}
+			if hasNull {
+				return fmt.Sprintf("%s in (%s) or %s IS NULL", columnName, strings.Join(params, ","), args[0]), nil
+			} else {
+				return fmt.Sprintf("%s in (%s)", columnName, strings.Join(params,",")), nil
+			}
+		}
 	default:
 		return "", fmt.Errorf("Unknown macro %v", name)
 	}
