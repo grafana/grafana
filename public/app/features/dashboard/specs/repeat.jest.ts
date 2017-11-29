@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import {DashboardModel} from '../dashboard_model';
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -146,7 +147,7 @@ describe('given dashboard with panel repeat in vertical direction', function() {
   });
 });
 
-describe.skip('given dashboard with row repeat', function() {
+describe('given dashboard with row repeat', function() {
   var dashboard;
 
   beforeEach(function() {
@@ -177,14 +178,19 @@ describe.skip('given dashboard with row repeat', function() {
   });
 
   it('should not repeat only row', function() {
-    expect(dashboard.panels[1].type).toBe('graph');
+    const panel_types = _.map(dashboard.panels, 'type');
+    expect(panel_types).toEqual([
+      'row', 'graph', 'graph',
+      'row', 'graph', 'graph',
+      'row', 'graph'
+    ]);
   });
-  //
+
   // it('should set scopedVars on panels', function() {
   //   expect(dashboard.panels[1].scopedVars).toMatchObject({apps: {text: 'se1', value: 'se1'}})
   // });
-  //
-  // it.skip('should repeat row and panels below two times', function() {
+
+  // it('should repeat row and panels below two times', function() {
   //   expect(dashboard.panels).toMatchObject([
   //     // first (original row)
   //     {id: 1, type: 'row',   repeat: 'apps', gridPos: {x: 0, y: 0, h: 1 , w: 24}},

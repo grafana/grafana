@@ -274,7 +274,7 @@ export class DashboardModel {
       return sourcePanel;
     }
 
-    var clone = new PanelModel(sourcePanel.getSaveModel());
+    let clone = new PanelModel(sourcePanel.getSaveModel());
     clone.id = this.getNextPanelId();
 
     if (sourcePanel.type === 'row') {
@@ -282,7 +282,7 @@ export class DashboardModel {
       let rowPanels = this.getRowPanels(sourcePanelIndex);
       clone.panels = _.map(rowPanels, panel => panel.getSaveModel());
 
-      // insert after preceding row's panels
+      // insert copied row after preceding row's panels
       let insertPos = sourcePanelIndex + ((rowPanels.length + 1)*valueIndex);
       this.panels.splice(insertPos, 0, clone);
     } else {
@@ -300,12 +300,12 @@ export class DashboardModel {
   }
 
   repeatPanel(panel: PanelModel, panelIndex: number) {
-    var variable = _.find(this.templating.list, {name: panel.repeat});
+    let variable = _.find(this.templating.list, {name: panel.repeat});
     if (!variable) {
       return;
     }
 
-    var selected;
+    let selected;
     if (variable.current.text === 'All') {
       selected = variable.options.slice(1, variable.options.length);
     } else {
@@ -317,36 +317,70 @@ export class DashboardModel {
     let yPos = panel.gridPos.y;
 
     for (let index = 0; index < selected.length; index++) {
-      var option = selected[index];
-      var copy = this.getPanelRepeatClone(panel, index, panelIndex);
+      let option = selected[index];
+      let copy = this.getPanelRepeatClone(panel, index, panelIndex);
 
       copy.scopedVars = {};
       copy.scopedVars[variable.name] = option;
 
       if (copy.type === 'row') {
         // place row below row panels
-      }
+        let rowHeight = this.getRowHeight(copy);
+        if (rowHeight) {
+          copy.gridPos.y += rowHeight * index;
+          let rowPanels = copy.panels;
+          // insert after preceding row's panels
+          let insertPos = panelIndex + ((rowPanels.length + 1) * index) + 1;
+          _.each(rowPanels, (rowPanel, i) => {
+            let cloneRowPanel = new PanelModel(rowPanel);
+            cloneRowPanel.id = this.getNextPanelId();
+            cloneRowPanel.repeatIteration = this.iteration;
+            cloneRowPanel.repeatPanelId = rowPanel.id;
+            cloneRowPanel.repeat = null;
+            cloneRowPanel.gridPos.y += rowHeight * index;
+            this.panels.splice(insertPos+i, 0, cloneRowPanel);
+          });
+          copy.panels = [];
+          yPos += rowHeight;
 
-      if (panel.repeatDirection === REPEAT_DIR_VERTICAL) {
-        copy.gridPos.y = yPos;
-        yPos += copy.gridPos.h;
+          // Update gridPos for panels below
+          for (let i = insertPos+rowPanels.length; i< this.panels.length; i++) {
+            this.panels[i].gridPos.y += yPos;
+          }
+        }
       } else {
-        // set width based on how many are selected
-        // assumed the repeated panels should take up full row width
-
-        copy.gridPos.w = Math.max(GRID_COLUMN_COUNT / selected.length, minWidth);
-        copy.gridPos.x = xPos;
-        copy.gridPos.y = yPos;
-
-        xPos += copy.gridPos.w;
-
-        // handle overflow by pushing down one row
-        if (xPos + copy.gridPos.w > GRID_COLUMN_COUNT) {
-          xPos = 0;
+        if (panel.repeatDirection === REPEAT_DIR_VERTICAL) {
+          copy.gridPos.y = yPos;
           yPos += copy.gridPos.h;
+        } else {
+          // set width based on how many are selected
+          // assumed the repeated panels should take up full row width
+
+          copy.gridPos.w = Math.max(GRID_COLUMN_COUNT / selected.length, minWidth);
+          copy.gridPos.x = xPos;
+          copy.gridPos.y = yPos;
+
+          xPos += copy.gridPos.w;
+
+          // handle overflow by pushing down one row
+          if (xPos + copy.gridPos.w > GRID_COLUMN_COUNT) {
+            xPos = 0;
+            yPos += copy.gridPos.h;
+          }
         }
       }
     }
+  }
+
+  getRowHeight(rowPanel: PanelModel): number {
+    if (!rowPanel.panels || rowPanel.panels.length === 0) {
+      return 0;
+    }
+    const positions = _.map(rowPanel.panels, 'gridPos');
+    const maxPos = _.maxBy(positions, (pos) => {
+      return pos.y + pos.h;
+    });
+    return maxPos.h + 1;
   }
 
   removePanel(panel: PanelModel) {
