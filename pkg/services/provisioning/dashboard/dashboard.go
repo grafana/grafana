@@ -20,10 +20,11 @@ func Provision(ctx context.Context, configDirectory string) (*DashboardProvision
 		ctx:       ctx,
 	}
 
-	return d, d.Init(ctx)
+	err := d.Provision(ctx)
+	return d, err
 }
 
-func (provider *DashboardProvisioner) Init(ctx context.Context) error {
+func (provider *DashboardProvisioner) Provision(ctx context.Context) error {
 	cfgs, err := provider.cfgReader.readConfig()
 	if err != nil {
 		return err

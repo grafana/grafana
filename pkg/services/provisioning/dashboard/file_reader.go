@@ -42,7 +42,7 @@ func NewDashboardFilereader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 }
 
 func (fr *fileReader) ReadAndListen(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second * 10)
+	ticker := time.NewTicker(time.Second * 5)
 
 	if err := fr.walkFolder(); err != nil {
 		fr.log.Error("failed to search for dashboards", "error", err)
@@ -105,11 +105,10 @@ func (fr *fileReader) walkFolder() error {
 		}
 
 		if cmd.Result.Updated.Unix() >= f.ModTime().Unix() {
-			fr.log.Debug("already using latest version", "dashboard", dash.Dashboard.Slug)
 			return nil
 		}
 
-		fr.log.Debug("no dashboard in cache. Loading dashboard from disk into database.", "file", path)
+		fr.log.Debug("no dashboard in cache. loading dashboard from disk into database.", "file", path)
 		return fr.saveDashboard(dash)
 	})
 }
@@ -141,16 +140,16 @@ func (fr *fileReader) readDashboardFromFile(path string) (*DashboardJson, error)
 	return dash, nil
 }
 
-func (fr *fileReader) saveDashboard(dashboardJson *DashboardJson) error {
-	dash := dashboardJson.Dashboard
+func (fr *fileReader) saveDashboard(json *DashboardJson) error {
+	dashboard := json.Dashboard
 
-	if dash.Title == "" {
+	if dashboard.Title == "" {
 		return models.ErrDashboardTitleEmpty
 	}
 
 	validateAlertsCmd := alerting.ValidateDashboardAlertsCommand{
-		OrgId:     dashboardJson.OrgId,
-		Dashboard: dash,
+		OrgId:     json.OrgId,
+		Dashboard: dashboard,
 	}
 
 	if err := bus.Dispatch(&validateAlertsCmd); err != nil {
@@ -158,11 +157,11 @@ func (fr *fileReader) saveDashboard(dashboardJson *DashboardJson) error {
 	}
 
 	cmd := models.SaveDashboardCommand{
-		Dashboard: dash.Data,
+		Dashboard: dashboard.Data,
 		Message:   "Dashboard created from file.",
-		OrgId:     dashboardJson.OrgId,
+		OrgId:     json.OrgId,
 		Overwrite: true,
-		UpdatedAt: dashboardJson.ModTime,
+		UpdatedAt: json.ModTime,
 	}
 
 	err := bus.Dispatch(&cmd)
@@ -171,7 +170,7 @@ func (fr *fileReader) saveDashboard(dashboardJson *DashboardJson) error {
 	}
 
 	alertCmd := alerting.UpdateDashboardAlertsCommand{
-		OrgId:     dashboardJson.OrgId,
+		OrgId:     json.OrgId,
 		Dashboard: cmd.Result,
 	}
 
