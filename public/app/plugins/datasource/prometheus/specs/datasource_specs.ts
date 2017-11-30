@@ -590,19 +590,4 @@ describe('PrometheusDatasource', function() {
       expect(query.scopedVars.__interval_ms.value).to.be(5 * 1000);
     });
   });
-  describe('The nested query', function() {
-    it('should generate correct query', function() {
-      let query = 'sum(rate(#A[1m]))';
-      let options = {
-        targets: [
-          {
-            refId: 'A',
-            expr: 'http_requests_total'
-          }
-        ]
-      };
-      let result = ctx.ds.replaceNestedQuery(query, options);
-      expect(result).to.be('sum(rate(http_requests_total[1m]))');
-    });
-  });
 });
