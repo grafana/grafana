@@ -215,10 +215,6 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 					Description: "Add and configure data sources",
 					Id:          "datasources",
 					Url:         setting.AppSubUrl + "/datasources",
-					Children: []*dtos.NavLink{
-						{Text: "List", Url: setting.AppSubUrl + "/datasources", Icon: "gicon gicon-datasources"},
-						{Text: "New", Url: setting.AppSubUrl + "/datasources", Icon: "fa fa-fw fa-plus"},
-					},
 				},
 				{
 					Text:        "Members",

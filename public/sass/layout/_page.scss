@@ -52,6 +52,10 @@
   margin-bottom: $spacer * 2;
   display: flex;
   align-items: flex-start;
+
+  > a, > button {
+    margin-left: $spacer;
+  }
 }
 
 .page-action-bar__spacer {
@@ -68,6 +72,10 @@
     width: $page-sidebar-width;
     margin-left: $page-sidebar-margin;
   }
+}
+
+.page-sub-heading {
+  margin-bottom: $spacer;
 }
 
 .page-sidebar {
