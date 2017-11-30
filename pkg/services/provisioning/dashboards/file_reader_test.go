@@ -1,4 +1,4 @@
-package dashboard
+package dashboards
 
 import (
 	"github.com/grafana/grafana/pkg/bus"

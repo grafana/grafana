@@ -1,4 +1,4 @@
-package datasource
+package datasources
 
 import "github.com/grafana/grafana/pkg/models"
 import "github.com/grafana/grafana/pkg/components/simplejson"

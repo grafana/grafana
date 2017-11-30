@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	//"github.com/grafana/grafana/pkg/services/dashboards"
 	"os"
 	"path"
 	"strings"
@@ -123,6 +124,12 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	cmd.UserId = c.UserId
 
 	dash := cmd.GetDashboardModel()
+
+	// dashItem := &dashboards.SaveDashboardItem{
+	// 	Dashboard: dash,
+	// 	Message:   cmd.Message,
+	// }
+	// err := dashboards.SaveDashboard(dashItem)
 
 	// Check if Title is empty
 	if dash.Title == "" {
