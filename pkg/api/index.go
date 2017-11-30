@@ -117,22 +117,23 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	if c.IsSignedIn {
 		profileNode := &dtos.NavLink{
-			Text:         c.SignedInUser.Login,
+			Text:         c.SignedInUser.Name,
+			SubTitle:     c.SignedInUser.Login,
 			Id:           "profile",
 			Img:          data.User.GravatarUrl,
 			Url:          setting.AppSubUrl + "/profile",
 			HideFromMenu: true,
 			Children: []*dtos.NavLink{
-				{Text: "Your profile", Url: setting.AppSubUrl + "/profile", Icon: "fa fa-fw fa-sliders"},
+				{Text: "Preferences", Id: "profile-settings", Url: setting.AppSubUrl + "/profile", Icon: "fa fa-fw fa-sliders"},
 				{Text: "Change Password", Id: "change-password", Url: setting.AppSubUrl + "/profile/password", Icon: "fa fa-fw fa-lock", HideFromMenu: true},
 			},
 		}
 
 		if !setting.DisableSignoutMenu {
 			// add sign out first
-			profileNode.Children = append([]*dtos.NavLink{
-				{Text: "Sign out", Url: setting.AppSubUrl + "/logout", Icon: "fa fa-fw fa-sign-out", Target: "_self"},
-			}, profileNode.Children...)
+			profileNode.Children = append(profileNode.Children, &dtos.NavLink{
+				Text: "Sign out", Id: "sign-out", Url: setting.AppSubUrl + "/logout", Icon: "fa fa-fw fa-sign-out", Target: "_self",
+			})
 		}
 
 		data.NavTree = append(data.NavTree, profileNode)
