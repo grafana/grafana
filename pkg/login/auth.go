@@ -14,7 +14,7 @@ import (
 
 var (
 	ErrInvalidCredentials   = errors.New("Invalid Username or Password")
-	ErrTooManyLoginAttempts = errors.New("Too many consequent incorrect login attempts for user. Login for user temporarily blocked.")
+	ErrTooManyLoginAttempts = errors.New("Too many consecutive incorrect login attempts for user. Login for user temporarily blocked.")
 )
 
 type LoginUserQuery struct {
