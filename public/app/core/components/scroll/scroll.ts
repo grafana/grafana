@@ -8,6 +8,10 @@ export function geminiScrollbar() {
 
       let scrollbar = new PerfectScrollbar(elem[0]);
 
+      scope.$on('$routeChangeSuccess', () => {
+        elem[0].scrollTop = 0;
+      });
+
       scope.$on('$destroy', () => {
         scrollbar.destroy();
       });
