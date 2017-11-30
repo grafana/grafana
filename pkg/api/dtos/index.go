@@ -24,6 +24,7 @@ type NavLink struct {
 	Id           string     `json:"id,omitempty"`
 	Text         string     `json:"text,omitempty"`
 	Description  string     `json:"description,omitempty"`
+	SubTitle     string     `json:"subTitle,omitempty"`
 	Icon         string     `json:"icon,omitempty"`
 	Img          string     `json:"img,omitempty"`
 	Url          string     `json:"url,omitempty"`

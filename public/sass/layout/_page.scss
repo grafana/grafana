@@ -42,6 +42,12 @@
   }
 }
 
+.page-heading {
+  font-size: 1.25rem;
+  margin-top: 0;
+  margin-bottom: $spacer * 0.7;
+}
+
 .page-action-bar {
   margin-bottom: $spacer * 2;
   display: flex;

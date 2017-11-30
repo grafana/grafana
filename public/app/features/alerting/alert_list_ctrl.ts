@@ -23,8 +23,7 @@ export class AlertListCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, private $location, navModelSrv) {
-    this.navModel = navModelSrv.getNav('alerting', 'alert-list');
-    this.navModel.setPageHeaderIndex(0);
+    this.navModel = navModelSrv.getNav('alerting', 'alert-list', 0);
 
     var params = $location.search();
     this.filters.state = params.state || null;

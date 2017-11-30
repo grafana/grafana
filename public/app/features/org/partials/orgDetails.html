@@ -1,26 +1,51 @@
-<navbar model="navModel"></navbar>
+<!-- <div class="page&#45;header&#45;canvas"> -->
+<!--   <div class="page&#45;container" > -->
+<!--     <navbar model="navModel"></navbar> -->
+<!--  -->
+<!--     <div class="page&#45;header"> -->
+<!--       <page&#45;h1 model="navModel"></page&#45;h1> -->
+<!--  -->
+<!--       <ul class="gf&#45;tabs"> -->
+<!--         <li class="gf&#45;tabs&#45;item"> -->
+<!--           <a class="gf&#45;tabs&#45;link active" href="org"> -->
+<!--             <i class="fa fa&#45;fw fa&#45;sliders"></i> -->
+<!--             Preferences -->
+<!--           </a> -->
+<!--         </li> -->
+<!--         <li class="gf&#45;tabs&#45;item"> -->
+<!--           <a class="gf&#45;tabs&#45;link" href="org/users"> -->
+<!--             <i class="icon&#45;gf icon&#45;gf&#45;fw icon&#45;gf&#45;users"></i> -->
+<!--             Members -->
+<!--           </a> -->
+<!--         </li> -->
+<!--         <li class="gf&#45;tabs&#45;item"> -->
+<!--           <a class="gf&#45;tabs&#45;link" href="org/user&#45;groups"> -->
+<!--             <i class="gicon gicon&#45;user&#45;group"></i> -->
+<!--             Teams -->
+<!--           </a> -->
+<!--         </li> -->
+<!--       </ul> -->
+<!--     </div> -->
+<!--   </div> -->
+<!-- </div> -->
 
-<div class="page-container">
-	<div class="page-header">
-		<page-h1 model="navModel"></page-h1>
-	</div>
+<page-header model="navModel"></page-header>
 
-	<h3 class="page-heading">General</h3>
-	<form name="orgForm" class="gf-form-group">
-		<div class="gf-form-inline">
-			<div class="gf-form max-width-28">
-				<span class="gf-form-label">Organization name</span>
-				<input class="gf-form-input" type="text" required ng-model="org.name">
-			</div>
-		</div>
+<div class="page-container page-body">
+  <h3 class="page-heading">General</h3>
+  <form name="orgForm" class="gf-form-group">
+    <div class="gf-form-inline">
+      <div class="gf-form max-width-28">
+        <span class="gf-form-label">Organization name</span>
+        <input class="gf-form-input" type="text" required ng-model="org.name">
+      </div>
+    </div>
 
     <div class="gf-form-button-row">
       <button type="submit" class="btn btn-success" ng-click="update()">Save</button>
     </div>
-	</form>
-
-	<prefs-control mode="org"></prefs-control>
-
+  </form>
+  <prefs-control mode="org"></prefs-control>
 </div>
 
 

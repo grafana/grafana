@@ -1,5 +1,3 @@
-///<reference path="../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
 import _ from 'lodash';
@@ -9,19 +7,17 @@ export interface NavModelItem {
   url: string;
   icon?: string;
   img?: string;
+  active?: boolean;
+  children: NavModelItem[];
 }
 
 export class NavModel {
   breadcrumbs: NavModelItem[];
-  header: NavModelItem;
+  main: NavModelItem;
   node: NavModelItem;
 
   constructor() {
     this.breadcrumbs = [];
-  }
-
-  setPageHeaderIndex(index: number) {
-    this.header = this.breadcrumbs[index];
   }
 }
 
@@ -43,11 +39,27 @@ export class NavModelSrv {
     var nav = new NavModel();
 
     for (let id of args) {
+      // if its a number then it's the index to use for main
+      if (_.isNumber(id)) {
+        nav.main = nav.breadcrumbs[id];
+        break;
+      }
+
       let node = _.find(children, {id: id});
       nav.breadcrumbs.push(node);
       nav.node = node;
-      nav.header = node;
+      nav.main = node;
       children = node.children;
+    }
+
+    if (nav.main.children) {
+      for (let item of nav.main.children) {
+        item.active = false;
+
+        if (item.url === nav.node.url) {
+          item.active = true;
+        }
+      }
     }
 
     return nav;
