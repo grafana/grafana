@@ -144,14 +144,14 @@ div.flot-text {
   width: 27px;
   height: 27px;
   top: 0;
-  z-index: 10;
+  z-index: 1;
 
   .fa {
     position: relative;
     top: -4px;
     left: -6px;
     font-size: 75%;
-    z-index: 1000;
+    z-index: 1;
   }
 
   &--info {

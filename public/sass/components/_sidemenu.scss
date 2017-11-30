@@ -19,7 +19,7 @@
     height: auto;
     box-shadow: $side-menu-shadow;
     position: relative;
-    z-index: 2;
+    z-index: 3;
   }
   .sidemenu__top,
   .sidemenu__bottom {
@@ -56,7 +56,7 @@
       // again by the mouse getting outside the hover space
       left: $side-menu-width - 2px;
       @include animation('dropdown-anim 150ms ease-in-out 100ms forwards');
-      z-index: 1;
+      z-index: 2;
     }
   }
 }
