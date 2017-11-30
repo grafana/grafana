@@ -1,6 +1,8 @@
 .gf-tabs {
   @include clearfix();
   float: left;
+  position: relative;
+  top: 1px;
 }
 
 .gf-tabs-item {
@@ -18,7 +20,7 @@
   border-radius: 3px 3px 0 0;
 
   i {
-    padding-right: 5px;
+    margin-right: 5px;
   }
 
   &:hover,
@@ -32,8 +34,6 @@
     border-color: $orange $dark-4 transparent;
     background: $page-bg;
     color: $link-color;
-    position: relative;
-    top: 1px;
   }
 }
 

@@ -10,6 +10,7 @@ export class AlertNotificationsListCtrl {
   constructor(private backendSrv, navModelSrv) {
     this.loadNotifications();
     this.navModel = navModelSrv.getNav('alerting', 'channels');
+    this.navModel.setPageHeaderIndex(0);
   }
 
   loadNotifications() {

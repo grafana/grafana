@@ -3,9 +3,7 @@
 		<navbar model="ctrl.navModel"></navbar>
 
 		<div class="page-header">
-			<page-h1 model="ctrl.navModel"></page-h1>
-
-			<div ng-if="ctrl.current.readOnly" class="grafana-info-box span8">Disclaimer. This datasource was added by config and cannot be modified using the UI. Please contact your server admin to update this datasource.</div>
+      <page-h1 model="ctrl.navModel"></page-h1>
 
 			<div class="page-header-tabs" ng-show="ctrl.hasDashboards">
 				<ul class="gf-tabs">
@@ -28,6 +26,13 @@
 </div>
 
 <div class="page-container page-body">
+
+  <div class="page-action-bar">
+    <div ng-if="ctrl.current.readOnly" class="grafana-info-box span8">
+      Disclaimer. This datasource was added by config and cannot be modified using the UI. Please contact your server admin to update this datasource.
+    </div>
+  </div>
+
 	<div ng-if="ctrl.tabIndex === 0">
 		<form name="ctrl.editForm" ng-if="ctrl.current">
 			<div class="gf-form-group">

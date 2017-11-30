@@ -1,0 +1,61 @@
+
+.page-header-canvas {
+  background: linear-gradient(90deg, #292a2d, black);
+  box-shadow: inset 0px -4px 14px #2d2d2d;
+  border-bottom: 1px solid $dark-4;
+}
+
+.page-header {
+  padding: 2rem 0 0 0;
+
+  .btn {
+    float: right;
+    margin-left: 1rem;
+
+    // better align icons
+    .fa {
+      position: relative;
+      top: 1px;
+    }
+  }
+}
+
+.page-header__title {
+  font-size: $font-size-h2;
+  flex-grow: 1;
+  margin-bottom: 2.5rem;
+  line-height: 50px;
+}
+
+.page-header__img {
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  position: relative;
+  top: -3px;
+  width: 50px;
+  height: 50px;
+}
+
+.page-header__icon {
+  font-size: 150%;
+  margin-right: 0.5rem;
+  width: 50px;
+  height: 50px;
+  position: relative;
+
+  &.fa {
+    top: 3px;
+  }
+
+  &.icon-gf {
+    top: 3px;
+  }
+}
+
+.page-heading {
+  font-size: 1.25rem;
+  margin-top: 0;
+  margin-bottom: $spacer * 0.7;
+}
+
+

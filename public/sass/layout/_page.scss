@@ -42,6 +42,17 @@
   }
 }
 
+.page-action-bar {
+  margin-bottom: $spacer * 2;
+  display: flex;
+  align-items: flex-start;
+}
+
+.page-action-bar__spacer {
+  width: $spacer * 2;
+  flex-grow: 1;
+}
+
 .page-content-with-sidebar {
   width: calc(100% - #{$page-sidebar-width + $page-sidebar-margin}); // sidebar width + margin
 }
@@ -50,68 +61,6 @@
   @include media-breakpoint-up(md) {
     width: $page-sidebar-width;
     margin-left: $page-sidebar-margin;
-  }
-}
-
-.page-header-canvas {
-  background: linear-gradient(90deg, #292a2d, black);
-  box-shadow: inset 0px -4px 14px #2d2d2d;
-  bottom-border: 1px solid $dark-4;
-}
-
-.page-header {
-  padding: 2rem 0 0 0;
-
-  .btn {
-    float: right;
-    margin-left: 1rem;
-
-    // better align icons
-    .fa {
-      position: relative;
-      top: 1px;
-    }
-  }
-}
-
-.page-header__title {
-  font-size: $font-size-h2;
-  flex-grow: 1;
-  display: inline-block;
-  margin-bottom: 2.5rem;
-}
-
-.page-header__img {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  margin-right: 1rem;
-  position: relative;
-  top: -3px;
-}
-
-.page-header__icon {
-  font-size: 150%;
-  margin-right: 1rem;
-}
-
-.page-heading {
-  font-size: 1.25rem;
-  margin-top: 0;
-  margin-bottom: $spacer * 0.7;
-}
-
-.admin-page {
-  max-width: 800px;
-  margin-left: 10px;
-  h2 {
-    margin-left: 15px;
-    margin-bottom: 0px;
-    font-size: $font-size-lg;
-    color: $text-color;
-    i {
-      padding-right: 6px;
-    }
   }
 }
 
@@ -207,13 +156,12 @@
 
     // 5px - for rounded arrows and
     // 50px - to prevent hover glitches on the border created using shadows*/
-  border-radius: 0 5px 0 50px;
-}
+    border-radius: 0 5px 0 50px;
+  }
 
-// we dont need an arrow after the last link
-&:last-child:after {
-  content: none;
+  // we dont need an arrow after the last link
+  &:last-child:after {
+    content: none;
+  }
 }
-}
-
 

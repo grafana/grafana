@@ -1,9 +1,14 @@
-<navbar model="ctrl.navModel"></navbar>
-<div class="page-container">
-	<div class="page-header">
-		<page-h1 model="ctrl.navModel"></page-h1>
-	</div>
+<div class="page-header-canvas">
+	<div class="page-container">
+    <navbar model="ctrl.navModel"></navbar>
 
+    <div class="page-header">
+      <page-h1 model="ctrl.navModel"></page-h1>
+    </div>
+  </div>
+</div>
+
+<div class="page-container page-body">
 	<section class="card-section card-list-layout-grid">
 		<ol class="card-list">
 			<li class="card-item-wrapper" ng-repeat="navItem in ctrl.navModel.node.children">

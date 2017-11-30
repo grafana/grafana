@@ -5,15 +5,24 @@ import config from 'app/core/config';
 import _ from 'lodash';
 
 export interface NavModelItem {
-  title: string;
+  text: string;
   url: string;
   icon?: string;
-  iconUrl?: string;
+  img?: string;
 }
 
-export interface NavModel {
-  section: NavModelItem;
-  menu: NavModelItem[];
+export class NavModel {
+  breadcrumbs: NavModelItem[];
+  header: NavModelItem;
+  node: NavModelItem;
+
+  constructor() {
+    this.breadcrumbs = [];
+  }
+
+  setPageHeaderIndex(index: number) {
+    this.header = this.breadcrumbs[index];
+  }
 }
 
 export class NavModelSrv {
@@ -31,12 +40,13 @@ export class NavModelSrv {
 
   getNav(...args) {
     var children = this.navItems;
-    var nav = {breadcrumbs: [], node: null};
+    var nav = new NavModel();
 
     for (let id of args) {
       let node = _.find(children, {id: id});
       nav.breadcrumbs.push(node);
       nav.node = node;
+      nav.header = node;
       children = node.children;
     }
 

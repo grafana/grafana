@@ -40,9 +40,9 @@ export function pageH1() {
     restrict: 'E',
     template: `
     <h1 class="page-header__title">
-      <i class="page-header__icon {{::model.node.icon}}" ng-if="::model.node.icon"></i>
-      <img class="page-header__img" ng-src="{{::model.node.img}}" ng-if="::model.node.img"></i>
-      {{model.node.text}}
+      <i class="page-header__icon {{::model.header.icon}}" ng-if="::model.header.icon"></i>
+      <img class="page-header__img" ng-src="{{::model.header.img}}" ng-if="::model.header.img"></i>
+      {{model.header.text}}
     </h1>
     `,
     scope: {
