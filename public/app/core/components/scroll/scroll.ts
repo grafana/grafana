@@ -12,6 +12,10 @@ export function geminiScrollbar() {
         elem[0].scrollTop = 0;
       });
 
+      scope.$on('$routeUpdate', () => {
+        elem[0].scrollTop = 0;
+      });
+
       scope.$on('$destroy', () => {
         scrollbar.destroy();
       });
