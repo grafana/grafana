@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"strings"
 	"sync"
 	"time"
@@ -18,42 +19,34 @@ type DashboardsAsConfig struct {
 	Options  map[string]interface{} `json:"options" yaml:"options"`
 }
 
-type DashboardJson struct {
-	TitleLower string
-	OrgId      int64
-	Folder     string
-	ModTime    time.Time
-	Dashboard  *models.Dashboard
-}
-
 type dashboardCache struct {
 	mutex      *sync.Mutex
-	dashboards map[string]*DashboardJson
+	dashboards map[string]*dashboards.SaveDashboardItem
 }
 
 func newDashboardCache() *dashboardCache {
 	return &dashboardCache{
-		dashboards: map[string]*DashboardJson{},
+		dashboards: map[string]*dashboards.SaveDashboardItem{},
 		mutex:      &sync.Mutex{},
 	}
 }
 
-func (dc *dashboardCache) addCache(key string, json *DashboardJson) {
+func (dc *dashboardCache) addCache(key string, json *dashboards.SaveDashboardItem) {
 	dc.mutex.Lock()
 	defer dc.mutex.Unlock()
 	dc.dashboards[key] = json
 }
 
-func (dc *dashboardCache) getCache(key string) (*DashboardJson, bool) {
+func (dc *dashboardCache) getCache(key string) (*dashboards.SaveDashboardItem, bool) {
 	dc.mutex.Lock()
 	defer dc.mutex.Unlock()
 	v, exist := dc.dashboards[key]
 	return v, exist
 }
 
-func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *DashboardsAsConfig) (*DashboardJson, error) {
+func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *DashboardsAsConfig) (*dashboards.SaveDashboardItem, error) {
 
-	dash := &DashboardJson{}
+	dash := &dashboards.SaveDashboardItem{}
 	dash.Dashboard = models.NewDashboardFromJson(data)
 	dash.TitleLower = strings.ToLower(dash.Dashboard.Title)
 	dash.ModTime = lastModified

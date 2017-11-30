@@ -3,7 +3,7 @@ package dashboard
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"os"
 	"path/filepath"
 	"strings"
@@ -96,7 +96,7 @@ func (fr *fileReader) walkFolder() error {
 
 		if err == models.ErrDashboardNotFound {
 			fr.log.Debug("saving new dashboard", "file", path)
-			return fr.saveDashboard(dash)
+			return dashboards.SaveDashboard(dash)
 		}
 
 		if err != nil {
@@ -109,11 +109,11 @@ func (fr *fileReader) walkFolder() error {
 		}
 
 		fr.log.Debug("no dashboard in cache. loading dashboard from disk into database.", "file", path)
-		return fr.saveDashboard(dash)
+		return dashboards.SaveDashboard(dash)
 	})
 }
 
-func (fr *fileReader) readDashboardFromFile(path string) (*DashboardJson, error) {
+func (fr *fileReader) readDashboardFromFile(path string) (*dashboards.SaveDashboardItem, error) {
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -138,45 +138,4 @@ func (fr *fileReader) readDashboardFromFile(path string) (*DashboardJson, error)
 	fr.dashboardCache.addCache(path, dash)
 
 	return dash, nil
-}
-
-func (fr *fileReader) saveDashboard(json *DashboardJson) error {
-	dashboard := json.Dashboard
-
-	if dashboard.Title == "" {
-		return models.ErrDashboardTitleEmpty
-	}
-
-	validateAlertsCmd := alerting.ValidateDashboardAlertsCommand{
-		OrgId:     json.OrgId,
-		Dashboard: dashboard,
-	}
-
-	if err := bus.Dispatch(&validateAlertsCmd); err != nil {
-		return models.ErrDashboardContainsInvalidAlertData
-	}
-
-	cmd := models.SaveDashboardCommand{
-		Dashboard: dashboard.Data,
-		Message:   "Dashboard created from file.",
-		OrgId:     json.OrgId,
-		Overwrite: true,
-		UpdatedAt: json.ModTime,
-	}
-
-	err := bus.Dispatch(&cmd)
-	if err != nil {
-		return err
-	}
-
-	alertCmd := alerting.UpdateDashboardAlertsCommand{
-		OrgId:     json.OrgId,
-		Dashboard: cmd.Result,
-	}
-
-	if err := bus.Dispatch(&alertCmd); err != nil {
-		return err
-	}
-
-	return nil
 }
