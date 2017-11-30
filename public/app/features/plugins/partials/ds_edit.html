@@ -1,28 +1,34 @@
-<navbar model="ctrl.navModel"></navbar>
-<div class="page-container">
-	<div class="page-header">
-		<page-h1 model="ctrl.navModel"></page-h1>
+<div class="page-header-canvas">
+	<div class="page-container">
+		<navbar model="ctrl.navModel"></navbar>
 
-		<div ng-if="ctrl.current.readOnly" class="grafana-info-box span8">Disclaimer. This datasource was added by config and cannot be modified using the UI. Please contact your server admin to update this datasource.</div>
+		<div class="page-header">
+			<page-h1 model="ctrl.navModel"></page-h1>
 
-		<div class="page-header-tabs" ng-show="ctrl.hasDashboards">
-			<ul class="gf-tabs">
-				<li class="gf-tabs-item">
-					<a class="gf-tabs-link" ng-click="ctrl.tabIndex = 0" ng-class="{active: ctrl.tabIndex === 0}">
-						Config
-					</a>
-				</li>
-				<li class="gf-tabs-item">
-					<a class="gf-tabs-link" ng-click="ctrl.tabIndex = 1" ng-class="{active: ctrl.tabIndex === 1}">
-						Dashboards
-					</a>
-				</li>
-			</ul>
+			<div ng-if="ctrl.current.readOnly" class="grafana-info-box span8">Disclaimer. This datasource was added by config and cannot be modified using the UI. Please contact your server admin to update this datasource.</div>
+
+			<div class="page-header-tabs" ng-show="ctrl.hasDashboards">
+				<ul class="gf-tabs">
+					<li class="gf-tabs-item">
+						<a class="gf-tabs-link" ng-click="ctrl.tabIndex = 0" ng-class="{active: ctrl.tabIndex === 0}">
+							<i class="fa fa-sliders"></i>
+							Config
+						</a>
+					</li>
+					<li class="gf-tabs-item">
+						<a class="gf-tabs-link" ng-click="ctrl.tabIndex = 1" ng-class="{active: ctrl.tabIndex === 1}">
+							<i class="fa fa-th-large"></i>
+							Dashboards
+						</a>
+					</li>
+				</ul>
+			</div>
 		</div>
 	</div>
+</div>
 
-	<div ng-if="ctrl.tabIndex === 0" class="tab-content">
-
+<div class="page-container page-body">
+	<div ng-if="ctrl.tabIndex === 0">
 		<form name="ctrl.editForm" ng-if="ctrl.current">
 			<div class="gf-form-group">
 				<div class="gf-form-inline">
@@ -83,7 +89,7 @@
 
 		</form>
 	</div>
-	<div ng-if="ctrl.tabIndex === 1" class="tab-content">
+	<div ng-if="ctrl.tabIndex === 1">
 		<dashboard-import-list plugin="ctrl.datasourceMeta" datasource="ctrl.current"></dashboard-import-list>
 	</div>
 </div>
