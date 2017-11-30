@@ -5,7 +5,7 @@
   position: relative;
   padding-left: $side-menu-width;
   box-shadow: $navbarShadow;
-  z-index: 2;
+  z-index: $zindex-navbar-fixed;
   background: $navbarBackground;
 }
 
