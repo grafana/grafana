@@ -16,49 +16,7 @@
   }
 }
 
-// .navbar .nav {
-//   position: relative;
-//   left: 0;
-//   float: left;
-//
-//   &--grow {
-//     flex-grow: 1;
-//   }
-// }
-//
-//
-// .navbar .nav > li {
-//   float: left;
-// }
-//
-// // Links
-// .navbar .nav > li > a {
-//   float: none;
-//   padding: 17px 13px 13px;
-//   color: $navbarLinkColor;
-//   text-decoration: none;
-//
-//   .fa { font-size: 115%; }
-// }
-//
-// // Hover/focus
-// .navbar .nav > li > a:focus,
-// .navbar .nav > li > a:hover {
-//   color: $navbarLinkColorHover;
-//   text-decoration: none;
-// }
-//
-// // Active nav items
-// .navbar .nav > .active > a,
-// .navbar .nav > .active > a:hover,
-// .navbar .nav > .active > a:focus {
-//   color: $navbarLinkColorActive;
-//   text-decoration: none;
-//   background-color: $navbarLinkBackgroundActive;
-// }
-
 .navbar-page-btn {
-  flex-grow: 1;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -110,6 +68,10 @@
   margin-right: $spacer;
 }
 
+.navbar__spacer {
+  flex-grow: 1;
+}
+
 .navbar-button {
   @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
 
@@ -130,18 +92,20 @@
   }
 
   &--add-panel {
+    padding: 2px 8px;
+
     .gicon {
       font-size: 22px;
     }
-    padding: 2px 8px;
   }
 
   &--tight {
+    padding: 6px 4px;
+
     .fa {
       font-size: 14px;
       position: relative;
       top: 2px;
     }
-    padding: 6px 4px;
   }
 }
