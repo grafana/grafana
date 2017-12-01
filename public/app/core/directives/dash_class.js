@@ -34,6 +34,10 @@ function (_, $, coreModule) {
         $scope.$watch('ctrl.playlistSrv.isPlaying', function(newValue) {
           elem.toggleClass('playlist-active', newValue === true);
         });
+
+        $scope.$watch('ctrl.dashboardViewState.state.editView', function(newValue) {
+          elem.toggleClass('dashboard-settings-open', _.isString(newValue));
+        });
       }
     };
   });

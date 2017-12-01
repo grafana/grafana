@@ -27,8 +27,8 @@ import './acl/acl';
 import './folder_picker/picker';
 import './folder_modal/folder';
 import './move_to_folder_modal/move_to_folder';
+import './settings/settings';
+
 import coreModule from 'app/core/core_module';
-
 import {DashboardListCtrl} from './dashboard_list_ctrl';
-
 coreModule.controller('DashboardListCtrl', DashboardListCtrl);

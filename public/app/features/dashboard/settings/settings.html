@@ -1,0 +1,27 @@
+<h2>Settings</h2>
+
+<div class="edit-tab-with-sidemenu">
+	<aside class="edit-sidemenu-aside">
+		<ul class="edit-sidemenu">
+			<li ng-class="{active: ctrl.viewId === section.id}" ng-repeat="section in ctrl.sections">
+				<a ng-click="ctrl.viewId = section.id">
+					{{::section.title}}
+				</a>
+			</li>
+		</ul>
+	</aside>
+
+	<div class="edit-tab-content" ng-if="ctrl.viewId === 'general'">
+		general
+	</div>
+
+	<div class="edit-tab-content" ng-if="ctrl.viewId === 'annotations'">
+		annotations
+	</div>
+
+	<div class="edit-tab-content" ng-if="ctrl.viewId === 'templating'">
+		annotations
+	</div>
+
+</div>
+
