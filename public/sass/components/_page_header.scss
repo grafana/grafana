@@ -105,7 +105,7 @@
     font-size: 18px;
   }
 
-  &:first-child:before {
+  &:first-child::before {
     left: 14px;
   }
 
@@ -120,13 +120,13 @@
     background: linear-gradient(#333, #000);
   }
 
-  &.active:after,
-  &:hover:after {
+  &.active::after,
+  &:hover::after {
     background: #333;
     background: linear-gradient(135deg, #333, #000);
   }
 
-  &:after {
+  &::after {
     content: '';
     position: absolute;
     top: 0;
@@ -152,7 +152,7 @@
   }
 
   // we dont need an arrow after the last link
-  &:last-child:after {
+  &:last-child::after {
     content: none;
   }
 }
