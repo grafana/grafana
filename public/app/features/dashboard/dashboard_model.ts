@@ -305,8 +305,6 @@ export class DashboardModel {
     }
 
     let clone = new PanelModel(sourcePanel.getSaveModel());
-    clone.id = this.getNextPanelId();
-
     // for row clones we need to figure out panels under row to clone and where to insert clone
     let rowPanels, insertPos;
     if (sourcePanel.collapsed) {
@@ -322,9 +320,7 @@ export class DashboardModel {
     }
     this.panels.splice(insertPos, 0, clone);
 
-    clone.repeatIteration = this.iteration;
-    clone.repeatPanelId = sourcePanel.id;
-    clone.repeat = null;
+    this.updateRepeatedPanelIds(clone);
     return clone;
   }
 
@@ -337,101 +333,117 @@ export class DashboardModel {
       return;
     }
 
-    let selected;
-    if (variable.current.text === 'All') {
-      selected = variable.options.slice(1, variable.options.length);
-    } else {
-      selected = _.filter(variable.options, {selected: true});
+    if (panel.type === 'row') {
+      this.repeatRow(panel, panelIndex, variable);
+      return;
     }
 
+    let selectedOptions = this.getSelectedVariableOptions(variable);
     let minWidth = panel.minSpan || 6;
     let xPos = 0;
     let yPos = panel.gridPos.y;
 
-    for (let index = 0; index < selected.length; index++) {
-      let option = selected[index];
+    for (let index = 0; index < selectedOptions.length; index++) {
+      let option = selectedOptions[index];
       let copy;
 
-      if (panel.type === 'row') {
-        copy = this.getRowRepeatClone(panel, index, panelIndex);
-        copy.scopedVars = {};
-        copy.scopedVars[variable.name] = option;
+      copy = this.getPanelRepeatClone(panel, index, panelIndex);
+      copy.scopedVars = {};
+      copy.scopedVars[variable.name] = option;
 
-        let rowHeight = this.getRowHeight(copy);
-        // if (rowHeight) {
-        let panelsBelowIndex;
-        let rowPanels = copy.panels || [];
-        // insert after 'row' panel
-        let insertPos = panelIndex + ((rowPanels.length + 1) * index) + 1;
-
-        if (copy.collapsed) {
-          copy.gridPos.y += index;
-          yPos += index;
-          panelsBelowIndex = panelIndex + index + 1;
-
-          _.each(copy.panels, (panel, i) => {
-            panel.scopedVars = {};
-            panel.scopedVars[variable.name] = option;
-
-            if (index > 0) {
-              panel.id = this.getNextPanelId();
-              panel.repeatIteration = this.iteration;
-              panel.repeatPanelId = rowPanels[i].id;
-              panel.repeat = null;
-              copy.panels[i] = panel;
-            }
-          });
-        } else {
-          _.each(rowPanels, (rowPanel, i) => {
-            rowPanel.scopedVars = {};
-            rowPanel.scopedVars[variable.name] = option;
-
-            if (index > 0) {
-              let cloneRowPanel = new PanelModel(rowPanel);
-              cloneRowPanel.id = this.getNextPanelId();
-              cloneRowPanel.repeatIteration = this.iteration;
-              cloneRowPanel.repeatPanelId = rowPanel.id;
-              cloneRowPanel.repeat = null;
-              cloneRowPanel.gridPos.y += rowHeight * index;
-              this.panels.splice(insertPos+i, 0, cloneRowPanel);
-            }
-          });
-          copy.panels = [];
-          copy.gridPos.y += rowHeight * index;
-          yPos += rowHeight;
-          panelsBelowIndex = insertPos+rowPanels.length;
-        }
-
-        // Update gridPos for panels below
-        for (let i = panelsBelowIndex; i< this.panels.length; i++) {
-          this.panels[i].gridPos.y += yPos;
-        }
+      if (panel.repeatDirection === REPEAT_DIR_VERTICAL) {
+        copy.gridPos.y = yPos;
+        yPos += copy.gridPos.h;
       } else {
-        copy = this.getPanelRepeatClone(panel, index, panelIndex);
-        copy.scopedVars = {};
-        copy.scopedVars[variable.name] = option;
+        // set width based on how many are selected
+        // assumed the repeated panels should take up full row width
 
-        if (panel.repeatDirection === REPEAT_DIR_VERTICAL) {
-          copy.gridPos.y = yPos;
+        copy.gridPos.w = Math.max(GRID_COLUMN_COUNT / selectedOptions.length, minWidth);
+        copy.gridPos.x = xPos;
+        copy.gridPos.y = yPos;
+
+        xPos += copy.gridPos.w;
+
+        // handle overflow by pushing down one row
+        if (xPos + copy.gridPos.w > GRID_COLUMN_COUNT) {
+          xPos = 0;
           yPos += copy.gridPos.h;
-        } else {
-          // set width based on how many are selected
-          // assumed the repeated panels should take up full row width
-
-          copy.gridPos.w = Math.max(GRID_COLUMN_COUNT / selected.length, minWidth);
-          copy.gridPos.x = xPos;
-          copy.gridPos.y = yPos;
-
-          xPos += copy.gridPos.w;
-
-          // handle overflow by pushing down one row
-          if (xPos + copy.gridPos.w > GRID_COLUMN_COUNT) {
-            xPos = 0;
-            yPos += copy.gridPos.h;
-          }
         }
       }
     }
+  }
+
+  repeatRow(panel: PanelModel, panelIndex: number, variable) {
+    let selectedOptions = this.getSelectedVariableOptions(variable);
+    let yPos = panel.gridPos.y;
+
+    function setScopedVars(panel, variableOption) {
+      panel.scopedVars = {};
+      panel.scopedVars[variable.name] = variableOption;
+    }
+
+    for (let optionIndex = 0; optionIndex < selectedOptions.length; optionIndex++) {
+      let option = selectedOptions[optionIndex];
+      let rowCopy = this.getRowRepeatClone(panel, optionIndex, panelIndex);
+      setScopedVars(rowCopy, option);
+
+      let rowHeight = this.getRowHeight(rowCopy);
+      let rowPanels = rowCopy.panels || [];
+      let panelBelowIndex;
+
+      if (panel.collapsed) {
+        // For collapsed row just copy its panels and set scoped vars and proper IDs
+        _.each(rowPanels, (rowPanel, i) => {
+          setScopedVars(rowPanel, option);
+          if (optionIndex > 0) {
+            this.updateRepeatedPanelIds(rowPanel);
+          }
+        });
+        rowCopy.gridPos.y += optionIndex;
+        yPos += optionIndex;
+        panelBelowIndex = panelIndex + optionIndex + 1;
+      } else {
+        // insert after 'row' panel
+        let insertPos = panelIndex + ((rowPanels.length + 1) * optionIndex) + 1;
+        _.each(rowPanels, (rowPanel, i) => {
+          setScopedVars(rowPanel, option);
+          if (optionIndex > 0) {
+            let cloneRowPanel = new PanelModel(rowPanel);
+            this.updateRepeatedPanelIds(cloneRowPanel);
+            // For exposed row additionally set proper Y grid position and add it to dashboard panels
+            cloneRowPanel.gridPos.y += rowHeight * optionIndex;
+            this.panels.splice(insertPos+i, 0, cloneRowPanel);
+          }
+        });
+        rowCopy.panels = [];
+        rowCopy.gridPos.y += rowHeight * optionIndex;
+        yPos += rowHeight;
+        panelBelowIndex = insertPos+rowPanels.length;
+      }
+
+      // Update gridPos for panels below
+      for (let i = panelBelowIndex; i< this.panels.length; i++) {
+        this.panels[i].gridPos.y += yPos;
+      }
+    }
+  }
+
+  updateRepeatedPanelIds(panel: PanelModel) {
+    panel.repeatPanelId = panel.id;
+    panel.id = this.getNextPanelId();
+    panel.repeatIteration = this.iteration;
+    panel.repeat = null;
+    return panel;
+  }
+
+  getSelectedVariableOptions(variable) {
+    let selectedOptions;
+    if (variable.current.text === 'All') {
+      selectedOptions = variable.options.slice(1, variable.options.length);
+    } else {
+      selectedOptions = _.filter(variable.options, {selected: true});
+    }
+    return selectedOptions;
   }
 
   getRowHeight(rowPanel: PanelModel): number {
