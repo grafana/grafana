@@ -1,14 +1,25 @@
 package dashboards
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"time"
 )
 
 type Repository interface {
-	SaveDashboard(*SaveDashboardItem) error
+	SaveDashboard(*SaveDashboardItem) (*models.Dashboard, error)
+}
+
+var repositoryInstance Repository
+
+func GetRepository() Repository {
+	return repositoryInstance
+}
+
+func SetRepository(rep Repository) {
+	repositoryInstance = rep
 }
 
 type SaveDashboardItem struct {
@@ -22,7 +33,9 @@ type SaveDashboardItem struct {
 	Dashboard  *models.Dashboard
 }
 
-func SaveDashboard(json *SaveDashboardItem) (*models.Dashboard, error) {
+type dashboardRepository struct{}
+
+func (dr *dashboardRepository) SaveDashboard(json *SaveDashboardItem) (*models.Dashboard, error) {
 	dashboard := json.Dashboard
 
 	if dashboard.Title == "" {

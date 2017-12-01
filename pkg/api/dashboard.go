@@ -142,7 +142,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		UserId:    c.UserId,
 	}
 
-	dashboard, err := dashboards.SaveDashboard(dashItem)
+	dashboard, err := dashboards.GetRepository().SaveDashboard(dashItem)
 
 	if err == m.ErrDashboardTitleEmpty {
 		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)

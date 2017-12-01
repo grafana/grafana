@@ -3,11 +3,12 @@ package dashboards
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/dashboards"
 
 	"github.com/grafana/grafana/pkg/bus"
 
@@ -21,6 +22,7 @@ type fileReader struct {
 	Path           string
 	log            log.Logger
 	dashboardCache *dashboardCache
+	dashboardRepo  dashboards.Repository
 }
 
 func NewDashboardFilereader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
@@ -37,6 +39,7 @@ func NewDashboardFilereader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		Cfg:            cfg,
 		Path:           path,
 		log:            log,
+		dashboardRepo:  dashboards.GetRepository(),
 		dashboardCache: newDashboardCache(),
 	}, nil
 }
@@ -96,7 +99,7 @@ func (fr *fileReader) walkFolder() error {
 
 		if err == models.ErrDashboardNotFound {
 			fr.log.Debug("saving new dashboard", "file", path)
-			_, err = dashboards.SaveDashboard(dash)
+			_, err = fr.dashboardRepo.SaveDashboard(dash)
 			return err
 		}
 
@@ -110,7 +113,7 @@ func (fr *fileReader) walkFolder() error {
 		}
 
 		fr.log.Debug("no dashboard in cache. loading dashboard from disk into database.", "file", path)
-		_, err = dashboards.SaveDashboard(dash)
+		_, err = fr.dashboardRepo.SaveDashboard(dash)
 		return err
 	})
 }
