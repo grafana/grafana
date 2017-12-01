@@ -9,6 +9,8 @@ export interface NavModelItem {
   img?: string;
   id: string;
   active?: boolean;
+  hideFromTabs?: boolean;
+  divider?: boolean;
   children: NavModelItem[];
 }
 

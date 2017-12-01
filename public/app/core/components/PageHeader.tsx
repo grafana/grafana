@@ -28,6 +28,10 @@ export interface IProps {
 // }
 
 function TabItem(tab: NavModelItem) {
+  if (tab.hideFromTabs || tab.divider) {
+    return (null);
+  }
+
   let tabClasses = classNames({
     'gf-tabs-link': true,
     active: tab.active,

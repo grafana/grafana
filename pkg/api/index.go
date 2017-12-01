@@ -101,17 +101,19 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	}
 
 	dashboardChildNavs := []*dtos.NavLink{
-		{Text: "Home", Url: setting.AppSubUrl + "/", Icon: "fa fa-fw fa-home"},
+		{Text: "Home", Url: setting.AppSubUrl + "/", Icon: "fa fa-fw fa-home", HideFromTabs: true},
+		{Divider: true},
+		{Text: "Manage", Id: "dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "fa fa-fw fa-sitemap"},
 		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "fa fa-fw fa-film"},
 		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "icon-gf icon-gf-fw icon-gf-snapshot"},
-		{Text: "Dashboard List", Id: "dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "fa fa-fw fa-bars"},
 	}
 
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
 		Text:     "Dashboards",
 		Id:       "dashboards",
+		SubTitle: "Manage dashboards & folders",
 		Icon:     "gicon gicon-dashboard",
-		Url:      setting.AppSubUrl + "/",
+		Url:      setting.AppSubUrl + "/dashboards",
 		Children: dashboardChildNavs,
 	})
 
