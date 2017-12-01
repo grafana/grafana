@@ -1,63 +1,81 @@
-<navbar model="ctrl.navModel"></navbar>
+<page-header model="ctrl.navModel"></page-header>
 
-<div class="page-container">
-	<div class="page-header">
-		<h1>
-			<i class="icon-gf icon-gf-apps"></i>
-			Plugins <span class="muted small">(currently installed)</span>
-		</h1>
+<!-- <div class="page&#45;header&#45;canvas"> -->
+<!--   <div class="page&#45;container"> -->
+<!--     <navbar model="ctrl.navModel"></navbar> -->
+<!--  -->
+<!--     <div class="page&#45;header"> -->
+<!-- 		  <page&#45;h1 model="ctrl.navModel"></page&#45;h1> -->
+<!--  -->
+<!--       <div class="page&#45;header&#45;tabs"> -->
+<!--         <ul class="gf&#45;tabs"> -->
+<!--           <li class="gf&#45;tabs&#45;item"> -->
+<!--             <a class="gf&#45;tabs&#45;link" href="plugins?type=panel" ng&#45;class="{active: ctrl.tabIndex === 0}"> -->
+<!--               <i class="icon&#45;gf icon&#45;gf&#45;panel"></i> -->
+<!--               Panels -->
+<!--             </a> -->
+<!--           </li> -->
+<!--           <li class="gf&#45;tabs&#45;item"> -->
+<!--             <a class="gf&#45;tabs&#45;link" href="plugins?type=datasource" ng&#45;class="{active: ctrl.tabIndex === 1}"> -->
+<!--               <i class="gicon gicon&#45;datasources"></i> -->
+<!--               Data sources -->
+<!--             </a> -->
+<!--           </li> -->
+<!--           <li class="gf&#45;tabs&#45;item"> -->
+<!--             <a class="gf&#45;tabs&#45;link" href="plugins?type=app" ng&#45;class="{active: ctrl.tabIndex === 2}"> -->
+<!--               <i class="icon&#45;gf icon&#45;gf&#45;apps"></i> -->
+<!--               Apps -->
+<!--             </a> -->
+<!--           </li> -->
+<!--         </ul> -->
+<!--  -->
+<!--         <a class="get&#45;more&#45;plugins&#45;link pull&#45;right" href="https://grafana.com/plugins?utm_source=grafana_plugin_list" target="_blank"> -->
+<!--           Find more <img src="public/img/icn&#45;plugins&#45;tiny.svg" />plugins on Grafana.com -->
+<!--         </a> -->
+<!--       </div> -->
+<!--     </div> -->
+<!--   </div> -->
+<!-- </div> -->
 
-		<div class="page-header-tabs">
-			<ul class="gf-tabs">
-				<li class="gf-tabs-item">
-					<a class="gf-tabs-link" href="plugins?type=panel" ng-class="{active: ctrl.tabIndex === 0}">
-						Panels
-					</a>
-				</li>
-				<li class="gf-tabs-item">
-					<a class="gf-tabs-link" href="plugins?type=datasource" ng-class="{active: ctrl.tabIndex === 1}">
-						Data sources
-					</a>
-				</li>
-				<li class="gf-tabs-item">
-					<a class="gf-tabs-link" href="plugins?type=app" ng-class="{active: ctrl.tabIndex === 2}">
-						Apps
-					</a>
-				</li>
-			</ul>
+<div class="page-container page-body">
+  <div class="page-action-bar">
+    <div class="gf-form">
+      <label class="gf-form-label">Search</label>
+      <input type="text" class="gf-form-input width-20" ng-model="ctrl.searchQuery" ng-change="ctrl.onQueryUpdated()" />
+    </div>
 
-			<a class="get-more-plugins-link" href="https://grafana.com/plugins?utm_source=grafana_plugin_list" target="_blank">
-				Find more <img src="public/img/icn-plugins-tiny.svg" />plugins on Grafana.com
-			</a>
-		</div>
+    <div class="page-action-bar__spacer"></div>
+    <a class="btn btn-success" href="https://grafana.com/plugins?utm_source=grafana_plugin_list" target="_blank">
+      Find more plugins on Grafana.com
+    </a>
 	</div>
 
-	<section class="card-section" layout-mode>
-		<layout-selector></layout-selector>
+  <section class="card-section" layout-mode>
+    <layout-selector></layout-selector>
 
-		<ol class="card-list" >
-			<li class="card-item-wrapper" ng-repeat="plugin in ctrl.plugins">
-				<a class="card-item" href="plugins/{{plugin.id}}/edit">
-					<div class="card-item-header">
-						<div class="card-item-type">
-							<i class="icon-gf icon-gf-{{plugin.type}}"></i>
-							{{plugin.type}}
-						</div>
-						<div class="card-item-notice" ng-show="plugin.hasUpdate">
-							<span bs-tooltip="plugin.latestVersion">Update available!</span>
-						</div>
-					</div>
-					<div class="card-item-body">
-						<figure class="card-item-figure">
-							<img ng-src="{{plugin.info.logos.small}}">
-						</figure>
-						<div class="card-item-details">
-							<div class="card-item-name">{{plugin.name}}</div>
-							<div class="card-item-sub-name">By {{plugin.info.author.name}}</div>
-						</div>
-					</div>
-				</a>
-			</li>
-		</ol>
-	</section>
+    <ol class="card-list" >
+      <li class="card-item-wrapper" ng-repeat="plugin in ctrl.plugins">
+        <a class="card-item" href="plugins/{{plugin.id}}/edit">
+          <div class="card-item-header">
+            <div class="card-item-type">
+              <i class="icon-gf icon-gf-{{plugin.type}}"></i>
+              {{plugin.type}}
+            </div>
+            <div class="card-item-notice" ng-show="plugin.hasUpdate">
+              <span bs-tooltip="plugin.latestVersion">Update available!</span>
+            </div>
+          </div>
+          <div class="card-item-body">
+            <figure class="card-item-figure">
+              <img ng-src="{{plugin.info.logos.small}}">
+            </figure>
+            <div class="card-item-details">
+              <div class="card-item-name">{{plugin.name}}</div>
+              <div class="card-item-sub-name">By {{plugin.info.author.name}}</div>
+            </div>
+          </div>
+        </a>
+      </li>
+    </ol>
+  </section>
 </div>

@@ -1,20 +1,22 @@
-<navbar model="ctrl.navModel"></navbar>
+<page-header model="ctrl.navModel"></page-header>
 
-<div class="page-container">
-	<div class="page-header">
-		<h1>User Groups</h1>
+<div class="page-container page-body">
+	<div class="page-action-bar">
+
+    <div class="gf-form width-15">
+      <label class="gf-form-label">Search</label>
+      <input type="text" class="gf-form-input" placeholder="Find User Group by name" tabindex="1" give-focus="true"
+          ng-model="ctrl.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.get()" />
+    </div>
+
+    <div class="page-action-bar__spacer"></div>
 
     <a class="btn btn-success" ng-click="ctrl.openUserGroupModal()">
       <i class="fa fa-plus"></i>
       Create User Group
     </a>
   </div>
-    <div class="gf-form width-15 gf-form-group">
-      <span style="position: relative;">
-        <input type="text" class="gf-form-input" placeholder="Find User Group by name" tabindex="1" give-focus="true"
-          ng-model="ctrl.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.get()" />
-      </span>
-    </div>
+
   <div class="admin-list-table">
     <table class="filter-table form-inline" ng-show="ctrl.userGroups.length > 0">
       <thead>
@@ -42,7 +44,6 @@
           </td>
         </tr>
       </tbody>
-
     </table>
   </div>
 

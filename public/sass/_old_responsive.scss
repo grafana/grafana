@@ -29,8 +29,9 @@
   .dashnav-action-icons {
     display: none;
   }
+
   .page-container {
-    padding: ($spacer * 1) ($spacer * 2);
+    padding: 0 $spacer * 2;
   }
 
   .dash-row-menu-container {

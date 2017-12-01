@@ -23,7 +23,7 @@ export class OrgUsersCtrl {
       role: 'Viewer',
     };
 
-    this.navModel = navModelSrv.getNav('cfg', 'users');
+    this.navModel = navModelSrv.getNav('cfg', 'users', 0);
 
     this.get();
     this.editor = { index: 0 };
@@ -44,8 +44,7 @@ export class OrgUsersCtrl {
     if (this.externalUserMngLinkName) {
       return this.externalUserMngLinkName;
     }
-
-    return "Add Members";
+    return "Add Member";
   }
 
   get() {

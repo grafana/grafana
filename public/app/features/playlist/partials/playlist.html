@@ -1,9 +1,9 @@
-<navbar model="ctrl.navModel"></navbar>
+<page-header model="ctrl.navModel"></page-header>
 
-<div class="page-container" ng-form="playlistEditForm">
-	<div class="page-header">
-		<page-h1 model="ctrl.navModel"></page-h1>
-	</div>
+<div class="page-container page-body" ng-form="playlistEditForm">
+
+  <h3 class="page-sub-heading" ng-hide="ctrl.isNew">Edit Playlist</h3>
+  <h3 class="page-sub-heading" ng-show="ctrl.isNew">New Playlist</h3>
 
 	<p class="playlist-description">A playlist rotates through a pre-selected list of Dashboards. A Playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.</p>
 
@@ -103,7 +103,7 @@
 	<div class="clearfix"></div>
 
 	<div class="gf-form-button-row">
-		<a class="btn btn-success " ng-show="ctrl.isNew()"
+		<a class="btn btn-success " ng-show="ctrl.isNew"
 			ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()"
 			ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)">Create new playlist</a>
 		<a class="btn btn-success" ng-show="!ctrl.isNew()"
