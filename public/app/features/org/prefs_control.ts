@@ -49,7 +49,7 @@ export class PrefsControlCtrl {
 
 var template = `
 <form name="ctrl.prefsForm" class="section gf-form-group">
-  <h3 class="section-heading">Preferences</h3>
+  <h3 class="page-heading">Preferences</h3>
 
   <div class="gf-form">
     <span class="gf-form-label width-11">UI Theme</span>

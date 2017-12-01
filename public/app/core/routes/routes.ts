@@ -48,12 +48,6 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     reloadOnSearch: false,
     pageClass: 'page-dashboard',
   })
-  .when('/configuration', {
-    templateUrl: 'public/app/features/admin/partials/configuration_home.html',
-    controller : 'ConfigurationHomeCtrl',
-    controllerAs: 'ctrl',
-    resolve: loadAdminBundle,
-  })
   .when('/datasources', {
     templateUrl: 'public/app/features/plugins/partials/ds_list.html',
     controller : 'DataSourcesCtrl',

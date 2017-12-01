@@ -263,16 +263,18 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 				Divider: true, HideFromTabs: true,
 			})
 			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
-				Text: "Server Admin",
-				Id:   "admin",
-				Icon: "fa fa-fw fa-shield",
-				Url:  setting.AppSubUrl + "/admin",
+				Text:         "Server Admin",
+				HideFromTabs: true,
+				SubTitle:     "Manage all users & orgs",
+				Id:           "admin",
+				Icon:         "fa fa-fw fa-shield",
+				Url:          setting.AppSubUrl + "/admin/users",
 				Children: []*dtos.NavLink{
-					{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users"},
-					{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs"},
-					{Text: "Server Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings"},
-					{Text: "Server Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats"},
-					{Text: "Style Guide", Id: "styleguide", Url: setting.AppSubUrl + "/styleguide"},
+					{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "icon-gf icon-gf-fw icon-gf-users"},
+					{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "gicon gicon-org"},
+					{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "fa fa-fw fa-sliders"},
+					{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "fa fa-fw fa-bar-chart"},
+					{Text: "Style Guide", Id: "styleguide", Url: setting.AppSubUrl + "/styleguide", Icon: "fa fa-fw fa-eyedropper"},
 				},
 			})
 		}

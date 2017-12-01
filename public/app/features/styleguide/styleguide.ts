@@ -8,7 +8,7 @@ class StyleGuideCtrl {
   theme: string;
   buttonNames = ['primary', 'secondary', 'inverse', 'success', 'warning', 'danger'];
   buttonSizes = ['btn-small', '', 'btn-large'];
-  buttonVariants = ['-', '-outline-'];
+  buttonVariants = ['-'];
   icons: any = [];
   page: any;
   pages = ['colors', 'buttons', 'icons', 'plugins'];
@@ -16,7 +16,7 @@ class StyleGuideCtrl {
 
   /** @ngInject **/
   constructor(private $http, private $routeParams, private backendSrv, navModelSrv) {
-    this.navModel = navModelSrv.getNav('cfg', 'admin', 'styleguide');
+    this.navModel = navModelSrv.getNav('cfg', 'admin', 'styleguide', 1);
     this.theme = config.bootData.user.lightTheme ? 'light': 'dark';
     this.page = {};
 
