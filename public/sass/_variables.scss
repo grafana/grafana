@@ -201,6 +201,10 @@ $zindex-tooltip:           1020;
 $zindex-navbar-fixed:      1030;
 $zindex-modal-backdrop:    1040;
 $zindex-modal:             1050;
+$zindex-typeahead:         1060;
+$zindex-sidemenu : $zindex-navbar-fixed + 5;
+
+
 
 // Buttons
 //

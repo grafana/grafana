@@ -299,7 +299,7 @@
 // Typeahead
 // ---------
 .typeahead {
-  z-index: 1051;
+  z-index: $zindex-typeahead;
   margin-top: 2px; // give it some space to breathe
 }
 
