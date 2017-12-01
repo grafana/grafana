@@ -17,6 +17,7 @@ var (
 	ErrDashboardVersionMismatch          = errors.New("The dashboard has been changed by someone else")
 	ErrDashboardTitleEmpty               = errors.New("Dashboard title cannot be empty")
 	ErrDashboardContainsInvalidAlertData = errors.New("Invalid alert data. Cannot save dashboard")
+	ErrDashboardFailedToUpdateAlertData  = errors.New("Failed to save alert data")
 )
 
 type UpdatePluginDashboardError struct {

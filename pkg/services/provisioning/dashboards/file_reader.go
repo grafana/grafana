@@ -96,7 +96,8 @@ func (fr *fileReader) walkFolder() error {
 
 		if err == models.ErrDashboardNotFound {
 			fr.log.Debug("saving new dashboard", "file", path)
-			return dashboards.SaveDashboard(dash)
+			_, err = dashboards.SaveDashboard(dash)
+			return err
 		}
 
 		if err != nil {
@@ -109,7 +110,8 @@ func (fr *fileReader) walkFolder() error {
 		}
 
 		fr.log.Debug("no dashboard in cache. loading dashboard from disk into database.", "file", path)
-		return dashboards.SaveDashboard(dash)
+		_, err = dashboards.SaveDashboard(dash)
+		return err
 	})
 }
 

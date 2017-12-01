@@ -22,11 +22,11 @@ type SaveDashboardItem struct {
 	Dashboard  *models.Dashboard
 }
 
-func SaveDashboard(json *SaveDashboardItem) error {
+func SaveDashboard(json *SaveDashboardItem) (*models.Dashboard, error) {
 	dashboard := json.Dashboard
 
 	if dashboard.Title == "" {
-		return models.ErrDashboardTitleEmpty
+		return nil, models.ErrDashboardTitleEmpty
 	}
 
 	validateAlertsCmd := alerting.ValidateDashboardAlertsCommand{
@@ -35,7 +35,7 @@ func SaveDashboard(json *SaveDashboardItem) error {
 	}
 
 	if err := bus.Dispatch(&validateAlertsCmd); err != nil {
-		return models.ErrDashboardContainsInvalidAlertData
+		return nil, models.ErrDashboardContainsInvalidAlertData
 	}
 
 	cmd := models.SaveDashboardCommand{
@@ -51,7 +51,7 @@ func SaveDashboard(json *SaveDashboardItem) error {
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	alertCmd := alerting.UpdateDashboardAlertsCommand{
@@ -60,8 +60,8 @@ func SaveDashboard(json *SaveDashboardItem) error {
 	}
 
 	if err := bus.Dispatch(&alertCmd); err != nil {
-		return err
+		return nil, models.ErrDashboardFailedToUpdateAlertData
 	}
 
-	return nil
+	return cmd.Result, nil
 }
