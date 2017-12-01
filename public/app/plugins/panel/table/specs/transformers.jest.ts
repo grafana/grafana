@@ -1,6 +1,6 @@
 import {transformers, transformDataToTable} from '../transformers';
 
-describe('when transforming time series table', () => {
+describe('when transforming time series table.', () => {
   var table;
 
   describe('given 2 time series', () => {
@@ -94,7 +94,60 @@ describe('when transforming time series table', () => {
         expect(table.columns[2].text).toBe('Min');
       });
     });
+  });
 
+  describe('table data sets', () => {
+    describe('Table', () => {
+      var panel = {
+        transform: 'table',
+      };
+      var time = new Date().getTime();
+      var rawData = [
+        {
+          type: 'table',
+          columns: [
+            { text: 'Time' },
+            { text: 'Label Key 1' },
+            { text: 'Value' },
+          ],
+          rows: [
+            [time, 'Label Value 1', 42],
+          ],
+        }
+      ];
+
+      describe('getColumns', function() {
+        it('should return data columns', function() {
+          var columns = transformers['table'].getColumns(rawData);
+          expect(columns[0].text).toBe('Time');
+          expect(columns[1].text).toBe('Label Key 1');
+          expect(columns[2].text).toBe('Value');
+        });
+      });
+
+      describe('transform', function() {
+        beforeEach(() => {
+          table = transformDataToTable(rawData, panel);
+        });
+
+        it ('should return 3 columns', () => {
+          expect(table.columns.length).toBe(3);
+          expect(table.columns[0].text).toBe('Time');
+          expect(table.columns[1].text).toBe('Label Key 1');
+          expect(table.columns[2].text).toBe('Value');
+        });
+
+        it ('should return 1 row', () => {
+          expect(table.rows.length).toBe(1);
+          expect(table.rows[0][0]).toBe(time);
+          expect(table.rows[0][1]).toBe('Label Value 1');
+          expect(table.rows[0][2]).toBe(42);
+        });
+      });
+    });
+  });
+
+  describe('doc data sets', () => {
     describe('JSON Data', () => {
       var panel = {
         transform: 'json',
@@ -148,7 +201,9 @@ describe('when transforming time series table', () => {
         });
       });
     });
+  });
 
+  describe('annotation data', () => {
     describe('Annnotations', () => {
       var panel = {transform: 'annotations'};
       var rawData = {
