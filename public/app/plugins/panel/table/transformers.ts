@@ -145,9 +145,127 @@ transformers['table'] = {
     if (data[0].type !== 'table') {
       throw {message: 'Query result is not in table format, try using another transform.'};
     }
-
     model.columns = data[0].columns;
     model.rows = data[0].rows;
+  }
+};
+
+transformers['multiquery_table'] = {
+  description: 'Multi-Query Table',
+  getColumns: function(data) {
+    // Track column indexes: name -> index
+    const columnNames = {};
+
+    // Union of all non-value columns
+    const columns = data.reduce((acc, d, i) => {
+      d.columns.forEach((col, j) => {
+        const { text } = col;
+        if (text !== 'Value') {
+          if (columnNames[text] === undefined) {
+            columnNames[text] = acc.length;
+            acc.push(col);
+          }
+        }
+      });
+      return acc;
+    }, []);
+
+    // Append one value column per data set
+    data.forEach((_, i) => {
+      // Value (A), Value (B),...
+      const text = `Value ${String.fromCharCode(65 + i)}`;
+      columnNames[text] = columns.length;
+      columns.push({ text });
+    });
+
+    return columns;
+  },
+  transform: function(data, panel, model) {
+    if (!data || data.length === 0) {
+      return;
+    }
+
+    if (data[0].type !== 'table') {
+      throw {message: 'Query result is not in table format, try using another transform.'};
+    }
+
+    // Track column indexes: name -> index
+    const columnNames = {};
+    const columnIndexes = [];
+
+    // Union of all non-value columns
+    const columns = data.reduce((acc, d, i) => {
+      const indexes = [];
+      d.columns.forEach((col, j) => {
+        const { text } = col;
+        if (text !== 'Value') {
+          if (columnNames[text] === undefined) {
+            columnNames[text] = acc.length;
+            acc.push(col);
+          }
+          indexes[j] = columnNames[text];
+        }
+      });
+      columnIndexes.push(indexes);
+      return acc;
+    }, []);
+    const nonValueColumnCount = columns.length;
+
+    // Append one value column per data set
+    data.forEach((_, i) => {
+      // Value (A), Value (B),...
+      const text = `Value ${String.fromCharCode(65 + i)}`;
+      columnNames[text] = columns.length;
+      columns.push({ text });
+      columnIndexes[i].push(columnNames[text]);
+    });
+
+    model.columns = columns;
+
+    // Adjust rows to new column indexes
+    let rows = data.reduce((acc, d, i) => {
+      const indexes = columnIndexes[i];
+      d.rows.forEach((r, j) => {
+        const alteredRow = [];
+        indexes.forEach((to, from) => {
+          alteredRow[to] = r[from];
+        });
+        acc.push(alteredRow);
+      });
+      return acc;
+    }, []);
+
+    // Merge rows that have same columns
+    const mergedRows = {};
+    rows = rows.reduce((acc, row, i) => {
+      if (!mergedRows[i]) {
+        const match = _.findIndex(rows, (other, j) => {
+          let same = true;
+          for (let index = 0; index < nonValueColumnCount; index++) {
+            if (row[index] !== other[index]) {
+              same = false;
+              break;
+            }
+          }
+          return same;
+        }, i + 1);
+        if (match > -1) {
+          const matchedRow = rows[match];
+          // Merge values into current row
+          for (let index = nonValueColumnCount; index < columns.length; index++) {
+            if (row[index] === undefined && matchedRow[index] !== undefined) {
+              row[index] = matchedRow[index];
+              break;
+            }
+          }
+          mergedRows[match] = matchedRow;
+        }
+        acc.push(row);
+      }
+      return acc;
+    }, []);
+
+    model.rows = rows;
   }
 };
 
