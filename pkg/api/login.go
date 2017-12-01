@@ -45,7 +45,7 @@ func LoginView(c *middleware.Context) {
 	}
 
 	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
-		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/", nil, m.UseSecureCookie(&c.Req))
 		c.Redirect(redirectTo)
 		return
 	}
@@ -64,8 +64,8 @@ func tryLoginUsingRememberCookie(c *middleware.Context) bool {
 	defer func() {
 		if !isSucceed {
 			log.Trace("auto-login cookie cleared: %s", uname)
-			c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
-			c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
+			c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/", nil, m.UseSecureCookie(&c.Req))
+			c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/", nil, m.UseSecureCookie(&c.Req))
 			return
 		}
 	}()
@@ -124,7 +124,7 @@ func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) Response {
 
 	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
 		result["redirectUrl"] = redirectTo
-		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/", nil, m.UseSecureCookie(&c.Req))
 	}
 
 	metrics.M_Api_Login_Post.Inc()
@@ -141,8 +141,8 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 
 	days := 86400 * setting.LogInRememberDays
 	if days > 0 {
-		c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
-		c.SetSuperSecureCookie(user.Rands+user.Password, setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
+		c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/", nil, m.UseSecureCookie(&c.Req))
+		c.SetSuperSecureCookie(user.Rands+user.Password, setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/", nil, m.UseSecureCookie(&r.Req))
 	}
 
 	c.Session.RegenerateId(c)
@@ -150,8 +150,8 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 }
 
 func Logout(c *middleware.Context) {
-	c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/")
-	c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/")
+	c.SetCookie(setting.CookieUserName, "", -1, setting.AppSubUrl+"/", nil, m.UseSecureCookie(&c.Req))
+	c.SetCookie(setting.CookieRememberName, "", -1, setting.AppSubUrl+"/", nil, m.UseSecurecookie(&c.Req))
 	c.Session.Destory(c)
 	c.Redirect(setting.AppSubUrl + "/login")
 }
