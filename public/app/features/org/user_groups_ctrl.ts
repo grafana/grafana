@@ -15,7 +15,7 @@ export class UserGroupsCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, navModelSrv) {
-    this.navModel = navModelSrv.getNav('cfg', 'users');
+    this.navModel = navModelSrv.getNav('cfg', 'users', 0);
     this.get();
   }
 

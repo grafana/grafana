@@ -1,34 +1,36 @@
-<div class="page-header-canvas">
-  <div class="page-container" ng-init="ctrl.init()">
-    <navbar model="ctrl.navModel"></navbar>
+<!-- <div class="page&#45;header&#45;canvas"> -->
+<!--   <div class="page&#45;container" ng&#45;init="ctrl.init()"> -->
+<!--     <navbar model="ctrl.navModel"></navbar> -->
+<!--  -->
+<!--     <div class="page&#45;header"> -->
+<!--       <div class="plugin&#45;header"> -->
+<!--         <span class="plugin&#45;header&#45;logo"> -->
+<!--           <img ng&#45;src="{{ctrl.model.info.logos.large}}"> -->
+<!--         </span> -->
+<!--  -->
+<!--         <div class="plugin&#45;header&#45;info&#45;block"> -->
+<!--           <h1 class="plugin&#45;header&#45;name">{{ctrl.model.name}}</h1> -->
+<!--           <div class="plugin&#45;header&#45;author">By {{ctrl.model.info.author.name}}</div> -->
+<!--           <div class="plugin&#45;header&#45;stamps"> -->
+<!--             <span class="plugin&#45;header&#45;stamps&#45;type"> -->
+<!--               <i class="{{ctrl.pluginIcon}}"></i> {{ctrl.model.type}} -->
+<!--             </span> -->
+<!--           </div> -->
+<!--         </div> -->
+<!--       </div> -->
+<!--  -->
+<!--       <ul class="gf&#45;tabs"> -->
+<!--         <li class="gf&#45;tabs&#45;item" ng&#45;repeat="tab in ctrl.tabs"> -->
+<!--           <a class="gf&#45;tabs&#45;link" ng&#45;click="ctrl.tabIndex = $index" ng&#45;class="{active: ctrl.tabIndex === $index}"> -->
+<!--             {{::tab}} -->
+<!--           </a> -->
+<!--         </li> -->
+<!--       </ul> -->
+<!--     </div> -->
+<!--   </div> -->
+<!-- </div> -->
 
-    <div class="page-header">
-      <div class="plugin-header">
-        <span class="plugin-header-logo">
-          <img ng-src="{{ctrl.model.info.logos.large}}">
-        </span>
-
-        <div class="plugin-header-info-block">
-          <h1 class="plugin-header-name">{{ctrl.model.name}}</h1>
-          <div class="plugin-header-author">By {{ctrl.model.info.author.name}}</div>
-          <div class="plugin-header-stamps">
-            <span class="plugin-header-stamps-type">
-              <i class="{{ctrl.pluginIcon}}"></i> {{ctrl.model.type}}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <ul class="gf-tabs">
-        <li class="gf-tabs-item" ng-repeat="tab in ctrl.tabs">
-          <a class="gf-tabs-link" ng-click="ctrl.tabIndex = $index" ng-class="{active: ctrl.tabIndex === $index}">
-            {{::tab}}
-          </a>
-        </li>
-      </ul>
-    </div>
-  </div>
-</div>
+<page-header model="ctrl.navModel"></page-header>
 
 <div class="page-container page-body page-body--with-sidebar">
   <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabs[ctrl.tabIndex] === 'Readme'">

@@ -7,6 +7,7 @@ export interface NavModelItem {
   url: string;
   icon?: string;
   img?: string;
+  id: string;
   active?: boolean;
   children: NavModelItem[];
 }

@@ -1,9 +1,50 @@
 import React from 'react';
-import { NavModel } from '../nav_model_srv';
-import classNames  from 'classnames';
+import { NavModel, NavModelItem } from '../nav_model_srv';
+import classNames from 'classnames';
 
 export interface IProps {
   model: NavModel;
+}
+
+// function BreadcrumbItem(item: NavModelItem) {
+//   return (
+//     <a className="breadcrumb-item" href={item.url} key={item.id}>
+//       {item.text}
+//     </a>
+//   );
+// }
+//
+// function Breadcrumb(model: NavModel) {
+//   return (
+//     <div className="page-nav">
+//       <div className="page-breadcrumbs">
+//         <a className="breadcrumb-item active" href="/">
+//           <i className="fa fa-home" />
+//         </a>
+//         {model.breadcrumbs.map(BreadcrumbItem)}
+//       </div>
+//     </div>
+//   );
+// }
+
+function TabItem(tab: NavModelItem) {
+  let tabClasses = classNames({
+    'gf-tabs-link': true,
+    active: tab.active,
+  });
+
+  return (
+    <li className="gf-tabs-item" key={tab.url}>
+      <a className={tabClasses} href={tab.url}>
+        <i className={tab.icon} />
+        {tab.text}
+      </a>
+    </li>
+  );
+}
+
+function Tabs({main}: {main: NavModelItem}) {
+  return <ul className="gf-tabs">{main.children.map(TabItem)}</ul>;
 }
 
 export default class PageHeader extends React.Component<IProps, any> {
@@ -11,38 +52,12 @@ export default class PageHeader extends React.Component<IProps, any> {
     super(props);
   }
 
-  renderBreadcrumb(breadcrumb) {
-    return (
-      <a className="breadcrumb-item" href={breadcrumb.url} key={breadcrumb.id}>
-        {breadcrumb.text}
-      </a>
-    );
-  }
-
-  renderTab(tab) {
-    let tabClasses = classNames({
-      'gf-tabs-link': true,
-      'active': tab.active,
-    });
-
-    console.log(tab.active);
-
-    return (
-      <li className="gf-tabs-item" key={tab.url}>
-        <a className={tabClasses} href={tab.url}>
-          <i className={tab.icon} />
-          {tab.text}
-        </a>
-      </li>
-    );
-  }
-
   renderHeaderTitle(main) {
     return (
       <div className="page-header__inner">
         <span className="page-header__logo">
-           {main.icon && <i className={`page-header__icon ${main.icon}`} />}
-           {main.img && <img className="page-header__img" src={main.img} />}
+          {main.icon && <i className={`page-header__icon ${main.icon}`} />}
+          {main.img && <img className="page-header__img" src={main.img} />}
         </span>
 
         <div className="page-header__info-block">
@@ -50,7 +65,7 @@ export default class PageHeader extends React.Component<IProps, any> {
           {main.subTitle && <div className="page-header__sub-title">{main.subTitle}</div>}
           {main.subType && (
             <div className="page-header__stamps">
-              <i className={main.subType.icon}></i>
+              <i className={main.subType.icon} />
               {main.subType.text}
             </div>
           )}
@@ -63,23 +78,10 @@ export default class PageHeader extends React.Component<IProps, any> {
     return (
       <div className="page-header-canvas">
         <div className="page-container">
-          <div className="page-nav">
-            <div className="page-breadcrumbs">
-              <a className="breadcrumb-item active" href="/">
-                <i className="fa fa-home" />
-              </a>
-              {this.props.model.breadcrumbs.map(this.renderBreadcrumb)}
-            </div>
-          </div>
-
           <div className="page-header">
             {this.renderHeaderTitle(this.props.model.main)}
 
-            {this.props.model.main.children && (
-              <ul className="gf-tabs">
-              {this.props.model.main.children.map(this.renderTab)}
-              </ul>
-            )}
+            {this.props.model.main.children && <Tabs main={this.props.model.main} />}
           </div>
         </div>
       </div>
