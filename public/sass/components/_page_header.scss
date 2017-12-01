@@ -1,7 +1,7 @@
 
 .page-header-canvas {
   background: linear-gradient(90deg, #292a2d, black);
-  box-shadow: inset 0px -4px 14px #2d2d2d;
+  box-shadow: inset 0px -4px 14px $dark-2;
   border-bottom: 1px solid $dark-4;
 }
 
@@ -35,7 +35,7 @@
 .page-header__img {
   border-radius: 50%;
   position: relative;
-  top: -3px;
+  top: 10px;
   width: 50px;
   height: 50px;
 }

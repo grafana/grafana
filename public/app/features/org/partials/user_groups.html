@@ -3,9 +3,9 @@
 <div class="page-container page-body">
 	<div class="page-action-bar">
 
-    <div class="gf-form width-15">
+    <div class="gf-form gf-form--grow">
       <label class="gf-form-label">Search</label>
-      <input type="text" class="gf-form-input" placeholder="Find User Group by name" tabindex="1" give-focus="true"
+      <input type="text" class="gf-form-input max-width-20" placeholder="Find User Group by name" tabindex="1" give-focus="true"
           ng-model="ctrl.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.get()" />
     </div>
 
@@ -13,7 +13,7 @@
 
     <a class="btn btn-success" ng-click="ctrl.openUserGroupModal()">
       <i class="fa fa-plus"></i>
-      Create User Group
+			Add Team
     </a>
   </div>
 

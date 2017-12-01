@@ -36,12 +36,11 @@ export class NewDashboardCtrl {
       meta: { canStar: false, canShare: false, isNew: true },
       dashboard: {
         title: "New dashboard",
-        rows: [
+        panels: [
           {
-            title: 'Dashboard Row',
-            height: '350px',
-            panels: [],
-            isNew: true,
+            type: 'add-panel',
+            gridPos: {x: 0, y: 0, w: 12, h: 9},
+            title: 'Panel Title',
           }
         ]
       },

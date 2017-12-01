@@ -21,7 +21,7 @@
   }
 }
 
-@include media-breakpoint-down(md) {
+@include media-breakpoint-down(sm) {
   .react-grid-layout {
     height: 100% !important;
   }

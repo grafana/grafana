@@ -1,13 +1,13 @@
-<div class="navbar-buttons">
-	<button class="btn navbar-button navbar-button--tight gf-timepicker-time-control" bs-tooltip="'Shift time backward <br> (left arrow key)'" data-placement="bottom" ng-click='ctrl.move(-1)'>
+<div class="navbar-buttons navbar-buttons--zoom">
+	<button class="btn navbar-button navbar-button--tight" ng-click='ctrl.move(-1)'>
 		<i class="fa fa-chevron-left"></i>
 	</button>
 
-	<button class="btn navbar-button dashnav-zoom-out gf-timepicker-time-control" bs-tooltip="'Time range zoom out <br> CTRL+Z'" data-placement="bottom" ng-click='ctrl.zoom(2)'>
+	<button class="btn navbar-button" bs-tooltip="'Time range zoom out <br> CTRL+Z'" data-placement="bottom" ng-click='ctrl.zoom(2)'>
 		<i class="fa fa-search-minus"></i>
 	</button>
 
-	<button class="btn navbar-button navbar-button--tight gf-timepicker-time-control" bs-tooltip="'Shift time forward <br> (right arrow key)'" data-placement="bottom" ng-click='ctrl.move(1)'>
+	<button class="btn navbar-button navbar-button--tight" ng-click='ctrl.move(1)'>
 		<i class="fa fa-chevron-right"></i>
 	</button>
 </div>
@@ -20,7 +20,7 @@
 		<span ng-show="ctrl.dashboard.refresh" class="text-warning">&nbsp; Refresh every {{ctrl.dashboard.refresh}}</span>
 	</button>
 
-	<button class="btn navbar-button dashnav-refresh-action" ng-click="ctrl.timeSrv.refreshDashboard()">
+	<button class="btn navbar-button navbar-button--refresh" ng-click="ctrl.timeSrv.refreshDashboard()">
 		<i class="fa fa-refresh"></i>
 	</button>
 </div>

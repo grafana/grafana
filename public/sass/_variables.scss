@@ -89,6 +89,7 @@ $font-size-root: 14px !default;
 $font-size-base: 13px !default;
 
 $font-size-lg:   18px !default;
+$font-size-md:   15px !default;
 $font-size-sm:   11px !default;
 $font-size-xs:   9px !default;
 
@@ -197,8 +198,8 @@ $form-icon-danger: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www
 // Used for a bird's eye view of components dependent on the z-axis
 // Try to avoid customizing these :)
 $zindex-dropdown:          1000;
-$zindex-tooltip:           1020;
-$zindex-navbar-fixed:      1030;
+$zindex-navbar-fixed:      1020;
+$zindex-tooltip:           1030;
 $zindex-modal-backdrop:    1040;
 $zindex-modal:             1050;
 $zindex-typeahead:         1060;

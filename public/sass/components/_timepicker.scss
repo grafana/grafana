@@ -7,6 +7,11 @@
   display: flex;
 }
 
+.gf-timepicker-nav-btn {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
 .gf-timepicker-dropdown {
   margin: -8px -10px 10px 5px;
   padding: 10px 20px;

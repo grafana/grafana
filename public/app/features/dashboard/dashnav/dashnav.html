@@ -20,7 +20,7 @@
 
 	<div class="navbar__spacer"></div>
 
-	<div class="navbar-buttons">
+	<div class="navbar-buttons navbar-buttons--actions">
 		<button class="btn navbar-button navbar-button--add-panel" ng-show="::ctrl.dashboard.meta.canSave" bs-tooltip="'Add panel'" data-placement="bottom" ng-click="ctrl.addPanel()">
 			<i class="gicon gicon-add-panel"></i>
 		</button>
@@ -42,7 +42,7 @@
 		</button>
 
 		<div class="dropdown">
-			<button class="btn navbar-button" data-toggle="dropdown">
+			<button class="btn navbar-button" data-toggle="dropdown" bs-tooltip="'Settings'" data-placement="bottom">
 				<i class="fa fa-cog"></i>
 			</button>
 

@@ -6,27 +6,6 @@ export interface IProps {
   model: NavModel;
 }
 
-// function BreadcrumbItem(item: NavModelItem) {
-//   return (
-//     <a className="breadcrumb-item" href={item.url} key={item.id}>
-//       {item.text}
-//     </a>
-//   );
-// }
-//
-// function Breadcrumb(model: NavModel) {
-//   return (
-//     <div className="page-nav">
-//       <div className="page-breadcrumbs">
-//         <a className="breadcrumb-item active" href="/">
-//           <i className="fa fa-home" />
-//         </a>
-//         {model.breadcrumbs.map(BreadcrumbItem)}
-//       </div>
-//     </div>
-//   );
-// }
-
 function TabItem(tab: NavModelItem) {
   if (tab.hideFromTabs) {
     return (null);
@@ -84,7 +63,6 @@ export default class PageHeader extends React.Component<IProps, any> {
         <div className="page-container">
           <div className="page-header">
             {this.renderHeaderTitle(this.props.model.main)}
-
             {this.props.model.main.children && <Tabs main={this.props.model.main} />}
           </div>
         </div>
