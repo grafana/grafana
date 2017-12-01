@@ -2,9 +2,11 @@
 
 Xorm is a simple and powerful ORM for Go.
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/go-xorm/xorm?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![CircleCI](https://circleci.com/gh/go-xorm/xorm/tree/master.svg?style=svg)](https://circleci.com/gh/go-xorm/xorm/tree/master)  [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/go-xorm/xorm?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-[![Build Status](https://drone.io/github.com/go-xorm/tests/status.png)](https://drone.io/github.com/go-xorm/tests/latest)  [![Go Walker](http://gowalker.org/api/v1/badge)](http://gowalker.org/github.com/go-xorm/xorm) [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/lunny/xorm/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+# Notice
+
+The last master version is not backwards compatible. You should use `engine.ShowSQL()` and `engine.Logger().SetLevel()` instead of `engine.ShowSQL = `, `engine.ShowInfo = ` and so on.
 
 # Features
 
@@ -26,6 +28,7 @@ Xorm is a simple and powerful ORM for Go.
 
 * Optimistic Locking support
 
+* SQL Builder support via [github.com/go-xorm/builder](https://github.com/go-xorm/builder)
 
 # Drivers Support
 
@@ -43,13 +46,25 @@ Drivers for Go's sql package which currently support database/sql includes:
 
 * MsSql: [github.com/denisenkom/go-mssqldb](https://github.com/denisenkom/go-mssqldb)
 
-* MsSql: [github.com/lunny/godbc](https://github.com/lunny/godbc)
-
 * Oracle: [github.com/mattn/go-oci8](https://github.com/mattn/go-oci8) (experiment)
 
-* ql: [github.com/cznic/ql](https://github.com/cznic/ql) (experiment)
-
 # Changelog
+
+* **v0.6.0**
+    * remove support for ql
+    * add query condition builder support via [github.com/go-xorm/builder](https://github.com/go-xorm/builder), so `Where`, `And`, `Or` 
+methods can use `builder.Cond` as parameter
+    * add Sum, SumInt, SumInt64 and NotIn methods
+    * some bugs fixed
+
+* **v0.5.0**
+    * logging interface changed
+    * some bugs fixed
+
+* **v0.4.5**
+    * many bugs fixed
+    * extends support unlimited deepth
+    * Delete Limit support
 
 * **v0.4.4**
     * ql database expriment support
@@ -58,25 +73,9 @@ Drivers for Go's sql package which currently support database/sql includes:
     * select ForUpdate support
     * many bugs fixed
 
-* **v0.4.3**
-    * Json column type support
-    * oracle expirement support
-    * bug fixed
-
-* **v0.4.2**
-	* Transaction will auto rollback if not Rollback or Commit be called.
-    * Gonic Mapper support
-    * bug fixed
-
-[More changelogs ...](https://github.com/go-xorm/manual-en-US/tree/master/chapter-16)
+[More changes ...](https://github.com/go-xorm/manual-en-US/tree/master/chapter-16)
 
 # Installation
-
-If you have [gopm](https://github.com/gpmgo/gopm) installed,
-
-	gopm get github.com/go-xorm/xorm
-
-Or
 
 	go get github.com/go-xorm/xorm
 
@@ -124,7 +123,7 @@ results, err := engine.Query("select * from user")
 affected, err := engine.Exec("update user set age = ? where name = ?", age, name)
 ```
 
-* Insert one or multipe records to database
+* Insert one or multiple records to database
 
 ```Go
 affected, err := engine.Insert(&user)
@@ -173,7 +172,7 @@ err := engine.Table("user").Select("user.*, detail.*")
 // SELECT user.*, detail.* FROM user INNER JOIN detail WHERE user.name = ? limit 0 offset 10
 ```
 
-* Query multiple records and record by record handle, there two methods Iterate and Rows
+* Query multiple records and record by record handle, there are two methods Iterate and Rows
 
 ```Go
 err := engine.Iterate(&User{Name:name}, func(idx int, bean interface{}) error {
@@ -191,7 +190,7 @@ for rows.Next() {
 }
 ```
 
-* Update one or more records, default will update non-empty and non-zero fields except to use Cols, AllCols and etc.
+* Update one or more records, default will update non-empty and non-zero fields except when you use Cols, AllCols and so on.
 
 ```Go
 affected, err := engine.Id(1).Update(&user)
@@ -201,7 +200,7 @@ affected, err := engine.Update(&user, &User{Name:name})
 // UPDATE user SET ... Where name = ?
 
 var ids = []int64{1, 2, 3}
-affected, err := engine.In(ids).Update(&user)
+affected, err := engine.In("id", ids).Update(&user)
 // UPDATE user SET ... Where id IN (?, ?, ?)
 
 // force update indicated columns by Cols
@@ -216,11 +215,12 @@ affected, err := engine.Id(1).AllCols().Update(&user)
 // UPDATE user SET name=?,age=?,salt=?,passwd=?,updated=? Where id = ?
 ```
 
-* Delete one or more records, Delete MUST has conditon
+* Delete one or more records, Delete MUST have condition
 
 ```Go
 affected, err := engine.Where(...).Delete(&user)
 // DELETE FROM user Where ...
+affected, err := engine.Id(2).Delete(&user)
 ```
 
 * Count records
@@ -228,6 +228,13 @@ affected, err := engine.Where(...).Delete(&user)
 ```Go
 counts, err := engine.Count(&user)
 // SELECT count(*) AS total FROM user
+```
+
+* Query conditions builder
+
+```Go
+err := engine.Where(builder.NotIn("a", 1, 2).And(builder.In("b", "c", "d", "e"))).Find(&users)
+// SELECT id, name ... FROM user WHERE a NOT IN (?, ?) AND b IN (?, ?, ?)
 ```
 
 # Cases

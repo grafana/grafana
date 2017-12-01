@@ -15,6 +15,12 @@ weight = 1
 The Grafana back-end has a number of configuration options that can be
 specified in a `.ini` configuration file or specified using environment variables.
 
+## Comments In .ini Files
+
+Semicolons (the `;` char) are the standard way to comment out lines in a `.ini` file.
+
+A common problem is forgetting to uncomment a line in the `custom.ini` (or `grafana.ini`) file which causes the configuration option to be ignored.
+
 ## Config file locations
 
 - Default configuration from `$WORKING_DIR/conf/defaults.ini`
@@ -31,26 +37,31 @@ specified in a `.ini` configuration file or specified using environment variable
 All options in the configuration file (listed below) can be overridden
 using environment variables using the syntax:
 
-    GF_<SectionName>_<KeyName>
+```bash
+GF_<SectionName>_<KeyName>
+```
 
 Where the section name is the text within the brackets. Everything
 should be upper case, `.` should be replaced by `_`. For example, given these configuration settings:
 
-    # default section
-    instance_name = ${HOSTNAME}
+```bash
+# default section
+instance_name = ${HOSTNAME}
 
-    [security]
-    admin_user = admin
+[security]
+admin_user = admin
 
-    [auth.google]
-    client_secret = 0ldS3cretKey
-
+[auth.google]
+client_secret = 0ldS3cretKey
+```
 
 Then you can override them using:
 
-    export GF_DEFAULT_INSTANCE_NAME=my-instance
-    export GF_SECURITY_ADMIN_USER=true
-    export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
+```bash
+export GF_DEFAULT_INSTANCE_NAME=my-instance
+export GF_SECURITY_ADMIN_USER=true
+export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
+```
 
 <hr />
 
@@ -76,6 +87,14 @@ command line in the init.d script or the systemd service file.  It can
 be overridden in the configuration file or in the default environment variable
 file.
 
+### plugins
+
+Directory where grafana will automatically scan and look for plugins
+
+### datasources
+
+Config files containing datasources that will be configured at startup
+
 ## [server]
 
 ### http_addr
@@ -87,11 +106,15 @@ The IP address to bind to. If empty will bind to all interfaces
 The port to bind to, defaults to `3000`. To use port 80 you need to
 either give the Grafana binary permission for example:
 
-    $ sudo setcap 'cap_net_bind_service=+ep' /usr/sbin/grafana-server
+```bash
+$ sudo setcap 'cap_net_bind_service=+ep' /usr/sbin/grafana-server
+```
 
 Or redirect port 80 to the Grafana port using:
 
-    $ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
+```bash
+$ sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 3000
+```
 
 Another way is put a webserver like Nginx or Apache in front of Grafana and have them proxy requests to Grafana.
 
@@ -203,6 +226,15 @@ For MySQL, use either `true`, `false`, or `skip-verify`.
 
 (MySQL only) The common name field of the certificate used by the `mysql` server. Not necessary if `ssl_mode` is set to `skip-verify`.
 
+### max_idle_conn
+The maximum number of connections in the idle connection pool.
+
+### max_open_conn
+The maximum number of open connections to the database.
+
+### log_queries
+Set to `true` to log the sql calls and execution times.
+
 <hr />
 
 ## [security]
@@ -229,6 +261,10 @@ Used for signing keep me logged in / remember me cookies.
 Set to `true` to disable the use of Gravatar for user profile images.
 Default is `false`.
 
+### data_source_proxy_whitelist
+
+Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces
+
 <hr />
 
 ## [users]
@@ -236,13 +272,13 @@ Default is `false`.
 ### allow_sign_up
 
 Set to `false` to prohibit users from being able to sign up / create
-user accounts. Defaults to `true`.  The admin user can still create
+user accounts. Defaults to `false`.  The admin user can still create
 users from the [Grafana Admin Pages](../../reference/admin)
 
 ### allow_org_create
 
 Set to `false` to prohibit users from creating new organizations.
-Defaults to `true`.
+Defaults to `false`.
 
 ### auto_assign_org
 
@@ -267,6 +303,10 @@ options are `Admin` and `Editor` and `Read Only Editor`. e.g. :
 
 Set to true to disable (hide) the login form, useful if you use OAuth, defaults to false.
 
+### disable_signout_menu
+
+Set to true to disable the signout link in the side menu. useful if you use auth.proxy, defaults to false.
+
 <hr>
 
 ## [auth.anonymous]
@@ -288,30 +328,33 @@ options are `Editor` and `Admin`.
 
 ## [auth.github]
 
-You need to create a GitHub application (you find this under the GitHub
-profile page). When you create the application you will need to specify
+You need to create a GitHub OAuth application (you find this under the GitHub
+settings page). When you create the application you will need to specify
 a callback URL. Specify this as callback:
 
-    http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/github
+```bash
+http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/github
+```
 
 This callback URL must match the full HTTP address that you use in your
 browser to access Grafana, but with the prefix path of `/login/github`.
-When the GitHub application is created you will get a Client ID and a
+When the GitHub OAuth application is created you will get a Client ID and a
 Client Secret. Specify these in the Grafana configuration file. For
 example:
 
-    [auth.github]
-    enabled = true
-    allow_sign_up = true
-    client_id = YOUR_GITHUB_APP_CLIENT_ID
-    client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
-    scopes = user:email
-    auth_url = https://github.com/login/oauth/authorize
-    token_url = https://github.com/login/oauth/access_token
-    api_url = https://api.github.com/user
-    allow_sign_up = false
-    team_ids =
-    allowed_organizations =
+```bash
+[auth.github]
+enabled = true
+allow_sign_up = true
+client_id = YOUR_GITHUB_APP_CLIENT_ID
+client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
+scopes = user:email
+auth_url = https://github.com/login/oauth/authorize
+token_url = https://github.com/login/oauth/access_token
+api_url = https://api.github.com/user
+team_ids =
+allowed_organizations =
+```
 
 Restart the Grafana back-end. You should now see a GitHub login button
 on the login page. You can now login or sign up with your GitHub
@@ -329,15 +372,17 @@ GitHub. If the authenticated user isn't a member of at least one of the
 teams they will not be able to register or authenticate with your
 Grafana instance. For example:
 
-    [auth.github]
-    enabled = true
-    client_id = YOUR_GITHUB_APP_CLIENT_ID
-    client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
-    scopes = user:email,read:org
-    team_ids = 150,300
-    auth_url = https://github.com/login/oauth/authorize
-    token_url = https://github.com/login/oauth/access_token
-    allow_sign_up = true
+```bash
+[auth.github]
+enabled = true
+client_id = YOUR_GITHUB_APP_CLIENT_ID
+client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
+scopes = user:email,read:org
+team_ids = 150,300
+auth_url = https://github.com/login/oauth/authorize
+token_url = https://github.com/login/oauth/access_token
+allow_sign_up = true
+```
 
 ### allowed_organizations
 
@@ -346,16 +391,18 @@ organizations on GitHub. If the authenticated user isn't a member of at least
 one of the organizations they will not be able to register or authenticate with
 your Grafana instance. For example
 
-    [auth.github]
-    enabled = true
-    client_id = YOUR_GITHUB_APP_CLIENT_ID
-    client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
-    scopes = user:email,read:org
-    auth_url = https://github.com/login/oauth/authorize
-    token_url = https://github.com/login/oauth/access_token
-    allow_sign_up = true
-    # space-delimited organization names
-    allowed_organizations = github google
+```bash
+[auth.github]
+enabled = true
+client_id = YOUR_GITHUB_APP_CLIENT_ID
+client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
+scopes = user:email,read:org
+auth_url = https://github.com/login/oauth/authorize
+token_url = https://github.com/login/oauth/access_token
+allow_sign_up = true
+# space-delimited organization names
+allowed_organizations = github google
+```
 
 <hr>
 
@@ -366,22 +413,26 @@ Developer Console](https://console.developers.google.com/project).  When
 you create the project you will need to specify a callback URL. Specify
 this as callback:
 
-    http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/google
+```bash
+http://<my_grafana_server_name_or_ip>:<grafana_server_port>/login/google
+```
 
 This callback URL must match the full HTTP address that you use in your
 browser to access Grafana, but with the prefix path of `/login/google`.
 When the Google project is created you will get a Client ID and a Client
 Secret. Specify these in the Grafana configuration file. For example:
 
-    [auth.google]
-    enabled = true
-    client_id = YOUR_GOOGLE_APP_CLIENT_ID
-    client_secret = YOUR_GOOGLE_APP_CLIENT_SECRET
-    scopes = https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
-    auth_url = https://accounts.google.com/o/oauth2/auth
-    token_url = https://accounts.google.com/o/oauth2/token
-    allowed_domains = mycompany.com mycompany.org
-    allow_sign_up = true
+```bash
+[auth.google]
+enabled = true
+client_id = YOUR_GOOGLE_APP_CLIENT_ID
+client_secret = YOUR_GOOGLE_APP_CLIENT_SECRET
+scopes = https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
+auth_url = https://accounts.google.com/o/oauth2/auth
+token_url = https://accounts.google.com/o/oauth2/token
+allowed_domains = mycompany.com mycompany.org
+allow_sign_up = true
+```
 
 Restart the Grafana back-end. You should now see a Google login button
 on the login page. You can now login or sign up with your Google
@@ -399,18 +450,54 @@ This option could be used if have your own oauth service.
 This callback URL must match the full HTTP address that you use in your
 browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
 
-    [auth.generic_oauth]
-    enabled = true
-    client_id = YOUR_APP_CLIENT_ID
-    client_secret = YOUR_APP_CLIENT_SECRET
-    scopes =
-    auth_url =
-    token_url =
-    api_url =
-    allowed_domains = mycompany.com mycompany.org
-    allow_sign_up = true
+```bash
+[auth.generic_oauth]
+enabled = true
+client_id = YOUR_APP_CLIENT_ID
+client_secret = YOUR_APP_CLIENT_SECRET
+scopes =
+auth_url =
+token_url =
+api_url =
+allowed_domains = mycompany.com mycompany.org
+allow_sign_up = true
+```
 
-Set api_url to the resource that returns basic user info.
+Set api_url to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
+
+### Set up oauth2 with Okta
+
+First set up Grafana as an OpenId client "webapplication" in Okta. Then set the Base URIs to `https://<grafana domain>/` and set the Login redirect URIs to `https://<grafana domain>/login/generic_oauth`.
+
+Finaly set up the generic oauth module like this:
+```bash
+[auth.generic_oauth]
+name = Okta
+enabled = true
+scopes = openid profile email
+client_id = <okta application Client ID>
+client_secret = <okta application Client Secret>
+auth_url = https://<okta domain>/oauth2/v1/authorize
+token_url = https://<okta domain>/oauth2/v1/token
+api_url = https://<okta domain>/oauth2/v1/userinfo
+```
+
+### Set up oauth2 with Bitbucket
+
+```bash
+[auth.generic_oauth]
+name = BitBucket
+enabled = true
+allow_sign_up = true
+client_id = <client id>
+client_secret = <secret>
+scopes = account email
+auth_url = https://bitbucket.org/site/oauth2/authorize
+token_url = https://bitbucket.org/site/oauth2/access_token
+api_url = https://api.bitbucket.org/2.0/user
+team_ids =
+allowed_organizations =
+```
 
 <hr>
 
@@ -427,24 +514,38 @@ Set to `true` to enable LDAP integration (default: `false`)
 ### config_file
 Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
 
+### allow_sign_up
+
+Allow sign up should almost always be true (default) to allow new Grafana users to be created (if ldap authentication is ok). If set to
+false only pre-existing Grafana users will be able to login (if ldap authentication is ok).
+
 > For details on LDAP Configuration, go to the [LDAP Integration]({{< relref "ldap.md" >}}) page.
 
 <hr>
 
 ## [auth.proxy]
+
 This feature allows you to handle authentication in a http reverse proxy.
 
 ### enabled
+
 Defaults to `false`
 
 ### header_name
+
 Defaults to X-WEBAUTH-USER
 
 #### header_property
+
 Defaults to username but can also be set to email
 
 ### auto_sign_up
+
 Set to `true` to enable auto sign up of users who do not exist in Grafana DB. Defaults to `true`.
+
+### whitelist
+
+Limit where auth proxy requests come from by configuring a list of IP addresses. This can be used to prevent users spoofing the X-WEBAUTH-USER header.
 
 <hr>
 
@@ -461,7 +562,7 @@ session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
-- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=require
+- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=verify-full
 - **memcache:** ex:  127.0.0.1:11211
 - **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`
 
@@ -470,23 +571,27 @@ session table manually.
 
 Mysql Example:
 
-    CREATE TABLE `session` (
-        `key`       CHAR(16) NOT NULL,
-        `data`      BLOB,
-        `expiry`    INT(11) UNSIGNED NOT NULL,
-        PRIMARY KEY (`key`)
-    ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+```bash
+CREATE TABLE `session` (
+    `key`       CHAR(16) NOT NULL,
+    `data`      BLOB,
+    `expiry`    INT(11) UNSIGNED NOT NULL,
+    PRIMARY KEY (`key`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+```
 
 Postgres Example:
 
-    CREATE TABLE session (
-        key       CHAR(16) NOT NULL,
-        data      BYTEA,
-        expiry    INTEGER NOT NULL,
-        PRIMARY KEY (key)
-    );
+```bash
+CREATE TABLE session (
+    key       CHAR(16) NOT NULL,
+    data      BYTEA,
+    expiry    INTEGER NOT NULL,
+    PRIMARY KEY (key)
+);
+```
 
-Postgres valid `sslmode` are `disable`, `require` (default), `verify-ca`, and `verify-full`.
+Postgres valid `sslmode` are `disable`, `require`, `verify-ca`, and `verify-full` (default).
 
 ### cookie_name
 
@@ -518,6 +623,12 @@ If you want to track Grafana usage via Google analytics specify *your* Universal
 Analytics ID here. By default this feature is disabled.
 
 <hr />
+
+## [dashboards]
+
+### versions_to_keep (introduced in v5.0)
+
+Number dashboard versions to keep (per dashboard). Default: 20, Minimum: 1.
 
 ## [dashboards.json]
 
@@ -560,6 +671,9 @@ Address used when sending out emails, defaults to `admin@grafana.localhost`
 ### from_name
 Name to be used when sending out emails, defaults to `Grafana`
 
+### ehlo_identity
+Name to be used as client identity for EHLO in SMTP dialog, defaults to instance_name.
+
 ## [log]
 
 ### mode
@@ -576,7 +690,7 @@ Ex `filters = sqlstore:debug`
 ## [metrics]
 
 ### enabled
-Enable metrics reporting. defaults true. Available via HTTP API `/api/metrics`.
+Enable metrics reporting. defaults true. Available via HTTP API `/metrics`.
 
 ### interval_seconds
 
@@ -612,15 +726,24 @@ Time to live for snapshots.
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
-You can choose between (s3, webdav). If left empty Grafana will ignore the upload action.
+You can choose between (s3, webdav, gcs). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
 
+### bucket
+Bucket name for S3. e.g. grafana.snapshot
+
+### region
+Region name for S3. e.g. 'us-east-1', 'cn-north-1', etc
+
+### path
+Optional extra path inside bucket, useful to apply expiration policies
+
 ### bucket_url
+(for backward compatibility, only works when no bucket or region are configured)
 Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-east-1', e.g.
 - http://grafana.s3.amazonaws.com/
 - https://grafana.s3-ap-southeast-2.amazonaws.com/
-- https://grafana.s3-cn-north-1.amazonaws.com.cn
 
 ### access_key
 Access key. e.g. AAAAAAAAAAAAAAAAAAAA
@@ -635,11 +758,28 @@ Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 ### url
 Url to where Grafana will send PUT request with images
 
+### public_url
+Optional parameter. Url to send to users in notifications, directly appended with the resulting uploaded file name.
+
 ### username
 basic auth username
 
 ### password
 basic auth password
+
+## [external_image_storage.gcs]
+
+### key_file
+Path to JSON key file associated with a Google service account to authenticate and authorize.
+Service Account keys can be created and downloaded from https://console.developers.google.com/permissions/serviceaccounts.
+
+Service Account should have "Storage Object Writer" role.
+
+### bucket name
+Bucket Name on Google Cloud Storage.
+
+### path
+Optional extra path inside bucket
 
 ## [alerting]
 

@@ -1,0 +1,60 @@
+
+//
+// Layout
+//
+
+.error-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.error-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.error-space-between {justify-content: space-between;}
+
+.graph-box {
+    width: 62%;
+    padding: 2rem 1rem;
+}
+
+.info-box {
+    width: 38%;
+    padding: 2rem 1rem 6rem;
+}
+
+.graph-percentage {padding: 0 0 1.5rem;}
+
+.image-box {padding: .5rem}
+
+.left-margin{padding: 0 0 0 5rem;}
+
+.current-box {justify-content: flex-end;}
+
+//
+// Text
+//
+
+.current-text {
+    color: $blue;
+    font-weight: bold;
+    line-height: 1rem;
+}
+
+.error-link {color: $orange;}
+
+.error-minus {
+    color: #7eb26d;
+    padding: 0 .5rem;
+    line-height: 1.5rem;
+}
+
+.graph-percentage p {
+    text-align: right;
+    margin: 0;
+    line-height: 1rem;
+}
+
+.graph-text {margin: 0;}

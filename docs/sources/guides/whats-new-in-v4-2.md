@@ -12,7 +12,7 @@ weight = -1
 
 ## Whats new in Grafana v4.2
 
-Grafana v4.2 Beta is now [available for download](/download/4_2_0/).
+Grafana v4.2 Beta is now [available for download](https://grafana.com/grafana/download/4.2.0).
 Just like the last release this one contains lots bug fixes and minor improvements.
 We are very happy to say that 27 of 40 issues was closed by pull requests from the community.
 Big thumbs up!

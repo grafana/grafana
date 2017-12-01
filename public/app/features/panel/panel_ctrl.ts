@@ -1,8 +1,5 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import _ from 'lodash';
-import angular from 'angular';
 import $ from 'jquery';
 import {profiler} from 'app/core/profiler';
 import Remarkable from 'remarkable';
@@ -29,14 +26,12 @@ export class PanelCtrl {
   fullscreen: boolean;
   inspector: any;
   editModeInitiated: boolean;
-  editorHelpIndex: number;
   editMode: any;
   height: any;
   containerHeight: any;
   events: Emitter;
   timing: any;
-  skippedLastRefresh: boolean;
-  isPanelVisible: any;
+  loading: boolean;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
@@ -77,14 +72,7 @@ export class PanelCtrl {
   }
 
   refresh() {
-    if (!this.isPanelVisible() && !this.dashboard.meta.soloMode && !this.dashboard.snapshot) {
-      this.skippedLastRefresh = true;
-      return;
-    }
-
-    this.skippedLastRefresh = false;
-
-    this.events.emit('refresh', null);
+   this.events.emit('refresh', null);
   }
 
   publishAppEvent(evtName, evt) {
@@ -195,14 +183,6 @@ export class PanelCtrl {
     this.events.emit('render', payload);
   }
 
-  toggleEditorHelp(index) {
-    if (this.editorHelpIndex === index) {
-      this.editorHelpIndex = null;
-      return;
-    }
-    this.editorHelpIndex = index;
-  }
-
   duplicate() {
     this.dashboard.duplicatePanel(this.panel, this.row);
     this.$timeout(() => {
@@ -231,7 +211,6 @@ export class PanelCtrl {
   }
 
   replacePanel(newPanel, oldPanel) {
-    var row = this.row;
     var index = _.indexOf(this.row.panels, oldPanel);
     this.row.panels.splice(index, 1);
 

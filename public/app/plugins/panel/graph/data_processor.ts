@@ -1,10 +1,6 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
-import moment from 'moment';
 import TimeSeries from 'app/core/time_series2';
-import {colors} from 'app/core/core';
+import colors from 'app/core/utils/colors';
 
 export class DataProcessor {
 
@@ -34,6 +30,15 @@ export class DataProcessor {
           return this.timeSeriesHandler(item, index, options);
         });
       }
+      case 'histogram': {
+        let histogramDataList = [{
+          target: 'count',
+          datapoints: _.concat([], _.flatten(_.map(options.dataList, 'datapoints')))
+        }];
+        return histogramDataList.map((item, index) => {
+          return this.timeSeriesHandler(item, index, options);
+        });
+      }
       case 'field': {
         return this.customHandler(firstItem);
       }
@@ -47,6 +52,9 @@ export class DataProcessor {
       default: {
         if (this.panel.xaxis.mode === 'series') {
           return 'series';
+        }
+        if (this.panel.xaxis.mode === 'histogram') {
+          return 'histogram';
         }
         return 'time';
       }
@@ -72,6 +80,15 @@ export class DataProcessor {
         this.panel.legend.show = false;
         this.panel.tooltip.shared = false;
         this.panel.xaxis.values = ['total'];
+        break;
+      }
+      case 'histogram': {
+        this.panel.bars = true;
+        this.panel.lines = false;
+        this.panel.points = false;
+        this.panel.stack = false;
+        this.panel.legend.show = false;
+        this.panel.tooltip.shared = false;
         break;
       }
     }
@@ -131,34 +148,34 @@ export class DataProcessor {
     let fields = [];
     var firstItem = dataList[0];
     let fieldParts = [];
+
     function getPropertiesRecursive(obj) {
-        _.forEach(obj, (value, key) => {
-          if (_.isObject(value)) {
-            fieldParts.push(key);
-            getPropertiesRecursive(value);
-          } else {
-            if (!onlyNumbers || _.isNumber(value)) {
-              let field = fieldParts.concat(key).join('.');
-              fields.push(field);
-            }
+      _.forEach(obj, (value, key) => {
+        if (_.isObject(value)) {
+          fieldParts.push(key);
+          getPropertiesRecursive(value);
+        } else {
+          if (!onlyNumbers || _.isNumber(value)) {
+            let field = fieldParts.concat(key).join('.');
+            fields.push(field);
           }
-        });
-        fieldParts.pop();
+        }
+      });
+      fieldParts.pop();
     }
-    if (firstItem.type === 'docs'){
+
+    if (firstItem.type === 'docs') {
       if (firstItem.datapoints.length === 0) {
         return [];
       }
       getPropertiesRecursive(firstItem.datapoints[0]);
-      return fields;
     }
+
+    return fields;
   }
 
   getXAxisValueOptions(options) {
     switch (this.panel.xaxis.mode) {
-      case 'time': {
-        return [];
-      }
       case 'series': {
         return [
           {text: 'Avg', value: 'avg'},
@@ -169,6 +186,8 @@ export class DataProcessor {
         ];
       }
     }
+
+    return [];
   }
 
   pluckDeep(obj: any, property: string) {

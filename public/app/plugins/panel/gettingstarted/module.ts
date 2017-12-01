@@ -11,7 +11,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
   steps: any;
 
   /** @ngInject **/
-  constructor($scope, $injector, private backendSrv, private datasourceSrv, private $q) {
+  constructor($scope, $injector, private backendSrv, datasourceSrv, private $q) {
     super($scope, $injector);
 
     this.stepIndex = 0;
@@ -34,7 +34,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
       check: () => {
         return $q.when(
           datasourceSrv.getMetricSources().filter(item => {
-            return item.meta.builtIn === false;
+            return item.meta.builtIn !== true;
           }).length > 0
         );
       }
@@ -58,7 +58,7 @@ class GettingStartedPanelCtrl extends PanelCtrl {
       icon: 'icon-gf icon-gf-users',
       href: 'org/users?gettingstarted',
       check: () => {
-        return  this.backendSrv.get('api/org/users').then(res => {
+        return  this.backendSrv.get('/api/org/users').then(res => {
           return res.length > 1;
         });
       }
@@ -69,9 +69,9 @@ class GettingStartedPanelCtrl extends PanelCtrl {
       title: 'Install apps & plugins',
       cta: 'Explore plugin repository',
       icon: 'icon-gf icon-gf-apps',
-      href: 'https://grafana.net/plugins?utm_source=grafana_getting_started',
+      href: 'https://grafana.com/plugins?utm_source=grafana_getting_started',
       check: () => {
-        return this.backendSrv.get('api/plugins', {embedded: 0, core: 0}).then(plugins => {
+        return this.backendSrv.get('/api/plugins', {embedded: 0, core: 0}).then(plugins => {
           return plugins.length > 0;
         });
       }
@@ -116,4 +116,4 @@ class GettingStartedPanelCtrl extends PanelCtrl {
   }
 }
 
-export {GettingStartedPanelCtrl, GettingStartedPanelCtrl as PanelCtrl}
+export {GettingStartedPanelCtrl, GettingStartedPanelCtrl as PanelCtrl};

@@ -1,6 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import {DashboardModel} from './model';
 
@@ -23,32 +22,7 @@ export class DashboardSrv {
     return this.dash;
   }
 
-  saveDashboard(options) {
-    if (!this.dash.meta.canSave && options.makeEditable !== true) {
-      return Promise.resolve();
-    }
-
-    if (this.dash.title === 'New dashboard') {
-      return this.saveDashboardAs();
-    }
-
-    var clone = this.dash.getSaveModelClone();
-
-    return this.backendSrv.saveDashboard(clone, options).then(data => {
-      this.dash.version = data.version;
-
-      this.$rootScope.appEvent('dashboard-saved', this.dash);
-
-      var dashboardUrl = '/dashboard/db/' + data.slug;
-      if (dashboardUrl !== this.$location.path()) {
-        this.$location.url(dashboardUrl);
-      }
-
-      this.$rootScope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
-    }).catch(this.handleSaveDashboardError.bind(this));
-  }
-
-  handleSaveDashboardError(err) {
+  handleSaveDashboardError(clone, err) {
     if (err.data && err.data.status === "version-mismatch") {
       err.isHandled = true;
 
@@ -59,7 +33,7 @@ export class DashboardSrv {
         yesText: "Save & Overwrite",
         icon: "fa-warning",
         onConfirm: () => {
-          this.saveDashboard({overwrite: true});
+          this.save(clone, {overwrite: true});
         }
       });
     }
@@ -74,7 +48,7 @@ export class DashboardSrv {
         yesText: "Save & Overwrite",
         icon: "fa-warning",
         onConfirm: () => {
-          this.saveDashboard({overwrite: true});
+          this.save(clone, {overwrite: true});
         }
       });
     }
@@ -90,28 +64,94 @@ export class DashboardSrv {
         icon: "fa-warning",
         altActionText: "Save As",
         onAltAction: () => {
-          this.saveDashboardAs();
+          this.showSaveAsModal();
         },
         onConfirm: () => {
-          this.saveDashboard({overwrite: true});
+          this.save(clone, {overwrite: true});
         }
       });
     }
   }
 
-  saveDashboardAs() {
+  postSave(clone, data) {
+    this.dash.version = data.version;
+
+    var dashboardUrl = '/dashboard/db/' + data.slug;
+    if (dashboardUrl !== this.$location.path()) {
+      this.$location.url(dashboardUrl);
+    }
+
+    this.$rootScope.appEvent('dashboard-saved', this.dash);
+    this.$rootScope.appEvent('alert-success', ['Dashboard saved']);
+  }
+
+  save(clone, options) {
+    return this.backendSrv.saveDashboard(clone, options)
+      .then(this.postSave.bind(this, clone))
+      .catch(this.handleSaveDashboardError.bind(this, clone));
+  }
+
+  saveDashboard(options, clone) {
+    if (clone) {
+      this.setCurrent(this.create(clone, this.dash.meta));
+    }
+
+    if (!this.dash.meta.canSave && options.makeEditable !== true) {
+      return Promise.resolve();
+    }
+
+    if (this.dash.title === 'New dashboard') {
+      return this.showSaveAsModal();
+    }
+
+    if (this.dash.version > 0) {
+      return this.showSaveModal();
+    }
+
+    return this.save(this.dash.getSaveModelClone(), options);
+  }
+
+  showSaveAsModal() {
     var newScope = this.$rootScope.$new();
     newScope.clone = this.dash.getSaveModelClone();
     newScope.clone.editable = true;
     newScope.clone.hideControls = false;
 
     this.$rootScope.appEvent('show-modal', {
-      src: 'public/app/features/dashboard/partials/saveDashboardAs.html',
+      templateHtml: '<save-dashboard-as-modal dismiss="dismiss()"></save-dashboard-as-modal>',
       scope: newScope,
       modalClass: 'modal--narrow'
     });
   }
 
+  showSaveModal() {
+    this.$rootScope.appEvent('show-modal', {
+      templateHtml: '<save-dashboard-modal dismiss="dismiss()"></save-dashboard-modal>',
+      scope: this.$rootScope.$new(),
+      modalClass: 'modal--narrow'
+    });
+  }
+
+  starDashboard(dashboardId, isStarred) {
+    let promise;
+
+    if (isStarred) {
+      promise = this.backendSrv.delete('/api/user/stars/dashboard/' + dashboardId).then(() =>  {
+        return false;
+      });
+    } else {
+      promise = this.backendSrv.post('/api/user/stars/dashboard/' + dashboardId).then(() => {
+        return true;
+      });
+    }
+
+    return promise.then(res => {
+      if (this.dash && this.dash.id === dashboardId) {
+        this.dash.meta.isStarred = res;
+      }
+      return res;
+    });
+  }
 }
 
 coreModule.service('dashboardSrv', DashboardSrv);

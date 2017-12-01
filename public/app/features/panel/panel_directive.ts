@@ -2,7 +2,6 @@
 
 import angular from 'angular';
 import $ from 'jquery';
-import _ from 'lodash';
 import Drop from 'tether-drop';
 
 var module = angular.module('grafana.directives');
@@ -156,10 +155,20 @@ module.directive('grafanaPanel', function($rootScope, $document) {
             content: function() {
               return ctrl.getInfoContent({mode: 'tooltip'});
             },
-            position: 'top center',
             classes: ctrl.error ? 'drop-error' : 'drop-help',
             openOn: 'hover',
             hoverOpenDelay: 100,
+            tetherOptions: {
+              attachment: 'bottom left',
+              targetAttachment: 'top left',
+              constraints: [
+                {
+                  to: 'window',
+                  attachment: 'together',
+                  pin: true
+                }
+              ],
+            }
           });
         }
       }
@@ -175,23 +184,9 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       elem.on('mouseenter', mouseEnter);
       elem.on('mouseleave', mouseLeave);
 
-      ctrl.isPanelVisible = function () {
-        var position = panelContainer[0].getBoundingClientRect();
-        return (0 < position.top) && (position.top < window.innerHeight);
-      };
-
-      const refreshOnScroll = function () {
-        if (ctrl.skippedLastRefresh) {
-          ctrl.refresh();
-        }
-      };
-
-      $document.on('scroll', refreshOnScroll);
-
       scope.$on('$destroy', function() {
         elem.off();
         cornerInfoElem.off();
-        $document.off('scroll', refreshOnScroll);
 
         if (infoDrop) {
           infoDrop.destroy();

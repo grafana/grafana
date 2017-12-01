@@ -11,6 +11,7 @@ export class User {
   orgRole: any;
   timezone: string;
   helpFlags1: number;
+  lightTheme: boolean;
 
   constructor() {
     if (config.bootData.user) {

@@ -1,14 +1,13 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import config from 'app/core/config';
-import store from 'app/core/store';
 import _ from 'lodash';
-import angular from 'angular';
 import $ from 'jquery';
 
 import coreModule from 'app/core/core_module';
 import {profiler} from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
+import Drop from 'tether-drop';
 
 export class GrafanaCtrl {
 
@@ -105,15 +104,24 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
         if (pageClass) {
           body.removeClass(pageClass);
         }
-        pageClass = data.$$route.pageClass;
-        if (pageClass) {
-          body.addClass(pageClass);
+
+        if (data.$$route) {
+          pageClass = data.$$route.pageClass;
+          if (pageClass) {
+            body.addClass(pageClass);
+          }
         }
+
         $("#tooltip, .tooltip").remove();
 
         // check for kiosk url param
         if (data.params.kiosk) {
           appEvents.emit('toggle-kiosk-mode');
+        }
+
+        // close all drops
+        for (let drop of Drop.drops) {
+          drop.destroy();
         }
       });
 
@@ -188,12 +196,21 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
 
         // hide search
         if (body.find('.search-container').length > 0) {
-          if (target.parents('.search-container').length === 0) {
+          if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
             scope.$apply(function() {
               scope.appEvent('hide-dash-search');
             });
           }
         }
+
+        // hide menus
+        var openMenus = body.find('.navbar-page-btn--open');
+        if (openMenus.length > 0) {
+          if (target.parents('.navbar-page-btn--open').length === 0) {
+            openMenus.removeClass('navbar-page-btn--open');
+          }
+        }
+
         // hide sidemenu
         if (!ignoreSideMenuHide && !contextSrv.pinned && body.find('.sidemenu').length > 0) {
           if (target.parents('.sidemenu').length === 0) {

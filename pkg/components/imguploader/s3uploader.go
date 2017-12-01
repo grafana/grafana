@@ -1,6 +1,7 @@
 package imguploader
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/grafana/grafana/pkg/log"
@@ -17,16 +19,18 @@ import (
 type S3Uploader struct {
 	region    string
 	bucket    string
+	path      string
 	acl       string
 	secretKey string
 	accessKey string
 	log       log.Logger
 }
 
-func NewS3Uploader(region, bucket, acl, accessKey, secretKey string) *S3Uploader {
+func NewS3Uploader(region, bucket, path, acl, accessKey, secretKey string) *S3Uploader {
 	return &S3Uploader{
 		region:    region,
 		bucket:    bucket,
+		path:      path,
 		acl:       acl,
 		accessKey: accessKey,
 		secretKey: secretKey,
@@ -34,7 +38,7 @@ func NewS3Uploader(region, bucket, acl, accessKey, secretKey string) *S3Uploader
 	}
 }
 
-func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
+func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, error) {
 	sess, err := session.NewSession()
 	if err != nil {
 		return "", err
@@ -53,8 +57,10 @@ func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
 		Credentials: creds,
 	}
 
-	key := util.GetRandomString(20) + ".png"
-	log.Debug("Uploading image to s3", "bucket = ", u.bucket, ", key = ", key)
+	s3_endpoint, _ := endpoints.DefaultResolver().EndpointFor("s3", u.region)
+	key := u.path + util.GetRandomString(20) + ".png"
+	image_url := s3_endpoint.URL + "/" + u.bucket + "/" + key
+	log.Debug("Uploading image to s3", "url = ", image_url)
 
 	file, err := os.Open(imageDiskPath)
 	if err != nil {
@@ -77,6 +83,5 @@ func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	return "https://" + u.bucket + ".s3.amazonaws.com/" + key, nil
+	return image_url, nil
 }

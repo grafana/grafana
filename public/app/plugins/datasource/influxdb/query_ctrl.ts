@@ -1,8 +1,6 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
-import InfluxQueryBuilder from './query_builder';
+import {InfluxQueryBuilder} from './query_builder';
 import InfluxQuery from './influx_query';
 import queryPart from './query_part';
 import {QueryCtrl} from 'app/plugins/sdk';
@@ -33,11 +31,6 @@ export class InfluxQueryCtrl extends QueryCtrl {
       {text: 'Time series', value: 'time_series'},
       {text: 'Table', value: 'table'},
     ];
-    this.orderByTime = [
-      {text: 'ASC', value: 'ASC'},
-      {text: 'DESC', value: 'DESC'},
-    ];
-
     this.policySegment = uiSegmentSrv.newSegment(this.target.policy);
 
     if (!this.target.measurement) {
@@ -70,6 +63,10 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.removeTagFilterSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove tag filter --'});
   }
 
+  removeOrderByTime() {
+    this.target.orderByTime = 'ASC';
+  }
+
   buildSelectMenu() {
     var categories = queryPart.getCategories();
     this.selectMenu = _.reduce(categories, function(memo, cat, key) {
@@ -92,6 +89,15 @@ export class InfluxQueryCtrl extends QueryCtrl {
       if (!this.queryModel.hasFill()) {
         options.push(this.uiSegmentSrv.newSegment({value: 'fill(null)'}));
       }
+      if (!this.target.limit) {
+        options.push(this.uiSegmentSrv.newSegment({value: 'LIMIT'}));
+      }
+      if (!this.target.slimit) {
+        options.push(this.uiSegmentSrv.newSegment({value: 'SLIMIT'}));
+      }
+      if (this.target.orderByTime === 'ASC') {
+        options.push(this.uiSegmentSrv.newSegment({value: 'ORDER BY time DESC'}));
+      }
       if (!this.queryModel.hasGroupByTime()) {
         options.push(this.uiSegmentSrv.newSegment({value: 'time($interval)'}));
       }
@@ -103,7 +109,24 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   groupByAction() {
-    this.queryModel.addGroupBy(this.groupBySegment.value);
+    switch (this.groupBySegment.value) {
+      case 'LIMIT': {
+        this.target.limit = 10;
+        break;
+      }
+      case 'SLIMIT': {
+        this.target.slimit = 10;
+        break;
+      }
+      case 'ORDER BY time DESC': {
+        this.target.orderByTime = 'DESC';
+        break;
+      }
+      default: {
+        this.queryModel.addGroupBy(this.groupBySegment.value);
+      }
+    }
+
     var plusButton = this.uiSegmentSrv.newPlusButton();
     this.groupBySegment.value  = plusButton.value;
     this.groupBySegment.html  = plusButton.html;
@@ -327,12 +350,13 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  getTagValueOperator(tagValue, tagOperator) {
+  getTagValueOperator(tagValue, tagOperator): string {
     if (tagOperator !== '=~' && tagOperator !== '!~' && /^\/.*\/$/.test(tagValue)) {
       return '=~';
     } else if ((tagOperator === '=~' || tagOperator === '!~') && /^(?!\/.*\/$)/.test(tagValue)) {
       return '=';
     }
+    return null;
   }
 
   getCollapsedText() {

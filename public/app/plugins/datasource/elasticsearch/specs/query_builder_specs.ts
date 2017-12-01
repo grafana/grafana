@@ -1,6 +1,6 @@
 
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
-import ElasticQueryBuilder from '../query_builder';
+import {describe, beforeEach, it, expect} from 'test/lib/common';
+import {ElasticQueryBuilder} from '../query_builder';
 
 describe('ElasticQueryBuilder', function() {
   var builder;
@@ -40,8 +40,7 @@ describe('ElasticQueryBuilder', function() {
     var query = builder.build({
       metrics: [{type: 'count', id: '1'}],
       timeField: '@timestamp',
-      bucketAggs: [
-        {type: 'terms', field: '@host', id: '2'},
+      bucketAggs: [ {type: 'terms', field: '@host', id: '2'},
         {type: 'date_histogram', field: '@timestamp', id: '3'}
       ],
     });
@@ -156,12 +155,21 @@ describe('ElasticQueryBuilder', function() {
 
   it('with raw_document metric', function() {
     var query = builder.build({
-      metrics: [{type: 'raw_document', id: '1'}],
+      metrics: [{type: 'raw_document', id: '1',settings: {}}],
       timeField: '@timestamp',
       bucketAggs: [],
     });
 
     expect(query.size).to.be(500);
+  });
+  it('with raw_document metric size set', function() {
+    var query = builder.build({
+      metrics: [{type: 'raw_document', id: '1',settings: {size: 1337}}],
+      timeField: '@timestamp',
+      bucketAggs: [],
+    });
+
+    expect(query.size).to.be(1337);
   });
 
   it('with moving average', function() {
@@ -249,6 +257,23 @@ describe('ElasticQueryBuilder', function() {
     expect(firstLevel.aggs["2"].derivative.buckets_path).to.be("3");
   });
 
+  it('with histogram', function() {
+    var query = builder.build({
+      metrics: [
+        {id: '1', type: 'count' },
+      ],
+      bucketAggs: [
+        {type: 'histogram', field: 'bytes', id: '3', settings: {interval: 10, min_doc_count: 2, missing: 5}}
+      ],
+    });
+
+    var firstLevel = query.aggs["3"];
+    expect(firstLevel.histogram.field).to.be('bytes');
+    expect(firstLevel.histogram.interval).to.be(10);
+    expect(firstLevel.histogram.min_doc_count).to.be(2);
+    expect(firstLevel.histogram.missing).to.be(5);
+  });
+
   it('with adhoc filters', function() {
     var query = builder.build({
       metrics: [{type: 'Count', id: '0'}],
@@ -256,6 +281,7 @@ describe('ElasticQueryBuilder', function() {
       bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '3'}],
     }, [
       {key: 'key1', operator: '=', value: 'value1'},
+      {key: 'key2', operator: '=', value: 'value2'},
       {key: 'key2', operator: '!=', value: 'value2'},
       {key: 'key3', operator: '<', value: 'value3'},
       {key: 'key4', operator: '>', value: 'value4'},
@@ -263,11 +289,12 @@ describe('ElasticQueryBuilder', function() {
       {key: 'key6', operator: '!~', value: 'value6'},
     ]);
 
-    expect(query.query.bool.filter[2].term["key1"]).to.be("value1");
-    expect(query.query.bool.filter[3].bool.must_not.term["key2"]).to.be("value2");
-    expect(query.query.bool.filter[4].range["key3"].lt).to.be("value3");
-    expect(query.query.bool.filter[5].range["key4"].gt).to.be("value4");
-    expect(query.query.bool.filter[6].regexp["key5"]).to.be("value5");
-    expect(query.query.bool.filter[7].bool.must_not.regexp["key6"]).to.be("value6");
+    expect(query.query.bool.must[0].match_phrase["key1"].query).to.be("value1");
+    expect(query.query.bool.must[1].match_phrase["key2"].query).to.be("value2");
+    expect(query.query.bool.must_not[0].match_phrase["key2"].query).to.be("value2");
+    expect(query.query.bool.filter[2].range["key3"].lt).to.be("value3");
+    expect(query.query.bool.filter[3].range["key4"].gt).to.be("value4");
+    expect(query.query.bool.filter[4].regexp["key5"]).to.be("value5");
+    expect(query.query.bool.filter[5].bool.must_not.regexp["key6"]).to.be("value6");
   });
 });

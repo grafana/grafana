@@ -6,8 +6,6 @@ import {
   QueryPart,
   functionRenderer,
   suffixRenderer,
-  identityRenderer,
-  quotedIdentityRenderer,
 } from 'app/core/components/query_part/query_part';
 
 var index = [];
@@ -15,6 +13,7 @@ var categories = {
   Aggregations: [],
   Selectors: [],
   Transformations: [],
+  Predictors: [],
   Math: [],
   Aliasing: [],
   Fields: [],
@@ -27,7 +26,7 @@ function createPart(part): any {
   }
 
   return new QueryPart(part, def);
-};
+}
 
 function register(options: any) {
   index[options.type] = new QueryPartDef(options);
@@ -86,7 +85,7 @@ function addMathStrategy(selectParts, partModel) {
       return;
     }
     // if next to last is math, replace it
-    if (selectParts[partCount-2].def.type === 'math') {
+    if (partCount > 1 && selectParts[partCount-2].def.type === 'math') {
       selectParts[partCount-2] = partModel;
       return;
     } else if (selectParts[partCount-1].def.type === 'alias') { // if last is alias add it before
@@ -230,10 +229,19 @@ register({
 });
 
 register({
+  type: 'non_negative_difference',
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+register({
   type: 'moving_average',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
-  params: [{ name: "window", type: "number", options: [5, 10, 20, 30, 40]}],
+  params: [{ name: "window", type: "int", options: [5, 10, 20, 30, 40]}],
   defaultParams: [10],
   renderer: functionRenderer,
 });
@@ -259,8 +267,8 @@ register({
 register({
   type: 'time',
   category: groupByTimeFunctions,
-  params: [{ name: "interval", type: "time", options: ['auto', '1s', '10s', '1m', '5m', '10m', '15m', '1h'] }],
-  defaultParams: ['auto'],
+  params: [{ name: "interval", type: "time", options: ['$__interval', '1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
+  defaultParams: ['$__interval'],
   renderer: functionRenderer,
 });
 
@@ -278,6 +286,25 @@ register({
   category: categories.Transformations,
   params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
   defaultParams: ['10s'],
+  renderer: functionRenderer,
+});
+
+// predictions
+register({
+  type: 'holt_winters',
+  addStrategy: addTransformationStrategy,
+  category: categories.Predictors,
+  params: [{ name: "number", type: "int", options: [5, 10, 20, 30, 40]}, { name: "season", type: "int", options: [0, 1, 2, 5, 10]}],
+  defaultParams: [10, 2],
+  renderer: functionRenderer,
+});
+
+register({
+  type: 'holt_winters_with_fit',
+  addStrategy: addTransformationStrategy,
+  category: categories.Predictors,
+  params: [{ name: "number", type: "int", options: [5, 10, 20, 30, 40]}, { name: "season", type: "int", options: [0, 1, 2, 5, 10]}],
+  defaultParams: [10, 2],
   renderer: functionRenderer,
 });
 

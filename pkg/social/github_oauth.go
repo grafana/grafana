@@ -2,9 +2,9 @@ package social
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/grafana/grafana/pkg/models"
 
@@ -21,11 +21,8 @@ type SocialGithub struct {
 }
 
 var (
-	ErrMissingTeamMembership = errors.New("User not a member of one of the required teams")
-)
-
-var (
-	ErrMissingOrganizationMembership = errors.New("User not a member of one of the required organizations")
+	ErrMissingTeamMembership         = &Error{"User not a member of one of the required teams"}
+	ErrMissingOrganizationMembership = &Error{"User not a member of one of the required organizations"}
 )
 
 func (s *SocialGithub) Type() int {
@@ -89,18 +86,16 @@ func (s *SocialGithub) FetchPrivateEmail(client *http.Client) (string, error) {
 		Verified bool   `json:"verified"`
 	}
 
-	emailsUrl := fmt.Sprintf(s.apiUrl + "/emails")
-	r, err := client.Get(emailsUrl)
+	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
-
-	defer r.Body.Close()
 
 	var records []Record
 
-	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
-		return "", err
+	err = json.Unmarshal(response.Body, &records)
+	if err != nil {
+		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
 
 	var email = ""
@@ -118,26 +113,58 @@ func (s *SocialGithub) FetchTeamMemberships(client *http.Client) ([]int, error) 
 		Id int `json:"id"`
 	}
 
-	membershipUrl := fmt.Sprintf(s.apiUrl + "/teams")
-	r, err := client.Get(membershipUrl)
-	if err != nil {
-		return nil, err
-	}
+	url := fmt.Sprintf(s.apiUrl + "/teams?per_page=100")
+	hasMore := true
+	ids := make([]int, 0)
 
-	defer r.Body.Close()
+	for hasMore {
 
-	var records []Record
+		response, err := HttpGet(client, url)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting team memberships: %s", err)
+		}
 
-	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
-		return nil, err
-	}
+		var records []Record
 
-	var ids = make([]int, len(records))
-	for i, record := range records {
-		ids[i] = record.Id
+		err = json.Unmarshal(response.Body, &records)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting team memberships: %s", err)
+		}
+
+		newRecords := len(records)
+		existingRecords := len(ids)
+		tempIds := make([]int, (newRecords + existingRecords))
+		copy(tempIds, ids)
+		ids = tempIds
+
+		for i, record := range records {
+			ids[i] = record.Id
+		}
+
+		url, hasMore = s.HasMoreRecords(response.Headers)
 	}
 
 	return ids, nil
+}
+
+func (s *SocialGithub) HasMoreRecords(headers http.Header) (string, bool) {
+
+	value, exists := headers["Link"]
+	if !exists {
+		return "", false
+	}
+
+	pattern := regexp.MustCompile(`<([^>]+)>; rel="next"`)
+	matches := pattern.FindStringSubmatch(value[0])
+
+	if matches == nil {
+		return "", false
+	}
+
+	url := matches[1]
+
+	return url, true
+
 }
 
 func (s *SocialGithub) FetchOrganizations(client *http.Client) ([]string, error) {
@@ -145,18 +172,16 @@ func (s *SocialGithub) FetchOrganizations(client *http.Client) ([]string, error)
 		Login string `json:"login"`
 	}
 
-	url := fmt.Sprintf(s.apiUrl + "/orgs")
-	r, err := client.Get(url)
+	response, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/orgs"))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting organizations: %s", err)
 	}
-
-	defer r.Body.Close()
 
 	var records []Record
 
-	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
-		return nil, err
+	err = json.Unmarshal(response.Body, &records)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting organizations: %s", err)
 	}
 
 	var logins = make([]string, len(records))
@@ -174,16 +199,14 @@ func (s *SocialGithub) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 		Email string `json:"email"`
 	}
 
-	var err error
-	r, err := client.Get(s.apiUrl)
+	response, err := HttpGet(client, s.apiUrl)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
-	defer r.Body.Close()
-
-	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
-		return nil, err
+	err = json.Unmarshal(response.Body, &data)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
 	userInfo := &BasicUserInfo{

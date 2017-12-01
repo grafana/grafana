@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 )
 
 // UseServiceDefaultRetries instructs the config to use the service's own
@@ -21,9 +22,9 @@ type RequestRetryer interface{}
 //
 //     // Create Session with MaxRetry configuration to be shared by multiple
 //     // service clients.
-//     sess, err := session.NewSession(&aws.Config{
+//     sess := session.Must(session.NewSession(&aws.Config{
 //         MaxRetries: aws.Int(3),
-//     })
+//     }))
 //
 //     // Create S3 service client with a specific Region.
 //     svc := s3.New(sess, &aws.Config{
@@ -47,6 +48,17 @@ type Config struct {
 	// @note You must still provide a `Region` value when specifying an
 	//   endpoint for a client.
 	Endpoint *string
+
+	// The resolver to use for looking up endpoints for AWS service clients
+	// to use based on region.
+	EndpointResolver endpoints.Resolver
+
+	// EnforceShouldRetryCheck is used in the AfterRetryHandler to always call
+	// ShouldRetry regardless of whether or not if request.Retryable is set.
+	// This will utilize ShouldRetry method of custom retryers. If EnforceShouldRetryCheck
+	// is not set, then ShouldRetry will only be called if request.Retryable is nil.
+	// Proper handling of the request.Retryable field is important when setting this field.
+	EnforceShouldRetryCheck *bool
 
 	// The region to send requests to. This parameter is required and must
 	// be configured globally or on a per-client basis unless otherwise
@@ -83,7 +95,7 @@ type Config struct {
 	// recoverable failures.
 	//
 	// When nil or the value does not implement the request.Retryer interface,
-	// the request.DefaultRetryer will be used.
+	// the client.DefaultRetryer will be used.
 	//
 	// When both Retryer and MaxRetries are non-nil, the former is used and
 	// the latter ignored.
@@ -149,7 +161,8 @@ type Config struct {
 	// the EC2Metadata overriding the timeout for default credentials chain.
 	//
 	// Example:
-	//    sess, err := session.NewSession(aws.NewConfig().WithEC2MetadataDiableTimeoutOverride(true))
+	//    sess := session.Must(session.NewSession(aws.NewConfig()
+	//       .WithEC2MetadataDiableTimeoutOverride(true)))
 	//
 	//    svc := s3.New(sess)
 	//
@@ -169,7 +182,7 @@ type Config struct {
 	//
 	// Only supported with.
 	//
-	//     sess, err := session.NewSession()
+	//     sess := session.Must(session.NewSession())
 	//
 	//     svc := s3.New(sess, &aws.Config{
 	//         UseDualStack: aws.Bool(true),
@@ -181,13 +194,19 @@ type Config struct {
 	// request delays. This value should only be used for testing. To adjust
 	// the delay of a request see the aws/client.DefaultRetryer and
 	// aws/request.Retryer.
+	//
+	// SleepDelay will prevent any Context from being used for canceling retry
+	// delay of an API operation. It is recommended to not use SleepDelay at all
+	// and specify a Retryer instead.
 	SleepDelay func(time.Duration)
 
 	// DisableRestProtocolURICleaning will not clean the URL path when making rest protocol requests.
 	// Will default to false. This would only be used for empty directory names in s3 requests.
 	//
 	// Example:
-	//    sess, err := session.NewSession(&aws.Config{DisableRestProtocolURICleaning: aws.Bool(true))
+	//    sess := session.Must(session.NewSession(&aws.Config{
+	//         DisableRestProtocolURICleaning: aws.Bool(true),
+	//    }))
 	//
 	//    svc := s3.New(sess)
 	//    out, err := svc.GetObject(&s3.GetObjectInput {
@@ -202,9 +221,9 @@ type Config struct {
 //
 //     // Create Session with MaxRetry configuration to be shared by multiple
 //     // service clients.
-//     sess, err := session.NewSession(aws.NewConfig().
+//     sess := session.Must(session.NewSession(aws.NewConfig().
 //         WithMaxRetries(3),
-//     )
+//     ))
 //
 //     // Create S3 service client with a specific Region.
 //     svc := s3.New(sess, aws.NewConfig().
@@ -232,6 +251,13 @@ func (c *Config) WithCredentials(creds *credentials.Credentials) *Config {
 // chaining.
 func (c *Config) WithEndpoint(endpoint string) *Config {
 	c.Endpoint = &endpoint
+	return c
+}
+
+// WithEndpointResolver sets a config EndpointResolver value returning a
+// Config pointer for chaining.
+func (c *Config) WithEndpointResolver(resolver endpoints.Resolver) *Config {
+	c.EndpointResolver = resolver
 	return c
 }
 
@@ -357,6 +383,10 @@ func mergeInConfig(dst *Config, other *Config) {
 		dst.Endpoint = other.Endpoint
 	}
 
+	if other.EndpointResolver != nil {
+		dst.EndpointResolver = other.EndpointResolver
+	}
+
 	if other.Region != nil {
 		dst.Region = other.Region
 	}
@@ -419,6 +449,10 @@ func mergeInConfig(dst *Config, other *Config) {
 
 	if other.DisableRestProtocolURICleaning != nil {
 		dst.DisableRestProtocolURICleaning = other.DisableRestProtocolURICleaning
+	}
+
+	if other.EnforceShouldRetryCheck != nil {
+		dst.EnforceShouldRetryCheck = other.EnforceShouldRetryCheck
 	}
 }
 

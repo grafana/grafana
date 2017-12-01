@@ -127,6 +127,9 @@ func (b *xmlBuilder) buildStruct(value reflect.Value, current *XMLNode, tag refl
 		if field.PkgPath != "" {
 			continue // ignore unexported fields
 		}
+		if field.Tag.Get("ignore") != "" {
+			continue
+		}
 
 		mTag := field.Tag
 		if mTag.Get("location") != "" { // skip non-body members

@@ -1,10 +1,9 @@
 package sqlstore
 
 import (
+	"strconv"
 	"strings"
 	"time"
-
-	"github.com/go-xorm/xorm"
 
 	"fmt"
 
@@ -23,17 +22,17 @@ func init() {
 	bus.AddHandler("sql", GetUserByLogin)
 	bus.AddHandler("sql", GetUserByEmail)
 	bus.AddHandler("sql", SetUsingOrg)
+	bus.AddHandler("sql", UpdateUserLastSeenAt)
 	bus.AddHandler("sql", GetUserProfile)
 	bus.AddHandler("sql", GetSignedInUser)
 	bus.AddHandler("sql", SearchUsers)
 	bus.AddHandler("sql", GetUserOrgList)
 	bus.AddHandler("sql", DeleteUser)
-	bus.AddHandler("sql", SetUsingOrg)
 	bus.AddHandler("sql", UpdateUserPermissions)
 	bus.AddHandler("sql", SetUserHelpFlag)
 }
 
-func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *session) (int64, error) {
+func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error) {
 	if cmd.SkipOrgSetup {
 		return -1, nil
 	}
@@ -76,7 +75,7 @@ func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *session) (int64, error) 
 }
 
 func CreateUser(cmd *m.CreateUserCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 		orgId, err := getOrgIdForNewUser(cmd, sess)
 		if err != nil {
 			return err
@@ -97,6 +96,7 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			EmailVerified: cmd.EmailVerified,
 			Created:       time.Now(),
 			Updated:       time.Now(),
+			LastSeenAt:    time.Now().AddDate(-10, 0, 0),
 		}
 
 		if len(cmd.Password) > 0 {
@@ -219,7 +219,7 @@ func GetUserByEmail(query *m.GetUserByEmailQuery) error {
 }
 
 func UpdateUser(cmd *m.UpdateUserCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		user := m.User{
 			Name:    cmd.Name,
@@ -246,11 +246,29 @@ func UpdateUser(cmd *m.UpdateUserCommand) error {
 }
 
 func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		user := m.User{
 			Password: cmd.NewPassword,
 			Updated:  time.Now(),
+		}
+
+		if _, err := sess.Id(cmd.UserId).Update(&user); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+func UpdateUserLastSeenAt(cmd *m.UpdateUserLastSeenAtCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		if cmd.UserId <= 0 {
+		}
+
+		user := m.User{
+			Id:         cmd.UserId,
+			LastSeenAt: time.Now(),
 		}
 
 		if _, err := sess.Id(cmd.UserId).Update(&user); err != nil {
@@ -273,10 +291,10 @@ func SetUsingOrg(cmd *m.SetUsingOrgCommand) error {
 	}
 
 	if !valid {
-		return fmt.Errorf("user does not belong ot org")
+		return fmt.Errorf("user does not belong to org")
 	}
 
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		user := m.User{}
 		sess.Id(cmd.UserId).Get(&user)
 
@@ -319,19 +337,25 @@ func GetUserOrgList(query *m.GetUserOrgListQuery) error {
 }
 
 func GetSignedInUser(query *m.GetSignedInUserQuery) error {
+	orgId := "u.org_id"
+	if query.OrgId > 0 {
+		orgId = strconv.FormatInt(query.OrgId, 10)
+	}
+
 	var rawSql = `SELECT
-	                u.id           as user_id,
-	                u.is_admin     as is_grafana_admin,
-	                u.email        as email,
-	                u.login        as login,
-									u.name         as name,
-									u.help_flags1  as help_flags1,
-	                org.name       as org_name,
-	                org_user.role  as org_role,
-	                org.id         as org_id
-	                FROM ` + dialect.Quote("user") + ` as u
-									LEFT OUTER JOIN org_user on org_user.org_id = u.org_id and org_user.user_id = u.id
-	                LEFT OUTER JOIN org on org.id = u.org_id `
+		u.id             as user_id,
+		u.is_admin       as is_grafana_admin,
+		u.email          as email,
+		u.login          as login,
+		u.name           as name,
+		u.help_flags1    as help_flags1,
+		u.last_seen_at   as last_seen_at,
+		org.name         as org_name,
+		org_user.role    as org_role,
+		org.id           as org_id
+		FROM ` + dialect.Quote("user") + ` as u
+		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
+		LEFT OUTER JOIN org on org.id = org_user.org_id `
 
 	sess := x.Table("user")
 	if query.UserId > 0 {
@@ -363,32 +387,54 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 	query.Result = m.SearchUserQueryResult{
 		Users: make([]*m.UserSearchHitDTO, 0),
 	}
+
 	queryWithWildcards := "%" + query.Query + "%"
 
+	whereConditions := make([]string, 0)
+	whereParams := make([]interface{}, 0)
 	sess := x.Table("user")
-	if query.Query != "" {
-		sess.Where("email LIKE ? OR name LIKE ? OR login like ?", queryWithWildcards, queryWithWildcards, queryWithWildcards)
+
+	if query.OrgId > 0 {
+		whereConditions = append(whereConditions, "org_id = ?")
+		whereParams = append(whereParams, query.OrgId)
 	}
+
+	if query.Query != "" {
+		whereConditions = append(whereConditions, "(email "+dialect.LikeStr()+" ? OR name "+dialect.LikeStr()+" ? OR login "+dialect.LikeStr()+" ?)")
+		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+	}
+
+	if len(whereConditions) > 0 {
+		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
+	}
+
 	offset := query.Limit * (query.Page - 1)
 	sess.Limit(query.Limit, offset)
-	sess.Cols("id", "email", "name", "login", "is_admin")
+	sess.Cols("id", "email", "name", "login", "is_admin", "last_seen_at")
 	if err := sess.Find(&query.Result.Users); err != nil {
 		return err
 	}
 
+	// get total
 	user := m.User{}
-
 	countSess := x.Table("user")
-	if query.Query != "" {
-		countSess.Where("email LIKE ? OR name LIKE ? OR login like ?", queryWithWildcards, queryWithWildcards, queryWithWildcards)
+
+	if len(whereConditions) > 0 {
+		countSess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 	}
+
 	count, err := countSess.Count(&user)
 	query.Result.TotalCount = count
+
+	for _, user := range query.Result.Users {
+		user.LastSeenAtAge = util.GetAgeString(user.LastSeenAt)
+	}
+
 	return err
 }
 
 func DeleteUser(cmd *m.DeleteUserCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		deletes := []string{
 			"DELETE FROM star WHERE user_id = ?",
 			"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
@@ -406,7 +452,7 @@ func DeleteUser(cmd *m.DeleteUserCommand) error {
 }
 
 func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		user := m.User{}
 		sess.Id(cmd.UserId).Get(&user)
 
@@ -418,7 +464,7 @@ func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {
 }
 
 func SetUserHelpFlag(cmd *m.SetUserHelpFlagCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		user := m.User{
 			Id:         cmd.UserId,

@@ -1,6 +1,7 @@
 package testdata
 
 import (
+	"encoding/json"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -11,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type ScenarioHandler func(query *tsdb.Query, context *tsdb.QueryContext) *tsdb.QueryResult
+type ScenarioHandler func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult
 
 type Scenario struct {
 	Id          string          `json:"id"`
@@ -30,12 +31,73 @@ func init() {
 	logger.Debug("Initializing TestData Scenario")
 
 	registerScenario(&Scenario{
+		Id:   "exponential_heatmap_bucket_data",
+		Name: "Exponential heatmap bucket data",
+
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			to := context.TimeRange.GetToAsMsEpoch()
+
+			var series []*tsdb.TimeSeries
+			start := 1
+			factor := 2
+			for i := 0; i < 10; i++ {
+				timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
+				serie := &tsdb.TimeSeries{Name: strconv.Itoa(start)}
+				start *= factor
+
+				points := make(tsdb.TimeSeriesPoints, 0)
+				for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
+					v := float64(rand.Int63n(100))
+					points = append(points, tsdb.NewTimePoint(null.FloatFrom(v), float64(timeWalkerMs)))
+					timeWalkerMs += query.IntervalMs * 50
+				}
+
+				serie.Points = points
+				series = append(series, serie)
+			}
+
+			queryRes := tsdb.NewQueryResult()
+			queryRes.Series = append(queryRes.Series, series...)
+			return queryRes
+		},
+	})
+
+	registerScenario(&Scenario{
+		Id:   "linear_heatmap_bucket_data",
+		Name: "Linear heatmap bucket data",
+
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			to := context.TimeRange.GetToAsMsEpoch()
+
+			var series []*tsdb.TimeSeries
+			for i := 0; i < 10; i++ {
+				timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
+				serie := &tsdb.TimeSeries{Name: strconv.Itoa(i * 10)}
+
+				points := make(tsdb.TimeSeriesPoints, 0)
+				for j := int64(0); j < 100 && timeWalkerMs < to; j++ {
+					v := float64(rand.Int63n(100))
+					points = append(points, tsdb.NewTimePoint(null.FloatFrom(v), float64(timeWalkerMs)))
+					timeWalkerMs += query.IntervalMs * 50
+				}
+
+				serie.Points = points
+				series = append(series, serie)
+			}
+
+			queryRes := tsdb.NewQueryResult()
+			queryRes.Series = append(queryRes.Series, series...)
+			return queryRes
+		},
+	})
+
+	registerScenario(&Scenario{
 		Id:   "random_walk",
 		Name: "Random Walk",
 
-		Handler: func(query *tsdb.Query, context *tsdb.QueryContext) *tsdb.QueryResult {
-			timeWalkerMs := context.TimeRange.GetFromAsMsEpoch()
-			to := context.TimeRange.GetToAsMsEpoch()
+		Handler: func(query *tsdb.Query, tsdbQuery *tsdb.TsdbQuery) *tsdb.QueryResult {
+			timeWalkerMs := tsdbQuery.TimeRange.GetFromAsMsEpoch()
+			to := tsdbQuery.TimeRange.GetToAsMsEpoch()
 
 			series := newSeriesForQuery(query)
 
@@ -60,7 +122,7 @@ func init() {
 	registerScenario(&Scenario{
 		Id:   "no_data_points",
 		Name: "No Data Points",
-		Handler: func(query *tsdb.Query, context *tsdb.QueryContext) *tsdb.QueryResult {
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			return tsdb.NewQueryResult()
 		},
 	})
@@ -68,7 +130,7 @@ func init() {
 	registerScenario(&Scenario{
 		Id:   "datapoints_outside_range",
 		Name: "Datapoints Outside Range",
-		Handler: func(query *tsdb.Query, context *tsdb.QueryContext) *tsdb.QueryResult {
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			queryRes := tsdb.NewQueryResult()
 
 			series := newSeriesForQuery(query)
@@ -82,10 +144,49 @@ func init() {
 	})
 
 	registerScenario(&Scenario{
+		Id:   "manual_entry",
+		Name: "Manual Entry",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			queryRes := tsdb.NewQueryResult()
+
+			points := query.Model.Get("points").MustArray()
+
+			series := newSeriesForQuery(query)
+			startTime := context.TimeRange.GetFromAsMsEpoch()
+			endTime := context.TimeRange.GetToAsMsEpoch()
+
+			for _, val := range points {
+				pointValues := val.([]interface{})
+
+				var value null.Float
+				var time int64
+
+				if valueFloat, err := strconv.ParseFloat(string(pointValues[0].(json.Number)), 64); err == nil {
+					value = null.FloatFrom(valueFloat)
+				}
+
+				if timeInt, err := strconv.ParseInt(string(pointValues[1].(json.Number)), 10, 64); err != nil {
+					continue
+				} else {
+					time = timeInt
+				}
+
+				if time >= startTime && time <= endTime {
+					series.Points = append(series.Points, tsdb.NewTimePoint(value, float64(time)))
+				}
+			}
+
+			queryRes.Series = append(queryRes.Series, series)
+
+			return queryRes
+		},
+	})
+
+	registerScenario(&Scenario{
 		Id:          "csv_metric_values",
 		Name:        "CSV Metric Values",
 		StringInput: "1,20,90,30,5,0",
-		Handler: func(query *tsdb.Query, context *tsdb.QueryContext) *tsdb.QueryResult {
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			queryRes := tsdb.NewQueryResult()
 
 			stringInput := query.Model.Get("stringInput").MustString()

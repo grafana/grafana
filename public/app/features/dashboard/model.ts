@@ -1,11 +1,11 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import config from 'app/core/config';
 import angular from 'angular';
 import moment from 'moment';
 import _ from 'lodash';
 import $ from 'jquery';
 
+import {DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
 import {Emitter, contextSrv, appEvents} from 'app/core/core';
 import {DashboardRow} from './row/row_model';
 import sortByKeys from 'app/core/utils/sort_by_keys';
@@ -35,7 +35,6 @@ export class DashboardModel {
   gnetId: any;
   meta: any;
   events: any;
-  editMode: boolean;
 
   constructor(data, meta?) {
     if (!data) {
@@ -72,8 +71,33 @@ export class DashboardModel {
       }
     }
 
+    this.addBuiltInAnnotationQuery();
     this.updateSchema(data);
     this.initMeta(meta);
+  }
+
+  addBuiltInAnnotationQuery() {
+    let found = false;
+    for (let item of this.annotations.list) {
+      if (item.builtIn === 1) {
+        found = true;
+        break;
+      }
+    }
+
+    if (found) {
+      return;
+    }
+
+    this.annotations.list.unshift({
+      datasource: '-- Grafana --',
+      name: 'Annotations & Alerts',
+      type: 'dashboard',
+      iconColor: DEFAULT_ANNOTATION_COLOR,
+      enable: true,
+      hide: true,
+      builtIn: 1,
+    });
   }
 
   private initMeta(meta) {
@@ -193,32 +217,22 @@ export class DashboardModel {
     });
   }
 
-  toggleEditMode() {
-    if (!this.meta.canEdit) {
-      console.log('Not allowed to edit dashboard');
-      return;
-    }
-
-    this.editMode = !this.editMode;
-    this.updateSubmenuVisibility();
-    this.events.emit('edit-mode-changed', this.editMode);
-  }
-
   setPanelFocus(id) {
     this.meta.focusPanelId = id;
   }
 
   updateSubmenuVisibility() {
-    if (this.editMode) {
-      this.meta.submenuEnabled = true;
-      return;
-    }
+    this.meta.submenuEnabled = (() => {
+      if (this.links.length > 0) { return true; }
 
-    var visibleVars = _.filter(this.templating.list, function(template) {
-      return template.hide !== 2;
-    });
+      var visibleVars = _.filter(this.templating.list, variable => variable.hide !== 2);
+      if (visibleVars.length > 0) { return true; }
 
-    this.meta.submenuEnabled = visibleVars.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
+      var visibleAnnotations = _.filter(this.annotations.list, annotation => annotation.hide !== true);
+      if (visibleAnnotations.length > 0) { return true; }
+
+      return false;
+    })();
   }
 
   getPanelInfoById(panelId) {
@@ -248,18 +262,21 @@ export class DashboardModel {
     delete newPanel.repeatIteration;
     delete newPanel.repeatPanelId;
     delete newPanel.scopedVars;
+    if (newPanel.alert) {
+      delete newPanel.thresholds;
+    }
     delete newPanel.alert;
 
     row.addPanel(newPanel);
     return newPanel;
   }
 
-  formatDate(date, format) {
+  formatDate(date, format?) {
     date = moment.isMoment(date) ? date : moment(date);
     format = format || 'YYYY-MM-DD HH:mm:ss';
-    this.timezone = this.getTimezone();
+    let timezone = this.getTimezone();
 
-    return this.timezone === 'browser' ?
+    return timezone === 'browser' ?
       moment(date).format(format) :
       moment.utc(date).format(format);
   }

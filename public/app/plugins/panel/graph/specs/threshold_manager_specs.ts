@@ -1,6 +1,6 @@
 ///<reference path="../../../../headers/common.d.ts" />
 
-import {describe, beforeEach, it, sinon, expect, angularMocks} from '../../../../../test/lib/common';
+import {describe, it, expect} from '../../../../../test/lib/common';
 
 import {ThresholdManager} from '../threshold_manager';
 
@@ -21,7 +21,7 @@ describe('ThresholdManager', function() {
       ctx.setup = function(thresholds) {
         ctx.panel.thresholds = thresholds;
         var manager = new ThresholdManager(ctx.panelCtrl);
-        manager.addPlotOptions(ctx.options, ctx.panel);
+        manager.addFlotOptions(ctx.options, ctx.panel);
       };
 
       func(ctx);

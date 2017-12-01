@@ -2,8 +2,6 @@
 
 import config from 'app/core/config';
 import angular from 'angular';
-import moment from 'moment';
-import _ from 'lodash';
 
 import coreModule from 'app/core/core_module';
 
@@ -12,7 +10,7 @@ export class DashboardCtrl {
   /** @ngInject */
   constructor(
     private $scope,
-    private $rootScope,
+    $rootScope,
     keybindingSrv,
     timeSrv,
     variableSrv,
@@ -22,10 +20,12 @@ export class DashboardCtrl {
     dynamicDashboardSrv,
     dashboardViewStateSrv,
     contextSrv,
+    playlistSrv,
     alertSrv,
     $timeout) {
 
       $scope.editor = { index: 0 };
+      $scope.playlistSrv = playlistSrv;
 
       var resizeEventTimeout;
 

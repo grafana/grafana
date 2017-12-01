@@ -1,8 +1,5 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import {coreModule} from 'app/core/core';
-import _ from 'lodash';
 
 export class ProfileCtrl {
   user: any;
@@ -10,11 +7,14 @@ export class ProfileCtrl {
   orgs: any = [];
   userForm: any;
   showOrgsList = false;
+  readonlyLoginFields = config.disableLoginForm;
+  navModel: any;
 
   /** @ngInject **/
-  constructor(private backendSrv, private contextSrv, private $location) {
+  constructor(private backendSrv, private contextSrv, private $location, navModelSrv) {
     this.getUser();
     this.getUserOrgs();
+    this.navModel = navModelSrv.getProfileNav();
   }
 
   getUser() {

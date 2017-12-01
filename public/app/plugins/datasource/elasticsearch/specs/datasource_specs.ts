@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
 import moment from 'moment';
 import angular from 'angular';
 import helpers from 'test/specs/helpers';
@@ -7,7 +7,6 @@ import {ElasticDatasource} from "../datasource";
 
 describe('ElasticDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
-  var instanceSettings: any = {jsonData: {}};
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
@@ -42,7 +41,7 @@ describe('ElasticDatasource', function() {
       ctx.$rootScope.$apply();
 
       var today = moment.utc().format("YYYY.MM.DD");
-      expect(requestOptions.url).to.be("http://es.com/asd-" + today + '/_stats');
+      expect(requestOptions.url).to.be("http://es.com/asd-" + today + '/_mapping');
     });
   });
 
@@ -62,7 +61,7 @@ describe('ElasticDatasource', function() {
           from: moment.utc([2015, 4, 30, 10]),
           to: moment.utc([2015, 5, 1, 10])
         },
-        targets: [{ bucketAggs: [], metrics: [], query: 'escape\\:test' }]
+        targets: [{ bucketAggs: [], metrics: [{type: 'raw_document'}], query: 'escape\\:test' }]
       });
 
       ctx.$rootScope.$apply();
@@ -113,7 +112,7 @@ describe('ElasticDatasource', function() {
   });
 
   describe('When getting fields', function() {
-    var requestOptions, parts, header;
+    var requestOptions;
 
     beforeEach(function() {
       createDatasource({url: 'http://es.com', index: 'metricbeat'});
@@ -129,7 +128,10 @@ describe('ElasticDatasource', function() {
                   '@timestamp': {type: 'date'},
                   beat: {
                     properties: {
-                      name: {type: 'string'},
+                      name: {
+                        fields: {raw: {type: 'keyword'}},
+                        type: 'string'
+                      },
                       hostname: {type: 'string'},
                     }
                   },
@@ -169,6 +171,7 @@ describe('ElasticDatasource', function() {
         var fields = _.map(fieldObjects, 'text');
         expect(fields).to.eql([
           '@timestamp',
+          'beat.name.raw',
           'beat.name',
           'beat.hostname',
           'system.cpu.system',
@@ -248,7 +251,7 @@ describe('ElasticDatasource', function() {
   });
 
   describe('When issuing metricFind query on es5.x', function() {
-    var requestOptions, parts, header, body;
+    var requestOptions, parts, header, body, results;
 
     beforeEach(function() {
       createDatasource({url: 'http://es.com', index: 'test', jsonData: {esVersion: '5'}});
@@ -256,18 +259,41 @@ describe('ElasticDatasource', function() {
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
         return ctx.$q.when({
-            data: {
-                responses: [{aggregations: {"1": [{buckets: {text: 'test', value: '1'}}]}}]
-            }
+          data: {
+            responses: [
+              {
+                aggregations: {
+                  "1": {
+                    buckets: [
+                      {doc_count: 1, key: 'test'},
+                      {doc_count: 2, key: 'test2', key_as_string: 'test2_as_string'},
+                    ]
+                  }
+                }
+              }
+            ]
+          }
         });
       };
 
-      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}');
+      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}').then(res => {
+        results = res;
+      });
+
       ctx.$rootScope.$apply();
 
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
       body = angular.fromJson(parts[1]);
+    });
+
+    it('should get results', function() {
+      expect(results.length).to.eql(2);
+    });
+
+    it('should use key or key_as_string', function() {
+      expect(results[0].text).to.eql('test');
+      expect(results[1].text).to.eql('test2_as_string');
     });
 
     it('should not set search type to count', function() {

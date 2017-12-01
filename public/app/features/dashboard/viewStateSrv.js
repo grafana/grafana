@@ -7,6 +7,7 @@ define([
 function (angular, _, $, config) {
   'use strict';
 
+  config = config.default;
   var module = angular.module('grafana.services');
 
   module.factory('dashboardViewStateSrv', function($location, $timeout) {
@@ -19,12 +20,6 @@ function (angular, _, $, config) {
       self.panelScopes = [];
       self.$scope = $scope;
       self.dashboard = $scope.dashboard;
-
-      $scope.exitFullscreen = function() {
-        if (self.state.fullscreen) {
-          self.update({ fullscreen: false });
-        }
-      };
 
       $scope.onAppEvent('$routeUpdate', function() {
         var urlState = self.getQueryStringState();
@@ -41,6 +36,9 @@ function (angular, _, $, config) {
         self.registerPanel(payload.scope);
       });
 
+      // this marks changes to location during this digest cycle as not to add history item
+      // dont want url changes like adding orgId to add browser history
+      $location.replace();
       this.update(this.getQueryStringState());
       this.expandRowForPanel();
     }
@@ -157,7 +155,6 @@ function (angular, _, $, config) {
 
       ctrl.editMode = false;
       ctrl.fullscreen = false;
-      ctrl.dashboard.editMode = this.oldDashboardEditMode;
 
       this.$scope.appEvent('panel-fullscreen-exit', {panelId: ctrl.panel.id});
 
@@ -179,10 +176,8 @@ function (angular, _, $, config) {
       ctrl.editMode = this.state.edit && this.dashboard.meta.canEdit;
       ctrl.fullscreen = true;
 
-      this.oldDashboardEditMode = this.dashboard.editMode;
       this.oldTimeRange = ctrl.range;
       this.fullscreenPanel = panelScope;
-      this.dashboard.editMode = false;
 
       $(window).scrollTop(0);
 

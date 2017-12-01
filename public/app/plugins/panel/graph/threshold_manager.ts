@@ -1,6 +1,4 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import 'jquery.flot';
+import 'vendor/flot/jquery.flot';
 import $ from 'jquery';
 import _ from 'lodash';
 
@@ -60,8 +58,6 @@ export class ThresholdManager {
       var graphValue = plot.c2p({left: 0, top: posTop}).y;
       graphValue = parseInt(graphValue.toFixed(0));
       model.value = graphValue;
-
-      var valueCanvasPos = plot.p2c({x: 0, y: graphValue});
 
       handleElem.off("mousemove", dragging);
       handleElem.off("mouseup", dragging);
@@ -158,7 +154,7 @@ export class ThresholdManager {
     this.needsCleanup = true;
   }
 
-  addPlotOptions(options, panel) {
+  addFlotOptions(options, panel) {
     if (!panel.thresholds || panel.thresholds.length === 0) {
       return;
     }

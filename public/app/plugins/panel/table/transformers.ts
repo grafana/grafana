@@ -1,11 +1,7 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import moment from 'moment';
 import flatten from '../../../core/utils/flatten';
 import TimeSeries from '../../../core/time_series2';
 import TableModel from '../../../core/table_model';
-import angular from "angular";
 
 var transformers = {};
 
@@ -42,7 +38,7 @@ transformers['timeseries_to_columns'] = {
     // group by time
     var points = {};
 
-    for (var i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {
       var series = data[i];
       model.columns.push({text: series.target});
 
@@ -63,7 +59,7 @@ transformers['timeseries_to_columns'] = {
       var point = points[time];
       var values = [point.time];
 
-      for (var i = 0; i < data.length; i++) {
+      for (let i = 0; i < data.length; i++) {
         var value = point[i];
         values.push(value);
       }
@@ -88,10 +84,6 @@ transformers['timeseries_aggregations'] = {
   transform: function(data, panel, model) {
     var i, y;
     model.columns.push({text: 'Metric'});
-
-    if (panel.columns.length === 0) {
-      panel.columns.push({text: 'Avg', value: 'avg'});
-    }
 
     for (i = 0; i < panel.columns.length; i++) {
       model.columns.push({text: panel.columns[i].text});
@@ -132,7 +124,7 @@ transformers['annotations'] = {
 
     for (var i = 0; i < data.annotations.length; i++) {
       var evt = data.annotations[i];
-      model.rows.push([evt.min, evt.title, evt.text, evt.tags]);
+      model.rows.push([evt.time, evt.title, evt.text, evt.tags]);
     }
   }
 };
@@ -143,6 +135,7 @@ transformers['table'] = {
     if (!data || data.length === 0) {
       return [];
     }
+    return data[0].columns;
   },
   transform: function(data, panel, model) {
     if (!data || data.length === 0) {
@@ -189,8 +182,16 @@ transformers['json'] = {
   },
   transform: function(data, panel, model) {
     var i, y, z;
-    for (i = 0; i < panel.columns.length; i++) {
-      model.columns.push({text: panel.columns[i].text});
+
+    for (let column of panel.columns) {
+      var tableCol: any = {text: column.text};
+
+      // if filterable data then set columns to filterable
+      if (data.length > 0 && data[0].filterable) {
+        tableCol.filterable = true;
+      }
+
+      model.columns.push(tableCol);
     }
 
     if (model.columns.length === 0) {
@@ -220,8 +221,7 @@ transformers['json'] = {
 };
 
 function transformDataToTable(data, panel) {
-  var model = new TableModel(),
-    copyData = angular.copy(data);
+  var model = new TableModel();
 
   if (!data || data.length === 0) {
     return model;
@@ -229,17 +229,11 @@ function transformDataToTable(data, panel) {
 
   var transformer = transformers[panel.transform];
   if (!transformer) {
-    throw {message: 'Transformer ' + panel.transformer + ' not found'};
+    throw {message: 'Transformer ' + panel.transform + ' not found'};
   }
 
-  if (panel.filterNull) {
-    for (var i = 0; i < copyData.length; i++) {
-      copyData[i].datapoints = copyData[i].datapoints.filter((dp) => dp[0] != null);
-    }
-  }
-
-  transformer.transform(copyData, panel, model);
+  transformer.transform(data, panel, model);
   return model;
 }
 
-export {transformers, transformDataToTable}
+export {transformers, transformDataToTable};

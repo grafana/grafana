@@ -5,8 +5,11 @@ package api
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"path"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -20,6 +23,7 @@ type API struct {
 	Shapes        map[string]*Shape
 	Waiters       []Waiter
 	Documentation string
+	Examples      Examples
 
 	// Set to true to avoid removing unused shapes
 	NoRemoveUnusedShapes bool
@@ -48,6 +52,8 @@ type API struct {
 	imports     map[string]bool
 	name        string
 	path        string
+
+	BaseCrosslinkURL string
 }
 
 // A Metadata is the metadata about an API's definition.
@@ -61,6 +67,21 @@ type Metadata struct {
 	JSONVersion         string
 	TargetPrefix        string
 	Protocol            string
+	UID                 string
+	EndpointsID         string
+
+	NoResolveEndpoint bool
+}
+
+var serviceAliases map[string]string
+
+func Bootstrap() error {
+	b, err := ioutil.ReadFile(filepath.Join("..", "models", "customizations", "service-aliases.json"))
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(b, &serviceAliases)
 }
 
 // PackageName name of the API package
@@ -84,14 +105,9 @@ func (a *API) StructName() string {
 		}
 
 		name = nameRegex.ReplaceAllString(name, "")
-		switch strings.ToLower(name) {
-		case "elasticloadbalancing":
-			a.name = "ELB"
-		case "elasticloadbalancingv2":
-			a.name = "ELBV2"
-		case "config":
-			a.name = "ConfigService"
-		default:
+
+		a.name = name
+		if name, ok := serviceAliases[strings.ToLower(name)]; ok {
 			a.name = name
 		}
 	}
@@ -172,10 +188,21 @@ func (a *API) ShapeList() []*Shape {
 	list := make([]*Shape, 0, len(a.Shapes))
 	for _, n := range a.ShapeNames() {
 		// Ignore error shapes in list
-		if a.Shapes[n].IsError {
-			continue
+		if s := a.Shapes[n]; !s.IsError {
+			list = append(list, s)
 		}
-		list = append(list, a.Shapes[n])
+	}
+	return list
+}
+
+// ShapeListErrors returns a list of the errors defined by the API model
+func (a *API) ShapeListErrors() []*Shape {
+	list := []*Shape{}
+	for _, n := range a.ShapeNames() {
+		// Ignore error shapes in list
+		if s := a.Shapes[n]; s.IsError {
+			list = append(list, s)
+		}
 	}
 	return list
 }
@@ -239,7 +266,6 @@ var tplAPI = template.Must(template.New("api").Parse(`
 // APIGoCode renders the API in Go code. Returning it as a string
 func (a *API) APIGoCode() string {
 	a.resetImports()
-	delete(a.imports, "github.com/aws/aws-sdk-go/aws")
 	a.imports["github.com/aws/aws-sdk-go/aws/awsutil"] = true
 	a.imports["github.com/aws/aws-sdk-go/aws/request"] = true
 	if a.OperationHasOutputPlaceholder() {
@@ -264,10 +290,160 @@ func (a *API) APIGoCode() string {
 	return code
 }
 
+var noCrossLinkServices = map[string]struct{}{
+	"apigateway":        struct{}{},
+	"budgets":           struct{}{},
+	"cloudsearch":       struct{}{},
+	"cloudsearchdomain": struct{}{},
+	"discovery":         struct{}{},
+	"elastictranscoder": struct{}{},
+	"es":                struct{}{},
+	"glacier":           struct{}{},
+	"importexport":      struct{}{},
+	"iot":               struct{}{},
+	"iot-data":          struct{}{},
+	"lambda":            struct{}{},
+	"machinelearning":   struct{}{},
+	"rekognition":       struct{}{},
+	"sdb":               struct{}{},
+	"swf":               struct{}{},
+}
+
+func GetCrosslinkURL(baseURL, name, uid string, params ...string) string {
+	_, ok := noCrossLinkServices[strings.ToLower(name)]
+	if uid != "" && baseURL != "" && !ok {
+		return strings.Join(append([]string{baseURL, "goto", "WebAPI", uid}, params...), "/")
+	}
+	return ""
+}
+
+func (a *API) APIName() string {
+	return a.name
+}
+
+var tplServiceDoc = template.Must(template.New("service docs").Funcs(template.FuncMap{
+	"GetCrosslinkURL": GetCrosslinkURL,
+}).
+	Parse(`
+// Package {{ .PackageName }} provides the client and types for making API
+// requests to {{ .Metadata.ServiceFullName }}.
+{{ if .Documentation -}}
+//
+{{ .Documentation }}
+{{ end -}}
+{{ $crosslinkURL := GetCrosslinkURL $.BaseCrosslinkURL $.APIName $.Metadata.UID -}}
+{{ if $crosslinkURL -}}
+//
+// See {{ $crosslinkURL }} for more information on this service.
+{{ end -}}
+//
+// See {{ .PackageName }} package documentation for more information.
+// https://docs.aws.amazon.com/sdk-for-go/api/service/{{ .PackageName }}/
+//
+// Using the Client
+//
+// To use the client for {{ .Metadata.ServiceFullName }} you will first need
+// to create a new instance of it. 
+//
+// When creating a client for an AWS service you'll first need to have a Session
+// already created. The Session provides configuration that can be shared
+// between multiple service clients. Additional configuration can be applied to
+// the Session and service's client when they are constructed. The aws package's
+// Config type contains several fields such as Region for the AWS Region the
+// client should make API requests too. The optional Config value can be provided
+// as the variadic argument for Sessions and client creation.
+//
+// Once the service's client is created you can use it to make API requests the
+// AWS service. These clients are safe to use concurrently.
+//
+//   // Create a session to share configuration, and load external configuration.
+//   sess := session.Must(session.NewSession())
+//
+//   // Create the service's client with the session.
+//   svc := {{ .PackageName }}.New(sess)
+//
+// See the SDK's documentation for more information on how to use service clients.
+// https://docs.aws.amazon.com/sdk-for-go/api/
+// 
+// See aws package's Config type for more information on configuration options.
+// https://docs.aws.amazon.com/sdk-for-go/api/aws/#Config
+//
+// See the {{ .Metadata.ServiceFullName }} client {{ .StructName }} for more
+// information on creating the service's client.
+// https://docs.aws.amazon.com/sdk-for-go/api/service/{{ .PackageName }}/#New
+//
+{{ $opts := .OperationNames -}}
+{{ $optName := index $opts 0 -}}
+{{ $opt := index .Operations $optName -}}
+{{ $optInputName := $opt.InputRef.GoTypeWithPkgName -}}
+// Once the client is created you can make an API request to the service.
+// Each API method takes a input parameter, and returns the service response
+// and an error.
+//
+// The API method will document which error codes the service can be returned
+// by the operation if the service models the API operation's errors. These
+// errors will also be available as const strings prefixed with "ErrCode".
+//
+//   result, err := svc.{{ $opt.ExportedName }}(params)
+//   if err != nil {
+//       // Cast err to awserr.Error to handle specific error codes.
+//       aerr, ok := err.(awserr.Error)
+//       if ok && aerr.Code() == <error code to check for> {
+//           // Specific error code handling
+//       }
+//       return err
+//   }
+//
+//   fmt.Println("{{ $optName }} result:")
+//   fmt.Println(result)
+//
+// Using the Client with Context
+//
+// The service's client also provides methods to make API requests with a Context
+// value. This allows you to control the timeout, and cancellation of pending
+// requests. These methods also take request Option as variadic parameter to apply
+// additional configuration to the API request.
+//
+//   ctx := context.Background()
+//
+//   result, err := svc.{{ $opt.ExportedName }}WithContext(ctx, params)
+//
+// See the request package documentation for more information on using Context pattern
+// with the SDK.
+// https://docs.aws.amazon.com/sdk-for-go/api/aws/request/
+`))
+
 // A tplService defines the template for the service generated code.
-var tplService = template.Must(template.New("service").Parse(`
-{{ .Documentation }}//The service client's operations are safe to be used concurrently.
-// It is not safe to mutate any of the client's properties though.
+var tplService = template.Must(template.New("service").Funcs(template.FuncMap{
+	"ServiceNameValue": func(a *API) string {
+		if a.NoConstServiceNames {
+			return fmt.Sprintf("%q", a.Metadata.EndpointPrefix)
+		}
+		return "ServiceName"
+	},
+	"EndpointsIDConstValue": func(a *API) string {
+		if a.NoConstServiceNames {
+			return fmt.Sprintf("%q", a.Metadata.EndpointPrefix)
+		}
+		if a.Metadata.EndpointPrefix == a.Metadata.EndpointsID {
+			return "ServiceName"
+		}
+		return fmt.Sprintf("%q", a.Metadata.EndpointsID)
+	},
+	"EndpointsIDValue": func(a *API) string {
+		if a.NoConstServiceNames {
+			return fmt.Sprintf("%q", a.Metadata.EndpointPrefix)
+		}
+
+		return "EndpointsID"
+	},
+}).Parse(`
+// {{ .StructName }} provides the API operation methods for making requests to
+// {{ .Metadata.ServiceFullName }}. See this package's package overview docs
+// for details on the service.
+//
+// {{ .StructName }} methods are safe to use concurrently. It is not safe to
+// modify mutate any of the struct's properties though.
 type {{ .StructName }} struct {
 	*client.Client
 }
@@ -279,10 +455,14 @@ var initClient func(*client.Client)
 var initRequest func(*request.Request)
 {{ end }}
 
-{{ if not .NoConstServiceNames }}
-// A ServiceName is the name of the service the client will make API calls to.
-const ServiceName = "{{ .Metadata.EndpointPrefix }}"
-{{ end }}
+
+{{ if not .NoConstServiceNames -}}
+// Service information constants
+const (
+	ServiceName = "{{ .Metadata.EndpointPrefix }}" // Service endpoint prefix API calls made to.
+	EndpointsID = {{ EndpointsIDConstValue . }} // Service ID for Regions and Endpoints metadata.
+)
+{{- end }}
 
 // New creates a new instance of the {{ .StructName }} client with a session.
 // If additional configuration is needed for the client instance use the optional
@@ -295,24 +475,41 @@ const ServiceName = "{{ .Metadata.EndpointPrefix }}"
 //     // Create a {{ .StructName }} client with additional configuration
 //     svc := {{ .PackageName }}.New(mySession, aws.NewConfig().WithRegion("us-west-2"))
 func New(p client.ConfigProvider, cfgs ...*aws.Config) *{{ .StructName }} {
-	c := p.ClientConfig({{ if .NoConstServiceNames }}"{{ .Metadata.EndpointPrefix }}"{{ else }}ServiceName{{ end }}, cfgs...)
-	return newClient(*c.Config, c.Handlers, c.Endpoint, c.SigningRegion)
+	{{ if .Metadata.NoResolveEndpoint -}}
+		var c client.Config
+		if v, ok := p.(client.ConfigNoResolveEndpointProvider); ok {
+			c = v.ClientConfigNoResolveEndpoint(cfgs...)
+		} else {
+			c = p.ClientConfig({{ EndpointsIDValue . }}, cfgs...)
+		}
+	{{- else -}}
+		c := p.ClientConfig({{ EndpointsIDValue . }}, cfgs...)
+	{{- end }}
+	return newClient(*c.Config, c.Handlers, c.Endpoint, c.SigningRegion, c.SigningName)
 }
 
 // newClient creates, initializes and returns a new service client instance.
-func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegion string) *{{ .StructName }} {
+func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegion, signingName string) *{{ .StructName }} {
+	{{- if .Metadata.SigningName }}
+		if len(signingName) == 0 {
+			signingName = "{{ .Metadata.SigningName }}"
+		}
+	{{- end }}
     svc := &{{ .StructName }}{
     	Client: client.New(
     		cfg,
     		metadata.ClientInfo{
-			ServiceName:  {{ if .NoConstServiceNames }}"{{ .Metadata.EndpointPrefix }}"{{ else }}ServiceName{{ end }}, {{ if ne .Metadata.SigningName "" }}
-			SigningName: "{{ .Metadata.SigningName }}",{{ end }}
+			ServiceName: {{ ServiceNameValue . }},
+			SigningName: signingName,
 			SigningRegion: signingRegion,
 			Endpoint:     endpoint,
 			APIVersion:   "{{ .Metadata.APIVersion }}",
-{{ if eq .Metadata.Protocol "json" }}JSONVersion:  "{{ .Metadata.JSONVersion }}",
-			TargetPrefix: "{{ .Metadata.TargetPrefix }}",
-{{ end }}
+			{{ if .Metadata.JSONVersion -}}
+				JSONVersion:  "{{ .Metadata.JSONVersion }}",
+			{{- end }}
+			{{ if .Metadata.TargetPrefix -}}
+				TargetPrefix: "{{ .Metadata.TargetPrefix }}",
+			{{- end }}
     		},
     		handlers,
     	),
@@ -320,8 +517,10 @@ func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegio
 
 	// Handlers
 	svc.Handlers.Sign.PushBackNamed({{if eq .Metadata.SignatureVersion "v2"}}v2{{else}}v4{{end}}.SignRequestHandler)
-	{{if eq .Metadata.SignatureVersion "v2"}}svc.Handlers.Sign.PushBackNamed(corehandlers.BuildContentLengthHandler)
-	{{end}}svc.Handlers.Build.PushBackNamed({{ .ProtocolPackage }}.BuildHandler)
+	{{- if eq .Metadata.SignatureVersion "v2" }}
+		svc.Handlers.Sign.PushBackNamed(corehandlers.BuildContentLengthHandler)
+	{{- end }}
+	svc.Handlers.Build.PushBackNamed({{ .ProtocolPackage }}.BuildHandler)
 	svc.Handlers.Unmarshal.PushBackNamed({{ .ProtocolPackage }}.UnmarshalHandler)
 	svc.Handlers.UnmarshalMeta.PushBackNamed({{ .ProtocolPackage }}.UnmarshalMetaHandler)
 	svc.Handlers.UnmarshalError.PushBackNamed({{ .ProtocolPackage }}.UnmarshalErrorHandler)
@@ -350,6 +549,20 @@ func (c *{{ .StructName }}) newRequest(op *request.Operation, params, data inter
 }
 `))
 
+// ServicePackageDoc generates the contents of the doc file for the service.
+//
+// Will also read in the custom doc templates for the service if found.
+func (a *API) ServicePackageDoc() string {
+	a.imports = map[string]bool{}
+
+	var buf bytes.Buffer
+	if err := tplServiceDoc.Execute(&buf, a); err != nil {
+		panic(err)
+	}
+
+	return buf.String()
+}
+
 // ServiceGoCode renders service go code. Returning it as a string.
 func (a *API) ServiceGoCode() string {
 	a.resetImports()
@@ -377,20 +590,29 @@ func (a *API) ServiceGoCode() string {
 // ExampleGoCode renders service example code. Returning it as a string.
 func (a *API) ExampleGoCode() string {
 	exs := []string{}
+	imports := map[string]bool{}
 	for _, o := range a.OperationList() {
+		o.imports = map[string]bool{}
 		exs = append(exs, o.Example())
+		for k, v := range o.imports {
+			imports[k] = v
+		}
 	}
 
-	code := fmt.Sprintf("import (\n%q\n%q\n%q\n\n%q\n%q\n%q\n)\n\n"+
-		"var _ time.Duration\nvar _ bytes.Buffer\n\n%s",
+	code := fmt.Sprintf("import (\n%q\n%q\n%q\n\n%q\n%q\n%q\n",
 		"bytes",
 		"fmt",
 		"time",
 		"github.com/aws/aws-sdk-go/aws",
 		"github.com/aws/aws-sdk-go/aws/session",
 		path.Join(a.SvcClientImportPath, a.PackageName()),
-		strings.Join(exs, "\n\n"),
 	)
+	for k, _ := range imports {
+		code += fmt.Sprintf("%q\n", k)
+	}
+	code += ")\n\n"
+	code += "var _ time.Duration\nvar _ bytes.Buffer\n\n"
+	code += strings.Join(exs, "\n\n")
 	return code
 }
 
@@ -428,7 +650,7 @@ var tplInterface = template.Must(template.New("interface").Parse(`
 //        // mock response/functionality
 //    }
 //
-//    TestMyFunc(t *testing.T) {
+//    func TestMyFunc(t *testing.T) {
 //        // Setup Test
 //        mockSvc := &mock{{ .StructName }}Client{}
 //
@@ -459,6 +681,7 @@ var _ {{ .StructName }}API = (*{{ .PackageName }}.{{ .StructName }})(nil)
 func (a *API) InterfaceGoCode() string {
 	a.resetImports()
 	a.imports = map[string]bool{
+		"github.com/aws/aws-sdk-go/aws":                   true,
 		"github.com/aws/aws-sdk-go/aws/request":           true,
 		path.Join(a.SvcClientImportPath, a.PackageName()): true,
 	}
@@ -521,6 +744,12 @@ func resolveShapeValidations(s *Shape, ancestry ...*Shape) {
 	ancestry = append(ancestry, s)
 	for _, name := range children {
 		ref := s.MemberRefs[name]
+		// Since this is a grab bag we will just continue since
+		// we can't validate because we don't know the valued shape.
+		if ref.JSONValue {
+			continue
+		}
+
 		nestedShape := ref.Shape.NestedShape()
 
 		var v *ShapeValidation
@@ -542,4 +771,30 @@ func resolveShapeValidations(s *Shape, ancestry ...*Shape) {
 		}
 	}
 	ancestry = ancestry[:len(ancestry)-1]
+}
+
+// A tplAPIErrors is the top level template for the API
+var tplAPIErrors = template.Must(template.New("api").Parse(`
+const (
+{{ range $_, $s := $.ShapeListErrors }}
+	// {{ $s.ErrorCodeName }} for service response error code
+	// {{ printf "%q" $s.ErrorName }}.
+	{{ if $s.Docstring -}}
+	//
+	{{ $s.Docstring }}
+	{{ end -}}
+	{{ $s.ErrorCodeName }} = {{ printf "%q" $s.ErrorName }}
+{{ end }}
+)
+`))
+
+func (a *API) APIErrorsGoCode() string {
+	var buf bytes.Buffer
+	err := tplAPIErrors.Execute(&buf, a)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return strings.TrimSpace(buf.String())
 }

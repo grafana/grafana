@@ -10,10 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/log"
 	l "github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Context struct {
@@ -39,6 +39,12 @@ func GetContextHandler() macaron.Handler {
 			Logger:         log.New("context"),
 		}
 
+		orgId := int64(0)
+		orgIdHeader := ctx.Req.Header.Get("X-Grafana-Org-Id")
+		if orgIdHeader != "" {
+			orgId, _ = strconv.ParseInt(orgIdHeader, 10, 64)
+		}
+
 		// the order in which these are tested are important
 		// look for api key in Authorization header first
 		// then init session and look for userId in session
@@ -46,9 +52,9 @@ func GetContextHandler() macaron.Handler {
 		// then test if anonymous access is enabled
 		if initContextWithRenderAuth(ctx) ||
 			initContextWithApiKey(ctx) ||
-			initContextWithBasicAuth(ctx) ||
-			initContextWithAuthProxy(ctx) ||
-			initContextWithUserSessionCookie(ctx) ||
+			initContextWithBasicAuth(ctx, orgId) ||
+			initContextWithAuthProxy(ctx, orgId) ||
+			initContextWithUserSessionCookie(ctx, orgId) ||
 			initContextWithAnonymousUser(ctx) {
 		}
 
@@ -56,6 +62,15 @@ func GetContextHandler() macaron.Handler {
 		ctx.Data["ctx"] = ctx
 
 		c.Map(ctx)
+
+		// update last seen at
+		// update last seen every 5min
+		if ctx.ShouldUpdateLastSeenAt() {
+			ctx.Logger.Debug("Updating last user_seen_at", "user_id", ctx.UserId)
+			if err := bus.Dispatch(&m.UpdateUserLastSeenAtCommand{UserId: ctx.UserId}); err != nil {
+				ctx.Logger.Error("Failed to update last_seen_at", "error", err)
+			}
+		}
 	}
 }
 
@@ -68,18 +83,18 @@ func initContextWithAnonymousUser(ctx *Context) bool {
 	if err := bus.Dispatch(&orgQuery); err != nil {
 		log.Error(3, "Anonymous access organization error: '%s': %s", setting.AnonymousOrgName, err)
 		return false
-	} else {
-		ctx.IsSignedIn = false
-		ctx.AllowAnonymous = true
-		ctx.SignedInUser = &m.SignedInUser{}
-		ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
-		ctx.OrgId = orgQuery.Result.Id
-		ctx.OrgName = orgQuery.Result.Name
-		return true
 	}
+
+	ctx.IsSignedIn = false
+	ctx.AllowAnonymous = true
+	ctx.SignedInUser = &m.SignedInUser{}
+	ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
+	ctx.OrgId = orgQuery.Result.Id
+	ctx.OrgName = orgQuery.Result.Name
+	return true
 }
 
-func initContextWithUserSessionCookie(ctx *Context) bool {
+func initContextWithUserSessionCookie(ctx *Context, orgId int64) bool {
 	// initialize session
 	if err := ctx.Session.Start(ctx); err != nil {
 		ctx.Logger.Error("Failed to start session", "error", err)
@@ -91,15 +106,15 @@ func initContextWithUserSessionCookie(ctx *Context) bool {
 		return false
 	}
 
-	query := m.GetSignedInUserQuery{UserId: userId}
+	query := m.GetSignedInUserQuery{UserId: userId, OrgId: orgId}
 	if err := bus.Dispatch(&query); err != nil {
-		ctx.Logger.Error("Failed to get user with id", "userId", userId)
+		ctx.Logger.Error("Failed to get user with id", "userId", userId, "error", err)
 		return false
-	} else {
-		ctx.SignedInUser = query.Result
-		ctx.IsSignedIn = true
-		return true
 	}
+
+	ctx.SignedInUser = query.Result
+	ctx.IsSignedIn = true
+	return true
 }
 
 func initContextWithApiKey(ctx *Context) bool {
@@ -114,30 +129,31 @@ func initContextWithApiKey(ctx *Context) bool {
 		ctx.JsonApiErr(401, "Invalid API key", err)
 		return true
 	}
+
 	// fetch key
 	keyQuery := m.GetApiKeyByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
 	if err := bus.Dispatch(&keyQuery); err != nil {
 		ctx.JsonApiErr(401, "Invalid API key", err)
 		return true
-	} else {
-		apikey := keyQuery.Result
+	}
 
-		// validate api key
-		if !apikeygen.IsValid(decoded, apikey.Key) {
-			ctx.JsonApiErr(401, "Invalid API key", err)
-			return true
-		}
+	apikey := keyQuery.Result
 
-		ctx.IsSignedIn = true
-		ctx.SignedInUser = &m.SignedInUser{}
-		ctx.OrgRole = apikey.Role
-		ctx.ApiKeyId = apikey.Id
-		ctx.OrgId = apikey.OrgId
+	// validate api key
+	if !apikeygen.IsValid(decoded, apikey.Key) {
+		ctx.JsonApiErr(401, "Invalid API key", err)
 		return true
 	}
+
+	ctx.IsSignedIn = true
+	ctx.SignedInUser = &m.SignedInUser{}
+	ctx.OrgRole = apikey.Role
+	ctx.ApiKeyId = apikey.Id
+	ctx.OrgId = apikey.OrgId
+	return true
 }
 
-func initContextWithBasicAuth(ctx *Context) bool {
+func initContextWithBasicAuth(ctx *Context, orgId int64) bool {
 
 	if !setting.BasicAuthEnabled {
 		return false
@@ -168,15 +184,15 @@ func initContextWithBasicAuth(ctx *Context) bool {
 		return true
 	}
 
-	query := m.GetSignedInUserQuery{UserId: user.Id}
+	query := m.GetSignedInUserQuery{UserId: user.Id, OrgId: orgId}
 	if err := bus.Dispatch(&query); err != nil {
 		ctx.JsonApiErr(401, "Authentication error", err)
 		return true
-	} else {
-		ctx.SignedInUser = query.Result
-		ctx.IsSignedIn = true
-		return true
 	}
+
+	ctx.SignedInUser = query.Result
+	ctx.IsSignedIn = true
+	return true
 }
 
 // Handle handles and logs error by given status.
@@ -235,6 +251,16 @@ func (ctx *Context) HasHelpFlag(flag m.HelpFlags1) bool {
 	return ctx.HelpFlags1.HasFlag(flag)
 }
 
-func (ctx *Context) TimeRequest(timer metrics.Timer) {
+func (ctx *Context) TimeRequest(timer prometheus.Summary) {
 	ctx.Data["perfmon.timer"] = timer
+}
+
+func AddDefaultResponseHeaders() macaron.Handler {
+	return func(ctx *Context) {
+		if ctx.IsApiRequest() && ctx.Req.Method == "GET" {
+			ctx.Resp.Header().Add("Cache-Control", "no-cache")
+			ctx.Resp.Header().Add("Pragma", "no-cache")
+			ctx.Resp.Header().Add("Expires", "-1")
+		}
+	}
 }

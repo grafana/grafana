@@ -1,9 +1,4 @@
-<navbar icon="fa fa-fw fa-cogs" title="Admin" title-url="admin">
-  <a href="admin/users" class="navbar-page-btn">
-    <i class="icon-gf icon-gf-users"></i>
-    Users
-  </a>
-</navbar>
+<navbar model="ctrl.navModel"></navbar>
 
 <div class="page-container">
   <div class="page-header">
@@ -14,12 +9,14 @@
       Add new user
     </a>
   </div>
-  <div class="search-field-wrapper pull-right width-18">
+
+  <div class="gf-form pull-right gf-form-group">
+		<label class="gf-form-label">Search</label>
     <span style="position: relative;">
-      <input  type="text" placeholder="Find user by name/login/email" tabindex="1" give-focus="true"
-      ng-model="ctrl.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.getUsers()" />
+      <input class="gf-form-input width-15" type="text" placeholder="Find user by name/login/email" tabindex="1" give-focus="true" ng-model="ctrl.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.getUsers()" />
     </span>
   </div>
+
   <div class="admin-list-table">
     <table class="filter-table form-inline">
       <thead>
@@ -28,7 +25,11 @@
           <th>Name</th>
           <th>Login</th>
           <th>Email</th>
-          <th style="white-space: nowrap">Grafana Admin</th>
+          <th>
+						Seen
+						<tip>Time since user was seen using Grafana</tip>
+					</th>
+          <th></th>
           <th></th>
         </tr>
       </thead>
@@ -38,7 +39,12 @@
           <td>{{user.name}}</td>
           <td>{{user.login}}</td>
           <td>{{user.email}}</td>
-          <td>{{user.isAdmin}}</td>
+          <td>
+						{{user.lastSeenAtAge}}
+					</td>
+          <td>
+						<i class="fa fa-shield" ng-show="user.isAdmin" bs-tooltip="'Grafana Admin'"></i>
+					</td>
           <td class="text-right">
             <a href="admin/users/edit/{{user.id}}" class="btn btn-inverse btn-small">
               <i class="fa fa-edit"></i>

@@ -47,7 +47,7 @@
 </script>
 
 <script type="text/ng-template" id="shareExport.html">
-	<dash-export-modal></dash-export-modal>
+	<dash-export-modal dismiss="dismiss()"></dash-export-modal>
 </script>
 
 <script type="text/ng-template" id="shareLinkOptions.html">
@@ -86,7 +86,7 @@
 							<input type="text" data-share-panel-url class="gf-form-input" ng-model="shareUrl"></input>
 						</div>
 						<div class="gf-form">
-							<button class="btn btn-inverse" data-clipboard-text="{{shareUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
+							<button class="btn btn-inverse" clipboard-button="getShareUrl()"><i class="fa fa-clipboard"></i> Copy</button>
 						</div>
 					</div>
 				</div>
@@ -143,7 +143,7 @@
 								{{snapshotUrl}}
 							</a>
 							<br>
-							<button class="btn btn-inverse" data-clipboard-text="{{snapshotUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy Link</button>
+							<button class="btn btn-inverse" clipboard-button="getSnapshotUrl()"><i class="fa fa-clipboard"></i> Copy Link</button>
 						</div>
 					</div>
 				</div>

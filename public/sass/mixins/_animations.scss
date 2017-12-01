@@ -23,3 +23,14 @@
   -o-animation: #{$str};
   animation: #{$str};
 }
+
+.animate-height {
+  max-height: 0;
+  overflow: hidden;
+
+  &--open {
+    max-height: 1000px;
+    overflow: auto;
+    transition: max-height 250ms ease-in-out;
+  }
+}

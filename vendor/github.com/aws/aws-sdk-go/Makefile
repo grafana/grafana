@@ -2,10 +2,11 @@ LINTIGNOREDOT='awstesting/integration.+should not use dot imports'
 LINTIGNOREDOC='service/[^/]+/(api|service|waiters)\.go:.+(comment on exported|should have comment or be unexported)'
 LINTIGNORECONST='service/[^/]+/(api|service|waiters)\.go:.+(type|struct field|const|func) ([^ ]+) should be ([^ ]+)'
 LINTIGNORESTUTTER='service/[^/]+/(api|service)\.go:.+(and that stutters)'
-LINTIGNOREINFLECT='service/[^/]+/(api|service)\.go:.+method .+ should be '
+LINTIGNOREINFLECT='service/[^/]+/(api|errors|service)\.go:.+(method|const) .+ should be '
 LINTIGNOREINFLECTS3UPLOAD='service/s3/s3manager/upload\.go:.+struct field SSEKMSKeyId should be '
 LINTIGNOREDEPS='vendor/.+\.go'
-UNIT_TEST_TAGS="example codegen"
+LINTIGNOREPKGCOMMENT='service/[^/]+/doc_custom.go:.+package comment should be of the form'
+UNIT_TEST_TAGS="example codegen awsinclude"
 
 SDK_WITH_VENDOR_PKGS=$(shell go list -tags ${UNIT_TEST_TAGS} ./... | grep -v "/vendor/src")
 SDK_ONLY_PKGS=$(shell go list ./... | grep -v "/vendor/")
@@ -45,7 +46,7 @@ gen-protocol-test:
 	go generate ./private/protocol/...
 
 gen-endpoints:
-	go generate ./private/endpoints
+	go generate ./models/endpoints/
 
 build:
 	@echo "go build SDK and vendor packages"
@@ -64,48 +65,69 @@ integration: get-deps-tests integ-custom smoke-tests performance
 integ-custom:
 	go test -tags "integration" ./awstesting/integration/customizations/...
 
+cleanup-integ:
+	go run -tags "integration" ./awstesting/cmd/bucket_cleanup/main.go "aws-sdk-go-integration"
+
 smoke-tests: get-deps-tests
 	gucumber -go-tags "integration" ./awstesting/integration/smoke
 
 performance: get-deps-tests
 	AWS_TESTING_LOG_RESULTS=${log-detailed} AWS_TESTING_REGION=$(region) AWS_TESTING_DB_TABLE=$(table) gucumber -go-tags "integration" ./awstesting/performance
 
-sandbox-tests: sandbox-test-go14 sandbox-test-go15 sandbox-test-go15-novendorexp sandbox-test-go16 sandbox-test-go17 sandbox-test-gotip
+sandbox-tests: sandbox-test-go15 sandbox-test-go15-novendorexp sandbox-test-go16 sandbox-test-go17 sandbox-test-go18 sandbox-test-gotip
 
-sandbox-test-go14:
-	docker build -f ./awstesting/sandbox/Dockerfile.test.go1.4 -t "aws-sdk-go-1.4" .
-	docker run -t aws-sdk-go-1.4
-
-sandbox-test-go15:
+sandbox-build-go15:
 	docker build -f ./awstesting/sandbox/Dockerfile.test.go1.5 -t "aws-sdk-go-1.5" .
+sandbox-go15: sandbox-build-go15
+	docker run -i -t aws-sdk-go-1.5 bash
+sandbox-test-go15: sandbox-build-go15
 	docker run -t aws-sdk-go-1.5
 
-sandbox-test-go15-novendorexp:
+sandbox-build-go15-novendorexp:
 	docker build -f ./awstesting/sandbox/Dockerfile.test.go1.5-novendorexp -t "aws-sdk-go-1.5-novendorexp" .
+sandbox-go15-novendorexp: sandbox-build-go15-novendorexp
+	docker run -i -t aws-sdk-go-1.5-novendorexp bash
+sandbox-test-go15-novendorexp: sandbox-build-go15-novendorexp
 	docker run -t aws-sdk-go-1.5-novendorexp
 
-sandbox-test-go16:
+sandbox-build-go16:
 	docker build -f ./awstesting/sandbox/Dockerfile.test.go1.6 -t "aws-sdk-go-1.6" .
+sandbox-go16: sandbox-build-go16
+	docker run -i -t aws-sdk-go-1.6 bash
+sandbox-test-go16: sandbox-build-go16
 	docker run -t aws-sdk-go-1.6
 
-sandbox-test-go17:
+sandbox-build-go17:
 	docker build -f ./awstesting/sandbox/Dockerfile.test.go1.7 -t "aws-sdk-go-1.7" .
+sandbox-go17: sandbox-build-go17
+	docker run -i -t aws-sdk-go-1.7 bash
+sandbox-test-go17: sandbox-build-go17
 	docker run -t aws-sdk-go-1.7
 
-sandbox-test-gotip:
+sandbox-build-go18:
+	docker build -f ./awstesting/sandbox/Dockerfile.test.go1.8 -t "aws-sdk-go-1.8" .
+sandbox-go18: sandbox-build-go18
+	docker run -i -t aws-sdk-go-1.8 bash
+sandbox-test-go18: sandbox-build-go18
+	docker run -t aws-sdk-go-1.8
+
+sandbox-build-gotip:
 	@echo "Run make update-aws-golang-tip, if this test fails because missing aws-golang:tip container"
 	docker build -f ./awstesting/sandbox/Dockerfile.test.gotip -t "aws-sdk-go-tip" .
+sandbox-gotip: sandbox-build-gotip
+	docker run -i -t aws-sdk-go-tip bash
+sandbox-test-gotip: sandbox-build-gotip
 	docker run -t aws-sdk-go-tip
 
 update-aws-golang-tip:
-	docker build -f ./awstesting/sandbox/Dockerfile.golang-tip -t "aws-golang:tip" .
+	docker build --no-cache=true -f ./awstesting/sandbox/Dockerfile.golang-tip -t "aws-golang:tip" .
 
 verify: get-deps-verify lint vet
 
 lint:
 	@echo "go lint SDK and vendor packages"
 	@lint=`if [ \( -z "${SDK_GO_1_4}" \) -a \( -z "${SDK_GO_1_5}" \) ]; then  golint ./...; else echo "skipping golint"; fi`; \
-	lint=`echo "$$lint" | grep -E -v -e ${LINTIGNOREDOT} -e ${LINTIGNOREDOC} -e ${LINTIGNORECONST} -e ${LINTIGNORESTUTTER} -e ${LINTIGNOREINFLECT} -e ${LINTIGNOREDEPS} -e ${LINTIGNOREINFLECTS3UPLOAD}`; \
+	lint=`echo "$$lint" | grep -E -v -e ${LINTIGNOREDOT} -e ${LINTIGNOREDOC} -e ${LINTIGNORECONST} -e ${LINTIGNORESTUTTER} -e ${LINTIGNOREINFLECT} -e ${LINTIGNOREDEPS} -e ${LINTIGNOREINFLECTS3UPLOAD} -e ${LINTIGNOREPKGCOMMENT}`; \
 	echo "$$lint"; \
 	if [ "$$lint" != "" ] && [ "$$lint" != "skipping golint" ]; then exit 1; fi
 
@@ -131,6 +153,7 @@ get-deps-tests:
 	go get github.com/stretchr/testify
 	go get github.com/smartystreets/goconvey
 	go get golang.org/x/net/html
+	go get golang.org/x/net/http2
 
 get-deps-verify:
 	@echo "go get SDK verification utilities"

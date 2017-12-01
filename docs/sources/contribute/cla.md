@@ -2,7 +2,7 @@
 title = "Contributor Licence Agreement (CLA)"
 description = "Contributer Licence Agreement (CLA)"
 type = "docs"
-aliases = ["/project/cla"]
+aliases = ["/project/cla", "docs/contributing/cla.html"]
 [menu.docs]
 parent = "contribute"
 weight = 1

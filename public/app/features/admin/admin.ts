@@ -1,14 +1,16 @@
 import  AdminListUsersCtrl from './admin_list_users_ctrl';
-import  './adminListOrgsCtrl';
-import  './adminEditOrgCtrl';
-import  './adminEditUserCtrl';
+import  './admin_list_orgs_ctrl';
+import  './admin_edit_org_ctrl';
+import  './admin_edit_user_ctrl';
 
 import coreModule from 'app/core/core_module';
 
 class AdminSettingsCtrl {
+  navModel: any;
 
   /** @ngInject **/
-  constructor($scope, backendSrv) {
+  constructor($scope, backendSrv, navModelSrv) {
+    this.navModel = navModelSrv.getAdminNav();
 
     backendSrv.get('/api/admin/settings').then(function(settings) {
       $scope.settings = settings;
@@ -18,16 +20,22 @@ class AdminSettingsCtrl {
 }
 
 class AdminHomeCtrl {
+  navModel: any;
+
   /** @ngInject **/
-  constructor() {
+  constructor(navModelSrv) {
+    this.navModel = navModelSrv.getAdminNav();
   }
 }
 
 export class AdminStatsCtrl {
   stats: any;
+  navModel: any;
 
   /** @ngInject */
-  constructor(backendSrv: any) {
+  constructor(backendSrv: any, navModelSrv) {
+    this.navModel = navModelSrv.getAdminNav();
+
     backendSrv.get('/api/admin/stats').then(stats => {
       this.stats = stats;
     });

@@ -1,17 +1,15 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
-import _ from 'lodash';
-import coreModule from '../../core/core_module';
-import config from 'app/core/config';
+import {coreModule} from  'app/core/core';
 
 export class AlertNotificationsListCtrl {
-
   notifications: any;
+  navModel: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $scope) {
+  constructor(private backendSrv, navModelSrv) {
     this.loadNotifications();
+    this.navModel = navModelSrv.getAlertingNav(1);
   }
 
   loadNotifications() {

@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -30,7 +29,7 @@ func init() {
            label="Auto close incidents"
            label-class="width-14"
            checked="ctrl.model.settings.autoClose"
-           tooltip="Automatically close alerts in OpseGenie once the alert goes back to ok.">
+           tooltip="Automatically close alerts in OpsGenie once the alert goes back to ok.">
         </gf-form-switch>
       </div>
     `,
@@ -38,8 +37,7 @@ func init() {
 }
 
 var (
-	opsgenieCreateAlertURL string = "https://api.opsgenie.com/v1/json/alert"
-	opsgenieCloseAlertURL  string = "https://api.opsgenie.com/v1/json/alert/close"
+	opsgenieAlertURL string = "https://api.opsgenie.com/v2/alerts"
 )
 
 func NewOpsGenieNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
@@ -65,7 +63,6 @@ type OpsGenieNotifier struct {
 }
 
 func (this *OpsGenieNotifier) Notify(evalContext *alerting.EvalContext) error {
-	metrics.M_Alerting_Notification_Sent_OpsGenie.Inc(1)
 
 	var err error
 	switch evalContext.Rule.State {
@@ -89,7 +86,6 @@ func (this *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) err
 	}
 
 	bodyJSON := simplejson.New()
-	bodyJSON.Set("apiKey", this.ApiKey)
 	bodyJSON.Set("message", evalContext.Rule.Name)
 	bodyJSON.Set("source", "Grafana")
 	bodyJSON.Set("alias", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
@@ -105,9 +101,13 @@ func (this *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) err
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &m.SendWebhookSync{
-		Url:        opsgenieCreateAlertURL,
+		Url:        opsgenieAlertURL,
 		Body:       string(body),
 		HttpMethod: "POST",
+		HttpHeader: map[string]string{
+			"Content-Type":  "application/json",
+			"Authorization": fmt.Sprintf("GenieKey %s", this.ApiKey),
+		},
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
@@ -121,14 +121,17 @@ func (this *OpsGenieNotifier) closeAlert(evalContext *alerting.EvalContext) erro
 	this.log.Info("Closing OpsGenie alert", "ruleId", evalContext.Rule.Id, "notification", this.Name)
 
 	bodyJSON := simplejson.New()
-	bodyJSON.Set("apiKey", this.ApiKey)
-	bodyJSON.Set("alias", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
+	bodyJSON.Set("source", "Grafana")
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &m.SendWebhookSync{
-		Url:        opsgenieCloseAlertURL,
+		Url:        fmt.Sprintf("%s/alertId-%d/close?identifierType=alias", opsgenieAlertURL, evalContext.Rule.Id),
 		Body:       string(body),
 		HttpMethod: "POST",
+		HttpHeader: map[string]string{
+			"Content-Type":  "application/json",
+			"Authorization": fmt.Sprintf("GenieKey %s", this.ApiKey),
+		},
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {

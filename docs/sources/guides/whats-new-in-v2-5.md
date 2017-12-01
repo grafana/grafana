@@ -107,5 +107,5 @@ view the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG
 
 - - -
 
-### <a href="http://grafana.org/download">Download Grafana 2.5 now</a>
+### <a href="https://grafana.com/get">Download Grafana 2.5 now</a>
 

@@ -1,0 +1,102 @@
+<div class="gf-form-group">
+  <div class="gf-form-inline">
+    <div class="gf-form">
+			<label class="gf-form-label gf-query-ds-label">
+				<i class="icon-gf icon-gf-datasources"></i>
+			</label>
+      <label class="gf-form-label">Data Source</label>
+
+      <gf-form-dropdown model="ctrl.panelDsValue" css-class="gf-size-auto"
+                        lookup-text="true"
+                        get-options="ctrl.getOptions(true)"
+                        on-change="ctrl.datasourceChanged($option)">
+      </gf-form-dropdown>
+		</div>
+
+		<div class="gf-form gf-form--grow">
+			<label class="gf-form-label gf-form-label--grow"></label>
+		</div>
+		<div class="gf-form" ng-if="ctrl.queryOptions">
+			<a class="gf-form-label" ng-click="ctrl.toggleOptions()">
+				<i class="fa fa-fw fa-caret-right" ng-hide="ctrl.optionsOpen"></i><i class="fa fa-fw fa-caret-down" ng-show="ctrl.optionsOpen"></i>Options
+			</a>
+		</div>
+		<div class="gf-form" ng-if="ctrl.hasQueryHelp">
+			<button class="gf-form-label" ng-click="ctrl.toggleHelp()">
+				<i class="fa fa-fw fa-caret-right" ng-hide="ctrl.helpOpen"></i><i class="fa fa-fw fa-caret-down" ng-show="ctrl.helpOpen"></i>Help
+			</button>
+		</div>
+		<div class="gf-form">
+			<button class="gf-form-label" ng-click="ctrl.toggleQueryTroubleshooter()" bs-tooltip="'Display query request & response'">
+				<i class="fa fa-fw fa-caret-right" ng-hide="ctrl.queryTroubleshooterOpen"></i><i class="fa fa-fw fa-caret-down" ng-show="ctrl.queryTroubleshooterOpen"></i>Query Inspector
+			</button>
+		</div>
+	</div>
+
+	<div>
+		<div ng-if="ctrl.optionsOpen">
+			<div class="gf-form gf-form--flex-end" ng-if="ctrl.queryOptions.minInterval">
+				<label class="gf-form-label">Min time interval</label>
+				<input type="text" class="gf-form-input width-6" placeholder="{{ctrl.panelCtrl.interval}}" ng-model="ctrl.panel.interval" spellcheck="false" ng-model-onblur ng-change="ctrl.panelCtrl.refresh()" />
+				<info-popover mode="right-absolute">
+					A lower limit for the auto group by time interval. Recommended to be set to write frequency,
+					for example <code>1m</code> if your data is written every minute. Access auto interval via variable <code>$__interval</code> for time range
+					string and <code>$__interval_ms</code> for numeric variable that can be used in math expressions.
+				</info-popover>
+			</div>
+			<div class="gf-form gf-form--flex-end" ng-if="ctrl.queryOptions.cacheTimeout">
+				<label class="gf-form-label width-9">Cache timeout</label>
+				<input  type="text" class="gf-form-input width-6" placeholder="60" ng-model="ctrl.panel.cacheTimeout" ng-model-onblur ng-change="ctrl.panelCtrl.refresh()" spellcheck="false" />
+				<info-popover mode="right-absolute">
+					If your time series store has a query cache this option can override the default
+					cache timeout. Specify a numeric value in seconds.
+				</info-popover>
+			</div>
+			<div class="gf-form gf-form--flex-end" ng-if="ctrl.queryOptions.maxDataPoints">
+				<label class="gf-form-label width-9">Max data points</label>
+				<input type="text" class="gf-form-input width-6" placeholder="auto" ng-model-onblur ng-change="ctrl.panelCtrl.refresh()" ng-model="ctrl.panel.maxDataPoints" spellcheck="false"  />
+				<info-popover mode="right-absolute">
+					The maximum data points the query should return. For graphs this
+					is automatically set to one data point per pixel.
+				</info-popover>
+			</div>
+		</div>
+
+		<div class="grafana-info-box" ng-if="ctrl.helpOpen">
+			<div class="markdown-html" ng-bind-html="ctrl.helpHtml"></div>
+			<a class="grafana-info-box__close" ng-click="ctrl.toggleHelp()">
+				<i class="fa fa-chevron-up"></i>
+			</a>
+		</div>
+
+		<query-troubleshooter panel-ctrl="ctrl.panelCtrl" is-open="ctrl.queryTroubleshooterOpen"></query-troubleshooter>
+	</div>
+</div>
+
+<div class="query-editor-rows gf-form-group" ng-if="ctrl.datasourceInstance">
+	<div ng-repeat="target in ctrl.panel.targets" ng-class="{'gf-form-disabled': target.hide}">
+		<rebuild-on-change property="ctrl.panel.datasource || target.datasource" show-null="true">
+			<plugin-component type="query-ctrl">
+			</plugin-component>
+		</rebuild-on-change>
+	</div>
+
+	<div class="gf-form-query">
+		<div class="gf-form gf-form-query-letter-cell">
+			<label class="gf-form-label">
+				<span class="gf-form-query-letter-cell-carret">
+					<i class="fa fa-caret-down"></i>
+				</span>
+				<span class="gf-form-query-letter-cell-letter">{{ctrl.panelCtrl.nextRefId}}</span>
+			</label>
+			<button class="btn btn-secondary gf-form-btn" ng-click="ctrl.addQuery()" ng-hide="ctrl.datasourceInstance.meta.mixed">
+				Add Query
+			</button>
+
+			<div class="dropdown" ng-if="ctrl.datasourceInstance.meta.mixed">
+				<gf-form-dropdown model="ctrl.addQueryDropdown" get-options="ctrl.getOptions(false)" on-change="ctrl.addMixedQuery($option)">
+				</gf-form-dropdown>
+			</div>
+		</div>
+	</div>
+</div>

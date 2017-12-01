@@ -68,7 +68,7 @@ func GetPreferences(query *m.GetPreferencesQuery) error {
 }
 
 func SavePreferences(cmd *m.SavePreferencesCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		var prefs m.Preferences
 		exists, err := sess.Where("org_id=? AND user_id=?", cmd.OrgId, cmd.UserId).Get(&prefs)

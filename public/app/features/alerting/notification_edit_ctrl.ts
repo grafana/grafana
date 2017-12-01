@@ -1,12 +1,11 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
-import config from 'app/core/config';
 import {appEvents, coreModule} from 'app/core/core';
 
 export class AlertNotificationEditCtrl {
   theForm: any;
+  navModel: any;
   testSeverity = "critical";
   notifiers: any;
   notifierTemplateId: string;
@@ -23,7 +22,9 @@ export class AlertNotificationEditCtrl {
   };
 
   /** @ngInject */
-  constructor(private $routeParams, private backendSrv, private $location, private $templateCache) {
+  constructor(private $routeParams, private backendSrv, private $location, private $templateCache, navModelSrv) {
+    this.navModel = navModelSrv.getAlertingNav();
+
     this.backendSrv.get(`/api/alert-notifiers`).then(notifiers => {
       this.notifiers = notifiers;
 
@@ -85,7 +86,7 @@ export class AlertNotificationEditCtrl {
 
     this.backendSrv.post(`/api/alert-notifications/test`, payload)
     .then(res => {
-      appEvents.emit('alert-succes', ['Test notification sent', '']);
+      appEvents.emit('alert-success', ['Test notification sent', '']);
     });
   }
 }

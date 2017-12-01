@@ -3,7 +3,7 @@
 import _ from 'lodash';
 
 import config from 'app/core/config';
-import {coreModule, appEvents} from 'app/core/core';
+import {coreModule} from 'app/core/core';
 
 export class AddPanelCtrl {
   row: any;
@@ -15,7 +15,7 @@ export class AddPanelCtrl {
   panelSearch: any;
 
   /** @ngInject */
-  constructor(private $scope, private $timeout, private $rootScope) {
+  constructor(private $timeout, private $rootScope) {
     this.row = this.rowCtrl.row;
     this.dashboard = this.rowCtrl.dashboard;
     this.activeIndex = 0;

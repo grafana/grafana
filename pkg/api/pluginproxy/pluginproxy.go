@@ -1,14 +1,11 @@
 package pluginproxy
 
 import (
-	"bytes"
 	"encoding/json"
-	"errors"
-	"fmt"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"text/template"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -37,23 +34,8 @@ func getHeaders(route *plugins.AppPluginRoute, orgId int64, appId string) (http.
 		SecureJsonData: query.Result.SecureJsonData.Decrypt(),
 	}
 
-	for _, header := range route.Headers {
-		var contentBuf bytes.Buffer
-		t, err := template.New("content").Parse(header.Content)
-		if err != nil {
-			return nil, errors.New(fmt.Sprintf("could not parse header content template for header %s.", header.Name))
-		}
-
-		err = t.Execute(&contentBuf, data)
-		if err != nil {
-			return nil, errors.New(fmt.Sprintf("failed to execute header content template for header %s.", header.Name))
-		}
-
-		log.Trace("Adding header to proxy request. %s: %s", header.Name, contentBuf.String())
-		result.Add(header.Name, contentBuf.String())
-	}
-
-	return result, nil
+	err := addHeaders(&result, route, data)
+	return result, err
 }
 
 func NewApiPluginProxy(ctx *middleware.Context, proxyPath string, route *plugins.AppPluginRoute, appId string) *httputil.ReverseProxy {
@@ -71,7 +53,25 @@ func NewApiPluginProxy(ctx *middleware.Context, proxyPath string, route *plugins
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
 
-		//Create a HTTP header with the context in it.
+		// clear X-Forwarded Host/Port/Proto headers
+		req.Header.Del("X-Forwarded-Host")
+		req.Header.Del("X-Forwarded-Port")
+		req.Header.Del("X-Forwarded-Proto")
+
+		// set X-Forwarded-For header
+		if req.RemoteAddr != "" {
+			remoteAddr, _, err := net.SplitHostPort(req.RemoteAddr)
+			if err != nil {
+				remoteAddr = req.RemoteAddr
+			}
+			if req.Header.Get("X-Forwarded-For") != "" {
+				req.Header.Set("X-Forwarded-For", req.Header.Get("X-Forwarded-For")+", "+remoteAddr)
+			} else {
+				req.Header.Set("X-Forwarded-For", remoteAddr)
+			}
+		}
+
+		// Create a HTTP header with the context in it.
 		ctxJson, err := json.Marshal(ctx.SignedInUser)
 		if err != nil {
 			ctx.JsonApiErr(500, "failed to marshal context to json.", err)
@@ -93,6 +93,8 @@ func NewApiPluginProxy(ctx *middleware.Context, proxyPath string, route *plugins
 			}
 		}
 
+		// reqBytes, _ := httputil.DumpRequestOut(req, true);
+		// log.Trace("Proxying plugin request: %s", string(reqBytes))
 	}
 
 	return &httputil.ReverseProxy{Director: director}

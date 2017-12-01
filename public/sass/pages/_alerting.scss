@@ -30,13 +30,65 @@
 
 // Alert List
 
-.alert-list-item-state {
+.alert-list {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.alert-list-icon {
   font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   .icon-gf, .fa {
-    font-size: 120%;
+    font-size: 200%;
     position: relative;
     top: 2px;
   }
+}
+
+.alert-list-body {
+  display: flex;
+}
+
+.alert-list-main {
+  padding: 0 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.alert-list-title {
+  font-size: $font-size-base;
+  margin: 0;
+  font-weight: 600;
+}
+
+.alert-list-state {
+  font-weight: bold;
+}
+
+.alert-list-text {
+  font-size: $font-size-sm;
+  margin: 0;
+  line-height: 1.5rem;
+  color: $text-color-weak;
+}
+
+.alert-list-info {
+  color: $text-color;
+}
+
+.alert-list-info-left {
+  padding-left: 2rem;
+}
+
+.alert-list-footer {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .panel-has-alert {
@@ -50,15 +102,27 @@
 
 .panel-alert-state {
   &--alerting {
-    animation: alerting-panel 1.6s cubic-bezier(1,.1,.73,1) 0s infinite alternate;
     box-shadow: 0 0 10px rgba($critical,0.5);
-    opacity: 1;
+    position: relative;
 
     .panel-alert-icon:before {
       color: $critical;
       content: "\e610";
     }
   }
+
+  &--alerting::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    box-shadow: 0 0 10px rgba($critical,1);
+    opacity: 0;
+    animation: alerting-panel 1.6s cubic-bezier(1,.1,.73,1) 0s infinite alternate;
+  }
+
 
   &--ok {
     .panel-alert-icon:before {
@@ -70,6 +134,6 @@
 
 @keyframes alerting-panel {
   100% {
-    box-shadow: 0 0 15px $critical;
+    opacity: 1;
   }
 }

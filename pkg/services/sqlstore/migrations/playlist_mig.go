@@ -32,4 +32,15 @@ func addPlaylistMigrations(mg *Migrator) {
 	}
 
 	mg.AddMigration("create playlist item table v2", NewAddTableMigration(playlistItemV2))
+
+	mg.AddMigration("Update playlist table charset", NewTableCharsetMigration("playlist", []*Column{
+		{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "interval", Type: DB_NVarchar, Length: 255, Nullable: false},
+	}))
+
+	mg.AddMigration("Update playlist_item table charset", NewTableCharsetMigration("playlist_item", []*Column{
+		{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "value", Type: DB_Text, Nullable: false},
+		{Name: "title", Type: DB_Text, Nullable: false},
+	}))
 }

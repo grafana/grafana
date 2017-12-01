@@ -23,17 +23,22 @@ type AppPlugin struct {
 }
 
 type AppPluginRoute struct {
-	Path            string                 `json:"path"`
-	Method          string                 `json:"method"`
-	ReqGrafanaAdmin bool                   `json:"reqGrafanaAdmin"`
-	ReqRole         models.RoleType        `json:"reqRole"`
-	Url             string                 `json:"url"`
-	Headers         []AppPluginRouteHeader `json:"headers"`
+	Path      string                 `json:"path"`
+	Method    string                 `json:"method"`
+	ReqRole   models.RoleType        `json:"reqRole"`
+	Url       string                 `json:"url"`
+	Headers   []AppPluginRouteHeader `json:"headers"`
+	TokenAuth *JwtTokenAuth          `json:"tokenAuth"`
 }
 
 type AppPluginRouteHeader struct {
 	Name    string `json:"name"`
 	Content string `json:"content"`
+}
+
+type JwtTokenAuth struct {
+	Url    string            `json:"url"`
+	Params map[string]string `json:"params"`
 }
 
 func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {

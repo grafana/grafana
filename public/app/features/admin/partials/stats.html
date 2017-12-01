@@ -1,5 +1,4 @@
-<navbar icon="fa fa-fw fa-cogs" title="Admin" title-url="admin">
-</navbar>
+<navbar model="ctrl.navModel"></navbar>
 
 <div class="page-container">
 	<div class="page-header">
@@ -16,39 +15,43 @@
 		<tbody>
 			<tr>
 				<td>Total dashboards</td>
-				<td>{{ctrl.stats.dashboard_count}}</td>
+				<td>{{ctrl.stats.dashboards}}</td>
 			</tr>
 			<tr>
 				<td>Total users</td>
-				<td>{{ctrl.stats.user_count}}</td>
+				<td>{{ctrl.stats.users}}</td>
+			</tr>
+			<tr>
+				<td>Active users (seen last 14 days)</td>
+				<td>{{ctrl.stats.activeUsers}}</td>
 			</tr>
 			<tr>
 				<td>Total organizations</td>
-				<td>{{ctrl.stats.org_count}}</td>
+				<td>{{ctrl.stats.orgs}}</td>
 			</tr>
 			<tr>
 				<td>Total datasources</td>
-				<td>{{ctrl.stats.data_source_count}}</td>
+				<td>{{ctrl.stats.datasources}}</td>
 			</tr>
 			<tr>
 				<td>Total playlists</td>
-				<td>{{ctrl.stats.playlist_count}}</td>
+				<td>{{ctrl.stats.playlists}}</td>
 			</tr>
 			<tr>
 				<td>Total snapshots</td>
-				<td>{{ctrl.stats.db_snapshot_count}}</td>
+				<td>{{ctrl.stats.snapshots}}</td>
 			</tr>
 			<tr>
 				<td>Total dashboard tags</td>
-				<td>{{ctrl.stats.db_tag_count}}</td>
+				<td>{{ctrl.stats.tags}}</td>
 			</tr>
 			<tr>
 				<td>Total starred dashboards</td>
-				<td>{{ctrl.stats.starred_db_count}}</td>
+				<td>{{ctrl.stats.stars}}</td>
 			</tr>
       <tr>
 				<td>Total alerts</td>
-				<td>{{ctrl.stats.alert_count}}</td>
+				<td>{{ctrl.stats.alerts}}</td>
 			</tr>
 		</tbody>
 	</table>

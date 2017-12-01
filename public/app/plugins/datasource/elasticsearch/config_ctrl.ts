@@ -1,6 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import angular from 'angular';
 import _ from 'lodash';
 
 export class ElasticConfigCtrl {
@@ -10,6 +7,8 @@ export class ElasticConfigCtrl {
   /** @ngInject */
   constructor($scope) {
     this.current.jsonData.timeField = this.current.jsonData.timeField || '@timestamp';
+    this.current.jsonData.esVersion = this.current.jsonData.esVersion || 5;
+    this.current.jsonData.maxConcurrentShardRequests = this.current.jsonData.maxConcurrentShardRequests || 256;
   }
 
   indexPatternTypes = [
@@ -24,6 +23,7 @@ export class ElasticConfigCtrl {
   esVersions = [
     {name: '2.x', value: 2},
     {name: '5.x', value: 5},
+    {name: '5.6+', value: 56},
   ];
 
   indexPatternTypeChanged() {

@@ -15,33 +15,33 @@ weight = 3
 Grafana ships with very feature rich data source plugin for InfluxDB. Supporting a feature rich query editor, annotation and templating queries.
 
 ## Adding the data source
-![](/img/docs/v2/add_Influx.jpg)
 
-1. Open the side menu by clicking the the Grafana icon in the top header.
+1. Open the side menu by clicking the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
+3. Click the `+ Add data source` button in the top header.
+4. Select *InfluxDB* from the *Type* dropdown.
 
-    > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
-
-3. Click the `Add new` link in the top header.
+> NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
 Name | Description
 ------------ | -------------
-Name | The data source name, important that this is the same as in Grafana v1.x if you plan to import old dashboards.
-Default | Default data source means that it will be pre-selected for new panels.
-Url | The http protocol, ip and port of you influxdb api (influxdb api port is by default 8086)
-Access | Proxy = access via Grafana backend, Direct = access directly from browser.
-Database | Name of your influxdb database
-User | Name of your database user
-Password | Database user's password
+*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Default* | Default data source means that it will be pre-selected for new panels.
+*Url* | The http protocol, ip and port of you influxdb api (influxdb api port is by default 8086)
+*Access* | Proxy = access via Grafana backend, Direct = access directly from browser.
+*Database* | Name of your influxdb database
+*User* | Name of your database user
+*Password* | Database user's password
 
- > Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the Data Source to the browser.
+### Proxy vs Direct access
 
- > Direct access is still supported because in some cases it may be useful to access a Data Source directly depending on the use case and topology of Grafana, the user, and the Data Source.
-
+Proxy access means that the Grafana backend will proxy all requests from the browser. So requests to InfluxDB will be channeled through
+`grafana-server`. This means that the URL you specify needs to be accessible from the server you are running Grafana on. Proxy access
+mode is also more secure as the username & password will never reach the browser.
 
 ## Query Editor
 
-![](/assets/img/blog/v2.6/influxdb_editor_v3.gif)
+{{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
 
 You find the InfluxDB editor in the metrics tab in Graph or Singlestat panel's edit mode. You enter edit mode by clicking the
 panel title, then edit. The editor allows you to select metrics and tags.
@@ -57,10 +57,8 @@ will automatically adjust the filter tag condition to use the InfluxDB regex mat
 
 ### Field & Aggregation functions
 In the `SELECT` row you can specify what fields and functions you want to use. If you have a
-group by time you need an aggregation function. Some functions like derivative require an aggregation function.
-
-The editor tries simplify and unify this part of the query. For example:
-![](/img/docs/influxdb/select_editor.png)
+group by time you need an aggregation function. Some functions like derivative require an aggregation function. The editor tries simplify and unify this part of the query. For example:<br>
+![](/img/docs/influxdb/select_editor.png)<br>
 
 The above will generate the following InfluxDB `SELECT` clause:
 
@@ -88,8 +86,8 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 - $m = replaced with measurement name
 - $measurement = replaced with measurement name
 - $col = replaced with column name
-- $tag_hostname = replaced with the value of the hostname tag
-- You can also use [[tag_hostname]] pattern replacement syntax
+- $tag_exampletag = replaced with the value of the `exampletag` tag. The syntax is `$tag_yourTagName` (must start with `$tag_`). To use your tag as an alias in the ALIAS BY field then the tag must be used to group by in the query.
+- You can also use [[tag_hostname]] pattern replacement syntax. For example, in the ALIAS BY field using this text `Host: [[tag_hostname]]` would substitute in the `hostname` tag value for each legend value and an example legend value would be: `Host: server1`.
 
 ### Table query / raw data
 
@@ -100,11 +98,21 @@ change the option `Format As` to `Table` if you want to show raw data in the `Ta
 
 
 ## Templating
-You can create a template variable in Grafana and have that variable filled with values from any InfluxDB metric exploration query.
-You can then use this variable in your InfluxDB metric queries.
 
-For example you can have a variable that contains all values for tag `hostname` if you specify a query like this
-in the templating edit view.
+Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
+Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
+being displayed in your dashboard.
+
+Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+types of template variables.
+
+### Query variable
+
+If you add a template variable of the type `Query` you can write a InfluxDB exploration (meta data) query. These queries can
+return things like measurement names, key names or key values.
+
+For example you can have a variable that contains all values for tag `hostname` if you specify a query like this in the templating variable *Query* setting.
+
 ```sql
 SHOW TAG VALUES WITH KEY = "hostname"
 ```
@@ -116,12 +124,46 @@ the hosts variable only show hosts from the current selected region with a query
 SHOW TAG VALUES WITH KEY = "hostname"  WHERE region =~ /$region/
 ```
 
-> Always use `regex values` or `regex wildcard` for All format or multi select format.
+You can fetch key names for a given measurement.
 
-![](/img/docs/influxdb/templating_simple_ex1.png)
+```sql
+SHOW TAG KEYS [FROM <measurement_name>]
+```
+
+If you have a variable with key names you can use this variable in a group by clause. This will allow you to change group by using the variable dropdown at the top
+of the dashboard.
+
+### Using variables in queries
+
+There are two syntaxes:
+
+`$<varname>`  Example:
+
+```sql
+SELECT mean("value") FROM "logins" WHERE "hostname" =~ /^$host$/ AND $timeFilter GROUP BY time($__interval), "hostname"
+```
+
+`[[varname]]`  Example:
+
+```sql
+SELECT mean("value") FROM "logins" WHERE "hostname" =~ /^[[host]]$/ AND $timeFilter GROUP BY time($__interval), "hostname"
+```
+
+Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the *Multi-value* or *Include all value*
+options are enabled, Grafana converts the labels from plain text to a regex compatible string. Which means you have to use `=~` instead of `=`.
+
+Example Dashboard:
+[InfluxDB Templated Dashboard](http://play.grafana.org/dashboard/db/influxdb-templated-queries)
+
+### Ad hoc filters variable
+
+InfluxDB supports the special `Ad hoc filters` variable type. This variable allows you to specify any number of key/value filters on the fly. These filters will automatically
+be applied to all your InfluxDB queries.
 
 ## Annotations
-Annotations allows you to overlay rich event information on top of graphs.
+
+[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+queries via the Dashboard menu / Annotations view.
 
 An example query:
 
@@ -129,4 +171,6 @@ An example query:
 SELECT title, description from events WHERE $timeFilter order asc
 ```
 
-
+For InfluxDB you need to enter a query like in the above example. You need to have the ```where $timeFilter```
+part. If you only select one column you will not need to enter anything in the column mapping fields. The
+Tags field can be a comma separated string.

@@ -7,10 +7,10 @@ import {variableTypes} from './variable';
 export class VariableEditorCtrl {
 
   /** @ngInject **/
-  constructor(private $scope, private datasourceSrv, private variableSrv, templateSrv) {
+  constructor($scope, datasourceSrv, variableSrv, templateSrv) {
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
-    $scope.namePattern = /^((?!__).)*$/;
+    $scope.namePattern = /^(?!__).*$/;
 
     $scope.refreshOptions = [
       {value: 0, text: "Never"},
@@ -35,14 +35,6 @@ export class VariableEditorCtrl {
     $scope.init = function() {
       $scope.mode = 'list';
 
-      $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
-        return !ds.meta.builtIn && ds.value !== null;
-      });
-
-      $scope.datasourceTypes = _($scope.datasources).uniqBy('meta.id').map(function(ds) {
-        return {text: ds.meta.name, value: ds.meta.id};
-      }).value();
-
       $scope.variables = variableSrv.variables;
       $scope.reset();
 
@@ -55,15 +47,14 @@ export class VariableEditorCtrl {
 
     $scope.add = function() {
       if ($scope.isValid()) {
-        $scope.variables.push($scope.current);
+        variableSrv.addVariable($scope.current);
         $scope.update();
-        $scope.dashboard.updateSubmenuVisibility();
       }
     };
 
     $scope.isValid = function() {
       if (!$scope.ctrl.form.$valid) {
-        return;
+        return false;
       }
 
       if (!$scope.current.name.match(/^\w+$/)) {
@@ -74,6 +65,11 @@ export class VariableEditorCtrl {
       var sameName = _.find($scope.variables, { name: $scope.current.name });
       if (sameName && sameName !== $scope.current) {
         $scope.appEvent('alert-warning', ['Validation', 'Variable with the same name already exists']);
+        return false;
+      }
+
+      if ($scope.current.type === 'query' && $scope.current.query.match(new RegExp('\\$' + $scope.current.name + '(/| |$)'))) {
+        $scope.appEvent('alert-warning', ['Validation', 'Query cannot contain a reference to itself. Variable: $'  + $scope.current.name]);
         return false;
       }
 
@@ -109,9 +105,8 @@ export class VariableEditorCtrl {
     $scope.duplicate = function(variable) {
       var clone = _.cloneDeep(variable.getSaveModel());
       $scope.current = variableSrv.createVariableFromModel(clone);
-      $scope.variables.push($scope.current);
       $scope.current.name = 'copy_of_'+variable.name;
-      $scope.dashboard.updateSubmenuVisibility();
+      variableSrv.addVariable($scope.current);
     };
 
     $scope.update = function() {
@@ -127,6 +122,15 @@ export class VariableEditorCtrl {
     $scope.reset = function() {
       $scope.currentIsNew = true;
       $scope.current = variableSrv.createVariableFromModel({type: 'query'});
+
+      // this is done here in case a new data source type variable was added
+      $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
+        return !ds.meta.mixed && ds.value !== null;
+      });
+
+      $scope.datasourceTypes = _($scope.datasources).uniqBy('meta.id').map(function(ds) {
+        return {text: ds.meta.name, value: ds.meta.id};
+      }).value();
     };
 
     $scope.typeChanged = function() {
@@ -145,9 +149,7 @@ export class VariableEditorCtrl {
     };
 
     $scope.removeVariable = function(variable) {
-      var index = _.indexOf($scope.variables, variable);
-      $scope.variables.splice(index, 1);
-      $scope.dashboard.updateSubmenuVisibility();
+      variableSrv.removeVariable(variable);
     };
   }
 }

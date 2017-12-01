@@ -24,6 +24,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/macaron.v1"
 )
 
 var gravatarSource string
@@ -65,7 +66,7 @@ func New(hash string) *Avatar {
 	return &Avatar{
 		hash: hash,
 		reqParams: url.Values{
-			"d":    {"404"},
+			"d":    {"retro"},
 			"size": {"200"},
 			"r":    {"pg"}}.Encode(),
 	}
@@ -89,12 +90,12 @@ func (this *Avatar) Update() (err error) {
 	return err
 }
 
-type service struct {
+type CacheServer struct {
 	notFound *Avatar
 	cache    map[string]*Avatar
 }
 
-func (this *service) mustInt(r *http.Request, defaultValue int, keys ...string) (v int) {
+func (this *CacheServer) mustInt(r *http.Request, defaultValue int, keys ...string) (v int) {
 	for _, k := range keys {
 		if _, err := fmt.Sscanf(r.FormValue(k), "%d", &v); err == nil {
 			defaultValue = v
@@ -103,8 +104,8 @@ func (this *service) mustInt(r *http.Request, defaultValue int, keys ...string) 
 	return defaultValue
 }
 
-func (this *service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	urlPath := r.URL.Path
+func (this *CacheServer) Handler(ctx *macaron.Context) {
+	urlPath := ctx.Req.URL.Path
 	hash := urlPath[strings.LastIndex(urlPath, "/")+1:]
 
 	var avatar *Avatar
@@ -126,27 +127,31 @@ func (this *service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		this.cache[hash] = avatar
 	}
 
-	w.Header().Set("Content-Type", "image/jpeg")
-	w.Header().Set("Content-Length", strconv.Itoa(len(avatar.data.Bytes())))
-	w.Header().Set("Cache-Control", "private, max-age=3600")
+	ctx.Resp.Header().Add("Content-Type", "image/jpeg")
 
-	if err := avatar.Encode(w); err != nil {
+	if !setting.EnableGzip {
+		ctx.Resp.Header().Add("Content-Length", strconv.Itoa(len(avatar.data.Bytes())))
+	}
+
+	ctx.Resp.Header().Add("Cache-Control", "private, max-age=3600")
+
+	if err := avatar.Encode(ctx.Resp); err != nil {
 		log.Warn("avatar encode error: %v", err)
-		w.WriteHeader(500)
+		ctx.WriteHeader(500)
 	}
 }
 
-func CacheServer() http.Handler {
+func NewCacheServer() *CacheServer {
 	UpdateGravatarSource()
 
-	return &service{
+	return &CacheServer{
 		notFound: newNotFound(),
 		cache:    make(map[string]*Avatar),
 	}
 }
 
 func newNotFound() *Avatar {
-	avatar := &Avatar{}
+	avatar := &Avatar{notFound: true}
 
 	// load transparent png into buffer
 	path := filepath.Join(setting.StaticRootPath, "img", "transparent.png")
@@ -217,7 +222,10 @@ func (this *thunderTask) Fetch() {
 	this.Done()
 }
 
-var client = &http.Client{}
+var client *http.Client = &http.Client{
+	Timeout:   time.Second * 2,
+	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
+}
 
 func (this *thunderTask) fetch() error {
 	this.Avatar.timestamp = time.Now()

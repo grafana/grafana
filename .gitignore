@@ -4,17 +4,20 @@ coverage/
 .aws-config.json
 awsconfig
 /dist
+/public/build
+/public/views/index.html
 /emails/dist
 /public_gen
 /public/vendor/npm
 /tmp
 vendor/phantomjs/phantomjs
+vendor/phantomjs/phantomjs.exe
+profile.out
+coverage.txt
 
 docs/AWS_S3_BUCKET
 docs/GIT_BRANCH
-docs/VERSION
 docs/GITCOMMIT
-docs/changed-files
 docs/changed-files
 
 # locally required config files
@@ -25,6 +28,8 @@ public/css/*.min.css
 *.swp
 .idea/
 *.iml
+*.tmp
+.DS_Store
 .vscode/
 
 /data/*
@@ -33,9 +38,21 @@ public/css/*.min.css
 conf/custom.ini
 fig.yml
 docker-compose.yml
+docker-compose.yaml
 profile.cov
 /grafana
 .notouch
 /pkg/cmd/grafana-cli/grafana-cli
 /pkg/cmd/grafana-server/grafana-server
+/pkg/cmd/grafana-server/debug
+debug.test
 /examples/*/dist
+/packaging/**/*.rpm
+/packaging/**/*.deb
+
+/vendor/**/*.py
+/vendor/**/*.xml
+/vendor/**/*.yml
+/vendor/**/*_test.go
+/vendor/**/.editorconfig
+/vendor/**/appengine*

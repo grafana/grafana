@@ -42,6 +42,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		}
 
 		var dsMap = map[string]interface{}{
+			"id":   ds.Id,
 			"type": ds.Type,
 			"name": ds.Name,
 			"url":  url,
@@ -61,6 +62,8 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 
 		if ds.JsonData != nil {
 			dsMap["jsonData"] = ds.JsonData
+		} else {
+			dsMap["jsonData"] = make(map[string]string)
 		}
 
 		if ds.Access == m.DS_ACCESS_DIRECT {
@@ -101,18 +104,15 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		datasources[ds.Name] = dsMap
 	}
 
-	// add grafana backend data source
-	grafanaDatasourceMeta, _ := plugins.DataSources["grafana"]
-	datasources["-- Grafana --"] = map[string]interface{}{
-		"type": "grafana",
-		"name": "-- Grafana --",
-		"meta": grafanaDatasourceMeta,
-	}
-
-	// add mixed backend data source
-	datasources["-- Mixed --"] = map[string]interface{}{
-		"type": "mixed",
-		"meta": plugins.DataSources["mixed"],
+	// add datasources that are built in (meaning they are not added via data sources page, nor have any entry in datasource table)
+	for _, ds := range plugins.DataSources {
+		if ds.BuiltIn {
+			datasources[ds.Name] = map[string]interface{}{
+				"type": ds.Type,
+				"name": ds.Name,
+				"meta": plugins.DataSources[ds.Id],
+			}
+		}
 	}
 
 	if defaultDatasource == "" {
@@ -133,15 +133,20 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	}
 
 	jsonObj := map[string]interface{}{
-		"defaultDatasource": defaultDatasource,
-		"datasources":       datasources,
-		"panels":            panels,
-		"appSubUrl":         setting.AppSubUrl,
-		"allowOrgCreate":    (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		"authProxyEnabled":  setting.AuthProxyEnabled,
-		"ldapEnabled":       setting.LdapEnabled,
-		"alertingEnabled":   setting.AlertingEnabled,
-		"googleAnalyticsId": setting.GoogleAnalyticsId,
+		"defaultDatasource":       defaultDatasource,
+		"datasources":             datasources,
+		"panels":                  panels,
+		"appSubUrl":               setting.AppSubUrl,
+		"allowOrgCreate":          (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		"authProxyEnabled":        setting.AuthProxyEnabled,
+		"ldapEnabled":             setting.LdapEnabled,
+		"alertingEnabled":         setting.AlertingEnabled,
+		"googleAnalyticsId":       setting.GoogleAnalyticsId,
+		"disableLoginForm":        setting.DisableLoginForm,
+		"disableSignoutMenu":      setting.DisableSignoutMenu,
+		"externalUserMngInfo":     setting.ExternalUserMngInfo,
+		"externalUserMngLinkUrl":  setting.ExternalUserMngLinkUrl,
+		"externalUserMngLinkName": setting.ExternalUserMngLinkName,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
@@ -166,10 +171,12 @@ func getPanelSort(id string) int {
 		sort = 3
 	case "text":
 		sort = 4
-	case "alertlist":
+	case "heatmap":
 		sort = 5
-	case "dashlist":
+	case "alertlist":
 		sort = 6
+	case "dashlist":
+		sort = 7
 	}
 	return sort
 }

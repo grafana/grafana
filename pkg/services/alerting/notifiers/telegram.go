@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -80,14 +79,13 @@ func NewTelegramNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending alert notification to", "bot_token", this.BotToken)
 	this.log.Info("Sending alert notification to", "chat_id", this.ChatID)
-	metrics.M_Alerting_Notification_Sent_Telegram.Inc(1)
 
 	bodyJSON := simplejson.New()
 
 	bodyJSON.Set("chat_id", this.ChatID)
 	bodyJSON.Set("parse_mode", "html")
 
-	message := fmt.Sprintf("%s\nState: %s\nMessage: %s\n", evalContext.GetNotificationTitle(), evalContext.Rule.Name, evalContext.Rule.Message)
+	message := fmt.Sprintf("<b>%s</b>\nState: %s\nMessage: %s\n", evalContext.GetNotificationTitle(), evalContext.Rule.Name, evalContext.Rule.Message)
 
 	ruleUrl, err := evalContext.GetRuleUrl()
 	if err == nil {
@@ -96,6 +94,19 @@ func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.ImagePublicUrl != "" {
 		message = message + fmt.Sprintf("Image: %s\n", evalContext.ImagePublicUrl)
 	}
+
+	metrics := ""
+	fieldLimitCount := 4
+	for index, evt := range evalContext.EvalMatches {
+		metrics += fmt.Sprintf("\n%s: %s", evt.Metric, evt.Value)
+		if index > fieldLimitCount {
+			break
+		}
+	}
+	if metrics != "" {
+		message = message + fmt.Sprintf("\n<i>Metrics:</i>%s", metrics)
+	}
+
 	bodyJSON.Set("text", message)
 
 	url := fmt.Sprintf(telegeramApiUrl, this.BotToken, "sendMessage")

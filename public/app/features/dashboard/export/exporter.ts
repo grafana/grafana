@@ -1,9 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import config from 'app/core/config';
-import angular from 'angular';
 import _ from 'lodash';
-
 import {DynamicDashboardSrv} from '../dynamic_dashboard_srv';
 
 export class DashboardExporter {
@@ -40,7 +38,7 @@ export class DashboardExporter {
     var templateizeDatasourceUsage = obj => {
       // ignore data source properties that contain a variable
       if (obj.datasource && obj.datasource.indexOf('$') === 0) {
-        if (variableLookup[obj.datasource.substring(1)]){
+        if (variableLookup[obj.datasource.substring(1)]) {
           return;
         }
       }
@@ -103,7 +101,7 @@ export class DashboardExporter {
         templateizeDatasourceUsage(variable);
         variable.options = [];
         variable.current = {};
-        variable.refresh = 1;
+        variable.refresh = variable.refresh > 0 ? variable.refresh : 1;
       }
     }
 

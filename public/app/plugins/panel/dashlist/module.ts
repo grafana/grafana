@@ -1,7 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import config from 'app/core/config';
 import {PanelCtrl} from 'app/plugins/sdk';
 import {impressions} from 'app/features/dashboard/impression_store';
 
@@ -22,7 +21,7 @@ class DashListCtrl extends PanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private backendSrv) {
+  constructor($scope, $injector, private backendSrv, private dashboardSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
@@ -106,6 +105,17 @@ class DashListCtrl extends PanelCtrl {
     });
   }
 
+  starDashboard(dash, evt) {
+    this.dashboardSrv.starDashboard(dash.id, dash.isStarred).then(newState => {
+      dash.isStarred = newState;
+    });
+
+    if (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+    }
+  }
+
   getRecentDashboards() {
     this.groups[1].show = this.panel.recent;
     if (!this.panel.recent) {
@@ -125,4 +135,4 @@ class DashListCtrl extends PanelCtrl {
   }
 }
 
-export {DashListCtrl, DashListCtrl as PanelCtrl}
+export {DashListCtrl, DashListCtrl as PanelCtrl};

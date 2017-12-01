@@ -1,0 +1,26 @@
+.gf-icon-picker {
+  width: 400px;
+  height: 450px;
+
+  .icon-filter {
+    padding-bottom: 10px;
+    margin: auto;
+    width: 50%;
+  }
+
+  .icon-container {
+    max-height: 350px;
+    overflow: auto;
+
+    .gf-event-icon {
+      margin: 0.4rem;
+      height: 1.5rem;
+    }
+  }
+}
+
+.gf-icon-picker-button {
+  .gf-event-icon {
+    height: 1.2rem;
+  }
+}

@@ -25,6 +25,7 @@ stopGrafana() {
 	fi
 }
 
+
 # Initial installation: $1 == 1
 # Upgrade: $1 == 2, and configured to restart on upgrade
 if [ $1 -eq 1 ] ; then
@@ -68,13 +69,6 @@ if [ $1 -eq 1 ] ; then
     echo " sudo service grafana-server start"
   fi
 elif [ $1 -ge 2 ] ; then
-  if [ -x /opt/grafana/ ]; then
-    echo "### Upgrading Notice ### "
-    echo "-- New grafana install home is /usr/share/grafana"
-    echo "-- Please move sqlite3 database to /var/lib/grafana/"
-    echo "-- Notice: service name && binary changed to grafana-server"
-  fi
-
   if [ "$RESTART_ON_UPGRADE" == "true" ]; then
     stopGrafana
     startGrafana

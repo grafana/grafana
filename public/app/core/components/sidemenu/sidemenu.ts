@@ -1,7 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import config from 'app/core/config';
-import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from '../../core_module';
 
@@ -19,11 +18,11 @@ export class SideMenuCtrl {
   maxShownOrgs: number;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private contextSrv, private backendSrv, private $element) {
+  constructor(private $scope, private $location, private contextSrv, private backendSrv) {
     this.isSignedIn = contextSrv.isSignedIn;
     this.user = contextSrv.user;
     this.appSubUrl = config.appSubUrl;
-    this.showSignout = this.contextSrv.isSignedIn && !config['authProxyEnabled'];
+    this.showSignout = this.contextSrv.isSignedIn && !config['disableSignoutMenu'];
     this.maxShownOrgs = 10;
 
     this.mainLinks = config.bootData.mainNavLinks;
@@ -77,14 +76,18 @@ export class SideMenuCtrl {
    });
  }
 
- loadOrgsItems(){
+ loadOrgsItems() {
    this.orgItems = [];
    this.orgs.forEach(org => {
      if (org.orgId === this.contextSrv.user.orgId) {
        return;
      }
 
-     if (this.orgItems.length < this.maxShownOrgs && (this.orgFilter === '' || org.name.indexOf(this.orgFilter) !== -1)){
+     if (this.orgItems.length === this.maxShownOrgs) {
+       return;
+     }
+
+     if (this.orgFilter === '' || (org.name.toLowerCase().indexOf(this.orgFilter.toLowerCase()) !== -1)) {
        this.orgItems.push({
          text: "Switch to " + org.name,
          icon: "fa fa-fw fa-random",

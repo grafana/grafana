@@ -1,0 +1,14 @@
+dependencies:
+  override:
+    # './...' is a relative pattern which means all subdirectories
+    - go get -t -d -v ./...
+    - go build -v
+
+database:
+  override:
+    - mysql -u root -e "CREATE DATABASE core_test DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci"
+    
+test:
+  override:
+    # './...' is a relative pattern which means all subdirectories
+    - go test -v -race

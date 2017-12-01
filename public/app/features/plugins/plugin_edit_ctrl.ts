@@ -2,7 +2,7 @@
 
 import angular from 'angular';
 import _ from 'lodash';
-import appEvents from 'app/core/app_events';
+import Remarkable from 'remarkable';
 
 export class PluginEditCtrl {
   model: any;
@@ -13,17 +13,21 @@ export class PluginEditCtrl {
   includedDatasources: any;
   tabIndex: number;
   tabs: any;
+  navModel: any;
   hasDashboards: any;
   preUpdateHook: () => any;
   postUpdateHook: () => any;
 
   /** @ngInject */
-  constructor(private $scope,
-              private $rootScope,
-              private backendSrv,
-              private $routeParams,
-              private $sce,
-              private $http) {
+  constructor(
+    private $scope,
+    private $rootScope,
+    private backendSrv,
+    private $sce,
+    $routeParams,
+    navModelSrv,
+  ) {
+    this.navModel = navModelSrv.getPluginsNav();
     this.model = {};
     this.pluginId = $routeParams.pluginId;
     this.tabIndex = 0;
@@ -31,7 +35,7 @@ export class PluginEditCtrl {
 
     this.preUpdateHook = () => Promise.resolve();
     this.postUpdateHook = () => Promise.resolve();
-   }
+  }
 
   init() {
     return this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(result => {
@@ -62,11 +66,9 @@ export class PluginEditCtrl {
   }
 
   initReadme() {
-    return this.backendSrv.get(`/api/plugins/${this.pluginId}/readme`).then(res => {
-      return System.import('remarkable').then(Remarkable => {
-        var md = new Remarkable();
-        this.readmeHtml = this.$sce.trustAsHtml(md.render(res));
-      });
+    return this.backendSrv.get(`/api/plugins/${this.pluginId}/markdown/readme`).then(res => {
+      var md = new Remarkable();
+      this.readmeHtml = this.$sce.trustAsHtml(md.render(res));
     });
   }
 
@@ -77,6 +79,7 @@ export class PluginEditCtrl {
       case 'app':  return 'icon-gf icon-gf-apps';
       case 'page':  return 'icon-gf icon-gf-endpoint-tiny';
       case 'dashboard':  return 'icon-gf icon-gf-dashboard';
+      default: return 'icon-gf icon-gf-apps';
     }
   }
 

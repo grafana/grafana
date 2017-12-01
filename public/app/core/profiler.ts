@@ -1,7 +1,4 @@
-///<reference path="../headers/common.d.ts" />
-
 import $ from 'jquery';
-import _ from 'lodash';
 import angular from 'angular';
 
 export class Profiler {
