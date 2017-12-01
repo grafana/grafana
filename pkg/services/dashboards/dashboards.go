@@ -33,9 +33,9 @@ type SaveDashboardItem struct {
 	Dashboard  *models.Dashboard
 }
 
-type dashboardRepository struct{}
+type DashboardRepository struct{}
 
-func (dr *dashboardRepository) SaveDashboard(json *SaveDashboardItem) (*models.Dashboard, error) {
+func (dr *DashboardRepository) SaveDashboard(json *SaveDashboardItem) (*models.Dashboard, error) {
 	dashboard := json.Dashboard
 
 	if dashboard.Title == "" {

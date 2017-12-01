@@ -25,6 +25,7 @@ func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *Das
 	dash.Dashboard = models.NewDashboardFromJson(data)
 	dash.TitleLower = strings.ToLower(dash.Dashboard.Title)
 	dash.UpdatedAt = lastModified
+	dash.Overwrite = true
 	dash.OrgId = cfg.OrgId
 	dash.Folder = cfg.Folder
 	dash.Dashboard.Data.Set("editable", cfg.Editable)

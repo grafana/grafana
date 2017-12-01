@@ -41,7 +41,7 @@ func NewDashboardFilereader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		Path:          path,
 		log:           log,
 		dashboardRepo: dashboards.GetRepository(),
-		cache:         gocache.New(5*time.Minute, 10*time.Minute),
+		cache:         gocache.New(5*time.Minute, 30*time.Minute),
 	}, nil
 }
 
@@ -87,23 +87,23 @@ func (fr *fileReader) walkFolder() error {
 		}
 	}
 
-	return filepath.Walk(fr.Path, func(path string, f os.FileInfo, err error) error {
+	return filepath.Walk(fr.Path, func(path string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if f.IsDir() {
-			if strings.HasPrefix(f.Name(), ".") {
+		if fileInfo.IsDir() {
+			if strings.HasPrefix(fileInfo.Name(), ".") {
 				return filepath.SkipDir
 			}
 			return nil
 		}
 
-		if !strings.HasSuffix(f.Name(), ".json") {
+		if !strings.HasSuffix(fileInfo.Name(), ".json") {
 			return nil
 		}
 
 		cachedDashboard, exist := fr.getCache(path)
-		if exist && cachedDashboard.UpdatedAt == f.ModTime() {
+		if exist && cachedDashboard.UpdatedAt == fileInfo.ModTime() {
 			return nil
 		}
 
@@ -116,6 +116,7 @@ func (fr *fileReader) walkFolder() error {
 		cmd := &models.GetDashboardQuery{Slug: dash.Dashboard.Slug}
 		err = bus.Dispatch(cmd)
 
+		// if we dont have the dashboard in the db, save it!
 		if err == models.ErrDashboardNotFound {
 			fr.log.Debug("saving new dashboard", "file", path)
 			_, err = fr.dashboardRepo.SaveDashboard(dash)
@@ -127,11 +128,12 @@ func (fr *fileReader) walkFolder() error {
 			return nil
 		}
 
-		if cmd.Result.Updated.Unix() >= f.ModTime().Unix() {
+		// break if db version is newer then fil version
+		if cmd.Result.Updated.Unix() >= fileInfo.ModTime().Unix() {
 			return nil
 		}
 
-		fr.log.Debug("no dashboard in cache. loading dashboard from disk into database.", "file", path)
+		fr.log.Debug("loading dashboard from disk into database.", "file", path)
 		_, err = fr.dashboardRepo.SaveDashboard(dash)
 		return err
 	})
