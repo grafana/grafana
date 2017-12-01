@@ -32,14 +32,6 @@
 
 .page-body {
   padding-top: $spacer*2;
-
-  &--with-sidebar {
-    @include media-breakpoint-up(md) {
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-    }
-  }
 }
 
 .page-heading {
@@ -63,8 +55,16 @@
   flex-grow: 1;
 }
 
-.page-content-with-sidebar {
+.sidebar-content {
   width: calc(100% - #{$page-sidebar-width + $page-sidebar-margin}); // sidebar width + margin
+}
+
+.sidebar-container {
+  @include media-breakpoint-up(md) {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
 }
 
 .page-sidebar {

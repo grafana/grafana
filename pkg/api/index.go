@@ -226,7 +226,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 				},
 				{
 					Text:        "Teams",
-					Id:          "users",
+					Id:          "teams",
 					Description: "Manage org groups",
 					Icon:        "gicon gicon-user-group",
 					Url:         setting.AppSubUrl + "/org/user-groups",
