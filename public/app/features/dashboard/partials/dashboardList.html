@@ -2,17 +2,17 @@
 
 <div class="page-container page-body">
   <div class="page-action-bar">
-    <div class="gf-form width-15">
+    <div class="gf-form">
       <label class="gf-form-label">Search</label>
-      <input type="text" class="gf-form-input" placeholder="Find Dashboard by name" tabindex="1" give-focus="true" ng-model="ctrl.query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.onQueryChange()" />
+      <input type="text" class="gf-form-input max-width-30" placeholder="Find Dashboard by name" tabindex="1" give-focus="true" ng-model="ctrl.query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.onQueryChange()" />
     </div>
     <div class="page-action-bar__spacer"></div>
-    <a class="btn btn-inverse" href="/dashboard/new">
-      <i class="gicon gicon-dashboard-new"></i>
+    <a class="btn btn-success" href="/dashboard/new">
+      <i class="fa fa-plus"></i>
       Dashboard
     </a>
-    <a class="btn btn-inverse" href="/dashboard/new/?editview=new-folder">
-      <i class="gicon gicon-folder-new"></i>
+    <a class="btn btn-success" href="/dashboard/new/?editview=new-folder">
+      <i class="fa fa-plus"></i>
       Folder
     </a>
   </div>

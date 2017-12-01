@@ -102,7 +102,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	dashboardChildNavs := []*dtos.NavLink{
 		{Text: "Home", Url: setting.AppSubUrl + "/", Icon: "fa fa-fw fa-home", HideFromTabs: true},
-		{Divider: true},
+		{Divider: true, HideFromTabs: true},
 		{Text: "Manage", Id: "dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "fa fa-fw fa-sitemap"},
 		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "fa fa-fw fa-film"},
 		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "icon-gf icon-gf-fw icon-gf-snapshot"},
@@ -113,7 +113,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		Id:       "dashboards",
 		SubTitle: "Manage dashboards & folders",
 		Icon:     "gicon gicon-dashboard",
-		Url:      setting.AppSubUrl + "/dashboards",
+		Url:      setting.AppSubUrl + "/",
 		Children: dashboardChildNavs,
 	})
 
@@ -239,11 +239,6 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 					Description: "View and configure plugins",
 					Icon:        "icon-gf icon-gf-fw icon-gf-apps",
 					Url:         setting.AppSubUrl + "/plugins",
-					// Children: []*dtos.NavLink{
-					// 	{Text: "Panels", Url: setting.AppSubUrl + "/plugins?type=panel", Icon: "fa fa-fw fa-stop"},
-					// 	{Text: "Data sources", Url: setting.AppSubUrl + "/plugins?type=datasource", Icon: "icon-gf icon-gf-datasources"},
-					// 	{Text: "Apps", Url: setting.AppSubUrl + "/plugins?type=app", Icon: "icon-gf icon-gf-apps"},
-					// },
 				},
 				{
 					Text:        "Preferences",
@@ -263,21 +258,24 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			},
 		}
 
-		// if c.IsGrafanaAdmin {
-		// 	cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
-		// 		Text: "Server Admin",
-		// 		Id:   "admin",
-		// 		Icon: "fa fa-fw fa-shield",
-		// 		Url:  setting.AppSubUrl + "/admin",
-		// 		Children: []*dtos.NavLink{
-		// 			{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users"},
-		// 			{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs"},
-		// 			{Text: "Server Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings"},
-		// 			{Text: "Server Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats"},
-		// 			{Text: "Style Guide", Id: "styleguide", Url: setting.AppSubUrl + "/styleguide"},
-		// 		},
-		// 	})
-		// }
+		if c.IsGrafanaAdmin {
+			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
+				Divider: true, HideFromTabs: true,
+			})
+			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
+				Text: "Server Admin",
+				Id:   "admin",
+				Icon: "fa fa-fw fa-shield",
+				Url:  setting.AppSubUrl + "/admin",
+				Children: []*dtos.NavLink{
+					{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users"},
+					{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs"},
+					{Text: "Server Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings"},
+					{Text: "Server Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats"},
+					{Text: "Style Guide", Id: "styleguide", Url: setting.AppSubUrl + "/styleguide"},
+				},
+			})
+		}
 
 		data.NavTree = append(data.NavTree, cfgNode)
 	}

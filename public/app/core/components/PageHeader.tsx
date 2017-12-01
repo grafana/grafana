@@ -28,7 +28,7 @@ export interface IProps {
 // }
 
 function TabItem(tab: NavModelItem) {
-  if (tab.hideFromTabs || tab.divider) {
+  if (tab.hideFromTabs) {
     return (null);
   }
 
