@@ -15,14 +15,15 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
+	gocache "github.com/patrickmn/go-cache"
 )
 
 type fileReader struct {
-	Cfg            *DashboardsAsConfig
-	Path           string
-	log            log.Logger
-	dashboardCache *dashboardCache
-	dashboardRepo  dashboards.Repository
+	Cfg           *DashboardsAsConfig
+	Path          string
+	log           log.Logger
+	dashboardRepo dashboards.Repository
+	cache         *gocache.Cache
 }
 
 func NewDashboardFilereader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
@@ -36,12 +37,30 @@ func NewDashboardFilereader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 	}
 
 	return &fileReader{
-		Cfg:            cfg,
-		Path:           path,
-		log:            log,
-		dashboardRepo:  dashboards.GetRepository(),
-		dashboardCache: newDashboardCache(),
+		Cfg:           cfg,
+		Path:          path,
+		log:           log,
+		dashboardRepo: dashboards.GetRepository(),
+		cache:         gocache.New(5*time.Minute, 10*time.Minute),
 	}, nil
+}
+
+func (fr *fileReader) addCache(key string, json *dashboards.SaveDashboardItem) {
+	fr.cache.Add(key, json, time.Minute*10)
+}
+
+func (fr *fileReader) getCache(key string) (*dashboards.SaveDashboardItem, bool) {
+	obj, exist := fr.cache.Get(key)
+	if !exist {
+		return nil, exist
+	}
+
+	dash, ok := obj.(*dashboards.SaveDashboardItem)
+	if !ok {
+		return nil, ok
+	}
+
+	return dash, ok
 }
 
 func (fr *fileReader) ReadAndListen(ctx context.Context) error {
@@ -83,8 +102,8 @@ func (fr *fileReader) walkFolder() error {
 			return nil
 		}
 
-		cachedDashboard, exist := fr.dashboardCache.getCache(path)
-		if exist && cachedDashboard.ModTime == f.ModTime() {
+		cachedDashboard, exist := fr.getCache(path)
+		if exist && cachedDashboard.UpdatedAt == f.ModTime() {
 			return nil
 		}
 
@@ -140,7 +159,7 @@ func (fr *fileReader) readDashboardFromFile(path string) (*dashboards.SaveDashbo
 		return nil, err
 	}
 
-	fr.dashboardCache.addCache(path, dash)
+	fr.addCache(path, dash)
 
 	return dash, nil
 }

@@ -26,7 +26,7 @@ type SaveDashboardItem struct {
 	TitleLower string
 	OrgId      int64
 	Folder     string
-	ModTime    time.Time
+	UpdatedAt  time.Time
 	UserId     int64
 	Message    string
 	Overwrite  bool
@@ -56,10 +56,11 @@ func (dr *dashboardRepository) SaveDashboard(json *SaveDashboardItem) (*models.D
 		Message:   json.Message,
 		OrgId:     json.OrgId,
 		Overwrite: json.Overwrite,
+		UserId:    json.UserId,
 	}
 
-	if !json.ModTime.IsZero() {
-		cmd.UpdatedAt = json.ModTime
+	if !json.UpdatedAt.IsZero() {
+		cmd.UpdatedAt = json.UpdatedAt
 	}
 
 	err := bus.Dispatch(&cmd)
@@ -69,6 +70,7 @@ func (dr *dashboardRepository) SaveDashboard(json *SaveDashboardItem) (*models.D
 
 	alertCmd := alerting.UpdateDashboardAlertsCommand{
 		OrgId:     json.OrgId,
+		UserId:    json.UserId,
 		Dashboard: cmd.Result,
 	}
 

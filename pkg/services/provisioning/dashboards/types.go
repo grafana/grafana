@@ -1,11 +1,11 @@
 package dashboards
 
 import (
+	"strings"
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"strings"
-	"sync"
-	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -19,37 +19,12 @@ type DashboardsAsConfig struct {
 	Options  map[string]interface{} `json:"options" yaml:"options"`
 }
 
-type dashboardCache struct {
-	mutex      *sync.Mutex
-	dashboards map[string]*dashboards.SaveDashboardItem
-}
-
-func newDashboardCache() *dashboardCache {
-	return &dashboardCache{
-		dashboards: map[string]*dashboards.SaveDashboardItem{},
-		mutex:      &sync.Mutex{},
-	}
-}
-
-func (dc *dashboardCache) addCache(key string, json *dashboards.SaveDashboardItem) {
-	dc.mutex.Lock()
-	defer dc.mutex.Unlock()
-	dc.dashboards[key] = json
-}
-
-func (dc *dashboardCache) getCache(key string) (*dashboards.SaveDashboardItem, bool) {
-	dc.mutex.Lock()
-	defer dc.mutex.Unlock()
-	v, exist := dc.dashboards[key]
-	return v, exist
-}
-
 func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *DashboardsAsConfig) (*dashboards.SaveDashboardItem, error) {
 
 	dash := &dashboards.SaveDashboardItem{}
 	dash.Dashboard = models.NewDashboardFromJson(data)
 	dash.TitleLower = strings.ToLower(dash.Dashboard.Title)
-	dash.ModTime = lastModified
+	dash.UpdatedAt = lastModified
 	dash.OrgId = cfg.OrgId
 	dash.Folder = cfg.Folder
 	dash.Dashboard.Data.Set("editable", cfg.Editable)

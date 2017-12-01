@@ -1,12 +1,13 @@
 package dashboards
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 
 	"github.com/grafana/grafana/pkg/log"
 	. "github.com/smartystreets/goconvey/convey"
@@ -26,9 +27,7 @@ func TestDashboardFileReader(t *testing.T) {
 		fakeRepo = &fakeDashboardRepo{}
 
 		bus.AddHandler("test", mockGetDashboardQuery)
-		bus.AddHandler("test", mockValidateDashboardAlertsCommand)
-		bus.AddHandler("test", mockSaveDashboardCommand)
-		bus.AddHandler("test", mockUpdateDashboardAlertsCommand)
+		dashboards.SetRepository(fakeRepo)
 		logger := log.New("test.logger")
 
 		cfg := &DashboardsAsConfig{
@@ -117,8 +116,13 @@ func TestDashboardFileReader(t *testing.T) {
 }
 
 type fakeDashboardRepo struct {
-	inserted     []*models.SaveDashboardCommand
+	inserted     []*dashboards.SaveDashboardItem
 	getDashboard []*models.Dashboard
+}
+
+func (repo *fakeDashboardRepo) SaveDashboard(json *dashboards.SaveDashboardItem) (*models.Dashboard, error) {
+	repo.inserted = append(repo.inserted, json)
+	return json.Dashboard, nil
 }
 
 func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {
@@ -130,17 +134,4 @@ func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {
 	}
 
 	return models.ErrDashboardNotFound
-}
-
-func mockValidateDashboardAlertsCommand(cmd *alerting.ValidateDashboardAlertsCommand) error {
-	return nil
-}
-
-func mockSaveDashboardCommand(cmd *models.SaveDashboardCommand) error {
-	fakeRepo.inserted = append(fakeRepo.inserted, cmd)
-	return nil
-}
-
-func mockUpdateDashboardAlertsCommand(cmd *alerting.UpdateDashboardAlertsCommand) error {
-	return nil
 }
