@@ -98,7 +98,7 @@ func (g *GrafanaServerImpl) Start() {
 		return
 	}
 
-	SendSystemdReady("READY=1")
+	SendSystemdNotification("READY=1")
 	g.startHttpServer()
 }
 
@@ -173,7 +173,7 @@ func (g *GrafanaServerImpl) writePIDFile() {
 	g.log.Info("Writing PID file", "path", *pidFile, "pid", pid)
 }
 
-func SendSystemdReady(state string) error {
+func SendSystemdNotification(state string) error {
 	notifySocket := os.Getenv("NOTIFY_SOCKET")
 
 	if notifySocket == "" {
