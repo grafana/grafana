@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -29,7 +31,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/social"
 	"github.com/grafana/grafana/pkg/tracing"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func NewGrafanaServer() models.GrafanaServer {
@@ -97,7 +98,7 @@ func (g *GrafanaServerImpl) Start() {
 		return
 	}
 
-	util.SdNotify("READY=1")
+	SendSystemdReady("READY=1")
 	g.startHttpServer()
 }
 
@@ -170,4 +171,29 @@ func (g *GrafanaServerImpl) writePIDFile() {
 	}
 
 	g.log.Info("Writing PID file", "path", *pidFile, "pid", pid)
+}
+
+func SendSystemdReady(state string) error {
+	notifySocket := os.Getenv("NOTIFY_SOCKET")
+
+	if notifySocket == "" {
+		return fmt.Errorf("NOTIFY_SOCKET environment variable empty or unset.")
+	}
+
+	socketAddr := &net.UnixAddr{
+		Name: notifySocket,
+		Net:  "unixgram",
+	}
+
+	conn, err := net.DialUnix(socketAddr.Net, nil, socketAddr)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.Write([]byte(state))
+
+	conn.Close()
+
+	return err
 }
