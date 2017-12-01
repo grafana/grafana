@@ -128,7 +128,7 @@
     "remarkable": "^1.7.1",
     "rxjs": "^5.4.3",
     "tether": "^1.4.0",
-    "tether-drop": "git+https://github.com/torkelo/drop.git",
+    "tether-drop": "https://github.com/torkelo/drop",
     "tinycolor2": "^1.4.1",
     "d3": "^4.11.0",
     "d3-scale-chromatic": "^1.1.1"
