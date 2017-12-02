@@ -27,7 +27,7 @@
 }
 
 .add-panel__items {
-  padding: 3px 0;
+  padding: 3px 8px;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -41,7 +41,7 @@
   background: $card-background;
   box-shadow: $card-shadow;
 
-  border: $panel-border;
+  border-radius: 3px;
   padding: $spacer/3 $spacer;
   width: 31%;
   height: 60px;
