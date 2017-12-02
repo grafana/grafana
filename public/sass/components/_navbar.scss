@@ -2,12 +2,13 @@
 .navbar {
   position: relative;
   padding-left: $side-menu-width;
-  box-shadow: $navbarShadow;
+  // box-shadow: $navbarShadow;
   z-index: $zindex-navbar-fixed;
-  background: $navbarBackground;
+  // background: $navbarBackground;
   height: $navbarHeight;
   padding-right: $spacer;
   display: flex;
+  flex-grow: 1;
 }
 
 .sidemenu-open {
@@ -77,7 +78,7 @@
 
   display: inline-block;
   font-weight: $btn-font-weight;
-  padding: 5px 10px;
+  padding: 8px 11px;
   line-height: 16px;
   color: $text-muted;
   border: 1px solid #151515;
@@ -93,7 +94,7 @@
   }
 
   &--add-panel {
-    padding: 2px 8px;
+    padding: 5px 10px;
 
     .gicon {
       font-size: 22px;
@@ -101,7 +102,7 @@
   }
 
   &--tight {
-    padding: 6px 4px;
+    padding: 9px 4px;
 
     .fa {
       font-size: 14px;

@@ -1,10 +1,12 @@
 <div class="navbar">
 
-	<a class="navbar-page-btn" ng-click="ctrl.showSearch()">
-		<i class="gicon gicon-dashboard"></i>
-		{{ctrl.dashboard.title}}
-		<i class="fa fa-caret-down"></i>
-	</a>
+	<div>
+		<a class="navbar-page-btn" ng-click="ctrl.showSearch()">
+			<i class="gicon gicon-dashboard"></i>
+			{{ctrl.dashboard.title}}
+			<i class="fa fa-caret-down"></i>
+		</a>
+	</div>
 
 	<ul class="nav dash-playlist-actions" ng-if="ctrl.playlistSrv.isPlaying">
 		<li>
