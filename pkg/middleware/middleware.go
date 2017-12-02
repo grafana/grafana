@@ -55,7 +55,7 @@ func GetContextHandler() macaron.Handler {
 			initContextWithBasicAuth(ctx, orgId) ||
 			initContextWithAuthProxy(ctx, orgId) ||
 			initContextWithUserSessionCookie(ctx, orgId) ||
-			initContextWithAnonymousUser(ctx) {
+			initContextWithAnonymousUser(ctx, orgId) {
 		}
 
 		ctx.Logger = log.New("context", "userId", ctx.UserId, "orgId", ctx.OrgId, "uname", ctx.Login)
@@ -74,7 +74,7 @@ func GetContextHandler() macaron.Handler {
 	}
 }
 
-func initContextWithAnonymousUser(ctx *Context) bool {
+func initContextWithAnonymousUser(ctx *Context, orgId int64) bool {
 	if !setting.AnonymousEnabled {
 		return false
 	}
@@ -82,6 +82,10 @@ func initContextWithAnonymousUser(ctx *Context) bool {
 	orgQuery := m.GetOrgByNameQuery{Name: setting.AnonymousOrgName}
 	if err := bus.Dispatch(&orgQuery); err != nil {
 		log.Error(3, "Anonymous access organization error: '%s': %s", setting.AnonymousOrgName, err)
+		return false
+	}
+
+	if orgId != 0 && orgId != orgQuery.Result.Id {
 		return false
 	}
 
