@@ -79,6 +79,10 @@ func main() {
 		case "setup":
 			setup()
 
+		case "build-srv":
+			clean()
+			build("grafana-server", "./pkg/cmd/grafana-server", []string{})
+
 		case "build-cli":
 			clean()
 			build("grafana-cli", "./pkg/cmd/grafana-cli", []string{})
