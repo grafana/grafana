@@ -1,0 +1,18 @@
+.dashboard-settings {
+  opacity: 0;
+  display: block;
+  padding: $spacer*2;
+}
+
+.dashboard-page--settings-opening {
+  .dashboard-container {
+    display: none;
+  }
+}
+
+.dashboard-page--settings-open {
+  .dashboard-settings {
+    opacity: 1;
+    transition: opacity 250ms ease-in-out;
+  }
+}

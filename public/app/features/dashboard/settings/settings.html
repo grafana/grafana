@@ -1,7 +1,11 @@
-<h2>Settings</h2>
 
 <div class="edit-tab-with-sidemenu">
 	<aside class="edit-sidemenu-aside">
+		<h2>
+			<i class="fa fa-cog"></i>
+			Settings
+		</h2>
+
 		<ul class="edit-sidemenu">
 			<li ng-class="{active: ctrl.viewId === section.id}" ng-repeat="section in ctrl.sections">
 				<a ng-click="ctrl.viewId = section.id">

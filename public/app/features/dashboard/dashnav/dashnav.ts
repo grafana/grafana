@@ -37,8 +37,8 @@ export class DashNavCtrl {
       this.contextSrv.toggleSideMenu();
     }
 
-    openEditView(editview) {
-      var search = _.extend(this.$location.search(), {editview: editview});
+    openSettings() {
+      var search = _.extend(this.$location.search(), {editview: 'general'});
       this.$location.search(search);
     }
 

@@ -35,8 +35,16 @@ function (_, $, coreModule) {
           elem.toggleClass('playlist-active', newValue === true);
         });
 
-        $scope.$watch('ctrl.dashboardViewState.state.editView', function(newValue) {
-          elem.toggleClass('dashboard-settings-open', _.isString(newValue));
+        $scope.$watch('ctrl.dashboardViewState.state.editview', function(newValue) {
+          if (newValue) {
+            elem.toggleClass('dashboard-page--settings-opening', _.isString(newValue));
+            setTimeout(function() {
+              elem.toggleClass('dashboard-page--settings-open', _.isString(newValue));
+            }, 10);
+          } else {
+            elem.removeClass('dashboard-page--settings-opening');
+            elem.removeClass('dashboard-page--settings-open');
+          }
         });
       }
     };

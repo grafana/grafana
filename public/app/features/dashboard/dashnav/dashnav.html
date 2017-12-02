@@ -41,20 +41,9 @@
 			<i class="fa fa-link"></i>
 		</button>
 
-		<div class="dropdown">
-			<button class="btn navbar-button" data-toggle="dropdown" bs-tooltip="'Settings'" data-placement="bottom">
-				<i class="fa fa-cog"></i>
-			</button>
-
-			<ul class="dropdown-menu dropdown-menu--navbar">
-				<li ng-repeat="navItem in ::ctrl.navModel.menu" ng-class="{active: navItem.active}">
-					<a class="pointer" ng-href="{{::navItem.url}}" ng-click="ctrl.navItemClicked(navItem, $event)">
-						<i class="{{::navItem.icon}}" ng-show="::navItem.icon"></i>
-						{{::navItem.title}}
-					</a>
-				</li>
-			</ul>
-		</div>
+		<button class="btn navbar-button" ng-click="ctrl.openSettings()" bs-tooltip="'Settings'" data-placement="bottom">
+			<i class="fa fa-cog"></i>
+		</button>
 	</div>
 
 	<gf-time-picker class="gf-timepicker-nav" dashboard="ctrl.dashboard" ng-if="!ctrl.dashboard.timepicker.hidden"></gf-time-picker>
