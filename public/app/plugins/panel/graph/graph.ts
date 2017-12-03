@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.selection';
 import 'vendor/flot/jquery.flot.time';
@@ -22,7 +20,7 @@ import {EventManager} from 'app/features/annotations/all';
 import {convertValuesToHistogram, getSeriesValues} from './histogram';
 
 /** @ngInject **/
-function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
+function graphDirective($rootScope, timeSrv, contextSrv) {
   return {
     restrict: 'A',
     template: '',

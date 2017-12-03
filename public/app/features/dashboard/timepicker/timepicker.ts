@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import angular from 'angular';
 import moment from 'moment';
@@ -25,10 +23,11 @@ export class TimePickerCtrl {
   refresh: any;
   isUtc: boolean;
   firstDayOfWeek: number;
+  closeDropdown: any;
 
   /** @ngInject */
-  constructor(private $scope, private $rootScope, private timeSrv) {
-    $scope.ctrl = this;
+  constructor(private $scope, private $rootScope, private timeSrv, private popoverSrv, private $element) {
+    this.$scope.ctrl = this;
 
     $rootScope.onAppEvent('shift-time-forward', () => this.move(1), $scope);
     $rootScope.onAppEvent('shift-time-backward', () => this.move(-1), $scope);
@@ -108,10 +107,15 @@ export class TimePickerCtrl {
 
     this.refresh.options.unshift({text: 'off'});
 
-    this.$rootScope.appEvent('show-dash-editor', {
-      editview: 'timepicker',
-      scope: this.$scope,
-      cssClass: 'gf-timepicker-dropdown',
+    this.closeDropdown = this.popoverSrv.show({
+      element: this.$element[0],
+      position: 'bottom center',
+      template: '<gf-time-picker-dropdown ctrl="ctrl" />',
+      openOn: 'click',
+      classNames: 'drop-popover drop-popover--form',
+      model: {
+        ctrl: this
+      },
     });
   }
 
@@ -121,7 +125,7 @@ export class TimePickerCtrl {
     }
 
     this.timeSrv.setTime(this.editTimeRaw);
-    this.$rootScope.appEvent('hide-dash-editor');
+    this.closeDropdown();
   }
 
   absoluteFromChanged() {
@@ -144,7 +148,7 @@ export class TimePickerCtrl {
     }
 
     this.timeSrv.setTime(range);
-    this.$rootScope.appEvent('hide-dash-editor');
+    this.closeDropdown();
   }
 
 }
@@ -175,9 +179,20 @@ export function timePickerDirective() {
   };
 }
 
+export function timePickerDropdown() {
+  return {
+    restrict: 'E',
+    templateUrl: 'public/app/features/dashboard/timepicker/dropdown.html',
+    scope: {
+      ctrl: "="
+    }
+  };
+}
+
 
 angular.module('grafana.directives').directive('gfTimePickerSettings', settingsDirective);
 angular.module('grafana.directives').directive('gfTimePicker', timePickerDirective);
+angular.module('grafana.directives').directive('gfTimePickerDropdown', timePickerDropdown);
 
 import {inputDateDirective} from './input_date';
 angular.module("grafana.directives").directive('inputDatetime', inputDateDirective);
