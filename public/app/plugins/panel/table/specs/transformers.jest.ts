@@ -145,6 +145,161 @@ describe('when transforming time series table.', () => {
         });
       });
     });
+
+    describe('Multi-Query Table', () => {
+      const transform = 'multiquery_table';
+      var panel = {
+        transform,
+      };
+      var time = new Date().getTime();
+      var singleQueryData = [
+        {
+          type: 'table',
+          columns: [
+            { text: 'Time' },
+            { text: 'Label Key 1' },
+            { text: 'Value' },
+          ],
+          rows: [
+            [time, 'Label Value 1', 42],
+          ],
+        }
+      ];
+
+      var multipleQueriesDataSameLabels = [
+        {
+          type: 'table',
+          columns: [
+            { text: 'Time' },
+            { text: 'Label Key 1' },
+            { text: 'Label Key 2' },
+            { text: 'Value' },
+          ],
+          rows: [
+            [time, 'Label Value 1', 'Label Value 2', 42],
+          ],
+        },
+        {
+          type: 'table',
+          columns: [
+            { text: 'Time' },
+            { text: 'Label Key 1' },
+            { text: 'Label Key 2' },
+            { text: 'Value' },
+          ],
+          rows: [
+            [time, 'Label Value 1', 'Label Value 2', 13],
+          ],
+        }
+      ];
+
+      var multipleQueriesDataDifferentLabels = [
+        {
+          type: 'table',
+          columns: [
+            { text: 'Time' },
+            { text: 'Label Key 1' },
+            { text: 'Value' },
+          ],
+          rows: [
+            [time, 'Label Value 1', 42],
+          ],
+        },
+        {
+          type: 'table',
+          columns: [
+            { text: 'Time' },
+            { text: 'Label Key 2' },
+            { text: 'Value' },
+          ],
+          rows: [
+            [time, 'Label Value 2', 13],
+          ],
+        }
+      ];
+
+      describe('getColumns', function() {
+        it('should return data columns given a single query', function() {
+          var columns = transformers[transform].getColumns(singleQueryData);
+          expect(columns[0].text).toBe('Time');
+          expect(columns[1].text).toBe('Label Key 1');
+          expect(columns[2].text).toBe('Value A');
+        });
+
+        it('should return the union of data columns given a multiple queries', function() {
+          var columns = transformers[transform].getColumns(multipleQueriesDataSameLabels);
+          expect(columns[0].text).toBe('Time');
+          expect(columns[1].text).toBe('Label Key 1');
+          expect(columns[2].text).toBe('Label Key 2');
+          expect(columns[3].text).toBe('Value A');
+          expect(columns[4].text).toBe('Value B');
+        });
+
+        it('should return the union of data columns given a multiple queries with different labels', function() {
+          var columns = transformers[transform].getColumns(multipleQueriesDataDifferentLabels);
+          expect(columns[0].text).toBe('Time');
+          expect(columns[1].text).toBe('Label Key 1');
+          expect(columns[2].text).toBe('Label Key 2');
+          expect(columns[3].text).toBe('Value A');
+          expect(columns[4].text).toBe('Value B');
+        });
+      });
+
+      describe('transform', function() {
+        it ('should return 3 columns for single queries', () => {
+          table = transformDataToTable(singleQueryData, panel);
+          expect(table.columns.length).toBe(3);
+          expect(table.columns[0].text).toBe('Time');
+          expect(table.columns[1].text).toBe('Label Key 1');
+          expect(table.columns[2].text).toBe('Value A');
+        });
+
+        it ('should return the union of columns for multiple queries', () => {
+          table = transformDataToTable(multipleQueriesDataSameLabels, panel);
+          expect(table.columns.length).toBe(5);
+          expect(table.columns[0].text).toBe('Time');
+          expect(table.columns[1].text).toBe('Label Key 1');
+          expect(table.columns[2].text).toBe('Label Key 2');
+          expect(table.columns[3].text).toBe('Value A');
+          expect(table.columns[4].text).toBe('Value B');
+        });
+
+        it ('should return 1 row for a single query', () => {
+          table = transformDataToTable(singleQueryData, panel);
+          expect(table.rows.length).toBe(1);
+          expect(table.rows[0][0]).toBe(time);
+          expect(table.rows[0][1]).toBe('Label Value 1');
+          expect(table.rows[0][2]).toBe(42);
+        });
+
+        it ('should return 1 row for a mulitple queries with same label values', () => {
+          table = transformDataToTable(multipleQueriesDataSameLabels, panel);
+          expect(table.rows.length).toBe(1);
+          expect(table.rows[0][0]).toBe(time);
+          expect(table.rows[0][1]).toBe('Label Value 1');
+          expect(table.rows[0][2]).toBe('Label Value 2');
+          expect(table.rows[0][3]).toBe(42);
+          expect(table.rows[0][4]).toBe(13);
+        });
+
+        it ('should return 2 rows for a mulitple queries with different label values', () => {
+          table = transformDataToTable(multipleQueriesDataDifferentLabels, panel);
+          expect(table.rows.length).toBe(2);
+
+          expect(table.rows[0][0]).toBe(time);
+          expect(table.rows[0][1]).toBe('Label Value 1');
+          expect(table.rows[0][2]).toBeUndefined();
+          expect(table.rows[0][3]).toBe(42);
+          expect(table.rows[0][4]).toBeUndefined();
+
+          expect(table.rows[1][0]).toBe(time);
+          expect(table.rows[1][1]).toBeUndefined();
+          expect(table.rows[1][2]).toBe('Label Value 2');
+          expect(table.rows[1][3]).toBeUndefined();
+          expect(table.rows[1][4]).toBe(13);
+        });
+      });
+    });
   });
 
   describe('doc data sets', () => {
