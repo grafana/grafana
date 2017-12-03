@@ -14,6 +14,7 @@ type TestDB struct {
 var TestDB_Sqlite3 = TestDB{DriverName: "sqlite3", ConnStr: ":memory:?_loc=Local"}
 var TestDB_Mysql = TestDB{DriverName: "mysql", ConnStr: "grafana:password@tcp(localhost:3306)/grafana_tests?collation=utf8mb4_unicode_ci"}
 var TestDB_Postgres = TestDB{DriverName: "postgres", ConnStr: "user=grafanatest password=grafanatest host=localhost port=5432 dbname=grafanatest sslmode=disable"}
+var TestDB_Mssql = TestDB{DriverName: "mssql", ConnStr: "server=localhost;port=1433;database=grafana_tests;user id=grafana;password=password"}
 
 func CleanDB(x *xorm.Engine) {
 	if x.DriverName() == "postgres" {
