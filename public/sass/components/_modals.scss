@@ -23,7 +23,7 @@
   position: fixed;
   z-index: $zindex-modal;
   width: 100%;
-	background-color: $panel-bg;
+	background: $page-bg;
   @include box-shadow(0 3px 7px rgba(0,0,0,0.3));
   @include background-clip(padding-box);
   outline: none;
@@ -37,13 +37,10 @@
 }
 
 .modal-header {
-  background-color: $body-bg;
-	@include brand-bottom-border();
-	@include clearfix();
-
-  .gf-tabs-link.active {
-    background-color: $panel-bg;
-  }
+  background: $page-header-bg;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
+  @include clearfix();
 }
 
 .modal-header-title {

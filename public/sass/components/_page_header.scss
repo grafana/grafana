@@ -1,8 +1,8 @@
 
 .page-header-canvas {
-  background: linear-gradient(90deg, #292a2d, black);
-  box-shadow: inset 0px -4px 14px $dark-2;
-  border-bottom: 1px solid $dark-4;
+  background: $page-header-bg;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
 }
 
 .page-header {
