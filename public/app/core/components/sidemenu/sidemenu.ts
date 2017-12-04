@@ -11,6 +11,7 @@ export class SideMenuCtrl {
   bottomNav: any;
   loginUrl: string;
   isSignedIn: boolean;
+  smallBPSideMenuOpen = false;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private $location, private contextSrv, private $timeout) {
@@ -28,6 +29,10 @@ export class SideMenuCtrl {
     }
 
     this.$scope.$on('$routeChangeSuccess', () => {
+      if (this.smallBPSideMenuOpen) {
+        this.contextSrv.setSideMenuForSmallBreakpoint(false, true);
+        this.smallBPSideMenuOpen = false;
+      }
       this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
     });
   }
@@ -37,6 +42,11 @@ export class SideMenuCtrl {
     this.$timeout(() => {
       this.$rootScope.$broadcast('render');
     });
+  }
+
+  toggleSideMenuSmallBreakpoint() {
+    this.smallBPSideMenuOpen = !this.smallBPSideMenuOpen;
+    this.contextSrv.setSideMenuForSmallBreakpoint(this.smallBPSideMenuOpen, false);
   }
 
   switchOrg() {

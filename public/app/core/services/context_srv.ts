@@ -27,9 +27,10 @@ export class ContextSrv {
   isGrafanaAdmin: any;
   isEditor: any;
   sidemenu: any;
+  sidemenuSmallBreakpoint = false;
 
   constructor() {
-    this.sidemenu = store.getBool('grafana.sidemenu', false);
+    this.sidemenu = store.getBool('grafana.sidemenu', true);
 
     if (!config.buildInfo) {
       config.buildInfo = {};
@@ -55,7 +56,11 @@ export class ContextSrv {
 
   toggleSideMenu() {
     this.sidemenu = !this.sidemenu;
-    store.set('grafana.sidemenu',this.sidemenu);
+    store.set('grafana.sidemenu', this.sidemenu);
+  }
+
+  setSideMenuForSmallBreakpoint(show: boolean, persistToggle: boolean) {
+    this.sidemenuSmallBreakpoint = show;
   }
 }
 
