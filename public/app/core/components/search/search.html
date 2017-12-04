@@ -20,37 +20,12 @@
 
 	<div class="search-dropdown">
     <div class="search-dropdown__col_1">
-      <div class="search-results-container" grafana-scrollbar>
-        <h6 ng-show="!ctrl.isLoading && results.length">No dashboards matching your query were found.</h6>
-
-        <div ng-repeat="section in ctrl.results" class="search-section">
-          <a class="search-section__header pointer" ng-hide="section.hideHeader" ng-click="ctrl.toggleFolder(section)">
-            <i class="search-section__header__icon" ng-class="section.icon"></i>
-            <span class="search-section__header__text">{{::section.title}}</span>
-            <i class="fa fa-minus search-section__header__toggle" ng-show="section.expanded"></i>
-            <i class="fa fa-plus search-section__header__toggle" ng-hide="section.expanded"></i>
-          </a>
-
-          <div ng-if="section.expanded">
-            <a ng-repeat="item in section.items" class="search-item" ng-class="{'selected': item.selected}" ng-href="{{::item.url}}">
-              <span class="search-item__icon">
-                <i class="fa fa-th-large"></i>
-              </span>
-              <span class="search-item__body">
-                <div class="search-item__body-title">{{::item.title}}</div>
-                <div class="search-item__body-sub-title" ng-show="item.folderTitle && section.hideHeader">
-                  {{::item.folderTitle}}
-                </div>
-              </span>
-              <span class="search-item__tags">
-                <span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in item.tags" tag-color-from-name="tag" class="label label-tag">
-                  {{tag}}
-                </span>
-              </span>
-            </a>
-          </div>
+        <div class="search-results-container" grafana-scrollbar>
+            <h6 ng-show="!ctrl.isLoading && ctrl.results.length === 0">No dashboards matching your query were found.</h6>
+            <dashboard-search-results
+              results="ctrl.results"
+              on-tag-selected="ctrl.filterByTag($tag)" />
         </div>
-      </div>
     </div>
 
     <div class="search-dropdown__col_2">
