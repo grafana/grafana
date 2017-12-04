@@ -135,24 +135,7 @@ transformers['table'] = {
     if (!data || data.length === 0) {
       return [];
     }
-    return data[0].columns;
-  },
-  transform: function(data, panel, model) {
-    if (!data || data.length === 0) {
-      return;
-    }
 
-    if (data[0].type !== 'table') {
-      throw {message: 'Query result is not in table format, try using another transform.'};
-    }
-    model.columns = data[0].columns;
-    model.rows = data[0].rows;
-  }
-};
-
-transformers['multiquery_table'] = {
-  description: 'Multi-Query Table',
-  getColumns: function(data) {
     // Track column indexes: name -> index
     const columnNames = {};
 
@@ -173,7 +156,7 @@ transformers['multiquery_table'] = {
     // Append one value column per data set
     data.forEach((_, i) => {
       // Value (A), Value (B),...
-      const text = `Value ${String.fromCharCode(65 + i)}`;
+      const text = `Value #${String.fromCharCode(65 + i)}`;
       columnNames[text] = columns.length;
       columns.push({ text });
     });
@@ -185,8 +168,9 @@ transformers['multiquery_table'] = {
       return;
     }
 
-    if (data[0].type !== 'table') {
-      throw {message: 'Query result is not in table format, try using another transform.'};
+    const noTableIndex = _.findIndex(data, d => d.type !== 'table');
+    if (noTableIndex > -1) {
+      throw {message: `Result of query #${String.fromCharCode(65 + noTableIndex)} is not in table format, try using another transform.`};
     }
 
     // Track column indexes: name -> index
@@ -213,8 +197,8 @@ transformers['multiquery_table'] = {
 
     // Append one value column per data set
     data.forEach((_, i) => {
-      // Value (A), Value (B),...
-      const text = `Value ${String.fromCharCode(65 + i)}`;
+      // Value #A, Value #B,...
+      const text = `Value #${String.fromCharCode(65 + i)}`;
       columnNames[text] = columns.length;
       columns.push({ text });
       columnIndexes[i].push(columnNames[text]);

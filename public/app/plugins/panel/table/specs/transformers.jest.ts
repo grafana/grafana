@@ -98,13 +98,15 @@ describe('when transforming time series table.', () => {
 
   describe('table data sets', () => {
     describe('Table', () => {
+      const transform = 'table';
       var panel = {
-        transform: 'table',
+        transform,
       };
       var time = new Date().getTime();
-      var rawData = [
+
+      var nonTableData = [
         {
-          type: 'table',
+          type: 'foo',
           columns: [
             { text: 'Time' },
             { text: 'Label Key 1' },
@@ -116,42 +118,6 @@ describe('when transforming time series table.', () => {
         }
       ];
 
-      describe('getColumns', function() {
-        it('should return data columns', function() {
-          var columns = transformers['table'].getColumns(rawData);
-          expect(columns[0].text).toBe('Time');
-          expect(columns[1].text).toBe('Label Key 1');
-          expect(columns[2].text).toBe('Value');
-        });
-      });
-
-      describe('transform', function() {
-        beforeEach(() => {
-          table = transformDataToTable(rawData, panel);
-        });
-
-        it ('should return 3 columns', () => {
-          expect(table.columns.length).toBe(3);
-          expect(table.columns[0].text).toBe('Time');
-          expect(table.columns[1].text).toBe('Label Key 1');
-          expect(table.columns[2].text).toBe('Value');
-        });
-
-        it ('should return 1 row', () => {
-          expect(table.rows.length).toBe(1);
-          expect(table.rows[0][0]).toBe(time);
-          expect(table.rows[0][1]).toBe('Label Value 1');
-          expect(table.rows[0][2]).toBe(42);
-        });
-      });
-    });
-
-    describe('Multi-Query Table', () => {
-      const transform = 'multiquery_table';
-      var panel = {
-        transform,
-      };
-      var time = new Date().getTime();
       var singleQueryData = [
         {
           type: 'table',
@@ -223,7 +189,7 @@ describe('when transforming time series table.', () => {
           var columns = transformers[transform].getColumns(singleQueryData);
           expect(columns[0].text).toBe('Time');
           expect(columns[1].text).toBe('Label Key 1');
-          expect(columns[2].text).toBe('Value A');
+          expect(columns[2].text).toBe('Value #A');
         });
 
         it('should return the union of data columns given a multiple queries', function() {
@@ -231,8 +197,8 @@ describe('when transforming time series table.', () => {
           expect(columns[0].text).toBe('Time');
           expect(columns[1].text).toBe('Label Key 1');
           expect(columns[2].text).toBe('Label Key 2');
-          expect(columns[3].text).toBe('Value A');
-          expect(columns[4].text).toBe('Value B');
+          expect(columns[3].text).toBe('Value #A');
+          expect(columns[4].text).toBe('Value #B');
         });
 
         it('should return the union of data columns given a multiple queries with different labels', function() {
@@ -240,18 +206,22 @@ describe('when transforming time series table.', () => {
           expect(columns[0].text).toBe('Time');
           expect(columns[1].text).toBe('Label Key 1');
           expect(columns[2].text).toBe('Label Key 2');
-          expect(columns[3].text).toBe('Value A');
-          expect(columns[4].text).toBe('Value B');
+          expect(columns[3].text).toBe('Value #A');
+          expect(columns[4].text).toBe('Value #B');
         });
       });
 
       describe('transform', function() {
+        it ('should throw an error with non-table data', () => {
+          expect(() => transformDataToTable(nonTableData, panel)).toThrow();
+        });
+
         it ('should return 3 columns for single queries', () => {
           table = transformDataToTable(singleQueryData, panel);
           expect(table.columns.length).toBe(3);
           expect(table.columns[0].text).toBe('Time');
           expect(table.columns[1].text).toBe('Label Key 1');
-          expect(table.columns[2].text).toBe('Value A');
+          expect(table.columns[2].text).toBe('Value #A');
         });
 
         it ('should return the union of columns for multiple queries', () => {
@@ -260,8 +230,8 @@ describe('when transforming time series table.', () => {
           expect(table.columns[0].text).toBe('Time');
           expect(table.columns[1].text).toBe('Label Key 1');
           expect(table.columns[2].text).toBe('Label Key 2');
-          expect(table.columns[3].text).toBe('Value A');
-          expect(table.columns[4].text).toBe('Value B');
+          expect(table.columns[3].text).toBe('Value #A');
+          expect(table.columns[4].text).toBe('Value #B');
         });
 
         it ('should return 1 row for a single query', () => {
