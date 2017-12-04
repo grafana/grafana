@@ -68,6 +68,11 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controller : 'DashboardListCtrl',
     controllerAs: 'ctrl',
   })
+  .when('/dashboards/import', {
+    templateUrl: 'public/app/features/dashboard/partials/dashboardImport.html',
+    controller : 'DashboardImportCtrl',
+    controllerAs: 'ctrl',
+  })
   .when('/org', {
     templateUrl: 'public/app/features/org/partials/orgDetails.html',
     controller : 'OrgDetailsCtrl',

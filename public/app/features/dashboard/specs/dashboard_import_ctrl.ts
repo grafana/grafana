@@ -1,9 +1,9 @@
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 
-import {DashImportCtrl} from 'app/features/dashboard/import/dash_import';
+import {DashboardImportCtrl} from '../dashboard_import_ctrl';
 import config from 'app/core/config';
 
-describe('DashImportCtrl', function() {
+describe('DashboardImportCtrl', function() {
   var ctx: any = {};
   var backendSrv = {
     search: sinon.stub().returns(Promise.resolve([])),
@@ -15,7 +15,7 @@ describe('DashImportCtrl', function() {
   beforeEach(angularMocks.inject(($rootScope, $controller, $q) => {
     ctx.$q = $q;
     ctx.scope = $rootScope.$new();
-    ctx.ctrl = $controller(DashImportCtrl, {
+    ctx.ctrl = $controller(DashboardImportCtrl, {
       $scope: ctx.scope,
       backendSrv: backendSrv,
     });
