@@ -1,25 +1,24 @@
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
-
 import {DashboardImportCtrl} from '../dashboard_import_ctrl';
-import config from 'app/core/config';
+import config from '../../../core/config';
 
 describe('DashboardImportCtrl', function() {
   var ctx: any = {};
-  var backendSrv = {
-    search: sinon.stub().returns(Promise.resolve([])),
-    get: sinon.stub()
-  };
 
-  beforeEach(angularMocks.module('grafana.core'));
+  let navModelSrv;
+  let backendSrv;
 
-  beforeEach(angularMocks.inject(($rootScope, $controller, $q) => {
-    ctx.$q = $q;
-    ctx.scope = $rootScope.$new();
-    ctx.ctrl = $controller(DashboardImportCtrl, {
-      $scope: ctx.scope,
-      backendSrv: backendSrv,
-    });
-  }));
+  beforeEach(() => {
+    navModelSrv = {
+      getNav: () => {}
+    };
+
+    backendSrv = {
+      search: jest.fn().mockReturnValue(Promise.resolve([])),
+      get: jest.fn()
+    };
+
+    ctx.ctrl = new DashboardImportCtrl(backendSrv, navModelSrv, {}, {}, {});
+  });
 
   describe('when uploading json', function() {
     beforeEach(function() {
@@ -37,13 +36,13 @@ describe('DashboardImportCtrl', function() {
     });
 
     it('should build input model', function() {
-      expect(ctx.ctrl.inputs.length).to.eql(1);
-      expect(ctx.ctrl.inputs[0].name).to.eql('ds');
-      expect(ctx.ctrl.inputs[0].info).to.eql('Select a Test DB data source');
+      expect(ctx.ctrl.inputs.length).toBe(1);
+      expect(ctx.ctrl.inputs[0].name).toBe('ds');
+      expect(ctx.ctrl.inputs[0].info).toBe('Select a Test DB data source');
     });
 
     it('should set inputValid to false', function() {
-      expect(ctx.ctrl.inputsValid).to.eql(false);
+      expect(ctx.ctrl.inputsValid).toBe(false);
     });
   });
 
@@ -51,7 +50,7 @@ describe('DashboardImportCtrl', function() {
     beforeEach(function() {
       ctx.ctrl.gnetUrl = 'http://grafana.com/dashboards/123';
       // setup api mock
-      backendSrv.get = sinon.spy(() => {
+      backendSrv.get = jest.fn(() => {
         return Promise.resolve({
           json: {}
         });
@@ -60,7 +59,7 @@ describe('DashboardImportCtrl', function() {
     });
 
     it('should call gnet api with correct dashboard id', function() {
-      expect(backendSrv.get.getCall(0).args[0]).to.eql('api/gnet/dashboards/123');
+      expect(backendSrv.get.mock.calls[0][0]).toBe('api/gnet/dashboards/123');
     });
   });
 
@@ -68,7 +67,7 @@ describe('DashboardImportCtrl', function() {
     beforeEach(function() {
       ctx.ctrl.gnetUrl = '2342';
       // setup api mock
-      backendSrv.get = sinon.spy(() => {
+      backendSrv.get = jest.fn(() => {
         return Promise.resolve({
           json: {}
         });
@@ -77,10 +76,8 @@ describe('DashboardImportCtrl', function() {
     });
 
     it('should call gnet api with correct dashboard id', function() {
-      expect(backendSrv.get.getCall(0).args[0]).to.eql('api/gnet/dashboards/2342');
+      expect(backendSrv.get.mock.calls[0][0]).toBe('api/gnet/dashboards/2342');
     });
   });
 
 });
-
-
