@@ -1,29 +1,23 @@
-<navbar model="ctrl.navModel"></navbar>
+<page-header model="ctrl.navModel"></page-header>
 
-<div class="page-container" >
-	<div class="page-header">
-    <page-h1 model="ctrl.navModel"></page-h1>
+<div class="page-container page-body">
 
-    <a class="btn btn-secondary" ng-click="ctrl.openHowTo()">
-			<i class="fa fa-info-circle"></i>
-			How to add an alert
-		</a>
-    <a class="btn btn-inverse" href="alerting/notifications" >
-			<i class="fa fa-bell"></i>
-			Notification channels
-		</a>
-	</div>
-
-  <div class="gf-form-group">
-    <div class="gf-form-inline">
-      <div class="gf-form">
-        <label class="gf-form-label">Filter by state</label>
-        <div class="gf-form-select-wrapper width-13">
-          <select class="gf-form-input" ng-model="ctrl.filters.state" ng-options="f.value as f.text for f in ctrl.stateFilters" ng-change="ctrl.filtersChanged()">
-          </select>
-        </div>
+  <div class="page-action-bar">
+    <div class="gf-form">
+      <label class="gf-form-label">Filter by state</label>
+      <div class="gf-form-select-wrapper width-13">
+        <select class="gf-form-input" ng-model="ctrl.filters.state" ng-options="f.value as f.text for f in ctrl.stateFilters" ng-change="ctrl.filtersChanged()">
+        </select>
       </div>
     </div>
+
+    <div class="page-action-bar__spacer">
+    </div>
+
+    <a class="btn btn-secondary" ng-click="ctrl.openHowTo()">
+      <i class="fa fa-info-circle"></i>
+      How to add an alert
+    </a>
   </div>
 
   <section class="card-section card-list-layout-list">

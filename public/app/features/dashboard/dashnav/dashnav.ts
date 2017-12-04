@@ -150,7 +150,7 @@ export class DashNavCtrl {
       this.dashboard.addPanel({
         type: 'add-panel',
         gridPos: {x: 0, y: 0, w: 12, h: 9},
-        title: 'New Graph',
+        title: 'Panel Title',
       });
     }
 

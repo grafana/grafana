@@ -71,7 +71,7 @@
 }
 
 .ps__thumb-y {
-  @include gradient-vertical($blue, lighten($blue, 20%));
+  @include gradient-vertical($scrollbarBackground, $scrollbarBackground2);
   border-radius: 6px;
   width: 6px;
   /* there must be 'right' for ps__thumb-y */

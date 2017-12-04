@@ -16,7 +16,7 @@
 
 .page-container {
   @extend .container;
-  padding: $spacer $spacer $spacer $spacer*3;
+  padding: 0 $spacer * 2;
 }
 
 .scroll-canvas {
@@ -31,15 +31,40 @@
 }
 
 .page-body {
+  padding-top: $spacer*2;
+}
+
+.page-heading {
+  font-size: 1.25rem;
+  margin-top: 0;
+  margin-bottom: $spacer * 0.7;
+}
+
+.page-action-bar {
+  margin-bottom: $spacer * 2;
+  display: flex;
+  align-items: flex-start;
+
+  > a, > button {
+    margin-left: $spacer;
+  }
+}
+
+.page-action-bar__spacer {
+  width: $spacer * 2;
+  flex-grow: 1;
+}
+
+.sidebar-content {
+  width: calc(100% - #{$page-sidebar-width + $page-sidebar-margin}); // sidebar width + margin
+}
+
+.sidebar-container {
   @include media-breakpoint-up(md) {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
   }
-}
-
-.page-content-with-sidebar {
-  width: calc(100% - #{$page-sidebar-width + $page-sidebar-margin}); // sidebar width + margin
 }
 
 .page-sidebar {
@@ -49,60 +74,8 @@
   }
 }
 
-.page-header {
-  padding: 2rem 0 0 0;
-  margin-bottom: 2rem;
-  @include brand-bottom-border();
-  @include clearfix();
-
-  h1 {
-    font-size: $font-size-h2;
-    flex-grow: 1;
-    display: inline-block;
-    margin-bottom: 1rem;
-
-    img {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      margin-right: 0.5rem;
-      position: relative;
-      top: -3px;
-    }
-  }
-
-  a, button {
-    float: right;
-    margin-left: $spacer;
-
-    // better align icons
-    .fa {
-      position: relative;
-      top: 1px;
-    }
-  }
-}
-
-
-
-.page-heading {
-  font-size: 1.25rem;
-  margin-top: 0;
-  margin-bottom: $spacer * 0.7;
-}
-
-.admin-page {
-  max-width: 800px;
-  margin-left: 10px;
-  h2 {
-    margin-left: 15px;
-    margin-bottom: 0px;
-    font-size: $font-size-lg;
-    color: $text-color;
-    i {
-      padding-right: 6px;
-    }
-  }
+.page-sub-heading {
+  margin-bottom: $spacer;
 }
 
 .page-sidebar {
@@ -120,89 +93,3 @@
 .page-sidebar-section {
   margin-bottom: $spacer*2;
 }
-
-.page-breadcrumbs {
-  display: flex;
-  padding: 10px 25px;
-  line-height: 0.5;
-}
-
-.breadcrumb {
-  display: inline-block;
-  box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.35);
-  overflow: hidden;
-  border-radius: 5px;
-  counter-reset: flag;
-}
-
-.breadcrumb-item {
-  text-decoration: none;
-  outline: none;
-  display: block;
-  float: left;
-  font-size: 12px;
-  line-height: 36px;
-  padding: 0 7px 0 37px;
-  @include gradientBar($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
-  position: relative;
-  box-shadow: $card-shadow;
-
-  &:first-child {
-    padding-left: 13px;
-    border-radius: 5px 0 0 5px; /*to match with the parent's radius*/
-    font-size: 20px;
-  }
-
-  &:first-child:before {
-    left: 14px;
-  }
-
-  &:last-child {
-    border-radius: 0 5px 5px 0; /*this was to prevent glitches on hover*/
-    padding-right: 20px;
-  }
-
-  &.active,
-  &:hover {
-    background: #fff;//#333;
-    background: linear-gradient(#dde4ed, darken(#dde4ed, 5%)); //linear-gradient(#333, #000);
-  }
-
-  &.active:after,
-  &:hover:after {
-    background: #fff;//#333;
-    background: linear-gradient(135deg, #dde4ed,darken(#dde4ed, 5%));////linear-gradient(135deg, #333, #000);
-  }
-
-  &:after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: -18px; // half of square's length
-
-    // same dimension as the line-height of .breadcrumb-item
-    width: 36px;
-    height: 36px;
-
-    transform: scale(0.707) rotate(45deg);
-    // we need to prevent the arrows from getting buried under the next link
-    z-index: 1;
-
-    // background same as links but the gradient will be rotated to compensate with the transform applied
-    background: linear-gradient(135deg, $btn-inverse-bg, $btn-inverse-bg-hl);
-
-    // stylish arrow design using box shadow
-    box-shadow: 2px -2px 0 2px rgb(250, 250, 250), 3px -3px 0 2px rgba(255, 255, 255, 0.1);
-
-    // 5px - for rounded arrows and
-    // 50px - to prevent hover glitches on the border created using shadows*/
-    border-radius: 0 5px 0 50px;
-  }
-
-  // we dont need an arrow after the last link
-  &:last-child:after {
-    content: none;
-  }
-}
-
-

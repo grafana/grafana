@@ -6,7 +6,7 @@ export class OrgDetailsCtrl {
   constructor($scope, $http, backendSrv, contextSrv, navModelSrv) {
     $scope.init = function() {
       $scope.getOrgInfo();
-      $scope.navModel = navModelSrv.getNav('cfg', 'org');
+      $scope.navModel = navModelSrv.getNav('cfg', 'org-settings', 0);
     };
 
     $scope.getOrgInfo = function() {

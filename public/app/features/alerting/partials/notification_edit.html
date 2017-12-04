@@ -1,9 +1,9 @@
-<navbar model="ctrl.navModel"></navbar>
+<page-header model="ctrl.navModel"></page-header>
 
-<div class="page-container">
-  <div class="page-header">
-    <page-h1 model="ctrl.navModel"></page-h1>
-  </div>
+<div class="page-container page-body">
+
+  <h3 class="page-sub-heading" ng-hide="ctrl.isNew">Edit Notification Channel</h3>
+  <h3 class="page-sub-heading" ng-show="ctrl.isNew">New Notification Channel</h3>
 
   <form name="ctrl.theForm" ng-if="ctrl.notifiers">
     <div class="gf-form-group">

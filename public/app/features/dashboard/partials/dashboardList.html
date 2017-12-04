@@ -1,163 +1,131 @@
-<div class="scroll-canvas" grafana-scrollbar>
-  <navbar model="ctrl.navModel"></navbar>
-  <div class="page-container" style="height: 95%">
-    <div class="page-header">
-      <h1>Dashboards</h1>
+<page-header model="ctrl.navModel"></page-header>
 
-      <a class="btn btn-inverse" href="/dashboard/new">
-        <i class="gicon gicon-dashboard-new"></i>
-        Dashboard
-      </a>
-      <a class="btn btn-inverse" href="/dashboard/new/?editview=new-folder">
-        <i class="gicon gicon-folder-new"></i>
-        Folder
-      </a>
+<div class="page-container page-body">
+  <div class="page-action-bar">
+    <div class="gf-form gf-form--grow">
+      <label class="gf-form-label">Search</label>
+      <input type="text" class="gf-form-input max-width-30" placeholder="Find Dashboard by name" tabindex="1" give-focus="true" ng-model="ctrl.query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.onQueryChange()" />
     </div>
-    <div class="gf-form-group">
-      <div class="gf-form width-15">
-        <span style="position: relative;">
-          <input type="text" class="gf-form-input" placeholder="Find Dashboard by name" tabindex="1" give-focus="true"
-            ng-model="ctrl.query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.onQueryChange()" />
-        </span>
+    <div class="page-action-bar__spacer"></div>
+    <a class="btn btn-success" href="/dashboard/new">
+      <i class="fa fa-plus"></i>
+      Dashboard
+    </a>
+    <a class="btn btn-success" href="/dashboard/new/?editview=new-folder">
+      <i class="fa fa-plus"></i>
+      Folder
+    </a>
+  </div>
+
+  <div class="gf-form" ng-if="ctrl.query.tag.length">
+    Filters:
+    <span ng-repeat="tagName in ctrl.query.tag">
+      <a ng-click="ctrl.removeTag(tagName, $event)" tag-color-from-name="tagName" class="label label-tag">
+        <i class="fa fa-remove"></i>
+        {{tagName}}
+      </a>
+    </span>
+  </div>
+
+  <div class="gf-form">
+      <div class="gf-form-button-row"
+        ng-show="ctrl.hasFilters">
+        <button
+          type="button"
+          class="btn gf-form-button btn-inverse btn-small"
+          ng-click="ctrl.clearFilters()">
+          <i class="fa fa-close"></i> Clear current search query and filters
+      </button>
+      </div>
+  </div>
+
+  <div class="gf-form-group">
+    <div class="gf-form-button-row">
+      <button	type="button"
+          class="btn gf-form-button btn-secondary"
+          ng-disabled="!ctrl.canMove"
+          ng-click="ctrl.moveTo()"
+          bs-tooltip="ctrl.canMove ? '' : 'Select a dashboard to move (cannot move folders)'" data-placement="bottom">
+        <i class="fa fa-exchange"></i>&nbsp;&nbsp;Move to...
+      </button>
+      <button  type="button"
+          class="btn gf-form-button btn-inverse"
+          ng-click="ctrl.delete()"
+          ng-disabled="!ctrl.canDelete">
+          <i class="fa fa-trash"></i>&nbsp;&nbsp;Delete
+      </button>
+    </div>
+  </div>
+
+  <div class="dashboard-list">
+    <div class="search-results-filter-row">
+      <gf-form-switch
+        on-change="ctrl.onSelectAllChanged()"
+        checked="ctrl.selectAllChecked"
+      />
+      <div class="search-results-filter-row__filters">
+        <select
+          class="search-results-filter-row__filters-item gf-form-input"
+          ng-model="ctrl.selectedStarredFilter"
+          ng-options="t.text disable when t.disabled for t in ctrl.starredFilterOptions"
+          ng-change="ctrl.onStarredFilterChange()"
+        />
+        <select
+          class="search-results-filter-row__filters-item gf-form-input"
+          ng-model="ctrl.selectedTagFilter"
+          ng-options="t.term disable when t.disabled for t in ctrl.tagFilterOptions"
+          ng-change="ctrl.onTagFilterChange()"
+        />
       </div>
     </div>
+    <div class="search-results-container" ng-show="ctrl.sections.length > 0" grafana-scrollbar>
+      <div ng-repeat="section in ctrl.sections" class="search-section">
 
-    <div class="gf-form" ng-if="ctrl.query.tag.length">
-      Filters:
-      <span ng-repeat="tagName in ctrl.query.tag">
-        <a ng-click="ctrl.removeTag(tagName, $event)" tag-color-from-name="tagName" class="label label-tag">
-          <i class="fa fa-remove"></i>
-          {{tagName}}
-        </a>
-      </span>
-    </div>
-
-    <div class="gf-form">
-        <div class="gf-form-button-row"
-          ng-show="ctrl.hasFilters">
-          <button
-            type="button"
-            class="btn gf-form-button btn-inverse btn-small"
-            ng-click="ctrl.clearFilters()">
-            <i class="fa fa-close"></i> Clear current search query and filters
-        </button>
+        <div class="search-section__header__with-checkbox" ng-hide="section.hideHeader">
+          <gf-form-switch
+            on-change="ctrl.selectionChanged()"
+            checked="section.checked">
+          </gf-form-switch>
+          <a  class="search-section__header pointer" ng-click="ctrl.toggleFolder(section)" ng-hide="section.hideHeader">
+            <i class="search-section__header__icon" ng-class="section.icon"></i>
+            <span class="search-section__header__text">{{::section.title}}</span>
+            <i class="fa fa-minus search-section__header__toggle" ng-show="section.expanded"></i>
+            <i class="fa fa-plus search-section__header__toggle" ng-hide="section.expanded"></i>
+          </a>
         </div>
-    </div>
 
-    <div class="gf-form-group">
-      <div class="gf-form-button-row">
-        <button	type="button"
-            class="btn gf-form-button btn-secondary"
-            ng-disabled="!ctrl.canMove"
-            ng-click="ctrl.moveTo()"
-            bs-tooltip="ctrl.canMove ? '' : 'Select a dashboard to move (cannot move folders)'" data-placement="bottom">
-          <i class="fa fa-exchange"></i>&nbsp;&nbsp;Move to...
-        </button>
-        <button  type="button"
-            class="btn gf-form-button btn-inverse"
-            ng-click="ctrl.delete()"
-            ng-disabled="!ctrl.canDelete">
-            <i class="fa fa-trash"></i>&nbsp;&nbsp;Delete
-        </button>
-      </div>
-    </div>
-
-      <div class="dashboard-list">
-        <div class="search-results-filter-row">
+        <div ng-if="section.expanded">
+          <div ng-repeat="item in section.items" class="search-item__with-checkbox" ng-class="{'selected': item.selected}">
             <gf-form-switch
-              on-change="ctrl.onSelectAllChanged()"
-              checked="ctrl.selectAllChecked"
-            />
-          <div class="search-results-filter-row__filters">
-            <select
-              class="search-results-filter-row__filters-item gf-form-input"
-              ng-model="ctrl.selectedStarredFilter"
-              ng-options="t.text disable when t.disabled for t in ctrl.starredFilterOptions"
-              ng-change="ctrl.onStarredFilterChange()"
-            />
-            <select
-              class="search-results-filter-row__filters-item gf-form-input"
-              ng-model="ctrl.selectedTagFilter"
-              ng-options="t.term disable when t.disabled for t in ctrl.tagFilterOptions"
-              ng-change="ctrl.onTagFilterChange()"
-            />
-          </div>
-        </div>
-        <div class="search-results-container" ng-show="ctrl.sections.length > 0" grafana-scrollbar>
-          <div ng-repeat="section in ctrl.sections" class="search-section">
-
-            <div class="search-section__header__with-checkbox" ng-hide="section.hideHeader">
-              <gf-form-switch
-                on-change="ctrl.selectionChanged()"
-                checked="section.checked">
-              </gf-form-switch>
-              <a  class="search-section__header pointer" ng-click="ctrl.toggleFolder(section)" ng-hide="section.hideHeader">
-                <i class="search-section__header__icon" ng-class="section.icon"></i>
-                <span class="search-section__header__text">{{::section.title}}</span>
-                <i class="fa fa-minus search-section__header__toggle" ng-show="section.expanded"></i>
-                <i class="fa fa-plus search-section__header__toggle" ng-hide="section.expanded"></i>
-              </a>
-            </div>
-
-            <div ng-if="section.expanded">
-              <div ng-repeat="item in section.items" class="search-item__with-checkbox" ng-class="{'selected': item.selected}">
-                <gf-form-switch
-                  on-change="ctrl.selectionChanged()"
-                  checked="item.checked" />
-                <a ng-href="{{::item.url}}" class="search-item">
-                  <span class="search-item__icon">
-                    <i class="fa fa-th-large"></i>
-                  </span>
-                  <span class="search-item__body">
-                    <div class="search-item__body-title">{{::item.title}}</div>
-                    <div class="search-item__body-sub-title" ng-show="item.folderTitle && section.hideHeader">
-                      <i class="fa fa-folder-o"></i>
-                      {{::item.folderTitle}}
-                    </div>
-                  </span>
-                  <span class="search-item__tags">
-                    <span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in item.tags" tag-color-from-name="tag"  class="label label-tag">
-                      {{tag}}
-                    </span>
-                  </span>
-                  <span class="search-item__actions">
-                    <i class="fa" ng-class="{'fa-star': item.isStarred, 'fa-star-o': !item.isStarred}"></i>
-                  </span>
-                </a>
-              </div>
-            </div>
-          </div>
-
-            <!-- <div bindonce class="search-section" ng-repeat="dashboard in ctrl.dashboards">
-                <gf-form-switch
-                    switch-class="gf-form-switch--table-cell"
-                    on-change="ctrl.selectionChanged()"
-                    checked="dashboard.checked">
-                </gf-form-switch>
-                <a class="search-item pointer "
-                  bo-href-i="{{dashboard.url}}">
-                  <span class="search-item__icon">
-                    <i class="fa fa-th-large"></i>
-                  </span>
-                  <span class="search-result-tags">
-                    <span ng-click="ctrl.filterByTag(tag, $event)" bindonce ng-repeat="tag in dashboard.tags" tag-color-from-name="tag"  class="label label-tag">
-                      {{tag}}
-                    </span>
-                    <i class="fa" bo-class="{'fa-star': dashboard.isStarred, 'fa-star-o': !dashboard.isStarred}"></i>
-                  </span>
-                  <span class="search-result-link">
-                    <i class="fa search-result-icon"></i>
-                    <span bo-text="dashboard.title" />
-                  </span>
-                </a>
-            </div> -->
+              on-change="ctrl.selectionChanged()"
+              checked="item.checked" />
+            <a ng-href="{{::item.url}}" class="search-item">
+              <span class="search-item__icon">
+                <i class="fa fa-th-large"></i>
+              </span>
+              <span class="search-item__body">
+                <div class="search-item__body-title">{{::item.title}}</div>
+                <div class="search-item__body-sub-title" ng-show="item.folderTitle && section.hideHeader">
+                  <i class="fa fa-folder-o"></i>
+                  {{::item.folderTitle}}
+                </div>
+              </span>
+              <span class="search-item__tags">
+                <span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in item.tags" tag-color-from-name="tag"  class="label label-tag">
+                  {{tag}}
+                </span>
+              </span>
+              <span class="search-item__actions">
+                <i class="fa" ng-class="{'fa-star': item.isStarred, 'fa-star-o': !item.isStarred}"></i>
+              </span>
+            </a>
           </div>
         </div>
       </div>
-
-    <em class="muted" ng-hide="ctrl.sections.length > 0">
-      No Dashboards or Folders found.
-    </em>
+    </div>
   </div>
 </div>
 
+<em class="muted" ng-hide="ctrl.sections.length > 0">
+  No Dashboards or Folders found.
+</em>

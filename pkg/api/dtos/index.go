@@ -24,11 +24,13 @@ type NavLink struct {
 	Id           string     `json:"id,omitempty"`
 	Text         string     `json:"text,omitempty"`
 	Description  string     `json:"description,omitempty"`
+	SubTitle     string     `json:"subTitle,omitempty"`
 	Icon         string     `json:"icon,omitempty"`
 	Img          string     `json:"img,omitempty"`
 	Url          string     `json:"url,omitempty"`
 	Target       string     `json:"target,omitempty"`
 	Divider      bool       `json:"divider,omitempty"`
 	HideFromMenu bool       `json:"hideFromMenu,omitempty"`
+	HideFromTabs bool       `json:"hideFromTabs,omitempty"`
 	Children     []*NavLink `json:"children,omitempty"`
 }

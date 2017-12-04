@@ -15,7 +15,7 @@ $dark-3:           #262628;
 $dark-4:           #333333;
 $dark-5:           #444444;
 $gray-1:           #555555;
-$gray-2:           #7B7B7B;
+$gray-2:           #8e8e8e;
 $gray-3:           #b3b3b3;
 $gray-4:           #D8D9DA;
 $gray-5:           #ECECEC;
@@ -51,7 +51,8 @@ $critical:              #ed2e18;
 // Scaffolding
 // -------------------------
 $body-bg:  			   	    rgb(23,24,25);
-$page-bg:  			   	    $dark-2;
+$page-bg:  			   	    rgb(22, 23, 25);
+
 $body-color:   		 	    $gray-4;
 $text-color:   	   		  $gray-4;
 $text-color-strong: 	  $white;
@@ -64,7 +65,7 @@ $text-shadow-faint: 1px 1px 4px rgb(45, 45, 45);
 
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255,213,0,0.7) 0%, rgba(255,68,0,0.7) 99%, rgba(255,68,0,0.7) 100%);
-$page-gradient: linear-gradient(180deg, #222426 10px, rgba(15, 15, 16, .03) 100px, rgba(10, 10, 11, .03));
+$page-gradient: linear-gradient(180deg, #222426 10px, rgb(22, 23, 25) 100px);
 
 // Links
 // -------------------------
@@ -97,6 +98,11 @@ $panel-drop-zone-bg:    repeating-linear-gradient(-128deg, #111, #111 10px, #191
 $panel-header-hover-bg:       $dark-4;
 $panel-header-menu-hover-bg:  $dark-5;
 
+// page header
+$page-header-bg: linear-gradient(90deg, #292a2d, black);
+$page-header-shadow: inset 0px -4px 14px $dark-2;
+$page-header-border-color: $dark-4;
+
 $divider-border-color:        #555;
 
 // Graphite Target Editor
@@ -121,8 +127,9 @@ $list-item-link-color: $text-color;
 $list-item-shadow:     $card-shadow;
 
 // Scrollbars
-$scrollbarBackground: #3a3a3a;
+$scrollbarBackground: #404357;
 $scrollbarBackground2: #3a3a3a;
+
 $scrollbarBorder: black;
 
 // Tables
@@ -180,6 +187,7 @@ $input-invalid-border-color:     lighten($red, 5%);
 
 // Search
 $search-shadow: 0 0 35px 0 $body-bg;
+$search-filter-box-bg: $gray-blue;
 
 // Dropdowns
 // -------------------------
@@ -274,7 +282,7 @@ $alert-warning-bg:        linear-gradient(90deg, #d44939, #e0603d);
 $alert-info-bg:           linear-gradient(100deg, #1a4552, #00374a);
 
 // popover
-$popover-bg:              $panel-bg;
+$popover-bg:              $page-bg;
 $popover-color:           $text-color;
 $popover-border-color:    $dark-4;
 $popover-shadow:          0 0 20px black;
@@ -300,7 +308,7 @@ $checkboxImageUrl: '../img/checkbox.png';
 $info-box-background: linear-gradient(100deg, #1a4552, #00374a);
 
 // footer
-$footer-link-color:   $gray-1;
+$footer-link-color:   $gray-2;
 $footer-link-hover:   $gray-4;
 
 // collapse box

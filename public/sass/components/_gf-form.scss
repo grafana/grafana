@@ -1,4 +1,5 @@
 $gf-form-margin: 3px;
+$input-border: 1px solid $input-border-color;
 
 .gf-form {
   margin-bottom: $gf-form-margin;
@@ -19,6 +20,15 @@ $gf-form-margin: 3px;
 
   &--flex-end {
     justify-content: flex-end;
+  }
+
+  &--alt {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .gf-form-label {
+      padding: 4px 0;
+    }
   }
 }
 
@@ -115,7 +125,7 @@ $gf-form-margin: 3px;
   background-color: $input-bg;
   background-image: none;
   background-clip: padding-box;
-  border: 1px solid $input-border-color;
+  border: $input-border;
   @include border-radius($input-border-radius-sm);
   @include box-shadow($input-box-shadow);
   white-space: nowrap;
@@ -268,6 +278,7 @@ $gf-form-margin: 3px;
   position: relative;
   background-color: $input-bg;
   padding-right: $input-padding-x;
+  border: $input-border;
 
   &::after {
     position: absolute;
@@ -278,6 +289,10 @@ $gf-form-margin: 3px;
     font: normal normal normal $font-size-sm/1 FontAwesome;
     content: '\f0d7';
     pointer-events: none;
+  }
+
+  .gf-form-input {
+    border: none;
   }
 }
 

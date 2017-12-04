@@ -1,15 +1,15 @@
-.nav.gf-timepicker-nav {
-  margin-right: 0;
-}
-
 .timepicker-timestring {
   font-weight: normal;
 }
 
+.gf-timepicker-nav {
+  flex-wrap: nowrap;
+  display: flex;
+}
+
 .gf-timepicker-nav-btn {
-  overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: hidden;
 }
 
 .gf-timepicker-dropdown {
@@ -118,14 +118,3 @@
   @extend .fa-chevron-left;
 }
 
-.gf-timepicker-time-control {
-  font-size: $font-size-sm;
-  a {
-    padding: 18px 7px 13px !important;
-  }
-}
-
-.dashnav-move-timeframe  {
-  position: relative;
-  top: 1px;
-}

@@ -5,7 +5,7 @@ export class NewOrgCtrl {
 
   /** @ngInject **/
   constructor($scope, $http, backendSrv, navModelSrv) {
-    $scope.navModel = navModelSrv.getOrgNav(0);
+    $scope.navModel = navModelSrv.getNav('cfg', 'admin', 'global-orgs', 1);
     $scope.newOrg = {name: ''};
 
     $scope.createOrg = function() {

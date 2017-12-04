@@ -1,8 +1,9 @@
-<navbar model="navModel"></navbar>
+<page-header model="navModel"></page-header>
 
-<div class="page-container">
-	<div class="page-header">
-		<h1>Edit User</h1>
+<div class="page-container page-body">
+
+	<div class="page-sub-heading">
+		<h2>Edit User</h2>
 	</div>
 
 	<form name="userForm" class="gf-form-group">
@@ -54,7 +55,7 @@
 	<form name="addOrgForm" class="gf-form-group">
 		<div class="gf-form-inline">
 			<div class="gf-form">
-				<span class="gf-form-label width-12">Add organization</span>
+				<span class="gf-form-label">Add</span>
 				<input type="text" ng-model="newOrg.name" bs-typeahead="searchOrgs"	required class="gf-form-input max-width-20" placeholder="organization name">
 			</div>
 			<div class="gf-form">
@@ -67,12 +68,14 @@
 		</div>
 	</form>
 
-	<table class="grafana-options-table">
-		<tr>
-			<th>Name</th>
-			<th>Role</th>
-			<th></th>
-		</tr>
+	<table class="filter-table">
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Role</th>
+				<th></th>
+			</tr>
+		</thead>
 		<tr ng-repeat="org in orgs">
 			<td>
 				{{org.name}} <span class="label label-info" ng-show="org.orgId === user.orgId">Current</span>

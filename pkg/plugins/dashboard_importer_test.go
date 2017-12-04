@@ -13,32 +13,12 @@ import (
 )
 
 func TestDashboardImport(t *testing.T) {
-
-	Convey("When importing plugin dashboard", t, func() {
-		setting.Cfg = ini.Empty()
-		sec, _ := setting.Cfg.NewSection("plugin.test-app")
-		sec.NewKey("path", "../../tests/test-app")
-		err := Init()
-
-		So(err, ShouldBeNil)
-
-		folderId := int64(1000)
+	pluginScenario("When importing a plugin dashboard", t, func() {
 		var importedDash *m.Dashboard
-		var createdFolder *m.Dashboard
+
 		bus.AddHandler("test", func(cmd *m.SaveDashboardCommand) error {
-			if cmd.IsFolder {
-				createdFolder = cmd.GetDashboardModel()
-				createdFolder.Id = folderId
-				cmd.Result = createdFolder
-			} else {
-				importedDash = cmd.GetDashboardModel()
-				cmd.Result = importedDash
-			}
-
-			return nil
-		})
-
-		bus.AddHandler("test", func(cmd *m.GetDashboardQuery) error {
+			importedDash = cmd.GetDashboardModel()
+			cmd.Result = importedDash
 			return nil
 		})
 
@@ -52,7 +32,7 @@ func TestDashboardImport(t *testing.T) {
 			},
 		}
 
-		err = ImportDashboard(&cmd)
+		err := ImportDashboard(&cmd)
 		So(err, ShouldBeNil)
 
 		Convey("should install dashboard", func() {
@@ -67,78 +47,6 @@ func TestDashboardImport(t *testing.T) {
 
 			panel := importedDash.Data.Get("rows").GetIndex(0).Get("panels").GetIndex(0)
 			So(panel.Get("datasource").MustString(), ShouldEqual, "graphite")
-
-			So(importedDash.FolderId, ShouldEqual, folderId)
-		})
-
-		Convey("should create app folder", func() {
-			So(createdFolder.Title, ShouldEqual, "App: Test App")
-			So(createdFolder.Id, ShouldEqual, folderId)
-		})
-	})
-
-	Convey("When re-importing plugin dashboard", t, func() {
-		setting.Cfg = ini.Empty()
-		sec, _ := setting.Cfg.NewSection("plugin.test-app")
-		sec.NewKey("path", "../../tests/test-app")
-		err := Init()
-
-		So(err, ShouldBeNil)
-
-		folderId := int64(1000)
-		var importedDash *m.Dashboard
-		var createdFolder *m.Dashboard
-		bus.AddHandler("test", func(cmd *m.SaveDashboardCommand) error {
-			if cmd.IsFolder {
-				cmd.Result = cmd.GetDashboardModel()
-			} else {
-				importedDash = cmd.GetDashboardModel()
-				cmd.Result = importedDash
-			}
-
-			return nil
-		})
-
-		bus.AddHandler("test", func(cmd *m.GetDashboardQuery) error {
-			cmd.Result = &m.Dashboard{
-				Id:    1000,
-				Title: "Something",
-			}
-
-			return nil
-		})
-
-		cmd := ImportDashboardCommand{
-			PluginId: "test-app",
-			Path:     "dashboards/connections.json",
-			OrgId:    1,
-			UserId:   1,
-			Inputs: []ImportDashboardInput{
-				{Name: "*", Type: "datasource", Value: "graphite"},
-			},
-		}
-
-		err = ImportDashboard(&cmd)
-		So(err, ShouldBeNil)
-
-		Convey("should install dashboard", func() {
-			So(importedDash, ShouldNotBeNil)
-
-			resultStr, _ := importedDash.Data.EncodePretty()
-			expectedBytes, _ := ioutil.ReadFile("../../tests/test-app/dashboards/connections_result.json")
-			expectedJson, _ := simplejson.NewJson(expectedBytes)
-			expectedStr, _ := expectedJson.EncodePretty()
-
-			So(string(resultStr), ShouldEqual, string(expectedStr))
-
-			panel := importedDash.Data.Get("rows").GetIndex(0).Get("panels").GetIndex(0)
-			So(panel.Get("datasource").MustString(), ShouldEqual, "graphite")
-
-			So(importedDash.FolderId, ShouldEqual, folderId)
-		})
-
-		Convey("should not create app folder", func() {
-			So(createdFolder, ShouldBeNil)
 		})
 	})
 
@@ -176,4 +84,17 @@ func TestDashboardImport(t *testing.T) {
 
 	})
 
+}
+
+func pluginScenario(desc string, t *testing.T, fn func()) {
+	Convey("Given a plugin", t, func() {
+		setting.Cfg = ini.Empty()
+		sec, _ := setting.Cfg.NewSection("plugin.test-app")
+		sec.NewKey("path", "../../tests/test-app")
+		err := Init()
+
+		So(err, ShouldBeNil)
+
+		Convey(desc, fn)
+	})
 }

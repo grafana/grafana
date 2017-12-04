@@ -19,6 +19,7 @@ div.flot-text {
   &--solo {
     .panel-container {
       border: none;
+      z-index: $zindex-sidemenu + 1
     }
   }
 }
@@ -42,7 +43,7 @@ div.flot-text {
 }
 
 .panel-content {
-  padding: 0px 10px 5px 10px;
+  padding: $panel-padding;
   height: calc(100% - 27px);
   position: relative;
   overflow: hidden;
@@ -144,14 +145,14 @@ div.flot-text {
   width: 27px;
   height: 27px;
   top: 0;
-  z-index: 10;
+  z-index: 1;
 
   .fa {
     position: relative;
     top: -4px;
     left: -6px;
     font-size: 75%;
-    z-index: 1000;
+    z-index: 1;
   }
 
   &--info {

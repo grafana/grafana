@@ -85,6 +85,16 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         }
       });
 
+      let sidemenuOpenSmallBreakpoint = scope.contextSrv.sidemenuSmallBreakpoint;
+      body.toggleClass('sidemenu-open--xs', sidemenuOpenSmallBreakpoint);
+
+      scope.$watch('contextSrv.sidemenuSmallBreakpoint', newVal => {
+        if (sidemenuOpenSmallBreakpoint !== scope.contextSrv.sidemenuSmallBreakpoint) {
+          sidemenuOpenSmallBreakpoint = scope.contextSrv.sidemenuSmallBreakpoint;
+          body.toggleClass('sidemenu-open--xs', scope.contextSrv.sidemenuSmallBreakpoint);
+        }
+      });
+
       // tooltip removal fix
       // manage page classes
       var pageClass;

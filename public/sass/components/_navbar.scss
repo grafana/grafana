@@ -1,66 +1,20 @@
 
 .navbar {
-  display: block;
-  overflow: visible;
   position: relative;
   padding-left: $side-menu-width;
-  box-shadow: $navbarShadow;
-  z-index: 1;
-  background: $navbarBackground;
-}
-
-.navbar-inner {
-  min-height: $navbarHeight;
+  // box-shadow: $navbarShadow;
+  z-index: $zindex-navbar-fixed;
+  // background: $navbarBackground;
+  height: $navbarHeight;
   padding-right: $spacer;
   display: flex;
-  @include clearfix();
+  flex-grow: 1;
 }
 
 .sidemenu-open {
   .navbar {
     padding-left: 15px;
   }
-}
-
-.navbar .nav {
-  position: relative;
-  left: 0;
-  float: left;
-
-  &--grow {
-    flex-grow: 1;
-  }
-}
-
-
-.navbar .nav > li {
-  float: left;
-}
-
-// Links
-.navbar .nav > li > a {
-  float: none;
-  padding: 17px 13px 13px;
-  color: $navbarLinkColor;
-  text-decoration: none;
-
-  .fa { font-size: 115%; }
-}
-
-// Hover/focus
-.navbar .nav > li > a:focus,
-.navbar .nav > li > a:hover {
-  color: $navbarLinkColorHover;
-  text-decoration: none;
-}
-
-// Active nav items
-.navbar .nav > .active > a,
-.navbar .nav > .active > a:hover,
-.navbar .nav > .active > a:focus {
-  color: $navbarLinkColorActive;
-  text-decoration: none;
-  background-color: $navbarLinkBackgroundActive;
 }
 
 .navbar-page-btn {
@@ -105,4 +59,55 @@
 
 .navbar-mini-btn-wrapper {
   padding: 15px;
+}
+
+.navbar-buttons {
+  height: $navbarHeight;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-right: $spacer;
+}
+
+.navbar__spacer {
+  flex-grow: 1;
+}
+
+.navbar-button {
+  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
+
+  display: inline-block;
+  font-weight: $btn-font-weight;
+  padding: 8px 11px;
+  line-height: 16px;
+  color: $text-muted;
+  border: 1px solid #151515;
+  margin-right: 1px;
+  white-space: nowrap;
+
+  .gicon {
+    font-size: 16px;
+  }
+
+  .fa {
+    font-size: 16px;
+  }
+
+  &--add-panel {
+    padding: 5px 10px;
+
+    .gicon {
+      font-size: 22px;
+    }
+  }
+
+  &--tight {
+    padding: 9px 4px;
+
+    .fa {
+      font-size: 14px;
+      position: relative;
+      top: 2px;
+    }
+  }
 }

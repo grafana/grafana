@@ -102,6 +102,8 @@ $brand-gradient: linear-gradient(to right, rgba(255,213,0,1.0) 0%, rgba(255,68,0
 //$page-gradient: linear-gradient(120deg, transparent 40%, darken($gray-6, 4%) 98%);
 $page-gradient: linear-gradient(120deg, $gray-7 40%, $gray-6 98%);
 //$page-gradient: $gray-7;
+// $page-gradient: linear-gradient(-60deg, transparent 70%, darken($page-bg, 4%) 98%);
+$page-header-bg: linear-gradient(90deg, #292a2d, black);
 
 // Links
 // -------------------------
@@ -134,6 +136,11 @@ $panel-border:       solid 1px $panel-border-color;
 $panel-drop-zone-bg: repeating-linear-gradient(-128deg, $body-bg, $body-bg 10px, $gray-6 10px, $gray-6 20px);
 $panel-header-hover-bg:       $gray-6;
 $panel-header-menu-hover-bg:  $gray-4;
+
+// Page header
+$page-header-bg: linear-gradient(90deg, #292a2d, black);
+$page-header-shadow: inset 0px -4px 14px $dark-2;
+$page-header-border-color: $dark-4;
 
 $divider-border-color:	      $gray-2;
 
@@ -238,6 +245,7 @@ $breadcrumb-hover-hl:       #d9dadd;
 
 // search
 $search-shadow: 0 5px 30px 0 $gray-4;
+$search-filter-box-bg: $gray-4;
 
 // Dropdowns
 // -------------------------
@@ -322,7 +330,7 @@ $alert-warning-bg:        linear-gradient(90deg, #d44939, #e04d3d);
 $alert-info-bg:           $blue-dark;
 
 // popover
-$popover-bg:              $panel-bg;
+$popover-bg:              $page-bg;
 $popover-color:           $text-color;
 $popover-border-color:    $gray-5;
 $popover-shadow:          0 0 20px $white;

@@ -9,7 +9,7 @@ export class SnapshotsCtrl {
 
   /** @ngInject */
   constructor(private $rootScope, private backendSrv, navModelSrv) {
-    this.navModel = navModelSrv.getNav('dashboards', 'snapshots');
+    this.navModel = navModelSrv.getNav('dashboards', 'snapshots', 0);
     this.backendSrv.get('/api/dashboard/snapshots').then(result => {
       this.snapshots = result;
     });
