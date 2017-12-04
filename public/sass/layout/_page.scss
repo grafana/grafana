@@ -144,7 +144,6 @@
   line-height: 36px;
   padding: 0 7px 0 37px;
   @include gradientBar($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
-  //background:linear-gradient(#edeff2, #e3e4e7);
   position: relative;
   box-shadow: $card-shadow;
 
@@ -166,13 +165,13 @@
   &.active,
   &:hover {
     background: #fff;//#333;
-    background: linear-gradient($gray-4, darken($gray-4, 5%)); //linear-gradient(#333, #000);
+    background: linear-gradient(#dde4ed, darken(#dde4ed, 5%)); //linear-gradient(#333, #000);
   }
 
   &.active:after,
   &:hover:after {
     background: #fff;//#333;
-    background: linear-gradient(135deg, $gray-4,darken($gray-4, 5%));////linear-gradient(135deg, #333, #000);
+    background: linear-gradient(135deg, #dde4ed,darken(#dde4ed, 5%));////linear-gradient(135deg, #333, #000);
   }
 
   &:after {
