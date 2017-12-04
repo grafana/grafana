@@ -383,8 +383,8 @@ export class DashboardMigrator {
       return;
     }
 
-    // Add special "row" panels if even one row is collapsed or has visible title
-    const showRows = _.some(old.rows, (row) => row.collapse || row.showTitle);
+    // Add special "row" panels if even one row is collapsed, repeated or has visible title
+    const showRows = _.some(old.rows, (row) => row.collapse || row.showTitle || row.repeat);
 
     for (let row of old.rows) {
       let height: any = row.height || DEFAULT_ROW_HEIGHT;
@@ -398,6 +398,7 @@ export class DashboardMigrator {
         rowPanel.type = 'row';
         rowPanel.title = row.title;
         rowPanel.collapsed = row.collapse;
+        rowPanel.repeat = row.repeat;
         rowPanel.panels = [];
         rowPanel.gridPos = {x: 0, y: yPos, w: GRID_COLUMN_COUNT, h: rowGridHeight};
         rowPanelModel = new PanelModel(rowPanel);
