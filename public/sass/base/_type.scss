@@ -48,6 +48,8 @@ a.text-success:hover,
 a.text-success:focus { color: darken($success-text-color, 10%); }
 a { cursor: pointer; }
 
+.text-link { text-decoration: underline; }
+
 a:focus {
   outline:0 none !important;
 }
