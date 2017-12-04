@@ -259,16 +259,6 @@ export class DashboardModel {
       }
     }
 
-    // for (let panel of this.panels) {
-    //   if (panel.repeat) {
-    //     if (!cleanUpOnly) {
-    //       this.repeatPanel(panel);
-    //     }
-    //   } else if (panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
-    //     panelsToRemove.push(panel);
-    //   }
-    // }
-
     // remove panels
     _.pull(this.panels, ...panelsToRemove);
 
@@ -322,9 +312,6 @@ export class DashboardModel {
 
     this.updateRepeatedPanelIds(clone);
     return clone;
-  }
-
-  getBottomYForRow() {
   }
 
   repeatPanel(panel: PanelModel, panelIndex: number) {
