@@ -16,7 +16,7 @@ export class DashboardImportCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private $location, private $scope, $routeParams) {
-    this.navModel = navModelSrv.getNav('dashboards', 'import', 0);
+    this.navModel = navModelSrv.getNav('create', 'import');
 
     this.step = 1;
     this.nameExists = false;

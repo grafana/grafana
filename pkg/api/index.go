@@ -90,11 +90,13 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
 			Text: "Create",
+			Id:   "create",
 			Icon: "fa fa-fw fa-plus",
 			Url:  "#",
 			Children: []*dtos.NavLink{
 				{Text: "Dashboard", Icon: "gicon gicon-dashboard-new", Url: setting.AppSubUrl + "/dashboard/new"},
 				{Text: "Folder", Icon: "gicon gicon-folder-new", Url: setting.AppSubUrl + "/dashboard/new/?editview=new-folder"},
+				{Text: "Import", Id: "import", Icon: "gicon gicon-dashboard-import", Url: setting.AppSubUrl + "/dashboard/import"},
 			},
 		})
 	}
@@ -103,7 +105,6 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		{Text: "Home", Url: setting.AppSubUrl + "/", Icon: "fa fa-fw fa-home", HideFromTabs: true},
 		{Divider: true, HideFromTabs: true},
 		{Text: "Manage", Id: "dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "fa fa-fw fa-sitemap"},
-		{Text: "Import", Id: "import", Url: setting.AppSubUrl + "/dashboards/import", Icon: "gicon gicon-dashboard-import"},
 		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "fa fa-fw fa-film"},
 		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "icon-gf icon-gf-fw icon-gf-snapshot"},
 	}

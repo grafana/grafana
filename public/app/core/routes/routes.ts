@@ -48,6 +48,11 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     reloadOnSearch: false,
     pageClass: 'page-dashboard',
   })
+  .when('/dashboard/import', {
+    templateUrl: 'public/app/features/dashboard/partials/dashboardImport.html',
+    controller : 'DashboardImportCtrl',
+    controllerAs: 'ctrl',
+  })
   .when('/datasources', {
     templateUrl: 'public/app/features/plugins/partials/ds_list.html',
     controller : 'DataSourcesCtrl',
@@ -66,11 +71,6 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/dashboards', {
     templateUrl: 'public/app/features/dashboard/partials/dashboardList.html',
     controller : 'DashboardListCtrl',
-    controllerAs: 'ctrl',
-  })
-  .when('/dashboards/import', {
-    templateUrl: 'public/app/features/dashboard/partials/dashboardImport.html',
-    controller : 'DashboardImportCtrl',
     controllerAs: 'ctrl',
   })
   .when('/org', {
