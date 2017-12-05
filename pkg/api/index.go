@@ -104,7 +104,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	dashboardChildNavs := []*dtos.NavLink{
 		{Text: "Home", Url: setting.AppSubUrl + "/", Icon: "fa fa-fw fa-home", HideFromTabs: true},
 		{Divider: true, HideFromTabs: true},
-		{Text: "Manage", Id: "dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "fa fa-fw fa-sitemap"},
+		{Text: "Manage", Id: "manage-dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "fa fa-fw fa-sitemap"},
 		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "fa fa-fw fa-film"},
 		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "icon-gf icon-gf-fw icon-gf-snapshot"},
 	}

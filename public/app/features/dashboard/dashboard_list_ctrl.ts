@@ -17,7 +17,7 @@ export class DashboardListCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private $q, private searchSrv: SearchSrv) {
-    this.navModel = navModelSrv.getNav('dashboards', 'dashboards', 0);
+    this.navModel = navModelSrv.getNav('dashboards', 'manage-dashboards', 0);
     this.query = {query: '', mode: 'tree', tag: [], starred: false};
     this.selectedStarredFilter = this.starredFilterOptions[0];
 
