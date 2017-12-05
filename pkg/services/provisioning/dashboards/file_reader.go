@@ -64,16 +64,24 @@ func (fr *fileReader) getCache(key string) (*dashboards.SaveDashboardItem, bool)
 }
 
 func (fr *fileReader) ReadAndListen(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second * 5)
+	ticker := time.NewTicker(time.Second * 3)
 
 	if err := fr.walkFolder(); err != nil {
 		fr.log.Error("failed to search for dashboards", "error", err)
 	}
 
+	running := false
+
 	for {
 		select {
 		case <-ticker.C:
-			fr.walkFolder()
+			if !running { // avoid walking the filesystem in parallel. incase fs is very slow.
+				running = true
+				go func() {
+					fr.walkFolder()
+					running = false
+				}()
+			}
 		case <-ctx.Done():
 			return nil
 		}
