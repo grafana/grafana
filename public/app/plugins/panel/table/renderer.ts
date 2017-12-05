@@ -127,7 +127,7 @@ export class TableRenderer {
     let row = this.table.rows[rowIndex];
     for (let i = 0; i < row.length; i++) {
       cell_variable = `__cell_${i}`;
-      scopedVars[cell_variable] = { value: row[i] };
+      scopedVars[cell_variable] = { value: encodeURIComponent(row[i]) };
     }
     return scopedVars;
   }
