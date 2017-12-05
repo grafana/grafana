@@ -41,7 +41,7 @@ func TestDashboardFileReader(t *testing.T) {
 		Convey("Can read default dashboard", func() {
 			cfg.Options["folder"] = defaultDashboards
 
-			reader, err := NewDashboardFilereader(cfg, logger)
+			reader, err := NewDashboardFileReader(cfg, logger)
 			So(err, ShouldBeNil)
 
 			err = reader.walkFolder()
@@ -58,7 +58,7 @@ func TestDashboardFileReader(t *testing.T) {
 				Slug:    "grafana",
 			})
 
-			reader, err := NewDashboardFilereader(cfg, logger)
+			reader, err := NewDashboardFileReader(cfg, logger)
 			So(err, ShouldBeNil)
 
 			err = reader.walkFolder()
@@ -77,7 +77,7 @@ func TestDashboardFileReader(t *testing.T) {
 				Slug:    "grafana",
 			})
 
-			reader, err := NewDashboardFilereader(cfg, logger)
+			reader, err := NewDashboardFileReader(cfg, logger)
 			So(err, ShouldBeNil)
 
 			err = reader.walkFolder()
@@ -94,7 +94,7 @@ func TestDashboardFileReader(t *testing.T) {
 				Folder: "",
 			}
 
-			_, err := NewDashboardFilereader(cfg, logger)
+			_, err := NewDashboardFileReader(cfg, logger)
 			So(err, ShouldNotBeNil)
 		})
 
@@ -109,7 +109,7 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			_, err := NewDashboardFilereader(cfg, logger)
+			_, err := NewDashboardFileReader(cfg, logger)
 			So(err, ShouldBeNil)
 		})
 	})

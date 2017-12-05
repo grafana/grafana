@@ -33,7 +33,7 @@ func (provider *DashboardProvisioner) Provision(ctx context.Context) error {
 	for _, cfg := range cfgs {
 		switch cfg.Type {
 		case "file":
-			fileReader, err := NewDashboardFilereader(cfg, provider.log.New("type", cfg.Type, "name", cfg.Name))
+			fileReader, err := NewDashboardFileReader(cfg, provider.log.New("type", cfg.Type, "name", cfg.Name))
 			if err != nil {
 				return err
 			}

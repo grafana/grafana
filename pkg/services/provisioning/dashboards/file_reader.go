@@ -26,7 +26,7 @@ type fileReader struct {
 	cache         *gocache.Cache
 }
 
-func NewDashboardFilereader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
+func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
 	path, ok := cfg.Options["folder"].(string)
 	if !ok {
 		return nil, fmt.Errorf("Failed to load dashboards. folder param is not a string")
