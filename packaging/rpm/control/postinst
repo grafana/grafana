@@ -43,6 +43,10 @@ if [ $1 -eq 1 ] ; then
   if [ ! -f $CONF_FILE ]; then
     cp /usr/share/grafana/conf/sample.ini $CONF_FILE
     cp /usr/share/grafana/conf/ldap.toml /etc/grafana/ldap.toml
+
+    mkdir -p /etc/grafana/dashboards /etc/grafana/datasources
+    cp /usr/share/grafana/conf/dashboards/sample.yaml /etc/grafana/dashboards/sample.yaml
+    cp /usr/share/grafana/conf/datasources/sample.yaml /etc/grafana/datasources/sample.yaml
   fi
 
  	# Set user permissions on /var/log/grafana, /var/lib/grafana

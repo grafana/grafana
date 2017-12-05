@@ -18,5 +18,9 @@ RESTART_ON_UPGRADE=true
 
 PLUGINS_DIR=/var/lib/grafana/plugins
 
+DATASOURCES_CFG_DIR=/etc/grafana/datasources
+
+DASHBOARDS_CFG_DIR=/etc/grafana/dashboards
+
 # Only used on systemd systems
 PID_FILE_DIR=/var/run/grafana
