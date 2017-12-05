@@ -1,46 +1,57 @@
 <page-header model="ctrl.navModel"></page-header>
 
 <div class="page-container page-body">
-  <div class="page-action-bar">
-    <div class="page-action-bar__spacer"></div>
-    <a class="page-header__cta btn btn-success" href="datasources/new">
-      <i class="fa fa-plus"></i>
-      Add data source
-    </a>
+	<div ng-if="ctrl.datasources.length">
+		<div class="page-action-bar">
+			<div class="page-action-bar__spacer"></div>
+			<a class="page-header__cta btn btn-success" href="datasources/new">
+				<i class="fa fa-plus"></i>
+				Add data source
+			</a>
+		</div>
+
+		<section class="card-section" layout-mode>
+			<layout-selector></layout-selector>
+			<ol class="card-list">
+				<li class="card-item-wrapper" ng-repeat="ds in ctrl.datasources">
+					<a class="card-item" href="datasources/edit/{{ds.id}}/">
+						<div class="card-item-header">
+							<div class="card-item-type">
+								{{ds.type}}
+							</div>
+						</div>
+						<div class="card-item-body">
+							<figure class="card-item-figure">
+								<img ng-src="{{ds.typeLogoUrl}}">
+							</figure>
+							<div class="card-item-details">
+								<div class="card-item-name">
+									{{ds.name}}
+									<span ng-if="ds.isDefault">
+										<span class="btn btn-secondary btn-mini">default</span>
+									</span>
+								</div>
+								<div class="card-item-sub-name">
+									{{ds.url}}
+								</div>
+							</div>
+						</div>
+					</a>
+				</li>
+			</ol>
+		</section>
 	</div>
 
-	<section class="card-section" layout-mode>
-		<layout-selector></layout-selector>
-		<ol class="card-list">
-			<li class="card-item-wrapper" ng-repeat="ds in ctrl.datasources">
-				<a class="card-item" href="datasources/edit/{{ds.id}}/">
-					<div class="card-item-header">
-						<div class="card-item-type">
-							{{ds.type}}
-						</div>
-					</div>
-					<div class="card-item-body">
-						<figure class="card-item-figure">
-							<img ng-src="{{ds.typeLogoUrl}}">
-						</figure>
-						<div class="card-item-details">
-							<div class="card-item-name">
-								{{ds.name}}
-								<span ng-if="ds.isDefault">
-									<span class="btn btn-secondary btn-mini">default</span>
-								</span>
-							</div>
-							<div class="card-item-sub-name">
-								{{ds.url}}
-							</div>
-						</div>
-					</div>
-				</a>
-			</li>
-		</ol>
-	</section>
-
 	<div ng-if="ctrl.datasources.length === 0">
-		<em>No data sources defined</em>
+		<empty-list-cta model="{
+			title: 'There are no data sources defined yet',
+			buttonIcon: 'gicon gicon-dashboard-new',
+			buttonLink: '/datasources/new',
+			buttonTitle: 'Add data source',
+			proTip: 'You can also define data sources through configuration files.',
+			proTipLink: 'http://docs.grafana.org/administration/provisioning/#datasources?utm_source=grafana_ds_list',
+			proTipLinkTitle: 'Learn more',
+			proTipTarget: '_blank'
+		}" />
 	</div>
 </div>
