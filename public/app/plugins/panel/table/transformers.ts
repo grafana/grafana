@@ -136,6 +136,11 @@ transformers['table'] = {
       return [];
     }
 
+    // Single query returns data columns as is
+    if (data.length === 1) {
+      return [...data[0].columns];
+    }
+
     // Track column indexes: name -> index
     const columnNames = {};
 
@@ -155,7 +160,7 @@ transformers['table'] = {
 
     // Append one value column per data set
     data.forEach((_, i) => {
-      // Value (A), Value (B),...
+      // Value #A, Value #B,...
       const text = `Value #${String.fromCharCode(65 + i)}`;
       columnNames[text] = columns.length;
       columns.push({ text });
@@ -171,6 +176,13 @@ transformers['table'] = {
     const noTableIndex = _.findIndex(data, d => d.type !== 'table');
     if (noTableIndex > -1) {
       throw {message: `Result of query #${String.fromCharCode(65 + noTableIndex)} is not in table format, try using another transform.`};
+    }
+
+    // Single query returns data columns and rows as is
+    if (data.length === 1) {
+      model.columns = [...data[0].columns];
+      model.rows = [...data[0].rows];
+      return;
     }
 
     // Track column indexes: name -> index

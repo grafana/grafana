@@ -1,6 +1,6 @@
 import {transformers, transformDataToTable} from '../transformers';
 
-describe('when transforming time series table.', () => {
+describe('when transforming time series table', () => {
   var table;
 
   describe('given 2 time series', () => {
@@ -189,7 +189,7 @@ describe('when transforming time series table.', () => {
           var columns = transformers[transform].getColumns(singleQueryData);
           expect(columns[0].text).toBe('Time');
           expect(columns[1].text).toBe('Label Key 1');
-          expect(columns[2].text).toBe('Value #A');
+          expect(columns[2].text).toBe('Value');
         });
 
         it('should return the union of data columns given a multiple queries', function() {
@@ -221,7 +221,7 @@ describe('when transforming time series table.', () => {
           expect(table.columns.length).toBe(3);
           expect(table.columns[0].text).toBe('Time');
           expect(table.columns[1].text).toBe('Label Key 1');
-          expect(table.columns[2].text).toBe('Value #A');
+          expect(table.columns[2].text).toBe('Value');
         });
 
         it ('should return the union of columns for multiple queries', () => {
