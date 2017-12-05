@@ -2,8 +2,9 @@ define([
   'angular',
   'lodash',
   'jquery',
+  'perfect-scrollbar'
 ],
-function (angular, _, $) {
+function (angular, _, $, PerfectScrollbar) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -19,6 +20,7 @@ function (angular, _, $) {
         var data;
         var seriesList;
         var i;
+        var legendScrollbar;
 
         ctrl.events.on('render', function() {
           data = ctrl.seriesList;
@@ -205,7 +207,13 @@ function (angular, _, $) {
             tbodyElem.append(seriesElements);
             $container.append(tbodyElem);
           } else {
+            var maxLegendHeight = ctrl.height / 2;
+            $container.css("max-height", maxLegendHeight - 6);
             $container.append(seriesElements);
+            if (!legendScrollbar) {
+              legendScrollbar = new PerfectScrollbar.default($container[0]);
+            }
+            legendScrollbar.update();
           }
         }
       }

@@ -27,6 +27,7 @@
   text-align: center;
   width: calc(100% - $spacer);
   padding-top: 6px;
+  position: relative;
 
   .popover-content {
     padding: 0;

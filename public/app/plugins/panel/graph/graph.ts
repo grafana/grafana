@@ -84,19 +84,42 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       }, scope);
 
       function getLegendHeight(panelHeight) {
+        const LEGEND_TABLE_LINE_HEIGHT = 21;
+        const LEGEND_LINE_HEIGHT = 17;
+        const LEGEND_PADDING = 23;
+        const LEGEND_CHAR_WIDTH = 5;
+
         if (!panel.legend.show || panel.legend.rightSide) {
           return 0;
         }
 
+        let legendSeries = _.filter(data, function(series) {
+          return series.hideFromLegend(panel.legend) === false;
+        });
+
         if (panel.legend.alignAsTable) {
-          var legendSeries = _.filter(data, function(series) {
-            return series.hideFromLegend(panel.legend) === false;
-          });
-          var total = 23 + (21 * legendSeries.length);
+          let total = LEGEND_PADDING + (LEGEND_TABLE_LINE_HEIGHT * legendSeries.length);
           return Math.min(total, Math.floor(panelHeight/2));
         } else {
-          return 26;
+          let linesCount = getLegendBoxHeight(legendSeries, panelWidth, LEGEND_CHAR_WIDTH);
+          let total = LEGEND_PADDING + (LEGEND_LINE_HEIGHT * linesCount);
+          return Math.min(total, Math.floor(panelHeight/2));
         }
+      }
+
+      function getLegendBoxHeight(legendSeries, legendWidth, charWidth) {
+        let linesCount = 1;
+        let currentLineLength = 0;
+        let legendWidthChars = Math.floor(legendWidth / charWidth);
+        _.each(legendSeries, (series) => {
+          let nextLength = series.aliasEscaped.length + 4;
+          currentLineLength += nextLength;
+          if (currentLineLength > legendWidthChars) {
+            linesCount++;
+            currentLineLength = nextLength;
+          }
+        });
+        return linesCount;
       }
 
       function setElementHeight() {
