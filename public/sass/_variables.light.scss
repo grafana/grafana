@@ -122,8 +122,8 @@ $code-tag-bg:       $gray-6;
 $code-tag-border:   darken($code-tag-bg, 3%);
 
 // cards
-$card-background: linear-gradient(135deg, $gray-4, $gray-5);
-$card-background-hover: linear-gradient(135deg, $gray-6, $gray-7);
+$card-background: linear-gradient(135deg, $gray-6, $gray-5);
+$card-background-hover: linear-gradient(135deg, $gray-5, $gray-6);
 $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .1);
 
 // Lists
@@ -194,7 +194,7 @@ $input-invalid-border-color:     lighten($red, 5%);
 
 // Sidemenu
 // -------------------------
-$side-menu-bg:            $dark-3;
+$side-menu-bg:            $dark-2;
 $side-menu-item-hover-bg: $gray-1;
 $side-menu-shadow:        5px 0px 10px -5px $gray-1;
 $side-menu-link-color:    $gray-6;
