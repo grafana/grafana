@@ -230,3 +230,18 @@
   padding: $spacer*2 $spacer;
   background: $panel-bg;
 }
+
+@include media-breakpoint-up(xs) {
+
+  .search-container {
+    left: 0;
+  }
+
+  .search-dropdown {
+    flex-direction: column;
+  }
+
+  .search-dropdown__col_2 {
+    display: none;
+  }
+}
