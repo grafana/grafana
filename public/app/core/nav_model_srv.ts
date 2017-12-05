@@ -119,14 +119,6 @@ export class NavModelSrv {
         clickHandler: () => dashNavCtrl.openEditView('annotations')
       });
 
-      if (dashboard.meta.canAdmin) {
-        menu.push({
-          title: 'Permissions...',
-          icon: 'fa fa-fw fa-lock',
-          clickHandler: () => dashNavCtrl.openEditView('permissions')
-        });
-      }
-
       if (!dashboard.meta.isHome) {
         menu.push({
           title: 'Version history',

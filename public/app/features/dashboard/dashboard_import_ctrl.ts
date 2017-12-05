@@ -1,10 +1,8 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import coreModule from 'app/core/core_module';
-import config from 'app/core/config';
 import _ from 'lodash';
+import config from 'app/core/config';
 
-export class DashImportCtrl {
+export class DashboardImportCtrl {
+  navModel: any;
   step: number;
   jsonText: string;
   parseError: string;
@@ -17,7 +15,9 @@ export class DashImportCtrl {
   gnetInfo: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $location, private $scope, $routeParams) {
+  constructor(private backendSrv, navModelSrv, private $location, private $scope, $routeParams) {
+    this.navModel = navModelSrv.getNav('create', 'import');
+
     this.step = 1;
     this.nameExists = false;
 
@@ -160,17 +160,4 @@ export class DashImportCtrl {
     this.gnetError = '';
     this.gnetInfo = '';
   }
-
 }
-
-export function dashImportDirective() {
-  return {
-    restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/import/dash_import.html',
-    controller: DashImportCtrl,
-    bindToController: true,
-    controllerAs: 'ctrl',
-  };
-}
-
-coreModule.directive('dashImport', dashImportDirective);
