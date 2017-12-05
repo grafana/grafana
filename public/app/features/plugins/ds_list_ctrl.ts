@@ -1,6 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import coreModule from '../../core/core_module';
+import {appEvents} from 'app/core/core';
 
 export class DataSourcesCtrl {
   datasources: any;
@@ -11,13 +12,24 @@ export class DataSourcesCtrl {
     private $scope,
     private backendSrv,
     private datasourceSrv,
+    private $location,
     private navModelSrv) {
 
     this.navModel = this.navModelSrv.getNav('cfg', 'datasources', 0);
-
+    this.navigateToUrl = this.navigateToUrl.bind(this);
     backendSrv.get('/api/datasources').then(result => {
       this.datasources = result;
     });
+
+    appEvents.on('location-change', payload => {
+      this.navigateToUrl(payload.href);
+    });
+  }
+
+  navigateToUrl(url) {
+    // debugger;
+    this.$location.path(url);
+    this.$location.replace();
   }
 
   removeDataSourceConfirmed(ds) {

@@ -31,7 +31,7 @@
   &.active,
   &.active:hover,
   &.active:focus {
-    border-color: transparent $dark-4 transparent;
+    border-color: $orange $tab-border-color transparent;
     background: $page-bg;
     color: $link-color;
     overflow: hidden;

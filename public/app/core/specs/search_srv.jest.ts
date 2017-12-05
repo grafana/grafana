@@ -2,6 +2,7 @@ import { SearchSrv } from 'app/core/services/search_srv';
 import { BackendSrvMock } from 'test/mocks/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { beforeEach } from 'test/lib/common';
 
 jest.mock('app/core/store', () => {
   return {
@@ -242,6 +243,45 @@ describe('SearchSrv', () => {
 
     it('should send starred query to backend search', () => {
       expect(backendSrvMock.search.mock.calls[0][0].starred).toEqual(true);
+    });
+  });
+
+  describe('when skipping recent dashboards', () => {
+    let getRecentDashboardsCalled = false;
+
+    beforeEach(() => {
+      backendSrvMock.search = jest.fn();
+      backendSrvMock.search.mockReturnValue(Promise.resolve([]));
+
+      searchSrv.getRecentDashboards = () => {
+        getRecentDashboardsCalled = true;
+      };
+
+      return searchSrv.search({ skipRecent: true }).then(() => {});
+    });
+
+    it('should not fetch recent dashboards', () => {
+      expect(getRecentDashboardsCalled).toBeFalsy();
+    });
+  });
+
+  describe('when skipping starred dashboards', () => {
+    let getStarredCalled = false;
+
+    beforeEach(() => {
+      backendSrvMock.search = jest.fn();
+      backendSrvMock.search.mockReturnValue(Promise.resolve([]));
+      impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([]);
+
+      searchSrv.getStarred = () => {
+        getStarredCalled = true;
+      };
+
+      return searchSrv.search({ skipStarred: true }).then(() => {});
+    });
+
+    it('should not fetch starred dashboards', () => {
+      expect(getStarredCalled).toBeFalsy();
     });
   });
 });

@@ -129,12 +129,8 @@
   }
 }
 
-.search-section__header__with-checkbox {
-  display: flex;
-}
-
 .search-section__header__icon {
-  padding: 5px 10px;
+  padding: 2px 10px;
 }
 
 .search-section__header__toggle {
@@ -143,14 +139,6 @@
 
 .search-section__header__text {
   flex-grow: 1;
-}
-
-.search-item__with-checkbox {
-  display: flex;
-
-  .search-item {
-    margin: 1px 3px;
-  }
 }
 
 .search-item {

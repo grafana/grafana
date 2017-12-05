@@ -139,6 +139,8 @@ $table-bg-accent:             $dark-3; // for striping
 $table-bg-hover:              $dark-4; // for hover
 $table-border:                $dark-3; // table and cell border
 
+$table-bg-odd:               $dark-2;
+
 // Buttons
 // -------------------------
 
@@ -160,6 +162,7 @@ $btn-danger-bg-hl:            darken($red, 8%);
 $btn-inverse-bg:              $dark-3;
 $btn-inverse-bg-hl:     	    lighten($dark-3, 4%);
 $btn-inverse-text-color:      $link-color;
+$btn-inverse-text-shadow:     0px 1px 0 rgba(0,0,0,.1);
 
 $btn-link-color:              $gray-3;
 
@@ -182,7 +185,7 @@ $input-border-focus:             $input-border-color !default;
 $input-box-shadow-focus:         rgba(102,175,233,.6) !default;
 $input-color-placeholder:        $gray-1 !default;
 $input-label-bg:				         $gray-blue;
-$input-label-border-color:       transparent;
+$input-label-border-color:       $gray-blue;
 $input-invalid-border-color:     lighten($red, 5%);
 
 // Search
@@ -241,11 +244,14 @@ $navbarDropdownShadow:            inset 0px 4px 10px -4px $body-bg;
 $navbarButtonBackground:          $navbarBackground;
 $navbarButtonBackgroundHighlight: $body-bg;
 
+$navbar-button-border:             #151515;
+
 // Sidemenu
 // -------------------------
 $side-menu-bg:            $black;
 $side-menu-item-hover-bg: $dark-2;
 $side-menu-shadow:        0 0 20px black;
+$side-menu-link-color:    $link-color;
 $breadcrumb-hover-hl:   #111;
 
 // Menu dropdowns
@@ -261,6 +267,9 @@ $page-nav-bg: $black;
 $page-nav-shadow: 5px 5px 20px -5px $black;
 $page-nav-breadcrumb-color: $gray-3;
 
+// Tabs
+// -------------------------
+$tab-border-color:          $dark-4;
 
 // Pagination
 // -------------------------

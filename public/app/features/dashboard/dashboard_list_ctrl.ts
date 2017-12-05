@@ -17,8 +17,8 @@ export class DashboardListCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private $q, private searchSrv: SearchSrv) {
-    this.navModel = navModelSrv.getNav('dashboards', 'dashboards', 0);
-    this.query = {query: '', mode: 'tree', tag: [], starred: false};
+    this.navModel = navModelSrv.getNav('dashboards', 'manage-dashboards', 0);
+    this.query = {query: '', mode: 'tree', tag: [], starred: false, skipRecent: true, skipStarred: true};
     this.selectedStarredFilter = this.starredFilterOptions[0];
 
     this.getDashboards().then(() => {
@@ -148,11 +148,9 @@ export class DashboardListCtrl {
     });
   }
 
-  filterByTag(tag, evt) {
-    this.query.tag.push(tag);
-    if (evt) {
-      evt.stopPropagation();
-      evt.preventDefault();
+  filterByTag(tag) {
+    if (_.indexOf(this.query.tag, tag) === -1) {
+      this.query.tag.push(tag);
     }
 
     return this.getDashboards();
@@ -163,9 +161,9 @@ export class DashboardListCtrl {
   }
 
   onTagFilterChange() {
-    this.query.tag.push(this.selectedTagFilter.term);
+    var res = this.filterByTag(this.selectedTagFilter.term);
     this.selectedTagFilter = this.tagFilterOptions[0];
-    return this.getDashboards();
+    return res;
   }
 
   removeTag(tag, evt) {

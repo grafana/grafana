@@ -94,13 +94,11 @@ export class SearchCtrl {
     return query.query === '' && query.starred === false && query.tag.length === 0;
   }
 
-  filterByTag(tag, evt) {
-    this.query.tag.push(tag);
-    this.search();
-    this.giveSearchFocus = this.giveSearchFocus + 1;
-    if (evt) {
-      evt.stopPropagation();
-      evt.preventDefault();
+  filterByTag(tag) {
+    if (_.indexOf(this.query.tag, tag) === -1) {
+      this.query.tag.push(tag);
+      this.search();
+      this.giveSearchFocus = this.giveSearchFocus + 1;
     }
   }
 
