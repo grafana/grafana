@@ -90,12 +90,13 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
 			Text: "Create",
+			Id:   "create",
 			Icon: "fa fa-fw fa-plus",
 			Url:  "#",
 			Children: []*dtos.NavLink{
 				{Text: "Dashboard", Icon: "gicon gicon-dashboard-new", Url: setting.AppSubUrl + "/dashboard/new"},
 				{Text: "Folder", Icon: "gicon gicon-folder-new", Url: setting.AppSubUrl + "/dashboard/new/?editview=new-folder"},
-				{Text: "Import", Icon: "gicon gicon-dashboard-import", Url: setting.AppSubUrl + "/dashboard/new/?editview=import"},
+				{Text: "Import", Id: "import", Icon: "gicon gicon-dashboard-import", Url: setting.AppSubUrl + "/dashboard/import"},
 			},
 		})
 	}
