@@ -3,7 +3,8 @@
 <div class="page-container page-body" ng-cloak>
   <div ng-if="ctrl.step === 1">
 
-    <form class="gf-form-group">
+    <form class="page-action-bar">
+      <div class="page-action-bar__spacer"></div>
       <dash-upload on-upload="ctrl.onUpload(dash)"></dash-upload>
     </form>
 
@@ -112,10 +113,10 @@
     </div>
 
     <div class="gf-form-button-row">
-      <button type="button" class="btn gf-form-btn btn-success width-12" ng-click="ctrl.saveDashboard()" ng-hide="ctrl.nameExists" ng-disabled="!ctrl.inputsValid">
+      <button type="button" class="btn btn-success width-12" ng-click="ctrl.saveDashboard()" ng-hide="ctrl.nameExists" ng-disabled="!ctrl.inputsValid">
         <i class="fa fa-save"></i> Import
       </button>
-      <button type="button" class="btn gf-form-btn btn-danger width-12" ng-click="ctrl.saveDashboard()" ng-show="ctrl.nameExists" ng-disabled="!ctrl.inputsValid">
+      <button type="button" class="btn btn-danger width-12" ng-click="ctrl.saveDashboard()" ng-show="ctrl.nameExists" ng-disabled="!ctrl.inputsValid">
         <i class="fa fa-save"></i> Import (Overwrite)
       </button>
       <a class="btn btn-link" ng-click="ctrl.back()">Cancel</a>
