@@ -172,7 +172,6 @@ export class ElasticQueryBuilder {
   build(target, adhocFilters?, queryString?) {
     // make sure query has defaults;
     target.metrics = target.metrics || [{ type: 'count', id: '1' }];
-    target.dsType = 'elasticsearch';
     target.bucketAggs = target.bucketAggs || [{type: 'date_histogram', id: '2', settings: {interval: 'auto'}}];
     target.timeField =  this.timeField;
 
