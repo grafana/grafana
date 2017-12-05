@@ -200,9 +200,8 @@
   }
 
   .card-item {
-    border-bottom: .2rem solid $page-bg;
-    border-radius: 0;
-    box-shadow: none;
+    border-bottom: 3px solid $page-bg;
+    border-radius: 2px;
   }
 
   .card-item-header {
