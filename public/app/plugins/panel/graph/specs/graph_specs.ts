@@ -20,7 +20,8 @@ describe('grafanaGraph', function() {
       ctx.setup = setupFunc => {
         beforeEach(
           angularMocks.module($provide => {
-            $provide.value('timeSrv', new helpers.TimeSrvStub());
+            $provide.value("timeSrv", new helpers.TimeSrvStub());
+            $provide.value("templateSrv", new helpers.TemplateSrvStub());
           })
         );
 

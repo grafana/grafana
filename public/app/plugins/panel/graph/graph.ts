@@ -20,7 +20,7 @@ import { EventManager } from 'app/features/annotations/all';
 import { convertValuesToHistogram, getSeriesValues } from './histogram';
 
 /** @ngInject **/
-function graphDirective(timeSrv, popoverSrv, contextSrv) {
+function graphDirective(timeSrv, popoverSrv, contextSrv, templateSrv) {
   return {
     restrict: 'A',
     template: '',
@@ -520,7 +520,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           return null;
         }
 
-        return _.toNumber(value);
+        return _.toNumber(templateSrv.replace(value, ctrl.panel.scopedVars));
       }
 
       function applyLogScale(axis, data) {
