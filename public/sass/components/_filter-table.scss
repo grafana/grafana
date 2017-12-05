@@ -17,8 +17,7 @@
 
   tbody {
     tr:nth-child(odd) {
-      //background: $dark-2;
-      background: $gray-6;
+      background: $table-bg-odd;
     }
   }
 

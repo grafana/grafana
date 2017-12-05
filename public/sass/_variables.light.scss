@@ -13,34 +13,6 @@ $theme-name: light;
 $black:                 #000;
 
 // -------------------------
-/*$black:            #000;
-$dark-1:           #141414;
-$dark-2:           #1d1d1f;
-$dark-3:           #262628;
-$dark-4:           #373737;
-$dark-5:           #444444;
-$gray-1:           #555555;
-$gray-2:           #7B7B7B;
-$gray-3:           #b3b3b3;
-$gray-4:           #D8D9DA;
-$gray-5:           #ECECEC;
-$gray-6:           #f4f5f8;
-$gray-7:           #fbfbfb;*/
-
-/*$black:            #000;
-$dark-1:           #121314;
-$dark-2:           #1d1d1f;
-$dark-3:           #272729;
-$dark-4:           #38383b;
-$dark-5:           #444547;
-$gray-1:           #525357;
-$gray-2:           #7a7c80;
-$gray-3:           #b2b3b8;
-$gray-4:           #d5d6db;
-$gray-5:           #e9eaf0;
-$gray-6:           #f4f5f8;
-$gray-7:           #fafbfc;*/
-
 $black:            #000;
 $dark-1:           #13161d;
 $dark-2:           #1e2028;
@@ -49,18 +21,17 @@ $dark-4:           #35373f;
 $dark-5:           #41444b;
 $gray-1:           #52545c;
 $gray-2:           #767980;
-$gray-3:           #acaeb6;
-$gray-4:           #ced0d8;
-$gray-5:           #dfe3eb;
-//$gray-5:             #dfe7eb;
-$gray-6:           #ebedf2;
+$gray-3:           #acb6bf;
+$gray-4:           #c7d0d9;
+$gray-5:           #dde4ed;
+$gray-6:           #e9edf2;
 $gray-7:           #f7f8fa;
 
 $white:            #fff;
 
 // Accent colors
 // -------------------------
-$blue:             	   	#2AB2E4;
+$blue:                  #1ca4d6;
 $blue-dark:             #3CAAD6;
 $green:                 #3aa655;
 $red:                   #d44939;
@@ -68,7 +39,7 @@ $yellow:                #FF851B;
 $orange:                #Ff7941;
 $pink:                  #E671B8;
 $purple:                #9954BB;
-$variable:              #2AB2E4;
+$variable:              $blue;
 
 $brand-primary:         $orange;
 $brand-success:         $green;
@@ -84,8 +55,8 @@ $critical:              #EC2128;
 // Scaffolding
 // -------------------------
 
-$body-bg:  		  		    $white;
-$page-bg:  		  		    $white;
+$body-bg:  		  		    $gray-7;
+$page-bg:  		  		    $gray-7;
 $body-color:    		    $gray-1;
 $text-color:    		    $dark-4;
 $text-color-strong:	    $white;
@@ -99,11 +70,7 @@ $textShadow: none;
 
 // gradients
 $brand-gradient: linear-gradient(to right, rgba(255,213,0,1.0) 0%, rgba(255,68,0,1.0) 99%, rgba(255,68,0,1.0) 100%);
-//$page-gradient: linear-gradient(120deg, transparent 40%, darken($gray-6, 4%) 98%);
-$page-gradient: linear-gradient(120deg, $gray-7 40%, $gray-6 98%);
-//$page-gradient: $gray-7;
-// $page-gradient: linear-gradient(-60deg, transparent 70%, darken($page-bg, 4%) 98%);
-$page-header-bg: linear-gradient(90deg, #292a2d, black);
+$page-gradient: linear-gradient(-60deg, transparent 70%, $gray-7 98%);
 
 // Links
 // -------------------------
@@ -130,7 +97,7 @@ $component-active-bg:    $brand-primary !default;
 // Panel
 // -------------------------
 
-$panel-bg: 		       $white;//$gray-7;
+$panel-bg: 		       $white;
 $panel-border-color: $gray-5;
 $panel-border:       solid 1px $panel-border-color;
 $panel-drop-zone-bg: repeating-linear-gradient(-128deg, $body-bg, $body-bg 10px, $gray-6 10px, $gray-6 20px);
@@ -138,9 +105,9 @@ $panel-header-hover-bg:       $gray-6;
 $panel-header-menu-hover-bg:  $gray-4;
 
 // Page header
-$page-header-bg: linear-gradient(90deg, #292a2d, black);
-$page-header-shadow: inset 0px -4px 14px $dark-2;
-$page-header-border-color: $dark-4;
+$page-header-bg: linear-gradient(90deg, $white, $gray-7);
+$page-header-shadow: inset 0px -3px 10px $gray-6;
+$page-header-border-color: $gray-4;
 
 $divider-border-color:	      $gray-2;
 
@@ -155,12 +122,12 @@ $code-tag-bg:       $gray-6;
 $code-tag-border:   darken($code-tag-bg, 3%);
 
 // cards
-$card-background: linear-gradient(135deg, #ccd2d9, #dde4ed);//linear-gradient(135deg, $gray-4, $gray-5);
+$card-background: linear-gradient(135deg, $gray-4, $gray-5);
 $card-background-hover: linear-gradient(135deg, $gray-6, $gray-7);
 $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .1);
 
 // Lists
-$list-item-bg:         linear-gradient(135deg, #dde4ed, $gray-6);//$card-background;
+$list-item-bg:         linear-gradient(135deg, $gray-5, $gray-6);//$card-background;
 $list-item-hover-bg:   darken($gray-5, 5%);
 $list-item-link-color: $text-color;
 $list-item-shadow:     $card-shadow;
@@ -172,6 +139,8 @@ $table-bg-accent:            $gray-5; // for striping
 $table-bg-hover:             $gray-5; // for hover
 $table-bg-active:            $table-bg-hover !default;
 $table-border:               $gray-3; // table and cell border
+
+$table-bg-odd:               $gray-5;
 
 // Scrollbars
 $scrollbarBackground:   $gray-5;
@@ -195,9 +164,10 @@ $btn-warning-bg-hl:     darken($orange, 3%);
 $btn-danger-bg:         lighten($red, 3%);
 $btn-danger-bg-hl:      darken($red, 3%);
 
-$btn-inverse-bg:          #acb6bf;//#dae5f0;//$gray-5;
-$btn-inverse-bg-hl:       darken(#b8c2cc, 5%);
-$btn-inverse-text-color:  $gray-7;//$dark-4;
+$btn-inverse-bg:          $gray-6;
+$btn-inverse-bg-hl:       darken($gray-6, 5%);
+$btn-inverse-text-color:  $gray-1;
+$btn-inverse-text-shadow: 0 1px 0 rgba(255, 255, 255, .4);
 
 $btn-link-color: $gray-1;
 
@@ -213,28 +183,28 @@ $input-bg:                       $white;
 $input-bg-disabled:              $gray-5;
 
 $input-color:                    $dark-3;
-$input-border-color:             #dde4ed;//$gray-4;
+$input-border-color:             $gray-5;
 $input-box-shadow:               none;
 $input-border-focus:             $blue !default;
 $input-box-shadow-focus:         $blue !default;
 $input-color-placeholder:        $gray-4 !default;
-$input-label-bg:	        	     #dde4ed;//#dfe7f0;//#dae5f0;//#d8dfed;//$gray-5;#dde6f0;
-$input-label-border-color:       #dde4ed;//#dfe7f0;//#dae5f0;//#d8dfed;//$gray-5;#dde6f0;
+$input-label-bg:	        	     $gray-5;
+$input-label-border-color:       $gray-5;
 $input-invalid-border-color:     lighten($red, 5%);
 
 // Sidemenu
 // -------------------------
 $side-menu-bg:            $dark-3;
 $side-menu-item-hover-bg: $gray-1;
-$side-menu-shadow:        0 0 5px $dark-5;//0 0 5px #c2c2c2;
+$side-menu-shadow:        5px 0px 10px -5px $gray-1;
 $side-menu-link-color:    $gray-6;
 
 // Menu dropdowns
 // -------------------------
-$menu-dropdown-bg:            $white;
+$menu-dropdown-bg:            $gray-7;
 $menu-dropdown-hover-bg:      $gray-6;
 $menu-dropdown-border-color:  $gray-4;
-$menu-dropdown-shadow:        5px 5px 20px -5px $gray-4;
+$menu-dropdown-shadow:        5px 5px 10px -5px $gray-1;
 
 // Breadcrumb
 // -------------------------
@@ -243,9 +213,13 @@ $page-nav-shadow:           5px 5px 20px -5px $gray-4;
 $page-nav-breadcrumb-color: $black;
 $breadcrumb-hover-hl:       #d9dadd;
 
+// Tabs
+// -------------------------
+$tab-border-color:          $gray-5;
+
 // search
 $search-shadow: 0 5px 30px 0 $gray-4;
-$search-filter-box-bg: $gray-4;
+$search-filter-box-bg: $gray-7;
 
 // Dropdowns
 // -------------------------
@@ -309,6 +283,8 @@ $navbarBrandColor:                $navbarLinkColor;
 $navbarButtonBackground:          lighten($navbarBackground, 3%);
 $navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
 
+$navbar-button-border:            $gray-4;
+
 
 // Pagination
 // -------------------------
@@ -352,7 +328,8 @@ $graph-tooltip-bg:        $gray-5;
 $checkboxImageUrl: '../img/checkbox_white.png';
 
 // info box
-$info-box-background: linear-gradient(135deg, #f1fbff, #d7ebff);
+// $info-box-background: linear-gradient(135deg, #f1fbff, #d7ebff);
+$info-box-background: linear-gradient(135deg, $blue, $blue-dark);
 
 // footer
 $footer-link-color:   $gray-3;

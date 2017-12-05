@@ -95,7 +95,7 @@
 }
 // Inverse appears as dark gray
 .btn-inverse {
-  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
+  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
   //background: $card-background;
   box-shadow: $card-shadow;
   //border: 1px solid $tight-form-func-highlight-bg;
