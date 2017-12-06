@@ -65,26 +65,22 @@
 .graph-text {margin: 0;}
 
 @include media-breakpoint-down(sm) {
-
   .graph-box {
     width: 50%;
-}
+  }
 
-.info-box {
+  .info-box {
     width: 50%;
-    padding-bottom: 2rem;
-}
+  }
 }
 
 @include media-breakpoint-down(xs) {
+  .error-container {
+    flex-direction: column;
+  }
 
-    .error-container {
-      flex-direction: column;
-    }
-
-    .graph-box {
-      width: 100%;
-      padding: 2rem 1rem;
+  .graph-box {
+    width: 100%;
   }
 
   .info-box {
@@ -94,4 +90,4 @@
   .error-full-width {
     width: 100%;
   }
-  }
+}
