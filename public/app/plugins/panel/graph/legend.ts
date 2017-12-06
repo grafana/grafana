@@ -2,6 +2,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
 import PerfectScrollbar from 'perfect-scrollbar';
+import {updateLegendValues} from 'app/core/core';
 
 var module = angular.module('grafana.directives');
 
@@ -25,6 +26,11 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         }
         ctrl.events.emit('legend-rendering-complete');
       });
+
+      function updateLegendDecimals() {
+        let graphHeight = ctrl.height - $container.height();
+        updateLegendValues(data, panel, graphHeight);
+      }
 
       function getSeriesIndexForElement(el) {
         return el.parents('[data-series-index]').data('series-index');
@@ -170,6 +176,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           html += '<a class="graph-legend-alias pointer" title="' + series.aliasEscaped + '">' + series.aliasEscaped + '</a>';
 
           if (panel.legend.values) {
+            updateLegendDecimals();
             var avg = series.formatValue(series.stats.avg);
             var current = series.formatValue(series.stats.current);
             var min = series.formatValue(series.stats.min);

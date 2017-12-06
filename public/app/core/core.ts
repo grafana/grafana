@@ -52,6 +52,8 @@ import {gfPageDirective} from './components/gf_page';
 import {orgSwitcher} from './components/org_switcher';
 import {profiler} from './profiler';
 import {registerAngularDirectives} from './angular_wrappers';
+import {updateLegendValues} from './time_series2';
+import TimeSeries from './time_series2';
 
 export {
   profiler,
@@ -83,5 +85,7 @@ export {
   userGroupPicker,
   geminiScrollbar,
   gfPageDirective,
-  orgSwitcher
+  orgSwitcher,
+  TimeSeries,
+  updateLegendValues
 };

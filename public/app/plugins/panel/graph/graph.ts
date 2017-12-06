@@ -22,7 +22,7 @@ import {EventManager} from 'app/features/annotations/all';
 import {convertValuesToHistogram, getSeriesValues} from './histogram';
 
 /** @ngInject **/
-function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
+function graphDirective(timeSrv, popoverSrv, contextSrv) {
   return {
     restrict: 'A',
     template: '',
@@ -34,7 +34,6 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       var data;
       var plot;
       var sortedSeries;
-      var rootScope = scope.$root;
       var panelWidth = 0;
       var eventManager = new EventManager(ctrl);
       var thresholdManager = new ThresholdManager(ctrl);
@@ -143,27 +142,6 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       }
 
       function drawHook(plot) {
-        // Update legend values
-        var yaxis = plot.getYAxes();
-        for (var i = 0; i < data.length; i++) {
-          var series = data[i];
-          var axis = yaxis[series.yaxis - 1];
-          var formater = kbn.valueFormats[panel.yaxes[series.yaxis - 1].format];
-
-          // decimal override
-          if (_.isNumber(panel.decimals)) {
-            series.updateLegendValues(formater, panel.decimals, null);
-          } else {
-            // auto decimals
-            // legend and tooltip gets one more decimal precision
-            // than graph legend ticks
-            var tickDecimals = (axis.tickDecimals || -1) + 1;
-            series.updateLegendValues(formater, tickDecimals, axis.scaledDecimals + 2);
-          }
-
-          if (!rootScope.$$phase) { scope.$digest(); }
-        }
-
         // add left axis labels
         if (panel.yaxes[0].label && panel.yaxes[0].show) {
           $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>").text(panel.yaxes[0].label).appendTo(elem);
