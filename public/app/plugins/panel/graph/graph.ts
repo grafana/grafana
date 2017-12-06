@@ -53,18 +53,28 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         }
       });
 
-      ctrl.events.on('render', function(renderData) {
+      /**
+       * Split graph rendering into two parts.
+       * First, calculate series stats in buildFlotPairs() function. Then legend rendering started
+       * (see ctrl.events.on('render') in legend.ts).
+       * When legend is rendered it emits 'legend-rendering-complete' and graph rendered.
+       */
+      ctrl.events.on('render', (renderData) => {
         data = renderData || data;
         if (!data) {
           return;
         }
         annotations = ctrl.annotations || [];
         buildFlotPairs(data);
+        ctrl.events.emit('render-legend');
+      });
+
+      ctrl.events.on('legend-rendering-complete', () => {
         render_panel();
       });
 
       // global events
-      appEvents.on('graph-hover', function(evt) {
+      appEvents.on('graph-hover', (evt) => {
         // ignore other graph hover events if shared tooltip is disabled
         if (!dashboard.sharedTooltipModeEnabled()) {
           return;
@@ -78,7 +88,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         tooltip.show(evt.pos);
       }, scope);
 
-      appEvents.on('graph-hover-clear', function(event, info) {
+      appEvents.on('graph-hover-clear', (event, info) => {
         if (plot) {
           tooltip.clear(plot);
         }
@@ -86,9 +96,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
 
       function getLegendHeight(panelHeight) {
         const LEGEND_TABLE_LINE_HEIGHT = 21;
-        const LEGEND_LINE_HEIGHT = 17;
         const LEGEND_PADDING = 23;
-        const LEGEND_CHAR_WIDTH = 5;
 
         if (!panel.legend.show || panel.legend.rightSide) {
           return 0;
@@ -102,25 +110,22 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
           let total = LEGEND_PADDING + (LEGEND_TABLE_LINE_HEIGHT * legendSeries.length);
           return Math.min(total, Math.floor(panelHeight/2));
         } else {
-          let linesCount = getLegendBoxHeight(legendSeries, panelWidth, LEGEND_CHAR_WIDTH);
-          let total = LEGEND_PADDING + (LEGEND_LINE_HEIGHT * linesCount);
+          let legendHeight = getLegendContainerHeight();
+          let total = LEGEND_PADDING + (legendHeight);
           return Math.min(total, Math.floor(panelHeight/2));
         }
       }
 
-      function getLegendBoxHeight(legendSeries, legendWidth, charWidth) {
-        let linesCount = 1;
-        let currentLineLength = 0;
-        let legendWidthChars = Math.floor(legendWidth / charWidth);
-        _.each(legendSeries, (series) => {
-          let nextLength = series.aliasEscaped.length + 4;
-          currentLineLength += nextLength;
-          if (currentLineLength > legendWidthChars) {
-            linesCount++;
-            currentLineLength = nextLength;
-          }
-        });
-        return linesCount;
+      function getLegendContainerHeight() {
+        try {
+          let graphWrapperElem = elem.parent().parent();
+          let legendElem = graphWrapperElem.find('.graph-legend-wrapper');
+          let legendHeight = legendElem.height();
+          return legendHeight;
+        } catch (e) {
+          console.log(e);
+          return 0;
+        }
       }
 
       function setElementHeight() {

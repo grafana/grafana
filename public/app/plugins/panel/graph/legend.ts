@@ -18,11 +18,12 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       var i;
       var legendScrollbar;
 
-      ctrl.events.on('render', function() {
+      ctrl.events.on('render-legend', () => {
         data = ctrl.seriesList;
         if (data) {
           render();
         }
+        ctrl.events.emit('legend-rendering-complete');
       });
 
       function getSeriesIndexForElement(el) {
