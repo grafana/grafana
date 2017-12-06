@@ -14,16 +14,29 @@ export class DashboardListCtrl {
   selectAllChecked = false;
   starredFilterOptions = [{text: 'Filter by Starred', disabled: true}, {text: 'Yes'}, {text: 'No'}];
   selectedStarredFilter: any;
+  folderTitle = null;
 
   /** @ngInject */
-  constructor(private backendSrv, navModelSrv, private $q, private searchSrv: SearchSrv) {
+  constructor(private backendSrv, navModelSrv, private $q, private searchSrv: SearchSrv, private $routeParams) {
     this.navModel = navModelSrv.getNav('dashboards', 'manage-dashboards', 0);
     this.query = {query: '', mode: 'tree', tag: [], starred: false, skipRecent: true, skipStarred: true};
+
     this.selectedStarredFilter = this.starredFilterOptions[0];
 
-    this.getDashboards().then(() => {
-      this.getTags();
-    });
+    if (this.$routeParams.folderId && this.$routeParams.type && this.$routeParams.slug) {
+      backendSrv.getDashboard(this.$routeParams.type, this.$routeParams.slug).then(result => {
+        this.folderTitle = result.dashboard.title;
+        this.query.folderIds = [result.dashboard.id];
+
+        this.getDashboards().then(() => {
+          this.getTags();
+        });
+      });
+    } else {
+      this.getDashboards().then(() => {
+        this.getTags();
+      });
+    }
   }
 
   getDashboards() {

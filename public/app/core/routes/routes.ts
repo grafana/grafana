@@ -73,6 +73,11 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controller : 'DashboardListCtrl',
     controllerAs: 'ctrl',
   })
+  .when('/dashboards/folder/:folderId/:type/:slug', {
+    templateUrl: 'public/app/features/dashboard/partials/dashboardList.html',
+    controller : 'DashboardListCtrl',
+    controllerAs: 'ctrl',
+  })
   .when('/org', {
     templateUrl: 'public/app/features/org/partials/orgDetails.html',
     controller : 'OrgDetailsCtrl',

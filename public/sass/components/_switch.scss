@@ -102,12 +102,23 @@ $switch-height: 1.5rem;
   }
 }
 
-.gf-form-switch--search-result__section, .gf-form-switch--search-result__item {
-  min-width: 2.6rem;
-
+.gf-form-switch--transparent {
   input + label {
-    background-color: inherit;
-    height: 1.7rem;
+    background: transparent;
+  }
+
+  input + label::before, input + label::after {
+    background: transparent;
+  }
+
+  &:hover {
+    input + label::before {
+      background: transparent;
+    }
+
+    input + label::after {
+      background: transparent;
+    }
   }
 }
 
@@ -115,57 +126,24 @@ $switch-height: 1.5rem;
   min-width: 3.3rem;
   margin-right: -0.3rem;
 
-  &:hover {
-    input + label::before {
-      @include buttonBackground($panel-bg, $panel-bg);
-    }
-
-    input + label::after {
-      @include buttonBackground($panel-bg, $panel-bg, lighten($orange, 10%));
-    }
-  }
-
-  input + label::before, input + label::after {
-    @include buttonBackground($panel-bg, $panel-bg);
-  }
-
-  input + label::before {
-    color: $gray-2
-  }
-
-  input + label::after {
-    color: $orange
+  input + label {
+    height: 1.7rem;
   }
 }
 
 .gf-form-switch--search-result__item {
+  min-width: 2.6rem;
+
   input + label {
     height: 2.7rem;
   }
+}
 
+.gf-form-switch--search-result-filter-row__checkbox {
+  min-width: 4.7rem;
 
-  &:hover {
-    input + label::before {
-      @include buttonBackground($list-item-hover-bg, $list-item-hover-bg);
-    }
-
-    input + label::after {
-      @include buttonBackground($list-item-hover-bg, $list-item-hover-bg);
-      color: lighten($orange, 10%);
-    }
-
-  }
-
-  input + label::before, input + label::after {
-    @include buttonBackground($list-item-hover-bg, $list-item-hover-bg);
-  }
-
-  input + label::before {
-    color: $gray-2
-  }
-
-  input + label::after {
-    color: $orange
+  input + label {
+    height: 2.5rem;
   }
 }
 
