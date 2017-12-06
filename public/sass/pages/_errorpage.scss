@@ -3,6 +3,11 @@
 // Layout
 //
 
+.error-container {
+  display: flex;
+  flex-direction: row;
+}
+
 .error-row {
     display: flex;
     flex-direction: row;
@@ -22,7 +27,7 @@
 
 .info-box {
     width: 38%;
-    padding: 2rem 1rem 6rem;
+    padding: 2rem 1rem 2rem;
 }
 
 .graph-percentage {padding: 0 0 1.5rem;}
@@ -58,3 +63,35 @@
 }
 
 .graph-text {margin: 0;}
+
+@include media-breakpoint-down(sm) {
+
+  .graph-box {
+    width: 50%;
+}
+
+.info-box {
+    width: 50%;
+    padding-bottom: 2rem;
+}
+}
+
+@include media-breakpoint-down(xs) {
+
+    .error-container {
+      flex-direction: column;
+    }
+
+    .graph-box {
+      width: 100%;
+      padding: 2rem 1rem;
+  }
+
+  .info-box {
+      width: 100%;
+  }
+
+  .error-full-width {
+    width: 100%;
+  }
+  }
