@@ -72,6 +72,21 @@
   text-transform: uppercase;
 }
 
+.page-header__select_nav {
+  margin-bottom: 10px;
+
+  @include media-breakpoint-up(lg) {
+    display: none;
+  }
+}
+
+.page-header__tabs {
+  display: none;
+  @include media-breakpoint-up(lg) {
+    display: block;
+  }
+}
+
 .page-breadcrumbs {
   display: flex;
   padding: 10px 0;
