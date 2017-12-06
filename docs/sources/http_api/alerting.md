@@ -198,6 +198,14 @@ Content-Type: application/json
 
 `POST /api/alert-notifications`
 
+JSON Base Body Schema:
+
+- **name** – Any string that labels this alert channel.
+- **isDefault** – Can be `true` or `false`. True to trigger on all alerts. False to only trigger when specified in an alert.
+- **type** – One of the supported notification types.  Generally the same as in the drop down but in `camelCase` format.
+- **uploadImage** – Can be `true` or `false`. True to trigger uploading of images when alerts are sent.
+
+
 **Example Request**:
 
 ```http
