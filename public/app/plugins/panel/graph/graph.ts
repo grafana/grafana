@@ -34,7 +34,6 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       var data;
       var plot;
       var sortedSeries;
-      var legendSideLastValue = null;
       var rootScope = scope.$root;
       var panelWidth = 0;
       var eventManager = new EventManager(ctrl);
@@ -95,25 +94,14 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       }, scope);
 
       function getLegendHeight(panelHeight) {
-        const LEGEND_TABLE_LINE_HEIGHT = 21;
         const LEGEND_PADDING = 23;
 
         if (!panel.legend.show || panel.legend.rightSide) {
           return 0;
         }
 
-        let legendSeries = _.filter(data, function(series) {
-          return series.hideFromLegend(panel.legend) === false;
-        });
-
-        if (panel.legend.alignAsTable) {
-          let total = LEGEND_PADDING + (LEGEND_TABLE_LINE_HEIGHT * legendSeries.length);
-          return Math.min(total, Math.floor(panelHeight/2));
-        } else {
-          let legendHeight = getLegendContainerHeight();
-          let total = LEGEND_PADDING + (legendHeight);
-          return Math.min(total, Math.floor(panelHeight/2));
-        }
+        let legendHeight = getLegendContainerHeight() + LEGEND_PADDING;
+        return Math.min(legendHeight, Math.floor(panelHeight/2));
       }
 
       function getLegendContainerHeight() {
@@ -254,15 +242,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         eventManager.addFlotEvents(annotations, options);
 
         sortedSeries = sortSeries(data, panel);
-
-        if (shouldDelayDraw(panel)) {
-          // temp fix for legends on the side, need to render twice to get dimensions right
-          callPlot(options, false);
-          setTimeout(function() { callPlot(options, true); }, 50);
-          legendSideLastValue = panel.legend.rightSide;
-        } else {
-          callPlot(options, true);
-        }
+        callPlot(options, true);
       }
 
       function buildFlotPairs(data) {
@@ -444,16 +424,6 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         } else {
           return fill/10;
         }
-      }
-
-      function shouldDelayDraw(panel) {
-        if (panel.legend.rightSide) {
-          return true;
-        }
-        if (legendSideLastValue !== null && panel.legend.rightSide !== legendSideLastValue) {
-          return true;
-        }
-        return false;
       }
 
       function addTimeAxis(options) {
