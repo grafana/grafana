@@ -29,11 +29,13 @@ case "$1" in
   if [ ! -f $CONF_FILE ]; then
     cp /usr/share/grafana/conf/sample.ini $CONF_FILE
     cp /usr/share/grafana/conf/ldap.toml /etc/grafana/ldap.toml
-
-    mkdir -p /etc/grafana/dashboards /etc/grafana/datasources
-    cp /usr/share/grafana/conf/dashboards/sample.yaml /etc/grafana/dashboards/sample.yaml
-    cp /usr/share/grafana/conf/datasources/sample.yaml /etc/grafana/datasources/sample.yaml
   fi
+
+   if [ ! -f $DATASOURCES_CFG_DIR ]; then
+    mkdir -p /etc/grafana/dashboards /etc/grafana/datasources
+    cp /usr/share/grafana/conf/dashboards/sample.yaml $DASHBOARDS_CFG_DIR/sample.yaml
+    cp /usr/share/grafana/conf/datasources/sample.yaml $DATASOURCES_CFG_DIR/sample.yaml
+  fi 
 
 	# configuration files should not be modifiable by grafana user, as this can be a security issue
 	chown -Rh root:$GRAFANA_GROUP /etc/grafana/*
