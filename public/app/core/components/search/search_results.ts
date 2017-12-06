@@ -6,9 +6,23 @@ export class SearchResultsCtrl {
   onSelectionChanged: any;
   onTagSelected: any;
 
+  /** @ngInject */
+  constructor(private $location) {
+
+  }
+
   toggleFolderExpand(section) {
     if (section.toggle) {
       section.toggle(section);
+    }
+  }
+
+  navigateToFolder(section, evt) {
+    this.$location.path('/dashboards/folder/' + section.id + '/' + section.uri);
+
+    if (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
     }
   }
 

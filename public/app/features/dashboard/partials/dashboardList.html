@@ -1,17 +1,35 @@
 <page-header model="ctrl.navModel"></page-header>
 
 <div class="page-container page-body">
+  <div class="page-action-bar" ng-show="ctrl.folderTitle">
+      <div class="gf-form gf-form--grow">
+          <h3 class="page-sub-heading">
+            <i class="fa fa-folder-open"></i>&nbsp;{{ctrl.folderTitle}}
+          </h3>
+      </div>
+      <div class="page-action-bar__spacer"></div>
+      <button class="btn btn-inverse" disabled>Permissions</button>
+      <a class="btn btn-success" href="/dashboard/new">
+        <i class="fa fa-plus"></i>
+        Dashboard
+      </a>
+      <a class="btn btn-success" href="/dashboard/new/?editview=new-folder">
+        <i class="fa fa-plus"></i>
+        Folder
+      </a>
+    </div>
+
   <div class="page-action-bar">
     <div class="gf-form gf-form--grow">
       <label class="gf-form-label">Search</label>
       <input type="text" class="gf-form-input max-width-30" placeholder="Find Dashboard by name" tabindex="1" give-focus="true" ng-model="ctrl.query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.onQueryChange()" />
     </div>
     <div class="page-action-bar__spacer"></div>
-    <a class="btn btn-success" href="/dashboard/new">
+    <a class="btn btn-success" href="/dashboard/new" ng-hide="ctrl.folderTitle">
       <i class="fa fa-plus"></i>
       Dashboard
     </a>
-    <a class="btn btn-success" href="/dashboard/new/?editview=new-folder">
+    <a class="btn btn-success" href="/dashboard/new/?editview=new-folder" ng-hide="ctrl.folderTitle">
       <i class="fa fa-plus"></i>
       Folder
     </a>
@@ -39,29 +57,12 @@
       </div>
   </div>
 
-  <div class="gf-form-group">
-    <div class="gf-form-button-row">
-      <button	type="button"
-          class="btn gf-form-button btn-secondary"
-          ng-disabled="!ctrl.canMove"
-          ng-click="ctrl.moveTo()"
-          bs-tooltip="ctrl.canMove ? '' : 'Select a dashboard to move (cannot move folders)'" data-placement="bottom">
-        <i class="fa fa-exchange"></i>&nbsp;&nbsp;Move to...
-      </button>
-      <button  type="button"
-          class="btn gf-form-button btn-inverse"
-          ng-click="ctrl.delete()"
-          ng-disabled="!ctrl.canDelete">
-          <i class="fa fa-trash"></i>&nbsp;&nbsp;Delete
-      </button>
-    </div>
-  </div>
-
   <div class="dashboard-list">
     <div class="search-results-filter-row">
       <gf-form-switch
         on-change="ctrl.onSelectAllChanged()"
         checked="ctrl.selectAllChecked"
+        switch-class="gf-form-switch--transparent gf-form-switch--search-result-filter-row__checkbox"
       />
       <div class="search-results-filter-row__filters">
         <select
@@ -69,17 +70,35 @@
           ng-model="ctrl.selectedStarredFilter"
           ng-options="t.text disable when t.disabled for t in ctrl.starredFilterOptions"
           ng-change="ctrl.onStarredFilterChange()"
+          ng-show="!(ctrl.canMove || ctrl.canDelete)"
         />
         <select
           class="search-results-filter-row__filters-item gf-form-input"
           ng-model="ctrl.selectedTagFilter"
           ng-options="t.term disable when t.disabled for t in ctrl.tagFilterOptions"
           ng-change="ctrl.onTagFilterChange()"
+          ng-show="!(ctrl.canMove || ctrl.canDelete)"
         />
+        <div class="gf-form-button-row" ng-show="ctrl.canMove || ctrl.canDelete">
+          <button	type="button"
+              class="btn gf-form-button btn-inverse"
+              ng-disabled="!ctrl.canMove"
+              ng-click="ctrl.moveTo()"
+              bs-tooltip="ctrl.canMove ? '' : 'Select a dashboard to move (cannot move folders)'"
+              data-placement="bottom">
+            <i class="fa fa-exchange"></i>&nbsp;&nbsp;Move
+          </button>
+          <button  type="button"
+              class="btn gf-form-button btn-danger"
+              ng-click="ctrl.delete()"
+              ng-disabled="!ctrl.canDelete">
+              <i class="fa fa-trash"></i>&nbsp;&nbsp;Delete
+          </button>
+        </div>
       </div>
     </div>
     <div class="search-results-container">
-        <h6 ng-show="ctrl.sections.length === 0">No dashboards matching your query were found.</h6>
+      <h6 ng-show="ctrl.sections.length === 0">No dashboards matching your query were found.</h6>
       <dashboard-search-results
         results="ctrl.sections"
         editable="true"

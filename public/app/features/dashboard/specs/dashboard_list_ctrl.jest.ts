@@ -545,5 +545,5 @@ function createCtrlWithStubs(searchResponse: any, tags?: any) {
     }
   };
 
-  return new DashboardListCtrl({}, { getNav: () => { } }, q, <SearchSrv>searchSrvStub);
+  return new DashboardListCtrl({}, { getNav: () => { } }, q, <SearchSrv>searchSrvStub, {});
 }

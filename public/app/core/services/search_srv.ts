@@ -154,12 +154,12 @@ export class SearchSrv {
   }
 
   search(options) {
-    if (!options.query && (!options.tag || options.tag.length === 0) && !options.starred) {
+    if (!options.folderIds && !options.query && (!options.tag || options.tag.length === 0) && !options.starred) {
       return this.browse(options);
     }
 
     let query = _.clone(options);
-    query.folderIds = [];
+    query.folderIds = options.folderIds || [];
     query.type = 'dash-db';
 
     return this.backendSrv.search(query).then(results => {
