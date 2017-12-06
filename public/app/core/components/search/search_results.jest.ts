@@ -8,7 +8,7 @@ describe('SearchResultsCtrl', () => {
     let selectionChanged = false;
 
     beforeEach(() => {
-      ctrl = new SearchResultsCtrl();
+      ctrl = new SearchResultsCtrl({});
       ctrl.onSelectionChanged = () => selectionChanged = true;
       ctrl.toggleSelection(item);
     });
@@ -27,7 +27,7 @@ describe('SearchResultsCtrl', () => {
     let selectionChanged = false;
 
     beforeEach(() => {
-      ctrl = new SearchResultsCtrl();
+      ctrl = new SearchResultsCtrl({});
       ctrl.onSelectionChanged = () => selectionChanged = true;
       ctrl.toggleSelection(item);
     });
@@ -45,7 +45,7 @@ describe('SearchResultsCtrl', () => {
     let selectedTag = null;
 
     beforeEach(() => {
-      ctrl = new SearchResultsCtrl();
+      ctrl = new SearchResultsCtrl({});
       ctrl.onTagSelected = (tag) => selectedTag = tag;
       ctrl.selectTag('tag-test');
     });
@@ -64,7 +64,7 @@ describe('SearchResultsCtrl', () => {
     };
 
     beforeEach(() => {
-      ctrl = new SearchResultsCtrl();
+      ctrl = new SearchResultsCtrl({});
       ctrl.toggleFolderExpand(folder);
     });
 

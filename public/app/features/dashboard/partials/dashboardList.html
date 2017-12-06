@@ -57,7 +57,20 @@
       </div>
   </div>
 
-  <div class="dashboard-list">
+  <div ng-if="!ctrl.hasFilters && ctrl.sections.length === 0">
+    <empty-list-cta model="{
+      title: 'This folder doesn\'t have any dashboards yet',
+      buttonIcon: 'gicon gicon-dashboard-new',
+      buttonLink: '/dashboard/new',
+      buttonTitle: 'Create Dashboard',
+      proTip: 'You can bulk move dashboards into this folder from the main dashboard list.',
+      proTipLink: 'http://docs.grafana.org/administration/provisioning/#datasources?utm_source=grafana_ds_list',
+      proTipLinkTitle: 'Learn more',
+      proTipTarget: '_blank'
+    }" />
+  </div>
+
+  <div class="dashboard-list" ng-show="ctrl.sections.length > 0">
     <div class="search-results-filter-row">
       <gf-form-switch
         on-change="ctrl.onSelectAllChanged()"
@@ -98,7 +111,6 @@
       </div>
     </div>
     <div class="search-results-container">
-      <h6 ng-show="ctrl.sections.length === 0">No dashboards matching your query were found.</h6>
       <dashboard-search-results
         results="ctrl.sections"
         editable="true"
