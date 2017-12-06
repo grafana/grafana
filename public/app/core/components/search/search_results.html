@@ -1,5 +1,5 @@
 <div ng-repeat="section in ctrl.results" class="search-section">
-  <a class="search-section__header pointer" ng-hide="section.hideHeader" ng-click="ctrl.toggleFolderExpand(section)">
+  <a class="search-section__header pointer" ng-hide="section.hideHeader" ng-class="{'selected': section.selected}" ng-click="ctrl.toggleFolderExpand(section)">
     <div ng-click="ctrl.toggleSelection(section, $event)">
       <gf-form-switch
         ng-show="ctrl.editable"

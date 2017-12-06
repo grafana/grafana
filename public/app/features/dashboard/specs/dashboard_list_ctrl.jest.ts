@@ -537,9 +537,6 @@ function createCtrlWithStubs(searchResponse: any, tags?: any) {
     search: (options: any) => {
       return q.resolve(searchResponse);
     },
-    toggleSection: (section) => {
-      return;
-    },
     getDashboardTags: () => {
       return q.resolve(tags || []);
     }

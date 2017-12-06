@@ -201,10 +201,6 @@ export class SearchSrv {
     });
   }
 
-  toggleSection(section) {
-    section.toggle(section);
-  }
-
   getDashboardTags() {
     return this.backendSrv.get('/api/dashboards/tags');
   }

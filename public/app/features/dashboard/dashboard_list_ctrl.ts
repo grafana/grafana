@@ -150,10 +150,6 @@ export class DashboardListCtrl {
     });
   }
 
-  toggleFolder(section) {
-    return this.searchSrv.toggleSection(section);
-  }
-
   getTags() {
     return this.searchSrv.getDashboardTags().then((results) => {
       this.tagFilterOptions =  [{ term: 'Filter By Tag', disabled: true }].concat(results);

@@ -120,8 +120,9 @@
   display: flex;
   flex-grow: 1;
 
-  &:hover {
-    color: $text-color-weak;
+  &:hover, &.selected {
+    color: $link-hover-color;
+
     .search-section__header__toggle {
       background: $tight-form-func-bg;
       color: $link-hover-color;
@@ -151,11 +152,8 @@
   white-space: nowrap;
   padding: 0px;
 
-  &:hover {
+  &:hover, &.selected {
     @include left-brand-border-gradient();
-  }
-
-  &.selected {
     background: $list-item-hover-bg;
   }
 }
