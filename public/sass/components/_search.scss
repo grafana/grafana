@@ -231,17 +231,46 @@
   background: $panel-bg;
 }
 
-@include media-breakpoint-up(xs) {
+@include media-breakpoint-down(xs) {
 
   .search-container {
     left: 0;
   }
 
   .search-dropdown {
-    flex-direction: column;
+    flex-direction: column-reverse;
   }
 
   .search-dropdown__col_2 {
+    flex-grow: 0;
+    height: auto;
+    padding: 0;
+  }
+
+  .search-item {
+    height: 100%;
+  }
+
+  .search-filter-box {
+    margin: 0;
+    box-sizing: content-box;
+    border-radius: 0;
+    padding: 1rem 2rem;
+  }
+
+  .search-filter-box-mobile {
+    display: none !important;
+  }
+
+  .search-item__body {
+    overflow: visible;
+  }
+
+  .search-item__tags {
+    // padding: 10px;
+    // overflow: hidden;
+    // display: flex;
+    // flex-wrap: wrap;
     display: none;
   }
 }
