@@ -13,7 +13,10 @@
 			<input type="text" class="gf-form-input" ng-model="ctrl.target.legendFormat"
 			spellcheck='false' placeholder="legend format" data-min-length=0 data-items=1000
 			ng-model-onblur ng-change="ctrl.refreshMetricData()">
-			</input>
+      </input>
+      <info-popover mode="right-absolute">
+				Controls the name of the time series, using name or pattern. For example {{hostname}} will be replaced with label value for the label hostname.
+			</info-popover>
 		</div>
 
 		<div class="gf-form">
