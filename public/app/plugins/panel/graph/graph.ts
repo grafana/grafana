@@ -59,6 +59,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
           return;
         }
         annotations = ctrl.annotations || [];
+        buildFlotPairs(data);
         render_panel();
       });
 
@@ -230,7 +231,6 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
       // Function for rendering panel
       function render_panel() {
         panelWidth =  elem.width();
-
         if (shouldAbortRender()) {
           return;
         }
@@ -241,10 +241,107 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         // un-check dashes if lines are unchecked
         panel.dashes = panel.lines ? panel.dashes : false;
 
-        var stack = panel.stack ? true : null;
-
         // Populate element
-        var options: any = {
+        let options: any = buildFlotOptions(panel);
+        prepareXAxis(options, panel);
+        configureYAxisOptions(data, options);
+        thresholdManager.addFlotOptions(options, panel);
+        eventManager.addFlotEvents(annotations, options);
+
+        sortedSeries = sortSeries(data, panel);
+
+        if (shouldDelayDraw(panel)) {
+          // temp fix for legends on the side, need to render twice to get dimensions right
+          callPlot(options, false);
+          setTimeout(function() { callPlot(options, true); }, 50);
+          legendSideLastValue = panel.legend.rightSide;
+        } else {
+          callPlot(options, true);
+        }
+      }
+
+      function buildFlotPairs(data) {
+        for (let i = 0; i < data.length; i++) {
+          let series = data[i];
+          series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
+
+          // if hidden remove points and disable stack
+          if (ctrl.hiddenSeries[series.alias]) {
+            series.data = [];
+            series.stack = false;
+          }
+        }
+      }
+
+      function prepareXAxis(options, panel) {
+        switch (panel.xaxis.mode) {
+          case 'series': {
+            options.series.bars.barWidth = 0.7;
+            options.series.bars.align = 'center';
+
+            for (let i = 0; i < data.length; i++) {
+              let series = data[i];
+              series.data = [[i + 1, series.stats[panel.xaxis.values[0]]]];
+            }
+
+            addXSeriesAxis(options);
+            break;
+          }
+          case 'histogram': {
+            let bucketSize: number;
+            let values = getSeriesValues(data);
+
+            if (data.length && values.length) {
+              let histMin = _.min(_.map(data, s => s.stats.min));
+              let histMax = _.max(_.map(data, s => s.stats.max));
+              let ticks = panel.xaxis.buckets || panelWidth / 50;
+              bucketSize = tickStep(histMin, histMax, ticks);
+              let histogram = convertValuesToHistogram(values, bucketSize);
+              data[0].data = histogram;
+              options.series.bars.barWidth = bucketSize * 0.8;
+            } else {
+              bucketSize = 0;
+            }
+
+            addXHistogramAxis(options, bucketSize);
+            break;
+          }
+          case 'table': {
+            options.series.bars.barWidth = 0.7;
+            options.series.bars.align = 'center';
+            addXTableAxis(options);
+            break;
+          }
+          default: {
+            options.series.bars.barWidth = getMinTimeStepOfSeries(data) / 1.5;
+            addTimeAxis(options);
+            break;
+          }
+        }
+      }
+
+      function callPlot(options, incrementRenderCounter) {
+        try {
+          plot = $.plot(elem, sortedSeries, options);
+          if (ctrl.renderError) {
+            delete ctrl.error;
+            delete ctrl.inspector;
+          }
+        } catch (e) {
+          console.log('flotcharts error', e);
+          ctrl.error = e.message || "Render Error";
+          ctrl.renderError = true;
+          ctrl.inspector = {error: e};
+        }
+
+        if (incrementRenderCounter) {
+          ctrl.renderingCompleted();
+        }
+      }
+
+      function buildFlotOptions(panel) {
+        const stack = panel.stack ? true : null;
+        let options = {
           hooks: {
             draw: [drawHook],
             processOffset: [processOffsetHook],
@@ -301,96 +398,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
             mode: 'x'
           }
         };
-
-        for (let i = 0; i < data.length; i++) {
-          let series = data[i];
-          series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
-
-          // if hidden remove points and disable stack
-          if (ctrl.hiddenSeries[series.alias]) {
-            series.data = [];
-            series.stack = false;
-          }
-        }
-
-        switch (panel.xaxis.mode) {
-          case 'series': {
-            options.series.bars.barWidth = 0.7;
-            options.series.bars.align = 'center';
-
-            for (let i = 0; i < data.length; i++) {
-              let series = data[i];
-              series.data = [[i + 1, series.stats[panel.xaxis.values[0]]]];
-            }
-
-            addXSeriesAxis(options);
-            break;
-          }
-          case 'histogram': {
-            let bucketSize: number;
-            let values = getSeriesValues(data);
-
-            if (data.length && values.length) {
-              let histMin = _.min(_.map(data, s => s.stats.min));
-              let histMax = _.max(_.map(data, s => s.stats.max));
-              let ticks = panel.xaxis.buckets || panelWidth / 50;
-              bucketSize = tickStep(histMin, histMax, ticks);
-              let histogram = convertValuesToHistogram(values, bucketSize);
-              data[0].data = histogram;
-              options.series.bars.barWidth = bucketSize * 0.8;
-            } else {
-              bucketSize = 0;
-            }
-
-            addXHistogramAxis(options, bucketSize);
-            break;
-          }
-          case 'table': {
-            options.series.bars.barWidth = 0.7;
-            options.series.bars.align = 'center';
-            addXTableAxis(options);
-            break;
-          }
-          default: {
-            options.series.bars.barWidth = getMinTimeStepOfSeries(data) / 1.5;
-            addTimeAxis(options);
-            break;
-          }
-        }
-
-        thresholdManager.addFlotOptions(options, panel);
-        eventManager.addFlotEvents(annotations, options);
-        configureAxisOptions(data, options);
-
-        sortedSeries = sortSeries(data, ctrl.panel);
-
-        function callPlot(incrementRenderCounter) {
-          try {
-            plot = $.plot(elem, sortedSeries, options);
-            if (ctrl.renderError) {
-              delete ctrl.error;
-              delete ctrl.inspector;
-            }
-          } catch (e) {
-            console.log('flotcharts error', e);
-            ctrl.error = e.message || "Render Error";
-            ctrl.renderError = true;
-            ctrl.inspector = {error: e};
-          }
-
-          if (incrementRenderCounter) {
-            ctrl.renderingCompleted();
-          }
-        }
-
-        if (shouldDelayDraw(panel)) {
-          // temp fix for legends on the side, need to render twice to get dimensions right
-          callPlot(false);
-          setTimeout(function() { callPlot(true); }, 50);
-          legendSideLastValue = panel.legend.rightSide;
-        } else {
-          callPlot(true);
-        }
+        return options;
       }
 
       function sortSeries(series, panel) {
@@ -542,7 +550,7 @@ function graphDirective($rootScope, timeSrv, popoverSrv, contextSrv) {
         };
       }
 
-      function configureAxisOptions(data, options) {
+      function configureYAxisOptions(data, options) {
         var defaults = {
           position: 'left',
           show: panel.yaxes[0].show,
