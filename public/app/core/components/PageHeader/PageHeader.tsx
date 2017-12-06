@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavModel, NavModelItem } from '../../nav_model_srv';
 import classNames from 'classnames';
-// import appEvents from 'app/core/app_events';
+import appEvents from 'app/core/app_events';
 
 export interface IProps {
   model: NavModel;
@@ -54,8 +54,7 @@ function SelectNav({main, customCss}: {main: NavModelItem, customCss: string}) {
   const gotoUrl = evt => {
     var element = evt.target;
     var url = element.options[element.selectedIndex].value;
-    // appEvents.emit('location-change', {href: url})
-    window.location.href = url; // TODO: Trigger angular navigation
+    appEvents.emit('location-change', {href: url});
   };
 
   return (<select

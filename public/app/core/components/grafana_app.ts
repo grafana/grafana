@@ -12,7 +12,7 @@ import Drop from 'tether-drop';
 export class GrafanaCtrl {
 
   /** @ngInject */
-  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv) {
+  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv, globalEventSrv) {
 
     $scope.init = function() {
       $scope.contextSrv = contextSrv;
@@ -23,6 +23,7 @@ export class GrafanaCtrl {
       profiler.init(config, $rootScope);
       alertSrv.init();
       utilSrv.init();
+      globalEventSrv.init();
 
       $scope.dashAlerts = alertSrv;
     };
