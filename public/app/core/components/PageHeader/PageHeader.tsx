@@ -1,6 +1,7 @@
 import React from 'react';
-import { NavModel, NavModelItem } from '../nav_model_srv';
+import { NavModel, NavModelItem } from '../../nav_model_srv';
 import classNames from 'classnames';
+import appEvents from 'app/core/app_events';
 
 export interface IProps {
   model: NavModel;
@@ -26,8 +27,44 @@ function TabItem(tab: NavModelItem) {
   );
 }
 
-function Tabs({main}: {main: NavModelItem}) {
-  return <ul className="gf-tabs">{main.children.map(TabItem)}</ul>;
+function SelectOption(navItem: NavModelItem) {
+  if (navItem.hideFromTabs) { // TODO: Rename hideFromTabs => hideFromNav
+    return (null);
+  }
+
+  return (
+    <option key={navItem.url} value={navItem.url}>
+      {navItem.text}
+    </option>
+  );
+}
+
+function Navigation({main}: {main: NavModelItem}) {
+  return (<nav>
+    <SelectNav customCss="page-header__select_nav" main={main} />
+    <Tabs customCss="page-header__tabs" main={main} />
+  </nav>);
+}
+
+function SelectNav({main, customCss}: {main: NavModelItem, customCss: string}) {
+  const defaultSelectedItem = main.children.find(navItem => {
+    return navItem.active === true;
+  });
+
+  const gotoUrl = evt => {
+    var element = evt.target;
+    var url = element.options[element.selectedIndex].value;
+    appEvents.emit('location-change', {href: url});
+  };
+
+  return (<select
+    className={`gf-select-nav ${customCss}`}
+    defaultValue={defaultSelectedItem.url}
+    onChange={gotoUrl}>{main.children.map(SelectOption)}</select>);
+}
+
+function Tabs({main, customCss}: {main: NavModelItem, customCss: string}) {
+  return <ul className={`gf-tabs ${customCss}`}>{main.children.map(TabItem)}</ul>;
 }
 
 export default class PageHeader extends React.Component<IProps, any> {
@@ -63,7 +100,7 @@ export default class PageHeader extends React.Component<IProps, any> {
         <div className="page-container">
           <div className="page-header">
             {this.renderHeaderTitle(this.props.model.main)}
-            {this.props.model.main.children && <Tabs main={this.props.model.main} />}
+            {this.props.model.main.children && <Navigation main={this.props.model.main} />}
           </div>
         </div>
       </div>
