@@ -244,4 +244,10 @@
   .search-item__tags {
     display: none;
   }
+
+  input[type='text'],
+  input[type='number'],
+  textarea {
+    font-size: 16px;
+  }
 }
