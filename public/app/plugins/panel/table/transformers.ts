@@ -235,26 +235,33 @@ transformers['table'] = {
     const mergedRows = {};
     rows = rows.reduce((acc, row, i) => {
       if (!mergedRows[i]) {
-        const match = _.findIndex(rows, (other, j) => {
-          let same = true;
-          for (let index = 0; index < nonValueColumnCount; index++) {
-            if (row[index] !== other[index]) {
-              same = false;
-              break;
+        let offset = i + 1;
+        while (offset < rows.length) {
+          const match = _.findIndex(rows, (other, j) => {
+            let same = true;
+            for (let index = 0; index < nonValueColumnCount; index++) {
+              if (row[index] !== other[index]) {
+                same = false;
+                break;
+              }
             }
-          }
-          return same;
-        }, i + 1);
-        if (match > -1) {
-          const matchedRow = rows[match];
-          // Merge values into current row
-          for (let index = nonValueColumnCount; index < columns.length; index++) {
-            if (row[index] === undefined && matchedRow[index] !== undefined) {
-              row[index] = matchedRow[index];
-              break;
+            return same;
+          }, offset);
+          if (match > -1) {
+            const matchedRow = rows[match];
+            // Merge values into current row
+            for (let index = nonValueColumnCount; index < columns.length; index++) {
+              if (row[index] === undefined && matchedRow[index] !== undefined) {
+                row[index] = matchedRow[index];
+                break;
+              }
             }
+            mergedRows[match] = matchedRow;
+            // Keep looking for more rows to merge
+            offset = match + 1;
+          } else {
+            break;
           }
-          mergedRows[match] = matchedRow;
         }
         acc.push(row);
       }

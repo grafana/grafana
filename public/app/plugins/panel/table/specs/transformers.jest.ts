@@ -156,6 +156,18 @@ describe('when transforming time series table', () => {
           rows: [
             [time, 'Label Value 1', 'Label Value 2', 13],
           ],
+        },
+        {
+          type: 'table',
+          columns: [
+            { text: 'Time' },
+            { text: 'Label Key 1' },
+            { text: 'Label Key 2' },
+            { text: 'Value' },
+          ],
+          rows: [
+            [time, 'Label Value 1', 'Label Value 2', 4],
+          ],
         }
       ];
 
@@ -226,12 +238,13 @@ describe('when transforming time series table', () => {
 
         it ('should return the union of columns for multiple queries', () => {
           table = transformDataToTable(multipleQueriesDataSameLabels, panel);
-          expect(table.columns.length).toBe(5);
+          expect(table.columns.length).toBe(6);
           expect(table.columns[0].text).toBe('Time');
           expect(table.columns[1].text).toBe('Label Key 1');
           expect(table.columns[2].text).toBe('Label Key 2');
           expect(table.columns[3].text).toBe('Value #A');
           expect(table.columns[4].text).toBe('Value #B');
+          expect(table.columns[5].text).toBe('Value #C');
         });
 
         it ('should return 1 row for a single query', () => {
@@ -250,6 +263,7 @@ describe('when transforming time series table', () => {
           expect(table.rows[0][2]).toBe('Label Value 2');
           expect(table.rows[0][3]).toBe(42);
           expect(table.rows[0][4]).toBe(13);
+          expect(table.rows[0][5]).toBe(4);
         });
 
         it ('should return 2 rows for a mulitple queries with different label values', () => {
