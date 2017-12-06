@@ -1,9 +1,9 @@
 package mssql
 
 import (
+	"strings"
 	"testing"
 	"time"
-	"strings"
 
 	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/go-xorm/xorm"
@@ -18,6 +18,7 @@ import (
 // and set up a MSSQL db named grafana_tests and a user/password grafana/password
 // and set the variable below to the IP address of the database
 var serverIP string = "10.20.30.40"
+
 func TestMSSQL(t *testing.T) {
 	//SkipConvey("MSSQL", t, func() {
 	SkipConvey("MSSQL", t, func() {
@@ -96,19 +97,19 @@ func TestMSSQL(t *testing.T) {
 			So(column[7].(string), ShouldEqual, "hi varchar")
 			So(column[8].(string), ShouldEqual, "I am only char")
 
-			So(column[9].(float64), ShouldEqual, 1.1100000143051147)	// MSSQL dose not have precision for "real" datatype
+			So(column[9].(float64), ShouldEqual, 1.1100000143051147) // MSSQL dose not have precision for "real" datatype
 			// fiix me: MSSQL driver puts the decimal inside an array of chars. and the test fails despite the values are correct.
 			//So(column[10].([]uint8), ShouldEqual, []uint8{'2', '.', '2', '2'})
 			So(column[11].(float64), ShouldEqual, 3.33)
-			So(column[12].(time.Time), ShouldHappenWithin, time.Duration(15*time.Second), time.Now().UTC() )
-			So(column[13].(time.Time), ShouldHappenWithin, time.Duration(15*time.Second), time.Now().UTC().Truncate(24*time.Hour) )
-			So(column[14].(time.Time), ShouldHappenWithin, time.Duration(15*time.Second), time.Date( 1, time.January, 1, time.Now().UTC().Hour(), time.Now().UTC().Minute(), time.Now().UTC().Second(), 0, time.UTC) )
+			So(column[12].(time.Time), ShouldHappenWithin, time.Duration(15*time.Second), time.Now().UTC())
+			So(column[13].(time.Time), ShouldHappenWithin, time.Duration(15*time.Second), time.Now().UTC().Truncate(24*time.Hour))
+			So(column[14].(time.Time), ShouldHappenWithin, time.Duration(15*time.Second), time.Date(1, time.January, 1, time.Now().UTC().Hour(), time.Now().UTC().Minute(), time.Now().UTC().Second(), 0, time.UTC))
 		})
 	})
 }
 
 func InitMSSQLTestDB(t *testing.T) *xorm.Engine {
-	x, err := xorm.NewEngine(sqlutil.TestDB_Mssql.DriverName, strings.Replace(sqlutil.TestDB_Mssql.ConnStr, "localhost", serverIP, 1) )
+	x, err := xorm.NewEngine(sqlutil.TestDB_Mssql.DriverName, strings.Replace(sqlutil.TestDB_Mssql.ConnStr, "localhost", serverIP, 1))
 
 	// x.ShowSQL()
 

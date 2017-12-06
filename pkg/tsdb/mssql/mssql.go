@@ -38,7 +38,7 @@ func NewMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 
 	serport := datasource.Url
 	// fix me: need to have a default port if user did not provide. i.e. 1433
-	words := strings.Split(serport,":")
+	words := strings.Split(serport, ":")
 	server, port := words[0], words[1]
 	cnnstr := fmt.Sprintf("server=%s;port=%s;database=%s;user id=%s;password=%s;",
 		server,
@@ -106,16 +106,16 @@ func (e MssqlQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Rows,
 
 func (e MssqlQueryEndpoint) getTypedRowData(types []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
 	values := make([]interface{}, len(types))
-        valuePtrs := make([]interface{}, len(types))
+	valuePtrs := make([]interface{}, len(types))
 
 	for i, stype := range types {
 		e.log.Debug("type", "type", stype)
-                valuePtrs[i] = &values[i]
+		valuePtrs[i] = &values[i]
 	}
 
-        if err := rows.Scan(valuePtrs...); err != nil {
-                return nil, err
-        }
+	if err := rows.Scan(valuePtrs...); err != nil {
+		return nil, err
+	}
 
 	return values, nil
 }
