@@ -52,6 +52,8 @@ import {gfPageDirective} from './components/gf_page';
 import {orgSwitcher} from './components/org_switcher';
 import {profiler} from './profiler';
 import {registerAngularDirectives} from './angular_wrappers';
+import {updateLegendValues} from './time_series2';
+import TimeSeries from './time_series2';
 import {searchResultsDirective} from './components/search/search_results';
 
 export {
@@ -85,5 +87,7 @@ export {
   geminiScrollbar,
   gfPageDirective,
   orgSwitcher,
+  TimeSeries,
+  updateLegendValues,
   searchResultsDirective
 };
