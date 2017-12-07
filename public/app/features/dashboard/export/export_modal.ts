@@ -26,7 +26,7 @@ export class DashExportCtrl {
   }
 
   saveJson() {
-    var clone = this.dashboardSrv.getCurrent().getSaveModelClone();
+    var clone = this.dash;
 
     this.$scope.$root.appEvent('show-json-editor', {
       object: clone,

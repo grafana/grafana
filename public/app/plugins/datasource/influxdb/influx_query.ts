@@ -19,7 +19,6 @@ export default class InfluxQuery {
     this.scopedVars = scopedVars;
 
     target.policy = target.policy || 'default';
-    target.dsType = 'influxdb';
     target.resultFormat = target.resultFormat || 'time_series';
     target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];

@@ -1,14 +1,10 @@
-define([
-  'angular',
-  '../core_module',
-  'app/core/config',
-],
-function (angular, coreModule, config) {
-  'use strict';
+import coreModule from '../core_module';
+import config from 'app/core/config';
 
-  config = config.default;
+export class InvitedCtrl {
 
-  coreModule.default.controller('InvitedCtrl', function($scope, $routeParams, contextSrv, backendSrv) {
+  /** @ngInject */
+  constructor($scope, $routeParams, contextSrv, backendSrv) {
     contextSrv.sidemenu = false;
     $scope.formModel = {};
 
@@ -35,6 +31,7 @@ function (angular, coreModule, config) {
     };
 
     $scope.init();
+  }
+}
 
-  });
-});
+coreModule.controller('InvitedCtrl', InvitedCtrl);

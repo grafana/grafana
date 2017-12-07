@@ -1,13 +1,10 @@
-define([
-  'angular',
-  'app/core/config',
-  '../core_module',
-],
-function (angular, config, coreModule) {
-  'use strict';
+import config from 'app/core/config';
+import coreModule from '../core_module';
 
-  coreModule.default.controller('ErrorCtrl', function($scope, contextSrv, navModelSrv) {
+export class ErrorCtrl {
 
+  /** @ngInject */
+  constructor($scope, contextSrv, navModelSrv) {
     $scope.navModel = navModelSrv.getNotFoundNav();
     $scope.appSubUrl = config.appSubUrl;
 
@@ -17,7 +14,7 @@ function (angular, config, coreModule) {
     $scope.$on('$destroy', function() {
       contextSrv.sidemenu = showSideMenu;
     });
+  }
+}
 
-  });
-
-});
+coreModule.controller('ErrorCtrl', ErrorCtrl);

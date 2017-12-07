@@ -6,6 +6,7 @@ import (
 	"io"
 	"mime/multipart"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -176,7 +177,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 func SlackFileUpload(evalContext *alerting.EvalContext, log log.Logger, url string, recipient string, token string) error {
 	if evalContext.ImageOnDiskPath == "" {
-		evalContext.ImageOnDiskPath = "public/img/mixed_styles.png"
+		evalContext.ImageOnDiskPath = filepath.Join(setting.HomePath, "public/img/mixed_styles.png")
 	}
 	log.Info("Uploading to slack via file.upload API")
 	headers, uploadBody, err := GenerateSlackBody(evalContext.ImageOnDiskPath, token, recipient)
