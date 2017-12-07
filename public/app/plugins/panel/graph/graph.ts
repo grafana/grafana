@@ -92,47 +92,10 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         }
       }, scope);
 
-      function getLegendHeight(panelHeight) {
-        const LEGEND_PADDING = 23;
-
-        if (!panel.legend.show || panel.legend.rightSide) {
-          return 0;
-        }
-
-        let legendHeight = getLegendContainerHeight() + LEGEND_PADDING;
-        return Math.min(legendHeight, Math.floor(panelHeight/2));
-      }
-
-      function getLegendContainerHeight() {
-        try {
-          let graphWrapperElem = elem.parent().parent();
-          let legendElem = graphWrapperElem.find('.graph-legend-wrapper');
-          let legendHeight = legendElem.height();
-          return legendHeight;
-        } catch (e) {
-          console.log(e);
-          return 0;
-        }
-      }
-
-      function setElementHeight() {
-        try {
-          var height = ctrl.height - getLegendHeight(ctrl.height);
-          elem.css('height', height + 'px');
-
-          return true;
-        } catch (e) { // IE throws errors sometimes
-          console.log(e);
-          return false;
-        }
-      }
-
       function shouldAbortRender() {
         if (!data) {
           return true;
         }
-
-        if (!setElementHeight()) { return true; }
 
         if (panelWidth === 0) {
           return true;
@@ -150,6 +113,10 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         // add right axis labels
         if (panel.yaxes[1].label && panel.yaxes[1].show) {
           $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>").text(panel.yaxes[1].label).appendTo(elem);
+        }
+
+        if (ctrl.dataWarning) {
+          $(`<div class="datapoints-warning flot-temp-elem">${ctrl.dataWarning.title}</div>`).appendTo(elem);
         }
 
         thresholdManager.draw(plot);

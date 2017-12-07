@@ -1,10 +1,39 @@
-.graph-canvas-wrapper {
-  position: relative;
-  cursor: crosshair;
+.graph-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &--legend-right {
+    flex-direction: row;
+
+    // .graph-panel__chart {
+      //   display: table-cell;
+      //   width: 100%;
+      //   position: relative;
+    // }
+
+    .graph-legend {
+      max-height: 100%;
+      position: relative;
+      left: 4px;
+      margin: 0 0 0 1rem;
+    }
+
+    .graph-legend-series {
+      display: block;
+      padding-left: 0px;
+    }
+
+    .graph-legend-table .graph-legend-series {
+      display: table-row;
+    }
+  }
 }
 
-.histogram-chart {
+.graph-panel__chart {
   position: relative;
+  cursor: crosshair;
+  flex-grow: 1;
 }
 
 .datapoints-warning {
@@ -23,6 +52,8 @@
 
 .graph-legend {
   @include clearfix();
+  flex: 0 1 auto;
+  max-height: 30%;
   margin: 0 $spacer;
   text-align: center;
   width: calc(100% - $spacer);
@@ -161,39 +192,6 @@
   }
 }
 
-.graph-legend-rightside {
-
-  &.graph-wrapper {
-    display: table;
-    width: 100%;
-  }
-
-  .graph-canvas-wrapper {
-    display: table-cell;
-    width: 100%;
-    position: relative;
-  }
-
-  .graph-legend-wrapper {
-    display: table-cell;
-    vertical-align: top;
-    position: relative;
-    left: 4px;
-  }
-
-  .graph-legend {
-    margin: 0 0 0 1rem;
-  }
-
-  .graph-legend-series {
-    display: block;
-    padding-left: 0px;
-  }
-
-  .graph-legend-table .graph-legend-series {
-    display: table-row;
-  }
-}
 
 .graph-legend-series-hidden {
   .graph-legend-value,

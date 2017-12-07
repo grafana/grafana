@@ -10,7 +10,6 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
 
   return {
     link: function(scope, elem) {
-      var $container = $('<section class="graph-legend"></section>');
       var firstRender = true;
       var ctrl = scope.ctrl;
       var panel = ctrl.panel;
@@ -20,7 +19,9 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       var legendScrollbar;
 
       scope.$on("$destroy", function() {
-        legendScrollbar.destroy();
+        if (!legendScrollbar) {
+          legendScrollbar.destroy();
+        }
       });
 
       ctrl.events.on('render-legend', () => {
@@ -73,9 +74,9 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         var el = $(e.currentTarget);
         var index = getSeriesIndexForElement(el);
         var seriesInfo = seriesList[index];
-        var scrollPosition = $($container.children('tbody')).scrollTop();
+        var scrollPosition = $(elem.children('tbody')).scrollTop();
         ctrl.toggleSeries(seriesInfo, e);
-        $($container.children('tbody')).scrollTop(scrollPosition);
+        $(elem.children('tbody')).scrollTop(scrollPosition);
       }
 
       function sortLegend(e) {
@@ -117,22 +118,21 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         }
 
         if (firstRender) {
-          elem.append($container);
-          $container.on('click', '.graph-legend-icon', openColorSelector);
-          $container.on('click', '.graph-legend-alias', toggleSeries);
-          $container.on('click', 'th', sortLegend);
+          elem.on('click', '.graph-legend-icon', openColorSelector);
+          elem.on('click', '.graph-legend-alias', toggleSeries);
+          elem.on('click', 'th', sortLegend);
           firstRender = false;
         }
 
         seriesList = data;
 
-        $container.empty();
+        elem.empty();
 
         // Set min-width if side style and there is a value, otherwise remove the CSS propery
         var width = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth + "px" : "";
-        $container.css("min-width", width);
+        elem.css("min-width", width);
 
-        $container.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
+        elem.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
 
         var tableHeaderElem;
         if (panel.legend.alignAsTable) {
@@ -162,7 +162,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         if (!panel.legend.rightSide) {
           renderLegendElement(tableHeaderElem);
           updateLegendDecimals();
-          $container.empty();
+          elem.empty();
         } else {
           updateLegendDecimals();
         }
@@ -214,26 +214,17 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         var seriesElements = renderSeriesLegendElements();
 
         if (panel.legend.alignAsTable) {
-          var maxHeight = ctrl.height;
-
-          if (!panel.legend.rightSide) {
-            maxHeight = maxHeight/2;
-          }
-
-          var topPadding = 6;
           var tbodyElem = $('<tbody></tbody>');
-          tbodyElem.css("max-height", maxHeight - topPadding);
           tbodyElem.append(tableHeaderElem);
           tbodyElem.append(seriesElements);
-          $container.append(tbodyElem);
+          elem.append(tbodyElem);
         } else {
-          var maxLegendHeight = ctrl.height / 2;
-          $container.css("max-height", maxLegendHeight - 6);
-          $container.append(seriesElements);
+          elem.append(seriesElements);
+        }
 
-          if (!legendScrollbar) {
-            legendScrollbar = new PerfectScrollbar($container[0]);
-          }
+        if (!legendScrollbar) {
+          legendScrollbar = new PerfectScrollbar(elem[0]);
+        } else {
           legendScrollbar.update();
         }
       }
