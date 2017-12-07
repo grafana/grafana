@@ -9,7 +9,7 @@
 
 # 4.7.0 (unreleased)
 
-## Breaking change if you are running night build
+## Breaking changes
 
 `[dashboard.json]` have been replaced with [dashboard provisioning](http://docs.grafana.org/administration/provisioning/). 
 
