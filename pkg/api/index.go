@@ -95,7 +95,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Url:  "#",
 			Children: []*dtos.NavLink{
 				{Text: "Dashboard", Icon: "gicon gicon-dashboard-new", Url: setting.AppSubUrl + "/dashboard/new"},
-				{Text: "Folder", Icon: "gicon gicon-folder-new", Url: setting.AppSubUrl + "/dashboard/new/?editview=new-folder"},
+				{Text: "Folder", SubTitle: "Create a new folder to organize your dashboards", Id: "folder", Icon: "gicon gicon-folder-new", Url: setting.AppSubUrl + "/dashboards/folder/new"},
 				{Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "gicon gicon-dashboard-import", Url: setting.AppSubUrl + "/dashboard/import"},
 			},
 		})
