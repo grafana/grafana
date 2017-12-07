@@ -1,4 +1,4 @@
-import { SearchResultsCtrl } from './search_results';
+import { SearchResultsCtrl } from '../components/search/search_results';
 
 describe('SearchResultsCtrl', () => {
   let ctrl;

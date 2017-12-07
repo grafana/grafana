@@ -1,5 +1,5 @@
-import { SearchCtrl } from './search';
-import { SearchSrv } from 'app/core/services/search_srv';
+import { SearchCtrl } from '../components/search/search';
+import { SearchSrv } from '../services/search_srv';
 
 describe('SearchCtrl', () => {
   const searchSrvStub = {
