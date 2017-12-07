@@ -1,38 +1,14 @@
 package search
 
 import (
-	"log"
-	"path/filepath"
 	"sort"
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
-
-var jsonDashIndex *JsonDashIndex
 
 func Init() {
 	bus.AddHandler("search", searchHandler)
-
-	jsonIndexCfg, _ := setting.Cfg.GetSection("dashboards.json")
-
-	if jsonIndexCfg == nil {
-		log.Fatal("Config section missing: dashboards.json")
-		return
-	}
-
-	jsonIndexEnabled := jsonIndexCfg.Key("enabled").MustBool(false)
-
-	if jsonIndexEnabled {
-		jsonFilesPath := jsonIndexCfg.Key("path").String()
-		if !filepath.IsAbs(jsonFilesPath) {
-			jsonFilesPath = filepath.Join(setting.HomePath, jsonFilesPath)
-		}
-
-		jsonDashIndex = NewJsonDashIndex(jsonFilesPath)
-		go jsonDashIndex.updateLoop()
-	}
 }
 
 func searchHandler(query *Query) error {
@@ -51,15 +27,6 @@ func searchHandler(query *Query) error {
 	}
 
 	hits = append(hits, dashQuery.Result...)
-
-	if jsonDashIndex != nil {
-		jsonHits, err := jsonDashIndex.Search(query)
-		if err != nil {
-			return err
-		}
-
-		hits = append(hits, jsonHits...)
-	}
 
 	// filter out results with tag filter
 	if len(query.Tags) > 0 {
@@ -125,11 +92,4 @@ func setIsStarredFlagOnSearchResults(userId int64, hits []*Hit) error {
 	}
 
 	return nil
-}
-
-func GetDashboardFromJsonIndex(filename string) *m.Dashboard {
-	if jsonDashIndex == nil {
-		return nil
-	}
-	return jsonDashIndex.GetDashboard(filename)
 }

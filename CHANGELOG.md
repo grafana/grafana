@@ -10,6 +10,9 @@
 # 4.7.0 (unreleased)
 
 ## Breaking change if you are running night build
+
+[dashboard.json] have been replaced with [dashboard provisioning](http://docs.grafana.org/administration/provisioning/). 
+
 Config files for provisioning datasources as configuration have changed from `/conf/datasources` to `/conf/provisioning/datasources`. 
 From `/etc/grafana/datasources` to `/etc/grafana/provisioning/datasources` when installed with deb/rpm packages. 
 

@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -236,22 +235,6 @@ func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
 	panels := row.Get("panels").MustArray()
 	panels = append(panels, newpanel)
 	row.Set("panels", panels)
-}
-
-func GetDashboardFromJsonFile(c *middleware.Context) {
-	file := c.Params(":file")
-
-	dashboard := search.GetDashboardFromJsonIndex(file)
-	if dashboard == nil {
-		c.JsonApiErr(404, "Dashboard not found", nil)
-		return
-	}
-
-	dash := dtos.DashboardFullWithMeta{Dashboard: dashboard.Data}
-	dash.Meta.Type = m.DashTypeJson
-	dash.Meta.CanEdit = canEditDashboard(c.OrgRole)
-
-	c.JSON(200, &dash)
 }
 
 // GetDashboardVersions returns all dashboard versions as JSON

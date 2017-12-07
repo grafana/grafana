@@ -234,7 +234,6 @@ func (hs *HttpServer) registerRoutes() {
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), wrap(CalculateDashboardDiff))
 
 			dashboardRoute.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
-			dashboardRoute.Get("/file/:file", GetDashboardFromJsonFile)
 			dashboardRoute.Get("/home", wrap(GetHomeDashboard))
 			dashboardRoute.Get("/tags", GetDashboardTags)
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
