@@ -50,12 +50,12 @@ var (
 	BuildStamp   int64
 
 	// Paths
-	LogsPath        string
-	HomePath        string
-	DataPath        string
-	PluginsPath     string
-	DatasourcesPath string
-	CustomInitPath  = "conf/custom.ini"
+	LogsPath         string
+	HomePath         string
+	DataPath         string
+	PluginsPath      string
+	ProvisioningPath string
+	CustomInitPath   = "conf/custom.ini"
 
 	// Log settings.
 	LogModes   []string
@@ -474,8 +474,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
 	InstanceName = Cfg.Section("").Key("instance_name").MustString("unknown_instance_name")
 	PluginsPath = makeAbsolute(Cfg.Section("paths").Key("plugins").String(), HomePath)
-	DatasourcesPath = makeAbsolute(Cfg.Section("paths").Key("datasources").String(), HomePath)
-
+	ProvisioningPath = makeAbsolute(Cfg.Section("paths").Key("provisioning").String(), HomePath)
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
 
@@ -670,6 +669,6 @@ func LogConfigurationInfo() {
 	logger.Info("Path Data", "path", DataPath)
 	logger.Info("Path Logs", "path", LogsPath)
 	logger.Info("Path Plugins", "path", PluginsPath)
-	logger.Info("Path Datasources", "path", DatasourcesPath)
+	logger.Info("Path Provisioning", "path", ProvisioningPath)
 	logger.Info("App mode " + Env)
 }

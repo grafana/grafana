@@ -11,11 +11,13 @@ import (
 
 // Typed errors
 var (
-	ErrDashboardNotFound           = errors.New("Dashboard not found")
-	ErrDashboardSnapshotNotFound   = errors.New("Dashboard snapshot not found")
-	ErrDashboardWithSameNameExists = errors.New("A dashboard with the same name already exists")
-	ErrDashboardVersionMismatch    = errors.New("The dashboard has been changed by someone else")
-	ErrDashboardTitleEmpty         = errors.New("Dashboard title cannot be empty")
+	ErrDashboardNotFound                 = errors.New("Dashboard not found")
+	ErrDashboardSnapshotNotFound         = errors.New("Dashboard snapshot not found")
+	ErrDashboardWithSameNameExists       = errors.New("A dashboard with the same name already exists")
+	ErrDashboardVersionMismatch          = errors.New("The dashboard has been changed by someone else")
+	ErrDashboardTitleEmpty               = errors.New("Dashboard title cannot be empty")
+	ErrDashboardContainsInvalidAlertData = errors.New("Invalid alert data. Cannot save dashboard")
+	ErrDashboardFailedToUpdateAlertData  = errors.New("Failed to save alert data")
 )
 
 type UpdatePluginDashboardError struct {
@@ -138,6 +140,8 @@ type SaveDashboardCommand struct {
 	OrgId        int64            `json:"-"`
 	RestoredFrom int              `json:"-"`
 	PluginId     string           `json:"-"`
+
+	UpdatedAt time.Time
 
 	Result *Dashboard
 }

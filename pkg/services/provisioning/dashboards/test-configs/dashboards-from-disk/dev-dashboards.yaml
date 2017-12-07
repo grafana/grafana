@@ -1,0 +1,12 @@
+- name: 'general dashboards'
+  org_id: 2
+  folder: 'developers'
+  editable: true
+  type: file
+  options:
+    folder: /var/lib/grafana/dashboards
+
+- name: 'default'
+  type: file
+  options:
+    folder: /var/lib/grafana/dashboards
