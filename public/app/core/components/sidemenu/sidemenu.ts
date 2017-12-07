@@ -29,7 +29,7 @@ export class SideMenuCtrl {
       }
     }
 
-  const helpNode = _.find(this.bottomNav, {id: 'help'});
+    const helpNode = _.find(this.bottomNav, {id: 'help'});
     const shortcutsNode = _.find(helpNode.children, {text: 'Keyboard shortcuts'});
 
     shortcutsNode.click = () => {
