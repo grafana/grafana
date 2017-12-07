@@ -4,6 +4,7 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import $ from 'jquery';
 import coreModule from '../../core_module';
+import {appEvents} from 'app/core/core';
 
 export class SideMenuCtrl {
   user: any;
@@ -27,6 +28,13 @@ export class SideMenuCtrl {
         profileNode.showOrgSwitcher = true;
       }
     }
+
+    const helpNode = _.find(this.bottomNav, {id: 'help'});
+    const shortcutsNode = _.find(helpNode.children, {text: 'Keyboard shortcuts'});
+
+    shortcutsNode.click = () => {
+      appEvents.emit('show-modal', {templateHtml: '<help-modal></help-modal>'});
+    };
 
     this.$scope.$on('$routeChangeSuccess', () => {
       if (this.smallBPSideMenuOpen) {
