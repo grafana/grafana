@@ -31,10 +31,10 @@ case "$1" in
     cp /usr/share/grafana/conf/ldap.toml /etc/grafana/ldap.toml
   fi
 
-   if [ ! -f $DATASOURCES_CFG_DIR ]; then
-    mkdir -p /etc/grafana/dashboards /etc/grafana/datasources
-    cp /usr/share/grafana/conf/dashboards/sample.yaml $DASHBOARDS_CFG_DIR/sample.yaml
-    cp /usr/share/grafana/conf/datasources/sample.yaml $DATASOURCES_CFG_DIR/sample.yaml
+  if [ ! -f $PROVISIONING_CFG_DIR ]; then
+    mkdir -p $PROVISIONING_CFG_DIR/dashboards $PROVISIONING_CFG_DIR/datasources
+    cp /usr/share/grafana/conf/provisioning/dashboards/sample.yaml $PROVISIONING_CFG_DIR/dashboards/sample.yaml
+    cp /usr/share/grafana/conf/provisioning/datasources/sample.yaml $PROVISIONING_CFG_DIR/datasources/sample.yaml
   fi 
 
 	# configuration files should not be modifiable by grafana user, as this can be a security issue

@@ -2,6 +2,7 @@ package provisioning
 
 import (
 	"context"
+	"path"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/services/provisioning/dashboards"
@@ -10,12 +11,14 @@ import (
 )
 
 func Init(ctx context.Context, homePath string, cfg *ini.File) error {
-	datasourcePath := makeAbsolute(cfg.Section("paths").Key("datasources").String(), homePath)
+	provisioningPath := makeAbsolute(cfg.Section("paths").Key("provisioning").String(), homePath)
+
+	datasourcePath := path.Join(provisioningPath, "datasources")
 	if err := datasources.Provision(datasourcePath); err != nil {
 		return err
 	}
 
-	dashboardPath := makeAbsolute(cfg.Section("paths").Key("dashboards").String(), homePath)
+	dashboardPath := path.Join(provisioningPath, "dashboards")
 	_, err := dashboards.Provision(ctx, dashboardPath)
 	if err != nil {
 		return err
