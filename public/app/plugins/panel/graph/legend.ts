@@ -27,8 +27,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         ctrl.events.emit('legend-rendering-complete');
       });
 
-      function updateLegendDecimals() {
-        let graphHeight = ctrl.height - $container.height();
+      function updateLegendDecimals(graphHeight) {
         updateLegendValues(data, panel, graphHeight);
       }
 
@@ -155,8 +154,21 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           }
         }
 
-        var seriesElements = [];
+        // render first time for getting proper legend height
+        if (!panel.legend.rightSide) {
+          renderLegendElement(tableHeaderElem);
+          let graphHeight = ctrl.height - $container.height() - 23;
+          updateLegendDecimals(graphHeight);
+          $container.empty();
+        } else {
+          updateLegendDecimals(ctrl.height);
+        }
 
+        renderLegendElement(tableHeaderElem);
+      }
+
+      function renderSeriesLegendElements() {
+        let seriesElements = [];
         for (i = 0; i < seriesList.length; i++) {
           var series = seriesList[i];
 
@@ -176,7 +188,6 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           html += '<a class="graph-legend-alias pointer" title="' + series.aliasEscaped + '">' + series.aliasEscaped + '</a>';
 
           if (panel.legend.values) {
-            updateLegendDecimals();
             var avg = series.formatValue(series.stats.avg);
             var current = series.formatValue(series.stats.current);
             var min = series.formatValue(series.stats.min);
@@ -193,6 +204,11 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           html += '</div>';
           seriesElements.push($(html));
         }
+        return seriesElements;
+      }
+
+      function renderLegendElement(tableHeaderElem) {
+        var seriesElements = renderSeriesLegendElements();
 
         if (panel.legend.alignAsTable) {
           var maxHeight = ctrl.height;
