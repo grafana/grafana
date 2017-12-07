@@ -30,7 +30,7 @@ function GridWrapper({size, layout, onLayoutChange, children, onResize, onResize
       isResizable={true}
       measureBeforeMount={false}
       containerPadding={[0, 0]}
-      useCSSTransforms={false}
+      useCSSTransforms={true}
       margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
       cols={GRID_COLUMN_COUNT}
       rowHeight={GRID_CELL_HEIGHT}

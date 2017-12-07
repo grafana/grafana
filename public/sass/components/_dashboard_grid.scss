@@ -47,3 +47,10 @@
   }
 }
 
+// Hack for preventing panel menu overlapping.
+.react-grid-item.resizing.panel,
+.react-grid-item.panel.dropdown-menu-open,
+.react-grid-item.react-draggable-dragging.panel {
+  z-index: $zindex-dropdown;
+}
+
