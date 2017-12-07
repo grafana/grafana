@@ -89,7 +89,7 @@ func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
-		return fmt.Sprintf("(extract(epoch from \"%s\")/%v)::bigint*%v", args[0], interval.Seconds(), interval.Seconds()), nil
+		return fmt.Sprintf("(extract(epoch from %s)/%v)::bigint*%v AS time", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
