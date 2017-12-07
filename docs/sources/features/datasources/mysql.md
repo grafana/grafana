@@ -146,6 +146,12 @@ the hosts variable only show hosts from the current selected region with a query
 SELECT hostname FROM my_host  WHERE region IN($region)
 ```
 
+To use time range dependent macros like `$__timeFilter(column)` in your query, the refresh mode of the template variable needs to be set to *On Time Range Change*.
+
+```sql
+SELECT event_name FROM event_log WHERE $__timeFilter(time_column)
+```
+
 ### Using Variables in Queries
 
 From Grafana 4.3.0 to 4.6.0, template variables are always quoted automatically so if it is a string value do not wrap them in quotes in where clauses.
