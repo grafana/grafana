@@ -59,7 +59,7 @@
 				</a>
 			</li>
 			<li ng-repeat="child in ::item.children" ng-class="{divider: child.divider}" ng-hide="::child.hideFromMenu">
-				<a href="{{::child.url}}" target="{{::child.target}}">
+				<a href="{{::child.url}}" target="{{::child.target}}" ng-click="ctrl.itemClicked(child, $event)">
 					<i class="{{::child.icon}}" ng-show="::child.icon"></i>
 					{{::child.text}}
 				</a>

@@ -50,6 +50,13 @@ export class SideMenuCtrl {
       templateHtml: '<org-switcher dismiss="dismiss()"></org-switcher>',
     });
   }
+
+  itemClicked(item, evt) {
+    if (item.url === '/shortcuts') {
+      appEvents.emit('show-modal', {templateHtml: '<help-modal></help-modal>'});
+      evt.preventDefault();
+    }
+  }
 }
 
 export function sideMenuDirective() {
