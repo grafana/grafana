@@ -118,29 +118,13 @@ export function getFlotRange(panelMin, panelMax, datamin, datamax) {
 }
 
 /**
- * Estimate number of ticks for Y axis.
- * Implementation from Flot.
- */
-export function getFlotNumberOfTicks(height, ticks?) {
-  let noTicks;
-  if (typeof ticks === "number" && ticks > 0) {
-    noTicks = ticks;
-  } else {
-    // heuristic based on the model a*sqrt(x) fitted to
-    // some data points that seemed reasonable
-    noTicks = 0.3 * Math.sqrt(height);
-  }
-  return noTicks;
-}
-
-/**
  * Calculate tick decimals.
  * Implementation from Flot.
  */
-export function getFlotTickDecimals(data, axis, height) {
+export function getFlotTickDecimals(data, axis) {
   let {datamin, datamax} = getDataMinMax(data);
   let {min, max} = getFlotRange(axis.min, axis.max, datamin, datamax);
-  let noTicks = getFlotNumberOfTicks(height);
+  let noTicks = 3;
   let tickDecimals, maxDec;
   let delta = (max - min) / noTicks;
   let dec = -Math.floor(Math.log(delta) / Math.LN10);

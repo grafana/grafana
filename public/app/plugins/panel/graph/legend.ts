@@ -19,6 +19,10 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       var i;
       var legendScrollbar;
 
+      scope.$on("$destroy", function() {
+        legendScrollbar.destroy();
+      });
+
       ctrl.events.on('render-legend', () => {
         data = ctrl.seriesList;
         if (data) {
@@ -27,8 +31,8 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         ctrl.events.emit('legend-rendering-complete');
       });
 
-      function updateLegendDecimals(graphHeight) {
-        updateLegendValues(data, panel, graphHeight);
+      function updateLegendDecimals() {
+        updateLegendValues(data, panel);
       }
 
       function getSeriesIndexForElement(el) {
@@ -157,11 +161,10 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         // render first time for getting proper legend height
         if (!panel.legend.rightSide) {
           renderLegendElement(tableHeaderElem);
-          let graphHeight = ctrl.height - $container.height() - 23;
-          updateLegendDecimals(graphHeight);
+          updateLegendDecimals();
           $container.empty();
         } else {
-          updateLegendDecimals(ctrl.height);
+          updateLegendDecimals();
         }
 
         renderLegendElement(tableHeaderElem);
@@ -227,6 +230,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           var maxLegendHeight = ctrl.height / 2;
           $container.css("max-height", maxLegendHeight - 6);
           $container.append(seriesElements);
+
           if (!legendScrollbar) {
             legendScrollbar = new PerfectScrollbar($container[0]);
           }

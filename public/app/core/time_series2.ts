@@ -21,14 +21,13 @@ function translateFillOption(fill) {
  * Calculate decimals for legend and update values for each series.
  * @param data series data
  * @param panel
- * @param height Graph height
  */
-export function updateLegendValues(data: TimeSeries[], panel, height) {
+export function updateLegendValues(data: TimeSeries[], panel) {
   for (let i = 0; i < data.length; i++) {
     let series = data[i];
     let yaxes = panel.yaxes;
     let axis = yaxes[series.yaxis - 1];
-    let {tickDecimals, scaledDecimals} = getFlotTickDecimals(data, axis, height);
+    let {tickDecimals, scaledDecimals} = getFlotTickDecimals(data, axis);
     let formater = kbn.valueFormats[panel.yaxes[series.yaxis - 1].format];
 
     // decimal override
