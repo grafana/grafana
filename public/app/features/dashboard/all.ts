@@ -29,7 +29,11 @@ import './move_to_folder_modal/move_to_folder';
 import coreModule from 'app/core/core_module';
 
 import {DashboardListCtrl} from './dashboard_list_ctrl';
+import {FolderDashboardsCtrl} from './folder_dashboards_ctrl';
+import {FolderPermissionsCtrl} from './folder_permissions_ctrl';
 import {DashboardImportCtrl} from './dashboard_import_ctrl';
 
 coreModule.controller('DashboardListCtrl', DashboardListCtrl);
+coreModule.controller('FolderDashboardsCtrl', FolderDashboardsCtrl);
+coreModule.controller('FolderPermissionsCtrl', FolderPermissionsCtrl);
 coreModule.controller('DashboardImportCtrl', DashboardImportCtrl);

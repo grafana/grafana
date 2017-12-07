@@ -1,8 +1,8 @@
-import { DashboardListCtrl } from '../dashboard_list_ctrl';
+import { ManageDashboardsCtrl } from 'app/core/components/manage_dashboards/manage_dashboards';
 import { SearchSrv } from 'app/core/services/search_srv';
 import q from 'q';
 
-describe('DashboardListCtrl', () => {
+describe('ManageDashboards', () => {
   let ctrl;
 
   describe('when browsing dashboards', () => {
@@ -542,5 +542,5 @@ function createCtrlWithStubs(searchResponse: any, tags?: any) {
     }
   };
 
-  return new DashboardListCtrl({}, { getNav: () => { } }, q, <SearchSrv>searchSrvStub, {});
+  return new ManageDashboardsCtrl({}, { getNav: () => { } }, q, <SearchSrv>searchSrvStub);
 }

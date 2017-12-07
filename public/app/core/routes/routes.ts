@@ -69,13 +69,18 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controllerAs: 'ctrl',
   })
   .when('/dashboards', {
-    templateUrl: 'public/app/features/dashboard/partials/dashboardList.html',
+    templateUrl: 'public/app/features/dashboard/partials/dashboard_list.html',
     controller : 'DashboardListCtrl',
     controllerAs: 'ctrl',
   })
+  .when('/dashboards/folder/:folderId/:type/:slug/permissions', {
+    templateUrl: 'public/app/features/dashboard/partials/folder_permissions.html',
+    controller : 'FolderPermissionsCtrl',
+    controllerAs: 'ctrl',
+  })
   .when('/dashboards/folder/:folderId/:type/:slug', {
-    templateUrl: 'public/app/features/dashboard/partials/dashboardList.html',
-    controller : 'DashboardListCtrl',
+    templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
+    controller : 'FolderDashboardsCtrl',
     controllerAs: 'ctrl',
   })
   .when('/org', {

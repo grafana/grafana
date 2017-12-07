@@ -53,6 +53,7 @@ import {orgSwitcher} from './components/org_switcher';
 import {profiler} from './profiler';
 import {registerAngularDirectives} from './angular_wrappers';
 import {searchResultsDirective} from './components/search/search_results';
+import {manageDashboardsDirective} from './components/manage_dashboards/manage_dashboards';
 
 export {
   profiler,
@@ -85,5 +86,6 @@ export {
   geminiScrollbar,
   gfPageDirective,
   orgSwitcher,
-  searchResultsDirective
+  searchResultsDirective,
+  manageDashboardsDirective
 };

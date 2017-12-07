@@ -10,7 +10,7 @@
     </div>
     <i class="search-section__header__icon" ng-class="section.icon"></i>
     <span class="search-section__header__text">{{::section.title}}</span>
-    <div ng-show="ctrl.editable && section.id > 0 && section.expanded" ng-click="ctrl.navigateToFolder(section, $event)">
+    <div ng-show="ctrl.editable && section.id > 0" ng-click="ctrl.navigateToFolder(section, $event)">
         <i class="fa fa-cog search-section__header__toggle"></i>&nbsp;
     </div>
     <i class="fa fa-minus search-section__header__toggle" ng-show="section.expanded"></i>

@@ -72,6 +72,19 @@ export default class PageHeader extends React.Component<IProps, any> {
     super(props);
   }
 
+  renderBreadcrumb(breadcrumbs) {
+    const breadcrumbsResult = [];
+    for (let i = 0; i < breadcrumbs.length; i++) {
+      const bc = breadcrumbs[i];
+      if (bc.uri) {
+        breadcrumbsResult.push(<a className="text-link" key={i} href={bc.uri}>{bc.title}</a>);
+      } else {
+        breadcrumbsResult.push(<span key={i}> / {bc.title}</span>);
+      }
+    }
+    return breadcrumbsResult;
+  }
+
   renderHeaderTitle(main) {
     return (
       <div className="page-header__inner">
@@ -81,7 +94,12 @@ export default class PageHeader extends React.Component<IProps, any> {
         </span>
 
         <div className="page-header__info-block">
-          <h1 className="page-header__title">{main.text}</h1>
+          {main.text && <h1 className="page-header__title">{main.text}</h1>}
+          {main.breadcrumbs && main.breadcrumbs.length > 0 && (
+            <h1 className="page-header__title">
+              {this.renderBreadcrumb(main.breadcrumbs)}
+            </h1>)
+          }
           {main.subTitle && <div className="page-header__sub-title">{main.subTitle}</div>}
           {main.subType && (
             <div className="page-header__stamps">
