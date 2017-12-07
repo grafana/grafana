@@ -4,7 +4,7 @@ import coreModule from 'app/core/core_module';
 
 var template = `
 <input type="file" id="dashupload" name="dashupload" class="hide"/>
-<label class="btn btn-secondary" for="dashupload">
+<label class="btn btn-success" for="dashupload">
   <i class="fa fa-upload"></i>
   Upload .json File
 </label>

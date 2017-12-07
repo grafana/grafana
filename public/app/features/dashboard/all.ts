@@ -15,7 +15,6 @@ import './unsavedChangesSrv';
 import './unsaved_changes_modal';
 import './timepicker/timepicker';
 import './upload';
-import './import/dash_import';
 import './export/export_modal';
 import './export_data/export_data_modal';
 import './ad_hoc_filters';
@@ -30,5 +29,7 @@ import './move_to_folder_modal/move_to_folder';
 import coreModule from 'app/core/core_module';
 
 import {DashboardListCtrl} from './dashboard_list_ctrl';
+import {DashboardImportCtrl} from './dashboard_import_ctrl';
 
 coreModule.controller('DashboardListCtrl', DashboardListCtrl);
+coreModule.controller('DashboardImportCtrl', DashboardImportCtrl);

@@ -120,8 +120,9 @@
   display: flex;
   flex-grow: 1;
 
-  &:hover {
-    color: $text-color-weak;
+  &:hover, &.selected {
+    color: $link-hover-color;
+
     .search-section__header__toggle {
       background: $tight-form-func-bg;
       color: $link-hover-color;
@@ -129,12 +130,8 @@
   }
 }
 
-.search-section__header__with-checkbox {
-  display: flex;
-}
-
 .search-section__header__icon {
-  padding: 5px 10px;
+  padding: 2px 10px;
 }
 
 .search-section__header__toggle {
@@ -143,14 +140,6 @@
 
 .search-section__header__text {
   flex-grow: 1;
-}
-
-.search-item__with-checkbox {
-  display: flex;
-
-  .search-item {
-    margin: 1px 3px;
-  }
 }
 
 .search-item {
@@ -163,11 +152,8 @@
   white-space: nowrap;
   padding: 0px;
 
-  &:hover {
+  &:hover, &.selected {
     @include left-brand-border-gradient();
-  }
-
-  &.selected {
     background: $list-item-hover-bg;
   }
 }

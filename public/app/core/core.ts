@@ -54,6 +54,7 @@ import {profiler} from './profiler';
 import {registerAngularDirectives} from './angular_wrappers';
 import {updateLegendValues} from './time_series2';
 import TimeSeries from './time_series2';
+import {searchResultsDirective} from './components/search/search_results';
 
 export {
   profiler,
@@ -87,5 +88,6 @@ export {
   gfPageDirective,
   orgSwitcher,
   TimeSeries,
-  updateLegendValues
+  updateLegendValues,
+  searchResultsDirective
 };

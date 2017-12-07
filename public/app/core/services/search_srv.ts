@@ -128,14 +128,20 @@ export class SearchSrv {
     });
   }
 
-  private browse() {
+  private browse(options) {
     let sections: any = {};
 
-    let promises = [
-      this.getRecentDashboards(sections),
-      this.getStarred(sections),
-      this.getDashboardsAndFolders(sections),
-    ];
+    let promises = [];
+
+    if (!options.skipRecent) {
+      promises.push(this.getRecentDashboards(sections));
+    }
+
+    if (!options.skipStarred) {
+      promises.push(this.getStarred(sections));
+    }
+
+    promises.push(this.getDashboardsAndFolders(sections));
 
     return this.$q.all(promises).then(() => {
       return _.sortBy(_.values(sections), 'score');
@@ -148,15 +154,19 @@ export class SearchSrv {
   }
 
   search(options) {
-    if (!options.query && (!options.tag || options.tag.length === 0) && !options.starred) {
-      return this.browse();
+    if (!options.folderIds && !options.query && (!options.tag || options.tag.length === 0) && !options.starred) {
+      return this.browse(options);
     }
 
     let query = _.clone(options);
-    query.folderIds = [];
+    query.folderIds = options.folderIds || [];
     query.type = 'dash-db';
 
     return this.backendSrv.search(query).then(results => {
+      if (results.length === 0) {
+        return results;
+      }
+
       let section = {
         hideHeader: true,
         items: [],
@@ -189,10 +199,6 @@ export class SearchSrv {
     return this.backendSrv.search(query).then(results => {
       section.items = _.map(results, this.transformToViewModel);
     });
-  }
-
-  toggleSection(section) {
-    section.toggle(section);
   }
 
   getDashboardTags() {

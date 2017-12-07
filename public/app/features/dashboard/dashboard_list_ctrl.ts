@@ -14,16 +14,29 @@ export class DashboardListCtrl {
   selectAllChecked = false;
   starredFilterOptions = [{text: 'Filter by Starred', disabled: true}, {text: 'Yes'}, {text: 'No'}];
   selectedStarredFilter: any;
+  folderTitle = null;
 
   /** @ngInject */
-  constructor(private backendSrv, navModelSrv, private $q, private searchSrv: SearchSrv) {
-    this.navModel = navModelSrv.getNav('dashboards', 'dashboards', 0);
-    this.query = {query: '', mode: 'tree', tag: [], starred: false};
+  constructor(private backendSrv, navModelSrv, private $q, private searchSrv: SearchSrv, private $routeParams) {
+    this.navModel = navModelSrv.getNav('dashboards', 'manage-dashboards', 0);
+    this.query = {query: '', mode: 'tree', tag: [], starred: false, skipRecent: true, skipStarred: true};
+
     this.selectedStarredFilter = this.starredFilterOptions[0];
 
-    this.getDashboards().then(() => {
-      this.getTags();
-    });
+    if (this.$routeParams.folderId && this.$routeParams.type && this.$routeParams.slug) {
+      backendSrv.getDashboard(this.$routeParams.type, this.$routeParams.slug).then(result => {
+        this.folderTitle = result.dashboard.title;
+        this.query.folderIds = [result.dashboard.id];
+
+        this.getDashboards().then(() => {
+          this.getTags();
+        });
+      });
+    } else {
+      this.getDashboards().then(() => {
+        this.getTags();
+      });
+    }
   }
 
   getDashboards() {
@@ -137,10 +150,6 @@ export class DashboardListCtrl {
     });
   }
 
-  toggleFolder(section) {
-    return this.searchSrv.toggleSection(section);
-  }
-
   getTags() {
     return this.searchSrv.getDashboardTags().then((results) => {
       this.tagFilterOptions =  [{ term: 'Filter By Tag', disabled: true }].concat(results);
@@ -148,11 +157,9 @@ export class DashboardListCtrl {
     });
   }
 
-  filterByTag(tag, evt) {
-    this.query.tag.push(tag);
-    if (evt) {
-      evt.stopPropagation();
-      evt.preventDefault();
+  filterByTag(tag) {
+    if (_.indexOf(this.query.tag, tag) === -1) {
+      this.query.tag.push(tag);
     }
 
     return this.getDashboards();
@@ -163,9 +170,9 @@ export class DashboardListCtrl {
   }
 
   onTagFilterChange() {
-    this.query.tag.push(this.selectedTagFilter.term);
+    var res = this.filterByTag(this.selectedTagFilter.term);
     this.selectedTagFilter = this.tagFilterOptions[0];
-    return this.getDashboards();
+    return res;
   }
 
   removeTag(tag, evt) {

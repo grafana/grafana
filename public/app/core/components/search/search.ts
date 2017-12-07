@@ -64,18 +64,70 @@ export class SearchCtrl {
       this.moveSelection(-1);
     }
     if (evt.keyCode === 13) {
-      var selectedDash = this.results[this.selectedIndex];
-      if (selectedDash) {
-        this.$location.search({});
-        this.$location.path(selectedDash.url);
+      const flattenedResult = this.getFlattenedResultForNavigation();
+      const currentItem = flattenedResult[this.selectedIndex];
+
+      if (currentItem) {
+        if (currentItem.dashboardIndex !== undefined) {
+          const selectedDash = this.results[currentItem.folderIndex].items[currentItem.dashboardIndex];
+
+          if (selectedDash) {
+            this.$location.search({});
+            this.$location.path(selectedDash.url);
+          }
+        } else {
+          const selectedFolder = this.results[currentItem.folderIndex];
+
+          if (selectedFolder) {
+            selectedFolder.toggle(selectedFolder);
+          }
+        }
       }
     }
   }
 
   moveSelection(direction) {
-    var max = (this.results || []).length;
-    var newIndex = this.selectedIndex + direction;
+    if (this.results.length === 0) {
+      return;
+    }
+
+    const flattenedResult = this.getFlattenedResultForNavigation();
+    const currentItem = flattenedResult[this.selectedIndex];
+
+    if (currentItem) {
+      if (currentItem.dashboardIndex !== undefined) {
+        this.results[currentItem.folderIndex].items[currentItem.dashboardIndex].selected = false;
+      } else {
+        this.results[currentItem.folderIndex].selected = false;
+      }
+    }
+
+    const max = flattenedResult.length;
+    let newIndex = this.selectedIndex + direction;
     this.selectedIndex = ((newIndex %= max) < 0) ? newIndex + max : newIndex;
+    const selectedItem = flattenedResult[this.selectedIndex];
+
+    if (selectedItem.dashboardIndex === undefined && this.results[selectedItem.folderIndex].id === 0) {
+      this.moveSelection(direction);
+      return;
+    }
+
+    if (selectedItem.dashboardIndex !== undefined) {
+      if (!this.results[selectedItem.folderIndex].expanded) {
+        this.moveSelection(direction);
+        return;
+      }
+
+      this.results[selectedItem.folderIndex].items[selectedItem.dashboardIndex].selected = true;
+      return;
+    }
+
+    if (this.results[selectedItem.folderIndex].hideHeader) {
+      this.moveSelection(direction);
+      return;
+    }
+
+    this.results[selectedItem.folderIndex].selected = true;
   }
 
   searchDashboards() {
@@ -84,8 +136,9 @@ export class SearchCtrl {
 
     return this.searchSrv.search(this.query).then(results => {
       if (localSearchId < this.currentSearchId) { return; }
-      this.results = results;
+      this.results = results || [];
       this.isLoading = false;
+      this.moveSelection(1);
     });
   }
 
@@ -94,13 +147,11 @@ export class SearchCtrl {
     return query.query === '' && query.starred === false && query.tag.length === 0;
   }
 
-  filterByTag(tag, evt) {
-    this.query.tag.push(tag);
-    this.search();
-    this.giveSearchFocus = this.giveSearchFocus + 1;
-    if (evt) {
-      evt.stopPropagation();
-      evt.preventDefault();
+  filterByTag(tag) {
+    if (_.indexOf(this.query.tag, tag) === -1) {
+      this.query.tag.push(tag);
+      this.search();
+      this.giveSearchFocus = this.giveSearchFocus + 1;
     }
   }
 
@@ -127,12 +178,32 @@ export class SearchCtrl {
 
   search() {
     this.showImport = false;
-    this.selectedIndex = 0;
+    this.selectedIndex = -1;
     this.searchDashboards();
   }
 
-  toggleFolder(section) {
-    this.searchSrv.toggleSection(section);
+  private getFlattenedResultForNavigation() {
+    let folderIndex = 0;
+
+    return _.flatMap(this.results, (s) => {
+      let result = [];
+
+      result.push({
+        folderIndex: folderIndex
+      });
+
+      let dashboardIndex = 0;
+
+      result = result.concat(_.map(s.items || [], (i) => {
+        return {
+          folderIndex: folderIndex,
+          dashboardIndex: dashboardIndex++
+        };
+      }));
+
+      folderIndex++;
+      return result;
+    });
   }
 }
 

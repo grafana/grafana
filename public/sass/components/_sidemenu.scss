@@ -110,7 +110,7 @@
   display: inline-block;
 
   .fa, .icon-gf, .gicon {
-    color: $link-color;
+    color: $side-menu-link-color;
     position: relative;
     opacity: .7;
     font-size: 130%;
@@ -135,6 +135,7 @@
   white-space: nowrap;
   background-color: $side-menu-item-hover-bg;
   font-size: 17px;
+  color: #ebedf2;
 }
 
 li.sidemenu-org-switcher {
