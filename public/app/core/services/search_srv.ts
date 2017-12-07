@@ -51,7 +51,7 @@ export class SearchSrv {
     store.set('search.sections.recent', this.recentIsOpen);
 
     if (!section.expanded || section.items.length) {
-      return;
+      return Promise.resolve();
     }
 
     return this.queryForRecentDashboards().then(result => {
@@ -62,6 +62,7 @@ export class SearchSrv {
   private toggleStarred(section) {
     this.starredIsOpen = section.expanded = !section.expanded;
     store.set('search.sections.starred', this.starredIsOpen);
+    return Promise.resolve();
   }
 
   private getStarred(sections) {
@@ -189,7 +190,7 @@ export class SearchSrv {
     section.icon = section.expanded ? 'fa fa-folder-open' : 'fa fa-folder';
 
     if (section.items.length) {
-      return;
+      return Promise.resolve();
     }
 
     let query = {

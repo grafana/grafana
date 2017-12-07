@@ -5,6 +5,7 @@ export class SearchResultsCtrl {
   results: any;
   onSelectionChanged: any;
   onTagSelected: any;
+  onFolderExpanding: any;
 
   /** @ngInject */
   constructor(private $location) {
@@ -13,6 +14,10 @@ export class SearchResultsCtrl {
 
   toggleFolderExpand(section) {
     if (section.toggle) {
+      if (!section.expanded && this.onFolderExpanding) {
+        this.onFolderExpanding();
+      }
+
       section.toggle(section);
     }
   }
@@ -62,7 +67,8 @@ export function searchResultsDirective() {
       editable: '@',
       results: '=',
       onSelectionChanged: '&',
-      onTagSelected: '&'
+      onTagSelected: '&',
+      onFolderExpanding: '&'
     },
   };
 }

@@ -102,6 +102,11 @@ export class SearchCtrl {
       }
     }
 
+    if (direction === 0) {
+      this.selectedIndex = -1;
+      return;
+    }
+
     const max = flattenedResult.length;
     let newIndex = this.selectedIndex + direction;
     this.selectedIndex = ((newIndex %= max) < 0) ? newIndex + max : newIndex;
@@ -180,6 +185,10 @@ export class SearchCtrl {
     this.showImport = false;
     this.selectedIndex = -1;
     this.searchDashboards();
+  }
+
+  folderExpanding() {
+    this.moveSelection(0);
   }
 
   private getFlattenedResultForNavigation() {

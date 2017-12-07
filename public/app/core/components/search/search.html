@@ -24,7 +24,9 @@
             <h6 ng-show="!ctrl.isLoading && ctrl.results.length === 0">No dashboards matching your query were found.</h6>
             <dashboard-search-results
               results="ctrl.results"
-              on-tag-selected="ctrl.filterByTag($tag)" />
+              on-tag-selected="ctrl.filterByTag($tag)"
+              on-folder-expanding="ctrl.folderExpanding()"
+              on-folder-expanded="ctrl.folderExpanded($folder)" />
         </div>
     </div>
 

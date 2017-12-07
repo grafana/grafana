@@ -55,21 +55,43 @@ describe('SearchResultsCtrl', () => {
     });
   });
 
-  describe('when toggle a folder', () => {
-    let folderToggled = false;
-    let folder = {
-      toggle: () => {
-        folderToggled = true;
-      }
-    };
+  describe('when toggle a collapsed folder', () => {
+    let folderExpanded = false;
 
     beforeEach(() => {
       ctrl = new SearchResultsCtrl({});
+      ctrl.onFolderExpanding = () => { folderExpanded = true; };
+
+      let folder = {
+        expanded: false,
+        toggle: () => {}
+      };
+
       ctrl.toggleFolderExpand(folder);
     });
 
-    it('should trigger folder toggle callback', () => {
-      expect(folderToggled).toBeTruthy();
+    it('should trigger folder expanding callback', () => {
+      expect(folderExpanded).toBeTruthy();
+    });
+  });
+
+  describe('when toggle an expanded folder', () => {
+    let folderExpanded = false;
+
+    beforeEach(() => {
+      ctrl = new SearchResultsCtrl({});
+      ctrl.onFolderExpanding = () => { folderExpanded = true; };
+
+      let folder = {
+        expanded: true,
+        toggle: () => {}
+      };
+
+      ctrl.toggleFolderExpand(folder);
+    });
+
+    it('should not trigger folder expanding callback', () => {
+      expect(folderExpanded).toBeFalsy();
     });
   });
 });
