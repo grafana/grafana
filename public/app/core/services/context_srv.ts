@@ -58,10 +58,6 @@ export class ContextSrv {
     this.sidemenu = !this.sidemenu;
     store.set('grafana.sidemenu', this.sidemenu);
   }
-
-  setSideMenuForSmallBreakpoint(show: boolean, persistToggle: boolean) {
-    this.sidemenuSmallBreakpoint = show;
-  }
 }
 
 var contextSrv = new ContextSrv();

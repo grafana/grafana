@@ -79,21 +79,16 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       sidemenuOpen = scope.contextSrv.sidemenu;
       body.toggleClass('sidemenu-open', sidemenuOpen);
 
-      scope.$watch('contextSrv.sidemenu', newVal => {
-        if (sidemenuOpen !== scope.contextSrv.sidemenu) {
-          sidemenuOpen = scope.contextSrv.sidemenu;
-          body.toggleClass('sidemenu-open', scope.contextSrv.sidemenu);
-        }
+      appEvents.on('toggle-sidemenu', () => {
+        body.toggleClass('sidemenu-open');
       });
 
-      let sidemenuOpenSmallBreakpoint = scope.contextSrv.sidemenuSmallBreakpoint;
-      body.toggleClass('sidemenu-open--xs', sidemenuOpenSmallBreakpoint);
+      appEvents.on('toggle-sidemenu-mobile', () => {
+        body.toggleClass('sidemenu-open--xs');
+      });
 
-      scope.$watch('contextSrv.sidemenuSmallBreakpoint', newVal => {
-        if (sidemenuOpenSmallBreakpoint !== scope.contextSrv.sidemenuSmallBreakpoint) {
-          sidemenuOpenSmallBreakpoint = scope.contextSrv.sidemenuSmallBreakpoint;
-          body.toggleClass('sidemenu-open--xs', scope.contextSrv.sidemenuSmallBreakpoint);
-        }
+      appEvents.on('toggle-sidemenu-hidden', () => {
+        body.toggleClass('sidemenu-hidden');
       });
 
       // tooltip removal fix
@@ -110,6 +105,9 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
             body.addClass(pageClass);
           }
         }
+
+        // clear body class sidemenu states
+        body.removeClass('sidemenu-open--xs');
 
         $("#tooltip, .tooltip").remove();
 

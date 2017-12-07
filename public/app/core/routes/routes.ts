@@ -178,23 +178,27 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/login', {
     templateUrl: 'public/app/partials/login.html',
     controller : 'LoginCtrl',
-    pageClass: 'page-login',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/invite/:code', {
     templateUrl: 'public/app/partials/signup_invited.html',
     controller : 'InvitedCtrl',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/signup', {
     templateUrl: 'public/app/partials/signup_step2.html',
     controller : 'SignUpCtrl',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/user/password/send-reset-email', {
     templateUrl: 'public/app/partials/reset_password.html',
     controller : 'ResetPasswordCtrl',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/user/password/reset', {
     templateUrl: 'public/app/partials/reset_password.html',
     controller : 'ResetPasswordCtrl',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/dashboard/snapshots', {
     templateUrl: 'public/app/features/snapshot/partials/snapshots.html',

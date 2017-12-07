@@ -70,13 +70,15 @@ export class NavModelSrv {
 
   getNotFoundNav() {
     var node = {
-      text: "Page not found ",
+      text: "Page not found",
       icon: "fa fa-fw fa-warning",
+      subTitle: "404 Error"
     };
 
     return {
       breadcrumbs: [node],
-      node: node
+      node: node,
+      main: node
     };
   }
 

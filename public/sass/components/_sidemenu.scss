@@ -16,6 +16,14 @@
   .sidemenu__close {
     display: none;
   }
+
+}
+
+// body class that hides sidemenu
+.sidemenu-hidden {
+  .sidemenu {
+    display: none;
+  }
 }
 
 @include media-breakpoint-up(sm) {
@@ -164,7 +172,7 @@ li.sidemenu-org-switcher {
   }
 }
 
-.sidemenu__logo, .sidemenu__logo_small_breakpoint {
+.sidemenu__logo {
   display: block;
   padding: 0.4rem 1.0rem 0.4rem 0.65rem;
   min-height: $navbarHeight;
@@ -203,6 +211,8 @@ li.sidemenu-org-switcher {
     .sidemenu__close {
       display: block;
       font-size: $font-size-md;
+      position: relative;
+      top: -3px;
     }
 
     .sidemenu__top,
@@ -215,14 +225,16 @@ li.sidemenu-org-switcher {
     .sidemenu__logo {
       display: none;
     }
+
     .sidemenu__logo_small_breakpoint {
+      padding: 12px 10px 26px;
       display: flex;
       flex-direction: row;
       justify-content: space-between;
       align-items: baseline;
 
-      &:hover {
-        background: transparent;
+      .fa-bars {
+        font-size: 25px;
       }
     }
 

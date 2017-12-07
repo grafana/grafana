@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import moment from 'moment';
 import angular from 'angular';
@@ -18,7 +16,6 @@ export class DashNavCtrl {
     private dashboardSrv,
     private $location,
     private backendSrv,
-    private contextSrv,
     public playlistSrv,
     navModelSrv) {
       this.navModel = navModelSrv.getDashboardNav(this.dashboard, this);
@@ -33,10 +30,6 @@ export class DashNavCtrl {
           this.titleTooltip += '<br>Expires: &nbsp;' + moment(meta.expires).fromNow() + '<br>';
         }
       }
-    }
-
-    toggleSideMenu() {
-      this.contextSrv.toggleSideMenu();
     }
 
     openEditView(editview) {

@@ -1,9 +1,8 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import config from 'app/core/config';
 import $ from 'jquery';
 import coreModule from '../../core_module';
+import appEvents from 'app/core/app_events';
 
 export class SideMenuCtrl {
   user: any;
@@ -11,7 +10,7 @@ export class SideMenuCtrl {
   bottomNav: any;
   loginUrl: string;
   isSignedIn: boolean;
-  smallBPSideMenuOpen = false;
+  isOpenMobile: boolean;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private $location, private contextSrv, private $timeout) {
@@ -29,24 +28,21 @@ export class SideMenuCtrl {
     }
 
     this.$scope.$on('$routeChangeSuccess', () => {
-      if (this.smallBPSideMenuOpen) {
-        this.contextSrv.setSideMenuForSmallBreakpoint(false, true);
-        this.smallBPSideMenuOpen = false;
-      }
       this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
     });
   }
 
   toggleSideMenu() {
     this.contextSrv.toggleSideMenu();
+    appEvents.emit('toggle-sidemenu');
+
     this.$timeout(() => {
       this.$rootScope.$broadcast('render');
     });
   }
 
   toggleSideMenuSmallBreakpoint() {
-    this.smallBPSideMenuOpen = !this.smallBPSideMenuOpen;
-    this.contextSrv.setSideMenuForSmallBreakpoint(this.smallBPSideMenuOpen, false);
+    appEvents.emit('toggle-sidemenu-mobile');
   }
 
   switchOrg() {
@@ -74,10 +70,6 @@ export function sideMenuDirective() {
         setTimeout(function() {
           parent.append(menu);
         }, 100);
-      });
-
-      scope.$on("$destory", function() {
-        elem.off('click.dropdown');
       });
     }
   };
