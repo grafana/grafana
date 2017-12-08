@@ -160,7 +160,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   }
 
   render() {
-    console.log('animated', this.state.animated);
     return (
       <SizedReactLayoutGrid
         className={classNames({'layout': true, 'animated': this.state.animated})}

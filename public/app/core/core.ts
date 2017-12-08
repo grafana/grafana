@@ -18,6 +18,7 @@ import './components/colorpicker/ColorPicker';
 import './components/colorpicker/SeriesColorPicker';
 import './components/colorpicker/spectrum_picker';
 import './services/search_srv';
+import './services/ng_react';
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';
