@@ -139,6 +139,12 @@ A query can return multiple columns and Grafana will automatically create a list
 SELECT host.hostname, other_host.hostname2 FROM host JOIN other_host ON host.city = other_host.city
 ```
 
+To use time range dependent macros like `$__timeFilter(column)` in your query the refresh mode of the template variable needs to be set to *On Time Range Change*.
+
+```sql
+SELECT event_name FROM event_log WHERE $__timeFilter(time_column)
+```
+
 Another option is a query that can create a key/value variable. The query should return two columns that are named `__text` and `__value`. The `__text` column value should be unique (if it is not unique then the first value is used). The options in the dropdown will have a text and value that allows you to have a friendly name as text and an id as the value. An example query with `hostname` as the text and `id` as the value:
 
 ```sql

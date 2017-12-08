@@ -13,11 +13,13 @@
 }
 
 .gf-timepicker-dropdown {
-  margin: -8px -10px 10px 5px;
+  position: absolute;
+  top: $navbarHeight;
+  right: 0;
   padding: 10px 20px;
-  float: right;
-  background-color: $panel-bg;
-  @include box-shadow($navbarDropdownShadow);
+  background-color: $search-filter-box-bg;
+  border-radius: 0 0 0 4px;
+  box-shadow: $search-shadow;
 }
 
 .gf-timepicker-absolute-section {

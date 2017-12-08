@@ -51,10 +51,21 @@
 
 // Button Sizes
 // --------------------------------------------------
+// XLarge
+.btn-xlarge {
+  @include button-size($btn-padding-y-xl, $btn-padding-x-xl, $font-size-lg, $btn-border-radius);
+  font-weight: normal;
+  padding-bottom: $btn-padding-y-xl - 3;
+  .gicon {
+    font-size: 31px;
+    margin-right: 1rem;
+  }
+}
 
 // Large
 .btn-large {
   @include button-size($btn-padding-y-lg, $btn-padding-x-lg, $font-size-lg, $btn-border-radius);
+  font-weight: normal;
 }
 
 .btn-small {
@@ -95,7 +106,7 @@
 }
 // Inverse appears as dark gray
 .btn-inverse {
-  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
+  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
   //background: $card-background;
   box-shadow: $card-shadow;
   //border: 1px solid $tight-form-func-highlight-bg;

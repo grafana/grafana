@@ -18,6 +18,14 @@
 // Media queries
 // ---------------------
 
+@include media-breakpoint-down(xs) {
+  input[type='text'],
+  input[type='number'],
+  textarea {
+    font-size: 16px;
+  }
+}
+
 @include media-breakpoint-up(sm) {
   .navbar-page-btn {
     max-width: 250px;

@@ -93,7 +93,10 @@ Directory where grafana will automatically scan and look for plugins
 
 ### datasources
 
-Config files containing datasources that will be configured at startup
+> This feature is available in 5.0+
+
+Config files containing datasources that will be configured at startup. 
+You can read more about the config files at the [provisioning page](/administration/provisioning/#datasources).
 
 ## [server]
 

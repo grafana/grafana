@@ -48,6 +48,11 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     reloadOnSearch: false,
     pageClass: 'page-dashboard',
   })
+  .when('/dashboard/import', {
+    templateUrl: 'public/app/features/dashboard/partials/dashboardImport.html',
+    controller : 'DashboardImportCtrl',
+    controllerAs: 'ctrl',
+  })
   .when('/datasources', {
     templateUrl: 'public/app/features/plugins/partials/ds_list.html',
     controller : 'DataSourcesCtrl',
@@ -64,8 +69,23 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controllerAs: 'ctrl',
   })
   .when('/dashboards', {
-    templateUrl: 'public/app/features/dashboard/partials/dashboardList.html',
+    templateUrl: 'public/app/features/dashboard/partials/dashboard_list.html',
     controller : 'DashboardListCtrl',
+    controllerAs: 'ctrl',
+  })
+  .when('/dashboards/folder/new', {
+    templateUrl: 'public/app/features/dashboard/partials/create_folder.html',
+    controller : 'CreateFolderCtrl',
+    controllerAs: 'ctrl',
+  })
+  .when('/dashboards/folder/:folderId/:type/:slug/permissions', {
+    templateUrl: 'public/app/features/dashboard/partials/folder_permissions.html',
+    controller : 'FolderPermissionsCtrl',
+    controllerAs: 'ctrl',
+  })
+  .when('/dashboards/folder/:folderId/:type/:slug', {
+    templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
+    controller : 'FolderDashboardsCtrl',
     controllerAs: 'ctrl',
   })
   .when('/org', {
@@ -168,23 +188,27 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/login', {
     templateUrl: 'public/app/partials/login.html',
     controller : 'LoginCtrl',
-    pageClass: 'page-login',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/invite/:code', {
     templateUrl: 'public/app/partials/signup_invited.html',
     controller : 'InvitedCtrl',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/signup', {
     templateUrl: 'public/app/partials/signup_step2.html',
     controller : 'SignUpCtrl',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/user/password/send-reset-email', {
     templateUrl: 'public/app/partials/reset_password.html',
     controller : 'ResetPasswordCtrl',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/user/password/reset', {
     templateUrl: 'public/app/partials/reset_password.html',
     controller : 'ResetPasswordCtrl',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/dashboard/snapshots', {
     templateUrl: 'public/app/features/snapshot/partials/snapshots.html',

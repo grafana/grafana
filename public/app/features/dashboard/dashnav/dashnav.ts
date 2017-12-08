@@ -16,7 +16,6 @@ export class DashNavCtrl {
     private dashboardSrv,
     private $location,
     private backendSrv,
-    private contextSrv,
     public playlistSrv,
     navModelSrv) {
       this.navModel = navModelSrv.getDashboardNav(this.dashboard, this);
@@ -33,12 +32,8 @@ export class DashNavCtrl {
       }
     }
 
-    toggleSideMenu() {
-      this.contextSrv.toggleSideMenu();
-    }
-
-    openSettings() {
-      var search = _.extend(this.$location.search(), {editview: 'general'});
+    openEditView(editview) {
+      var search = _.extend(this.$location.search(), {editview: editview});
       this.$location.search(search);
     }
 

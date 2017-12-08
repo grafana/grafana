@@ -366,7 +366,6 @@ func TestAlertRuleExtraction(t *testing.T) {
 				          "steppedLine": false,
 				          "targets": [
 				            {
-				              "dsType": "influxdb",
 				              "groupBy": [
 				                {
 				                  "params": [
@@ -411,7 +410,6 @@ func TestAlertRuleExtraction(t *testing.T) {
 				              "tags": []
 				            },
 				            {
-				              "dsType": "influxdb",
 				              "groupBy": [
 				                {
 				                  "params": [

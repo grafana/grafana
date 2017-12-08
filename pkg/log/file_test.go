@@ -38,6 +38,7 @@ func TestLogFile(t *testing.T) {
 			So(fileLogWrite.maxlines_curlines, ShouldEqual, 3)
 		})
 
+		fileLogWrite.Close()
 		err = os.Remove(fileLogWrite.Filename)
 		So(err, ShouldBeNil)
 	})

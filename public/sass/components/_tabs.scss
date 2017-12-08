@@ -16,7 +16,7 @@
   position: relative;
   display: block;
   border: solid transparent;
-  border-width: 2px 1px 1px;
+  border-width: 0 1px 1px;
   border-radius: 3px 3px 0 0;
 
   i {
@@ -31,9 +31,21 @@
   &.active,
   &.active:hover,
   &.active:focus {
-    border-color: $orange $dark-4 transparent;
+    border-color: $orange $tab-border-color transparent;
     background: $page-bg;
     color: $link-color;
+    overflow: hidden;
+
+    &::before {
+      display: block;
+      content: ' ';
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      top: 0;
+      background-image: linear-gradient(to right, #ffd500 0%, #ff4400 99%, #ff4400 100%);
+    }
   }
 }
 

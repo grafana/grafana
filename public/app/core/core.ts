@@ -18,6 +18,7 @@ import './components/colorpicker/ColorPicker';
 import './components/colorpicker/SeriesColorPicker';
 import './components/colorpicker/spectrum_picker';
 import './services/search_srv';
+import './services/ng_react';
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';
@@ -52,6 +53,10 @@ import {gfPageDirective} from './components/gf_page';
 import {orgSwitcher} from './components/org_switcher';
 import {profiler} from './profiler';
 import {registerAngularDirectives} from './angular_wrappers';
+import {updateLegendValues} from './time_series2';
+import TimeSeries from './time_series2';
+import {searchResultsDirective} from './components/search/search_results';
+import {manageDashboardsDirective} from './components/manage_dashboards/manage_dashboards';
 
 export {
   profiler,
@@ -83,5 +88,9 @@ export {
   userGroupPicker,
   geminiScrollbar,
   gfPageDirective,
-  orgSwitcher
+  orgSwitcher,
+  manageDashboardsDirective,
+  TimeSeries,
+  updateLegendValues,
+  searchResultsDirective
 };

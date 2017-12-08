@@ -1,11 +1,9 @@
-define([
-  'angular',
-  '../core_module',
-],
-function (angular, coreModule) {
-  'use strict';
+import coreModule from '../core_module';
 
-  coreModule.default.controller('ResetPasswordCtrl', function($scope, contextSrv, backendSrv, $location) {
+export class ResetPasswordCtrl {
+
+  /** @ngInject */
+  constructor($scope, contextSrv, backendSrv, $location) {
     contextSrv.sidemenu = false;
     $scope.formModel = {};
     $scope.mode = 'send';
@@ -37,7 +35,7 @@ function (angular, coreModule) {
         $location.path('login');
       });
     };
+  }
+}
 
-  });
-
-});
+coreModule.controller('ResetPasswordCtrl', ResetPasswordCtrl);

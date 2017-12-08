@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { DashboardModel } from '../dashboard_model';
 import { PanelModel } from '../panel_model';
 import {GRID_CELL_HEIGHT, GRID_CELL_VMARGIN} from 'app/core/constants';
+import { expect } from 'test/lib/common';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -315,12 +316,33 @@ describe('DashboardModel', function() {
 
       expect(panelGridPos).toEqual(expectedGrid);
     });
+
+    it('should add repeated row if repeat set', function() {
+      model.rows = [
+        createRow({showTitle: true, title: "Row", height: 8, repeat: "server"}, [[6]]),
+        createRow({height: 8}, [[12]])
+      ];
+      let dashboard = new DashboardModel(model);
+      let panelGridPos = getGridPositions(dashboard);
+      let expectedGrid = [
+        {x: 0, y: 0, w: 24, h: 8},
+        {x: 0, y: 1, w: 12, h: 8},
+        {x: 0, y: 9, w: 24, h: 8},
+        {x: 0, y: 10, w: 24, h: 8}
+      ];
+
+      expect(panelGridPos).toEqual(expectedGrid);
+      expect(dashboard.panels[0].repeat).toBe("server");
+      expect(dashboard.panels[1].repeat).toBeUndefined();
+      expect(dashboard.panels[2].repeat).toBeUndefined();
+      expect(dashboard.panels[3].repeat).toBeUndefined();
+    });
   });
 });
 
 function createRow(options, panelDescriptions: any[]) {
   const PANEL_HEIGHT_STEP = GRID_CELL_HEIGHT + GRID_CELL_VMARGIN;
-  let {collapse, height, showTitle, title} = options;
+  let {collapse, height, showTitle, title, repeat} = options;
   height = height * PANEL_HEIGHT_STEP;
   let panels = [];
   _.each(panelDescriptions, panelDesc => {
@@ -330,7 +352,7 @@ function createRow(options, panelDescriptions: any[]) {
     }
     panels.push(panel);
   });
-  let row = {collapse, height, showTitle, title, panels};
+  let row = {collapse, height, showTitle, title, panels, repeat};
   return row;
 }
 

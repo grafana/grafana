@@ -1,5 +1,5 @@
 
-<div class="edit-tab-with-sidemenu">
+<div class="edit-tab-with-sidemenu" ng-if="ctrl.viewId !== 'timepicker'">
 	<aside class="edit-sidemenu-aside">
 		<h2>
 			<i class="fa fa-cog"></i>
@@ -26,6 +26,9 @@
 	<div class="edit-tab-content" ng-if="ctrl.viewId === 'templating'">
 		annotations
 	</div>
+</div>
 
+<div ng-if="ctrl.viewId === 'timepicker'">
+  <gf-time-picker-dropdown dashboard="ctrl.dashboard"></gf-time-picker-dropdown>
 </div>
 

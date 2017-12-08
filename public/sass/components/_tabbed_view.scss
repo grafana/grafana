@@ -12,8 +12,10 @@
 }
 
 .tabbed-view-header {
+  background: $page-header-bg;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
   @include clearfix();
-  @include brand-bottom-border();
 }
 
 .tabbed-view-title {
@@ -24,7 +26,7 @@
 
 .tabbed-view-panel-title {
   float: left;
-  padding-top: 1rem;
+  padding-top: 9px;
   margin: 0 2rem 0 0;
 }
 

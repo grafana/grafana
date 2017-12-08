@@ -70,13 +70,15 @@ export class NavModelSrv {
 
   getNotFoundNav() {
     var node = {
-      text: "Page not found ",
+      text: "Page not found",
       icon: "fa fa-fw fa-warning",
+      subTitle: "404 Error"
     };
 
     return {
       breadcrumbs: [node],
-      node: node
+      node: node,
+      main: node
     };
   }
 
@@ -118,14 +120,6 @@ export class NavModelSrv {
         icon: 'fa fa-fw fa-comment',
         clickHandler: () => dashNavCtrl.openEditView('annotations')
       });
-
-      if (dashboard.meta.canAdmin) {
-        menu.push({
-          title: 'Permissions...',
-          icon: 'fa fa-fw fa-lock',
-          clickHandler: () => dashNavCtrl.openEditView('permissions')
-        });
-      }
 
       if (!dashboard.meta.isHome) {
         menu.push({

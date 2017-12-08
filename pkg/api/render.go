@@ -10,7 +10,11 @@ import (
 )
 
 func RenderToPng(c *middleware.Context) {
-	queryReader := util.NewUrlQueryReader(c.Req.URL)
+	queryReader, err := util.NewUrlQueryReader(c.Req.URL)
+	if err != nil {
+		c.Handle(400, "Render parameters error", err)
+		return
+	}
 	queryParams := fmt.Sprintf("?%s", c.Req.URL.RawQuery)
 
 	renderOpts := &renderer.RenderOpts{

@@ -15,8 +15,12 @@
 }
 
 .page-container {
-  @extend .container;
-  padding: 0 $spacer * 2;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left:  $spacer*2;
+  padding-right: $spacer*2;
+  max-width: 980px;
+  @include clearfix();
 }
 
 .scroll-canvas {

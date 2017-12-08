@@ -90,12 +90,13 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
 		data.NavTree = append(data.NavTree, &dtos.NavLink{
 			Text: "Create",
+			Id:   "create",
 			Icon: "fa fa-fw fa-plus",
 			Url:  "#",
 			Children: []*dtos.NavLink{
 				{Text: "Dashboard", Icon: "gicon gicon-dashboard-new", Url: setting.AppSubUrl + "/dashboard/new"},
-				{Text: "Folder", Icon: "gicon gicon-folder-new", Url: setting.AppSubUrl + "/dashboard/new/?editview=new-folder"},
-				{Text: "Import", Icon: "gicon gicon-dashboard-import", Url: setting.AppSubUrl + "/dashboard/new/?editview=import"},
+				{Text: "Folder", SubTitle: "Create a new folder to organize your dashboards", Id: "folder", Icon: "gicon gicon-folder-new", Url: setting.AppSubUrl + "/dashboards/folder/new"},
+				{Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "gicon gicon-dashboard-import", Url: setting.AppSubUrl + "/dashboard/import"},
 			},
 		})
 	}
@@ -103,7 +104,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	dashboardChildNavs := []*dtos.NavLink{
 		{Text: "Home", Url: setting.AppSubUrl + "/", Icon: "fa fa-fw fa-home", HideFromTabs: true},
 		{Divider: true, HideFromTabs: true},
-		{Text: "Manage", Id: "dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "fa fa-fw fa-sitemap"},
+		{Text: "Manage", Id: "manage-dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "fa fa-fw fa-sitemap"},
 		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "fa fa-fw fa-film"},
 		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "icon-gf icon-gf-fw icon-gf-snapshot"},
 	}
@@ -115,6 +116,21 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		Icon:     "gicon gicon-dashboard",
 		Url:      setting.AppSubUrl + "/",
 		Children: dashboardChildNavs,
+	})
+
+	dashboardFolderChildNavs := []*dtos.NavLink{
+		{Text: "Dashboards", Id: "manage-folder-dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "fa fa-fw fa-th-large"},
+		{Text: "Permissions", Id: "manage-folder-permissions", Url: setting.AppSubUrl + "/dashboards?1", Icon: "fa fa-fw fa-lock"},
+	}
+
+	data.NavTree = append(data.NavTree, &dtos.NavLink{
+		Text:         "Dashboards",
+		Id:           "manage-folder",
+		SubTitle:     "Manage folder dashboards & permissions",
+		Icon:         "fa fa-folder-open",
+		Url:          setting.AppSubUrl + "/",
+		HideFromMenu: true,
+		Children:     dashboardFolderChildNavs,
 	})
 
 	if c.IsSignedIn {

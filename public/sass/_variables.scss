@@ -75,7 +75,7 @@ $container-max-widths: (
 $grid-columns:      12 !default;
 $grid-gutter-width: 30px !default;
 
-$enable-flex: false;
+$enable-flex: true;
 
 // Typography
 // -------------------------
@@ -218,10 +218,13 @@ $btn-font-weight:                500 !default;
 $btn-padding-x-sm:               .5rem !default;
 $btn-padding-y-sm:               .25rem !default;
 
-$btn-padding-x-lg:               1.5rem !default;
-$btn-padding-y-lg:               .75rem !default;
+$btn-padding-x-lg:               21px !default;
+$btn-padding-y-lg:               11px !default;
 
-$btn-border-radius:              3px;
+$btn-padding-x-xl:               21px !default;
+$btn-padding-y-xl:               11px !default;
+
+$btn-border-radius:              2px;
 
 // sidemenu
 $side-menu-width:  60px;
@@ -232,5 +235,5 @@ $dashboard-padding: $panel-margin * 2;
 $panel-padding: 0px 10px 5px 10px;
 
 // tabs
-$tabs-padding: 10px 15px 10px;
+$tabs-padding: 10px 15px 9px;
 

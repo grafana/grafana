@@ -1,5 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
+import $ from 'jquery';
 import {coreModule} from 'app/core/core';
 
 var template = `
@@ -83,6 +84,7 @@ function panelHeader($compile) {
     restrict: 'E',
     template: template,
     link: function(scope, elem, attrs) {
+      console.log(elem.html());
 
       let menuElem = elem.find('.panel-menu');
       let menuScope;
@@ -106,10 +108,34 @@ function panelHeader($compile) {
         }
       });
 
+      elem.find('.panel-menu-toggle').click(() => {
+        togglePanelStackPosition();
+      });
+
       function togglePanelMenu(e) {
         if (!isDragged) {
           e.stopPropagation();
+          togglePanelStackPosition();
           elem.find('[data-toggle=dropdown]').dropdown('toggle');
+        }
+      }
+
+      /**
+       * Hack for adding special class 'dropdown-menu-open' to the panel.
+       * This class sets z-index for panel and prevents menu overlapping.
+       */
+      function togglePanelStackPosition() {
+        const menuOpenClass = 'dropdown-menu-open';
+        const panelGridClass = '.react-grid-item.panel';
+
+        let panelElem = elem.find('[data-toggle=dropdown]').parentsUntil('.panel').parent();
+        let menuElem = elem.find('[data-toggle=dropdown]').parent();
+        panelElem = panelElem && panelElem.length ? panelElem[0] : undefined;
+        if (panelElem) {
+          panelElem = $(panelElem);
+          $(panelGridClass).removeClass(menuOpenClass);
+          let state = !menuElem.hasClass('open');
+          panelElem.toggleClass(menuOpenClass, state);
         }
       }
 
