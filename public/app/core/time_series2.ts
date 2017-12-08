@@ -44,12 +44,18 @@ export function updateLegendValues(data: TimeSeries[], panel) {
 }
 
 export function getDataMinMax(data: TimeSeries[]) {
-  const datamin = _.minBy(data, (series) => {
-    return series.stats.min;
-  }).stats.min;
-  const datamax = _.maxBy(data, (series: TimeSeries) => {
-    return series.stats.max;
-  }).stats.max;
+  let datamin = null;
+  let datamax = null;
+
+  for (let series of data) {
+    if (datamax === null || datamax < series.stats.max) {
+      datamax = series.stats.max;
+    }
+    if (datamin === null || datamin > series.stats.min) {
+      datamin = series.stats.min;
+    }
+  }
+
   return {datamin, datamax};
 }
 
