@@ -53,3 +53,12 @@
 .react-grid-item.react-draggable-dragging.panel {
   z-index: $zindex-dropdown;
 }
+
+// Disable animation on initial rendering and enable it when component has been mounted.
+.react-grid-item.cssTransforms.panel {
+  transition-property: none;
+}
+
+.animated .react-grid-item.cssTransforms.panel {
+  transition-property: transform;
+}

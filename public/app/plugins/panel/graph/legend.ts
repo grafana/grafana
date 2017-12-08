@@ -19,7 +19,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       var legendScrollbar;
 
       scope.$on("$destroy", function() {
-        if (!legendScrollbar) {
+        if (legendScrollbar) {
           legendScrollbar.destroy();
         }
       });
