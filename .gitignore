@@ -39,8 +39,7 @@ conf/custom.ini
 fig.yml
 docker-compose.yml
 docker-compose.yaml
-/conf/dashboards/custom.yaml
-/conf/datasources/custom.yaml
+/conf/provisioning/**/custom.yaml
 profile.cov
 /grafana
 .notouch
