@@ -129,7 +129,6 @@ export class DashboardCtrl implements PanelContainer {
     }
 
     getPanelContainer() {
-      console.log('DashboardCtrl:getPanelContainer()');
       return this;
     }
 
