@@ -1,4 +1,4 @@
-import {coreModule, appEvents} from 'app/core/core';
+import {coreModule} from 'app/core/core';
 import {DashboardModel} from '../dashboard_model';
 import $ from 'jquery';
 import _ from 'lodash';
@@ -17,6 +17,9 @@ export class SettingsCtrl {
 
   /** @ngInject */
   constructor($scope, private $location, private $rootScope) {
+    // temp hack
+    $scope.dashboard = this.dashboard;
+
     const params = this.$location.search();
     const url = $location.path();
 

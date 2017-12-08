@@ -43,12 +43,19 @@
 			<i class="fa fa-link"></i>
 		</button>
 
-		<button class="btn navbar-button" ng-click="ctrl.openSettings()" bs-tooltip="'Settings'" data-placement="bottom">
+		<button class="btn navbar-button" ng-click="ctrl.toggleSettings()" bs-tooltip="'Settings'" data-placement="bottom">
 			<i class="fa fa-cog"></i>
 		</button>
 	</div>
 
 	<gf-time-picker class="gf-timepicker-nav" dashboard="ctrl.dashboard" ng-if="!ctrl.dashboard.timepicker.hidden"></gf-time-picker>
+
+	<div class="navbar-buttons navbar-buttons--close">
+		<button class="btn navbar-button navbar-button--primary" ng-click="ctrl.toggleSettings()" bs-tooltip="'Close settings'" data-placement="bottom">
+			<i class="fa fa-remove"></i>
+			Close
+		</button>
+	</div>
 
 </div>
 

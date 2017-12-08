@@ -1,57 +1,59 @@
+<h3 class="dashboard-settings__header">Annotations</h3>
+
 <div ng-controller="AnnotationsEditorCtrl">
-	<div class="tabbed-view-header">
-		<h2 class="tabbed-view-title">
-			Annotations
-		</h2>
 
-		<ul class="gf-tabs">
-			<li class="gf-tabs-item" >
-				<a class="gf-tabs-link" ng-click="ctrl.mode = 'list';" ng-class="{active: ctrl.mode === 'list'}">
-					Queries
-				</a>
-			</li>
-			<li class="gf-tabs-item" ng-show="ctrl.mode === 'edit'">
-				<a class="gf-tabs-link" ng-class="{active: ctrl.mode === 'edit'}">
-					Edit Query
-				</a>
-			</li>
-			<li class="gf-tabs-item" ng-show="ctrl.mode === 'new'">
-				<span class="active gf-tabs-link">New Query</span>
-			</li>
+	<!-- <div class="tabbed&#45;view&#45;header"> -->
+	<!-- 	<h2 class="tabbed&#45;view&#45;title"> -->
+	<!-- 		Annotations -->
+	<!-- 	</h2> -->
+  <!--  -->
+	<!-- 	<ul class="gf&#45;tabs"> -->
+	<!-- 		<li class="gf&#45;tabs&#45;item" > -->
+	<!-- 			<a class="gf&#45;tabs&#45;link" ng&#45;click="ctrl.mode = 'list';" ng&#45;class="{active: ctrl.mode === 'list'}"> -->
+	<!-- 				Queries -->
+	<!-- 			</a> -->
+	<!-- 		</li> -->
+	<!-- 		<li class="gf&#45;tabs&#45;item" ng&#45;show="ctrl.mode === 'edit'"> -->
+	<!-- 			<a class="gf&#45;tabs&#45;link" ng&#45;class="{active: ctrl.mode === 'edit'}"> -->
+	<!-- 				Edit Query -->
+	<!-- 			</a> -->
+	<!-- 		</li> -->
+	<!-- 		<li class="gf&#45;tabs&#45;item" ng&#45;show="ctrl.mode === 'new'"> -->
+	<!-- 			<span class="active gf&#45;tabs&#45;link">New Query</span> -->
+	<!-- 		</li> -->
+  <!--  -->
+	<!-- 		<li class="gf&#45;tabs&#45;item" > -->
+  <!--       <a class="gf&#45;tabs&#45;link" ng&#45;click="ctrl.mode = 'help';" ng&#45;class="{active: ctrl.mode === 'help'}"> -->
+  <!--         Help -->
+  <!--       </a> -->
+  <!--     </li> -->
+	<!-- 	</ul> -->
+  <!--  -->
+	<!-- 	<button class="tabbed&#45;view&#45;close&#45;btn" ng&#45;click="dismiss();"> -->
+	<!-- 		<i class="fa fa&#45;remove"></i> -->
+	<!-- 	</button> -->
+	<!-- </div> -->
 
-			<li class="gf-tabs-item" >
-        <a class="gf-tabs-link" ng-click="ctrl.mode = 'help';" ng-class="{active: ctrl.mode === 'help'}">
-          Help
-        </a>
-      </li>
-		</ul>
+		<!-- <div ng&#45;show="ctrl.mode === 'help'"> -->
+		<!-- 	<div class="grafana&#45;info&#45;box col&#45;lg&#45;8"> -->
+		<!-- 		<h5>What are Annotations?</h5> -->
+		<!-- 		<p> -->
+		<!-- 			Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines and icons -->
+		<!-- 			on all graph panels. When you hover over an annotation icon you can get title, tags, and text information for the event. -->
+		<!-- 			In the <i>Queries</i> tab you can add queries that return annotation events. -->
+		<!-- 		</p> -->
+		<!-- 		<p> -->
+		<!-- 			You can add annotations directly from grafana by holding CTRL or CMD + click on graph (or drag region). These will be stored in Grafana's annotation database. -->
+		<!-- 		</p> -->
+		<!-- 		Checkout the <a class="external&#45;link" target="_blank" href="http://docs.grafana.org/reference/annotations/">Annotations documentation</a> for more information. -->
+		<!-- 	</div> -->
+		<!-- </div> -->
 
-		<button class="tabbed-view-close-btn" ng-click="dismiss();">
-			<i class="fa fa-remove"></i>
-		</button>
-	</div>
-
-	<div class="tabbed-view-body">
-
-		<div ng-show="ctrl.mode === 'help'">
-			<div class="grafana-info-box col-lg-8">
-				<h5>What are Annotations?</h5>
-				<p>
-					Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines and icons
-					on all graph panels. When you hover over an annotation icon you can get title, tags, and text information for the event.
-					In the <i>Queries</i> tab you can add queries that return annotation events.
-				</p>
-				<p>
-					You can add annotations directly from grafana by holding CTRL or CMD + click on graph (or drag region). These will be stored in Grafana's annotation database.
-				</p>
-				Checkout the <a class="external-link" target="_blank" href="http://docs.grafana.org/reference/annotations/">Annotations documentation</a> for more information.
-			</div>
-		</div>
-
-		<div class="editor-row row" ng-if="ctrl.mode === 'list'">
+		<div class="editor-row row">
 			<div ng-if="ctrl.annotations.length === 0">
 				<em>No annotation queries defined</em>
 			</div>
+
 			<table class="grafana-options-table">
 				<tr ng-repeat="annotation in ctrl.annotations">
 					<td style="width:90%" ng-hide="annotation.builtIn">
@@ -79,67 +81,67 @@
 			</table>
 		</div>
 
-		<div class="gf-form" ng-show="ctrl.mode === 'list'">
+		<div class="gf-form">
 			<div class="gf-form-button-row">
 				<a type="button" class="btn gf-form-button btn-success" ng-click="ctrl.setupNew()"><i class="fa fa-plus" ></i>&nbsp;&nbsp;New</a>
 			</div>
 		</div>
 
-		<div class="annotations-basic-settings" ng-if="ctrl.mode === 'edit' || ctrl.mode === 'new'">
-			<div>
-				<div class="gf-form-group">
-					<h5 class="section-heading">General</h5>
-					<div class="gf-form-inline">
-						<div class="gf-form">
-							<span class="gf-form-label width-7">Name</span>
-							<input type="text" class="gf-form-input width-20" ng-model='ctrl.currentAnnotation.name' placeholder="name"></input>
-						</div>
-						<div class="gf-form">
-							<span class="gf-form-label width-7">Data source</span>
-							<div class="gf-form-select-wrapper">
-								<select class="gf-form-input" ng-model="ctrl.currentAnnotation.datasource" ng-options="f.name as f.name for f in ctrl.datasources" ng-change="ctrl.datasourceChanged()"></select>
-							</div>
-						</div>
-					</div>
-				</div>
-
-				<div class="gf-form-group">
-					<div class="gf-form-inline">
-						<gf-form-switch class="gf-form"
-														label="Enabled"
-														checked="ctrl.currentAnnotation.enable"
-														on-change="ctrl.annotationEnabledChange()"
-														label-class="width-7">
-						</gf-form-switch>
-						<gf-form-switch class="gf-form"
-														label="Hidden"
-														tooltip="Hides the annotation query toggle from showing at the top of the dashboard"
-														checked="ctrl.currentAnnotation.hide"
-														on-change="ctrl.annotationHiddenChanged()"
-														label-class="width-7">
-						</gf-form-switch>
-						<div class="gf-form">
-							<label class="gf-form-label width-9">Color</label>
-							<span class="gf-form-label">
-								<color-picker color="ctrl.currentAnnotation.iconColor" onChange="ctrl.onColorChange"></color-picker>
-							</span>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<h5 class="section-heading">Query</h5>
-			<rebuild-on-change property="ctrl.currentDatasource">
-				<plugin-component type="annotations-query-ctrl">
-				</plugin-component>
-			</rebuild-on-change>
-
-			<div class="gf-form">
-				<div class="gf-form-button-row p-y-0">
-					<button ng-show="ctrl.mode === 'new'" type="button" class="btn gf-form-button btn-success" ng-click="ctrl.add()">Add</button>
-					<button ng-show="ctrl.mode === 'edit'" type="button" class="btn btn-success pull-left" ng-click="ctrl.update()">Update</button>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
+<!-- 		<div class="annotations&#45;basic&#45;settings" ng&#45;if="ctrl.mode === 'edit' || ctrl.mode === 'new'"> -->
+<!-- 			<div> -->
+<!-- 				<div class="gf&#45;form&#45;group"> -->
+<!-- 					<h5 class="section&#45;heading">General</h5> -->
+<!-- 					<div class="gf&#45;form&#45;inline"> -->
+<!-- 						<div class="gf&#45;form"> -->
+<!-- 							<span class="gf&#45;form&#45;label width&#45;7">Name</span> -->
+<!-- 							<input type="text" class="gf&#45;form&#45;input width&#45;20" ng&#45;model='ctrl.currentAnnotation.name' placeholder="name"></input> -->
+<!-- 						</div> -->
+<!-- 						<div class="gf&#45;form"> -->
+<!-- 							<span class="gf&#45;form&#45;label width&#45;7">Data source</span> -->
+<!-- 							<div class="gf&#45;form&#45;select&#45;wrapper"> -->
+<!-- 								<select class="gf&#45;form&#45;input" ng&#45;model="ctrl.currentAnnotation.datasource" ng&#45;options="f.name as f.name for f in ctrl.datasources" ng&#45;change="ctrl.datasourceChanged()"></select> -->
+<!-- 							</div> -->
+<!-- 						</div> -->
+<!-- 					</div> -->
+<!-- 				</div> -->
+<!--  -->
+<!-- 				<div class="gf&#45;form&#45;group"> -->
+<!-- 					<div class="gf&#45;form&#45;inline"> -->
+<!-- 						<gf&#45;form&#45;switch class="gf&#45;form" -->
+<!-- 														label="Enabled" -->
+<!-- 														checked="ctrl.currentAnnotation.enable" -->
+<!-- 														on&#45;change="ctrl.annotationEnabledChange()" -->
+<!-- 														label&#45;class="width&#45;7"> -->
+<!-- 						</gf&#45;form&#45;switch> -->
+<!-- 						<gf&#45;form&#45;switch class="gf&#45;form" -->
+<!-- 														label="Hidden" -->
+<!-- 														tooltip="Hides the annotation query toggle from showing at the top of the dashboard" -->
+<!-- 														checked="ctrl.currentAnnotation.hide" -->
+<!-- 														on&#45;change="ctrl.annotationHiddenChanged()" -->
+<!-- 														label&#45;class="width&#45;7"> -->
+<!-- 						</gf&#45;form&#45;switch> -->
+<!-- 						<div class="gf&#45;form"> -->
+<!-- 							<label class="gf&#45;form&#45;label width&#45;9">Color</label> -->
+<!-- 							<span class="gf&#45;form&#45;label"> -->
+<!-- 								<color&#45;picker color="ctrl.currentAnnotation.iconColor" onChange="ctrl.onColorChange"></color&#45;picker> -->
+<!-- 							</span> -->
+<!-- 						</div> -->
+<!-- 					</div> -->
+<!-- 				</div> -->
+<!-- 			</div> -->
+<!--  -->
+<!-- 			<h5 class="section&#45;heading">Query</h5> -->
+<!-- 			<rebuild&#45;on&#45;change property="ctrl.currentDatasource"> -->
+<!-- 				<plugin&#45;component type="annotations&#45;query&#45;ctrl"> -->
+<!-- 				</plugin&#45;component> -->
+<!-- 			</rebuild&#45;on&#45;change> -->
+<!--  -->
+<!-- 			<div class="gf&#45;form"> -->
+<!-- 				<div class="gf&#45;form&#45;button&#45;row p&#45;y&#45;0"> -->
+<!-- 					<button ng&#45;show="ctrl.mode === 'new'" type="button" class="btn gf&#45;form&#45;button btn&#45;success" ng&#45;click="ctrl.add()">Add</button> -->
+<!-- 					<button ng&#45;show="ctrl.mode === 'edit'" type="button" class="btn btn&#45;success pull&#45;left" ng&#45;click="ctrl.update()">Update</button> -->
+<!-- 				</div> -->
+<!-- 			</div> -->
+<!-- 		</div> -->
+<!-- 	</div> -->
+<!-- </div> -->

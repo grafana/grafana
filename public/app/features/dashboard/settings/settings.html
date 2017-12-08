@@ -1,28 +1,20 @@
-<div class="sidenav">
-	<aside class="sidenav__aside">
-		<h2>
-			<i class="fa fa-cog"></i>
-			Settings
-		</h2>
+<aside class="dashboard-settings__aside">
+	<h2 class="dashboard-settings__aside-header">
+		<i class="fa fa-cog"></i>
+		Settings
+	</h2>
 
-		<ul class="edit-sidemenu">
-			<li ng-class="{active: ctrl.viewId === section.id}" ng-repeat="section in ctrl.sections">
-        <a href="{{::section.url}}">
-					{{::section.title}}
-				</a>
-			</li>
-		</ul>
-	</aside>
+	<a href="{{::section.url}}" class="dashboard-settings__nav-item" ng-class="{active: ctrl.viewId === section.id}" ng-repeat="section in ctrl.sections">
+		{{::section.title}}
+	</a>
+</aside>
 
-	<div class="sidenav__content" ng-if="ctrl.viewId === 'settings'" ng-include="'public/app/features/dashboard/partials/settings.html'">
-	</div>
-
-	<div class="sidenav__content" ng-if="ctrl.viewId === 'annotations'" ng-include="'public/app/features/annotations/partials/editor.html'">
-	</div>
-
-	<div class="sidenav__content" ng-if="ctrl.viewId === 'templating'">
-		annotations
-	</div>
+<div class="dashboard-settings__content" ng-if="ctrl.viewId === 'settings'" ng-include="'public/app/features/dashboard/partials/settings.html'">
 </div>
 
+<div class="dashboard-settings__content" ng-if="ctrl.viewId === 'annotations'" ng-include="'public/app/features/annotations/partials/editor.html'">
+</div>
 
+<div class="dashboard-settings__content" ng-if="ctrl.viewId === 'templating'">
+	annotationus
+</div>

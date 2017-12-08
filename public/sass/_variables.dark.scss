@@ -189,7 +189,7 @@ $input-label-border-color:       $gray-blue;
 $input-invalid-border-color:     lighten($red, 5%);
 
 // Search
-$search-shadow: 0 0 35px 0 $body-bg;
+$search-shadow: 0 0 30px 0 $black;
 $search-filter-box-bg: $gray-blue;
 
 // Dropdowns
@@ -226,10 +226,10 @@ $horizontalComponentOffset:       180px;
 // -------------------------
 $wellBackground:                  #131517;
 
-$navbarHeight:                    52px;
+$navbarHeight:                    55px;
 $navbarBackgroundHighlight:       $dark-3;
 $navbarBackground:                $panel-bg;
-$navbarBorder:                    1px solid $body-bg;
+$navbarBorder:                    1px solid $dark-3;
 $navbarShadow:                    0 0 20px black;
 
 $navbarText:                      $gray-4;

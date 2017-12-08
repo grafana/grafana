@@ -32,7 +32,7 @@ export class DashNavCtrl {
       }
     }
 
-    openSettings() {
+    toggleSettings() {
       let search = this.$location.search();
       if (search.editview) {
         delete search.editview;

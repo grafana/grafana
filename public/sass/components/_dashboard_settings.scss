@@ -1,7 +1,8 @@
 .dashboard-settings {
   opacity: 0;
-  display: block;
-  padding: $spacer*2;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
 }
 
 .dashboard-page--settings-opening {
@@ -13,6 +14,44 @@
 .dashboard-page--settings-open {
   .dashboard-settings {
     opacity: 1;
-    transition: opacity 250ms ease-in-out;
+    transition: opacity 300ms ease-in-out;
+  }
+}
+
+.dashboard-settings__content {
+  flex-grow: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 30px;
+}
+
+.dashboard-settings__aside {
+  padding: 30px 0 0 30px;
+  background: $search-filter-box-bg;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-settings__aside-header {
+  color: $text-muted;
+  font-size: $font-size-h3;
+  margin-bottom: 20px;
+  padding-right: 60px;
+  white-space: nowrap;
+}
+
+.dashboard-settings__header {
+  font-size: $font-size-h3;
+  margin-bottom: 20px;
+}
+
+.dashboard-settings__nav-item {
+  padding: 7px 12px;
+  color: $text-color;
+  @include left-brand-border;
+
+  &.active {
+    @include left-brand-border-gradient();
+    background: $page-bg;
   }
 }
