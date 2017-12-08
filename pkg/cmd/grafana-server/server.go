@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 
 	"golang.org/x/sync/errgroup"
@@ -20,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -33,7 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/tracing"
 )
 
-func NewGrafanaServer() models.GrafanaServer {
+func NewGrafanaServer() *GrafanaServerImpl {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
@@ -54,9 +52,7 @@ type GrafanaServerImpl struct {
 	httpServer *api.HttpServer
 }
 
-func (g *GrafanaServerImpl) Start() {
-	go listenToSystemSignals(g)
-
+func (g *GrafanaServerImpl) Start() error {
 	g.initLogging()
 	g.writePIDFile()
 
@@ -69,16 +65,12 @@ func (g *GrafanaServerImpl) Start() {
 	plugins.Init()
 
 	if err := provisioning.Init(g.context, setting.HomePath, setting.Cfg); err != nil {
-		logger.Error("Failed to provision Grafana from config", "error", err)
-		g.Shutdown(1, "Startup failed")
-		return
+		return fmt.Errorf("Failed to provision Grafana from config. error: %v", err)
 	}
 
 	closer, err := tracing.Init(setting.Cfg)
 	if err != nil {
-		g.log.Error("Tracing settings is not valid", "error", err)
-		g.Shutdown(1, "Startup failed")
-		return
+		return fmt.Errorf("Tracing settings is not valid. error: %v", err)
 	}
 	defer closer.Close()
 
@@ -93,13 +85,12 @@ func (g *GrafanaServerImpl) Start() {
 	g.childRoutines.Go(func() error { return cleanUpService.Run(g.context) })
 
 	if err = notifications.Init(); err != nil {
-		g.log.Error("Notification service failed to initialize", "error", err)
-		g.Shutdown(1, "Startup failed")
-		return
+		return fmt.Errorf("Notification service failed to initialize. error: %v", err)
 	}
 
-	SendSystemdNotification("READY=1")
-	g.startHttpServer()
+	sendSystemdNotification("READY=1")
+
+	return g.startHttpServer()
 }
 
 func initSql() {
@@ -123,16 +114,16 @@ func (g *GrafanaServerImpl) initLogging() {
 	setting.LogConfigurationInfo()
 }
 
-func (g *GrafanaServerImpl) startHttpServer() {
+func (g *GrafanaServerImpl) startHttpServer() error {
 	g.httpServer = api.NewHttpServer()
 
 	err := g.httpServer.Start(g.context)
 
 	if err != nil {
-		g.log.Error("Fail to start server", "error", err)
-		g.Shutdown(1, "Startup failed")
-		return
+		return fmt.Errorf("Fail to start server. error: %v", err)
 	}
+
+	return nil
 }
 
 func (g *GrafanaServerImpl) Shutdown(code int, reason string) {
@@ -145,10 +136,9 @@ func (g *GrafanaServerImpl) Shutdown(code int, reason string) {
 
 	g.shutdownFn()
 	err = g.childRoutines.Wait()
-
-	g.log.Info("Shutdown completed", "reason", err)
-	log.Close()
-	os.Exit(code)
+	if err != nil && err != context.Canceled {
+		g.log.Error("Server shutdown completed with an error", "error", err)
+	}
 }
 
 func (g *GrafanaServerImpl) writePIDFile() {
@@ -173,7 +163,7 @@ func (g *GrafanaServerImpl) writePIDFile() {
 	g.log.Info("Writing PID file", "path", *pidFile, "pid", pid)
 }
 
-func SendSystemdNotification(state string) error {
+func sendSystemdNotification(state string) error {
 	notifySocket := os.Getenv("NOTIFY_SOCKET")
 
 	if notifySocket == "" {
