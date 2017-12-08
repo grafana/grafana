@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
+import gfunc from './gfunc';
 
 /** @ngInject */
 export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv) {
@@ -12,6 +13,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.cacheTimeout = instanceSettings.cacheTimeout;
   this.withCredentials = instanceSettings.withCredentials;
   this.render_method = instanceSettings.render_method || 'POST';
+  this.funcDefs = null;
 
   this.getQueryOptionsInfo = function() {
     return {
@@ -347,6 +349,125 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       });
   };
 
+  this.createFuncInstance = function(funcDef, options?) {
+    return gfunc.createFuncInstance(funcDef, options, this.funcDefs);
+  };
+
+  this.getFuncDef = function(name) {
+    return gfunc.getFuncDef(name, this.funcDefs);
+  };
+
+  this.getFuncDefs = function() {
+    let self = this;
+
+    if (self.funcDefs !== null) {
+      return Promise.resolve(self.funcDefs);
+    }
+
+    if (!supportsFunctionIndex(self.graphiteVersion)) {
+      self.funcDefs = gfunc.getFuncDefs(self.graphiteVersion);
+      return Promise.resolve(self.funcDefs);
+    }
+
+    let httpOptions = {
+      method: 'GET',
+      url: '/functions',
+    };
+
+    return self
+      .doGraphiteRequest(httpOptions)
+      .then(results => {
+        if (results.status !== 200 || typeof results.data !== 'object') {
+          self.funcDefs = gfunc.getFuncDefs(self.graphiteVersion);
+          return Promise.resolve(self.funcDefs);
+        }
+
+        self.funcDefs = {};
+        _.forEach(results.data || {}, (funcDef, funcName) => {
+          // skip graphite graph functions
+          if (funcDef.group === 'Graph') {
+            return;
+          }
+
+          var func = {
+            name: funcDef.name,
+            description: funcDef.description,
+            category: funcDef.group,
+            params: [],
+            defaultParams: [],
+            fake: false,
+          };
+
+          // get rid of the first "seriesList" param
+          if (/^seriesLists?$/.test(_.get(funcDef, 'params[0].type', ''))) {
+            // handle functions that accept multiple seriesLists
+            // we leave the param in place but mark it optional, so users can add more series if they wish
+            if (funcDef.params[0].multiple) {
+              funcDef.params[0].required = false;
+              // otherwise chop off the first param, it'll be handled separately
+            } else {
+              funcDef.params.shift();
+            }
+            // tag function as fake
+          } else {
+            func.fake = true;
+          }
+
+          _.forEach(funcDef.params, rawParam => {
+            var param = {
+              name: rawParam.name,
+              type: 'string',
+              optional: !rawParam.required,
+              multiple: !!rawParam.multiple,
+              options: undefined,
+            };
+
+            if (rawParam.default !== undefined) {
+              func.defaultParams.push(_.toString(rawParam.default));
+            } else if (rawParam.suggestions) {
+              func.defaultParams.push(_.toString(rawParam.suggestions[0]));
+            } else {
+              func.defaultParams.push('');
+            }
+
+            if (rawParam.type === 'boolean') {
+              param.type = 'boolean';
+              param.options = ['true', 'false'];
+            } else if (rawParam.type === 'integer') {
+              param.type = 'int';
+            } else if (rawParam.type === 'float') {
+              param.type = 'float';
+            } else if (rawParam.type === 'node') {
+              param.type = 'node';
+              param.options = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+            } else if (rawParam.type === 'nodeOrTag') {
+              param.type = 'node_or_tag';
+              param.options = ['name', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+            } else if (rawParam.type === 'intOrInterval') {
+              param.type = 'int_or_interval';
+            } else if (rawParam.type === 'seriesList') {
+              param.type = 'value_or_series';
+            }
+
+            if (rawParam.options) {
+              param.options = _.map(rawParam.options, _.toString);
+            } else if (rawParam.suggestions) {
+              param.options = _.map(rawParam.suggestions, _.toString);
+            }
+
+            func.params.push(param);
+          });
+
+          self.funcDefs[funcName] = func;
+        });
+        return self.funcDefs;
+      })
+      .catch(err => {
+        self.funcDefs = gfunc.getFuncDefs(self.graphiteVersion);
+        return self.funcDefs;
+      });
+  };
+
   this.testDatasource = function() {
     return this.metricFindQuery('*').then(function() {
       return { status: 'success', message: 'Data source is working' };
@@ -438,5 +559,9 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 }
 
 function supportsTags(version: string): boolean {
+  return isVersionGtOrEq(version, '1.1');
+}
+
+function supportsFunctionIndex(version: string): boolean {
   return isVersionGtOrEq(version, '1.1');
 }
