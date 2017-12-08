@@ -176,7 +176,7 @@ export class TableRenderer {
       var scopedVars = this.renderRowVariables(rowIndex);
       scopedVars['__cell'] = { value: value };
 
-      var cellLink = this.templateSrv.replace(column.style.linkUrl, scopedVars);
+      var cellLink = this.templateSrv.replace(column.style.linkUrl, scopedVars, encodeURIComponent);
       var cellLinkTooltip = this.templateSrv.replace(column.style.linkTooltip, scopedVars);
       var cellTarget = column.style.linkTargetBlank ? '_blank' : '';
 
