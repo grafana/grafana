@@ -8,7 +8,6 @@ $input-border: 1px solid $input-border-color;
   align-items: center;
   text-align: left;
   position: relative;
-  font-size: $font-size-sm;
 
   &--offset-1 {
     margin-left: $spacer;
@@ -71,7 +70,6 @@ $input-border: 1px solid $input-border-color;
 
   background-color: $input-label-bg;
   display: block;
-  font-size: $font-size-sm;
 
   border: $input-btn-border-width solid $input-label-border-color;
   @include border-radius($label-border-radius-sm);
@@ -90,7 +88,6 @@ $input-border: 1px solid $input-border-color;
 .gf-form-pre {
   display: block;
   flex-grow: 1;
-  font-size: $font-size-sm;
   margin: 0;
   margin-right: $gf-form-margin;
   border: $input-btn-border-width solid transparent;
