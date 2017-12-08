@@ -2,7 +2,6 @@ import './add_graphite_func';
 import './func_editor';
 
 import _ from 'lodash';
-import gfunc from './gfunc';
 import GraphiteQuery from './graphite_query';
 import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
@@ -26,7 +25,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
     if (this.target) {
       this.target.target = this.target.target || '';
-      this.queryModel = new GraphiteQuery(this.target, templateSrv);
+      this.queryModel = new GraphiteQuery(this.datasource, this.target, templateSrv);
       this.buildSegments();
     }
 
@@ -242,7 +241,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   addFunction(funcDef) {
-    var newFunc = gfunc.createFuncInstance(funcDef, {
+    var newFunc = this.datasource.createFuncInstance(funcDef, {
       withDefaultParams: true,
     });
     newFunc.added = true;
@@ -268,8 +267,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   addSeriesByTagFunc(tag) {
-    let funcDef = gfunc.getFuncDef('seriesByTag');
-    let newFunc = gfunc.createFuncInstance(funcDef, {
+    let newFunc = this.datasource.createFuncInstance('seriesByTag', {
       withDefaultParams: false,
     });
     let tagParam = `${tag}=select tag value`;

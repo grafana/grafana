@@ -2,8 +2,9 @@ define([
   'angular',
   'lodash',
   'jquery',
+  'rst2html',
 ],
-function (angular, _, $) {
+function (angular, _, $, rst2html) {
   'use strict';
 
   angular
@@ -12,7 +13,7 @@ function (angular, _, $) {
 
       var funcSpanTemplate = '<a ng-click="">{{func.def.name}}</a><span>(</span>';
       var paramTemplate = '<input type="text" style="display:none"' +
-                          ' class="input-mini tight-form-func-param"></input>';
+                          ' class="input-small tight-form-func-param"></input>';
 
       var funcControlsTemplate =
          '<div class="tight-form-func-controls">' +
@@ -29,7 +30,6 @@ function (angular, _, $) {
           var $funcControls = $(funcControlsTemplate);
           var ctrl = $scope.ctrl;
           var func = $scope.func;
-          var funcDef = func.def;
           var scheduledRelink = false;
           var paramCountAtLink = 0;
 
@@ -37,11 +37,12 @@ function (angular, _, $) {
             /*jshint validthis:true */
 
             var $link = $(this);
+            var $comma = $link.prev('.comma');
             var $input = $link.next();
 
             $input.val(func.params[paramIndex]);
-            $input.css('width', ($link.width() + 16) + 'px');
 
+            $comma.removeClass('last');
             $link.hide();
             $input.show();
             $input.focus();
@@ -68,22 +69,42 @@ function (angular, _, $) {
             }
           }
 
+          function paramDef(index) {
+            if (index < func.def.params.length) {
+              return func.def.params[index];
+            }
+            if (_.last(func.def.params).multiple) {
+              return _.assign({}, _.last(func.def.params), {optional: true});
+            }
+            return {};
+          }
+
           function inputBlur(paramIndex) {
             /*jshint validthis:true */
             var $input = $(this);
+            if ($input.data('typeahead') && $input.data('typeahead').shown) {
+              return;
+            }
+
             var $link = $input.prev();
+            var $comma = $link.prev('.comma');
             var newValue = $input.val();
 
-            if (newValue !== '' || func.def.params[paramIndex].optional) {
+            if (newValue !== '' || paramDef(paramIndex).optional) {
               $link.html(templateSrv.highlightVariablesAsHtml(newValue));
 
-              func.updateParam($input.val(), paramIndex);
+              func.updateParam(newValue, paramIndex);
               scheduledRelinkIfNeeded();
 
               $scope.$apply(function() {
                 ctrl.targetChanged();
               });
 
+              if ($link.hasClass('last') && newValue === '') {
+                $comma.addClass('last');
+              } else {
+                $link.removeClass('last');
+              }
               $input.hide();
               $link.show();
             }
@@ -104,8 +125,8 @@ function (angular, _, $) {
           function addTypeahead($input, paramIndex) {
             $input.attr('data-provide', 'typeahead');
 
-            var options = funcDef.params[paramIndex].options;
-            if (funcDef.params[paramIndex].type === 'int') {
+            var options = paramDef(paramIndex).options;
+            if (paramDef(paramIndex).type === 'int') {
               options = _.map(options, function(val) { return val.toString(); });
             }
 
@@ -148,18 +169,34 @@ function (angular, _, $) {
             $funcControls.appendTo(elem);
             $funcLink.appendTo(elem);
 
-            _.each(funcDef.params, function(param, index) {
-              if (param.optional && func.params.length <= index) {
-                return;
-              }
+            var defParams = _.clone(func.def.params);
+            var lastParam = _.last(func.def.params);
 
-              if (index > 0) {
-                $('<span>, </span>').appendTo(elem);
+            while (func.params.length >= defParams.length && lastParam && lastParam.multiple) {
+              defParams.push(_.assign({}, lastParam, {optional: true}));
+            }
+
+            _.each(defParams, function(param, index) {
+              if (param.optional && func.params.length < index) {
+                return false;
               }
 
               var paramValue = templateSrv.highlightVariablesAsHtml(func.params[index]);
-              var $paramLink = $('<a ng-click="" class="graphite-func-param-link">' + paramValue + '</a>');
+
+              var last = (index >= func.params.length - 1) && param.optional && !paramValue;
+              if (last && param.multiple) {
+                paramValue = '+';
+              }
+
+              if (index > 0) {
+                $('<span class="comma' + (last ? ' last' : '') + '">, </span>').appendTo(elem);
+              }
+
+              var $paramLink = $(
+                '<a ng-click="" class="graphite-func-param-link' + (last ? ' last' : '') + '">'
+                + (paramValue || '&nbsp;') + '</a>');
               var $input = $(paramTemplate);
+              $input.attr('placeholder', param.name);
 
               paramCountAtLink++;
 
@@ -171,10 +208,9 @@ function (angular, _, $) {
               $input.keypress(_.partial(inputKeyPress, index));
               $paramLink.click(_.partial(clickFuncParam, index));
 
-              if (funcDef.params[index].options) {
+              if (param.options) {
                 addTypeahead($input, index);
               }
-
             });
 
             $('<span>)</span>').appendTo(elem);
@@ -182,7 +218,7 @@ function (angular, _, $) {
             $compile(elem.contents())($scope);
           }
 
-          function ifJustAddedFocusFistParam() {
+          function ifJustAddedFocusFirstParam() {
             if ($scope.func.added) {
               $scope.func.added = false;
               setTimeout(function() {
@@ -223,7 +259,12 @@ function (angular, _, $) {
               }
 
               if ($target.hasClass('fa-question-circle')) {
-                window.open("http://graphite.readthedocs.org/en/latest/functions.html#graphite.render.functions." + funcDef.name,'_blank');
+                if (func.def.description) {
+                  alert(rst2html(func.def.description));
+                } else {
+                  window.open(
+                    "http://graphite.readthedocs.org/en/latest/functions.html#graphite.render.functions." + func.def.name,'_blank');
+                }
                 return;
               }
             });
@@ -233,7 +274,7 @@ function (angular, _, $) {
             elem.children().remove();
 
             addElementsAndCompile();
-            ifJustAddedFocusFistParam();
+            ifJustAddedFocusFirstParam();
             registerFuncControlsToggle();
             registerFuncControlsActions();
           }
