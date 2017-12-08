@@ -54,6 +54,11 @@
   z-index: $zindex-dropdown;
 }
 
-// .react-grid-item {
-//   transition: all 2000ms ease !important;
-// }
+// Disable animation on initial rendering and enable it when component has been mounted.
+.react-grid-item.cssTransforms.panel {
+  transition-property: none;
+}
+
+.animated .react-grid-item.cssTransforms.panel {
+  transition-property: transform;
+}

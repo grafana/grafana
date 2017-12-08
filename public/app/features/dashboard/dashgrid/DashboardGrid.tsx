@@ -11,37 +11,59 @@ import sizeMe from 'react-sizeme';
 
 let lastGridWidth = 1200;
 
-function GridWrapper({size, layout, onLayoutChange, children, onResize, onResizeStop, onWidthChange}) {
-  if (size.width === 0) {
-    console.log('size is zero!');
+export interface GridWrapperProps {
+  size: any;
+  layout: any;
+  children: any;
+  onResize: any;
+  onResizeStop: any;
+  onWidthChange: any;
+  onLayoutChange: any;
+}
+
+class GridWrapper extends React.Component<GridWrapperProps, any> {
+  animated: boolean;
+
+  constructor(props) {
+    super(props);
+    if (this.props.size.width === 0) {
+      console.log('size is zero!');
+    }
+
+    const width = this.props.size.width > 0 ? this.props.size.width : lastGridWidth;
+    if (width !== lastGridWidth) {
+      this.props.onWidthChange();
+      lastGridWidth = width;
+    }
   }
 
-  const width = size.width > 0 ? size.width : lastGridWidth;
-  if (width !== lastGridWidth) {
-    onWidthChange();
-    lastGridWidth = width;
+  componentDidMount() {
+    // Disable animation on initial rendering and enable it when component has been mounted.
+    this.animated = true;
   }
 
-  return (
-    <ReactGridLayout
-      width={lastGridWidth}
-      className="layout"
-      isDraggable={true}
-      isResizable={true}
-      measureBeforeMount={false}
-      containerPadding={[0, 0]}
-      useCSSTransforms={true}
-      margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
-      cols={GRID_COLUMN_COUNT}
-      rowHeight={GRID_CELL_HEIGHT}
-      draggableHandle=".grid-drag-handle"
-      layout={layout}
-      onResize={onResize}
-      onResizeStop={onResizeStop}
-      onLayoutChange={onLayoutChange}>
-      {children}
-    </ReactGridLayout>
-  );
+  render() {
+    return (
+      <ReactGridLayout
+        width={lastGridWidth}
+        className={this.animated ? 'layout animated' : 'layout'}
+        isDraggable={true}
+        isResizable={true}
+        measureBeforeMount={false}
+        containerPadding={[0, 0]}
+        useCSSTransforms={true}
+        margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
+        cols={GRID_COLUMN_COUNT}
+        rowHeight={GRID_CELL_HEIGHT}
+        draggableHandle=".grid-drag-handle"
+        layout={this.props.layout}
+        onResize={this.props.onResize}
+        onResizeStop={this.props.onResizeStop}
+        onLayoutChange={this.props.onLayoutChange}>
+        {this.props.children}
+      </ReactGridLayout>
+    );
+  }
 }
 
 const SizedReactLayoutGrid = sizeMe({monitorWidth: true})(GridWrapper);
@@ -51,7 +73,6 @@ export interface DashboardGridProps {
 }
 
 export class DashboardGrid extends React.Component<DashboardGridProps, any> {
-  element: any;
   gridToPanelMap: any;
   panelContainer: PanelContainer;
   dashboard: DashboardModel;
@@ -73,10 +94,6 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.dashboard.on('view-mode-changed', this.triggerForceUpdate.bind(this));
     this.dashboard.on('row-collapsed', this.triggerForceUpdate.bind(this));
     this.dashboard.on('row-expanded', this.triggerForceUpdate.bind(this));
-  }
-
-  componentDidMount() {
-    console.log('componentDidMount', this);
   }
 
   buildLayout() {
@@ -161,8 +178,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
         onLayoutChange={this.onLayoutChange}
         onWidthChange={this.onWidthChange}
         onResize={this.onResize}
-        onResizeStop={this.onResizeStop}
-        ref={element => this.element = element}>
+        onResizeStop={this.onResizeStop}>
         {this.renderPanels()}
       </SizedReactLayoutGrid>
     );
