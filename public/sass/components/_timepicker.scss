@@ -17,7 +17,7 @@
   top: $navbarHeight;
   right: 0;
   padding: 10px 20px;
-  background-color: $search-filter-box-bg;
+  background-color: $page-bg;
   border-radius: 0 0 0 4px;
   box-shadow: $search-shadow;
 }
@@ -25,7 +25,6 @@
 .gf-timepicker-absolute-section {
   width: 290px;
   float: left;
-  border-right: 1px solid $divider-border-color;
   padding: 0 10px;
   select {
     width: 183px;
@@ -43,7 +42,7 @@
   font-size: 75%;
   padding: 3px;
   border-radius: 2px;
-  font-weight: bold;
+  font-weight: 500;
   margin-left: 4px;
 }
 
@@ -61,7 +60,7 @@
     li.active {
       border-bottom: 1px solid $blue;
       margin: 3px 0;
-      font-weight: bold;
+      font-weight: 500;
     }
   }
 }
