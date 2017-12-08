@@ -107,15 +107,14 @@ function panelHeader($compile) {
         }
       });
 
-      elem.find('.panel-menu-toggle').click((evt) => {
-        console.log(evt);
-        togglePanelState();
+      elem.find('.panel-menu-toggle').click(() => {
+        togglePanelStackPosition();
       });
 
       function togglePanelMenu(e) {
         if (!isDragged) {
           e.stopPropagation();
-          togglePanelState();
+          togglePanelStackPosition();
           elem.find('[data-toggle=dropdown]').dropdown('toggle');
         }
       }
@@ -124,7 +123,7 @@ function panelHeader($compile) {
        * Hack for adding special class 'dropdown-menu-open' to the panel.
        * This class sets z-index for panel and prevents menu overlapping.
        */
-      function togglePanelState() {
+      function togglePanelStackPosition() {
         const menuOpenClass = 'dropdown-menu-open';
         const panelGridClass = '.react-grid-item.panel';
 
