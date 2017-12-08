@@ -118,21 +118,6 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		Children: dashboardChildNavs,
 	})
 
-	dashboardFolderChildNavs := []*dtos.NavLink{
-		{Text: "Dashboards", Id: "manage-folder-dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "fa fa-fw fa-th-large"},
-		{Text: "Permissions", Id: "manage-folder-permissions", Url: setting.AppSubUrl + "/dashboards?1", Icon: "fa fa-fw fa-lock"},
-	}
-
-	data.NavTree = append(data.NavTree, &dtos.NavLink{
-		Text:         "Dashboards",
-		Id:           "manage-folder",
-		SubTitle:     "Manage folder dashboards & permissions",
-		Icon:         "fa fa-folder-open",
-		Url:          setting.AppSubUrl + "/",
-		HideFromMenu: true,
-		Children:     dashboardFolderChildNavs,
-	})
-
 	if c.IsSignedIn {
 		profileNode := &dtos.NavLink{
 			Text:         c.SignedInUser.Name,
