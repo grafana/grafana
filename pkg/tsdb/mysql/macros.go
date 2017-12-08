@@ -21,7 +21,7 @@ func NewMysqlMacroEngine() tsdb.SqlMacroEngine {
 	return &MySqlMacroEngine{}
 }
 
-func (m *MySqlMacroEngine) Interpolate(timeRange *tsdb.TimeRange, sql string) (string, error) {
+func (m *MySqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
 	m.TimeRange = timeRange
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error

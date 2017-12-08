@@ -15,14 +15,16 @@ const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type PostgresMacroEngine struct {
 	TimeRange *tsdb.TimeRange
+	Query     *tsdb.Query
 }
 
 func NewPostgresMacroEngine() tsdb.SqlMacroEngine {
 	return &PostgresMacroEngine{}
 }
 
-func (m *PostgresMacroEngine) Interpolate(timeRange *tsdb.TimeRange, sql string) (string, error) {
+func (m *PostgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
 	m.TimeRange = timeRange
+	m.Query = query
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
