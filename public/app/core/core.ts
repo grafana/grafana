@@ -47,7 +47,7 @@ import {helpModal} from './components/help/help';
 import {JsonExplorer} from './components/json_explorer/json_explorer';
 import {NavModelSrv, NavModel} from './nav_model_srv';
 import {userPicker} from './components/user_picker';
-import {userGroupPicker} from './components/user_group_picker';
+import {teamPicker} from './components/user_group_picker';
 import {geminiScrollbar} from './components/scroll/scroll';
 import {gfPageDirective} from './components/gf_page';
 import {orgSwitcher} from './components/org_switcher';
@@ -85,7 +85,7 @@ export {
   NavModelSrv,
   NavModel,
   userPicker,
-  userGroupPicker,
+  teamPicker,
   geminiScrollbar,
   gfPageDirective,
   orgSwitcher,

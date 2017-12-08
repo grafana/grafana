@@ -7,48 +7,48 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// POST /api/user-groups
-func CreateUserGroup(c *middleware.Context, cmd m.CreateUserGroupCommand) Response {
+// POST /api/teams
+func CreateTeam(c *middleware.Context, cmd m.CreateTeamCommand) Response {
 	cmd.OrgId = c.OrgId
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == m.ErrUserGroupNameTaken {
-			return ApiError(409, "User Group name taken", err)
+		if err == m.ErrTeamNameTaken {
+			return ApiError(409, "Team name taken", err)
 		}
-		return ApiError(500, "Failed to create User Group", err)
+		return ApiError(500, "Failed to create Team", err)
 	}
 
 	return Json(200, &util.DynMap{
-		"userGroupId": cmd.Result.Id,
-		"message":     "User Group created",
+		"teamId":  cmd.Result.Id,
+		"message": "Team created",
 	})
 }
 
-// PUT /api/user-groups/:userGroupId
-func UpdateUserGroup(c *middleware.Context, cmd m.UpdateUserGroupCommand) Response {
-	cmd.Id = c.ParamsInt64(":userGroupId")
+// PUT /api/teams/:teamId
+func UpdateTeam(c *middleware.Context, cmd m.UpdateTeamCommand) Response {
+	cmd.Id = c.ParamsInt64(":teamId")
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == m.ErrUserGroupNameTaken {
-			return ApiError(400, "User Group name taken", err)
+		if err == m.ErrTeamNameTaken {
+			return ApiError(400, "Team name taken", err)
 		}
-		return ApiError(500, "Failed to update User Group", err)
+		return ApiError(500, "Failed to update Team", err)
 	}
 
-	return ApiSuccess("User Group updated")
+	return ApiSuccess("Team updated")
 }
 
-// DELETE /api/user-groups/:userGroupId
-func DeleteUserGroupById(c *middleware.Context) Response {
-	if err := bus.Dispatch(&m.DeleteUserGroupCommand{Id: c.ParamsInt64(":userGroupId")}); err != nil {
-		if err == m.ErrUserGroupNotFound {
-			return ApiError(404, "Failed to delete User Group. ID not found", nil)
+// DELETE /api/teams/:teamId
+func DeleteTeamById(c *middleware.Context) Response {
+	if err := bus.Dispatch(&m.DeleteTeamCommand{Id: c.ParamsInt64(":teamId")}); err != nil {
+		if err == m.ErrTeamNotFound {
+			return ApiError(404, "Failed to delete Team. ID not found", nil)
 		}
-		return ApiError(500, "Failed to update User Group", err)
+		return ApiError(500, "Failed to update Team", err)
 	}
-	return ApiSuccess("User Group deleted")
+	return ApiSuccess("Team deleted")
 }
 
-// GET /api/user-groups/search
-func SearchUserGroups(c *middleware.Context) Response {
+// GET /api/teams/search
+func SearchTeams(c *middleware.Context) Response {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -58,7 +58,7 @@ func SearchUserGroups(c *middleware.Context) Response {
 		page = 1
 	}
 
-	query := m.SearchUserGroupsQuery{
+	query := m.SearchTeamsQuery{
 		Query: c.Query("query"),
 		Name:  c.Query("name"),
 		Page:  page,
@@ -67,7 +67,7 @@ func SearchUserGroups(c *middleware.Context) Response {
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Failed to search User Groups", err)
+		return ApiError(500, "Failed to search Teams", err)
 	}
 
 	query.Result.Page = page
@@ -76,16 +76,16 @@ func SearchUserGroups(c *middleware.Context) Response {
 	return Json(200, query.Result)
 }
 
-// GET /api/user-groups/:userGroupId
-func GetUserGroupById(c *middleware.Context) Response {
-	query := m.GetUserGroupByIdQuery{Id: c.ParamsInt64(":userGroupId")}
+// GET /api/teams/:teamId
+func GetTeamById(c *middleware.Context) Response {
+	query := m.GetTeamByIdQuery{Id: c.ParamsInt64(":teamId")}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == m.ErrUserGroupNotFound {
-			return ApiError(404, "User Group not found", err)
+		if err == m.ErrTeamNotFound {
+			return ApiError(404, "Team not found", err)
 		}
 
-		return ApiError(500, "Failed to get User Group", err)
+		return ApiError(500, "Failed to get Team", err)
 	}
 
 	return Json(200, &query.Result)

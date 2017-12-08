@@ -3,17 +3,17 @@
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 
-export class CreateUserGroupCtrl {
-  userGroupName = '';
+export class CreateTeamCtrl {
+  teamName = '';
 
   /** @ngInject */
   constructor(private backendSrv, private $location) {
   }
 
-  createUserGroup() {
-    this.backendSrv.post('/api/user-groups', {name: this.userGroupName}).then((result) => {
-      if (result.userGroupId) {
-        this.$location.path('/org/user-groups/edit/' + result.userGroupId);
+  createTeam() {
+    this.backendSrv.post('/api/teams', {name: this.teamName}).then((result) => {
+      if (result.teamId) {
+        this.$location.path('/org/teams/edit/' + result.teamId);
       }
       this.dismiss();
     });
@@ -24,14 +24,14 @@ export class CreateUserGroupCtrl {
   }
 }
 
-export function createUserGroupModal() {
+export function createTeamModal() {
   return {
     restrict: 'E',
     templateUrl: 'public/app/features/org/partials/create_user_group.html',
-    controller: CreateUserGroupCtrl,
+    controller: CreateTeamCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
   };
 }
 
-coreModule.directive('createUserGroupModal', createUserGroupModal);
+coreModule.directive('createTeamModal', createTeamModal);

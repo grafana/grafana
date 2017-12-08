@@ -109,15 +109,15 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controller : 'OrgApiKeysCtrl',
     resolve: loadOrgBundle,
   })
-  .when('/org/user-groups', {
+  .when('/org/teams', {
     templateUrl: 'public/app/features/org/partials/user_groups.html',
-    controller : 'UserGroupsCtrl',
+    controller : 'TeamsCtrl',
     controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })
-  .when('/org/user-groups/edit/:id', {
+  .when('/org/teams/edit/:id', {
     templateUrl: 'public/app/features/org/partials/user_group_details.html',
-    controller : 'UserGroupDetailsCtrl',
+    controller : 'TeamDetailsCtrl',
     controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })

@@ -16,7 +16,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			savedFolder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
 			childDash := insertTestDashboard("2 test dash", 1, savedFolder.Id, false, "prod", "webapp")
 
-			Convey("When adding dashboard permission with userId and userGroupId set to 0", func() {
+			Convey("When adding dashboard permission with userId and teamId set to 0", func() {
 				err := SetDashboardAcl(&m.SetDashboardAclCommand{
 					OrgId:       1,
 					DashboardId: savedFolder.Id,
@@ -175,15 +175,15 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				})
 			})
 
-			Convey("Given a user group", func() {
-				group1 := m.CreateUserGroupCommand{Name: "group1 name", OrgId: 1}
-				err := CreateUserGroup(&group1)
+			Convey("Given a team", func() {
+				group1 := m.CreateTeamCommand{Name: "group1 name", OrgId: 1}
+				err := CreateTeam(&group1)
 				So(err, ShouldBeNil)
 
-				Convey("Should be able to add a user permission for a user group", func() {
+				Convey("Should be able to add a user permission for a team", func() {
 					setDashAclCmd := m.SetDashboardAclCommand{
 						OrgId:       1,
-						UserGroupId: group1.Result.Id,
+						TeamId: group1.Result.Id,
 						DashboardId: savedFolder.Id,
 						Permission:  m.PERMISSION_EDIT,
 					}
@@ -196,9 +196,9 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
 					So(q1.Result[0].Permission, ShouldEqual, m.PERMISSION_EDIT)
-					So(q1.Result[0].UserGroupId, ShouldEqual, group1.Result.Id)
+					So(q1.Result[0].TeamId, ShouldEqual, group1.Result.Id)
 
-					Convey("Should be able to delete an existing permission for a user group", func() {
+					Convey("Should be able to delete an existing permission for a team", func() {
 						err := RemoveDashboardAcl(&m.RemoveDashboardAclCommand{
 							OrgId: 1,
 							AclId: setDashAclCmd.Result.Id,
@@ -212,10 +212,10 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					})
 				})
 
-				Convey("Should be able to update an existing permission for a user group", func() {
+				Convey("Should be able to update an existing permission for a team", func() {
 					err := SetDashboardAcl(&m.SetDashboardAclCommand{
 						OrgId:       1,
-						UserGroupId: group1.Result.Id,
+						TeamId: group1.Result.Id,
 						DashboardId: savedFolder.Id,
 						Permission:  m.PERMISSION_ADMIN,
 					})
@@ -227,7 +227,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(len(q3.Result), ShouldEqual, 1)
 					So(q3.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
 					So(q3.Result[0].Permission, ShouldEqual, m.PERMISSION_ADMIN)
-					So(q3.Result[0].UserGroupId, ShouldEqual, group1.Result.Id)
+					So(q3.Result[0].TeamId, ShouldEqual, group1.Result.Id)
 				})
 
 			})

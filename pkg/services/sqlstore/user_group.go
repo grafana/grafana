@@ -9,82 +9,82 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", CreateUserGroup)
-	bus.AddHandler("sql", UpdateUserGroup)
-	bus.AddHandler("sql", DeleteUserGroup)
-	bus.AddHandler("sql", SearchUserGroups)
-	bus.AddHandler("sql", GetUserGroupById)
-	bus.AddHandler("sql", GetUserGroupsByUser)
+	bus.AddHandler("sql", CreateTeam)
+	bus.AddHandler("sql", UpdateTeam)
+	bus.AddHandler("sql", DeleteTeam)
+	bus.AddHandler("sql", SearchTeams)
+	bus.AddHandler("sql", GetTeamById)
+	bus.AddHandler("sql", GetTeamsByUser)
 
-	bus.AddHandler("sql", AddUserGroupMember)
-	bus.AddHandler("sql", RemoveUserGroupMember)
-	bus.AddHandler("sql", GetUserGroupMembers)
+	bus.AddHandler("sql", AddTeamMember)
+	bus.AddHandler("sql", RemoveTeamMember)
+	bus.AddHandler("sql", GetTeamMembers)
 }
 
-func CreateUserGroup(cmd *m.CreateUserGroupCommand) error {
+func CreateTeam(cmd *m.CreateTeamCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 
-		if isNameTaken, err := isUserGroupNameTaken(cmd.Name, 0, sess); err != nil {
+		if isNameTaken, err := isTeamNameTaken(cmd.Name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
-			return m.ErrUserGroupNameTaken
+			return m.ErrTeamNameTaken
 		}
 
-		userGroup := m.UserGroup{
+		team := m.Team{
 			Name:    cmd.Name,
 			OrgId:   cmd.OrgId,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}
 
-		_, err := sess.Insert(&userGroup)
+		_, err := sess.Insert(&team)
 
-		cmd.Result = userGroup
+		cmd.Result = team
 
 		return err
 	})
 }
 
-func UpdateUserGroup(cmd *m.UpdateUserGroupCommand) error {
+func UpdateTeam(cmd *m.UpdateTeamCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 
-		if isNameTaken, err := isUserGroupNameTaken(cmd.Name, cmd.Id, sess); err != nil {
+		if isNameTaken, err := isTeamNameTaken(cmd.Name, cmd.Id, sess); err != nil {
 			return err
 		} else if isNameTaken {
-			return m.ErrUserGroupNameTaken
+			return m.ErrTeamNameTaken
 		}
 
-		userGroup := m.UserGroup{
+		team := m.Team{
 			Name:    cmd.Name,
 			Updated: time.Now(),
 		}
 
-		affectedRows, err := sess.Id(cmd.Id).Update(&userGroup)
+		affectedRows, err := sess.Id(cmd.Id).Update(&team)
 
 		if err != nil {
 			return err
 		}
 
 		if affectedRows == 0 {
-			return m.ErrUserGroupNotFound
+			return m.ErrTeamNotFound
 		}
 
 		return nil
 	})
 }
 
-func DeleteUserGroup(cmd *m.DeleteUserGroupCommand) error {
+func DeleteTeam(cmd *m.DeleteTeamCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		if res, err := sess.Query("SELECT 1 from user_group WHERE id=?", cmd.Id); err != nil {
+		if res, err := sess.Query("SELECT 1 from team WHERE id=?", cmd.Id); err != nil {
 			return err
 		} else if len(res) != 1 {
-			return m.ErrUserGroupNotFound
+			return m.ErrTeamNotFound
 		}
 
 		deletes := []string{
-			"DELETE FROM user_group_member WHERE user_group_id = ?",
-			"DELETE FROM user_group WHERE id = ?",
-			"DELETE FROM dashboard_acl WHERE user_group_id = ?",
+			"DELETE FROM team_member WHERE team_id = ?",
+			"DELETE FROM team WHERE id = ?",
+			"DELETE FROM dashboard_acl WHERE team_id = ?",
 		}
 
 		for _, sql := range deletes {
@@ -97,28 +97,28 @@ func DeleteUserGroup(cmd *m.DeleteUserGroupCommand) error {
 	})
 }
 
-func isUserGroupNameTaken(name string, existingId int64, sess *DBSession) (bool, error) {
-	var userGroup m.UserGroup
-	exists, err := sess.Where("name=?", name).Get(&userGroup)
+func isTeamNameTaken(name string, existingId int64, sess *DBSession) (bool, error) {
+	var team m.Team
+	exists, err := sess.Where("name=?", name).Get(&team)
 
 	if err != nil {
 		return false, nil
 	}
 
-	if exists && existingId != userGroup.Id {
+	if exists && existingId != team.Id {
 		return true, nil
 	}
 
 	return false, nil
 }
 
-func SearchUserGroups(query *m.SearchUserGroupsQuery) error {
-	query.Result = m.SearchUserGroupQueryResult{
-		UserGroups: make([]*m.UserGroup, 0),
+func SearchTeams(query *m.SearchTeamsQuery) error {
+	query.Result = m.SearchTeamQueryResult{
+		Teams: make([]*m.Team, 0),
 	}
 	queryWithWildcards := "%" + query.Query + "%"
 
-	sess := x.Table("user_group")
+	sess := x.Table("team")
 	sess.Where("org_id=?", query.OrgId)
 
 	if query.Query != "" {
@@ -132,46 +132,46 @@ func SearchUserGroups(query *m.SearchUserGroupsQuery) error {
 	offset := query.Limit * (query.Page - 1)
 	sess.Limit(query.Limit, offset)
 	sess.Cols("id", "name")
-	if err := sess.Find(&query.Result.UserGroups); err != nil {
+	if err := sess.Find(&query.Result.Teams); err != nil {
 		return err
 	}
 
-	userGroup := m.UserGroup{}
+	team := m.Team{}
 
-	countSess := x.Table("user_group")
+	countSess := x.Table("team")
 	if query.Query != "" {
 		countSess.Where("name LIKE ?", queryWithWildcards)
 	}
 	if query.Name != "" {
 		countSess.Where("name=?", query.Name)
 	}
-	count, err := countSess.Count(&userGroup)
+	count, err := countSess.Count(&team)
 	query.Result.TotalCount = count
 
 	return err
 }
 
-func GetUserGroupById(query *m.GetUserGroupByIdQuery) error {
-	var userGroup m.UserGroup
-	exists, err := x.Id(query.Id).Get(&userGroup)
+func GetTeamById(query *m.GetTeamByIdQuery) error {
+	var team m.Team
+	exists, err := x.Id(query.Id).Get(&team)
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		return m.ErrUserGroupNotFound
+		return m.ErrTeamNotFound
 	}
 
-	query.Result = &userGroup
+	query.Result = &team
 	return nil
 }
 
-func GetUserGroupsByUser(query *m.GetUserGroupsByUserQuery) error {
-	query.Result = make([]*m.UserGroup, 0)
+func GetTeamsByUser(query *m.GetTeamsByUserQuery) error {
+	query.Result = make([]*m.Team, 0)
 
-	sess := x.Table("user_group")
-	sess.Join("INNER", "user_group_member", "user_group.id=user_group_member.user_group_id")
-	sess.Where("user_group_member.user_id=?", query.UserId)
+	sess := x.Table("team")
+	sess.Join("INNER", "team_member", "team.id=team_member.team_id")
+	sess.Where("team_member.user_id=?", query.UserId)
 
 	err := sess.Find(&query.Result)
 	if err != nil {
@@ -181,23 +181,23 @@ func GetUserGroupsByUser(query *m.GetUserGroupsByUserQuery) error {
 	return nil
 }
 
-func AddUserGroupMember(cmd *m.AddUserGroupMemberCommand) error {
+func AddTeamMember(cmd *m.AddTeamMemberCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		if res, err := sess.Query("SELECT 1 from user_group_member WHERE user_group_id=? and user_id=?", cmd.UserGroupId, cmd.UserId); err != nil {
+		if res, err := sess.Query("SELECT 1 from team_member WHERE team_id=? and user_id=?", cmd.TeamId, cmd.UserId); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return m.ErrUserGroupMemberAlreadyAdded
+			return m.ErrTeamMemberAlreadyAdded
 		}
 
-		if res, err := sess.Query("SELECT 1 from user_group WHERE id=?", cmd.UserGroupId); err != nil {
+		if res, err := sess.Query("SELECT 1 from team WHERE id=?", cmd.TeamId); err != nil {
 			return err
 		} else if len(res) != 1 {
-			return m.ErrUserGroupNotFound
+			return m.ErrTeamNotFound
 		}
 
-		entity := m.UserGroupMember{
+		entity := m.TeamMember{
 			OrgId:       cmd.OrgId,
-			UserGroupId: cmd.UserGroupId,
+			TeamId: cmd.TeamId,
 			UserId:      cmd.UserId,
 			Created:     time.Now(),
 			Updated:     time.Now(),
@@ -208,10 +208,10 @@ func AddUserGroupMember(cmd *m.AddUserGroupMemberCommand) error {
 	})
 }
 
-func RemoveUserGroupMember(cmd *m.RemoveUserGroupMemberCommand) error {
+func RemoveTeamMember(cmd *m.RemoveTeamMemberCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "DELETE FROM user_group_member WHERE user_group_id=? and user_id=?"
-		_, err := sess.Exec(rawSql, cmd.UserGroupId, cmd.UserId)
+		var rawSql = "DELETE FROM team_member WHERE team_id=? and user_id=?"
+		_, err := sess.Exec(rawSql, cmd.TeamId, cmd.UserId)
 		if err != nil {
 			return err
 		}
@@ -220,12 +220,12 @@ func RemoveUserGroupMember(cmd *m.RemoveUserGroupMemberCommand) error {
 	})
 }
 
-func GetUserGroupMembers(query *m.GetUserGroupMembersQuery) error {
-	query.Result = make([]*m.UserGroupMemberDTO, 0)
-	sess := x.Table("user_group_member")
-	sess.Join("INNER", "user", fmt.Sprintf("user_group_member.user_id=%s.id", x.Dialect().Quote("user")))
-	sess.Where("user_group_member.user_group_id=?", query.UserGroupId)
-	sess.Cols("user.org_id", "user_group_member.user_group_id", "user_group_member.user_id", "user.email", "user.login")
+func GetTeamMembers(query *m.GetTeamMembersQuery) error {
+	query.Result = make([]*m.TeamMemberDTO, 0)
+	sess := x.Table("team_member")
+	sess.Join("INNER", "user", fmt.Sprintf("team_member.user_id=%s.id", x.Dialect().Quote("user")))
+	sess.Where("team_member.team_id=?", query.TeamId)
+	sess.Cols("user.org_id", "team_member.team_id", "team_member.user_id", "user.email", "user.login")
 	sess.Asc("user.login", "user.email")
 
 	err := sess.Find(&query.Result)

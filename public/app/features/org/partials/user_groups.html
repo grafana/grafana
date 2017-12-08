@@ -11,14 +11,14 @@
 
     <div class="page-action-bar__spacer"></div>
 
-    <a class="btn btn-success" ng-click="ctrl.openUserGroupModal()">
+    <a class="btn btn-success" ng-click="ctrl.openTeamModal()">
       <i class="fa fa-plus"></i>
 			Add Team
     </a>
   </div>
 
   <div class="admin-list-table">
-    <table class="filter-table form-inline" ng-show="ctrl.userGroups.length > 0">
+    <table class="filter-table form-inline" ng-show="ctrl.teams.length > 0">
       <thead>
         <tr>
           <th>Name</th>
@@ -27,18 +27,18 @@
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="userGroup in ctrl.userGroups">
+        <tr ng-repeat="team in ctrl.teams">
           <td>
-            <a href="org/user-groups/edit/{{userGroup.id}}">{{userGroup.name}}</a>
+            <a href="org/teams/edit/{{team.id}}">{{team.name}}</a>
           </td>
           <td>#Count</td>
           <td class="text-right">
-            <a href="org/user-groups/edit/{{userGroup.id}}" class="btn btn-inverse btn-small">
+            <a href="org/teams/edit/{{team.id}}" class="btn btn-inverse btn-small">
               <i class="fa fa-edit"></i>
               Edit
             </a>
             &nbsp;&nbsp;
-            <a ng-click="ctrl.deleteUserGroup(userGroup)" class="btn btn-danger btn-small">
+            <a ng-click="ctrl.deleteTeam(team)" class="btn btn-danger btn-small">
               <i class="fa fa-remove"></i>
             </a>
           </td>
@@ -58,7 +58,7 @@
     </ol>
   </div>
 
-  <em class="muted" ng-hide="ctrl.userGroups.length > 0">
+  <em class="muted" ng-hide="ctrl.teams.length > 0">
     No User Groups found.
   </em>
 </div>

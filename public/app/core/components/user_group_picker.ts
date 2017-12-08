@@ -10,9 +10,9 @@ const template = `
   </gf-form-dropdown>
 </div>
 `;
-export class UserGroupPickerCtrl {
+export class TeamPickerCtrl {
   group: any;
-  userGroupPicked: any;
+  teamPicked: any;
   debouncedSearchGroups: any;
 
   /** @ngInject */
@@ -26,34 +26,34 @@ export class UserGroupPickerCtrl {
   }
 
   searchGroups(query: string) {
-    return Promise.resolve(this.backendSrv.get('/api/user-groups/search?perpage=10&page=1&query=' + query).then(result => {
-      return _.map(result.userGroups, ug => {
+    return Promise.resolve(this.backendSrv.get('/api/teams/search?perpage=10&page=1&query=' + query).then(result => {
+      return _.map(result.teams, ug => {
         return {text: ug.name, value: ug};
       });
     }));
   }
 
   onChange(option) {
-    this.userGroupPicked({$group: option.value});
+    this.teamPicked({$group: option.value});
   }
 }
 
-export function userGroupPicker() {
+export function teamPicker() {
   return {
     restrict: 'E',
     template: template,
-    controller: UserGroupPickerCtrl,
+    controller: TeamPickerCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      userGroupPicked: '&',
+      teamPicked: '&',
     },
     link: function(scope, elem, attrs, ctrl) {
-      scope.$on("user-group-picker-reset", () => {
+      scope.$on("team-picker-reset", () => {
         ctrl.reset();
       });
     }
   };
 }
 
-coreModule.directive('userGroupPicker', userGroupPicker);
+coreModule.directive('teamPicker', teamPicker);

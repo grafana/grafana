@@ -6,6 +6,8 @@ import './change_password_ctrl';
 import './new_org_ctrl';
 import './user_invite_ctrl';
 import './user_groups_ctrl';
+import './user_group_details_ctrl';
+import './create_user_group_modal';
 import './org_api_keys_ctrl';
 import './org_details_ctrl';
 import './prefs_control';

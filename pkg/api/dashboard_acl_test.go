@@ -16,8 +16,8 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			{Id: 1, OrgId: 1, DashboardId: 1, UserId: 2, Permission: m.PERMISSION_VIEW},
 			{Id: 2, OrgId: 1, DashboardId: 1, UserId: 3, Permission: m.PERMISSION_EDIT},
 			{Id: 3, OrgId: 1, DashboardId: 1, UserId: 4, Permission: m.PERMISSION_ADMIN},
-			{Id: 4, OrgId: 1, DashboardId: 1, UserGroupId: 1, Permission: m.PERMISSION_VIEW},
-			{Id: 5, OrgId: 1, DashboardId: 1, UserGroupId: 2, Permission: m.PERMISSION_ADMIN},
+			{Id: 4, OrgId: 1, DashboardId: 1, TeamId: 1, Permission: m.PERMISSION_VIEW},
+			{Id: 5, OrgId: 1, DashboardId: 1, TeamId: 2, Permission: m.PERMISSION_ADMIN},
 		}
 		dtoRes := transformDashboardAclsToDTOs(mockResult)
 
@@ -31,9 +31,9 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		userGroupResp := []*m.UserGroup{}
-		bus.AddHandler("test", func(query *m.GetUserGroupsByUserQuery) error {
-			query.Result = userGroupResp
+		teamResp := []*m.Team{}
+		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
+			query.Result = teamResp
 			return nil
 		})
 
@@ -81,9 +81,9 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 				})
 			})
 
-			Convey("When user is a member of a user group in the ACL with admin permission", func() {
+			Convey("When user is a member of a team in the ACL with admin permission", func() {
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/id/1/acl/1", "/api/dashboards/id/:dashboardsId/acl/:aclId", m.ROLE_EDITOR, func(sc *scenarioContext) {
-					userGroupResp = append(userGroupResp, &m.UserGroup{Id: 2, OrgId: 1, Name: "UG2"})
+					teamResp = append(teamResp, &m.Team{Id: 2, OrgId: 1, Name: "UG2"})
 
 					bus.AddHandler("test3", func(cmd *m.RemoveDashboardAclCommand) error {
 						return nil
@@ -165,7 +165,7 @@ func transformDashboardAclsToDTOs(acls []*m.DashboardAclInfoDTO) []*m.DashboardA
 			DashboardId: acl.DashboardId,
 			Permission:  acl.Permission,
 			UserId:      acl.UserId,
-			UserGroupId: acl.UserGroupId,
+			TeamId: acl.TeamId,
 		}
 		dtos = append(dtos, dto)
 	}

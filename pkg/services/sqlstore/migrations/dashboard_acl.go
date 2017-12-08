@@ -10,7 +10,7 @@ func addDashboardAclMigrations(mg *Migrator) {
 			{Name: "org_id", Type: DB_BigInt},
 			{Name: "dashboard_id", Type: DB_BigInt},
 			{Name: "user_id", Type: DB_BigInt, Nullable: true},
-			{Name: "user_group_id", Type: DB_BigInt, Nullable: true},
+			{Name: "team_id", Type: DB_BigInt, Nullable: true},
 			{Name: "permission", Type: DB_SmallInt, Default: "4"},
 			{Name: "role", Type: DB_Varchar, Length: 20, Nullable: true},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
@@ -19,7 +19,7 @@ func addDashboardAclMigrations(mg *Migrator) {
 		Indices: []*Index{
 			{Cols: []string{"dashboard_id"}},
 			{Cols: []string{"dashboard_id", "user_id"}, Type: UniqueIndex},
-			{Cols: []string{"dashboard_id", "user_group_id"}, Type: UniqueIndex},
+			{Cols: []string{"dashboard_id", "team_id"}, Type: UniqueIndex},
 		},
 	}
 

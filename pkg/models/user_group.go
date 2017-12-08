@@ -7,12 +7,12 @@ import (
 
 // Typed errors
 var (
-	ErrUserGroupNotFound  = errors.New("User Group not found")
-	ErrUserGroupNameTaken = errors.New("User Group name is taken")
+	ErrTeamNotFound  = errors.New("Team not found")
+	ErrTeamNameTaken = errors.New("Team name is taken")
 )
 
-// UserGroup model
-type UserGroup struct {
+// Team model
+type Team struct {
 	Id    int64  `json:"id"`
 	OrgId int64  `json:"orgId"`
 	Name  string `json:"name"`
@@ -24,45 +24,45 @@ type UserGroup struct {
 // ---------------------
 // COMMANDS
 
-type CreateUserGroupCommand struct {
+type CreateTeamCommand struct {
 	Name  string `json:"name" binding:"Required"`
 	OrgId int64  `json:"-"`
 
-	Result UserGroup `json:"-"`
+	Result Team `json:"-"`
 }
 
-type UpdateUserGroupCommand struct {
+type UpdateTeamCommand struct {
 	Id   int64
 	Name string
 }
 
-type DeleteUserGroupCommand struct {
+type DeleteTeamCommand struct {
 	Id int64
 }
 
-type GetUserGroupByIdQuery struct {
+type GetTeamByIdQuery struct {
 	Id     int64
-	Result *UserGroup
+	Result *Team
 }
 
-type GetUserGroupsByUserQuery struct {
+type GetTeamsByUserQuery struct {
 	UserId int64        `json:"userId"`
-	Result []*UserGroup `json:"userGroups"`
+	Result []*Team `json:"teams"`
 }
 
-type SearchUserGroupsQuery struct {
+type SearchTeamsQuery struct {
 	Query string
 	Name  string
 	Limit int
 	Page  int
 	OrgId int64
 
-	Result SearchUserGroupQueryResult
+	Result SearchTeamQueryResult
 }
 
-type SearchUserGroupQueryResult struct {
+type SearchTeamQueryResult struct {
 	TotalCount int64        `json:"totalCount"`
-	UserGroups []*UserGroup `json:"userGroups"`
+	Teams []*Team `json:"teams"`
 	Page       int          `json:"page"`
 	PerPage    int          `json:"perPage"`
 }

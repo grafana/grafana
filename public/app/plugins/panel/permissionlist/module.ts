@@ -7,7 +7,7 @@ class PermissionListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
 
   userPermissions: any[];
-  userGroupPermissions: any[];
+  teamPermissions: any[];
   roles: any[];
 
   panelDefaults = {
@@ -48,7 +48,7 @@ class PermissionListCtrl extends PanelCtrl {
   return this.backendSrv.get(`/api/dashboards/id/${this.panel.folderId}/acl`)
     .then(result => {
       this.userPermissions = _.filter(result, p => { return p.userId > 0;});
-      this.userGroupPermissions = _.filter(result, p => { return p.userGroupId > 0;});
+      this.teamPermissions = _.filter(result, p => { return p.teamId > 0;});
       // this.roles = this.setRoles(result);
     });
   }

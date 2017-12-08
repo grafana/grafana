@@ -135,16 +135,16 @@ func (hs *HttpServer) registerRoutes() {
 			usersRoute.Post("/:id/using/:orgId", wrap(UpdateUserActiveOrg))
 		}, reqGrafanaAdmin)
 
-		// user group (admin permission required)
-		apiRoute.Group("/user-groups", func(userGroupsRoute RouteRegister) {
-			userGroupsRoute.Get("/:userGroupId", wrap(GetUserGroupById))
-			userGroupsRoute.Get("/search", wrap(SearchUserGroups))
-			userGroupsRoute.Post("/", quota("user-groups"), bind(m.CreateUserGroupCommand{}), wrap(CreateUserGroup))
-			userGroupsRoute.Put("/:userGroupId", bind(m.UpdateUserGroupCommand{}), wrap(UpdateUserGroup))
-			userGroupsRoute.Delete("/:userGroupId", wrap(DeleteUserGroupById))
-			userGroupsRoute.Get("/:userGroupId/members", wrap(GetUserGroupMembers))
-			userGroupsRoute.Post("/:userGroupId/members", quota("user-groups"), bind(m.AddUserGroupMemberCommand{}), wrap(AddUserGroupMember))
-			userGroupsRoute.Delete("/:userGroupId/members/:userId", wrap(RemoveUserGroupMember))
+		// team (admin permission required)
+		apiRoute.Group("/teams", func(teamsRoute RouteRegister) {
+			teamsRoute.Get("/:teamId", wrap(GetTeamById))
+			teamsRoute.Get("/search", wrap(SearchTeams))
+			teamsRoute.Post("/", quota("teams"), bind(m.CreateTeamCommand{}), wrap(CreateTeam))
+			teamsRoute.Put("/:teamId", bind(m.UpdateTeamCommand{}), wrap(UpdateTeam))
+			teamsRoute.Delete("/:teamId", wrap(DeleteTeamById))
+			teamsRoute.Get("/:teamId/members", wrap(GetTeamMembers))
+			teamsRoute.Post("/:teamId/members", quota("teams"), bind(m.AddTeamMemberCommand{}), wrap(AddTeamMember))
+			teamsRoute.Delete("/:teamId/members/:userId", wrap(RemoveTeamMember))
 		}, reqOrgAdmin)
 
 		// org information available to all users.

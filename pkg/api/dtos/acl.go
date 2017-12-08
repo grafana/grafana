@@ -10,7 +10,7 @@ type UpdateDashboardAclCommand struct {
 
 type DashboardAclUpdateItem struct {
 	UserId      int64            `json:"userId"`
-	UserGroupId int64            `json:"userGroupId"`
+	TeamId int64            `json:"teamId"`
 	Role        *m.RoleType      `json:"role,omitempty"`
 	Permission  m.PermissionType `json:"permission"`
 }

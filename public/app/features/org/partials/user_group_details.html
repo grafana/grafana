@@ -5,10 +5,10 @@
 		<h1>Edit User Group</h1>
 	</div>
 
-	<form name="userGroupDetailsForm" class="gf-form-group gf-form-inline">
+	<form name="teamDetailsForm" class="gf-form-group gf-form-inline">
 		<div class="gf-form">
 			<span class="gf-form-label width-10">Name</span>
-			<input type="text" required ng-model="ctrl.userGroup.name" class="gf-form-input max-width-14" >
+			<input type="text" required ng-model="ctrl.team.name" class="gf-form-input max-width-14" >
 		</div>
 
 		<div class="gf-form">
@@ -26,24 +26,24 @@
       </div>
     </form>
 
-    <table class="grafana-options-table" ng-show="ctrl.userGroupMembers.length > 0">
+    <table class="grafana-options-table" ng-show="ctrl.teamMembers.length > 0">
       <tr>
         <th>Username</th>
         <th>Email</th>
         <th></th>
       </tr>
-      <tr ng-repeat="member in ctrl.userGroupMembers">
+      <tr ng-repeat="member in ctrl.teamMembers">
         <td>{{member.login}}</td>
         <td>{{member.email}}</td>
         <td style="width: 1%">
-          <a ng-click="ctrl.removeUserGroupMember(member)" class="btn btn-danger btn-mini">
+          <a ng-click="ctrl.removeTeamMember(member)" class="btn btn-danger btn-mini">
             <i class="fa fa-remove"></i>
           </a>
         </td>
       </tr>
     </table>
     <div>
-  <em class="muted" ng-hide="ctrl.userGroupMembers.length > 0">
+  <em class="muted" ng-hide="ctrl.teamMembers.length > 0">
     This user group has no members yet.
   </em>
 </div>
