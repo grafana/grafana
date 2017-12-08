@@ -8,6 +8,7 @@ import (
 
 var (
 	simpleDashboardConfig string = "./test-configs/dashboards-from-disk"
+	brokenConfigs         string = "./test-configs/borken-configs"
 )
 
 func TestDashboardsAsConfig(t *testing.T) {
@@ -44,6 +45,18 @@ func TestDashboardsAsConfig(t *testing.T) {
 
 			So(len(ds2.Options), ShouldEqual, 1)
 			So(ds2.Options["folder"], ShouldEqual, "/var/lib/grafana/dashboards")
+		})
+
+		Convey("Should skip broken config files", func() {
+
+			cfgProvifer := configReader{path: brokenConfigs}
+			cfg, err := cfgProvifer.readConfig()
+			if err != nil {
+				t.Fatalf("readConfig return an error %v", err)
+			}
+
+			So(len(cfg), ShouldEqual, 0)
+
 		})
 	})
 }
