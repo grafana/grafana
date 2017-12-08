@@ -20,7 +20,7 @@ var panelTemplate = `
     </div>
 
     <div class="panel-content">
-      <ng-transclude></ng-transclude>
+      <ng-transclude class="panel-height-helper"></ng-transclude>
     </div>
   </div>
 
