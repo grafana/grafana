@@ -220,12 +220,12 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           elem.append(tbodyElem);
         } else {
           elem.append(seriesElements);
-        }
 
-        if (!legendScrollbar) {
-          legendScrollbar = new PerfectScrollbar(elem[0]);
-        } else {
-          legendScrollbar.update();
+          if (!legendScrollbar) {
+            legendScrollbar = new PerfectScrollbar(elem[0]);
+          } else {
+            legendScrollbar.update();
+          }
         }
       }
     }

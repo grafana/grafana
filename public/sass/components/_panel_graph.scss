@@ -6,17 +6,9 @@
   &--legend-right {
     flex-direction: row;
 
-    // .graph-panel__chart {
-      //   display: table-cell;
-      //   width: 100%;
-      //   position: relative;
-    // }
-
     .graph-legend {
+      flex: 0 1 10px;
       max-height: 100%;
-      position: relative;
-      left: 4px;
-      margin: 0 0 0 1rem;
     }
 
     .graph-legend-series {
@@ -51,12 +43,10 @@
 }
 
 .graph-legend {
-  @include clearfix();
   flex: 0 1 auto;
   max-height: 30%;
   margin: 0 $spacer;
   text-align: center;
-  width: calc(100% - $spacer);
   padding-top: 6px;
   position: relative;
 
@@ -121,7 +111,9 @@
     display: block;
     overflow-y: auto;
     overflow-x: hidden;
+    height: 100%;
     padding-bottom: 1px;
+    padding-right: 5px;
   }
 
   .graph-legend-series {
