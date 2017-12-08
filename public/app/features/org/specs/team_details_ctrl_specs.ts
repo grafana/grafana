@@ -24,7 +24,7 @@ var backendSrv = {
     });
   }));
 
-  describe('when user is chosen to be added to user group', () => {
+  describe('when user is chosen to be added to team', () => {
     beforeEach(() => {
       const userItem = {
         id: 2,

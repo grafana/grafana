@@ -5,7 +5,7 @@
 
     <div class="gf-form gf-form--grow">
       <label class="gf-form-label">Search</label>
-      <input type="text" class="gf-form-input max-width-20" placeholder="Find User Group by name" tabindex="1" give-focus="true"
+      <input type="text" class="gf-form-input max-width-20" placeholder="Find Team by name" tabindex="1" give-focus="true"
           ng-model="ctrl.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.get()" />
     </div>
 
@@ -59,6 +59,6 @@
   </div>
 
   <em class="muted" ng-hide="ctrl.teams.length > 0">
-    No User Groups found.
+    No Teams found.
   </em>
 </div>

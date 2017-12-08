@@ -6,7 +6,7 @@ But it will give you an idea of our current vision and plan.
 ### Short term (1-4 months)
 
  - Release Grafana v5
-  - User groups
+  - Teams
   - Dashboard folders
   - Dashboard & folder permissions (assigned to users or groups)
   - New Dashboard layout engine

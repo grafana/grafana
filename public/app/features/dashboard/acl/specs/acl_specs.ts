@@ -54,7 +54,7 @@ describe('AclCtrl', () => {
       ctx.ctrl.typeChanged();
     });
 
-     it('should sort the result by role, user group and user', () => {
+     it('should sort the result by role, team and user', () => {
         expect(ctx.ctrl.items[0].role).to.eql('Viewer');
         expect(ctx.ctrl.items[1].role).to.eql('Editor');
         expect(ctx.ctrl.items[2].teamId).to.eql(2);
@@ -124,7 +124,7 @@ describe('AclCtrl', () => {
     });
   });
 
-  describe('when duplicate user group permissions are added', () => {
+  describe('when duplicate team permissions are added', () => {
     beforeEach(() => {
       backendSrv.get.reset();
       backendSrv.post.reset();
@@ -148,7 +148,7 @@ describe('AclCtrl', () => {
     });
   });
 
-  describe('when one inherited and one not inherited user group permission are added', () => {
+  describe('when one inherited and one not inherited team permission are added', () => {
     beforeEach(() => {
       backendSrv.get.reset();
       backendSrv.post.reset();

@@ -12,7 +12,7 @@ export class AclCtrl {
     {value: 4, text: 'Admin'}
   ];
   aclTypes = [
-    {value: 'Group', text: 'User Group'},
+    {value: 'Group', text: 'Team'},
     {value: 'User',  text: 'User'},
     {value: 'Viewer', text: 'Everyone With Viewer Role'},
     {value: 'Editor', text: 'Everyone With Editor Role'}
