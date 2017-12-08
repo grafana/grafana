@@ -1,0 +1,15 @@
+.sidenav {
+  display: flex;
+  flex-direction: row;
+}
+
+.sidenav__content {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.sidenav__aside {
+  margin-right: $spacer*2;
+}
+
+

@@ -2,7 +2,9 @@
 	<dashnav dashboard="ctrl.dashboard"></dashnav>
 
 	<div class="scroll-canvas scroll-canvas--dashboard" grafana-scrollbar>
-		<dashboard-settings dashboard="ctrl.dashboard" ng-if="ctrl.dashboardViewState.state.editview" class="dashboard-settings">
+		<dashboard-settings dashboard="ctrl.dashboard"
+											  ng-if="ctrl.dashboardViewState.state.editview"
+												class="dashboard-settings">
 		</dashboard-settings>
 
 		<div class="dashboard-container">

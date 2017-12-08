@@ -9,6 +9,10 @@
   padding-right: $spacer;
   display: flex;
   flex-grow: 1;
+
+  background: $page-header-bg;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
 }
 
 .sidemenu-open {

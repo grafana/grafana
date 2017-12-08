@@ -32,13 +32,14 @@ export class DashNavCtrl {
       }
     }
 
-    openEditView(editview) {
-      var search = _.extend(this.$location.search(), {editview: editview});
+    openSettings() {
+      let search = this.$location.search();
+      if (search.editview) {
+        delete search.editview;
+      } else {
+        search.editview = 'settings';
+      }
       this.$location.search(search);
-    }
-
-    showHelpModal() {
-      appEvents.emit('show-modal', {templateHtml: '<help-modal></help-modal>'});
     }
 
     starDashboard() {

@@ -72,8 +72,8 @@ export class KeybindingSrv {
     }, 'keydown');
   }
 
-  showDashEditView(view) {
-    var search = _.extend(this.$location.search(), {editview: view});
+  showDashEditView() {
+    var search = _.extend(this.$location.search(), {editview: 'settings'});
     this.$location.search(search);
   }
 
@@ -197,7 +197,7 @@ export class KeybindingSrv {
     });
 
     this.bind('d s', () => {
-      this.showDashEditView('settings');
+      this.showDashEditView();
     });
 
     this.bind('d k', () => {
@@ -215,8 +215,14 @@ export class KeybindingSrv {
       }
 
       scope.appEvent('hide-modal');
-      scope.appEvent('hide-dash-editor');
       scope.appEvent('panel-change-view', {fullscreen: false, edit: false});
+
+      // close settings view
+      var search = this.$location.search();
+      if (search.editview) {
+        delete search.editview;
+        this.$location.search(search);
+      }
     });
   }
 }

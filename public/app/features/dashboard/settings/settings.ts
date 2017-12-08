@@ -1,5 +1,7 @@
 import {coreModule, appEvents} from 'app/core/core';
 import {DashboardModel} from '../dashboard_model';
+import $ from 'jquery';
+import _ from 'lodash';
 
 export class SettingsCtrl {
   dashboard: DashboardModel;
@@ -7,7 +9,7 @@ export class SettingsCtrl {
   viewId: string;
 
   sections: any[] = [
-    {title: 'General',     id: 'general'},
+    {title: 'General',     id: 'settings'},
     {title: 'Annotations', id: 'annotations'},
     {title: 'Templating',  id: 'templating'},
     {title: 'Versions',    id: 'versions'},
@@ -15,10 +17,22 @@ export class SettingsCtrl {
 
   /** @ngInject */
   constructor($scope, private $location, private $rootScope) {
-    appEvents.on('hide-dash-editor', this.hideSettings.bind(this), $scope);
+    const params = this.$location.search();
+    const url = $location.path();
 
-    var urlParams = this.$location.search();
-    this.viewId = urlParams.editview;
+    for (let section of this.sections) {
+      const sectionParams = _.defaults({editview: section.id}, params);
+      section.url = url + '?' + $.param(sectionParams);
+      console.log(section.url);
+    }
+
+    this.viewId = params.editview;
+    $rootScope.onAppEvent("$routeUpdate", this.onRouteUpdated.bind(this), $scope);
+  }
+
+  onRouteUpdated() {
+    console.log('settings route updated');
+    this.viewId = this.$location.search().editview;
   }
 
   hideSettings() {

@@ -1,6 +1,5 @@
-
-<div class="edit-tab-with-sidemenu" ng-if="ctrl.viewId !== 'timepicker'">
-	<aside class="edit-sidemenu-aside">
+<div class="sidenav">
+	<aside class="sidenav__aside">
 		<h2>
 			<i class="fa fa-cog"></i>
 			Settings
@@ -8,27 +7,22 @@
 
 		<ul class="edit-sidemenu">
 			<li ng-class="{active: ctrl.viewId === section.id}" ng-repeat="section in ctrl.sections">
-				<a ng-click="ctrl.viewId = section.id">
+        <a href="{{::section.url}}">
 					{{::section.title}}
 				</a>
 			</li>
 		</ul>
 	</aside>
 
-	<div class="edit-tab-content" ng-if="ctrl.viewId === 'general'">
-		general
+	<div class="sidenav__content" ng-if="ctrl.viewId === 'settings'" ng-include="'public/app/features/dashboard/partials/settings.html'">
 	</div>
 
-	<div class="edit-tab-content" ng-if="ctrl.viewId === 'annotations'">
-		annotations
+	<div class="sidenav__content" ng-if="ctrl.viewId === 'annotations'" ng-include="'public/app/features/annotations/partials/editor.html'">
 	</div>
 
-	<div class="edit-tab-content" ng-if="ctrl.viewId === 'templating'">
+	<div class="sidenav__content" ng-if="ctrl.viewId === 'templating'">
 		annotations
 	</div>
 </div>
 
-<div ng-if="ctrl.viewId === 'timepicker'">
-  <gf-time-picker-dropdown dashboard="ctrl.dashboard"></gf-time-picker-dropdown>
-</div>
 
