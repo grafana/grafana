@@ -51,6 +51,7 @@ export interface DashboardGridProps {
 }
 
 export class DashboardGrid extends React.Component<DashboardGridProps, any> {
+  element: any;
   gridToPanelMap: any;
   panelContainer: PanelContainer;
   dashboard: DashboardModel;
@@ -72,6 +73,10 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.dashboard.on('view-mode-changed', this.triggerForceUpdate.bind(this));
     this.dashboard.on('row-collapsed', this.triggerForceUpdate.bind(this));
     this.dashboard.on('row-expanded', this.triggerForceUpdate.bind(this));
+  }
+
+  componentDidMount() {
+    console.log('componentDidMount', this);
   }
 
   buildLayout() {
@@ -156,7 +161,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
         onLayoutChange={this.onLayoutChange}
         onWidthChange={this.onWidthChange}
         onResize={this.onResize}
-        onResizeStop={this.onResizeStop}>
+        onResizeStop={this.onResizeStop}
+        ref={element => this.element = element}>
         {this.renderPanels()}
       </SizedReactLayoutGrid>
     );
