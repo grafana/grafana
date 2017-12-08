@@ -110,13 +110,13 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     resolve: loadOrgBundle,
   })
   .when('/org/teams', {
-    templateUrl: 'public/app/features/org/partials/user_groups.html',
+    templateUrl: 'public/app/features/org/partials/teams.html',
     controller : 'TeamsCtrl',
     controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })
   .when('/org/teams/edit/:id', {
-    templateUrl: 'public/app/features/org/partials/user_group_details.html',
+    templateUrl: 'public/app/features/org/partials/team_details.html',
     controller : 'TeamDetailsCtrl',
     controllerAs: 'ctrl',
     resolve: loadOrgBundle,

@@ -1,6 +1,6 @@
-import '../user_group_details_ctrl';
+import '../team_details_ctrl';
 import {describe, beforeEach, it, expect, sinon, angularMocks} from 'test/lib/common';
-import TeamDetailsCtrl from '../user_group_details_ctrl';
+import TeamDetailsCtrl from '../team_details_ctrl';
 
 describe('TeamDetailsCtrl', () => {
 var ctx: any = {};

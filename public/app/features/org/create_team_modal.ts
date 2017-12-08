@@ -27,7 +27,7 @@ export class CreateTeamCtrl {
 export function createTeamModal() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/org/partials/create_user_group.html',
+    templateUrl: 'public/app/features/org/partials/create_team.html',
     controller: CreateTeamCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
