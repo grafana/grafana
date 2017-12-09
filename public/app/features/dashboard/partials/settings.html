@@ -33,6 +33,23 @@
 			<div class="gf-form-select-wrapper">
 				<select ng-model="ctrl.dashboard.timezone" class='gf-form-input' ng-options="f.value as f.text for f in [{value: '', text: 'Default'}, {value: 'browser', text: 'Local browser time'},{value: 'utc', text: 'UTC'}]" ng-change="timezoneChanged()"></select>
 			</div>
+      <div class="gf-form">
+				<label class="gf-form-label width-7">Description</label>
+				<input type="text" class="gf-form-input width-30" ng-model='ctrl.dashboard.description'></input>
+			</div>
+      <div class="gf-form">
+				<label class="gf-form-label width-7">
+          Tags
+          <info-popover mode="right-normal">Press enter to add a tag</info-popover>
+        </label>
+				<bootstrap-tagsinput ng-model="ctrl.dashboard.tags" tagclass="label label-tag" placeholder="add tags">
+				</bootstrap-tagsinput>
+			</div>
+      <folder-picker ng-if="!ctrl.dashboard.meta.isFolder"
+                     initial-folder-id="ctrl.dashboard.folderId"
+										 on-change="ctrl.onFolderChange($folder)"
+										 label-class="width-7">
+			</folder-picker>
 		</div>
 		<gf-form-switch class="gf-form" label="Editable" tooltip="Uncheck, then save and reload to disable all dashboard editing" checked="ctrl.dashboard.editable" label-class="width-11">
 		</gf-form-switch>

@@ -64,7 +64,6 @@ $input-border: 1px solid $input-border-color;
 
 .gf-form-label {
   padding: $input-padding-y $input-padding-x;
-  margin-right: $gf-form-margin;
   flex-shrink: 0;
   font-weight: $font-weight-semi-bold;
 
@@ -72,8 +71,8 @@ $input-border: 1px solid $input-border-color;
   display: block;
 
   border: $input-btn-border-width solid $input-label-border-color;
-  @include border-radius($label-border-radius-sm);
-
+  border-right: none;
+  border-radius: $label-border-radius;
 
   &--grow {
     flex-grow: 1;
@@ -91,6 +90,7 @@ $input-border: 1px solid $input-border-color;
   margin: 0;
   margin-right: $gf-form-margin;
   border: $input-btn-border-width solid transparent;
+  border-left: none;
   @include border-radius($label-border-radius-sm);
 }
 
@@ -116,14 +116,14 @@ $input-border: 1px solid $input-border-color;
   width: 100%;
   padding: $input-padding-y $input-padding-x;
   margin-right: $gf-form-margin;
-  font-size: $font-size-base;
+  font-size: $font-size-md;
   line-height: $input-line-height;
   color: $input-color;
   background-color: $input-bg;
   background-image: none;
   background-clip: padding-box;
   border: $input-border;
-  @include border-radius($input-border-radius-sm);
+  border-radius: $input-border-radius;
   @include box-shadow($input-box-shadow);
   white-space: nowrap;
   overflow: hidden;
@@ -276,6 +276,7 @@ $input-border: 1px solid $input-border-color;
   background-color: $input-bg;
   padding-right: $input-padding-x;
   border: $input-border;
+  border-radius: $input-border-radius;
 
   &::after {
     position: absolute;

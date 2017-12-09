@@ -89,9 +89,9 @@ $font-size-root: 14px !default;
 $font-size-base: 13px !default;
 
 $font-size-lg:   18px !default;
-$font-size-md:   15px !default;
-$font-size-sm:   11px !default;
-$font-size-xs:   9px !default;
+$font-size-md:   14px !default;
+$font-size-sm:   12px !default;
+$font-size-xs:   10px !default;
 
 $line-height-base: 1.5 !default;
 $font-weight-semi-bold: 500;
@@ -135,9 +135,9 @@ $list-inline-padding: 5px !default;
 $line-height-lg:         (4 / 3) !default;
 $line-height-sm:         1.5 !default;
 
-$border-radius:          0.2rem !default;
-$border-radius-lg:       0.3rem !default;
-$border-radius-sm:       0.1rem !default;
+$border-radius:          3px !default;
+$border-radius-lg:       5px !default;
+$border-radius-sm:       2px!default;
 
 $caret-width:            .3em !default;
 $caret-width-lg:         $caret-width !default;
@@ -162,7 +162,7 @@ $table-sm-cell-padding:         .3rem !default;
 // Forms
 $input-padding-x:                10px !default;
 $input-padding-y:                8px !default;
-$input-line-height:              19px !default;
+$input-line-height:              18px !default;
 
 $input-btn-border-width:         1px;
 $input-border-radius:            0 $border-radius $border-radius 0 !default;
@@ -203,9 +203,7 @@ $zindex-tooltip:           1030;
 $zindex-modal-backdrop:    1040;
 $zindex-modal:             1050;
 $zindex-typeahead:         1060;
-$zindex-sidemenu : $zindex-navbar-fixed + 5;
-
-
+$zindex-sidemenu:          $zindex-navbar-fixed;
 
 // Buttons
 //

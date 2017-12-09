@@ -15,7 +15,8 @@
 
     <div class="p-t-2">
       <div class="gf-form">
-          <folder-picker initial-title="Choose"
+          <folder-picker
+            on-load="ctrl.onFolderChange($folder)"
             on-change="ctrl.onFolderChange($folder)"
             label-class="width-7">
           </folder-picker>
