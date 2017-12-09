@@ -73,7 +73,6 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
       var lastHasAlertRule = false;
       var lastAlertState;
       var hasAlertRule;
-      var lastHeight = 0;
 
       function mouseEnter() {
         panelContainer.toggleClass('panel-hover-highlight', true);
@@ -90,7 +89,6 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
         if (panelScrollbar) {
           panelScrollbar.update();
         }
-        lastHeight = ctrl.height;
       }
 
       // set initial transparency
