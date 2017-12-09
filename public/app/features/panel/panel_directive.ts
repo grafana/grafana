@@ -53,7 +53,7 @@ var panelTemplate = `
   </div>
 `;
 
-module.directive('grafanaPanel', function($rootScope, $document) {
+module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
   return {
     restrict: 'E',
     template: panelTemplate,
@@ -106,11 +106,19 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         }
       });
 
-      ctrl.events.on('render', () => {
-        if (lastHeight !== ctrl.height) {
-          panelHeightUpdated();
-        }
+      ctrl.events.on('panel-size-changed', () => {
+        ctrl.calculatePanelHeight();
+        panelHeightUpdated();
+        $timeout(() => {
+          ctrl.render();
+        });
+      });
 
+      // set initial height
+      ctrl.calculatePanelHeight();
+      panelHeightUpdated();
+
+      ctrl.events.on('render', () => {
         if (transparentLastState !== ctrl.panel.transparent) {
           panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
           transparentLastState = ctrl.panel.transparent;
