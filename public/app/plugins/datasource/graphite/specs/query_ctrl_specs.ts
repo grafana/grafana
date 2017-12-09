@@ -95,11 +95,11 @@ describe('GraphiteQueryCtrl', function() {
     });
 
     it('should not add select metric segment', function() {
-      expect(ctx.ctrl.segments.length).to.be(0);
+      expect(ctx.ctrl.segments.length).to.be(1);
     });
 
-    it('should add both series refs as params', function() {
-      expect(ctx.ctrl.queryModel.functions[0].params.length).to.be(2);
+    it('should add second series ref as param', function() {
+      expect(ctx.ctrl.queryModel.functions[0].params.length).to.be(1);
     });
   });
 

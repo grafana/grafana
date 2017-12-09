@@ -91,27 +91,25 @@ export default class GraphiteQuery {
         this.functions.push(innerFunc);
         break;
       case 'series-ref':
-        this.addFunctionParameter(func, astNode.value, index, this.segments.length > 0);
+        if (this.segments.length > 0) {
+          this.addFunctionParameter(func, astNode.value, index, true);
+        } else {
+          this.segments.push(astNode);
+        }
         break;
       case 'bool':
       case 'string':
       case 'number':
-        if ((index-1) >= func.def.params.length) {
-          throw { message: 'invalid number of parameters to method ' + func.def.name };
-        }
         var shiftBack = this.isShiftParamsBack(func);
         this.addFunctionParameter(func, astNode.value, index, shiftBack);
-      break;
+        break;
       case 'metric':
         if (this.segments.length > 0) {
-        if (astNode.segments.length !== 1) {
-          throw { message: 'Multiple metric params not supported, use text editor.' };
+          this.addFunctionParameter(func, _.join(_.map(astNode.segments, 'value'), '.'), index, true);
+        } else {
+          this.segments = astNode.segments;
         }
-        this.addFunctionParameter(func, astNode.segments[0].value, index, true);
         break;
-      }
-
-      this.segments = astNode.segments;
     }
   }
 
@@ -148,6 +146,9 @@ export default class GraphiteQuery {
   addFunctionParameter(func, value, index, shiftBack) {
     if (shiftBack) {
       index = Math.max(index - 1, 0);
+    }
+    if (index > func.def.params.length) {
+      throw { message: 'too many parameters for function ' + func.def.name };
     }
     func.params[index] = value;
   }
