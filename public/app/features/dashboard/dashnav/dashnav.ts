@@ -42,6 +42,18 @@ export class DashNavCtrl {
       this.$location.search(search);
     }
 
+    close() {
+      let search = this.$location.search();
+      if (search.editview) {
+        delete search.editview;
+      }
+      if (search.fullscreen) {
+        delete search.fullscreen;
+        delete search.edit;
+      }
+      this.$location.search(search);
+    }
+
     starDashboard() {
       this.dashboardSrv.starDashboard(this.dashboard.id, this.dashboard.meta.isStarred)
         .then(newState => {

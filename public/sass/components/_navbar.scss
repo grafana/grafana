@@ -10,19 +10,38 @@
   display: flex;
   flex-grow: 1;
   border-bottom: 1px solid transparent;
-  transition: all 300ms ease-in-out;
+  transition: all 350ms ease-in-out;
 }
+
+@mixin navbar-alt-look() {
+  background: $page-header-bg;
+  box-shadow: $search-shadow;
+  border-bottom: $navbarBorder;
+}
+
 
 .dashboard-page--settings-open {
   .navbar {
-    background: $page-header-bg;
-    box-shadow: $search-shadow;
-    border-bottom: $navbarBorder;
+    @include navbar-alt-look();
   }
 
   .navbar-buttons--actions,
   .navbar-page-btn .fa-caret-down,
   .gf-timepicker-nav {
+    display: none;
+  }
+
+  .navbar-buttons--close {
+    display: flex;
+  }
+}
+
+.panel-in-fullscreen {
+ .navbar {
+    @include navbar-alt-look();
+  }
+
+  .navbar-buttons--actions {
     display: none;
   }
 

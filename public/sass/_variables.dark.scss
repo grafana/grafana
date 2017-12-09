@@ -22,7 +22,6 @@ $gray-5:           #ECECEC;
 $gray-6:           #f4f5f8;
 $gray-7:           #fbfbfb;
 
-// $gray-blue:				 #292a2d;
 $gray-blue:        #212327;
 $input-black:      #09090B;
 
@@ -100,6 +99,7 @@ $panel-border:          solid 1px $panel-border-color;
 $panel-drop-zone-bg:    repeating-linear-gradient(-128deg, #111, #111 10px, #191919 10px, #222 20px);
 $panel-header-hover-bg:       $dark-4;
 $panel-header-menu-hover-bg:  $dark-5;
+$panel-edit-shadow: 0 -30px 30px -30px $black;
 
 // page header
 $page-header-bg: linear-gradient(90deg, #292a2d, black);
