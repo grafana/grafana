@@ -17,8 +17,8 @@ type SqlEngine interface {
 		ctx context.Context,
 		ds *models.DataSource,
 		query *TsdbQuery,
-		transformToTimeSeries func(query *Query, rows *core.Rows, result *QueryResult) error,
-		transformToTable func(query *Query, rows *core.Rows, result *QueryResult) error,
+		transformToTimeSeries func(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error,
+		transformToTable func(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error,
 	) (*Response, error)
 }
 
@@ -77,8 +77,8 @@ func (e *DefaultSqlEngine) Query(
 	ctx context.Context,
 	dsInfo *models.DataSource,
 	tsdbQuery *TsdbQuery,
-	transformToTimeSeries func(query *Query, rows *core.Rows, result *QueryResult) error,
-	transformToTable func(query *Query, rows *core.Rows, result *QueryResult) error,
+	transformToTimeSeries func(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error,
+	transformToTable func(query *Query, rows *core.Rows, result *QueryResult, tsdbQuery *TsdbQuery) error,
 ) (*Response, error) {
 	result := &Response{
 		Results: make(map[string]*QueryResult),
@@ -117,13 +117,13 @@ func (e *DefaultSqlEngine) Query(
 
 		switch format {
 		case "time_series":
-			err := transformToTimeSeries(query, rows, queryResult)
+			err := transformToTimeSeries(query, rows, queryResult, tsdbQuery)
 			if err != nil {
 				queryResult.Error = err
 				continue
 			}
 		case "table":
-			err := transformToTable(query, rows, queryResult)
+			err := transformToTable(query, rows, queryResult, tsdbQuery)
 			if err != nil {
 				queryResult.Error = err
 				continue
