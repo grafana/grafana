@@ -170,7 +170,7 @@ describe('GraphiteQueryCtrl', function() {
 
   describe('when updating targets with nested query', function() {
     beforeEach(function() {
-      ctx.ctrl.target.target = 'scaleToSeconds(#A)';
+      ctx.ctrl.target.target = 'scaleToSeconds(#A, 60)';
       ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
       ctx.ctrl.parseTarget();
 
@@ -183,11 +183,11 @@ describe('GraphiteQueryCtrl', function() {
     });
 
     it('target should remain the same', function() {
-      expect(ctx.ctrl.target.target).to.be('scaleToSeconds(#A)');
+      expect(ctx.ctrl.target.target).to.be('scaleToSeconds(#A, 60)');
     });
 
     it('targetFull should include nexted queries', function() {
-      expect(ctx.ctrl.target.targetFull).to.be('scaleToSeconds(nested.query.count)');
+      expect(ctx.ctrl.target.targetFull).to.be('scaleToSeconds(nested.query.count, 60)');
     });
   });
 
