@@ -5,6 +5,7 @@
 	</h2>
 
 	<a href="{{::section.url}}" class="dashboard-settings__nav-item" ng-class="{active: ctrl.viewId === section.id}" ng-repeat="section in ctrl.sections">
+    <i class="{{::section.icon}}"></i>
 		{{::section.title}}
 	</a>
 </aside>

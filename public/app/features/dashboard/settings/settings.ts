@@ -9,10 +9,15 @@ export class SettingsCtrl {
   viewId: string;
 
   sections: any[] = [
-    {title: 'General',     id: 'settings'},
-    {title: 'Annotations', id: 'annotations'},
-    {title: 'Templating',  id: 'templating'},
-    {title: 'Versions',    id: 'versions'},
+    {title: 'General',     id: 'settings', icon: "fa fa-fw fa-sliders"},
+    {title: 'Timepicker',  id: 'timepicker', icon: "fa fa-fw fa-clock-o"},
+    {title: 'Annotations', id: 'annotations', icon: "fa fa-fw fa-comment-o"},
+    {title: 'Templating',  id: 'templating', icon: "fa fa-fw fa-dollar"},
+    {title: 'Links',       id: 'links', icon: "fa fa-fw fa-external-link"},
+    {title: 'Versions',    id: 'versions', icon: "fa fa-fw fa-history"},
+    {title: 'View JSON',   id: 'view_json', icon: "fa fa-fw fa-code"},
+    {title: 'Save As',     id: 'save_as', icon: "fa fa-fw fa-copy"},
+    {title: 'Delete',      id: 'delete', icon: "fa fa-fw fa-trash"},
   ];
 
   /** @ngInject */
