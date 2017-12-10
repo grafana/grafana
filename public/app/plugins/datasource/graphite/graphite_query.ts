@@ -46,7 +46,7 @@ export default class GraphiteQuery {
     }
 
     try {
-      this.parseTargetRecursive(astNode, null, 0);
+      this.parseTargetRecursive(astNode, null);
     } catch (err) {
       console.log('error parsing target:', err.message);
       this.error = err.message;
@@ -75,7 +75,7 @@ export default class GraphiteQuery {
     }, "");
   }
 
-  parseTargetRecursive(astNode, func, index) {
+  parseTargetRecursive(astNode, func) {
     if (astNode === null) {
       return null;
     }
@@ -83,8 +83,8 @@ export default class GraphiteQuery {
     switch (astNode.type) {
       case 'function':
         var innerFunc = gfunc.createFuncInstance(astNode.name, { withDefaultParams: false });
-        _.each(astNode.params, (param, index) => {
-          this.parseTargetRecursive(param, innerFunc, index);
+        _.each(astNode.params, param => {
+          this.parseTargetRecursive(param, innerFunc);
         });
 
         innerFunc.updateText();
@@ -92,7 +92,7 @@ export default class GraphiteQuery {
         break;
       case 'series-ref':
         if (this.segments.length > 0) {
-          this.addFunctionParameter(func, astNode.value, index, true);
+          this.addFunctionParameter(func, astNode.value);
         } else {
           this.segments.push(astNode);
         }
@@ -100,21 +100,16 @@ export default class GraphiteQuery {
       case 'bool':
       case 'string':
       case 'number':
-        var shiftBack = this.isShiftParamsBack(func);
-        this.addFunctionParameter(func, astNode.value, index, shiftBack);
+        this.addFunctionParameter(func, astNode.value);
         break;
       case 'metric':
         if (this.segments.length > 0) {
-          this.addFunctionParameter(func, _.join(_.map(astNode.segments, 'value'), '.'), index, true);
+          this.addFunctionParameter(func, _.join(_.map(astNode.segments, 'value'), '.'));
         } else {
           this.segments = astNode.segments;
         }
         break;
     }
-  }
-
-  isShiftParamsBack(func) {
-    return func.def.name !== 'seriesByTag';
   }
 
   updateSegmentValue(segment, index) {
@@ -143,14 +138,11 @@ export default class GraphiteQuery {
     }
   }
 
-  addFunctionParameter(func, value, index, shiftBack) {
-    if (shiftBack) {
-      index = Math.max(index - 1, 0);
-    }
-    if (index > func.def.params.length) {
+  addFunctionParameter(func, value) {
+    if (func.params.length >= func.def.params.length) {
       throw { message: 'too many parameters for function ' + func.def.name };
     }
-    func.params[index] = value;
+    func.params.push(value);
   }
 
   removeFunction(func) {
