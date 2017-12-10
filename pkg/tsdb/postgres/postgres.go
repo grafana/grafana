@@ -204,7 +204,7 @@ func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *co
 	fillValue := null.Float{}
 	if fillMissing {
 		fillInterval = query.Model.Get("fillInterval").MustFloat64() * 1000
-		if query.Model.Get("fillNULL").MustBool(false) == false {
+		if query.Model.Get("fillNull").MustBool(false) == false {
 			fillValue.Float64 = query.Model.Get("fillValue").MustFloat64()
 			fillValue.Valid = true
 		}
