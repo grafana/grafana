@@ -1,7 +1,3 @@
-$switch-border-radius: 1rem;
-$switch-width: 3.5rem;
-$switch-height: 1.5rem;
-
 /* ============================================================
   SWITCH 3 - YES NO
 ============================================================ */
@@ -27,8 +23,10 @@ $switch-height: 1.5rem;
     outline: none;
     user-select: none;
     width: 100%;
-    height: 2.65rem;
-    background-color: $page-bg;
+    height: 37px;
+    background: $input-bg;
+    border: 1px solid $input-border-color;
+    border-left: none;
   }
 
   input + label::before, input + label::after {
@@ -47,6 +45,7 @@ $switch-height: 1.5rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    border-radius: $input-border-radius;
   }
 
   &:hover {

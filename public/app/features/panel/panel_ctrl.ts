@@ -52,12 +52,9 @@ export class PanelCtrl {
       this.events.emit('panel-teardown');
       this.events.removeAllListeners();
     });
-
-    this.calculatePanelHeight();
   }
 
   init() {
-    this.events.on('panel-size-changed', this.onSizeChanged.bind(this));
     this.events.emit('panel-initialized');
     this.publishAppEvent('panel-initialized', {scope: this.$scope});
   }
@@ -182,13 +179,6 @@ export class PanelCtrl {
   render(payload?) {
     this.timing.renderStart = new Date().getTime();
     this.events.emit('render', payload);
-  }
-
-  private onSizeChanged() {
-    this.calculatePanelHeight();
-    this.$timeout(() => {
-      this.render();
-    }, 100);
   }
 
   duplicate() {

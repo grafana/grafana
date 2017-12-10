@@ -9,7 +9,6 @@ import 'angular-native-dragdrop';
 import 'angular-bindonce';
 import 'react';
 import 'react-dom';
-import 'ngreact';
 
 import 'vendor/bootstrap/bootstrap';
 import 'vendor/angular-ui/ui-bootstrap-tpls';

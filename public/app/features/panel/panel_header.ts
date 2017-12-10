@@ -84,7 +84,6 @@ function panelHeader($compile) {
     restrict: 'E',
     template: template,
     link: function(scope, elem, attrs) {
-
       let menuElem = elem.find('.panel-menu');
       let menuScope;
       let isDragged;

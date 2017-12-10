@@ -87,6 +87,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.onResizeStop = this.onResizeStop.bind(this);
     this.onWidthChange = this.onWidthChange.bind(this);
 
+    this.state = {animated: false};
+
     // subscribe to dashboard events
     this.dashboard = this.panelContainer.getDashboard();
     this.dashboard.on('panel-added', this.triggerForceUpdate.bind(this));
@@ -157,6 +159,14 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.panelMap[newItem.i].resizeDone();
   }
 
+  componentDidMount() {
+    setTimeout(() => {
+      this.setState(() => {
+        return {animated: true};
+      });
+    });
+  }
+
   renderPanels() {
     const panelElements = [];
 
@@ -175,6 +185,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   render() {
     return (
       <SizedReactLayoutGrid
+        className={classNames({'layout': true, 'animated': this.state.animated})}
         layout={this.buildLayout()}
         onLayoutChange={this.onLayoutChange}
         onWidthChange={this.onWidthChange}

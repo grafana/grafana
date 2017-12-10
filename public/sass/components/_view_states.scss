@@ -37,6 +37,7 @@
   .navbar {
     box-shadow: none;
     background: transparent;
+    padding-left: $side-menu-width + 20px;
   }
 
   .navbar-page-btn {

@@ -1,15 +1,12 @@
 <page-header model="ctrl.navModel"></page-header>
 
 <div class="page-container page-body" ng-cloak>
-  <h3 class="section-heading">
-    Create New Folder
-  </h3>
 
   <form name="ctrl.saveForm" ng-submit="ctrl.create()" class="modal-content folder-modal" novalidate>
     <div class="gf-form-group">
       <div class="gf-form-inline">
         <div class="gf-form gf-form--grow">
-          <label class="gf-form-label width-10">Name</label>
+          <label class="gf-form-label width-10">Folder name</label>
           <input type="text" class="gf-form-input" ng-model="ctrl.title" give-focus="true" ng-change="ctrl.titleChanged()" ng-model-options="{ debounce: 400 }" ng-class="{'validation-error': ctrl.nameExists || !ctrl.dash.title}">
           <label class="gf-form-label text-success" ng-if="!ctrl.nameExists && ctrl.title">
             <i class="fa fa-check"></i>

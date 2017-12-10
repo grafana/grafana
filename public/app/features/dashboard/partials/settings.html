@@ -37,9 +37,8 @@
 				<bootstrap-tagsinput ng-model="ctrl.dashboard.tags" tagclass="label label-tag" placeholder="add tags">
 				</bootstrap-tagsinput>
 			</div>
-
       <folder-picker ng-if="!ctrl.dashboard.meta.isFolder"
-										 initial-title="ctrl.dashboard.meta.folderTitle"
+                     initial-folder-id="ctrl.dashboard.folderId"
 										 on-change="ctrl.onFolderChange($folder)"
 										 label-class="width-7">
 			</folder-picker>

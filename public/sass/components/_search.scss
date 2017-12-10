@@ -217,3 +217,18 @@
   padding: $spacer*2 $spacer;
   background: $panel-bg;
 }
+
+@include media-breakpoint-down(xs) {
+
+  .search-container {
+    left: 0;
+  }
+
+  .search-dropdown__col_2 {
+    display: none;
+  }
+
+  .search-item__tags {
+    display: none;
+  }
+}
