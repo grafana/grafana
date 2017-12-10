@@ -219,10 +219,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.updateModelTarget();
 
     if (this.queryModel.target !== oldTarget) {
-      var lastSegment = this.segments.length > 0 ? this.segments[this.segments.length - 1] : {};
-      if (lastSegment.value !== 'select metric') {
-        this.panelCtrl.refresh();
-      }
+      this.panelCtrl.refresh();
     }
   }
 

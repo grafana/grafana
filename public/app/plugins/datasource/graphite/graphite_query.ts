@@ -152,7 +152,7 @@ export default class GraphiteQuery {
   updateModelTarget(targets) {
     // render query
     if (!this.target.textEditor) {
-      var metricPath = this.getSegmentPathUpTo(this.segments.length);
+      var metricPath = this.getSegmentPathUpTo(this.segments.length).replace(/\.select metric$/, '');
       this.target.target = _.reduce(this.functions, wrapFunction, metricPath);
     }
 
