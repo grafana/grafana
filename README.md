@@ -19,7 +19,7 @@ If you have any problems please read the [troubleshooting guide](http://docs.gra
 Be sure to read the [getting started guide](http://docs.grafana.org/guides/gettingstarted/) and the other feature guides.
 
 ## Run from master
-If you want to build a package yourself, or contribute. Here is a guide for how to do that. You can always find
+If you want to build a package yourself, or contribute - Here is a guide for how to do that. You can always find
 the latest master builds [here](https://grafana.com/grafana/download)
 
 ### Dependencies
@@ -97,7 +97,7 @@ Writing & watching frontend tests (we have two test runners)
 
 ## Contribute
 
-If you have any idea for an improvement or found a bug do not hesitate to open an issue.
+If you have any idea for an improvement or found a bug, do not hesitate to open an issue.
 And if you have time clone this repo and submit a pull request and help me make Grafana
 the kickass metrics & devops dashboard we all dream about!
 
