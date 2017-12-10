@@ -3,6 +3,7 @@ package postgres
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -84,12 +85,25 @@ func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string,
 	case "__timeTo":
 		return fmt.Sprintf("to_timestamp(%d)", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
 	case "__timeGroup":
-		if len(args) != 2 {
-			return "", fmt.Errorf("macro %v needs time column and interval", name)
+		if len(args) < 2 {
+			return "", fmt.Errorf("macro %v needs time column and interval and optional fill value", name)
 		}
 		interval, err := time.ParseDuration(strings.Trim(args[1], `' `))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		if len(args) == 3 {
+			m.Query.Model.Set("fill", true)
+			m.Query.Model.Set("fillInterval", interval.Seconds())
+			if strings.Trim(args[2], " ") == "NULL" {
+				m.Query.Model.Set("fillNull", true)
+			} else {
+				floatVal, err := strconv.ParseFloat(args[2], 64)
+				if err != nil {
+					return "", fmt.Errorf("error parsing fill value %v", args[2])
+				}
+				m.Query.Model.Set("fillValue", floatVal)
+			}
 		}
 		return fmt.Sprintf("(extract(epoch from %s)/%v)::bigint*%v AS time", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochFilter":
