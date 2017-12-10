@@ -26,6 +26,14 @@ class GridWrapper extends React.Component<GridWrapperProps, any> {
 
   constructor(props) {
     super(props);
+  }
+
+  componentDidMount() {
+    // Disable animation on initial rendering and enable it when component has been mounted.
+    this.animated = true;
+  }
+
+  render() {
     if (this.props.size.width === 0) {
       console.log('size is zero!');
     }
@@ -35,14 +43,7 @@ class GridWrapper extends React.Component<GridWrapperProps, any> {
       this.props.onWidthChange();
       lastGridWidth = width;
     }
-  }
 
-  componentDidMount() {
-    // Disable animation on initial rendering and enable it when component has been mounted.
-    this.animated = true;
-  }
-
-  render() {
     return (
       <ReactGridLayout
         width={lastGridWidth}
