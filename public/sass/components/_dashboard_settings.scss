@@ -38,6 +38,13 @@
   margin-bottom: 20px;
   padding-right: 60px;
   white-space: nowrap;
+
+  i {
+    font-size: 25px;
+    position: relative;
+    top: 1px;
+    padding-right: 5px;
+  }
 }
 
 .dashboard-settings__header {

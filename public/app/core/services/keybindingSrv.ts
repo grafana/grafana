@@ -84,10 +84,6 @@ export class KeybindingSrv {
       scope.broadcastRefresh();
     });
 
-    this.bind('mod+h', () => {
-      dashboard.hideControls = !dashboard.hideControls;
-    });
-
     this.bind('mod+s', e => {
       scope.appEvent('save-dashboard');
     });

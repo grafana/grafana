@@ -10,7 +10,6 @@ export class SettingsCtrl {
 
   sections: any[] = [
     {title: 'General',     id: 'settings', icon: "fa fa-fw fa-sliders"},
-    {title: 'Timepicker',  id: 'timepicker', icon: "fa fa-fw fa-clock-o"},
     {title: 'Annotations', id: 'annotations', icon: "fa fa-fw fa-comment-o"},
     {title: 'Templating',  id: 'templating', icon: "fa fa-fw fa-dollar"},
     {title: 'Links',       id: 'links', icon: "fa fa-fw fa-external-link"},

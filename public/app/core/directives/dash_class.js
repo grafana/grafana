@@ -18,19 +18,6 @@ function (_, $, coreModule) {
           elem.toggleClass('panel-in-fullscreen', false);
         });
 
-        var lastHideControlsVal;
-        $scope.$watch('ctrl.dashboard.hideControls', function() {
-          if (!$scope.dashboard) {
-            return;
-          }
-
-          var hideControls = $scope.dashboard.hideControls;
-          if (lastHideControlsVal !== hideControls) {
-            elem.toggleClass('hide-controls', hideControls);
-            lastHideControlsVal = hideControls;
-          }
-        });
-
         $scope.$watch('ctrl.playlistSrv.isPlaying', function(newValue) {
           elem.toggleClass('playlist-active', newValue === true);
         });
