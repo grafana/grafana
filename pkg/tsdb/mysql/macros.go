@@ -3,6 +3,7 @@ package mysql
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,6 +16,7 @@ const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type MySqlMacroEngine struct {
 	TimeRange *tsdb.TimeRange
+	Query     *tsdb.Query
 }
 
 func NewMysqlMacroEngine() tsdb.SqlMacroEngine {
@@ -23,6 +25,7 @@ func NewMysqlMacroEngine() tsdb.SqlMacroEngine {
 
 func (m *MySqlMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
 	m.TimeRange = timeRange
+	m.Query = query
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
 
@@ -76,12 +79,25 @@ func (m *MySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 	case "__timeTo":
 		return fmt.Sprintf("FROM_UNIXTIME(%d)", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
 	case "__timeGroup":
-		if len(args) != 2 {
+		if len(args) < 2 {
 			return "", fmt.Errorf("macro %v needs time column and interval", name)
 		}
 		interval, err := time.ParseDuration(strings.Trim(args[1], `'" `))
 		if err != nil {
 			return "", fmt.Errorf("error parsing interval %v", args[1])
+		}
+		if len(args) == 3 {
+			m.Query.Model.Set("fill", true)
+			m.Query.Model.Set("fillInterval", interval.Seconds())
+			if strings.Trim(args[2], " ") == "NULL" {
+				m.Query.Model.Set("fillNull", true)
+			} else {
+				floatVal, err := strconv.ParseFloat(args[2], 64)
+				if err != nil {
+					return "", fmt.Errorf("error parsing fill value %v", args[2])
+				}
+				m.Query.Model.Set("fillValue", floatVal)
+			}
 		}
 		return fmt.Sprintf("cast(cast(UNIX_TIMESTAMP(%s)/(%.0f) as signed)*%.0f as signed)", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochFilter":
