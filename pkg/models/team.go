@@ -46,7 +46,7 @@ type GetTeamByIdQuery struct {
 }
 
 type GetTeamsByUserQuery struct {
-	UserId int64        `json:"userId"`
+	UserId int64   `json:"userId"`
 	Result []*Team `json:"teams"`
 }
 
@@ -61,8 +61,8 @@ type SearchTeamsQuery struct {
 }
 
 type SearchTeamQueryResult struct {
-	TotalCount int64        `json:"totalCount"`
-	Teams []*Team `json:"teams"`
-	Page       int          `json:"page"`
-	PerPage    int          `json:"perPage"`
+	TotalCount int64   `json:"totalCount"`
+	Teams      []*Team `json:"teams"`
+	Page       int     `json:"page"`
+	PerPage    int     `json:"perPage"`
 }

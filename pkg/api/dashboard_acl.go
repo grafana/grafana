@@ -43,7 +43,7 @@ func UpdateDashboardAcl(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCom
 			OrgId:       c.OrgId,
 			DashboardId: dashId,
 			UserId:      item.UserId,
-			TeamId: item.TeamId,
+			TeamId:      item.TeamId,
 			Role:        item.Role,
 			Permission:  item.Permission,
 			Created:     time.Now(),

@@ -75,7 +75,7 @@ func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 
 		entity := m.DashboardAcl{
 			OrgId:       cmd.OrgId,
-			TeamId: cmd.TeamId,
+			TeamId:      cmd.TeamId,
 			UserId:      cmd.UserId,
 			Created:     time.Now(),
 			Updated:     time.Now(),

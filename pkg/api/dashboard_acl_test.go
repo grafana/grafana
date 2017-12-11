@@ -165,7 +165,7 @@ func transformDashboardAclsToDTOs(acls []*m.DashboardAclInfoDTO) []*m.DashboardA
 			DashboardId: acl.DashboardId,
 			Permission:  acl.Permission,
 			UserId:      acl.UserId,
-			TeamId: acl.TeamId,
+			TeamId:      acl.TeamId,
 		}
 		dtos = append(dtos, dto)
 	}

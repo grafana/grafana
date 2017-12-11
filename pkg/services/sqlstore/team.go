@@ -196,11 +196,11 @@ func AddTeamMember(cmd *m.AddTeamMemberCommand) error {
 		}
 
 		entity := m.TeamMember{
-			OrgId:       cmd.OrgId,
-			TeamId: cmd.TeamId,
-			UserId:      cmd.UserId,
-			Created:     time.Now(),
-			Updated:     time.Now(),
+			OrgId:   cmd.OrgId,
+			TeamId:  cmd.TeamId,
+			UserId:  cmd.UserId,
+			Created: time.Now(),
+			Updated: time.Now(),
 		}
 
 		_, err := sess.Insert(&entity)

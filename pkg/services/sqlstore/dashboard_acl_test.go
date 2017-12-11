@@ -183,7 +183,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				Convey("Should be able to add a user permission for a team", func() {
 					setDashAclCmd := m.SetDashboardAclCommand{
 						OrgId:       1,
-						TeamId: group1.Result.Id,
+						TeamId:      group1.Result.Id,
 						DashboardId: savedFolder.Id,
 						Permission:  m.PERMISSION_EDIT,
 					}
@@ -215,7 +215,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				Convey("Should be able to update an existing permission for a team", func() {
 					err := SetDashboardAcl(&m.SetDashboardAclCommand{
 						OrgId:       1,
-						TeamId: group1.Result.Id,
+						TeamId:      group1.Result.Id,
 						DashboardId: savedFolder.Id,
 						Permission:  m.PERMISSION_ADMIN,
 					})
