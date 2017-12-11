@@ -33,6 +33,7 @@ select:-webkit-autofill:focus {
   flex-direction: column;
   width: 100%;
   align-items: center;
+  margin-bottom: 1rem;
 }
 
 .login-form {
@@ -174,7 +175,7 @@ select:-webkit-autofill:focus {
   width: 100%;
 
   .btn {
-    margin: 10px 0 0;
+    margin: 0 0 1rem;
   }
 
   .btn-google {
@@ -209,14 +210,14 @@ select:-webkit-autofill:focus {
 .login-divider {
   float: left;
   width: 100%;
-  margin: 5px 25% 25px 25%;
+  margin: 0 25% 1rem 25%;
   display: flex;
   justify-content: space-between;
 
   .login-divider-line {
     width: 110px;
     height: 10px;
-    border-bottom: 1px solid $gray-7;
+    border-bottom: 1px solid $login-border;
 
     .login-divider-text {
       background-color: $panel-bg;
@@ -231,7 +232,7 @@ select:-webkit-autofill:focus {
   align-items: center;
   justify-content: flex-end;
   width: 100%;
-  margin-top: 2rem
+  margin-top: 1rem
 }
 
 .login-signup-title {
@@ -241,7 +242,8 @@ select:-webkit-autofill:focus {
 }
 
 .login-btn {
-  width: 100%; margin: 0 0 1rem;
+  width: 100%;
+  margin: 0 0 1rem;
 }
 
 .signup-page-background {
