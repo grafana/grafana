@@ -46,6 +46,8 @@ export class SettingsCtrl {
       return panel.alert ? 1 : 0;
     });
 
+    this.confirmValid = this.alertCount === 0;
+
     this.onRouteUpdated();
     $rootScope.onAppEvent("$routeUpdate", this.onRouteUpdated.bind(this), $scope);
   }
