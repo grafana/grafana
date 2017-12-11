@@ -76,7 +76,7 @@ func (c *EvalContext) ShouldUpdateAlertState() bool {
 }
 
 func (c *EvalContext) ShouldSendNotification() bool {
-	if (c.PrevAlertState == m.AlertStatePending) && (c.Rule.State == m.AlertStateOK) {
+	if ((c.PrevAlertState == m.AlertStatePending) && (c.Rule.State == m.AlertStateOK)) || ((c.PrevAlertState == m.AlertStateAlerting) && (c.Rule.State == m.AlertStateOK)) {
 		return false
 	}
 
