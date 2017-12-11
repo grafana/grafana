@@ -8,18 +8,6 @@
   </span>
 </h3>
 
-<div class="page-action-bar" ng-show="ctrl.mode === 'list'">
-  <div class="page-action-bar__spacer"></div>
-  <button type="button"
-          class="btn btn-success"
-          ng-if="ctrl.revisions.length > 1"
-          ng-disabled="!ctrl.canCompare"
-          ng-click="ctrl.getDiff(ctrl.diff)"
-          bs-tooltip="ctrl.canCompare ? '' : 'Select 2 versions to start comparing'" data-placement="bottom">
-    <i class="fa fa-code-fork" ></i>&nbsp;&nbsp;Compare versions
-  </button>
-</div>
-
 <div ng-if="ctrl.mode === 'list'">
   <div ng-if="ctrl.loading">
     <i class="fa fa-spinner fa-spin"></i>
@@ -75,6 +63,14 @@
                    ng-disabled="ctrl.isLastPage()">
             Show more versions
           </button>
+          <button type="button"
+                  class="btn btn-success"
+                  ng-if="ctrl.revisions.length > 1"
+                  ng-disabled="!ctrl.canCompare"
+                  ng-click="ctrl.getDiff(ctrl.diff)"
+                  bs-tooltip="ctrl.canCompare ? '' : 'Select 2 versions to start comparing'" data-placement="bottom">
+            <i class="fa fa-code-fork" ></i>&nbsp;&nbsp;Compare versions
+          </button>
         </div>
       </div>
     </div>
@@ -89,9 +85,9 @@
 
   <div ng-if="!ctrl.loading">
     <button  type="button"
-        class="btn btn-danger pull-right"
-        ng-click="ctrl.restore(ctrl.baseInfo.version)"
-        ng-if="ctrl.isNewLatest">
+             class="btn btn-danger pull-right"
+             ng-click="ctrl.restore(ctrl.baseInfo.version)"
+             ng-if="ctrl.isNewLatest">
       <i class="fa fa-history" ></i>&nbsp;&nbsp;Restore to version {{ctrl.baseInfo.version}}
     </button>
     <section>

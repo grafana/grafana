@@ -134,20 +134,27 @@ export class PanelCtrl {
   getMenu() {
     let menu = [];
     menu.push({text: 'View', click: 'ctrl.viewPanel();', icon: "fa fa-fw fa-eye", shortcut: "v"});
-    menu.push({text: 'Edit', click: 'ctrl.editPanel();', role: 'Editor', icon: "fa fa-fw fa-edit", shortcut: "e"});
+
+    if (this.dashboard.meta.canEdit) {
+      menu.push({text: 'Edit', click: 'ctrl.editPanel();', role: 'Editor', icon: "fa fa-fw fa-edit", shortcut: "e"});
+    }
+
     menu.push({text: 'Share', click: 'ctrl.sharePanel();', icon: "fa fa-fw fa-share", shortcut: "p s"});
 
     let extendedMenu = this.getExtendedMenu();
     menu.push({text: 'More ...', click: 'ctrl.removePanel();', icon: "fa fa-fw fa-cube", submenu: extendedMenu});
 
-    menu.push({divider: true, role: 'Editor'});
-    menu.push({text: 'Remove', click: 'ctrl.removePanel();', role: 'Editor', icon: "fa fa-fw fa-trash", shortcut: "p r"});
+    if (this.dashboard.meta.canEdit) {
+      menu.push({divider: true, role: 'Editor'});
+      menu.push({text: 'Remove', click: 'ctrl.removePanel();', role: 'Editor', icon: "fa fa-fw fa-trash", shortcut: "p r"});
+    }
+
     return menu;
   }
 
   getExtendedMenu() {
     let menu = [];
-    if (!this.fullscreen) {
+    if (!this.fullscreen && this.dashboard.meta.canEdit) {
       menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
     }
     menu.push({text: 'Panel JSON', click: 'ctrl.editPanelJson(); dismiss();' });

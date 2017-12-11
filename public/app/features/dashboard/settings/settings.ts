@@ -1,4 +1,4 @@
-import {coreModule} from 'app/core/core';
+import {coreModule, appEvents} from 'app/core/core';
 import {DashboardModel} from '../dashboard_model';
 import $ from 'jquery';
 import _ from 'lodash';
@@ -8,6 +8,9 @@ export class SettingsCtrl {
   isOpen: boolean;
   viewId: string;
   json: string;
+  alertCount: number;
+  confirmValid: boolean;
+  confirmText: string;
 
   sections: any[] = [
     {title: 'General',     id: 'settings', icon: "fa fa-fw fa-sliders"},
@@ -21,7 +24,7 @@ export class SettingsCtrl {
   ];
 
   /** @ngInject */
-  constructor(private $scope, private $location, private $rootScope) {
+  constructor(private $scope, private $location, private $rootScope, private backendSrv, private dashboardSrv) {
     // temp hack for annotations and variables editors
     // that rely on inherited scope
     $scope.dashboard = this.dashboard;
@@ -37,6 +40,10 @@ export class SettingsCtrl {
     this.$scope.$on('$destroy', () => {
       this.dashboard.updateSubmenuVisibility();
       this.$rootScope.$broadcast("refresh");
+    });
+
+    this.alertCount = _.sumBy(this.dashboard.panels, panel => {
+      return panel.alert ? 1 : 0;
     });
 
     this.onRouteUpdated();
@@ -58,6 +65,26 @@ export class SettingsCtrl {
       this.$rootScope.$apply(() => {
         this.$location.search(urlParams);
       });
+    });
+  }
+
+  makeEditable() {
+    this.dashboard.editable = true;
+
+    return this.dashboardSrv.saveDashboard({makeEditable: true, overwrite: false}).then(() => {
+      // force refresh whole page
+      window.location.href = window.location.href;
+    });
+  }
+
+  confirmTextChanged() {
+    this.confirmValid = this.confirmText === "DELETE";
+  }
+
+  deleteDashboard() {
+    this.backendSrv.delete('/api/dashboards/db/' + this.dashboard.meta.slug).then(() => {
+      appEvents.emit('alert-success', ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
+      this.$location.url('/');
     });
   }
 

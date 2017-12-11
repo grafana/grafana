@@ -4,7 +4,7 @@ import './history/history';
 import './dashboardLoaderSrv';
 import './dashnav/dashnav';
 import './submenu/submenu';
-import './save_as_modal';
+import './dashboard_save_as';
 import './save_modal';
 import './shareModalCtrl';
 import './shareSnapshotCtrl';
