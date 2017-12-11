@@ -1,7 +1,7 @@
 
 .navbar {
   position: relative;
-  padding-left: $side-menu-width;
+  margin-left: 40px;
   // box-shadow: $navbarShadow;
   z-index: $zindex-navbar-fixed;
   // background: $navbarBackground;
@@ -9,12 +9,6 @@
   padding-right: $spacer;
   display: flex;
   flex-grow: 1;
-}
-
-.sidemenu-open {
-  .navbar {
-    padding-left: 15px;
-  }
 }
 
 .navbar-page-btn {
@@ -44,6 +38,8 @@
     line-height: 8px;
     opacity: 0.75;
     margin-right: 8px;
+    // icon hidden on smaller screens
+    display: none;
   }
 }
 
@@ -111,3 +107,22 @@
     }
   }
 }
+
+@include media-breakpoint-up(sm) {
+  .navbar {
+    margin-left: 50px;
+  }
+
+  .sidemenu-open {
+    .navbar {
+      margin-left: 15px;
+    }
+  }
+
+  .navbar-page-btn {
+    .gicon {
+      display: inline-block;
+    }
+  }
+}
+

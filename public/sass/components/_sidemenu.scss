@@ -16,7 +16,6 @@
   .sidemenu__close {
     display: none;
   }
-
 }
 
 // body class that hides sidemenu
@@ -191,12 +190,6 @@ li.sidemenu-org-switcher {
 }
 
 @include media-breakpoint-down(xs) {
-  .sidemenu-open {
-    .navbar {
-      padding-left: 60px !important;
-    }
-  }
-
   .sidemenu-open--xs {
     .sidemenu {
       width: 100%;
@@ -227,7 +220,7 @@ li.sidemenu-org-switcher {
     }
 
     .sidemenu__logo_small_breakpoint {
-      padding: 12px 10px 26px;
+      padding: 16px 10px 26px;
       display: flex;
       flex-direction: row;
       justify-content: space-between;
