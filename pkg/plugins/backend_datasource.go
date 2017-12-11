@@ -20,19 +20,12 @@ type BackendDatasource struct {
 	*PluginBase
 
 	Executable string
+	log        log.Logger
 	client     *plugin.Client
 }
 
-type Killable interface {
-	Kill()
-}
-
-type NoopKiller struct{}
-
-func (nk NoopKiller) Kill() {}
-
-func (p *BackendDatasource) initBackendPlugin() (Killable, error) {
-	logger := log.New("grafana.plugins")
+func (p *BackendDatasource) initBackendPlugin(log log.Logger) error {
+	p.log = log.New("plugin-id", p.Id)
 
 	p.client = plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: plugin.HandshakeConfig{
@@ -43,33 +36,33 @@ func (p *BackendDatasource) initBackendPlugin() (Killable, error) {
 		Plugins:          map[string]plugin.Plugin{p.Id: &shared.TsdbPluginImpl{}},
 		Cmd:              exec.Command("sh", "-c", path.Join(p.PluginDir, p.Executable)),
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
-		Logger:           backend.LogWrapper{Logger: logger},
+		Logger:           backend.LogWrapper{Logger: p.log},
 	})
 
 	rpcClient, err := p.client.Client()
 	if err != nil {
-		return NoopKiller{}, err
+		return err
 	}
 
 	raw, err := rpcClient.Dispense(p.Id)
 	if err != nil {
-		return NoopKiller{}, err
+		return err
 	}
 
 	plugin := raw.(shared.TsdbPlugin)
 	response, err := plugin.Query(context.Background(), &proto.TsdbQuery{})
 
 	if err != nil {
-		logger.Error("Response from plugin. ", "response", response)
+		p.log.Error("Response from plugin. ", "response", response)
 	} else {
-		logger.Info("Response from plugin. ", "response", response)
+		p.log.Info("Response from plugin. ", "response", response)
 	}
 
 	tsdb.RegisterTsdbQueryEndpoint(p.Id, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 		return &shared.TsdbWrapper{TsdbPlugin: plugin}, nil
 	})
 
-	return p.client, nil
+	return nil
 }
 
 func (p *BackendDatasource) Kill() {

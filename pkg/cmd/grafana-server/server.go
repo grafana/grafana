@@ -63,11 +63,11 @@ func (g *GrafanaServerImpl) Start() error {
 	login.Init()
 	social.NewOAuthService()
 
-	pluginCloser, err := plugins.Init()
+	pluginManager, err := plugins.NewPluginManager()
 	if err != nil {
 		return fmt.Errorf("Failed to start plugins. error: %v", err)
 	}
-	defer pluginCloser()
+	g.childRoutines.Go(func() error { return pluginManager.Run(g.context) })
 
 	if err := provisioning.Init(g.context, setting.HomePath, setting.Cfg); err != nil {
 		return fmt.Errorf("Failed to provision Grafana from config. error: %v", err)

@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -37,7 +38,29 @@ type PluginScanner struct {
 
 type Dispose func()
 
-func Init() (Dispose, error) {
+type PluginManager struct {
+	log log.Logger
+}
+
+func NewPluginManager() (*PluginManager, error) {
+	Init()
+	return &PluginManager{
+		log: log.New("plugins"),
+	}, nil
+}
+
+func (p *PluginManager) Run(ctx context.Context) error {
+	<-ctx.Done()
+
+	for _, p := range BackendDatasources {
+		p.Kill()
+	}
+
+	p.log.Info("Stopped Plugins", "error", ctx.Err())
+	return ctx.Err()
+}
+
+func Init() error {
 	plog = log.New("plugins")
 
 	DataSources = make(map[string]*DataSourcePlugin)
@@ -82,26 +105,17 @@ func Init() (Dispose, error) {
 		app.initApp()
 	}
 
-	killers := []Killable{}
 	for _, be := range BackendDatasources {
-		killable, err := be.initBackendPlugin()
+		err := be.initBackendPlugin(plog)
 		if err != nil {
 			plog.Error("failed to init plugin", "id", be.Id, "error", err)
-		} else {
-			killers = append(killers, killable)
 		}
 	}
 
 	go StartPluginUpdateChecker()
 	go updateAppDashboards()
 
-	return dispose, nil
-}
-
-func dispose() {
-	for _, p := range BackendDatasources {
-		p.Kill()
-	}
+	return nil
 }
 
 func checkPluginPaths() error {
