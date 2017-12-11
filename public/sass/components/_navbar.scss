@@ -1,7 +1,7 @@
 
 .navbar {
   position: relative;
-  padding-left: $side-menu-width;
+  margin-left: 40px;
   z-index: $zindex-navbar-fixed;
   height: $navbarHeight;
   padding-right: $spacer;
@@ -48,12 +48,6 @@
   }
 }
 
-.sidemenu-open {
-  .navbar {
-    padding-left: 15px;
-  }
-}
-
 .navbar-page-btn {
   text-overflow: ellipsis;
   overflow: hidden;
@@ -82,6 +76,8 @@
     line-height: 8px;
     opacity: 0.75;
     margin-right: 8px;
+    // icon hidden on smaller screens
+    display: none;
   }
 }
 
@@ -143,3 +139,22 @@
     @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
   }
 }
+
+@include media-breakpoint-up(sm) {
+  .navbar {
+    margin-left: 50px;
+  }
+
+  .sidemenu-open {
+    .navbar {
+      margin-left: 15px;
+    }
+  }
+
+  .navbar-page-btn {
+    .gicon {
+      display: inline-block;
+    }
+  }
+}
+
