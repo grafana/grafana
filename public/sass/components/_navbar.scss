@@ -23,7 +23,10 @@
     @include navbar-alt-look();
   }
 
-  .navbar-buttons--actions,
+  .navbar-button--add-panel,
+  .navbar-button--star,
+  .navbar-button--share,
+  .navbar-button--settings,
   .navbar-page-btn .fa-caret-down,
   .gf-timepicker-nav {
     display: none;
@@ -39,7 +42,11 @@
     @include navbar-alt-look();
   }
 
-  .navbar-buttons--actions {
+  .navbar-button--add-panel,
+  .navbar-button--star,
+  .navbar-button--save,
+  .navbar-button--settings,
+  .navbar-page-btn .fa-caret-down {
     display: none;
   }
 
@@ -90,6 +97,7 @@
 
   &--close {
     display: none;
+    margin-right: 0;
   }
 }
 

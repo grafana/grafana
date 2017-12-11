@@ -7,26 +7,6 @@
 	</h3>
 
 	<div ng-if="ctrl.mode === 'list'">
-		<!-- empty list cta, there is always one built in query -->
-		<div ng-if="ctrl.annotations.length === 1">
-			<div class="empty-list-cta">
-				<div class="empty-list-cta__title">There are no custom annotation queries added yet</div>
-				<a ng-click="ctrl.setupNew()" class="empty-list-cta__button btn btn-xlarge btn-success">
-					<i class="gicon gicon-dashboard-new"></i>
-					Add Annotation Query
-				</a>
-				<div class="grafana-info-box">
-					<h5>What are Annotations?</h5>
-					<p>
-					Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines and icons
-					on all graph panels. When you hover over an annotation icon you can get event text &amp; tags for the event. You can add annotation events
-					directly from grafana by holding CTRL or CMD + click on graph (or drag region). These will be stored in Grafana's annotation database.
-					</p>
-					Checkout the <a class="external-link" target="_blank" href="http://docs.grafana.org/reference/annotations/">Annotations documentation</a> for more information.
-				</div>
-			</div>
-		</div>
-
 		<div class="page-action-bar" ng-if="ctrl.annotations.length > 1">
 			<div class="page-action-bar__spacer"></div>
 			<a type="button" class="btn btn-success" ng-click="ctrl.setupNew();"><i class="fa fa-plus" ></i> New</a>
@@ -63,6 +43,26 @@
 				</tr>
 			</tbody>
 		</table>
+
+		<!-- empty list cta, there is always one built in query -->
+		<div ng-if="ctrl.annotations.length === 1" class="p-t-2">
+			<div class="empty-list-cta">
+				<div class="empty-list-cta__title">There are no custom annotation queries added yet</div>
+				<a ng-click="ctrl.setupNew()" class="empty-list-cta__button btn btn-xlarge btn-success">
+					<i class="gicon gicon-dashboard-new"></i>
+					Add Annotation Query
+				</a>
+				<div class="grafana-info-box">
+					<h5>What are Annotations?</h5>
+					<p>
+					Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines and icons
+					on all graph panels. When you hover over an annotation icon you can get event text &amp; tags for the event. You can add annotation events
+					directly from grafana by holding CTRL or CMD + click on graph (or drag region). These will be stored in Grafana's annotation database.
+					</p>
+					Checkout the <a class="external-link" target="_blank" href="http://docs.grafana.org/reference/annotations/">Annotations documentation</a> for more information.
+				</div>
+			</div>
+		</div>
 	</div>
 
 	<div class="annotations-basic-settings" ng-if="ctrl.mode === 'edit' || ctrl.mode === 'new'">
