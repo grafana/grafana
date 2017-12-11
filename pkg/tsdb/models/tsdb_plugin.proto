@@ -35,24 +35,26 @@ message QueryResult {
   string errorString = 2;
   string refId = 3;
   string metaJson = 4;
-  repeated TsdbSeries series = 5;
+  repeated TimeSeries series = 5;
 
-  //repeat TsdbTables tables = x;
+  //repeat Table tables = x;
 }
 
 message DatasourceInfo {
-  string name = 1;
-  string type = 2;
-  string access = 3;
-  string url = 4;
-  bool basicAuth = 5;
-  string basicAuthUser = 6;
-  string basicAuthPassword = 7;
-  string jsonData = 8;
-  string secureJsonData = 9;
+  int64 id = 1;
+  int64 orgId = 2;
+  string name = 3;
+  string type = 4;
+  string access = 5;
+  string url = 6;
+  bool basicAuth = 7;
+  string basicAuthUser = 8;
+  string basicAuthPassword = 9;
+  string jsonData = 10;
+  string secureJsonData = 11;
 }
 
-message TsdbSeries {
+message TimeSeries {
   string name = 1;
   map<string, string> tags = 2;
   repeated Point points = 3;
