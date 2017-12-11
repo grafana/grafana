@@ -144,27 +144,17 @@ transformers['table'] = {
     // Track column indexes: name -> index
     const columnNames = {};
 
-    // Union of all non-value columns
+    // Union of all columns
     const columns = data.reduce((acc, d, i) => {
       d.columns.forEach((col, j) => {
         const { text } = col;
-        if (text !== 'Value') {
-          if (columnNames[text] === undefined) {
-            columnNames[text] = acc.length;
-            acc.push(col);
-          }
+        if (columnNames[text] === undefined) {
+          columnNames[text] = acc.length;
+          acc.push(col);
         }
       });
       return acc;
     }, []);
-
-    // Append one value column per data set
-    data.forEach((_, i) => {
-      // Value #A, Value #B,...
-      const text = `Value #${String.fromCharCode(65 + i)}`;
-      columnNames[text] = columns.length;
-      columns.push({ text });
-    });
 
     return columns;
   },
@@ -194,27 +184,15 @@ transformers['table'] = {
       const indexes = [];
       d.columns.forEach((col, j) => {
         const { text } = col;
-        if (text !== 'Value') {
-          if (columnNames[text] === undefined) {
-            columnNames[text] = acc.length;
-            acc.push(col);
-          }
-          indexes[j] = columnNames[text];
+        if (columnNames[text] === undefined) {
+          columnNames[text] = acc.length;
+          acc.push(col);
         }
+        indexes[j] = columnNames[text];
       });
       columnIndexes.push(indexes);
       return acc;
     }, []);
-    const nonValueColumnCount = columns.length;
-
-    // Append one value column per data set
-    data.forEach((_, i) => {
-      // Value #A, Value #B,...
-      const text = `Value #${String.fromCharCode(65 + i)}`;
-      columnNames[text] = columns.length;
-      columns.push({ text });
-      columnIndexes[i].push(columnNames[text]);
-    });
 
     model.columns = columns;
 
@@ -231,29 +209,36 @@ transformers['table'] = {
       return acc;
     }, []);
 
-    // Merge rows that have same columns
+    // Merge rows that have same values for columns
     const mergedRows = {};
-    rows = rows.reduce((acc, row, i) => {
-      if (!mergedRows[i]) {
-        let offset = i + 1;
+    rows = rows.reduce((acc, row, rowIndex) => {
+      if (!mergedRows[rowIndex]) {
+        let offset = rowIndex + 1;
         while (offset < rows.length) {
-          const match = _.findIndex(rows, (other, j) => {
-            let same = true;
-            for (let index = 0; index < nonValueColumnCount; index++) {
-              if (row[index] !== other[index]) {
-                same = false;
+          // Find next row that has the same field values unless the respective field is undefined
+          const match = _.findIndex(rows, (otherRow) => {
+            let fieldsAreTheSame = true;
+            let foundFieldToMatch = false;
+            for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+              if (row[columnIndex] !== undefined && otherRow[columnIndex] !== undefined) {
+                if (row[columnIndex] !== otherRow[columnIndex]) {
+                  fieldsAreTheSame = false;
+                }
+              } else if (row[columnIndex] === undefined || otherRow[columnIndex] === undefined) {
+                foundFieldToMatch = true;
+              }
+              if (!fieldsAreTheSame) {
                 break;
               }
             }
-            return same;
+            return fieldsAreTheSame && foundFieldToMatch;
           }, offset);
           if (match > -1) {
             const matchedRow = rows[match];
             // Merge values into current row
-            for (let index = nonValueColumnCount; index < columns.length; index++) {
-              if (row[index] === undefined && matchedRow[index] !== undefined) {
-                row[index] = matchedRow[index];
-                break;
+            for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+              if (row[columnIndex] === undefined && matchedRow[columnIndex] !== undefined) {
+                row[columnIndex] = matchedRow[columnIndex];
               }
             }
             mergedRows[match] = matchedRow;
