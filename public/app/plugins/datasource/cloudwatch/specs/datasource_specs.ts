@@ -165,6 +165,55 @@ describe('CloudWatchDatasource', function() {
     });
   });
 
+  describe('When query region is "default"', function () {
+    it('should return the datasource region if empty or "default"', function() {
+      var defaultRegion = instanceSettings.jsonData.defaultRegion;
+
+      expect(ctx.ds.getActualRegion()).to.be(defaultRegion);
+      expect(ctx.ds.getActualRegion('')).to.be(defaultRegion);
+      expect(ctx.ds.getActualRegion("default")).to.be(defaultRegion);
+    });
+
+    it('should return the specified region if specified', function() {
+      expect(ctx.ds.getActualRegion('some-fake-region-1')).to.be('some-fake-region-1');
+    });
+
+    var requestParams;
+    beforeEach(function() {
+      ctx.ds.performTimeSeriesQuery = function(request) {
+        requestParams = request;
+        return ctx.$q.when({data: {}});
+      };
+    });
+
+    it('should query for the datasource region if empty or "default"', function(done) {
+      var query = {
+        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            region: 'default',
+            namespace: 'AWS/EC2',
+            metricName: 'CPUUtilization',
+            dimensions: {
+              InstanceId: 'i-12345678'
+            },
+            statistics: ['Average'],
+            period: 300
+          }
+        ]
+      };
+
+      ctx.ds.query(query).then(function(result) {
+        expect(requestParams.queries[0].region).to.be(instanceSettings.jsonData.defaultRegion);
+        done();
+      });
+      ctx.$rootScope.$apply();
+    });
+
+
+  });
+
   describe('When performing CloudWatch query for extended statistics', function() {
     var requestParams;
 
@@ -329,6 +378,26 @@ describe('CloudWatchDatasource', function() {
   });
 
   describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)', scenario => {
+    scenario.setup(() => {
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [
+              { rows: [['i-12345678', 'i-12345678']] }
+            ]
+          }
+        }
+      };
+    });
+
+    it('should call __ListMetrics and return result', () => {
+      expect(scenario.result[0].text).to.contain('i-12345678');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('dimension_values');
+    });
+  });
+
+  describeMetricFindQuery('dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)', scenario => {
     scenario.setup(() => {
       scenario.requestResponse = {
         results: {
