@@ -21,8 +21,9 @@ export class SettingsCtrl {
 
   /** @ngInject */
   constructor(private $scope, private $location, private $rootScope) {
-    // temp hack
-    this.$scope.dashboard = this.dashboard;
+    // temp hack for annotations and variables editors
+    // that rely on inherited scope
+    $scope.dashboard = this.dashboard;
 
     const params = this.$location.search();
     const url = $location.path();
@@ -55,6 +56,12 @@ export class SettingsCtrl {
         this.$location.search(urlParams);
       });
     });
+  }
+
+  onFolderChange(folder) {
+    this.dashboard.folderId = folder.id;
+    this.dashboard.meta.folderId = folder.id;
+    this.dashboard.meta.folderTitle= folder.title;
   }
 }
 

@@ -122,12 +122,6 @@ export class DashboardCtrl implements PanelContainer {
       this.$rootScope.$broadcast("refresh");
     }
 
-    onFolderChange(folder) {
-      this.dashboard.folderId = folder.id;
-      this.dashboard.meta.folderId = folder.id;
-      this.dashboard.meta.folderTitle= folder.title;
-    }
-
     getPanelContainer() {
       return this;
     }

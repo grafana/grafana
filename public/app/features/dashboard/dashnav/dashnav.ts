@@ -131,18 +131,6 @@ export class DashNavCtrl {
       return this.dashboardSrv.showSaveAsModal();
     }
 
-    viewJson() {
-      var clone = this.dashboard.getSaveModelClone();
-
-      this.$rootScope.appEvent('show-json-editor', {
-        object: clone,
-      });
-    }
-
-    onFolderChange(folderId) {
-      this.dashboard.folderId = folderId;
-    }
-
     showSearch() {
       this.$rootScope.appEvent('show-dash-search');
     }
