@@ -2,9 +2,7 @@
 .navbar {
   position: relative;
   padding-left: $side-menu-width;
-  // box-shadow: $navbarShadow;
   z-index: $zindex-navbar-fixed;
-  // background: $navbarBackground;
   height: $navbarHeight;
   padding-right: $spacer;
   display: flex;

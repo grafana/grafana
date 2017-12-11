@@ -11,7 +11,7 @@ export class SettingsCtrl {
   sections: any[] = [
     {title: 'General',     id: 'settings', icon: "fa fa-fw fa-sliders"},
     {title: 'Annotations', id: 'annotations', icon: "fa fa-fw fa-comment-o"},
-    {title: 'Templating',  id: 'templating', icon: "fa fa-fw fa-dollar"},
+    {title: 'Variables',   id: 'templating', icon: "fa fa-fw fa-dollar"},
     {title: 'Links',       id: 'links', icon: "fa fa-fw fa-external-link"},
     {title: 'Versions',    id: 'versions', icon: "fa fa-fw fa-history"},
     {title: 'View JSON',   id: 'view_json', icon: "fa fa-fw fa-code"},

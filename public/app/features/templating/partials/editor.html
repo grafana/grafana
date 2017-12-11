@@ -1,64 +1,71 @@
-<h3 class="dashboard-settings__header">Templating</h3>
+<h3 class="dashboard-settings__header">Variables</h3>
 
 <div ng-controller="VariableEditorCtrl" ng-init="init()">
 	<div ng-if="mode === 'list'">
+
 		<div ng-if="variables.length === 0">
-			<em>No template variables defined</em>
-			<br /> <br />
+			<div class="empty-list-cta">
+				<div class="empty-list-cta__title">There are no template variables added yet</div>
+				<a ng-click="mode = 'new';" class="empty-list-cta__button btn btn-xlarge btn-success">
+					<i class="gicon gicon-dashboard-new"></i>
+					Add variable
+				</a>
+				<div class="grafana-info-box">
+					<h5>
+						What does variables do?
+					</h5>
+					<p>Variables enables more interactive and dynamic dashboards. Instead of hard-coding things like server or sensor names
+					in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
+					the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
+
+					Checkout the
+					<a class="external-link" href="http://docs.grafana.org/reference/templating/" target="_blank">
+						Templating documentation
+					</a> for more information.
+				</div>
+			</div>
 		</div>
-		<table class="filter-table filter-table--hover">
-			<thead>
-				<tr>
-					<th>Variable</th>
-					<th>Definition</th>
-					<th colspan="5"></th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr ng-repeat="variable in variables">
-					<td style="width: 1%">
-						<span ng-click="edit(variable)" class="pointer template-variable">
-							${{variable.name}}
-						</span>
-					</td>
-					<td style="max-width: 200px;" ng-click="edit(variable)" class="pointer max-width">
-						{{variable.query}}
-					</td>
 
-					<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
-					<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
-					<td style="width: 1%">
-						<a ng-click="duplicate(variable)" class="btn btn-inverse btn-mini">
-							Duplicate
-						</a>
-					</td>
-					<td style="width: 1%">
-						<a ng-click="removeVariable(variable)" class="btn btn-danger btn-mini">
-							<i class="fa fa-remove"></i>
-						</a>
-					</td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
+		<div ng-if="variables.length">
+			<div class="page-action-bar">
+				<div class="page-action-bar__spacer"></div>
+				<a type="button" class="btn btn-success" ng-click="mode = 'new';"><i class="fa fa-plus" ></i> New</a>
+			</div>
 
-	<div ng-show="mode === 'help'">
-		<div class="grafana-info-box col-lg-8">
-			<h5>What does templating do?</h5>
-			<p>Templating allows for more interactive and dynamic dashboards. Instead of hard-coding things like server, application
-			and sensor name in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
-			the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
-			<br>
-			<br>
+			<table class="filter-table filter-table--hover">
+				<thead>
+					<tr>
+						<th>Variable</th>
+						<th>Definition</th>
+						<th colspan="5"></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="variable in variables">
+						<td style="width: 1%">
+							<span ng-click="edit(variable)" class="pointer template-variable">
+								${{variable.name}}
+							</span>
+						</td>
+						<td style="max-width: 200px;" ng-click="edit(variable)" class="pointer max-width">
+							{{variable.query}}
+						</td>
 
-			Checkout the <a class="external-link" target="_blank" href="http://docs.grafana.org/reference/templating/">Templating documentation</a> for more information.
-			</p>
-		</div>
-	</div>
-
-	<div class="gf-form" ng-show="mode === 'list'">
-		<div class="gf-form-button-row">
-			<a type="button" class="btn gf-form-button btn-success" ng-click="mode = 'new';"><i class="fa fa-plus" ></i>&nbsp;&nbsp;New</a>
+						<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
+						<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
+						<td style="width: 1%">
+							<a ng-click="duplicate(variable)" class="btn btn-inverse btn-mini">
+								Duplicate
+							</a>
+						</td>
+						<td style="width: 1%">
+							<a ng-click="removeVariable(variable)" class="btn btn-danger btn-mini">
+								<i class="fa fa-remove"></i>
+							</a>
+						</td>
+					</tr>
+				</tbody>
+			</table>
 		</div>
 	</div>
 
