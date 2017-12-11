@@ -16,7 +16,7 @@ message Query {
   string modelJson = 2;
   int64 MaxDataPoints = 3;
   int64 intervalMs = 4;
-  DatasourceInfo datasource = 5;
+  // dont repeat. DatasourceInfo datasource = 5;
 }
 
 message Timerange {

@@ -27,6 +27,8 @@ func (tw *TsdbWrapper) Query(ctx context.Context, ds *models.DataSource, query *
 			Name:              ds.Name,
 			Type:              ds.Type,
 			Url:               ds.Url,
+			Id:                ds.Id,
+			OrgId:             ds.OrgId,
 		},
 		Timerange: &proto.Timerange{
 			From: query.TimeRange.From,
