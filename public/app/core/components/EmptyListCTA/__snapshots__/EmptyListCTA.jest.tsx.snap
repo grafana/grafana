@@ -2,7 +2,7 @@
 
 exports[`CollorPalette renders correctly 1`] = `
 <div
-  className="empty-list-cta p-t-2 p-b-1"
+  className="empty-list-cta"
 >
   <div
     className="empty-list-cta__title"

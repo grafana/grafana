@@ -69,6 +69,10 @@ export class AnnotationsEditorCtrl {
     this.reset();
   }
 
+  backToList() {
+    this.mode = 'list';
+  }
+
   add() {
     this.annotations.push(this.currentAnnotation);
     this.reset();

@@ -1,7 +1,7 @@
 
 <div ng-controller="AnnotationsEditorCtrl">
 	<h3 class="dashboard-settings__header">
-		<a ng-click="ctrl.setMode('list')">Annotations</a>
+		<a ng-click="ctrl.backToList()">Annotations</a>
 		<span ng-show="ctrl.mode === 'new'">&gt; New</span>
 		<span ng-show="ctrl.mode === 'edit'">&gt; Edit</span>
 	</h3>
@@ -32,7 +32,7 @@
 			<a type="button" class="btn btn-success" ng-click="ctrl.setupNew();"><i class="fa fa-plus" ></i> New</a>
 		</div>
 
-		<table class="filter-table">
+		<table class="filter-table filter-table--hover">
 			<thead>
 				<tr>
 					<th>Query name</th>
