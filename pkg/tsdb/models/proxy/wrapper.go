@@ -14,8 +14,15 @@ type TsdbWrapper struct {
 }
 
 func (tw *TsdbWrapper) Query(ctx context.Context, ds *models.DataSource, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	jsonData, _ := ds.JsonData.MarshalJSON()
-	now, _ := ptypes.TimestampProto(query.TimeRange.Now)
+	jsonData, err := ds.JsonData.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	now, err := ptypes.TimestampProto(query.TimeRange.Now)
+	if err != nil {
+		return nil, err
+	}
 
 	pbQuery := &proto.TsdbQuery{
 		Datasource: &proto.DatasourceInfo{
