@@ -20,9 +20,9 @@ export class SettingsCtrl {
   ];
 
   /** @ngInject */
-  constructor($scope, private $location, private $rootScope) {
+  constructor(private $scope, private $location, private $rootScope) {
     // temp hack
-    $scope.dashboard = this.dashboard;
+    this.$scope.dashboard = this.dashboard;
 
     const params = this.$location.search();
     const url = $location.path();
@@ -35,6 +35,11 @@ export class SettingsCtrl {
 
     this.viewId = params.editview;
     $rootScope.onAppEvent("$routeUpdate", this.onRouteUpdated.bind(this), $scope);
+
+    this.$scope.$on('$destroy', () => {
+      this.dashboard.updateSubmenuVisibility();
+      this.$rootScope.$broadcast("refresh");
+    });
   }
 
   onRouteUpdated() {

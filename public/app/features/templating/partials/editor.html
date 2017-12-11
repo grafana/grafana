@@ -1,19 +1,22 @@
-<h3 class="dashboard-settings__header">Variables</h3>
-
 <div ng-controller="VariableEditorCtrl" ng-init="init()">
+
+	<h3 class="dashboard-settings__header">
+		<a ng-click="setMode('list')">Variables</a>
+		<span ng-show="mode === 'new'">&gt; New</span>
+		<span ng-show="mode === 'edit'">&gt; Edit</span>
+	</h3>
+
 	<div ng-if="mode === 'list'">
 
 		<div ng-if="variables.length === 0">
 			<div class="empty-list-cta">
 				<div class="empty-list-cta__title">There are no template variables added yet</div>
-				<a ng-click="mode = 'new';" class="empty-list-cta__button btn btn-xlarge btn-success">
+				<a ng-click="setMode('new')" class="empty-list-cta__button btn btn-xlarge btn-success">
 					<i class="gicon gicon-dashboard-new"></i>
 					Add variable
 				</a>
 				<div class="grafana-info-box">
-					<h5>
-						What does variables do?
-					</h5>
+					<h5>What does variables do?</h5>
 					<p>Variables enables more interactive and dynamic dashboards. Instead of hard-coding things like server or sensor names
 					in your metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
 					the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
@@ -29,7 +32,7 @@
 		<div ng-if="variables.length">
 			<div class="page-action-bar">
 				<div class="page-action-bar__spacer"></div>
-				<a type="button" class="btn btn-success" ng-click="mode = 'new';"><i class="fa fa-plus" ></i> New</a>
+				<a type="button" class="btn btn-success" ng-click="setMode('new');"><i class="fa fa-plus" ></i> New</a>
 			</div>
 
 			<table class="filter-table filter-table--hover">
@@ -50,7 +53,6 @@
 						<td style="max-width: 200px;" ng-click="edit(variable)" class="pointer max-width">
 							{{variable.query}}
 						</td>
-
 						<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
 						<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
 						<td style="width: 1%">
@@ -70,7 +72,7 @@
 	</div>
 
 	<form ng-if="mode === 'edit' || mode === 'new'" name="ctrl.form">
-		<h5 class="section-heading">Variable</h5>
+		<h5 class="section-heading">General</h5>
 		<div class="gf-form-group">
 			<div class="gf-form-inline">
 				<div class="gf-form max-width-19">

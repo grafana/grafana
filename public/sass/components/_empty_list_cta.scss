@@ -1,8 +1,13 @@
 .empty-list-cta {
   background-color: $search-filter-box-bg;
   text-align: center;
-  padding: 2rem 2rem 1rem 2rem;
+  padding: 2rem;
   border-radius: $border-radius;
+
+  .grafana-info-box {
+    max-width: 700px;
+    margin: 0 auto;
+  }
 }
 
 .empty-list-cta__title {
@@ -12,10 +17,6 @@
 
 .empty-list-cta__button {
   margin-bottom: 50px;
-}
-
-.empty-list-cta__pro-tip {
-  padding-bottom: 1rem;
 }
 
 .empty-list-cta__pro-tip-link {
