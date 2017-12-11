@@ -218,9 +218,13 @@ export class PanelCtrl {
   }
 
   editPanelJson() {
-    this.publishAppEvent('show-json-editor', {
-      object: this.panel.getSaveModel(),
-      updateHandler: this.replacePanel.bind(this)
+    let editScope = this.$scope.$root.$new();
+    editScope.object = this.panel.getSaveModel();
+    editScope.updateHandler = this.replacePanel.bind(this);
+
+    this.publishAppEvent('show-modal', {
+      src: 'public/app/partials/edit_json.html',
+      scope: editScope
     });
   }
 
