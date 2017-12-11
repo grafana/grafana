@@ -7,7 +7,7 @@ import 'app/features/panellinks/link_srv';
 import kbn from 'app/core/utils/kbn';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
-import {MetricsPanelCtrl} from 'app/plugins/sdk';
+import {MetricsPanelCtrl, alertTab} from 'app/plugins/sdk';
 
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -15,6 +15,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   dataType = 'timeseries';
   series: any[];
   data: any;
+  alertState: any;
+  annotationsPromise: any;
   fontSizes: any[];
   unitFormats: any[];
   invalidGaugeRange: boolean;
@@ -84,10 +86,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private $location, private linkSrv) {
+  constructor($scope, $injector, private $location, private linkSrv, private annotationsSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
-
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
@@ -102,6 +103,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Options', 'public/app/plugins/panel/singlestat/editor.html', 2);
     this.addEditorTab('Value Mappings', 'public/app/plugins/panel/singlestat/mappings.html', 3);
     this.unitFormats = kbn.getUnitFormats();
+    if (config.alertingEnabled) {
+      this.addEditorTab('Alert', alertTab, 5);
+    }
   }
 
   setUnitFormat(subItem) {
@@ -113,6 +117,22 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.onDataReceived([]);
   }
 
+  issueQueries(datasource) {
+    this.annotationsPromise = this.annotationsSrv.getAnnotations({
+      dashboard: this.dashboard,
+      panel: this.panel,
+      range: this.range,
+    });
+    return super.issueQueries(datasource);
+  }
+  onDataSnapshotLoad(snapshotData) {
+    this.annotationsPromise = this.annotationsSrv.getAnnotations({
+      dashboard: this.dashboard,
+      panel: this.panel,
+      range: this.range,
+    });
+    this.onDataReceived(snapshotData);
+  }
   onDataReceived(dataList) {
     const data: any = {};
     if (dataList.length > 0 && dataList[0].type === 'table') {
@@ -124,8 +144,15 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       this.series = dataList.map(this.seriesHandler.bind(this));
       this.setValues(data);
     }
+    if (this.annotationsPromise) {
+      this.annotationsPromise.then(result => {
+        this.alertState = result.alertState;
+        this.render();
+      }, () => {
+        this.render();
+      });
+    }
     this.data = data;
-    this.render();
   }
 
   seriesHandler(seriesData) {
