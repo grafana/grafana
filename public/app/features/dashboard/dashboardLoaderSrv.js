@@ -43,7 +43,7 @@ function (angular, moment, _, $, kbn, dateMath, impressionSrv) {
           });
       } else {
         promise = backendSrv.getDashboard($routeParams.type, $routeParams.slug)
-          .then(result => {
+          .then(function(result) {
             if (result.meta.isFolder) {
               $rootScope.appEvent("alert-error", ['Dashboard not found']);
               throw new Error("Dashboard not found");
