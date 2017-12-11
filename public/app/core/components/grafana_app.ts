@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
@@ -12,7 +10,7 @@ import Drop from 'tether-drop';
 export class GrafanaCtrl {
 
   /** @ngInject */
-  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv) {
+  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv, globalEventSrv) {
 
     $scope.init = function() {
       $scope.contextSrv = contextSrv;
@@ -23,6 +21,7 @@ export class GrafanaCtrl {
       profiler.init(config, $rootScope);
       alertSrv.init();
       utilSrv.init();
+      globalEventSrv.init();
 
       $scope.dashAlerts = alertSrv;
     };
@@ -78,11 +77,16 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       sidemenuOpen = scope.contextSrv.sidemenu;
       body.toggleClass('sidemenu-open', sidemenuOpen);
 
-      scope.$watch('contextSrv.sidemenu', newVal => {
-        if (sidemenuOpen !== scope.contextSrv.sidemenu) {
-          sidemenuOpen = scope.contextSrv.sidemenu;
-          body.toggleClass('sidemenu-open', scope.contextSrv.sidemenu);
-        }
+      appEvents.on('toggle-sidemenu', () => {
+        body.toggleClass('sidemenu-open');
+      });
+
+      appEvents.on('toggle-sidemenu-mobile', () => {
+        body.toggleClass('sidemenu-open--xs');
+      });
+
+      appEvents.on('toggle-sidemenu-hidden', () => {
+        body.toggleClass('sidemenu-hidden');
       });
 
       // tooltip removal fix
@@ -99,6 +103,9 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
             body.addClass(pageClass);
           }
         }
+
+        // clear body class sidemenu states
+        body.removeClass('sidemenu-open--xs');
 
         $("#tooltip, .tooltip").remove();
 

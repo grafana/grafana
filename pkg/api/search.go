@@ -15,7 +15,6 @@ func Search(c *middleware.Context) {
 	starred := c.Query("starred")
 	limit := c.QueryInt("limit")
 	dashboardType := c.Query("type")
-	folderId := c.QueryInt64("folderId")
 
 	if limit == 0 {
 		limit = 1000
@@ -29,6 +28,14 @@ func Search(c *middleware.Context) {
 		}
 	}
 
+	folderIds := make([]int64, 0)
+	for _, id := range c.QueryStrings("folderIds") {
+		folderId, err := strconv.ParseInt(id, 10, 64)
+		if err == nil {
+			folderIds = append(folderIds, folderId)
+		}
+	}
+
 	searchQuery := search.Query{
 		Title:        query,
 		Tags:         tags,
@@ -38,7 +45,7 @@ func Search(c *middleware.Context) {
 		OrgId:        c.OrgId,
 		DashboardIds: dbids,
 		Type:         dashboardType,
-		FolderId:     folderId,
+		FolderIds:    folderIds,
 	}
 
 	err := bus.Dispatch(&searchQuery)

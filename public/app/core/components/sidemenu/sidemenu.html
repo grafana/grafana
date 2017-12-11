@@ -2,6 +2,11 @@
 	<img src="public/img/grafana_icon.svg"></img>
 </a>
 
+<a class="sidemenu__logo_small_breakpoint" ng-click="ctrl.toggleSideMenuSmallBreakpoint()">
+  <i class="fa fa-bars"></i>
+  <span class="sidemenu__close"><i class="fa fa-times"></i>&nbsp;Close</span>
+</a>
+
 <div class="sidemenu__top">
 	<div ng-repeat="item in ::ctrl.mainLinks" class="sidemenu-item dropdown">
 		<a href="{{::item.url}}" class="sidemenu-link" target="{{::item.target}}">
@@ -54,7 +59,7 @@
 				</a>
 			</li>
 			<li ng-repeat="child in ::item.children" ng-class="{divider: child.divider}" ng-hide="::child.hideFromMenu">
-				<a href="{{::child.url}}" target="{{::child.target}}">
+				<a href="{{::child.url}}" target="{{::child.target}}" ng-click="ctrl.itemClicked(child, $event)">
 					<i class="{{::child.icon}}" ng-show="::child.icon"></i>
 					{{::child.text}}
 				</a>

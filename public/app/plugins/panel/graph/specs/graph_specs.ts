@@ -87,6 +87,8 @@ describe('grafanaGraph', function() {
 
           $.plot = ctx.plotSpy = sinon.spy();
           ctrl.events.emit('render', ctx.data);
+          ctrl.events.emit('render-legend');
+          ctrl.events.emit('legend-rendering-complete');
           ctx.plotData = ctx.plotSpy.getCall(0).args[1];
           ctx.plotOptions = ctx.plotSpy.getCall(0).args[2];
         }));

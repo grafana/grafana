@@ -1,126 +1,106 @@
-/**
- * gemini-scrollbar
- * @version 1.5.2
- * @link http://noeldelgado.github.io/gemini-scrollbar/
- * @license MIT
+/*
+ * Container style
  */
-
-/* disable selection while dragging */
-.gm-scrollbar-disable-selection {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+.ps {
+  overflow: hidden !important;
+  overflow-anchor: none;
+  -ms-overflow-style: none;
+  touch-action: auto;
+  -ms-touch-action: auto;
 }
 
-/* fallback for native floating scrollbars */
-.gm-prevented {
-  -webkit-overflow-scrolling: touch;
-}
-.gm-prevented > .gm-scrollbar {
+/*
+ * Scrollbar rail styles
+ */
+.ps__rail-x {
   display: none;
-}
-
-/* actual gemini-scrollbar styles */
-.gm-scrollbar-container {
-  position: relative;
-  overflow: hidden!important;
-  width: 100%;
-  height: 100%;
-}
-
-.gm-scrollbar {
+  opacity: 0;
+  transition: background-color .2s linear, opacity .2s linear;
+  -webkit-transition: background-color .2s linear, opacity .2s linear;
+  height: 15px;
+  /* there must be 'bottom' or 'top' for ps__rail-x */
+  bottom: 0px;
+  /* please don't change 'position' */
   position: absolute;
-  right: 2px;
-  bottom: 2px;
-  z-index: 1;
-  border-radius: 3px;
-
-  &:hover {
-    .thumb {
-      opacity: 1;
-      transition: opacity 100ms ease-in-out;
-    }
-  }
 }
 
-.gm-scrollbar.-vertical {
-  width: 6px;
-  top: 2px;
+.ps__rail-y {
+  display: none;
+  opacity: 0;
+  transition: background-color .2s linear, opacity .2s linear;
+  -webkit-transition: background-color .2s linear, opacity .2s linear;
+  width: 15px;
+  /* there must be 'right' or 'left' for ps__rail-y */
+  right: 0;
+  /* please don't change 'position' */
+  position: absolute;
 }
 
-.gm-scrollbar.-horizontal {
+.ps--active-x > .ps__rail-x,
+.ps--active-y > .ps__rail-y {
+  display: block;
+  background-color: transparent;
+}
+
+.ps--focus > .ps__rail-x,
+.ps--focus > .ps__rail-y,
+.ps--scrolling-x > .ps__rail-x,
+.ps--scrolling-y > .ps__rail-y {
+  opacity: 0.6;
+}
+
+.ps__rail-x:hover,
+.ps__rail-y:hover,
+.ps__rail-x:focus,
+.ps__rail-y:focus {
+  background-color: transparent;
+  opacity: 0.9;
+}
+
+/*
+ * Scrollbar thumb styles
+ */
+.ps__thumb-x {
+  background-color: #aaa;
+  border-radius: 6px;
   height: 6px;
-  left: 2px;
+  /* there must be 'bottom' for ps__thumb-x */
+  bottom: 2px;
+  /* please don't change 'position' */
+  position: absolute;
 }
 
-.gm-scrollbar .thumb {
-  position: relative;
-  display: block;
-  width: 0;
-  height: 0;
-  cursor: pointer;
-  border-radius: inherit;
-  background-color: $dark-5;
-  transform: translate3d(0,0,0);
-  opacity: 0;
+.ps__thumb-y {
+  @include gradient-vertical($scrollbarBackground, $scrollbarBackground2);
+  border-radius: 6px;
+  width: 6px;
+  /* there must be 'right' for ps__thumb-y */
+  right: 2px;
+  /* please don't change 'position' */
+  position: absolute;
 }
 
-.gemini-scrolling {
-  .gm-scrollbar .thumb {
-    opacity: 1;
-    transition: opacity 100ms ease-in-out;
+
+/* MS supports */
+@supports (-ms-overflow-style: none) {
+  .ps {
+    overflow: auto !important;
   }
 }
 
-.gm-scrollbar .thumb:hover,
-.gm-scrollbar .thumb:active {
-  background-color: $blue-dark;
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+  .ps {
+    overflow: auto !important;
+  }
 }
 
-.gm-scrollbar.-vertical .thumb {
-  width: 100%;
+.ps__rail-x:hover,
+.ps__rail-y:hover,
+.ps__rail-x:focus,
+.ps__rail-y:focus {
+  background-color: transparent;
+  opacity: 0.9;
 }
-
-.gm-scrollbar.-horizontal .thumb {
-  height: 100%;
-}
-
-.gm-scrollbar-container .gm-scroll-view {
-  width: 100%;
-  height: 100%;
-  overflow: scroll;
-  transform: translate3d(0,0,0);
-  -webkit-overflow-scrolling: touch;
-}
-
-/* @option: autoshow */
-.gm-scrollbar-container.gm-autoshow .gm-scrollbar {
-  opacity: 0;
-  transition: opacity 120ms ease-out;
-}
-.gm-scrollbar-container.gm-autoshow:hover > .gm-scrollbar,
-.gm-scrollbar-container.gm-autoshow:active > .gm-scrollbar,
-.gm-scrollbar-container.gm-autoshow:focus > .gm-scrollbar {
-  opacity: 1;
-  transition: opacity 340ms ease-out;
-}
-
-.gm-resize-trigger {
-  position: absolute;
-  display: block;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0;
-}
-
 
 // Srollbars
 //

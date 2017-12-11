@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import moment from 'moment';
 import angular from 'angular';
@@ -18,7 +16,6 @@ export class DashNavCtrl {
     private dashboardSrv,
     private $location,
     private backendSrv,
-    private contextSrv,
     public playlistSrv,
     navModelSrv) {
       this.navModel = navModelSrv.getDashboardNav(this.dashboard, this);
@@ -35,10 +32,6 @@ export class DashNavCtrl {
       }
     }
 
-    toggleSideMenu() {
-      this.contextSrv.toggleSideMenu();
-    }
-
     openEditView(editview) {
       var search = _.extend(this.$location.search(), {editview: editview});
       this.$location.search(search);
@@ -49,14 +42,9 @@ export class DashNavCtrl {
     }
 
     starDashboard() {
-      if (this.dashboard.meta.isStarred) {
-        return this.backendSrv.delete('/api/user/stars/dashboard/' + this.dashboard.id).then(() =>  {
-          this.dashboard.meta.isStarred = false;
-        });
-      }
-
-      this.backendSrv.post('/api/user/stars/dashboard/' + this.dashboard.id).then(() => {
-        this.dashboard.meta.isStarred = true;
+      this.dashboardSrv.starDashboard(this.dashboard.id, this.dashboard.meta.isStarred)
+        .then(newState => {
+          this.dashboard.meta.isStarred = newState;
       });
     }
 
@@ -155,7 +143,7 @@ export class DashNavCtrl {
       this.dashboard.addPanel({
         type: 'add-panel',
         gridPos: {x: 0, y: 0, w: 12, h: 9},
-        title: 'New Graph',
+        title: 'Panel Title',
       });
     }
 

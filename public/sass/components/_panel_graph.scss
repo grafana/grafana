@@ -1,10 +1,31 @@
-.graph-canvas-wrapper {
-  position: relative;
-  cursor: crosshair;
+.graph-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &--legend-right {
+    flex-direction: row;
+
+    .graph-legend {
+      flex: 0 1 10px;
+      max-height: 100%;
+    }
+
+    .graph-legend-series {
+      display: block;
+      padding-left: 0px;
+    }
+
+    .graph-legend-table .graph-legend-series {
+      display: table-row;
+    }
+  }
 }
 
-.histogram-chart {
+.graph-panel__chart {
   position: relative;
+  cursor: crosshair;
+  flex-grow: 1;
 }
 
 .datapoints-warning {
@@ -22,11 +43,12 @@
 }
 
 .graph-legend {
-  @include clearfix();
+  flex: 0 1 auto;
+  max-height: 30%;
   margin: 0 $spacer;
   text-align: center;
-  width: calc(100% - $spacer);
   padding-top: 6px;
+  position: relative;
 
   .popover-content {
     padding: 0;
@@ -89,7 +111,9 @@
     display: block;
     overflow-y: auto;
     overflow-x: hidden;
+    height: 100%;
     padding-bottom: 1px;
+    padding-right: 5px;
   }
 
   .graph-legend-series {
@@ -139,7 +163,7 @@
   }
 
   .graph-legend-series:nth-child(odd) {
-    background-color: $grafanaListAccent;
+    background: $table-bg-accent;
   }
 
   .graph-legend-value {
@@ -160,39 +184,6 @@
   }
 }
 
-.graph-legend-rightside {
-
-  &.graph-wrapper {
-    display: table;
-    width: 100%;
-  }
-
-  .graph-canvas-wrapper {
-    display: table-cell;
-    width: 100%;
-    position: relative;
-  }
-
-  .graph-legend-wrapper {
-    display: table-cell;
-    vertical-align: top;
-    position: relative;
-    left: 4px;
-  }
-
-  .graph-legend {
-    margin: 0 0 0 1rem;
-  }
-
-  .graph-legend-series {
-    display: block;
-    padding-left: 0px;
-  }
-
-  .graph-legend-table .graph-legend-series {
-    display: table-row;
-  }
-}
 
 .graph-legend-series-hidden {
   .graph-legend-value,
@@ -280,7 +271,7 @@
 
   .graph-annotation__header {
     background-color: $popover-border-color;
-    padding: 0.40rem 0.65rem;
+    padding: 6px 10px;
     display: flex;
   }
 

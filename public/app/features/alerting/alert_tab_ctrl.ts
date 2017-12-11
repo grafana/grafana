@@ -95,6 +95,7 @@ export class AlertTabCtrl {
       case "hipchat": return "fa fa-mail-forward";
       case "pushover": return "fa fa-mobile";
       case "kafka": return "fa fa-random";
+      case "teams": return "fa fa-windows";
     }
     return 'fa fa-bell';
   }
@@ -209,7 +210,6 @@ export class AlertTabCtrl {
     }
 
     let firstTarget;
-    var fixed = false;
     let foundTarget = null;
 
     for (var condition of this.alert.conditions) {
@@ -231,7 +231,6 @@ export class AlertTabCtrl {
         if (firstTarget) {
           condition.query.params[0] = firstTarget.refId;
           foundTarget = firstTarget;
-          fixed = true;
         } else {
           this.error = "Could not find any metric queries";
         }

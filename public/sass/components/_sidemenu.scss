@@ -4,26 +4,42 @@
   flex-flow: column;
   flex-direction: column;
   width: $side-menu-width;
-  background: $navbarBackground;
-  z-index: 10;
-
+  z-index: $zindex-sidemenu;
   a:focus {
     text-decoration: none;
   }
+
+  .sidemenu__logo_small_breakpoint {
+    display: none;
+  }
+
+  .sidemenu__close {
+    display: none;
+  }
+
 }
 
-.sidemenu-open {
+// body class that hides sidemenu
+.sidemenu-hidden {
   .sidemenu {
-    background: $side-menu-bg;
-    position: initial;
-    height: auto;
-    box-shadow: $side-menu-shadow;
-    position: relative;
-    z-index: 2;
+    display: none;
   }
-  .sidemenu__top,
-  .sidemenu__bottom {
-    display: block;
+}
+
+@include media-breakpoint-up(sm) {
+  .sidemenu-open {
+    .sidemenu {
+      background: $side-menu-bg;
+      position: initial;
+      height: auto;
+      box-shadow: $side-menu-shadow;
+      position: relative;
+      z-index: $zindex-sidemenu;
+    }
+    .sidemenu__top,
+    .sidemenu__bottom {
+      display: block;
+    }
   }
 }
 
@@ -42,21 +58,23 @@
   position: relative;
   @include left-brand-border();
 
-  &.active,
-  &:hover {
-    background-color: $side-menu-item-hover-bg;
-    @include left-brand-border-gradient();
+  @include media-breakpoint-up(sm) {
+    &.active,
+    &:hover {
+      background-color: $side-menu-item-hover-bg;
+      @include left-brand-border-gradient();
 
-    .dropdown-menu {
-      margin: 0;
-      display: block;
-      opacity: 0;
-      top: 0px;
-      // important to overlap it otherwise it can be hidden
-      // again by the mouse getting outside the hover space
-      left: $side-menu-width - 2px;
-      @include animation('dropdown-anim 150ms ease-in-out 100ms forwards');
-      z-index: 1;
+      .dropdown-menu {
+        margin: 0;
+        display: block;
+        opacity: 0;
+        top: 0px;
+        // important to overlap it otherwise it can be hidden
+        // again by the mouse getting outside the hover space
+        left: $side-menu-width - 2px;
+        @include animation('dropdown-anim 150ms ease-in-out 100ms forwards');
+        z-index:  $zindex-sidemenu;
+      }
     }
   }
 }
@@ -100,7 +118,7 @@
   display: inline-block;
 
   .fa, .icon-gf, .gicon {
-    color: $link-color;
+    color: $side-menu-link-color;
     position: relative;
     opacity: .7;
     font-size: 130%;
@@ -125,6 +143,7 @@
   white-space: nowrap;
   background-color: $side-menu-item-hover-bg;
   font-size: 17px;
+  color: #ebedf2;
 }
 
 li.sidemenu-org-switcher {
@@ -171,3 +190,88 @@ li.sidemenu-org-switcher {
   }
 }
 
+@include media-breakpoint-down(xs) {
+  .sidemenu-open {
+    .navbar {
+      padding-left: 60px !important;
+    }
+  }
+
+  .sidemenu-open--xs {
+    .sidemenu {
+      width: 100%;
+      background: $side-menu-bg;
+      position: initial;
+      height: auto;
+      box-shadow: $side-menu-shadow;
+      position: relative;
+      z-index: $zindex-sidemenu;
+    }
+
+    .sidemenu__close {
+      display: block;
+      font-size: $font-size-md;
+      position: relative;
+      top: -3px;
+    }
+
+    .sidemenu__top,
+    .sidemenu__bottom {
+      display: block;
+    }
+  }
+
+  .sidemenu {
+    .sidemenu__logo {
+      display: none;
+    }
+
+    .sidemenu__logo_small_breakpoint {
+      padding: 12px 10px 26px;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: baseline;
+
+      .fa-bars {
+        font-size: 25px;
+      }
+    }
+
+    .sidemenu__top {
+      padding-top: 0rem;
+    }
+
+    .side-menu-header {
+      padding-left: 10px;
+    }
+
+    .sidemenu-link {
+      text-align: left;
+    }
+
+    .sidemenu-icon {
+      display: none
+    }
+
+    .dropdown-menu--sidemenu {
+      display: block;
+      position: unset;
+      width: 100%;
+      float: none;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+
+      > li > a {
+        padding-left: 15px;
+      }
+    }
+
+    .sidemenu__bottom {
+      .dropdown-menu--sidemenu {
+        display: flex;
+        flex-direction: column-reverse;
+      }
+    }
+  }
+}

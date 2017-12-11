@@ -15,6 +15,10 @@
   background-image: url('../img/icons_#{$theme-name}_theme/icon_alert.svg');
 }
 
+.gicon-alert-alt {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_alert_alt.svg');
+}
+
 .gicon-datasources {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_data_sources.svg');
 }
@@ -43,5 +47,29 @@
   background-image: url('../img/icons_#{$theme-name}_theme/icon_add_panel.svg');
 }
 
+.gicon-alert-notification-channel {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_notification_channels.svg');
+}
+
+.gicon-user-group {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_user_group.svg');
+}
+
+.gicon-org {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_org.svg');
+}
+
+.gicon-zoom-out {
+  background-image: url('../img/icons_#{$theme-name}_theme/icon_zoom_out.svg');
+}
+
+.sidemenu {
+  .gicon-dashboard {
+    background-image: url('../img/icons_dark_theme/icon_dashboard.svg');
+  }
+  .gicon-alert {
+    background-image: url('../img/icons_dark_theme/icon_alert.svg');
+  }
+}
 
 

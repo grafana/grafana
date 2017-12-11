@@ -1,22 +1,27 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import GeminiScrollbar from 'gemini-scrollbar';
+import PerfectScrollbar from 'perfect-scrollbar';
 import coreModule from 'app/core/core_module';
 
 export function geminiScrollbar() {
   return {
     restrict: 'A',
     link: function(scope, elem, attrs) {
-      var myScrollbar = new GeminiScrollbar({
-        autoshow: false,
-        element: elem[0]
-      }).create();
+
+      let scrollbar = new PerfectScrollbar(elem[0]);
+
+      scope.$on('$routeChangeSuccess', () => {
+        elem[0].scrollTop = 0;
+      });
+
+      scope.$on('$routeUpdate', () => {
+        elem[0].scrollTop = 0;
+      });
 
       scope.$on('$destroy', () => {
-        myScrollbar.destroy();
+        scrollbar.destroy();
       });
+
     }
   };
 }
 
-coreModule.directive('geminiScrollbar', geminiScrollbar);
+coreModule.directive('grafanaScrollbar', geminiScrollbar);

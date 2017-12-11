@@ -22,7 +22,7 @@ const  template = `
 				<input type="text" class="gf-form-input" ng-model="ctrl.clone.title" give-focus="true" required>
 			</div>
       <div class="gf-form">
-        <folder-picker initial-title="ctrl.folderTitle"
+        <folder-picker initial-folder-id="ctrl.folderId"
                        on-change="ctrl.onFolderChange($folder)"
                        label-class="width-7">
         </folder-picker>
@@ -39,7 +39,7 @@ const  template = `
 
 export class SaveDashboardAsModalCtrl {
   clone: any;
-  folderTitle: any;
+  folderId: any;
   dismiss: () => void;
 
   /** @ngInject */
@@ -50,13 +50,15 @@ export class SaveDashboardAsModalCtrl {
     this.clone.title += ' Copy';
     this.clone.editable = true;
     this.clone.hideControls = false;
-    this.folderTitle = dashboard.meta.folderTitle || 'Root';
+    this.folderId = dashboard.folderId;
 
     // remove alerts if source dashboard is already persisted
     // do not want to create alert dupes
     if (dashboard.id > 0) {
       this.clone.panels.forEach(panel => {
-        delete panel.thresholds;
+        if (panel.type === "graph" && panel.alert) {
+          delete panel.thresholds;
+        }
         delete panel.alert;
       });
     }

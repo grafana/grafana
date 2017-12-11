@@ -75,7 +75,7 @@ $container-max-widths: (
 $grid-columns:      12 !default;
 $grid-gutter-width: 30px !default;
 
-$enable-flex: false;
+$enable-flex: true;
 
 // Typography
 // -------------------------
@@ -86,11 +86,12 @@ $font-family-monospace:    Menlo, Monaco, Consolas, "Courier New", monospace;
 $font-family-base:         $font-family-sans-serif !default;
 
 $font-size-root: 14px !default;
+$font-size-base: 13px !default;
 
-$font-size-base: 1rem !default;
-$font-size-lg:   1.25rem !default;
-$font-size-sm:   .875rem !default;
-$font-size-xs:   .75rem !default;
+$font-size-lg:   18px !default;
+$font-size-md:   14px !default;
+$font-size-sm:   12px !default;
+$font-size-xs:   10px !default;
 
 $line-height-base: 1.5 !default;
 $font-weight-semi-bold: 500;
@@ -134,9 +135,9 @@ $list-inline-padding: 5px !default;
 $line-height-lg:         (4 / 3) !default;
 $line-height-sm:         1.5 !default;
 
-$border-radius:          0.2rem !default;
-$border-radius-lg:       0.3rem !default;
-$border-radius-sm:       0.1rem !default;
+$border-radius:          3px !default;
+$border-radius-lg:       5px !default;
+$border-radius-sm:       2px!default;
 
 $caret-width:            .3em !default;
 $caret-width-lg:         $caret-width !default;
@@ -155,13 +156,13 @@ $link-hover-decoration:   none !default;
 //
 // Customizes the `.table` component with basic values, each used across all table variations.
 
-$table-cell-padding:            .75rem !default;
+$table-cell-padding:            4px 10px !default;
 $table-sm-cell-padding:         .3rem !default;
 
 // Forms
-$input-padding-x:                .75rem !default;
-$input-padding-y:                .6rem !default;
-$input-line-height:              1.35rem !default;
+$input-padding-x:                10px !default;
+$input-padding-y:                8px !default;
+$input-line-height:              18px !default;
 
 $input-btn-border-width:         1px;
 $input-border-radius:            0 $border-radius $border-radius 0 !default;
@@ -172,11 +173,11 @@ $label-border-radius:            $border-radius 0 0 $border-radius !default;
 $label-border-radius-lg:         $border-radius-lg 0 0 $border-radius-lg !default;
 $label-border-radius-sm:         $border-radius-sm 0 0 $border-radius-sm !default;
 
-$input-padding-x-sm:             .5rem !default;
-$input-padding-y-sm:             .25rem !default;
+$input-padding-x-sm:             7px !default;
+$input-padding-y-sm:             4px !default;
 
-$input-padding-x-lg:             1.5rem !default;
-$input-padding-y-lg:             .75rem !default;
+$input-padding-x-lg:             20px !default;
+$input-padding-y-lg:             10px !default;
 
 $input-height:                   (($font-size-base * $line-height-base) + ($input-padding-y * 2)) !default;
 $input-height-lg:                (($font-size-lg * $line-height-lg) + ($input-padding-y-lg * 2)) !default;
@@ -197,10 +198,12 @@ $form-icon-danger: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www
 // Used for a bird's eye view of components dependent on the z-axis
 // Try to avoid customizing these :)
 $zindex-dropdown:          1000;
-$zindex-tooltip:           1020;
-$zindex-navbar-fixed:      1030;
+$zindex-navbar-fixed:      1020;
+$zindex-tooltip:           1030;
 $zindex-modal-backdrop:    1040;
 $zindex-modal:             1050;
+$zindex-typeahead:         1060;
+$zindex-sidemenu:          $zindex-navbar-fixed;
 
 // Buttons
 //
@@ -213,10 +216,13 @@ $btn-font-weight:                500 !default;
 $btn-padding-x-sm:               .5rem !default;
 $btn-padding-y-sm:               .25rem !default;
 
-$btn-padding-x-lg:               1.5rem !default;
-$btn-padding-y-lg:               .75rem !default;
+$btn-padding-x-lg:               21px !default;
+$btn-padding-y-lg:               11px !default;
 
-$btn-border-radius:              3px;
+$btn-padding-x-xl:               21px !default;
+$btn-padding-y-xl:               11px !default;
+
+$btn-border-radius:              2px;
 
 // sidemenu
 $side-menu-width:  60px;
@@ -224,9 +230,8 @@ $side-menu-width:  60px;
 // dashboard
 $panel-margin: 10px;
 $dashboard-padding: $panel-margin * 2;
+$panel-padding: 0px 10px 5px 10px;
 
 // tabs
-$tabs-padding-top: 0.6rem;
-$tabs-padding-bottom: 0.4rem;
-$tabs-top-margin: 0.5rem;
+$tabs-padding: 10px 15px 9px;
 

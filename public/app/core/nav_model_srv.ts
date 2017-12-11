@@ -1,19 +1,27 @@
-///<reference path="../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
 import _ from 'lodash';
 
 export interface NavModelItem {
-  title: string;
+  text: string;
   url: string;
   icon?: string;
-  iconUrl?: string;
+  img?: string;
+  id: string;
+  active?: boolean;
+  hideFromTabs?: boolean;
+  divider?: boolean;
+  children: NavModelItem[];
 }
 
-export interface NavModel {
-  section: NavModelItem;
-  menu: NavModelItem[];
+export class NavModel {
+  breadcrumbs: NavModelItem[];
+  main: NavModelItem;
+  node: NavModelItem;
+
+  constructor() {
+    this.breadcrumbs = [];
+  }
 }
 
 export class NavModelSrv {
@@ -31,13 +39,30 @@ export class NavModelSrv {
 
   getNav(...args) {
     var children = this.navItems;
-    var nav = {breadcrumbs: [], node: null};
+    var nav = new NavModel();
 
     for (let id of args) {
+      // if its a number then it's the index to use for main
+      if (_.isNumber(id)) {
+        nav.main = nav.breadcrumbs[id];
+        break;
+      }
+
       let node = _.find(children, {id: id});
       nav.breadcrumbs.push(node);
       nav.node = node;
+      nav.main = node;
       children = node.children;
+    }
+
+    if (nav.main.children) {
+      for (let item of nav.main.children) {
+        item.active = false;
+
+        if (item.url === nav.node.url) {
+          item.active = true;
+        }
+      }
     }
 
     return nav;
@@ -45,13 +70,15 @@ export class NavModelSrv {
 
   getNotFoundNav() {
     var node = {
-      text: "Page not found ",
+      text: "Page not found",
       icon: "fa fa-fw fa-warning",
+      subTitle: "404 Error"
     };
 
     return {
       breadcrumbs: [node],
-      node: node
+      node: node,
+      main: node
     };
   }
 
@@ -93,14 +120,6 @@ export class NavModelSrv {
         icon: 'fa fa-fw fa-comment',
         clickHandler: () => dashNavCtrl.openEditView('annotations')
       });
-
-      if (dashboard.meta.canAdmin) {
-        menu.push({
-          title: 'Permissions...',
-          icon: 'fa fa-fw fa-lock',
-          clickHandler: () => dashNavCtrl.openEditView('permissions')
-        });
-      }
 
       if (!dashboard.meta.isHome) {
         menu.push({

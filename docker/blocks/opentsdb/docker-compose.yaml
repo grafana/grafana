@@ -1,0 +1,11 @@
+  opentsdb:
+    image: opower/opentsdb:latest
+    ports:
+      - "4242:4242"
+
+  fake-opentsdb-data:
+    image: grafana/fake-data-gen
+    network_mode: bridge
+    environment:
+      FD_DATASOURCE: opentsdb
+

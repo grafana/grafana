@@ -1,41 +1,3 @@
-.plugin-header {
-  @include clearfix();
-
-  padding: $spacer 0 $spacer/2 0;
-  margin-bottom: 2rem;
-}
-
-.plugin-header-logo {
-  float: left;
-  width: 7rem;
-  img {
-    width: 7rem;
-  }
-  margin-right: $spacer;
-}
-
-.plugin-header-info-block {
-  float: left;
-}
-
-.plugin-header-author {
-}
-
-.plugin-header-stamps-type {
-  color: $link-color-disabled;
-  text-transform: uppercase;
-}
-
-.plugin-info-list-item {
-  img {
-    width: 16px;
-  }
-
-  white-space: nowrap;
-  max-width: $page-sidebar-width;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
 
 .get-more-plugins-link {
   color: $gray-3;
@@ -55,3 +17,15 @@
     display: none;
   }
 }
+
+.plugin-info-list-item {
+  img {
+    width: 16px;
+  }
+
+  white-space: nowrap;
+  max-width: $page-sidebar-width;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+

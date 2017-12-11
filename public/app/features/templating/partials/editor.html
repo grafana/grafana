@@ -37,36 +37,39 @@
         <em>No template variables defined</em>
         <br /> <br />
 			</div>
-      <table class="grafana-options-table">
-        <tr ng-repeat="variable in variables">
-          <td style="width: 1%">
-            <span class="template-variable">
-              ${{variable.name}}
-            </span>
-          </td>
-          <td class="max-width" style="max-width: 200px;">
-            {{variable.query}}
-          </td>
+      <table class="filter-table filter-table--hover">
+      	<thead>
+      		<tr>
+						<th>Variable</th>
+						<th>Definition</th>
+						<th colspan="5"></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr ng-repeat="variable in variables">
+						<td style="width: 1%">
+							<span ng-click="edit(variable)" class="pointer template-variable">
+								${{variable.name}}
+							</span>
+						</td>
+						<td style="max-width: 200px;" ng-click="edit(variable)" class="pointer max-width">
+							{{variable.query}}
+						</td>
 
-          <td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
-          <td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
-          <td style="width: 1%">
-            <a ng-click="duplicate(variable)" class="btn btn-inverse btn-mini">
-              Duplicate
-            </a>
-          </td>
-          <td style="width: 1%">
-            <a ng-click="edit(variable)" class="btn btn-inverse btn-mini">
-              <i class="fa fa-edit"></i>
-              Edit
-            </a>
-          </td>
-          <td style="width: 1%">
-            <a ng-click="removeVariable(variable)" class="btn btn-danger btn-mini">
-              <i class="fa fa-remove"></i>
-            </a>
-          </td>
-        </tr>
+						<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
+						<td style="width: 1%"><i ng-click="_.move(variables,$index,$index+1)" ng-hide="$last" class="pointer fa fa-arrow-down"></i></td>
+						<td style="width: 1%">
+							<a ng-click="duplicate(variable)" class="btn btn-inverse btn-mini">
+								Duplicate
+							</a>
+						</td>
+						<td style="width: 1%">
+							<a ng-click="removeVariable(variable)" class="btn btn-danger btn-mini">
+								<i class="fa fa-remove"></i>
+							</a>
+						</td>
+					</tr>
+				</tbody>
       </table>
     </div>
 

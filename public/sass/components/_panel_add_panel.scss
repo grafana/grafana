@@ -1,20 +1,48 @@
 
 .add-panel {
+  height: 100%;
+}
+
+.add-panel__header {
+  padding: 5px 15px;
+  display: flex;
+  align-items: center;
+
+  i {
+    font-size: 30px;
+    margin-right: $spacer;
+  }
+}
+
+.add-panel__title {
+  font-size: $font-size-md;
+  margin-right: $spacer/2;
+}
+
+.add-panel__sub-title {
+  font-style: italic;
+  color: $text-muted;
+  position: relative;
+  top: 1px;
+}
+
+.add-panel__items {
+  padding: 3px 8px;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   overflow: auto;
-  height: 100%;
+  height: calc(100% - 43px);
   align-content: flex-start;
   justify-content: space-around;
-  padding: 3px 0;
+  position: relative;
 }
 
 .add-panel__item {
   background: $card-background;
   box-shadow: $card-shadow;
 
-  border: $panel-border;
+  border-radius: 3px;
   padding: $spacer/3 $spacer;
   width: 31%;
   height: 60px;

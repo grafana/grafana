@@ -15,6 +15,12 @@ class Settings {
     disableLoginForm: boolean;
     defaultDatasource: string;
     alertingEnabled: boolean;
+    authProxyEnabled: boolean;
+    ldapEnabled: boolean;
+    oauth: any;
+    disableUserSignUp: boolean;
+    loginHint: any;
+    loginError: any;
 
     constructor(options) {
         var defaults = {

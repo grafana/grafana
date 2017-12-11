@@ -112,13 +112,11 @@ describe('ElasticDatasource', function() {
   });
 
   describe('When getting fields', function() {
-    var requestOptions;
 
     beforeEach(function() {
       createDatasource({url: 'http://es.com', index: 'metricbeat'});
 
       ctx.backendSrv.datasourceRequest = function(options) {
-        requestOptions = options;
         return ctx.$q.when({data: {
           metricbeat: {
             mappings: {

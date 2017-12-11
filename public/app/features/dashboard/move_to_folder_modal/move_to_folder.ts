@@ -7,6 +7,7 @@ export class MoveToFolderCtrl {
   folder: any;
   dismiss: any;
   afterSave: any;
+  fromFolderId: number;
 
   /** @ngInject */
   constructor(private backendSrv, private $q) {}
@@ -16,10 +17,16 @@ export class MoveToFolderCtrl {
   }
 
   save() {
+    if (this.folder.id === this.fromFolderId) {
+      appEvents.emit('alert-error', ['Dashboard(s) already belong to this folder']);
+      return;
+    }
+
     const promises = [];
     for (let dash of this.dashboards) {
-      const promise = this.backendSrv.get('/api/dashboards/' + dash.uri).then(fullDash => {
+      const promise = this.backendSrv.get('/api/dashboards/' + dash).then(fullDash => {
         const model = new DashboardModel(fullDash.dashboard, fullDash.meta);
+
         model.folderId = this.folder.id;
         model.meta.folderId = this.folder.id;
         model.meta.folderTitle = this.folder.title;
@@ -53,6 +60,7 @@ export function moveToFolderModal() {
     scope: {
       dismiss: "&",
       dashboards: "=",
+      fromFolderId: '<',
       afterSave: "&"
     }
   };

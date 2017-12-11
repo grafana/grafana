@@ -9,7 +9,6 @@ class PlaylistSrv {
   private dashboards: any;
   private index: number;
   private interval: any;
-  private playlistId: number;
   private startUrl: string;
   public isPlaying: boolean;
 
@@ -65,7 +64,6 @@ class PlaylistSrv {
 
     this.startUrl = window.location.href;
     this.index = 0;
-    this.playlistId = playlistId;
     this.isPlaying = true;
 
     if (this.$routeParams.kiosk) {
@@ -84,7 +82,6 @@ class PlaylistSrv {
   stop() {
     this.index = 0;
     this.isPlaying = false;
-    this.playlistId = 0;
 
     if (this.cancelPromise) {
       this.$timeout.cancel(this.cancelPromise);

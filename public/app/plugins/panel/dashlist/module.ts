@@ -1,11 +1,10 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import {PanelCtrl} from 'app/plugins/sdk';
-import {impressions} from 'app/features/dashboard/impression_store';
+import impressionSrv from 'app/core/services/impression_srv';
 
 class DashListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
+  static scrollable = true;
 
   groups: any[];
   modes: any[];
@@ -22,7 +21,7 @@ class DashListCtrl extends PanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private backendSrv) {
+  constructor($scope, $injector, private backendSrv, private dashboardSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
@@ -107,13 +106,24 @@ class DashListCtrl extends PanelCtrl {
     });
   }
 
+  starDashboard(dash, evt) {
+    this.dashboardSrv.starDashboard(dash.id, dash.isStarred).then(newState => {
+      dash.isStarred = newState;
+    });
+
+    if (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+    }
+  }
+
   getRecentDashboards() {
     this.groups[1].show = this.panel.recent;
     if (!this.panel.recent) {
       return Promise.resolve();
     }
 
-    var dashIds = _.take(impressions.getDashboardOpened(), this.panel.limit);
+    var dashIds = _.take(impressionSrv.getDashboardOpened(), this.panel.limit);
     return this.backendSrv.search({dashboardIds: dashIds, limit: this.panel.limit}).then(result => {
       this.groups[1].list = dashIds.map(orderId => {
         return _.find(result, dashboard => {

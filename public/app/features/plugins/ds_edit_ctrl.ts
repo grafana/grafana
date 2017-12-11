@@ -41,7 +41,7 @@ export class DataSourceEditCtrl {
     navModelSrv,
   ) {
 
-    this.navModel = navModelSrv.getNav('cfg', 'datasources');
+    this.navModel = navModelSrv.getNav('cfg', 'datasources', 0);
     this.datasources = [];
     this.tabIndex = 0;
 
@@ -58,9 +58,7 @@ export class DataSourceEditCtrl {
     this.isNew = true;
     this.current = _.cloneDeep(defaults);
 
-    // add to nav & breadcrumbs
-    this.navModel.node = {text: 'New data source', icon: 'icon-gf icon-gf-fw icon-gf-datasources'};
-    this.navModel.breadcrumbs.push(this.navModel.node);
+    this.navModel.breadcrumbs.push({text: 'New'});
 
     // We are coming from getting started
     if (this.$location.search().gettingstarted) {
@@ -87,7 +85,7 @@ export class DataSourceEditCtrl {
     this.backendSrv.get('/api/datasources/' + id).then(ds => {
       this.isNew = false;
       this.current = ds;
-      this.navModel.node = {text: ds.name, icon: 'icon-gf icon-gf-fw icon-gf-datasources'};
+      this.navModel.node = {text: ds.name, icon: 'icon-gf icon-gf-fw icon-gf-datasources', id: 'ds-new'};
       this.navModel.breadcrumbs.push(this.navModel.node);
 
       if (datasourceCreated) {
@@ -114,7 +112,7 @@ export class DataSourceEditCtrl {
     this.hasDashboards = false;
     return this.backendSrv.get('/api/plugins/' + this.current.type + '/settings').then(pluginInfo => {
       this.datasourceMeta = pluginInfo;
-      this.hasDashboards = _.find(pluginInfo.includes, {type: 'dashboard'});
+      this.hasDashboards = _.find(pluginInfo.includes, {type: 'dashboard'}) !== undefined;
     });
   }
 
@@ -154,6 +152,10 @@ export class DataSourceEditCtrl {
 
   saveChanges() {
     if (!this.editForm.$valid) {
+      return;
+    }
+
+    if (this.current.readOnly) {
       return;
     }
 

@@ -87,6 +87,7 @@ func init() {
 		"AWS/Logs":             {"IncomingBytes", "IncomingLogEvents", "ForwardedBytes", "ForwardedLogEvents", "DeliveryErrors", "DeliveryThrottling"},
 		"AWS/ML":               {"PredictCount", "PredictFailureCount"},
 		"AWS/NATGateway":       {"PacketsOutToDestination", "PacketsOutToSource", "PacketsInFromSource", "PacketsInFromDestination", "BytesOutToDestination", "BytesOutToSource", "BytesInFromSource", "BytesInFromDestination", "ErrorPortAllocation", "ActiveConnectionCount", "ConnectionAttemptCount", "ConnectionEstablishedCount", "IdleTimeoutCount", "PacketsDropCount"},
+		"AWS/NetworkELB":       {"ActiveFlowCount", "ConsumedLCUs", "HealthyHostCount", "NewFlowCount", "ProcessedBytes", "TCP_Client_Reset_Count", "TCP_ELB_Reset_Count", "TCP_Target_Reset_Count", "UnHealthyHostCount"},
 		"AWS/OpsWorks":         {"cpu_idle", "cpu_nice", "cpu_system", "cpu_user", "cpu_waitio", "load_1", "load_5", "load_15", "memory_buffers", "memory_cached", "memory_free", "memory_swap", "memory_total", "memory_used", "procs"},
 		"AWS/Redshift":         {"CPUUtilization", "DatabaseConnections", "HealthStatus", "MaintenanceMode", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "PercentageDiskSpaceUsed", "ReadIOPS", "ReadLatency", "ReadThroughput", "WriteIOPS", "WriteLatency", "WriteThroughput"},
 		"AWS/RDS":              {"ActiveTransactions", "AuroraBinlogReplicaLag", "AuroraReplicaLag", "AuroraReplicaLagMaximum", "AuroraReplicaLagMinimum", "BinLogDiskUsage", "BlockedTransactions", "BufferCacheHitRatio", "CommitLatency", "CommitThroughput", "BinLogDiskUsage", "CPUCreditBalance", "CPUCreditUsage", "CPUUtilization", "DatabaseConnections", "DDLLatency", "DDLThroughput", "Deadlocks", "DeleteLatency", "DeleteThroughput", "DiskQueueDepth", "DMLLatency", "DMLThroughput", "EngineUptime", "FailedSqlStatements", "FreeableMemory", "FreeLocalStorage", "FreeStorageSpace", "InsertLatency", "InsertThroughput", "LoginFailures", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "NetworkThroughput", "Queries", "ReadIOPS", "ReadLatency", "ReadThroughput", "ReplicaLag", "ResultSetCacheHitRatio", "SelectLatency", "SelectThroughput", "SwapUsage", "TotalConnections", "UpdateLatency", "UpdateThroughput", "VolumeBytesUsed", "VolumeReadIOPS", "VolumeWriteIOPS", "WriteIOPS", "WriteLatency", "WriteThroughput"},
@@ -132,6 +133,7 @@ func init() {
 		"AWS/Logs":             {"LogGroupName", "DestinationType", "FilterName"},
 		"AWS/ML":               {"MLModelId", "RequestMode"},
 		"AWS/NATGateway":       {"NatGatewayId"},
+		"AWS/NetworkELB":       {"LoadBalancer", "TargetGroup", "AvailabilityZone"},
 		"AWS/OpsWorks":         {"StackId", "LayerId", "InstanceId"},
 		"AWS/Redshift":         {"NodeID", "ClusterIdentifier"},
 		"AWS/RDS":              {"DBInstanceIdentifier", "DBClusterIdentifier", "DbClusterIdentifier", "DatabaseClass", "EngineName", "Role"},
@@ -183,6 +185,18 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 		data, err = e.handleGetEbsVolumeIds(ctx, parameters, queryContext)
 		break
 	case "ec2_instance_attribute":
+		region := parameters.Get("region").MustString()
+		dsInfo := e.getDsInfo(region)
+		cfg, err := e.getAwsConfig(dsInfo)
+		if err != nil {
+			return nil, errors.New("Failed to call ec2:DescribeInstances")
+		}
+		sess, err := session.NewSession(cfg)
+		if err != nil {
+			return nil, errors.New("Failed to call ec2:DescribeInstances")
+		}
+		e.ec2Svc = ec2.New(sess, cfg)
+
 		data, err = e.handleGetEc2InstanceAttribute(ctx, parameters, queryContext)
 		break
 	}
@@ -373,14 +387,16 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 
 	var filters []*ec2.Filter
 	for k, v := range filterJson {
-		if vv, ok := v.([]string); ok {
-			var vvvv []*string
+		if vv, ok := v.([]interface{}); ok {
+			var vvvvv []*string
 			for _, vvv := range vv {
-				vvvv = append(vvvv, &vvv)
+				if vvvv, ok := vvv.(string); ok {
+					vvvvv = append(vvvvv, &vvvv)
+				}
 			}
 			filters = append(filters, &ec2.Filter{
 				Name:   aws.String(k),
-				Values: vvvv,
+				Values: vvvvv,
 			})
 		}
 	}
@@ -467,24 +483,13 @@ func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace stri
 }
 
 func (e *CloudWatchExecutor) ec2DescribeInstances(region string, filters []*ec2.Filter, instanceIds []*string) (*ec2.DescribeInstancesOutput, error) {
-	dsInfo := e.getDsInfo(region)
-	cfg, err := e.getAwsConfig(dsInfo)
-	if err != nil {
-		return nil, errors.New("Failed to call ec2:DescribeInstances")
-	}
-	sess, err := session.NewSession(cfg)
-	if err != nil {
-		return nil, errors.New("Failed to call ec2:DescribeInstances")
-	}
-	svc := ec2.New(sess, cfg)
-
 	params := &ec2.DescribeInstancesInput{
 		Filters:     filters,
 		InstanceIds: instanceIds,
 	}
 
 	var resp ec2.DescribeInstancesOutput
-	err = svc.DescribeInstancesPages(params,
+	err := e.ec2Svc.DescribeInstancesPages(params,
 		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
 			reservations, _ := awsutil.ValuesAtPath(page, "Reservations")
 			for _, reservation := range reservations {

@@ -21,33 +21,23 @@
 
 .playlist-active,
 .user-activity-low {
+  .react-resizable-handle
   .add-row-panel-hint,
   .dash-row-menu-container,
-  .panel-drop-zone
-  .dashnav-refresh-action,
-  .dashnav-zoom-out,
+  .navbar-button--refresh,
+  .navbar-buttons--zoom,
+  .navbar-buttons--actions,
   .panel-menu-container,
-  .dashnav-action-icons,
   .panel-info-corner--info,
-  .panel-info-corner--links,
-  .dashnav-move-timeframe  {
+  .panel-info-corner--links {
     opacity: 0;
     transition: all 1.5s ease-in-out 1s;
   }
 
-  // navbar buttons
-  .navbar {
-    border-color: transparent;
-    background: transparent;
-    transition: all 1.5s ease-in-out 1s;
-    .fa {
-      opacity: 0;
-      transition: all 1.5s ease-in-out 1s;
-    }
-  }
-
   .navbar {
     box-shadow: none;
+    background: transparent;
+    padding-left: $side-menu-width + 20px;
   }
 
   .navbar-page-btn {

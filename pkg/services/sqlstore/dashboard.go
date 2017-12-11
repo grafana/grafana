@@ -1,9 +1,6 @@
 package sqlstore
 
 import (
-	"bytes"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -189,137 +186,40 @@ type DashboardSearchProjection struct {
 }
 
 func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
-	var sql bytes.Buffer
-	params := make([]interface{}, 0)
 	limit := query.Limit
 	if limit == 0 {
 		limit = 1000
 	}
 
-	sql.WriteString(`
-	SELECT
-		dashboard.id,
-		dashboard.title,
-		dashboard.slug,
-		dashboard_tag.term,
-		dashboard.is_folder,
-		dashboard.folder_id,
-		folder.slug as folder_slug,
-		folder.title as folder_title
-	FROM `)
+	sb := NewSearchBuilder(query.SignedInUser, limit).
+		WithTags(query.Tags).
+		WithDashboardIdsIn(query.DashboardIds)
 
-	// add tags filter
-	if len(query.Tags) > 0 {
-		sql.WriteString(
-			`(
-		SELECT
-			dashboard.id FROM dashboard
-			LEFT OUTER JOIN dashboard_tag ON dashboard_tag.dashboard_id = dashboard.id
-		`)
-		if query.IsStarred {
-			sql.WriteString(" INNER JOIN star on star.dashboard_id = dashboard.id")
-		}
-
-		sql.WriteString(` WHERE dashboard_tag.term IN (?` + strings.Repeat(",?", len(query.Tags)-1) + `) AND `)
-		for _, tag := range query.Tags {
-			params = append(params, tag)
-		}
-		params = createSearchWhereClause(query, &sql, params)
-		fmt.Printf("params2 %v", params)
-
-		// this ends the inner select (tag filtered part)
-		sql.WriteString(`
-			GROUP BY dashboard.id HAVING COUNT(dashboard.id) >= ?
-			LIMIT ?) as ids
-			INNER JOIN dashboard on ids.id = dashboard.id
-		`)
-
-		params = append(params, len(query.Tags))
-		params = append(params, limit)
-	} else {
-		sql.WriteString(`( SELECT dashboard.id FROM dashboard `)
-		if query.IsStarred {
-			sql.WriteString(" INNER JOIN star on star.dashboard_id = dashboard.id")
-		}
-		sql.WriteString(` WHERE `)
-		params = createSearchWhereClause(query, &sql, params)
-
-		sql.WriteString(`
-			LIMIT ?) as ids
-		INNER JOIN dashboard on ids.id = dashboard.id
-		`)
-		params = append(params, limit)
+	if query.IsStarred {
+		sb.IsStarred()
 	}
 
-	sql.WriteString(`
-		LEFT OUTER JOIN dashboard folder on folder.id = dashboard.folder_id
-		LEFT OUTER JOIN dashboard_tag on dashboard.id = dashboard_tag.dashboard_id`)
+	if len(query.Title) > 0 {
+		sb.WithTitle(query.Title)
+	}
 
-	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 5000"))
+	if len(query.Type) > 0 {
+		sb.WithType(query.Type)
+	}
+
+	if len(query.FolderIds) > 0 {
+		sb.WithFolderIds(query.FolderIds)
+	}
 
 	var res []DashboardSearchProjection
 
-	err := x.Sql(sql.String(), params...).Find(&res)
+	sql, params := sb.ToSql()
+	err := x.Sql(sql, params...).Find(&res)
 	if err != nil {
 		return nil, err
 	}
 
 	return res, nil
-}
-
-func createSearchWhereClause(query *search.FindPersistedDashboardsQuery, sql *bytes.Buffer, params []interface{}) []interface{} {
-	sql.WriteString(` dashboard.org_id=?`)
-	params = append(params, query.SignedInUser.OrgId)
-
-	if query.IsStarred {
-		sql.WriteString(` AND star.user_id=?`)
-		params = append(params, query.SignedInUser.UserId)
-	}
-
-	if len(query.DashboardIds) > 0 {
-		sql.WriteString(` AND dashboard.id IN (?` + strings.Repeat(",?", len(query.DashboardIds)-1) + `)`)
-		for _, dashboardId := range query.DashboardIds {
-			params = append(params, dashboardId)
-		}
-	}
-
-	if query.SignedInUser.OrgRole != m.ROLE_ADMIN {
-		allowedDashboardsSubQuery := ` AND (dashboard.has_acl = 0 OR dashboard.id in (
-			SELECT distinct d.id AS DashboardId
-			FROM dashboard AS d
-	      		LEFT JOIN dashboard_acl as da on d.folder_id = da.dashboard_id or d.id = da.dashboard_id
-	      		LEFT JOIN user_group_member as ugm on ugm.user_group_id =  da.user_group_id
-	      		LEFT JOIN org_user ou on ou.role = da.role
-			WHERE
-			  d.has_acl = 1 and
-				(da.user_id = ? or ugm.user_id = ? or ou.id is not null)
-			  and d.org_id = ?
-			)
-		)`
-
-		sql.WriteString(allowedDashboardsSubQuery)
-		params = append(params, query.SignedInUser.UserId, query.SignedInUser.UserId, query.SignedInUser.OrgId)
-	}
-
-	if len(query.Title) > 0 {
-		sql.WriteString(" AND dashboard.title " + dialect.LikeStr() + " ?")
-		params = append(params, "%"+query.Title+"%")
-	}
-
-	if len(query.Type) > 0 && query.Type == "dash-folder" {
-		sql.WriteString(" AND dashboard.is_folder = 1")
-	}
-
-	if len(query.Type) > 0 && query.Type == "dash-db" {
-		sql.WriteString(" AND dashboard.is_folder = 0")
-	}
-
-	if query.FolderId > 0 {
-		sql.WriteString(" AND dashboard.folder_id = ?")
-		params = append(params, query.FolderId)
-	}
-
-	return params
 }
 
 func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
@@ -440,7 +340,7 @@ func GetDashboards(query *m.GetDashboardsQuery) error {
 func GetDashboardsByPluginId(query *m.GetDashboardsByPluginIdQuery) error {
 	var dashboards = make([]*m.Dashboard, 0)
 
-	err := x.Where("org_id=? AND plugin_id=?", query.OrgId, query.PluginId).Find(&dashboards)
+	err := x.Where("org_id=? AND plugin_id=? AND is_folder=0", query.OrgId, query.PluginId).Find(&dashboards)
 	query.Result = dashboards
 
 	if err != nil {

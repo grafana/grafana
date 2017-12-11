@@ -68,6 +68,15 @@ func NewDashboard(title string) *Dashboard {
 	return dash
 }
 
+// NewDashboardFolder creates a new dashboard folder
+func NewDashboardFolder(title string) *Dashboard {
+	folder := NewDashboard(title)
+	folder.Data.Set("schemaVersion", 16)
+	folder.Data.Set("editable", true)
+	folder.Data.Set("hideControls", true)
+	return folder
+}
+
 // GetTags turns the tags in data json into go string array
 func (dash *Dashboard) GetTags() []string {
 	return dash.Data.Get("tags").MustStringArray()

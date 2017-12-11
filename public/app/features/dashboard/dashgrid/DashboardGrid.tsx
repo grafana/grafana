@@ -11,7 +11,7 @@ import sizeMe from 'react-sizeme';
 
 let lastGridWidth = 1200;
 
-function GridWrapper({size, layout, onLayoutChange, children, onResize, onResizeStop, onWidthChange}) {
+function GridWrapper({size, layout, onLayoutChange, children, onResize, onResizeStop, onWidthChange, className}) {
   if (size.width === 0) {
     console.log('size is zero!');
   }
@@ -25,12 +25,12 @@ function GridWrapper({size, layout, onLayoutChange, children, onResize, onResize
   return (
     <ReactGridLayout
       width={lastGridWidth}
-      className="layout"
+      className={className}
       isDraggable={true}
       isResizable={true}
       measureBeforeMount={false}
       containerPadding={[0, 0]}
-      useCSSTransforms={false}
+      useCSSTransforms={true}
       margin={[GRID_CELL_VMARGIN, GRID_CELL_VMARGIN]}
       cols={GRID_COLUMN_COUNT}
       rowHeight={GRID_CELL_HEIGHT}
@@ -63,6 +63,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.onResize = this.onResize.bind(this);
     this.onResizeStop = this.onResizeStop.bind(this);
     this.onWidthChange = this.onWidthChange.bind(this);
+
+    this.state = {animated: false};
 
     // subscribe to dashboard events
     this.dashboard = this.panelContainer.getDashboard();
@@ -134,6 +136,14 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.panelMap[newItem.i].resizeDone();
   }
 
+  componentDidMount() {
+    setTimeout(() => {
+      this.setState(() => {
+        return {animated: true};
+      });
+    });
+  }
+
   renderPanels() {
     const panelElements = [];
 
@@ -152,6 +162,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   render() {
     return (
       <SizedReactLayoutGrid
+        className={classNames({'layout': true, 'animated': this.state.animated})}
         layout={this.buildLayout()}
         onLayoutChange={this.onLayoutChange}
         onWidthChange={this.onWidthChange}

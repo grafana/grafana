@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import coreModule from '../../core/core_module';
 
@@ -11,10 +9,12 @@ export class PlaylistEditCtrl {
   playlist: any = {
     interval: '5m',
   };
+
   playlistItems: any = [];
   dashboardresult: any = [];
   tagresult: any = [];
   navModel: any;
+  isNew: boolean;
 
   /** @ngInject */
   constructor(
@@ -24,7 +24,9 @@ export class PlaylistEditCtrl {
     $route,
     navModelSrv
   ) {
-    this.navModel = navModelSrv.getNav('dashboards', 'playlists');
+
+    this.navModel = navModelSrv.getNav('dashboards', 'playlists', 0);
+    this.isNew = $route.current.params.id;
 
     if ($route.current.params.id) {
       var playlistId = $route.current.params.id;
@@ -102,10 +104,6 @@ export class PlaylistEditCtrl {
       }, () => {
         this.$scope.appEvent('alert-error', ['Unable to save playlist', '']);
       });
-  }
-
-  isNew() {
-    return !this.playlist.id;
   }
 
   isPlaylistEmpty() {

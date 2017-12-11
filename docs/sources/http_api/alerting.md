@@ -133,6 +133,37 @@ Content-Type: application/json
 }
 ```
 
+## Pause all alerts
+
+`POST /api/admin/pause-all-alerts`
+
+```http
+POST /api/admin/pause-all-alerts HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+{
+  "paused": true
+}
+```
+
+JSON Body Schema:
+
+- **paused** – Can be `true` or `false`. True to pause an alert. False to unpause an alert.
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+{
+  "state":   "Paused",
+  "message": "alert paused",
+  "alertsAffected": 1
+}
+```
+
 ## Get alert notifications
 
 `GET /api/alert-notifications`

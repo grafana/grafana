@@ -1,4 +1,5 @@
 $gf-form-margin: 3px;
+$input-border: 1px solid $input-border-color;
 
 .gf-form {
   margin-bottom: $gf-form-margin;
@@ -7,7 +8,6 @@ $gf-form-margin: 3px;
   align-items: center;
   text-align: left;
   position: relative;
-  font-size: $font-size-sm;
 
   &--offset-1 {
     margin-left: $spacer;
@@ -19,6 +19,15 @@ $gf-form-margin: 3px;
 
   &--flex-end {
     justify-content: flex-end;
+  }
+
+  &--alt {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .gf-form-label {
+      padding: 4px 0;
+    }
   }
 }
 
@@ -55,17 +64,15 @@ $gf-form-margin: 3px;
 
 .gf-form-label {
   padding: $input-padding-y $input-padding-x;
-  margin-right: $gf-form-margin;
   flex-shrink: 0;
   font-weight: $font-weight-semi-bold;
 
   background-color: $input-label-bg;
   display: block;
-  font-size: $font-size-sm;
 
   border: $input-btn-border-width solid $input-label-border-color;
-  @include border-radius($label-border-radius-sm);
-
+  border-right: none;
+  border-radius: $label-border-radius;
 
   &--grow {
     flex-grow: 1;
@@ -80,10 +87,10 @@ $gf-form-margin: 3px;
 .gf-form-pre {
   display: block;
   flex-grow: 1;
-  font-size: $font-size-sm;
   margin: 0;
   margin-right: $gf-form-margin;
   border: $input-btn-border-width solid transparent;
+  border-left: none;
   @include border-radius($label-border-radius-sm);
 }
 
@@ -109,14 +116,14 @@ $gf-form-margin: 3px;
   width: 100%;
   padding: $input-padding-y $input-padding-x;
   margin-right: $gf-form-margin;
-  font-size: $font-size-base;
+  font-size: $font-size-md;
   line-height: $input-line-height;
   color: $input-color;
   background-color: $input-bg;
   background-image: none;
   background-clip: padding-box;
-  border: 1px solid $input-border-color;
-  @include border-radius($input-border-radius-sm);
+  border: $input-border;
+  border-radius: $input-border-radius;
   @include box-shadow($input-box-shadow);
   white-space: nowrap;
   overflow: hidden;
@@ -268,6 +275,8 @@ $gf-form-margin: 3px;
   position: relative;
   background-color: $input-bg;
   padding-right: $input-padding-x;
+  border: $input-border;
+  border-radius: $input-border-radius;
 
   &::after {
     position: absolute;
@@ -278,6 +287,10 @@ $gf-form-margin: 3px;
     font: normal normal normal $font-size-sm/1 FontAwesome;
     content: '\f0d7';
     pointer-events: none;
+  }
+
+  .gf-form-input {
+    border: none;
   }
 }
 

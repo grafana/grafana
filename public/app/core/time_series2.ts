@@ -1,4 +1,5 @@
 import kbn from 'app/core/utils/kbn';
+import {getFlotTickDecimals} from 'app/core/utils/ticks';
 import _ from 'lodash';
 
 function matchSeriesOverride(aliasOrRegex, seriesAlias) {
@@ -14,6 +15,48 @@ function matchSeriesOverride(aliasOrRegex, seriesAlias) {
 
 function translateFillOption(fill) {
   return fill === 0 ? 0.001 : fill/10;
+}
+
+/**
+ * Calculate decimals for legend and update values for each series.
+ * @param data series data
+ * @param panel
+ */
+export function updateLegendValues(data: TimeSeries[], panel) {
+  for (let i = 0; i < data.length; i++) {
+    let series = data[i];
+    let yaxes = panel.yaxes;
+    let axis = yaxes[series.yaxis - 1];
+    let {tickDecimals, scaledDecimals} = getFlotTickDecimals(data, axis);
+    let formater = kbn.valueFormats[panel.yaxes[series.yaxis - 1].format];
+
+    // decimal override
+    if (_.isNumber(panel.decimals)) {
+      series.updateLegendValues(formater, panel.decimals, null);
+    } else {
+      // auto decimals
+      // legend and tooltip gets one more decimal precision
+      // than graph legend ticks
+      tickDecimals = (tickDecimals || -1) + 1;
+      series.updateLegendValues(formater, tickDecimals, scaledDecimals + 2);
+    }
+  }
+}
+
+export function getDataMinMax(data: TimeSeries[]) {
+  let datamin = null;
+  let datamax = null;
+
+  for (let series of data) {
+    if (datamax === null || datamax < series.stats.max) {
+      datamax = series.stats.max;
+    }
+    if (datamin === null || datamin > series.stats.min) {
+      datamin = series.stats.min;
+    }
+  }
+
+  return {datamin, datamax};
 }
 
 export default class TimeSeries {

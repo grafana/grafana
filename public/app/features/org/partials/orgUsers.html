@@ -1,34 +1,52 @@
-<navbar model="ctrl.navModel"></navbar>
+<!-- <navbar model="ctrl.navModel"></navbar> -->
+<!--  -->
+<!-- <div class="page&#45;container"> -->
+<!-- 	<div class="page&#45;header"> -->
+<!-- 		<page&#45;h1 model="ctrl.navModel"></page&#45;h1> -->
+<!--  -->
+<!-- 		<button class="btn btn&#45;success" ng&#45;click="ctrl.openAddUsersView()" ng&#45;hide="ctrl.externalUserMngLinkUrl"> -->
+<!-- 			<span>{{ctrl.addUsersBtnName}}</span> -->
+<!-- 		</button> -->
+<!--  -->
+<!-- 		<div class="page&#45;header&#45;tabs"> -->
+<!--  -->
+<!-- 			<a class="btn btn&#45;inverse" ng&#45;href="{{ctrl.externalUserMngLinkUrl}}" target="_blank" ng&#45;if="ctrl.externalUserMngLinkUrl"> -->
+<!-- 				<i class="fa fa&#45;external&#45;link&#45;square"></i> -->
+<!-- 				{{ctrl.addUsersBtnName}} -->
+<!--       </a> -->
+<!--  -->
+<!-- 			<ul class="gf&#45;tabs"> -->
+<!-- 				<li class="gf&#45;tabs&#45;item"> -->
+<!-- 					<a class="gf&#45;tabs&#45;link" ng&#45;click="ctrl.editor.index = 0" ng&#45;class="{active: ctrl.editor.index === 0}"> -->
+<!-- 						Users ({{ctrl.users.length}}) -->
+<!-- 					</a> -->
+<!-- 				</li> -->
+<!-- 				<li class="gf&#45;tabs&#45;item" ng&#45;show="ctrl.pendingInvites.length"> -->
+<!-- 					<a class="gf&#45;tabs&#45;link" ng&#45;click="ctrl.editor.index = 1" ng&#45;class="{active: ctrl.editor.index === 1}"> -->
+<!-- 						Pending Invites ({{ctrl.pendingInvites.length}}) -->
+<!-- 					</a> -->
+<!-- 				</li> -->
+<!-- 			</ul> -->
+<!-- 		</div> -->
+<!-- 	</div> -->
 
-<div class="page-container">
-	<div class="page-header">
-		<page-h1 model="ctrl.navModel"></page-h1>
+<page-header model="ctrl.navModel"></page-header>
 
+<div class="page-container page-body">
+  <div class="page-action-bar">
+    <div class="page-action-bar__spacer"></div>
+    <button class="btn btn-inverse" ng-show="ctrl.pendingInvites.length" ng-click="ctrl.editor.index = 1">
+      Pending Invites ({{ctrl.pendingInvites.length}})
+    </button>
 		<button class="btn btn-success" ng-click="ctrl.openAddUsersView()" ng-hide="ctrl.externalUserMngLinkUrl">
+      <i class="fa fa-plus"></i>
 			<span>{{ctrl.addUsersBtnName}}</span>
 		</button>
-
-		<div class="page-header-tabs">
-
-			<a class="btn btn-inverse" ng-href="{{ctrl.externalUserMngLinkUrl}}" target="_blank" ng-if="ctrl.externalUserMngLinkUrl">
-				<i class="fa fa-external-link-square"></i>
-				{{ctrl.addUsersBtnName}}
-      </a>
-
-			<ul class="gf-tabs">
-				<li class="gf-tabs-item">
-					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 0" ng-class="{active: ctrl.editor.index === 0}">
-						Users ({{ctrl.users.length}})
-					</a>
-				</li>
-				<li class="gf-tabs-item" ng-show="ctrl.pendingInvites.length">
-					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 1" ng-class="{active: ctrl.editor.index === 1}">
-						Pending Invites ({{ctrl.pendingInvites.length}})
-					</a>
-				</li>
-			</ul>
-		</div>
-	</div>
+    <a class="btn btn-inverse" ng-href="{{ctrl.externalUserMngLinkUrl}}" target="_blank" ng-if="ctrl.externalUserMngLinkUrl">
+      <i class="fa fa-external-link-square"></i>
+      {{ctrl.addUsersBtnName}}
+    </a>
+  </div>
 
   <div class="grafana-info-box" ng-if="ctrl.externalUserMngInfo">
     <span ng-bind-html="ctrl.externalUserMngInfo"></span>
@@ -41,26 +59,26 @@
           <th></th>
           <th>Login</th>
           <th>Email</th>
-					<th>
-						Seen
-						<tip>Time since user was seen using Grafana</tip>
-					</th>
+          <th>
+            Seen
+            <tip>Time since user was seen using Grafana</tip>
+          </th>
           <th>Role</th>
           <th style="width: 34px;"></th>
         </tr>
       </thead>
       <tr ng-repeat="user in ctrl.users">
         <td class="width-4 text-center">
-					<img class="filter-table__avatar" ng-src="{{user.avatarUrl}}"></img>
-				</td>
+          <img class="filter-table__avatar" ng-src="{{user.avatarUrl}}"></img>
+        </td>
         <td>{{user.login}}</td>
         <td><span class="ellipsis">{{user.email}}</span></td>
-				<td>{{user.lastSeenAtAge}}</td>
+        <td>{{user.lastSeenAtAge}}</td>
         <td>
-					<div class="gf-form-select-wrapper width-9">
-						<select type="text" ng-model="user.role" class="gf-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="ctrl.updateOrgUser(user)">
-						</select>
-					</div>
+          <div class="gf-form-select-wrapper width-9">
+            <select type="text" ng-model="user.role" class="gf-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="ctrl.updateOrgUser(user)">
+            </select>
+          </div>
         </td>
         <td>
           <a ng-click="ctrl.removeUser(user)" class="btn btn-danger btn-mini">

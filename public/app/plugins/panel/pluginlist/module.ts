@@ -1,10 +1,9 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import {PanelCtrl} from '../../../features/panel/panel_ctrl';
 
 class PluginListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
+  static scrollable = true;
 
   pluginList: any[];
   viewModel: any;
@@ -15,6 +14,7 @@ class PluginListCtrl extends PanelCtrl {
   /** @ngInject */
   constructor($scope, $injector, private backendSrv, private $location) {
     super($scope, $injector);
+
     _.defaults(this.panel, this.panelDefaults);
 
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));

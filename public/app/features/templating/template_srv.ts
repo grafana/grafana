@@ -12,7 +12,6 @@ export class TemplateSrv {
   private index = {};
   private grafanaVariables = {};
   private builtIns = {};
-  private filters = {};
 
   constructor() {
     this.builtIns['__interval'] = {text: '1s', value: '1s'};
@@ -26,7 +25,6 @@ export class TemplateSrv {
 
   updateTemplateData() {
     this.index = {};
-    this.filters = {};
 
     for (var i = 0; i < this.variables.length; i++) {
       var variable = this.variables[i];

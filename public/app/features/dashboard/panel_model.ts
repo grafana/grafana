@@ -29,6 +29,7 @@ export class PanelModel {
   minSpan?: number;
   collapsed?: boolean;
   panels?: any;
+  soloMode?: boolean;
 
   // non persisted
   fullscreen: boolean;

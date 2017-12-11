@@ -154,7 +154,7 @@ describe('when transforming time series table', () => {
       var rawData = {
         annotations: [
           {
-            min: 1000,
+            time: 1000,
             text: 'hej',
             tags: ['tags', 'asd'],
             title: 'title',

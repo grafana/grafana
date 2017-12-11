@@ -4,6 +4,7 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import {PanelModel} from '../panel_model';
 import {PanelContainer} from './PanelContainer';
+import ScrollBar from 'app/core/components/ScrollBar/ScrollBar';
 
 export interface AddPanelPanelProps {
   panel: PanelModel;
@@ -72,8 +73,18 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
   render() {
     return (
       <div className="panel-container">
-        <div className="add-panel">{this.state.panelPlugins.map(this.renderPanelItem.bind(this))}</div>
+        <div className="add-panel">
+          <div className="add-panel__header">
+            <i className="gicon gicon-add-panel"></i>
+            <span className="add-panel__title">New Panel</span>
+            <span className="add-panel__sub-title">Select a visualization</span>
+          </div>
+          <ScrollBar className="add-panel__items">
+            {this.state.panelPlugins.map(this.renderPanelItem.bind(this))}
+          </ScrollBar>
+        </div>
       </div>
     );
   }
 }
+

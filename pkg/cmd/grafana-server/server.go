@@ -3,11 +3,16 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/services/provisioning"
 
 	"golang.org/x/sync/errgroup"
 
@@ -21,7 +26,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/social"
 	"github.com/grafana/grafana/pkg/tracing"
 )
@@ -54,11 +61,18 @@ func (g *GrafanaServerImpl) Start() {
 	g.writePIDFile()
 
 	initSql()
+
 	metrics.Init(setting.Cfg)
 	search.Init()
 	login.Init()
 	social.NewOAuthService()
 	plugins.Init()
+
+	if err := provisioning.StartUp(setting.DatasourcesPath); err != nil {
+		logger.Error("Failed to provision Grafana from config", "error", err)
+		g.Shutdown(1, "Startup failed")
+		return
+	}
 
 	closer, err := tracing.Init(setting.Cfg)
 	if err != nil {
@@ -84,7 +98,13 @@ func (g *GrafanaServerImpl) Start() {
 		return
 	}
 
+	SendSystemdNotification("READY=1")
 	g.startHttpServer()
+}
+
+func initSql() {
+	sqlstore.NewEngine()
+	sqlstore.EnsureAdminUser()
 }
 
 func (g *GrafanaServerImpl) initLogging() {
@@ -151,4 +171,29 @@ func (g *GrafanaServerImpl) writePIDFile() {
 	}
 
 	g.log.Info("Writing PID file", "path", *pidFile, "pid", pid)
+}
+
+func SendSystemdNotification(state string) error {
+	notifySocket := os.Getenv("NOTIFY_SOCKET")
+
+	if notifySocket == "" {
+		return fmt.Errorf("NOTIFY_SOCKET environment variable empty or unset.")
+	}
+
+	socketAddr := &net.UnixAddr{
+		Name: notifySocket,
+		Net:  "unixgram",
+	}
+
+	conn, err := net.DialUnix(socketAddr.Net, nil, socketAddr)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.Write([]byte(state))
+
+	conn.Close()
+
+	return err
 }

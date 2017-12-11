@@ -25,6 +25,10 @@
 		<span class="gf-form-label width-9">Version</span>
 		<select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.esVersion" ng-options="f.value as f.name for f in ctrl.esVersions"></select>
 	</div>
+    <div class="gf-form max-width-30" ng-if="ctrl.current.jsonData.esVersion>=56">
+        <span class="gf-form-label width-15">Max concurrent Shard Requests</span>
+        <input class="gf-form-input" type="text"  ng-model='ctrl.current.jsonData.maxConcurrentShardRequests' placeholder="" required></input>
+    </div>
 	<div class="gf-form-inline">
 		<div class="gf-form">
 			<span class="gf-form-label width-9">Min interval</span>

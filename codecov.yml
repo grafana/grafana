@@ -7,5 +7,7 @@ coverage:
     project: yes
     patch: yes
     changes: no
-    
-comment: false
+
+comment:
+  layout: "diff"
+  behavior: "once"

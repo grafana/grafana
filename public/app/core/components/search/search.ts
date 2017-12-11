@@ -1,7 +1,6 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import coreModule from '../../core_module';
+import { SearchSrv } from 'app/core/services/search_srv';
 
 export class SearchCtrl {
   isOpen: boolean;
@@ -10,23 +9,22 @@ export class SearchCtrl {
   selectedIndex: number;
   results: any;
   currentSearchId: number;
-  tagsMode: boolean;
   showImport: boolean;
   dismiss: any;
   ignoreClose: any;
-  // triggers fade animation class
-  openCompleted: boolean;
+  isLoading: boolean;
+  initialFolderFilterTitle: string;
 
   /** @ngInject */
-  constructor($scope, private $location, private $timeout, private backendSrv, public contextSrv, $rootScope) {
+  constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv, $rootScope) {
     $rootScope.onAppEvent('show-dash-search', this.openSearch.bind(this), $scope);
     $rootScope.onAppEvent('hide-dash-search', this.closeSearch.bind(this), $scope);
+
+    this.initialFolderFilterTitle = "All";
   }
 
   closeSearch() {
     this.isOpen = this.ignoreClose;
-    this.openCompleted = false;
-    this.contextSrv.isSearching = this.isOpen;
   }
 
   openSearch(evt, payload) {
@@ -36,28 +34,19 @@ export class SearchCtrl {
     }
 
     this.isOpen = true;
-    this.contextSrv.isSearching = true;
     this.giveSearchFocus = 0;
     this.selectedIndex = -1;
     this.results = [];
-    this.query = { query: '', tag: [], starred: false, mode: 'tree' };
+    this.query = { query: '', tag: [], starred: false };
     this.currentSearchId = 0;
     this.ignoreClose = true;
+    this.isLoading = true;
 
     if (payload && payload.starred) {
       this.query.starred = true;
     }
 
-    if (payload && payload.tagsMode) {
-      return this.$timeout(() => {
-        this.ignoreClose = false;
-        this.giveSearchFocus = this.giveSearchFocus + 1;
-        this.getTags();
-      }, 100);
-    }
-
     this.$timeout(() => {
-      this.openCompleted = true;
       this.ignoreClose = false;
       this.giveSearchFocus = this.giveSearchFocus + 1;
       this.search();
@@ -75,76 +64,86 @@ export class SearchCtrl {
       this.moveSelection(-1);
     }
     if (evt.keyCode === 13) {
-      if (this.tagsMode) {
-        var tag = this.results[this.selectedIndex];
-        if (tag) {
-          this.filterByTag(tag.term, null);
-        }
-        return;
-      }
+      const flattenedResult = this.getFlattenedResultForNavigation();
+      const currentItem = flattenedResult[this.selectedIndex];
 
-      var selectedDash = this.results[this.selectedIndex];
-      if (selectedDash) {
-        this.$location.search({});
-        this.$location.path(selectedDash.url);
+      if (currentItem) {
+        if (currentItem.dashboardIndex !== undefined) {
+          const selectedDash = this.results[currentItem.folderIndex].items[currentItem.dashboardIndex];
+
+          if (selectedDash) {
+            this.$location.search({});
+            this.$location.path(selectedDash.url);
+          }
+        } else {
+          const selectedFolder = this.results[currentItem.folderIndex];
+
+          if (selectedFolder) {
+            selectedFolder.toggle(selectedFolder);
+          }
+        }
       }
     }
   }
 
   moveSelection(direction) {
-    var max = (this.results || []).length;
-    var newIndex = this.selectedIndex + direction;
+    if (this.results.length === 0) {
+      return;
+    }
+
+    const flattenedResult = this.getFlattenedResultForNavigation();
+    const currentItem = flattenedResult[this.selectedIndex];
+
+    if (currentItem) {
+      if (currentItem.dashboardIndex !== undefined) {
+        this.results[currentItem.folderIndex].items[currentItem.dashboardIndex].selected = false;
+      } else {
+        this.results[currentItem.folderIndex].selected = false;
+      }
+    }
+
+    if (direction === 0) {
+      this.selectedIndex = -1;
+      return;
+    }
+
+    const max = flattenedResult.length;
+    let newIndex = this.selectedIndex + direction;
     this.selectedIndex = ((newIndex %= max) < 0) ? newIndex + max : newIndex;
+    const selectedItem = flattenedResult[this.selectedIndex];
+
+    if (selectedItem.dashboardIndex === undefined && this.results[selectedItem.folderIndex].id === 0) {
+      this.moveSelection(direction);
+      return;
+    }
+
+    if (selectedItem.dashboardIndex !== undefined) {
+      if (!this.results[selectedItem.folderIndex].expanded) {
+        this.moveSelection(direction);
+        return;
+      }
+
+      this.results[selectedItem.folderIndex].items[selectedItem.dashboardIndex].selected = true;
+      return;
+    }
+
+    if (this.results[selectedItem.folderIndex].hideHeader) {
+      this.moveSelection(direction);
+      return;
+    }
+
+    this.results[selectedItem.folderIndex].selected = true;
   }
 
   searchDashboards() {
-    this.tagsMode = false;
     this.currentSearchId = this.currentSearchId + 1;
     var localSearchId = this.currentSearchId;
 
-    return this.backendSrv.search(this.query).then(results => {
+    return this.searchSrv.search(this.query).then(results => {
       if (localSearchId < this.currentSearchId) { return; }
-
-      let byId = _.groupBy(results, 'id');
-      let byFolderId = _.groupBy(results, 'folderId');
-      let finalList = [];
-
-      // add missing parent folders
-      _.each(results, (hit, index) => {
-        if (hit.folderId && !byId[hit.folderId]) {
-          const folder = {
-            id: hit.folderId,
-            uri: `db/${hit.folderSlug}`,
-            title: hit.folderTitle,
-            type: 'dash-folder'
-          };
-          byId[hit.folderId] = folder;
-          results.splice(index, 0, folder);
-        }
-      });
-
-      // group by folder
-      for (let hit of results) {
-        if (hit.folderId) {
-          hit.type = "dash-child";
-        } else {
-          finalList.push(hit);
-        }
-
-        hit.url = 'dashboard/' + hit.uri;
-
-        if (hit.type === 'dash-folder') {
-          if (!byFolderId[hit.id]) {
-            continue;
-          }
-
-          for (let child of byFolderId[hit.id]) {
-            finalList.push(child);
-          }
-        }
-      }
-
-      this.results = finalList;
+      this.results = results || [];
+      this.isLoading = false;
+      this.moveSelection(1);
     });
   }
 
@@ -153,13 +152,11 @@ export class SearchCtrl {
     return query.query === '' && query.starred === false && query.tag.length === 0;
   }
 
-  filterByTag(tag, evt) {
-    this.query.tag.push(tag);
-    this.search();
-    this.giveSearchFocus = this.giveSearchFocus + 1;
-    if (evt) {
-      evt.stopPropagation();
-      evt.preventDefault();
+  filterByTag(tag) {
+    if (_.indexOf(this.query.tag, tag) === -1) {
+      this.query.tag.push(tag);
+      this.search();
+      this.giveSearchFocus = this.giveSearchFocus + 1;
     }
   }
 
@@ -172,13 +169,9 @@ export class SearchCtrl {
   }
 
   getTags() {
-    return this.backendSrv.get('/api/dashboards/tags').then((results) => {
-      this.tagsMode = !this.tagsMode;
+    return this.searchSrv.getDashboardTags().then((results) => {
       this.results = results;
       this.giveSearchFocus = this.giveSearchFocus + 1;
-      if ( !this.tagsMode ) {
-        this.search();
-      }
     });
   }
 
@@ -190,10 +183,37 @@ export class SearchCtrl {
 
   search() {
     this.showImport = false;
-    this.selectedIndex = 0;
+    this.selectedIndex = -1;
     this.searchDashboards();
   }
 
+  folderExpanding() {
+    this.moveSelection(0);
+  }
+
+  private getFlattenedResultForNavigation() {
+    let folderIndex = 0;
+
+    return _.flatMap(this.results, (s) => {
+      let result = [];
+
+      result.push({
+        folderIndex: folderIndex
+      });
+
+      let dashboardIndex = 0;
+
+      result = result.concat(_.map(s.items || [], (i) => {
+        return {
+          folderIndex: folderIndex,
+          dashboardIndex: dashboardIndex++
+        };
+      }));
+
+      folderIndex++;
+      return result;
+    });
+  }
 }
 
 export function searchDirective() {

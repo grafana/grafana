@@ -8,19 +8,14 @@
     .tabbed-view-header {
       padding: 1.5em 1rem 0 1rem;
     }
-
-    .gf-tabs-link.active {
-      background-color: $panel-bg;
-    }
-    .tabbed-view-body {
-      min-height: 200px;
-    }
   }
 }
 
 .tabbed-view-header {
+  background: $page-header-bg;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
   @include clearfix();
-  @include brand-bottom-border();
 }
 
 .tabbed-view-title {
@@ -31,7 +26,7 @@
 
 .tabbed-view-panel-title {
   float: left;
-  padding-top: 1rem;
+  padding-top: 9px;
   margin: 0 2rem 0 0;
 }
 
@@ -41,7 +36,7 @@
   margin: 0;
   background-color: transparent;
   border: none;
-  padding: ($tabs-padding-top + $tabs-top-margin) $spacer $tabs-padding-bottom;
+  padding: $tabs-padding;
   color: $text-color;
   i {
     font-size: 120%;

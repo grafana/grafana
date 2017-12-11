@@ -1,13 +1,14 @@
 import moment from 'moment';
 import _ from 'lodash';
 
-import {GRID_COLUMN_COUNT, GRID_CELL_HEIGHT, REPEAT_DIR_VERTICAL} from 'app/core/constants';
+import {GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL} from 'app/core/constants';
 import {DEFAULT_ANNOTATION_COLOR} from 'app/core/utils/colors';
 import {Emitter} from 'app/core/utils/emitter';
 import {contextSrv} from 'app/core/services/context_srv';
 import sortByKeys from 'app/core/utils/sort_by_keys';
 
 import {PanelModel} from './panel_model';
+import {DashboardMigrator} from './dashboard_migration';
 
 export class DashboardModel {
   id: any;
@@ -180,6 +181,14 @@ export class DashboardModel {
       if (panel.id > max) {
         max = panel.id;
       }
+
+      if (panel.collapsed) {
+        for (let rowPanel of panel.panels) {
+          if (rowPanel.id > max) {
+            max = rowPanel.id;
+          }
+        }
+      }
     }
 
     return max + 1;
@@ -250,16 +259,6 @@ export class DashboardModel {
       }
     }
 
-    // for (let panel of this.panels) {
-    //   if (panel.repeat) {
-    //     if (!cleanUpOnly) {
-    //       this.repeatPanel(panel);
-    //     }
-    //   } else if (panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
-    //     panelsToRemove.push(panel);
-    //   }
-    // }
-
     // remove panels
     _.pull(this.panels, ...panelsToRemove);
 
@@ -273,21 +272,11 @@ export class DashboardModel {
       return sourcePanel;
     }
 
-    var clone = new PanelModel(sourcePanel.getSaveModel());
+    let clone = new PanelModel(sourcePanel.getSaveModel());
     clone.id = this.getNextPanelId();
 
-    if (sourcePanel.type === 'row') {
-      // for row clones we need to figure out panels under row to clone and where to insert clone
-      let rowPanels = this.getRowPanels(sourcePanelIndex);
-      clone.panels = _.map(rowPanels, panel => panel.getSaveModel());
-
-      // insert after preceding row's panels
-      let insertPos = sourcePanelIndex + ((rowPanels.length + 1)*valueIndex);
-      this.panels.splice(insertPos, 0, clone);
-    } else {
-      // insert after source panel + value index
-      this.panels.splice(sourcePanelIndex+valueIndex, 0, clone);
-    }
+    // insert after source panel + value index
+    this.panels.splice(sourcePanelIndex+valueIndex, 0, clone);
 
     clone.repeatIteration = this.iteration;
     clone.repeatPanelId = sourcePanel.id;
@@ -295,36 +284,59 @@ export class DashboardModel {
     return clone;
   }
 
-  getBottomYForRow() {
+  getRowRepeatClone(sourcePanel, valueIndex, sourcePanelIndex) {
+    // if first clone return source
+    if (valueIndex === 0) {
+      if (!sourcePanel.collapsed) {
+        let rowPanels = this.getRowPanels(sourcePanelIndex);
+        sourcePanel.panels = rowPanels;
+      }
+      return sourcePanel;
+    }
+
+    let clone = new PanelModel(sourcePanel.getSaveModel());
+    // for row clones we need to figure out panels under row to clone and where to insert clone
+    let rowPanels, insertPos;
+    if (sourcePanel.collapsed) {
+      rowPanels = _.cloneDeep(sourcePanel.panels);
+      clone.panels = rowPanels;
+      // insert copied row after preceding row
+      insertPos = sourcePanelIndex + valueIndex;
+    } else {
+      rowPanels = this.getRowPanels(sourcePanelIndex);
+      clone.panels = _.map(rowPanels, panel => panel.getSaveModel());
+      // insert copied row after preceding row's panels
+      insertPos = sourcePanelIndex + ((rowPanels.length + 1)*valueIndex);
+    }
+    this.panels.splice(insertPos, 0, clone);
+
+    this.updateRepeatedPanelIds(clone);
+    return clone;
   }
 
   repeatPanel(panel: PanelModel, panelIndex: number) {
-    var variable = _.find(this.templating.list, {name: panel.repeat});
+    let variable = _.find(this.templating.list, {name: panel.repeat});
     if (!variable) {
       return;
     }
 
-    var selected;
-    if (variable.current.text === 'All') {
-      selected = variable.options.slice(1, variable.options.length);
-    } else {
-      selected = _.filter(variable.options, {selected: true});
+    if (panel.type === 'row') {
+      this.repeatRow(panel, panelIndex, variable);
+      return;
     }
 
+    let selectedOptions = this.getSelectedVariableOptions(variable);
     let minWidth = panel.minSpan || 6;
     let xPos = 0;
     let yPos = panel.gridPos.y;
 
-    for (let index = 0; index < selected.length; index++) {
-      var option = selected[index];
-      var copy = this.getPanelRepeatClone(panel, index, panelIndex);
+    for (let index = 0; index < selectedOptions.length; index++) {
+      let option = selectedOptions[index];
+      let copy;
 
+      copy = this.getPanelRepeatClone(panel, index, panelIndex);
       copy.scopedVars = {};
       copy.scopedVars[variable.name] = option;
-
-      if (copy.type === 'row') {
-        // place row below row panels
-      }
 
       if (panel.repeatDirection === REPEAT_DIR_VERTICAL) {
         copy.gridPos.y = yPos;
@@ -333,7 +345,7 @@ export class DashboardModel {
         // set width based on how many are selected
         // assumed the repeated panels should take up full row width
 
-        copy.gridPos.w = Math.max(GRID_COLUMN_COUNT / selected.length, minWidth);
+        copy.gridPos.w = Math.max(GRID_COLUMN_COUNT / selectedOptions.length, minWidth);
         copy.gridPos.x = xPos;
         copy.gridPos.y = yPos;
 
@@ -346,6 +358,90 @@ export class DashboardModel {
         }
       }
     }
+  }
+
+  repeatRow(panel: PanelModel, panelIndex: number, variable) {
+    let selectedOptions = this.getSelectedVariableOptions(variable);
+    let yPos = panel.gridPos.y;
+
+    function setScopedVars(panel, variableOption) {
+      panel.scopedVars = {};
+      panel.scopedVars[variable.name] = variableOption;
+    }
+
+    for (let optionIndex = 0; optionIndex < selectedOptions.length; optionIndex++) {
+      let option = selectedOptions[optionIndex];
+      let rowCopy = this.getRowRepeatClone(panel, optionIndex, panelIndex);
+      setScopedVars(rowCopy, option);
+
+      let rowHeight = this.getRowHeight(rowCopy);
+      let rowPanels = rowCopy.panels || [];
+      let panelBelowIndex;
+
+      if (panel.collapsed) {
+        // For collapsed row just copy its panels and set scoped vars and proper IDs
+        _.each(rowPanels, (rowPanel, i) => {
+          setScopedVars(rowPanel, option);
+          if (optionIndex > 0) {
+            this.updateRepeatedPanelIds(rowPanel);
+          }
+        });
+        rowCopy.gridPos.y += optionIndex;
+        yPos += optionIndex;
+        panelBelowIndex = panelIndex + optionIndex + 1;
+      } else {
+        // insert after 'row' panel
+        let insertPos = panelIndex + ((rowPanels.length + 1) * optionIndex) + 1;
+        _.each(rowPanels, (rowPanel, i) => {
+          setScopedVars(rowPanel, option);
+          if (optionIndex > 0) {
+            let cloneRowPanel = new PanelModel(rowPanel);
+            this.updateRepeatedPanelIds(cloneRowPanel);
+            // For exposed row additionally set proper Y grid position and add it to dashboard panels
+            cloneRowPanel.gridPos.y += rowHeight * optionIndex;
+            this.panels.splice(insertPos+i, 0, cloneRowPanel);
+          }
+        });
+        rowCopy.panels = [];
+        rowCopy.gridPos.y += rowHeight * optionIndex;
+        yPos += rowHeight;
+        panelBelowIndex = insertPos+rowPanels.length;
+      }
+
+      // Update gridPos for panels below
+      for (let i = panelBelowIndex; i< this.panels.length; i++) {
+        this.panels[i].gridPos.y += yPos;
+      }
+    }
+  }
+
+  updateRepeatedPanelIds(panel: PanelModel) {
+    panel.repeatPanelId = panel.id;
+    panel.id = this.getNextPanelId();
+    panel.repeatIteration = this.iteration;
+    panel.repeat = null;
+    return panel;
+  }
+
+  getSelectedVariableOptions(variable) {
+    let selectedOptions;
+    if (variable.current.text === 'All') {
+      selectedOptions = variable.options.slice(1, variable.options.length);
+    } else {
+      selectedOptions = _.filter(variable.options, {selected: true});
+    }
+    return selectedOptions;
+  }
+
+  getRowHeight(rowPanel: PanelModel): number {
+    if (!rowPanel.panels || rowPanel.panels.length === 0) {
+      return 0;
+    }
+    const positions = _.map(rowPanel.panels, 'gridPos');
+    const maxPos = _.maxBy(positions, (pos) => {
+      return pos.y + pos.h;
+    });
+    return maxPos.h + 1;
   }
 
   removePanel(panel: PanelModel) {
@@ -554,416 +650,7 @@ export class DashboardModel {
   }
 
   private updateSchema(old) {
-    var i, j, k;
-    var oldVersion = this.schemaVersion;
-    var panelUpgrades = [];
-    this.schemaVersion = 16;
-
-    if (oldVersion === this.schemaVersion) {
-      return;
-    }
-
-    // version 2 schema changes
-    if (oldVersion < 2) {
-      if (old.services) {
-        if (old.services.filter) {
-          this.time = old.services.filter.time;
-          this.templating.list = old.services.filter.list || [];
-        }
-      }
-
-      panelUpgrades.push(function(panel) {
-        // rename panel type
-        if (panel.type === 'graphite') {
-          panel.type = 'graph';
-        }
-
-        if (panel.type !== 'graph') {
-          return;
-        }
-
-        if (_.isBoolean(panel.legend)) {
-          panel.legend = {show: panel.legend};
-        }
-
-        if (panel.grid) {
-          if (panel.grid.min) {
-            panel.grid.leftMin = panel.grid.min;
-            delete panel.grid.min;
-          }
-
-          if (panel.grid.max) {
-            panel.grid.leftMax = panel.grid.max;
-            delete panel.grid.max;
-          }
-        }
-
-        if (panel.y_format) {
-          panel.y_formats[0] = panel.y_format;
-          delete panel.y_format;
-        }
-
-        if (panel.y2_format) {
-          panel.y_formats[1] = panel.y2_format;
-          delete panel.y2_format;
-        }
-      });
-    }
-
-    // schema version 3 changes
-    if (oldVersion < 3) {
-      // ensure panel ids
-      var maxId = this.getNextPanelId();
-      panelUpgrades.push(function(panel) {
-        if (!panel.id) {
-          panel.id = maxId;
-          maxId += 1;
-        }
-      });
-    }
-
-    // schema version 4 changes
-    if (oldVersion < 4) {
-      // move aliasYAxis changes
-      panelUpgrades.push(function(panel) {
-        if (panel.type !== 'graph') {
-          return;
-        }
-        _.each(panel.aliasYAxis, function(value, key) {
-          panel.seriesOverrides = [{alias: key, yaxis: value}];
-        });
-        delete panel.aliasYAxis;
-      });
-    }
-
-    if (oldVersion < 6) {
-      // move pulldowns to new schema
-      var annotations = _.find(old.pulldowns, {type: 'annotations'});
-
-      if (annotations) {
-        this.annotations = {
-          list: annotations.annotations || [],
-        };
-      }
-
-      // update template variables
-      for (i = 0; i < this.templating.list.length; i++) {
-        var variable = this.templating.list[i];
-        if (variable.datasource === void 0) {
-          variable.datasource = null;
-        }
-        if (variable.type === 'filter') {
-          variable.type = 'query';
-        }
-        if (variable.type === void 0) {
-          variable.type = 'query';
-        }
-        if (variable.allFormat === void 0) {
-          variable.allFormat = 'glob';
-        }
-      }
-    }
-
-    if (oldVersion < 7) {
-      if (old.nav && old.nav.length) {
-        this.timepicker = old.nav[0];
-      }
-
-      // ensure query refIds
-      panelUpgrades.push(function(panel) {
-        _.each(
-          panel.targets,
-          function(target) {
-            if (!target.refId) {
-              target.refId = this.getNextQueryLetter(panel);
-            }
-          }.bind(this),
-        );
-      });
-    }
-
-    if (oldVersion < 8) {
-      panelUpgrades.push(function(panel) {
-        _.each(panel.targets, function(target) {
-          // update old influxdb query schema
-          if (target.fields && target.tags && target.groupBy) {
-            if (target.rawQuery) {
-              delete target.fields;
-              delete target.fill;
-            } else {
-              target.select = _.map(target.fields, function(field) {
-                var parts = [];
-                parts.push({type: 'field', params: [field.name]});
-                parts.push({type: field.func, params: []});
-                if (field.mathExpr) {
-                  parts.push({type: 'math', params: [field.mathExpr]});
-                }
-                if (field.asExpr) {
-                  parts.push({type: 'alias', params: [field.asExpr]});
-                }
-                return parts;
-              });
-              delete target.fields;
-              _.each(target.groupBy, function(part) {
-                if (part.type === 'time' && part.interval) {
-                  part.params = [part.interval];
-                  delete part.interval;
-                }
-                if (part.type === 'tag' && part.key) {
-                  part.params = [part.key];
-                  delete part.key;
-                }
-              });
-
-              if (target.fill) {
-                target.groupBy.push({type: 'fill', params: [target.fill]});
-                delete target.fill;
-              }
-            }
-          }
-        });
-      });
-    }
-
-    // schema version 9 changes
-    if (oldVersion < 9) {
-      // move aliasYAxis changes
-      panelUpgrades.push(function(panel) {
-        if (panel.type !== 'singlestat' && panel.thresholds !== '') {
-          return;
-        }
-
-        if (panel.thresholds) {
-          var k = panel.thresholds.split(',');
-
-          if (k.length >= 3) {
-            k.shift();
-            panel.thresholds = k.join(',');
-          }
-        }
-      });
-    }
-
-    // schema version 10 changes
-    if (oldVersion < 10) {
-      // move aliasYAxis changes
-      panelUpgrades.push(function(panel) {
-        if (panel.type !== 'table') {
-          return;
-        }
-
-        _.each(panel.styles, function(style) {
-          if (style.thresholds && style.thresholds.length >= 3) {
-            var k = style.thresholds;
-            k.shift();
-            style.thresholds = k;
-          }
-        });
-      });
-    }
-
-    if (oldVersion < 12) {
-      // update template variables
-      _.each(this.templating.list, function(templateVariable) {
-        if (templateVariable.refresh) {
-          templateVariable.refresh = 1;
-        }
-        if (!templateVariable.refresh) {
-          templateVariable.refresh = 0;
-        }
-        if (templateVariable.hideVariable) {
-          templateVariable.hide = 2;
-        } else if (templateVariable.hideLabel) {
-          templateVariable.hide = 1;
-        }
-      });
-    }
-
-    if (oldVersion < 12) {
-      // update graph yaxes changes
-      panelUpgrades.push(function(panel) {
-        if (panel.type !== 'graph') {
-          return;
-        }
-        if (!panel.grid) {
-          return;
-        }
-
-        if (!panel.yaxes) {
-          panel.yaxes = [
-            {
-              show: panel['y-axis'],
-              min: panel.grid.leftMin,
-              max: panel.grid.leftMax,
-              logBase: panel.grid.leftLogBase,
-              format: panel.y_formats[0],
-              label: panel.leftYAxisLabel,
-            },
-            {
-              show: panel['y-axis'],
-              min: panel.grid.rightMin,
-              max: panel.grid.rightMax,
-              logBase: panel.grid.rightLogBase,
-              format: panel.y_formats[1],
-              label: panel.rightYAxisLabel,
-            },
-          ];
-
-          panel.xaxis = {
-            show: panel['x-axis'],
-          };
-
-          delete panel.grid.leftMin;
-          delete panel.grid.leftMax;
-          delete panel.grid.leftLogBase;
-          delete panel.grid.rightMin;
-          delete panel.grid.rightMax;
-          delete panel.grid.rightLogBase;
-          delete panel.y_formats;
-          delete panel.leftYAxisLabel;
-          delete panel.rightYAxisLabel;
-          delete panel['y-axis'];
-          delete panel['x-axis'];
-        }
-      });
-    }
-
-    if (oldVersion < 13) {
-      // update graph yaxes changes
-      panelUpgrades.push(function(panel) {
-        if (panel.type !== 'graph') {
-          return;
-        }
-        if (!panel.grid) {
-          return;
-        }
-
-        panel.thresholds = [];
-        var t1: any = {},
-          t2: any = {};
-
-        if (panel.grid.threshold1 !== null) {
-          t1.value = panel.grid.threshold1;
-          if (panel.grid.thresholdLine) {
-            t1.line = true;
-            t1.lineColor = panel.grid.threshold1Color;
-            t1.colorMode = 'custom';
-          } else {
-            t1.fill = true;
-            t1.fillColor = panel.grid.threshold1Color;
-            t1.colorMode = 'custom';
-          }
-        }
-
-        if (panel.grid.threshold2 !== null) {
-          t2.value = panel.grid.threshold2;
-          if (panel.grid.thresholdLine) {
-            t2.line = true;
-            t2.lineColor = panel.grid.threshold2Color;
-            t2.colorMode = 'custom';
-          } else {
-            t2.fill = true;
-            t2.fillColor = panel.grid.threshold2Color;
-            t2.colorMode = 'custom';
-          }
-        }
-
-        if (_.isNumber(t1.value)) {
-          if (_.isNumber(t2.value)) {
-            if (t1.value > t2.value) {
-              t1.op = t2.op = 'lt';
-              panel.thresholds.push(t1);
-              panel.thresholds.push(t2);
-            } else {
-              t1.op = t2.op = 'gt';
-              panel.thresholds.push(t1);
-              panel.thresholds.push(t2);
-            }
-          } else {
-            t1.op = 'gt';
-            panel.thresholds.push(t1);
-          }
-        }
-
-        delete panel.grid.threshold1;
-        delete panel.grid.threshold1Color;
-        delete panel.grid.threshold2;
-        delete panel.grid.threshold2Color;
-        delete panel.grid.thresholdLine;
-      });
-    }
-
-    if (oldVersion < 14) {
-      this.graphTooltip = old.sharedCrosshair ? 1 : 0;
-    }
-
-    if (oldVersion < 16) {
-      this.upgradeToGridLayout(old);
-    }
-
-    if (panelUpgrades.length === 0) {
-      return;
-    }
-
-    for (j = 0; j < this.panels.length; j++) {
-      for (k = 0; k < panelUpgrades.length; k++) {
-        panelUpgrades[k].call(this, this.panels[j]);
-      }
-    }
-  }
-
-  upgradeToGridLayout(old) {
-    let yPos = 0;
-    let widthFactor = GRID_COLUMN_COUNT / 12;
-    //let rowIds = 1000;
-    //
-
-    if (!old.rows) {
-      return;
-    }
-
-    for (let row of old.rows) {
-      let xPos = 0;
-      let height: any = row.height || 250;
-
-      // if (this.meta.keepRows) {
-      //   this.panels.push({
-      //     id: rowIds++,
-      //     type: 'row',
-      //     title: row.title,
-      //     x: 0,
-      //     y: yPos,
-      //     height: 1,
-      //     width: 12
-      //   });
-      //
-      //   yPos += 1;
-      // }
-
-      if (_.isString(height)) {
-        height = parseInt(height.replace('px', ''), 10);
-      }
-
-      const rowGridHeight = Math.ceil(height / GRID_CELL_HEIGHT);
-
-      for (let panel of row.panels) {
-        const panelWidth = Math.floor(panel.span) * widthFactor;
-
-        // should wrap to next row?
-        if (xPos + panelWidth >= GRID_COLUMN_COUNT) {
-          yPos += rowGridHeight;
-        }
-
-        panel.gridPos = {x: xPos, y: yPos, w: panelWidth, h: rowGridHeight};
-
-        delete panel.span;
-
-        xPos += panel.gridPos.w;
-
-        this.panels.push(new PanelModel(panel));
-      }
-
-      yPos += rowGridHeight;
-    }
+    let migrator = new DashboardMigrator(this);
+    migrator.updateSchema(old);
   }
 }

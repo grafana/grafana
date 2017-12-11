@@ -17,7 +17,7 @@
     "max-line-length": [true, 150],
     "member-access": false,
     "no-arg": true,
-    "no-bitwise": true,
+    "no-bitwise": false,
     "no-console": [true,
       "debug",
       "info",

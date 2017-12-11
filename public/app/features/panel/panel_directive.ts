@@ -1,7 +1,6 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import Drop from 'tether-drop';
+import PerfectScrollbar from 'perfect-scrollbar';
 
 var module = angular.module('grafana.directives');
 
@@ -21,7 +20,7 @@ var panelTemplate = `
     </div>
 
     <div class="panel-content">
-      <ng-transclude></ng-transclude>
+      <ng-transclude class="panel-height-helper"></ng-transclude>
     </div>
   </div>
 
@@ -54,7 +53,7 @@ var panelTemplate = `
   </div>
 `;
 
-module.directive('grafanaPanel', function($rootScope, $document) {
+module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
   return {
     restrict: 'E',
     template: panelTemplate,
@@ -62,9 +61,11 @@ module.directive('grafanaPanel', function($rootScope, $document) {
     scope: { ctrl: "=" },
     link: function(scope, elem) {
       var panelContainer = elem.find('.panel-container');
+      var panelContent = elem.find('.panel-content');
       var cornerInfoElem = elem.find('.panel-info-corner');
       var ctrl = scope.ctrl;
       var infoDrop;
+      var panelScrollbar;
 
       // the reason for handling these classes this way is for performance
       // limit the watchers on panels etc
@@ -72,7 +73,6 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       var lastHasAlertRule = false;
       var lastAlertState;
       var hasAlertRule;
-      var lastHeight = 0;
 
       function mouseEnter() {
         panelContainer.toggleClass('panel-hover-highlight', true);
@@ -84,11 +84,11 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         ctrl.dashboard.setPanelFocus(0);
       }
 
-      // set initial height
-      if (!ctrl.containerHeight) {
-        ctrl.calculatePanelHeight();
-        panelContainer.css({minHeight: ctrl.containerHeight});
-        lastHeight = ctrl.containerHeight;
+      function panelHeightUpdated() {
+        panelContent.css({height: ctrl.height + 'px'});
+        if (panelScrollbar) {
+          panelScrollbar.update();
+        }
       }
 
       // set initial transparency
@@ -97,12 +97,26 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         panelContainer.addClass('panel-transparent', true);
       }
 
-      ctrl.events.on('render', () => {
-        if (lastHeight !== ctrl.containerHeight) {
-          panelContainer.css({minHeight: ctrl.containerHeight});
-          lastHeight = ctrl.containerHeight;
+      // update scrollbar after mounting
+      ctrl.events.on('component-did-mount', () => {
+        if (ctrl.__proto__.constructor.scrollable) {
+          panelScrollbar = new PerfectScrollbar(panelContent[0]);
         }
+      });
 
+      ctrl.events.on('panel-size-changed', () => {
+        ctrl.calculatePanelHeight();
+        panelHeightUpdated();
+        $timeout(() => {
+          ctrl.render();
+        });
+      });
+
+      // set initial height
+      ctrl.calculatePanelHeight();
+      panelHeightUpdated();
+
+      ctrl.events.on('render', () => {
         if (transparentLastState !== ctrl.panel.transparent) {
           panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
           transparentLastState = ctrl.panel.transparent;
@@ -181,6 +195,10 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         if (infoDrop) {
           infoDrop.destroy();
         }
+
+        if (panelScrollbar) {
+          panelScrollbar.update();
+        }
       });
     }
   };
@@ -190,11 +208,11 @@ module.directive('panelHelpCorner', function($rootScope) {
   return {
     restrict: 'E',
     template: `
-      <span class="alert-error panel-error small pointer" ng-if="ctrl.error" ng-click="ctrl.openInspector()">
-        <span data-placement="top" bs-tooltip="ctrl.error">
-          <i class="fa fa-exclamation"></i><span class="panel-error-arrow"></span>
-        </span>
-      </span>
+    <span class="alert-error panel-error small pointer" ng-if="ctrl.error" ng-click="ctrl.openInspector()">
+    <span data-placement="top" bs-tooltip="ctrl.error">
+    <i class="fa fa-exclamation"></i><span class="panel-error-arrow"></span>
+    </span>
+    </span>
     `,
     link: function(scope, elem) {
     }

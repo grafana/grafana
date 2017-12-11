@@ -5,12 +5,12 @@ import _ from 'lodash';
 
 export class FolderPickerCtrl {
   initialTitle: string;
-  initialFolderId: number;
+  initialFolderId?: number;
   labelClass: string;
   onChange: any;
+  onLoad: any;
   rootName = 'Root';
-
-  private folder: any;
+  folder: any;
 
   /** @ngInject */
   constructor(private backendSrv) {
@@ -18,12 +18,19 @@ export class FolderPickerCtrl {
       this.labelClass = "width-7";
     }
 
-    if (this.initialFolderId > 0) {
+    if (this.initialFolderId && this.initialFolderId > 0) {
       this.getOptions('').then(result => {
         this.folder = _.find(result, {value: this.initialFolderId});
+        this.onFolderLoad();
       });
     } else {
-      this.folder = {text: this.initialTitle, value: null};
+      if (this.initialTitle) {
+        this.folder = {text: this.initialTitle, value: null};
+      } else {
+        this.folder = {text: this.rootName, value: 0};
+      }
+
+      this.onFolderLoad();
     }
   }
 
@@ -34,14 +41,24 @@ export class FolderPickerCtrl {
     };
 
     return this.backendSrv.search(params).then(result => {
-      if (query === "") {
-        result.unshift({title: this.rootName, value: 0});
+      if (query === '' ||
+          query.toLowerCase() === "r" ||
+          query.toLowerCase() === "ro" ||
+          query.toLowerCase() === "roo" ||
+          query.toLowerCase() === "root") {
+        result.unshift({title: this.rootName, id: 0});
       }
 
       return _.map(result, item => {
         return {text: item.title, value: item.id};
       });
     });
+  }
+
+  onFolderLoad() {
+    if (this.onLoad) {
+      this.onLoad({$folder: {id: this.folder.value, title: this.folder.text}});
+    }
   }
 
   onFolderChange(option) {
@@ -70,11 +87,12 @@ export function folderPicker() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      initialTitle: "<",
+      initialTitle: '<',
       initialFolderId: '<',
       labelClass: '@',
       rootName: '@',
-      onChange: '&'
+      onChange: '&',
+      onLoad: '&'
     }
   };
 }

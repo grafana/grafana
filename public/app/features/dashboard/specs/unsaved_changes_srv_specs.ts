@@ -5,7 +5,6 @@ import 'app/features/dashboard/dashboard_srv';
 describe("unsavedChangesSrv", function() {
   var _unsavedChangesSrv;
   var _dashboardSrv;
-  var _location;
   var _contextSrvStub = { isEditor: true };
   var _rootScope;
   var tracker;
@@ -22,7 +21,6 @@ describe("unsavedChangesSrv", function() {
   beforeEach(angularMocks.inject(function(unsavedChangesSrv, $location, $rootScope, dashboardSrv) {
     _unsavedChangesSrv = unsavedChangesSrv;
     _dashboardSrv = dashboardSrv;
-    _location = $location;
     _rootScope = $rootScope;
   }));
 

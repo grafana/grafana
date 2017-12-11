@@ -13,7 +13,7 @@ import * as datemath from 'app/core/utils/datemath';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
-import {impressions} from 'app/features/dashboard/impression_store';
+import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
 
@@ -40,7 +40,10 @@ System.config({
     css: 'vendor/plugin-css/css.js'
   },
   meta: {
-    '*': {esModule: true}
+    '*': {
+      esModule: true,
+      authorization: true,
+    }
   }
 });
 
@@ -75,7 +78,7 @@ exposeToPlugin('vendor/npm/rxjs/Rx', {
 });
 
 exposeToPlugin('app/features/dashboard/impression_store', {
-  impressions: impressions,
+  impressions: impressionSrv,
   __esModule: true
 });
 
