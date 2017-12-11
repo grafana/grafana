@@ -24,6 +24,7 @@ func RenderToPng(c *middleware.Context) {
 		OrgId:    c.OrgId,
 		Timeout:  queryReader.Get("timeout", "60"),
 		Timezone: queryReader.Get("tz", ""),
+		Encoding: queryReader.Get("encoding", ""),
 	}
 
 	pngPath, err := renderer.RenderToPng(renderOpts)
