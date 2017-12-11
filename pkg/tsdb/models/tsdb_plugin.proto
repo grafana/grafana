@@ -5,7 +5,6 @@ package plugins;
 
 import "google/protobuf/timestamp.proto";
 
-// Message represents a simple message sent to the Echo service.
 message TsdbQuery {
   Timerange timerange = 1;
   DatasourceInfo datasource = 2;
@@ -37,7 +36,8 @@ message QueryResult {
   string refId = 3;
   string metaJson = 4;
   repeated TsdbSeries series = 5;
-  //repeat TsdbTables tables = x;    
+
+  //repeat TsdbTables tables = x;
 }
 
 message DatasourceInfo {
@@ -55,7 +55,7 @@ message DatasourceInfo {
 message TsdbSeries {
   string name = 1;
   map<string, string> tags = 2;
-  repeated Point points = 3; 
+  repeated Point points = 3;
 }
 
 message Point {

@@ -9,8 +9,6 @@ type GRPCClient struct {
 	proto.TsdbPluginClient
 }
 
-//Query(ctx context.Context, ds *models.DataSource, query *TsdbQuery) (*Response, error)
-
 func (m *GRPCClient) Query(ctx context.Context, req *proto.TsdbQuery) (*proto.Response, error) {
 	return m.TsdbPluginClient.Query(ctx, req)
 }
