@@ -86,20 +86,30 @@
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === 'delete'">
   <h3 class="dashboard-settings__header">Delete dashboard</h3>
 
-  <div ng-if="ctrl.dashboard.meta.canSave">
-    <div class="p-b-2" ng-if="ctrl.alertCount > 1">
-      <h5>This dashboard contains {{ctrl.alertCount}} alerts. Deleting this dashboard will also delete those alerts</h5>
-      <input type="text" class="gf-form-input width-16" style="display: inline-block;" placeholder="Type DELETE to confirm" ng-model="ctrl.confirmText" ng-change="ctrl.confirmTextChanged()">
-    </div>
-
-    <button class="btn btn-danger" ng-click="ctrl.deleteDashboard()" ng-disabled="!ctrl.confirmValid" >
-      <i class="fa fa-trash"></i>
-      Delete
-    </button>
+  <div class="p-b-2" ng-if="ctrl.alertCount > 1">
+    <h5>This dashboard contains {{ctrl.alertCount}} alerts. Deleting this dashboard will also delete those alerts</h5>
+    <input type="text" class="gf-form-input width-16" style="display: inline-block;" placeholder="Type DELETE to confirm" ng-model="ctrl.confirmText" ng-change="ctrl.confirmTextChanged()">
   </div>
 
-  <div ng-if="!ctrl.dashboard.meta.canSave">
-    <h5>You cannot delete this dashboard</h5>
-  </div>
-
+  <button class="btn btn-danger" ng-click="ctrl.deleteDashboard()" ng-disabled="!ctrl.confirmValid" >
+    <i class="fa fa-trash"></i>
+    Delete
+  </button>
 </div>
+
+<div class="dashboard-settings__content" ng-if="ctrl.viewId === '404'">
+  <h3 class="dashboard-settings__header">Settings view not found</h3>
+
+  <div>
+    <h5>The settings page could not be found or you do not have permission to access it</h5>
+  </div>
+</div>
+
+<div class="dashboard-settings__content" ng-if="ctrl.viewId === 'make_editable'">
+  <h3 class="dashboard-settings__header">Make Editable</h3>
+
+  <button class="btn btn-success" ng-click="ctrl.makeEditable()">
+    Make Editable
+  </button>
+</div>
+
