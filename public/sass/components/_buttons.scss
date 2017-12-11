@@ -92,6 +92,7 @@
 .btn-warning {
   @include buttonBackground($btn-warning-bg, $btn-warning-bg-hl);
 }
+
 // Danger and error appear as red
 .btn-danger {
   @include buttonBackground($btn-danger-bg, $btn-danger-bg-hl);
@@ -142,4 +143,7 @@
   }
 }
 
-
+.btn-p-x-2 {
+  padding-left: 20px;
+  padding-right: 20px;
+}
