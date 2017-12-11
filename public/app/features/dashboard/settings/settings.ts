@@ -7,6 +7,7 @@ export class SettingsCtrl {
   dashboard: DashboardModel;
   isOpen: boolean;
   viewId: string;
+  json: string;
 
   sections: any[] = [
     {title: 'General',     id: 'settings', icon: "fa fa-fw fa-sliders"},
@@ -31,21 +32,23 @@ export class SettingsCtrl {
     for (let section of this.sections) {
       const sectionParams = _.defaults({editview: section.id}, params);
       section.url = url + '?' + $.param(sectionParams);
-      console.log(section.url);
     }
-
-    this.viewId = params.editview;
-    $rootScope.onAppEvent("$routeUpdate", this.onRouteUpdated.bind(this), $scope);
 
     this.$scope.$on('$destroy', () => {
       this.dashboard.updateSubmenuVisibility();
       this.$rootScope.$broadcast("refresh");
     });
+
+    this.onRouteUpdated();
+    $rootScope.onAppEvent("$routeUpdate", this.onRouteUpdated.bind(this), $scope);
   }
 
   onRouteUpdated() {
-    console.log('settings route updated');
     this.viewId = this.$location.search().editview;
+
+    if (this.viewId) {
+      this.json = JSON.stringify(this.dashboard.getSaveModelClone(), null, 2);
+    }
   }
 
   hideSettings() {
