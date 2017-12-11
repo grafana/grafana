@@ -65,8 +65,7 @@ func (g *GrafanaServerImpl) Start() error {
 
 	pluginCloser, err := plugins.Init()
 	if err != nil {
-		g.log.Error("failed to start plugins", "error", err)
-		g.Shutdown(1, "Startup failed")
+		return fmt.Errorf("Failed to start plugins. error: %v", err)
 	}
 	defer pluginCloser()
 
