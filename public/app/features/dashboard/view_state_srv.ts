@@ -75,7 +75,7 @@ export class DashboardViewState {
     }
 
     // remember if editStateChanged
-    this.editStateChanged = state.edit !== this.state.edit;
+    this.editStateChanged = (state.edit || false) !== (this.state.edit || false);
 
     _.extend(this.state, state);
     this.dashboard.meta.fullscreen = this.state.fullscreen;

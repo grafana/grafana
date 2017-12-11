@@ -21,7 +21,10 @@ $gray-4:           #D8D9DA;
 $gray-5:           #ECECEC;
 $gray-6:           #f4f5f8;
 $gray-7:           #fbfbfb;
-$gray-blue:				 #292a2d;
+
+// $gray-blue:				 #292a2d;
+$gray-blue:        #212327;
+$input-black:      #09090B;
 
 $white:            #fff;
 
@@ -175,7 +178,7 @@ $btn-drag-image: '../img/grab_dark.svg';
 
 // Forms
 // -------------------------
-$input-bg:                       $black;
+$input-bg:                       $input-black;
 $input-bg-disabled:              $dark-3;
 
 $input-color:                    $gray-4;
@@ -185,7 +188,7 @@ $input-border-focus:             $input-border-color !default;
 $input-box-shadow-focus:         rgba(102,175,233,.6) !default;
 $input-color-placeholder:        $gray-1 !default;
 $input-label-bg:				         $gray-blue;
-$input-label-border-color:       $gray-blue;
+$input-label-border-color:       $dark-3;
 $input-invalid-border-color:     lighten($red, 5%);
 
 // Search

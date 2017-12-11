@@ -53,7 +53,7 @@ var panelTemplate = `
   </div>
 `;
 
-module.directive('grafanaPanel', function($rootScope, $document) {
+module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
   return {
     restrict: 'E',
     template: panelTemplate,
@@ -73,7 +73,6 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       var lastHasAlertRule = false;
       var lastAlertState;
       var hasAlertRule;
-      var lastHeight = 0;
 
       function mouseEnter() {
         panelContainer.toggleClass('panel-hover-highlight', true);
@@ -90,7 +89,6 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         if (panelScrollbar) {
           panelScrollbar.update();
         }
-        lastHeight = ctrl.height;
       }
 
       // set initial transparency
@@ -106,11 +104,19 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         }
       });
 
-      ctrl.events.on('render', () => {
-        if (lastHeight !== ctrl.height) {
-          panelHeightUpdated();
-        }
+      ctrl.events.on('panel-size-changed', () => {
+        ctrl.calculatePanelHeight();
+        panelHeightUpdated();
+        $timeout(() => {
+          ctrl.render();
+        });
+      });
 
+      // set initial height
+      ctrl.calculatePanelHeight();
+      panelHeightUpdated();
+
+      ctrl.events.on('render', () => {
         if (transparentLastState !== ctrl.panel.transparent) {
           panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
           transparentLastState = ctrl.panel.transparent;

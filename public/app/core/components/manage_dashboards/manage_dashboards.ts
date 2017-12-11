@@ -134,12 +134,12 @@ export class ManageDashboardsCtrl {
     const selectedDashboards = this.getDashboardsToMove();
 
     const template = '<move-to-folder-modal dismiss="dismiss()" ' +
-      'dashboards="model.dashboards" after-save="model.afterSave()">' +
+      'dashboards="model.dashboards" from-folder-id="model.fromFolderId" after-save="model.afterSave()">' +
       '</move-to-folder-modal>`';
     appEvents.emit('show-modal', {
       templateHtml: template,
       modalClass: 'modal--narrow',
-      model: { dashboards: selectedDashboards, afterSave: this.getDashboards.bind(this) }
+      model: { dashboards: selectedDashboards, fromFolderId: this.folderId ? Number(this.folderId) : 0, afterSave: this.getDashboards.bind(this) }
     });
   }
 
