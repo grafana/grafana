@@ -30,24 +30,20 @@ export class DashLinkEditorCtrl {
     this.mode = 'list';
   }
 
-  addLinkMode() {
-    this.mode = 'new';
-  }
-
-  editLinkMode(index) {
-    this.currentLink = index;
-    this.mode = 'edit';
-  }
-
-  addLink(type) {
-    this.dashboard.links.push({ type: type, icon: 'external link' });
-    //this.dashboard.updateSubmenuVisibility();
+  addLink() {
+    this.dashboard.links.push({ type: 'dashboard', icon: 'external link' });
+    this.dashboard.updateSubmenuVisibility();
     this.updated();
-    this.mode = 'list';
+    this.mode = 'new';
   }
 
   editLink(index) {
 
+  }
+
+  saveLink() {
+    this.updated();
+    this.backToList();
   }
 
   moveLink(index, dir) {
