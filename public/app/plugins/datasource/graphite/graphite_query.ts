@@ -121,7 +121,11 @@ export default class GraphiteQuery {
   }
 
   hasSelectMetric() {
-    return this.segments[this.segments.length - 1].value === 'select metric';
+    if (this.segments.length > 0) {
+      return this.segments[this.segments.length - 1].value === 'select metric';
+    } else {
+      return false;
+    }
   }
 
   addFunction(newFunc) {
