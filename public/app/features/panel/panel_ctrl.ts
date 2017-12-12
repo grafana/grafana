@@ -2,6 +2,7 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
 import {appEvents, profiler} from 'app/core/core';
+import { PanelModel } from 'app/features/dashboard/panel_model';
 import Remarkable from 'remarkable';
 import {GRID_CELL_HEIGHT, GRID_CELL_VMARGIN} from 'app/core/constants';
 
@@ -190,8 +191,9 @@ export class PanelCtrl {
 
   duplicate() {
     this.dashboard.duplicatePanel(this.panel);
+    let self = this;
     this.$timeout(() => {
-      this.$scope.$root.$broadcast('render');
+      self.$scope.$root.$broadcast('render');
     });
   }
 
@@ -223,21 +225,32 @@ export class PanelCtrl {
   }
 
   editPanelJson() {
-    this.publishAppEvent('show-json-editor', {
-      object: this.panel.getSaveModel(),
-      updateHandler: this.replacePanel.bind(this)
+    let editScope = this.$scope.$root.$new();
+    editScope.object = this.panel.getSaveModel();
+    editScope.updateHandler = this.replacePanel.bind(this);
+
+    this.publishAppEvent('show-modal', {
+      src: 'public/app/partials/edit_json.html',
+      scope: editScope
     });
   }
 
   replacePanel(newPanel, oldPanel) {
-    var index = _.indexOf(this.dashboard.panels, oldPanel);
-    this.dashboard.panels.splice(index, 1);
+    let dashboard = this.dashboard;
+    let index = _.findIndex(dashboard.panels, (panel) => {
+      return panel.id === oldPanel.id;
+    });
+    let deletedPanel = dashboard.panels.splice(index, 1);
+    this.dashboard.events.emit('panel-removed', deletedPanel);
 
     // adding it back needs to be done in next digest
     this.$timeout(() => {
+      newPanel = new PanelModel(newPanel);
       newPanel.id = oldPanel.id;
-      newPanel.width = oldPanel.width;
-      this.dashboard.panels.splice(index, 0, newPanel);
+
+      dashboard.panels.splice(index, 0, newPanel);
+      dashboard.sortPanelsByGridPos();
+      dashboard.events.emit('panel-added', newPanel);
     });
   }
 
