@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import './history_srv';
 
 import _ from 'lodash';

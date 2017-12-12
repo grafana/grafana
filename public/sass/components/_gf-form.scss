@@ -85,6 +85,14 @@ $input-border: 1px solid $input-border-color;
   }
 }
 
+.gf-form-label + .gf-form-label {
+  margin-right: $gf-form-margin;
+}
+
+.gf-form + .gf-form {
+  margin-right: $gf-form-margin;
+}
+
 .gf-form-pre {
   display: block;
   flex-grow: 1;
@@ -254,9 +262,6 @@ $input-border: 1px solid $input-border-color;
   margin-right: $gf-form-margin;
   line-height: $input-line-height;
   font-size: $font-size-sm;
-  box-shadow: none;
-  @include border-radius($label-border-radius-sm);
-  border: $input-btn-border-width solid transparent;
 
   flex-shrink: 0;
   flex-grow: 0;
