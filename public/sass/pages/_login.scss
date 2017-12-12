@@ -105,6 +105,7 @@ select:-webkit-autofill:focus {
   align-items: center;
   justify-content: center;
   flex-grow: 1;
+  max-width: 415px;
 }
 
 .login-tab-header {
@@ -173,30 +174,6 @@ select:-webkit-autofill:focus {
 
 .login-oauth {
   width: 100%;
-
-  .btn {
-    margin: 0 0 1rem;
-  }
-
-  .btn-google {
-    background: #dd4b39;
-    color: white;
-  }
-
-  .btn-github {
-    background: #555;
-    color: white;
-  }
-
-  .btn-grafana-com {
-    @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
-    box-shadow: $card-shadow;
-
-    img {
-      width: 19px;
-      vertical-align: sub;
-    }
-  }
 }
 
 .password-recovery {

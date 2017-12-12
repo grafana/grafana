@@ -1,7 +1,7 @@
 <div class="login container">
   <div class="login-content">
     <div class="login-branding">
-      <img class="logo-icon" src="public/img/grafana_icon.svg"></img>
+      <img class="logo-icon" src="public/img/grafana_icon.svg" alt="Grafana" />
       <i class="icon-gf icon-gf-grafana_wordmark"></i>
     </div>
     <div class="login-inner-box">
@@ -42,16 +42,20 @@
       </div>
       <div class="clearfix"></div>
       <div class="login-oauth text-center" ng-show="oauthEnabled">
-        <a class="btn btn-medium btn-google login-btn" href="login/google" target="_self" ng-if="oauth.google">
+        <a class="btn btn-medium btn-service btn-service--google login-btn" href="login/google" target="_self" ng-if="oauth.google">
+          <i class="btn-service-icon fa fa-google"></i>
           Sign in with Google
         </a>
-        <a class="btn btn-medium btn-github login-btn" href="login/github" target="_self" ng-if="oauth.github">
+        <a class="btn btn-medium btn-service btn-service--github login-btn" href="login/github" target="_self" ng-if="oauth.github">
+          <i class="btn-service-icon fa fa-github"></i>
           Sign in with GitHub
         </a>
-        <a class="btn btn-medium btn-grafana-com login-btn" href="login/grafana_com" target="_self" ng-if="oauth.grafana_com">
+        <a class="btn btn-medium btn-inverse btn-service btn-service--grafanacom login-btn" href="login/grafana_com" target="_self" ng-if="oauth.grafana_com">
+          <i class="btn-service-icon"></i>
           Sign in with Grafana.com
         </a>
-        <a class="btn btn-medium btn-generic-oauth login-btn" href="login/generic_oauth" target="_self" ng-if="oauth.generic_oauth">
+        <a class="btn btn-medium btn-inverse btn-service btn-service--oauth login-btn" href="login/generic_oauth" target="_self" ng-if="oauth.generic_oauth">
+          <i class="btn-service-icon fa fa-sign-in"></i>
           Sign in with {{oauth.generic_oauth.name}}
         </a>
       </div>
@@ -59,7 +63,7 @@
         <div class="login-signup-title p-r-1">
           New to Grafana?
         </div>
-        <a class="btn btn-medium btn-signup btn-p-x-2">
+        <a href="/signup" class="btn btn-medium btn-signup btn-p-x-2">
           Sign Up
         </a>
       </div>

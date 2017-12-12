@@ -237,3 +237,25 @@ $panel-padding: 0px 10px 5px 10px;
 // tabs
 $tabs-padding: 10px 15px 9px;
 
+$external-services: (
+  github: (
+    bgColor: #464646,
+    borderColor: #393939,
+    icon: ''
+  ),
+  google: (
+    bgColor: #e84d3c,
+    borderColor: #b83e31,
+    icon: ''
+  ),
+  grafanacom: (
+    bgColor: inherit,
+    borderColor: #393939,
+    icon: ''
+  ),
+  oauth: (
+    bgColor: inherit,
+    borderColor: #393939,
+    icon: ''
+  )
+) !default;

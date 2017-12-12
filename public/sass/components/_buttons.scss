@@ -143,7 +143,57 @@
   }
 }
 
+// Extra padding
 .btn-p-x-2 {
   padding-left: 20px;
   padding-right: 20px;
+}
+
+// External services
+// Usage:
+// <div class="btn btn-service btn-service--facebook">Button text</div>
+
+$btn-service-icon-width: 35px;
+.btn-service {
+  position: relative;
+}
+
+@each $service, $data in $external-services {
+  $serviceBgColor: map-get($data, bgColor);
+  $serviceBorderColor: map-get($data, borderColor);
+
+  .btn-service--#{$service} {
+    background-color: $serviceBgColor;
+    border: 1px solid $serviceBorderColor;
+
+    .btn-service-icon {
+      font-size: 24px; // Override
+      border-right: 1px solid $serviceBorderColor;
+    }
+  }
+}
+
+.btn-service-icon {
+  position: absolute;
+  left: 0;
+  height: 100%;
+  top: 0;
+  padding-left: .5rem;
+  padding-right: .5rem;
+  width: $btn-service-icon-width;
+  text-align: center;
+
+  &::before {
+    position: relative;
+    top: 4px;
+  }
+}
+
+.btn-service--grafanacom {
+  .btn-service-icon {
+    background-image: url(/public/img/grafana_mask_icon_white.svg);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 60%;
+  }
 }
