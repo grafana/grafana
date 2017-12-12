@@ -37,6 +37,7 @@
   font-size: $font-size-h3;
   padding-right: 60px;
   white-space: nowrap;
+  margin-bottom: $spacer;
 
   i {
     font-size: 25px;
@@ -48,7 +49,6 @@
 
 .dashboard-settings__header {
   font-size: $font-size-h3;
-  margin-bottom: 20px;
 }
 
 .dashboard-settings__nav-item {

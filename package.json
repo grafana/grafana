@@ -129,7 +129,7 @@
     "prop-types": "^15.6.0",
     "react": "^16.1.1",
     "react-dom": "^16.1.1",
-    "react-grid-layout": "^0.16.0",
+    "react-grid-layout": "^0.16.1",
     "react-sizeme": "^2.3.6",
     "remarkable": "^1.7.1",
     "rxjs": "^5.4.3",

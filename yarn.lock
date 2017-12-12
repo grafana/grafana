@@ -6447,10 +6447,6 @@ ng-annotate@^1.2.1:
     stringset "~0.2.1"
     tryor "~0.1.2"
 
-ngreact@^0.4.1:
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/ngreact/-/ngreact-0.4.1.tgz#53d8f0db7c687c6daa340827a5ef04a903c14701"
-
 ngtemplate-loader@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/ngtemplate-loader/-/ngtemplate-loader-2.0.1.tgz#9d7ed2e8a2363523ad7b64d74aac402d8daff3f3"
@@ -7942,9 +7938,9 @@ react-dom@^16.1.1:
     classnames "^2.2.5"
     prop-types "^15.5.10"
 
-react-grid-layout@^0.16.0:
-  version "0.16.0"
-  resolved "https://registry.yarnpkg.com/react-grid-layout/-/react-grid-layout-0.16.0.tgz#f74363cd134b2f8a763224d7b6287cbb68e6de05"
+react-grid-layout@^0.16.1:
+  version "0.16.1"
+  resolved "https://registry.yarnpkg.com/react-grid-layout/-/react-grid-layout-0.16.1.tgz#45eb5687da2ae6912b63c1c0b79b7fb6bbd32202"
   dependencies:
     classnames "2.x"
     lodash.isequal "^4.0.0"
