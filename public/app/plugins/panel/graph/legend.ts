@@ -222,7 +222,11 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           elem.append(seriesElements);
 
           if (!legendScrollbar) {
-            legendScrollbar = new PerfectScrollbar(elem[0]);
+            legendScrollbar = new PerfectScrollbar(elem[0], {
+              // Number of pixels the content height can surpass the container height without enabling the scroll bar.
+              scrollYMarginOffset: 2,
+              suppressScrollX: true
+            });
           } else {
             legendScrollbar.update();
           }
