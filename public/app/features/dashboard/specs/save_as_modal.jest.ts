@@ -1,4 +1,4 @@
-import { SaveDashboardAsCtrl } from '../dashboard_save_as';
+import { SaveDashboardAsModalCtrl } from '../save_as_modal;
 import { describe, it, expect } from 'test/lib/common';
 
 describe('saving dashboard as', () => {
@@ -21,7 +21,7 @@ describe('saving dashboard as', () => {
         },
       };
 
-      var ctrl = new SaveDashboardAsCtrl(mockDashboardSrv);
+      var ctrl = new SaveDashboardAsModalCtrl(mockDashboardSrv);
       var ctx: any = {
         clone: ctrl.clone,
         ctrl: ctrl,

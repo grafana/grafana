@@ -67,3 +67,15 @@
     padding-right: 5px;
   }
 }
+
+.dashboard-settings__aside-actions {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex-grow: 1;
+  margin: $spacer*3 $spacer*2 0 0;
+
+  button {
+    margin-bottom: 10px;
+  }
+}

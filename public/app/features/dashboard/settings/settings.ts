@@ -9,8 +9,8 @@ export class SettingsCtrl {
   viewId: string;
   json: string;
   alertCount: number;
-  confirmValid: boolean;
-  confirmText: string;
+  canSaveAs: boolean;
+  canDelete: boolean;
   sections: any[];
 
   /** @ngInject */
@@ -24,13 +24,11 @@ export class SettingsCtrl {
       this.$rootScope.$broadcast('refresh');
     });
 
-    this.alertCount = _.sumBy(this.dashboard.panels, panel => {
-      return panel.alert ? 1 : 0;
-    });
+    this.canSaveAs = contextSrv.isEditor;
+    this.canDelete = this.dashboard.meta.canSave;
 
-    this.confirmValid = this.alertCount === 0;
-    this.onRouteUpdated();
     this.buildSectionList();
+    this.onRouteUpdated();
 
     $rootScope.onAppEvent('$routeUpdate', this.onRouteUpdated.bind(this), $scope);
   }
@@ -55,20 +53,20 @@ export class SettingsCtrl {
 
     this.sections.push({ title: 'View JSON', id: 'view_json', icon: 'fa fa-fw fa-code' });
 
-    if (contextSrv.isEditor) {
-      this.sections.push({ title: 'Save As', id: 'save_as', icon: 'fa fa-fw fa-copy' });
-    }
-
-    if (this.dashboard.meta.canSave) {
-      this.sections.push({ title: 'Delete', id: 'delete', icon: 'fa fa-fw fa-trash' });
-    }
-
     const params = this.$location.search();
     const url = this.$location.path();
 
     for (let section of this.sections) {
       const sectionParams = _.defaults({ editview: section.id }, params);
       section.url = url + '?' + $.param(sectionParams);
+    }
+  }
+
+  onRouteUpdated() {
+    this.viewId = this.$location.search().editview;
+
+    if (this.viewId) {
+      this.json = JSON.stringify(this.dashboard.getSaveModelClone(), null, 2);
     }
 
     const currentSection = _.find(this.sections, { id: this.viewId });
@@ -79,12 +77,8 @@ export class SettingsCtrl {
     }
   }
 
-  onRouteUpdated() {
-    this.viewId = this.$location.search().editview;
-
-    if (this.viewId) {
-      this.json = JSON.stringify(this.dashboard.getSaveModelClone(), null, 2);
-    }
+  openSaveAsModal() {
+    this.dashboardSrv.showSaveAsModal();
   }
 
   hideSettings() {
@@ -106,11 +100,34 @@ export class SettingsCtrl {
     });
   }
 
-  confirmTextChanged() {
-    this.confirmValid = this.confirmText === 'DELETE';
+  deleteDashboard() {
+    var confirmText = '';
+    var text2 = this.dashboard.title;
+
+    const alerts = _.sumBy(this.dashboard.panels, panel => {
+      return panel.alert ? 1 : 0;
+    });
+
+    if (alerts > 0) {
+      confirmText = 'DELETE';
+      text2 = `This dashboard contains ${alerts} alerts. Deleting this dashboard will also delete those alerts`;
+    }
+
+    appEvents.emit('confirm-modal', {
+      title: 'Delete',
+      text: 'Do you want to delete this dashboard?',
+      text2: text2,
+      icon: 'fa-trash',
+      confirmText: confirmText,
+      yesText: 'Delete',
+      onConfirm: () => {
+        this.dashboard.meta.canSave = false;
+        this.deleteDashboardConfirmed();
+      }
+    });
   }
 
-  deleteDashboard() {
+  deleteDashboardConfirmed() {
     this.backendSrv.delete('/api/dashboards/db/' + this.dashboard.meta.slug).then(() => {
       appEvents.emit('alert-success', ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
       this.$location.url('/');
