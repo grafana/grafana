@@ -40,7 +40,6 @@
       <thead>
         <tr>
           <th>Type</th>
-          <th>Tags</th>
           <th colspan="3"></th>
         </tr>
       </thead>
@@ -49,9 +48,6 @@
           <td style="width:90%" class="pointer" ng-click="ctrl.editLinkMode(link)">
             <i class="fa fa-fw fa-external-link"></i>
             {{link.type}}
-          </td>
-          <td class="pointer">
-            {{link.tags}}
           </td>
           <td style="width: 1%">
             <i ng-click="ctrl.moveLink($index, -1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i>
@@ -130,7 +126,7 @@
       </div>
     </div>
   </div>
-  <button class="btn btn-success" ng-if="ctrl.mode == 'new'" ng-click="ctrl.addLink(link.type, link.tags, link.url, link.title)">
+  <button class="btn btn-success" ng-if="ctrl.mode == 'new'" ng-click="ctrl.addLink(link.type)">
     <i class="fa fa-plus"></i> Add</button>
   <button class="btn btn-success" ng-if="ctrl.mode == 'edit'" ng-click="ctrl.editLink()">
     <i class="fa fa-plus"></i> Edit</button>

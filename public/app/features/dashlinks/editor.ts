@@ -39,9 +39,9 @@ export class DashLinkEditorCtrl {
     this.mode = 'edit';
   }
 
-  addLink(type, tags) {
-    this.dashboard.links.push({ type: type, tags: tags, icon: 'external link' });
-    this.dashboard.updateSubmenuVisibility();
+  addLink(type) {
+    this.dashboard.links.push({ type: type, icon: 'external link' });
+    //this.dashboard.updateSubmenuVisibility();
     this.updated();
     this.mode = 'list';
   }
@@ -61,7 +61,7 @@ export class DashLinkEditorCtrl {
 
   deleteLink(index) {
     this.dashboard.links.splice(index, 1);
-    this.dashboard.updateSubmenuVisibility();
+    //this.dashboard.updateSubmenuVisibility();
     this.updated();
   }
 }
