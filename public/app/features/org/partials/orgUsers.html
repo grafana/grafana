@@ -38,10 +38,10 @@
     <button class="btn btn-inverse" ng-show="ctrl.pendingInvites.length" ng-click="ctrl.editor.index = 1">
       Pending Invites ({{ctrl.pendingInvites.length}})
     </button>
-		<button class="btn btn-success" ng-click="ctrl.openAddUsersView()" ng-hide="ctrl.externalUserMngLinkUrl">
+		<a class="btn btn-success" href="org/users/new" ng-hide="ctrl.externalUserMngLinkUrl">
       <i class="fa fa-plus"></i>
 			<span>{{ctrl.addUsersBtnName}}</span>
-		</button>
+    </a>
     <a class="btn btn-inverse" ng-href="{{ctrl.externalUserMngLinkUrl}}" target="_blank" ng-if="ctrl.externalUserMngLinkUrl">
       <i class="fa fa-external-link-square"></i>
       {{ctrl.addUsersBtnName}}
