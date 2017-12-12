@@ -224,6 +224,8 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
 
         if (!panel.legend.rightSide) {
           addScrollbar();
+        } else {
+          destroyScrollbar();
         }
       }
 
@@ -238,6 +240,12 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           legendScrollbar = new PerfectScrollbar(elem[0], scrollbarOptions);
         } else {
           legendScrollbar.update();
+        }
+      }
+
+      function destroyScrollbar() {
+        if (legendScrollbar) {
+          legendScrollbar.destroy();
         }
       }
     }
