@@ -220,16 +220,24 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           elem.append(tbodyElem);
         } else {
           elem.append(seriesElements);
+        }
 
-          if (!legendScrollbar) {
-            legendScrollbar = new PerfectScrollbar(elem[0], {
-              // Number of pixels the content height can surpass the container height without enabling the scroll bar.
-              scrollYMarginOffset: 2,
-              suppressScrollX: true
-            });
-          } else {
-            legendScrollbar.update();
-          }
+        if (!panel.legend.rightSide) {
+          addScrollbar();
+        }
+      }
+
+      function addScrollbar() {
+        const scrollbarOptions = {
+          // Number of pixels the content height can surpass the container height without enabling the scroll bar.
+          scrollYMarginOffset: 2,
+          suppressScrollX: true
+        };
+
+        if (!legendScrollbar) {
+          legendScrollbar = new PerfectScrollbar(elem[0], scrollbarOptions);
+        } else {
+          legendScrollbar.update();
         }
       }
     }
