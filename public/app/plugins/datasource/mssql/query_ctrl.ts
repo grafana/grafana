@@ -16,7 +16,7 @@ export interface QueryMeta {
 
 
 const defaultQuery = `SELECT
-  DATEDIFF(second, {d '1970-01-01'}, DATEADD(second,DATEDIFF(second,GETDATE(),GETUTCDATE()),<time_column>)) as time_sec,
+  $__utcTime(<time_column>),
   <value column> as value,
   <series name column> as metric
 FROM <table name>

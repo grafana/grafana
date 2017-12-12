@@ -64,7 +64,17 @@ func (m *MsSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return fmt.Sprintf("DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), %s) ) as time_sec", args[0]), nil
+		return fmt.Sprintf("%s AS time", args[0]), nil
+	case "__utcTime":
+		if len(args) == 0 {
+			return "", fmt.Errorf("missing time column argument for macro %v", name)
+		}
+		return fmt.Sprintf("DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), %s) AS time", args[0]), nil
+	case "__timeEpoch":
+		if len(args) == 0 {
+			return "", fmt.Errorf("missing time column argument for macro %v", name)
+		}
+		return fmt.Sprintf("DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), %s) ) AS time", args[0]), nil
 	case "__timeFilter":
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)

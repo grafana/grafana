@@ -31,7 +31,6 @@ Example:
 
 ```sql
  CREATE USER grafanareader WITH PASSWORD 'password'
-
  GRANT SELECT ON dbo.YourTable3 TO grafanareader
 ```
 
@@ -43,7 +42,9 @@ To simplify syntax and to allow for dynamic parts, like date range filters, the 
 
 Macro example | Description
 ------------ | -------------
-*$__time(dateColumn)* | Will be replaced by an expression to convert a DATETIME column type to unix timestamp and rename the it to `time_sec`. For example, *DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumn) ) as time_sec*
+*$__time(dateColumn)* | Will rename the column to `time`. For example, *dateColumn AS time*.
+*$__utcTime(dateColumn)* | Will be replaced by an expression to convert a DATETIME column type to UTC depending on the server's local timeoffset and rename it to `time`. For example, *DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumn) ) AS time*
+*$__timeEpoch(dateColumn)* | Will be replaced by an expression to convert a DATETIME column type to unix timestamp and rename the it to `time`. For example, *DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), dateColumn) ) AS time*
 *$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn >= DATEADD(s, 1494410783+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01') AND dateColumn <= DATEADD(s, 1494497183+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')*
 *$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *DATEADD(second, 1494410783+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')*
 *$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *DATEADD(second, 1494497183+DATEDIFF(second,GETUTCDATE(),GETDATE()), '1970-01-01')*
@@ -77,7 +78,7 @@ FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_NAME = 'mssql_types';
 ```
 
-You can control the name of the Table panel columns by using regular `as ` SQL column selection syntax.
+You can control the name of the Table panel columns by using regular `AS ` SQL column selection syntax.
 
 The resulting table panel:
 
@@ -85,23 +86,48 @@ The resulting table panel:
 
 ### Time series queries
 
-If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must follow these rules:
-- Must be a column named `time_sec` representing a unix epoch in seconds.
-- Must be a column named `value` representing the time series value.
-- Must be a column named `metric` representing the time series name.
+If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must must have a column named `time` that returns either a sql datetime or any numeric datatype representing unix epoch in seconds. You may return a column named `metric` that is used as metric name for the value column. Any column except `time` and `metric` is treated as a value column. If you ommit the `metric` column, tha name of the value column will be the metric name. You may select multiple value columns, each will have its name as metric. If you select multiple value columns along with a `metric` column, the names ("MetircName - ColumnName") will be combined to make the metric name.
 
 Example with `metric` column
 
 ```sql
 SELECT
-  MIN(DATEDIFF(second,{d '1970-01-01'},[time_date_time])) as [time_sec],
-  MAX([value_double]) as [value],
+  [time_date_time] as [time],
+  [value_double] as [value],
   [metric1] as [metric]
 FROM [test_data]
 WHERE   $__timeFilter([time_date_time])
-GROUP BY metric1, DATEDIFF(second,{d '1970-01-01'},[time_date_time])/300
 ORDER BY [time_date_time]
 ```
+
+Example with multiple `value` culumns
+
+```sql
+SELECT
+  [time_date_time] as [time],
+  [value_double1] as [metric_name1],
+  [value_int2] as [metric_name2]
+FROM [test_data]
+WHERE   $__timeFilter([time_date_time])
+ORDER BY [time_date_time]
+```
+
+Example with multiple `value` culumns combined with a `metric` column
+
+```sql
+SELECT
+  [time_date_time] as [time],
+  [value_double1] as [value1],
+  [value_int2] as [value2],
+  [metric_col] as [metric]
+FROM [test_data]
+WHERE   $__timeFilter([time_date_time])
+ORDER BY [time_date_time]
+```
+The result of the above query would look something like the below
+
+![](/img/docs/v47/mssql_metric_value.png)
+
 Currently, there is no support for a dynamic group by time based on time range & panel width.
 This is something we plan to add.
 
@@ -138,7 +164,7 @@ You can also create nested variables. For example if you had another variable na
 the hosts variable only show hosts from the current selected region with a query like this (if `region` is a multi-value variable then use the `IN` comparison operator rather than `=` to match against multiple values):
 
 ```sql
-SELECT hostname FROM host  WHERE region IN($region)
+SELECT hostname FROM host WHERE region IN ($region)
 ```
 
 ### Using Variables in Queries
@@ -155,7 +181,7 @@ There are two syntaxes:
 
 ```sql
 SELECT
-  atimestamp time_sec,
+  atimestamp time,
   aint value
 FROM table
 WHERE $__timeFilter(atimestamp) and hostname in($hostname)
@@ -166,7 +192,7 @@ ORDER BY atimestamp
 
 ```sql
 SELECT
-  atimestamp as time_sec,
+  atimestamp as time,
   aint as value
 FROM table
 WHERE $__timeFilter(atimestamp) and hostname in([[hostname]])
@@ -181,7 +207,7 @@ An example query:
 
 ```sql
 SELECT
-  DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time_column) ) as [time_sec],
+  DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time_column) ) as [time],
  metric1 as [text],
   convert(varvhar, metric1) + ',' + convert(varchar, metric2) as [tags] 
 FROM
@@ -192,7 +218,7 @@ WHERE
 
 Name | Description
 ------------ | -------------
-time_sec | The name of the date/time field.
+time | The name of the date/time field. could be in a native sql time datatype
 text | Event description field.
 tags | Optional field name to use for event tags as a comma separated string.
 

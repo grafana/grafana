@@ -8,7 +8,7 @@ class MssqlConfigCtrl {
 }
 
 const defaultQuery = `SELECT TOP 100
-    DATEDIFF(second, {d '1970-01-01'}, DATEADD(second,DATEDIFF(second,GETDATE(),GETUTCDATE()),<time_column>) ) as time_sec,
+    $__utcTime(<time_column>),
     <text_column> as text,
     <tags_column> as tags
   FROM <table name>

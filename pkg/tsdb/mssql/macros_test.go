@@ -16,14 +16,28 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate(nil, "select $__time(time_column)")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "select DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time_column) ) as time_sec")
+			So(sql, ShouldEqual, "select time_column AS time")
 		})
 
-		Convey("interpolate __time function wrapped in aggregation", func() {
-			sql, err := engine.Interpolate(nil, "select min($__time(time_column))")
+		Convey("interpolate __utcTime function", func() {
+			sql, err := engine.Interpolate(nil, "select $__utcTime(time_column)")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "select min(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time_column) ) as time_sec)")
+			So(sql, ShouldEqual, "select DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time_column) AS time")
+		})
+
+		Convey("interpolate __timeEpoch function", func() {
+			sql, err := engine.Interpolate(nil, "select $__timeEpoch(time_column)")
+			So(err, ShouldBeNil)
+
+			So(sql, ShouldEqual, "select DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time_column) ) AS time")
+		})
+
+		Convey("interpolate __timeEpoch function wrapped in aggregation", func() {
+			sql, err := engine.Interpolate(nil, "select min($__timeEpoch(time_column))")
+			So(err, ShouldBeNil)
+
+			So(sql, ShouldEqual, "select min(DATEDIFF(second, {d '1970-01-01'}, DATEADD(second, DATEDIFF(second,GETDATE(),GETUTCDATE()), time_column) ) AS time)")
 		})
 
 		Convey("interpolate __timeFilter function", func() {

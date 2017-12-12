@@ -28,7 +28,7 @@ describe('MSSQLDatasource', function() {
     const options = {
       annotation: {
         name: annotationName,
-        rawQuery: 'select time_sec, text, tags from table;'
+        rawQuery: 'select time, text, tags from table;'
       },
       range: {
         from: moment(1432288354),
@@ -42,7 +42,7 @@ describe('MSSQLDatasource', function() {
           refId: annotationName,
           tables: [
             {
-              columns: [{text: 'time_sec'}, {text: 'text'}, {text: 'tags'}],
+              columns: [{text: 'time'}, {text: 'text'}, {text: 'tags'}],
               rows: [
                 [1432288355, 'some text', 'TagA,TagB'],
                 [1432288390, 'some text2', ' TagB , TagC'],
