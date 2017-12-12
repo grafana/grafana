@@ -104,10 +104,12 @@
 .gf-form-switch--transparent {
   input + label {
     background: transparent;
+    border: none;
   }
 
   input + label::before, input + label::after {
     background: transparent;
+    border: none;
   }
 
   &:hover {
