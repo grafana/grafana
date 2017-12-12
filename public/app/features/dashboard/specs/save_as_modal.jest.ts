@@ -1,4 +1,4 @@
-import { SaveDashboardAsModalCtrl } from '../save_as_modal;
+import { SaveDashboardAsModalCtrl } from '../save_as_modal';
 import { describe, it, expect } from 'test/lib/common';
 
 describe('saving dashboard as', () => {
