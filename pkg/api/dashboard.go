@@ -139,6 +139,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		Message:   cmd.Message,
 		OrgId:     c.OrgId,
 		UserId:    c.UserId,
+		Overwrite: cmd.Overwrite,
 	}
 
 	dashboard, err := dashboards.GetRepository().SaveDashboard(dashItem)
