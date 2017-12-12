@@ -84,6 +84,11 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 		} else {
 			dash.Version++
 			dash.Data.Set("version", dash.Version)
+
+			if !cmd.UpdatedAt.IsZero() {
+				dash.Updated = cmd.UpdatedAt
+			}
+
 			affectedRows, err = sess.MustCols("folder_id", "has_acl").Id(dash.Id).Update(dash)
 		}
 

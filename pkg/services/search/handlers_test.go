@@ -12,6 +12,7 @@ func TestSearch(t *testing.T) {
 
 	Convey("Given search query", t, func() {
 		query := Query{Limit: 2000, SignedInUser: &m.SignedInUser{IsGrafanaAdmin: true}}
+
 		bus.AddHandler("test", func(query *FindPersistedDashboardsQuery) error {
 			query.Result = HitList{
 				&Hit{Id: 16, Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},

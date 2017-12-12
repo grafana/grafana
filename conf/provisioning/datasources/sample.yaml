@@ -1,11 +1,11 @@
-# list of datasources that should be deleted from the database
-delete_datasources:
-  # - name: Graphite
-  #   org_id: 1
+# # list of datasources that should be deleted from the database
+#delete_datasources:
+#   - name: Graphite
+#     org_id: 1
 
-# list of datasources to insert/update depending 
-# whats available in the datbase
-datasources:
+# # list of datasources to insert/update depending
+# # whats available in the datbase
+#datasources:
 #   # <string, required> name of the datasource. Required
 # - name: Graphite
 #   # <string, required> datasource type. Required
@@ -33,7 +33,7 @@ datasources:
 #   # <bool> mark as default datasource. Max one per org
 #   is_default:
 #   # <map> fields that will be converted to json and stored in json_data
-#   json_data: 
+#   json_data:
 #      graphiteVersion: "1.1"
 #      tlsAuth: true
 #      tlsAuthWithCACert: true
