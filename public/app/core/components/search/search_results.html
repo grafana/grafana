@@ -13,9 +13,10 @@
     <div ng-show="ctrl.editable && section.id > 0" ng-click="ctrl.navigateToFolder(section, $event)">
         <i class="fa fa-cog search-section__header__toggle"></i>&nbsp;
     </div>
-    <i class="fa fa-minus search-section__header__toggle" ng-show="section.expanded"></i>
-    <i class="fa fa-plus search-section__header__toggle" ng-hide="section.expanded"></i>
+		<i class="fa fa-angle-down search-section__header__toggle" ng-show="section.expanded"></i>
+    <i class="fa fa-angle-right search-section__header__toggle" ng-hide="section.expanded"></i>
   </a>
+
   <div class="search-section__header" ng-show="section.hideHeader"></div>
 
   <div ng-if="section.expanded">
@@ -45,3 +46,4 @@
     </a>
   </div>
 </div>
+
