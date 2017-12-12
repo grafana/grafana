@@ -83,6 +83,14 @@
   margin-bottom: $spacer * 1.5;
 }
 
+.search-filter-box-item {
+  display:block;
+  margin-bottom: 16px;
+  i {
+    font-size: 20px;
+  }
+}
+
 .search-results-container {
   height: 100%;
   display: block;
