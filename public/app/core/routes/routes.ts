@@ -104,6 +104,11 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })
+  .when('/org/users/new', {
+    templateUrl: 'public/app/features/org/partials/invite.html',
+    controller : 'UserInviteCtrl',
+    resolve: loadOrgBundle,
+  })
   .when('/org/apikeys', {
     templateUrl: 'public/app/features/org/partials/orgApiKeys.html',
     controller : 'OrgApiKeysCtrl',

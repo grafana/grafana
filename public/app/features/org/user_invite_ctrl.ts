@@ -1,13 +1,17 @@
-import angular from 'angular';
+import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 
 export class UserInviteCtrl {
 
   /** @ngInject **/
-  constructor($scope, backendSrv) {
-    $scope.invites = [
+  constructor($scope, backendSrv, navModelSrv) {
+    $scope.navModel = navModelSrv.getNav('cfg', 'users', 0);
+
+    const defaultInvites = [
       {name: '', email: '', role: 'Editor'},
     ];
+
+    $scope.invites = _.cloneDeep(defaultInvites);
 
     $scope.options = {skipEmails: false};
     $scope.init = function() { };
@@ -20,9 +24,17 @@ export class UserInviteCtrl {
       $scope.invites = _.without($scope.invites, invite);
     };
 
+    $scope.resetInvites = function() {
+      $scope.invites = _.cloneDeep(defaultInvites);
+    };
+
     $scope.sendInvites = function() {
       if (!$scope.inviteForm.$valid) { return; }
       $scope.sendSingleInvite(0);
+    };
+
+    $scope.invitesSent = function() {
+      $scope.resetInvites();
     };
 
     $scope.sendSingleInvite = function(index) {
@@ -34,7 +46,6 @@ export class UserInviteCtrl {
 
         if (index === $scope.invites.length) {
           $scope.invitesSent();
-          $scope.dismiss();
         } else {
           $scope.sendSingleInvite(index);
         }
@@ -43,4 +54,4 @@ export class UserInviteCtrl {
   }
 }
 
-angular.module('grafana.controllers').controller('UserInviteCtrl', UserInviteCtrl);
+coreModule.controller('UserInviteCtrl', UserInviteCtrl);
