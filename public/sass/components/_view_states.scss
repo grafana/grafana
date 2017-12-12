@@ -1,19 +1,5 @@
-@mixin hide-controls() {
-  .add-row-panel-hint,
-  .dash-row-menu-container {
-    display: none;
-  }
-  .panel-drop-zone {
-    visibility: hidden;
-  }
-}
-
-.hide-controls {
-  @include hide-controls();
-}
 
 .page-kiosk-mode {
-  @include hide-controls();
   dashnav {
     display: none;
   }
@@ -45,7 +31,7 @@
     background: transparent;
     transform: translate3d(-40px, 0, 0);
     transition: all 1.5s ease-in-out 1s;
-    .icon-gf {
+    i {
       opacity: 0;
       transition: all 1.5s ease-in-out 1s;
     }

@@ -13,7 +13,6 @@ function ($, angular, coreModule, _) {
     'templating':  { src: 'public/app/features/templating/partials/editor.html'},
     'history':     { html: '<gf-dashboard-history dashboard="dashboard"></gf-dashboard-history>'},
     'timepicker':  { src: 'public/app/features/dashboard/timepicker/dropdown.html' },
-    'add-panel':    { html: '<add-panel></add-panel>' },
     'import':      { html: '<dash-import dismiss="dismiss()"></dash-import>', isModal: true },
     'permissions': { html: '<dash-acl-modal dismiss="dismiss()"></dash-acl-modal>', isModal: true },
     'new-folder':  {

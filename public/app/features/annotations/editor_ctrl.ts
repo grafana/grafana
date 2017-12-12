@@ -26,7 +26,7 @@ export class AnnotationsEditorCtrl {
   ];
 
   /** @ngInject */
-  constructor(private $scope, private datasourceSrv) {
+  constructor($scope, private datasourceSrv) {
     $scope.ctrl = this;
 
     this.mode = 'list';
@@ -62,7 +62,6 @@ export class AnnotationsEditorCtrl {
   update() {
     this.reset();
     this.mode = 'list';
-    this.$scope.broadcastRefresh();
   }
 
   setupNew() {
@@ -70,31 +69,23 @@ export class AnnotationsEditorCtrl {
     this.reset();
   }
 
+  backToList() {
+    this.mode = 'list';
+  }
+
   add() {
     this.annotations.push(this.currentAnnotation);
     this.reset();
     this.mode = 'list';
-    this.$scope.broadcastRefresh();
-    this.$scope.dashboard.updateSubmenuVisibility();
   }
 
   removeAnnotation(annotation) {
     var index = _.indexOf(this.annotations, annotation);
     this.annotations.splice(index, 1);
-    this.$scope.dashboard.updateSubmenuVisibility();
-    this.$scope.broadcastRefresh();
   }
 
   onColorChange(newColor) {
     this.currentAnnotation.iconColor = newColor;
-  }
-
-  annotationEnabledChange() {
-    this.$scope.broadcastRefresh();
-  }
-
-  annotationHiddenChanged() {
-    this.$scope.dashboard.updateSubmenuVisibility();
   }
 }
 

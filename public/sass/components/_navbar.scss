@@ -2,13 +2,57 @@
 .navbar {
   position: relative;
   margin-left: 40px;
-  // box-shadow: $navbarShadow;
   z-index: $zindex-navbar-fixed;
-  // background: $navbarBackground;
   height: $navbarHeight;
   padding-right: $spacer;
   display: flex;
   flex-grow: 1;
+  border-bottom: 1px solid transparent;
+  transition: all 350ms ease-in-out;
+}
+
+@mixin navbar-alt-look() {
+  background: $page-header-bg;
+  box-shadow: $search-shadow;
+  border-bottom: $navbarBorder;
+}
+
+
+.dashboard-page--settings-open {
+  .navbar {
+    @include navbar-alt-look();
+  }
+
+  .navbar-button--add-panel,
+  .navbar-button--star,
+  .navbar-button--share,
+  .navbar-button--settings,
+  .navbar-page-btn .fa-caret-down,
+  .gf-timepicker-nav {
+    display: none;
+  }
+
+  .navbar-buttons--close {
+    display: flex;
+  }
+}
+
+.panel-in-fullscreen {
+ .navbar {
+    @include navbar-alt-look();
+  }
+
+  .navbar-button--add-panel,
+  .navbar-button--star,
+  .navbar-button--save,
+  .navbar-button--settings,
+  .navbar-page-btn .fa-caret-down {
+    display: none;
+  }
+
+  .navbar-buttons--close {
+    display: flex;
+  }
 }
 
 .navbar-page-btn {
@@ -19,8 +63,9 @@
   margin: 0;
   color: darken($link-color, 5%);
   font-size: $font-size-lg;
-  padding: 1rem 1rem 0.75rem 1rem;
+  padding-left: 1rem;
   min-height: $navbarHeight;
+  line-height: $navbarHeight;
 
   .fa-caret-down {
     font-size: 60%;
@@ -43,26 +88,17 @@
   }
 }
 
-.navbar-page-btn-wrapper {
-  display: inline-block;
-  position: relative;
-}
-
-.navbar-section-wrapper {
-  position: relative;
-  float: left;
-}
-
-.navbar-mini-btn-wrapper {
-  padding: 15px;
-}
-
 .navbar-buttons {
   height: $navbarHeight;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   margin-right: $spacer;
+
+  &--close {
+    display: none;
+    margin-right: 0;
+  }
 }
 
 .navbar__spacer {
@@ -74,7 +110,7 @@
 
   display: inline-block;
   font-weight: $btn-font-weight;
-  padding: 8px 11px;
+  padding: 6px 11px;
   line-height: 16px;
   color: $text-muted;
   border: 1px solid $navbar-button-border;
@@ -90,7 +126,7 @@
   }
 
   &--add-panel {
-    padding: 5px 10px;
+    padding: 3px 10px;
 
     .gicon {
       font-size: 22px;
@@ -98,13 +134,17 @@
   }
 
   &--tight {
-    padding: 9px 4px;
+    padding: 7px 4px;
 
     .fa {
       font-size: 14px;
       position: relative;
       top: 2px;
     }
+  }
+
+  &--primary {
+    @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
   }
 }
 
@@ -115,7 +155,8 @@
 
   .sidemenu-open {
     .navbar {
-      margin-left: 15px;
+      padding-left: 15px;
+      margin-left: 0;
     }
   }
 
