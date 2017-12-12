@@ -181,7 +181,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 }
 
 func canEditDashboard(role m.RoleType) bool {
-	return role == m.ROLE_ADMIN || role == m.ROLE_EDITOR || role == m.ROLE_READ_ONLY_EDITOR
+	return role == m.ROLE_ADMIN || role == m.ROLE_EDITOR
 }
 
 func GetHomeDashboard(c *middleware.Context) Response {
