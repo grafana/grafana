@@ -191,9 +191,8 @@ export class PanelCtrl {
 
   duplicate() {
     this.dashboard.duplicatePanel(this.panel);
-    let self = this;
     this.$timeout(() => {
-      self.$scope.$root.$broadcast('render');
+      this.$scope.$root.$broadcast('render');
     });
   }
 
@@ -240,18 +239,16 @@ export class PanelCtrl {
     let index = _.findIndex(dashboard.panels, (panel) => {
       return panel.id === oldPanel.id;
     });
+
     let deletedPanel = dashboard.panels.splice(index, 1);
     this.dashboard.events.emit('panel-removed', deletedPanel);
 
-    // adding it back needs to be done in next digest
-    this.$timeout(() => {
-      newPanel = new PanelModel(newPanel);
-      newPanel.id = oldPanel.id;
+    newPanel = new PanelModel(newPanel);
+    newPanel.id = oldPanel.id;
 
-      dashboard.panels.splice(index, 0, newPanel);
-      dashboard.sortPanelsByGridPos();
-      dashboard.events.emit('panel-added', newPanel);
-    });
+    dashboard.panels.splice(index, 0, newPanel);
+    dashboard.sortPanelsByGridPos();
+    dashboard.events.emit('panel-added', newPanel);
   }
 
   sharePanel() {
