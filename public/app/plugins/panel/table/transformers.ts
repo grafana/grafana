@@ -145,8 +145,8 @@ transformers['table'] = {
     const columnNames = {};
 
     // Union of all columns
-    const columns = data.reduce((acc, d, i) => {
-      d.columns.forEach((col, j) => {
+    const columns = data.reduce((acc, series) => {
+      series.columns.forEach(col => {
         const { text } = col;
         if (columnNames[text] === undefined) {
           columnNames[text] = acc.length;
@@ -175,76 +175,84 @@ transformers['table'] = {
       return;
     }
 
-    // Track column indexes: name -> index
+    // Track column indexes of union: name -> index
     const columnNames = {};
-    const columnIndexes = [];
 
     // Union of all non-value columns
-    const columns = data.reduce((acc, d, i) => {
-      const indexes = [];
-      d.columns.forEach((col, j) => {
+    const columnsUnion = data.reduce((acc, series) => {
+      series.columns.forEach(col => {
         const { text } = col;
         if (columnNames[text] === undefined) {
           columnNames[text] = acc.length;
           acc.push(col);
         }
-        indexes[j] = columnNames[text];
       });
-      columnIndexes.push(indexes);
       return acc;
     }, []);
 
-    model.columns = columns;
+    // Map old column index to union index per series, e.g.,
+    // given columnNames {A: 0, B: 1} and
+    // data [{columns: [{ text: 'A' }]}, {columns: [{ text: 'B' }]}] => [[0], [1]]
+    const columnIndexMapper = data.map(series =>
+      series.columns.map(col => columnNames[col.text])
+    );
 
-    // Adjust rows to new column indexes
-    let rows = data.reduce((acc, d, i) => {
-      const indexes = columnIndexes[i];
-      d.rows.forEach((r, j) => {
+    // Flatten rows of all series and adjust new column indexes
+    const flattenedRows = data.reduce((acc, series, seriesIndex) => {
+      const mapper = columnIndexMapper[seriesIndex];
+      series.rows.forEach(row => {
         const alteredRow = [];
-        indexes.forEach((to, from) => {
-          alteredRow[to] = r[from];
+        // Shifting entries according to index mapper
+        mapper.forEach((to, from) => {
+          alteredRow[to] = row[from];
         });
         acc.push(alteredRow);
       });
       return acc;
     }, []);
 
+    // Returns true if both rows have matching non-empty fields as well as matching
+    // indexes where one field is empty and the other is not
+    function areRowsMatching(columns, row, otherRow) {
+      let foundFieldToMatch = false;
+      for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+        if (row[columnIndex] !== undefined && otherRow[columnIndex] !== undefined) {
+          if (row[columnIndex] !== otherRow[columnIndex]) {
+            return false;
+          }
+        } else if (row[columnIndex] === undefined || otherRow[columnIndex] === undefined) {
+          foundFieldToMatch = true;
+        }
+      }
+      return foundFieldToMatch;
+    }
+
     // Merge rows that have same values for columns
     const mergedRows = {};
-    rows = rows.reduce((acc, row, rowIndex) => {
+    const compactedRows = flattenedRows.reduce((acc, row, rowIndex) => {
       if (!mergedRows[rowIndex]) {
+        // Look from current row onwards
         let offset = rowIndex + 1;
-        while (offset < rows.length) {
-          // Find next row that has the same field values unless the respective field is undefined
-          const match = _.findIndex(rows, (otherRow) => {
-            let fieldsAreTheSame = true;
-            let foundFieldToMatch = false;
-            for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
-              if (row[columnIndex] !== undefined && otherRow[columnIndex] !== undefined) {
-                if (row[columnIndex] !== otherRow[columnIndex]) {
-                  fieldsAreTheSame = false;
-                }
-              } else if (row[columnIndex] === undefined || otherRow[columnIndex] === undefined) {
-                foundFieldToMatch = true;
-              }
-              if (!fieldsAreTheSame) {
-                break;
-              }
-            }
-            return fieldsAreTheSame && foundFieldToMatch;
-          }, offset);
+        // More than one row can be merged into current row
+        while (offset < flattenedRows.length) {
+          // Find next row that could be merged
+          const match = _.findIndex(flattenedRows,
+            otherRow => areRowsMatching(columnsUnion, row, otherRow),
+          offset);
           if (match > -1) {
-            const matchedRow = rows[match];
-            // Merge values into current row
-            for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+            const matchedRow = flattenedRows[match];
+            // Merge values from match into current row if there is a gap in the current row
+            for (let columnIndex = 0; columnIndex < columnsUnion.length; columnIndex++) {
               if (row[columnIndex] === undefined && matchedRow[columnIndex] !== undefined) {
                 row[columnIndex] = matchedRow[columnIndex];
               }
             }
+            // Dont visit this row again
             mergedRows[match] = matchedRow;
             // Keep looking for more rows to merge
             offset = match + 1;
           } else {
+            // No match found, stop looking
             break;
           }
         }
@@ -253,7 +261,8 @@ transformers['table'] = {
       return acc;
     }, []);
 
-    model.rows = rows;
+    model.columns = columnsUnion;
+    model.rows = compactedRows;
   }
 };
 
