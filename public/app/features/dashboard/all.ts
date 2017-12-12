@@ -19,7 +19,7 @@ import './export/export_modal';
 import './export_data/export_data_modal';
 import './ad_hoc_filters';
 import './repeat_option/repeat_option';
-import './dashgrid/DashboardGrid';
+import './dashgrid/DashboardGridDirective';
 import './dashgrid/PanelLoader';
 import './dashgrid/RowOptions';
 import './acl/acl';
