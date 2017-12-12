@@ -1,25 +1,6 @@
 import angular from 'angular';
 import _ from 'lodash';
-
-var iconMap = {
-  "external link": "fa-external-link",
-  "dashboard": "fa-th-large",
-  "question": "fa-question",
-  "info": "fa-info",
-  "bolt": "fa-bolt",
-  "doc": "fa-file-text-o",
-  "cloud": "fa-cloud",
-};
-
-function dashLinksEditor() {
-  return {
-    restrict: 'E',
-    controller: 'DashLinkEditorCtrl',
-    templateUrl: 'public/app/features/dashlinks/editor.html',
-    link: function() {
-    }
-  };
-}
+import {iconMap} from './editor';
 
 function dashLinksContainer() {
   return {
@@ -162,37 +143,6 @@ export class DashLinksContainerCtrl {
   }
 }
 
-export class DashLinkEditorCtrl {
-  /** @ngInject */
-  constructor($scope, $rootScope) {
-    $scope.iconMap = iconMap;
-    $scope.dashboard.links = $scope.dashboard.links || [];
-
-    $scope.addLink = function() {
-      $scope.dashboard.links.push({ type: 'dashboards', icon: 'external link' });
-      $scope.dashboard.updateSubmenuVisibility();
-      $scope.updated();
-    };
-
-    $scope.moveLink = function(index, dir) {
-      _.move($scope.dashboard.links, index, index+dir);
-      $scope.updated();
-    };
-
-    $scope.updated = function() {
-      $rootScope.appEvent('dash-links-updated');
-    };
-
-    $scope.deleteLink = function(index) {
-      $scope.dashboard.links.splice(index, 1);
-      $scope.dashboard.updateSubmenuVisibility();
-      $scope.updated();
-    };
-  }
-}
-
-angular.module('grafana.directives').directive('dashLinksEditor', dashLinksEditor);
 angular.module('grafana.directives').directive('dashLinksContainer', dashLinksContainer);
 angular.module('grafana.directives').directive('dashLink', dashLink);
 angular.module('grafana.directives').controller("DashLinksContainerCtrl", DashLinksContainerCtrl);
-angular.module('grafana.directives').controller('DashLinkEditorCtrl', DashLinkEditorCtrl);
