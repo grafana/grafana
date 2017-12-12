@@ -56,8 +56,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetUserGroupsByUserQuery) error {
-			query.Result = []*m.UserGroup{}
+		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
+			query.Result = []*m.Team{}
 			return nil
 		})
 
@@ -217,8 +217,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetUserGroupsByUserQuery) error {
-			query.Result = []*m.UserGroup{}
+		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
+			query.Result = []*m.Team{}
 			return nil
 		})
 

@@ -12,7 +12,7 @@ export class AclCtrl {
     {value: 4, text: 'Admin'}
   ];
   aclTypes = [
-    {value: 'Group', text: 'User Group'},
+    {value: 'Group', text: 'Team'},
     {value: 'User',  text: 'User'},
     {value: 'Viewer', text: 'Everyone With Viewer Role'},
     {value: 'Editor', text: 'Everyone With Editor Role'}
@@ -58,10 +58,10 @@ export class AclCtrl {
       item.nameHtml = this.$sce.trustAsHtml(item.userLogin);
       item.sortName = item.userLogin;
       item.sortRank = 10;
-    } else if (item.userGroupId > 0) {
+    } else if (item.teamId > 0) {
       item.icon = "fa fa-fw fa-users";
-      item.nameHtml = this.$sce.trustAsHtml(item.userGroup);
-      item.sortName = item.userGroup;
+      item.nameHtml = this.$sce.trustAsHtml(item.team);
+      item.sortName = item.team;
       item.sortRank = 20;
     } else if (item.role) {
       item.icon = "fa fa-fw fa-street-view";
@@ -89,7 +89,7 @@ export class AclCtrl {
       updated.push({
         id: item.id,
         userId: item.userId,
-        userGroupId: item.userGroupId,
+        teamId: item.teamId,
         role: item.role,
         permission: item.permission,
       });
@@ -144,7 +144,7 @@ export class AclCtrl {
 
     return (origItem.role && newItem.role && origItem.role === newItem.role) ||
     (origItem.userId && newItem.userId && origItem.userId === newItem.userId) ||
-    (origItem.userGroupId && newItem.userGroupId && origItem.userGroupId === newItem.userGroupId);
+    (origItem.teamId && newItem.teamId && origItem.teamId === newItem.teamId);
   }
 
   userPicked(user) {
@@ -153,8 +153,8 @@ export class AclCtrl {
   }
 
   groupPicked(group) {
-    this.addNewItem({userGroupId: group.id, userGroup: group.name, permission: 1});
-    this.$scope.$broadcast('user-group-picker-reset');
+    this.addNewItem({teamId: group.id, team: group.name, permission: 1});
+    this.$scope.$broadcast('team-picker-reset');
   }
 
   removeItem(index) {
@@ -179,7 +179,7 @@ export function dashAclModal() {
 export interface FormModel {
   dashboardId: number;
   userId?: number;
-  userGroupId?: number;
+  teamId?: number;
   PermissionType: number;
 }
 
@@ -189,8 +189,8 @@ export interface DashboardAcl {
   userId?: number;
   userLogin?: string;
   userEmail?: string;
-  userGroupId?: number;
-  userGroup?: string;
+  teamId?: number;
+  team?: string;
   permission?: number;
   permissionName?: string;
   role?: string;

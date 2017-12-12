@@ -24,7 +24,7 @@ func UpdateDashboardAcl(cmd *m.UpdateDashboardAclCommand) error {
 		}
 
 		for _, item := range cmd.Items {
-			if item.UserId == 0 && item.UserGroupId == 0 && !item.Role.IsValid() {
+			if item.UserId == 0 && item.TeamId == 0 && !item.Role.IsValid() {
 				return m.ErrDashboardAclInfoMissing
 			}
 
@@ -32,7 +32,7 @@ func UpdateDashboardAcl(cmd *m.UpdateDashboardAclCommand) error {
 				return m.ErrDashboardPermissionDashboardEmpty
 			}
 
-			sess.Nullable("user_id", "user_group_id")
+			sess.Nullable("user_id", "team_id")
 			if _, err := sess.Insert(item); err != nil {
 				return err
 			}
@@ -49,7 +49,7 @@ func UpdateDashboardAcl(cmd *m.UpdateDashboardAclCommand) error {
 
 func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		if cmd.UserId == 0 && cmd.UserGroupId == 0 {
+		if cmd.UserId == 0 && cmd.TeamId == 0 {
 			return m.ErrDashboardAclInfoMissing
 		}
 
@@ -57,7 +57,7 @@ func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 			return m.ErrDashboardPermissionDashboardEmpty
 		}
 
-		if res, err := sess.Query("SELECT 1 from "+dialect.Quote("dashboard_acl")+" WHERE dashboard_id =? and (user_group_id=? or user_id=?)", cmd.DashboardId, cmd.UserGroupId, cmd.UserId); err != nil {
+		if res, err := sess.Query("SELECT 1 from "+dialect.Quote("dashboard_acl")+" WHERE dashboard_id =? and (team_id=? or user_id=?)", cmd.DashboardId, cmd.TeamId, cmd.UserId); err != nil {
 			return err
 		} else if len(res) == 1 {
 
@@ -66,7 +66,7 @@ func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 				Updated:    time.Now(),
 			}
 
-			if _, err := sess.Cols("updated", "permission").Where("dashboard_id =? and (user_group_id=? or user_id=?)", cmd.DashboardId, cmd.UserGroupId, cmd.UserId).Update(&entity); err != nil {
+			if _, err := sess.Cols("updated", "permission").Where("dashboard_id =? and (team_id=? or user_id=?)", cmd.DashboardId, cmd.TeamId, cmd.UserId).Update(&entity); err != nil {
 				return err
 			}
 
@@ -75,7 +75,7 @@ func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 
 		entity := m.DashboardAcl{
 			OrgId:       cmd.OrgId,
-			UserGroupId: cmd.UserGroupId,
+			TeamId:      cmd.TeamId,
 			UserId:      cmd.UserId,
 			Created:     time.Now(),
 			Updated:     time.Now(),
@@ -89,8 +89,8 @@ func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 			cols = append(cols, "user_id")
 		}
 
-		if cmd.UserGroupId != 0 {
-			cols = append(cols, "user_group_id")
+		if cmd.TeamId != 0 {
+			cols = append(cols, "team_id")
 		}
 
 		_, err := sess.Cols(cols...).Insert(&entity)
@@ -138,17 +138,17 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 		da.org_id,
 		da.dashboard_id,
 		da.user_id,
-		da.user_group_id,
+		da.team_id,
 		da.permission,
 		da.role,
 		da.created,
 		da.updated,
 		u.login AS user_login,
 		u.email AS user_email,
-		ug.name AS user_group
+		ug.name AS team
   FROM` + dialect.Quote("dashboard_acl") + ` as da
 		LEFT OUTER JOIN ` + dialect.Quote("user") + ` AS u ON u.id = da.user_id
-		LEFT OUTER JOIN user_group ug on ug.id = da.user_group_id
+		LEFT OUTER JOIN team ug on ug.id = da.team_id
 	WHERE dashboard_id ` + dashboardFilter + ` AND da.org_id = ?
 
 	-- Also include default permission if has_acl = 0
@@ -159,14 +159,14 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 			da.org_id,
 			da.dashboard_id,
 			da.user_id,
-			da.user_group_id,
+			da.team_id,
 			da.permission,
 			da.role,
 			da.created,
 			da.updated,
 			'' as user_login,
 			'' as user_email,
-			'' as user_group
+			'' as team
 			FROM dashboard_acl as da,
         dashboard as dash
         LEFT JOIN dashboard folder on dash.folder_id = folder.id

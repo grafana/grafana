@@ -179,7 +179,7 @@ func (sb *SearchBuilder) buildSearchWhereClause() {
 			SELECT distinct d.id AS DashboardId
 			FROM dashboard AS d
 	      		LEFT JOIN dashboard_acl as da on d.folder_id = da.dashboard_id or d.id = da.dashboard_id
-	      		LEFT JOIN user_group_member as ugm on ugm.user_group_id =  da.user_group_id
+	      		LEFT JOIN team_member as ugm on ugm.team_id =  da.team_id
 	      		LEFT JOIN org_user ou on ou.role = da.role
 			WHERE
 			  d.has_acl = 1 and

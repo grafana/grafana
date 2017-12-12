@@ -1,8 +1,8 @@
-import '../user_group_details_ctrl';
+import '../team_details_ctrl';
 import {describe, beforeEach, it, expect, sinon, angularMocks} from 'test/lib/common';
-import UserGroupDetailsCtrl from '../user_group_details_ctrl';
+import TeamDetailsCtrl from '../team_details_ctrl';
 
-describe('UserGroupDetailsCtrl', () => {
+describe('TeamDetailsCtrl', () => {
 var ctx: any = {};
 var backendSrv = {
   searchUsers: sinon.stub().returns(Promise.resolve([])),
@@ -16,7 +16,7 @@ var backendSrv = {
   beforeEach(angularMocks.inject(($rootScope, $controller, $q) => {
     ctx.$q = $q;
     ctx.scope = $rootScope.$new();
-    ctx.ctrl = $controller(UserGroupDetailsCtrl, {
+    ctx.ctrl = $controller(TeamDetailsCtrl, {
       $scope: ctx.scope,
       backendSrv: backendSrv,
       $routeParams: {id: 1},
@@ -24,7 +24,7 @@ var backendSrv = {
     });
   }));
 
-  describe('when user is chosen to be added to user group', () => {
+  describe('when user is chosen to be added to team', () => {
     beforeEach(() => {
       const userItem = {
         id: 2,
@@ -34,13 +34,13 @@ var backendSrv = {
     });
 
     it('should parse the result and save to db', () => {
-      expect(backendSrv.post.getCall(0).args[0]).to.eql('/api/user-groups/1/members');
+      expect(backendSrv.post.getCall(0).args[0]).to.eql('/api/teams/1/members');
       expect(backendSrv.post.getCall(0).args[1].userId).to.eql(2);
     });
 
     it('should refresh the list after saving.', () => {
-      expect(backendSrv.get.getCall(0).args[0]).to.eql('/api/user-groups/1');
-      expect(backendSrv.get.getCall(1).args[0]).to.eql('/api/user-groups/1/members');
+      expect(backendSrv.get.getCall(0).args[0]).to.eql('/api/teams/1');
+      expect(backendSrv.get.getCall(1).args[0]).to.eql('/api/teams/1/members');
     });
   });
 });

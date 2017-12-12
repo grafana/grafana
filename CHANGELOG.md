@@ -2,7 +2,7 @@
 
 ### WIP (in develop branch currently as its unstable or unfinished)
 - Dashboard folders
-- User groups
+- Teams
 - Dashboard permissions (on folder & dashboard level), permissions can be assigned to groups or individual users
 - UX changes to nav & side menu
 - New dashboard grid layout system
