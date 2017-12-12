@@ -120,6 +120,10 @@ export default class GraphiteQuery {
     this.segments.push({value: "select metric"});
   }
 
+  hasSelectMetric() {
+    return this.segments[this.segments.length - 1].value === 'select metric';
+  }
+
   addFunction(newFunc) {
     this.functions.push(newFunc);
     this.moveAliasFuncLast();

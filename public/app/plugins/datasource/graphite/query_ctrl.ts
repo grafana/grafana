@@ -218,7 +218,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     var oldTarget = this.queryModel.target.target;
     this.updateModelTarget();
 
-    if (this.queryModel.target !== oldTarget) {
+    if (this.queryModel.target !== oldTarget && !this.queryModel.hasSelectMetric()) {
       this.panelCtrl.refresh();
     }
   }
