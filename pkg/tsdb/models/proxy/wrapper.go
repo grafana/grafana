@@ -64,6 +64,7 @@ func (tw *TsdbWrapper) Query(ctx context.Context, ds *models.DataSource, query *
 
 	res := &tsdb.Response{
 		Message: pbres.Message,
+		Results: map[string]*tsdb.QueryResult{},
 	}
 
 	for _, r := range pbres.Results {

@@ -24,17 +24,19 @@ type BackendDatasource struct {
 	client     *plugin.Client
 }
 
+var handshakeConfig = plugin.HandshakeConfig{
+	ProtocolVersion:  1,
+	MagicCookieKey:   "GRAFANA_BACKEND_DATASOURCE",
+	MagicCookieValue: "55d2200a-6492-493a-9353-73b728d468aa",
+}
+
 func (p *BackendDatasource) initBackendPlugin(log log.Logger) error {
 	p.log = log.New("plugin-id", p.Id)
 
 	p.client = plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: plugin.HandshakeConfig{
-			ProtocolVersion:  1,
-			MagicCookieKey:   "BASIC_PLUGIN",
-			MagicCookieValue: "hello",
-		},
+		HandshakeConfig:  handshakeConfig,
 		Plugins:          map[string]plugin.Plugin{p.Id: &shared.TsdbPluginImpl{}},
-		Cmd:              exec.Command("sh", "-c", path.Join(p.PluginDir, p.Executable)),
+		Cmd:              exec.Command(path.Join(p.PluginDir, p.Executable)),
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
 		Logger:           backend.LogWrapper{Logger: p.log},
 	})
