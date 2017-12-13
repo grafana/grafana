@@ -1,35 +1,31 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from '../../core/core_module';
-import {appEvents} from 'app/core/core';
+import _ from 'lodash';
 
 export class DataSourcesCtrl {
   datasources: any;
+  unfiltered: any;
   navModel: any;
+  searchQuery: string;
 
   /** @ngInject */
   constructor(
     private $scope,
     private backendSrv,
     private datasourceSrv,
-    private $location,
     private navModelSrv) {
 
     this.navModel = this.navModelSrv.getNav('cfg', 'datasources', 0);
-    this.navigateToUrl = this.navigateToUrl.bind(this);
     backendSrv.get('/api/datasources').then(result => {
       this.datasources = result;
-    });
-
-    appEvents.on('location-change', payload => {
-      this.navigateToUrl(payload.href);
+      this.unfiltered = result;
     });
   }
 
-  navigateToUrl(url) {
-    // debugger;
-    this.$location.path(url);
-    this.$location.replace();
+  onQueryUpdated() {
+    let regex = new RegExp(this.searchQuery, 'ig');
+    this.datasources = _.filter(this.unfiltered, item => {
+      return regex.test(item.name) || regex.test(item.type);
+    });
   }
 
   removeDataSourceConfirmed(ds) {
