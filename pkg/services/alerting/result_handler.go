@@ -85,11 +85,9 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 		if err := annotationRepo.Save(&item); err != nil {
 			handler.log.Error("Failed to save annotation for new alert state", "error", err)
 		}
-
-		if evalContext.ShouldSendNotification() {
-			handler.notifier.Send(evalContext)
-		}
 	}
+
+	handler.notifier.SendIfNeeded(evalContext)
 
 	return nil
 }
