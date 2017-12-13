@@ -8,7 +8,7 @@ export default class TeamDetailsCtrl {
   navModel: any;
 
   constructor(private $scope, private backendSrv, private $routeParams, navModelSrv) {
-    this.navModel = navModelSrv.getNav('cfg', 'users');
+    this.navModel = navModelSrv.getNav('cfg', 'teams', 0);
     this.get();
   }
 
