@@ -1,6 +1,5 @@
 import angular from "angular";
 import _ from "lodash";
-import appEvents from "app/core/app_events";
 
 export var iconMap = {
   "external link": "fa-external-link",
