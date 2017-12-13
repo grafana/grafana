@@ -37,7 +37,7 @@ export class SettingsCtrl {
     this.sections = [];
     if (this.dashboard.meta.canEdit) {
       this.sections.push({ title: 'General', id: 'settings', icon: 'gicon gicon-preferences' });
-      this.sections.push({ title: 'Annotations', id: 'annotations', icon: 'gicon gicon-annotationp' });
+      this.sections.push({ title: 'Annotations', id: 'annotations', icon: 'gicon gicon-annotation' });
       this.sections.push({ title: 'Variables', id: 'templating', icon: 'gicon gicon-variable' });
       this.sections.push({ title: 'Links', id: 'links', icon: 'gicon gicon-link' });
 
