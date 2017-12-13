@@ -123,6 +123,10 @@ type PushoverNotifier struct {
 	log      log.Logger
 }
 
+func (this *PushoverNotifier) ShouldNotify(context *alerting.EvalContext) bool {
+	return defaultShouldNotify(context)
+}
+
 func (this *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 	ruleUrl, err := evalContext.GetRuleUrl()
 	if err != nil {

@@ -65,6 +65,10 @@ type WebhookNotifier struct {
 	log        log.Logger
 }
 
+func (this *WebhookNotifier) ShouldNotify(context *alerting.EvalContext) bool {
+	return defaultShouldNotify(context)
+}
+
 func (this *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending webhook")
 
