@@ -65,7 +65,7 @@ func (n *notificationService) sendNotifications(context *EvalContext, notifiers 
 
 	for _, notifier := range notifiers {
 		not := notifier //avoid updating scope variable in go routine
-		n.log.Info("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
+		n.log.Debug("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
 		metrics.M_Alerting_Notification_Sent.WithLabelValues(not.GetType()).Inc()
 		g.Go(func() error { return not.Notify(context) })
 	}
