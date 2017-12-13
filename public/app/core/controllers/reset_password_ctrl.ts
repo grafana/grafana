@@ -19,7 +19,7 @@ export class ResetPasswordCtrl {
         icon: 'gicon gicon-branding',
         subTitle: 'Reset your Grafana password',
         breadcrumbs: [
-          { title: 'Login', uri: '/login' },
+          { title: 'Login', url: '/login' },
           { title: 'Reset Password' },
         ]
       }

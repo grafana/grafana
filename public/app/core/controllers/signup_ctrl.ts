@@ -31,7 +31,7 @@ export class SignUpCtrl {
         icon: 'gicon gicon-branding',
         subTitle: 'Register your Grafana account',
         breadcrumbs: [
-          { title: 'Login', uri: '/login' },
+          { title: 'Login', url: '/login' },
           { title: 'Sign Up' },
         ]
       }

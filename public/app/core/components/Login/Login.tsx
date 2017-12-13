@@ -1,4 +1,4 @@
-﻿import React, { Component } from 'react';
+import React, { Component } from 'react';
 
 const elementsInWidth = 22;
 const elementRows = 50;
@@ -55,7 +55,7 @@ export class Login extends Component {
             <login-bg>
                 <login-bg-fx />
                 <BgElements flipIndex={this.state.flipIndex} />
-            </login-bglogin-box>
+            </login-bg>
         );
     }
 }
