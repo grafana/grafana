@@ -10,7 +10,7 @@ import sizeMe from 'react-sizeme';
 
 let lastGridWidth = 1200;
 
-function GridWrapper({size, layout, onLayoutChange, children, onResize, onResizeStop, onWidthChange, className}) {
+function GridWrapper({size, layout, onLayoutChange, children, onDragStop, onResize, onResizeStop, onWidthChange, className}) {
   if (size.width === 0) {
     console.log('size is zero!');
   }
@@ -37,6 +37,7 @@ function GridWrapper({size, layout, onLayoutChange, children, onResize, onResize
       layout={layout}
       onResize={onResize}
       onResizeStop={onResizeStop}
+      onDragStop={onDragStop}
       onLayoutChange={onLayoutChange}>
       {children}
     </ReactGridLayout>
@@ -61,6 +62,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.onLayoutChange = this.onLayoutChange.bind(this);
     this.onResize = this.onResize.bind(this);
     this.onResizeStop = this.onResizeStop.bind(this);
+    this.onDragStop = this.onDragStop.bind(this);
     this.onWidthChange = this.onWidthChange.bind(this);
 
     this.state = {animated: false};
@@ -127,12 +129,25 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     }
   }
 
+  updateGridPos(item, layout) {
+    this.panelMap[item.i].updateGridPos(item);
+
+    // react-grid-layout has a bug (#670), and onLayoutChange() is only called when the component is mounted.
+    // So it's required to call it explicitly when panel resized or moved to save layout changes.
+    this.onLayoutChange(layout);
+  }
+
   onResize(layout, oldItem, newItem) {
     this.panelMap[newItem.i].updateGridPos(newItem);
   }
 
   onResizeStop(layout, oldItem, newItem) {
+    this.updateGridPos(newItem, layout);
     this.panelMap[newItem.i].resizeDone();
+  }
+
+  onDragStop(layout, oldItem, newItem) {
+    this.updateGridPos(newItem, layout);
   }
 
   componentDidMount() {
@@ -165,6 +180,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
         layout={this.buildLayout()}
         onLayoutChange={this.onLayoutChange}
         onWidthChange={this.onWidthChange}
+        onDragStop={this.onDragStop}
         onResize={this.onResize}
         onResizeStop={this.onResizeStop}>
         {this.renderPanels()}
