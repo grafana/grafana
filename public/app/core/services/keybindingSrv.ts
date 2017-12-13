@@ -189,7 +189,7 @@ export class KeybindingSrv {
     });
 
     this.bind('d r', () => {
-      scope.broadcastRefresh();
+      scope.ctrl.timeSrv.refreshDashboard();
     });
 
     this.bind('d s', () => {
