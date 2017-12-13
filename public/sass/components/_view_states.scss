@@ -17,29 +17,24 @@
   .panel-info-corner--info,
   .panel-info-corner--links {
     opacity: 0;
-    transition: all 1.5s ease-in-out 1s;
   }
 
   .navbar {
     box-shadow: none;
     background: transparent;
-    padding-left: $side-menu-width + 20px;
   }
 
   .navbar-page-btn {
     border-color: transparent;
     background: transparent;
     transform: translate3d(-40px, 0, 0);
-    transition: all 1.5s ease-in-out 1s;
     i {
       opacity: 0;
-      transition: all 1.5s ease-in-out 1s;
     }
   }
 
   .gf-timepicker-nav-btn {
     transform: translate3d(40px, 0, 0);
-    transition: transform 1.5s ease-in-out 1s;
   }
 }
 
