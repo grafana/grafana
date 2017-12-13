@@ -14,6 +14,17 @@ export class ResetPasswordCtrl {
       $scope.formModel.code = params.code;
     }
 
+    $scope.navModel = {
+      main: {
+        icon: 'gicon gicon-branding',
+        subTitle: 'Reset your Grafana password',
+        breadcrumbs: [
+          { title: 'Login', uri: '/login' },
+          { title: 'Reset Password' },
+        ]
+      }
+    };
+
     $scope.sendResetEmail = function() {
       if (!$scope.sendResetForm.$valid) {
         return;
