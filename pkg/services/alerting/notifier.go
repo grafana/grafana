@@ -47,8 +47,6 @@ func (n *notificationService) SendIfNeeded(context *EvalContext) error {
 		return err
 	}
 
-	n.log.Info("Sending notifications for", "ruleId", context.Rule.Id, "sent count", len(notifiers))
-
 	if len(notifiers) == 0 {
 		return nil
 	}
