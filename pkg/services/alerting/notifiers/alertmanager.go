@@ -55,8 +55,6 @@ func (this *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) erro
 	for _, match := range evalContext.EvalMatches {
 		alertJSON := simplejson.New()
 		alertJSON.Set("startsAt", evalContext.StartTime.UTC().Format(time.RFC3339))
-		// Rule state should always be alerting if notifying.
-		alertJSON.Set("endsAt", "0001-01-01T00:00:00Z")
 
 		if ruleUrl, err := evalContext.GetRuleUrl(); err == nil {
 			alertJSON.Set("generatorURL", ruleUrl)
