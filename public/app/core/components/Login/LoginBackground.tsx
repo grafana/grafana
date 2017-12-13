@@ -1,29 +1,27 @@
 import React, { Component } from 'react';
 
-const elementsInWidth = 22;
-const elementRows = 50;
+const xCount = 50;
+const yCount = 50;
 
-function Cell({ index, flipIndex }) {
-  const bgColor1 = getColor(index);
-   // const bgColor2 = getColor(index+2);
+function Cell({ x, y, flipIndex }) {
+  const index = (y * xCount) + x;
+  const bgColor1 = getColor(x, y);
   return (
-    <div className={`login-bg__item login-bg-${index} ${flipIndex === index ? 'login-bg-flip' : ''}`} key={index} style={{background: bgColor1}} />
+    <div className={`login-bg__item ${flipIndex === index ? 'login-bg-flip' : ''}`} key={index} style={{background: bgColor1}} />
   );
 }
 
-const getRandomInt = (min, max) => {
+function getRandomInt(min, max) {
   min = Math.ceil(min);
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
-};
+}
 
 export default class LoginBackground extends Component<any, any> {
-  nrOfElements: number;
   cancelInterval: any;
 
   constructor(props) {
     super(props);
-    this.nrOfElements = elementsInWidth * elementRows;
 
     this.state = {
       flipIndex: null,
@@ -33,14 +31,13 @@ export default class LoginBackground extends Component<any, any> {
   }
 
   flipElements() {
-    const elementIndexToFlip = getRandomInt(0, this.nrOfElements - 1);
+    const elementIndexToFlip = getRandomInt(0, (xCount * yCount) - 1);
     this.setState(prevState => {
       return {
         ...prevState,
         flipIndex: elementIndexToFlip,
       };
     });
-    console.log('elementIndexToFlip', elementIndexToFlip);
   }
 
   componentWillMount() {
@@ -56,9 +53,15 @@ export default class LoginBackground extends Component<any, any> {
 
     return (
       <div className="login-bg">
-        {Array.from(Array(elementsInWidth * elementRows)).map((el, index) => {
+        {Array.from(Array(yCount)).map((el, y) => {
           return (
-            <Cell index={index} flipIndex={this.state.flipIndex} />
+            <div className="login-bg__row">
+              {Array.from(Array(xCount)).map((el2, x) => {
+                return (
+                  <Cell y={y} x={x} flipIndex={this.state.flipIndex} />
+                );
+              })}
+            </div>
           );
         })}
       </div>
@@ -66,7 +69,7 @@ export default class LoginBackground extends Component<any, any> {
   }
 }
 
-const getColor = index => {
+function getColor(x, y) {
   const colors = [
     '#14161A',
     '#111920',
@@ -1228,5 +1231,10 @@ const getColor = index => {
     '#101A27',
     '#13171F',
   ];
-  return colors[index];
-};
+
+  // let randX = getRandomInt(0, x);
+  // let randY = getRandomInt(0, y);
+  // let randIndex = randY * xCount + randX;
+
+  return colors[(y*xCount + x) % colors.length];
+}

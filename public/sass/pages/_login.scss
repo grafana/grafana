@@ -73,6 +73,8 @@ select:-webkit-autofill:focus {
   display: flex;
   align-items: stretch;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
 .login-branding {
@@ -293,7 +295,7 @@ select:-webkit-autofill:focus {
     padding: 2rem 4rem;
 
     .logo-icon {
-      width: 100px;
+      width: 130px;
     }
 
     .icon-gf-grafana_wordmark {
@@ -333,13 +335,27 @@ select:-webkit-autofill:focus {
   left: 0;
   right: 0;
   perspective: 1000px;
+  display: flex;
+  flex-wrap: wrap;
+  z-index: 0;
+  flex-direction: column;
+  justify-content: stretch;
+  justify-items: stretch;
+  height: 100%;
+
+  .login-bg__row {
+    display: flex;
+    flex-grow: 1;
+    height: 10px;
+    justify-content: stretch;
+  }
 
   .login-bg__item {
     width: 4%;
-    height: 10px;
+    height: 100%;
+    flex-grow: 1;
     // background: hotpink;
     // border:1px solid #0F1926;
-    float: left;
     transition: 1s ease-in-out;
     z-index: 1;
     transform-style: preserve-3d;
@@ -347,7 +363,6 @@ select:-webkit-autofill:focus {
     &.login-bg-flip {
       transform: rotateY(180deg);
     }
-
 
     &:before, &:after {
       backface-visibility: hidden;
@@ -360,65 +375,10 @@ select:-webkit-autofill:focus {
       display: block;
     }
 
-    &:before {
-      z-index: 2;
-      transform: rotateY(0deg);
-      background-color: #215392;
-    }
-
     &:after {
       transform: rotateY(180deg);
       background-color: rgb(25, 50, 80);
     }
-
-    &:nth-child(3n+0) {
-      &:before {
-        background-color: #0f253c;
-      }
-      &:after {
-        background-color: blue;
-      }
-    }
-
-
-    &:nth-child(3n+1) {
-      &:before {
-        background-color: #102438;
-      }
-      &:after {
-        background-color: blue;
-      }
-    }
-
-    &:nth-child(3n+2) {
-      &:before {
-        background-color: #19314e;
-      }
-      &:after {
-        background-color: blue;
-      }
-    }
-
-    &:nth-child(3n+3) {
-      &:before {
-        background-color: #215392;
-      }
-      &:after {
-        background-color: blue;
-      }
-    }
-
-    // &:nth-child(3n+5) {
-    //   &:before {
-    //     background-color: hotpink;
-    //   }
-    //   &:after {
-    //     background-color: blue;
-    //   }
-    // }
-
-
-
   }
 }
 
