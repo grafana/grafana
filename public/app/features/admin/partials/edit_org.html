@@ -29,7 +29,7 @@
 			<td>{{orgUser.login}}</td>
 			<td>{{orgUser.email}}</td>
 			<td>
-				<select type="text" ng-model="orgUser.role" class="gf-form-input max-width-8" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(orgUser)">
+				<select type="text" ng-model="orgUser.role" class="gf-form-input max-width-8" ng-options="f for f in ['Viewer', 'Editor', 'Admin']" ng-change="updateOrgUser(orgUser)">
 				</select>
 			</td>
 			<td style="width: 1%">

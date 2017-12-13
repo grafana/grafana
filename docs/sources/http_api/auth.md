@@ -100,7 +100,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 JSON Body schema:
 
 - **name** – The key name
-- **role** – Sets the access level/Grafana Role for the key. Can be one of the following values: `Viewer`, `Editor`, `Read Only Editor` or `Admin`.
+- **role** – Sets the access level/Grafana Role for the key. Can be one of the following values: `Viewer`, `Editor` or `Admin`.
 
 **Example Response**:
 

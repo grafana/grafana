@@ -106,6 +106,7 @@ var (
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
+	ViewersCanEdit          bool
 
 	// Http auth
 	AdminUser     string
@@ -540,13 +541,14 @@ func NewConfigContext(args *CommandLineArgs) error {
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
-	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Read Only Editor", "Viewer"})
+	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 	LoginHint = users.Key("login_hint").String()
 	DefaultTheme = users.Key("default_theme").String()
 	ExternalUserMngLinkUrl = users.Key("external_manage_link_url").String()
 	ExternalUserMngLinkName = users.Key("external_manage_link_name").String()
 	ExternalUserMngInfo = users.Key("external_manage_info").String()
+	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 
 	// auth
 	auth := Cfg.Section("auth")
