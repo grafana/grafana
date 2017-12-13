@@ -14,10 +14,7 @@ export class DashNavCtrl {
     private $rootScope,
     private dashboardSrv,
     private $location,
-    public playlistSrv,
-    navModelSrv) {
-      this.navModel = navModelSrv.getDashboardNav(this.dashboard, this);
-
+    public playlistSrv) {
       appEvents.on('save-dashboard', this.saveDashboard.bind(this), $scope);
 
       if (this.dashboard.meta.isSnapshot) {

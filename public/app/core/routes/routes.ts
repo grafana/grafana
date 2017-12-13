@@ -83,6 +83,11 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controller : 'FolderPermissionsCtrl',
     controllerAs: 'ctrl',
   })
+  .when('/dashboards/folder/:folderId/:type/:slug/settings', {
+    templateUrl: 'public/app/features/dashboard/partials/folder_settings.html',
+    controller : 'FolderSettingsCtrl',
+    controllerAs: 'ctrl',
+  })
   .when('/dashboards/folder/:folderId/:type/:slug', {
     templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
     controller : 'FolderDashboardsCtrl',

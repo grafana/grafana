@@ -221,7 +221,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 					Url:         setting.AppSubUrl + "/datasources",
 				},
 				{
-					Text:        "Members",
+					Text:        "Users",
 					Id:          "users",
 					Description: "Manage org members",
 					Icon:        "icon-gf icon-gf-fw icon-gf-users",

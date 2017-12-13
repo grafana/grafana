@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
 
@@ -35,8 +33,20 @@ export class AppPageCtrl {
       return;
     }
 
-    this.navModel = this.navModelSrv.getNav('plugin-page-' + app.id);
-    this.navModel.breadcrumbs.push({text: this.page.name});
+    let pluginNav = this.navModelSrv.getNav('plugin-page-' + app.id);
+
+    this.navModel = {
+      main: {
+        img: app.info.logos.large,
+        subTitle: app.name,
+        url: '',
+        text: '',
+        breadcrumbs: [
+          { title: app.name, url: pluginNav.main.url },
+          { title: this.page.name },
+        ],
+      }
+    };
   }
 
   loadPluginInfo() {

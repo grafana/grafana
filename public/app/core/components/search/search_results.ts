@@ -9,7 +9,6 @@ export class SearchResultsCtrl {
 
   /** @ngInject */
   constructor(private $location) {
-
   }
 
   toggleFolderExpand(section) {
