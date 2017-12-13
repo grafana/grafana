@@ -7,7 +7,7 @@ export class CreateFolderCtrl {
   titleTouched = false;
 
   constructor(private backendSrv, private $location, navModelSrv) {
-    this.navModel = navModelSrv.getNav('create', 'folder');
+    this.navModel = navModelSrv.getNav('dashboards', 'manage-dashboards', 0);
   }
 
   create() {

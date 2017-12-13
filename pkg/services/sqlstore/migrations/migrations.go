@@ -26,7 +26,7 @@ func AddMigrations(mg *Migrator) {
 	addAnnotationMig(mg)
 	addTestDataMigrations(mg)
 	addDashboardVersionMigration(mg)
-	addUserGroupMigrations(mg)
+	addTeamMigrations(mg)
 	addDashboardAclMigrations(mg)
 	addTagMigration(mg)
 }

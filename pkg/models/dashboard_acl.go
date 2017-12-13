@@ -24,7 +24,7 @@ func (p PermissionType) String() string {
 
 // Typed errors
 var (
-	ErrDashboardAclInfoMissing           = errors.New("User id and user group id cannot both be empty for a dashboard permission.")
+	ErrDashboardAclInfoMissing           = errors.New("User id and team id cannot both be empty for a dashboard permission.")
 	ErrDashboardPermissionDashboardEmpty = errors.New("Dashboard Id must be greater than zero for a dashboard permission.")
 )
 
@@ -34,10 +34,10 @@ type DashboardAcl struct {
 	OrgId       int64
 	DashboardId int64
 
-	UserId      int64
-	UserGroupId int64
-	Role        *RoleType // pointer to be nullable
-	Permission  PermissionType
+	UserId     int64
+	TeamId     int64
+	Role       *RoleType // pointer to be nullable
+	Permission PermissionType
 
 	Created time.Time
 	Updated time.Time
@@ -54,8 +54,8 @@ type DashboardAclInfoDTO struct {
 	UserId         int64          `json:"userId"`
 	UserLogin      string         `json:"userLogin"`
 	UserEmail      string         `json:"userEmail"`
-	UserGroupId    int64          `json:"userGroupId"`
-	UserGroup      string         `json:"userGroup"`
+	TeamId         int64          `json:"teamId"`
+	Team           string         `json:"team"`
 	Role           *RoleType      `json:"role,omitempty"`
 	Permission     PermissionType `json:"permission"`
 	PermissionName string         `json:"permissionName"`
@@ -74,7 +74,7 @@ type SetDashboardAclCommand struct {
 	DashboardId int64
 	OrgId       int64
 	UserId      int64
-	UserGroupId int64
+	TeamId      int64
 	Permission  PermissionType
 
 	Result DashboardAcl

@@ -95,11 +95,11 @@ describe('GraphiteQueryCtrl', function() {
     });
 
     it('should not add select metric segment', function() {
-      expect(ctx.ctrl.segments.length).to.be(0);
+      expect(ctx.ctrl.segments.length).to.be(1);
     });
 
-    it('should add both series refs as params', function() {
-      expect(ctx.ctrl.queryModel.functions[0].params.length).to.be(2);
+    it('should add second series ref as param', function() {
+      expect(ctx.ctrl.queryModel.functions[0].params.length).to.be(1);
     });
   });
 
@@ -170,7 +170,7 @@ describe('GraphiteQueryCtrl', function() {
 
   describe('when updating targets with nested query', function() {
     beforeEach(function() {
-      ctx.ctrl.target.target = 'scaleToSeconds(#A)';
+      ctx.ctrl.target.target = 'scaleToSeconds(#A, 60)';
       ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
       ctx.ctrl.parseTarget();
 
@@ -183,11 +183,11 @@ describe('GraphiteQueryCtrl', function() {
     });
 
     it('target should remain the same', function() {
-      expect(ctx.ctrl.target.target).to.be('scaleToSeconds(#A)');
+      expect(ctx.ctrl.target.target).to.be('scaleToSeconds(#A, 60)');
     });
 
     it('targetFull should include nexted queries', function() {
-      expect(ctx.ctrl.target.targetFull).to.be('scaleToSeconds(nested.query.count)');
+      expect(ctx.ctrl.target.targetFull).to.be('scaleToSeconds(nested.query.count, 60)');
     });
   });
 

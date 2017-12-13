@@ -14,9 +14,22 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+type fakeDashboardRepo struct {
+	inserted     []*dashboards.SaveDashboardItem
+	getDashboard []*m.Dashboard
+}
+
+func (repo *fakeDashboardRepo) SaveDashboard(json *dashboards.SaveDashboardItem) (*m.Dashboard, error) {
+	repo.inserted = append(repo.inserted, json)
+	return json.Dashboard, nil
+}
+
+var fakeRepo *fakeDashboardRepo
 
 func TestDashboardApiEndpoint(t *testing.T) {
 	Convey("Given a dashboard with a parent folder which does not have an acl", t, func() {
@@ -43,8 +56,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetUserGroupsByUserQuery) error {
-			query.Result = []*m.UserGroup{}
+		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
+			query.Result = []*m.Team{}
 			return nil
 		})
 
@@ -204,8 +217,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *m.GetUserGroupsByUserQuery) error {
-			query.Result = []*m.UserGroup{}
+		bus.AddHandler("test", func(query *m.GetTeamsByUserQuery) error {
+			query.Result = []*m.Team{}
 			return nil
 		})
 
@@ -499,6 +512,9 @@ func postDashboardScenario(desc string, url string, routePattern string, role m.
 
 			return PostDashboard(c, cmd)
 		})
+
+		fakeRepo = &fakeDashboardRepo{}
+		dashboards.SetRepository(fakeRepo)
 
 		sc.m.Post(routePattern, sc.defaultHandler)
 

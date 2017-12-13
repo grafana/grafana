@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import angular from 'angular';
 import moment from 'moment';
@@ -25,10 +23,12 @@ export class TimePickerCtrl {
   refresh: any;
   isUtc: boolean;
   firstDayOfWeek: number;
+  closeDropdown: any;
+  isOpen: boolean;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private timeSrv) {
-    $scope.ctrl = this;
+    this.$scope.ctrl = this;
 
     $rootScope.onAppEvent('shift-time-forward', () => this.move(1), $scope);
     $rootScope.onAppEvent('shift-time-backward', () => this.move(-1), $scope);
@@ -96,6 +96,11 @@ export class TimePickerCtrl {
   }
 
   openDropdown() {
+    if (this.isOpen) {
+      this.isOpen = false;
+      return;
+    }
+
     this.onRefresh();
     this.editTimeRaw = this.timeRaw;
     this.timeOptions = rangeUtil.getRelativeTimesList(this.panel, this.rangeString);
@@ -107,12 +112,7 @@ export class TimePickerCtrl {
     };
 
     this.refresh.options.unshift({text: 'off'});
-
-    this.$rootScope.appEvent('show-dash-editor', {
-      editview: 'timepicker',
-      scope: this.$scope,
-      cssClass: 'gf-timepicker-dropdown',
-    });
+    this.isOpen = true;
   }
 
   applyCustom() {
@@ -121,7 +121,7 @@ export class TimePickerCtrl {
     }
 
     this.timeSrv.setTime(this.editTimeRaw);
-    this.$rootScope.appEvent('hide-dash-editor');
+    this.isOpen = false;
   }
 
   absoluteFromChanged() {
@@ -144,7 +144,7 @@ export class TimePickerCtrl {
     }
 
     this.timeSrv.setTime(range);
-    this.$rootScope.appEvent('hide-dash-editor');
+    this.isOpen = false;
   }
 
 }
@@ -174,7 +174,6 @@ export function timePickerDirective() {
     }
   };
 }
-
 
 angular.module('grafana.directives').directive('gfTimePickerSettings', settingsDirective);
 angular.module('grafana.directives').directive('gfTimePicker', timePickerDirective);

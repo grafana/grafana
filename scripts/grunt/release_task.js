@@ -26,7 +26,7 @@ module.exports = function(grunt) {
     });
     grunt.config('copy.backend_files', {
       expand: true,
-      src: ['conf/*', 'vendor/phantomjs/*', 'scripts/*'],
+      src: ['conf/**', 'vendor/phantomjs/*', 'scripts/*'],
       options: { mode: true},
       dest: '<%= tempDir %>'
     });

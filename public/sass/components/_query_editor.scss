@@ -33,6 +33,10 @@
   .gf-form-label {
     margin-right: 2px;
   }
+
+  .gf-form + .gf-form {
+    margin-right: 0;
+  }
 }
 
 .gf-form-query-content {

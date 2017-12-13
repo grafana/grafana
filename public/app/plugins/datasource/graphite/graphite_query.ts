@@ -46,7 +46,7 @@ export default class GraphiteQuery {
     }
 
     try {
-      this.parseTargetRecursive(astNode, null, 0);
+      this.parseTargetRecursive(astNode, null);
     } catch (err) {
       console.log('error parsing target:', err.message);
       this.error = err.message;
@@ -75,7 +75,7 @@ export default class GraphiteQuery {
     }, "");
   }
 
-  parseTargetRecursive(astNode, func, index) {
+  parseTargetRecursive(astNode, func) {
     if (astNode === null) {
       return null;
     }
@@ -83,40 +83,33 @@ export default class GraphiteQuery {
     switch (astNode.type) {
       case 'function':
         var innerFunc = gfunc.createFuncInstance(astNode.name, { withDefaultParams: false });
-        _.each(astNode.params, (param, index) => {
-          this.parseTargetRecursive(param, innerFunc, index);
+        _.each(astNode.params, param => {
+          this.parseTargetRecursive(param, innerFunc);
         });
 
         innerFunc.updateText();
         this.functions.push(innerFunc);
         break;
       case 'series-ref':
-        this.addFunctionParameter(func, astNode.value, index, this.segments.length > 0);
+        if (this.segments.length > 0) {
+          this.addFunctionParameter(func, astNode.value);
+        } else {
+          this.segments.push(astNode);
+        }
         break;
       case 'bool':
       case 'string':
       case 'number':
-        if ((index-1) >= func.def.params.length) {
-          throw { message: 'invalid number of parameters to method ' + func.def.name };
-        }
-        var shiftBack = this.isShiftParamsBack(func);
-        this.addFunctionParameter(func, astNode.value, index, shiftBack);
-      break;
+        this.addFunctionParameter(func, astNode.value);
+        break;
       case 'metric':
         if (this.segments.length > 0) {
-        if (astNode.segments.length !== 1) {
-          throw { message: 'Multiple metric params not supported, use text editor.' };
+          this.addFunctionParameter(func, _.join(_.map(astNode.segments, 'value'), '.'));
+        } else {
+          this.segments = astNode.segments;
         }
-        this.addFunctionParameter(func, astNode.segments[0].value, index, true);
         break;
-      }
-
-      this.segments = astNode.segments;
     }
-  }
-
-  isShiftParamsBack(func) {
-    return func.def.name !== 'seriesByTag';
   }
 
   updateSegmentValue(segment, index) {
@@ -125,6 +118,14 @@ export default class GraphiteQuery {
 
   addSelectMetricSegment() {
     this.segments.push({value: "select metric"});
+  }
+
+  hasSelectMetric() {
+    if (this.segments.length > 0) {
+      return this.segments[this.segments.length - 1].value === 'select metric';
+    } else {
+      return false;
+    }
   }
 
   addFunction(newFunc) {
@@ -145,11 +146,11 @@ export default class GraphiteQuery {
     }
   }
 
-  addFunctionParameter(func, value, index, shiftBack) {
-    if (shiftBack) {
-      index = Math.max(index - 1, 0);
+  addFunctionParameter(func, value) {
+    if (func.params.length >= func.def.params.length) {
+      throw { message: 'too many parameters for function ' + func.def.name };
     }
-    func.params[index] = value;
+    func.params.push(value);
   }
 
   removeFunction(func) {
@@ -159,7 +160,7 @@ export default class GraphiteQuery {
   updateModelTarget(targets) {
     // render query
     if (!this.target.textEditor) {
-      var metricPath = this.getSegmentPathUpTo(this.segments.length);
+      var metricPath = this.getSegmentPathUpTo(this.segments.length).replace(/\.select metric$/, '');
       this.target.target = _.reduce(this.functions, wrapFunction, metricPath);
     }
 

@@ -40,12 +40,12 @@ describe('AclCtrl', () => {
 
       ctx.ctrl.userPicked(userItem);
 
-      const userGroupItem = {
+      const teamItem = {
         id: 2,
         name: 'ug1',
       };
 
-      ctx.ctrl.groupPicked(userGroupItem);
+      ctx.ctrl.groupPicked(teamItem);
 
       ctx.ctrl.newType = 'Editor';
       ctx.ctrl.typeChanged();
@@ -54,10 +54,10 @@ describe('AclCtrl', () => {
       ctx.ctrl.typeChanged();
     });
 
-     it('should sort the result by role, user group and user', () => {
+     it('should sort the result by role, team and user', () => {
         expect(ctx.ctrl.items[0].role).to.eql('Viewer');
         expect(ctx.ctrl.items[1].role).to.eql('Editor');
-        expect(ctx.ctrl.items[2].userGroupId).to.eql(2);
+        expect(ctx.ctrl.items[2].teamId).to.eql(2);
         expect(ctx.ctrl.items[3].userId).to.eql(2);
       });
 
@@ -71,7 +71,7 @@ describe('AclCtrl', () => {
       expect(backendSrv.post.getCall(0).args[1].items[0].permission).to.eql(1);
       expect(backendSrv.post.getCall(0).args[1].items[1].role).to.eql('Editor');
       expect(backendSrv.post.getCall(0).args[1].items[1].permission).to.eql(1);
-      expect(backendSrv.post.getCall(0).args[1].items[2].userGroupId).to.eql(2);
+      expect(backendSrv.post.getCall(0).args[1].items[2].teamId).to.eql(2);
       expect(backendSrv.post.getCall(0).args[1].items[2].permission).to.eql(1);
       expect(backendSrv.post.getCall(0).args[1].items[3].userId).to.eql(2);
       expect(backendSrv.post.getCall(0).args[1].items[3].permission).to.eql(1);
@@ -124,19 +124,19 @@ describe('AclCtrl', () => {
     });
   });
 
-  describe('when duplicate user group permissions are added', () => {
+  describe('when duplicate team permissions are added', () => {
     beforeEach(() => {
       backendSrv.get.reset();
       backendSrv.post.reset();
       ctx.ctrl.items = [];
 
-      const userGroupItem = {
+      const teamItem = {
         id: 2,
         name: 'ug1',
       };
 
-      ctx.ctrl.groupPicked(userGroupItem);
-      ctx.ctrl.groupPicked(userGroupItem);
+      ctx.ctrl.groupPicked(teamItem);
+      ctx.ctrl.groupPicked(teamItem);
     });
 
     it('should throw a validation error', () => {
@@ -148,25 +148,25 @@ describe('AclCtrl', () => {
     });
   });
 
-  describe('when one inherited and one not inherited user group permission are added', () => {
+  describe('when one inherited and one not inherited team permission are added', () => {
     beforeEach(() => {
       backendSrv.get.reset();
       backendSrv.post.reset();
       ctx.ctrl.items = [];
 
-      const inheritedUserGroupItem = {
+      const inheritedTeamItem = {
         id: 2,
         name: 'ug1',
         dashboardId: -1
       };
 
-      ctx.ctrl.items.push(inheritedUserGroupItem);
+      ctx.ctrl.items.push(inheritedTeamItem);
 
-      const userGroupItem = {
+      const teamItem = {
         id: 2,
         name: 'ug1',
       };
-      ctx.ctrl.groupPicked(userGroupItem);
+      ctx.ctrl.groupPicked(teamItem);
     });
 
     it('should not throw a validation error', () => {

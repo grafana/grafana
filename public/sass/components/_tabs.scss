@@ -18,9 +18,15 @@
   border: solid transparent;
   border-width: 0 1px 1px;
   border-radius: 3px 3px 0 0;
+  color: $text-color;
 
   i {
     margin-right: 5px;
+  }
+
+  .gicon {
+    position: relative;
+    top: -2px;
   }
 
   &:hover,

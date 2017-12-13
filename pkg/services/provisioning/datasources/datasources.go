@@ -118,13 +118,19 @@ func (configReader) readConfig(path string) ([]*DatasourcesAsConfig, error) {
 				return nil, err
 			}
 
-			datasources = append(datasources, datasource)
+			if datasource != nil {
+				datasources = append(datasources, datasource)
+			}
 		}
 	}
 
 	defaultCount := 0
-	for _, cfg := range datasources {
-		for _, ds := range cfg.Datasources {
+	for i := range datasources {
+		if datasources[i].Datasources == nil {
+			continue
+		}
+
+		for _, ds := range datasources[i].Datasources {
 			if ds.OrgId == 0 {
 				ds.OrgId = 1
 			}
@@ -137,7 +143,7 @@ func (configReader) readConfig(path string) ([]*DatasourcesAsConfig, error) {
 			}
 		}
 
-		for _, ds := range cfg.DeleteDatasources {
+		for _, ds := range datasources[i].DeleteDatasources {
 			if ds.OrgId == 0 {
 				ds.OrgId = 1
 			}

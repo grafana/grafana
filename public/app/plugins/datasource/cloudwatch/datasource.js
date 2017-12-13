@@ -39,7 +39,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
           !!item.metricName &&
           !_.isEmpty(item.statistics);
       }).map(function (item) {
-        item.region = templateSrv.replace(item.region, options.scopedVars);
+        item.region = templateSrv.replace(self.getActualRegion(item.region), options.scopedVars);
         item.namespace = templateSrv.replace(item.namespace, options.scopedVars);
         item.metricName = templateSrv.replace(item.metricName, options.scopedVars);
         item.dimensions = self.convertDimensionFormat(item.dimensions, options.scopeVars);
@@ -165,21 +165,21 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
 
     this.getMetrics = function (namespace, region) {
       return this.doMetricQueryRequest('metrics', {
-        region: templateSrv.replace(region),
+        region: templateSrv.replace(this.getActualRegion(region)),
         namespace: templateSrv.replace(namespace)
       });
     };
 
     this.getDimensionKeys = function(namespace, region) {
       return this.doMetricQueryRequest('dimension_keys', {
-        region: templateSrv.replace(region),
+        region: templateSrv.replace(this.getActualRegion(region)),
         namespace: templateSrv.replace(namespace)
       });
     };
 
     this.getDimensionValues = function(region, namespace, metricName, dimensionKey, filterDimensions) {
       return this.doMetricQueryRequest('dimension_values', {
-        region: templateSrv.replace(region),
+        region: templateSrv.replace(this.getActualRegion(region)),
         namespace: templateSrv.replace(namespace),
         metricName: templateSrv.replace(metricName),
         dimensionKey: templateSrv.replace(dimensionKey),
@@ -189,14 +189,14 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
 
     this.getEbsVolumeIds = function(region, instanceId) {
       return this.doMetricQueryRequest('ebs_volume_ids', {
-        region: templateSrv.replace(region),
+        region: templateSrv.replace(this.getActualRegion(region)),
         instanceId: templateSrv.replace(instanceId)
       });
     };
 
     this.getEc2InstanceAttribute = function(region, attributeName, filters) {
       return this.doMetricQueryRequest('ec2_instance_attribute', {
-        region: templateSrv.replace(region),
+        region: templateSrv.replace(this.getActualRegion(region)),
         attributeName: templateSrv.replace(attributeName),
         filters: filters
       });
@@ -267,7 +267,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
       period = parseInt(period, 10);
       var parameters = {
         prefixMatching: annotation.prefixMatching,
-        region: templateSrv.replace(annotation.region),
+        region: templateSrv.replace(this.getActualRegion(annotation.region)),
         namespace: templateSrv.replace(annotation.namespace),
         metricName: templateSrv.replace(annotation.metricName),
         dimensions: this.convertDimensionFormat(annotation.dimensions, {}),
@@ -339,6 +339,13 @@ function (angular, _, moment, dateMath, kbn, templatingVariable) {
 
     this.getDefaultRegion = function() {
       return this.defaultRegion;
+    };
+
+    this.getActualRegion = function(region) {
+      if (region === 'default' || _.isEmpty(region)) {
+        return this.getDefaultRegion();
+      }
+      return region;
     };
 
     this.getExpandedVariables = function(target, dimensionKey, variable, templateSrv) {

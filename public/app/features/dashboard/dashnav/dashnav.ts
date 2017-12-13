@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import moment from 'moment';
 import angular from 'angular';
 import {appEvents, NavModel} from 'app/core/core';
@@ -15,13 +14,11 @@ export class DashNavCtrl {
     private $rootScope,
     private dashboardSrv,
     private $location,
-    private backendSrv,
     public playlistSrv,
     navModelSrv) {
       this.navModel = navModelSrv.getDashboardNav(this.dashboard, this);
 
       appEvents.on('save-dashboard', this.saveDashboard.bind(this), $scope);
-      appEvents.on('delete-dashboard', this.deleteDashboard.bind(this), $scope);
 
       if (this.dashboard.meta.isSnapshot) {
         var meta = this.dashboard.meta;
@@ -32,13 +29,26 @@ export class DashNavCtrl {
       }
     }
 
-    openEditView(editview) {
-      var search = _.extend(this.$location.search(), {editview: editview});
+    toggleSettings() {
+      let search = this.$location.search();
+      if (search.editview) {
+        delete search.editview;
+      } else {
+        search.editview = 'settings';
+      }
       this.$location.search(search);
     }
 
-    showHelpModal() {
-      appEvents.emit('show-modal', {templateHtml: '<help-modal></help-modal>'});
+    close() {
+      let search = this.$location.search();
+      if (search.editview) {
+        delete search.editview;
+      }
+      if (search.fullscreen) {
+        delete search.fullscreen;
+        delete search.edit;
+      }
+      this.$location.search(search);
     }
 
     starDashboard() {
@@ -63,71 +73,8 @@ export class DashNavCtrl {
       angular.element(evt.currentTarget).tooltip('hide');
     }
 
-    makeEditable() {
-      this.dashboard.editable = true;
-
-      return this.dashboardSrv.saveDashboard({makeEditable: true, overwrite: false}).then(() => {
-        // force refresh whole page
-        window.location.href = window.location.href;
-      });
-    }
-
-    exitFullscreen() {
-      this.$rootScope.appEvent('panel-change-view', {fullscreen: false, edit: false});
-    }
-
     saveDashboard() {
       return this.dashboardSrv.saveDashboard();
-    }
-
-    deleteDashboard() {
-      var confirmText = '';
-      var text2 = this.dashboard.title;
-
-      const alerts = _.sumBy(this.dashboard.panels, panel => {
-         return panel.alert ? 1 : 0;
-      });
-
-      if (alerts > 0) {
-        confirmText = 'DELETE';
-        text2 = `This dashboard contains ${alerts} alerts. Deleting this dashboard will also delete those alerts`;
-      }
-
-      appEvents.emit('confirm-modal', {
-        title: 'Delete',
-        text: 'Do you want to delete this dashboard?',
-        text2: text2,
-        icon: 'fa-trash',
-        confirmText: confirmText,
-        yesText: 'Delete',
-        onConfirm: () => {
-          this.dashboard.meta.canSave = false;
-          this.deleteDashboardConfirmed();
-        }
-      });
-    }
-
-    deleteDashboardConfirmed() {
-      this.backendSrv.delete('/api/dashboards/db/' + this.dashboard.meta.slug).then(() => {
-        appEvents.emit('alert-success', ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
-        this.$location.url('/');
-      });
-    }
-
-    saveDashboardAs() {
-      return this.dashboardSrv.showSaveAsModal();
-    }
-
-    viewJson() {
-      var clone = this.dashboard.getSaveModelClone();
-
-      this.$rootScope.appEvent('show-json-editor', {
-        object: clone,
-      });
-    }
-
-    onFolderChange(folderId) {
-      this.dashboard.folderId = folderId;
     }
 
     showSearch() {

@@ -62,6 +62,10 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   checkOtherSegments(fromIndex) {
+    if (this.queryModel.segments.length === 1 && this.queryModel.segments[0].type === 'series-ref') {
+      return;
+    }
+
     if (fromIndex === 0) {
       this.addSelectMetricSegment();
       return;
@@ -108,8 +112,23 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
       if (altSegments.length === 0) { return altSegments; }
 
+      // add query references
+      if (index === 0) {
+        _.eachRight(this.panelCtrl.panel.targets, target => {
+          if (target.refId === this.queryModel.target.refId) {
+            return;
+          }
+
+          altSegments.unshift(this.uiSegmentSrv.newSegment({
+            type: 'series-ref',
+            value: '#' + target.refId,
+            expandable: false,
+          }));
+        });
+      }
+
       // add template variables
-      _.each(this.templateSrv.variables, variable => {
+      _.eachRight(this.templateSrv.variables, variable => {
         altSegments.unshift(this.uiSegmentSrv.newSegment({
           type: 'template',
           value: '$' + variable.name,
@@ -199,11 +218,8 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     var oldTarget = this.queryModel.target.target;
     this.updateModelTarget();
 
-    if (this.queryModel.target !== oldTarget) {
-      var lastSegment = this.segments.length > 0 ? this.segments[this.segments.length - 1] : {};
-      if (lastSegment.value !== 'select metric') {
-        this.panelCtrl.refresh();
-      }
+    if (this.queryModel.target !== oldTarget && !this.queryModel.hasSelectMetric()) {
+      this.panelCtrl.refresh();
     }
   }
 

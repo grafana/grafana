@@ -208,7 +208,7 @@ function (angular, _, $) {
 
               if ($target.hasClass('fa-arrow-left')) {
                 $scope.$apply(function() {
-                  _.move(ctrl.functions, $scope.$index, $scope.$index - 1);
+                  _.move(ctrl.queryModel.functions, $scope.$index, $scope.$index - 1);
                   ctrl.targetChanged();
                 });
                 return;
@@ -216,7 +216,7 @@ function (angular, _, $) {
 
               if ($target.hasClass('fa-arrow-right')) {
                 $scope.$apply(function() {
-                  _.move(ctrl.functions, $scope.$index, $scope.$index + 1);
+                  _.move(ctrl.queryModel.functions, $scope.$index, $scope.$index + 1);
                   ctrl.targetChanged();
                 });
                 return;

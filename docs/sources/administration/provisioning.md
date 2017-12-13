@@ -74,7 +74,7 @@ Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://gith
 
 > This feature is available from v5.0
 
-It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`conf/datasources`](/installation/configuration/#datasources) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `delete_datasources`. Grafana will delete datasources listed in `delete_datasources` before inserting/updating those in the `datasource` list.
+It's possible to manage datasources in Grafana by adding one or more yaml config files in the [`provisioning/datasources`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `datasources` that will be added or updated during start up. If the datasource already exists, Grafana will update it to match the configuration file. The config file can also contain a list of datasources that should be deleted. That list is called `delete_datasources`. Grafana will delete datasources listed in `delete_datasources` before inserting/updating those in the `datasource` list.
 
 ### Running multiple grafana instances.
 If you are running multiple instances of Grafana you might run into problems if they have different versions of the datasource.yaml configuration file. The best way to solve this problem is to add a version number to each datasource in the configuration and increase it when you update the config. Grafana will only update datasources with the same or lower version number than specified in the config. That way old configs cannot overwrite newer configs if they restart at the same time. 
@@ -165,3 +165,20 @@ Secure json data is a map of settings that will be encrypted with [secret key](/
 | tlsClientKey | string | *All* |TLS Client key for outgoing requests |
 | password | string | Postgre | password | 
 | user | string | Postgre | user | 
+
+### Dashboards
+
+It's possible to manage dashboards in Grafana by adding one or more yaml config files in the [`provisioning/dashboards`](/installation/configuration/#provisioning) directory. Each config file can contain a list of `dashboards providers` that will load dashboards into grafana. Currently we only support reading dashboards from file but we will add more providers in the future. 
+
+The dashboard provider config file looks like this
+
+```yaml
+- name: 'default'
+  org_id: 1
+  folder: ''
+  type: file
+  options:
+    folder: /var/lib/grafana/dashboards
+```
+
+When grafana starts it will update/insert all dashboards available in the configured folders. If you modify the file the dashboard will also be updated. 

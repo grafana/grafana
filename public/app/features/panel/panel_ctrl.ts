@@ -2,6 +2,7 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
 import {appEvents, profiler} from 'app/core/core';
+import { PanelModel } from 'app/features/dashboard/panel_model';
 import Remarkable from 'remarkable';
 import {GRID_CELL_HEIGHT, GRID_CELL_VMARGIN} from 'app/core/constants';
 
@@ -134,20 +135,27 @@ export class PanelCtrl {
   getMenu() {
     let menu = [];
     menu.push({text: 'View', click: 'ctrl.viewPanel();', icon: "fa fa-fw fa-eye", shortcut: "v"});
-    menu.push({text: 'Edit', click: 'ctrl.editPanel();', role: 'Editor', icon: "fa fa-fw fa-edit", shortcut: "e"});
+
+    if (this.dashboard.meta.canEdit) {
+      menu.push({text: 'Edit', click: 'ctrl.editPanel();', role: 'Editor', icon: "fa fa-fw fa-edit", shortcut: "e"});
+    }
+
     menu.push({text: 'Share', click: 'ctrl.sharePanel();', icon: "fa fa-fw fa-share", shortcut: "p s"});
 
     let extendedMenu = this.getExtendedMenu();
     menu.push({text: 'More ...', click: 'ctrl.removePanel();', icon: "fa fa-fw fa-cube", submenu: extendedMenu});
 
-    menu.push({divider: true, role: 'Editor'});
-    menu.push({text: 'Remove', click: 'ctrl.removePanel();', role: 'Editor', icon: "fa fa-fw fa-trash", shortcut: "p r"});
+    if (this.dashboard.meta.canEdit) {
+      menu.push({divider: true, role: 'Editor'});
+      menu.push({text: 'Remove', click: 'ctrl.removePanel();', role: 'Editor', icon: "fa fa-fw fa-trash", shortcut: "p r"});
+    }
+
     return menu;
   }
 
   getExtendedMenu() {
     let menu = [];
-    if (!this.fullscreen) {
+    if (!this.fullscreen && this.dashboard.meta.canEdit) {
       menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
     }
     menu.push({text: 'Panel JSON', click: 'ctrl.editPanelJson(); dismiss();' });
@@ -216,22 +224,31 @@ export class PanelCtrl {
   }
 
   editPanelJson() {
-    this.publishAppEvent('show-json-editor', {
-      object: this.panel.getSaveModel(),
-      updateHandler: this.replacePanel.bind(this)
+    let editScope = this.$scope.$root.$new();
+    editScope.object = this.panel.getSaveModel();
+    editScope.updateHandler = this.replacePanel.bind(this);
+
+    this.publishAppEvent('show-modal', {
+      src: 'public/app/partials/edit_json.html',
+      scope: editScope
     });
   }
 
   replacePanel(newPanel, oldPanel) {
-    var index = _.indexOf(this.dashboard.panels, oldPanel);
-    this.dashboard.panels.splice(index, 1);
-
-    // adding it back needs to be done in next digest
-    this.$timeout(() => {
-      newPanel.id = oldPanel.id;
-      newPanel.width = oldPanel.width;
-      this.dashboard.panels.splice(index, 0, newPanel);
+    let dashboard = this.dashboard;
+    let index = _.findIndex(dashboard.panels, (panel) => {
+      return panel.id === oldPanel.id;
     });
+
+    let deletedPanel = dashboard.panels.splice(index, 1);
+    this.dashboard.events.emit('panel-removed', deletedPanel);
+
+    newPanel = new PanelModel(newPanel);
+    newPanel.id = oldPanel.id;
+
+    dashboard.panels.splice(index, 0, newPanel);
+    dashboard.sortPanelsByGridPos();
+    dashboard.events.emit('panel-added', newPanel);
   }
 
   sharePanel() {

@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import {variableTypes} from './variable';
@@ -43,6 +41,10 @@ export class VariableEditorCtrl {
           $scope.reset();
         }
       });
+    };
+
+    $scope.setMode = function(mode) {
+      $scope.mode = mode;
     };
 
     $scope.add = function() {

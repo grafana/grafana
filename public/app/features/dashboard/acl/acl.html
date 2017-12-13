@@ -52,7 +52,7 @@
             <user-picker user-picked="ctrl.userPicked($user)"></user-picker>
           </div>
           <div class="gf-form" ng-show="ctrl.newType === 'Group'">
-            <user-group-picker user-group-picked="ctrl.groupPicked($group)"></user-group-picker>
+            <team-picker team-picked="ctrl.groupPicked($group)"></team-picker>
           </div>
         </div>
       </form>
@@ -101,9 +101,9 @@
   <!--             </a> -->
   <!--           </td> -->
   <!--         </tr> -->
-  <!--         <tr ng&#45;repeat="permission in ctrl.userGroupPermissions" class="permissionlist__item"> -->
+  <!--         <tr ng&#45;repeat="permission in ctrl.teamPermissions" class="permissionlist__item"> -->
   <!--           <td><i class="fa fa&#45;fw fa&#45;users"></i></td> -->
-  <!--           <td>{{permission.userGroup}}</td> -->
+  <!--           <td>{{permission.team}}</td> -->
   <!--           <td><select class="gf&#45;form&#45;input gf&#45;size&#45;auto" ng&#45;model="permission.permissions" ng&#45;options="p.value as p.text for p in ctrl.permissionTypeOptions" ng&#45;change="ctrl.updatePermission(permission)"></select></td> -->
   <!--           <td class="text&#45;right"> -->
   <!--             <a ng&#45;click="ctrl.removePermission(permission)" class="btn btn&#45;danger btn&#45;small"> -->

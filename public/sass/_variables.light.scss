@@ -103,6 +103,7 @@ $panel-border:       solid 1px $panel-border-color;
 $panel-drop-zone-bg: repeating-linear-gradient(-128deg, $body-bg, $body-bg 10px, $gray-6 10px, $gray-6 20px);
 $panel-header-hover-bg:       $gray-6;
 $panel-header-menu-hover-bg:  $gray-4;
+$panel-edit-shadow: 0 0 30px 20px $black;
 
 // Page header
 $page-header-bg: linear-gradient(90deg, $white, $gray-7);

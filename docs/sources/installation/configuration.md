@@ -91,12 +91,11 @@ file.
 
 Directory where grafana will automatically scan and look for plugins
 
-### datasources
+### provisioning
 
 > This feature is available in 5.0+
 
-Config files containing datasources that will be configured at startup. 
-You can read more about the config files at the [provisioning page](/administration/provisioning/#datasources).
+Folder that contains [provisioning](/administration/provisioning) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
 
 ## [server]
 
@@ -635,8 +634,7 @@ Number dashboard versions to keep (per dashboard). Default: 20, Minimum: 1.
 
 ## [dashboards.json]
 
-If you have a system that automatically builds dashboards as json files you can enable this feature to have the
-Grafana backend index those json dashboards which will make them appear in regular dashboard search.
+> This have been replaced with dashboards [provisioning](/administration/provisioning) in 5.0+
 
 ### enabled
 `true` or `false`. Is disabled by default.

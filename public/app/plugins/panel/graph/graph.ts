@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.selection';
 import 'vendor/flot/jquery.flot.time';

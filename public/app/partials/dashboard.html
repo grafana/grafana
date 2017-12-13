@@ -2,15 +2,17 @@
 	<dashnav dashboard="ctrl.dashboard"></dashnav>
 
 	<div class="scroll-canvas scroll-canvas--dashboard" grafana-scrollbar>
-		<div dash-editor-view class="dash-edit-view"></div>
-		<div class="dashboard-container">
+		<dashboard-settings dashboard="ctrl.dashboard"
+											  ng-if="ctrl.dashboardViewState.state.editview"
+												class="dashboard-settings">
+		</dashboard-settings>
 
+		<div class="dashboard-container">
 			<dashboard-submenu ng-if="ctrl.dashboard.meta.submenuEnabled" dashboard="ctrl.dashboard">
 			</dashboard-submenu>
 
 			<dashboard-grid get-panel-container="ctrl.getPanelContainer">
 			</dashboard-grid>
-
 		</div>
 	</div>
 </div>

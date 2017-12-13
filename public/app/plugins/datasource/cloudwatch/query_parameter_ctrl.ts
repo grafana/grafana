@@ -28,7 +28,7 @@ export class CloudWatchQueryParameterCtrl {
       target.statistics = target.statistics || ['Average'];
       target.dimensions = target.dimensions || {};
       target.period = target.period || '';
-      target.region = target.region || '';
+      target.region = target.region || 'default';
 
       $scope.regionSegment =  uiSegmentSrv.getSegmentForValue($scope.target.region, 'select region');
       $scope.namespaceSegment = uiSegmentSrv.getSegmentForValue($scope.target.namespace, 'select namespace');
@@ -51,7 +51,7 @@ export class CloudWatchQueryParameterCtrl {
       $scope.removeStatSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove stat --'});
 
       if (_.isEmpty($scope.target.region)) {
-        $scope.target.region = $scope.datasource.getDefaultRegion();
+        $scope.target.region = 'default';
       }
 
       if (!$scope.onChange) {
@@ -148,6 +148,10 @@ export class CloudWatchQueryParameterCtrl {
 
     $scope.getRegions = function() {
       return $scope.datasource.metricFindQuery('regions()')
+      .then(function(results) {
+        results.unshift({ text: 'default'});
+        return results;
+      })
       .then($scope.transformToSegments(true));
     };
 

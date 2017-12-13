@@ -91,7 +91,7 @@ func RemoveOrgUser(cmd *m.RemoveOrgUserCommand) error {
 		deletes := []string{
 			"DELETE FROM org_user WHERE org_id=? and user_id=?",
 			"DELETE FROM dashboard_acl WHERE org_id=? and user_id = ?",
-			"DELETE FROM user_group_member WHERE org_id=? and user_id = ?",
+			"DELETE FROM team_member WHERE org_id=? and user_id = ?",
 		}
 
 		for _, sql := range deletes {

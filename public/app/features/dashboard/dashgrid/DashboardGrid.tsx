@@ -1,5 +1,4 @@
 import React from 'react';
-import coreModule from 'app/core/core_module';
 import ReactGridLayout from 'react-grid-layout';
 import {GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT} from 'app/core/constants';
 import {DashboardPanel} from './DashboardPanel';
@@ -174,6 +173,3 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   }
 }
 
-coreModule.directive('dashboardGrid', function(reactDirective) {
-  return reactDirective(DashboardGrid, [['getPanelContainer', {watchDepth: 'reference', wrapApply: false}]]);
-});

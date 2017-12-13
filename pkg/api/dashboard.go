@@ -6,6 +6,8 @@ import (
 	"os"
 	"path"
 
+	"github.com/grafana/grafana/pkg/services/dashboards"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
@@ -15,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -157,13 +158,6 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 
 	dash := cmd.GetDashboardModel()
 
-	// look up existing dashboard
-	if dash.Id > 0 {
-		if existing, _ := getDashboardHelper(c.OrgId, "", dash.Id); existing != nil {
-			dash.HasAcl = existing.HasAcl
-		}
-	}
-
 	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
 		return dashboardGuardianResponse(err)
@@ -188,17 +182,24 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		}
 	}
 
-	validateAlertsCmd := alerting.ValidateDashboardAlertsCommand{
+	dashItem := &dashboards.SaveDashboardItem{
+		Dashboard: dash,
+		Message:   cmd.Message,
 		OrgId:     c.OrgId,
 		UserId:    c.UserId,
-		Dashboard: dash,
+		Overwrite: cmd.Overwrite,
 	}
 
-	if err := bus.Dispatch(&validateAlertsCmd); err != nil {
+	dashboard, err := dashboards.GetRepository().SaveDashboard(dashItem)
+
+	if err == m.ErrDashboardTitleEmpty {
+		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)
+	}
+
+	if err == m.ErrDashboardContainsInvalidAlertData {
 		return ApiError(500, "Invalid alert data. Cannot save dashboard", err)
 	}
 
-	err := bus.Dispatch(&cmd)
 	if err != nil {
 		if err == m.ErrDashboardWithSameNameExists {
 			return Json(412, util.DynMap{"status": "name-exists", "message": err.Error()})
@@ -220,18 +221,16 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		return ApiError(500, "Failed to save dashboard", err)
 	}
 
-	alertCmd := alerting.UpdateDashboardAlertsCommand{
-		OrgId:     c.OrgId,
-		UserId:    c.UserId,
-		Dashboard: cmd.Result,
-	}
-
-	if err := bus.Dispatch(&alertCmd); err != nil {
-		return ApiError(500, "Failed to save alerts", err)
+	if err == m.ErrDashboardFailedToUpdateAlertData {
+		return ApiError(500, "Invalid alert data. Cannot save dashboard", err)
 	}
 
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)
-	return Json(200, util.DynMap{"status": "success", "slug": cmd.Result.Slug, "version": cmd.Result.Version, "id": cmd.Result.Id})
+	return Json(200, util.DynMap{"status": "success", "slug": dashboard.Slug, "version": dashboard.Version, "id": dashboard.Id})
+}
+
+func canEditDashboard(role m.RoleType) bool {
+	return role == m.ROLE_ADMIN || role == m.ROLE_EDITOR || role == m.ROLE_READ_ONLY_EDITOR
 }
 
 func GetHomeDashboard(c *middleware.Context) Response {

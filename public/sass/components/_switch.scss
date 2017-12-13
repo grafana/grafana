@@ -27,6 +27,7 @@
     background: $input-bg;
     border: 1px solid $input-border-color;
     border-left: none;
+    border-radius: $input-border-radius;
   }
 
   input + label::before, input + label::after {
@@ -45,7 +46,6 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    border-radius: $input-border-radius;
   }
 
   &:hover {
@@ -104,10 +104,12 @@
 .gf-form-switch--transparent {
   input + label {
     background: transparent;
+    border: none;
   }
 
   input + label::before, input + label::after {
     background: transparent;
+    border: none;
   }
 
   &:hover {

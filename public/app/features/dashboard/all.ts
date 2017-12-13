@@ -19,15 +19,16 @@ import './export/export_modal';
 import './export_data/export_data_modal';
 import './ad_hoc_filters';
 import './repeat_option/repeat_option';
-import './dashgrid/DashboardGrid';
+import './dashgrid/DashboardGridDirective';
 import './dashgrid/PanelLoader';
 import './dashgrid/RowOptions';
 import './acl/acl';
 import './folder_picker/picker';
 import './folder_modal/folder';
 import './move_to_folder_modal/move_to_folder';
-import coreModule from 'app/core/core_module';
+import './settings/settings';
 
+import coreModule from 'app/core/core_module';
 import {DashboardListCtrl} from './dashboard_list_ctrl';
 import {FolderDashboardsCtrl} from './folder_dashboards_ctrl';
 import {FolderPermissionsCtrl} from './folder_permissions_ctrl';

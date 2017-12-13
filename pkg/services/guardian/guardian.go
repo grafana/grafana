@@ -11,7 +11,7 @@ type DashboardGuardian struct {
 	dashId int64
 	orgId  int64
 	acl    []*m.DashboardAclInfoDTO
-	groups []*m.UserGroup
+	groups []*m.Team
 	log    log.Logger
 }
 
@@ -55,7 +55,7 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, er
 		orgRole = m.ROLE_VIEWER
 	}
 
-	userGroupAclItems := []*m.DashboardAclInfoDTO{}
+	teamAclItems := []*m.DashboardAclInfoDTO{}
 
 	for _, p := range acl {
 		// user match
@@ -71,26 +71,26 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, er
 		}
 
 		// remember this rule for later
-		if p.UserGroupId > 0 {
-			userGroupAclItems = append(userGroupAclItems, p)
+		if p.TeamId > 0 {
+			teamAclItems = append(teamAclItems, p)
 		}
 	}
 
 	// do we have group rules?
-	if len(userGroupAclItems) == 0 {
+	if len(teamAclItems) == 0 {
 		return false, nil
 	}
 
 	// load groups
-	userGroups, err := g.getUserGroups()
+	teams, err := g.getTeams()
 	if err != nil {
 		return false, err
 	}
 
 	// evalute group rules
 	for _, p := range acl {
-		for _, ug := range userGroups {
-			if ug.Id == p.UserGroupId && p.Permission >= permission {
+		for _, ug := range teams {
+			if ug.Id == p.TeamId && p.Permission >= permission {
 				return true, nil
 			}
 		}
@@ -114,12 +114,12 @@ func (g *DashboardGuardian) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
 	return g.acl, nil
 }
 
-func (g *DashboardGuardian) getUserGroups() ([]*m.UserGroup, error) {
+func (g *DashboardGuardian) getTeams() ([]*m.Team, error) {
 	if g.groups != nil {
 		return g.groups, nil
 	}
 
-	query := m.GetUserGroupsByUserQuery{UserId: g.user.UserId}
+	query := m.GetTeamsByUserQuery{UserId: g.user.UserId}
 	err := bus.Dispatch(&query)
 
 	g.groups = query.Result

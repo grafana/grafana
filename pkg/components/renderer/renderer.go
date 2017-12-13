@@ -31,6 +31,7 @@ type RenderOpts struct {
 	OrgRole        models.RoleType
 	Timezone       string
 	IsAlertContext bool
+	Encoding       string
 }
 
 var ErrTimeout = errors.New("Timeout error. You can set timeout in seconds with &timeout url parameter")
@@ -101,6 +102,10 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		"domain=" + localDomain,
 		"timeout=" + strconv.Itoa(timeout),
 		"renderKey=" + renderKey,
+	}
+
+	if params.Encoding != "" {
+		cmdArgs = append([]string{fmt.Sprintf("--output-encoding=%s", params.Encoding)}, cmdArgs...)
 	}
 
 	cmd := exec.Command(binPath, cmdArgs...)

@@ -31,7 +31,7 @@ export class LoadDashboardCtrl {
 export class NewDashboardCtrl {
 
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope, $routeParams) {
     $scope.initDashboard({
       meta: { canStar: false, canShare: false, isNew: true },
       dashboard: {
@@ -42,7 +42,8 @@ export class NewDashboardCtrl {
             gridPos: {x: 0, y: 0, w: 12, h: 9},
             title: 'Panel Title',
           }
-        ]
+        ],
+        folderId: Number($routeParams.folderId)
       },
     }, $scope);
   }
