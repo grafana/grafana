@@ -1,7 +1,6 @@
 package dashboards
 
 import (
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -23,7 +22,6 @@ func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *Das
 
 	dash := &dashboards.SaveDashboardItem{}
 	dash.Dashboard = models.NewDashboardFromJson(data)
-	dash.TitleLower = strings.ToLower(dash.Dashboard.Title)
 	dash.UpdatedAt = lastModified
 	dash.Overwrite = true
 	dash.OrgId = cfg.OrgId

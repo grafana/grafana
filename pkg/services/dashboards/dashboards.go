@@ -23,14 +23,13 @@ func SetRepository(rep Repository) {
 }
 
 type SaveDashboardItem struct {
-	TitleLower string
-	OrgId      int64
-	Folder     string
-	UpdatedAt  time.Time
-	UserId     int64
-	Message    string
-	Overwrite  bool
-	Dashboard  *models.Dashboard
+	OrgId     int64
+	Folder    string
+	UpdatedAt time.Time
+	UserId    int64
+	Message   string
+	Overwrite bool
+	Dashboard *models.Dashboard
 }
 
 type DashboardRepository struct{}
