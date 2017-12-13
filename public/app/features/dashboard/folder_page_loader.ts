@@ -12,7 +12,7 @@ export class FolderPageLoader {
         url: '/fsdfds',
         text: '',
         breadcrumbs: [
-          { title: 'Dashboards', uri: '/dashboards' },
+          { title: 'Dashboards', url: '/dashboards' },
           { title: ' ' },
         ],
         children: [

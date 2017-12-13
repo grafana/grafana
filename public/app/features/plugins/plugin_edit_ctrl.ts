@@ -11,8 +11,7 @@ export class PluginEditCtrl {
   includes: any;
   readmeHtml: any;
   includedDatasources: any;
-  tabIndex: number;
-  tabs: any;
+  tab: string;
   navModel: any;
   hasDashboards: any;
   preUpdateHook: () => any;
@@ -24,24 +23,76 @@ export class PluginEditCtrl {
     private $rootScope,
     private backendSrv,
     private $sce,
-    $routeParams,
+    private $routeParams,
     navModelSrv,
   ) {
-    this.navModel = navModelSrv.getNav('cfg', 'plugins', 0);
-    this.model = {};
-    this.pluginId = $routeParams.pluginId;
-    this.tabIndex = 0;
-    this.tabs = ['Readme'];
 
+    this.pluginId = $routeParams.pluginId;
     this.preUpdateHook = () => Promise.resolve();
     this.postUpdateHook = () => Promise.resolve();
+
+    this.init();
+  }
+
+  setNavModel(model) {
+    let defaultTab = 'readme';
+
+    this.navModel = {
+      main: {
+        img: model.info.logos.large,
+        subTitle: model.info.description,
+        url: '',
+        text: '',
+        breadcrumbs: [
+          { title: 'Plugins', url: '/plugins' },
+          { title: model.name },
+        ],
+        children: [
+          {
+            icon: 'fa fa-fw fa-file-text-o',
+            id: 'readme',
+            text: 'Readme',
+            url: `plugins/${this.model.id}/edit?tab=readme`
+          }
+        ]
+      }
+    };
+
+    if (model.type === 'app') {
+        this.navModel.main.children.push({
+            icon: 'fa fa-fw fa-th-large',
+            id: 'config',
+            text: 'Config',
+            url: `plugins/${this.model.id}/edit?tab=config`
+        });
+
+        let hasDashboards = _.find(model.includes, {type: 'dashboard'});
+
+        if (hasDashboards) {
+          this.navModel.main.children.push({
+            icon: 'gicon gicon-dashboard',
+            id: 'dashboards',
+            text: 'Dashboards',
+            url: `plugins/${this.model.id}/edit?tab=dashboards`
+          });
+        }
+
+        defaultTab = 'config';
+    }
+
+    this.tab = this.$routeParams.tab || defaultTab;
+
+    for (let tab of this.navModel.main.children) {
+      if (tab.id === this.tab) {
+        tab.active = true;
+      }
+    }
   }
 
   init() {
     return this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(result => {
       this.model = result;
       this.pluginIcon = this.getPluginIcon(this.model.type);
-      this.navModel.breadcrumbs.push({text: this.model.name});
 
       this.model.dependencies.plugins.forEach(plug => {
         plug.icon = this.getPluginIcon(plug.type);
@@ -52,16 +103,7 @@ export class PluginEditCtrl {
         return plug;
       });
 
-      if (this.model.type === 'app') {
-        this.hasDashboards = _.find(result.includes, {type: 'dashboard'});
-        if (this.hasDashboards) {
-          this.tabs.unshift('Dashboards');
-        }
-
-        this.tabs.unshift('Config');
-        this.tabIndex = 0;
-      }
-
+      this.setNavModel(this.model);
       return this.initReadme();
     });
   }

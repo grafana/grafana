@@ -76,8 +76,8 @@ export default class PageHeader extends React.Component<IProps, any> {
     const breadcrumbsResult = [];
     for (let i = 0; i < breadcrumbs.length; i++) {
       const bc = breadcrumbs[i];
-      if (bc.uri) {
-        breadcrumbsResult.push(<a className="text-link" key={i} href={bc.uri}>{bc.title}</a>);
+      if (bc.url) {
+        breadcrumbsResult.push(<a className="text-link" key={i} href={bc.url}>{bc.title}</a>);
       } else {
         breadcrumbsResult.push(<span key={i}> / {bc.title}</span>);
       }
