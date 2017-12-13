@@ -77,6 +77,13 @@ func (m *PostgresMacroEngine) evaluateMacro(name string, args []string) (string,
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 		return fmt.Sprintf("extract(epoch from %s) BETWEEN %d AND %d", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+	case "__timeFilterDateTime":
+		if len(args) == 0 {
+			return "", fmt.Errorf("missing time column argument for macro %v", name)
+		}
+
+		format := "2006-01-02 15:04:05"
+		return fmt.Sprintf("%s BETWEEN '%s' AND '%s'", args[0], m.TimeRange.MustGetFrom().Format(format), m.TimeRange.MustGetTo().Format(format)), nil
 	case "__timeFrom":
 		return fmt.Sprintf("to_timestamp(%d)", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
 	case "__timeTo":
