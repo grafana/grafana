@@ -12,9 +12,9 @@ import (
 
 func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
-		Type:        "alertmanager",
-		Name:        "alertmanager",
-		Description: "Sends alert to Alertmanager",
+		Type:        "prometheus-alertmanager",
+		Name:        "Prometheus Alertmanager",
+		Description: "Sends alert to Prometheus Alertmanager",
 		Factory:     NewAlertmanagerNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Alertmanager settings</h3>
@@ -35,7 +35,7 @@ func NewAlertmanagerNotifier(model *m.AlertNotification) (alerting.Notifier, err
 	return &AlertmanagerNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		Url:          url,
-		log:          log.New("alerting.notifier.alertmanager"),
+		log:          log.New("alerting.notifier.prometheus-alertmanager"),
 	}, nil
 }
 
@@ -46,14 +46,10 @@ type AlertmanagerNotifier struct {
 }
 
 func (this *AlertmanagerNotifier) ShouldNotify(evalContext *alerting.EvalContext) bool {
-	if evalContext.Rule.State == m.AlertStateAlerting {
-		return true
-	}
-	return false
+	return evalContext.Rule.State == m.AlertStateAlerting
 }
 
 func (this *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error {
-	this.log.Info("Sending alertmanager")
 
 	alerts := make([]interface{}, 0)
 	for _, match := range evalContext.EvalMatches {
@@ -62,8 +58,7 @@ func (this *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) erro
 		// Rule state should always be alerting if notifying.
 		alertJSON.Set("endsAt", "0001-01-01T00:00:00Z")
 
-		ruleUrl, err := evalContext.GetRuleUrl()
-		if err == nil {
+		if ruleUrl, err := evalContext.GetRuleUrl(); err == nil {
 			alertJSON.Set("generatorURL", ruleUrl)
 		}
 

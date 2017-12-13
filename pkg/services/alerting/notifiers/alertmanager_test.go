@@ -27,10 +27,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 			})
 
 			Convey("from settings", func() {
-				json := `
-				{
-          "url": "http://127.0.0.1:9093/"
-				}`
+				json := `{ "url": "http://127.0.0.1:9093/" }`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
 				model := &m.AlertNotification{
