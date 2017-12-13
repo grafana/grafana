@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import Remarkable from 'remarkable';
@@ -44,7 +42,7 @@ export class OrgUsersCtrl {
     if (this.externalUserMngLinkName) {
       return this.externalUserMngLinkName;
     }
-    return "Add Member";
+    return "Invite User";
   }
 
   get() {
