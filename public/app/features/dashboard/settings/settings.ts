@@ -36,10 +36,10 @@ export class SettingsCtrl {
   buildSectionList() {
     this.sections = [];
     if (this.dashboard.meta.canEdit) {
-      this.sections.push({ title: 'General', id: 'settings', icon: 'fa fa-fw fa-sliders' });
-      this.sections.push({ title: 'Annotations', id: 'annotations', icon: 'fa fa-fw fa-comment-o' });
-      this.sections.push({ title: 'Variables', id: 'templating', icon: 'fa fa-fw fa-dollar' });
-      this.sections.push({ title: 'Links', id: 'links', icon: 'fa fa-fw fa-external-link' });
+      this.sections.push({ title: 'General', id: 'settings', icon: 'gicon gicon-preferences' });
+      this.sections.push({ title: 'Annotations', id: 'annotations', icon: 'gicon gicon-annotationp' });
+      this.sections.push({ title: 'Variables', id: 'templating', icon: 'gicon gicon-variable' });
+      this.sections.push({ title: 'Links', id: 'links', icon: 'gicon gicon-link' });
 
       if (this.dashboard.id) {
         this.sections.push({ title: 'Versions', id: 'versions', icon: 'fa fa-fw fa-history' });
@@ -51,7 +51,7 @@ export class SettingsCtrl {
       this.viewId = 'make_editable';
     }
 
-    this.sections.push({ title: 'View JSON', id: 'view_json', icon: 'fa fa-fw fa-code' });
+    this.sections.push({ title: 'View JSON', id: 'view_json', icon: 'gicon gicon-json' });
 
     const params = this.$location.search();
     const url = this.$location.path();
