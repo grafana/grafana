@@ -23,14 +23,12 @@ func SetRepository(rep Repository) {
 }
 
 type SaveDashboardItem struct {
-	TitleLower string
-	OrgId      int64
-	Folder     string
-	UpdatedAt  time.Time
-	UserId     int64
-	Message    string
-	Overwrite  bool
-	Dashboard  *models.Dashboard
+	OrgId     int64
+	UpdatedAt time.Time
+	UserId    int64
+	Message   string
+	Overwrite bool
+	Dashboard *models.Dashboard
 }
 
 type DashboardRepository struct{}
@@ -57,6 +55,8 @@ func (dr *DashboardRepository) SaveDashboard(json *SaveDashboardItem) (*models.D
 		OrgId:     json.OrgId,
 		Overwrite: json.Overwrite,
 		UserId:    json.UserId,
+		FolderId:  dashboard.FolderId,
+		IsFolder:  dashboard.IsFolder,
 	}
 
 	if !json.UpdatedAt.IsZero() {
