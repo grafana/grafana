@@ -72,8 +72,12 @@ func (this *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) erro
 		}
 
 		tags := make(map[string]string)
-		for k, v := range match.Tags {
-			tags[k] = v
+		if len(match.Tags) == 0 {
+			tags["metric"] = match.Metric
+		} else {
+			for k, v := range match.Tags {
+				tags[k] = v
+			}
 		}
 		tags["alertname"] = evalContext.Rule.Name
 		alertJSON.Set("labels", tags)
