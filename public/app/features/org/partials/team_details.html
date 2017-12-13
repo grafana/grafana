@@ -1,20 +1,18 @@
-<navbar model="ctrl.navModel"></navbar>
+<page-header model="ctrl.navModel"></page-header>
 
-<div class="page-container">
-	<div class="page-header">
-		<h1>Edit Team</h1>
-	</div>
+<div class="page-container page-body">
+  <h3 class="page-sub-heading">Edit Team</h3>
 
-	<form name="teamDetailsForm" class="gf-form-group gf-form-inline">
-		<div class="gf-form">
-			<span class="gf-form-label width-10">Name</span>
-			<input type="text" required ng-model="ctrl.team.name" class="gf-form-input max-width-14" >
-		</div>
+  <form name="teamDetailsForm" class="gf-form-group gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label width-10">Name</span>
+      <input type="text" required ng-model="ctrl.team.name" class="gf-form-input max-width-14">
+    </div>
 
-		<div class="gf-form">
-			<button type="submit" class="btn btn-success" ng-click="ctrl.update()">Update</button>
-		</div>
-	</form>
+    <div class="gf-form">
+      <button type="submit" class="btn btn-success" ng-click="ctrl.update()">Update</button>
+    </div>
+  </form>
 
   <div class="gf-form-group">
     <h3 class="page-heading">Team Members</h3>
@@ -43,7 +41,7 @@
       </tr>
     </table>
     <div>
-  <em class="muted" ng-hide="ctrl.teamMembers.length > 0">
-    This team has no members yet.
-  </em>
-</div>
+      <em class="muted" ng-hide="ctrl.teamMembers.length > 0">
+        This team has no members yet.
+      </em>
+    </div>
