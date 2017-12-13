@@ -277,4 +277,64 @@ describe('templateSrv', function() {
     });
 
   });
+
+  describe('getVariants', function() {
+    it('should return empty array if no target', function() {
+      initTemplateSrv([{type: 'query', name: 'test', current: {value: 'val1'}}]);
+
+      var target = _templateSrv.getVariants(undefined, {});
+      expect(target).toEqual([]);
+    });
+
+    it('should return array with the same value if no template vars found', function() {
+      initTemplateSrv([{type: 'query', name: 'test', current: {value: 'val1'}}]);
+
+      var target = _templateSrv.getVariants('this.is.filters', {});
+      expect(target).toEqual(['this.is.filters']);
+    });
+
+    it('should return array with the same value if template var does not exists', function() {
+      initTemplateSrv([{type: 'query', name: 'test', current: {value: 'val1'}}]);
+
+      var target = _templateSrv.getVariants('this.$check.filters', {});
+      expect(target).toEqual(['this.$check.filters']);
+    });
+
+    it('should return $test with singular scoped value', function() {
+      initTemplateSrv([{type: 'query', name: 'test', current: {value: 'val0'}}]);
+
+      var target = _templateSrv.getVariants('this.$test.filters', {'test': {value: 'val1'}});
+      expect(target).toEqual(['this.val1.filters']);
+    });
+
+    it('should return $test with multi scoped value', function() {
+      initTemplateSrv([{type: 'query', name: 'test', current: {value: 'val0'}}]);
+
+      var target = _templateSrv.getVariants('this.$test.filters', {'test': {value: ['val1', 'val2']}});
+      expect(target).toEqual(['this.val1.filters', 'this.val2.filters']);
+    });
+
+    it('should return $test with singular value', function() {
+      initTemplateSrv([{type: 'query', name: 'test', current: {value: 'val1'}}]);
+
+      var target = _templateSrv.getVariants('this.$test.filters', {});
+      expect(target).toEqual(['this.val1.filters']);
+    });
+
+    it('should return $test with multi value', function() {
+      initTemplateSrv([{type: 'query', name: 'test', current: {value: ['val1', 'val2']}}]);
+
+      var target = _templateSrv.getVariants('this.$test.filters', {});
+      expect(target).toEqual(['this.val1.filters', 'this.val2.filters']);
+    });
+
+    it('should return $test with system value', function() {
+      initTemplateSrv([{type: 'query', name: 'test', current: {value: '$__system_value'}}]);
+      _templateSrv.setGrafanaVariable('$__system_value', 'val1');
+      _templateSrv.updateTemplateData();
+
+      var target = _templateSrv.getVariants('this.$test.filters', {});
+      expect(target).toEqual(['this.val1.filters']);
+    });
+  });
 });

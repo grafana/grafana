@@ -198,6 +198,54 @@ export class TemplateSrv {
     });
   }
 
+  getVariants(target, scopedVars?) {
+    if (!target) { return []; }
+
+    var buildVariants, matches, variable, value, systemValue;
+    this.regex.lastIndex = 0;
+
+    buildVariants = (values) => {
+      if (!_.isArray(values)) {
+        return [target.replace(this.regex, values)];
+      }
+
+      return _.map(values, (val) => {
+        return target.replace(this.regex, val);
+      });
+    };
+
+    matches = this.regex.exec(target);
+    if (!matches) { return [target]; }
+
+    variable = this.index[matches[1] || matches[2]];
+
+    if (scopedVars) {
+      value = scopedVars[matches[1] || matches[2]];
+
+      if (value) {
+        return buildVariants(value.value);
+      }
+    }
+
+    if (!variable) { return [target]; }
+
+    systemValue = this.grafanaVariables[variable.current.value];
+    if (systemValue) {
+      return buildVariants(systemValue);
+    }
+
+    value = variable.current.value;
+    if (this.isAllValue(value)) {
+      value = this.getAllValue(variable);
+
+      if (variable.allValue) {
+        return buildVariants(value);
+      }
+    }
+
+    return buildVariants(value);
+  }
+
   isAllValue(value) {
     return value === '$__all' || Array.isArray(value) && value[0] === '$__all';
   }

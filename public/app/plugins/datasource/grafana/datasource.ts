@@ -3,7 +3,7 @@ import _ from 'lodash';
 class GrafanaDatasource {
 
   /** @ngInject */
-  constructor(private backendSrv, private $q) {}
+  constructor(private backendSrv, private $q, private templateSrv) {}
 
   query(options) {
     return this.backendSrv
@@ -35,7 +35,6 @@ class GrafanaDatasource {
     return this.$q.when({data: []});
   }
 
-
   annotationQuery(options) {
     const params: any = {
       from: options.range.from.valueOf(),
@@ -59,6 +58,10 @@ class GrafanaDatasource {
         return this.$q.when([]);
       }
     }
+
+    params.tags = _.flatMap(options.annotation.tags, (tag) => {
+      return this.templateSrv.getVariants(tag, {});
+    });
 
     return this.backendSrv.get('/api/annotations', params);
   }
