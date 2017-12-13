@@ -61,9 +61,18 @@ export class OrgSwitchCtrl {
   }
 
   setUsingOrg(org) {
-    this.backendSrv.post('/api/user/using/' + org.orgId).then(() => {
-      window.location.href = window.location.href;
+    return this.backendSrv.post('/api/user/using/' + org.orgId).then(() => {
+      const re = /orgId=\d+/gi;
+      this.setWindowLocationHref(this.getWindowLocationHref().replace(re, 'orgId=' + org.orgId));
     });
+  }
+
+  getWindowLocationHref() {
+    return window.location.href;
+  }
+
+  setWindowLocationHref(href: string) {
+    window.location.href = href;
   }
 }
 
