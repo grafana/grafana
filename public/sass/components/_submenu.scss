@@ -38,7 +38,11 @@
 
 .variable-value-link {
   padding-right: 10px;
-  padding: 8px 7px;
+  padding: $input-padding-y $input-padding-x;
+  background-color: $input-bg;
+  border: 1px solid $input-border-color;
+  border-radius: $input-border-radius;
+  color: $input-color;
   box-sizing: content-box;
   display: inline-block;
   color: $text-color;
