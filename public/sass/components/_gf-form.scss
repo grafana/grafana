@@ -1,6 +1,7 @@
 $gf-form-margin: 3px;
 $input-border: 1px solid $input-border-color;
 
+
 .gf-form {
   margin-bottom: $gf-form-margin;
   display: flex;
@@ -27,6 +28,26 @@ $input-border: 1px solid $input-border-color;
 
     .gf-form-label {
       padding: 4px 0;
+    }
+  }
+}
+
+.gf-form-inline-icon {
+  position: relative;
+
+  .fa {
+    position: absolute;
+    top: 50%;
+    margin-top: -9px;
+    font-size: $font-size-lg;
+    left: 10px;
+    color: $input-color-placeholder;
+  }
+  > input {
+    padding-left: 30px;
+
+    &:focus + .fa {
+      color: $gray-4;
     }
   }
 }
