@@ -12,6 +12,7 @@ export interface NavModelItem {
   hideFromTabs?: boolean;
   divider?: boolean;
   children: NavModelItem[];
+  target?: string;
 }
 
 export class NavModel {

@@ -19,7 +19,7 @@ function TabItem(tab: NavModelItem) {
 
   return (
     <li className="gf-tabs-item" key={tab.url}>
-      <a className={tabClasses} href={tab.url}>
+      <a className={tabClasses} target={tab.target} href={tab.url}>
         <i className={tab.icon} />
         {tab.text}
       </a>
