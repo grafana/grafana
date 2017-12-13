@@ -11,6 +11,11 @@
   vertical-align: middle;
 }
 
+.mini {
+  width: 0.8em;
+  height: 0.8em;
+}
+
 .gicon-add-annotation {
   background-image: url('../img/icons_#{$theme-name}_theme/icon_add_annotation.svg');
 }
