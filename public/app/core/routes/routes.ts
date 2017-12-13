@@ -109,9 +109,10 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })
-  .when('/org/users/new', {
+  .when('/org/users/invite', {
     templateUrl: 'public/app/features/org/partials/invite.html',
     controller : 'UserInviteCtrl',
+    controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })
   .when('/org/apikeys', {
