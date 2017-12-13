@@ -18,7 +18,7 @@ func TestDashboardImport(t *testing.T) {
 		setting.Cfg = ini.Empty()
 		sec, _ := setting.Cfg.NewSection("plugin.test-app")
 		sec.NewKey("path", "../../tests/test-app")
-		_, err := Init()
+		err := Init()
 
 		So(err, ShouldBeNil)
 
