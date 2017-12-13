@@ -39,6 +39,11 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 			break
 		}
 
+		if i == 0 {
+			firing = cr.Firing
+			noDataFound = cr.NoDataFound
+		}
+
 		// calculating Firing based on operator
 		if cr.Operator == "or" {
 			firing = firing || cr.Firing
