@@ -327,14 +327,14 @@ select:-webkit-autofill:focus {
 }
 
 
-login-bg {
+.login-bg {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   perspective: 1000px;
 
-  .login-bg {
+  .login-bg__item {
     width: 4%;
     height: 10px;
     // background: hotpink;
@@ -422,7 +422,7 @@ login-bg {
   }
 }
 
-login-bg-fx {
+.login-bg-fx {
   position: absolute;
   top: 0;
   left: 0;
