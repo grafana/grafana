@@ -48,6 +48,11 @@
   float: left;
   padding-top: $spacer * 0.75;
   margin: 0 $spacer*3 0 $spacer*1.5;
+
+  .gicon {
+    position: relative;
+    top: -2px;
+  }
 }
 
 .modal-header-close {

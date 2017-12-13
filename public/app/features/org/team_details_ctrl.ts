@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
 
 export default class TeamDetailsCtrl {
@@ -28,7 +26,7 @@ export default class TeamDetailsCtrl {
   removeTeamMember(teamMember: TeamMember) {
     this.$scope.appEvent('confirm-modal', {
       title: 'Remove Member',
-      text: 'Are you sure you want to remove ' + teamMember.name + ' from this group?',
+      text: 'Are you sure you want to remove ' + teamMember.login + ' from this group?',
       yesText: "Remove",
       icon: "fa-warning",
       onConfirm: () => {
@@ -71,6 +69,7 @@ export interface User {
 export interface TeamMember {
   userId: number;
   name: string;
+  login: string;
 }
 
 coreModule.controller('TeamDetailsCtrl', TeamDetailsCtrl);
