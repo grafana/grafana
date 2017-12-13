@@ -75,7 +75,7 @@
         <td><span class="ellipsis">{{user.email}}</span></td>
         <td>{{user.lastSeenAtAge}}</td>
         <td>
-          <div class="gf-form-select-wrapper width-9">
+          <div class="gf-form-select-wrapper width-12">
             <select type="text" ng-model="user.role" class="gf-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="ctrl.updateOrgUser(user)">
             </select>
           </div>
