@@ -221,6 +221,10 @@ $input-border: 1px solid $input-border-color;
     padding-bottom: 4px;
     font-size: $font-size-sm;
   }
+
+  &--plaintext {
+    white-space: unset;
+  }
 }
 
 .gf-form-hint {

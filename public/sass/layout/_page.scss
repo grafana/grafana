@@ -55,6 +55,10 @@
   }
 }
 
+.page-action-bar--narrow {
+  margin-bottom: 0;
+}
+
 .page-action-bar__spacer {
   width: $spacer * 2;
   flex-grow: 1;
