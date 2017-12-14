@@ -31,8 +31,8 @@ $white:            #fff;
 
 // Accent colors
 // -------------------------
-$blue:                  #1ca4d6;
-$blue-dark:             #3CAAD6;
+$blue:                  #61c2f2;
+$blue-dark:             #0083b3;
 $green:                 #3aa655;
 $red:                   #d44939;
 $yellow:                #FF851B;
@@ -45,6 +45,8 @@ $brand-primary:         $orange;
 $brand-success:         $green;
 $brand-warning:         $orange;
 $brand-danger:          $red;
+
+$query-blue:            $blue-dark;
 
 // Status colors
 // -------------------------
@@ -329,8 +331,8 @@ $graph-tooltip-bg:        $gray-5;
 $checkboxImageUrl: '../img/checkbox_white.png';
 
 // info box
-// $info-box-background: linear-gradient(135deg, #f1fbff, #d7ebff);
-$info-box-background: linear-gradient(135deg, $blue, $blue-dark);
+$info-box-background: linear-gradient(100deg, $blue-dark, darken($blue-dark, 5%));
+$info-box-color:      $gray-7;
 
 // footer
 $footer-link-color:   $gray-3;
