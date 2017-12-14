@@ -75,6 +75,10 @@ $input-border: 1px solid $input-border-color;
   flex-direction: row;
   flex-wrap: wrap;
   align-content: flex-start;
+
+  .gf-form + .gf-form {
+    margin-right: $gf-form-margin;
+  }
 }
 
 .gf-form-button-row {
@@ -108,10 +112,6 @@ $input-border: 1px solid $input-border-color;
 }
 
 .gf-form-label + .gf-form-label {
-  margin-right: $gf-form-margin;
-}
-
-.gf-form + .gf-form {
   margin-right: $gf-form-margin;
 }
 

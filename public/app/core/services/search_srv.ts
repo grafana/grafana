@@ -84,105 +84,96 @@ export class SearchSrv {
     });
   }
 
-  private getDashboardsAndFolders(sections) {
-    const rootFolderId = 0;
-
-    let query = {
-      folderIds: [rootFolderId],
-    };
-
-    return this.backendSrv.search(query).then(results => {
-      for (let hit of results) {
-        if (hit.type === 'dash-folder') {
-          sections[hit.id] = {
-            id: hit.id,
-            title: hit.title,
-            items: [],
-            icon: 'fa fa-folder',
-            score: _.keys(sections).length,
-            uri: hit.uri,
-            toggle: this.toggleFolder.bind(this),
-          };
-        }
-      }
-
-      sections[0] = {
-        id: 0,
-        title: 'Root',
-        items: [],
-        icon: 'fa fa-folder-open',
-        score: _.keys(sections).length,
-        expanded: true,
-      };
-
-      for (let hit of results) {
-        if (hit.type === 'dash-folder') {
-          continue;
-        }
-        let section = sections[hit.folderId || 0];
-        if (section) {
-          section.items.push(this.transformToViewModel(hit));
-        } else {
-          console.log('Error: dashboard returned from browse search but not folder', hit.id, hit.folderId);
-        }
-      }
-    });
+  private transformToViewModel(hit) {
+    hit.url = 'dashboard/db/' + hit.slug;
+    return hit;
   }
 
-  private browse(options) {
+  search(options) {
     let sections: any = {};
-
     let promises = [];
+    let query = _.clone(options);
+    let hasFilters = options.query ||
+      (options.tag && options.tag.length > 0) || options.starred ||
+      (options.folderIds && options.folderIds.length > 0);
 
-    if (!options.skipRecent) {
+    if (!options.skipRecent && !hasFilters) {
       promises.push(this.getRecentDashboards(sections));
     }
 
-    if (!options.skipStarred) {
+    if (!options.skipStarred && !hasFilters) {
       promises.push(this.getStarred(sections));
     }
 
-    promises.push(this.getDashboardsAndFolders(sections));
+    query.folderIds = query.folderIds || [];
+    if (!hasFilters) {
+      query.folderIds = [0];
+    }
+
+    promises.push(this.backendSrv.search(query).then(results => {
+      return this.handleSearchResult(sections, results);
+    }));
 
     return this.$q.all(promises).then(() => {
       return _.sortBy(_.values(sections), 'score');
     });
   }
 
-  private transformToViewModel(hit) {
-    hit.url = 'dashboard/' + hit.uri;
-    return hit;
-  }
-
-  search(options) {
-    if (!options.folderIds && !options.query && (!options.tag || options.tag.length === 0) && !options.starred) {
-      return this.browse(options);
+  private handleSearchResult(sections, results) {
+    if (results.length === 0) {
+      return sections;
     }
 
-    let query = _.clone(options);
-    query.folderIds = options.folderIds || [];
-    query.type = 'dash-db';
+    // create folder index
+    for (let hit of results) {
+      if (hit.type === 'dash-folder') {
+        sections[hit.id] = {
+          id: hit.id,
+          title: hit.title,
+          expanded: false,
+          items: [],
+          toggle: this.toggleFolder.bind(this),
+          url: `dashboards/folder/${hit.id}/${hit.slug}`,
+          icon: 'fa fa-folder',
+          score: _.keys(sections).length,
+        };
+      }
+    }
 
-    return this.backendSrv.search(query).then(results => {
-      if (results.length === 0) {
-        return results;
+    for (let hit of results) {
+      if (hit.type === 'dash-folder') {
+        continue;
       }
 
-      let section = {
-        hideHeader: true,
-        items: [],
-        expanded: true,
-      };
-
-      for (let hit of results) {
-        if (hit.type === 'dash-folder') {
-          continue;
+      let section = sections[hit.folderId || 0];
+      if (!section) {
+        if (hit.folderId) {
+          section = {
+            id: hit.folderId,
+            title: hit.folderTitle,
+            url: `dashboards/folder/${hit.folderId}/${hit.folderSlug}`,
+            items: [],
+            icon: 'fa fa-folder-open',
+            toggle: this.toggleFolder.bind(this),
+            score: _.keys(sections).length,
+          };
+        } else {
+          section = {
+            id: 0,
+            title: 'Root',
+            items: [],
+            icon: 'fa fa-folder-open',
+            toggle: this.toggleFolder.bind(this),
+            score: _.keys(sections).length,
+          };
         }
-        section.items.push(this.transformToViewModel(hit));
+        // add section
+        sections[hit.folderId || 0] = section;
       }
 
-      return [section];
-    });
+      section.expanded = true;
+      section.items.push(this.transformToViewModel(hit));
+    }
   }
 
   private toggleFolder(section) {

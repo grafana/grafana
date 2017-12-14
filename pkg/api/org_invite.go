@@ -61,7 +61,7 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 	}
 
 	// send invite email
-	if !inviteDto.SkipEmails && util.IsEmail(inviteDto.LoginOrEmail) {
+	if inviteDto.SendEmail && util.IsEmail(inviteDto.LoginOrEmail) {
 		emailCmd := m.SendEmailCommand{
 			To:       []string{inviteDto.LoginOrEmail},
 			Template: "new_user_invite.html",
@@ -99,7 +99,7 @@ func inviteExistingUserToOrg(c *middleware.Context, user *m.User, inviteDto *dto
 		return ApiError(500, "Error while trying to create org user", err)
 	} else {
 
-		if !inviteDto.SkipEmails && util.IsEmail(user.Email) {
+		if inviteDto.SendEmail && util.IsEmail(user.Email) {
 			emailCmd := m.SendEmailCommand{
 				To:       []string{user.Email},
 				Template: "invited_to_org.html",

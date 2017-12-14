@@ -6,10 +6,12 @@ export class FolderDashboardsCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private $routeParams) {
-    if (this.$routeParams.folderId && this.$routeParams.type && this.$routeParams.slug) {
+    if (this.$routeParams.folderId && this.$routeParams.slug) {
       this.folderId = $routeParams.folderId;
 
-      new FolderPageLoader(this.backendSrv, this.$routeParams).load(this, this.folderId, 'manage-folder-dashboards');
+      const loader = new FolderPageLoader(this.backendSrv, this.$routeParams);
+
+      loader.load(this, this.folderId, 'manage-folder-dashboards');
     }
   }
 }

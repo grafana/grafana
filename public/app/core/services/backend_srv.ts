@@ -238,63 +238,12 @@ export class BackendSrv {
       schemaVersion: 16,
       title: name,
       editable: true,
-      hideControls: true,
-      panels: [
-        {
-          id: 1,
-          folderId: 0,
-          headings: false,
-          limit: 1000,
-          links: [],
-          query: '',
-          recent: false,
-          search: true,
-          starred: false,
-          tags: [],
-          title: 'Dashboards in this folder',
-          type: 'dashlist',
-          gridPos: {
-            x: 0,
-            y: 0,
-            w: 8,
-            h: 10
-          }
-        },
-        {
-          id: 2,
-          onlyAlertsOnDashboard: true,
-          title: 'Alerts in this folder',
-          type: 'alertlist',
-          gridPos: {
-            x: 4,
-            y: 0,
-            w: 8,
-            h: 10
-          }
-        },
-        {
-          id: 3,
-          title: 'Permissions for this folder',
-          type: 'permissionlist',
-          folderId: 0,
-          gridPos: {
-            x: 8,
-            y: 0,
-            w: 8,
-            h: 10
-          }
-        }
-      ]
+      panels: []
     };
 
     return this.post('/api/dashboards/db/', {dashboard: dash, isFolder: true, overwrite: false})
     .then(res => {
       return this.getDashboard('db', res.slug);
-    })
-    .then(res => {
-      res.dashboard.panels[0].folderId = res.dashboard.id;
-      res.dashboard.panels[2].folderId = res.dashboard.id;
-      return this.saveDashboard(res.dashboard, {overwrite: false});
     });
   }
 }

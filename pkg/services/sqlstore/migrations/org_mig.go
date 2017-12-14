@@ -83,4 +83,10 @@ func addOrgMigrations(mg *Migrator) {
 	mg.AddMigration("Update org_user table charset", NewTableCharsetMigration("org_user", []*Column{
 		{Name: "role", Type: DB_NVarchar, Length: 20},
 	}))
+
+	const migrateReadOnlyViewersToViewers = `UPDATE org_user SET role = 'Viewer' WHERE role = 'Read Only Editor'`
+	mg.AddMigration("Migrate all Read Only Viewers to Viewers", new(RawSqlMigration).
+		Sqlite(migrateReadOnlyViewersToViewers).
+		Postgres(migrateReadOnlyViewersToViewers).
+		Mysql(migrateReadOnlyViewersToViewers))
 }

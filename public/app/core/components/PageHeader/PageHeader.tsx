@@ -19,7 +19,7 @@ function TabItem(tab: NavModelItem) {
 
   return (
     <li className="gf-tabs-item" key={tab.url}>
-      <a className={tabClasses} href={tab.url}>
+      <a className={tabClasses} target={tab.target} href={tab.url}>
         <i className={tab.icon} />
         {tab.text}
       </a>
@@ -113,12 +113,18 @@ export default class PageHeader extends React.Component<IProps, any> {
   }
 
   render() {
+    const { model } = this.props;
+
+    if (!model) {
+      return null;
+    }
+
     return (
       <div className="page-header-canvas">
         <div className="page-container">
           <div className="page-header">
-            {this.renderHeaderTitle(this.props.model.main)}
-            {this.props.model.main.children && <Navigation main={this.props.model.main} />}
+            {this.renderHeaderTitle(model.main)}
+            {model.main.children && <Navigation main={model.main} />}
           </div>
         </div>
       </div>

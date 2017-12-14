@@ -51,10 +51,6 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, er
 	}
 
 	orgRole := g.user.OrgRole
-	if orgRole == m.ROLE_READ_ONLY_EDITOR {
-		orgRole = m.ROLE_VIEWER
-	}
-
 	teamAclItems := []*m.DashboardAclInfoDTO{}
 
 	for _, p := range acl {

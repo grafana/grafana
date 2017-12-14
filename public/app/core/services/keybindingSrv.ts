@@ -81,7 +81,7 @@ export class KeybindingSrv {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit('graph-hover-clear');
-      scope.broadcastRefresh();
+      this.$rootScope.$broadcast('refresh');
     });
 
     this.bind('mod+s', e => {
@@ -189,7 +189,7 @@ export class KeybindingSrv {
     });
 
     this.bind('d r', () => {
-      scope.broadcastRefresh();
+      this.$rootScope.$broadcast('refresh');
     });
 
     this.bind('d s', () => {

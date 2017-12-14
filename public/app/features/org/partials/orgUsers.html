@@ -1,50 +1,26 @@
-<!-- <navbar model="ctrl.navModel"></navbar> -->
-<!--  -->
-<!-- <div class="page&#45;container"> -->
-<!-- 	<div class="page&#45;header"> -->
-<!-- 		<page&#45;h1 model="ctrl.navModel"></page&#45;h1> -->
-<!--  -->
-<!-- 		<button class="btn btn&#45;success" ng&#45;click="ctrl.openAddUsersView()" ng&#45;hide="ctrl.externalUserMngLinkUrl"> -->
-<!-- 			<span>{{ctrl.addUsersBtnName}}</span> -->
-<!-- 		</button> -->
-<!--  -->
-<!-- 		<div class="page&#45;header&#45;tabs"> -->
-<!--  -->
-<!-- 			<a class="btn btn&#45;inverse" ng&#45;href="{{ctrl.externalUserMngLinkUrl}}" target="_blank" ng&#45;if="ctrl.externalUserMngLinkUrl"> -->
-<!-- 				<i class="fa fa&#45;external&#45;link&#45;square"></i> -->
-<!-- 				{{ctrl.addUsersBtnName}} -->
-<!--       </a> -->
-<!--  -->
-<!-- 			<ul class="gf&#45;tabs"> -->
-<!-- 				<li class="gf&#45;tabs&#45;item"> -->
-<!-- 					<a class="gf&#45;tabs&#45;link" ng&#45;click="ctrl.editor.index = 0" ng&#45;class="{active: ctrl.editor.index === 0}"> -->
-<!-- 						Users ({{ctrl.users.length}}) -->
-<!-- 					</a> -->
-<!-- 				</li> -->
-<!-- 				<li class="gf&#45;tabs&#45;item" ng&#45;show="ctrl.pendingInvites.length"> -->
-<!-- 					<a class="gf&#45;tabs&#45;link" ng&#45;click="ctrl.editor.index = 1" ng&#45;class="{active: ctrl.editor.index === 1}"> -->
-<!-- 						Pending Invites ({{ctrl.pendingInvites.length}}) -->
-<!-- 					</a> -->
-<!-- 				</li> -->
-<!-- 			</ul> -->
-<!-- 		</div> -->
-<!-- 	</div> -->
-
 <page-header model="ctrl.navModel"></page-header>
 
 <div class="page-container page-body">
   <div class="page-action-bar">
+    <div class="gf-form">
+      <label class="gf-form-label">Search</label>
+      <input type="text" class="gf-form-input width-20" ng-model="ctrl.searchQuery" ng-change="ctrl.onQueryUpdated()" give-focus="true" placeholder="Filter by username or email" />
+    </div>
+
     <div class="page-action-bar__spacer"></div>
-    <button class="btn btn-inverse" ng-show="ctrl.pendingInvites.length" ng-click="ctrl.editor.index = 1">
+
+    <button class="btn btn-inverse" ng-show="ctrl.pendingInvites.length" ng-click="ctrl.showInvites = true">
       Pending Invites ({{ctrl.pendingInvites.length}})
     </button>
-		<a class="btn btn-success" href="org/users/new" ng-hide="ctrl.externalUserMngLinkUrl">
+
+    <a class="btn btn-success" href="org/users/invite" ng-show="ctrl.canInvite">
       <i class="fa fa-plus"></i>
-			<span>{{ctrl.addUsersBtnName}}</span>
+      <span>Invite</span>
     </a>
-    <a class="btn btn-inverse" ng-href="{{ctrl.externalUserMngLinkUrl}}" target="_blank" ng-if="ctrl.externalUserMngLinkUrl">
+
+    <a class="btn btn-success" ng-href="{{ctrl.externalUserMngLinkUrl}}" target="_blank" ng-if="ctrl.externalUserMngLinkUrl">
       <i class="fa fa-external-link-square"></i>
-      {{ctrl.addUsersBtnName}}
+      {{ctrl.externalUserMngLinkName}}
     </a>
   </div>
 
@@ -52,7 +28,7 @@
     <span ng-bind-html="ctrl.externalUserMngInfo"></span>
   </div>
 
-  <div ng-if="ctrl.editor.index === 0" class="tab-content">
+  <div ng-hide="ctrl.showInvites">
     <table class="filter-table form-inline">
       <thead>
         <tr>
@@ -75,8 +51,8 @@
         <td><span class="ellipsis">{{user.email}}</span></td>
         <td>{{user.lastSeenAtAge}}</td>
         <td>
-          <div class="gf-form-select-wrapper width-9">
-            <select type="text" ng-model="user.role" class="gf-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="ctrl.updateOrgUser(user)">
+          <div class="gf-form-select-wrapper width-12">
+            <select type="text" ng-model="user.role" class="gf-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Admin']" ng-change="ctrl.updateOrgUser(user)">
             </select>
           </div>
         </td>
@@ -89,46 +65,32 @@
     </table>
   </div>
 
-  <div ng-if="ctrl.editor.index === 1">
+  <div ng-if="ctrl.showInvites">
     <table class="filter-table form-inline">
       <thead>
         <tr>
           <th>Email</th>
           <th>Name</th>
           <th></th>
+          <th style="width: 34px;"></th>
         </tr>
       </thead>
-      <tbody ng-repeat="invite in ctrl.pendingInvites">
-        <tr ng-click="invite.expanded = !invite.expanded" ng-class="{'expanded': invite.expanded}">
-          <td>{{invite.email}}</td>
-          <td>{{invite.name}}</td>
-          <td class="text-right">
-            <button class="btn btn-inverse btn-mini" clipboard-button="ctrl.getInviteUrl(invite)" ng-click="ctrl.copyInviteToClipboard($event)">
-              <i class="fa fa-clipboard"></i> Copy Invite
-            </button>
-            &nbsp;
-            <button class="btn btn-inverse btn-mini">
-              Details
-              <i ng-show="!invite.expanded" class="fa fa-caret-right"></i>
-              <i ng-show="invite.expanded" class="fa fa-caret-down"></i>
-            </button>
-          </td>
-        </tr>
-        <tr ng-show="invite.expanded">
-          <td colspan="3">
-            <a href="{{invite.url}}">{{invite.url}}</a><br><br>
-            &nbsp;
-            <button class="btn btn-inverse btn-mini" ng-click="ctrl.revokeInvite(invite, $event)">
-              <i class="fa fa-remove" style="color: red"></i> Revoke invite
-            </button>
-            <span style="padding-left: 15px">
-              Invited: <em> {{invite.createdOn | date: 'shortDate'}} by {{invite.invitedBy}} </em>
-            </span>
-          </td>
-        </tr>
-      </tbody>
+      <tr ng-repeat="invite in ctrl.pendingInvites">
+        <td>{{invite.email}}</td>
+        <td>{{invite.name}}</td>
+        <td class="text-right">
+          <button class="btn btn-inverse btn-mini" clipboard-button="ctrl.getInviteUrl(invite)" ng-click="ctrl.copyInviteToClipboard($event)">
+            <i class="fa fa-clipboard"></i> Copy Invite
+          </button>
+          &nbsp;
+        </td>
+        <td>
+          <button class="btn btn-danger btn-mini" ng-click="ctrl.revokeInvite(invite, $event)">
+            <i class="fa fa-remove"></i>
+          </button>
+        </td>
+      </tr>
     </table>
-
   </div>
 </div>
 

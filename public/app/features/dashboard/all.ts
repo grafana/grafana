@@ -24,7 +24,6 @@ import './dashgrid/PanelLoader';
 import './dashgrid/RowOptions';
 import './acl/acl';
 import './folder_picker/picker';
-import './folder_modal/folder';
 import './move_to_folder_modal/move_to_folder';
 import './settings/settings';
 

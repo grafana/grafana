@@ -12,7 +12,9 @@
 			</div>
 			<div class="gf-form">
 				<span class="gf-form-label">Role</span>
-				<select class="gf-form-input gf-size-auto" ng-model="token.role" ng-options="r for r in roleTypes"></select>
+        <span class="gf-form-select-wrapper">
+            <select class="gf-form-input gf-size-auto" ng-model="token.role" ng-options="r for r in roleTypes"></select>
+        </span>
 			</div>
 			<div class="gf-form">
 				<button class="btn gf-form-btn btn-success" ng-click="addToken()">Add</button>

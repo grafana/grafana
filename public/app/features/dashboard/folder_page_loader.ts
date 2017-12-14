@@ -9,7 +9,7 @@ export class FolderPageLoader {
         icon: 'fa fa-folder-open',
         id: 'manage-folder',
         subTitle: 'Manage folder dashboards & permissions',
-        url: '/fsdfds',
+        url: '',
         text: '',
         breadcrumbs: [
           { title: 'Dashboards', url: '/dashboards' },
@@ -41,11 +41,11 @@ export class FolderPageLoader {
       }
     };
 
-    return this.backendSrv.getDashboard(this.$routeParams.type, this.$routeParams.slug).then(result => {
+    return this.backendSrv.getDashboard('db', this.$routeParams.slug).then(result => {
       const folderTitle = result.dashboard.title;
       ctrl.navModel.main.text = '';
       ctrl.navModel.main.breadcrumbs = [
-        { title: 'Dashboards', uri: '/dashboards' },
+        { title: 'Dashboards', url: '/dashboards' },
         { title: folderTitle }
       ];
 
@@ -65,6 +65,6 @@ export class FolderPageLoader {
   }
 
   createFolderUrl(folderId: number, type: string, slug: string) {
-    return `/dashboards/folder/${folderId}/${type}/${slug}`;
+    return `/dashboards/folder/${folderId}/${slug}`;
   }
 }

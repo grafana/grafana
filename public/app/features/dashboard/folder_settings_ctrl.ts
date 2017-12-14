@@ -11,7 +11,7 @@ export class FolderSettingsCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private $routeParams, private $location) {
-    if (this.$routeParams.folderId && this.$routeParams.type && this.$routeParams.slug) {
+    if (this.$routeParams.folderId && this.$routeParams.slug) {
       this.folderId = $routeParams.folderId;
 
       this.folderPageLoader = new FolderPageLoader(this.backendSrv, this.$routeParams);

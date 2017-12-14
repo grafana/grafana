@@ -214,9 +214,8 @@ describe('SearchSrv', () => {
       expect(backendSrvMock.search.mock.calls[0][0].folderIds).toHaveLength(0);
     });
 
-    it('should place all results in a single section', () => {
-      expect(results).toHaveLength(1);
-      expect(results[0].hideHeader).toBe(true);
+    it('should group results by folder', () => {
+      expect(results).toHaveLength(2);
     });
   });
 

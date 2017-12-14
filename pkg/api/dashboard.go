@@ -229,10 +229,6 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	return Json(200, util.DynMap{"status": "success", "slug": dashboard.Slug, "version": dashboard.Version, "id": dashboard.Id})
 }
 
-func canEditDashboard(role m.RoleType) bool {
-	return role == m.ROLE_ADMIN || role == m.ROLE_EDITOR || role == m.ROLE_READ_ONLY_EDITOR
-}
-
 func GetHomeDashboard(c *middleware.Context) Response {
 	prefsQuery := m.GetPreferencesWithDefaultsQuery{OrgId: c.OrgId, UserId: c.UserId}
 	if err := bus.Dispatch(&prefsQuery); err != nil {
@@ -258,7 +254,7 @@ func GetHomeDashboard(c *middleware.Context) Response {
 
 	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true
-	dash.Meta.CanEdit = c.SignedInUser.HasRole(m.ROLE_READ_ONLY_EDITOR)
+	dash.Meta.CanEdit = c.SignedInUser.HasRole(m.ROLE_EDITOR)
 	dash.Meta.FolderTitle = "Root"
 
 	jsonParser := json.NewDecoder(file)

@@ -26,6 +26,17 @@ export class SignUpCtrl {
     $scope.verifyEmailEnabled = false;
     $scope.autoAssignOrg = false;
 
+    $scope.navModel = {
+      main: {
+        icon: 'gicon gicon-branding',
+        subTitle: 'Register your Grafana account',
+        breadcrumbs: [
+          { title: 'Login', url: '/login' },
+          { title: 'Sign Up' },
+        ]
+      }
+    };
+
     backendSrv.get('/api/user/signup/options').then(options => {
       $scope.verifyEmailEnabled = options.verifyEmailEnabled;
       $scope.autoAssignOrg = options.autoAssignOrg;

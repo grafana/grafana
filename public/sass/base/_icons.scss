@@ -63,6 +63,10 @@
   background-image: url('../img/icons_#{$theme-name}_theme/icon_zoom_out.svg');
 }
 
+.gicon-branding {
+  background-image: url('../img/grafana_icon.svg');
+}
+
 .sidemenu {
   .gicon-dashboard {
     background-image: url('../img/icons_dark_theme/icon_dashboard.svg');
@@ -71,5 +75,3 @@
     background-image: url('../img/icons_dark_theme/icon_alert.svg');
   }
 }
-
-

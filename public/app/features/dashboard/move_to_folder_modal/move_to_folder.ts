@@ -1,52 +1,89 @@
+import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import {DashboardModel} from '../dashboard_model';
+import { DashboardModel } from '../dashboard_model';
 
 export class MoveToFolderCtrl {
   dashboards: any;
   folder: any;
   dismiss: any;
   afterSave: any;
-  fromFolderId: number;
 
   /** @ngInject */
-  constructor(private backendSrv, private $q) {}
+  constructor(private backendSrv, private $q) { }
 
   onFolderChange(folder) {
     this.folder = folder;
   }
 
-  save() {
-    if (this.folder.id === this.fromFolderId) {
-      appEvents.emit('alert-error', ['Dashboard(s) already belong to this folder']);
-      return;
-    }
+  private doNext(fn, ...args: any[]) {
+    return function (result) {
+      return fn.apply(null, args)
+        .then(res => {
+          return Array.prototype.concat(result, [res]);
+        });
+    };
+  }
 
-    const promises = [];
-    for (let dash of this.dashboards) {
-      const promise = this.backendSrv.get('/api/dashboards/' + dash).then(fullDash => {
+  private doInOrder(tasks, init) {
+    return tasks.reduce(this.$q.when, init);
+  }
+
+  private moveDashboard(dash) {
+    let deferred = this.$q.defer();
+
+    this.backendSrv.get('/api/dashboards/' + dash)
+      .then(fullDash => {
         const model = new DashboardModel(fullDash.dashboard, fullDash.meta);
+
+        if ((!model.folderId && this.folder.id === 0) ||
+          model.folderId === this.folder.id) {
+          deferred.resolve({alreadyInFolder: true});
+          return;
+        }
 
         model.folderId = this.folder.id;
         model.meta.folderId = this.folder.id;
         model.meta.folderTitle = this.folder.title;
         const clone = model.getSaveModelClone();
-        return this.backendSrv.saveDashboard(clone);
+
+        this.backendSrv.saveDashboard(clone)
+          .then(() => {
+            deferred.resolve({succeeded: true});
+          })
+          .catch(err => {
+            deferred.resolve({succeeded: false});
+          });
       });
 
-      promises.push(promise);
+    return deferred.promise;
+  }
+
+  save() {
+    const tasks = [];
+
+    for (let dash of this.dashboards) {
+      tasks.push(this.doNext(this.moveDashboard.bind(this), dash));
     }
 
-    return this.$q.all(promises).then(() => {
-      appEvents.emit('alert-success', ['Dashboards Moved', 'OK']);
-      this.dismiss();
+    return this.doInOrder(tasks, [])
+      .then(result => {
+        const totalCount = result.length;
+        const successCount = _.filter(result, { succeeded: true }).length;
+        const alreadyInFolderCount = _.filter(result, { alreadyInFolder: true }).length;
 
-      return this.afterSave();
-    }).then(() => {
-      console.log('afterSave');
-    }).catch(err => {
-      appEvents.emit('alert-error', [err.message]);
-    });
+        if (successCount > 0) {
+          const msg = successCount + ' dashboard' + (successCount === 1 ? '' : 's') + ' moved to ' + this.folder.title;
+          appEvents.emit('alert-success', [ 'Dashboard' + (successCount === 1 ? '' : 's') + ' Moved', msg]);
+        }
+
+        if (totalCount === alreadyInFolderCount) {
+          appEvents.emit('alert-error', ['Error', 'Dashboards already belongs to folder ' + this.folder.title]);
+        }
+
+        this.dismiss();
+        return this.afterSave();
+      });
   }
 }
 
@@ -60,7 +97,6 @@ export function moveToFolderModal() {
     scope: {
       dismiss: "&",
       dashboards: "=",
-      fromFolderId: '<',
       afterSave: "&"
     }
   };

@@ -8,6 +8,17 @@ export class InvitedCtrl {
     contextSrv.sidemenu = false;
     $scope.formModel = {};
 
+    $scope.navModel = {
+      main: {
+        icon: 'gicon gicon-branding',
+        subTitle: 'Register your Grafana account',
+        breadcrumbs: [
+          { title: 'Login', url: '/login' },
+          { title: 'Invite' },
+        ]
+      }
+    };
+
     $scope.init = function() {
       backendSrv.get('/api/user/invite/' + $routeParams.code).then(function(invite) {
         $scope.formModel.name = invite.name;
