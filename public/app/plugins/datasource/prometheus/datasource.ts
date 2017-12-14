@@ -117,7 +117,17 @@ export class PrometheusDatasource {
           throw response.error;
         }
 
-        if (activeTargets[index].format !== "table") {
+        // Collect all labels across all metrics
+        let metricLabels = {};
+        _.each(response.data.data.result, function (series) {
+          for (var label in series.metric) {
+              metricLabels[label] = 1;
+          }
+        });
+
+        if (activeTargets[index].format === "table") {
+          result.push(self.transformMetricDataToTable(response.data.data.result, metricLabels));
+        } else {
           for (let metricData of response.data.data.result) {
             if (response.data.data.resultType === 'matrix') {
               result.push(self.transformMetricData(metricData, activeTargets[index], start, end, queries[index].step));
@@ -127,17 +137,6 @@ export class PrometheusDatasource {
           }
         }
       });
-
-      var tableResponses = _.filter(responseList, (response, index) => {
-        return activeTargets[index].format === "table";
-      })
-      .map((response) => {
-        return response.data.data.result;
-      })
-      .flatten();
-      if (tableResponses.length > 0) {
-        result.push(self.transformMetricDataToTable(tableResponses));
-      }
 
       return { data: result };
     }, (err) => {
@@ -312,23 +311,13 @@ export class PrometheusDatasource {
     return { target: metricLabel, datapoints: dps };
   }
 
-  transformMetricDataToTable(md) {
+  transformMetricDataToTable(md, metricLabels) {
     var table = new TableModel();
     var i, j;
-    var metricLabels = {};
 
     if (md.length === 0) {
       return table;
     }
-
-    // Collect all labels across all metrics
-    _.each(md, function(series) {
-      for (var label in series.metric) {
-        if (!metricLabels.hasOwnProperty(label)) {
-          metricLabels[label] = 1;
-        }
-      }
-    });
 
     // Sort metric labels, create columns for them and record their index
     var sortedLabels = _.keys(metricLabels).sort();
