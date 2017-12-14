@@ -118,6 +118,7 @@ export class FormDropdownCtrl {
 
       // add custom values
       if (this.allowCustom) {
+        console.log('allowCustom', this.text);
         if (_.indexOf(optionTexts, this.text) === -1) {
           options.unshift(this.text);
         }
@@ -174,6 +175,7 @@ export class FormDropdownCtrl {
         }
         this.text = option.text;
       } else if (this.allowCustom) {
+        console.log('allowCustom', text);
         if (_.isObject(this.model)) {
           this.model.text = this.model.value = text;
         } else {

@@ -131,6 +131,7 @@
     "tether-drop": "https://github.com/torkelo/drop",
     "tinycolor2": "^1.4.1",
     "d3": "^4.11.0",
-    "d3-scale-chromatic": "^1.1.1"
+    "d3-scale-chromatic": "^1.1.1",
+    "react-select": "^1.0.0-rc.10"
   }
 }

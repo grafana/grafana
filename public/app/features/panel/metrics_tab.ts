@@ -58,6 +58,12 @@ export class MetricsTabCtrl {
     }));
   }
 
+  getOptionsReact() {
+    return (input) => {
+      return this.getOptions(true);
+    };
+  }
+
   datasourceChanged(option) {
     if (!option) {
       return;
@@ -66,6 +72,13 @@ export class MetricsTabCtrl {
     this.datasourceInstance = option.datasource;
     this.panelCtrl.setDatasource(option.datasource);
     this.updateDatasourceOptions();
+  }
+
+  datasourceChangedReact() {
+    return (newValue) => {
+      this.datasourceChanged(newValue);
+      this.panelDsValue = this.panelCtrl.panel.datasource;
+    };
   }
 
   addMixedQuery(option) {
