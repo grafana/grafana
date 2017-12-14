@@ -501,7 +501,7 @@ describe('ManageDashboards', () => {
   });
 
   describe('when deleting dashboards', () => {
-    let toBeDeleted = [];
+    let toBeDeleted: any;
 
     beforeEach(() => {
       ctrl = createCtrlWithStubs([]);
@@ -535,23 +535,27 @@ describe('ManageDashboards', () => {
         }
       ];
 
-      toBeDeleted = ctrl.getDashboardsToDelete();
+      toBeDeleted = ctrl.getFoldersAndDashboardsToDelete();
     });
 
-    it('should return 3 items', () => {
-      expect(toBeDeleted.length).toEqual(3);
+    it('should return 1 folder', () => {
+      expect(toBeDeleted.folders.length).toEqual(1);
+    });
+
+    it('should return 2 dashboards', () => {
+      expect(toBeDeleted.dashboards.length).toEqual(2);
     });
 
     it('should filter out children if parent is checked', () => {
-      expect(toBeDeleted[0]).toEqual('folder');
+      expect(toBeDeleted.folders[0]).toEqual('folder');
     });
 
     it('should not filter out children if parent not is checked', () => {
-      expect(toBeDeleted[1]).toEqual('folder-2-dash');
+      expect(toBeDeleted.dashboards[0]).toEqual('folder-2-dash');
     });
 
     it('should not filter out children if parent is checked and root', () => {
-      expect(toBeDeleted[2]).toEqual('root-dash');
+      expect(toBeDeleted.dashboards[1]).toEqual('root-dash');
     });
   });
 
@@ -599,5 +603,5 @@ function createCtrlWithStubs(searchResponse: any, tags?: any) {
     }
   };
 
-  return new ManageDashboardsCtrl({}, { getNav: () => { } }, q, <SearchSrv>searchSrvStub);
+  return new ManageDashboardsCtrl({}, { getNav: () => { } }, <SearchSrv>searchSrvStub);
 }

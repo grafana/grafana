@@ -50,8 +50,8 @@ export class FolderSettingsCtrl {
       icon: 'fa-trash',
       yesText: 'Delete',
       onConfirm: () => {
-        return this.backendSrv.delete(`/api/dashboards/${this.meta.type}/${this.meta.slug}`).then(() => {
-          appEvents.emit('alert-success', ['Folder deleted']);
+        return this.backendSrv.deleteDashboard(this.meta.slug).then(() => {
+          appEvents.emit('alert-success', ['Folder Deleted', `${this.dashboard.title} has been deleted`]);
           this.$location.url('/dashboards');
         });
       }

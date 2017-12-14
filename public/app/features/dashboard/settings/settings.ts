@@ -128,7 +128,7 @@ export class SettingsCtrl {
   }
 
   deleteDashboardConfirmed() {
-    this.backendSrv.delete('/api/dashboards/db/' + this.dashboard.meta.slug).then(() => {
+    this.backendSrv.deleteDashboard(this.dashboard.meta.slug).then(() => {
       appEvents.emit('alert-success', ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
       this.$location.url('/');
     });

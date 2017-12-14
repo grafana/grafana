@@ -3,6 +3,7 @@
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
+import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 
 export class BackendSrv {
   private inFlightRequests = {};
@@ -245,6 +246,96 @@ export class BackendSrv {
     .then(res => {
       return this.getDashboard('db', res.slug);
     });
+  }
+
+  deleteDashboard(slug) {
+    let deferred = this.$q.defer();
+
+    this.getDashboard('db', slug)
+      .then(fullDash => {
+        this.delete(`/api/dashboards/db/${slug}`)
+          .then(() => {
+            deferred.resolve(fullDash);
+          }).catch(err => {
+            deferred.reject(err);
+          });
+      });
+
+    return deferred.promise;
+  }
+
+  deleteDashboards(dashboardSlugs) {
+    const tasks = [];
+
+    for (let slug of dashboardSlugs) {
+      tasks.push(this.createTask(this.deleteDashboard.bind(this), true, slug));
+    }
+
+    return this.executeInOrder(tasks, []);
+  }
+
+  moveDashboards(dashboardSlugs, toFolder) {
+    const tasks = [];
+
+    for (let slug of dashboardSlugs) {
+      tasks.push(this.createTask(this.moveDashboard.bind(this), true, slug, toFolder));
+    }
+
+    return this.executeInOrder(tasks, [])
+      .then(result => {
+        return {
+          totalCount: result.length,
+          successCount: _.filter(result, { succeeded: true }).length,
+          alreadyInFolderCount: _.filter(result, { alreadyInFolder: true }).length
+        };
+      });
+  }
+
+  private moveDashboard(slug, toFolder) {
+    let deferred = this.$q.defer();
+
+    this.getDashboard('db', slug).then(fullDash => {
+      const model = new DashboardModel(fullDash.dashboard, fullDash.meta);
+
+      if ((!model.folderId && toFolder.id === 0) ||
+        model.folderId === toFolder.id) {
+        deferred.resolve({alreadyInFolder: true});
+        return;
+      }
+
+      model.folderId = toFolder.id;
+      model.meta.folderId = toFolder.id;
+      model.meta.folderTitle = toFolder.title;
+      const clone = model.getSaveModelClone();
+
+      this.saveDashboard(clone, {})
+        .then(() => {
+          deferred.resolve({succeeded: true});
+        }).catch(err => {
+          deferred.resolve({succeeded: false});
+        });
+    });
+
+    return deferred.promise;
+  }
+
+  private createTask(fn, ignoreRejections, ...args: any[]) {
+    return (result) => {
+      return fn.apply(null, args)
+        .then(res => {
+          return Array.prototype.concat(result, [res]);
+        }).catch(err => {
+          if (ignoreRejections) {
+            return result;
+          }
+
+          throw err;
+        });
+    };
+  }
+
+  private executeInOrder(tasks, initialValue) {
+    return tasks.reduce(this.$q.when, initialValue);
   }
 }
 

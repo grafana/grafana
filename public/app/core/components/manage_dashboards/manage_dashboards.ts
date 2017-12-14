@@ -18,7 +18,7 @@ export class ManageDashboardsCtrl {
   folderId?: number;
 
   /** @ngInject */
-  constructor(private backendSrv, navModelSrv, private $q, private searchSrv: SearchSrv) {
+  constructor(private backendSrv, navModelSrv, private searchSrv: SearchSrv) {
     this.query = { query: '', mode: 'tree', tag: [], starred: false, skipRecent: true, skipStarred: true };
 
     if (this.folderId) {
@@ -76,15 +76,18 @@ export class ManageDashboardsCtrl {
     this.canDelete = selectedDashboards > 0 || selectedFolders > 0;
   }
 
-  getDashboardsToDelete() {
-    let selectedDashboards = [];
+  getFoldersAndDashboardsToDelete() {
+    let selectedDashboards = {
+      folders: [],
+      dashboards: []
+    };
 
     for (const section of this.sections) {
       if (section.checked && section.id !== 0) {
-        selectedDashboards.push(section.slug);
+        selectedDashboards.folders.push(section.slug);
       } else {
         const selected = _.filter(section.items, { checked: true });
-        selectedDashboards.push(..._.map(selected, 'slug'));
+        selectedDashboards.dashboards.push(..._.map(selected, 'slug'));
       }
     }
 
@@ -102,23 +105,71 @@ export class ManageDashboardsCtrl {
   }
 
   delete() {
-    const selectedDashboards = this.getDashboardsToDelete();
+    const data = this.getFoldersAndDashboardsToDelete();
+    const folderCount = data.folders.length;
+    const dashCount = data.dashboards.length;
+    let text = 'Do you want to delete the ';
+    let text2;
+
+    if (folderCount > 0 && dashCount > 0) {
+      text += `selected folder${folderCount === 1 ? '' : 's'} and dashboard${dashCount === 1 ? '' : 's'}?`;
+      text2 = `All dashboards of the selected folder${folderCount === 1 ? '' : 's'} will also be deleted`;
+    } else if (folderCount > 0) {
+      text += `selected folder${folderCount === 1 ? '' : 's'} and all its dashboards?`;
+    } else {
+      text += `selected dashboard${dashCount === 1 ? '' : 's'}?`;
+    }
 
     appEvents.emit('confirm-modal', {
       title: 'Delete',
-      text: `Do you want to delete the ${selectedDashboards.length} selected dashboards?`,
+      text: text,
+      text2: text2,
       icon: 'fa-trash',
       yesText: 'Delete',
       onConfirm: () => {
-        const promises = [];
-        for (let dash of selectedDashboards) {
-          promises.push(this.backendSrv.delete(`/api/dashboards/db/${dash}`));
+        const foldersAndDashboards = data.folders.concat(data.dashboards);
+        this.deleteFoldersAndDashboards(foldersAndDashboards);
+      }
+    });
+  }
+
+  private deleteFoldersAndDashboards(slugs) {
+    this.backendSrv.deleteDashboards(slugs).then(result => {
+      const folders = _.filter(result, dash => dash.meta.isFolder);
+      const folderCount = folders.length;
+      const dashboards = _.filter(result, dash => !dash.meta.isFolder);
+      const dashCount = dashboards.length;
+
+      if (result.length > 0) {
+        let header;
+        let msg;
+
+        if (folderCount > 0 && dashCount > 0) {
+          header = `Folder${folderCount === 1 ? '' : 's'} And Dashboard${dashCount === 1 ? '' : 's'} Deleted`;
+          msg = `${folderCount} folder${folderCount === 1 ? '' : 's'} `;
+          msg += `and ${dashCount} dashboard${dashCount === 1 ? '' : 's'} has been deleted`;
+        } else if (folderCount > 0) {
+          header = `Folder${folderCount === 1 ? '' : 's'} Deleted`;
+
+          if (folderCount === 1) {
+            msg = `${folders[0].dashboard.title} has been deleted`;
+          } else {
+            msg = `${folderCount} folder${folderCount === 1 ? '' : 's'} has been deleted`;
+          }
+        } else if (dashCount > 0) {
+          header = `Dashboard${dashCount === 1 ? '' : 's'} Deleted`;
+
+          if (dashCount === 1) {
+            msg = `${dashboards[0].dashboard.title} has been deleted`;
+          } else {
+            msg = `${dashCount} dashboard${dashCount === 1 ? '' : 's'} has been deleted`;
+          }
         }
 
-        this.$q.all(promises).then(() => {
-          this.getDashboards();
-        });
+        appEvents.emit('alert-success', [header, msg]);
       }
+
+      this.getDashboards();
     });
   }
 
