@@ -1,12 +1,12 @@
 # 5.0.0 (unreleased)
 
 ### New Features 
-**Dashboards** Dashboard folders, [#1611](https://github.com/grafana/grafana/issues/1611)
-**Teams** User groups (teams) implemented. Can be used in folder & dashboard permission list.
-**Dashboard grid**: Panels are now layed out in a two dimensional grid (with x, y, w, h). [#9093](https://github.com/grafana/grafana/issues/9093).
-**Templating**: Vertical repeat direction for panel repeats. 
-**UX**: Major update to page header and navigation
-**Dashboard settings**: Combine dashboard settings views into one with side menu, [#9750](https://github.com/grafana/grafana/issues/9750)
+- **Dashboards** Dashboard folders, [#1611](https://github.com/grafana/grafana/issues/1611)
+- **Teams** User groups (teams) implemented. Can be used in folder & dashboard permission list.
+- **Dashboard grid**: Panels are now layed out in a two dimensional grid (with x, y, w, h). [#9093](https://github.com/grafana/grafana/issues/9093).
+- **Templating**: Vertical repeat direction for panel repeats. 
+- **UX**: Major update to page header and navigation
+- **Dashboard settings**: Combine dashboard settings views into one with side menu, [#9750](https://github.com/grafana/grafana/issues/9750)
 
 ## New Dashboard Grid 
 
