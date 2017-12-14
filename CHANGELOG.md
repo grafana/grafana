@@ -46,7 +46,7 @@ From `/etc/grafana/datasources` to `/etc/grafana/provisioning/datasources` when 
 * **Singlestat**: suppress error when result contains no datapoints [#9636](https://github.com/grafana/grafana/issues/9636), thx [@utkarshcmu](https://github.com/utkarshcmu)
 * **Postgres/MySQL**: Control quoting in SQL-queries when using template variables [#9030](https://github.com/grafana/grafana/issues/9030), thanks [@svenklemm](https://github.com/svenklemm)
 
-# 4.6.3 (unreleased)
+# 4.6.3 (2017-12-14)
 
 ## Fixes
 * **Gzip**: Fixes bug gravatar images when gzip was enabled [#5952](https://github.com/grafana/grafana/issues/5952)
