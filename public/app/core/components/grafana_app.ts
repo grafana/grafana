@@ -203,7 +203,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           }, 100);
         }
 
-        if (target.parents('.dash-playlist-actions').length === 0) {
+        if (target.parents('.navbar-buttons--playlist').length === 0) {
           playlistSrv.stop();
         }
 

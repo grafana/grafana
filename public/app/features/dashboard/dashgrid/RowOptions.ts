@@ -6,6 +6,7 @@ export class RowOptionsCtrl {
   dismiss: any;
   onUpdated: any;
   onDelete: any;
+  showDelete: boolean;
 
   /** @ngInject */
   constructor() {

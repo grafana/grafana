@@ -17,6 +17,13 @@
       opacity: 1;
     }
   }
+
+  &:hover {
+    .dashboard-row__actions {
+      visibility: visible;
+      opacity: 1;
+    }
+  }
 }
 
 .dashboard-row__title {
@@ -37,6 +44,7 @@
   visibility: hidden;
   opacity: 0;
   flex-grow: 1;
+  transition: 200ms opacity ease-in 200ms;
 
   a {
     color: $text-color-weak;

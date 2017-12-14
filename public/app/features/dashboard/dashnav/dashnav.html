@@ -8,17 +8,11 @@
 		</a>
 	</div>
 
-	<ul class="nav dash-playlist-actions" ng-if="ctrl.playlistSrv.isPlaying">
-		<li>
-			<a ng-click="ctrl.playlistSrv.prev()"><i class="fa fa-step-backward"></i></a>
-		</li>
-		<li>
-			<a ng-click="ctrl.playlistSrv.stop()"><i class="fa fa-stop"></i></a>
-		</li>
-		<li>
-			<a ng-click="ctrl.playlistSrv.next()"><i class="fa fa-step-forward"></i></a>
-		</li>
-	</ul>
+	<div class="navbar-buttons navbar-buttons--playlist" ng-if="ctrl.playlistSrv.isPlaying">
+		<a class="navbar-button navbar-button--tight" ng-click="ctrl.playlistSrv.prev()"><i class="fa fa-step-backward"></i></a>
+		<a class="navbar-button navbar-button--tight" ng-click="ctrl.playlistSrv.stop()"><i class="fa fa-stop"></i></a>
+		<a class="navbar-button navbar-button--tight" ng-click="ctrl.playlistSrv.next()"><i class="fa fa-step-forward"></i></a>
+	</div>
 
 	<div class="navbar__spacer"></div>
 

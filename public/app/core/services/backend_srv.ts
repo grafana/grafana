@@ -248,4 +248,5 @@ export class BackendSrv {
   }
 }
 
+
 coreModule.service('backendSrv', BackendSrv);
