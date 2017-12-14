@@ -45,10 +45,10 @@ $input-border: 1px solid $input-border-color;
   }
 
   > input {
-    padding-left: 30px;
+    padding-left: 35px;
 
     &:focus + .gf-form-input-icon {
-      color: $gray-4;
+      color: $text-muted
     }
   }
 }
