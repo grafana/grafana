@@ -64,6 +64,7 @@ func (hs *HttpServer) registerRoutes() {
 	r.Get("/dashboard-solo/snapshot/*", Index)
 	r.Get("/dashboard-solo/*", reqSignedIn, Index)
 	r.Get("/import/dashboard", reqSignedIn, Index)
+	r.Get("/dashboards/", reqSignedIn, Index)
 	r.Get("/dashboards/*", reqSignedIn, Index)
 
 	r.Get("/playlists/", reqSignedIn, Index)
