@@ -1,11 +1,18 @@
 # 5.0.0 (unreleased)
 
-### WIP (in develop branch currently as its unstable or unfinished)
-- Dashboard folders
-- User groups
-- Dashboard permissions (on folder & dashboard level), permissions can be assigned to groups or individual users
-- UX changes to nav & side menu
-- New dashboard grid layout system
+### New Features 
+**Dashboards** Dashboard folders, [#1611](https://github.com/grafana/grafana/issues/1611)
+**Teams** User groups (teams) implemented. Can be used in folder & dashboard permission list.
+**Dashboard grid**: Panels are now layed out in a two dimensional grid (with x, y, w, h). [#9093](https://github.com/grafana/grafana/issues/9093).
+**Templating**: Vertical repeat direction for panel repeats. 
+**UX**: Major update to page header and navigation
+**Dashboard settings**: Combine dashboard settings views into one with side menu, [#9750](https://github.com/grafana/grafana/issues/9750)
+
+## New Dashboard Grid 
+
+The new grid engine is major upgrade for how you can position and move panels. It enables new layouts and a much easier dashboard building experience. The change is backwards compatible. Grafana will automatically upgrade your dashboards to the new schema and position panels to match your existing layout. There might be minor differences in panel height. 
+
+Dashboard panels and rows are positioned using a gridPos object `{x: 0, y: 0, w: 24, h: 5}`. Units are in grid dimensions (24 columns, 1 height unit 30px). Rows and Panels objects exist (together) in a flat array directly on the dashboard root object. Rows are not needed for layouts anymore and are mainly there for backward compatibility. Some panel plugins that do not respect their panel height might require an update.
 
 # 4.7.0 (unreleased)
 
