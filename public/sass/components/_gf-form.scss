@@ -32,10 +32,10 @@ $input-border: 1px solid $input-border-color;
   }
 }
 
-.gf-form-inline-icon {
+.gf-form--has-input-icon {
   position: relative;
 
-  .fa {
+  .gf-form-input-icon {
     position: absolute;
     top: 50%;
     margin-top: -9px;
@@ -43,10 +43,11 @@ $input-border: 1px solid $input-border-color;
     left: 10px;
     color: $input-color-placeholder;
   }
+
   > input {
     padding-left: 30px;
 
-    &:focus + .fa {
+    &:focus + .gf-form-input-icon {
       color: $gray-4;
     }
   }

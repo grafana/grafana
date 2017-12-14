@@ -3,13 +3,11 @@
 <div class="page-container page-body">
 	<div ng-if="ctrl.unfiltered.length">
 		<div class="page-action-bar">
-      <div class="gf-form">
-        <label class="gf-form-label">Search</label>
-        <input type="text" class="gf-form-input width-20" ng-model="ctrl.searchQuery" ng-change="ctrl.onQueryUpdated()" give-focus="true" placeholder="Filter by name or type" />
-      </div>
-
+			<label class="gf-form gf-form--grow gf-form--has-input-icon">
+				<input type="text" class="gf-form-input width-20" ng-model="ctrl.searchQuery" ng-change="ctrl.onQueryUpdated()" give-focus="true" placeholder="Filter by name or type" />
+				<i class="gf-form-input-icon fa fa-search"></i>
+			</label>
 			<div class="page-action-bar__spacer"></div>
-
 			<a class="page-header__cta btn btn-success" href="datasources/new">
 				<i class="fa fa-plus"></i>
 				Add data source
