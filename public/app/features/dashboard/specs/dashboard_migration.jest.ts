@@ -337,12 +337,24 @@ describe('DashboardModel', function() {
       expect(dashboard.panels[2].repeat).toBeUndefined();
       expect(dashboard.panels[3].repeat).toBeUndefined();
     });
+
+    it('should ignore repeated row', function() {
+      model.rows = [
+        createRow({showTitle: true, title: "Row1", height: 8, repeat: "server"}, [[6]]),
+        createRow({showTitle: true, title: "Row2", height: 8, repeatIteration: 12313, repeatRowId: 1}, [[6]]),
+      ];
+
+      let dashboard = new DashboardModel(model);
+      expect(dashboard.panels[0].repeat).toBe("server");
+      expect(dashboard.panels.length).toBe(2);
+    });
+
   });
 });
 
 function createRow(options, panelDescriptions: any[]) {
   const PANEL_HEIGHT_STEP = GRID_CELL_HEIGHT + GRID_CELL_VMARGIN;
-  let {collapse, height, showTitle, title, repeat} = options;
+  let {collapse, height, showTitle, title, repeat, repeatIteration} = options;
   height = height * PANEL_HEIGHT_STEP;
   let panels = [];
   _.each(panelDescriptions, panelDesc => {
@@ -352,7 +364,7 @@ function createRow(options, panelDescriptions: any[]) {
     }
     panels.push(panel);
   });
-  let row = {collapse, height, showTitle, title, panels, repeat};
+  let row = {collapse, height, showTitle, title, panels, repeat, repeatIteration};
   return row;
 }
 

@@ -387,6 +387,10 @@ export class DashboardMigrator {
     const showRows = _.some(old.rows, (row) => row.collapse || row.showTitle || row.repeat);
 
     for (let row of old.rows) {
+      if (row.repeatIteration) {
+        continue;
+      }
+
       let height: any = row.height || DEFAULT_ROW_HEIGHT;
       const rowGridHeight = getGridHeight(height);
 
