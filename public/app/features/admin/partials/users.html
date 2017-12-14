@@ -1,12 +1,13 @@
 <page-header model="ctrl.navModel"></page-header>
 
 <div class="page-container page-body">
-	<div class="page-action-bar">
-		<div class="gf-form">
-			<label class="gf-form-label">Search</label>
-			<input class="gf-form-input width-15" type="text" placeholder="Find user by name/login/email" tabindex="1" give-focus="true" ng-model="ctrl.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.getUsers()" />
-		</div>
-		<div class="page-action-bar__spacer"></div>
+  <div class="page-action-bar">
+    <div class="gf-form">
+      <label class="gf-form-label">Search</label>
+      <input class="gf-form-input width-15" type="text" placeholder="Find user by name/login/email" tabindex="1" give-focus="true"
+        ng-model="ctrl.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.getUsers()" />
+    </div>
+    <div class="page-action-bar__spacer"></div>
     <a class="btn btn-success" href="admin/users/create">
       <i class="fa fa-plus"></i>
       Add new user
@@ -14,39 +15,48 @@
   </div>
 
   <div class="admin-list-table">
-    <table class="filter-table form-inline">
+    <table class="filter-table form-inline filter-table--hover">
       <thead>
         <tr>
           <th></th>
           <th>Login</th>
           <th>Email</th>
           <th>
-						Seen
-						<tip>Time since user was seen using Grafana</tip>
-					</th>
+            Seen
+            <tip>Time since user was seen using Grafana</tip>
+          </th>
           <th></th>
-          <th></th>
+          <th style="width: 1%"></th>
         </tr>
       </thead>
       <tbody>
         <tr ng-repeat="user in ctrl.users">
-					<td class="width-4 text-center">
-						<img class="filter-table__avatar" ng-src="{{user.avatarUrl}}"></img>
-					</td>
-          <td>{{user.login}}</td>
-          <td>{{user.email}}</td>
-          <td>
-						{{user.lastSeenAtAge}}
-					</td>
-          <td>
-						<i class="fa fa-shield" ng-show="user.isAdmin" bs-tooltip="'Grafana Admin'"></i>
-					</td>
-          <td class="text-right">
-            <a href="admin/users/edit/{{user.id}}" class="btn btn-inverse btn-small">
-              <i class="fa fa-edit"></i>
-              Edit
+          <td class="width-4 text-center link-td">
+            <a href="admin/users/edit/{{user.id}}">
+              <img class="filter-table__avatar" ng-src="{{user.avatarUrl}}"></img>
             </a>
-            &nbsp;&nbsp;
+          </td>
+          <td class="link-td">
+            <a href="admin/users/edit/{{user.id}}">
+              {{user.login}}
+            </a>
+          </td>
+          <td class="link-td">
+            <a href="admin/users/edit/{{user.id}}">
+              {{user.email}}
+            </a>
+          </td>
+          <td class="link-td">
+            <a href="admin/users/edit/{{user.id}}">
+              {{user.lastSeenAtAge}}
+            </a>
+          </td>
+          <td class="link-td">
+            <a href="admin/users/edit/{{user.id}}">
+              <i class="fa fa-shield" ng-show="user.isAdmin" bs-tooltip="'Grafana Admin'"></i>
+            </a>
+          </td>
+          <td class="text-right">
             <a ng-click="ctrl.deleteUser(user)" class="btn btn-danger btn-small">
               <i class="fa fa-remove"></i>
             </a>
@@ -60,10 +70,7 @@
   <div class="admin-list-paging" ng-if="ctrl.showPaging">
     <ol>
       <li ng-repeat="page in ctrl.pages">
-        <button
-          class="btn btn-small"
-          ng-class="{'btn-secondary': page.current, 'btn-inverse': !page.current}"
-          ng-click="ctrl.navigateToPage(page)">{{page.page}}</button>
+        <button class="btn btn-small" ng-class="{'btn-secondary': page.current, 'btn-inverse': !page.current}" ng-click="ctrl.navigateToPage(page)">{{page.page}}</button>
       </li>
     </ol>
   </div>
