@@ -20,7 +20,7 @@ export class CreateFolderCtrl {
     return this.backendSrv.createDashboardFolder(title).then(result => {
       appEvents.emit('alert-success', ['Folder Created', 'OK']);
 
-      var folderUrl = `/dashboards/folder/${result.id}/db/${result.slug}`;
+      var folderUrl = `/dashboards/folder/${result.dashboard.id}/${result.meta.slug}`;
       this.$location.url(folderUrl);
     });
   }
