@@ -1,4 +1,4 @@
-// import _ from 'lodash';
+import _ from 'lodash';
 import coreModule from '../../core_module';
 
 export class SearchResultsCtrl {
@@ -6,10 +6,10 @@ export class SearchResultsCtrl {
   onSelectionChanged: any;
   onTagSelected: any;
   onFolderExpanding: any;
+  editable: boolean;
 
   /** @ngInject */
-  constructor(private $location) {
-  }
+  constructor(private $location) {}
 
   toggleFolderExpand(section) {
     if (section.toggle) {
@@ -17,12 +17,24 @@ export class SearchResultsCtrl {
         this.onFolderExpanding();
       }
 
-      section.toggle(section);
+      section.toggle(section).then(f => {
+        if (this.editable && f.expanded) {
+          if (f.items) {
+            _.each(f.items, i => {
+              i.checked = f.checked;
+            });
+
+            if (this.onSelectionChanged) {
+              this.onSelectionChanged();
+            }
+          }
+        }
+      });
     }
   }
 
   navigateToFolder(section, evt) {
-    this.$location.path('/dashboards/folder/' + section.id + '/' + section.uri);
+    this.$location.path(section.url);
 
     if (evt) {
       evt.stopPropagation();
@@ -32,6 +44,12 @@ export class SearchResultsCtrl {
 
   toggleSelection(item, evt) {
     item.checked = !item.checked;
+
+    if (item.items) {
+      _.each(item.items, i => {
+        i.checked = item.checked;
+      });
+    }
 
     if (this.onSelectionChanged) {
       this.onSelectionChanged();

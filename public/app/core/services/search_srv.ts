@@ -51,18 +51,19 @@ export class SearchSrv {
     store.set('search.sections.recent', this.recentIsOpen);
 
     if (!section.expanded || section.items.length) {
-      return Promise.resolve();
+      return Promise.resolve(section);
     }
 
     return this.queryForRecentDashboards().then(result => {
       section.items = result;
+      return Promise.resolve(section);
     });
   }
 
   private toggleStarred(section) {
     this.starredIsOpen = section.expanded = !section.expanded;
     store.set('search.sections.starred', this.starredIsOpen);
-    return Promise.resolve();
+    return Promise.resolve(section);
   }
 
   private getStarred(sections) {
@@ -134,6 +135,7 @@ export class SearchSrv {
           items: [],
           toggle: this.toggleFolder.bind(this),
           url: `dashboards/folder/${hit.id}/${hit.slug}`,
+          slug: hit.slug,
           icon: 'fa fa-folder',
           score: _.keys(sections).length,
         };
@@ -152,6 +154,7 @@ export class SearchSrv {
             id: hit.folderId,
             title: hit.folderTitle,
             url: `dashboards/folder/${hit.folderId}/${hit.folderSlug}`,
+            slug: hit.slug,
             items: [],
             icon: 'fa fa-folder-open',
             toggle: this.toggleFolder.bind(this),
@@ -181,7 +184,7 @@ export class SearchSrv {
     section.icon = section.expanded ? 'fa fa-folder-open' : 'fa fa-folder';
 
     if (section.items.length) {
-      return Promise.resolve();
+      return Promise.resolve(section);
     }
 
     let query = {
@@ -190,6 +193,7 @@ export class SearchSrv {
 
     return this.backendSrv.search(query).then(results => {
       section.items = _.map(results, this.transformToViewModel);
+      return Promise.resolve(section);
     });
   }
 

@@ -58,10 +58,13 @@ export class ManageDashboardsCtrl {
         dashboard.checked = false;
       }
     }
+
+    if (this.folderId && this.sections.length > 0) {
+      this.sections[0].hideHeader = true;
+    }
   }
 
   selectionChanged() {
-
     let selectedDashboards = 0;
 
     for (let section of this.sections) {
@@ -69,7 +72,7 @@ export class ManageDashboardsCtrl {
     }
 
     const selectedFolders = _.filter(this.sections, { checked: true }).length;
-    this.canMove = selectedDashboards > 0 && selectedFolders === 0;
+    this.canMove = selectedDashboards > 0;
     this.canDelete = selectedDashboards > 0 || selectedFolders > 0;
   }
 
@@ -77,11 +80,11 @@ export class ManageDashboardsCtrl {
     let selectedDashboards = [];
 
     for (const section of this.sections) {
-      if (section.checked) {
-        selectedDashboards.push(section.uri);
+      if (section.checked && section.id !== 0) {
+        selectedDashboards.push(section.slug);
       } else {
         const selected = _.filter(section.items, { checked: true });
-        selectedDashboards.push(..._.map(selected, 'uri'));
+        selectedDashboards.push(..._.map(selected, 'slug'));
       }
     }
 
@@ -109,7 +112,7 @@ export class ManageDashboardsCtrl {
       onConfirm: () => {
         const promises = [];
         for (let dash of selectedDashboards) {
-          promises.push(this.backendSrv.delete(`/api/dashboards/${dash}`));
+          promises.push(this.backendSrv.delete(`/api/dashboards/db/${dash}`));
         }
 
         this.$q.all(promises).then(() => {
@@ -124,7 +127,7 @@ export class ManageDashboardsCtrl {
 
     for (const section of this.sections) {
       const selected = _.filter(section.items, { checked: true });
-      selectedDashboards.push(..._.map(selected, 'uri'));
+      selectedDashboards.push(..._.map(selected, 'slug'));
     }
 
     return selectedDashboards;

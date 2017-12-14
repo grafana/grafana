@@ -58,6 +58,41 @@ describe('ManageDashboards', () => {
       expect(ctrl.sections[0].items[0].checked).toEqual(false);
       expect(ctrl.sections[1].checked).toEqual(false);
       expect(ctrl.sections[1].items[0].checked).toEqual(false);
+      expect(ctrl.sections[0].hideHeader).toBeFalsy();
+    });
+  });
+
+  describe('when browsing dashboards for a folder', () => {
+    beforeEach(() => {
+      const response = [
+        {
+          id: 410,
+          title: "afolder",
+          type: "dash-folder",
+          items: [
+            {
+              id: 399,
+              title: "Dashboard Test",
+              url: "dashboard/db/dashboard-test",
+              icon: 'fa fa-folder',
+              tags: [],
+              isStarred: false,
+              folderId: 410,
+              folderTitle: "afolder",
+              folderSlug: "afolder"
+            }
+          ],
+          tags: [],
+          isStarred: false
+        }
+      ];
+      ctrl = createCtrlWithStubs(response);
+      ctrl.folderId = 410;
+      return ctrl.getDashboards();
+    });
+
+    it('should set hide header to true on section', () => {
+      expect(ctrl.sections[0].hideHeader).toBeTruthy();
     });
   });
 
@@ -263,8 +298,8 @@ describe('ManageDashboards', () => {
           expect(ctrl.sections[1].items[0].checked).toBeTruthy();
         });
 
-        it('should disable Move To button', () => {
-          expect(ctrl.canMove).toBeFalsy();
+        it('should enable Move To button', () => {
+          expect(ctrl.canMove).toBeTruthy();
         });
 
         it('should enable delete button', () => {
@@ -294,8 +329,8 @@ describe('ManageDashboards', () => {
         ctrl.selectionChanged();
       });
 
-      it('should disable Move To button', () => {
-        expect(ctrl.canMove).toBeFalsy();
+      it('should enable Move To button', () => {
+        expect(ctrl.canMove).toBeTruthy();
       });
 
       it('should enable delete button', () => {
@@ -455,8 +490,8 @@ describe('ManageDashboards', () => {
         ctrl.selectionChanged();
       });
 
-      it('should disable Move To button', () => {
-        expect(ctrl.canMove).toBeFalsy();
+      it('should enable Move To button', () => {
+        expect(ctrl.canMove).toBeTruthy();
       });
 
       it('should enable delete button', () => {
@@ -466,6 +501,8 @@ describe('ManageDashboards', () => {
   });
 
   describe('when deleting dashboards', () => {
+    let toBeDeleted = [];
+
     beforeEach(() => {
       ctrl = createCtrlWithStubs([]);
 
@@ -474,27 +511,47 @@ describe('ManageDashboards', () => {
           id: 1,
           title: 'folder',
           items: [
-            { id: 2, checked: true, uri: 'dash' }
+            { id: 2, checked: true, slug: 'folder-dash' }
           ],
           checked: true,
-          uri: 'folder'
+          slug: 'folder'
+        },
+        {
+          id: 3,
+          title: 'folder-2',
+          items: [
+            { id: 3, checked: true, slug: 'folder-2-dash' }
+          ],
+          checked: false,
+          slug: 'folder-2'
         },
         {
           id: 0,
           title: 'Root',
           items: [
-            { id: 3, checked: true, uri: 'dash-2' }
+            { id: 3, checked: true, slug: 'root-dash' }
           ],
-          checked: false
+          checked: true
         }
       ];
+
+      toBeDeleted = ctrl.getDashboardsToDelete();
     });
 
-    it('should filter out children if parent is selected', () => {
-      const toBeDeleted = ctrl.getDashboardsToDelete();
-      expect(toBeDeleted.length).toEqual(2);
+    it('should return 3 items', () => {
+      expect(toBeDeleted.length).toEqual(3);
+    });
+
+    it('should filter out children if parent is checked', () => {
       expect(toBeDeleted[0]).toEqual('folder');
-      expect(toBeDeleted[1]).toEqual('dash-2');
+    });
+
+    it('should not filter out children if parent not is checked', () => {
+      expect(toBeDeleted[1]).toEqual('folder-2-dash');
+    });
+
+    it('should not filter out children if parent is checked and root', () => {
+      expect(toBeDeleted[2]).toEqual('root-dash');
     });
   });
 
@@ -507,16 +564,16 @@ describe('ManageDashboards', () => {
           id: 1,
           title: 'folder',
           items: [
-            { id: 2, checked: true, uri: 'dash' }
+            { id: 2, checked: true, slug: 'dash' }
           ],
           checked: false,
-          uri: 'folder'
+          slug: 'folder'
         },
         {
           id: 0,
           title: 'Root',
           items: [
-            { id: 3, checked: true, uri: 'dash-2' }
+            { id: 3, checked: true, slug: 'dash-2' }
           ],
           checked: false
         }
