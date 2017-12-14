@@ -128,6 +128,9 @@ the graph crosses a particular threshold.
 - **Null point mode** - How null values are displayed
 - **Staircase line** - Draws adjacent points as staircase
 
+### Time range
+- ``Show`` - Allows to show the time range as part of the title.
+
 ### Multiple Series
 
 If there are multiple series, they can be displayed as a group.
