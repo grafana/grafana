@@ -64,7 +64,7 @@ describe('SearchResultsCtrl', () => {
 
       let folder = {
         expanded: false,
-        toggle: () => {}
+        toggle: () => Promise.resolve(folder)
       };
 
       ctrl.toggleFolderExpand(folder);
@@ -84,7 +84,7 @@ describe('SearchResultsCtrl', () => {
 
       let folder = {
         expanded: true,
-        toggle: () => {}
+        toggle: () => Promise.resolve(folder)
       };
 
       ctrl.toggleFolderExpand(folder);

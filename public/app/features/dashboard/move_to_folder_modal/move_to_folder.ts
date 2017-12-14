@@ -32,7 +32,7 @@ export class MoveToFolderCtrl {
   private moveDashboard(dash) {
     let deferred = this.$q.defer();
 
-    this.backendSrv.get('/api/dashboards/' + dash)
+    this.backendSrv.get('/api/dashboards/db/' + dash)
       .then(fullDash => {
         const model = new DashboardModel(fullDash.dashboard, fullDash.meta);
 
