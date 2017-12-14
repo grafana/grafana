@@ -103,39 +103,6 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 		})
 
-		Convey("When user is an Org Read Only Editor", func() {
-			role := m.ROLE_READ_ONLY_EDITOR
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
-				dash := GetDashboardShouldReturn200(sc)
-
-				Convey("Should be able to view but not save the dashboard", func() {
-					So(dash.Meta.CanEdit, ShouldBeFalse)
-					So(dash.Meta.CanSave, ShouldBeFalse)
-					So(dash.Meta.CanAdmin, ShouldBeFalse)
-				})
-			})
-
-			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
-				CallDeleteDashboard(sc)
-				So(sc.resp.Code, ShouldEqual, 403)
-			})
-
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
-				CallGetDashboardVersion(sc)
-				So(sc.resp.Code, ShouldEqual, 403)
-			})
-
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
-				CallGetDashboardVersions(sc)
-				So(sc.resp.Code, ShouldEqual, 403)
-			})
-
-			postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, cmd, func(sc *scenarioContext) {
-				CallPostDashboard(sc)
-				So(sc.resp.Code, ShouldEqual, 403)
-			})
-		})
-
 		Convey("When user is an Org Editor", func() {
 			role := m.ROLE_EDITOR
 
