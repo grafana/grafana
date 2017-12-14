@@ -27,7 +27,7 @@
 						{{annotation.name}}
 					</td>
 					<td style="width:90%" ng-show="annotation.builtIn" class="pointer" ng-click="ctrl.edit(annotation)">
-						<i class="fa fa-comment"></i> &nbsp;
+						<i class="gicon gicon-annotation"></i> &nbsp;
 						<em class="muted">{{annotation.name}} (Built-in)</em>
 					</td>
 					<td class="pointer" ng-click="ctrl.edit(annotation)">
@@ -49,7 +49,7 @@
 			<div class="empty-list-cta">
 				<div class="empty-list-cta__title">There are no custom annotation queries added yet</div>
 				<a ng-click="ctrl.setupNew()" class="empty-list-cta__button btn btn-xlarge btn-success">
-					<i class="gicon gicon-dashboard-new"></i>
+					<i class="gicon gicon-add-annotation"></i>
 					Add Annotation Query
 				</a>
 				<div class="grafana-info-box">
