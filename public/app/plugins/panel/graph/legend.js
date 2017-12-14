@@ -142,8 +142,20 @@ function (angular, _, $) {
           }
 
           if (panel.legend.sort) {
-            seriesList = _.sortBy(seriesList, function(series) {
-              return series.stats[panel.legend.sort];
+            seriesList.sort(function(s1,s2) {
+              var a = s1.stats[panel.legend.sort];
+              var b = s2.stats[panel.legend.sort];
+              if (a === b) {
+                return 0;
+              }
+              // sort should put null values at last
+              if (a === null) {
+                return -1;
+              }
+              if (b === null) {
+                return 1;
+              }
+              return a < b ? -1 : 1;
             });
             if (panel.legend.sortDesc) {
               seriesList = seriesList.reverse();
