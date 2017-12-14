@@ -210,8 +210,14 @@ describe('PrometheusDatasource', function() {
         ]
       }
     };
+    var metricLabels = {};
+    response.data.result.forEach(function (series) {
+      for (var label in series.metric) {
+        metricLabels[label] = 1;
+      }
+    });
     it('should return table model', function() {
-      var table = ctx.ds.transformMetricDataToTable(response.data.result);
+      var table = ctx.ds.transformMetricDataToTable(response.data.result, metricLabels);
       expect(table.type).to.be('table');
       expect(table.rows).to.eql(
         [
@@ -266,6 +272,12 @@ describe('PrometheusDatasource', function() {
         }]
       }
     };
+    var metricLabels = {};
+    response.data.result.concat(response2.data.result).forEach(function (series) {
+      for (var label in series.metric) {
+        metricLabels[label] = 1;
+      }
+    });
     beforeEach(function () {
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.$httpBackend.expect('GET', urlExpected2).respond(response2);
@@ -274,7 +286,7 @@ describe('PrometheusDatasource', function() {
       ctx.$httpBackend.flush();
     });
     it('should return table model', function() {
-      var table = ctx.ds.transformMetricDataToTable(response.data.result.concat(response2.data.result));
+      var table = ctx.ds.transformMetricDataToTable(response.data.result.concat(response2.data.result), metricLabels);
       expect(table.type).to.be('table');
       expect(table.rows).to.eql(
         [
