@@ -2,10 +2,10 @@
 
 <div class="page-container page-body">
   <div class="page-action-bar">
-    <div class="gf-form">
-      <label class="gf-form-label">Search</label>
+    <label class="gf-form gf-form--grow gf-form--has-input-icon">
       <input type="text" class="gf-form-input width-20" ng-model="ctrl.searchQuery" ng-change="ctrl.onQueryUpdated()" placeholder="Filter by name or type" />
-    </div>
+      <i class="gf-form-input-icon fa fa-search"></i>
+    </label>
 
     <div class="page-action-bar__spacer"></div>
     <a class="btn btn-success" href="https://grafana.com/plugins?utm_source=grafana_plugin_list" target="_blank">
