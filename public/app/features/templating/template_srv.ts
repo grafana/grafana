@@ -240,3 +240,5 @@ export class TemplateSrv {
     return value.join(',');
   }
 }
+
+export default new TemplateSrv();

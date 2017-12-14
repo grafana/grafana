@@ -2,6 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { PanelModel } from '../panel_model';
 import { PanelContainer } from './PanelContainer';
+import templateSrv from 'app/features/templating/template_srv';
 import appEvents from 'app/core/app_events';
 
 export interface DashboardRowProps {
@@ -10,6 +11,9 @@ export interface DashboardRowProps {
 }
 
 export class DashboardRow extends React.Component<DashboardRowProps, any> {
+  dashboard: any;
+  panelContainer: any;
+
   constructor(props) {
     super(props);
 
@@ -17,15 +21,15 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       collapsed: this.props.panel.collapsed,
     };
 
+    this.panelContainer = this.props.getPanelContainer();
+    this.dashboard = this.panelContainer.getDashboard();
+
     this.toggle = this.toggle.bind(this);
     this.openSettings = this.openSettings.bind(this);
   }
 
   toggle() {
-    const panelContainer = this.props.getPanelContainer();
-    const dashboard = panelContainer.getDashboard();
-
-    dashboard.toggleRow(this.props.panel);
+    this.dashboard.toggleRow(this.props.panel);
 
     this.setState(prevState => {
       return { collapsed: !prevState.collapsed };
@@ -72,13 +76,14 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       'fa-chevron-right': this.state.collapsed,
     });
 
+    let title = templateSrv.replaceWithText(this.props.panel.title, this.props.panel.scopedVars);
     const hiddenPanels = this.props.panel.panels ? this.props.panel.panels.length : 0;
 
     return (
       <div className={classes}>
         <a className="dashboard-row__title pointer" onClick={this.toggle}>
           <i className={chevronClass} />
-          {this.props.panel.title}
+          {title}
           <span className="dashboard-row__panel_count">({hiddenPanels} hidden panels)</span>
         </a>
         <div className="dashboard-row__actions">
