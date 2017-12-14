@@ -297,8 +297,8 @@ export class BackendSrv {
     this.getDashboard('db', slug).then(fullDash => {
       const model = new DashboardModel(fullDash.dashboard, fullDash.meta);
 
-      if ((!model.folderId && toFolder.id === 0) ||
-        model.folderId === toFolder.id) {
+      if ((!fullDash.meta.folderId && toFolder.id === 0) ||
+        fullDash.meta.folderId === toFolder.id) {
         deferred.resolve({alreadyInFolder: true});
         return;
       }
@@ -312,7 +312,18 @@ export class BackendSrv {
         .then(() => {
           deferred.resolve({succeeded: true});
         }).catch(err => {
-          deferred.resolve({succeeded: false});
+          if (err.data && err.data.status === "plugin-dashboard") {
+            err.isHandled = true;
+
+            this.saveDashboard(clone, {overwrite: true})
+              .then(() => {
+                deferred.resolve({succeeded: true});
+              }).catch(err => {
+                deferred.resolve({succeeded: false});
+              });
+          } else {
+            deferred.resolve({succeeded: false});
+          }
         });
     });
 
