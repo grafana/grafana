@@ -9,7 +9,7 @@ export class AlertNotificationsListCtrl {
   /** @ngInject */
   constructor(private backendSrv, navModelSrv) {
     this.loadNotifications();
-    this.navModel = navModelSrv.getAlertingNav(1);
+    this.navModel = navModelSrv.getNav('alerting', 'channels', 0);
   }
 
   loadNotifications() {

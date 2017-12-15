@@ -5,7 +5,7 @@ export class AdminListOrgsCtrl {
   /** @ngInject */
   constructor($scope, backendSrv, navModelSrv) {
     $scope.init = function() {
-      $scope.navModel = navModelSrv.getAdminNav();
+      $scope.navModel = navModelSrv.getNav('cfg', 'admin', 'global-orgs', 1);
       $scope.getOrgs();
     };
 

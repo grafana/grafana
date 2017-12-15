@@ -1,29 +1,24 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import _ from 'lodash';
-import {DynamicDashboardSrv} from '../dynamic_dashboard_srv';
+import {DashboardModel} from '../dashboard_model';
 
 export class DashboardExporter {
 
   constructor(private datasourceSrv) {
   }
 
-  makeExportable(dashboard) {
-    var dynSrv = new DynamicDashboardSrv();
-
+  makeExportable(dashboard: DashboardModel) {
     // clean up repeated rows and panels,
     // this is done on the live real dashboard instance, not on a clone
     // so we need to undo this
     // this is pretty hacky and needs to be changed
-    dynSrv.init(dashboard);
-    dynSrv.process({cleanUpOnly: true});
+    dashboard.cleanUpRepeats();
 
     var saveModel = dashboard.getSaveModelClone();
     saveModel.id = null;
 
     // undo repeat cleanup
-    dynSrv.process();
+    dashboard.processRepeats();
 
     var inputs = [];
     var requires = {};
@@ -69,29 +64,27 @@ export class DashboardExporter {
     };
 
     // check up panel data sources
-    for (let row of saveModel.rows) {
-      for (let panel of row.panels) {
-        if (panel.datasource !== undefined) {
-          templateizeDatasourceUsage(panel);
-        }
+    for (let panel of saveModel.panels) {
+      if (panel.datasource !== undefined) {
+        templateizeDatasourceUsage(panel);
+      }
 
-        if (panel.targets) {
-          for (let target of panel.targets) {
-            if (target.datasource !== undefined) {
-              templateizeDatasourceUsage(target);
-            }
+      if (panel.targets) {
+        for (let target of panel.targets) {
+          if (target.datasource !== undefined) {
+            templateizeDatasourceUsage(target);
           }
         }
+      }
 
-        var panelDef = config.panels[panel.type];
-        if (panelDef) {
-          requires['panel' + panelDef.id] = {
-            type: 'panel',
-            id: panelDef.id,
-            name: panelDef.name,
-            version: panelDef.info.version,
-          };
-        }
+      var panelDef = config.panels[panel.type];
+      if (panelDef) {
+        requires['panel' + panelDef.id] = {
+          type: 'panel',
+          id: panelDef.id,
+          name: panelDef.name,
+          version: panelDef.info.version,
+        };
       }
     }
 

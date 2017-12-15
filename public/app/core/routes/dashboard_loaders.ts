@@ -20,6 +20,9 @@ export class LoadDashboardCtrl {
     }
 
     dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
+      if ($routeParams.keepRows) {
+        result.meta.keepRows = true;
+      }
       $scope.initDashboard(result, $scope);
     });
   }
@@ -28,19 +31,19 @@ export class LoadDashboardCtrl {
 export class NewDashboardCtrl {
 
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope, $routeParams) {
     $scope.initDashboard({
       meta: { canStar: false, canShare: false, isNew: true },
       dashboard: {
         title: "New dashboard",
-        rows: [
+        panels: [
           {
-            title: 'Dashboard Row',
-            height: '250px',
-            panels: [],
-            isNew: true,
+            type: 'add-panel',
+            gridPos: {x: 0, y: 0, w: 12, h: 9},
+            title: 'Panel Title',
           }
-        ]
+        ],
+        folderId: Number($routeParams.folderId)
       },
     }, $scope);
   }

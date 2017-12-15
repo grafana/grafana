@@ -23,7 +23,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
 
     var target = this.target;
     target.expr = target.expr || '';
-    target.intervalFactor = target.intervalFactor || 2;
+    target.intervalFactor = target.intervalFactor || 1;
     target.format = target.format || this.getDefaultFormat();
 
     this.metric = '';

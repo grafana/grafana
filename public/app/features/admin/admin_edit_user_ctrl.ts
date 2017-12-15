@@ -8,7 +8,7 @@ export class AdminEditUserCtrl {
     $scope.user = {};
     $scope.newOrg = { name: '', role: 'Editor' };
     $scope.permissions = {};
-    $scope.navModel = navModelSrv.getAdminNav();
+    $scope.navModel = navModelSrv.getNav('cfg', 'admin', 'global-users', 1);
 
     $scope.init = function() {
       if ($routeParams.id) {

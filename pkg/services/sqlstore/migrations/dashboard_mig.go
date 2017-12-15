@@ -136,4 +136,18 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Update dashboard_tag table charset", NewTableCharsetMigration("dashboard_tag", []*Column{
 		{Name: "term", Type: DB_NVarchar, Length: 50, Nullable: false},
 	}))
+
+	// add column to store folder_id for dashboard folder structure
+	mg.AddMigration("Add column folder_id in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "folder_id", Type: DB_BigInt, Nullable: false, Default: "0",
+	}))
+
+	mg.AddMigration("Add column isFolder in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "is_folder", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+
+	// add column to flag if dashboard has an ACL
+	mg.AddMigration("Add column has_acl in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "has_acl", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
 }

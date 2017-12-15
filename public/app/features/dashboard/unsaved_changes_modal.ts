@@ -22,9 +22,9 @@ const  template = `
     </div>
 
     <div class="confirm-modal-buttons">
-      <button type="button" class="btn btn-inverse" ng-click="ctrl.dismiss()">Cancel</button>
-      <button type="button" class="btn btn-danger" ng-click="ctrl.discard()">Discard</button>
       <button type="button" class="btn btn-success" ng-click="ctrl.save()">Save</button>
+      <button type="button" class="btn btn-danger" ng-click="ctrl.discard()">Discard</button>
+      <button type="button" class="btn btn-inverse" ng-click="ctrl.dismiss()">Cancel</button>
     </div>
   </div>
 </div>

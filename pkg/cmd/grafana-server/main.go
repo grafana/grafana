@@ -30,7 +30,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/testdata"
 )
 
-var version = "4.6.0"
+var version = "5.0.0"
 var commit = "NA"
 var buildstamp string
 var build_date string

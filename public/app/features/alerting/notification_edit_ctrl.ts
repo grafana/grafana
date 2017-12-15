@@ -9,7 +9,7 @@ export class AlertNotificationEditCtrl {
   testSeverity = "critical";
   notifiers: any;
   notifierTemplateId: string;
-
+  isNew: boolean;
   model: any;
   defaults: any = {
     type: 'email',
@@ -23,7 +23,8 @@ export class AlertNotificationEditCtrl {
 
   /** @ngInject */
   constructor(private $routeParams, private backendSrv, private $location, private $templateCache, navModelSrv) {
-    this.navModel = navModelSrv.getAlertingNav();
+    this.navModel = navModelSrv.getNav('alerting', 'channels', 0);
+    this.isNew = !this.$routeParams.id;
 
     this.backendSrv.get(`/api/alert-notifiers`).then(notifiers => {
       this.notifiers = notifiers;
@@ -34,10 +35,14 @@ export class AlertNotificationEditCtrl {
       }
 
       if (!this.$routeParams.id) {
+        this.navModel.breadcrumbs.push({text: 'New channel'});
+        this.navModel.node = {text: 'New channel'};
         return _.defaults(this.model, this.defaults);
       }
 
       return this.backendSrv.get(`/api/alert-notifications/${this.$routeParams.id}`).then(result => {
+        this.navModel.breadcrumbs.push({text: result.name});
+        this.navModel.node = {text: result.name};
         return result;
       });
     }).then(model => {

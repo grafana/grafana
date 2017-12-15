@@ -1,23 +1,30 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from '../../core/core_module';
+import _ from 'lodash';
 
 export class DataSourcesCtrl {
   datasources: any;
+  unfiltered: any;
   navModel: any;
+  searchQuery: string;
 
   /** @ngInject */
   constructor(
     private $scope,
     private backendSrv,
     private datasourceSrv,
-    private navModelSrv
-  ) {
+    private navModelSrv) {
 
-    this.navModel = this.navModelSrv.getDatasourceNav(0);
-
+    this.navModel = this.navModelSrv.getNav('cfg', 'datasources', 0);
     backendSrv.get('/api/datasources').then(result => {
       this.datasources = result;
+      this.unfiltered = result;
+    });
+  }
+
+  onQueryUpdated() {
+    let regex = new RegExp(this.searchQuery, 'ig');
+    this.datasources = _.filter(this.unfiltered, item => {
+      return regex.test(item.name) || regex.test(item.type);
     });
   }
 

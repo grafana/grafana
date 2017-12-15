@@ -10,7 +10,7 @@ export class DashExportCtrl {
   dismiss: () => void;
 
   /** @ngInject */
-  constructor(private dashboardSrv, datasourceSrv, private $scope) {
+  constructor(private dashboardSrv, datasourceSrv, private $scope, private $rootScope) {
     this.exporter = new DashboardExporter(datasourceSrv);
 
     this.exporter.makeExportable(this.dashboardSrv.getCurrent()).then(dash => {
@@ -27,10 +27,14 @@ export class DashExportCtrl {
 
   saveJson() {
     var clone = this.dash;
+    let editScope = this.$rootScope.$new();
+    editScope.object = clone;
 
-    this.$scope.$root.appEvent('show-json-editor', {
-      object: clone,
+    this.$rootScope.appEvent('show-modal', {
+      src: 'public/app/partials/edit_json.html',
+      scope: editScope
     });
+
     this.dismiss();
   }
 }

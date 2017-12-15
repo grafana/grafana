@@ -3,7 +3,7 @@ const merge = require('webpack-merge');
 const common = require('./webpack.common.js');
 
 config = merge(common, {
-  devtool: 'inline-source-map',
+  devtool: 'cheap-module-source-map',
   externals: {
     'react/addons': true,
     'react/lib/ExecutionEnvironment': true,

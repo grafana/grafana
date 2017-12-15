@@ -118,7 +118,7 @@ export class PrometheusDatasource {
         }
 
         if (activeTargets[index].format === "table") {
-          result.push(self.transformMetricDataToTable(response.data.data.result));
+          result.push(self.transformMetricDataToTable(response.data.data.result, responseList.length, index));
         } else {
           for (let metricData of response.data.data.result) {
             if (response.data.data.resultType === 'matrix') {
@@ -301,7 +301,7 @@ export class PrometheusDatasource {
     return { target: metricLabel, datapoints: dps };
   }
 
-  transformMetricDataToTable(md) {
+  transformMetricDataToTable(md, resultCount: number, resultIndex: number) {
     var table = new TableModel();
     var i, j;
     var metricLabels = {};
@@ -326,7 +326,8 @@ export class PrometheusDatasource {
       metricLabels[label] = labelIndex + 1;
       table.columns.push({text: label});
     });
-    table.columns.push({text: 'Value'});
+    let valueText = resultCount > 1 ? `Value #${String.fromCharCode(65 + resultIndex)}` : 'Value';
+    table.columns.push({text: valueText});
 
     // Populate rows, set value to empty string when label not present.
     _.each(md, function(series) {

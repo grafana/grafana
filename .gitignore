@@ -51,6 +51,9 @@ debug.test
 /packaging/**/*.rpm
 /packaging/**/*.deb
 
+# Ignore OSX indexing
+.DS_Store
+
 /vendor/**/*.py
 /vendor/**/*.xml
 /vendor/**/*.yml

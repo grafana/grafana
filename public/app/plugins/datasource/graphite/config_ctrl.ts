@@ -15,6 +15,10 @@ export class GraphiteConfigCtrl {
   }
 
   autoDetectGraphiteVersion() {
+    if (!this.current.id) {
+      return;
+    }
+
     this.datasourceSrv.loadDatasource(this.current.name)
     .then((ds) => {
       return ds.getVersion();
