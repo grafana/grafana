@@ -6,6 +6,7 @@ export class CreateFolderCtrl {
   nameExists = false;
   titleTouched = false;
 
+  /** @ngInject **/
   constructor(private backendSrv, private $location, navModelSrv) {
     this.navModel = navModelSrv.getNav('dashboards', 'manage-dashboards', 0);
   }
