@@ -162,6 +162,7 @@ type SignedInUser struct {
 	ApiKeyId       int64
 	OrgCount       int
 	IsGrafanaAdmin bool
+	IsAnonymous    bool
 	HelpFlags1     HelpFlags1
 	LastSeenAt     time.Time
 }

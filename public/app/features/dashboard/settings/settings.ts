@@ -40,10 +40,10 @@ export class SettingsCtrl {
       this.sections.push({ title: 'Annotations', id: 'annotations', icon: 'gicon gicon-annotation' });
       this.sections.push({ title: 'Variables', id: 'templating', icon: 'gicon gicon-variable' });
       this.sections.push({ title: 'Links', id: 'links', icon: 'gicon gicon-link' });
+    }
 
-      if (this.dashboard.id) {
-        this.sections.push({ title: 'Versions', id: 'versions', icon: 'fa fa-fw fa-history' });
-      }
+    if (this.dashboard.id && this.dashboard.meta.canSave) {
+      this.sections.push({ title: 'Versions', id: 'versions', icon: 'fa fa-fw fa-history' });
     }
 
     if (contextSrv.isEditor && !this.dashboard.editable) {
