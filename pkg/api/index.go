@@ -92,7 +92,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Text: "Create",
 			Id:   "create",
 			Icon: "fa fa-fw fa-plus",
-			Url:  setting.AppSubUrl + "dashboard/new",
+			Url:  setting.AppSubUrl + "/dashboard/new",
 			Children: []*dtos.NavLink{
 				{Text: "Dashboard", Icon: "gicon gicon-dashboard-new", Url: setting.AppSubUrl + "/dashboard/new"},
 				{Text: "Folder", SubTitle: "Create a new folder to organize your dashboards", Id: "folder", Icon: "gicon gicon-folder-new", Url: setting.AppSubUrl + "/dashboards/folder/new"},
