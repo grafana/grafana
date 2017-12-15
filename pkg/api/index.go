@@ -102,11 +102,11 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	}
 
 	dashboardChildNavs := []*dtos.NavLink{
-		{Text: "Home", Url: setting.AppSubUrl + "/", Icon: "fa fa-fw fa-home", HideFromTabs: true},
+		{Text: "Home", Url: setting.AppSubUrl + "/", Icon: "gicon gicon-home", HideFromTabs: true},
 		{Divider: true, HideFromTabs: true},
-		{Text: "Manage", Id: "manage-dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "fa fa-fw fa-sitemap"},
-		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "fa fa-fw fa-film"},
-		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "icon-gf icon-gf-fw icon-gf-snapshot"},
+		{Text: "Manage", Id: "manage-dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "gicon gicon-manage"},
+		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "gicon gicon-playlists"},
+		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "gicon gicon-snapshots"},
 	}
 
 	data.NavTree = append(data.NavTree, &dtos.NavLink{
@@ -127,7 +127,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Url:          setting.AppSubUrl + "/profile",
 			HideFromMenu: true,
 			Children: []*dtos.NavLink{
-				{Text: "Preferences", Id: "profile-settings", Url: setting.AppSubUrl + "/profile", Icon: "fa fa-fw fa-sliders"},
+				{Text: "Preferences", Id: "profile-settings", Url: setting.AppSubUrl + "/profile", Icon: "gicon gicon-preferences"},
 				{Text: "Change Password", Id: "change-password", Url: setting.AppSubUrl + "/profile/password", Icon: "fa fa-fw fa-lock", HideFromMenu: true},
 			},
 		}
@@ -144,7 +144,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	if setting.AlertingEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR) {
 		alertChildNavs := []*dtos.NavLink{
-			{Text: "Alert Rules", Id: "alert-list", Url: setting.AppSubUrl + "/alerting/list", Icon: "fa fa-fw fa-list-ul"},
+			{Text: "Alert Rules", Id: "alert-list", Url: setting.AppSubUrl + "/alerting/list", Icon: "gicon gicon-alert-rules"},
 			{Text: "Notification channels", Id: "channels", Url: setting.AppSubUrl + "/alerting/notifications", Icon: "gicon gicon-alert-notification-channel"},
 		}
 
@@ -196,7 +196,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 			if len(appLink.Children) > 0 && c.OrgRole == m.ROLE_ADMIN {
 				appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
-				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "fa fa-fw fa-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit"})
+				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "gicon gicon-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit"})
 			}
 
 			if len(appLink.Children) > 0 {
@@ -210,7 +210,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Id:       "cfg",
 			Text:     "Configuration",
 			SubTitle: "Organization: " + c.OrgName,
-			Icon:     "fa fa-fw fa-cog",
+			Icon:     "gicon gicon-cog",
 			Url:      setting.AppSubUrl + "/datasources",
 			Children: []*dtos.NavLink{
 				{
@@ -224,7 +224,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 					Text:        "Users",
 					Id:          "users",
 					Description: "Manage org members",
-					Icon:        "icon-gf icon-gf-fw icon-gf-users",
+					Icon:        "gicon gicon-user",
 					Url:         setting.AppSubUrl + "/org/users",
 				},
 				{
@@ -238,14 +238,14 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 					Text:        "Plugins",
 					Id:          "plugins",
 					Description: "View and configure plugins",
-					Icon:        "icon-gf icon-gf-fw icon-gf-apps",
+					Icon:        "gicon gicon-plugins",
 					Url:         setting.AppSubUrl + "/plugins",
 				},
 				{
 					Text:        "Preferences",
 					Id:          "org-settings",
 					Description: "Organization preferences",
-					Icon:        "fa fa-fw fa-sliders",
+					Icon:        "gicon gicon-preferences",
 					Url:         setting.AppSubUrl + "/org",
 				},
 
@@ -253,7 +253,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 					Text:        "API Keys",
 					Id:          "apikeys",
 					Description: "Create & manage API keys",
-					Icon:        "fa fa-fw fa-key",
+					Icon:        "gicon gicon-apikeys",
 					Url:         setting.AppSubUrl + "/org/apikeys",
 				},
 			},
@@ -268,12 +268,12 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 				HideFromTabs: true,
 				SubTitle:     "Manage all users & orgs",
 				Id:           "admin",
-				Icon:         "fa fa-fw fa-shield",
+				Icon:         "gicon gicon-shield",
 				Url:          setting.AppSubUrl + "/admin/users",
 				Children: []*dtos.NavLink{
-					{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "icon-gf icon-gf-fw icon-gf-users"},
+					{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "gicon gicon-user"},
 					{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "gicon gicon-org"},
-					{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "fa fa-fw fa-sliders"},
+					{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "gicon gicon-preferences"},
 					{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "fa fa-fw fa-bar-chart"},
 					{Text: "Style Guide", Id: "styleguide", Url: setting.AppSubUrl + "/styleguide", Icon: "fa fa-fw fa-eyedropper"},
 				},
@@ -287,7 +287,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		Text:         "Help",
 		Id:           "help",
 		Url:          "#",
-		Icon:         "fa fa-fw fa-question",
+		Icon:         "gicon gicon-question",
 		HideFromMenu: true,
 		Children: []*dtos.NavLink{
 			{Text: "Keyboard shortcuts", Url: "/shortcuts", Icon: "fa fa-fw fa-keyboard-o", Target: "_self"},

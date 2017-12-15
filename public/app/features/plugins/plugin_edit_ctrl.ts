@@ -60,7 +60,7 @@ export class PluginEditCtrl {
 
     if (model.type === 'app') {
         this.navModel.main.children.push({
-            icon: 'fa fa-fw fa-th-large',
+            icon: 'gicon gicon-cog',
             id: 'config',
             text: 'Config',
             url: `plugins/${this.model.id}/edit?tab=config`
