@@ -117,6 +117,8 @@ export class DashboardModel {
     meta.canSave = meta.canSave !== false;
     meta.canStar = meta.canStar !== false;
     meta.canEdit = meta.canEdit !== false;
+    meta.showSettings = meta.canEdit;
+    meta.canMakeEditable = meta.canSave && !this.editable;
 
     if (!this.editable) {
       meta.canEdit = false;
