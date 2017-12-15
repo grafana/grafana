@@ -1,7 +1,7 @@
 <page-header model="ctrl.navModel"></page-header>
 
 <div class="page-container page-body">
-	<div class="page-action-bar">
+  <div class="page-action-bar">
     <div class="page-action-bar__spacer">
     </div>
 
@@ -11,34 +11,35 @@
     </a>
   </div>
 
-	<table class="grafana-options-table">
-		<thead>
-			<th style="min-width: 200px"><strong>Name</strong></th>
-			<th style="min-width: 100px">Type</th>
-			<th style="width: 1%"></th>
-		</thead>
-		<tr ng-repeat="notification in ctrl.notifications">
-			<td>
-				<a href="alerting/notification/{{notification.id}}/edit">
-					{{notification.name}}
-				</a>
-			</td>
-			<td>
-				{{notification.type}}
-			</td>
-			<td class="text-right">
-				<span class="btn btn-secondary btn-small" ng-show="notification.isDefault == true">
-					default
-				</span>
-				<a href="alerting/notification/{{notification.id}}/edit" class="btn btn-inverse btn-small">
-					<i class="fa fa-edit"></i>
-					edit
-				</a>
-				<a ng-click="ctrl.deleteNotification(notification.id)" class="btn btn-danger btn-small">
-          <i class="fa fa-remove"></i>
-        </a>
-			</td>
-		</tr>
-	</table>
-
+  <table class="filter-table filter-table--hover">
+    <thead>
+      <th style="min-width: 200px">
+        <strong>Name</strong>
+      </th>
+      <th style="min-width: 100px">Type</th>
+      <th style="width: 1%"></th>
+    </thead>
+    <tbody>
+      <tr ng-repeat="notification in ctrl.notifications">
+        <td class="link-td">
+          <a href="alerting/notification/{{notification.id}}/edit">
+            {{notification.name}}
+          </a>
+        </td>
+        <td class="link-td">
+          <a href="alerting/notification/{{notification.id}}/edit">
+            {{notification.type}}
+          </a>
+        </td>
+        <td class="text-right">
+          <span class="btn btn-secondary btn-small" ng-show="notification.isDefault == true">
+            default
+          </span>
+          <a ng-click="ctrl.deleteNotification(notification.id)" class="btn btn-danger btn-small">
+            <i class="fa fa-remove"></i>
+          </a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>

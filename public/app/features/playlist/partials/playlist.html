@@ -34,7 +34,7 @@
 			</div>
 
 			<div ng-if="ctrl.filteredDashboards.length > 0">
-				<table class="grafana-options-table playlist-available-list">
+				<table class="filter-table playlist-available-list">
 					<tr ng-repeat="playlistItem in ctrl.filteredDashboards">
 						<td>
 							<i class="icon-gf icon-gf-dashboard"></i>
@@ -51,7 +51,7 @@
 				</table>
 			</div>
 			<div class="playlist-search-results-container" ng-if="ctrl.filteredTags.length > 0;">
-				<table class="grafana-options-table playlist-available-list">
+				<table class="filter-table playlist-available-list">
 					<tr ng-repeat="tag in ctrl.filteredTags">
 						<td>
 							<a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
@@ -72,7 +72,7 @@
 
 		<div class="col-lg-6">
 			<h5 class="page headering playlist-column-header">Selected</h5>
-			<table class="grafana-options-table playlist-available-list">
+			<table class="filter-table playlist-available-list">
 				<tr ng-repeat="playlistItem in ctrl.playlistItems">
 					<td ng-if="playlistItem.type === 'dashboard_by_id'">
 						<i class="icon-gf icon-gf-dashboard"></i>&nbsp;&nbsp;{{playlistItem.title}}

@@ -37,15 +37,10 @@
     <div class="gf-form-group" ng-include src="ctrl.notifierTemplateId">
     </div>
 
-    <div class="gf-form-group">
-      <div class="gf-form-inline">
-        <div class="gf-form width-8">
-          <button type="submit" ng-click="ctrl.save()" class="btn btn-success width-7">Save</button>
-        </div>
-        <div class="gf-form width-8">
-          <button type="submit" ng-click="ctrl.testNotification()" class="btn btn-secondary width-7">Send Test</button>
-        </div>
-      </div>
+    <div class="gf-form-group gf-form-button-row">
+			<button type="submit" ng-click="ctrl.save()" class="btn btn-success width-7">Save</button>
+			<button type="submit" ng-click="ctrl.testNotification()" class="btn btn-secondary width-7">Send Test</button>
+			<a href="alerting/notifications" class="btn btn-inverse">Back</a>
     </div>
   </form>
 </div>

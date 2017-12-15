@@ -15,26 +15,23 @@
   </div>
 
   <div class="admin-list-table">
-    <table class="filter-table form-inline" ng-show="ctrl.teams.length > 0">
+    <table class="filter-table filter-table--hover form-inline" ng-show="ctrl.teams.length > 0">
       <thead>
         <tr>
           <th>Name</th>
           <th>Members</th>
-          <th></th>
+          <th style="width: 1%"></th>
         </tr>
       </thead>
       <tbody>
         <tr ng-repeat="team in ctrl.teams">
-          <td>
+          <td class="link-td">
             <a href="org/teams/edit/{{team.id}}">{{team.name}}</a>
           </td>
-          <td>#Count</td>
+          <td class="link-td">
+            <a href="org/teams/edit/{{team.id}}">#Count</a>
+          </td>
           <td class="text-right">
-            <a href="org/teams/edit/{{team.id}}" class="btn btn-inverse btn-small">
-              <i class="fa fa-edit"></i>
-              Edit
-            </a>
-            &nbsp;&nbsp;
             <a ng-click="ctrl.deleteTeam(team)" class="btn btn-danger btn-small">
               <i class="fa fa-remove"></i>
             </a>
