@@ -77,7 +77,7 @@ var template = `
   </div>
 
   <div class="gf-form-button-row">
-    <button type="submit" class="btn btn-success" ng-click="ctrl.updatePrefs()">Update</button>
+    <button type="submit" class="btn btn-success" ng-click="ctrl.updatePrefs()">Save</button>
   </div>
 </form>
 `;

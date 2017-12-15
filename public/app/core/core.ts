@@ -17,6 +17,8 @@ import './utils/outline';
 import './components/colorpicker/ColorPicker';
 import './components/colorpicker/SeriesColorPicker';
 import './components/colorpicker/spectrum_picker';
+import './services/search_srv';
+import './services/ng_react';
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';
@@ -44,9 +46,20 @@ import {KeybindingSrv} from './services/keybindingSrv';
 import {helpModal} from './components/help/help';
 import {JsonExplorer} from './components/json_explorer/json_explorer';
 import {NavModelSrv, NavModel} from './nav_model_srv';
+import {userPicker} from './components/user_picker';
+import {teamPicker} from './components/team_picker';
+import {geminiScrollbar} from './components/scroll/scroll';
+import {gfPageDirective} from './components/gf_page';
+import {orgSwitcher} from './components/org_switcher';
+import {profiler} from './profiler';
 import {registerAngularDirectives} from './angular_wrappers';
+import {updateLegendValues} from './time_series2';
+import TimeSeries from './time_series2';
+import {searchResultsDirective} from './components/search/search_results';
+import {manageDashboardsDirective} from './components/manage_dashboards/manage_dashboards';
 
 export {
+  profiler,
   registerAngularDirectives,
   arrayJoin,
   coreModule,
@@ -71,4 +84,13 @@ export {
   JsonExplorer,
   NavModelSrv,
   NavModel,
+  userPicker,
+  teamPicker,
+  geminiScrollbar,
+  gfPageDirective,
+  orgSwitcher,
+  manageDashboardsDirective,
+  TimeSeries,
+  updateLegendValues,
+  searchResultsDirective
 };

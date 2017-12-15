@@ -80,10 +80,11 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	}
 
 	renderOpts := &renderer.RenderOpts{
-		Width:   "800",
-		Height:  "400",
-		Timeout: "30",
-		OrgId:   context.Rule.OrgId,
+		Width:          "800",
+		Height:         "400",
+		Timeout:        "30",
+		OrgId:          context.Rule.OrgId,
+		IsAlertContext: true,
 	}
 
 	if slug, err := context.GetDashboardSlug(); err != nil {

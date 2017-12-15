@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import coreModule from '../../core/core_module';
 
@@ -11,10 +9,12 @@ export class PlaylistEditCtrl {
   playlist: any = {
     interval: '5m',
   };
+
   playlistItems: any = [];
   dashboardresult: any = [];
   tagresult: any = [];
   navModel: any;
+  isNew: boolean;
 
   /** @ngInject */
   constructor(
@@ -25,18 +25,24 @@ export class PlaylistEditCtrl {
     navModelSrv
   ) {
 
-    this.navModel = navModelSrv.getPlaylistsNav(0);
+    this.navModel = navModelSrv.getNav('dashboards', 'playlists', 0);
+    this.isNew = $route.current.params.id;
 
     if ($route.current.params.id) {
       var playlistId = $route.current.params.id;
 
       backendSrv.get('/api/playlists/' + playlistId).then(result => {
         this.playlist = result;
+        this.navModel.node = {text: result.name, icon: this.navModel.node.icon};
+        this.navModel.breadcrumbs.push(this.navModel.node);
       });
 
       backendSrv.get('/api/playlists/' + playlistId + '/items').then(result => {
         this.playlistItems = result;
       });
+    }  else {
+      this.navModel.node = {text: "New playlist", icon: this.navModel.node.icon};
+      this.navModel.breadcrumbs.push(this.navModel.node);
     }
   }
 
@@ -98,10 +104,6 @@ export class PlaylistEditCtrl {
       }, () => {
         this.$scope.appEvent('alert-error', ['Unable to save playlist', '']);
       });
-  }
-
-  isNew() {
-    return !this.playlist.id;
   }
 
   isPlaylistEmpty() {

@@ -16,6 +16,7 @@ var (
 	ErrDashboardWithSameNameExists       = errors.New("A dashboard with the same name already exists")
 	ErrDashboardVersionMismatch          = errors.New("The dashboard has been changed by someone else")
 	ErrDashboardTitleEmpty               = errors.New("Dashboard title cannot be empty")
+	ErrDashboardFolderCannotHaveParent   = errors.New("A Dashboard Folder cannot be added to another folder")
 	ErrDashboardContainsInvalidAlertData = errors.New("Invalid alert data. Cannot save dashboard")
 	ErrDashboardFailedToUpdateAlertData  = errors.New("Failed to save alert data")
 )
@@ -49,6 +50,9 @@ type Dashboard struct {
 
 	UpdatedBy int64
 	CreatedBy int64
+	FolderId  int64
+	IsFolder  bool
+	HasAcl    bool
 
 	Title string
 	Data  *simplejson.Json
@@ -64,6 +68,15 @@ func NewDashboard(title string) *Dashboard {
 	dash.Updated = time.Now()
 	dash.UpdateSlug()
 	return dash
+}
+
+// NewDashboardFolder creates a new dashboard folder
+func NewDashboardFolder(title string) *Dashboard {
+	folder := NewDashboard(title)
+	folder.Data.Set("schemaVersion", 16)
+	folder.Data.Set("editable", true)
+	folder.Data.Set("hideControls", true)
+	return folder
 }
 
 // GetTags turns the tags in data json into go string array
@@ -113,6 +126,8 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.UpdatedBy = userId
 	dash.OrgId = cmd.OrgId
 	dash.PluginId = cmd.PluginId
+	dash.IsFolder = cmd.IsFolder
+	dash.FolderId = cmd.FolderId
 	dash.UpdateSlug()
 	return dash
 }
@@ -140,6 +155,8 @@ type SaveDashboardCommand struct {
 	OrgId        int64            `json:"-"`
 	RestoredFrom int              `json:"-"`
 	PluginId     string           `json:"-"`
+	FolderId     int64            `json:"folderId"`
+	IsFolder     bool             `json:"isFolder"`
 
 	UpdatedAt time.Time
 
@@ -147,7 +164,7 @@ type SaveDashboardCommand struct {
 }
 
 type DeleteDashboardCommand struct {
-	Slug  string
+	Id    int64
 	OrgId int64
 }
 

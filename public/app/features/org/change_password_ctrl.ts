@@ -8,7 +8,7 @@ export class ChangePasswordCtrl {
     $scope.command = {};
     $scope.authProxyEnabled = config.authProxyEnabled;
     $scope.ldapEnabled = config.ldapEnabled;
-    $scope.navModel = navModelSrv.getProfileNav();
+    $scope.navModel = navModelSrv.getNav('profile', 'change-password', 0);
 
     $scope.changePassword = function() {
       if (!$scope.userForm.$valid) { return; }

@@ -18,6 +18,7 @@ import * as heatmapPanel from 'app/plugins/panel/heatmap/module';
 import * as tablePanel from 'app/plugins/panel/table/module';
 import * as singlestatPanel from 'app/plugins/panel/singlestat/module';
 import * as gettingStartedPanel from 'app/plugins/panel/gettingstarted/module';
+
 import * as testDataAppPlugin from 'app/plugins/app/testdata/module';
 import * as testDataDSPlugin from 'app/plugins/app/testdata/datasource/module';
 

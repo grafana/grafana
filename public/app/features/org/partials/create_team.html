@@ -1,0 +1,27 @@
+<div class="modal-body">
+  <div class="modal-header">
+		<h2 class="modal-header-title">
+			<i class="gicon gicon-team"></i>
+			<span class="p-l-1">Create Team</span>
+		</h2>
+
+		<a class="modal-header-close" ng-click="ctrl.dismiss();">
+			<i class="fa fa-remove"></i>
+		</a>
+	</div>
+
+	<div class="modal-content">
+		<form name="ctrl.createTeamForm" class="gf-form-group" novalidate>
+      <div class="p-t-2">
+        <div class="gf-form-inline">
+          <div class="gf-form max-width-21">
+            <input type="text" class="gf-form-input" ng-model='ctrl.teamName' required give-focus="true" placeholder="Enter Team Name"></input>
+          </div>
+          <div class="gf-form">
+            <button class="btn gf-form-btn btn-success" ng-click="ctrl.createTeam();ctrl.dismiss();">Create</button>
+          </div>
+        </div>
+      </div>
+		</form>
+	</div>
+</div>

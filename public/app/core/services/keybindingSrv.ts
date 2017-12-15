@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import $ from 'jquery';
 import _ from 'lodash';
 
@@ -74,8 +72,8 @@ export class KeybindingSrv {
     }, 'keydown');
   }
 
-  showDashEditView(view) {
-    var search = _.extend(this.$location.search(), {editview: view});
+  showDashEditView() {
+    var search = _.extend(this.$location.search(), {editview: 'settings'});
     this.$location.search(search);
   }
 
@@ -83,11 +81,7 @@ export class KeybindingSrv {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit('graph-hover-clear');
-      scope.broadcastRefresh();
-    });
-
-    this.bind('mod+h', () => {
-      dashboard.hideControls = !dashboard.hideControls;
+      this.$rootScope.$broadcast('refresh');
     });
 
     this.bind('mod+s', e => {
@@ -195,11 +189,11 @@ export class KeybindingSrv {
     });
 
     this.bind('d r', () => {
-      scope.broadcastRefresh();
+      this.$rootScope.$broadcast('refresh');
     });
 
     this.bind('d s', () => {
-      this.showDashEditView('settings');
+      this.showDashEditView();
     });
 
     this.bind('d k', () => {
@@ -217,8 +211,14 @@ export class KeybindingSrv {
       }
 
       scope.appEvent('hide-modal');
-      scope.appEvent('hide-dash-editor');
       scope.appEvent('panel-change-view', {fullscreen: false, edit: false});
+
+      // close settings view
+      var search = this.$location.search();
+      if (search.editview) {
+        delete search.editview;
+        this.$location.search(search);
+      }
     });
   }
 }

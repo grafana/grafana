@@ -18,14 +18,21 @@
     font-variant: normal;
     text-transform: none;
     line-height: 1;
+    display: inline-block;
+    vertical-align: middle;
 
     /* Better Font Rendering =========== */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-gf-fw {
+  width: 1.2857142857em;
+  text-align: center;
+}
+
 .inline-icon-gf {
-    vertical-align: middle;
+  vertical-align: middle;
 }
 
 .icon-gf-raintank_wordmark:before {
@@ -145,7 +152,7 @@
 }
 .icon-gf-grabber:before {
   content: "\e90b";
-} 
+}
 .icon-gf-users:before {
     content: "\e622";
 }

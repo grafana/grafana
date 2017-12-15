@@ -3,14 +3,12 @@ import 'app/core/services/backend_srv';
 
 describe('backend_srv', function() {
   var _backendSrv;
-  var _http;
   var _httpBackend;
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(angularMocks.inject(function ($httpBackend, $http, backendSrv) {
     _httpBackend = $httpBackend;
-    _http = $http;
     _backendSrv = backendSrv;
   }));
 

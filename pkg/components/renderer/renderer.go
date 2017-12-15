@@ -16,18 +16,22 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type RenderOpts struct {
-	Path     string
-	Width    string
-	Height   string
-	Timeout  string
-	OrgId    int64
-	Timezone string
-	Encoding string
+	Path           string
+	Width          string
+	Height         string
+	Timeout        string
+	OrgId          int64
+	UserId         int64
+	OrgRole        models.RoleType
+	Timezone       string
+	IsAlertContext bool
+	Encoding       string
 }
 
 var ErrTimeout = errors.New("Timeout error. You can set timeout in seconds with &timeout url parameter")
@@ -75,7 +79,11 @@ func RenderToPng(params *RenderOpts) (string, error) {
 	pngPath, _ := filepath.Abs(filepath.Join(setting.ImagesDir, util.GetRandomString(20)))
 	pngPath = pngPath + ".png"
 
-	renderKey := middleware.AddRenderAuthKey(params.OrgId)
+	orgRole := params.OrgRole
+	if params.IsAlertContext {
+		orgRole = models.ROLE_ADMIN
+	}
+	renderKey := middleware.AddRenderAuthKey(params.OrgId, params.UserId, orgRole)
 	defer middleware.RemoveRenderAuthKey(renderKey)
 
 	timeout, err := strconv.Atoi(params.Timeout)

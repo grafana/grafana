@@ -84,12 +84,10 @@ describe("DateMath", () => {
 
   describe('rounding', () => {
     var now;
-    var anchored;
 
     beforeEach(() => {
       clock = sinon.useFakeTimers(unix);
       now = moment();
-      anchored = moment(anchor);
     });
 
     _.each(spans, (span) => {

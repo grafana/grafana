@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
 
 const  template = `
@@ -18,9 +16,15 @@ const  template = `
 	<form name="ctrl.saveForm" ng-submit="ctrl.save()" class="modal-content" novalidate>
 		<div class="p-t-2">
 			<div class="gf-form">
-				<label class="gf-form-label">New name</label>
+				<label class="gf-form-label width-7">New name</label>
 				<input type="text" class="gf-form-input" ng-model="ctrl.clone.title" give-focus="true" required>
 			</div>
+      <div class="gf-form">
+        <folder-picker initial-folder-id="ctrl.folderId"
+                       on-change="ctrl.onFolderChange($folder)"
+                       label-class="width-7">
+        </folder-picker>
+      </div>
 		</div>
 
 		<div class="gf-form-button-row text-center">
@@ -33,6 +37,7 @@ const  template = `
 
 export class SaveDashboardAsModalCtrl {
   clone: any;
+  folderId: any;
   dismiss: () => void;
 
   /** @ngInject */
@@ -43,18 +48,16 @@ export class SaveDashboardAsModalCtrl {
     this.clone.title += ' Copy';
     this.clone.editable = true;
     this.clone.hideControls = false;
+    this.folderId = dashboard.folderId;
 
     // remove alerts if source dashboard is already persisted
     // do not want to create alert dupes
     if (dashboard.id > 0) {
-      this.clone.rows.forEach(row => {
-        row.panels.forEach(panel => {
-          if (panel.type === "graph" && panel.alert) {
-            delete panel.thresholds;
-          }
-
-          delete panel.alert;
-        });
+      this.clone.panels.forEach(panel => {
+        if (panel.type === "graph" && panel.alert) {
+          delete panel.thresholds;
+        }
+        delete panel.alert;
       });
     }
 
@@ -69,6 +72,10 @@ export class SaveDashboardAsModalCtrl {
     if (evt.keyCode === 13) {
       this.save();
     }
+  }
+
+  onFolderChange(folder) {
+    this.clone.folderId = folder.id;
   }
 }
 

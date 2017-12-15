@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 export default class AdminListUsersCtrl {
   users: any;
   pages = [];
@@ -12,7 +10,7 @@ export default class AdminListUsersCtrl {
 
   /** @ngInject */
   constructor(private $scope, private backendSrv, navModelSrv) {
-    this.navModel = navModelSrv.getAdminNav();
+    this.navModel = navModelSrv.getNav('cfg', 'admin', 'global-users', 1);
     this.query = '';
     this.getUsers();
   }

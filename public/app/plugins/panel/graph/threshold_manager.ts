@@ -34,7 +34,6 @@ export class ThresholdManager {
     var handleElem = $(evt.currentTarget).parents(".alert-handle-wrapper");
     var handleIndex = $(evt.currentTarget).data("handleIndex");
 
-    var isMoving = false;
     var lastY = null;
     var posTop;
     var plot = this.plot;
@@ -53,7 +52,6 @@ export class ThresholdManager {
     }
 
     function stopped() {
-      isMoving = false;
       // calculate graph level
       var graphValue = plot.c2p({left: 0, top: posTop}).y;
       graphValue = parseInt(graphValue.toFixed(0));
@@ -70,7 +68,6 @@ export class ThresholdManager {
       });
     }
 
-    isMoving = true;
     lastY = null;
     posTop = handleElem.position().top;
 

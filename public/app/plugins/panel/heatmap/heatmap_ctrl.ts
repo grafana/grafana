@@ -100,9 +100,8 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   scaledDecimals: number;
 
   /** @ngInject */
-  constructor($scope, $injector, private $rootScope, timeSrv) {
+  constructor($scope, $injector, timeSrv) {
     super($scope, $injector);
-    this.$rootScope = $rootScope;
     this.timeSrv = timeSrv;
     this.selectionActivated = false;
 

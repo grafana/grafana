@@ -7,20 +7,25 @@ import (
 )
 
 type DashboardMeta struct {
-	IsStarred  bool      `json:"isStarred,omitempty"`
-	IsHome     bool      `json:"isHome,omitempty"`
-	IsSnapshot bool      `json:"isSnapshot,omitempty"`
-	Type       string    `json:"type,omitempty"`
-	CanSave    bool      `json:"canSave"`
-	CanEdit    bool      `json:"canEdit"`
-	CanStar    bool      `json:"canStar"`
-	Slug       string    `json:"slug"`
-	Expires    time.Time `json:"expires"`
-	Created    time.Time `json:"created"`
-	Updated    time.Time `json:"updated"`
-	UpdatedBy  string    `json:"updatedBy"`
-	CreatedBy  string    `json:"createdBy"`
-	Version    int       `json:"version"`
+	IsStarred   bool      `json:"isStarred,omitempty"`
+	IsHome      bool      `json:"isHome,omitempty"`
+	IsSnapshot  bool      `json:"isSnapshot,omitempty"`
+	Type        string    `json:"type,omitempty"`
+	CanSave     bool      `json:"canSave"`
+	CanEdit     bool      `json:"canEdit"`
+	CanAdmin    bool      `json:"canAdmin"`
+	CanStar     bool      `json:"canStar"`
+	Slug        string    `json:"slug"`
+	Expires     time.Time `json:"expires"`
+	Created     time.Time `json:"created"`
+	Updated     time.Time `json:"updated"`
+	UpdatedBy   string    `json:"updatedBy"`
+	CreatedBy   string    `json:"createdBy"`
+	Version     int       `json:"version"`
+	HasAcl      bool      `json:"hasAcl"`
+	IsFolder    bool      `json:"isFolder"`
+	FolderId    int64     `json:"folderId"`
+	FolderTitle string    `json:"folderTitle"`
 }
 
 type DashboardFullWithMeta struct {

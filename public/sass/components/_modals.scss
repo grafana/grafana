@@ -10,7 +10,7 @@
   bottom: 0;
   left: 0;
   z-index: $zindex-modal-backdrop;
-  background-color: $black;
+  background-color: $modal-backdrop-bg;
 }
 
 .modal-backdrop,
@@ -21,10 +21,9 @@
 // Base modal
 .modal {
   position: fixed;
-  overflow: hidden;
   z-index: $zindex-modal;
   width: 100%;
-	background-color: $panel-bg;
+	background: $page-bg;
   @include box-shadow(0 3px 7px rgba(0,0,0,0.3));
   @include background-clip(padding-box);
   outline: none;
@@ -38,32 +37,32 @@
 }
 
 .modal-header {
-  background-color: $body-bg;
-	@include brand-bottom-border();
-	@include clearfix();
-
-  .gf-tabs-link.active {
-    background-color: $panel-bg;
-  }
+  background: $page-header-bg;
+  box-shadow: $page-header-shadow;
+  border-bottom: 1px solid $page-header-border-color;
+  @include clearfix();
 }
 
 .modal-header-title {
-  font-style: italic;
   font-size: $font-size-h3;
   float: left;
   padding-top: $spacer * 0.75;
   margin: 0 $spacer*3 0 $spacer*1.5;
+
+  .gicon {
+    position: relative;
+    top: -2px;
+  }
 }
 
 .modal-header-close {
   float: right;
-  padding: 0.75rem $spacer;
+  padding: 9px $spacer;
 }
 
 // Body (where all modal content resides)
 .modal-body {
   position: relative;
-  overflow-y: auto;
 }
 
 .modal-content {

@@ -5,7 +5,7 @@
   align-content: flex-start;
   align-items: flex-start;
 
-  margin: 0 $panel-margin ($panel-margin*2) $panel-margin;
+  margin: 0 0 $panel-margin 0;
 }
 
 .annotation-disabled, .annotation-disabled a {
@@ -38,7 +38,11 @@
 
 .variable-value-link {
   padding-right: 10px;
-  padding: 8px 7px;
+  padding: $input-padding-y $input-padding-x;
+  background-color: $input-bg;
+  border: 1px solid $input-border-color;
+  border-radius: $input-border-radius;
+  color: $input-color;
   box-sizing: content-box;
   display: inline-block;
   color: $text-color;
@@ -51,15 +55,6 @@
 .variable-link-wrapper  {
   display: inline-block;
   position: relative;
-
-  .hidden-input {
-    padding: 8px 7px;
-    border: none;
-    margin: 0px;
-    background: transparent;
-    border-radius: 0;
-    border-right: 1px solid $tight-form-border;
-  }
 }
 
 .variable-value-dropdown {

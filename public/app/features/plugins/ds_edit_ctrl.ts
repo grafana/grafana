@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 
 import config from 'app/core/config';
@@ -38,11 +36,10 @@ export class DataSourceEditCtrl {
     private $routeParams,
     private $location,
     private datasourceSrv,
-    private navModelSrv,
+    navModelSrv,
   ) {
 
-    this.navModel = this.navModelSrv.getDatasourceNav(0);
-    this.isNew = true;
+    this.navModel = navModelSrv.getNav('cfg', 'datasources', 0);
     this.datasources = [];
     this.tabIndex = 0;
 
@@ -56,7 +53,10 @@ export class DataSourceEditCtrl {
   }
 
   initNewDatasourceModel() {
+    this.isNew = true;
     this.current = _.cloneDeep(defaults);
+
+    this.navModel.breadcrumbs.push({text: 'New'});
 
     // We are coming from getting started
     if (this.$location.search().gettingstarted) {
@@ -83,10 +83,14 @@ export class DataSourceEditCtrl {
     this.backendSrv.get('/api/datasources/' + id).then(ds => {
       this.isNew = false;
       this.current = ds;
+      this.navModel.node = {text: ds.name, icon: 'icon-gf icon-gf-fw icon-gf-datasources', id: 'ds-new'};
+      this.navModel.breadcrumbs.push(this.navModel.node);
+
       if (datasourceCreated) {
         datasourceCreated = false;
         this.testDatasource();
       }
+
       return this.typeChanged();
     });
   }
@@ -106,7 +110,7 @@ export class DataSourceEditCtrl {
     this.hasDashboards = false;
     return this.backendSrv.get('/api/plugins/' + this.current.type + '/settings').then(pluginInfo => {
       this.datasourceMeta = pluginInfo;
-      this.hasDashboards = _.find(pluginInfo.includes, {type: 'dashboard'});
+      this.hasDashboards = _.find(pluginInfo.includes, {type: 'dashboard'}) !== undefined;
     });
   }
 

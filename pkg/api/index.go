@@ -50,6 +50,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Login:          c.Login,
 			Email:          c.Email,
 			Name:           c.Name,
+			OrgCount:       c.OrgCount,
 			OrgId:          c.OrgId,
 			OrgName:        c.OrgName,
 			OrgRole:        c.OrgRole,
@@ -61,6 +62,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			HelpFlags1:     c.HelpFlags1,
 		},
 		Settings:                settings,
+		Theme:                   prefs.Theme,
 		AppUrl:                  appUrl,
 		AppSubUrl:               appSubUrl,
 		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
@@ -82,52 +84,77 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	themeUrlParam := c.Query("theme")
 	if themeUrlParam == "light" {
 		data.User.LightTheme = true
-	}
-
-	dashboardChildNavs := []*dtos.NavLink{
-		{Text: "Home", Url: setting.AppSubUrl + "/"},
-		{Text: "Playlists", Url: setting.AppSubUrl + "/playlists"},
-		{Text: "Snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots"},
+		data.Theme = "light"
 	}
 
 	if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Divider: true})
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "New", Icon: "fa fa-plus", Url: setting.AppSubUrl + "/dashboard/new"})
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "Import", Icon: "fa fa-download", Url: setting.AppSubUrl + "/dashboard/new/?editview=import"})
+		data.NavTree = append(data.NavTree, &dtos.NavLink{
+			Text: "Create",
+			Id:   "create",
+			Icon: "fa fa-fw fa-plus",
+			Url:  setting.AppSubUrl + "dashboard/new",
+			Children: []*dtos.NavLink{
+				{Text: "Dashboard", Icon: "gicon gicon-dashboard-new", Url: setting.AppSubUrl + "/dashboard/new"},
+				{Text: "Folder", SubTitle: "Create a new folder to organize your dashboards", Id: "folder", Icon: "gicon gicon-folder-new", Url: setting.AppSubUrl + "/dashboards/folder/new"},
+				{Text: "Import", SubTitle: "Import dashboard from file or Grafana.com", Id: "import", Icon: "gicon gicon-dashboard-import", Url: setting.AppSubUrl + "/dashboard/import"},
+			},
+		})
 	}
 
-	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+	dashboardChildNavs := []*dtos.NavLink{
+		{Text: "Home", Url: setting.AppSubUrl + "/", Icon: "gicon gicon-home", HideFromTabs: true},
+		{Divider: true, HideFromTabs: true},
+		{Text: "Manage", Id: "manage-dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "gicon gicon-manage"},
+		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "gicon gicon-playlists"},
+		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "gicon gicon-snapshots"},
+	}
+
+	data.NavTree = append(data.NavTree, &dtos.NavLink{
 		Text:     "Dashboards",
-		Icon:     "icon-gf icon-gf-dashboard",
+		Id:       "dashboards",
+		SubTitle: "Manage dashboards & folders",
+		Icon:     "gicon gicon-dashboard",
 		Url:      setting.AppSubUrl + "/",
 		Children: dashboardChildNavs,
 	})
 
-	if setting.AlertingEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR) {
-		alertChildNavs := []*dtos.NavLink{
-			{Text: "Alert List", Url: setting.AppSubUrl + "/alerting/list"},
-			{Text: "Notification channels", Url: setting.AppSubUrl + "/alerting/notifications"},
+	if c.IsSignedIn {
+		profileNode := &dtos.NavLink{
+			Text:         c.SignedInUser.Name,
+			SubTitle:     c.SignedInUser.Login,
+			Id:           "profile",
+			Img:          data.User.GravatarUrl,
+			Url:          setting.AppSubUrl + "/profile",
+			HideFromMenu: true,
+			Children: []*dtos.NavLink{
+				{Text: "Preferences", Id: "profile-settings", Url: setting.AppSubUrl + "/profile", Icon: "gicon gicon-preferences"},
+				{Text: "Change Password", Id: "change-password", Url: setting.AppSubUrl + "/profile/password", Icon: "fa fa-fw fa-lock", HideFromMenu: true},
+			},
 		}
 
-		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-			Text:     "Alerting",
-			Icon:     "icon-gf icon-gf-alert",
-			Url:      setting.AppSubUrl + "/alerting/list",
-			Children: alertChildNavs,
-		})
+		if !setting.DisableSignoutMenu {
+			// add sign out first
+			profileNode.Children = append(profileNode.Children, &dtos.NavLink{
+				Text: "Sign out", Id: "sign-out", Url: setting.AppSubUrl + "/logout", Icon: "fa fa-fw fa-sign-out", Target: "_self",
+			})
+		}
+
+		data.NavTree = append(data.NavTree, profileNode)
 	}
 
-	if c.OrgRole == m.ROLE_ADMIN {
-		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-			Text: "Data Sources",
-			Icon: "icon-gf icon-gf-datasources",
-			Url:  setting.AppSubUrl + "/datasources",
-		})
+	if setting.AlertingEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR) {
+		alertChildNavs := []*dtos.NavLink{
+			{Text: "Alert Rules", Id: "alert-list", Url: setting.AppSubUrl + "/alerting/list", Icon: "gicon gicon-alert-rules"},
+			{Text: "Notification channels", Id: "channels", Url: setting.AppSubUrl + "/alerting/notifications", Icon: "gicon gicon-alert-notification-channel"},
+		}
 
-		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-			Text: "Plugins",
-			Icon: "icon-gf icon-gf-apps",
-			Url:  setting.AppSubUrl + "/plugins",
+		data.NavTree = append(data.NavTree, &dtos.NavLink{
+			Text:     "Alerting",
+			SubTitle: "Alert rules & notifications",
+			Id:       "alerting",
+			Icon:     "gicon gicon-alert",
+			Url:      setting.AppSubUrl + "/alerting/list",
+			Children: alertChildNavs,
 		})
 	}
 
@@ -140,6 +167,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		if plugin.Pinned {
 			appLink := &dtos.NavLink{
 				Text: plugin.Name,
+				Id:   "plugin-page-" + plugin.Id,
 				Url:  plugin.DefaultNavUrl,
 				Img:  plugin.Info.Logos.Small,
 			}
@@ -168,28 +196,105 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 			if len(appLink.Children) > 0 && c.OrgRole == m.ROLE_ADMIN {
 				appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
-				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "fa fa-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit"})
+				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "gicon gicon-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit"})
 			}
 
 			if len(appLink.Children) > 0 {
-				data.MainNavLinks = append(data.MainNavLinks, appLink)
+				data.NavTree = append(data.NavTree, appLink)
 			}
 		}
 	}
 
-	if c.IsGrafanaAdmin {
-		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-			Text: "Admin",
-			Icon: "fa fa-fw fa-cogs",
-			Url:  setting.AppSubUrl + "/admin",
+	if c.OrgRole == m.ROLE_ADMIN {
+		cfgNode := &dtos.NavLink{
+			Id:       "cfg",
+			Text:     "Configuration",
+			SubTitle: "Organization: " + c.OrgName,
+			Icon:     "gicon gicon-cog",
+			Url:      setting.AppSubUrl + "/datasources",
 			Children: []*dtos.NavLink{
-				{Text: "Global Users", Url: setting.AppSubUrl + "/admin/users"},
-				{Text: "Global Orgs", Url: setting.AppSubUrl + "/admin/orgs"},
-				{Text: "Server Settings", Url: setting.AppSubUrl + "/admin/settings"},
-				{Text: "Server Stats", Url: setting.AppSubUrl + "/admin/stats"},
+				{
+					Text:        "Data Sources",
+					Icon:        "gicon gicon-datasources",
+					Description: "Add and configure data sources",
+					Id:          "datasources",
+					Url:         setting.AppSubUrl + "/datasources",
+				},
+				{
+					Text:        "Users",
+					Id:          "users",
+					Description: "Manage org members",
+					Icon:        "gicon gicon-user",
+					Url:         setting.AppSubUrl + "/org/users",
+				},
+				{
+					Text:        "Teams",
+					Id:          "teams",
+					Description: "Manage org groups",
+					Icon:        "gicon gicon-team",
+					Url:         setting.AppSubUrl + "/org/teams",
+				},
+				{
+					Text:        "Plugins",
+					Id:          "plugins",
+					Description: "View and configure plugins",
+					Icon:        "gicon gicon-plugins",
+					Url:         setting.AppSubUrl + "/plugins",
+				},
+				{
+					Text:        "Preferences",
+					Id:          "org-settings",
+					Description: "Organization preferences",
+					Icon:        "gicon gicon-preferences",
+					Url:         setting.AppSubUrl + "/org",
+				},
+
+				{
+					Text:        "API Keys",
+					Id:          "apikeys",
+					Description: "Create & manage API keys",
+					Icon:        "gicon gicon-apikeys",
+					Url:         setting.AppSubUrl + "/org/apikeys",
+				},
 			},
-		})
+		}
+
+		if c.IsGrafanaAdmin {
+			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
+				Divider: true, HideFromTabs: true,
+			})
+			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
+				Text:         "Server Admin",
+				HideFromTabs: true,
+				SubTitle:     "Manage all users & orgs",
+				Id:           "admin",
+				Icon:         "gicon gicon-shield",
+				Url:          setting.AppSubUrl + "/admin/users",
+				Children: []*dtos.NavLink{
+					{Text: "Users", Id: "global-users", Url: setting.AppSubUrl + "/admin/users", Icon: "gicon gicon-user"},
+					{Text: "Orgs", Id: "global-orgs", Url: setting.AppSubUrl + "/admin/orgs", Icon: "gicon gicon-org"},
+					{Text: "Settings", Id: "server-settings", Url: setting.AppSubUrl + "/admin/settings", Icon: "gicon gicon-preferences"},
+					{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "fa fa-fw fa-bar-chart"},
+					{Text: "Style Guide", Id: "styleguide", Url: setting.AppSubUrl + "/styleguide", Icon: "fa fa-fw fa-eyedropper"},
+				},
+			})
+		}
+
+		data.NavTree = append(data.NavTree, cfgNode)
 	}
+
+	data.NavTree = append(data.NavTree, &dtos.NavLink{
+		Text:         "Help",
+		Id:           "help",
+		Url:          "#",
+		Icon:         "gicon gicon-question",
+		HideFromMenu: true,
+		Children: []*dtos.NavLink{
+			{Text: "Keyboard shortcuts", Url: "/shortcuts", Icon: "fa fa-fw fa-keyboard-o", Target: "_self"},
+			{Text: "Community site", Url: "http://community.grafana.com", Icon: "fa fa-fw fa-comment", Target: "_blank"},
+			{Text: "Documentation", Url: "http://docs.grafana.org", Icon: "fa fa-fw fa-file", Target: "_blank"},
+		},
+	})
 
 	return &data, nil
 }

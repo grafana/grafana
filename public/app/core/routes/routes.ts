@@ -48,9 +48,10 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     reloadOnSearch: false,
     pageClass: 'page-dashboard',
   })
-  .when('/dashboards/list', {
-    templateUrl: 'public/app/features/dashboard/partials/dash_list.html',
-    controller : 'DashListCtrl',
+  .when('/dashboard/import', {
+    templateUrl: 'public/app/features/dashboard/partials/dashboardImport.html',
+    controller : 'DashboardImportCtrl',
+    controllerAs: 'ctrl',
   })
   .when('/datasources', {
     templateUrl: 'public/app/features/plugins/partials/ds_list.html',
@@ -65,6 +66,31 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/datasources/new', {
     templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
     controller : 'DataSourceEditCtrl',
+    controllerAs: 'ctrl',
+  })
+  .when('/dashboards', {
+    templateUrl: 'public/app/features/dashboard/partials/dashboard_list.html',
+    controller : 'DashboardListCtrl',
+    controllerAs: 'ctrl',
+  })
+  .when('/dashboards/folder/new', {
+    templateUrl: 'public/app/features/dashboard/partials/create_folder.html',
+    controller : 'CreateFolderCtrl',
+    controllerAs: 'ctrl',
+  })
+  .when('/dashboards/folder/:folderId/:slug/permissions', {
+    templateUrl: 'public/app/features/dashboard/partials/folder_permissions.html',
+    controller : 'FolderPermissionsCtrl',
+    controllerAs: 'ctrl',
+  })
+  .when('/dashboards/folder/:folderId/:slug/settings', {
+    templateUrl: 'public/app/features/dashboard/partials/folder_settings.html',
+    controller : 'FolderSettingsCtrl',
+    controllerAs: 'ctrl',
+  })
+  .when('/dashboards/folder/:folderId/:slug', {
+    templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
+    controller : 'FolderDashboardsCtrl',
     controllerAs: 'ctrl',
   })
   .when('/org', {
@@ -83,9 +109,27 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })
+  .when('/org/users/invite', {
+    templateUrl: 'public/app/features/org/partials/invite.html',
+    controller : 'UserInviteCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadOrgBundle,
+  })
   .when('/org/apikeys', {
     templateUrl: 'public/app/features/org/partials/orgApiKeys.html',
     controller : 'OrgApiKeysCtrl',
+    resolve: loadOrgBundle,
+  })
+  .when('/org/teams', {
+    templateUrl: 'public/app/features/org/partials/teams.html',
+    controller : 'TeamsCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadOrgBundle,
+  })
+  .when('/org/teams/edit/:id', {
+    templateUrl: 'public/app/features/org/partials/team_details.html',
+    controller : 'TeamDetailsCtrl',
+    controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })
   .when('/profile', {
@@ -155,22 +199,27 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/login', {
     templateUrl: 'public/app/partials/login.html',
     controller : 'LoginCtrl',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/invite/:code', {
     templateUrl: 'public/app/partials/signup_invited.html',
     controller : 'InvitedCtrl',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/signup', {
     templateUrl: 'public/app/partials/signup_step2.html',
     controller : 'SignUpCtrl',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/user/password/send-reset-email', {
     templateUrl: 'public/app/partials/reset_password.html',
     controller : 'ResetPasswordCtrl',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/user/password/reset', {
     templateUrl: 'public/app/partials/reset_password.html',
     controller : 'ResetPasswordCtrl',
+    pageClass: 'sidemenu-hidden',
   })
   .when('/dashboard/snapshots', {
     templateUrl: 'public/app/features/snapshot/partials/snapshots.html',

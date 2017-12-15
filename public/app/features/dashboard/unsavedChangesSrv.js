@@ -105,6 +105,23 @@ function(angular, _) {
         return true;
       });
 
+      dash.panels = _.filter(dash.panels, function(panel) {
+        if (panel.repeatPanelId) {
+          return false;
+        }
+
+        // remove scopedVars
+        panel.scopedVars = null;
+
+        // ignore panel legend sort
+        if (panel.legend)  {
+          delete panel.legend.sort;
+          delete panel.legend.sortDesc;
+        }
+
+        return true;
+      });
+
       // ignore template variable values
       _.each(dash.templating.list, function(value) {
         value.current = null;

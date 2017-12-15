@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
@@ -9,6 +7,7 @@ export class User {
   isGrafanaAdmin: any;
   isSignedIn: any;
   orgRole: any;
+  orgId: number;
   timezone: string;
   helpFlags1: number;
   lightTheme: boolean;
@@ -28,12 +27,10 @@ export class ContextSrv {
   isGrafanaAdmin: any;
   isEditor: any;
   sidemenu: any;
+  sidemenuSmallBreakpoint = false;
 
   constructor() {
-    this.pinned = store.getBool('grafana.sidemenu.pinned', false);
-    if (this.pinned) {
-      this.sidemenu = true;
-    }
+    this.sidemenu = store.getBool('grafana.sidemenu', true);
 
     if (!config.buildInfo) {
       config.buildInfo = {};
@@ -53,20 +50,13 @@ export class ContextSrv {
     return this.user.orgRole === role;
   }
 
-  setPinnedState(val) {
-    this.pinned = val;
-    store.set('grafana.sidemenu.pinned', val);
-  }
-
   isGrafanaVisible() {
     return !!(document.visibilityState === undefined || document.visibilityState === 'visible');
   }
 
   toggleSideMenu() {
     this.sidemenu = !this.sidemenu;
-    if (!this.sidemenu) {
-      this.setPinnedState(false);
-    }
+    store.set('grafana.sidemenu', this.sidemenu);
   }
 }
 

@@ -26,9 +26,9 @@ describe('grafanaGraph', function() {
 
         beforeEach(angularMocks.inject(($rootScope, $compile) => {
           var ctrl: any = {
-            events: new Emitter(),
             height: 200,
             panel: {
+              events: new Emitter(),
               legend: {},
               grid: { },
               yaxes: [
@@ -65,7 +65,7 @@ describe('grafanaGraph', function() {
 
           var scope = $rootScope.$new();
           scope.ctrl = ctrl;
-
+          scope.ctrl.events = ctrl.panel.events;
 
           $rootScope.onAppEvent = sinon.spy();
 
@@ -87,6 +87,8 @@ describe('grafanaGraph', function() {
 
           $.plot = ctx.plotSpy = sinon.spy();
           ctrl.events.emit('render', ctx.data);
+          ctrl.events.emit('render-legend');
+          ctrl.events.emit('legend-rendering-complete');
           ctx.plotData = ctx.plotSpy.getCall(0).args[1];
           ctx.plotOptions = ctx.plotSpy.getCall(0).args[2];
         }));

@@ -167,9 +167,7 @@ Lexer.prototype = {
     this.from = this.char;
 
     // Move to the next non-space character.
-    var start;
     if (/\s/.test(this.peek())) {
-      start = this.char;
 
       while (/\s/.test(this.peek())) {
         this.from += 1;

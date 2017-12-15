@@ -1,4 +1,4 @@
-import {describe, beforeEach} from 'test/lib/common';
+import {describe, beforeEach, expect} from 'test/lib/common';
 
 import {DashboardSrv} from '../dashboard_srv';
 
@@ -9,4 +9,7 @@ describe('dashboardSrv', function() {
     _dashboardSrv = new DashboardSrv({}, {}, {});
   });
 
+  it("should do something", () => {
+    expect(_dashboardSrv).not.to.be(null);
+  });
 });

@@ -396,10 +396,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var $panelContainer = elem.find('.panel-container');
     elem = elem.find('.singlestat-panel');
 
-    function setElementHeight() {
-      elem.css('height', ctrl.height + 'px');
-    }
-
     function applyColoringThresholds(value, valueString) {
       if (!panel.colorValue) {
         return valueString;
@@ -601,8 +597,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         return Number(strVale.trim());
       });
       data.colorMap = panel.colors;
-
-      setElementHeight();
 
       var body = panel.gauge.show ? '' : getBigValueHtml();
 

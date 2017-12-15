@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
@@ -12,7 +10,7 @@ import Drop from 'tether-drop';
 export class GrafanaCtrl {
 
   /** @ngInject */
-  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv) {
+  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv, globalEventSrv) {
 
     $scope.init = function() {
       $scope.contextSrv = contextSrv;
@@ -23,6 +21,7 @@ export class GrafanaCtrl {
       profiler.init(config, $rootScope);
       alertSrv.init();
       utilSrv.init();
+      globalEventSrv.init();
 
       $scope.dashAlerts = alertSrv;
     };
@@ -64,37 +63,30 @@ export class GrafanaCtrl {
 }
 
 /** @ngInject */
-export function grafanaAppDirective(playlistSrv, contextSrv) {
+export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScope) {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
     link: (scope, elem) => {
-      var ignoreSideMenuHide;
+      var sidemenuOpen;
       var body = $('body');
 
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = function() {};
 
-      // handle sidemenu open state
-      scope.$watch('contextSrv.sidemenu', newVal => {
-        if (newVal !== undefined) {
-          body.toggleClass('sidemenu-open', scope.contextSrv.sidemenu);
-          if (!newVal) {
-            contextSrv.setPinnedState(false);
-          }
-        }
-        if (contextSrv.sidemenu) {
-          ignoreSideMenuHide = true;
-          setTimeout(() => {
-            ignoreSideMenuHide = false;
-          }, 300);
-        }
+      sidemenuOpen = scope.contextSrv.sidemenu;
+      body.toggleClass('sidemenu-open', sidemenuOpen);
+
+      appEvents.on('toggle-sidemenu', () => {
+        body.toggleClass('sidemenu-open');
       });
 
-      scope.$watch('contextSrv.pinned', newVal => {
-        if (newVal !== undefined) {
-          body.toggleClass('sidemenu-pinned', newVal);
-        }
+      appEvents.on('toggle-sidemenu-mobile', () => {
+        body.toggleClass('sidemenu-open--xs');
+      });
+
+      appEvents.on('toggle-sidemenu-hidden', () => {
+        body.toggleClass('sidemenu-hidden');
       });
 
       // tooltip removal fix
@@ -111,6 +103,9 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
             body.addClass(pageClass);
           }
         }
+
+        // clear body class sidemenu states
+        body.removeClass('sidemenu-open--xs');
 
         $("#tooltip, .tooltip").remove();
 
@@ -134,6 +129,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
       var lastActivity = new Date().getTime();
       var activeUser = true;
       var inActiveTimeLimit = 60 * 1000;
+      var sidemenuHidden = false;
 
       function checkForInActiveUser() {
         if (!activeUser) {
@@ -147,6 +143,14 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
         if ((new Date().getTime() - lastActivity) > inActiveTimeLimit) {
           activeUser = false;
           body.addClass('user-activity-low');
+          // hide sidemenu
+          if (sidemenuOpen) {
+            sidemenuHidden = true;
+            body.removeClass('sidemenu-open');
+            $timeout(function() {
+              $rootScope.$broadcast("render");
+            }, 100);
+          }
         }
       }
 
@@ -155,6 +159,15 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
         if (!activeUser) {
           activeUser = true;
           body.removeClass('user-activity-low');
+
+          // restore sidemenu
+          if (sidemenuHidden) {
+            sidemenuHidden = false;
+            body.addClass('sidemenu-open');
+            $timeout(function() {
+              $rootScope.$broadcast("render");
+            }, 100);
+          }
         }
       }
 
@@ -190,7 +203,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
           }, 100);
         }
 
-        if (target.parents('.dash-playlist-actions').length === 0) {
+        if (target.parents('.navbar-buttons--playlist').length === 0) {
           playlistSrv.stop();
         }
 
@@ -199,23 +212,6 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
           if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
             scope.$apply(function() {
               scope.appEvent('hide-dash-search');
-            });
-          }
-        }
-
-        // hide menus
-        var openMenus = body.find('.navbar-page-btn--open');
-        if (openMenus.length > 0) {
-          if (target.parents('.navbar-page-btn--open').length === 0) {
-            openMenus.removeClass('navbar-page-btn--open');
-          }
-        }
-
-        // hide sidemenu
-        if (!ignoreSideMenuHide && !contextSrv.pinned && body.find('.sidemenu').length > 0) {
-          if (target.parents('.sidemenu').length === 0) {
-            scope.$apply(function() {
-              scope.contextSrv.toggleSideMenu();
             });
           }
         }

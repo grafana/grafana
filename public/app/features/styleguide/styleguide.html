@@ -1,34 +1,10 @@
-<navbar model="ctrl.navModel"></navbar>
+<page-header model="ctrl.navModel"></page-header>
 
-<div class="page-container">
-	<div class="page-header">
-		<h1>Style Guide</h1>
+<div class="page-container page-body">
 
-		<a class="btn btn-success" ng-click="ctrl.switchTheme()">
-			<i class="fa fa-random"></i>
-			Switch theme
-		</a>
+	<h3 class="page-heading">Buttons</h3>
 
-		<div class="page-header-tabs">
-			<ul class="gf-tabs">
-				<li class="gf-tabs-item" ng-repeat="page in ctrl.pages">
-					<a class="gf-tabs-link" href="styleguide/{{page}}" ng-class="{active: ctrl.page[page]}">{{page}}</a>
-				</li>
-			</ul>
-		</div>
-
-	</div>
-
-	<div class="tab-pane" ng-if="ctrl.page.colors">
-		<ul>
-			<li class="style-guide-color-card" ng-repeat="color in ctrl.colors" style="background-color: {{color.value}}">
-				<strong>${{color.name}}</strong>
-				<em>{{color.value}}</em>
-			</li>
-		</ul>
-	</div>
-
-	<div class="tab-pane" ng-if="ctrl.page.buttons">
+	<div class="tab-pane">
 		<div ng-repeat="variant in ctrl.buttonVariants" class="row">
 			<div ng-repeat="btnSize in ctrl.buttonSizes" class="style-guide-button-list p-a-2 col-md-4">
 				<button ng-repeat="buttonName in ctrl.buttonNames" class="btn btn{{variant}}{{buttonName}} {{btnSize}}">
@@ -38,7 +14,7 @@
 		</div>
 	</div>
 
-	<div class="tab-pane style-guide-icon-list" ng-if="ctrl.page.icons">
+	<div class="tab-pane style-guide-icon-list">
 		<div class="row">
 			<div ng-repeat="icon in ctrl.icons" class="col-md-2 col-sm-3 col-xs-4">
 				<i class="icon-gf icon-gf-{{icon}}" bs-tooltip="'icon-gf icon-gf-{{icon}}'"></i>
@@ -46,13 +22,13 @@
 		</div>
 	</div>
 
-	<div class="tab-pane style-guide-plugin-authoring" ng-if="ctrl.page.plugins">
-		<p>From grafana 3.0 it's very easy to develop your own plugins and share them with other grafana users.</p>
-		<p>More information about plugin development can be found at <a href="http://docs.grafana.org/plugins/developing/development/" target="_blank">docs.grafana.org</a></p>
-	</div>
+	<h3 class="page-heading">Forms</h3>
 
-	<div class="tab-pane" ng-if="ctrl.page.forms">
-		forms
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<label class="gf-form-label">Label</label>
+			<input type="text" class="gf-form-input" />
+		</div>
 	</div>
 
 </div>

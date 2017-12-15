@@ -68,6 +68,13 @@ function popoverSrv($compile, $rootScope, $timeout) {
       openDrop = drop;
       openDrop.open();
     }, 100);
+
+    // return close function
+    return function() {
+      if (drop) {
+        drop.close();
+      }
+    };
   };
 }
 
