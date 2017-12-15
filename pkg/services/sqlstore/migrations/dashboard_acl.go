@@ -26,7 +26,7 @@ func addDashboardAclMigrations(mg *Migrator) {
 	mg.AddMigration("create dashboard acl table", NewAddTableMigration(dashboardAclV1))
 
 	//-------  indexes ------------------
-	mg.AddMigration("add unique index dashboard_acl_dashboard_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[0]))
+	mg.AddMigration("add index dashboard_acl_dashboard_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[0]))
 	mg.AddMigration("add unique index dashboard_acl_dashboard_id_user_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[1]))
 	mg.AddMigration("add unique index dashboard_acl_dashboard_id_team_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[2]))
 
