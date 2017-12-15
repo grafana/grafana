@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"bytes"
 	"fmt"
 	"time"
 
@@ -114,37 +115,54 @@ func isTeamNameTaken(name string, existingId int64, sess *DBSession) (bool, erro
 
 func SearchTeams(query *m.SearchTeamsQuery) error {
 	query.Result = m.SearchTeamQueryResult{
-		Teams: make([]*m.Team, 0),
+		Teams: make([]*m.SearchTeamDto, 0),
 	}
 	queryWithWildcards := "%" + query.Query + "%"
 
-	sess := x.Table("team")
-	sess.Where("org_id=?", query.OrgId)
+	var sql bytes.Buffer
+	params := make([]interface{}, 0)
+
+	sql.WriteString(`select
+		team.id as id,
+		team.name as name,
+		(select count(*) from team_member where team_member.team_id = team.id) as member_count
+		from team as team
+		where team.org_id = ?`)
+
+	params = append(params, query.OrgId)
 
 	if query.Query != "" {
-		sess.Where("name LIKE ?", queryWithWildcards)
+		sql.WriteString(` and team.name ` + dialect.LikeStr() + ` ?`)
+		params = append(params, queryWithWildcards)
 	}
-	if query.Name != "" {
-		sess.Where("name=?", query.Name)
-	}
-	sess.Asc("name")
 
-	offset := query.Limit * (query.Page - 1)
-	sess.Limit(query.Limit, offset)
-	sess.Cols("id", "name")
-	if err := sess.Find(&query.Result.Teams); err != nil {
+	if query.Name != "" {
+		sql.WriteString(` and team.name = ?`)
+		params = append(params, query.Name)
+	}
+
+	sql.WriteString(` order by team.name asc`)
+
+	if query.Limit != 0 {
+		sql.WriteString(` limit ? offset ?`)
+		offset := query.Limit * (query.Page - 1)
+		params = append(params, query.Limit, offset)
+	}
+
+	if err := x.Sql(sql.String(), params...).Find(&query.Result.Teams); err != nil {
 		return err
 	}
 
 	team := m.Team{}
-
 	countSess := x.Table("team")
 	if query.Query != "" {
-		countSess.Where("name LIKE ?", queryWithWildcards)
+		countSess.Where(`name `+dialect.LikeStr()+` ?`, queryWithWildcards)
 	}
+
 	if query.Name != "" {
 		countSess.Where("name=?", query.Name)
 	}
+
 	count, err := countSess.Count(&team)
 	query.Result.TotalCount = count
 

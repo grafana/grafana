@@ -13,7 +13,7 @@ import (
 func TestTeamApiEndpoint(t *testing.T) {
 	Convey("Given two teams", t, func() {
 		mockResult := models.SearchTeamQueryResult{
-			Teams: []*models.Team{
+			Teams: []*models.SearchTeamDto{
 				{Name: "team1"},
 				{Name: "team2"},
 			},

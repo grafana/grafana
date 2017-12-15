@@ -60,9 +60,16 @@ type SearchTeamsQuery struct {
 	Result SearchTeamQueryResult
 }
 
+type SearchTeamDto struct {
+	Id          int64  `json:"id"`
+	OrgId       int64  `json:"orgId"`
+	Name        string `json:"name"`
+	MemberCount int64  `json:"memberCount"`
+}
+
 type SearchTeamQueryResult struct {
-	TotalCount int64   `json:"totalCount"`
-	Teams      []*Team `json:"teams"`
-	Page       int     `json:"page"`
-	PerPage    int     `json:"perPage"`
+	TotalCount int64            `json:"totalCount"`
+	Teams      []*SearchTeamDto `json:"teams"`
+	Page       int              `json:"page"`
+	PerPage    int              `json:"perPage"`
 }
