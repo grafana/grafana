@@ -70,10 +70,10 @@ func Init() error {
 	Plugins = make(map[string]*PluginBase)
 	BackendDatasources = make(map[string]*BackendDatasource)
 	PluginTypes = map[string]interface{}{
-		"panel":              PanelPlugin{},
-		"datasource":         DataSourcePlugin{},
-		"app":                AppPlugin{},
-		"backend-datasource": BackendDatasource{},
+		"panel":      PanelPlugin{},
+		"datasource": DataSourcePlugin{},
+		"app":        AppPlugin{},
+		//"backend-datasource": BackendDatasource{},
 	}
 
 	plog.Info("Starting plugin search")
@@ -98,18 +98,15 @@ func Init() error {
 	for _, panel := range Panels {
 		panel.initFrontendPlugin()
 	}
-	for _, panel := range DataSources {
-		panel.initFrontendPlugin()
+	for _, ds := range DataSources {
+		if ds.Backend {
+			ds.initBackendPlugin(plog)
+		}
+
+		ds.initFrontendPlugin()
 	}
 	for _, app := range Apps {
 		app.initApp()
-	}
-
-	for _, be := range BackendDatasources {
-		err := be.initBackendPlugin(plog)
-		if err != nil {
-			plog.Error("failed to init plugin", "id", be.Id, "error", err)
-		}
 	}
 
 	go StartPluginUpdateChecker()
