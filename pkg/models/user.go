@@ -170,6 +170,16 @@ func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
 	return u.UserId > 0 && time.Since(u.LastSeenAt) > time.Minute*5
 }
 
+func (u *SignedInUser) NameOrFallback() string {
+	if u.Name != "" {
+		return u.Name
+	} else if u.Login != "" {
+		return u.Login
+	} else {
+		return u.Email
+	}
+}
+
 type UpdateUserLastSeenAtCommand struct {
 	UserId int64
 }
