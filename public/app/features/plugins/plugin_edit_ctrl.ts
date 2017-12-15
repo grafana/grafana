@@ -40,7 +40,7 @@ export class PluginEditCtrl {
     this.navModel = {
       main: {
         img: model.info.logos.large,
-        subTitle: model.info.description,
+        subTitle: model.info.author.name,
         url: '',
         text: '',
         breadcrumbs: [
