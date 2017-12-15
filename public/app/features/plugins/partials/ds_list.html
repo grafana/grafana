@@ -3,10 +3,13 @@
 <div class="page-container page-body">
 	<div ng-if="ctrl.unfiltered.length">
 		<div class="page-action-bar">
-			<label class="gf-form gf-form--grow gf-form--has-input-icon">
-				<input type="text" class="gf-form-input width-20" ng-model="ctrl.searchQuery" ng-change="ctrl.onQueryUpdated()" placeholder="Filter by name or type" />
-				<i class="gf-form-input-icon fa fa-search"></i>
-			</label>
+			<div class="gf-form gf-form--grow">
+				<label class="gf-form--has-input-icon">
+					<input type="text" class="gf-form-input width-20" ng-model="ctrl.searchQuery" ng-change="ctrl.onQueryUpdated()" placeholder="Filter by name or type" />
+					<i class="gf-form-input-icon fa fa-search"></i>
+				</label>
+				<layout-selector />
+			</div>
 			<div class="page-action-bar__spacer"></div>
 			<a class="page-header__cta btn btn-success" href="datasources/new">
 				<i class="fa fa-plus"></i>
@@ -15,7 +18,6 @@
 		</div>
 
 		<section class="card-section" layout-mode>
-			<layout-selector></layout-selector>
 			<ol class="card-list">
 				<li class="card-item-wrapper" ng-repeat="ds in ctrl.datasources">
 					<a class="card-item" href="datasources/edit/{{ds.id}}/">

@@ -1,10 +1,8 @@
 .layout-selector {
   @include clearfix();
 
+  margin-left: $spacer;
   text-align: right;
-  margin: 0 $spacer*1.5 $spacer;
-  position: relative;
-  top: -0.5rem;
 
   button {
     background: $input-label-bg;
