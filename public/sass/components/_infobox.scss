@@ -7,6 +7,10 @@
   margin-bottom: $spacer;
   margin-right: $gf-form-margin;
   flex-grow: 1;
+  color: $info-box-color;
+    h5 {
+      color: $info-box-color;
+    }
 
   h5 {
     margin-bottom: $spacer;

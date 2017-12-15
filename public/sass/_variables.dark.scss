@@ -44,6 +44,8 @@ $brand-success:         $green;
 $brand-warning:         $brand-primary;
 $brand-danger:          $red;
 
+$query-blue:            $blue;
+
 // Status colors
 // -------------------------
 $online:                #10a345;
@@ -316,7 +318,8 @@ $graph-tooltip-bg:        $dark-1;
 $checkboxImageUrl: '../img/checkbox.png';
 
 // info box
-$info-box-background: linear-gradient(100deg, #1a4552, #00374a);
+$info-box-background: linear-gradient(100deg, $blue-dark, darken($blue-dark, 5%));
+$info-box-color:      $gray-4;
 
 // footer
 $footer-link-color:   $gray-2;
