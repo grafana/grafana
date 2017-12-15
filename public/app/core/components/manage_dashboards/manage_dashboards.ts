@@ -231,8 +231,14 @@ export class ManageDashboardsCtrl {
     }
   }
 
+  removeStarred() {
+    this.query.starred = false;
+    return this.getDashboards();
+  }
+
   onStarredFilterChange() {
     this.query.starred = this.selectedStarredFilter.text === 'Yes';
+    this.selectedStarredFilter = this.starredFilterOptions[0];
     return this.getDashboards();
   }
 
