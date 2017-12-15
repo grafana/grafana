@@ -199,7 +199,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/login', {
     templateUrl: 'public/app/partials/login.html',
     controller : 'LoginCtrl',
-    pageClass: 'sidemenu-hidden',
+    pageClass: 'login-page sidemenu-hidden',
   })
   .when('/invite/:code', {
     templateUrl: 'public/app/partials/signup_invited.html',
