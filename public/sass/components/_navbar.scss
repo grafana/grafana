@@ -1,14 +1,16 @@
 
 .navbar {
   position: relative;
-  margin-left: 40px;
+  padding-left: 40px;
   z-index: $zindex-navbar-fixed;
   height: $navbarHeight;
   padding-right: $spacer;
   display: flex;
   flex-grow: 1;
   border-bottom: 1px solid transparent;
-  transition: all 350ms ease-in-out;
+  transition-duration: 350ms;
+  transition-timing-function: ease-in-out;
+  transition-property: box-shadow, border-bottom;
 }
 
 @mixin navbar-alt-look() {
@@ -150,7 +152,7 @@
 
 @include media-breakpoint-up(sm) {
   .navbar {
-    margin-left: 50px;
+    padding-left: 50px;
   }
 
   .sidemenu-open {
