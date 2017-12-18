@@ -106,6 +106,19 @@ GROUP BY metric1, UNIX_TIMESTAMP(time_date_time) DIV 300
 ORDER BY time_sec asc
 ```
 
+Example with $__timeGroup macro:
+
+```sql
+SELECT
+  $__timeGroup(time_date_time,'5m') as time_sec,
+  min(value_double) as value,
+  metric_name as metric
+FROM test_data
+WHERE $__timeFilter(time_date_time)
+GROUP BY 1, metric_name
+ORDER BY 1
+```
+
 Currently, there is no support for a dynamic group by time based on time range & panel width.
 This is something we plan to add.
 
