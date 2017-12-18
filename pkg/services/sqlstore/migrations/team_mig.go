@@ -7,7 +7,7 @@ func addTeamMigrations(mg *Migrator) {
 		Name: "team",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
