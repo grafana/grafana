@@ -57,7 +57,7 @@ function popoverSrv($compile, $rootScope, $timeout) {
         openOn: options.openOn,
         hoverCloseDelay: 200,
         tetherOptions: {
-          constraints: [{to: 'scrollParent', attachment: "none both"}]
+          constraints: [{to: 'scrollParent', attachment: 'together'}]
         }
       });
 
@@ -79,3 +79,4 @@ function popoverSrv($compile, $rootScope, $timeout) {
 }
 
 coreModule.service('popoverSrv', popoverSrv);
+
