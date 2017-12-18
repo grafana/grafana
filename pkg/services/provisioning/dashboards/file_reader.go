@@ -121,6 +121,9 @@ func (fr *fileReader) walkFolder() error {
 			return nil
 		}
 
+		// id = 0 indicates ID validation should be avoided before writing to the db.
+		dash.Dashboard.Id = 0
+
 		cmd := &models.GetDashboardQuery{Slug: dash.Dashboard.Slug}
 		err = bus.Dispatch(cmd)
 

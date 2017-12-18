@@ -5,6 +5,7 @@ export default class TeamDetailsCtrl {
   teamMembers: User[] = [];
   navModel: any;
 
+  /** @ngInject **/
   constructor(private $scope, private backendSrv, private $routeParams, navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg', 'teams', 0);
     this.get();

@@ -6,6 +6,7 @@
   color: $footer-link-color;
   padding: 5rem 0 1rem 0;
   font-size: $font-size-sm;
+  position: relative;
   width: 98%;  /* was causing horiz scrollbars - need to examine */
 
   a {
@@ -34,5 +35,12 @@
       padding-left: 0;
       content: '';
     }
+  }
+}
+
+.login-page {
+  .footer {
+    position: absolute;
+    bottom: $spacer;
   }
 }

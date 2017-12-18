@@ -19,6 +19,7 @@ export class CloudWatchQueryParameter {
 
 export class CloudWatchQueryParameterCtrl {
 
+  /** @ngInject */
   constructor($scope, templateSrv, uiSegmentSrv, datasourceSrv, $q) {
 
     $scope.init = function() {

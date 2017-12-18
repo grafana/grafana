@@ -15,6 +15,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/setting"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -165,6 +166,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		fakeDash.Id = 1
 		fakeDash.FolderId = 1
 		fakeDash.HasAcl = true
+		setting.ViewersCanEdit = false
 
 		aclMockResp := []*m.DashboardAclInfoDTO{
 			{
@@ -304,6 +306,35 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, cmd, func(sc *scenarioContext) {
 				CallPostDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
+			})
+		})
+
+		Convey("When user is an Org Viewer and viewers can edit", func() {
+			role := m.ROLE_VIEWER
+			setting.ViewersCanEdit = true
+
+			mockResult := []*m.DashboardAclInfoDTO{
+				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_VIEW},
+			}
+
+			bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+				query.Result = mockResult
+				return nil
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
+				dash := GetDashboardShouldReturn200(sc)
+
+				Convey("Should be able to get dashboard with edit rights but can save should be false", func() {
+					So(dash.Meta.CanEdit, ShouldBeTrue)
+					So(dash.Meta.CanSave, ShouldBeFalse)
+					So(dash.Meta.CanAdmin, ShouldBeFalse)
+				})
+			})
+
+			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
+				CallDeleteDashboard(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
 			})
 		})
 

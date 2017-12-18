@@ -45,7 +45,14 @@ To simplify syntax and to allow for dynamic parts, like date range filters, the 
 
 Macro example | Description
 ------------ | -------------
+*$__time(dateColumn)* | Will be replaced by an expression to convert to a UNIX timestamp and rename the column to `time_sec`. For example, *UNIX_TIMESTAMP(dateColumn) as time_sec*
 *$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn > FROM_UNIXTIME(1494410783) AND dateColumn < FROM_UNIXTIME(1494497183)*
+*$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *FROM_UNIXTIME(1494410783)*
+*$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *FROM_UNIXTIME(1494497183)*
+*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *cast(cast(UNIX_TIMESTAMP(dateColumn)/(300) as signed)*300 as signed) as time_sec,*
+*$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
+*$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
+*$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
 
@@ -97,6 +104,19 @@ FROM test_data
 WHERE   $__timeFilter(time_date_time)
 GROUP BY metric1, UNIX_TIMESTAMP(time_date_time) DIV 300
 ORDER BY time_sec asc
+```
+
+Example with $__timeGroup macro:
+
+```sql
+SELECT
+  $__timeGroup(time_date_time,'5m') as time_sec,
+  min(value_double) as value,
+  metric_name as metric
+FROM test_data
+WHERE $__timeFilter(time_date_time)
+GROUP BY 1, metric_name
+ORDER BY 1
 ```
 
 Currently, there is no support for a dynamic group by time based on time range & panel width.

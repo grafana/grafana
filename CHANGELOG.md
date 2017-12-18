@@ -1,20 +1,27 @@
-# 5.0.0 (unreleased)
+# 5.0.0 (unreleased / master branch)
 
-### WIP (in develop branch currently as its unstable or unfinished)
-- Dashboard folders
-- Teams
-- Dashboard permissions (on folder & dashboard level), permissions can be assigned to groups or individual users
-- UX changes to nav & side menu
-- New dashboard grid layout system
+### New Features
+- **Dashboards** Dashboard folders, [#1611](https://github.com/grafana/grafana/issues/1611)
+- **Teams** User groups (teams) implemented. Can be used in folder & dashboard permission list.
+- **Dashboard grid**: Panels are now layed out in a two dimensional grid (with x, y, w, h). [#9093](https://github.com/grafana/grafana/issues/9093).
+- **Templating**: Vertical repeat direction for panel repeats.
+- **UX**: Major update to page header and navigation
+- **Dashboard settings**: Combine dashboard settings views into one with side menu, [#9750](https://github.com/grafana/grafana/issues/9750)
 
-# 4.7.0 (unreleased)
+## New Dashboard Grid
+
+The new grid engine is major upgrade for how you can position and move panels. It enables new layouts and a much easier dashboard building experience. The change is backwards compatible. Grafana will automatically upgrade your dashboards to the new schema and position panels to match your existing layout. There might be minor differences in panel height.
+
+Dashboard panels and rows are positioned using a gridPos object `{x: 0, y: 0, w: 24, h: 5}`. Units are in grid dimensions (24 columns, 1 height unit 30px). Rows and Panels objects exist (together) in a flat array directly on the dashboard root object. Rows are not needed for layouts anymore and are mainly there for backward compatibility. Some panel plugins that do not respect their panel height might require an update.
+
+# 4.7.0 (unreleased / v4.7.x branch)
 
 ## Breaking changes
 
-`[dashboard.json]` have been replaced with [dashboard provisioning](http://docs.grafana.org/administration/provisioning/). 
+`[dashboard.json]` have been replaced with [dashboard provisioning](http://docs.grafana.org/administration/provisioning/).
 
-Config files for provisioning datasources as configuration have changed from `/conf/datasources` to `/conf/provisioning/datasources`. 
-From `/etc/grafana/datasources` to `/etc/grafana/provisioning/datasources` when installed with deb/rpm packages. 
+Config files for provisioning datasources as configuration have changed from `/conf/datasources` to `/conf/provisioning/datasources`.
+From `/etc/grafana/datasources` to `/etc/grafana/provisioning/datasources` when installed with deb/rpm packages.
 
 ## New Features
 * **Data Source Proxy**: Add support for whitelisting specified cookies that will be passed through to the data source when proxying data source requests [#5457](https://github.com/grafana/grafana/issues/5457), thanks [@robingustafsson](https://github.com/robingustafsson)
@@ -25,7 +32,8 @@ From `/etc/grafana/datasources` to `/etc/grafana/provisioning/datasources` when 
 * **Graphite**: Query editor updated to support new query by tag features [#9230](https://github.com/grafana/grafana/issues/9230)
 * **Dashboard history**: New config file option versions_to_keep sets how many versions per dashboard to store, [#9671](https://github.com/grafana/grafana/issues/9671)
 * **Dashboard as cfg**: Load dashboards from file into Grafana on startup/change [#9654](https://github.com/grafana/grafana/issues/9654) [#5269](https://github.com/grafana/grafana/issues/5269)
-
+* **Prometheus**: Grafana can now send alerts to Prometheus Alertmanager while firing [#7481](https://github.com/grafana/grafana/issues/7481), thx [@Thib17](https://github.com/Thib17) and [@mtanda](https://github.com/mtanda)
+* **Table**: Support multiple table formated queries in table panel [#9170](https://github.com/grafana/grafana/issues/9170), thx [@davkal](https://github.com/davkal)
 ## Minor
 * **Alert panel**: Adds placeholder text when no alerts are within the time range [#9624](https://github.com/grafana/grafana/issues/9624), thx [@straend](https://github.com/straend)
 * **Mysql**: MySQL enable MaxOpenCon and MaxIdleCon regards how constring is configured.  [#9784](https://github.com/grafana/grafana/issues/9784), thx [@dfredell](https://github.com/dfredell)
@@ -33,7 +41,7 @@ From `/etc/grafana/datasources` to `/etc/grafana/provisioning/datasources` when 
 * **Dashboard**: Make it possible to start dashboards from search and dashboard list panel [#1871](https://github.com/grafana/grafana/issues/1871)
 * **Annotations**: Posting annotations now return the id of the annotation [#9798](https://github.com/grafana/grafana/issues/9798)
 * **Systemd**: Use systemd notification ready flag [#10024](https://github.com/grafana/grafana/issues/10024), thx [@jgrassler](https://github.com/jgrassler)
-* **Github**: Use organizations_url provided from github to verify user belongs in org. [#10111](https://github.com/grafana/grafana/issues/10111), thx 
+* **Github**: Use organizations_url provided from github to verify user belongs in org. [#10111](https://github.com/grafana/grafana/issues/10111), thx
 [@adiletmaratov](https://github.com/adiletmaratov)
 * **Backend**: Fixed bug where Grafana exited before all sub routines where finished [#10131](https://github.com/grafana/grafana/issues/10131)
 
@@ -46,7 +54,7 @@ From `/etc/grafana/datasources` to `/etc/grafana/provisioning/datasources` when 
 * **Singlestat**: suppress error when result contains no datapoints [#9636](https://github.com/grafana/grafana/issues/9636), thx [@utkarshcmu](https://github.com/utkarshcmu)
 * **Postgres/MySQL**: Control quoting in SQL-queries when using template variables [#9030](https://github.com/grafana/grafana/issues/9030), thanks [@svenklemm](https://github.com/svenklemm)
 
-# 4.6.3 (unreleased)
+# 4.6.3 (2017-12-14)
 
 ## Fixes
 * **Gzip**: Fixes bug gravatar images when gzip was enabled [#5952](https://github.com/grafana/grafana/issues/5952)

@@ -126,25 +126,26 @@ There are couple of configurations options which need to be set in Grafana UI un
 
 Once these two properties are set, you can send the alerts to Kafka for further processing or throttling them.
 
-### Other Supported Notification Channels
+### All supported notifier
 
-Grafana also supports the following Notification Channels:
+Name | Type |Support images 
+-----|------------ | ------  
+Slack | `slack` | yes
+Pagerduty | `pagerduty` | yes
+Email | `email` | yes
+Webhook | `webhook` | link
+Kafka | `kafka` | no
+Hipchat | `hipchat` | yes
+VictorOps | `victorops` | yes
+Sensu | `sensu` | yes
+OpsGenie | `opsgenie` | yes
+Threema | `threema` | yes
+Pushover | `pushover` | no
+Telegram | `telegram` | no
+Line | `line` | no
+Prometheus Alertmanager | `prometheus-alertmanager` | no
 
-- HipChat
 
-- VictorOps
-
-- Sensu
-
-- OpsGenie
-
-- Threema
-
-- Pushover
-
-- Telegram
-
-- LINE
 
 # Enable images in notifications {#external-image-store}
 
