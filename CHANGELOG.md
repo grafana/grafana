@@ -1,5 +1,7 @@
 # 5.0.0 (unreleased / master branch)
 
+Grafana v5.0 is going to be the biggest and most foundational release Grafana has ever had, coming with a ton of UX improvements, a new dashboard grid engine, dashboard folders, user teams and permissions. Checkout out this [video preview](https://www.youtube.com/watch?v=BC_YRNpqj5k) of Grafana v5.
+
 ### New Features
 - **Dashboards** Dashboard folders, [#1611](https://github.com/grafana/grafana/issues/1611)
 - **Teams** User groups (teams) implemented. Can be used in folder & dashboard permission list.
