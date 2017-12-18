@@ -17,6 +17,9 @@ import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
 
+
+import * as query_part from 'app/core/components/query_part/query_part';
+
 // rxjs
 import {Observable} from 'rxjs/Observable';
 import {Subject} from 'rxjs/Subject';
@@ -101,6 +104,8 @@ exposeToPlugin('app/core/core', {
   contextSrv: contextSrv,
   __esModule: true
 });
+exposeToPlugin('app/core/components/query_part/query_part', query_part);
+
 
 import 'vendor/flot/jquery.flot';
 import 'vendor/flot/jquery.flot.selection';
