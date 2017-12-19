@@ -6,6 +6,7 @@ describe("DashboardImportCtrl", function() {
 
   let navModelSrv;
   let backendSrv;
+  let validationSrv;
 
   beforeEach(() => {
     navModelSrv = {
@@ -17,7 +18,11 @@ describe("DashboardImportCtrl", function() {
       get: jest.fn()
     };
 
-    ctx.ctrl = new DashboardImportCtrl(backendSrv, navModelSrv, {}, {}, {});
+    validationSrv = {
+      validateNewDashboardOrFolderName: jest.fn().mockReturnValue(Promise.resolve())
+    };
+
+    ctx.ctrl = new DashboardImportCtrl(backendSrv, validationSrv, navModelSrv, {}, {}, {});
   });
 
   describe("when uploading json", function() {
