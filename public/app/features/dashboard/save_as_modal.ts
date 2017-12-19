@@ -22,13 +22,16 @@ const template = `
       <div class="gf-form">
         <folder-picker initial-folder-id="ctrl.folderId"
                        on-change="ctrl.onFolderChange($folder)"
+                       enter-folder-creation="ctrl.onEnterFolderCreation()"
+                       exit-folder-creation="ctrl.onExitFolderCreation()"
+                       enable-create-new="true"
                        label-class="width-7">
         </folder-picker>
       </div>
 		</div>
 
 		<div class="gf-form-button-row text-center">
-			<button type="submit" class="btn btn-success" ng-disabled="ctrl.saveForm.$invalid">Save</button>
+			<button type="submit" class="btn btn-success" ng-disabled="ctrl.saveForm.$invalid || !ctrl.isValidFolderSelection">Save</button>
 			<a class="btn-text" ng-click="ctrl.dismiss();">Cancel</a>
 		</div>
 	</form>
@@ -38,6 +41,7 @@ const template = `
 export class SaveDashboardAsModalCtrl {
   clone: any;
   folderId: any;
+  isValidFolderSelection = true;
   dismiss: () => void;
 
   /** @ngInject */
@@ -68,8 +72,16 @@ export class SaveDashboardAsModalCtrl {
     return this.dashboardSrv.save(this.clone).then(this.dismiss);
   }
 
+  onEnterFolderCreation() {
+    this.isValidFolderSelection = false;
+  }
+
+  onExitFolderCreation() {
+    this.isValidFolderSelection = true;
+  }
+
   keyDown(evt) {
-    if (evt.keyCode === 13) {
+    if (this.isValidFolderSelection && evt.keyCode === 13) {
       this.save();
     }
   }
