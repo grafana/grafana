@@ -70,8 +70,9 @@
   text-transform: uppercase;
 }
 
-.page-header__select_nav {
+.page-header__select-nav {
   margin-bottom: 10px;
+  max-width: 100%;
 
   @include media-breakpoint-up(lg) {
     display: none;

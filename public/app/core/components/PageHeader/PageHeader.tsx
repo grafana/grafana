@@ -41,7 +41,7 @@ function SelectOption(navItem: NavModelItem) {
 
 function Navigation({main}: {main: NavModelItem}) {
   return (<nav>
-    <SelectNav customCss="page-header__select_nav" main={main} />
+    <SelectNav customCss="page-header__select-nav" main={main} />
     <Tabs customCss="page-header__tabs" main={main} />
   </nav>);
 }
@@ -57,10 +57,15 @@ function SelectNav({main, customCss}: {main: NavModelItem, customCss: string}) {
     appEvents.emit('location-change', {href: url});
   };
 
-  return (<select
-    className={`gf-select-nav ${customCss}`}
-    defaultValue={defaultSelectedItem.url}
-    onChange={gotoUrl}>{main.children.map(SelectOption)}</select>);
+  return (
+    <div className={`gf-form-select-wrapper width-20 ${customCss}`}>
+      <label className={`gf-form-select-icon ${defaultSelectedItem.icon}`} htmlFor="page-header-select-nav" />{/* Label to make it clickable */}
+        <select
+          className="gf-select-nav gf-form-input"
+          defaultValue={defaultSelectedItem.url}
+          onChange={gotoUrl}
+          id="page-header-select-nav">{main.children.map(SelectOption)}</select>
+    </div>);
 }
 
 function Tabs({main, customCss}: {main: NavModelItem, customCss: string}) {
