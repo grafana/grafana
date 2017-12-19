@@ -1,15 +1,15 @@
 import coreModule from '../../core_module';
 import {NavModel}  from '../../nav_model_srv';
+import appEvents from 'app/core/app_events';
 
 export class NavbarCtrl {
   model: NavModel;
 
   /** @ngInject */
-  constructor(private $rootScope) {
-  }
+  constructor() {}
 
   showSearch() {
-    this.$rootScope.appEvent('show-dash-search');
+    appEvents.emit('show-dash-search');
   }
 
   navItemClicked(navItem, evt) {

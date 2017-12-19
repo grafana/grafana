@@ -11,7 +11,6 @@ export class DashNavCtrl {
   /** @ngInject */
   constructor(
     private $scope,
-    private $rootScope,
     private dashboardSrv,
     private $location,
     public playlistSrv) {
@@ -75,7 +74,7 @@ export class DashNavCtrl {
     }
 
     showSearch() {
-      this.$rootScope.appEvent('show-dash-search');
+      appEvents.emit('show-dash-search');
     }
 
     addPanel() {

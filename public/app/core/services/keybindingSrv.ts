@@ -36,15 +36,15 @@ export class KeybindingSrv {
   }
 
   openSearchStarred() {
-    this.$rootScope.appEvent('show-dash-search', {starred: true});
+    appEvents.emit('show-dash-search', {starred: true});
   }
 
   openSearchTags() {
-    this.$rootScope.appEvent('show-dash-search', {tagsMode: true});
+    appEvents.emit('show-dash-search', {tagsMode: true});
   }
 
   openSearch() {
-    this.$rootScope.appEvent('show-dash-search');
+    appEvents.emit('show-dash-search');
   }
 
   openAlerting() {
