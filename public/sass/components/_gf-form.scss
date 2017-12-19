@@ -109,6 +109,10 @@ $input-border: 1px solid $input-border-color;
   &--error {
     color: $critical;
   }
+
+  &:disabled {
+    color: $text-color-weak
+  }
 }
 
 .gf-form-label + .gf-form-label {

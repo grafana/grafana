@@ -45,9 +45,11 @@
 			</bootstrap-tagsinput>
 		</div>
 		<folder-picker initial-title="ctrl.dashboard.meta.folderTitle"
-								 initial-folder-id="ctrl.dashboard.meta.folderId"
-				 on-change="ctrl.onFolderChange($folder)"
-		 label-class="width-7">
+									 initial-folder-id="ctrl.dashboard.meta.folderId"
+									 on-change="ctrl.onFolderChange($folder)"
+									 enable-create-new="true"
+									 is-valid-selection="true"
+									 label-class="width-7">
 		</folder-picker>
 		<gf-form-switch class="gf-form" label="Editable" tooltip="Uncheck, then save and reload to disable all dashboard editing" checked="ctrl.dashboard.editable" label-class="width-7">
 		</gf-form-switch>
