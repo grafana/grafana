@@ -155,11 +155,31 @@ func TestAlertRuleExtraction(t *testing.T) {
 			})
 		})
 
-		Convey("Parse and validate dashboard containing influxdb alert", func() {
-			json2, err := ioutil.ReadFile("./test-data/influxdb-alert.json")
+		Convey("Parse alerts from dashboard without rows", func() {
+			json, err := ioutil.ReadFile("./test-data/v5-dashboard.json")
 			So(err, ShouldBeNil)
 
-			dashJson, err := simplejson.NewJson(json2)
+			dashJson, err := simplejson.NewJson(json)
+			So(err, ShouldBeNil)
+			dash := m.NewDashboardFromJson(dashJson)
+			extractor := NewDashAlertExtractor(dash, 1)
+
+			alerts, err := extractor.GetAlerts()
+
+			Convey("Get rules without error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Should have 2 alert rule", func() {
+				So(len(alerts), ShouldEqual, 2)
+			})
+		})
+
+		Convey("Parse and validate dashboard containing influxdb alert", func() {
+			json, err := ioutil.ReadFile("./test-data/influxdb-alert.json")
+			So(err, ShouldBeNil)
+
+			dashJson, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
 			dash := m.NewDashboardFromJson(dashJson)
 			extractor := NewDashAlertExtractor(dash, 1)
