@@ -1,23 +1,23 @@
-﻿import { GlobalEventSrv } from 'app/core/services/global_event_srv';
-import { beforeEach } from 'test/lib/common';
+﻿import { GlobalEventSrv } from "app/core/services/global_event_srv";
+import { beforeEach } from "test/lib/common";
 
-jest.mock('app/core/config', () => {
+jest.mock("app/core/config", () => {
   return {
-    appSubUrl: '/subUrl'
+    appSubUrl: "/subUrl"
   };
 });
 
-describe('GlobalEventSrv', () => {
+describe("GlobalEventSrv", () => {
   let searchSrv;
 
   beforeEach(() => {
     searchSrv = new GlobalEventSrv(null, null);
   });
 
-  describe('With /subUrl as appSubUrl', () => {
-    it('/subUrl should be stripped', () => {
-        const urlWithoutMaster = searchSrv.stripBaseFromUrl('/subUrl/grafana/');
-        expect(urlWithoutMaster).toBe('/grafana/');
+  describe("With /subUrl as appSubUrl", () => {
+    it("/subUrl should be stripped", () => {
+      const urlWithoutMaster = searchSrv.stripBaseFromUrl("/subUrl/grafana/");
+      expect(urlWithoutMaster).toBe("/grafana/");
     });
   });
 });

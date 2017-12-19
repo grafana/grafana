@@ -1,17 +1,16 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
-import coreModule from '../core_module';
+import angular from "angular";
+import coreModule from "../core_module";
 
 export class DeltaCtrl {
   observer: any;
 
   /** @ngInject */
   constructor(private $rootScope) {
-
-    const waitForCompile = (mutations) => {
+    const waitForCompile = mutations => {
       if (mutations.length === 1) {
-        this.$rootScope.appEvent('json-diff-ready');
+        this.$rootScope.appEvent("json-diff-ready");
       }
     };
 
@@ -19,13 +18,13 @@ export class DeltaCtrl {
 
     const observerConfig = {
       attributes: true,
-      attributeFilter: ['class'],
+      attributeFilter: ["class"],
       characterData: false,
       childList: true,
-      subtree: false,
+      subtree: false
     };
 
-    this.observer.observe(angular.element('.delta-html')[0], observerConfig);
+    this.observer.observe(angular.element(".delta-html")[0], observerConfig);
   }
 
   $onDestroy() {
@@ -37,10 +36,10 @@ export function delta() {
   return {
     controller: DeltaCtrl,
     replace: false,
-    restrict: 'A',
+    restrict: "A"
   };
 }
-coreModule.directive('diffDelta', delta);
+coreModule.directive("diffDelta", delta);
 
 // Link to JSON line number
 export class LinkJSONCtrl {
@@ -56,7 +55,7 @@ export class LinkJSONCtrl {
     };
 
     this.$scope.switchView().then(() => {
-      unbind = this.$rootScope.$on('json-diff-ready', scroll.bind(this));
+      unbind = this.$rootScope.$on("json-diff-ready", scroll.bind(this));
     });
   }
 }
@@ -64,15 +63,15 @@ export class LinkJSONCtrl {
 export function linkJson() {
   return {
     controller: LinkJSONCtrl,
-    controllerAs: 'ctrl',
+    controllerAs: "ctrl",
     replace: true,
-    restrict: 'E',
+    restrict: "E",
     scope: {
-      line: '@lineDisplay',
-      link: '@lineLink',
-      switchView: '&',
+      line: "@lineDisplay",
+      link: "@lineLink",
+      switchView: "&"
     },
     template: `<a class="diff-linenum btn btn-inverse btn-small" ng-click="ctrl.goToLine(link)">Line {{ line }}</a>`
   };
 }
-coreModule.directive('diffLinkJson', linkJson);
+coreModule.directive("diffLinkJson", linkJson);

@@ -1,8 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
+import angular from "angular";
 
-var directiveModule = angular.module('grafana.directives');
+var directiveModule = angular.module("grafana.directives");
 
 /** @ngInject */
 function panelEditorTab(dynamicDirectiveSrv) {
@@ -10,7 +10,7 @@ function panelEditorTab(dynamicDirectiveSrv) {
     scope: {
       ctrl: "=",
       editorTab: "=",
-      index: "=",
+      index: "="
     },
     directive: scope => {
       var pluginId = scope.ctrl.pluginId;
@@ -23,10 +23,10 @@ function panelEditorTab(dynamicDirectiveSrv) {
 
       return Promise.resolve({
         name: `panel-editor-tab-${pluginId}${tabIndex}`,
-        fn: fn,
+        fn: fn
       });
     }
   });
 }
 
-directiveModule.directive('panelEditorTab', panelEditorTab);
+directiveModule.directive("panelEditorTab", panelEditorTab);

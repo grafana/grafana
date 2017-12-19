@@ -1,5 +1,5 @@
-import _ from 'lodash';
-import config from 'app/core/config';
+import _ from "lodash";
+import config from "app/core/config";
 
 export class DashboardImportCtrl {
   navModel: any;
@@ -15,15 +15,21 @@ export class DashboardImportCtrl {
   gnetInfo: any;
 
   /** @ngInject */
-  constructor(private backendSrv, navModelSrv, private $location, private $scope, $routeParams) {
-    this.navModel = navModelSrv.getNav('create', 'import');
+  constructor(
+    private backendSrv,
+    navModelSrv,
+    private $location,
+    private $scope,
+    $routeParams
+  ) {
+    this.navModel = navModelSrv.getNav("create", "import");
 
     this.step = 1;
     this.nameExists = false;
 
     // check gnetId in url
-    if ($routeParams.gnetId)  {
-      this.gnetUrl = $routeParams.gnetId ;
+    if ($routeParams.gnetId) {
+      this.gnetUrl = $routeParams.gnetId;
       this.checkGnetDashboard();
     }
   }
@@ -46,10 +52,10 @@ export class DashboardImportCtrl {
           options: []
         };
 
-        if (input.type === 'datasource') {
+        if (input.type === "datasource") {
           this.setDatasourceOptions(input, inputModel);
         } else if (!inputModel.info) {
-          inputModel.info = 'Specify a string constant';
+          inputModel.info = "Specify a string constant";
         }
 
         this.inputs.push(inputModel);
@@ -66,13 +72,14 @@ export class DashboardImportCtrl {
     });
 
     if (sources.length === 0) {
-      inputModel.info = "No data sources of type " + input.pluginName + " found";
+      inputModel.info =
+        "No data sources of type " + input.pluginName + " found";
     } else if (!inputModel.info) {
       inputModel.info = "Select a " + input.pluginName + " data source";
     }
 
     inputModel.options = sources.map(val => {
-      return {text: val.name, value: val.name};
+      return { text: val.name, value: val.name };
     });
   }
 
@@ -86,7 +93,7 @@ export class DashboardImportCtrl {
   }
 
   titleChanged() {
-    this.backendSrv.search({query: this.dash.title}).then(res => {
+    this.backendSrv.search({ query: this.dash.title }).then(res => {
       this.nameExists = false;
       for (let hit of res) {
         if (this.dash.title === hit.title) {
@@ -107,19 +114,21 @@ export class DashboardImportCtrl {
       };
     });
 
-    return this.backendSrv.post('api/dashboards/import', {
-      dashboard: this.dash,
-      overwrite: true,
-      inputs: inputs
-    }).then(res => {
-      this.$location.url('dashboard/' + res.importedUri);
-      this.$scope.dismiss();
-    });
+    return this.backendSrv
+      .post("api/dashboards/import", {
+        dashboard: this.dash,
+        overwrite: true,
+        inputs: inputs
+      })
+      .then(res => {
+        this.$location.url("dashboard/" + res.importedUri);
+        this.$scope.dismiss();
+      });
   }
 
   loadJsonText() {
     try {
-      this.parseError = '';
+      this.parseError = "";
       var dash = JSON.parse(this.jsonText);
       this.onUpload(dash);
     } catch (err) {
@@ -130,7 +139,7 @@ export class DashboardImportCtrl {
   }
 
   checkGnetDashboard() {
-    this.gnetError = '';
+    this.gnetError = "";
 
     var match = /(^\d+$)|dashboards\/(\d+)/.exec(this.gnetUrl);
     var dashboardId;
@@ -140,24 +149,27 @@ export class DashboardImportCtrl {
     } else if (match && match[2]) {
       dashboardId = match[2];
     } else {
-      this.gnetError = 'Could not find dashboard';
+      this.gnetError = "Could not find dashboard";
     }
 
-    return this.backendSrv.get('api/gnet/dashboards/' + dashboardId).then(res => {
-      this.gnetInfo = res;
-      // store reference to grafana.com
-      res.json.gnetId = res.id;
-      this.onUpload(res.json);
-    }).catch(err => {
-      err.isHandled = true;
-      this.gnetError = err.data.message || err;
-    });
+    return this.backendSrv
+      .get("api/gnet/dashboards/" + dashboardId)
+      .then(res => {
+        this.gnetInfo = res;
+        // store reference to grafana.com
+        res.json.gnetId = res.id;
+        this.onUpload(res.json);
+      })
+      .catch(err => {
+        err.isHandled = true;
+        this.gnetError = err.data.message || err;
+      });
   }
 
   back() {
-    this.gnetUrl = '';
+    this.gnetUrl = "";
     this.step = 1;
-    this.gnetError = '';
-    this.gnetInfo = '';
+    this.gnetError = "";
+    this.gnetInfo = "";
   }
 }

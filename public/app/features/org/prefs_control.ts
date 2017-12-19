@@ -1,7 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import config from 'app/core/config';
-import coreModule from 'app/core/core_module';
+import config from "app/core/config";
+import coreModule from "app/core/core_module";
 
 export class PrefsControlCtrl {
   prefs: any;
@@ -10,19 +10,18 @@ export class PrefsControlCtrl {
   mode: string;
 
   timezones: any = [
-    {value: '', text: 'Default'},
-    {value: 'browser', text: 'Local browser time'},
-    {value: 'utc', text: 'UTC'},
+    { value: "", text: "Default" },
+    { value: "browser", text: "Local browser time" },
+    { value: "utc", text: "UTC" }
   ];
   themes: any = [
-    {value: '', text: 'Default'},
-    {value: 'dark', text: 'Dark'},
-    {value: 'light', text: 'Light'},
+    { value: "", text: "Default" },
+    { value: "dark", text: "Dark" },
+    { value: "light", text: "Light" }
   ];
 
   /** @ngInject **/
-  constructor(private backendSrv, private $location) {
-  }
+  constructor(private backendSrv, private $location) {}
 
   $onInit() {
     return this.backendSrv.get(`/api/${this.mode}/preferences`).then(prefs => {
@@ -32,7 +31,9 @@ export class PrefsControlCtrl {
   }
 
   updatePrefs() {
-    if (!this.prefsForm.$valid) { return; }
+    if (!this.prefsForm.$valid) {
+      return;
+    }
 
     var cmd = {
       theme: this.prefs.theme,
@@ -44,7 +45,6 @@ export class PrefsControlCtrl {
       window.location.href = config.appSubUrl + this.$location.path();
     });
   }
-
 }
 
 var template = `
@@ -84,10 +84,10 @@ var template = `
 
 export function prefsControlDirective() {
   return {
-    restrict: 'E',
+    restrict: "E",
     controller: PrefsControlCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
+    controllerAs: "ctrl",
     template: template,
     scope: {
       mode: "@"
@@ -95,6 +95,4 @@ export function prefsControlDirective() {
   };
 }
 
-coreModule.directive('prefsControl', prefsControlDirective);
-
-
+coreModule.directive("prefsControl", prefsControlDirective);

@@ -1,4 +1,4 @@
-import * as queryDef from './query_def';
+import * as queryDef from "./query_def";
 
 export class ElasticQueryBuilder {
   timeField: string;
@@ -14,7 +14,7 @@ export class ElasticQueryBuilder {
     filter[this.timeField] = {
       gte: "$timeFrom",
       lte: "$timeTo",
-      format: "epoch_millis",
+      format: "epoch_millis"
     };
 
     return filter;
@@ -22,13 +22,16 @@ export class ElasticQueryBuilder {
 
   buildTermsAgg(aggDef, queryNode, target) {
     var metricRef, metric, y;
-    queryNode.terms = { "field": aggDef.field };
+    queryNode.terms = { field: aggDef.field };
 
     if (!aggDef.settings) {
       return queryNode;
     }
 
-    queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 500 : parseInt(aggDef.settings.size, 10);
+    queryNode.terms.size =
+      parseInt(aggDef.settings.size, 10) === 0
+        ? 500
+        : parseInt(aggDef.settings.size, 10);
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
       queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
@@ -41,7 +44,7 @@ export class ElasticQueryBuilder {
           if (metric.id === aggDef.settings.orderBy) {
             queryNode.aggs = {};
             queryNode.aggs[metric.id] = {};
-            queryNode.aggs[metric.id][metric.type] = {field: metric.field};
+            queryNode.aggs[metric.id][metric.type] = { field: metric.field };
             break;
           }
         }
@@ -49,7 +52,10 @@ export class ElasticQueryBuilder {
     }
 
     if (aggDef.settings.min_doc_count !== void 0) {
-      queryNode.terms.min_doc_count = parseInt(aggDef.settings.min_doc_count, 10);
+      queryNode.terms.min_doc_count = parseInt(
+        aggDef.settings.min_doc_count,
+        10
+      );
     }
 
     if (aggDef.settings.missing) {
@@ -65,10 +71,10 @@ export class ElasticQueryBuilder {
     esAgg.interval = settings.interval;
     esAgg.field = this.timeField;
     esAgg.min_doc_count = settings.min_doc_count || 0;
-    esAgg.extended_bounds = {min: "$timeFrom", max: "$timeTo"};
+    esAgg.extended_bounds = { min: "$timeFrom", max: "$timeTo" };
     esAgg.format = "epoch_millis";
 
-    if (esAgg.interval === 'auto') {
+    if (esAgg.interval === "auto") {
       esAgg.interval = "$__interval";
     }
 
@@ -97,7 +103,7 @@ export class ElasticQueryBuilder {
     for (var i = 0; i < aggDef.settings.filters.length; i++) {
       var query = aggDef.settings.filters[i].query;
       var label = aggDef.settings.filters[i].label;
-      label = label === '' || label === undefined ? query : label;
+      label = label === "" || label === undefined ? query : label;
       filterObj[label] = {
         query_string: {
           query: query,
@@ -112,7 +118,7 @@ export class ElasticQueryBuilder {
   documentQuery(query, size) {
     query.size = size;
     query.sort = {};
-    query.sort[this.timeField] = {order: 'desc', unmapped_type: 'boolean'};
+    query.sort[this.timeField] = { order: "desc", unmapped_type: "boolean" };
 
     // fields field not supported on ES 5.x
     if (this.esVersion < 5) {
@@ -140,30 +146,36 @@ export class ElasticQueryBuilder {
       condition = {};
       condition[filter.key] = filter.value;
       queryCondition = {};
-      queryCondition[filter.key] = {query: filter.value};
+      queryCondition[filter.key] = { query: filter.value };
 
-      switch (filter.operator){
+      switch (filter.operator) {
         case "=":
-          if (!query.query.bool.must) { query.query.bool.must = []; }
-          query.query.bool.must.push({match_phrase: queryCondition});
+          if (!query.query.bool.must) {
+            query.query.bool.must = [];
+          }
+          query.query.bool.must.push({ match_phrase: queryCondition });
           break;
         case "!=":
-          if (!query.query.bool.must_not) { query.query.bool.must_not = []; }
-          query.query.bool.must_not.push({match_phrase: queryCondition});
+          if (!query.query.bool.must_not) {
+            query.query.bool.must_not = [];
+          }
+          query.query.bool.must_not.push({ match_phrase: queryCondition });
           break;
         case "<":
-          condition[filter.key] = {"lt": filter.value};
-          query.query.bool.filter.push({"range": condition});
+          condition[filter.key] = { lt: filter.value };
+          query.query.bool.filter.push({ range: condition });
           break;
         case ">":
-          condition[filter.key] = {"gt": filter.value};
-          query.query.bool.filter.push({"range": condition});
+          condition[filter.key] = { gt: filter.value };
+          query.query.bool.filter.push({ range: condition });
           break;
         case "=~":
-          query.query.bool.filter.push({"regexp": condition});
+          query.query.bool.filter.push({ regexp: condition });
           break;
         case "!~":
-          query.query.bool.filter.push({"bool": {"must_not": {"regexp": condition}}});
+          query.query.bool.filter.push({
+            bool: { must_not: { regexp: condition } }
+          });
           break;
       }
     }
@@ -171,21 +183,23 @@ export class ElasticQueryBuilder {
 
   build(target, adhocFilters?, queryString?) {
     // make sure query has defaults;
-    target.metrics = target.metrics || [{ type: 'count', id: '1' }];
-    target.bucketAggs = target.bucketAggs || [{type: 'date_histogram', id: '2', settings: {interval: 'auto'}}];
-    target.timeField =  this.timeField;
+    target.metrics = target.metrics || [{ type: "count", id: "1" }];
+    target.bucketAggs = target.bucketAggs || [
+      { type: "date_histogram", id: "2", settings: { interval: "auto" } }
+    ];
+    target.timeField = this.timeField;
 
     var i, nestedAggs, metric;
     var query = {
-      "size": 0,
-      "query": {
-        "bool": {
-          "filter": [
-            {"range": this.getRangeFilter()},
+      size: 0,
+      query: {
+        bool: {
+          filter: [
+            { range: this.getRangeFilter() },
             {
-              "query_string": {
-                "analyze_wildcard": true,
-                "query": queryString,
+              query_string: {
+                analyze_wildcard: true,
+                query: queryString
               }
             }
           ]
@@ -198,8 +212,8 @@ export class ElasticQueryBuilder {
     // handle document query
     if (target.bucketAggs.length === 0) {
       metric = target.metrics[0];
-      if (!metric || metric.type !== 'raw_document') {
-        throw {message: 'Invalid query'};
+      if (!metric || metric.type !== "raw_document") {
+        throw { message: "Invalid query" };
       }
 
       var size = (metric.settings && metric.settings.size) || 500;
@@ -213,24 +227,27 @@ export class ElasticQueryBuilder {
       var esAgg = {};
 
       switch (aggDef.type) {
-        case 'date_histogram': {
+        case "date_histogram": {
           esAgg["date_histogram"] = this.getDateHistogramAgg(aggDef);
           break;
         }
-        case 'histogram': {
+        case "histogram": {
           esAgg["histogram"] = this.getHistogramAgg(aggDef);
           break;
         }
-        case 'filters': {
-          esAgg["filters"] = {filters: this.getFiltersAgg(aggDef)};
+        case "filters": {
+          esAgg["filters"] = { filters: this.getFiltersAgg(aggDef) };
           break;
         }
-        case 'terms': {
+        case "terms": {
           this.buildTermsAgg(aggDef, esAgg, target);
           break;
         }
-        case 'geohash_grid': {
-          esAgg['geohash_grid'] = {field: aggDef.field, precision: aggDef.settings.precision};
+        case "geohash_grid": {
+          esAgg["geohash_grid"] = {
+            field: aggDef.field,
+            precision: aggDef.settings.precision
+          };
           break;
         }
       }
@@ -244,7 +261,7 @@ export class ElasticQueryBuilder {
 
     for (i = 0; i < target.metrics.length; i++) {
       metric = target.metrics[i];
-      if (metric.type === 'count') {
+      if (metric.type === "count") {
         continue;
       }
 
@@ -258,11 +275,14 @@ export class ElasticQueryBuilder {
           continue;
         }
       } else {
-        metricAgg = {field: metric.field};
+        metricAgg = { field: metric.field };
       }
 
       for (var prop in metric.settings) {
-        if (metric.settings.hasOwnProperty(prop) && metric.settings[prop] !== null) {
+        if (
+          metric.settings.hasOwnProperty(prop) &&
+          metric.settings[prop] !== null
+        ) {
           metricAgg[prop] = metric.settings[prop];
         }
       }
@@ -276,19 +296,19 @@ export class ElasticQueryBuilder {
 
   getTermsQuery(queryDef) {
     var query: any = {
-      "size": 0,
-      "query": {
-        "bool": {
-          "filter": [{"range": this.getRangeFilter()}]
+      size: 0,
+      query: {
+        bool: {
+          filter: [{ range: this.getRangeFilter() }]
         }
       }
     };
 
     if (queryDef.query) {
       query.query.bool.filter.push({
-        "query_string": {
-          "analyze_wildcard": true,
-          "query": queryDef.query,
+        query_string: {
+          analyze_wildcard: true,
+          query: queryDef.query
         }
       });
     }
@@ -298,15 +318,15 @@ export class ElasticQueryBuilder {
       size = queryDef.size;
     }
 
-    query.aggs =  {
+    query.aggs = {
       "1": {
-        "terms": {
-          "field": queryDef.field,
-          "size": size,
-          "order": {
-            "_term": "asc"
+        terms: {
+          field: queryDef.field,
+          size: size,
+          order: {
+            _term: "asc"
           }
-        },
+        }
       }
     };
     return query;

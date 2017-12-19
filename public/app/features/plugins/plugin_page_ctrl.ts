@@ -1,5 +1,5 @@
-import angular from 'angular';
-import _ from 'lodash';
+import angular from "angular";
+import _ from "lodash";
 
 var pluginInfoCache = {};
 
@@ -10,7 +10,12 @@ export class AppPageCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $routeParams: any, private $rootScope, private navModelSrv) {
+  constructor(
+    private backendSrv,
+    private $routeParams: any,
+    private $rootScope,
+    private navModelSrv
+  ) {
     this.pluginId = $routeParams.pluginId;
 
     if (pluginInfoCache[this.pluginId]) {
@@ -22,29 +27,29 @@ export class AppPageCtrl {
 
   initPage(app) {
     this.appModel = app;
-    this.page = _.find(app.includes, {slug: this.$routeParams.slug});
+    this.page = _.find(app.includes, { slug: this.$routeParams.slug });
 
     pluginInfoCache[this.pluginId] = app;
 
     if (!this.page) {
-      this.$rootScope.appEvent('alert-error', ['App Page Not Found', '']);
+      this.$rootScope.appEvent("alert-error", ["App Page Not Found", ""]);
 
       this.navModel = this.navModelSrv.getNotFoundNav();
       return;
     }
 
-    let pluginNav = this.navModelSrv.getNav('plugin-page-' + app.id);
+    let pluginNav = this.navModelSrv.getNav("plugin-page-" + app.id);
 
     this.navModel = {
       main: {
         img: app.info.logos.large,
         subTitle: app.name,
-        url: '',
-        text: '',
+        url: "",
+        text: "",
         breadcrumbs: [
           { title: app.name, url: pluginNav.main.url },
-          { title: this.page.name },
-        ],
+          { title: this.page.name }
+        ]
       }
     };
   }
@@ -56,5 +61,4 @@ export class AppPageCtrl {
   }
 }
 
-angular.module('grafana.controllers').controller('AppPageCtrl', AppPageCtrl);
-
+angular.module("grafana.controllers").controller("AppPageCtrl", AppPageCtrl);

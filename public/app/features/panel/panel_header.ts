@@ -1,7 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import $ from 'jquery';
-import {coreModule} from 'app/core/core';
+import $ from "jquery";
+import { coreModule } from "app/core/core";
 
 var template = `
 <span class="panel-title">
@@ -31,21 +31,25 @@ var template = `
 </span>`;
 
 function renderMenuItem(item, ctrl) {
-  let html = '';
-  let listItemClass = '';
+  let html = "";
+  let listItemClass = "";
 
   if (item.divider) {
     return '<li class="divider"></li>';
   }
 
   if (item.submenu) {
-    listItemClass = 'dropdown-submenu';
+    listItemClass = "dropdown-submenu";
   }
 
   html += `<li class="${listItemClass}"><a `;
 
-  if (item.click) { html += ` ng-click="${item.click}"`; }
-  if (item.href) { html += ` href="${item.href}"`; }
+  if (item.click) {
+    html += ` ng-click="${item.click}"`;
+  }
+  if (item.href) {
+    html += ` href="${item.href}"`;
+  }
 
   html += `><i class="${item.icon}"></i>`;
   html += `<span class="dropdown-item-text">${item.text}</span>`;
@@ -61,7 +65,7 @@ function renderMenuItem(item, ctrl) {
     for (let subitem of item.submenu) {
       html += renderMenuItem(subitem, ctrl);
     }
-    html += '</ul>';
+    html += "</ul>";
   }
 
   html += `</li>`;
@@ -69,7 +73,7 @@ function renderMenuItem(item, ctrl) {
 }
 
 function createMenuTemplate(ctrl) {
-  let html = '';
+  let html = "";
 
   for (let item of ctrl.getMenu()) {
     html += renderMenuItem(item, ctrl);
@@ -81,10 +85,10 @@ function createMenuTemplate(ctrl) {
 /** @ngInject **/
 function panelHeader($compile) {
   return {
-    restrict: 'E',
+    restrict: "E",
     template: template,
     link: function(scope, elem, attrs) {
-      let menuElem = elem.find('.panel-menu');
+      let menuElem = elem.find(".panel-menu");
       let menuScope;
       let isDragged;
 
@@ -101,12 +105,15 @@ function panelHeader($compile) {
         menuElem.html(menuHtml);
         $compile(menuElem)(menuScope);
 
-        if (targetClass.indexOf('panel-title-text') >= 0 || targetClass.indexOf('panel-title') >= 0) {
+        if (
+          targetClass.indexOf("panel-title-text") >= 0 ||
+          targetClass.indexOf("panel-title") >= 0
+        ) {
           togglePanelMenu(evt);
         }
       });
 
-      elem.find('.panel-menu-toggle').click(() => {
+      elem.find(".panel-menu-toggle").click(() => {
         togglePanelStackPosition();
       });
 
@@ -114,7 +121,7 @@ function panelHeader($compile) {
         if (!isDragged) {
           e.stopPropagation();
           togglePanelStackPosition();
-          elem.find('[data-toggle=dropdown]').dropdown('toggle');
+          elem.find("[data-toggle=dropdown]").dropdown("toggle");
         }
       }
 
@@ -123,27 +130,30 @@ function panelHeader($compile) {
        * This class sets z-index for panel and prevents menu overlapping.
        */
       function togglePanelStackPosition() {
-        const menuOpenClass = 'dropdown-menu-open';
-        const panelGridClass = '.react-grid-item.panel';
+        const menuOpenClass = "dropdown-menu-open";
+        const panelGridClass = ".react-grid-item.panel";
 
-        let panelElem = elem.find('[data-toggle=dropdown]').parentsUntil('.panel').parent();
-        let menuElem = elem.find('[data-toggle=dropdown]').parent();
+        let panelElem = elem
+          .find("[data-toggle=dropdown]")
+          .parentsUntil(".panel")
+          .parent();
+        let menuElem = elem.find("[data-toggle=dropdown]").parent();
         panelElem = panelElem && panelElem.length ? panelElem[0] : undefined;
         if (panelElem) {
           panelElem = $(panelElem);
           $(panelGridClass).removeClass(menuOpenClass);
-          let state = !menuElem.hasClass('open');
+          let state = !menuElem.hasClass("open");
           panelElem.toggleClass(menuOpenClass, state);
         }
       }
 
       let mouseX, mouseY;
-      elem.mousedown((e) => {
+      elem.mousedown(e => {
         mouseX = e.pageX;
         mouseY = e.pageY;
       });
 
-      elem.mouseup((e) => {
+      elem.mouseup(e => {
         if (mouseX === e.pageX && mouseY === e.pageY) {
           isDragged = false;
         } else {
@@ -154,4 +164,4 @@ function panelHeader($compile) {
   };
 }
 
-coreModule.directive('panelHeader', panelHeader);
+coreModule.directive("panelHeader", panelHeader);

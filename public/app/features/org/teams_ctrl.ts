@@ -1,7 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import coreModule from 'app/core/core_module';
-import appEvents from 'app/core/app_events';
+import coreModule from "app/core/core_module";
+import appEvents from "app/core/app_events";
 
 export class TeamsCtrl {
   teams: any;

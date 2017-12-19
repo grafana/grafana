@@ -1,4 +1,4 @@
-import {getDataMinMax} from 'app/core/time_series2';
+import { getDataMinMax } from "app/core/time_series2";
 
 /**
  * Calculate tick step.
@@ -40,7 +40,12 @@ export function getScaledDecimals(decimals, tick_size) {
  * @param noTicks       Number of ticks
  * @param tickDecimals  Tick decimal precision
  */
-export function getFlotTickSize(min: number, max: number, noTicks: number, tickDecimals: number) {
+export function getFlotTickSize(
+  min: number,
+  max: number,
+  noTicks: number,
+  tickDecimals: number
+) {
   var delta = (max - min) / noTicks,
     dec = -Math.floor(Math.log(delta) / Math.LN10),
     maxDec = tickDecimals;
@@ -81,19 +86,19 @@ export function getFlotRange(panelMin, panelMax, datamin, datamax) {
   let delta = max - min;
 
   if (delta === 0.0) {
-      // Grafana fix: wide Y min and max using increased wideFactor
-      // when all series values are the same
-      var wideFactor = 0.25;
-      var widen = Math.abs(max === 0 ? 1 : max * wideFactor);
+    // Grafana fix: wide Y min and max using increased wideFactor
+    // when all series values are the same
+    var wideFactor = 0.25;
+    var widen = Math.abs(max === 0 ? 1 : max * wideFactor);
 
-      if (panelMin === null) {
-        min -= widen;
-      }
-      // always widen max if we couldn't widen min to ensure we
-      // don't fall into min == max which doesn't work
-      if (panelMax == null || panelMin != null) {
-        max += widen;
-      }
+    if (panelMin === null) {
+      min -= widen;
+    }
+    // always widen max if we couldn't widen min to ensure we
+    // don't fall into min == max which doesn't work
+    if (panelMax == null || panelMin != null) {
+      max += widen;
+    }
   } else {
     // consider autoscaling
     var margin = autoscaleMargin;
@@ -114,7 +119,7 @@ export function getFlotRange(panelMin, panelMax, datamin, datamax) {
       }
     }
   }
-  return {min, max};
+  return { min, max };
 }
 
 /**
@@ -122,8 +127,8 @@ export function getFlotRange(panelMin, panelMax, datamin, datamax) {
  * Implementation from Flot.
  */
 export function getFlotTickDecimals(data, axis) {
-  let {datamin, datamax} = getDataMinMax(data);
-  let {min, max} = getFlotRange(axis.min, axis.max, datamin, datamax);
+  let { datamin, datamax } = getDataMinMax(data);
+  let { min, max } = getFlotRange(axis.min, axis.max, datamin, datamax);
   let noTicks = 3;
   let tickDecimals, maxDec;
   let delta = (max - min) / noTicks;
@@ -154,5 +159,5 @@ export function getFlotTickDecimals(data, axis) {
   tickDecimals = Math.max(0, maxDec != null ? maxDec : dec);
   // grafana addition
   const scaledDecimals = tickDecimals - Math.floor(Math.log(size) / Math.LN10);
-  return {tickDecimals, scaledDecimals};
+  return { tickDecimals, scaledDecimals };
 }

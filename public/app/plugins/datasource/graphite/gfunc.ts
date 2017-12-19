@@ -1,6 +1,6 @@
 import _ from "lodash";
 import $ from "jquery";
-import {isVersionGtOrEq} from "app/core/utils/version";
+import { isVersionGtOrEq } from "app/core/utils/version";
 
 var index = [];
 var categories = {
@@ -1050,9 +1050,7 @@ _.each(categories, function(funcList, catName) {
 });
 
 function isVersionRelatedFunction(func, graphiteVersion) {
-  return (
-    isVersionGtOrEq(graphiteVersion, func.version) || !func.version
-  );
+  return isVersionGtOrEq(graphiteVersion, func.version) || !func.version;
 }
 
 export class FuncInstance {

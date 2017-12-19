@@ -1,7 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from 'angular';
-import _ from 'lodash';
+import angular from "angular";
+import _ from "lodash";
 
 export class SubmenuCtrl {
   annotations: any;
@@ -9,15 +9,13 @@ export class SubmenuCtrl {
   dashboard: any;
 
   /** @ngInject */
-  constructor(private $rootScope,
-              private variableSrv,
-              private $location) {
+  constructor(private $rootScope, private variableSrv, private $location) {
     this.annotations = this.dashboard.templating.list;
     this.variables = this.variableSrv.variables;
   }
 
   annotationStateChanged() {
-    this.$rootScope.$broadcast('refresh');
+    this.$rootScope.$broadcast("refresh");
   }
 
   variableUpdated(variable) {
@@ -25,22 +23,24 @@ export class SubmenuCtrl {
   }
 
   openEditView(editview) {
-    var search = _.extend(this.$location.search(), {editview: editview});
+    var search = _.extend(this.$location.search(), { editview: editview });
     this.$location.search(search);
   }
 }
 
 export function submenuDirective() {
   return {
-    restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/submenu/submenu.html',
+    restrict: "E",
+    templateUrl: "public/app/features/dashboard/submenu/submenu.html",
     controller: SubmenuCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
+    controllerAs: "ctrl",
     scope: {
-      dashboard: "=",
+      dashboard: "="
     }
   };
 }
 
-angular.module('grafana.directives').directive('dashboardSubmenu', submenuDirective);
+angular
+  .module("grafana.directives")
+  .directive("dashboardSubmenu", submenuDirective);

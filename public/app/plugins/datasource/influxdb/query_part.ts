@@ -1,12 +1,12 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import _ from 'lodash';
+import _ from "lodash";
 import {
   QueryPartDef,
   QueryPart,
   functionRenderer,
-  suffixRenderer,
-} from 'app/core/components/query_part/query_part';
+  suffixRenderer
+} from "app/core/components/query_part/query_part";
 
 var index = [];
 var categories = {
@@ -16,13 +16,13 @@ var categories = {
   Predictors: [],
   Math: [],
   Aliasing: [],
-  Fields: [],
+  Fields: []
 };
 
 function createPart(part): any {
   var def = index[part.type];
   if (!def) {
-    throw {message: 'Could not find query part ' + part.type};
+    throw { message: "Could not find query part " + part.type };
   }
 
   return new QueryPart(part, def);
@@ -36,12 +36,12 @@ function register(options: any) {
 var groupByTimeFunctions = [];
 
 function aliasRenderer(part, innerExpr) {
-  return innerExpr + ' AS ' + '"' + part.params[0] + '"';
+  return innerExpr + " AS " + '"' + part.params[0] + '"';
 }
 
 function fieldRenderer(part, innerExpr) {
-  if (part.params[0] === '*')  {
-    return '*';
+  if (part.params[0] === "*") {
+    return "*";
   }
   return '"' + part.params[0] + '"';
 }
@@ -68,7 +68,10 @@ function addTransformationStrategy(selectParts, partModel) {
   // look for index to add transformation
   for (i = 0; i < selectParts.length; i++) {
     var part = selectParts[i];
-    if (part.def.category === categories.Math  || part.def.category === categories.Aliasing) {
+    if (
+      part.def.category === categories.Math ||
+      part.def.category === categories.Aliasing
+    ) {
       break;
     }
   }
@@ -80,16 +83,17 @@ function addMathStrategy(selectParts, partModel) {
   var partCount = selectParts.length;
   if (partCount > 0) {
     // if last is math, replace it
-    if (selectParts[partCount-1].def.type === 'math') {
-      selectParts[partCount-1] = partModel;
+    if (selectParts[partCount - 1].def.type === "math") {
+      selectParts[partCount - 1] = partModel;
       return;
     }
     // if next to last is math, replace it
-    if (partCount > 1 && selectParts[partCount-2].def.type === 'math') {
-      selectParts[partCount-2] = partModel;
+    if (partCount > 1 && selectParts[partCount - 2].def.type === "math") {
+      selectParts[partCount - 2] = partModel;
       return;
-    } else if (selectParts[partCount-1].def.type === 'alias') { // if last is alias add it before
-      selectParts.splice(partCount-1, 0, partModel);
+    } else if (selectParts[partCount - 1].def.type === "alias") {
+      // if last is alias add it before
+      selectParts.splice(partCount - 1, 0, partModel);
       return;
     }
   }
@@ -100,8 +104,8 @@ function addAliasStrategy(selectParts, partModel) {
   var partCount = selectParts.length;
   if (partCount > 0) {
     // if last is alias, replace it
-    if (selectParts[partCount-1].def.type === 'alias') {
-      selectParts[partCount-1] = partModel;
+    if (selectParts[partCount - 1].def.type === "alias") {
+      selectParts[partCount - 1] = partModel;
       return;
     }
   }
@@ -111,294 +115,329 @@ function addAliasStrategy(selectParts, partModel) {
 function addFieldStrategy(selectParts, partModel, query) {
   // copy all parts
   var parts = _.map(selectParts, function(part: any) {
-    return createPart({type: part.def.type, params: _.clone(part.params)});
+    return createPart({ type: part.def.type, params: _.clone(part.params) });
   });
 
   query.selectModels.push(parts);
 }
 
 register({
-  type: 'field',
+  type: "field",
   addStrategy: addFieldStrategy,
   category: categories.Fields,
-  params: [{type: 'field', dynamicLookup: true}],
-  defaultParams: ['value'],
-  renderer: fieldRenderer,
+  params: [{ type: "field", dynamicLookup: true }],
+  defaultParams: ["value"],
+  renderer: fieldRenderer
 });
 
 // Aggregations
 register({
-  type: 'count',
+  type: "count",
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'distinct',
+  type: "distinct",
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'integral',
+  type: "integral",
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'mean',
+  type: "mean",
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'median',
+  type: "median",
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'mode',
+  type: "mode",
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'sum',
+  type: "sum",
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 // transformations
 
 register({
-  type: 'derivative',
+  type: "derivative",
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
-  params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
-  defaultParams: ['10s'],
-  renderer: functionRenderer,
+  params: [
+    {
+      name: "duration",
+      type: "interval",
+      options: ["1s", "10s", "1m", "5m", "10m", "15m", "1h"]
+    }
+  ],
+  defaultParams: ["10s"],
+  renderer: functionRenderer
 });
 
 register({
-  type: 'spread',
+  type: "spread",
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'non_negative_derivative',
+  type: "non_negative_derivative",
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
-  params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
-  defaultParams: ['10s'],
-  renderer: functionRenderer,
+  params: [
+    {
+      name: "duration",
+      type: "interval",
+      options: ["1s", "10s", "1m", "5m", "10m", "15m", "1h"]
+    }
+  ],
+  defaultParams: ["10s"],
+  renderer: functionRenderer
 });
 
 register({
-  type: 'difference',
-  addStrategy: addTransformationStrategy,
-  category: categories.Transformations,
-  params: [],
-  defaultParams: [],
-  renderer: functionRenderer,
-});
-
-register({
-  type: 'non_negative_difference',
+  type: "difference",
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'moving_average',
+  type: "non_negative_difference",
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
-  params: [{ name: "window", type: "int", options: [5, 10, 20, 30, 40]}],
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer
+});
+
+register({
+  type: "moving_average",
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [{ name: "window", type: "int", options: [5, 10, 20, 30, 40] }],
   defaultParams: [10],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'cumulative_sum',
+  type: "cumulative_sum",
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'stddev',
+  type: "stddev",
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'time',
+  type: "time",
   category: groupByTimeFunctions,
-  params: [{ name: "interval", type: "time", options: ['$__interval', '1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
-  defaultParams: ['$__interval'],
-  renderer: functionRenderer,
+  params: [
+    {
+      name: "interval",
+      type: "time",
+      options: ["$__interval", "1s", "10s", "1m", "5m", "10m", "15m", "1h"]
+    }
+  ],
+  defaultParams: ["$__interval"],
+  renderer: functionRenderer
 });
 
 register({
-  type: 'fill',
+  type: "fill",
   category: groupByTimeFunctions,
-  params: [{ name: "fill", type: "string", options: ['none', 'null', '0', 'previous', 'linear'] }],
-  defaultParams: ['null'],
-  renderer: functionRenderer,
+  params: [
+    {
+      name: "fill",
+      type: "string",
+      options: ["none", "null", "0", "previous", "linear"]
+    }
+  ],
+  defaultParams: ["null"],
+  renderer: functionRenderer
 });
 
 register({
-  type: 'elapsed',
+  type: "elapsed",
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
-  params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
-  defaultParams: ['10s'],
-  renderer: functionRenderer,
+  params: [
+    {
+      name: "duration",
+      type: "interval",
+      options: ["1s", "10s", "1m", "5m", "10m", "15m", "1h"]
+    }
+  ],
+  defaultParams: ["10s"],
+  renderer: functionRenderer
 });
 
 // predictions
 register({
-  type: 'holt_winters',
+  type: "holt_winters",
   addStrategy: addTransformationStrategy,
   category: categories.Predictors,
-  params: [{ name: "number", type: "int", options: [5, 10, 20, 30, 40]}, { name: "season", type: "int", options: [0, 1, 2, 5, 10]}],
+  params: [
+    { name: "number", type: "int", options: [5, 10, 20, 30, 40] },
+    { name: "season", type: "int", options: [0, 1, 2, 5, 10] }
+  ],
   defaultParams: [10, 2],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'holt_winters_with_fit',
+  type: "holt_winters_with_fit",
   addStrategy: addTransformationStrategy,
   category: categories.Predictors,
-  params: [{ name: "number", type: "int", options: [5, 10, 20, 30, 40]}, { name: "season", type: "int", options: [0, 1, 2, 5, 10]}],
+  params: [
+    { name: "number", type: "int", options: [5, 10, 20, 30, 40] },
+    { name: "season", type: "int", options: [0, 1, 2, 5, 10] }
+  ],
   defaultParams: [10, 2],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 // Selectors
 register({
-  type: 'bottom',
+  type: "bottom",
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Selectors,
-  params: [{name: 'count', type: 'int'}],
+  params: [{ name: "count", type: "int" }],
   defaultParams: [3],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'first',
+  type: "first",
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Selectors,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'last',
+  type: "last",
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Selectors,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'max',
+  type: "max",
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Selectors,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'min',
+  type: "min",
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Selectors,
   params: [],
   defaultParams: [],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'percentile',
+  type: "percentile",
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Selectors,
-  params: [{name: 'nth', type: 'int'}],
+  params: [{ name: "nth", type: "int" }],
   defaultParams: [95],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'top',
+  type: "top",
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Selectors,
-  params: [{name: 'count', type: 'int'}],
+  params: [{ name: "count", type: "int" }],
   defaultParams: [3],
-  renderer: functionRenderer,
+  renderer: functionRenderer
 });
 
 register({
-  type: 'tag',
+  type: "tag",
   category: groupByTimeFunctions,
-  params: [{name: 'tag', type: 'string', dynamicLookup: true}],
-  defaultParams: ['tag'],
-  renderer: fieldRenderer,
+  params: [{ name: "tag", type: "string", dynamicLookup: true }],
+  defaultParams: ["tag"],
+  renderer: fieldRenderer
 });
 
 register({
-  type: 'math',
+  type: "math",
   addStrategy: addMathStrategy,
   category: categories.Math,
-  params: [{ name: "expr", type: "string"}],
-  defaultParams: [' / 100'],
-  renderer: suffixRenderer,
+  params: [{ name: "expr", type: "string" }],
+  defaultParams: [" / 100"],
+  renderer: suffixRenderer
 });
 
 register({
-  type: 'alias',
+  type: "alias",
   addStrategy: addAliasStrategy,
   category: categories.Aliasing,
-  params: [{ name: "name", type: "string", quote: 'double'}],
-  defaultParams: ['alias'],
-  renderMode: 'suffix',
-  renderer: aliasRenderer,
+  params: [{ name: "name", type: "string", quote: "double" }],
+  defaultParams: ["alias"],
+  renderMode: "suffix",
+  renderer: aliasRenderer
 });
-
 
 export default {
   create: createPart,

@@ -1,4 +1,3 @@
-
 export default class TableModel {
   columns: any[];
   rows: any[];
@@ -9,7 +8,7 @@ export default class TableModel {
     this.columns = [];
     this.columnMap = {};
     this.rows = [];
-    this.type = 'table';
+    this.type = "table";
   }
 
   sort(options) {

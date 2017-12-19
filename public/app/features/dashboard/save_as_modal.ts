@@ -1,6 +1,6 @@
-import coreModule from 'app/core/core_module';
+import coreModule from "app/core/core_module";
 
-const  template = `
+const template = `
 <div class="modal-body">
 	<div class="modal-header">
 		<h2 class="modal-header-title">
@@ -45,7 +45,7 @@ export class SaveDashboardAsModalCtrl {
     var dashboard = this.dashboardSrv.getCurrent();
     this.clone = dashboard.getSaveModelClone();
     this.clone.id = null;
-    this.clone.title += ' Copy';
+    this.clone.title += " Copy";
     this.clone.editable = true;
     this.clone.hideControls = false;
     this.folderId = dashboard.folderId;
@@ -81,13 +81,13 @@ export class SaveDashboardAsModalCtrl {
 
 export function saveDashboardAsDirective() {
   return {
-    restrict: 'E',
+    restrict: "E",
     template: template,
     controller: SaveDashboardAsModalCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
-    scope: {dismiss: "&"}
+    controllerAs: "ctrl",
+    scope: { dismiss: "&" }
   };
 }
 
-coreModule.directive('saveDashboardAsModal',  saveDashboardAsDirective);
+coreModule.directive("saveDashboardAsModal", saveDashboardAsDirective);

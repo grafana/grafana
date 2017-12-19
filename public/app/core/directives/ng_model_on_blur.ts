@@ -1,18 +1,18 @@
-import coreModule from '../core_module';
-import * as rangeUtil from 'app/core/utils/rangeutil';
+import coreModule from "../core_module";
+import * as rangeUtil from "app/core/utils/rangeutil";
 
 function ngModelOnBlur() {
   return {
-    restrict: 'A',
+    restrict: "A",
     priority: 1,
-    require: 'ngModel',
+    require: "ngModel",
     link: function(scope, elm, attr, ngModelCtrl) {
-      if (attr.type === 'radio' || attr.type === 'checkbox') {
+      if (attr.type === "radio" || attr.type === "checkbox") {
         return;
       }
 
-      elm.off('input keydown change');
-      elm.bind('blur', function() {
+      elm.off("input keydown change");
+      elm.bind("blur", function() {
         scope.$apply(function() {
           ngModelCtrl.$setViewValue(elm.val());
         });
@@ -23,11 +23,13 @@ function ngModelOnBlur() {
 
 function emptyToNull() {
   return {
-    restrict: 'A',
-    require: 'ngModel',
-    link: function (scope, elm, attrs, ctrl) {
-      ctrl.$parsers.push(function (viewValue) {
-        if (viewValue === "") { return null; }
+    restrict: "A",
+    require: "ngModel",
+    link: function(scope, elm, attrs, ctrl) {
+      ctrl.$parsers.push(function(viewValue) {
+        if (viewValue === "") {
+          return null;
+        }
         return viewValue;
       });
     }
@@ -36,13 +38,13 @@ function emptyToNull() {
 
 function validTimeSpan() {
   return {
-    require: 'ngModel',
+    require: "ngModel",
     link: function(scope, elm, attrs, ctrl) {
       ctrl.$validators.integer = function(modelValue, viewValue) {
         if (ctrl.$isEmpty(modelValue)) {
           return true;
         }
-        if (viewValue.indexOf('$') === 0 || viewValue.indexOf('+$') === 0) {
+        if (viewValue.indexOf("$") === 0 || viewValue.indexOf("+$") === 0) {
           return true; // allow template variable
         }
         var info = rangeUtil.describeTextRange(viewValue);
@@ -52,6 +54,6 @@ function validTimeSpan() {
   };
 }
 
-coreModule.directive('ngModelOnblur', ngModelOnBlur);
-coreModule.directive('emptyToNull', emptyToNull);
-coreModule.directive('validTimeSpan', validTimeSpan);
+coreModule.directive("ngModelOnblur", ngModelOnBlur);
+coreModule.directive("emptyToNull", emptyToNull);
+coreModule.directive("validTimeSpan", validTimeSpan);

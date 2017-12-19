@@ -1,6 +1,6 @@
-import coreModule from '../../core_module';
-import {NavModel}  from '../../nav_model_srv';
-import appEvents from 'app/core/app_events';
+import coreModule from "../../core_module";
+import { NavModel } from "../../nav_model_srv";
+import appEvents from "app/core/app_events";
 
 export class NavbarCtrl {
   model: NavModel;
@@ -9,7 +9,7 @@ export class NavbarCtrl {
   constructor() {}
 
   showSearch() {
-    appEvents.emit('show-dash-search');
+    appEvents.emit("show-dash-search");
   }
 
   navItemClicked(navItem, evt) {
@@ -22,22 +22,21 @@ export class NavbarCtrl {
 
 export function navbarDirective() {
   return {
-    restrict: 'E',
-    templateUrl: 'public/app/core/components/navbar/navbar.html',
+    restrict: "E",
+    templateUrl: "public/app/core/components/navbar/navbar.html",
     controller: NavbarCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
+    controllerAs: "ctrl",
     scope: {
-      model: "=",
+      model: "="
     },
-    link: function(scope, elem) {
-    }
+    link: function(scope, elem) {}
   };
 }
 
 export function pageH1() {
   return {
-    restrict: 'E',
+    restrict: "E",
     template: `
     <h1 class="page-header__title">
       <i class="page-header__icon {{::model.header.icon}}" ng-if="::model.header.icon"></i>
@@ -46,11 +45,10 @@ export function pageH1() {
     </h1>
     `,
     scope: {
-      model: "=",
+      model: "="
     }
   };
 }
 
-
-coreModule.directive('pageH1', pageH1);
-coreModule.directive('navbar', navbarDirective);
+coreModule.directive("pageH1", pageH1);
+coreModule.directive("navbar", navbarDirective);

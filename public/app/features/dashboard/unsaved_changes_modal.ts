@@ -1,8 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import coreModule from 'app/core/core_module';
+import coreModule from "app/core/core_module";
 
-const  template = `
+const template = `
 <div class="modal-body">
   <div class="modal-header">
     <h2 class="modal-header-title">
@@ -35,8 +35,7 @@ export class UnsavedChangesModalCtrl {
   dismiss: () => void;
 
   /** @ngInject */
-  constructor(private unsavedChangesSrv) {
-  }
+  constructor(private unsavedChangesSrv) {}
 
   discard() {
     this.dismiss();
@@ -51,13 +50,13 @@ export class UnsavedChangesModalCtrl {
 
 export function unsavedChangesModalDirective() {
   return {
-    restrict: 'E',
+    restrict: "E",
     template: template,
     controller: UnsavedChangesModalCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
-    scope: {dismiss: "&"}
+    controllerAs: "ctrl",
+    scope: { dismiss: "&" }
   };
 }
 
-coreModule.directive('unsavedChangesModal', unsavedChangesModalDirective);
+coreModule.directive("unsavedChangesModal", unsavedChangesModalDirective);

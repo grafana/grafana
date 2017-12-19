@@ -1,13 +1,12 @@
-import angular from 'angular';
-import _ from 'lodash';
-import $ from 'jquery';
-import PerfectScrollbar from 'perfect-scrollbar';
-import {updateLegendValues} from 'app/core/core';
+import angular from "angular";
+import _ from "lodash";
+import $ from "jquery";
+import PerfectScrollbar from "perfect-scrollbar";
+import { updateLegendValues } from "app/core/core";
 
-var module = angular.module('grafana.directives');
+var module = angular.module("grafana.directives");
 
-module.directive('graphLegend', function(popoverSrv, $timeout) {
-
+module.directive("graphLegend", function(popoverSrv, $timeout) {
   return {
     link: function(scope, elem) {
       var firstRender = true;
@@ -24,12 +23,12 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         }
       });
 
-      ctrl.events.on('render-legend', () => {
+      ctrl.events.on("render-legend", () => {
         data = ctrl.seriesList;
         if (data) {
           render();
         }
-        ctrl.events.emit('legend-rendering-complete');
+        ctrl.events.emit("legend-rendering-complete");
       });
 
       function updateLegendDecimals() {
@@ -37,27 +36,28 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function getSeriesIndexForElement(el) {
-        return el.parents('[data-series-index]').data('series-index');
+        return el.parents("[data-series-index]").data("series-index");
       }
 
       function openColorSelector(e) {
         // if we clicked inside poup container ignore click
-        if ($(e.target).parents('.popover').length) {
+        if ($(e.target).parents(".popover").length) {
           return;
         }
 
-        var el = $(e.currentTarget).find('.fa-minus');
+        var el = $(e.currentTarget).find(".fa-minus");
         var index = getSeriesIndexForElement(el);
         var series = seriesList[index];
 
         $timeout(function() {
           popoverSrv.show({
             element: el[0],
-            position: 'bottom left',
-            targetAttachment: 'top left',
-            template: '<series-color-picker series="series" onToggleAxis="toggleAxis" onColorChange="colorSelected">' +
-              '</series-color-picker>',
-            openOn: 'hover',
+            position: "bottom left",
+            targetAttachment: "top left",
+            template:
+              '<series-color-picker series="series" onToggleAxis="toggleAxis" onColorChange="colorSelected">' +
+              "</series-color-picker>",
+            openOn: "hover",
             model: {
               series: series,
               toggleAxis: function() {
@@ -66,7 +66,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
               colorSelected: function(color) {
                 ctrl.changeSeriesColor(series, color);
               }
-            },
+            }
           });
         });
       }
@@ -75,16 +75,18 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         var el = $(e.currentTarget);
         var index = getSeriesIndexForElement(el);
         var seriesInfo = seriesList[index];
-        var scrollPosition = $(elem.children('tbody')).scrollTop();
+        var scrollPosition = $(elem.children("tbody")).scrollTop();
         ctrl.toggleSeries(seriesInfo, e);
-        $(elem.children('tbody')).scrollTop(scrollPosition);
+        $(elem.children("tbody")).scrollTop(scrollPosition);
       }
 
       function sortLegend(e) {
         var el = $(e.currentTarget);
-        var stat = el.data('stat');
+        var stat = el.data("stat");
 
-        if (stat !== panel.legend.sort) { panel.legend.sortDesc = null; }
+        if (stat !== panel.legend.sort) {
+          panel.legend.sortDesc = null;
+        }
 
         // if already sort ascending, disable sorting
         if (panel.legend.sortDesc === false) {
@@ -100,15 +102,20 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
       }
 
       function getTableHeaderHtml(statName) {
-        if (!panel.legend[statName]) { return ""; }
-        var html = '<th class="pointer" data-stat="' + statName + '">' + statName;
+        if (!panel.legend[statName]) {
+          return "";
+        }
+        var html =
+          '<th class="pointer" data-stat="' + statName + '">' + statName;
 
         if (panel.legend.sort === statName) {
-          var cssClass = panel.legend.sortDesc ? 'fa fa-caret-down' : 'fa fa-caret-up' ;
+          var cssClass = panel.legend.sortDesc
+            ? "fa fa-caret-down"
+            : "fa fa-caret-up";
           html += ' <span class="' + cssClass + '"></span>';
         }
 
-        return html + '</th>';
+        return html + "</th>";
       }
 
       function render() {
@@ -119,9 +126,9 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         }
 
         if (firstRender) {
-          elem.on('click', '.graph-legend-icon', openColorSelector);
-          elem.on('click', '.graph-legend-alias', toggleSeries);
-          elem.on('click', 'th', sortLegend);
+          elem.on("click", ".graph-legend-icon", openColorSelector);
+          elem.on("click", ".graph-legend-alias", toggleSeries);
+          elem.on("click", "th", sortLegend);
           firstRender = false;
         }
 
@@ -130,23 +137,29 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         elem.empty();
 
         // Set min-width if side style and there is a value, otherwise remove the CSS propery
-        var width = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth + "px" : "";
+        var width =
+          panel.legend.rightSide && panel.legend.sideWidth
+            ? panel.legend.sideWidth + "px"
+            : "";
         elem.css("min-width", width);
 
-        elem.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
+        elem.toggleClass(
+          "graph-legend-table",
+          panel.legend.alignAsTable === true
+        );
 
         var tableHeaderElem;
         if (panel.legend.alignAsTable) {
-          var header = '<tr>';
+          var header = "<tr>";
           header += '<th colspan="2" style="text-align:left"></th>';
           if (panel.legend.values) {
-            header += getTableHeaderHtml('min');
-            header += getTableHeaderHtml('max');
-            header += getTableHeaderHtml('avg');
-            header += getTableHeaderHtml('current');
-            header += getTableHeaderHtml('total');
+            header += getTableHeaderHtml("min");
+            header += getTableHeaderHtml("max");
+            header += getTableHeaderHtml("avg");
+            header += getTableHeaderHtml("current");
+            header += getTableHeaderHtml("total");
           }
-          header += '</tr>';
+          header += "</tr>";
           tableHeaderElem = $(header);
         }
 
@@ -182,14 +195,26 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
 
           var html = '<div class="graph-legend-series';
 
-          if (series.yaxis === 2) { html += ' graph-legend-series--right-y'; }
-          if (ctrl.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
+          if (series.yaxis === 2) {
+            html += " graph-legend-series--right-y";
+          }
+          if (ctrl.hiddenSeries[series.alias]) {
+            html += " graph-legend-series-hidden";
+          }
           html += '" data-series-index="' + i + '">';
           html += '<div class="graph-legend-icon">';
-          html += '<i class="fa fa-minus pointer" style="color:' + series.color + '"></i>';
-          html += '</div>';
+          html +=
+            '<i class="fa fa-minus pointer" style="color:' +
+            series.color +
+            '"></i>';
+          html += "</div>";
 
-          html += '<a class="graph-legend-alias pointer" title="' + series.aliasEscaped + '">' + series.aliasEscaped + '</a>';
+          html +=
+            '<a class="graph-legend-alias pointer" title="' +
+            series.aliasEscaped +
+            '">' +
+            series.aliasEscaped +
+            "</a>";
 
           if (panel.legend.values) {
             var avg = series.formatValue(series.stats.avg);
@@ -198,14 +223,26 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
             var max = series.formatValue(series.stats.max);
             var total = series.formatValue(series.stats.total);
 
-            if (panel.legend.min) { html += '<div class="graph-legend-value min">' + min + '</div>'; }
-            if (panel.legend.max) { html += '<div class="graph-legend-value max">' + max + '</div>'; }
-            if (panel.legend.avg) { html += '<div class="graph-legend-value avg">' + avg + '</div>'; }
-            if (panel.legend.current) { html += '<div class="graph-legend-value current">' + current + '</div>'; }
-            if (panel.legend.total) { html += '<div class="graph-legend-value total">' + total + '</div>'; }
+            if (panel.legend.min) {
+              html += '<div class="graph-legend-value min">' + min + "</div>";
+            }
+            if (panel.legend.max) {
+              html += '<div class="graph-legend-value max">' + max + "</div>";
+            }
+            if (panel.legend.avg) {
+              html += '<div class="graph-legend-value avg">' + avg + "</div>";
+            }
+            if (panel.legend.current) {
+              html +=
+                '<div class="graph-legend-value current">' + current + "</div>";
+            }
+            if (panel.legend.total) {
+              html +=
+                '<div class="graph-legend-value total">' + total + "</div>";
+            }
           }
 
-          html += '</div>';
+          html += "</div>";
           seriesElements.push($(html));
         }
         return seriesElements;
@@ -215,7 +252,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         var seriesElements = renderSeriesLegendElements();
 
         if (panel.legend.alignAsTable) {
-          var tbodyElem = $('<tbody></tbody>');
+          var tbodyElem = $("<tbody></tbody>");
           tbodyElem.append(tableHeaderElem);
           tbodyElem.append(seriesElements);
           elem.append(tbodyElem);

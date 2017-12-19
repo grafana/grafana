@@ -1,18 +1,17 @@
-import angular from 'angular';
-import coreModule from 'app/core/core_module';
+import angular from "angular";
+import coreModule from "app/core/core_module";
 
 export interface AttachedPanel {
   destroy();
 }
 
 export class PanelLoader {
-
   /** @ngInject */
-  constructor(private $compile, private $rootScope) {
-  }
+  constructor(private $compile, private $rootScope) {}
 
   load(elem, panel, dashboard): AttachedPanel {
-    var template = '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
+    var template =
+      '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
     var panelScope = this.$rootScope.$new();
     panelScope.panel = panel;
     panelScope.dashboard = dashboard;
@@ -30,4 +29,4 @@ export class PanelLoader {
   }
 }
 
-coreModule.service('panelLoader', PanelLoader);
+coreModule.service("panelLoader", PanelLoader);

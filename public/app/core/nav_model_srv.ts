@@ -1,6 +1,6 @@
-import coreModule from 'app/core/core_module';
-import config from 'app/core/config';
-import _ from 'lodash';
+import coreModule from "app/core/core_module";
+import config from "app/core/config";
+import _ from "lodash";
 
 export interface NavModelItem {
   text: string;
@@ -34,7 +34,7 @@ export class NavModelSrv {
   }
 
   getCfgNode() {
-    return _.find(this.navItems, {id: 'cfg'});
+    return _.find(this.navItems, { id: "cfg" });
   }
 
   getNav(...args) {
@@ -48,7 +48,7 @@ export class NavModelSrv {
         break;
       }
 
-      let node = _.find(children, {id: id});
+      let node = _.find(children, { id: id });
       nav.breadcrumbs.push(node);
       nav.node = node;
       nav.main = node;
@@ -83,4 +83,4 @@ export class NavModelSrv {
   }
 }
 
-coreModule.service('navModelSrv', NavModelSrv);
+coreModule.service("navModelSrv", NavModelSrv);

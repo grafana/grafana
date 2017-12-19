@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _ from "lodash";
 
 /**
  * This function converts annotation events into set
@@ -7,7 +7,7 @@ import _ from 'lodash';
  * @param options
  */
 export function makeRegions(annotations, options) {
-  let [regionEvents, singleEvents] = _.partition(annotations, 'regionId');
+  let [regionEvents, singleEvents] = _.partition(annotations, "regionId");
   let regions = getRegions(regionEvents, options.range);
   annotations = _.concat(regions, singleEvents);
   return annotations;
@@ -17,7 +17,7 @@ function getRegions(events, range) {
   let region_events = _.filter(events, event => {
     return event.regionId;
   });
-  let regions = _.groupBy(region_events, 'regionId');
+  let regions = _.groupBy(region_events, "regionId");
   regions = _.compact(
     _.map(regions, region_events => {
       let region_obj = _.head(region_events);
@@ -43,7 +43,7 @@ function getRegions(events, range) {
           return region_obj;
         }
       }
-    }),
+    })
   );
 
   return regions;
@@ -57,14 +57,14 @@ export function dedupAnnotations(annotations) {
   let dedup = [];
 
   // Split events by annotationId property existance
-  let events = _.partition(annotations, 'id');
+  let events = _.partition(annotations, "id");
 
-  let eventsById = _.groupBy(events[0], 'id');
+  let eventsById = _.groupBy(events[0], "id");
   dedup = _.map(eventsById, eventGroup => {
     if (eventGroup.length > 1 && !_.every(eventGroup, isPanelAlert)) {
       // Get first non-panel alert
       return _.find(eventGroup, event => {
-        return event.eventType !== 'panel-alert';
+        return event.eventType !== "panel-alert";
       });
     } else {
       return _.head(eventGroup);
@@ -76,5 +76,5 @@ export function dedupAnnotations(annotations) {
 }
 
 function isPanelAlert(event) {
-  return event.eventType === 'panel-alert';
+  return event.eventType === "panel-alert";
 }

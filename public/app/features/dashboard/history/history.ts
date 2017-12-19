@@ -1,16 +1,21 @@
-import './history_srv';
+import "./history_srv";
 
-import _ from 'lodash';
-import angular from 'angular';
-import moment from 'moment';
+import _ from "lodash";
+import angular from "angular";
+import moment from "moment";
 
-import {DashboardModel} from '../dashboard_model';
-import {HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv} from './history_srv';
+import { DashboardModel } from "../dashboard_model";
+import {
+  HistoryListOpts,
+  RevisionsModel,
+  CalculateDiffOptions,
+  HistorySrv
+} from "./history_srv";
 
 export class HistoryListCtrl {
   appending: boolean;
   dashboard: DashboardModel;
-  delta: { basic: string; json: string; };
+  delta: { basic: string; json: string };
   diff: string;
   limit: number;
   loading: boolean;
@@ -24,23 +29,28 @@ export class HistoryListCtrl {
   isNewLatest: boolean;
 
   /** @ngInject */
-  constructor(private $route,
-              private $rootScope,
-              private $location,
-              private $q,
-              private historySrv: HistorySrv,
-              public $scope) {
-
+  constructor(
+    private $route,
+    private $rootScope,
+    private $location,
+    private $q,
+    private historySrv: HistorySrv,
+    public $scope
+  ) {
     this.appending = false;
-    this.diff = 'basic';
+    this.diff = "basic";
     this.limit = 10;
     this.loading = false;
     this.max = 2;
-    this.mode = 'list';
+    this.mode = "list";
     this.start = 0;
     this.canCompare = false;
 
-    this.$rootScope.onAppEvent('dashboard-saved', this.onDashboardSaved.bind(this), $scope);
+    this.$rootScope.onAppEvent(
+      "dashboard-saved",
+      this.onDashboardSaved.bind(this),
+      $scope
+    );
     this.resetFromSource();
   }
 
@@ -50,13 +60,13 @@ export class HistoryListCtrl {
 
   switchMode(mode: string) {
     this.mode = mode;
-    if (this.mode === 'list') {
+    if (this.mode === "list") {
       this.reset();
     }
   }
 
   dismiss() {
-    this.$rootScope.appEvent('hide-dash-editor');
+    this.$rootScope.appEvent("hide-dash-editor");
   }
 
   addToLog() {
@@ -65,7 +75,7 @@ export class HistoryListCtrl {
   }
 
   revisionSelectionChanged() {
-    let selected = _.filter(this.revisions, {checked: true}).length;
+    let selected = _.filter(this.revisions, { checked: true }).length;
     this.canCompare = selected === 2;
   }
 
@@ -74,21 +84,22 @@ export class HistoryListCtrl {
   }
 
   formatBasicDate(date) {
-    const now = this.dashboard.timezone === 'browser' ?  moment() : moment.utc();
-    const then = this.dashboard.timezone === 'browser' ?  moment(date) : moment.utc(date);
+    const now = this.dashboard.timezone === "browser" ? moment() : moment.utc();
+    const then =
+      this.dashboard.timezone === "browser" ? moment(date) : moment.utc(date);
     return then.from(now);
   }
 
   getDiff(diff: string) {
     this.diff = diff;
-    this.mode = 'compare';
+    this.mode = "compare";
 
     // have it already been fetched?
     if (this.delta[this.diff]) {
       return this.$q.when(this.delta[this.diff]);
     }
 
-    const selected = _.filter(this.revisions, {checked: true});
+    const selected = _.filter(this.revisions, { checked: true });
 
     this.newInfo = selected[0];
     this.baseInfo = selected[1];
@@ -98,22 +109,26 @@ export class HistoryListCtrl {
     const options: CalculateDiffOptions = {
       new: {
         dashboardId: this.dashboard.id,
-        version: this.newInfo.version,
+        version: this.newInfo.version
       },
       base: {
         dashboardId: this.dashboard.id,
-        version: this.baseInfo.version,
+        version: this.baseInfo.version
       },
-      diffType: diff,
+      diffType: diff
     };
 
-    return this.historySrv.calculateDiff(options).then(response => {
-      this.delta[this.diff] = response;
-    }).catch(() => {
-      this.mode = 'list';
-    }).finally(() => {
-      this.loading = false;
-    });
+    return this.historySrv
+      .calculateDiff(options)
+      .then(response => {
+        this.delta[this.diff] = response;
+      })
+      .catch(() => {
+        this.mode = "list";
+      })
+      .finally(() => {
+        this.loading = false;
+      });
   }
 
   getLog(append = false) {
@@ -121,25 +136,28 @@ export class HistoryListCtrl {
     this.appending = append;
     const options: HistoryListOpts = {
       limit: this.limit,
-      start: this.start,
+      start: this.start
     };
 
-    return this.historySrv.getHistoryList(this.dashboard, options).then(revisions => {
-      // set formated dates & default values
-      for (let rev of revisions) {
-        rev.createdDateString = this.formatDate(rev.created);
-        rev.ageString = this.formatBasicDate(rev.created);
-        rev.checked = false;
-      }
+    return this.historySrv
+      .getHistoryList(this.dashboard, options)
+      .then(revisions => {
+        // set formated dates & default values
+        for (let rev of revisions) {
+          rev.createdDateString = this.formatDate(rev.created);
+          rev.ageString = this.formatBasicDate(rev.created);
+          rev.checked = false;
+        }
 
-      this.revisions = append ? this.revisions.concat(revisions) : revisions;
-
-    }).catch(err => {
-      this.loading = false;
-    }).finally(() => {
-      this.loading = false;
-      this.appending = false;
-    });
+        this.revisions = append ? this.revisions.concat(revisions) : revisions;
+      })
+      .catch(err => {
+        this.loading = false;
+      })
+      .finally(() => {
+        this.loading = false;
+        this.appending = false;
+      });
   }
 
   isLastPage() {
@@ -147,10 +165,12 @@ export class HistoryListCtrl {
   }
 
   reset() {
-    this.delta = { basic: '', json: '' };
-    this.diff = 'basic';
-    this.mode = 'list';
-    this.revisions = _.map(this.revisions, rev => _.extend({}, rev, { checked: false }));
+    this.delta = { basic: "", json: "" };
+    this.diff = "basic";
+    this.mode = "list";
+    this.revisions = _.map(this.revisions, rev =>
+      _.extend({}, rev, { checked: false })
+    );
     this.canCompare = false;
     this.start = 0;
     this.isNewLatest = false;
@@ -162,40 +182,48 @@ export class HistoryListCtrl {
   }
 
   restore(version: number) {
-    this.$rootScope.appEvent('confirm-modal', {
-      title: 'Restore version',
-      text: '',
+    this.$rootScope.appEvent("confirm-modal", {
+      title: "Restore version",
+      text: "",
       text2: `Are you sure you want to restore the dashboard to version ${version}? All unsaved changes will be lost.`,
-      icon: 'fa-history',
+      icon: "fa-history",
       yesText: `Yes, restore to version ${version}`,
-      onConfirm: this.restoreConfirm.bind(this, version),
+      onConfirm: this.restoreConfirm.bind(this, version)
     });
   }
 
   restoreConfirm(version: number) {
     this.loading = true;
-    return this.historySrv.restoreDashboard(this.dashboard, version).then(response => {
-      this.$location.path('dashboard/db/' + response.slug);
-      this.$route.reload();
-      this.$rootScope.appEvent('alert-success', ['Dashboard restored', 'Restored from version ' + version]);
-    }).catch(() => {
-      this.mode = 'list';
-      this.loading = false;
-    });
+    return this.historySrv
+      .restoreDashboard(this.dashboard, version)
+      .then(response => {
+        this.$location.path("dashboard/db/" + response.slug);
+        this.$route.reload();
+        this.$rootScope.appEvent("alert-success", [
+          "Dashboard restored",
+          "Restored from version " + version
+        ]);
+      })
+      .catch(() => {
+        this.mode = "list";
+        this.loading = false;
+      });
   }
 }
 
 export function dashboardHistoryDirective() {
   return {
-    restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/history/history.html',
+    restrict: "E",
+    templateUrl: "public/app/features/dashboard/history/history.html",
     controller: HistoryListCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
+    controllerAs: "ctrl",
     scope: {
       dashboard: "="
     }
   };
 }
 
-angular.module('grafana.directives').directive('gfDashboardHistory', dashboardHistoryDirective);
+angular
+  .module("grafana.directives")
+  .directive("gfDashboardHistory", dashboardHistoryDirective);

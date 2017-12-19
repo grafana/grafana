@@ -1,32 +1,38 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from 'lodash';
-import moment from 'moment';
+import _ from "lodash";
+import moment from "moment";
 
-var units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
+var units = ["y", "M", "w", "d", "h", "m", "s"];
 
 export function parse(text, roundUp?, timezone?) {
-  if (!text) { return undefined; }
-  if (moment.isMoment(text)) { return text; }
-  if (_.isDate(text)) { return moment(text); }
+  if (!text) {
+    return undefined;
+  }
+  if (moment.isMoment(text)) {
+    return text;
+  }
+  if (_.isDate(text)) {
+    return moment(text);
+  }
 
   var time;
-  var mathString = '';
+  var mathString = "";
   var index;
   var parseString;
 
-  if (text.substring(0, 3) === 'now') {
-    if (timezone === 'utc') {
+  if (text.substring(0, 3) === "now") {
+    if (timezone === "utc") {
       time = moment.utc();
     } else {
       time = moment();
     }
-    mathString = text.substring('now'.length);
+    mathString = text.substring("now".length);
   } else {
-    index = text.indexOf('||');
+    index = text.indexOf("||");
     if (index === -1) {
       parseString = text;
-      mathString = ''; // nothing else
+      mathString = ""; // nothing else
     } else {
       parseString = text.substring(0, index);
       mathString = text.substring(index + 2);
@@ -66,11 +72,11 @@ export function parseDateMath(mathString, time, roundUp?) {
     var num;
     var unit;
 
-    if (c === '/') {
+    if (c === "/") {
       type = 0;
-    } else if (c === '+') {
+    } else if (c === "+") {
       type = 1;
-    } else if (c === '-') {
+    } else if (c === "-") {
       type = 2;
     } else {
       return undefined;
@@ -84,7 +90,9 @@ export function parseDateMath(mathString, time, roundUp?) {
       var numFrom = i;
       while (!isNaN(mathString.charAt(i))) {
         i++;
-        if (i > 10) { return undefined; }
+        if (i > 10) {
+          return undefined;
+        }
       }
       num = parseInt(mathString.substring(numFrom, i), 10);
     }
@@ -115,4 +123,3 @@ export function parseDateMath(mathString, time, roundUp?) {
   }
   return dateTime;
 }
-

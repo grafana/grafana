@@ -1,16 +1,17 @@
-import _ from 'lodash';
+import _ from "lodash";
 
 export default class ResponseParser {
-
   parse(query, results) {
-    if (!results || results.results.length === 0) { return []; }
+    if (!results || results.results.length === 0) {
+      return [];
+    }
 
     var influxResults = results.results[0];
     if (!influxResults.series) {
       return [];
     }
 
-    var influxdb11format = query.toLowerCase().indexOf('show tag values') >= 0;
+    var influxdb11format = query.toLowerCase().indexOf("show tag values") >= 0;
 
     var res = {};
     _.each(influxResults.series, serie => {
@@ -28,7 +29,7 @@ export default class ResponseParser {
     });
 
     return _.map(res, value => {
-      return { text: value};
+      return { text: value };
     });
   }
 }

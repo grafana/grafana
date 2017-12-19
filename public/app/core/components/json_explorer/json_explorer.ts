@@ -8,9 +8,9 @@ import {
   getValuePreview,
   cssClass,
   createElement
-} from './helpers';
+} from "./helpers";
 
-import _ from 'lodash';
+import _ from "lodash";
 
 const DATE_STRING_REGEX = /(^\d{1,4}[\.|\\/|-]\d{1,2}[\.|\\/|-]\d{1,4})(\s*(?:0?[1-9]:[0-5]|1(?=[012])\d:[0-5])\d\s*[ap]m)?$/;
 const PARTIAL_DATE_REGEX = /\d{2}:\d{2}:\d{2} GMT-\d{4}/;
@@ -19,7 +19,12 @@ const JSON_DATE_REGEX = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
 // When toggleing, don't animated removal or addition of more than a few items
 const MAX_ANIMATED_TOGGLE_ITEMS = 10;
 
-const requestAnimationFrame = window.requestAnimationFrame || function(cb: ()=>void) { cb(); return 0; };
+const requestAnimationFrame =
+  window.requestAnimationFrame ||
+  function(cb: () => void) {
+    cb();
+    return 0;
+  };
 
 export interface JsonExplorerConfig {
   animateOpen?: boolean;
@@ -33,15 +38,13 @@ const _defaultConfig: JsonExplorerConfig = {
   theme: null
 };
 
-
 /**
  * @class JsonExplorer
  *
  * JsonExplorer allows you to render JSON objects in HTML with a
  * **collapsible** navigation.
-*/
+ */
 export class JsonExplorer {
-
   // Hold the open state after the toggler is used
   private _isOpen: boolean = null;
 
@@ -77,9 +80,13 @@ export class JsonExplorer {
    *
    * @param {string} [key=undefined] The key that this object in it's parent
    * context
-  */
-  constructor(public json: any, private open = 1, private config: JsonExplorerConfig = _defaultConfig, private key?: string) {
-  }
+   */
+  constructor(
+    public json: any,
+    private open = 1,
+    private config: JsonExplorerConfig = _defaultConfig,
+    private key?: string
+  ) {}
 
   /*
    * is formatter open?
@@ -103,17 +110,19 @@ export class JsonExplorer {
    * is this a date string?
   */
   private get isDate(): boolean {
-    return (this.type === 'string') &&
+    return (
+      this.type === "string" &&
       (DATE_STRING_REGEX.test(this.json) ||
-      JSON_DATE_REGEX.test(this.json) ||
-      PARTIAL_DATE_REGEX.test(this.json));
+        JSON_DATE_REGEX.test(this.json) ||
+        PARTIAL_DATE_REGEX.test(this.json))
+    );
   }
 
   /*
    * is this a URL string?
   */
   private get isUrl(): boolean {
-    return this.type === 'string' && (this.json.indexOf('http') === 0);
+    return this.type === "string" && this.json.indexOf("http") === 0;
   }
 
   /*
@@ -142,7 +151,9 @@ export class JsonExplorer {
    * is this an empty object or array?
   */
   private get isEmpty(): boolean {
-    return this.isEmptyObject || (this.keys && !this.keys.length && this.isArray);
+    return (
+      this.isEmptyObject || (this.keys && !this.keys.length && this.isArray)
+    );
   }
 
   /*
@@ -150,7 +161,7 @@ export class JsonExplorer {
    * This means that the formatter was called as a sub formatter of a parent formatter
   */
   private get hasKey(): boolean {
-    return typeof this.key !== 'undefined';
+    return typeof this.key !== "undefined";
   }
 
   /*
@@ -174,7 +185,7 @@ export class JsonExplorer {
   */
   private get keys(): string[] {
     if (this.isObject) {
-      return Object.keys(this.json).map((key)=> key ? key : '""');
+      return Object.keys(this.json).map(key => (key ? key : '""'));
     } else {
       return [];
     }
@@ -183,7 +194,7 @@ export class JsonExplorer {
   /**
    * Toggles `isOpen` state
    *
-  */
+   */
   toggleOpen() {
     this.isOpen = !this.isOpen;
 
@@ -193,58 +204,65 @@ export class JsonExplorer {
       } else {
         this.removeChildren(this.config.animateClose);
       }
-      this.element.classList.toggle(cssClass('open'));
+      this.element.classList.toggle(cssClass("open"));
     }
   }
 
   /**
-  * Open all children up to a certain depth.
-  * Allows actions such as expand all/collapse all
-  *
-  */
+   * Open all children up to a certain depth.
+   * Allows actions such as expand all/collapse all
+   *
+   */
   openAtDepth(depth = 1) {
     if (depth < 0) {
       return;
     }
 
     this.open = depth;
-    this.isOpen = (depth !== 0);
+    this.isOpen = depth !== 0;
 
     if (this.element) {
       this.removeChildren(false);
 
       if (depth === 0) {
-        this.element.classList.remove(cssClass('open'));
+        this.element.classList.remove(cssClass("open"));
       } else {
         this.appendChildren(this.config.animateOpen);
-        this.element.classList.add(cssClass('open'));
+        this.element.classList.add(cssClass("open"));
       }
     }
   }
 
   isNumberArray() {
-    return (this.json.length > 0 && this.json.length < 4) &&
-      (_.isNumber(this.json[0]) || _.isNumber(this.json[1]));
+    return (
+      this.json.length > 0 &&
+      this.json.length < 4 &&
+      (_.isNumber(this.json[0]) || _.isNumber(this.json[1]))
+    );
   }
 
   renderArray() {
-    const arrayWrapperSpan = createElement('span');
-    arrayWrapperSpan.appendChild(createElement('span', 'bracket', '['));
+    const arrayWrapperSpan = createElement("span");
+    arrayWrapperSpan.appendChild(createElement("span", "bracket", "["));
 
     // some pretty handling of number arrays
     if (this.isNumberArray()) {
       this.json.forEach((val, index) => {
         if (index > 0) {
-          arrayWrapperSpan.appendChild(createElement('span', 'array-comma', ','));
+          arrayWrapperSpan.appendChild(
+            createElement("span", "array-comma", ",")
+          );
         }
-        arrayWrapperSpan.appendChild(createElement('span', 'number', val));
+        arrayWrapperSpan.appendChild(createElement("span", "number", val));
       });
       this.skipChildren = true;
     } else {
-      arrayWrapperSpan.appendChild(createElement('span', 'number', (this.json.length)));
+      arrayWrapperSpan.appendChild(
+        createElement("span", "number", this.json.length)
+      );
     }
 
-    arrayWrapperSpan.appendChild(createElement('span', 'bracket', ']'));
+    arrayWrapperSpan.appendChild(createElement("span", "bracket", "]"));
     return arrayWrapperSpan;
   }
 
@@ -255,11 +273,11 @@ export class JsonExplorer {
    */
   render(skipRoot = false): HTMLDivElement {
     // construct the root element and assign it to this.element
-    this.element = createElement('div', 'row');
+    this.element = createElement("div", "row");
 
     // construct the toggler link
-    const togglerLink = createElement('a', 'toggler-link');
-    const togglerIcon = createElement('span', 'toggler');
+    const togglerLink = createElement("a", "toggler-link");
+    const togglerIcon = createElement("span", "toggler");
 
     // if this is an object we need a wrapper span (toggler)
     if (this.isObject) {
@@ -268,19 +286,23 @@ export class JsonExplorer {
 
     // if this is child of a parent formatter we need to append the key
     if (this.hasKey) {
-      togglerLink.appendChild(createElement('span', 'key', `${this.key}:`));
+      togglerLink.appendChild(createElement("span", "key", `${this.key}:`));
     }
 
     // Value for objects and arrays
     if (this.isObject) {
       // construct the value holder element
-      const value = createElement('span', 'value');
+      const value = createElement("span", "value");
 
       // we need a wrapper span for objects
-      const objectWrapperSpan = createElement('span');
+      const objectWrapperSpan = createElement("span");
 
       // get constructor name and append it to wrapper span
-      var constructorName = createElement('span', 'constructor-name', this.constructorName);
+      var constructorName = createElement(
+        "span",
+        "constructor-name",
+        this.constructorName
+      );
       objectWrapperSpan.appendChild(constructorName);
 
       // if it's an array append the array specific elements like brackets and length
@@ -294,18 +316,17 @@ export class JsonExplorer {
       togglerLink.appendChild(value);
       // Primitive values
     } else {
-
       // make a value holder element
-      const value = this.isUrl ? createElement('a') : createElement('span');
+      const value = this.isUrl ? createElement("a") : createElement("span");
 
       // add type and other type related CSS classes
       value.classList.add(cssClass(this.type));
       if (this.isDate) {
-        value.classList.add(cssClass('date'));
+        value.classList.add(cssClass("date"));
       }
       if (this.isUrl) {
-        value.classList.add(cssClass('url'));
-        value.setAttribute('href', this.json);
+        value.classList.add(cssClass("url"));
+        value.setAttribute("href", this.json);
       }
 
       // Append value content to value element
@@ -317,17 +338,17 @@ export class JsonExplorer {
     }
 
     // construct a children element
-    const children = createElement('div', 'children');
+    const children = createElement("div", "children");
 
     // set CSS classes for children
     if (this.isObject) {
-      children.classList.add(cssClass('object'));
+      children.classList.add(cssClass("object"));
     }
     if (this.isArray) {
-      children.classList.add(cssClass('array'));
+      children.classList.add(cssClass("array"));
     }
     if (this.isEmpty) {
-      children.classList.add(cssClass('empty'));
+      children.classList.add(cssClass("empty"));
     }
 
     // set CSS classes for root element
@@ -335,7 +356,7 @@ export class JsonExplorer {
       this.element.classList.add(cssClass(this.config.theme));
     }
     if (this.isOpen) {
-      this.element.classList.add(cssClass('open'));
+      this.element.classList.add(cssClass("open"));
     }
 
     // append toggler and children elements to root element
@@ -357,7 +378,7 @@ export class JsonExplorer {
 
     // add event listener for toggling
     if (this.isObject) {
-      togglerLink.addEventListener('click', this.toggleOpen.bind(this));
+      togglerLink.addEventListener("click", this.toggleOpen.bind(this));
     }
 
     return this.element as HTMLDivElement;
@@ -366,17 +387,24 @@ export class JsonExplorer {
   /**
    * Appends all the children to children element
    * Animated option is used when user triggers this via a click
-  */
+   */
   appendChildren(animated = false) {
-    const children = this.element.querySelector(`div.${cssClass('children')}`);
+    const children = this.element.querySelector(`div.${cssClass("children")}`);
 
-    if (!children || this.isEmpty) { return; }
+    if (!children || this.isEmpty) {
+      return;
+    }
 
     if (animated) {
       let index = 0;
-      const addAChild = ()=> {
+      const addAChild = () => {
         const key = this.keys[index];
-        const formatter = new JsonExplorer(this.json[key], this.open - 1, this.config, key);
+        const formatter = new JsonExplorer(
+          this.json[key],
+          this.open - 1,
+          this.config,
+          key
+        );
         children.appendChild(formatter.render());
 
         index += 1;
@@ -391,10 +419,14 @@ export class JsonExplorer {
       };
 
       requestAnimationFrame(addAChild);
-
     } else {
       this.keys.forEach(key => {
-        const formatter = new JsonExplorer(this.json[key], this.open - 1, this.config, key);
+        const formatter = new JsonExplorer(
+          this.json[key],
+          this.open - 1,
+          this.config,
+          key
+        );
         children.appendChild(formatter.render());
       });
     }
@@ -403,13 +435,15 @@ export class JsonExplorer {
   /**
    * Removes all the children from children element
    * Animated option is used when user triggers this via a click
-  */
+   */
   removeChildren(animated = false) {
-    const childrenElement = this.element.querySelector(`div.${cssClass('children')}`) as HTMLDivElement;
+    const childrenElement = this.element.querySelector(
+      `div.${cssClass("children")}`
+    ) as HTMLDivElement;
 
     if (animated) {
       let childrenRemoved = 0;
-      const removeAChild = ()=> {
+      const removeAChild = () => {
         if (childrenElement && childrenElement.children.length) {
           childrenElement.removeChild(childrenElement.children[0]);
           childrenRemoved += 1;
@@ -423,7 +457,7 @@ export class JsonExplorer {
       requestAnimationFrame(removeAChild);
     } else {
       if (childrenElement) {
-        childrenElement.innerHTML = '';
+        childrenElement.innerHTML = "";
       }
     }
   }

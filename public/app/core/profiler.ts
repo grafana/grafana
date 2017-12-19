@@ -1,5 +1,5 @@
-import $ from 'jquery';
-import angular from 'angular';
+import $ from "jquery";
+import angular from "angular";
 
 export class Profiler {
   panelsRendered: number;
@@ -11,7 +11,7 @@ export class Profiler {
   scopeCount: any;
 
   init(config, $rootScope) {
-    this.enabled = config.buildInfo.env === 'development';
+    this.enabled = config.buildInfo.env === "development";
     this.timings = {};
     this.timings.appStart = { loadStart: new Date().getTime() };
     this.$rootScope = $rootScope;
@@ -20,15 +20,30 @@ export class Profiler {
       return;
     }
 
-    $rootScope.$watch(() => {
-      this.digestCounter++;
-      return false;
-    }, () => {});
+    $rootScope.$watch(
+      () => {
+        this.digestCounter++;
+        return false;
+      },
+      () => {}
+    );
 
-    $rootScope.onAppEvent('refresh', this.refresh.bind(this), $rootScope);
-    $rootScope.onAppEvent('dashboard-fetch-end', this.dashboardFetched.bind(this), $rootScope);
-    $rootScope.onAppEvent('dashboard-initialized', this.dashboardInitialized.bind(this), $rootScope);
-    $rootScope.onAppEvent('panel-initialized', this.panelInitialized.bind(this), $rootScope);
+    $rootScope.onAppEvent("refresh", this.refresh.bind(this), $rootScope);
+    $rootScope.onAppEvent(
+      "dashboard-fetch-end",
+      this.dashboardFetched.bind(this),
+      $rootScope
+    );
+    $rootScope.onAppEvent(
+      "dashboard-initialized",
+      this.dashboardInitialized.bind(this),
+      $rootScope
+    );
+    $rootScope.onAppEvent(
+      "panel-initialized",
+      this.panelInitialized.bind(this),
+      $rootScope
+    );
   }
 
   refresh() {
@@ -36,10 +51,10 @@ export class Profiler {
     this.timings.render = 0;
 
     setTimeout(() => {
-      console.log('panel count: ' + this.panelsInitCount);
-      console.log('total query: ' + this.timings.query);
-      console.log('total render: ' + this.timings.render);
-      console.log('avg render: ' + this.timings.render / this.panelsInitCount);
+      console.log("panel count: " + this.panelsInitCount);
+      console.log("total query: " + this.timings.query);
+      console.log("total render: " + this.timings.render);
+      console.log("avg render: " + this.timings.render / this.panelsInitCount);
     }, 5000);
   }
 
@@ -55,12 +70,21 @@ export class Profiler {
 
   dashboardInitialized() {
     setTimeout(() => {
-      console.log("Dashboard::Performance Total Digests: " + this.digestCounter);
-      console.log("Dashboard::Performance Total Watchers: " + this.getTotalWatcherCount());
-      console.log("Dashboard::Performance Total ScopeCount: " + this.scopeCount);
+      console.log(
+        "Dashboard::Performance Total Digests: " + this.digestCounter
+      );
+      console.log(
+        "Dashboard::Performance Total Watchers: " + this.getTotalWatcherCount()
+      );
+      console.log(
+        "Dashboard::Performance Total ScopeCount: " + this.scopeCount
+      );
 
-      var timeTaken = this.timings.lastPanelInitializedAt - this.timings.dashboardLoadStart;
-      console.log("Dashboard::Performance All panels initialized in " + timeTaken + " ms");
+      var timeTaken =
+        this.timings.lastPanelInitializedAt - this.timings.dashboardLoadStart;
+      console.log(
+        "Dashboard::Performance All panels initialized in " + timeTaken + " ms"
+      );
 
       // measure digest performance
       var rootDigestStart = window.performance.now();
@@ -68,24 +92,27 @@ export class Profiler {
         this.$rootScope.$apply();
       }
 
-      console.log("Dashboard::Performance Root Digest " + ((window.performance.now() - rootDigestStart) / 30));
+      console.log(
+        "Dashboard::Performance Root Digest " +
+          (window.performance.now() - rootDigestStart) / 30
+      );
     }, 3000);
   }
 
   getTotalWatcherCount() {
     var count = 0;
     var scopes = 0;
-    var root = $(document.getElementsByTagName('body'));
+    var root = $(document.getElementsByTagName("body"));
 
-    var f = function (element) {
-      if (element.data().hasOwnProperty('$scope')) {
+    var f = function(element) {
+      if (element.data().hasOwnProperty("$scope")) {
         scopes++;
-        angular.forEach(element.data().$scope.$$watchers, function () {
+        angular.forEach(element.data().$scope.$$watchers, function() {
           count++;
         });
       }
 
-      angular.forEach(element.children(), function (childElement) {
+      angular.forEach(element.children(), function(childElement) {
         f($(childElement));
       });
     };
@@ -116,8 +143,7 @@ export class Profiler {
     this.panelsInitCount++;
     this.timings.lastPanelInitializedAt = new Date().getTime();
   }
-
 }
 
 var profiler = new Profiler();
-export {profiler};
+export { profiler };

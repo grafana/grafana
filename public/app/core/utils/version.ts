@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import _ from "lodash";
 
 const versionPattern = /^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z\.]+))?/;
 
@@ -20,7 +20,11 @@ export class SemVersion {
 
   isGtOrEq(version: string): boolean {
     let compared = new SemVersion(version);
-    return !(this.major < compared.major || this.minor < compared.minor || this.patch < compared.patch);
+    return !(
+      this.major < compared.major ||
+      this.minor < compared.minor ||
+      this.patch < compared.patch
+    );
   }
 
   isValid(): boolean {

@@ -1,6 +1,6 @@
-import _ from 'lodash';
-import coreModule from 'app/core/core_module';
-import {DashboardModel} from '../dashboard_model';
+import _ from "lodash";
+import coreModule from "app/core/core_module";
+import { DashboardModel } from "../dashboard_model";
 
 export interface HistoryListOpts {
   limit: number;
@@ -36,18 +36,22 @@ export class HistorySrv {
 
   getHistoryList(dashboard: DashboardModel, options: HistoryListOpts) {
     const id = dashboard && dashboard.id ? dashboard.id : void 0;
-    return id ? this.backendSrv.get(`api/dashboards/id/${id}/versions`, options) : this.$q.when([]);
+    return id
+      ? this.backendSrv.get(`api/dashboards/id/${id}/versions`, options)
+      : this.$q.when([]);
   }
 
   calculateDiff(options: CalculateDiffOptions) {
-    return this.backendSrv.post('api/dashboards/calculate-diff', options);
+    return this.backendSrv.post("api/dashboards/calculate-diff", options);
   }
 
   restoreDashboard(dashboard: DashboardModel, version: number) {
     const id = dashboard && dashboard.id ? dashboard.id : void 0;
     const url = `api/dashboards/id/${id}/restore`;
-    return id && _.isNumber(version) ? this.backendSrv.post(url, { version }) : this.$q.when({});
+    return id && _.isNumber(version)
+      ? this.backendSrv.post(url, { version })
+      : this.$q.when({});
   }
 }
 
-coreModule.service('historySrv', HistorySrv);
+coreModule.service("historySrv", HistorySrv);

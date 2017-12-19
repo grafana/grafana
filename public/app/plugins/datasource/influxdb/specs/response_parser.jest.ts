@@ -1,20 +1,19 @@
-import _ from 'lodash';
-import ResponseParser from '../response_parser';
+import _ from "lodash";
+import ResponseParser from "../response_parser";
 
-describe('influxdb response parser', () => {
-
+describe("influxdb response parser", () => {
   const parser = new ResponseParser();
 
   describe("SHOW TAG response", () => {
     var query = 'SHOW TAG KEYS FROM "cpu"';
     var response = {
-      "results": [
+      results: [
         {
-          "series": [
+          series: [
             {
-              "name": "cpu",
-              "columns": ["tagKey"],
-              "values": [ ["datacenter"], ["hostname"], ["source"] ]
+              name: "cpu",
+              columns: ["tagKey"],
+              values: [["datacenter"], ["hostname"], ["source"]]
             }
           ]
         }
@@ -33,13 +32,13 @@ describe('influxdb response parser', () => {
 
     describe("response from 0.10.0", () => {
       var response = {
-        "results": [
+        results: [
           {
-            "series": [
+            series: [
               {
-                "name": "hostnameTagValues",
-                "columns": ["hostname"],
-                "values": [ ["server1"], ["server2"], ["server2"] ]
+                name: "hostnameTagValues",
+                columns: ["hostname"],
+                values: [["server1"], ["server2"], ["server2"]]
               }
             ]
           }
@@ -57,27 +56,21 @@ describe('influxdb response parser', () => {
 
     describe("response from 0.12.0", () => {
       var response = {
-        "results": [
-           {
-             "series": [
-               {
-                 "name": "cpu",
-                 "columns": [ "key", "value"],
-                 "values": [
-                   [ "source", "site" ],
-                   [ "source", "api" ]
-                 ]
-               },
-               {
-                 "name": "logins",
-                 "columns": [ "key", "value"],
-                 "values": [
-                   [ "source", "site" ],
-                   [ "source", "webapi"]
-                 ]
-               },
-             ]
-           }
+        results: [
+          {
+            series: [
+              {
+                name: "cpu",
+                columns: ["key", "value"],
+                values: [["source", "site"], ["source", "api"]]
+              },
+              {
+                name: "logins",
+                columns: ["key", "value"],
+                values: [["source", "site"], ["source", "webapi"]]
+              }
+            ]
+          }
         ]
       };
 
@@ -85,9 +78,9 @@ describe('influxdb response parser', () => {
 
       it("should get two responses", () => {
         expect(_.size(result)).toBe(3);
-        expect(result[0].text).toBe('site');
-        expect(result[1].text).toBe('api');
-        expect(result[2].text).toBe('webapi');
+        expect(result[0].text).toBe("site");
+        expect(result[1].text).toBe("api");
+        expect(result[2].text).toBe("webapi");
       });
     });
   });
@@ -96,14 +89,19 @@ describe('influxdb response parser', () => {
     var query = 'SHOW FIELD KEYS FROM "cpu"';
     describe("response from 0.10.0", () => {
       var response = {
-        "results": [
+        results: [
           {
-            "series": [
+            series: [
               {
-                "name": "measurements",
-                "columns": ["name"],
-                "values": [
-                  ["cpu"], ["derivative"], ["logins.count"], ["logs"], ["payment.ended"], ["payment.started"]
+                name: "measurements",
+                columns: ["name"],
+                values: [
+                  ["cpu"],
+                  ["derivative"],
+                  ["logins.count"],
+                  ["logs"],
+                  ["payment.ended"],
+                  ["payment.started"]
                 ]
               }
             ]
@@ -119,13 +117,13 @@ describe('influxdb response parser', () => {
 
     describe("response from 0.11.0", () => {
       var response = {
-        "results": [
+        results: [
           {
-            "series": [
+            series: [
               {
-                "name": "cpu",
-                "columns": ["fieldKey"],
-                "values": [ [ "value"] ]
+                name: "cpu",
+                columns: ["fieldKey"],
+                values: [["value"]]
               }
             ]
           }

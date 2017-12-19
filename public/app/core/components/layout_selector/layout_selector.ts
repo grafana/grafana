@@ -1,5 +1,5 @@
-import store from 'app/core/store';
-import coreModule from 'app/core/core_module';
+import store from "app/core/store";
+import coreModule from "app/core/core_module";
 
 var template = `
 <div class="layout-selector">
@@ -17,53 +17,56 @@ export class LayoutSelectorCtrl {
 
   /** @ngInject **/
   constructor(private $rootScope) {
-    this.mode = store.get('grafana.list.layout.mode') || 'grid';
+    this.mode = store.get("grafana.list.layout.mode") || "grid";
   }
 
   listView() {
-    this.mode = 'list';
-    store.set('grafana.list.layout.mode', 'list');
-    this.$rootScope.appEvent('layout-mode-changed', 'list');
+    this.mode = "list";
+    store.set("grafana.list.layout.mode", "list");
+    this.$rootScope.appEvent("layout-mode-changed", "list");
   }
 
   gridView() {
-    this.mode = 'grid';
-    store.set('grafana.list.layout.mode', 'grid');
-    this.$rootScope.appEvent('layout-mode-changed', 'grid');
+    this.mode = "grid";
+    store.set("grafana.list.layout.mode", "grid");
+    this.$rootScope.appEvent("layout-mode-changed", "grid");
   }
-
 }
 
 /** @ngInject **/
 export function layoutSelector() {
   return {
-    restrict: 'E',
+    restrict: "E",
     controller: LayoutSelectorCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
+    controllerAs: "ctrl",
     scope: {},
-    template: template,
+    template: template
   };
 }
 
 /** @ngInject **/
 export function layoutMode($rootScope) {
   return {
-    restrict: 'A',
+    restrict: "A",
     scope: {},
     link: function(scope, elem) {
-      var layout = store.get('grafana.list.layout.mode') || 'grid';
-      var className = 'card-list-layout-' + layout;
+      var layout = store.get("grafana.list.layout.mode") || "grid";
+      var className = "card-list-layout-" + layout;
       elem.addClass(className);
 
-      $rootScope.onAppEvent('layout-mode-changed', (evt, newLayout) => {
-        elem.removeClass(className);
-        className = 'card-list-layout-' + newLayout;
-        elem.addClass(className);
-      }, scope);
+      $rootScope.onAppEvent(
+        "layout-mode-changed",
+        (evt, newLayout) => {
+          elem.removeClass(className);
+          className = "card-list-layout-" + newLayout;
+          elem.addClass(className);
+        },
+        scope
+      );
     }
   };
 }
 
-coreModule.directive('layoutSelector', layoutSelector);
-coreModule.directive('layoutMode', layoutMode);
+coreModule.directive("layoutSelector", layoutSelector);
+coreModule.directive("layoutMode", layoutMode);

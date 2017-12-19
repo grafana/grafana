@@ -1,8 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import coreModule from '../../core/core_module';
-import kbn from 'app/core/utils/kbn';
-import appEvents from 'app/core/app_events';
+import coreModule from "../../core/core_module";
+import kbn from "app/core/utils/kbn";
+import appEvents from "app/core/app_events";
 
 class PlaylistSrv {
   private cancelPromise: any;
@@ -18,7 +18,7 @@ class PlaylistSrv {
     private $timeout: any,
     private backendSrv: any,
     private $routeParams: any
-    ) { }
+  ) {}
 
   next() {
     this.$timeout.cancel(this.cancelPromise);
@@ -31,18 +31,18 @@ class PlaylistSrv {
     }
 
     var dash = this.dashboards[this.index];
-    this.$location.url('dashboard/' + dash.uri);
+    this.$location.url("dashboard/" + dash.uri);
 
     this.index++;
     this.cancelPromise = this.$timeout(() => this.next(), this.interval);
   }
 
   getUrlWithKioskMode() {
-    const inKioskMode = document.body.classList.contains('page-kiosk-mode');
+    const inKioskMode = document.body.classList.contains("page-kiosk-mode");
 
     // check if should add kiosk query param
-    if (inKioskMode && this.startUrl.indexOf('kiosk') === -1) {
-      return this.startUrl + '?kiosk=true';
+    if (inKioskMode && this.startUrl.indexOf("kiosk") === -1) {
+      return this.startUrl + "?kiosk=true";
     }
 
     // check if should remove kiosk query param
@@ -67,15 +67,17 @@ class PlaylistSrv {
     this.isPlaying = true;
 
     if (this.$routeParams.kiosk) {
-      appEvents.emit('toggle-kiosk-mode');
+      appEvents.emit("toggle-kiosk-mode");
     }
 
     this.backendSrv.get(`/api/playlists/${playlistId}`).then(playlist => {
-      this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then(dashboards => {
-        this.dashboards = dashboards;
-        this.interval = kbn.interval_to_ms(playlist.interval);
-        this.next();
-      });
+      this.backendSrv
+        .get(`/api/playlists/${playlistId}/dashboards`)
+        .then(dashboards => {
+          this.dashboards = dashboards;
+          this.interval = kbn.interval_to_ms(playlist.interval);
+          this.next();
+        });
     });
   }
 
@@ -89,4 +91,4 @@ class PlaylistSrv {
   }
 }
 
-coreModule.service('playlistSrv', PlaylistSrv);
+coreModule.service("playlistSrv", PlaylistSrv);

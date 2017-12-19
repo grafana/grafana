@@ -1,5 +1,4 @@
 export class Store {
-
   get(key) {
     return window.localStorage[key];
   }
@@ -12,7 +11,7 @@ export class Store {
     if (def !== void 0 && !this.exists(key)) {
       return def;
     }
-    return window.localStorage[key] === 'true';
+    return window.localStorage[key] === "true";
   }
 
   exists(key) {
@@ -22,7 +21,6 @@ export class Store {
   delete(key) {
     window.localStorage.removeItem(key);
   }
-
 }
 
 const store = new Store();

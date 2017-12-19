@@ -1,7 +1,6 @@
-import angular from 'angular';
+import angular from "angular";
 
-export class SoloPanelCtrl{
-
+export class SoloPanelCtrl {
   /** @ngInject */
   constructor($scope, $routeParams, $location, dashboardLoaderSrv, contextSrv) {
     var panelId;
@@ -14,10 +13,12 @@ export class SoloPanelCtrl{
 
       $scope.onAppEvent("dashboard-initialized", $scope.initPanelScope);
 
-      dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
-        result.meta.soloMode = true;
-        $scope.initDashboard(result, $scope);
-      });
+      dashboardLoaderSrv
+        .loadDashboard($routeParams.type, $routeParams.slug)
+        .then(function(result) {
+          result.meta.soloMode = true;
+          $scope.initDashboard(result, $scope);
+        });
     };
 
     $scope.initPanelScope = function() {
@@ -25,7 +26,7 @@ export class SoloPanelCtrl{
 
       // fake row ctrl scope
       $scope.ctrl = {
-        dashboard: $scope.dashboard,
+        dashboard: $scope.dashboard
       };
 
       $scope.panel = panelInfo.panel;
@@ -33,7 +34,7 @@ export class SoloPanelCtrl{
       $scope.$index = 0;
 
       if (!$scope.panel) {
-        $scope.appEvent('alert-error', ['Panel not found', '']);
+        $scope.appEvent("alert-error", ["Panel not found", ""]);
         return;
       }
     };
@@ -42,4 +43,4 @@ export class SoloPanelCtrl{
   }
 }
 
-angular.module('grafana.routes').controller('SoloPanelCtrl', SoloPanelCtrl);
+angular.module("grafana.routes").controller("SoloPanelCtrl", SoloPanelCtrl);

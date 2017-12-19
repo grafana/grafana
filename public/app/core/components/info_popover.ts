@@ -1,35 +1,35 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from 'lodash';
-import coreModule from 'app/core/core_module';
-import Drop from 'tether-drop';
+import _ from "lodash";
+import coreModule from "app/core/core_module";
+import Drop from "tether-drop";
 
 export function infoPopover() {
   return {
-    restrict: 'E',
+    restrict: "E",
     template: '<i class="fa fa-info-circle"></i>',
     transclude: true,
     link: function(scope, elem, attrs, ctrl, transclude) {
-      var offset = attrs.offset || '0 -10px';
-      var position = attrs.position || 'right middle';
-      var classes = 'drop-help drop-hide-out-of-bounds';
-      var openOn = 'hover';
+      var offset = attrs.offset || "0 -10px";
+      var position = attrs.position || "right middle";
+      var classes = "drop-help drop-hide-out-of-bounds";
+      var openOn = "hover";
 
-      elem.addClass('gf-form-help-icon');
+      elem.addClass("gf-form-help-icon");
 
       if (attrs.wide) {
-        classes += ' drop-wide';
+        classes += " drop-wide";
       }
 
       if (attrs.mode) {
-        elem.addClass('gf-form-help-icon--' + attrs.mode);
+        elem.addClass("gf-form-help-icon--" + attrs.mode);
       }
 
       transclude(function(clone, newScope) {
         var content = document.createElement("div");
-        content.className = 'markdown-html';
+        content.className = "markdown-html";
 
-        _.each(clone, (node) => {
+        _.each(clone, node => {
           content.appendChild(node);
         });
 
@@ -43,23 +43,22 @@ export function infoPopover() {
           tetherOptions: {
             offset: offset,
             constraints: [
-                {
-                  to: 'window',
-                  attachment: 'together',
-                  pin: true
-                }
-              ],
+              {
+                to: "window",
+                attachment: "together",
+                pin: true
+              }
+            ]
           }
         });
 
-        var unbind = scope.$on('$destroy', function() {
+        var unbind = scope.$on("$destroy", function() {
           drop.destroy();
           unbind();
         });
-
       });
     }
   };
 }
 
-coreModule.directive('infoPopover', infoPopover);
+coreModule.directive("infoPopover", infoPopover);

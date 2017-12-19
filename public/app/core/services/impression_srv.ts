@@ -1,6 +1,6 @@
-import store from 'app/core/store';
-import _ from 'lodash';
-import config from 'app/core/config';
+import store from "app/core/store";
+import _ from "lodash";
+import config from "app/core/config";
 
 export class ImpressionSrv {
   constructor() {}
@@ -15,7 +15,7 @@ export class ImpressionSrv {
       }
     }
 
-    impressions = impressions.filter((imp) => {
+    impressions = impressions.filter(imp => {
       return dashboardId !== imp;
     });
 

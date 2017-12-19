@@ -1,5 +1,5 @@
-import coreModule from 'app/core/core_module';
-import _ from 'lodash';
+import coreModule from "app/core/core_module";
+import _ from "lodash";
 
 const template = `
 <div class="dropdown">
@@ -17,36 +17,43 @@ export class TeamPickerCtrl {
 
   /** @ngInject */
   constructor(private backendSrv) {
-    this.debouncedSearchGroups = _.debounce(this.searchGroups, 500, {'leading': true, 'trailing': false});
+    this.debouncedSearchGroups = _.debounce(this.searchGroups, 500, {
+      leading: true,
+      trailing: false
+    });
     this.reset();
   }
 
   reset() {
-    this.group = {text: 'Choose', value: null};
+    this.group = { text: "Choose", value: null };
   }
 
   searchGroups(query: string) {
-    return Promise.resolve(this.backendSrv.get('/api/teams/search?perpage=10&page=1&query=' + query).then(result => {
-      return _.map(result.teams, ug => {
-        return {text: ug.name, value: ug};
-      });
-    }));
+    return Promise.resolve(
+      this.backendSrv
+        .get("/api/teams/search?perpage=10&page=1&query=" + query)
+        .then(result => {
+          return _.map(result.teams, ug => {
+            return { text: ug.name, value: ug };
+          });
+        })
+    );
   }
 
   onChange(option) {
-    this.teamPicked({$group: option.value});
+    this.teamPicked({ $group: option.value });
   }
 }
 
 export function teamPicker() {
   return {
-    restrict: 'E',
+    restrict: "E",
     template: template,
     controller: TeamPickerCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
+    controllerAs: "ctrl",
     scope: {
-      teamPicked: '&',
+      teamPicked: "&"
     },
     link: function(scope, elem, attrs, ctrl) {
       scope.$on("team-picker-reset", () => {
@@ -56,4 +63,4 @@ export function teamPicker() {
   };
 }
 
-coreModule.directive('teamPicker', teamPicker);
+coreModule.directive("teamPicker", teamPicker);

@@ -1,8 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from 'lodash';
-import appEvents  from 'app/core/app_events';
-import {coreModule, JsonExplorer} from 'app/core/core';
+import _ from "lodash";
+import appEvents from "app/core/app_events";
+import { coreModule, JsonExplorer } from "app/core/core";
 
 const template = `
 <div class="query-troubleshooter" ng-if="ctrl.isOpen">
@@ -47,16 +47,16 @@ export class QueryTroubleshooterCtrl {
     this.onRequestErrorEventListener = this.onRequestError.bind(this);
     this.onRequestResponseEventListener = this.onRequestResponse.bind(this);
 
-    appEvents.on('ds-request-response', this.onRequestResponseEventListener);
-    appEvents.on('ds-request-error', this.onRequestErrorEventListener);
+    appEvents.on("ds-request-response", this.onRequestResponseEventListener);
+    appEvents.on("ds-request-error", this.onRequestErrorEventListener);
 
-    $scope.$on('$destroy',  this.removeEventsListeners.bind(this));
-    $scope.$watch('ctrl.isOpen',  this.stateChanged.bind(this));
+    $scope.$on("$destroy", this.removeEventsListeners.bind(this));
+    $scope.$watch("ctrl.isOpen", this.stateChanged.bind(this));
   }
 
   removeEventsListeners() {
-    appEvents.off('ds-request-response', this.onRequestResponseEventListener);
-    appEvents.off('ds-request-error', this.onRequestErrorEventListener);
+    appEvents.off("ds-request-response", this.onRequestResponseEventListener);
+    appEvents.off("ds-request-error", this.onRequestErrorEventListener);
   }
 
   toggleMocking() {
@@ -85,7 +85,7 @@ export class QueryTroubleshooterCtrl {
     if (this.jsonExplorer) {
       return JSON.stringify(this.jsonExplorer.json, null, 2);
     }
-    return '';
+    return "";
   }
 
   handleMocking(data) {
@@ -93,7 +93,7 @@ export class QueryTroubleshooterCtrl {
     try {
       mockedData = JSON.parse(this.mockedResponse);
     } catch (err) {
-      appEvents.emit('alert-error', ['Failed to parse mocked response']);
+      appEvents.emit("alert-error", ["Failed to parse mocked response"]);
       return;
     }
 
@@ -163,22 +163,21 @@ export class QueryTroubleshooterCtrl {
 
 export function queryTroubleshooter() {
   return {
-    restrict: 'E',
+    restrict: "E",
     template: template,
     controller: QueryTroubleshooterCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
+    controllerAs: "ctrl",
     scope: {
       panelCtrl: "=",
-      isOpen: "=",
+      isOpen: "="
     },
     link: function(scope, elem, attrs, ctrl) {
-
       ctrl.renderJsonExplorer = function(data) {
-        var jsonElem = elem.find('.query-troubleshooter-json');
+        var jsonElem = elem.find(".query-troubleshooter-json");
 
-        ctrl.jsonExplorer =  new JsonExplorer(data, 3, {
-          animateOpen: true,
+        ctrl.jsonExplorer = new JsonExplorer(data, 3, {
+          animateOpen: true
         });
 
         const html = ctrl.jsonExplorer.render(true);
@@ -188,4 +187,4 @@ export function queryTroubleshooter() {
   };
 }
 
-coreModule.directive('queryTroubleshooter', queryTroubleshooter);
+coreModule.directive("queryTroubleshooter", queryTroubleshooter);

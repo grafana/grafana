@@ -1,8 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from 'lodash';
-import angular from 'angular';
-import coreModule from 'app/core/core_module';
+import _ from "lodash";
+import angular from "angular";
+import coreModule from "app/core/core_module";
 
 export class AdHocFiltersCtrl {
   segments: any;
@@ -10,10 +10,24 @@ export class AdHocFiltersCtrl {
   removeTagFilterSegment: any;
 
   /** @ngInject */
-  constructor(private uiSegmentSrv, private datasourceSrv, private $q, private variableSrv, $scope, private $rootScope) {
-    this.removeTagFilterSegment = uiSegmentSrv.newSegment({fake: true, value: '-- remove filter --'});
+  constructor(
+    private uiSegmentSrv,
+    private datasourceSrv,
+    private $q,
+    private variableSrv,
+    $scope,
+    private $rootScope
+  ) {
+    this.removeTagFilterSegment = uiSegmentSrv.newSegment({
+      fake: true,
+      value: "-- remove filter --"
+    });
     this.buildSegmentModel();
-    this.$rootScope.onAppEvent('template-variable-value-updated', this.buildSegmentModel.bind(this), $scope);
+    this.$rootScope.onAppEvent(
+      "template-variable-value-updated",
+      this.buildSegmentModel.bind(this),
+      $scope
+    );
   }
 
   buildSegmentModel() {
@@ -24,7 +38,7 @@ export class AdHocFiltersCtrl {
 
     for (let tag of this.variable.filters) {
       if (this.segments.length > 0) {
-        this.segments.push(this.uiSegmentSrv.newCondition('AND'));
+        this.segments.push(this.uiSegmentSrv.newCondition("AND"));
       }
 
       if (tag.key !== undefined && tag.value !== undefined) {
@@ -38,32 +52,34 @@ export class AdHocFiltersCtrl {
   }
 
   getOptions(segment, index) {
-    if (segment.type === 'operator') {
-      return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '>', '=~', '!~']));
+    if (segment.type === "operator") {
+      return this.$q.when(
+        this.uiSegmentSrv.newOperators(["=", "!=", "<", ">", "=~", "!~"])
+      );
     }
 
-    if (segment.type === 'condition') {
-      return this.$q.when([this.uiSegmentSrv.newSegment('AND')]);
+    if (segment.type === "condition") {
+      return this.$q.when([this.uiSegmentSrv.newSegment("AND")]);
     }
 
     return this.datasourceSrv.get(this.variable.datasource).then(ds => {
       var options: any = {};
       var promise = null;
 
-      if (segment.type !== 'value') {
+      if (segment.type !== "value") {
         promise = ds.getTagKeys();
       } else {
-        options.key = this.segments[index-2].value;
+        options.key = this.segments[index - 2].value;
         promise = ds.getTagValues(options);
       }
 
       return promise.then(results => {
         results = _.map(results, segment => {
-          return this.uiSegmentSrv.newSegment({value: segment.text});
+          return this.uiSegmentSrv.newSegment({ value: segment.text });
         });
 
         // add remove option for keys
-        if (segment.type === 'key') {
+        if (segment.type === "key") {
           results.splice(0, 0, angular.copy(this.removeTagFilterSegment));
         }
         return results;
@@ -80,23 +96,29 @@ export class AdHocFiltersCtrl {
       if (this.segments.length === 0) {
         this.segments.push(this.uiSegmentSrv.newPlusButton());
       } else if (this.segments.length > 2) {
-        this.segments.splice(Math.max(index-1, 0), 1);
-        if (this.segments[this.segments.length-1].type !== 'plus-button') {
+        this.segments.splice(Math.max(index - 1, 0), 1);
+        if (this.segments[this.segments.length - 1].type !== "plus-button") {
           this.segments.push(this.uiSegmentSrv.newPlusButton());
         }
       }
     } else {
-      if (segment.type === 'plus-button') {
+      if (segment.type === "plus-button") {
         if (index > 2) {
-          this.segments.splice(index, 0, this.uiSegmentSrv.newCondition('AND'));
+          this.segments.splice(index, 0, this.uiSegmentSrv.newCondition("AND"));
         }
-        this.segments.push(this.uiSegmentSrv.newOperator('='));
-        this.segments.push(this.uiSegmentSrv.newFake('select tag value', 'value', 'query-segment-value'));
-        segment.type = 'key';
-        segment.cssClass = 'query-segment-key';
+        this.segments.push(this.uiSegmentSrv.newOperator("="));
+        this.segments.push(
+          this.uiSegmentSrv.newFake(
+            "select tag value",
+            "value",
+            "query-segment-value"
+          )
+        );
+        segment.type = "key";
+        segment.cssClass = "query-segment-key";
       }
 
-      if ((index+1) === this.segments.length) {
+      if (index + 1 === this.segments.length) {
         this.segments.push(this.uiSegmentSrv.newPlusButton());
       }
     }
@@ -110,26 +132,26 @@ export class AdHocFiltersCtrl {
     var hasFakes = false;
 
     this.segments.forEach(segment => {
-      if (segment.type === 'value' && segment.fake) {
+      if (segment.type === "value" && segment.fake) {
         hasFakes = true;
         return;
       }
 
       switch (segment.type) {
-        case 'key': {
-          filters.push({key: segment.value});
+        case "key": {
+          filters.push({ key: segment.value });
           filterIndex += 1;
           break;
         }
-        case 'value': {
+        case "value": {
           filters[filterIndex].value = segment.value;
           break;
         }
-        case 'operator': {
+        case "operator": {
           filters[filterIndex].operator = segment.value;
           break;
         }
-        case 'condition': {
+        case "condition": {
           filters[filterIndex].condition = segment.value;
           break;
         }
@@ -156,15 +178,15 @@ var template = `
 
 export function adHocFiltersComponent() {
   return {
-    restrict: 'E',
+    restrict: "E",
     template: template,
     controller: AdHocFiltersCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
+    controllerAs: "ctrl",
     scope: {
       variable: "="
     }
   };
 }
 
-coreModule.directive('adHocFilters', adHocFiltersComponent);
+coreModule.directive("adHocFilters", adHocFiltersComponent);

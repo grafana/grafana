@@ -1,8 +1,8 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import _ from 'lodash';
-import $ from 'jquery';
-import coreModule from 'app/core/core_module';
+import _ from "lodash";
+import $ from "jquery";
+import coreModule from "app/core/core_module";
 
 var template = `
 <div class="dropdown cascade-open">
@@ -15,22 +15,22 @@ var template = `
 </ul>
 `;
 
-  /** @ngInject */
+/** @ngInject */
 export function queryPartEditorDirective($compile, templateSrv) {
-
-  var paramTemplate = '<input type="text" class="hide input-mini tight-form-func-param"></input>';
+  var paramTemplate =
+    '<input type="text" class="hide input-mini tight-form-func-param"></input>';
 
   return {
-    restrict: 'E',
+    restrict: "E",
     template: template,
     scope: {
       part: "=",
-      handleEvent: "&",
+      handleEvent: "&"
     },
     link: function postLink($scope, elem) {
       var part = $scope.part;
       var partDef = part.def;
-      var $paramsContainer = elem.find('.query-part-parameters');
+      var $paramsContainer = elem.find(".query-part-parameters");
 
       $scope.partActions = [];
 
@@ -40,16 +40,16 @@ export function queryPartEditorDirective($compile, templateSrv) {
         var $input = $link.next();
 
         $input.val(part.params[paramIndex]);
-        $input.css('width', ($link.width() + 16) + 'px');
+        $input.css("width", $link.width() + 16 + "px");
 
         $link.hide();
         $input.show();
         $input.focus();
         $input.select();
 
-        var typeahead = $input.data('typeahead');
+        var typeahead = $input.data("typeahead");
         if (typeahead) {
-          $input.val('');
+          $input.val("");
           typeahead.lookup();
         }
       }
@@ -60,12 +60,12 @@ export function queryPartEditorDirective($compile, templateSrv) {
         var $link = $input.prev();
         var newValue = $input.val();
 
-        if (newValue !== '' || part.def.params[paramIndex].optional) {
+        if (newValue !== "" || part.def.params[paramIndex].optional) {
           $link.html(templateSrv.highlightVariablesAsHtml(newValue));
 
           part.updateParam($input.val(), paramIndex);
           $scope.$apply(() => {
-            $scope.handleEvent({$event: {name: 'part-param-changed'}});
+            $scope.handleEvent({ $event: { name: "part-param-changed" } });
           });
         }
 
@@ -82,7 +82,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
 
       function inputKeyDown() {
         /*jshint validthis:true */
-        this.style.width = (3 + this.value.length) * 8 + 'px';
+        this.style.width = (3 + this.value.length) * 8 + "px";
       }
 
       function addTypeahead($input, param, paramIndex) {
@@ -90,30 +90,36 @@ export function queryPartEditorDirective($compile, templateSrv) {
           return;
         }
 
-        var typeaheadSource = function (query, callback) {
+        var typeaheadSource = function(query, callback) {
           if (param.options) {
             var options = param.options;
-            if (param.type === 'int') {
-              options = _.map(options, function(val) { return val.toString(); });
+            if (param.type === "int") {
+              options = _.map(options, function(val) {
+                return val.toString();
+              });
             }
             return options;
           }
 
           $scope.$apply(function() {
-            $scope.handleEvent({$event: {name: 'get-param-options'}}).then(function(result) {
-              var dynamicOptions = _.map(result, function(op) { return op.value; });
-              callback(dynamicOptions);
-            });
+            $scope
+              .handleEvent({ $event: { name: "get-param-options" } })
+              .then(function(result) {
+                var dynamicOptions = _.map(result, function(op) {
+                  return op.value;
+                });
+                callback(dynamicOptions);
+              });
           });
         };
 
-        $input.attr('data-provide', 'typeahead');
+        $input.attr("data-provide", "typeahead");
 
         $input.typeahead({
           source: typeaheadSource,
           minLength: 0,
           items: 1000,
-          updater: function (value) {
+          updater: function(value) {
             setTimeout(function() {
               inputBlur.call($input[0], paramIndex);
             }, 0);
@@ -121,22 +127,24 @@ export function queryPartEditorDirective($compile, templateSrv) {
           }
         });
 
-        var typeahead = $input.data('typeahead');
-        typeahead.lookup = function () {
-          this.query = this.$element.val() || '';
+        var typeahead = $input.data("typeahead");
+        typeahead.lookup = function() {
+          this.query = this.$element.val() || "";
           var items = this.source(this.query, $.proxy(this.process, this));
           return items ? this.process(items) : items;
         };
       }
 
       $scope.showActionsMenu = function() {
-        $scope.handleEvent({$event: {name: 'get-part-actions'}}).then(res => {
-          $scope.partActions = res;
-        });
+        $scope
+          .handleEvent({ $event: { name: "get-part-actions" } })
+          .then(res => {
+            $scope.partActions = res;
+          });
       };
 
       $scope.triggerPartAction = function(action) {
-        $scope.handleEvent({$event: {name: 'action', action: action}});
+        $scope.handleEvent({ $event: { name: "action", action: action } });
       };
 
       function addElementsAndCompile() {
@@ -146,11 +154,15 @@ export function queryPartEditorDirective($compile, templateSrv) {
           }
 
           if (index > 0) {
-            $('<span>, </span>').appendTo($paramsContainer);
+            $("<span>, </span>").appendTo($paramsContainer);
           }
 
-          var paramValue = templateSrv.highlightVariablesAsHtml(part.params[index]);
-          var $paramLink = $('<a class="graphite-func-param-link pointer">' + paramValue + '</a>');
+          var paramValue = templateSrv.highlightVariablesAsHtml(
+            part.params[index]
+          );
+          var $paramLink = $(
+            '<a class="graphite-func-param-link pointer">' + paramValue + "</a>"
+          );
           var $input = $(paramTemplate);
 
           $paramLink.appendTo($paramsContainer);
@@ -175,4 +187,4 @@ export function queryPartEditorDirective($compile, templateSrv) {
   };
 }
 
-coreModule.directive('queryPartEditor', queryPartEditorDirective);
+coreModule.directive("queryPartEditor", queryPartEditorDirective);

@@ -1,4 +1,4 @@
-import {coreModule} from 'app/core/core';
+import { coreModule } from "app/core/core";
 
 export class RowOptionsCtrl {
   row: any;
@@ -29,18 +29,18 @@ export class RowOptionsCtrl {
 
 export function rowOptionsDirective() {
   return {
-    restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/partials/row_options.html',
+    restrict: "E",
+    templateUrl: "public/app/features/dashboard/partials/row_options.html",
     controller: RowOptionsCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
+    controllerAs: "ctrl",
     scope: {
       row: "=",
       dismiss: "&",
       onUpdated: "&",
       onDelete: "&"
-    },
+    }
   };
 }
 
-coreModule.directive('rowOptions', rowOptionsDirective);
+coreModule.directive("rowOptions", rowOptionsDirective);

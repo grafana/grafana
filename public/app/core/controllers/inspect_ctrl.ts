@@ -1,18 +1,17 @@
-import angular from 'angular';
-import _ from 'lodash';
-import $ from 'jquery';
-import coreModule from '../core_module';
+import angular from "angular";
+import _ from "lodash";
+import $ from "jquery";
+import coreModule from "../core_module";
 
 export class InspectCtrl {
-
   /** @ngInject */
   constructor($scope, $sanitize) {
     var model = $scope.inspector;
 
-    $scope.init = function () {
+    $scope.init = function() {
       $scope.editor = { index: 0 };
 
-      if (!model.error)  {
+      if (!model.error) {
         return;
       }
 
@@ -29,8 +28,11 @@ export class InspectCtrl {
       }
 
       if (model.error.config && model.error.config.params) {
-        $scope.request_parameters = _.map(model.error.config.params, function(value, key) {
-          return { key: key, value: value};
+        $scope.request_parameters = _.map(model.error.config.params, function(
+          value,
+          key
+        ) {
+          return { key: key, value: value };
         });
       }
 
@@ -44,10 +46,15 @@ export class InspectCtrl {
         $scope.editor.index = 2;
 
         if (_.isString(model.error.config.data)) {
-          $scope.request_parameters = this.getParametersFromQueryString(model.error.config.data);
-        } else  {
-          $scope.request_parameters = _.map(model.error.config.data, function(value, key) {
-            return {key: key, value: angular.toJson(value, true)};
+          $scope.request_parameters = this.getParametersFromQueryString(
+            model.error.config.data
+          );
+        } else {
+          $scope.request_parameters = _.map(model.error.config.data, function(
+            value,
+            key
+          ) {
+            return { key: key, value: angular.toJson(value, true) };
           });
         }
       }
@@ -59,11 +66,14 @@ export class InspectCtrl {
     for (var i = 0; i < parameters.length; i++) {
       var keyValue = parameters[i].split("=");
       if (keyValue[1].length > 0) {
-        result.push({ key: keyValue[0], value: (<any>window).unescape(keyValue[1]) });
+        result.push({
+          key: keyValue[0],
+          value: (<any>window).unescape(keyValue[1])
+        });
       }
     }
     return result;
   }
 }
 
-coreModule.controller('InspectCtrl', InspectCtrl);
+coreModule.controller("InspectCtrl", InspectCtrl);

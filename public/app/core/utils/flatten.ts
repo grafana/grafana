@@ -4,7 +4,7 @@
 export default function flatten(target, opts): any {
   opts = opts || {};
 
-  var delimiter = opts.delimiter || '.';
+  var delimiter = opts.delimiter || ".";
   var maxDepth = opts.maxDepth || 3;
   var currentDepth = 1;
   var output = {};
@@ -22,7 +22,12 @@ export default function flatten(target, opts): any {
         maxDepth = currentDepth + 1;
       }
 
-      if (!isarray && isobject && Object.keys(value).length && currentDepth < maxDepth) {
+      if (
+        !isarray &&
+        isobject &&
+        Object.keys(value).length &&
+        currentDepth < maxDepth
+      ) {
         ++currentDepth;
         return step(value, newKey);
       }

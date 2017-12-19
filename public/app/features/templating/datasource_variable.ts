@@ -1,7 +1,12 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import kbn from 'app/core/utils/kbn';
-import {Variable, containsVariable, assignModelProperties, variableTypes} from './variable';
+import kbn from "app/core/utils/kbn";
+import {
+  Variable,
+  containsVariable,
+  assignModelProperties,
+  variableTypes
+} from "./variable";
 
 export class DatasourceVariable implements Variable {
   regex: any;
@@ -10,20 +15,25 @@ export class DatasourceVariable implements Variable {
   current: any;
   refresh: any;
 
- defaults = {
-    type: 'datasource',
-    name: '',
+  defaults = {
+    type: "datasource",
+    name: "",
     hide: 0,
-    label: '',
+    label: "",
     current: {},
-    regex: '',
+    regex: "",
     options: [],
-    query: '',
-    refresh: 1,
+    query: "",
+    refresh: 1
   };
 
   /** @ngInject **/
-  constructor(private model, private datasourceSrv, private variableSrv, private templateSrv) {
+  constructor(
+    private model,
+    private datasourceSrv,
+    private variableSrv,
+    private templateSrv
+  ) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 1;
   }
@@ -42,11 +52,11 @@ export class DatasourceVariable implements Variable {
 
   updateOptions() {
     var options = [];
-    var sources = this.datasourceSrv.getMetricSources({skipVariables: true});
+    var sources = this.datasourceSrv.getMetricSources({ skipVariables: true });
     var regex;
 
     if (this.regex) {
-      regex = this.templateSrv.replace(this.regex, null, 'regex');
+      regex = this.templateSrv.replace(this.regex, null, "regex");
       regex = kbn.stringToJsRegex(regex);
     }
 
@@ -61,11 +71,11 @@ export class DatasourceVariable implements Variable {
         continue;
       }
 
-      options.push({text: source.name, value: source.name});
+      options.push({ text: source.name, value: source.name });
     }
 
     if (options.length === 0) {
-      options.push({text: 'No data sources found', value: ''});
+      options.push({ text: "No data sources found", value: "" });
     }
 
     this.options = options;
@@ -88,8 +98,9 @@ export class DatasourceVariable implements Variable {
   }
 }
 
-variableTypes['datasource'] = {
-  name: 'Datasource',
+variableTypes["datasource"] = {
+  name: "Datasource",
   ctor: DatasourceVariable,
-  description: 'Enabled you to dynamically switch the datasource for multiple panels',
+  description:
+    "Enabled you to dynamically switch the datasource for multiple panels"
 };

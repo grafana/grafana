@@ -1,6 +1,6 @@
-import _ from 'lodash';
-import coreModule from '../../core_module';
-import appEvents from 'app/core/app_events';
+import _ from "lodash";
+import coreModule from "../../core_module";
+import appEvents from "app/core/app_events";
 
 export class SearchResultsCtrl {
   results: any;
@@ -64,13 +64,13 @@ export class SearchResultsCtrl {
 
   onItemClick(item) {
     if (this.$location.path().indexOf(item.url) > -1) {
-      appEvents.emit('hide-dash-search');
+      appEvents.emit("hide-dash-search");
     }
   }
 
   selectTag(tag, evt) {
     if (this.onTagSelected) {
-      this.onTagSelected({$tag: tag});
+      this.onTagSelected({ $tag: tag });
     }
 
     if (evt) {
@@ -82,19 +82,19 @@ export class SearchResultsCtrl {
 
 export function searchResultsDirective() {
   return {
-    restrict: 'E',
-    templateUrl: 'public/app/core/components/search/search_results.html',
+    restrict: "E",
+    templateUrl: "public/app/core/components/search/search_results.html",
     controller: SearchResultsCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
+    controllerAs: "ctrl",
     scope: {
-      editable: '@',
-      results: '=',
-      onSelectionChanged: '&',
-      onTagSelected: '&',
-      onFolderExpanding: '&'
-    },
+      editable: "@",
+      results: "=",
+      onSelectionChanged: "&",
+      onTagSelected: "&",
+      onFolderExpanding: "&"
+    }
   };
 }
 
-coreModule.directive('dashboardSearchResults', searchResultsDirective);
+coreModule.directive("dashboardSearchResults", searchResultsDirective);

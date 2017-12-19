@@ -1,5 +1,12 @@
-import {describe, beforeEach, it, expect, angularMocks, sinon} from 'test/lib/common';
-import 'app/core/directives/value_select_dropdown';
+import {
+  describe,
+  beforeEach,
+  it,
+  expect,
+  angularMocks,
+  sinon
+} from "test/lib/common";
+import "app/core/directives/value_select_dropdown";
 
 describe("SelectDropdownCtrl", function() {
   var scope;
@@ -8,23 +15,25 @@ describe("SelectDropdownCtrl", function() {
   var rootScope;
   var q;
 
-  beforeEach(angularMocks.module('grafana.core'));
-  beforeEach(angularMocks.inject(function($controller, $rootScope, $q, $httpBackend) {
-    rootScope = $rootScope;
-    q = $q;
-    scope = $rootScope.$new();
-    ctrl = $controller('ValueSelectDropdownCtrl', {$scope: scope});
-    ctrl.onUpdated = sinon.spy();
-    $httpBackend.when('GET', /\.html$/).respond('');
-  }));
+  beforeEach(angularMocks.module("grafana.core"));
+  beforeEach(
+    angularMocks.inject(function($controller, $rootScope, $q, $httpBackend) {
+      rootScope = $rootScope;
+      q = $q;
+      scope = $rootScope.$new();
+      ctrl = $controller("ValueSelectDropdownCtrl", { $scope: scope });
+      ctrl.onUpdated = sinon.spy();
+      $httpBackend.when("GET", /\.html$/).respond("");
+    })
+  );
 
   describe("Given simple variable", function() {
     beforeEach(function() {
       ctrl.variable = {
-        current: {text: 'hej', value: 'hej' },
+        current: { text: "hej", value: "hej" },
         getValuesForTag: function(key) {
           return q.when(tagValuesMap[key]);
-        },
+        }
       };
       ctrl.init();
     });
@@ -37,11 +46,11 @@ describe("SelectDropdownCtrl", function() {
   describe("Given variable with tags and dropdown is opened", function() {
     beforeEach(function() {
       ctrl.variable = {
-        current: {text: 'server-1', value: 'server-1'},
+        current: { text: "server-1", value: "server-1" },
         options: [
-          {text: 'server-1', value: 'server-1', selected: true},
-          {text: 'server-2', value: 'server-2'},
-          {text: 'server-3', value: 'server-3'},
+          { text: "server-1", value: "server-1", selected: true },
+          { text: "server-2", value: "server-2" },
+          { text: "server-3", value: "server-3" }
         ],
         tags: ["key1", "key2", "key3"],
         getValuesForTag: function(key) {
@@ -49,9 +58,9 @@ describe("SelectDropdownCtrl", function() {
         },
         multi: true
       };
-      tagValuesMap.key1 = ['server-1', 'server-3'];
-      tagValuesMap.key2 = ['server-2', 'server-3'];
-      tagValuesMap.key3 = ['server-1', 'server-2', 'server-3'];
+      tagValuesMap.key1 = ["server-1", "server-3"];
+      tagValuesMap.key2 = ["server-2", "server-3"];
+      tagValuesMap.key3 = ["server-1", "server-2", "server-3"];
       ctrl.init();
       ctrl.show();
     });
@@ -70,21 +79,21 @@ describe("SelectDropdownCtrl", function() {
     });
 
     it("should set linkText", function() {
-      expect(ctrl.linkText).to.be('server-1');
+      expect(ctrl.linkText).to.be("server-1");
     });
 
-    describe('after adititional value is selected', function() {
+    describe("after adititional value is selected", function() {
       beforeEach(function() {
         ctrl.selectValue(ctrl.options[2], {});
         ctrl.commitChanges();
       });
 
-      it('should update link text', function() {
-        expect(ctrl.linkText).to.be('server-1 + server-3');
+      it("should update link text", function() {
+        expect(ctrl.linkText).to.be("server-1 + server-3");
       });
     });
 
-    describe('When tag is selected', function() {
+    describe("When tag is selected", function() {
       beforeEach(function() {
         ctrl.selectTag(ctrl.tags[0]);
         rootScope.$digest();
@@ -101,10 +110,10 @@ describe("SelectDropdownCtrl", function() {
       });
 
       it("link text should not include tag values", function() {
-        expect(ctrl.linkText).to.be('');
+        expect(ctrl.linkText).to.be("");
       });
 
-      describe('and then dropdown is opened and closed without changes', function() {
+      describe("and then dropdown is opened and closed without changes", function() {
         beforeEach(function() {
           ctrl.show();
           ctrl.commitChanges();
@@ -116,7 +125,7 @@ describe("SelectDropdownCtrl", function() {
         });
       });
 
-      describe('and then unselected', function() {
+      describe("and then unselected", function() {
         beforeEach(function() {
           ctrl.selectTag(ctrl.tags[0]);
           rootScope.$digest();
@@ -127,7 +136,7 @@ describe("SelectDropdownCtrl", function() {
         });
       });
 
-      describe('and then value is unselected', function() {
+      describe("and then value is unselected", function() {
         beforeEach(function() {
           ctrl.selectValue(ctrl.options[0], {});
         });
@@ -142,11 +151,15 @@ describe("SelectDropdownCtrl", function() {
   describe("Given variable with selected tags", function() {
     beforeEach(function() {
       ctrl.variable = {
-        current: {text: 'server-1', value: 'server-1', tags: [{text: 'key1', selected: true}] },
+        current: {
+          text: "server-1",
+          value: "server-1",
+          tags: [{ text: "key1", selected: true }]
+        },
         options: [
-          {text: 'server-1', value: 'server-1'},
-          {text: 'server-2', value: 'server-2'},
-          {text: 'server-3', value: 'server-3'},
+          { text: "server-1", value: "server-1" },
+          { text: "server-2", value: "server-2" },
+          { text: "server-3", value: "server-3" }
         ],
         tags: ["key1", "key2", "key3"],
         getValuesForTag: function(key) {
@@ -161,7 +174,5 @@ describe("SelectDropdownCtrl", function() {
     it("should set tag as selected", function() {
       expect(ctrl.tags[0].selected).to.be(true);
     });
-
   });
 });
-

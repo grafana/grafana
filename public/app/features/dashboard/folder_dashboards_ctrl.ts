@@ -1,4 +1,4 @@
-import {FolderPageLoader} from './folder_page_loader';
+import { FolderPageLoader } from "./folder_page_loader";
 
 export class FolderDashboardsCtrl {
   navModel: any;
@@ -11,7 +11,7 @@ export class FolderDashboardsCtrl {
 
       const loader = new FolderPageLoader(this.backendSrv, this.$routeParams);
 
-      loader.load(this, this.folderId, 'manage-folder-dashboards');
+      loader.load(this, this.folderId, "manage-folder-dashboards");
     }
   }
 }

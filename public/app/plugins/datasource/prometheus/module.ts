@@ -1,17 +1,17 @@
-import {PrometheusDatasource} from './datasource';
-import {PrometheusQueryCtrl} from './query_ctrl';
+import { PrometheusDatasource } from "./datasource";
+import { PrometheusQueryCtrl } from "./query_ctrl";
 
 class PrometheusConfigCtrl {
-  static templateUrl = 'partials/config.html';
+  static templateUrl = "partials/config.html";
 }
 
 class PrometheusAnnotationsQueryCtrl {
-  static templateUrl = 'partials/annotations.editor.html';
+  static templateUrl = "partials/annotations.editor.html";
 }
 
 export {
   PrometheusDatasource as Datasource,
   PrometheusQueryCtrl as QueryCtrl,
   PrometheusConfigCtrl as ConfigCtrl,
-  PrometheusAnnotationsQueryCtrl as AnnotationsQueryCtrl,
+  PrometheusAnnotationsQueryCtrl as AnnotationsQueryCtrl
 };

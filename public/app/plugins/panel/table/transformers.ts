@@ -1,20 +1,20 @@
-import _ from 'lodash';
-import flatten from '../../../core/utils/flatten';
-import TimeSeries from '../../../core/time_series2';
-import TableModel from '../../../core/table_model';
+import _ from "lodash";
+import flatten from "../../../core/utils/flatten";
+import TimeSeries from "../../../core/time_series2";
+import TableModel from "../../../core/table_model";
 
 var transformers = {};
 
-transformers['timeseries_to_rows'] = {
-  description: 'Time series to rows',
+transformers["timeseries_to_rows"] = {
+  description: "Time series to rows",
   getColumns: function() {
     return [];
   },
   transform: function(data, panel, model) {
     model.columns = [
-      {text: 'Time', type: 'date'},
-      {text: 'Metric'},
-      {text: 'Value'},
+      { text: "Time", type: "date" },
+      { text: "Metric" },
+      { text: "Value" }
     ];
 
     for (var i = 0; i < data.length; i++) {
@@ -24,30 +24,30 @@ transformers['timeseries_to_rows'] = {
         model.rows.push([dp[1], series.target, dp[0]]);
       }
     }
-  },
+  }
 };
 
-transformers['timeseries_to_columns'] = {
-  description: 'Time series to columns',
+transformers["timeseries_to_columns"] = {
+  description: "Time series to columns",
   getColumns: function() {
     return [];
   },
   transform: function(data, panel, model) {
-    model.columns.push({text: 'Time', type: 'date'});
+    model.columns.push({ text: "Time", type: "date" });
 
     // group by time
     var points = {};
 
     for (let i = 0; i < data.length; i++) {
       var series = data[i];
-      model.columns.push({text: series.target});
+      model.columns.push({ text: series.target });
 
       for (var y = 0; y < series.datapoints.length; y++) {
         var dp = series.datapoints[y];
         var timeKey = dp[1].toString();
 
         if (!points[timeKey]) {
-          points[timeKey] = {time: dp[1]};
+          points[timeKey] = { time: dp[1] };
           points[timeKey][i] = dp[0];
         } else {
           points[timeKey][i] = dp[0];
@@ -69,33 +69,33 @@ transformers['timeseries_to_columns'] = {
   }
 };
 
-transformers['timeseries_aggregations'] = {
-  description: 'Time series aggregations',
+transformers["timeseries_aggregations"] = {
+  description: "Time series aggregations",
   getColumns: function() {
     return [
-      {text: 'Avg', value: 'avg'},
-      {text: 'Min', value: 'min'},
-      {text: 'Max', value: 'max'},
-      {text: 'Total', value: 'total'},
-      {text: 'Current', value: 'current'},
-      {text: 'Count', value: 'count'},
+      { text: "Avg", value: "avg" },
+      { text: "Min", value: "min" },
+      { text: "Max", value: "max" },
+      { text: "Total", value: "total" },
+      { text: "Current", value: "current" },
+      { text: "Count", value: "count" }
     ];
   },
   transform: function(data, panel, model) {
     var i, y;
-    model.columns.push({text: 'Metric'});
+    model.columns.push({ text: "Metric" });
 
     for (i = 0; i < panel.columns.length; i++) {
-      model.columns.push({text: panel.columns[i].text});
+      model.columns.push({ text: panel.columns[i].text });
     }
 
     for (i = 0; i < data.length; i++) {
       var series = new TimeSeries({
         datapoints: data[i].datapoints,
-        alias: data[i].target,
+        alias: data[i].target
       });
 
-      series.getFlotPairs('connected');
+      series.getFlotPairs("connected");
       var cells = [series.alias];
 
       for (y = 0; y < panel.columns.length; y++) {
@@ -107,16 +107,16 @@ transformers['timeseries_aggregations'] = {
   }
 };
 
-transformers['annotations'] = {
-  description: 'Annotations',
+transformers["annotations"] = {
+  description: "Annotations",
   getColumns: function() {
     return [];
   },
   transform: function(data, panel, model) {
-    model.columns.push({text: 'Time', type: 'date'});
-    model.columns.push({text: 'Title'});
-    model.columns.push({text: 'Text'});
-    model.columns.push({text: 'Tags'});
+    model.columns.push({ text: "Time", type: "date" });
+    model.columns.push({ text: "Title" });
+    model.columns.push({ text: "Text" });
+    model.columns.push({ text: "Tags" });
 
     if (!data || !data.annotations || data.annotations.length === 0) {
       return;
@@ -129,8 +129,8 @@ transformers['annotations'] = {
   }
 };
 
-transformers['table'] = {
-  description: 'Table',
+transformers["table"] = {
+  description: "Table",
   getColumns: function(data) {
     if (!data || data.length === 0) {
       return [];
@@ -163,9 +163,13 @@ transformers['table'] = {
       return;
     }
 
-    const noTableIndex = _.findIndex(data, d => d.type !== 'table');
+    const noTableIndex = _.findIndex(data, d => d.type !== "table");
     if (noTableIndex > -1) {
-      throw {message: `Result of query #${String.fromCharCode(65 + noTableIndex)} is not in table format, try using another transform.`};
+      throw {
+        message: `Result of query #${String.fromCharCode(
+          65 + noTableIndex
+        )} is not in table format, try using another transform.`
+      };
     }
 
     // Single query returns data columns and rows as is
@@ -216,11 +220,17 @@ transformers['table'] = {
     function areRowsMatching(columns, row, otherRow) {
       let foundFieldToMatch = false;
       for (let columnIndex = 0; columnIndex < columns.length; columnIndex++) {
-        if (row[columnIndex] !== undefined && otherRow[columnIndex] !== undefined) {
+        if (
+          row[columnIndex] !== undefined &&
+          otherRow[columnIndex] !== undefined
+        ) {
           if (row[columnIndex] !== otherRow[columnIndex]) {
             return false;
           }
-        } else if (row[columnIndex] === undefined || otherRow[columnIndex] === undefined) {
+        } else if (
+          row[columnIndex] === undefined ||
+          otherRow[columnIndex] === undefined
+        ) {
           foundFieldToMatch = true;
         }
       }
@@ -236,14 +246,23 @@ transformers['table'] = {
         // More than one row can be merged into current row
         while (offset < flattenedRows.length) {
           // Find next row that could be merged
-          const match = _.findIndex(flattenedRows,
+          const match = _.findIndex(
+            flattenedRows,
             otherRow => areRowsMatching(columnsUnion, row, otherRow),
-          offset);
+            offset
+          );
           if (match > -1) {
             const matchedRow = flattenedRows[match];
             // Merge values from match into current row if there is a gap in the current row
-            for (let columnIndex = 0; columnIndex < columnsUnion.length; columnIndex++) {
-              if (row[columnIndex] === undefined && matchedRow[columnIndex] !== undefined) {
+            for (
+              let columnIndex = 0;
+              columnIndex < columnsUnion.length;
+              columnIndex++
+            ) {
+              if (
+                row[columnIndex] === undefined &&
+                matchedRow[columnIndex] !== undefined
+              ) {
                 row[columnIndex] = matchedRow[columnIndex];
               }
             }
@@ -266,8 +285,8 @@ transformers['table'] = {
   }
 };
 
-transformers['json'] = {
-  description: 'JSON Data',
+transformers["json"] = {
+  description: "JSON Data",
   getColumns: function(data) {
     if (!data || data.length === 0) {
       return [];
@@ -276,7 +295,7 @@ transformers['json'] = {
     var names: any = {};
     for (var i = 0; i < data.length; i++) {
       var series = data[i];
-      if (series.type !== 'docs') {
+      if (series.type !== "docs") {
         continue;
       }
 
@@ -292,14 +311,14 @@ transformers['json'] = {
     }
 
     return _.map(names, function(value, key) {
-      return {text: key, value: key};
+      return { text: key, value: key };
     });
   },
   transform: function(data, panel, model) {
     var i, y, z;
 
     for (let column of panel.columns) {
-      var tableCol: any = {text: column.text};
+      var tableCol: any = { text: column.text };
 
       // if filterable data then set columns to filterable
       if (data.length > 0 && data[0].filterable) {
@@ -310,7 +329,7 @@ transformers['json'] = {
     }
 
     if (model.columns.length === 0) {
-      model.columns.push({text: 'JSON'});
+      model.columns.push({ text: "JSON" });
     }
 
     for (i = 0; i < data.length; i++) {
@@ -344,11 +363,11 @@ function transformDataToTable(data, panel) {
 
   var transformer = transformers[panel.transform];
   if (!transformer) {
-    throw {message: 'Transformer ' + panel.transform + ' not found'};
+    throw { message: "Transformer " + panel.transform + " not found" };
   }
 
   transformer.transform(data, panel, model);
   return model;
 }
 
-export {transformers, transformDataToTable};
+export { transformers, transformDataToTable };

@@ -1,23 +1,22 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from 'lodash';
-import coreModule from '../core_module';
+import _ from "lodash";
+import coreModule from "../core_module";
 
 export function arrayJoin() {
-  'use strict';
+  "use strict";
 
   return {
-    restrict: 'A',
-    require: 'ngModel',
+    restrict: "A",
+    require: "ngModel",
     link: function(scope, element, attr, ngModel) {
-
       function split_array(text) {
-        return (text || '').split(',');
+        return (text || "").split(",");
       }
 
       function join_array(text) {
         if (_.isArray(text)) {
-          return (text || '').join(',');
+          return (text || "").join(",");
         } else {
           return text;
         }
@@ -29,5 +28,4 @@ export function arrayJoin() {
   };
 }
 
-coreModule.directive('arrayJoin', arrayJoin);
-
+coreModule.directive("arrayJoin", arrayJoin);

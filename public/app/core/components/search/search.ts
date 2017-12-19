@@ -1,7 +1,7 @@
-import _ from 'lodash';
-import coreModule from '../../core_module';
-import { SearchSrv } from 'app/core/services/search_srv';
-import appEvents from 'app/core/app_events';
+import _ from "lodash";
+import coreModule from "../../core_module";
+import { SearchSrv } from "app/core/services/search_srv";
+import appEvents from "app/core/app_events";
 
 export class SearchCtrl {
   isOpen: boolean;
@@ -17,9 +17,14 @@ export class SearchCtrl {
   initialFolderFilterTitle: string;
 
   /** @ngInject */
-  constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv) {
-    appEvents.on('show-dash-search', this.openSearch.bind(this), $scope);
-    appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
+  constructor(
+    $scope,
+    private $location,
+    private $timeout,
+    private searchSrv: SearchSrv
+  ) {
+    appEvents.on("show-dash-search", this.openSearch.bind(this), $scope);
+    appEvents.on("hide-dash-search", this.closeSearch.bind(this), $scope);
 
     this.initialFolderFilterTitle = "All";
   }
@@ -38,7 +43,7 @@ export class SearchCtrl {
     this.giveSearchFocus = 0;
     this.selectedIndex = -1;
     this.results = [];
-    this.query = { query: '', tag: [], starred: false };
+    this.query = { query: "", tag: [], starred: false };
     this.currentSearchId = 0;
     this.ignoreClose = true;
     this.isLoading = true;
@@ -70,7 +75,9 @@ export class SearchCtrl {
 
       if (currentItem) {
         if (currentItem.dashboardIndex !== undefined) {
-          const selectedDash = this.results[currentItem.folderIndex].items[currentItem.dashboardIndex];
+          const selectedDash = this.results[currentItem.folderIndex].items[
+            currentItem.dashboardIndex
+          ];
 
           if (selectedDash) {
             this.$location.search({});
@@ -98,7 +105,9 @@ export class SearchCtrl {
 
     if (currentItem) {
       if (currentItem.dashboardIndex !== undefined) {
-        this.results[currentItem.folderIndex].items[currentItem.dashboardIndex].selected = false;
+        this.results[currentItem.folderIndex].items[
+          currentItem.dashboardIndex
+        ].selected = false;
       } else {
         this.results[currentItem.folderIndex].selected = false;
       }
@@ -111,10 +120,13 @@ export class SearchCtrl {
 
     const max = flattenedResult.length;
     let newIndex = this.selectedIndex + direction;
-    this.selectedIndex = ((newIndex %= max) < 0) ? newIndex + max : newIndex;
+    this.selectedIndex = (newIndex %= max) < 0 ? newIndex + max : newIndex;
     const selectedItem = flattenedResult[this.selectedIndex];
 
-    if (selectedItem.dashboardIndex === undefined && this.results[selectedItem.folderIndex].id === 0) {
+    if (
+      selectedItem.dashboardIndex === undefined &&
+      this.results[selectedItem.folderIndex].id === 0
+    ) {
       this.moveSelection(direction);
       return;
     }
@@ -125,7 +137,9 @@ export class SearchCtrl {
         return;
       }
 
-      this.results[selectedItem.folderIndex].items[selectedItem.dashboardIndex].selected = true;
+      this.results[selectedItem.folderIndex].items[
+        selectedItem.dashboardIndex
+      ].selected = true;
       return;
     }
 
@@ -142,7 +156,9 @@ export class SearchCtrl {
     var localSearchId = this.currentSearchId;
 
     return this.searchSrv.search(this.query).then(results => {
-      if (localSearchId < this.currentSearchId) { return; }
+      if (localSearchId < this.currentSearchId) {
+        return;
+      }
       this.results = results || [];
       this.isLoading = false;
       this.moveSelection(1);
@@ -151,7 +167,9 @@ export class SearchCtrl {
 
   queryHasNoFilters() {
     var query = this.query;
-    return query.query === '' && query.starred === false && query.tag.length === 0;
+    return (
+      query.query === "" && query.starred === false && query.tag.length === 0
+    );
   }
 
   filterByTag(tag) {
@@ -171,7 +189,7 @@ export class SearchCtrl {
   }
 
   getTags() {
-    return this.searchSrv.getDashboardTags().then((results) => {
+    return this.searchSrv.getDashboardTags().then(results => {
       this.results = results;
       this.giveSearchFocus = this.giveSearchFocus + 1;
     });
@@ -196,7 +214,7 @@ export class SearchCtrl {
   private getFlattenedResultForNavigation() {
     let folderIndex = 0;
 
-    return _.flatMap(this.results, (s) => {
+    return _.flatMap(this.results, s => {
       let result = [];
 
       result.push({
@@ -205,12 +223,14 @@ export class SearchCtrl {
 
       let dashboardIndex = 0;
 
-      result = result.concat(_.map(s.items || [], (i) => {
-        return {
-          folderIndex: folderIndex,
-          dashboardIndex: dashboardIndex++
-        };
-      }));
+      result = result.concat(
+        _.map(s.items || [], i => {
+          return {
+            folderIndex: folderIndex,
+            dashboardIndex: dashboardIndex++
+          };
+        })
+      );
 
       folderIndex++;
       return result;
@@ -220,13 +240,13 @@ export class SearchCtrl {
 
 export function searchDirective() {
   return {
-    restrict: 'E',
-    templateUrl: 'public/app/core/components/search/search.html',
+    restrict: "E",
+    templateUrl: "public/app/core/components/search/search.html",
     controller: SearchCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
-    scope: {},
+    controllerAs: "ctrl",
+    scope: {}
   };
 }
 
-coreModule.directive('dashboardSearch', searchDirective);
+coreModule.directive("dashboardSearch", searchDirective);
