@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import coreModule from '../../core_module';
+import appEvents from 'app/core/app_events';
 
 export class SearchResultsCtrl {
   results: any;
@@ -58,6 +59,12 @@ export class SearchResultsCtrl {
     if (evt) {
       evt.stopPropagation();
       evt.preventDefault();
+    }
+  }
+
+  onItemClick(item) {
+    if (this.$location.path().indexOf(item.url) > -1) {
+      appEvents.emit('hide-dash-search');
     }
   }
 
