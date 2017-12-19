@@ -1,5 +1,4 @@
 import coreModule from "app/core/core_module";
-import appEvents from "app/core/app_events";
 
 export default class CreateTeamCtrl {
   name: string;
