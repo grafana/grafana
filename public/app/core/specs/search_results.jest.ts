@@ -1,4 +1,12 @@
 import { SearchResultsCtrl } from '../components/search/search_results';
+import { beforeEach, afterEach } from 'test/lib/common';
+import appEvents from 'app/core/app_events';
+
+jest.mock('app/core/app_events', () => {
+  return {
+    emit: jest.fn<any>()
+  };
+});
 
 describe('SearchResultsCtrl', () => {
   let ctrl;
@@ -92,6 +100,41 @@ describe('SearchResultsCtrl', () => {
 
     it('should not trigger folder expanding callback', () => {
       expect(folderExpanded).toBeFalsy();
+    });
+  });
+
+  describe('when clicking on a link in search result', () => {
+    const dashPath = 'dashboard/path';
+    const $location = { path: () =>  dashPath};
+    const appEventsMock = appEvents as any;
+
+    describe('with the same url as current path', () => {
+      beforeEach(() => {
+        ctrl = new SearchResultsCtrl($location);
+        const item = { url: dashPath};
+        ctrl.onItemClick(item);
+      });
+
+      it('should close the search', () => {
+        expect(appEventsMock.emit.mock.calls.length).toBe(1);
+        expect(appEventsMock.emit.mock.calls[0][0]).toBe('hide-dash-search');
+      });
+    });
+
+    describe('with a different url than current path', () => {
+      beforeEach(() => {
+        ctrl = new SearchResultsCtrl($location);
+        const item = { url: 'another/path'};
+        ctrl.onItemClick(item);
+      });
+
+      it('should do nothing', () => {
+        expect(appEventsMock.emit.mock.calls.length).toBe(0);
+      });
+    });
+
+    afterEach(() => {
+      appEventsMock.emit.mockClear();
     });
   });
 });

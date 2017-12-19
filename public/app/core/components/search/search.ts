@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import coreModule from '../../core_module';
 import { SearchSrv } from 'app/core/services/search_srv';
+import appEvents from 'app/core/app_events';
 
 export class SearchCtrl {
   isOpen: boolean;
@@ -16,9 +17,9 @@ export class SearchCtrl {
   initialFolderFilterTitle: string;
 
   /** @ngInject */
-  constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv, $rootScope) {
-    $rootScope.onAppEvent('show-dash-search', this.openSearch.bind(this), $scope);
-    $rootScope.onAppEvent('hide-dash-search', this.closeSearch.bind(this), $scope);
+  constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv) {
+    appEvents.on('show-dash-search', this.openSearch.bind(this), $scope);
+    appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
 
     this.initialFolderFilterTitle = "All";
   }
@@ -74,6 +75,7 @@ export class SearchCtrl {
           if (selectedDash) {
             this.$location.search({});
             this.$location.path(selectedDash.url);
+            this.closeSearch();
           }
         } else {
           const selectedFolder = this.results[currentItem.folderIndex];

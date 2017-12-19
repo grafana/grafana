@@ -1,15 +1,15 @@
-import config from 'app/core/config';
-import _ from 'lodash';
-import $ from 'jquery';
-import {appEvents, profiler} from 'app/core/core';
-import { PanelModel } from 'app/features/dashboard/panel_model';
-import Remarkable from 'remarkable';
-import {GRID_CELL_HEIGHT, GRID_CELL_VMARGIN} from 'app/core/constants';
+import config from "app/core/config";
+import _ from "lodash";
+import $ from "jquery";
+import { appEvents, profiler } from "app/core/core";
+import { PanelModel } from "app/features/dashboard/panel_model";
+import Remarkable from "remarkable";
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from "app/core/constants";
 
 const TITLE_HEIGHT = 27;
 const PANEL_BORDER = 2;
 
-import {Emitter} from 'app/core/core';
+import { Emitter } from "app/core/core";
 
 export class PanelCtrl {
   panel: any;
@@ -35,7 +35,7 @@ export class PanelCtrl {
   constructor($scope, $injector) {
     this.$injector = $injector;
     this.$scope = $scope;
-    this.$timeout = $injector.get('$timeout');
+    this.$timeout = $injector.get("$timeout");
     this.editorTabIndex = 0;
     this.events = this.panel.events;
     this.timing = {};
@@ -50,18 +50,18 @@ export class PanelCtrl {
     $scope.$on("component-did-mount", () => this.panelDidMount());
 
     $scope.$on("$destroy", () => {
-      this.events.emit('panel-teardown');
+      this.events.emit("panel-teardown");
       this.events.removeAllListeners();
     });
   }
 
   init() {
-    this.events.emit('panel-initialized');
-    this.publishAppEvent('panel-initialized', {scope: this.$scope});
+    this.events.emit("panel-initialized");
+    this.publishAppEvent("panel-initialized", { scope: this.$scope });
   }
 
   panelDidMount() {
-    this.events.emit('component-did-mount');
+    this.events.emit("component-did-mount");
   }
 
   renderingCompleted() {
@@ -69,7 +69,7 @@ export class PanelCtrl {
   }
 
   refresh() {
-    this.events.emit('refresh', null);
+    this.events.emit("refresh", null);
   }
 
   publishAppEvent(evtName, evt) {
@@ -77,8 +77,10 @@ export class PanelCtrl {
   }
 
   changeView(fullscreen, edit) {
-    this.publishAppEvent('panel-change-view', {
-      fullscreen: fullscreen, edit: edit, panelId: this.panel.id
+    this.publishAppEvent("panel-change-view", {
+      fullscreen: fullscreen,
+      edit: edit,
+      panelId: this.panel.id
     });
   }
 
@@ -96,11 +98,11 @@ export class PanelCtrl {
 
   initEditMode() {
     this.editorTabs = [];
-    this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
+    this.addEditorTab("General", "public/app/partials/panelgeneral.html");
     this.editModeInitiated = true;
-    this.events.emit('init-edit-mode', null);
+    this.events.emit("init-edit-mode", null);
 
-    var urlTab = (this.$injector.get('$routeParams').tab || '').toLowerCase();
+    var urlTab = (this.$injector.get("$routeParams").tab || "").toLowerCase();
     if (urlTab) {
       this.editorTabs.forEach((tab, i) => {
         if (tab.title.toLowerCase() === urlTab) {
@@ -112,17 +114,17 @@ export class PanelCtrl {
 
   changeTab(newIndex) {
     this.editorTabIndex = newIndex;
-    var route = this.$injector.get('$route');
+    var route = this.$injector.get("$route");
     route.current.params.tab = this.editorTabs[newIndex].title.toLowerCase();
     route.updateParams();
   }
 
   addEditorTab(title, directiveFn, index?) {
-    var editorTab = {title, directiveFn};
+    var editorTab = { title, directiveFn };
 
     if (_.isString(directiveFn)) {
       editorTab.directiveFn = function() {
-        return {templateUrl: directiveFn};
+        return { templateUrl: directiveFn };
       };
     }
     if (index) {
@@ -134,20 +136,47 @@ export class PanelCtrl {
 
   getMenu() {
     let menu = [];
-    menu.push({text: 'View', click: 'ctrl.viewPanel();', icon: "fa fa-fw fa-eye", shortcut: "v"});
+    menu.push({
+      text: "View",
+      click: "ctrl.viewPanel();",
+      icon: "fa fa-fw fa-eye",
+      shortcut: "v"
+    });
 
     if (this.dashboard.meta.canEdit) {
-      menu.push({text: 'Edit', click: 'ctrl.editPanel();', role: 'Editor', icon: "fa fa-fw fa-edit", shortcut: "e"});
+      menu.push({
+        text: "Edit",
+        click: "ctrl.editPanel();",
+        role: "Editor",
+        icon: "fa fa-fw fa-edit",
+        shortcut: "e"
+      });
     }
 
-    menu.push({text: 'Share', click: 'ctrl.sharePanel();', icon: "fa fa-fw fa-share", shortcut: "p s"});
+    menu.push({
+      text: "Share",
+      click: "ctrl.sharePanel();",
+      icon: "fa fa-fw fa-share",
+      shortcut: "p s"
+    });
 
     let extendedMenu = this.getExtendedMenu();
-    menu.push({text: 'More ...', click: 'ctrl.removePanel();', icon: "fa fa-fw fa-cube", submenu: extendedMenu});
+    menu.push({
+      text: "More ...",
+      click: "",
+      icon: "fa fa-fw fa-cube",
+      submenu: extendedMenu
+    });
 
     if (this.dashboard.meta.canEdit) {
-      menu.push({divider: true, role: 'Editor'});
-      menu.push({text: 'Remove', click: 'ctrl.removePanel();', role: 'Editor', icon: "fa fa-fw fa-trash", shortcut: "p r"});
+      menu.push({ divider: true, role: "Editor" });
+      menu.push({
+        text: "Remove",
+        click: "ctrl.removePanel();",
+        role: "Editor",
+        icon: "fa fa-fw fa-trash",
+        shortcut: "p r"
+      });
     }
 
     return menu;
@@ -156,10 +185,17 @@ export class PanelCtrl {
   getExtendedMenu() {
     let menu = [];
     if (!this.fullscreen && this.dashboard.meta.canEdit) {
-      menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
+      menu.push({
+        text: "Duplicate",
+        click: "ctrl.duplicate()",
+        role: "Editor"
+      });
     }
-    menu.push({text: 'Panel JSON', click: 'ctrl.editPanelJson(); dismiss();' });
-    this.events.emit('init-panel-actions', menu);
+    menu.push({
+      text: "Panel JSON",
+      click: "ctrl.editPanelJson(); dismiss();"
+    });
+    this.events.emit("init-panel-actions", menu);
     return menu;
   }
 
@@ -169,12 +205,14 @@ export class PanelCtrl {
 
   calculatePanelHeight() {
     if (this.fullscreen) {
-       var docHeight = $(window).height();
-       var editHeight = Math.floor(docHeight * 0.4);
-       var fullscreenHeight = Math.floor(docHeight * 0.8);
-       this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
+      var docHeight = $(window).height();
+      var editHeight = Math.floor(docHeight * 0.4);
+      var fullscreenHeight = Math.floor(docHeight * 0.8);
+      this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
     } else {
-      this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + ((this.panel.gridPos.h-1) * GRID_CELL_VMARGIN);
+      this.containerHeight =
+        this.panel.gridPos.h * GRID_CELL_HEIGHT +
+        (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
     }
 
     if (this.panel.soloMode) {
@@ -186,13 +224,13 @@ export class PanelCtrl {
 
   render(payload?) {
     this.timing.renderStart = new Date().getTime();
-    this.events.emit('render', payload);
+    this.events.emit("render", payload);
   }
 
   duplicate() {
     this.dashboard.duplicatePanel(this.panel);
     this.$timeout(() => {
-      this.$scope.$root.$broadcast('render');
+      this.$scope.$root.$broadcast("render");
     });
   }
 
@@ -202,17 +240,18 @@ export class PanelCtrl {
       var text2, confirmText;
 
       if (this.panel.alert) {
-        text2 = "Panel includes an alert rule, removing panel will also remove alert rule";
+        text2 =
+          "Panel includes an alert rule, removing panel will also remove alert rule";
         confirmText = "YES";
       }
 
-      appEvents.emit('confirm-modal', {
-        title: 'Remove Panel',
-        text: 'Are you sure you want to remove this panel?',
+      appEvents.emit("confirm-modal", {
+        title: "Remove Panel",
+        text: "Are you sure you want to remove this panel?",
         text2: text2,
-        icon: 'fa-trash',
+        icon: "fa-trash",
         confirmText: confirmText,
-        yesText: 'Remove',
+        yesText: "Remove",
         onConfirm: () => {
           this.removePanel(false);
         }
@@ -228,27 +267,27 @@ export class PanelCtrl {
     editScope.object = this.panel.getSaveModel();
     editScope.updateHandler = this.replacePanel.bind(this);
 
-    this.publishAppEvent('show-modal', {
-      src: 'public/app/partials/edit_json.html',
+    this.publishAppEvent("show-modal", {
+      src: "public/app/partials/edit_json.html",
       scope: editScope
     });
   }
 
   replacePanel(newPanel, oldPanel) {
     let dashboard = this.dashboard;
-    let index = _.findIndex(dashboard.panels, (panel) => {
+    let index = _.findIndex(dashboard.panels, panel => {
       return panel.id === oldPanel.id;
     });
 
     let deletedPanel = dashboard.panels.splice(index, 1);
-    this.dashboard.events.emit('panel-removed', deletedPanel);
+    this.dashboard.events.emit("panel-removed", deletedPanel);
 
     newPanel = new PanelModel(newPanel);
     newPanel.id = oldPanel.id;
 
     dashboard.panels.splice(index, 0, newPanel);
     dashboard.sortPanelsByGridPos();
-    dashboard.events.emit('panel-added', newPanel);
+    dashboard.events.emit("panel-added", newPanel);
   }
 
   sharePanel() {
@@ -256,60 +295,70 @@ export class PanelCtrl {
     shareScope.panel = this.panel;
     shareScope.dashboard = this.dashboard;
 
-    this.publishAppEvent('show-modal', {
-      src: 'public/app/features/dashboard/partials/shareModal.html',
+    this.publishAppEvent("show-modal", {
+      src: "public/app/features/dashboard/partials/shareModal.html",
       scope: shareScope
     });
   }
 
   getInfoMode() {
     if (this.error) {
-      return 'error';
+      return "error";
     }
     if (!!this.panel.description) {
-      return 'info';
+      return "info";
     }
     if (this.panel.links && this.panel.links.length) {
-      return 'links';
+      return "links";
     }
-    return '';
+    return "";
   }
 
   getInfoContent(options) {
     var markdown = this.panel.description;
 
-    if (options.mode === 'tooltip') {
+    if (options.mode === "tooltip") {
       markdown = this.error || this.panel.description;
     }
 
-    var linkSrv = this.$injector.get('linkSrv');
-    var templateSrv = this.$injector.get('templateSrv');
-    var interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
+    var linkSrv = this.$injector.get("linkSrv");
+    var templateSrv = this.$injector.get("templateSrv");
+    var interpolatedMarkdown = templateSrv.replace(
+      markdown,
+      this.panel.scopedVars
+    );
     var html = '<div class="markdown-html">';
 
     html += new Remarkable().render(interpolatedMarkdown);
 
     if (this.panel.links && this.panel.links.length > 0) {
-      html += '<ul>';
+      html += "<ul>";
       for (let link of this.panel.links) {
         var info = linkSrv.getPanelLinkAnchorInfo(link, this.panel.scopedVars);
-        html += '<li><a class="panel-menu-link" href="' + info.href + '" target="' + info.target + '">' + info.title + '</a></li>';
+        html +=
+          '<li><a class="panel-menu-link" href="' +
+          info.href +
+          '" target="' +
+          info.target +
+          '">' +
+          info.title +
+          "</a></li>";
       }
-      html += '</ul>';
+      html += "</ul>";
     }
 
-    return html + '</div>';
+    return html + "</div>";
   }
 
   openInspector() {
     var modalScope = this.$scope.$new();
     modalScope.panel = this.panel;
     modalScope.dashboard = this.dashboard;
-    modalScope.panelInfoHtml = this.getInfoContent({mode: 'inspector'});
+    modalScope.panelInfoHtml = this.getInfoContent({ mode: "inspector" });
 
     modalScope.inspector = $.extend(true, {}, this.inspector);
-    this.publishAppEvent('show-modal', {
-      src: 'public/app/features/dashboard/partials/inspector.html',
+    this.publishAppEvent("show-modal", {
+      src: "public/app/features/dashboard/partials/inspector.html",
       scope: modalScope
     });
   }

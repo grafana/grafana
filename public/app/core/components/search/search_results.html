@@ -32,7 +32,7 @@
       <span class="search-item__icon">
         <i class="gicon mini gicon-dashboard-list"></i>
       </span>
-      <span class="search-item__body">
+      <span class="search-item__body" ng-click="ctrl.onItemClick(item)">
         <div class="search-item__body-title">{{::item.title}}</div>
       </span>
       <span class="search-item__tags">
