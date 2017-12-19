@@ -45,4 +45,9 @@ func addTeamMigrations(mg *Migrator) {
 	//-------  indexes ------------------
 	mg.AddMigration("add index team_member.org_id", NewAddIndexMigration(teamMemberV1, teamMemberV1.Indices[0]))
 	mg.AddMigration("add unique index team_member_org_id_team_id_user_id", NewAddIndexMigration(teamMemberV1, teamMemberV1.Indices[1]))
+
+	// add column email
+	mg.AddMigration("Add column email to team table", NewAddColumnMigration(teamV1, &Column{
+		Name: "email", Type: DB_NVarchar, Nullable: true, Length: 190,
+	}))
 }
