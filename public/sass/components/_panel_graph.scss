@@ -70,19 +70,19 @@
   font-size: 85%;
   text-align: left;
   &.current::before {
-    content: "Current: "
+    content: "Current: ";
   }
   &.max::before {
-    content: "Max: "
+    content: "Max: ";
   }
   &.min::before {
-    content: "Min: "
+    content: "Min: ";
   }
   &.total::before {
-    content: "Total: "
+    content: "Total: ";
   }
   &.avg::before {
-    content: "Avg: "
+    content: "Avg: ";
   }
 }
 
@@ -124,15 +124,17 @@
       float: none;
 
       .graph-legend-alias::after {
-        content: '(right-y)';
+        content: "(right-y)";
         padding: 0 5px;
         color: $text-color-weak;
       }
     }
   }
 
-
-  td, .graph-legend-alias, .graph-legend-icon, .graph-legend-value {
+  td,
+  .graph-legend-alias,
+  .graph-legend-icon,
+  .graph-legend-value {
     float: none;
     display: table-cell;
     white-space: nowrap;
@@ -149,7 +151,7 @@
     }
   }
 
- .graph-legend-value  {
+  .graph-legend-value {
     padding-left: 15px;
   }
 
@@ -167,9 +169,13 @@
   }
 
   .graph-legend-value {
-    &.current, &.max, &.min, &.total, &.avg {
+    &.current,
+    &.max,
+    &.min,
+    &.total,
+    &.avg {
       &::before {
-        content: '';
+        content: "";
       }
     }
   }
@@ -183,7 +189,6 @@
     white-space: nowrap;
   }
 }
-
 
 .graph-legend-series-hidden {
   .graph-legend-value,
@@ -252,7 +257,7 @@
     max-width: 650px;
     text-overflow: ellipsis;
     overflow: hidden;
-   }
+  }
 
   .graph-tooltip-value {
     display: table-cell;
@@ -263,7 +268,6 @@
 }
 
 .graph-annotation {
-
   .label-tag {
     margin-right: 4px;
     margin-top: 8px;
@@ -396,7 +400,7 @@
     }
   }
 
-  &--T0{
+  &--T0 {
     right: -104px;
     width: 129px;
 
@@ -419,10 +423,10 @@
     position: relative;
 
     &--critical {
-      background-color: rgba(237, 46, 24, 0.60);
+      background-color: rgba(237, 46, 24, 0.6);
     }
     &--warning {
-      background-color: rgba(247, 149, 32, 0.60);
+      background-color: rgba(247, 149, 32, 0.6);
     }
   }
 }

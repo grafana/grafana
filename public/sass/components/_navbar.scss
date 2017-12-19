@@ -1,4 +1,3 @@
-
 .navbar {
   position: relative;
   padding-left: 40px;
@@ -18,7 +17,6 @@
   box-shadow: $search-shadow;
   border-bottom: $navbarBorder;
 }
-
 
 .dashboard-page--settings-open {
   .navbar {
@@ -40,7 +38,7 @@
 }
 
 .panel-in-fullscreen {
- .navbar {
+  .navbar {
     @include navbar-alt-look();
   }
 
@@ -168,4 +166,3 @@
     }
   }
 }
-

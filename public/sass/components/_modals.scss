@@ -23,7 +23,7 @@
   position: fixed;
   z-index: $zindex-modal;
   width: 100%;
-	background: $page-bg;
+  background: $page-bg;
   @include box-shadow(0 3px 7px rgba(0,0,0,0.3));
   @include background-clip(padding-box);
   outline: none;
@@ -77,7 +77,7 @@
 // Footer (for actions)
 .modal-footer {
   padding: 14px 15px 15px;
-	border-top: 1px solid $panel-bg;
+  border-top: 1px solid $panel-bg;
   background-color: $panel-bg;
   text-align: right; // right align buttons
   @include clearfix(); // clear it in case folks use .pull-* classes on buttons
@@ -139,7 +139,8 @@
   .share-modal-big-icon {
     margin-bottom: 10px;
     margin-right: 2rem;
-    .fa, .icon-gf {
+    .fa,
+    .icon-gf {
       font-size: 50px;
     }
   }
@@ -173,5 +174,3 @@
     text-overflow: ellipsis;
   }
 }
-
-

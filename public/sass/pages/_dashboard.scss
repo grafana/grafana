@@ -19,7 +19,7 @@ div.flot-text {
   &--solo {
     .panel-container {
       border: none;
-      z-index: $zindex-sidemenu + 1
+      z-index: $zindex-sidemenu + 1;
     }
   }
 }
@@ -98,7 +98,7 @@ div.flot-text {
 }
 
 .panel-loading {
-  position:absolute;
+  position: absolute;
   top: -3px;
   right: 0px;
   z-index: 800;
@@ -184,7 +184,7 @@ div.flot-text {
   }
 }
 
-.panel-hover-highlight  {
+.panel-hover-highlight {
   .panel-menu-toggle {
     visibility: visible;
     transition: opacity 0.1s ease-in 0.2s;
@@ -213,7 +213,7 @@ div.flot-text {
   span {
     display: inline-block;
     @include brand-bottom-border();
-    padding: 0.5rem .5rem .2rem .5rem;
+    padding: 0.5rem 0.5rem 0.2rem 0.5rem;
   }
 }
 

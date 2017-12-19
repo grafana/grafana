@@ -15,8 +15,8 @@
 .ps__rail-x {
   display: none;
   opacity: 0;
-  transition: background-color .2s linear, opacity .2s linear;
-  -webkit-transition: background-color .2s linear, opacity .2s linear;
+  transition: background-color 0.2s linear, opacity 0.2s linear;
+  -webkit-transition: background-color 0.2s linear, opacity 0.2s linear;
   height: 15px;
   /* there must be 'bottom' or 'top' for ps__rail-x */
   bottom: 0px;
@@ -27,8 +27,8 @@
 .ps__rail-y {
   display: none;
   opacity: 0;
-  transition: background-color .2s linear, opacity .2s linear;
-  -webkit-transition: background-color .2s linear, opacity .2s linear;
+  transition: background-color 0.2s linear, opacity 0.2s linear;
+  -webkit-transition: background-color 0.2s linear, opacity 0.2s linear;
   width: 15px;
   /* there must be 'right' or 'left' for ps__rail-y */
   right: 0;
@@ -80,7 +80,6 @@
   position: absolute;
 }
 
-
 /* MS supports */
 @supports (-ms-overflow-style: none) {
   .ps {
@@ -115,20 +114,46 @@
 }
 
 ::-webkit-scrollbar-button:start:decrement,
-::-webkit-scrollbar-button:end:increment { display: none;  }
-::-webkit-scrollbar-button:horizontal:decrement {  display: none; }
-::-webkit-scrollbar-button:horizontal:increment {  display: none; }
-::-webkit-scrollbar-button:vertical:decrement { display: none; }
-::-webkit-scrollbar-button:vertical:increment { display: none; }
-::-webkit-scrollbar-button:horizontal:decrement:active { background-image: none; }
-::-webkit-scrollbar-button:horizontal:increment:active { background-image: none; }
-::-webkit-scrollbar-button:vertical:decrement:active { background-image: none; }
-::-webkit-scrollbar-button:vertical:increment:active {background-image: none; }
-::-webkit-scrollbar-track-piece { background-color: transparent; }
+::-webkit-scrollbar-button:end:increment {
+  display: none;
+}
+::-webkit-scrollbar-button:horizontal:decrement {
+  display: none;
+}
+::-webkit-scrollbar-button:horizontal:increment {
+  display: none;
+}
+::-webkit-scrollbar-button:vertical:decrement {
+  display: none;
+}
+::-webkit-scrollbar-button:vertical:increment {
+  display: none;
+}
+::-webkit-scrollbar-button:horizontal:decrement:active {
+  background-image: none;
+}
+::-webkit-scrollbar-button:horizontal:increment:active {
+  background-image: none;
+}
+::-webkit-scrollbar-button:vertical:decrement:active {
+  background-image: none;
+}
+::-webkit-scrollbar-button:vertical:increment:active {
+  background-image: none;
+}
+::-webkit-scrollbar-track-piece {
+  background-color: transparent;
+}
 
 ::-webkit-scrollbar-thumb:vertical {
   height: 50px;
-  background: -webkit-gradient(linear, left top, right top, color-stop(0%, $scrollbarBackground), color-stop(100%, $scrollbarBackground2));
+  background: -webkit-gradient(
+    linear,
+    left top,
+    right top,
+    color-stop(0%, $scrollbarBackground),
+    color-stop(100%, $scrollbarBackground2)
+  );
   border: 1px solid $scrollbarBorder;
   border-top: 1px solid $scrollbarBorder;
   border-left: 1px solid $scrollbarBorder;
@@ -136,7 +161,13 @@
 
 ::-webkit-scrollbar-thumb:horizontal {
   width: 50px;
-  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, $scrollbarBackground), color-stop(100%, $scrollbarBackground2));
+  background: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    color-stop(0%, $scrollbarBackground),
+    color-stop(100%, $scrollbarBackground2)
+  );
   border: 1px solid $scrollbarBorder;
   border-top: 1px solid $scrollbarBorder;
   border-left: 1px solid $scrollbarBorder;

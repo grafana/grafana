@@ -71,8 +71,8 @@
         // important to overlap it otherwise it can be hidden
         // again by the mouse getting outside the hover space
         left: $side-menu-width - 2px;
-        @include animation('dropdown-anim 150ms ease-in-out 100ms forwards');
-        z-index:  $zindex-sidemenu;
+        @include animation("dropdown-anim 150ms ease-in-out 100ms forwards");
+        z-index: $zindex-sidemenu;
       }
     }
   }
@@ -96,7 +96,7 @@
     border-radius: 50%;
     width: 28px;
     height: 28px;
-    box-shadow: 0 0 14px 2px rgba(255,255,255, 0.05);
+    box-shadow: 0 0 14px 2px rgba(255, 255, 255, 0.05);
   }
 }
 
@@ -116,10 +116,12 @@
   height: 35px;
   display: inline-block;
 
-  .fa, .icon-gf, .gicon {
+  .fa,
+  .icon-gf,
+  .gicon {
     color: $side-menu-link-color;
     position: relative;
-    opacity: .7;
+    opacity: 0.7;
     font-size: 130%;
   }
 
@@ -173,7 +175,7 @@ li.sidemenu-org-switcher {
 
 .sidemenu__logo {
   display: block;
-  padding: 0.4rem 1.0rem 0.4rem 0.65rem;
+  padding: 0.4rem 1rem 0.4rem 0.65rem;
   min-height: $navbarHeight;
   position: relative;
 
@@ -244,7 +246,7 @@ li.sidemenu-org-switcher {
     }
 
     .sidemenu-icon {
-      display: none
+      display: none;
     }
 
     .dropdown-menu--sidemenu {

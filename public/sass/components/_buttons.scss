@@ -44,7 +44,7 @@
   &[disabled],
   &:disabled {
     cursor: $cursor-disabled;
-    opacity: .65;
+    opacity: 0.65;
     @include box-shadow(none);
   }
 }
@@ -136,10 +136,13 @@
   @include box-shadow(none);
   cursor: default;
 
-  &:hover, &:active, &:active:hover, &:focus {
+  &:hover,
+  &:active,
+  &:active:hover,
+  &:focus {
     color: $gray-1;
     background-color: transparent;
-        border-color: $gray-1;
+    border-color: $gray-1;
   }
 }
 
@@ -178,8 +181,8 @@ $btn-service-icon-width: 35px;
   left: 0;
   height: 100%;
   top: 0;
-  padding-left: .5rem;
-  padding-right: .5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
   width: $btn-service-icon-width;
   text-align: center;
 

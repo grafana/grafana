@@ -17,7 +17,7 @@
 .page-container {
   margin-left: auto;
   margin-right: auto;
-  padding-left:  $spacer*2;
+  padding-left: $spacer*2;
   padding-right: $spacer*2;
   max-width: 980px;
   @include clearfix();
@@ -50,7 +50,8 @@
   display: flex;
   align-items: flex-start;
 
-  > a, > button {
+  > a,
+  > button {
     margin-left: $spacer;
   }
 }
@@ -65,7 +66,9 @@
 }
 
 .sidebar-content {
-  width: calc(100% - #{$page-sidebar-width + $page-sidebar-margin}); // sidebar width + margin
+  width: calc(
+    100% - #{$page-sidebar-width + $page-sidebar-margin}
+  ); // sidebar width + margin
 }
 
 .sidebar-container {

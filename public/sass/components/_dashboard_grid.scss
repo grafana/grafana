@@ -2,7 +2,6 @@
 @import "~react-resizable/css/styles.css";
 
 .panel-in-fullscreen {
-
   .react-grid-layout {
     height: 100% !important;
   }
@@ -40,10 +39,9 @@
   }
 }
 
-
 .theme-dark {
   .react-grid-item > .react-resizable-handle {
-    background-image: url('../img/resize-handle-white.svg');
+    background-image: url("../img/resize-handle-white.svg");
   }
 }
 

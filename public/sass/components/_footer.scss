@@ -1,5 +1,5 @@
 .page-dashboard .footer {
-	display: none;
+  display: none;
 }
 
 .footer {
@@ -7,7 +7,7 @@
   padding: 5rem 0 1rem 0;
   font-size: $font-size-sm;
   position: relative;
-  width: 98%;  /* was causing horiz scrollbars - need to examine */
+  width: 98%; /* was causing horiz scrollbars - need to examine */
 
   a {
     color: $footer-link-color;
@@ -25,7 +25,7 @@
     display: inline-block;
     padding-right: 2px;
     &::after {
-      content: ' | ';
+      content: " | ";
       padding-left: 2px;
     }
   }
@@ -33,7 +33,7 @@
   li:last-child {
     &::after {
       padding-left: 0;
-      content: '';
+      content: "";
     }
   }
 }
