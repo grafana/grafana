@@ -53,7 +53,8 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         $timeout(function() {
           popoverSrv.show({
             element: el[0],
-            position: 'bottom center',
+            position: 'bottom left',
+            targetAttachment: 'top left',
             template: '<series-color-picker series="series" onToggleAxis="toggleAxis" onColorChange="colorSelected">' +
               '</series-color-picker>',
             openOn: 'hover',

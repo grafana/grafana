@@ -1,12 +1,12 @@
 package alerting
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -16,10 +16,6 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		RegisterCondition("query", func(model *simplejson.Json, index int) (Condition, error) {
 			return &FakeCondition{}, nil
-		})
-
-		setting.NewConfigContext(&setting.CommandLineArgs{
-			HomePath: "../../../",
 		})
 
 		// mock data
@@ -45,70 +41,8 @@ func TestAlertRuleExtraction(t *testing.T) {
 			return nil
 		})
 
-		json := `
-      {
-        "id": 57,
-        "title": "Graphite 4",
-        "originalTitle": "Graphite 4",
-        "tags": ["graphite"],
-        "rows": [
-        {
-          "panels": [
-          {
-            "title": "Active desktop users",
-            "editable": true,
-            "type": "graph",
-            "id": 3,
-            "targets": [
-            {
-              "refId": "A",
-              "target": "aliasByNode(statsd.fakesite.counters.session_start.desktop.count, 4)"
-            }
-            ],
-            "datasource": null,
-            "alert": {
-              "name": "name1",
-              "message": "desc1",
-              "handler": 1,
-              "frequency": "60s",
-              "conditions": [
-              {
-                "type": "query",
-                "query": {"params": ["A", "5m", "now"]},
-                "reducer": {"type": "avg", "params": []},
-                "evaluator": {"type": ">", "params": [100]}
-              }
-              ]
-            }
-          },
-          {
-            "title": "Active mobile users",
-            "id": 4,
-            "targets": [
-              {"refId": "A", "target": ""},
-              {"refId": "B", "target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}
-            ],
-            "datasource": "graphite2",
-            "alert": {
-              "name": "name2",
-              "message": "desc2",
-              "handler": 0,
-              "frequency": "60s",
-              "severity": "warning",
-              "conditions": [
-              {
-                "type": "query",
-                "query":  {"params": ["B", "5m", "now"]},
-                "reducer": {"type": "avg", "params": []},
-                "evaluator": {"type": ">", "params": [100]}
-              }
-              ]
-            }
-          }
-          ]
-        }
-      ]
-      }`
+		json, err := ioutil.ReadFile("./test-data/graphite-alert.json")
+		So(err, ShouldBeNil)
 
 		Convey("Extractor should not modify the original json", func() {
 			dashJson, err := simplejson.NewJson([]byte(json))
@@ -201,69 +135,8 @@ func TestAlertRuleExtraction(t *testing.T) {
 		})
 
 		Convey("Panels missing id should return error", func() {
-			panelWithoutId := `
-      {
-        "id": 57,
-        "title": "Graphite 4",
-        "originalTitle": "Graphite 4",
-        "tags": ["graphite"],
-        "rows": [
-        {
-          "panels": [
-          {
-            "title": "Active desktop users",
-            "editable": true,
-            "type": "graph",
-            "targets": [
-            {
-              "refId": "A",
-              "target": "aliasByNode(statsd.fakesite.counters.session_start.desktop.count, 4)"
-            }
-            ],
-            "datasource": null,
-            "alert": {
-              "name": "name1",
-              "message": "desc1",
-              "handler": 1,
-              "frequency": "60s",
-              "conditions": [
-              {
-                "type": "query",
-                "query": {"params": ["A", "5m", "now"]},
-                "reducer": {"type": "avg", "params": []},
-                "evaluator": {"type": ">", "params": [100]}
-              }
-              ]
-            }
-          },
-          {
-            "title": "Active mobile users",
-            "id": 4,
-            "targets": [
-              {"refId": "A", "target": ""},
-              {"refId": "B", "target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}
-            ],
-            "datasource": "graphite2",
-            "alert": {
-              "name": "name2",
-              "message": "desc2",
-              "handler": 0,
-              "frequency": "60s",
-              "severity": "warning",
-              "conditions": [
-              {
-                "type": "query",
-                "query":  {"params": ["B", "5m", "now"]},
-                "reducer": {"type": "avg", "params": []},
-                "evaluator": {"type": ">", "params": [100]}
-              }
-              ]
-            }
-          }
-          ]
-        }
-      ]
-			}`
+			panelWithoutId, err := ioutil.ReadFile("./test-data/panels-missing-id.json")
+			So(err, ShouldBeNil)
 
 			dashJson, err := simplejson.NewJson([]byte(panelWithoutId))
 			So(err, ShouldBeNil)
@@ -277,292 +150,31 @@ func TestAlertRuleExtraction(t *testing.T) {
 			})
 		})
 
+		Convey("Parse alerts from dashboard without rows", func() {
+			json, err := ioutil.ReadFile("./test-data/v5-dashboard.json")
+			So(err, ShouldBeNil)
+
+			dashJson, err := simplejson.NewJson(json)
+			So(err, ShouldBeNil)
+			dash := m.NewDashboardFromJson(dashJson)
+			extractor := NewDashAlertExtractor(dash, 1)
+
+			alerts, err := extractor.GetAlerts()
+
+			Convey("Get rules without error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Should have 2 alert rule", func() {
+				So(len(alerts), ShouldEqual, 2)
+			})
+		})
+
 		Convey("Parse and validate dashboard containing influxdb alert", func() {
+			json, err := ioutil.ReadFile("./test-data/influxdb-alert.json")
+			So(err, ShouldBeNil)
 
-			json2 := `{
-				  "id": 4,
-				  "title": "Influxdb",
-				  "tags": [
-				    "apa"
-				  ],
-				  "style": "dark",
-				  "timezone": "browser",
-				  "editable": true,
-				  "hideControls": false,
-				  "sharedCrosshair": false,
-				  "rows": [
-				    {
-				      "collapse": false,
-				      "editable": true,
-				      "height": "450px",
-				      "panels": [
-				        {
-				          "alert": {
-				            "conditions": [
-				              {
-				                "evaluator": {
-				                  "params": [
-				                    10
-				                  ],
-				                  "type": "gt"
-				                },
-				                "query": {
-				                  "params": [
-				                    "B",
-				                    "5m",
-				                    "now"
-				                  ]
-				                },
-				                "reducer": {
-				                  "params": [],
-				                  "type": "avg"
-				                },
-				                "type": "query"
-				              }
-				            ],
-				            "frequency": "3s",
-				            "handler": 1,
-				            "name": "Influxdb",
-				            "noDataState": "no_data",
-				            "notifications": [
-				              {
-				                "id": 6
-				              }
-				            ]
-				          },
-				          "alerting": {},
-				          "aliasColors": {
-				            "logins.count.count": "#890F02"
-				          },
-				          "bars": false,
-				          "datasource": "InfluxDB",
-				          "editable": true,
-				          "error": false,
-				          "fill": 1,
-				          "grid": {},
-				          "id": 1,
-				          "interval": ">10s",
-				          "isNew": true,
-				          "legend": {
-				            "avg": false,
-				            "current": false,
-				            "max": false,
-				            "min": false,
-				            "show": true,
-				            "total": false,
-				            "values": false
-				          },
-				          "lines": true,
-				          "linewidth": 2,
-				          "links": [],
-				          "nullPointMode": "connected",
-				          "percentage": false,
-				          "pointradius": 5,
-				          "points": false,
-				          "renderer": "flot",
-				          "seriesOverrides": [],
-				          "span": 10,
-				          "stack": false,
-				          "steppedLine": false,
-				          "targets": [
-				            {
-				              "groupBy": [
-				                {
-				                  "params": [
-				                    "$interval"
-				                  ],
-				                  "type": "time"
-				                },
-				                {
-				                  "params": [
-				                    "datacenter"
-				                  ],
-				                  "type": "tag"
-				                },
-				                {
-				                  "params": [
-				                    "none"
-				                  ],
-				                  "type": "fill"
-				                }
-				              ],
-				              "hide": false,
-				              "measurement": "logins.count",
-				              "policy": "default",
-				              "query": "SELECT 8 * count(\"value\") FROM \"logins.count\" WHERE $timeFilter GROUP BY time($interval), \"datacenter\" fill(none)",
-				              "rawQuery": true,
-				              "refId": "B",
-				              "resultFormat": "time_series",
-				              "select": [
-				                [
-				                  {
-				                    "params": [
-				                      "value"
-				                    ],
-				                    "type": "field"
-				                  },
-				                  {
-				                    "params": [],
-				                    "type": "count"
-				                  }
-				                ]
-				              ],
-				              "tags": []
-				            },
-				            {
-				              "groupBy": [
-				                {
-				                  "params": [
-				                    "$interval"
-				                  ],
-				                  "type": "time"
-				                },
-				                {
-				                  "params": [
-				                    "null"
-				                  ],
-				                  "type": "fill"
-				                }
-				              ],
-				              "hide": true,
-				              "measurement": "cpu",
-				              "policy": "default",
-				              "refId": "A",
-				              "resultFormat": "time_series",
-				              "select": [
-				                [
-				                  {
-				                    "params": [
-				                      "value"
-				                    ],
-				                    "type": "field"
-				                  },
-				                  {
-				                    "params": [],
-				                    "type": "mean"
-				                  }
-				                ],
-				                [
-				                  {
-				                    "params": [
-				                      "value"
-				                    ],
-				                    "type": "field"
-				                  },
-				                  {
-				                    "params": [],
-				                    "type": "sum"
-				                  }
-				                ]
-				              ],
-				              "tags": []
-				            }
-				          ],
-				          "thresholds": [
-				            {
-				              "colorMode": "critical",
-				              "fill": true,
-				              "line": true,
-				              "op": "gt",
-				              "value": 10
-				            }
-				          ],
-				          "timeFrom": null,
-				          "timeShift": null,
-				          "title": "Panel Title",
-				          "tooltip": {
-				            "msResolution": false,
-				            "ordering": "alphabetical",
-				            "shared": true,
-				            "sort": 0,
-				            "value_type": "cumulative"
-				          },
-				          "type": "graph",
-				          "xaxis": {
-				            "mode": "time",
-				            "name": null,
-				            "show": true,
-				            "values": []
-				          },
-				          "yaxes": [
-				            {
-				              "format": "short",
-				              "logBase": 1,
-				              "max": null,
-				              "min": null,
-				              "show": true
-				            },
-				            {
-				              "format": "short",
-				              "logBase": 1,
-				              "max": null,
-				              "min": null,
-				              "show": true
-				            }
-				          ]
-				        },
-				        {
-				          "editable": true,
-				          "error": false,
-				          "id": 2,
-				          "isNew": true,
-				          "limit": 10,
-				          "links": [],
-				          "show": "current",
-				          "span": 2,
-				          "stateFilter": [
-				            "alerting"
-				          ],
-				          "title": "Alert status",
-				          "type": "alertlist"
-				        }
-				      ],
-				      "title": "Row"
-				    }
-				  ],
-				  "time": {
-				    "from": "now-5m",
-				    "to": "now"
-				  },
-				  "timepicker": {
-				    "now": true,
-				    "refresh_intervals": [
-				      "5s",
-				      "10s",
-				      "30s",
-				      "1m",
-				      "5m",
-				      "15m",
-				      "30m",
-				      "1h",
-				      "2h",
-				      "1d"
-				    ],
-				    "time_options": [
-				      "5m",
-				      "15m",
-				      "1h",
-				      "6h",
-				      "12h",
-				      "24h",
-				      "2d",
-				      "7d",
-				      "30d"
-				    ]
-				  },
-				  "templating": {
-				    "list": []
-				  },
-				  "annotations": {
-				    "list": []
-				  },
-				  "schemaVersion": 13,
-				  "version": 120,
-				  "links": [],
-				  "gnetId": null
-				}`
-
-			dashJson, err := simplejson.NewJson([]byte(json2))
+			dashJson, err := simplejson.NewJson(json)
 			So(err, ShouldBeNil)
 			dash := m.NewDashboardFromJson(dashJson)
 			extractor := NewDashAlertExtractor(dash, 1)
