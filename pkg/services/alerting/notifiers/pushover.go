@@ -148,7 +148,7 @@ func (this *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 		message += fmt.Sprintf("\n<a href=\"%s\">Show graph image</a>", evalContext.ImagePublicUrl)
 	}
 	if message == "" {
-		message = "Nothing to see here! (Set a notification message to replace this text.)"
+		message = "Notification message missing (Set a notification message to replace this text.)"
 	}
 
 	q := url.Values{}
