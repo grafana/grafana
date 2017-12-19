@@ -251,7 +251,7 @@ export class BackendSrv {
   createDashboardFolder(name) {
     const dash = {
       schemaVersion: 16,
-      title: name,
+      title: name.trim(),
       editable: true,
       panels: []
     };
