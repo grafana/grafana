@@ -469,6 +469,16 @@ export class DashboardModel {
     this.events.emit("panel-removed", panel);
   }
 
+  removeRow(row: PanelModel, removePanels: boolean) {
+    const needToogle = (!removePanels && row.collapsed) || (removePanels && !row.collapsed);
+
+    if (needToogle) {
+      this.toggleRow(row);
+    }
+
+    this.removePanel(row);
+  }
+
   setPanelFocus(id) {
     this.meta.focusPanelId = id;
   }

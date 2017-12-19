@@ -329,6 +329,26 @@ describe("DashboardModel", function() {
       expect(dashboard.panels.length).toBe(3);
       expect(dashboard.panels[1].panels.length).toBe(2);
     });
+
+    describe("and when removing row and its panels", function() {
+      beforeEach(function() {
+        dashboard.removeRow(dashboard.panels[1], true);
+      });
+
+      it("should remove row and its panels", function() {
+        expect(dashboard.panels.length).toBe(2);
+      });
+    });
+
+    describe("and when removing only the row", function() {
+      beforeEach(function() {
+        dashboard.removeRow(dashboard.panels[1], false);
+      });
+
+      it("should only remove row", function() {
+        expect(dashboard.panels.length).toBe(4);
+      });
+    });
   });
 
   describe("When expanding row", function() {
@@ -348,7 +368,7 @@ describe("DashboardModel", function() {
               { id: 4, type: "graph", gridPos: { x: 12, y: 2, w: 12, h: 2 } }
             ]
           },
-          { id: 5, type: "graph", gridPos: { x: 0, y: 6, w: 1, h: 1 } }
+          { id: 5, type: "row", gridPos: { x: 0, y: 6, w: 1, h: 1 } }
         ]
       });
       dashboard.toggleRow(dashboard.panels[1]);
@@ -378,6 +398,26 @@ describe("DashboardModel", function() {
         y: 10,
         w: 1,
         h: 1
+      });
+    });
+
+    describe("and when removing row and its panels", function() {
+      beforeEach(function() {
+        dashboard.removeRow(dashboard.panels[1], true);
+      });
+
+      it("should remove row and its panels", function() {
+        expect(dashboard.panels.length).toBe(2);
+      });
+    });
+
+    describe("and when removing only the row", function() {
+      beforeEach(function() {
+        dashboard.removeRow(dashboard.panels[1], false);
+      });
+
+      it("should only remove row", function() {
+        expect(dashboard.panels.length).toBe(4);
       });
     });
   });

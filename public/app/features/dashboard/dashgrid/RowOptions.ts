@@ -5,7 +5,6 @@ export class RowOptionsCtrl {
   source: any;
   dismiss: any;
   onUpdated: any;
-  onDelete: any;
   showDelete: boolean;
 
   /** @ngInject */
@@ -20,11 +19,6 @@ export class RowOptionsCtrl {
     this.onUpdated();
     this.dismiss();
   }
-
-  delete() {
-    this.onDelete();
-    this.dismiss();
-  }
 }
 
 export function rowOptionsDirective() {
@@ -37,8 +31,7 @@ export function rowOptionsDirective() {
     scope: {
       row: "=",
       dismiss: "&",
-      onUpdated: "&",
-      onDelete: "&"
+      onUpdated: "&"
     }
   };
 }
