@@ -3,6 +3,8 @@ import _ from 'lodash';
 
 export class AclCtrl {
   dashboard: any;
+  meta: any;
+
   items: DashboardAcl[];
   permissionOptions = [{ value: 1, text: 'View' }, { value: 2, text: 'Edit' }, { value: 4, text: 'Admin' }];
   aclTypes = [
@@ -12,7 +14,6 @@ export class AclCtrl {
     { value: 'Editor', text: 'Everyone With Editor Role' },
   ];
 
-  dismiss: () => void;
   newType: string;
   canUpdate: boolean;
   error: string;
@@ -20,18 +21,17 @@ export class AclCtrl {
   readonly duplicateError = 'This permission exists already.';
 
   /** @ngInject */
-  constructor(private backendSrv, dashboardSrv, private $sce, private $scope) {
+  constructor(private backendSrv, private $sce, private $scope) {
     this.items = [];
     this.resetNewType();
-    this.dashboard = dashboardSrv.getCurrent();
-    this.get(this.dashboard.id);
+    this.getAcl(this.dashboard.id);
   }
 
   resetNewType() {
     this.newType = 'Group';
   }
 
-  get(dashboardId: number) {
+  getAcl(dashboardId: number) {
     return this.backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`).then(result => {
       this.items = _.map(result, this.prepareViewModel.bind(this));
       this.sortItems();
@@ -43,7 +43,8 @@ export class AclCtrl {
   }
 
   prepareViewModel(item: DashboardAcl): DashboardAcl {
-    item.inherited = !this.dashboard.meta.isFolder && this.dashboard.id !== item.dashboardId;
+    item.inherited =
+      !this.meta.isFolder && this.dashboard.id !== item.dashboardId;
     item.sortRank = 0;
 
     if (item.userId > 0) {
@@ -88,8 +89,8 @@ export class AclCtrl {
       });
     }
 
-    return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, { items: updated }).then(() => {
-      return this.dismiss();
+    return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, {
+      items: updated
     });
   }
 
@@ -168,8 +169,9 @@ export function dashAclModal() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      dismiss: '&',
-    },
+      dashboard: "=",
+      meta: "="
+    }
   };
 }
 
