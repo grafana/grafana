@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -17,10 +16,6 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		RegisterCondition("query", func(model *simplejson.Json, index int) (Condition, error) {
 			return &FakeCondition{}, nil
-		})
-
-		setting.NewConfigContext(&setting.CommandLineArgs{
-			HomePath: "../../../",
 		})
 
 		// mock data
