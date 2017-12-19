@@ -6,6 +6,7 @@ export class MoveToFolderCtrl {
   folder: any;
   dismiss: any;
   afterSave: any;
+  isValidFolderSelection = true;
 
   /** @ngInject */
   constructor(private backendSrv) {}
@@ -38,6 +39,14 @@ export class MoveToFolderCtrl {
         this.dismiss();
         return this.afterSave();
       });
+  }
+
+  onEnterFolderCreation() {
+    this.isValidFolderSelection = false;
+  }
+
+  onExitFolderCreation() {
+    this.isValidFolderSelection = true;
   }
 }
 
