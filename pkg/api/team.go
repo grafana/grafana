@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -68,6 +69,10 @@ func SearchTeams(c *middleware.Context) Response {
 
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Failed to search Teams", err)
+	}
+
+	for _, team := range query.Result.Teams {
+		team.AvatarUrl = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
 	}
 
 	query.Result.Page = page
