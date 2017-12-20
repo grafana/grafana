@@ -77,8 +77,10 @@ func (tw *TsdbWrapper) Query(ctx context.Context, ds *models.DataSource, query *
 			points := tsdb.TimeSeriesPoints{}
 
 			for _, p := range s.Points {
-				po := tsdb.NewTimePoint(null.FloatFrom(float64(p.Timestamp.Nanos)), p.Value)
-				points = append(points, po)
+				if p.Timestamp != nil {
+					po := tsdb.NewTimePoint(null.FloatFrom(p.Value), float64(p.Timestamp.Seconds))
+					points = append(points, po)
+				}
 			}
 
 			res.Results[r.RefId].Series = append(res.Results[r.RefId].Series, &tsdb.TimeSeries{
