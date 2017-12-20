@@ -1,4 +1,4 @@
-﻿import { GlobalEventSrv } from "app/core/services/global_event_srv";
+import { GlobalEventSrv } from "app/core/services/global_event_srv";
 import { beforeEach } from "test/lib/common";
 
 jest.mock("app/core/config", () => {
@@ -11,7 +11,7 @@ describe("GlobalEventSrv", () => {
   let searchSrv;
 
   beforeEach(() => {
-    searchSrv = new GlobalEventSrv(null, null);
+    searchSrv = new GlobalEventSrv(null, null, null);
   });
 
   describe("With /subUrl as appSubUrl", () => {

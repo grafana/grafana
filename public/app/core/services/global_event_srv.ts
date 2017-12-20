@@ -6,10 +6,12 @@ import appEvents from "app/core/app_events";
 // Good for communication react > angular and vice verse
 export class GlobalEventSrv {
   private appSubUrl;
+  private fullPageReloadRoutes;
 
   /** @ngInject */
-  constructor(private $location, private $timeout) {
+  constructor(private $location, private $timeout, private $window) {
     this.appSubUrl = config.appSubUrl;
+    this.fullPageReloadRoutes = ["/logout"];
   }
 
   // Angular's $location does not like <base href...> and absolute urls
@@ -27,6 +29,10 @@ export class GlobalEventSrv {
   init() {
     appEvents.on("location-change", payload => {
       const urlWithoutBase = this.stripBaseFromUrl(payload.href);
+      if (this.fullPageReloadRoutes.indexOf(urlWithoutBase) > -1) {
+        this.$window.location.href = payload.href;
+        return;
+      }
 
       this.$timeout(() => {
         // A hack to use timeout when we're changing things (in this case the url) from outside of Angular.
