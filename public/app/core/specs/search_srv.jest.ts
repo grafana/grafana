@@ -100,7 +100,7 @@ describe("SearchSrv", () => {
     });
 
     it("should include starred dashboards section", () => {
-      expect(results[0].title).toBe("Starred Boards");
+      expect(results[0].title).toBe("Starred");
       expect(results[0].items.length).toBe(1);
     });
   });
@@ -128,7 +128,7 @@ describe("SearchSrv", () => {
     });
 
     it("should not show starred in recent", () => {
-      expect(results[1].title).toBe("Recent Boards");
+      expect(results[1].title).toBe("Recent");
       expect(results[1].items[0].title).toBe("recent");
     });
 

@@ -18,7 +18,7 @@ export class SearchSrv {
     return this.queryForRecentDashboards().then(result => {
       if (result.length > 0) {
         sections["recent"] = {
-          title: "Recent Boards",
+          title: "Recent",
           icon: "fa fa-clock-o",
           score: -1,
           removable: true,
@@ -76,7 +76,7 @@ export class SearchSrv {
     return this.backendSrv.search({ starred: true, limit: 5 }).then(result => {
       if (result.length > 0) {
         sections["starred"] = {
-          title: "Starred Boards",
+          title: "Starred",
           icon: "fa fa-star-o",
           score: -2,
           expanded: this.starredIsOpen,
