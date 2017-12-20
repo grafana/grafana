@@ -111,7 +111,7 @@ $input-border: 1px solid $input-border-color;
   }
 
   &:disabled {
-    color: $text-color-weak
+    color: $text-color-weak;
   }
 }
 
@@ -248,12 +248,30 @@ $input-border: 1px solid $input-border-color;
   position: relative;
   background-color: $input-bg;
 
+  .gf-form-select-icon {
+    position: absolute;
+    z-index: 1;
+    left: $input-padding-x;
+    top: 50%;
+    margin-top: -7px;
+
+    & + .gf-form-input {
+      position: relative;
+      z-index: 2;
+      padding-left: $input-padding-x*3;
+      background-color: transparent;
+
+      option {
+        // Firefox
+        color: $black;
+      }
+    }
+  }
+
   select.gf-form-input {
     text-indent: 0.01px;
     text-overflow: "";
-    padding-right: $input-padding-x*4;
-    -webkit-appearance: none;
-    -moz-appearance: menulist-text; // was set to "window" and caused odd display on windos and linux.
+    padding-right: $input-padding-x*3;
     appearance: none;
 
     &:-moz-focusring {
