@@ -8,6 +8,8 @@ export class FolderSettingsCtrl {
   canSave = false;
   dashboard: any;
   meta: any;
+  title: string;
+  hasChanged: boolean;
 
   /** @ngInject */
   constructor(
@@ -29,11 +31,20 @@ export class FolderSettingsCtrl {
           this.dashboard = result.dashboard;
           this.meta = result.meta;
           this.canSave = result.meta.canSave;
+          this.title = this.dashboard.title;
         });
     }
   }
 
   save() {
+    this.titleChanged();
+
+    if (!this.hasChanged) {
+      return;
+    }
+
+    this.dashboard.title = this.title.trim();
+
     return this.backendSrv
       .saveDashboard(this.dashboard, { overwrite: false })
       .then(result => {
@@ -50,6 +61,11 @@ export class FolderSettingsCtrl {
         appEvents.emit('alert-success', ['Folder saved']);
       })
       .catch(this.handleSaveFolderError);
+  }
+
+  titleChanged() {
+    this.hasChanged =
+      this.dashboard.title.toLowerCase() !== this.title.trim().toLowerCase();
   }
 
   delete(evt) {

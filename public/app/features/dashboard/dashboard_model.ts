@@ -31,7 +31,6 @@ export class DashboardModel {
   revision: number;
   links: any;
   gnetId: any;
-  folderId: number;
   panels: PanelModel[];
 
   // ------------------
@@ -76,7 +75,6 @@ export class DashboardModel {
     this.version = data.version || 0;
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
-    this.folderId = data.folderId || null;
     this.panels = _.map(
       data.panels || [],
       panelData => new PanelModel(panelData)

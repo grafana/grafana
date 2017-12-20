@@ -242,7 +242,7 @@ export class BackendSrv {
 
     return this.post('/api/dashboards/db/', {
       dashboard: dash,
-      folderId: dash.folderId,
+      folderId: options.folderId,
       overwrite: options.overwrite === true,
       message: options.message || '',
     });
@@ -324,20 +324,22 @@ export class BackendSrv {
         return;
       }
 
-      model.folderId = toFolder.id;
-      model.meta.folderId = toFolder.id;
-      model.meta.folderTitle = toFolder.title;
       const clone = model.getSaveModelClone();
+      let options = {
+        folderId: toFolder.id,
+        overwrite: false,
+      };
 
-      this.saveDashboard(clone, {})
+      this.saveDashboard(clone, options)
         .then(() => {
           deferred.resolve({ succeeded: true });
         })
         .catch(err => {
           if (err.data && err.data.status === 'plugin-dashboard') {
             err.isHandled = true;
+            options.overwrite = true;
 
-            this.saveDashboard(clone, { overwrite: true })
+            this.saveDashboard(clone, options)
               .then(() => {
                 deferred.resolve({ succeeded: true });
               })

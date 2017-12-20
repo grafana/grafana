@@ -84,6 +84,9 @@ export class DashboardSrv {
   }
 
   save(clone, options) {
+    options = options || {};
+    options.folderId = this.dash.meta.folderId;
+
     return this.backendSrv
       .saveDashboard(clone, options)
       .then(this.postSave.bind(this, clone))
