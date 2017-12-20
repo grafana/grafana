@@ -34,7 +34,12 @@ export class NewDashboardCtrl {
   constructor($scope, $routeParams) {
     $scope.initDashboard(
       {
-        meta: { canStar: false, canShare: false, isNew: true },
+        meta: {
+          canStar: false,
+          canShare: false,
+          isNew: true,
+          folderId: Number($routeParams.folderId),
+        },
         dashboard: {
           title: 'New dashboard',
           panels: [
@@ -44,7 +49,6 @@ export class NewDashboardCtrl {
               title: 'Panel Title',
             },
           ],
-          folderId: Number($routeParams.folderId),
         },
       },
       $scope

@@ -185,7 +185,6 @@ export class SettingsCtrl {
   }
 
   onFolderChange(folder) {
-    this.dashboard.folderId = folder.id;
     this.dashboard.meta.folderId = folder.id;
     this.dashboard.meta.folderTitle = folder.title;
   }
