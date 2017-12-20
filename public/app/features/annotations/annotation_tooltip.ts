@@ -1,7 +1,7 @@
-import _ from "lodash";
-import $ from "jquery";
-import coreModule from "app/core/core_module";
-import alertDef from "../alerting/alert_def";
+import _ from 'lodash';
+import $ from 'jquery';
+import coreModule from 'app/core/core_module';
+import alertDef from '../alerting/alert_def';
 
 /** @ngInject **/
 export function annotationTooltipDirective(
@@ -15,17 +15,17 @@ export function annotationTooltipDirective(
       return $sanitize(str);
     } catch (err) {
       console.log(
-        "Could not sanitize annotation string, html escaping instead"
+        'Could not sanitize annotation string, html escaping instead'
       );
       return _.escape(str);
     }
   }
 
   return {
-    restrict: "E",
+    restrict: 'E',
     scope: {
-      event: "=",
-      onEdit: "&"
+      event: '=',
+      onEdit: '&',
     },
     link: function(scope, element) {
       var event = scope.event;
@@ -34,7 +34,7 @@ export function annotationTooltipDirective(
       var dashboard = dashboardSrv.getCurrent();
 
       var tooltip = '<div class="graph-annotation">';
-      var titleStateClass = "";
+      var titleStateClass = '';
 
       if (event.alertId) {
         var stateModel = alertDef.getStateDisplayModel(event.newState);
@@ -44,11 +44,11 @@ export function annotationTooltipDirective(
         }`;
         text = alertDef.getAlertAnnotationInfo(event);
         if (event.text) {
-          text = text + "<br />" + event.text;
+          text = text + '<br />' + event.text;
         }
       } else if (title) {
-        text = title + "<br />" + (_.isString(text) ? text : "");
-        title = "";
+        text = title + '<br />' + (_.isString(text) ? text : '');
+        title = '';
       }
 
       var header = `<div class="graph-annotation__header">`;
@@ -81,7 +81,7 @@ export function annotationTooltipDirective(
 
       if (text) {
         tooltip +=
-          "<div>" + sanitizeString(text.replace(/\n/g, "<br>")) + "</div>";
+          '<div>' + sanitizeString(text.replace(/\n/g, '<br>')) + '</div>';
       }
 
       var tags = event.tags;
@@ -92,15 +92,15 @@ export function annotationTooltipDirective(
           '<span class="label label-tag small" ng-repeat="tag in tags" tag-color-from-name="tag">{{tag}}</span><br/>';
       }
 
-      tooltip += "</div>";
-      tooltip += "</div>";
+      tooltip += '</div>';
+      tooltip += '</div>';
 
       var $tooltip = $(tooltip);
       $tooltip.appendTo(element);
 
       $compile(element.contents())(scope);
-    }
+    },
   };
 }
 
-coreModule.directive("annotationTooltip", annotationTooltipDirective);
+coreModule.directive('annotationTooltip', annotationTooltipDirective);

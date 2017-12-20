@@ -1,6 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from "lodash";
+import _ from 'lodash';
 
 export class QueryCtrl {
   target: any;

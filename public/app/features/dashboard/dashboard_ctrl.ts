@@ -1,8 +1,8 @@
-import config from "app/core/config";
+import config from 'app/core/config';
 
-import coreModule from "app/core/core_module";
-import { PanelContainer } from "./dashgrid/PanelContainer";
-import { DashboardModel } from "./dashboard_model";
+import coreModule from 'app/core/core_module';
+import { PanelContainer } from './dashgrid/PanelContainer';
+import { DashboardModel } from './dashboard_model';
 
 export class DashboardCtrl implements PanelContainer {
   dashboard: DashboardModel;
@@ -39,7 +39,7 @@ export class DashboardCtrl implements PanelContainer {
     try {
       this.setupDashboardInternal(data);
     } catch (err) {
-      this.onInitFailed(err, "Dashboard init failed", true);
+      this.onInitFailed(err, 'Dashboard init failed', true);
     }
   }
 
@@ -56,7 +56,7 @@ export class DashboardCtrl implements PanelContainer {
     this.variableSrv
       .init(dashboard)
       // template values failes are non fatal
-      .catch(this.onInitFailed.bind(this, "Templating init failed", false))
+      .catch(this.onInitFailed.bind(this, 'Templating init failed', false))
       // continue
       .finally(() => {
         this.dashboard = dashboard;
@@ -75,9 +75,9 @@ export class DashboardCtrl implements PanelContainer {
         this.dashboard.updateSubmenuVisibility();
         this.setWindowTitleAndTheme();
 
-        this.$scope.appEvent("dashboard-initialized", dashboard);
+        this.$scope.appEvent('dashboard-initialized', dashboard);
       })
-      .catch(this.onInitFailed.bind(this, "Dashboard init failed", true));
+      .catch(this.onInitFailed.bind(this, 'Dashboard init failed', true));
   }
 
   onInitFailed(msg, fatal, err) {
@@ -89,12 +89,12 @@ export class DashboardCtrl implements PanelContainer {
       err = { message: err.toString() };
     }
 
-    this.$scope.appEvent("alert-error", [msg, err.message]);
+    this.$scope.appEvent('alert-error', [msg, err.message]);
 
     // protect against  recursive fallbacks
     if (fatal && !this.loadedFallbackDashboard) {
       this.loadedFallbackDashboard = true;
-      this.setupDashboard({ dashboard: { title: "Dashboard Init failed" } });
+      this.setupDashboard({ dashboard: { title: 'Dashboard Init failed' } });
     }
   }
 
@@ -110,9 +110,9 @@ export class DashboardCtrl implements PanelContainer {
     var editScope = this.$rootScope.$new();
     editScope.object = options.object;
     editScope.updateHandler = options.updateHandler;
-    this.$scope.appEvent("show-dash-editor", {
-      src: "public/app/partials/edit_json.html",
-      scope: editScope
+    this.$scope.appEvent('show-dash-editor', {
+      src: 'public/app/partials/edit_json.html',
+      scope: editScope,
     });
   }
 
@@ -125,7 +125,7 @@ export class DashboardCtrl implements PanelContainer {
   }
 
   timezoneChanged() {
-    this.$rootScope.$broadcast("refresh");
+    this.$rootScope.$broadcast('refresh');
   }
 
   getPanelContainer() {
@@ -133,13 +133,13 @@ export class DashboardCtrl implements PanelContainer {
   }
 
   init(dashboard) {
-    this.$scope.onAppEvent("show-json-editor", this.showJsonEditor.bind(this));
+    this.$scope.onAppEvent('show-json-editor', this.showJsonEditor.bind(this));
     this.$scope.onAppEvent(
-      "template-variable-value-updated",
+      'template-variable-value-updated',
       this.templateVariableUpdated.bind(this)
     );
     this.setupDashboard(dashboard);
   }
 }
 
-coreModule.controller("DashboardCtrl", DashboardCtrl);
+coreModule.controller('DashboardCtrl', DashboardCtrl);

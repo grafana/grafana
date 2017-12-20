@@ -1,5 +1,5 @@
-import { DashboardModel } from "../dashboard/dashboard_model";
-import Remarkable from "remarkable";
+import { DashboardModel } from '../dashboard/dashboard_model';
+import Remarkable from 'remarkable';
 
 export class MetricsTabCtrl {
   dsName: string;
@@ -34,7 +34,7 @@ export class MetricsTabCtrl {
       }
     }
 
-    this.addQueryDropdown = { text: "Add Query", value: null, fake: true };
+    this.addQueryDropdown = { text: 'Add Query', value: null, fake: true };
 
     // update next ref id
     this.panelCtrl.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
@@ -77,9 +77,9 @@ export class MetricsTabCtrl {
 
     this.panelCtrl.addQuery({
       isNew: true,
-      datasource: option.datasource.name
+      datasource: option.datasource.name,
     });
-    this.addQueryDropdown = { text: "Add Query", value: null, fake: true };
+    this.addQueryDropdown = { text: 'Add Query', value: null, fake: true };
   }
 
   addQuery() {
@@ -116,11 +116,11 @@ export class MetricsTabCtrl {
 
 /** @ngInject **/
 export function metricsTabDirective() {
-  "use strict";
+  'use strict';
   return {
-    restrict: "E",
+    restrict: 'E',
     scope: true,
-    templateUrl: "public/app/features/panel/partials/metrics_tab.html",
-    controller: MetricsTabCtrl
+    templateUrl: 'public/app/features/panel/partials/metrics_tab.html',
+    controller: MetricsTabCtrl,
   };
 }

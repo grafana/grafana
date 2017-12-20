@@ -1,13 +1,13 @@
-import kbn from "app/core/utils/kbn";
-import { getFlotTickDecimals } from "app/core/utils/ticks";
-import _ from "lodash";
+import kbn from 'app/core/utils/kbn';
+import { getFlotTickDecimals } from 'app/core/utils/ticks';
+import _ from 'lodash';
 
 function matchSeriesOverride(aliasOrRegex, seriesAlias) {
   if (!aliasOrRegex) {
     return false;
   }
 
-  if (aliasOrRegex[0] === "/") {
+  if (aliasOrRegex[0] === '/') {
     var regex = kbn.stringToJsRegex(aliasOrRegex);
     return seriesAlias.match(regex) != null;
   }
@@ -108,7 +108,7 @@ export default class TimeSeries {
   applySeriesOverrides(overrides) {
     this.lines = {};
     this.dashes = {
-      dashLength: []
+      dashLength: [],
     };
     this.points = {};
     this.bars = {};
@@ -199,8 +199,8 @@ export default class TimeSeries {
     this.allIsNull = true;
     this.allIsZero = true;
 
-    var ignoreNulls = fillStyle === "connected";
-    var nullAsZero = fillStyle === "null as zero";
+    var ignoreNulls = fillStyle === 'connected';
+    var nullAsZero = fillStyle === 'null as zero';
     var currentTime;
     var currentValue;
     var nonNulls = 0;

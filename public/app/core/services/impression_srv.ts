@@ -1,6 +1,6 @@
-import store from "app/core/store";
-import _ from "lodash";
-import config from "app/core/config";
+import store from 'app/core/store';
+import _ from 'lodash';
+import config from 'app/core/config';
 
 export class ImpressionSrv {
   constructor() {}
@@ -28,7 +28,7 @@ export class ImpressionSrv {
   }
 
   getDashboardOpened() {
-    var impressions = store.get(this.impressionKey(config)) || "[]";
+    var impressions = store.get(this.impressionKey(config)) || '[]';
 
     impressions = JSON.parse(impressions);
 
@@ -40,7 +40,7 @@ export class ImpressionSrv {
   }
 
   impressionKey(config) {
-    return "dashboard_impressions-" + config.bootData.user.orgId;
+    return 'dashboard_impressions-' + config.bootData.user.orgId;
   }
 }
 

@@ -107,11 +107,11 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "prettier --write",
+      "prettier --single-quote --trailing-comma es5 --write",
       "git add"
     ],
     "*.scss": [
-      "prettier --write",
+      "prettier --single-quote --write",
       "git add"
     ]
   },

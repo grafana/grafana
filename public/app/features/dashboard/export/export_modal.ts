@@ -1,8 +1,8 @@
-import angular from "angular";
-import { saveAs } from "file-saver";
+import angular from 'angular';
+import { saveAs } from 'file-saver';
 
-import coreModule from "app/core/core_module";
-import { DashboardExporter } from "./exporter";
+import coreModule from 'app/core/core_module';
+import { DashboardExporter } from './exporter';
 
 export class DashExportCtrl {
   dash: any;
@@ -27,9 +27,9 @@ export class DashExportCtrl {
 
   save() {
     var blob = new Blob([angular.toJson(this.dash, true)], {
-      type: "application/json;charset=utf-8"
+      type: 'application/json;charset=utf-8',
     });
-    saveAs(blob, this.dash.title + "-" + new Date().getTime() + ".json");
+    saveAs(blob, this.dash.title + '-' + new Date().getTime() + '.json');
   }
 
   saveJson() {
@@ -37,9 +37,9 @@ export class DashExportCtrl {
     let editScope = this.$rootScope.$new();
     editScope.object = clone;
 
-    this.$rootScope.appEvent("show-modal", {
-      src: "public/app/partials/edit_json.html",
-      scope: editScope
+    this.$rootScope.appEvent('show-modal', {
+      src: 'public/app/partials/edit_json.html',
+      scope: editScope,
     });
 
     this.dismiss();
@@ -48,13 +48,13 @@ export class DashExportCtrl {
 
 export function dashExportDirective() {
   return {
-    restrict: "E",
-    templateUrl: "public/app/features/dashboard/export/export_modal.html",
+    restrict: 'E',
+    templateUrl: 'public/app/features/dashboard/export/export_modal.html',
     controller: DashExportCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
-    scope: { dismiss: "&" }
+    controllerAs: 'ctrl',
+    scope: { dismiss: '&' },
   };
 }
 
-coreModule.directive("dashExportModal", dashExportDirective);
+coreModule.directive('dashExportModal', dashExportDirective);

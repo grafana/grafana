@@ -1,6 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import coreModule from "../../core/core_module";
+import coreModule from '../../core/core_module';
 
 export class PlaylistSearchCtrl {
   query: any;
@@ -10,10 +10,10 @@ export class PlaylistSearchCtrl {
 
   /** @ngInject */
   constructor($timeout, private backendSrv) {
-    this.query = { query: "", tag: [], starred: false, limit: 30 };
+    this.query = { query: '', tag: [], starred: false, limit: 30 };
 
     $timeout(() => {
-      this.query.query = "";
+      this.query.query = '';
       this.searchDashboards();
     }, 100);
   }
@@ -25,7 +25,7 @@ export class PlaylistSearchCtrl {
     prom.promise = this.backendSrv.search(this.query).then(result => {
       return {
         dashboardResult: result,
-        tagResult: []
+        tagResult: [],
       };
     });
 
@@ -39,7 +39,7 @@ export class PlaylistSearchCtrl {
 
   queryHasNoFilters() {
     return (
-      this.query.query === "" &&
+      this.query.query === '' &&
       this.query.starred === false &&
       this.query.tag.length === 0
     );
@@ -56,10 +56,10 @@ export class PlaylistSearchCtrl {
 
   getTags() {
     var prom: any = {};
-    prom.promise = this.backendSrv.get("/api/dashboards/tags").then(result => {
+    prom.promise = this.backendSrv.get('/api/dashboards/tags').then(result => {
       return {
         dashboardResult: [],
-        tagResult: result
+        tagResult: result,
       };
     });
 
@@ -69,15 +69,15 @@ export class PlaylistSearchCtrl {
 
 export function playlistSearchDirective() {
   return {
-    restrict: "E",
-    templateUrl: "public/app/features/playlist/partials/playlist_search.html",
+    restrict: 'E',
+    templateUrl: 'public/app/features/playlist/partials/playlist_search.html',
     controller: PlaylistSearchCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
+    controllerAs: 'ctrl',
     scope: {
-      searchStarted: "&"
-    }
+      searchStarted: '&',
+    },
   };
 }
 
-coreModule.directive("playlistSearch", playlistSearchDirective);
+coreModule.directive('playlistSearch', playlistSearchDirective);

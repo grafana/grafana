@@ -1,5 +1,5 @@
-import angular from "angular";
-import coreModule from "app/core/core_module";
+import angular from 'angular';
+import coreModule from 'app/core/core_module';
 
 export interface AttachedPanel {
   destroy();
@@ -24,9 +24,9 @@ export class PanelLoader {
       destroy: () => {
         panelScope.$destroy();
         compiledElem.remove();
-      }
+      },
     };
   }
 }
 
-coreModule.service("panelLoader", PanelLoader);
+coreModule.service('panelLoader', PanelLoader);

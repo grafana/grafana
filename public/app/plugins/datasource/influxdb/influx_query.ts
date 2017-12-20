@@ -1,8 +1,8 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import _ from "lodash";
-import queryPart from "./query_part";
-import kbn from "app/core/utils/kbn";
+import _ from 'lodash';
+import queryPart from './query_part';
+import kbn from 'app/core/utils/kbn';
 
 export default class InfluxQuery {
   target: any;
@@ -18,16 +18,16 @@ export default class InfluxQuery {
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
 
-    target.policy = target.policy || "default";
-    target.resultFormat = target.resultFormat || "time_series";
-    target.orderByTime = target.orderByTime || "ASC";
+    target.policy = target.policy || 'default';
+    target.resultFormat = target.resultFormat || 'time_series';
+    target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
     target.groupBy = target.groupBy || [
-      { type: "time", params: ["$__interval"] },
-      { type: "fill", params: ["null"] }
+      { type: 'time', params: ['$__interval'] },
+      { type: 'fill', params: ['null'] },
     ];
     target.select = target.select || [
-      [{ type: "field", params: ["value"] }, { type: "mean", params: [] }]
+      [{ type: 'field', params: ['value'] }, { type: 'mean', params: [] }],
     ];
 
     this.updateProjection();
@@ -49,11 +49,11 @@ export default class InfluxQuery {
   }
 
   hasGroupByTime() {
-    return _.find(this.target.groupBy, (g: any) => g.type === "time");
+    return _.find(this.target.groupBy, (g: any) => g.type === 'time');
   }
 
   hasFill() {
-    return _.find(this.target.groupBy, (g: any) => g.type === "fill");
+    return _.find(this.target.groupBy, (g: any) => g.type === 'fill');
   }
 
   addGroupBy(value) {
@@ -65,10 +65,10 @@ export default class InfluxQuery {
 
     if (partCount === 0) {
       this.target.groupBy.push(partModel.part);
-    } else if (typePart === "time") {
+    } else if (typePart === 'time') {
       this.target.groupBy.splice(0, 0, partModel.part);
-    } else if (typePart === "tag") {
-      if (this.target.groupBy[partCount - 1].type === "fill") {
+    } else if (typePart === 'tag') {
+      if (this.target.groupBy[partCount - 1].type === 'fill') {
         this.target.groupBy.splice(partCount - 1, 0, partModel.part);
       } else {
         this.target.groupBy.push(partModel.part);
@@ -83,11 +83,11 @@ export default class InfluxQuery {
   removeGroupByPart(part, index) {
     var categories = queryPart.getCategories();
 
-    if (part.def.type === "time") {
+    if (part.def.type === 'time') {
       // remove fill
       this.target.groupBy = _.filter(
         this.target.groupBy,
-        (g: any) => g.type !== "fill"
+        (g: any) => g.type !== 'fill'
       );
       // remove aggregations
       this.target.select = _.map(this.target.select, (s: any) => {
@@ -115,7 +115,7 @@ export default class InfluxQuery {
 
   removeSelectPart(selectParts, part) {
     // if we remove the field remove the whole statement
-    if (part.def.type === "field") {
+    if (part.def.type === 'field') {
       if (this.selectModels.length > 1) {
         var modelsIndex = _.indexOf(this.selectModels, selectParts);
         this.selectModels.splice(modelsIndex, 1);
@@ -135,54 +135,54 @@ export default class InfluxQuery {
   }
 
   private renderTagCondition(tag, index, interpolate) {
-    var str = "";
+    var str = '';
     var operator = tag.operator;
     var value = tag.value;
     if (index > 0) {
-      str = (tag.condition || "AND") + " ";
+      str = (tag.condition || 'AND') + ' ';
     }
 
     if (!operator) {
       if (/^\/.*\/$/.test(value)) {
-        operator = "=~";
+        operator = '=~';
       } else {
-        operator = "=";
+        operator = '=';
       }
     }
 
     // quote value unless regex
-    if (operator !== "=~" && operator !== "!~") {
+    if (operator !== '=~' && operator !== '!~') {
       if (interpolate) {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
-      if (operator !== ">" && operator !== "<") {
-        value = "'" + value.replace(/\\/g, "\\\\") + "'";
+      if (operator !== '>' && operator !== '<') {
+        value = "'" + value.replace(/\\/g, '\\\\') + "'";
       }
     } else if (interpolate) {
-      value = this.templateSrv.replace(value, this.scopedVars, "regex");
+      value = this.templateSrv.replace(value, this.scopedVars, 'regex');
     }
 
-    return str + '"' + tag.key + '" ' + operator + " " + value;
+    return str + '"' + tag.key + '" ' + operator + ' ' + value;
   }
 
   getMeasurementAndPolicy(interpolate) {
     var policy = this.target.policy;
-    var measurement = this.target.measurement || "measurement";
+    var measurement = this.target.measurement || 'measurement';
 
-    if (!measurement.match("^/.*/$")) {
+    if (!measurement.match('^/.*/$')) {
       measurement = '"' + measurement + '"';
     } else if (interpolate) {
       measurement = this.templateSrv.replace(
         measurement,
         this.scopedVars,
-        "regex"
+        'regex'
       );
     }
 
-    if (policy !== "default") {
+    if (policy !== 'default') {
       policy = '"' + this.target.policy + '".';
     } else {
-      policy = "";
+      policy = '';
     }
 
     return policy + measurement;
@@ -194,12 +194,12 @@ export default class InfluxQuery {
       return value;
     }
 
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       return kbn.regexEscape(value);
     }
 
     var escapedValues = _.map(value, kbn.regexEscape);
-    return "(" + escapedValues.join("|") + ")";
+    return '(' + escapedValues.join('|') + ')';
   }
 
   render(interpolate?) {
@@ -217,61 +217,61 @@ export default class InfluxQuery {
       }
     }
 
-    var query = "SELECT ";
+    var query = 'SELECT ';
     var i, y;
     for (i = 0; i < this.selectModels.length; i++) {
       let parts = this.selectModels[i];
-      var selectText = "";
+      var selectText = '';
       for (y = 0; y < parts.length; y++) {
         let part = parts[y];
         selectText = part.render(selectText);
       }
 
       if (i > 0) {
-        query += ", ";
+        query += ', ';
       }
       query += selectText;
     }
 
-    query += " FROM " + this.getMeasurementAndPolicy(interpolate) + " WHERE ";
+    query += ' FROM ' + this.getMeasurementAndPolicy(interpolate) + ' WHERE ';
     var conditions = _.map(target.tags, (tag, index) => {
       return this.renderTagCondition(tag, index, interpolate);
     });
 
     if (conditions.length > 0) {
-      query += "(" + conditions.join(" ") + ") AND ";
+      query += '(' + conditions.join(' ') + ') AND ';
     }
 
-    query += "$timeFilter";
+    query += '$timeFilter';
 
-    var groupBySection = "";
+    var groupBySection = '';
     for (i = 0; i < this.groupByParts.length; i++) {
       var part = this.groupByParts[i];
       if (i > 0) {
         // for some reason fill has no seperator
-        groupBySection += part.def.type === "fill" ? " " : ", ";
+        groupBySection += part.def.type === 'fill' ? ' ' : ', ';
       }
-      groupBySection += part.render("");
+      groupBySection += part.render('');
     }
 
     if (groupBySection.length) {
-      query += " GROUP BY " + groupBySection;
+      query += ' GROUP BY ' + groupBySection;
     }
 
     if (target.fill) {
-      query += " fill(" + target.fill + ")";
+      query += ' fill(' + target.fill + ')';
     }
 
-    if (target.orderByTime === "DESC") {
-      query += " ORDER BY time DESC";
+    if (target.orderByTime === 'DESC') {
+      query += ' ORDER BY time DESC';
     }
 
     if (target.limit) {
-      query += " LIMIT " + target.limit;
+      query += ' LIMIT ' + target.limit;
     }
 
     if (target.slimit) {
-      query += " SLIMIT " + target.slimit;
+      query += ' SLIMIT ' + target.slimit;
     }
 
     return query;
@@ -281,6 +281,6 @@ export default class InfluxQuery {
     var conditions = _.map(filters, (tag, index) => {
       return this.renderTagCondition(tag, index, false);
     });
-    return conditions.join(" ");
+    return conditions.join(' ');
   }
 }

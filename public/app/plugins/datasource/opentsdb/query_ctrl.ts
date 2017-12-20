@@ -1,11 +1,11 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import _ from "lodash";
-import kbn from "app/core/utils/kbn";
-import { QueryCtrl } from "app/plugins/sdk";
+import _ from 'lodash';
+import kbn from 'app/core/utils/kbn';
+import { QueryCtrl } from 'app/plugins/sdk';
 
 export class OpenTsQueryCtrl extends QueryCtrl {
-  static templateUrl = "partials/query.editor.html";
+  static templateUrl = 'partials/query.editor.html';
   aggregators: any;
   fillPolicies: any;
   filterTypes: any;
@@ -27,38 +27,38 @@ export class OpenTsQueryCtrl extends QueryCtrl {
 
     this.errors = this.validateTarget();
     this.aggregators = [
-      "avg",
-      "sum",
-      "min",
-      "max",
-      "dev",
-      "zimsum",
-      "mimmin",
-      "mimmax"
+      'avg',
+      'sum',
+      'min',
+      'max',
+      'dev',
+      'zimsum',
+      'mimmin',
+      'mimmax',
     ];
-    this.fillPolicies = ["none", "nan", "null", "zero"];
+    this.fillPolicies = ['none', 'nan', 'null', 'zero'];
     this.filterTypes = [
-      "wildcard",
-      "iliteral_or",
-      "not_iliteral_or",
-      "not_literal_or",
-      "iwildcard",
-      "literal_or",
-      "regexp"
+      'wildcard',
+      'iliteral_or',
+      'not_iliteral_or',
+      'not_literal_or',
+      'iwildcard',
+      'literal_or',
+      'regexp',
     ];
 
     this.tsdbVersion = this.datasource.tsdbVersion;
 
     if (!this.target.aggregator) {
-      this.target.aggregator = "sum";
+      this.target.aggregator = 'sum';
     }
 
     if (!this.target.downsampleAggregator) {
-      this.target.downsampleAggregator = "avg";
+      this.target.downsampleAggregator = 'avg';
     }
 
     if (!this.target.downsampleFillPolicy) {
-      this.target.downsampleFillPolicy = "none";
+      this.target.downsampleFillPolicy = 'none';
     }
 
     this.datasource.getAggregators().then(aggs => {
@@ -76,7 +76,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     // needs to be defined here as it is called from typeahead
     this.suggestMetrics = (query, callback) => {
       this.datasource
-        .metricFindQuery("metrics(" + query + ")")
+        .metricFindQuery('metrics(' + query + ')')
         .then(this.getTextValues)
         .then(callback);
     };
@@ -87,7 +87,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
 
     this.suggestTagValues = (query, callback) => {
       this.datasource
-        .metricFindQuery("suggest_tagv(" + query + ")")
+        .metricFindQuery('suggest_tagv(' + query + ')')
         .then(this.getTextValues)
         .then(callback);
     };
@@ -107,7 +107,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   addTag() {
     if (this.target.filters && this.target.filters.length > 0) {
       this.errors.tags =
-        "Please remove filters to use tags, tags and filters are mutually exclusive.";
+        'Please remove filters to use tags, tags and filters are mutually exclusive.';
     }
 
     if (!this.addTagMode) {
@@ -123,8 +123,8 @@ export class OpenTsQueryCtrl extends QueryCtrl {
 
     if (!this.errors.tags) {
       this.target.tags[this.target.currentTagKey] = this.target.currentTagValue;
-      this.target.currentTagKey = "";
-      this.target.currentTagValue = "";
+      this.target.currentTagKey = '';
+      this.target.currentTagValue = '';
       this.targetBlur();
     }
 
@@ -151,7 +151,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   addFilter() {
     if (this.target.tags && _.size(this.target.tags) > 0) {
       this.errors.filters =
-        "Please remove tags to use filters, tags and filters are mutually exclusive.";
+        'Please remove tags to use filters, tags and filters are mutually exclusive.';
     }
 
     if (!this.addFilterMode) {
@@ -164,7 +164,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     }
 
     if (!this.target.currentFilterType) {
-      this.target.currentFilterType = "iliteral_or";
+      this.target.currentFilterType = 'iliteral_or';
     }
 
     if (!this.target.currentFilterGroupBy) {
@@ -178,12 +178,12 @@ export class OpenTsQueryCtrl extends QueryCtrl {
         type: this.target.currentFilterType,
         tagk: this.target.currentFilterKey,
         filter: this.target.currentFilterValue,
-        groupBy: this.target.currentFilterGroupBy
+        groupBy: this.target.currentFilterGroupBy,
       };
       this.target.filters.push(currentFilter);
-      this.target.currentFilterType = "literal_or";
-      this.target.currentFilterKey = "";
-      this.target.currentFilterValue = "";
+      this.target.currentFilterType = 'literal_or';
+      this.target.currentFilterKey = '';
+      this.target.currentFilterValue = '';
       this.target.currentFilterGroupBy = false;
       this.targetBlur();
     }

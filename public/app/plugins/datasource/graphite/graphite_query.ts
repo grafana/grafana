@@ -1,6 +1,6 @@
-import _ from "lodash";
-import gfunc from "./gfunc";
-import { Parser } from "./parser";
+import _ from 'lodash';
+import gfunc from './gfunc';
+import { Parser } from './parser';
 
 export default class GraphiteQuery {
   target: any;
@@ -19,7 +19,7 @@ export default class GraphiteQuery {
     this.target = target;
     this.parseTarget();
 
-    this.removeTagValue = "-- remove tag --";
+    this.removeTagValue = '-- remove tag --';
   }
 
   parseTarget() {
@@ -39,8 +39,8 @@ export default class GraphiteQuery {
       return;
     }
 
-    if (astNode.type === "error") {
-      this.error = astNode.message + " at position: " + astNode.pos;
+    if (astNode.type === 'error') {
+      this.error = astNode.message + ' at position: ' + astNode.pos;
       this.target.textEditor = true;
       return;
     }
@@ -48,7 +48,7 @@ export default class GraphiteQuery {
     try {
       this.parseTargetRecursive(astNode, null);
     } catch (err) {
-      console.log("error parsing target:", err.message);
+      console.log('error parsing target:', err.message);
       this.error = err.message;
       this.target.textEditor = true;
     }
@@ -60,7 +60,7 @@ export default class GraphiteQuery {
   checkForSeriesByTag() {
     let seriesByTagFunc = _.find(
       this.functions,
-      func => func.def.name === "seriesByTag"
+      func => func.def.name === 'seriesByTag'
     );
     if (seriesByTagFunc) {
       this.seriesByTagUsed = true;
@@ -76,9 +76,9 @@ export default class GraphiteQuery {
     return _.reduce(
       arr,
       function(result, segment) {
-        return result ? result + "." + segment.value : segment.value;
+        return result ? result + '.' + segment.value : segment.value;
       },
-      ""
+      ''
     );
   }
 
@@ -88,9 +88,9 @@ export default class GraphiteQuery {
     }
 
     switch (astNode.type) {
-      case "function":
+      case 'function':
         var innerFunc = gfunc.createFuncInstance(astNode.name, {
-          withDefaultParams: false
+          withDefaultParams: false,
         });
         _.each(astNode.params, param => {
           this.parseTargetRecursive(param, innerFunc);
@@ -99,23 +99,23 @@ export default class GraphiteQuery {
         innerFunc.updateText();
         this.functions.push(innerFunc);
         break;
-      case "series-ref":
+      case 'series-ref':
         if (this.segments.length > 0) {
           this.addFunctionParameter(func, astNode.value);
         } else {
           this.segments.push(astNode);
         }
         break;
-      case "bool":
-      case "string":
-      case "number":
+      case 'bool':
+      case 'string':
+      case 'number':
         this.addFunctionParameter(func, astNode.value);
         break;
-      case "metric":
+      case 'metric':
         if (this.segments.length > 0) {
           this.addFunctionParameter(
             func,
-            _.join(_.map(astNode.segments, "value"), ".")
+            _.join(_.map(astNode.segments, 'value'), '.')
           );
         } else {
           this.segments = astNode.segments;
@@ -129,7 +129,7 @@ export default class GraphiteQuery {
   }
 
   addSelectMetricSegment() {
-    this.segments.push({ value: "select metric" });
+    this.segments.push({ value: 'select metric' });
   }
 
   addFunction(newFunc) {
@@ -140,9 +140,9 @@ export default class GraphiteQuery {
   moveAliasFuncLast() {
     var aliasFunc = _.find(this.functions, function(func) {
       return (
-        func.def.name === "alias" ||
-        func.def.name === "aliasByNode" ||
-        func.def.name === "aliasByMetric"
+        func.def.name === 'alias' ||
+        func.def.name === 'aliasByNode' ||
+        func.def.name === 'aliasByMetric'
       );
     });
 
@@ -154,7 +154,7 @@ export default class GraphiteQuery {
 
   addFunctionParameter(func, value) {
     if (func.params.length >= func.def.params.length) {
-      throw { message: "too many parameters for function " + func.def.name };
+      throw { message: 'too many parameters for function ' + func.def.name };
     }
     func.params.push(value);
   }
@@ -168,7 +168,7 @@ export default class GraphiteQuery {
     if (!this.target.textEditor) {
       var metricPath = this.getSegmentPathUpTo(this.segments.length).replace(
         /\.select metric$/,
-        ""
+        ''
       );
       this.target.target = _.reduce(this.functions, wrapFunction, metricPath);
     }
@@ -185,7 +185,7 @@ export default class GraphiteQuery {
 
   updateRenderedTarget(target, targets) {
     // render nested query
-    var targetsByRefId = _.keyBy(targets, "refId");
+    var targetsByRefId = _.keyBy(targets, 'refId');
 
     // no references to self
     delete targetsByRefId[target.refId];
@@ -234,7 +234,7 @@ export default class GraphiteQuery {
             return {
               key: tag[0],
               operator: tag[1],
-              value: tag[2]
+              value: tag[2],
             };
           }
         }
@@ -244,7 +244,7 @@ export default class GraphiteQuery {
   }
 
   getSeriesByTagFuncIndex() {
-    return _.findIndex(this.functions, func => func.def.name === "seriesByTag");
+    return _.findIndex(this.functions, func => func.def.name === 'seriesByTag');
   }
 
   getSeriesByTagFunc() {

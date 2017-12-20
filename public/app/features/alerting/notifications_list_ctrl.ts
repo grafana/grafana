@@ -1,6 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import { coreModule } from "app/core/core";
+import { coreModule } from 'app/core/core';
 
 export class AlertNotificationsListCtrl {
   notifications: any;
@@ -9,7 +9,7 @@ export class AlertNotificationsListCtrl {
   /** @ngInject */
   constructor(private backendSrv, navModelSrv) {
     this.loadNotifications();
-    this.navModel = navModelSrv.getNav("alerting", "channels", 0);
+    this.navModel = navModelSrv.getNav('alerting', 'channels', 0);
   }
 
   loadNotifications() {
@@ -27,4 +27,4 @@ export class AlertNotificationsListCtrl {
   }
 }
 
-coreModule.controller("AlertNotificationsListCtrl", AlertNotificationsListCtrl);
+coreModule.controller('AlertNotificationsListCtrl', AlertNotificationsListCtrl);

@@ -13,7 +13,7 @@ function escapeString(str: string): string {
 */
 export function isObject(value: any): boolean {
   var type = typeof value;
-  return !!value && type === "object";
+  return !!value && type === 'object';
 }
 
 /*
@@ -23,13 +23,13 @@ export function isObject(value: any): boolean {
 */
 export function getObjectName(object: Object): string {
   if (object === undefined) {
-    return "";
+    return '';
   }
   if (object === null) {
-    return "Object";
+    return 'Object';
   }
-  if (typeof object === "object" && !object.constructor) {
-    return "Object";
+  if (typeof object === 'object' && !object.constructor) {
+    return 'Object';
   }
 
   const funcNameRegex = /function ([^(]*)/;
@@ -37,7 +37,7 @@ export function getObjectName(object: Object): string {
   if (results && results.length > 1) {
     return results[1];
   } else {
-    return "";
+    return '';
   }
 }
 
@@ -46,7 +46,7 @@ export function getObjectName(object: Object): string {
 */
 export function getType(object: Object): string {
   if (object === null) {
-    return "null";
+    return 'null';
   }
   return typeof object;
 }
@@ -57,20 +57,20 @@ export function getType(object: Object): string {
 export function getValuePreview(object: Object, value: string): string {
   var type = getType(object);
 
-  if (type === "null" || type === "undefined") {
+  if (type === 'null' || type === 'undefined') {
     return type;
   }
 
-  if (type === "string") {
+  if (type === 'string') {
     value = '"' + escapeString(value) + '"';
   }
-  if (type === "function") {
+  if (type === 'function') {
     // Remove content of the function
     return (
       object
         .toString()
-        .replace(/[\r\n]/g, "")
-        .replace(/\{.*\}/, "") + "{…}"
+        .replace(/[\r\n]/g, '')
+        .replace(/\{.*\}/, '') + '{…}'
     );
   }
   return value;
@@ -80,11 +80,11 @@ export function getValuePreview(object: Object, value: string): string {
  * Generates inline preview for a JavaScript object
 */
 export function getPreview(object: string): string {
-  let value = "";
+  let value = '';
   if (isObject(object)) {
     value = getObjectName(object);
     if (Array.isArray(object)) {
-      value += "[" + object.length + "]";
+      value += '[' + object.length + ']';
     }
   } else {
     value = getValuePreview(object, object);

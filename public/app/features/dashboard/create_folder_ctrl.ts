@@ -1,14 +1,19 @@
-import appEvents from "app/core/app_events";
+import appEvents from 'app/core/app_events';
 
 export class CreateFolderCtrl {
-  title = "";
+  title = '';
   navModel: any;
   titleTouched = false;
   hasValidationError: boolean;
   validationError: any;
 
   /** @ngInject **/
-  constructor(private backendSrv, private $location, private validationSrv, navModelSrv) {
+  constructor(
+    private backendSrv,
+    private $location,
+    private validationSrv,
+    navModelSrv
+  ) {
     this.navModel = navModelSrv.getNav('dashboards', 'manage-dashboards', 0);
   }
 
@@ -30,7 +35,8 @@ export class CreateFolderCtrl {
   titleChanged() {
     this.titleTouched = true;
 
-    this.validationSrv.validateNewDashboardOrFolderName(this.title)
+    this.validationSrv
+      .validateNewDashboardOrFolderName(this.title)
       .then(() => {
         this.hasValidationError = false;
       })

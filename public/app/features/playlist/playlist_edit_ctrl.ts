@@ -1,13 +1,13 @@
-import _ from "lodash";
-import coreModule from "../../core/core_module";
+import _ from 'lodash';
+import coreModule from '../../core/core_module';
 
 export class PlaylistEditCtrl {
   filteredDashboards: any = [];
   filteredTags: any = [];
-  searchQuery = "";
+  searchQuery = '';
   loading = false;
   playlist: any = {
-    interval: "5m"
+    interval: '5m',
   };
 
   playlistItems: any = [];
@@ -24,28 +24,28 @@ export class PlaylistEditCtrl {
     $route,
     navModelSrv
   ) {
-    this.navModel = navModelSrv.getNav("dashboards", "playlists", 0);
+    this.navModel = navModelSrv.getNav('dashboards', 'playlists', 0);
     this.isNew = $route.current.params.id;
 
     if ($route.current.params.id) {
       var playlistId = $route.current.params.id;
 
-      backendSrv.get("/api/playlists/" + playlistId).then(result => {
+      backendSrv.get('/api/playlists/' + playlistId).then(result => {
         this.playlist = result;
         this.navModel.node = {
           text: result.name,
-          icon: this.navModel.node.icon
+          icon: this.navModel.node.icon,
         };
         this.navModel.breadcrumbs.push(this.navModel.node);
       });
 
-      backendSrv.get("/api/playlists/" + playlistId + "/items").then(result => {
+      backendSrv.get('/api/playlists/' + playlistId + '/items').then(result => {
         this.playlistItems = result;
       });
     } else {
       this.navModel.node = {
-        text: "New playlist",
-        icon: this.navModel.node.icon
+        text: 'New playlist',
+        icon: this.navModel.node.icon,
       };
       this.navModel.breadcrumbs.push(this.navModel.node);
     }
@@ -67,7 +67,7 @@ export class PlaylistEditCtrl {
 
   addPlaylistItem(playlistItem) {
     playlistItem.value = playlistItem.id.toString();
-    playlistItem.type = "dashboard_by_id";
+    playlistItem.type = 'dashboard_by_id';
     playlistItem.order = this.playlistItems.length + 1;
 
     this.playlistItems.push(playlistItem);
@@ -77,9 +77,9 @@ export class PlaylistEditCtrl {
   addTagPlaylistItem(tag) {
     var playlistItem: any = {
       value: tag.term,
-      type: "dashboard_by_tag",
+      type: 'dashboard_by_tag',
       order: this.playlistItems.length + 1,
-      title: tag.term
+      title: tag.term,
     };
 
     this.playlistItems.push(playlistItem);
@@ -99,16 +99,16 @@ export class PlaylistEditCtrl {
     playlist.items = playlistItems;
 
     savePromise = playlist.id
-      ? this.backendSrv.put("/api/playlists/" + playlist.id, playlist)
-      : this.backendSrv.post("/api/playlists", playlist);
+      ? this.backendSrv.put('/api/playlists/' + playlist.id, playlist)
+      : this.backendSrv.post('/api/playlists', playlist);
 
     savePromise.then(
       () => {
-        this.$scope.appEvent("alert-success", ["Playlist saved", ""]);
-        this.$location.path("/playlists");
+        this.$scope.appEvent('alert-success', ['Playlist saved', '']);
+        this.$location.path('/playlists');
       },
       () => {
-        this.$scope.appEvent("alert-error", ["Unable to save playlist", ""]);
+        this.$scope.appEvent('alert-error', ['Unable to save playlist', '']);
       }
     );
   }
@@ -118,7 +118,7 @@ export class PlaylistEditCtrl {
   }
 
   backToList() {
-    this.$location.path("/playlists");
+    this.$location.path('/playlists');
   }
 
   searchStarted(promise) {
@@ -148,4 +148,4 @@ export class PlaylistEditCtrl {
   }
 }
 
-coreModule.controller("PlaylistEditCtrl", PlaylistEditCtrl);
+coreModule.controller('PlaylistEditCtrl', PlaylistEditCtrl);

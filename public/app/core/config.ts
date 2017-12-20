@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _ from 'lodash';
 
 class Settings {
   datasources: any;
@@ -25,12 +25,12 @@ class Settings {
   constructor(options) {
     var defaults = {
       datasources: {},
-      window_title_prefix: "Grafana - ",
+      window_title_prefix: 'Grafana - ',
       panels: {},
-      new_panel_title: "Panel Title",
-      playlist_timespan: "1m",
+      new_panel_title: 'Panel Title',
+      playlist_timespan: '1m',
       unsaved_changes_warning: true,
-      appSubUrl: ""
+      appSubUrl: '',
     };
     _.extend(this, defaults, options);
   }

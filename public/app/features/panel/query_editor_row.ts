@@ -1,8 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from "angular";
+import angular from 'angular';
 
-var module = angular.module("grafana.directives");
+var module = angular.module('grafana.directives');
 
 export class QueryRowCtrl {
   collapsedText: string;
@@ -62,7 +62,7 @@ export class QueryRowCtrl {
       this.collapsedText = this.queryCtrl.getCollapsedText();
     } catch (e) {
       var err = e.message || e.toString();
-      this.collapsedText = "Error: " + err;
+      this.collapsedText = 'Error: ' + err;
     }
   }
 
@@ -95,18 +95,18 @@ export class QueryRowCtrl {
 /** @ngInject **/
 function queryEditorRowDirective() {
   return {
-    restrict: "E",
+    restrict: 'E',
     controller: QueryRowCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
-    templateUrl: "public/app/features/panel/partials/query_editor_row.html",
+    controllerAs: 'ctrl',
+    templateUrl: 'public/app/features/panel/partials/query_editor_row.html',
     transclude: true,
     scope: {
-      queryCtrl: "=",
-      canCollapse: "=",
-      hasTextEditMode: "="
-    }
+      queryCtrl: '=',
+      canCollapse: '=',
+      hasTextEditMode: '=',
+    },
   };
 }
 
-module.directive("queryEditorRow", queryEditorRowDirective);
+module.directive('queryEditorRow', queryEditorRowDirective);

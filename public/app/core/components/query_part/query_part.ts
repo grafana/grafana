@@ -1,6 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import _ from "lodash";
+import _ from 'lodash';
 
 export class QueryPartDef {
   type: string;
@@ -30,7 +30,7 @@ export class QueryPart {
     this.part = part;
     this.def = def;
     if (!this.def) {
-      throw { message: "Could not find query part " + part.type };
+      throw { message: 'Could not find query part ' + part.type };
     }
 
     part.params = part.params || _.clone(this.def.defaultParams);
@@ -43,7 +43,7 @@ export class QueryPart {
   }
 
   hasMultipleParamsInString(strValue, index) {
-    if (strValue.indexOf(",") === -1) {
+    if (strValue.indexOf(',') === -1) {
       return false;
     }
 
@@ -54,13 +54,13 @@ export class QueryPart {
     // handle optional parameters
     // if string contains ',' and next param is optional, split and update both
     if (this.hasMultipleParamsInString(strValue, index)) {
-      _.each(strValue.split(","), (partVal, idx) => {
+      _.each(strValue.split(','), (partVal, idx) => {
         this.updateParam(partVal.trim(), idx);
       });
       return;
     }
 
-    if (strValue === "" && this.def.params[index].optional) {
+    if (strValue === '' && this.def.params[index].optional) {
       this.params.splice(index, 1);
     } else {
       this.params[index] = strValue;
@@ -72,29 +72,29 @@ export class QueryPart {
 
   updateText() {
     if (this.params.length === 0) {
-      this.text = this.def.type + "()";
+      this.text = this.def.type + '()';
       return;
     }
 
-    var text = this.def.type + "(";
-    text += this.params.join(", ");
-    text += ")";
+    var text = this.def.type + '(';
+    text += this.params.join(', ');
+    text += ')';
     this.text = text;
   }
 }
 
 export function functionRenderer(part, innerExpr) {
-  var str = part.def.type + "(";
+  var str = part.def.type + '(';
   var parameters = _.map(part.params, (value, index) => {
     var paramType = part.def.params[index];
-    if (paramType.type === "time") {
-      if (value === "auto") {
-        value = "$__interval";
+    if (paramType.type === 'time') {
+      if (value === 'auto') {
+        value = '$__interval';
       }
     }
-    if (paramType.quote === "single") {
+    if (paramType.quote === 'single') {
       return "'" + value + "'";
-    } else if (paramType.quote === "double") {
+    } else if (paramType.quote === 'double') {
       return '"' + value + '"';
     }
 
@@ -104,11 +104,11 @@ export function functionRenderer(part, innerExpr) {
   if (innerExpr) {
     parameters.unshift(innerExpr);
   }
-  return str + parameters.join(", ") + ")";
+  return str + parameters.join(', ') + ')';
 }
 
 export function suffixRenderer(part, innerExpr) {
-  return innerExpr + " " + part.params[0];
+  return innerExpr + ' ' + part.params[0];
 }
 
 export function identityRenderer(part, innerExpr) {

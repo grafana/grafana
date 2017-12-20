@@ -1,9 +1,9 @@
-import "./editor_ctrl";
+import './editor_ctrl';
 
-import angular from "angular";
-import _ from "lodash";
-import coreModule from "app/core/core_module";
-import { makeRegions, dedupAnnotations } from "./events_processing";
+import angular from 'angular';
+import _ from 'lodash';
+import coreModule from 'app/core/core_module';
+import { makeRegions, dedupAnnotations } from './events_processing';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -17,9 +17,9 @@ export class AnnotationsSrv {
     private backendSrv,
     private timeSrv
   ) {
-    $rootScope.onAppEvent("refresh", this.clearCache.bind(this), $rootScope);
+    $rootScope.onAppEvent('refresh', this.clearCache.bind(this), $rootScope);
     $rootScope.onAppEvent(
-      "dashboard-initialized",
+      'dashboard-initialized',
       this.clearCache.bind(this),
       $rootScope
     );
@@ -40,7 +40,7 @@ export class AnnotationsSrv {
         // filter out annotations that do not belong to requesting panel
         annotations = _.filter(annotations, item => {
           // if event has panel id and query is of type dashboard then panel and requesting panel id must match
-          if (item.panelId && item.source.type === "dashboard") {
+          if (item.panelId && item.source.type === 'dashboard') {
             return item.panelId === options.panel.id;
           }
           return true;
@@ -54,17 +54,17 @@ export class AnnotationsSrv {
 
         return {
           annotations: annotations,
-          alertState: alertState
+          alertState: alertState,
         };
       })
       .catch(err => {
         if (!err.message && err.data && err.data.message) {
           err.message = err.data.message;
         }
-        console.log("AnnotationSrv.query error", err);
-        this.$rootScope.appEvent("alert-error", [
-          "Annotation Query Failed",
-          err.message || err
+        console.log('AnnotationSrv.query error', err);
+        this.$rootScope.appEvent('alert-error', [
+          'Annotation Query Failed',
+          err.message || err,
         ]);
         return [];
       });
@@ -80,7 +80,7 @@ export class AnnotationsSrv {
       return this.$q.when([]);
     }
 
-    if (options.range.raw.to !== "now") {
+    if (options.range.raw.to !== 'now') {
       return this.$q.when([]);
     }
 
@@ -89,9 +89,9 @@ export class AnnotationsSrv {
     }
 
     this.alertStatesPromise = this.backendSrv.get(
-      "/api/alerts/states-for-dashboard",
+      '/api/alerts/states-for-dashboard',
       {
-        dashboardId: options.dashboard.id
+        dashboardId: options.dashboard.id,
       }
     );
     return this.alertStatesPromise;
@@ -125,7 +125,7 @@ export class AnnotationsSrv {
               range: range,
               rangeRaw: range.raw,
               annotation: annotation,
-              dashboard: dashboard
+              dashboard: dashboard,
             });
           })
           .then(results => {
@@ -145,7 +145,7 @@ export class AnnotationsSrv {
 
   saveAnnotationEvent(annotation) {
     this.globalAnnotationsPromise = null;
-    return this.backendSrv.post("/api/annotations", annotation);
+    return this.backendSrv.post('/api/annotations', annotation);
   }
 
   updateAnnotationEvent(annotation) {
@@ -178,4 +178,4 @@ export class AnnotationsSrv {
   }
 }
 
-coreModule.service("annotationsSrv", AnnotationsSrv);
+coreModule.service('annotationsSrv', AnnotationsSrv);

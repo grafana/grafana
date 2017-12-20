@@ -1,27 +1,27 @@
-import _ from "lodash";
+import _ from 'lodash';
 
 function renderTagCondition(tag, index) {
-  var str = "";
+  var str = '';
   var operator = tag.operator;
   var value = tag.value;
   if (index > 0) {
-    str = (tag.condition || "AND") + " ";
+    str = (tag.condition || 'AND') + ' ';
   }
 
   if (!operator) {
     if (/^\/.*\/$/.test(tag.value)) {
-      operator = "=~";
+      operator = '=~';
     } else {
-      operator = "=";
+      operator = '=';
     }
   }
 
   // quote value unless regex or number
-  if (operator !== "=~" && operator !== "!~" && isNaN(+value)) {
+  if (operator !== '=~' && operator !== '!~' && isNaN(+value)) {
     value = "'" + value + "'";
   }
 
-  return str + '"' + tag.key + '" ' + operator + " " + value;
+  return str + '"' + tag.key + '" ' + operator + ' ' + value;
 }
 
 export class InfluxQueryBuilder {
@@ -36,49 +36,49 @@ export class InfluxQueryBuilder {
     var measurement;
     var policy;
 
-    if (type === "TAG_KEYS") {
-      query = "SHOW TAG KEYS";
+    if (type === 'TAG_KEYS') {
+      query = 'SHOW TAG KEYS';
       measurement = this.target.measurement;
       policy = this.target.policy;
-    } else if (type === "TAG_VALUES") {
-      query = "SHOW TAG VALUES";
+    } else if (type === 'TAG_VALUES') {
+      query = 'SHOW TAG VALUES';
       measurement = this.target.measurement;
       policy = this.target.policy;
-    } else if (type === "MEASUREMENTS") {
-      query = "SHOW MEASUREMENTS";
+    } else if (type === 'MEASUREMENTS') {
+      query = 'SHOW MEASUREMENTS';
       if (withMeasurementFilter) {
-        query += " WITH MEASUREMENT =~ /" + withMeasurementFilter + "/";
+        query += ' WITH MEASUREMENT =~ /' + withMeasurementFilter + '/';
       }
-    } else if (type === "FIELDS") {
+    } else if (type === 'FIELDS') {
       measurement = this.target.measurement;
       policy = this.target.policy;
 
-      if (!measurement.match("^/.*/")) {
+      if (!measurement.match('^/.*/')) {
         measurement = '"' + measurement + '"';
 
-        if (policy && policy !== "default") {
+        if (policy && policy !== 'default') {
           policy = '"' + policy + '"';
-          measurement = policy + "." + measurement;
+          measurement = policy + '.' + measurement;
         }
       }
 
-      return "SHOW FIELD KEYS FROM " + measurement;
-    } else if (type === "RETENTION POLICIES") {
+      return 'SHOW FIELD KEYS FROM ' + measurement;
+    } else if (type === 'RETENTION POLICIES') {
       query = 'SHOW RETENTION POLICIES on "' + this.database + '"';
       return query;
     }
 
     if (measurement) {
-      if (!measurement.match("^/.*/") && !measurement.match(/^merge\(.*\)/)) {
+      if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
         measurement = '"' + measurement + '"';
       }
 
-      if (policy && policy !== "default") {
+      if (policy && policy !== 'default') {
         policy = '"' + policy + '"';
-        measurement = policy + "." + measurement;
+        measurement = policy + '.' + measurement;
       }
 
-      query += " FROM " + measurement;
+      query += ' FROM ' + measurement;
     }
 
     if (withKey) {
@@ -100,11 +100,11 @@ export class InfluxQueryBuilder {
       );
 
       if (whereConditions.length > 0) {
-        query += " WHERE " + whereConditions.join(" ");
+        query += ' WHERE ' + whereConditions.join(' ');
       }
     }
-    if (type === "MEASUREMENTS") {
-      query += " LIMIT 100";
+    if (type === 'MEASUREMENTS') {
+      query += ' LIMIT 100';
       //Solve issue #2524 by limiting the number of measurements returned
       //LIMIT must be after WITH MEASUREMENT and WHERE clauses
       //This also could be used for TAG KEYS and TAG VALUES, if desired

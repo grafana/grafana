@@ -1,17 +1,17 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from "lodash";
-import angular from "angular";
-import moment from "moment";
-import coreModule from "../core_module";
+import _ from 'lodash';
+import angular from 'angular';
+import moment from 'moment';
+import coreModule from '../core_module';
 
-coreModule.filter("stringSort", function() {
+coreModule.filter('stringSort', function() {
   return function(input) {
     return input.sort();
   };
 });
 
-coreModule.filter("slice", function() {
+coreModule.filter('slice', function() {
   return function(arr, start, end) {
     if (!_.isUndefined(arr)) {
       return arr.slice(start, end);
@@ -19,7 +19,7 @@ coreModule.filter("slice", function() {
   };
 });
 
-coreModule.filter("stringify", function() {
+coreModule.filter('stringify', function() {
   return function(arr) {
     if (_.isObject(arr) && !_.isArray(arr)) {
       return angular.toJson(arr);
@@ -29,25 +29,25 @@ coreModule.filter("stringify", function() {
   };
 });
 
-coreModule.filter("moment", function() {
+coreModule.filter('moment', function() {
   return function(date, mode) {
     switch (mode) {
-      case "ago":
+      case 'ago':
         return moment(date).fromNow();
     }
     return moment(date).fromNow();
   };
 });
 
-coreModule.filter("noXml", function() {
+coreModule.filter('noXml', function() {
   var noXml = function(text) {
     return _.isString(text)
       ? text
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/'/g, "&#39;")
-          .replace(/"/g, "&quot;")
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/'/g, '&#39;')
+          .replace(/"/g, '&quot;')
       : text;
   };
   return function(text) {
@@ -72,5 +72,5 @@ function interpolateTemplateVars(templateSrv) {
   return filterFunc;
 }
 
-coreModule.filter("interpolateTemplateVars", interpolateTemplateVars);
+coreModule.filter('interpolateTemplateVars', interpolateTemplateVars);
 export default {};

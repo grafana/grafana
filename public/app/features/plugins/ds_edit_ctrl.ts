@@ -1,17 +1,17 @@
-import _ from "lodash";
+import _ from 'lodash';
 
-import config from "app/core/config";
-import { coreModule, appEvents } from "app/core/core";
+import config from 'app/core/config';
+import { coreModule, appEvents } from 'app/core/core';
 
 var datasourceTypes = [];
 
 var defaults = {
-  name: "",
-  type: "graphite",
-  url: "",
-  access: "proxy",
+  name: '',
+  type: 'graphite',
+  url: '',
+  access: 'proxy',
   jsonData: {},
-  secureJsonFields: {}
+  secureJsonFields: {},
 };
 
 var datasourceCreated = false;
@@ -38,7 +38,7 @@ export class DataSourceEditCtrl {
     private datasourceSrv,
     navModelSrv
   ) {
-    this.navModel = navModelSrv.getNav("cfg", "datasources", 0);
+    this.navModel = navModelSrv.getNav('cfg', 'datasources', 0);
     this.datasources = [];
     this.tabIndex = 0;
 
@@ -55,7 +55,7 @@ export class DataSourceEditCtrl {
     this.isNew = true;
     this.current = _.cloneDeep(defaults);
 
-    this.navModel.breadcrumbs.push({ text: "New" });
+    this.navModel.breadcrumbs.push({ text: 'New' });
 
     // We are coming from getting started
     if (this.$location.search().gettingstarted) {
@@ -73,7 +73,7 @@ export class DataSourceEditCtrl {
     }
 
     return this.backendSrv
-      .get("/api/plugins", { enabled: 1, type: "datasource" })
+      .get('/api/plugins', { enabled: 1, type: 'datasource' })
       .then(plugins => {
         datasourceTypes = plugins;
         this.types = plugins;
@@ -81,13 +81,13 @@ export class DataSourceEditCtrl {
   }
 
   getDatasourceById(id) {
-    this.backendSrv.get("/api/datasources/" + id).then(ds => {
+    this.backendSrv.get('/api/datasources/' + id).then(ds => {
       this.isNew = false;
       this.current = ds;
       this.navModel.node = {
         text: ds.name,
-        icon: "icon-gf icon-gf-fw icon-gf-datasources",
-        id: "ds-new"
+        icon: 'icon-gf icon-gf-fw icon-gf-datasources',
+        id: 'ds-new',
       };
       this.navModel.breadcrumbs.push(this.navModel.node);
 
@@ -107,7 +107,7 @@ export class DataSourceEditCtrl {
         id: this.current.id,
         name: this.current.name,
         isDefault: this.current.isDefault,
-        type: this.current.type
+        type: this.current.type,
       },
       _.cloneDeep(defaults)
     );
@@ -117,16 +117,16 @@ export class DataSourceEditCtrl {
   typeChanged() {
     this.hasDashboards = false;
     return this.backendSrv
-      .get("/api/plugins/" + this.current.type + "/settings")
+      .get('/api/plugins/' + this.current.type + '/settings')
       .then(pluginInfo => {
         this.datasourceMeta = pluginInfo;
         this.hasDashboards =
-          _.find(pluginInfo.includes, { type: "dashboard" }) !== undefined;
+          _.find(pluginInfo.includes, { type: 'dashboard' }) !== undefined;
       });
   }
 
   updateFrontendSettings() {
-    return this.backendSrv.get("/api/frontend/settings").then(settings => {
+    return this.backendSrv.get('/api/frontend/settings').then(settings => {
       config.datasources = settings.datasources;
       config.defaultDatasource = settings.defaultDatasource;
       this.datasourceSrv.init();
@@ -139,7 +139,7 @@ export class DataSourceEditCtrl {
         return;
       }
 
-      this.testing = { done: false, status: "error" };
+      this.testing = { done: false, status: 'error' };
 
       // make test call in no backend cache context
       this.backendSrv
@@ -152,7 +152,7 @@ export class DataSourceEditCtrl {
             })
             .catch(err => {
               if (err.statusText) {
-                this.testing.message = "HTTP Error " + err.statusText;
+                this.testing.message = 'HTTP Error ' + err.statusText;
               } else {
                 this.testing.message = err.message;
               }
@@ -175,7 +175,7 @@ export class DataSourceEditCtrl {
 
     if (this.current.id) {
       return this.backendSrv
-        .put("/api/datasources/" + this.current.id, this.current)
+        .put('/api/datasources/' + this.current.id, this.current)
         .then(result => {
           this.current = result.datasource;
           this.updateFrontendSettings().then(() => {
@@ -184,51 +184,51 @@ export class DataSourceEditCtrl {
         });
     } else {
       return this.backendSrv
-        .post("/api/datasources", this.current)
+        .post('/api/datasources', this.current)
         .then(result => {
           this.current = result.datasource;
           this.updateFrontendSettings();
 
           datasourceCreated = true;
-          this.$location.path("datasources/edit/" + result.id);
+          this.$location.path('datasources/edit/' + result.id);
         });
     }
   }
 
   confirmDelete() {
-    this.backendSrv.delete("/api/datasources/" + this.current.id).then(() => {
-      this.$location.path("datasources");
+    this.backendSrv.delete('/api/datasources/' + this.current.id).then(() => {
+      this.$location.path('datasources');
     });
   }
 
   delete(s) {
-    appEvents.emit("confirm-modal", {
-      title: "Delete",
-      text: "Are you sure you want to delete this datasource?",
-      yesText: "Delete",
-      icon: "fa-trash",
+    appEvents.emit('confirm-modal', {
+      title: 'Delete',
+      text: 'Are you sure you want to delete this datasource?',
+      yesText: 'Delete',
+      icon: 'fa-trash',
       onConfirm: () => {
         this.confirmDelete();
-      }
+      },
     });
   }
 }
 
-coreModule.controller("DataSourceEditCtrl", DataSourceEditCtrl);
+coreModule.controller('DataSourceEditCtrl', DataSourceEditCtrl);
 
-coreModule.directive("datasourceHttpSettings", function() {
+coreModule.directive('datasourceHttpSettings', function() {
   return {
     scope: {
-      current: "=",
-      suggestUrl: "@"
+      current: '=',
+      suggestUrl: '@',
     },
-    templateUrl: "public/app/features/plugins/partials/ds_http_settings.html",
+    templateUrl: 'public/app/features/plugins/partials/ds_http_settings.html',
     link: {
       pre: function($scope, elem, attrs) {
         $scope.getSuggestUrls = function() {
           return [$scope.suggestUrl];
         };
-      }
-    }
+      },
+    },
   };
 });

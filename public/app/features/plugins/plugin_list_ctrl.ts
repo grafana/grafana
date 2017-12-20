@@ -1,5 +1,5 @@
-import angular from "angular";
-import _ from "lodash";
+import angular from 'angular';
+import _ from 'lodash';
 
 export class PluginListCtrl {
   plugins: any[];
@@ -11,16 +11,16 @@ export class PluginListCtrl {
   /** @ngInject */
   constructor(private backendSrv: any, $location, navModelSrv) {
     this.tabIndex = 0;
-    this.navModel = navModelSrv.getNav("cfg", "plugins", 0);
+    this.navModel = navModelSrv.getNav('cfg', 'plugins', 0);
 
-    this.backendSrv.get("api/plugins", { embedded: 0 }).then(plugins => {
+    this.backendSrv.get('api/plugins', { embedded: 0 }).then(plugins => {
       this.plugins = plugins;
       this.allPlugins = plugins;
     });
   }
 
   onQueryUpdated() {
-    let regex = new RegExp(this.searchQuery, "ig");
+    let regex = new RegExp(this.searchQuery, 'ig');
     this.plugins = _.filter(this.allPlugins, item => {
       return regex.test(item.name) || regex.test(item.type);
     });
@@ -28,5 +28,5 @@ export class PluginListCtrl {
 }
 
 angular
-  .module("grafana.controllers")
-  .controller("PluginListCtrl", PluginListCtrl);
+  .module('grafana.controllers')
+  .controller('PluginListCtrl', PluginListCtrl);

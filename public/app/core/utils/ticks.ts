@@ -1,4 +1,4 @@
-import { getDataMinMax } from "app/core/time_series2";
+import { getDataMinMax } from 'app/core/time_series2';
 
 /**
  * Calculate tick step.

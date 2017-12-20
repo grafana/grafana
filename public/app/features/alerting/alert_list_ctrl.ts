@@ -1,29 +1,29 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from "lodash";
-import moment from "moment";
+import _ from 'lodash';
+import moment from 'moment';
 
-import { coreModule, appEvents } from "app/core/core";
-import alertDef from "./alert_def";
+import { coreModule, appEvents } from 'app/core/core';
+import alertDef from './alert_def';
 
 export class AlertListCtrl {
   alerts: any;
   stateFilters = [
-    { text: "All", value: null },
-    { text: "OK", value: "ok" },
-    { text: "Not OK", value: "not_ok" },
-    { text: "Alerting", value: "alerting" },
-    { text: "No Data", value: "no_data" },
-    { text: "Paused", value: "paused" }
+    { text: 'All', value: null },
+    { text: 'OK', value: 'ok' },
+    { text: 'Not OK', value: 'not_ok' },
+    { text: 'Alerting', value: 'alerting' },
+    { text: 'No Data', value: 'no_data' },
+    { text: 'Paused', value: 'paused' },
   ];
   filters = {
-    state: "ALL"
+    state: 'ALL',
   };
   navModel: any;
 
   /** @ngInject */
   constructor(private backendSrv, private $location, navModelSrv) {
-    this.navModel = navModelSrv.getNav("alerting", "alert-list", 0);
+    this.navModel = navModelSrv.getNav('alerting', 'alert-list', 0);
 
     var params = $location.search();
     this.filters.state = params.state || null;
@@ -35,12 +35,12 @@ export class AlertListCtrl {
   }
 
   loadAlerts() {
-    this.backendSrv.get("/api/alerts", this.filters).then(result => {
+    this.backendSrv.get('/api/alerts', this.filters).then(result => {
       this.alerts = _.map(result, alert => {
         alert.stateModel = alertDef.getStateDisplayModel(alert.state);
         alert.newStateDateAgo = moment(alert.newStateDate)
           .fromNow()
-          .replace(" ago", "");
+          .replace(' ago', '');
         if (alert.evalData && alert.evalData.no_data) {
           alert.no_data = true;
         }
@@ -53,7 +53,7 @@ export class AlertListCtrl {
     var alert = _.find(this.alerts, { id: alertId });
 
     var payload = {
-      paused: alert.state !== "paused"
+      paused: alert.state !== 'paused',
     };
 
     this.backendSrv
@@ -65,12 +65,12 @@ export class AlertListCtrl {
   }
 
   openHowTo() {
-    appEvents.emit("show-modal", {
-      src: "public/app/features/alerting/partials/alert_howto.html",
-      modalClass: "confirm-modal",
-      model: {}
+    appEvents.emit('show-modal', {
+      src: 'public/app/features/alerting/partials/alert_howto.html',
+      modalClass: 'confirm-modal',
+      model: {},
     });
   }
 }
 
-coreModule.controller("AlertListCtrl", AlertListCtrl);
+coreModule.controller('AlertListCtrl', AlertListCtrl);

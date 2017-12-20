@@ -1,6 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import { Variable, assignModelProperties, variableTypes } from "./variable";
+import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class ConstantVariable implements Variable {
   query: string;
@@ -8,13 +8,13 @@ export class ConstantVariable implements Variable {
   current: any;
 
   defaults = {
-    type: "constant",
-    name: "",
+    type: 'constant',
+    name: '',
     hide: 2,
-    label: "",
-    query: "",
+    label: '',
+    query: '',
     current: {},
-    options: []
+    options: [],
   };
 
   /** @ngInject **/
@@ -50,9 +50,9 @@ export class ConstantVariable implements Variable {
   }
 }
 
-variableTypes["constant"] = {
-  name: "Constant",
+variableTypes['constant'] = {
+  name: 'Constant',
   ctor: ConstantVariable,
   description:
-    "Define a hidden constant variable, useful for metric prefixes in dashboards you want to share"
+    'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share',
 };

@@ -1,7 +1,7 @@
-import config from "app/core/config";
-import coreModule from "app/core/core_module";
-import Remarkable from "remarkable";
-import _ from "lodash";
+import config from 'app/core/config';
+import coreModule from 'app/core/core_module';
+import Remarkable from 'remarkable';
+import _ from 'lodash';
 
 export class OrgUsersCtrl {
   unfiltered: any;
@@ -18,7 +18,7 @@ export class OrgUsersCtrl {
 
   /** @ngInject */
   constructor(private $scope, private backendSrv, navModelSrv, $sce) {
-    this.navModel = navModelSrv.getNav("cfg", "users", 0);
+    this.navModel = navModelSrv.getNav('cfg', 'users', 0);
 
     this.get();
     this.externalUserMngLinkUrl = config.externalUserMngLinkUrl;
@@ -29,54 +29,54 @@ export class OrgUsersCtrl {
     // render external user management info markdown
     if (config.externalUserMngInfo) {
       this.externalUserMngInfo = new Remarkable({
-        linkTarget: "__blank"
+        linkTarget: '__blank',
       }).render(config.externalUserMngInfo);
     }
   }
 
   get() {
-    this.backendSrv.get("/api/org/users").then(users => {
+    this.backendSrv.get('/api/org/users').then(users => {
       this.users = users;
       this.unfiltered = users;
     });
-    this.backendSrv.get("/api/org/invites").then(pendingInvites => {
+    this.backendSrv.get('/api/org/invites').then(pendingInvites => {
       this.pendingInvites = pendingInvites;
     });
   }
 
   onQueryUpdated() {
-    let regex = new RegExp(this.searchQuery, "ig");
+    let regex = new RegExp(this.searchQuery, 'ig');
     this.users = _.filter(this.unfiltered, item => {
       return regex.test(item.email) || regex.test(item.login);
     });
   }
 
   updateOrgUser(user) {
-    this.backendSrv.patch("/api/org/users/" + user.userId, user);
+    this.backendSrv.patch('/api/org/users/' + user.userId, user);
   }
 
   removeUser(user) {
-    this.$scope.appEvent("confirm-modal", {
-      title: "Delete",
-      text: "Are you sure you want to delete user " + user.login + "?",
-      yesText: "Delete",
-      icon: "fa-warning",
+    this.$scope.appEvent('confirm-modal', {
+      title: 'Delete',
+      text: 'Are you sure you want to delete user ' + user.login + '?',
+      yesText: 'Delete',
+      icon: 'fa-warning',
       onConfirm: () => {
         this.removeUserConfirmed(user);
-      }
+      },
     });
   }
 
   removeUserConfirmed(user) {
     this.backendSrv
-      .delete("/api/org/users/" + user.userId)
+      .delete('/api/org/users/' + user.userId)
       .then(this.get.bind(this));
   }
 
   revokeInvite(invite, evt) {
     evt.stopPropagation();
     this.backendSrv
-      .patch("/api/org/invites/" + invite.code + "/revoke")
+      .patch('/api/org/invites/' + invite.code + '/revoke')
       .then(this.get.bind(this));
   }
 
@@ -89,4 +89,4 @@ export class OrgUsersCtrl {
   }
 }
 
-coreModule.controller("OrgUsersCtrl", OrgUsersCtrl);
+coreModule.controller('OrgUsersCtrl', OrgUsersCtrl);

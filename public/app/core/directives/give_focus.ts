@@ -1,8 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import coreModule from "../core_module";
+import coreModule from '../core_module';
 
-coreModule.directive("giveFocus", function() {
+coreModule.directive('giveFocus', function() {
   return function(scope, element, attrs) {
     element.click(function(e) {
       e.stopPropagation();

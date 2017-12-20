@@ -1,15 +1,15 @@
-import angular from "angular";
+import angular from 'angular';
 
 export class OrgDetailsCtrl {
   /** @ngInject **/
   constructor($scope, $http, backendSrv, contextSrv, navModelSrv) {
     $scope.init = function() {
       $scope.getOrgInfo();
-      $scope.navModel = navModelSrv.getNav("cfg", "org-settings", 0);
+      $scope.navModel = navModelSrv.getNav('cfg', 'org-settings', 0);
     };
 
     $scope.getOrgInfo = function() {
-      backendSrv.get("/api/org").then(function(org) {
+      backendSrv.get('/api/org').then(function(org) {
         $scope.org = org;
         $scope.address = org.address;
         contextSrv.user.orgName = org.name;
@@ -21,7 +21,7 @@ export class OrgDetailsCtrl {
         return;
       }
       var data = { name: $scope.org.name };
-      backendSrv.put("/api/org", data).then($scope.getOrgInfo);
+      backendSrv.put('/api/org', data).then($scope.getOrgInfo);
     };
 
     $scope.updateAddress = function() {
@@ -29,7 +29,7 @@ export class OrgDetailsCtrl {
         return;
       }
       backendSrv
-        .put("/api/org/address", $scope.address)
+        .put('/api/org/address', $scope.address)
         .then($scope.getOrgInfo);
     };
 
@@ -38,5 +38,5 @@ export class OrgDetailsCtrl {
 }
 
 angular
-  .module("grafana.controllers")
-  .controller("OrgDetailsCtrl", OrgDetailsCtrl);
+  .module('grafana.controllers')
+  .controller('OrgDetailsCtrl', OrgDetailsCtrl);

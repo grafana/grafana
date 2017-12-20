@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _ from 'lodash';
 
 const versionPattern = /^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z\.]+))?/;
 

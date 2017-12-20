@@ -1,5 +1,5 @@
-import angular from "angular";
-import coreModule from "../core_module";
+import angular from 'angular';
+import coreModule from '../core_module';
 
 export class JsonEditorCtrl {
   /** @ngInject */
@@ -15,4 +15,4 @@ export class JsonEditorCtrl {
   }
 }
 
-coreModule.controller("JsonEditorCtrl", JsonEditorCtrl);
+coreModule.controller('JsonEditorCtrl', JsonEditorCtrl);

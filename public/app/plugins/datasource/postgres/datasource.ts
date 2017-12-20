@@ -1,7 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import _ from "lodash";
-import ResponseParser from "./response_parser";
+import _ from 'lodash';
+import ResponseParser from './response_parser';
 
 export class PostgresDatasource {
   id: any;
@@ -21,7 +21,7 @@ export class PostgresDatasource {
   }
 
   interpolateVariable(value, variable) {
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
         return "'" + value + "'";
       } else {
@@ -29,14 +29,14 @@ export class PostgresDatasource {
       }
     }
 
-    if (typeof value === "number") {
+    if (typeof value === 'number') {
       return value;
     }
 
     var quotedValues = _.map(value, function(val) {
       return "'" + val + "'";
     });
-    return quotedValues.join(",");
+    return quotedValues.join(',');
   }
 
   query(options) {
@@ -53,7 +53,7 @@ export class PostgresDatasource {
           options.scopedVars,
           this.interpolateVariable
         ),
-        format: item.format
+        format: item.format,
       };
     });
 
@@ -63,13 +63,13 @@ export class PostgresDatasource {
 
     return this.backendSrv
       .datasourceRequest({
-        url: "/api/tsdb/query",
-        method: "POST",
+        url: '/api/tsdb/query',
+        method: 'POST',
         data: {
           from: options.range.from.valueOf().toString(),
           to: options.range.to.valueOf().toString(),
-          queries: queries
-        }
+          queries: queries,
+        },
       })
       .then(this.responseParser.processQueryResult);
   }
@@ -77,7 +77,7 @@ export class PostgresDatasource {
   annotationQuery(options) {
     if (!options.annotation.rawQuery) {
       return this.$q.reject({
-        message: "Query missing in annotation definition"
+        message: 'Query missing in annotation definition',
       });
     }
 
@@ -89,18 +89,18 @@ export class PostgresDatasource {
         options.scopedVars,
         this.interpolateVariable
       ),
-      format: "table"
+      format: 'table',
     };
 
     return this.backendSrv
       .datasourceRequest({
-        url: "/api/tsdb/query",
-        method: "POST",
+        url: '/api/tsdb/query',
+        method: 'POST',
         data: {
           from: options.range.from.valueOf().toString(),
           to: options.range.to.valueOf().toString(),
-          queries: [query]
-        }
+          queries: [query],
+        },
       })
       .then(data =>
         this.responseParser.transformAnnotationResponse(options, data)
@@ -108,7 +108,7 @@ export class PostgresDatasource {
   }
 
   metricFindQuery(query, optionalOptions) {
-    let refId = "tempvar";
+    let refId = 'tempvar';
     if (
       optionalOptions &&
       optionalOptions.variable &&
@@ -121,11 +121,11 @@ export class PostgresDatasource {
       refId: refId,
       datasourceId: this.id,
       rawSql: this.templateSrv.replace(query, {}, this.interpolateVariable),
-      format: "table"
+      format: 'table',
     };
 
     var data = {
-      queries: [interpolatedQuery]
+      queries: [interpolatedQuery],
     };
 
     if (
@@ -133,17 +133,17 @@ export class PostgresDatasource {
       optionalOptions.range &&
       optionalOptions.range.from
     ) {
-      data["from"] = optionalOptions.range.from.valueOf().toString();
+      data['from'] = optionalOptions.range.from.valueOf().toString();
     }
     if (optionalOptions && optionalOptions.range && optionalOptions.range.to) {
-      data["to"] = optionalOptions.range.to.valueOf().toString();
+      data['to'] = optionalOptions.range.to.valueOf().toString();
     }
 
     return this.backendSrv
       .datasourceRequest({
-        url: "/api/tsdb/query",
-        method: "POST",
-        data: data
+        url: '/api/tsdb/query',
+        method: 'POST',
+        data: data,
       })
       .then(data =>
         this.responseParser.parseMetricFindQueryResult(refId, data)
@@ -153,32 +153,32 @@ export class PostgresDatasource {
   testDatasource() {
     return this.backendSrv
       .datasourceRequest({
-        url: "/api/tsdb/query",
-        method: "POST",
+        url: '/api/tsdb/query',
+        method: 'POST',
         data: {
-          from: "5m",
-          to: "now",
+          from: '5m',
+          to: 'now',
           queries: [
             {
-              refId: "A",
+              refId: 'A',
               intervalMs: 1,
               maxDataPoints: 1,
               datasourceId: this.id,
-              rawSql: "SELECT 1",
-              format: "table"
-            }
-          ]
-        }
+              rawSql: 'SELECT 1',
+              format: 'table',
+            },
+          ],
+        },
       })
       .then(res => {
-        return { status: "success", message: "Database Connection OK" };
+        return { status: 'success', message: 'Database Connection OK' };
       })
       .catch(err => {
         console.log(err);
         if (err.data && err.data.message) {
-          return { status: "error", message: err.data.message };
+          return { status: 'error', message: err.data.message };
         } else {
-          return { status: "error", message: err.status };
+          return { status: 'error', message: err.status };
         }
       });
   }

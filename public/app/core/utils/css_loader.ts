@@ -1,10 +1,10 @@
 ///<reference path="../../headers/common.d.ts" />
 
 var waitSeconds = 100;
-var head = document.getElementsByTagName("head")[0];
+var head = document.getElementsByTagName('head')[0];
 
 // get all link tags in the page
-var links = document.getElementsByTagName("link");
+var links = document.getElementsByTagName('link');
 var linkHrefs = [];
 for (var i = 0; i < links.length; i++) {
   linkHrefs.push(links[i].href);
@@ -27,9 +27,9 @@ var noop = function() {};
 
 var loadCSS = function(url) {
   return new Promise(function(resolve, reject) {
-    var link = document.createElement("link");
+    var link = document.createElement('link');
     var timeout = setTimeout(function() {
-      reject("Unable to load CSS");
+      reject('Unable to load CSS');
     }, waitSeconds * 1000);
 
     var _callback = function(error) {
@@ -39,13 +39,13 @@ var loadCSS = function(url) {
         if (error) {
           reject(error);
         } else {
-          resolve("");
+          resolve('');
         }
       }, 7);
     };
 
-    link.type = "text/css";
-    link.rel = "stylesheet";
+    link.type = 'text/css';
+    link.rel = 'stylesheet';
     link.href = url;
 
     if (!isWebkit) {
@@ -57,7 +57,7 @@ var loadCSS = function(url) {
     }
 
     link.onerror = function(evt: any) {
-      _callback(evt.error || new Error("Error loading CSS file."));
+      _callback(evt.error || new Error('Error loading CSS file.'));
     };
 
     head.appendChild(link);
@@ -65,14 +65,14 @@ var loadCSS = function(url) {
 };
 
 export function fetch(load): any {
-  if (typeof window === "undefined") {
-    return "";
+  if (typeof window === 'undefined') {
+    return '';
   }
 
   // dont reload styles loaded in the head
   for (var i = 0; i < linkHrefs.length; i++) {
     if (load.address === linkHrefs[i]) {
-      return "";
+      return '';
     }
   }
   return loadCSS(load.address);

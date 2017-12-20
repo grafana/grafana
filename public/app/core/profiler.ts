@@ -1,5 +1,5 @@
-import $ from "jquery";
-import angular from "angular";
+import $ from 'jquery';
+import angular from 'angular';
 
 export class Profiler {
   panelsRendered: number;
@@ -11,7 +11,7 @@ export class Profiler {
   scopeCount: any;
 
   init(config, $rootScope) {
-    this.enabled = config.buildInfo.env === "development";
+    this.enabled = config.buildInfo.env === 'development';
     this.timings = {};
     this.timings.appStart = { loadStart: new Date().getTime() };
     this.$rootScope = $rootScope;
@@ -28,19 +28,19 @@ export class Profiler {
       () => {}
     );
 
-    $rootScope.onAppEvent("refresh", this.refresh.bind(this), $rootScope);
+    $rootScope.onAppEvent('refresh', this.refresh.bind(this), $rootScope);
     $rootScope.onAppEvent(
-      "dashboard-fetch-end",
+      'dashboard-fetch-end',
       this.dashboardFetched.bind(this),
       $rootScope
     );
     $rootScope.onAppEvent(
-      "dashboard-initialized",
+      'dashboard-initialized',
       this.dashboardInitialized.bind(this),
       $rootScope
     );
     $rootScope.onAppEvent(
-      "panel-initialized",
+      'panel-initialized',
       this.panelInitialized.bind(this),
       $rootScope
     );
@@ -51,10 +51,10 @@ export class Profiler {
     this.timings.render = 0;
 
     setTimeout(() => {
-      console.log("panel count: " + this.panelsInitCount);
-      console.log("total query: " + this.timings.query);
-      console.log("total render: " + this.timings.render);
-      console.log("avg render: " + this.timings.render / this.panelsInitCount);
+      console.log('panel count: ' + this.panelsInitCount);
+      console.log('total query: ' + this.timings.query);
+      console.log('total render: ' + this.timings.render);
+      console.log('avg render: ' + this.timings.render / this.panelsInitCount);
     }, 5000);
   }
 
@@ -71,19 +71,19 @@ export class Profiler {
   dashboardInitialized() {
     setTimeout(() => {
       console.log(
-        "Dashboard::Performance Total Digests: " + this.digestCounter
+        'Dashboard::Performance Total Digests: ' + this.digestCounter
       );
       console.log(
-        "Dashboard::Performance Total Watchers: " + this.getTotalWatcherCount()
+        'Dashboard::Performance Total Watchers: ' + this.getTotalWatcherCount()
       );
       console.log(
-        "Dashboard::Performance Total ScopeCount: " + this.scopeCount
+        'Dashboard::Performance Total ScopeCount: ' + this.scopeCount
       );
 
       var timeTaken =
         this.timings.lastPanelInitializedAt - this.timings.dashboardLoadStart;
       console.log(
-        "Dashboard::Performance All panels initialized in " + timeTaken + " ms"
+        'Dashboard::Performance All panels initialized in ' + timeTaken + ' ms'
       );
 
       // measure digest performance
@@ -93,7 +93,7 @@ export class Profiler {
       }
 
       console.log(
-        "Dashboard::Performance Root Digest " +
+        'Dashboard::Performance Root Digest ' +
           (window.performance.now() - rootDigestStart) / 30
       );
     }, 3000);
@@ -102,10 +102,10 @@ export class Profiler {
   getTotalWatcherCount() {
     var count = 0;
     var scopes = 0;
-    var root = $(document.getElementsByTagName("body"));
+    var root = $(document.getElementsByTagName('body'));
 
     var f = function(element) {
-      if (element.data().hasOwnProperty("$scope")) {
+      if (element.data().hasOwnProperty('$scope')) {
         scopes++;
         angular.forEach(element.data().$scope.$$watchers, function() {
           count++;

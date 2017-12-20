@@ -1,8 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from "lodash";
-import coreModule from "app/core/core_module";
-import Drop from "tether-drop";
+import _ from 'lodash';
+import coreModule from 'app/core/core_module';
+import Drop from 'tether-drop';
 
 /** @ngInject **/
 function popoverSrv($compile, $rootScope, $timeout) {
@@ -43,7 +43,7 @@ function popoverSrv($compile, $rootScope, $timeout) {
       drop.close();
     };
 
-    var contentElement = document.createElement("div");
+    var contentElement = document.createElement('div');
     contentElement.innerHTML = options.template;
 
     $compile(contentElement)(scope);
@@ -53,15 +53,15 @@ function popoverSrv($compile, $rootScope, $timeout) {
         target: options.element,
         content: contentElement,
         position: options.position,
-        classes: options.classNames || "drop-popover",
+        classes: options.classNames || 'drop-popover',
         openOn: options.openOn,
         hoverCloseDelay: 200,
         tetherOptions: {
-          constraints: [{ to: "scrollParent", attachment: "together" }]
-        }
+          constraints: [{ to: 'scrollParent', attachment: 'together' }],
+        },
       });
 
-      drop.on("close", () => {
+      drop.on('close', () => {
         cleanUp();
       });
 
@@ -78,4 +78,4 @@ function popoverSrv($compile, $rootScope, $timeout) {
   };
 }
 
-coreModule.service("popoverSrv", popoverSrv);
+coreModule.service('popoverSrv', popoverSrv);

@@ -1,4 +1,4 @@
-import { FolderPageLoader } from "./folder_page_loader";
+import { FolderPageLoader } from './folder_page_loader';
 
 export class FolderPermissionsCtrl {
   navModel: any;
@@ -12,7 +12,7 @@ export class FolderPermissionsCtrl {
       new FolderPageLoader(this.backendSrv, this.$routeParams).load(
         this,
         this.folderId,
-        "manage-folder-permissions"
+        'manage-folder-permissions'
       );
     }
   }

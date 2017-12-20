@@ -1,7 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import coreModule from "app/core/core_module";
-import { contextSrv } from "app/core/services/context_srv";
+import coreModule from 'app/core/core_module';
+import { contextSrv } from 'app/core/services/context_srv';
 
 const template = `
 <div class="modal-body">
@@ -55,16 +55,16 @@ export class OrgSwitchCtrl {
   }
 
   getUserOrgs() {
-    this.backendSrv.get("/api/user/orgs").then(orgs => {
+    this.backendSrv.get('/api/user/orgs').then(orgs => {
       this.orgs = orgs;
     });
   }
 
   setUsingOrg(org) {
-    return this.backendSrv.post("/api/user/using/" + org.orgId).then(() => {
+    return this.backendSrv.post('/api/user/using/' + org.orgId).then(() => {
       const re = /orgId=\d+/gi;
       this.setWindowLocationHref(
-        this.getWindowLocationHref().replace(re, "orgId=" + org.orgId)
+        this.getWindowLocationHref().replace(re, 'orgId=' + org.orgId)
       );
     });
   }
@@ -80,13 +80,13 @@ export class OrgSwitchCtrl {
 
 export function orgSwitcher() {
   return {
-    restrict: "E",
+    restrict: 'E',
     template: template,
     controller: OrgSwitchCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
-    scope: { dismiss: "&" }
+    controllerAs: 'ctrl',
+    scope: { dismiss: '&' },
   };
 }
 
-coreModule.directive("orgSwitcher", orgSwitcher);
+coreModule.directive('orgSwitcher', orgSwitcher);

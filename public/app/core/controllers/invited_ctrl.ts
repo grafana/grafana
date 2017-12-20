@@ -1,5 +1,5 @@
-import coreModule from "../core_module";
-import config from "app/core/config";
+import coreModule from '../core_module';
+import config from 'app/core/config';
 
 export class InvitedCtrl {
   /** @ngInject */
@@ -9,15 +9,15 @@ export class InvitedCtrl {
 
     $scope.navModel = {
       main: {
-        icon: "gicon gicon-branding",
-        subTitle: "Register your Grafana account",
-        breadcrumbs: [{ title: "Login", url: "/login" }, { title: "Invite" }]
-      }
+        icon: 'gicon gicon-branding',
+        subTitle: 'Register your Grafana account',
+        breadcrumbs: [{ title: 'Login', url: '/login' }, { title: 'Invite' }],
+      },
     };
 
     $scope.init = function() {
       backendSrv
-        .get("/api/user/invite/" + $routeParams.code)
+        .get('/api/user/invite/' + $routeParams.code)
         .then(function(invite) {
           $scope.formModel.name = invite.name;
           $scope.formModel.email = invite.email;
@@ -35,9 +35,9 @@ export class InvitedCtrl {
       }
 
       backendSrv
-        .post("/api/user/invite/complete", $scope.formModel)
+        .post('/api/user/invite/complete', $scope.formModel)
         .then(function() {
-          window.location.href = config.appSubUrl + "/";
+          window.location.href = config.appSubUrl + '/';
         });
     };
 
@@ -45,4 +45,4 @@ export class InvitedCtrl {
   }
 }
 
-coreModule.controller("InvitedCtrl", InvitedCtrl);
+coreModule.controller('InvitedCtrl', InvitedCtrl);

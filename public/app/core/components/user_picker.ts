@@ -1,5 +1,5 @@
-import coreModule from "app/core/core_module";
-import _ from "lodash";
+import coreModule from 'app/core/core_module';
+import _ from 'lodash';
 
 const template = `
 <div class="dropdown">
@@ -20,17 +20,17 @@ export class UserPickerCtrl {
     this.reset();
     this.debouncedSearchUsers = _.debounce(this.searchUsers, 500, {
       leading: true,
-      trailing: false
+      trailing: false,
     });
   }
 
   searchUsers(query: string) {
     return Promise.resolve(
       this.backendSrv
-        .get("/api/users/search?perpage=10&page=1&query=" + query)
+        .get('/api/users/search?perpage=10&page=1&query=' + query)
         .then(result => {
           return _.map(result.users, user => {
-            return { text: user.login + " -  " + user.email, value: user };
+            return { text: user.login + ' -  ' + user.email, value: user };
           });
         })
     );
@@ -41,7 +41,7 @@ export class UserPickerCtrl {
   }
 
   reset() {
-    this.user = { text: "Choose", value: null };
+    this.user = { text: 'Choose', value: null };
   }
 }
 
@@ -54,20 +54,20 @@ export interface User {
 
 export function userPicker() {
   return {
-    restrict: "E",
+    restrict: 'E',
     template: template,
     controller: UserPickerCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
+    controllerAs: 'ctrl',
     scope: {
-      userPicked: "&"
+      userPicked: '&',
     },
     link: function(scope, elem, attrs, ctrl) {
-      scope.$on("user-picker-reset", () => {
+      scope.$on('user-picker-reset', () => {
         ctrl.reset();
       });
-    }
+    },
   };
 }
 
-coreModule.directive("userPicker", userPicker);
+coreModule.directive('userPicker', userPicker);

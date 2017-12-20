@@ -1,6 +1,6 @@
-import _ from "lodash";
-import coreModule from "app/core/core_module";
-import appEvents from "app/core/app_events";
+import _ from 'lodash';
+import coreModule from 'app/core/core_module';
+import appEvents from 'app/core/app_events';
 
 export class FolderPickerCtrl {
   initialTitle: string;
@@ -12,7 +12,7 @@ export class FolderPickerCtrl {
   enterFolderCreation: any;
   exitFolderCreation: any;
   enableCreateNew: boolean;
-  rootName = "Root";
+  rootName = 'Root';
   folder: any;
   createNewFolder: boolean;
   newFolderName: string;
@@ -23,7 +23,7 @@ export class FolderPickerCtrl {
   /** @ngInject */
   constructor(private backendSrv, private validationSrv) {
     if (!this.labelClass) {
-      this.labelClass = "width-7";
+      this.labelClass = 'width-7';
     }
 
     this.loadInitialValue();
@@ -32,22 +32,22 @@ export class FolderPickerCtrl {
   getOptions(query) {
     var params = {
       query: query,
-      type: "dash-folder"
+      type: 'dash-folder',
     };
 
     return this.backendSrv.search(params).then(result => {
       if (
-        query === "" ||
-        query.toLowerCase() === "r" ||
-        query.toLowerCase() === "ro" ||
-        query.toLowerCase() === "roo" ||
-        query.toLowerCase() === "root"
+        query === '' ||
+        query.toLowerCase() === 'r' ||
+        query.toLowerCase() === 'ro' ||
+        query.toLowerCase() === 'roo' ||
+        query.toLowerCase() === 'root'
       ) {
         result.unshift({ title: this.rootName, id: 0 });
       }
 
-      if (this.enableCreateNew && query === "") {
-        result.unshift({ title: "-- New Folder --", id: -1 });
+      if (this.enableCreateNew && query === '') {
+        result.unshift({ title: '-- New Folder --', id: -1 });
       }
 
       return _.map(result, item => {
@@ -88,12 +88,12 @@ export class FolderPickerCtrl {
     return this.backendSrv
       .createDashboardFolder(this.newFolderName)
       .then(result => {
-        appEvents.emit("alert-success", ["Folder Created", "OK"]);
+        appEvents.emit('alert-success', ['Folder Created', 'OK']);
 
         this.closeCreateFolder();
         this.folder = {
           text: result.dashboard.title,
-          value: result.dashboard.id
+          value: result.dashboard.id,
         };
         this.onFolderChange(this.folder);
       });
@@ -114,13 +114,13 @@ export class FolderPickerCtrl {
     this.createNewFolder = false;
     this.hasValidationError = false;
     this.validationError = null;
-    this.newFolderName = "";
+    this.newFolderName = '';
     this.newFolderNameTouched = false;
   }
 
   private loadInitialValue() {
     if (this.initialFolderId && this.initialFolderId > 0) {
-      this.getOptions("").then(result => {
+      this.getOptions('').then(result => {
         this.folder = _.find(result, { value: this.initialFolderId });
         this.onFolderLoad();
       });
@@ -138,7 +138,7 @@ export class FolderPickerCtrl {
   private onFolderLoad() {
     if (this.onLoad) {
       this.onLoad({
-        $folder: { id: this.folder.value, title: this.folder.text }
+        $folder: { id: this.folder.value, title: this.folder.text },
       });
     }
   }
@@ -146,25 +146,25 @@ export class FolderPickerCtrl {
 
 export function folderPicker() {
   return {
-    restrict: "E",
+    restrict: 'E',
     templateUrl:
-      "public/app/features/dashboard/folder_picker/folder_picker.html",
+      'public/app/features/dashboard/folder_picker/folder_picker.html',
     controller: FolderPickerCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
+    controllerAs: 'ctrl',
     scope: {
-      initialTitle: "<",
-      initialFolderId: "<",
-      labelClass: "@",
-      rootName: "@",
-      onChange: "&",
-      onLoad: "&",
-      onCreateFolder: "&",
-      enterFolderCreation: "&",
-      exitFolderCreation: "&",
-      enableCreateNew: "@"
-    }
+      initialTitle: '<',
+      initialFolderId: '<',
+      labelClass: '@',
+      rootName: '@',
+      onChange: '&',
+      onLoad: '&',
+      onCreateFolder: '&',
+      enterFolderCreation: '&',
+      exitFolderCreation: '&',
+      enableCreateNew: '@',
+    },
   };
 }
 
-coreModule.directive("folderPicker", folderPicker);
+coreModule.directive('folderPicker', folderPicker);

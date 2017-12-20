@@ -1,27 +1,27 @@
-import coreModule from "../core_module";
+import coreModule from '../core_module';
 
 export class ResetPasswordCtrl {
   /** @ngInject */
   constructor($scope, contextSrv, backendSrv, $location) {
     contextSrv.sidemenu = false;
     $scope.formModel = {};
-    $scope.mode = "send";
+    $scope.mode = 'send';
 
     var params = $location.search();
     if (params.code) {
-      $scope.mode = "reset";
+      $scope.mode = 'reset';
       $scope.formModel.code = params.code;
     }
 
     $scope.navModel = {
       main: {
-        icon: "gicon gicon-branding",
-        subTitle: "Reset your Grafana password",
+        icon: 'gicon gicon-branding',
+        subTitle: 'Reset your Grafana password',
         breadcrumbs: [
-          { title: "Login", url: "/login" },
-          { title: "Reset Password" }
-        ]
-      }
+          { title: 'Login', url: '/login' },
+          { title: 'Reset Password' },
+        ],
+      },
     };
 
     $scope.sendResetEmail = function() {
@@ -29,9 +29,9 @@ export class ResetPasswordCtrl {
         return;
       }
       backendSrv
-        .post("/api/user/password/send-reset-email", $scope.formModel)
+        .post('/api/user/password/send-reset-email', $scope.formModel)
         .then(function() {
-          $scope.mode = "email-sent";
+          $scope.mode = 'email-sent';
         });
     };
 
@@ -41,17 +41,17 @@ export class ResetPasswordCtrl {
       }
 
       if ($scope.formModel.newPassword !== $scope.formModel.confirmPassword) {
-        $scope.appEvent("alert-warning", ["New passwords do not match", ""]);
+        $scope.appEvent('alert-warning', ['New passwords do not match', '']);
         return;
       }
 
       backendSrv
-        .post("/api/user/password/reset", $scope.formModel)
+        .post('/api/user/password/reset', $scope.formModel)
         .then(function() {
-          $location.path("login");
+          $location.path('login');
         });
     };
   }
 }
 
-coreModule.controller("ResetPasswordCtrl", ResetPasswordCtrl);
+coreModule.controller('ResetPasswordCtrl', ResetPasswordCtrl);

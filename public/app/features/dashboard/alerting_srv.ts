@@ -1,6 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import coreModule from "app/core/core_module";
+import coreModule from 'app/core/core_module';
 
 export class AlertingSrv {
   dashboard: any;
@@ -12,4 +12,4 @@ export class AlertingSrv {
   }
 }
 
-coreModule.service("alertingSrv", AlertingSrv);
+coreModule.service('alertingSrv', AlertingSrv);

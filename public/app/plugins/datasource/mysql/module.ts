@@ -1,10 +1,10 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import { MysqlDatasource } from "./datasource";
-import { MysqlQueryCtrl } from "./query_ctrl";
+import { MysqlDatasource } from './datasource';
+import { MysqlQueryCtrl } from './query_ctrl';
 
 class MysqlConfigCtrl {
-  static templateUrl = "partials/config.html";
+  static templateUrl = 'partials/config.html';
 }
 
 const defaultQuery = `SELECT
@@ -18,7 +18,7 @@ const defaultQuery = `SELECT
   `;
 
 class MysqlAnnotationsQueryCtrl {
-  static templateUrl = "partials/annotations.editor.html";
+  static templateUrl = 'partials/annotations.editor.html';
 
   annotation: any;
 
@@ -33,5 +33,5 @@ export {
   MysqlDatasource as Datasource,
   MysqlQueryCtrl as QueryCtrl,
   MysqlConfigCtrl as ConfigCtrl,
-  MysqlAnnotationsQueryCtrl as AnnotationsQueryCtrl
+  MysqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };

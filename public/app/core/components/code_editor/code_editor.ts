@@ -26,24 +26,24 @@
  * Ctrl-Enter (Command-Enter): run onChange() function
  */
 
-import coreModule from "app/core/core_module";
-import config from "app/core/config";
-import ace from "brace";
-import "./theme-grafana-dark";
-import "brace/ext/language_tools";
-import "brace/theme/textmate";
-import "brace/mode/text";
-import "brace/snippets/text";
-import "brace/mode/sql";
-import "brace/snippets/sql";
-import "brace/mode/markdown";
-import "brace/snippets/markdown";
-import "brace/mode/json";
-import "brace/snippets/json";
+import coreModule from 'app/core/core_module';
+import config from 'app/core/config';
+import ace from 'brace';
+import './theme-grafana-dark';
+import 'brace/ext/language_tools';
+import 'brace/theme/textmate';
+import 'brace/mode/text';
+import 'brace/snippets/text';
+import 'brace/mode/sql';
+import 'brace/snippets/sql';
+import 'brace/mode/markdown';
+import 'brace/snippets/markdown';
+import 'brace/mode/json';
+import 'brace/snippets/json';
 
-const DEFAULT_THEME_DARK = "ace/theme/grafana-dark";
-const DEFAULT_THEME_LIGHT = "ace/theme/textmate";
-const DEFAULT_MODE = "text";
+const DEFAULT_THEME_DARK = 'ace/theme/grafana-dark';
+const DEFAULT_THEME_LIGHT = 'ace/theme/textmate';
+const DEFAULT_MODE = 'text';
 const DEFAULT_MAX_LINES = 10;
 const DEFAULT_TAB_SIZE = 2;
 const DEFAULT_BEHAVIOURS = true;
@@ -57,7 +57,7 @@ function link(scope, elem, attrs) {
   let showGutter = attrs.showGutter !== undefined;
   let tabSize = attrs.tabSize || DEFAULT_TAB_SIZE;
   let behavioursEnabled = attrs.behavioursEnabled
-    ? attrs.behavioursEnabled === "true"
+    ? attrs.behavioursEnabled === 'true'
     : DEFAULT_BEHAVIOURS;
 
   // Initialize editor
@@ -72,7 +72,7 @@ function link(scope, elem, attrs) {
     behavioursEnabled: behavioursEnabled,
     highlightActiveLine: false,
     showPrintMargin: false,
-    autoScrollEditorIntoView: true // this is needed if editor is inside scrollable page
+    autoScrollEditorIntoView: true, // this is needed if editor is inside scrollable page
   };
 
   // Set options
@@ -88,9 +88,9 @@ function link(scope, elem, attrs) {
   setEditorContent(scope.content);
 
   // Add classes
-  elem.addClass("gf-code-editor");
-  let textarea = elem.find("textarea");
-  textarea.addClass("gf-form-input");
+  elem.addClass('gf-code-editor');
+  let textarea = elem.find('textarea');
+  textarea.addClass('gf-form-input');
 
   if (scope.codeEditorFocus) {
     setTimeout(function() {
@@ -104,7 +104,7 @@ function link(scope, elem, attrs) {
   }
 
   // Event handlers
-  editorSession.on("change", e => {
+  editorSession.on('change', e => {
     scope.$apply(() => {
       let newValue = codeEditor.getValue();
       scope.content = newValue;
@@ -112,7 +112,7 @@ function link(scope, elem, attrs) {
   });
 
   // Sync with outer scope - update editor content if model has been changed from outside of directive.
-  scope.$watch("content", (newValue, oldValue) => {
+  scope.$watch('content', (newValue, oldValue) => {
     let editorValue = codeEditor.getValue();
     if (newValue !== editorValue && newValue !== oldValue) {
       scope.$$postDigest(function() {
@@ -121,29 +121,29 @@ function link(scope, elem, attrs) {
     }
   });
 
-  codeEditor.on("blur", () => {
+  codeEditor.on('blur', () => {
     scope.onChange();
   });
 
-  scope.$on("$destroy", () => {
+  scope.$on('$destroy', () => {
     codeEditor.destroy();
   });
 
   // Keybindings
   codeEditor.commands.addCommand({
-    name: "executeQuery",
-    bindKey: { win: "Ctrl-Enter", mac: "Command-Enter" },
+    name: 'executeQuery',
+    bindKey: { win: 'Ctrl-Enter', mac: 'Command-Enter' },
     exec: () => {
       scope.onChange();
-    }
+    },
   });
 
   function setLangMode(lang) {
-    ace.acequire("ace/ext/language_tools");
+    ace.acequire('ace/ext/language_tools');
     codeEditor.setOptions({
       enableBasicAutocompletion: true,
       enableLiveAutocompletion: true,
-      enableSnippets: true
+      enableSnippets: true,
     });
 
     if (scope.getCompleter()) {
@@ -174,17 +174,17 @@ function link(scope, elem, attrs) {
 
 export function codeEditorDirective() {
   return {
-    restrict: "E",
+    restrict: 'E',
     template: editorTemplate,
     scope: {
-      content: "=",
-      datasource: "=",
-      codeEditorFocus: "<",
-      onChange: "&",
-      getCompleter: "&"
+      content: '=',
+      datasource: '=',
+      codeEditorFocus: '<',
+      onChange: '&',
+      getCompleter: '&',
     },
-    link: link
+    link: link,
   };
 }
 
-coreModule.directive("codeEditor", codeEditorDirective);
+coreModule.directive('codeEditor', codeEditorDirective);

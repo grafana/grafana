@@ -1,5 +1,5 @@
-import coreModule from "app/core/core_module";
-import _ from "lodash";
+import coreModule from 'app/core/core_module';
+import _ from 'lodash';
 
 const template = `
 <div class="dropdown">
@@ -19,19 +19,19 @@ export class TeamPickerCtrl {
   constructor(private backendSrv) {
     this.debouncedSearchGroups = _.debounce(this.searchGroups, 500, {
       leading: true,
-      trailing: false
+      trailing: false,
     });
     this.reset();
   }
 
   reset() {
-    this.group = { text: "Choose", value: null };
+    this.group = { text: 'Choose', value: null };
   }
 
   searchGroups(query: string) {
     return Promise.resolve(
       this.backendSrv
-        .get("/api/teams/search?perpage=10&page=1&query=" + query)
+        .get('/api/teams/search?perpage=10&page=1&query=' + query)
         .then(result => {
           return _.map(result.teams, ug => {
             return { text: ug.name, value: ug };
@@ -47,20 +47,20 @@ export class TeamPickerCtrl {
 
 export function teamPicker() {
   return {
-    restrict: "E",
+    restrict: 'E',
     template: template,
     controller: TeamPickerCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
+    controllerAs: 'ctrl',
     scope: {
-      teamPicked: "&"
+      teamPicked: '&',
     },
     link: function(scope, elem, attrs, ctrl) {
-      scope.$on("team-picker-reset", () => {
+      scope.$on('team-picker-reset', () => {
         ctrl.reset();
       });
-    }
+    },
   };
 }
 
-coreModule.directive("teamPicker", teamPicker);
+coreModule.directive('teamPicker', teamPicker);

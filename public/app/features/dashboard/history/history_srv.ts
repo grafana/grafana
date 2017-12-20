@@ -1,6 +1,6 @@
-import _ from "lodash";
-import coreModule from "app/core/core_module";
-import { DashboardModel } from "../dashboard_model";
+import _ from 'lodash';
+import coreModule from 'app/core/core_module';
+import { DashboardModel } from '../dashboard_model';
 
 export interface HistoryListOpts {
   limit: number;
@@ -42,7 +42,7 @@ export class HistorySrv {
   }
 
   calculateDiff(options: CalculateDiffOptions) {
-    return this.backendSrv.post("api/dashboards/calculate-diff", options);
+    return this.backendSrv.post('api/dashboards/calculate-diff', options);
   }
 
   restoreDashboard(dashboard: DashboardModel, version: number) {
@@ -54,4 +54,4 @@ export class HistorySrv {
   }
 }
 
-coreModule.service("historySrv", HistorySrv);
+coreModule.service('historySrv', HistorySrv);

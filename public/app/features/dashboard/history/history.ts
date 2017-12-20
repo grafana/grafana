@@ -1,16 +1,16 @@
-import "./history_srv";
+import './history_srv';
 
-import _ from "lodash";
-import angular from "angular";
-import moment from "moment";
+import _ from 'lodash';
+import angular from 'angular';
+import moment from 'moment';
 
-import { DashboardModel } from "../dashboard_model";
+import { DashboardModel } from '../dashboard_model';
 import {
   HistoryListOpts,
   RevisionsModel,
   CalculateDiffOptions,
-  HistorySrv
-} from "./history_srv";
+  HistorySrv,
+} from './history_srv';
 
 export class HistoryListCtrl {
   appending: boolean;
@@ -38,16 +38,16 @@ export class HistoryListCtrl {
     public $scope
   ) {
     this.appending = false;
-    this.diff = "basic";
+    this.diff = 'basic';
     this.limit = 10;
     this.loading = false;
     this.max = 2;
-    this.mode = "list";
+    this.mode = 'list';
     this.start = 0;
     this.canCompare = false;
 
     this.$rootScope.onAppEvent(
-      "dashboard-saved",
+      'dashboard-saved',
       this.onDashboardSaved.bind(this),
       $scope
     );
@@ -60,13 +60,13 @@ export class HistoryListCtrl {
 
   switchMode(mode: string) {
     this.mode = mode;
-    if (this.mode === "list") {
+    if (this.mode === 'list') {
       this.reset();
     }
   }
 
   dismiss() {
-    this.$rootScope.appEvent("hide-dash-editor");
+    this.$rootScope.appEvent('hide-dash-editor');
   }
 
   addToLog() {
@@ -84,15 +84,15 @@ export class HistoryListCtrl {
   }
 
   formatBasicDate(date) {
-    const now = this.dashboard.timezone === "browser" ? moment() : moment.utc();
+    const now = this.dashboard.timezone === 'browser' ? moment() : moment.utc();
     const then =
-      this.dashboard.timezone === "browser" ? moment(date) : moment.utc(date);
+      this.dashboard.timezone === 'browser' ? moment(date) : moment.utc(date);
     return then.from(now);
   }
 
   getDiff(diff: string) {
     this.diff = diff;
-    this.mode = "compare";
+    this.mode = 'compare';
 
     // have it already been fetched?
     if (this.delta[this.diff]) {
@@ -109,13 +109,13 @@ export class HistoryListCtrl {
     const options: CalculateDiffOptions = {
       new: {
         dashboardId: this.dashboard.id,
-        version: this.newInfo.version
+        version: this.newInfo.version,
       },
       base: {
         dashboardId: this.dashboard.id,
-        version: this.baseInfo.version
+        version: this.baseInfo.version,
       },
-      diffType: diff
+      diffType: diff,
     };
 
     return this.historySrv
@@ -124,7 +124,7 @@ export class HistoryListCtrl {
         this.delta[this.diff] = response;
       })
       .catch(() => {
-        this.mode = "list";
+        this.mode = 'list';
       })
       .finally(() => {
         this.loading = false;
@@ -136,7 +136,7 @@ export class HistoryListCtrl {
     this.appending = append;
     const options: HistoryListOpts = {
       limit: this.limit,
-      start: this.start
+      start: this.start,
     };
 
     return this.historySrv
@@ -165,9 +165,9 @@ export class HistoryListCtrl {
   }
 
   reset() {
-    this.delta = { basic: "", json: "" };
-    this.diff = "basic";
-    this.mode = "list";
+    this.delta = { basic: '', json: '' };
+    this.diff = 'basic';
+    this.mode = 'list';
     this.revisions = _.map(this.revisions, rev =>
       _.extend({}, rev, { checked: false })
     );
@@ -182,13 +182,13 @@ export class HistoryListCtrl {
   }
 
   restore(version: number) {
-    this.$rootScope.appEvent("confirm-modal", {
-      title: "Restore version",
-      text: "",
+    this.$rootScope.appEvent('confirm-modal', {
+      title: 'Restore version',
+      text: '',
       text2: `Are you sure you want to restore the dashboard to version ${version}? All unsaved changes will be lost.`,
-      icon: "fa-history",
+      icon: 'fa-history',
       yesText: `Yes, restore to version ${version}`,
-      onConfirm: this.restoreConfirm.bind(this, version)
+      onConfirm: this.restoreConfirm.bind(this, version),
     });
   }
 
@@ -197,15 +197,15 @@ export class HistoryListCtrl {
     return this.historySrv
       .restoreDashboard(this.dashboard, version)
       .then(response => {
-        this.$location.path("dashboard/db/" + response.slug);
+        this.$location.path('dashboard/db/' + response.slug);
         this.$route.reload();
-        this.$rootScope.appEvent("alert-success", [
-          "Dashboard restored",
-          "Restored from version " + version
+        this.$rootScope.appEvent('alert-success', [
+          'Dashboard restored',
+          'Restored from version ' + version,
         ]);
       })
       .catch(() => {
-        this.mode = "list";
+        this.mode = 'list';
         this.loading = false;
       });
   }
@@ -213,17 +213,17 @@ export class HistoryListCtrl {
 
 export function dashboardHistoryDirective() {
   return {
-    restrict: "E",
-    templateUrl: "public/app/features/dashboard/history/history.html",
+    restrict: 'E',
+    templateUrl: 'public/app/features/dashboard/history/history.html',
     controller: HistoryListCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
+    controllerAs: 'ctrl',
     scope: {
-      dashboard: "="
-    }
+      dashboard: '=',
+    },
   };
 }
 
 angular
-  .module("grafana.directives")
-  .directive("gfDashboardHistory", dashboardHistoryDirective);
+  .module('grafana.directives')
+  .directive('gfDashboardHistory', dashboardHistoryDirective);

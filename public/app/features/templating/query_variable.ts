@@ -1,14 +1,14 @@
-import _ from "lodash";
-import kbn from "app/core/utils/kbn";
+import _ from 'lodash';
+import kbn from 'app/core/utils/kbn';
 import {
   Variable,
   containsVariable,
   assignModelProperties,
-  variableTypes
-} from "./variable";
+  variableTypes,
+} from './variable';
 
 function getNoneOption() {
-  return { text: "None", value: "", isNone: true };
+  return { text: 'None', value: '', isNone: true };
 }
 
 export class QueryVariable implements Variable {
@@ -29,15 +29,15 @@ export class QueryVariable implements Variable {
   tags: any[];
 
   defaults = {
-    type: "query",
+    type: 'query',
     label: null,
-    query: "",
-    regex: "",
+    query: '',
+    regex: '',
     sort: 0,
     datasource: null,
     refresh: 0,
     hide: 0,
-    name: "",
+    name: '',
     multi: false,
     includeAll: false,
     allValue: null,
@@ -45,8 +45,8 @@ export class QueryVariable implements Variable {
     current: {},
     tags: [],
     useTags: false,
-    tagsQuery: "",
-    tagValuesQuery: ""
+    tagsQuery: '',
+    tagValuesQuery: '',
   };
 
   /** @ngInject **/
@@ -82,8 +82,8 @@ export class QueryVariable implements Variable {
   }
 
   getValueForUrl() {
-    if (this.current.text === "All") {
-      return "All";
+    if (this.current.text === 'All') {
+      return 'All';
     }
     return this.current.value;
   }
@@ -119,7 +119,7 @@ export class QueryVariable implements Variable {
 
   getValuesForTag(tagKey) {
     return this.datasourceSrv.get(this.datasource).then(datasource => {
-      var query = this.tagValuesQuery.replace("$tag", tagKey);
+      var query = this.tagValuesQuery.replace('$tag', tagKey);
       return this.metricFindQuery(datasource, query).then(function(results) {
         return _.map(results, function(value) {
           return value.text;
@@ -152,7 +152,7 @@ export class QueryVariable implements Variable {
   }
 
   addAllOption() {
-    this.options.unshift({ text: "All", value: "$__all" });
+    this.options.unshift({ text: 'All', value: '$__all' });
   }
 
   metricNamesToVariableValues(metricNames) {
@@ -161,7 +161,7 @@ export class QueryVariable implements Variable {
 
     if (this.regex) {
       regex = kbn.stringToJsRegex(
-        this.templateSrv.replace(this.regex, {}, "regex")
+        this.templateSrv.replace(this.regex, {}, 'regex')
       );
     }
     for (i = 0; i < metricNames.length; i++) {
@@ -196,7 +196,7 @@ export class QueryVariable implements Variable {
       options.push({ text: text, value: value });
     }
 
-    options = _.uniqBy(options, "value");
+    options = _.uniqBy(options, 'value');
     return this.sortVariableValues(options, this.sort);
   }
 
@@ -209,7 +209,7 @@ export class QueryVariable implements Variable {
     var reverseSort = sortOrder % 2 === 0;
 
     if (sortType === 1) {
-      options = _.sortBy(options, "text");
+      options = _.sortBy(options, 'text');
     } else if (sortType === 2) {
       options = _.sortBy(options, opt => {
         var matches = opt.text.match(/.*?(\d+).*/);
@@ -233,9 +233,9 @@ export class QueryVariable implements Variable {
   }
 }
 
-variableTypes["query"] = {
-  name: "Query",
+variableTypes['query'] = {
+  name: 'Query',
   ctor: QueryVariable,
-  description: "Variable values are fetched from a datasource query",
-  supportsMulti: true
+  description: 'Variable values are fetched from a datasource query',
+  supportsMulti: true,
 };

@@ -1,5 +1,5 @@
-import _ from "lodash";
-import TableModel from "app/core/table_model";
+import _ from 'lodash';
+import TableModel from 'app/core/table_model';
 
 export default class InfluxSeries {
   series: any;
@@ -23,20 +23,20 @@ export default class InfluxSeries {
     _.each(this.series, series => {
       var columns = series.columns.length;
       var tags = _.map(series.tags, function(value, key) {
-        return key + ": " + value;
+        return key + ': ' + value;
       });
 
       for (j = 1; j < columns; j++) {
         var seriesName = series.name;
         var columnName = series.columns[j];
-        if (columnName !== "value") {
-          seriesName = seriesName + "." + columnName;
+        if (columnName !== 'value') {
+          seriesName = seriesName + '.' + columnName;
         }
 
         if (this.alias) {
           seriesName = this._getSeriesName(series, j);
         } else if (series.tags) {
-          seriesName = seriesName + " {" + tags.join(", ") + "}";
+          seriesName = seriesName + ' {' + tags.join(', ') + '}';
         }
 
         var datapoints = [];
@@ -55,26 +55,26 @@ export default class InfluxSeries {
 
   _getSeriesName(series, index) {
     var regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
-    var segments = series.name.split(".");
+    var segments = series.name.split('.');
 
     return this.alias.replace(regex, function(match, g1, g2) {
       var group = g1 || g2;
       var segIndex = parseInt(group, 10);
 
-      if (group === "m" || group === "measurement") {
+      if (group === 'm' || group === 'measurement') {
         return series.name;
       }
-      if (group === "col") {
+      if (group === 'col') {
         return series.columns[index];
       }
       if (!isNaN(segIndex)) {
         return segments[segIndex];
       }
-      if (group.indexOf("tag_") !== 0) {
+      if (group.indexOf('tag_') !== 0) {
         return match;
       }
 
-      var tag = group.replace("tag_", "");
+      var tag = group.replace('tag_', '');
       if (!series.tags) {
         return match;
       }
@@ -92,11 +92,11 @@ export default class InfluxSeries {
       var textCol = null;
 
       _.each(series.columns, (column, index) => {
-        if (column === "time") {
+        if (column === 'time') {
           timeCol = index;
           return;
         }
-        if (column === "sequence_number") {
+        if (column === 'sequence_number') {
           return;
         }
         if (!titleCol) {
@@ -108,7 +108,7 @@ export default class InfluxSeries {
         }
         if (
           _.includes(
-            (this.annotation.tagsColumn || "").replace(" ", "").split(","),
+            (this.annotation.tagsColumn || '').replace(' ', '').split(','),
             column
           )
         ) {
@@ -133,10 +133,10 @@ export default class InfluxSeries {
                 return value[t];
               })
               .map(function(t) {
-                return value[t].split(",");
+                return value[t].split(',');
               })
           ),
-          text: value[textCol]
+          text: value[textCol],
         };
 
         list.push(data);
@@ -156,7 +156,7 @@ export default class InfluxSeries {
 
     _.each(this.series, (series, seriesIndex) => {
       if (seriesIndex === 0) {
-        table.columns.push({ text: "Time", type: "time" });
+        table.columns.push({ text: 'Time', type: 'time' });
         _.each(_.keys(series.tags), function(key) {
           table.columns.push({ text: key });
         });

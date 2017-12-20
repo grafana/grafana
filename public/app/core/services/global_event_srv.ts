@@ -1,6 +1,6 @@
-﻿import coreModule from "app/core/core_module";
-import config from "app/core/config";
-import appEvents from "app/core/app_events";
+﻿import coreModule from 'app/core/core_module';
+import config from 'app/core/config';
+import appEvents from 'app/core/app_events';
 
 // This service is for registering global events.
 // Good for communication react > angular and vice verse
@@ -11,13 +11,13 @@ export class GlobalEventSrv {
   /** @ngInject */
   constructor(private $location, private $timeout, private $window) {
     this.appSubUrl = config.appSubUrl;
-    this.fullPageReloadRoutes = ["/logout"];
+    this.fullPageReloadRoutes = ['/logout'];
   }
 
   // Angular's $location does not like <base href...> and absolute urls
-  stripBaseFromUrl(url = "") {
+  stripBaseFromUrl(url = '') {
     const appSubUrl = this.appSubUrl;
-    const stripExtraChars = appSubUrl.endsWith("/") ? 1 : 0;
+    const stripExtraChars = appSubUrl.endsWith('/') ? 1 : 0;
     const urlWithoutBase =
       url.length > 0 && url.indexOf(appSubUrl) === 0
         ? url.slice(appSubUrl.length - stripExtraChars)
@@ -27,7 +27,7 @@ export class GlobalEventSrv {
   }
 
   init() {
-    appEvents.on("location-change", payload => {
+    appEvents.on('location-change', payload => {
       const urlWithoutBase = this.stripBaseFromUrl(payload.href);
       if (this.fullPageReloadRoutes.indexOf(urlWithoutBase) > -1) {
         this.$window.location.href = payload.href;
@@ -42,4 +42,4 @@ export class GlobalEventSrv {
   }
 }
 
-coreModule.service("globalEventSrv", GlobalEventSrv);
+coreModule.service('globalEventSrv', GlobalEventSrv);

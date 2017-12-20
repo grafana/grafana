@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _ from 'lodash';
 
 export default class ResponseParser {
   parse(query, results) {
@@ -11,7 +11,7 @@ export default class ResponseParser {
       return [];
     }
 
-    var influxdb11format = query.toLowerCase().indexOf("show tag values") >= 0;
+    var influxdb11format = query.toLowerCase().indexOf('show tag values') >= 0;
 
     var res = {};
     _.each(influxResults.series, serie => {

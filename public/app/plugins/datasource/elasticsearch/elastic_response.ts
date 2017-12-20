@@ -1,8 +1,8 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import _ from "lodash";
-import * as queryDef from "./query_def";
-import TableModel from "app/core/table_model";
+import _ from 'lodash';
+import * as queryDef from './query_def';
+import TableModel from 'app/core/table_model';
 
 export class ElasticResponse {
   constructor(private targets, private response) {
@@ -20,8 +20,8 @@ export class ElasticResponse {
       }
 
       switch (metric.type) {
-        case "count": {
-          newSeries = { datapoints: [], metric: "count", props: props };
+        case 'count': {
+          newSeries = { datapoints: [], metric: 'count', props: props };
           for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
             value = bucket.doc_count;
@@ -30,7 +30,7 @@ export class ElasticResponse {
           seriesList.push(newSeries);
           break;
         }
-        case "percentiles": {
+        case 'percentiles': {
           if (esAgg.buckets.length === 0) {
             break;
           }
@@ -41,9 +41,9 @@ export class ElasticResponse {
           for (var percentileName in percentiles) {
             newSeries = {
               datapoints: [],
-              metric: "p" + percentileName,
+              metric: 'p' + percentileName,
               props: props,
-              field: metric.field
+              field: metric.field,
             };
 
             for (i = 0; i < esAgg.buckets.length; i++) {
@@ -56,7 +56,7 @@ export class ElasticResponse {
 
           break;
         }
-        case "extended_stats": {
+        case 'extended_stats': {
           for (var statName in metric.meta) {
             if (!metric.meta[statName]) {
               continue;
@@ -66,7 +66,7 @@ export class ElasticResponse {
               datapoints: [],
               metric: statName,
               props: props,
-              field: metric.field
+              field: metric.field,
             };
 
             for (i = 0; i < esAgg.buckets.length; i++) {
@@ -92,7 +92,7 @@ export class ElasticResponse {
             datapoints: [],
             metric: metric.type,
             field: metric.field,
-            props: props
+            props: props,
           };
           for (i = 0; i < esAgg.buckets.length; i++) {
             bucket = esAgg.buckets[i];
@@ -140,7 +140,7 @@ export class ElasticResponse {
 
       for (let metric of target.metrics) {
         switch (metric.type) {
-          case "count": {
+          case 'count': {
             addMetricValue(
               values,
               this.getMetricName(metric.type),
@@ -148,7 +148,7 @@ export class ElasticResponse {
             );
             break;
           }
-          case "extended_stats": {
+          case 'extended_stats': {
             for (var statName in metric.meta) {
               if (!metric.meta[statName]) {
                 continue;
@@ -175,7 +175,7 @@ export class ElasticResponse {
 
             // if more of the same metric type include field field name in property
             if (otherMetrics.length > 1) {
-              metricName += " " + metric.field;
+              metricName += ' ' + metric.field;
             }
 
             addMetricValue(values, metricName, bucket[metric.id].value);
@@ -203,7 +203,7 @@ export class ElasticResponse {
       }
 
       if (depth === maxDepth) {
-        if (aggDef.type === "date_histogram") {
+        if (aggDef.type === 'date_histogram') {
           this.processMetrics(esAgg, target, seriesList, props);
         } else {
           this.processAggregationDocs(esAgg, aggDef, target, table, props);
@@ -215,7 +215,7 @@ export class ElasticResponse {
           if (bucket.key !== void 0) {
             props[aggDef.field] = bucket.key;
           } else {
-            props["filter"] = nameIndex;
+            props['filter'] = nameIndex;
           }
           if (bucket.key_as_string) {
             props[aggDef.field] = bucket.key_as_string;
@@ -251,16 +251,16 @@ export class ElasticResponse {
       return target.alias.replace(regex, function(match, g1, g2) {
         var group = g1 || g2;
 
-        if (group.indexOf("term ") === 0) {
+        if (group.indexOf('term ') === 0) {
           return series.props[group.substring(5)];
         }
         if (series.props[group] !== void 0) {
           return series.props[group];
         }
-        if (group === "metric") {
+        if (group === 'metric') {
           return metricName;
         }
-        if (group === "field") {
+        if (group === 'field') {
           return series.field;
         }
 
@@ -271,12 +271,12 @@ export class ElasticResponse {
     if (series.field && queryDef.isPipelineAgg(series.metric)) {
       var appliedAgg = _.find(target.metrics, { id: series.field });
       if (appliedAgg) {
-        metricName += " " + queryDef.describeMetric(appliedAgg);
+        metricName += ' ' + queryDef.describeMetric(appliedAgg);
       } else {
-        metricName = "Unset";
+        metricName = 'Unset';
       }
     } else if (series.field) {
-      metricName += " " + series.field;
+      metricName += ' ' + series.field;
     }
 
     var propKeys = _.keys(series.props);
@@ -284,20 +284,20 @@ export class ElasticResponse {
       return metricName;
     }
 
-    var name = "";
+    var name = '';
     for (var propName in series.props) {
-      name += series.props[propName] + " ";
+      name += series.props[propName] + ' ';
     }
 
     if (metricTypeCount === 1) {
       return name.trim();
     }
 
-    return name.trim() + " " + metricName;
+    return name.trim() + ' ' + metricName;
   }
 
   nameSeries(seriesList, target) {
-    var metricTypeCount = _.uniq(_.map(seriesList, "metric")).length;
+    var metricTypeCount = _.uniq(_.map(seriesList, 'metric')).length;
 
     for (var i = 0; i < seriesList.length; i++) {
       var series = seriesList[i];
@@ -307,11 +307,11 @@ export class ElasticResponse {
 
   processHits(hits, seriesList) {
     var series = {
-      target: "docs",
-      type: "docs",
+      target: 'docs',
+      type: 'docs',
       datapoints: [],
       total: hits.total,
-      filterable: true
+      filterable: true,
     };
     var propName, hit, doc, i;
 
@@ -320,7 +320,7 @@ export class ElasticResponse {
       doc = {
         _id: hit._id,
         _type: hit._type,
-        _index: hit._index
+        _index: hit._index,
       };
 
       if (hit._source) {
@@ -339,7 +339,7 @@ export class ElasticResponse {
   }
 
   trimDatapoints(aggregations, target) {
-    var histogram = _.find(target.bucketAggs, { type: "date_histogram" });
+    var histogram = _.find(target.bucketAggs, { type: 'date_histogram' });
 
     var shouldDropFirstAndLast =
       histogram && histogram.settings && histogram.settings.trimEdges;
@@ -367,7 +367,7 @@ export class ElasticResponse {
     ) {
       result.message = err.root_cause[0].reason;
     } else {
-      result.message = err.reason || "Unkown elatic error response";
+      result.message = err.reason || 'Unkown elatic error response';
     }
 
     if (response.$$config) {

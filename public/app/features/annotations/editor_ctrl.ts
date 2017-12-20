@@ -1,7 +1,7 @@
-import angular from "angular";
-import _ from "lodash";
-import $ from "jquery";
-import coreModule from "app/core/core_module";
+import angular from 'angular';
+import _ from 'lodash';
+import $ from 'jquery';
+import coreModule from 'app/core/core_module';
 
 export class AnnotationsEditorCtrl {
   mode: any;
@@ -12,24 +12,24 @@ export class AnnotationsEditorCtrl {
   currentIsNew: any;
 
   annotationDefaults: any = {
-    name: "",
+    name: '',
     datasource: null,
-    iconColor: "rgba(255, 96, 96, 1)",
+    iconColor: 'rgba(255, 96, 96, 1)',
     enable: true,
     showIn: 0,
-    hide: false
+    hide: false,
   };
 
   showOptions: any = [
-    { text: "All Panels", value: 0 },
-    { text: "Specific Panels", value: 1 }
+    { text: 'All Panels', value: 0 },
+    { text: 'Specific Panels', value: 1 },
   ];
 
   /** @ngInject */
   constructor($scope, private datasourceSrv) {
     $scope.ctrl = this;
 
-    this.mode = "list";
+    this.mode = 'list';
     this.datasources = datasourceSrv.getAnnotationSources();
     this.annotations = $scope.dashboard.annotations.list;
     this.reset();
@@ -50,8 +50,8 @@ export class AnnotationsEditorCtrl {
     this.currentAnnotation.showIn = this.currentAnnotation.showIn || 0;
     this.currentIsNew = false;
     this.datasourceChanged();
-    this.mode = "edit";
-    $(".tooltip.in").remove();
+    this.mode = 'edit';
+    $('.tooltip.in').remove();
   }
 
   reset() {
@@ -63,22 +63,22 @@ export class AnnotationsEditorCtrl {
 
   update() {
     this.reset();
-    this.mode = "list";
+    this.mode = 'list';
   }
 
   setupNew() {
-    this.mode = "new";
+    this.mode = 'new';
     this.reset();
   }
 
   backToList() {
-    this.mode = "list";
+    this.mode = 'list';
   }
 
   add() {
     this.annotations.push(this.currentAnnotation);
     this.reset();
-    this.mode = "list";
+    this.mode = 'list';
   }
 
   removeAnnotation(annotation) {
@@ -91,4 +91,4 @@ export class AnnotationsEditorCtrl {
   }
 }
 
-coreModule.controller("AnnotationsEditorCtrl", AnnotationsEditorCtrl);
+coreModule.controller('AnnotationsEditorCtrl', AnnotationsEditorCtrl);

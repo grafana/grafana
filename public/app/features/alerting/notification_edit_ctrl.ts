@@ -1,24 +1,24 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from "lodash";
-import { appEvents, coreModule } from "app/core/core";
+import _ from 'lodash';
+import { appEvents, coreModule } from 'app/core/core';
 
 export class AlertNotificationEditCtrl {
   theForm: any;
   navModel: any;
-  testSeverity = "critical";
+  testSeverity = 'critical';
   notifiers: any;
   notifierTemplateId: string;
   isNew: boolean;
   model: any;
   defaults: any = {
-    type: "email",
+    type: 'email',
     settings: {
-      httpMethod: "POST",
+      httpMethod: 'POST',
       autoResolve: true,
-      uploadImage: true
+      uploadImage: true,
     },
-    isDefault: false
+    isDefault: false,
   };
 
   /** @ngInject */
@@ -29,7 +29,7 @@ export class AlertNotificationEditCtrl {
     private $templateCache,
     navModelSrv
   ) {
-    this.navModel = navModelSrv.getNav("alerting", "channels", 0);
+    this.navModel = navModelSrv.getNav('alerting', 'channels', 0);
     this.isNew = !this.$routeParams.id;
 
     this.backendSrv
@@ -46,8 +46,8 @@ export class AlertNotificationEditCtrl {
         }
 
         if (!this.$routeParams.id) {
-          this.navModel.breadcrumbs.push({ text: "New channel" });
-          this.navModel.node = { text: "New channel" };
+          this.navModel.breadcrumbs.push({ text: 'New channel' });
+          this.navModel.node = { text: 'New channel' };
           return _.defaults(this.model, this.defaults);
         }
 
@@ -75,12 +75,12 @@ export class AlertNotificationEditCtrl {
         .put(`/api/alert-notifications/${this.model.id}`, this.model)
         .then(res => {
           this.model = res;
-          appEvents.emit("alert-success", ["Notification updated", ""]);
+          appEvents.emit('alert-success', ['Notification updated', '']);
         });
     } else {
       this.backendSrv.post(`/api/alert-notifications`, this.model).then(res => {
-        appEvents.emit("alert-success", ["Notification created", ""]);
-        this.$location.path("alerting/notifications");
+        appEvents.emit('alert-success', ['Notification created', '']);
+        this.$location.path('alerting/notifications');
       });
     }
   }
@@ -102,13 +102,13 @@ export class AlertNotificationEditCtrl {
     var payload = {
       name: this.model.name,
       type: this.model.type,
-      settings: this.model.settings
+      settings: this.model.settings,
     };
 
     this.backendSrv.post(`/api/alert-notifications/test`, payload).then(res => {
-      appEvents.emit("alert-success", ["Test notification sent", ""]);
+      appEvents.emit('alert-success', ['Test notification sent', '']);
     });
   }
 }
 
-coreModule.controller("AlertNotificationEditCtrl", AlertNotificationEditCtrl);
+coreModule.controller('AlertNotificationEditCtrl', AlertNotificationEditCtrl);
