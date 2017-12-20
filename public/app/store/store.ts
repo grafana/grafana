@@ -1,16 +1,20 @@
 import { types } from "mobx-state-tree";
 
-const Search = types.model({
-  name: "",
-  done: false
-});
+const Search = types
+  .model({
+    name: "asdas",
+    done: false
+  })
+  .actions(self => ({
+    search() {
+      self.name = "changed";
+    }
+  }));
 
 const RootStore = types.model({
-  search: types.map(Search)
+  search: types.optional(Search, {})
 });
 
-const store = RootStore.create({
-  search: {}
-});
+const store = RootStore.create({});
 
 export { store };
