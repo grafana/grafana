@@ -22,11 +22,12 @@
     <div class="search-dropdown__col_1">
         <div class="search-results-container" grafana-scrollbar>
           <h6 ng-show="!ctrl.isLoading && ctrl.results.length === 0">No dashboards matching your query were found.</h6>
-          <dashboard-search-results
-            results="ctrl.results"
-            on-tag-selected="ctrl.filterByTag($tag)"
-            on-folder-expanding="ctrl.folderExpanding()"
-            on-folder-expanded="ctrl.folderExpanded($folder)" />
+          <search-result />
+        <!--   <dashboard&#45;search&#45;results -->
+        <!--     results="ctrl.results" -->
+        <!--     on&#45;tag&#45;selected="ctrl.filterByTag($tag)" -->
+        <!--     on&#45;folder&#45;expanding="ctrl.folderExpanding()" -->
+        <!--     on&#45;folder&#45;expanded="ctrl.folderExpanded($folder)" /> -->
         </div>
     </div>
 

@@ -19,6 +19,7 @@ import angular from "angular";
 import config from "app/core/config";
 import _ from "lodash";
 import moment from "moment";
+import { createStore } from "app/stores/store";
 
 // add move to lodash for backward compatabiltiy
 _.move = function(array, fromIndex, toIndex) {
@@ -135,6 +136,8 @@ export class GrafanaApp {
 
     Promise.all(preBootRequires)
       .then(() => {
+        createStore();
+
         // disable tool tip animation
         $.fn.tooltip.defaults.animation = false;
         // bootstrap the app
