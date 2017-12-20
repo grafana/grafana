@@ -61,7 +61,7 @@ message TimeSeries {
 }
 
 message Point {
-  google.protobuf.Timestamp timestamp = 1;
+  int64 timestamp = 1;
   double value = 2;
 }
 
