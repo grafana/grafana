@@ -243,11 +243,11 @@ func (hs *HttpServer) registerRoutes() {
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute RouteRegister) {
 			dashboardRoute.Get("/db/:slug", wrap(GetDashboard))
-			dashboardRoute.Delete("/db/:slug", reqEditorRole, wrap(DeleteDashboard))
+			dashboardRoute.Delete("/db/:slug", wrap(DeleteDashboard))
 
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), wrap(CalculateDashboardDiff))
 
-			dashboardRoute.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
+			dashboardRoute.Post("/db", bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
 			dashboardRoute.Get("/home", wrap(GetHomeDashboard))
 			dashboardRoute.Get("/tags", GetDashboardTags)
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
@@ -255,7 +255,7 @@ func (hs *HttpServer) registerRoutes() {
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute RouteRegister) {
 				dashIdRoute.Get("/versions", wrap(GetDashboardVersions))
 				dashIdRoute.Get("/versions/:id", wrap(GetDashboardVersion))
-				dashIdRoute.Post("/restore", reqEditorRole, bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
+				dashIdRoute.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
 
 				dashIdRoute.Group("/acl", func(aclRoute RouteRegister) {
 					aclRoute.Get("/", wrap(GetDashboardAclList))

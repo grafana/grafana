@@ -38,9 +38,9 @@ func isDashboardStarredByUser(c *middleware.Context, dashId int64) (bool, error)
 func dashboardGuardianResponse(err error) Response {
 	if err != nil {
 		return ApiError(500, "Error while checking dashboard permissions", err)
-	} else {
-		return ApiError(403, "Access denied to this dashboard", nil)
 	}
+
+	return ApiError(403, "Access denied to this dashboard", nil)
 }
 
 func GetDashboard(c *middleware.Context) Response {
