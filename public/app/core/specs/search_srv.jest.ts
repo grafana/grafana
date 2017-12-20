@@ -50,7 +50,7 @@ describe('SearchSrv', () => {
     });
 
     it('should include recent dashboards section', () => {
-      expect(results[0].title).toBe('Recent Boards');
+      expect(results[0].title).toBe('Recent');
     });
 
     it('should return order decided by impressions store not api', () => {
@@ -133,7 +133,7 @@ describe('SearchSrv', () => {
     });
 
     it('should show starred', () => {
-      expect(results[0].title).toBe('Starred Boards');
+      expect(results[0].title).toBe('Starred');
       expect(results[0].items[0].title).toBe('starred and recent');
     });
   });
