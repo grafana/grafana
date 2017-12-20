@@ -68,11 +68,11 @@ export class SettingsCtrl {
       });
     }
 
-    if (this.dashboard.id && this.dashboard.meta.canSave) {
+    if (this.dashboard.id && this.dashboard.meta.canAdmin) {
       this.sections.push({
-        title: "Permissions",
-        id: "permissions",
-        icon: "fa fa-fw fa-lock"
+        title: 'Permissions',
+        id: 'permissions',
+        icon: 'fa fa-fw fa-lock',
       });
     }
 
