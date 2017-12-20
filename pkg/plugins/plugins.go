@@ -18,13 +18,13 @@ import (
 )
 
 var (
-	DataSources        map[string]*DataSourcePlugin
-	Panels             map[string]*PanelPlugin
-	StaticRoutes       []*PluginStaticRoute
-	Apps               map[string]*AppPlugin
-	Plugins            map[string]*PluginBase
-	BackendDatasources map[string]*BackendDatasource
-	PluginTypes        map[string]interface{}
+	DataSources  map[string]*DataSourcePlugin
+	Panels       map[string]*PanelPlugin
+	StaticRoutes []*PluginStaticRoute
+	Apps         map[string]*AppPlugin
+	Plugins      map[string]*PluginBase
+	//BackendDatasources map[string]*BackendDatasource
+	PluginTypes map[string]interface{}
 
 	GrafanaLatestVersion string
 	GrafanaHasUpdate     bool
@@ -52,7 +52,7 @@ func NewPluginManager() (*PluginManager, error) {
 func (p *PluginManager) Run(ctx context.Context) error {
 	<-ctx.Done()
 
-	for _, p := range BackendDatasources {
+	for _, p := range DataSources {
 		p.Kill()
 	}
 
@@ -68,12 +68,10 @@ func Init() error {
 	Panels = make(map[string]*PanelPlugin)
 	Apps = make(map[string]*AppPlugin)
 	Plugins = make(map[string]*PluginBase)
-	BackendDatasources = make(map[string]*BackendDatasource)
 	PluginTypes = map[string]interface{}{
 		"panel":      PanelPlugin{},
 		"datasource": DataSourcePlugin{},
 		"app":        AppPlugin{},
-		//"backend-datasource": BackendDatasource{},
 	}
 
 	plog.Info("Starting plugin search")

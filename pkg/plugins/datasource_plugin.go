@@ -2,10 +2,13 @@ package plugins
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -55,13 +58,21 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
 	return nil
 }
 
+var handshakeConfig = plugin.HandshakeConfig{
+	ProtocolVersion:  1,
+	MagicCookieKey:   "GRAFANA_BACKEND_DATASOURCE",
+	MagicCookieValue: "55d2200a-6492-493a-9353-73b728d468aa",
+}
+
 func (p *DataSourcePlugin) initBackendPlugin(log log.Logger) error {
 	p.log = log.New("plugin-id", p.Id)
+
+	cmd := path.Join(p.PluginDir, fmt.Sprintf("%s_%s_%s", p.Executable, strings.ToLower(runtime.GOOS), strings.ToLower(runtime.GOARCH)))
 
 	p.client = plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig:  handshakeConfig,
 		Plugins:          map[string]plugin.Plugin{p.Id: &shared.TsdbPluginImpl{}},
-		Cmd:              exec.Command(path.Join(p.PluginDir, p.Executable)),
+		Cmd:              exec.Command(cmd),
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
 		Logger:           backend.LogWrapper{Logger: p.log},
 	})
@@ -86,5 +97,7 @@ func (p *DataSourcePlugin) initBackendPlugin(log log.Logger) error {
 }
 
 func (p *DataSourcePlugin) Kill() {
-	p.client.Kill()
+	if p.client != nil {
+		p.client.Kill()
+	}
 }
