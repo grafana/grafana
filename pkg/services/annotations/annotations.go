@@ -10,14 +10,16 @@ type Repository interface {
 }
 
 type ItemQuery struct {
-	OrgId       int64    `json:"orgId"`
-	From        int64    `json:"from"`
-	To          int64    `json:"to"`
-	AlertId     int64    `json:"alertId"`
-	DashboardId int64    `json:"dashboardId"`
-	PanelId     int64    `json:"panelId"`
-	Tags        []string `json:"tags"`
-	Type        string   `json:"type"`
+	OrgId        int64    `json:"orgId"`
+	From         int64    `json:"from"`
+	To           int64    `json:"to"`
+	AlertId      int64    `json:"alertId"`
+	DashboardId  int64    `json:"dashboardId"`
+	PanelId      int64    `json:"panelId"`
+	AnnotationId int64    `json:"annotationId"`
+	RegionId     int64    `json:"regionId"`
+	Tags         []string `json:"tags"`
+	Type         string   `json:"type"`
 
 	Limit int64 `json:"limit"`
 }
