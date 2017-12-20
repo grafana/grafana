@@ -50,15 +50,20 @@ export class FolderPageLoader {
       });
       dashTab.url = folderUrl;
 
-      const permTab = _.find(ctrl.navModel.main.children, {
-        id: 'manage-folder-permissions',
-      });
-      permTab.url = folderUrl + '/permissions';
+        if (result.meta.canAdmin) {
+          const permTab = _.find(ctrl.navModel.main.children, {
+            id: 'manage-folder-permissions',
+          });
 
-      const settingsTab = _.find(ctrl.navModel.main.children, {
-        id: 'manage-folder-settings',
-      });
-      settingsTab.url = folderUrl + '/settings';
+          permTab.url = folderUrl + '/permissions';
+
+          const settingsTab = _.find(ctrl.navModel.main.children, {
+            id: 'manage-folder-settings',
+          });
+          settingsTab.url = folderUrl + '/settings';
+        } else {
+          ctrl.navModel.main.children = [dashTab];
+        }
 
       return result;
     });
