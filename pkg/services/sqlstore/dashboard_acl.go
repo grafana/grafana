@@ -170,7 +170,12 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 			FROM dashboard_acl as da,
         dashboard as dash
         LEFT JOIN dashboard folder on dash.folder_id = folder.id
-			WHERE dash.id = ? AND (dash.has_acl = 0 or folder.has_acl = 0) AND da.dashboard_id = -1
+			WHERE
+				dash.id = ? AND (
+					dash.has_acl = ` + dialect.BooleanStr(false) + ` or
+					folder.has_acl = ` + dialect.BooleanStr(false) + `
+				) AND
+				da.dashboard_id = -1
 	`
 
 	query.Result = make([]*m.DashboardAclInfoDTO, 0)
