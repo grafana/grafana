@@ -133,6 +133,7 @@ func (this *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 		this.log.Error("Failed get rule link", "error", err)
 		return err
 	}
+
 	message := evalContext.Rule.Message
 	for idx, evt := range evalContext.EvalMatches {
 		message += fmt.Sprintf("\n<b>%s</b>: %v", evt.Metric, evt.Value)
@@ -145,6 +146,9 @@ func (this *PushoverNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 	if evalContext.ImagePublicUrl != "" {
 		message += fmt.Sprintf("\n<a href=\"%s\">Show graph image</a>", evalContext.ImagePublicUrl)
+	}
+	if message == "" {
+		message = "Notification message missing (Set a notification message to replace this text.)"
 	}
 
 	q := url.Values{}

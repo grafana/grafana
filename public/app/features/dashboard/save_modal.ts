@@ -2,7 +2,7 @@
 
 import coreModule from 'app/core/core_module';
 
-const  template = `
+const template = `
 <div class="modal-body">
 	<div class="modal-header">
 		<h2 class="modal-header-title">
@@ -67,7 +67,7 @@ export class SaveDashboardModalCtrl {
 
     var dashboard = this.dashboardSrv.getCurrent();
     var saveModel = dashboard.getSaveModelClone();
-    var options = {message: this.message};
+    var options = { message: this.message };
 
     return this.dashboardSrv.save(saveModel, options).then(this.dismiss);
   }
@@ -80,8 +80,8 @@ export function saveDashboardModalDirective() {
     controller: SaveDashboardModalCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    scope: {dismiss: "&"}
+    scope: { dismiss: '&' },
   };
 }
 
-coreModule.directive('saveDashboardModal',  saveDashboardModalDirective);
+coreModule.directive('saveDashboardModal', saveDashboardModalDirective);

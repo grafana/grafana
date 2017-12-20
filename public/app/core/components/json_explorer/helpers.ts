@@ -5,7 +5,7 @@
  * Escapes `"` charachters from string
 */
 function escapeString(str: string): string {
-  return str.replace('"', '\"');
+  return str.replace('"', '"');
 }
 
 /*
@@ -13,7 +13,7 @@ function escapeString(str: string): string {
 */
 export function isObject(value: any): boolean {
   var type = typeof value;
-  return !!value && (type === 'object');
+  return !!value && type === 'object';
 }
 
 /*
@@ -29,11 +29,11 @@ export function getObjectName(object: Object): string {
     return 'Object';
   }
   if (typeof object === 'object' && !object.constructor) {
-      return 'Object';
+    return 'Object';
   }
 
   const funcNameRegex = /function ([^(]*)/;
-  const results = (funcNameRegex).exec((object).constructor.toString());
+  const results = funcNameRegex.exec(object.constructor.toString());
   if (results && results.length > 1) {
     return results[1];
   } else {
@@ -45,27 +45,33 @@ export function getObjectName(object: Object): string {
  * Gets type of an object. Returns "null" for null objects
 */
 export function getType(object: Object): string {
-  if (object === null) { return 'null'; }
+  if (object === null) {
+    return 'null';
+  }
   return typeof object;
 }
 
 /*
  * Generates inline preview for a JavaScript object based on a value
 */
-export function getValuePreview (object: Object, value: string): string {
+export function getValuePreview(object: Object, value: string): string {
   var type = getType(object);
 
-  if (type === 'null' || type === 'undefined') { return type; }
+  if (type === 'null' || type === 'undefined') {
+    return type;
+  }
 
   if (type === 'string') {
     value = '"' + escapeString(value) + '"';
   }
   if (type === 'function') {
-
     // Remove content of the function
-    return object.toString()
+    return (
+      object
+        .toString()
         .replace(/[\r\n]/g, '')
-        .replace(/\{.*\}/, '') + '{…}';
+        .replace(/\{.*\}/, '') + '{…}'
+    );
   }
   return value;
 }
@@ -97,7 +103,11 @@ export function cssClass(className: string): string {
   * Creates a new DOM element wiht given type and class
   * TODO: move me to helpers
 */
-export function createElement(type: string, className?: string, content?: Element|string): Element {
+export function createElement(
+  type: string,
+  className?: string,
+  content?: Element | string
+): Element {
   const el = document.createElement(type);
   if (className) {
     el.classList.add(cssClass(className));

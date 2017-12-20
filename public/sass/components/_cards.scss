@@ -125,7 +125,6 @@
 }
 
 .card-list-layout-grid {
-
   .card-item-type {
     display: inline-block;
   }
@@ -156,7 +155,9 @@
     img {
       width: 6rem;
     }
-    .fa, .icon-gf, .gicon {
+    .fa,
+    .icon-gf,
+    .gicon {
       font-size: 3.5rem;
     }
   }
@@ -187,7 +188,6 @@
 }
 
 .card-list-layout-list {
-
   .card-item-wrapper {
     padding: 0;
     width: 100%;

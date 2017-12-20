@@ -7,7 +7,7 @@ import {
   getType,
   getValuePreview,
   cssClass,
-  createElement
+  createElement,
 } from './helpers';
 
 import _ from 'lodash';
@@ -19,7 +19,12 @@ const JSON_DATE_REGEX = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
 // When toggleing, don't animated removal or addition of more than a few items
 const MAX_ANIMATED_TOGGLE_ITEMS = 10;
 
-const requestAnimationFrame = window.requestAnimationFrame || function(cb: ()=>void) { cb(); return 0; };
+const requestAnimationFrame =
+  window.requestAnimationFrame ||
+  function(cb: () => void) {
+    cb();
+    return 0;
+  };
 
 export interface JsonExplorerConfig {
   animateOpen?: boolean;
@@ -30,18 +35,16 @@ export interface JsonExplorerConfig {
 const _defaultConfig: JsonExplorerConfig = {
   animateOpen: true,
   animateClose: true,
-  theme: null
+  theme: null,
 };
-
 
 /**
  * @class JsonExplorer
  *
  * JsonExplorer allows you to render JSON objects in HTML with a
  * **collapsible** navigation.
-*/
+ */
 export class JsonExplorer {
-
   // Hold the open state after the toggler is used
   private _isOpen: boolean = null;
 
@@ -77,9 +80,13 @@ export class JsonExplorer {
    *
    * @param {string} [key=undefined] The key that this object in it's parent
    * context
-  */
-  constructor(public json: any, private open = 1, private config: JsonExplorerConfig = _defaultConfig, private key?: string) {
-  }
+   */
+  constructor(
+    public json: any,
+    private open = 1,
+    private config: JsonExplorerConfig = _defaultConfig,
+    private key?: string
+  ) {}
 
   /*
    * is formatter open?
@@ -103,17 +110,19 @@ export class JsonExplorer {
    * is this a date string?
   */
   private get isDate(): boolean {
-    return (this.type === 'string') &&
+    return (
+      this.type === 'string' &&
       (DATE_STRING_REGEX.test(this.json) ||
-      JSON_DATE_REGEX.test(this.json) ||
-      PARTIAL_DATE_REGEX.test(this.json));
+        JSON_DATE_REGEX.test(this.json) ||
+        PARTIAL_DATE_REGEX.test(this.json))
+    );
   }
 
   /*
    * is this a URL string?
   */
   private get isUrl(): boolean {
-    return this.type === 'string' && (this.json.indexOf('http') === 0);
+    return this.type === 'string' && this.json.indexOf('http') === 0;
   }
 
   /*
@@ -142,7 +151,9 @@ export class JsonExplorer {
    * is this an empty object or array?
   */
   private get isEmpty(): boolean {
-    return this.isEmptyObject || (this.keys && !this.keys.length && this.isArray);
+    return (
+      this.isEmptyObject || (this.keys && !this.keys.length && this.isArray)
+    );
   }
 
   /*
@@ -174,7 +185,7 @@ export class JsonExplorer {
   */
   private get keys(): string[] {
     if (this.isObject) {
-      return Object.keys(this.json).map((key)=> key ? key : '""');
+      return Object.keys(this.json).map(key => (key ? key : '""'));
     } else {
       return [];
     }
@@ -183,7 +194,7 @@ export class JsonExplorer {
   /**
    * Toggles `isOpen` state
    *
-  */
+   */
   toggleOpen() {
     this.isOpen = !this.isOpen;
 
@@ -198,17 +209,17 @@ export class JsonExplorer {
   }
 
   /**
-  * Open all children up to a certain depth.
-  * Allows actions such as expand all/collapse all
-  *
-  */
+   * Open all children up to a certain depth.
+   * Allows actions such as expand all/collapse all
+   *
+   */
   openAtDepth(depth = 1) {
     if (depth < 0) {
       return;
     }
 
     this.open = depth;
-    this.isOpen = (depth !== 0);
+    this.isOpen = depth !== 0;
 
     if (this.element) {
       this.removeChildren(false);
@@ -223,8 +234,11 @@ export class JsonExplorer {
   }
 
   isNumberArray() {
-    return (this.json.length > 0 && this.json.length < 4) &&
-      (_.isNumber(this.json[0]) || _.isNumber(this.json[1]));
+    return (
+      this.json.length > 0 &&
+      this.json.length < 4 &&
+      (_.isNumber(this.json[0]) || _.isNumber(this.json[1]))
+    );
   }
 
   renderArray() {
@@ -235,13 +249,17 @@ export class JsonExplorer {
     if (this.isNumberArray()) {
       this.json.forEach((val, index) => {
         if (index > 0) {
-          arrayWrapperSpan.appendChild(createElement('span', 'array-comma', ','));
+          arrayWrapperSpan.appendChild(
+            createElement('span', 'array-comma', ',')
+          );
         }
         arrayWrapperSpan.appendChild(createElement('span', 'number', val));
       });
       this.skipChildren = true;
     } else {
-      arrayWrapperSpan.appendChild(createElement('span', 'number', (this.json.length)));
+      arrayWrapperSpan.appendChild(
+        createElement('span', 'number', this.json.length)
+      );
     }
 
     arrayWrapperSpan.appendChild(createElement('span', 'bracket', ']'));
@@ -280,7 +298,11 @@ export class JsonExplorer {
       const objectWrapperSpan = createElement('span');
 
       // get constructor name and append it to wrapper span
-      var constructorName = createElement('span', 'constructor-name', this.constructorName);
+      var constructorName = createElement(
+        'span',
+        'constructor-name',
+        this.constructorName
+      );
       objectWrapperSpan.appendChild(constructorName);
 
       // if it's an array append the array specific elements like brackets and length
@@ -294,7 +316,6 @@ export class JsonExplorer {
       togglerLink.appendChild(value);
       // Primitive values
     } else {
-
       // make a value holder element
       const value = this.isUrl ? createElement('a') : createElement('span');
 
@@ -366,17 +387,24 @@ export class JsonExplorer {
   /**
    * Appends all the children to children element
    * Animated option is used when user triggers this via a click
-  */
+   */
   appendChildren(animated = false) {
     const children = this.element.querySelector(`div.${cssClass('children')}`);
 
-    if (!children || this.isEmpty) { return; }
+    if (!children || this.isEmpty) {
+      return;
+    }
 
     if (animated) {
       let index = 0;
-      const addAChild = ()=> {
+      const addAChild = () => {
         const key = this.keys[index];
-        const formatter = new JsonExplorer(this.json[key], this.open - 1, this.config, key);
+        const formatter = new JsonExplorer(
+          this.json[key],
+          this.open - 1,
+          this.config,
+          key
+        );
         children.appendChild(formatter.render());
 
         index += 1;
@@ -391,10 +419,14 @@ export class JsonExplorer {
       };
 
       requestAnimationFrame(addAChild);
-
     } else {
       this.keys.forEach(key => {
-        const formatter = new JsonExplorer(this.json[key], this.open - 1, this.config, key);
+        const formatter = new JsonExplorer(
+          this.json[key],
+          this.open - 1,
+          this.config,
+          key
+        );
         children.appendChild(formatter.render());
       });
     }
@@ -403,13 +435,15 @@ export class JsonExplorer {
   /**
    * Removes all the children from children element
    * Animated option is used when user triggers this via a click
-  */
+   */
   removeChildren(animated = false) {
-    const childrenElement = this.element.querySelector(`div.${cssClass('children')}`) as HTMLDivElement;
+    const childrenElement = this.element.querySelector(
+      `div.${cssClass('children')}`
+    ) as HTMLDivElement;
 
     if (animated) {
       let childrenRemoved = 0;
-      const removeAChild = ()=> {
+      const removeAChild = () => {
         if (childrenElement && childrenElement.children.length) {
           childrenElement.removeChild(childrenElement.children[0]);
           childrenRemoved += 1;

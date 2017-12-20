@@ -2,7 +2,7 @@
 
 import coreModule from 'app/core/core_module';
 
-const  template = `
+const template = `
 <div class="modal-body">
   <div class="modal-header">
     <h2 class="modal-header-title">
@@ -35,8 +35,7 @@ export class UnsavedChangesModalCtrl {
   dismiss: () => void;
 
   /** @ngInject */
-  constructor(private unsavedChangesSrv) {
-  }
+  constructor(private unsavedChangesSrv) {}
 
   discard() {
     this.dismiss();
@@ -56,7 +55,7 @@ export function unsavedChangesModalDirective() {
     controller: UnsavedChangesModalCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    scope: {dismiss: "&"}
+    scope: { dismiss: '&' },
   };
 }
 

@@ -1,6 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import coreModule from 'app/core/core_module';
+import coreModule from "app/core/core_module";
 
 export class ThresholdFormCtrl {
   panelCtrl: any;
@@ -25,7 +25,13 @@ export class ThresholdFormCtrl {
   }
 
   addThreshold() {
-    this.panel.thresholds.push({value: undefined, colorMode: "critical", op: 'gt', fill: true, line: true});
+    this.panel.thresholds.push({
+      value: undefined,
+      colorMode: "critical",
+      op: "gt",
+      fill: true,
+      line: true
+    });
     this.panelCtrl.render();
   }
 
@@ -39,14 +45,14 @@ export class ThresholdFormCtrl {
   }
 
   onFillColorChange(index) {
-    return (newColor) => {
+    return newColor => {
       this.panel.thresholds[index].fillColor = newColor;
       this.render();
     };
   }
 
   onLineColorChange(index) {
-    return (newColor) => {
+    return newColor => {
       this.panel.thresholds[index].lineColor = newColor;
       this.render();
     };
@@ -123,13 +129,13 @@ var template = `
 </div>
 `;
 
-coreModule.directive('graphThresholdForm', function() {
+coreModule.directive("graphThresholdForm", function() {
   return {
-    restrict: 'E',
+    restrict: "E",
     template: template,
     controller: ThresholdFormCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
+    controllerAs: "ctrl",
     scope: {
       panelCtrl: "="
     }

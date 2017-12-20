@@ -1,14 +1,14 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import {PostgresDatasource} from './datasource';
-import {PostgresQueryCtrl} from './query_ctrl';
+import { PostgresDatasource } from './datasource';
+import { PostgresQueryCtrl } from './query_ctrl';
 
 class PostgresConfigCtrl {
   static templateUrl = 'partials/config.html';
 
   current: any;
 
-   /** @ngInject **/
+  /** @ngInject **/
   constructor($scope) {
     this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'require';
   }
@@ -42,4 +42,3 @@ export {
   PostgresConfigCtrl as ConfigCtrl,
   PostgresAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
-

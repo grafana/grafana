@@ -1,15 +1,15 @@
 import coreModule from '../../core_module';
-import {NavModel}  from '../../nav_model_srv';
+import { NavModel } from '../../nav_model_srv';
+import appEvents from 'app/core/app_events';
 
 export class NavbarCtrl {
   model: NavModel;
 
   /** @ngInject */
-  constructor(private $rootScope) {
-  }
+  constructor() {}
 
   showSearch() {
-    this.$rootScope.appEvent('show-dash-search');
+    appEvents.emit('show-dash-search');
   }
 
   navItemClicked(navItem, evt) {
@@ -28,10 +28,9 @@ export function navbarDirective() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      model: "=",
+      model: '=',
     },
-    link: function(scope, elem) {
-    }
+    link: function(scope, elem) {},
   };
 }
 
@@ -46,11 +45,10 @@ export function pageH1() {
     </h1>
     `,
     scope: {
-      model: "=",
-    }
+      model: '=',
+    },
   };
 }
-
 
 coreModule.directive('pageH1', pageH1);
 coreModule.directive('navbar', navbarDirective);

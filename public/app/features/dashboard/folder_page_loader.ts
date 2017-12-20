@@ -1,7 +1,7 @@
-import _ from "lodash";
+import _ from 'lodash';
 
 export class FolderPageLoader {
-  constructor(private backendSrv, private $routeParams) { }
+  constructor(private backendSrv, private $routeParams) {}
 
   load(ctrl, folderId, activeChildId) {
     ctrl.navModel = {
@@ -21,47 +21,59 @@ export class FolderPageLoader {
             icon: 'fa fa-fw fa-th-large',
             id: 'manage-folder-dashboards',
             text: 'Dashboards',
-            url: '/dashboards'
+            url: '/dashboards',
           },
           {
             active: activeChildId === 'manage-folder-permissions',
             icon: 'fa fa-fw fa-lock',
             id: 'manage-folder-permissions',
             text: 'Permissions',
-            url: '/dashboards/permissions'
+            url: '/dashboards/permissions',
           },
           {
             active: activeChildId === 'manage-folder-settings',
             icon: 'fa fa-fw fa-cog',
             id: 'manage-folder-settings',
             text: 'Settings',
-            url: '/dashboards/settings'
-          }
-        ]
-      }
+            url: '/dashboards/settings',
+          },
+        ],
+      },
     };
 
-    return this.backendSrv.getDashboard('db', this.$routeParams.slug).then(result => {
-      const folderTitle = result.dashboard.title;
-      ctrl.navModel.main.text = '';
-      ctrl.navModel.main.breadcrumbs = [
-        { title: 'Dashboards', url: '/dashboards' },
-        { title: folderTitle }
-      ];
+    return this.backendSrv
+      .getDashboard('db', this.$routeParams.slug)
+      .then(result => {
+        const folderTitle = result.dashboard.title;
+        ctrl.navModel.main.text = '';
+        ctrl.navModel.main.breadcrumbs = [
+          { title: 'Dashboards', url: '/dashboards' },
+          { title: folderTitle },
+        ];
 
-      const folderUrl = this.createFolderUrl(folderId, result.meta.type, result.meta.slug);
+        const folderUrl = this.createFolderUrl(
+          folderId,
+          result.meta.type,
+          result.meta.slug
+        );
 
-      const dashTab = _.find(ctrl.navModel.main.children, { id: 'manage-folder-dashboards' });
-      dashTab.url = folderUrl;
+        const dashTab = _.find(ctrl.navModel.main.children, {
+          id: 'manage-folder-dashboards',
+        });
+        dashTab.url = folderUrl;
 
-      const permTab = _.find(ctrl.navModel.main.children, { id: 'manage-folder-permissions' });
-      permTab.url = folderUrl + '/permissions';
+        const permTab = _.find(ctrl.navModel.main.children, {
+          id: 'manage-folder-permissions',
+        });
+        permTab.url = folderUrl + '/permissions';
 
-      const settingsTab = _.find(ctrl.navModel.main.children, { id: 'manage-folder-settings' });
-      settingsTab.url = folderUrl + '/settings';
+        const settingsTab = _.find(ctrl.navModel.main.children, {
+          id: 'manage-folder-settings',
+        });
+        settingsTab.url = folderUrl + '/settings';
 
-      return result;
-    });
+        return result;
+      });
   }
 
   createFolderUrl(folderId: number, type: string, slug: string) {

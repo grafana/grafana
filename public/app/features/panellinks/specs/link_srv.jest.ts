@@ -27,7 +27,10 @@ describe('linkSrv', function() {
     });
 
     it('add & to URL if query string is present', function() {
-      var url = linkSrv.appendToQueryString('http://example.com?foo=bar', 'hello=world');
+      var url = linkSrv.appendToQueryString(
+        'http://example.com?foo=bar',
+        'hello=world'
+      );
       expect(url).toBe('http://example.com?foo=bar&hello=world');
     });
 
@@ -39,7 +42,10 @@ describe('linkSrv', function() {
         var url2 = linkSrv.appendToQueryString('http://example.com?', toAppend);
         expect(url2).toBe('http://example.com?');
 
-        var url3 = linkSrv.appendToQueryString('http://example.com?foo=bar', toAppend);
+        var url3 = linkSrv.appendToQueryString(
+          'http://example.com?foo=bar',
+          toAppend
+        );
         expect(url3).toBe('http://example.com?foo=bar');
       });
     });

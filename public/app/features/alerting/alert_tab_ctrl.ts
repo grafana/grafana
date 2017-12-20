@@ -1,8 +1,8 @@
- ///<reference path="../../headers/common.d.ts" />
+///<reference path="../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import {ThresholdMapper} from './threshold_mapper';
-import {QueryPart} from 'app/core/components/query_part/query_part';
+import { ThresholdMapper } from './threshold_mapper';
+import { QueryPart } from 'app/core/components/query_part/query_part';
 import alertDef from './alert_def';
 import config from 'app/core/config';
 import appEvents from 'app/core/app_events';
@@ -28,12 +28,14 @@ export class AlertTabCtrl {
   alertHistory: any;
 
   /** @ngInject */
-  constructor(private $scope,
-              private backendSrv,
-              private dashboardSrv,
-              private uiSegmentSrv,
-              private $q,
-              private datasourceSrv) {
+  constructor(
+    private $scope,
+    private backendSrv,
+    private dashboardSrv,
+    private uiSegmentSrv,
+    private $q,
+    private datasourceSrv
+  ) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
@@ -54,8 +56,11 @@ export class AlertTabCtrl {
     this.panelCtrl.events.on('threshold-changed', thresholdChangedEventHandler);
 
     // set panel alert edit mode
-    this.$scope.$on("$destroy", () => {
-      this.panelCtrl.events.off("threshold-changed", thresholdChangedEventHandler);
+    this.$scope.$on('$destroy', () => {
+      this.panelCtrl.events.off(
+        'threshold-changed',
+        thresholdChangedEventHandler
+      );
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
     });
@@ -74,36 +79,56 @@ export class AlertTabCtrl {
   }
 
   getAlertHistory() {
-    this.backendSrv.get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50`).then(res => {
-      this.alertHistory = _.map(res, ah => {
-        ah.time = this.dashboardSrv.getCurrent().formatDate(ah.time, 'MMM D, YYYY HH:mm:ss');
-        ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
-        ah.info = alertDef.getAlertAnnotationInfo(ah);
-        return ah;
+    this.backendSrv
+      .get(
+        `/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${
+          this.panel.id
+        }&limit=50`
+      )
+      .then(res => {
+        this.alertHistory = _.map(res, ah => {
+          ah.time = this.dashboardSrv
+            .getCurrent()
+            .formatDate(ah.time, 'MMM D, YYYY HH:mm:ss');
+          ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
+          ah.info = alertDef.getAlertAnnotationInfo(ah);
+          return ah;
+        });
       });
-    });
   }
 
   getNotificationIcon(type): string {
     switch (type) {
-      case "email": return "fa fa-envelope";
-      case "slack": return "fa fa-slack";
-      case "victorops": return "fa fa-pagelines";
-      case "webhook": return "fa fa-cubes";
-      case "pagerduty": return "fa fa-bullhorn";
-      case "opsgenie": return "fa fa-bell";
-      case "hipchat": return "fa fa-mail-forward";
-      case "pushover": return "fa fa-mobile";
-      case "kafka": return "fa fa-random";
-      case "teams": return "fa fa-windows";
+      case 'email':
+        return 'fa fa-envelope';
+      case 'slack':
+        return 'fa fa-slack';
+      case 'victorops':
+        return 'fa fa-pagelines';
+      case 'webhook':
+        return 'fa fa-cubes';
+      case 'pagerduty':
+        return 'fa fa-bullhorn';
+      case 'opsgenie':
+        return 'fa fa-bell';
+      case 'hipchat':
+        return 'fa fa-mail-forward';
+      case 'pushover':
+        return 'fa fa-mobile';
+      case 'kafka':
+        return 'fa fa-random';
+      case 'teams':
+        return 'fa fa-windows';
     }
     return 'fa fa-bell';
   }
 
   getNotifications() {
-    return Promise.resolve(this.notifications.map(item => {
-      return this.uiSegmentSrv.newSegment(item.name);
-    }));
+    return Promise.resolve(
+      this.notifications.map(item => {
+        return this.uiSegmentSrv.newSegment(item.name);
+      })
+    );
   }
 
   changeTabIndex(newTabIndex) {
@@ -115,7 +140,9 @@ export class AlertTabCtrl {
   }
 
   notificationAdded() {
-    var model = _.find(this.notifications, {name: this.addNotificationSegment.value});
+    var model = _.find(this.notifications, {
+      name: this.addNotificationSegment.value,
+    });
     if (!model) {
       return;
     }
@@ -123,9 +150,9 @@ export class AlertTabCtrl {
     this.alertNotifications.push({
       name: model.name,
       iconClass: this.getNotificationIcon(model.type),
-      isDefault: false
+      isDefault: false,
     });
-    this.alert.notifications.push({id: model.id});
+    this.alert.notifications.push({ id: model.id });
 
     // reset plus button
     this.addNotificationSegment.value = this.uiSegmentSrv.newPlusButton().value;
@@ -138,7 +165,7 @@ export class AlertTabCtrl {
   }
 
   initModel() {
-    var alert = this.alert = this.panel.alert;
+    var alert = (this.alert = this.panel.alert);
     if (!alert) {
       return;
     }
@@ -157,15 +184,19 @@ export class AlertTabCtrl {
     var defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;
 
-    this.conditionModels = _.reduce(alert.conditions, (memo, value) => {
-      memo.push(this.buildConditionModel(value));
-      return memo;
-    }, []);
+    this.conditionModels = _.reduce(
+      alert.conditions,
+      (memo, value) => {
+        memo.push(this.buildConditionModel(value));
+        return memo;
+      },
+      []
+    );
 
     ThresholdMapper.alertToGraphThresholds(this.panel);
 
     for (let addedNotification of alert.notifications) {
-      var model = _.find(this.notifications, {id: addedNotification.id});
+      var model = _.find(this.notifications, { id: addedNotification.id });
       if (model && model.isDefault === false) {
         model.iconClass = this.getNotificationIcon(model.type);
         this.alertNotifications.push(model);
@@ -175,7 +206,7 @@ export class AlertTabCtrl {
     for (let notification of this.notifications) {
       if (notification.isDefault) {
         notification.iconClass = this.getNotificationIcon(notification.type);
-        notification.bgColor = "#00678b";
+        notification.bgColor = '#00678b';
         this.alertNotifications.push(notification);
       }
     }
@@ -197,10 +228,10 @@ export class AlertTabCtrl {
   buildDefaultCondition() {
     return {
       type: 'query',
-      query: {params: ['A', '5m', 'now']},
-      reducer: {type: 'avg', params: []},
-      evaluator: {type: 'gt', params: [null]},
-      operator: {type: 'and'},
+      query: { params: ['A', '5m', 'now'] },
+      reducer: { type: 'avg', params: [] },
+      evaluator: { type: 'gt', params: [null] },
+      operator: { type: 'and' },
     };
   }
 
@@ -232,7 +263,7 @@ export class AlertTabCtrl {
           condition.query.params[0] = firstTarget.refId;
           foundTarget = firstTarget;
         } else {
-          this.error = "Could not find any metric queries";
+          this.error = 'Could not find any metric queries';
         }
       }
 
@@ -250,7 +281,7 @@ export class AlertTabCtrl {
   }
 
   buildConditionModel(source) {
-    var cm: any = {source: source, type: source.type};
+    var cm: any = { source: source, type: source.type };
 
     cm.queryPart = new QueryPart(source.query, alertDef.alertQueryDef);
     cm.reducerPart = alertDef.createReducerPart(source.reducer);
@@ -262,16 +293,16 @@ export class AlertTabCtrl {
 
   handleQueryPartEvent(conditionModel, evt) {
     switch (evt.name) {
-      case "action-remove-part": {
+      case 'action-remove-part': {
         break;
       }
-      case "get-part-actions": {
+      case 'get-part-actions': {
         return this.$q.when([]);
       }
-      case "part-param-changed": {
+      case 'part-param-changed': {
         this.validateModel();
       }
-      case "get-param-options": {
+      case 'get-param-options': {
         var result = this.panel.targets.map(target => {
           return this.uiSegmentSrv.newSegment({ value: target.refId });
         });
@@ -283,12 +314,14 @@ export class AlertTabCtrl {
 
   handleReducerPartEvent(conditionModel, evt) {
     switch (evt.name) {
-      case "action": {
+      case 'action': {
         conditionModel.source.reducer.type = evt.action.value;
-        conditionModel.reducerPart = alertDef.createReducerPart(conditionModel.source.reducer);
+        conditionModel.reducerPart = alertDef.createReducerPart(
+          conditionModel.source.reducer
+        );
         break;
       }
-      case "get-part-actions": {
+      case 'get-part-actions': {
         var result = [];
         for (var type of alertDef.reducerTypes) {
           if (type.value !== conditionModel.source.reducer.type) {
@@ -327,7 +360,7 @@ export class AlertTabCtrl {
         this.conditionModels = [];
         this.panelCtrl.alertState = null;
         this.panelCtrl.render();
-      }
+      },
     });
   }
 
@@ -344,17 +377,17 @@ export class AlertTabCtrl {
   evaluatorTypeChanged(evaluator) {
     // ensure params array is correct length
     switch (evaluator.type) {
-      case "lt":
-        case "gt": {
+      case 'lt':
+      case 'gt': {
         evaluator.params = [evaluator.params[0]];
         break;
       }
-      case "within_range":
-        case "outside_range": {
+      case 'within_range':
+      case 'outside_range': {
         evaluator.params = [evaluator.params[0], evaluator.params[1]];
         break;
       }
-      case "no_value": {
+      case 'no_value': {
         evaluator.params = [];
       }
     }
@@ -365,18 +398,21 @@ export class AlertTabCtrl {
   clearHistory() {
     appEvents.emit('confirm-modal', {
       title: 'Delete Alert History',
-      text: 'Are you sure you want to remove all history & annotations for this alert?',
+      text:
+        'Are you sure you want to remove all history & annotations for this alert?',
       icon: 'fa-trash',
       yesText: 'Yes',
       onConfirm: () => {
-        this.backendSrv.post('/api/annotations/mass-delete', {
-          dashboardId: this.panelCtrl.dashboard.id,
-          panelId: this.panel.id,
-        }).then(res => {
-          this.alertHistory = [];
-          this.panelCtrl.refresh();
-        });
-      }
+        this.backendSrv
+          .post('/api/annotations/mass-delete', {
+            dashboardId: this.panelCtrl.dashboard.id,
+            panelId: this.panel.id,
+          })
+          .then(res => {
+            this.alertHistory = [];
+            this.panelCtrl.refresh();
+          });
+      },
     });
   }
 

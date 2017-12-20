@@ -13,7 +13,7 @@ export class PluginListCtrl {
     this.tabIndex = 0;
     this.navModel = navModelSrv.getNav('cfg', 'plugins', 0);
 
-    this.backendSrv.get('api/plugins', {embedded: 0}).then(plugins => {
+    this.backendSrv.get('api/plugins', { embedded: 0 }).then(plugins => {
       this.plugins = plugins;
       this.allPlugins = plugins;
     });
@@ -27,4 +27,6 @@ export class PluginListCtrl {
   }
 }
 
-angular.module('grafana.controllers').controller('PluginListCtrl', PluginListCtrl);
+angular
+  .module('grafana.controllers')
+  .controller('PluginListCtrl', PluginListCtrl);

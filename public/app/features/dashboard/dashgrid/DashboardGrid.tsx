@@ -1,16 +1,28 @@
 import React from 'react';
 import ReactGridLayout from 'react-grid-layout';
-import {GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT} from 'app/core/constants';
-import {DashboardPanel} from './DashboardPanel';
-import {DashboardModel} from '../dashboard_model';
-import {PanelContainer} from './PanelContainer';
-import {PanelModel} from '../panel_model';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
+import { DashboardPanel } from './DashboardPanel';
+import { DashboardModel } from '../dashboard_model';
+import { PanelContainer } from './PanelContainer';
+import { PanelModel } from '../panel_model';
 import classNames from 'classnames';
 import sizeMe from 'react-sizeme';
 
 let lastGridWidth = 1200;
 
-function GridWrapper({size, layout, onLayoutChange, children, onDragStop, onResize, onResizeStop, onWidthChange, className}) {
+function GridWrapper({
+  size,
+  layout,
+  onLayoutChange,
+  children,
+  onDragStop,
+  onResize,
+  onResizeStop,
+  onWidthChange,
+  className,
+  isResizable,
+  isDraggable,
+}) {
   if (size.width === 0) {
     console.log('size is zero!');
   }
@@ -25,8 +37,8 @@ function GridWrapper({size, layout, onLayoutChange, children, onDragStop, onResi
     <ReactGridLayout
       width={lastGridWidth}
       className={className}
-      isDraggable={true}
-      isResizable={true}
+      isDraggable={isDraggable}
+      isResizable={isResizable}
       measureBeforeMount={false}
       containerPadding={[0, 0]}
       useCSSTransforms={true}
@@ -44,7 +56,7 @@ function GridWrapper({size, layout, onLayoutChange, children, onDragStop, onResi
   );
 }
 
-const SizedReactLayoutGrid = sizeMe({monitorWidth: true})(GridWrapper);
+const SizedReactLayoutGrid = sizeMe({ monitorWidth: true })(GridWrapper);
 
 export interface DashboardGridProps {
   getPanelContainer: () => PanelContainer;
@@ -54,7 +66,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   gridToPanelMap: any;
   panelContainer: PanelContainer;
   dashboard: DashboardModel;
-  panelMap: {[id: string]: PanelModel};
+  panelMap: { [id: string]: PanelModel };
 
   constructor(props) {
     super(props);
@@ -65,7 +77,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     this.onDragStop = this.onDragStop.bind(this);
     this.onWidthChange = this.onWidthChange.bind(this);
 
-    this.state = {animated: false};
+    this.state = { animated: false };
 
     // subscribe to dashboard events
     this.dashboard = this.panelContainer.getDashboard();
@@ -153,7 +165,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   componentDidMount() {
     setTimeout(() => {
       this.setState(() => {
-        return {animated: true};
+        return { animated: true };
       });
     });
   }
@@ -162,7 +174,7 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     const panelElements = [];
 
     for (let panel of this.dashboard.panels) {
-      const panelClasses = classNames({panel: true, 'panel--fullscreen': panel.fullscreen});
+      const panelClasses = classNames({ panel: true, 'panel--fullscreen': panel.fullscreen });
       panelElements.push(
         <div key={panel.id.toString()} className={panelClasses}>
           <DashboardPanel panel={panel} getPanelContainer={this.props.getPanelContainer} />
@@ -176,8 +188,10 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
   render() {
     return (
       <SizedReactLayoutGrid
-        className={classNames({'layout': true, 'animated': this.state.animated})}
+        className={classNames({ layout: true, animated: this.state.animated })}
         layout={this.buildLayout()}
+        isResizable={this.dashboard.meta.canEdit}
+        isDraggable={this.dashboard.meta.canEdit}
         onLayoutChange={this.onLayoutChange}
         onWidthChange={this.onWidthChange}
         onDragStop={this.onDragStop}
@@ -188,4 +202,3 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
     );
   }
 }
-

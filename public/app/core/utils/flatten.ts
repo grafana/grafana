@@ -14,7 +14,7 @@ export default function flatten(target, opts): any {
       var value = object[key];
       var isarray = opts.safe && Array.isArray(value);
       var type = Object.prototype.toString.call(value);
-      var isobject = type === "[object Object]";
+      var isobject = type === '[object Object]';
 
       var newKey = prev ? prev + delimiter + key : key;
 
@@ -22,7 +22,12 @@ export default function flatten(target, opts): any {
         maxDepth = currentDepth + 1;
       }
 
-      if (!isarray && isobject && Object.keys(value).length && currentDepth < maxDepth) {
+      if (
+        !isarray &&
+        isobject &&
+        Object.keys(value).length &&
+        currentDepth < maxDepth
+      ) {
         ++currentDepth;
         return step(value, newKey);
       }

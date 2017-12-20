@@ -1,5 +1,4 @@
-
-import {Lexer} from './lexer';
+import { Lexer } from './lexer';
 
 export function Parser(expression) {
   this.expression = expression;
@@ -9,27 +8,25 @@ export function Parser(expression) {
 }
 
 Parser.prototype = {
-
-  getAst: function () {
+  getAst: function() {
     return this.start();
   },
 
-  start: function () {
+  start: function() {
     try {
       return this.functionCall() || this.metricExpression();
     } catch (e) {
       return {
         type: 'error',
         message: e.message,
-        pos: e.pos
+        pos: e.pos,
       };
     }
   },
 
   curlyBraceSegment: function() {
     if (this.match('identifier', '{') || this.match('{')) {
-
-      var curlySegment = "";
+      var curlySegment = '';
 
       while (!this.match('') && !this.match('}')) {
         curlySegment += this.consumeToken().value;
@@ -49,7 +46,7 @@ Parser.prototype = {
 
       return {
         type: 'segment',
-        value: curlySegment
+        value: curlySegment,
       };
     } else {
       return null;
@@ -67,12 +64,15 @@ Parser.prototype = {
       var parts = this.consumeToken().value.split('.');
       if (parts.length === 2) {
         this.tokens.splice(this.index, 0, { type: '.' });
-        this.tokens.splice(this.index + 1, 0, { type: 'number', value: parts[1] });
+        this.tokens.splice(this.index + 1, 0, {
+          type: 'number',
+          value: parts[1],
+        });
       }
 
       return {
         type: 'segment',
-        value: parts[0]
+        value: parts[0],
       };
     }
 
@@ -88,7 +88,7 @@ Parser.prototype = {
 
     var node = {
       type: 'template',
-      value: this.consumeToken().value
+      value: this.consumeToken().value,
     };
 
     if (!this.match('templateEnd')) {
@@ -100,13 +100,18 @@ Parser.prototype = {
   },
 
   metricExpression: function() {
-    if (!this.match('templateStart') && !this.match('identifier') && !this.match('number') && !this.match('{')) {
+    if (
+      !this.match('templateStart') &&
+      !this.match('identifier') &&
+      !this.match('number') &&
+      !this.match('{')
+    ) {
       return null;
     }
 
     var node = {
       type: 'metric',
-      segments: []
+      segments: [],
     };
 
     node.segments.push(this.metricSegment());
@@ -160,7 +165,7 @@ Parser.prototype = {
     };
   },
 
-  functionParameters: function () {
+  functionParameters: function() {
     if (this.match(')') || this.match('')) {
       return [];
     }
@@ -195,22 +200,22 @@ Parser.prototype = {
 
     return {
       type: 'series-ref',
-      value: token.value
+      value: token.value,
     };
   },
 
-  numericLiteral: function () {
+  numericLiteral: function() {
     if (!this.match('number')) {
       return null;
     }
 
     return {
       type: 'number',
-      value: parseFloat(this.consumeToken().value)
+      value: parseFloat(this.consumeToken().value),
     };
   },
 
-  stringLiteral: function () {
+  stringLiteral: function() {
     if (!this.match('string')) {
       return null;
     }
@@ -222,7 +227,7 @@ Parser.prototype = {
 
     return {
       type: 'string',
-      value: token.value
+      value: token.value,
     };
   },
 
@@ -230,8 +235,8 @@ Parser.prototype = {
     var currentToken = this.tokens[this.index];
     var type = currentToken ? currentToken.type : 'end of string';
     throw {
-      message: text + " instead found " + type,
-      pos: currentToken ? currentToken.pos : this.lexer.char
+      message: text + ' instead found ' + type,
+      pos: currentToken ? currentToken.pos : this.lexer.char,
     };
   },
 
@@ -243,13 +248,14 @@ Parser.prototype = {
 
   matchToken: function(type, index) {
     var token = this.tokens[this.index + index];
-    return (token === undefined && type === '') ||
-      token && token.type === type;
+    return (
+      (token === undefined && type === '') || (token && token.type === type)
+    );
   },
 
   match: function(token1, token2) {
-    return this.matchToken(token1, 0) &&
-      (!token2 || this.matchToken(token2, 1));
+    return (
+      this.matchToken(token1, 0) && (!token2 || this.matchToken(token2, 1))
+    );
   },
 };
-

@@ -13,22 +13,36 @@ export class SideMenuCtrl {
   isOpenMobile: boolean;
 
   /** @ngInject */
-  constructor(private $scope, private $rootScope, private $location, private contextSrv, private $timeout) {
+  constructor(
+    private $scope,
+    private $rootScope,
+    private $location,
+    private contextSrv,
+    private $timeout
+  ) {
     this.isSignedIn = contextSrv.isSignedIn;
     this.user = contextSrv.user;
-    this.mainLinks = _.filter(config.bootData.navTree, item => !item.hideFromMenu);
-    this.bottomNav = _.filter(config.bootData.navTree, item => item.hideFromMenu);
-    this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
+    this.mainLinks = _.filter(
+      config.bootData.navTree,
+      item => !item.hideFromMenu
+    );
+    this.bottomNav = _.filter(
+      config.bootData.navTree,
+      item => item.hideFromMenu
+    );
+    this.loginUrl =
+      'login?redirect=' + encodeURIComponent(this.$location.path());
 
     if (contextSrv.user.orgCount > 1) {
-      let profileNode = _.find(this.bottomNav, {id: 'profile'});
+      let profileNode = _.find(this.bottomNav, { id: 'profile' });
       if (profileNode) {
         profileNode.showOrgSwitcher = true;
       }
     }
 
     this.$scope.$on('$routeChangeSuccess', () => {
-      this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
+      this.loginUrl =
+        'login?redirect=' + encodeURIComponent(this.$location.path());
     });
   }
 
@@ -53,7 +67,9 @@ export class SideMenuCtrl {
 
   itemClicked(item, evt) {
     if (item.url === '/shortcuts') {
-      appEvents.emit('show-modal', {templateHtml: '<help-modal></help-modal>'});
+      appEvents.emit('show-modal', {
+        templateHtml: '<help-modal></help-modal>',
+      });
       evt.preventDefault();
     }
   }
@@ -78,7 +94,7 @@ export function sideMenuDirective() {
           parent.append(menu);
         }, 100);
       });
-    }
+    },
   };
 }
 

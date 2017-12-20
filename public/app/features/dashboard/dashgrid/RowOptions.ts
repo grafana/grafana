@@ -1,11 +1,10 @@
-import {coreModule} from 'app/core/core';
+import { coreModule } from 'app/core/core';
 
 export class RowOptionsCtrl {
   row: any;
   source: any;
   dismiss: any;
   onUpdated: any;
-  onDelete: any;
   showDelete: boolean;
 
   /** @ngInject */
@@ -20,11 +19,6 @@ export class RowOptionsCtrl {
     this.onUpdated();
     this.dismiss();
   }
-
-  delete() {
-    this.onDelete();
-    this.dismiss();
-  }
 }
 
 export function rowOptionsDirective() {
@@ -35,10 +29,9 @@ export function rowOptionsDirective() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      row: "=",
-      dismiss: "&",
-      onUpdated: "&",
-      onDelete: "&"
+      row: '=',
+      dismiss: '&',
+      onUpdated: '&',
     },
   };
 }

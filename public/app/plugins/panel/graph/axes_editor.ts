@@ -1,6 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import kbn from 'app/core/utils/kbn';
+import kbn from "app/core/utils/kbn";
 
 export class AxesEditorCtrl {
   panel: any;
@@ -20,32 +20,32 @@ export class AxesEditorCtrl {
     this.unitFormats = kbn.getUnitFormats();
 
     this.logScales = {
-      'linear': 1,
-      'log (base 2)': 2,
-      'log (base 10)': 10,
-      'log (base 32)': 32,
-      'log (base 1024)': 1024
+      linear: 1,
+      "log (base 2)": 2,
+      "log (base 10)": 10,
+      "log (base 32)": 32,
+      "log (base 1024)": 1024
     };
 
     this.xAxisModes = {
-      'Time': 'time',
-      'Series': 'series',
-      'Histogram': 'histogram'
+      Time: "time",
+      Series: "series",
+      Histogram: "histogram"
       // 'Data field': 'field',
     };
 
-    this.xAxisStatOptions =  [
-      {text: 'Avg', value: 'avg'},
-      {text: 'Min', value: 'min'},
-      {text: 'Max', value: 'max'},
-      {text: 'Total', value: 'total'},
-      {text: 'Count', value: 'count'},
-      {text: 'Current', value: 'current'},
+    this.xAxisStatOptions = [
+      { text: "Avg", value: "avg" },
+      { text: "Min", value: "min" },
+      { text: "Max", value: "max" },
+      { text: "Total", value: "total" },
+      { text: "Count", value: "count" },
+      { text: "Current", value: "current" }
     ];
 
-    if (this.panel.xaxis.mode === 'custom') {
+    if (this.panel.xaxis.mode === "custom") {
       if (!this.panel.xaxis.name) {
-        this.panel.xaxis.name = 'specify field';
+        this.panel.xaxis.name = "specify field";
       }
     }
   }
@@ -59,7 +59,7 @@ export class AxesEditorCtrl {
     this.panelCtrl.render();
   }
 
-  xAxisModeChanged()  {
+  xAxisModeChanged() {
     this.panelCtrl.processor.setPanelDefaultsForNewXAxisMode();
     this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
   }
@@ -69,23 +69,25 @@ export class AxesEditorCtrl {
   }
 
   getDataFieldNames(onlyNumbers) {
-    var props = this.panelCtrl.processor.getDataFieldNames(this.panelCtrl.dataList, onlyNumbers);
+    var props = this.panelCtrl.processor.getDataFieldNames(
+      this.panelCtrl.dataList,
+      onlyNumbers
+    );
     var items = props.map(prop => {
-      return {text: prop, value: prop};
+      return { text: prop, value: prop };
     });
 
     return this.$q.when(items);
   }
-
 }
 
 /** @ngInject **/
 export function axesEditorComponent() {
-  'use strict';
+  "use strict";
   return {
-    restrict: 'E',
+    restrict: "E",
     scope: true,
-    templateUrl: 'public/app/plugins/panel/graph/axes_editor.html',
-    controller: AxesEditorCtrl,
+    templateUrl: "public/app/plugins/panel/graph/axes_editor.html",
+    controller: AxesEditorCtrl
   };
 }

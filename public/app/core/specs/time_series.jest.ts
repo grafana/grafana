@@ -1,6 +1,6 @@
 import TimeSeries from 'app/core/time_series2';
 
-describe("TimeSeries", function() {
+describe('TimeSeries', function() {
   var points, series;
   var yAxisFormats = ['short', 'ms'];
   var testData;
@@ -8,9 +8,7 @@ describe("TimeSeries", function() {
   beforeEach(function() {
     testData = {
       alias: 'test',
-      datapoints: [
-        [1,2],[null,3],[10,4],[8,5]
-      ]
+      datapoints: [[1, 2], [null, 3], [10, 4], [8, 5]],
     };
   });
 
@@ -30,7 +28,7 @@ describe("TimeSeries", function() {
 
     it('if last is null current should pick next to last', function() {
       series = new TimeSeries({
-        datapoints: [[10,1], [null, 2]]
+        datapoints: [[10, 1], [null, 2]],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.current).toBe(10);
@@ -38,7 +36,7 @@ describe("TimeSeries", function() {
 
     it('max value should work for negative values', function() {
       series = new TimeSeries({
-        datapoints: [[-10,1], [-4, 2]]
+        datapoints: [[-10, 1], [-4, 2]],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.max).toBe(-4);
@@ -52,7 +50,7 @@ describe("TimeSeries", function() {
 
     it('the delta value should account for nulls', function() {
       series = new TimeSeries({
-        datapoints: [[1,2],[3,3],[null,4],[10,5],[15,6]]
+        datapoints: [[1, 2], [3, 3], [null, 4], [10, 5], [15, 6]],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.delta).toBe(14);
@@ -60,7 +58,7 @@ describe("TimeSeries", function() {
 
     it('the delta value should account for nulls on first', function() {
       series = new TimeSeries({
-        datapoints: [[null,2],[1,3],[10,4],[15,5]]
+        datapoints: [[null, 2], [1, 3], [10, 4], [15, 5]],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.delta).toBe(14);
@@ -68,7 +66,7 @@ describe("TimeSeries", function() {
 
     it('the delta value should account for nulls on last', function() {
       series = new TimeSeries({
-        datapoints: [[1,2],[5,3],[10,4],[null,5]]
+        datapoints: [[1, 2], [5, 3], [10, 4], [null, 5]],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.delta).toBe(9);
@@ -76,7 +74,7 @@ describe("TimeSeries", function() {
 
     it('the delta value should account for resets', function() {
       series = new TimeSeries({
-        datapoints: [[1,2],[5,3],[10,4],[0,5],[10,6]]
+        datapoints: [[1, 2], [5, 3], [10, 4], [0, 5], [10, 6]],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.delta).toBe(19);
@@ -84,7 +82,7 @@ describe("TimeSeries", function() {
 
     it('the delta value should account for resets on last', function() {
       series = new TimeSeries({
-        datapoints: [[1,2],[2,3],[10,4],[8,5]]
+        datapoints: [[1, 2], [2, 3], [10, 4], [8, 5]],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.delta).toBe(17);
@@ -101,7 +99,7 @@ describe("TimeSeries", function() {
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.first).toBe(1);
       series = new TimeSeries({
-        datapoints: [[null,2],[1,3],[10,4],[8,5]]
+        datapoints: [[null, 2], [1, 3], [10, 4], [8, 5]],
       });
       series.getFlotPairs('null', yAxisFormats);
       expect(series.stats.first).toBe(1);
@@ -115,7 +113,7 @@ describe("TimeSeries", function() {
 
     it('average value should be null if all values is null', function() {
       series = new TimeSeries({
-        datapoints: [[null,2],[null,3],[null,4],[null,5]]
+        datapoints: [[null, 2], [null, 3], [null, 4], [null, 5]],
       });
       series.getFlotPairs('null');
       expect(series.stats.avg).toBe(null);
@@ -125,7 +123,9 @@ describe("TimeSeries", function() {
   describe('When checking if ms resolution is needed', function() {
     describe('msResolution with second resolution timestamps', function() {
       beforeEach(function() {
-        series = new TimeSeries({datapoints: [[45, 1234567890], [60, 1234567899]]});
+        series = new TimeSeries({
+          datapoints: [[45, 1234567890], [60, 1234567899]],
+        });
       });
 
       it('should set hasMsResolution to false', function() {
@@ -135,7 +135,9 @@ describe("TimeSeries", function() {
 
     describe('msResolution with millisecond resolution timestamps', function() {
       beforeEach(function() {
-        series = new TimeSeries({datapoints: [[55, 1236547890001], [90, 1234456709000]]});
+        series = new TimeSeries({
+          datapoints: [[55, 1236547890001], [90, 1234456709000]],
+        });
       });
 
       it('should show millisecond resolution tooltip', function() {
@@ -145,7 +147,9 @@ describe("TimeSeries", function() {
 
     describe('msResolution with millisecond resolution timestamps but with trailing zeroes', function() {
       beforeEach(function() {
-        series = new TimeSeries({datapoints: [[45, 1234567890000], [60, 1234567899000]]});
+        series = new TimeSeries({
+          datapoints: [[45, 1234567890000], [60, 1234567899000]],
+        });
       });
 
       it('should not show millisecond resolution tooltip', function() {
@@ -195,7 +199,9 @@ describe("TimeSeries", function() {
     describe('series option overrides, bars, true & lines false', function() {
       beforeEach(function() {
         series.alias = 'test';
-        series.applySeriesOverrides([{ alias: 'test', bars: true, lines: false }]);
+        series.applySeriesOverrides([
+          { alias: 'test', bars: true, lines: false },
+        ]);
       });
 
       it('should disable lines, and enable bars', function() {
@@ -207,7 +213,9 @@ describe("TimeSeries", function() {
     describe('series option overrides, linewidth, stack', function() {
       beforeEach(function() {
         series.alias = 'test';
-        series.applySeriesOverrides([{ alias: 'test', linewidth: 5, stack: false }]);
+        series.applySeriesOverrides([
+          { alias: 'test', linewidth: 5, stack: false },
+        ]);
       });
 
       it('should disable stack, and set lineWidth', function() {
@@ -219,7 +227,9 @@ describe("TimeSeries", function() {
     describe('series option overrides, dashes and lineWidth', function() {
       beforeEach(function() {
         series.alias = 'test';
-        series.applySeriesOverrides([{ alias: 'test', linewidth: 5, dashes: true }]);
+        series.applySeriesOverrides([
+          { alias: 'test', linewidth: 5, dashes: true },
+        ]);
       });
 
       it('should enable dashes, set dashes lineWidth to 5 and lines lineWidth to 0', function() {
@@ -243,7 +253,9 @@ describe("TimeSeries", function() {
     describe('series option overrides, pointradius, steppedLine', function() {
       beforeEach(function() {
         series.alias = 'test';
-        series.applySeriesOverrides([{ alias: 'test', pointradius: 5, steppedLine: true }]);
+        series.applySeriesOverrides([
+          { alias: 'test', pointradius: 5, steppedLine: true },
+        ]);
       });
 
       it('should set pointradius, and set steppedLine', function() {
@@ -277,7 +289,6 @@ describe("TimeSeries", function() {
         expect(series.zindex).toBe(2);
       });
     });
-
   });
 
   describe('value formatter', function() {
@@ -287,12 +298,11 @@ describe("TimeSeries", function() {
     });
 
     it('should format non-numeric values as empty string', function() {
-      expect(series.formatValue(null)).toBe("");
-      expect(series.formatValue(undefined)).toBe("");
-      expect(series.formatValue(NaN)).toBe("");
-      expect(series.formatValue(Infinity)).toBe("");
-      expect(series.formatValue(-Infinity)).toBe("");
+      expect(series.formatValue(null)).toBe('');
+      expect(series.formatValue(undefined)).toBe('');
+      expect(series.formatValue(NaN)).toBe('');
+      expect(series.formatValue(Infinity)).toBe('');
+      expect(series.formatValue(-Infinity)).toBe('');
     });
   });
-
 });

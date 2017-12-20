@@ -6,13 +6,12 @@ export interface AttachedPanel {
 }
 
 export class PanelLoader {
-
   /** @ngInject */
-  constructor(private $compile, private $rootScope) {
-  }
+  constructor(private $compile, private $rootScope) {}
 
   load(elem, panel, dashboard): AttachedPanel {
-    var template = '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
+    var template =
+      '<plugin-component type="panel" class="panel-height-helper"></plugin-component>';
     var panelScope = this.$rootScope.$new();
     panelScope.panel = panel;
     panelScope.dashboard = dashboard;
@@ -23,10 +22,9 @@ export class PanelLoader {
 
     return {
       destroy: () => {
-        console.log('AttachedPanel:Destroy, id' + panel.id);
         panelScope.$destroy();
         compiledElem.remove();
-      }
+      },
     };
   }
 }

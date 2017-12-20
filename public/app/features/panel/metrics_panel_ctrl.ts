@@ -2,12 +2,12 @@ import config from 'app/core/config';
 import $ from 'jquery';
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {PanelCtrl} from 'app/features/panel/panel_ctrl';
+import { PanelCtrl } from 'app/features/panel/panel_ctrl';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
 
-import {metricsTabDirective} from './metrics_tab';
+import { metricsTabDirective } from './metrics_tab';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -47,7 +47,10 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
-    this.events.on('init-edit-mode', this.onInitMetricsPanelEditMode.bind(this));
+    this.events.on(
+      'init-edit-mode',
+      this.onInitMetricsPanelEditMode.bind(this)
+    );
     this.events.on('panel-teardown', this.onPanelTearDown.bind(this));
   }
 
@@ -60,12 +63,17 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   private onInitMetricsPanelEditMode() {
     this.addEditorTab('Metrics', metricsTabDirective);
-    this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
+    this.addEditorTab(
+      'Time range',
+      'public/app/features/panel/partials/panelTime.html'
+    );
   }
 
   private onMetricsPanelRefresh() {
     // ignore fetching data if another panel is in fullscreen
-    if (this.otherPanelInFullscreenMode()) { return; }
+    if (this.otherPanelInFullscreenMode()) {
+      return;
+    }
 
     // if we have snapshot data use that
     if (this.panel.snapshotData) {
@@ -91,35 +99,35 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     // load datasource service
     this.setTimeQueryStart();
-    this.datasourceSrv.get(this.panel.datasource)
-    .then(this.updateTimeRange.bind(this))
-    .then(this.issueQueries.bind(this))
-    .then(this.handleQueryResult.bind(this))
-    .catch(err => {
-      // if cancelled  keep loading set to true
-      if (err.cancelled) {
-        console.log('Panel request cancelled', err);
-        return;
-      }
-
-      this.loading = false;
-      this.error = err.message || "Request Error";
-      this.inspector = {error: err};
-
-      if (err.data) {
-        if (err.data.message) {
-          this.error = err.data.message;
+    this.datasourceSrv
+      .get(this.panel.datasource)
+      .then(this.updateTimeRange.bind(this))
+      .then(this.issueQueries.bind(this))
+      .then(this.handleQueryResult.bind(this))
+      .catch(err => {
+        // if cancelled  keep loading set to true
+        if (err.cancelled) {
+          console.log('Panel request cancelled', err);
+          return;
         }
-        if (err.data.error) {
-          this.error = err.data.error;
-        }
-      }
 
-      this.events.emit('data-error', err);
-      console.log('Panel data error:', err);
-    });
+        this.loading = false;
+        this.error = err.message || 'Request Error';
+        this.inspector = { error: err };
+
+        if (err.data) {
+          if (err.data.message) {
+            this.error = err.data.message;
+          }
+          if (err.data.error) {
+            this.error = err.data.error;
+          }
+        }
+
+        this.events.emit('data-error', err);
+        console.log('Panel data error:', err);
+      });
   }
-
 
   setTimeQueryStart() {
     this.timing.queryStart = new Date().getTime();
@@ -130,7 +138,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   updateTimeRange(datasource?) {
-    this.datasource = datasource || this.datasource;
+    this.datasource = datasource || this.datasource;
     this.range = this.timeSrv.timeRange();
 
     this.applyPanelTimeOverrides();
@@ -138,7 +146,9 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (this.panel.maxDataPoints) {
       this.resolution = this.panel.maxDataPoints;
     } else {
-      this.resolution = Math.ceil($(window).width() * (this.panel.gridPos.w / 24));
+      this.resolution = Math.ceil(
+        $(window).width() * (this.panel.gridPos.w / 24)
+      );
     }
 
     this.calculateInterval();
@@ -151,12 +161,19 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     // if no panel interval check datasource
     if (intervalOverride) {
-      intervalOverride = this.templateSrv.replace(intervalOverride, this.panel.scopedVars);
+      intervalOverride = this.templateSrv.replace(
+        intervalOverride,
+        this.panel.scopedVars
+      );
     } else if (this.datasource && this.datasource.interval) {
       intervalOverride = this.datasource.interval;
     }
 
-    var res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
+    var res = kbn.calculateInterval(
+      this.range,
+      this.resolution,
+      intervalOverride
+    );
     this.interval = res.interval;
     this.intervalMs = res.intervalMs;
   }
@@ -166,7 +183,10 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     // check panel time overrrides
     if (this.panel.timeFrom) {
-      var timeFromInterpolated = this.templateSrv.replace(this.panel.timeFrom, this.panel.scopedVars);
+      var timeFromInterpolated = this.templateSrv.replace(
+        this.panel.timeFrom,
+        this.panel.scopedVars
+      );
       var timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
       if (timeFromInfo.invalid) {
         this.timeInfo = 'invalid time override';
@@ -184,7 +204,10 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     if (this.panel.timeShift) {
-      var timeShiftInterpolated = this.templateSrv.replace(this.panel.timeShift, this.panel.scopedVars);
+      var timeShiftInterpolated = this.templateSrv.replace(
+        this.panel.timeShift,
+        this.panel.scopedVars
+      );
       var timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
       if (timeShiftInfo.invalid) {
         this.timeInfo = 'invalid timeshift';
@@ -193,9 +216,13 @@ class MetricsPanelCtrl extends PanelCtrl {
 
       var timeShift = '-' + timeShiftInterpolated;
       this.timeInfo += ' timeshift ' + timeShift;
-      this.range.from = dateMath.parseDateMath(timeShift, this.range.from, false);
+      this.range.from = dateMath.parseDateMath(
+        timeShift,
+        this.range.from,
+        false
+      );
       this.range.to = dateMath.parseDateMath(timeShift, this.range.to, true);
-      this.range.raw = {from: this.range.from, to: this.range.to};
+      this.range.raw = { from: this.range.from, to: this.range.to };
     }
 
     if (this.panel.hideTimeOverride) {
@@ -213,8 +240,8 @@ class MetricsPanelCtrl extends PanelCtrl {
     // make shallow copy of scoped vars,
     // and add built in variables interval and interval_ms
     var scopedVars = Object.assign({}, this.panel.scopedVars, {
-      "__interval":     {text: this.interval,   value: this.interval},
-      "__interval_ms":  {text: this.intervalMs, value: this.intervalMs},
+      __interval: { text: this.interval, value: this.interval },
+      __interval_ms: { text: this.intervalMs, value: this.intervalMs },
     });
 
     var metricsQuery = {
@@ -227,7 +254,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       targets: this.panel.targets,
       maxDataPoints: this.resolution,
       scopedVars: scopedVars,
-      cacheTimeout: this.panel.cacheTimeout
+      cacheTimeout: this.panel.cacheTimeout,
     };
 
     return datasource.query(metricsQuery);
@@ -248,8 +275,11 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     if (!result || !result.data) {
-      console.log('Data source query result invalid, missing data field:', result);
-      result = {data: []};
+      console.log(
+        'Data source query result invalid, missing data field:',
+        result
+      );
+      result = { data: [] };
     }
 
     this.events.emit('data-received', result.data);
@@ -264,21 +294,21 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     this.dataStream = stream;
     this.dataSubscription = stream.subscribe({
-      next: (data) => {
+      next: data => {
         console.log('dataSubject next!');
         if (data.range) {
           this.range = data.range;
         }
         this.events.emit('data-received', data.data);
       },
-      error: (error) => {
+      error: error => {
         this.events.emit('data-error', error);
         console.log('panel: observer got error');
       },
       complete: () => {
         console.log('panel: observer got complete');
         this.dataStream = null;
-      }
+      },
     });
   }
 
@@ -323,4 +353,4 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 }
 
-export {MetricsPanelCtrl};
+export { MetricsPanelCtrl };

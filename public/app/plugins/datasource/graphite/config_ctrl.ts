@@ -9,7 +9,8 @@ export class GraphiteConfigCtrl {
   constructor($scope, datasourceSrv) {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
-    this.current.jsonData.graphiteVersion = this.current.jsonData.graphiteVersion || '0.9';
+    this.current.jsonData.graphiteVersion =
+      this.current.jsonData.graphiteVersion || '0.9';
 
     this.autoDetectGraphiteVersion();
   }
@@ -19,19 +20,20 @@ export class GraphiteConfigCtrl {
       return;
     }
 
-    this.datasourceSrv.loadDatasource(this.current.name)
-    .then((ds) => {
-      return ds.getVersion();
-    }).then((version) => {
-      this.graphiteVersions.push({name: version, value: version});
-      this.current.jsonData.graphiteVersion = version;
-    });
+    this.datasourceSrv
+      .loadDatasource(this.current.name)
+      .then(ds => {
+        return ds.getVersion();
+      })
+      .then(version => {
+        this.graphiteVersions.push({ name: version, value: version });
+        this.current.jsonData.graphiteVersion = version;
+      });
   }
 
   graphiteVersions = [
-    {name: '0.9.x', value: '0.9'},
-    {name: '1.0.x', value: '1.0'},
-    {name: '1.1.x', value: '1.1'},
+    { name: '0.9.x', value: '0.9' },
+    { name: '1.0.x', value: '1.0' },
+    { name: '1.1.x', value: '1.1' },
   ];
 }
-

@@ -1,8 +1,14 @@
 import _ from 'lodash';
-import {GRID_COLUMN_COUNT, GRID_CELL_HEIGHT, GRID_CELL_VMARGIN,
-        DEFAULT_ROW_HEIGHT, MIN_PANEL_HEIGHT, DEFAULT_PANEL_SPAN} from 'app/core/constants';
-import {PanelModel} from './panel_model';
-import {DashboardModel} from './dashboard_model';
+import {
+  GRID_COLUMN_COUNT,
+  GRID_CELL_HEIGHT,
+  GRID_CELL_VMARGIN,
+  DEFAULT_ROW_HEIGHT,
+  MIN_PANEL_HEIGHT,
+  DEFAULT_PANEL_SPAN,
+} from 'app/core/constants';
+import { PanelModel } from './panel_model';
+import { DashboardModel } from './dashboard_model';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -41,7 +47,7 @@ export class DashboardMigrator {
         }
 
         if (_.isBoolean(panel.legend)) {
-          panel.legend = {show: panel.legend};
+          panel.legend = { show: panel.legend };
         }
 
         if (panel.grid) {
@@ -88,7 +94,7 @@ export class DashboardMigrator {
           return;
         }
         _.each(panel.aliasYAxis, function(value, key) {
-          panel.seriesOverrides = [{alias: key, yaxis: value}];
+          panel.seriesOverrides = [{ alias: key, yaxis: value }];
         });
         delete panel.aliasYAxis;
       });
@@ -96,7 +102,7 @@ export class DashboardMigrator {
 
     if (oldVersion < 6) {
       // move pulldowns to new schema
-      var annotations = _.find(old.pulldowns, {type: 'annotations'});
+      var annotations = _.find(old.pulldowns, { type: 'annotations' });
 
       if (annotations) {
         this.dashboard.annotations = {
@@ -135,7 +141,7 @@ export class DashboardMigrator {
             if (!target.refId) {
               target.refId = this.dashboard.getNextQueryLetter(panel);
             }
-          }.bind(this),
+          }.bind(this)
         );
       });
     }
@@ -151,13 +157,13 @@ export class DashboardMigrator {
             } else {
               target.select = _.map(target.fields, function(field) {
                 var parts = [];
-                parts.push({type: 'field', params: [field.name]});
-                parts.push({type: field.func, params: []});
+                parts.push({ type: 'field', params: [field.name] });
+                parts.push({ type: field.func, params: [] });
                 if (field.mathExpr) {
-                  parts.push({type: 'math', params: [field.mathExpr]});
+                  parts.push({ type: 'math', params: [field.mathExpr] });
                 }
                 if (field.asExpr) {
-                  parts.push({type: 'alias', params: [field.asExpr]});
+                  parts.push({ type: 'alias', params: [field.asExpr] });
                 }
                 return parts;
               });
@@ -174,7 +180,7 @@ export class DashboardMigrator {
               });
 
               if (target.fill) {
-                target.groupBy.push({type: 'fill', params: [target.fill]});
+                target.groupBy.push({ type: 'fill', params: [target.fill] });
                 delete target.fill;
               }
             }
@@ -374,9 +380,13 @@ export class DashboardMigrator {
     let yPos = 0;
     let widthFactor = GRID_COLUMN_COUNT / 12;
 
-    const maxPanelId = _.max(_.flattenDeep(_.map(old.rows, (row) => {
-      return _.map(row.panels, 'id');
-    })));
+    const maxPanelId = _.max(
+      _.flattenDeep(
+        _.map(old.rows, row => {
+          return _.map(row.panels, 'id');
+        })
+      )
+    );
     let nextRowId = maxPanelId + 1;
 
     if (!old.rows) {
@@ -384,7 +394,10 @@ export class DashboardMigrator {
     }
 
     // Add special "row" panels if even one row is collapsed, repeated or has visible title
-    const showRows = _.some(old.rows, (row) => row.collapse || row.showTitle || row.repeat);
+    const showRows = _.some(
+      old.rows,
+      row => row.collapse || row.showTitle || row.repeat
+    );
 
     for (let row of old.rows) {
       if (row.repeatIteration) {
@@ -404,7 +417,12 @@ export class DashboardMigrator {
         rowPanel.collapsed = row.collapse;
         rowPanel.repeat = row.repeat;
         rowPanel.panels = [];
-        rowPanel.gridPos = {x: 0, y: yPos, w: GRID_COLUMN_COUNT, h: rowGridHeight};
+        rowPanel.gridPos = {
+          x: 0,
+          y: yPos,
+          w: GRID_COLUMN_COUNT,
+          h: rowGridHeight,
+        };
         rowPanelModel = new PanelModel(rowPanel);
         nextRowId++;
         yPos++;
@@ -415,11 +433,18 @@ export class DashboardMigrator {
       for (let panel of row.panels) {
         panel.span = panel.span || DEFAULT_PANEL_SPAN;
         const panelWidth = Math.floor(panel.span) * widthFactor;
-        const panelHeight = panel.height ? getGridHeight(panel.height) : rowGridHeight;
+        const panelHeight = panel.height
+          ? getGridHeight(panel.height)
+          : rowGridHeight;
 
         let panelPos = rowArea.getPanelPosition(panelHeight, panelWidth);
         yPos = rowArea.yPos;
-        panel.gridPos = {x: panelPos.x, y: yPos + panelPos.y, w: panelWidth, h: panelHeight};
+        panel.gridPos = {
+          x: panelPos.x,
+          y: yPos + panelPos.y,
+          w: panelWidth,
+          h: panelHeight,
+        };
         rowArea.addPanel(panel.gridPos);
 
         delete panel.span;
@@ -503,7 +528,7 @@ class RowArea {
         if (endPlace === undefined) {
           endPlace = i;
         } else {
-          if (i < this.area.length - 1 && this.area[i] <= this.area[i+1]) {
+          if (i < this.area.length - 1 && this.area[i] <= this.area[i + 1]) {
             startPlace = i;
           } else {
             break;
@@ -514,11 +539,15 @@ class RowArea {
       }
     }
 
-    if (startPlace !== undefined && endPlace !== undefined && endPlace - startPlace >= panelWidth - 1) {
+    if (
+      startPlace !== undefined &&
+      endPlace !== undefined &&
+      endPlace - startPlace >= panelWidth - 1
+    ) {
       const yPos = _.max(this.area.slice(startPlace));
       place = {
         x: startPlace,
-        y: yPos
+        y: yPos,
       };
     } else if (!callOnce) {
       // wrap to next row

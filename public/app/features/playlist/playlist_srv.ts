@@ -18,7 +18,7 @@ class PlaylistSrv {
     private $timeout: any,
     private backendSrv: any,
     private $routeParams: any
-    ) { }
+  ) {}
 
   next() {
     this.$timeout.cancel(this.cancelPromise);
@@ -47,7 +47,7 @@ class PlaylistSrv {
 
     // check if should remove kiosk query param
     if (!inKioskMode) {
-      return this.startUrl.split("?")[0];
+      return this.startUrl.split('?')[0];
     }
 
     // already has kiosk query param, just return startUrl
@@ -71,11 +71,13 @@ class PlaylistSrv {
     }
 
     this.backendSrv.get(`/api/playlists/${playlistId}`).then(playlist => {
-      this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then(dashboards => {
-        this.dashboards = dashboards;
-        this.interval = kbn.interval_to_ms(playlist.interval);
-        this.next();
-      });
+      this.backendSrv
+        .get(`/api/playlists/${playlistId}/dashboards`)
+        .then(dashboards => {
+          this.dashboards = dashboards;
+          this.interval = kbn.interval_to_ms(playlist.interval);
+          this.next();
+        });
     });
   }
 

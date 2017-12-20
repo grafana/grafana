@@ -21,12 +21,12 @@ import _ from 'lodash';
 import moment from 'moment';
 
 // add move to lodash for backward compatabiltiy
-_.move = function (array, fromIndex, toIndex) {
+_.move = function(array, fromIndex, toIndex) {
   array.splice(toIndex, 0, array.splice(fromIndex, 1)[0]);
   return array;
 };
 
-import {coreModule, registerAngularDirectives} from './core/core';
+import { coreModule, registerAngularDirectives } from './core/core';
 
 export class GrafanaApp {
   registerFunctions: any;
@@ -54,36 +54,49 @@ export class GrafanaApp {
 
     moment.locale(config.bootData.user.locale);
 
-    app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $httpProvider, $provide) => {
-      // pre assing bindings before constructor calls
-      $compileProvider.preAssignBindingsEnabled(true);
+    app.config(
+      (
+        $locationProvider,
+        $controllerProvider,
+        $compileProvider,
+        $filterProvider,
+        $httpProvider,
+        $provide
+      ) => {
+        // pre assing bindings before constructor calls
+        $compileProvider.preAssignBindingsEnabled(true);
 
-      if (config.buildInfo.env !== 'development') {
-        $compileProvider.debugInfoEnabled(false);
+        if (config.buildInfo.env !== 'development') {
+          $compileProvider.debugInfoEnabled(false);
+        }
+
+        $httpProvider.useApplyAsync(true);
+
+        this.registerFunctions.controller = $controllerProvider.register;
+        this.registerFunctions.directive = $compileProvider.directive;
+        this.registerFunctions.factory = $provide.factory;
+        this.registerFunctions.service = $provide.service;
+        this.registerFunctions.filter = $filterProvider.register;
+
+        $provide.decorator('$http', [
+          '$delegate',
+          '$templateCache',
+          function($delegate, $templateCache) {
+            var get = $delegate.get;
+            $delegate.get = function(url, config) {
+              if (url.match(/\.html$/)) {
+                // some template's already exist in the cache
+                if (!$templateCache.get(url)) {
+                  url += '?v=' + new Date().getTime();
+                }
+              }
+              return get(url, config);
+            };
+            return $delegate;
+          },
+        ]);
       }
-
-      $httpProvider.useApplyAsync(true);
-
-      this.registerFunctions.controller = $controllerProvider.register;
-      this.registerFunctions.directive  = $compileProvider.directive;
-      this.registerFunctions.factory    = $provide.factory;
-      this.registerFunctions.service    = $provide.service;
-      this.registerFunctions.filter     = $filterProvider.register;
-
-      $provide.decorator("$http", ["$delegate", "$templateCache", function($delegate, $templateCache) {
-        var get = $delegate.get;
-        $delegate.get = function(url, config) {
-          if (url.match(/\.html$/)) {
-            // some template's already exist in the cache
-            if (!$templateCache.get(url)) {
-              url += "?v=" + new Date().getTime();
-            }
-          }
-          return get(url, config);
-        };
-        return $delegate;
-      }]);
-    });
+    );
 
     this.ngModuleDependencies = [
       'grafana.core',
@@ -95,10 +108,17 @@ export class GrafanaApp {
       'pasvaz.bindonce',
       'ui.bootstrap',
       'ui.bootstrap.tpls',
-      'react'
+      'react',
     ];
 
-    var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
+    var module_types = [
+      'controllers',
+      'directives',
+      'factories',
+      'services',
+      'filters',
+      'routes',
+    ];
 
     _.each(module_types, type => {
       var moduleName = 'grafana.' + type;
@@ -113,20 +133,22 @@ export class GrafanaApp {
 
     var preBootRequires = [System.import('app/features/all')];
 
-    Promise.all(preBootRequires).then(() => {
-      // disable tool tip animation
-      $.fn.tooltip.defaults.animation = false;
-      // bootstrap the app
-      angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
-        _.each(this.preBootModules, module => {
-          _.extend(module, this.registerFunctions);
-        });
+    Promise.all(preBootRequires)
+      .then(() => {
+        // disable tool tip animation
+        $.fn.tooltip.defaults.animation = false;
+        // bootstrap the app
+        angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
+          _.each(this.preBootModules, module => {
+            _.extend(module, this.registerFunctions);
+          });
 
-        this.preBootModules = null;
+          this.preBootModules = null;
+        });
+      })
+      .catch(function(err) {
+        console.log('Application boot failed:', err);
       });
-    }).catch(function(err) {
-      console.log('Application boot failed:', err);
-    });
   }
 }
 

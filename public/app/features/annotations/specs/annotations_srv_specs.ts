@@ -1,4 +1,10 @@
-import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
+import {
+  describe,
+  beforeEach,
+  it,
+  expect,
+  angularMocks,
+} from 'test/lib/common';
 import '../annotations_srv';
 import helpers from 'test/specs/helpers';
 
@@ -18,18 +24,19 @@ describe('AnnotationsSrv', function() {
       limit: 200,
       name: 'test',
       scope: 'global',
-      tags: [
-        'test'
-      ],
+      tags: ['test'],
       type: 'event',
     };
 
     const time = 1507039543000;
-    const annotations = [{id: 1, panelId: 1, text: 'text', time: time}];
+    const annotations = [{ id: 1, panelId: 1, text: 'text', time: time }];
     let translatedAnnotations;
 
     beforeEach(() => {
-      translatedAnnotations = ctx.service.translateQueryResult(annotationSource, annotations);
+      translatedAnnotations = ctx.service.translateQueryResult(
+        annotationSource,
+        annotations
+      );
     });
 
     it('should set defaults', () => {
@@ -37,4 +44,3 @@ describe('AnnotationsSrv', function() {
     });
   });
 });
-

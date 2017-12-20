@@ -1,4 +1,3 @@
-
 export default class TableModel {
   columns: any[];
   rows: any[];

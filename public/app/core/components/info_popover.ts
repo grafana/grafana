@@ -26,10 +26,10 @@ export function infoPopover() {
       }
 
       transclude(function(clone, newScope) {
-        var content = document.createElement("div");
+        var content = document.createElement('div');
         content.className = 'markdown-html';
 
-        _.each(clone, (node) => {
+        _.each(clone, node => {
           content.appendChild(node);
         });
 
@@ -43,22 +43,21 @@ export function infoPopover() {
           tetherOptions: {
             offset: offset,
             constraints: [
-                {
-                  to: 'window',
-                  attachment: 'together',
-                  pin: true
-                }
-              ],
-          }
+              {
+                to: 'window',
+                attachment: 'together',
+                pin: true,
+              },
+            ],
+          },
         });
 
         var unbind = scope.$on('$destroy', function() {
           drop.destroy();
           unbind();
         });
-
       });
-    }
+    },
   };
 }
 

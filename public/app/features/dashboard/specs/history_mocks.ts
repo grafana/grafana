@@ -1,46 +1,47 @@
-
 export function versions() {
-  return [{
-    id: 4,
-    dashboardId: 1,
-    parentVersion: 3,
-    restoredFrom: 0,
-    version: 4,
-    created: '2017-02-22T17:43:01-08:00',
-    createdBy: 'admin',
-    message: '',
-  },
-  {
-    id: 3,
-    dashboardId: 1,
-    parentVersion: 1,
-    restoredFrom: 1,
-    version: 3,
-    created: '2017-02-22T17:43:01-08:00',
-    createdBy: 'admin',
-    message: '',
-  },
-  {
-    id: 2,
-    dashboardId: 1,
-    parentVersion: 0,
-    restoredFrom: -1,
-    version: 2,
-    created: '2017-02-22T17:29:52-08:00',
-    createdBy: 'admin',
-    message: '',
-  },
-  {
-    id: 1,
-    dashboardId: 1,
-    parentVersion: 0,
-    restoredFrom: -1,
-    slug: 'history-dashboard',
-    version: 1,
-    created: '2017-02-22T17:06:37-08:00',
-    createdBy: 'admin',
-    message: '',
-  }];
+  return [
+    {
+      id: 4,
+      dashboardId: 1,
+      parentVersion: 3,
+      restoredFrom: 0,
+      version: 4,
+      created: '2017-02-22T17:43:01-08:00',
+      createdBy: 'admin',
+      message: '',
+    },
+    {
+      id: 3,
+      dashboardId: 1,
+      parentVersion: 1,
+      restoredFrom: 1,
+      version: 3,
+      created: '2017-02-22T17:43:01-08:00',
+      createdBy: 'admin',
+      message: '',
+    },
+    {
+      id: 2,
+      dashboardId: 1,
+      parentVersion: 0,
+      restoredFrom: -1,
+      version: 2,
+      created: '2017-02-22T17:29:52-08:00',
+      createdBy: 'admin',
+      message: '',
+    },
+    {
+      id: 1,
+      dashboardId: 1,
+      parentVersion: 0,
+      restoredFrom: -1,
+      slug: 'history-dashboard',
+      version: 1,
+      created: '2017-02-22T17:06:37-08:00',
+      createdBy: 'admin',
+      message: '',
+    },
+  ];
 }
 
 export function compare(type) {
@@ -65,7 +66,7 @@ export function restore(version, restoredFrom?) {
       },
       dashboard: {
         annotations: {
-          list: []
+          list: [],
         },
         description: 'A random dashboard for implementing the history list',
         editable: true,
@@ -75,87 +76,91 @@ export function restore(version, restoredFrom?) {
         id: 1,
         links: [],
         restoredFrom: restoredFrom,
-        rows: [{
-          collapse: false,
-          height: '250px',
-          panels: [{
-            aliasColors: {},
-            bars: false,
-            datasource: null,
-            fill: 1,
-            id: 1,
-            legend: {
-              avg: false,
-              current: false,
-              max: false,
-              min: false,
-              show: true,
-              total: false,
-              values: false
-            },
-            lines: true,
-            linewidth: 1,
-            nullPointMode: "null",
-            percentage: false,
-            pointradius: 5,
-            points: false,
-            renderer: 'flot',
-            seriesOverrides: [],
-            span: 12,
-            stack: false,
-            steppedLine: false,
-            targets: [{}],
-            thresholds: [],
-            timeFrom: null,
-            timeShift: null,
-            title: 'Panel Title',
-            tooltip: {
-              shared: true,
-              sort: 0,
-              value_type: 'individual'
-            },
-            type: 'graph',
-            xaxis: {
-              mode: 'time',
-              name: null,
-              show: true,
-              values: []
-            },
-            yaxes: [{
-              format: 'short',
-              label: null,
-              logBase: 1,
-              max: null,
-              min: null,
-              show: true
-            }, {
-              format: 'short',
-              label: null,
-              logBase: 1,
-              max: null,
-              min: null,
-              show: true
-            }]
-          }],
-          repeat: null,
-          repeatIteration: null,
-          repeatRowId: null,
-          showTitle: false,
-          title: 'Dashboard Row',
-          titleSize: 'h6'
-        }
+        rows: [
+          {
+            collapse: false,
+            height: '250px',
+            panels: [
+              {
+                aliasColors: {},
+                bars: false,
+                datasource: null,
+                fill: 1,
+                id: 1,
+                legend: {
+                  avg: false,
+                  current: false,
+                  max: false,
+                  min: false,
+                  show: true,
+                  total: false,
+                  values: false,
+                },
+                lines: true,
+                linewidth: 1,
+                nullPointMode: 'null',
+                percentage: false,
+                pointradius: 5,
+                points: false,
+                renderer: 'flot',
+                seriesOverrides: [],
+                span: 12,
+                stack: false,
+                steppedLine: false,
+                targets: [{}],
+                thresholds: [],
+                timeFrom: null,
+                timeShift: null,
+                title: 'Panel Title',
+                tooltip: {
+                  shared: true,
+                  sort: 0,
+                  value_type: 'individual',
+                },
+                type: 'graph',
+                xaxis: {
+                  mode: 'time',
+                  name: null,
+                  show: true,
+                  values: [],
+                },
+                yaxes: [
+                  {
+                    format: 'short',
+                    label: null,
+                    logBase: 1,
+                    max: null,
+                    min: null,
+                    show: true,
+                  },
+                  {
+                    format: 'short',
+                    label: null,
+                    logBase: 1,
+                    max: null,
+                    min: null,
+                    show: true,
+                  },
+                ],
+              },
+            ],
+            repeat: null,
+            repeatIteration: null,
+            repeatRowId: null,
+            showTitle: false,
+            title: 'Dashboard Row',
+            titleSize: 'h6',
+          },
         ],
         schemaVersion: 14,
         style: 'dark',
-        tags: [
-          'development'
-        ],
+        tags: ['development'],
         templating: {
-          'list': []
+          list: [],
         },
         time: {
           from: 'now-6h',
-          to: 'now'
+          to: 'now',
         },
         timepicker: {
           refresh_intervals: [
@@ -179,15 +184,15 @@ export function restore(version, restoredFrom?) {
             '24h',
             '2d',
             '7d',
-            '30d'
-          ]
+            '30d',
+          ],
         },
         timezone: 'utc',
         title: 'History Dashboard',
         version: version,
-      }
+      },
     },
     message: 'Dashboard restored to version ' + version,
-    version: version
+    version: version,
   };
 }

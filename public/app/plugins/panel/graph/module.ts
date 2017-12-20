@@ -1,16 +1,16 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import './graph';
-import './legend';
-import './series_overrides_ctrl';
-import './thresholds_form';
+import "./graph";
+import "./legend";
+import "./series_overrides_ctrl";
+import "./thresholds_form";
 
-import template from './template';
-import _ from 'lodash';
-import config from 'app/core/config';
-import {MetricsPanelCtrl, alertTab} from 'app/plugins/sdk';
-import {DataProcessor} from './data_processor';
-import {axesEditorComponent} from './axes_editor';
+import template from "./template";
+import _ from "lodash";
+import config from "app/core/config";
+import { MetricsPanelCtrl, alertTab } from "app/plugins/sdk";
+import { DataProcessor } from "./data_processor";
+import { axesEditorComponent } from "./axes_editor";
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -31,7 +31,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     // datasource name, null = default datasource
     datasource: null,
     // sets client side (flot) or native graphite png renderer (png)
-    renderer: 'flot',
+    renderer: "flot",
     yaxes: [
       {
         label: null,
@@ -39,7 +39,7 @@ class GraphCtrl extends MetricsPanelCtrl {
         logBase: 1,
         min: null,
         max: null,
-        format: 'short'
+        format: "short"
       },
       {
         label: null,
@@ -47,38 +47,38 @@ class GraphCtrl extends MetricsPanelCtrl {
         logBase: 1,
         min: null,
         max: null,
-        format: 'short'
+        format: "short"
       }
     ],
     xaxis: {
       show: true,
-      mode: 'time',
+      mode: "time",
       name: null,
       values: [],
       buckets: null
     },
     // show/hide lines
-    lines         : true,
+    lines: true,
     // fill factor
-    fill          : 1,
+    fill: 1,
     // line width in pixels
-    linewidth     : 1,
+    linewidth: 1,
     // show/hide dashed line
-    dashes        : false,
+    dashes: false,
     // length of a dash
-    dashLength    : 10,
+    dashLength: 10,
     // length of space between two dashes
-    spaceLength   : 10,
+    spaceLength: 10,
     // show hide points
-    points        : false,
+    points: false,
     // point radius in pixels
-    pointradius   : 5,
+    pointradius: 5,
     // show hide bars
-    bars          : false,
+    bars: false,
     // enable/disable stacking
-    stack         : false,
+    stack: false,
     // stack percentage mode
-    percentage    : false,
+    percentage: false,
     // legend options
     legend: {
       show: true, // disable/enable legend
@@ -90,14 +90,14 @@ class GraphCtrl extends MetricsPanelCtrl {
       avg: false
     },
     // how null points should be handled
-    nullPointMode : 'null',
+    nullPointMode: "null",
     // staircase line mode
     steppedLine: false,
     // tooltip options
-    tooltip       : {
-      value_type: 'individual',
+    tooltip: {
+      value_type: "individual",
       shared: true,
-      sort: 0,
+      sort: 0
     },
     // time overrides
     timeFrom: null,
@@ -108,7 +108,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     aliasColors: {},
     // other style overrides
     seriesOverrides: [],
-    thresholds: [],
+    thresholds: []
   };
 
   /** @ngInject */
@@ -122,49 +122,57 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.processor = new DataProcessor(this.panel);
 
-    this.events.on('render', this.onRender.bind(this));
-    this.events.on('data-received', this.onDataReceived.bind(this));
-    this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
-    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
-    this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
+    this.events.on("render", this.onRender.bind(this));
+    this.events.on("data-received", this.onDataReceived.bind(this));
+    this.events.on("data-error", this.onDataError.bind(this));
+    this.events.on("data-snapshot-load", this.onDataSnapshotLoad.bind(this));
+    this.events.on("init-edit-mode", this.onInitEditMode.bind(this));
+    this.events.on("init-panel-actions", this.onInitPanelActions.bind(this));
   }
 
   onInitEditMode() {
-    this.addEditorTab('Axes', axesEditorComponent, 2);
-    this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
-    this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
+    this.addEditorTab("Axes", axesEditorComponent, 2);
+    this.addEditorTab(
+      "Legend",
+      "public/app/plugins/panel/graph/tab_legend.html",
+      3
+    );
+    this.addEditorTab(
+      "Display",
+      "public/app/plugins/panel/graph/tab_display.html",
+      4
+    );
 
     if (config.alertingEnabled) {
-      this.addEditorTab('Alert', alertTab, 5);
+      this.addEditorTab("Alert", alertTab, 5);
     }
 
     this.subTabIndex = 0;
   }
 
   onInitPanelActions(actions) {
-    actions.push({text: 'Export CSV', click: 'ctrl.exportCsv()'});
-    actions.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
+    actions.push({ text: "Export CSV", click: "ctrl.exportCsv()" });
+    actions.push({ text: "Toggle legend", click: "ctrl.toggleLegend()" });
   }
 
   issueQueries(datasource) {
     this.annotationsPromise = this.annotationsSrv.getAnnotations({
       dashboard: this.dashboard,
       panel: this.panel,
-      range: this.range,
+      range: this.range
     });
     return super.issueQueries(datasource);
   }
 
   zoomOut(evt) {
-    this.publishAppEvent('zoom-out', 2);
+    this.publishAppEvent("zoom-out", 2);
   }
 
   onDataSnapshotLoad(snapshotData) {
     this.annotationsPromise = this.annotationsSrv.getAnnotations({
       dashboard: this.dashboard,
       panel: this.panel,
-      range: this.range,
+      range: this.range
     });
     this.onDataReceived(snapshotData);
   }
@@ -177,7 +185,10 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onDataReceived(dataList) {
     this.dataList = dataList;
-    this.seriesList = this.processor.getSeriesList({dataList: dataList, range: this.range});
+    this.seriesList = this.processor.getSeriesList({
+      dataList: dataList,
+      range: this.range
+    });
 
     this.dataWarning = null;
     const datapointsCount = this.seriesList.reduce((prev, series) => {
@@ -186,41 +197,46 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     if (datapointsCount === 0) {
       this.dataWarning = {
-        title: 'No data points',
-        tip: 'No datapoints returned from data query'
+        title: "No data points",
+        tip: "No datapoints returned from data query"
       };
     } else {
-
       for (let series of this.seriesList) {
         if (series.isOutsideRange) {
           this.dataWarning = {
-            title: 'Data points outside time range',
-            tip: 'Can be caused by timezone mismatch or missing time filter in query',
+            title: "Data points outside time range",
+            tip:
+              "Can be caused by timezone mismatch or missing time filter in query"
           };
           break;
         }
       }
     }
 
-    this.annotationsPromise.then(result => {
-      this.loading = false;
-      this.alertState = result.alertState;
-      this.annotations = result.annotations;
-      this.render(this.seriesList);
-    }, () => {
-      this.loading = false;
-      this.render(this.seriesList);
-    });
+    this.annotationsPromise.then(
+      result => {
+        this.loading = false;
+        this.alertState = result.alertState;
+        this.annotations = result.annotations;
+        this.render(this.seriesList);
+      },
+      () => {
+        this.loading = false;
+        this.render(this.seriesList);
+      }
+    );
   }
 
   onRender() {
-    if (!this.seriesList) { return; }
+    if (!this.seriesList) {
+      return;
+    }
 
     for (let series of this.seriesList) {
       series.applySeriesOverrides(this.panel.seriesOverrides);
 
       if (series.unit) {
-        this.panel.yaxes[series.yaxis-1].format = series.unit;
+        this.panel.yaxes[series.yaxis - 1].format = series.unit;
       }
     }
   }
@@ -244,7 +260,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  toggleSeriesExclusiveMode (serie) {
+  toggleSeriesExclusiveMode(serie) {
     var hidden = this.hiddenSeries;
 
     if (hidden[serie.alias]) {
@@ -278,7 +294,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   toggleAxis(info) {
-    var override = _.find(this.panel.seriesOverrides, {alias: info.alias});
+    var override = _.find(this.panel.seriesOverrides, { alias: info.alias });
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);
@@ -292,7 +308,10 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   removeSeriesOverride(override) {
-    this.panel.seriesOverrides = _.without(this.panel.seriesOverrides, override);
+    this.panel.seriesOverrides = _.without(
+      this.panel.seriesOverrides,
+      override
+    );
     this.render();
   }
 
@@ -303,19 +322,20 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   legendValuesOptionChanged() {
     var legend = this.panel.legend;
-    legend.values = legend.min || legend.max || legend.avg || legend.current || legend.total;
+    legend.values =
+      legend.min || legend.max || legend.avg || legend.current || legend.total;
     this.render();
   }
 
   exportCsv() {
     var scope = this.$scope.$new(true);
     scope.seriesList = this.seriesList;
-    this.publishAppEvent('show-modal', {
+    this.publishAppEvent("show-modal", {
       templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',
       scope,
-      modalClass: 'modal--narrow'
+      modalClass: "modal--narrow"
     });
   }
 }
 
-export {GraphCtrl, GraphCtrl as PanelCtrl};
+export { GraphCtrl, GraphCtrl as PanelCtrl };

@@ -1,12 +1,18 @@
-import _ from 'lodash';
-import moment from 'moment';
-import kbn from 'app/core/utils/kbn';
+import _ from "lodash";
+import moment from "moment";
+import kbn from "app/core/utils/kbn";
 
 export class TableRenderer {
   formatters: any[];
   colorState: any;
 
-  constructor(private panel, private table, private isUtc, private sanitize, private templateSrv) {
+  constructor(
+    private panel,
+    private table,
+    private isUtc,
+    private sanitize,
+    private templateSrv
+  ) {
     this.initColumns();
   }
 
@@ -44,7 +50,9 @@ export class TableRenderer {
   }
 
   getColorForValue(value, style) {
-    if (!style.thresholds) { return null; }
+    if (!style.thresholds) {
+      return null;
+    }
 
     for (var i = style.thresholds.length; i > 0; i--) {
       if (value >= style.thresholds[i - 1]) {
@@ -56,11 +64,11 @@ export class TableRenderer {
 
   defaultCellFormatter(v, style) {
     if (v === null || v === void 0 || v === undefined) {
-      return '';
+      return "";
     }
 
     if (_.isArray(v)) {
-      v = v.join(', ');
+      v = v.join(", ");
     }
 
     if (style && style.sanitize) {
@@ -75,19 +83,21 @@ export class TableRenderer {
       return this.defaultCellFormatter;
     }
 
-    if (column.style.type === 'hidden') {
+    if (column.style.type === "hidden") {
       return v => {
         return undefined;
       };
     }
 
-    if (column.style.type === 'date') {
+    if (column.style.type === "date") {
       return v => {
         if (v === undefined || v === null) {
-          return '-';
+          return "-";
         }
 
-        if (_.isArray(v)) { v = v[0]; }
+        if (_.isArray(v)) {
+          v = v[0];
+        }
         var date = moment(v);
         if (this.isUtc) {
           date = date.utc();
@@ -96,12 +106,12 @@ export class TableRenderer {
       };
     }
 
-    if (column.style.type === 'number') {
+    if (column.style.type === "number") {
       let valueFormatter = kbn.valueFormats[column.unit || column.style.unit];
 
-      return v =>  {
+      return v => {
         if (v === null || v === void 0) {
-          return '-';
+          return "-";
         }
 
         if (_.isString(v) || _.isArray(v)) {
@@ -109,14 +119,17 @@ export class TableRenderer {
         }
 
         if (column.style.colorMode) {
-          this.colorState[column.style.colorMode] = this.getColorForValue(v, column.style);
+          this.colorState[column.style.colorMode] = this.getColorForValue(
+            v,
+            column.style
+          );
         }
 
         return valueFormatter(v, column.style.decimals, null);
       };
     }
 
-    return (value) => {
+    return value => {
       return this.defaultCellFormatter(value, column.style);
     };
   }
@@ -140,12 +153,13 @@ export class TableRenderer {
     value = this.formatColumnValue(columnIndex, value);
 
     var column = this.table.columns[columnIndex];
-    var style = '';
+    var style = "";
     var cellClasses = [];
-    var cellClass = '';
+    var cellClass = "";
 
     if (this.colorState.cell) {
-      style = ' style="background-color:' + this.colorState.cell + ';color: white"';
+      style =
+        ' style="background-color:' + this.colorState.cell + ';color: white"';
       this.colorState.cell = null;
     } else if (this.colorState.value) {
       style = ' style="color:' + this.colorState.value + '"';
@@ -155,9 +169,12 @@ export class TableRenderer {
     // because of the fixed table headers css only solution
     // there is an issue if header cell is wider the cell
     // this hack adds header content to cell (not visible)
-    var columnHtml = '';
+    var columnHtml = "";
     if (addWidthHack) {
-      columnHtml = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].title + '</div>';
+      columnHtml =
+        '<div class="table-panel-width-hack">' +
+        this.table.columns[columnIndex].title +
+        "</div>";
     }
 
     if (value === undefined) {
@@ -174,11 +191,14 @@ export class TableRenderer {
     if (column.style && column.style.link) {
       // Render cell as link
       var scopedVars = this.renderRowVariables(rowIndex);
-      scopedVars['__cell'] = { value: value };
+      scopedVars["__cell"] = { value: value };
 
       var cellLink = this.templateSrv.replace(column.style.linkUrl, scopedVars);
-      var cellLinkTooltip = this.templateSrv.replace(column.style.linkTooltip, scopedVars);
-      var cellTarget = column.style.linkTargetBlank ? '_blank' : '';
+      var cellLinkTooltip = this.templateSrv.replace(
+        column.style.linkTooltip,
+        scopedVars
+      );
+      var cellTarget = column.style.linkTargetBlank ? "_blank" : "";
 
       cellClasses.push("table-panel-cell-link");
       columnHtml += `
@@ -204,10 +224,10 @@ export class TableRenderer {
     }
 
     if (cellClasses.length) {
-      cellClass = ' class="' + cellClasses.join(' ') + '"';
+      cellClass = ' class="' + cellClasses.join(" ") + '"';
     }
 
-    columnHtml = '<td' + cellClass + style + '>' + columnHtml + '</td>';
+    columnHtml = "<td" + cellClass + style + ">" + columnHtml + "</td>";
     return columnHtml;
   }
 
@@ -219,18 +239,19 @@ export class TableRenderer {
 
     for (var y = startPos; y < endPos; y++) {
       let row = this.table.rows[y];
-      let cellHtml = '';
-      let rowStyle = '';
+      let cellHtml = "";
+      let rowStyle = "";
       for (var i = 0; i < this.table.columns.length; i++) {
         cellHtml += this.renderCell(i, y, row[i], y === startPos);
       }
 
       if (this.colorState.row) {
-        rowStyle = ' style="background-color:' + this.colorState.row + ';color: white"';
+        rowStyle =
+          ' style="background-color:' + this.colorState.row + ';color: white"';
         this.colorState.row = null;
       }
 
-      html += '<tr ' + rowStyle + '>' + cellHtml + '</tr>';
+      html += "<tr " + rowStyle + ">" + cellHtml + "</tr>";
     }
 
     return html;
@@ -248,8 +269,8 @@ export class TableRenderer {
       rows.push(new_row);
     }
     return {
-        columns: this.table.columns,
-        rows: rows,
+      columns: this.table.columns,
+      rows: rows
     };
   }
 }

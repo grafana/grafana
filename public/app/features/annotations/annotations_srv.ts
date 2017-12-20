@@ -3,16 +3,26 @@ import './editor_ctrl';
 import angular from 'angular';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
-import {makeRegions, dedupAnnotations} from './events_processing';
+import { makeRegions, dedupAnnotations } from './events_processing';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
   alertStatesPromise: any;
 
   /** @ngInject */
-  constructor(private $rootScope, private $q, private datasourceSrv, private backendSrv, private timeSrv) {
+  constructor(
+    private $rootScope,
+    private $q,
+    private datasourceSrv,
+    private backendSrv,
+    private timeSrv
+  ) {
     $rootScope.onAppEvent('refresh', this.clearCache.bind(this), $rootScope);
-    $rootScope.onAppEvent('dashboard-initialized', this.clearCache.bind(this), $rootScope);
+    $rootScope.onAppEvent(
+      'dashboard-initialized',
+      this.clearCache.bind(this),
+      $rootScope
+    );
   }
 
   clearCache() {
@@ -40,7 +50,7 @@ export class AnnotationsSrv {
         annotations = makeRegions(annotations, options);
 
         // look for alert state for this panel
-        var alertState = _.find(results[1], {panelId: options.panel.id});
+        var alertState = _.find(results[1], { panelId: options.panel.id });
 
         return {
           annotations: annotations,
@@ -52,7 +62,10 @@ export class AnnotationsSrv {
           err.message = err.data.message;
         }
         console.log('AnnotationSrv.query error', err);
-        this.$rootScope.appEvent('alert-error', ['Annotation Query Failed', err.message || err]);
+        this.$rootScope.appEvent('alert-error', [
+          'Annotation Query Failed',
+          err.message || err,
+        ]);
         return [];
       });
   }
@@ -75,9 +88,12 @@ export class AnnotationsSrv {
       return this.alertStatesPromise;
     }
 
-    this.alertStatesPromise = this.backendSrv.get('/api/alerts/states-for-dashboard', {
-      dashboardId: options.dashboard.id,
-    });
+    this.alertStatesPromise = this.backendSrv.get(
+      '/api/alerts/states-for-dashboard',
+      {
+        dashboardId: options.dashboard.id,
+      }
+    );
     return this.alertStatesPromise;
   }
 
@@ -119,7 +135,7 @@ export class AnnotationsSrv {
             }
             // translate result
             return this.translateQueryResult(annotation, results);
-          }),
+          })
       );
     }
 

@@ -1,7 +1,6 @@
 import angular from 'angular';
 
 export class AdminListOrgsCtrl {
-
   /** @ngInject */
   constructor($scope, backendSrv, navModelSrv) {
     $scope.init = function() {
@@ -26,7 +25,7 @@ export class AdminListOrgsCtrl {
           backendSrv.delete('/api/orgs/' + org.id).then(function() {
             $scope.getOrgs();
           });
-        }
+        },
       });
     };
 
@@ -34,4 +33,6 @@ export class AdminListOrgsCtrl {
   }
 }
 
-angular.module('grafana.controllers').controller('AdminListOrgsCtrl', AdminListOrgsCtrl);
+angular
+  .module('grafana.controllers')
+  .controller('AdminListOrgsCtrl', AdminListOrgsCtrl);

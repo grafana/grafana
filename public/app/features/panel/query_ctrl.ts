@@ -13,12 +13,12 @@ export class QueryCtrl {
 
   constructor(public $scope, public $injector) {
     this.panel = this.panelCtrl.panel;
-    this.isLastQuery = _.indexOf(this.panel.targets, this.target) === (this.panel.targets.length - 1);
+    this.isLastQuery =
+      _.indexOf(this.panel.targets, this.target) ===
+      this.panel.targets.length - 1;
   }
 
   refresh() {
     this.panelCtrl.refresh();
   }
-
 }
-

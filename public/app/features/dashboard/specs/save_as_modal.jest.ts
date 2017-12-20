@@ -25,7 +25,7 @@ describe('saving dashboard as', () => {
       var ctx: any = {
         clone: ctrl.clone,
         ctrl: ctrl,
-        panel: panel
+        panel: panel,
       };
 
       it('verify', () => {
@@ -42,7 +42,12 @@ describe('saving dashboard as', () => {
     expect(clone.hideControls).toBe(false);
   });
 
-  var graphPanel = { id: 1, type: 'graph', alert: { rule: 1 }, thresholds: { value: 3000 } };
+  var graphPanel = {
+    id: 1,
+    type: 'graph',
+    alert: { rule: 1 },
+    thresholds: { value: 3000 },
+  };
 
   scenario('should remove alert from graph panel', graphPanel, ctx => {
     expect(ctx.panel.alert).toBe(undefined);
@@ -52,11 +57,19 @@ describe('saving dashboard as', () => {
     expect(ctx.panel.thresholds).toBe(undefined);
   });
 
-  scenario('singlestat should keep threshold', { id: 1, type: 'singlestat', thresholds: { value: 3000 } }, ctx => {
-    expect(ctx.panel.thresholds).not.toBe(undefined);
-  });
+  scenario(
+    'singlestat should keep threshold',
+    { id: 1, type: 'singlestat', thresholds: { value: 3000 } },
+    ctx => {
+      expect(ctx.panel.thresholds).not.toBe(undefined);
+    }
+  );
 
-  scenario('table should keep threshold', { id: 1, type: 'table', thresholds: { value: 3000 } }, ctx => {
-    expect(ctx.panel.thresholds).not.toBe(undefined);
-  });
+  scenario(
+    'table should keep threshold',
+    { id: 1, type: 'table', thresholds: { value: 3000 } },
+    ctx => {
+      expect(ctx.panel.thresholds).not.toBe(undefined);
+    }
+  );
 });

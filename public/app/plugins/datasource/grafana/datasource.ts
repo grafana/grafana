@@ -1,7 +1,6 @@
 import _ from 'lodash';
 
 class GrafanaDatasource {
-
   /** @ngInject */
   constructor(private backendSrv, private $q) {}
 
@@ -27,14 +26,13 @@ class GrafanaDatasource {
           });
         }
 
-        return {data: data};
+        return { data: data };
       });
   }
 
   metricFindQuery(options) {
-    return this.$q.when({data: []});
+    return this.$q.when({ data: [] });
   }
-
 
   annotationQuery(options) {
     const params: any = {
@@ -55,7 +53,10 @@ class GrafanaDatasource {
       delete params.tags;
     } else {
       // require at least one tag
-      if (!_.isArray(options.annotation.tags) || options.annotation.tags.length === 0) {
+      if (
+        !_.isArray(options.annotation.tags) ||
+        options.annotation.tags.length === 0
+      ) {
         return this.$q.when([]);
       }
     }
@@ -64,4 +65,4 @@ class GrafanaDatasource {
   }
 }
 
-export {GrafanaDatasource};
+export { GrafanaDatasource };

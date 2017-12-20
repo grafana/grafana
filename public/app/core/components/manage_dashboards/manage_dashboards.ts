@@ -13,13 +13,24 @@ export class ManageDashboardsCtrl {
   canMove = false;
   hasFilters = false;
   selectAllChecked = false;
-  starredFilterOptions = [{ text: 'Filter by Starred', disabled: true }, { text: 'Yes' }, { text: 'No' }];
+  starredFilterOptions = [
+    { text: 'Filter by Starred', disabled: true },
+    { text: 'Yes' },
+    { text: 'No' },
+  ];
   selectedStarredFilter: any;
   folderId?: number;
 
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private searchSrv: SearchSrv) {
-    this.query = { query: '', mode: 'tree', tag: [], starred: false, skipRecent: true, skipStarred: true };
+    this.query = {
+      query: '',
+      mode: 'tree',
+      tag: [],
+      starred: false,
+      skipRecent: true,
+      skipStarred: true,
+    };
 
     if (this.folderId) {
       this.query.folderIds = [this.folderId];
@@ -33,7 +44,7 @@ export class ManageDashboardsCtrl {
   }
 
   getDashboards() {
-    return this.searchSrv.search(this.query).then((result) => {
+    return this.searchSrv.search(this.query).then(result => {
       return this.initDashboardList(result);
     });
   }
@@ -42,7 +53,10 @@ export class ManageDashboardsCtrl {
     this.canMove = false;
     this.canDelete = false;
     this.selectAllChecked = false;
-    this.hasFilters = this.query.query.length > 0 || this.query.tag.length > 0 || this.query.starred;
+    this.hasFilters =
+      this.query.query.length > 0 ||
+      this.query.tag.length > 0 ||
+      this.query.starred;
 
     if (!result) {
       this.sections = [];
@@ -79,7 +93,7 @@ export class ManageDashboardsCtrl {
   getFoldersAndDashboardsToDelete() {
     let selectedDashboards = {
       folders: [],
-      dashboards: []
+      dashboards: [],
     };
 
     for (const section of this.sections) {
@@ -112,10 +126,16 @@ export class ManageDashboardsCtrl {
     let text2;
 
     if (folderCount > 0 && dashCount > 0) {
-      text += `selected folder${folderCount === 1 ? '' : 's'} and dashboard${dashCount === 1 ? '' : 's'}?`;
-      text2 = `All dashboards of the selected folder${folderCount === 1 ? '' : 's'} will also be deleted`;
+      text += `selected folder${folderCount === 1 ? '' : 's'} and dashboard${
+        dashCount === 1 ? '' : 's'
+      }?`;
+      text2 = `All dashboards of the selected folder${
+        folderCount === 1 ? '' : 's'
+      } will also be deleted`;
     } else if (folderCount > 0) {
-      text += `selected folder${folderCount === 1 ? '' : 's'} and all its dashboards?`;
+      text += `selected folder${
+        folderCount === 1 ? '' : 's'
+      } and all its dashboards?`;
     } else {
       text += `selected dashboard${dashCount === 1 ? '' : 's'}?`;
     }
@@ -129,7 +149,7 @@ export class ManageDashboardsCtrl {
       onConfirm: () => {
         const foldersAndDashboards = data.folders.concat(data.dashboards);
         this.deleteFoldersAndDashboards(foldersAndDashboards);
-      }
+      },
     });
   }
 
@@ -145,16 +165,22 @@ export class ManageDashboardsCtrl {
         let msg;
 
         if (folderCount > 0 && dashCount > 0) {
-          header = `Folder${folderCount === 1 ? '' : 's'} And Dashboard${dashCount === 1 ? '' : 's'} Deleted`;
+          header = `Folder${folderCount === 1 ? '' : 's'} And Dashboard${
+            dashCount === 1 ? '' : 's'
+          } Deleted`;
           msg = `${folderCount} folder${folderCount === 1 ? '' : 's'} `;
-          msg += `and ${dashCount} dashboard${dashCount === 1 ? '' : 's'} has been deleted`;
+          msg += `and ${dashCount} dashboard${
+            dashCount === 1 ? '' : 's'
+          } has been deleted`;
         } else if (folderCount > 0) {
           header = `Folder${folderCount === 1 ? '' : 's'} Deleted`;
 
           if (folderCount === 1) {
             msg = `${folders[0].dashboard.title} has been deleted`;
           } else {
-            msg = `${folderCount} folder${folderCount === 1 ? '' : 's'} has been deleted`;
+            msg = `${folderCount} folder${
+              folderCount === 1 ? '' : 's'
+            } has been deleted`;
           }
         } else if (dashCount > 0) {
           header = `Dashboard${dashCount === 1 ? '' : 's'} Deleted`;
@@ -162,7 +188,9 @@ export class ManageDashboardsCtrl {
           if (dashCount === 1) {
             msg = `${dashboards[0].dashboard.title} has been deleted`;
           } else {
-            msg = `${dashCount} dashboard${dashCount === 1 ? '' : 's'} has been deleted`;
+            msg = `${dashCount} dashboard${
+              dashCount === 1 ? '' : 's'
+            } has been deleted`;
           }
         }
 
@@ -187,19 +215,25 @@ export class ManageDashboardsCtrl {
   moveTo() {
     const selectedDashboards = this.getDashboardsToMove();
 
-    const template = '<move-to-folder-modal dismiss="dismiss()" ' +
+    const template =
+      '<move-to-folder-modal dismiss="dismiss()" ' +
       'dashboards="model.dashboards" after-save="model.afterSave()">' +
       '</move-to-folder-modal>`';
     appEvents.emit('show-modal', {
       templateHtml: template,
       modalClass: 'modal--narrow',
-      model: { dashboards: selectedDashboards, afterSave: this.getDashboards.bind(this) }
+      model: {
+        dashboards: selectedDashboards,
+        afterSave: this.getDashboards.bind(this),
+      },
     });
   }
 
   getTags() {
-    return this.searchSrv.getDashboardTags().then((results) => {
-      this.tagFilterOptions = [{ term: 'Filter By Tag', disabled: true }].concat(results);
+    return this.searchSrv.getDashboardTags().then(results => {
+      this.tagFilterOptions = [
+        { term: 'Filter By Tag', disabled: true },
+      ].concat(results);
       this.selectedTagFilter = this.tagFilterOptions[0];
     });
   }
@@ -248,7 +282,7 @@ export class ManageDashboardsCtrl {
         section.checked = this.selectAllChecked;
       }
 
-      section.items = _.map(section.items, (item) => {
+      section.items = _.map(section.items, item => {
         item.checked = this.selectAllChecked;
         return item;
       });
@@ -268,13 +302,14 @@ export class ManageDashboardsCtrl {
 export function manageDashboardsDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/core/components/manage_dashboards/manage_dashboards.html',
+    templateUrl:
+      'public/app/core/components/manage_dashboards/manage_dashboards.html',
     controller: ManageDashboardsCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      folderId: '='
-    }
+      folderId: '=',
+    },
   };
 }
 

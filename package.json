@@ -65,7 +65,7 @@
     "karma-sinon": "^1.0.5",
     "karma-sourcemap-loader": "^0.3.7",
     "karma-webpack": "^2.0.4",
-    "lint-staged": "^4.2.3",
+    "lint-staged": "^6.0.0",
     "load-grunt-tasks": "3.5.2",
     "mocha": "^4.0.1",
     "ng-annotate-loader": "^0.6.1",
@@ -76,7 +76,7 @@
     "postcss-browser-reporter": "^0.5.0",
     "postcss-loader": "^2.0.6",
     "postcss-reporter": "^5.0.0",
-    "prettier": "1.7.3",
+    "prettier": "1.9.2",
     "react-test-renderer": "^16.0.0",
     "sass-lint": "^1.10.2",
     "sass-loader": "^6.0.6",
@@ -103,7 +103,17 @@
     "lint": "tslint -c tslint.json --project tsconfig.json --type-check",
     "karma": "node ./node_modules/grunt-cli/bin/grunt karma:dev",
     "jest": "node ./node_modules/jest-cli/bin/jest.js --notify --watch",
-    "precommit": "node ./node_modules/grunt-cli/bin/grunt precommit"
+    "precommit": "lint-staged && node ./node_modules/grunt-cli/bin/grunt precommit"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "prettier --single-quote --trailing-comma es5 --write",
+      "git add"
+    ],
+    "*.scss": [
+      "prettier --single-quote --write",
+      "git add"
+    ]
   },
   "license": "Apache-2.0",
   "dependencies": {

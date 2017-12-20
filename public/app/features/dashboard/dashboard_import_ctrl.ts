@@ -13,17 +13,27 @@ export class DashboardImportCtrl {
   gnetUrl: string;
   gnetError: string;
   gnetInfo: any;
+  titleTouched: boolean;
+  hasNameValidationError: boolean;
+  nameValidationError: any;
 
   /** @ngInject */
-  constructor(private backendSrv, navModelSrv, private $location, private $scope, $routeParams) {
+  constructor(
+    private backendSrv,
+    private validationSrv,
+    navModelSrv,
+    private $location,
+    private $scope,
+    $routeParams
+  ) {
     this.navModel = navModelSrv.getNav('create', 'import');
 
     this.step = 1;
     this.nameExists = false;
 
     // check gnetId in url
-    if ($routeParams.gnetId)  {
-      this.gnetUrl = $routeParams.gnetId ;
+    if ($routeParams.gnetId) {
+      this.gnetUrl = $routeParams.gnetId;
       this.checkGnetDashboard();
     }
   }
@@ -43,7 +53,7 @@ export class DashboardImportCtrl {
           value: input.value,
           type: input.type,
           pluginId: input.pluginId,
-          options: []
+          options: [],
         };
 
         if (input.type === 'datasource') {
@@ -66,13 +76,14 @@ export class DashboardImportCtrl {
     });
 
     if (sources.length === 0) {
-      inputModel.info = "No data sources of type " + input.pluginName + " found";
+      inputModel.info =
+        'No data sources of type ' + input.pluginName + ' found';
     } else if (!inputModel.info) {
-      inputModel.info = "Select a " + input.pluginName + " data source";
+      inputModel.info = 'Select a ' + input.pluginName + ' data source';
     }
 
     inputModel.options = sources.map(val => {
-      return {text: val.name, value: val.name};
+      return { text: val.name, value: val.name };
     });
   }
 
@@ -86,15 +97,22 @@ export class DashboardImportCtrl {
   }
 
   titleChanged() {
-    this.backendSrv.search({query: this.dash.title}).then(res => {
-      this.nameExists = false;
-      for (let hit of res) {
-        if (this.dash.title === hit.title) {
+    this.titleTouched = true;
+    this.nameExists = false;
+
+    this.validationSrv
+      .validateNewDashboardOrFolderName(this.dash.title)
+      .then(() => {
+        this.hasNameValidationError = false;
+      })
+      .catch(err => {
+        if (err.type === 'EXISTING') {
           this.nameExists = true;
-          break;
         }
-      }
-    });
+
+        this.hasNameValidationError = true;
+        this.nameValidationError = err.message;
+      });
   }
 
   saveDashboard() {
@@ -103,18 +121,20 @@ export class DashboardImportCtrl {
         name: input.name,
         type: input.type,
         pluginId: input.pluginId,
-        value: input.value
+        value: input.value,
       };
     });
 
-    return this.backendSrv.post('api/dashboards/import', {
-      dashboard: this.dash,
-      overwrite: true,
-      inputs: inputs
-    }).then(res => {
-      this.$location.url('dashboard/' + res.importedUri);
-      this.$scope.dismiss();
-    });
+    return this.backendSrv
+      .post('api/dashboards/import', {
+        dashboard: this.dash,
+        overwrite: true,
+        inputs: inputs,
+      })
+      .then(res => {
+        this.$location.url('dashboard/' + res.importedUri);
+        this.$scope.dismiss();
+      });
   }
 
   loadJsonText() {
@@ -143,15 +163,18 @@ export class DashboardImportCtrl {
       this.gnetError = 'Could not find dashboard';
     }
 
-    return this.backendSrv.get('api/gnet/dashboards/' + dashboardId).then(res => {
-      this.gnetInfo = res;
-      // store reference to grafana.com
-      res.json.gnetId = res.id;
-      this.onUpload(res.json);
-    }).catch(err => {
-      err.isHandled = true;
-      this.gnetError = err.data.message || err;
-    });
+    return this.backendSrv
+      .get('api/gnet/dashboards/' + dashboardId)
+      .then(res => {
+        this.gnetInfo = res;
+        // store reference to grafana.com
+        res.json.gnetId = res.id;
+        this.onUpload(res.json);
+      })
+      .catch(err => {
+        err.isHandled = true;
+        this.gnetError = err.data.message || err;
+      });
   }
 
   back() {

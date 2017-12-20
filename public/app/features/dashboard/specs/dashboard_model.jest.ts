@@ -70,11 +70,21 @@ describe('DashboardModel', function() {
       dashboard.addPanel(panel);
       dashboard.duplicatePanel(dashboard.panels[0]);
 
-      expect(dashboard.panels[1].gridPos).toMatchObject({ x: 6, y: 0, h: 2, w: 6 });
+      expect(dashboard.panels[1].gridPos).toMatchObject({
+        x: 6,
+        y: 0,
+        h: 2,
+        w: 6,
+      });
     });
 
     it('duplicate panel should remove repeat data', function() {
-      var panel = { id: 10, gridPos: { x: 0, y: 0, w: 6, h: 2 }, repeat: 'asd', scopedVars: { test: 'asd' } };
+      var panel = {
+        id: 10,
+        gridPos: { x: 0, y: 0, w: 6, h: 2 },
+        repeat: 'asd',
+        scopedVars: { test: 'asd' },
+      };
 
       dashboard.addPanel(panel);
       dashboard.duplicatePanel(dashboard.panels[0]);
@@ -206,11 +216,15 @@ describe('DashboardModel', function() {
     });
 
     it('Should format timestamp with second resolution even if second format is passed as parameter', function() {
-      expect(dashboard.formatDate(1234567890007, 'YYYY-MM-DD HH:mm:ss')).toBe('2009-02-13 23:31:30');
+      expect(dashboard.formatDate(1234567890007, 'YYYY-MM-DD HH:mm:ss')).toBe(
+        '2009-02-13 23:31:30'
+      );
     });
 
     it('Should format timestamp with millisecond resolution if format is passed as parameter', function() {
-      expect(dashboard.formatDate(1234567890007, 'YYYY-MM-DD HH:mm:ss.SSS')).toBe('2009-02-13 23:31:30.007');
+      expect(
+        dashboard.formatDate(1234567890007, 'YYYY-MM-DD HH:mm:ss.SSS')
+      ).toBe('2009-02-13 23:31:30.007');
     });
   });
 
@@ -315,6 +329,26 @@ describe('DashboardModel', function() {
       expect(dashboard.panels.length).toBe(3);
       expect(dashboard.panels[1].panels.length).toBe(2);
     });
+
+    describe('and when removing row and its panels', function() {
+      beforeEach(function() {
+        dashboard.removeRow(dashboard.panels[1], true);
+      });
+
+      it('should remove row and its panels', function() {
+        expect(dashboard.panels.length).toBe(2);
+      });
+    });
+
+    describe('and when removing only the row', function() {
+      beforeEach(function() {
+        dashboard.removeRow(dashboard.panels[1], false);
+      });
+
+      it('should only remove row', function() {
+        expect(dashboard.panels.length).toBe(4);
+      });
+    });
   });
 
   describe('When expanding row', function() {
@@ -334,7 +368,7 @@ describe('DashboardModel', function() {
               { id: 4, type: 'graph', gridPos: { x: 12, y: 2, w: 12, h: 2 } },
             ],
           },
-          { id: 5, type: 'graph', gridPos: { x: 0, y: 6, w: 1, h: 1 } },
+          { id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 1, h: 1 } },
         ],
       });
       dashboard.toggleRow(dashboard.panels[1]);
@@ -350,11 +384,41 @@ describe('DashboardModel', function() {
     });
 
     it('should position them below row', function() {
-      expect(dashboard.panels[2].gridPos).toMatchObject({ x: 0, y: 8, w: 12, h: 2 });
+      expect(dashboard.panels[2].gridPos).toMatchObject({
+        x: 0,
+        y: 8,
+        w: 12,
+        h: 2,
+      });
     });
 
     it('should move panels below down', function() {
-      expect(dashboard.panels[4].gridPos).toMatchObject({ x: 0, y: 10, w: 1, h: 1 });
+      expect(dashboard.panels[4].gridPos).toMatchObject({
+        x: 0,
+        y: 10,
+        w: 1,
+        h: 1,
+      });
+    });
+
+    describe('and when removing row and its panels', function() {
+      beforeEach(function() {
+        dashboard.removeRow(dashboard.panels[1], true);
+      });
+
+      it('should remove row and its panels', function() {
+        expect(dashboard.panels.length).toBe(2);
+      });
+    });
+
+    describe('and when removing only the row', function() {
+      beforeEach(function() {
+        dashboard.removeRow(dashboard.panels[1], false);
+      });
+
+      it('should only remove row', function() {
+        expect(dashboard.panels.length).toBe(4);
+      });
     });
   });
 });

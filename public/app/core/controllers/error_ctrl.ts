@@ -3,7 +3,6 @@ import coreModule from '../core_module';
 import appEvents from 'app/core/app_events';
 
 export class ErrorCtrl {
-
   /** @ngInject */
   constructor($scope, contextSrv, navModelSrv) {
     $scope.navModel = navModelSrv.getNotFoundNav();
@@ -13,7 +12,7 @@ export class ErrorCtrl {
       appEvents.emit('toggle-sidemenu-hidden');
     }
 
-    $scope.$on("destroy", () => {
+    $scope.$on('destroy', () => {
       if (!contextSrv.isSignedIn) {
         appEvents.emit('toggle-sidemenu-hidden');
       }

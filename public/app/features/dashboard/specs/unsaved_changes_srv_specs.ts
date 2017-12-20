@@ -1,8 +1,15 @@
-import {describe, beforeEach, it, expect, sinon, angularMocks} from 'test/lib/common';
+import {
+  describe,
+  beforeEach,
+  it,
+  expect,
+  sinon,
+  angularMocks,
+} from 'test/lib/common';
 import 'app/features/dashboard/unsavedChangesSrv';
 import 'app/features/dashboard/dashboard_srv';
 
-describe("unsavedChangesSrv", function() {
+describe('unsavedChangesSrv', function() {
   var _unsavedChangesSrv;
   var _dashboardSrv;
   var _contextSrvStub = { isEditor: true };
@@ -13,26 +20,35 @@ describe("unsavedChangesSrv", function() {
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(angularMocks.module(function($provide) {
-    $provide.value('contextSrv', _contextSrvStub);
-    $provide.value('$window', {});
-  }));
+  beforeEach(
+    angularMocks.module(function($provide) {
+      $provide.value('contextSrv', _contextSrvStub);
+      $provide.value('$window', {});
+    })
+  );
 
-  beforeEach(angularMocks.inject(function(unsavedChangesSrv, $location, $rootScope, dashboardSrv) {
-    _unsavedChangesSrv = unsavedChangesSrv;
-    _dashboardSrv = dashboardSrv;
-    _rootScope = $rootScope;
-  }));
+  beforeEach(
+    angularMocks.inject(function(
+      unsavedChangesSrv,
+      $location,
+      $rootScope,
+      dashboardSrv
+    ) {
+      _unsavedChangesSrv = unsavedChangesSrv;
+      _dashboardSrv = dashboardSrv;
+      _rootScope = $rootScope;
+    })
+  );
 
   beforeEach(function() {
     dash = _dashboardSrv.create({
       refresh: false,
-      panels: [{ test: "asd", legend: { } }],
+      panels: [{ test: 'asd', legend: {} }],
       rows: [
         {
-          panels: [{ test: "asd", legend: { } }]
-        }
-      ]
+          panels: [{ test: 'asd', legend: {} }],
+        },
+      ],
     });
     scope = _rootScope.$new();
     scope.appEvent = sinon.spy();
@@ -46,12 +62,12 @@ describe("unsavedChangesSrv", function() {
   });
 
   it('Simple change should be registered', function() {
-    dash.property = "google";
+    dash.property = 'google';
     expect(tracker.hasChanges()).to.be(true);
   });
 
   it('Should ignore a lot of changes', function() {
-    dash.time = {from: '1h'};
+    dash.time = { from: '1h' };
     dash.refresh = true;
     dash.schemaVersion = 10;
     expect(tracker.hasChanges()).to.be(false);
@@ -64,12 +80,12 @@ describe("unsavedChangesSrv", function() {
 
   it('Should ignore panel legend changes', function() {
     dash.panels[0].legend.sortDesc = true;
-    dash.panels[0].legend.sort = "avg";
+    dash.panels[0].legend.sort = 'avg';
     expect(tracker.hasChanges()).to.be(false);
   });
 
   it.skip('Should ignore panel repeats', function() {
-    dash.rows[0].panels.push({repeatPanelId: 10});
+    dash.rows[0].panels.push({ repeatPanelId: 10 });
     expect(tracker.hasChanges()).to.be(false);
   });
 

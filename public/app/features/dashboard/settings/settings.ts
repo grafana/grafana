@@ -14,7 +14,13 @@ export class SettingsCtrl {
   sections: any[];
 
   /** @ngInject */
-  constructor(private $scope, private $location, private $rootScope, private backendSrv, private dashboardSrv) {
+  constructor(
+    private $scope,
+    private $location,
+    private $rootScope,
+    private backendSrv,
+    private dashboardSrv
+  ) {
     // temp hack for annotations and variables editors
     // that rely on inherited scope
     $scope.dashboard = this.dashboard;
@@ -30,28 +36,60 @@ export class SettingsCtrl {
     this.buildSectionList();
     this.onRouteUpdated();
 
-    $rootScope.onAppEvent('$routeUpdate', this.onRouteUpdated.bind(this), $scope);
+    $rootScope.onAppEvent(
+      '$routeUpdate',
+      this.onRouteUpdated.bind(this),
+      $scope
+    );
   }
 
   buildSectionList() {
     this.sections = [];
+
     if (this.dashboard.meta.canEdit) {
-      this.sections.push({ title: 'General', id: 'settings', icon: 'gicon gicon-preferences' });
-      this.sections.push({ title: 'Annotations', id: 'annotations', icon: 'gicon gicon-annotation' });
-      this.sections.push({ title: 'Variables', id: 'templating', icon: 'gicon gicon-variable' });
-      this.sections.push({ title: 'Links', id: 'links', icon: 'gicon gicon-link' });
+      this.sections.push({
+        title: 'General',
+        id: 'settings',
+        icon: 'gicon gicon-preferences',
+      });
+      this.sections.push({
+        title: 'Annotations',
+        id: 'annotations',
+        icon: 'gicon gicon-annotation',
+      });
+      this.sections.push({
+        title: 'Variables',
+        id: 'templating',
+        icon: 'gicon gicon-variable',
+      });
+      this.sections.push({
+        title: 'Links',
+        id: 'links',
+        icon: 'gicon gicon-link',
+      });
     }
 
     if (this.dashboard.id && this.dashboard.meta.canSave) {
-      this.sections.push({ title: 'Versions', id: 'versions', icon: 'fa fa-fw fa-history' });
+      this.sections.push({
+        title: 'Versions',
+        id: 'versions',
+        icon: 'fa fa-fw fa-history',
+      });
     }
 
-    if (contextSrv.isEditor && !this.dashboard.editable) {
-      this.sections.push({ title: 'Make Editable', icon: 'fa fa-fw fa-edit', id: 'make_editable' });
-      this.viewId = 'make_editable';
+    if (this.dashboard.meta.canMakeEditable) {
+      this.sections.push({
+        title: 'Make Editable',
+        icon: 'fa fa-fw fa-edit',
+        id: 'make_editable',
+      });
     }
 
-    this.sections.push({ title: 'View JSON', id: 'view_json', icon: 'gicon gicon-json' });
+    this.sections.push({
+      title: 'View JSON',
+      id: 'view_json',
+      icon: 'gicon gicon-json',
+    });
 
     const params = this.$location.search();
     const url = this.$location.path();
@@ -69,11 +107,18 @@ export class SettingsCtrl {
       this.json = JSON.stringify(this.dashboard.getSaveModelClone(), null, 2);
     }
 
+    if (this.viewId === 'settings' && this.dashboard.meta.canMakeEditable) {
+      this.viewId = 'make_editable';
+    }
+
     const currentSection = _.find(this.sections, { id: this.viewId });
     if (!currentSection) {
-      this.sections.unshift({ title: 'Not found', id: '404', icon: 'fa fa-fw fa-warning' });
+      this.sections.unshift({
+        title: 'Not found',
+        id: '404',
+        icon: 'fa fa-fw fa-warning',
+      });
       this.viewId = '404';
-      return;
     }
   }
 
@@ -94,10 +139,12 @@ export class SettingsCtrl {
   makeEditable() {
     this.dashboard.editable = true;
 
-    return this.dashboardSrv.saveDashboard({ makeEditable: true, overwrite: false }).then(() => {
-      // force refresh whole page
-      window.location.href = window.location.href;
-    });
+    return this.dashboardSrv
+      .saveDashboard({ makeEditable: true, overwrite: false })
+      .then(() => {
+        // force refresh whole page
+        window.location.href = window.location.href;
+      });
   }
 
   deleteDashboard() {
@@ -123,13 +170,16 @@ export class SettingsCtrl {
       onConfirm: () => {
         this.dashboard.meta.canSave = false;
         this.deleteDashboardConfirmed();
-      }
+      },
     });
   }
 
   deleteDashboardConfirmed() {
     this.backendSrv.deleteDashboard(this.dashboard.meta.slug).then(() => {
-      appEvents.emit('alert-success', ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
+      appEvents.emit('alert-success', [
+        'Dashboard Deleted',
+        this.dashboard.title + ' has been deleted',
+      ]);
       this.$location.url('/');
     });
   }

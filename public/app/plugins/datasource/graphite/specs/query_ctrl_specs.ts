@@ -1,10 +1,16 @@
-
 import 'app/core/services/segment_srv';
-import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
+import {
+  describe,
+  beforeEach,
+  it,
+  sinon,
+  expect,
+  angularMocks,
+} from 'test/lib/common';
 
 import gfunc from '../gfunc';
 import helpers from 'test/specs/helpers';
-import {GraphiteQueryCtrl} from '../query_ctrl';
+import { GraphiteQueryCtrl } from '../query_ctrl';
 
 describe('GraphiteQueryCtrl', function() {
   var ctx = new helpers.ControllerTestContext();
@@ -12,35 +18,45 @@ describe('GraphiteQueryCtrl', function() {
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.controllers'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(angularMocks.module(function($compileProvider) {
-    $compileProvider.preAssignBindingsEnabled(true);
-  }));
+  beforeEach(
+    angularMocks.module(function($compileProvider) {
+      $compileProvider.preAssignBindingsEnabled(true);
+    })
+  );
 
   beforeEach(ctx.providePhase());
-  beforeEach(angularMocks.inject(($rootScope, $controller, $q) => {
-    ctx.$q = $q;
-    ctx.scope = $rootScope.$new();
-    ctx.target = {target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)'};
-    ctx.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
-    ctx.panelCtrl = {panel: {}};
-    ctx.panelCtrl = {
-      panel: {
-        targets: [ctx.target]
-      }
-    };
-    ctx.panelCtrl.refresh = sinon.spy();
+  beforeEach(
+    angularMocks.inject(($rootScope, $controller, $q) => {
+      ctx.$q = $q;
+      ctx.scope = $rootScope.$new();
+      ctx.target = { target: 'aliasByNode(scaleToSeconds(test.prod.*,1),2)' };
+      ctx.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
+      ctx.panelCtrl = { panel: {} };
+      ctx.panelCtrl = {
+        panel: {
+          targets: [ctx.target],
+        },
+      };
+      ctx.panelCtrl.refresh = sinon.spy();
 
-    ctx.ctrl = $controller(GraphiteQueryCtrl, {$scope: ctx.scope}, {
-      panelCtrl: ctx.panelCtrl,
-      datasource: ctx.datasource,
-      target: ctx.target
-    });
-    ctx.scope.$digest();
-  }));
+      ctx.ctrl = $controller(
+        GraphiteQueryCtrl,
+        { $scope: ctx.scope },
+        {
+          panelCtrl: ctx.panelCtrl,
+          datasource: ctx.datasource,
+          target: ctx.target,
+        }
+      );
+      ctx.scope.$digest();
+    })
+  );
 
   describe('init', function() {
     it('should validate metric key exists', function() {
-      expect(ctx.datasource.metricFindQuery.getCall(0).args[0]).to.be('test.prod.*');
+      expect(ctx.datasource.metricFindQuery.getCall(0).args[0]).to.be(
+        'test.prod.*'
+      );
     });
 
     it('should delete last segment if no metrics are found', function() {
@@ -55,7 +71,9 @@ describe('GraphiteQueryCtrl', function() {
   describe('when adding function', function() {
     beforeEach(function() {
       ctx.ctrl.target.target = 'test.prod.*.count';
-      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.datasource.metricFindQuery = sinon
+        .stub()
+        .returns(ctx.$q.when([{ expandable: false }]));
       ctx.ctrl.parseTarget();
       ctx.ctrl.addFunction(gfunc.getFuncDef('aliasByNode'));
     });
@@ -76,7 +94,9 @@ describe('GraphiteQueryCtrl', function() {
   describe('when adding function before any metric segment', function() {
     beforeEach(function() {
       ctx.ctrl.target.target = '';
-      ctx.ctrl.datasource.metricFindQuery.returns(ctx.$q.when([{expandable: true}]));
+      ctx.ctrl.datasource.metricFindQuery.returns(
+        ctx.$q.when([{ expandable: true }])
+      );
       ctx.ctrl.parseTarget();
       ctx.ctrl.addFunction(gfunc.getFuncDef('asPercent'));
     });
@@ -153,14 +173,18 @@ describe('GraphiteQueryCtrl', function() {
 
   describe('targetChanged', function() {
     beforeEach(function() {
-      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.datasource.metricFindQuery = sinon
+        .stub()
+        .returns(ctx.$q.when([{ expandable: false }]));
       ctx.ctrl.parseTarget();
       ctx.ctrl.target.target = '';
       ctx.ctrl.targetChanged();
     });
 
     it('should rebuld target after expression model', function() {
-      expect(ctx.ctrl.target.target).to.be('aliasByNode(scaleToSeconds(test.prod.*, 1), 2)');
+      expect(ctx.ctrl.target.target).to.be(
+        'aliasByNode(scaleToSeconds(test.prod.*, 1), 2)'
+      );
     });
 
     it('should call panelCtrl.refresh', function() {
@@ -171,13 +195,17 @@ describe('GraphiteQueryCtrl', function() {
   describe('when updating targets with nested query', function() {
     beforeEach(function() {
       ctx.ctrl.target.target = 'scaleToSeconds(#A, 60)';
-      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.datasource.metricFindQuery = sinon
+        .stub()
+        .returns(ctx.$q.when([{ expandable: false }]));
       ctx.ctrl.parseTarget();
 
-      ctx.ctrl.panelCtrl.panel.targets = [ {
-        target: 'nested.query.count',
-        refId: 'A'
-      }];
+      ctx.ctrl.panelCtrl.panel.targets = [
+        {
+          target: 'nested.query.count',
+          refId: 'A',
+        },
+      ];
 
       ctx.ctrl.updateModelTarget();
     });
@@ -187,7 +215,9 @@ describe('GraphiteQueryCtrl', function() {
     });
 
     it('targetFull should include nexted queries', function() {
-      expect(ctx.ctrl.target.targetFull).to.be('scaleToSeconds(nested.query.count, 60)');
+      expect(ctx.ctrl.target.targetFull).to.be(
+        'scaleToSeconds(nested.query.count, 60)'
+      );
     });
   });
 
@@ -195,25 +225,32 @@ describe('GraphiteQueryCtrl', function() {
     beforeEach(function() {
       ctx.ctrl.target.target = 'metrics.a.count';
       ctx.ctrl.target.refId = 'A';
-      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.datasource.metricFindQuery = sinon
+        .stub()
+        .returns(ctx.$q.when([{ expandable: false }]));
       ctx.ctrl.parseTarget();
 
       ctx.ctrl.panelCtrl.panel.targets = [
-        ctx.ctrl.target, {target: 'sumSeries(#A)', refId: 'B'}
+        ctx.ctrl.target,
+        { target: 'sumSeries(#A)', refId: 'B' },
       ];
 
       ctx.ctrl.updateModelTarget();
     });
 
     it('targetFull of other query should update', function() {
-      expect(ctx.ctrl.panel.targets[1].targetFull).to.be('sumSeries(metrics.a.count)');
+      expect(ctx.ctrl.panel.targets[1].targetFull).to.be(
+        'sumSeries(metrics.a.count)'
+      );
     });
   });
 
   describe('when adding seriesByTag function', function() {
     beforeEach(function() {
       ctx.ctrl.target.target = '';
-      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.datasource.metricFindQuery = sinon
+        .stub()
+        .returns(ctx.$q.when([{ expandable: false }]));
       ctx.ctrl.parseTarget();
       ctx.ctrl.addFunction(gfunc.getFuncDef('seriesByTag'));
     });
@@ -238,14 +275,16 @@ describe('GraphiteQueryCtrl', function() {
   describe('when parsing seriesByTag function', function() {
     beforeEach(function() {
       ctx.ctrl.target.target = "seriesByTag('tag1=value1', 'tag2!=~value2')";
-      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.datasource.metricFindQuery = sinon
+        .stub()
+        .returns(ctx.$q.when([{ expandable: false }]));
       ctx.ctrl.parseTarget();
     });
 
     it('should add tags', function() {
       const expected = [
-        {key: 'tag1', operator: '=', value: 'value1'},
-        {key: 'tag2', operator: '!=~', value: 'value2'}
+        { key: 'tag1', operator: '=', value: 'value1' },
+        { key: 'tag2', operator: '!=~', value: 'value2' },
       ];
       expect(ctx.ctrl.queryModel.tags).to.eql(expected);
     });
@@ -257,15 +296,17 @@ describe('GraphiteQueryCtrl', function() {
 
   describe('when tag added', function() {
     beforeEach(function() {
-      ctx.ctrl.target.target = "seriesByTag()";
-      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.target.target = 'seriesByTag()';
+      ctx.ctrl.datasource.metricFindQuery = sinon
+        .stub()
+        .returns(ctx.$q.when([{ expandable: false }]));
       ctx.ctrl.parseTarget();
-      ctx.ctrl.addNewTag({value: 'tag1'});
+      ctx.ctrl.addNewTag({ value: 'tag1' });
     });
 
     it('should update tags with default value', function() {
       const expected = [
-        {key: 'tag1', operator: '=', value: 'select tag value'}
+        { key: 'tag1', operator: '=', value: 'select tag value' },
       ];
       expect(ctx.ctrl.queryModel.tags).to.eql(expected);
     });
@@ -279,15 +320,20 @@ describe('GraphiteQueryCtrl', function() {
   describe('when tag changed', function() {
     beforeEach(function() {
       ctx.ctrl.target.target = "seriesByTag('tag1=value1', 'tag2!=~value2')";
-      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.datasource.metricFindQuery = sinon
+        .stub()
+        .returns(ctx.$q.when([{ expandable: false }]));
       ctx.ctrl.parseTarget();
-      ctx.ctrl.tagChanged({key: 'tag1', operator: '=', value: 'new_value'}, 0);
+      ctx.ctrl.tagChanged(
+        { key: 'tag1', operator: '=', value: 'new_value' },
+        0
+      );
     });
 
     it('should update tags', function() {
       const expected = [
-        {key: 'tag1', operator: '=', value: 'new_value'},
-        {key: 'tag2', operator: '!=~', value: 'value2'}
+        { key: 'tag1', operator: '=', value: 'new_value' },
+        { key: 'tag2', operator: '!=~', value: 'value2' },
       ];
       expect(ctx.ctrl.queryModel.tags).to.eql(expected);
     });
@@ -301,15 +347,15 @@ describe('GraphiteQueryCtrl', function() {
   describe('when tag removed', function() {
     beforeEach(function() {
       ctx.ctrl.target.target = "seriesByTag('tag1=value1', 'tag2!=~value2')";
-      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.datasource.metricFindQuery = sinon
+        .stub()
+        .returns(ctx.$q.when([{ expandable: false }]));
       ctx.ctrl.parseTarget();
       ctx.ctrl.removeTag(0);
     });
 
     it('should update tags', function() {
-      const expected = [
-        {key: 'tag2', operator: '!=~', value: 'value2'}
-      ];
+      const expected = [{ key: 'tag2', operator: '!=~', value: 'value2' }];
       expect(ctx.ctrl.queryModel.tags).to.eql(expected);
     });
 
@@ -318,5 +364,4 @@ describe('GraphiteQueryCtrl', function() {
       expect(ctx.ctrl.target.target).to.eql(expected);
     });
   });
-
 });

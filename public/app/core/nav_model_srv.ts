@@ -34,7 +34,7 @@ export class NavModelSrv {
   }
 
   getCfgNode() {
-    return _.find(this.navItems, {id: 'cfg'});
+    return _.find(this.navItems, { id: 'cfg' });
   }
 
   getNav(...args) {
@@ -48,7 +48,7 @@ export class NavModelSrv {
         break;
       }
 
-      let node = _.find(children, {id: id});
+      let node = _.find(children, { id: id });
       nav.breadcrumbs.push(node);
       nav.node = node;
       nav.main = node;
@@ -70,15 +70,15 @@ export class NavModelSrv {
 
   getNotFoundNav() {
     var node = {
-      text: "Page not found",
-      icon: "fa fa-fw fa-warning",
-      subTitle: "404 Error"
+      text: 'Page not found',
+      icon: 'fa fa-fw fa-warning',
+      subTitle: '404 Error',
     };
 
     return {
       breadcrumbs: [node],
       node: node,
-      main: node
+      main: node,
     };
   }
 }

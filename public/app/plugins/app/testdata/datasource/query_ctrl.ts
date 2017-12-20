@@ -25,7 +25,8 @@ export class TestDataQueryCtrl extends QueryCtrl {
   getPoints() {
     return _.map(this.target.points, (point, index) => {
       return {
-        text: moment(point[1]).format('MMMM Do YYYY, H:mm:ss') + ' : ' + point[0],
+        text:
+          moment(point[1]).format('MMMM Do YYYY, H:mm:ss') + ' : ' + point[0],
         value: index,
       };
     });

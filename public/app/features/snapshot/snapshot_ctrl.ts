@@ -16,28 +16,34 @@ export class SnapshotsCtrl {
   }
 
   removeSnapshotConfirmed(snapshot) {
-    _.remove(this.snapshots, {key: snapshot.key});
-    this.backendSrv.get('/api/snapshots-delete/' + snapshot.deleteKey)
-    .then(() => {
-      this.$rootScope.appEvent('alert-success', ['Snapshot deleted', '']);
-    }, () => {
-      this.$rootScope.appEvent('alert-error', ['Unable to delete snapshot', '']);
-      this.snapshots.push(snapshot);
-    });
+    _.remove(this.snapshots, { key: snapshot.key });
+    this.backendSrv.get('/api/snapshots-delete/' + snapshot.deleteKey).then(
+      () => {
+        this.$rootScope.appEvent('alert-success', ['Snapshot deleted', '']);
+      },
+      () => {
+        this.$rootScope.appEvent('alert-error', [
+          'Unable to delete snapshot',
+          '',
+        ]);
+        this.snapshots.push(snapshot);
+      }
+    );
   }
 
   removeSnapshot(snapshot) {
     this.$rootScope.appEvent('confirm-modal', {
       title: 'Delete',
       text: 'Are you sure you want to delete snapshot ' + snapshot.name + '?',
-      yesText: "Delete",
-      icon: "fa-trash",
+      yesText: 'Delete',
+      icon: 'fa-trash',
       onConfirm: () => {
         this.removeSnapshotConfirmed(snapshot);
-      }
+      },
     });
   }
-
 }
 
-angular.module('grafana.controllers').controller('SnapshotsCtrl', SnapshotsCtrl);
+angular
+  .module('grafana.controllers')
+  .controller('SnapshotsCtrl', SnapshotsCtrl);

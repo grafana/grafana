@@ -1,10 +1,7 @@
-input[type=text].ng-dirty.ng-invalid {
+input[type="text"].ng-dirty.ng-invalid {
 }
 
 input.validation-error,
 input.ng-dirty.ng-invalid {
   box-shadow: inset 0 0px 5px $red;
 }
-
-
-

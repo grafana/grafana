@@ -1,14 +1,14 @@
-import angular from "angular";
-import _ from "lodash";
+import angular from 'angular';
+import _ from 'lodash';
 
 export var iconMap = {
-  "external link": "fa-external-link",
-  dashboard: "fa-th-large",
-  question: "fa-question",
-  info: "fa-info",
-  bolt: "fa-bolt",
-  doc: "fa-file-text-o",
-  cloud: "fa-cloud"
+  'external link': 'fa-external-link',
+  dashboard: 'fa-th-large',
+  question: 'fa-question',
+  info: 'fa-info',
+  bolt: 'fa-bolt',
+  doc: 'fa-file-text-o',
+  cloud: 'fa-cloud',
 };
 
 export class DashLinkEditorCtrl {
@@ -21,30 +21,30 @@ export class DashLinkEditorCtrl {
   constructor($scope, $rootScope) {
     this.iconMap = iconMap;
     this.dashboard.links = this.dashboard.links || [];
-    this.mode = "list";
+    this.mode = 'list';
 
-    $scope.$on("$destroy", () => {
-      $rootScope.appEvent("dash-links-updated");
+    $scope.$on('$destroy', () => {
+      $rootScope.appEvent('dash-links-updated');
     });
   }
 
   backToList() {
-    this.mode = "list";
+    this.mode = 'list';
   }
 
   setupNew() {
-    this.mode = "new";
-    this.link = { type: "dashboards", icon: "external link" };
+    this.mode = 'new';
+    this.link = { type: 'dashboards', icon: 'external link' };
   }
 
   addLink() {
     this.dashboard.links.push(this.link);
-    this.mode = "list";
+    this.mode = 'list';
   }
 
   editLink(link) {
     this.link = link;
-    this.mode = "edit";
+    this.mode = 'edit';
     console.log(this.link);
   }
 
@@ -64,17 +64,17 @@ export class DashLinkEditorCtrl {
 
 function dashLinksEditor() {
   return {
-    restrict: "E",
+    restrict: 'E',
     controller: DashLinkEditorCtrl,
-    templateUrl: "public/app/features/dashlinks/editor.html",
+    templateUrl: 'public/app/features/dashlinks/editor.html',
     bindToController: true,
-    controllerAs: "ctrl",
+    controllerAs: 'ctrl',
     scope: {
-      dashboard: "="
-    }
+      dashboard: '=',
+    },
   };
 }
 
 angular
-  .module("grafana.directives")
-  .directive("dashLinksEditor", dashLinksEditor);
+  .module('grafana.directives')
+  .directive('dashLinksEditor', dashLinksEditor);

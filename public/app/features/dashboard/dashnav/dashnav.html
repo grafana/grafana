@@ -33,11 +33,11 @@
 			<i class="fa fa-save"></i>
 		</button>
 
-		<button class="btn navbar-button navbar-button--snapshot-origin" ng-if="::ctrl.dashboard.snapshot.originalUrl" ng-href="{{ctrl.dashboard.snapshot.originalUrl}}" bs-tooltip="'Open original dashboard'" data-placement="bottom">
+		<a class="btn navbar-button navbar-button--snapshot-origin" ng-if="::ctrl.dashboard.snapshot.originalUrl" href="{{ctrl.dashboard.snapshot.originalUrl}}" bs-tooltip="'Open original dashboard'" data-placement="bottom">
 			<i class="fa fa-link"></i>
-		</button>
+		</a>
 
-		<button class="btn navbar-button navbar-button--settings" ng-click="ctrl.toggleSettings()" bs-tooltip="'Settings'" data-placement="bottom">
+		<button class="btn navbar-button navbar-button--settings" ng-click="ctrl.toggleSettings()" bs-tooltip="'Settings'" data-placement="bottom" ng-show="ctrl.dashboard.meta.showSettings">
 			<i class="fa fa-cog"></i>
 		</button>
 	</div>

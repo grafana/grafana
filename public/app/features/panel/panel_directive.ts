@@ -58,7 +58,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
     restrict: 'E',
     template: panelTemplate,
     transclude: true,
-    scope: { ctrl: "=" },
+    scope: { ctrl: '=' },
     link: function(scope, elem) {
       var panelContainer = elem.find('.panel-container');
       var panelContent = elem.find('.panel-content');
@@ -85,7 +85,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
       }
 
       function panelHeightUpdated() {
-        panelContent.css({height: ctrl.height + 'px'});
+        panelContent.css({ height: ctrl.height + 'px' });
         if (panelScrollbar) {
           panelScrollbar.update();
         }
@@ -118,7 +118,10 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
 
       ctrl.events.on('render', () => {
         if (transparentLastState !== ctrl.panel.transparent) {
-          panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
+          panelContainer.toggleClass(
+            'panel-transparent',
+            ctrl.panel.transparent === true
+          );
           transparentLastState = ctrl.panel.transparent;
         }
 
@@ -134,8 +137,13 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
             panelContainer.removeClass('panel-alert-state--' + lastAlertState);
           }
 
-          if (ctrl.alertState.state === 'ok' || ctrl.alertState.state === 'alerting') {
-            panelContainer.addClass('panel-alert-state--' + ctrl.alertState.state);
+          if (
+            ctrl.alertState.state === 'ok' ||
+            ctrl.alertState.state === 'alerting'
+          ) {
+            panelContainer.addClass(
+              'panel-alert-state--' + ctrl.alertState.state
+            );
           }
 
           lastAlertState = ctrl.alertState.state;
@@ -147,7 +155,8 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
 
       function updatePanelCornerInfo() {
         var cornerMode = ctrl.getInfoMode();
-        cornerInfoElem[0].className = 'panel-info-corner panel-info-corner--' + cornerMode;
+        cornerInfoElem[0].className =
+          'panel-info-corner panel-info-corner--' + cornerMode;
 
         if (cornerMode) {
           if (infoDrop) {
@@ -157,7 +166,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
           infoDrop = new Drop({
             target: cornerInfoElem[0],
             content: function() {
-              return ctrl.getInfoContent({mode: 'tooltip'});
+              return ctrl.getInfoContent({ mode: 'tooltip' });
             },
             classes: ctrl.error ? 'drop-error' : 'drop-help',
             openOn: 'hover',
@@ -169,15 +178,18 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
                 {
                   to: 'window',
                   attachment: 'together',
-                  pin: true
-                }
+                  pin: true,
+                },
               ],
-            }
+            },
           });
         }
       }
 
-      scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], updatePanelCornerInfo);
+      scope.$watchGroup(
+        ['ctrl.error', 'ctrl.panel.description'],
+        updatePanelCornerInfo
+      );
       scope.$watchCollection('ctrl.panel.links', updatePanelCornerInfo);
 
       cornerInfoElem.on('click', function() {
@@ -200,7 +212,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
           panelScrollbar.update();
         }
       });
-    }
+    },
   };
 });
 
@@ -214,9 +226,6 @@ module.directive('panelHelpCorner', function($rootScope) {
     </span>
     </span>
     `,
-    link: function(scope, elem) {
-    }
+    link: function(scope, elem) {},
   };
 });
-
-

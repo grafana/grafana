@@ -1,10 +1,8 @@
-
-import {describe, it, expect} from 'test/lib/common';
+import { describe, it, expect } from 'test/lib/common';
 
 import * as queryDef from '../query_def';
 
 describe('ElasticQueryDef', function() {
-
   describe('getPipelineAggOptions', function() {
     describe('with zero targets', function() {
       var response = queryDef.getPipelineAggOptions([]);
@@ -18,8 +16,8 @@ describe('ElasticQueryDef', function() {
       var targets = {
         metrics: [
           { type: 'count', field: '@value' },
-          { type: 'sum', field: '@value' }
-        ]
+          { type: 'sum', field: '@value' },
+        ],
       };
 
       var response = queryDef.getPipelineAggOptions(targets);
@@ -33,8 +31,8 @@ describe('ElasticQueryDef', function() {
       var targets = {
         metrics: [
           { type: 'count', field: '@value' },
-          { type: 'moving_avg', field: '@value' }
-        ]
+          { type: 'moving_avg', field: '@value' },
+        ],
       };
 
       var response = queryDef.getPipelineAggOptions(targets);
@@ -46,9 +44,7 @@ describe('ElasticQueryDef', function() {
 
     describe('with derivatives targets', function() {
       var targets = {
-        metrics: [
-          { type: 'derivative', field: '@value' }
-        ]
+        metrics: [{ type: 'derivative', field: '@value' }],
       };
 
       var response = queryDef.getPipelineAggOptions(targets);
@@ -78,28 +74,28 @@ describe('ElasticQueryDef', function() {
   });
 
   describe('pipeline aggs depending on esverison', function() {
-      describe('using esversion undefined', function() {
-          it('should not get pipeline aggs', function() {
-              expect(queryDef.getMetricAggTypes(undefined).length).to.be(9);
-          });
+    describe('using esversion undefined', function() {
+      it('should not get pipeline aggs', function() {
+        expect(queryDef.getMetricAggTypes(undefined).length).to.be(9);
       });
+    });
 
-      describe('using esversion 1', function() {
-          it('should not get pipeline aggs', function() {
-              expect(queryDef.getMetricAggTypes(1).length).to.be(9);
-          });
+    describe('using esversion 1', function() {
+      it('should not get pipeline aggs', function() {
+        expect(queryDef.getMetricAggTypes(1).length).to.be(9);
       });
+    });
 
-      describe('using esversion 2', function() {
-          it('should get pipeline aggs', function() {
-              expect(queryDef.getMetricAggTypes(2).length).to.be(11);
-          });
+    describe('using esversion 2', function() {
+      it('should get pipeline aggs', function() {
+        expect(queryDef.getMetricAggTypes(2).length).to.be(11);
       });
+    });
 
-      describe('using esversion 5', function() {
-          it('should get pipeline aggs', function() {
-              expect(queryDef.getMetricAggTypes(5).length).to.be(11);
-          });
+    describe('using esversion 5', function() {
+      it('should get pipeline aggs', function() {
+        expect(queryDef.getMetricAggTypes(5).length).to.be(11);
       });
+    });
   });
 });

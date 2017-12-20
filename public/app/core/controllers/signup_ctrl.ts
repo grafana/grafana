@@ -4,14 +4,13 @@ import config from 'app/core/config';
 import coreModule from '../core_module';
 
 export class SignUpCtrl {
-
   /** @ngInject */
   constructor(
-      private $scope: any,
-      private backendSrv: any,
-      $location: any,
-      contextSrv: any) {
-
+    private $scope: any,
+    private backendSrv: any,
+    $location: any,
+    contextSrv: any
+  ) {
     contextSrv.sidemenu = false;
     $scope.ctrl = this;
 
@@ -30,11 +29,8 @@ export class SignUpCtrl {
       main: {
         icon: 'gicon gicon-branding',
         subTitle: 'Register your Grafana account',
-        breadcrumbs: [
-          { title: 'Login', url: '/login' },
-          { title: 'Sign Up' },
-        ]
-      }
+        breadcrumbs: [{ title: 'Login', url: '/login' }, { title: 'Sign Up' }],
+      },
     };
 
     backendSrv.get('/api/user/signup/options').then(options => {
@@ -43,20 +39,22 @@ export class SignUpCtrl {
     });
   }
 
-  submit () {
+  submit() {
     if (!this.$scope.signUpForm.$valid) {
       return;
     }
 
-    this.backendSrv.post('/api/user/signup/step2', this.$scope.formModel).then(rsp => {
-      if (rsp.code === 'redirect-to-select-org') {
-        window.location.href = config.appSubUrl + '/profile/select-org?signup=1';
-      } else {
-        window.location.href = config.appSubUrl + '/';
-      }
-    });
+    this.backendSrv
+      .post('/api/user/signup/step2', this.$scope.formModel)
+      .then(rsp => {
+        if (rsp.code === 'redirect-to-select-org') {
+          window.location.href =
+            config.appSubUrl + '/profile/select-org?signup=1';
+        } else {
+          window.location.href = config.appSubUrl + '/';
+        }
+      });
   }
 }
 
 coreModule.controller('SignUpCtrl', SignUpCtrl);
-

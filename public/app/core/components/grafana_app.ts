@@ -3,15 +3,21 @@ import _ from 'lodash';
 import $ from 'jquery';
 
 import coreModule from 'app/core/core_module';
-import {profiler} from 'app/core/profiler';
+import { profiler } from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
 import Drop from 'tether-drop';
 
 export class GrafanaCtrl {
-
   /** @ngInject */
-  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv, globalEventSrv) {
-
+  constructor(
+    $scope,
+    alertSrv,
+    utilSrv,
+    $rootScope,
+    $controller,
+    contextSrv,
+    globalEventSrv
+  ) {
     $scope.init = function() {
       $scope.contextSrv = contextSrv;
 
@@ -27,7 +33,7 @@ export class GrafanaCtrl {
     };
 
     $scope.initDashboard = function(dashboardData, viewScope) {
-      $scope.appEvent("dashboard-fetch-end", dashboardData);
+      $scope.appEvent('dashboard-fetch-end', dashboardData);
       $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
     };
 
@@ -49,13 +55,62 @@ export class GrafanaCtrl {
     };
 
     $rootScope.colors = [
-      "#7EB26D","#EAB839","#6ED0E0","#EF843C","#E24D42","#1F78C1","#BA43A9","#705DA0",
-      "#508642","#CCA300","#447EBC","#C15C17","#890F02","#0A437C","#6D1F62","#584477",
-      "#B7DBAB","#F4D598","#70DBED","#F9BA8F","#F29191","#82B5D8","#E5A8E2","#AEA2E0",
-      "#629E51","#E5AC0E","#64B0C8","#E0752D","#BF1B00","#0A50A1","#962D82","#614D93",
-      "#9AC48A","#F2C96D","#65C5DB","#F9934E","#EA6460","#5195CE","#D683CE","#806EB7",
-      "#3F6833","#967302","#2F575E","#99440A","#58140C","#052B51","#511749","#3F2B5B",
-      "#E0F9D7","#FCEACA","#CFFAFF","#F9E2D2","#FCE2DE","#BADFF4","#F9D9F9","#DEDAF7"
+      '#7EB26D',
+      '#EAB839',
+      '#6ED0E0',
+      '#EF843C',
+      '#E24D42',
+      '#1F78C1',
+      '#BA43A9',
+      '#705DA0',
+      '#508642',
+      '#CCA300',
+      '#447EBC',
+      '#C15C17',
+      '#890F02',
+      '#0A437C',
+      '#6D1F62',
+      '#584477',
+      '#B7DBAB',
+      '#F4D598',
+      '#70DBED',
+      '#F9BA8F',
+      '#F29191',
+      '#82B5D8',
+      '#E5A8E2',
+      '#AEA2E0',
+      '#629E51',
+      '#E5AC0E',
+      '#64B0C8',
+      '#E0752D',
+      '#BF1B00',
+      '#0A50A1',
+      '#962D82',
+      '#614D93',
+      '#9AC48A',
+      '#F2C96D',
+      '#65C5DB',
+      '#F9934E',
+      '#EA6460',
+      '#5195CE',
+      '#D683CE',
+      '#806EB7',
+      '#3F6833',
+      '#967302',
+      '#2F575E',
+      '#99440A',
+      '#58140C',
+      '#052B51',
+      '#511749',
+      '#3F2B5B',
+      '#E0F9D7',
+      '#FCEACA',
+      '#CFFAFF',
+      '#F9E2D2',
+      '#FCE2DE',
+      '#BADFF4',
+      '#F9D9F9',
+      '#DEDAF7',
     ];
 
     $scope.init();
@@ -63,7 +118,12 @@ export class GrafanaCtrl {
 }
 
 /** @ngInject */
-export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScope) {
+export function grafanaAppDirective(
+  playlistSrv,
+  contextSrv,
+  $timeout,
+  $rootScope
+) {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
@@ -92,7 +152,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       // tooltip removal fix
       // manage page classes
       var pageClass;
-      scope.$on("$routeChangeSuccess", function(evt, data) {
+      scope.$on('$routeChangeSuccess', function(evt, data) {
         if (pageClass) {
           body.removeClass(pageClass);
         }
@@ -107,7 +167,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
         // clear body class sidemenu states
         body.removeClass('sidemenu-open--xs');
 
-        $("#tooltip, .tooltip").remove();
+        $('#tooltip, .tooltip').remove();
 
         // check for kiosk url param
         if (data.params.kiosk) {
@@ -140,7 +200,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
           return;
         }
 
-        if ((new Date().getTime() - lastActivity) > inActiveTimeLimit) {
+        if (new Date().getTime() - lastActivity > inActiveTimeLimit) {
           activeUser = false;
           body.addClass('user-activity-low');
           // hide sidemenu
@@ -148,7 +208,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
             sidemenuHidden = true;
             body.removeClass('sidemenu-open');
             $timeout(function() {
-              $rootScope.$broadcast("render");
+              $rootScope.$broadcast('render');
             }, 100);
           }
         }
@@ -165,7 +225,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
             sidemenuHidden = false;
             body.addClass('sidemenu-open');
             $timeout(function() {
-              $rootScope.$broadcast("render");
+              $rootScope.$broadcast('render');
             }, 100);
           }
         }
@@ -209,7 +269,10 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
 
         // hide search
         if (body.find('.search-container').length > 0) {
-          if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
+          if (
+            target.parents('.search-results-container, .search-field-wrapper')
+              .length === 0
+          ) {
             scope.$apply(function() {
               scope.appEvent('hide-dash-search');
             });
@@ -218,11 +281,14 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
 
         // hide popovers
         var popover = elem.find('.popover');
-        if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
+        if (
+          popover.length > 0 &&
+          target.parents('.graph-legend').length === 0
+        ) {
           popover.hide();
         }
       });
-    }
+    },
   };
 }
 

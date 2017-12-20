@@ -2,7 +2,6 @@
 // Dropdown menus
 // --------------------------------------------------
 
-
 // Use the .menu class on any <li> element within the topbar or ul.tabs and you'll get some superfancy dropdowns
 .dropup,
 .dropdown {
@@ -31,9 +30,9 @@
   width: 0;
   height: 0;
   vertical-align: top;
-  border-top:   4px solid $text-color-weak;
+  border-top: 4px solid $text-color-weak;
   border-right: 4px solid transparent;
-  border-left:  4px solid transparent;
+  border-left: 4px solid transparent;
   content: "";
 }
 
@@ -137,7 +136,6 @@
 .dropdown-item-text {
   flex-grow: 1;
 }
-
 
 // Hover/Focus state
 // -----------

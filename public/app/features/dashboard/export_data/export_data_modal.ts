@@ -14,9 +14,17 @@ export class ExportDataModalCtrl {
       fileExport.exportTableDataToCsv(this.data, this.excel);
     } else {
       if (this.asRows) {
-        fileExport.exportSeriesListToCsv(this.data, this.dateTimeFormat, this.excel);
+        fileExport.exportSeriesListToCsv(
+          this.data,
+          this.dateTimeFormat,
+          this.excel
+        );
       } else {
-        fileExport.exportSeriesListToCsvColumns(this.data, this.dateTimeFormat, this.excel);
+        fileExport.exportSeriesListToCsvColumns(
+          this.data,
+          this.dateTimeFormat,
+          this.excel
+        );
       }
     }
 
@@ -31,15 +39,18 @@ export class ExportDataModalCtrl {
 export function exportDataModal() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/export_data/export_data_modal.html',
+    templateUrl:
+      'public/app/features/dashboard/export_data/export_data_modal.html',
     controller: ExportDataModalCtrl,
     controllerAs: 'ctrl',
     scope: {
       panel: '<',
-      data: '<' // The difference to '=' is that the bound properties are not watched
+      data: '<', // The difference to '=' is that the bound properties are not watched
     },
-    bindToController: true
+    bindToController: true,
   };
 }
 
-angular.module('grafana.directives').directive('exportDataModal', exportDataModal);
+angular
+  .module('grafana.directives')
+  .directive('exportDataModal', exportDataModal);

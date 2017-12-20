@@ -67,8 +67,10 @@ export default class PrometheusMetricFindQuery {
 
       return this.datasource._request("GET", url).then(function(result) {
         var _labels = _.map(result.data.data, function(metric) {
-          return metric[label] || '';
-        }).filter(function(label) { return label !== ''; });
+          return metric[label] || "";
+        }).filter(function(label) {
+          return label !== "";
+        });
 
         return _.uniq(_labels).map(function(metric) {
           return {

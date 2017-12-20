@@ -13,27 +13,35 @@ export class DashImportListCtrl {
   constructor($scope, private backendSrv, private $rootScope) {
     this.dashboards = [];
 
-    backendSrv.get(`/api/plugins/${this.plugin.id}/dashboards`).then(dashboards => {
-      this.dashboards = dashboards;
-    });
+    backendSrv
+      .get(`/api/plugins/${this.plugin.id}/dashboards`)
+      .then(dashboards => {
+        this.dashboards = dashboards;
+      });
 
-    appEvents.on('dashboard-list-import-all', this.importAll.bind(this), $scope);
+    appEvents.on(
+      'dashboard-list-import-all',
+      this.importAll.bind(this),
+      $scope
+    );
   }
 
   importAll(payload) {
-    return this.importNext(0).then(() => {
-      payload.resolve("All dashboards imported");
-    }).catch(err => {
-      payload.reject(err);
-    });
+    return this.importNext(0)
+      .then(() => {
+        payload.resolve('All dashboards imported');
+      })
+      .catch(err => {
+        payload.reject(err);
+      });
   }
 
   importNext(index) {
     return this.import(this.dashboards[index], true).then(() => {
-      if (index+1 < this.dashboards.length) {
+      if (index + 1 < this.dashboards.length) {
         return new Promise(resolve => {
           setTimeout(() => {
-            this.importNext(index+1).then(() => {
+            this.importNext(index + 1).then(() => {
               resolve();
             });
           }, 500);
@@ -49,7 +57,7 @@ export class DashImportListCtrl {
       pluginId: this.plugin.id,
       path: dash.path,
       overwrite: overwrite,
-      inputs: []
+      inputs: [],
     };
 
     if (this.datasource) {
@@ -57,19 +65,27 @@ export class DashImportListCtrl {
         name: '*',
         type: 'datasource',
         pluginId: this.datasource.type,
-        value: this.datasource.name
+        value: this.datasource.name,
       });
     }
 
-    return this.backendSrv.post(`/api/dashboards/import`, installCmd).then(res => {
-      this.$rootScope.appEvent('alert-success', ['Dashboard Imported', dash.title]);
-      _.extend(dash, res);
-    });
+    return this.backendSrv
+      .post(`/api/dashboards/import`, installCmd)
+      .then(res => {
+        this.$rootScope.appEvent('alert-success', [
+          'Dashboard Imported',
+          dash.title,
+        ]);
+        _.extend(dash, res);
+      });
   }
 
   remove(dash) {
     this.backendSrv.delete('/api/dashboards/' + dash.importedUri).then(() => {
-      this.$rootScope.appEvent('alert-success', ['Dashboard Deleted', dash.title]);
+      this.$rootScope.appEvent('alert-success', [
+        'Dashboard Deleted',
+        dash.title,
+      ]);
       dash.imported = false;
     });
   }
@@ -83,9 +99,9 @@ export function dashboardImportList() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      plugin: "=",
-      datasource: "="
-    }
+      plugin: '=',
+      datasource: '=',
+    },
   };
 }
 

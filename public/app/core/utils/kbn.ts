@@ -168,7 +168,9 @@ kbn.calculateInterval = function(range, resolution, lowLimitInterval) {
     lowLimitMs = kbn.interval_to_ms(lowLimitInterval);
   }
 
-  intervalMs = kbn.round_interval((range.to.valueOf() - range.from.valueOf()) / resolution);
+  intervalMs = kbn.round_interval(
+    (range.to.valueOf() - range.from.valueOf()) / resolution
+  );
   if (lowLimitMs > intervalMs) {
     intervalMs = lowLimitMs;
   }
@@ -182,7 +184,9 @@ kbn.calculateInterval = function(range, resolution, lowLimitInterval) {
 kbn.describe_interval = function(str) {
   var matches = str.match(kbn.interval_regex);
   if (!matches || !_.has(kbn.intervals_in_seconds, matches[2])) {
-    throw new Error('Invalid interval string, expecting a number followed by one of "Mwdhmsy"');
+    throw new Error(
+      'Invalid interval string, expecting a number followed by one of "Mwdhmsy"'
+    );
   } else {
     return {
       sec: kbn.intervals_in_seconds[matches[2]],
@@ -205,7 +209,11 @@ kbn.interval_to_seconds = function(str) {
 kbn.query_color_dot = function(color, diameter) {
   return (
     '<div class="icon-circle" style="' +
-    ['display:inline-block', 'color:' + color, 'font-size:' + diameter + 'px'].join(';') +
+    [
+      'display:inline-block',
+      'color:' + color,
+      'font-size:' + diameter + 'px',
+    ].join(';') +
     '"></div>'
   );
 };
@@ -245,14 +253,23 @@ kbn.toFixed = function(value, decimals) {
     var decimalPos = formatted.indexOf('.');
     var precision = decimalPos === -1 ? 0 : formatted.length - decimalPos - 1;
     if (precision < decimals) {
-      return (precision ? formatted : formatted + '.') + String(factor).substr(1, decimals - precision);
+      return (
+        (precision ? formatted : formatted + '.') +
+        String(factor).substr(1, decimals - precision)
+      );
     }
   }
 
   return formatted;
 };
 
-kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals, ext) {
+kbn.toFixedScaled = function(
+  value,
+  decimals,
+  scaledDecimals,
+  additionalDecimals,
+  ext
+) {
   if (scaledDecimals === null) {
     return kbn.toFixed(value, decimals) + ext;
   } else {
@@ -329,7 +346,9 @@ kbn.formatBuilders.decimalSIPrefix = function(unit, offset) {
 // offset is given, it starts the units at the given prefix; otherwise, the
 // offset defaults to zero and the initial unit is not prefixed.
 kbn.formatBuilders.binarySIPrefix = function(unit, offset) {
-  var prefixes = ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'].slice(offset);
+  var prefixes = ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'].slice(
+    offset
+  );
   var units = prefixes.map(function(p) {
     return ' ' + p + unit;
   });
@@ -506,7 +525,11 @@ kbn.valueFormats.pressurembar = kbn.formatBuilders.decimalSIPrefix('bar', -1);
 kbn.valueFormats.pressurekbar = kbn.formatBuilders.decimalSIPrefix('bar', 1);
 kbn.valueFormats.pressurehpa = kbn.formatBuilders.fixedUnit('hPa');
 kbn.valueFormats.pressurehg = kbn.formatBuilders.fixedUnit('"Hg');
-kbn.valueFormats.pressurepsi = kbn.formatBuilders.scaledUnits(1000, [' psi', ' ksi', ' Mpsi']);
+kbn.valueFormats.pressurepsi = kbn.formatBuilders.scaledUnits(1000, [
+  ' psi',
+  ' ksi',
+  ' Mpsi',
+]);
 
 // Force
 kbn.valueFormats.forceNm = kbn.formatBuilders.decimalSIPrefix('Nm');
@@ -541,7 +564,7 @@ kbn.valueFormats.velocityknot = kbn.formatBuilders.fixedUnit('kn');
 // Acceleration
 kbn.valueFormats.accMS2 = kbn.formatBuilders.fixedUnit('m/sec²');
 kbn.valueFormats.accFS2 = kbn.formatBuilders.fixedUnit('f/sec²');
-kbn.valueFormats.accG   = kbn.formatBuilders.fixedUnit('g');
+kbn.valueFormats.accG = kbn.formatBuilders.fixedUnit('g');
 
 // Volume
 kbn.valueFormats.litre = kbn.formatBuilders.decimalSIPrefix('L');
@@ -557,9 +580,9 @@ kbn.valueFormats.flowcfs = kbn.formatBuilders.fixedUnit('cfs');
 kbn.valueFormats.flowcfm = kbn.formatBuilders.fixedUnit('cfm');
 
 // Angle
-kbn.valueFormats.degree  = kbn.formatBuilders.fixedUnit('°');
-kbn.valueFormats.radian  = kbn.formatBuilders.fixedUnit('rad');
-kbn.valueFormats.grad    = kbn.formatBuilders.fixedUnit('grad');
+kbn.valueFormats.degree = kbn.formatBuilders.fixedUnit('°');
+kbn.valueFormats.radian = kbn.formatBuilders.fixedUnit('rad');
+kbn.valueFormats.grad = kbn.formatBuilders.fixedUnit('grad');
 
 // Time
 kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
@@ -579,13 +602,31 @@ kbn.valueFormats.ms = function(size, decimals, scaledDecimals) {
     return kbn.toFixedScaled(size / 60000, decimals, scaledDecimals, 5, ' min');
   } else if (Math.abs(size) < 86400000) {
     // Less than one day, devide in hours
-    return kbn.toFixedScaled(size / 3600000, decimals, scaledDecimals, 7, ' hour');
+    return kbn.toFixedScaled(
+      size / 3600000,
+      decimals,
+      scaledDecimals,
+      7,
+      ' hour'
+    );
   } else if (Math.abs(size) < 31536000000) {
     // Less than one year, devide in days
-    return kbn.toFixedScaled(size / 86400000, decimals, scaledDecimals, 8, ' day');
+    return kbn.toFixedScaled(
+      size / 86400000,
+      decimals,
+      scaledDecimals,
+      8,
+      ' day'
+    );
   }
 
-  return kbn.toFixedScaled(size / 31536000000, decimals, scaledDecimals, 10, ' year');
+  return kbn.toFixedScaled(
+    size / 31536000000,
+    decimals,
+    scaledDecimals,
+    10,
+    ' year'
+  );
 };
 
 kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
@@ -595,15 +636,33 @@ kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
 
   // Less than 1 µs, devide in ns
   if (Math.abs(size) < 0.000001) {
-    return kbn.toFixedScaled(size * 1e9, decimals, scaledDecimals - decimals, -9, ' ns');
+    return kbn.toFixedScaled(
+      size * 1e9,
+      decimals,
+      scaledDecimals - decimals,
+      -9,
+      ' ns'
+    );
   }
   // Less than 1 ms, devide in µs
   if (Math.abs(size) < 0.001) {
-    return kbn.toFixedScaled(size * 1e6, decimals, scaledDecimals - decimals, -6, ' µs');
+    return kbn.toFixedScaled(
+      size * 1e6,
+      decimals,
+      scaledDecimals - decimals,
+      -6,
+      ' µs'
+    );
   }
   // Less than 1 second, devide in ms
   if (Math.abs(size) < 1) {
-    return kbn.toFixedScaled(size * 1e3, decimals, scaledDecimals - decimals, -3, ' ms');
+    return kbn.toFixedScaled(
+      size * 1e3,
+      decimals,
+      scaledDecimals - decimals,
+      -3,
+      ' ms'
+    );
   }
 
   if (Math.abs(size) < 60) {
@@ -619,10 +678,22 @@ kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
     return kbn.toFixedScaled(size / 86400, decimals, scaledDecimals, 5, ' day');
   } else if (Math.abs(size) < 31536000) {
     // Less than one year, devide in week
-    return kbn.toFixedScaled(size / 604800, decimals, scaledDecimals, 6, ' week');
+    return kbn.toFixedScaled(
+      size / 604800,
+      decimals,
+      scaledDecimals,
+      6,
+      ' week'
+    );
   }
 
-  return kbn.toFixedScaled(size / 3.15569e7, decimals, scaledDecimals, 7, ' year');
+  return kbn.toFixedScaled(
+    size / 3.15569e7,
+    decimals,
+    scaledDecimals,
+    7,
+    ' year'
+  );
 };
 
 kbn.valueFormats['µs'] = function(size, decimals, scaledDecimals) {
@@ -649,11 +720,29 @@ kbn.valueFormats.ns = function(size, decimals, scaledDecimals) {
   } else if (Math.abs(size) < 1000000) {
     return kbn.toFixedScaled(size / 1000, decimals, scaledDecimals, 3, ' µs');
   } else if (Math.abs(size) < 1000000000) {
-    return kbn.toFixedScaled(size / 1000000, decimals, scaledDecimals, 6, ' ms');
+    return kbn.toFixedScaled(
+      size / 1000000,
+      decimals,
+      scaledDecimals,
+      6,
+      ' ms'
+    );
   } else if (Math.abs(size) < 60000000000) {
-    return kbn.toFixedScaled(size / 1000000000, decimals, scaledDecimals, 9, ' s');
+    return kbn.toFixedScaled(
+      size / 1000000000,
+      decimals,
+      scaledDecimals,
+      9,
+      ' s'
+    );
   } else {
-    return kbn.toFixedScaled(size / 60000000000, decimals, scaledDecimals, 12, ' min');
+    return kbn.toFixedScaled(
+      size / 60000000000,
+      decimals,
+      scaledDecimals,
+      12,
+      ' min'
+    );
   }
 };
 
@@ -669,9 +758,21 @@ kbn.valueFormats.m = function(size, decimals, scaledDecimals) {
   } else if (Math.abs(size) < 10080) {
     return kbn.toFixedScaled(size / 1440, decimals, scaledDecimals, 3, ' day');
   } else if (Math.abs(size) < 604800) {
-    return kbn.toFixedScaled(size / 10080, decimals, scaledDecimals, 4, ' week');
+    return kbn.toFixedScaled(
+      size / 10080,
+      decimals,
+      scaledDecimals,
+      4,
+      ' week'
+    );
   } else {
-    return kbn.toFixedScaled(size / 5.25948e5, decimals, scaledDecimals, 5, ' year');
+    return kbn.toFixedScaled(
+      size / 5.25948e5,
+      decimals,
+      scaledDecimals,
+      5,
+      ' year'
+    );
   }
 };
 
@@ -902,10 +1003,10 @@ kbn.getUnitFormats = function() {
     {
       text: 'area',
       submenu: [
-        {text: 'Square Meters (m²)', value: 'areaM2' },
-        {text: 'Square Feet (ft²)',  value: 'areaF2' },
-        {text: 'Square Miles (mi²)', value: 'areaMI2'},
-      ]
+        { text: 'Square Meters (m²)', value: 'areaM2' },
+        { text: 'Square Feet (ft²)', value: 'areaF2' },
+        { text: 'Square Miles (mi²)', value: 'areaMI2' },
+      ],
     },
     {
       text: 'mass',
@@ -957,7 +1058,7 @@ kbn.getUnitFormats = function() {
         { text: 'Kilovolt (kV)', value: 'kvolt' },
         { text: 'Millivolt (mV)', value: 'mvolt' },
         { text: 'Decibel-milliwatt (dBm)', value: 'dBm' },
-        { text: 'Ohm (Ω)', value: 'ohm' }
+        { text: 'Ohm (Ω)', value: 'ohm' },
       ],
     },
     {
@@ -1002,17 +1103,17 @@ kbn.getUnitFormats = function() {
       submenu: [
         { text: 'Degrees (°)', value: 'degree' },
         { text: 'Radians', value: 'radian' },
-        { text: 'Gradian', value: 'grad' }
-      ]
+        { text: 'Gradian', value: 'grad' },
+      ],
     },
     {
       text: 'acceleration',
       submenu: [
         { text: 'Meters/sec²', value: 'accMS2' },
-        { text: 'Feet/sec²',  value: 'accFS2' },
-        { text: 'G unit',  value: 'accG' }
-      ]
-    }
+        { text: 'Feet/sec²', value: 'accFS2' },
+        { text: 'G unit', value: 'accG' },
+      ],
+    },
   ];
 };
 

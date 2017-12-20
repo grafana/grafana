@@ -3,30 +3,41 @@ import moment from 'moment';
 import config from 'app/core/config';
 
 export class ShareModalCtrl {
-
   /** @ngInject */
-  constructor($scope, $rootScope, $location, $timeout, timeSrv, templateSrv, linkSrv) {
-    $scope.options = { forCurrent: true, includeTemplateVars: true, theme: 'current' };
-    $scope.editor = { index: $scope.tabIndex || 0};
+  constructor(
+    $scope,
+    $rootScope,
+    $location,
+    $timeout,
+    timeSrv,
+    templateSrv,
+    linkSrv
+  ) {
+    $scope.options = {
+      forCurrent: true,
+      includeTemplateVars: true,
+      theme: 'current',
+    };
+    $scope.editor = { index: $scope.tabIndex || 0 };
 
     $scope.init = function() {
       $scope.modeSharePanel = $scope.panel ? true : false;
 
-      $scope.tabs = [{title: 'Link', src: 'shareLink.html'}];
+      $scope.tabs = [{ title: 'Link', src: 'shareLink.html' }];
 
       if ($scope.modeSharePanel) {
         $scope.modalTitle = 'Share Panel';
-        $scope.tabs.push({title: 'Embed', src: 'shareEmbed.html'});
+        $scope.tabs.push({ title: 'Embed', src: 'shareEmbed.html' });
       } else {
         $scope.modalTitle = 'Share';
       }
 
       if (!$scope.dashboard.meta.isSnapshot) {
-        $scope.tabs.push({title: 'Snapshot', src: 'shareSnapshot.html'});
+        $scope.tabs.push({ title: 'Snapshot', src: 'shareSnapshot.html' });
       }
 
       if (!$scope.dashboard.meta.isSnapshot && !$scope.modeSharePanel) {
-        $scope.tabs.push({title: 'Export', src: 'shareExport.html'});
+        $scope.tabs.push({ title: 'Export', src: 'shareExport.html' });
       }
 
       $scope.buildUrl();
@@ -70,17 +81,26 @@ export class ShareModalCtrl {
 
       $scope.shareUrl = linkSrv.addParamsToUrl(baseUrl, params);
 
-      var soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
+      var soloUrl = baseUrl.replace(
+        config.appSubUrl + '/dashboard/',
+        config.appSubUrl + '/dashboard-solo/'
+      );
       delete params.fullscreen;
       delete params.edit;
       soloUrl = linkSrv.addParamsToUrl(soloUrl, params);
 
-      $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
+      $scope.iframeHtml =
+        '<iframe src="' +
+        soloUrl +
+        '" width="450" height="200" frameborder="0"></iframe>';
 
-      $scope.imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
+      $scope.imageUrl = soloUrl.replace(
+        config.appSubUrl + '/dashboard-solo/',
+        config.appSubUrl + '/render/dashboard-solo/'
+      );
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
-      $scope.imageUrl += '&tz=UTC' + encodeURIComponent(moment().format("Z"));
+      $scope.imageUrl += '&tz=UTC' + encodeURIComponent(moment().format('Z'));
     };
 
     $scope.getShareUrl = function() {
@@ -89,4 +109,6 @@ export class ShareModalCtrl {
   }
 }
 
-angular.module('grafana.controllers').controller('ShareModalCtrl', ShareModalCtrl);
+angular
+  .module('grafana.controllers')
+  .controller('ShareModalCtrl', ShareModalCtrl);

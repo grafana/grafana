@@ -7,8 +7,7 @@ export class Timer {
   timers = [];
 
   /** @ngInject */
-  constructor(private $timeout) {
-  }
+  constructor(private $timeout) {}
 
   register(promise) {
     this.timers.push(promise);
