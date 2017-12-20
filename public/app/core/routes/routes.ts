@@ -145,6 +145,12 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
       resolve: loadOrgBundle,
     })
+    .when('/org/teams/new', {
+      templateUrl: 'public/app/features/org/partials/create_team.html',
+      controller: 'CreateTeamCtrl',
+      controllerAs: 'ctrl',
+      resolve: loadOrgBundle,
+    })
     .when('/org/teams/edit/:id', {
       templateUrl: 'public/app/features/org/partials/team_details.html',
       controller: 'TeamDetailsCtrl',

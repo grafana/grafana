@@ -55,7 +55,10 @@ export default class TeamDetailsCtrl {
       return;
     }
 
-    this.backendSrv.put('/api/teams/' + this.team.id, { name: this.team.name });
+    this.backendSrv.put('/api/teams/' + this.team.id, {
+      name: this.team.name,
+      email: this.team.email,
+    });
   }
 
   userPicked(user) {
@@ -71,6 +74,7 @@ export default class TeamDetailsCtrl {
 export interface Team {
   id: number;
   name: string;
+  email: string;
 }
 
 export interface User {

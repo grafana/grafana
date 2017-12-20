@@ -8,7 +8,7 @@
     </label>
     <div class="page-action-bar__spacer"></div>
 
-    <a class="btn btn-success" ng-click="ctrl.openTeamModal()">
+    <a class="btn btn-success" href="/org/teams/new">
       <i class="fa fa-plus"></i>
 			Add Team
     </a>
@@ -18,16 +18,26 @@
     <table class="filter-table filter-table--hover form-inline" ng-show="ctrl.teams.length > 0">
       <thead>
         <tr>
+          <th></th>
           <th>Name</th>
+          <th>Email</th>
           <th>Members</th>
           <th style="width: 1%"></th>
         </tr>
       </thead>
       <tbody>
         <tr ng-repeat="team in ctrl.teams">
+          <td class="width-4 text-center link-td">
+            <a href="org/teams/edit/{{team.id}}">
+              <img class="filter-table__avatar" ng-src="{{team.avatarUrl}}"></img>
+            </a>
+          </td>
           <td class="link-td">
             <a href="org/teams/edit/{{team.id}}">{{team.name}}</a>
           </td>
+          <td class="link-td">
+              <a href="org/teams/edit/{{team.id}}">{{team.email}}</a>
+            </td>
           <td class="link-td">
             <a href="org/teams/edit/{{team.id}}">{{team.memberCount}}</a>
           </td>

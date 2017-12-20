@@ -3,13 +3,22 @@
 <div class="page-container page-body">
 	<h3 class="page-sub-heading">Team Details</h3>
 
-  <form name="teamDetailsForm" class="gf-form-group gf-form-inline">
-    <div class="gf-form">
+  <form name="teamDetailsForm" class="gf-form-group">
+    <div class="gf-form max-width-30">
       <span class="gf-form-label width-10">Name</span>
-      <input type="text" required ng-model="ctrl.team.name" class="gf-form-input max-width-14">
-    </div>
+      <input type="text" required ng-model="ctrl.team.name" class="gf-form-input max-width-22">
+		</div>
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-10">
+				Email
+				<info-popover mode="right-normal">
+						This is optional and is primarily used for allowing custom team avatars.
+				</info-popover>
+			</span>
+			<input class="gf-form-input max-width-22" type="email" ng-model="ctrl.team.email" placeholder="email@test.com">
+		</div>
 
-    <div class="gf-form">
+    <div class="gf-form-button-row">
       <button type="submit" class="btn btn-success" ng-click="ctrl.update()">Update</button>
     </div>
   </form>
@@ -28,12 +37,16 @@
     <table class="filter-table" ng-show="ctrl.teamMembers.length > 0">
 			<thead>
 				<tr>
+					<th></th>
 					<th>Username</th>
 					<th>Email</th>
 					<th></th>
 				</tr>
 			</thead>
 			<tr ng-repeat="member in ctrl.teamMembers">
+				<td class="width-4 text-center link-td">
+					<img class="filter-table__avatar" ng-src="{{member.avatarUrl}}"></img>
+				</td>
 				<td>{{member.login}}</td>
 				<td>{{member.email}}</td>
 				<td style="width: 1%">
