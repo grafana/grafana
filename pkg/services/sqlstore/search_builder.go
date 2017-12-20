@@ -175,14 +175,14 @@ func (sb *SearchBuilder) buildSearchWhereClause() {
 	}
 
 	if sb.signedInUser.OrgRole != m.ROLE_ADMIN {
-		allowedDashboardsSubQuery := ` AND (dashboard.has_acl = 0 OR dashboard.id in (
+		allowedDashboardsSubQuery := ` AND (dashboard.has_acl = ` + dialect.BooleanStr(false) + ` OR dashboard.id in (
 			SELECT distinct d.id AS DashboardId
 			FROM dashboard AS d
 	      		LEFT JOIN dashboard_acl as da on d.folder_id = da.dashboard_id or d.id = da.dashboard_id
 	      		LEFT JOIN team_member as ugm on ugm.team_id =  da.team_id
 	      		LEFT JOIN org_user ou on ou.role = da.role
 			WHERE
-			  d.has_acl = 1 and
+			  d.has_acl = ` + dialect.BooleanStr(true) + ` and
 				(da.user_id = ? or ugm.user_id = ? or ou.id is not null)
 			  and d.org_id = ?
 			)
@@ -198,11 +198,11 @@ func (sb *SearchBuilder) buildSearchWhereClause() {
 	}
 
 	if sb.whereTypeFolder {
-		sb.sql.WriteString(" AND dashboard.is_folder = 1")
+		sb.sql.WriteString(" AND dashboard.is_folder = " + dialect.BooleanStr(true))
 	}
 
 	if sb.whereTypeDash {
-		sb.sql.WriteString(" AND dashboard.is_folder = 0")
+		sb.sql.WriteString(" AND dashboard.is_folder = " + dialect.BooleanStr(false))
 	}
 
 	if len(sb.whereFolderIds) > 0 {
