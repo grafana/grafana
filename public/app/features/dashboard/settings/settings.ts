@@ -68,6 +68,14 @@ export class SettingsCtrl {
       });
     }
 
+    if (this.dashboard.id && this.dashboard.meta.canSave) {
+      this.sections.push({
+        title: "Permissions",
+        id: "permissions",
+        icon: "fa fa-fw fa-lock"
+      });
+    }
+
     if (this.dashboard.meta.canMakeEditable) {
       this.sections.push({
         title: 'General',

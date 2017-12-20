@@ -93,6 +93,14 @@
 	</div>
 </div>
 
+<div class="dashboard-settings__content" ng-if="ctrl.viewId === 'permissions'" >
+  <h3 class="dashboard-settings__header">Permissions</h3>
+  <dash-acl-modal ng-if="ctrl.dashboard"
+    dashboard="ctrl.dashboard"
+    meta="ctrl.dashboard.meta">
+  </dash-acl-modal>
+</div>
+
 <div class="dashboard-settings__content" ng-if="ctrl.viewId === '404'">
   <h3 class="dashboard-settings__header">Settings view not found</h3>
 
