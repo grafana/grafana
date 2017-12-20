@@ -64,10 +64,14 @@ var handshakeConfig = plugin.HandshakeConfig{
 	MagicCookieValue: "55d2200a-6492-493a-9353-73b728d468aa",
 }
 
+func buildExecutablePath(pluginDir, executable, os, arch string) string {
+	return path.Join(pluginDir, fmt.Sprintf("%s_%s_%s", executable, strings.ToLower(os), strings.ToLower(arch)))
+}
+
 func (p *DataSourcePlugin) initBackendPlugin(log log.Logger) error {
 	p.log = log.New("plugin-id", p.Id)
 
-	cmd := path.Join(p.PluginDir, fmt.Sprintf("%s_%s_%s", p.Executable, strings.ToLower(runtime.GOOS), strings.ToLower(runtime.GOARCH)))
+	cmd := buildExecutablePath(p.PluginDir, p.Executable, runtime.GOOS, runtime.GOARCH)
 
 	p.client = plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig:  handshakeConfig,
