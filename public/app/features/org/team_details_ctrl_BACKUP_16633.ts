@@ -22,18 +22,37 @@ export default class TeamDetailsCtrl {
       this.backendSrv.get(`/api/teams/${this.$routeParams.id}`).then(result => {
         this.team = result;
       });
+<<<<<<< HEAD
       this.backendSrv.get(`/api/teams/${this.$routeParams.id}/members`).then(result => {
         this.teamMembers = result;
       });
+=======
+      this.backendSrv
+        .get(`/api/teams/${this.$routeParams.id}/members`)
+        .then(result => {
+          this.teamMembers = result;
+        });
+>>>>>>> ux: POC on new select box for the user picker (#10289)
     }
   }
 
   removeTeamMember(teamMember: TeamMember) {
+<<<<<<< HEAD
     this.$scope.appEvent('confirm-modal', {
       title: 'Remove Member',
       text: 'Are you sure you want to remove ' + teamMember.login + ' from this group?',
       yesText: 'Remove',
       icon: 'fa-warning',
+=======
+    this.$scope.appEvent("confirm-modal", {
+      title: "Remove Member",
+      text:
+        "Are you sure you want to remove " +
+        teamMember.login +
+        " from this group?",
+      yesText: "Remove",
+      icon: "fa-warning",
+>>>>>>> ux: POC on new select box for the user picker (#10289)
       onConfirm: () => {
         this.removeMemberConfirmed(teamMember);
       },
@@ -41,7 +60,13 @@ export default class TeamDetailsCtrl {
   }
 
   removeMemberConfirmed(teamMember: TeamMember) {
-    this.backendSrv.delete(`/api/teams/${this.$routeParams.id}/members/${teamMember.userId}`).then(this.get);
+<<<<<<< HEAD
+    this.backendSrv.delete(`/api/teams/${this.$routeParams.id}/members/${teamMember.userId}`).then(this.get.bind(this));
+=======
+    this.backendSrv
+      .delete(`/api/teams/${this.$routeParams.id}/members/${teamMember.userId}`)
+      .then(this.get);
+>>>>>>> ux: POC on new select box for the user picker (#10289)
   }
 
   update() {
@@ -49,6 +74,7 @@ export default class TeamDetailsCtrl {
       return;
     }
 
+<<<<<<< HEAD
     this.backendSrv.put('/api/teams/' + this.team.id, {
       name: this.team.name,
       email: this.team.email,
@@ -60,6 +86,18 @@ export default class TeamDetailsCtrl {
       this.$scope.$broadcast('user-picker-reset');
       this.get();
     });
+=======
+    this.backendSrv.put("/api/teams/" + this.team.id, { name: this.team.name });
+  }
+
+  userPicked(user) {
+    this.backendSrv
+      .post(`/api/teams/${this.$routeParams.id}/members`, { userId: user.id })
+      .then(() => {
+        this.$scope.$broadcast("user-picker-reset");
+        this.get();
+      });
+>>>>>>> ux: POC on new select box for the user picker (#10289)
   }
 }
 
@@ -82,4 +120,8 @@ export interface TeamMember {
   login: string;
 }
 
+<<<<<<< HEAD
 coreModule.controller('TeamDetailsCtrl', TeamDetailsCtrl);
+=======
+coreModule.controller("TeamDetailsCtrl", TeamDetailsCtrl);
+>>>>>>> ux: POC on new select box for the user picker (#10289)

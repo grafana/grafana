@@ -1,4 +1,4 @@
-import coreModule from "app/core/core_module";
+import coreModule from 'app/core/core_module';
 
 export default class TeamDetailsCtrl {
   team: Team;
@@ -6,14 +6,8 @@ export default class TeamDetailsCtrl {
   navModel: any;
 
   /** @ngInject **/
-  constructor(
-    private $scope,
-    private backendSrv,
-    private $routeParams,
-    navModelSrv
-  ) {
-    this.navModel = navModelSrv.getNav("cfg", "teams", 0);
-    this.get = this.get.bind(this);
+  constructor(private $scope, private backendSrv, private $routeParams, navModelSrv) {
+    this.navModel = navModelSrv.getNav('cfg', 'teams', 0);
     this.get();
   }
 
@@ -41,7 +35,7 @@ export default class TeamDetailsCtrl {
   }
 
   removeMemberConfirmed(teamMember: TeamMember) {
-    this.backendSrv.delete(`/api/teams/${this.$routeParams.id}/members/${teamMember.userId}`).then(this.get);
+    this.backendSrv.delete(`/api/teams/${this.$routeParams.id}/members/${teamMember.userId}`).then(this.get.bind(this));
   }
 
   update() {

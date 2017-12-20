@@ -149,6 +149,7 @@
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "react-grid-layout": "^0.16.1",
+    "react-select": "^1.1.0",
     "react-sizeme": "^2.3.6",
     "remarkable": "^1.7.1",
     "rxjs": "^5.4.3",
