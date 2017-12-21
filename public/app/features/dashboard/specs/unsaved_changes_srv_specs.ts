@@ -32,7 +32,6 @@ describe('unsavedChangesSrv', function() {
 
   beforeEach(
     angularMocks.inject(function(
-      unsavedChangesSrv,
       $location,
       $rootScope,
       dashboardSrv,
