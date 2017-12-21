@@ -20,6 +20,17 @@ export const SearchResultSection = types
   .actions(self => ({
     toggle() {
       self.expanded = !self.expanded;
+
+      for (let i = 0; i < 100; i++) {
+        self.items.push(
+          ResultItem.create({
+            id: i,
+            title: "Dashboard " + self.items.length,
+            icon: "gicon gicon-dashboard",
+            url: "asd"
+          })
+        );
+      }
     }
   }));
 

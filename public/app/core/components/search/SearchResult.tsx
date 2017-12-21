@@ -15,6 +15,8 @@ export class SearchResult extends React.Component<SearchResultProps, any> {
     this.state = {
       search: store.search
     };
+
+    store.search.query();
   }
 
   render() {
