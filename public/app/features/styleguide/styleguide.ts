@@ -9,7 +9,7 @@ class StyleGuideCtrl {
   navModel: any;
 
   /** @ngInject **/
-  constructor(private $http, private $routeParams, private backendSrv, navModelSrv) {
+  constructor(private $routeParams, private backendSrv, navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg', 'admin', 'styleguide', 1);
     this.theme = config.bootData.user.lightTheme ? 'light' : 'dark';
   }
