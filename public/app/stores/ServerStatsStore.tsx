@@ -15,6 +15,7 @@ export const ServerStatsStore = types
 
       let res = yield backendSrv.get('/api/admin/stats');
 
+      self.stats.clear();
       self.stats.push(ServerStat.create({ name: 'Total dashboards', value: res.dashboards }));
       self.stats.push(ServerStat.create({ name: 'Total users', value: res.users }));
       self.stats.push(ServerStat.create({ name: 'Active users (seen last 30 days)', value: res.activeUsers }));
