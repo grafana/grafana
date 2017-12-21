@@ -195,6 +195,14 @@ export class PanelCtrl {
       text: 'Panel JSON',
       click: 'ctrl.editPanelJson(); dismiss();',
     });
+
+    menu.push({
+      text: 'Copy to Clipboard',
+      click: 'ctrl.copyPanelToClipboard()',
+      role: 'Editor',
+      directives: ['clipboard-button="ctrl.getPanelJson()"'],
+    });
+
     this.events.emit('init-panel-actions', menu);
     return menu;
   }
@@ -263,11 +271,23 @@ export class PanelCtrl {
     let editScope = this.$scope.$root.$new();
     editScope.object = this.panel.getSaveModel();
     editScope.updateHandler = this.replacePanel.bind(this);
+    editScope.enableCopy = true;
 
     this.publishAppEvent('show-modal', {
       src: 'public/app/partials/edit_json.html',
       scope: editScope,
     });
+  }
+
+  copyPanelToClipboard() {
+    appEvents.emit('copy-dashboard-panel', {
+      dashboard: this.dashboard.title,
+      panel: this.panel.getSaveModel(),
+    });
+  }
+
+  getPanelJson() {
+    return JSON.stringify(this.panel.getSaveModel(), null, 2);
   }
 
   replacePanel(newPanel, oldPanel) {
