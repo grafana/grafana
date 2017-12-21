@@ -110,9 +110,7 @@ describe('when parsing', function() {
     var parser = new Parser('metric.test.*.asd.');
     var rootNode = parser.getAst();
 
-    expect(rootNode.message).toBe(
-      'Expected metric identifier instead found end of string'
-    );
+    expect(rootNode.message).toBe('Expected metric identifier instead found end of string');
     expect(rootNode.pos).toBe(19);
   });
 
@@ -120,9 +118,7 @@ describe('when parsing', function() {
     var parser = new Parser('sum(test');
     var rootNode = parser.getAst();
 
-    expect(rootNode.message).toBe(
-      'Expected closing parenthesis instead found end of string'
-    );
+    expect(rootNode.message).toBe('Expected closing parenthesis instead found end of string');
     expect(rootNode.pos).toBe(9);
   });
 
@@ -135,9 +131,7 @@ describe('when parsing', function() {
   });
 
   it('handle issue #69', function() {
-    var parser = new Parser(
-      'cactiStyle(offset(scale(net.192-168-1-1.192-168-1-9.ping_value.*,0.001),-100))'
-    );
+    var parser = new Parser('cactiStyle(offset(scale(net.192-168-1-1.192-168-1-9.ping_value.*,0.001),-100))');
     var rootNode = parser.getAst();
     expect(rootNode.type).toBe('function');
   });
@@ -168,9 +162,7 @@ describe('when parsing', function() {
   });
 
   it('series parameters, issue 2788', function() {
-    var parser = new Parser(
-      "summarize(diffSeries(#A, #B), '10m', 'sum', false)"
-    );
+    var parser = new Parser("summarize(diffSeries(#A, #B), '10m', 'sum', false)");
     var rootNode = parser.getAst();
     expect(rootNode.type).toBe('function');
     expect(rootNode.params[0].type).toBe('function');

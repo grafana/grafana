@@ -10,12 +10,7 @@ export class AppPageCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(
-    private backendSrv,
-    private $routeParams: any,
-    private $rootScope,
-    private navModelSrv
-  ) {
+  constructor(private backendSrv, private $routeParams: any, private $rootScope, private navModelSrv) {
     this.pluginId = $routeParams.pluginId;
 
     if (pluginInfoCache[this.pluginId]) {
@@ -46,10 +41,7 @@ export class AppPageCtrl {
         subTitle: app.name,
         url: '',
         text: '',
-        breadcrumbs: [
-          { title: app.name, url: pluginNav.main.url },
-          { title: this.page.name },
-        ],
+        breadcrumbs: [{ title: app.name, url: pluginNav.main.url }, { title: this.page.name }],
       },
     };
   }

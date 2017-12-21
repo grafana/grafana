@@ -1,11 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  sinon,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, sinon, angularMocks } from 'test/lib/common';
 
 import helpers from 'test/specs/helpers';
 import '../time_srv';
@@ -55,24 +48,16 @@ describe('timeSrv', function() {
       ctx.$location.search({ from: '20140410T052010', to: '20140520T031022' });
       ctx.service.init(_dashboard);
       var time = ctx.service.timeRange(true);
-      expect(time.from.valueOf()).to.equal(
-        new Date('2014-04-10T05:20:10Z').getTime()
-      );
-      expect(time.to.valueOf()).to.equal(
-        new Date('2014-05-20T03:10:22Z').getTime()
-      );
+      expect(time.from.valueOf()).to.equal(new Date('2014-04-10T05:20:10Z').getTime());
+      expect(time.to.valueOf()).to.equal(new Date('2014-05-20T03:10:22Z').getTime());
     });
 
     it('should handle formated dates without time', function() {
       ctx.$location.search({ from: '20140410', to: '20140520' });
       ctx.service.init(_dashboard);
       var time = ctx.service.timeRange(true);
-      expect(time.from.valueOf()).to.equal(
-        new Date('2014-04-10T00:00:00Z').getTime()
-      );
-      expect(time.to.valueOf()).to.equal(
-        new Date('2014-05-20T00:00:00Z').getTime()
-      );
+      expect(time.from.valueOf()).to.equal(new Date('2014-04-10T00:00:00Z').getTime());
+      expect(time.to.valueOf()).to.equal(new Date('2014-05-20T00:00:00Z').getTime());
     });
 
     it('should handle epochs', function() {

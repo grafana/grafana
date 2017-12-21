@@ -26,6 +26,4 @@ export class ChangePasswordCtrl {
   }
 }
 
-angular
-  .module('grafana.controllers')
-  .controller('ChangePasswordCtrl', ChangePasswordCtrl);
+angular.module('grafana.controllers').controller('ChangePasswordCtrl', ChangePasswordCtrl);

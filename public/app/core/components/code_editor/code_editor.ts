@@ -56,9 +56,7 @@ function link(scope, elem, attrs) {
   let maxLines = attrs.maxLines || DEFAULT_MAX_LINES;
   let showGutter = attrs.showGutter !== undefined;
   let tabSize = attrs.tabSize || DEFAULT_TAB_SIZE;
-  let behavioursEnabled = attrs.behavioursEnabled
-    ? attrs.behavioursEnabled === 'true'
-    : DEFAULT_BEHAVIOURS;
+  let behavioursEnabled = attrs.behavioursEnabled ? attrs.behavioursEnabled === 'true' : DEFAULT_BEHAVIOURS;
 
   // Initialize editor
   let aceElem = elem.get(0);

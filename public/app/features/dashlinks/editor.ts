@@ -75,6 +75,4 @@ function dashLinksEditor() {
   };
 }
 
-angular
-  .module('grafana.directives')
-  .directive('dashLinksEditor', dashLinksEditor);
+angular.module('grafana.directives').directive('dashLinksEditor', dashLinksEditor);

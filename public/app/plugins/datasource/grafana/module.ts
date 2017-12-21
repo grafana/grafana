@@ -8,10 +8,7 @@ class GrafanaQueryCtrl extends QueryCtrl {
 class GrafanaAnnotationsQueryCtrl {
   annotation: any;
 
-  types = [
-    { text: 'Dashboard', value: 'dashboard' },
-    { text: 'Tags', value: 'tags' },
-  ];
+  types = [{ text: 'Dashboard', value: 'dashboard' }, { text: 'Tags', value: 'tags' }];
 
   constructor() {
     this.annotation.type = this.annotation.type || 'tags';

@@ -1,11 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  sinon,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, sinon, angularMocks } from 'test/lib/common';
 import { AclCtrl } from '../acl';
 
 describe('AclCtrl', () => {
@@ -81,9 +74,7 @@ describe('AclCtrl', () => {
         done();
       });
 
-      expect(backendSrv.post.getCall(0).args[0]).to.eql(
-        '/api/dashboards/id/1/acl'
-      );
+      expect(backendSrv.post.getCall(0).args[0]).to.eql('/api/dashboards/id/1/acl');
       expect(backendSrv.post.getCall(0).args[1].items[0].role).to.eql('Viewer');
       expect(backendSrv.post.getCall(0).args[1].items[0].permission).to.eql(1);
       expect(backendSrv.post.getCall(0).args[1].items[1].role).to.eql('Editor');

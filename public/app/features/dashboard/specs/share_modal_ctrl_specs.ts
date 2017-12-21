@@ -1,11 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  sinon,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, sinon, angularMocks } from 'test/lib/common';
 import helpers from 'test/specs/helpers';
 import '../shareModalCtrl';
 import config from 'app/core/config';
@@ -46,22 +39,17 @@ describe('ShareModalCtrl', function() {
       ctx.scope.panel = { id: 22 };
 
       ctx.scope.init();
-      expect(ctx.scope.shareUrl).to.be(
-        'http://server/#!/test?from=1000&to=2000&orgId=1&panelId=22&fullscreen'
-      );
+      expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&orgId=1&panelId=22&fullscreen');
     });
 
     it('should generate render url', function() {
-      ctx.$location.$$absUrl =
-        'http://dashboards.grafana.com/dashboard/db/my-dash';
+      ctx.$location.$$absUrl = 'http://dashboards.grafana.com/dashboard/db/my-dash';
 
       ctx.scope.panel = { id: 22 };
 
       ctx.scope.init();
-      var base =
-        'http://dashboards.grafana.com/render/dashboard-solo/db/my-dash';
-      var params =
-        '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
+      var base = 'http://dashboards.grafana.com/render/dashboard-solo/db/my-dash';
+      var params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
       expect(ctx.scope.imageUrl).to.contain(base + params);
     });
 
@@ -71,9 +59,7 @@ describe('ShareModalCtrl', function() {
       ctx.scope.panel = null;
 
       ctx.scope.init();
-      expect(ctx.scope.shareUrl).to.be(
-        'http://server/#!/test?from=1000&to=2000&orgId=1'
-      );
+      expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&orgId=1');
     });
 
     it('should add theme when specified', function() {
@@ -82,9 +68,7 @@ describe('ShareModalCtrl', function() {
       ctx.scope.panel = null;
 
       ctx.scope.init();
-      expect(ctx.scope.shareUrl).to.be(
-        'http://server/#!/test?from=1000&to=2000&orgId=1&theme=light'
-      );
+      expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&orgId=1&theme=light');
     });
 
     it('should remove fullscreen from image url when is first param in querystring and modeSharePanel is true', function() {
@@ -94,12 +78,8 @@ describe('ShareModalCtrl', function() {
 
       ctx.scope.buildUrl();
 
-      expect(ctx.scope.shareUrl).to.contain(
-        '?fullscreen&edit&from=1000&to=2000&orgId=1&panelId=1'
-      );
-      expect(ctx.scope.imageUrl).to.contain(
-        '?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC'
-      );
+      expect(ctx.scope.shareUrl).to.contain('?fullscreen&edit&from=1000&to=2000&orgId=1&panelId=1');
+      expect(ctx.scope.imageUrl).to.contain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
     });
 
     it('should remove edit from image url when is first param in querystring and modeSharePanel is true', function() {
@@ -109,12 +89,8 @@ describe('ShareModalCtrl', function() {
 
       ctx.scope.buildUrl();
 
-      expect(ctx.scope.shareUrl).to.contain(
-        '?edit&fullscreen&from=1000&to=2000&orgId=1&panelId=1'
-      );
-      expect(ctx.scope.imageUrl).to.contain(
-        '?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC'
-      );
+      expect(ctx.scope.shareUrl).to.contain('?edit&fullscreen&from=1000&to=2000&orgId=1&panelId=1');
+      expect(ctx.scope.imageUrl).to.contain('?from=1000&to=2000&orgId=1&panelId=1&width=1000&height=500&tz=UTC');
     });
 
     it('should include template variables in url', function() {

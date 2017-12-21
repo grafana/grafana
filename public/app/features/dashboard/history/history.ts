@@ -5,12 +5,7 @@ import angular from 'angular';
 import moment from 'moment';
 
 import { DashboardModel } from '../dashboard_model';
-import {
-  HistoryListOpts,
-  RevisionsModel,
-  CalculateDiffOptions,
-  HistorySrv,
-} from './history_srv';
+import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './history_srv';
 
 export class HistoryListCtrl {
   appending: boolean;
@@ -46,11 +41,7 @@ export class HistoryListCtrl {
     this.start = 0;
     this.canCompare = false;
 
-    this.$rootScope.onAppEvent(
-      'dashboard-saved',
-      this.onDashboardSaved.bind(this),
-      $scope
-    );
+    this.$rootScope.onAppEvent('dashboard-saved', this.onDashboardSaved.bind(this), $scope);
     this.resetFromSource();
   }
 
@@ -85,8 +76,7 @@ export class HistoryListCtrl {
 
   formatBasicDate(date) {
     const now = this.dashboard.timezone === 'browser' ? moment() : moment.utc();
-    const then =
-      this.dashboard.timezone === 'browser' ? moment(date) : moment.utc(date);
+    const then = this.dashboard.timezone === 'browser' ? moment(date) : moment.utc(date);
     return then.from(now);
   }
 
@@ -168,9 +158,7 @@ export class HistoryListCtrl {
     this.delta = { basic: '', json: '' };
     this.diff = 'basic';
     this.mode = 'list';
-    this.revisions = _.map(this.revisions, rev =>
-      _.extend({}, rev, { checked: false })
-    );
+    this.revisions = _.map(this.revisions, rev => _.extend({}, rev, { checked: false }));
     this.canCompare = false;
     this.start = 0;
     this.isNewLatest = false;
@@ -199,10 +187,7 @@ export class HistoryListCtrl {
       .then(response => {
         this.$location.path('dashboard/db/' + response.slug);
         this.$route.reload();
-        this.$rootScope.appEvent('alert-success', [
-          'Dashboard restored',
-          'Restored from version ' + version,
-        ]);
+        this.$rootScope.appEvent('alert-success', ['Dashboard restored', 'Restored from version ' + version]);
       })
       .catch(() => {
         this.mode = 'list';
@@ -224,6 +209,4 @@ export function dashboardHistoryDirective() {
   };
 }
 
-angular
-  .module('grafana.directives')
-  .directive('gfDashboardHistory', dashboardHistoryDirective);
+angular.module('grafana.directives').directive('gfDashboardHistory', dashboardHistoryDirective);

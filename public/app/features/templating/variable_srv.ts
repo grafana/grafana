@@ -10,29 +10,17 @@ export class VariableSrv {
   variables: any;
 
   /** @ngInject */
-  constructor(
-    private $rootScope,
-    private $q,
-    private $location,
-    private $injector,
-    private templateSrv
-  ) {
+  constructor(private $rootScope, private $q, private $location, private $injector, private templateSrv) {
     // update time variant variables
     $rootScope.$on('refresh', this.onDashboardRefresh.bind(this), $rootScope);
-    $rootScope.$on(
-      'template-variable-value-updated',
-      this.updateUrlParamsWithCurrentVariables.bind(this),
-      $rootScope
-    );
+    $rootScope.$on('template-variable-value-updated', this.updateUrlParamsWithCurrentVariables.bind(this), $rootScope);
   }
 
   init(dashboard) {
     this.dashboard = dashboard;
 
     // create working class models representing variables
-    this.variables = dashboard.templating.list = dashboard.templating.list.map(
-      this.createVariableFromModel.bind(this)
-    );
+    this.variables = dashboard.templating.list = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
     this.templateSrv.init(this.variables);
 
     // init variables
@@ -53,19 +41,15 @@ export class VariableSrv {
   }
 
   onDashboardRefresh() {
-    var promises = this.variables
-      .filter(variable => variable.refresh === 2)
-      .map(variable => {
-        var previousOptions = variable.options.slice();
+    var promises = this.variables.filter(variable => variable.refresh === 2).map(variable => {
+      var previousOptions = variable.options.slice();
 
-        return variable.updateOptions().then(() => {
-          if (
-            angular.toJson(previousOptions) !== angular.toJson(variable.options)
-          ) {
-            this.$rootScope.$emit('template-variable-value-updated');
-          }
-        });
+      return variable.updateOptions().then(() => {
+        if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
+          this.$rootScope.$emit('template-variable-value-updated');
+        }
       });
+    });
 
     return this.$q.all(promises);
   }
@@ -84,9 +68,7 @@ export class VariableSrv {
       .then(() => {
         var urlValue = queryParams['var-' + variable.name];
         if (urlValue !== void 0) {
-          return variable
-            .setValueFromUrl(urlValue)
-            .then(variable.initLock.resolve);
+          return variable.setValueFromUrl(urlValue).then(variable.initLock.resolve);
         }
 
         if (variable.refresh === 1 || variable.refresh === 2) {

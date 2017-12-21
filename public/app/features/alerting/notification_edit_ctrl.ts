@@ -22,13 +22,7 @@ export class AlertNotificationEditCtrl {
   };
 
   /** @ngInject */
-  constructor(
-    private $routeParams,
-    private backendSrv,
-    private $location,
-    private $templateCache,
-    navModelSrv
-  ) {
+  constructor(private $routeParams, private backendSrv, private $location, private $templateCache, navModelSrv) {
     this.navModel = navModelSrv.getNav('alerting', 'channels', 0);
     this.isNew = !this.$routeParams.id;
 
@@ -39,10 +33,7 @@ export class AlertNotificationEditCtrl {
 
         // add option templates
         for (let notifier of this.notifiers) {
-          this.$templateCache.put(
-            this.getNotifierTemplateId(notifier.type),
-            notifier.optionsTemplate
-          );
+          this.$templateCache.put(this.getNotifierTemplateId(notifier.type), notifier.optionsTemplate);
         }
 
         if (!this.$routeParams.id) {
@@ -51,13 +42,11 @@ export class AlertNotificationEditCtrl {
           return _.defaults(this.model, this.defaults);
         }
 
-        return this.backendSrv
-          .get(`/api/alert-notifications/${this.$routeParams.id}`)
-          .then(result => {
-            this.navModel.breadcrumbs.push({ text: result.name });
-            this.navModel.node = { text: result.name };
-            return result;
-          });
+        return this.backendSrv.get(`/api/alert-notifications/${this.$routeParams.id}`).then(result => {
+          this.navModel.breadcrumbs.push({ text: result.name });
+          this.navModel.node = { text: result.name };
+          return result;
+        });
       })
       .then(model => {
         this.model = model;
@@ -71,12 +60,10 @@ export class AlertNotificationEditCtrl {
     }
 
     if (this.model.id) {
-      this.backendSrv
-        .put(`/api/alert-notifications/${this.model.id}`, this.model)
-        .then(res => {
-          this.model = res;
-          appEvents.emit('alert-success', ['Notification updated', '']);
-        });
+      this.backendSrv.put(`/api/alert-notifications/${this.model.id}`, this.model).then(res => {
+        this.model = res;
+        appEvents.emit('alert-success', ['Notification updated', '']);
+      });
     } else {
       this.backendSrv.post(`/api/alert-notifications`, this.model).then(res => {
         appEvents.emit('alert-success', ['Notification created', '']);

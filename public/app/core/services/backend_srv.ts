@@ -11,13 +11,7 @@ export class BackendSrv {
   private noBackendCache: boolean;
 
   /** @ngInject */
-  constructor(
-    private $http,
-    private alertSrv,
-    private $q,
-    private $timeout,
-    private contextSrv
-  ) {}
+  constructor(private $http, private alertSrv, private $q, private $timeout, private contextSrv) {}
 
   get(url, params?) {
     return this.request({ method: 'GET', url: url, params: params });
@@ -109,11 +103,7 @@ export class BackendSrv {
       },
       err => {
         // handle unauthorized
-        if (
-          err.status === 401 &&
-          this.contextSrv.user.isSignedIn &&
-          firstAttempt
-        ) {
+        if (err.status === 401 && this.contextSrv.user.isSignedIn && firstAttempt) {
           return this.loginPing().then(() => {
             options.retry = 1;
             return this.request(options);
@@ -295,17 +285,14 @@ export class BackendSrv {
     const tasks = [];
 
     for (let slug of dashboardSlugs) {
-      tasks.push(
-        this.createTask(this.moveDashboard.bind(this), true, slug, toFolder)
-      );
+      tasks.push(this.createTask(this.moveDashboard.bind(this), true, slug, toFolder));
     }
 
     return this.executeInOrder(tasks, []).then(result => {
       return {
         totalCount: result.length,
         successCount: _.filter(result, { succeeded: true }).length,
-        alreadyInFolderCount: _.filter(result, { alreadyInFolder: true })
-          .length,
+        alreadyInFolderCount: _.filter(result, { alreadyInFolder: true }).length,
       };
     });
   }
@@ -316,10 +303,7 @@ export class BackendSrv {
     this.getDashboard('db', slug).then(fullDash => {
       const model = new DashboardModel(fullDash.dashboard, fullDash.meta);
 
-      if (
-        (!fullDash.meta.folderId && toFolder.id === 0) ||
-        fullDash.meta.folderId === toFolder.id
-      ) {
+      if ((!fullDash.meta.folderId && toFolder.id === 0) || fullDash.meta.folderId === toFolder.id) {
         deferred.resolve({ alreadyInFolder: true });
         return;
       }

@@ -28,15 +28,11 @@ export class OrgDetailsCtrl {
       if (!$scope.addressForm.$valid) {
         return;
       }
-      backendSrv
-        .put('/api/org/address', $scope.address)
-        .then($scope.getOrgInfo);
+      backendSrv.put('/api/org/address', $scope.address).then($scope.getOrgInfo);
     };
 
     $scope.init();
   }
 }
 
-angular
-  .module('grafana.controllers')
-  .controller('OrgDetailsCtrl', OrgDetailsCtrl);
+angular.module('grafana.controllers').controller('OrgDetailsCtrl', OrgDetailsCtrl);

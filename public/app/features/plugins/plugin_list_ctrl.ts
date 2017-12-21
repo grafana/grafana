@@ -27,6 +27,4 @@ export class PluginListCtrl {
   }
 }
 
-angular
-  .module('grafana.controllers')
-  .controller('PluginListCtrl', PluginListCtrl);
+angular.module('grafana.controllers').controller('PluginListCtrl', PluginListCtrl);

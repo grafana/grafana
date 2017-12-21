@@ -30,21 +30,17 @@ export class AdminEditUserCtrl {
       }
 
       var payload = { password: $scope.password };
-      backendSrv
-        .put('/api/admin/users/' + $scope.user_id + '/password', payload)
-        .then(function() {
-          $location.path('/admin/users');
-        });
+      backendSrv.put('/api/admin/users/' + $scope.user_id + '/password', payload).then(function() {
+        $location.path('/admin/users');
+      });
     };
 
     $scope.updatePermissions = function() {
       var payload = $scope.permissions;
 
-      backendSrv
-        .put('/api/admin/users/' + $scope.user_id + '/permissions', payload)
-        .then(function() {
-          $location.path('/admin/users');
-        });
+      backendSrv.put('/api/admin/users/' + $scope.user_id + '/permissions', payload).then(function() {
+        $location.path('/admin/users');
+      });
     };
 
     $scope.create = function() {
@@ -68,28 +64,19 @@ export class AdminEditUserCtrl {
         return;
       }
 
-      backendSrv
-        .put('/api/users/' + $scope.user_id, $scope.user)
-        .then(function() {
-          $location.path('/admin/users');
-        });
+      backendSrv.put('/api/users/' + $scope.user_id, $scope.user).then(function() {
+        $location.path('/admin/users');
+      });
     };
 
     $scope.updateOrgUser = function(orgUser) {
-      backendSrv
-        .patch(
-          '/api/orgs/' + orgUser.orgId + '/users/' + $scope.user_id,
-          orgUser
-        )
-        .then(function() {});
+      backendSrv.patch('/api/orgs/' + orgUser.orgId + '/users/' + $scope.user_id, orgUser).then(function() {});
     };
 
     $scope.removeOrgUser = function(orgUser) {
-      backendSrv
-        .delete('/api/orgs/' + orgUser.orgId + '/users/' + $scope.user_id)
-        .then(function() {
-          $scope.getUserOrgs($scope.user_id);
-        });
+      backendSrv.delete('/api/orgs/' + orgUser.orgId + '/users/' + $scope.user_id).then(function() {
+        $scope.getUserOrgs($scope.user_id);
+      });
     };
 
     $scope.orgsSearchCache = [];
@@ -120,17 +107,13 @@ export class AdminEditUserCtrl {
 
       $scope.newOrg.loginOrEmail = $scope.user.login;
 
-      backendSrv
-        .post('/api/orgs/' + orgInfo.id + '/users/', $scope.newOrg)
-        .then(function() {
-          $scope.getUserOrgs($scope.user_id);
-        });
+      backendSrv.post('/api/orgs/' + orgInfo.id + '/users/', $scope.newOrg).then(function() {
+        $scope.getUserOrgs($scope.user_id);
+      });
     };
 
     $scope.init();
   }
 }
 
-angular
-  .module('grafana.controllers')
-  .controller('AdminEditUserCtrl', AdminEditUserCtrl);
+angular.module('grafana.controllers').controller('AdminEditUserCtrl', AdminEditUserCtrl);

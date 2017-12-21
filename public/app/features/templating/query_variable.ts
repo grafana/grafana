@@ -1,11 +1,6 @@
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {
-  Variable,
-  containsVariable,
-  assignModelProperties,
-  variableTypes,
-} from './variable';
+import { Variable, containsVariable, assignModelProperties, variableTypes } from './variable';
 
 function getNoneOption() {
   return { text: 'None', value: '', isNone: true };
@@ -50,13 +45,7 @@ export class QueryVariable implements Variable {
   };
 
   /** @ngInject **/
-  constructor(
-    private model,
-    private datasourceSrv,
-    private templateSrv,
-    private variableSrv,
-    private timeSrv
-  ) {
+  constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private timeSrv) {
     // copy model properties to this instance
     assignModelProperties(this, model, this.defaults);
   }
@@ -93,12 +82,7 @@ export class QueryVariable implements Variable {
       .get(this.datasource)
       .then(this.updateOptionsFromMetricFindQuery.bind(this))
       .then(this.updateTags.bind(this))
-      .then(
-        this.variableSrv.validateVariableSelectionState.bind(
-          this.variableSrv,
-          this
-        )
-      );
+      .then(this.variableSrv.validateVariableSelectionState.bind(this.variableSrv, this));
   }
 
   updateTags(datasource) {
@@ -160,19 +144,13 @@ export class QueryVariable implements Variable {
     options = [];
 
     if (this.regex) {
-      regex = kbn.stringToJsRegex(
-        this.templateSrv.replace(this.regex, {}, 'regex')
-      );
+      regex = kbn.stringToJsRegex(this.templateSrv.replace(this.regex, {}, 'regex'));
     }
     for (i = 0; i < metricNames.length; i++) {
       var item = metricNames[i];
-      var text =
-        item.text === undefined || item.text === null ? item.value : item.text;
+      var text = item.text === undefined || item.text === null ? item.value : item.text;
 
-      var value =
-        item.value === undefined || item.value === null
-          ? item.text
-          : item.value;
+      var value = item.value === undefined || item.value === null ? item.text : item.value;
 
       if (_.isNumber(value)) {
         value = value.toString();

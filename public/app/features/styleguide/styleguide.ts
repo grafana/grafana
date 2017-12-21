@@ -5,14 +5,7 @@ import _ from 'lodash';
 class StyleGuideCtrl {
   colors: any = [];
   theme: string;
-  buttonNames = [
-    'primary',
-    'secondary',
-    'inverse',
-    'success',
-    'warning',
-    'danger',
-  ];
+  buttonNames = ['primary', 'secondary', 'inverse', 'success', 'warning', 'danger'];
   buttonSizes = ['btn-small', '', 'btn-large'];
   buttonVariants = ['-'];
   icons: any = [];
@@ -21,12 +14,7 @@ class StyleGuideCtrl {
   navModel: any;
 
   /** @ngInject **/
-  constructor(
-    private $http,
-    private $routeParams,
-    private backendSrv,
-    navModelSrv
-  ) {
+  constructor(private $http, private $routeParams, private backendSrv, navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg', 'admin', 'styleguide', 1);
     this.theme = config.bootData.user.lightTheme ? 'light' : 'dark';
     this.page = {};

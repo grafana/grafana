@@ -1,11 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  angularMocks,
-  sinon,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, angularMocks, sinon } from 'test/lib/common';
 import 'app/core/directives/value_select_dropdown';
 
 describe('SelectDropdownCtrl', function() {

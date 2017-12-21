@@ -4,15 +4,7 @@ import config from 'app/core/config';
 
 export class ShareModalCtrl {
   /** @ngInject */
-  constructor(
-    $scope,
-    $rootScope,
-    $location,
-    $timeout,
-    timeSrv,
-    templateSrv,
-    linkSrv
-  ) {
+  constructor($scope, $rootScope, $location, $timeout, timeSrv, templateSrv, linkSrv) {
     $scope.options = {
       forCurrent: true,
       includeTemplateVars: true,
@@ -81,18 +73,12 @@ export class ShareModalCtrl {
 
       $scope.shareUrl = linkSrv.addParamsToUrl(baseUrl, params);
 
-      var soloUrl = baseUrl.replace(
-        config.appSubUrl + '/dashboard/',
-        config.appSubUrl + '/dashboard-solo/'
-      );
+      var soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
       delete params.fullscreen;
       delete params.edit;
       soloUrl = linkSrv.addParamsToUrl(soloUrl, params);
 
-      $scope.iframeHtml =
-        '<iframe src="' +
-        soloUrl +
-        '" width="450" height="200" frameborder="0"></iframe>';
+      $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
 
       $scope.imageUrl = soloUrl.replace(
         config.appSubUrl + '/dashboard-solo/',
@@ -109,6 +95,4 @@ export class ShareModalCtrl {
   }
 }
 
-angular
-  .module('grafana.controllers')
-  .controller('ShareModalCtrl', ShareModalCtrl);
+angular.module('grafana.controllers').controller('ShareModalCtrl', ShareModalCtrl);

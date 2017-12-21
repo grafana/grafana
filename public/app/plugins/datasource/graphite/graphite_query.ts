@@ -58,10 +58,7 @@ export default class GraphiteQuery {
   }
 
   checkForSeriesByTag() {
-    let seriesByTagFunc = _.find(
-      this.functions,
-      func => func.def.name === 'seriesByTag'
-    );
+    let seriesByTagFunc = _.find(this.functions, func => func.def.name === 'seriesByTag');
     if (seriesByTagFunc) {
       this.seriesByTagUsed = true;
       seriesByTagFunc.hidden = true;
@@ -113,10 +110,7 @@ export default class GraphiteQuery {
         break;
       case 'metric':
         if (this.segments.length > 0) {
-          this.addFunctionParameter(
-            func,
-            _.join(_.map(astNode.segments, 'value'), '.')
-          );
+          this.addFunctionParameter(func, _.join(_.map(astNode.segments, 'value'), '.'));
         } else {
           this.segments = astNode.segments;
         }
@@ -139,11 +133,7 @@ export default class GraphiteQuery {
 
   moveAliasFuncLast() {
     var aliasFunc = _.find(this.functions, function(func) {
-      return (
-        func.def.name === 'alias' ||
-        func.def.name === 'aliasByNode' ||
-        func.def.name === 'aliasByMetric'
-      );
+      return func.def.name === 'alias' || func.def.name === 'aliasByNode' || func.def.name === 'aliasByMetric';
     });
 
     if (aliasFunc) {
@@ -166,10 +156,7 @@ export default class GraphiteQuery {
   updateModelTarget(targets) {
     // render query
     if (!this.target.textEditor) {
-      var metricPath = this.getSegmentPathUpTo(this.segments.length).replace(
-        /\.select metric$/,
-        ''
-      );
+      var metricPath = this.getSegmentPathUpTo(this.segments.length).replace(/\.select metric$/, '');
       this.target.target = _.reduce(this.functions, wrapFunction, metricPath);
     }
 
@@ -196,19 +183,16 @@ export default class GraphiteQuery {
     // Keep interpolating until there are no query references
     // The reason for the loop is that the referenced query might contain another reference to another query
     while (targetWithNestedQueries.match(nestedSeriesRefRegex)) {
-      var updated = targetWithNestedQueries.replace(
-        nestedSeriesRefRegex,
-        (match, g1) => {
-          var t = targetsByRefId[g1];
-          if (!t) {
-            return match;
-          }
-
-          // no circular references
-          delete targetsByRefId[g1];
-          return t.target;
+      var updated = targetWithNestedQueries.replace(nestedSeriesRefRegex, (match, g1) => {
+        var t = targetsByRefId[g1];
+        if (!t) {
+          return match;
         }
-      );
+
+        // no circular references
+        delete targetsByRefId[g1];
+        return t.target;
+      });
 
       if (updated === targetWithNestedQueries) {
         break;

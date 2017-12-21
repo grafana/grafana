@@ -28,10 +28,7 @@ export class ElasticQueryBuilder {
       return queryNode;
     }
 
-    queryNode.terms.size =
-      parseInt(aggDef.settings.size, 10) === 0
-        ? 500
-        : parseInt(aggDef.settings.size, 10);
+    queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 500 : parseInt(aggDef.settings.size, 10);
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
       queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
@@ -52,10 +49,7 @@ export class ElasticQueryBuilder {
     }
 
     if (aggDef.settings.min_doc_count !== void 0) {
-      queryNode.terms.min_doc_count = parseInt(
-        aggDef.settings.min_doc_count,
-        10
-      );
+      queryNode.terms.min_doc_count = parseInt(aggDef.settings.min_doc_count, 10);
     }
 
     if (aggDef.settings.missing) {
@@ -184,9 +178,7 @@ export class ElasticQueryBuilder {
   build(target, adhocFilters?, queryString?) {
     // make sure query has defaults;
     target.metrics = target.metrics || [{ type: 'count', id: '1' }];
-    target.bucketAggs = target.bucketAggs || [
-      { type: 'date_histogram', id: '2', settings: { interval: 'auto' } },
-    ];
+    target.bucketAggs = target.bucketAggs || [{ type: 'date_histogram', id: '2', settings: { interval: 'auto' } }];
     target.timeField = this.timeField;
 
     var i, nestedAggs, metric;
@@ -279,10 +271,7 @@ export class ElasticQueryBuilder {
       }
 
       for (var prop in metric.settings) {
-        if (
-          metric.settings.hasOwnProperty(prop) &&
-          metric.settings[prop] !== null
-        ) {
+        if (metric.settings.hasOwnProperty(prop) && metric.settings[prop] !== null) {
           metricAgg[prop] = metric.settings[prop];
         }
       }

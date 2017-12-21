@@ -17,11 +17,7 @@ export default class AdminListUsersCtrl {
 
   getUsers() {
     this.backendSrv
-      .get(
-        `/api/users/search?perpage=${this.perPage}&page=${this.page}&query=${
-          this.query
-        }`
-      )
+      .get(`/api/users/search?perpage=${this.perPage}&page=${this.page}&query=${this.query}`)
       .then(result => {
         this.users = result.users;
         this.page = result.page;

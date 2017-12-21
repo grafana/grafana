@@ -35,24 +35,17 @@ export class AdminEditOrgCtrl {
     };
 
     $scope.updateOrgUser = function(orgUser) {
-      backendSrv.patch(
-        '/api/orgs/' + orgUser.orgId + '/users/' + orgUser.userId,
-        orgUser
-      );
+      backendSrv.patch('/api/orgs/' + orgUser.orgId + '/users/' + orgUser.userId, orgUser);
     };
 
     $scope.removeOrgUser = function(orgUser) {
-      backendSrv
-        .delete('/api/orgs/' + orgUser.orgId + '/users/' + orgUser.userId)
-        .then(function() {
-          $scope.getOrgUsers($scope.org.id);
-        });
+      backendSrv.delete('/api/orgs/' + orgUser.orgId + '/users/' + orgUser.userId).then(function() {
+        $scope.getOrgUsers($scope.org.id);
+      });
     };
 
     $scope.init();
   }
 }
 
-angular
-  .module('grafana.controllers')
-  .controller('AdminEditOrgCtrl', AdminEditOrgCtrl);
+angular.module('grafana.controllers').controller('AdminEditOrgCtrl', AdminEditOrgCtrl);

@@ -1,12 +1,5 @@
 import '../team_details_ctrl';
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  sinon,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, sinon, angularMocks } from 'test/lib/common';
 import TeamDetailsCtrl from '../team_details_ctrl';
 
 describe('TeamDetailsCtrl', () => {

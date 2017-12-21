@@ -29,21 +29,9 @@ export class Profiler {
     );
 
     $rootScope.onAppEvent('refresh', this.refresh.bind(this), $rootScope);
-    $rootScope.onAppEvent(
-      'dashboard-fetch-end',
-      this.dashboardFetched.bind(this),
-      $rootScope
-    );
-    $rootScope.onAppEvent(
-      'dashboard-initialized',
-      this.dashboardInitialized.bind(this),
-      $rootScope
-    );
-    $rootScope.onAppEvent(
-      'panel-initialized',
-      this.panelInitialized.bind(this),
-      $rootScope
-    );
+    $rootScope.onAppEvent('dashboard-fetch-end', this.dashboardFetched.bind(this), $rootScope);
+    $rootScope.onAppEvent('dashboard-initialized', this.dashboardInitialized.bind(this), $rootScope);
+    $rootScope.onAppEvent('panel-initialized', this.panelInitialized.bind(this), $rootScope);
   }
 
   refresh() {
@@ -70,21 +58,12 @@ export class Profiler {
 
   dashboardInitialized() {
     setTimeout(() => {
-      console.log(
-        'Dashboard::Performance Total Digests: ' + this.digestCounter
-      );
-      console.log(
-        'Dashboard::Performance Total Watchers: ' + this.getTotalWatcherCount()
-      );
-      console.log(
-        'Dashboard::Performance Total ScopeCount: ' + this.scopeCount
-      );
+      console.log('Dashboard::Performance Total Digests: ' + this.digestCounter);
+      console.log('Dashboard::Performance Total Watchers: ' + this.getTotalWatcherCount());
+      console.log('Dashboard::Performance Total ScopeCount: ' + this.scopeCount);
 
-      var timeTaken =
-        this.timings.lastPanelInitializedAt - this.timings.dashboardLoadStart;
-      console.log(
-        'Dashboard::Performance All panels initialized in ' + timeTaken + ' ms'
-      );
+      var timeTaken = this.timings.lastPanelInitializedAt - this.timings.dashboardLoadStart;
+      console.log('Dashboard::Performance All panels initialized in ' + timeTaken + ' ms');
 
       // measure digest performance
       var rootDigestStart = window.performance.now();
@@ -92,10 +71,7 @@ export class Profiler {
         this.$rootScope.$apply();
       }
 
-      console.log(
-        'Dashboard::Performance Root Digest ' +
-          (window.performance.now() - rootDigestStart) / 30
-      );
+      console.log('Dashboard::Performance Root Digest ' + (window.performance.now() - rootDigestStart) / 30);
     }, 3000);
   }
 

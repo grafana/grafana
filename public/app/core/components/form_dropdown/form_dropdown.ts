@@ -32,13 +32,7 @@ export class FormDropdownCtrl {
   lookupText: boolean;
 
   /** @ngInject **/
-  constructor(
-    private $scope,
-    $element,
-    private $sce,
-    private templateSrv,
-    private $q
-  ) {
+  constructor(private $scope, $element, private $sce, private templateSrv, private $q) {
     this.inputElement = $element.find('input').first();
     this.linkElement = $element.find('a').first();
     this.linkMode = true;
@@ -50,8 +44,7 @@ export class FormDropdownCtrl {
     if (this.labelMode) {
       this.cssClasses = 'gf-form-label ' + this.cssClass;
     } else {
-      this.cssClasses =
-        'gf-form-input gf-form-input--dropdown ' + this.cssClass;
+      this.cssClasses = 'gf-form-input gf-form-input--dropdown ' + this.cssClass;
     }
 
     this.inputElement.attr('data-provide', 'typeahead');
@@ -207,16 +200,11 @@ export class FormDropdownCtrl {
 
   updateDisplay(text) {
     this.text = text;
-    this.display = this.$sce.trustAsHtml(
-      this.templateSrv.highlightVariablesAsHtml(text)
-    );
+    this.display = this.$sce.trustAsHtml(this.templateSrv.highlightVariablesAsHtml(text));
   }
 
   open() {
-    this.inputElement.css(
-      'width',
-      Math.max(this.linkElement.width(), 80) + 16 + 'px'
-    );
+    this.inputElement.css('width', Math.max(this.linkElement.width(), 80) + 16 + 'px');
 
     this.inputElement.show();
     this.inputElement.focus();

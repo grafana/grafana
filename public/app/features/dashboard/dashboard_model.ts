@@ -75,10 +75,7 @@ export class DashboardModel {
     this.version = data.version || 0;
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
-    this.panels = _.map(
-      data.panels || [],
-      panelData => new PanelModel(panelData)
-    );
+    this.panels = _.map(data.panels || [], panelData => new PanelModel(panelData));
 
     this.initMeta(meta);
     this.updateSchema(data);
@@ -135,10 +132,7 @@ export class DashboardModel {
     // make clone
     var copy: any = {};
     for (var property in this) {
-      if (
-        DashboardModel.nonPersistedProperties[property] ||
-        !this.hasOwnProperty(property)
-      ) {
+      if (DashboardModel.nonPersistedProperties[property] || !this.hasOwnProperty(property)) {
         continue;
       }
 
@@ -147,10 +141,7 @@ export class DashboardModel {
 
     // get variable save models
     copy.templating = {
-      list: _.map(
-        this.templating.list,
-        variable => (variable.getSaveModel ? variable.getSaveModel() : variable)
-      ),
+      list: _.map(this.templating.list, variable => (variable.getSaveModel ? variable.getSaveModel() : variable)),
     };
 
     // get panel save models
@@ -261,10 +252,7 @@ export class DashboardModel {
         if (!cleanUpOnly) {
           this.repeatPanel(panel, i);
         }
-      } else if (
-        panel.repeatPanelId &&
-        panel.repeatIteration !== this.iteration
-      ) {
+      } else if (panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
         panelsToRemove.push(panel);
       }
     }
@@ -355,10 +343,7 @@ export class DashboardModel {
         // set width based on how many are selected
         // assumed the repeated panels should take up full row width
 
-        copy.gridPos.w = Math.max(
-          GRID_COLUMN_COUNT / selectedOptions.length,
-          minWidth
-        );
+        copy.gridPos.w = Math.max(GRID_COLUMN_COUNT / selectedOptions.length, minWidth);
         copy.gridPos.x = xPos;
         copy.gridPos.y = yPos;
 
@@ -382,11 +367,7 @@ export class DashboardModel {
       panel.scopedVars[variable.name] = variableOption;
     }
 
-    for (
-      let optionIndex = 0;
-      optionIndex < selectedOptions.length;
-      optionIndex++
-    ) {
+    for (let optionIndex = 0; optionIndex < selectedOptions.length; optionIndex++) {
       let option = selectedOptions[optionIndex];
       let rowCopy = this.getRowRepeatClone(panel, optionIndex, panelIndex);
       setScopedVars(rowCopy, option);
@@ -468,8 +449,7 @@ export class DashboardModel {
   }
 
   removeRow(row: PanelModel, removePanels: boolean) {
-    const needToogle =
-      (!removePanels && row.collapsed) || (removePanels && !row.collapsed);
+    const needToogle = (!removePanels && row.collapsed) || (removePanels && !row.collapsed);
 
     if (needToogle) {
       this.toggleRow(row);
@@ -488,18 +468,12 @@ export class DashboardModel {
         return true;
       }
 
-      var visibleVars = _.filter(
-        this.templating.list,
-        variable => variable.hide !== 2
-      );
+      var visibleVars = _.filter(this.templating.list, variable => variable.hide !== 2);
       if (visibleVars.length > 0) {
         return true;
       }
 
-      var visibleAnnotations = _.filter(
-        this.annotations.list,
-        annotation => annotation.hide !== true
-      );
+      var visibleAnnotations = _.filter(this.annotations.list, annotation => annotation.hide !== true);
       if (visibleAnnotations.length > 0) {
         return true;
       }
@@ -551,9 +525,7 @@ export class DashboardModel {
     format = format || 'YYYY-MM-DD HH:mm:ss';
     let timezone = this.getTimezone();
 
-    return timezone === 'browser'
-      ? moment(date).format(format)
-      : moment.utc(date).format(format);
+    return timezone === 'browser' ? moment(date).format(format) : moment.utc(date).format(format);
   }
 
   destroy() {
@@ -593,11 +565,7 @@ export class DashboardModel {
         const pushDownAmount = yMax - row.gridPos.y;
 
         // push panels below down
-        for (
-          let panelIndex = insertPos;
-          panelIndex < this.panels.length;
-          panelIndex++
-        ) {
+        for (let panelIndex = insertPos; panelIndex < this.panels.length; panelIndex++) {
           this.panels[panelIndex].gridPos.y += pushDownAmount;
         }
 
@@ -668,9 +636,7 @@ export class DashboardModel {
   getRelativeTime(date) {
     date = moment.isMoment(date) ? date : moment(date);
 
-    return this.timezone === 'browser'
-      ? moment(date).fromNow()
-      : moment.utc(date).fromNow();
+    return this.timezone === 'browser' ? moment(date).fromNow() : moment.utc(date).fromNow();
   }
 
   getNextQueryLetter(panel) {

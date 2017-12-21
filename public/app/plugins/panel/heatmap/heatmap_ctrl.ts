@@ -1,16 +1,16 @@
-import { MetricsPanelCtrl } from "app/plugins/sdk";
-import _ from "lodash";
-import kbn from "app/core/utils/kbn";
-import TimeSeries from "app/core/time_series2";
-import { axesEditor } from "./axes_editor";
-import { heatmapDisplayEditor } from "./display_editor";
-import rendering from "./rendering";
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import _ from 'lodash';
+import kbn from 'app/core/utils/kbn';
+import TimeSeries from 'app/core/time_series2';
+import { axesEditor } from './axes_editor';
+import { heatmapDisplayEditor } from './display_editor';
+import rendering from './rendering';
 import {
   convertToHeatMap,
   convertToCards,
   elasticHistogramToHeatmap,
-  calculateBucketSize
-} from "./heatmap_data_converter";
+  calculateBucketSize,
+} from './heatmap_data_converter';
 
 let X_BUCKET_NUMBER_DEFAULT = 30;
 let Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -19,30 +19,30 @@ let panelDefaults = {
   heatmap: {},
   cards: {
     cardPadding: null,
-    cardRound: null
+    cardRound: null,
   },
   color: {
-    mode: "spectrum",
-    cardColor: "#b4ff00",
-    colorScale: "sqrt",
+    mode: 'spectrum',
+    cardColor: '#b4ff00',
+    colorScale: 'sqrt',
     exponent: 0.5,
-    colorScheme: "interpolateOranges"
+    colorScheme: 'interpolateOranges',
   },
   legend: {
-    show: false
+    show: false,
   },
-  dataFormat: "timeseries",
+  dataFormat: 'timeseries',
   xAxis: {
-    show: true
+    show: true,
   },
   yAxis: {
     show: true,
-    format: "short",
+    format: 'short',
     decimals: null,
     logBase: 1,
     splitFactor: null,
     min: null,
-    max: null
+    max: null,
   },
   xBucketSize: null,
   xBucketNumber: null,
@@ -50,46 +50,46 @@ let panelDefaults = {
   yBucketNumber: null,
   tooltip: {
     show: true,
-    showHistogram: false
+    showHistogram: false,
   },
-  highlightCards: true
+  highlightCards: true,
 };
 
-let colorModes = ["opacity", "spectrum"];
-let opacityScales = ["linear", "sqrt"];
+let colorModes = ['opacity', 'spectrum'];
+let opacityScales = ['linear', 'sqrt'];
 
 // Schemes from d3-scale-chromatic
 // https://github.com/d3/d3-scale-chromatic
 let colorSchemes = [
   // Diverging
-  { name: "Spectral", value: "interpolateSpectral", invert: "always" },
-  { name: "RdYlGn", value: "interpolateRdYlGn", invert: "always" },
+  { name: 'Spectral', value: 'interpolateSpectral', invert: 'always' },
+  { name: 'RdYlGn', value: 'interpolateRdYlGn', invert: 'always' },
 
   // Sequential (Single Hue)
-  { name: "Blues", value: "interpolateBlues", invert: "dark" },
-  { name: "Greens", value: "interpolateGreens", invert: "dark" },
-  { name: "Greys", value: "interpolateGreys", invert: "dark" },
-  { name: "Oranges", value: "interpolateOranges", invert: "dark" },
-  { name: "Purples", value: "interpolatePurples", invert: "dark" },
-  { name: "Reds", value: "interpolateReds", invert: "dark" },
+  { name: 'Blues', value: 'interpolateBlues', invert: 'dark' },
+  { name: 'Greens', value: 'interpolateGreens', invert: 'dark' },
+  { name: 'Greys', value: 'interpolateGreys', invert: 'dark' },
+  { name: 'Oranges', value: 'interpolateOranges', invert: 'dark' },
+  { name: 'Purples', value: 'interpolatePurples', invert: 'dark' },
+  { name: 'Reds', value: 'interpolateReds', invert: 'dark' },
 
   // Sequential (Multi-Hue)
-  { name: "BuGn", value: "interpolateBuGn", invert: "dark" },
-  { name: "BuPu", value: "interpolateBuPu", invert: "dark" },
-  { name: "GnBu", value: "interpolateGnBu", invert: "dark" },
-  { name: "OrRd", value: "interpolateOrRd", invert: "dark" },
-  { name: "PuBuGn", value: "interpolatePuBuGn", invert: "dark" },
-  { name: "PuBu", value: "interpolatePuBu", invert: "dark" },
-  { name: "PuRd", value: "interpolatePuRd", invert: "dark" },
-  { name: "RdPu", value: "interpolateRdPu", invert: "dark" },
-  { name: "YlGnBu", value: "interpolateYlGnBu", invert: "dark" },
-  { name: "YlGn", value: "interpolateYlGn", invert: "dark" },
-  { name: "YlOrBr", value: "interpolateYlOrBr", invert: "dark" },
-  { name: "YlOrRd", value: "interpolateYlOrRd", invert: "darm" }
+  { name: 'BuGn', value: 'interpolateBuGn', invert: 'dark' },
+  { name: 'BuPu', value: 'interpolateBuPu', invert: 'dark' },
+  { name: 'GnBu', value: 'interpolateGnBu', invert: 'dark' },
+  { name: 'OrRd', value: 'interpolateOrRd', invert: 'dark' },
+  { name: 'PuBuGn', value: 'interpolatePuBuGn', invert: 'dark' },
+  { name: 'PuBu', value: 'interpolatePuBu', invert: 'dark' },
+  { name: 'PuRd', value: 'interpolatePuRd', invert: 'dark' },
+  { name: 'RdPu', value: 'interpolateRdPu', invert: 'dark' },
+  { name: 'YlGnBu', value: 'interpolateYlGnBu', invert: 'dark' },
+  { name: 'YlGn', value: 'interpolateYlGn', invert: 'dark' },
+  { name: 'YlOrBr', value: 'interpolateYlOrBr', invert: 'dark' },
+  { name: 'YlOrRd', value: 'interpolateYlOrRd', invert: 'darm' },
 ];
 
 export class HeatmapCtrl extends MetricsPanelCtrl {
-  static templateUrl = "module.html";
+  static templateUrl = 'module.html';
 
   opacityScales: any = [];
   colorModes: any = [];
@@ -115,23 +115,23 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     this.colorSchemes = colorSchemes;
 
     // Bind grafana panel events
-    this.events.on("render", this.onRender.bind(this));
-    this.events.on("data-received", this.onDataReceived.bind(this));
-    this.events.on("data-error", this.onDataError.bind(this));
-    this.events.on("data-snapshot-load", this.onDataReceived.bind(this));
-    this.events.on("init-edit-mode", this.onInitEditMode.bind(this));
+    this.events.on('render', this.onRender.bind(this));
+    this.events.on('data-received', this.onDataReceived.bind(this));
+    this.events.on('data-error', this.onDataError.bind(this));
+    this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
+    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
 
     this.onCardColorChange = this.onCardColorChange.bind(this);
   }
 
   onInitEditMode() {
-    this.addEditorTab("Axes", axesEditor, 2);
-    this.addEditorTab("Display", heatmapDisplayEditor, 3);
+    this.addEditorTab('Axes', axesEditor, 2);
+    this.addEditorTab('Display', heatmapDisplayEditor, 3);
     this.unitFormats = kbn.getUnitFormats();
   }
 
   zoomOut(evt) {
-    this.publishAppEvent("zoom-out", 2);
+    this.publishAppEvent('zoom-out', 2);
   }
 
   onRender() {
@@ -142,7 +142,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     let xBucketSize, yBucketSize, heatmapStats, bucketsData;
     let logBase = this.panel.yAxis.logBase;
 
-    if (this.panel.dataFormat === "tsbuckets") {
+    if (this.panel.dataFormat === 'tsbuckets') {
       heatmapStats = this.parseHistogramSeries(this.series);
       bucketsData = elasticHistogramToHeatmap(this.series);
 
@@ -157,9 +157,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       }
     } else {
       let xBucketNumber = this.panel.xBucketNumber || X_BUCKET_NUMBER_DEFAULT;
-      let xBucketSizeByNumber = Math.floor(
-        (this.range.to - this.range.from) / xBucketNumber
-      );
+      let xBucketSizeByNumber = Math.floor((this.range.to - this.range.from) / xBucketNumber);
 
       // Parse X bucket size (number or interval)
       let isIntervalString = kbn.interval_regex.test(this.panel.xBucketSize);
@@ -167,7 +165,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
         xBucketSize = kbn.interval_to_ms(this.panel.xBucketSize);
       } else if (
         isNaN(Number(this.panel.xBucketSize)) ||
-        this.panel.xBucketSize === "" ||
+        this.panel.xBucketSize === '' ||
         this.panel.xBucketSize === null
       ) {
         xBucketSize = xBucketSizeByNumber;
@@ -193,12 +191,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
         yBucketSize = this.panel.yBucketSize || yBucketSize;
       }
 
-      bucketsData = convertToHeatMap(
-        this.series,
-        yBucketSize,
-        xBucketSize,
-        logBase
-      );
+      bucketsData = convertToHeatMap(this.series, yBucketSize, xBucketSize, logBase);
     }
 
     // Set default Y range if no data
@@ -215,7 +208,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       xBucketSize: xBucketSize,
       yBucketSize: yBucketSize,
       cards: cards,
-      cardStats: cardStats
+      cardStats: cardStats,
     };
   }
 
@@ -233,16 +226,15 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
     if (datapointsCount === 0) {
       this.dataWarning = {
-        title: "No data points",
-        tip: "No datapoints returned from data query"
+        title: 'No data points',
+        tip: 'No datapoints returned from data query',
       };
     } else {
       for (let series of this.series) {
         if (series.isOutsideRange) {
           this.dataWarning = {
-            title: "Data points outside time range",
-            tip:
-              "Can be caused by timezone mismatch or missing time filter in query"
+            title: 'Data points outside time range',
+            tip: 'Can be caused by timezone mismatch or missing time filter in query',
           };
           break;
         }
@@ -265,7 +257,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   seriesHandler(seriesData) {
     let series = new TimeSeries({
       datapoints: seriesData.datapoints,
-      alias: seriesData.target
+      alias: seriesData.target,
     });
 
     series.flotpairs = series.getFlotPairs(this.panel.nullPointMode);
@@ -290,7 +282,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     return {
       max: max,
       min: min,
-      minLog: minLog
+      minLog: minLog,
     };
   }
 
@@ -303,7 +295,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     return {
       max: max,
       min: min,
-      minLog: minLog
+      minLog: minLog,
     };
   }
 

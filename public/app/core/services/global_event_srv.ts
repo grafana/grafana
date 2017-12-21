@@ -19,9 +19,7 @@ export class GlobalEventSrv {
     const appSubUrl = this.appSubUrl;
     const stripExtraChars = appSubUrl.endsWith('/') ? 1 : 0;
     const urlWithoutBase =
-      url.length > 0 && url.indexOf(appSubUrl) === 0
-        ? url.slice(appSubUrl.length - stripExtraChars)
-        : url;
+      url.length > 0 && url.indexOf(appSubUrl) === 0 ? url.slice(appSubUrl.length - stripExtraChars) : url;
 
     return urlWithoutBase;
   }

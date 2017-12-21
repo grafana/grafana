@@ -1,10 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import moment from 'moment';
 import helpers from 'test/specs/helpers';
 import { PostgresDatasource } from '../datasource';
@@ -101,11 +95,7 @@ describe('PostgreSQLDatasource', function() {
           tables: [
             {
               columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [
-                ['aTitle', 'some text'],
-                ['aTitle2', 'some text2'],
-                ['aTitle3', 'some text3'],
-              ],
+              rows: [['aTitle', 'some text'], ['aTitle2', 'some text2'], ['aTitle3', 'some text3']],
             },
           ],
         },
@@ -142,11 +132,7 @@ describe('PostgreSQLDatasource', function() {
           tables: [
             {
               columns: [{ text: '__value' }, { text: '__text' }],
-              rows: [
-                ['value1', 'aTitle'],
-                ['value2', 'aTitle2'],
-                ['value3', 'aTitle3'],
-              ],
+              rows: [['value1', 'aTitle'], ['value2', 'aTitle2'], ['value3', 'aTitle3']],
             },
           ],
         },
@@ -185,11 +171,7 @@ describe('PostgreSQLDatasource', function() {
           tables: [
             {
               columns: [{ text: '__text' }, { text: '__value' }],
-              rows: [
-                ['aTitle', 'same'],
-                ['aTitle', 'same'],
-                ['aTitle', 'diff'],
-              ],
+              rows: [['aTitle', 'same'], ['aTitle', 'same'], ['aTitle', 'diff']],
             },
           ],
         },
@@ -232,9 +214,7 @@ describe('PostgreSQLDatasource', function() {
 
     describe('and value is an array of strings', () => {
       it('should return comma separated quoted values', () => {
-        expect(
-          ctx.ds.interpolateVariable(['a', 'b', 'c'], ctx.variable)
-        ).to.eql("'a','b','c'");
+        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'], ctx.variable)).to.eql("'a','b','c'");
       });
     });
 

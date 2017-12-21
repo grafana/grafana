@@ -22,10 +22,7 @@ export class SnapshotsCtrl {
         this.$rootScope.appEvent('alert-success', ['Snapshot deleted', '']);
       },
       () => {
-        this.$rootScope.appEvent('alert-error', [
-          'Unable to delete snapshot',
-          '',
-        ]);
+        this.$rootScope.appEvent('alert-error', ['Unable to delete snapshot', '']);
         this.snapshots.push(snapshot);
       }
     );
@@ -44,6 +41,4 @@ export class SnapshotsCtrl {
   }
 }
 
-angular
-  .module('grafana.controllers')
-  .controller('SnapshotsCtrl', SnapshotsCtrl);
+angular.module('grafana.controllers').controller('SnapshotsCtrl', SnapshotsCtrl);

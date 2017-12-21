@@ -5,10 +5,7 @@ import moment from 'moment';
 describe('rangeUtil', () => {
   describe('Can get range grouped list of ranges', () => {
     it('when custom settings should return default range list', () => {
-      var groups = rangeUtil.getRelativeTimesList(
-        { time_options: [] },
-        'Last 5 minutes'
-      );
+      var groups = rangeUtil.getRelativeTimesList({ time_options: [] }, 'Last 5 minutes');
       expect(_.keys(groups).length).toBe(4);
       expect(groups[3][0].active).toBe(true);
     });

@@ -41,6 +41,4 @@ export class OrgApiKeysCtrl {
   }
 }
 
-angular
-  .module('grafana.controllers')
-  .controller('OrgApiKeysCtrl', OrgApiKeysCtrl);
+angular.module('grafana.controllers').controller('OrgApiKeysCtrl', OrgApiKeysCtrl);

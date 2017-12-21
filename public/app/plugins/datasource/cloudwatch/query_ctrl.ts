@@ -11,7 +11,6 @@ export class CloudWatchQueryCtrl extends QueryCtrl {
   /** @ngInject **/
   constructor($scope, $injector) {
     super($scope, $injector);
-    this.aliasSyntax =
-      '{{metric}} {{stat}} {{namespace}} {{region}} {{<dimension name>}}';
+    this.aliasSyntax = '{{metric}} {{stat}} {{namespace}} {{region}} {{<dimension name>}}';
   }
 }

@@ -9,15 +9,7 @@ import Drop from 'tether-drop';
 
 export class GrafanaCtrl {
   /** @ngInject */
-  constructor(
-    $scope,
-    alertSrv,
-    utilSrv,
-    $rootScope,
-    $controller,
-    contextSrv,
-    globalEventSrv
-  ) {
+  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv, globalEventSrv) {
     $scope.init = function() {
       $scope.contextSrv = contextSrv;
 
@@ -118,12 +110,7 @@ export class GrafanaCtrl {
 }
 
 /** @ngInject */
-export function grafanaAppDirective(
-  playlistSrv,
-  contextSrv,
-  $timeout,
-  $rootScope
-) {
+export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScope) {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,
@@ -269,10 +256,7 @@ export function grafanaAppDirective(
 
         // hide search
         if (body.find('.search-container').length > 0) {
-          if (
-            target.parents('.search-results-container, .search-field-wrapper')
-              .length === 0
-          ) {
+          if (target.parents('.search-results-container, .search-field-wrapper').length === 0) {
             scope.$apply(function() {
               scope.appEvent('hide-dash-search');
             });
@@ -281,10 +265,7 @@ export function grafanaAppDirective(
 
         // hide popovers
         var popover = elem.find('.popover');
-        if (
-          popover.length > 0 &&
-          target.parents('.graph-legend').length === 0
-        ) {
+        if (popover.length > 0 && target.parents('.graph-legend').length === 0) {
           popover.hide();
         }
       });

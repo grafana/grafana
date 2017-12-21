@@ -40,11 +40,7 @@ export default class ResponseParser {
   }
 
   parseMetricFindQueryResult(refId, results) {
-    if (
-      !results ||
-      results.data.length === 0 ||
-      results.data.results[refId].meta.rowCount === 0
-    ) {
+    if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) {
       return [];
     }
 
@@ -123,8 +119,7 @@ export default class ResponseParser {
         timeColumnIndex = i;
       } else if (table.columns[i].text === 'title') {
         return this.$q.reject({
-          message:
-            'The title column for annotations is deprecated, now only a column named text is returned',
+          message: 'The title column for annotations is deprecated, now only a column named text is returned',
         });
       } else if (table.columns[i].text === 'text') {
         textColumnIndex = i;
@@ -135,8 +130,7 @@ export default class ResponseParser {
 
     if (timeColumnIndex === -1) {
       return this.$q.reject({
-        message:
-          'Missing mandatory time column (with time_sec column alias) in annotation query.',
+        message: 'Missing mandatory time column (with time_sec column alias) in annotation query.',
       });
     }
 
@@ -147,9 +141,7 @@ export default class ResponseParser {
         annotation: options.annotation,
         time: Math.floor(row[timeColumnIndex]) * 1000,
         text: row[textColumnIndex],
-        tags: row[tagsColumnIndex]
-          ? row[tagsColumnIndex].trim().split(/\s*,\s*/)
-          : [],
+        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
       });
     }
 

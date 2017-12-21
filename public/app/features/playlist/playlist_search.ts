@@ -38,11 +38,7 @@ export class PlaylistSearchCtrl {
   }
 
   queryHasNoFilters() {
-    return (
-      this.query.query === '' &&
-      this.query.starred === false &&
-      this.query.tag.length === 0
-    );
+    return this.query.query === '' && this.query.starred === false && this.query.tag.length === 0;
   }
 
   filterByTag(tag, evt) {

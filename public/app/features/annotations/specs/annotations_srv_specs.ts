@@ -1,10 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import '../annotations_srv';
 import helpers from 'test/specs/helpers';
 
@@ -33,10 +27,7 @@ describe('AnnotationsSrv', function() {
     let translatedAnnotations;
 
     beforeEach(() => {
-      translatedAnnotations = ctx.service.translateQueryResult(
-        annotationSource,
-        annotations
-      );
+      translatedAnnotations = ctx.service.translateQueryResult(annotationSource, annotations);
     });
 
     it('should set defaults', () => {

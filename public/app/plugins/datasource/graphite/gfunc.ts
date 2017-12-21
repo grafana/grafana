@@ -136,10 +136,7 @@ addFuncDef({
 addFuncDef({
   name: 'percentileOfSeries',
   category: categories.Combine,
-  params: [
-    { name: 'n', type: 'int' },
-    { name: 'interpolate', type: 'boolean', options: ['true', 'false'] },
-  ],
+  params: [{ name: 'n', type: 'int' }, { name: 'interpolate', type: 'boolean', options: ['true', 'false'] }],
   defaultParams: [95, 'false'],
 });
 
@@ -170,10 +167,7 @@ addFuncDef({
 addFuncDef({
   name: 'averageSeriesWithWildcards',
   category: categories.Combine,
-  params: [
-    { name: 'node', type: 'int' },
-    { name: 'node', type: 'int', optional: true },
-  ],
+  params: [{ name: 'node', type: 'int' }, { name: 'node', type: 'int', optional: true }],
   defaultParams: [3],
 });
 
@@ -187,10 +181,7 @@ addFuncDef({
 addFuncDef({
   name: 'aliasSub',
   category: categories.Special,
-  params: [
-    { name: 'search', type: 'string' },
-    { name: 'replace', type: 'string' },
-  ],
+  params: [{ name: 'search', type: 'string' }, { name: 'replace', type: 'string' }],
   defaultParams: ['', '\\1'],
 });
 
@@ -656,11 +647,7 @@ addFuncDef({
 addFuncDef({
   name: 'useSeriesAbove',
   category: categories.Filter,
-  params: [
-    { name: 'value', type: 'int' },
-    { name: 'search', type: 'string' },
-    { name: 'replace', type: 'string' },
-  ],
+  params: [{ name: 'value', type: 'int' }, { name: 'search', type: 'string' }, { name: 'replace', type: 'string' }],
   defaultParams: [0, 'search', 'replace'],
 });
 
@@ -1076,11 +1063,7 @@ export class FuncInstance {
       this.params,
       function(value, index) {
         var paramType = this.def.params[index].type;
-        if (
-          paramType === 'int' ||
-          paramType === 'value_or_series' ||
-          paramType === 'boolean'
-        ) {
+        if (paramType === 'int' || paramType === 'value_or_series' || paramType === 'boolean') {
           return value;
         } else if (paramType === 'int_or_interval' && $.isNumeric(value)) {
           return value;

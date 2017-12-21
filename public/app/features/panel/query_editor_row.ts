@@ -20,9 +20,7 @@ export class QueryRowCtrl {
     this.panel = this.panelCtrl.panel;
 
     if (!this.target.refId) {
-      this.target.refId = this.panelCtrl.dashboard.getNextQueryLetter(
-        this.panel
-      );
+      this.target.refId = this.panelCtrl.dashboard.getNextQueryLetter(this.panel);
     }
 
     this.toggleCollapse(true);
@@ -51,8 +49,7 @@ export class QueryRowCtrl {
     }
 
     if (init) {
-      this.collapsed =
-        this.panelCtrl.__collapsedQueryCache[this.target.refId] !== false;
+      this.collapsed = this.panelCtrl.__collapsedQueryCache[this.target.refId] !== false;
     } else {
       this.collapsed = !this.collapsed;
       this.panelCtrl.__collapsedQueryCache[this.target.refId] = this.collapsed;

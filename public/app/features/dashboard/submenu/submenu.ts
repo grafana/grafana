@@ -41,6 +41,4 @@ export function submenuDirective() {
   };
 }
 
-angular
-  .module('grafana.directives')
-  .directive('dashboardSubmenu', submenuDirective);
+angular.module('grafana.directives').directive('dashboardSubmenu', submenuDirective);

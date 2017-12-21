@@ -28,10 +28,7 @@ export class InspectCtrl {
       }
 
       if (model.error.config && model.error.config.params) {
-        $scope.request_parameters = _.map(model.error.config.params, function(
-          value,
-          key
-        ) {
+        $scope.request_parameters = _.map(model.error.config.params, function(value, key) {
           return { key: key, value: value };
         });
       }
@@ -46,14 +43,9 @@ export class InspectCtrl {
         $scope.editor.index = 2;
 
         if (_.isString(model.error.config.data)) {
-          $scope.request_parameters = this.getParametersFromQueryString(
-            model.error.config.data
-          );
+          $scope.request_parameters = this.getParametersFromQueryString(model.error.config.data);
         } else {
-          $scope.request_parameters = _.map(model.error.config.data, function(
-            value,
-            key
-          ) {
+          $scope.request_parameters = _.map(model.error.config.data, function(value, key) {
             return { key: key, value: angular.toJson(value, true) };
           });
         }

@@ -18,14 +18,12 @@ export class LoadDashboardCtrl {
       return;
     }
 
-    dashboardLoaderSrv
-      .loadDashboard($routeParams.type, $routeParams.slug)
-      .then(function(result) {
-        if ($routeParams.keepRows) {
-          result.meta.keepRows = true;
-        }
-        $scope.initDashboard(result, $scope);
-      });
+    dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
+      if ($routeParams.keepRows) {
+        result.meta.keepRows = true;
+      }
+      $scope.initDashboard(result, $scope);
+    });
   }
 }
 

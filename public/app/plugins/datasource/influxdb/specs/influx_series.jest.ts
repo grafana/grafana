@@ -195,13 +195,7 @@ describe('when generating timeseries from influxdb response', function() {
 
       expect(table.type).toBe('table');
       expect(table.columns.length).toBe(5);
-      expect(table.rows[0]).toEqual([
-        1431946625000,
-        'Africa',
-        'server2',
-        23,
-        10,
-      ]);
+      expect(table.rows[0]).toEqual([1431946625000, 'Africa', 'server2', 23, 10]);
     });
   });
 
@@ -215,15 +209,7 @@ describe('when generating timeseries from influxdb response', function() {
             name: 'logins.count',
             tags: { datacenter: 'Africa', server: 'server2' },
             columns: ['time', 'datacenter', 'hostname', 'source', 'value'],
-            values: [
-              [
-                1481549440372,
-                'America',
-                '10.1.100.10',
-                'backend',
-                215.7432653659507,
-              ],
-            ],
+            values: [[1481549440372, 'America', '10.1.100.10', 'backend', 215.7432653659507]],
           },
         ],
       };
@@ -247,15 +233,7 @@ describe('when generating timeseries from influxdb response', function() {
             name: 'logins.count',
             tags: { datacenter: 'Africa', server: 'server2' },
             columns: ['time', 'datacenter', 'hostname', 'source', 'value'],
-            values: [
-              [
-                1481549440372,
-                'America',
-                '10.1.100.10',
-                'backend',
-                215.7432653659507,
-              ],
-            ],
+            values: [[1481549440372, 'America', '10.1.100.10', 'backend', 215.7432653659507]],
           },
         ],
       };

@@ -21,11 +21,7 @@ export class TeamsCtrl {
 
   get() {
     this.backendSrv
-      .get(
-        `/api/teams/search?perpage=${this.perPage}&page=${this.page}&query=${
-          this.query
-        }`
-      )
+      .get(`/api/teams/search?perpage=${this.perPage}&page=${this.page}&query=${this.query}`)
       .then(result => {
         this.teams = result.teams;
         this.page = result.page;

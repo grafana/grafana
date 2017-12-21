@@ -17,8 +17,7 @@ var template = `
 
 /** @ngInject */
 export function queryPartEditorDirective($compile, templateSrv) {
-  var paramTemplate =
-    '<input type="text" class="hide input-mini tight-form-func-param"></input>';
+  var paramTemplate = '<input type="text" class="hide input-mini tight-form-func-param"></input>';
 
   return {
     restrict: 'E',
@@ -102,14 +101,12 @@ export function queryPartEditorDirective($compile, templateSrv) {
           }
 
           $scope.$apply(function() {
-            $scope
-              .handleEvent({ $event: { name: 'get-param-options' } })
-              .then(function(result) {
-                var dynamicOptions = _.map(result, function(op) {
-                  return op.value;
-                });
-                callback(dynamicOptions);
+            $scope.handleEvent({ $event: { name: 'get-param-options' } }).then(function(result) {
+              var dynamicOptions = _.map(result, function(op) {
+                return op.value;
               });
+              callback(dynamicOptions);
+            });
           });
         };
 
@@ -136,11 +133,9 @@ export function queryPartEditorDirective($compile, templateSrv) {
       }
 
       $scope.showActionsMenu = function() {
-        $scope
-          .handleEvent({ $event: { name: 'get-part-actions' } })
-          .then(res => {
-            $scope.partActions = res;
-          });
+        $scope.handleEvent({ $event: { name: 'get-part-actions' } }).then(res => {
+          $scope.partActions = res;
+        });
       };
 
       $scope.triggerPartAction = function(action) {
@@ -157,12 +152,8 @@ export function queryPartEditorDirective($compile, templateSrv) {
             $('<span>, </span>').appendTo($paramsContainer);
           }
 
-          var paramValue = templateSrv.highlightVariablesAsHtml(
-            part.params[index]
-          );
-          var $paramLink = $(
-            '<a class="graphite-func-param-link pointer">' + paramValue + '</a>'
-          );
+          var paramValue = templateSrv.highlightVariablesAsHtml(part.params[index]);
+          var $paramLink = $('<a class="graphite-func-param-link pointer">' + paramValue + '</a>');
           var $input = $(paramTemplate);
 
           $paramLink.appendTo($paramsContainer);

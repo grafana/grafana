@@ -1,10 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import {
-  QueryPartDef,
-  QueryPart,
-} from 'app/core/components/query_part/query_part';
+import { QueryPartDef, QueryPart } from 'app/core/components/query_part/query_part';
 
 var alertQueryDef = new QueryPartDef({
   type: 'query',
@@ -38,10 +35,7 @@ var evalFunctions = [
   { text: 'HAS NO VALUE', value: 'no_value' },
 ];
 
-var evalOperators = [
-  { text: 'OR', value: 'or' },
-  { text: 'AND', value: 'and' },
-];
+var evalOperators = [{ text: 'OR', value: 'or' }, { text: 'AND', value: 'and' }];
 
 var reducerTypes = [
   { text: 'avg()', value: 'avg' },
@@ -63,10 +57,7 @@ var noDataModes = [
   { text: 'Ok', value: 'ok' },
 ];
 
-var executionErrorModes = [
-  { text: 'Alerting', value: 'alerting' },
-  { text: 'Keep Last State', value: 'keep_state' },
-];
+var executionErrorModes = [{ text: 'Alerting', value: 'alerting' }, { text: 'Keep Last State', value: 'keep_state' }];
 
 function createReducerPart(model) {
   var def = new QueryPartDef({ type: model.type, defaultParams: [] });

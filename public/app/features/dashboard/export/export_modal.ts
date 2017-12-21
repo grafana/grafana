@@ -10,12 +10,7 @@ export class DashExportCtrl {
   dismiss: () => void;
 
   /** @ngInject */
-  constructor(
-    private dashboardSrv,
-    datasourceSrv,
-    private $scope,
-    private $rootScope
-  ) {
+  constructor(private dashboardSrv, datasourceSrv, private $scope, private $rootScope) {
     this.exporter = new DashboardExporter(datasourceSrv);
 
     this.exporter.makeExportable(this.dashboardSrv.getCurrent()).then(dash => {

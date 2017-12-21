@@ -18,14 +18,7 @@ export class DashboardImportCtrl {
   nameValidationError: any;
 
   /** @ngInject */
-  constructor(
-    private backendSrv,
-    private validationSrv,
-    navModelSrv,
-    private $location,
-    private $scope,
-    $routeParams
-  ) {
+  constructor(private backendSrv, private validationSrv, navModelSrv, private $location, private $scope, $routeParams) {
     this.navModel = navModelSrv.getNav('create', 'import');
 
     this.step = 1;
@@ -76,8 +69,7 @@ export class DashboardImportCtrl {
     });
 
     if (sources.length === 0) {
-      inputModel.info =
-        'No data sources of type ' + input.pluginName + ' found';
+      inputModel.info = 'No data sources of type ' + input.pluginName + ' found';
     } else if (!inputModel.info) {
       inputModel.info = 'Select a ' + input.pluginName + ' data source';
     }

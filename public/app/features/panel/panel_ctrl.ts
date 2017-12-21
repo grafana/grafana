@@ -210,9 +210,7 @@ export class PanelCtrl {
       var fullscreenHeight = Math.floor(docHeight * 0.8);
       this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
     } else {
-      this.containerHeight =
-        this.panel.gridPos.h * GRID_CELL_HEIGHT +
-        (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
+      this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
     }
 
     if (this.panel.soloMode) {
@@ -240,8 +238,7 @@ export class PanelCtrl {
       var text2, confirmText;
 
       if (this.panel.alert) {
-        text2 =
-          'Panel includes an alert rule, removing panel will also remove alert rule';
+        text2 = 'Panel includes an alert rule, removing panel will also remove alert rule';
         confirmText = 'YES';
       }
 
@@ -323,10 +320,7 @@ export class PanelCtrl {
 
     var linkSrv = this.$injector.get('linkSrv');
     var templateSrv = this.$injector.get('templateSrv');
-    var interpolatedMarkdown = templateSrv.replace(
-      markdown,
-      this.panel.scopedVars
-    );
+    var interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
     var html = '<div class="markdown-html">';
 
     html += new Remarkable().render(interpolatedMarkdown);

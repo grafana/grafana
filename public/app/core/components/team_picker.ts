@@ -30,13 +30,11 @@ export class TeamPickerCtrl {
 
   searchGroups(query: string) {
     return Promise.resolve(
-      this.backendSrv
-        .get('/api/teams/search?perpage=10&page=1&query=' + query)
-        .then(result => {
-          return _.map(result.teams, ug => {
-            return { text: ug.name, value: ug };
-          });
-        })
+      this.backendSrv.get('/api/teams/search?perpage=10&page=1&query=' + query).then(result => {
+        return _.map(result.teams, ug => {
+          return { text: ug.name, value: ug };
+        });
+      })
     );
   }
 

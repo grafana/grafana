@@ -95,14 +95,7 @@ describe('influxdb response parser', () => {
               {
                 name: 'measurements',
                 columns: ['name'],
-                values: [
-                  ['cpu'],
-                  ['derivative'],
-                  ['logins.count'],
-                  ['logs'],
-                  ['payment.ended'],
-                  ['payment.started'],
-                ],
+                values: [['cpu'], ['derivative'], ['logins.count'], ['logs'], ['payment.ended'], ['payment.started']],
               },
             ],
           },

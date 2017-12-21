@@ -28,10 +28,7 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
               dash = JSON.parse(e.target.result);
             } catch (err) {
               console.log(err);
-              scope.appEvent('alert-error', [
-                'Import failed',
-                'JSON -> JS Serialization failed: ' + err.message,
-              ]);
+              scope.appEvent('alert-error', ['Import failed', 'JSON -> JS Serialization failed: ' + err.message]);
               return;
             }
 
@@ -52,15 +49,9 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
       // Check for the various File API support.
       if (wnd.File && wnd.FileReader && wnd.FileList && wnd.Blob) {
         // Something
-        document
-          .getElementById('dashupload')
-          .addEventListener('change', file_selected, false);
+        document.getElementById('dashupload').addEventListener('change', file_selected, false);
       } else {
-        alertSrv.set(
-          'Oops',
-          'Sorry, the HTML5 File APIs are not fully supported in this browser.',
-          'error'
-        );
+        alertSrv.set('Oops', 'Sorry, the HTML5 File APIs are not fully supported in this browser.', 'error');
       }
     },
   };

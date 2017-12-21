@@ -9,20 +9,14 @@ export class DashNavCtrl {
   titleTooltip: string;
 
   /** @ngInject */
-  constructor(
-    private $scope,
-    private dashboardSrv,
-    private $location,
-    public playlistSrv
-  ) {
+  constructor(private $scope, private dashboardSrv, private $location, public playlistSrv) {
     appEvents.on('save-dashboard', this.saveDashboard.bind(this), $scope);
 
     if (this.dashboard.meta.isSnapshot) {
       var meta = this.dashboard.meta;
       this.titleTooltip = 'Created: &nbsp;' + moment(meta.created).calendar();
       if (meta.expires) {
-        this.titleTooltip +=
-          '<br>Expires: &nbsp;' + moment(meta.expires).fromNow() + '<br>';
+        this.titleTooltip += '<br>Expires: &nbsp;' + moment(meta.expires).fromNow() + '<br>';
       }
     }
   }
@@ -50,11 +44,9 @@ export class DashNavCtrl {
   }
 
   starDashboard() {
-    this.dashboardSrv
-      .starDashboard(this.dashboard.id, this.dashboard.meta.isStarred)
-      .then(newState => {
-        this.dashboard.meta.isStarred = newState;
-      });
+    this.dashboardSrv.starDashboard(this.dashboard.id, this.dashboard.meta.isStarred).then(newState => {
+      this.dashboard.meta.isStarred = newState;
+    });
   }
 
   shareDashboard(tabIndex) {
@@ -81,10 +73,7 @@ export class DashNavCtrl {
   }
 
   addPanel() {
-    if (
-      this.dashboard.panels.length > 0 &&
-      this.dashboard.panels[0].type === 'add-panel'
-    ) {
+    if (this.dashboard.panels.length > 0 && this.dashboard.panels[0].type === 'add-panel') {
       this.dashboard.removePanel(this.dashboard.panels[0]);
       return;
     }

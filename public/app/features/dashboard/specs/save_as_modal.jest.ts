@@ -57,19 +57,11 @@ describe('saving dashboard as', () => {
     expect(ctx.panel.thresholds).toBe(undefined);
   });
 
-  scenario(
-    'singlestat should keep threshold',
-    { id: 1, type: 'singlestat', thresholds: { value: 3000 } },
-    ctx => {
-      expect(ctx.panel.thresholds).not.toBe(undefined);
-    }
-  );
+  scenario('singlestat should keep threshold', { id: 1, type: 'singlestat', thresholds: { value: 3000 } }, ctx => {
+    expect(ctx.panel.thresholds).not.toBe(undefined);
+  });
 
-  scenario(
-    'table should keep threshold',
-    { id: 1, type: 'table', thresholds: { value: 3000 } },
-    ctx => {
-      expect(ctx.panel.thresholds).not.toBe(undefined);
-    }
-  );
+  scenario('table should keep threshold', { id: 1, type: 'table', thresholds: { value: 3000 } }, ctx => {
+    expect(ctx.panel.thresholds).not.toBe(undefined);
+  });
 });

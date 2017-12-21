@@ -16,9 +16,7 @@ function outlineFixer() {
 
   var set_css = function(css_text) {
     // Handle setting of <style> element contents in IE8
-    !!style_element.styleSheet
-      ? (style_element.styleSheet.cssText = css_text)
-      : (style_element.innerHTML = css_text);
+    !!style_element.styleSheet ? (style_element.styleSheet.cssText = css_text) : (style_element.innerHTML = css_text);
   };
 
   d.getElementsByTagName('HEAD')[0].appendChild(style_element);

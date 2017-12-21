@@ -51,10 +51,7 @@ export class ContextSrv {
   }
 
   isGrafanaVisible() {
-    return !!(
-      document.visibilityState === undefined ||
-      document.visibilityState === 'visible'
-    );
+    return !!(document.visibilityState === undefined || document.visibilityState === 'visible');
   }
 
   toggleSideMenu() {

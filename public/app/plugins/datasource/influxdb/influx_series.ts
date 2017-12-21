@@ -106,12 +106,7 @@ export default class InfluxSeries {
           titleCol = index;
           return;
         }
-        if (
-          _.includes(
-            (this.annotation.tagsColumn || '').replace(' ', '').split(','),
-            column
-          )
-        ) {
+        if (_.includes((this.annotation.tagsColumn || '').replace(' ', '').split(','), column)) {
           tagsCol.push(index);
           return;
         }

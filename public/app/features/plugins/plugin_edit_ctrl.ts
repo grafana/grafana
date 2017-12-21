@@ -18,14 +18,7 @@ export class PluginEditCtrl {
   postUpdateHook: () => any;
 
   /** @ngInject */
-  constructor(
-    private $scope,
-    private $rootScope,
-    private backendSrv,
-    private $sce,
-    private $routeParams,
-    navModelSrv
-  ) {
+  constructor(private $scope, private $rootScope, private backendSrv, private $sce, private $routeParams, navModelSrv) {
     this.pluginId = $routeParams.pluginId;
     this.preUpdateHook = () => Promise.resolve();
     this.postUpdateHook = () => Promise.resolve();
@@ -42,10 +35,7 @@ export class PluginEditCtrl {
         subTitle: model.info.author.name,
         url: '',
         text: '',
-        breadcrumbs: [
-          { title: 'Plugins', url: '/plugins' },
-          { title: model.name },
-        ],
+        breadcrumbs: [{ title: 'Plugins', url: '/plugins' }, { title: model.name }],
         children: [
           {
             icon: 'fa fa-fw fa-file-text-o',
@@ -89,33 +79,29 @@ export class PluginEditCtrl {
   }
 
   init() {
-    return this.backendSrv
-      .get(`/api/plugins/${this.pluginId}/settings`)
-      .then(result => {
-        this.model = result;
-        this.pluginIcon = this.getPluginIcon(this.model.type);
+    return this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(result => {
+      this.model = result;
+      this.pluginIcon = this.getPluginIcon(this.model.type);
 
-        this.model.dependencies.plugins.forEach(plug => {
-          plug.icon = this.getPluginIcon(plug.type);
-        });
-
-        this.includes = _.map(result.includes, plug => {
-          plug.icon = this.getPluginIcon(plug.type);
-          return plug;
-        });
-
-        this.setNavModel(this.model);
-        return this.initReadme();
+      this.model.dependencies.plugins.forEach(plug => {
+        plug.icon = this.getPluginIcon(plug.type);
       });
+
+      this.includes = _.map(result.includes, plug => {
+        plug.icon = this.getPluginIcon(plug.type);
+        return plug;
+      });
+
+      this.setNavModel(this.model);
+      return this.initReadme();
+    });
   }
 
   initReadme() {
-    return this.backendSrv
-      .get(`/api/plugins/${this.pluginId}/markdown/readme`)
-      .then(res => {
-        var md = new Remarkable();
-        this.readmeHtml = this.$sce.trustAsHtml(md.render(res));
-      });
+    return this.backendSrv.get(`/api/plugins/${this.pluginId}/markdown/readme`).then(res => {
+      var md = new Remarkable();
+      this.readmeHtml = this.$sce.trustAsHtml(md.render(res));
+    });
   }
 
   getPluginIcon(type) {
@@ -147,10 +133,7 @@ export class PluginEditCtrl {
           },
           {}
         );
-        return this.backendSrv.post(
-          `/api/plugins/${this.pluginId}/settings`,
-          updateCmd
-        );
+        return this.backendSrv.post(`/api/plugins/${this.pluginId}/settings`, updateCmd);
       })
       .then(this.postUpdateHook)
       .then(res => {
@@ -193,6 +176,4 @@ export class PluginEditCtrl {
   }
 }
 
-angular
-  .module('grafana.controllers')
-  .controller('PluginEditCtrl', PluginEditCtrl);
+angular.module('grafana.controllers').controller('PluginEditCtrl', PluginEditCtrl);

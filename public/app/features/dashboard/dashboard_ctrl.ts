@@ -66,9 +66,7 @@ export class DashboardCtrl implements PanelContainer {
 
         // TODO refactor ViewStateSrv
         this.$scope.dashboard = dashboard;
-        this.dashboardViewState = this.dashboardViewStateSrv.create(
-          this.$scope
-        );
+        this.dashboardViewState = this.dashboardViewStateSrv.create(this.$scope);
 
         this.keybindingSrv.setupDashboardBindings(this.$scope, dashboard);
 
@@ -134,10 +132,7 @@ export class DashboardCtrl implements PanelContainer {
 
   init(dashboard) {
     this.$scope.onAppEvent('show-json-editor', this.showJsonEditor.bind(this));
-    this.$scope.onAppEvent(
-      'template-variable-value-updated',
-      this.templateVariableUpdated.bind(this)
-    );
+    this.$scope.onAppEvent('template-variable-value-updated', this.templateVariableUpdated.bind(this));
     this.setupDashboard(dashboard);
   }
 }

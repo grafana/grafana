@@ -25,10 +25,7 @@ class DynamicDirectiveSrv {
         }
 
         if (!directiveInfo.fn.registered) {
-          coreModule.directive(
-            attrs.$normalize(directiveInfo.name),
-            directiveInfo.fn
-          );
+          coreModule.directive(attrs.$normalize(directiveInfo.name), directiveInfo.fn);
           directiveInfo.fn.registered = true;
         }
 
@@ -36,10 +33,7 @@ class DynamicDirectiveSrv {
       })
       .catch(err => {
         console.log('Plugin load:', err);
-        this.$rootScope.appEvent('alert-error', [
-          'Plugin error',
-          err.toString(),
-        ]);
+        this.$rootScope.appEvent('alert-error', ['Plugin error', err.toString()]);
       });
   }
 

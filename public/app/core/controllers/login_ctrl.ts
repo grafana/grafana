@@ -48,15 +48,13 @@ export class LoginCtrl {
         return;
       }
 
-      backendSrv
-        .post('/api/user/signup', $scope.formModel)
-        .then(function(result) {
-          if (result.status === 'SignUpCreated') {
-            $location.path('/signup').search({ email: $scope.formModel.email });
-          } else {
-            window.location.href = config.appSubUrl + '/';
-          }
-        });
+      backendSrv.post('/api/user/signup', $scope.formModel).then(function(result) {
+        if (result.status === 'SignUpCreated') {
+          $location.path('/signup').search({ email: $scope.formModel.email });
+        } else {
+          window.location.href = config.appSubUrl + '/';
+        }
+      });
     };
 
     $scope.login = function() {

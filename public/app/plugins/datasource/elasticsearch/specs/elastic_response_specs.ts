@@ -12,9 +12,7 @@ describe('ElasticResponse', function() {
         {
           refId: 'A',
           metrics: [{ type: 'count', id: '1' }],
-          bucketAggs: [
-            { type: 'date_histogram', field: '@timestamp', id: '2' },
-          ],
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
         },
       ];
       response = {
@@ -57,13 +55,8 @@ describe('ElasticResponse', function() {
       targets = [
         {
           refId: 'A',
-          metrics: [
-            { type: 'count', id: '1' },
-            { type: 'avg', field: 'value', id: '2' },
-          ],
-          bucketAggs: [
-            { type: 'date_histogram', field: '@timestamp', id: '3' },
-          ],
+          metrics: [{ type: 'count', id: '1' }, { type: 'avg', field: 'value', id: '2' }],
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
         },
       ];
       response = {
@@ -126,20 +119,14 @@ describe('ElasticResponse', function() {
                 buckets: [
                   {
                     '3': {
-                      buckets: [
-                        { doc_count: 1, key: 1000 },
-                        { doc_count: 3, key: 2000 },
-                      ],
+                      buckets: [{ doc_count: 1, key: 1000 }, { doc_count: 3, key: 2000 }],
                     },
                     doc_count: 4,
                     key: 'server1',
                   },
                   {
                     '3': {
-                      buckets: [
-                        { doc_count: 2, key: 1000 },
-                        { doc_count: 8, key: 2000 },
-                      ],
+                      buckets: [{ doc_count: 2, key: 1000 }, { doc_count: 8, key: 2000 }],
                     },
                     doc_count: 10,
                     key: 'server2',
@@ -169,10 +156,7 @@ describe('ElasticResponse', function() {
       targets = [
         {
           refId: 'A',
-          metrics: [
-            { type: 'count', id: '1' },
-            { type: 'avg', field: '@value', id: '4' },
-          ],
+          metrics: [{ type: 'count', id: '1' }, { type: 'avg', field: '@value', id: '4' }],
           bucketAggs: [
             { type: 'terms', field: 'host', id: '2' },
             { type: 'date_histogram', field: '@timestamp', id: '3' },
@@ -232,12 +216,8 @@ describe('ElasticResponse', function() {
       targets = [
         {
           refId: 'A',
-          metrics: [
-            { type: 'percentiles', settings: { percents: [75, 90] }, id: '1' },
-          ],
-          bucketAggs: [
-            { type: 'date_histogram', field: '@timestamp', id: '3' },
-          ],
+          metrics: [{ type: 'percentiles', settings: { percents: [75, 90] }, id: '1' }],
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
         },
       ];
       response = {
@@ -291,10 +271,7 @@ describe('ElasticResponse', function() {
               id: '1',
             },
           ],
-          bucketAggs: [
-            { type: 'terms', field: 'host', id: '3' },
-            { type: 'date_histogram', id: '4' },
-          ],
+          bucketAggs: [{ type: 'terms', field: 'host', id: '3' }, { type: 'date_histogram', id: '4' }],
         },
       ];
       response = {
@@ -379,30 +356,21 @@ describe('ElasticResponse', function() {
                 buckets: [
                   {
                     '3': {
-                      buckets: [
-                        { doc_count: 1, key: 1000 },
-                        { doc_count: 3, key: 2000 },
-                      ],
+                      buckets: [{ doc_count: 1, key: 1000 }, { doc_count: 3, key: 2000 }],
                     },
                     doc_count: 4,
                     key: 'server1',
                   },
                   {
                     '3': {
-                      buckets: [
-                        { doc_count: 2, key: 1000 },
-                        { doc_count: 8, key: 2000 },
-                      ],
+                      buckets: [{ doc_count: 2, key: 1000 }, { doc_count: 8, key: 2000 }],
                     },
                     doc_count: 10,
                     key: 'server2',
                   },
                   {
                     '3': {
-                      buckets: [
-                        { doc_count: 2, key: 1000 },
-                        { doc_count: 8, key: 2000 },
-                      ],
+                      buckets: [{ doc_count: 2, key: 1000 }, { doc_count: 8, key: 2000 }],
                     },
                     doc_count: 10,
                     key: 0,
@@ -420,12 +388,8 @@ describe('ElasticResponse', function() {
     it('should return 2 series', function() {
       expect(result.data.length).to.be(3);
       expect(result.data[0].datapoints.length).to.be(2);
-      expect(result.data[0].target).to.be(
-        'server1 Count and {{not_exist}} server1'
-      );
-      expect(result.data[1].target).to.be(
-        'server2 Count and {{not_exist}} server2'
-      );
+      expect(result.data[0].target).to.be('server1 Count and {{not_exist}} server1');
+      expect(result.data[1].target).to.be('server2 Count and {{not_exist}} server2');
       expect(result.data[2].target).to.be('0 Count and {{not_exist}} 0');
     });
   });
@@ -446,11 +410,7 @@ describe('ElasticResponse', function() {
           {
             aggregations: {
               '3': {
-                buckets: [
-                  { doc_count: 1, key: 1000 },
-                  { doc_count: 3, key: 2000 },
-                  { doc_count: 2, key: 1000 },
-                ],
+                buckets: [{ doc_count: 1, key: 1000 }, { doc_count: 3, key: 2000 }, { doc_count: 2, key: 1000 }],
               },
             },
           },
@@ -462,10 +422,7 @@ describe('ElasticResponse', function() {
 
     it('should return table with byte and count', function() {
       expect(result.data[0].rows.length).to.be(3);
-      expect(result.data[0].columns).to.eql([
-        { text: 'bytes', filterable: true },
-        { text: 'Count' },
-      ]);
+      expect(result.data[0].columns).to.eql([{ text: 'bytes', filterable: true }, { text: 'Count' }]);
     });
   });
 
@@ -482,10 +439,7 @@ describe('ElasticResponse', function() {
               id: '2',
               type: 'filters',
               settings: {
-                filters: [
-                  { query: '@metric:cpu' },
-                  { query: '@metric:logins.count' },
-                ],
+                filters: [{ query: '@metric:cpu' }, { query: '@metric:logins.count' }],
               },
             },
             { type: 'date_histogram', field: '@timestamp', id: '3' },
@@ -500,18 +454,12 @@ describe('ElasticResponse', function() {
                 buckets: {
                   '@metric:cpu': {
                     '3': {
-                      buckets: [
-                        { doc_count: 1, key: 1000 },
-                        { doc_count: 3, key: 2000 },
-                      ],
+                      buckets: [{ doc_count: 1, key: 1000 }, { doc_count: 3, key: 2000 }],
                     },
                   },
                   '@metric:logins.count': {
                     '3': {
-                      buckets: [
-                        { doc_count: 2, key: 1000 },
-                        { doc_count: 8, key: 2000 },
-                      ],
+                      buckets: [{ doc_count: 2, key: 1000 }, { doc_count: 8, key: 2000 }],
                     },
                   },
                 },
@@ -640,10 +588,7 @@ describe('ElasticResponse', function() {
       targets = [
         {
           refId: 'A',
-          metrics: [
-            { type: 'avg', id: '1', field: 'test' },
-            { type: 'avg', id: '2', field: 'test2' },
-          ],
+          metrics: [{ type: 'avg', id: '1', field: 'test' }, { type: 'avg', id: '2', field: 'test2' }],
           bucketAggs: [{ id: '2', type: 'terms', field: 'host' }],
         },
       ];

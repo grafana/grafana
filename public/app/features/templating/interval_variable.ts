@@ -29,12 +29,7 @@ export class IntervalVariable implements Variable {
   };
 
   /** @ngInject **/
-  constructor(
-    private model,
-    private timeSrv,
-    private templateSrv,
-    private variableSrv
-  ) {
+  constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 2;
   }
@@ -62,24 +57,15 @@ export class IntervalVariable implements Variable {
       });
     }
 
-    var res = kbn.calculateInterval(
-      this.timeSrv.timeRange(),
-      this.auto_count,
-      this.auto_min
-    );
-    this.templateSrv.setGrafanaVariable(
-      '$__auto_interval_' + this.name,
-      res.interval
-    );
+    var res = kbn.calculateInterval(this.timeSrv.timeRange(), this.auto_count, this.auto_min);
+    this.templateSrv.setGrafanaVariable('$__auto_interval_' + this.name, res.interval);
     // for backward compatibility, to be removed eventually
     this.templateSrv.setGrafanaVariable('$__auto_interval', res.interval);
   }
 
   updateOptions() {
     // extract options between quotes and/or comma
-    this.options = _.map(this.query.match(/(["'])(.*?)\1|\w+/g), function(
-      text
-    ) {
+    this.options = _.map(this.query.match(/(["'])(.*?)\1|\w+/g), function(text) {
       text = text.replace(/["']+/g, '');
       return { text: text.trim(), value: text.trim() };
     });

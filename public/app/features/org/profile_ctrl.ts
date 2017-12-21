@@ -11,12 +11,7 @@ export class ProfileCtrl {
   navModel: any;
 
   /** @ngInject **/
-  constructor(
-    private backendSrv,
-    private contextSrv,
-    private $location,
-    navModelSrv
-  ) {
+  constructor(private backendSrv, private contextSrv, private $location, navModelSrv) {
     this.getUser();
     this.getUserOrgs();
     this.navModel = navModelSrv.getNav('profile', 'profile-settings', 0);

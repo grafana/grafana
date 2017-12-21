@@ -1,10 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import helpers from 'test/specs/helpers';
 import { GraphiteDatasource } from '../datasource';
 import moment from 'moment';
@@ -184,11 +178,7 @@ describe('graphiteDatasource', function() {
 
     it('should replace target placeholder', function() {
       let results = ctx.ds.buildGraphiteParams({
-        targets: [
-          { target: 'series1' },
-          { target: 'series2' },
-          { target: 'asPercent(#A,#B)' },
-        ],
+        targets: [{ target: 'series1' }, { target: 'series2' }, { target: 'asPercent(#A,#B)' }],
       });
       expect(results[2]).to.be('target=asPercent(series1%2Cseries2)');
     });
@@ -201,42 +191,28 @@ describe('graphiteDatasource', function() {
           { target: 'asPercent(#A,#B)' },
         ],
       });
-      expect(results[0]).to.be(
-        'target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))')
-      );
+      expect(results[0]).to.be('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
     });
 
     it('should replace target placeholder when nesting query references', function() {
       let results = ctx.ds.buildGraphiteParams({
-        targets: [
-          { target: 'series1' },
-          { target: 'sumSeries(#A)' },
-          { target: 'asPercent(#A,#B)' },
-        ],
+        targets: [{ target: 'series1' }, { target: 'sumSeries(#A)' }, { target: 'asPercent(#A,#B)' }],
       });
-      expect(results[2]).to.be(
-        'target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))')
-      );
+      expect(results[2]).to.be('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
     });
 
     it('should fix wrong minute interval parameters', function() {
       let results = ctx.ds.buildGraphiteParams({
         targets: [{ target: "summarize(prod.25m.count, '25m', 'sum')" }],
       });
-      expect(results[0]).to.be(
-        'target=' +
-          encodeURIComponent("summarize(prod.25m.count, '25min', 'sum')")
-      );
+      expect(results[0]).to.be('target=' + encodeURIComponent("summarize(prod.25m.count, '25min', 'sum')"));
     });
 
     it('should fix wrong month interval parameters', function() {
       let results = ctx.ds.buildGraphiteParams({
         targets: [{ target: "summarize(prod.5M.count, '5M', 'sum')" }],
       });
-      expect(results[0]).to.be(
-        'target=' +
-          encodeURIComponent("summarize(prod.5M.count, '5mon', 'sum')")
-      );
+      expect(results[0]).to.be('target=' + encodeURIComponent("summarize(prod.5M.count, '5mon', 'sum')"));
     });
 
     it('should ignore empty targets', function() {

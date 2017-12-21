@@ -11,10 +11,7 @@ export class FolderPageLoader {
         subTitle: 'Manage folder dashboards & permissions',
         url: '',
         text: '',
-        breadcrumbs: [
-          { title: 'Dashboards', url: '/dashboards' },
-          { title: ' ' },
-        ],
+        breadcrumbs: [{ title: 'Dashboards', url: '/dashboards' }, { title: ' ' }],
         children: [
           {
             active: activeChildId === 'manage-folder-dashboards',
@@ -41,39 +38,30 @@ export class FolderPageLoader {
       },
     };
 
-    return this.backendSrv
-      .getDashboard('db', this.$routeParams.slug)
-      .then(result => {
-        const folderTitle = result.dashboard.title;
-        ctrl.navModel.main.text = '';
-        ctrl.navModel.main.breadcrumbs = [
-          { title: 'Dashboards', url: '/dashboards' },
-          { title: folderTitle },
-        ];
+    return this.backendSrv.getDashboard('db', this.$routeParams.slug).then(result => {
+      const folderTitle = result.dashboard.title;
+      ctrl.navModel.main.text = '';
+      ctrl.navModel.main.breadcrumbs = [{ title: 'Dashboards', url: '/dashboards' }, { title: folderTitle }];
 
-        const folderUrl = this.createFolderUrl(
-          folderId,
-          result.meta.type,
-          result.meta.slug
-        );
+      const folderUrl = this.createFolderUrl(folderId, result.meta.type, result.meta.slug);
 
-        const dashTab = _.find(ctrl.navModel.main.children, {
-          id: 'manage-folder-dashboards',
-        });
-        dashTab.url = folderUrl;
-
-        const permTab = _.find(ctrl.navModel.main.children, {
-          id: 'manage-folder-permissions',
-        });
-        permTab.url = folderUrl + '/permissions';
-
-        const settingsTab = _.find(ctrl.navModel.main.children, {
-          id: 'manage-folder-settings',
-        });
-        settingsTab.url = folderUrl + '/settings';
-
-        return result;
+      const dashTab = _.find(ctrl.navModel.main.children, {
+        id: 'manage-folder-dashboards',
       });
+      dashTab.url = folderUrl;
+
+      const permTab = _.find(ctrl.navModel.main.children, {
+        id: 'manage-folder-permissions',
+      });
+      permTab.url = folderUrl + '/permissions';
+
+      const settingsTab = _.find(ctrl.navModel.main.children, {
+        id: 'manage-folder-settings',
+      });
+      settingsTab.url = folderUrl + '/settings';
+
+      return result;
+    });
   }
 
   createFolderUrl(folderId: number, type: string, slug: string) {

@@ -88,10 +88,7 @@ function applyFunctions(obj, scope, propsConfig?) {
      * ensures that when function is called from a React component
      * the Angular digest cycle is run
      */
-    prev[key] =
-      angular.isFunction(value) && config.wrapApply !== false
-        ? applied(value, scope)
-        : value;
+    prev[key] = angular.isFunction(value) && config.wrapApply !== false ? applied(value, scope) : value;
 
     return prev;
   }, {});
@@ -167,8 +164,7 @@ function findAttribute(attrs, propName) {
 
 // get watch depth of prop (string or array)
 function getPropWatchDepth(defaultWatch, prop) {
-  var customWatchDepth =
-    Array.isArray(prop) && angular.isObject(prop[1]) && prop[1].watchDepth;
+  var customWatchDepth = Array.isArray(prop) && angular.isObject(prop[1]) && prop[1].watchDepth;
   return customWatchDepth || defaultWatch;
 }
 
@@ -205,9 +201,7 @@ var reactComponent = function($injector) {
       };
 
       // If there are props, re-render when they change
-      attrs.props
-        ? watchProps(attrs.watchDepth, scope, [attrs.props], renderMyComponent)
-        : renderMyComponent();
+      attrs.props ? watchProps(attrs.watchDepth, scope, [attrs.props], renderMyComponent) : renderMyComponent();
 
       // cleanup when scope is destroyed
       scope.$on('$destroy', function() {
@@ -215,10 +209,7 @@ var reactComponent = function($injector) {
           ReactDOM.unmountComponentAtNode(elem[0]);
         } else {
           scope.$eval(attrs.onScopeDestroy, {
-            unmountComponent: ReactDOM.unmountComponentAtNode.bind(
-              this,
-              elem[0]
-            ),
+            unmountComponent: ReactDOM.unmountComponentAtNode.bind(this, elem[0]),
           });
         }
       });
@@ -282,20 +273,11 @@ var reactDirective = function($injector) {
         // watch each property name and trigger an update whenever something changes,
         // to update scope.props with new values
         var propExpressions = props.map(function(prop) {
-          return Array.isArray(prop)
-            ? [attrs[getPropName(prop)], getPropConfig(prop)]
-            : attrs[prop];
+          return Array.isArray(prop) ? [attrs[getPropName(prop)], getPropConfig(prop)] : attrs[prop];
         });
 
         // If we don't have any props, then our watch statement won't fire.
-        props.length
-          ? watchProps(
-              attrs.watchDepth,
-              scope,
-              propExpressions,
-              renderMyComponent
-            )
-          : renderMyComponent();
+        props.length ? watchProps(attrs.watchDepth, scope, propExpressions, renderMyComponent) : renderMyComponent();
 
         // cleanup when scope is destroyed
         scope.$on('$destroy', function() {
@@ -303,10 +285,7 @@ var reactDirective = function($injector) {
             ReactDOM.unmountComponentAtNode(elem[0]);
           } else {
             scope.$eval(attrs.onScopeDestroy, {
-              unmountComponent: ReactDOM.unmountComponentAtNode.bind(
-                this,
-                elem[0]
-              ),
+              unmountComponent: ReactDOM.unmountComponentAtNode.bind(this, elem[0]),
             });
           }
         });

@@ -1,11 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  sinon,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, sinon, angularMocks } from 'test/lib/common';
 import 'app/features/dashboard/unsavedChangesSrv';
 import 'app/features/dashboard/dashboard_srv';
 
@@ -28,12 +21,7 @@ describe('unsavedChangesSrv', function() {
   );
 
   beforeEach(
-    angularMocks.inject(function(
-      unsavedChangesSrv,
-      $location,
-      $rootScope,
-      dashboardSrv
-    ) {
+    angularMocks.inject(function(unsavedChangesSrv, $location, $rootScope, dashboardSrv) {
       _unsavedChangesSrv = unsavedChangesSrv;
       _dashboardSrv = dashboardSrv;
       _rootScope = $rootScope;

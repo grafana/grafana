@@ -118,14 +118,7 @@ function editorCheckbox($compile, $interpolate) {
       var model = $interpolate(attrs.model)(scope);
       var ngchange = attrs.change ? ' ng-change="' + attrs.change + '"' : '';
       var tip = attrs.tip ? ' <tip>' + attrs.tip + '</tip>' : '';
-      var label =
-        '<label for="' +
-        scope.$id +
-        model +
-        '" class="checkbox-label">' +
-        text +
-        tip +
-        '</label>';
+      var label = '<label for="' + scope.$id + model + '" class="checkbox-label">' + text + tip + '</label>';
 
       var template =
         '<input class="cr1" id="' +
@@ -155,12 +148,7 @@ function editorCheckbox($compile, $interpolate) {
 function gfDropdown($parse, $compile, $timeout) {
   function buildTemplate(items, placement?) {
     var upclass = placement === 'top' ? 'dropup' : '';
-    var ul = [
-      '<ul class="dropdown-menu ' +
-        upclass +
-        '" role="menu" aria-labelledby="drop1">',
-      '</ul>',
-    ];
+    var ul = ['<ul class="dropdown-menu ' + upclass + '" role="menu" aria-labelledby="drop1">', '</ul>'];
 
     for (let index = 0; index < items.length; index++) {
       let item = items[index];
@@ -172,9 +160,7 @@ function gfDropdown($parse, $compile, $timeout) {
 
       var li =
         '<li' +
-        (item.submenu && item.submenu.length
-          ? ' class="dropdown-submenu"'
-          : '') +
+        (item.submenu && item.submenu.length ? ' class="dropdown-submenu"' : '') +
         '>' +
         '<a tabindex="-1" ng-href="' +
         (item.href || '') +
@@ -205,9 +191,7 @@ function gfDropdown($parse, $compile, $timeout) {
         items = getter(scope);
       $timeout(function() {
         var placement = iElement.data('placement');
-        var dropdown = angular.element(
-          buildTemplate(items, placement).join('')
-        );
+        var dropdown = angular.element(buildTemplate(items, placement).join(''));
         dropdown.insertAfter(iElement);
         $compile(iElement.next('ul.dropdown-menu'))(scope);
       });

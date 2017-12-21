@@ -1,29 +1,29 @@
-import "vendor/flot/jquery.flot";
-import "vendor/flot/jquery.flot.selection";
-import "vendor/flot/jquery.flot.time";
-import "vendor/flot/jquery.flot.stack";
-import "vendor/flot/jquery.flot.stackpercent";
-import "vendor/flot/jquery.flot.fillbelow";
-import "vendor/flot/jquery.flot.crosshair";
-import "vendor/flot/jquery.flot.dashes";
-import "./jquery.flot.events";
+import 'vendor/flot/jquery.flot';
+import 'vendor/flot/jquery.flot.selection';
+import 'vendor/flot/jquery.flot.time';
+import 'vendor/flot/jquery.flot.stack';
+import 'vendor/flot/jquery.flot.stackpercent';
+import 'vendor/flot/jquery.flot.fillbelow';
+import 'vendor/flot/jquery.flot.crosshair';
+import 'vendor/flot/jquery.flot.dashes';
+import './jquery.flot.events';
 
-import $ from "jquery";
-import _ from "lodash";
-import moment from "moment";
-import kbn from "app/core/utils/kbn";
-import { tickStep } from "app/core/utils/ticks";
-import { appEvents, coreModule } from "app/core/core";
-import GraphTooltip from "./graph_tooltip";
-import { ThresholdManager } from "./threshold_manager";
-import { EventManager } from "app/features/annotations/all";
-import { convertValuesToHistogram, getSeriesValues } from "./histogram";
+import $ from 'jquery';
+import _ from 'lodash';
+import moment from 'moment';
+import kbn from 'app/core/utils/kbn';
+import { tickStep } from 'app/core/utils/ticks';
+import { appEvents, coreModule } from 'app/core/core';
+import GraphTooltip from './graph_tooltip';
+import { ThresholdManager } from './threshold_manager';
+import { EventManager } from 'app/features/annotations/all';
+import { convertValuesToHistogram, getSeriesValues } from './histogram';
 
 /** @ngInject **/
 function graphDirective(timeSrv, popoverSrv, contextSrv) {
   return {
-    restrict: "A",
-    template: "",
+    restrict: 'A',
+    template: '',
     link: function(scope, elem) {
       var ctrl = scope.ctrl;
       var dashboard = ctrl.dashboard;
@@ -40,7 +40,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
       });
 
       // panel events
-      ctrl.events.on("panel-teardown", () => {
+      ctrl.events.on('panel-teardown', () => {
         thresholdManager = null;
 
         if (plot) {
@@ -55,23 +55,23 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
        * (see ctrl.events.on('render') in legend.ts).
        * When legend is rendered it emits 'legend-rendering-complete' and graph rendered.
        */
-      ctrl.events.on("render", renderData => {
+      ctrl.events.on('render', renderData => {
         data = renderData || data;
         if (!data) {
           return;
         }
         annotations = ctrl.annotations || [];
         buildFlotPairs(data);
-        ctrl.events.emit("render-legend");
+        ctrl.events.emit('render-legend');
       });
 
-      ctrl.events.on("legend-rendering-complete", () => {
+      ctrl.events.on('legend-rendering-complete', () => {
         render_panel();
       });
 
       // global events
       appEvents.on(
-        "graph-hover",
+        'graph-hover',
         evt => {
           // ignore other graph hover events if shared tooltip is disabled
           if (!dashboard.sharedTooltipModeEnabled()) {
@@ -79,11 +79,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           }
 
           // ignore if we are the emitter
-          if (
-            !plot ||
-            evt.panel.id === panel.id ||
-            ctrl.otherPanelInFullscreenMode()
-          ) {
+          if (!plot || evt.panel.id === panel.id || ctrl.otherPanelInFullscreenMode()) {
             return;
           }
 
@@ -93,7 +89,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
       );
 
       appEvents.on(
-        "graph-hover-clear",
+        'graph-hover-clear',
         (event, info) => {
           if (plot) {
             tooltip.clear(plot);
@@ -130,11 +126,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         }
 
         if (ctrl.dataWarning) {
-          $(
-            `<div class="datapoints-warning flot-temp-elem">${
-              ctrl.dataWarning.title
-            }</div>`
-          ).appendTo(elem);
+          $(`<div class="datapoints-warning flot-temp-elem">${ctrl.dataWarning.title}</div>`).appendTo(elem);
         }
 
         thresholdManager.draw(plot);
@@ -155,10 +147,8 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         for (var i = 0; i < yaxis.length; i++) {
           var axis = yaxis[i];
           var panelOptions = panel.yaxes[i];
-          axis.options.max =
-            axis.options.max !== null ? axis.options.max : panelOptions.max;
-          axis.options.min =
-            axis.options.min !== null ? axis.options.min : panelOptions.min;
+          axis.options.max = axis.options.max !== null ? axis.options.max : panelOptions.max;
+          axis.options.min = axis.options.min !== null ? axis.options.min : panelOptions.min;
         }
       }
 
@@ -177,11 +167,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
               continue;
             }
           } else {
-            if (
-              typeof data[i].bars === "undefined" ||
-              typeof data[i].bars.show === "undefined" ||
-              !data[i].bars.show
-            ) {
+            if (typeof data[i].bars === 'undefined' || typeof data[i].bars.show === 'undefined' || !data[i].bars.show) {
               continue;
             }
           }
@@ -221,9 +207,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
       function buildFlotPairs(data) {
         for (let i = 0; i < data.length; i++) {
           let series = data[i];
-          series.data = series.getFlotPairs(
-            series.nullPointMode || panel.nullPointMode
-          );
+          series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
 
           // if hidden remove points and disable stack
           if (ctrl.hiddenSeries[series.alias]) {
@@ -235,9 +219,9 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
 
       function prepareXAxis(options, panel) {
         switch (panel.xaxis.mode) {
-          case "series": {
+          case 'series': {
             options.series.bars.barWidth = 0.7;
-            options.series.bars.align = "center";
+            options.series.bars.align = 'center';
 
             for (let i = 0; i < data.length; i++) {
               let series = data[i];
@@ -247,7 +231,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
             addXSeriesAxis(options);
             break;
           }
-          case "histogram": {
+          case 'histogram': {
             let bucketSize: number;
             let values = getSeriesValues(data);
 
@@ -266,9 +250,9 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
             addXHistogramAxis(options, bucketSize);
             break;
           }
-          case "table": {
+          case 'table': {
             options.series.bars.barWidth = 0.7;
-            options.series.bars.align = "center";
+            options.series.bars.align = 'center';
             addXTableAxis(options);
             break;
           }
@@ -288,8 +272,8 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
             delete ctrl.inspector;
           }
         } catch (e) {
-          console.log("flotcharts error", e);
-          ctrl.error = e.message || "Render Error";
+          console.log('flotcharts error', e);
+          ctrl.error = e.message || 'Render Error';
           ctrl.renderError = true;
           ctrl.inspector = { error: e };
         }
@@ -304,7 +288,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         let options = {
           hooks: {
             draw: [drawHook],
-            processOffset: [processOffsetHook]
+            processOffset: [processOffsetHook],
           },
           legend: { show: false },
           series: {
@@ -315,27 +299,27 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
               zero: false,
               fill: translateFillOption(panel.fill),
               lineWidth: panel.dashes ? 0 : panel.linewidth,
-              steps: panel.steppedLine
+              steps: panel.steppedLine,
             },
             dashes: {
               show: panel.dashes,
               lineWidth: panel.linewidth,
-              dashLength: [panel.dashLength, panel.spaceLength]
+              dashLength: [panel.dashLength, panel.spaceLength],
             },
             bars: {
               show: panel.bars,
               fill: 1,
               barWidth: 1,
               zero: false,
-              lineWidth: 0
+              lineWidth: 0,
             },
             points: {
               show: panel.points,
               fill: 1,
               fillColor: false,
-              radius: panel.points ? panel.pointradius : 2
+              radius: panel.points ? panel.pointradius : 2,
             },
-            shadowSize: 0
+            shadowSize: 0,
           },
           yaxes: [],
           xaxis: {},
@@ -346,17 +330,17 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
             borderWidth: 0,
             hoverable: true,
             clickable: true,
-            color: "#c8c8c8",
+            color: '#c8c8c8',
             margin: { left: 0, right: 0 },
-            labelMarginX: 0
+            labelMarginX: 0,
           },
           selection: {
-            mode: "x",
-            color: "#666"
+            mode: 'x',
+            color: '#666',
           },
           crosshair: {
-            mode: "x"
-          }
+            mode: 'x',
+          },
         };
         return options;
       }
@@ -403,20 +387,18 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
 
       function addTimeAxis(options) {
         var ticks = panelWidth / 100;
-        var min = _.isUndefined(ctrl.range.from)
-          ? null
-          : ctrl.range.from.valueOf();
+        var min = _.isUndefined(ctrl.range.from) ? null : ctrl.range.from.valueOf();
         var max = _.isUndefined(ctrl.range.to) ? null : ctrl.range.to.valueOf();
 
         options.xaxis = {
           timezone: dashboard.getTimezone(),
           show: panel.xaxis.show,
-          mode: "time",
+          mode: 'time',
           min: min,
           max: max,
-          label: "Datetime",
+          label: 'Datetime',
           ticks: ticks,
-          timeformat: time_format(ticks, min, max)
+          timeformat: time_format(ticks, min, max),
         };
       }
 
@@ -431,8 +413,8 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           mode: null,
           min: 0,
           max: ticks.length + 1,
-          label: "Datetime",
-          ticks: ticks
+          label: 'Datetime',
+          ticks: ticks,
         };
       }
 
@@ -474,12 +456,12 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           mode: null,
           min: min,
           max: max,
-          label: "Histogram",
-          ticks: ticks
+          label: 'Histogram',
+          ticks: ticks,
         };
 
         // Use 'short' format for histogram values
-        configureAxisMode(options.xaxis, "short");
+        configureAxisMode(options.xaxis, 'short');
       }
 
       function addXTableAxis(options) {
@@ -497,20 +479,20 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           mode: null,
           min: 0,
           max: ticks.length + 1,
-          label: "Datetime",
-          ticks: ticks
+          label: 'Datetime',
+          ticks: ticks,
         };
       }
 
       function configureYAxisOptions(data, options) {
         var defaults = {
-          position: "left",
+          position: 'left',
           show: panel.yaxes[0].show,
           index: 1,
           logBase: panel.yaxes[0].logBase || 1,
           min: parseNumber(panel.yaxes[0].min),
           max: parseNumber(panel.yaxes[0].max),
-          tickDecimals: panel.yaxes[0].decimals
+          tickDecimals: panel.yaxes[0].decimals,
         };
 
         options.yaxes.push(defaults);
@@ -520,27 +502,21 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           secondY.index = 2;
           secondY.show = panel.yaxes[1].show;
           secondY.logBase = panel.yaxes[1].logBase || 1;
-          secondY.position = "right";
+          secondY.position = 'right';
           secondY.min = parseNumber(panel.yaxes[1].min);
           secondY.max = parseNumber(panel.yaxes[1].max);
           secondY.tickDecimals = panel.yaxes[1].decimals;
           options.yaxes.push(secondY);
 
           applyLogScale(options.yaxes[1], data);
-          configureAxisMode(
-            options.yaxes[1],
-            panel.percentage && panel.stack ? "percent" : panel.yaxes[1].format
-          );
+          configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? 'percent' : panel.yaxes[1].format);
         }
         applyLogScale(options.yaxes[0], data);
-        configureAxisMode(
-          options.yaxes[0],
-          panel.percentage && panel.stack ? "percent" : panel.yaxes[0].format
-        );
+        configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? 'percent' : panel.yaxes[0].format);
       }
 
       function parseNumber(value: any) {
-        if (value === null || typeof value === "undefined") {
+        if (value === null || typeof value === 'undefined') {
           return null;
         }
 
@@ -578,9 +554,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         }
 
         axis.transform = function(v) {
-          return v < Number.MIN_VALUE
-            ? null
-            : Math.log(v) / Math.log(axis.logBase);
+          return v < Number.MIN_VALUE ? null : Math.log(v) / Math.log(axis.logBase);
         };
         axis.inverseTransform = function(v) {
           return Math.pow(axis.logBase, v);
@@ -598,16 +572,12 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         if (axis.min) {
           min = axis.inverseTransform(Math.ceil(axis.transform(axis.min)));
         } else {
-          min = axis.min = axis.inverseTransform(
-            Math.floor(axis.transform(min))
-          );
+          min = axis.min = axis.inverseTransform(Math.floor(axis.transform(min)));
         }
         if (axis.max) {
           max = axis.inverseTransform(Math.floor(axis.transform(axis.max)));
         } else {
-          max = axis.max = axis.inverseTransform(
-            Math.ceil(axis.transform(max))
-          );
+          max = axis.max = axis.inverseTransform(Math.ceil(axis.transform(max)));
         }
 
         if (!min || min < Number.MIN_VALUE || !max || max < Number.MIN_VALUE) {
@@ -658,11 +628,7 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
 
       function configureAxisMode(axis, format) {
         axis.tickFormatter = function(val, axis) {
-          return kbn.valueFormats[format](
-            val,
-            axis.tickDecimals,
-            axis.scaledDecimals
-          );
+          return kbn.valueFormats[format](val, axis.tickDecimals, axis.scaledDecimals);
         };
       }
 
@@ -674,25 +640,25 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           var oneYear = 31536000000;
 
           if (secPerTick <= 45) {
-            return "%H:%M:%S";
+            return '%H:%M:%S';
           }
           if (secPerTick <= 7200 || range <= oneDay) {
-            return "%H:%M";
+            return '%H:%M';
           }
           if (secPerTick <= 80000) {
-            return "%m/%d %H:%M";
+            return '%m/%d %H:%M';
           }
           if (secPerTick <= 2419200 || range <= oneYear) {
-            return "%m/%d";
+            return '%m/%d';
           }
-          return "%Y-%m";
+          return '%Y-%m';
         }
 
-        return "%H:%M";
+        return '%H:%M';
       }
 
-      elem.bind("plotselected", function(event, ranges) {
-        if (panel.xaxis.mode !== "time") {
+      elem.bind('plotselected', function(event, ranges) {
+        if (panel.xaxis.mode !== 'time') {
           // Skip if panel in histogram or series mode
           plot.clearSelection();
           return;
@@ -707,14 +673,14 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           scope.$apply(function() {
             timeSrv.setTime({
               from: moment.utc(ranges.xaxis.from),
-              to: moment.utc(ranges.xaxis.to)
+              to: moment.utc(ranges.xaxis.to),
             });
           });
         }
       });
 
-      elem.bind("plotclick", function(event, pos, item) {
-        if (panel.xaxis.mode !== "time") {
+      elem.bind('plotclick', function(event, pos, item) {
+        if (panel.xaxis.mode !== 'time') {
           // Skip if panel in histogram or series mode
           return;
         }
@@ -730,13 +696,13 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         }
       });
 
-      scope.$on("$destroy", function() {
+      scope.$on('$destroy', function() {
         tooltip.destroy();
         elem.off();
         elem.remove();
       });
-    }
+    },
   };
 }
 
-coreModule.directive("grafanaGraph", graphDirective);
+coreModule.directive('grafanaGraph', graphDirective);

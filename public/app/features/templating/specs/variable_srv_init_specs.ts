@@ -1,11 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  sinon,
-  expect,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, sinon, expect, angularMocks } from 'test/lib/common';
 
 import '../all';
 
@@ -25,9 +18,7 @@ describe('VariableSrv init', function() {
     })
   );
 
-  beforeEach(
-    ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', '$location'])
-  );
+  beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', '$location']));
   beforeEach(
     angularMocks.inject(($rootScope, $q, $location, $injector) => {
       ctx.$q = $q;
@@ -50,16 +41,10 @@ describe('VariableSrv init', function() {
       beforeEach(function() {
         scenario.setupFn();
         ctx.datasource = {};
-        ctx.datasource.metricFindQuery = sinon
-          .stub()
-          .returns(ctx.$q.when(scenario.queryResult));
+        ctx.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when(scenario.queryResult));
 
-        ctx.datasourceSrv.get = sinon
-          .stub()
-          .returns(ctx.$q.when(ctx.datasource));
-        ctx.datasourceSrv.getMetricSources = sinon
-          .stub()
-          .returns(scenario.metricSources);
+        ctx.datasourceSrv.get = sinon.stub().returns(ctx.$q.when(ctx.datasource));
+        ctx.datasourceSrv.getMetricSources = sinon.stub().returns(scenario.metricSources);
 
         ctx.$location.search = sinon.stub().returns(scenario.urlParams);
         ctx.dashboard = {
@@ -78,28 +63,25 @@ describe('VariableSrv init', function() {
   }
 
   ['query', 'interval', 'custom', 'datasource'].forEach(type => {
-    describeInitScenario(
-      'when setting ' + type + ' variable via url',
-      scenario => {
-        scenario.setup(() => {
-          scenario.variables = [
-            {
-              name: 'apps',
-              type: type,
-              current: { text: 'test', value: 'test' },
-              options: [{ text: 'test', value: 'test' }],
-            },
-          ];
-          scenario.urlParams['var-apps'] = 'new';
-          scenario.metricSources = [];
-        });
+    describeInitScenario('when setting ' + type + ' variable via url', scenario => {
+      scenario.setup(() => {
+        scenario.variables = [
+          {
+            name: 'apps',
+            type: type,
+            current: { text: 'test', value: 'test' },
+            options: [{ text: 'test', value: 'test' }],
+          },
+        ];
+        scenario.urlParams['var-apps'] = 'new';
+        scenario.metricSources = [];
+      });
 
-        it('should update current value', () => {
-          expect(scenario.variables[0].current.value).to.be('new');
-          expect(scenario.variables[0].current.text).to.be('new');
-        });
-      }
-    );
+      it('should update current value', () => {
+        expect(scenario.variables[0].current.value).to.be('new');
+        expect(scenario.variables[0].current.text).to.be('new');
+      });
+    });
   });
 
   describe('given dependent variables', () => {
@@ -125,10 +107,7 @@ describe('VariableSrv init', function() {
       scenario.setup(() => {
         scenario.variables = _.cloneDeep(variableList);
         scenario.urlParams['var-app'] = 'google';
-        scenario.queryResult = [
-          { text: 'google-server1' },
-          { text: 'google-server2' },
-        ];
+        scenario.queryResult = [{ text: 'google-server1' }, { text: 'google-server2' }];
       });
 
       it('should update child variable', () => {
@@ -167,40 +146,37 @@ describe('VariableSrv init', function() {
     });
   });
 
-  describeInitScenario(
-    'when template variable is present in url multiple times',
-    scenario => {
-      scenario.setup(() => {
-        scenario.variables = [
-          {
-            name: 'apps',
-            type: 'query',
-            multi: true,
-            current: { text: 'val1', value: 'val1' },
-            options: [
-              { text: 'val1', value: 'val1' },
-              { text: 'val2', value: 'val2' },
-              { text: 'val3', value: 'val3', selected: true },
-            ],
-          },
-        ];
-        scenario.urlParams['var-apps'] = ['val2', 'val1'];
-      });
+  describeInitScenario('when template variable is present in url multiple times', scenario => {
+    scenario.setup(() => {
+      scenario.variables = [
+        {
+          name: 'apps',
+          type: 'query',
+          multi: true,
+          current: { text: 'val1', value: 'val1' },
+          options: [
+            { text: 'val1', value: 'val1' },
+            { text: 'val2', value: 'val2' },
+            { text: 'val3', value: 'val3', selected: true },
+          ],
+        },
+      ];
+      scenario.urlParams['var-apps'] = ['val2', 'val1'];
+    });
 
-      it('should update current value', function() {
-        var variable = ctx.variableSrv.variables[0];
-        expect(variable.current.value.length).to.be(2);
-        expect(variable.current.value[0]).to.be('val2');
-        expect(variable.current.value[1]).to.be('val1');
-        expect(variable.current.text).to.be('val2 + val1');
-        expect(variable.options[0].selected).to.be(true);
-        expect(variable.options[1].selected).to.be(true);
-      });
+    it('should update current value', function() {
+      var variable = ctx.variableSrv.variables[0];
+      expect(variable.current.value.length).to.be(2);
+      expect(variable.current.value[0]).to.be('val2');
+      expect(variable.current.value[1]).to.be('val1');
+      expect(variable.current.text).to.be('val2 + val1');
+      expect(variable.options[0].selected).to.be(true);
+      expect(variable.options[1].selected).to.be(true);
+    });
 
-      it('should set options that are not in value to selected false', function() {
-        var variable = ctx.variableSrv.variables[0];
-        expect(variable.options[2].selected).to.be(false);
-      });
-    }
-  );
+    it('should set options that are not in value to selected false', function() {
+      var variable = ctx.variableSrv.variables[0];
+      expect(variable.options[2].selected).to.be(false);
+    });
+  });
 });

@@ -232,16 +232,7 @@ describe('given dashboard with row repeat', function() {
 
   it('should not repeat only row', function() {
     const panel_types = _.map(dashboard.panels, 'type');
-    expect(panel_types).toEqual([
-      'row',
-      'graph',
-      'graph',
-      'row',
-      'graph',
-      'graph',
-      'row',
-      'graph',
-    ]);
+    expect(panel_types).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph', 'row', 'graph']);
   });
 
   it('should set scopedVars for each panel', function() {
@@ -262,17 +253,7 @@ describe('given dashboard with row repeat', function() {
       })
     );
 
-    expect(scopedVars).toEqual([
-      'se1',
-      'se1',
-      'se1',
-      'se2',
-      'se2',
-      'se2',
-      'se3',
-      'se3',
-      'se3',
-    ]);
+    expect(scopedVars).toEqual(['se1', 'se1', 'se1', 'se2', 'se2', 'se2', 'se3', 'se3', 'se3']);
   });
 
   it('should repeat only configured row', function() {

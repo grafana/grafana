@@ -13,11 +13,7 @@ describe('containsVariable', function() {
     });
 
     it('should find it if it ends with variable and passing multiple test strings', function() {
-      var contains = containsVariable(
-        'show field keys from $pgmetric',
-        'test string2',
-        'pgmetric'
-      );
+      var contains = containsVariable('show field keys from $pgmetric', 'test string2', 'pgmetric');
       expect(contains).toBe(true);
     });
 

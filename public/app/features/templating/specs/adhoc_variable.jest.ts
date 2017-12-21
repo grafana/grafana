@@ -11,22 +11,14 @@ describe('AdhocVariable', function() {
         ],
       });
       var urlValue = variable.getValueForUrl();
-      expect(urlValue).toMatchObject([
-        'key1|=|value1',
-        'key2|!=|value2',
-        'key3|=|value3a__gfp__value3b__gfp__value3c',
-      ]);
+      expect(urlValue).toMatchObject(['key1|=|value1', 'key2|!=|value2', 'key3|=|value3a__gfp__value3b__gfp__value3c']);
     });
   });
 
   describe('when deserializing from url', function() {
     it('should restore filters', function() {
       var variable = new AdhocVariable({});
-      variable.setValueFromUrl([
-        'key1|=|value1',
-        'key2|!=|value2',
-        'key3|=|value3a__gfp__value3b__gfp__value3c',
-      ]);
+      variable.setValueFromUrl(['key1|=|value1', 'key2|!=|value2', 'key3|=|value3a__gfp__value3b__gfp__value3c']);
 
       expect(variable.filters[0].key).toBe('key1');
       expect(variable.filters[0].operator).toBe('=');

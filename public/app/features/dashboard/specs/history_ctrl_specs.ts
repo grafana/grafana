@@ -1,11 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  sinon,
-  expect,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, sinon, expect, angularMocks } from 'test/lib/common';
 
 import _ from 'lodash';
 import { HistoryListCtrl } from 'app/features/dashboard/history/history';
@@ -95,9 +88,7 @@ describe('HistoryListCtrl', function() {
       });
 
       it('should add a checked property to each revision', function() {
-        var actual = _.filter(ctx.ctrl.revisions, rev =>
-          rev.hasOwnProperty('checked')
-        );
+        var actual = _.filter(ctx.ctrl.revisions, rev => rev.hasOwnProperty('checked'));
         expect(actual.length).to.be(4);
       });
 
@@ -139,18 +130,12 @@ describe('HistoryListCtrl', function() {
 
       it('should listen for the `dashboard-saved` appEvent', function() {
         expect($rootScope.onAppEvent.calledOnce).to.be(true);
-        expect($rootScope.onAppEvent.getCall(0).args[0]).to.be(
-          'dashboard-saved'
-        );
+        expect($rootScope.onAppEvent.getCall(0).args[0]).to.be('dashboard-saved');
       });
 
       it('should call `onDashboardSaved` when the appEvent is received', function() {
-        expect($rootScope.onAppEvent.getCall(0).args[1]).to.not.be(
-          ctx.ctrl.onDashboardSaved
-        );
-        expect($rootScope.onAppEvent.getCall(0).args[1].toString).to.be(
-          ctx.ctrl.onDashboardSaved.toString
-        );
+        expect($rootScope.onAppEvent.getCall(0).args[1]).to.not.be(ctx.ctrl.onDashboardSaved);
+        expect($rootScope.onAppEvent.getCall(0).args[1].toString).to.be(ctx.ctrl.onDashboardSaved.toString);
       });
     });
   });

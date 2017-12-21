@@ -1,4 +1,4 @@
-import coreModule from "app/core/core_module";
+import coreModule from 'app/core/core_module';
 
 export default class CreateTeamCtrl {
   name: string;
@@ -7,20 +7,20 @@ export default class CreateTeamCtrl {
 
   /** @ngInject **/
   constructor(private backendSrv, private $location, navModelSrv) {
-    this.navModel = navModelSrv.getNav("cfg", "teams", 0);
+    this.navModel = navModelSrv.getNav('cfg', 'teams', 0);
   }
 
   create() {
     const payload = {
       name: this.name,
-      email: this.email
+      email: this.email,
     };
-    this.backendSrv.post("/api/teams", payload).then(result => {
+    this.backendSrv.post('/api/teams', payload).then(result => {
       if (result.teamId) {
-        this.$location.path("/org/teams/edit/" + result.teamId);
+        this.$location.path('/org/teams/edit/' + result.teamId);
       }
     });
   }
 }
 
-coreModule.controller("CreateTeamCtrl", CreateTeamCtrl);
+coreModule.controller('CreateTeamCtrl', CreateTeamCtrl);

@@ -56,12 +56,10 @@ export class AlertListCtrl {
       paused: alert.state !== 'paused',
     };
 
-    this.backendSrv
-      .post(`/api/alerts/${alert.id}/pause`, payload)
-      .then(result => {
-        alert.state = result.state;
-        alert.stateModel = alertDef.getStateDisplayModel(result.state);
-      });
+    this.backendSrv.post(`/api/alerts/${alert.id}/pause`, payload).then(result => {
+      alert.state = result.state;
+      alert.stateModel = alertDef.getStateDisplayModel(result.state);
+    });
   }
 
   openHowTo() {

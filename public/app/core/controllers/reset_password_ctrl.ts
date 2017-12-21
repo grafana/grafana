@@ -17,10 +17,7 @@ export class ResetPasswordCtrl {
       main: {
         icon: 'gicon gicon-branding',
         subTitle: 'Reset your Grafana password',
-        breadcrumbs: [
-          { title: 'Login', url: '/login' },
-          { title: 'Reset Password' },
-        ],
+        breadcrumbs: [{ title: 'Login', url: '/login' }, { title: 'Reset Password' }],
       },
     };
 
@@ -28,11 +25,9 @@ export class ResetPasswordCtrl {
       if (!$scope.sendResetForm.$valid) {
         return;
       }
-      backendSrv
-        .post('/api/user/password/send-reset-email', $scope.formModel)
-        .then(function() {
-          $scope.mode = 'email-sent';
-        });
+      backendSrv.post('/api/user/password/send-reset-email', $scope.formModel).then(function() {
+        $scope.mode = 'email-sent';
+      });
     };
 
     $scope.submitReset = function() {
@@ -45,11 +40,9 @@ export class ResetPasswordCtrl {
         return;
       }
 
-      backendSrv
-        .post('/api/user/password/reset', $scope.formModel)
-        .then(function() {
-          $location.path('login');
-        });
+      backendSrv.post('/api/user/password/reset', $scope.formModel).then(function() {
+        $location.path('login');
+      });
     };
   }
 }

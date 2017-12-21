@@ -30,12 +30,7 @@ describe('IndexPattern', function() {
         var from = new Date(1432940523000);
         var to = new Date(1433153106000);
 
-        var expected = [
-          'asd-2015.05.29',
-          'asd-2015.05.30',
-          'asd-2015.05.31',
-          'asd-2015.06.01',
-        ];
+        var expected = ['asd-2015.05.29', 'asd-2015.05.30', 'asd-2015.05.31', 'asd-2015.06.01'];
 
         expect(pattern.getIndexList(from, to)).to.eql(expected);
       });

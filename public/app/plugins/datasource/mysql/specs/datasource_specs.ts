@@ -1,10 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import moment from 'moment';
 import helpers from 'test/specs/helpers';
 import { MysqlDatasource } from '../datasource';
@@ -52,11 +46,7 @@ describe('MySQLDatasource', function() {
           refId: annotationName,
           tables: [
             {
-              columns: [
-                { text: 'time_sec' },
-                { text: 'text' },
-                { text: 'tags' },
-              ],
+              columns: [{ text: 'time_sec' }, { text: 'text' }, { text: 'tags' }],
               rows: [
                 [1432288355, 'some text', 'TagA,TagB'],
                 [1432288390, 'some text2', ' TagB , TagC'],
@@ -105,11 +95,7 @@ describe('MySQLDatasource', function() {
           tables: [
             {
               columns: [{ text: 'title' }, { text: 'text' }],
-              rows: [
-                ['aTitle', 'some text'],
-                ['aTitle2', 'some text2'],
-                ['aTitle3', 'some text3'],
-              ],
+              rows: [['aTitle', 'some text'], ['aTitle2', 'some text2'], ['aTitle3', 'some text3']],
             },
           ],
         },
@@ -146,11 +132,7 @@ describe('MySQLDatasource', function() {
           tables: [
             {
               columns: [{ text: '__value' }, { text: '__text' }],
-              rows: [
-                ['value1', 'aTitle'],
-                ['value2', 'aTitle2'],
-                ['value3', 'aTitle3'],
-              ],
+              rows: [['value1', 'aTitle'], ['value2', 'aTitle2'], ['value3', 'aTitle3']],
             },
           ],
         },
@@ -189,11 +171,7 @@ describe('MySQLDatasource', function() {
           tables: [
             {
               columns: [{ text: '__text' }, { text: '__value' }],
-              rows: [
-                ['aTitle', 'same'],
-                ['aTitle', 'same'],
-                ['aTitle', 'diff'],
-              ],
+              rows: [['aTitle', 'same'], ['aTitle', 'same'], ['aTitle', 'diff']],
             },
           ],
         },
@@ -236,9 +214,7 @@ describe('MySQLDatasource', function() {
 
     describe('and value is an array of strings', () => {
       it('should return comma separated quoted values', () => {
-        expect(
-          ctx.ds.interpolateVariable(['a', 'b', 'c'], ctx.variable)
-        ).to.eql("'a','b','c'");
+        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'], ctx.variable)).to.eql("'a','b','c'");
       });
     });
 

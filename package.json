@@ -107,13 +107,18 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "prettier --single-quote --trailing-comma es5 --write",
+      "prettier --write",
       "git add"
     ],
     "*.scss": [
-      "prettier --single-quote --write",
+      "prettier --write",
       "git add"
     ]
+  },
+  "prettier": {
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "printWidth": 120
   },
   "license": "Apache-2.0",
   "dependencies": {
