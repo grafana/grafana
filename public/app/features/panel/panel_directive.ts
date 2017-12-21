@@ -1,8 +1,8 @@
-import angular from "angular";
-import Drop from "tether-drop";
-import PerfectScrollbar from "perfect-scrollbar";
+import angular from 'angular';
+import Drop from 'tether-drop';
+import PerfectScrollbar from 'perfect-scrollbar';
 
-var module = angular.module("grafana.directives");
+var module = angular.module('grafana.directives');
 
 var panelTemplate = `
   <div class="panel-container">
@@ -53,16 +53,16 @@ var panelTemplate = `
   </div>
 `;
 
-module.directive("grafanaPanel", function($rootScope, $document, $timeout) {
+module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
   return {
-    restrict: "E",
+    restrict: 'E',
     template: panelTemplate,
     transclude: true,
-    scope: { ctrl: "=" },
+    scope: { ctrl: '=' },
     link: function(scope, elem) {
-      var panelContainer = elem.find(".panel-container");
-      var panelContent = elem.find(".panel-content");
-      var cornerInfoElem = elem.find(".panel-info-corner");
+      var panelContainer = elem.find('.panel-container');
+      var panelContent = elem.find('.panel-content');
+      var cornerInfoElem = elem.find('.panel-info-corner');
       var ctrl = scope.ctrl;
       var infoDrop;
       var panelScrollbar;
@@ -75,17 +75,17 @@ module.directive("grafanaPanel", function($rootScope, $document, $timeout) {
       var hasAlertRule;
 
       function mouseEnter() {
-        panelContainer.toggleClass("panel-hover-highlight", true);
+        panelContainer.toggleClass('panel-hover-highlight', true);
         ctrl.dashboard.setPanelFocus(ctrl.panel.id);
       }
 
       function mouseLeave() {
-        panelContainer.toggleClass("panel-hover-highlight", false);
+        panelContainer.toggleClass('panel-hover-highlight', false);
         ctrl.dashboard.setPanelFocus(0);
       }
 
       function panelHeightUpdated() {
-        panelContent.css({ height: ctrl.height + "px" });
+        panelContent.css({ height: ctrl.height + 'px' });
         if (panelScrollbar) {
           panelScrollbar.update();
         }
@@ -94,17 +94,17 @@ module.directive("grafanaPanel", function($rootScope, $document, $timeout) {
       // set initial transparency
       if (ctrl.panel.transparent) {
         transparentLastState = true;
-        panelContainer.addClass("panel-transparent", true);
+        panelContainer.addClass('panel-transparent', true);
       }
 
       // update scrollbar after mounting
-      ctrl.events.on("component-did-mount", () => {
+      ctrl.events.on('component-did-mount', () => {
         if (ctrl.__proto__.constructor.scrollable) {
           panelScrollbar = new PerfectScrollbar(panelContent[0]);
         }
       });
 
-      ctrl.events.on("panel-size-changed", () => {
+      ctrl.events.on('panel-size-changed', () => {
         ctrl.calculatePanelHeight();
         panelHeightUpdated();
         $timeout(() => {
@@ -116,47 +116,38 @@ module.directive("grafanaPanel", function($rootScope, $document, $timeout) {
       ctrl.calculatePanelHeight();
       panelHeightUpdated();
 
-      ctrl.events.on("render", () => {
+      ctrl.events.on('render', () => {
         if (transparentLastState !== ctrl.panel.transparent) {
-          panelContainer.toggleClass(
-            "panel-transparent",
-            ctrl.panel.transparent === true
-          );
+          panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
           transparentLastState = ctrl.panel.transparent;
         }
 
         hasAlertRule = ctrl.panel.alert !== undefined;
         if (lastHasAlertRule !== hasAlertRule) {
-          panelContainer.toggleClass("panel-has-alert", hasAlertRule);
+          panelContainer.toggleClass('panel-has-alert', hasAlertRule);
 
           lastHasAlertRule = hasAlertRule;
         }
 
         if (ctrl.alertState) {
           if (lastAlertState) {
-            panelContainer.removeClass("panel-alert-state--" + lastAlertState);
+            panelContainer.removeClass('panel-alert-state--' + lastAlertState);
           }
 
-          if (
-            ctrl.alertState.state === "ok" ||
-            ctrl.alertState.state === "alerting"
-          ) {
-            panelContainer.addClass(
-              "panel-alert-state--" + ctrl.alertState.state
-            );
+          if (ctrl.alertState.state === 'ok' || ctrl.alertState.state === 'alerting') {
+            panelContainer.addClass('panel-alert-state--' + ctrl.alertState.state);
           }
 
           lastAlertState = ctrl.alertState.state;
         } else if (lastAlertState) {
-          panelContainer.removeClass("panel-alert-state--" + lastAlertState);
+          panelContainer.removeClass('panel-alert-state--' + lastAlertState);
           lastAlertState = null;
         }
       });
 
       function updatePanelCornerInfo() {
         var cornerMode = ctrl.getInfoMode();
-        cornerInfoElem[0].className =
-          "panel-info-corner panel-info-corner--" + cornerMode;
+        cornerInfoElem[0].className = 'panel-info-corner panel-info-corner--' + cornerMode;
 
         if (cornerMode) {
           if (infoDrop) {
@@ -166,41 +157,38 @@ module.directive("grafanaPanel", function($rootScope, $document, $timeout) {
           infoDrop = new Drop({
             target: cornerInfoElem[0],
             content: function() {
-              return ctrl.getInfoContent({ mode: "tooltip" });
+              return ctrl.getInfoContent({ mode: 'tooltip' });
             },
-            classes: ctrl.error ? "drop-error" : "drop-help",
-            openOn: "hover",
+            classes: ctrl.error ? 'drop-error' : 'drop-help',
+            openOn: 'hover',
             hoverOpenDelay: 100,
             tetherOptions: {
-              attachment: "bottom left",
-              targetAttachment: "top left",
+              attachment: 'bottom left',
+              targetAttachment: 'top left',
               constraints: [
                 {
-                  to: "window",
-                  attachment: "together",
-                  pin: true
-                }
-              ]
-            }
+                  to: 'window',
+                  attachment: 'together',
+                  pin: true,
+                },
+              ],
+            },
           });
         }
       }
 
-      scope.$watchGroup(
-        ["ctrl.error", "ctrl.panel.description"],
-        updatePanelCornerInfo
-      );
-      scope.$watchCollection("ctrl.panel.links", updatePanelCornerInfo);
+      scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], updatePanelCornerInfo);
+      scope.$watchCollection('ctrl.panel.links', updatePanelCornerInfo);
 
-      cornerInfoElem.on("click", function() {
+      cornerInfoElem.on('click', function() {
         infoDrop.close();
         scope.$apply(ctrl.openInspector.bind(ctrl));
       });
 
-      elem.on("mouseenter", mouseEnter);
-      elem.on("mouseleave", mouseLeave);
+      elem.on('mouseenter', mouseEnter);
+      elem.on('mouseleave', mouseLeave);
 
-      scope.$on("$destroy", function() {
+      scope.$on('$destroy', function() {
         elem.off();
         cornerInfoElem.off();
 
@@ -212,13 +200,13 @@ module.directive("grafanaPanel", function($rootScope, $document, $timeout) {
           panelScrollbar.update();
         }
       });
-    }
+    },
   };
 });
 
-module.directive("panelHelpCorner", function($rootScope) {
+module.directive('panelHelpCorner', function($rootScope) {
   return {
-    restrict: "E",
+    restrict: 'E',
     template: `
     <span class="alert-error panel-error small pointer" ng-if="ctrl.error" ng-click="ctrl.openInspector()">
     <span data-placement="top" bs-tooltip="ctrl.error">
@@ -226,6 +214,6 @@ module.directive("panelHelpCorner", function($rootScope) {
     </span>
     </span>
     `,
-    link: function(scope, elem) {}
+    link: function(scope, elem) {},
   };
 });

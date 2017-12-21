@@ -1,6 +1,6 @@
-import angular from "angular";
-import _ from "lodash";
-import config from "app/core/config";
+import angular from 'angular';
+import _ from 'lodash';
+import config from 'app/core/config';
 
 // represents the transient view state
 // like fullscreen panel & edit
@@ -21,18 +21,18 @@ export class DashboardViewState {
     self.$scope = $scope;
     self.dashboard = $scope.dashboard;
 
-    $scope.onAppEvent("$routeUpdate", function() {
+    $scope.onAppEvent('$routeUpdate', function() {
       var urlState = self.getQueryStringState();
       if (self.needsSync(urlState)) {
         self.update(urlState, true);
       }
     });
 
-    $scope.onAppEvent("panel-change-view", function(evt, payload) {
+    $scope.onAppEvent('panel-change-view', function(evt, payload) {
       self.update(payload);
     });
 
-    $scope.onAppEvent("panel-initialized", function(evt, payload) {
+    $scope.onAppEvent('panel-initialized', function(evt, payload) {
       self.registerPanel(payload.scope);
     });
 
@@ -50,7 +50,7 @@ export class DashboardViewState {
     var state = this.$location.search();
     state.panelId = parseInt(state.panelId) || null;
     state.fullscreen = state.fullscreen ? true : null;
-    state.edit = state.edit === "true" || state.edit === true || null;
+    state.edit = state.edit === 'true' || state.edit === true || null;
     state.editview = state.editview || null;
     state.orgId = config.bootData.user.orgId;
     return state;
@@ -75,8 +75,7 @@ export class DashboardViewState {
     }
 
     // remember if editStateChanged
-    this.editStateChanged =
-      (state.edit || false) !== (this.state.edit || false);
+    this.editStateChanged = (state.edit || false) !== (this.state.edit || false);
 
     _.extend(this.state, state);
     this.dashboard.meta.fullscreen = this.state.fullscreen;
@@ -117,10 +116,7 @@ export class DashboardViewState {
 
       if (this.fullscreenPanel) {
         // if already fullscreen
-        if (
-          this.fullscreenPanel === panelScope &&
-          this.editStateChanged === false
-        ) {
+        if (this.fullscreenPanel === panelScope && this.editStateChanged === false) {
           return;
         } else {
           this.leaveFullscreen(false);
@@ -153,7 +149,7 @@ export class DashboardViewState {
     ctrl.fullscreen = false;
 
     this.dashboard.setViewMode(ctrl.panel, false, false);
-    this.$scope.appEvent("panel-fullscreen-exit", { panelId: ctrl.panel.id });
+    this.$scope.appEvent('panel-fullscreen-exit', { panelId: ctrl.panel.id });
 
     if (!render) {
       return false;
@@ -161,9 +157,9 @@ export class DashboardViewState {
 
     this.$timeout(function() {
       if (self.oldTimeRange !== ctrl.range) {
-        self.$rootScope.$broadcast("refresh");
+        self.$rootScope.$broadcast('refresh');
       } else {
-        self.$rootScope.$broadcast("render");
+        self.$rootScope.$broadcast('render');
       }
       delete self.fullscreenPanel;
     });
@@ -180,7 +176,7 @@ export class DashboardViewState {
     this.fullscreenPanel = panelScope;
 
     this.dashboard.setViewMode(ctrl.panel, true, ctrl.editMode);
-    this.$scope.appEvent("panel-fullscreen-enter", { panelId: ctrl.panel.id });
+    this.$scope.appEvent('panel-fullscreen-enter', { panelId: ctrl.panel.id });
   }
 
   registerPanel(panelScope) {
@@ -197,7 +193,7 @@ export class DashboardViewState {
       }
     }
 
-    var unbind = panelScope.$on("$destroy", function() {
+    var unbind = panelScope.$on('$destroy', function() {
       self.panelScopes = _.without(self.panelScopes, panelScope);
       unbind();
     });
@@ -209,10 +205,8 @@ export function dashboardViewStateSrv($location, $timeout, $rootScope) {
   return {
     create: function($scope) {
       return new DashboardViewState($scope, $location, $timeout, $rootScope);
-    }
+    },
   };
 }
 
-angular
-  .module("grafana.services")
-  .factory("dashboardViewStateSrv", dashboardViewStateSrv);
+angular.module('grafana.services').factory('dashboardViewStateSrv', dashboardViewStateSrv);

@@ -11,7 +11,7 @@ export class Store {
     if (def !== void 0 && !this.exists(key)) {
       return def;
     }
-    return window.localStorage[key] === "true";
+    return window.localStorage[key] === 'true';
   }
 
   exists(key) {

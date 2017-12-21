@@ -1,6 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import { liveSrv } from "app/core/core";
+import { liveSrv } from 'app/core/core';
 
 class DataObservable {
   target: any;
@@ -12,7 +12,7 @@ class DataObservable {
   subscribe(options) {
     var observable = liveSrv.subscribe(this.target.stream);
     return observable.subscribe(data => {
-      console.log("grafana stream ds data!", data);
+      console.log('grafana stream ds data!', data);
     });
   }
 }

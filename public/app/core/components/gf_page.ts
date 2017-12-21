@@ -1,6 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import coreModule from "app/core/core_module";
+import coreModule from 'app/core/core_module';
 
 const template = `
 <div class="scroll-canvas">
@@ -24,19 +24,19 @@ const template = `
 
 export function gfPageDirective() {
   return {
-    restrict: "E",
+    restrict: 'E',
     template: template,
     scope: {
-      model: "="
+      model: '=',
     },
     transclude: {
-      header: "?gfPageHeader",
-      body: "gfPageBody"
+      header: '?gfPageHeader',
+      body: 'gfPageBody',
     },
     link: function(scope, elem, attrs) {
       console.log(scope);
-    }
+    },
   };
 }
 
-coreModule.directive("gfPage", gfPageDirective);
+coreModule.directive('gfPage', gfPageDirective);

@@ -1,16 +1,16 @@
-import angular from "angular";
-import _ from "lodash";
-import "./link_srv";
+import angular from 'angular';
+import _ from 'lodash';
+import './link_srv';
 
 function panelLinksEditor() {
   return {
     scope: {
-      panel: "="
+      panel: '=',
     },
-    restrict: "E",
-    controller: "PanelLinksEditorCtrl",
-    templateUrl: "public/app/features/panellinks/module.html",
-    link: function() {}
+    restrict: 'E',
+    controller: 'PanelLinksEditorCtrl',
+    templateUrl: 'public/app/features/panellinks/module.html',
+    link: function() {},
   };
 }
 
@@ -21,7 +21,7 @@ export class PanelLinksEditorCtrl {
 
     $scope.addLink = function() {
       $scope.panel.links.push({
-        type: "dashboard"
+        type: 'dashboard',
       });
     };
 
@@ -52,6 +52,6 @@ export class PanelLinksEditorCtrl {
 }
 
 angular
-  .module("grafana.directives")
-  .directive("panelLinksEditor", panelLinksEditor)
-  .controller("PanelLinksEditorCtrl", PanelLinksEditorCtrl);
+  .module('grafana.directives')
+  .directive('panelLinksEditor', panelLinksEditor)
+  .controller('PanelLinksEditorCtrl', PanelLinksEditorCtrl);

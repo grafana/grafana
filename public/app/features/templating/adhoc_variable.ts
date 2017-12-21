@@ -1,16 +1,16 @@
-import _ from "lodash";
-import { Variable, assignModelProperties, variableTypes } from "./variable";
+import _ from 'lodash';
+import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class AdhocVariable implements Variable {
   filters: any[];
 
   defaults = {
-    type: "adhoc",
-    name: "",
-    label: "",
+    type: 'adhoc',
+    name: '',
+    label: '',
     hide: 0,
     datasource: null,
-    filters: []
+    filters: [],
   };
 
   /** @ngInject **/
@@ -41,13 +41,13 @@ export class AdhocVariable implements Variable {
     }
 
     this.filters = urlValue.map(item => {
-      var values = item.split("|").map(value => {
+      var values = item.split('|').map(value => {
         return this.unescapeDelimiter(value);
       });
       return {
         key: values[0],
         operator: values[1],
-        value: values[2]
+        value: values[2],
       };
     });
 
@@ -60,16 +60,16 @@ export class AdhocVariable implements Variable {
         .map(value => {
           return this.escapeDelimiter(value);
         })
-        .join("|");
+        .join('|');
     });
   }
 
   escapeDelimiter(value) {
-    return value.replace(/\|/g, "__gfp__");
+    return value.replace(/\|/g, '__gfp__');
   }
 
   unescapeDelimiter(value) {
-    return value.replace(/__gfp__/g, "|");
+    return value.replace(/__gfp__/g, '|');
   }
 
   setFilters(filters: any[]) {
@@ -77,8 +77,8 @@ export class AdhocVariable implements Variable {
   }
 }
 
-variableTypes["adhoc"] = {
-  name: "Ad hoc filters",
+variableTypes['adhoc'] = {
+  name: 'Ad hoc filters',
   ctor: AdhocVariable,
-  description: "Add key/value filters on the fly"
+  description: 'Add key/value filters on the fly',
 };

@@ -1,6 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import coreModule from "app/core/core_module";
+import coreModule from 'app/core/core_module';
 
 var template = `
 <label for="check-{{ctrl.id}}" class="gf-form-label {{ctrl.labelClass}} pointer" ng-show="ctrl.label">
@@ -37,20 +37,20 @@ export class SwitchCtrl {
 
 export function switchDirective() {
   return {
-    restrict: "E",
+    restrict: 'E',
     controller: SwitchCtrl,
-    controllerAs: "ctrl",
+    controllerAs: 'ctrl',
     bindToController: true,
     scope: {
-      checked: "=",
-      label: "@",
-      labelClass: "@",
-      tooltip: "@",
-      switchClass: "@",
-      onChange: "&"
+      checked: '=',
+      label: '@',
+      labelClass: '@',
+      tooltip: '@',
+      switchClass: '@',
+      onChange: '&',
     },
-    template: template
+    template: template,
   };
 }
 
-coreModule.directive("gfFormSwitch", switchDirective);
+coreModule.directive('gfFormSwitch', switchDirective);

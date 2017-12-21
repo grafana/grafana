@@ -1,9 +1,9 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from "lodash";
-import coreModule from "app/core/core_module";
-import appEvents from "app/core/app_events";
-import { DashboardModel } from "app/features/dashboard/dashboard_model";
+import _ from 'lodash';
+import coreModule from 'app/core/core_module';
+import appEvents from 'app/core/app_events';
+import { DashboardModel } from 'app/features/dashboard/dashboard_model';
 
 export class BackendSrv {
   private inFlightRequests = {};
@@ -11,32 +11,26 @@ export class BackendSrv {
   private noBackendCache: boolean;
 
   /** @ngInject */
-  constructor(
-    private $http,
-    private alertSrv,
-    private $q,
-    private $timeout,
-    private contextSrv
-  ) {}
+  constructor(private $http, private alertSrv, private $q, private $timeout, private contextSrv) {}
 
   get(url, params?) {
-    return this.request({ method: "GET", url: url, params: params });
+    return this.request({ method: 'GET', url: url, params: params });
   }
 
   delete(url) {
-    return this.request({ method: "DELETE", url: url });
+    return this.request({ method: 'DELETE', url: url });
   }
 
   post(url, data) {
-    return this.request({ method: "POST", url: url, data: data });
+    return this.request({ method: 'POST', url: url, data: data });
   }
 
   patch(url, data) {
-    return this.request({ method: "PATCH", url: url, data: data });
+    return this.request({ method: 'PATCH', url: url, data: data });
   }
 
   put(url, data) {
-    return this.request({ method: "PUT", url: url, data: data });
+    return this.request({ method: 'PUT', url: url, data: data });
   }
 
   withNoBackendCache(callback) {
@@ -51,28 +45,28 @@ export class BackendSrv {
       return;
     }
 
-    var data = err.data || { message: "Unexpected error" };
+    var data = err.data || { message: 'Unexpected error' };
     if (_.isString(data)) {
       data = { message: data };
     }
 
     if (err.status === 422) {
-      this.alertSrv.set("Validation failed", data.message, "warning", 4000);
+      this.alertSrv.set('Validation failed', data.message, 'warning', 4000);
       throw data;
     }
 
-    data.severity = "error";
+    data.severity = 'error';
 
     if (err.status < 500) {
-      data.severity = "warning";
+      data.severity = 'warning';
     }
 
     if (data.message) {
-      let description = "";
+      let description = '';
       let message = data.message;
       if (message.length > 80) {
         description = message;
-        message = "Error";
+        message = 'Error';
       }
       this.alertSrv.set(message, description, data.severity, 10000);
     }
@@ -88,20 +82,20 @@ export class BackendSrv {
     if (requestIsLocal) {
       if (this.contextSrv.user && this.contextSrv.user.orgId) {
         options.headers = options.headers || {};
-        options.headers["X-Grafana-Org-Id"] = this.contextSrv.user.orgId;
+        options.headers['X-Grafana-Org-Id'] = this.contextSrv.user.orgId;
       }
 
-      if (options.url.indexOf("/") === 0) {
+      if (options.url.indexOf('/') === 0) {
         options.url = options.url.substring(1);
       }
     }
 
     return this.$http(options).then(
       results => {
-        if (options.method !== "GET") {
+        if (options.method !== 'GET') {
           if (results && results.data.message) {
             if (options.showSuccessAlert !== false) {
-              this.alertSrv.set(results.data.message, "", "success", 3000);
+              this.alertSrv.set(results.data.message, '', 'success', 3000);
             }
           }
         }
@@ -109,11 +103,7 @@ export class BackendSrv {
       },
       err => {
         // handle unauthorized
-        if (
-          err.status === 401 &&
-          this.contextSrv.user.isSignedIn &&
-          firstAttempt
-        ) {
+        if (err.status === 401 && this.contextSrv.user.isSignedIn && firstAttempt) {
           return this.loginPing().then(() => {
             options.retry = 1;
             return this.request(options);
@@ -163,26 +153,26 @@ export class BackendSrv {
     if (requestIsLocal) {
       if (this.contextSrv.user && this.contextSrv.user.orgId) {
         options.headers = options.headers || {};
-        options.headers["X-Grafana-Org-Id"] = this.contextSrv.user.orgId;
+        options.headers['X-Grafana-Org-Id'] = this.contextSrv.user.orgId;
       }
 
-      if (options.url.indexOf("/") === 0) {
+      if (options.url.indexOf('/') === 0) {
         options.url = options.url.substring(1);
       }
 
       if (options.headers && options.headers.Authorization) {
-        options.headers["X-DS-Authorization"] = options.headers.Authorization;
+        options.headers['X-DS-Authorization'] = options.headers.Authorization;
         delete options.headers.Authorization;
       }
 
       if (this.noBackendCache) {
-        options.headers["X-Grafana-NoCache"] = "true";
+        options.headers['X-Grafana-NoCache'] = 'true';
       }
     }
 
     return this.$http(options)
       .then(response => {
-        appEvents.emit("ds-request-response", response);
+        appEvents.emit('ds-request-response', response);
         return response;
       })
       .catch(err => {
@@ -205,7 +195,7 @@ export class BackendSrv {
         if (_.isString(err.data) && err.status === 500) {
           err.data = {
             error: err.statusText,
-            response: err.data
+            response: err.data,
           };
         }
 
@@ -214,7 +204,7 @@ export class BackendSrv {
           err.data.message = err.data.error;
         }
 
-        appEvents.emit("ds-request-error", err);
+        appEvents.emit('ds-request-error', err);
         throw err;
       })
       .finally(() => {
@@ -226,49 +216,49 @@ export class BackendSrv {
   }
 
   loginPing() {
-    return this.request({ url: "/api/login/ping", method: "GET", retry: 1 });
+    return this.request({ url: '/api/login/ping', method: 'GET', retry: 1 });
   }
 
   search(query) {
-    return this.get("/api/search", query);
+    return this.get('/api/search', query);
   }
 
   getDashboard(type, slug) {
-    return this.get("/api/dashboards/" + type + "/" + slug);
+    return this.get('/api/dashboards/' + type + '/' + slug);
   }
 
   saveDashboard(dash, options) {
     options = options || {};
 
-    return this.post("/api/dashboards/db/", {
+    return this.post('/api/dashboards/db/', {
       dashboard: dash,
-      folderId: dash.folderId,
+      folderId: options.folderId,
       overwrite: options.overwrite === true,
-      message: options.message || ""
+      message: options.message || '',
     });
   }
 
   createDashboardFolder(name) {
     const dash = {
       schemaVersion: 16,
-      title: name,
+      title: name.trim(),
       editable: true,
-      panels: []
+      panels: [],
     };
 
-    return this.post("/api/dashboards/db/", {
+    return this.post('/api/dashboards/db/', {
       dashboard: dash,
       isFolder: true,
-      overwrite: false
+      overwrite: false,
     }).then(res => {
-      return this.getDashboard("db", res.slug);
+      return this.getDashboard('db', res.slug);
     });
   }
 
   deleteDashboard(slug) {
     let deferred = this.$q.defer();
 
-    this.getDashboard("db", slug).then(fullDash => {
+    this.getDashboard('db', slug).then(fullDash => {
       this.delete(`/api/dashboards/db/${slug}`)
         .then(() => {
           deferred.resolve(fullDash);
@@ -295,16 +285,14 @@ export class BackendSrv {
     const tasks = [];
 
     for (let slug of dashboardSlugs) {
-      tasks.push(
-        this.createTask(this.moveDashboard.bind(this), true, slug, toFolder)
-      );
+      tasks.push(this.createTask(this.moveDashboard.bind(this), true, slug, toFolder));
     }
 
     return this.executeInOrder(tasks, []).then(result => {
       return {
         totalCount: result.length,
         successCount: _.filter(result, { succeeded: true }).length,
-        alreadyInFolderCount: _.filter(result, { alreadyInFolder: true }).length
+        alreadyInFolderCount: _.filter(result, { alreadyInFolder: true }).length,
       };
     });
   }
@@ -312,31 +300,30 @@ export class BackendSrv {
   private moveDashboard(slug, toFolder) {
     let deferred = this.$q.defer();
 
-    this.getDashboard("db", slug).then(fullDash => {
+    this.getDashboard('db', slug).then(fullDash => {
       const model = new DashboardModel(fullDash.dashboard, fullDash.meta);
 
-      if (
-        (!fullDash.meta.folderId && toFolder.id === 0) ||
-        fullDash.meta.folderId === toFolder.id
-      ) {
+      if ((!fullDash.meta.folderId && toFolder.id === 0) || fullDash.meta.folderId === toFolder.id) {
         deferred.resolve({ alreadyInFolder: true });
         return;
       }
 
-      model.folderId = toFolder.id;
-      model.meta.folderId = toFolder.id;
-      model.meta.folderTitle = toFolder.title;
       const clone = model.getSaveModelClone();
+      let options = {
+        folderId: toFolder.id,
+        overwrite: false,
+      };
 
-      this.saveDashboard(clone, {})
+      this.saveDashboard(clone, options)
         .then(() => {
           deferred.resolve({ succeeded: true });
         })
         .catch(err => {
-          if (err.data && err.data.status === "plugin-dashboard") {
+          if (err.data && err.data.status === 'plugin-dashboard') {
             err.isHandled = true;
+            options.overwrite = true;
 
-            this.saveDashboard(clone, { overwrite: true })
+            this.saveDashboard(clone, options)
               .then(() => {
                 deferred.resolve({ succeeded: true });
               })
@@ -374,4 +361,4 @@ export class BackendSrv {
   }
 }
 
-coreModule.service("backendSrv", BackendSrv);
+coreModule.service('backendSrv', BackendSrv);

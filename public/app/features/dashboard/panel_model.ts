@@ -1,5 +1,5 @@
-import { Emitter } from "app/core/utils/emitter";
-import _ from "lodash";
+import { Emitter } from 'app/core/utils/emitter';
+import _ from 'lodash';
 
 export interface GridPos {
   x: number;
@@ -12,7 +12,7 @@ export interface GridPos {
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
   fullscreen: true,
-  isEditing: true
+  isEditing: true,
 };
 
 export class PanelModel {
@@ -65,7 +65,7 @@ export class PanelModel {
   setViewMode(fullscreen: boolean, isEditing: boolean) {
     this.fullscreen = fullscreen;
     this.isEditing = isEditing;
-    this.events.emit("panel-size-changed");
+    this.events.emit('panel-size-changed');
   }
 
   updateGridPos(newPos: GridPos) {
@@ -81,13 +81,13 @@ export class PanelModel {
     this.gridPos.h = newPos.h;
 
     if (sizeChanged) {
-      console.log("PanelModel sizeChanged event and render events fired");
-      this.events.emit("panel-size-changed");
+      console.log('PanelModel sizeChanged event and render events fired');
+      this.events.emit('panel-size-changed');
     }
   }
 
   resizeDone() {
-    this.events.emit("panel-size-changed");
+    this.events.emit('panel-size-changed');
   }
 
   destroy() {

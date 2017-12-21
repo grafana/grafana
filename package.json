@@ -115,6 +115,11 @@
       "git add"
     ]
   },
+  "prettier": {
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "printWidth": 120
+  },
   "license": "Apache-2.0",
   "dependencies": {
     "angular": "^1.6.6",

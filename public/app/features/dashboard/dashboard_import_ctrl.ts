@@ -1,5 +1,5 @@
-import _ from "lodash";
-import config from "app/core/config";
+import _ from 'lodash';
+import config from 'app/core/config';
 
 export class DashboardImportCtrl {
   navModel: any;
@@ -13,16 +13,13 @@ export class DashboardImportCtrl {
   gnetUrl: string;
   gnetError: string;
   gnetInfo: any;
+  titleTouched: boolean;
+  hasNameValidationError: boolean;
+  nameValidationError: any;
 
   /** @ngInject */
-  constructor(
-    private backendSrv,
-    navModelSrv,
-    private $location,
-    private $scope,
-    $routeParams
-  ) {
-    this.navModel = navModelSrv.getNav("create", "import");
+  constructor(private backendSrv, private validationSrv, navModelSrv, private $location, private $scope, $routeParams) {
+    this.navModel = navModelSrv.getNav('create', 'import');
 
     this.step = 1;
     this.nameExists = false;
@@ -49,13 +46,13 @@ export class DashboardImportCtrl {
           value: input.value,
           type: input.type,
           pluginId: input.pluginId,
-          options: []
+          options: [],
         };
 
-        if (input.type === "datasource") {
+        if (input.type === 'datasource') {
           this.setDatasourceOptions(input, inputModel);
         } else if (!inputModel.info) {
-          inputModel.info = "Specify a string constant";
+          inputModel.info = 'Specify a string constant';
         }
 
         this.inputs.push(inputModel);
@@ -72,10 +69,9 @@ export class DashboardImportCtrl {
     });
 
     if (sources.length === 0) {
-      inputModel.info =
-        "No data sources of type " + input.pluginName + " found";
+      inputModel.info = 'No data sources of type ' + input.pluginName + ' found';
     } else if (!inputModel.info) {
-      inputModel.info = "Select a " + input.pluginName + " data source";
+      inputModel.info = 'Select a ' + input.pluginName + ' data source';
     }
 
     inputModel.options = sources.map(val => {
@@ -93,15 +89,22 @@ export class DashboardImportCtrl {
   }
 
   titleChanged() {
-    this.backendSrv.search({ query: this.dash.title }).then(res => {
-      this.nameExists = false;
-      for (let hit of res) {
-        if (this.dash.title === hit.title) {
+    this.titleTouched = true;
+    this.nameExists = false;
+
+    this.validationSrv
+      .validateNewDashboardOrFolderName(this.dash.title)
+      .then(() => {
+        this.hasNameValidationError = false;
+      })
+      .catch(err => {
+        if (err.type === 'EXISTING') {
           this.nameExists = true;
-          break;
         }
-      }
-    });
+
+        this.hasNameValidationError = true;
+        this.nameValidationError = err.message;
+      });
   }
 
   saveDashboard() {
@@ -110,25 +113,25 @@ export class DashboardImportCtrl {
         name: input.name,
         type: input.type,
         pluginId: input.pluginId,
-        value: input.value
+        value: input.value,
       };
     });
 
     return this.backendSrv
-      .post("api/dashboards/import", {
+      .post('api/dashboards/import', {
         dashboard: this.dash,
         overwrite: true,
-        inputs: inputs
+        inputs: inputs,
       })
       .then(res => {
-        this.$location.url("dashboard/" + res.importedUri);
+        this.$location.url('dashboard/' + res.importedUri);
         this.$scope.dismiss();
       });
   }
 
   loadJsonText() {
     try {
-      this.parseError = "";
+      this.parseError = '';
       var dash = JSON.parse(this.jsonText);
       this.onUpload(dash);
     } catch (err) {
@@ -139,7 +142,7 @@ export class DashboardImportCtrl {
   }
 
   checkGnetDashboard() {
-    this.gnetError = "";
+    this.gnetError = '';
 
     var match = /(^\d+$)|dashboards\/(\d+)/.exec(this.gnetUrl);
     var dashboardId;
@@ -149,11 +152,11 @@ export class DashboardImportCtrl {
     } else if (match && match[2]) {
       dashboardId = match[2];
     } else {
-      this.gnetError = "Could not find dashboard";
+      this.gnetError = 'Could not find dashboard';
     }
 
     return this.backendSrv
-      .get("api/gnet/dashboards/" + dashboardId)
+      .get('api/gnet/dashboards/' + dashboardId)
       .then(res => {
         this.gnetInfo = res;
         // store reference to grafana.com
@@ -167,9 +170,9 @@ export class DashboardImportCtrl {
   }
 
   back() {
-    this.gnetUrl = "";
+    this.gnetUrl = '';
     this.step = 1;
-    this.gnetError = "";
-    this.gnetInfo = "";
+    this.gnetError = '';
+    this.gnetInfo = '';
   }
 }

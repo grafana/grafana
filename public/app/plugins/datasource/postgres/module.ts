@@ -1,16 +1,16 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import { PostgresDatasource } from "./datasource";
-import { PostgresQueryCtrl } from "./query_ctrl";
+import { PostgresDatasource } from './datasource';
+import { PostgresQueryCtrl } from './query_ctrl';
 
 class PostgresConfigCtrl {
-  static templateUrl = "partials/config.html";
+  static templateUrl = 'partials/config.html';
 
   current: any;
 
   /** @ngInject **/
   constructor($scope) {
-    this.current.jsonData.sslmode = this.current.jsonData.sslmode || "require";
+    this.current.jsonData.sslmode = this.current.jsonData.sslmode || 'require';
   }
 }
 
@@ -25,7 +25,7 @@ WHERE
 `;
 
 class PostgresAnnotationsQueryCtrl {
-  static templateUrl = "partials/annotations.editor.html";
+  static templateUrl = 'partials/annotations.editor.html';
 
   annotation: any;
 
@@ -40,5 +40,5 @@ export {
   PostgresDatasource as Datasource,
   PostgresQueryCtrl as QueryCtrl,
   PostgresConfigCtrl as ConfigCtrl,
-  PostgresAnnotationsQueryCtrl as AnnotationsQueryCtrl
+  PostgresAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };

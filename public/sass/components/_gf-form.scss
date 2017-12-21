@@ -109,6 +109,10 @@ $input-border: 1px solid $input-border-color;
   &--error {
     color: $critical;
   }
+
+  &:disabled {
+    color: $text-color-weak;
+  }
 }
 
 .gf-form-label + .gf-form-label {
@@ -213,7 +217,7 @@ $input-border: 1px solid $input-border-color;
       background-color: transparent;
       color: $text-color;
       font: normal normal normal $font-size-sm/1 FontAwesome;
-      content: "\f0d7";
+      content: '\f0d7';
       pointer-events: none;
     }
   }
@@ -244,12 +248,30 @@ $input-border: 1px solid $input-border-color;
   position: relative;
   background-color: $input-bg;
 
+  .gf-form-select-icon {
+    position: absolute;
+    z-index: 1;
+    left: $input-padding-x;
+    top: 50%;
+    margin-top: -7px;
+
+    & + .gf-form-input {
+      position: relative;
+      z-index: 2;
+      padding-left: $input-padding-x*3;
+      background-color: transparent;
+
+      option {
+        // Firefox
+        color: $black;
+      }
+    }
+  }
+
   select.gf-form-input {
     text-indent: 0.01px;
-    text-overflow: "";
-    padding-right: $input-padding-x*4;
-    -webkit-appearance: none;
-    -moz-appearance: menulist-text; // was set to "window" and caused odd display on windos and linux.
+    text-overflow: '';
+    padding-right: $input-padding-x*3;
     appearance: none;
 
     &:-moz-focusring {
@@ -270,7 +292,7 @@ $input-border: 1px solid $input-border-color;
     background-color: transparent;
     color: $text-color;
     font: normal normal normal $font-size-sm/1 FontAwesome;
-    content: "\f0d7";
+    content: '\f0d7';
     pointer-events: none;
     font-size: 11px;
   }
@@ -297,7 +319,7 @@ $input-border: 1px solid $input-border-color;
 }
 
 .natural-language-input {
-  &input[type="number"] {
+  &input[type='number'] {
     font-size: $font-size-base;
     line-height: $input-line-height;
     margin: -6px -5px 0 5px;
@@ -320,7 +342,7 @@ $input-border: 1px solid $input-border-color;
     background-color: transparent;
     color: $input-color;
     font: normal normal normal $font-size-sm/1 FontAwesome;
-    content: "\f0d7";
+    content: '\f0d7';
     pointer-events: none;
   }
 

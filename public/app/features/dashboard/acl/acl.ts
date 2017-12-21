@@ -1,21 +1,17 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import coreModule from "app/core/core_module";
-import _ from "lodash";
+import coreModule from 'app/core/core_module';
+import _ from 'lodash';
 
 export class AclCtrl {
   dashboard: any;
   items: DashboardAcl[];
-  permissionOptions = [
-    { value: 1, text: "View" },
-    { value: 2, text: "Edit" },
-    { value: 4, text: "Admin" }
-  ];
+  permissionOptions = [{ value: 1, text: 'View' }, { value: 2, text: 'Edit' }, { value: 4, text: 'Admin' }];
   aclTypes = [
-    { value: "Group", text: "Team" },
-    { value: "User", text: "User" },
-    { value: "Viewer", text: "Everyone With Viewer Role" },
-    { value: "Editor", text: "Everyone With Editor Role" }
+    { value: 'Group', text: 'Team' },
+    { value: 'User', text: 'User' },
+    { value: 'Viewer', text: 'Everyone With Viewer Role' },
+    { value: 'Editor', text: 'Everyone With Editor Role' },
   ];
 
   dismiss: () => void;
@@ -23,7 +19,7 @@ export class AclCtrl {
   canUpdate: boolean;
   error: string;
 
-  readonly duplicateError = "This permission exists already.";
+  readonly duplicateError = 'This permission exists already.';
 
   /** @ngInject */
   constructor(private backendSrv, dashboardSrv, private $sce, private $scope) {
@@ -34,49 +30,40 @@ export class AclCtrl {
   }
 
   resetNewType() {
-    this.newType = "Group";
+    this.newType = 'Group';
   }
 
   get(dashboardId: number) {
-    return this.backendSrv
-      .get(`/api/dashboards/id/${dashboardId}/acl`)
-      .then(result => {
-        this.items = _.map(result, this.prepareViewModel.bind(this));
-        this.sortItems();
-      });
+    return this.backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`).then(result => {
+      this.items = _.map(result, this.prepareViewModel.bind(this));
+      this.sortItems();
+    });
   }
 
   sortItems() {
-    this.items = _.orderBy(
-      this.items,
-      ["sortRank", "sortName"],
-      ["desc", "asc"]
-    );
+    this.items = _.orderBy(this.items, ['sortRank', 'sortName'], ['desc', 'asc']);
   }
 
   prepareViewModel(item: DashboardAcl): DashboardAcl {
-    item.inherited =
-      !this.dashboard.meta.isFolder && this.dashboard.id !== item.dashboardId;
+    item.inherited = !this.dashboard.meta.isFolder && this.dashboard.id !== item.dashboardId;
     item.sortRank = 0;
 
     if (item.userId > 0) {
-      item.icon = "fa fa-fw fa-user";
+      item.icon = 'fa fa-fw fa-user';
       item.nameHtml = this.$sce.trustAsHtml(item.userLogin);
       item.sortName = item.userLogin;
       item.sortRank = 10;
     } else if (item.teamId > 0) {
-      item.icon = "fa fa-fw fa-users";
+      item.icon = 'fa fa-fw fa-users';
       item.nameHtml = this.$sce.trustAsHtml(item.team);
       item.sortName = item.team;
       item.sortRank = 20;
     } else if (item.role) {
-      item.icon = "fa fa-fw fa-street-view";
-      item.nameHtml = this.$sce.trustAsHtml(
-        `Everyone with <span class="query-keyword">${item.role}</span> Role`
-      );
+      item.icon = 'fa fa-fw fa-street-view';
+      item.nameHtml = this.$sce.trustAsHtml(`Everyone with <span class="query-keyword">${item.role}</span> Role`);
       item.sortName = item.role;
       item.sortRank = 30;
-      if (item.role === "Viewer") {
+      if (item.role === 'Viewer') {
         item.sortRank += 1;
       }
     }
@@ -99,19 +86,17 @@ export class AclCtrl {
         userId: item.userId,
         teamId: item.teamId,
         role: item.role,
-        permission: item.permission
+        permission: item.permission,
       });
     }
 
-    return this.backendSrv
-      .post(`/api/dashboards/id/${this.dashboard.id}/acl`, { items: updated })
-      .then(() => {
-        return this.dismiss();
-      });
+    return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, { items: updated }).then(() => {
+      return this.dismiss();
+    });
   }
 
   typeChanged() {
-    if (this.newType === "Viewer" || this.newType === "Editor") {
+    if (this.newType === 'Viewer' || this.newType === 'Editor') {
       this.addNewItem({ permission: 1, role: this.newType });
       this.canUpdate = true;
       this.resetNewType();
@@ -126,7 +111,7 @@ export class AclCtrl {
     if (!this.isValid(item)) {
       return;
     }
-    this.error = "";
+    this.error = '';
 
     item.dashboardId = this.dashboard.id;
 
@@ -156,21 +141,19 @@ export class AclCtrl {
 
     return (
       (origItem.role && newItem.role && origItem.role === newItem.role) ||
-      (origItem.userId &&
-        newItem.userId &&
-        origItem.userId === newItem.userId) ||
+      (origItem.userId && newItem.userId && origItem.userId === newItem.userId) ||
       (origItem.teamId && newItem.teamId && origItem.teamId === newItem.teamId)
     );
   }
 
   userPicked(user) {
     this.addNewItem({ userId: user.id, userLogin: user.login, permission: 1 });
-    this.$scope.$broadcast("user-picker-reset");
+    this.$scope.$broadcast('user-picker-reset');
   }
 
   groupPicked(group) {
     this.addNewItem({ teamId: group.id, team: group.name, permission: 1 });
-    this.$scope.$broadcast("team-picker-reset");
+    this.$scope.$broadcast('team-picker-reset');
   }
 
   removeItem(index) {
@@ -181,14 +164,14 @@ export class AclCtrl {
 
 export function dashAclModal() {
   return {
-    restrict: "E",
-    templateUrl: "public/app/features/dashboard/acl/acl.html",
+    restrict: 'E',
+    templateUrl: 'public/app/features/dashboard/acl/acl.html',
     controller: AclCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
+    controllerAs: 'ctrl',
     scope: {
-      dismiss: "&"
-    }
+      dismiss: '&',
+    },
   };
 }
 
@@ -217,4 +200,4 @@ export interface DashboardAcl {
   sortRank?: number;
 }
 
-coreModule.directive("dashAclModal", dashAclModal);
+coreModule.directive('dashAclModal', dashAclModal);

@@ -1,34 +1,22 @@
-import coreModule from "app/core/core_module";
-import config from "app/core/config";
-import _ from "lodash";
+import coreModule from 'app/core/core_module';
+import config from 'app/core/config';
+import _ from 'lodash';
 
 class StyleGuideCtrl {
   colors: any = [];
   theme: string;
-  buttonNames = [
-    "primary",
-    "secondary",
-    "inverse",
-    "success",
-    "warning",
-    "danger"
-  ];
-  buttonSizes = ["btn-small", "", "btn-large"];
-  buttonVariants = ["-"];
+  buttonNames = ['primary', 'secondary', 'inverse', 'success', 'warning', 'danger'];
+  buttonSizes = ['btn-small', '', 'btn-large'];
+  buttonVariants = ['-'];
   icons: any = [];
   page: any;
-  pages = ["colors", "buttons", "icons", "plugins"];
+  pages = ['colors', 'buttons', 'icons', 'plugins'];
   navModel: any;
 
   /** @ngInject **/
-  constructor(
-    private $http,
-    private $routeParams,
-    private backendSrv,
-    navModelSrv
-  ) {
-    this.navModel = navModelSrv.getNav("cfg", "admin", "styleguide", 1);
-    this.theme = config.bootData.user.lightTheme ? "light" : "dark";
+  constructor(private $http, private $routeParams, private backendSrv, navModelSrv) {
+    this.navModel = navModelSrv.getNav('cfg', 'admin', 'styleguide', 1);
+    this.theme = config.bootData.user.lightTheme ? 'light' : 'dark';
     this.page = {};
 
     if ($routeParams.page) {
@@ -47,7 +35,7 @@ class StyleGuideCtrl {
   }
 
   loadColors() {
-    this.$http.get("public/build/styleguide.json").then(res => {
+    this.$http.get('public/build/styleguide.json').then(res => {
       this.colors = _.map(res.data[this.theme], (value, key) => {
         return { name: key, value: value };
       });
@@ -55,22 +43,22 @@ class StyleGuideCtrl {
   }
 
   loadIcons() {
-    this.$http.get("public/sass/icons.json").then(res => {
+    this.$http.get('public/sass/icons.json').then(res => {
       this.icons = res.data;
     });
   }
 
   switchTheme() {
-    this.$routeParams.theme = this.theme === "dark" ? "light" : "dark";
+    this.$routeParams.theme = this.theme === 'dark' ? 'light' : 'dark';
 
     var cmd = {
-      theme: this.$routeParams.theme
+      theme: this.$routeParams.theme,
     };
 
-    this.backendSrv.put("/api/user/preferences", cmd).then(() => {
+    this.backendSrv.put('/api/user/preferences', cmd).then(() => {
       window.location.href = window.location.href;
     });
   }
 }
 
-coreModule.controller("StyleGuideCtrl", StyleGuideCtrl);
+coreModule.controller('StyleGuideCtrl', StyleGuideCtrl);

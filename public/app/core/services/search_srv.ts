@@ -1,8 +1,8 @@
-import _ from "lodash";
-import coreModule from "app/core/core_module";
-import impressionSrv from "app/core/services/impression_srv";
-import store from "app/core/store";
-import { contextSrv } from "app/core/services/context_srv";
+import _ from 'lodash';
+import coreModule from 'app/core/core_module';
+import impressionSrv from 'app/core/services/impression_srv';
+import store from 'app/core/store';
+import { contextSrv } from 'app/core/services/context_srv';
 
 export class SearchSrv {
   recentIsOpen: boolean;
@@ -10,21 +10,21 @@ export class SearchSrv {
 
   /** @ngInject */
   constructor(private backendSrv, private $q) {
-    this.recentIsOpen = store.getBool("search.sections.recent", true);
-    this.starredIsOpen = store.getBool("search.sections.starred", true);
+    this.recentIsOpen = store.getBool('search.sections.recent', true);
+    this.starredIsOpen = store.getBool('search.sections.starred', true);
   }
 
   private getRecentDashboards(sections) {
     return this.queryForRecentDashboards().then(result => {
       if (result.length > 0) {
-        sections["recent"] = {
-          title: "Recent Boards",
-          icon: "fa fa-clock-o",
+        sections['recent'] = {
+          title: 'Recent',
+          icon: 'fa fa-clock-o',
           score: -1,
           removable: true,
           expanded: this.recentIsOpen,
           toggle: this.toggleRecent.bind(this),
-          items: result
+          items: result,
         };
       }
     });
@@ -50,7 +50,7 @@ export class SearchSrv {
 
   private toggleRecent(section) {
     this.recentIsOpen = section.expanded = !section.expanded;
-    store.set("search.sections.recent", this.recentIsOpen);
+    store.set('search.sections.recent', this.recentIsOpen);
 
     if (!section.expanded || section.items.length) {
       return Promise.resolve(section);
@@ -64,7 +64,7 @@ export class SearchSrv {
 
   private toggleStarred(section) {
     this.starredIsOpen = section.expanded = !section.expanded;
-    store.set("search.sections.starred", this.starredIsOpen);
+    store.set('search.sections.starred', this.starredIsOpen);
     return Promise.resolve(section);
   }
 
@@ -75,20 +75,20 @@ export class SearchSrv {
 
     return this.backendSrv.search({ starred: true, limit: 5 }).then(result => {
       if (result.length > 0) {
-        sections["starred"] = {
-          title: "Starred Boards",
-          icon: "fa fa-star-o",
+        sections['starred'] = {
+          title: 'Starred',
+          icon: 'fa fa-star-o',
           score: -2,
           expanded: this.starredIsOpen,
           toggle: this.toggleStarred.bind(this),
-          items: result.map(this.transformToViewModel)
+          items: result.map(this.transformToViewModel),
         };
       }
     });
   }
 
   private transformToViewModel(hit) {
-    hit.url = "dashboard/db/" + hit.slug;
+    hit.url = 'dashboard/db/' + hit.slug;
     return hit;
   }
 
@@ -122,7 +122,7 @@ export class SearchSrv {
     );
 
     return this.$q.all(promises).then(() => {
-      return _.sortBy(_.values(sections), "score");
+      return _.sortBy(_.values(sections), 'score');
     });
   }
 
@@ -133,7 +133,7 @@ export class SearchSrv {
 
     // create folder index
     for (let hit of results) {
-      if (hit.type === "dash-folder") {
+      if (hit.type === 'dash-folder') {
         sections[hit.id] = {
           id: hit.id,
           title: hit.title,
@@ -142,14 +142,14 @@ export class SearchSrv {
           toggle: this.toggleFolder.bind(this),
           url: `dashboards/folder/${hit.id}/${hit.slug}`,
           slug: hit.slug,
-          icon: "fa fa-folder",
-          score: _.keys(sections).length
+          icon: 'fa fa-folder',
+          score: _.keys(sections).length,
         };
       }
     }
 
     for (let hit of results) {
-      if (hit.type === "dash-folder") {
+      if (hit.type === 'dash-folder') {
         continue;
       }
 
@@ -162,18 +162,18 @@ export class SearchSrv {
             url: `dashboards/folder/${hit.folderId}/${hit.folderSlug}`,
             slug: hit.slug,
             items: [],
-            icon: "fa fa-folder-open",
+            icon: 'fa fa-folder-open',
             toggle: this.toggleFolder.bind(this),
-            score: _.keys(sections).length
+            score: _.keys(sections).length,
           };
         } else {
           section = {
             id: 0,
-            title: "Root",
+            title: 'Root',
             items: [],
-            icon: "fa fa-folder-open",
+            icon: 'fa fa-folder-open',
             toggle: this.toggleFolder.bind(this),
-            score: _.keys(sections).length
+            score: _.keys(sections).length,
           };
         }
         // add section
@@ -187,14 +187,14 @@ export class SearchSrv {
 
   private toggleFolder(section) {
     section.expanded = !section.expanded;
-    section.icon = section.expanded ? "fa fa-folder-open" : "fa fa-folder";
+    section.icon = section.expanded ? 'fa fa-folder-open' : 'fa fa-folder';
 
     if (section.items.length) {
       return Promise.resolve(section);
     }
 
     let query = {
-      folderIds: [section.id]
+      folderIds: [section.id],
     };
 
     return this.backendSrv.search(query).then(results => {
@@ -204,8 +204,8 @@ export class SearchSrv {
   }
 
   getDashboardTags() {
-    return this.backendSrv.get("/api/dashboards/tags");
+    return this.backendSrv.get('/api/dashboards/tags');
   }
 }
 
-coreModule.service("searchSrv", SearchSrv);
+coreModule.service('searchSrv', SearchSrv);

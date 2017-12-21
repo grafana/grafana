@@ -1,14 +1,14 @@
-import _ from "lodash";
+import _ from 'lodash';
 import {
   GRID_COLUMN_COUNT,
   GRID_CELL_HEIGHT,
   GRID_CELL_VMARGIN,
   DEFAULT_ROW_HEIGHT,
   MIN_PANEL_HEIGHT,
-  DEFAULT_PANEL_SPAN
-} from "app/core/constants";
-import { PanelModel } from "./panel_model";
-import { DashboardModel } from "./dashboard_model";
+  DEFAULT_PANEL_SPAN,
+} from 'app/core/constants';
+import { PanelModel } from './panel_model';
+import { DashboardModel } from './dashboard_model';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -38,11 +38,11 @@ export class DashboardMigrator {
 
       panelUpgrades.push(function(panel) {
         // rename panel type
-        if (panel.type === "graphite") {
-          panel.type = "graph";
+        if (panel.type === 'graphite') {
+          panel.type = 'graph';
         }
 
-        if (panel.type !== "graph") {
+        if (panel.type !== 'graph') {
           return;
         }
 
@@ -90,7 +90,7 @@ export class DashboardMigrator {
     if (oldVersion < 4) {
       // move aliasYAxis changes
       panelUpgrades.push(function(panel) {
-        if (panel.type !== "graph") {
+        if (panel.type !== 'graph') {
           return;
         }
         _.each(panel.aliasYAxis, function(value, key) {
@@ -102,11 +102,11 @@ export class DashboardMigrator {
 
     if (oldVersion < 6) {
       // move pulldowns to new schema
-      var annotations = _.find(old.pulldowns, { type: "annotations" });
+      var annotations = _.find(old.pulldowns, { type: 'annotations' });
 
       if (annotations) {
         this.dashboard.annotations = {
-          list: annotations.annotations || []
+          list: annotations.annotations || [],
         };
       }
 
@@ -116,14 +116,14 @@ export class DashboardMigrator {
         if (variable.datasource === void 0) {
           variable.datasource = null;
         }
-        if (variable.type === "filter") {
-          variable.type = "query";
+        if (variable.type === 'filter') {
+          variable.type = 'query';
         }
         if (variable.type === void 0) {
-          variable.type = "query";
+          variable.type = 'query';
         }
         if (variable.allFormat === void 0) {
-          variable.allFormat = "glob";
+          variable.allFormat = 'glob';
         }
       }
     }
@@ -157,30 +157,30 @@ export class DashboardMigrator {
             } else {
               target.select = _.map(target.fields, function(field) {
                 var parts = [];
-                parts.push({ type: "field", params: [field.name] });
+                parts.push({ type: 'field', params: [field.name] });
                 parts.push({ type: field.func, params: [] });
                 if (field.mathExpr) {
-                  parts.push({ type: "math", params: [field.mathExpr] });
+                  parts.push({ type: 'math', params: [field.mathExpr] });
                 }
                 if (field.asExpr) {
-                  parts.push({ type: "alias", params: [field.asExpr] });
+                  parts.push({ type: 'alias', params: [field.asExpr] });
                 }
                 return parts;
               });
               delete target.fields;
               _.each(target.groupBy, function(part) {
-                if (part.type === "time" && part.interval) {
+                if (part.type === 'time' && part.interval) {
                   part.params = [part.interval];
                   delete part.interval;
                 }
-                if (part.type === "tag" && part.key) {
+                if (part.type === 'tag' && part.key) {
                   part.params = [part.key];
                   delete part.key;
                 }
               });
 
               if (target.fill) {
-                target.groupBy.push({ type: "fill", params: [target.fill] });
+                target.groupBy.push({ type: 'fill', params: [target.fill] });
                 delete target.fill;
               }
             }
@@ -193,16 +193,16 @@ export class DashboardMigrator {
     if (oldVersion < 9) {
       // move aliasYAxis changes
       panelUpgrades.push(function(panel) {
-        if (panel.type !== "singlestat" && panel.thresholds !== "") {
+        if (panel.type !== 'singlestat' && panel.thresholds !== '') {
           return;
         }
 
         if (panel.thresholds) {
-          var k = panel.thresholds.split(",");
+          var k = panel.thresholds.split(',');
 
           if (k.length >= 3) {
             k.shift();
-            panel.thresholds = k.join(",");
+            panel.thresholds = k.join(',');
           }
         }
       });
@@ -212,7 +212,7 @@ export class DashboardMigrator {
     if (oldVersion < 10) {
       // move aliasYAxis changes
       panelUpgrades.push(function(panel) {
-        if (panel.type !== "table") {
+        if (panel.type !== 'table') {
           return;
         }
 
@@ -246,7 +246,7 @@ export class DashboardMigrator {
     if (oldVersion < 12) {
       // update graph yaxes changes
       panelUpgrades.push(function(panel) {
-        if (panel.type !== "graph") {
+        if (panel.type !== 'graph') {
           return;
         }
         if (!panel.grid) {
@@ -256,25 +256,25 @@ export class DashboardMigrator {
         if (!panel.yaxes) {
           panel.yaxes = [
             {
-              show: panel["y-axis"],
+              show: panel['y-axis'],
               min: panel.grid.leftMin,
               max: panel.grid.leftMax,
               logBase: panel.grid.leftLogBase,
               format: panel.y_formats[0],
-              label: panel.leftYAxisLabel
+              label: panel.leftYAxisLabel,
             },
             {
-              show: panel["y-axis"],
+              show: panel['y-axis'],
               min: panel.grid.rightMin,
               max: panel.grid.rightMax,
               logBase: panel.grid.rightLogBase,
               format: panel.y_formats[1],
-              label: panel.rightYAxisLabel
-            }
+              label: panel.rightYAxisLabel,
+            },
           ];
 
           panel.xaxis = {
-            show: panel["x-axis"]
+            show: panel['x-axis'],
           };
 
           delete panel.grid.leftMin;
@@ -286,8 +286,8 @@ export class DashboardMigrator {
           delete panel.y_formats;
           delete panel.leftYAxisLabel;
           delete panel.rightYAxisLabel;
-          delete panel["y-axis"];
-          delete panel["x-axis"];
+          delete panel['y-axis'];
+          delete panel['x-axis'];
         }
       });
     }
@@ -295,7 +295,7 @@ export class DashboardMigrator {
     if (oldVersion < 13) {
       // update graph yaxes changes
       panelUpgrades.push(function(panel) {
-        if (panel.type !== "graph") {
+        if (panel.type !== 'graph') {
           return;
         }
         if (!panel.grid) {
@@ -311,11 +311,11 @@ export class DashboardMigrator {
           if (panel.grid.thresholdLine) {
             t1.line = true;
             t1.lineColor = panel.grid.threshold1Color;
-            t1.colorMode = "custom";
+            t1.colorMode = 'custom';
           } else {
             t1.fill = true;
             t1.fillColor = panel.grid.threshold1Color;
-            t1.colorMode = "custom";
+            t1.colorMode = 'custom';
           }
         }
 
@@ -324,27 +324,27 @@ export class DashboardMigrator {
           if (panel.grid.thresholdLine) {
             t2.line = true;
             t2.lineColor = panel.grid.threshold2Color;
-            t2.colorMode = "custom";
+            t2.colorMode = 'custom';
           } else {
             t2.fill = true;
             t2.fillColor = panel.grid.threshold2Color;
-            t2.colorMode = "custom";
+            t2.colorMode = 'custom';
           }
         }
 
         if (_.isNumber(t1.value)) {
           if (_.isNumber(t2.value)) {
             if (t1.value > t2.value) {
-              t1.op = t2.op = "lt";
+              t1.op = t2.op = 'lt';
               panel.thresholds.push(t1);
               panel.thresholds.push(t2);
             } else {
-              t1.op = t2.op = "gt";
+              t1.op = t2.op = 'gt';
               panel.thresholds.push(t1);
               panel.thresholds.push(t2);
             }
           } else {
-            t1.op = "gt";
+            t1.op = 'gt';
             panel.thresholds.push(t1);
           }
         }
@@ -383,7 +383,7 @@ export class DashboardMigrator {
     const maxPanelId = _.max(
       _.flattenDeep(
         _.map(old.rows, row => {
-          return _.map(row.panels, "id");
+          return _.map(row.panels, 'id');
         })
       )
     );
@@ -394,10 +394,7 @@ export class DashboardMigrator {
     }
 
     // Add special "row" panels if even one row is collapsed, repeated or has visible title
-    const showRows = _.some(
-      old.rows,
-      row => row.collapse || row.showTitle || row.repeat
-    );
+    const showRows = _.some(old.rows, row => row.collapse || row.showTitle || row.repeat);
 
     for (let row of old.rows) {
       if (row.repeatIteration) {
@@ -412,7 +409,7 @@ export class DashboardMigrator {
       if (showRows) {
         // add special row panel
         rowPanel.id = nextRowId;
-        rowPanel.type = "row";
+        rowPanel.type = 'row';
         rowPanel.title = row.title;
         rowPanel.collapsed = row.collapse;
         rowPanel.repeat = row.repeat;
@@ -421,7 +418,7 @@ export class DashboardMigrator {
           x: 0,
           y: yPos,
           w: GRID_COLUMN_COUNT,
-          h: rowGridHeight
+          h: rowGridHeight,
         };
         rowPanelModel = new PanelModel(rowPanel);
         nextRowId++;
@@ -433,9 +430,7 @@ export class DashboardMigrator {
       for (let panel of row.panels) {
         panel.span = panel.span || DEFAULT_PANEL_SPAN;
         const panelWidth = Math.floor(panel.span) * widthFactor;
-        const panelHeight = panel.height
-          ? getGridHeight(panel.height)
-          : rowGridHeight;
+        const panelHeight = panel.height ? getGridHeight(panel.height) : rowGridHeight;
 
         let panelPos = rowArea.getPanelPosition(panelHeight, panelWidth);
         yPos = rowArea.yPos;
@@ -443,7 +438,7 @@ export class DashboardMigrator {
           x: panelPos.x,
           y: yPos + panelPos.y,
           w: panelWidth,
-          h: panelHeight
+          h: panelHeight,
         };
         rowArea.addPanel(panel.gridPos);
 
@@ -469,7 +464,7 @@ export class DashboardMigrator {
 
 function getGridHeight(height) {
   if (_.isString(height)) {
-    height = parseInt(height.replace("px", ""), 10);
+    height = parseInt(height.replace('px', ''), 10);
   }
 
   if (height < MIN_PANEL_HEIGHT) {
@@ -539,15 +534,11 @@ class RowArea {
       }
     }
 
-    if (
-      startPlace !== undefined &&
-      endPlace !== undefined &&
-      endPlace - startPlace >= panelWidth - 1
-    ) {
+    if (startPlace !== undefined && endPlace !== undefined && endPlace - startPlace >= panelWidth - 1) {
       const yPos = _.max(this.area.slice(startPlace));
       place = {
         x: startPlace,
-        y: yPos
+        y: yPos,
       };
     } else if (!callOnce) {
       // wrap to next row

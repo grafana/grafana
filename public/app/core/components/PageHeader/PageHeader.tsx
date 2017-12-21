@@ -9,7 +9,7 @@ export interface IProps {
 
 function TabItem(tab: NavModelItem) {
   if (tab.hideFromTabs) {
-    return (null);
+    return null;
   }
 
   let tabClasses = classNames({
@@ -28,8 +28,9 @@ function TabItem(tab: NavModelItem) {
 }
 
 function SelectOption(navItem: NavModelItem) {
-  if (navItem.hideFromTabs) { // TODO: Rename hideFromTabs => hideFromNav
-    return (null);
+  if (navItem.hideFromTabs) {
+    // TODO: Rename hideFromTabs => hideFromNav
+    return null;
   }
 
   return (
@@ -39,14 +40,16 @@ function SelectOption(navItem: NavModelItem) {
   );
 }
 
-function Navigation({main}: {main: NavModelItem}) {
-  return (<nav>
-    <SelectNav customCss="page-header__select_nav" main={main} />
-    <Tabs customCss="page-header__tabs" main={main} />
-  </nav>);
+function Navigation({ main }: { main: NavModelItem }) {
+  return (
+    <nav>
+      <SelectNav customCss="page-header__select-nav" main={main} />
+      <Tabs customCss="page-header__tabs" main={main} />
+    </nav>
+  );
 }
 
-function SelectNav({main, customCss}: {main: NavModelItem, customCss: string}) {
+function SelectNav({ main, customCss }: { main: NavModelItem; customCss: string }) {
   const defaultSelectedItem = main.children.find(navItem => {
     return navItem.active === true;
   });
@@ -54,16 +57,26 @@ function SelectNav({main, customCss}: {main: NavModelItem, customCss: string}) {
   const gotoUrl = evt => {
     var element = evt.target;
     var url = element.options[element.selectedIndex].value;
-    appEvents.emit('location-change', {href: url});
+    appEvents.emit('location-change', { href: url });
   };
 
-  return (<select
-    className={`gf-select-nav ${customCss}`}
-    defaultValue={defaultSelectedItem.url}
-    onChange={gotoUrl}>{main.children.map(SelectOption)}</select>);
+  return (
+    <div className={`gf-form-select-wrapper width-20 ${customCss}`}>
+      <label className={`gf-form-select-icon ${defaultSelectedItem.icon}`} htmlFor="page-header-select-nav" />
+      {/* Label to make it clickable */}
+      <select
+        className="gf-select-nav gf-form-input"
+        defaultValue={defaultSelectedItem.url}
+        onChange={gotoUrl}
+        id="page-header-select-nav"
+      >
+        {main.children.map(SelectOption)}
+      </select>
+    </div>
+  );
 }
 
-function Tabs({main, customCss}: {main: NavModelItem, customCss: string}) {
+function Tabs({ main, customCss }: { main: NavModelItem; customCss: string }) {
   return <ul className={`gf-tabs ${customCss}`}>{main.children.map(TabItem)}</ul>;
 }
 
@@ -77,7 +90,11 @@ export default class PageHeader extends React.Component<IProps, any> {
     for (let i = 0; i < breadcrumbs.length; i++) {
       const bc = breadcrumbs[i];
       if (bc.url) {
-        breadcrumbsResult.push(<a className="text-link" key={i} href={bc.url}>{bc.title}</a>);
+        breadcrumbsResult.push(
+          <a className="text-link" key={i} href={bc.url}>
+            {bc.title}
+          </a>
+        );
       } else {
         breadcrumbsResult.push(<span key={i}> / {bc.title}</span>);
       }
@@ -95,11 +112,10 @@ export default class PageHeader extends React.Component<IProps, any> {
 
         <div className="page-header__info-block">
           {main.text && <h1 className="page-header__title">{main.text}</h1>}
-          {main.breadcrumbs && main.breadcrumbs.length > 0 && (
-            <h1 className="page-header__title">
-              {this.renderBreadcrumb(main.breadcrumbs)}
-            </h1>)
-          }
+          {main.breadcrumbs &&
+            main.breadcrumbs.length > 0 && (
+              <h1 className="page-header__title">{this.renderBreadcrumb(main.breadcrumbs)}</h1>
+            )}
           {main.subTitle && <div className="page-header__sub-title">{main.subTitle}</div>}
           {main.subType && (
             <div className="page-header__stamps">

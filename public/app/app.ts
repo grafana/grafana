@@ -1,25 +1,24 @@
-import "babel-polyfill";
-import "file-saver";
-import "lodash";
-import "jquery";
-import "angular";
-import "angular-route";
-import "angular-sanitize";
-import "angular-native-dragdrop";
-import "angular-bindonce";
-import "react";
-import "react-dom";
+import 'babel-polyfill';
+import 'file-saver';
+import 'lodash';
+import 'jquery';
+import 'angular';
+import 'angular-route';
+import 'angular-sanitize';
+import 'angular-native-dragdrop';
+import 'angular-bindonce';
+import 'react';
+import 'react-dom';
 
-import "vendor/bootstrap/bootstrap";
-import "vendor/angular-ui/ui-bootstrap-tpls";
-import "vendor/angular-other/angular-strap";
+import 'vendor/bootstrap/bootstrap';
+import 'vendor/angular-ui/ui-bootstrap-tpls';
+import 'vendor/angular-other/angular-strap';
 
-import $ from "jquery";
-import angular from "angular";
-import config from "app/core/config";
-import _ from "lodash";
-import moment from "moment";
-import { createStore } from "app/stores/store";
+import $ from 'jquery';
+import angular from 'angular';
+import config from 'app/core/config';
+import _ from 'lodash';
+import moment from 'moment';
 
 // add move to lodash for backward compatabiltiy
 _.move = function(array, fromIndex, toIndex) {
@@ -27,7 +26,8 @@ _.move = function(array, fromIndex, toIndex) {
   return array;
 };
 
-import { coreModule, registerAngularDirectives } from "./core/core";
+import { coreModule, registerAngularDirectives } from './core/core';
+import { setupAngularRoutes } from './routes/routes';
 
 export class GrafanaApp {
   registerFunctions: any;
@@ -51,78 +51,62 @@ export class GrafanaApp {
   }
 
   init() {
-    var app = angular.module("grafana", []);
+    var app = angular.module('grafana', []);
 
     moment.locale(config.bootData.user.locale);
 
-    app.config(
-      (
-        $locationProvider,
-        $controllerProvider,
-        $compileProvider,
-        $filterProvider,
-        $httpProvider,
-        $provide
-      ) => {
-        // pre assing bindings before constructor calls
-        $compileProvider.preAssignBindingsEnabled(true);
+    app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $httpProvider, $provide) => {
+      // pre assing bindings before constructor calls
+      $compileProvider.preAssignBindingsEnabled(true);
 
-        if (config.buildInfo.env !== "development") {
-          $compileProvider.debugInfoEnabled(false);
-        }
-
-        $httpProvider.useApplyAsync(true);
-
-        this.registerFunctions.controller = $controllerProvider.register;
-        this.registerFunctions.directive = $compileProvider.directive;
-        this.registerFunctions.factory = $provide.factory;
-        this.registerFunctions.service = $provide.service;
-        this.registerFunctions.filter = $filterProvider.register;
-
-        $provide.decorator("$http", [
-          "$delegate",
-          "$templateCache",
-          function($delegate, $templateCache) {
-            var get = $delegate.get;
-            $delegate.get = function(url, config) {
-              if (url.match(/\.html$/)) {
-                // some template's already exist in the cache
-                if (!$templateCache.get(url)) {
-                  url += "?v=" + new Date().getTime();
-                }
-              }
-              return get(url, config);
-            };
-            return $delegate;
-          }
-        ]);
+      if (config.buildInfo.env !== 'development') {
+        $compileProvider.debugInfoEnabled(false);
       }
-    );
+
+      $httpProvider.useApplyAsync(true);
+
+      this.registerFunctions.controller = $controllerProvider.register;
+      this.registerFunctions.directive = $compileProvider.directive;
+      this.registerFunctions.factory = $provide.factory;
+      this.registerFunctions.service = $provide.service;
+      this.registerFunctions.filter = $filterProvider.register;
+
+      $provide.decorator('$http', [
+        '$delegate',
+        '$templateCache',
+        function($delegate, $templateCache) {
+          var get = $delegate.get;
+          $delegate.get = function(url, config) {
+            if (url.match(/\.html$/)) {
+              // some template's already exist in the cache
+              if (!$templateCache.get(url)) {
+                url += '?v=' + new Date().getTime();
+              }
+            }
+            return get(url, config);
+          };
+          return $delegate;
+        },
+      ]);
+    });
 
     this.ngModuleDependencies = [
-      "grafana.core",
-      "ngRoute",
-      "ngSanitize",
-      "$strap.directives",
-      "ang-drag-drop",
-      "grafana",
-      "pasvaz.bindonce",
-      "ui.bootstrap",
-      "ui.bootstrap.tpls",
-      "react"
+      'grafana.core',
+      'ngRoute',
+      'ngSanitize',
+      '$strap.directives',
+      'ang-drag-drop',
+      'grafana',
+      'pasvaz.bindonce',
+      'ui.bootstrap',
+      'ui.bootstrap.tpls',
+      'react',
     ];
 
-    var module_types = [
-      "controllers",
-      "directives",
-      "factories",
-      "services",
-      "filters",
-      "routes"
-    ];
+    var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];
 
     _.each(module_types, type => {
-      var moduleName = "grafana." + type;
+      var moduleName = 'grafana.' + type;
       this.useModule(angular.module(moduleName, []));
     });
 
@@ -130,16 +114,16 @@ export class GrafanaApp {
     this.useModule(coreModule);
 
     // register react angular wrappers
+    coreModule.config(setupAngularRoutes);
     registerAngularDirectives();
 
-    var preBootRequires = [System.import("app/features/all")];
+    var preBootRequires = [System.import('app/features/all')];
 
     Promise.all(preBootRequires)
       .then(() => {
-        createStore();
-
         // disable tool tip animation
         $.fn.tooltip.defaults.animation = false;
+
         // bootstrap the app
         angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
           _.each(this.preBootModules, module => {
@@ -150,7 +134,7 @@ export class GrafanaApp {
         });
       })
       .catch(function(err) {
-        console.log("Application boot failed:", err);
+        console.log('Application boot failed:', err);
       });
   }
 }

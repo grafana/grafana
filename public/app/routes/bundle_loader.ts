@@ -5,9 +5,9 @@ export class BundleLoader {
     var defer = null;
 
     this.lazy = [
-      "$q",
-      "$route",
-      "$rootScope",
+      '$q',
+      '$route',
+      '$rootScope',
       ($q, $route, $rootScope) => {
         if (defer) {
           return defer.promise;
@@ -20,7 +20,7 @@ export class BundleLoader {
         });
 
         return defer.promise;
-      }
+      },
     ];
   }
 }

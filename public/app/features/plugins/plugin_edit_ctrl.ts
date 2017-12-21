@@ -1,8 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from "angular";
-import _ from "lodash";
-import Remarkable from "remarkable";
+import angular from 'angular';
+import _ from 'lodash';
+import Remarkable from 'remarkable';
 
 export class PluginEditCtrl {
   model: any;
@@ -18,14 +18,7 @@ export class PluginEditCtrl {
   postUpdateHook: () => any;
 
   /** @ngInject */
-  constructor(
-    private $scope,
-    private $rootScope,
-    private backendSrv,
-    private $sce,
-    private $routeParams,
-    navModelSrv
-  ) {
+  constructor(private $scope, private $rootScope, private backendSrv, private $sce, private $routeParams, navModelSrv) {
     this.pluginId = $routeParams.pluginId;
     this.preUpdateHook = () => Promise.resolve();
     this.postUpdateHook = () => Promise.resolve();
@@ -34,49 +27,46 @@ export class PluginEditCtrl {
   }
 
   setNavModel(model) {
-    let defaultTab = "readme";
+    let defaultTab = 'readme';
 
     this.navModel = {
       main: {
         img: model.info.logos.large,
         subTitle: model.info.author.name,
-        url: "",
-        text: "",
-        breadcrumbs: [
-          { title: "Plugins", url: "/plugins" },
-          { title: model.name }
-        ],
+        url: '',
+        text: '',
+        breadcrumbs: [{ title: 'Plugins', url: '/plugins' }, { title: model.name }],
         children: [
           {
-            icon: "fa fa-fw fa-file-text-o",
-            id: "readme",
-            text: "Readme",
-            url: `plugins/${this.model.id}/edit?tab=readme`
-          }
-        ]
-      }
+            icon: 'fa fa-fw fa-file-text-o',
+            id: 'readme',
+            text: 'Readme',
+            url: `plugins/${this.model.id}/edit?tab=readme`,
+          },
+        ],
+      },
     };
 
-    if (model.type === "app") {
+    if (model.type === 'app') {
       this.navModel.main.children.push({
-        icon: "gicon gicon-cog",
-        id: "config",
-        text: "Config",
-        url: `plugins/${this.model.id}/edit?tab=config`
+        icon: 'gicon gicon-cog',
+        id: 'config',
+        text: 'Config',
+        url: `plugins/${this.model.id}/edit?tab=config`,
       });
 
-      let hasDashboards = _.find(model.includes, { type: "dashboard" });
+      let hasDashboards = _.find(model.includes, { type: 'dashboard' });
 
       if (hasDashboards) {
         this.navModel.main.children.push({
-          icon: "gicon gicon-dashboard",
-          id: "dashboards",
-          text: "Dashboards",
-          url: `plugins/${this.model.id}/edit?tab=dashboards`
+          icon: 'gicon gicon-dashboard',
+          id: 'dashboards',
+          text: 'Dashboards',
+          url: `plugins/${this.model.id}/edit?tab=dashboards`,
         });
       }
 
-      defaultTab = "config";
+      defaultTab = 'config';
     }
 
     this.tab = this.$routeParams.tab || defaultTab;
@@ -89,49 +79,45 @@ export class PluginEditCtrl {
   }
 
   init() {
-    return this.backendSrv
-      .get(`/api/plugins/${this.pluginId}/settings`)
-      .then(result => {
-        this.model = result;
-        this.pluginIcon = this.getPluginIcon(this.model.type);
+    return this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(result => {
+      this.model = result;
+      this.pluginIcon = this.getPluginIcon(this.model.type);
 
-        this.model.dependencies.plugins.forEach(plug => {
-          plug.icon = this.getPluginIcon(plug.type);
-        });
-
-        this.includes = _.map(result.includes, plug => {
-          plug.icon = this.getPluginIcon(plug.type);
-          return plug;
-        });
-
-        this.setNavModel(this.model);
-        return this.initReadme();
+      this.model.dependencies.plugins.forEach(plug => {
+        plug.icon = this.getPluginIcon(plug.type);
       });
+
+      this.includes = _.map(result.includes, plug => {
+        plug.icon = this.getPluginIcon(plug.type);
+        return plug;
+      });
+
+      this.setNavModel(this.model);
+      return this.initReadme();
+    });
   }
 
   initReadme() {
-    return this.backendSrv
-      .get(`/api/plugins/${this.pluginId}/markdown/readme`)
-      .then(res => {
-        var md = new Remarkable();
-        this.readmeHtml = this.$sce.trustAsHtml(md.render(res));
-      });
+    return this.backendSrv.get(`/api/plugins/${this.pluginId}/markdown/readme`).then(res => {
+      var md = new Remarkable();
+      this.readmeHtml = this.$sce.trustAsHtml(md.render(res));
+    });
   }
 
   getPluginIcon(type) {
     switch (type) {
-      case "datasource":
-        return "icon-gf icon-gf-datasources";
-      case "panel":
-        return "icon-gf icon-gf-panel";
-      case "app":
-        return "icon-gf icon-gf-apps";
-      case "page":
-        return "icon-gf icon-gf-endpoint-tiny";
-      case "dashboard":
-        return "icon-gf icon-gf-dashboard";
+      case 'datasource':
+        return 'icon-gf icon-gf-datasources';
+      case 'panel':
+        return 'icon-gf icon-gf-panel';
+      case 'app':
+        return 'icon-gf icon-gf-apps';
+      case 'page':
+        return 'icon-gf icon-gf-endpoint-tiny';
+      case 'dashboard':
+        return 'icon-gf icon-gf-dashboard';
       default:
-        return "icon-gf icon-gf-apps";
+        return 'icon-gf icon-gf-apps';
     }
   }
 
@@ -143,14 +129,11 @@ export class PluginEditCtrl {
             enabled: this.model.enabled,
             pinned: this.model.pinned,
             jsonData: this.model.jsonData,
-            secureJsonData: this.model.secureJsonData
+            secureJsonData: this.model.secureJsonData,
           },
           {}
         );
-        return this.backendSrv.post(
-          `/api/plugins/${this.pluginId}/settings`,
-          updateCmd
-        );
+        return this.backendSrv.post(`/api/plugins/${this.pluginId}/settings`, updateCmd);
       })
       .then(this.postUpdateHook)
       .then(res => {
@@ -174,9 +157,9 @@ export class PluginEditCtrl {
     var modalScope = this.$scope.$new(true);
     modalScope.plugin = this.model;
 
-    this.$rootScope.appEvent("show-modal", {
-      src: "public/app/features/plugins/partials/update_instructions.html",
-      scope: modalScope
+    this.$rootScope.appEvent('show-modal', {
+      src: 'public/app/features/plugins/partials/update_instructions.html',
+      scope: modalScope,
     });
   }
 
@@ -193,6 +176,4 @@ export class PluginEditCtrl {
   }
 }
 
-angular
-  .module("grafana.controllers")
-  .controller("PluginEditCtrl", PluginEditCtrl);
+angular.module('grafana.controllers').controller('PluginEditCtrl', PluginEditCtrl);

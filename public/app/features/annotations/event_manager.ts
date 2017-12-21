@@ -1,15 +1,15 @@
-import _ from "lodash";
-import moment from "moment";
-import tinycolor from "tinycolor2";
-import { MetricsPanelCtrl } from "app/plugins/sdk";
-import { AnnotationEvent } from "./event";
+import _ from 'lodash';
+import moment from 'moment';
+import tinycolor from 'tinycolor2';
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import { AnnotationEvent } from './event';
 import {
   OK_COLOR,
   ALERTING_COLOR,
   NO_DATA_COLOR,
   DEFAULT_ANNOTATION_COLOR,
-  REGION_FILL_ALPHA
-} from "app/core/utils/colors";
+  REGION_FILL_ALPHA,
+} from 'app/core/utils/colors';
 
 export class EventManager {
   event: AnnotationEvent;
@@ -58,24 +58,24 @@ export class EventManager {
     var types = {
       $__alerting: {
         color: ALERTING_COLOR,
-        position: "BOTTOM",
-        markerSize: 5
+        position: 'BOTTOM',
+        markerSize: 5,
       },
       $__ok: {
         color: OK_COLOR,
-        position: "BOTTOM",
-        markerSize: 5
+        position: 'BOTTOM',
+        markerSize: 5,
       },
       $__no_data: {
         color: NO_DATA_COLOR,
-        position: "BOTTOM",
-        markerSize: 5
+        position: 'BOTTOM',
+        markerSize: 5,
       },
       $__editing: {
         color: DEFAULT_ANNOTATION_COLOR,
-        position: "BOTTOM",
-        markerSize: 5
-      }
+        position: 'BOTTOM',
+        markerSize: 5,
+      },
     };
 
     if (this.event) {
@@ -86,9 +86,9 @@ export class EventManager {
             min: this.event.time.valueOf(),
             timeEnd: this.event.timeEnd.valueOf(),
             text: this.event.text,
-            eventType: "$__editing",
-            editModel: this.event
-          }
+            eventType: '$__editing',
+            editModel: this.event,
+          },
         ];
       } else {
         annotations = [
@@ -96,8 +96,8 @@ export class EventManager {
             min: this.event.time.valueOf(),
             text: this.event.text,
             editModel: this.event,
-            eventType: "$__editing"
-          }
+            eventType: '$__editing',
+          },
         ];
       }
     } else {
@@ -111,15 +111,15 @@ export class EventManager {
         item.eventType = item.source.name;
 
         if (item.newState) {
-          item.eventType = "$__" + item.newState;
+          item.eventType = '$__' + item.newState;
           continue;
         }
 
         if (!types[item.source.name]) {
           types[item.source.name] = {
             color: item.source.iconColor,
-            position: "BOTTOM",
-            markerSize: 5
+            position: 'BOTTOM',
+            markerSize: 5,
           };
         }
       }
@@ -137,13 +137,13 @@ export class EventManager {
       levels: _.keys(types).length + 1,
       data: annotations,
       types: types,
-      manager: this
+      manager: this,
     };
   }
 }
 
 function getRegions(events) {
-  return _.filter(events, "isRegion");
+  return _.filter(events, 'isRegion');
 }
 
 function addRegionMarking(regions, flotOptions) {
@@ -161,7 +161,7 @@ function addRegionMarking(regions, flotOptions) {
     fillColor = addAlphaToRGB(fillColor, REGION_FILL_ALPHA);
     markings.push({
       xaxis: { from: region.min, to: region.timeEnd },
-      color: fillColor
+      color: fillColor,
     });
   });
 }

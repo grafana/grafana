@@ -5,7 +5,7 @@
       <i class="gf-form-input-icon fa fa-search"></i>
     </label>
     <div class="page-action-bar__spacer"></div>
-    <a class="btn btn-success" href="/dashboard/new?folderId={{ctrl.folderId}}">
+    <a class="btn btn-success" ng-href="{{ctrl.createDashboardUrl()}}">
       <i class="fa fa-plus"></i>
       Dashboard
     </a>
@@ -60,20 +60,22 @@
         switch-class="gf-form-switch--transparent gf-form-switch--search-result-filter-row__checkbox"
       />
       <div class="search-results-filter-row__filters">
-        <select
-          class="search-results-filter-row__filters-item gf-form-input"
-          ng-model="ctrl.selectedStarredFilter"
-          ng-options="t.text disable when t.disabled for t in ctrl.starredFilterOptions"
-          ng-change="ctrl.onStarredFilterChange()"
-          ng-show="!(ctrl.canMove || ctrl.canDelete)"
-        />
-        <select
-          class="search-results-filter-row__filters-item gf-form-input"
-          ng-model="ctrl.selectedTagFilter"
-          ng-options="t.term disable when t.disabled for t in ctrl.tagFilterOptions"
-          ng-change="ctrl.onTagFilterChange()"
-          ng-show="!(ctrl.canMove || ctrl.canDelete)"
-        />
+        <div class="gf-form-select-wrapper" ng-show="!(ctrl.canMove || ctrl.canDelete)">
+          <select
+            class="search-results-filter-row__filters-item gf-form-input"
+            ng-model="ctrl.selectedStarredFilter"
+            ng-options="t.text disable when t.disabled for t in ctrl.starredFilterOptions"
+            ng-change="ctrl.onStarredFilterChange()"
+          />
+        </div>
+        <div class="gf-form-select-wrapper" ng-show="!(ctrl.canMove || ctrl.canDelete)">
+          <select
+            class="search-results-filter-row__filters-item gf-form-input"
+            ng-model="ctrl.selectedTagFilter"
+            ng-options="t.term disable when t.disabled for t in ctrl.tagFilterOptions"
+            ng-change="ctrl.onTagFilterChange()"
+          />
+        </div>
         <div class="gf-form-button-row" ng-show="ctrl.canMove || ctrl.canDelete">
           <button	type="button"
             class="btn gf-form-button btn-inverse"

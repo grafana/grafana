@@ -1,7 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import angular from "angular";
-import _ from "lodash";
+import angular from 'angular';
+import _ from 'lodash';
 
 export class SubmenuCtrl {
   annotations: any;
@@ -15,7 +15,7 @@ export class SubmenuCtrl {
   }
 
   annotationStateChanged() {
-    this.$rootScope.$broadcast("refresh");
+    this.$rootScope.$broadcast('refresh');
   }
 
   variableUpdated(variable) {
@@ -30,17 +30,15 @@ export class SubmenuCtrl {
 
 export function submenuDirective() {
   return {
-    restrict: "E",
-    templateUrl: "public/app/features/dashboard/submenu/submenu.html",
+    restrict: 'E',
+    templateUrl: 'public/app/features/dashboard/submenu/submenu.html',
     controller: SubmenuCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
+    controllerAs: 'ctrl',
     scope: {
-      dashboard: "="
-    }
+      dashboard: '=',
+    },
   };
 }
 
-angular
-  .module("grafana.directives")
-  .directive("dashboardSubmenu", submenuDirective);
+angular.module('grafana.directives').directive('dashboardSubmenu', submenuDirective);

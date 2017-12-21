@@ -1,15 +1,15 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import "./bucket_agg";
-import "./metric_agg";
+import './bucket_agg';
+import './metric_agg';
 
-import angular from "angular";
-import _ from "lodash";
-import * as queryDef from "./query_def";
-import { QueryCtrl } from "app/plugins/sdk";
+import angular from 'angular';
+import _ from 'lodash';
+import * as queryDef from './query_def';
+import { QueryCtrl } from 'app/plugins/sdk';
 
 export class ElasticQueryCtrl extends QueryCtrl {
-  static templateUrl = "partials/query.editor.html";
+  static templateUrl = 'partials/query.editor.html';
 
   esVersion: any;
   rawQueryOld: string;
@@ -23,7 +23,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
   }
 
   getFields(type) {
-    var jsonStr = angular.toJson({ find: "fields", type: type });
+    var jsonStr = angular.toJson({ find: 'fields', type: type });
     return this.datasource
       .metricFindQuery(jsonStr)
       .then(this.uiSegmentSrv.transformToSegments(false))
@@ -31,16 +31,13 @@ export class ElasticQueryCtrl extends QueryCtrl {
   }
 
   queryUpdated() {
-    var newJson = angular.toJson(
-      this.datasource.queryBuilder.build(this.target),
-      true
-    );
+    var newJson = angular.toJson(this.datasource.queryBuilder.build(this.target), true);
     if (this.rawQueryOld && newJson !== this.rawQueryOld) {
       this.refresh();
     }
 
     this.rawQueryOld = newJson;
-    this.$rootScope.appEvent("elastic-query-updated");
+    this.$rootScope.appEvent('elastic-query-updated');
   }
 
   getCollapsedText() {
@@ -48,45 +45,45 @@ export class ElasticQueryCtrl extends QueryCtrl {
     var bucketAggs = this.target.bucketAggs;
     var metricAggTypes = queryDef.getMetricAggTypes(this.esVersion);
     var bucketAggTypes = queryDef.bucketAggTypes;
-    var text = "";
+    var text = '';
 
     if (this.target.query) {
-      text += "Query: " + this.target.query + ", ";
+      text += 'Query: ' + this.target.query + ', ';
     }
 
-    text += "Metrics: ";
+    text += 'Metrics: ';
 
     _.each(metricAggs, (metric, index) => {
       var aggDef = _.find(metricAggTypes, { value: metric.type });
-      text += aggDef.text + "(";
+      text += aggDef.text + '(';
       if (aggDef.requiresField) {
         text += metric.field;
       }
-      text += "), ";
+      text += '), ';
     });
 
     _.each(bucketAggs, (bucketAgg, index) => {
       if (index === 0) {
-        text += " Group by: ";
+        text += ' Group by: ';
       }
 
       var aggDef = _.find(bucketAggTypes, { value: bucketAgg.type });
-      text += aggDef.text + "(";
+      text += aggDef.text + '(';
       if (aggDef.requiresField) {
         text += bucketAgg.field;
       }
-      text += "), ";
+      text += '), ';
     });
 
     if (this.target.alias) {
-      text += "Alias: " + this.target.alias;
+      text += 'Alias: ' + this.target.alias;
     }
 
     return text;
   }
 
   handleQueryError(err) {
-    this.error = err.message || "Failed to issue metric query";
+    this.error = err.message || 'Failed to issue metric query';
     return [];
   }
 }

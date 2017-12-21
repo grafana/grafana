@@ -1,6 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import coreModule from "app/core/core_module";
+import coreModule from 'app/core/core_module';
 
 const template = `
 <div class="modal-body">
@@ -56,7 +56,7 @@ export class SaveDashboardModalCtrl {
 
   /** @ngInject */
   constructor(private dashboardSrv) {
-    this.message = "";
+    this.message = '';
     this.max = 64;
   }
 
@@ -75,13 +75,13 @@ export class SaveDashboardModalCtrl {
 
 export function saveDashboardModalDirective() {
   return {
-    restrict: "E",
+    restrict: 'E',
     template: template,
     controller: SaveDashboardModalCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
-    scope: { dismiss: "&" }
+    controllerAs: 'ctrl',
+    scope: { dismiss: '&' },
   };
 }
 
-coreModule.directive("saveDashboardModal", saveDashboardModalDirective);
+coreModule.directive('saveDashboardModal', saveDashboardModalDirective);

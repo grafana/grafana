@@ -1,11 +1,11 @@
-import moment from "moment";
+import moment from 'moment';
 
 const intervalMap = {
-  Hourly: { startOf: "hour", amount: "hours" },
-  Daily: { startOf: "day", amount: "days" },
-  Weekly: { startOf: "isoWeek", amount: "weeks" },
-  Monthly: { startOf: "month", amount: "months" },
-  Yearly: { startOf: "year", amount: "years" }
+  Hourly: { startOf: 'hour', amount: 'hours' },
+  Daily: { startOf: 'day', amount: 'days' },
+  Weekly: { startOf: 'isoWeek', amount: 'weeks' },
+  Monthly: { startOf: 'month', amount: 'months' },
+  Yearly: { startOf: 'year', amount: 'years' },
 };
 
 export class IndexPattern {

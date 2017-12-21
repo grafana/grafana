@@ -1,14 +1,14 @@
-import moment from "moment";
-import _ from "lodash";
+import moment from 'moment';
+import _ from 'lodash';
 
-import { GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from "app/core/constants";
-import { DEFAULT_ANNOTATION_COLOR } from "app/core/utils/colors";
-import { Emitter } from "app/core/utils/emitter";
-import { contextSrv } from "app/core/services/context_srv";
-import sortByKeys from "app/core/utils/sort_by_keys";
+import { GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
+import { DEFAULT_ANNOTATION_COLOR } from 'app/core/utils/colors';
+import { Emitter } from 'app/core/utils/emitter';
+import { contextSrv } from 'app/core/services/context_srv';
+import sortByKeys from 'app/core/utils/sort_by_keys';
 
-import { PanelModel } from "./panel_model";
-import { DashboardMigrator } from "./dashboard_migration";
+import { PanelModel } from './panel_model';
+import { DashboardMigrator } from './dashboard_migration';
 
 export class DashboardModel {
   id: any;
@@ -31,7 +31,6 @@ export class DashboardModel {
   revision: number;
   links: any;
   gnetId: any;
-  folderId: number;
   panels: PanelModel[];
 
   // ------------------
@@ -47,7 +46,7 @@ export class DashboardModel {
     events: true,
     meta: true,
     panels: true, // needs special handling
-    templating: true // needs special handling
+    templating: true, // needs special handling
   };
 
   constructor(data, meta?) {
@@ -58,15 +57,15 @@ export class DashboardModel {
     this.events = new Emitter();
     this.id = data.id || null;
     this.revision = data.revision;
-    this.title = data.title || "No Title";
+    this.title = data.title || 'No Title';
     this.autoUpdate = data.autoUpdate;
     this.description = data.description;
     this.tags = data.tags || [];
-    this.style = data.style || "dark";
-    this.timezone = data.timezone || "";
+    this.style = data.style || 'dark';
+    this.timezone = data.timezone || '';
     this.editable = data.editable !== false;
     this.graphTooltip = data.graphTooltip || 0;
-    this.time = data.time || { from: "now-6h", to: "now" };
+    this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};
     this.templating = this.ensureListExist(data.templating);
     this.annotations = this.ensureListExist(data.annotations);
@@ -76,11 +75,7 @@ export class DashboardModel {
     this.version = data.version || 0;
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
-    this.folderId = data.folderId || null;
-    this.panels = _.map(
-      data.panels || [],
-      panelData => new PanelModel(panelData)
-    );
+    this.panels = _.map(data.panels || [], panelData => new PanelModel(panelData));
 
     this.initMeta(meta);
     this.updateSchema(data);
@@ -103,13 +98,13 @@ export class DashboardModel {
     }
 
     this.annotations.list.unshift({
-      datasource: "-- Grafana --",
-      name: "Annotations & Alerts",
-      type: "dashboard",
+      datasource: '-- Grafana --',
+      name: 'Annotations & Alerts',
+      type: 'dashboard',
       iconColor: DEFAULT_ANNOTATION_COLOR,
       enable: true,
       hide: true,
-      builtIn: 1
+      builtIn: 1,
     });
   }
 
@@ -137,10 +132,7 @@ export class DashboardModel {
     // make clone
     var copy: any = {};
     for (var property in this) {
-      if (
-        DashboardModel.nonPersistedProperties[property] ||
-        !this.hasOwnProperty(property)
-      ) {
+      if (DashboardModel.nonPersistedProperties[property] || !this.hasOwnProperty(property)) {
         continue;
       }
 
@@ -149,10 +141,7 @@ export class DashboardModel {
 
     // get variable save models
     copy.templating = {
-      list: _.map(
-        this.templating.list,
-        variable => (variable.getSaveModel ? variable.getSaveModel() : variable)
-      )
+      list: _.map(this.templating.list, variable => (variable.getSaveModel ? variable.getSaveModel() : variable)),
     };
 
     // get panel save models
@@ -170,7 +159,7 @@ export class DashboardModel {
 
     panel.setViewMode(fullscreen, this.meta.isEditing);
 
-    this.events.emit("view-mode-changed", panel);
+    this.events.emit('view-mode-changed', panel);
   }
 
   private ensureListExist(data) {
@@ -227,7 +216,7 @@ export class DashboardModel {
 
     this.sortPanelsByGridPos();
 
-    this.events.emit("panel-added", panel);
+    this.events.emit('panel-added', panel);
   }
 
   sortPanelsByGridPos() {
@@ -263,10 +252,7 @@ export class DashboardModel {
         if (!cleanUpOnly) {
           this.repeatPanel(panel, i);
         }
-      } else if (
-        panel.repeatPanelId &&
-        panel.repeatIteration !== this.iteration
-      ) {
+      } else if (panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
         panelsToRemove.push(panel);
       }
     }
@@ -275,7 +261,7 @@ export class DashboardModel {
     _.pull(this.panels, ...panelsToRemove);
 
     this.sortPanelsByGridPos();
-    this.events.emit("repeats-processed");
+    this.events.emit('repeats-processed');
   }
 
   getPanelRepeatClone(sourcePanel, valueIndex, sourcePanelIndex) {
@@ -332,7 +318,7 @@ export class DashboardModel {
       return;
     }
 
-    if (panel.type === "row") {
+    if (panel.type === 'row') {
       this.repeatRow(panel, panelIndex, variable);
       return;
     }
@@ -357,10 +343,7 @@ export class DashboardModel {
         // set width based on how many are selected
         // assumed the repeated panels should take up full row width
 
-        copy.gridPos.w = Math.max(
-          GRID_COLUMN_COUNT / selectedOptions.length,
-          minWidth
-        );
+        copy.gridPos.w = Math.max(GRID_COLUMN_COUNT / selectedOptions.length, minWidth);
         copy.gridPos.x = xPos;
         copy.gridPos.y = yPos;
 
@@ -384,11 +367,7 @@ export class DashboardModel {
       panel.scopedVars[variable.name] = variableOption;
     }
 
-    for (
-      let optionIndex = 0;
-      optionIndex < selectedOptions.length;
-      optionIndex++
-    ) {
+    for (let optionIndex = 0; optionIndex < selectedOptions.length; optionIndex++) {
       let option = selectedOptions[optionIndex];
       let rowCopy = this.getRowRepeatClone(panel, optionIndex, panelIndex);
       setScopedVars(rowCopy, option);
@@ -444,7 +423,7 @@ export class DashboardModel {
 
   getSelectedVariableOptions(variable) {
     let selectedOptions;
-    if (variable.current.text === "All") {
+    if (variable.current.text === 'All') {
       selectedOptions = variable.options.slice(1, variable.options.length);
     } else {
       selectedOptions = _.filter(variable.options, { selected: true });
@@ -456,7 +435,7 @@ export class DashboardModel {
     if (!rowPanel.panels || rowPanel.panels.length === 0) {
       return 0;
     }
-    const positions = _.map(rowPanel.panels, "gridPos");
+    const positions = _.map(rowPanel.panels, 'gridPos');
     const maxPos = _.maxBy(positions, pos => {
       return pos.y + pos.h;
     });
@@ -466,7 +445,17 @@ export class DashboardModel {
   removePanel(panel: PanelModel) {
     var index = _.indexOf(this.panels, panel);
     this.panels.splice(index, 1);
-    this.events.emit("panel-removed", panel);
+    this.events.emit('panel-removed', panel);
+  }
+
+  removeRow(row: PanelModel, removePanels: boolean) {
+    const needToogle = (!removePanels && row.collapsed) || (removePanels && !row.collapsed);
+
+    if (needToogle) {
+      this.toggleRow(row);
+    }
+
+    this.removePanel(row);
   }
 
   setPanelFocus(id) {
@@ -479,18 +468,12 @@ export class DashboardModel {
         return true;
       }
 
-      var visibleVars = _.filter(
-        this.templating.list,
-        variable => variable.hide !== 2
-      );
+      var visibleVars = _.filter(this.templating.list, variable => variable.hide !== 2);
       if (visibleVars.length > 0) {
         return true;
       }
 
-      var visibleAnnotations = _.filter(
-        this.annotations.list,
-        annotation => annotation.hide !== true
-      );
+      var visibleAnnotations = _.filter(this.annotations.list, annotation => annotation.hide !== true);
       if (visibleAnnotations.length > 0) {
         return true;
       }
@@ -504,7 +487,7 @@ export class DashboardModel {
       if (this.panels[i].id === panelId) {
         return {
           panel: this.panels[i],
-          index: i
+          index: i,
         };
       }
     }
@@ -539,12 +522,10 @@ export class DashboardModel {
 
   formatDate(date, format?) {
     date = moment.isMoment(date) ? date : moment(date);
-    format = format || "YYYY-MM-DD HH:mm:ss";
+    format = format || 'YYYY-MM-DD HH:mm:ss';
     let timezone = this.getTimezone();
 
-    return timezone === "browser"
-      ? moment(date).format(format)
-      : moment.utc(date).format(format);
+    return timezone === 'browser' ? moment(date).format(format) : moment.utc(date).format(format);
   }
 
   destroy() {
@@ -584,11 +565,7 @@ export class DashboardModel {
         const pushDownAmount = yMax - row.gridPos.y;
 
         // push panels below down
-        for (
-          let panelIndex = insertPos;
-          panelIndex < this.panels.length;
-          panelIndex++
-        ) {
+        for (let panelIndex = insertPos; panelIndex < this.panels.length; panelIndex++) {
           this.panels[panelIndex].gridPos.y += pushDownAmount;
         }
 
@@ -599,7 +576,7 @@ export class DashboardModel {
       this.sortPanelsByGridPos();
 
       // emit change event
-      this.events.emit("row-expanded");
+      this.events.emit('row-expanded');
       return;
     }
 
@@ -612,7 +589,7 @@ export class DashboardModel {
     row.collapsed = true;
 
     // emit change event
-    this.events.emit("row-collapsed");
+    this.events.emit('row-collapsed');
   }
 
   /**
@@ -625,7 +602,7 @@ export class DashboardModel {
       let panel = this.panels[index];
 
       // break when encountering another row
-      if (panel.type === "row") {
+      if (panel.type === 'row') {
         break;
       }
 
@@ -659,13 +636,11 @@ export class DashboardModel {
   getRelativeTime(date) {
     date = moment.isMoment(date) ? date : moment(date);
 
-    return this.timezone === "browser"
-      ? moment(date).fromNow()
-      : moment.utc(date).fromNow();
+    return this.timezone === 'browser' ? moment(date).fromNow() : moment.utc(date).fromNow();
   }
 
   getNextQueryLetter(panel) {
-    var letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
     return _.find(letters, function(refId) {
       return _.every(panel.targets, function(other) {
@@ -675,7 +650,7 @@ export class DashboardModel {
   }
 
   isTimezoneUtc() {
-    return this.getTimezone() === "utc";
+    return this.getTimezone() === 'utc';
   }
 
   getTimezone() {

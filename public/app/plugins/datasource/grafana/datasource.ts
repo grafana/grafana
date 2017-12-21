@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _ from 'lodash';
 
 class GrafanaDatasource {
   /** @ngInject */
@@ -6,11 +6,11 @@ class GrafanaDatasource {
 
   query(options) {
     return this.backendSrv
-      .get("/api/tsdb/testdata/random-walk", {
+      .get('/api/tsdb/testdata/random-walk', {
         from: options.range.from.valueOf(),
         to: options.range.to.valueOf(),
         intervalMs: options.intervalMs,
-        maxDataPoints: options.maxDataPoints
+        maxDataPoints: options.maxDataPoints,
       })
       .then(res => {
         var data = [];
@@ -20,7 +20,7 @@ class GrafanaDatasource {
             for (let series of queryRes.series) {
               data.push({
                 target: series.name,
-                datapoints: series.points
+                datapoints: series.points,
               });
             }
           });
@@ -39,10 +39,10 @@ class GrafanaDatasource {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
       limit: options.annotation.limit,
-      tags: options.annotation.tags
+      tags: options.annotation.tags,
     };
 
-    if (options.annotation.type === "dashboard") {
+    if (options.annotation.type === 'dashboard') {
       // if no dashboard id yet return
       if (!options.dashboard.id) {
         return this.$q.when([]);
@@ -53,15 +53,12 @@ class GrafanaDatasource {
       delete params.tags;
     } else {
       // require at least one tag
-      if (
-        !_.isArray(options.annotation.tags) ||
-        options.annotation.tags.length === 0
-      ) {
+      if (!_.isArray(options.annotation.tags) || options.annotation.tags.length === 0) {
         return this.$q.when([]);
       }
     }
 
-    return this.backendSrv.get("/api/annotations", params);
+    return this.backendSrv.get('/api/annotations', params);
   }
 }
 

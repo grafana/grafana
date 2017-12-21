@@ -1,6 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import coreModule from "app/core/core_module";
+import coreModule from 'app/core/core_module';
 
 const template = `
 <div class="modal-body">
@@ -50,13 +50,13 @@ export class UnsavedChangesModalCtrl {
 
 export function unsavedChangesModalDirective() {
   return {
-    restrict: "E",
+    restrict: 'E',
     template: template,
     controller: UnsavedChangesModalCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
-    scope: { dismiss: "&" }
+    controllerAs: 'ctrl',
+    scope: { dismiss: '&' },
   };
 }
 
-coreModule.directive("unsavedChangesModal", unsavedChangesModalDirective);
+coreModule.directive('unsavedChangesModal', unsavedChangesModalDirective);

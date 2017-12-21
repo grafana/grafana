@@ -1,7 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from "lodash";
-import { Variable, assignModelProperties, variableTypes } from "./variable";
+import _ from 'lodash';
+import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class CustomVariable implements Variable {
   query: string;
@@ -11,16 +11,16 @@ export class CustomVariable implements Variable {
   current: any;
 
   defaults = {
-    type: "custom",
-    name: "",
-    label: "",
+    type: 'custom',
+    name: '',
+    label: '',
     hide: 0,
     options: [],
     current: {},
-    query: "",
+    query: '',
     includeAll: false,
     multi: false,
-    allValue: null
+    allValue: null,
   };
 
   /** @ngInject **/
@@ -51,7 +51,7 @@ export class CustomVariable implements Variable {
   }
 
   addAllOption() {
-    this.options.unshift({ text: "All", value: "$__all" });
+    this.options.unshift({ text: 'All', value: '$__all' });
   }
 
   dependsOn(variable) {
@@ -63,16 +63,16 @@ export class CustomVariable implements Variable {
   }
 
   getValueForUrl() {
-    if (this.current.text === "All") {
-      return "All";
+    if (this.current.text === 'All') {
+      return 'All';
     }
     return this.current.value;
   }
 }
 
-variableTypes["custom"] = {
-  name: "Custom",
+variableTypes['custom'] = {
+  name: 'Custom',
   ctor: CustomVariable,
-  description: "Define variable values manually",
-  supportsMulti: true
+  description: 'Define variable values manually',
+  supportsMulti: true,
 };

@@ -1,35 +1,29 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from "lodash";
-import { appEvents, coreModule } from "app/core/core";
+import _ from 'lodash';
+import { appEvents, coreModule } from 'app/core/core';
 
 export class AlertNotificationEditCtrl {
   theForm: any;
   navModel: any;
-  testSeverity = "critical";
+  testSeverity = 'critical';
   notifiers: any;
   notifierTemplateId: string;
   isNew: boolean;
   model: any;
   defaults: any = {
-    type: "email",
+    type: 'email',
     settings: {
-      httpMethod: "POST",
+      httpMethod: 'POST',
       autoResolve: true,
-      uploadImage: true
+      uploadImage: true,
     },
-    isDefault: false
+    isDefault: false,
   };
 
   /** @ngInject */
-  constructor(
-    private $routeParams,
-    private backendSrv,
-    private $location,
-    private $templateCache,
-    navModelSrv
-  ) {
-    this.navModel = navModelSrv.getNav("alerting", "channels", 0);
+  constructor(private $routeParams, private backendSrv, private $location, private $templateCache, navModelSrv) {
+    this.navModel = navModelSrv.getNav('alerting', 'channels', 0);
     this.isNew = !this.$routeParams.id;
 
     this.backendSrv
@@ -39,25 +33,20 @@ export class AlertNotificationEditCtrl {
 
         // add option templates
         for (let notifier of this.notifiers) {
-          this.$templateCache.put(
-            this.getNotifierTemplateId(notifier.type),
-            notifier.optionsTemplate
-          );
+          this.$templateCache.put(this.getNotifierTemplateId(notifier.type), notifier.optionsTemplate);
         }
 
         if (!this.$routeParams.id) {
-          this.navModel.breadcrumbs.push({ text: "New channel" });
-          this.navModel.node = { text: "New channel" };
+          this.navModel.breadcrumbs.push({ text: 'New channel' });
+          this.navModel.node = { text: 'New channel' };
           return _.defaults(this.model, this.defaults);
         }
 
-        return this.backendSrv
-          .get(`/api/alert-notifications/${this.$routeParams.id}`)
-          .then(result => {
-            this.navModel.breadcrumbs.push({ text: result.name });
-            this.navModel.node = { text: result.name };
-            return result;
-          });
+        return this.backendSrv.get(`/api/alert-notifications/${this.$routeParams.id}`).then(result => {
+          this.navModel.breadcrumbs.push({ text: result.name });
+          this.navModel.node = { text: result.name };
+          return result;
+        });
       })
       .then(model => {
         this.model = model;
@@ -71,16 +60,14 @@ export class AlertNotificationEditCtrl {
     }
 
     if (this.model.id) {
-      this.backendSrv
-        .put(`/api/alert-notifications/${this.model.id}`, this.model)
-        .then(res => {
-          this.model = res;
-          appEvents.emit("alert-success", ["Notification updated", ""]);
-        });
+      this.backendSrv.put(`/api/alert-notifications/${this.model.id}`, this.model).then(res => {
+        this.model = res;
+        appEvents.emit('alert-success', ['Notification updated', '']);
+      });
     } else {
       this.backendSrv.post(`/api/alert-notifications`, this.model).then(res => {
-        appEvents.emit("alert-success", ["Notification created", ""]);
-        this.$location.path("alerting/notifications");
+        appEvents.emit('alert-success', ['Notification created', '']);
+        this.$location.path('alerting/notifications');
       });
     }
   }
@@ -102,13 +89,13 @@ export class AlertNotificationEditCtrl {
     var payload = {
       name: this.model.name,
       type: this.model.type,
-      settings: this.model.settings
+      settings: this.model.settings,
     };
 
     this.backendSrv.post(`/api/alert-notifications/test`, payload).then(res => {
-      appEvents.emit("alert-success", ["Test notification sent", ""]);
+      appEvents.emit('alert-success', ['Test notification sent', '']);
     });
   }
 }
 
-coreModule.controller("AlertNotificationEditCtrl", AlertNotificationEditCtrl);
+coreModule.controller('AlertNotificationEditCtrl', AlertNotificationEditCtrl);

@@ -33,6 +33,7 @@ func CreateTeam(cmd *m.CreateTeamCommand) error {
 
 		team := m.Team{
 			Name:    cmd.Name,
+			Email:   cmd.Email,
 			OrgId:   cmd.OrgId,
 			Created: time.Now(),
 			Updated: time.Now(),
@@ -57,8 +58,11 @@ func UpdateTeam(cmd *m.UpdateTeamCommand) error {
 
 		team := m.Team{
 			Name:    cmd.Name,
+			Email:   cmd.Email,
 			Updated: time.Now(),
 		}
+
+		sess.MustCols("email")
 
 		affectedRows, err := sess.Id(cmd.Id).Update(&team)
 
@@ -125,6 +129,7 @@ func SearchTeams(query *m.SearchTeamsQuery) error {
 	sql.WriteString(`select
 		team.id as id,
 		team.name as name,
+		team.email as email,
 		(select count(*) from team_member where team_member.team_id = team.id) as member_count
 		from team as team
 		where team.org_id = ?`)

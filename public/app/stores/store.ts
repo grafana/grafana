@@ -1,7 +1,12 @@
-import { RootStore, IRootStore } from "./RootStore";
+import { RootStore, IRootStore } from './RootStore';
 
 export let store: IRootStore;
 
-export function createStore() {
-  store = RootStore.create({});
+export function createStore(backendSrv) {
+  store = RootStore.create(
+    {},
+    {
+      backendSrv: backendSrv,
+    }
+  );
 }

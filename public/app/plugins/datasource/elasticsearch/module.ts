@@ -1,13 +1,13 @@
-import { ElasticDatasource } from "./datasource";
-import { ElasticQueryCtrl } from "./query_ctrl";
-import { ElasticConfigCtrl } from "./config_ctrl";
+import { ElasticDatasource } from './datasource';
+import { ElasticQueryCtrl } from './query_ctrl';
+import { ElasticConfigCtrl } from './config_ctrl';
 
 class ElasticQueryOptionsCtrl {
-  static templateUrl = "partials/query.options.html";
+  static templateUrl = 'partials/query.options.html';
 }
 
 class ElasticAnnotationsQueryCtrl {
-  static templateUrl = "partials/annotations.editor.html";
+  static templateUrl = 'partials/annotations.editor.html';
 }
 
 export {
@@ -15,5 +15,5 @@ export {
   ElasticQueryCtrl as QueryCtrl,
   ElasticConfigCtrl as ConfigCtrl,
   ElasticQueryOptionsCtrl as QueryOptionsCtrl,
-  ElasticAnnotationsQueryCtrl as AnnotationsQueryCtrl
+  ElasticAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };

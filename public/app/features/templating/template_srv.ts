@@ -1,11 +1,8 @@
-import kbn from "app/core/utils/kbn";
-import _ from "lodash";
+import kbn from 'app/core/utils/kbn';
+import _ from 'lodash';
 
 function luceneEscape(value) {
-  return value.replace(
-    /([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g,
-    "\\$1"
-  );
+  return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
 }
 
 export class TemplateSrv {
@@ -17,8 +14,8 @@ export class TemplateSrv {
   private builtIns = {};
 
   constructor() {
-    this.builtIns["__interval"] = { text: "1s", value: "1s" };
-    this.builtIns["__interval_ms"] = { text: "100", value: "100" };
+    this.builtIns['__interval'] = { text: '1s', value: '1s' };
+    this.builtIns['__interval_ms'] = { text: '100', value: '100' };
   }
 
   init(variables) {
@@ -32,10 +29,7 @@ export class TemplateSrv {
     for (var i = 0; i < this.variables.length; i++) {
       var variable = this.variables[i];
 
-      if (
-        !variable.current ||
-        (!variable.current.isNone && !variable.current.value)
-      ) {
+      if (!variable.current || (!variable.current.isNone && !variable.current.value)) {
         continue;
       }
 
@@ -52,7 +46,7 @@ export class TemplateSrv {
 
     for (var i = 0; i < this.variables.length; i++) {
       var variable = this.variables[i];
-      if (variable.type !== "adhoc") {
+      if (variable.type !== 'adhoc') {
         continue;
       }
 
@@ -60,7 +54,7 @@ export class TemplateSrv {
         filters = filters.concat(variable.filters);
       }
 
-      if (variable.datasource.indexOf("$") === 0) {
+      if (variable.datasource.indexOf('$') === 0) {
         if (this.replace(variable.datasource) === datasourceName) {
           filters = filters.concat(variable.filters);
         }
@@ -71,50 +65,50 @@ export class TemplateSrv {
   }
 
   luceneFormat(value) {
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       return luceneEscape(value);
     }
     var quotedValues = _.map(value, function(val) {
       return '"' + luceneEscape(val) + '"';
     });
-    return "(" + quotedValues.join(" OR ") + ")";
+    return '(' + quotedValues.join(' OR ') + ')';
   }
 
   formatValue(value, format, variable) {
     // for some scopedVars there is no variable
     variable = variable || {};
 
-    if (typeof format === "function") {
+    if (typeof format === 'function') {
       return format(value, variable, this.formatValue);
     }
 
     switch (format) {
-      case "regex": {
-        if (typeof value === "string") {
+      case 'regex': {
+        if (typeof value === 'string') {
           return kbn.regexEscape(value);
         }
 
         var escapedValues = _.map(value, kbn.regexEscape);
-        return "(" + escapedValues.join("|") + ")";
+        return '(' + escapedValues.join('|') + ')';
       }
-      case "lucene": {
+      case 'lucene': {
         return this.luceneFormat(value);
       }
-      case "pipe": {
-        if (typeof value === "string") {
+      case 'pipe': {
+        if (typeof value === 'string') {
           return value;
         }
-        return value.join("|");
+        return value.join('|');
       }
-      case "distributed": {
-        if (typeof value === "string") {
+      case 'distributed': {
+        if (typeof value === 'string') {
           return value;
         }
         return this.distributeVariable(value, variable.name);
       }
       default: {
         if (_.isArray(value)) {
-          return "{" + value.join(",") + "}";
+          return '{' + value.join(',') + '}';
         }
         return value;
       }
@@ -148,7 +142,7 @@ export class TemplateSrv {
     this.regex.lastIndex = 0;
     return str.replace(this.regex, (match, g1, g2) => {
       if (this.index[g1 || g2] || this.builtIns[g1 || g2]) {
-        return '<span class="template-variable">' + match + "</span>";
+        return '<span class="template-variable">' + match + '</span>';
       }
       return match;
     });
@@ -207,9 +201,7 @@ export class TemplateSrv {
   }
 
   isAllValue(value) {
-    return (
-      value === "$__all" || (Array.isArray(value) && value[0] === "$__all")
-    );
+    return value === '$__all' || (Array.isArray(value) && value[0] === '$__all');
   }
 
   replaceWithText(target, scopedVars) {
@@ -233,18 +225,16 @@ export class TemplateSrv {
         return match;
       }
 
-      return (
-        this.grafanaVariables[variable.current.value] || variable.current.text
-      );
+      return this.grafanaVariables[variable.current.value] || variable.current.text;
     });
   }
 
   fillVariableValuesForUrl(params, scopedVars) {
     _.each(this.variables, function(variable) {
       if (scopedVars && scopedVars[variable.name] !== void 0) {
-        params["var-" + variable.name] = scopedVars[variable.name].value;
+        params['var-' + variable.name] = scopedVars[variable.name].value;
       } else {
-        params["var-" + variable.name] = variable.getValueForUrl();
+        params['var-' + variable.name] = variable.getValueForUrl();
       }
     });
   }
@@ -252,12 +242,12 @@ export class TemplateSrv {
   distributeVariable(value, variable) {
     value = _.map(value, function(val, index) {
       if (index !== 0) {
-        return variable + "=" + val;
+        return variable + '=' + val;
       } else {
         return val;
       }
     });
-    return value.join(",");
+    return value.join(',');
   }
 }
 

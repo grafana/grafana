@@ -1,24 +1,19 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import _ from "lodash";
-import * as dateMath from "app/core/utils/datemath";
-import { isVersionGtOrEq, SemVersion } from "app/core/utils/version";
+import _ from 'lodash';
+import * as dateMath from 'app/core/utils/datemath';
+import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 
 /** @ngInject */
-export function GraphiteDatasource(
-  instanceSettings,
-  $q,
-  backendSrv,
-  templateSrv
-) {
+export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv) {
   this.basicAuth = instanceSettings.basicAuth;
   this.url = instanceSettings.url;
   this.name = instanceSettings.name;
-  this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || "0.9";
+  this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || '0.9';
   this.supportsTags = supportsTags(this.graphiteVersion);
   this.cacheTimeout = instanceSettings.cacheTimeout;
   this.withCredentials = instanceSettings.withCredentials;
-  this.render_method = instanceSettings.render_method || "POST";
+  this.render_method = instanceSettings.render_method || 'POST';
 
   this.getQueryOptionsInfo = function() {
     return {
@@ -26,11 +21,10 @@ export function GraphiteDatasource(
       cacheTimeout: true,
       links: [
         {
-          text: "Help",
-          url:
-            "http://docs.grafana.org/features/datasources/graphite/#using-graphite-in-grafana"
-        }
-      ]
+          text: 'Help',
+          url: 'http://docs.grafana.org/features/datasources/graphite/#using-graphite-in-grafana',
+        },
+      ],
     };
   };
 
@@ -41,7 +35,7 @@ export function GraphiteDatasource(
       targets: options.targets,
       format: options.format,
       cacheTimeout: options.cacheTimeout || this.cacheTimeout,
-      maxDataPoints: options.maxDataPoints
+      maxDataPoints: options.maxDataPoints,
     };
 
     var params = this.buildGraphiteParams(graphOptions, options.scopedVars);
@@ -50,16 +44,16 @@ export function GraphiteDatasource(
     }
 
     var httpOptions: any = {
-      method: "POST",
-      url: "/render",
-      data: params.join("&"),
+      method: 'POST',
+      url: '/render',
+      data: params.join('&'),
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      }
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
     };
 
     if (options.panelId) {
-      httpOptions.requestId = this.name + ".panelId." + options.panelId;
+      httpOptions.requestId = this.name + '.panelId.' + options.panelId;
     }
 
     return this.doGraphiteRequest(httpOptions).then(this.convertDataPointsToMs);
@@ -80,10 +74,10 @@ export function GraphiteDatasource(
 
   this.parseTags = function(tagString) {
     let tags = [];
-    tags = tagString.split(",");
+    tags = tagString.split(',');
     if (tags.length === 1) {
-      tags = tagString.split(" ");
-      if (tags[0] === "") {
+      tags = tagString.split(' ');
+      if (tags[0] === '') {
         tags = [];
       }
     }
@@ -93,12 +87,12 @@ export function GraphiteDatasource(
   this.annotationQuery = function(options) {
     // Graphite metric as annotation
     if (options.annotation.target) {
-      var target = templateSrv.replace(options.annotation.target, {}, "glob");
+      var target = templateSrv.replace(options.annotation.target, {}, 'glob');
       var graphiteQuery = {
         rangeRaw: options.rangeRaw,
         targets: [{ target: target }],
-        format: "json",
-        maxDataPoints: 100
+        format: 'json',
+        maxDataPoints: 100,
       };
 
       return this.query(graphiteQuery).then(function(result) {
@@ -116,7 +110,7 @@ export function GraphiteDatasource(
             list.push({
               annotation: options.annotation,
               time: datapoint[1],
-              title: target.target
+              title: target.target,
             });
           }
         }
@@ -126,46 +120,44 @@ export function GraphiteDatasource(
     } else {
       // Graphite event as annotation
       var tags = templateSrv.replace(options.annotation.tags);
-      return this.events({ range: options.rangeRaw, tags: tags }).then(
-        results => {
-          var list = [];
-          for (var i = 0; i < results.data.length; i++) {
-            var e = results.data[i];
+      return this.events({ range: options.rangeRaw, tags: tags }).then(results => {
+        var list = [];
+        for (var i = 0; i < results.data.length; i++) {
+          var e = results.data[i];
 
-            var tags = e.tags;
-            if (_.isString(e.tags)) {
-              tags = this.parseTags(e.tags);
-            }
-
-            list.push({
-              annotation: options.annotation,
-              time: e.when * 1000,
-              title: e.what,
-              tags: tags,
-              text: e.data
-            });
+          var tags = e.tags;
+          if (_.isString(e.tags)) {
+            tags = this.parseTags(e.tags);
           }
 
-          return list;
+          list.push({
+            annotation: options.annotation,
+            time: e.when * 1000,
+            title: e.what,
+            tags: tags,
+            text: e.data,
+          });
         }
-      );
+
+        return list;
+      });
     }
   };
 
   this.events = function(options) {
     try {
-      var tags = "";
+      var tags = '';
       if (options.tags) {
-        tags = "&tags=" + options.tags;
+        tags = '&tags=' + options.tags;
       }
       return this.doGraphiteRequest({
-        method: "GET",
+        method: 'GET',
         url:
-          "/events/get_data?from=" +
+          '/events/get_data?from=' +
           this.translateTime(options.range.from, false) +
-          "&until=" +
+          '&until=' +
           this.translateTime(options.range.to, true) +
-          tags
+          tags,
       });
     } catch (err) {
       return $q.reject(err);
@@ -178,12 +170,12 @@ export function GraphiteDatasource(
 
   this.translateTime = function(date, roundUp) {
     if (_.isString(date)) {
-      if (date === "now") {
-        return "now";
-      } else if (date.indexOf("now-") >= 0 && date.indexOf("/") === -1) {
+      if (date === 'now') {
+        return 'now';
+      } else if (date.indexOf('now-') >= 0 && date.indexOf('/') === -1) {
         date = date.substring(3);
-        date = date.replace("m", "min");
-        date = date.replace("M", "mon");
+        date = date.replace('m', 'min');
+        date = date.replace('M', 'mon');
         return date;
       }
       date = dateMath.parse(date, roundUp);
@@ -194,12 +186,12 @@ export function GraphiteDatasource(
     // to guarantee that we get all the data that
     // exists for the specified range
     if (roundUp) {
-      if (date.get("s")) {
-        date.add(1, "m");
+      if (date.get('s')) {
+        date.add(1, 'm');
       }
     } else if (roundUp === false) {
-      if (date.get("s")) {
-        date.subtract(1, "m");
+      if (date.get('s')) {
+        date.subtract(1, 'm');
       }
     }
 
@@ -211,13 +203,13 @@ export function GraphiteDatasource(
     let interpolatedQuery = templateSrv.replace(query);
 
     let httpOptions: any = {
-      method: "GET",
-      url: "/metrics/find",
+      method: 'GET',
+      url: '/metrics/find',
       params: {
-        query: interpolatedQuery
+        query: interpolatedQuery,
       },
       // for cancellations
-      requestId: options.requestId
+      requestId: options.requestId,
     };
 
     if (options && options.range) {
@@ -229,7 +221,7 @@ export function GraphiteDatasource(
       return _.map(results.data, metric => {
         return {
           text: metric.text,
-          expandable: metric.expandable ? true : false
+          expandable: metric.expandable ? true : false,
         };
       });
     });
@@ -239,10 +231,10 @@ export function GraphiteDatasource(
     let options = optionalOptions || {};
 
     let httpOptions: any = {
-      method: "GET",
-      url: "/tags",
+      method: 'GET',
+      url: '/tags',
       // for cancellations
-      requestId: options.requestId
+      requestId: options.requestId,
     };
 
     if (options && options.range) {
@@ -254,7 +246,7 @@ export function GraphiteDatasource(
       return _.map(results.data, tag => {
         return {
           text: tag.tag,
-          id: tag.id
+          id: tag.id,
         };
       });
     });
@@ -264,10 +256,10 @@ export function GraphiteDatasource(
     let options = optionalOptions || {};
 
     let httpOptions: any = {
-      method: "GET",
-      url: "/tags/" + tag,
+      method: 'GET',
+      url: '/tags/' + tag,
       // for cancellations
-      requestId: options.requestId
+      requestId: options.requestId,
     };
 
     if (options && options.range) {
@@ -280,7 +272,7 @@ export function GraphiteDatasource(
         return _.map(results.data.values, value => {
           return {
             text: value.value,
-            id: value.id
+            id: value.id,
           };
         });
       } else {
@@ -291,11 +283,11 @@ export function GraphiteDatasource(
 
   this.getTagsAutoComplete = (expression, tagPrefix) => {
     let httpOptions: any = {
-      method: "GET",
-      url: "/tags/autoComplete/tags",
+      method: 'GET',
+      url: '/tags/autoComplete/tags',
       params: {
-        expr: expression
-      }
+        expr: expression,
+      },
     };
 
     if (tagPrefix) {
@@ -315,12 +307,12 @@ export function GraphiteDatasource(
 
   this.getTagValuesAutoComplete = (expression, tag, valuePrefix) => {
     let httpOptions: any = {
-      method: "GET",
-      url: "/tags/autoComplete/values",
+      method: 'GET',
+      url: '/tags/autoComplete/values',
       params: {
         expr: expression,
-        tag: tag
-      }
+        tag: tag,
+      },
     };
 
     if (valuePrefix) {
@@ -340,26 +332,26 @@ export function GraphiteDatasource(
 
   this.getVersion = function() {
     let httpOptions = {
-      method: "GET",
-      url: "/version/_" // Prevent last / trimming
+      method: 'GET',
+      url: '/version/_', // Prevent last / trimming
     };
 
     return this.doGraphiteRequest(httpOptions)
       .then(results => {
         if (results.data) {
           let semver = new SemVersion(results.data);
-          return semver.isValid() ? results.data : "";
+          return semver.isValid() ? results.data : '';
         }
-        return "";
+        return '';
       })
       .catch(() => {
-        return "";
+        return '';
       });
   };
 
   this.testDatasource = function() {
-    return this.metricFindQuery("*").then(function() {
-      return { status: "success", message: "Data source is working" };
+    return this.metricFindQuery('*').then(function() {
+      return { status: 'success', message: 'Data source is working' };
     });
   };
 
@@ -373,22 +365,15 @@ export function GraphiteDatasource(
     }
 
     options.url = this.url + options.url;
-    options.inspect = { type: "graphite" };
+    options.inspect = { type: 'graphite' };
 
     return backendSrv.datasourceRequest(options);
   };
 
-  this._seriesRefLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  this._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   this.buildGraphiteParams = function(options, scopedVars) {
-    var graphite_options = [
-      "from",
-      "until",
-      "rawData",
-      "format",
-      "maxDataPoints",
-      "cacheTimeout"
-    ];
+    var graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     var clean_options = [],
       targets = {};
     var target, targetValue, i;
@@ -396,10 +381,10 @@ export function GraphiteDatasource(
     var intervalFormatFixRegex = /'(\d+)m'/gi;
     var hasTargets = false;
 
-    options["format"] = "json";
+    options['format'] = 'json';
 
     function fixIntervalFormat(match) {
-      return match.replace("m", "min").replace("M", "mon");
+      return match.replace('m', 'min').replace('M', 'mon');
     }
 
     for (i = 0; i < options.targets.length; i++) {
@@ -413,10 +398,7 @@ export function GraphiteDatasource(
       }
 
       targetValue = templateSrv.replace(target.target, scopedVars);
-      targetValue = targetValue.replace(
-        intervalFormatFixRegex,
-        fixIntervalFormat
-      );
+      targetValue = targetValue.replace(intervalFormatFixRegex, fixIntervalFormat);
       targets[target.refId] = targetValue;
     }
 
@@ -436,7 +418,7 @@ export function GraphiteDatasource(
 
       if (!target.hide) {
         hasTargets = true;
-        clean_options.push("target=" + encodeURIComponent(targetValue));
+        clean_options.push('target=' + encodeURIComponent(targetValue));
       }
     }
 
@@ -445,7 +427,7 @@ export function GraphiteDatasource(
         return;
       }
       if (value) {
-        clean_options.push(key + "=" + encodeURIComponent(value));
+        clean_options.push(key + '=' + encodeURIComponent(value));
       }
     });
 
@@ -458,5 +440,5 @@ export function GraphiteDatasource(
 }
 
 function supportsTags(version: string): boolean {
-  return isVersionGtOrEq(version, "1.1");
+  return isVersionGtOrEq(version, '1.1');
 }

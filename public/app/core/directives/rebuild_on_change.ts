@@ -1,5 +1,5 @@
-import $ from "jquery";
-import coreModule from "../core_module";
+import $ from 'jquery';
+import coreModule from '../core_module';
 
 function getBlockNodes(nodes) {
   var node = nodes[0];
@@ -25,7 +25,7 @@ function rebuildOnChange($animate) {
     terminal: true,
     transclude: true,
     priority: 600,
-    restrict: "E",
+    restrict: 'E',
     link: function(scope, elem, attrs, ctrl, transclude) {
       var block, childScope, previousElements;
 
@@ -47,10 +47,7 @@ function rebuildOnChange($animate) {
         }
       }
 
-      scope.$watch(attrs.property, function rebuildOnChangeAction(
-        value,
-        oldValue
-      ) {
+      scope.$watch(attrs.property, function rebuildOnChangeAction(value, oldValue) {
         if (childScope && value !== oldValue) {
           cleanUp();
         }
@@ -58,9 +55,7 @@ function rebuildOnChange($animate) {
         if (!childScope && (value || attrs.showNull)) {
           transclude(function(clone, newScope) {
             childScope = newScope;
-            clone[clone.length++] = document.createComment(
-              " end rebuild on change "
-            );
+            clone[clone.length++] = document.createComment(' end rebuild on change ');
             block = { clone: clone };
             $animate.enter(clone, elem.parent(), elem);
           });
@@ -68,8 +63,8 @@ function rebuildOnChange($animate) {
           cleanUp();
         }
       });
-    }
+    },
   };
 }
 
-coreModule.directive("rebuildOnChange", rebuildOnChange);
+coreModule.directive('rebuildOnChange', rebuildOnChange);

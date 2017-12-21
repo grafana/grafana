@@ -1,7 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import coreModule from "app/core/core_module";
-import appEvents from "app/core/app_events";
+import coreModule from 'app/core/core_module';
+import appEvents from 'app/core/app_events';
 
 export class UtilSrv {
   modalScope: any;
@@ -10,8 +10,8 @@ export class UtilSrv {
   constructor(private $rootScope, private $modal) {}
 
   init() {
-    appEvents.on("show-modal", this.showModal.bind(this), this.$rootScope);
-    appEvents.on("hide-modal", this.hideModal.bind(this), this.$rootScope);
+    appEvents.on('show-modal', this.showModal.bind(this), this.$rootScope);
+    appEvents.on('hide-modal', this.hideModal.bind(this), this.$rootScope);
   }
 
   hideModal() {
@@ -42,13 +42,13 @@ export class UtilSrv {
       show: false,
       scope: this.modalScope,
       keyboard: false,
-      backdrop: options.backdrop
+      backdrop: options.backdrop,
     });
 
     Promise.resolve(modal).then(function(modalEl) {
-      modalEl.modal("show");
+      modalEl.modal('show');
     });
   }
 }
 
-coreModule.service("utilSrv", UtilSrv);
+coreModule.service('utilSrv', UtilSrv);

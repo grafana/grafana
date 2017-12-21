@@ -1,7 +1,7 @@
-import _ from "lodash";
-import coreModule from "../../core_module";
-import { SearchSrv } from "app/core/services/search_srv";
-import appEvents from "app/core/app_events";
+import _ from 'lodash';
+import coreModule from '../../core_module';
+import { SearchSrv } from 'app/core/services/search_srv';
+import appEvents from 'app/core/app_events';
 
 export class SearchCtrl {
   isOpen: boolean;
@@ -17,16 +17,11 @@ export class SearchCtrl {
   initialFolderFilterTitle: string;
 
   /** @ngInject */
-  constructor(
-    $scope,
-    private $location,
-    private $timeout,
-    private searchSrv: SearchSrv
-  ) {
-    appEvents.on("show-dash-search", this.openSearch.bind(this), $scope);
-    appEvents.on("hide-dash-search", this.closeSearch.bind(this), $scope);
+  constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv) {
+    appEvents.on('show-dash-search', this.openSearch.bind(this), $scope);
+    appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
 
-    this.initialFolderFilterTitle = "All";
+    this.initialFolderFilterTitle = 'All';
   }
 
   closeSearch() {
@@ -43,7 +38,7 @@ export class SearchCtrl {
     this.giveSearchFocus = 0;
     this.selectedIndex = -1;
     this.results = [];
-    this.query = { query: "", tag: [], starred: false };
+    this.query = { query: '', tag: [], starred: false };
     this.currentSearchId = 0;
     this.ignoreClose = true;
     this.isLoading = true;
@@ -75,9 +70,7 @@ export class SearchCtrl {
 
       if (currentItem) {
         if (currentItem.dashboardIndex !== undefined) {
-          const selectedDash = this.results[currentItem.folderIndex].items[
-            currentItem.dashboardIndex
-          ];
+          const selectedDash = this.results[currentItem.folderIndex].items[currentItem.dashboardIndex];
 
           if (selectedDash) {
             this.$location.search({});
@@ -105,9 +98,7 @@ export class SearchCtrl {
 
     if (currentItem) {
       if (currentItem.dashboardIndex !== undefined) {
-        this.results[currentItem.folderIndex].items[
-          currentItem.dashboardIndex
-        ].selected = false;
+        this.results[currentItem.folderIndex].items[currentItem.dashboardIndex].selected = false;
       } else {
         this.results[currentItem.folderIndex].selected = false;
       }
@@ -123,10 +114,7 @@ export class SearchCtrl {
     this.selectedIndex = (newIndex %= max) < 0 ? newIndex + max : newIndex;
     const selectedItem = flattenedResult[this.selectedIndex];
 
-    if (
-      selectedItem.dashboardIndex === undefined &&
-      this.results[selectedItem.folderIndex].id === 0
-    ) {
+    if (selectedItem.dashboardIndex === undefined && this.results[selectedItem.folderIndex].id === 0) {
       this.moveSelection(direction);
       return;
     }
@@ -137,9 +125,7 @@ export class SearchCtrl {
         return;
       }
 
-      this.results[selectedItem.folderIndex].items[
-        selectedItem.dashboardIndex
-      ].selected = true;
+      this.results[selectedItem.folderIndex].items[selectedItem.dashboardIndex].selected = true;
       return;
     }
 
@@ -167,9 +153,7 @@ export class SearchCtrl {
 
   queryHasNoFilters() {
     var query = this.query;
-    return (
-      query.query === "" && query.starred === false && query.tag.length === 0
-    );
+    return query.query === '' && query.starred === false && query.tag.length === 0;
   }
 
   filterByTag(tag) {
@@ -218,7 +202,7 @@ export class SearchCtrl {
       let result = [];
 
       result.push({
-        folderIndex: folderIndex
+        folderIndex: folderIndex,
       });
 
       let dashboardIndex = 0;
@@ -227,7 +211,7 @@ export class SearchCtrl {
         _.map(s.items || [], i => {
           return {
             folderIndex: folderIndex,
-            dashboardIndex: dashboardIndex++
+            dashboardIndex: dashboardIndex++,
           };
         })
       );
@@ -240,13 +224,13 @@ export class SearchCtrl {
 
 export function searchDirective() {
   return {
-    restrict: "E",
-    templateUrl: "public/app/core/components/search/search.html",
+    restrict: 'E',
+    templateUrl: 'public/app/core/components/search/search.html',
     controller: SearchCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
-    scope: {}
+    controllerAs: 'ctrl',
+    scope: {},
   };
 }
 
-coreModule.directive("dashboardSearch", searchDirective);
+coreModule.directive('dashboardSearch', searchDirective);

@@ -1,13 +1,13 @@
-import _ from "lodash";
-import $ from "jquery";
-import coreModule from "../../core_module";
+import _ from 'lodash';
+import $ from 'jquery';
+import coreModule from '../../core_module';
 
 function typeaheadMatcher(item) {
   var str = this.query;
-  if (str[0] === "/") {
+  if (str[0] === '/') {
     str = str.substring(1);
   }
-  if (str[str.length - 1] === "/") {
+  if (str[str.length - 1] === '/') {
     str = str.substring(0, str.length - 1);
   }
   return item.toLowerCase().match(str.toLowerCase());
@@ -32,42 +32,35 @@ export class FormDropdownCtrl {
   lookupText: boolean;
 
   /** @ngInject **/
-  constructor(
-    private $scope,
-    $element,
-    private $sce,
-    private templateSrv,
-    private $q
-  ) {
-    this.inputElement = $element.find("input").first();
-    this.linkElement = $element.find("a").first();
+  constructor(private $scope, $element, private $sce, private templateSrv, private $q) {
+    this.inputElement = $element.find('input').first();
+    this.linkElement = $element.find('a').first();
     this.linkMode = true;
     this.cancelBlur = null;
 
     // listen to model changes
-    $scope.$watch("ctrl.model", this.modelChanged.bind(this));
+    $scope.$watch('ctrl.model', this.modelChanged.bind(this));
 
     if (this.labelMode) {
-      this.cssClasses = "gf-form-label " + this.cssClass;
+      this.cssClasses = 'gf-form-label ' + this.cssClass;
     } else {
-      this.cssClasses =
-        "gf-form-input gf-form-input--dropdown " + this.cssClass;
+      this.cssClasses = 'gf-form-input gf-form-input--dropdown ' + this.cssClass;
     }
 
-    this.inputElement.attr("data-provide", "typeahead");
+    this.inputElement.attr('data-provide', 'typeahead');
     this.inputElement.typeahead({
       source: this.typeaheadSource.bind(this),
       minLength: 0,
       items: 10000,
       updater: this.typeaheadUpdater.bind(this),
-      matcher: typeaheadMatcher
+      matcher: typeaheadMatcher,
     });
 
     // modify typeahead lookup
     // this = typeahead
-    var typeahead = this.inputElement.data("typeahead");
+    var typeahead = this.inputElement.data('typeahead');
     typeahead.lookup = function() {
-      this.query = this.$element.val() || "";
+      this.query = this.$element.val() || '';
       var items = this.source(this.query, $.proxy(this.process, this));
       return items ? this.process(items) : items;
     };
@@ -99,7 +92,7 @@ export class FormDropdownCtrl {
   }
 
   isPromiseLike(obj) {
-    return obj && typeof obj.then === "function";
+    return obj && typeof obj.then === 'function';
   }
 
   modelChanged() {
@@ -108,7 +101,7 @@ export class FormDropdownCtrl {
     } else {
       // if we have text use it
       if (this.lookupText) {
-        this.getOptionsInternal("").then(options => {
+        this.getOptionsInternal('').then(options => {
           var item = _.find(options, { value: this.model });
           this.updateDisplay(item ? item.text : this.model);
         });
@@ -172,7 +165,7 @@ export class FormDropdownCtrl {
   updateValue(text) {
     text = _.unescape(text);
 
-    if (text === "" || this.text === text) {
+    if (text === '' || this.text === text) {
       return;
     }
 
@@ -207,16 +200,11 @@ export class FormDropdownCtrl {
 
   updateDisplay(text) {
     this.text = text;
-    this.display = this.$sce.trustAsHtml(
-      this.templateSrv.highlightVariablesAsHtml(text)
-    );
+    this.display = this.$sce.trustAsHtml(this.templateSrv.highlightVariablesAsHtml(text));
   }
 
   open() {
-    this.inputElement.css(
-      "width",
-      Math.max(this.linkElement.width(), 80) + 16 + "px"
-    );
+    this.inputElement.css('width', Math.max(this.linkElement.width(), 80) + 16 + 'px');
 
     this.inputElement.show();
     this.inputElement.focus();
@@ -224,9 +212,9 @@ export class FormDropdownCtrl {
     this.linkElement.hide();
     this.linkMode = false;
 
-    var typeahead = this.inputElement.data("typeahead");
+    var typeahead = this.inputElement.data('typeahead');
     if (typeahead) {
-      this.inputElement.val("");
+      this.inputElement.val('');
       typeahead.lookup();
     }
   }
@@ -249,21 +237,21 @@ const template = `
 
 export function formDropdownDirective() {
   return {
-    restrict: "E",
+    restrict: 'E',
     template: template,
     controller: FormDropdownCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
+    controllerAs: 'ctrl',
     scope: {
-      model: "=",
-      getOptions: "&",
-      onChange: "&",
-      cssClass: "@",
-      allowCustom: "@",
-      labelMode: "@",
-      lookupText: "@"
-    }
+      model: '=',
+      getOptions: '&',
+      onChange: '&',
+      cssClass: '@',
+      allowCustom: '@',
+      labelMode: '@',
+      lookupText: '@',
+    },
   };
 }
 
-coreModule.directive("gfFormDropdown", formDropdownDirective);
+coreModule.directive('gfFormDropdown', formDropdownDirective);

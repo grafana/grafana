@@ -1,8 +1,8 @@
-import _ from "lodash";
-import moment from "moment";
-import { coreModule } from "app/core/core";
-import { MetricsPanelCtrl } from "app/plugins/sdk";
-import { AnnotationEvent } from "./event";
+import _ from 'lodash';
+import moment from 'moment';
+import { coreModule } from 'app/core/core';
+import { MetricsPanelCtrl } from 'app/plugins/sdk';
+import { AnnotationEvent } from './event';
 
 export class EventEditorCtrl {
   panelCtrl: MetricsPanelCtrl;
@@ -39,7 +39,7 @@ export class EventEditorCtrl {
       saveModel.timeEnd = this.event.timeEnd.valueOf();
 
       if (saveModel.timeEnd < saveModel.time) {
-        console.log("invalid time");
+        console.log('invalid time');
         return;
       }
     }
@@ -94,17 +94,17 @@ function tryEpochToMoment(timestamp) {
 
 export function eventEditor() {
   return {
-    restrict: "E",
+    restrict: 'E',
     controller: EventEditorCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
-    templateUrl: "public/app/features/annotations/partials/event_editor.html",
+    controllerAs: 'ctrl',
+    templateUrl: 'public/app/features/annotations/partials/event_editor.html',
     scope: {
-      panelCtrl: "=",
-      event: "=",
-      close: "&"
-    }
+      panelCtrl: '=',
+      event: '=',
+      close: '&',
+    },
   };
 }
 
-coreModule.directive("eventEditor", eventEditor);
+coreModule.directive('eventEditor', eventEditor);

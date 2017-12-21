@@ -1,8 +1,8 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import _ from "lodash";
-import coreModule from "app/core/core_module";
-import appEvents from "app/core/app_events";
+import _ from 'lodash';
+import coreModule from 'app/core/core_module';
+import appEvents from 'app/core/app_events';
 
 export class DashImportListCtrl {
   dashboards: any[];
@@ -13,23 +13,17 @@ export class DashImportListCtrl {
   constructor($scope, private backendSrv, private $rootScope) {
     this.dashboards = [];
 
-    backendSrv
-      .get(`/api/plugins/${this.plugin.id}/dashboards`)
-      .then(dashboards => {
-        this.dashboards = dashboards;
-      });
+    backendSrv.get(`/api/plugins/${this.plugin.id}/dashboards`).then(dashboards => {
+      this.dashboards = dashboards;
+    });
 
-    appEvents.on(
-      "dashboard-list-import-all",
-      this.importAll.bind(this),
-      $scope
-    );
+    appEvents.on('dashboard-list-import-all', this.importAll.bind(this), $scope);
   }
 
   importAll(payload) {
     return this.importNext(0)
       .then(() => {
-        payload.resolve("All dashboards imported");
+        payload.resolve('All dashboards imported');
       })
       .catch(err => {
         payload.reject(err);
@@ -57,35 +51,27 @@ export class DashImportListCtrl {
       pluginId: this.plugin.id,
       path: dash.path,
       overwrite: overwrite,
-      inputs: []
+      inputs: [],
     };
 
     if (this.datasource) {
       installCmd.inputs.push({
-        name: "*",
-        type: "datasource",
+        name: '*',
+        type: 'datasource',
         pluginId: this.datasource.type,
-        value: this.datasource.name
+        value: this.datasource.name,
       });
     }
 
-    return this.backendSrv
-      .post(`/api/dashboards/import`, installCmd)
-      .then(res => {
-        this.$rootScope.appEvent("alert-success", [
-          "Dashboard Imported",
-          dash.title
-        ]);
-        _.extend(dash, res);
-      });
+    return this.backendSrv.post(`/api/dashboards/import`, installCmd).then(res => {
+      this.$rootScope.appEvent('alert-success', ['Dashboard Imported', dash.title]);
+      _.extend(dash, res);
+    });
   }
 
   remove(dash) {
-    this.backendSrv.delete("/api/dashboards/" + dash.importedUri).then(() => {
-      this.$rootScope.appEvent("alert-success", [
-        "Dashboard Deleted",
-        dash.title
-      ]);
+    this.backendSrv.delete('/api/dashboards/' + dash.importedUri).then(() => {
+      this.$rootScope.appEvent('alert-success', ['Dashboard Deleted', dash.title]);
       dash.imported = false;
     });
   }
@@ -93,16 +79,16 @@ export class DashImportListCtrl {
 
 export function dashboardImportList() {
   return {
-    restrict: "E",
-    templateUrl: "public/app/features/plugins/import_list/import_list.html",
+    restrict: 'E',
+    templateUrl: 'public/app/features/plugins/import_list/import_list.html',
     controller: DashImportListCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
+    controllerAs: 'ctrl',
     scope: {
-      plugin: "=",
-      datasource: "="
-    }
+      plugin: '=',
+      datasource: '=',
+    },
   };
 }
 
-coreModule.directive("dashboardImportList", dashboardImportList);
+coreModule.directive('dashboardImportList', dashboardImportList);

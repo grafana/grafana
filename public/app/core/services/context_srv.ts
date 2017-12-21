@@ -1,7 +1,7 @@
-import config from "app/core/config";
-import _ from "lodash";
-import coreModule from "app/core/core_module";
-import store from "app/core/store";
+import config from 'app/core/config';
+import _ from 'lodash';
+import coreModule from 'app/core/core_module';
+import store from 'app/core/store';
 
 export class User {
   isGrafanaAdmin: any;
@@ -30,7 +30,7 @@ export class ContextSrv {
   sidemenuSmallBreakpoint = false;
 
   constructor() {
-    this.sidemenu = store.getBool("grafana.sidemenu", true);
+    this.sidemenu = store.getBool('grafana.sidemenu', true);
 
     if (!config.buildInfo) {
       config.buildInfo = {};
@@ -43,7 +43,7 @@ export class ContextSrv {
     this.user = new User();
     this.isSignedIn = this.user.isSignedIn;
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;
-    this.isEditor = this.hasRole("Editor") || this.hasRole("Admin");
+    this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
   }
 
   hasRole(role) {
@@ -51,21 +51,18 @@ export class ContextSrv {
   }
 
   isGrafanaVisible() {
-    return !!(
-      document.visibilityState === undefined ||
-      document.visibilityState === "visible"
-    );
+    return !!(document.visibilityState === undefined || document.visibilityState === 'visible');
   }
 
   toggleSideMenu() {
     this.sidemenu = !this.sidemenu;
-    store.set("grafana.sidemenu", this.sidemenu);
+    store.set('grafana.sidemenu', this.sidemenu);
   }
 }
 
 var contextSrv = new ContextSrv();
 export { contextSrv };
 
-coreModule.factory("contextSrv", function() {
+coreModule.factory('contextSrv', function() {
   return contextSrv;
 });

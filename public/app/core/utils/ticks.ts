@@ -1,4 +1,4 @@
-import { getDataMinMax } from "app/core/time_series2";
+import { getDataMinMax } from 'app/core/time_series2';
 
 /**
  * Calculate tick step.
@@ -40,12 +40,7 @@ export function getScaledDecimals(decimals, tick_size) {
  * @param noTicks       Number of ticks
  * @param tickDecimals  Tick decimal precision
  */
-export function getFlotTickSize(
-  min: number,
-  max: number,
-  noTicks: number,
-  tickDecimals: number
-) {
+export function getFlotTickSize(min: number, max: number, noTicks: number, tickDecimals: number) {
   var delta = (max - min) / noTicks,
     dec = -Math.floor(Math.log(delta) / Math.LN10),
     maxDec = tickDecimals;

@@ -1,30 +1,22 @@
-import angular from "angular";
-import * as fileExport from "app/core/utils/file_export";
-import appEvents from "app/core/app_events";
+import angular from 'angular';
+import * as fileExport from 'app/core/utils/file_export';
+import appEvents from 'app/core/app_events';
 
 export class ExportDataModalCtrl {
   private data: any[];
   private panel: string;
   asRows: Boolean = true;
-  dateTimeFormat = "YYYY-MM-DDTHH:mm:ssZ";
+  dateTimeFormat = 'YYYY-MM-DDTHH:mm:ssZ';
   excel: false;
 
   export() {
-    if (this.panel === "table") {
+    if (this.panel === 'table') {
       fileExport.exportTableDataToCsv(this.data, this.excel);
     } else {
       if (this.asRows) {
-        fileExport.exportSeriesListToCsv(
-          this.data,
-          this.dateTimeFormat,
-          this.excel
-        );
+        fileExport.exportSeriesListToCsv(this.data, this.dateTimeFormat, this.excel);
       } else {
-        fileExport.exportSeriesListToCsvColumns(
-          this.data,
-          this.dateTimeFormat,
-          this.excel
-        );
+        fileExport.exportSeriesListToCsvColumns(this.data, this.dateTimeFormat, this.excel);
       }
     }
 
@@ -32,25 +24,22 @@ export class ExportDataModalCtrl {
   }
 
   dismiss() {
-    appEvents.emit("hide-modal");
+    appEvents.emit('hide-modal');
   }
 }
 
 export function exportDataModal() {
   return {
-    restrict: "E",
-    templateUrl:
-      "public/app/features/dashboard/export_data/export_data_modal.html",
+    restrict: 'E',
+    templateUrl: 'public/app/features/dashboard/export_data/export_data_modal.html',
     controller: ExportDataModalCtrl,
-    controllerAs: "ctrl",
+    controllerAs: 'ctrl',
     scope: {
-      panel: "<",
-      data: "<" // The difference to '=' is that the bound properties are not watched
+      panel: '<',
+      data: '<', // The difference to '=' is that the bound properties are not watched
     },
-    bindToController: true
+    bindToController: true,
   };
 }
 
-angular
-  .module("grafana.directives")
-  .directive("exportDataModal", exportDataModal);
+angular.module('grafana.directives').directive('exportDataModal', exportDataModal);
