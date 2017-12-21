@@ -1,4 +1,4 @@
-﻿import React, { Component } from "react";
+﻿import React, { Component } from 'react';
 export interface IProps {
   onSelect: any;
   onFocus: any;
@@ -19,9 +19,11 @@ class UserPickerOption extends Component<IProps, any> {
     event.stopPropagation();
     this.props.onSelect(this.props.option, event);
   }
+
   handleMouseEnter(event) {
     this.props.onFocus(this.props.option, event);
   }
+
   handleMouseMove(event) {
     if (this.props.isFocused) {
       return;
@@ -40,11 +42,7 @@ class UserPickerOption extends Component<IProps, any> {
         title={option.title}
         className={`user-picker-option__button btn btn-link ${className}`}
       >
-        <img
-          src={option.avatarUrl}
-          alt={option.label}
-          className="user-picker-option__avatar"
-        />
+        <img src={option.avatarUrl} alt={option.label} className="user-picker-option__avatar" />
         {children}
       </button>
     );
