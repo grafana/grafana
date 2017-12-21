@@ -1,6 +1,12 @@
 ﻿import React, { Component } from "react";
-
-class UserPickerOption extends Component {
+export interface IProps {
+  onSelect: any;
+  onFocus: any;
+  option: any;
+  isFocused: any;
+  className: any;
+}
+class UserPickerOption extends Component<IProps, any> {
   constructor(props) {
     super(props);
     this.handleMouseDown = this.handleMouseDown.bind(this);
