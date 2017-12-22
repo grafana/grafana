@@ -27,7 +27,7 @@ message Timerange {
 
 message Response {
   string message = 1;
-  repeated QueryResult results = 2;
+  map<string, QueryResult> results = 2;
 }
 
 message QueryResult {
