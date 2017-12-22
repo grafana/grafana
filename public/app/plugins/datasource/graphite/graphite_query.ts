@@ -209,7 +209,7 @@ export default class GraphiteQuery {
   }
 
   splitSeriesByTagParams(func) {
-    const tagPattern = /([^\!=~]+)([\!=~]+)([^\!=~]+)/;
+    const tagPattern = /([^\!=~]+)(\!?=~?)(.*)/;
     return _.flatten(
       _.map(func.params, (param: string) => {
         let matches = tagPattern.exec(param);
