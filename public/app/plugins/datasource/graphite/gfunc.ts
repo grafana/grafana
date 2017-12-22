@@ -59,35 +59,35 @@ addFuncDef({
   name: 'diffSeries',
   params: optionalSeriesRefArgs,
   defaultParams: ['#A'],
-  category: 'Calculate',
+  category: 'Combine',
 });
 
 addFuncDef({
   name: 'stddevSeries',
   params: optionalSeriesRefArgs,
   defaultParams: [''],
-  category: 'Calculate',
+  category: 'Combine',
 });
 
 addFuncDef({
   name: 'divideSeries',
   params: optionalSeriesRefArgs,
   defaultParams: ['#A'],
-  category: 'Calculate',
+  category: 'Combine',
 });
 
 addFuncDef({
   name: 'multiplySeries',
   params: optionalSeriesRefArgs,
   defaultParams: ['#A'],
-  category: 'Calculate',
+  category: 'Combine',
 });
 
 addFuncDef({
   name: 'asPercent',
   params: optionalSeriesRefArgs,
   defaultParams: ['#A'],
-  category: 'Calculate',
+  category: 'Combine',
 });
 
 addFuncDef({
@@ -153,23 +153,16 @@ addFuncDef({
 
 addFuncDef({
   name: 'alias',
-  category: 'Special',
+  category: 'Alias',
   params: [{ name: 'alias', type: 'string' }],
   defaultParams: ['alias'],
 });
 
 addFuncDef({
   name: 'aliasSub',
-  category: 'Special',
+  category: 'Alias',
   params: [{ name: 'search', type: 'string' }, { name: 'replace', type: 'string' }],
   defaultParams: ['', '\\1'],
-});
-
-addFuncDef({
-  name: 'stacked',
-  category: 'Special',
-  params: [{ name: 'stack', type: 'string' }],
-  defaultParams: ['stacked'],
 });
 
 addFuncDef({
@@ -194,7 +187,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'groupByNode',
-  category: 'Special',
+  category: 'Combine',
   params: [
     {
       name: 'node',
@@ -212,7 +205,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'aliasByNode',
-  category: 'Special',
+  category: 'Alias',
   params: [
     {
       name: 'node',
@@ -244,7 +237,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'sortByName',
-  category: 'Special',
+  category: 'Sorting',
   params: [
     {
       name: 'natural',
@@ -258,22 +251,22 @@ addFuncDef({
 
 addFuncDef({
   name: 'sortByMaxima',
-  category: 'Special',
+  category: 'Sorting',
 });
 
 addFuncDef({
   name: 'sortByMinima',
-  category: 'Special',
+  category: 'Sorting',
 });
 
 addFuncDef({
   name: 'sortByTotal',
-  category: 'Special',
+  category: 'Sorting',
 });
 
 addFuncDef({
   name: 'aliasByMetric',
-  category: 'Special',
+  category: 'Alias',
 });
 
 addFuncDef({
@@ -286,7 +279,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'countSeries',
-  category: 'Special',
+  category: 'Combine',
 });
 
 addFuncDef({
@@ -303,7 +296,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'keepLastValue',
-  category: 'Special',
+  category: 'Transform',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [100],
 });
@@ -436,105 +429,105 @@ addFuncDef({
 
 addFuncDef({
   name: 'averageAbove',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [25],
 });
 
 addFuncDef({
   name: 'averageBelow',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [25],
 });
 
 addFuncDef({
   name: 'currentAbove',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [25],
 });
 
 addFuncDef({
   name: 'currentBelow',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [25],
 });
 
 addFuncDef({
   name: 'maximumAbove',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'value', type: 'int' }],
   defaultParams: [0],
 });
 
 addFuncDef({
   name: 'maximumBelow',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'value', type: 'int' }],
   defaultParams: [0],
 });
 
 addFuncDef({
   name: 'minimumAbove',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'value', type: 'int' }],
   defaultParams: [0],
 });
 
 addFuncDef({
   name: 'minimumBelow',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'value', type: 'int' }],
   defaultParams: [0],
 });
 
 addFuncDef({
   name: 'limit',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [5],
 });
 
 addFuncDef({
   name: 'mostDeviant',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [10],
 });
 
 addFuncDef({
   name: 'exclude',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'exclude', type: 'string' }],
   defaultParams: ['exclude'],
 });
 
 addFuncDef({
   name: 'highestCurrent',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'count', type: 'int' }],
   defaultParams: [5],
 });
 
 addFuncDef({
   name: 'highestMax',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'count', type: 'int' }],
   defaultParams: [5],
 });
 
 addFuncDef({
   name: 'lowestCurrent',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'count', type: 'int' }],
   defaultParams: [5],
 });
 
 addFuncDef({
   name: 'movingAverage',
-  category: 'Filter',
+  category: 'Calculate',
   params: [
     {
       name: 'windowSize',
@@ -547,7 +540,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'movingMedian',
-  category: 'Filter',
+  category: 'Calculate',
   params: [
     {
       name: 'windowSize',
@@ -560,56 +553,56 @@ addFuncDef({
 
 addFuncDef({
   name: 'stdev',
-  category: 'Filter',
+  category: 'Calculate',
   params: [{ name: 'n', type: 'int' }, { name: 'tolerance', type: 'int' }],
   defaultParams: [5, 0.1],
 });
 
 addFuncDef({
   name: 'highestAverage',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'count', type: 'int' }],
   defaultParams: [5],
 });
 
 addFuncDef({
   name: 'lowestAverage',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'count', type: 'int' }],
   defaultParams: [5],
 });
 
 addFuncDef({
   name: 'removeAbovePercentile',
-  category: 'Filter',
+  category: 'Filter Data',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [5],
 });
 
 addFuncDef({
   name: 'removeAboveValue',
-  category: 'Filter',
+  category: 'Filter Data',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [5],
 });
 
 addFuncDef({
   name: 'removeBelowPercentile',
-  category: 'Filter',
+  category: 'Filter Data',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [5],
 });
 
 addFuncDef({
   name: 'removeBelowValue',
-  category: 'Filter',
+  category: 'Filter Data',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [5],
 });
 
 addFuncDef({
   name: 'useSeriesAbove',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'value', type: 'int' }, { name: 'search', type: 'string' }, { name: 'replace', type: 'string' }],
   defaultParams: [0, 'search', 'replace'],
 });
@@ -620,7 +613,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'aggregateLine',
-  category: 'Combine',
+  category: 'Calculate',
   params: [
     {
       name: 'func',
@@ -634,7 +627,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'averageOutsidePercentile',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [95],
   version: '1.0',
@@ -672,7 +665,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'grep',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'grep', type: 'string' }],
   defaultParams: ['grep'],
   version: '1.0',
@@ -680,7 +673,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'groupByNodes',
-  category: 'Special',
+  category: 'Combine',
   params: [
     {
       name: 'function',
@@ -806,7 +799,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'multiplySeriesWithWildcards',
-  category: 'Calculate',
+  category: 'Combine',
   params: [
     {
       name: 'position',
@@ -864,7 +857,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'removeBetweenPercentile',
-  category: 'Filter',
+  category: 'Filter Series',
   params: [{ name: 'n', type: 'int' }],
   defaultParams: [95],
   version: '1.0',
@@ -872,7 +865,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'removeEmptySeries',
-  category: 'Filter',
+  category: 'Filter Series',
   version: '1.0',
 });
 
@@ -904,7 +897,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'weightedAverage',
-  category: 'Filter',
+  category: 'Combine',
   params: [
     { name: 'other', type: 'value_or_series', optional: true },
     {
@@ -926,7 +919,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'groupByTags',
-  category: 'Special',
+  category: 'Combine',
   params: [
     {
       name: 'function',
@@ -941,7 +934,7 @@ addFuncDef({
 
 addFuncDef({
   name: 'aliasByTags',
-  category: 'Special',
+  category: 'Alias',
   params: [{ name: 'tag', type: 'string', multiple: true }],
   defaultParams: ['tag'],
   version: '1.1',
