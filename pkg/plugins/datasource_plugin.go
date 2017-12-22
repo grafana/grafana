@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -71,6 +72,13 @@ func buildExecutablePath(pluginDir, executable, os, arch string) string {
 func (p *DataSourcePlugin) initBackendPlugin(log log.Logger) error {
 	p.log = log.New("plugin-id", p.Id)
 
+	p.spawnSubProcess()
+	go p.reattachKilledProcess()
+
+	return nil
+}
+
+func (p *DataSourcePlugin) spawnSubProcess() error {
 	cmd := buildExecutablePath(p.PluginDir, p.Executable, runtime.GOOS, runtime.GOARCH)
 
 	p.client = plugin.NewClient(&plugin.ClientConfig{
@@ -94,10 +102,26 @@ func (p *DataSourcePlugin) initBackendPlugin(log log.Logger) error {
 	plugin := raw.(shared.TsdbPlugin)
 
 	tsdb.RegisterTsdbQueryEndpoint(p.Id, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return &shared.TsdbWrapper{TsdbPlugin: plugin}, nil
+		return &shared.DatasourcePluginWrapper{TsdbPlugin: plugin}, nil
 	})
 
 	return nil
+}
+
+func (p *DataSourcePlugin) reattachKilledProcess() {
+	ticker := time.NewTicker(time.Second * 1)
+
+	for {
+		select {
+		case <-ticker.C:
+			if p.client.Exited() {
+				err := p.spawnSubProcess()
+				if err != nil {
+					p.log.Error("Failed to spawn subprocess")
+				}
+			}
+		}
+	}
 }
 
 func (p *DataSourcePlugin) Kill() {

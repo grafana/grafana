@@ -11,11 +11,21 @@ type LogWrapper struct {
 	Logger glog.Logger
 }
 
-func (lw LogWrapper) Trace(msg string, args ...interface{}) {}
-func (lw LogWrapper) Debug(msg string, args ...interface{}) {}
-func (lw LogWrapper) Info(msg string, args ...interface{})  {}
-func (lw LogWrapper) Warn(msg string, args ...interface{})  {}
-func (lw LogWrapper) Error(msg string, args ...interface{}) {}
+func (lw LogWrapper) Trace(msg string, args ...interface{}) {
+	glog.Debug2(msg, args...)
+}
+func (lw LogWrapper) Debug(msg string, args ...interface{}) {
+	glog.Debug2(msg, args...)
+}
+func (lw LogWrapper) Info(msg string, args ...interface{}) {
+	glog.Info2(msg, args...)
+}
+func (lw LogWrapper) Warn(msg string, args ...interface{}) {
+	glog.Warn2(msg, args...)
+}
+func (lw LogWrapper) Error(msg string, args ...interface{}) {
+	glog.Error2(msg, args...)
+}
 
 func (lw LogWrapper) IsTrace() bool { return true }
 func (lw LogWrapper) IsDebug() bool { return true }

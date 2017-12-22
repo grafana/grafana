@@ -9,11 +9,11 @@ import (
 	"golang.org/x/net/context"
 )
 
-type TsdbWrapper struct {
+type DatasourcePluginWrapper struct {
 	TsdbPlugin
 }
 
-func (tw *TsdbWrapper) Query(ctx context.Context, ds *models.DataSource, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSource, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	jsonData, err := ds.JsonData.MarshalJSON()
 	if err != nil {
 		return nil, err
