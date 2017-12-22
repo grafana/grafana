@@ -270,7 +270,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     let newFunc = this.datasource.createFuncInstance('seriesByTag', {
       withDefaultParams: false,
     });
-    let tagParam = `${tag}=select tag value`;
+    let tagParam = `${tag}=`;
     newFunc.params = [tagParam];
     this.queryModel.addFunction(newFunc);
     newFunc.added = true;
@@ -353,7 +353,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
   addNewTag(segment) {
     let newTagKey = segment.value;
-    let newTag = { key: newTagKey, operator: '=', value: 'select tag value' };
+    let newTag = { key: newTagKey, operator: '=', value: '' };
     this.queryModel.addTag(newTag);
     this.targetChanged();
     this.fixTagSegments();

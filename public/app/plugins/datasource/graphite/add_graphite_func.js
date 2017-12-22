@@ -13,7 +13,7 @@ function (angular, _, $) {
                             ' class="gf-form-input"' +
                             ' spellcheck="false" style="display:none"></input>';
 
-      var buttonTemplate = '<a  class="gf-form-label query-part dropdown-toggle"' +
+      var buttonTemplate = '<a class="gf-form-label query-part dropdown-toggle"' +
                               ' tabindex="1" gf-dropdown="functionMenu" data-toggle="dropdown">' +
                               '<i class="fa fa-plus"></i></a>';
 

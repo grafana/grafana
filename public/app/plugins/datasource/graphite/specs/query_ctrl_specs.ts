@@ -284,12 +284,12 @@ describe('GraphiteQueryCtrl', function() {
     });
 
     it('should update tags with default value', function() {
-      const expected = [{ key: 'tag1', operator: '=', value: 'select tag value' }];
+      const expected = [{ key: 'tag1', operator: '=', value: '' }];
       expect(ctx.ctrl.queryModel.tags).to.eql(expected);
     });
 
     it('should update target', function() {
-      const expected = "seriesByTag('tag1=select tag value')";
+      const expected = "seriesByTag('tag1=')";
       expect(ctx.ctrl.target.target).to.eql(expected);
     });
   });
