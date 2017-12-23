@@ -1,12 +1,12 @@
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
-// import pluginLoader from './plugin_loader';
 import { importPluginModule } from './plugin_loader';
 
 export class DatasourceSrv {
   datasources: any;
 
+  /** @ngInject */
   constructor(private $q, private $injector, $rootScope, private templateSrv) {
     this.init();
   }
