@@ -42,8 +42,8 @@ type PluginManager struct {
 	log log.Logger
 }
 
-func NewPluginManager() (*PluginManager, error) {
-	Init()
+func NewPluginManager(ctx context.Context) (*PluginManager, error) {
+	Init(ctx)
 	return &PluginManager{
 		log: log.New("plugins"),
 	}, nil
@@ -60,7 +60,7 @@ func (p *PluginManager) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func Init() error {
+func Init(ctx context.Context) error {
 	plog = log.New("plugins")
 
 	DataSources = make(map[string]*DataSourcePlugin)
@@ -98,7 +98,7 @@ func Init() error {
 	}
 	for _, ds := range DataSources {
 		if ds.Backend {
-			ds.initBackendPlugin(plog)
+			ds.initBackendPlugin(ctx, plog)
 		}
 
 		ds.initFrontendPlugin()

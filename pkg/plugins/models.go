@@ -41,8 +41,6 @@ type PluginBase struct {
 	HideFromList bool               `json:"hideFromList,omitempty"`
 	State        string             `json:"state,omitempty"`
 
-
-
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`
 	DefaultNavUrl   string `json:"-"`

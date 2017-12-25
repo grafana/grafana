@@ -63,7 +63,7 @@ func (g *GrafanaServerImpl) Start() error {
 	login.Init()
 	social.NewOAuthService()
 
-	pluginManager, err := plugins.NewPluginManager()
+	pluginManager, err := plugins.NewPluginManager(g.context)
 	if err != nil {
 		return fmt.Errorf("Failed to start plugins. error: %v", err)
 	}
