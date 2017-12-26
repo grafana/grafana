@@ -51,6 +51,12 @@ function renderMenuItem(item, ctrl) {
     html += ` href="${item.href}"`;
   }
 
+  if (item.directives) {
+    for (let directive of item.directives) {
+      html += ` ${directive}`;
+    }
+  }
+
   html += `><i class="${item.icon}"></i>`;
   html += `<span class="dropdown-item-text">${item.text}</span>`;
 

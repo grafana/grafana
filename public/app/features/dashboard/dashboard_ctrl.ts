@@ -22,7 +22,8 @@ export class DashboardCtrl implements PanelContainer {
     private unsavedChangesSrv,
     private dashboardViewStateSrv,
     public playlistSrv,
-    private panelLoader
+    private panelLoader,
+    private panelClipboardSrv
   ) {
     // temp hack due to way dashboards are loaded
     // can't use controllerAs on route yet
@@ -120,6 +121,10 @@ export class DashboardCtrl implements PanelContainer {
 
   getPanelLoader() {
     return this.panelLoader;
+  }
+
+  getClipboardPanel() {
+    return this.panelClipboardSrv.getPanel();
   }
 
   timezoneChanged() {
