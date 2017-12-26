@@ -14,6 +14,7 @@ type OAuthInfo struct {
 	TlsClientKey           string
 	TlsClientCa            string
 	TlsSkipVerify          bool
+	LogoutUrl              string
 }
 
 type OAuther struct {

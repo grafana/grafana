@@ -17,6 +17,7 @@ type BasicUserInfo struct {
 	Login   string
 	Company string
 	Role    string
+	Logout  string
 }
 
 type SocialConnector interface {
@@ -67,6 +68,8 @@ func NewOAuthService() {
 			TlsClientKey:   sec.Key("tls_client_key").String(),
 			TlsClientCa:    sec.Key("tls_client_ca").String(),
 			TlsSkipVerify:  sec.Key("tls_skip_verify_insecure").MustBool(),
+			LogoutUrl:      sec.Key("logout_url").String(),
+
 		}
 
 		if !info.Enabled {

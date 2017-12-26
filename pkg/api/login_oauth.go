@@ -21,6 +21,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
+	"sync"
 )
 
 var (
@@ -193,6 +194,11 @@ func OAuthLogin(ctx *middleware.Context) {
 	// login
 	loginUserWithUser(userQuery.Result, ctx)
 
+
+	logoutMap.Store(userQuery.Result.Id, fmt.Sprintf("%s?client_id=%s&logout_uri=%s", setting.OAuthService.OAuthInfos[name].LogoutUrl,
+		setting.OAuthService.OAuthInfos[name].ClientId,
+		url.PathEscape(setting.AppUrl + "login")))
+
 	metrics.M_Api_Login_OAuth.Inc()
 
 	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
@@ -209,4 +215,15 @@ func redirectWithError(ctx *middleware.Context, err error, v ...interface{}) {
 	// TODO: we can use the flash storage here once it's implemented
 	ctx.Session.Set("loginError", err.Error())
 	ctx.Redirect(setting.AppSubUrl + "/login")
+}
+
+var logoutMap sync.Map
+
+func OAuthLogout(ctx *middleware.Context) string {
+	logout, ok := logoutMap.Load(ctx.UserId)
+	if ok {
+		logoutMap.Delete(ctx.UserId)
+		return logout.(string)
+	}
+	return ""
 }
