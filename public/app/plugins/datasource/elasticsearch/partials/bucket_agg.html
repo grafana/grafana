@@ -21,6 +21,14 @@
 											label-mode="true"
 											css-class="width-12">
 		</gf-form-dropdown>
+		<gf-form-dropdown ng-if="agg.settings.nested.path"
+											model="agg.settings.nested.path"
+											get-options="getFieldsNestedPath()"
+											on-change="onChange()"
+											allow-custom="false"
+											label-mode="true"
+											css-class="width-12">
+		</gf-form-dropdown>
 	</div>
 
 	<div class="gf-form gf-form--grow">
@@ -80,6 +88,18 @@
 		<div class="gf-form offset-width-7">
 			<label class="gf-form-label width-10">Min Doc Count</label>
 			<input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.min_doc_count" ng-blur="onChangeInternal()">
+		</div>
+	</div>
+
+	<div ng-if="agg.type === 'nested'">
+		<div class="gf-form offset-width-7">
+			<label class="gf-form-label width-10">Nested Term</label>
+			<metric-segment-model property="agg.settings.nested.term" get-options="getFieldsNestedTerm()" on-change="onChangeInternal()" css-class="width-12" custom="true"></metric-segment-model>
+		</div>
+
+		<div class="gf-form offset-width-7">
+			<label class="gf-form-label width-10">Query</label>
+			<input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.nested.query" spellcheck='false' placeholder="Nested string match query" ng-blur="onChangeInternal()">
 		</div>
 	</div>
 

@@ -289,8 +289,9 @@ export class ElasticDatasource {
         integer: 'number',
         long: 'number',
         date: 'date',
-        string: 'string',
-        text: 'string',
+        string: 'keyword',
+        text: 'keyword',
+        keyword: 'keyword',
         scaled_float: 'number',
         nested: 'nested',
       };
