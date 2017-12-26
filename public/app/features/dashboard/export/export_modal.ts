@@ -31,6 +31,7 @@ export class DashExportCtrl {
     var clone = this.dash;
     let editScope = this.$rootScope.$new();
     editScope.object = clone;
+    editScope.enableCopy = true;
 
     this.$rootScope.appEvent('show-modal', {
       src: 'public/app/partials/edit_json.html',

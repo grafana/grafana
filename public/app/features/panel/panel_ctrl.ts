@@ -272,6 +272,7 @@ export class PanelCtrl {
     let editScope = this.$scope.$root.$new();
     editScope.object = this.panel.getSaveModel();
     editScope.updateHandler = this.replacePanel.bind(this);
+    editScope.enableCopy = true;
 
     this.publishAppEvent('show-modal', {
       src: 'public/app/partials/edit_json.html',
