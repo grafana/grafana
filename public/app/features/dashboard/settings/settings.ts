@@ -128,9 +128,19 @@ export class SettingsCtrl {
 
   makeEditable() {
     this.dashboard.editable = true;
+    this.dashboard.meta.canMakeEditable = false;
+    this.dashboard.meta.canEdit = true;
+    this.dashboard.meta.canSave = true;
+    this.canDelete = true;
+    this.viewId = 'settings';
+    this.buildSectionList();
 
-    return this.dashboardSrv.saveDashboard({ makeEditable: true, overwrite: false }).then(() => {
-      // force refresh whole page
+    const currentSection = _.find(this.sections, { id: this.viewId });
+    this.$location.url(currentSection.url);
+    this.onRouteUpdated();
+
+    // Force dashboard reload after saving to update view
+    appEvents.on('dashboard-saved', () => {
       window.location.href = window.location.href;
     });
   }
