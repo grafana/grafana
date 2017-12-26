@@ -4,7 +4,8 @@ import $ from 'jquery';
 import { appEvents, profiler } from 'app/core/core';
 import { PanelModel } from 'app/features/dashboard/panel_model';
 import Remarkable from 'remarkable';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, LS_PANEL_COPY_KEY } from 'app/core/constants';
+import store from 'app/core/store';
 
 const TITLE_HEIGHT = 27;
 const PANEL_BORDER = 2;
@@ -190,11 +191,19 @@ export class PanelCtrl {
         click: 'ctrl.duplicate()',
         role: 'Editor',
       });
+
+      menu.push({
+        text: 'Add to Panel List',
+        click: 'ctrl.addToPanelList()',
+        role: 'Editor',
+      });
     }
+
     menu.push({
       text: 'Panel JSON',
       click: 'ctrl.editPanelJson(); dismiss();',
     });
+
     this.events.emit('init-panel-actions', menu);
     return menu;
   }
@@ -263,11 +272,17 @@ export class PanelCtrl {
     let editScope = this.$scope.$root.$new();
     editScope.object = this.panel.getSaveModel();
     editScope.updateHandler = this.replacePanel.bind(this);
+    editScope.enableCopy = true;
 
     this.publishAppEvent('show-modal', {
       src: 'public/app/partials/edit_json.html',
       scope: editScope,
     });
+  }
+
+  addToPanelList() {
+    store.set(LS_PANEL_COPY_KEY, JSON.stringify(this.panel.getSaveModel()));
+    appEvents.emit('alert-success', ['Panel temporarily added to panel list']);
   }
 
   replacePanel(newPanel, oldPanel) {

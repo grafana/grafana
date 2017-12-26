@@ -60,9 +60,10 @@ func TestPrometheus(t *testing.T) {
 			Convey("with 48h time range", func() {
 				queryContext.TimeRange = tsdb.NewTimeRange("12h", "now")
 
-				model, err := parseQuery(dsInfo, queryModels, queryContext)
-
+				models, err := parseQuery(dsInfo, queryModels, queryContext)
 				So(err, ShouldBeNil)
+
+				model := models[0]
 				So(model.Step, ShouldEqual, time.Second*30)
 			})
 		})
@@ -83,18 +84,22 @@ func TestPrometheus(t *testing.T) {
 			Convey("with 48h time range", func() {
 				queryContext.TimeRange = tsdb.NewTimeRange("48h", "now")
 
-				model, err := parseQuery(dsInfo, queryModels, queryContext)
+				models, err := parseQuery(dsInfo, queryModels, queryContext)
 
 				So(err, ShouldBeNil)
+
+				model := models[0]
 				So(model.Step, ShouldEqual, time.Minute*2)
 			})
 
 			Convey("with 1h time range", func() {
 				queryContext.TimeRange = tsdb.NewTimeRange("1h", "now")
 
-				model, err := parseQuery(dsInfo, queryModels, queryContext)
+				models, err := parseQuery(dsInfo, queryModels, queryContext)
 
 				So(err, ShouldBeNil)
+
+				model := models[0]
 				So(model.Step, ShouldEqual, time.Second*15)
 			})
 		})
@@ -116,9 +121,11 @@ func TestPrometheus(t *testing.T) {
 				Convey("with 48h time range", func() {
 					queryContext.TimeRange = tsdb.NewTimeRange("48h", "now")
 
-					model, err := parseQuery(dsInfo, queryModels, queryContext)
+					models, err := parseQuery(dsInfo, queryModels, queryContext)
 
 					So(err, ShouldBeNil)
+
+					model := models[0]
 					So(model.Step, ShouldEqual, time.Minute*20)
 				})
 			})
@@ -139,9 +146,11 @@ func TestPrometheus(t *testing.T) {
 				Convey("with 48h time range", func() {
 					queryContext.TimeRange = tsdb.NewTimeRange("48h", "now")
 
-					model, err := parseQuery(dsInfo, queryModels, queryContext)
+					models, err := parseQuery(dsInfo, queryModels, queryContext)
 
 					So(err, ShouldBeNil)
+
+					model := models[0]
 					So(model.Step, ShouldEqual, time.Minute*2)
 				})
 			})

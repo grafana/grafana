@@ -42,7 +42,7 @@ var (
 )
 
 func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
-	autoResolve := model.Settings.Get("autoResolve").MustBool(true)
+	autoResolve := model.Settings.Get("autoResolve").MustBool(false)
 	key := model.Settings.Get("integrationKey").MustString()
 	if key == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}

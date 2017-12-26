@@ -12,9 +12,9 @@ export default class PrometheusMetricFindQuery {
   }
 
   process() {
-    var label_values_regex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]+)\)$/;
-    var metric_names_regex = /^metrics\((.+)\)$/;
-    var query_result_regex = /^query_result\((.+)\)$/;
+    var label_values_regex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]+)\)\s*$/;
+    var metric_names_regex = /^metrics\((.+)\)\s*$/;
+    var query_result_regex = /^query_result\((.+)\)\s*$/;
 
     var label_values_query = this.query.match(label_values_regex);
     if (label_values_query) {

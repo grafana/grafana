@@ -2,6 +2,7 @@ import angular from 'angular';
 import Clipboard from 'clipboard';
 import coreModule from '../core_module';
 import kbn from 'app/core/utils/kbn';
+import { appEvents } from 'app/core/core';
 
 /** @ngInject */
 function tip($compile) {
@@ -30,6 +31,10 @@ function clipboardButton() {
         text: function() {
           return scope.getText();
         },
+      });
+
+      scope.clipboard.on('success', () => {
+        appEvents.emit('alert-success', ['Content copied to clipboard']);
       });
 
       scope.$on('$destroy', function() {
