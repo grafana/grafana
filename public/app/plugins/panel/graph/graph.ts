@@ -13,7 +13,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import { tickStep } from 'app/core/utils/ticks';
-import { appEvents, coreModule } from 'app/core/core';
+import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { EventManager } from 'app/features/annotations/all';
@@ -62,6 +62,8 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         }
         annotations = ctrl.annotations || [];
         buildFlotPairs(data);
+        updateLegendValues(data, panel);
+
         ctrl.events.emit('render-legend');
       });
 
