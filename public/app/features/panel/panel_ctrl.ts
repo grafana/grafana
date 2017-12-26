@@ -4,7 +4,8 @@ import $ from 'jquery';
 import { appEvents, profiler } from 'app/core/core';
 import { PanelModel } from 'app/features/dashboard/panel_model';
 import Remarkable from 'remarkable';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, LS_PANEL_COPY_KEY } from 'app/core/constants';
+import store from 'app/core/store';
 
 const TITLE_HEIGHT = 27;
 const PANEL_BORDER = 2;
@@ -190,17 +191,17 @@ export class PanelCtrl {
         click: 'ctrl.duplicate()',
         role: 'Editor',
       });
+
+      menu.push({
+        text: 'Add to Panel List',
+        click: 'ctrl.addToPanelList()',
+        role: 'Editor',
+      });
     }
+
     menu.push({
       text: 'Panel JSON',
       click: 'ctrl.editPanelJson(); dismiss();',
-    });
-
-    menu.push({
-      text: 'Copy to Clipboard',
-      click: 'ctrl.copyPanelToClipboard()',
-      role: 'Editor',
-      directives: ['clipboard-button="ctrl.getPanelJson()"'],
     });
 
     this.events.emit('init-panel-actions', menu);
@@ -278,15 +279,9 @@ export class PanelCtrl {
     });
   }
 
-  copyPanelToClipboard() {
-    appEvents.emit('copy-dashboard-panel', {
-      dashboard: this.dashboard.title,
-      panel: this.panel.getSaveModel(),
-    });
-  }
-
-  getPanelJson() {
-    return JSON.stringify(this.panel.getSaveModel(), null, 2);
+  addToPanelList() {
+    store.set(LS_PANEL_COPY_KEY, JSON.stringify(this.panel.getSaveModel()));
+    appEvents.emit('alert-success', ['Panel temporarily added to panel list']);
   }
 
   replacePanel(newPanel, oldPanel) {
