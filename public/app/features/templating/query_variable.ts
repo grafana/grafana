@@ -19,6 +19,8 @@ export class QueryVariable implements Variable {
   multi: boolean;
   includeAll: boolean;
   useTags: boolean;
+  tagRegex: any;
+  prettyTags: any[];
   tagsQuery: string;
   tagValuesQuery: string;
   tags: any[];
@@ -38,6 +40,8 @@ export class QueryVariable implements Variable {
     allValue: null,
     options: [],
     current: {},
+    tagRegex: '',
+    prettyTags: [],
     tags: [],
     useTags: false,
     tagsQuery: '',
@@ -88,9 +92,10 @@ export class QueryVariable implements Variable {
   updateTags(datasource) {
     if (this.useTags) {
       return this.metricFindQuery(datasource, this.tagsQuery).then(results => {
+        this.prettyTags = this.tagNamesToVariableValues(results);
         this.tags = [];
-        for (var i = 0; i < results.length; i++) {
-          this.tags.push(results[i].text);
+        for (var i = 0; i < this.prettyTags.length; i++) {
+          this.tags.push(this.prettyTags[i].text);
         }
         return datasource;
       });
@@ -162,6 +167,45 @@ export class QueryVariable implements Variable {
 
       if (regex) {
         matches = regex.exec(value);
+        if (!matches) {
+          continue;
+        }
+        if (matches.length > 1) {
+          value = matches[1];
+          text = matches[1];
+        }
+      }
+
+      options.push({ text: text, value: value });
+    }
+
+    options = _.uniqBy(options, 'value');
+    return this.sortVariableValues(options, this.sort);
+  }
+
+  tagNamesToVariableValues(tagNames) {
+    var tagRegex, options, i, matches;
+    options = [];
+
+    if (this.tagRegex) {
+      tagRegex = kbn.stringToJsRegex(this.templateSrv.replace(this.tagRegex, {}, 'regex'));
+    }
+    for (i = 0; i < tagNames.length; i++) {
+      var item = tagNames[i];
+      var text = item.text === undefined || item.text === null ? item.value : item.text;
+
+      var value = item.value === undefined || item.value === null ? item.text : item.value;
+
+      if (_.isNumber(value)) {
+        value = value.toString();
+      }
+
+      if (_.isNumber(text)) {
+        text = text.toString();
+      }
+
+      if (tagRegex) {
+        matches = tagRegex.exec(value);
         if (!matches) {
           continue;
         }
