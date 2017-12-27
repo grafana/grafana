@@ -106,7 +106,10 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   getAltSegments(index, prefix) {
-    var query = index === 0 ? '*' : this.queryModel.getSegmentPathUpTo(index) + '.*';
+    var query = '*' + prefix + '*';
+    if (index > 0) {
+      query = this.queryModel.getSegmentPathUpTo(index) + '.' + query;
+    }
     var options = {
       range: this.panelCtrl.range,
       requestId: 'get-alt-segments',
