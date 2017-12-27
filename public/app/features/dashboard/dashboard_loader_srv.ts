@@ -20,7 +20,7 @@ export class DashboardLoaderSrv {
     private $rootScope
   ) {}
 
-  _dashboardLoadFailed(title, snapshot) {
+  _dashboardLoadFailed(title, snapshot?) {
     snapshot = snapshot || false;
     return {
       meta: {
@@ -74,9 +74,9 @@ export class DashboardLoaderSrv {
     var url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
     return this.$http({ url: url, method: 'GET' })
-      .then(this._executeScript)
+      .then(this._executeScript.bind(this))
       .then(
-        function(result) {
+        result => {
           return {
             meta: {
               fromScript: true,
@@ -87,7 +87,7 @@ export class DashboardLoaderSrv {
             dashboard: result.data,
           };
         },
-        function(err) {
+        err => {
           console.log('Script dashboard error ' + err);
           this.$rootScope.appEvent('alert-error', [
             'Script Error',
