@@ -80,6 +80,8 @@ export class DashboardSrv {
 
     this.$rootScope.appEvent('dashboard-saved', this.dash);
     this.$rootScope.appEvent('alert-success', ['Dashboard saved']);
+
+    return this.dash;
   }
 
   save(clone, options) {
