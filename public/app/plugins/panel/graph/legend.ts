@@ -2,7 +2,6 @@ import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
 import PerfectScrollbar from 'perfect-scrollbar';
-import { updateLegendValues } from 'app/core/core';
 
 var module = angular.module('grafana.directives');
 
@@ -30,10 +29,6 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         }
         ctrl.events.emit('legend-rendering-complete');
       });
-
-      function updateLegendDecimals() {
-        updateLegendValues(data, panel);
-      }
 
       function getSeriesIndexForElement(el) {
         return el.parents('[data-series-index]').data('series-index');
@@ -166,10 +161,7 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         // render first time for getting proper legend height
         if (!panel.legend.rightSide) {
           renderLegendElement(tableHeaderElem);
-          updateLegendDecimals();
           elem.empty();
-        } else {
-          updateLegendDecimals();
         }
 
         renderLegendElement(tableHeaderElem);

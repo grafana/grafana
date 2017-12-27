@@ -28,9 +28,10 @@ export function updateLegendValues(data: TimeSeries[], panel) {
   for (let i = 0; i < data.length; i++) {
     let series = data[i];
     let yaxes = panel.yaxes;
-    let axis = yaxes[series.yaxis - 1];
+    const seriesYAxis = series.yaxis || 1;
+    let axis = yaxes[seriesYAxis - 1];
     let { tickDecimals, scaledDecimals } = getFlotTickDecimals(data, axis);
-    let formater = kbn.valueFormats[panel.yaxes[series.yaxis - 1].format];
+    let formater = kbn.valueFormats[panel.yaxes[seriesYAxis - 1].format];
 
     // decimal override
     if (_.isNumber(panel.decimals)) {
