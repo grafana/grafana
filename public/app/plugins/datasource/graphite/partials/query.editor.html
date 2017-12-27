@@ -45,11 +45,11 @@
       </div>
 
       <div ng-if="ctrl.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.addTagSegments" role="menuitem" class="gf-form">
-        <metric-segment segment="segment" get-options="ctrl.getTagsAsSegments()" on-change="ctrl.addNewTag(segment)" />
+        <metric-segment segment="segment" get-options="ctrl.getTagsAsSegments($query)" on-change="ctrl.addNewTag(segment)" />
       </div>
 
       <div ng-if="!ctrl.queryModel.seriesByTagUsed" ng-repeat="segment in ctrl.segments" role="menuitem" class="gf-form">
-        <metric-segment segment="segment" get-options="ctrl.getAltSegments($index)" on-change="ctrl.segmentValueChanged(segment, $index)" />
+        <metric-segment segment="segment" get-options="ctrl.getAltSegments($index, $query)" on-change="ctrl.segmentValueChanged(segment, $index)" />
       </div>
 
       <div ng-if="ctrl.paused" class="gf-form">
