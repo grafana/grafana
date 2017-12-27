@@ -9,7 +9,7 @@
       <i class="fa fa-plus"></i>
       Dashboard
     </a>
-    <a class="btn btn-success" href="/dashboards/folder/new" ng-if="!ctrl.folderId">
+    <a class="btn btn-success" href="dashboards/folder/new" ng-if="!ctrl.folderId">
       <i class="fa fa-plus"></i>
       Folder
     </a>
@@ -108,11 +108,11 @@
   <empty-list-cta model="{
     title: 'This folder doesn\'t have any dashboards yet',
     buttonIcon: 'gicon gicon-dashboard-new',
-    buttonLink: '/dashboard/new?folderId={{ctrl.folderId}}',
+    buttonLink: 'dashboard/new?folderId={{ctrl.folderId}}',
     buttonTitle: 'Create Dashboard',
     proTip: 'Add dashboards into your folder at ->',
-    proTipLink: '/dashboards',
+    proTipLink: 'dashboards',
     proTipLinkTitle: 'Manage dashboards',
-    proTipTarget: '_blank'
+    proTipTarget: ''
   }" />
 </div>

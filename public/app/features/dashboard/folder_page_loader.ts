@@ -65,6 +65,6 @@ export class FolderPageLoader {
   }
 
   createFolderUrl(folderId: number, type: string, slug: string) {
-    return `/dashboards/folder/${folderId}/${slug}`;
+    return `dashboards/folder/${folderId}/${slug}`;
   }
 }
