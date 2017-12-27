@@ -24,14 +24,14 @@ var (
 
 func TestDashboardFileReader(t *testing.T) {
 	Convey("Dashboard file reader", t, func() {
+		bus.ClearBusHandlers()
+		fakeRepo = &fakeDashboardRepo{}
+
+		bus.AddHandler("test", mockGetDashboardQuery)
+		dashboards.SetRepository(fakeRepo)
+		logger := log.New("test.logger")
+
 		Convey("Reading dashboards from disk", func() {
-
-			bus.ClearBusHandlers()
-			fakeRepo = &fakeDashboardRepo{}
-
-			bus.AddHandler("test", mockGetDashboardQuery)
-			dashboards.SetRepository(fakeRepo)
-			logger := log.New("test.logger")
 
 			cfg := &DashboardsAsConfig{
 				Name:    "Default",
@@ -43,14 +43,27 @@ func TestDashboardFileReader(t *testing.T) {
 
 			Convey("Can read default dashboard", func() {
 				cfg.Options["folder"] = defaultDashboards
+				cfg.Folder = "Team A"
 
 				reader, err := NewDashboardFileReader(cfg, logger)
 				So(err, ShouldBeNil)
 
-				err = reader.walkFolder()
+				err = reader.startWalkingDisk()
 				So(err, ShouldBeNil)
 
-				So(len(fakeRepo.inserted), ShouldEqual, 2)
+				folders := 0
+				dashboards := 0
+
+				for _, i := range fakeRepo.inserted {
+					if i.Dashboard.IsFolder {
+						folders++
+					} else {
+						dashboards++
+					}
+				}
+
+				So(dashboards, ShouldEqual, 2)
+				So(folders, ShouldEqual, 1)
 			})
 
 			Convey("Should not update dashboards when db is newer", func() {
@@ -64,7 +77,7 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger)
 				So(err, ShouldBeNil)
 
-				err = reader.walkFolder()
+				err = reader.startWalkingDisk()
 				So(err, ShouldBeNil)
 
 				So(len(fakeRepo.inserted), ShouldEqual, 0)
@@ -83,7 +96,7 @@ func TestDashboardFileReader(t *testing.T) {
 				reader, err := NewDashboardFileReader(cfg, logger)
 				So(err, ShouldBeNil)
 
-				err = reader.walkFolder()
+				err = reader.startWalkingDisk()
 				So(err, ShouldBeNil)
 
 				So(len(fakeRepo.inserted), ShouldEqual, 1)
@@ -102,22 +115,52 @@ func TestDashboardFileReader(t *testing.T) {
 			})
 
 			Convey("Broken dashboards should not cause error", func() {
-				cfg := &DashboardsAsConfig{
-					Name:   "Default",
-					Type:   "file",
-					OrgId:  1,
-					Folder: "",
-					Options: map[string]interface{}{
-						"folder": brokenDashboards,
-					},
-				}
+				cfg.Options["folder"] = brokenDashboards
 
 				_, err := NewDashboardFileReader(cfg, logger)
 				So(err, ShouldBeNil)
 			})
 		})
 
-		Convey("Walking", func() {
+		Convey("Should not create new folder if folder name is missing", func() {
+			cfg := &DashboardsAsConfig{
+				Name:   "Default",
+				Type:   "file",
+				OrgId:  1,
+				Folder: "",
+				Options: map[string]interface{}{
+					"folder": defaultDashboards,
+				},
+			}
+
+			_, err := getOrCreateFolder(cfg, fakeRepo)
+			So(err, ShouldEqual, ErrFolderNameMissing)
+		})
+
+		Convey("can get or Create dashboard folder", func() {
+			cfg := &DashboardsAsConfig{
+				Name:   "Default",
+				Type:   "file",
+				OrgId:  1,
+				Folder: "TEAM A",
+				Options: map[string]interface{}{
+					"folder": defaultDashboards,
+				},
+			}
+
+			folderId, err := getOrCreateFolder(cfg, fakeRepo)
+			So(err, ShouldBeNil)
+			inserted := false
+			for _, d := range fakeRepo.inserted {
+				if d.Dashboard.IsFolder && d.Dashboard.Id == folderId {
+					inserted = true
+				}
+			}
+			So(len(fakeRepo.inserted), ShouldEqual, 1)
+			So(inserted, ShouldBeTrue)
+		})
+
+		Convey("Walking the folder with dashboards", func() {
 			cfg := &DashboardsAsConfig{
 				Name:   "Default",
 				Type:   "file",
@@ -132,12 +175,12 @@ func TestDashboardFileReader(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("should skip dirs that starts with .", func() {
-				shouldSkip := reader.createWalkFunc(reader)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
+				shouldSkip := reader.createWalk(reader, 0)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
 				So(shouldSkip, ShouldEqual, filepath.SkipDir)
 			})
 
 			Convey("should keep walking if file is not .json", func() {
-				shouldSkip := reader.createWalkFunc(reader)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
+				shouldSkip := reader.createWalk(reader, 0)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
 				So(shouldSkip, ShouldBeNil)
 			})
 		})
