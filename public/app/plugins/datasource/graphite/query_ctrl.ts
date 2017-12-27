@@ -17,11 +17,13 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   addTagSegments: any[];
   removeTagValue: string;
   supportsTags: boolean;
+  paused: boolean;
 
   /** @ngInject **/
   constructor($scope, $injector, private uiSegmentSrv, private templateSrv) {
     super($scope, $injector);
     this.supportsTags = this.datasource.supportsTags;
+    this.paused = false;
 
     if (this.target) {
       this.target.target = this.target.target || '';
@@ -191,6 +193,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
     if (segment.type === 'tag') {
       let tag = removeTagPrefix(segment.value);
+      this.pause();
       this.addSeriesByTagFunc(tag);
       return;
     }
@@ -235,7 +238,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     var oldTarget = this.queryModel.target.target;
     this.updateModelTarget();
 
-    if (this.queryModel.target !== oldTarget) {
+    if (this.queryModel.target !== oldTarget && !this.paused) {
       this.panelCtrl.refresh();
     }
   }
@@ -371,6 +374,15 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
   showDelimiter(index) {
     return index !== this.queryModel.tags.length - 1;
+  }
+
+  pause() {
+    this.paused = true;
+  }
+
+  unpause() {
+    this.paused = false;
+    this.panelCtrl.refresh();
   }
 }
 
