@@ -18,12 +18,18 @@ import (
 	gocache "github.com/patrickmn/go-cache"
 )
 
+var (
+	checkDiskForChangesInterval time.Duration = time.Second * 3
+)
+
 type fileReader struct {
-	Cfg           *DashboardsAsConfig
-	Path          string
-	log           log.Logger
-	dashboardRepo dashboards.Repository
-	cache         *gocache.Cache
+	Cfg            *DashboardsAsConfig
+	Path           string
+	FolderId       int64
+	log            log.Logger
+	dashboardRepo  dashboards.Repository
+	cache          *gocache.Cache
+	createWalkFunc func(fr *fileReader) filepath.WalkFunc
 }
 
 func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
@@ -37,34 +43,17 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 	}
 
 	return &fileReader{
-		Cfg:           cfg,
-		Path:          path,
-		log:           log,
-		dashboardRepo: dashboards.GetRepository(),
-		cache:         gocache.New(5*time.Minute, 30*time.Minute),
+		Cfg:            cfg,
+		Path:           path,
+		log:            log,
+		dashboardRepo:  dashboards.GetRepository(),
+		cache:          gocache.New(5*time.Minute, 30*time.Minute),
+		createWalkFunc: createWalkFn,
 	}, nil
 }
 
-func (fr *fileReader) addCache(key string, json *dashboards.SaveDashboardItem) {
-	fr.cache.Add(key, json, time.Minute*10)
-}
-
-func (fr *fileReader) getCache(key string) (*dashboards.SaveDashboardItem, bool) {
-	obj, exist := fr.cache.Get(key)
-	if !exist {
-		return nil, exist
-	}
-
-	dash, ok := obj.(*dashboards.SaveDashboardItem)
-	if !ok {
-		return nil, ok
-	}
-
-	return dash, ok
-}
-
 func (fr *fileReader) ReadAndListen(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second * 3)
+	ticker := time.NewTicker(checkDiskForChangesInterval)
 
 	if err := fr.walkFolder(); err != nil {
 		fr.log.Error("failed to search for dashboards", "error", err)
@@ -95,7 +84,11 @@ func (fr *fileReader) walkFolder() error {
 		}
 	}
 
-	return filepath.Walk(fr.Path, func(path string, fileInfo os.FileInfo, err error) error {
+	return filepath.Walk(fr.Path, fr.createWalkFunc(fr)) //omg this is so ugly :(
+}
+
+func createWalkFn(fr *fileReader) filepath.WalkFunc {
+	return func(path string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -147,7 +140,7 @@ func (fr *fileReader) walkFolder() error {
 		fr.log.Debug("loading dashboard from disk into database.", "file", path)
 		_, err = fr.dashboardRepo.SaveDashboard(dash)
 		return err
-	})
+	}
 }
 
 func (fr *fileReader) readDashboardFromFile(path string) (*dashboards.SaveDashboardItem, error) {
@@ -172,7 +165,25 @@ func (fr *fileReader) readDashboardFromFile(path string) (*dashboards.SaveDashbo
 		return nil, err
 	}
 
-	fr.addCache(path, dash)
+	fr.addDashboardCache(path, dash)
 
 	return dash, nil
+}
+
+func (fr *fileReader) addDashboardCache(key string, json *dashboards.SaveDashboardItem) {
+	fr.cache.Add(key, json, time.Minute*10)
+}
+
+func (fr *fileReader) getCache(key string) (*dashboards.SaveDashboardItem, bool) {
+	obj, exist := fr.cache.Get(key)
+	if !exist {
+		return nil, exist
+	}
+
+	dash, ok := obj.(*dashboards.SaveDashboardItem)
+	if !ok {
+		return nil, ok
+	}
+
+	return dash, ok
 }
