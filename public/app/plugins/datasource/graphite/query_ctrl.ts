@@ -105,7 +105,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     });
   }
 
-  getAltSegments(index) {
+  getAltSegments(index, prefix) {
     var query = index === 0 ? '*' : this.queryModel.getSegmentPathUpTo(index) + '.*';
     var options = {
       range: this.panelCtrl.range,
@@ -122,7 +122,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
           });
         });
 
-        if (altSegments.length === 0) {
+        if (index > 0 && altSegments.length === 0) {
           return altSegments;
         }
 
@@ -159,7 +159,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
         if (this.supportsTags && index === 0) {
           this.removeTaggedEntry(altSegments);
-          return this.addAltTagSegments(index, altSegments);
+          return this.addAltTagSegments(prefix, altSegments);
         } else {
           return altSegments;
         }
@@ -169,8 +169,8 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       });
   }
 
-  addAltTagSegments(index, altSegments) {
-    return this.getTagsAsSegments().then(tagSegments => {
+  addAltTagSegments(prefix, altSegments) {
+    return this.getTagsAsSegments(prefix).then(tagSegments => {
       tagSegments = _.map(tagSegments, segment => {
         segment.value = TAG_PREFIX + segment.value;
         return segment;
@@ -315,9 +315,9 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     });
   }
 
-  getTagsAsSegments() {
+  getTagsAsSegments(tagPrefix) {
     let tagExpressions = this.queryModel.renderTagExpressions();
-    return this.datasource.getTagsAutoComplete(tagExpressions).then(values => {
+    return this.datasource.getTagsAutoComplete(tagExpressions, tagPrefix).then(values => {
       return _.map(values, val => {
         return this.uiSegmentSrv.newSegment({
           value: val.text,
