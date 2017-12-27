@@ -16,7 +16,7 @@ function WrapInProvider(store, Component, props) {
 export function reactContainer($route) {
   return {
     restrict: 'E',
-    template: '<h2>hasad</h2>',
+    template: '',
     link(scope, elem) {
       let component = $route.current.locals.component;
       let props = {};

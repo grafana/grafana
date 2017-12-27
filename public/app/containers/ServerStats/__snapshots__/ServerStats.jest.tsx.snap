@@ -1,0 +1,99 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ServerStats Should render table with stats 1`] = `
+<div>
+  // 
+  <div
+    className="page-container page-body"
+  >
+    <table
+      className="filter-table form-inline"
+    >
+      <thead>
+        <tr>
+          <th>
+            Name
+          </th>
+          <th>
+            Value
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            Total dashboards
+          </td>
+          <td>
+            10
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total users
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Active users (seen last 30 days)
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total orgs
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total playlists
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total snapshots
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total dashboard tags
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total starred dashboards
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+        <tr>
+          <td>
+            Total alerts
+          </td>
+          <td>
+            0
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+`;

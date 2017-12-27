@@ -1,6 +1,6 @@
 import './dashboard_loaders';
 import './ReactContainer';
-import ServerStats from 'app/containers/ServerStats';
+import { ServerStats } from 'app/containers/ServerStats/ServerStats';
 
 /** @ngInject **/
 export function setupAngularRoutes($routeProvider, $locationProvider) {

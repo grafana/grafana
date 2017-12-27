@@ -9,20 +9,19 @@ export interface IProps {
 
 @inject('store')
 @observer
-export default class ServerStats extends React.Component<IProps, any> {
-  navModel: NavModel;
-
+export class ServerStats extends React.Component<IProps, any> {
   constructor(props) {
     super(props);
 
-    this.navModel = new NavModelSrv().getNav('cfg', 'admin', 'server-stats', 1);
+    // this.navModel = new NavModelSrv().getNav('cfg', 'admin', 'server-stats', 1);
+    this.props.store.nav.load('cfg', 'admin', 'server-stats');
     this.props.store.serverStats.load();
   }
 
   render() {
     return (
       <div>
-        <PageHeader model={this.navModel} />
+        <PageHeader model={this.props.store.nav} />
         <div className="page-container page-body">
           <table className="filter-table form-inline">
             <thead>
