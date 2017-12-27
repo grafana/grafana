@@ -43,7 +43,9 @@ func AuthenticateUser(query *LoginUserQuery) error {
 				return err
 			}
 		}
-	} else if err == ErrInvalidCredentials {
+	}
+
+	if err == ErrInvalidCredentials {
 		loginAttemptCommand := m.CreateLoginAttemptCommand{
 			Username:  query.Username,
 			IpAddress: query.IpAddress,
