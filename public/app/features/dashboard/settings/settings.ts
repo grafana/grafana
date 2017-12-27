@@ -69,8 +69,8 @@ export class SettingsCtrl {
 
     if (this.dashboard.meta.canMakeEditable) {
       this.sections.push({
-        title: 'Make Editable',
-        icon: 'fa fa-fw fa-edit',
+        title: 'General',
+        icon: 'gicon gicon-preferences',
         id: 'make_editable',
       });
     }
@@ -137,12 +137,6 @@ export class SettingsCtrl {
 
     const currentSection = _.find(this.sections, { id: this.viewId });
     this.$location.url(currentSection.url);
-    this.onRouteUpdated();
-
-    // Force dashboard reload after saving to update view
-    appEvents.on('dashboard-saved', () => {
-      window.location.href = window.location.href;
-    });
   }
 
   deleteDashboard() {
