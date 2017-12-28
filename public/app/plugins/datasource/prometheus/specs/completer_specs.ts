@@ -50,8 +50,8 @@ describe('Prometheus editor completer', function() {
       });
 
       return completer.getCompletions(editor, session, { row: 0, column: 10 }, '[', (s, res) => {
-        expect(res[0].caption).to.eql('1s');
-        expect(res[0].value).to.eql('[1s');
+        expect(res[0].caption).to.eql('$__interval');
+        expect(res[0].value).to.eql('[$__interval');
         expect(res[0].meta).to.eql('range vector');
       });
     });
