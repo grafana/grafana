@@ -444,9 +444,18 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
             return;
           }
 
+          var description = funcDef.description;
+          if (description) {
+            // tidy up some pydoc syntax that rst2html can't handle
+            description = description
+              .replace(/:py:func:`(.+)( <[^>]*>)?`/g, '``$1``')
+              .replace(/.. seealso:: /g, 'See also: ')
+              .replace(/.. code-block *:: *none/g, '.. code-block::');
+          }
+
           var func = {
             name: funcDef.name,
-            description: funcDef.description,
+            description: description,
             category: funcDef.group,
             params: [],
             defaultParams: [],

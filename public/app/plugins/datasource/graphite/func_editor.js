@@ -264,7 +264,8 @@ function (angular, _, $, rst2html) {
                   popoverSrv.show({
                     element: e.target,
                     position: 'bottom left',
-                    template: '<div><h4>' + funcDef.name + '</h4>' + rst2html(funcDef.description) + '</div>',
+                    classNames: 'drop-popover drop-function-def',
+                    template: '<div style="overflow:auto;max-height:30rem;"><h4>' + funcDef.name + '</h4>' + rst2html(funcDef.description) + '</div>',
                     openOn: 'click',
                   });
                 } else {
