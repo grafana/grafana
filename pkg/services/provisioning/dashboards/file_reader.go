@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,7 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
-	gocache "github.com/patrickmn/go-cache"
+)
+
+var (
+	checkDiskForChangesInterval time.Duration = time.Second * 3
+
+	ErrFolderNameMissing error = errors.New("Folder name missing")
 )
 
 type fileReader struct {
@@ -23,7 +29,8 @@ type fileReader struct {
 	Path          string
 	log           log.Logger
 	dashboardRepo dashboards.Repository
-	cache         *gocache.Cache
+	cache         *dashboardCache
+	createWalk    func(fr *fileReader, folderId int64) filepath.WalkFunc
 }
 
 func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
@@ -41,32 +48,15 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 		Path:          path,
 		log:           log,
 		dashboardRepo: dashboards.GetRepository(),
-		cache:         gocache.New(5*time.Minute, 30*time.Minute),
+		cache:         NewDashboardCache(),
+		createWalk:    createWalkFn,
 	}, nil
 }
 
-func (fr *fileReader) addCache(key string, json *dashboards.SaveDashboardItem) {
-	fr.cache.Add(key, json, time.Minute*10)
-}
-
-func (fr *fileReader) getCache(key string) (*dashboards.SaveDashboardItem, bool) {
-	obj, exist := fr.cache.Get(key)
-	if !exist {
-		return nil, exist
-	}
-
-	dash, ok := obj.(*dashboards.SaveDashboardItem)
-	if !ok {
-		return nil, ok
-	}
-
-	return dash, ok
-}
-
 func (fr *fileReader) ReadAndListen(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second * 3)
+	ticker := time.NewTicker(checkDiskForChangesInterval)
 
-	if err := fr.walkFolder(); err != nil {
+	if err := fr.startWalkingDisk(); err != nil {
 		fr.log.Error("failed to search for dashboards", "error", err)
 	}
 
@@ -78,7 +68,9 @@ func (fr *fileReader) ReadAndListen(ctx context.Context) error {
 			if !running { // avoid walking the filesystem in parallel. incase fs is very slow.
 				running = true
 				go func() {
-					fr.walkFolder()
+					if err := fr.startWalkingDisk(); err != nil {
+						fr.log.Error("failed to search for dashboards", "error", err)
+					}
 					running = false
 				}()
 			}
@@ -88,14 +80,57 @@ func (fr *fileReader) ReadAndListen(ctx context.Context) error {
 	}
 }
 
-func (fr *fileReader) walkFolder() error {
+func (fr *fileReader) startWalkingDisk() error {
 	if _, err := os.Stat(fr.Path); err != nil {
 		if os.IsNotExist(err) {
 			return err
 		}
 	}
 
-	return filepath.Walk(fr.Path, func(path string, fileInfo os.FileInfo, err error) error {
+	folderId, err := getOrCreateFolderId(fr.Cfg, fr.dashboardRepo)
+	if err != nil && err != ErrFolderNameMissing {
+		return err
+	}
+
+	return filepath.Walk(fr.Path, fr.createWalk(fr, folderId))
+}
+
+func getOrCreateFolderId(cfg *DashboardsAsConfig, repo dashboards.Repository) (int64, error) {
+	if cfg.Folder == "" {
+		return 0, ErrFolderNameMissing
+	}
+
+	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(cfg.Folder), OrgId: cfg.OrgId}
+	err := bus.Dispatch(cmd)
+
+	if err != nil && err != models.ErrDashboardNotFound {
+		return 0, err
+	}
+
+	// dashboard folder not found. create one.
+	if err == models.ErrDashboardNotFound {
+		dash := &dashboards.SaveDashboardItem{}
+		dash.Dashboard = models.NewDashboard(cfg.Folder)
+		dash.Dashboard.IsFolder = true
+		dash.Overwrite = true
+		dash.OrgId = cfg.OrgId
+		dbDash, err := repo.SaveDashboard(dash)
+		if err != nil {
+			return 0, err
+		}
+
+		return dbDash.Id, nil
+	}
+
+	if !cmd.Result.IsFolder {
+		return 0, fmt.Errorf("Got invalid response. Expected folder, found dashboard")
+	}
+
+	return cmd.Result.Id, nil
+}
+
+func createWalkFn(fr *fileReader, folderId int64) filepath.WalkFunc {
+	return func(path string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -110,12 +145,12 @@ func (fr *fileReader) walkFolder() error {
 			return nil
 		}
 
-		cachedDashboard, exist := fr.getCache(path)
+		cachedDashboard, exist := fr.cache.getCache(path)
 		if exist && cachedDashboard.UpdatedAt == fileInfo.ModTime() {
 			return nil
 		}
 
-		dash, err := fr.readDashboardFromFile(path)
+		dash, err := fr.readDashboardFromFile(path, folderId)
 		if err != nil {
 			fr.log.Error("failed to load dashboard from ", "file", path, "error", err)
 			return nil
@@ -147,10 +182,10 @@ func (fr *fileReader) walkFolder() error {
 		fr.log.Debug("loading dashboard from disk into database.", "file", path)
 		_, err = fr.dashboardRepo.SaveDashboard(dash)
 		return err
-	})
+	}
 }
 
-func (fr *fileReader) readDashboardFromFile(path string) (*dashboards.SaveDashboardItem, error) {
+func (fr *fileReader) readDashboardFromFile(path string, folderId int64) (*dashboards.SaveDashboardItem, error) {
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -167,12 +202,12 @@ func (fr *fileReader) readDashboardFromFile(path string) (*dashboards.SaveDashbo
 		return nil, err
 	}
 
-	dash, err := createDashboardJson(data, stat.ModTime(), fr.Cfg)
+	dash, err := createDashboardJson(data, stat.ModTime(), fr.Cfg, folderId)
 	if err != nil {
 		return nil, err
 	}
 
-	fr.addCache(path, dash)
+	fr.cache.addDashboardCache(path, dash)
 
 	return dash, nil
 }

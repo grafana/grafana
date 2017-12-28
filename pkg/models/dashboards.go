@@ -139,8 +139,12 @@ func (dash *Dashboard) GetString(prop string, defaultValue string) string {
 
 // UpdateSlug updates the slug
 func (dash *Dashboard) UpdateSlug() {
-	title := strings.ToLower(dash.Data.Get("title").MustString())
-	dash.Slug = slug.Make(title)
+	title := dash.Data.Get("title").MustString()
+	dash.Slug = SlugifyTitle(title)
+}
+
+func SlugifyTitle(title string) string {
+	return slug.Make(strings.ToLower(title))
 }
 
 //
