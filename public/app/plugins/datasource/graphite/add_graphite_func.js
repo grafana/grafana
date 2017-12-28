@@ -2,13 +2,15 @@ define([
   'angular',
   'lodash',
   'jquery',
+  'rst2html',
+  'tether-drop',
 ],
-function (angular, _, $) {
+function (angular, _, $, rst2html, Drop) {
   'use strict';
 
   angular
     .module('grafana.directives')
-    .directive('graphiteAddFunc', function($compile) {
+  .directive('graphiteAddFunc', function($compile) {
       var inputTemplate = '<input type="text"'+
                             ' class="gf-form-input"' +
                             ' spellcheck="false" style="display:none"></input>';
@@ -81,6 +83,52 @@ function (angular, _, $) {
 
             $compile(elem.contents())($scope);
           });
+
+          var drops = [];
+
+          $(elem)
+            .on('mouseenter', 'ul.dropdown-menu li', function () {
+              while (drops.length > 0) {
+                drops.pop().remove();
+              }
+
+              var funcDef;
+              try {
+                funcDef = ctrl.datasource.getFuncDef($('a', this).text());
+              } catch (e) {
+                // ignore
+              }
+
+              if (funcDef && funcDef.description) {
+                var shortDesc = funcDef.description;
+                if (shortDesc.length > 500) {
+                  shortDesc = shortDesc.substring(0, 497) + '...';
+                }
+
+                var contentElement = document.createElement('div');
+                contentElement.innerHTML = '<h4>' + funcDef.name + '</h4>' + rst2html(shortDesc);
+
+                var drop = new Drop({
+                  target: this,
+                  content: contentElement,
+                  classes: 'drop-popover',
+                  openOn: 'always',
+                  tetherOptions: {
+                    attachment: 'bottom left',
+                    targetAttachment: 'bottom right',
+                  },
+                });
+
+                drops.push(drop);
+
+                drop.open();
+              }
+            })
+            .on('mouseout', 'ul.dropdown-menu li', function() {
+              while (drops.length > 0) {
+                drops.pop().remove();
+              }
+            });
         }
       };
     });
