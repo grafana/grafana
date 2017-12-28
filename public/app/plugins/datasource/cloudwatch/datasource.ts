@@ -3,8 +3,9 @@ import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 import kbn from 'app/core/utils/kbn';
 import * as templatingVariable from 'app/features/templating/variable';
+// import * as moment from 'moment';
 
-export class CloudWatchDatasource {
+export default class CloudWatchDatasource {
   type: any;
   name: any;
   supportMetrics: any;
