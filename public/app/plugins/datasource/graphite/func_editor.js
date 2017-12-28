@@ -9,7 +9,7 @@ function (angular, _, $, rst2html) {
 
   angular
     .module('grafana.directives')
-    .directive('graphiteFuncEditor', function($compile, templateSrv) {
+    .directive('graphiteFuncEditor', function($compile, templateSrv, popoverSrv) {
 
       var funcSpanTemplate = '<a ng-click="">{{func.def.name}}</a><span>(</span>';
       var paramTemplate = '<input type="text" style="display:none"' +
@@ -259,8 +259,14 @@ function (angular, _, $, rst2html) {
               }
 
               if ($target.hasClass('fa-question-circle')) {
-                if (func.def.description) {
-                  alert(rst2html(func.def.description));
+                var funcDef = ctrl.datasource.getFuncDef(func.def.name);
+                if (funcDef && funcDef.description) {
+                  popoverSrv.show({
+                    element: e.target,
+                    position: 'bottom left',
+                    template: '<div><h4>' + funcDef.name + '</h4>' + rst2html(funcDef.description) + '</div>',
+                    openOn: 'click',
+                  });
                 } else {
                   window.open(
                     "http://graphite.readthedocs.org/en/latest/functions.html#graphite.render.functions." + func.def.name,'_blank');
