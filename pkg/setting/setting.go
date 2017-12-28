@@ -600,7 +600,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	readQuotaSettings()
 
 	if VerifyEmailEnabled && !Smtp.Enabled {
-		log.Warn("require_email_validation is enabled but smpt is disabled")
+		log.Warn("require_email_validation is enabled but smtp is disabled")
 	}
 
 	// check old key  name
