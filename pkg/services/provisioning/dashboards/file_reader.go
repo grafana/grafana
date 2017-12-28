@@ -29,7 +29,7 @@ type fileReader struct {
 	Path          string
 	log           log.Logger
 	dashboardRepo dashboards.Repository
-	cache         *DashboardCache
+	cache         *dashboardCache
 	createWalk    func(fr *fileReader, folderId int64) filepath.WalkFunc
 }
 
@@ -87,7 +87,7 @@ func (fr *fileReader) startWalkingDisk() error {
 		}
 	}
 
-	folderId, err := getOrCreateFolder(fr.Cfg, fr.dashboardRepo)
+	folderId, err := getOrCreateFolderId(fr.Cfg, fr.dashboardRepo)
 	if err != nil && err != ErrFolderNameMissing {
 		return err
 	}
@@ -95,7 +95,7 @@ func (fr *fileReader) startWalkingDisk() error {
 	return filepath.Walk(fr.Path, fr.createWalk(fr, folderId))
 }
 
-func getOrCreateFolder(cfg *DashboardsAsConfig, repo dashboards.Repository) (int64, error) {
+func getOrCreateFolderId(cfg *DashboardsAsConfig, repo dashboards.Repository) (int64, error) {
 	if cfg.Folder == "" {
 		return 0, ErrFolderNameMissing
 	}

@@ -133,7 +133,7 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			_, err := getOrCreateFolder(cfg, fakeRepo)
+			_, err := getOrCreateFolderId(cfg, fakeRepo)
 			So(err, ShouldEqual, ErrFolderNameMissing)
 		})
 
@@ -148,7 +148,7 @@ func TestDashboardFileReader(t *testing.T) {
 				},
 			}
 
-			folderId, err := getOrCreateFolder(cfg, fakeRepo)
+			folderId, err := getOrCreateFolderId(cfg, fakeRepo)
 			So(err, ShouldBeNil)
 			inserted := false
 			for _, d := range fakeRepo.inserted {
