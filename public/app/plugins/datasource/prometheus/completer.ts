@@ -92,16 +92,19 @@ export class PromCompleter {
           });
         }
       }
-      vectors.push({
-        caption: '$__interval',
-        value: '[$__interval',
-        meta: 'range vector',
-      });
-      vectors.push({
+
+      vectors.unshift({
         caption: '$__interval_ms',
         value: '[$__interval_ms',
         meta: 'range vector',
       });
+
+      vectors.unshift({
+        caption: '$__interval',
+        value: '[$__interval',
+        meta: 'range vector',
+      });
+
       callback(null, vectors);
       return;
     }
