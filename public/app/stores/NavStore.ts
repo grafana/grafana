@@ -24,17 +24,12 @@ export const NavStore = types
       let parents = [];
 
       for (let id of args) {
-        // if its a number then it's the index to use for main
-        if (_.isNumber(id)) {
-          main = parents[id];
-          break;
-        }
-
         node = _.find(children, { id: id });
-        main = node;
         children = node.children;
         parents.push(node);
       }
+
+      main = parents[parents.length - 2];
 
       if (main.children) {
         for (let item of main.children) {

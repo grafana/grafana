@@ -12,7 +12,7 @@ export class ServerStats extends React.Component<IProps, any> {
   constructor(props) {
     super(props);
 
-    this.props.store.nav.load('cfg', 'admin', 'server-stats', 1);
+    this.props.store.nav.load('cfg', 'admin', 'server-stats');
     this.props.store.serverStats.load();
   }
 

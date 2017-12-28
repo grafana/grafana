@@ -1,6 +1,7 @@
 import './dashboard_loaders';
 import './ReactContainer';
 import { ServerStats } from 'app/containers/ServerStats/ServerStats';
+import { AlertRuleList } from 'app/containers/AlertRuleList/AlertRuleList';
 
 /** @ngInject **/
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -224,6 +225,12 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       templateUrl: 'public/app/features/alerting/partials/alert_list.html',
       controller: 'AlertListCtrl',
       controllerAs: 'ctrl',
+    })
+    .when('/alerting/list2', {
+      template: '<react-container />',
+      resolve: {
+        component: () => AlertRuleList,
+      },
     })
     .when('/alerting/notifications', {
       templateUrl: 'public/app/features/alerting/partials/notifications_list.html',
