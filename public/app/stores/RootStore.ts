@@ -1,7 +1,7 @@
 import { types } from 'mobx-state-tree';
 import { SearchStore } from './SearchStore';
 import { ServerStatsStore } from './ServerStatsStore';
-import { NavStore } from './NavStore/NavStore';
+import { NavStore } from './NavStore';
 
 export const RootStore = types.model({
   search: types.optional(SearchStore, {

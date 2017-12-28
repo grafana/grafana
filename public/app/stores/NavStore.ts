@@ -1,12 +1,11 @@
-import { types } from 'mobx-state-tree';
-import config from 'app/core/config';
+import { types, getEnv } from 'mobx-state-tree';
 import _ from 'lodash';
 
 export const NavItem = types.model('NavItem', {
   id: types.identifier(types.string),
   text: types.string,
   url: types.optional(types.string, ''),
-  description: types.optional(types.string, ''),
+  subTitle: types.optional(types.string, ''),
   icon: types.optional(types.string, ''),
   img: types.optional(types.string, ''),
   active: types.optional(types.boolean, false),
@@ -17,26 +16,24 @@ export const NavStore = types
   .model('NavStore', {
     main: types.maybe(NavItem),
     node: types.maybe(NavItem),
-    breadcrumbs: types.optional(types.array(NavItem), []),
   })
   .actions(self => ({
     load(...args) {
-      var children = config.bootData.navTree;
+      var children = getEnv(self).navTree;
       let main, node;
-      let breadcrumbs = [];
+      let parents = [];
 
       for (let id of args) {
         // if its a number then it's the index to use for main
         if (_.isNumber(id)) {
-          main = breadcrumbs[id];
+          main = parents[id];
           break;
         }
 
-        let current = _.find(children, { id: id });
-        breadcrumbs.push(current);
+        node = _.find(children, { id: id });
         main = node;
-        node = current;
         children = node.children;
+        parents.push(node);
       }
 
       if (main.children) {
@@ -51,24 +48,5 @@ export const NavStore = types
 
       self.main = NavItem.create(main);
       self.node = NavItem.create(node);
-
-      for (let item of breadcrumbs) {
-        self.breadcrumbs.push(NavItem.create(item));
-      }
-
-      // self.main = NavItem.create({
-      //   id: 'test',
-      //   text: 'test',
-      //   url: '/test';
-      //   children: [
-      //     {
-      //       id: 'test',
-      //       text: 'text',
-      //       url: '/test',
-      //       active: true,
-      //       children: []
-      //     }
-      //   ]
-      // });
     },
   }));

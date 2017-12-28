@@ -1,7 +1,6 @@
 import React from 'react';
 import { inject, observer } from 'mobx-react';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import { NavModel, NavModelSrv } from 'app/core/nav_model_srv';
 
 export interface IProps {
   store: any;
@@ -13,8 +12,7 @@ export class ServerStats extends React.Component<IProps, any> {
   constructor(props) {
     super(props);
 
-    // this.navModel = new NavModelSrv().getNav('cfg', 'admin', 'server-stats', 1);
-    this.props.store.nav.load('cfg', 'admin', 'server-stats');
+    this.props.store.nav.load('cfg', 'admin', 'server-stats', 1);
     this.props.store.serverStats.load();
   }
 

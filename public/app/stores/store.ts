@@ -1,4 +1,5 @@
 import { RootStore, IRootStore } from './RootStore';
+import config from 'app/core/config';
 
 export let store: IRootStore;
 
@@ -7,6 +8,7 @@ export function createStore(backendSrv) {
     {},
     {
       backendSrv: backendSrv,
+      navTree: config.bootData.navTree,
     }
   );
 }
