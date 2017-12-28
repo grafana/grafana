@@ -610,7 +610,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	}
 
 	imageUploadingSection := Cfg.Section("external_image_storage")
-	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("internal")
+	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("")
 	return nil
 }
 
