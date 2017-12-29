@@ -91,7 +91,7 @@ func (service *CleanUpService) deleteExpiredDashboardVersions() {
 }
 
 func (service *CleanUpService) deleteOldLoginAttempts() {
-	if setting.DisableLoginAttemptsValidation {
+	if setting.DisableBruteForceLoginProtection {
 		return
 	}
 

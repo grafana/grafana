@@ -11,8 +11,8 @@ import (
 
 func TestLoginAttemptsValidation(t *testing.T) {
 	Convey("Validate login attempts", t, func() {
-		Convey("Given login attempt validation enabled", func() {
-			setting.DisableLoginAttemptsValidation = false
+		Convey("Given brute force login protection enabled", func() {
+			setting.DisableBruteForceLoginProtection = false
 
 			Convey("When user login attempt count equals max-1 ", func() {
 				withLoginAttempts(maxInvalidLoginAttempts - 1)
@@ -64,8 +64,8 @@ func TestLoginAttemptsValidation(t *testing.T) {
 			})
 		})
 
-		Convey("Given login attempt validation disabled", func() {
-			setting.DisableLoginAttemptsValidation = true
+		Convey("Given brute force login protection disabled", func() {
+			setting.DisableBruteForceLoginProtection = true
 
 			Convey("When user login attempt count equals max-1 ", func() {
 				withLoginAttempts(maxInvalidLoginAttempts - 1)

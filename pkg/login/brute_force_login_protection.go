@@ -14,7 +14,7 @@ var (
 )
 
 var validateLoginAttempts = func(username string) error {
-	if setting.DisableLoginAttemptsValidation {
+	if setting.DisableBruteForceLoginProtection {
 		return nil
 	}
 
@@ -35,7 +35,7 @@ var validateLoginAttempts = func(username string) error {
 }
 
 var saveInvalidLoginAttempt = func(query *LoginUserQuery) {
-	if setting.DisableLoginAttemptsValidation {
+	if setting.DisableBruteForceLoginProtection {
 		return
 	}
 
