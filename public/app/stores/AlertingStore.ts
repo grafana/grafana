@@ -12,7 +12,7 @@ export const AlertRule = types.model('AlertRule', {
   stateIcon: types.string,
   stateClass: types.string,
   stateAge: types.string,
-  info: types.string,
+  info: types.optional(types.string, ''),
   dashboardUri: types.string,
 });
 

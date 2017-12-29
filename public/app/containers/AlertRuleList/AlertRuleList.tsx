@@ -62,7 +62,7 @@ function AlertRuleItem(rule) {
   let ruleUrl = `dashboard/${rule.dashboardUri}?panelId=${rule.panelId}&fullscreen&edit&tab=alert`;
 
   return (
-    <li className="card-item-wrapper">
+    <li className="card-item-wrapper" key={rule.id}>
       <div className="card-item card-item--alert">
         <div className="card-item-header">
           <div className="card-item-type">
