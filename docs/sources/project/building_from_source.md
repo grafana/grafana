@@ -107,6 +107,59 @@ This step builds linux packages and requires that fpm is installed. Install fpm 
 go run build.go build package
 ```
 
+### Compile Linux Packages in Docker
+
+```
+docker run -itv $PWD:/go/src/github.com/grafana/grafana -w /go/src/github.com/grafana/grafana ubuntu:xenial bash -c '
+apt-get update &&
+apt-get install -y software-properties-common &&
+add-apt-repository -y ppa:gophers/archive &&
+apt-get install -y curl &&
+curl -sL https://deb.nodesource.com/setup_6.x | bash - &&
+apt-get update &&
+apt-get install -y rpm git golang-1.9-go nodejs ruby ruby-dev &&
+gem install fpm &&
+npm install -g yarn &&
+yarn install --pure-lockfile &&
+export PATH=/usr/lib/go-1.9/bin:$PWD/node_modules/.bin:$PATH &&
+go run build.go build package
+'
+```
+
+This will output packages in `dist/`.
+
+### Build a Custom Docker Image
+
+- Clone [grafana-docker](https://github.com/grafana/grafana-docker).
+- Copy the `deb` package from `dist/` to where you checked out `grafana-docker`.
+- Patch and build the image:
+
+```shell
+cat << 'PATCH' | git apply -
+diff --git a/Dockerfile b/Dockerfile
+index 5a56c94..91389de 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -1,11 +1,10 @@
+ FROM debian:jessie
+ 
+-ARG DOWNLOAD_URL
++COPY grafana_*_amd64.deb /tmp/grafana.deb
+ 
+ RUN apt-get update && \
+     apt-get -y --no-install-recommends install libfontconfig curl ca-certificates && \
+     apt-get clean && \
+-    curl ${DOWNLOAD_URL} > /tmp/grafana.deb && \
+     dpkg -i /tmp/grafana.deb && \
+     rm /tmp/grafana.deb && \
+     curl -L https://github.com/tianon/gosu/releases/download/1.7/gosu-amd64 > /usr/sbin/gosu && \
+PATCH
+
+docker build -t grafana/grafana:local .
+```
+
+Now you can run `grafana/grafana:local`.
+
 ## Dev config
 
 Create a custom.ini in the conf directory to override default configuration options.
