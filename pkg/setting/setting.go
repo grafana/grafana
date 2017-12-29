@@ -75,13 +75,14 @@ var (
 	EnforceDomain      bool
 
 	// Security settings.
-	SecretKey             string
-	LogInRememberDays     int
-	CookieUserName        string
-	CookieRememberName    string
-	DisableGravatar       bool
-	EmailCodeValidMinutes int
-	DataProxyWhiteList    map[string]bool
+	SecretKey                      string
+	LogInRememberDays              int
+	CookieUserName                 string
+	CookieRememberName             string
+	DisableGravatar                bool
+	EmailCodeValidMinutes          int
+	DataProxyWhiteList             map[string]bool
+	DisableLoginAttemptsValidation bool
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -514,6 +515,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+	DisableLoginAttemptsValidation = security.Key("disable_login_attempts_validation").MustBool(false)
 
 	// read snapshots settings
 	snapshots := Cfg.Section("snapshots")
