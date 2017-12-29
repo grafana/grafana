@@ -71,8 +71,8 @@ Each field in the dashboard JSON is explained below with its usage:
 | **timepicker** | timepicker metadata, see [timepicker section](#timepicker) for details |
 | **templating** | templating metadata, see [templating section](#templating) for details |
 | **annotations** | annotations metadata, see [annotations section](#annotations) for details |
-| **schemaVersion** | TODO |
-| **version** | TODO |
+| **schemaVersion** | version of the JSON schema (integer), incremented each time a Grafana update brings changes to the said schema |
+| **version** | version of the dashboard (integer), incremented each time the dashboard is updated |
 | **links** | TODO |
 
 ### rows
