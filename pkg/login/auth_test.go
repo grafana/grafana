@@ -1,268 +1,214 @@
 package login
 
 import (
+	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestAuthenticateUser(t *testing.T) {
-	Convey("Given Ldap disabled", t, func() {
-		setting.LdapEnabled = false
+	Convey("Authenticate user", t, func() {
+		authScenario("When a user authenticates having too many login attempts", func(sc *authScenarioContext) {
+			mockLoginAttemptValidation(ErrTooManyLoginAttempts, sc)
+			mockLoginUsingGrafanaDB(nil, sc)
+			mockLoginUsingLdap(true, nil, sc)
+			mockSaveInvalidLoginAttempt(sc)
 
-		Convey("When non-existing user authenticates", func() {
-			bus.AddHandler("test", func(query *m.GetUserByLoginQuery) error {
-				return m.ErrUserNotFound
+			err := AuthenticateUser(sc.loginUserQuery)
+
+			Convey("it should result in", func() {
+				So(err, ShouldEqual, ErrTooManyLoginAttempts)
+				So(sc.loginAttemptValidationWasCalled, ShouldBeTrue)
+				So(sc.grafanaLoginWasCalled, ShouldBeFalse)
+				So(sc.ldapLoginWasCalled, ShouldBeFalse)
+				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeFalse)
 			})
+		})
 
-			err := AuthenticateUser(&LoginUserQuery{
-				Username:  "user",
-				Password:  "pwd",
-				IpAddress: "192.168.1.1:56433",
+		authScenario("When grafana user authenticate with valid credentials", func(sc *authScenarioContext) {
+			mockLoginAttemptValidation(nil, sc)
+			mockLoginUsingGrafanaDB(nil, sc)
+			mockLoginUsingLdap(true, ErrInvalidCredentials, sc)
+			mockSaveInvalidLoginAttempt(sc)
+
+			err := AuthenticateUser(sc.loginUserQuery)
+
+			Convey("it should result in", func() {
+				So(err, ShouldEqual, nil)
+				So(sc.loginAttemptValidationWasCalled, ShouldBeTrue)
+				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
+				So(sc.ldapLoginWasCalled, ShouldBeFalse)
+				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeFalse)
 			})
+		})
 
-			Convey("it should result in ErrInvalidCredentials error", func() {
+		authScenario("When grafana user authenticate and unexpected error occurs", func(sc *authScenarioContext) {
+			customErr := errors.New("custom")
+			mockLoginAttemptValidation(nil, sc)
+			mockLoginUsingGrafanaDB(customErr, sc)
+			mockLoginUsingLdap(true, ErrInvalidCredentials, sc)
+			mockSaveInvalidLoginAttempt(sc)
+
+			err := AuthenticateUser(sc.loginUserQuery)
+
+			Convey("it should result in", func() {
+				So(err, ShouldEqual, customErr)
+				So(sc.loginAttemptValidationWasCalled, ShouldBeTrue)
+				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
+				So(sc.ldapLoginWasCalled, ShouldBeFalse)
+				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeFalse)
+			})
+		})
+
+		authScenario("When a non-existing grafana user authenticate and ldap disabled", func(sc *authScenarioContext) {
+			mockLoginAttemptValidation(nil, sc)
+			mockLoginUsingGrafanaDB(m.ErrUserNotFound, sc)
+			mockLoginUsingLdap(false, nil, sc)
+			mockSaveInvalidLoginAttempt(sc)
+
+			err := AuthenticateUser(sc.loginUserQuery)
+
+			Convey("it should result in", func() {
 				So(err, ShouldEqual, ErrInvalidCredentials)
+				So(sc.loginAttemptValidationWasCalled, ShouldBeTrue)
+				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
+				So(sc.ldapLoginWasCalled, ShouldBeTrue)
+				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeFalse)
 			})
 		})
 
-		Convey("When user authenticates with wrong credentials", func() {
-			bus.AddHandler("test", func(query *m.GetUserByLoginQuery) error {
-				query.Result = &m.User{
-					Password: "pwd",
-					Salt:     "salt",
-				}
-				return nil
-			})
+		authScenario("When a non-existing grafana user authenticate and invalid ldap credentials", func(sc *authScenarioContext) {
+			mockLoginAttemptValidation(nil, sc)
+			mockLoginUsingGrafanaDB(m.ErrUserNotFound, sc)
+			mockLoginUsingLdap(true, ErrInvalidCredentials, sc)
+			mockSaveInvalidLoginAttempt(sc)
 
-			Convey("for the 4th consecutive time", func() {
-				bus.AddHandler("test", func(query *m.GetUserLoginAttemptCountQuery) error {
-					query.Result = 4
-					return nil
-				})
+			err := AuthenticateUser(sc.loginUserQuery)
 
-				query := LoginUserQuery{
-					Username:  "user",
-					Password:  "pwd",
-					IpAddress: "192.168.1.1:56433",
-				}
-
-				var createLoginAttemptCmd *m.CreateLoginAttemptCommand
-
-				bus.AddHandler("test", func(cmd *m.CreateLoginAttemptCommand) error {
-					createLoginAttemptCmd = cmd
-					return nil
-				})
-
-				err := AuthenticateUser(&query)
-
-				Convey("it should result in ErrInvalidCredentials error", func() {
-					So(err, ShouldEqual, ErrInvalidCredentials)
-				})
-
-				Convey("it should create a login attempt", func() {
-					So(createLoginAttemptCmd, ShouldNotBeNil)
-					So(createLoginAttemptCmd.Username, ShouldEqual, query.Username)
-					So(createLoginAttemptCmd.IpAddress, ShouldEqual, query.IpAddress)
-				})
-			})
-
-			Convey("for the 5th consecutive time", func() {
-				bus.AddHandler("test", func(query *m.GetUserLoginAttemptCountQuery) error {
-					query.Result = 5
-					return nil
-				})
-
-				err := AuthenticateUser(&LoginUserQuery{
-					Username:  "user",
-					Password:  "pwd",
-					IpAddress: "192.168.1.1:56433",
-				})
-
-				Convey("it should result in TooManyLoginAttempts error", func() {
-					So(err, ShouldEqual, ErrTooManyLoginAttempts)
-				})
-			})
-		})
-	})
-
-	Convey("Given Ldap enabled", t, func() {
-		setting.LdapEnabled = true
-		LdapCfg.Servers = append(LdapCfg.Servers,
-			&LdapServerConf{
-				Host: "",
-			})
-
-		Convey("When non-existing user authenticates", func() {
-			ldapAuthenticatorMock := mockLdapAuthenticator(ErrInvalidCredentials)
-
-			bus.AddHandler("test", func(query *m.GetUserByLoginQuery) error {
-				return m.ErrUserNotFound
-			})
-
-			err := AuthenticateUser(&LoginUserQuery{
-				Username:  "user",
-				Password:  "pwd",
-				IpAddress: "192.168.1.1:56433",
-			})
-
-			Convey("it should result in ErrInvalidCredentials error", func() {
+			Convey("it should result in", func() {
 				So(err, ShouldEqual, ErrInvalidCredentials)
-			})
-
-			Convey("it should call Ldap authenticator", func() {
-				So(ldapAuthenticatorMock.loginCalled, ShouldBeTrue)
+				So(sc.loginAttemptValidationWasCalled, ShouldBeTrue)
+				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
+				So(sc.ldapLoginWasCalled, ShouldBeTrue)
+				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeTrue)
 			})
 		})
 
-		Convey("When user authenticates with wrong credentials and successful ldap authentication", func() {
-			ldapAuthenticatorMock := mockLdapAuthenticator(nil)
+		authScenario("When a non-existing grafana user authenticate and valid ldap credentials", func(sc *authScenarioContext) {
+			mockLoginAttemptValidation(nil, sc)
+			mockLoginUsingGrafanaDB(m.ErrUserNotFound, sc)
+			mockLoginUsingLdap(true, nil, sc)
+			mockSaveInvalidLoginAttempt(sc)
 
-			bus.AddHandler("test", func(query *m.GetUserByLoginQuery) error {
-				query.Result = &m.User{
-					Password: "pwd",
-					Salt:     "salt",
-				}
-				return nil
-			})
+			err := AuthenticateUser(sc.loginUserQuery)
 
-			bus.AddHandler("test", func(query *m.GetUserLoginAttemptCountQuery) error {
-				query.Result = 0
-				return nil
-			})
-
-			var createLoginAttemptCmd *m.CreateLoginAttemptCommand
-
-			bus.AddHandler("test", func(cmd *m.CreateLoginAttemptCommand) error {
-				createLoginAttemptCmd = cmd
-				return nil
-			})
-
-			query := LoginUserQuery{
-				Username:  "user",
-				Password:  "pwd",
-				IpAddress: "192.168.1.1:56433",
-			}
-
-			err := AuthenticateUser(&query)
-
-			Convey("it should not result in error", func() {
+			Convey("it should result in", func() {
 				So(err, ShouldBeNil)
-			})
-
-			Convey("it should call Ldap authenticator", func() {
-				So(ldapAuthenticatorMock.loginCalled, ShouldBeTrue)
-			})
-
-			Convey("it should not create a login attempty", func() {
-				So(createLoginAttemptCmd, ShouldBeNil)
+				So(sc.loginAttemptValidationWasCalled, ShouldBeTrue)
+				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
+				So(sc.ldapLoginWasCalled, ShouldBeTrue)
+				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeFalse)
 			})
 		})
 
-		Convey("When user authenticates with wrong credentials and unsuccessful ldap authentication", func() {
-			bus.AddHandler("test", func(query *m.GetUserByLoginQuery) error {
-				query.Result = &m.User{
-					Password: "pwd",
-					Salt:     "salt",
-				}
-				return nil
+		authScenario("When a non-existing grafana user authenticate and ldap returns unexpected error", func(sc *authScenarioContext) {
+			customErr := errors.New("custom")
+			mockLoginAttemptValidation(nil, sc)
+			mockLoginUsingGrafanaDB(m.ErrUserNotFound, sc)
+			mockLoginUsingLdap(true, customErr, sc)
+			mockSaveInvalidLoginAttempt(sc)
+
+			err := AuthenticateUser(sc.loginUserQuery)
+
+			Convey("it should result in", func() {
+				So(err, ShouldEqual, customErr)
+				So(sc.loginAttemptValidationWasCalled, ShouldBeTrue)
+				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
+				So(sc.ldapLoginWasCalled, ShouldBeTrue)
+				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeFalse)
 			})
+		})
 
-			Convey("for the 4th consecutive time", func() {
-				ldapAuthenticatorMock := mockLdapAuthenticator(ErrInvalidCredentials)
-				bus.AddHandler("test", func(query *m.GetUserLoginAttemptCountQuery) error {
-					query.Result = 4
-					return nil
-				})
+		authScenario("When grafana user authenticate with invalid credentials and invalid ldap credentials", func(sc *authScenarioContext) {
+			mockLoginAttemptValidation(nil, sc)
+			mockLoginUsingGrafanaDB(ErrInvalidCredentials, sc)
+			mockLoginUsingLdap(true, ErrInvalidCredentials, sc)
+			mockSaveInvalidLoginAttempt(sc)
 
-				query := LoginUserQuery{
-					Username:  "user",
-					Password:  "pwd",
-					IpAddress: "192.168.1.1:56433",
-				}
+			err := AuthenticateUser(sc.loginUserQuery)
 
-				var createLoginAttemptCmd *m.CreateLoginAttemptCommand
-
-				bus.AddHandler("test", func(cmd *m.CreateLoginAttemptCommand) error {
-					createLoginAttemptCmd = cmd
-					return nil
-				})
-
-				err := AuthenticateUser(&query)
-
-				Convey("it should result in ErrInvalidCredentials error", func() {
-					So(err, ShouldEqual, ErrInvalidCredentials)
-				})
-
-				Convey("it should create a login attempt", func() {
-					So(createLoginAttemptCmd, ShouldNotBeNil)
-					So(createLoginAttemptCmd.Username, ShouldEqual, query.Username)
-					So(createLoginAttemptCmd.IpAddress, ShouldEqual, query.IpAddress)
-				})
-
-				Convey("it should call Ldap authenticator", func() {
-					So(ldapAuthenticatorMock.loginCalled, ShouldBeTrue)
-				})
-			})
-
-			Convey("for the 5th consecutive time", func() {
-				ldapAuthenticatorMock := mockLdapAuthenticator(ErrInvalidCredentials)
-				bus.AddHandler("test", func(query *m.GetUserLoginAttemptCountQuery) error {
-					query.Result = 5
-					return nil
-				})
-
-				err := AuthenticateUser(&LoginUserQuery{
-					Username:  "user",
-					Password:  "pwd",
-					IpAddress: "192.168.1.1:56433",
-				})
-
-				Convey("it should result in TooManyLoginAttempts error", func() {
-					So(err, ShouldEqual, ErrTooManyLoginAttempts)
-				})
-
-				Convey("it should not call Ldap authenticator", func() {
-					So(ldapAuthenticatorMock.loginCalled, ShouldBeFalse)
-				})
+			Convey("it should result in", func() {
+				So(err, ShouldEqual, ErrInvalidCredentials)
+				So(sc.loginAttemptValidationWasCalled, ShouldBeTrue)
+				So(sc.grafanaLoginWasCalled, ShouldBeTrue)
+				So(sc.ldapLoginWasCalled, ShouldBeTrue)
+				So(sc.saveInvalidLoginAttemptWasCalled, ShouldBeTrue)
 			})
 		})
 	})
 }
 
-func mockLdapAuthenticator(loginError error) *mockLdapAuther {
-	mock := &mockLdapAuther{
-		LoginError: loginError,
+type authScenarioContext struct {
+	loginUserQuery                   *LoginUserQuery
+	grafanaLoginWasCalled            bool
+	ldapLoginWasCalled               bool
+	loginAttemptValidationWasCalled  bool
+	saveInvalidLoginAttemptWasCalled bool
+}
+
+type authScenarioFunc func(sc *authScenarioContext)
+
+func mockLoginUsingGrafanaDB(err error, sc *authScenarioContext) {
+	loginUsingGrafanaDB = func(query *LoginUserQuery) error {
+		sc.grafanaLoginWasCalled = true
+		return err
 	}
+}
 
-	NewLdapAuthenticator = func(server *LdapServerConf) ILdapAuther {
-		return mock
+func mockLoginUsingLdap(enabled bool, err error, sc *authScenarioContext) {
+	loginUsingLdap = func(query *LoginUserQuery) (bool, error) {
+		sc.ldapLoginWasCalled = true
+		return enabled, err
 	}
-
-	return mock
 }
 
-type mockLdapAuther struct {
-	LoginError  error
-	loginCalled bool
+func mockLoginAttemptValidation(err error, sc *authScenarioContext) {
+	validateLoginAttempts = func(username string) error {
+		sc.loginAttemptValidationWasCalled = true
+		return err
+	}
 }
 
-func (a *mockLdapAuther) Login(query *LoginUserQuery) error {
-	a.loginCalled = true
-	return a.LoginError
+func mockSaveInvalidLoginAttempt(sc *authScenarioContext) {
+	saveInvalidLoginAttempt = func(query *LoginUserQuery) {
+		sc.saveInvalidLoginAttemptWasCalled = true
+	}
 }
 
-func (a *mockLdapAuther) SyncSignedInUser(signedInUser *m.SignedInUser) error {
-	return nil
-}
+func authScenario(desc string, fn authScenarioFunc) {
+	Convey(desc, func() {
+		origLoginUsingGrafanaDB := loginUsingGrafanaDB
+		origLoginUsingLdap := loginUsingLdap
+		origValidateLoginAttempts := validateLoginAttempts
+		origSaveInvalidLoginAttempt := saveInvalidLoginAttempt
 
-func (a *mockLdapAuther) GetGrafanaUserFor(ldapUser *LdapUserInfo) (*m.User, error) {
-	return nil, nil
-}
+		sc := &authScenarioContext{
+			loginUserQuery: &LoginUserQuery{
+				Username:  "user",
+				Password:  "pwd",
+				IpAddress: "192.168.1.1:56433",
+			},
+		}
 
-func (a *mockLdapAuther) SyncOrgRoles(user *m.User, ldapUser *LdapUserInfo) error {
-	return nil
+		defer func() {
+			loginUsingGrafanaDB = origLoginUsingGrafanaDB
+			loginUsingLdap = origLoginUsingLdap
+			validateLoginAttempts = origValidateLoginAttempts
+			saveInvalidLoginAttempt = origSaveInvalidLoginAttempt
+		}()
+
+		fn(sc)
+	})
 }
