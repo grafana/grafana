@@ -91,6 +91,10 @@ func (service *CleanUpService) deleteExpiredDashboardVersions() {
 }
 
 func (service *CleanUpService) deleteOldLoginAttempts() {
+	if setting.DisableLoginAttemptsValidation {
+		return
+	}
+
 	cmd := m.DeleteOldLoginAttemptsCommand{
 		OlderThan: time.Now().Add(time.Minute * -10),
 	}
