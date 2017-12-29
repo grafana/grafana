@@ -151,7 +151,7 @@
     "react-grid-layout": "^0.16.1",
     "react-sizeme": "^2.3.6",
     "remarkable": "^1.7.1",
-    "rst2html": "github:thoward/rst2html#d6e2f21",
+    "rst2html": "github:thoward/rst2html#990cb89",
     "rxjs": "^5.4.3",
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop",

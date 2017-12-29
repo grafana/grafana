@@ -8798,9 +8798,9 @@ rst-selector-parser@^2.2.3:
     lodash.flattendeep "^4.4.0"
     nearley "^2.7.10"
 
-"rst2html@github:thoward/rst2html#d6e2f21":
+"rst2html@github:thoward/rst2html#990cb89":
   version "1.0.4"
-  resolved "https://codeload.github.com/thoward/rst2html/tar.gz/d6e2f219ea94ec7b1fe3cc918d152b67015ab04e"
+  resolved "https://codeload.github.com/thoward/rst2html/tar.gz/990cb89f2a300cdd9151790be377c4c0840df809"
   dependencies:
     restructured "0.0.11"
 
