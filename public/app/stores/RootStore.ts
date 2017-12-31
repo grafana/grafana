@@ -2,7 +2,7 @@ import { types } from 'mobx-state-tree';
 import { SearchStore } from './SearchStore';
 import { ServerStatsStore } from './ServerStatsStore';
 import { NavStore } from './NavStore';
-import { AlertingStore } from './AlertingStore';
+import { AlertListStore } from './AlertListStore';
 
 export const RootStore = types.model({
   search: types.optional(SearchStore, {
@@ -12,7 +12,7 @@ export const RootStore = types.model({
     stats: [],
   }),
   nav: types.optional(NavStore, {}),
-  alerting: types.optional(AlertingStore, {
+  alertList: types.optional(AlertListStore, {
     rules: [],
   }),
 });

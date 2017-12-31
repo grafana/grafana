@@ -2,49 +2,73 @@ import React from 'react';
 import classNames from 'classnames';
 import { inject, observer } from 'mobx-react';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
+import { IRootStore } from 'app/stores/RootStore';
+import { IAlertRule } from 'app/stores/AlertListStore';
+import appEvents from 'app/core/app_events';
 
-export interface IProps {
-  store: any;
+export interface AlertRuleListProps {
+  store: IRootStore;
 }
 
 @inject('store')
 @observer
-export class AlertRuleList extends React.Component<IProps, any> {
+export class AlertRuleList extends React.Component<AlertRuleListProps, any> {
+  stateFilters = [
+    { text: 'All', value: 'all' },
+    { text: 'OK', value: 'ok' },
+    { text: 'Not OK', value: 'not_ok' },
+    { text: 'Alerting', value: 'alerting' },
+    { text: 'No Data', value: 'no_data' },
+    { text: 'Paused', value: 'paused' },
+  ];
+
   constructor(props) {
     super(props);
 
     this.props.store.nav.load('alerting', 'alert-list');
-    this.props.store.alerting.loadRules();
+    this.props.store.alertList.loadRules();
   }
 
+  onStateFilterChanged = evt => {
+    this.props.store.alertList.setStateFilter(evt.target.value);
+    this.props.store.alertList.loadRules();
+  };
+
+  onOpenHowTo = () => {
+    appEvents.emit('show-modal', {
+      src: 'public/app/features/alerting/partials/alert_howto.html',
+      modalClass: 'confirm-modal',
+      model: {},
+    });
+  };
+
   render() {
+    const { nav, alertList } = this.props.store;
+
     return (
       <div>
-        <PageHeader model={this.props.store.nav} />
+        <PageHeader model={nav as any} />
         <div className="page-container page-body">
           <div className="page-action-bar">
             <div className="gf-form">
               <label className="gf-form-label">Filter by state</label>
 
               <div className="gf-form-select-wrapper width-13">
-                <select
-                  className="gf-form-input"
-                  ng-model="ctrl.filters.state"
-                  ng-options="f.value as f.text for f in ctrl.stateFilters"
-                  ng-change="ctrl.filtersChanged()"
-                />
+                <select className="gf-form-input" onChange={this.onStateFilterChanged}>
+                  {this.stateFilters.map(AlertStateFilterOption)}
+                </select>
               </div>
             </div>
 
             <div className="page-action-bar__spacer" />
 
-            <a className="btn btn-secondary" ng-click="ctrl.openHowTo()">
+            <a className="btn btn-secondary" onClick={this.onOpenHowTo}>
               <i className="fa fa-info-circle" /> How to add an alert
             </a>
           </div>
 
           <section className="card-section card-list-layout-list">
-            <ol className="card-list">{this.props.store.alerting.rules.map(AlertRuleItem)}</ol>
+            <ol className="card-list">{alertList.rules.map(rule => <AlertRuleItem rule={rule} key={rule.id} />)}</ol>
           </section>
         </div>
       </div>
@@ -52,43 +76,68 @@ export class AlertRuleList extends React.Component<IProps, any> {
   }
 }
 
-function AlertRuleItem(rule) {
-  let stateClass = classNames({
-    fa: true,
-    'fa-play': rule.state === 'paused',
-    'fa-pause': rule.state !== 'paused',
-  });
-
-  let ruleUrl = `dashboard/${rule.dashboardUri}?panelId=${rule.panelId}&fullscreen&edit&tab=alert`;
-
+function AlertStateFilterOption({ text, value }) {
   return (
-    <li className="card-item-wrapper" key={rule.id}>
-      <div className="card-item card-item--alert">
-        <div className="card-item-header">
-          <div className="card-item-type">
-            <a className="card-item-cog" title="Pausing an alert rule prevents it from executing">
-              <i className={stateClass} />
-            </a>
-            <a className="card-item-cog" href={ruleUrl} title="Edit alert rule">
-              <i className="icon-gf icon-gf-settings" />
-            </a>
-          </div>
-        </div>
-        <div className="card-item-body">
-          <div className="card-item-details">
-            <div className="card-item-name">
-              <a href={ruleUrl}>{rule.name}</a>
-            </div>
-            <div className="card-item-sub-name">
-              <span className={`alert-list-item-state ${rule.stateClass}`}>
-                <i className={rule.stateIcon} /> {rule.stateText}
-              </span>
-              <span> for {rule.stateAge}</span>
-            </div>
-            {rule.info && <div className="small muted">{rule.info}</div>}
-          </div>
-        </div>
-      </div>
-    </li>
+    <option key={value} value={value}>
+      {text}
+    </option>
   );
+}
+
+export interface AlertRuleItemProps {
+  rule: IAlertRule;
+}
+
+@observer
+export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
+  toggleState = () => {
+    this.props.rule.togglePaused();
+  };
+
+  render() {
+    const { rule } = this.props;
+
+    let stateClass = classNames({
+      fa: true,
+      'fa-play': rule.isPaused,
+      'fa-pause': !rule.isPaused,
+    });
+
+    let ruleUrl = `dashboard/${rule.dashboardUri}?panelId=${rule.panelId}&fullscreen&edit&tab=alert`;
+
+    return (
+      <li className="card-item-wrapper">
+        <div className="card-item card-item--alert">
+          <div className="card-item-header">
+            <div className="card-item-type">
+              <a
+                className="card-item-cog"
+                title="Pausing an alert rule prevents it from executing"
+                onClick={this.toggleState}
+              >
+                <i className={stateClass} />
+              </a>
+              <a className="card-item-cog" href={ruleUrl} title="Edit alert rule">
+                <i className="icon-gf icon-gf-settings" />
+              </a>
+            </div>
+          </div>
+          <div className="card-item-body">
+            <div className="card-item-details">
+              <div className="card-item-name">
+                <a href={ruleUrl}>{rule.name}</a>
+              </div>
+              <div className="card-item-sub-name">
+                <span className={`alert-list-item-state ${rule.stateClass}`}>
+                  <i className={rule.stateIcon} /> {rule.stateText}
+                </span>
+                <span> for {rule.stateAge}</span>
+              </div>
+              {rule.info && <div className="small muted">{rule.info}</div>}
+            </div>
+          </div>
+        </div>
+      </li>
+    );
+  }
 }
