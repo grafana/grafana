@@ -273,6 +273,12 @@
 				<span class="gf-form-label width-10">Tags query</span>
 				<input type="text" class="gf-form-input" ng-model='current.tagsQuery' placeholder="metric name or tags query" ng-model-onblur></input>
 			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-7">
+					Tag Regex
+				</span>
+				<input type="text" class="gf-form-input" ng-model='current.tagRegex' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()"></input>
+			</div>
 			<div class="gf-form" ng-if="current.useTags">
 				<li class="gf-form-label width-10">Tag values query</li>
 				<input type="text" class="gf-form-input" ng-model='current.tagValuesQuery' placeholder="apps.$tag.*" ng-model-onblur></input>
