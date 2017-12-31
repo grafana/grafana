@@ -10,19 +10,18 @@ import { createStore } from 'app/stores/store';
 
 export class GrafanaCtrl {
   /** @ngInject */
-  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv, globalEventSrv, backendSrv) {
+  constructor($scope, alertSrv, utilSrv, $rootScope, $controller, contextSrv, bridgeSrv, backendSrv) {
     createStore(backendSrv);
 
     $scope.init = function() {
       $scope.contextSrv = contextSrv;
-
-      $rootScope.appSubUrl = config.appSubUrl;
+      $scope.appSubUrl = config.appSubUrl;
       $scope._ = _;
 
       profiler.init(config, $rootScope);
       alertSrv.init();
       utilSrv.init();
-      globalEventSrv.init();
+      bridgeSrv.init();
 
       $scope.dashAlerts = alertSrv;
     };
@@ -54,7 +53,7 @@ export class GrafanaCtrl {
 }
 
 /** @ngInject */
-export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScope) {
+export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScope, $location) {
   return {
     restrict: 'E',
     controller: GrafanaCtrl,

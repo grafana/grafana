@@ -61,14 +61,12 @@ export const AlertListStore = types
 
     loadRules: flow(function* load() {
       let backendSrv = getEnv(self).backendSrv;
-
       let filters = { state: self.stateFilter };
-
-      let rules = yield backendSrv.get('/api/alerts', filters);
+      let apiRules = yield backendSrv.get('/api/alerts', filters);
 
       self.rules.clear();
 
-      for (let rule of rules) {
+      for (let rule of apiRules) {
         setStateFields(rule, rule.state);
 
         if (rule.executionError) {

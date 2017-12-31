@@ -3,6 +3,7 @@ import { SearchStore } from './SearchStore';
 import { ServerStatsStore } from './ServerStatsStore';
 import { NavStore } from './NavStore';
 import { AlertListStore } from './AlertListStore';
+import { ViewStore } from './ViewStore';
 
 export const RootStore = types.model({
   search: types.optional(SearchStore, {
@@ -14,6 +15,10 @@ export const RootStore = types.model({
   nav: types.optional(NavStore, {}),
   alertList: types.optional(AlertListStore, {
     rules: [],
+  }),
+  view: types.optional(ViewStore, {
+    path: '',
+    query: {},
   }),
 });
 

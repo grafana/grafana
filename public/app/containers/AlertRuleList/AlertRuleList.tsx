@@ -25,12 +25,16 @@ export class AlertRuleList extends React.Component<AlertRuleListProps, any> {
   constructor(props) {
     super(props);
 
-    this.props.store.nav.load('alerting', 'alert-list');
-    this.props.store.alertList.loadRules();
+    const store = this.props.store;
+
+    store.nav.load('alerting', 'alert-list');
+    store.alertList.setStateFilter(store.view.query.get('state') || 'all');
+    store.alertList.loadRules();
   }
 
   onStateFilterChanged = evt => {
     this.props.store.alertList.setStateFilter(evt.target.value);
+    this.props.store.view.updateQuery({ state: evt.target.value });
     this.props.store.alertList.loadRules();
   };
 
@@ -54,7 +58,7 @@ export class AlertRuleList extends React.Component<AlertRuleListProps, any> {
               <label className="gf-form-label">Filter by state</label>
 
               <div className="gf-form-select-wrapper width-13">
-                <select className="gf-form-input" onChange={this.onStateFilterChanged}>
+                <select className="gf-form-input" onChange={this.onStateFilterChanged} value={alertList.stateFilter}>
                   {this.stateFilters.map(AlertStateFilterOption)}
                 </select>
               </div>

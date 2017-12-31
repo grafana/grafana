@@ -1,5 +1,4 @@
-import { GlobalEventSrv } from 'app/core/services/global_event_srv';
-import { beforeEach } from 'test/lib/common';
+import { GlobalEventSrv } from 'app/core/services/bridge_srv';
 
 jest.mock('app/core/config', () => {
   return {
@@ -7,7 +6,7 @@ jest.mock('app/core/config', () => {
   };
 });
 
-describe('GlobalEventSrv', () => {
+describe('BridgeSrv', () => {
   let searchSrv;
 
   beforeEach(() => {

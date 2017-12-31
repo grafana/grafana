@@ -226,8 +226,9 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'AlertListCtrl',
       controllerAs: 'ctrl',
     })
-    .when('/alerting/list2', {
+    .when('/alerting/list', {
       template: '<react-container />',
+      reloadOnSearch: false,
       resolve: {
         component: () => AlertRuleList,
       },

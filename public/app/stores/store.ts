@@ -11,4 +11,6 @@ export function createStore(backendSrv) {
       navTree: config.bootData.navTree,
     }
   );
+
+  return store;
 }
