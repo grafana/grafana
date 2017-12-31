@@ -8,6 +8,7 @@ export class VariableEditorCtrl {
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
     $scope.namePattern = /^(?!__).*$/;
+    $scope._ = _;
 
     $scope.refreshOptions = [
       { value: 0, text: 'Never' },
