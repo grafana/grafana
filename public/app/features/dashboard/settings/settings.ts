@@ -2,6 +2,7 @@ import { coreModule, appEvents, contextSrv } from 'app/core/core';
 import { DashboardModel } from '../dashboard_model';
 import $ from 'jquery';
 import _ from 'lodash';
+import './panels';
 
 export class SettingsCtrl {
   dashboard: DashboardModel;
@@ -56,6 +57,11 @@ export class SettingsCtrl {
         title: 'Links',
         id: 'links',
         icon: 'gicon gicon-link',
+      });
+      this.sections.push({
+        title: 'Panels',
+        id: 'panels',
+        icon: 'icon-gf icon-gf-panel',
       });
     }
 

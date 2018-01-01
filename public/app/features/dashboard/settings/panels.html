@@ -1,0 +1,110 @@
+<h3 class="dashboard-settings__header">
+  Dashboard Panels
+</h3>
+
+
+<div class="gf-form-group">
+
+<table class="filter-table filter-table--hover">
+  <thead>
+    <tr>
+      <th><img ng-src="{{ctrl.getIconFor(null)}}" height="20px;"/></th>
+      <th>Title</th>
+      <th ng-show="ctrl.showDatasource">Datasource</th>
+      <th ng-show="ctrl.showAlerts">Alert</th>
+      <th ng-show="ctrl.showAlerts">Every</th>
+      <th ng-show="ctrl.showGridPos">X</th>
+      <th ng-show="ctrl.showGridPos">Y</th>
+      <th ng-show="ctrl.showGridPos">W</th>
+      <th ng-show="ctrl.showGridPos">H</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat-start="panel in ctrl.dashboard.panels track by $index">
+      <td style="width: 10px;" ng-click="ctrl.showPanel(panel)" class="pointer">
+        <img ng-src="{{ctrl.getIconFor(panel)}}" height="20px;" title="{{panel.type}} / {{panel.id}}" />
+      </td>
+      <td style="max-width: 100%; padding:2px 0px;" >
+        <input type="text" class="gf-form-input" ng-model="panel.title" />
+      </td>
+      <td style="max-width: 100%;" ng-show="ctrl.showDatasource" >
+        <div ng-show="panel.hasOwnProperty('datasource')">
+          <div class="gf-form-select-wrapper">
+            <select class="gf-form-input" ng-model="panel.datasource" ng-options="f for f in ctrl.datasources" ng-change="ctrl.updateStats()"></select>
+          </div>
+        </div>
+      </td>
+      <td ng-show="ctrl.showAlerts" style="max-width: 100%;" >
+        <input ng-show="panel.alert" type="text" class="gf-form-input" ng-model="panel.alert.name" />
+      </td>
+      <td ng-show="ctrl.showAlerts" style="width: 5em;" >
+        <input ng-show="panel.alert" type="text" class="gf-form-input" ng-model="panel.alert.frequency" />
+      </td>
+      <td ng-show="ctrl.showGridPos" style="width: 4em; padding:0px; margin:0px;">
+        <input type="number" class="gf-form-input" ng-model="panel.gridPos.x" ng-change="ctrl.layoutChanged()"/>
+      </td>
+      <td ng-show="ctrl.showGridPos" style="width: 4em; padding:0px; margin:0px;">
+        <input type="number" class="gf-form-input" ng-model="panel.gridPos.y" ng-change="ctrl.layoutChanged()"/>
+      </td>
+      <td ng-show="ctrl.showGridPos" style="width: 4em; padding:0px; margin:0px;">
+        <input type="number" class="gf-form-input" ng-model="panel.gridPos.w" ng-change="ctrl.layoutChanged()" max="24"/>
+      </td>
+      <td ng-show="ctrl.showGridPos" style="width: 4em; padding:0px; margin:0px;">
+        <input type="number" class="gf-form-input" ng-model="panel.gridPos.h" ng-change="ctrl.layoutChanged()"/>
+      </td>
+      <td style="width: 1%">
+        <a ng-click="ctrl.removePanel(panel, true)" class="btn btn-danger btn-small">
+          <i class="fa fa-remove"></i>
+        </a>
+      </td>
+    </tr>
+    <tr ng-repeat-end ng-show="ctrl.showDescription && !ctrl.isRow(panel)">
+      <td>&nbsp;</td>
+      <td style="max-width: 100%; padding:2px 0px;" >
+        <textarea class="gf-form-input" rows="3" ng-model="panel.description" placeholder="Panel description, supports markdown &amp; links" ng-blur="ctrl.updateStats();"></textarea>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+
+<div class="gf-form-group">
+
+  <h5 class="section-heading">Configure</h5>
+  <div class="gf-form-group">
+    <div ng-show="ctrl.stats.alerts > 0" class="gf-form">
+      <gf-form-switch class="gf-form" label="Alert Info" checked="ctrl.showAlerts" label-class="width-7"></gf-form-switch>
+      &nbsp; <em class="muted">{{ ctrl.stats.alerts }} Alert Configured</em>
+    </div>
+
+    <div class="gf-form">
+      <gf-form-switch class="gf-form-inline" label="Datasource" checked="ctrl.showDatasource" label-class="width-7"></gf-form-switch>
+      <div class="gf-form-inline">&nbsp;
+        <a ng-repeat="src in ctrl.stats.sources"
+          ng-click="ctrl.openDatasource(src.name)"
+          class="tag label label-tag" style="background-color: rgb(117, 117, 117); border-color: rgb(155, 155, 155); margin-right:10px;">
+          {{ src.count }}x {{ src.name }}
+        </a>
+      </div>
+    </div>
+
+    <div class="gf-form">
+      <gf-form-switch class="gf-form-inline" label="Description" checked="ctrl.showDescription" label-class="width-7"></gf-form-switch>
+      &nbsp; <em class="muted">{{ ctrl.stats.descriptions }} Panels with Description</em>
+    </div>
+
+    <div class="gf-form">
+      <gf-form-switch class="gf-form-inline" label="Grid Position" checked="ctrl.showGridPos" label-class="width-7"></gf-form-switch>
+      &nbsp; <em ng-show="ctrl.showGridPos">NOTE: requires a save a full refresh to use changes!</em>
+    </div>
+  </div>
+
+</div>
+
+
+
+
+
+
