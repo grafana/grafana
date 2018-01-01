@@ -1,5 +1,6 @@
 export const backendSrv = {
   get: jest.fn(),
+  post: jest.fn(),
 };
 
 export function createNavTree(...args) {

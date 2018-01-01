@@ -1,15 +1,15 @@
 import React from 'react';
-// import renderer from 'react-test-renderer';
 import moment from 'moment';
-import { AlertRuleList, AlertRuleItem } from './AlertRuleList';
+import { AlertRuleList } from './AlertRuleList';
 import { RootStore } from 'app/stores/RootStore';
 import { backendSrv, createNavTree } from 'test/mocks/common';
-import { shallow } from 'enzyme';
+import { mount } from 'enzyme';
+import toJson from 'enzyme-to-json';
 
 describe('AlertRuleList', () => {
   let page, store;
 
-  beforeAll(done => {
+  beforeAll(() => {
     backendSrv.get.mockReturnValue(
       Promise.resolve([
         {
@@ -36,14 +36,7 @@ describe('AlertRuleList', () => {
       }
     );
 
-    page = shallow(<AlertRuleList store={store} />)
-      .first()
-      .shallow();
-
-    setTimeout(() => {
-      page.update();
-      done();
-    });
+    page = mount(<AlertRuleList store={store} />);
   });
 
   it('should call api to get rules', () => {
@@ -51,6 +44,25 @@ describe('AlertRuleList', () => {
   });
 
   it('should render 1 rule', () => {
-    expect(page.find(AlertRuleItem)).toHaveLength(1);
+    page.update();
+    let ruleNode = page.find('.card-item-wrapper');
+    expect(toJson(ruleNode)).toMatchSnapshot();
+  });
+
+  it('toggle state should change pause rule if not paused', async () => {
+    backendSrv.post.mockReturnValue(
+      Promise.resolve({
+        state: 'paused',
+      })
+    );
+
+    page.find('.fa-pause').simulate('click');
+
+    // wait for api call to resolve
+    await Promise.resolve();
+    page.update();
+
+    expect(store.alertList.rules[0].state).toBe('paused');
+    expect(page.find('.fa-play')).toHaveLength(1);
   });
 });
