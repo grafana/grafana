@@ -50,7 +50,6 @@ export class AlertRuleList extends React.Component<AlertRuleListProps, any> {
 
   render() {
     const { nav, alertList } = this.props.store;
-    console.log('render', alertList.rules.length);
 
     return (
       <div>

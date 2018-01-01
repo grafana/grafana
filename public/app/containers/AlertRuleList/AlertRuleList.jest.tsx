@@ -39,8 +39,11 @@ describe('AlertRuleList', () => {
     page = shallow(<AlertRuleList store={store} />)
       .first()
       .shallow();
-    setTimeout(done, 100);
-    //page = renderer.create(<AlertRuleList store={store} />);
+
+    setTimeout(() => {
+      page.update();
+      done();
+    });
   });
 
   it('should call api to get rules', () => {
@@ -48,7 +51,6 @@ describe('AlertRuleList', () => {
   });
 
   it('should render 1 rule', () => {
-    console.log(page.find('.card-section').debug());
     expect(page.find(AlertRuleItem)).toHaveLength(1);
   });
 });
