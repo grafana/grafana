@@ -55,13 +55,12 @@ export const AlertListStore = types
     stateFilter: types.optional(types.string, 'all'),
   })
   .actions(self => ({
-    setStateFilter: function(state) {
-      self.stateFilter = state;
-    },
-
-    loadRules: flow(function* load() {
+    loadRules: flow(function* load(filters) {
       let backendSrv = getEnv(self).backendSrv;
-      let filters = { state: self.stateFilter };
+
+      // store state filter used in api query
+      self.stateFilter = filters.state;
+
       let apiRules = yield backendSrv.get('/api/alerts', filters);
 
       self.rules.clear();

@@ -1,4 +1,4 @@
-import { GlobalEventSrv } from 'app/core/services/bridge_srv';
+import { BridgeSrv } from 'app/core/services/bridge_srv';
 
 jest.mock('app/core/config', () => {
   return {
@@ -10,7 +10,7 @@ describe('BridgeSrv', () => {
   let searchSrv;
 
   beforeEach(() => {
-    searchSrv = new GlobalEventSrv(null, null, null);
+    searchSrv = new BridgeSrv(null, null, null, null);
   });
 
   describe('With /subUrl as appSubUrl', () => {

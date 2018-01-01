@@ -25,6 +25,10 @@ export const NavStore = types
 
       for (let id of args) {
         node = _.find(children, { id: id });
+        if (!node) {
+          throw new Error(`NavItem with id ${id} not found`);
+        }
+
         children = node.children;
         parents.push(node);
       }

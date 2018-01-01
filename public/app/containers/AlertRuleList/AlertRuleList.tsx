@@ -25,18 +25,20 @@ export class AlertRuleList extends React.Component<AlertRuleListProps, any> {
   constructor(props) {
     super(props);
 
-    const store = this.props.store;
-
-    store.nav.load('alerting', 'alert-list');
-    store.alertList.setStateFilter(store.view.query.get('state') || 'all');
-    store.alertList.loadRules();
+    this.props.store.nav.load('alerting', 'alert-list');
+    this.fetchRules();
   }
 
   onStateFilterChanged = evt => {
-    this.props.store.alertList.setStateFilter(evt.target.value);
     this.props.store.view.updateQuery({ state: evt.target.value });
-    this.props.store.alertList.loadRules();
+    this.fetchRules();
   };
+
+  fetchRules() {
+    this.props.store.alertList.loadRules({
+      state: this.props.store.view.query.get('state') || 'all',
+    });
+  }
 
   onOpenHowTo = () => {
     appEvents.emit('show-modal', {
@@ -48,6 +50,7 @@ export class AlertRuleList extends React.Component<AlertRuleListProps, any> {
 
   render() {
     const { nav, alertList } = this.props.store;
+    console.log('render', alertList.rules.length);
 
     return (
       <div>
