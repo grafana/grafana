@@ -2,10 +2,12 @@ import { types } from 'mobx-state-tree';
 import _ from 'lodash';
 import $ from 'jquery';
 
+let QueryValueType = types.union(types.string, types.boolean, types.number);
+
 export const ViewStore = types
   .model({
     path: types.string,
-    query: types.map(types.string),
+    query: types.map(QueryValueType),
   })
   .views(self => ({
     get currentUrl() {
