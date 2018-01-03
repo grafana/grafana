@@ -1,16 +1,5 @@
 import { types, getEnv } from 'mobx-state-tree';
-import _ from 'lodash';
-
-export const NavItem = types.model('NavItem', {
-  id: types.identifier(types.string),
-  text: types.string,
-  url: types.optional(types.string, ''),
-  subTitle: types.optional(types.string, ''),
-  icon: types.optional(types.string, ''),
-  img: types.optional(types.string, ''),
-  active: types.optional(types.boolean, false),
-  children: types.optional(types.array(types.late(() => NavItem)), []),
-});
+import { NavItem } from './NavItem';
 
 export const NavStore = types
   .model('NavStore', {
@@ -19,12 +8,13 @@ export const NavStore = types
   })
   .actions(self => ({
     load(...args) {
-      var children = getEnv(self).navTree;
+      let children = getEnv(self).navTree;
       let main, node;
       let parents = [];
 
       for (let id of args) {
-        node = _.find(children, { id: id });
+        node = children.find(el => el.id === id);
+
         if (!node) {
           throw new Error(`NavItem with id ${id} not found`);
         }
