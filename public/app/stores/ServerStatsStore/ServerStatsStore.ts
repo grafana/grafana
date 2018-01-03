@@ -1,9 +1,5 @@
-import { types, getEnv, flow } from 'mobx-state-tree';
-
-export const ServerStat = types.model('ServerStat', {
-  name: types.string,
-  value: types.optional(types.number, 0),
-});
+﻿import { types, getEnv, flow } from 'mobx-state-tree';
+import { ServerStat } from './ServerStat';
 
 export const ServerStatsStore = types
   .model('ServerStatsStore', {
@@ -12,9 +8,8 @@ export const ServerStatsStore = types
   })
   .actions(self => ({
     load: flow(function* load() {
-      let backendSrv = getEnv(self).backendSrv;
-
-      let res = yield backendSrv.get('/api/admin/stats');
+      const backendSrv = getEnv(self).backendSrv;
+      const res = yield backendSrv.get('/api/admin/stats');
       self.stats.clear();
       self.stats.push(ServerStat.create({ name: 'Total dashboards', value: res.dashboards }));
       self.stats.push(ServerStat.create({ name: 'Total users', value: res.users }));
