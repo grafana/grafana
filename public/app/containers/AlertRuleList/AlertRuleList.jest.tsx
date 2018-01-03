@@ -1,7 +1,7 @@
 import React from 'react';
 import moment from 'moment';
 import { AlertRuleList } from './AlertRuleList';
-import { RootStore } from 'app/stores/RootStore';
+import { RootStore } from 'app/stores/RootStore/RootStore';
 import { backendSrv, createNavTree } from 'test/mocks/common';
 import { mount } from 'enzyme';
 import toJson from 'enzyme-to-json';
@@ -36,7 +36,7 @@ describe('AlertRuleList', () => {
       }
     );
 
-    page = mount(<AlertRuleList store={store} />);
+    page = mount(<AlertRuleList {...store} />);
   });
 
   it('should call api to get rules', () => {
