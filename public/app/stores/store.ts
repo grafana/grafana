@@ -1,4 +1,4 @@
-import { RootStore, IRootStore } from './RootStore';
+import { RootStore, IRootStore } from './RootStore/RootStore';
 import config from 'app/core/config';
 
 export let store: IRootStore;

@@ -1,8 +1,8 @@
-﻿import { SearchStore } from './../stores/SearchStore';
-import { ServerStatsStore } from './../stores/ServerStatsStore';
-import { NavStore } from './../stores/NavStore';
-import { AlertListStore } from './../stores/AlertListStore';
-import { ViewStore } from './../stores/ViewStore';
+﻿import { SearchStore } from './../stores/SearchStore/SearchStore';
+import { ServerStatsStore } from './../stores/ServerStatsStore/ServerStatsStore';
+import { NavStore } from './../stores/NavStore/NavStore';
+import { AlertListStore } from './../stores/AlertListStore/AlertListStore';
+import { ViewStore } from './../stores/ViewStore/ViewStore';
 
 interface IContainerProps {
   search: typeof SearchStore.Type;

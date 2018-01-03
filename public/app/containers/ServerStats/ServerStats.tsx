@@ -16,7 +16,6 @@ export class ServerStats extends React.Component<IContainerProps, any> {
 
   render() {
     const { nav, serverStats } = this.props;
-    console.log('NAVVVVV', nav);
     return (
       <div>
         <PageHeader model={nav as any} />

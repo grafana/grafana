@@ -1,7 +1,7 @@
 import React from 'react';
 import renderer from 'react-test-renderer';
 import { ServerStats } from './ServerStats';
-import { RootStore } from 'app/stores/RootStore';
+import { RootStore } from 'app/stores/RootStore/RootStore';
 import { backendSrv, createNavTree } from 'test/mocks/common';
 
 describe('ServerStats', () => {

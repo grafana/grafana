@@ -2,7 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { inject, observer } from 'mobx-react';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import { IAlertRule } from 'app/stores/AlertListStore';
+import { IAlertRule } from 'app/stores/AlertListStore/AlertListStore';
 import appEvents from 'app/core/app_events';
 import IContainerProps from 'app/containers/IContainerProps';
 
