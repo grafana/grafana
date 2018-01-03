@@ -7,6 +7,8 @@ import { coreModule, appEvents } from 'app/core/core';
 import alertDef from './alert_def';
 
 export class AlertListCtrl {
+  unfiltered: any;
+  searchQuery: string;
   alerts: any;
   stateFilters = [
     { text: 'All', value: null },
@@ -46,6 +48,7 @@ export class AlertListCtrl {
         }
         return alert;
       });
+      this.unfiltered = this.alerts;
     });
   }
 
@@ -67,6 +70,13 @@ export class AlertListCtrl {
       src: 'public/app/features/alerting/partials/alert_howto.html',
       modalClass: 'confirm-modal',
       model: {},
+    });
+  }
+
+  onQueryUpdated() {
+    let regex = new RegExp(this.searchQuery, 'ig');
+    this.alerts = _.filter(this.unfiltered, item => {
+      return regex.test(item.stateModel) || regex.test(item.name);
     });
   }
 }
