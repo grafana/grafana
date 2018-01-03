@@ -4,10 +4,12 @@ import { NavStore } from './../stores/NavStore';
 import { AlertListStore } from './../stores/AlertListStore';
 import { ViewStore } from './../stores/ViewStore';
 
-export interface IContainerProps {
+interface IContainerProps {
   search: typeof SearchStore.Type;
   serverStats: typeof ServerStatsStore.Type;
   nav: typeof NavStore.Type;
   alertList: typeof AlertListStore.Type;
   view: typeof ViewStore.Type;
 }
+
+export default IContainerProps;
