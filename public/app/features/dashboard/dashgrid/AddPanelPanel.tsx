@@ -3,14 +3,14 @@ import _ from 'lodash';
 
 import config from 'app/core/config';
 import { PanelModel } from '../panel_model';
-import { PanelContainer } from './PanelContainer';
+import { DashboardModel } from '../dashboard_model';
 import ScrollBar from 'app/core/components/ScrollBar/ScrollBar';
 import store from 'app/core/store';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 
 export interface AddPanelPanelProps {
   panel: PanelModel;
-  getPanelContainer: () => PanelContainer;
+  dashboard: DashboardModel;
 }
 
 export interface AddPanelPanelState {
@@ -55,8 +55,7 @@ export class AddPanelPanel extends React.Component<AddPanelPanelProps, AddPanelP
   }
 
   onAddPanel = panelPluginInfo => {
-    const panelContainer = this.props.getPanelContainer();
-    const dashboard = panelContainer.getDashboard();
+    const dashboard = this.props.dashboard;
     const { gridPos } = this.props.panel;
 
     var newPanel: any = {

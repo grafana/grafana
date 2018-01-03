@@ -4,18 +4,13 @@ import { DashboardRow } from '../dashgrid/DashboardRow';
 import { PanelModel } from '../panel_model';
 
 describe('DashboardRow', () => {
-  let wrapper, panel, getPanelContainer, dashboardMock;
+  let wrapper, panel, dashboardMock;
 
   beforeEach(() => {
-    dashboardMock = {toggleRow: jest.fn()};
+    dashboardMock = { toggleRow: jest.fn() };
 
-    getPanelContainer = jest.fn().mockReturnValue({
-      getDashboard: jest.fn().mockReturnValue(dashboardMock),
-      getPanelLoader: jest.fn()
-    });
-
-    panel = new PanelModel({collapsed: false});
-    wrapper = shallow(<DashboardRow panel={panel} getPanelContainer={getPanelContainer} />);
+    panel = new PanelModel({ collapsed: false });
+    wrapper = shallow(<DashboardRow panel={panel} dashboard={dashboardMock} />);
   });
 
   it('Should not have collapsed class when collaped is false', () => {
@@ -29,5 +24,4 @@ describe('DashboardRow', () => {
     expect(wrapper.find('.dashboard-row--collapsed')).toHaveLength(1);
     expect(dashboardMock.toggleRow.mock.calls).toHaveLength(1);
   });
-
 });

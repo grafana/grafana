@@ -3,7 +3,7 @@ import config from 'app/core/config';
 import classNames from 'classnames';
 import appEvents from 'app/core/app_events';
 import { PanelModel } from '../panel_model';
-import { PanelContainer } from './PanelContainer';
+import { DashboardModel } from '../dashboard_model';
 import { AttachedPanel } from './PanelLoader';
 import { DashboardRow } from './DashboardRow';
 import { AddPanelPanel } from './AddPanelPanel';
@@ -11,7 +11,7 @@ import { importPluginModule } from 'app/features/plugins/plugin_loader';
 
 export interface DashboardPanelProps {
   panel: PanelModel;
-  getPanelContainer: () => PanelContainer;
+  dashboard: DashboardModel;
 }
 
 export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
@@ -39,33 +39,16 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
     }
   }
 
-  componentDidMount() {
-    if (!this.element) {
-      return;
-    }
-
-    const panelContainer = this.props.getPanelContainer();
-    const dashboard = panelContainer.getDashboard();
-    const loader = panelContainer.getPanelLoader();
-    this.attachedPanel = loader.load(this.element, this.props.panel, dashboard);
-  }
-
-  componentWillUnmount() {
-    if (this.attachedPanel) {
-      this.attachedPanel.destroy();
-    }
-  }
-
   isSpecial() {
     return this.specialPanels[this.props.panel.type];
   }
 
   renderRow() {
-    return <DashboardRow panel={this.props.panel} getPanelContainer={this.props.getPanelContainer} />;
+    return <DashboardRow panel={this.props.panel} dashboard={this.props.dashboard} />;
   }
 
   renderAddPanel() {
-    return <AddPanelPanel panel={this.props.panel} getPanelContainer={this.props.getPanelContainer} />;
+    return <AddPanelPanel panel={this.props.panel} dashboard={this.props.dashboard} />;
   }
 
   render() {
@@ -81,7 +64,7 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
 
     return (
       <div className="panel-container">
-        <PanelHeader panel={this.props.panel} />
+        <PanelHeader panel={this.props.panel} dashboard={this.props.dashboard} />
         <div className="panel-content">{PanelComponent && <PanelComponent />}</div>
       </div>
     );
@@ -93,16 +76,13 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
 }
 
 interface PanelHeaderProps {
-  panel: any;
+  panel: PanelModel;
+  dashboard: DashboardModel;
 }
 
 export class PanelHeader extends React.Component<PanelHeaderProps, any> {
   onEditPanel = () => {
-    appEvents.emit('panel-change-view', {
-      fullscreen: true,
-      edit: true,
-      panelId: this.props.panel.id,
-    });
+    this.props.dashboard.setViewMode(this.props.panel, true, true);
   };
 
   render() {

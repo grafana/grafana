@@ -50,7 +50,8 @@ function GridWrapper({
       onResize={onResize}
       onResizeStop={onResizeStop}
       onDragStop={onDragStop}
-      onLayoutChange={onLayoutChange}>
+      onLayoutChange={onLayoutChange}
+    >
       {children}
     </ReactGridLayout>
   );
@@ -177,8 +178,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
       const panelClasses = classNames({ panel: true, 'panel--fullscreen': panel.fullscreen });
       panelElements.push(
         <div key={panel.id.toString()} className={panelClasses}>
-          <DashboardPanel panel={panel} getPanelContainer={this.props.getPanelContainer} />
-        </div>,
+          <DashboardPanel panel={panel} dashboard={this.dashboard} />
+        </div>
       );
     }
 
@@ -196,7 +197,8 @@ export class DashboardGrid extends React.Component<DashboardGridProps, any> {
         onWidthChange={this.onWidthChange}
         onDragStop={this.onDragStop}
         onResize={this.onResize}
-        onResizeStop={this.onResizeStop}>
+        onResizeStop={this.onResizeStop}
+      >
         {this.renderPanels()}
       </SizedReactLayoutGrid>
     );

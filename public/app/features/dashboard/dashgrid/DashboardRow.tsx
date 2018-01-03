@@ -1,19 +1,16 @@
 import React from 'react';
 import classNames from 'classnames';
 import { PanelModel } from '../panel_model';
-import { PanelContainer } from './PanelContainer';
+import { DashboardModel } from '../dashboard_model';
 import templateSrv from 'app/features/templating/template_srv';
 import appEvents from 'app/core/app_events';
 
 export interface DashboardRowProps {
   panel: PanelModel;
-  getPanelContainer: () => PanelContainer;
+  dashboard: DashboardModel;
 }
 
 export class DashboardRow extends React.Component<DashboardRowProps, any> {
-  dashboard: any;
-  panelContainer: any;
-
   constructor(props) {
     super(props);
 
@@ -21,16 +18,13 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       collapsed: this.props.panel.collapsed,
     };
 
-    this.panelContainer = this.props.getPanelContainer();
-    this.dashboard = this.panelContainer.getDashboard();
-
     this.toggle = this.toggle.bind(this);
     this.openSettings = this.openSettings.bind(this);
     this.delete = this.delete.bind(this);
   }
 
   toggle() {
-    this.dashboard.toggleRow(this.props.panel);
+    this.props.dashboard.toggleRow(this.props.panel);
 
     this.setState(prevState => {
       return { collapsed: !prevState.collapsed };
@@ -55,14 +49,10 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
       altActionText: 'Delete row only',
       icon: 'fa-trash',
       onConfirm: () => {
-        const panelContainer = this.props.getPanelContainer();
-        const dashboard = panelContainer.getDashboard();
-        dashboard.removeRow(this.props.panel, true);
+        this.props.dashboard.removeRow(this.props.panel, true);
       },
       onAltAction: () => {
-        const panelContainer = this.props.getPanelContainer();
-        const dashboard = panelContainer.getDashboard();
-        dashboard.removeRow(this.props.panel, false);
+        this.props.dashboard.removeRow(this.props.panel, false);
       },
     });
   }
