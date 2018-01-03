@@ -5,7 +5,7 @@ $select-item-bg: $dropdownBackground;
 $select-item-fg: $input-color;
 $select-option-bg: $dropdownBackground;
 $select-option-color: $input-color;
-@import "../../../node_modules/react-select/scss/default.scss";
+@import '../../../node_modules/react-select/scss/default.scss';
 
 @mixin select-control() {
   width: 100%;
@@ -21,28 +21,23 @@ $select-option-color: $input-color;
   @include box-shadow($shadow);
 }
 
-// gf-
-// .form-dropdown {
-
-// }
-
 .gf-form-input--form-dropdown {
   padding: 0;
   border: 0;
   overflow: visible;
 
   .Select-placeholder {
-    color: #d8d9da;
+    color: $gray-4;
   }
 
   > .Select-control {
     @include select-control();
-    border-color: #262628;
+    border-color: $dark-3;
   }
 
   &.is-open > .Select-control {
     background: transparent;
-    border-color: #262628;
+    border-color: $dark-3;
   }
 
   &.is-focused > .Select-control {
@@ -66,100 +61,8 @@ $select-option-color: $input-color;
       height: 100%;
       width: 2px;
       display: block;
-      content: "";
-      background-image: linear-gradient(
-        to bottom,
-        #ffd500 0%,
-        #ff4400 99%,
-        #ff4400 100%
-      );
+      content: '';
+      background-image: linear-gradient(to bottom, #ffd500 0%, #ff4400 99%, #ff4400 100%);
     }
   }
 }
-
-// gf-form-input--dropdown
-
-// @mixin select-control() {
-//   width: 100%;
-//   margin-right: $gf-form-margin;
-//   @include border-radius($input-border-radius-sm);
-// }
-
-// @mixin select-control-focus() {
-//   border-color: $input-border-focus;
-//   outline: none;
-//   $shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px $input-box-shadow-focus;
-//   @include box-shadow($shadow);
-// }
-
-// .gf-form-dropdown-react {
-//   padding: 0px;
-// }
-
-// .Select {
-//   &.is-focused > .Select-control {
-//     background-color: $input-bg;
-//     @include select-control-focus();
-//   }
-//   &.is-focused:not(.is-open)>.Select-control,
-//   &.is-focused:not(.is-open).is-pseudo-focused>.Select-control {
-//     background-color: $input-label-bg;
-//     border: none;
-//     box-shadow: none;
-//   }
-//   &.has-value.Select--single>.Select-control .Select-value,
-//   &.has-value.is-pseudo-focused.Select--single>.Select-control .Select-value {
-//     .Select-value-label {
-//       color: $input-color;
-//     }
-//   }
-// }
-
-// .gf-form-label {
-
-//   .Select-control {
-//     @include select-control();
-//     font-size: $font-size-sm;
-//     color: $input-color;
-//     background-color: $input-label-bg; // padding: $input-padding-y $input-padding-x;
-//     display: block;
-//     border: $input-btn-border-width solid transparent;
-//   }
-// }
-
-// .gf-form-input {
-//   overflow: visible;
-
-//   .Select-control {
-//     @include select-control();
-//     background-color: $input-bg;
-//     color: $input-color;
-//     border: $input-btn-border-width solid $input-border-color;
-//   }
-// }
-
-// .Select-menu-outer {
-//   margin: 2px 0 0;
-//   border: 1px solid $dropdownBorder;
-//   background: $dropdownBackground;
-//   @include border-radius($input-border-radius-sm);
-// }
-
-// .Select-option {
-//   font-size: $font-size-sm;
-//   padding: 3px 20px 3px 15px;
-//   &:last-child {
-//     @include border-radius($input-border-radius-sm);
-//   }
-//   &.is-selected {
-//     background-color: $dropdownLinkBackgroundHover;
-//     color: $dropdownLinkColorHover;
-//   }
-//   &.is-focused {
-//     background-color: $dropdownLinkBackgroundHover;
-//     color: $dropdownLinkColorHover;
-//   }
-//   &.is-disabled {
-//     color: $gray-2;
-//   }
-// }

@@ -1,7 +1,7 @@
-﻿import React, { Component } from "react";
-import { debounce } from "lodash";
-import Select from "react-select";
-import UserPickerOption from "./UserPickerOption";
+﻿import React, { Component } from 'react';
+import { debounce } from 'lodash';
+import Select from 'react-select';
+import UserPickerOption from './UserPickerOption';
 export interface IProps {
   backendSrv: any;
   teamId: string;
@@ -34,21 +34,16 @@ class UserPicker extends Component<IProps, any> {
 
     this.debouncedSearchUsers = debounce(this.searchUsers, 300, {
       leading: true,
-      trailing: false
+      trailing: false,
     });
 
     this.state = {
       multi: false,
-      isLoading: false
+      isLoading: false,
     };
   }
 
-  componentWillReceiveProps(nextProps) {
-    console.log("componentWillReceiveProps", nextProps);
-  }
-
   handleChange(user) {
-    console.log("user", user);
     this.addUser(user.id);
   }
 
@@ -56,44 +51,37 @@ class UserPicker extends Component<IProps, any> {
     this.setState(prevState => {
       return {
         ...prevState,
-        isLoading: isLoading
+        isLoading: isLoading,
       };
     });
   }
 
   addUser(userId) {
     this.toggleLoading(true);
-    this.backendSrv
-      .post(`/api/teams/${this.teamId}/members`, { userId: userId })
-      .then(() => {
-        this.refreshList(); // this.get() in the angular controller
-        this.toggleLoading(false);
-        // this.$scope.$broadcast('user-picker-reset'); // TODO?
-      });
+    this.backendSrv.post(`/api/teams/${this.teamId}/members`, { userId: userId }).then(() => {
+      this.refreshList();
+      this.toggleLoading(false);
+    });
   }
 
   searchUsers(query) {
     this.toggleLoading(true);
 
-    return this.backendSrv
-      .get(`/api/users/search?perpage=10&page=1&query=${query}`)
-      .then(result => {
-        const users = result.users.map(user => {
-          return {
-            id: user.id,
-            label: `${user.login} - ${user.email}`,
-            avatarUrl: user.avatarUrl
-          };
-        });
-        this.toggleLoading(false);
-        return { options: users };
+    return this.backendSrv.get(`/api/users/search?perpage=10&page=1&query=${query}`).then(result => {
+      const users = result.users.map(user => {
+        return {
+          id: user.id,
+          label: `${user.login} - ${user.email}`,
+          avatarUrl: user.avatarUrl,
+        };
       });
+      this.toggleLoading(false);
+      return { options: users };
+    });
   }
 
   render() {
-    const AsyncComponent = this.state.creatable
-      ? Select.AsyncCreatable
-      : Select.Async;
+    const AsyncComponent = this.state.creatable ? Select.AsyncCreatable : Select.Async;
 
     return (
       <div className="user-picker">

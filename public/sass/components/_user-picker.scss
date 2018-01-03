@@ -2,24 +2,8 @@
   position: relative;
   text-align: left;
   width: 100%;
-  background-color: #171819;
   display: block;
   border-radius: 0;
-
-  // &:hover {
-  //     background-color: #262628;
-  //     // background-color: blue;
-  //     &::before {
-  //         position: absolute;
-  //         left: 0;
-  //         top: 0;
-  //         height: 100%;
-  //         width: 2px;
-  //         display: block;
-  //         content: '';
-  //         background-image: linear-gradient(to bottom, #ffd500 0%, #ff4400 99%, #ff4400 100%);
-  //     }
-  // }
 }
 .user-picker-option__avatar {
   width: 20px;
