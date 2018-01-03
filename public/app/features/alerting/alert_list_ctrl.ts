@@ -76,7 +76,7 @@ export class AlertListCtrl {
   onQueryUpdated() {
     let regex = new RegExp(this.searchQuery, 'ig');
     this.alerts = _.filter(this.unfiltered, item => {
-      return regex.test(item.stateModel) || regex.test(item.name);
+      return regex.test(item.stateModel.text) || regex.test(item.name);
     });
   }
 }
