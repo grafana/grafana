@@ -1,6 +1,7 @@
 import React from 'react';
 import config from 'app/core/config';
 import classNames from 'classnames';
+import appEvents from 'app/core/app_events';
 import { PanelModel } from '../panel_model';
 import { PanelContainer } from './PanelContainer';
 import { AttachedPanel } from './PanelLoader';
@@ -72,9 +73,6 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
       return this.specialPanels[this.props.panel.type]();
     }
 
-    let isFullscreen = false;
-    let isLoading = false;
-    let panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
     let PanelComponent = null;
 
     if (this.pluginExports && this.pluginExports.PanelComponent) {
@@ -83,20 +81,7 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
 
     return (
       <div className="panel-container">
-        <div className={panelHeaderClass}>
-          <span className="panel-info-corner">
-            <i className="fa" />
-            <span className="panel-info-corner-inner" />
-          </span>
-
-          {isLoading && (
-            <span className="panel-loading">
-              <i className="fa fa-spinner fa-spin" />
-            </span>
-          )}
-          <div className="panel-title-container">{this.props.panel.title}</div>
-        </div>
-
+        <PanelHeader panel={this.props.panel} />
         <div className="panel-content">{PanelComponent && <PanelComponent />}</div>
       </div>
     );
@@ -104,5 +89,63 @@ export class DashboardPanel extends React.Component<DashboardPanelProps, any> {
     // return (
     //   <div ref={element => this.element = element} className="panel-height-helper" />
     // );
+  }
+}
+
+interface PanelHeaderProps {
+  panel: any;
+}
+
+export class PanelHeader extends React.Component<PanelHeaderProps, any> {
+  onEditPanel = () => {
+    appEvents.emit('panel-change-view', {
+      fullscreen: true,
+      edit: true,
+      panelId: this.props.panel.id,
+    });
+  };
+
+  render() {
+    let isFullscreen = false;
+    let isLoading = false;
+    let panelHeaderClass = classNames({ 'panel-header': true, 'grid-drag-handle': !isFullscreen });
+
+    return (
+      <div className={panelHeaderClass}>
+        <span className="panel-info-corner">
+          <i className="fa" />
+          <span className="panel-info-corner-inner" />
+        </span>
+
+        {isLoading && (
+          <span className="panel-loading">
+            <i className="fa fa-spinner fa-spin" />
+          </span>
+        )}
+
+        <div className="panel-title-container">
+          <span className="panel-title">
+            <span className="icon-gf panel-alert-icon" />
+            <span className="panel-title-text">{this.props.panel.title}</span>
+            <span className="panel-menu-container dropdown">
+              <span className="fa fa-caret-down panel-menu-toggle" data-toggle="dropdown" />
+              <ul className="dropdown-menu dropdown-menu--menu panel-menu" role="menu">
+                <li>
+                  <a onClick={this.onEditPanel}>
+                    <i className="fa fa-fw fa-edit" /> Edit
+                  </a>
+                </li>
+                <li>
+                  <a href="asd">asd</a>
+                </li>
+              </ul>
+            </span>
+            <span className="panel-time-info">
+              <i className="fa fa-clock-o" /> 4m
+            </span>
+          </span>
+        </div>
+      </div>
+    );
   }
 }
