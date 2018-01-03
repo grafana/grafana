@@ -127,7 +127,7 @@ func init() {
 		"AWS/Events":           {"RuleName"},
 		"AWS/Firehose":         {"DeliveryStreamName"},
 		"AWS/IoT":              {"Protocol"},
-		"AWS/Kinesis":          {"StreamName", "ShardID"},
+		"AWS/Kinesis":          {"StreamName", "ShardId"},
 		"AWS/KinesisAnalytics": {"Flow", "Id", "Application"},
 		"AWS/Lambda":           {"FunctionName", "Resource", "Version", "Alias"},
 		"AWS/Logs":             {"LogGroupName", "DestinationType", "FilterName"},

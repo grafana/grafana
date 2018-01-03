@@ -25,7 +25,10 @@ describe('InfluxQueryBuilder', function() {
     });
 
     it('should have where condition in tag keys query with tags', function() {
-      var builder = new InfluxQueryBuilder({ measurement: '', tags: [{ key: 'host', value: 'se1' }] });
+      var builder = new InfluxQueryBuilder({
+        measurement: '',
+        tags: [{ key: 'host', value: 'se1' }],
+      });
       var query = builder.buildExploreQuery('TAG_KEYS');
       expect(query).toBe('SHOW TAG KEYS WHERE "host" = \'se1\'');
     });
@@ -49,19 +52,28 @@ describe('InfluxQueryBuilder', function() {
     });
 
     it('should have WITH MEASUREMENT WHERE in measurement query for non-empty query with tags', function() {
-      var builder = new InfluxQueryBuilder({ measurement: '', tags: [{ key: 'app', value: 'email' }] });
+      var builder = new InfluxQueryBuilder({
+        measurement: '',
+        tags: [{ key: 'app', value: 'email' }],
+      });
       var query = builder.buildExploreQuery('MEASUREMENTS', undefined, 'something');
       expect(query).toBe('SHOW MEASUREMENTS WITH MEASUREMENT =~ /something/ WHERE "app" = \'email\' LIMIT 100');
     });
 
     it('should have where condition in measurement query for query with tags', function() {
-      var builder = new InfluxQueryBuilder({ measurement: '', tags: [{ key: 'app', value: 'email' }] });
+      var builder = new InfluxQueryBuilder({
+        measurement: '',
+        tags: [{ key: 'app', value: 'email' }],
+      });
       var query = builder.buildExploreQuery('MEASUREMENTS');
       expect(query).toBe('SHOW MEASUREMENTS WHERE "app" = \'email\' LIMIT 100');
     });
 
     it('should have where tag name IN filter in tag values query for query with one tag', function() {
-      var builder = new InfluxQueryBuilder({ measurement: '', tags: [{ key: 'app', value: 'asdsadsad' }] });
+      var builder = new InfluxQueryBuilder({
+        measurement: '',
+        tags: [{ key: 'app', value: 'asdsadsad' }],
+      });
       var query = builder.buildExploreQuery('TAG_VALUES', 'app');
       expect(query).toBe('SHOW TAG VALUES WITH KEY = "app"');
     });
@@ -86,7 +98,11 @@ describe('InfluxQueryBuilder', function() {
     });
 
     it('should not includ policy when policy is default', function() {
-      var builder = new InfluxQueryBuilder({ measurement: 'cpu', policy: 'default', tags: [] });
+      var builder = new InfluxQueryBuilder({
+        measurement: 'cpu',
+        policy: 'default',
+        tags: [],
+      });
       var query = builder.buildExploreQuery('TAG_VALUES', 'app');
       expect(query).toBe('SHOW TAG VALUES FROM "cpu" WITH KEY = "app"');
     });
@@ -101,13 +117,19 @@ describe('InfluxQueryBuilder', function() {
     });
 
     it('should build show field query', function() {
-      var builder = new InfluxQueryBuilder({ measurement: 'cpu', tags: [{ key: 'app', value: 'email' }] });
+      var builder = new InfluxQueryBuilder({
+        measurement: 'cpu',
+        tags: [{ key: 'app', value: 'email' }],
+      });
       var query = builder.buildExploreQuery('FIELDS');
       expect(query).toBe('SHOW FIELD KEYS FROM "cpu"');
     });
 
     it('should build show field query with regexp', function() {
-      var builder = new InfluxQueryBuilder({ measurement: '/$var/', tags: [{ key: 'app', value: 'email' }] });
+      var builder = new InfluxQueryBuilder({
+        measurement: '/$var/',
+        tags: [{ key: 'app', value: 'email' }],
+      });
       var query = builder.buildExploreQuery('FIELDS');
       expect(query).toBe('SHOW FIELD KEYS FROM /$var/');
     });

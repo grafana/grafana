@@ -27,9 +27,11 @@
     margin-left: 0;
     margin-bottom: 0;
   }
+
   ul > li {
     display: inline; // Remove list-style and block-level defaults
   }
+
   ul > li > a {
     float: left; // Collapse white-space
     padding: 4px 12px;
@@ -109,10 +111,10 @@
 }
 
 .table-panel-header-bg {
-  background: $grafanaListAccent;
+  background: $list-item-bg;
   border-top: 2px solid $body-bg;
   border-bottom: 2px solid $body-bg;
-  height: 2.0em;
+  height: 2em;
   position: absolute;
   top: 0;
   right: 0;

@@ -2,9 +2,9 @@ import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
 import * as d3 from 'd3';
-import {contextSrv} from 'app/core/core';
-import {tickStep} from 'app/core/utils/ticks';
-import {getColorScale, getOpacityScale} from './color_scale';
+import { contextSrv } from 'app/core/core';
+import { tickStep } from 'app/core/utils/ticks';
+import { getColorScale, getOpacityScale } from './color_scale';
 
 let module = angular.module('grafana.directives');
 
@@ -30,7 +30,9 @@ module.directive('colorLegend', function() {
         let legendWidth = Math.floor(legendElem.outerWidth());
 
         if (panel.color.mode === 'spectrum') {
-          let colorScheme = _.find(ctrl.colorSchemes, {value: panel.color.colorScheme});
+          let colorScheme = _.find(ctrl.colorSchemes, {
+            value: panel.color.colorScheme,
+          });
           let colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, legendWidth);
           drawSimpleColorLegend(elem, colorScale);
         } else if (panel.color.mode === 'opacity') {
@@ -38,7 +40,7 @@ module.directive('colorLegend', function() {
           drawSimpleOpacityLegend(elem, colorOptions);
         }
       }
-    }
+    },
   };
 });
 
@@ -67,7 +69,9 @@ module.directive('heatmapLegend', function() {
           let minValue = panel.color.min || 0;
 
           if (panel.color.mode === 'spectrum') {
-            let colorScheme = _.find(ctrl.colorSchemes, {value: panel.color.colorScheme});
+            let colorScheme = _.find(ctrl.colorSchemes, {
+              value: panel.color.colorScheme,
+            });
             drawColorLegend(elem, colorScheme, rangeFrom, rangeTo, maxValue, minValue);
           } else if (panel.color.mode === 'opacity') {
             let colorOptions = panel.color;
@@ -75,7 +79,7 @@ module.directive('heatmapLegend', function() {
           }
         }
       }
-    }
+    },
   };
 });
 
@@ -85,7 +89,7 @@ function drawColorLegend(elem, colorScheme, rangeFrom, rangeTo, maxValue, minVal
   clearLegend(elem);
 
   let legendWidth = Math.floor(legendElem.outerWidth()) - 30;
-  let legendHeight = legendElem.attr("height");
+  let legendHeight = legendElem.attr('height');
 
   let rangeStep = 1;
   if (rangeTo - rangeFrom > legendWidth) {
@@ -95,15 +99,17 @@ function drawColorLegend(elem, colorScheme, rangeFrom, rangeTo, maxValue, minVal
   let valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
   let colorScale = getColorScale(colorScheme, contextSrv.user.lightTheme, maxValue, minValue);
-  legend.selectAll(".heatmap-color-legend-rect")
+  legend
+    .selectAll('.heatmap-color-legend-rect')
     .data(valuesRange)
-    .enter().append("rect")
-    .attr("x", d => d * widthFactor)
-    .attr("y", 0)
-    .attr("width", rangeStep * widthFactor + 1) // Overlap rectangles to prevent gaps
-    .attr("height", legendHeight)
-    .attr("stroke-width", 0)
-    .attr("fill", d => colorScale(d));
+    .enter()
+    .append('rect')
+    .attr('x', d => d * widthFactor)
+    .attr('y', 0)
+    .attr('width', rangeStep * widthFactor + 1) // Overlap rectangles to prevent gaps
+    .attr('height', legendHeight)
+    .attr('stroke-width', 0)
+    .attr('fill', d => colorScale(d));
 
   drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minValue, legendWidth);
 }
@@ -114,7 +120,7 @@ function drawOpacityLegend(elem, options, rangeFrom, rangeTo, maxValue, minValue
   clearLegend(elem);
 
   let legendWidth = Math.floor(legendElem.outerWidth()) - 30;
-  let legendHeight = legendElem.attr("height");
+  let legendHeight = legendElem.attr('height');
 
   let rangeStep = 1;
   if (rangeTo - rangeFrom > legendWidth) {
@@ -124,16 +130,18 @@ function drawOpacityLegend(elem, options, rangeFrom, rangeTo, maxValue, minValue
   let valuesRange = d3.range(rangeFrom, rangeTo, rangeStep);
 
   let opacityScale = getOpacityScale(options, maxValue, minValue);
-  legend.selectAll(".heatmap-opacity-legend-rect")
+  legend
+    .selectAll('.heatmap-opacity-legend-rect')
     .data(valuesRange)
-    .enter().append("rect")
-    .attr("x", d => d * widthFactor)
-    .attr("y", 0)
-    .attr("width", rangeStep * widthFactor)
-    .attr("height", legendHeight)
-    .attr("stroke-width", 0)
-    .attr("fill", options.cardColor)
-    .style("opacity", d => opacityScale(d));
+    .enter()
+    .append('rect')
+    .attr('x', d => d * widthFactor)
+    .attr('y', 0)
+    .attr('width', rangeStep * widthFactor)
+    .attr('height', legendHeight)
+    .attr('stroke-width', 0)
+    .attr('fill', options.cardColor)
+    .style('opacity', d => opacityScale(d));
 
   drawLegendValues(elem, opacityScale, rangeFrom, rangeTo, maxValue, minValue, legendWidth);
 }
@@ -146,25 +154,32 @@ function drawLegendValues(elem, colorScale, rangeFrom, rangeTo, maxValue, minVal
     return;
   }
 
-  let legendValueScale = d3.scaleLinear()
+  let legendValueScale = d3
+    .scaleLinear()
     .domain([0, rangeTo])
     .range([0, legendWidth]);
 
   let ticks = buildLegendTicks(0, rangeTo, maxValue, minValue);
-  let xAxis = d3.axisBottom(legendValueScale)
+  let xAxis = d3
+    .axisBottom(legendValueScale)
     .tickValues(ticks)
     .tickSize(2);
 
-  let colorRect = legendElem.find(":first-child");
+  let colorRect = legendElem.find(':first-child');
   let posY = getSvgElemHeight(legendElem) + 2;
   let posX = getSvgElemX(colorRect);
 
-  d3.select(legendElem.get(0)).append("g")
-    .attr("class", "axis")
-    .attr("transform", "translate(" + posX + "," + posY + ")")
+  d3
+    .select(legendElem.get(0))
+    .append('g')
+    .attr('class', 'axis')
+    .attr('transform', 'translate(' + posX + ',' + posY + ')')
     .call(xAxis);
 
-  legend.select(".axis").select(".domain").remove();
+  legend
+    .select('.axis')
+    .select('.domain')
+    .remove();
 }
 
 function drawSimpleColorLegend(elem, colorScale) {
@@ -172,23 +187,25 @@ function drawSimpleColorLegend(elem, colorScale) {
   clearLegend(elem);
 
   let legendWidth = Math.floor(legendElem.outerWidth());
-  let legendHeight = legendElem.attr("height");
+  let legendHeight = legendElem.attr('height');
 
   if (legendWidth) {
     let valuesNumber = Math.floor(legendWidth / 2);
-    let rangeStep  = Math.floor(legendWidth / valuesNumber);
+    let rangeStep = Math.floor(legendWidth / valuesNumber);
     let valuesRange = d3.range(0, legendWidth, rangeStep);
 
     let legend = d3.select(legendElem.get(0));
-    var legendRects = legend.selectAll(".heatmap-color-legend-rect").data(valuesRange);
+    var legendRects = legend.selectAll('.heatmap-color-legend-rect').data(valuesRange);
 
-    legendRects.enter().append("rect")
-      .attr("x", d => d)
-      .attr("y", 0)
-      .attr("width", rangeStep + 1) // Overlap rectangles to prevent gaps
-      .attr("height", legendHeight)
-      .attr("stroke-width", 0)
-      .attr("fill", d => colorScale(d));
+    legendRects
+      .enter()
+      .append('rect')
+      .attr('x', d => d)
+      .attr('y', 0)
+      .attr('width', rangeStep + 1) // Overlap rectangles to prevent gaps
+      .attr('height', legendHeight)
+      .attr('stroke-width', 0)
+      .attr('fill', d => colorScale(d));
   }
 }
 
@@ -198,32 +215,37 @@ function drawSimpleOpacityLegend(elem, options) {
 
   let legend = d3.select(legendElem.get(0));
   let legendWidth = Math.floor(legendElem.outerWidth());
-  let legendHeight = legendElem.attr("height");
+  let legendHeight = legendElem.attr('height');
 
   if (legendWidth) {
     let legendOpacityScale;
     if (options.colorScale === 'linear') {
-      legendOpacityScale = d3.scaleLinear()
-      .domain([0, legendWidth])
-      .range([0, 1]);
+      legendOpacityScale = d3
+        .scaleLinear()
+        .domain([0, legendWidth])
+        .range([0, 1]);
     } else if (options.colorScale === 'sqrt') {
-      legendOpacityScale = d3.scalePow().exponent(options.exponent)
-      .domain([0, legendWidth])
-      .range([0, 1]);
+      legendOpacityScale = d3
+        .scalePow()
+        .exponent(options.exponent)
+        .domain([0, legendWidth])
+        .range([0, 1]);
     }
 
     let rangeStep = 10;
     let valuesRange = d3.range(0, legendWidth, rangeStep);
-    var legendRects = legend.selectAll(".heatmap-opacity-legend-rect").data(valuesRange);
+    var legendRects = legend.selectAll('.heatmap-opacity-legend-rect').data(valuesRange);
 
-    legendRects.enter().append("rect")
-      .attr("x", d => d)
-      .attr("y", 0)
-      .attr("width", rangeStep)
-      .attr("height", legendHeight)
-      .attr("stroke-width", 0)
-      .attr("fill", options.cardColor)
-      .style("opacity", d => legendOpacityScale(d));
+    legendRects
+      .enter()
+      .append('rect')
+      .attr('x', d => d)
+      .attr('y', 0)
+      .attr('width', rangeStep)
+      .attr('height', legendHeight)
+      .attr('stroke-width', 0)
+      .attr('fill', options.cardColor)
+      .style('opacity', d => legendOpacityScale(d));
   }
 }
 

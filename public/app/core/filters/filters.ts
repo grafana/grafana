@@ -41,19 +41,17 @@ coreModule.filter('moment', function() {
 
 coreModule.filter('noXml', function() {
   var noXml = function(text) {
-  return _.isString(text)
-    ? text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/'/g, '&#39;')
-    .replace(/"/g, '&quot;')
-    : text;
+    return _.isString(text)
+      ? text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/'/g, '&#39;')
+          .replace(/"/g, '&quot;')
+      : text;
   };
   return function(text) {
-    return _.isArray(text)
-      ? _.map(text, noXml)
-      : noXml(text);
+    return _.isArray(text) ? _.map(text, noXml) : noXml(text);
   };
 });
 

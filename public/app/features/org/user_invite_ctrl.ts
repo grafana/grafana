@@ -1,46 +1,31 @@
-import angular from 'angular';
-import _ from 'lodash';
+import coreModule from 'app/core/core_module';
 
 export class UserInviteCtrl {
+  navModel: any;
+  invite: any;
+  inviteForm: any;
 
   /** @ngInject **/
-  constructor($scope, backendSrv) {
-    $scope.invites = [
-      {name: '', email: '', role: 'Editor'},
-    ];
+  constructor(private backendSrv, navModelSrv, private $location) {
+    this.navModel = navModelSrv.getNav('cfg', 'users', 0);
 
-    $scope.options = {skipEmails: false};
-    $scope.init = function() { };
-
-    $scope.addInvite = function() {
-      $scope.invites.push({name: '', email: '', role: 'Editor'});
+    this.invite = {
+      name: '',
+      email: '',
+      role: 'Editor',
+      sendEmail: true,
     };
+  }
 
-    $scope.removeInvite = function(invite) {
-      $scope.invites = _.without($scope.invites, invite);
-    };
+  sendInvite() {
+    if (!this.inviteForm.$valid) {
+      return;
+    }
 
-    $scope.sendInvites = function() {
-      if (!$scope.inviteForm.$valid) { return; }
-      $scope.sendSingleInvite(0);
-    };
-
-    $scope.sendSingleInvite = function(index) {
-      var invite = $scope.invites[index];
-      invite.skipEmails = $scope.options.skipEmails;
-
-      return backendSrv.post('/api/org/invites', invite).finally(function() {
-        index += 1;
-
-        if (index === $scope.invites.length) {
-          $scope.invitesSent();
-          $scope.dismiss();
-        } else {
-          $scope.sendSingleInvite(index);
-        }
-      });
-    };
+    return this.backendSrv.post('/api/org/invites', this.invite).then(() => {
+      this.$location.path('org/users/');
+    });
   }
 }
 
-angular.module('grafana.controllers').controller('UserInviteCtrl', UserInviteCtrl);
+coreModule.controller('UserInviteCtrl', UserInviteCtrl);

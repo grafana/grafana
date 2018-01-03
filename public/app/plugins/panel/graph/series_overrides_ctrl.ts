@@ -2,7 +2,6 @@ import _ from 'lodash';
 import angular from 'angular';
 
 export class SeriesOverridesCtrl {
-
   /** @ngInject */
   constructor($scope, $element, popoverSrv) {
     $scope.overrideMenu = [];
@@ -17,7 +16,7 @@ export class SeriesOverridesCtrl {
         values: values,
         submenu: _.map(values, function(value) {
           return { text: String(value), value: value };
-        })
+        }),
       };
 
       $scope.overrideMenu.push(option);
@@ -36,7 +35,7 @@ export class SeriesOverridesCtrl {
       // can be removed by the user if they still want lines
       if (item.propertyName === 'fillBelowTo') {
         $scope.override['lines'] = false;
-        $scope.ctrl.addSeriesOverride({alias: subItem.value, lines: false });
+        $scope.ctrl.addSeriesOverride({ alias: subItem.value, lines: false });
       }
 
       $scope.updateCurrentOverrides();
@@ -50,20 +49,20 @@ export class SeriesOverridesCtrl {
     };
 
     $scope.openColorSelector = function(color) {
-      var fakeSeries = {color: color};
+      var fakeSeries = { color: color };
       popoverSrv.show({
-        element: $element.find(".dropdown")[0],
+        element: $element.find('.dropdown')[0],
         position: 'top center',
         openOn: 'click',
         template: '<series-color-picker series="series" onColorChange="colorSelected" />',
         model: {
           autoClose: true,
           colorSelected: $scope.colorSelected,
-          series: fakeSeries
+          series: fakeSeries,
         },
         onClose: function() {
           $scope.ctrl.render();
-        }
+        },
       });
     };
 
@@ -83,11 +82,13 @@ export class SeriesOverridesCtrl {
       $scope.currentOverrides = [];
       _.each($scope.overrideMenu, function(option) {
         var value = $scope.override[option.propertyName];
-        if (_.isUndefined(value)) { return; }
+        if (_.isUndefined(value)) {
+          return;
+        }
         $scope.currentOverrides.push({
           name: option.text,
           propertyName: option.propertyName,
-          value: String(value)
+          value: String(value),
         });
       });
     };
@@ -100,8 +101,50 @@ export class SeriesOverridesCtrl {
     $scope.addOverrideOption('Fill below to', 'fillBelowTo', $scope.getSeriesNames());
     $scope.addOverrideOption('Staircase line', 'steppedLine', [true, false]);
     $scope.addOverrideOption('Dashes', 'dashes', [true, false]);
-    $scope.addOverrideOption('Dash Length', 'dashLength', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
-    $scope.addOverrideOption('Dash Space', 'spaceLength', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+    $scope.addOverrideOption('Dash Length', 'dashLength', [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+    ]);
+    $scope.addOverrideOption('Dash Space', 'spaceLength', [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+    ]);
     $scope.addOverrideOption('Points', 'points', [true, false]);
     $scope.addOverrideOption('Points Radius', 'pointradius', [1, 2, 3, 4, 5]);
     $scope.addOverrideOption('Stack', 'stack', [true, false, 'A', 'B', 'C', 'D']);

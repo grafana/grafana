@@ -99,9 +99,9 @@ func main() {
 
 		case "package":
 			grunt(gruntBuildArg("release")...)
-      if runtime.GOOS != "windows" {
-			  createLinuxPackages()
-      }
+			if runtime.GOOS != "windows" {
+				createLinuxPackages()
+			}
 
 		case "pkg-rpm":
 			grunt(gruntBuildArg("release")...)

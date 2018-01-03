@@ -3,7 +3,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
-import {variableTypes} from './variable';
+import { variableTypes } from './variable';
 
 export class VariableSrv {
   dashboard: any;
@@ -29,21 +29,22 @@ export class VariableSrv {
     }
 
     var queryParams = this.$location.search();
-    return this.$q.all(this.variables.map(variable => {
-      return this.processVariable(variable, queryParams);
-    })).then(() => {
-      this.templateSrv.updateTemplateData();
-    });
+    return this.$q
+      .all(
+        this.variables.map(variable => {
+          return this.processVariable(variable, queryParams);
+        })
+      )
+      .then(() => {
+        this.templateSrv.updateTemplateData();
+      });
   }
 
   onDashboardRefresh() {
-    var promises = this.variables
-    .filter(variable => variable.refresh === 2)
-    .map(variable => {
+    var promises = this.variables.filter(variable => variable.refresh === 2).map(variable => {
       var previousOptions = variable.options.slice();
 
-      return variable.updateOptions()
-      .then(() => {
+      return variable.updateOptions().then(() => {
         if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
           this.$rootScope.$emit('template-variable-value-updated');
         }
@@ -62,30 +63,35 @@ export class VariableSrv {
       }
     }
 
-    return this.$q.all(dependencies).then(() => {
-      var urlValue = queryParams['var-' + variable.name];
-      if (urlValue !== void 0) {
-        return variable.setValueFromUrl(urlValue).then(variable.initLock.resolve);
-      }
+    return this.$q
+      .all(dependencies)
+      .then(() => {
+        var urlValue = queryParams['var-' + variable.name];
+        if (urlValue !== void 0) {
+          return variable.setValueFromUrl(urlValue).then(variable.initLock.resolve);
+        }
 
-      if (variable.refresh === 1 || variable.refresh === 2) {
-        return variable.updateOptions().then(variable.initLock.resolve);
-      }
+        if (variable.refresh === 1 || variable.refresh === 2) {
+          return variable.updateOptions().then(variable.initLock.resolve);
+        }
 
-      variable.initLock.resolve();
-    }).finally(() => {
-      this.templateSrv.variableInitialized(variable);
-      delete variable.initLock;
-    });
+        variable.initLock.resolve();
+      })
+      .finally(() => {
+        this.templateSrv.variableInitialized(variable);
+        delete variable.initLock;
+      });
   }
 
   createVariableFromModel(model) {
     var ctor = variableTypes[model.type].ctor;
     if (!ctor) {
-      throw {message: "Unable to find variable constructor for " + model.type};
+      throw {
+        message: 'Unable to find variable constructor for ' + model.type,
+      };
     }
 
-    var variable = this.$injector.instantiate(ctor, {model: model});
+    var variable = this.$injector.instantiate(ctor, { model: model });
     return variable;
   }
 
@@ -168,18 +174,26 @@ export class VariableSrv {
         selected = variable.options[0];
       } else {
         selected = {
-          value: _.map(selected, function(val) {return val.value;}),
-          text: _.map(selected, function(val) {return val.text;}).join(' + '),
+          value: _.map(selected, function(val) {
+            return val.value;
+          }),
+          text: _.map(selected, function(val) {
+            return val.text;
+          }).join(' + '),
         };
       }
 
       return variable.setValue(selected);
     } else {
-      var currentOption = _.find(variable.options, {text: variable.current.text});
+      var currentOption = _.find(variable.options, {
+        text: variable.current.text,
+      });
       if (currentOption) {
         return variable.setValue(currentOption);
       } else {
-        if (!variable.options.length) { return Promise.resolve(); }
+        if (!variable.options.length) {
+          return Promise.resolve();
+        }
         return variable.setValue(variable.options[0]);
       }
     }
@@ -197,7 +211,7 @@ export class VariableSrv {
         return op.text === urlValue || op.value === urlValue;
       });
 
-      option = option || {text: urlValue, value: urlValue};
+      option = option || { text: urlValue, value: urlValue };
       return variable.setValue(option);
     });
   }
@@ -231,24 +245,30 @@ export class VariableSrv {
   }
 
   setAdhocFilter(options) {
-    var variable = _.find(this.variables, {type: 'adhoc', datasource: options.datasource});
+    var variable = _.find(this.variables, {
+      type: 'adhoc',
+      datasource: options.datasource,
+    });
     if (!variable) {
-      variable = this.createVariableFromModel({name: 'Filters', type: 'adhoc', datasource: options.datasource});
+      variable = this.createVariableFromModel({
+        name: 'Filters',
+        type: 'adhoc',
+        datasource: options.datasource,
+      });
       this.addVariable(variable);
     }
 
     let filters = variable.filters;
-    let filter =  _.find(filters, {key: options.key, value: options.value});
+    let filter = _.find(filters, { key: options.key, value: options.value });
 
     if (!filter) {
-      filter = {key: options.key, value: options.value};
+      filter = { key: options.key, value: options.value };
       filters.push(filter);
     }
 
     filter.operator = options.operator;
     this.variableUpdated(variable, true);
   }
-
 }
 
 coreModule.service('variableSrv', VariableSrv);

@@ -78,6 +78,15 @@ func (e PostgresQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Ro
 
 	rowLimit := 1000000
 	rowCount := 0
+	timeIndex := -1
+
+	// check if there is a column named time
+	for i, col := range columnNames {
+		switch col {
+		case "time":
+			timeIndex = i
+		}
+	}
 
 	for ; rows.Next(); rowCount++ {
 		if rowCount > rowLimit {
@@ -87,6 +96,15 @@ func (e PostgresQueryEndpoint) transformToTable(query *tsdb.Query, rows *core.Ro
 		values, err := e.getTypedRowData(rows)
 		if err != nil {
 			return err
+		}
+
+		// convert column named time to unix timestamp to make
+		// native datetime postgres types work in annotation queries
+		if timeIndex != -1 {
+			switch value := values[timeIndex].(type) {
+			case time.Time:
+				values[timeIndex] = float64(value.UnixNano() / 1e9)
+			}
 		}
 
 		table.Rows = append(table.Rows, values)
@@ -142,8 +160,13 @@ func (e PostgresQueryEndpoint) getTypedRowData(rows *core.Rows) (tsdb.RowValues,
 func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 	pointsBySeries := make(map[string]*tsdb.TimeSeries)
 	seriesByQueryOrder := list.New()
-	columnNames, err := rows.Columns()
 
+	columnNames, err := rows.Columns()
+	if err != nil {
+		return err
+	}
+
+	columnTypes, err := rows.ColumnTypes()
 	if err != nil {
 		return err
 	}
@@ -153,13 +176,21 @@ func (e PostgresQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *co
 	timeIndex := -1
 	metricIndex := -1
 
-	// check columns of resultset
+	// check columns of resultset: a column named time is mandatory
+	// the first text column is treated as metric name unless a column named metric is present
 	for i, col := range columnNames {
 		switch col {
 		case "time":
 			timeIndex = i
 		case "metric":
 			metricIndex = i
+		default:
+			if metricIndex == -1 {
+				switch columnTypes[i].DatabaseTypeName() {
+				case "UNKNOWN", "TEXT", "VARCHAR", "CHAR":
+					metricIndex = i
+				}
+			}
 		}
 	}
 

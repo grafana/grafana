@@ -15,19 +15,24 @@ export class GraphiteConfigCtrl {
   }
 
   autoDetectGraphiteVersion() {
-    this.datasourceSrv.loadDatasource(this.current.name)
-    .then((ds) => {
-      return ds.getVersion();
-    }).then((version) => {
-      this.graphiteVersions.push({name: version, value: version});
-      this.current.jsonData.graphiteVersion = version;
-    });
+    if (!this.current.id) {
+      return;
+    }
+
+    this.datasourceSrv
+      .loadDatasource(this.current.name)
+      .then(ds => {
+        return ds.getVersion();
+      })
+      .then(version => {
+        this.graphiteVersions.push({ name: version, value: version });
+        this.current.jsonData.graphiteVersion = version;
+      });
   }
 
   graphiteVersions = [
-    {name: '0.9.x', value: '0.9'},
-    {name: '1.0.x', value: '1.0'},
-    {name: '1.1.x', value: '1.1'},
+    { name: '0.9.x', value: '0.9' },
+    { name: '1.0.x', value: '1.0' },
+    { name: '1.1.x', value: '1.1' },
   ];
 }
-

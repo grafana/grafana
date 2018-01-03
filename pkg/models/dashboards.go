@@ -11,11 +11,14 @@ import (
 
 // Typed errors
 var (
-	ErrDashboardNotFound           = errors.New("Dashboard not found")
-	ErrDashboardSnapshotNotFound   = errors.New("Dashboard snapshot not found")
-	ErrDashboardWithSameNameExists = errors.New("A dashboard with the same name already exists")
-	ErrDashboardVersionMismatch    = errors.New("The dashboard has been changed by someone else")
-	ErrDashboardTitleEmpty         = errors.New("Dashboard title cannot be empty")
+	ErrDashboardNotFound                 = errors.New("Dashboard not found")
+	ErrDashboardSnapshotNotFound         = errors.New("Dashboard snapshot not found")
+	ErrDashboardWithSameNameExists       = errors.New("A dashboard with the same name already exists")
+	ErrDashboardVersionMismatch          = errors.New("The dashboard has been changed by someone else")
+	ErrDashboardTitleEmpty               = errors.New("Dashboard title cannot be empty")
+	ErrDashboardFolderCannotHaveParent   = errors.New("A Dashboard Folder cannot be added to another folder")
+	ErrDashboardContainsInvalidAlertData = errors.New("Invalid alert data. Cannot save dashboard")
+	ErrDashboardFailedToUpdateAlertData  = errors.New("Failed to save alert data")
 )
 
 type UpdatePluginDashboardError struct {
@@ -47,6 +50,9 @@ type Dashboard struct {
 
 	UpdatedBy int64
 	CreatedBy int64
+	FolderId  int64
+	IsFolder  bool
+	HasAcl    bool
 
 	Title string
 	Data  *simplejson.Json
@@ -62,6 +68,15 @@ func NewDashboard(title string) *Dashboard {
 	dash.Updated = time.Now()
 	dash.UpdateSlug()
 	return dash
+}
+
+// NewDashboardFolder creates a new dashboard folder
+func NewDashboardFolder(title string) *Dashboard {
+	folder := NewDashboard(title)
+	folder.Data.Set("schemaVersion", 16)
+	folder.Data.Set("editable", true)
+	folder.Data.Set("hideControls", true)
+	return folder
 }
 
 // GetTags turns the tags in data json into go string array
@@ -111,6 +126,8 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.UpdatedBy = userId
 	dash.OrgId = cmd.OrgId
 	dash.PluginId = cmd.PluginId
+	dash.IsFolder = cmd.IsFolder
+	dash.FolderId = cmd.FolderId
 	dash.UpdateSlug()
 	return dash
 }
@@ -122,8 +139,12 @@ func (dash *Dashboard) GetString(prop string, defaultValue string) string {
 
 // UpdateSlug updates the slug
 func (dash *Dashboard) UpdateSlug() {
-	title := strings.ToLower(dash.Data.Get("title").MustString())
-	dash.Slug = slug.Make(title)
+	title := dash.Data.Get("title").MustString()
+	dash.Slug = SlugifyTitle(title)
+}
+
+func SlugifyTitle(title string) string {
+	return slug.Make(strings.ToLower(title))
 }
 
 //
@@ -138,12 +159,16 @@ type SaveDashboardCommand struct {
 	OrgId        int64            `json:"-"`
 	RestoredFrom int              `json:"-"`
 	PluginId     string           `json:"-"`
+	FolderId     int64            `json:"folderId"`
+	IsFolder     bool             `json:"isFolder"`
+
+	UpdatedAt time.Time
 
 	Result *Dashboard
 }
 
 type DeleteDashboardCommand struct {
-	Slug  string
+	Id    int64
 	OrgId int64
 }
 

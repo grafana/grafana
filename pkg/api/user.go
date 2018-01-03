@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -219,7 +220,7 @@ func SearchUsers(c *middleware.Context) Response {
 	return Json(200, query.Result.Users)
 }
 
-// GET /api/search
+// GET /api/users/search
 func SearchUsersWithPaging(c *middleware.Context) Response {
 	query, err := searchUser(c)
 	if err != nil {
@@ -245,6 +246,10 @@ func searchUser(c *middleware.Context) (*m.SearchUsersQuery, error) {
 	query := &m.SearchUsersQuery{Query: searchQuery, Page: page, Limit: perPage}
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
+	}
+
+	for _, user := range query.Result.Users {
+		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
 	}
 
 	query.Result.Page = page

@@ -7,4 +7,3 @@ export function assignModelProperties(target, source, defaults, removeDefaults?)
     target[key] = source[key] === undefined ? defaults[key] : source[key];
   }
 }
-

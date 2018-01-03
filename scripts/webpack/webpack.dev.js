@@ -10,7 +10,7 @@ const WebpackCleanupPlugin = require('webpack-cleanup-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 module.exports = merge(common, {
-  devtool: "eval-source-map",
+  devtool: "cheap-module-source-map",
 
   entry: {
     dark: './public/sass/grafana.dark.scss',
@@ -21,7 +21,7 @@ module.exports = merge(common, {
   module: {
     rules: [
       require('./sass.rule.js')({
-        sourceMap: true, minimize: false
+        sourceMap: false, minimize: false
       })
     ]
   },
@@ -29,6 +29,7 @@ module.exports = merge(common, {
   plugins: [
     new ExtractTextPlugin({ // define where to save the file
       filename: 'grafana.[name].css',
+      allChunks: true,
     }),
     new HtmlWebpackPlugin({
       filename: path.resolve(__dirname, '../../public/views/index.html'),

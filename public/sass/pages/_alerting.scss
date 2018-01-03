@@ -41,7 +41,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  .icon-gf, .fa {
+  .icon-gf,
+  .fa {
     font-size: 200%;
     position: relative;
     top: 2px;
@@ -102,7 +103,7 @@
 
 .panel-alert-state {
   &--alerting {
-    box-shadow: 0 0 10px rgba($critical,0.5);
+    box-shadow: 0 0 10px rgba($critical, 0.5);
     position: relative;
 
     .panel-alert-icon:before {
@@ -112,17 +113,17 @@
   }
 
   &--alerting::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     z-index: -1;
     width: 100%;
     height: 100%;
-    box-shadow: 0 0 10px rgba($critical,1);
+    box-shadow: 0 0 10px rgba($critical, 1);
     opacity: 0;
-    animation: alerting-panel 1.6s cubic-bezier(1,.1,.73,1) 0s infinite alternate;
+    animation: alerting-panel 1.6s cubic-bezier(1, 0.1, 0.73, 1) 0s infinite
+      alternate;
   }
-
 
   &--ok {
     .panel-alert-icon:before {

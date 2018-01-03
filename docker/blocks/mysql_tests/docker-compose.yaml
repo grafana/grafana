@@ -7,3 +7,4 @@
       MYSQL_PASSWORD: password
     ports:
       - "3306:3306"
+    tmpfs: /var/lib/mysql:rw

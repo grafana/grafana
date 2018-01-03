@@ -3,7 +3,6 @@ import coreModule from '../core_module';
 import config from 'app/core/config';
 
 export class LoginCtrl {
-
   /** @ngInject */
   constructor($scope, backendSrv, contextSrv, $location) {
     $scope.formModel = {
@@ -19,13 +18,13 @@ export class LoginCtrl {
 
     $scope.disableLoginForm = config.disableLoginForm;
     $scope.disableUserSignUp = config.disableUserSignUp;
-    $scope.loginHint     = config.loginHint;
+    $scope.loginHint = config.loginHint;
 
     $scope.loginMode = true;
     $scope.submitBtnText = 'Log in';
 
     $scope.init = function() {
-      $scope.$watch("loginMode", $scope.loginModeChanged);
+      $scope.$watch('loginMode', $scope.loginModeChanged);
 
       if (config.loginError) {
         $scope.appEvent('alert-warning', ['Login Failed', config.loginError]);
@@ -51,7 +50,7 @@ export class LoginCtrl {
 
       backendSrv.post('/api/user/signup', $scope.formModel).then(function(result) {
         if (result.status === 'SignUpCreated') {
-          $location.path('/signup').search({email: $scope.formModel.email});
+          $location.path('/signup').search({ email: $scope.formModel.email });
         } else {
           window.location.href = config.appSubUrl + '/';
         }

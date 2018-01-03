@@ -1,6 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import {Variable, assignModelProperties, variableTypes} from './variable';
+import { Variable, assignModelProperties, variableTypes } from './variable';
 
 export class ConstantVariable implements Variable {
   query: string;
@@ -32,7 +32,7 @@ export class ConstantVariable implements Variable {
   }
 
   updateOptions() {
-    this.options = [{text: this.query.trim(), value: this.query.trim()}];
+    this.options = [{ text: this.query.trim(), value: this.query.trim() }];
     this.setValue(this.options[0]);
     return Promise.resolve();
   }
@@ -48,11 +48,10 @@ export class ConstantVariable implements Variable {
   getValueForUrl() {
     return this.current.value;
   }
-
 }
 
 variableTypes['constant'] = {
   name: 'Constant',
   ctor: ConstantVariable,
-  description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share' ,
+  description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share',
 };

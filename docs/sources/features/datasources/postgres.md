@@ -48,7 +48,7 @@ Macro example | Description
 *$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *extract(epoch from dateColumn) BETWEEN 1494410783 AND 1494497183*
 *$__timeFrom()* | Will be replaced by the start of the currently active time selection. For example, *to_timestamp(1494410783)*
 *$__timeTo()* | Will be replaced by the end of the currently active time selection. For example, *to_timestamp(1494497183)*
-*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *(extract(epoch from "dateColumn")/300)::bigint*300*
+*$__timeGroup(dateColumn,'5m')* | Will be replaced by an expression usable in GROUP BY clause. For example, *(extract(epoch from dateColumn)/300)::bigint*300 AS time*
 *$__unixEpochFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name with times represented as unix timestamp. For example, *dateColumn > 1494410783 AND dateColumn < 1494497183*
 *$__unixEpochFrom()* | Will be replaced by the start of the currently active time selection as unix timestamp. For example, *1494410783*
 *$__unixEpochTo()* | Will be replaced by the end of the currently active time selection as unix timestamp. For example, *1494497183*
@@ -94,7 +94,7 @@ Example with `metric` column
 
 ```sql
 SELECT
-  $__timeGroup(time_date_time,'5m') as time,
+  $__timeGroup(time_date_time,'5m'),
   min(value_double),
   'min' as metric
 FROM test_data
@@ -107,7 +107,7 @@ Example with multiple columns:
 
 ```sql
 SELECT
-  $__timeGroup(time_date_time,'5m') as time,
+  $__timeGroup(time_date_time,'5m'),
   min(value_double) as min_value,
   max(value_double) as max_value
 FROM test_data
@@ -137,6 +137,12 @@ A query can return multiple columns and Grafana will automatically create a list
 
 ```sql
 SELECT host.hostname, other_host.hostname2 FROM host JOIN other_host ON host.city = other_host.city
+```
+
+To use time range dependent macros like `$__timeFilter(column)` in your query the refresh mode of the template variable needs to be set to *On Time Range Change*.
+
+```sql
+SELECT event_name FROM event_log WHERE $__timeFilter(time_column)
 ```
 
 Another option is a query that can create a key/value variable. The query should return two columns that are named `__text` and `__value`. The `__text` column value should be unique (if it is not unique then the first value is used). The options in the dropdown will have a text and value that allows you to have a friendly name as text and an id as the value. An example query with `hostname` as the text and `id` as the value:

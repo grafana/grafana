@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import angular from 'angular';
 import moment from 'moment';
@@ -7,7 +5,6 @@ import moment from 'moment';
 import * as rangeUtil from 'app/core/utils/rangeutil';
 
 export class TimePickerCtrl {
-
   static tooltipFormat = 'MMM D, YYYY HH:mm:ss';
   static defaults = {
     time_options: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
@@ -25,10 +22,12 @@ export class TimePickerCtrl {
   refresh: any;
   isUtc: boolean;
   firstDayOfWeek: number;
+  closeDropdown: any;
+  isOpen: boolean;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private timeSrv) {
-    $scope.ctrl = this;
+    this.$scope.ctrl = this;
 
     $rootScope.onAppEvent('shift-time-forward', () => this.move(1), $scope);
     $rootScope.onAppEvent('shift-time-backward', () => this.move(-1), $scope);
@@ -62,7 +61,7 @@ export class TimePickerCtrl {
     }
 
     this.rangeString = rangeUtil.describeTimeRange(timeRaw);
-    this.absolute = {fromJs: time.from.toDate(), toJs: time.to.toDate()};
+    this.absolute = { fromJs: time.from.toDate(), toJs: time.to.toDate() };
     this.tooltip = this.dashboard.formatDate(time.from) + ' <br>to<br>';
     this.tooltip += this.dashboard.formatDate(time.to);
     this.timeRaw = timeRaw;
@@ -92,27 +91,27 @@ export class TimePickerCtrl {
       from = range.from.valueOf();
     }
 
-    this.timeSrv.setTime({from: moment.utc(from), to: moment.utc(to)});
+    this.timeSrv.setTime({ from: moment.utc(from), to: moment.utc(to) });
   }
 
   openDropdown() {
+    if (this.isOpen) {
+      this.isOpen = false;
+      return;
+    }
+
     this.onRefresh();
     this.editTimeRaw = this.timeRaw;
     this.timeOptions = rangeUtil.getRelativeTimesList(this.panel, this.rangeString);
     this.refresh = {
       value: this.dashboard.refresh,
       options: _.map(this.panel.refresh_intervals, (interval: any) => {
-        return {text: interval, value: interval};
-      })
+        return { text: interval, value: interval };
+      }),
     };
 
-    this.refresh.options.unshift({text: 'off'});
-
-    this.$rootScope.appEvent('show-dash-editor', {
-      editview: 'timepicker',
-      scope: this.$scope,
-      cssClass: 'gf-timepicker-dropdown',
-    });
+    this.refresh.options.unshift({ text: 'off' });
+    this.isOpen = true;
   }
 
   applyCustom() {
@@ -121,7 +120,7 @@ export class TimePickerCtrl {
     }
 
     this.timeSrv.setTime(this.editTimeRaw);
-    this.$rootScope.appEvent('hide-dash-editor');
+    this.isOpen = false;
   }
 
   absoluteFromChanged() {
@@ -137,16 +136,15 @@ export class TimePickerCtrl {
   }
 
   setRelativeFilter(timespan) {
-    var range = {from: timespan.from, to: timespan.to};
+    var range = { from: timespan.from, to: timespan.to };
 
     if (this.panel.nowDelay && range.to === 'now') {
       range.to = 'now-' + this.panel.nowDelay;
     }
 
     this.timeSrv.setTime(range);
-    this.$rootScope.appEvent('hide-dash-editor');
+    this.isOpen = false;
   }
-
 }
 
 export function settingsDirective() {
@@ -157,8 +155,8 @@ export function settingsDirective() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      dashboard: "="
-    }
+      dashboard: '=',
+    },
   };
 }
 
@@ -170,14 +168,13 @@ export function timePickerDirective() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      dashboard: "="
-    }
+      dashboard: '=',
+    },
   };
 }
-
 
 angular.module('grafana.directives').directive('gfTimePickerSettings', settingsDirective);
 angular.module('grafana.directives').directive('gfTimePicker', timePickerDirective);
 
-import {inputDateDirective} from './input_date';
-angular.module("grafana.directives").directive('inputDatetime', inputDateDirective);
+import { inputDateDirective } from './input_date';
+angular.module('grafana.directives').directive('inputDatetime', inputDateDirective);

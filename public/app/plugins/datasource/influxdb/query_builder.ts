@@ -25,8 +25,7 @@ function renderTagCondition(tag, index) {
 }
 
 export class InfluxQueryBuilder {
-
-  constructor(private target, private database?) { }
+  constructor(private target, private database?) {}
 
   buildExploreQuery(type: string, withKey?: string, withMeasurementFilter?: string) {
     var query;
@@ -60,7 +59,6 @@ export class InfluxQueryBuilder {
       }
 
       return 'SHOW FIELD KEYS FROM ' + measurement;
-
     } else if (type === 'RETENTION POLICIES') {
       query = 'SHOW RETENTION POLICIES on "' + this.database + '"';
       return query;
@@ -94,7 +92,7 @@ export class InfluxQueryBuilder {
           memo.push(renderTagCondition(tag, memo.length));
           return memo;
         },
-        [],
+        []
       );
 
       if (whereConditions.length > 0) {

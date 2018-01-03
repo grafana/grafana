@@ -3,7 +3,6 @@ import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 
 export class LinkSrv {
-
   /** @ngInject */
   constructor(private templateSrv, private timeSrv) {}
 

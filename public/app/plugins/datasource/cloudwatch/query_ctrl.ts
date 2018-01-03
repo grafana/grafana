@@ -1,7 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import './query_parameter_ctrl';
-import {QueryCtrl} from 'app/plugins/sdk';
+import { QueryCtrl } from 'app/plugins/sdk';
 
 export class CloudWatchQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';

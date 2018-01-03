@@ -1,13 +1,13 @@
-import {describe, it, expect} from 'test/lib/common';
+import { describe, it, expect } from 'test/lib/common';
 
-import {getColorForValue} from '../module';
+import { getColorForValue } from '../module';
 
 describe('grafanaSingleStat', function() {
   describe('legacy thresholds', () => {
     describe('positive thresholds', () => {
       var data: any = {
         colorMap: ['green', 'yellow', 'red'],
-        thresholds: [20, 50]
+        thresholds: [20, 50],
       };
 
       it('5 should return green', () => {
@@ -43,7 +43,7 @@ describe('grafanaSingleStat', function() {
   describe('negative thresholds', () => {
     var data: any = {
       colorMap: ['green', 'yellow', 'red'],
-      thresholds: [ 0, 20]
+      thresholds: [0, 20],
     };
 
     it('-30 should return green', () => {
@@ -62,7 +62,7 @@ describe('grafanaSingleStat', function() {
   describe('negative thresholds', () => {
     var data: any = {
       colorMap: ['green', 'yellow', 'red'],
-      thresholds: [-27, 20]
+      thresholds: [-27, 20],
     };
 
     it('-30 should return green', () => {

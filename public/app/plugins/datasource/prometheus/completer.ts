@@ -1,6 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import {PrometheusDatasource} from "./datasource";
+import { PrometheusDatasource } from './datasource';
 import _ from 'lodash';
 
 export class PromCompleter {
@@ -35,10 +35,15 @@ export class PromCompleter {
 
         return this.getLabelNameAndValueForMetric(metricName).then(result => {
           var labelNames = this.transformToCompletions(
-            _.uniq(_.flatten(result.map(r => {
-              return Object.keys(r.metric);
-            })))
-          , 'label name');
+            _.uniq(
+              _.flatten(
+                result.map(r => {
+                  return Object.keys(r.metric);
+                })
+              )
+            ),
+            'label name'
+          );
           this.labelNameCache[metricName] = labelNames;
           callback(null, labelNames);
         });
@@ -63,10 +68,13 @@ export class PromCompleter {
 
         return this.getLabelNameAndValueForMetric(metricName).then(result => {
           var labelValues = this.transformToCompletions(
-            _.uniq(result.map(r => {
-              return r.metric[labelName];
-            }))
-          , 'label value');
+            _.uniq(
+              result.map(r => {
+                return r.metric[labelName];
+              })
+            ),
+            'label value'
+          );
           this.labelValueCache[metricName] = this.labelValueCache[metricName] || {};
           this.labelValueCache[metricName][labelName] = labelValues;
           callback(null, labelValues);
@@ -76,12 +84,27 @@ export class PromCompleter {
     if (token.type === 'paren.lparen' && token.value === '[') {
       var vectors = [];
       for (let unit of ['s', 'm', 'h']) {
-        for (let value of [1,5,10,30]) {
-         vectors.push({caption: value+unit, value: '['+value+unit, meta: 'range vector'});
+        for (let value of [1, 5, 10, 30]) {
+          vectors.push({
+            caption: value + unit,
+            value: '[' + value + unit,
+            meta: 'range vector',
+          });
         }
       }
-      vectors.push({caption: '$__interval', value: '[$__interval', meta: 'range vector'});
-      vectors.push({caption: '$__interval_ms', value: '[$__interval_ms', meta: 'range vector'});
+
+      vectors.unshift({
+        caption: '$__interval_ms',
+        value: '[$__interval_ms',
+        meta: 'range vector',
+      });
+
+      vectors.unshift({
+        caption: '$__interval',
+        value: '[$__interval',
+        meta: 'range vector',
+      });
+
       callback(null, vectors);
       return;
     }
@@ -89,18 +112,21 @@ export class PromCompleter {
     var query = prefix;
 
     return this.datasource.performSuggestQuery(query, true).then(metricNames => {
-      callback(null, metricNames.map(name => {
-        let value = name;
-        if (prefix === '(') {
-          value = '(' + name;
-        }
+      callback(
+        null,
+        metricNames.map(name => {
+          let value = name;
+          if (prefix === '(') {
+            value = '(' + name;
+          }
 
-        return {
-          caption: name,
-          value: value,
-          meta: 'metric',
-        };
-      }));
+          return {
+            caption: name,
+            value: value,
+            meta: 'metric',
+          };
+        })
+      );
     });
   }
 
@@ -125,7 +151,7 @@ export class PromCompleter {
         caption: name,
         value: name,
         meta: meta,
-        score: Number.MAX_VALUE
+        score: Number.MAX_VALUE,
       };
     });
   }
@@ -158,7 +184,8 @@ export class PromCompleter {
     var tokens, idx;
     for (var r = row; r >= 0; r--) {
       tokens = session.getTokens(r);
-      if (r === row) { // current row
+      if (r === row) {
+        // current row
         var c = 0;
         for (idx = 0; idx < tokens.length; idx++) {
           c += tokens[idx].value.length;
@@ -175,8 +202,7 @@ export class PromCompleter {
           return null;
         }
 
-        if (tokens[idx].type === target
-          && (!value || tokens[idx].value === value)) {
+        if (tokens[idx].type === target && (!value || tokens[idx].value === value)) {
           tokens[idx].row = r;
           tokens[idx].index = idx;
           return tokens[idx];
@@ -186,5 +212,4 @@ export class PromCompleter {
 
     return null;
   }
-
 }

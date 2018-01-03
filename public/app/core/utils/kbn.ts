@@ -541,7 +541,7 @@ kbn.valueFormats.velocityknot = kbn.formatBuilders.fixedUnit('kn');
 // Acceleration
 kbn.valueFormats.accMS2 = kbn.formatBuilders.fixedUnit('m/sec²');
 kbn.valueFormats.accFS2 = kbn.formatBuilders.fixedUnit('f/sec²');
-kbn.valueFormats.accG   = kbn.formatBuilders.fixedUnit('g');
+kbn.valueFormats.accG = kbn.formatBuilders.fixedUnit('g');
 
 // Volume
 kbn.valueFormats.litre = kbn.formatBuilders.decimalSIPrefix('L');
@@ -557,9 +557,9 @@ kbn.valueFormats.flowcfs = kbn.formatBuilders.fixedUnit('cfs');
 kbn.valueFormats.flowcfm = kbn.formatBuilders.fixedUnit('cfm');
 
 // Angle
-kbn.valueFormats.degree  = kbn.formatBuilders.fixedUnit('°');
-kbn.valueFormats.radian  = kbn.formatBuilders.fixedUnit('rad');
-kbn.valueFormats.grad    = kbn.formatBuilders.fixedUnit('grad');
+kbn.valueFormats.degree = kbn.formatBuilders.fixedUnit('°');
+kbn.valueFormats.radian = kbn.formatBuilders.fixedUnit('rad');
+kbn.valueFormats.grad = kbn.formatBuilders.fixedUnit('grad');
 
 // Time
 kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
@@ -902,10 +902,10 @@ kbn.getUnitFormats = function() {
     {
       text: 'area',
       submenu: [
-        {text: 'Square Meters (m²)', value: 'areaM2' },
-        {text: 'Square Feet (ft²)',  value: 'areaF2' },
-        {text: 'Square Miles (mi²)', value: 'areaMI2'},
-      ]
+        { text: 'Square Meters (m²)', value: 'areaM2' },
+        { text: 'Square Feet (ft²)', value: 'areaF2' },
+        { text: 'Square Miles (mi²)', value: 'areaMI2' },
+      ],
     },
     {
       text: 'mass',
@@ -957,7 +957,7 @@ kbn.getUnitFormats = function() {
         { text: 'Kilovolt (kV)', value: 'kvolt' },
         { text: 'Millivolt (mV)', value: 'mvolt' },
         { text: 'Decibel-milliwatt (dBm)', value: 'dBm' },
-        { text: 'Ohm (Ω)', value: 'ohm' }
+        { text: 'Ohm (Ω)', value: 'ohm' },
       ],
     },
     {
@@ -1002,17 +1002,17 @@ kbn.getUnitFormats = function() {
       submenu: [
         { text: 'Degrees (°)', value: 'degree' },
         { text: 'Radians', value: 'radian' },
-        { text: 'Gradian', value: 'grad' }
-      ]
+        { text: 'Gradian', value: 'grad' },
+      ],
     },
     {
       text: 'acceleration',
       submenu: [
         { text: 'Meters/sec²', value: 'accMS2' },
-        { text: 'Feet/sec²',  value: 'accFS2' },
-        { text: 'G unit',  value: 'accG' }
-      ]
-    }
+        { text: 'Feet/sec²', value: 'accFS2' },
+        { text: 'G unit', value: 'accG' },
+      ],
+    },
   ];
 };
 

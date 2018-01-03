@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
 	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
+	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -128,10 +129,10 @@ func remoteCredProvider(sess *session.Session) credentials.Provider {
 func ecsCredProvider(sess *session.Session, uri string) credentials.Provider {
 	const host = `169.254.170.2`
 
-	c := ec2metadata.New(sess)
+	d := defaults.Get()
 	return endpointcreds.NewProviderClient(
-		c.Client.Config,
-		c.Client.Handlers,
+		*d.Config,
+		d.Handlers,
 		fmt.Sprintf("http://%s%s", host, uri),
 		func(p *endpointcreds.Provider) { p.ExpiryWindow = 5 * time.Minute })
 }
@@ -141,6 +142,11 @@ func ec2RoleProvider(sess *session.Session) credentials.Provider {
 }
 
 func (e *CloudWatchExecutor) getDsInfo(region string) *DatasourceInfo {
+	defaultRegion := e.DataSource.JsonData.Get("defaultRegion").MustString()
+	if region == "default" {
+		region = defaultRegion
+	}
+
 	authType := e.DataSource.JsonData.Get("authType").MustString()
 	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	accessKey := ""

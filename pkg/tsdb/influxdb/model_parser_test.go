@@ -20,7 +20,6 @@ func TestInfluxdbQueryParser(t *testing.T) {
 		Convey("can parse influxdb json model", func() {
 			json := `
         {
-        "dsType": "influxdb",
         "groupBy": [
           {
             "params": [
@@ -123,7 +122,6 @@ func TestInfluxdbQueryParser(t *testing.T) {
 		Convey("can part raw query json model", func() {
 			json := `
       {
-        "dsType": "influxdb",
         "groupBy": [
           {
             "params": [

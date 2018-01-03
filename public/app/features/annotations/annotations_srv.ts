@@ -3,7 +3,7 @@ import './editor_ctrl';
 import angular from 'angular';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
-import {makeRegions, dedupAnnotations} from './events_processing';
+import { makeRegions, dedupAnnotations } from './events_processing';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -40,7 +40,7 @@ export class AnnotationsSrv {
         annotations = makeRegions(annotations, options);
 
         // look for alert state for this panel
-        var alertState = _.find(results[1], {panelId: options.panel.id});
+        var alertState = _.find(results[1], { panelId: options.panel.id });
 
         return {
           annotations: annotations,
@@ -119,7 +119,7 @@ export class AnnotationsSrv {
             }
             // translate result
             return this.translateQueryResult(annotation, results);
-          }),
+          })
       );
     }
 

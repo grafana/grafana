@@ -21,6 +21,7 @@
 @import "base/grid";
 @import "base/fonts";
 @import "base/code";
+@import "base/icons";
 
 // UTILS
 @import "utils/utils";
@@ -34,6 +35,7 @@
 @import "layout/page";
 
 // COMPONENTS
+@import "components/scrollbar";
 @import "components/cards";
 @import "components/buttons";
 @import "components/navs";
@@ -52,6 +54,8 @@
 @import "components/panel_table";
 @import "components/panel_text";
 @import "components/panel_heatmap";
+@import "components/panel_add_panel";
+@import "components/settings_permissions";
 @import "components/tagsinput";
 @import "components/tables_lists";
 @import "components/search";
@@ -62,7 +66,6 @@
 @import "components/filter-controls";
 @import "components/filter-list";
 @import "components/filter-table";
-@import "components/scrollbar";
 @import "components/old_stuff";
 @import "components/typeahead";
 @import "components/modals";
@@ -76,11 +79,15 @@
 @import "components/tabbed_view";
 @import "components/query_part";
 @import "components/jsontree";
-@import "components/edit_sidemenu.scss";
+@import "components/edit_sidemenu";
 @import "components/row.scss";
-@import "components/icon-picker.scss";
-@import "components/json_explorer.scss";
-@import "components/code_editor.scss";
+@import "components/json_explorer";
+@import "components/code_editor";
+@import "components/dashboard_grid";
+@import "components/dashboard_list";
+@import "components/page_header";
+@import "components/dashboard_settings";
+@import "components/empty_list_cta";
 
 // PAGES
 @import "pages/login";

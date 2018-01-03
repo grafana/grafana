@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -41,7 +42,7 @@ func OrgRedirect() macaron.Handler {
 			return
 		}
 
-		newUrl := setting.ToAbsUrl(fmt.Sprintf("%s?%s", c.Req.URL.Path, c.Req.URL.Query().Encode()))
-		c.Redirect(newUrl, 302)
+		newURL := setting.ToAbsUrl(fmt.Sprintf("%s?%s", strings.TrimPrefix(c.Req.URL.Path, "/"), c.Req.URL.Query().Encode()))
+		c.Redirect(newURL, 302)
 	}
 }

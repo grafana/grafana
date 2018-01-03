@@ -6,9 +6,15 @@ import moment from 'moment';
 var units = ['y', 'M', 'w', 'd', 'h', 'm', 's'];
 
 export function parse(text, roundUp?, timezone?) {
-  if (!text) { return undefined; }
-  if (moment.isMoment(text)) { return text; }
-  if (_.isDate(text)) { return moment(text); }
+  if (!text) {
+    return undefined;
+  }
+  if (moment.isMoment(text)) {
+    return text;
+  }
+  if (_.isDate(text)) {
+    return moment(text);
+  }
 
   var time;
   var mathString = '';
@@ -84,7 +90,9 @@ export function parseDateMath(mathString, time, roundUp?) {
       var numFrom = i;
       while (!isNaN(mathString.charAt(i))) {
         i++;
-        if (i > 10) { return undefined; }
+        if (i > 10) {
+          return undefined;
+        }
       }
       num = parseInt(mathString.substring(numFrom, i), 10);
     }
@@ -115,4 +123,3 @@ export function parseDateMath(mathString, time, roundUp?) {
   }
   return dateTime;
 }
-

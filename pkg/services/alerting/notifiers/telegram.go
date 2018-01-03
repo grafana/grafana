@@ -76,6 +76,10 @@ func NewTelegramNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 	}, nil
 }
 
+func (this *TelegramNotifier) ShouldNotify(context *alerting.EvalContext) bool {
+	return defaultShouldNotify(context)
+}
+
 func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending alert notification to", "bot_token", this.BotToken)
 	this.log.Info("Sending alert notification to", "chat_id", this.ChatID)

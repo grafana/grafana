@@ -3,6 +3,7 @@ package imguploader
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/log"
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -76,6 +77,21 @@ func NewImageUploader() (ImageUploader, error) {
 		path := gcssec.Key("path").MustString("")
 
 		return NewGCSUploader(keyFile, bucketName, path), nil
+	case "azure_blob":
+		azureBlobSec, err := setting.Cfg.GetSection("external_image_storage.azure_blob")
+		if err != nil {
+			return nil, err
+		}
+
+		account_name := azureBlobSec.Key("account_name").MustString("")
+		account_key := azureBlobSec.Key("account_key").MustString("")
+		container_name := azureBlobSec.Key("container_name").MustString("")
+
+		return NewAzureBlobUploader(account_name, account_key, container_name), nil
+	}
+
+	if setting.ImageUploadProvider != "" {
+		log.Error2("The external image storage configuration is invalid", "unsupported provider", setting.ImageUploadProvider)
 	}
 
 	return NopImageUploader{}, nil
