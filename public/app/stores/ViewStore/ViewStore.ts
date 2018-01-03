@@ -21,7 +21,7 @@ export const ViewStore = types
       let path = self.path;
 
       if (self.query.size) {
-        path += '?' + urlParameterize(self.query.toJS());
+        path += urlParameterize(self.query.toJS());
       }
       return path;
     },
