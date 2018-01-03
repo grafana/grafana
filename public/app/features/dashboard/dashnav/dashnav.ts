@@ -83,6 +83,8 @@ export class DashNavCtrl {
       gridPos: { x: 0, y: 0, w: 12, h: 9 },
       title: 'Panel Title',
     });
+
+    appEvents.emit('scroll-top');
   }
 
   navItemClicked(navItem, evt) {
