@@ -37,6 +37,7 @@ var customMetricsDimensionsMap map[string]map[string]map[string]*CustomMetricsCa
 
 func init() {
 	metricsMap = map[string][]string{
+		"AWS/AmazonMQ":       {"CpuUtilization", "HeapUsage", "NetworkIn", "NetworkOut", "TotalMessageCount", "ConsumerCount", "EnqueueCount", "EnqueueTime", "ExpiredCount", "InflightCount", "DispatchCount", "DequeueCount", "MemoryUsage", "ProducerCount", "QueueSize"},
 		"AWS/ApiGateway":     {"4XXError", "5XXError", "CacheHitCount", "CacheMissCount", "Count", "IntegrationLatency", "Latency"},
 		"AWS/ApplicationELB": {"ActiveConnectionCount", "ClientTLSNegotiationErrorCount", "HealthyHostCount", "HTTPCode_ELB_4XX_Count", "HTTPCode_ELB_5XX_Count", "HTTPCode_Target_2XX_Count", "HTTPCode_Target_3XX_Count", "HTTPCode_Target_4XX_Count", "HTTPCode_Target_5XX_Count", "IPv6ProcessedBytes", "IPv6RequestCount", "NewConnectionCount", "ProcessedBytes", "RejectedConnectionCount", "RequestCount", "RequestCountPerTarget", "TargetConnectionErrorCount", "TargetResponseTime", "TargetTLSNegotiationErrorCount", "UnHealthyHostCount"},
 		"AWS/AutoScaling":    {"GroupMinSize", "GroupMaxSize", "GroupDesiredCapacity", "GroupInServiceInstances", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"},
@@ -106,6 +107,7 @@ func init() {
 		"KMS":            {"SecondsUntilKeyMaterialExpiration"},
 	}
 	dimensionsMap = map[string][]string{
+		"AWS/AmazonMQ":         {"Broker", "Topic", "Queue"},
 		"AWS/ApiGateway":       {"ApiName", "Method", "Resource", "Stage"},
 		"AWS/ApplicationELB":   {"LoadBalancer", "TargetGroup", "AvailabilityZone"},
 		"AWS/AutoScaling":      {"AutoScalingGroupName"},
