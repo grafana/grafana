@@ -6,7 +6,7 @@ import { Provider } from 'mobx-react';
 
 function WrapInProvider(store, Component, props) {
   return (
-    <Provider store={store}>
+    <Provider {...store}>
       <Component {...props} />
     </Provider>
   );

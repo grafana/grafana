@@ -2,17 +2,13 @@ import React from 'react';
 import classNames from 'classnames';
 import { inject, observer } from 'mobx-react';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
-import { IRootStore } from 'app/stores/RootStore';
 import { IAlertRule } from 'app/stores/AlertListStore';
 import appEvents from 'app/core/app_events';
+import IContainerProps from 'app/containers/IContainerProps';
 
-export interface AlertRuleListProps {
-  store: IRootStore;
-}
-
-@inject('store')
+@inject('view', 'nav', 'alertList')
 @observer
-export class AlertRuleList extends React.Component<AlertRuleListProps, any> {
+export class AlertRuleList extends React.Component<IContainerProps, any> {
   stateFilters = [
     { text: 'All', value: 'all' },
     { text: 'OK', value: 'ok' },
@@ -25,18 +21,18 @@ export class AlertRuleList extends React.Component<AlertRuleListProps, any> {
   constructor(props) {
     super(props);
 
-    this.props.store.nav.load('alerting', 'alert-list');
+    this.props.nav.load('alerting', 'alert-list');
     this.fetchRules();
   }
 
   onStateFilterChanged = evt => {
-    this.props.store.view.updateQuery({ state: evt.target.value });
+    this.props.view.updateQuery({ state: evt.target.value });
     this.fetchRules();
   };
 
   fetchRules() {
-    this.props.store.alertList.loadRules({
-      state: this.props.store.view.query.get('state') || 'all',
+    this.props.alertList.loadRules({
+      state: this.props.view.query.get('state') || 'all',
     });
   }
 
@@ -49,7 +45,7 @@ export class AlertRuleList extends React.Component<AlertRuleListProps, any> {
   };
 
   render() {
-    const { nav, alertList } = this.props.store;
+    const { nav, alertList } = this.props;
 
     return (
       <div>

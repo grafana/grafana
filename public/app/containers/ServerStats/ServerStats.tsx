@@ -1,25 +1,25 @@
 import React from 'react';
 import { inject, observer } from 'mobx-react';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
+import IContainerProps from 'app/containers/IContainerProps';
 
-export interface IProps {
-  store: any;
-}
-
-@inject('store')
+@inject('nav', 'serverStats')
 @observer
-export class ServerStats extends React.Component<IProps, any> {
+export class ServerStats extends React.Component<IContainerProps, any> {
   constructor(props) {
     super(props);
+    const { nav, serverStats } = this.props;
 
-    this.props.store.nav.load('cfg', 'admin', 'server-stats');
-    this.props.store.serverStats.load();
+    nav.load('cfg', 'admin', 'server-stats');
+    serverStats.load();
   }
 
   render() {
+    const { nav, serverStats } = this.props;
+    console.log('NAVVVVV', nav);
     return (
       <div>
-        <PageHeader model={this.props.store.nav} />
+        <PageHeader model={nav as any} />
         <div className="page-container page-body">
           <table className="filter-table form-inline">
             <thead>
@@ -28,7 +28,7 @@ export class ServerStats extends React.Component<IProps, any> {
                 <th>Value</th>
               </tr>
             </thead>
-            <tbody>{this.props.store.serverStats.stats.map(StatItem)}</tbody>
+            <tbody>{serverStats.stats.map(StatItem)}</tbody>
           </table>
         </div>
       </div>

@@ -20,7 +20,7 @@ describe('ServerStats', () => {
       }
     );
 
-    const page = renderer.create(<ServerStats store={store} />);
+    const page = renderer.create(<ServerStats {...store} />);
 
     setTimeout(() => {
       expect(page.toJSON()).toMatchSnapshot();

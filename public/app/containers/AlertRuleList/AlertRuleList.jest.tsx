@@ -36,7 +36,7 @@ describe('AlertRuleList', () => {
       }
     );
 
-    page = mount(<AlertRuleList store={store} />);
+    page = mount(<AlertRuleList {...store} />);
   });
 
   it('should call api to get rules', () => {
