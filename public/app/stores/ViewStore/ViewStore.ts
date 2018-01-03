@@ -1,8 +1,15 @@
 import { types } from 'mobx-state-tree';
-import _ from 'lodash';
-import $ from 'jquery';
 
-let QueryValueType = types.union(types.string, types.boolean, types.number);
+const QueryValueType = types.union(types.string, types.boolean, types.number);
+const urlParameterize = queryObj => {
+  const keys = Object.keys(queryObj);
+  const newQuery = keys.reduce((acc: string, key: string, idx: number) => {
+    const preChar = idx === 0 ? '?' : '&';
+    return acc + preChar + key + '=' + queryObj[key];
+  }, '');
+
+  return newQuery;
+};
 
 export const ViewStore = types
   .model({
@@ -12,26 +19,28 @@ export const ViewStore = types
   .views(self => ({
     get currentUrl() {
       let path = self.path;
+
       if (self.query.size) {
-        path += '?' + $.param(self.query.toJS());
+        path += '?' + urlParameterize(self.query.toJS());
       }
       return path;
     },
   }))
-  .actions(self => ({
-    updatePathAndQuery(path: string, query: any) {
+  .actions(self => {
+    function updateQuery(query: any) {
+      self.query.clear();
+      for (let key of Object.keys(query)) {
+        self.query.set(key, query[key]);
+      }
+    }
+
+    function updatePathAndQuery(path: string, query: any) {
       self.path = path;
-      self.query.clear();
+      updateQuery(query);
+    }
 
-      for (let key of _.keys(query)) {
-        self.query.set(key, query[key]);
-      }
-    },
-
-    updateQuery(query: any) {
-      self.query.clear();
-      for (let key of _.keys(query)) {
-        self.query.set(key, query[key]);
-      }
-    },
-  }));
+    return {
+      updateQuery,
+      updatePathAndQuery,
+    };
+  });
