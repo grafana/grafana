@@ -53,6 +53,18 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
         <div className="page-container page-body">
           <div className="page-action-bar">
             <div className="gf-form">
+              <label className="gf-form--has-input-icon">
+                <input
+                  type="text"
+                  className="gf-form-input width-13"
+                  placeholder="Search alert"
+                  value={this.searchQuery}
+                  onChange={this.onQueryUpdated}
+                />
+                <i className="gf-form-input-icon fa fa-search" />
+              </label>
+            </div>
+            <div className="gf-form">
               <label className="gf-form-label">Filter by state</label>
 
               <div className="gf-form-select-wrapper width-13">
@@ -69,8 +81,10 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
             </a>
           </div>
 
-          <section className="card-section card-list-layout-list">
-            <ol className="card-list">{alertList.rules.map(rule => <AlertRuleItem rule={rule} key={rule.id} />)}</ol>
+          <section>
+            <ol className="alert-rule-list">
+              {alertList.rules.map(rule => <AlertRuleItem rule={rule} key={rule.id} />)}
+            </ol>
           </section>
         </div>
       </div>
@@ -108,36 +122,33 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
     let ruleUrl = `dashboard/${rule.dashboardUri}?panelId=${rule.panelId}&fullscreen&edit&tab=alert`;
 
     return (
-      <li className="card-item-wrapper">
-        <div className="card-item card-item--alert">
-          <div className="card-item-header">
-            <div className="card-item-type">
-              <a
-                className="card-item-cog"
-                title="Pausing an alert rule prevents it from executing"
-                onClick={this.toggleState}
-              >
-                <i className={stateClass} />
-              </a>
-              <a className="card-item-cog" href={ruleUrl} title="Edit alert rule">
-                <i className="icon-gf icon-gf-settings" />
-              </a>
+      <li className="alert-rule-item">
+        <div className="alert-rule-item__body">
+          <span className={`alert-rule-item__icon ${rule.stateClass}`}>
+            <i className={rule.stateIcon} />
+          </span>
+          <div className="alert-rule-item__header">
+            <div className="alert-rule-item__name">
+              <a href={ruleUrl}>{rule.name}</a>
+            </div>
+            <div className="alert-rule-item__text">
+              <span className={`${rule.stateClass}`}>{rule.stateText}</span>
+              <span className="alert-rule-item__time"> for {rule.stateAge}</span>
             </div>
           </div>
-          <div className="card-item-body">
-            <div className="card-item-details">
-              <div className="card-item-name">
-                <a href={ruleUrl}>{rule.name}</a>
-              </div>
-              <div className="card-item-sub-name">
-                <span className={`alert-list-item-state ${rule.stateClass}`}>
-                  <i className={rule.stateIcon} /> {rule.stateText}
-                </span>
-                <span> for {rule.stateAge}</span>
-              </div>
-              {rule.info && <div className="small muted">{rule.info}</div>}
-            </div>
-          </div>
+          {rule.info && <div className="small muted alert-rule-item__info">{rule.info}</div>}
+        </div>
+        <div className="alert-rule-item__footer">
+          <a
+            className="btn btn-small btn-inverse alert-list__btn width-2"
+            title="Pausing an alert rule prevents it from executing"
+            onClick={this.toggleState}
+          >
+            <i className={stateClass} />
+          </a>
+          <a className="btn btn-small btn-inverse alert-list__btn width-2" href={ruleUrl} title="Edit alert rule">
+            <i className="icon-gf icon-gf-settings" />
+          </a>
         </div>
       </li>
     );
