@@ -23,6 +23,7 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
 
     this.props.nav.load('alerting', 'alert-list');
     this.fetchRules();
+    this.state = { search: '' };
   }
 
   onStateFilterChanged = evt => {
@@ -44,8 +45,18 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
     });
   };
 
+  onSearchFilter(event) {
+    this.setState({ search: event.target.value });
+    console.log('yo');
+  }
+
   render() {
     const { nav, alertList } = this.props;
+
+    let regex = new RegExp(this.state.search, 'ig');
+    const filteredAlerts = alertList.rules.filter(alert => {
+      return regex.test(alert.name) || regex.test(alert.stateText);
+    });
 
     return (
       <div>
@@ -58,8 +69,8 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
                   type="text"
                   className="gf-form-input width-13"
                   placeholder="Search alert"
-                  value={this.searchQuery}
-                  onChange={this.onQueryUpdated}
+                  value={this.state.search}
+                  onChange={this.onSearchFilter.bind(this)}
                 />
                 <i className="gf-form-input-icon fa fa-search" />
               </label>
@@ -83,7 +94,7 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
 
           <section>
             <ol className="alert-rule-list">
-              {alertList.rules.map(rule => <AlertRuleItem rule={rule} key={rule.id} />)}
+              {filteredAlerts.map(rule => <AlertRuleItem rule={rule} key={rule.id} />)}
             </ol>
           </section>
         </div>
