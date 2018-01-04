@@ -1,4 +1,4 @@
-import coreModule from '../core_module';
+import coreModule from 'app/core/core_module';
 
 export class LoadDashboardCtrl {
   /** @ngInject */

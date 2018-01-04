@@ -1,0 +1,72 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AlertRuleList should render 1 rule 1`] = `
+<li
+  className="card-item-wrapper"
+>
+  <div
+    className="card-item card-item--alert"
+  >
+    <div
+      className="card-item-header"
+    >
+      <div
+        className="card-item-type"
+      >
+        <a
+          className="card-item-cog"
+          onClick={[Function]}
+          title="Pausing an alert rule prevents it from executing"
+        >
+          <i
+            className="fa fa-pause"
+          />
+        </a>
+        <a
+          className="card-item-cog"
+          href="dashboard/db/mygool?panelId=3&fullscreen&edit&tab=alert"
+          title="Edit alert rule"
+        >
+          <i
+            className="icon-gf icon-gf-settings"
+          />
+        </a>
+      </div>
+    </div>
+    <div
+      className="card-item-body"
+    >
+      <div
+        className="card-item-details"
+      >
+        <div
+          className="card-item-name"
+        >
+          <a
+            href="dashboard/db/mygool?panelId=3&fullscreen&edit&tab=alert"
+          >
+            Panel Title alert
+          </a>
+        </div>
+        <div
+          className="card-item-sub-name"
+        >
+          <span
+            className="alert-list-item-state alert-state-ok"
+          >
+            <i
+              className="icon-gf icon-gf-online"
+            />
+             
+            OK
+          </span>
+          <span>
+             for 
+            5 minutes
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</li>
+`;

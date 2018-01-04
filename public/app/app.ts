@@ -27,6 +27,7 @@ _.move = function(array, fromIndex, toIndex) {
 };
 
 import { coreModule, registerAngularDirectives } from './core/core';
+import { setupAngularRoutes } from './routes/routes';
 
 export class GrafanaApp {
   registerFunctions: any;
@@ -113,6 +114,7 @@ export class GrafanaApp {
     this.useModule(coreModule);
 
     // register react angular wrappers
+    coreModule.config(setupAngularRoutes);
     registerAngularDirectives();
 
     var preBootRequires = [System.import('app/features/all')];
@@ -121,6 +123,7 @@ export class GrafanaApp {
       .then(() => {
         // disable tool tip animation
         $.fn.tooltip.defaults.animation = false;
+
         // bootstrap the app
         angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
           _.each(this.preBootModules, module => {

@@ -1,7 +1,7 @@
-import React from "react";
-import { NavModel, NavModelItem } from "../../nav_model_srv";
-import classNames from "classnames";
-import appEvents from "app/core/app_events";
+import React from 'react';
+import { NavModel, NavModelItem } from '../../nav_model_srv';
+import classNames from 'classnames';
+import appEvents from 'app/core/app_events';
 
 export interface IProps {
   model: NavModel;
@@ -13,8 +13,8 @@ function TabItem(tab: NavModelItem) {
   }
 
   let tabClasses = classNames({
-    "gf-tabs-link": true,
-    active: tab.active
+    'gf-tabs-link': true,
+    active: tab.active,
   });
 
   return (
@@ -49,13 +49,7 @@ function Navigation({ main }: { main: NavModelItem }) {
   );
 }
 
-function SelectNav({
-  main,
-  customCss
-}: {
-  main: NavModelItem;
-  customCss: string;
-}) {
+function SelectNav({ main, customCss }: { main: NavModelItem; customCss: string }) {
   const defaultSelectedItem = main.children.find(navItem => {
     return navItem.active === true;
   });
@@ -63,15 +57,12 @@ function SelectNav({
   const gotoUrl = evt => {
     var element = evt.target;
     var url = element.options[element.selectedIndex].value;
-    appEvents.emit("location-change", { href: url });
+    appEvents.emit('location-change', { href: url });
   };
 
   return (
     <div className={`gf-form-select-wrapper width-20 ${customCss}`}>
-      <label
-        className={`gf-form-select-icon ${defaultSelectedItem.icon}`}
-        htmlFor="page-header-select-nav"
-      />
+      <label className={`gf-form-select-icon ${defaultSelectedItem.icon}`} htmlFor="page-header-select-nav" />
       {/* Label to make it clickable */}
       <select
         className="gf-select-nav gf-form-input"
@@ -86,9 +77,7 @@ function SelectNav({
 }
 
 function Tabs({ main, customCss }: { main: NavModelItem; customCss: string }) {
-  return (
-    <ul className={`gf-tabs ${customCss}`}>{main.children.map(TabItem)}</ul>
-  );
+  return <ul className={`gf-tabs ${customCss}`}>{main.children.map(TabItem)}</ul>;
 }
 
 export default class PageHeader extends React.Component<IProps, any> {
@@ -125,13 +114,9 @@ export default class PageHeader extends React.Component<IProps, any> {
           {main.text && <h1 className="page-header__title">{main.text}</h1>}
           {main.breadcrumbs &&
             main.breadcrumbs.length > 0 && (
-              <h1 className="page-header__title">
-                {this.renderBreadcrumb(main.breadcrumbs)}
-              </h1>
+              <h1 className="page-header__title">{this.renderBreadcrumb(main.breadcrumbs)}</h1>
             )}
-          {main.subTitle && (
-            <div className="page-header__sub-title">{main.subTitle}</div>
-          )}
+          {main.subTitle && <div className="page-header__sub-title">{main.subTitle}</div>}
           {main.subType && (
             <div className="page-header__stamps">
               <i className={main.subType.icon} />

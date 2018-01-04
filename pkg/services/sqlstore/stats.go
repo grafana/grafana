@@ -13,7 +13,7 @@ func init() {
 	bus.AddHandler("sql", GetAdminStats)
 }
 
-var activeUserTimeLimit time.Duration = time.Hour * 24 * 14
+var activeUserTimeLimit time.Duration = time.Hour * 24 * 30
 
 func GetDataSourceStats(query *m.GetDataSourceStatsQuery) error {
 	var rawSql = `SELECT COUNT(*) as count, type FROM data_source GROUP BY type`

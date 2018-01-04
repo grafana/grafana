@@ -1,42 +1,11 @@
 import './dashboard_loaders';
-import coreModule from 'app/core/core_module';
+import './ReactContainer';
+import { ServerStats } from 'app/containers/ServerStats/ServerStats';
+import { AlertRuleList } from 'app/containers/AlertRuleList/AlertRuleList';
 
 /** @ngInject **/
-function setupAngularRoutes($routeProvider, $locationProvider) {
+export function setupAngularRoutes($routeProvider, $locationProvider) {
   $locationProvider.html5Mode(true);
-
-  var loadOrgBundle = {
-    lazy: [
-      '$q',
-      '$route',
-      '$rootScope',
-      ($q, $route, $rootScope) => {
-        return System.import('app/features/org/all');
-      },
-    ],
-  };
-
-  var loadAdminBundle = {
-    lazy: [
-      '$q',
-      '$route',
-      '$rootScope',
-      ($q, $route, $rootScope) => {
-        return System.import('app/features/admin/admin');
-      },
-    ],
-  };
-
-  var loadAlertingBundle = {
-    lazy: [
-      '$q',
-      '$route',
-      '$rootScope',
-      ($q, $route, $rootScope) => {
-        return System.import('app/features/alerting/all');
-      },
-    ],
-  };
 
   $routeProvider
     .when('/', {
@@ -111,110 +80,92 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     .when('/org', {
       templateUrl: 'public/app/features/org/partials/orgDetails.html',
       controller: 'OrgDetailsCtrl',
-      resolve: loadOrgBundle,
     })
     .when('/org/new', {
       templateUrl: 'public/app/features/org/partials/newOrg.html',
       controller: 'NewOrgCtrl',
-      resolve: loadOrgBundle,
     })
     .when('/org/users', {
       templateUrl: 'public/app/features/org/partials/orgUsers.html',
       controller: 'OrgUsersCtrl',
       controllerAs: 'ctrl',
-      resolve: loadOrgBundle,
     })
     .when('/org/users/invite', {
       templateUrl: 'public/app/features/org/partials/invite.html',
       controller: 'UserInviteCtrl',
       controllerAs: 'ctrl',
-      resolve: loadOrgBundle,
     })
     .when('/org/apikeys', {
       templateUrl: 'public/app/features/org/partials/orgApiKeys.html',
       controller: 'OrgApiKeysCtrl',
-      resolve: loadOrgBundle,
     })
     .when('/org/teams', {
       templateUrl: 'public/app/features/org/partials/teams.html',
       controller: 'TeamsCtrl',
       controllerAs: 'ctrl',
-      resolve: loadOrgBundle,
     })
     .when('/org/teams/new', {
       templateUrl: 'public/app/features/org/partials/create_team.html',
       controller: 'CreateTeamCtrl',
       controllerAs: 'ctrl',
-      resolve: loadOrgBundle,
     })
     .when('/org/teams/edit/:id', {
       templateUrl: 'public/app/features/org/partials/team_details.html',
       controller: 'TeamDetailsCtrl',
       controllerAs: 'ctrl',
-      resolve: loadOrgBundle,
     })
     .when('/profile', {
       templateUrl: 'public/app/features/org/partials/profile.html',
       controller: 'ProfileCtrl',
       controllerAs: 'ctrl',
-      resolve: loadOrgBundle,
     })
     .when('/profile/password', {
       templateUrl: 'public/app/features/org/partials/change_password.html',
       controller: 'ChangePasswordCtrl',
-      resolve: loadOrgBundle,
     })
     .when('/profile/select-org', {
       templateUrl: 'public/app/features/org/partials/select_org.html',
       controller: 'SelectOrgCtrl',
-      resolve: loadOrgBundle,
     })
     // ADMIN
     .when('/admin', {
       templateUrl: 'public/app/features/admin/partials/admin_home.html',
       controller: 'AdminHomeCtrl',
       controllerAs: 'ctrl',
-      resolve: loadAdminBundle,
     })
     .when('/admin/settings', {
       templateUrl: 'public/app/features/admin/partials/settings.html',
       controller: 'AdminSettingsCtrl',
       controllerAs: 'ctrl',
-      resolve: loadAdminBundle,
     })
     .when('/admin/users', {
       templateUrl: 'public/app/features/admin/partials/users.html',
       controller: 'AdminListUsersCtrl',
       controllerAs: 'ctrl',
-      resolve: loadAdminBundle,
     })
     .when('/admin/users/create', {
       templateUrl: 'public/app/features/admin/partials/new_user.html',
       controller: 'AdminEditUserCtrl',
-      resolve: loadAdminBundle,
     })
     .when('/admin/users/edit/:id', {
       templateUrl: 'public/app/features/admin/partials/edit_user.html',
       controller: 'AdminEditUserCtrl',
-      resolve: loadAdminBundle,
     })
     .when('/admin/orgs', {
       templateUrl: 'public/app/features/admin/partials/orgs.html',
       controller: 'AdminListOrgsCtrl',
       controllerAs: 'ctrl',
-      resolve: loadAdminBundle,
     })
     .when('/admin/orgs/edit/:id', {
       templateUrl: 'public/app/features/admin/partials/edit_org.html',
       controller: 'AdminEditOrgCtrl',
       controllerAs: 'ctrl',
-      resolve: loadAdminBundle,
     })
     .when('/admin/stats', {
-      templateUrl: 'public/app/features/admin/partials/stats.html',
-      controller: 'AdminStatsCtrl',
-      controllerAs: 'ctrl',
-      resolve: loadAdminBundle,
+      template: '<react-container />',
+      resolve: {
+        component: () => ServerStats,
+      },
     })
     // LOGIN / SIGNUP
     .when('/login', {
@@ -274,30 +225,31 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
       templateUrl: 'public/app/features/alerting/partials/alert_list.html',
       controller: 'AlertListCtrl',
       controllerAs: 'ctrl',
-      resolve: loadAlertingBundle,
+    })
+    .when('/alerting/list', {
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () => AlertRuleList,
+      },
     })
     .when('/alerting/notifications', {
       templateUrl: 'public/app/features/alerting/partials/notifications_list.html',
       controller: 'AlertNotificationsListCtrl',
       controllerAs: 'ctrl',
-      resolve: loadAlertingBundle,
     })
     .when('/alerting/notification/new', {
       templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
       controller: 'AlertNotificationEditCtrl',
       controllerAs: 'ctrl',
-      resolve: loadAlertingBundle,
     })
     .when('/alerting/notification/:id/edit', {
       templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
       controller: 'AlertNotificationEditCtrl',
       controllerAs: 'ctrl',
-      resolve: loadAlertingBundle,
     })
     .otherwise({
       templateUrl: 'public/app/partials/error.html',
       controller: 'ErrorCtrl',
     });
 }
-
-coreModule.config(setupAngularRoutes);
