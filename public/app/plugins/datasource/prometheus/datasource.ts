@@ -173,6 +173,9 @@ export class PrometheusDatasource {
       throw { message: 'Invalid time range' };
     }
 
+    start = start - (start % query.step);
+    end = end - (end % query.step) + query.step;
+
     var url =
       '/api/v1/query_range?query=' +
       encodeURIComponent(query.expr) +
