@@ -15,7 +15,7 @@ export class ThresholdFormCtrl {
       this.disabled = true;
     }
 
-    var unbindDestroy = $scope.$on("$destroy", () => {
+    var unbindDestroy = $scope.$on('$destroy', () => {
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
       unbindDestroy();
@@ -25,7 +25,13 @@ export class ThresholdFormCtrl {
   }
 
   addThreshold() {
-    this.panel.thresholds.push({value: undefined, colorMode: "critical", op: 'gt', fill: true, line: true});
+    this.panel.thresholds.push({
+      value: undefined,
+      colorMode: 'critical',
+      op: 'gt',
+      fill: true,
+      line: true,
+    });
     this.panelCtrl.render();
   }
 
@@ -39,14 +45,14 @@ export class ThresholdFormCtrl {
   }
 
   onFillColorChange(index) {
-    return (newColor) => {
+    return newColor => {
       this.panel.thresholds[index].fillColor = newColor;
       this.render();
     };
   }
 
   onLineColorChange(index) {
-    return (newColor) => {
+    return newColor => {
       this.panel.thresholds[index].lineColor = newColor;
       this.render();
     };
@@ -131,7 +137,7 @@ coreModule.directive('graphThresholdForm', function() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      panelCtrl: "="
-    }
+      panelCtrl: '=',
+    },
   };
 });

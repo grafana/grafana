@@ -1,24 +1,22 @@
 import _ from 'lodash';
 import TableModel from 'app/core/table_model';
-import {TableRenderer} from '../renderer';
+import { TableRenderer } from '../renderer';
 
 describe('when rendering table', () => {
   describe('given 2 columns', () => {
     var table = new TableModel();
     table.columns = [
-      {text: 'Time'},
-      {text: 'Value'},
-      {text: 'Colored'},
-      {text: 'Undefined'},
-      {text: 'String'},
-      {text: 'United', unit: 'bps'},
-      {text: 'Sanitized'},
-      {text: 'Link'},
-      {text: 'Array'},
+      { text: 'Time' },
+      { text: 'Value' },
+      { text: 'Colored' },
+      { text: 'Undefined' },
+      { text: 'String' },
+      { text: 'United', unit: 'bps' },
+      { text: 'Sanitized' },
+      { text: 'Link' },
+      { text: 'Array' },
     ];
-    table.rows = [
-      [1388556366666, 1230, 40, undefined, "", "", "my.host.com", "host1", ["value1", "value2"]]
-    ];
+    table.rows = [[1388556366666, 1230, 40, undefined, '', '', 'my.host.com', 'host1', ['value1', 'value2']]];
 
     var panel = {
       pageSize: 10,
@@ -27,14 +25,14 @@ describe('when rendering table', () => {
           pattern: 'Time',
           type: 'date',
           format: 'LLL',
-          alias: 'Timestamp'
+          alias: 'Timestamp',
         },
         {
           pattern: '/(Val)ue/',
           type: 'number',
           unit: 'ms',
           decimals: 3,
-          alias: '$1'
+          alias: '$1',
         },
         {
           pattern: 'Colored',
@@ -43,7 +41,7 @@ describe('when rendering table', () => {
           decimals: 1,
           colorMode: 'value',
           thresholds: [50, 80],
-          colors: ['green', 'orange', 'red']
+          colors: ['green', 'orange', 'red'],
         },
         {
           pattern: 'String',
@@ -64,17 +62,17 @@ describe('when rendering table', () => {
           pattern: 'Link',
           type: 'string',
           link: true,
-          linkUrl: "/dashboard?param=$__cell&param_1=$__cell_1&param_2=$__cell_2",
-          linkTooltip: "$__cell $__cell_1 $__cell_6",
-          linkTargetBlank: true
+          linkUrl: '/dashboard?param=$__cell&param_1=$__cell_1&param_2=$__cell_2',
+          linkTooltip: '$__cell $__cell_1 $__cell_6',
+          linkTargetBlank: true,
         },
         {
           pattern: 'Array',
           type: 'number',
           unit: 'ms',
-          decimals: 3
-        }
-      ]
+          decimals: 3,
+        },
+      ],
     };
 
     var sanitize = function(value) {
@@ -90,7 +88,7 @@ describe('when rendering table', () => {
           });
         }
         return value;
-      }
+      },
     };
 
     var renderer = new TableRenderer(panel, table, 'utc', sanitize, templateSrv);
@@ -146,12 +144,12 @@ describe('when rendering table', () => {
     });
 
     it('string style with escape html should return escaped html', () => {
-      var html = renderer.renderCell(4, 0, "&breaking <br /> the <br /> row");
+      var html = renderer.renderCell(4, 0, '&breaking <br /> the <br /> row');
       expect(html).toBe('<td>&amp;breaking &lt;br /&gt; the &lt;br /&gt; row</td>');
     });
 
     it('undefined formater should return escaped html', () => {
-      var html = renderer.renderCell(3, 0, "&breaking <br /> the <br /> row");
+      var html = renderer.renderCell(3, 0, '&breaking <br /> the <br /> row');
       expect(html).toBe('<td>&amp;breaking &lt;br /&gt; the &lt;br /&gt; row</td>');
     });
 

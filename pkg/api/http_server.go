@@ -95,7 +95,7 @@ func (hs *HttpServer) Start(ctx context.Context) error {
 
 func (hs *HttpServer) Shutdown(ctx context.Context) error {
 	err := hs.httpSrv.Shutdown(ctx)
-	hs.log.Info("stopped http server")
+	hs.log.Info("Stopped HTTP server")
 	return err
 }
 

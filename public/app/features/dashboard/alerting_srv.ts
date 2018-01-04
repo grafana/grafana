@@ -12,6 +12,4 @@ export class AlertingSrv {
   }
 }
 
-
 coreModule.service('alertingSrv', AlertingSrv);
-

@@ -143,7 +143,6 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		"alertingEnabled":         setting.AlertingEnabled,
 		"googleAnalyticsId":       setting.GoogleAnalyticsId,
 		"disableLoginForm":        setting.DisableLoginForm,
-		"disableSignoutMenu":      setting.DisableSignoutMenu,
 		"externalUserMngInfo":     setting.ExternalUserMngInfo,
 		"externalUserMngLinkUrl":  setting.ExternalUserMngLinkUrl,
 		"externalUserMngLinkName": setting.ExternalUserMngLinkName,

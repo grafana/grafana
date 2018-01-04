@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -100,6 +101,7 @@ func SetEngine(engine *xorm.Engine) (err error) {
 
 	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
+	dashboards.SetRepository(&dashboards.DashboardRepository{})
 	return nil
 }
 

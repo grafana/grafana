@@ -49,7 +49,9 @@ var loadCSS = function(url) {
     link.href = url;
 
     if (!isWebkit) {
-      link.onload = function() { _callback(undefined); };
+      link.onload = function() {
+        _callback(undefined);
+      };
     } else {
       webkitLoadCheck(link, _callback);
     }
@@ -75,4 +77,3 @@ export function fetch(load): any {
   }
   return loadCSS(load.address);
 }
-

@@ -1,10 +1,31 @@
-.graph-canvas-wrapper {
-  position: relative;
-  cursor: crosshair;
+.graph-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &--legend-right {
+    flex-direction: row;
+
+    .graph-legend {
+      flex: 0 1 10px;
+      max-height: 100%;
+    }
+
+    .graph-legend-series {
+      display: block;
+      padding-left: 0px;
+    }
+
+    .graph-legend-table .graph-legend-series {
+      display: table-row;
+    }
+  }
 }
 
-.histogram-chart {
+.graph-panel__chart {
   position: relative;
+  cursor: crosshair;
+  flex-grow: 1;
 }
 
 .datapoints-warning {
@@ -22,11 +43,12 @@
 }
 
 .graph-legend {
-  @include clearfix();
+  flex: 0 1 auto;
+  max-height: 30%;
   margin: 0 $spacer;
   text-align: center;
-  width: calc(100% - $spacer);
   padding-top: 6px;
+  position: relative;
 
   .popover-content {
     padding: 0;
@@ -48,19 +70,19 @@
   font-size: 85%;
   text-align: left;
   &.current::before {
-    content: "Current: "
+    content: "Current: ";
   }
   &.max::before {
-    content: "Max: "
+    content: "Max: ";
   }
   &.min::before {
-    content: "Min: "
+    content: "Min: ";
   }
   &.total::before {
-    content: "Total: "
+    content: "Total: ";
   }
   &.avg::before {
-    content: "Avg: "
+    content: "Avg: ";
   }
 }
 
@@ -89,7 +111,9 @@
     display: block;
     overflow-y: auto;
     overflow-x: hidden;
+    height: 100%;
     padding-bottom: 1px;
+    padding-right: 5px;
   }
 
   .graph-legend-series {
@@ -100,15 +124,17 @@
       float: none;
 
       .graph-legend-alias::after {
-        content: '(right-y)';
+        content: "(right-y)";
         padding: 0 5px;
         color: $text-color-weak;
       }
     }
   }
 
-
-  td, .graph-legend-alias, .graph-legend-icon, .graph-legend-value {
+  td,
+  .graph-legend-alias,
+  .graph-legend-icon,
+  .graph-legend-value {
     float: none;
     display: table-cell;
     white-space: nowrap;
@@ -125,7 +151,7 @@
     }
   }
 
- .graph-legend-value  {
+  .graph-legend-value {
     padding-left: 15px;
   }
 
@@ -139,13 +165,17 @@
   }
 
   .graph-legend-series:nth-child(odd) {
-    background-color: $grafanaListAccent;
+    background: $table-bg-accent;
   }
 
   .graph-legend-value {
-    &.current, &.max, &.min, &.total, &.avg {
+    &.current,
+    &.max,
+    &.min,
+    &.total,
+    &.avg {
       &::before {
-        content: '';
+        content: "";
       }
     }
   }
@@ -160,40 +190,6 @@
   }
 }
 
-.graph-legend-rightside {
-
-  &.graph-wrapper {
-    display: table;
-    width: 100%;
-  }
-
-  .graph-canvas-wrapper {
-    display: table-cell;
-    width: 100%;
-    position: relative;
-  }
-
-  .graph-legend-wrapper {
-    display: table-cell;
-    vertical-align: top;
-    position: relative;
-    left: 4px;
-  }
-
-  .graph-legend {
-    margin: 0 0 0 1rem;
-  }
-
-  .graph-legend-series {
-    display: block;
-    padding-left: 0px;
-  }
-
-  .graph-legend-table .graph-legend-series {
-    display: table-row;
-  }
-}
-
 .graph-legend-series-hidden {
   .graph-legend-value,
   .graph-legend-alias {
@@ -202,7 +198,7 @@
 }
 
 .graph-legend-popover {
-  width: 200px;
+  width: 210px;
   label {
     display: inline-block;
   }
@@ -261,7 +257,7 @@
     max-width: 650px;
     text-overflow: ellipsis;
     overflow: hidden;
-   }
+  }
 
   .graph-tooltip-value {
     display: table-cell;
@@ -272,7 +268,6 @@
 }
 
 .graph-annotation {
-
   .label-tag {
     margin-right: 4px;
     margin-top: 8px;
@@ -405,7 +400,7 @@
     }
   }
 
-  &--T0{
+  &--T0 {
     right: -104px;
     width: 129px;
 
@@ -428,10 +423,10 @@
     position: relative;
 
     &--critical {
-      background-color: rgba(237, 46, 24, 0.60);
+      background-color: rgba(237, 46, 24, 0.6);
     }
     &--warning {
-      background-color: rgba(247, 149, 32, 0.60);
+      background-color: rgba(247, 149, 32, 0.6);
     }
   }
 }

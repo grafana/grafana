@@ -1,0 +1,46 @@
+<div class="gf-form-inline">
+  <div class="gf-form">
+    <label class="gf-form-label {{ctrl.labelClass}}">Folder</label>
+    <div class="dropdown" ng-hide="ctrl.createNewFolder">
+      <gf-form-dropdown model="ctrl.folder"
+        get-options="ctrl.getOptions($query)"
+        on-change="ctrl.onFolderChange($option)">
+      </gf-form-dropdown>
+    </div>
+    <input type="text"
+      class="gf-form-input max-width-10"
+      ng-show="ctrl.createNewFolder"
+      give-focus="ctrl.createNewFolder"
+      ng-model="ctrl.newFolderName"
+      ng-model-options="{ debounce: 400 }"
+      ng-class="{'validation-error': !ctrl.isNewFolderNameValid()}"
+      ng-change="ctrl.newFolderNameChanged()" />
+  </div>
+  <div class="gf-form" ng-show="ctrl.createNewFolder">
+    <label class="gf-form-label text-success"
+      ng-show="ctrl.newFolderNameTouched && !ctrl.hasValidationError">
+      <i class="fa fa-check"></i>
+    </label>
+  </div>
+  <div class="gf-form" ng-show="ctrl.createNewFolder">
+    <button class="gf-form-label"
+      ng-click="ctrl.createFolder($event)"
+      ng-disabled="!ctrl.newFolderNameTouched || ctrl.hasValidationError">
+      <i class="fa fa-fw fa-save"></i>&nbsp;Create
+    </button>
+  </div>
+  <div class="gf-form" ng-show="ctrl.createNewFolder">
+    <button class="gf-form-label"
+      ng-click="ctrl.cancelCreateFolder($event)">
+      Cancel
+  </button>
+  </div>
+</div>
+<div class="gf-form-inline" ng-if="ctrl.newFolderNameTouched && ctrl.hasValidationError">
+  <div class="gf-form gf-form--grow">
+    <label class="gf-form-label text-warning gf-form-label--grow">
+      <i class="fa fa-warning"></i>
+      {{ctrl.validationError}}
+    </label>
+  </div>
+</div>

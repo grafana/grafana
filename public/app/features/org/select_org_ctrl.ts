@@ -2,7 +2,6 @@ import angular from 'angular';
 import config from 'app/core/config';
 
 export class SelectOrgCtrl {
-
   /** @ngInject **/
   constructor($scope, backendSrv, contextSrv) {
     contextSrv.sidemenu = false;

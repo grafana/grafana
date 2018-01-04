@@ -1,10 +1,8 @@
 .layout-selector {
   @include clearfix();
 
+  margin-left: $spacer;
   text-align: right;
-  margin: 0 $spacer*1.5 $spacer;
-  position: relative;
-  top: -0.5rem;
 
   button {
     background: $input-label-bg;
@@ -27,7 +25,7 @@
 
     &:nth-child(2) {
       border-radius: 3px 0 0 3px;
-      border-right: 1px solid $panel-border;
+      border-right: $panel-border;
     }
 
     &:nth-child(1) {
@@ -97,7 +95,7 @@
   color: $text-color-weak;
   text-transform: uppercase;
   font-size: $font-size-sm;
-  font-weight: bold;
+  font-weight: $font-weight-semi-bold;
 }
 
 .card-item-notice {
@@ -127,7 +125,6 @@
 }
 
 .card-list-layout-grid {
-
   .card-item-type {
     display: inline-block;
   }
@@ -144,7 +141,7 @@
 
   .card-item-wrapper {
     width: 100%;
-    padding: 0 1.5rem 1.5rem 0rem;
+    padding: 0 1rem 1rem 0rem;
   }
 
   .card-item-wrapper--clickable {
@@ -157,6 +154,11 @@
 
     img {
       width: 6rem;
+    }
+    .fa,
+    .icon-gf,
+    .gicon {
+      font-size: 3.5rem;
     }
   }
 
@@ -186,7 +188,6 @@
 }
 
 .card-list-layout-list {
-
   .card-item-wrapper {
     padding: 0;
     width: 100%;
@@ -197,9 +198,8 @@
   }
 
   .card-item {
-    border-bottom: .2rem solid $page-bg;
-    border-radius: 0;
-    box-shadow: none;
+    border-bottom: 3px solid $page-bg;
+    border-radius: 2px;
   }
 
   .card-item-header {

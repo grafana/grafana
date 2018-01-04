@@ -50,11 +50,11 @@ Macros:
 - $__timeEpoch -&gt; extract(epoch from column) as "time"
 - $__timeFilter(column) -&gt;  extract(epoch from column) BETWEEN 1492750877 AND 1492750877
 - $__unixEpochFilter(column) -&gt;  column &gt; 1492750877 AND column &lt; 1492750877
-- $__timeGroup(column,'5m') -&gt; (extract(epoch from "dateColumn")/300)::bigint*300
+- $__timeGroup(column,'5m') -&gt; (extract(epoch from column)/300)::bigint*300 AS time
 
 Example of group by and order by with $__timeGroup:
 SELECT
-  $__timeGroup(date_time_col, '1h') AS time,
+  $__timeGroup(date_time_col, '1h'),
   sum(value) as value
 FROM yourtable
 GROUP BY time

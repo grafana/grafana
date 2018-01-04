@@ -12,9 +12,9 @@ export class ElasticQueryBuilder {
   getRangeFilter() {
     var filter = {};
     filter[this.timeField] = {
-      gte: "$timeFrom",
-      lte: "$timeTo",
-      format: "epoch_millis",
+      gte: '$timeFrom',
+      lte: '$timeTo',
+      format: 'epoch_millis',
     };
 
     return filter;
@@ -22,7 +22,7 @@ export class ElasticQueryBuilder {
 
   buildTermsAgg(aggDef, queryNode, target) {
     var metricRef, metric, y;
-    queryNode.terms = { "field": aggDef.field };
+    queryNode.terms = { field: aggDef.field };
 
     if (!aggDef.settings) {
       return queryNode;
@@ -41,7 +41,7 @@ export class ElasticQueryBuilder {
           if (metric.id === aggDef.settings.orderBy) {
             queryNode.aggs = {};
             queryNode.aggs[metric.id] = {};
-            queryNode.aggs[metric.id][metric.type] = {field: metric.field};
+            queryNode.aggs[metric.id][metric.type] = { field: metric.field };
             break;
           }
         }
@@ -65,11 +65,11 @@ export class ElasticQueryBuilder {
     esAgg.interval = settings.interval;
     esAgg.field = this.timeField;
     esAgg.min_doc_count = settings.min_doc_count || 0;
-    esAgg.extended_bounds = {min: "$timeFrom", max: "$timeTo"};
-    esAgg.format = "epoch_millis";
+    esAgg.extended_bounds = { min: '$timeFrom', max: '$timeTo' };
+    esAgg.format = 'epoch_millis';
 
     if (esAgg.interval === 'auto') {
-      esAgg.interval = "$__interval";
+      esAgg.interval = '$__interval';
     }
 
     if (settings.missing) {
@@ -101,8 +101,8 @@ export class ElasticQueryBuilder {
       filterObj[label] = {
         query_string: {
           query: query,
-          analyze_wildcard: true
-        }
+          analyze_wildcard: true,
+        },
       };
     }
 
@@ -112,11 +112,11 @@ export class ElasticQueryBuilder {
   documentQuery(query, size) {
     query.size = size;
     query.sort = {};
-    query.sort[this.timeField] = {order: 'desc', unmapped_type: 'boolean'};
+    query.sort[this.timeField] = { order: 'desc', unmapped_type: 'boolean' };
 
     // fields field not supported on ES 5.x
     if (this.esVersion < 5) {
-      query.fields = ["*", "_source"];
+      query.fields = ['*', '_source'];
     }
 
     query.script_fields = {};
@@ -140,30 +140,36 @@ export class ElasticQueryBuilder {
       condition = {};
       condition[filter.key] = filter.value;
       queryCondition = {};
-      queryCondition[filter.key] = {query: filter.value};
+      queryCondition[filter.key] = { query: filter.value };
 
-      switch (filter.operator){
-        case "=":
-          if (!query.query.bool.must) { query.query.bool.must = []; }
-          query.query.bool.must.push({match_phrase: queryCondition});
+      switch (filter.operator) {
+        case '=':
+          if (!query.query.bool.must) {
+            query.query.bool.must = [];
+          }
+          query.query.bool.must.push({ match_phrase: queryCondition });
           break;
-        case "!=":
-          if (!query.query.bool.must_not) { query.query.bool.must_not = []; }
-          query.query.bool.must_not.push({match_phrase: queryCondition});
+        case '!=':
+          if (!query.query.bool.must_not) {
+            query.query.bool.must_not = [];
+          }
+          query.query.bool.must_not.push({ match_phrase: queryCondition });
           break;
-        case "<":
-          condition[filter.key] = {"lt": filter.value};
-          query.query.bool.filter.push({"range": condition});
+        case '<':
+          condition[filter.key] = { lt: filter.value };
+          query.query.bool.filter.push({ range: condition });
           break;
-        case ">":
-          condition[filter.key] = {"gt": filter.value};
-          query.query.bool.filter.push({"range": condition});
+        case '>':
+          condition[filter.key] = { gt: filter.value };
+          query.query.bool.filter.push({ range: condition });
           break;
-        case "=~":
-          query.query.bool.filter.push({"regexp": condition});
+        case '=~':
+          query.query.bool.filter.push({ regexp: condition });
           break;
-        case "!~":
-          query.query.bool.filter.push({"bool": {"must_not": {"regexp": condition}}});
+        case '!~':
+          query.query.bool.filter.push({
+            bool: { must_not: { regexp: condition } },
+          });
           break;
       }
     }
@@ -172,26 +178,25 @@ export class ElasticQueryBuilder {
   build(target, adhocFilters?, queryString?) {
     // make sure query has defaults;
     target.metrics = target.metrics || [{ type: 'count', id: '1' }];
-    target.dsType = 'elasticsearch';
-    target.bucketAggs = target.bucketAggs || [{type: 'date_histogram', id: '2', settings: {interval: 'auto'}}];
-    target.timeField =  this.timeField;
+    target.bucketAggs = target.bucketAggs || [{ type: 'date_histogram', id: '2', settings: { interval: 'auto' } }];
+    target.timeField = this.timeField;
 
     var i, nestedAggs, metric;
     var query = {
-      "size": 0,
-      "query": {
-        "bool": {
-          "filter": [
-            {"range": this.getRangeFilter()},
+      size: 0,
+      query: {
+        bool: {
+          filter: [
+            { range: this.getRangeFilter() },
             {
-              "query_string": {
-                "analyze_wildcard": true,
-                "query": queryString,
-              }
-            }
-          ]
-        }
-      }
+              query_string: {
+                analyze_wildcard: true,
+                query: queryString,
+              },
+            },
+          ],
+        },
+      },
     };
 
     this.addAdhocFilters(query, adhocFilters);
@@ -200,7 +205,7 @@ export class ElasticQueryBuilder {
     if (target.bucketAggs.length === 0) {
       metric = target.metrics[0];
       if (!metric || metric.type !== 'raw_document') {
-        throw {message: 'Invalid query'};
+        throw { message: 'Invalid query' };
       }
 
       var size = (metric.settings && metric.settings.size) || 500;
@@ -215,15 +220,15 @@ export class ElasticQueryBuilder {
 
       switch (aggDef.type) {
         case 'date_histogram': {
-          esAgg["date_histogram"] = this.getDateHistogramAgg(aggDef);
+          esAgg['date_histogram'] = this.getDateHistogramAgg(aggDef);
           break;
         }
         case 'histogram': {
-          esAgg["histogram"] = this.getHistogramAgg(aggDef);
+          esAgg['histogram'] = this.getHistogramAgg(aggDef);
           break;
         }
         case 'filters': {
-          esAgg["filters"] = {filters: this.getFiltersAgg(aggDef)};
+          esAgg['filters'] = { filters: this.getFiltersAgg(aggDef) };
           break;
         }
         case 'terms': {
@@ -231,7 +236,10 @@ export class ElasticQueryBuilder {
           break;
         }
         case 'geohash_grid': {
-          esAgg['geohash_grid'] = {field: aggDef.field, precision: aggDef.settings.precision};
+          esAgg['geohash_grid'] = {
+            field: aggDef.field,
+            precision: aggDef.settings.precision,
+          };
           break;
         }
       }
@@ -259,7 +267,7 @@ export class ElasticQueryBuilder {
           continue;
         }
       } else {
-        metricAgg = {field: metric.field};
+        metricAgg = { field: metric.field };
       }
 
       for (var prop in metric.settings) {
@@ -277,20 +285,20 @@ export class ElasticQueryBuilder {
 
   getTermsQuery(queryDef) {
     var query: any = {
-      "size": 0,
-      "query": {
-        "bool": {
-          "filter": [{"range": this.getRangeFilter()}]
-        }
-      }
+      size: 0,
+      query: {
+        bool: {
+          filter: [{ range: this.getRangeFilter() }],
+        },
+      },
     };
 
     if (queryDef.query) {
       query.query.bool.filter.push({
-        "query_string": {
-          "analyze_wildcard": true,
-          "query": queryDef.query,
-        }
+        query_string: {
+          analyze_wildcard: true,
+          query: queryDef.query,
+        },
       });
     }
 
@@ -299,16 +307,16 @@ export class ElasticQueryBuilder {
       size = queryDef.size;
     }
 
-    query.aggs =  {
-      "1": {
-        "terms": {
-          "field": queryDef.field,
-          "size": size,
-          "order": {
-            "_term": "asc"
-          }
+    query.aggs = {
+      '1': {
+        terms: {
+          field: queryDef.field,
+          size: size,
+          order: {
+            _term: 'asc',
+          },
         },
-      }
+      },
     };
     return query;
   }

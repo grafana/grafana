@@ -1,34 +1,28 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
+import _ from 'lodash';
 
 export class PluginListCtrl {
   plugins: any[];
   tabIndex: number;
   navModel: any;
+  searchQuery: string;
+  allPlugins: any[];
 
   /** @ngInject */
   constructor(private backendSrv: any, $location, navModelSrv) {
     this.tabIndex = 0;
-    this.navModel = navModelSrv.getPluginsNav();
+    this.navModel = navModelSrv.getNav('cfg', 'plugins', 0);
 
-    var pluginType = $location.search().type || 'panel';
-    switch (pluginType) {
-      case "datasource":  {
-        this.tabIndex = 1;
-        break;
-      }
-      case "app": {
-        this.tabIndex = 2;
-        break;
-      }
-      case "panel":
-      default:
-        this.tabIndex = 0;
-    }
-
-    this.backendSrv.get('api/plugins', {embedded: 0, type: pluginType}).then(plugins => {
+    this.backendSrv.get('api/plugins', { embedded: 0 }).then(plugins => {
       this.plugins = plugins;
+      this.allPlugins = plugins;
+    });
+  }
+
+  onQueryUpdated() {
+    let regex = new RegExp(this.searchQuery, 'ig');
+    this.plugins = _.filter(this.allPlugins, item => {
+      return regex.test(item.name) || regex.test(item.type);
     });
   }
 }

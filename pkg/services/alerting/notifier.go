@@ -24,7 +24,7 @@ type NotifierPlugin struct {
 }
 
 type NotificationService interface {
-	Send(context *EvalContext) error
+	SendIfNeeded(context *EvalContext) error
 }
 
 func NewNotificationService() NotificationService {
@@ -41,13 +41,11 @@ func newNotificationService() *notificationService {
 	}
 }
 
-func (n *notificationService) Send(context *EvalContext) error {
-	notifiers, err := n.getNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
+func (n *notificationService) SendIfNeeded(context *EvalContext) error {
+	notifiers, err := n.getNeededNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
 	if err != nil {
 		return err
 	}
-
-	n.log.Info("Sending notifications for", "ruleId", context.Rule.Id, "sent count", len(notifiers))
 
 	if len(notifiers) == 0 {
 		return nil
@@ -67,7 +65,7 @@ func (n *notificationService) sendNotifications(context *EvalContext, notifiers 
 
 	for _, notifier := range notifiers {
 		not := notifier //avoid updating scope variable in go routine
-		n.log.Info("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
+		n.log.Debug("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
 		metrics.M_Alerting_Notification_Sent.WithLabelValues(not.GetType()).Inc()
 		g.Go(func() error { return not.Notify(context) })
 	}
@@ -82,10 +80,11 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	}
 
 	renderOpts := &renderer.RenderOpts{
-		Width:   "800",
-		Height:  "400",
-		Timeout: "30",
-		OrgId:   context.Rule.OrgId,
+		Width:          "800",
+		Height:         "400",
+		Timeout:        "30",
+		OrgId:          context.Rule.OrgId,
+		IsAlertContext: true,
 	}
 
 	if slug, err := context.GetDashboardSlug(); err != nil {
@@ -109,7 +108,7 @@ func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	return nil
 }
 
-func (n *notificationService) getNotifiers(orgId int64, notificationIds []int64, context *EvalContext) (NotifierSlice, error) {
+func (n *notificationService) getNeededNotifiers(orgId int64, notificationIds []int64, context *EvalContext) (NotifierSlice, error) {
 	query := &m.GetAlertNotificationsToSendQuery{OrgId: orgId, Ids: notificationIds}
 
 	if err := bus.Dispatch(query); err != nil {
@@ -121,7 +120,7 @@ func (n *notificationService) getNotifiers(orgId int64, notificationIds []int64,
 		if not, err := n.createNotifierFor(notification); err != nil {
 			return nil, err
 		} else {
-			if shouldUseNotification(not, context) {
+			if not.ShouldNotify(context) {
 				result = append(result, not)
 			}
 		}
@@ -137,18 +136,6 @@ func (n *notificationService) createNotifierFor(model *m.AlertNotification) (Not
 	}
 
 	return notifierPlugin.Factory(model)
-}
-
-func shouldUseNotification(notifier Notifier, context *EvalContext) bool {
-	if !context.Firing {
-		return true
-	}
-
-	if context.Error != nil {
-		return true
-	}
-
-	return notifier.PassesFilter(context.Rule)
 }
 
 type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)

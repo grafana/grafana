@@ -95,13 +95,13 @@ function queryEditorRowDirective() {
     restrict: 'E',
     controller: QueryRowCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
+    controllerAs: 'ctrl',
     templateUrl: 'public/app/features/panel/partials/query_editor_row.html',
     transclude: true,
     scope: {
-      queryCtrl: "=",
-      canCollapse: "=",
-      hasTextEditMode: "=",
+      queryCtrl: '=',
+      canCollapse: '=',
+      hasTextEditMode: '=',
     },
   };
 }

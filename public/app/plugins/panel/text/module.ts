@@ -1,17 +1,18 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import {PanelCtrl} from 'app/plugins/sdk';
+import { PanelCtrl } from 'app/plugins/sdk';
 
 export class TextPanelCtrl extends PanelCtrl {
   static templateUrl = `public/app/plugins/panel/text/module.html`;
+  static scrollable = true;
 
   remarkable: any;
   content: string;
   // Set and populate defaults
   panelDefaults = {
-    mode    : "markdown", // 'html', 'markdown', 'text'
-    content : "# title",
+    mode: 'markdown', // 'html', 'markdown', 'text'
+    content: '# title',
   };
 
   /** @ngInject **/
@@ -23,10 +24,12 @@ export class TextPanelCtrl extends PanelCtrl {
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('refresh', this.onRefresh.bind(this));
     this.events.on('render', this.onRender.bind(this));
-    $scope.$watch('ctrl.panel.content',
-     _.throttle(() => {
-       this.render();
-     }, 1000)
+
+    $scope.$watch(
+      'ctrl.panel.content',
+      _.throttle(() => {
+        this.render();
+      }, 1000)
     );
   }
 
@@ -54,10 +57,10 @@ export class TextPanelCtrl extends PanelCtrl {
 
   renderText(content) {
     content = content
-    .replace(/&/g, '&amp;')
-    .replace(/>/g, '&gt;')
-    .replace(/</g, '&lt;')
-    .replace(/\n/g, '<br/>');
+      .replace(/&/g, '&amp;')
+      .replace(/>/g, '&gt;')
+      .replace(/</g, '&lt;')
+      .replace(/\n/g, '<br/>');
     this.updateContent(content);
   }
 
@@ -86,4 +89,4 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 }
 
-export {TextPanelCtrl as PanelCtrl};
+export { TextPanelCtrl as PanelCtrl };

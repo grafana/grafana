@@ -1,5 +1,5 @@
 .gf-code-editor {
-  min-height: 2.60rem;
+  min-height: 2.6rem;
   min-width: 20rem;
   flex-grow: 1;
   margin-right: 0.25rem;
@@ -7,7 +7,7 @@
   &.ace_editor {
     @include font-family-monospace();
     font-size: 1rem;
-    min-height: 2.60rem;
+    min-height: 2.6rem;
 
     @include border-radius($input-border-radius-sm);
     border: $input-btn-border-width solid $input-border-color;
@@ -26,7 +26,9 @@
   width: 550px !important;
 
   .ace_scroller {
-    .ace_selected, .ace_active-line, .ace_line-hover {
+    .ace_selected,
+    .ace_active-line,
+    .ace_line-hover {
       color: $dropdownLinkColorHover;
       background-color: $dropdownLinkBackgroundHover !important;
     }

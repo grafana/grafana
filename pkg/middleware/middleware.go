@@ -87,7 +87,7 @@ func initContextWithAnonymousUser(ctx *Context) bool {
 
 	ctx.IsSignedIn = false
 	ctx.AllowAnonymous = true
-	ctx.SignedInUser = &m.SignedInUser{}
+	ctx.SignedInUser = &m.SignedInUser{IsAnonymous: true}
 	ctx.OrgRole = m.RoleType(setting.AnonymousOrgRole)
 	ctx.OrgId = orgQuery.Result.Id
 	ctx.OrgName = orgQuery.Result.Name

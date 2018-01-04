@@ -1,12 +1,12 @@
-import "../datasource";
-import {describe, beforeEach, it, expect, angularMocks} from 'test/lib/common';
+import '../datasource';
+import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import helpers from 'test/specs/helpers';
-import CloudWatchDatasource from "../datasource";
+import CloudWatchDatasource from '../datasource';
 
 describe('CloudWatchDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
   var instanceSettings = {
-    jsonData: {defaultRegion: 'us-east-1', access: 'proxy'},
+    jsonData: { defaultRegion: 'us-east-1', access: 'proxy' },
   };
 
   beforeEach(angularMocks.module('grafana.core'));
@@ -14,13 +14,17 @@ describe('CloudWatchDatasource', function() {
   beforeEach(angularMocks.module('grafana.controllers'));
   beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
 
-  beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
-    ctx.$q = $q;
-    ctx.$httpBackend =  $httpBackend;
-    ctx.$rootScope = $rootScope;
-    ctx.ds = $injector.instantiate(CloudWatchDatasource, {instanceSettings: instanceSettings});
-    $httpBackend.when('GET', /\.html$/).respond('');
-  }));
+  beforeEach(
+    angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
+      ctx.$q = $q;
+      ctx.$httpBackend = $httpBackend;
+      ctx.$rootScope = $rootScope;
+      ctx.ds = $injector.instantiate(CloudWatchDatasource, {
+        instanceSettings: instanceSettings,
+      });
+      $httpBackend.when('GET', /\.html$/).respond('');
+    })
+  );
 
   describe('When performing CloudWatch query', function() {
     var requestParams;
@@ -34,12 +38,12 @@ describe('CloudWatchDatasource', function() {
           namespace: 'AWS/EC2',
           metricName: 'CPUUtilization',
           dimensions: {
-            InstanceId: 'i-12345678'
+            InstanceId: 'i-12345678',
           },
           statistics: ['Average'],
-          period: '300'
-        }
-      ]
+          period: '300',
+        },
+      ],
     };
 
     var response = {
@@ -51,24 +55,20 @@ describe('CloudWatchDatasource', function() {
           series: [
             {
               name: 'CPUUtilization_Average',
-              points: [
-                [1, 1483228800000],
-                [2, 1483229100000],
-                [5, 1483229700000],
-              ],
+              points: [[1, 1483228800000], [2, 1483229100000], [5, 1483229700000]],
               tags: {
-                InstanceId: 'i-12345678'
-              }
-            }
-          ]
-        }
-      }
+                InstanceId: 'i-12345678',
+              },
+            },
+          ],
+        },
+      },
     };
 
     beforeEach(function() {
       ctx.backendSrv.datasourceRequest = function(params) {
         requestParams = params.data;
-        return ctx.$q.when({data: response});
+        return ctx.$q.when({ data: response });
       };
     });
 
@@ -87,7 +87,7 @@ describe('CloudWatchDatasource', function() {
 
     it('should generate the correct query with interval variable', function(done) {
       ctx.templateSrv.data = {
-        period: '10m'
+        period: '10m',
       };
 
       var query = {
@@ -99,12 +99,12 @@ describe('CloudWatchDatasource', function() {
             namespace: 'AWS/EC2',
             metricName: 'CPUUtilization',
             dimensions: {
-              InstanceId: 'i-12345678'
+              InstanceId: 'i-12345678',
             },
             statistics: ['Average'],
-            period: '[[period]]'
-          }
-        ]
+            period: '[[period]]',
+          },
+        ],
       };
 
       ctx.ds.query(query).then(function() {
@@ -131,20 +131,26 @@ describe('CloudWatchDatasource', function() {
             name: 'instance_id',
             options: [
               { text: 'i-23456789', value: 'i-23456789', selected: false },
-              { text: 'i-34567890', value: 'i-34567890', selected: true }
-            ]
-          }
+              { text: 'i-34567890', value: 'i-34567890', selected: true },
+            ],
+          },
         ],
-        replace: function (target, scopedVars) {
+        replace: function(target, scopedVars) {
           if (target === '$instance_id' && scopedVars['instance_id']['text'] === 'i-34567890') {
             return 'i-34567890';
           } else {
             return '';
           }
         },
-        getVariableName: function (e) { return 'instance_id'; },
-        variableExists: function (e) { return true; },
-        containsVariable: function (str, variableName) { return str.indexOf('$' + variableName) !== -1; }
+        getVariableName: function(e) {
+          return 'instance_id';
+        },
+        variableExists: function(e) {
+          return true;
+        },
+        containsVariable: function(str, variableName) {
+          return str.indexOf('$' + variableName) !== -1;
+        },
       };
 
       var targets = [
@@ -153,11 +159,11 @@ describe('CloudWatchDatasource', function() {
           namespace: 'AWS/EC2',
           metricName: 'CPUUtilization',
           dimensions: {
-            InstanceId: '$instance_id'
+            InstanceId: '$instance_id',
           },
           statistics: ['Average'],
-          period: 300
-        }
+          period: 300,
+        },
       ];
 
       var result = ctx.ds.expandTemplateVariable(targets, {}, templateSrv);
@@ -165,9 +171,54 @@ describe('CloudWatchDatasource', function() {
     });
   });
 
-  describe('When performing CloudWatch query for extended statistics', function() {
-    var requestParams;
+  describe('When query region is "default"', function() {
+    it('should return the datasource region if empty or "default"', function() {
+      var defaultRegion = instanceSettings.jsonData.defaultRegion;
 
+      expect(ctx.ds.getActualRegion()).to.be(defaultRegion);
+      expect(ctx.ds.getActualRegion('')).to.be(defaultRegion);
+      expect(ctx.ds.getActualRegion('default')).to.be(defaultRegion);
+    });
+
+    it('should return the specified region if specified', function() {
+      expect(ctx.ds.getActualRegion('some-fake-region-1')).to.be('some-fake-region-1');
+    });
+
+    var requestParams;
+    beforeEach(function() {
+      ctx.ds.performTimeSeriesQuery = function(request) {
+        requestParams = request;
+        return ctx.$q.when({ data: {} });
+      };
+    });
+
+    it('should query for the datasource region if empty or "default"', function(done) {
+      var query = {
+        range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
+        targets: [
+          {
+            region: 'default',
+            namespace: 'AWS/EC2',
+            metricName: 'CPUUtilization',
+            dimensions: {
+              InstanceId: 'i-12345678',
+            },
+            statistics: ['Average'],
+            period: 300,
+          },
+        ],
+      };
+
+      ctx.ds.query(query).then(function(result) {
+        expect(requestParams.queries[0].region).to.be(instanceSettings.jsonData.defaultRegion);
+        done();
+      });
+      ctx.$rootScope.$apply();
+    });
+  });
+
+  describe('When performing CloudWatch query for extended statistics', function() {
     var query = {
       range: { from: 'now-1h', to: 'now' },
       rangeRaw: { from: 1483228800, to: 1483232400 },
@@ -178,12 +229,12 @@ describe('CloudWatchDatasource', function() {
           metricName: 'TargetResponseTime',
           dimensions: {
             LoadBalancer: 'lb',
-            TargetGroup: 'tg'
+            TargetGroup: 'tg',
           },
           statistics: ['p90.00'],
-          period: 300
-        }
-      ]
+          period: 300,
+        },
+      ],
     };
 
     var response = {
@@ -195,25 +246,20 @@ describe('CloudWatchDatasource', function() {
           series: [
             {
               name: 'TargetResponseTime_p90.00',
-              points: [
-                [1, 1483228800000],
-                [2, 1483229100000],
-                [5, 1483229700000],
-              ],
+              points: [[1, 1483228800000], [2, 1483229100000], [5, 1483229700000]],
               tags: {
                 LoadBalancer: 'lb',
-                TargetGroup: 'tg'
-              }
-            }
-          ]
-        }
-      }
+                TargetGroup: 'tg',
+              },
+            },
+          ],
+        },
+      },
     };
 
     beforeEach(function() {
       ctx.backendSrv.datasourceRequest = function(params) {
-        requestParams = params.data;
-        return ctx.$q.when({data: response});
+        return ctx.$q.when({ data: response });
       };
     });
 
@@ -235,7 +281,7 @@ describe('CloudWatchDatasource', function() {
           setupCallback();
           ctx.backendSrv.datasourceRequest = args => {
             scenario.request = args.data;
-            return ctx.$q.when({data: scenario.requestResponse});
+            return ctx.$q.when({ data: scenario.requestResponse });
           };
           ctx.ds.metricFindQuery(query).then(args => {
             scenario.result = args;
@@ -253,11 +299,9 @@ describe('CloudWatchDatasource', function() {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
-            tables: [
-              { rows: [['us-east-1', 'us-east-1']] }
-            ]
-          }
-        }
+            tables: [{ rows: [['us-east-1', 'us-east-1']] }],
+          },
+        },
       };
     });
 
@@ -273,11 +317,9 @@ describe('CloudWatchDatasource', function() {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
-            tables: [
-              { rows: [['AWS/EC2', 'AWS/EC2']] }
-            ]
-          }
-        }
+            tables: [{ rows: [['AWS/EC2', 'AWS/EC2']] }],
+          },
+        },
       };
     });
 
@@ -293,11 +335,9 @@ describe('CloudWatchDatasource', function() {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
-            tables: [
-              { rows: [['CPUUtilization', 'CPUUtilization']] }
-            ]
-          }
-        }
+            tables: [{ rows: [['CPUUtilization', 'CPUUtilization']] }],
+          },
+        },
       };
     });
 
@@ -313,11 +353,9 @@ describe('CloudWatchDatasource', function() {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
-            tables: [
-              { rows: [['InstanceId', 'InstanceId']] }
-            ]
-          }
-        }
+            tables: [{ rows: [['InstanceId', 'InstanceId']] }],
+          },
+        },
       };
     });
 
@@ -333,11 +371,9 @@ describe('CloudWatchDatasource', function() {
       scenario.requestResponse = {
         results: {
           metricFindQuery: {
-            tables: [
-              { rows: [['i-12345678', 'i-12345678']] }
-            ]
-          }
-        }
+            tables: [{ rows: [['i-12345678', 'i-12345678']] }],
+          },
+        },
       };
     });
 
@@ -348,7 +384,25 @@ describe('CloudWatchDatasource', function() {
     });
   });
 
-  it('should caclculate the correct period', function () {
+  describeMetricFindQuery('dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)', scenario => {
+    scenario.setup(() => {
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [{ rows: [['i-12345678', 'i-12345678']] }],
+          },
+        },
+      };
+    });
+
+    it('should call __ListMetrics and return result', () => {
+      expect(scenario.result[0].text).to.contain('i-12345678');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('dimension_values');
+    });
+  });
+
+  it('should caclculate the correct period', function() {
     var hourSec = 60 * 60;
     var daySec = hourSec * 24;
     var start = 1483196400 * 1000;
@@ -356,63 +410,80 @@ describe('CloudWatchDatasource', function() {
       [
         { period: 60, namespace: 'AWS/EC2' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        (hourSec * 3), 60
+        hourSec * 3,
+        60,
       ],
       [
         { period: null, namespace: 'AWS/EC2' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        (hourSec * 3), 300
+        hourSec * 3,
+        300,
       ],
       [
         { period: 60, namespace: 'AWS/ELB' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        (hourSec * 3), 60
+        hourSec * 3,
+        60,
       ],
       [
         { period: null, namespace: 'AWS/ELB' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        (hourSec * 3), 60
+        hourSec * 3,
+        60,
       ],
       [
         { period: 1, namespace: 'CustomMetricsNamespace' },
-        { range: { from: new Date(start), to: new Date(start + (1440 - 1) * 1000) } },
-        (hourSec * 3 - 1), 1
+        {
+          range: {
+            from: new Date(start),
+            to: new Date(start + (1440 - 1) * 1000),
+          },
+        },
+        hourSec * 3 - 1,
+        1,
       ],
       [
         { period: 1, namespace: 'CustomMetricsNamespace' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        (hourSec * 3 - 1), 60
+        hourSec * 3 - 1,
+        60,
       ],
       [
         { period: 60, namespace: 'CustomMetricsNamespace' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        (hourSec * 3), 60
+        hourSec * 3,
+        60,
       ],
       [
         { period: null, namespace: 'CustomMetricsNamespace' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        (hourSec * 3 - 1), 60
+        hourSec * 3 - 1,
+        60,
       ],
       [
         { period: null, namespace: 'CustomMetricsNamespace' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        (hourSec * 3), 60
+        hourSec * 3,
+        60,
       ],
       [
         { period: null, namespace: 'CustomMetricsNamespace' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        (daySec * 15), 60
+        daySec * 15,
+        60,
       ],
       [
         { period: null, namespace: 'CustomMetricsNamespace' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        (daySec * 63), 300
+        daySec * 63,
+        300,
       ],
       [
         { period: null, namespace: 'CustomMetricsNamespace' },
         { range: { from: new Date(start), to: new Date(start + 3600 * 1000) } },
-        (daySec * 455), 3600
-      ]
+        daySec * 455,
+        3600,
+      ],
     ];
     for (let t of testData) {
       let target = t[0];
@@ -423,5 +494,4 @@ describe('CloudWatchDatasource', function() {
       expect(actual).to.be(expected);
     }
   });
-
 });

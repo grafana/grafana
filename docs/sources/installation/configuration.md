@@ -91,9 +91,11 @@ file.
 
 Directory where grafana will automatically scan and look for plugins
 
-### datasources
+### provisioning
 
-Config files containing datasources that will be configured at startup
+> This feature is available in 5.0+
+
+Folder that contains [provisioning](/administration/provisioning) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
 
 ## [server]
 
@@ -203,7 +205,7 @@ The database user (not applicable for `sqlite3`).
 
 ### password
 
-The database user's password (not applicable for `sqlite3`). If the password contains `#` or `;` you have to wrap it with trippel quotes. Ex `"""#password;"""`
+The database user's password (not applicable for `sqlite3`). If the password contains `#` or `;` you have to wrap it with triple quotes. Ex `"""#password;"""`
 
 ### ssl_mode
 
@@ -212,19 +214,19 @@ For MySQL, use either `true`, `false`, or `skip-verify`.
 
 ### ca_cert_path
 
-(MySQL only) The path to the CA certificate to use. On many linux systems, certs can be found in `/etc/ssl/certs`.
+The path to the CA certificate to use. On many linux systems, certs can be found in `/etc/ssl/certs`.
 
 ### client_key_path
 
-(MySQL only) The path to the client key. Only if server requires client authentication.
+The path to the client key. Only if server requires client authentication.
 
 ### client_cert_path
 
-(MySQL only) The path to the client cert. Only if server requires client authentication.
+The path to the client cert. Only if server requires client authentication.
 
 ### server_cert_name
 
-(MySQL only) The common name field of the certificate used by the `mysql` server. Not necessary if `ssl_mode` is set to `skip-verify`.
+The common name field of the certificate used by the `mysql` or `postgres` server. Not necessary if `ssl_mode` is set to `skip-verify`.
 
 ### max_idle_conn
 The maximum number of connections in the idle connection pool.
@@ -290,10 +292,14 @@ organization to be created for that new user.
 
 The role new users will be assigned for the main organization (if the
 above setting is set to true).  Defaults to `Viewer`, other valid
-options are `Admin` and `Editor` and `Read Only Editor`. e.g. :
+options are `Admin` and `Editor`. e.g. :
 
-`auto_assign_org_role = Read Only Editor`
+`auto_assign_org_role = Viewer`
 
+### viewers can edit
+
+Viewers can edit/inspect dashboard settings in the browser. But not save the dashboard.
+Defaults to `false`.
 
 <hr>
 
@@ -490,7 +496,7 @@ name = BitBucket
 enabled = true
 allow_sign_up = true
 client_id = <client id>
-client_secret = <secret>
+client_secret = <client secret>
 scopes = account email
 auth_url = https://bitbucket.org/site/oauth2/authorize
 token_url = https://bitbucket.org/site/oauth2/access_token
@@ -498,6 +504,41 @@ api_url = https://api.bitbucket.org/2.0/user
 team_ids =
 allowed_organizations =
 ```
+
+### Set up oauth2 with OneLogin
+
+1.  Create a new Custom Connector with the following settings:
+    - Name: Grafana
+    - Sign On Method: OpenID Connect
+    - Redirect URI: `https://<grafana domain>/login/generic_oauth`
+    - Signing Algorithm: RS256
+    - Login URL: `https://<grafana domain>/login/generic_oauth`
+
+    then:
+2.  Add an App to the Grafana Connector:
+    - Display Name: Grafana
+
+    then:
+3.  Under the SSO tab on the Grafana App details page you'll find the Client ID and Client Secret.
+
+    Your OneLogin Domain will match the url you use to access OneLogin.
+
+    Configure Grafana as follows:
+
+    ```bash
+    [auth.generic_oauth]
+    name = OneLogin
+    enabled = true
+    allow_sign_up = true
+    client_id = <client id>
+    client_secret = <client secret>
+    scopes = openid email name
+    auth_url = https://<onelogin domain>.onelogin.com/oidc/auth
+    token_url = https://<onelogin domain>.onelogin.com/oidc/token
+    api_url = https://<onelogin domain>.onelogin.com/oidc/me
+    team_ids =
+    allowed_organizations =
+    ```
 
 <hr>
 
@@ -632,8 +673,7 @@ Number dashboard versions to keep (per dashboard). Default: 20, Minimum: 1.
 
 ## [dashboards.json]
 
-If you have a system that automatically builds dashboards as json files you can enable this feature to have the
-Grafana backend index those json dashboards which will make them appear in regular dashboard search.
+> This have been replaced with dashboards [provisioning](/administration/provisioning) in 5.0+
 
 ### enabled
 `true` or `false`. Is disabled by default.
@@ -726,7 +766,7 @@ Time to live for snapshots.
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
-You can choose between (s3, webdav, gcs). If left empty Grafana will ignore the upload action.
+You can choose between (s3, webdav, gcs, azure_blob). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
 
@@ -780,6 +820,17 @@ Bucket Name on Google Cloud Storage.
 
 ### path
 Optional extra path inside bucket
+
+## [external_image_storage.azure_blob]
+
+### account_name
+Storage account name
+
+### account_key
+Storage account key
+
+### container_name
+Container name where to store "Blob" images with random names. Creating the blob container beforehand is required. Only public containers are supported.
 
 ## [alerting]
 

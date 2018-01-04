@@ -1,18 +1,16 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import './history_srv';
 
 import _ from 'lodash';
 import angular from 'angular';
 import moment from 'moment';
 
-import {DashboardModel} from '../model';
-import {HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv} from './history_srv';
+import { DashboardModel } from '../dashboard_model';
+import { HistoryListOpts, RevisionsModel, CalculateDiffOptions, HistorySrv } from './history_srv';
 
 export class HistoryListCtrl {
   appending: boolean;
   dashboard: DashboardModel;
-  delta: { basic: string; json: string; };
+  delta: { basic: string; json: string };
   diff: string;
   limit: number;
   loading: boolean;
@@ -26,13 +24,14 @@ export class HistoryListCtrl {
   isNewLatest: boolean;
 
   /** @ngInject */
-  constructor(private $route,
-              private $rootScope,
-              private $location,
-              private $q,
-              private historySrv: HistorySrv,
-              public $scope) {
-
+  constructor(
+    private $route,
+    private $rootScope,
+    private $location,
+    private $q,
+    private historySrv: HistorySrv,
+    public $scope
+  ) {
     this.appending = false;
     this.diff = 'basic';
     this.limit = 10;
@@ -67,7 +66,7 @@ export class HistoryListCtrl {
   }
 
   revisionSelectionChanged() {
-    let selected = _.filter(this.revisions, {checked: true}).length;
+    let selected = _.filter(this.revisions, { checked: true }).length;
     this.canCompare = selected === 2;
   }
 
@@ -76,8 +75,8 @@ export class HistoryListCtrl {
   }
 
   formatBasicDate(date) {
-    const now = this.dashboard.timezone === 'browser' ?  moment() : moment.utc();
-    const then = this.dashboard.timezone === 'browser' ?  moment(date) : moment.utc(date);
+    const now = this.dashboard.timezone === 'browser' ? moment() : moment.utc();
+    const then = this.dashboard.timezone === 'browser' ? moment(date) : moment.utc(date);
     return then.from(now);
   }
 
@@ -90,7 +89,7 @@ export class HistoryListCtrl {
       return this.$q.when(this.delta[this.diff]);
     }
 
-    const selected = _.filter(this.revisions, {checked: true});
+    const selected = _.filter(this.revisions, { checked: true });
 
     this.newInfo = selected[0];
     this.baseInfo = selected[1];
@@ -109,13 +108,17 @@ export class HistoryListCtrl {
       diffType: diff,
     };
 
-    return this.historySrv.calculateDiff(options).then(response => {
-      this.delta[this.diff] = response;
-    }).catch(() => {
-      this.mode = 'list';
-    }).finally(() => {
-      this.loading = false;
-    });
+    return this.historySrv
+      .calculateDiff(options)
+      .then(response => {
+        this.delta[this.diff] = response;
+      })
+      .catch(() => {
+        this.mode = 'list';
+      })
+      .finally(() => {
+        this.loading = false;
+      });
   }
 
   getLog(append = false) {
@@ -126,22 +129,25 @@ export class HistoryListCtrl {
       start: this.start,
     };
 
-    return this.historySrv.getHistoryList(this.dashboard, options).then(revisions => {
-      // set formated dates & default values
-      for (let rev of revisions) {
-        rev.createdDateString = this.formatDate(rev.created);
-        rev.ageString = this.formatBasicDate(rev.created);
-        rev.checked = false;
-      }
+    return this.historySrv
+      .getHistoryList(this.dashboard, options)
+      .then(revisions => {
+        // set formated dates & default values
+        for (let rev of revisions) {
+          rev.createdDateString = this.formatDate(rev.created);
+          rev.ageString = this.formatBasicDate(rev.created);
+          rev.checked = false;
+        }
 
-      this.revisions = append ? this.revisions.concat(revisions) : revisions;
-
-    }).catch(err => {
-      this.loading = false;
-    }).finally(() => {
-      this.loading = false;
-      this.appending = false;
-    });
+        this.revisions = append ? this.revisions.concat(revisions) : revisions;
+      })
+      .catch(err => {
+        this.loading = false;
+      })
+      .finally(() => {
+        this.loading = false;
+        this.appending = false;
+      });
   }
 
   isLastPage() {
@@ -176,14 +182,17 @@ export class HistoryListCtrl {
 
   restoreConfirm(version: number) {
     this.loading = true;
-    return this.historySrv.restoreDashboard(this.dashboard, version).then(response => {
-      this.$location.path('dashboard/db/' + response.slug);
-      this.$route.reload();
-      this.$rootScope.appEvent('alert-success', ['Dashboard restored', 'Restored from version ' + version]);
-    }).catch(() => {
-      this.mode = 'list';
-      this.loading = false;
-    });
+    return this.historySrv
+      .restoreDashboard(this.dashboard, version)
+      .then(response => {
+        this.$location.path('dashboard/db/' + response.slug);
+        this.$route.reload();
+        this.$rootScope.appEvent('alert-success', ['Dashboard restored', 'Restored from version ' + version]);
+      })
+      .catch(() => {
+        this.mode = 'list';
+        this.loading = false;
+      });
   }
 }
 
@@ -195,8 +204,8 @@ export function dashboardHistoryDirective() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      dashboard: "="
-    }
+      dashboard: '=',
+    },
   };
 }
 

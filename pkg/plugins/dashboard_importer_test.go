@@ -13,16 +13,9 @@ import (
 )
 
 func TestDashboardImport(t *testing.T) {
-
-	Convey("When importing plugin dashboard", t, func() {
-		setting.Cfg = ini.Empty()
-		sec, _ := setting.Cfg.NewSection("plugin.test-app")
-		sec.NewKey("path", "../../tests/test-app")
-		err := Init()
-
-		So(err, ShouldBeNil)
-
+	pluginScenario("When importing a plugin dashboard", t, func() {
 		var importedDash *m.Dashboard
+
 		bus.AddHandler("test", func(cmd *m.SaveDashboardCommand) error {
 			importedDash = cmd.GetDashboardModel()
 			cmd.Result = importedDash
@@ -39,7 +32,7 @@ func TestDashboardImport(t *testing.T) {
 			},
 		}
 
-		err = ImportDashboard(&cmd)
+		err := ImportDashboard(&cmd)
 		So(err, ShouldBeNil)
 
 		Convey("should install dashboard", func() {
@@ -59,16 +52,16 @@ func TestDashboardImport(t *testing.T) {
 
 	Convey("When evaling dashboard template", t, func() {
 		template, _ := simplejson.NewJson([]byte(`{
-      "__inputs": [
-        {
-					"name": "DS_NAME",
-          "type": "datasource"
-        }
-      ],
-      "test": {
-        "prop": "${DS_NAME}"
-      }
-    }`))
+		"__inputs": [
+			{
+						"name": "DS_NAME",
+			"type": "datasource"
+			}
+		],
+		"test": {
+			"prop": "${DS_NAME}"
+		}
+		}`))
 
 		evaluator := &DashTemplateEvaluator{
 			template: template,
@@ -91,4 +84,17 @@ func TestDashboardImport(t *testing.T) {
 
 	})
 
+}
+
+func pluginScenario(desc string, t *testing.T, fn func()) {
+	Convey("Given a plugin", t, func() {
+		setting.Cfg = ini.Empty()
+		sec, _ := setting.Cfg.NewSection("plugin.test-app")
+		sec.NewKey("path", "../../tests/test-app")
+		err := Init()
+
+		So(err, ShouldBeNil)
+
+		Convey(desc, fn)
+	})
 }

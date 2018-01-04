@@ -21,18 +21,22 @@ func RenderToPng(c *middleware.Context) {
 		Path:     c.Params("*") + queryParams,
 		Width:    queryReader.Get("width", "800"),
 		Height:   queryReader.Get("height", "400"),
-		OrgId:    c.OrgId,
 		Timeout:  queryReader.Get("timeout", "60"),
+		OrgId:    c.OrgId,
+		UserId:   c.UserId,
+		OrgRole:  c.OrgRole,
 		Timezone: queryReader.Get("tz", ""),
+		Encoding: queryReader.Get("encoding", ""),
 	}
 
 	pngPath, err := renderer.RenderToPng(renderOpts)
 
-	if err != nil {
-		if err == renderer.ErrTimeout {
-			c.Handle(500, err.Error(), err)
-		}
+	if err != nil && err == renderer.ErrTimeout {
+		c.Handle(500, err.Error(), err)
+		return
+	}
 
+	if err != nil {
 		c.Handle(500, "Rendering failed.", err)
 		return
 	}

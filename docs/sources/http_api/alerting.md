@@ -196,6 +196,8 @@ Content-Type: application/json
 
 ## Create alert notification
 
+You can find the full list of [supported notifers](/alerting/notifications/#all-supported-notifier) at the alert notifiers page. 
+
 `POST /api/alert-notifications`
 
 **Example Request**:

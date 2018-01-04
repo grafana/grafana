@@ -11,8 +11,10 @@
 		</div>
 
 		<div class="gf-form width-14">
-			<span class="gf-form-label width-9">Pattern</span>
-			<select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.interval" ng-options="f.value as f.name for f in ctrl.indexPatternTypes" ng-change="ctrl.indexPatternTypeChanged()" ></select>
+      <span class="gf-form-label width-9">Pattern</span>
+      <span class="gf-form-select-wrapper">
+          <select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.interval" ng-options="f.value as f.name for f in ctrl.indexPatternTypes" ng-change="ctrl.indexPatternTypeChanged()" ></select>
+      </span>
 		</div>
 	</div>
 
@@ -22,8 +24,10 @@
 	</div>
 
 	<div class="gf-form">
-		<span class="gf-form-label width-9">Version</span>
-		<select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.esVersion" ng-options="f.value as f.name for f in ctrl.esVersions"></select>
+    <span class="gf-form-label width-9">Version</span>
+    <span class="gf-form-select-wrapper">
+        <select class="gf-form-input gf-size-auto" ng-model="ctrl.current.jsonData.esVersion" ng-options="f.value as f.name for f in ctrl.esVersions"></select>
+    </span>
 	</div>
     <div class="gf-form max-width-30" ng-if="ctrl.current.jsonData.esVersion>=56">
         <span class="gf-form-label width-15">Max concurrent Shard Requests</span>

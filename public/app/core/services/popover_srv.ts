@@ -57,8 +57,8 @@ function popoverSrv($compile, $rootScope, $timeout) {
         openOn: options.openOn,
         hoverCloseDelay: 200,
         tetherOptions: {
-          constraints: [{to: 'scrollParent', attachment: "none both"}]
-        }
+          constraints: [{ to: 'scrollParent', attachment: 'together' }],
+        },
       });
 
       drop.on('close', () => {
@@ -68,6 +68,13 @@ function popoverSrv($compile, $rootScope, $timeout) {
       openDrop = drop;
       openDrop.open();
     }, 100);
+
+    // return close function
+    return function() {
+      if (drop) {
+        drop.close();
+      }
+    };
   };
 }
 

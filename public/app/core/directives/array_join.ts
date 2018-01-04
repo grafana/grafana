@@ -10,7 +10,6 @@ export function arrayJoin() {
     restrict: 'A',
     require: 'ngModel',
     link: function(scope, element, attr, ngModel) {
-
       function split_array(text) {
         return (text || '').split(',');
       }
@@ -25,9 +24,8 @@ export function arrayJoin() {
 
       ngModel.$parsers.push(split_array);
       ngModel.$formatters.push(join_array);
-    }
+    },
   };
 }
 
 coreModule.directive('arrayJoin', arrayJoin);
-

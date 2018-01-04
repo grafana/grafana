@@ -1,0 +1,32 @@
+.permissionlist {
+  .permissionlist__section {
+    margin-bottom: $spacer*2;
+  }
+
+  .permissionlist__section-header {
+    margin-bottom: $spacer;
+    display: flex;
+  }
+
+  .permissionlist__section-header h6 {
+    margin: auto 5px;
+    color: $text-color-weak;
+  }
+
+  .permissionlist__section-header__add-button {
+    margin-left: auto;
+    width: 105px;
+  }
+
+  .permissionlist__item {
+    background-color: $tight-form-bg;
+
+    &:hover {
+      background-color: $tight-form-func-bg;
+    }
+  }
+
+  .permissionlist__item-buttons {
+    margin-left: auto;
+  }
+}

@@ -32,6 +32,7 @@ DATA_DIR=/var/lib/grafana
 PLUGINS_DIR=/var/lib/grafana/plugins
 LOG_DIR=/var/log/grafana
 CONF_FILE=$CONF_DIR/grafana.ini
+PROVISIONING_CFG_DIR=$CONF_DIR/provisioning
 MAX_OPEN_FILES=10000
 PID_FILE=/var/run/$NAME.pid
 DAEMON=/usr/sbin/$NAME
@@ -59,7 +60,7 @@ fi
 # overwrite settings from default file
 [ -e /etc/sysconfig/$NAME ] && . /etc/sysconfig/$NAME
 
-DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR} cfg:default.paths.plugins=${PLUGINS_DIR}"
+DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} cfg:default.paths.provisioning=$PROVISIONING_CFG_DIR cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR} cfg:default.paths.plugins=${PLUGINS_DIR}"
 
 function isRunning() {
   status -p $PID_FILE $NAME > /dev/null 2>&1

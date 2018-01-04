@@ -20,7 +20,6 @@ function getBlockNodes(nodes) {
 
 /** @ngInject **/
 function rebuildOnChange($animate) {
-
   return {
     multiElement: true,
     terminal: true,
@@ -57,14 +56,14 @@ function rebuildOnChange($animate) {
           transclude(function(clone, newScope) {
             childScope = newScope;
             clone[clone.length++] = document.createComment(' end rebuild on change ');
-            block = {clone: clone};
+            block = { clone: clone };
             $animate.enter(clone, elem.parent(), elem);
           });
         } else {
           cleanUp();
         }
       });
-    }
+    },
   };
 }
 

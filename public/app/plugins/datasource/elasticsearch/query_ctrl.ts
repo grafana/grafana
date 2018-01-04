@@ -6,7 +6,7 @@ import './metric_agg';
 import angular from 'angular';
 import _ from 'lodash';
 import * as queryDef from './query_def';
-import {QueryCtrl} from 'app/plugins/sdk';
+import { QueryCtrl } from 'app/plugins/sdk';
 
 export class ElasticQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -23,10 +23,11 @@ export class ElasticQueryCtrl extends QueryCtrl {
   }
 
   getFields(type) {
-    var jsonStr = angular.toJson({find: 'fields', type: type});
-    return this.datasource.metricFindQuery(jsonStr)
-    .then(this.uiSegmentSrv.transformToSegments(false))
-    .catch(this.handleQueryError.bind(this));
+    var jsonStr = angular.toJson({ find: 'fields', type: type });
+    return this.datasource
+      .metricFindQuery(jsonStr)
+      .then(this.uiSegmentSrv.transformToSegments(false))
+      .catch(this.handleQueryError.bind(this));
   }
 
   queryUpdated() {
@@ -53,7 +54,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
     text += 'Metrics: ';
 
     _.each(metricAggs, (metric, index) => {
-      var aggDef = _.find(metricAggTypes, {value: metric.type});
+      var aggDef = _.find(metricAggTypes, { value: metric.type });
       text += aggDef.text + '(';
       if (aggDef.requiresField) {
         text += metric.field;
@@ -66,7 +67,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
         text += ' Group by: ';
       }
 
-      var aggDef = _.find(bucketAggTypes, {value: bucketAgg.type});
+      var aggDef = _.find(bucketAggTypes, { value: bucketAgg.type });
       text += aggDef.text + '(';
       if (aggDef.requiresField) {
         text += bucketAgg.field;

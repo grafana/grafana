@@ -75,7 +75,7 @@ func syncPluginDashboards(pluginDef *PluginBase, orgId int64) {
 		if dash.Removed {
 			plog.Info("Deleting plugin dashboard", "pluginId", pluginDef.Id, "dashboard", dash.Slug)
 
-			deleteCmd := m.DeleteDashboardCommand{OrgId: orgId, Slug: dash.Slug}
+			deleteCmd := m.DeleteDashboardCommand{OrgId: orgId, Id: dash.DashboardId}
 			if err := bus.Dispatch(&deleteCmd); err != nil {
 				plog.Error("Failed to auto update app dashboard", "pluginId", pluginDef.Id, "error", err)
 				return
@@ -124,7 +124,7 @@ func handlePluginStateChanged(event *m.PluginStateChangedEvent) error {
 			return err
 		} else {
 			for _, dash := range query.Result {
-				deleteCmd := m.DeleteDashboardCommand{OrgId: dash.OrgId, Slug: dash.Slug}
+				deleteCmd := m.DeleteDashboardCommand{OrgId: dash.OrgId, Id: dash.Id}
 
 				plog.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
 

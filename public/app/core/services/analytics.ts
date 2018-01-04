@@ -3,14 +3,17 @@ import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
 
 export class Analytics {
-
   /** @ngInject */
-  constructor(private $rootScope, private $location) {
-  }
+  constructor(private $rootScope, private $location) {}
 
   gaInit() {
     $.getScript('https://www.google-analytics.com/analytics.js'); // jQuery shortcut
-    var ga = (<any>window).ga = (<any>window).ga || function () { (ga.q = ga.q || []).push(arguments); }; ga.l = +new Date;
+    var ga = ((<any>window).ga =
+      (<any>window).ga ||
+      function() {
+        (ga.q = ga.q || []).push(arguments);
+      });
+    ga.l = +new Date();
     ga('create', (<any>config).googleAnalyticsId, 'auto');
     return ga;
   }
@@ -33,4 +36,3 @@ function startAnalytics(googleAnalyticsSrv) {
 }
 
 coreModule.service('googleAnalyticsSrv', Analytics).run(startAnalytics);
-

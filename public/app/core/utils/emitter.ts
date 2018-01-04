@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import EventEmitter from 'eventemitter3';
 
 export class Emitter {

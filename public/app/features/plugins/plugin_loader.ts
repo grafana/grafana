@@ -8,18 +8,18 @@ import jquery from 'jquery';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import TableModel from 'app/core/table_model';
-import {coreModule, appEvents, contextSrv} from 'app/core/core';
+import { coreModule, appEvents, contextSrv } from 'app/core/core';
 import * as datemath from 'app/core/utils/datemath';
 import * as fileExport from 'app/core/utils/file_export';
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
-import {impressions} from 'app/features/dashboard/impression_store';
+import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
 import * as d3 from 'd3';
 
 // rxjs
-import {Observable} from 'rxjs/Observable';
-import {Subject} from 'rxjs/Subject';
+import { Observable } from 'rxjs/Observable';
+import { Subject } from 'rxjs/Subject';
 
 // these imports add functions to Observable
 import 'rxjs/add/observable/empty';
@@ -31,20 +31,20 @@ System.config({
   baseURL: 'public',
   defaultExtension: 'js',
   packages: {
-    'plugins': {
-      defaultExtension: 'js'
-    }
+    plugins: {
+      defaultExtension: 'js',
+    },
   },
   map: {
     text: 'vendor/plugin-text/text.js',
-    css: 'vendor/plugin-css/css.js'
+    css: 'vendor/plugin-css/css.js',
   },
   meta: {
     '*': {
       esModule: true,
       authorization: true,
-    }
-  }
+    },
+  },
 });
 
 // add cache busting
@@ -74,12 +74,12 @@ exposeToPlugin('rxjs/Observable', Observable);
 // backward compatible path
 exposeToPlugin('vendor/npm/rxjs/Rx', {
   Subject: Subject,
-  Observable: Observable
+  Observable: Observable,
 });
 
 exposeToPlugin('app/features/dashboard/impression_store', {
-  impressions: impressions,
-  __esModule: true
+  impressions: impressionSrv,
+  __esModule: true,
 });
 
 exposeToPlugin('app/plugins/sdk', sdk);
@@ -99,7 +99,7 @@ exposeToPlugin('app/core/core', {
   coreModule: coreModule,
   appEvents: appEvents,
   contextSrv: contextSrv,
-  __esModule: true
+  __esModule: true,
 });
 
 import 'vendor/flot/jquery.flot';
@@ -113,11 +113,18 @@ import 'vendor/flot/jquery.flot.crosshair';
 import 'vendor/flot/jquery.flot.dashes';
 
 const flotDeps = [
-  'jquery.flot', 'jquery.flot.pie', 'jquery.flot.time', 'jquery.flot.fillbelow', 'jquery.flot.crosshair',
-  'jquery.flot.stack', 'jquery.flot.selection', 'jquery.flot.stackpercent', 'jquery.flot.events'
+  'jquery.flot',
+  'jquery.flot.pie',
+  'jquery.flot.time',
+  'jquery.flot.fillbelow',
+  'jquery.flot.crosshair',
+  'jquery.flot.stack',
+  'jquery.flot.selection',
+  'jquery.flot.stackpercent',
+  'jquery.flot.events',
 ];
 for (let flotDep of flotDeps) {
-  exposeToPlugin(flotDep, {fakeDep: 1});
+  exposeToPlugin(flotDep, { fakeDep: 1 });
 }
 
 export function importPluginModule(path: string): Promise<any> {
@@ -135,4 +142,3 @@ export function loadPluginCss(options) {
     System.import(options.dark + '!css');
   }
 }
-

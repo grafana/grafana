@@ -2,7 +2,7 @@ import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 
 function luceneEscape(value) {
-  return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, "\\$1");
+  return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
 }
 
 export class TemplateSrv {
@@ -12,11 +12,10 @@ export class TemplateSrv {
   private index = {};
   private grafanaVariables = {};
   private builtIns = {};
-  private filters = {};
 
   constructor() {
-    this.builtIns['__interval'] = {text: '1s', value: '1s'};
-    this.builtIns['__interval_ms'] = {text: '100', value: '100'};
+    this.builtIns['__interval'] = { text: '1s', value: '1s' };
+    this.builtIns['__interval_ms'] = { text: '100', value: '100' };
   }
 
   init(variables) {
@@ -26,12 +25,11 @@ export class TemplateSrv {
 
   updateTemplateData() {
     this.index = {};
-    this.filters = {};
 
     for (var i = 0; i < this.variables.length; i++) {
       var variable = this.variables[i];
 
-      if (!variable.current || !variable.current.isNone && !variable.current.value) {
+      if (!variable.current || (!variable.current.isNone && !variable.current.value)) {
         continue;
       }
 
@@ -71,7 +69,7 @@ export class TemplateSrv {
       return luceneEscape(value);
     }
     var quotedValues = _.map(value, function(val) {
-      return '\"' + luceneEscape(val) + '\"';
+      return '"' + luceneEscape(val) + '"';
     });
     return '(' + quotedValues.join(' OR ') + ')';
   }
@@ -85,7 +83,7 @@ export class TemplateSrv {
     }
 
     switch (format) {
-      case "regex": {
+      case 'regex': {
         if (typeof value === 'string') {
           return kbn.regexEscape(value);
         }
@@ -93,22 +91,22 @@ export class TemplateSrv {
         var escapedValues = _.map(value, kbn.regexEscape);
         return '(' + escapedValues.join('|') + ')';
       }
-      case "lucene": {
+      case 'lucene': {
         return this.luceneFormat(value);
       }
-      case "pipe": {
+      case 'pipe': {
         if (typeof value === 'string') {
           return value;
         }
         return value.join('|');
       }
-      case "distributed": {
+      case 'distributed': {
         if (typeof value === 'string') {
           return value;
         }
         return this.distributeVariable(value, variable.name);
       }
-      default:  {
+      default: {
         if (_.isArray(value)) {
           return '{' + value.join(',') + '}';
         }
@@ -132,11 +130,13 @@ export class TemplateSrv {
 
   variableExists(expression) {
     var name = this.getVariableName(expression);
-    return name && (this.index[name] !== void 0);
+    return name && this.index[name] !== void 0;
   }
 
   highlightVariablesAsHtml(str) {
-    if (!str || !_.isString(str)) { return str; }
+    if (!str || !_.isString(str)) {
+      return str;
+    }
 
     str = _.escape(str);
     this.regex.lastIndex = 0;
@@ -160,7 +160,9 @@ export class TemplateSrv {
   }
 
   replace(target, scopedVars?, format?) {
-    if (!target) { return target; }
+    if (!target) {
+      return target;
+    }
 
     var variable, systemValue, value;
     this.regex.lastIndex = 0;
@@ -199,11 +201,13 @@ export class TemplateSrv {
   }
 
   isAllValue(value) {
-    return value === '$__all' || Array.isArray(value) && value[0] === '$__all';
+    return value === '$__all' || (Array.isArray(value) && value[0] === '$__all');
   }
 
   replaceWithText(target, scopedVars) {
-    if (!target) { return target; }
+    if (!target) {
+      return target;
+    }
 
     var variable;
     this.regex.lastIndex = 0;
@@ -211,11 +215,15 @@ export class TemplateSrv {
     return target.replace(this.regex, (match, g1, g2) => {
       if (scopedVars) {
         var option = scopedVars[g1 || g2];
-        if (option) { return option.text; }
+        if (option) {
+          return option.text;
+        }
       }
 
       variable = this.index[g1 || g2];
-      if (!variable) { return match; }
+      if (!variable) {
+        return match;
+      }
 
       return this.grafanaVariables[variable.current.value] || variable.current.text;
     });
@@ -234,7 +242,7 @@ export class TemplateSrv {
   distributeVariable(value, variable) {
     value = _.map(value, function(val, index) {
       if (index !== 0) {
-        return variable + "=" + val;
+        return variable + '=' + val;
       } else {
         return val;
       }
@@ -242,3 +250,5 @@ export class TemplateSrv {
     return value.join(',');
   }
 }
+
+export default new TemplateSrv();
