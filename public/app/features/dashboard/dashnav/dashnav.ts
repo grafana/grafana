@@ -84,7 +84,7 @@ export class DashNavCtrl {
       title: 'Panel Title',
     });
 
-    appEvents.emit('scroll-top');
+    appEvents.emit('smooth-scroll-top');
   }
 
   navItemClicked(navItem, evt) {

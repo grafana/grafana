@@ -8,9 +8,18 @@ export function geminiScrollbar() {
     link: function(scope, elem, attrs) {
       let scrollbar = new PerfectScrollbar(elem[0]);
 
-      appEvents.on('scroll-top', () => {
-        elem[0].scrollTop = 0;
-      });
+      appEvents.on(
+        'smooth-scroll-top',
+        () => {
+          elem.animate(
+            {
+              scrollTop: 0,
+            },
+            500
+          );
+        },
+        scope
+      );
 
       scope.$on('$routeChangeSuccess', () => {
         elem[0].scrollTop = 0;
