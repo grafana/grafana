@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 export class GraphiteConfigCtrl {
   static templateUrl = 'public/app/plugins/datasource/graphite/partials/config.html';
   datasourceSrv: any;

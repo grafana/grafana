@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';

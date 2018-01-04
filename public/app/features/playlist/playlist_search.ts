@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from '../../core/core_module';
 
 export class PlaylistSearchCtrl {

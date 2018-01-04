@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import { PrometheusDatasource } from './datasource';
 import _ from 'lodash';
 

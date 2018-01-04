@@ -1,5 +1,3 @@
-///<reference path="../../../../headers/common.d.ts" />
-
 import { describe, beforeEach, it, expect, angularMocks } from '../../../../../test/lib/common';
 
 import moment from 'moment';

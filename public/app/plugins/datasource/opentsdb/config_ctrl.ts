@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 export class OpenTsConfigCtrl {
   static templateUrl = 'public/app/plugins/datasource/opentsdb/partials/config.html';
   current: any;

@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';

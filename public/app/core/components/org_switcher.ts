@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
 import { contextSrv } from 'app/core/services/context_srv';
 

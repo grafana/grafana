@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 
 // This is auto generated from the unicode tables.

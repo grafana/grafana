@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import Drop from 'tether-drop';

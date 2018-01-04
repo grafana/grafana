@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 export class CloudWatchConfigCtrl {
   static templateUrl = 'partials/config.html';
   current: any;

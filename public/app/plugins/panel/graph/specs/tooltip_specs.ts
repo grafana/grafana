@@ -1,5 +1,3 @@
-///<reference path="../../../../headers/common.d.ts" />
-
 import { describe, beforeEach, it, sinon, expect } from '../../../../../test/lib/common';
 
 import $ from 'jquery';

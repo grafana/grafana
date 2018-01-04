@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import { QueryCtrl } from 'app/plugins/sdk';

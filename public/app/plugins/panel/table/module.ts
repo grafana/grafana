@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import $ from 'jquery';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';

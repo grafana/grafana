@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import coreModule from '../core_module';
 

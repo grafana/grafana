@@ -1,7 +1,6 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import { PanelCtrl } from 'app/plugins/sdk';
+import Remarkable from 'remarkable';
 
 export class TextPanelCtrl extends PanelCtrl {
   static templateUrl = `public/app/plugins/panel/text/module.html`;
@@ -66,11 +65,9 @@ export class TextPanelCtrl extends PanelCtrl {
 
   renderMarkdown(content) {
     if (!this.remarkable) {
-      return System.import('remarkable').then(Remarkable => {
-        this.remarkable = new Remarkable();
-        this.$scope.$apply(() => {
-          this.updateContent(this.remarkable.render(content));
-        });
+      this.remarkable = new Remarkable();
+      this.$scope.$apply(() => {
+        this.updateContent(this.remarkable.render(content));
       });
     }
 

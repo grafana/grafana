@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import { ThresholdMapper } from './threshold_mapper';
 import { QueryPart } from 'app/core/components/query_part/query_part';
