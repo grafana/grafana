@@ -52,7 +52,7 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
   render() {
     const { nav, alertList } = this.props;
 
-    let regex = new RegExp(this.state.search, 'ig');
+    let regex = new RegExp(this.state.search, 'i');
 
     return (
       <div>

@@ -10,6 +10,13 @@ export const AlertListStore = types
     rules: types.array(AlertRule),
     stateFilter: types.optional(types.string, 'all'),
   })
+  .views(self => ({
+    searchFilter(regex) {
+      return self.rules.filter(alert => {
+        return regex.test(alert.name) || regex.test(alert.stateText);
+      });
+    },
+  }))
   .actions(self => ({
     loadRules: flow(function* load(filters) {
       const backendSrv = getEnv(self).backendSrv;
@@ -31,11 +38,4 @@ export const AlertListStore = types
         self.rules.push(AlertRule.create(rule));
       }
     }),
-  }))
-  .views(self => ({
-    searchFilter(regex) {
-      return self.rules.filter(alert => {
-        return regex.test(alert.name) || regex.test(alert.stateText);
-      });
-    },
   }));
