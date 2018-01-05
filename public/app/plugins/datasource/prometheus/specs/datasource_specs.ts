@@ -102,7 +102,6 @@ describe('PrometheusDatasource', function() {
         ],
       },
     };
-    //    console.log(util.inspect(response, {depth: null}));
     beforeEach(function() {
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query).then(function(data) {
@@ -116,7 +115,6 @@ describe('PrometheusDatasource', function() {
       expect(results.data[1].datapoints.length).to.be((end - start) / step + 1);
     });
     it('should fill null until first datapoint in response', function() {
-      //console.log(util.inspect(results, {depth: null}));
       expect(results.data[0].datapoints[0][1]).to.be(start * 1000);
       expect(results.data[0].datapoints[0][0]).to.be(null);
       expect(results.data[0].datapoints[1][1]).to.be((start + step * 1) * 1000);
@@ -130,7 +128,6 @@ describe('PrometheusDatasource', function() {
       expect(results.data[0].datapoints[length - 1][0]).to.be(null);
     });
     it('should fill null at gap between series', function() {
-      //console.log(util.inspect(results, {depth: null}));
       expect(results.data[0].datapoints[2][1]).to.be((start + step * 2) * 1000);
       expect(results.data[0].datapoints[2][0]).to.be(null);
       expect(results.data[1].datapoints[1][1]).to.be((start + step * 1) * 1000);
