@@ -345,7 +345,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     });
   };
 
-  this.getTagValuesAutoComplete = (expressions, tag, valuePrefix, limit, optionalOptions) => {
+  this.getTagValuesAutoComplete = (expressions, tag, valuePrefix, optionalOptions) => {
     let options = optionalOptions || {};
 
     let httpOptions: any = {
