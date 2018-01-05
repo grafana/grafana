@@ -72,6 +72,13 @@ export class PrometheusDatasource {
     return this.templateSrv.variableExists(target.expr);
   }
 
+  clampRange(start, end, step) {
+    return {
+      start: start - start % step,
+      end: end - end % step + step,
+    };
+  }
+
   query(options) {
     var self = this;
     var start = this.getPrometheusTime(options.range.from, false);
@@ -99,7 +106,8 @@ export class PrometheusDatasource {
 
     var allQueryPromise = _.map(queries, query => {
       if (!query.instant) {
-        return this.performTimeSeriesQuery(query, start, end);
+        let range = this.clampRange(start, end, query.step);
+        return this.performTimeSeriesQuery(query, range.start, range.end);
       } else {
         return this.performInstantQuery(query, end);
       }
@@ -118,7 +126,9 @@ export class PrometheusDatasource {
         } else {
           for (let metricData of response.data.data.result) {
             if (response.data.data.resultType === 'matrix') {
-              result.push(self.transformMetricData(metricData, activeTargets[index], start, end, queries[index].step));
+              let step = queries[index].step;
+              let range = this.clampRange(start, end, step);
+              result.push(self.transformMetricData(metricData, activeTargets[index], range.start, range.end, step));
             } else if (response.data.data.resultType === 'vector') {
               result.push(self.transformInstantMetricData(metricData, activeTargets[index]));
             }
@@ -172,9 +182,6 @@ export class PrometheusDatasource {
     if (start > end) {
       throw { message: 'Invalid time range' };
     }
-
-    start = start - (start % query.step);
-    end = end - (end % query.step) + query.step;
 
     var url =
       '/api/v1/query_range?query=' +
@@ -247,11 +254,12 @@ export class PrometheusDatasource {
     var end = this.getPrometheusTime(options.range.to, true);
     var query = {
       expr: interpolated,
-      step: this.adjustInterval(kbn.interval_to_seconds(step), 0, Math.ceil(end - start), 1) + 's',
+      step: this.adjustInterval(kbn.interval_to_seconds(step), 0, Math.ceil(end - start), 1),
     };
+    let range = this.clampRange(start, end, query.step);
 
     var self = this;
-    return this.performTimeSeriesQuery(query, start, end).then(function(results) {
+    return this.performTimeSeriesQuery(query, range.start, range.end).then(function(results) {
       var eventList = [];
       tagKeys = tagKeys.split(',');
 

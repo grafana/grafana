@@ -34,7 +34,7 @@ describe('PrometheusDatasource', function() {
     var urlExpected =
       'proxied/api/v1/query_range?query=' +
       encodeURIComponent('test{job="testjob"}') +
-      '&start=1443438675&end=1443460275&step=60';
+      '&start=1443438660&end=1443460320&step=60';
     var query = {
       range: { from: moment(1443438674760), to: moment(1443460274760) },
       targets: [{ expr: 'test{job="testjob"}', format: 'time_series' }],
@@ -69,8 +69,8 @@ describe('PrometheusDatasource', function() {
   });
   describe('When querying prometheus with one target which return multiple series', function() {
     var results;
-    var start = 1443438675;
-    var end = 1443460275;
+    var start = 1443438660;
+    var end = 1443460320;
     var step = 60;
     var urlExpected =
       'proxied/api/v1/query_range?query=' +
@@ -102,6 +102,7 @@ describe('PrometheusDatasource', function() {
         ],
       },
     };
+    //    console.log(util.inspect(response, {depth: null}));
     beforeEach(function() {
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query).then(function(data) {
@@ -115,6 +116,7 @@ describe('PrometheusDatasource', function() {
       expect(results.data[1].datapoints.length).to.be((end - start) / step + 1);
     });
     it('should fill null until first datapoint in response', function() {
+      //console.log(util.inspect(results, {depth: null}));
       expect(results.data[0].datapoints[0][1]).to.be(start * 1000);
       expect(results.data[0].datapoints[0][0]).to.be(null);
       expect(results.data[0].datapoints[1][1]).to.be((start + step * 1) * 1000);
@@ -128,6 +130,7 @@ describe('PrometheusDatasource', function() {
       expect(results.data[0].datapoints[length - 1][0]).to.be(null);
     });
     it('should fill null at gap between series', function() {
+      //console.log(util.inspect(results, {depth: null}));
       expect(results.data[0].datapoints[2][1]).to.be((start + step * 2) * 1000);
       expect(results.data[0].datapoints[2][0]).to.be(null);
       expect(results.data[1].datapoints[1][1]).to.be((start + step * 1) * 1000);
@@ -176,7 +179,7 @@ describe('PrometheusDatasource', function() {
     var urlExpected =
       'proxied/api/v1/query_range?query=' +
       encodeURIComponent('ALERTS{alertstate="firing"}') +
-      '&start=1443438675&end=1443460275&step=60s';
+      '&start=1443438660&end=1443460320&step=60';
     var options = {
       annotation: {
         expr: 'ALERTS{alertstate="firing"}',
@@ -327,7 +330,7 @@ describe('PrometheusDatasource', function() {
         ],
         interval: '5s',
       };
-      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438675&end=1443460275&step=10';
+      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438670&end=1443460280&step=10';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -340,7 +343,7 @@ describe('PrometheusDatasource', function() {
         targets: [{ expr: 'test' }],
         interval: '100ms',
       };
-      var urlExpected = 'proxied/api/v1/query_range?query=test&start=1508318769&end=1508318771&step=1';
+      var urlExpected = 'proxied/api/v1/query_range?query=test&start=1508318769&end=1508318772&step=1';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -358,7 +361,7 @@ describe('PrometheusDatasource', function() {
         ],
         interval: '10s',
       };
-      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438675&end=1443460275&step=10';
+      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438670&end=1443460280&step=10';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -370,7 +373,7 @@ describe('PrometheusDatasource', function() {
         targets: [{ expr: 'test' }],
         interval: '1s',
       };
-      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438675&end=1443460275&step=2';
+      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438674&end=1443460276&step=2';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -388,7 +391,7 @@ describe('PrometheusDatasource', function() {
         ],
         interval: '5s',
       };
-      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438675&end=1443460275&step=50';
+      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438650&end=1443460300&step=50';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -406,7 +409,7 @@ describe('PrometheusDatasource', function() {
         ],
         interval: '5s',
       };
-      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438675&end=1443460275&step=15';
+      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438675&end=1443460290&step=15';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -424,7 +427,7 @@ describe('PrometheusDatasource', function() {
         ],
         interval: '10s',
       };
-      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438675&end=1443460275&step=100';
+      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438600&end=1443460300&step=100';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -441,7 +444,7 @@ describe('PrometheusDatasource', function() {
         ],
         interval: '10s',
       };
-      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438675&end=1444043475&step=100';
+      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438600&end=1444043500&step=100';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -458,7 +461,7 @@ describe('PrometheusDatasource', function() {
         ],
         interval: '5s',
       };
-      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438675&end=1444043475&step=60';
+      var urlExpected = 'proxied/api/v1/query_range?query=test' + '&start=1443438660&end=1444043520&step=60';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -492,7 +495,7 @@ describe('PrometheusDatasource', function() {
       var urlExpected =
         'proxied/api/v1/query_range?query=' +
         encodeURIComponent('rate(test[10s])') +
-        '&start=1443438675&end=1443460275&step=10';
+        '&start=1443438670&end=1443460280&step=10';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -521,7 +524,7 @@ describe('PrometheusDatasource', function() {
       var urlExpected =
         'proxied/api/v1/query_range?query=' +
         encodeURIComponent('rate(test[10s])') +
-        '&start=1443438675&end=1443460275&step=10';
+        '&start=1443438670&end=1443460280&step=10';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -551,7 +554,7 @@ describe('PrometheusDatasource', function() {
       var urlExpected =
         'proxied/api/v1/query_range?query=' +
         encodeURIComponent('rate(test[100s])') +
-        '&start=1443438675&end=1443460275&step=100';
+        '&start=1443438600&end=1443460300&step=100';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -581,7 +584,7 @@ describe('PrometheusDatasource', function() {
       var urlExpected =
         'proxied/api/v1/query_range?query=' +
         encodeURIComponent('rate(test[50s])') +
-        '&start=1443438675&end=1443460275&step=50';
+        '&start=1443438650&end=1443460300&step=50';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -611,7 +614,7 @@ describe('PrometheusDatasource', function() {
       var urlExpected =
         'proxied/api/v1/query_range?query=' +
         encodeURIComponent('rate(test[15s])') +
-        '&start=1443438675&end=1443460275&step=15';
+        '&start=1443438675&end=1443460290&step=15';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
@@ -640,7 +643,7 @@ describe('PrometheusDatasource', function() {
       var urlExpected =
         'proxied/api/v1/query_range?query=' +
         encodeURIComponent('rate(test[60s])') +
-        '&start=1443438675&end=1444043475&step=60';
+        '&start=1443438660&end=1444043520&step=60';
       ctx.$httpBackend.expect('GET', urlExpected).respond(response);
       ctx.ds.query(query);
       ctx.$httpBackend.verifyNoOutstandingExpectation();
