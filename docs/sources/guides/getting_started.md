@@ -14,6 +14,8 @@ parent = "guides"
 
 This guide will help you get started and acquainted with Grafana. It assumes you have a working Grafana server up and running and have added at least one [Data Source](/features/datasources/).
 
+Assuming you have installed grafana locally, you can access the web interface via http://<yourserver>:3000, e.g. http://localhost:3000. You can login using admin/admin as username and password.
+  
 ## Beginner guides
 
 Watch the 10min [beginners guide to building dashboards](https://www.youtube.com/watch?v=sKNZMtoSHN4&index=7&list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2) to get a quick intro to setting up Dashboards and Panels.
