@@ -47,16 +47,12 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
 
   onSearchFilter(event) {
     this.setState({ search: event.target.value });
-    console.log('yo');
   }
 
   render() {
     const { nav, alertList } = this.props;
 
     let regex = new RegExp(this.state.search, 'ig');
-    const filteredAlerts = alertList.rules.filter(alert => {
-      return regex.test(alert.name) || regex.test(alert.stateText);
-    });
 
     return (
       <div>
@@ -94,7 +90,7 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
 
           <section>
             <ol className="alert-rule-list">
-              {filteredAlerts.map(rule => <AlertRuleItem rule={rule} key={rule.id} />)}
+              {alertList.searchFilter(regex).map(rule => <AlertRuleItem rule={rule} key={rule.id} />)}
             </ol>
           </section>
         </div>

@@ -31,4 +31,11 @@ export const AlertListStore = types
         self.rules.push(AlertRule.create(rule));
       }
     }),
+  }))
+  .views(self => ({
+    searchFilter(regex) {
+      return self.rules.filter(alert => {
+        return regex.test(alert.name) || regex.test(alert.stateText);
+      });
+    },
   }));
