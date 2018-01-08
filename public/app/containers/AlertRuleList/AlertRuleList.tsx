@@ -5,7 +5,18 @@ import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import { IAlertRule } from 'app/stores/AlertListStore/AlertListStore';
 import appEvents from 'app/core/app_events';
 import IContainerProps from 'app/containers/IContainerProps';
+import { Tooltip } from './../../core/components/Tooltip/Tooltip';
 
+function TooltipContent(props) {
+  return (
+    <div>
+      <h1>Hello Im a React component with a h1 and an image</h1>
+      <img src="https://pbs.twimg.com/profile_images/883408726903971840/CoLX7WyW_bigger.jpg" />
+    </div>
+  );
+}
+
+const tooltipPositions = ['auto', 'top', 'left', 'bottom', 'right'];
 @inject('view', 'nav', 'alertList')
 @observer
 export class AlertRuleList extends React.Component<IContainerProps, any> {
@@ -23,6 +34,11 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
 
     this.props.nav.load('alerting', 'alert-list');
     this.fetchRules();
+    this.handleTooltipPositionChange = this.handleTooltipPositionChange.bind(this);
+
+    this.state = {
+      tooltipPosition: 'auto',
+    };
   }
 
   onStateFilterChanged = evt => {
@@ -44,6 +60,12 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
     });
   };
 
+  handleTooltipPositionChange(evt) {
+    evt.preventDefault();
+    this.setState({
+      tooltipPosition: evt.target.value,
+    });
+  }
   render() {
     const { nav, alertList } = this.props;
 
@@ -68,6 +90,31 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
               <i className="fa fa-info-circle" /> How to add an alert
             </a>
           </div>
+
+          <section className="POC" style={{ alignItems: 'flex-start' }}>
+            <select onChange={this.handleTooltipPositionChange}>
+              {tooltipPositions.map(p => {
+                return (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                );
+              })}
+            </select>
+            <Tooltip placement={this.state.tooltipPosition} content={`Hello, Tooltip POC`}>
+              <a className="btn btn-secondary">
+                <i className="fa fa-info-circle" /> Tooltip {this.state.tooltipPosition}
+              </a>
+            </Tooltip>
+          </section>
+
+          <section className="POC-2" style={{ alignItems: 'flex-start', marginTop: '100px' }}>
+            <Tooltip placement={this.state.tooltipPosition} content={TooltipContent}>
+              <a className="btn btn-secondary">
+                <i className="fa fa-info-circle" /> Tooltip with a component as content
+              </a>
+            </Tooltip>
+          </section>
 
           <section className="card-section card-list-layout-list">
             <ol className="card-list">{alertList.rules.map(rule => <AlertRuleItem rule={rule} key={rule.id} />)}</ol>
