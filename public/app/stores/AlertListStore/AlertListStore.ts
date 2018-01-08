@@ -13,7 +13,7 @@ export const AlertListStore = types
   .views(self => ({
     searchFilter(regex) {
       return self.rules.filter(alert => {
-        return regex.test(alert.name) || regex.test(alert.stateText);
+        return regex.test(alert.name) || regex.test(alert.stateText) || regex.test(alert.info);
       });
     },
   }))
