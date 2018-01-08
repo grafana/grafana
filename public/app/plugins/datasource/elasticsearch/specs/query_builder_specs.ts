@@ -113,6 +113,37 @@ describe('ElasticQueryBuilder', function() {
     expect(firstLevel.aggs['1'].percentiles.percents).to.eql([1, 2, 3, 4]);
   });
 
+  it('with nested aggs', function() {
+    var query = builder.build({
+      metrics: [{ type: 'avg', field: 'disk.wr_sec', id: '1' }],
+      bucketAggs: [
+        { type: 'date_histogram', field: '@timestamp', id: '2' },
+        {
+          id: '3',
+          type: 'nested',
+          settings: {
+            nested: {
+              path: 'disk',
+              term: 'disk.disk-device',
+              query: 'dev8-0',
+            },
+          },
+        },
+      ],
+    });
+
+    var firstLevel = query.aggs['2'];
+    var secondLevel = firstLevel.aggs['3'];
+    var thirdLevel = secondLevel.aggs['nested_aggs'];
+    var fourthLevel = thirdLevel.aggs['1'];
+
+    expect(firstLevel.date_histogram.field).to.be('@timestamp');
+    expect(secondLevel.nested.path).to.be('disk');
+    expect(Object.keys(thirdLevel.filter.term)[0]).to.be('disk.disk-device');
+    expect(thirdLevel.filter.term['disk.disk-device']).to.be('dev8-0');
+    expect(fourthLevel.avg.field).to.be('disk.wr_sec');
+  });
+
   it('with filters aggs', function() {
     var query = builder.build({
       metrics: [{ type: 'count', id: '1' }],

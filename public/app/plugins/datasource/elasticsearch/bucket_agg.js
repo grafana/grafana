@@ -61,12 +61,23 @@ function (angular, _, queryDef) {
         case 'histogram':
         case 'terms':  {
           delete $scope.agg.query;
+          delete $scope.agg.settings.nested.path;
           $scope.agg.field = 'select field';
           break;
         }
         case 'filters': {
           delete $scope.agg.field;
+          delete $scope.agg.settings.nested.path;
           $scope.agg.query = '*';
+          break;
+        }
+        case 'nested': {
+          delete $scope.agg.field;
+          delete $scope.agg.query;
+          $scope.agg.settings.nested = {};
+          $scope.agg.settings.nested.path = 'select field (type: nested)';
+          $scope.agg.settings.nested.term = 'select nested term path';
+          $scope.agg.settings.nested.query = 'select query for Nested Term';
           break;
         }
         case 'geohash_grid': {
@@ -88,6 +99,12 @@ function (angular, _, queryDef) {
       var settings = $scope.agg.settings || {};
 
       switch($scope.agg.type) {
+        case 'nested': {
+          if (settingsLinkText === '') {
+            settingsLinkText = 'Options';
+          }
+          break;
+        }
         case 'terms': {
           settings.order = settings.order || "desc";
           settings.size = settings.size || "10";
@@ -186,6 +203,14 @@ function (angular, _, queryDef) {
       } else {
         return $scope.getFields();
       }
+    };
+
+    $scope.getFieldsNestedPath = function() {
+      return $scope.getFields({$fieldType: 'nested'});
+    };
+
+    $scope.getFieldsNestedTerm = function() {
+      return $scope.getFields({$fieldType: 'keyword'});
     };
 
     $scope.getIntervalOptions = function() {

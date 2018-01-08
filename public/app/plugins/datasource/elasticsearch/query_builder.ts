@@ -59,6 +59,33 @@ export class ElasticQueryBuilder {
     return queryNode;
   }
 
+  buildNestedAgg(aggDef, queryNode, target) {
+    var metric, y;
+    if (!aggDef.settings) {
+      return queryNode;
+    }
+    var settings = aggDef.settings;
+    queryNode.nested = {};
+    queryNode.nested.path = settings.nested.path;
+
+    queryNode.aggs = {
+      nested_aggs: {
+        filter: {},
+        aggs: {},
+      },
+    };
+    queryNode.aggs.nested_aggs.filter.term = {};
+    queryNode.aggs.nested_aggs.filter.term[settings.nested.term] = settings.nested.query;
+
+    queryNode.aggs.nested_aggs.aggs = {};
+    for (y = 0; y < target.metrics.length; y++) {
+      metric = target.metrics[y];
+      queryNode.aggs.nested_aggs.aggs[metric.id] = {};
+      queryNode.aggs.nested_aggs.aggs[metric.id][metric.type] = { field: metric.field };
+    }
+    return queryNode;
+  }
+
   getDateHistogramAgg(aggDef) {
     var esAgg: any = {};
     var settings = aggDef.settings || {};
@@ -214,6 +241,7 @@ export class ElasticQueryBuilder {
 
     nestedAggs = query;
 
+    var foundNested = false;
     for (i = 0; i < target.bucketAggs.length; i++) {
       var aggDef = target.bucketAggs[i];
       var esAgg = {};
@@ -242,44 +270,49 @@ export class ElasticQueryBuilder {
           };
           break;
         }
+        case 'nested': {
+          foundNested = true;
+          this.buildNestedAgg(aggDef, esAgg, target);
+          break;
+        }
       }
 
       nestedAggs.aggs = nestedAggs.aggs || {};
       nestedAggs.aggs[aggDef.id] = esAgg;
       nestedAggs = esAgg;
     }
+    if (!foundNested) {
+      nestedAggs.aggs = {};
 
-    nestedAggs.aggs = {};
-
-    for (i = 0; i < target.metrics.length; i++) {
-      metric = target.metrics[i];
-      if (metric.type === 'count') {
-        continue;
-      }
-
-      var aggField = {};
-      var metricAgg = null;
-
-      if (queryDef.isPipelineAgg(metric.type)) {
-        if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
-          metricAgg = { buckets_path: metric.pipelineAgg };
-        } else {
+      for (i = 0; i < target.metrics.length; i++) {
+        metric = target.metrics[i];
+        if (metric.type === 'count') {
           continue;
         }
-      } else {
-        metricAgg = { field: metric.field };
-      }
 
-      for (var prop in metric.settings) {
-        if (metric.settings.hasOwnProperty(prop) && metric.settings[prop] !== null) {
-          metricAgg[prop] = metric.settings[prop];
+        var aggField = {};
+        var metricAgg = null;
+
+        if (queryDef.isPipelineAgg(metric.type)) {
+          if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
+            metricAgg = { buckets_path: metric.pipelineAgg };
+          } else {
+            continue;
+          }
+        } else {
+          metricAgg = { field: metric.field };
         }
+
+        for (var prop in metric.settings) {
+          if (metric.settings.hasOwnProperty(prop) && metric.settings[prop] !== null) {
+            metricAgg[prop] = metric.settings[prop];
+          }
+        }
+
+        aggField[metric.type] = metricAgg;
+        nestedAggs.aggs[metric.id] = aggField;
       }
-
-      aggField[metric.type] = metricAgg;
-      nestedAggs.aggs[metric.id] = aggField;
     }
-
     return query;
   }
 
