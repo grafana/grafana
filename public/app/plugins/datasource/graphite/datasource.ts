@@ -286,7 +286,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 
     let httpOptions: any = {
       method: 'GET',
-      url: '/tags/' + tag,
+      url: '/tags/' + templateSrv.replace(tag),
       // for cancellations
       requestId: options.requestId,
     };
@@ -317,7 +317,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       method: 'GET',
       url: '/tags/autoComplete/tags',
       params: {
-        expr: expressions,
+        expr: _.map(expressions, expression => templateSrv.replace(expression)),
       },
       // for cancellations
       requestId: options.requestId,
@@ -352,8 +352,8 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       method: 'GET',
       url: '/tags/autoComplete/values',
       params: {
-        expr: expressions,
-        tag: tag,
+        expr: _.map(expressions, expression => templateSrv.replace(expression)),
+        tag: templateSrv.replace(tag),
       },
       // for cancellations
       requestId: options.requestId,
