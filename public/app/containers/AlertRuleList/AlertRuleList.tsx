@@ -122,7 +122,7 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
   };
 
   renderText(text: string, searchArray) {
-    return <Highlighter highlightClassName="highlight" textToHighlight={text} searchWords={searchArray} />;
+    return <Highlighter highlightClassName="textHighlight" textToHighlight={text} searchWords={searchArray} />;
   }
 
   render() {
