@@ -415,6 +415,14 @@
 			"revisionTime": "2017-03-27T11:30:21Z"
 		},
 		{
+			"checksumSHA1": "luu+ud4XYZhlCoNnSAwCJlbh0Bg=",
+			"path": "github.com/go-stack/stack",
+			"revision": "259ab82a6cad3992b4e21ff5cac294ccb06474bc",
+			"revisionTime": "2017-11-12T03:14:02Z",
+			"version": "v1.7.0",
+			"versionExact": "v1.7.0"
+		},
+		{
 			"checksumSHA1": "HHB+Jna1wv0cXLxtCyOnQqFwvn4=",
 			"path": "github.com/go-xorm/builder",
 			"revision": "c6e604e9c7b7461715091e14ad0c242ec44c26e4",
@@ -486,7 +494,6 @@
 		},
 		{
 			"checksumSHA1": "y/A5iuvwjytQE2CqVuphQRXR2nI=",
-			"origin": "github.com/grafana/grafana/vendor/github.com/mattn/go-isatty",
 			"path": "github.com/mattn/go-isatty",
 			"revision": "a5cdd64afdee435007ee3e9f6ed4684af949d568",
 			"revisionTime": "2017-09-25T05:49:04Z"
