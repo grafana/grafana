@@ -12,7 +12,7 @@ export class FolderPermissionsCtrl {
       this.folderId = $routeParams.folderId;
 
       new FolderPageLoader(this.backendSrv, this.$routeParams)
-        .load(this, this.folderId, "manage-folder-permissions")
+        .load(this, this.folderId, 'manage-folder-permissions')
         .then(result => {
           this.dashboard = result.dashboard;
           this.meta = result.meta;
