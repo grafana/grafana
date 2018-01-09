@@ -73,10 +73,12 @@ func buildExecutablePath(pluginDir, executable, os, arch string) string {
 func (p *DataSourcePlugin) initBackendPlugin(ctx context.Context, log log.Logger) error {
 	p.log = log.New("plugin-id", p.Id)
 
-	p.spawnSubProcess()
-	go p.reattachKilledProcess(ctx)
+	err := p.spawnSubProcess()
+	if err == nil {
+		go p.restartKilledProcess(ctx)
+	}
 
-	return nil
+	return err
 }
 
 func (p *DataSourcePlugin) spawnSubProcess() error {
@@ -109,7 +111,7 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 	return nil
 }
 
-func (p *DataSourcePlugin) reattachKilledProcess(ctx context.Context) error {
+func (p *DataSourcePlugin) restartKilledProcess(ctx context.Context) error {
 	ticker := time.NewTicker(time.Second * 1)
 
 	for {
