@@ -17,7 +17,7 @@ ssl_skip_verify = false
 # root_ca_cert = "/path/to/certificate.crt"
 
 # Search user bind dn
-bind_dn = "cn=admin,dc=grafana,dc=org"
+bind_dn = "CN=admin,DC=grafana,DC=org"
 # Search user bind password
 # If the password contains # or ; you have to wrap it with trippel quotes. Ex """#password;"""
 bind_password = 'grafana'
@@ -26,7 +26,7 @@ bind_password = 'grafana'
 search_filter = "(cn=%s)"
 
 # An array of base dns to search through
-search_base_dns = ["dc=grafana,dc=org"]
+search_base_dns = ["DC=grafana,DC=org"]
 
 # In POSIX LDAP schemas, without memberOf attribute a secondary query must be made for groups.
 # This is done by enabling group_search_filter below. You must also set member_of= "cn"
@@ -43,7 +43,7 @@ search_base_dns = ["dc=grafana,dc=org"]
 #
 #     group_search_filter = "(member:1.2.840.113556.1.4.1941:=%s)"
 #     group_search_filter_user_attribute = "distinguishedName"
-#     group_search_base_dns = ["ou=groups,dc=grafana,dc=org"]
+#     group_search_base_dns = ["OU=groups,DC=grafana,DC=org"]
 #
 #     [servers.attributes]
 #     ...
@@ -58,7 +58,7 @@ search_base_dns = ["dc=grafana,dc=org"]
 ## [servers.attributes] to "distinguishedName"
 # group_search_filter_user_attribute = "distinguishedName"
 ## An array of the base DNs to search through for groups. Typically uses ou=groups
-# group_search_base_dns = ["ou=groups,dc=grafana,dc=org"]
+# group_search_base_dns = ["OU=groups,DC=grafana,DC=org"]
 
 # Specify names of the ldap attributes your ldap uses
 [servers.attributes]
@@ -70,13 +70,13 @@ email =  "email"
 
 # Map ldap groups to grafana org roles
 [[servers.group_mappings]]
-group_dn = "cn=admins,dc=grafana,dc=org"
+group_dn = "CN=admins,DC=grafana,DC=org"
 org_role = "Admin"
 # The Grafana organization database id, optional, if left out the default org (id 1) will be used
 # org_id = 1
 
 [[servers.group_mappings]]
-group_dn = "cn=users,dc=grafana,dc=org"
+group_dn = "CN=users,DC=grafana,DC=org"
 org_role = "Editor"
 
 [[servers.group_mappings]]
