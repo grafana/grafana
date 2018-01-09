@@ -8,10 +8,6 @@ import (
 	"google.golang.org/grpc"
 )
 
-// var PluginMap = map[string]plugin.Plugin{
-// 	"tsdb_mock": &TsdbPluginImpl{},
-// }
-
 type TsdbPlugin interface {
 	Query(ctx context.Context, req *proto.TsdbQuery) (*proto.Response, error)
 }
