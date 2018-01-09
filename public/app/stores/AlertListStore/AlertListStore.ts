@@ -9,9 +9,11 @@ export const AlertListStore = types
   .model('AlertListStore', {
     rules: types.array(AlertRule),
     stateFilter: types.optional(types.string, 'all'),
+    search: types.optional(types.string, ''),
   })
   .views(self => ({
-    searchFilter(regex) {
+    searchFilter() {
+      let regex = new RegExp(self.search, 'i');
       return self.rules.filter(alert => {
         return regex.test(alert.name) || regex.test(alert.stateText) || regex.test(alert.info);
       });
@@ -38,4 +40,7 @@ export const AlertListStore = types
         self.rules.push(AlertRule.create(rule));
       }
     }),
+    setSearchState(evt) {
+      self.search = evt;
+    },
   }));

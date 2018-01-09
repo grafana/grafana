@@ -46,14 +46,12 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
     });
   };
 
-  onSearchFilter(event) {
-    this.setState({ search: event.target.value });
-  }
+  onSearchFilter = evt => {
+    this.props.alertList.setSearchState(evt.target.value);
+  };
 
   render() {
     const { nav, alertList } = this.props;
-
-    let regex = new RegExp(this.state.search, 'i');
 
     return (
       <div>
@@ -66,8 +64,8 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
                   type="text"
                   className="gf-form-input width-13"
                   placeholder="Search alert"
-                  value={this.state.search}
-                  onChange={this.onSearchFilter.bind(this)}
+                  value={alertList.search}
+                  onChange={this.onSearchFilter}
                 />
                 <i className="gf-form-input-icon fa fa-search" />
               </label>
@@ -92,8 +90,8 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
           <section>
             <ol className="alert-rule-list">
               {alertList
-                .searchFilter(regex)
-                .map(rule => <AlertRuleItem rule={rule} key={rule.id} search={this.state.search} />)}
+                .searchFilter()
+                .map(rule => <AlertRuleItem rule={rule} key={rule.id} search={alertList.search} />)}
             </ol>
           </section>
         </div>
