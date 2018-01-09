@@ -73,9 +73,9 @@ export class DashNavCtrl {
   }
 
   addPanel() {
+    appEvents.emit('smooth-scroll-top');
     if (this.dashboard.panels.length > 0 && this.dashboard.panels[0].type === 'add-panel') {
-      this.dashboard.removePanel(this.dashboard.panels[0]);
-      return;
+      return; // Return if the "Add panel" exists already
     }
 
     this.dashboard.addPanel({
