@@ -33,7 +33,7 @@ export class PluginEditCtrl {
         subTitle: model.info.author.name,
         url: '',
         text: '',
-        breadcrumbs: [{ title: 'Plugins', url: '/plugins' }, { title: model.name }],
+        breadcrumbs: [{ title: 'Plugins', url: 'plugins' }, { title: model.name }],
         children: [
           {
             icon: 'fa fa-fw fa-file-text-o',
