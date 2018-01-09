@@ -145,7 +145,10 @@ export class DashboardModel {
     };
 
     // get panel save models
-    copy.panels = _.map(this.panels, panel => panel.getSaveModel());
+    copy.panels = _.chain(this.panels)
+      .filter(panel => panel.type !== 'add-panel')
+      .map(panel => panel.getSaveModel())
+      .value();
 
     //  sort by keys
     copy = sortByKeys(copy);
