@@ -187,13 +187,18 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     if (this.panel.timeShift) {
       var timeShiftInterpolated = this.templateSrv.replace(this.panel.timeShift, this.panel.scopedVars);
-      var timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
+      var timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated.replace(/^-/, ''));
       if (timeShiftInfo.invalid) {
         this.timeInfo = 'invalid timeshift';
         return;
       }
 
-      var timeShift = '-' + timeShiftInterpolated;
+      var timeShift;
+      if (timeShiftInterpolated[0] === '-') {
+        timeShift = timeShiftInterpolated.replace(/^-/, '+');
+      } else {
+        timeShift = '-' + timeShiftInterpolated;
+      }
       this.timeInfo += ' timeshift ' + timeShift;
       this.range.from = dateMath.parseDateMath(timeShift, this.range.from, false);
       this.range.to = dateMath.parseDateMath(timeShift, this.range.to, true);
