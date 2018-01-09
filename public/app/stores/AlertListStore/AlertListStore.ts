@@ -12,7 +12,7 @@ export const AlertListStore = types
     search: types.optional(types.string, ''),
   })
   .views(self => ({
-    searchFilter() {
+    get filteredRules() {
       let regex = new RegExp(self.search, 'i');
       return self.rules.filter(alert => {
         return regex.test(alert.name) || regex.test(alert.stateText) || regex.test(alert.info);
@@ -40,7 +40,7 @@ export const AlertListStore = types
         self.rules.push(AlertRule.create(rule));
       }
     }),
-    setSearchState(evt) {
-      self.search = evt;
+    setSearchQuery(query: string) {
+      self.search = query;
     },
   }));
