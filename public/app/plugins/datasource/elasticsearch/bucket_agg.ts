@@ -17,6 +17,7 @@ export function elasticBucketAgg() {
 }
 
 export class ElasticBucketAggCtrl {
+  /** @nginject */
   constructor($scope, uiSegmentSrv, $q, $rootScope) {
     var bucketAggs = $scope.target.bucketAggs;
 
