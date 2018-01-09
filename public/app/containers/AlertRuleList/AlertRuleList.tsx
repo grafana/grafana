@@ -119,14 +119,12 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
     this.props.rule.togglePaused();
   };
 
-  renderText(text: string, searchArray) {
-    return <Highlighter highlightClassName="textHighlight" textToHighlight={text} searchWords={searchArray} />;
+  renderText(text: string) {
+    return <Highlighter highlightClassName="textHighlight" textToHighlight={text} searchWords={[this.props.search]} />;
   }
 
   render() {
     const { rule } = this.props;
-
-    const searchArray = [this.props.search];
 
     let stateClass = classNames({
       fa: true,
@@ -144,16 +142,14 @@ export class AlertRuleItem extends React.Component<AlertRuleItemProps, any> {
           </span>
           <div className="alert-rule-item__header">
             <div className="alert-rule-item__name">
-              <a href={ruleUrl}>{this.renderText(rule.name, searchArray)}</a>
+              <a href={ruleUrl}>{this.renderText(rule.name)}</a>
             </div>
             <div className="alert-rule-item__text">
-              <span className={`${rule.stateClass}`}>{this.renderText(rule.stateText, searchArray)}</span>
+              <span className={`${rule.stateClass}`}>{this.renderText(rule.stateText)}</span>
               <span className="alert-rule-item__time"> for {rule.stateAge}</span>
             </div>
           </div>
-          {rule.info && (
-            <div className="small muted alert-rule-item__info">{this.renderText(rule.info, searchArray)}</div>
-          )}
+          {rule.info && <div className="small muted alert-rule-item__info">{this.renderText(rule.info)}</div>}
         </div>
         <div className="alert-rule-item__footer">
           <a
