@@ -2,6 +2,7 @@ import { coreModule, appEvents, contextSrv } from 'app/core/core';
 import { DashboardModel } from '../dashboard_model';
 import $ from 'jquery';
 import _ from 'lodash';
+import config from 'app/core/config';
 
 export class SettingsCtrl {
   dashboard: DashboardModel;
@@ -86,7 +87,7 @@ export class SettingsCtrl {
 
     for (let section of this.sections) {
       const sectionParams = _.defaults({ editview: section.id }, params);
-      section.url = url + '?' + $.param(sectionParams);
+      section.url = config.appSubUrl + url + '?' + $.param(sectionParams);
     }
   }
 

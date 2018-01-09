@@ -11,28 +11,28 @@ export class FolderPageLoader {
         subTitle: 'Manage folder dashboards & permissions',
         url: '',
         text: '',
-        breadcrumbs: [{ title: 'Dashboards', url: '/dashboards' }, { title: ' ' }],
+        breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }, { title: ' ' }],
         children: [
           {
             active: activeChildId === 'manage-folder-dashboards',
             icon: 'fa fa-fw fa-th-large',
             id: 'manage-folder-dashboards',
             text: 'Dashboards',
-            url: '/dashboards',
+            url: 'dashboards',
           },
           {
             active: activeChildId === 'manage-folder-permissions',
             icon: 'fa fa-fw fa-lock',
             id: 'manage-folder-permissions',
             text: 'Permissions',
-            url: '/dashboards/permissions',
+            url: 'dashboards/permissions',
           },
           {
             active: activeChildId === 'manage-folder-settings',
             icon: 'fa fa-fw fa-cog',
             id: 'manage-folder-settings',
             text: 'Settings',
-            url: '/dashboards/settings',
+            url: 'dashboards/settings',
           },
         ],
       },
@@ -41,7 +41,7 @@ export class FolderPageLoader {
     return this.backendSrv.getDashboard('db', this.$routeParams.slug).then(result => {
       const folderTitle = result.dashboard.title;
       ctrl.navModel.main.text = '';
-      ctrl.navModel.main.breadcrumbs = [{ title: 'Dashboards', url: '/dashboards' }, { title: folderTitle }];
+      ctrl.navModel.main.breadcrumbs = [{ title: 'Dashboards', url: 'dashboards' }, { title: folderTitle }];
 
       const folderUrl = this.createFolderUrl(folderId, result.meta.type, result.meta.slug);
 
