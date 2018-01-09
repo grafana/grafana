@@ -30,7 +30,9 @@ function dashLink($compile, linkSrv) {
       if (link.asDropdown) {
         template +=
           '<ul class="dropdown-menu" role="menu">' +
-          '<li ng-repeat="dash in link.searchHits"><a href="{{dash.url}}">{{dash.title}}</a></li>' +
+          '<li ng-repeat="dash in link.searchHits">' +
+          '<a href="{{dash.url}}" target="{{dash.target}}">{{dash.title}}</a>' +
+          '</li>' +
           '</ul>';
       }
 
@@ -84,6 +86,7 @@ export class DashLinksContainerCtrl {
               tags: linkDef.tags,
               keepTime: linkDef.keepTime,
               includeVars: linkDef.includeVars,
+              target: linkDef.targetBlank ? '_blank' : '_self',
               icon: 'fa fa-bars',
               asDropdown: true,
             },
@@ -128,6 +131,7 @@ export class DashLinksContainerCtrl {
               memo.push({
                 title: dash.title,
                 url: 'dashboard/' + dash.uri,
+                target: link.target,
                 icon: 'fa fa-th-large',
                 keepTime: link.keepTime,
                 includeVars: link.includeVars,
