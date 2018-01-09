@@ -5,19 +5,7 @@ import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import { IAlertRule } from 'app/stores/AlertListStore/AlertListStore';
 import appEvents from 'app/core/app_events';
 import IContainerProps from 'app/containers/IContainerProps';
-import Tooltip from './../../core/components/Tooltip/Tooltip';
-import Popover from './../../core/components/Tooltip/Popover';
 
-function TooltipContent(props) {
-  return (
-    <div>
-      <h1>Hello Im a React component with a h1 and an image</h1>
-      <img src="https://pbs.twimg.com/profile_images/883408726903971840/CoLX7WyW_bigger.jpg" />
-    </div>
-  );
-}
-
-const tooltipPositions = ['auto', 'top', 'left', 'bottom', 'right'];
 @inject('view', 'nav', 'alertList')
 @observer
 export class AlertRuleList extends React.Component<IContainerProps, any> {
