@@ -1,5 +1,6 @@
 ﻿import React from 'react';
 import withTooltip from './withTooltip';
+import { Target } from 'react-popper';
 
 interface ITooltipProps {
   tooltipSetState: (prevState: object) => void;
@@ -34,9 +35,9 @@ class Tooltip extends React.Component<ITooltipProps, any> {
 
   render() {
     return (
-      <span onMouseOver={this.showTooltip} onMouseOut={this.hideTooltip}>
+      <Target className="popper__target" onMouseOver={this.showTooltip} onMouseOut={this.hideTooltip}>
         {this.props.children}
-      </span>
+      </Target>
     );
   }
 }

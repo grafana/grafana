@@ -6,14 +6,11 @@ exports[`Popover renders correctly 1`] = `
 >
   <div
     className="popper__target"
+    onClick={[Function]}
   >
-    <span
-      onClick={[Function]}
-    >
-      <button>
-        Button with Popover
-      </button>
-    </span>
+    <button>
+      Button with Popover
+    </button>
   </div>
 </div>
 `;

@@ -1,5 +1,6 @@
 ﻿import React from 'react';
 import withTooltip from './withTooltip';
+import { Target } from 'react-popper';
 
 interface IPopoverProps {
   tooltipSetState: (prevState: object) => void;
@@ -22,7 +23,11 @@ class Popover extends React.Component<IPopoverProps, any> {
   }
 
   render() {
-    return <span onClick={this.toggleTooltip}>{this.props.children}</span>;
+    return (
+      <Target className="popper__target" onClick={this.toggleTooltip}>
+        {this.props.children}
+      </Target>
+    );
   }
 }
 

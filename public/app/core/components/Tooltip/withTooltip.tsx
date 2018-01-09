@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Manager, Target, Popper, Arrow } from 'react-popper';
+import { Manager, Popper, Arrow } from 'react-popper';
 
 interface IwithTooltipProps {
   placement?: string;
@@ -43,9 +43,7 @@ export default function withTooltip(WrappedComponent) {
 
       return (
         <Manager className="popper__manager">
-          <Target className="popper__target">
-            <WrappedComponent {...this.props} tooltipSetState={this.setState} />
-          </Target>
+          <WrappedComponent {...this.props} tooltipSetState={this.setState} />
           {this.state.show ? (
             <Popper placement={this.state.placement} className="popper">
               {this.renderContent(content)}

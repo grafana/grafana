@@ -6,17 +6,14 @@ exports[`Tooltip renders correctly 1`] = `
 >
   <div
     className="popper__target"
+    onMouseOut={[Function]}
+    onMouseOver={[Function]}
   >
-    <span
-      onMouseOut={[Function]}
-      onMouseOver={[Function]}
+    <a
+      href="http://www.grafana.com"
     >
-      <a
-        href="http://www.grafana.com"
-      >
-        Link with tooltip
-      </a>
-    </span>
+      Link with tooltip
+    </a>
   </div>
 </div>
 `;
