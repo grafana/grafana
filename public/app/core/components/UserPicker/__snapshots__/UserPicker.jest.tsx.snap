@@ -5,7 +5,7 @@ exports[`UserPicker renders correctly 1`] = `
   className="user-picker"
 >
   <div
-    className="Select width-8 gf-form-input gf-form-input--form-dropdown Select--single is-clearable is-loading is-searchable"
+    className="Select width-8 gf-form-input gf-form-input--form-dropdown is-clearable is-loading is-searchable Select--single"
     style={undefined}
   >
     <div
