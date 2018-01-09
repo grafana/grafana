@@ -1,24 +1,20 @@
 ﻿import React from 'react';
-import { Manager, Target, Popper, Arrow } from 'react-popper';
+import withTooltip from './withTooltip';
 
 interface ITooltipProps {
-  placement: any;
-  content: any;
+  tooltipSetState: (prevState: object) => void;
 }
 
-export class Tooltip extends React.Component<ITooltipProps, any> {
+class Tooltip extends React.Component<ITooltipProps, any> {
   constructor(props) {
     super(props);
-    this.handleMouseOver = this.handleMouseOver.bind(this);
-    this.handleMouseOut = this.handleMouseOut.bind(this);
-    this.state = {
-      placement: this.props.placement || 'auto',
-      show: false,
-    };
+    this.showTooltip = this.showTooltip.bind(this);
+    this.hideTooltip = this.hideTooltip.bind(this);
   }
 
-  handleMouseOver() {
-    this.setState(prevState => {
+  showTooltip() {
+    const { tooltipSetState } = this.props;
+    tooltipSetState(prevState => {
       return {
         ...prevState,
         show: true,
@@ -26,8 +22,9 @@ export class Tooltip extends React.Component<ITooltipProps, any> {
     });
   }
 
-  handleMouseOut() {
-    this.setState(prevState => {
+  hideTooltip() {
+    const { tooltipSetState } = this.props;
+    tooltipSetState(prevState => {
       return {
         ...prevState,
         show: false,
@@ -35,42 +32,13 @@ export class Tooltip extends React.Component<ITooltipProps, any> {
     });
   }
 
-  componentWillReceiveProps(nextProps) {
-    if (nextProps.placement !== this.state.placement) {
-      this.setState(prevState => {
-        return {
-          ...prevState,
-          placement: nextProps.placement,
-        };
-      });
-    }
-  }
-
-  renderContent(content) {
-    if (typeof content === 'function') {
-      // If it's a function we assume it's a React component
-      const ReactComponent = content;
-      return <ReactComponent />;
-    }
-    return content;
-  }
-
   render() {
-    const { content } = this.props;
     return (
-      <Manager className="popper__manager">
-        <Target className="popper__target">
-          <span onMouseOver={this.handleMouseOver} onMouseOut={this.handleMouseOut}>
-            {this.props.children}
-          </span>
-        </Target>
-        {this.state.show ? (
-          <Popper placement={this.state.placement} className="popper">
-            {this.renderContent(content)}
-            <Arrow className="popper__arrow" />
-          </Popper>
-        ) : null}
-      </Manager>
+      <span onMouseOver={this.showTooltip} onMouseOut={this.hideTooltip}>
+        {this.props.children}
+      </span>
     );
   }
 }
+
+export default withTooltip(Tooltip);

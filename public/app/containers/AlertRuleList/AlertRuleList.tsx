@@ -5,7 +5,8 @@ import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import { IAlertRule } from 'app/stores/AlertListStore/AlertListStore';
 import appEvents from 'app/core/app_events';
 import IContainerProps from 'app/containers/IContainerProps';
-import { Tooltip } from './../../core/components/Tooltip/Tooltip';
+import Tooltip from './../../core/components/Tooltip/Tooltip';
+import Popover from './../../core/components/Tooltip/Popover';
 
 function TooltipContent(props) {
   return (
@@ -108,12 +109,20 @@ export class AlertRuleList extends React.Component<IContainerProps, any> {
             </Tooltip>
           </section>
 
-          <section className="POC-2" style={{ alignItems: 'flex-start', marginTop: '100px' }}>
+          <section className="POC-2" style={{ alignItems: 'flex-start', marginTop: '50px' }}>
             <Tooltip placement={this.state.tooltipPosition} content={TooltipContent}>
               <a className="btn btn-secondary">
                 <i className="fa fa-info-circle" /> Tooltip with a component as content
               </a>
             </Tooltip>
+          </section>
+
+          <section className="POC-3" style={{ alignItems: 'flex-start', marginTop: '50px' }}>
+            <Popover placement={this.state.tooltipPosition} content={`You can se this because you clicked`}>
+              <a className="btn btn-secondary">
+                <i className="fa fa-info-circle" /> Popover component
+              </a>
+            </Popover>
           </section>
 
           <section className="card-section card-list-layout-list">
