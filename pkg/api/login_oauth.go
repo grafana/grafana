@@ -33,7 +33,7 @@ var (
 )
 
 const (
-	oAuthLogoutCookie = "GrafanaOauthLogout"
+	oAuthLogoutUrl = "GrafanaOauthLogout"
 )
 
 func GenStateString() string {
@@ -198,7 +198,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	loginUserWithUser(userQuery.Result, ctx)
 
 	if setting.OAuthService.OAuthInfos[name].LogoutUrl != "" {
-		ctx.SetCookie(oAuthLogoutCookie, fmt.Sprintf("%s?client_id=%s&logout_uri=%s", setting.OAuthService.OAuthInfos[name].LogoutUrl,
+		ctx.Session.Set(oAuthLogoutUrl, fmt.Sprintf("%s?client_id=%s&logout_uri=%s", setting.OAuthService.OAuthInfos[name].LogoutUrl,
 			setting.OAuthService.OAuthInfos[name].ClientId,
 			url.PathEscape(setting.AppUrl+"login")))
 	}
