@@ -1,4 +1,4 @@
-package proxy
+package tsdb
 
 import (
 	"github.com/golang/protobuf/ptypes"

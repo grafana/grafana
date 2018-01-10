@@ -1,4 +1,4 @@
-package proxy
+package tsdb
 
 import (
 	proto "github.com/grafana/grafana/pkg/tsdb/models"

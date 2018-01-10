@@ -14,9 +14,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins/backend"
+	shared "github.com/grafana/grafana/pkg/plugins/datasource/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb"
-	shared "github.com/grafana/grafana/pkg/tsdb/models/proxy"
 	plugin "github.com/hashicorp/go-plugin"
 )
 
@@ -89,7 +88,7 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 		Plugins:          map[string]plugin.Plugin{p.Id: &shared.TsdbPluginImpl{}},
 		Cmd:              exec.Command(cmd),
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
-		Logger:           backend.LogWrapper{Logger: p.log},
+		Logger:           LogWrapper{Logger: p.log},
 	})
 
 	rpcClient, err := p.client.Client()
