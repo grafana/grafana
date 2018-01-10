@@ -9,7 +9,16 @@ export const AlertListStore = types
   .model('AlertListStore', {
     rules: types.array(AlertRule),
     stateFilter: types.optional(types.string, 'all'),
+    search: types.optional(types.string, ''),
   })
+  .views(self => ({
+    get filteredRules() {
+      let regex = new RegExp(self.search, 'i');
+      return self.rules.filter(alert => {
+        return regex.test(alert.name) || regex.test(alert.stateText) || regex.test(alert.info);
+      });
+    },
+  }))
   .actions(self => ({
     loadRules: flow(function* load(filters) {
       const backendSrv = getEnv(self).backendSrv;
@@ -31,4 +40,7 @@ export const AlertListStore = types
         self.rules.push(AlertRule.create(rule));
       }
     }),
+    setSearchQuery(query: string) {
+      self.search = query;
+    },
   }));
