@@ -1,4 +1,5 @@
-﻿import React, { Component } from 'react';
+import React, { Component } from 'react';
+
 export interface IProps {
   onSelect: any;
   onFocus: any;
@@ -6,6 +7,7 @@ export interface IProps {
   isFocused: any;
   className: any;
 }
+
 class UserPickerOption extends Component<IProps, any> {
   constructor(props) {
     super(props);

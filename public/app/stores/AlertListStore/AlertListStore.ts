@@ -29,12 +29,13 @@ export const AlertListStore = types
       for (let rule of apiRules) {
         setStateFields(rule, rule.state);
 
-        if (rule.executionError) {
-          rule.info = 'Execution Error: ' + rule.executionError;
-        }
-
-        if (rule.evalData && rule.evalData.noData) {
-          rule.info = 'Query returned no data';
+        if (rule.state !== 'paused') {
+          if (rule.executionError) {
+            rule.info = 'Execution Error: ' + rule.executionError;
+          }
+          if (rule.evalData && rule.evalData.noData) {
+            rule.info = 'Query returned no data';
+          }
         }
 
         self.rules.push(AlertRule.create(rule));
