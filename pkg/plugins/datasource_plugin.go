@@ -65,8 +65,14 @@ var handshakeConfig = plugin.HandshakeConfig{
 	MagicCookieValue: "datasource",
 }
 
-func buildExecutablePath(pluginDir, executable, os, arch string) string {
-	return path.Join(pluginDir, fmt.Sprintf("%s_%s_%s", executable, strings.ToLower(os), strings.ToLower(arch)))
+func composeBinaryName(executable, os, arch string) string {
+	var extension string
+	os = strings.ToLower(os)
+	if os == "windows" {
+		extension = ".exe"
+	}
+
+	return fmt.Sprintf("%s_%s_%s%s", executable, os, strings.ToLower(arch), extension)
 }
 
 func (p *DataSourcePlugin) initBackendPlugin(ctx context.Context, log log.Logger) error {
@@ -81,12 +87,13 @@ func (p *DataSourcePlugin) initBackendPlugin(ctx context.Context, log log.Logger
 }
 
 func (p *DataSourcePlugin) spawnSubProcess() error {
-	cmd := buildExecutablePath(p.PluginDir, p.Executable, runtime.GOOS, runtime.GOARCH)
+	cmd := composeBinaryName(p.Executable, runtime.GOOS, runtime.GOARCH)
+	fullpath := path.Join(p.PluginDir, cmd)
 
 	p.client = plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig:  handshakeConfig,
 		Plugins:          map[string]plugin.Plugin{p.Id: &shared.TsdbPluginImpl{}},
-		Cmd:              exec.Command(cmd),
+		Cmd:              exec.Command(fullpath),
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
 		Logger:           LogWrapper{Logger: p.log},
 	})

@@ -1,12 +1,35 @@
 package plugins
 
-import "testing"
+import (
+	"testing"
+)
 
-func TestExecutablePathBuilder(t *testing.T) {
+func TestComposeBinaryName(t *testing.T) {
+	tests := []struct {
+		name string
+		os   string
+		arch string
 
-	have := buildExecutablePath("/var/grafana/plugins/grafana-simple-json-datasource", "simple-json", "linux", "amd64")
-	want := `/var/grafana/plugins/grafana-simple-json-datasource/simple-json_linux_amd64`
-	if have != want {
-		t.Errorf("expected %s got %s", want, have)
+		expectedPath string
+	}{
+		{
+			name:         "simple-json",
+			os:           "linux",
+			arch:         "amd64",
+			expectedPath: `simple-json_linux_amd64`,
+		},
+		{
+			name:         "simple-json",
+			os:           "windows",
+			arch:         "amd64",
+			expectedPath: `simple-json_windows_amd64.exe`,
+		},
+	}
+
+	for _, v := range tests {
+		have := composeBinaryName(v.name, v.os, v.arch)
+		if have != v.expectedPath {
+			t.Errorf("expected %s got %s", v.expectedPath, have)
+		}
 	}
 }
