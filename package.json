@@ -92,6 +92,7 @@
     "webpack": "^3.10.0",
     "webpack-bundle-analyzer": "^2.9.0",
     "webpack-cleanup-plugin": "^0.5.1",
+    "angular-mocks": "^1.6.6",
     "webpack-merge": "^4.1.0",
     "zone.js": "^0.7.2"
   },
@@ -125,7 +126,6 @@
   "dependencies": {
     "angular": "^1.6.6",
     "angular-bindonce": "^0.3.1",
-    "angular-mocks": "^1.6.6",
     "angular-native-dragdrop": "^1.2.2",
     "angular-route": "^1.6.6",
     "angular-sanitize": "^1.6.6",
