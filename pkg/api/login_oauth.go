@@ -33,6 +33,10 @@ var (
 	oauthLogger              = log.New("oauth.login")
 )
 
+const (
+	oAuthLogoutCookie = "GrafanaOauthLogout"
+)
+
 func GenStateString() string {
 	rnd := make([]byte, 32)
 	rand.Read(rnd)
@@ -195,9 +199,12 @@ func OAuthLogin(ctx *middleware.Context) {
 	loginUserWithUser(userQuery.Result, ctx)
 
 
-	logoutMap.Store(userQuery.Result.Id, fmt.Sprintf("%s?client_id=%s&logout_uri=%s", setting.OAuthService.OAuthInfos[name].LogoutUrl,
+	if (setting.OAuthService.OAuthInfos[name].LogoutUrl != "") {
+		ctx.SetCookie(oAuthLogoutCookie, fmt.Sprintf("%s?client_id=%s&logout_uri=%s", setting.OAuthService.OAuthInfos[name].LogoutUrl,
 		setting.OAuthService.OAuthInfos[name].ClientId,
 		url.PathEscape(setting.AppUrl + "login")))
+	}
+
 
 	metrics.M_Api_Login_OAuth.Inc()
 
@@ -215,15 +222,4 @@ func redirectWithError(ctx *middleware.Context, err error, v ...interface{}) {
 	// TODO: we can use the flash storage here once it's implemented
 	ctx.Session.Set("loginError", err.Error())
 	ctx.Redirect(setting.AppSubUrl + "/login")
-}
-
-var logoutMap sync.Map
-
-func OAuthLogout(ctx *middleware.Context) string {
-	logout, ok := logoutMap.Load(ctx.UserId)
-	if ok {
-		logoutMap.Delete(ctx.UserId)
-		return logout.(string)
-	}
-	return ""
 }
