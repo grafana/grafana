@@ -156,7 +156,7 @@ func Logout(c *middleware.Context) {
 	c.SetCookie(oAuthLogoutCookie, "", -1, setting.AppSubUrl+"/")
 	c.Session.Destory(c)
 
-	if (logoutUrl != "") {
+	if logoutUrl != "" {
 		c.Redirect(logoutUrl)
 	} else {
 		c.Redirect(setting.AppSubUrl + "/login")

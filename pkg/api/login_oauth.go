@@ -198,13 +198,11 @@ func OAuthLogin(ctx *middleware.Context) {
 	// login
 	loginUserWithUser(userQuery.Result, ctx)
 
-
-	if (setting.OAuthService.OAuthInfos[name].LogoutUrl != "") {
+	if setting.OAuthService.OAuthInfos[name].LogoutUrl != "" {
 		ctx.SetCookie(oAuthLogoutCookie, fmt.Sprintf("%s?client_id=%s&logout_uri=%s", setting.OAuthService.OAuthInfos[name].LogoutUrl,
-		setting.OAuthService.OAuthInfos[name].ClientId,
-		url.PathEscape(setting.AppUrl + "login")))
+			setting.OAuthService.OAuthInfos[name].ClientId,
+			url.PathEscape(setting.AppUrl+"login")))
 	}
-
 
 	metrics.M_Api_Login_OAuth.Inc()
 
