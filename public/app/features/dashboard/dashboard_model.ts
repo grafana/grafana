@@ -256,7 +256,7 @@ export class DashboardModel {
     this.events.emit('repeats-processed');
   }
 
-  processRepeats(cleanUpOnly?: boolean) {
+  processRepeats() {
     if (this.snapshot || this.templating.list.length === 0) {
       return;
     }
