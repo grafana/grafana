@@ -38,4 +38,43 @@ export const NavStore = types
       self.main = NavItem.create(main);
       self.node = NavItem.create(node);
     },
+    initFolderNav(folder: any, activeChildId: string) {
+      const folderUrl = createFolderUrl(folder.id, folder.slug);
+
+      self.main = {
+        icon: 'fa fa-folder-open',
+        id: 'manage-folder',
+        subTitle: 'Manage folder dashboards & permissions',
+        url: '',
+        text: folder.title,
+        breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
+        children: [
+          {
+            active: activeChildId === 'manage-folder-dashboards',
+            icon: 'fa fa-fw fa-th-large',
+            id: 'manage-folder-dashboards',
+            text: 'Dashboards',
+            url: folderUrl,
+          },
+          {
+            active: activeChildId === 'manage-folder-permissions',
+            icon: 'fa fa-fw fa-lock',
+            id: 'manage-folder-permissions',
+            text: 'Permissions',
+            url: folderUrl + '/permissions',
+          },
+          {
+            active: activeChildId === 'manage-folder-settings',
+            icon: 'fa fa-fw fa-cog',
+            id: 'manage-folder-settings',
+            text: 'Settings',
+            url: folderUrl + '/settings',
+          },
+        ],
+      };
+    },
   }));
+
+function createFolderUrl(folderId: number, slug: string) {
+  return `dashboards/folder/${folderId}/${slug}`;
+}

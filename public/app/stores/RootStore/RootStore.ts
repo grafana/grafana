@@ -4,6 +4,7 @@ import { ServerStatsStore } from './../ServerStatsStore/ServerStatsStore';
 import { NavStore } from './../NavStore/NavStore';
 import { AlertListStore } from './../AlertListStore/AlertListStore';
 import { ViewStore } from './../ViewStore/ViewStore';
+import { FolderStore } from './../FolderStore/FolderStore';
 
 export const RootStore = types.model({
   search: types.optional(SearchStore, {
@@ -19,7 +20,9 @@ export const RootStore = types.model({
   view: types.optional(ViewStore, {
     path: '',
     query: {},
+    routeParams: {},
   }),
+  folder: types.optional(FolderStore, {}),
 });
 
 type IRootStoreType = typeof RootStore.Type;

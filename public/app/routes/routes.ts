@@ -2,6 +2,7 @@ import './dashboard_loaders';
 import './ReactContainer';
 import { ServerStats } from 'app/containers/ServerStats/ServerStats';
 import { AlertRuleList } from 'app/containers/AlertRuleList/AlertRuleList';
+import { FolderSettings } from 'app/containers/ManageDashboards/FolderSettings';
 
 /** @ngInject **/
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -68,9 +69,10 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/dashboards/folder/:folderId/:slug/settings', {
-      templateUrl: 'public/app/features/dashboard/partials/folder_settings.html',
-      controller: 'FolderSettingsCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => FolderSettings,
+      },
     })
     .when('/dashboards/folder/:folderId/:slug', {
       templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',

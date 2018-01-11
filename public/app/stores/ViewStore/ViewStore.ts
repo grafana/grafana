@@ -15,6 +15,7 @@ export const ViewStore = types
   .model({
     path: types.string,
     query: types.map(QueryValueType),
+    routeParams: types.map(QueryValueType),
   })
   .views(self => ({
     get currentUrl() {
@@ -34,9 +35,17 @@ export const ViewStore = types
       }
     }
 
-    function updatePathAndQuery(path: string, query: any) {
+    function updateRouteParams(routeParams: any) {
+      self.routeParams.clear();
+      for (let key of Object.keys(routeParams)) {
+        self.routeParams.set(key, routeParams[key]);
+      }
+    }
+
+    function updatePathAndQuery(path: string, query: any, routeParams: any) {
       self.path = path;
       updateQuery(query);
+      updateRouteParams(routeParams);
     }
 
     return {

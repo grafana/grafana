@@ -43,33 +43,33 @@ export class FolderPageLoader {
       ctrl.navModel.main.text = '';
       ctrl.navModel.main.breadcrumbs = [{ title: 'Dashboards', url: 'dashboards' }, { title: folderTitle }];
 
-      const folderUrl = this.createFolderUrl(folderId, result.meta.type, result.meta.slug);
+      const folderUrl = this.createFolderUrl(folderId, result.meta.slug);
 
       const dashTab = _.find(ctrl.navModel.main.children, {
         id: 'manage-folder-dashboards',
       });
       dashTab.url = folderUrl;
 
-        if (result.meta.canAdmin) {
-          const permTab = _.find(ctrl.navModel.main.children, {
-            id: 'manage-folder-permissions',
-          });
+      if (result.meta.canAdmin) {
+        const permTab = _.find(ctrl.navModel.main.children, {
+          id: 'manage-folder-permissions',
+        });
 
-          permTab.url = folderUrl + '/permissions';
+        permTab.url = folderUrl + '/permissions';
 
-          const settingsTab = _.find(ctrl.navModel.main.children, {
-            id: 'manage-folder-settings',
-          });
-          settingsTab.url = folderUrl + '/settings';
-        } else {
-          ctrl.navModel.main.children = [dashTab];
-        }
+        const settingsTab = _.find(ctrl.navModel.main.children, {
+          id: 'manage-folder-settings',
+        });
+        settingsTab.url = folderUrl + '/settings';
+      } else {
+        ctrl.navModel.main.children = [dashTab];
+      }
 
       return result;
     });
   }
 
-  createFolderUrl(folderId: number, type: string, slug: string) {
+  createFolderUrl(folderId: number, slug: string) {
     return `dashboards/folder/${folderId}/${slug}`;
   }
 }
