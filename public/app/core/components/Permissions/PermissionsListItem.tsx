@@ -12,7 +12,7 @@ export default ({ item, permissionsOptions, removeItem, permissionChanged, itemI
 
   const handleChangePermission = evt => {
     evt.preventDefault();
-    permissionChanged();
+    permissionChanged(itemIndex, evt.target.value);
   };
 
   return (

@@ -1,6 +1,10 @@
 ﻿import React, { Component } from 'react';
 import PermissionsList from './PermissionsList';
 import _ from 'lodash';
+import DevTools from 'mobx-react-devtools';
+import { inject, observer } from 'mobx-react';
+import { Provider } from 'mobx-react';
+import { store } from 'app/stores/store';
 
 export interface DashboardAcl {
   id?: number;
@@ -24,12 +28,25 @@ export interface IProps {
   error: any;
   newType: any;
   aclTypes: any;
-  typeChanged: any;
   backendSrv: any;
   dashboardId: number;
+  permissions: any;
 }
 
 class Permissions extends Component<IProps, any> {
+  render() {
+    return (
+      <Provider {...store}>
+        <PermissionsInner {...this.props} />
+      </Provider>
+    );
+  }
+}
+
+@inject('permissions')
+@observer
+class PermissionsInner extends Component<IProps, any> {
+  // TODO Remove Inner from Name when we get access via ReactContainer
   dashboardId: any;
   meta: any;
   items: DashboardAcl[];
@@ -50,58 +67,34 @@ class Permissions extends Component<IProps, any> {
 
   constructor(props) {
     super(props);
-    this.dashboardId = this.props.dashboardId;
-    this.backendSrv = this.props.backendSrv;
+
+    const { dashboardId, backendSrv, permissions } = this.props;
+
+    this.dashboardId = dashboardId;
+    this.backendSrv = backendSrv;
     this.permissionChanged = this.permissionChanged.bind(this);
-    console.log('this.setState', this.setState);
+    this.typeChanged = this.typeChanged.bind(this);
+    this.removeItem = this.removeItem.bind(this);
+    permissions.load(this.dashboardId);
 
     this.state = {
-      items: [],
-      newType: '',
+      newType: 'Group',
       canUpdate: false,
       error: '',
     };
-  }
-
-  componentWillMount() {
-    this.getAcl(this.props.dashboardId);
-  }
-
-  getAcl(dashboardId: number) {
-    return this.backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`).then(result => {
-      console.log('this', this.setState);
-      const items = result.map(this.prepareViewModel.bind(this));
-      // this.items = _.map(result, this.prepareViewModel.bind(this));
-      this.setState(prevState => {
-        return {
-          ...prevState,
-          items: this.sortItems(items),
-        };
-      });
-    });
   }
 
   sortItems(items) {
     return _.orderBy(items, ['sortRank', 'sortName'], ['desc', 'asc']);
   }
 
-  permissionChanged() {
-    this.setState(prevState => {
-      return {
-        ...prevState,
-        canUpdate: true,
-      };
-    });
+  permissionChanged(evt) {
+    // TODO
   }
 
   removeItem(index) {
-    this.setState(prevState => {
-      return {
-        ...prevState,
-        items: this.state.items.splice(index, 1),
-        canUpdate: true,
-      };
-    });
+    const { permissions } = this.props;
+    permissions.removeStoreItem(index);
   }
 
   update() {
@@ -168,29 +161,91 @@ class Permissions extends Component<IProps, any> {
     return item;
   }
 
-  //   componentWillUpdate(nextProps, nextState) {
-  //     console.log('nextProps', nextProps);
-  //     console.log('nextState', nextState);
-  //   }
+  isDuplicate(origItem, newItem) {
+    if (origItem.inherited) {
+      return false;
+    }
 
-  //   componentWillReceiveProps(nextProps) {
-  //     console.log('nextPropzzzz', nextProps);
-  //   }
+    return (
+      (origItem.role && newItem.role && origItem.role === newItem.role) ||
+      (origItem.userId && newItem.userId && origItem.userId === newItem.userId) ||
+      (origItem.teamId && newItem.teamId && origItem.teamId === newItem.teamId)
+    );
+  }
+
+  isValid(item) {
+    const dupe = _.find(this.items, it => {
+      return this.isDuplicate(it, item);
+    });
+
+    if (dupe) {
+      this.error = this.duplicateError;
+      return false;
+    }
+
+    return true;
+  }
+
+  addNewItem(item) {
+    if (!this.isValid(item)) {
+      return;
+    }
+    this.error = '';
+
+    item.dashboardId = this.dashboardId;
+
+    let newItems = this.state.items;
+    newItems.push(this.prepareViewModel(item));
+
+    this.setState(prevState => {
+      return {
+        ...prevState,
+        items: this.sortItems(newItems),
+        canUpdate: true,
+      };
+    });
+  }
+
+  resetNewType() {
+    this.setState(prevState => {
+      return {
+        newType: 'Group',
+      };
+    });
+  }
+
+  typeChanged(evt) {
+    const { value } = evt.target;
+    this.setState(prevState => {
+      return {
+        ...prevState,
+        newType: value,
+      };
+    });
+  }
+
+  typeChanged___() {
+    const { newType } = this.state;
+    if (newType === 'Viewer' || newType === 'Editor') {
+      this.addNewItem({ permission: 1, role: newType });
+      this.resetNewType();
+      this.setState(prevState => {
+        return {
+          ...prevState,
+          canUpdate: true,
+        };
+      });
+    }
+  }
 
   render() {
-    const { error, newType, aclTypes, typeChanged } = this.props;
-
-    const { items, canUpdate } = this.state;
-
-    const handleTypeChange = () => {
-      typeChanged();
-    };
+    const { error, aclTypes, permissions } = this.props;
+    const { newType } = this.state;
 
     return (
       <div className="gf-form-group">
-        asd
         <PermissionsList
-          permissions={items}
+          permissions={permissions.items.toJS()}
           permissionsOptions={this.permissionOptions}
           removeItem={this.removeItem}
           permissionChanged={this.permissionChanged}
@@ -202,7 +257,7 @@ class Permissions extends Component<IProps, any> {
             <div className="gf-form-inline">
               <div className="gf-form">
                 <div className="gf-form-select-wrapper">
-                  <select className="gf-form-input gf-size-auto" onChange={handleTypeChange}>
+                  <select className="gf-form-input gf-size-auto" onChange={this.typeChanged}>
                     {aclTypes.map((option, idx) => {
                       return (
                         <option key={idx} value={option.value}>
@@ -222,12 +277,16 @@ class Permissions extends Component<IProps, any> {
               </div>
               {newType === 'User' ? (
                 <div className="gf-form">
+                  {' '}
+                  User picker
                   <user-picker user-picked="ctrl.userPicked($user)" />
                 </div>
               ) : null}
 
               {newType === 'Group' ? (
                 <div className="gf-form">
+                  {' '}
+                  Team picker
                   <team-picker team-picked="ctrl.groupPicked($group)" />
                 </div>
               ) : null}
@@ -243,11 +302,12 @@ class Permissions extends Component<IProps, any> {
           ) : null}
         </div>
         <div className="gf-form-button-row">
-          <button type="button" className="btn btn-danger" onClick={this.update} disabled={!canUpdate}>
+          <button type="button" className="btn btn-danger" onClick={this.update} disabled={!permissions.canUpdate}>
             Update Permissions
           </button>
         </div>
         asd3
+        <DevTools />
       </div>
     );
   }

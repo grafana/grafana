@@ -5,6 +5,7 @@ import { NavStore } from './../NavStore/NavStore';
 import { AlertListStore } from './../AlertListStore/AlertListStore';
 import { ViewStore } from './../ViewStore/ViewStore';
 import { FolderStore } from './../FolderStore/FolderStore';
+import { PermissionsStore } from './../PermissionsStore/PermissionsStore';
 
 export const RootStore = types.model({
   search: types.optional(SearchStore, {
@@ -16,6 +17,11 @@ export const RootStore = types.model({
   nav: types.optional(NavStore, {}),
   alertList: types.optional(AlertListStore, {
     rules: [],
+  }),
+  permissions: types.optional(PermissionsStore, {
+    fetching: false,
+    canUpdate: false,
+    items: [],
   }),
   view: types.optional(ViewStore, {
     path: '',

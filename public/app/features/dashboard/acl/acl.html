@@ -6,21 +6,6 @@
   dashboardId="ctrl.dashboard.id"
   backendSrv="ctrl.backendSrv" />
 
-
-<per m i s sions
-  permissions="{{ctrl.dummyItems}}"
-  permissionsOptions="{{ctrl.permissionOptions}}"
-  removeItem="ctrl.removeItem"
-  permissionChanged="ctrl.permissionChanged"
-  error="{{ctrl.error}}"
-  newType="ctrl.newType"
-  aclTypes="{{ctrl.aclTypes}}"
-  typeChanged="ctrl.typeChanged"
-  dashboardId="ctrl.dashboard.id"
-  backendSrv="ctrl.backendSrv"/>
-
-
-
 <div class="gf-form-group">
   <table class="filter-table gf-form-group">
     <tr ng-repeat="acl in ctrl.items" ng-class="{'gf-form-disabled': acl.inherited}">

@@ -9,18 +9,8 @@ export interface IProps {
 }
 
 class PermissionsList extends Component<IProps, any> {
-  // componentWillUpdate(nextProps, nextState) {
-  //     console.log('nextProps', nextProps);
-  //     console.log('nextState', nextState);
-  // }
-
-  // componentWillReceiveProps(nextProps) {
-  //     console.log('nextPropzzzz', nextProps);
-  // }
-
   render() {
     const { permissions, permissionsOptions, removeItem, permissionChanged } = this.props;
-
     return (
       <table className="filter-table gf-form-group">
         <tbody>
