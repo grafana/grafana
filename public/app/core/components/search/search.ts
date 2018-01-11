@@ -22,6 +22,8 @@ export class SearchCtrl {
     appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
 
     this.initialFolderFilterTitle = 'All';
+    this.getTags = this.getTags.bind(this);
+    this.onTagSelect = this.onTagSelect.bind(this);
   }
 
   closeSearch() {
@@ -176,7 +178,13 @@ export class SearchCtrl {
     return this.searchSrv.getDashboardTags().then(results => {
       this.results = results;
       this.giveSearchFocus = this.giveSearchFocus + 1;
+      return results;
     });
+  }
+
+  onTagSelect(newTags) {
+    this.query.tag = _.map(newTags, tag => tag.value);
+    this.search();
   }
 
   showStarred() {

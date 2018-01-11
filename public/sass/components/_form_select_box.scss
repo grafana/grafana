@@ -26,6 +26,7 @@ $select-menu-box-shadow: $menu-dropdown-shadow;
   @include box-shadow($shadow);
 }
 
+// react-select tweaks
 .gf-form-input--form-dropdown {
   padding: 0;
   border: 0;
@@ -38,6 +39,28 @@ $select-menu-box-shadow: $menu-dropdown-shadow;
   > .Select-control {
     @include select-control();
     border-color: $dark-3;
+
+    input {
+      min-width: 8rem;
+    }
+
+    .Select-clear,
+    .Select-arrow {
+      margin-right: 8px;
+    }
+
+    .Select-value {
+      display: inline-block;
+      padding: 2px 4px;
+      font-size: $font-size-base * 0.846;
+      font-weight: bold;
+      line-height: 14px; // ensure proper line-height if floated
+      color: $white;
+      vertical-align: baseline;
+      white-space: nowrap;
+      text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+      background-color: $gray-1;
+    }
   }
 
   &.is-open > .Select-control {
@@ -46,6 +69,11 @@ $select-menu-box-shadow: $menu-dropdown-shadow;
   }
 
   &.is-focused > .Select-control {
+    background-color: $input-bg;
+    @include select-control-focus();
+  }
+
+  &.is-focused:not(.is-open) > .Select-control {
     background-color: $input-bg;
     @include select-control-focus();
   }

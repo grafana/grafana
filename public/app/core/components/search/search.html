@@ -13,7 +13,11 @@
 						spellcheck='false'
 						ng-change="ctrl.search()"
 						ng-blur="ctrl.searchInputBlur()"
-						/>
+            />
+
+    <div class="gf-form">
+      <tag-filter tagOptions="ctrl.getTags" onSelect="ctrl.onTagSelect" tags="ctrl.query.tag"></tag-filter>
+    </div>
 
 		<div class="search-field-spacer"></div>
 	</div>

@@ -26,8 +26,9 @@
   box-shadow: $navbarShadow;
   position: relative;
 
-  input {
-    max-width: 653px;
+  & > input {
+    // max-width: 653px;
+    max-width: 503px;
     //padding: 0.5rem 1.5rem 0.5rem 0;
     padding: 1rem 1rem 0.75rem 1rem;
     height: 51px;
@@ -38,6 +39,13 @@
     background-color: $navbarButtonBackground;
     flex-grow: 10;
   }
+
+  // .tag-filter {
+  //   .Select-control {
+  //     width: 300px;
+  //     background-color: $navbarBackground;
+  //   }
+  // }
 }
 
 .search-field-spacer {
