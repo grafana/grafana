@@ -111,7 +111,7 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 	plugin := raw.(shared.TsdbPlugin)
 
 	tsdb.RegisterTsdbQueryEndpoint(p.Id, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return &shared.DatasourcePluginWrapper{TsdbPlugin: plugin}, nil
+		return shared.NewDatasourcePluginWrapper(p.log, plugin), nil
 	})
 
 	return nil
