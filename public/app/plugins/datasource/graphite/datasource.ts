@@ -429,7 +429,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       url: '/functions',
     };
 
-    return self
+    self.funcDefs = self
       .doGraphiteRequest(httpOptions)
       .then(results => {
         if (results.status !== 200 || typeof results.data !== 'object') {
@@ -530,6 +530,8 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
         self.funcDefs = gfunc.getFuncDefs(self.graphiteVersion);
         return self.funcDefs;
       });
+
+    return self.funcDefs;
   };
 
   this.testDatasource = function() {

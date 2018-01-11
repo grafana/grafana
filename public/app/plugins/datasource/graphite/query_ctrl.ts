@@ -106,7 +106,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   getAltSegments(index, prefix) {
-    var query = '*' + prefix + '*';
+    var query = prefix && prefix.length > 0 ? '*' + prefix + '*' : '*';
     if (index > 0) {
       query = this.queryModel.getSegmentPathUpTo(index) + '.' + query;
     }
