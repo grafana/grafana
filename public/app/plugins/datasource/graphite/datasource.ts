@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
+import gfunc from './gfunc';
 
 /** @ngInject */
 export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv) {
@@ -12,6 +13,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.cacheTimeout = instanceSettings.cacheTimeout;
   this.withCredentials = instanceSettings.withCredentials;
   this.render_method = instanceSettings.render_method || 'POST';
+  this.funcDefs = null;
 
   this.getQueryOptionsInfo = function() {
     return {
@@ -200,6 +202,35 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     let options = optionalOptions || {};
     let interpolatedQuery = templateSrv.replace(query);
 
+    // special handling for tag_values(<tag>[,<expression>]*), this is used for template variables
+    let matches = interpolatedQuery.match(/^tag_values\(([^,]+)((, *[^,]+)*)\)$/);
+    if (matches) {
+      const expressions = [];
+      const exprRegex = /, *([^,]+)/g;
+      let match;
+      while ((match = exprRegex.exec(matches[2])) !== null) {
+        expressions.push(match[1]);
+      }
+      options.limit = 10000;
+      return this.getTagValuesAutoComplete(expressions, matches[1], undefined, options);
+    }
+
+    // special handling for tags(<expression>[,<expression>]*), this is used for template variables
+    matches = interpolatedQuery.match(/^tags\(([^,]*)((, *[^,]+)*)\)$/);
+    if (matches) {
+      const expressions = [];
+      if (matches[1]) {
+        expressions.push(matches[1]);
+        const exprRegex = /, *([^,]+)/g;
+        let match;
+        while ((match = exprRegex.exec(matches[2])) !== null) {
+          expressions.push(match[1]);
+        }
+      }
+      options.limit = 10000;
+      return this.getTagsAutoComplete(expressions, undefined, options);
+    }
+
     let httpOptions: any = {
       method: 'GET',
       url: '/metrics/find',
@@ -210,7 +241,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       requestId: options.requestId,
     };
 
-    if (options && options.range) {
+    if (options.range) {
       httpOptions.params.from = this.translateTime(options.range.from, false);
       httpOptions.params.until = this.translateTime(options.range.to, true);
     }
@@ -235,7 +266,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       requestId: options.requestId,
     };
 
-    if (options && options.range) {
+    if (options.range) {
       httpOptions.params.from = this.translateTime(options.range.from, false);
       httpOptions.params.until = this.translateTime(options.range.to, true);
     }
@@ -255,12 +286,12 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 
     let httpOptions: any = {
       method: 'GET',
-      url: '/tags/' + tag,
+      url: '/tags/' + templateSrv.replace(tag),
       // for cancellations
       requestId: options.requestId,
     };
 
-    if (options && options.range) {
+    if (options.range) {
       httpOptions.params.from = this.translateTime(options.range.from, false);
       httpOptions.params.until = this.translateTime(options.range.to, true);
     }
@@ -279,17 +310,28 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     });
   };
 
-  this.getTagsAutoComplete = (expression, tagPrefix) => {
+  this.getTagsAutoComplete = (expressions, tagPrefix, optionalOptions) => {
+    let options = optionalOptions || {};
+
     let httpOptions: any = {
       method: 'GET',
       url: '/tags/autoComplete/tags',
       params: {
-        expr: expression,
+        expr: _.map(expressions, expression => templateSrv.replace(expression)),
       },
+      // for cancellations
+      requestId: options.requestId,
     };
 
     if (tagPrefix) {
       httpOptions.params.tagPrefix = tagPrefix;
+    }
+    if (options.limit) {
+      httpOptions.params.limit = options.limit;
+    }
+    if (options.range) {
+      httpOptions.params.from = this.translateTime(options.range.from, false);
+      httpOptions.params.until = this.translateTime(options.range.to, true);
     }
 
     return this.doGraphiteRequest(httpOptions).then(results => {
@@ -303,18 +345,29 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     });
   };
 
-  this.getTagValuesAutoComplete = (expression, tag, valuePrefix) => {
+  this.getTagValuesAutoComplete = (expressions, tag, valuePrefix, optionalOptions) => {
+    let options = optionalOptions || {};
+
     let httpOptions: any = {
       method: 'GET',
       url: '/tags/autoComplete/values',
       params: {
-        expr: expression,
-        tag: tag,
+        expr: _.map(expressions, expression => templateSrv.replace(expression)),
+        tag: templateSrv.replace(tag),
       },
+      // for cancellations
+      requestId: options.requestId,
     };
 
     if (valuePrefix) {
       httpOptions.params.valuePrefix = valuePrefix;
+    }
+    if (options.limit) {
+      httpOptions.params.limit = options.limit;
+    }
+    if (options.range) {
+      httpOptions.params.from = this.translateTime(options.range.from, false);
+      httpOptions.params.until = this.translateTime(options.range.to, true);
     }
 
     return this.doGraphiteRequest(httpOptions).then(results => {
@@ -328,10 +381,14 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     });
   };
 
-  this.getVersion = function() {
+  this.getVersion = function(optionalOptions) {
+    let options = optionalOptions || {};
+
     let httpOptions = {
       method: 'GET',
       url: '/version/_', // Prevent last / trimming
+      // for cancellations
+      requestId: options.requestId,
     };
 
     return this.doGraphiteRequest(httpOptions)
@@ -345,6 +402,136 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       .catch(() => {
         return '';
       });
+  };
+
+  this.createFuncInstance = function(funcDef, options?) {
+    return gfunc.createFuncInstance(funcDef, options, this.funcDefs);
+  };
+
+  this.getFuncDef = function(name) {
+    return gfunc.getFuncDef(name, this.funcDefs);
+  };
+
+  this.getFuncDefs = function() {
+    let self = this;
+
+    if (self.funcDefs !== null) {
+      return Promise.resolve(self.funcDefs);
+    }
+
+    if (!supportsFunctionIndex(self.graphiteVersion)) {
+      self.funcDefs = gfunc.getFuncDefs(self.graphiteVersion);
+      return Promise.resolve(self.funcDefs);
+    }
+
+    let httpOptions = {
+      method: 'GET',
+      url: '/functions',
+    };
+
+    self.funcDefs = self
+      .doGraphiteRequest(httpOptions)
+      .then(results => {
+        if (results.status !== 200 || typeof results.data !== 'object') {
+          self.funcDefs = gfunc.getFuncDefs(self.graphiteVersion);
+          return Promise.resolve(self.funcDefs);
+        }
+
+        self.funcDefs = {};
+        _.forEach(results.data || {}, (funcDef, funcName) => {
+          // skip graphite graph functions
+          if (funcDef.group === 'Graph') {
+            return;
+          }
+
+          var description = funcDef.description;
+          if (description) {
+            // tidy up some pydoc syntax that rst2html can't handle
+            description = description
+              .replace(/:py:func:`(.+)( <[^>]*>)?`/g, '``$1``')
+              .replace(/.. seealso:: /g, 'See also: ')
+              .replace(/.. code-block *:: *none/g, '.. code-block::');
+          }
+
+          var func = {
+            name: funcDef.name,
+            description: description,
+            category: funcDef.group,
+            params: [],
+            defaultParams: [],
+            fake: false,
+          };
+
+          // get rid of the first "seriesList" param
+          if (/^seriesLists?$/.test(_.get(funcDef, 'params[0].type', ''))) {
+            // handle functions that accept multiple seriesLists
+            // we leave the param in place but mark it optional, so users can add more series if they wish
+            if (funcDef.params[0].multiple) {
+              funcDef.params[0].required = false;
+              // otherwise chop off the first param, it'll be handled separately
+            } else {
+              funcDef.params.shift();
+            }
+            // tag function as fake
+          } else {
+            func.fake = true;
+          }
+
+          _.forEach(funcDef.params, rawParam => {
+            var param = {
+              name: rawParam.name,
+              type: 'string',
+              optional: !rawParam.required,
+              multiple: !!rawParam.multiple,
+              options: undefined,
+            };
+
+            if (rawParam.default !== undefined) {
+              func.defaultParams.push(_.toString(rawParam.default));
+            } else if (rawParam.suggestions) {
+              func.defaultParams.push(_.toString(rawParam.suggestions[0]));
+            } else {
+              func.defaultParams.push('');
+            }
+
+            if (rawParam.type === 'boolean') {
+              param.type = 'boolean';
+              param.options = ['true', 'false'];
+            } else if (rawParam.type === 'integer') {
+              param.type = 'int';
+            } else if (rawParam.type === 'float') {
+              param.type = 'float';
+            } else if (rawParam.type === 'node') {
+              param.type = 'node';
+              param.options = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+            } else if (rawParam.type === 'nodeOrTag') {
+              param.type = 'node_or_tag';
+              param.options = ['name', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+            } else if (rawParam.type === 'intOrInterval') {
+              param.type = 'int_or_interval';
+            } else if (rawParam.type === 'seriesList') {
+              param.type = 'value_or_series';
+            }
+
+            if (rawParam.options) {
+              param.options = _.map(rawParam.options, _.toString);
+            } else if (rawParam.suggestions) {
+              param.options = _.map(rawParam.suggestions, _.toString);
+            }
+
+            func.params.push(param);
+          });
+
+          self.funcDefs[funcName] = func;
+        });
+        return self.funcDefs;
+      })
+      .catch(err => {
+        self.funcDefs = gfunc.getFuncDefs(self.graphiteVersion);
+        return self.funcDefs;
+      });
+
+    return self.funcDefs;
   };
 
   this.testDatasource = function() {
@@ -438,5 +625,9 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 }
 
 function supportsTags(version: string): boolean {
+  return isVersionGtOrEq(version, '1.1');
+}
+
+function supportsFunctionIndex(version: string): boolean {
   return isVersionGtOrEq(version, '1.1');
 }
