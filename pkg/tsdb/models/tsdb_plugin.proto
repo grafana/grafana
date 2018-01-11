@@ -3,6 +3,8 @@ option go_package = "proto";
 
 package plugins;
 
+import "google/protobuf/any.proto";
+
 message TsdbQuery {
   TimeRange timeRange = 1;
   DatasourceInfo datasource = 2;
@@ -32,8 +34,20 @@ message QueryResult {
   string refId = 2;
   string metaJson = 3;
   repeated TimeSeries series = 4;
+  repeated Table tables = 5;
+}
 
-  //repeat Table tables = x;
+message Table {
+  repeated TableColumn columns = 1;
+  repeated TableRow rows = 2;
+}
+
+message TableColumn {
+  string name = 1;
+}
+
+message TableRow {
+  repeated google.protobuf.Any values = 1;
 }
 
 message DatasourceInfo {
