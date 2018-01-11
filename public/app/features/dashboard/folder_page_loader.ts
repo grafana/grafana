@@ -11,7 +11,7 @@ export class FolderPageLoader {
         subTitle: 'Manage folder dashboards & permissions',
         url: '',
         text: '',
-        breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }, { title: ' ' }],
+        breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
         children: [
           {
             active: activeChildId === 'manage-folder-dashboards',
@@ -40,8 +40,7 @@ export class FolderPageLoader {
 
     return this.backendSrv.getDashboard('db', this.$routeParams.slug).then(result => {
       const folderTitle = result.dashboard.title;
-      ctrl.navModel.main.text = '';
-      ctrl.navModel.main.breadcrumbs = [{ title: 'Dashboards', url: 'dashboards' }, { title: folderTitle }];
+      ctrl.navModel.main.text = folderTitle;
 
       const folderUrl = this.createFolderUrl(folderId, result.meta.slug);
 

@@ -49,7 +49,7 @@ export class FolderSettings extends React.Component<IContainerProps, any> {
     const { nav, folder, view } = this.props;
 
     folder
-      .saveDashboard(this.dashboard, { overwrite: false })
+      .saveFolder(this.dashboard, { overwrite: false })
       .then(newUrl => {
         view.updatePathAndQuery(newUrl, '', '');
 
@@ -96,7 +96,7 @@ export class FolderSettings extends React.Component<IContainerProps, any> {
         yesText: 'Save & Overwrite',
         icon: 'fa-warning',
         onConfirm: () => {
-          this.props.folder.saveDashboard(this.dashboard, { overwrite: true });
+          this.props.folder.saveFolder(this.dashboard, { overwrite: true });
         },
       });
     }

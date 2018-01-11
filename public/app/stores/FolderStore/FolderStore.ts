@@ -25,11 +25,13 @@ export const FolderStore = types
       });
       return res;
     }),
+
     setTitle: function(originalTitle: string, title: string) {
       self.folder.title = title;
       self.folder.hasChanged = originalTitle.toLowerCase() !== title.trim().toLowerCase() && title.trim().length > 0;
     },
-    saveDashboard: flow(function* saveDashboard(dashboard: any, options: any) {
+
+    saveFolder: flow(function* saveFolder(dashboard: any, options: any) {
       const backendSrv = getEnv(self).backendSrv;
       dashboard.title = self.folder.title.trim();
 
@@ -37,6 +39,7 @@ export const FolderStore = types
       self.folder.slug = res.slug;
       return `dashboards/folder/${self.folder.id}/${res.slug}/settings`;
     }),
+
     deleteFolder: flow(function* deleteFolder() {
       const backendSrv = getEnv(self).backendSrv;
 
