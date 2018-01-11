@@ -1,7 +1,6 @@
 package tsdb
 
 import (
-	"github.com/golang/protobuf/ptypes"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -19,28 +18,20 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 		return nil, err
 	}
 
-	now, err := ptypes.TimestampProto(query.TimeRange.Now)
-	if err != nil {
-		return nil, err
-	}
-
 	pbQuery := &proto.TsdbQuery{
 		Datasource: &proto.DatasourceInfo{
-			Access:            string(ds.Access),
-			BasicAuth:         ds.BasicAuth,
-			BasicAuthUser:     ds.BasicAuthUser,
-			BasicAuthPassword: ds.BasicAuthPassword,
-			JsonData:          string(jsonData),
-			Name:              ds.Name,
-			Type:              ds.Type,
-			Url:               ds.Url,
-			Id:                ds.Id,
-			OrgId:             ds.OrgId,
+			JsonData: string(jsonData),
+			Name:     ds.Name,
+			Type:     ds.Type,
+			Url:      ds.Url,
+			Id:       ds.Id,
+			OrgId:    ds.OrgId,
 		},
-		Timerange: &proto.Timerange{
-			From: query.TimeRange.From,
-			To:   query.TimeRange.To,
-			Now:  now,
+		TimeRange: &proto.TimeRange{
+			FromRaw:     query.TimeRange.From,
+			ToRaw:       query.TimeRange.To,
+			ToEpochMs:   query.TimeRange.GetToAsMsEpoch(),
+			FromEpochMs: query.TimeRange.GetFromAsMsEpoch(),
 		},
 		Queries: []*proto.Query{},
 	}
@@ -63,7 +54,6 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 	}
 
 	res := &tsdb.Response{
-		Message: pbres.Message,
 		Results: map[string]*tsdb.QueryResult{},
 	}
 
