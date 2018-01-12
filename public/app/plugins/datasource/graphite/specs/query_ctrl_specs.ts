@@ -26,7 +26,7 @@ describe('GraphiteQueryCtrl', function() {
       ctx.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([]));
       ctx.datasource.getFuncDefs = sinon.stub().returns(ctx.$q.when(gfunc.getFuncDefs('1.0')));
       ctx.datasource.getFuncDef = gfunc.getFuncDef;
-      ctx.datasource.waitForFuncDefsLoaded = ctx.$q.when(null);
+      ctx.datasource.waitForFuncDefsLoaded = sinon.stub().returns(ctx.$q.when(null));
       ctx.datasource.createFuncInstance = gfunc.createFuncInstance;
       ctx.panelCtrl = { panel: {} };
       ctx.panelCtrl = {

@@ -94,9 +94,9 @@ function (angular, _, $, rst2html) {
             // remove optional empty params
             if (newValue !== '' || paramDef(paramIndex).optional) {
               func.updateParam(newValue, paramIndex);
+              $link.html(newValue ? templateSrv.highlightVariablesAsHtml(newValue) : '&nbsp;');
             }
 
-            $link.html(templateSrv.highlightVariablesAsHtml(newValue));
             scheduledRelinkIfNeeded();
 
             $scope.$apply(function() {

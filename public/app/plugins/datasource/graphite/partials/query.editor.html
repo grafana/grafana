@@ -40,7 +40,6 @@
           placeholder="Tag value"
           get-options="ctrl.getTagValues(tag, $index, $query)"
           on-change="ctrl.tagChanged(tag, $index)"
-          start-open="!ctrl.showDelimiter($index)"
         />
         <label class="gf-form-label query-keyword" ng-if="ctrl.showDelimiter($index)">AND</label>
       </div>
@@ -56,11 +55,6 @@
       <div ng-if="ctrl.paused" class="gf-form">
         <a ng-click="ctrl.unpause()" class="gf-form-label query-part"><i class="fa fa-play"></i></a>
       </div>
-      <!--
-      <div ng-if="!ctrl.paused" class="gf-form">
-        <a ng-click="ctrl.pause()" class="gf-form-label query-part"><i class="fa fa-pause"></i></a>
-      </div>
-      -->
 
       <div class="gf-form gf-form--grow">
         <div class="gf-form-label gf-form-label--grow"></div>
