@@ -90,6 +90,23 @@ export class SearchCtrl {
     }
   }
 
+  searchInputBlur() {
+    this.search();
+  }
+
+  onFilterboxClick() {
+    this.giveSearchFocus = 0;
+    this.preventClose();
+  }
+
+  preventClose() {
+    this.ignoreClose = true;
+
+    this.$timeout(() => {
+      this.ignoreClose = false;
+    }, 100);
+  }
+
   moveSelection(direction) {
     if (this.results.length === 0) {
       return;
@@ -162,7 +179,6 @@ export class SearchCtrl {
     if (_.indexOf(this.query.tag, tag) === -1) {
       this.query.tag.push(tag);
       this.search();
-      this.giveSearchFocus = this.giveSearchFocus + 1;
     }
   }
 
@@ -176,8 +192,6 @@ export class SearchCtrl {
 
   getTags() {
     return this.searchSrv.getDashboardTags().then(results => {
-      this.results = results;
-      this.giveSearchFocus = this.giveSearchFocus + 1;
       return results;
     });
   }
@@ -185,6 +199,10 @@ export class SearchCtrl {
   onTagSelect(newTags) {
     this.query.tag = _.map(newTags, tag => tag.value);
     this.search();
+  }
+
+  clearSearchFilter() {
+    this.query.tag = [];
   }
 
   showStarred() {
