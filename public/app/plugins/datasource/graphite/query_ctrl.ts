@@ -20,16 +20,16 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   paused: boolean;
 
   /** @ngInject **/
-  constructor($scope, $injector, private uiSegmentSrv, private templateSrv) {
+  constructor($scope, $injector, private uiSegmentSrv, private templateSrv, $timeout) {
     super($scope, $injector);
     this.supportsTags = this.datasource.supportsTags;
     this.paused = false;
+    this.target.target = this.target.target || '';
 
-    if (this.target) {
-      this.target.target = this.target.target || '';
+    this.datasource.waitForFuncDefsLoaded().then(() => {
       this.queryModel = new GraphiteQuery(this.datasource, this.target, templateSrv);
       this.buildSegments();
-    }
+    });
 
     this.removeTagValue = '-- remove tag --';
   }

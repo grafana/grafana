@@ -14,6 +14,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.withCredentials = instanceSettings.withCredentials;
   this.render_method = instanceSettings.render_method || 'POST';
   this.funcDefs = null;
+  this.funcDefsPromise = null;
 
   this.getQueryOptionsInfo = function() {
     return {
@@ -412,16 +413,19 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     return gfunc.getFuncDef(name, this.funcDefs);
   };
 
-  this.getFuncDefs = function() {
-    let self = this;
+  this.waitForFuncDefsLoaded = function() {
+    return this.getFuncDefs();
+  };
 
-    if (self.funcDefs !== null) {
-      return Promise.resolve(self.funcDefs);
+  this.getFuncDefs = function() {
+    if (this.funcDefsPromise !== null) {
+      return this.funcDefsPromise;
     }
 
-    if (!supportsFunctionIndex(self.graphiteVersion)) {
-      self.funcDefs = gfunc.getFuncDefs(self.graphiteVersion);
-      return Promise.resolve(self.funcDefs);
+    if (!supportsFunctionIndex(this.graphiteVersion)) {
+      this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+      this.funcDefsPromise = Promise.resolve(this.funcDefs);
+      return this.funcDefsPromise;
     }
 
     let httpOptions = {
@@ -429,15 +433,15 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       url: '/functions',
     };
 
-    self.funcDefs = self
-      .doGraphiteRequest(httpOptions)
+    this.funcDefsPromise = this.doGraphiteRequest(httpOptions)
       .then(results => {
         if (results.status !== 200 || typeof results.data !== 'object') {
-          self.funcDefs = gfunc.getFuncDefs(self.graphiteVersion);
-          return Promise.resolve(self.funcDefs);
+          this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+          return Promise.resolve(this.funcDefs);
         }
 
-        self.funcDefs = {};
+        this.funcDefs = {};
+
         _.forEach(results.data || {}, (funcDef, funcName) => {
           // skip graphite graph functions
           if (funcDef.group === 'Graph') {
@@ -522,16 +526,17 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
             func.params.push(param);
           });
 
-          self.funcDefs[funcName] = func;
+          this.funcDefs[funcName] = func;
         });
-        return self.funcDefs;
+        return this.funcDefs;
       })
       .catch(err => {
-        self.funcDefs = gfunc.getFuncDefs(self.graphiteVersion);
-        return self.funcDefs;
+        console.log('Fetching graphite functions error', err);
+        this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
+        return this.funcDefs;
       });
 
-    return self.funcDefs;
+    return this.funcDefsPromise;
   };
 
   this.testDatasource = function() {
