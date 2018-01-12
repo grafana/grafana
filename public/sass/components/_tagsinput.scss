@@ -42,4 +42,15 @@
   max-width: 100%;
   line-height: 22px;
   background-color: $input-bg;
+
+  .label-tag {
+    margin-left: 6px;
+    font-size: 11px;
+    padding: 2px 6px;
+    cursor: pointer;
+
+    .fa.fa-remove {
+      margin-right: 3px;
+    }
+  }
 }

@@ -1,6 +1,7 @@
+import _ from 'lodash';
 import React from 'react';
 import { Async } from 'react-select';
-import _ from 'lodash';
+import { TagOption } from './TagOption';
 
 export interface IProps {
   tags: string[];
@@ -19,7 +20,7 @@ export class TagFilter extends React.Component<IProps, any> {
   searchTags(query) {
     return this.props.tagOptions().then(options => {
       const tags = _.map(options, tagOption => {
-        return { value: tagOption.term, label: tagOption.term };
+        return { value: tagOption.term, label: tagOption.term, count: tagOption.count };
       });
       return { options: tags };
     });
@@ -41,6 +42,7 @@ export class TagFilter extends React.Component<IProps, any> {
           placeholder="Select Tags"
           loadingPlaceholder="Loading..."
           noResultsText="No tags found"
+          valueComponent={TagOption}
         />
       </div>
     );

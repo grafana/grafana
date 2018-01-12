@@ -191,9 +191,7 @@ export class SearchCtrl {
   }
 
   getTags() {
-    return this.searchSrv.getDashboardTags().then(results => {
-      return results;
-    });
+    return this.searchSrv.getDashboardTags();
   }
 
   onTagSelect(newTags) {
@@ -203,6 +201,7 @@ export class SearchCtrl {
 
   clearSearchFilter() {
     this.query.tag = [];
+    this.search();
   }
 
   showStarred() {
