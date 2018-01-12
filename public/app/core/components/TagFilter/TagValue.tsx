@@ -8,7 +8,7 @@ export interface IProps {
   onRemove: any;
 }
 
-export class TagOption extends React.Component<IProps, any> {
+export class TagValue extends React.Component<IProps, any> {
   constructor(props) {
     super(props);
     this.onClick = this.onClick.bind(this);

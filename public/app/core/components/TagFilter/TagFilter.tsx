@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import React from 'react';
 import { Async } from 'react-select';
-import { TagOption } from './TagOption';
+import { TagValue } from './TagValue';
 
 export interface IProps {
   tags: string[];
@@ -42,7 +42,7 @@ export class TagFilter extends React.Component<IProps, any> {
           placeholder="Select Tags"
           loadingPlaceholder="Loading..."
           noResultsText="No tags found"
-          valueComponent={TagOption}
+          valueComponent={TagValue}
         />
       </div>
     );
