@@ -32,6 +32,7 @@ function (angular, _, $, rst2html) {
           var func = $scope.func;
           var scheduledRelink = false;
           var paramCountAtLink = 0;
+          var cancelBlur = null;
 
           function clickFuncParam(paramIndex) {
             /*jshint validthis:true */
@@ -79,41 +80,54 @@ function (angular, _, $, rst2html) {
             return {};
           }
 
-          function inputBlur(paramIndex) {
+          function switchToLink(inputElem, paramIndex) {
             /*jshint validthis:true */
-            var $input = $(this);
-            if ($input.data('typeahead') && $input.data('typeahead').shown) {
-              return;
-            }
+            var $input = $(inputElem);
+
+            clearTimeout(cancelBlur);
+            cancelBlur = null;
 
             var $link = $input.prev();
             var $comma = $link.prev('.comma');
             var newValue = $input.val();
 
+            // remove optional empty params
             if (newValue !== '' || paramDef(paramIndex).optional) {
-              $link.html(templateSrv.highlightVariablesAsHtml(newValue));
-
               func.updateParam(newValue, paramIndex);
-              scheduledRelinkIfNeeded();
-
-              $scope.$apply(function() {
-                ctrl.targetChanged();
-              });
-
-              if ($link.hasClass('last') && newValue === '') {
-                $comma.addClass('last');
-              } else {
-                $link.removeClass('last');
-              }
-              $input.hide();
-              $link.show();
             }
+
+            $link.html(templateSrv.highlightVariablesAsHtml(newValue));
+            scheduledRelinkIfNeeded();
+
+            $scope.$apply(function() {
+              ctrl.targetChanged();
+            });
+
+            if ($link.hasClass('last') && newValue === '') {
+              $comma.addClass('last');
+            } else {
+              $link.removeClass('last');
+            }
+
+            $input.hide();
+            $link.show();
+          }
+
+          // this = input element
+          function inputBlur(paramIndex) {
+            /*jshint validthis:true */
+            var inputElem = this;
+            // happens long before the click event on the typeahead options
+            // need to have long delay because the blur
+            cancelBlur = setTimeout(function() {
+              switchToLink(inputElem, paramIndex);
+            }, 200);
           }
 
           function inputKeyPress(paramIndex, e) {
             /*jshint validthis:true */
             if(e.which === 13) {
-              inputBlur.call(this, paramIndex);
+              $(this).blur();
             }
           }
 
@@ -135,9 +149,8 @@ function (angular, _, $, rst2html) {
               minLength: 0,
               items: 20,
               updater: function (value) {
-                setTimeout(function() {
-                  inputBlur.call($input[0], paramIndex);
-                }, 0);
+                $input.val(value);
+                switchToLink($input[0], paramIndex);
                 return value;
               }
             });
