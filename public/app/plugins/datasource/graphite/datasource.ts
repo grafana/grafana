@@ -387,8 +387,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
 
     let httpOptions = {
       method: 'GET',
-      url: '/version/_', // Prevent last / trimming
-      // for cancellations
+      url: '/version',
       requestId: options.requestId,
     };
 
