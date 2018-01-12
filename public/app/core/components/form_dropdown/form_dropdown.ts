@@ -176,7 +176,7 @@ export class FormDropdownCtrl {
   updateValue(text) {
     text = _.unescape(text);
 
-    if ((!this.allowCustom && text === '') || this.text === text) {
+    if (text === '' || this.text === text) {
       return;
     }
 
@@ -225,9 +225,7 @@ export class FormDropdownCtrl {
 
     var typeahead = this.inputElement.data('typeahead');
     if (typeahead) {
-      if (!this.allowCustom) {
-        this.inputElement.val('');
-      }
+      this.inputElement.val('');
       typeahead.lookup();
     }
   }
