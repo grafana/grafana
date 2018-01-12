@@ -1,17 +1,19 @@
 package notifiers
 
 import (
+	"bytes"
 	"fmt"
-
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"io"
+	"mime/multipart"
+	"os"
 )
 
 var (
-	telegeramApiUrl string = "https://api.telegram.org/bot%s/%s"
+	telegramApiUrl string = "https://api.telegram.org/bot%s/%s"
 )
 
 func init() {
@@ -47,9 +49,10 @@ func init() {
 
 type TelegramNotifier struct {
 	NotifierBase
-	BotToken string
-	ChatID   string
-	log      log.Logger
+	BotToken    string
+	ChatID      string
+	UploadImage bool
+	log         log.Logger
 }
 
 func NewTelegramNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
@@ -59,6 +62,7 @@ func NewTelegramNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 
 	botToken := model.Settings.Get("bottoken").MustString()
 	chatId := model.Settings.Get("chatid").MustString()
+	uploadImage := model.Settings.Get("uploadImage").MustBool()
 
 	if botToken == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find Bot Token in settings"}
@@ -72,31 +76,42 @@ func NewTelegramNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		BotToken:     botToken,
 		ChatID:       chatId,
+		UploadImage:  uploadImage,
 		log:          log.New("alerting.notifier.telegram"),
 	}, nil
 }
 
-func (this *TelegramNotifier) ShouldNotify(context *alerting.EvalContext) bool {
-	return defaultShouldNotify(context)
-}
+func (this *TelegramNotifier) buildMessage(evalContext *alerting.EvalContext, sendImageInline bool) *m.SendWebhookSync {
+	var imageFile *os.File
+	var err error
 
-func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
-	this.log.Info("Sending alert notification to", "bot_token", this.BotToken)
-	this.log.Info("Sending alert notification to", "chat_id", this.ChatID)
+	if sendImageInline {
+		imageFile, err = os.Open(evalContext.ImageOnDiskPath)
+		defer imageFile.Close()
+		if err != nil {
+			sendImageInline = false // fall back to text message
+		}
+	}
 
-	bodyJSON := simplejson.New()
+	message := ""
 
-	bodyJSON.Set("chat_id", this.ChatID)
-	bodyJSON.Set("parse_mode", "html")
-
-	message := fmt.Sprintf("<b>%s</b>\nState: %s\nMessage: %s\n", evalContext.GetNotificationTitle(), evalContext.Rule.Name, evalContext.Rule.Message)
+	if sendImageInline {
+		// Telegram's API does not allow HTML formatting for image captions.
+		message = fmt.Sprintf("%s\nState: %s\nMessage: %s\n", evalContext.GetNotificationTitle(), evalContext.Rule.Name, evalContext.Rule.Message)
+	} else {
+		message = fmt.Sprintf("<b>%s</b>\nState: %s\nMessage: %s\n", evalContext.GetNotificationTitle(), evalContext.Rule.Name, evalContext.Rule.Message)
+	}
 
 	ruleUrl, err := evalContext.GetRuleUrl()
 	if err == nil {
 		message = message + fmt.Sprintf("URL: %s\n", ruleUrl)
 	}
-	if evalContext.ImagePublicUrl != "" {
-		message = message + fmt.Sprintf("Image: %s\n", evalContext.ImagePublicUrl)
+
+	if !sendImageInline {
+		// only attach this if we are not sending it inline.
+		if evalContext.ImagePublicUrl != "" {
+			message = message + fmt.Sprintf("Image: %s\n", evalContext.ImagePublicUrl)
+		}
 	}
 
 	metrics := ""
@@ -107,19 +122,69 @@ func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 			break
 		}
 	}
+
 	if metrics != "" {
-		message = message + fmt.Sprintf("\n<i>Metrics:</i>%s", metrics)
+		if sendImageInline {
+			// Telegram's API does not allow HTML formatting for image captions.
+			message = message + fmt.Sprintf("\nMetrics:%s", metrics)
+		} else {
+			message = message + fmt.Sprintf("\n<i>Metrics:</i>%s", metrics)
+		}
 	}
 
-	bodyJSON.Set("text", message)
+	var body bytes.Buffer
 
-	url := fmt.Sprintf(telegeramApiUrl, this.BotToken, "sendMessage")
-	body, _ := bodyJSON.MarshalJSON()
+	w := multipart.NewWriter(&body)
+	fw, _ := w.CreateFormField("chat_id")
+	fw.Write([]byte(this.ChatID))
 
+	if sendImageInline {
+		fw, _ = w.CreateFormField("caption")
+		fw.Write([]byte(message))
+
+		fw, _ = w.CreateFormFile("photo", evalContext.ImageOnDiskPath)
+		io.Copy(fw, imageFile)
+	} else {
+		fw, _ = w.CreateFormField("text")
+		fw.Write([]byte(message))
+
+		fw, _ = w.CreateFormField("parse_mode")
+		fw.Write([]byte("html"))
+	}
+
+	w.Close()
+
+	apiMethod := ""
+	if sendImageInline {
+		this.log.Info("Sending telegram image notification", "photo", evalContext.ImageOnDiskPath, "chat_id", this.ChatID, "bot_token", this.BotToken)
+		apiMethod = "sendPhoto"
+	} else {
+		this.log.Info("Sending telegram text notification", "chat_id", this.ChatID, "bot_token", this.BotToken)
+		apiMethod = "sendMessage"
+	}
+
+	url := fmt.Sprintf(telegramApiUrl, this.BotToken, apiMethod)
 	cmd := &m.SendWebhookSync{
 		Url:        url,
-		Body:       string(body),
+		Body:       body.String(),
 		HttpMethod: "POST",
+		HttpHeader: map[string]string{
+			"Content-Type": w.FormDataContentType(),
+		},
+	}
+	return cmd
+}
+
+func (this *TelegramNotifier) ShouldNotify(context *alerting.EvalContext) bool {
+	return defaultShouldNotify(context)
+}
+
+func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
+	var cmd *m.SendWebhookSync
+	if evalContext.ImagePublicUrl == "" && this.UploadImage == true {
+		cmd = this.buildMessage(evalContext, true)
+	} else {
+		cmd = this.buildMessage(evalContext, false)
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
