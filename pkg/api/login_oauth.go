@@ -35,7 +35,7 @@ var (
 func GenStateString() string {
 	rnd := make([]byte, 32)
 	rand.Read(rnd)
-	return base64.StdEncoding.EncodeToString(rnd)
+	return base64.URLEncoding.EncodeToString(rnd)
 }
 
 func OAuthLogin(ctx *middleware.Context) {
