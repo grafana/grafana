@@ -74,13 +74,16 @@
   flex-grow: 1;
   height: 100%;
   padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .search-filter-box {
   background: $search-filter-box-bg;
   border-radius: 2px;
   padding: $spacer*1.5;
-  max-width: 340px;
+  min-width: 340px;
   margin-bottom: $spacer * 1.5;
   margin-left: $spacer * 1.5;
 }

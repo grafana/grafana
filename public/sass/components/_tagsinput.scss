@@ -39,17 +39,12 @@
 }
 
 .tag-filter {
-  max-width: 100%;
   line-height: 22px;
-
-  .Select-control {
-    background-color: $input-bg;
-  }
+  flex-grow: 1;
 
   .label-tag {
     margin-left: 6px;
     font-size: 11px;
-    padding: 2px 6px;
     cursor: pointer;
 
     .fa.fa-remove {
@@ -68,6 +63,13 @@
   .tag-count-label {
     margin-left: 3px;
   }
+
+  .gf-form-input--form-dropdown {
+    .Select-menu-outer {
+      border: 0;
+      width: 100%;
+    }
+  }
 }
 
 .tag-filter-values {
@@ -75,9 +77,7 @@
 
   .label-tag {
     margin: 6px 6px 0px 0px;
-    // margin-left: 6px;
     font-size: 11px;
-    padding: 2px 6px;
     cursor: pointer;
 
     .fa.fa-remove {

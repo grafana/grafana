@@ -33,7 +33,7 @@ $select-menu-box-shadow: $menu-dropdown-shadow;
   overflow: visible;
 
   .Select-placeholder {
-    color: $gray-4;
+    color: $input-color-placeholder;
   }
 
   > .Select-control {
@@ -41,7 +41,7 @@ $select-menu-box-shadow: $menu-dropdown-shadow;
     border-color: $dark-3;
 
     input {
-      min-width: 6rem;
+      min-width: 1rem;
     }
 
     .Select-clear,

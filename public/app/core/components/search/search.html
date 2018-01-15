@@ -40,19 +40,7 @@
           </a>
         </div>
 
-        <!-- <div class="gf-form">
-          <folder-picker initial-title="ctrl.initialFolderFilterTitle"
-                         on-change="ctrl.onFolderChange($folder)"
-                         label-class="width-4">
-          </folder-picker>
-        </div> -->
-
-        <tag-filter
-          label="'Tags'"
-          tags="ctrl.query.tag"
-          tagOptions="ctrl.getTags"
-          onSelect="ctrl.onTagSelect"
-          inlineTags="false">
+        <tag-filter tags="ctrl.query.tag" tagOptions="ctrl.getTags" onSelect="ctrl.onTagSelect">
         </tag-filter>
       </div>
 

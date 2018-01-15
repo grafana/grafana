@@ -6,8 +6,6 @@ import { TagOption } from './TagOption';
 
 export interface IProps {
   tags: string[];
-  inlineTags: any;
-  label: string;
   tagOptions: () => any;
   onSelect: (tag: string) => void;
 }
@@ -17,9 +15,6 @@ export class TagFilter extends React.Component<IProps, any> {
 
   constructor(props) {
     super(props);
-
-    // Default is true
-    this.inlineTags = this.props.inlineTags === undefined ? true : this.props.inlineTags;
 
     this.searchTags = this.searchTags.bind(this);
     this.onChange = this.onChange.bind(this);
@@ -53,47 +48,22 @@ export class TagFilter extends React.Component<IProps, any> {
       onChange: this.onChange,
       value: this.props.tags,
       multi: true,
-      className: 'width-8 gf-form-input gf-form-input--form-dropdown',
-      placeholder: 'Select Tags',
+      className: 'gf-form-input gf-form-input--form-dropdown',
+      placeholder: 'Tags',
       loadingPlaceholder: 'Loading...',
       noResultsText: 'No tags found',
       optionComponent: TagOption,
     };
 
-    if (this.inlineTags) {
-      selectOptions['valueComponent'] = TagValue;
+    selectOptions['valueComponent'] = TagValue;
 
-      return (
-        <div className="gf-form">
-          <label className="gf-form-label width-4">{this.props.label}</label>
-          <div className="tag-filter">
-            <Async {...selectOptions} />
-          </div>
+    return (
+      <div className="gf-form gf-form--has-input-icon gf-form--grow">
+        <div className="tag-filter">
+          <Async {...selectOptions} />
         </div>
-      );
-    } else {
-      selectOptions['valueComponent'] = () => false;
-
-      const tagsBadges = _.map(this.props.tags, tag => {
-        return (
-          <TagValue key={tag} value={{ label: tag }} className="" onClick={this.onChange} onRemove={this.onTagRemove} />
-        );
-      });
-
-      return (
-        <div>
-          <div className="gf-form">
-            <label className="gf-form-label width-4">{this.props.label}</label>
-            <div className="tag-filter">
-              <Async {...selectOptions} />
-            </div>
-          </div>
-          <div className="gf-form">
-            <label className="gf-form-label width-4">&nbsp;</label>
-            <div className="tag-filter-values">{tagsBadges}</div>
-          </div>
-        </div>
-      );
-    }
+        <i className="gf-form-input-icon fa fa-tag" />
+      </div>
+    );
   }
 }
