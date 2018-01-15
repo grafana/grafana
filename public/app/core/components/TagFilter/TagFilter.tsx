@@ -23,6 +23,7 @@ export class TagFilter extends React.Component<IProps, any> {
 
     this.searchTags = this.searchTags.bind(this);
     this.onChange = this.onChange.bind(this);
+    this.onTagRemove = this.onTagRemove.bind(this);
   }
 
   searchTags(query) {
@@ -34,36 +35,48 @@ export class TagFilter extends React.Component<IProps, any> {
     });
   }
 
-  onChange(newOption) {
-    this.props.onSelect(newOption);
+  onChange(newTags) {
+    this.props.onSelect(newTags);
+  }
+
+  onTagRemove(tag) {
+    let newTags = _.without(this.props.tags, tag.label);
+    newTags = _.map(newTags, tag => {
+      return { value: tag };
+    });
+    this.props.onSelect(newTags);
   }
 
   render() {
+    let selectOptions = {
+      loadOptions: this.searchTags,
+      onChange: this.onChange,
+      value: this.props.tags,
+      multi: true,
+      className: 'width-8 gf-form-input gf-form-input--form-dropdown',
+      placeholder: 'Select Tags',
+      loadingPlaceholder: 'Loading...',
+      noResultsText: 'No tags found',
+      optionComponent: TagOption,
+    };
+
     if (this.inlineTags) {
+      selectOptions['valueComponent'] = TagValue;
+
       return (
         <div className="gf-form">
           <label className="gf-form-label width-4">{this.props.label}</label>
           <div className="tag-filter">
-            <Async
-              loadOptions={this.searchTags}
-              onChange={this.onChange}
-              value={this.props.tags}
-              multi={true}
-              className="width-8 gf-form-input gf-form-input--form-dropdown"
-              placeholder="Select Tags"
-              loadingPlaceholder="Loading..."
-              noResultsText="No tags found"
-              valueComponent={TagValue}
-              optionComponent={TagOption}
-            />
+            <Async {...selectOptions} />
           </div>
         </div>
       );
     } else {
-      const valueComponent = () => false;
+      selectOptions['valueComponent'] = () => false;
+
       const tagsBadges = _.map(this.props.tags, tag => {
         return (
-          <TagValue key={tag} value={{ label: tag }} className="" onClick={this.onChange} onRemove={this.onChange} />
+          <TagValue key={tag} value={{ label: tag }} className="" onClick={this.onChange} onRemove={this.onTagRemove} />
         );
       });
 
@@ -72,18 +85,7 @@ export class TagFilter extends React.Component<IProps, any> {
           <div className="gf-form">
             <label className="gf-form-label width-4">{this.props.label}</label>
             <div className="tag-filter">
-              <Async
-                loadOptions={this.searchTags}
-                onChange={this.onChange}
-                value={this.props.tags}
-                multi={true}
-                className="width-8 gf-form-input gf-form-input--form-dropdown"
-                placeholder="Select Tags"
-                loadingPlaceholder="Loading..."
-                noResultsText="No tags found"
-                valueComponent={valueComponent}
-                optionComponent={TagOption}
-              />
+              <Async {...selectOptions} />
             </div>
           </div>
           <div className="gf-form">
