@@ -53,4 +53,16 @@
       margin-right: 3px;
     }
   }
+
+  .tag-filter-option {
+    position: relative;
+    text-align: left;
+    width: 100%;
+    display: block;
+    border-radius: 0;
+  }
+
+  .tag-count-label {
+    margin-left: 3px;
+  }
 }

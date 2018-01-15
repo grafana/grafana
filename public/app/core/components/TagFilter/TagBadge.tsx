@@ -24,11 +24,12 @@ export class TagBadge extends React.Component<IProps, any> {
       backgroundColor: color,
       borderColor: borderColor,
     };
+    const countLabel = count !== 0 && <span className="tag-count-label">{`(${count})`}</span>;
 
     return (
       <span className={`label label-tag`} onClick={this.onClick} style={tagStyle}>
         {removeIcon && <i className="fa fa-remove" />}
-        {label} {count !== 0 && count}
+        {label} {countLabel}
       </span>
     );
   }
