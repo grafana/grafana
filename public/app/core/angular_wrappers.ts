@@ -16,6 +16,8 @@ export function registerAngularDirectives() {
   react2AngularDirective('selectUserPicker', UserPicker, ['backendSrv', 'teamId', 'refreshList']);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',
+    'inlineTags',
+    'label',
     ['onSelect', { watchDepth: 'reference' }],
     ['tagOptions', { watchDepth: 'reference' }],
   ]);

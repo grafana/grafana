@@ -47,10 +47,13 @@
           </folder-picker>
         </div> -->
 
-        <div class="gf-form">
-          <label class="gf-form-label width-4">Tags</label>
-          <tag-filter tagOptions="ctrl.getTags" onSelect="ctrl.onTagSelect" tags="ctrl.query.tag"></tag-filter>
-        </div>
+        <tag-filter
+          label="'Tags'"
+          tags="ctrl.query.tag"
+          tagOptions="ctrl.getTags"
+          onSelect="ctrl.onTagSelect"
+          inlineTags="false">
+        </tag-filter>
 
         <!-- <div class="gf-form">
           <label class="gf-form-label width-4">Tags</label>

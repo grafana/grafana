@@ -41,7 +41,10 @@
 .tag-filter {
   max-width: 100%;
   line-height: 22px;
-  background-color: $input-bg;
+
+  .Select-control {
+    background-color: $input-bg;
+  }
 
   .label-tag {
     margin-left: 6px;
@@ -64,5 +67,21 @@
 
   .tag-count-label {
     margin-left: 3px;
+  }
+}
+
+.tag-filter-values {
+  display: inline;
+
+  .label-tag {
+    margin: 6px 6px 0px 0px;
+    // margin-left: 6px;
+    font-size: 11px;
+    padding: 2px 6px;
+    cursor: pointer;
+
+    .fa.fa-remove {
+      margin-right: 3px;
+    }
   }
 }
