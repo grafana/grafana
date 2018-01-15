@@ -600,7 +600,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	readQuotaSettings()
 
 	if VerifyEmailEnabled && !Smtp.Enabled {
-		log.Warn("require_email_validation is enabled but smpt is disabled")
+		log.Warn("require_email_validation is enabled but smtp is disabled")
 	}
 
 	// check old key  name
@@ -610,7 +610,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	}
 
 	imageUploadingSection := Cfg.Section("external_image_storage")
-	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("internal")
+	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("")
 	return nil
 }
 

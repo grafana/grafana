@@ -22,10 +22,7 @@ export function containsVariable(...args: any[]) {
   }
 
   variableName = kbn.regexEscape(variableName);
-  var findVarRegex = new RegExp(
-    '\\$(' + variableName + ')(?:\\W|$)|\\[\\[(' + variableName + ')\\]\\]',
-    'g'
-  );
+  var findVarRegex = new RegExp('\\$(' + variableName + ')(?:\\W|$)|\\[\\[(' + variableName + ')\\]\\]', 'g');
   var match = findVarRegex.exec(str);
   return match !== null;
 }

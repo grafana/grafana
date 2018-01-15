@@ -33,6 +33,7 @@ $input-border: 1px solid $input-border-color;
 
 .gf-form--has-input-icon {
   position: relative;
+  margin-right: $gf-form-margin;
 
   .gf-form-input-icon {
     position: absolute;
@@ -217,7 +218,7 @@ $input-border: 1px solid $input-border-color;
       background-color: transparent;
       color: $text-color;
       font: normal normal normal $font-size-sm/1 FontAwesome;
-      content: "\f0d7";
+      content: '\f0d7';
       pointer-events: none;
     }
   }
@@ -270,7 +271,7 @@ $input-border: 1px solid $input-border-color;
 
   select.gf-form-input {
     text-indent: 0.01px;
-    text-overflow: "";
+    text-overflow: '';
     padding-right: $input-padding-x*3;
     appearance: none;
 
@@ -292,7 +293,7 @@ $input-border: 1px solid $input-border-color;
     background-color: transparent;
     color: $text-color;
     font: normal normal normal $font-size-sm/1 FontAwesome;
-    content: "\f0d7";
+    content: '\f0d7';
     pointer-events: none;
     font-size: 11px;
   }
@@ -319,7 +320,7 @@ $input-border: 1px solid $input-border-color;
 }
 
 .natural-language-input {
-  &input[type="number"] {
+  &input[type='number'] {
     font-size: $font-size-base;
     line-height: $input-line-height;
     margin: -6px -5px 0 5px;
@@ -342,7 +343,7 @@ $input-border: 1px solid $input-border-color;
     background-color: transparent;
     color: $input-color;
     font: normal normal normal $font-size-sm/1 FontAwesome;
-    content: "\f0d7";
+    content: '\f0d7';
     pointer-events: none;
   }
 

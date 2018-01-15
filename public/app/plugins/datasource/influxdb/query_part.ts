@@ -1,12 +1,5 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import {
-  QueryPartDef,
-  QueryPart,
-  functionRenderer,
-  suffixRenderer,
-} from 'app/core/components/query_part/query_part';
+import { QueryPartDef, QueryPart, functionRenderer, suffixRenderer } from 'app/core/components/query_part/query_part';
 
 var index = [];
 var categories = {
@@ -68,10 +61,7 @@ function addTransformationStrategy(selectParts, partModel) {
   // look for index to add transformation
   for (i = 0; i < selectParts.length; i++) {
     var part = selectParts[i];
-    if (
-      part.def.category === categories.Math ||
-      part.def.category === categories.Aliasing
-    ) {
+    if (part.def.category === categories.Math || part.def.category === categories.Aliasing) {
       break;
     }
   }

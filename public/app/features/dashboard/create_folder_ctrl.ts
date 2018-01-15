@@ -8,12 +8,7 @@ export class CreateFolderCtrl {
   validationError: any;
 
   /** @ngInject **/
-  constructor(
-    private backendSrv,
-    private $location,
-    private validationSrv,
-    navModelSrv
-  ) {
+  constructor(private backendSrv, private $location, private validationSrv, navModelSrv) {
     this.navModel = navModelSrv.getNav('dashboards', 'manage-dashboards', 0);
   }
 
@@ -25,9 +20,7 @@ export class CreateFolderCtrl {
     return this.backendSrv.createDashboardFolder(this.title).then(result => {
       appEvents.emit('alert-success', ['Folder Created', 'OK']);
 
-      var folderUrl = `/dashboards/folder/${result.dashboard.id}/${
-        result.meta.slug
-      }`;
+      var folderUrl = `dashboards/folder/${result.dashboard.id}/${result.meta.slug}`;
       this.$location.url(folderUrl);
     });
   }

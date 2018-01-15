@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import appEvents from 'app/core/app_events';
 import { coreModule, JsonExplorer } from 'app/core/core';

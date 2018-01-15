@@ -1,16 +1,10 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
 import _ from 'lodash';
 
 export class AclCtrl {
   dashboard: any;
   items: DashboardAcl[];
-  permissionOptions = [
-    { value: 1, text: 'View' },
-    { value: 2, text: 'Edit' },
-    { value: 4, text: 'Admin' },
-  ];
+  permissionOptions = [{ value: 1, text: 'View' }, { value: 2, text: 'Edit' }, { value: 4, text: 'Admin' }];
   aclTypes = [
     { value: 'Group', text: 'Team' },
     { value: 'User', text: 'User' },
@@ -38,25 +32,18 @@ export class AclCtrl {
   }
 
   get(dashboardId: number) {
-    return this.backendSrv
-      .get(`/api/dashboards/id/${dashboardId}/acl`)
-      .then(result => {
-        this.items = _.map(result, this.prepareViewModel.bind(this));
-        this.sortItems();
-      });
+    return this.backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`).then(result => {
+      this.items = _.map(result, this.prepareViewModel.bind(this));
+      this.sortItems();
+    });
   }
 
   sortItems() {
-    this.items = _.orderBy(
-      this.items,
-      ['sortRank', 'sortName'],
-      ['desc', 'asc']
-    );
+    this.items = _.orderBy(this.items, ['sortRank', 'sortName'], ['desc', 'asc']);
   }
 
   prepareViewModel(item: DashboardAcl): DashboardAcl {
-    item.inherited =
-      !this.dashboard.meta.isFolder && this.dashboard.id !== item.dashboardId;
+    item.inherited = !this.dashboard.meta.isFolder && this.dashboard.id !== item.dashboardId;
     item.sortRank = 0;
 
     if (item.userId > 0) {
@@ -71,9 +58,7 @@ export class AclCtrl {
       item.sortRank = 20;
     } else if (item.role) {
       item.icon = 'fa fa-fw fa-street-view';
-      item.nameHtml = this.$sce.trustAsHtml(
-        `Everyone with <span class="query-keyword">${item.role}</span> Role`
-      );
+      item.nameHtml = this.$sce.trustAsHtml(`Everyone with <span class="query-keyword">${item.role}</span> Role`);
       item.sortName = item.role;
       item.sortRank = 30;
       if (item.role === 'Viewer') {
@@ -103,11 +88,9 @@ export class AclCtrl {
       });
     }
 
-    return this.backendSrv
-      .post(`/api/dashboards/id/${this.dashboard.id}/acl`, { items: updated })
-      .then(() => {
-        return this.dismiss();
-      });
+    return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, { items: updated }).then(() => {
+      return this.dismiss();
+    });
   }
 
   typeChanged() {
@@ -156,9 +139,7 @@ export class AclCtrl {
 
     return (
       (origItem.role && newItem.role && origItem.role === newItem.role) ||
-      (origItem.userId &&
-        newItem.userId &&
-        origItem.userId === newItem.userId) ||
+      (origItem.userId && newItem.userId && origItem.userId === newItem.userId) ||
       (origItem.teamId && newItem.teamId && origItem.teamId === newItem.teamId)
     );
   }

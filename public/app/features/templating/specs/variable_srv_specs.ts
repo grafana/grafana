@@ -1,11 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  sinon,
-  expect,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, sinon, expect, angularMocks } from 'test/lib/common';
 
 import '../all';
 
@@ -20,9 +13,7 @@ describe('VariableSrv', function() {
   beforeEach(angularMocks.module('grafana.controllers'));
   beforeEach(angularMocks.module('grafana.services'));
 
-  beforeEach(
-    ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', '$location'])
-  );
+  beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', '$location']));
   beforeEach(
     angularMocks.inject(($rootScope, $q, $location, $injector) => {
       ctx.$q = $q;
@@ -48,17 +39,11 @@ describe('VariableSrv', function() {
       beforeEach(function() {
         scenario.setupFn();
         var ds: any = {};
-        ds.metricFindQuery = sinon
-          .stub()
-          .returns(ctx.$q.when(scenario.queryResult));
+        ds.metricFindQuery = sinon.stub().returns(ctx.$q.when(scenario.queryResult));
         ctx.datasourceSrv.get = sinon.stub().returns(ctx.$q.when(ds));
-        ctx.datasourceSrv.getMetricSources = sinon
-          .stub()
-          .returns(scenario.metricSources);
+        ctx.datasourceSrv.getMetricSources = sinon.stub().returns(scenario.metricSources);
 
-        scenario.variable = ctx.variableSrv.createVariableFromModel(
-          scenario.variableModel
-        );
+        scenario.variable = ctx.variableSrv.createVariableFromModel(scenario.variableModel);
         ctx.variableSrv.addVariable(scenario.variable);
 
         ctx.variableSrv.updateOptions(scenario.variable);
@@ -133,25 +118,22 @@ describe('VariableSrv', function() {
   //
   // Query variable update
   //
-  describeUpdateVariable(
-    'query variable with empty current object and refresh',
-    function(scenario) {
-      scenario.setup(function() {
-        scenario.variableModel = {
-          type: 'query',
-          query: '',
-          name: 'test',
-          current: {},
-        };
-        scenario.queryResult = [{ text: 'backend1' }, { text: 'backend2' }];
-      });
+  describeUpdateVariable('query variable with empty current object and refresh', function(scenario) {
+    scenario.setup(function() {
+      scenario.variableModel = {
+        type: 'query',
+        query: '',
+        name: 'test',
+        current: {},
+      };
+      scenario.queryResult = [{ text: 'backend1' }, { text: 'backend2' }];
+    });
 
-      it('should set current value to first option', function() {
-        expect(scenario.variable.options.length).to.be(2);
-        expect(scenario.variable.current.value).to.be('backend1');
-      });
-    }
-  );
+    it('should set current value to first option', function() {
+      expect(scenario.variable.options.length).to.be(2);
+      expect(scenario.variable.current.value).to.be('backend1');
+    });
+  });
 
   describeUpdateVariable(
     'query variable with multi select and new options does not contain some selected values',
@@ -199,33 +181,28 @@ describe('VariableSrv', function() {
     }
   );
 
-  describeUpdateVariable(
-    'query variable with multi select and $__all selected',
-    function(scenario) {
-      scenario.setup(function() {
-        scenario.variableModel = {
-          type: 'query',
-          query: '',
-          name: 'test',
-          includeAll: true,
-          current: {
-            value: ['$__all'],
-            text: 'All',
-          },
-        };
-        scenario.queryResult = [{ text: 'val5' }, { text: 'val6' }];
-      });
+  describeUpdateVariable('query variable with multi select and $__all selected', function(scenario) {
+    scenario.setup(function() {
+      scenario.variableModel = {
+        type: 'query',
+        query: '',
+        name: 'test',
+        includeAll: true,
+        current: {
+          value: ['$__all'],
+          text: 'All',
+        },
+      };
+      scenario.queryResult = [{ text: 'val5' }, { text: 'val6' }];
+    });
 
-      it('should keep current All value', function() {
-        expect(scenario.variable.current.value).to.eql(['$__all']);
-        expect(scenario.variable.current.text).to.eql('All');
-      });
-    }
-  );
+    it('should keep current All value', function() {
+      expect(scenario.variable.current.value).to.eql(['$__all']);
+      expect(scenario.variable.current.text).to.eql('All');
+    });
+  });
 
-  describeUpdateVariable('query variable with numeric results', function(
-    scenario
-  ) {
+  describeUpdateVariable('query variable with numeric results', function(scenario) {
     scenario.setup(function() {
       scenario.variableModel = {
         type: 'query',
@@ -261,9 +238,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('and existing value still exists in options', function(
-    scenario
-  ) {
+  describeUpdateVariable('and existing value still exists in options', function(scenario) {
     scenario.setup(function() {
       scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test' };
       scenario.variableModel.current = { value: 'backend2', text: 'backend2' };
@@ -290,9 +265,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('and regex pattern exists and no match', function(
-    scenario
-  ) {
+  describeUpdateVariable('and regex pattern exists and no match', function(scenario) {
     scenario.setup(function() {
       scenario.variableModel = { type: 'query', query: 'apps.*', name: 'test' };
       scenario.variableModel.regex = '/apps.*(backendasd[0-9]+)/';
@@ -346,11 +319,7 @@ describe('VariableSrv', function() {
         name: 'test',
         includeAll: true,
       };
-      scenario.queryResult = [
-        { text: 'backend1' },
-        { text: 'backend2' },
-        { text: 'backend3' },
-      ];
+      scenario.queryResult = [{ text: 'backend1' }, { text: 'backend2' }, { text: 'backend3' }];
     });
 
     it('should add All option', function() {
@@ -359,9 +328,7 @@ describe('VariableSrv', function() {
     });
   });
 
-  describeUpdateVariable('with include all and custom value', function(
-    scenario
-  ) {
+  describeUpdateVariable('with include all and custom value', function(scenario) {
     scenario.setup(function() {
       scenario.variableModel = {
         type: 'query',
@@ -370,11 +337,7 @@ describe('VariableSrv', function() {
         includeAll: true,
         allValue: '*',
       };
-      scenario.queryResult = [
-        { text: 'backend1' },
-        { text: 'backend2' },
-        { text: 'backend3' },
-      ];
+      scenario.queryResult = [{ text: 'backend1' }, { text: 'backend2' }, { text: 'backend3' }];
     });
 
     it('should add All option with custom value', function() {
@@ -390,11 +353,7 @@ describe('VariableSrv', function() {
         name: 'test',
         sort: 0,
       };
-      scenario.queryResult = [
-        { text: 'bbb2' },
-        { text: 'aaa10' },
-        { text: 'ccc3' },
-      ];
+      scenario.queryResult = [{ text: 'bbb2' }, { text: 'aaa10' }, { text: 'ccc3' }];
     });
 
     it('should return options without sort', function() {
@@ -412,11 +371,7 @@ describe('VariableSrv', function() {
         name: 'test',
         sort: 1,
       };
-      scenario.queryResult = [
-        { text: 'bbb2' },
-        { text: 'aaa10' },
-        { text: 'ccc3' },
-      ];
+      scenario.queryResult = [{ text: 'bbb2' }, { text: 'aaa10' }, { text: 'ccc3' }];
     });
 
     it('should return options with alphabetical sort', function() {
@@ -434,11 +389,7 @@ describe('VariableSrv', function() {
         name: 'test',
         sort: 2,
       };
-      scenario.queryResult = [
-        { text: 'bbb2' },
-        { text: 'aaa10' },
-        { text: 'ccc3' },
-      ];
+      scenario.queryResult = [{ text: 'bbb2' }, { text: 'aaa10' }, { text: 'ccc3' }];
     });
 
     it('should return options with alphabetical sort', function() {
@@ -456,11 +407,7 @@ describe('VariableSrv', function() {
         name: 'test',
         sort: 3,
       };
-      scenario.queryResult = [
-        { text: 'bbb2' },
-        { text: 'aaa10' },
-        { text: 'ccc3' },
-      ];
+      scenario.queryResult = [{ text: 'bbb2' }, { text: 'aaa10' }, { text: 'ccc3' }];
     });
 
     it('should return options with numerical sort', function() {
@@ -478,11 +425,7 @@ describe('VariableSrv', function() {
         name: 'test',
         sort: 4,
       };
-      scenario.queryResult = [
-        { text: 'bbb2' },
-        { text: 'aaa10' },
-        { text: 'ccc3' },
-      ];
+      scenario.queryResult = [{ text: 'bbb2' }, { text: 'aaa10' }, { text: 'ccc3' }];
     });
 
     it('should return options with numerical sort', function() {
@@ -495,9 +438,7 @@ describe('VariableSrv', function() {
   //
   // datasource variable update
   //
-  describeUpdateVariable('datasource variable with regex filter', function(
-    scenario
-  ) {
+  describeUpdateVariable('datasource variable with regex filter', function(scenario) {
     scenario.setup(function() {
       scenario.variableModel = {
         type: 'datasource',

@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 
@@ -21,11 +19,7 @@ export class TeamsCtrl {
 
   get() {
     this.backendSrv
-      .get(
-        `/api/teams/search?perpage=${this.perPage}&page=${this.page}&query=${
-          this.query
-        }`
-      )
+      .get(`/api/teams/search?perpage=${this.perPage}&page=${this.page}&query=${this.query}`)
       .then(result => {
         this.teams = result.teams;
         this.page = result.page;

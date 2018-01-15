@@ -8,12 +8,7 @@ export class DataSourcesCtrl {
   searchQuery: string;
 
   /** @ngInject */
-  constructor(
-    private $scope,
-    private backendSrv,
-    private datasourceSrv,
-    private navModelSrv
-  ) {
+  constructor(private $scope, private backendSrv, private datasourceSrv, private navModelSrv) {
     this.navModel = this.navModelSrv.getNav('cfg', 'datasources', 0);
     backendSrv.get('/api/datasources').then(result => {
       this.datasources = result;
@@ -36,10 +31,7 @@ export class DataSourcesCtrl {
           this.$scope.appEvent('alert-success', ['Datasource deleted', '']);
         },
         () => {
-          this.$scope.appEvent('alert-error', [
-            'Unable to delete datasource',
-            '',
-          ]);
+          this.$scope.appEvent('alert-error', ['Unable to delete datasource', '']);
         }
       )
       .then(() => {

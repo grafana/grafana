@@ -14,12 +14,7 @@ export class LiveSrv {
 
   getWebSocketUrl() {
     var l = window.location;
-    return (
-      (l.protocol === 'https:' ? 'wss://' : 'ws://') +
-      l.host +
-      config.appSubUrl +
-      '/ws'
-    );
+    return (l.protocol === 'https:' ? 'wss://' : 'ws://') + l.host + config.appSubUrl + '/ws';
   }
 
   getConnection() {

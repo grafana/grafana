@@ -13,12 +13,10 @@ export class SoloPanelCtrl {
 
       $scope.onAppEvent('dashboard-initialized', $scope.initPanelScope);
 
-      dashboardLoaderSrv
-        .loadDashboard($routeParams.type, $routeParams.slug)
-        .then(function(result) {
-          result.meta.soloMode = true;
-          $scope.initDashboard(result, $scope);
-        });
+      dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
+        result.meta.soloMode = true;
+        $scope.initDashboard(result, $scope);
+      });
     };
 
     $scope.initPanelScope = function() {

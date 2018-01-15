@@ -8,6 +8,7 @@ export class VariableEditorCtrl {
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
     $scope.namePattern = /^(?!__).*$/;
+    $scope._ = _;
 
     $scope.refreshOptions = [
       { value: 0, text: 'Never' },
@@ -23,11 +24,7 @@ export class VariableEditorCtrl {
       { value: 4, text: 'Numerical (desc)' },
     ];
 
-    $scope.hideOptions = [
-      { value: 0, text: '' },
-      { value: 1, text: 'Label' },
-      { value: 2, text: 'Variable' },
-    ];
+    $scope.hideOptions = [{ value: 0, text: '' }, { value: 1, text: 'Label' }, { value: 2, text: 'Variable' }];
 
     $scope.init = function() {
       $scope.mode = 'list';
@@ -68,23 +65,17 @@ export class VariableEditorCtrl {
 
       var sameName = _.find($scope.variables, { name: $scope.current.name });
       if (sameName && sameName !== $scope.current) {
-        $scope.appEvent('alert-warning', [
-          'Validation',
-          'Variable with the same name already exists',
-        ]);
+        $scope.appEvent('alert-warning', ['Validation', 'Variable with the same name already exists']);
         return false;
       }
 
       if (
         $scope.current.type === 'query' &&
-        $scope.current.query.match(
-          new RegExp('\\$' + $scope.current.name + '(/| |$)')
-        )
+        $scope.current.query.match(new RegExp('\\$' + $scope.current.name + '(/| |$)'))
       ) {
         $scope.appEvent('alert-warning', [
           'Validation',
-          'Query cannot contain a reference to itself. Variable: $' +
-            $scope.current.name,
+          'Query cannot contain a reference to itself. Variable: $' + $scope.current.name,
         ]);
         return false;
       }
@@ -94,33 +85,23 @@ export class VariableEditorCtrl {
 
     $scope.validate = function() {
       $scope.infoText = '';
-      if (
-        $scope.current.type === 'adhoc' &&
-        $scope.current.datasource !== null
-      ) {
-        $scope.infoText =
-          'Adhoc filters are applied automatically to all queries that target this datasource';
+      if ($scope.current.type === 'adhoc' && $scope.current.datasource !== null) {
+        $scope.infoText = 'Adhoc filters are applied automatically to all queries that target this datasource';
         datasourceSrv.get($scope.current.datasource).then(ds => {
           if (!ds.getTagKeys) {
-            $scope.infoText =
-              'This datasource does not support adhoc filters yet.';
+            $scope.infoText = 'This datasource does not support adhoc filters yet.';
           }
         });
       }
     };
 
     $scope.runQuery = function() {
-      return variableSrv
-        .updateOptions($scope.current)
-        .then(null, function(err) {
-          if (err.data && err.data.message) {
-            err.message = err.data.message;
-          }
-          $scope.appEvent('alert-error', [
-            'Templating',
-            'Template variables could not be initialized: ' + err.message,
-          ]);
-        });
+      return variableSrv.updateOptions($scope.current).then(null, function(err) {
+        if (err.data && err.data.message) {
+          err.message = err.data.message;
+        }
+        $scope.appEvent('alert-error', ['Templating', 'Template variables could not be initialized: ' + err.message]);
+      });
     };
 
     $scope.edit = function(variable) {
@@ -152,9 +133,7 @@ export class VariableEditorCtrl {
       $scope.current = variableSrv.createVariableFromModel({ type: 'query' });
 
       // this is done here in case a new data source type variable was added
-      $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(
-        ds
-      ) {
+      $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
         return !ds.meta.mixed && ds.value !== null;
       });
 

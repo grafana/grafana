@@ -58,9 +58,7 @@ describe('when rendering func instance', function() {
     var func = gfunc.createFuncInstance('groupByNode');
     func.params[0] = 5;
     func.params[1] = 'avg';
-    expect(func.render('hello.metric')).toEqual(
-      "groupByNode(hello.metric, 5, 'avg')"
-    );
+    expect(func.render('hello.metric')).toEqual("groupByNode(hello.metric, 5, 'avg')");
   });
 
   it('should handle function with no metric param', function() {

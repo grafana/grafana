@@ -6,3 +6,5 @@ export const REPEAT_DIR_VERTICAL = 'v';
 export const DEFAULT_PANEL_SPAN = 4;
 export const DEFAULT_ROW_HEIGHT = 250;
 export const MIN_PANEL_HEIGHT = GRID_CELL_HEIGHT * 3;
+
+export const LS_PANEL_COPY_KEY = 'panel-copy';

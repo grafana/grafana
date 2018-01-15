@@ -47,10 +47,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
-    this.events.on(
-      'init-edit-mode',
-      this.onInitMetricsPanelEditMode.bind(this)
-    );
+    this.events.on('init-edit-mode', this.onInitMetricsPanelEditMode.bind(this));
     this.events.on('panel-teardown', this.onPanelTearDown.bind(this));
   }
 
@@ -63,10 +60,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   private onInitMetricsPanelEditMode() {
     this.addEditorTab('Metrics', metricsTabDirective);
-    this.addEditorTab(
-      'Time range',
-      'public/app/features/panel/partials/panelTime.html'
-    );
+    this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
   }
 
   private onMetricsPanelRefresh() {
@@ -146,9 +140,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (this.panel.maxDataPoints) {
       this.resolution = this.panel.maxDataPoints;
     } else {
-      this.resolution = Math.ceil(
-        $(window).width() * (this.panel.gridPos.w / 24)
-      );
+      this.resolution = Math.ceil($(window).width() * (this.panel.gridPos.w / 24));
     }
 
     this.calculateInterval();
@@ -161,19 +153,12 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     // if no panel interval check datasource
     if (intervalOverride) {
-      intervalOverride = this.templateSrv.replace(
-        intervalOverride,
-        this.panel.scopedVars
-      );
+      intervalOverride = this.templateSrv.replace(intervalOverride, this.panel.scopedVars);
     } else if (this.datasource && this.datasource.interval) {
       intervalOverride = this.datasource.interval;
     }
 
-    var res = kbn.calculateInterval(
-      this.range,
-      this.resolution,
-      intervalOverride
-    );
+    var res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
     this.interval = res.interval;
     this.intervalMs = res.intervalMs;
   }
@@ -183,10 +168,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     // check panel time overrrides
     if (this.panel.timeFrom) {
-      var timeFromInterpolated = this.templateSrv.replace(
-        this.panel.timeFrom,
-        this.panel.scopedVars
-      );
+      var timeFromInterpolated = this.templateSrv.replace(this.panel.timeFrom, this.panel.scopedVars);
       var timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
       if (timeFromInfo.invalid) {
         this.timeInfo = 'invalid time override';
@@ -204,10 +186,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     if (this.panel.timeShift) {
-      var timeShiftInterpolated = this.templateSrv.replace(
-        this.panel.timeShift,
-        this.panel.scopedVars
-      );
+      var timeShiftInterpolated = this.templateSrv.replace(this.panel.timeShift, this.panel.scopedVars);
       var timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
       if (timeShiftInfo.invalid) {
         this.timeInfo = 'invalid timeshift';
@@ -216,11 +195,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
       var timeShift = '-' + timeShiftInterpolated;
       this.timeInfo += ' timeshift ' + timeShift;
-      this.range.from = dateMath.parseDateMath(
-        timeShift,
-        this.range.from,
-        false
-      );
+      this.range.from = dateMath.parseDateMath(timeShift, this.range.from, false);
       this.range.to = dateMath.parseDateMath(timeShift, this.range.to, true);
       this.range.raw = { from: this.range.from, to: this.range.to };
     }
@@ -275,10 +250,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     if (!result || !result.data) {
-      console.log(
-        'Data source query result invalid, missing data field:',
-        result
-      );
+      console.log('Data source query result invalid, missing data field:', result);
       result = { data: [] };
     }
 

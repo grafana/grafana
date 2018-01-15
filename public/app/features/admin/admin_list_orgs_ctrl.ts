@@ -33,6 +33,4 @@ export class AdminListOrgsCtrl {
   }
 }
 
-angular
-  .module('grafana.controllers')
-  .controller('AdminListOrgsCtrl', AdminListOrgsCtrl);
+angular.module('grafana.controllers').controller('AdminListOrgsCtrl', AdminListOrgsCtrl);

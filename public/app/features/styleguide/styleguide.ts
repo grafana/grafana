@@ -1,63 +1,17 @@
 import coreModule from 'app/core/core_module';
 import config from 'app/core/config';
-import _ from 'lodash';
 
 class StyleGuideCtrl {
-  colors: any = [];
   theme: string;
-  buttonNames = [
-    'primary',
-    'secondary',
-    'inverse',
-    'success',
-    'warning',
-    'danger',
-  ];
+  buttonNames = ['primary', 'secondary', 'inverse', 'success', 'warning', 'danger'];
   buttonSizes = ['btn-small', '', 'btn-large'];
   buttonVariants = ['-'];
-  icons: any = [];
-  page: any;
-  pages = ['colors', 'buttons', 'icons', 'plugins'];
   navModel: any;
 
   /** @ngInject **/
-  constructor(
-    private $http,
-    private $routeParams,
-    private backendSrv,
-    navModelSrv
-  ) {
+  constructor(private $routeParams, private backendSrv, navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg', 'admin', 'styleguide', 1);
     this.theme = config.bootData.user.lightTheme ? 'light' : 'dark';
-    this.page = {};
-
-    if ($routeParams.page) {
-      this.page[$routeParams.page] = 1;
-    } else {
-      this.page.colors = true;
-    }
-
-    if (this.page.colors) {
-      this.loadColors();
-    }
-
-    if (this.page.icons) {
-      this.loadIcons();
-    }
-  }
-
-  loadColors() {
-    this.$http.get('public/build/styleguide.json').then(res => {
-      this.colors = _.map(res.data[this.theme], (value, key) => {
-        return { name: key, value: value };
-      });
-    });
-  }
-
-  loadIcons() {
-    this.$http.get('public/sass/icons.json').then(res => {
-      this.icons = res.data;
-    });
   }
 
   switchTheme() {

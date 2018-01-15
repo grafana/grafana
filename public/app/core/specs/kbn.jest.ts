@@ -34,8 +34,7 @@ describe('unit format menu', function() {
 function describeValueFormat(desc, value, tickSize, tickDecimals, result) {
   describe('value format: ' + desc, function() {
     it('should translate ' + value + ' as ' + result, function() {
-      var scaledDecimals =
-        tickDecimals - Math.floor(Math.log(tickSize) / Math.LN10);
+      var scaledDecimals = tickDecimals - Math.floor(Math.log(tickSize) / Math.LN10);
       var str = kbn.valueFormats[desc](value, tickDecimals, scaledDecimals);
       expect(str).toBe(result);
     });
@@ -342,14 +341,10 @@ describe('duration', function() {
   });
   it('too many decimals', function() {
     var str = kbn.toDuration(38898367008, 20, 'millisecond');
-    expect(str).toBe(
-      '1 year, 2 months, 3 weeks, 4 days, 5 hours, 6 minutes, 7 seconds, 8 milliseconds'
-    );
+    expect(str).toBe('1 year, 2 months, 3 weeks, 4 days, 5 hours, 6 minutes, 7 seconds, 8 milliseconds');
   });
   it('floating point error', function() {
     var str = kbn.toDuration(36993906007, 8, 'millisecond');
-    expect(str).toBe(
-      '1 year, 2 months, 0 weeks, 3 days, 4 hours, 5 minutes, 6 seconds, 7 milliseconds'
-    );
+    expect(str).toBe('1 year, 2 months, 0 weeks, 3 days, 4 hours, 5 minutes, 6 seconds, 7 milliseconds');
   });
 });

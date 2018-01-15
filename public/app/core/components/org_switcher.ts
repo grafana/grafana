@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from 'app/core/core_module';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -63,9 +61,7 @@ export class OrgSwitchCtrl {
   setUsingOrg(org) {
     return this.backendSrv.post('/api/user/using/' + org.orgId).then(() => {
       const re = /orgId=\d+/gi;
-      this.setWindowLocationHref(
-        this.getWindowLocationHref().replace(re, 'orgId=' + org.orgId)
-      );
+      this.setWindowLocationHref(this.getWindowLocationHref().replace(re, 'orgId=' + org.orgId));
     });
   }
 

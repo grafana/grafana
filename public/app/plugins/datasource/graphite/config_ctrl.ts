@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 export class GraphiteConfigCtrl {
   static templateUrl = 'public/app/plugins/datasource/graphite/partials/config.html';
   datasourceSrv: any;
@@ -9,8 +7,7 @@ export class GraphiteConfigCtrl {
   constructor($scope, datasourceSrv) {
     this.datasourceSrv = datasourceSrv;
     this.current.jsonData = this.current.jsonData || {};
-    this.current.jsonData.graphiteVersion =
-      this.current.jsonData.graphiteVersion || '0.9';
+    this.current.jsonData.graphiteVersion = this.current.jsonData.graphiteVersion || '0.9';
 
     this.autoDetectGraphiteVersion();
   }

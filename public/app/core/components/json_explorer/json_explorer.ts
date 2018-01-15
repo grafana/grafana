@@ -1,14 +1,7 @@
 // Based on work https://github.com/mohsen1/json-formatter-js
 // Licence MIT, Copyright (c) 2015 Mohsen Azimi
 
-import {
-  isObject,
-  getObjectName,
-  getType,
-  getValuePreview,
-  cssClass,
-  createElement,
-} from './helpers';
+import { isObject, getObjectName, getType, getValuePreview, cssClass, createElement } from './helpers';
 
 import _ from 'lodash';
 
@@ -112,9 +105,7 @@ export class JsonExplorer {
   private get isDate(): boolean {
     return (
       this.type === 'string' &&
-      (DATE_STRING_REGEX.test(this.json) ||
-        JSON_DATE_REGEX.test(this.json) ||
-        PARTIAL_DATE_REGEX.test(this.json))
+      (DATE_STRING_REGEX.test(this.json) || JSON_DATE_REGEX.test(this.json) || PARTIAL_DATE_REGEX.test(this.json))
     );
   }
 
@@ -151,9 +142,7 @@ export class JsonExplorer {
    * is this an empty object or array?
   */
   private get isEmpty(): boolean {
-    return (
-      this.isEmptyObject || (this.keys && !this.keys.length && this.isArray)
-    );
+    return this.isEmptyObject || (this.keys && !this.keys.length && this.isArray);
   }
 
   /*
@@ -234,11 +223,7 @@ export class JsonExplorer {
   }
 
   isNumberArray() {
-    return (
-      this.json.length > 0 &&
-      this.json.length < 4 &&
-      (_.isNumber(this.json[0]) || _.isNumber(this.json[1]))
-    );
+    return this.json.length > 0 && this.json.length < 4 && (_.isNumber(this.json[0]) || _.isNumber(this.json[1]));
   }
 
   renderArray() {
@@ -249,17 +234,13 @@ export class JsonExplorer {
     if (this.isNumberArray()) {
       this.json.forEach((val, index) => {
         if (index > 0) {
-          arrayWrapperSpan.appendChild(
-            createElement('span', 'array-comma', ',')
-          );
+          arrayWrapperSpan.appendChild(createElement('span', 'array-comma', ','));
         }
         arrayWrapperSpan.appendChild(createElement('span', 'number', val));
       });
       this.skipChildren = true;
     } else {
-      arrayWrapperSpan.appendChild(
-        createElement('span', 'number', this.json.length)
-      );
+      arrayWrapperSpan.appendChild(createElement('span', 'number', this.json.length));
     }
 
     arrayWrapperSpan.appendChild(createElement('span', 'bracket', ']'));
@@ -298,11 +279,7 @@ export class JsonExplorer {
       const objectWrapperSpan = createElement('span');
 
       // get constructor name and append it to wrapper span
-      var constructorName = createElement(
-        'span',
-        'constructor-name',
-        this.constructorName
-      );
+      var constructorName = createElement('span', 'constructor-name', this.constructorName);
       objectWrapperSpan.appendChild(constructorName);
 
       // if it's an array append the array specific elements like brackets and length
@@ -399,12 +376,7 @@ export class JsonExplorer {
       let index = 0;
       const addAChild = () => {
         const key = this.keys[index];
-        const formatter = new JsonExplorer(
-          this.json[key],
-          this.open - 1,
-          this.config,
-          key
-        );
+        const formatter = new JsonExplorer(this.json[key], this.open - 1, this.config, key);
         children.appendChild(formatter.render());
 
         index += 1;
@@ -421,12 +393,7 @@ export class JsonExplorer {
       requestAnimationFrame(addAChild);
     } else {
       this.keys.forEach(key => {
-        const formatter = new JsonExplorer(
-          this.json[key],
-          this.open - 1,
-          this.config,
-          key
-        );
+        const formatter = new JsonExplorer(this.json[key], this.open - 1, this.config, key);
         children.appendChild(formatter.render());
       });
     }
@@ -437,9 +404,7 @@ export class JsonExplorer {
    * Animated option is used when user triggers this via a click
    */
   removeChildren(animated = false) {
-    const childrenElement = this.element.querySelector(
-      `div.${cssClass('children')}`
-    ) as HTMLDivElement;
+    const childrenElement = this.element.querySelector(`div.${cssClass('children')}`) as HTMLDivElement;
 
     if (animated) {
       let childrenRemoved = 0;

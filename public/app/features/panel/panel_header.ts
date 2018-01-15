@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import $ from 'jquery';
 import { coreModule } from 'app/core/core';
 
@@ -105,10 +103,7 @@ function panelHeader($compile) {
         menuElem.html(menuHtml);
         $compile(menuElem)(menuScope);
 
-        if (
-          targetClass.indexOf('panel-title-text') >= 0 ||
-          targetClass.indexOf('panel-title') >= 0
-        ) {
+        if (targetClass.indexOf('panel-title-text') >= 0 || targetClass.indexOf('panel-title') >= 0) {
           togglePanelMenu(evt);
         }
       });

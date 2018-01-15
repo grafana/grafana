@@ -16,6 +16,7 @@ type Team struct {
 	Id    int64  `json:"id"`
 	OrgId int64  `json:"orgId"`
 	Name  string `json:"name"`
+	Email string `json:"email"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
@@ -26,14 +27,16 @@ type Team struct {
 
 type CreateTeamCommand struct {
 	Name  string `json:"name" binding:"Required"`
+	Email string `json:"email"`
 	OrgId int64  `json:"-"`
 
 	Result Team `json:"-"`
 }
 
 type UpdateTeamCommand struct {
-	Id   int64
-	Name string
+	Id    int64
+	Name  string
+	Email string
 }
 
 type DeleteTeamCommand struct {
@@ -64,6 +67,8 @@ type SearchTeamDto struct {
 	Id          int64  `json:"id"`
 	OrgId       int64  `json:"orgId"`
 	Name        string `json:"name"`
+	Email       string `json:"email"`
+	AvatarUrl   string `json:"avatarUrl"`
 	MemberCount int64  `json:"memberCount"`
 }
 

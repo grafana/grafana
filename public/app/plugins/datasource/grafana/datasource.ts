@@ -53,10 +53,7 @@ class GrafanaDatasource {
       delete params.tags;
     } else {
       // require at least one tag
-      if (
-        !_.isArray(options.annotation.tags) ||
-        options.annotation.tags.length === 0
-      ) {
+      if (!_.isArray(options.annotation.tags) || options.annotation.tags.length === 0) {
         return this.$q.when([]);
       }
     }

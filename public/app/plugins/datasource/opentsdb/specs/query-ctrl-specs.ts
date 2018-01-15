@@ -1,11 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  sinon,
-  expect,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, sinon, expect, angularMocks } from 'test/lib/common';
 import helpers from 'test/specs/helpers';
 import { OpenTsQueryCtrl } from '../query_ctrl';
 
@@ -114,9 +107,7 @@ describe('OpenTsQueryCtrl', function() {
         },
       ];
       ctx.ctrl.addTag();
-      expect(ctx.ctrl.errors.tags).to.be(
-        'Please remove filters to use tags, tags and filters are mutually exclusive.'
-      );
+      expect(ctx.ctrl.errors.tags).to.be('Please remove filters to use tags, tags and filters are mutually exclusive.');
     });
   });
 });

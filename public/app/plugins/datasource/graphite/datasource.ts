@@ -1,16 +1,9 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import * as dateMath from 'app/core/utils/datemath';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
 
 /** @ngInject */
-export function GraphiteDatasource(
-  instanceSettings,
-  $q,
-  backendSrv,
-  templateSrv
-) {
+export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv) {
   this.basicAuth = instanceSettings.basicAuth;
   this.url = instanceSettings.url;
   this.name = instanceSettings.name;
@@ -27,8 +20,7 @@ export function GraphiteDatasource(
       links: [
         {
           text: 'Help',
-          url:
-            'http://docs.grafana.org/features/datasources/graphite/#using-graphite-in-grafana',
+          url: 'http://docs.grafana.org/features/datasources/graphite/#using-graphite-in-grafana',
         },
       ],
     };
@@ -126,29 +118,27 @@ export function GraphiteDatasource(
     } else {
       // Graphite event as annotation
       var tags = templateSrv.replace(options.annotation.tags);
-      return this.events({ range: options.rangeRaw, tags: tags }).then(
-        results => {
-          var list = [];
-          for (var i = 0; i < results.data.length; i++) {
-            var e = results.data[i];
+      return this.events({ range: options.rangeRaw, tags: tags }).then(results => {
+        var list = [];
+        for (var i = 0; i < results.data.length; i++) {
+          var e = results.data[i];
 
-            var tags = e.tags;
-            if (_.isString(e.tags)) {
-              tags = this.parseTags(e.tags);
-            }
-
-            list.push({
-              annotation: options.annotation,
-              time: e.when * 1000,
-              title: e.what,
-              tags: tags,
-              text: e.data,
-            });
+          var tags = e.tags;
+          if (_.isString(e.tags)) {
+            tags = this.parseTags(e.tags);
           }
 
-          return list;
+          list.push({
+            annotation: options.annotation,
+            time: e.when * 1000,
+            title: e.what,
+            tags: tags,
+            text: e.data,
+          });
         }
-      );
+
+        return list;
+      });
     }
   };
 
@@ -381,14 +371,7 @@ export function GraphiteDatasource(
   this._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
   this.buildGraphiteParams = function(options, scopedVars) {
-    var graphite_options = [
-      'from',
-      'until',
-      'rawData',
-      'format',
-      'maxDataPoints',
-      'cacheTimeout',
-    ];
+    var graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     var clean_options = [],
       targets = {};
     var target, targetValue, i;
@@ -413,10 +396,7 @@ export function GraphiteDatasource(
       }
 
       targetValue = templateSrv.replace(target.target, scopedVars);
-      targetValue = targetValue.replace(
-        intervalFormatFixRegex,
-        fixIntervalFormat
-      );
+      targetValue = targetValue.replace(intervalFormatFixRegex, fixIntervalFormat);
       targets[target.refId] = targetValue;
     }
 

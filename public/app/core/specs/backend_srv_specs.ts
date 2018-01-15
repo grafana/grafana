@@ -1,10 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import 'app/core/services/backend_srv';
 
 describe('backend_srv', function() {

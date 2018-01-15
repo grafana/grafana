@@ -20,38 +20,20 @@ export class InfluxQueryCtrl extends QueryCtrl {
   removeTagFilterSegment: any;
 
   /** @ngInject **/
-  constructor(
-    $scope,
-    $injector,
-    private templateSrv,
-    private $q,
-    private uiSegmentSrv
-  ) {
+  constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
     super($scope, $injector);
 
     this.target = this.target;
-    this.queryModel = new InfluxQuery(
-      this.target,
-      templateSrv,
-      this.panel.scopedVars
-    );
-    this.queryBuilder = new InfluxQueryBuilder(
-      this.target,
-      this.datasource.database
-    );
+    this.queryModel = new InfluxQuery(this.target, templateSrv, this.panel.scopedVars);
+    this.queryBuilder = new InfluxQueryBuilder(this.target, this.datasource.database);
     this.groupBySegment = this.uiSegmentSrv.newPlusButton();
-    this.resultFormats = [
-      { text: 'Time series', value: 'time_series' },
-      { text: 'Table', value: 'table' },
-    ];
+    this.resultFormats = [{ text: 'Time series', value: 'time_series' }, { text: 'Table', value: 'table' }];
     this.policySegment = uiSegmentSrv.newSegment(this.target.policy);
 
     if (!this.target.measurement) {
       this.measurementSegment = uiSegmentSrv.newSelectMeasurement();
     } else {
-      this.measurementSegment = uiSegmentSrv.newSegment(
-        this.target.measurement
-      );
+      this.measurementSegment = uiSegmentSrv.newSegment(this.target.measurement);
     }
 
     this.tagSegments = [];
@@ -120,19 +102,13 @@ export class InfluxQueryCtrl extends QueryCtrl {
           options.push(this.uiSegmentSrv.newSegment({ value: 'SLIMIT' }));
         }
         if (this.target.orderByTime === 'ASC') {
-          options.push(
-            this.uiSegmentSrv.newSegment({ value: 'ORDER BY time DESC' })
-          );
+          options.push(this.uiSegmentSrv.newSegment({ value: 'ORDER BY time DESC' }));
         }
         if (!this.queryModel.hasGroupByTime()) {
-          options.push(
-            this.uiSegmentSrv.newSegment({ value: 'time($interval)' })
-          );
+          options.push(this.uiSegmentSrv.newSegment({ value: 'time($interval)' }));
         }
         for (let tag of tags) {
-          options.push(
-            this.uiSegmentSrv.newSegment({ value: 'tag(' + tag.text + ')' })
-          );
+          options.push(this.uiSegmentSrv.newSegment({ value: 'tag(' + tag.text + ')' }));
         }
         return options;
       })
@@ -232,9 +208,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   getPolicySegments() {
-    var policiesQuery = this.queryBuilder.buildExploreQuery(
-      'RETENTION POLICIES'
-    );
+    var policiesQuery = this.queryBuilder.buildExploreQuery('RETENTION POLICIES');
     return this.datasource
       .metricFindQuery(policiesQuery)
       .then(this.transformToSegments(false))
@@ -256,11 +230,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   getMeasurements(measurementFilter) {
-    var query = this.queryBuilder.buildExploreQuery(
-      'MEASUREMENTS',
-      undefined,
-      measurementFilter
-    );
+    var query = this.queryBuilder.buildExploreQuery('MEASUREMENTS', undefined, measurementFilter);
     return this.datasource
       .metricFindQuery(query)
       .then(this.transformToSegments(true))
@@ -299,19 +269,14 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
   getTagsOrValues(segment, index) {
     if (segment.type === 'condition') {
-      return this.$q.when([
-        this.uiSegmentSrv.newSegment('AND'),
-        this.uiSegmentSrv.newSegment('OR'),
-      ]);
+      return this.$q.when([this.uiSegmentSrv.newSegment('AND'), this.uiSegmentSrv.newSegment('OR')]);
     }
     if (segment.type === 'operator') {
       var nextValue = this.tagSegments[index + 1].value;
       if (/^\/.*\/$/.test(nextValue)) {
         return this.$q.when(this.uiSegmentSrv.newOperators(['=~', '!~']));
       } else {
-        return this.$q.when(
-          this.uiSegmentSrv.newOperators(['=', '!=', '<>', '<', '>'])
-        );
+        return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<>', '<', '>']));
       }
     }
 
@@ -320,10 +285,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
       query = this.queryBuilder.buildExploreQuery('TAG_KEYS');
       addTemplateVars = false;
     } else if (segment.type === 'value') {
-      query = this.queryBuilder.buildExploreQuery(
-        'TAG_VALUES',
-        this.tagSegments[index - 2].value
-      );
+      query = this.queryBuilder.buildExploreQuery('TAG_VALUES', this.tagSegments[index - 2].value);
       addTemplateVars = true;
     }
 
@@ -357,29 +319,17 @@ export class InfluxQueryCtrl extends QueryCtrl {
         this.tagSegments.push(this.uiSegmentSrv.newPlusButton());
       } else if (this.tagSegments.length > 2) {
         this.tagSegments.splice(Math.max(index - 1, 0), 1);
-        if (
-          this.tagSegments[this.tagSegments.length - 1].type !== 'plus-button'
-        ) {
+        if (this.tagSegments[this.tagSegments.length - 1].type !== 'plus-button') {
           this.tagSegments.push(this.uiSegmentSrv.newPlusButton());
         }
       }
     } else {
       if (segment.type === 'plus-button') {
         if (index > 2) {
-          this.tagSegments.splice(
-            index,
-            0,
-            this.uiSegmentSrv.newCondition('AND')
-          );
+          this.tagSegments.splice(index, 0, this.uiSegmentSrv.newCondition('AND'));
         }
         this.tagSegments.push(this.uiSegmentSrv.newOperator('='));
-        this.tagSegments.push(
-          this.uiSegmentSrv.newFake(
-            'select tag value',
-            'value',
-            'query-segment-value'
-          )
-        );
+        this.tagSegments.push(this.uiSegmentSrv.newFake('select tag value', 'value', 'query-segment-value'));
         segment.type = 'key';
         segment.cssClass = 'query-segment-key';
       }
@@ -404,14 +354,9 @@ export class InfluxQueryCtrl extends QueryCtrl {
         }
         tags[tagIndex].key = segment2.value;
       } else if (segment2.type === 'value') {
-        tagOperator = this.getTagValueOperator(
-          segment2.value,
-          tags[tagIndex].operator
-        );
+        tagOperator = this.getTagValueOperator(segment2.value, tags[tagIndex].operator);
         if (tagOperator) {
-          this.tagSegments[index - 1] = this.uiSegmentSrv.newOperator(
-            tagOperator
-          );
+          this.tagSegments[index - 1] = this.uiSegmentSrv.newOperator(tagOperator);
           tags[tagIndex].operator = tagOperator;
         }
         tags[tagIndex].value = segment2.value;
@@ -428,16 +373,9 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   getTagValueOperator(tagValue, tagOperator): string {
-    if (
-      tagOperator !== '=~' &&
-      tagOperator !== '!~' &&
-      /^\/.*\/$/.test(tagValue)
-    ) {
+    if (tagOperator !== '=~' && tagOperator !== '!~' && /^\/.*\/$/.test(tagValue)) {
       return '=~';
-    } else if (
-      (tagOperator === '=~' || tagOperator === '!~') &&
-      /^(?!\/.*\/$)/.test(tagValue)
-    ) {
+    } else if ((tagOperator === '=~' || tagOperator === '!~') && /^(?!\/.*\/$)/.test(tagValue)) {
       return '=';
     }
     return null;

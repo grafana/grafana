@@ -1,10 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 
 import helpers from 'test/specs/helpers';
 import '../history/history_srv';
@@ -21,9 +15,7 @@ describe('historySrv', function() {
   beforeEach(
     angularMocks.inject(function($httpBackend) {
       ctx.$httpBackend = $httpBackend;
-      $httpBackend
-        .whenRoute('GET', 'api/dashboards/id/:id/versions')
-        .respond(versionsResponse);
+      $httpBackend.whenRoute('GET', 'api/dashboards/id/:id/versions').respond(versionsResponse);
       $httpBackend
         .whenRoute('POST', 'api/dashboards/id/:id/restore')
         .respond(function(method, url, data, headers, params) {
@@ -76,11 +68,9 @@ describe('historySrv', function() {
       let version = 6;
       return wrapPromise(
         ctx,
-        ctx.service
-          .restoreDashboard({ id: 1 }, version)
-          .then(function(response) {
-            expect(response).to.eql(restoreResponse(version));
-          })
+        ctx.service.restoreDashboard({ id: 1 }, version).then(function(response) {
+          expect(response).to.eql(restoreResponse(version));
+        })
       );
     });
 

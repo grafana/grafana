@@ -54,10 +54,7 @@ describe('DashboardModel', function() {
           {
             type: 'table',
             legend: true,
-            styles: [
-              { thresholds: ['10', '20', '30'] },
-              { thresholds: ['100', '200', '300'] },
-            ],
+            styles: [{ thresholds: ['10', '20', '30'] }, { thresholds: ['100', '200', '300'] }],
             targets: [{ refId: 'A' }, {}],
           },
         ],
@@ -156,19 +153,13 @@ describe('DashboardModel', function() {
       model.rows = [createRow({ collapse: false, height: 8 }, [[6], [6]])];
       let dashboard = new DashboardModel(model);
       let panelGridPos = getGridPositions(dashboard);
-      let expectedGrid = [
-        { x: 0, y: 0, w: 12, h: 8 },
-        { x: 12, y: 0, w: 12, h: 8 },
-      ];
+      let expectedGrid = [{ x: 0, y: 0, w: 12, h: 8 }, { x: 12, y: 0, w: 12, h: 8 }];
 
       expect(panelGridPos).toEqual(expectedGrid);
     });
 
     it('should add special "row" panel if row is collapsed', function() {
-      model.rows = [
-        createRow({ collapse: true, height: 8 }, [[6], [6]]),
-        createRow({ height: 8 }, [[12]]),
-      ];
+      model.rows = [createRow({ collapse: true, height: 8 }, [[6], [6]]), createRow({ height: 8 }, [[12]])];
       let dashboard = new DashboardModel(model);
       let panelGridPos = getGridPositions(dashboard);
       let expectedGrid = [
@@ -222,10 +213,7 @@ describe('DashboardModel', function() {
     });
 
     it('should add all rows if even one collapsed or titled row is present', function() {
-      model.rows = [
-        createRow({ collapse: true, height: 8 }, [[6], [6]]),
-        createRow({ height: 8 }, [[12]]),
-      ];
+      model.rows = [createRow({ collapse: true, height: 8 }, [[6], [6]]), createRow({ height: 8 }, [[12]])];
       let dashboard = new DashboardModel(model);
       let panelGridPos = getGridPositions(dashboard);
       let expectedGrid = [
@@ -258,9 +246,7 @@ describe('DashboardModel', function() {
     });
 
     it('should place panel to the right side of panel having bigger height', function() {
-      model.rows = [
-        createRow({ height: 6 }, [[4], [2, 3], [4, 6], [2, 3], [2, 3]]),
-      ];
+      model.rows = [createRow({ height: 6 }, [[4], [2, 3], [4, 6], [2, 3], [2, 3]])];
       let dashboard = new DashboardModel(model);
       let panelGridPos = getGridPositions(dashboard);
       let expectedGrid = [
@@ -275,9 +261,7 @@ describe('DashboardModel', function() {
     });
 
     it('should fill current row if it possible', function() {
-      model.rows = [
-        createRow({ height: 9 }, [[4], [2, 3], [4, 6], [2, 3], [2, 3], [8, 3]]),
-      ];
+      model.rows = [createRow({ height: 9 }, [[4], [2, 3], [4, 6], [2, 3], [2, 3], [8, 3]])];
       let dashboard = new DashboardModel(model);
       let panelGridPos = getGridPositions(dashboard);
       let expectedGrid = [
@@ -293,9 +277,7 @@ describe('DashboardModel', function() {
     });
 
     it('should fill current row if it possible (2)', function() {
-      model.rows = [
-        createRow({ height: 8 }, [[4], [2, 3], [4, 6], [2, 3], [2, 3], [8, 3]]),
-      ];
+      model.rows = [createRow({ height: 8 }, [[4], [2, 3], [4, 6], [2, 3], [2, 3], [8, 3]])];
       let dashboard = new DashboardModel(model);
       let panelGridPos = getGridPositions(dashboard);
       let expectedGrid = [
@@ -311,9 +293,7 @@ describe('DashboardModel', function() {
     });
 
     it('should fill current row if panel height more than row height', function() {
-      model.rows = [
-        createRow({ height: 6 }, [[4], [2, 3], [4, 8], [2, 3], [2, 3]]),
-      ];
+      model.rows = [createRow({ height: 6 }, [[4], [2, 3], [4, 8], [2, 3], [2, 3]])];
       let dashboard = new DashboardModel(model);
       let panelGridPos = getGridPositions(dashboard);
       let expectedGrid = [
@@ -345,10 +325,7 @@ describe('DashboardModel', function() {
 
     it('should add repeated row if repeat set', function() {
       model.rows = [
-        createRow(
-          { showTitle: true, title: 'Row', height: 8, repeat: 'server' },
-          [[6]]
-        ),
+        createRow({ showTitle: true, title: 'Row', height: 8, repeat: 'server' }, [[6]]),
         createRow({ height: 8 }, [[12]]),
       ];
       let dashboard = new DashboardModel(model);
@@ -369,10 +346,7 @@ describe('DashboardModel', function() {
 
     it('should ignore repeated row', function() {
       model.rows = [
-        createRow(
-          { showTitle: true, title: 'Row1', height: 8, repeat: 'server' },
-          [[6]]
-        ),
+        createRow({ showTitle: true, title: 'Row1', height: 8, repeat: 'server' }, [[6]]),
         createRow(
           {
             showTitle: true,

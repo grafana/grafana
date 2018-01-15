@@ -1,10 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import config from 'app/core/config';
 import 'app/features/plugins/datasource_srv';
 

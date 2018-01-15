@@ -1,6 +1,4 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import kbn from "app/core/utils/kbn";
+import kbn from 'app/core/utils/kbn';
 
 export class AxesEditorCtrl {
   panel: any;
@@ -18,15 +16,15 @@ export class AxesEditorCtrl {
 
     this.logScales = {
       linear: 1,
-      "log (base 2)": 2,
-      "log (base 10)": 10,
-      "log (base 32)": 32,
-      "log (base 1024)": 1024
+      'log (base 2)': 2,
+      'log (base 10)': 10,
+      'log (base 32)': 32,
+      'log (base 1024)': 1024,
     };
 
     this.dataFormats = {
-      "Time series": "timeseries",
-      "Time series buckets": "tsbuckets"
+      'Time series': 'timeseries',
+      'Time series buckets': 'tsbuckets',
     };
   }
 
@@ -38,11 +36,11 @@ export class AxesEditorCtrl {
 
 /** @ngInject */
 export function axesEditor() {
-  "use strict";
+  'use strict';
   return {
-    restrict: "E",
+    restrict: 'E',
     scope: true,
-    templateUrl: "public/app/plugins/panel/heatmap/partials/axes_editor.html",
-    controller: AxesEditorCtrl
+    templateUrl: 'public/app/plugins/panel/heatmap/partials/axes_editor.html',
+    controller: AxesEditorCtrl,
   };
 }

@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 
 // This is auto generated from the unicode tables.
@@ -971,11 +969,7 @@ Lexer.prototype = {
       return match;
     }
 
-    match =
-      this.scanPunctuator() ||
-      this.scanNumericLiteral() ||
-      this.scanIdentifier() ||
-      this.scanTemplateSequence();
+    match = this.scanPunctuator() || this.scanNumericLiteral() || this.scanIdentifier() || this.scanTemplateSequence();
 
     if (match) {
       this.skip(match.value.length);
@@ -1057,12 +1051,7 @@ Lexer.prototype = {
       var ch4 = this.peek(index + 4);
       var code;
 
-      if (
-        isHexDigit(ch1) &&
-        isHexDigit(ch2) &&
-        isHexDigit(ch3) &&
-        isHexDigit(ch4)
-      ) {
+      if (isHexDigit(ch1) && isHexDigit(ch2) && isHexDigit(ch3) && isHexDigit(ch4)) {
         code = parseInt(ch1 + ch2 + ch3 + ch4, 16);
 
         if (isUnicodeLetter(code)) {
@@ -1198,13 +1187,7 @@ Lexer.prototype = {
     }
 
     function isIdentifierStart(ch) {
-      return (
-        ch === '$' ||
-        ch === '_' ||
-        ch === '\\' ||
-        (ch >= 'a' && ch <= 'z') ||
-        (ch >= 'A' && ch <= 'Z')
-      );
+      return ch === '$' || ch === '_' || ch === '\\' || (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
     }
 
     // handle negative num literals

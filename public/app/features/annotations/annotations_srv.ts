@@ -10,19 +10,9 @@ export class AnnotationsSrv {
   alertStatesPromise: any;
 
   /** @ngInject */
-  constructor(
-    private $rootScope,
-    private $q,
-    private datasourceSrv,
-    private backendSrv,
-    private timeSrv
-  ) {
+  constructor(private $rootScope, private $q, private datasourceSrv, private backendSrv, private timeSrv) {
     $rootScope.onAppEvent('refresh', this.clearCache.bind(this), $rootScope);
-    $rootScope.onAppEvent(
-      'dashboard-initialized',
-      this.clearCache.bind(this),
-      $rootScope
-    );
+    $rootScope.onAppEvent('dashboard-initialized', this.clearCache.bind(this), $rootScope);
   }
 
   clearCache() {
@@ -62,10 +52,7 @@ export class AnnotationsSrv {
           err.message = err.data.message;
         }
         console.log('AnnotationSrv.query error', err);
-        this.$rootScope.appEvent('alert-error', [
-          'Annotation Query Failed',
-          err.message || err,
-        ]);
+        this.$rootScope.appEvent('alert-error', ['Annotation Query Failed', err.message || err]);
         return [];
       });
   }
@@ -88,12 +75,9 @@ export class AnnotationsSrv {
       return this.alertStatesPromise;
     }
 
-    this.alertStatesPromise = this.backendSrv.get(
-      '/api/alerts/states-for-dashboard',
-      {
-        dashboardId: options.dashboard.id,
-      }
-    );
+    this.alertStatesPromise = this.backendSrv.get('/api/alerts/states-for-dashboard', {
+      dashboardId: options.dashboard.id,
+    });
     return this.alertStatesPromise;
   }
 

@@ -75,8 +75,7 @@ export class DashboardViewState {
     }
 
     // remember if editStateChanged
-    this.editStateChanged =
-      (state.edit || false) !== (this.state.edit || false);
+    this.editStateChanged = (state.edit || false) !== (this.state.edit || false);
 
     _.extend(this.state, state);
     this.dashboard.meta.fullscreen = this.state.fullscreen;
@@ -117,10 +116,7 @@ export class DashboardViewState {
 
       if (this.fullscreenPanel) {
         // if already fullscreen
-        if (
-          this.fullscreenPanel === panelScope &&
-          this.editStateChanged === false
-        ) {
+        if (this.fullscreenPanel === panelScope && this.editStateChanged === false) {
           return;
         } else {
           this.leaveFullscreen(false);
@@ -213,6 +209,4 @@ export function dashboardViewStateSrv($location, $timeout, $rootScope) {
   };
 }
 
-angular
-  .module('grafana.services')
-  .factory('dashboardViewStateSrv', dashboardViewStateSrv);
+angular.module('grafana.services').factory('dashboardViewStateSrv', dashboardViewStateSrv);

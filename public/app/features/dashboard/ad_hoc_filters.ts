@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import angular from 'angular';
 import coreModule from 'app/core/core_module';
@@ -23,11 +21,7 @@ export class AdHocFiltersCtrl {
       value: '-- remove filter --',
     });
     this.buildSegmentModel();
-    this.$rootScope.onAppEvent(
-      'template-variable-value-updated',
-      this.buildSegmentModel.bind(this),
-      $scope
-    );
+    this.$rootScope.onAppEvent('template-variable-value-updated', this.buildSegmentModel.bind(this), $scope);
   }
 
   buildSegmentModel() {
@@ -53,9 +47,7 @@ export class AdHocFiltersCtrl {
 
   getOptions(segment, index) {
     if (segment.type === 'operator') {
-      return this.$q.when(
-        this.uiSegmentSrv.newOperators(['=', '!=', '<', '>', '=~', '!~'])
-      );
+      return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '>', '=~', '!~']));
     }
 
     if (segment.type === 'condition') {
@@ -107,13 +99,7 @@ export class AdHocFiltersCtrl {
           this.segments.splice(index, 0, this.uiSegmentSrv.newCondition('AND'));
         }
         this.segments.push(this.uiSegmentSrv.newOperator('='));
-        this.segments.push(
-          this.uiSegmentSrv.newFake(
-            'select tag value',
-            'value',
-            'query-segment-value'
-          )
-        );
+        this.segments.push(this.uiSegmentSrv.newFake('select tag value', 'value', 'query-segment-value'));
         segment.type = 'key';
         segment.cssClass = 'query-segment-key';
       }

@@ -3,24 +3,22 @@
 		{{ctrl.noAlertsMessage}}
 	</div>
 
-  <section class="card-section card-list-layout-list" ng-if="ctrl.panel.show === 'current'">
-    <ol class="card-list">
-			<li class="card-item-wrapper" ng-repeat="alert in ctrl.currentAlerts">
-        <div class="alert-list card-item card-item--alert">
-          <div class="alert-list-body">
-            <div class="alert-list-icon alert-list-item-state {{alert.stateModel.stateClass}}">
-              <i class="{{alert.stateModel.iconClass}}"></i>
-            </div>
-            <div class="alert-list-main">
-              <p class="alert-list-title">
-                <a href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert">
-                  {{alert.name}}
-                </a>
-              </p>
-              <p class="alert-list-text">
-                <span class="alert-list-state {{alert.stateModel.stateClass}}">{{alert.stateModel.text}}</span>
-                for {{alert.newStateDateAgo}}
-              </p>
+  <section ng-if="ctrl.panel.show === 'current'">
+    <ol class="alert-rule-list">
+      <li class="alert-rule-item" ng-repeat="alert in ctrl.currentAlerts">
+        <div class="alert-rule-item__body">
+          <div class="alert-rule-item__icon  {{alert.stateModel.stateClass}}">
+            <i class="{{alert.stateModel.iconClass}}"></i>
+          </div>
+          <div class="alert-rule-item__header">
+            <p class="alert-rule-item__name">
+              <a href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert">
+                {{alert.name}}
+              </a>
+            </p>
+            <div class="alert-rule-item__text">
+              <span class="{{alert.stateModel.stateClass}}">{{alert.stateModel.text}}</span>
+              <span class="alert-rule-item__time">for {{alert.newStateDateAgo}}</span>
             </div>
           </div>
         </div>
@@ -28,30 +26,25 @@
     </ol>
   </section>
 
-  <section class="card-section card-list-layout-list" ng-if="ctrl.panel.show === 'changes'">
-		<ol class="card-list">
-			<li class="card-item-wrapper" ng-repeat="al in ctrl.alertHistory">
-				<div class="alert-list card-item card-item--alert">
-					<div class="alert-list-body">
-						<div class="alert-list-icon alert-list-item-state {{al.stateModel.stateClass}}">
-							<i class="{{al.stateModel.iconClass}}"></i>
-						</div>
-						<div class="alert-list-main">
-							<p class="alert-list-title">{{al.alertName}}</p>
-							<div class="alert-list-text">
-								<span class="alert-list-state {{al.stateModel.stateClass}}">{{al.stateModel.text}}</span>
-								<span class="alert-list-info alert-list-info-left">{{al.info}}</span>
-							</div>
-						</div>
-					</div>
-					<div class="alert-list-footer">
-						<span class="alert-list-text">{{al.time}}</span>
-						<span class="alert-list-text">
-							<!--Img Link-->
-						</span>
-					</div>
-				</div>
-			</li>
-		</ol>
-	</section>
+  <section ng-if="ctrl.panel.show === 'changes'">
+    <ol class="alert-rule-list">
+      <li class="alert-rule-item" ng-repeat="al in ctrl.alertHistory">
+        <div class="alert-rule-item__icon {{al.stateModel.stateClass}}">
+          <i class="{{al.stateModel.iconClass}}"></i>
+        </div>
+        <div class="alert-rule-item__body">
+          <div class="alert-rule-item__header">
+            <p class="alert-rule-item__name">{{al.alertName}}</p>
+            <div class="alert-rule-item__text">
+              <span class="{{al.stateModel.stateClass}}">{{al.stateModel.text}}</span>
+            </div>
+          </div>
+          <span class="alert-rule-item__info">{{al.info}}</span>
+        </div>
+        <div class="alert-rule-item__time">
+          <span>{{al.time}}</span>
+        </div>
+      </li>
+    </ol>
+  </section>
 </div>

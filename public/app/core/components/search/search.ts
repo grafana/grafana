@@ -17,12 +17,7 @@ export class SearchCtrl {
   initialFolderFilterTitle: string;
 
   /** @ngInject */
-  constructor(
-    $scope,
-    private $location,
-    private $timeout,
-    private searchSrv: SearchSrv
-  ) {
+  constructor($scope, private $location, private $timeout, private searchSrv: SearchSrv) {
     appEvents.on('show-dash-search', this.openSearch.bind(this), $scope);
     appEvents.on('hide-dash-search', this.closeSearch.bind(this), $scope);
 
@@ -75,9 +70,7 @@ export class SearchCtrl {
 
       if (currentItem) {
         if (currentItem.dashboardIndex !== undefined) {
-          const selectedDash = this.results[currentItem.folderIndex].items[
-            currentItem.dashboardIndex
-          ];
+          const selectedDash = this.results[currentItem.folderIndex].items[currentItem.dashboardIndex];
 
           if (selectedDash) {
             this.$location.search({});
@@ -105,9 +98,7 @@ export class SearchCtrl {
 
     if (currentItem) {
       if (currentItem.dashboardIndex !== undefined) {
-        this.results[currentItem.folderIndex].items[
-          currentItem.dashboardIndex
-        ].selected = false;
+        this.results[currentItem.folderIndex].items[currentItem.dashboardIndex].selected = false;
       } else {
         this.results[currentItem.folderIndex].selected = false;
       }
@@ -123,10 +114,7 @@ export class SearchCtrl {
     this.selectedIndex = (newIndex %= max) < 0 ? newIndex + max : newIndex;
     const selectedItem = flattenedResult[this.selectedIndex];
 
-    if (
-      selectedItem.dashboardIndex === undefined &&
-      this.results[selectedItem.folderIndex].id === 0
-    ) {
+    if (selectedItem.dashboardIndex === undefined && this.results[selectedItem.folderIndex].id === 0) {
       this.moveSelection(direction);
       return;
     }
@@ -137,9 +125,7 @@ export class SearchCtrl {
         return;
       }
 
-      this.results[selectedItem.folderIndex].items[
-        selectedItem.dashboardIndex
-      ].selected = true;
+      this.results[selectedItem.folderIndex].items[selectedItem.dashboardIndex].selected = true;
       return;
     }
 
@@ -167,9 +153,7 @@ export class SearchCtrl {
 
   queryHasNoFilters() {
     var query = this.query;
-    return (
-      query.query === '' && query.starred === false && query.tag.length === 0
-    );
+    return query.query === '' && query.starred === false && query.tag.length === 0;
   }
 
   filterByTag(tag) {

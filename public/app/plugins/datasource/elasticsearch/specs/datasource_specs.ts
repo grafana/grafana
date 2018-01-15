@@ -1,11 +1,5 @@
 import _ from 'lodash';
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import moment from 'moment';
 import angular from 'angular';
 import helpers from 'test/specs/helpers';
@@ -55,9 +49,7 @@ describe('ElasticDatasource', function() {
       ctx.$rootScope.$apply();
 
       var today = moment.utc().format('YYYY.MM.DD');
-      expect(requestOptions.url).to.be(
-        'http://es.com/asd-' + today + '/_mapping'
-      );
+      expect(requestOptions.url).to.be('http://es.com/asd-' + today + '/_mapping');
     });
   });
 
@@ -97,18 +89,12 @@ describe('ElasticDatasource', function() {
     });
 
     it('should translate index pattern to current day', function() {
-      expect(header.index).to.eql([
-        'asd-2015.05.30',
-        'asd-2015.05.31',
-        'asd-2015.06.01',
-      ]);
+      expect(header.index).to.eql(['asd-2015.05.30', 'asd-2015.05.31', 'asd-2015.06.01']);
     });
 
     it('should json escape lucene query', function() {
       var body = angular.fromJson(parts[1]);
-      expect(body.query.bool.filter[1].query_string.query).to.be(
-        'escape\\:test'
-      );
+      expect(body.query.bool.filter[1].query_string.query).to.be('escape\\:test');
     });
   });
 
@@ -238,11 +224,7 @@ describe('ElasticDatasource', function() {
         })
         .then(fieldObjects => {
           var fields = _.map(fieldObjects, 'text');
-          expect(fields).to.eql([
-            'system.cpu.system',
-            'system.cpu.user',
-            'system.process.cpu.total',
-          ]);
+          expect(fields).to.eql(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
         });
 
       ctx.ds
@@ -282,9 +264,7 @@ describe('ElasticDatasource', function() {
         },
         targets: [
           {
-            bucketAggs: [
-              { type: 'date_histogram', field: '@timestamp', id: '2' },
-            ],
+            bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
             metrics: [{ type: 'count' }],
             query: 'test',
           },

@@ -85,18 +85,16 @@ export class FolderPickerCtrl {
       evt.preventDefault();
     }
 
-    return this.backendSrv
-      .createDashboardFolder(this.newFolderName)
-      .then(result => {
-        appEvents.emit('alert-success', ['Folder Created', 'OK']);
+    return this.backendSrv.createDashboardFolder(this.newFolderName).then(result => {
+      appEvents.emit('alert-success', ['Folder Created', 'OK']);
 
-        this.closeCreateFolder();
-        this.folder = {
-          text: result.dashboard.title,
-          value: result.dashboard.id,
-        };
-        this.onFolderChange(this.folder);
-      });
+      this.closeCreateFolder();
+      this.folder = {
+        text: result.dashboard.title,
+        value: result.dashboard.id,
+      };
+      this.onFolderChange(this.folder);
+    });
   }
 
   cancelCreateFolder(evt) {
@@ -147,8 +145,7 @@ export class FolderPickerCtrl {
 export function folderPicker() {
   return {
     restrict: 'E',
-    templateUrl:
-      'public/app/features/dashboard/folder_picker/folder_picker.html',
+    templateUrl: 'public/app/features/dashboard/folder_picker/folder_picker.html',
     controller: FolderPickerCtrl,
     bindToController: true,
     controllerAs: 'ctrl',

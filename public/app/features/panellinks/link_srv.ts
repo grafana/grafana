@@ -49,11 +49,7 @@ export class LinkSrv {
   }
 
   appendToQueryString(url, stringToAppend) {
-    if (
-      !_.isUndefined(stringToAppend) &&
-      stringToAppend !== null &&
-      stringToAppend !== ''
-    ) {
+    if (!_.isUndefined(stringToAppend) && stringToAppend !== null && stringToAppend !== '') {
       var pos = url.indexOf('?');
       if (pos !== -1) {
         if (url.length - pos > 1) {
@@ -106,10 +102,7 @@ export class LinkSrv {
     info.href = this.addParamsToUrl(info.href, params);
 
     if (link.params) {
-      info.href = this.appendToQueryString(
-        info.href,
-        this.templateSrv.replace(link.params, scopedVars)
-      );
+      info.href = this.appendToQueryString(info.href, this.templateSrv.replace(link.params, scopedVars));
     }
 
     return info;

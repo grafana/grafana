@@ -20,10 +20,7 @@ export class AnnotationsEditorCtrl {
     hide: false,
   };
 
-  showOptions: any = [
-    { text: 'All Panels', value: 0 },
-    { text: 'Specific Panels', value: 1 },
-  ];
+  showOptions: any = [{ text: 'All Panels', value: 0 }, { text: 'Specific Panels', value: 1 }];
 
   /** @ngInject */
   constructor($scope, private datasourceSrv) {
@@ -38,11 +35,9 @@ export class AnnotationsEditorCtrl {
   }
 
   datasourceChanged() {
-    return this.datasourceSrv
-      .get(this.currentAnnotation.datasource)
-      .then(ds => {
-        this.currentDatasource = ds;
-      });
+    return this.datasourceSrv.get(this.currentAnnotation.datasource).then(ds => {
+      this.currentDatasource = ds;
+    });
   }
 
   edit(annotation) {

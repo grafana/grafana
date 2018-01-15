@@ -5,13 +5,15 @@ export class JsonEditorCtrl {
   /** @ngInject */
   constructor($scope) {
     $scope.json = angular.toJson($scope.object, true);
-    $scope.canUpdate =
-      $scope.updateHandler !== void 0 && $scope.contextSrv.isEditor;
+    $scope.canUpdate = $scope.updateHandler !== void 0 && $scope.contextSrv.isEditor;
+    $scope.canCopy = $scope.enableCopy;
 
     $scope.update = function() {
       var newObject = angular.fromJson($scope.json);
       $scope.updateHandler(newObject, $scope.object);
     };
+
+    $scope.getContentForClipboard = () => $scope.json;
   }
 }
 

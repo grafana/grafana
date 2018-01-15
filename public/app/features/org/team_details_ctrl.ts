@@ -6,13 +6,9 @@ export default class TeamDetailsCtrl {
   navModel: any;
 
   /** @ngInject **/
-  constructor(
-    private $scope,
-    private backendSrv,
-    private $routeParams,
-    navModelSrv
-  ) {
+  constructor(private $scope, private backendSrv, private $routeParams, navModelSrv) {
     this.navModel = navModelSrv.getNav('cfg', 'teams', 0);
+    this.get = this.get.bind(this);
     this.get();
   }
 
@@ -21,21 +17,16 @@ export default class TeamDetailsCtrl {
       this.backendSrv.get(`/api/teams/${this.$routeParams.id}`).then(result => {
         this.team = result;
       });
-      this.backendSrv
-        .get(`/api/teams/${this.$routeParams.id}/members`)
-        .then(result => {
-          this.teamMembers = result;
-        });
+      this.backendSrv.get(`/api/teams/${this.$routeParams.id}/members`).then(result => {
+        this.teamMembers = result;
+      });
     }
   }
 
   removeTeamMember(teamMember: TeamMember) {
     this.$scope.appEvent('confirm-modal', {
       title: 'Remove Member',
-      text:
-        'Are you sure you want to remove ' +
-        teamMember.login +
-        ' from this group?',
+      text: 'Are you sure you want to remove ' + teamMember.login + ' from this group?',
       yesText: 'Remove',
       icon: 'fa-warning',
       onConfirm: () => {
@@ -45,9 +36,7 @@ export default class TeamDetailsCtrl {
   }
 
   removeMemberConfirmed(teamMember: TeamMember) {
-    this.backendSrv
-      .delete(`/api/teams/${this.$routeParams.id}/members/${teamMember.userId}`)
-      .then(this.get.bind(this));
+    this.backendSrv.delete(`/api/teams/${this.$routeParams.id}/members/${teamMember.userId}`).then(this.get);
   }
 
   update() {
@@ -55,22 +44,24 @@ export default class TeamDetailsCtrl {
       return;
     }
 
-    this.backendSrv.put('/api/teams/' + this.team.id, { name: this.team.name });
+    this.backendSrv.put('/api/teams/' + this.team.id, {
+      name: this.team.name,
+      email: this.team.email,
+    });
   }
 
   userPicked(user) {
-    this.backendSrv
-      .post(`/api/teams/${this.$routeParams.id}/members`, { userId: user.id })
-      .then(() => {
-        this.$scope.$broadcast('user-picker-reset');
-        this.get();
-      });
+    this.backendSrv.post(`/api/teams/${this.$routeParams.id}/members`, { userId: user.id }).then(() => {
+      this.$scope.$broadcast('user-picker-reset');
+      this.get();
+    });
   }
 }
 
 export interface Team {
   id: number;
   name: string;
+  email: string;
 }
 
 export interface User {

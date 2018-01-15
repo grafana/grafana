@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import coreModule from '../../core/core_module';
 
 export class PlaylistSearchCtrl {
@@ -38,11 +36,7 @@ export class PlaylistSearchCtrl {
   }
 
   queryHasNoFilters() {
-    return (
-      this.query.query === '' &&
-      this.query.starred === false &&
-      this.query.tag.length === 0
-    );
+    return this.query.query === '' && this.query.starred === false && this.query.tag.length === 0;
   }
 
   filterByTag(tag, evt) {

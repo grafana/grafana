@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import { ThresholdMapper } from './threshold_mapper';
 import { QueryPart } from 'app/core/components/query_part/query_part';
@@ -57,10 +55,7 @@ export class AlertTabCtrl {
 
     // set panel alert edit mode
     this.$scope.$on('$destroy', () => {
-      this.panelCtrl.events.off(
-        'threshold-changed',
-        thresholdChangedEventHandler
-      );
+      this.panelCtrl.events.off('threshold-changed', thresholdChangedEventHandler);
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
     });
@@ -80,16 +75,10 @@ export class AlertTabCtrl {
 
   getAlertHistory() {
     this.backendSrv
-      .get(
-        `/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${
-          this.panel.id
-        }&limit=50`
-      )
+      .get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50`)
       .then(res => {
         this.alertHistory = _.map(res, ah => {
-          ah.time = this.dashboardSrv
-            .getCurrent()
-            .formatDate(ah.time, 'MMM D, YYYY HH:mm:ss');
+          ah.time = this.dashboardSrv.getCurrent().formatDate(ah.time, 'MMM D, YYYY HH:mm:ss');
           ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
           ah.info = alertDef.getAlertAnnotationInfo(ah);
           return ah;
@@ -316,9 +305,7 @@ export class AlertTabCtrl {
     switch (evt.name) {
       case 'action': {
         conditionModel.source.reducer.type = evt.action.value;
-        conditionModel.reducerPart = alertDef.createReducerPart(
-          conditionModel.source.reducer
-        );
+        conditionModel.reducerPart = alertDef.createReducerPart(conditionModel.source.reducer);
         break;
       }
       case 'get-part-actions': {
@@ -398,8 +385,7 @@ export class AlertTabCtrl {
   clearHistory() {
     appEvents.emit('confirm-modal', {
       title: 'Delete Alert History',
-      text:
-        'Are you sure you want to remove all history & annotations for this alert?',
+      text: 'Are you sure you want to remove all history & annotations for this alert?',
       icon: 'fa-trash',
       yesText: 'Yes',
       onConfirm: () => {

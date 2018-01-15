@@ -496,7 +496,7 @@ name = BitBucket
 enabled = true
 allow_sign_up = true
 client_id = <client id>
-client_secret = <secret>
+client_secret = <client secret>
 scopes = account email
 auth_url = https://bitbucket.org/site/oauth2/authorize
 token_url = https://bitbucket.org/site/oauth2/access_token
@@ -504,6 +504,41 @@ api_url = https://api.bitbucket.org/2.0/user
 team_ids =
 allowed_organizations =
 ```
+
+### Set up oauth2 with OneLogin
+
+1.  Create a new Custom Connector with the following settings:
+    - Name: Grafana
+    - Sign On Method: OpenID Connect
+    - Redirect URI: `https://<grafana domain>/login/generic_oauth`
+    - Signing Algorithm: RS256
+    - Login URL: `https://<grafana domain>/login/generic_oauth`
+
+    then:
+2.  Add an App to the Grafana Connector:
+    - Display Name: Grafana
+
+    then:
+3.  Under the SSO tab on the Grafana App details page you'll find the Client ID and Client Secret.
+
+    Your OneLogin Domain will match the url you use to access OneLogin.
+
+    Configure Grafana as follows:
+
+    ```bash
+    [auth.generic_oauth]
+    name = OneLogin
+    enabled = true
+    allow_sign_up = true
+    client_id = <client id>
+    client_secret = <client secret>
+    scopes = openid email name
+    auth_url = https://<onelogin domain>.onelogin.com/oidc/auth
+    token_url = https://<onelogin domain>.onelogin.com/oidc/token
+    api_url = https://<onelogin domain>.onelogin.com/oidc/me
+    team_ids =
+    allowed_organizations =
+    ```
 
 <hr>
 
@@ -731,7 +766,7 @@ Time to live for snapshots.
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
-You can choose between (s3, webdav, gcs). If left empty Grafana will ignore the upload action.
+You can choose between (s3, webdav, gcs, azure_blob). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
 
@@ -785,6 +820,17 @@ Bucket Name on Google Cloud Storage.
 
 ### path
 Optional extra path inside bucket
+
+## [external_image_storage.azure_blob]
+
+### account_name
+Storage account name
+
+### account_key
+Storage account key
+
+### container_name
+Container name where to store "Blob" images with random names. Creating the blob container beforehand is required. Only public containers are supported.
 
 ## [alerting]
 

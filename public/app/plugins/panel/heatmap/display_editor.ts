@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 export class HeatmapDisplayEditorCtrl {
   panel: any;
   panelCtrl: any;
@@ -16,12 +14,11 @@ export class HeatmapDisplayEditorCtrl {
 
 /** @ngInject */
 export function heatmapDisplayEditor() {
-  "use strict";
+  'use strict';
   return {
-    restrict: "E",
+    restrict: 'E',
     scope: true,
-    templateUrl:
-      "public/app/plugins/panel/heatmap/partials/display_editor.html",
-    controller: HeatmapDisplayEditorCtrl
+    templateUrl: 'public/app/plugins/panel/heatmap/partials/display_editor.html',
+    controller: HeatmapDisplayEditorCtrl,
   };
 }

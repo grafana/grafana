@@ -26,6 +26,4 @@ export class SelectOrgCtrl {
   }
 }
 
-angular
-  .module('grafana.controllers')
-  .controller('SelectOrgCtrl', SelectOrgCtrl);
+angular.module('grafana.controllers').controller('SelectOrgCtrl', SelectOrgCtrl);

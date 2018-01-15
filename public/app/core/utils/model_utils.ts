@@ -1,9 +1,4 @@
-export function assignModelProperties(
-  target,
-  source,
-  defaults,
-  removeDefaults?
-) {
+export function assignModelProperties(target, source, defaults, removeDefaults?) {
   for (var key in defaults) {
     if (!defaults.hasOwnProperty(key)) {
       continue;

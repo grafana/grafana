@@ -22,12 +22,7 @@ export default function flatten(target, opts): any {
         maxDepth = currentDepth + 1;
       }
 
-      if (
-        !isarray &&
-        isobject &&
-        Object.keys(value).length &&
-        currentDepth < maxDepth
-      ) {
+      if (!isarray && isobject && Object.keys(value).length && currentDepth < maxDepth) {
         ++currentDepth;
         return step(value, newKey);
       }

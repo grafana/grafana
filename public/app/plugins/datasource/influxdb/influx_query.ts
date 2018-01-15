@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import queryPart from './query_part';
 import kbn from 'app/core/utils/kbn';
@@ -22,13 +20,8 @@ export default class InfluxQuery {
     target.resultFormat = target.resultFormat || 'time_series';
     target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
-    target.groupBy = target.groupBy || [
-      { type: 'time', params: ['$__interval'] },
-      { type: 'fill', params: ['null'] },
-    ];
-    target.select = target.select || [
-      [{ type: 'field', params: ['value'] }, { type: 'mean', params: [] }],
-    ];
+    target.groupBy = target.groupBy || [{ type: 'time', params: ['$__interval'] }, { type: 'fill', params: ['null'] }];
+    target.select = target.select || [[{ type: 'field', params: ['value'] }, { type: 'mean', params: [] }]];
 
     this.updateProjection();
   }
@@ -85,10 +78,7 @@ export default class InfluxQuery {
 
     if (part.def.type === 'time') {
       // remove fill
-      this.target.groupBy = _.filter(
-        this.target.groupBy,
-        (g: any) => g.type !== 'fill'
-      );
+      this.target.groupBy = _.filter(this.target.groupBy, (g: any) => g.type !== 'fill');
       // remove aggregations
       this.target.select = _.map(this.target.select, (s: any) => {
         return _.filter(s, (part: any) => {
@@ -172,11 +162,7 @@ export default class InfluxQuery {
     if (!measurement.match('^/.*/$')) {
       measurement = '"' + measurement + '"';
     } else if (interpolate) {
-      measurement = this.templateSrv.replace(
-        measurement,
-        this.scopedVars,
-        'regex'
-      );
+      measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
     }
 
     if (policy !== 'default') {
@@ -207,11 +193,7 @@ export default class InfluxQuery {
 
     if (target.rawQuery) {
       if (interpolate) {
-        return this.templateSrv.replace(
-          target.query,
-          this.scopedVars,
-          this.interpolateQueryStr
-        );
+        return this.templateSrv.replace(target.query, this.scopedVars, this.interpolateQueryStr);
       } else {
         return target.query;
       }

@@ -31,11 +31,12 @@ func RenderToPng(c *middleware.Context) {
 
 	pngPath, err := renderer.RenderToPng(renderOpts)
 
-	if err != nil {
-		if err == renderer.ErrTimeout {
-			c.Handle(500, err.Error(), err)
-		}
+	if err != nil && err == renderer.ErrTimeout {
+		c.Handle(500, err.Error(), err)
+		return
+	}
 
+	if err != nil {
 		c.Handle(500, "Rendering failed.", err)
 		return
 	}

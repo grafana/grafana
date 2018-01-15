@@ -199,9 +199,7 @@ describe('TimeSeries', function() {
     describe('series option overrides, bars, true & lines false', function() {
       beforeEach(function() {
         series.alias = 'test';
-        series.applySeriesOverrides([
-          { alias: 'test', bars: true, lines: false },
-        ]);
+        series.applySeriesOverrides([{ alias: 'test', bars: true, lines: false }]);
       });
 
       it('should disable lines, and enable bars', function() {
@@ -213,9 +211,7 @@ describe('TimeSeries', function() {
     describe('series option overrides, linewidth, stack', function() {
       beforeEach(function() {
         series.alias = 'test';
-        series.applySeriesOverrides([
-          { alias: 'test', linewidth: 5, stack: false },
-        ]);
+        series.applySeriesOverrides([{ alias: 'test', linewidth: 5, stack: false }]);
       });
 
       it('should disable stack, and set lineWidth', function() {
@@ -227,9 +223,7 @@ describe('TimeSeries', function() {
     describe('series option overrides, dashes and lineWidth', function() {
       beforeEach(function() {
         series.alias = 'test';
-        series.applySeriesOverrides([
-          { alias: 'test', linewidth: 5, dashes: true },
-        ]);
+        series.applySeriesOverrides([{ alias: 'test', linewidth: 5, dashes: true }]);
       });
 
       it('should enable dashes, set dashes lineWidth to 5 and lines lineWidth to 0', function() {
@@ -253,9 +247,7 @@ describe('TimeSeries', function() {
     describe('series option overrides, pointradius, steppedLine', function() {
       beforeEach(function() {
         series.alias = 'test';
-        series.applySeriesOverrides([
-          { alias: 'test', pointradius: 5, steppedLine: true },
-        ]);
+        series.applySeriesOverrides([{ alias: 'test', pointradius: 5, steppedLine: true }]);
       });
 
       it('should set pointradius, and set steppedLine', function() {

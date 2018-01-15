@@ -18,14 +18,16 @@ type DashboardsAsConfig struct {
 	Options  map[string]interface{} `json:"options" yaml:"options"`
 }
 
-func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *DashboardsAsConfig) (*dashboards.SaveDashboardItem, error) {
-
+func createDashboardJson(data *simplejson.Json, lastModified time.Time, cfg *DashboardsAsConfig, folderId int64) (*dashboards.SaveDashboardItem, error) {
 	dash := &dashboards.SaveDashboardItem{}
 	dash.Dashboard = models.NewDashboardFromJson(data)
 	dash.UpdatedAt = lastModified
 	dash.Overwrite = true
 	dash.OrgId = cfg.OrgId
-	dash.Dashboard.Data.Set("editable", cfg.Editable)
+	dash.Dashboard.FolderId = folderId
+	if !cfg.Editable {
+		dash.Dashboard.Data.Set("editable", cfg.Editable)
+	}
 
 	if dash.Dashboard.Title == "" {
 		return nil, models.ErrDashboardTitleEmpty

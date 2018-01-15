@@ -10,9 +10,7 @@ describe('templateSrv', function() {
 
   describe('init', function() {
     beforeEach(function() {
-      initTemplateSrv([
-        { type: 'query', name: 'test', current: { value: 'oogle' } },
-      ]);
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
     });
 
     it('should initialize template data', function() {
@@ -23,9 +21,7 @@ describe('templateSrv', function() {
 
   describe('replace can pass scoped vars', function() {
     beforeEach(function() {
-      initTemplateSrv([
-        { type: 'query', name: 'test', current: { value: 'oogle' } },
-      ]);
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
     });
 
     it('should replace $test with scoped value', function() {
@@ -106,11 +102,7 @@ describe('templateSrv', function() {
           type: 'query',
           name: 'test',
           current: { value: '$__all' },
-          options: [
-            { value: '$__all' },
-            { value: 'value1' },
-            { value: 'value2' },
-          ],
+          options: [{ value: '$__all' }, { value: 'value1' }, { value: 'value2' }],
         },
       ]);
     });
@@ -147,9 +139,7 @@ describe('templateSrv', function() {
 
   describe('lucene format', function() {
     it('should properly escape $test with lucene escape sequences', function() {
-      initTemplateSrv([
-        { type: 'query', name: 'test', current: { value: 'value/4' } },
-      ]);
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'value/4' } }]);
       var target = _templateSrv.replace('this:$test', {}, 'lucene');
       expect(target).toBe('this:value\\/4');
     });
@@ -203,9 +193,7 @@ describe('templateSrv', function() {
 
   describe('can check if variable exists', function() {
     beforeEach(function() {
-      initTemplateSrv([
-        { type: 'query', name: 'test', current: { value: 'oogle' } },
-      ]);
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
     });
 
     it('should return true if exists', function() {
@@ -216,9 +204,7 @@ describe('templateSrv', function() {
 
   describe('can hightlight variables in string', function() {
     beforeEach(function() {
-      initTemplateSrv([
-        { type: 'query', name: 'test', current: { value: 'oogle' } },
-      ]);
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'oogle' } }]);
     });
 
     it('should insert html', function() {
@@ -228,9 +214,7 @@ describe('templateSrv', function() {
 
     it('should insert html anywhere in string', function() {
       var result = _templateSrv.highlightVariablesAsHtml('this $test ok');
-      expect(result).toBe(
-        'this <span class="template-variable">$test</span> ok'
-      );
+      expect(result).toBe('this <span class="template-variable">$test</span> ok');
     });
 
     it('should ignore if variables does not exist', function() {
@@ -241,9 +225,7 @@ describe('templateSrv', function() {
 
   describe('updateTemplateData with simple value', function() {
     beforeEach(function() {
-      initTemplateSrv([
-        { type: 'query', name: 'test', current: { value: 'muuuu' } },
-      ]);
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: 'muuuu' } }]);
     });
 
     it('should set current value and update template data', function() {
@@ -275,9 +257,7 @@ describe('templateSrv', function() {
 
   describe('fillVariableValuesForUrl with multi value and scopedVars', function() {
     beforeEach(function() {
-      initTemplateSrv([
-        { type: 'query', name: 'test', current: { value: ['val1', 'val2'] } },
-      ]);
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: ['val1', 'val2'] } }]);
     });
 
     it('should set scoped value as url params', function() {
@@ -308,9 +288,7 @@ describe('templateSrv', function() {
     });
 
     it('should replace with text except for grafanaVariables', function() {
-      var target = _templateSrv.replaceWithText(
-        'Server: $server, period: $period'
-      );
+      var target = _templateSrv.replaceWithText('Server: $server, period: $period');
       expect(target).toBe('Server: All, period: 13m');
     });
   });

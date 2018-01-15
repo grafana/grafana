@@ -9,14 +9,7 @@ import { UnknownPanelCtrl } from 'app/plugins/panel/unknown/module';
 import { DashboardRowCtrl } from './row_ctrl';
 
 /** @ngInject **/
-function pluginDirectiveLoader(
-  $compile,
-  datasourceSrv,
-  $rootScope,
-  $q,
-  $http,
-  $templateCache
-) {
+function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $templateCache) {
   function getTemplate(component) {
     if (component.template) {
       return $q.when(component.template);
@@ -42,10 +35,7 @@ function pluginDirectiveLoader(
 
   function getPluginComponentDirective(options) {
     // handle relative template urls for plugin templates
-    options.Component.templateUrl = relativeTemplateUrlToAbs(
-      options.Component.templateUrl,
-      options.baseUrl
-    );
+    options.Component.templateUrl = relativeTemplateUrlToAbs(options.Component.templateUrl, options.baseUrl);
 
     return function() {
       return {
@@ -91,9 +81,7 @@ function pluginDirectiveLoader(
     let panelInfo = config.panels[scope.panel.type];
     var panelCtrlPromise = Promise.resolve(UnknownPanelCtrl);
     if (panelInfo) {
-      panelCtrlPromise = importPluginModule(panelInfo.module).then(function(
-        panelModule
-      ) {
+      panelCtrlPromise = importPluginModule(panelInfo.module).then(function(panelModule) {
         return panelModule.PanelCtrl;
       });
     }
@@ -112,10 +100,7 @@ function pluginDirectiveLoader(
       }
 
       if (panelInfo) {
-        PanelCtrl.templateUrl = relativeTemplateUrlToAbs(
-          PanelCtrl.templateUrl,
-          panelInfo.baseUrl
-        );
+        PanelCtrl.templateUrl = relativeTemplateUrlToAbs(PanelCtrl.templateUrl, panelInfo.baseUrl);
       }
 
       PanelCtrl.templatePromise = getTemplate(PanelCtrl).then(template => {
@@ -171,13 +156,10 @@ function pluginDirectiveLoader(
       }
       // Annotations
       case 'annotations-query-ctrl': {
-        return importPluginModule(
-          scope.ctrl.currentDatasource.meta.module
-        ).then(function(dsModule) {
+        return importPluginModule(scope.ctrl.currentDatasource.meta.module).then(function(dsModule) {
           return {
             baseUrl: scope.ctrl.currentDatasource.meta.baseUrl,
-            name:
-              'annotations-query-ctrl-' + scope.ctrl.currentDatasource.meta.id,
+            name: 'annotations-query-ctrl-' + scope.ctrl.currentDatasource.meta.id,
             bindings: { annotation: '=', datasource: '=' },
             attrs: {
               annotation: 'ctrl.currentAnnotation',
@@ -269,8 +251,7 @@ function pluginDirectiveLoader(
 
     if (!componentInfo.Component) {
       throw {
-        message:
-          'Failed to find exported plugin component for ' + componentInfo.name,
+        message: 'Failed to find exported plugin component for ' + componentInfo.name,
       };
     }
 
@@ -292,10 +273,7 @@ function pluginDirectiveLoader(
           registerPluginComponent(scope, elem, attrs, componentInfo);
         })
         .catch(err => {
-          $rootScope.appEvent('alert-error', [
-            'Plugin Error',
-            err.message || err,
-          ]);
+          $rootScope.appEvent('alert-error', ['Plugin Error', err.message || err]);
           console.log('Plugin component error', err);
         });
     },

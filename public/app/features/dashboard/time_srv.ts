@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import moment from 'moment';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
@@ -16,13 +14,7 @@ class TimeSrv {
   private autoRefreshBlocked: boolean;
 
   /** @ngInject **/
-  constructor(
-    private $rootScope,
-    private $timeout,
-    private $location,
-    private timer,
-    private contextSrv
-  ) {
+  constructor(private $rootScope, private $timeout, private $location, private timer, private contextSrv) {
     // default time
     this.time = { from: '6h', to: 'now' };
 
@@ -115,10 +107,7 @@ class TimeSrv {
   }
 
   private timeHasChangedSinceLoad() {
-    return (
-      this.timeAtLoad.from !== this.time.from ||
-      this.timeAtLoad.to !== this.time.to
-    );
+    return this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to;
   }
 
   setAutoRefresh(interval) {
@@ -209,9 +198,7 @@ class TimeSrv {
   timeRange() {
     // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)
     var raw = {
-      from: moment.isMoment(this.time.from)
-        ? moment(this.time.from)
-        : this.time.from,
+      from: moment.isMoment(this.time.from) ? moment(this.time.from) : this.time.from,
       to: moment.isMoment(this.time.to) ? moment(this.time.to) : this.time.to,
     };
 

@@ -27,11 +27,7 @@ function renderTagCondition(tag, index) {
 export class InfluxQueryBuilder {
   constructor(private target, private database?) {}
 
-  buildExploreQuery(
-    type: string,
-    withKey?: string,
-    withMeasurementFilter?: string
-  ) {
+  buildExploreQuery(type: string, withKey?: string, withMeasurementFilter?: string) {
     var query;
     var measurement;
     var policy;

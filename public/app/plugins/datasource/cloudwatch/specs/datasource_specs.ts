@@ -1,11 +1,5 @@
 import '../datasource';
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import helpers from 'test/specs/helpers';
 import CloudWatchDatasource from '../datasource';
 
@@ -61,11 +55,7 @@ describe('CloudWatchDatasource', function() {
           series: [
             {
               name: 'CPUUtilization_Average',
-              points: [
-                [1, 1483228800000],
-                [2, 1483229100000],
-                [5, 1483229700000],
-              ],
+              points: [[1, 1483228800000], [2, 1483229100000], [5, 1483229700000]],
               tags: {
                 InstanceId: 'i-12345678',
               },
@@ -128,9 +118,7 @@ describe('CloudWatchDatasource', function() {
     it('should return series list', function(done) {
       ctx.ds.query(query).then(function(result) {
         expect(result.data[0].target).to.be(response.results.A.series[0].name);
-        expect(result.data[0].datapoints[0][0]).to.be(
-          response.results.A.series[0].points[0][0]
-        );
+        expect(result.data[0].datapoints[0][0]).to.be(response.results.A.series[0].points[0][0]);
         done();
       });
       ctx.$rootScope.$apply();
@@ -148,10 +136,7 @@ describe('CloudWatchDatasource', function() {
           },
         ],
         replace: function(target, scopedVars) {
-          if (
-            target === '$instance_id' &&
-            scopedVars['instance_id']['text'] === 'i-34567890'
-          ) {
+          if (target === '$instance_id' && scopedVars['instance_id']['text'] === 'i-34567890') {
             return 'i-34567890';
           } else {
             return '';
@@ -196,9 +181,7 @@ describe('CloudWatchDatasource', function() {
     });
 
     it('should return the specified region if specified', function() {
-      expect(ctx.ds.getActualRegion('some-fake-region-1')).to.be(
-        'some-fake-region-1'
-      );
+      expect(ctx.ds.getActualRegion('some-fake-region-1')).to.be('some-fake-region-1');
     });
 
     var requestParams;
@@ -228,9 +211,7 @@ describe('CloudWatchDatasource', function() {
       };
 
       ctx.ds.query(query).then(function(result) {
-        expect(requestParams.queries[0].region).to.be(
-          instanceSettings.jsonData.defaultRegion
-        );
+        expect(requestParams.queries[0].region).to.be(instanceSettings.jsonData.defaultRegion);
         done();
       });
       ctx.$rootScope.$apply();
@@ -265,11 +246,7 @@ describe('CloudWatchDatasource', function() {
           series: [
             {
               name: 'TargetResponseTime_p90.00',
-              points: [
-                [1, 1483228800000],
-                [2, 1483229100000],
-                [5, 1483229700000],
-              ],
+              points: [[1, 1483228800000], [2, 1483229100000], [5, 1483229700000]],
               tags: {
                 LoadBalancer: 'lb',
                 TargetGroup: 'tg',
@@ -289,9 +266,7 @@ describe('CloudWatchDatasource', function() {
     it('should return series list', function(done) {
       ctx.ds.query(query).then(function(result) {
         expect(result.data[0].target).to.be(response.results.A.series[0].name);
-        expect(result.data[0].datapoints[0][0]).to.be(
-          response.results.A.series[0].points[0][0]
-        );
+        expect(result.data[0].datapoints[0][0]).to.be(response.results.A.series[0].points[0][0]);
         done();
       });
       ctx.$rootScope.$apply();
@@ -391,47 +366,41 @@ describe('CloudWatchDatasource', function() {
     });
   });
 
-  describeMetricFindQuery(
-    'dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)',
-    scenario => {
-      scenario.setup(() => {
-        scenario.requestResponse = {
-          results: {
-            metricFindQuery: {
-              tables: [{ rows: [['i-12345678', 'i-12345678']] }],
-            },
+  describeMetricFindQuery('dimension_values(us-east-1,AWS/EC2,CPUUtilization,InstanceId)', scenario => {
+    scenario.setup(() => {
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [{ rows: [['i-12345678', 'i-12345678']] }],
           },
-        };
-      });
+        },
+      };
+    });
 
-      it('should call __ListMetrics and return result', () => {
-        expect(scenario.result[0].text).to.contain('i-12345678');
-        expect(scenario.request.queries[0].type).to.be('metricFindQuery');
-        expect(scenario.request.queries[0].subtype).to.be('dimension_values');
-      });
-    }
-  );
+    it('should call __ListMetrics and return result', () => {
+      expect(scenario.result[0].text).to.contain('i-12345678');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('dimension_values');
+    });
+  });
 
-  describeMetricFindQuery(
-    'dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)',
-    scenario => {
-      scenario.setup(() => {
-        scenario.requestResponse = {
-          results: {
-            metricFindQuery: {
-              tables: [{ rows: [['i-12345678', 'i-12345678']] }],
-            },
+  describeMetricFindQuery('dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)', scenario => {
+    scenario.setup(() => {
+      scenario.requestResponse = {
+        results: {
+          metricFindQuery: {
+            tables: [{ rows: [['i-12345678', 'i-12345678']] }],
           },
-        };
-      });
+        },
+      };
+    });
 
-      it('should call __ListMetrics and return result', () => {
-        expect(scenario.result[0].text).to.contain('i-12345678');
-        expect(scenario.request.queries[0].type).to.be('metricFindQuery');
-        expect(scenario.request.queries[0].subtype).to.be('dimension_values');
-      });
-    }
-  );
+    it('should call __ListMetrics and return result', () => {
+      expect(scenario.result[0].text).to.contain('i-12345678');
+      expect(scenario.request.queries[0].type).to.be('metricFindQuery');
+      expect(scenario.request.queries[0].subtype).to.be('dimension_values');
+    });
+  });
 
   it('should caclculate the correct period', function() {
     var hourSec = 60 * 60;

@@ -1,6 +1,4 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import coreModule from "app/core/core_module";
+import coreModule from 'app/core/core_module';
 
 export class ThresholdFormCtrl {
   panelCtrl: any;
@@ -15,7 +13,7 @@ export class ThresholdFormCtrl {
       this.disabled = true;
     }
 
-    var unbindDestroy = $scope.$on("$destroy", () => {
+    var unbindDestroy = $scope.$on('$destroy', () => {
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
       unbindDestroy();
@@ -27,10 +25,10 @@ export class ThresholdFormCtrl {
   addThreshold() {
     this.panel.thresholds.push({
       value: undefined,
-      colorMode: "critical",
-      op: "gt",
+      colorMode: 'critical',
+      op: 'gt',
       fill: true,
-      line: true
+      line: true,
     });
     this.panelCtrl.render();
   }
@@ -129,15 +127,15 @@ var template = `
 </div>
 `;
 
-coreModule.directive("graphThresholdForm", function() {
+coreModule.directive('graphThresholdForm', function() {
   return {
-    restrict: "E",
+    restrict: 'E',
     template: template,
     controller: ThresholdFormCtrl,
     bindToController: true,
-    controllerAs: "ctrl",
+    controllerAs: 'ctrl',
     scope: {
-      panelCtrl: "="
-    }
+      panelCtrl: '=',
+    },
   };
 });

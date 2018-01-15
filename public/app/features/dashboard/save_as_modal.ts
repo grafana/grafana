@@ -52,7 +52,7 @@ export class SaveDashboardAsModalCtrl {
     this.clone.title += ' Copy';
     this.clone.editable = true;
     this.clone.hideControls = false;
-    this.folderId = dashboard.folderId;
+    this.folderId = dashboard.meta.folderId;
 
     // remove alerts if source dashboard is already persisted
     // do not want to create alert dupes

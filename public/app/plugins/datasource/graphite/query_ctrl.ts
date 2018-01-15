@@ -62,10 +62,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   checkOtherSegments(fromIndex) {
-    if (
-      this.queryModel.segments.length === 1 &&
-      this.queryModel.segments[0].type === 'series-ref'
-    ) {
+    if (this.queryModel.segments.length === 1 && this.queryModel.segments[0].type === 'series-ref') {
       return;
     }
 
@@ -84,10 +81,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       .then(segments => {
         if (segments.length === 0) {
           if (path !== '') {
-            this.queryModel.segments = this.queryModel.segments.splice(
-              0,
-              fromIndex
-            );
+            this.queryModel.segments = this.queryModel.segments.splice(0, fromIndex);
             this.segments = this.segments.splice(0, fromIndex);
             this.addSelectMetricSegment();
           }
@@ -111,8 +105,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   getAltSegments(index) {
-    var query =
-      index === 0 ? '*' : this.queryModel.getSegmentPathUpTo(index) + '.*';
+    var query = index === 0 ? '*' : this.queryModel.getSegmentPathUpTo(index) + '.*';
     var options = {
       range: this.panelCtrl.range,
       requestId: 'get-alt-segments',
@@ -193,10 +186,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.error = null;
     this.queryModel.updateSegmentValue(segment, segmentIndex);
 
-    if (
-      this.queryModel.functions.length > 0 &&
-      this.queryModel.functions[0].def.fake
-    ) {
+    if (this.queryModel.functions.length > 0 && this.queryModel.functions[0].def.fake) {
       this.queryModel.functions = [];
     }
 
@@ -317,13 +307,11 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
   getTags(index, tagPrefix) {
     let tagExpressions = this.queryModel.renderTagExpressions(index);
-    return this.datasource
-      .getTagsAutoComplete(tagExpressions, tagPrefix)
-      .then(values => {
-        let altTags = _.map(values, 'text');
-        altTags.splice(0, 0, this.removeTagValue);
-        return mapToDropdownOptions(altTags);
-      });
+    return this.datasource.getTagsAutoComplete(tagExpressions, tagPrefix).then(values => {
+      let altTags = _.map(values, 'text');
+      altTags.splice(0, 0, this.removeTagValue);
+      return mapToDropdownOptions(altTags);
+    });
   }
 
   getTagsAsSegments() {
@@ -354,12 +342,10 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   getTagValues(tag, index, valuePrefix) {
     let tagExpressions = this.queryModel.renderTagExpressions(index);
     let tagKey = tag.key;
-    return this.datasource
-      .getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix)
-      .then(values => {
-        let altValues = _.map(values, 'text');
-        return mapToDropdownOptions(altValues);
-      });
+    return this.datasource.getTagValuesAutoComplete(tagExpressions, tagKey, valuePrefix).then(values => {
+      let altValues = _.map(values, 'text');
+      return mapToDropdownOptions(altValues);
+    });
   }
 
   tagChanged(tag, tagIndex) {

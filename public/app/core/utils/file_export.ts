@@ -4,31 +4,17 @@ import { saveAs } from 'file-saver';
 
 const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DDTHH:mm:ssZ';
 
-export function exportSeriesListToCsv(
-  seriesList,
-  dateTimeFormat = DEFAULT_DATETIME_FORMAT,
-  excel = false
-) {
+export function exportSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
   var text = (excel ? 'sep=;\n' : '') + 'Series;Time;Value\n';
   _.each(seriesList, function(series) {
     _.each(series.datapoints, function(dp) {
-      text +=
-        series.alias +
-        ';' +
-        moment(dp[1]).format(dateTimeFormat) +
-        ';' +
-        dp[0] +
-        '\n';
+      text += series.alias + ';' + moment(dp[1]).format(dateTimeFormat) + ';' + dp[0] + '\n';
     });
   });
   saveSaveBlob(text, 'grafana_data_export.csv');
 }
 
-export function exportSeriesListToCsvColumns(
-  seriesList,
-  dateTimeFormat = DEFAULT_DATETIME_FORMAT,
-  excel = false
-) {
+export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT, excel = false) {
   var text = (excel ? 'sep=;\n' : '') + 'Time;';
   // add header
   _.each(seriesList, function(series) {

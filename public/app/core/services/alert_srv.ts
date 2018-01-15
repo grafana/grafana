@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
@@ -38,15 +36,9 @@ export class AlertSrv {
       this.$rootScope
     );
 
-    appEvents.on('alert-warning', options =>
-      this.set(options[0], options[1], 'warning', 5000)
-    );
-    appEvents.on('alert-success', options =>
-      this.set(options[0], options[1], 'success', 3000)
-    );
-    appEvents.on('alert-error', options =>
-      this.set(options[0], options[1], 'error', 7000)
-    );
+    appEvents.on('alert-warning', options => this.set(options[0], options[1], 'warning', 5000));
+    appEvents.on('alert-success', options => this.set(options[0], options[1], 'success', 3000));
+    appEvents.on('alert-error', options => this.set(options[0], options[1], 'error', 7000));
     appEvents.on('confirm-modal', this.showConfirmModal.bind(this));
   }
 
@@ -114,8 +106,7 @@ export class AlertSrv {
     };
 
     scope.updateConfirmText = function(value) {
-      scope.confirmTextValid =
-        payload.confirmText.toLowerCase() === value.toLowerCase();
+      scope.confirmTextValid = payload.confirmText.toLowerCase() === value.toLowerCase();
     };
 
     scope.title = payload.title;

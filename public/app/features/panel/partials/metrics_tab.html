@@ -92,7 +92,7 @@
 			<button class="btn btn-secondary gf-form-btn" ng-click="ctrl.addQuery()" ng-hide="ctrl.datasourceInstance.meta.mixed">
 				Add Query
 			</button>
-			<div class="dropdown" ng-if="ctrl.current.meta.mixed">
+			<div class="dropdown" ng-if="ctrl.datasourceInstance.meta.mixed">
 				<gf-form-dropdown model="ctrl.addQueryDropdown" get-options="ctrl.getOptions(false)" on-change="ctrl.addMixedQuery($option)">
 				</gf-form-dropdown>
 			</div>

@@ -26,13 +26,11 @@ export class UserPickerCtrl {
 
   searchUsers(query: string) {
     return Promise.resolve(
-      this.backendSrv
-        .get('/api/users/search?perpage=10&page=1&query=' + query)
-        .then(result => {
-          return _.map(result.users, user => {
-            return { text: user.login + ' -  ' + user.email, value: user };
-          });
-        })
+      this.backendSrv.get('/api/users/search?perpage=10&page=1&query=' + query).then(result => {
+        return _.map(result.users, user => {
+          return { text: user.login + ' -  ' + user.email, value: user };
+        });
+      })
     );
   }
 

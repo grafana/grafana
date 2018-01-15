@@ -9,11 +9,7 @@ export class FolderPermissionsCtrl {
     if (this.$routeParams.folderId && this.$routeParams.slug) {
       this.folderId = $routeParams.folderId;
 
-      new FolderPageLoader(this.backendSrv, this.$routeParams).load(
-        this,
-        this.folderId,
-        'manage-folder-permissions'
-      );
+      new FolderPageLoader(this.backendSrv, this.$routeParams).load(this, this.folderId, 'manage-folder-permissions');
     }
   }
 }

@@ -118,10 +118,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
 
       ctrl.events.on('render', () => {
         if (transparentLastState !== ctrl.panel.transparent) {
-          panelContainer.toggleClass(
-            'panel-transparent',
-            ctrl.panel.transparent === true
-          );
+          panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
           transparentLastState = ctrl.panel.transparent;
         }
 
@@ -137,13 +134,8 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
             panelContainer.removeClass('panel-alert-state--' + lastAlertState);
           }
 
-          if (
-            ctrl.alertState.state === 'ok' ||
-            ctrl.alertState.state === 'alerting'
-          ) {
-            panelContainer.addClass(
-              'panel-alert-state--' + ctrl.alertState.state
-            );
+          if (ctrl.alertState.state === 'ok' || ctrl.alertState.state === 'alerting') {
+            panelContainer.addClass('panel-alert-state--' + ctrl.alertState.state);
           }
 
           lastAlertState = ctrl.alertState.state;
@@ -155,8 +147,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
 
       function updatePanelCornerInfo() {
         var cornerMode = ctrl.getInfoMode();
-        cornerInfoElem[0].className =
-          'panel-info-corner panel-info-corner--' + cornerMode;
+        cornerInfoElem[0].className = 'panel-info-corner panel-info-corner--' + cornerMode;
 
         if (cornerMode) {
           if (infoDrop) {
@@ -186,10 +177,7 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
         }
       }
 
-      scope.$watchGroup(
-        ['ctrl.error', 'ctrl.panel.description'],
-        updatePanelCornerInfo
-      );
+      scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], updatePanelCornerInfo);
       scope.$watchCollection('ctrl.panel.links', updatePanelCornerInfo);
 
       cornerInfoElem.on('click', function() {

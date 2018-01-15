@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import { GrafanaStreamDS } from './datasource';
 import { QueryCtrl } from 'app/plugins/sdk';
 

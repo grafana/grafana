@@ -120,8 +120,7 @@ export class DashboardExporter {
         // templatize constants
         for (let variable of saveModel.templating.list) {
           if (variable.type === 'constant') {
-            var refName =
-              'VAR_' + variable.name.replace(' ', '_').toUpperCase();
+            var refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
             inputs.push({
               name: refName,
               type: 'constant',

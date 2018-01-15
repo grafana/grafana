@@ -56,8 +56,7 @@ export class DashboardSrv {
       this.$rootScope.appEvent('confirm-modal', {
         title: 'Plugin Dashboard',
         text: err.data.message,
-        text2:
-          'Your changes will be lost when you update the plugin. Use Save As to create custom version.',
+        text2: 'Your changes will be lost when you update the plugin. Use Save As to create custom version.',
         yesText: 'Overwrite',
         icon: 'fa-warning',
         altActionText: 'Save As',
@@ -81,9 +80,14 @@ export class DashboardSrv {
 
     this.$rootScope.appEvent('dashboard-saved', this.dash);
     this.$rootScope.appEvent('alert-success', ['Dashboard saved']);
+
+    return this.dash;
   }
 
   save(clone, options) {
+    options = options || {};
+    options.folderId = this.dash.meta.folderId;
+
     return this.backendSrv
       .saveDashboard(clone, options)
       .then(this.postSave.bind(this, clone))
@@ -112,16 +116,14 @@ export class DashboardSrv {
 
   showSaveAsModal() {
     this.$rootScope.appEvent('show-modal', {
-      templateHtml:
-        '<save-dashboard-as-modal dismiss="dismiss()"></save-dashboard-as-modal>',
+      templateHtml: '<save-dashboard-as-modal dismiss="dismiss()"></save-dashboard-as-modal>',
       modalClass: 'modal--narrow',
     });
   }
 
   showSaveModal() {
     this.$rootScope.appEvent('show-modal', {
-      templateHtml:
-        '<save-dashboard-modal dismiss="dismiss()"></save-dashboard-modal>',
+      templateHtml: '<save-dashboard-modal dismiss="dismiss()"></save-dashboard-modal>',
       modalClass: 'modal--narrow',
     });
   }
@@ -130,17 +132,13 @@ export class DashboardSrv {
     let promise;
 
     if (isStarred) {
-      promise = this.backendSrv
-        .delete('/api/user/stars/dashboard/' + dashboardId)
-        .then(() => {
-          return false;
-        });
+      promise = this.backendSrv.delete('/api/user/stars/dashboard/' + dashboardId).then(() => {
+        return false;
+      });
     } else {
-      promise = this.backendSrv
-        .post('/api/user/stars/dashboard/' + dashboardId)
-        .then(() => {
-          return true;
-        });
+      promise = this.backendSrv.post('/api/user/stars/dashboard/' + dashboardId).then(() => {
+        return true;
+      });
     }
 
     return promise.then(res => {

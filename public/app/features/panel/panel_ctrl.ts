@@ -4,7 +4,8 @@ import $ from 'jquery';
 import { appEvents, profiler } from 'app/core/core';
 import { PanelModel } from 'app/features/dashboard/panel_model';
 import Remarkable from 'remarkable';
-import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
+import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, LS_PANEL_COPY_KEY } from 'app/core/constants';
+import store from 'app/core/store';
 
 const TITLE_HEIGHT = 27;
 const PANEL_BORDER = 2;
@@ -190,11 +191,19 @@ export class PanelCtrl {
         click: 'ctrl.duplicate()',
         role: 'Editor',
       });
+
+      menu.push({
+        text: 'Add to Panel List',
+        click: 'ctrl.addToPanelList()',
+        role: 'Editor',
+      });
     }
+
     menu.push({
       text: 'Panel JSON',
       click: 'ctrl.editPanelJson(); dismiss();',
     });
+
     this.events.emit('init-panel-actions', menu);
     return menu;
   }
@@ -210,9 +219,7 @@ export class PanelCtrl {
       var fullscreenHeight = Math.floor(docHeight * 0.8);
       this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
     } else {
-      this.containerHeight =
-        this.panel.gridPos.h * GRID_CELL_HEIGHT +
-        (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
+      this.containerHeight = this.panel.gridPos.h * GRID_CELL_HEIGHT + (this.panel.gridPos.h - 1) * GRID_CELL_VMARGIN;
     }
 
     if (this.panel.soloMode) {
@@ -240,8 +247,7 @@ export class PanelCtrl {
       var text2, confirmText;
 
       if (this.panel.alert) {
-        text2 =
-          'Panel includes an alert rule, removing panel will also remove alert rule';
+        text2 = 'Panel includes an alert rule, removing panel will also remove alert rule';
         confirmText = 'YES';
       }
 
@@ -266,11 +272,17 @@ export class PanelCtrl {
     let editScope = this.$scope.$root.$new();
     editScope.object = this.panel.getSaveModel();
     editScope.updateHandler = this.replacePanel.bind(this);
+    editScope.enableCopy = true;
 
     this.publishAppEvent('show-modal', {
       src: 'public/app/partials/edit_json.html',
       scope: editScope,
     });
+  }
+
+  addToPanelList() {
+    store.set(LS_PANEL_COPY_KEY, JSON.stringify(this.panel.getSaveModel()));
+    appEvents.emit('alert-success', ['Panel temporarily added to panel list']);
   }
 
   replacePanel(newPanel, oldPanel) {
@@ -323,10 +335,7 @@ export class PanelCtrl {
 
     var linkSrv = this.$injector.get('linkSrv');
     var templateSrv = this.$injector.get('templateSrv');
-    var interpolatedMarkdown = templateSrv.replace(
-      markdown,
-      this.panel.scopedVars
-    );
+    var interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
     var html = '<div class="markdown-html">';
 
     html += new Remarkable().render(interpolatedMarkdown);

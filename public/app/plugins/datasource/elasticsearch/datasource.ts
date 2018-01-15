@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
 import moment from 'moment';
@@ -21,13 +19,7 @@ export class ElasticDatasource {
   indexPattern: IndexPattern;
 
   /** @ngInject */
-  constructor(
-    instanceSettings,
-    private $q,
-    private backendSrv,
-    private templateSrv,
-    private timeSrv
-  ) {
+  constructor(instanceSettings, private $q, private backendSrv, private templateSrv, private timeSrv) {
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.url = instanceSettings.url;
@@ -35,13 +27,9 @@ export class ElasticDatasource {
     this.index = instanceSettings.index;
     this.timeField = instanceSettings.jsonData.timeField;
     this.esVersion = instanceSettings.jsonData.esVersion;
-    this.indexPattern = new IndexPattern(
-      instanceSettings.index,
-      instanceSettings.jsonData.interval
-    );
+    this.indexPattern = new IndexPattern(instanceSettings.index, instanceSettings.jsonData.interval);
     this.interval = instanceSettings.jsonData.timeInterval;
-    this.maxConcurrentShardRequests =
-      instanceSettings.jsonData.maxConcurrentShardRequests;
+    this.maxConcurrentShardRequests = instanceSettings.jsonData.maxConcurrentShardRequests;
     this.queryBuilder = new ElasticQueryBuilder({
       timeField: this.timeField,
       esVersion: this.esVersion,
@@ -69,20 +57,14 @@ export class ElasticDatasource {
 
   private get(url) {
     var range = this.timeSrv.timeRange();
-    var index_list = this.indexPattern.getIndexList(
-      range.from.valueOf(),
-      range.to.valueOf()
-    );
+    var index_list = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
     if (_.isArray(index_list) && index_list.length) {
       return this.request('GET', index_list[0] + url).then(function(results) {
         results.data.$$config = results.config;
         return results.data;
       });
     } else {
-      return this.request(
-        'GET',
-        this.indexPattern.getIndexForToday() + url
-      ).then(function(results) {
+      return this.request('GET', this.indexPattern.getIndexForToday() + url).then(function(results) {
         results.data.$$config = results.config;
         return results.data;
       });
@@ -154,10 +136,7 @@ export class ElasticDatasource {
     if (annotation.index) {
       header.index = annotation.index;
     } else {
-      header.index = this.indexPattern.getIndexList(
-        options.range.from,
-        options.range.to
-      );
+      header.index = this.indexPattern.getIndexList(options.range.from, options.range.to);
     }
 
     var payload = angular.toJson(header) + '\n' + angular.toJson(data) + '\n';
@@ -256,9 +235,7 @@ export class ElasticDatasource {
       index: this.indexPattern.getIndexList(timeFrom, timeTo),
     };
     if (this.esVersion >= 56) {
-      query_header[
-        'max_concurrent_shard_requests'
-      ] = this.maxConcurrentShardRequests;
+      query_header['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
     }
     return angular.toJson(query_header);
   }
@@ -277,23 +254,12 @@ export class ElasticDatasource {
         continue;
       }
 
-      var queryString = this.templateSrv.replace(
-        target.query || '*',
-        options.scopedVars,
-        'lucene'
-      );
+      var queryString = this.templateSrv.replace(target.query || '*', options.scopedVars, 'lucene');
       var queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
       var esQuery = angular.toJson(queryObj);
 
-      var searchType =
-        queryObj.size === 0 && this.esVersion < 5
-          ? 'count'
-          : 'query_then_fetch';
-      var header = this.getQueryHeader(
-        searchType,
-        options.range.from,
-        options.range.to
-      );
+      var searchType = queryObj.size === 0 && this.esVersion < 5 ? 'count' : 'query_then_fetch';
+      var header = this.getQueryHeader(searchType, options.range.from, options.range.to);
       payload += header + '\n';
 
       payload += esQuery + '\n';
@@ -402,21 +368,19 @@ export class ElasticDatasource {
     esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
     esQuery = header + '\n' + esQuery + '\n';
 
-    return this.post('_msearch?search_type=' + searchType, esQuery).then(
-      function(res) {
-        if (!res.responses[0].aggregations) {
-          return [];
-        }
-
-        var buckets = res.responses[0].aggregations['1'].buckets;
-        return _.map(buckets, function(bucket) {
-          return {
-            text: bucket.key_as_string || bucket.key,
-            value: bucket.key,
-          };
-        });
+    return this.post('_msearch?search_type=' + searchType, esQuery).then(function(res) {
+      if (!res.responses[0].aggregations) {
+        return [];
       }
-    );
+
+      var buckets = res.responses[0].aggregations['1'].buckets;
+      return _.map(buckets, function(bucket) {
+        return {
+          text: bucket.key_as_string || bucket.key,
+          value: bucket.key,
+        };
+      });
+    });
   }
 
   metricFindQuery(query) {

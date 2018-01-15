@@ -1,5 +1,5 @@
-import _ from "lodash";
-import TimeSeries from "app/core/time_series2";
+import _ from 'lodash';
+import TimeSeries from 'app/core/time_series2';
 
 /**
  * Convert series into array of series values.
@@ -29,10 +29,7 @@ export function getSeriesValues(dataList: TimeSeries[]): number[] {
  * @param values
  * @param bucketSize
  */
-export function convertValuesToHistogram(
-  values: number[],
-  bucketSize: number
-): any[] {
+export function convertValuesToHistogram(values: number[], bucketSize: number): any[] {
   let histogram = {};
 
   for (let i = 0; i < values.length; i++) {

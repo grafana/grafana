@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 import { QueryCtrl } from 'app/plugins/sdk';
@@ -26,16 +24,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     super($scope, $injector);
 
     this.errors = this.validateTarget();
-    this.aggregators = [
-      'avg',
-      'sum',
-      'min',
-      'max',
-      'dev',
-      'zimsum',
-      'mimmin',
-      'mimmax',
-    ];
+    this.aggregators = ['avg', 'sum', 'min', 'max', 'dev', 'zimsum', 'mimmin', 'mimmax'];
     this.fillPolicies = ['none', 'nan', 'null', 'zero'];
     this.filterTypes = [
       'wildcard',
@@ -106,8 +95,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
 
   addTag() {
     if (this.target.filters && this.target.filters.length > 0) {
-      this.errors.tags =
-        'Please remove filters to use tags, tags and filters are mutually exclusive.';
+      this.errors.tags = 'Please remove filters to use tags, tags and filters are mutually exclusive.';
     }
 
     if (!this.addTagMode) {
@@ -150,8 +138,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
 
   addFilter() {
     if (this.target.tags && _.size(this.target.tags) > 0) {
-      this.errors.filters =
-        'Please remove tags to use filters, tags and filters are mutually exclusive.';
+      this.errors.filters = 'Please remove tags to use filters, tags and filters are mutually exclusive.';
     }
 
     if (!this.addFilterMode) {
@@ -218,18 +205,14 @@ export class OpenTsQueryCtrl extends QueryCtrl {
         if (this.target.downsampleInterval) {
           kbn.describe_interval(this.target.downsampleInterval);
         } else {
-          errs.downsampleInterval =
-            "You must supply a downsample interval (e.g. '1m' or '1h').";
+          errs.downsampleInterval = "You must supply a downsample interval (e.g. '1m' or '1h').";
         }
       } catch (err) {
         errs.downsampleInterval = err.message;
       }
     }
 
-    if (
-      this.target.tags &&
-      _.has(this.target.tags, this.target.currentTagKey)
-    ) {
+    if (this.target.tags && _.has(this.target.tags, this.target.currentTagKey)) {
       errs.tags = "Duplicate tag key '" + this.target.currentTagKey + "'.";
     }
 

@@ -27,8 +27,8 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				userIds = append(userIds, userCmd.Result.Id)
 			}
 
-			group1 := m.CreateTeamCommand{Name: "group1 name"}
-			group2 := m.CreateTeamCommand{Name: "group2 name"}
+			group1 := m.CreateTeamCommand{Name: "group1 name", Email: "test1@test.com"}
+			group2 := m.CreateTeamCommand{Name: "group2 name", Email: "test2@test.com"}
 
 			err := CreateTeam(&group1)
 			So(err, ShouldBeNil)
@@ -43,6 +43,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 
 				team1 := query.Result.Teams[0]
 				So(team1.Name, ShouldEqual, "group1 name")
+				So(team1.Email, ShouldEqual, "test1@test.com")
 
 				err = AddTeamMember(&m.AddTeamMemberCommand{OrgId: 1, TeamId: team1.Id, UserId: userIds[0]})
 				So(err, ShouldBeNil)
@@ -76,6 +77,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 1)
 				So(query.Result[0].Name, ShouldEqual, "group2 name")
+				So(query.Result[0].Email, ShouldEqual, "test2@test.com")
 			})
 
 			Convey("Should be able to remove users from a group", func() {

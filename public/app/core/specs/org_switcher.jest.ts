@@ -25,8 +25,7 @@ describe('OrgSwitcher', () => {
 
       const orgSwitcherCtrl = new OrgSwitchCtrl(backendSrvStub);
 
-      orgSwitcherCtrl.getWindowLocationHref = () =>
-        'http://localhost:3000?orgId=1&from=now-3h&to=now';
+      orgSwitcherCtrl.getWindowLocationHref = () => 'http://localhost:3000?orgId=1&from=now-3h&to=now';
       orgSwitcherCtrl.setWindowLocationHref = href => (expectedHref = href);
 
       return orgSwitcherCtrl.setUsingOrg({ orgId: 2 });
@@ -37,9 +36,7 @@ describe('OrgSwitcher', () => {
     });
 
     it('should switch orgId in url', () => {
-      expect(expectedHref).toBe(
-        'http://localhost:3000?orgId=2&from=now-3h&to=now'
-      );
+      expect(expectedHref).toBe('http://localhost:3000?orgId=2&from=now-3h&to=now');
     });
   });
 });

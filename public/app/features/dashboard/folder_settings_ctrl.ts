@@ -8,40 +8,37 @@ export class FolderSettingsCtrl {
   canSave = false;
   dashboard: any;
   meta: any;
+  title: string;
+  hasChanged: boolean;
 
   /** @ngInject */
-  constructor(
-    private backendSrv,
-    navModelSrv,
-    private $routeParams,
-    private $location
-  ) {
+  constructor(private backendSrv, navModelSrv, private $routeParams, private $location) {
     if (this.$routeParams.folderId && this.$routeParams.slug) {
       this.folderId = $routeParams.folderId;
 
-      this.folderPageLoader = new FolderPageLoader(
-        this.backendSrv,
-        this.$routeParams
-      );
-      this.folderPageLoader
-        .load(this, this.folderId, 'manage-folder-settings')
-        .then(result => {
-          this.dashboard = result.dashboard;
-          this.meta = result.meta;
-          this.canSave = result.meta.canSave;
-        });
+      this.folderPageLoader = new FolderPageLoader(this.backendSrv, this.$routeParams);
+      this.folderPageLoader.load(this, this.folderId, 'manage-folder-settings').then(result => {
+        this.dashboard = result.dashboard;
+        this.meta = result.meta;
+        this.canSave = result.meta.canSave;
+        this.title = this.dashboard.title;
+      });
     }
   }
 
   save() {
+    this.titleChanged();
+
+    if (!this.hasChanged) {
+      return;
+    }
+
+    this.dashboard.title = this.title.trim();
+
     return this.backendSrv
       .saveDashboard(this.dashboard, { overwrite: false })
       .then(result => {
-        var folderUrl = this.folderPageLoader.createFolderUrl(
-          this.folderId,
-          this.meta.type,
-          result.slug
-        );
+        var folderUrl = this.folderPageLoader.createFolderUrl(this.folderId, this.meta.type, result.slug);
         if (folderUrl !== this.$location.path()) {
           this.$location.url(folderUrl + '/settings');
         }
@@ -50,6 +47,10 @@ export class FolderSettingsCtrl {
         appEvents.emit('alert-success', ['Folder saved']);
       })
       .catch(this.handleSaveFolderError);
+  }
+
+  titleChanged() {
+    this.hasChanged = this.dashboard.title.toLowerCase() !== this.title.trim().toLowerCase();
   }
 
   delete(evt) {
@@ -65,11 +66,8 @@ export class FolderSettingsCtrl {
       yesText: 'Delete',
       onConfirm: () => {
         return this.backendSrv.deleteDashboard(this.meta.slug).then(() => {
-          appEvents.emit('alert-success', [
-            'Folder Deleted',
-            `${this.dashboard.title} has been deleted`,
-          ]);
-          this.$location.url('/dashboards');
+          appEvents.emit('alert-success', ['Folder Deleted', `${this.dashboard.title} has been deleted`]);
+          this.$location.url('dashboards');
         });
       },
     });
@@ -94,9 +92,7 @@ export class FolderSettingsCtrl {
     if (err.data && err.data.status === 'name-exists') {
       err.isHandled = true;
 
-      appEvents.emit('alert-error', [
-        'A folder or dashboard with this name exists already.',
-      ]);
+      appEvents.emit('alert-error', ['A folder or dashboard with this name exists already.']);
     }
   }
 }

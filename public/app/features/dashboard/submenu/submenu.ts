@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
 
@@ -41,6 +39,4 @@ export function submenuDirective() {
   };
 }
 
-angular
-  .module('grafana.directives')
-  .directive('dashboardSubmenu', submenuDirective);
+angular.module('grafana.directives').directive('dashboardSubmenu', submenuDirective);

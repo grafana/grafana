@@ -394,10 +394,7 @@ export class DashboardMigrator {
     }
 
     // Add special "row" panels if even one row is collapsed, repeated or has visible title
-    const showRows = _.some(
-      old.rows,
-      row => row.collapse || row.showTitle || row.repeat
-    );
+    const showRows = _.some(old.rows, row => row.collapse || row.showTitle || row.repeat);
 
     for (let row of old.rows) {
       if (row.repeatIteration) {
@@ -433,9 +430,7 @@ export class DashboardMigrator {
       for (let panel of row.panels) {
         panel.span = panel.span || DEFAULT_PANEL_SPAN;
         const panelWidth = Math.floor(panel.span) * widthFactor;
-        const panelHeight = panel.height
-          ? getGridHeight(panel.height)
-          : rowGridHeight;
+        const panelHeight = panel.height ? getGridHeight(panel.height) : rowGridHeight;
 
         let panelPos = rowArea.getPanelPosition(panelHeight, panelWidth);
         yPos = rowArea.yPos;
@@ -539,11 +534,7 @@ class RowArea {
       }
     }
 
-    if (
-      startPlace !== undefined &&
-      endPlace !== undefined &&
-      endPlace - startPlace >= panelWidth - 1
-    ) {
+    if (startPlace !== undefined && endPlace !== undefined && endPlace - startPlace >= panelWidth - 1) {
       const yPos = _.max(this.area.slice(startPlace));
       place = {
         x: startPlace,

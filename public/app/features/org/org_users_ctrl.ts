@@ -23,8 +23,7 @@ export class OrgUsersCtrl {
     this.get();
     this.externalUserMngLinkUrl = config.externalUserMngLinkUrl;
     this.externalUserMngLinkName = config.externalUserMngLinkName;
-    this.canInvite =
-      !config.disableLoginForm && !config.externalUserMngLinkName;
+    this.canInvite = !config.disableLoginForm && !config.externalUserMngLinkName;
 
     // render external user management info markdown
     if (config.externalUserMngInfo) {
@@ -68,16 +67,12 @@ export class OrgUsersCtrl {
   }
 
   removeUserConfirmed(user) {
-    this.backendSrv
-      .delete('/api/org/users/' + user.userId)
-      .then(this.get.bind(this));
+    this.backendSrv.delete('/api/org/users/' + user.userId).then(this.get.bind(this));
   }
 
   revokeInvite(invite, evt) {
     evt.stopPropagation();
-    this.backendSrv
-      .patch('/api/org/invites/' + invite.code + '/revoke')
-      .then(this.get.bind(this));
+    this.backendSrv.patch('/api/org/invites/' + invite.code + '/revoke').then(this.get.bind(this));
   }
 
   copyInviteToClipboard(evt) {

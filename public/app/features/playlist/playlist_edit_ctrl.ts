@@ -17,13 +17,7 @@ export class PlaylistEditCtrl {
   isNew: boolean;
 
   /** @ngInject */
-  constructor(
-    private $scope,
-    private backendSrv,
-    private $location,
-    $route,
-    navModelSrv
-  ) {
+  constructor(private $scope, private backendSrv, private $location, $route, navModelSrv) {
     this.navModel = navModelSrv.getNav('dashboards', 'playlists', 0);
     this.isNew = $route.current.params.id;
 

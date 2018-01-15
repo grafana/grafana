@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -13,6 +14,10 @@ func GetTeamMembers(c *middleware.Context) Response {
 
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Failed to get Team Members", err)
+	}
+
+	for _, member := range query.Result {
+		member.AvatarUrl = dtos.GetGravatarUrl(member.Email)
 	}
 
 	return Json(200, query.Result)

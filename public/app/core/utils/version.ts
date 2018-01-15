@@ -20,11 +20,7 @@ export class SemVersion {
 
   isGtOrEq(version: string): boolean {
     let compared = new SemVersion(version);
-    return !(
-      this.major < compared.major ||
-      this.minor < compared.minor ||
-      this.patch < compared.patch
-    );
+    return !(this.major < compared.major || this.minor < compared.minor || this.patch < compared.patch);
   }
 
   isValid(): boolean {

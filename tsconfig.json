@@ -13,7 +13,7 @@
       "sourceMap": true,
       "noEmitOnError": false,
       "emitDecoratorMetadata": false,
-      "experimentalDecorators": false,
+      "experimentalDecorators": true,
       "noImplicitReturns": true,
       "noImplicitThis": false,
       "noImplicitUseStrict":false,

@@ -35,7 +35,6 @@ import { queryPartEditorDirective } from './components/query_part/query_part_edi
 import { formDropdownDirective } from './components/form_dropdown/form_dropdown';
 import 'app/core/controllers/all';
 import 'app/core/services/all';
-import 'app/core/routes/routes';
 import './filters/filters';
 import coreModule from './core_module';
 import appEvents from './app_events';

@@ -1,5 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 
@@ -14,11 +12,7 @@ export class PrefsControlCtrl {
     { value: 'browser', text: 'Local browser time' },
     { value: 'utc', text: 'UTC' },
   ];
-  themes: any = [
-    { value: '', text: 'Default' },
-    { value: 'dark', text: 'Dark' },
-    { value: 'light', text: 'Light' },
-  ];
+  themes: any = [{ value: '', text: 'Default' }, { value: 'dark', text: 'Dark' }, { value: 'light', text: 'Light' }];
 
   /** @ngInject **/
   constructor(private backendSrv, private $location) {}

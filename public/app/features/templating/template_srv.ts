@@ -2,10 +2,7 @@ import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 
 function luceneEscape(value) {
-  return value.replace(
-    /([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g,
-    '\\$1'
-  );
+  return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, '\\$1');
 }
 
 export class TemplateSrv {
@@ -32,10 +29,7 @@ export class TemplateSrv {
     for (var i = 0; i < this.variables.length; i++) {
       var variable = this.variables[i];
 
-      if (
-        !variable.current ||
-        (!variable.current.isNone && !variable.current.value)
-      ) {
+      if (!variable.current || (!variable.current.isNone && !variable.current.value)) {
         continue;
       }
 
@@ -207,9 +201,7 @@ export class TemplateSrv {
   }
 
   isAllValue(value) {
-    return (
-      value === '$__all' || (Array.isArray(value) && value[0] === '$__all')
-    );
+    return value === '$__all' || (Array.isArray(value) && value[0] === '$__all');
   }
 
   replaceWithText(target, scopedVars) {
@@ -233,9 +225,7 @@ export class TemplateSrv {
         return match;
       }
 
-      return (
-        this.grafanaVariables[variable.current.value] || variable.current.text
-      );
+      return this.grafanaVariables[variable.current.value] || variable.current.text;
     });
   }
 

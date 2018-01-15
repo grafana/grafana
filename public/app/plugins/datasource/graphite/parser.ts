@@ -100,12 +100,7 @@ Parser.prototype = {
   },
 
   metricExpression: function() {
-    if (
-      !this.match('templateStart') &&
-      !this.match('identifier') &&
-      !this.match('number') &&
-      !this.match('{')
-    ) {
+    if (!this.match('templateStart') && !this.match('identifier') && !this.match('number') && !this.match('{')) {
       return null;
     }
 
@@ -248,14 +243,10 @@ Parser.prototype = {
 
   matchToken: function(type, index) {
     var token = this.tokens[this.index + index];
-    return (
-      (token === undefined && type === '') || (token && token.type === type)
-    );
+    return (token === undefined && type === '') || (token && token.type === type);
   },
 
   match: function(token1, token2) {
-    return (
-      this.matchToken(token1, 0) && (!token2 || this.matchToken(token2, 1))
-    );
+    return this.matchToken(token1, 0) && (!token2 || this.matchToken(token2, 1));
   },
 };

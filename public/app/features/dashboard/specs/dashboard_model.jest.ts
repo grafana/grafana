@@ -49,6 +49,23 @@ describe('DashboardModel', function() {
       expect(keys[0]).toBe('annotations');
       expect(keys[1]).toBe('autoUpdate');
     });
+
+    it('should remove add panel panels', () => {
+      var model = new DashboardModel({});
+      model.addPanel({
+        type: 'add-panel',
+      });
+      model.addPanel({
+        type: 'graph',
+      });
+      model.addPanel({
+        type: 'add-panel',
+      });
+      var saveModel = model.getSaveModelClone();
+      var panels = saveModel.panels;
+
+      expect(panels.length).toBe(1);
+    });
   });
 
   describe('row and panel manipulation', function() {
@@ -216,15 +233,11 @@ describe('DashboardModel', function() {
     });
 
     it('Should format timestamp with second resolution even if second format is passed as parameter', function() {
-      expect(dashboard.formatDate(1234567890007, 'YYYY-MM-DD HH:mm:ss')).toBe(
-        '2009-02-13 23:31:30'
-      );
+      expect(dashboard.formatDate(1234567890007, 'YYYY-MM-DD HH:mm:ss')).toBe('2009-02-13 23:31:30');
     });
 
     it('Should format timestamp with millisecond resolution if format is passed as parameter', function() {
-      expect(
-        dashboard.formatDate(1234567890007, 'YYYY-MM-DD HH:mm:ss.SSS')
-      ).toBe('2009-02-13 23:31:30.007');
+      expect(dashboard.formatDate(1234567890007, 'YYYY-MM-DD HH:mm:ss.SSS')).toBe('2009-02-13 23:31:30.007');
     });
   });
 

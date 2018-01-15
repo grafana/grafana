@@ -1,10 +1,4 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  angularMocks,
-} from 'test/lib/common';
+import { describe, beforeEach, it, expect, angularMocks } from 'test/lib/common';
 import helpers from 'test/specs/helpers';
 import OpenTsDatasource from '../datasource';
 
@@ -71,27 +65,21 @@ describe('opentsdb', function() {
     });
 
     it('tag_values(cpu, test) should generate lookup query', function() {
-      ctx.ds
-        .metricFindQuery('tag_values(cpu, hostname, env=$env)')
-        .then(function(data) {
-          results = data;
-        });
+      ctx.ds.metricFindQuery('tag_values(cpu, hostname, env=$env)').then(function(data) {
+        results = data;
+      });
       ctx.$rootScope.$apply();
       expect(requestOptions.url).to.be('/api/search/lookup');
       expect(requestOptions.params.m).to.be('cpu{hostname=*,env=$env}');
     });
 
     it('tag_values(cpu, test) should generate lookup query', function() {
-      ctx.ds
-        .metricFindQuery('tag_values(cpu, hostname, env=$env, region=$region)')
-        .then(function(data) {
-          results = data;
-        });
+      ctx.ds.metricFindQuery('tag_values(cpu, hostname, env=$env, region=$region)').then(function(data) {
+        results = data;
+      });
       ctx.$rootScope.$apply();
       expect(requestOptions.url).to.be('/api/search/lookup');
-      expect(requestOptions.params.m).to.be(
-        'cpu{hostname=*,env=$env,region=$region}'
-      );
+      expect(requestOptions.params.m).to.be('cpu{hostname=*,env=$env,region=$region}');
     });
 
     it('suggest_tagk() should generate api suggest query', function() {

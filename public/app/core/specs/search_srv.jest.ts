@@ -35,10 +35,7 @@ describe('SearchSrv', () => {
       backendSrvMock.search = jest
         .fn()
         .mockReturnValueOnce(
-          Promise.resolve([
-            { id: 2, title: 'second but first' },
-            { id: 1, title: 'first but second' },
-          ])
+          Promise.resolve([{ id: 2, title: 'second but first' }, { id: 1, title: 'first but second' }])
         )
         .mockReturnValue(Promise.resolve([]));
 
@@ -64,14 +61,10 @@ describe('SearchSrv', () => {
       beforeEach(() => {
         backendSrvMock.search = jest
           .fn()
-          .mockReturnValueOnce(
-            Promise.resolve([{ id: 2, title: 'two' }, { id: 1, title: 'one' }])
-          )
+          .mockReturnValueOnce(Promise.resolve([{ id: 2, title: 'two' }, { id: 1, title: 'one' }]))
           .mockReturnValue(Promise.resolve([]));
 
-        impressionSrv.getDashboardOpened = jest
-          .fn()
-          .mockReturnValue([4, 5, 1, 2, 3]);
+        impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([4, 5, 1, 2, 3]);
 
         return searchSrv.search({ query: '' }).then(res => {
           results = res;
@@ -90,9 +83,7 @@ describe('SearchSrv', () => {
     let results;
 
     beforeEach(() => {
-      backendSrvMock.search = jest
-        .fn()
-        .mockReturnValue(Promise.resolve([{ id: 1, title: 'starred' }]));
+      backendSrvMock.search = jest.fn().mockReturnValue(Promise.resolve([{ id: 1, title: 'starred' }]));
 
       return searchSrv.search({ query: '' }).then(res => {
         results = res;
@@ -112,14 +103,9 @@ describe('SearchSrv', () => {
       backendSrvMock.search = jest
         .fn()
         .mockReturnValueOnce(
-          Promise.resolve([
-            { id: 1, title: 'starred and recent', isStarred: true },
-            { id: 2, title: 'recent' },
-          ])
+          Promise.resolve([{ id: 1, title: 'starred and recent', isStarred: true }, { id: 2, title: 'recent' }])
         )
-        .mockReturnValue(
-          Promise.resolve([{ id: 1, title: 'starred and recent' }])
-        );
+        .mockReturnValue(Promise.resolve([{ id: 1, title: 'starred and recent' }]));
 
       impressionSrv.getDashboardOpened = jest.fn().mockReturnValue([1, 2]);
       return searchSrv.search({ query: '' }).then(res => {

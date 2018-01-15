@@ -21,12 +21,7 @@ export default class InfluxDatasource {
   responseParser: any;
 
   /** @ngInject */
-  constructor(
-    instanceSettings,
-    private $q,
-    private backendSrv,
-    private templateSrv
-  ) {
+  constructor(instanceSettings, private $q, private backendSrv, private templateSrv) {
     this.type = 'influxdb';
     this.urls = _.map(instanceSettings.url.split(','), function(url) {
       return url.trim();
@@ -172,25 +167,17 @@ export default class InfluxDatasource {
   metricFindQuery(query) {
     var interpolated = this.templateSrv.replace(query, null, 'regex');
 
-    return this._seriesQuery(interpolated).then(
-      _.curry(this.responseParser.parse)(query)
-    );
+    return this._seriesQuery(interpolated).then(_.curry(this.responseParser.parse)(query));
   }
 
   getTagKeys(options) {
-    var queryBuilder = new InfluxQueryBuilder(
-      { measurement: '', tags: [] },
-      this.database
-    );
+    var queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
     var query = queryBuilder.buildExploreQuery('TAG_KEYS');
     return this.metricFindQuery(query);
   }
 
   getTagValues(options) {
-    var queryBuilder = new InfluxQueryBuilder(
-      { measurement: '', tags: [] },
-      this.database
-    );
+    var queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
     var query = queryBuilder.buildExploreQuery('TAG_VALUES', options.key);
     return this.metricFindQuery(query);
   }
@@ -222,10 +209,7 @@ export default class InfluxDatasource {
   }
 
   testDatasource() {
-    var queryBuilder = new InfluxQueryBuilder(
-      { measurement: '', tags: [] },
-      this.database
-    );
+    var queryBuilder = new InfluxQueryBuilder({ measurement: '', tags: [] }, this.database);
     var query = queryBuilder.buildExploreQuery('RETENTION POLICIES');
 
     return this._seriesQuery(query)
@@ -295,8 +279,7 @@ export default class InfluxDatasource {
             };
           } else {
             throw {
-              message:
-                'Network Error: ' + err.statusText + '(' + err.status + ')',
+              message: 'Network Error: ' + err.statusText + '(' + err.status + ')',
               data: err.data,
               config: err.config,
             };

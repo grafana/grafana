@@ -567,9 +567,5 @@ function createCtrlWithStubs(searchResponse: any, tags?: any) {
     },
   };
 
-  return new ManageDashboardsCtrl(
-    {},
-    { getNav: () => {} },
-    <SearchSrv>searchSrvStub
-  );
+  return new ManageDashboardsCtrl({}, { getNav: () => {} }, <SearchSrv>searchSrvStub);
 }

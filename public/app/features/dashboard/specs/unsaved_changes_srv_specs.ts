@@ -1,19 +1,15 @@
-import {
-  describe,
-  beforeEach,
-  it,
-  expect,
-  sinon,
-  angularMocks,
-} from 'test/lib/common';
-import 'app/features/dashboard/unsavedChangesSrv';
+import { describe, beforeEach, it, expect, sinon, angularMocks } from 'test/lib/common';
+import { Tracker } from 'app/features/dashboard/unsaved_changes_srv';
 import 'app/features/dashboard/dashboard_srv';
+import { contextSrv } from 'app/core/core';
 
 describe('unsavedChangesSrv', function() {
-  var _unsavedChangesSrv;
   var _dashboardSrv;
   var _contextSrvStub = { isEditor: true };
   var _rootScope;
+  var _location;
+  var _timeout;
+  var _window;
   var tracker;
   var dash;
   var scope;
@@ -28,15 +24,12 @@ describe('unsavedChangesSrv', function() {
   );
 
   beforeEach(
-    angularMocks.inject(function(
-      unsavedChangesSrv,
-      $location,
-      $rootScope,
-      dashboardSrv
-    ) {
-      _unsavedChangesSrv = unsavedChangesSrv;
+    angularMocks.inject(function($location, $rootScope, dashboardSrv, $timeout, $window) {
       _dashboardSrv = dashboardSrv;
       _rootScope = $rootScope;
+      _location = $location;
+      _timeout = $timeout;
+      _window = $window;
     })
   );
 
@@ -54,7 +47,7 @@ describe('unsavedChangesSrv', function() {
     scope.appEvent = sinon.spy();
     scope.onAppEvent = sinon.spy();
 
-    tracker = new _unsavedChangesSrv.Tracker(dash, scope);
+    tracker = new Tracker(dash, scope, undefined, _location, _window, _timeout, contextSrv, _rootScope);
   });
 
   it('No changes should not have changes', function() {

@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 
 export default class ResponseParser {
@@ -40,11 +38,7 @@ export default class ResponseParser {
   }
 
   parseMetricFindQueryResult(refId, results) {
-    if (
-      !results ||
-      results.data.length === 0 ||
-      results.data.results[refId].meta.rowCount === 0
-    ) {
+    if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) {
       return [];
     }
 
@@ -143,9 +137,7 @@ export default class ResponseParser {
         time: Math.floor(row[timeColumnIndex]) * 1000,
         title: row[titleColumnIndex],
         text: row[textColumnIndex],
-        tags: row[tagsColumnIndex]
-          ? row[tagsColumnIndex].trim().split(/\s*,\s*/)
-          : [],
+        tags: row[tagsColumnIndex] ? row[tagsColumnIndex].trim().split(/\s*,\s*/) : [],
       });
     }
 

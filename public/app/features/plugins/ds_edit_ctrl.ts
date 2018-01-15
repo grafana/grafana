@@ -72,12 +72,10 @@ export class DataSourceEditCtrl {
       return this.$q.when(null);
     }
 
-    return this.backendSrv
-      .get('/api/plugins', { enabled: 1, type: 'datasource' })
-      .then(plugins => {
-        datasourceTypes = plugins;
-        this.types = plugins;
-      });
+    return this.backendSrv.get('/api/plugins', { enabled: 1, type: 'datasource' }).then(plugins => {
+      datasourceTypes = plugins;
+      this.types = plugins;
+    });
   }
 
   getDatasourceById(id) {
@@ -116,13 +114,10 @@ export class DataSourceEditCtrl {
 
   typeChanged() {
     this.hasDashboards = false;
-    return this.backendSrv
-      .get('/api/plugins/' + this.current.type + '/settings')
-      .then(pluginInfo => {
-        this.datasourceMeta = pluginInfo;
-        this.hasDashboards =
-          _.find(pluginInfo.includes, { type: 'dashboard' }) !== undefined;
-      });
+    return this.backendSrv.get('/api/plugins/' + this.current.type + '/settings').then(pluginInfo => {
+      this.datasourceMeta = pluginInfo;
+      this.hasDashboards = _.find(pluginInfo.includes, { type: 'dashboard' }) !== undefined;
+    });
   }
 
   updateFrontendSettings() {
@@ -174,24 +169,20 @@ export class DataSourceEditCtrl {
     }
 
     if (this.current.id) {
-      return this.backendSrv
-        .put('/api/datasources/' + this.current.id, this.current)
-        .then(result => {
-          this.current = result.datasource;
-          this.updateFrontendSettings().then(() => {
-            this.testDatasource();
-          });
+      return this.backendSrv.put('/api/datasources/' + this.current.id, this.current).then(result => {
+        this.current = result.datasource;
+        this.updateFrontendSettings().then(() => {
+          this.testDatasource();
         });
+      });
     } else {
-      return this.backendSrv
-        .post('/api/datasources', this.current)
-        .then(result => {
-          this.current = result.datasource;
-          this.updateFrontendSettings();
+      return this.backendSrv.post('/api/datasources', this.current).then(result => {
+        this.current = result.datasource;
+        this.updateFrontendSettings();
 
-          datasourceCreated = true;
-          this.$location.path('datasources/edit/' + result.id);
-        });
+        datasourceCreated = true;
+        this.$location.path('datasources/edit/' + result.id);
+      });
     }
   }
 

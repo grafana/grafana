@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
@@ -74,10 +72,8 @@ export class ElasticResponse {
               var stats = bucket[metric.id];
 
               // add stats that are in nested obj to top level obj
-              stats.std_deviation_bounds_upper =
-                stats.std_deviation_bounds.upper;
-              stats.std_deviation_bounds_lower =
-                stats.std_deviation_bounds.lower;
+              stats.std_deviation_bounds_upper = stats.std_deviation_bounds.upper;
+              stats.std_deviation_bounds_lower = stats.std_deviation_bounds.lower;
 
               newSeries.datapoints.push([stats[statName], bucket.key]);
             }
@@ -141,11 +137,7 @@ export class ElasticResponse {
       for (let metric of target.metrics) {
         switch (metric.type) {
           case 'count': {
-            addMetricValue(
-              values,
-              this.getMetricName(metric.type),
-              bucket.doc_count
-            );
+            addMetricValue(values, this.getMetricName(metric.type), bucket.doc_count);
             break;
           }
           case 'extended_stats': {
@@ -156,16 +148,10 @@ export class ElasticResponse {
 
               var stats = bucket[metric.id];
               // add stats that are in nested obj to top level obj
-              stats.std_deviation_bounds_upper =
-                stats.std_deviation_bounds.upper;
-              stats.std_deviation_bounds_lower =
-                stats.std_deviation_bounds.lower;
+              stats.std_deviation_bounds_upper = stats.std_deviation_bounds.upper;
+              stats.std_deviation_bounds_lower = stats.std_deviation_bounds.lower;
 
-              addMetricValue(
-                values,
-                this.getMetricName(statName),
-                stats[statName]
-              );
+              addMetricValue(values, this.getMetricName(statName), stats[statName]);
             }
             break;
           }
@@ -220,14 +206,7 @@ export class ElasticResponse {
           if (bucket.key_as_string) {
             props[aggDef.field] = bucket.key_as_string;
           }
-          this.processBuckets(
-            bucket,
-            target,
-            seriesList,
-            table,
-            props,
-            depth + 1
-          );
+          this.processBuckets(bucket, target, seriesList, table, props, depth + 1);
         }
       }
     }
@@ -341,17 +320,13 @@ export class ElasticResponse {
   trimDatapoints(aggregations, target) {
     var histogram = _.find(target.bucketAggs, { type: 'date_histogram' });
 
-    var shouldDropFirstAndLast =
-      histogram && histogram.settings && histogram.settings.trimEdges;
+    var shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.trimEdges;
     if (shouldDropFirstAndLast) {
       var trim = histogram.settings.trimEdges;
       for (var prop in aggregations) {
         var points = aggregations[prop];
         if (points.datapoints.length > trim * 2) {
-          points.datapoints = points.datapoints.slice(
-            trim,
-            points.datapoints.length - trim
-          );
+          points.datapoints = points.datapoints.slice(trim, points.datapoints.length - trim);
         }
       }
     }
@@ -360,14 +335,10 @@ export class ElasticResponse {
   getErrorFromElasticResponse(response, err) {
     var result: any = {};
     result.data = JSON.stringify(err, null, 4);
-    if (
-      err.root_cause &&
-      err.root_cause.length > 0 &&
-      err.root_cause[0].reason
-    ) {
+    if (err.root_cause && err.root_cause.length > 0 && err.root_cause[0].reason) {
       result.message = err.root_cause[0].reason;
     } else {
-      result.message = err.reason || 'Unkown elatic error response';
+      result.message = err.reason || 'Unkown elastic error response';
     }
 
     if (response.$$config) {

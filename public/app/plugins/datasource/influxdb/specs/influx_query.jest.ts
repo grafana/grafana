@@ -14,9 +14,7 @@ describe('InfluxQuery', function() {
       );
 
       var queryText = query.render();
-      expect(queryText).toBe(
-        'SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(null)'
-      );
+      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(null)');
     });
   });
 
@@ -107,10 +105,7 @@ describe('InfluxQuery', function() {
         {
           measurement: 'cpu',
           groupBy: [{ type: 'time', params: ['auto'] }],
-          tags: [
-            { key: 'hostname', value: 'server1' },
-            { key: 'app', value: 'email', condition: 'AND' },
-          ],
+          tags: [{ key: 'hostname', value: 'server1' }, { key: 'app', value: 'email', condition: 'AND' }],
         },
         templateSrv,
         {}
@@ -130,10 +125,7 @@ describe('InfluxQuery', function() {
         {
           measurement: 'cpu',
           groupBy: [{ type: 'time', params: ['auto'] }],
-          tags: [
-            { key: 'hostname', value: 'server1' },
-            { key: 'hostname', value: 'server2', condition: 'OR' },
-          ],
+          tags: [{ key: 'hostname', value: 'server1' }, { key: 'hostname', value: 'server2', condition: 'OR' }],
         },
         templateSrv,
         {}
@@ -160,9 +152,7 @@ describe('InfluxQuery', function() {
       );
 
       var queryText = query.render();
-      expect(queryText).toBe(
-        'SELECT mean("value") FROM "cpu" WHERE ("value" > 5) AND $timeFilter'
-      );
+      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE ("value" > 5) AND $timeFilter');
     });
   });
 
@@ -172,19 +162,14 @@ describe('InfluxQuery', function() {
         {
           measurement: 'cpu',
           tags: [],
-          groupBy: [
-            { type: 'time', interval: 'auto' },
-            { type: 'tag', params: ['host'] },
-          ],
+          groupBy: [{ type: 'time', interval: 'auto' }, { type: 'tag', params: ['host'] }],
         },
         templateSrv,
         {}
       );
 
       var queryText = query.render();
-      expect(queryText).toBe(
-        'SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($__interval), "host"'
-      );
+      expect(queryText).toBe('SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($__interval), "host"');
     });
   });
 
@@ -216,9 +201,7 @@ describe('InfluxQuery', function() {
         {}
       );
       var queryText = query.render();
-      expect(queryText).toBe(
-        'SELECT "value" FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(0)'
-      );
+      expect(queryText).toBe('SELECT "value" FROM "cpu" WHERE $timeFilter GROUP BY time($__interval) fill(0)');
     });
   });
 
@@ -291,13 +274,7 @@ describe('InfluxQuery', function() {
       var query = new InfluxQuery(
         {
           measurement: 'cpu',
-          select: [
-            [
-              { type: 'field', params: ['value'] },
-              { type: 'mean' },
-              { type: 'alias' },
-            ],
-          ],
+          select: [[{ type: 'field', params: ['value'] }, { type: 'mean' }, { type: 'alias' }]],
         },
         templateSrv,
         {}
@@ -327,13 +304,7 @@ describe('InfluxQuery', function() {
       var query = new InfluxQuery(
         {
           measurement: 'cpu',
-          select: [
-            [
-              { type: 'field', params: ['value'] },
-              { type: 'mean' },
-              { type: 'math' },
-            ],
-          ],
+          select: [[{ type: 'field', params: ['value'] }, { type: 'mean' }, { type: 'math' }]],
         },
         templateSrv,
         {}

@@ -9,8 +9,7 @@ function dashLinksContainer() {
     },
     restrict: 'E',
     controller: 'DashLinksContainerCtrl',
-    template:
-      '<dash-link ng-repeat="link in generatedLinks" link="link"></dash-link>',
+    template: '<dash-link ng-repeat="link in generatedLinks" link="link"></dash-link>',
     link: function() {},
   };
 }
@@ -24,16 +23,16 @@ function dashLink($compile, linkSrv) {
       var template =
         '<div class="gf-form">' +
         '<a class="pointer gf-form-label" data-placement="bottom"' +
-        (link.asDropdown
-          ? ' ng-click="fillDropdown(link)" data-toggle="dropdown"'
-          : '') +
+        (link.asDropdown ? ' ng-click="fillDropdown(link)" data-toggle="dropdown"' : '') +
         '>' +
         '<i></i> <span></span></a>';
 
       if (link.asDropdown) {
         template +=
           '<ul class="dropdown-menu" role="menu">' +
-          '<li ng-repeat="dash in link.searchHits"><a href="{{dash.url}}">{{dash.title}}</a></li>' +
+          '<li ng-repeat="dash in link.searchHits">' +
+          '<a href="{{dash.url}}" target="{{dash.target}}">{{dash.title}}</a>' +
+          '</li>' +
           '</ul>';
       }
 
@@ -53,9 +52,7 @@ function dashLink($compile, linkSrv) {
       }
 
       // tooltip
-      elem
-        .find('a')
-        .tooltip({ title: scope.link.tooltip, html: true, container: 'body' });
+      elem.find('a').tooltip({ title: scope.link.tooltip, html: true, container: 'body' });
       icon.attr('class', 'fa fa-fw ' + scope.link.icon);
       anchor.attr('target', scope.link.target);
 
@@ -89,6 +86,7 @@ export class DashLinksContainerCtrl {
               tags: linkDef.tags,
               keepTime: linkDef.keepTime,
               includeVars: linkDef.includeVars,
+              target: linkDef.targetBlank ? '_blank' : '_self',
               icon: 'fa fa-bars',
               asDropdown: true,
             },
@@ -124,27 +122,26 @@ export class DashLinksContainerCtrl {
     }
 
     $scope.searchDashboards = function(link, limit) {
-      return backendSrv
-        .search({ tag: link.tags, limit: limit })
-        .then(function(results) {
-          return _.reduce(
-            results,
-            function(memo, dash) {
-              // do not add current dashboard
-              if (dash.id !== currentDashId) {
-                memo.push({
-                  title: dash.title,
-                  url: 'dashboard/' + dash.uri,
-                  icon: 'fa fa-th-large',
-                  keepTime: link.keepTime,
-                  includeVars: link.includeVars,
-                });
-              }
-              return memo;
-            },
-            []
-          );
-        });
+      return backendSrv.search({ tag: link.tags, limit: limit }).then(function(results) {
+        return _.reduce(
+          results,
+          function(memo, dash) {
+            // do not add current dashboard
+            if (dash.id !== currentDashId) {
+              memo.push({
+                title: dash.title,
+                url: 'dashboard/' + dash.uri,
+                target: link.target,
+                icon: 'fa fa-th-large',
+                keepTime: link.keepTime,
+                includeVars: link.includeVars,
+              });
+            }
+            return memo;
+          },
+          []
+        );
+      });
     };
 
     $scope.fillDropdown = function(link) {
@@ -161,10 +158,6 @@ export class DashLinksContainerCtrl {
   }
 }
 
-angular
-  .module('grafana.directives')
-  .directive('dashLinksContainer', dashLinksContainer);
+angular.module('grafana.directives').directive('dashLinksContainer', dashLinksContainer);
 angular.module('grafana.directives').directive('dashLink', dashLink);
-angular
-  .module('grafana.directives')
-  .controller('DashLinksContainerCtrl', DashLinksContainerCtrl);
+angular.module('grafana.directives').controller('DashLinksContainerCtrl', DashLinksContainerCtrl);

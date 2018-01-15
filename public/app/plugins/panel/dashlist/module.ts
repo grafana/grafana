@@ -1,23 +1,23 @@
-import _ from "lodash";
-import { PanelCtrl } from "app/plugins/sdk";
-import impressionSrv from "app/core/services/impression_srv";
+import _ from 'lodash';
+import { PanelCtrl } from 'app/plugins/sdk';
+import impressionSrv from 'app/core/services/impression_srv';
 
 class DashListCtrl extends PanelCtrl {
-  static templateUrl = "module.html";
+  static templateUrl = 'module.html';
   static scrollable = true;
 
   groups: any[];
   modes: any[];
 
   panelDefaults = {
-    query: "",
+    query: '',
     limit: 10,
     tags: [],
     recent: false,
     search: false,
     starred: true,
     headings: true,
-    folderId: 0
+    folderId: 0,
   };
 
   /** @ngInject */
@@ -30,27 +30,27 @@ class DashListCtrl extends PanelCtrl {
       delete this.panel.tag;
     }
 
-    this.events.on("refresh", this.onRefresh.bind(this));
-    this.events.on("init-edit-mode", this.onInitEditMode.bind(this));
+    this.events.on('refresh', this.onRefresh.bind(this));
+    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
 
     this.groups = [
-      { list: [], show: false, header: "Starred dashboards" },
-      { list: [], show: false, header: "Recently viewed dashboards" },
-      { list: [], show: false, header: "Search" }
+      { list: [], show: false, header: 'Starred dashboards' },
+      { list: [], show: false, header: 'Recently viewed dashboards' },
+      { list: [], show: false, header: 'Search' },
     ];
 
     // update capability
     if (this.panel.mode) {
-      if (this.panel.mode === "starred") {
+      if (this.panel.mode === 'starred') {
         this.panel.starred = true;
         this.panel.headings = false;
       }
-      if (this.panel.mode === "recently viewed") {
+      if (this.panel.mode === 'recently viewed') {
         this.panel.recent = true;
         this.panel.starred = false;
         this.panel.headings = false;
       }
-      if (this.panel.mode === "search") {
+      if (this.panel.mode === 'search') {
         this.panel.search = true;
         this.panel.starred = false;
         this.panel.headings = false;
@@ -61,11 +61,8 @@ class DashListCtrl extends PanelCtrl {
 
   onInitEditMode() {
     this.editorTabIndex = 1;
-    this.modes = ["starred", "search", "recently viewed"];
-    this.addEditorTab(
-      "Options",
-      "public/app/plugins/panel/dashlist/editor.html"
-    );
+    this.modes = ['starred', 'search', 'recently viewed'];
+    this.addEditorTab('Options', 'public/app/plugins/panel/dashlist/editor.html');
   }
 
   onRefresh() {
@@ -88,7 +85,7 @@ class DashListCtrl extends PanelCtrl {
       limit: this.panel.limit,
       query: this.panel.query,
       tag: this.panel.tags,
-      folderId: this.panel.folderId
+      folderId: this.panel.folderId,
     };
 
     return this.backendSrv.search(params).then(result => {
@@ -102,7 +99,7 @@ class DashListCtrl extends PanelCtrl {
       return Promise.resolve();
     }
 
-    var params = { limit: this.panel.limit, starred: "true" };
+    var params = { limit: this.panel.limit, starred: 'true' };
     return this.backendSrv.search(params).then(result => {
       this.groups[0].list = result;
     });
@@ -126,19 +123,17 @@ class DashListCtrl extends PanelCtrl {
     }
 
     var dashIds = _.take(impressionSrv.getDashboardOpened(), this.panel.limit);
-    return this.backendSrv
-      .search({ dashboardIds: dashIds, limit: this.panel.limit })
-      .then(result => {
-        this.groups[1].list = dashIds
-          .map(orderId => {
-            return _.find(result, dashboard => {
-              return dashboard.id === orderId;
-            });
-          })
-          .filter(el => {
-            return el !== undefined;
+    return this.backendSrv.search({ dashboardIds: dashIds, limit: this.panel.limit }).then(result => {
+      this.groups[1].list = dashIds
+        .map(orderId => {
+          return _.find(result, dashboard => {
+            return dashboard.id === orderId;
           });
-      });
+        })
+        .filter(el => {
+          return el !== undefined;
+        });
+    });
   }
 
   onFolderChange(folder: any) {

@@ -1,5 +1,3 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 import ResponseParser from './response_parser';
 
@@ -9,12 +7,7 @@ export class MysqlDatasource {
   responseParser: ResponseParser;
 
   /** @ngInject **/
-  constructor(
-    instanceSettings,
-    private backendSrv,
-    private $q,
-    private templateSrv
-  ) {
+  constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
     this.responseParser = new ResponseParser(this.$q);
@@ -52,11 +45,7 @@ export class MysqlDatasource {
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
         datasourceId: this.id,
-        rawSql: this.templateSrv.replace(
-          item.rawSql,
-          options.scopedVars,
-          this.interpolateVariable
-        ),
+        rawSql: this.templateSrv.replace(item.rawSql, options.scopedVars, this.interpolateVariable),
         format: item.format,
       };
     });
@@ -88,11 +77,7 @@ export class MysqlDatasource {
     const query = {
       refId: options.annotation.name,
       datasourceId: this.id,
-      rawSql: this.templateSrv.replace(
-        options.annotation.rawQuery,
-        options.scopedVars,
-        this.interpolateVariable
-      ),
+      rawSql: this.templateSrv.replace(options.annotation.rawQuery, options.scopedVars, this.interpolateVariable),
       format: 'table',
     };
 
@@ -106,18 +91,12 @@ export class MysqlDatasource {
           queries: [query],
         },
       })
-      .then(data =>
-        this.responseParser.transformAnnotationResponse(options, data)
-      );
+      .then(data => this.responseParser.transformAnnotationResponse(options, data));
   }
 
   metricFindQuery(query, optionalOptions) {
     let refId = 'tempvar';
-    if (
-      optionalOptions &&
-      optionalOptions.variable &&
-      optionalOptions.variable.name
-    ) {
+    if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
       refId = optionalOptions.variable.name;
     }
 
@@ -132,11 +111,7 @@ export class MysqlDatasource {
       queries: [interpolatedQuery],
     };
 
-    if (
-      optionalOptions &&
-      optionalOptions.range &&
-      optionalOptions.range.from
-    ) {
+    if (optionalOptions && optionalOptions.range && optionalOptions.range.from) {
       data['from'] = optionalOptions.range.from.valueOf().toString();
     }
     if (optionalOptions && optionalOptions.range && optionalOptions.range.to) {
@@ -149,9 +124,7 @@ export class MysqlDatasource {
         method: 'POST',
         data: data,
       })
-      .then(data =>
-        this.responseParser.parseMetricFindQueryResult(refId, data)
-      );
+      .then(data => this.responseParser.parseMetricFindQueryResult(refId, data));
   }
 
   testDatasource() {
