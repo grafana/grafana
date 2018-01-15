@@ -5,7 +5,7 @@ import DevTools from 'mobx-react-devtools';
 import { inject, observer } from 'mobx-react';
 import { Provider } from 'mobx-react';
 import { store } from 'app/stores/store';
-import UserPicker from 'app/core/components/UserPicker/UserPicker';
+// import UserPicker from 'app/core/components/UserPicker/UserPicker';
 
 export interface DashboardAcl {
   id?: number;
@@ -137,7 +137,7 @@ class PermissionsInner extends Component<IProps, any> {
 
   render() {
     console.log('PermissionsInner render');
-    const { error, aclTypes, permissions, backendSrv } = this.props;
+    const { error, aclTypes, permissions } = this.props;
     const { newType } = this.state;
 
     return (
@@ -173,6 +173,7 @@ class PermissionsInner extends Component<IProps, any> {
                   /> */}
                 </div>
               </div>
+              {/*
               {newType === 'User' ? (
                 <div className="gf-form">
                   {' '}
@@ -195,6 +196,7 @@ class PermissionsInner extends Component<IProps, any> {
                   <team-picker team-picked="ctrl.groupPicked($group)" />
                 </div>
               ) : null}
+              */}
             </div>
           </form>
           {error ? (
