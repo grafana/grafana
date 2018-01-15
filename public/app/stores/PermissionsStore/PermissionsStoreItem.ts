@@ -2,16 +2,16 @@
 
 export const PermissionsStoreItem = types
   .model('PermissionsStoreItem', {
-    dashboardId: types.number,
-    id: types.number,
+    dashboardId: types.optional(types.number, -1),
+    id: types.maybe(types.number),
     permission: types.number,
-    permissionName: types.string,
+    permissionName: types.maybe(types.string),
     role: types.maybe(types.string),
-    team: types.string,
-    teamId: types.number,
-    userEmail: types.string,
-    userId: types.number,
-    userLogin: types.string,
+    team: types.optional(types.string, ''),
+    teamId: types.optional(types.number, 0),
+    userEmail: types.optional(types.string, ''),
+    userId: types.optional(types.number, 0),
+    userLogin: types.optional(types.string, ''),
     inherited: types.maybe(types.boolean),
     sortRank: types.maybe(types.number),
     icon: types.maybe(types.string),
@@ -21,5 +21,9 @@ export const PermissionsStoreItem = types
   .actions(self => ({
     updateRole: role => {
       self.role = role;
+    },
+    updatePermission(permission: number, permissionName: string) {
+      self.permission = permission;
+      self.permissionName = permissionName;
     },
   }));

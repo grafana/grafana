@@ -1,10 +1,11 @@
 ﻿import React from 'react';
+import { observer } from 'mobx-react';
 
 const setClassNameHelper = inherited => {
   return inherited ? 'gf-form-disabled' : '';
 };
 
-export default ({ item, permissionsOptions, removeItem, permissionChanged, itemIndex }) => {
+export default observer(({ item, permissionsOptions, removeItem, permissionChanged, itemIndex }) => {
   const handleRemoveItem = evt => {
     evt.preventDefault();
     removeItem(itemIndex);
@@ -12,7 +13,10 @@ export default ({ item, permissionsOptions, removeItem, permissionChanged, itemI
 
   const handleChangePermission = evt => {
     evt.preventDefault();
-    permissionChanged(itemIndex, evt.target.value);
+    const value = evt.target.value;
+    const valueAsInt = parseInt(value, 10);
+    const newPermission = permissionsOptions.find(opt => opt.value === valueAsInt);
+    permissionChanged(itemIndex, newPermission.value, newPermission.text);
   };
 
   return (
@@ -57,4 +61,4 @@ export default ({ item, permissionsOptions, removeItem, permissionChanged, itemI
       </td>
     </tr>
   );
-};
+});

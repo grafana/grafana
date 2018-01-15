@@ -5,6 +5,7 @@ import DevTools from 'mobx-react-devtools';
 import { inject, observer } from 'mobx-react';
 import { Provider } from 'mobx-react';
 import { store } from 'app/stores/store';
+import UserPicker from 'app/core/components/UserPicker/UserPicker';
 
 export interface DashboardAcl {
   id?: number;
@@ -75,140 +76,42 @@ class PermissionsInner extends Component<IProps, any> {
     this.permissionChanged = this.permissionChanged.bind(this);
     this.typeChanged = this.typeChanged.bind(this);
     this.removeItem = this.removeItem.bind(this);
+    this.update = this.update.bind(this);
     permissions.load(this.dashboardId);
 
     this.state = {
       newType: 'Group',
-      canUpdate: false,
-      error: '',
     };
+  }
+
+  componentWillReceiveProps(nextProps) {
+    console.log('nextProps', nextProps);
   }
 
   sortItems(items) {
     return _.orderBy(items, ['sortRank', 'sortName'], ['desc', 'asc']);
   }
 
-  permissionChanged(evt) {
-    // TODO
+  permissionChanged(index: number, permission: number, permissionName: string) {
+    const { permissions } = this.props;
+    // permissions.items[index].updatePermission(permission, permissionName);
+    permissions.updatePermissionOnIndex(index, permission, permissionName);
   }
 
-  removeItem(index) {
+  removeItem(index: number) {
     const { permissions } = this.props;
     permissions.removeStoreItem(index);
   }
 
   update() {
-    var updated = [];
-    for (let item of this.state.items) {
-      if (item.inherited) {
-        continue;
-      }
-      updated.push({
-        id: item.id,
-        userId: item.userId,
-        teamId: item.teamId,
-        role: item.role,
-        permission: item.permission,
-      });
-    }
-
-    return this.backendSrv
-      .post(`/api/dashboards/id/${this.dashboardId}/acl`, {
-        items: updated,
-      })
-      .then(() => {
-        this.setState(prevState => {
-          return {
-            ...prevState,
-            canUpdate: false,
-          };
-        });
-      });
-  }
-
-  prepareViewModel(item: DashboardAcl): DashboardAcl {
-    // TODO: this.meta
-    // item.inherited = !this.meta.isFolder && this.dashboardId !== item.dashboardId;
-    item.inherited = this.dashboardId !== item.dashboardId;
-    item.sortRank = 0;
-    if (item.userId > 0) {
-      item.icon = 'fa fa-fw fa-user';
-      //   item.nameHtml = this.$sce.trustAsHtml(item.userLogin);
-      item.nameHtml = item.userLogin;
-      item.sortName = item.userLogin;
-      item.sortRank = 10;
-    } else if (item.teamId > 0) {
-      item.icon = 'fa fa-fw fa-users';
-      //   item.nameHtml = this.$sce.trustAsHtml(item.team);
-      item.nameHtml = item.team;
-      item.sortName = item.team;
-      item.sortRank = 20;
-    } else if (item.role) {
-      item.icon = 'fa fa-fw fa-street-view';
-      //   item.nameHtml = this.$sce.trustAsHtml(`Everyone with <span class="query-keyword">${item.role}</span> Role`);
-      item.nameHtml = `Everyone with <span class="query-keyword">${item.role}</span> Role`;
-      item.sortName = item.role;
-      item.sortRank = 30;
-      if (item.role === 'Viewer') {
-        item.sortRank += 1;
-      }
-    }
-
-    if (item.inherited) {
-      item.sortRank += 100;
-    }
-
-    return item;
-  }
-
-  isDuplicate(origItem, newItem) {
-    if (origItem.inherited) {
-      return false;
-    }
-
-    return (
-      (origItem.role && newItem.role && origItem.role === newItem.role) ||
-      (origItem.userId && newItem.userId && origItem.userId === newItem.userId) ||
-      (origItem.teamId && newItem.teamId && origItem.teamId === newItem.teamId)
-    );
-  }
-
-  isValid(item) {
-    const dupe = _.find(this.items, it => {
-      return this.isDuplicate(it, item);
-    });
-
-    if (dupe) {
-      this.error = this.duplicateError;
-      return false;
-    }
-
-    return true;
-  }
-
-  addNewItem(item) {
-    if (!this.isValid(item)) {
-      return;
-    }
-    this.error = '';
-
-    item.dashboardId = this.dashboardId;
-
-    let newItems = this.state.items;
-    newItems.push(this.prepareViewModel(item));
-
-    this.setState(prevState => {
-      return {
-        ...prevState,
-        items: this.sortItems(newItems),
-        canUpdate: true,
-      };
-    });
+    const { permissions, dashboardId } = this.props;
+    permissions.update(dashboardId);
   }
 
   resetNewType() {
     this.setState(prevState => {
       return {
+        ...prevState,
         newType: 'Group',
       };
     });
@@ -216,6 +119,14 @@ class PermissionsInner extends Component<IProps, any> {
 
   typeChanged(evt) {
     const { value } = evt.target;
+    const { permissions } = this.props;
+
+    if (value === 'Viewer' || value === 'Editor') {
+      permissions.addStoreItem({ permission: 1, role: value, dashboardId: this.dashboardId }, this.dashboardId);
+      this.resetNewType();
+      return;
+    }
+
     this.setState(prevState => {
       return {
         ...prevState,
@@ -224,40 +135,27 @@ class PermissionsInner extends Component<IProps, any> {
     });
   }
 
-  typeChanged___() {
-    const { newType } = this.state;
-    if (newType === 'Viewer' || newType === 'Editor') {
-      this.addNewItem({ permission: 1, role: newType });
-      this.resetNewType();
-      this.setState(prevState => {
-        return {
-          ...prevState,
-          canUpdate: true,
-        };
-      });
-    }
-  }
-
   render() {
-    const { error, aclTypes, permissions } = this.props;
+    console.log('PermissionsInner render');
+    const { error, aclTypes, permissions, backendSrv } = this.props;
     const { newType } = this.state;
 
     return (
       <div className="gf-form-group">
         <PermissionsList
-          permissions={permissions.items.toJS()}
+          permissions={permissions.items}
           permissionsOptions={this.permissionOptions}
           removeItem={this.removeItem}
           permissionChanged={this.permissionChanged}
+          fetching={permissions.fetching}
         />
-        asd2
         <div className="gf-form-inline">
           <form name="addPermission" className="gf-form-group">
             <h6 className="muted">Add Permission For</h6>
             <div className="gf-form-inline">
               <div className="gf-form">
                 <div className="gf-form-select-wrapper">
-                  <select className="gf-form-input gf-size-auto" onChange={this.typeChanged}>
+                  <select className="gf-form-input gf-size-auto" value={newType} onChange={this.typeChanged}>
                     {aclTypes.map((option, idx) => {
                       return (
                         <option key={idx} value={option.value}>
@@ -280,6 +178,13 @@ class PermissionsInner extends Component<IProps, any> {
                   {' '}
                   User picker
                   <user-picker user-picked="ctrl.userPicked($user)" />
+                  <select-user-picker
+                    backendSrv="ctrl.backendSrv"
+                    teamId="ctrl.$routeParams.id"
+                    refreshList="ctrl.get"
+                    teamMembers="ctrl.teamMembers"
+                  />
+                  <UserPicker backendSrv={backendSrv} teamId={0} />
                 </div>
               ) : null}
 
@@ -306,7 +211,6 @@ class PermissionsInner extends Component<IProps, any> {
             Update Permissions
           </button>
         </div>
-        asd3
         <DevTools />
       </div>
     );

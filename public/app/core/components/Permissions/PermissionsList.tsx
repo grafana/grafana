@@ -1,23 +1,27 @@
 ﻿import React, { Component } from 'react';
 import PermissionsListItem from './PermissionsListItem';
+import { observer } from 'mobx-react';
 
 export interface IProps {
   permissions: any[];
   permissionsOptions: any[];
   removeItem: any;
   permissionChanged: any;
+  fetching: boolean;
 }
 
+@observer
 class PermissionsList extends Component<IProps, any> {
   render() {
-    const { permissions, permissionsOptions, removeItem, permissionChanged } = this.props;
+    const { permissions, permissionsOptions, removeItem, permissionChanged, fetching } = this.props;
+
     return (
       <table className="filter-table gf-form-group">
         <tbody>
           {permissions.map((item, idx) => {
             return (
               <PermissionsListItem
-                key={item.id}
+                key={idx}
                 item={item}
                 itemIndex={idx}
                 permissionsOptions={permissionsOptions}
@@ -55,7 +59,15 @@ class PermissionsList extends Component<IProps, any> {
                 <em>No permissions are set. Will only be accessible by admins.</em>
               </td>
             </tr> */}
-          {permissions.length < 1 ? (
+          {fetching === true && permissions.length < 1 ? (
+            <tr>
+              <td colSpan={4}>
+                <em>Loading permissions...</em>
+              </td>
+            </tr>
+          ) : null}
+
+          {fetching === false && permissions.length < 1 ? (
             <tr>
               <td colSpan={4}>
                 <em>No permissions are set. Will only be accessible by admins.</em>
