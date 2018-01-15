@@ -35,8 +35,6 @@ type PluginScanner struct {
 	errors     []error
 }
 
-type Dispose func()
-
 type PluginManager struct {
 	log log.Logger
 }

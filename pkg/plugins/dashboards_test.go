@@ -18,7 +18,7 @@ func TestPluginDashboards(t *testing.T) {
 		setting.Cfg = ini.Empty()
 		sec, _ := setting.Cfg.NewSection("plugin.test-app")
 		sec.NewKey("path", "../../tests/test-app")
-		err := initPlugins(context.TODO())
+		err := initPlugins(context.Background())
 
 		So(err, ShouldBeNil)
 
