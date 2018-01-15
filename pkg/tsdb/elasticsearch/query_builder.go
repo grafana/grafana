@@ -23,21 +23,15 @@ var queryTemplate = `
 {
 	"size": 0,
 	"query": {
-		"filtered": {
-			"query": {
+		"bool": {
+			"must": {
 				"query_string": {
 					"analyze_wildcard": true,
 					"query": {{ marshal .Model.Query }}
 				}
 			},
 			"filter": {
-				"bool": {
-					"must": [
-						{
-							"range": {{ . | formatTimeRange }}
-						}
-					]
-				}
+				"range": {{ . | formatTimeRange }}
 			}
 		}
 	},
