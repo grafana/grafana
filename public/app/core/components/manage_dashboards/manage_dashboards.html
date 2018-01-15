@@ -105,7 +105,7 @@
   </div>
 </div>
 
-<div ng-if="ctrl.canSaveFolder && ctrl.folderId && !ctrl.hasFilters && ctrl.sections.length === 0">
+<div ng-if="ctrl.canSave && ctrl.folderId && !ctrl.hasFilters && ctrl.sections.length === 0">
   <empty-list-cta model="{
     title: 'This folder doesn\'t have any dashboards yet',
     buttonIcon: 'gicon gicon-dashboard-new',
