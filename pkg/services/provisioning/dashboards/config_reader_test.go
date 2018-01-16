@@ -33,7 +33,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 			So(ds.Editable, ShouldBeTrue)
 
 			So(len(ds.Options), ShouldEqual, 1)
-			So(ds.Options["folder"], ShouldEqual, "/var/lib/grafana/dashboards")
+			So(ds.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
 
 			ds2 := cfg[1]
 
@@ -44,7 +44,7 @@ func TestDashboardsAsConfig(t *testing.T) {
 			So(ds2.Editable, ShouldBeFalse)
 
 			So(len(ds2.Options), ShouldEqual, 1)
-			So(ds2.Options["folder"], ShouldEqual, "/var/lib/grafana/dashboards")
+			So(ds2.Options["path"], ShouldEqual, "/var/lib/grafana/dashboards")
 		})
 
 		Convey("Should skip broken config files", func() {
