@@ -9,14 +9,14 @@ weight = 10
 
 # How to Use IIS with URL Rewrite as a Reverse Proxy for Grafana on Windows
 
-If you want Grafana to be a subdomain under a website in IIS then the URL Rewrite module for ISS can be used to support this.
+If you want Grafana to be a subpath or subfolder under a website in IIS then the URL Rewrite module for ISS can be used to support this.
 
 Example:
 
 - Parent site: http://localhost:8080
 - Grafana: http://localhost:3000
 
-Grafana as a subdomain: http://localhost:8080/grafana 
+Grafana as a subpath: http://localhost:8080/grafana 
 
 ## Setup
 

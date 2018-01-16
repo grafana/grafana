@@ -77,13 +77,14 @@ Given:
 - subpath `grafana`
 - Grafana installed on `http://localhost:3000`
 - server config:
+
     ```bash
     [server]
     domain = localhost:8080
     root_url = %(protocol)s://%(domain)s:/grafana
     ```
 
-Create an Inbound Rule for the parent website (localhost:8080 in this example) with the following settings:
+Create an Inbound Rule for the parent website (localhost:8080 in this example) in IIS Manager with the following settings:
 
 - pattern: `grafana(/)?(.*)`
 - check the `Ignore case` checkbox
@@ -91,7 +92,7 @@ Create an Inbound Rule for the parent website (localhost:8080 in this example) w
 - check the `Append query string` checkbox
 - check the `Stop processing of subsequent rules` checkbox
 
-The rewrite rule that is generated for the web.config:
+This is the rewrite rule that is generated in the `web.config`:
 
 ```xml
   <rewrite>
@@ -103,3 +104,5 @@ The rewrite rule that is generated for the web.config:
       </rules>
   </rewrite>
 ```
+
+See the [tutorial on IIS Url Rewrites](http://docs.grafana.org/tutorials/iis/) for more in-depth instructions.
