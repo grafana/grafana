@@ -45,23 +45,17 @@ For this you need nodejs (v.6+).
 ```bash
 npm install -g yarn
 yarn install --pure-lockfile
-npm run build
-```
-
-To rebuild frontend assets (typescript, sass etc) as you change them start the watcher via.
-
-```bash
 npm run watch
 ```
 
-Run tests
+Run tests 
 ```bash
-npm run test
+npm run jest
 ```
 
-Run tests in watch mode
+Run karma tests
 ```bash
-npm run watch-test
+npm run karma
 ```
 
 ### Recompile backend on source change
