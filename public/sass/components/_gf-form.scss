@@ -51,6 +51,11 @@ $input-border: 1px solid $input-border-color;
       color: $text-muted;
     }
   }
+
+  .Select--multi .Select-multi-value-wrapper,
+  .Select-placeholder {
+    padding-left: 30px;
+  }
 }
 
 .gf-form-disabled {
