@@ -1,7 +1,7 @@
 package tsdb
 
 import (
-	"golang.org/x/net/context"
+	"context"
 
 	proto "github.com/grafana/grafana/pkg/tsdb/models"
 	plugin "github.com/hashicorp/go-plugin"

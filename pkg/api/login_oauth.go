@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
@@ -11,7 +12,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"

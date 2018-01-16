@@ -1,13 +1,14 @@
 package tsdb
 
 import (
+	"context"
 	"fmt"
+
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	proto "github.com/grafana/grafana/pkg/tsdb/models"
-	"golang.org/x/net/context"
 )
 
 func NewDatasourcePluginWrapper(log log.Logger, plugin TsdbPlugin) *DatasourcePluginWrapper {

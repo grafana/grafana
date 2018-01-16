@@ -1,8 +1,9 @@
 package tsdb
 
 import (
+	"context"
+
 	proto "github.com/grafana/grafana/pkg/tsdb/models"
-	"golang.org/x/net/context"
 )
 
 type GRPCClient struct {
