@@ -53,7 +53,6 @@ class PermissionsInner extends Component<IProps, any> {
   items: DashboardAcl[];
   dummyItems: DashboardAcl[];
   permissionOptions = [{ value: 1, text: 'View' }, { value: 2, text: 'Edit' }, { value: 4, text: 'Admin' }];
-  backendSrv: any;
   aclTypes = [
     { value: 'Group', text: 'Team' },
     { value: 'User', text: 'User' },
@@ -69,15 +68,13 @@ class PermissionsInner extends Component<IProps, any> {
   constructor(props) {
     super(props);
 
-    const { dashboardId, backendSrv, permissions } = this.props;
+    const { dashboardId, permissions } = this.props;
 
-    this.dashboardId = dashboardId;
-    this.backendSrv = backendSrv;
     this.permissionChanged = this.permissionChanged.bind(this);
     this.typeChanged = this.typeChanged.bind(this);
     this.removeItem = this.removeItem.bind(this);
     this.update = this.update.bind(this);
-    permissions.load(this.dashboardId);
+    permissions.load(dashboardId);
 
     this.state = {
       newType: 'Group',
@@ -119,10 +116,10 @@ class PermissionsInner extends Component<IProps, any> {
 
   typeChanged(evt) {
     const { value } = evt.target;
-    const { permissions } = this.props;
+    const { permissions, dashboardId } = this.props;
 
     if (value === 'Viewer' || value === 'Editor') {
-      permissions.addStoreItem({ permission: 1, role: value, dashboardId: this.dashboardId }, this.dashboardId);
+      permissions.addStoreItem({ permission: 1, role: value, dashboardId: dashboardId }, dashboardId);
       this.resetNewType();
       return;
     }
