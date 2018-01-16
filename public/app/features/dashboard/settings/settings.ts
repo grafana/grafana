@@ -11,6 +11,7 @@ export class SettingsCtrl {
   json: string;
   alertCount: number;
   canSaveAs: boolean;
+  canSave: boolean;
   canDelete: boolean;
   sections: any[];
 
@@ -26,6 +27,7 @@ export class SettingsCtrl {
     });
 
     this.canSaveAs = contextSrv.isEditor;
+    this.canSave = this.dashboard.meta.canSave;
     this.canDelete = this.dashboard.meta.canSave;
 
     this.buildSectionList();
@@ -115,6 +117,10 @@ export class SettingsCtrl {
 
   openSaveAsModal() {
     this.dashboardSrv.showSaveAsModal();
+  }
+
+  saveDashboard() {
+    this.dashboardSrv.saveDashboard();
   }
 
   hideSettings() {
