@@ -6,6 +6,8 @@ const duplicateError = 'This permission exists already.';
 export const PermissionsStore = types
   .model('PermissionsStore', {
     fetching: types.boolean,
+    isFolder: types.maybe(types.boolean),
+    dashboardId: types.maybe(types.number),
     canUpdate: types.boolean,
     items: types.optional(types.array(PermissionsStoreItem), []),
     originalItems: types.optional(types.array(PermissionsStoreItem), []),
@@ -25,21 +27,23 @@ export const PermissionsStore = types
     },
   }))
   .actions(self => ({
-    load: flow(function* load(dashboardId: number) {
+    load: flow(function* load(dashboardId: number, isFolder: boolean) {
       const backendSrv = getEnv(self).backendSrv;
       self.fetching = true;
+      self.isFolder = isFolder;
+      self.dashboardId = dashboardId;
       const res = yield backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`);
-      const items = prepareServerResponse(res, dashboardId);
+      const items = prepareServerResponse(res, dashboardId, isFolder);
       self.items = items;
       self.originalItems = items;
       self.fetching = false;
     }),
-    addStoreItem: (item, dashboardId: number) => {
+    addStoreItem: item => {
       if (!self.isValid(item)) {
         return;
       }
 
-      self.items.push(prepareItem(item, dashboardId));
+      self.items.push(prepareItem(item, self.dashboardId, self.isFolder));
       self.canUpdate = true;
     },
     removeStoreItem: idx => {
@@ -84,16 +88,17 @@ export const PermissionsStore = types
     }),
   }));
 
-const prepareServerResponse = (response, dashboardId: number) => {
+const prepareServerResponse = (response, dashboardId: number, isFolder: boolean) => {
   return response.map(item => {
-    return prepareItem(item, dashboardId);
+    return prepareItem(item, dashboardId, isFolder);
   });
 };
 
-const prepareItem = (item, dashboardId: number) => {
+const prepareItem = (item, dashboardId: number, isFolder: boolean) => {
   // TODO: this.meta
   // item.inherited = !this.meta.isFolder && this.dashboardId !== item.dashboardId;
-  item.inherited = dashboardId !== item.dashboardId;
+  item.inherited = !isFolder && dashboardId !== item.dashboardId;
+  // item.inherited = dashboardId !== item.dashboardId;
   item.sortRank = 0;
   if (item.userId > 0) {
     item.icon = 'fa fa-fw fa-user';

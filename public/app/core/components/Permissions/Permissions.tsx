@@ -26,12 +26,11 @@ export interface DashboardAcl {
 }
 
 export interface IProps {
-  error: any;
-  newType: any;
-  aclTypes: any;
-  backendSrv: any;
+  error: string;
+  newType: string;
   dashboardId: number;
   permissions: any;
+  isFolder: boolean;
 }
 
 class Permissions extends Component<IProps, any> {
@@ -67,14 +66,12 @@ class PermissionsInner extends Component<IProps, any> {
 
   constructor(props) {
     super(props);
-
-    const { dashboardId, permissions } = this.props;
-
+    const { dashboardId, permissions, isFolder } = this.props;
     this.permissionChanged = this.permissionChanged.bind(this);
     this.typeChanged = this.typeChanged.bind(this);
     this.removeItem = this.removeItem.bind(this);
     this.update = this.update.bind(this);
-    permissions.load(dashboardId);
+    permissions.load(dashboardId, isFolder);
 
     this.state = {
       newType: 'Group',
@@ -134,7 +131,7 @@ class PermissionsInner extends Component<IProps, any> {
 
   render() {
     console.log('PermissionsInner render');
-    const { error, aclTypes, permissions } = this.props;
+    const { error, permissions } = this.props;
     const { newType } = this.state;
 
     return (
@@ -153,7 +150,7 @@ class PermissionsInner extends Component<IProps, any> {
               <div className="gf-form">
                 <div className="gf-form-select-wrapper">
                   <select className="gf-form-input gf-size-auto" value={newType} onChange={this.typeChanged}>
-                    {aclTypes.map((option, idx) => {
+                    {this.aclTypes.map((option, idx) => {
                       return (
                         <option key={idx} value={option.value}>
                           {option.text}

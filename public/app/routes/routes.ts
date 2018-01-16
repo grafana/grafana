@@ -3,6 +3,7 @@ import './ReactContainer';
 import { ServerStats } from 'app/containers/ServerStats/ServerStats';
 import { AlertRuleList } from 'app/containers/AlertRuleList/AlertRuleList';
 import { FolderSettings } from 'app/containers/ManageDashboards/FolderSettings';
+import { FolderPermissions } from 'app/containers/ManageDashboards/FolderPermissions';
 
 /** @ngInject **/
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -68,10 +69,16 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'CreateFolderCtrl',
       controllerAs: 'ctrl',
     })
+    // .when('/dashboards/folder/:folderId/:slug/permissions', {
+    //   templateUrl: 'public/app/features/dashboard/partials/folder_permissions.html',
+    //   controller: 'FolderPermissionsCtrl',
+    //   controllerAs: 'ctrl',
+    // })
     .when('/dashboards/folder/:folderId/:slug/permissions', {
-      templateUrl: 'public/app/features/dashboard/partials/folder_permissions.html',
-      controller: 'FolderPermissionsCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => FolderPermissions,
+      },
     })
     .when('/dashboards/folder/:folderId/:slug/settings', {
       template: '<react-container />',
