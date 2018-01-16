@@ -90,6 +90,7 @@
 }
 
 input[type='text'].tight-form-func-param {
+  font-size: 0.875rem;
   background: transparent;
   border: none;
   margin: 0;
@@ -126,33 +127,6 @@ input[type='text'].tight-form-func-param {
     padding-top: 5px;
     min-width: 100px;
     text-align: center;
-  }
-}
-
-input[type='text'].tight-form-func-param {
-  font-size: 0.875rem;
-  background: transparent;
-  border: none;
-  margin: 0;
-  padding: 0;
-}
-
-.tight-form-func-controls {
-  display: none;
-  text-align: center;
-
-  .fa-arrow-left {
-    float: left;
-    position: relative;
-    top: 2px;
-  }
-  .fa-arrow-right {
-    float: right;
-    position: relative;
-    top: 2px;
-  }
-  .fa-remove {
-    margin-left: 10px;
   }
 }
 
