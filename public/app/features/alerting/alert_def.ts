@@ -138,10 +138,6 @@ function getAlertAnnotationInfo(ah) {
     return 'Error: ' + ah.data.error;
   }
 
-  if (ah.data.noData || ah.data.no_data) {
-    return 'No Data';
-  }
-
   return '';
 }
 

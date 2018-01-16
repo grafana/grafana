@@ -33,6 +33,7 @@ $input-border: 1px solid $input-border-color;
 
 .gf-form--has-input-icon {
   position: relative;
+  margin-right: $gf-form-margin;
 
   .gf-form-input-icon {
     position: absolute;

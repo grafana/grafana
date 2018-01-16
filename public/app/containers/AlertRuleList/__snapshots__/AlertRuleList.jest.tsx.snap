@@ -2,71 +2,102 @@
 
 exports[`AlertRuleList should render 1 rule 1`] = `
 <li
-  className="card-item-wrapper"
+  className="alert-rule-item"
 >
+  <span
+    className="alert-rule-item__icon alert-state-ok"
+  >
+    <i
+      className="icon-gf icon-gf-online"
+    />
+  </span>
   <div
-    className="card-item card-item--alert"
+    className="alert-rule-item__body"
   >
     <div
-      className="card-item-header"
+      className="alert-rule-item__header"
     >
       <div
-        className="card-item-type"
+        className="alert-rule-item__name"
       >
         <a
-          className="card-item-cog"
-          onClick={[Function]}
-          title="Pausing an alert rule prevents it from executing"
-        >
-          <i
-            className="fa fa-pause"
-          />
-        </a>
-        <a
-          className="card-item-cog"
           href="dashboard/db/mygool?panelId=3&fullscreen&edit&tab=alert"
-          title="Edit alert rule"
         >
-          <i
-            className="icon-gf icon-gf-settings"
-          />
+          <Highlighter
+            highlightClassName="highlight-search-match"
+            searchWords={
+              Array [
+                "",
+              ]
+            }
+            textToHighlight="Panel Title alert"
+          >
+            <span>
+              <span
+                className=""
+                key="0"
+              >
+                Panel Title alert
+              </span>
+            </span>
+          </Highlighter>
         </a>
       </div>
-    </div>
-    <div
-      className="card-item-body"
-    >
       <div
-        className="card-item-details"
+        className="alert-rule-item__text"
       >
-        <div
-          className="card-item-name"
+        <span
+          className="alert-state-ok"
         >
-          <a
-            href="dashboard/db/mygool?panelId=3&fullscreen&edit&tab=alert"
+          <Highlighter
+            highlightClassName="highlight-search-match"
+            searchWords={
+              Array [
+                "",
+              ]
+            }
+            textToHighlight="OK"
           >
-            Panel Title alert
-          </a>
-        </div>
-        <div
-          className="card-item-sub-name"
+            <span>
+              <span
+                className=""
+                key="0"
+              >
+                OK
+              </span>
+            </span>
+          </Highlighter>
+        </span>
+        <span
+          className="alert-rule-item__time"
         >
-          <span
-            className="alert-list-item-state alert-state-ok"
-          >
-            <i
-              className="icon-gf icon-gf-online"
-            />
-             
-            OK
-          </span>
-          <span>
-             for 
-            5 minutes
-          </span>
-        </div>
+           for 
+          5 minutes
+        </span>
       </div>
     </div>
+  </div>
+  <div
+    className="alert-rule-item__actions"
+  >
+    <a
+      className="btn btn-small btn-inverse alert-list__btn width-2"
+      onClick={[Function]}
+      title="Pausing an alert rule prevents it from executing"
+    >
+      <i
+        className="fa fa-pause"
+      />
+    </a>
+    <a
+      className="btn btn-small btn-inverse alert-list__btn width-2"
+      href="dashboard/db/mygool?panelId=3&fullscreen&edit&tab=alert"
+      title="Edit alert rule"
+    >
+      <i
+        className="icon-gf icon-gf-settings"
+      />
+    </a>
   </div>
 </li>
 `;

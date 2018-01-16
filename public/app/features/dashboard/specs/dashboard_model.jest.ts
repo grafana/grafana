@@ -49,6 +49,23 @@ describe('DashboardModel', function() {
       expect(keys[0]).toBe('annotations');
       expect(keys[1]).toBe('autoUpdate');
     });
+
+    it('should remove add panel panels', () => {
+      var model = new DashboardModel({});
+      model.addPanel({
+        type: 'add-panel',
+      });
+      model.addPanel({
+        type: 'graph',
+      });
+      model.addPanel({
+        type: 'add-panel',
+      });
+      var saveModel = model.getSaveModelClone();
+      var panels = saveModel.panels;
+
+      expect(panels.length).toBe(1);
+    });
   });
 
   describe('row and panel manipulation', function() {

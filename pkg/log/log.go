@@ -236,8 +236,8 @@ func LogFilterHandler(maxLevel log15.Lvl, filters map[string]log15.Lvl, h log15.
 
 		if len(filters) > 0 {
 			for i := 0; i < len(r.Ctx); i += 2 {
-				key := r.Ctx[i].(string)
-				if key == "logger" {
+				key, ok := r.Ctx[i].(string)
+				if ok && key == "logger" {
 					loggerName, strOk := r.Ctx[i+1].(string)
 					if strOk {
 						if filterLevel, ok := filters[loggerName]; ok {

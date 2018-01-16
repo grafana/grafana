@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"io/ioutil"
 	"testing"
 
@@ -91,7 +92,7 @@ func pluginScenario(desc string, t *testing.T, fn func()) {
 		setting.Cfg = ini.Empty()
 		sec, _ := setting.Cfg.NewSection("plugin.test-app")
 		sec.NewKey("path", "../../tests/test-app")
-		err := Init()
+		err := initPlugins(context.Background())
 
 		So(err, ShouldBeNil)
 

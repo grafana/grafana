@@ -35,12 +35,12 @@ export class Tracker {
 
     $window.onbeforeunload = () => {
       if (this.ignoreChanges()) {
-        return '';
+        return null;
       }
       if (this.hasChanges()) {
         return 'There are unsaved changes to this dashboard';
       }
-      return '';
+      return null;
     };
 
     scope.$on('$locationChangeStart', (event, next) => {

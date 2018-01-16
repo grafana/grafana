@@ -26,11 +26,10 @@
   <div class="gf-form-group">
 
     <h3 class="page-heading">Team Members</h3>
-
-    <form name="ctrl.addMemberForm" class="gf-form-group">
+		<form name="ctrl.addMemberForm" class="gf-form-group">
       <div class="gf-form">
         <span class="gf-form-label width-10">Add member</span>
-        <user-picker user-picked="ctrl.userPicked($user)"></user-picker>
+				<select-user-picker backendSrv="ctrl.backendSrv" teamId="ctrl.$routeParams.id" refreshList="ctrl.get" teamMembers="ctrl.teamMembers"></select-user-picker>
       </div>
     </form>
 
