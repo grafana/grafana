@@ -2,8 +2,8 @@ package notifiers
 
 import (
 	"os"
-	"time"
 	"strconv"
+	"time"
 
 	"fmt"
 
