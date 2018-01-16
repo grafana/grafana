@@ -1,4 +1,4 @@
-﻿import { types, getEnv, flow } from 'mobx-state-tree';
+import { types, getEnv, flow } from 'mobx-state-tree';
 import { setStateFields } from './helpers';
 
 export const AlertRule = types
@@ -26,7 +26,7 @@ export const AlertRule = types
      */
     togglePaused: flow(function* togglePaused() {
       const backendSrv = getEnv(self).backendSrv;
-      const payload = { paused: self.isPaused };
+      const payload = { paused: !self.isPaused };
       const res = yield backendSrv.post(`/api/alerts/${self.id}/pause`, payload);
       setStateFields(self, res.state);
       self.info = '';
