@@ -1077,8 +1077,103 @@ function getFuncDefs(graphiteVersion, idx?) {
   return funcs;
 }
 
+// parse response from graphite /functions endpoint into internal format
+function parseFuncDefs(rawDefs) {
+  var funcDefs = {};
+
+  _.forEach(rawDefs || {}, (funcDef, funcName) => {
+    // skip graphite graph functions
+    if (funcDef.group === 'Graph') {
+      return;
+    }
+
+    var description = funcDef.description;
+    if (description) {
+      // tidy up some pydoc syntax that rst2html can't handle
+      description = description
+        .replace(/:py:func:`(.+)( <[^>]*>)?`/g, '``$1``')
+        .replace(/.. seealso:: /g, 'See also: ')
+        .replace(/.. code-block *:: *none/g, '.. code-block::');
+    }
+
+    var func = {
+      name: funcDef.name,
+      description: description,
+      category: funcDef.group,
+      params: [],
+      defaultParams: [],
+      fake: false,
+    };
+
+    // get rid of the first "seriesList" param
+    if (/^seriesLists?$/.test(_.get(funcDef, 'params[0].type', ''))) {
+      // handle functions that accept multiple seriesLists
+      // we leave the param in place but mark it optional, so users can add more series if they wish
+      if (funcDef.params[0].multiple) {
+        funcDef.params[0].required = false;
+        // otherwise chop off the first param, it'll be handled separately
+      } else {
+        funcDef.params.shift();
+      }
+      // tag function as fake
+    } else {
+      func.fake = true;
+    }
+
+    _.forEach(funcDef.params, rawParam => {
+      var param = {
+        name: rawParam.name,
+        type: 'string',
+        optional: !rawParam.required,
+        multiple: !!rawParam.multiple,
+        options: undefined,
+      };
+
+      if (rawParam.default !== undefined) {
+        func.defaultParams.push(_.toString(rawParam.default));
+      } else if (rawParam.suggestions) {
+        func.defaultParams.push(_.toString(rawParam.suggestions[0]));
+      } else {
+        func.defaultParams.push('');
+      }
+
+      if (rawParam.type === 'boolean') {
+        param.type = 'boolean';
+        param.options = ['true', 'false'];
+      } else if (rawParam.type === 'integer') {
+        param.type = 'int';
+      } else if (rawParam.type === 'float') {
+        param.type = 'float';
+      } else if (rawParam.type === 'node') {
+        param.type = 'node';
+        param.options = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+      } else if (rawParam.type === 'nodeOrTag') {
+        param.type = 'node_or_tag';
+        param.options = ['name', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+      } else if (rawParam.type === 'intOrInterval') {
+        param.type = 'int_or_interval';
+      } else if (rawParam.type === 'seriesList') {
+        param.type = 'value_or_series';
+      }
+
+      if (rawParam.options) {
+        param.options = _.map(rawParam.options, _.toString);
+      } else if (rawParam.suggestions) {
+        param.options = _.map(rawParam.suggestions, _.toString);
+      }
+
+      func.params.push(param);
+    });
+
+    funcDefs[funcName] = func;
+  });
+
+  return funcDefs;
+}
+
 export default {
   createFuncInstance: createFuncInstance,
   getFuncDef: getFuncDef,
   getFuncDefs: getFuncDefs,
+  parseFuncDefs: parseFuncDefs,
 };
