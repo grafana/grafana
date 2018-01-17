@@ -1,6 +1,9 @@
 ﻿import React, { Component } from 'react';
 
-export interface IProps {}
+export interface IProps {
+  backendSrv: any;
+  userPicked: (user) => void;
+}
 
 // export interface User {
 //     id: number;

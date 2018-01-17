@@ -13,9 +13,9 @@ export interface IProps {
 
 export interface User {
   id: number;
-  name: string;
+  label: string;
+  avatarUrl: string;
   login: string;
-  email: string;
 }
 
 class UserPicker extends Component<IProps, any> {
@@ -33,12 +33,12 @@ class UserPicker extends Component<IProps, any> {
     });
   }
 
-  handleChange(user) {
+  handleChange(user: User) {
     const { userPicked } = this.props;
     userPicked(user);
   }
 
-  searchUsers(query) {
+  searchUsers(query?: string) {
     const { toggleLoading, backendSrv } = this.props;
 
     toggleLoading(true);
@@ -48,6 +48,7 @@ class UserPicker extends Component<IProps, any> {
           id: user.id,
           label: `${user.login} - ${user.email}`,
           avatarUrl: user.avatarUrl,
+          login: user.login,
         };
       });
       toggleLoading(false);

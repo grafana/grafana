@@ -1,9 +1,8 @@
 ﻿import React, { Component } from 'react';
 import PermissionsList from './PermissionsList';
-import _ from 'lodash';
 import DevTools from 'mobx-react-devtools';
 import { inject, observer } from 'mobx-react';
-// import UserPicker from 'app/core/components/UserPicker/UserPicker';
+import UserPicker, { User } from 'app/core/components/UserPicker/UserPicker';
 
 export interface DashboardAcl {
   id?: number;
@@ -29,6 +28,7 @@ export interface IProps {
   dashboardId: number;
   permissions?: any;
   isFolder: boolean;
+  backendSrv: any;
 }
 
 @inject('permissions')
@@ -49,6 +49,7 @@ class Permissions extends Component<IProps, any> {
   newType: string;
   canUpdate: boolean;
   error: string;
+  refreshList: any;
 
   readonly duplicateError = 'This permission exists already.';
 
@@ -59,6 +60,7 @@ class Permissions extends Component<IProps, any> {
     this.typeChanged = this.typeChanged.bind(this);
     this.removeItem = this.removeItem.bind(this);
     this.update = this.update.bind(this);
+    this.userPicked = this.userPicked.bind(this);
     permissions.load(dashboardId, isFolder);
 
     this.state = {
@@ -70,13 +72,8 @@ class Permissions extends Component<IProps, any> {
     console.log('nextProps', nextProps);
   }
 
-  sortItems(items) {
-    return _.orderBy(items, ['sortRank', 'sortName'], ['desc', 'asc']);
-  }
-
   permissionChanged(index: number, permission: number, permissionName: string) {
     const { permissions } = this.props;
-    // permissions.items[index].updatePermission(permission, permissionName);
     permissions.updatePermissionOnIndex(index, permission, permissionName);
   }
 
@@ -117,9 +114,14 @@ class Permissions extends Component<IProps, any> {
     });
   }
 
+  userPicked(user: User) {
+    const { permissions } = this.props;
+    permissions.addStoreItem({ userId: user.id, userLogin: user.login, permission: 1 });
+  }
+
   render() {
     console.log('Permissions render');
-    const { error, permissions } = this.props;
+    const { error, permissions, backendSrv } = this.props;
     const { newType } = this.state;
 
     return (
@@ -155,30 +157,26 @@ class Permissions extends Component<IProps, any> {
                   /> */}
                 </div>
               </div>
-              {/*
+
               {newType === 'User' ? (
                 <div className="gf-form">
-                  {' '}
-                  User picker
-                  <user-picker user-picked="ctrl.userPicked($user)" />
+                  {/* <user-picker user-picked="ctrl.userPicked($user)" />
                   <select-user-picker
                     backendSrv="ctrl.backendSrv"
                     teamId="ctrl.$routeParams.id"
                     refreshList="ctrl.get"
                     teamMembers="ctrl.teamMembers"
-                  />
-                  <UserPicker backendSrv={backendSrv} teamId={0} />
+                  /> */}
+                  <UserPicker backendSrv={backendSrv} userPicked={this.userPicked} />
                 </div>
               ) : null}
 
               {newType === 'Group' ? (
                 <div className="gf-form">
-                  {' '}
                   Team picker
-                  <team-picker team-picked="ctrl.groupPicked($group)" />
+                  {/* <team-picker team-picked="ctrl.groupPicked($group)" /> */}
                 </div>
               ) : null}
-              */}
             </div>
           </form>
           {error ? (

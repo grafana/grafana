@@ -51,13 +51,9 @@ export const PermissionsStore = types
       self.canUpdate = true;
     },
     updatePermissionOnIndex(idx: number, permission: number, permissionName: string) {
-      // self.items[idx].permission = permission;
-      // self.items[idx].permissionName = permissionName;
       self.items[idx].updatePermission(permission, permissionName);
       self.canUpdate = true;
     },
-    // load: flow(function* load(dashboardId: number) {
-
     update: flow(function* update(dashboardId: number) {
       const backendSrv = getEnv(self).backendSrv;
       const updated = [];
@@ -95,13 +91,12 @@ const prepareServerResponse = (response, dashboardId: number, isFolder: boolean)
 };
 
 const prepareItem = (item, dashboardId: number, isFolder: boolean) => {
-  // TODO: this.meta
-  // item.inherited = !this.meta.isFolder && this.dashboardId !== item.dashboardId;
   item.inherited = !isFolder && dashboardId !== item.dashboardId;
-  // item.inherited = dashboardId !== item.dashboardId;
+
   item.sortRank = 0;
   if (item.userId > 0) {
     item.icon = 'fa fa-fw fa-user';
+    // TODO: Check what sce.trustAsHtml did
     //   item.nameHtml = this.$sce.trustAsHtml(item.userLogin);
     item.nameHtml = item.userLogin;
     item.sortName = item.userLogin;
