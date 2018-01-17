@@ -29,7 +29,7 @@ describe('FolderSettings', () => {
       }
     );
 
-    wrapper = shallow(<FolderSettings {...store} />);
+    wrapper = shallow(<FolderSettings backendSrv={backendSrv} {...store} />);
     return wrapper
       .dive()
       .instance()
