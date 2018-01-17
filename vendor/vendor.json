@@ -435,10 +435,6 @@
 			"revisionTime": "2017-03-17T12:25:07Z"
 		},
 		{
-			"path": "github.com/go-xorm/xor,m",
-			"revision": ""
-		},
-		{
 			"checksumSHA1": "xkwhf97yNV6tFwrOHCPeWtKW39E=",
 			"path": "github.com/go-xorm/xorm",
 			"revision": "6687a2b4e824f4d87f2d65060ec5cb0d896dff1e",
@@ -485,6 +481,12 @@
 			"path": "github.com/gorilla/websocket",
 			"revision": "3ab3a8b8831546bd18fd182c20687ca853b2bb13",
 			"revisionTime": "2016-12-15T22:53:35Z"
+		},
+		{
+			"checksumSHA1": "EtBErX/rtSQmC2z8fgl6WFBCt+E=",
+			"path": "github.com/grafana/grafana_plugin_model/go/datasource",
+			"revision": "50b475deb168a09c6b9be2658a230add915e913b",
+			"revisionTime": "2018-01-17T10:10:56Z"
 		},
 		{
 			"checksumSHA1": "0OUXdKhaE6TzpHevY0VFlAA5YJ8=",
