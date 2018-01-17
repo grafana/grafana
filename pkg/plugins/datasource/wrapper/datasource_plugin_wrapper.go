@@ -1,4 +1,4 @@
-package tsdb
+package wrapper
 
 import (
 	"context"
@@ -8,16 +8,15 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
-	proto "github.com/grafana/grafana/pkg/tsdb/models"
+	"github.com/grafana/grafana_plugin_model/go/datasource"
 )
 
-func NewDatasourcePluginWrapper(log log.Logger, plugin TsdbPlugin) *DatasourcePluginWrapper {
-	return &DatasourcePluginWrapper{TsdbPlugin: plugin, logger: log}
+func NewDatasourcePluginWrapper(log log.Logger, plugin datasource.DatasourcePlugin) *DatasourcePluginWrapper {
+	return &DatasourcePluginWrapper{DatasourcePlugin: plugin, logger: log}
 }
 
 type DatasourcePluginWrapper struct {
-	TsdbPlugin
-
+	datasource.DatasourcePlugin
 	logger log.Logger
 }
 
@@ -27,8 +26,8 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 		return nil, err
 	}
 
-	pbQuery := &proto.TsdbQuery{
-		Datasource: &proto.DatasourceInfo{
+	pbQuery := &datasource.DatasourceRequest{
+		Datasource: &datasource.DatasourceInfo{
 			JsonData: string(jsonData),
 			Name:     ds.Name,
 			Type:     ds.Type,
@@ -36,19 +35,19 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 			Id:       ds.Id,
 			OrgId:    ds.OrgId,
 		},
-		TimeRange: &proto.TimeRange{
+		TimeRange: &datasource.TimeRange{
 			FromRaw:     query.TimeRange.From,
 			ToRaw:       query.TimeRange.To,
 			ToEpochMs:   query.TimeRange.GetToAsMsEpoch(),
 			FromEpochMs: query.TimeRange.GetFromAsMsEpoch(),
 		},
-		Queries: []*proto.Query{},
+		Queries: []*datasource.Query{},
 	}
 
 	for _, q := range query.Queries {
 		modelJson, _ := q.Model.MarshalJSON()
 
-		pbQuery.Queries = append(pbQuery.Queries, &proto.Query{
+		pbQuery.Queries = append(pbQuery.Queries, &datasource.Query{
 			ModelJson:     string(modelJson),
 			IntervalMs:    q.IntervalMs,
 			RefId:         q.RefId,
@@ -56,7 +55,7 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 		})
 	}
 
-	pbres, err := tw.TsdbPlugin.Query(ctx, pbQuery)
+	pbres, err := tw.DatasourcePlugin.Query(ctx, pbQuery)
 
 	if err != nil {
 		return nil, err
@@ -96,7 +95,7 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 
 	return res, nil
 }
-func (tw *DatasourcePluginWrapper) mapTables(r *proto.QueryResult) ([]*tsdb.Table, error) {
+func (tw *DatasourcePluginWrapper) mapTables(r *datasource.QueryResult) ([]*tsdb.Table, error) {
 	var tables []*tsdb.Table
 	for _, t := range r.GetTables() {
 		mappedTable, err := tw.mapTable(t)
@@ -108,7 +107,7 @@ func (tw *DatasourcePluginWrapper) mapTables(r *proto.QueryResult) ([]*tsdb.Tabl
 	return tables, nil
 }
 
-func (tw *DatasourcePluginWrapper) mapTable(t *proto.Table) (*tsdb.Table, error) {
+func (tw *DatasourcePluginWrapper) mapTable(t *datasource.Table) (*tsdb.Table, error) {
 	table := &tsdb.Table{}
 	for _, c := range t.GetColumns() {
 		table.Columns = append(table.Columns, tsdb.TableColumn{
@@ -131,19 +130,19 @@ func (tw *DatasourcePluginWrapper) mapTable(t *proto.Table) (*tsdb.Table, error)
 
 	return table, nil
 }
-func (tw *DatasourcePluginWrapper) mapRowValue(rv *proto.RowValue) (interface{}, error) {
+func (tw *DatasourcePluginWrapper) mapRowValue(rv *datasource.RowValue) (interface{}, error) {
 	switch rv.Kind {
-	case proto.RowValue_TYPE_NULL:
+	case datasource.RowValue_TYPE_NULL:
 		return nil, nil
-	case proto.RowValue_TYPE_INT64:
+	case datasource.RowValue_TYPE_INT64:
 		return rv.Int64Value, nil
-	case proto.RowValue_TYPE_BOOL:
+	case datasource.RowValue_TYPE_BOOL:
 		return rv.BoolValue, nil
-	case proto.RowValue_TYPE_STRING:
+	case datasource.RowValue_TYPE_STRING:
 		return rv.StringValue, nil
-	case proto.RowValue_TYPE_DOUBLE:
+	case datasource.RowValue_TYPE_DOUBLE:
 		return rv.DoubleValue, nil
-	case proto.RowValue_TYPE_BYTES:
+	case datasource.RowValue_TYPE_BYTES:
 		return rv.BytesValue, nil
 	default:
 		return nil, fmt.Errorf("Unsupported row value %v from plugin", rv.Kind)
