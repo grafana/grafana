@@ -20,7 +20,7 @@ describe('ViewStore', () => {
 
   it('Query can contain arrays', () => {
     store.updatePathAndQuery('/hello', { values: ['A', 'B'] });
-    expect(store.query.get('values').toJS()).toMatchObject(['A', 'B']);
+    expect(toJS(store.query.get('values'))).toMatchObject(['A', 'B']);
     expect(store.currentUrl).toBe('/hello?values=A&values=B');
   });
 });
