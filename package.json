@@ -91,8 +91,7 @@
     "typescript": "^2.6.2",
     "webpack": "^3.10.0",
     "webpack-bundle-analyzer": "^2.9.0",
-    "webpack-cleanup-plugin": "^0.5.1",
-    "angular-mocks": "^1.6.6",
+    "webpack-cleanup-plugin": "^0.5.1",    
     "webpack-merge": "^4.1.0",
     "zone.js": "^0.7.2"
   },
