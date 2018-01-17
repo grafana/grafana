@@ -68,6 +68,9 @@ function ($, core) {
       var last_value = 0; //needed for stacked values
 
       var minDistance, minTime;
+      seriesList.sort(function(a, b) {
+        return a.index - b.index;
+      });
 
       for (i = 0; i < seriesList.length; i++) {
         series = seriesList[i];
