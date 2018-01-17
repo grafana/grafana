@@ -1,15 +1,9 @@
 import { types } from 'mobx-state-tree';
+import { toJS } from 'mobx';
+import { toUrlParams } from 'app/core/utils/url';
 
-const QueryValueType = types.union(types.string, types.boolean, types.number);
-const urlParameterize = queryObj => {
-  const keys = Object.keys(queryObj);
-  const newQuery = keys.reduce((acc: string, key: string, idx: number) => {
-    const preChar = idx === 0 ? '?' : '&';
-    return acc + preChar + key + '=' + queryObj[key];
-  }, '');
-
-  return newQuery;
-};
+const QueryInnerValueType = types.union(types.string, types.boolean, types.number);
+const QueryValueType = types.union(QueryInnerValueType, types.array(QueryInnerValueType));
 
 export const ViewStore = types
   .model({
@@ -21,7 +15,7 @@ export const ViewStore = types
       let path = self.path;
 
       if (self.query.size) {
-        path += urlParameterize(self.query.toJS());
+        path += '?' + toUrlParams(toJS(self.query));
       }
       return path;
     },
