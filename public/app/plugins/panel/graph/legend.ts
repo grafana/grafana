@@ -156,6 +156,10 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
           if (panel.legend.sortDesc) {
             seriesList = seriesList.reverse();
           }
+        } else {
+          seriesList = _.sortBy(seriesList, function(series) {
+            return series.index;
+          })
         }
 
         // render first time for getting proper legend height
