@@ -19,7 +19,7 @@ export function registerAngularDirectives() {
     ['onSelect', { watchDepth: 'reference' }],
     ['tagOptions', { watchDepth: 'reference' }],
   ]);
-  react2AngularDirective('selectUserPicker', UserPicker, ['backendSrv', 'userPicked']);
+  react2AngularDirective('selectUserPicker', UserPicker, ['backendSrv', 'handlePicked']);
   react2AngularDirective('permissions', Permissions, [
     'error',
     'newType',

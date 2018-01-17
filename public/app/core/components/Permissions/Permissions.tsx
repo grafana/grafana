@@ -3,6 +3,7 @@ import PermissionsList from './PermissionsList';
 import DevTools from 'mobx-react-devtools';
 import { inject, observer } from 'mobx-react';
 import UserPicker, { User } from 'app/core/components/UserPicker/UserPicker';
+import TeamPicker, { Team } from 'app/core/components/UserPicker/TeamPicker';
 
 export interface DashboardAcl {
   id?: number;
@@ -61,6 +62,7 @@ class Permissions extends Component<IProps, any> {
     this.removeItem = this.removeItem.bind(this);
     this.update = this.update.bind(this);
     this.userPicked = this.userPicked.bind(this);
+    this.teamPicked = this.teamPicked.bind(this);
     permissions.load(dashboardId, isFolder);
 
     this.state = {
@@ -119,6 +121,11 @@ class Permissions extends Component<IProps, any> {
     permissions.addStoreItem({ userId: user.id, userLogin: user.login, permission: 1 });
   }
 
+  teamPicked(team: Team) {
+    const { permissions } = this.props;
+    permissions.addStoreItem({ teamId: team.id, team: team.name, permission: 1 });
+  }
+
   render() {
     console.log('Permissions render');
     const { error, permissions, backendSrv } = this.props;
@@ -167,14 +174,13 @@ class Permissions extends Component<IProps, any> {
                     refreshList="ctrl.get"
                     teamMembers="ctrl.teamMembers"
                   /> */}
-                  <UserPicker backendSrv={backendSrv} userPicked={this.userPicked} />
+                  <UserPicker backendSrv={backendSrv} handlePicked={this.userPicked} />
                 </div>
               ) : null}
 
               {newType === 'Group' ? (
                 <div className="gf-form">
-                  Team picker
-                  {/* <team-picker team-picked="ctrl.groupPicked($group)" /> */}
+                  <TeamPicker backendSrv={backendSrv} handlePicked={this.teamPicked} />
                 </div>
               ) : null}
             </div>

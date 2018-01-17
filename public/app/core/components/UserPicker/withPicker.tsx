@@ -2,7 +2,7 @@
 
 export interface IProps {
   backendSrv: any;
-  userPicked: (user) => void;
+  handlePicked: (data) => void;
 }
 
 // export interface User {
