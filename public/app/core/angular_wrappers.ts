@@ -14,12 +14,12 @@ export function registerAngularDirectives() {
   react2AngularDirective('emptyListCta', EmptyListCTA, ['model']);
   react2AngularDirective('loginBackground', LoginBackground, []);
   react2AngularDirective('searchResult', SearchResult, []);
-  react2AngularDirective('selectUserPicker', UserPicker, ['backendSrv', 'teamId', 'refreshList']);
   react2AngularDirective('tagFilter', TagFilter, [
     'tags',
     ['onSelect', { watchDepth: 'reference' }],
     ['tagOptions', { watchDepth: 'reference' }],
   ]);
+  react2AngularDirective('selectUserPicker', UserPicker, ['backendSrv', 'userPicked']);
   react2AngularDirective('permissions', Permissions, [
     'error',
     'newType',

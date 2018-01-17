@@ -29,7 +29,11 @@
 		<form name="ctrl.addMemberForm" class="gf-form-group">
       <div class="gf-form">
         <span class="gf-form-label width-10">Add member</span>
-				<select-user-picker backendSrv="ctrl.backendSrv" teamId="ctrl.$routeParams.id" refreshList="ctrl.get" teamMembers="ctrl.teamMembers"></select-user-picker>
+				<!--
+				Old picker
+				<user-picker user-picked="ctrl.userPicked($user)"></user-picker>
+				-->
+				<select-user-picker userPicked="ctrl.userPicked" backendSrv="ctrl.backendSrv"></select-user-picker>
       </div>
     </form>
 
@@ -60,3 +64,4 @@
 				This team has no members yet.
 			</em>
 		</div>
+

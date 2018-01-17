@@ -1,12 +1,14 @@
-import React, { Component } from 'react';
-import { debounce } from 'lodash';
+﻿import React, { Component } from 'react';
 import Select from 'react-select';
 import UserPickerOption from './UserPickerOption';
+import withPicker from './withPicker';
+import { debounce } from 'lodash';
 
 export interface IProps {
   backendSrv: any;
-  teamId: string;
-  refreshList: any;
+  isLoading: boolean;
+  toggleLoading: any;
+  userPicked: (user) => void;
 }
 
 export interface User {
@@ -19,56 +21,28 @@ export interface User {
 class UserPicker extends Component<IProps, any> {
   debouncedSearchUsers: any;
   backendSrv: any;
-  teamId: string;
-  refreshList: any;
 
   constructor(props) {
     super(props);
-    this.backendSrv = this.props.backendSrv;
-    this.teamId = this.props.teamId;
-    this.refreshList = this.props.refreshList;
-
+    this.state = {};
     this.searchUsers = this.searchUsers.bind(this);
     this.handleChange = this.handleChange.bind(this);
-    this.addUser = this.addUser.bind(this);
-    this.toggleLoading = this.toggleLoading.bind(this);
-
     this.debouncedSearchUsers = debounce(this.searchUsers, 300, {
       leading: true,
       trailing: false,
     });
-
-    this.state = {
-      multi: false,
-      isLoading: false,
-    };
   }
 
   handleChange(user) {
-    this.addUser(user.id);
-  }
-
-  toggleLoading(isLoading) {
-    this.setState(prevState => {
-      return {
-        ...prevState,
-        isLoading: isLoading,
-      };
-    });
-  }
-
-  addUser(userId) {
-    this.toggleLoading(true);
-    this.backendSrv.post(`/api/teams/${this.teamId}/members`, { userId: userId }).then(() => {
-      this.refreshList();
-      this.toggleLoading(false);
-    });
+    const { userPicked } = this.props;
+    userPicked(user);
   }
 
   searchUsers(query) {
-    this.toggleLoading(true);
+    const { toggleLoading, backendSrv } = this.props;
 
-    return this.backendSrv.get(`/api/users/search?perpage=10&page=1&query=${query}`).then(result => {
+    toggleLoading(true);
+    return backendSrv.get(`/api/users/search?perpage=10&page=1&query=${query}`).then(result => {
       const users = result.users.map(user => {
         return {
           id: user.id,
@@ -76,7 +50,7 @@ class UserPicker extends Component<IProps, any> {
           avatarUrl: user.avatarUrl,
         };
       });
-      this.toggleLoading(false);
+      toggleLoading(false);
       return { options: users };
     });
   }
@@ -91,7 +65,7 @@ class UserPicker extends Component<IProps, any> {
           multi={this.state.multi}
           labelKey="label"
           cache={false}
-          isLoading={this.state.isLoading}
+          isLoading={this.props.isLoading}
           loadOptions={this.debouncedSearchUsers}
           loadingPlaceholder="Loading..."
           noResultsText="No users found"
@@ -105,4 +79,4 @@ class UserPicker extends Component<IProps, any> {
   }
 }
 
-export default UserPicker;
+export default withPicker(UserPicker);
