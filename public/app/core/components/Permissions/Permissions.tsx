@@ -29,7 +29,7 @@ export interface IProps {
   error: string;
   newType: string;
   dashboardId: number;
-  permissions: any;
+  permissions?: any;
   isFolder: boolean;
 }
 
