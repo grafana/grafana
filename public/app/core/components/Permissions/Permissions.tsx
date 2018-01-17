@@ -3,8 +3,6 @@ import PermissionsList from './PermissionsList';
 import _ from 'lodash';
 import DevTools from 'mobx-react-devtools';
 import { inject, observer } from 'mobx-react';
-import { Provider } from 'mobx-react';
-import { store } from 'app/stores/store';
 // import UserPicker from 'app/core/components/UserPicker/UserPicker';
 
 export interface DashboardAcl {
@@ -33,19 +31,9 @@ export interface IProps {
   isFolder: boolean;
 }
 
-class Permissions extends Component<IProps, any> {
-  render() {
-    return (
-      <Provider {...store}>
-        <PermissionsInner {...this.props} />
-      </Provider>
-    );
-  }
-}
-
 @inject('permissions')
 @observer
-class PermissionsInner extends Component<IProps, any> {
+class Permissions extends Component<IProps, any> {
   // TODO Remove Inner from Name when we get access via ReactContainer
   dashboardId: any;
   meta: any;
@@ -130,7 +118,7 @@ class PermissionsInner extends Component<IProps, any> {
   }
 
   render() {
-    console.log('PermissionsInner render');
+    console.log('Permissions render');
     const { error, permissions } = this.props;
     const { newType } = this.state;
 
