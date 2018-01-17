@@ -108,7 +108,6 @@ export class DataProcessor {
       alias: alias,
       color: color,
       unit: seriesData.unit,
-      index: index,
     });
 
     if (datapoints && datapoints.length > 0) {
