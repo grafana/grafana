@@ -12,6 +12,7 @@ interface IContainerProps {
   alertList: typeof AlertListStore.Type;
   view: typeof ViewStore.Type;
   folder: typeof FolderStore.Type;
+  backendSrv: any;
 }
 
 export default IContainerProps;
