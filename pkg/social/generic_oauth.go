@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/mail"
 
 	"github.com/grafana/grafana/pkg/models"
 
@@ -165,15 +166,18 @@ func (s *GenericOAuth) FetchOrganizations(client *http.Client) ([]string, error)
 	return logins, nil
 }
 
+type UserInfoJson struct {
+	Name        string              `json:"name"`
+	DisplayName string              `json:"display_name"`
+	Login       string              `json:"login"`
+	Username    string              `json:"username"`
+	Email       string              `json:"email"`
+	Upn         string              `json:"upn"`
+	Attributes  map[string][]string `json:"attributes"`
+}
+
 func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
-	var data struct {
-		Name        string              `json:"name"`
-		DisplayName string              `json:"display_name"`
-		Login       string              `json:"login"`
-		Username    string              `json:"username"`
-		Email       string              `json:"email"`
-		Attributes  map[string][]string `json:"attributes"`
-	}
+	var data UserInfoJson
 
 	response, err := HttpGet(client, s.apiUrl)
 	if err != nil {
@@ -185,33 +189,25 @@ func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
+	name, err := s.extractName(data)
+	if err != nil {
+		return nil, err
+	}
+
+	email, err := s.extractEmail(data, client)
+	if err != nil {
+		return nil, err
+	}
+
+	login, err := s.extractLogin(data, email)
+	if err != nil {
+		return nil, err
+	}
+
 	userInfo := &BasicUserInfo{
-		Name:  data.Name,
-		Login: data.Login,
-		Email: data.Email,
-	}
-
-	if userInfo.Email == "" && data.Attributes["email:primary"] != nil {
-		userInfo.Email = data.Attributes["email:primary"][0]
-	}
-
-	if userInfo.Email == "" {
-		userInfo.Email, err = s.FetchPrivateEmail(client)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if userInfo.Name == "" && data.DisplayName != "" {
-		userInfo.Name = data.DisplayName
-	}
-
-	if userInfo.Login == "" && data.Username != "" {
-		userInfo.Login = data.Username
-	}
-
-	if userInfo.Login == "" {
-		userInfo.Login = data.Email
+		Name:  name,
+		Login: login,
+		Email: email,
 	}
 
 	if !s.IsTeamMember(client) {
@@ -223,4 +219,47 @@ func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	}
 
 	return userInfo, nil
+}
+
+func (s *GenericOAuth) extractEmail(data UserInfoJson, client *http.Client) (string, error) {
+	if data.Email != "" {
+		return data.Email, nil
+	}
+
+	if data.Attributes["email:primary"] != nil {
+		return data.Attributes["email:primary"][0], nil
+	}
+
+	if data.Upn != "" {
+		emailAddr, emailErr := mail.ParseAddress(data.Upn)
+		if emailErr == nil {
+			return emailAddr.Address, nil
+		}
+	}
+
+	return s.FetchPrivateEmail(client)
+}
+
+func (s *GenericOAuth) extractLogin(data UserInfoJson, email string) (string, error) {
+	if data.Login != "" {
+		return data.Login, nil
+	}
+
+	if data.Username != "" {
+		return data.Username, nil
+	}
+
+	return email, nil
+}
+
+func (s *GenericOAuth) extractName(data UserInfoJson) (string, error) {
+	if data.Name != "" {
+		return data.Name, nil
+	}
+
+	if data.DisplayName != "" {
+		return data.DisplayName, nil
+	}
+
+	return "", nil
 }
