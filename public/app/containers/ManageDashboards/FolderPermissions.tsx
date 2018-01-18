@@ -8,8 +8,6 @@ import Permissions from 'app/core/components/Permissions/Permissions';
 @inject('nav', 'folder', 'view', 'permissions')
 @observer
 export class FolderPermissions extends Component<IContainerProps, any> {
-  dashboard: any;
-
   constructor(props) {
     super(props);
     this.loadStore();
@@ -18,7 +16,6 @@ export class FolderPermissions extends Component<IContainerProps, any> {
   loadStore() {
     const { nav, folder, view } = this.props;
     return folder.load(view.routeParams.get('slug') as string).then(res => {
-      this.dashboard = res.dashboard;
       return nav.initFolderNav(toJS(folder.folder), 'manage-folder-permissions');
     });
   }
@@ -30,15 +27,17 @@ export class FolderPermissions extends Component<IContainerProps, any> {
       return <h2>Loading</h2>;
     }
 
+    const dashboardId = folder.folder.id;
+
     return (
       <div>
         <PageHeader model={nav as any} />
         <div className="page-container page-body">
+          <h2 className="page-sub-heading">Folder Permissions</h2>
           <Permissions
             permissions={permissions}
             isFolder={true}
-            error=""
-            dashboardId={1}
+            dashboardId={dashboardId}
             backendSrv={this.props.backendSrv}
           />
         </div>

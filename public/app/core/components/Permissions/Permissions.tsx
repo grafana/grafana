@@ -23,7 +23,6 @@ export interface DashboardAcl {
 }
 
 export interface IProps {
-  error: string;
   dashboardId: number;
   permissions?: any;
   isFolder: boolean;
