@@ -151,6 +151,17 @@ func createWalkFn(fr *fileReader, folderId int64) filepath.WalkFunc {
 			return nil
 		}
 
+		checkFilepath, err := filepath.EvalSymlinks(path)
+
+		if path != checkFilepath {
+			path = checkFilepath
+			fi, err := os.Lstat(checkFilepath)
+			if err != nil {
+				return err
+			}
+			fileInfo = fi
+		}
+
 		cachedDashboard, exist := fr.cache.getCache(path)
 		if exist && cachedDashboard.UpdatedAt == fileInfo.ModTime() {
 			return nil
