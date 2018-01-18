@@ -38,7 +38,6 @@ export class DataSourceEditCtrl {
     navModelSrv
   ) {
     this.navModel = navModelSrv.getNav('cfg', 'datasources', 0);
-    this.navModel = thi;
     this.datasources = [];
 
     this.loadDatasourceTypes().then(() => {
