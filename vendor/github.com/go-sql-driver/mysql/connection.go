@@ -10,6 +10,7 @@ package mysql
 
 import (
 	"database/sql/driver"
+	"io"
 	"net"
 	"strconv"
 	"strings"
@@ -22,7 +23,7 @@ type mysqlConn struct {
 	affectedRows     uint64
 	insertId         uint64
 	cfg              *Config
-	maxPacketAllowed int
+	maxAllowedPacket int
 	maxWriteSize     int
 	writeTimeout     time.Duration
 	flags            clientFlag
@@ -135,6 +136,11 @@ func (mc *mysqlConn) Prepare(query string) (driver.Stmt, error) {
 }
 
 func (mc *mysqlConn) interpolateParams(query string, args []driver.Value) (string, error) {
+	// Number of ? should be same to len(args)
+	if strings.Count(query, "?") != len(args) {
+		return "", driver.ErrSkip
+	}
+
 	buf := mc.buf.takeCompleteBuffer()
 	if buf == nil {
 		// can not take the buffer. Something must be wrong with the connection
@@ -241,7 +247,7 @@ func (mc *mysqlConn) interpolateParams(query string, args []driver.Value) (strin
 			return "", driver.ErrSkip
 		}
 
-		if len(buf)+4 > mc.maxPacketAllowed {
+		if len(buf)+4 > mc.maxAllowedPacket {
 			return "", driver.ErrSkip
 		}
 	}
@@ -284,22 +290,29 @@ func (mc *mysqlConn) Exec(query string, args []driver.Value) (driver.Result, err
 // Internal function to execute commands
 func (mc *mysqlConn) exec(query string) error {
 	// Send command
-	err := mc.writeCommandPacketStr(comQuery, query)
-	if err != nil {
+	if err := mc.writeCommandPacketStr(comQuery, query); err != nil {
 		return err
 	}
 
 	// Read Result
 	resLen, err := mc.readResultSetHeaderPacket()
-	if err == nil && resLen > 0 {
-		if err = mc.readUntilEOF(); err != nil {
+	if err != nil {
+		return err
+	}
+
+	if resLen > 0 {
+		// columns
+		if err := mc.readUntilEOF(); err != nil {
 			return err
 		}
 
-		err = mc.readUntilEOF()
+		// rows
+		if err := mc.readUntilEOF(); err != nil {
+			return err
+		}
 	}
 
-	return err
+	return mc.discardResults()
 }
 
 func (mc *mysqlConn) Query(query string, args []driver.Value) (driver.Rows, error) {
@@ -330,11 +343,17 @@ func (mc *mysqlConn) Query(query string, args []driver.Value) (driver.Rows, erro
 			rows.mc = mc
 
 			if resLen == 0 {
-				// no columns, no more data
-				return emptyRows{}, nil
+				rows.rs.done = true
+
+				switch err := rows.NextResultSet(); err {
+				case nil, io.EOF:
+					return rows, nil
+				default:
+					return nil, err
+				}
 			}
 			// Columns
-			rows.columns, err = mc.readColumns(resLen)
+			rows.rs.columns, err = mc.readColumns(resLen)
 			return rows, err
 		}
 	}
@@ -354,7 +373,7 @@ func (mc *mysqlConn) getSystemVar(name string) ([]byte, error) {
 	if err == nil {
 		rows := new(textRows)
 		rows.mc = mc
-		rows.columns = []mysqlField{{fieldType: fieldTypeVarChar}}
+		rows.rs.columns = []mysqlField{{fieldType: fieldTypeVarChar}}
 
 		if resLen > 0 {
 			// Columns

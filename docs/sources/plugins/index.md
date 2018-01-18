@@ -1,5 +1,6 @@
 +++
 title = "Plugins"
+type = "docs"
 [menu.docs]
 name = "Plugins"
 identifier = "plugins"
@@ -9,16 +10,11 @@ weight = 8
 
 # Plugins
 
-From Grafana 3.0 not only datasource plugins are supported but also panel plugins and apps.
-Having panels as plugins make it easy to create and add any kind of panel, to show your data
-or improve your favorite dashboards. Apps is something new in Grafana that enables
-bundling of datasources, panels, dashboards and Grafana pages into a cohesive experience.
+Plugins make it easy to create and add any kind of panel, data source or complete
+application, to show your data or improve your favorite dashboards.
 
-Grafana already have a strong community of contributors and plugin developers.
+Grafana has a strong community of contributors and plugin developers.
 By making it easier to develop and install plugins we hope that the community
 can grow even stronger and develop new plugins that we would never think about.
 
-You can discover available plugins on [Grafana.net](https://grafana.net)
-
-
-
+You can discover available plugins on [Grafana.com](https://grafana.com/plugins)

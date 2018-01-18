@@ -1,10 +1,7 @@
-///<reference path="../../headers/common.d.ts" />
-
-import angular from 'angular';
 import _ from 'lodash';
 
 import config from 'app/core/config';
-import {coreModule, appEvents} from 'app/core/core';
+import { coreModule, appEvents } from 'app/core/core';
 
 var datasourceTypes = [];
 
@@ -30,148 +27,182 @@ export class DataSourceEditCtrl {
   hasDashboards: boolean;
   editForm: any;
   gettingStarted: boolean;
+  navModel: any;
 
   /** @ngInject */
   constructor(
-    private $scope,
     private $q,
     private backendSrv,
     private $routeParams,
     private $location,
-    private datasourceSrv) {
+    private datasourceSrv,
+    navModelSrv
+  ) {
+    this.navModel = navModelSrv.getNav('cfg', 'datasources', 0);
+    this.datasources = [];
+    this.tabIndex = 0;
 
-      this.isNew = true;
-      this.datasources = [];
-      this.tabIndex = 0;
+    this.loadDatasourceTypes().then(() => {
+      if (this.$routeParams.id) {
+        this.getDatasourceById(this.$routeParams.id);
+      } else {
+        this.initNewDatasourceModel();
+      }
+    });
+  }
 
-      this.loadDatasourceTypes().then(() => {
-        if (this.$routeParams.id) {
-          this.getDatasourceById(this.$routeParams.id);
-        } else {
-          this.initNewDatasourceModel();
-        }
-      });
+  initNewDatasourceModel() {
+    this.isNew = true;
+    this.current = _.cloneDeep(defaults);
+
+    this.navModel.breadcrumbs.push({ text: 'New' });
+
+    // We are coming from getting started
+    if (this.$location.search().gettingstarted) {
+      this.gettingStarted = true;
+      this.current.isDefault = true;
     }
 
-    initNewDatasourceModel() {
-      this.current = angular.copy(defaults);
+    this.typeChanged();
+  }
 
-      // We are coming from getting started
-      if (this.$location.search().gettingstarted) {
-        this.gettingStarted = true;
-        this.current.isDefault = true;
+  loadDatasourceTypes() {
+    if (datasourceTypes.length > 0) {
+      this.types = datasourceTypes;
+      return this.$q.when(null);
+    }
+
+    return this.backendSrv.get('/api/plugins', { enabled: 1, type: 'datasource' }).then(plugins => {
+      datasourceTypes = plugins;
+      this.types = plugins;
+    });
+  }
+
+  getDatasourceById(id) {
+    this.backendSrv.get('/api/datasources/' + id).then(ds => {
+      this.isNew = false;
+      this.current = ds;
+      this.navModel.node = {
+        text: ds.name,
+        icon: 'icon-gf icon-gf-fw icon-gf-datasources',
+        id: 'ds-new',
+      };
+      this.navModel.breadcrumbs.push(this.navModel.node);
+
+      if (datasourceCreated) {
+        datasourceCreated = false;
+        this.testDatasource();
       }
 
-      this.typeChanged();
-    }
+      return this.typeChanged();
+    });
+  }
 
-    loadDatasourceTypes() {
-      if (datasourceTypes.length > 0) {
-        this.types = datasourceTypes;
-        return this.$q.when(null);
-      }
+  userChangedType() {
+    // reset model but keep name & default flag
+    this.current = _.defaults(
+      {
+        id: this.current.id,
+        name: this.current.name,
+        isDefault: this.current.isDefault,
+        type: this.current.type,
+      },
+      _.cloneDeep(defaults)
+    );
+    this.typeChanged();
+  }
 
-      return this.backendSrv.get('/api/plugins', {enabled: 1, type: 'datasource'}).then(plugins => {
-        datasourceTypes = plugins;
-        this.types = plugins;
-      });
-    }
+  typeChanged() {
+    this.hasDashboards = false;
+    return this.backendSrv.get('/api/plugins/' + this.current.type + '/settings').then(pluginInfo => {
+      this.datasourceMeta = pluginInfo;
+      this.hasDashboards = _.find(pluginInfo.includes, { type: 'dashboard' }) !== undefined;
+    });
+  }
 
-    getDatasourceById(id) {
-      this.backendSrv.get('/api/datasources/' + id).then(ds => {
-        this.isNew = false;
-        this.current = ds;
-        if (datasourceCreated) {
-          datasourceCreated = false;
-          this.testDatasource();
-        }
-        return this.typeChanged();
-      });
-    }
+  updateFrontendSettings() {
+    return this.backendSrv.get('/api/frontend/settings').then(settings => {
+      config.datasources = settings.datasources;
+      config.defaultDatasource = settings.defaultDatasource;
+      this.datasourceSrv.init();
+    });
+  }
 
-    typeChanged() {
-      this.hasDashboards = false;
-      return this.backendSrv.get('/api/plugins/' + this.current.type + '/settings').then(pluginInfo => {
-        this.datasourceMeta = pluginInfo;
-        this.hasDashboards = _.find(pluginInfo.includes, {type: 'dashboard'});
-      });
-    }
-
-    updateFrontendSettings() {
-      return this.backendSrv.get('/api/frontend/settings').then(settings => {
-        config.datasources = settings.datasources;
-        config.defaultDatasource = settings.defaultDatasource;
-        this.datasourceSrv.init();
-      });
-    }
-
-    testDatasource() {
-      this.testing = { done: false };
-
-      this.datasourceSrv.get(this.current.name).then(datasource => {
-        if (!datasource.testDatasource) {
-          delete this.testing;
-          return;
-        }
-
-        return datasource.testDatasource().then(result => {
-          this.testing.message = result.message;
-          this.testing.status = result.status;
-          this.testing.title = result.title;
-        }).catch(err => {
-          if (err.statusText) {
-            this.testing.message = err.statusText;
-            this.testing.title = "HTTP Error";
-          } else {
-            this.testing.message = err.message;
-            this.testing.title = "Unknown error";
-          }
-        });
-      }).finally(() => {
-        if (this.testing) {
-          this.testing.done = true;
-        }
-      });
-    }
-
-    saveChanges() {
-      if (!this.editForm.$valid) {
+  testDatasource() {
+    this.datasourceSrv.get(this.current.name).then(datasource => {
+      if (!datasource.testDatasource) {
         return;
       }
 
-      if (this.current.id) {
-        return this.backendSrv.put('/api/datasources/' + this.current.id, this.current).then(() => {
-          this.updateFrontendSettings().then(() => {
-            this.testDatasource();
-          });
-        });
-      } else {
-        return this.backendSrv.post('/api/datasources', this.current).then(result => {
-          this.updateFrontendSettings();
+      this.testing = { done: false, status: 'error' };
 
-          datasourceCreated = true;
-          this.$location.path('datasources/edit/' + result.id);
+      // make test call in no backend cache context
+      this.backendSrv
+        .withNoBackendCache(() => {
+          return datasource
+            .testDatasource()
+            .then(result => {
+              this.testing.message = result.message;
+              this.testing.status = result.status;
+            })
+            .catch(err => {
+              if (err.statusText) {
+                this.testing.message = 'HTTP Error ' + err.statusText;
+              } else {
+                this.testing.message = err.message;
+              }
+            });
+        })
+        .finally(() => {
+          this.testing.done = true;
         });
-      }
-    };
+    });
+  }
 
-    confirmDelete() {
-      this.backendSrv.delete('/api/datasources/' + this.current.id).then(() => {
-        this.$location.path('datasources');
-      });
+  saveChanges() {
+    if (!this.editForm.$valid) {
+      return;
     }
 
-    delete(s) {
-      appEvents.emit('confirm-modal', {
-        title: 'Delete',
-        text: 'Are you sure you want to delete this datasource?',
-        yesText: "Delete",
-        icon: "fa-trash",
-        onConfirm: () => {
-          this.confirmDelete();
-        }
+    if (this.current.readOnly) {
+      return;
+    }
+
+    if (this.current.id) {
+      return this.backendSrv.put('/api/datasources/' + this.current.id, this.current).then(result => {
+        this.current = result.datasource;
+        this.updateFrontendSettings().then(() => {
+          this.testDatasource();
+        });
+      });
+    } else {
+      return this.backendSrv.post('/api/datasources', this.current).then(result => {
+        this.current = result.datasource;
+        this.updateFrontendSettings();
+
+        datasourceCreated = true;
+        this.$location.path('datasources/edit/' + result.id);
       });
     }
+  }
+
+  confirmDelete() {
+    this.backendSrv.delete('/api/datasources/' + this.current.id).then(() => {
+      this.$location.path('datasources');
+    });
+  }
+
+  delete(s) {
+    appEvents.emit('confirm-modal', {
+      title: 'Delete',
+      text: 'Are you sure you want to delete this datasource?',
+      yesText: 'Delete',
+      icon: 'fa-trash',
+      onConfirm: () => {
+        this.confirmDelete();
+      },
+    });
+  }
 }
 
 coreModule.controller('DataSourceEditCtrl', DataSourceEditCtrl);
@@ -179,8 +210,8 @@ coreModule.controller('DataSourceEditCtrl', DataSourceEditCtrl);
 coreModule.directive('datasourceHttpSettings', function() {
   return {
     scope: {
-      current: "=",
-      suggestUrl: "@",
+      current: '=',
+      suggestUrl: '@',
     },
     templateUrl: 'public/app/features/plugins/partials/ds_http_settings.html',
     link: {
@@ -188,7 +219,7 @@ coreModule.directive('datasourceHttpSettings', function() {
         $scope.getSuggestUrls = function() {
           return [$scope.suggestUrl];
         };
-      }
-    }
+      },
+    },
   };
 });

@@ -48,14 +48,16 @@ func TestSlackNotifier(t *testing.T) {
 				So(slackNotifier.Url, ShouldEqual, "http://google.com")
 				So(slackNotifier.Recipient, ShouldEqual, "")
 				So(slackNotifier.Mention, ShouldEqual, "")
+				So(slackNotifier.Token, ShouldEqual, "")
 			})
 
-			Convey("from settings with Recipient and Mention", func() {
+			Convey("from settings with Recipient, Mention, and Token", func() {
 				json := `
 				{
           "url": "http://google.com",
           "recipient": "#ds-opentsdb",
-          "mention": "@carl"
+          "mention": "@carl",
+          "token": "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX"
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -74,8 +76,8 @@ func TestSlackNotifier(t *testing.T) {
 				So(slackNotifier.Url, ShouldEqual, "http://google.com")
 				So(slackNotifier.Recipient, ShouldEqual, "#ds-opentsdb")
 				So(slackNotifier.Mention, ShouldEqual, "@carl")
+				So(slackNotifier.Token, ShouldEqual, "xoxb-XXXXXXXX-XXXXXXXX-XXXXXXXXXX")
 			})
-
 		})
 	})
 }

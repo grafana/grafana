@@ -48,6 +48,7 @@ func GetPluginList(c *middleware.Context) Response {
 			LatestVersion: pluginDef.GrafanaNetVersion,
 			HasUpdate:     pluginDef.GrafanaNetHasUpdate,
 			DefaultNavUrl: pluginDef.DefaultNavUrl,
+			State:         pluginDef.State,
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
@@ -97,6 +98,7 @@ func GetPluginSettingById(c *middleware.Context) Response {
 			DefaultNavUrl: def.DefaultNavUrl,
 			LatestVersion: def.GrafanaNetVersion,
 			HasUpdate:     def.GrafanaNetHasUpdate,
+			State:         def.State,
 		}
 
 		query := m.GetPluginSettingByIdQuery{PluginId: pluginId, OrgId: c.OrgId}
@@ -145,17 +147,20 @@ func GetPluginDashboards(c *middleware.Context) Response {
 	}
 }
 
-func GetPluginReadme(c *middleware.Context) Response {
+func GetPluginMarkdown(c *middleware.Context) Response {
 	pluginId := c.Params(":pluginId")
+	name := c.Params(":name")
 
-	if content, err := plugins.GetPluginReadme(pluginId); err != nil {
+	if content, err := plugins.GetPluginMarkdown(pluginId, name); err != nil {
 		if notfound, ok := err.(plugins.PluginNotFoundError); ok {
 			return ApiError(404, notfound.Error(), nil)
 		}
 
-		return ApiError(500, "Could not get readme", err)
+		return ApiError(500, "Could not get markdown file", err)
 	} else {
-		return Respond(200, content)
+		resp := Respond(200, content)
+		resp.Header("Content-Type", "text/plain; charset=utf-8")
+		return resp
 	}
 }
 

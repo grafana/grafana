@@ -1,175 +1,78 @@
-
-.dash-row {
-  display: block;
+.dashboard-row {
   display: flex;
-  flex-direction: column;
-  position: relative;
+  align-items: center;
 
-  &--collapse {
-    .dash-row-header {
-      background: $panel-bg;
-      border: $panel-border;
-      margin-bottom: $panel-margin*2;
-    }
-  }
-}
+  height: 100%;
 
-.dash-row-header {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  margin-right: $panel-margin;
-  margin-left: 0;
+  &--collapsed {
+    background: $panel-bg;
 
-  .h1 { font-size: 2.7rem; font-style: normal; line-height: 4rem; font-weight: 300; }
-  .h2 { font-size: 2.4rem; line-height: 3.5rem; font-weight: 300; }
-  .h3 { font-size: 2.0rem; line-height: 3rem; font-weight: 300;}
-  .h4 { font-size: 1.7rem; font-weight: 300;}
-  .h5 { font-size: 1.4rem; font-weight: 300;}
-  .h6 { font-size: 1rem; font-weight: 300; }
-}
-
-.dash-row-header-title {
-  padding: 0.6rem;
-  flex-grow: 1;
-
-  .dash-row-collapse-toggle {
-    padding: 0 2px;
-    font-size: $font-size-xs;
-    color: $text-muted;
-    position: relative;
-    left: -3px;
-    top: -1px;
-  }
-
-  &:hover {
-    .dash-row-collapse-toggle {
-      color: $link-color;
-    }
-  }
-}
-
-.panels-wrapper {
-  flex-grow: 1;
-  position: relative;
-}
-
-.dash-row-dropview {
-  position: relative;
-  background:  $panel-bg;
-  border: $panel-border;
-  margin: 0 $panel-margin $panel-margin*2 $panel-margin;
-  padding: $panel-margin*2;
-  display: flex;
-}
-
-.dash-row-dropview-close {
-  position: absolute;
-  right: -12px;
-  top: -10px;
-  width: 20px;
-  height: 20px;
-}
-
-.add-panel-panels-scroll {
-  width: 100%;
-  overflow: auto;
-  -ms-overflow-style: none;
-
-  &::-webkit-scrollbar {
-    display: none
-  }
-}
-
-.add-panel-panels {
-  display: flex;
-  flex-direction: row;
-}
-
-.add-panel-item {
-  background: $input-label-bg;
-  border: $panel-border;
-  padding: $spacer/3 $spacer;
-  min-width: 9rem;
-  max-width: 9rem;
-  text-align: center;
-  margin: $gf-form-margin;
-  cursor: pointer;
-
-  &.active,
-  &:hover {
-    box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 1px rgba(82,168,236,5.8)
-  }
-}
-
-.add-panel-item-name {
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-  font-size: $font-size-sm;
-}
-
-.add-panel-item-img {
-  width: 2rem;
-}
-
-$dash-row-menu-animation-speed: 0.20s;
-
-.dash-row-menu-container {
-  position: absolute;
-  top: 0px;
-  width: 138px;
-  min-height: 100%;
-  transform: translate(-131px, 0);
-  transition: 0.1s ease-out 0.4s;
-  z-index: 99;
-  display: flex;
-  flex-direction: row;
-
-  &:hover {
-    transform: translate(-$panel-margin, 0);
-    transition: $dash-row-menu-animation-speed ease-in 0.05s;
-    z-index: 101;
-
-    .dash-row-menu-grip {
-      opacity: 0;
-      transition: $dash-row-menu-animation-speed ease-in 0.05s;
-    }
-  }
-}
-
-.dash-row-menu {
-  list-style: none;
-  flex-grow: 1;
-  box-shadow: $search-shadow;
-  background: $side-menu-bg;
-
-  li a {
-    display: block;
-    white-space: nowrap;
-    color: $text-muted;
-    font-size: $font-size-sm;
-    padding: $spacer/2 $spacer;
-    border-left: 2px solid $side-menu-bg;
-    i {
+    .dashboard-row__panel_count {
       display: inline-block;
-      padding-right: $spacer/2;
     }
+
+    .dashboard-row__drag,
+    .dashboard-row__actions {
+      visibility: visible;
+      opacity: 1;
+    }
+  }
+
+  &:hover {
+    .dashboard-row__actions {
+      visibility: visible;
+      opacity: 1;
+    }
+  }
+}
+
+.dashboard-row__title {
+  flex-grow: 0;
+  font-size: 1.15rem;
+  font-weight: $font-weight-semi-bold;
+  color: $text-color;
+
+  .fa {
+    color: $text-muted;
+    font-size: $font-size-xs;
+    padding: 0 0.5rem;
+  }
+}
+
+.dashboard-row__actions {
+  color: $text-muted;
+  visibility: hidden;
+  opacity: 0;
+  flex-grow: 1;
+  transition: 200ms opacity ease-in 200ms;
+
+  a {
+    color: $text-color-weak;
+    padding-left: $spacer;
 
     &:hover {
-      @include left-brand-border-gradient();
-      color: $link-color;
-      background: $input-label-bg;
+      color: $link-hover-color;
     }
   }
 }
 
-.dash-row-menu-grip {
-  text-align: center;
-  font-size: 130%;
-  color: $text-color-faint;
-  opacity: 1;
-  transition: $dash-row-menu-animation-speed ease-out 0.5s;
-  width: 1rem;
+.dashboard-row__panel_count {
+  padding-left: $spacer;
+  color: $text-color-weak;
+  font-style: italic;
+  font-size: $font-size-sm;
+  font-weight: normal;
+  display: none;
 }
 
+.dashboard-row__drag {
+  cursor: move;
+  width: 1rem;
+  height: 100%;
+  background: url("../img/grab_dark.svg") no-repeat 50% 50%;
+  background-size: 8px;
+  visibility: hidden;
+  position: absolute;
+  top: 0;
+  right: 0;
+}

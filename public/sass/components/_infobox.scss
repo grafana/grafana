@@ -1,23 +1,34 @@
-.grafana-info-box::before {
-  content: "\f05a";
-  font-family:'FontAwesome';
-  position: absolute;
-  top: -13px;
-  left: -8px;
-  font-size: 20px;
-  color: $blue;
-}
-
 .grafana-info-box {
   position: relative;
-  padding: 5px 20px;
-  background-color: $tight-form-bg;
-  border: 1px solid $tight-form-border;
+  background: $info-box-background;
+  box-shadow: $card-shadow;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: $spacer;
+  margin-right: $gf-form-margin;
+  flex-grow: 1;
+  color: $info-box-color;
   h5 {
-    margin-top: 5px;
+    color: $info-box-color;
+  }
+
+  h5 {
+    margin-bottom: $spacer;
   }
   ul {
-    padding-left: $spacer;
+    padding-left: $spacer * 1.5;
+  }
+
+  a {
+    @extend .external-link;
   }
 }
 
+.grafana-info-box__close {
+  text-align: center;
+  display: block;
+  color: $link-color !important;
+  height: 0;
+  position: relative;
+  top: -9px;
+}

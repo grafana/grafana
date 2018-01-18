@@ -1,8 +1,6 @@
 package sqlstore
 
 import (
-	"github.com/go-xorm/xorm"
-
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -36,7 +34,7 @@ func StarDashboard(cmd *m.StarDashboardCommand) error {
 		return m.ErrCommandValidationFailed
 	}
 
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		entity := m.Star{
 			UserId:      cmd.UserId,
@@ -53,7 +51,7 @@ func UnstarDashboard(cmd *m.UnstarDashboardCommand) error {
 		return m.ErrCommandValidationFailed
 	}
 
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "DELETE FROM star WHERE user_id=? and dashboard_id=?"
 		_, err := sess.Exec(rawSql, cmd.UserId, cmd.DashboardId)
 		return err

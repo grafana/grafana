@@ -44,7 +44,7 @@ func GetPluginSettingById(query *m.GetPluginSettingByIdQuery) error {
 }
 
 func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var pluginSetting m.PluginSetting
 
 		exists, err := sess.Where("org_id=? and plugin_id=?", cmd.OrgId, cmd.PluginId).Get(&pluginSetting)
@@ -74,7 +74,12 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 			return err
 		} else {
 			for key, data := range cmd.SecureJsonData {
-				pluginSetting.SecureJsonData[key] = util.Encrypt([]byte(data), setting.SecretKey)
+				encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
+				if err != nil {
+					return err
+				}
+
+				pluginSetting.SecureJsonData[key] = encryptedData
 			}
 
 			// add state change event on commit success
@@ -99,7 +104,7 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 }
 
 func UpdatePluginSettingVersion(cmd *m.UpdatePluginSettingVersionCmd) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		_, err := sess.Exec("UPDATE plugin_setting SET plugin_version=? WHERE org_id=? AND plugin_id=?", cmd.PluginVersion, cmd.OrgId, cmd.PluginId)
 		return err

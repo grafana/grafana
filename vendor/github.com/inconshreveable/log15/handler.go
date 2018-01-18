@@ -11,8 +11,8 @@ import (
 	"github.com/go-stack/stack"
 )
 
-// A Logger prints its log records by writing to a Handler.
-// The Handler interface defines where and how log records are written.
+// Handler interface defines where and how log records are written.
+// A logger prints its log records by writing to a Handler.
 // Handlers are composable, providing you great flexibility in combining
 // them to achieve the logging structure that suits your applications.
 type Handler interface {
@@ -180,7 +180,7 @@ func MatchFilterHandler(key string, value interface{}, h Handler) Handler {
 // level to the wrapped Handler. For example, to only
 // log Error/Crit records:
 //
-//     log.LvlFilterHandler(log.Error, log.StdoutHandler)
+//     log.LvlFilterHandler(log.LvlError, log.StdoutHandler)
 //
 func LvlFilterHandler(maxLvl Lvl, h Handler) Handler {
 	return FilterHandler(func(r *Record) (pass bool) {
@@ -188,7 +188,7 @@ func LvlFilterHandler(maxLvl Lvl, h Handler) Handler {
 	}, h)
 }
 
-// A MultiHandler dispatches any write to each of its handlers.
+// MultiHandler dispatches any write to each of its handlers.
 // This is useful for writing different types of log information
 // to different locations. For example, to log to a file and
 // standard error:
@@ -207,7 +207,7 @@ func MultiHandler(hs ...Handler) Handler {
 	})
 }
 
-// A FailoverHandler writes all log records to the first handler
+// FailoverHandler writes all log records to the first handler
 // specified, but will failover and write to the second handler if
 // the first handler has failed, and so on for all handlers specified.
 // For example you might want to log to a network socket, but failover
@@ -229,11 +229,9 @@ func FailoverHandler(hs ...Handler) Handler {
 			err = h.Log(r)
 			if err == nil {
 				return nil
-			} else {
-				r.Ctx = append(r.Ctx, fmt.Sprintf("failover_err_%d", i), err)
 			}
+			r.Ctx = append(r.Ctx, fmt.Sprintf("failover_err_%d", i), err)
 		}
-
 		return err
 	})
 }
@@ -315,13 +313,12 @@ func evaluateLazy(lz Lazy) (interface{}, error) {
 	results := value.Call([]reflect.Value{})
 	if len(results) == 1 {
 		return results[0].Interface(), nil
-	} else {
-		values := make([]interface{}, len(results))
-		for i, v := range results {
-			values[i] = v.Interface()
-		}
-		return values, nil
 	}
+	values := make([]interface{}, len(results))
+	for i, v := range results {
+		values[i] = v.Interface()
+	}
+	return values, nil
 }
 
 // DiscardHandler reports success for all writes but does nothing.
@@ -333,7 +330,7 @@ func DiscardHandler() Handler {
 	})
 }
 
-// The Must object provides the following Handler creation functions
+// Must object provides the following Handler creation functions
 // which instead of returning an error parameter only return a Handler
 // and panic on failure: FileHandler, NetHandler, SyslogHandler, SyslogNetHandler
 var Must muster

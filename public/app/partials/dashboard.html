@@ -1,24 +1,18 @@
-<div dash-class ng-if="dashboard">
-	<dashnav></dashnav>
+<div dash-class ng-if="ctrl.dashboard">
+	<dashnav dashboard="ctrl.dashboard"></dashnav>
 
-	<div class="dashboard-container">
-		<div dash-editor-view></div>
-		<dashboard-search></dashboard-search>
-		<div class="clearfix"></div>
+	<div class="scroll-canvas scroll-canvas--dashboard" grafana-scrollbar>
+		<dashboard-settings dashboard="ctrl.dashboard"
+											  ng-if="ctrl.dashboardViewState.state.editview"
+												class="dashboard-settings">
+		</dashboard-settings>
 
-		<dashboard-submenu ng-if="dashboard.meta.submenuEnabled" dashboard="dashboard"></dashboard-submenu>
+		<div class="dashboard-container">
+			<dashboard-submenu ng-if="ctrl.dashboard.meta.submenuEnabled" dashboard="ctrl.dashboard">
+			</dashboard-submenu>
 
-		<div class="clearfix"></div>
-
-    <dash-row class="dash-row" ng-repeat="row in dashboard.rows" row="row" dashboard="dashboard">
-    </dash-row>
-
-    <div ng-show='dashboardMeta.canEdit' class="add-row-panel-hint">
-      <div class="span12" style="text-align:left;">
-        <span style="margin-left: 12px;" ng-click="addRowDefault()" class="pointer btn btn-inverse btn-small">
-          <span><i class="fa fa-plus"></i> ADD ROW</span>
-        </span>
-      </div>
-    </div>
-  </div>
+			<dashboard-grid get-panel-container="ctrl.getPanelContainer">
+			</dashboard-grid>
+		</div>
+	</div>
 </div>

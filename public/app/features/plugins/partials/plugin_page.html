@@ -1,9 +1,10 @@
-<navbar icon-url="{{ctrl.appLogoUrl}}" title="{{ctrl.appModel.name}}" title-url="{{ctrl.appModel.defaultNavUrl}}">
-</navbar>
+<div ng-if="ctrl.navModel">
+  <page-header model="ctrl.navModel"></page-header>
 
-<div class="page-container" >
-	<div ng-if="ctrl.page">
-		<plugin-component type="app-page">
-		</plugin-component>
-	</div>
+  <div class="page-container">
+    <div ng-if="ctrl.page">
+      <plugin-component type="app-page">
+      </plugin-component>
+    </div>
+  </div>
 </div>

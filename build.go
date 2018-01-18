@@ -5,7 +5,7 @@ package main
 import (
 	"bytes"
 	"crypto/md5"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -94,7 +95,9 @@ func main() {
 
 		case "package":
 			grunt(gruntBuildArg("release")...)
-			createLinuxPackages()
+			if runtime.GOOS != "windows" {
+				createLinuxPackages()
+			}
 
 		case "pkg-rpm":
 			grunt(gruntBuildArg("release")...)
@@ -104,8 +107,8 @@ func main() {
 			grunt(gruntBuildArg("release")...)
 			createDebPackages()
 
-		case "sha1-dist":
-			sha1FilesInDist()
+		case "sha-dist":
+			shaFilesInDist()
 
 		case "latest":
 			makeLatestDistCopies()
@@ -120,14 +123,24 @@ func main() {
 }
 
 func makeLatestDistCopies() {
-	rpmIteration := "-1"
-	if linuxPackageIteration != "" {
-		rpmIteration = linuxPackageIteration
+	files, err := ioutil.ReadDir("dist")
+	if err != nil {
+		log.Fatalf("failed to create latest copies. Cannot read from /dist")
 	}
 
-	runError("cp", fmt.Sprintf("dist/grafana_%v-%v_amd64.deb", linuxPackageVersion, linuxPackageIteration), "dist/grafana_latest_amd64.deb")
-	runError("cp", fmt.Sprintf("dist/grafana-%v-%v.x86_64.rpm", linuxPackageVersion, rpmIteration), "dist/grafana-latest-1.x86_64.rpm")
-	runError("cp", fmt.Sprintf("dist/grafana-%v-%v.linux-x64.tar.gz", linuxPackageVersion, linuxPackageIteration), "dist/grafana-latest.linux-x64.tar.gz")
+	latestMapping := map[string]string{
+		".deb":    "dist/grafana_latest_amd64.deb",
+		".rpm":    "dist/grafana-latest-1.x86_64.rpm",
+		".tar.gz": "dist/grafana-latest.linux-x64.tar.gz",
+	}
+
+	for _, file := range files {
+		for extension, fullName := range latestMapping {
+			if strings.HasSuffix(file.Name(), extension) {
+				runError("cp", path.Join("dist", file.Name()), fullName)
+			}
+		}
+	}
 }
 
 func readVersionFromPackageJson() {
@@ -224,7 +237,7 @@ func createRpmPackages() {
 		defaultFileSrc: "packaging/rpm/sysconfig/grafana-server",
 		systemdFileSrc: "packaging/rpm/systemd/grafana-server.service",
 
-		depends: []string{"/sbin/service", "fontconfig"},
+		depends: []string{"/sbin/service", "fontconfig", "freetype", "urw-fonts"},
 	})
 }
 
@@ -264,9 +277,9 @@ func createPackage(options linuxPackageOptions) {
 		"--description", "Grafana",
 		"-C", packageRoot,
 		"--vendor", "Grafana",
-		"--url", "http://grafana.org",
+		"--url", "https://grafana.com",
 		"--license", "\"Apache 2.0\"",
-		"--maintainer", "contact@grafana.org",
+		"--maintainer", "contact@grafana.com",
 		"--config-files", options.initdScriptFilePath,
 		"--config-files", options.etcDefaultFilePath,
 		"--config-files", options.systemdServiceFilePath,
@@ -274,6 +287,14 @@ func createPackage(options linuxPackageOptions) {
 		"--name", "grafana",
 		"--version", linuxPackageVersion,
 		"-p", "./dist",
+	}
+
+	if options.packageType == "rpm" {
+		args = append(args, "--rpm-posttrans", "packaging/rpm/control/posttrans")
+	}
+
+	if options.packageType == "deb" {
+		args = append(args, "--deb-no-default-config-files")
 	}
 
 	if pkgArch != "" {
@@ -326,7 +347,11 @@ func ChangeWorkingDir(dir string) {
 }
 
 func grunt(params ...string) {
-	runPrint("./node_modules/.bin/grunt", params...)
+  if runtime.GOOS == "windows" {
+    runPrint(`.\node_modules\.bin\grunt`, params...)
+  } else {
+    runPrint("./node_modules/.bin/grunt", params...)
+  }
 }
 
 func gruntBuildArg(task string) []string {
@@ -334,7 +359,7 @@ func gruntBuildArg(task string) []string {
 	if includeBuildNumber {
 		args = append(args, fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration))
 	} else {
-		args = append(args, fmt.Sprintf("--pkgVer=%v", linuxPackageVersion))
+		args = append(args, fmt.Sprintf("--pkgVer=%v", version))
 	}
 	if pkgArch != "" {
 		args = append(args, fmt.Sprintf("--arch=%v", pkgArch))
@@ -511,14 +536,14 @@ func md5File(file string) error {
 	return out.Close()
 }
 
-func sha1FilesInDist() {
+func shaFilesInDist() {
 	filepath.Walk("./dist", func(path string, f os.FileInfo, err error) error {
 		if path == "./dist" {
 			return nil
 		}
 
-		if strings.Contains(path, ".sha1") == false {
-			err := sha1File(path)
+		if strings.Contains(path, ".sha256") == false {
+			err := shaFile(path)
 			if err != nil {
 				log.Printf("Failed to create sha file. error: %v\n", err)
 			}
@@ -527,20 +552,20 @@ func sha1FilesInDist() {
 	})
 }
 
-func sha1File(file string) error {
+func shaFile(file string) error {
 	fd, err := os.Open(file)
 	if err != nil {
 		return err
 	}
 	defer fd.Close()
 
-	h := sha1.New()
+	h := sha256.New()
 	_, err = io.Copy(h, fd)
 	if err != nil {
 		return err
 	}
 
-	out, err := os.Create(file + ".sha1")
+	out, err := os.Create(file + ".sha256")
 	if err != nil {
 		return err
 	}

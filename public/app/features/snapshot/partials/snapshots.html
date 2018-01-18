@@ -1,22 +1,14 @@
-<navbar icon="icon-gf icon-gf-snapshot" title="Snapshots" title-url="dashboard/snapshots">
-</navbar>
+<page-header model="ctrl.navModel"></page-header>
 
-<div class="page-container">
-  <div class="page-header">
-    <h1>Available snapshots</h1>
-  </div>
-
-
-   <table class="filter-table" style="margin-top: 20px">
+<div class="page-container page-body">
+   <table class="filter-table">
     <thead>
       <th><strong>Name</strong></th>
       <th><strong>Snapshot url</strong></th>
       <th style="width: 70px"></th>
       <th style="width: 25px"></th>
-
-   </thead>
-
-    <tr ng-repeat="snapshot in ctrl.snapshots">
+		</thead>
+		<tr ng-repeat="snapshot in ctrl.snapshots">
       <td>
 				<a href="dashboard/snapshot/{{snapshot.key}}">{{snapshot.name}}</a>
       </td>

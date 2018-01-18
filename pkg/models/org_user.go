@@ -18,25 +18,25 @@ var (
 type RoleType string
 
 const (
-	ROLE_VIEWER           RoleType = "Viewer"
-	ROLE_EDITOR           RoleType = "Editor"
-	ROLE_READ_ONLY_EDITOR RoleType = "Read Only Editor"
-	ROLE_ADMIN            RoleType = "Admin"
+	ROLE_VIEWER RoleType = "Viewer"
+	ROLE_EDITOR RoleType = "Editor"
+	ROLE_ADMIN  RoleType = "Admin"
 )
 
 func (r RoleType) IsValid() bool {
-	return r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR || r == ROLE_READ_ONLY_EDITOR
+	return r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR
 }
 
 func (r RoleType) Includes(other RoleType) bool {
 	if r == ROLE_ADMIN {
 		return true
 	}
-	if r == ROLE_EDITOR || r == ROLE_READ_ONLY_EDITOR {
+
+	if r == ROLE_EDITOR {
 		return other != ROLE_ADMIN
 	}
 
-	return r == other
+	return false
 }
 
 func (r *RoleType) UnmarshalJSON(data []byte) error {
@@ -103,9 +103,12 @@ type GetOrgUsersQuery struct {
 // Projections and DTOs
 
 type OrgUserDTO struct {
-	OrgId  int64  `json:"orgId"`
-	UserId int64  `json:"userId"`
-	Email  string `json:"email"`
-	Login  string `json:"login"`
-	Role   string `json:"role"`
+	OrgId         int64     `json:"orgId"`
+	UserId        int64     `json:"userId"`
+	Email         string    `json:"email"`
+	AvatarUrl     string    `json:"avatarUrl"`
+	Login         string    `json:"login"`
+	Role          string    `json:"role"`
+	LastSeenAt    time.Time `json:"lastSeenAt"`
+	LastSeenAtAge string    `json:"lastSeenAtAge"`
 }

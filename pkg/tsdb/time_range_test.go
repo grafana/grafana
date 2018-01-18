@@ -16,7 +16,7 @@ func TestTimeRange(t *testing.T) {
 			tr := TimeRange{
 				From: "5m",
 				To:   "now",
-				Now:  now,
+				now:  now,
 			}
 
 			Convey("5m ago ", func() {
@@ -39,7 +39,7 @@ func TestTimeRange(t *testing.T) {
 			tr := TimeRange{
 				From: "5h",
 				To:   "now-10m",
-				Now:  now,
+				now:  now,
 			}
 
 			Convey("5h ago ", func() {
@@ -52,8 +52,8 @@ func TestTimeRange(t *testing.T) {
 			})
 
 			Convey("now-10m ", func() {
-				fiveMinAgo, _ := time.ParseDuration("-10m")
-				expected := now.Add(fiveMinAgo)
+				tenMinAgo, _ := time.ParseDuration("-10m")
+				expected := now.Add(tenMinAgo)
 				res, err := tr.ParseTo()
 				So(err, ShouldBeNil)
 				So(res.Unix(), ShouldEqual, expected.Unix())
@@ -65,7 +65,7 @@ func TestTimeRange(t *testing.T) {
 			tr := TimeRange{
 				From: "1474973725473",
 				To:   "1474975757930",
-				Now:  now,
+				now:  now,
 			}
 
 			res, err := tr.ParseFrom()
@@ -82,7 +82,7 @@ func TestTimeRange(t *testing.T) {
 			tr := TimeRange{
 				From: "asdf",
 				To:   "asdf",
-				Now:  now,
+				now:  now,
 			}
 
 			_, err = tr.ParseFrom()

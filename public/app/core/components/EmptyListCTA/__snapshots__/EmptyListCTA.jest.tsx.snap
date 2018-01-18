@@ -1,0 +1,38 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`EmptyListCTA renders correctly 1`] = `
+<div
+  className="empty-list-cta"
+>
+  <div
+    className="empty-list-cta__title"
+  >
+    Title
+  </div>
+  <a
+    className="empty-list-cta__button btn btn-xlarge btn-success"
+    href="http://url/to/destination"
+  >
+    <i
+      className="ga css class"
+    />
+    Click me
+  </a>
+  <div
+    className="empty-list-cta__pro-tip"
+  >
+    <i
+      className="fa fa-rocket"
+    />
+     ProTip: 
+    This is a tip
+    <a
+      className="text-link empty-list-cta__pro-tip-link"
+      href="http://url/to/tip/destination"
+      target="_blank"
+    >
+      Learn more
+    </a>
+  </div>
+</div>
+`;

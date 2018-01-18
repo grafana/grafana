@@ -27,7 +27,7 @@ notifications will be sent out when the rule conditions are met.
 
 This feature has been worked on for over a year with many iterations and rewrites
 just to make sure the foundations are really solid. We are really proud to finally release it!
-Since the alerting execution is processed in the backend all data source plugins are not supported.
+Since the alerting execution is processed in the backend not all data source plugins are supported.
 Right now Graphite, Prometheus, InfluxDB and OpenTSDB are supported. Elasticsearch is being worked
 on but will be not ready for v4 release.
 
@@ -55,7 +55,7 @@ of another alert in your conditions, and `Time Of Day`.
 Alerting would not be very useful if there was no way to send notifications when rules trigger and change state. You
 can setup notifications of different types. We currently have `Slack`, `PagerDuty`, `Email` and `Webhook` with more in the
 pipe that will be added during beta period. The notifications can then be added to your alert rules.
-If you have configured an external image store in the grafana.ini config file (s3 and webdav options available)
+If you have configured an external image store in the grafana.ini config file (s3, webdav, and azure_blob options available)
 you can get very rich notifications with an image of the graph and the metric
 values all included in the notification.
 
@@ -70,8 +70,8 @@ to add graph comments in the form of annotations directly from within Grafana in
 
 {{< imgbox max-width="30%" img="/img/docs/v4/alert_list_panel.png" caption="Alert List Panel" >}}
 
-This new panel allows you to show alert rules or a history of alert rule state changes. You can filter based on states your
-interested in. Very useful panel for overview style dashboards.
+This new panel allows you to show alert rules or a history of alert rule state changes. You can filter based on states you are
+interested in. This panel is very useful for overview style dashboards.
 
 <div class="clearfix"></div>
 
@@ -79,8 +79,8 @@ interested in. Very useful panel for overview style dashboards.
 
 {{< imgbox max-width="30%" img="/img/docs/v4/adhoc_filters.gif" caption="Ad-hoc filters variable" >}}
 
-This is a new and very different type of template variable. It will allow you to create new key/value filters on the fly.
-With autocomplete for both key and values. The filter condition will be automatically applied to all
+This is a new and very different type of template variable. It will allow you to create new key/value filters on the fly
+with autocomplete for both key and values. The filter condition will be automatically applied to all
 queries that use that data source. This feature opens up more exploratory dashboards. In the gif animation to the right
 you have a dashboard for Elasticsearch log data. It uses one query variable that allow you to quickly change how the data
 is grouped, and an interval variable for controlling the granularity of the time buckets. What was missing
@@ -126,15 +126,15 @@ We always try to bring some UX/UI refinements & polish in every release.
 
 {{< imgbox max-width="50%" img="/img/docs/v4/add_panel.gif" caption="Add Panel flow" >}}
 
-We spent a lot of time improving the dashboard building experience. Trying to make it both
+We spent a lot of time improving the dashboard building experience to make it both
 more efficient and easier for beginners. After many good but not great experiments
 with a `build mode` we eventually decided to just improve the green row menu and
 continue work on a `build mode` for a future release.
 
 The new row menu automatically slides out when you mouse over the edge of the row. You no longer need
-to hover over the small green icon and the click it to expand the row menu.
+to hover over the small green icon and then click it to expand the row menu.
 
-There is some minor improvements to drag and drop behaviour. Now when dragging a panel from one row
+There are some minor improvements to drag and drop behaviour. Now when dragging a panel from one row
 to another you will insert the panel and Grafana will automatically make room for it.
 When you drag a panel within a row you will simply reorder the panels.
 
@@ -150,7 +150,7 @@ We plan to further improve dashboard building in the future with a more rich gri
 {{< imgbox max-width="40%" img="/img/docs/v4/shortcuts.png" caption="Shortcuts" >}}
 
 Grafana v4 introduces a number of really powerful keyboard shortcuts. You can now focus a panel
-by hovering over it with your mouse. With a panel focused you can simple hit `e` to toggle panel
+by hovering over it with your mouse. With a panel focused you can simply hit `e` to toggle panel
 edit mode, or `v` to toggle fullscreen mode. `p r` removes the panel. `p s` opens share
 modal.
 
@@ -164,10 +164,10 @@ Some nice navigation shortcuts are:
 
 ## Upgrade & Breaking changes
 
-There are no breaking changes. Old dashboards and features should work the same. Grafana-server will automatically upgrade it's db
+There are no breaking changes. Old dashboards and features should work the same. Grafana-server will automatically upgrade its db
 schema on restart. It's advisable to do a backup of Grafana's database before updating.
 
-If your are using plugins make sure to update your plugins as some might not work perfectly v4.
+If you are using plugins make sure to update your plugins as some might not work perfectly v4.
 
 You can update plugins using grafana-cli
 

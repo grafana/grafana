@@ -39,6 +39,8 @@ function (_, $, coreModule) {
             return;
           }
 
+          value = _.unescape(value);
+
           $scope.$apply(function() {
             var selected = _.find($scope.altSegments, {value: value});
             if (selected) {
@@ -46,6 +48,10 @@ function (_, $, coreModule) {
               segment.html = selected.html || selected.value;
               segment.fake = false;
               segment.expandable = selected.expandable;
+
+              if (selected.type) {
+                segment.type = selected.type;
+              }
             }
             else if (segment.custom !== 'false') {
               segment.value = value;
@@ -77,9 +83,11 @@ function (_, $, coreModule) {
 
         $scope.source = function(query, callback) {
           $scope.$apply(function() {
-            $scope.getOptions({ measurementFilter: query }).then(function(altSegments) {
+            $scope.getOptions({ $query: query }).then(function(altSegments) {
               $scope.altSegments = altSegments;
-              options = _.map($scope.altSegments, function(alt) { return alt.value; });
+              options = _.map($scope.altSegments, function(alt) {
+                return _.escape(alt.value);
+              });
 
               // add custom values
               if (segment.custom !== 'false') {

@@ -1,20 +1,16 @@
-///<reference path="../../../headers/common.d.ts" />
-
-import {liveSrv} from 'app/core/core';
-
-import {Observable} from 'vendor/npm/rxjs/Observable';
+import { liveSrv } from 'app/core/core';
 
 class DataObservable {
   target: any;
 
   constructor(target) {
-   this.target = target;
+    this.target = target;
   }
 
   subscribe(options) {
     var observable = liveSrv.subscribe(this.target.stream);
     return observable.subscribe(data => {
-      console.log("grafana stream ds data!", data);
+      console.log('grafana stream ds data!', data);
     });
   }
 }
@@ -23,12 +19,11 @@ export class GrafanaStreamDS {
   subscription: any;
 
   /** @ngInject */
-  constructor() {
-  }
+  constructor() {}
 
   query(options): any {
     if (options.targets.length === 0) {
-      return Promise.resolve({data: []});
+      return Promise.resolve({ data: [] });
     }
 
     var target = options.targets[0];
@@ -37,4 +32,3 @@ export class GrafanaStreamDS {
     return Promise.resolve(observable);
   }
 }
-

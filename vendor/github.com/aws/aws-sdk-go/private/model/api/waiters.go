@@ -12,6 +12,25 @@ import (
 	"text/template"
 )
 
+// WaiterAcceptor is the acceptors defined in the model the SDK will use
+// to wait on resource states with.
+type WaiterAcceptor struct {
+	State    string
+	Matcher  string
+	Argument string
+	Expected interface{}
+}
+
+// ExpectedString returns the string that was expected by the WaiterAcceptor
+func (a *WaiterAcceptor) ExpectedString() string {
+	switch a.Expected.(type) {
+	case string:
+		return fmt.Sprintf("%q", a.Expected)
+	default:
+		return fmt.Sprintf("%v", a.Expected)
+	}
+}
+
 // A Waiter is an individual waiter definition.
 type Waiter struct {
 	Name          string
@@ -19,23 +38,18 @@ type Waiter struct {
 	MaxAttempts   int
 	OperationName string `json:"operation"`
 	Operation     *Operation
-	Acceptors     []WaitAcceptor
-}
-
-// A WaitAcceptor is an individual wait acceptor definition.
-type WaitAcceptor struct {
-	Expected interface{}
-	Matcher  string
-	State    string
-	Argument string
+	Acceptors     []WaiterAcceptor
 }
 
 // WaitersGoCode generates and returns Go code for each of the waiters of
 // this API.
 func (a *API) WaitersGoCode() string {
 	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "import (\n\t%q\n)",
-		"github.com/aws/aws-sdk-go/private/waiter")
+	fmt.Fprintf(&buf, "import (\n%q\n\n%q\n%q\n)",
+		"time",
+		"github.com/aws/aws-sdk-go/aws",
+		"github.com/aws/aws-sdk-go/aws/request",
+	)
 
 	for _, w := range a.Waiters {
 		buf.WriteString(w.GoCode())
@@ -89,53 +103,67 @@ func (p *waiterDefinitions) setup() {
 	}
 }
 
-// ExpectedString returns the string that was expected by the WaitAcceptor
-func (a *WaitAcceptor) ExpectedString() string {
-	switch a.Expected.(type) {
-	case string:
-		return fmt.Sprintf("%q", a.Expected)
-	default:
-		return fmt.Sprintf("%v", a.Expected)
-	}
-}
-
-var waiterTmpls = template.Must(template.New("waiterTmpls").Parse(`
-{{ define "docstring" -}}
+var waiterTmpls = template.Must(template.New("waiterTmpls").Funcs(
+	template.FuncMap{
+		"titleCase": func(v string) string {
+			return strings.Title(v)
+		},
+	},
+).Parse(`
+{{ define "waiter"}}
 // WaitUntil{{ .Name }} uses the {{ .Operation.API.NiceName }} API operation
 // {{ .OperationName }} to wait for a condition to be met before returning.
 // If the condition is not meet within the max attempt window an error will
 // be returned.
-{{- end }}
-
-{{ define "waiter" }}
-{{ template "docstring" . }}
 func (c *{{ .Operation.API.StructName }}) WaitUntil{{ .Name }}(input {{ .Operation.InputRef.GoType }}) error {
-	waiterCfg  := waiter.Config{
-		Operation:   "{{ .OperationName }}",
-		Delay:       {{ .Delay }},
+	return c.WaitUntil{{ .Name }}WithContext(aws.BackgroundContext(), input)
+}
+
+// WaitUntil{{ .Name }}WithContext is an extended version of WaitUntil{{ .Name }}.
+// With the support for passing in a context and options to configure the
+// Waiter and the underlying request options.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *{{ .Operation.API.StructName }}) WaitUntil{{ .Name }}WithContext(` +
+	`ctx aws.Context, input {{ .Operation.InputRef.GoType }}, opts ...request.WaiterOption) error {
+	w := request.Waiter{
+		Name:    "WaitUntil{{ .Name }}",
 		MaxAttempts: {{ .MaxAttempts }},
-		Acceptors: []waiter.WaitAcceptor{
-			{{ range $_, $a := .Acceptors }}waiter.WaitAcceptor{
-				State:    "{{ .State }}",
-				Matcher:  "{{ .Matcher }}",
-				Argument: "{{ .Argument }}",
+		Delay: request.ConstantWaiterDelay({{ .Delay }} * time.Second),
+		Acceptors: []request.WaiterAcceptor{
+			{{ range $_, $a := .Acceptors }}{
+				State:    request.{{ titleCase .State }}WaiterState,
+				Matcher:  request.{{ titleCase .Matcher }}WaiterMatch,
+				{{- if .Argument }}Argument: "{{ .Argument }}",{{ end }}
 				Expected: {{ .ExpectedString }},
 			},
 			{{ end }}
 		},
+		Logger: c.Config.Logger,
+		NewRequest: func(opts []request.Option) (*request.Request, error) {
+			var inCpy {{ .Operation.InputRef.GoType }}
+			if input != nil  {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.{{ .OperationName }}Request(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
 	}
+	w.ApplyOptions(opts...)
 
-	w := waiter.Waiter{
-		Client: c,
-		Input:  input,
-		Config: waiterCfg,
-	}
-	return w.Wait()
+	return w.WaitWithContext(ctx)
 }
 {{- end }}
 
 {{ define "waiter interface" }}
 WaitUntil{{ .Name }}({{ .Operation.InputRef.GoTypeWithPkgName }}) error
+WaitUntil{{ .Name }}WithContext(aws.Context, {{ .Operation.InputRef.GoTypeWithPkgName }}, ...request.WaiterOption) error
 {{- end }}
 `))
 

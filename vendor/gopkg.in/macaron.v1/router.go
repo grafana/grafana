@@ -82,6 +82,9 @@ type Router struct {
 	groups              []group
 	notFound            http.HandlerFunc
 	internalServerError func(*Context, error)
+
+	// handlerWrapper is used to wrap arbitrary function from Handler to inject.FastInvoker.
+	handlerWrapper func(Handler) Handler
 }
 
 func NewRouter() *Router {
@@ -173,7 +176,7 @@ func (r *Router) Handle(method string, pattern string, handlers []Handler) *Rout
 		h = append(h, handlers...)
 		handlers = h
 	}
-	validateHandlers(handlers)
+	handlers = validateAndWrapHandlers(handlers, r.handlerWrapper)
 
 	return r.handle(method, pattern, func(resp http.ResponseWriter, req *http.Request, params Params) {
 		c := r.m.createContext(resp, req)
@@ -251,29 +254,36 @@ func (r *Router) Combo(pattern string, h ...Handler) *ComboRouter {
 	return &ComboRouter{r, pattern, h, map[string]bool{}, nil}
 }
 
-// Configurable http.HandlerFunc which is called when no matching route is
+// NotFound configurates http.HandlerFunc which is called when no matching route is
 // found. If it is not set, http.NotFound is used.
 // Be sure to set 404 response code in your handler.
 func (r *Router) NotFound(handlers ...Handler) {
-	validateHandlers(handlers)
+	handlers = validateAndWrapHandlers(handlers)
 	r.notFound = func(rw http.ResponseWriter, req *http.Request) {
 		c := r.m.createContext(rw, req)
-		c.handlers = append(r.m.handlers, handlers...)
+		c.handlers = make([]Handler, 0, len(r.m.handlers)+len(handlers))
+		c.handlers = append(c.handlers, r.m.handlers...)
+		c.handlers = append(c.handlers, handlers...)
 		c.run()
 	}
 }
 
-// Configurable handler which is called when route handler returns
+// InternalServerError configurates handler which is called when route handler returns
 // error. If it is not set, default handler is used.
 // Be sure to set 500 response code in your handler.
 func (r *Router) InternalServerError(handlers ...Handler) {
-	validateHandlers(handlers)
+	handlers = validateAndWrapHandlers(handlers)
 	r.internalServerError = func(c *Context, err error) {
 		c.index = 0
 		c.handlers = handlers
 		c.Map(err)
 		c.run()
 	}
+}
+
+// SetHandlerWrapper sets handlerWrapper for the router.
+func (r *Router) SetHandlerWrapper(f func(Handler) Handler) {
+	r.handlerWrapper = f
 }
 
 func (r *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {

@@ -28,6 +28,29 @@
   </tr>
 </table>
 
+[[if ne .Error "" ]]
+<table class="row" >
+  <tr>
+    <td class="last">
+      <center>
+      <table class="twelve columns" >
+        <tr>
+          <td class="twelve last">
+            <h5 style="font-weight: bold;">Error message</h5>
+          </td>
+        </tr>
+        <tr>
+          <td class="twelve last">
+            <p>[[.Error]]</p>
+          </td>
+        </tr>
+      </table>
+      </center>
+    </td>
+  </tr>
+</table>
+[[end]]
+
 [[if ne .State "ok" ]]
 <table class="row" >
   <tr>

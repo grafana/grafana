@@ -28,8 +28,8 @@ function (angular, _, dateMath) {
 
       _.each(options.targets, function(target) {
         if (!target.metric) { return; }
-        qs.push(convertTargetToQuery(target, options));
-      });
+        qs.push(convertTargetToQuery(target, options, this.tsdbVersion));
+      }.bind(this));
 
       var queries = _.compact(qs);
 
@@ -51,6 +51,10 @@ function (angular, _, dateMath) {
             groupByTags[key] = true;
           });
         }
+      });
+
+      options.targets = _.filter(options.targets, function(query) {
+        return query.hide !== true;
       });
 
       return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
@@ -87,9 +91,8 @@ function (angular, _, dateMath) {
           if(annotationObject) {
             _.each(annotationObject, function(annotation) {
               var event = {
-                title: annotation.description,
+                text: annotation.description,
                 time: Math.floor(annotation.startTime) * 1000,
-                text: annotation.notes,
                 annotation: options.annotation
               };
 
@@ -292,7 +295,7 @@ function (angular, _, dateMath) {
 
     this.testDatasource = function() {
       return this._performSuggestQuery('cpu', 'metrics').then(function () {
-        return { status: "success", message: "Data source is working", title: "Success" };
+        return { status: "success", message: "Data source is working" };
       });
     };
 
@@ -366,13 +369,13 @@ function (angular, _, dateMath) {
       return label;
     }
 
-    function convertTargetToQuery(target, options) {
+    function convertTargetToQuery(target, options, tsdbVersion) {
       if (!target.metric || target.hide) {
         return null;
       }
 
       var query = {
-        metric: templateSrv.replace(target.metric, options.scopedVars),
+        metric: templateSrv.replace(target.metric, options.scopedVars, 'pipe'),
         aggregator: "avg"
       };
 
@@ -393,6 +396,11 @@ function (angular, _, dateMath) {
         if (target.counterResetValue && target.counterResetValue.length) {
           query.rateOptions.resetValue = parseInt(target.counterResetValue);
         }
+
+        if(tsdbVersion >= 2) {
+          query.rateOptions.dropResets = !query.rateOptions.counterMax &&
+                (!query.rateOptions.ResetValue || query.rateOptions.ResetValue === 0);
+        }
       }
 
       if (!target.disableDownsampling) {
@@ -411,15 +419,15 @@ function (angular, _, dateMath) {
 
       if (target.filters && target.filters.length > 0) {
         query.filters = angular.copy(target.filters);
-        if(query.filters){
-          for(var filter_key in query.filters){
+        if (query.filters){
+          for (var filter_key in query.filters) {
             query.filters[filter_key].filter = templateSrv.replace(query.filters[filter_key].filter, options.scopedVars, 'pipe');
           }
         }
       } else {
         query.tags = angular.copy(target.tags);
-        if(query.tags){
-          for(var tag_key in query.tags){
+        if (query.tags){
+          for (var tag_key in query.tags) {
             query.tags[tag_key] = templateSrv.replace(query.tags[tag_key], options.scopedVars, 'pipe');
           }
         }
@@ -433,7 +441,7 @@ function (angular, _, dateMath) {
     }
 
     function mapMetricsToTargets(metrics, options, tsdbVersion) {
-      var interpolatedTagValue;
+      var interpolatedTagValue, arrTagV;
       return _.map(metrics, function(metricData) {
         if (tsdbVersion === 3) {
           return metricData.query.index;
@@ -445,7 +453,8 @@ function (angular, _, dateMath) {
               return target.metric === metricData.metric &&
               _.every(target.tags, function(tagV, tagK) {
                 interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars, 'pipe');
-                return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
+                arrTagV = interpolatedTagValue.split('|');
+                return _.includes(arrTagV, metricData.tags[tagK]) || interpolatedTagValue === "*";
               });
             }
           });
@@ -463,7 +472,5 @@ function (angular, _, dateMath) {
     }
   }
 
-  return {
-    OpenTsDatasource: OpenTsDatasource
-  };
+  return OpenTsDatasource;
 });

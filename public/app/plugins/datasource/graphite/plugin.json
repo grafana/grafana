@@ -11,10 +11,15 @@
   "alerting": true,
   "annotations": true,
 
+  "queryOptions": {
+    "maxDataPoints": true,
+    "cacheTimeout": true
+  },
+
   "info": {
     "author": {
       "name": "Grafana Project",
-      "url": "http://grafana.org"
+      "url": "https://grafana.com"
     },
     "logos": {
       "small": "img/graphite_logo.png",

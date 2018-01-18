@@ -3,20 +3,25 @@ Description=Grafana instance
 Documentation=http://docs.grafana.org
 Wants=network-online.target
 After=network-online.target
+After=postgresql.service mariadb.service mysql.service
 
 [Service]
 EnvironmentFile=/etc/sysconfig/grafana-server
 User=grafana
 Group=grafana
-Type=simple
+Type=notify
 Restart=on-failure
 WorkingDirectory=/usr/share/grafana
-ExecStart=/usr/sbin/grafana-server                                \
-                            --config=${CONF_FILE}                 \
-                            --pidfile=${PID_FILE}                 \
-                            cfg:default.paths.logs=${LOG_DIR}     \
-                            cfg:default.paths.data=${DATA_DIR}    \
-                            cfg:default.paths.plugins=${PLUGINS_DIR}
+RuntimeDirectory=grafana
+RuntimeDirectoryMode=0750
+ExecStart=/usr/sbin/grafana-server                                                  \
+                            --config=${CONF_FILE}                                   \
+                            --pidfile=${PID_FILE_DIR}/grafana-server.pid            \
+                            cfg:default.paths.logs=${LOG_DIR}                       \
+                            cfg:default.paths.data=${DATA_DIR}                      \
+                            cfg:default.paths.plugins=${PLUGINS_DIR}                \
+                            cfg:default.paths.provisioning=${PROVISIONING_CFG_DIR}  
+
 LimitNOFILE=10000
 TimeoutStopSec=20
 

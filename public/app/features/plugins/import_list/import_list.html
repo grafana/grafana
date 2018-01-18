@@ -13,12 +13,6 @@
 						{{dash.title}}
 					</span>
 				</td>
-				<td>
-          <span>
-            Revision: {{dash.revision}}
-            <span ng-if="dash.imported" class="small">(Imported: {{dash.importedRevision}})</span>
-          <span>
-				</td>
 				<td style="text-align: right">
 					<button class="btn btn-secondary btn-small" ng-click="ctrl.import(dash, false)" ng-show="!dash.imported">
 						Import

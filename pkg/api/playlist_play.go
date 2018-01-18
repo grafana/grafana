@@ -34,18 +34,18 @@ func populateDashboardsById(dashboardByIds []int64, dashboardIdOrder map[int64]i
 	return result, nil
 }
 
-func populateDashboardsByTag(orgId, userId int64, dashboardByTag []string, dashboardTagOrder map[string]int) dtos.PlaylistDashboardsSlice {
+func populateDashboardsByTag(orgId int64, signedInUser *m.SignedInUser, dashboardByTag []string, dashboardTagOrder map[string]int) dtos.PlaylistDashboardsSlice {
 	result := make(dtos.PlaylistDashboardsSlice, 0)
 
 	if len(dashboardByTag) > 0 {
 		for _, tag := range dashboardByTag {
 			searchQuery := search.Query{
-				Title:     "",
-				Tags:      []string{tag},
-				UserId:    userId,
-				Limit:     100,
-				IsStarred: false,
-				OrgId:     orgId,
+				Title:        "",
+				Tags:         []string{tag},
+				SignedInUser: signedInUser,
+				Limit:        100,
+				IsStarred:    false,
+				OrgId:        orgId,
 			}
 
 			if err := bus.Dispatch(&searchQuery); err == nil {
@@ -64,7 +64,7 @@ func populateDashboardsByTag(orgId, userId int64, dashboardByTag []string, dashb
 	return result
 }
 
-func LoadPlaylistDashboards(orgId, userId, playlistId int64) (dtos.PlaylistDashboardsSlice, error) {
+func LoadPlaylistDashboards(orgId int64, signedInUser *m.SignedInUser, playlistId int64) (dtos.PlaylistDashboardsSlice, error) {
 	playlistItems, _ := LoadPlaylistItems(playlistId)
 
 	dashboardByIds := make([]int64, 0)
@@ -89,8 +89,8 @@ func LoadPlaylistDashboards(orgId, userId, playlistId int64) (dtos.PlaylistDashb
 
 	var k, _ = populateDashboardsById(dashboardByIds, dashboardIdOrder)
 	result = append(result, k...)
-	result = append(result, populateDashboardsByTag(orgId, userId, dashboardByTag, dashboardTagOrder)...)
+	result = append(result, populateDashboardsByTag(orgId, signedInUser, dashboardByTag, dashboardTagOrder)...)
 
-	sort.Sort(sort.Reverse(result))
+	sort.Sort(result)
 	return result, nil
 }

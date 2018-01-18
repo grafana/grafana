@@ -1,7 +1,3 @@
-$switch-border-radius: 1rem;
-$switch-width: 3.5rem;
-$switch-height: 1.5rem;
-
 /* ============================================================
   SWITCH 3 - YES NO
 ============================================================ */
@@ -10,7 +6,8 @@ $switch-height: 1.5rem;
   position: relative;
   max-width: 4.5rem;
   flex-grow: 1;
-  min-width: 4.0rem;
+  min-width: 4rem;
+  margin-right: $gf-form-margin;
 
   input {
     position: absolute;
@@ -26,11 +23,15 @@ $switch-height: 1.5rem;
     outline: none;
     user-select: none;
     width: 100%;
-    height: 2.65rem;
-    background-color: $page-bg;
+    height: 37px;
+    background: $input-bg;
+    border: 1px solid $input-border-color;
+    border-left: none;
+    border-radius: $input-border-radius;
   }
 
-  input + label::before, input + label::after {
+  input + label::before,
+  input + label::after {
     @include buttonBackground($input-bg, $input-bg);
 
     display: block;
@@ -42,8 +43,10 @@ $switch-height: 1.5rem;
     color: #fff;
     font-size: $font-size-sm;
     text-align: center;
-    line-height: 2.8rem;
     font-size: 150%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   &:hover {
@@ -58,11 +61,10 @@ $switch-height: 1.5rem;
       color: lighten($orange, 10%);
       text-shadow: $text-shadow-strong;
     }
-
   }
 
   input + label::before {
-    font-family: 'FontAwesome';
+    font-family: "FontAwesome";
     content: "\f096"; // square-o
     color: $text-color-weak;
     transition: transform 0.4s;
@@ -75,7 +77,7 @@ $switch-height: 1.5rem;
     color: $orange;
     text-shadow: $text-shadow-strong;
 
-    font-family: 'FontAwesome';
+    font-family: "FontAwesome";
     transition: transform 0.4s;
     transform: rotateY(180deg);
     backface-visibility: hidden;
@@ -89,12 +91,72 @@ $switch-height: 1.5rem;
     transform: rotateY(0);
   }
 
+  &--table-cell {
+    margin-bottom: 0;
+    margin-right: 0;
+
+    input + label {
+      height: 3.6rem;
+    }
+  }
 }
 
-gf-form-switch[disabled]  {
+.gf-form-switch--transparent {
+  input + label {
+    background: transparent;
+    border: none;
+  }
+
+  input + label::before,
+  input + label::after {
+    background: transparent;
+    border: none;
+  }
+
+  &:hover {
+    input + label::before {
+      background: transparent;
+    }
+
+    input + label::after {
+      background: transparent;
+    }
+  }
+}
+
+.gf-form-switch--search-result__section {
+  min-width: 3.05rem;
+  margin-right: -0.3rem;
+
+  input + label {
+    height: 1.7rem;
+  }
+}
+
+.gf-form-switch--search-result__item {
+  min-width: 2.7rem;
+
+  input + label {
+    height: 2.7rem;
+  }
+}
+
+.gf-form-switch--search-result-filter-row__checkbox {
+  min-width: 3.75rem;
+
+  input + label {
+    height: 2.5rem;
+  }
+}
+
+gf-form-switch[disabled] {
   .gf-form-label,
   .gf-form-switch input + label {
     cursor: default;
     pointer-events: none !important;
+    &::before {
+      color: $text-color-faint;
+      text-shadow: none;
+    }
   }
 }

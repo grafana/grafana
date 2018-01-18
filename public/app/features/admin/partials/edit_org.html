@@ -1,14 +1,7 @@
-<navbar icon="fa fa-fw fa-cogs" title="Admin" title-url="admin">
-	<a href="admin/orgs" class="navbar-page-btn">
-		<i class="icon-gf icon-gf-users"></i>
-		Orgs
-	</a>
-</navbar>
+<page-header model="navModel"></page-header>
 
-<div class="page-container">
-	<div class="page-header">
-		<h1>Edit Organization</h1>
-	</div>
+<div class="page-container page-body">
+	<h2 class="page-sub-heading">Edit Organization</h2>
 
 	<form name="orgDetailsForm" class="gf-form-group">
 		<div class="gf-form">
@@ -23,7 +16,7 @@
 
 	<h3 class="page-heading">Organization Users</h3>
 
-	<table class="grafana-options-table">
+	<table class="filter-table">
 		<tr>
 			<th>Username</th>
 			<th>Email</th>
@@ -34,8 +27,12 @@
 			<td>{{orgUser.login}}</td>
 			<td>{{orgUser.email}}</td>
 			<td>
-				<select type="text" ng-model="orgUser.role" class="gf-form-input max-width-8" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(orgUser)">
-				</select>
+        <div class="gf-form">
+          <span class="gf-form-select-wrapper">
+              <select type="text" ng-model="orgUser.role" class="gf-form-input max-width-8" ng-options="f for f in ['Viewer', 'Editor', 'Admin']" ng-change="updateOrgUser(orgUser)">
+              </select>
+          </span>
+        </div>
 			</td>
 			<td style="width: 1%">
 				<a ng-click="removeOrgUser(orgUser)" class="btn btn-danger btn-mini">

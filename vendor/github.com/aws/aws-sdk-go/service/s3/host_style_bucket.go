@@ -1,7 +1,6 @@
 package s3
 
 import (
-	"bytes"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -9,7 +8,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/request"
 )
 
@@ -83,28 +81,30 @@ func updateEndpointForAccelerate(r *request.Request) {
 
 	if !hostCompatibleBucketName(r.HTTPRequest.URL, bucket) {
 		r.Error = awserr.New("InvalidParameterException",
-			fmt.Sprintf("bucket name %s is not compatibile with S3 Accelerate", bucket),
+			fmt.Sprintf("bucket name %s is not compatible with S3 Accelerate", bucket),
 			nil)
 		return
 	}
 
-	// Change endpoint from s3(-[a-z0-1-])?.amazonaws.com to s3-accelerate.amazonaws.com
-	r.HTTPRequest.URL.Host = replaceHostRegion(r.HTTPRequest.URL.Host, "accelerate")
+	parts := strings.Split(r.HTTPRequest.URL.Host, ".")
+	if len(parts) < 3 {
+		r.Error = awserr.New("InvalidParameterExecption",
+			fmt.Sprintf("unable to update endpoint host for S3 accelerate, hostname invalid, %s",
+				r.HTTPRequest.URL.Host), nil)
+		return
+	}
 
-	if aws.BoolValue(r.Config.UseDualStack) {
-		host := []byte(r.HTTPRequest.URL.Host)
-
-		// Strip region from hostname
-		if idx := bytes.Index(host, accelElem); idx >= 0 {
-			start := idx + len(accelElem)
-			if end := bytes.IndexByte(host[start:], '.'); end >= 0 {
-				end += start + 1
-				copy(host[start:], host[end:])
-				host = host[:len(host)-(end-start)]
-				r.HTTPRequest.URL.Host = string(host)
-			}
+	if parts[0] == "s3" || strings.HasPrefix(parts[0], "s3-") {
+		parts[0] = "s3-accelerate"
+	}
+	for i := 1; i+1 < len(parts); i++ {
+		if parts[i] == aws.StringValue(r.Config.Region) {
+			parts = append(parts[:i], parts[i+1:]...)
+			break
 		}
 	}
+
+	r.HTTPRequest.URL.Host = strings.Join(parts, ".")
 
 	moveBucketToHost(r.HTTPRequest.URL, bucket)
 }
@@ -112,15 +112,9 @@ func updateEndpointForAccelerate(r *request.Request) {
 // Attempts to retrieve the bucket name from the request input parameters.
 // If no bucket is found, or the field is empty "", false will be returned.
 func bucketNameFromReqParams(params interface{}) (string, bool) {
-	b, _ := awsutil.ValuesAtPath(params, "Bucket")
-	if len(b) == 0 {
-		return "", false
-	}
-
-	if bucket, ok := b[0].(*string); ok {
-		if bucketStr := aws.StringValue(bucket); bucketStr != "" {
-			return bucketStr, true
-		}
+	if iface, ok := params.(bucketGetter); ok {
+		b := iface.getBucket()
+		return b, len(b) > 0
 	}
 
 	return "", false
@@ -158,29 +152,4 @@ func moveBucketToHost(u *url.URL, bucket string) {
 	if u.Path == "" {
 		u.Path = "/"
 	}
-}
-
-const s3HostPrefix = "s3"
-
-// replaceHostRegion replaces the S3 region string in the host with the
-// value provided. If v is empty the host prefix returned will be s3.
-func replaceHostRegion(host, v string) string {
-	if !strings.HasPrefix(host, s3HostPrefix) {
-		return host
-	}
-
-	suffix := host[len(s3HostPrefix):]
-	for i := len(s3HostPrefix); i < len(host); i++ {
-		if host[i] == '.' {
-			// Trim until '.' leave the it in place.
-			suffix = host[i:]
-			break
-		}
-	}
-
-	if len(v) == 0 {
-		return fmt.Sprintf("s3%s", suffix)
-	}
-
-	return fmt.Sprintf("s3-%s%s", v, suffix)
 }

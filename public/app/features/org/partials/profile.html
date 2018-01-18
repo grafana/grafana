@@ -1,37 +1,30 @@
-<navbar icon="icon-gf icon-gf-users" title="Profile" title-url="profile">
-</navbar>
+<page-header model="ctrl.navModel"></page-header>
 
-<div class="page-container">
-	<div class="page-header">
-		<h1>Profile</h1>
-	</div>
+<div class="page-container page-body">
+  <h3 class="page-sub-heading">User Profile</h3>
 
 	<form name="ctrl.userForm" class="gf-form-group">
-		<h3 class="page-heading">Information</h3>
 
-		<div class="gf-form">
-			<span class="gf-form-label width-9">Name</span>
-			<input class="gf-form-input max-width-21" type="text" required ng-model="ctrl.user.name" >
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-8">Name</span>
+			<input class="gf-form-input max-width-22" type="text" required ng-model="ctrl.user.name" >
 		</div>
-		<div class="gf-form">
-			<span class="gf-form-label width-9">Email</span>
-			<input class="gf-form-input max-width-21" type="email" required ng-model="ctrl.user.email">
-		</div>
-		<div class="gf-form">
-			<span class="gf-form-label width-9">Username</span>
-			<input class="gf-form-input max-width-21" type="text" required ng-model="ctrl.user.login">
-		</div>
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-8">Email</span>
+			<input class="gf-form-input max-width-22" type="email" ng-readonly="ctrl.readonlyLoginFields" required ng-model="ctrl.user.email">
+      <i ng-if="ctrl.readonlyLoginFields" class="fa fa-lock gf-form-icon--right-absolute" bs-tooltip="'Login Details Locked - managed in another system.'"></i>
+    </div>
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-8">Username</span>
+      <input class="gf-form-input max-width-22" type="text" ng-readonly="ctrl.readonlyLoginFields" required ng-model="ctrl.user.login">
+      <i ng-if="ctrl.readonlyLoginFields" class="fa fa-lock gf-form-icon--right-absolute" bs-tooltip="'Login Details Locked - managed in another system.'"></i>
+    </div>
 		<div class="gf-form-button-row">
-			<button type="submit" class="btn btn-success" ng-click="ctrl.update()">Update</button>
+			<button type="submit" class="btn btn-success" ng-click="ctrl.update()">Save</button>
 		</div>
 	</form>
 
 	<prefs-control mode="user"></prefs-control>
-
-	<h3 class="page-heading">Password</h3>
-	<div class="gf-form-group">
-		<a href="profile/password" class="btn btn-inverse">Change Password</a>
-	</div>
 
 	<h3 class="page-heading" ng-show="ctrl.showOrgsList">Organizations</h3>
   <div class="gf-form-group" ng-show="ctrl.showOrgsList">

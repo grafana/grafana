@@ -1,3 +1,2 @@
 declare var OpenTsDatasource: any;
-export {OpenTsDatasource};
-
+export default OpenTsDatasource;

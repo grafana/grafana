@@ -2,12 +2,12 @@ package notifiers
 
 import (
 	"fmt"
+	"net/url"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"net/url"
 )
 
 func init() {
@@ -51,9 +51,12 @@ type LineNotifier struct {
 	log   log.Logger
 }
 
+func (this *LineNotifier) ShouldNotify(context *alerting.EvalContext) bool {
+	return defaultShouldNotify(context)
+}
+
 func (this *LineNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Executing line notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
-	metrics.M_Alerting_Notification_Sent_LINE.Inc(1)
 
 	var err error
 	switch evalContext.Rule.State {
@@ -75,12 +78,17 @@ func (this *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 	body := fmt.Sprintf("%s - %s\n%s", evalContext.Rule.Name, ruleUrl, evalContext.Rule.Message)
 	form.Add("message", body)
 
+	if evalContext.ImagePublicUrl != "" {
+		form.Add("imageThumbnail", evalContext.ImagePublicUrl)
+		form.Add("imageFullsize", evalContext.ImagePublicUrl)
+	}
+
 	cmd := &m.SendWebhookSync{
 		Url:        lineNotifyUrl,
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{
 			"Authorization": fmt.Sprintf("Bearer %s", this.Token),
-			"Content-Type":  "application/x-www-form-urlencoded",
+			"Content-Type":  "application/x-www-form-urlencoded;charset=UTF-8",
 		},
 		Body: form.Encode(),
 	}

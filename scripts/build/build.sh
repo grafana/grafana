@@ -7,20 +7,7 @@
 GOPATH=/go
 REPO_PATH=$GOPATH/src/github.com/grafana/grafana
 
-mkdir -p /go/src/github.com/grafana
-cd /go/src/github.com/grafana
-
-if [ "$CIRCLE_TAG" != "" ]; then
-  echo "Builing from tag $CIRCLE_TAG"
-  git clone https://github.com/grafana/grafana.git
-  cd $REPO_PATH
-  git checkout $CIRCLE_TAG
-else
-  echo "Building from branch $CIRCLE_BRANCH"
-  git clone --depth 1 https://github.com/grafana/grafana.git -b $CIRCLE_BRANCH
-  cd $REPO_PATH
-fi
-
+cd /go/src/github.com/grafana/grafana
 echo "current dir: $(pwd)"
 
 if [ "$CIRCLE_TAG" != "" ]; then
@@ -47,7 +34,3 @@ else
   echo "Packaging incremental build for $CIRCLE_BRANCH"
   go run build.go -buildNumber=${CIRCLE_BUILD_NUM} package latest
 fi
-
-cp dist/* /tmp/dist/
-
-

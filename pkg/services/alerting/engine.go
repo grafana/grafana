@@ -2,7 +2,12 @@ package alerting
 
 import (
 	"context"
+	"fmt"
 	"time"
+
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	tlog "github.com/opentracing/opentracing-go/log"
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/log"
@@ -98,23 +103,45 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 		}
 	}()
 
-	alertCtx, cancelFn := context.WithTimeout(context.TODO(), alertTimeout)
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertTimeout)
+	span := opentracing.StartSpan("alert execution")
+	alertCtx = opentracing.ContextWithSpan(alertCtx, span)
 
 	job.Running = true
 	evalContext := NewEvalContext(alertCtx, job.Rule)
+	evalContext.Ctx = alertCtx
 
 	done := make(chan struct{})
-
 	go func() {
 		defer func() {
 			if err := recover(); err != nil {
 				e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))
+				ext.Error.Set(span, true)
+				span.LogFields(
+					tlog.Error(fmt.Errorf("%v", err)),
+					tlog.String("message", "failed to execute alert rule. panic was recovered."),
+				)
+				span.Finish()
 				close(done)
 			}
 		}()
 
 		e.evalHandler.Eval(evalContext)
 		e.resultHandler.Handle(evalContext)
+
+		span.SetTag("alertId", evalContext.Rule.Id)
+		span.SetTag("dashboardId", evalContext.Rule.DashboardId)
+		span.SetTag("firing", evalContext.Firing)
+		span.SetTag("nodatapoints", evalContext.NoDataFound)
+		if evalContext.Error != nil {
+			ext.Error.Set(span, true)
+			span.LogFields(
+				tlog.Error(evalContext.Error),
+				tlog.String("message", "alerting execution failed"),
+			)
+		}
+
+		span.Finish()
 		close(done)
 	}()
 

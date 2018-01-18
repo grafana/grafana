@@ -1,8 +1,6 @@
-///<reference path="../../headers/common.d.ts" />
-
 import angular from 'angular';
 import _ from 'lodash';
-import appEvents from 'app/core/app_events';
+import Remarkable from 'remarkable';
 
 export class PluginEditCtrl {
   model: any;
@@ -11,27 +9,72 @@ export class PluginEditCtrl {
   includes: any;
   readmeHtml: any;
   includedDatasources: any;
-  tabIndex: number;
-  tabs: any;
+  tab: string;
+  navModel: any;
   hasDashboards: any;
   preUpdateHook: () => any;
   postUpdateHook: () => any;
 
   /** @ngInject */
-  constructor(private $scope,
-              private $rootScope,
-              private backendSrv,
-              private $routeParams,
-              private $sce,
-              private $http) {
-    this.model = {};
+  constructor(private $scope, private $rootScope, private backendSrv, private $sce, private $routeParams, navModelSrv) {
     this.pluginId = $routeParams.pluginId;
-    this.tabIndex = 0;
-    this.tabs = ['Readme'];
-
     this.preUpdateHook = () => Promise.resolve();
     this.postUpdateHook = () => Promise.resolve();
-   }
+
+    this.init();
+  }
+
+  setNavModel(model) {
+    let defaultTab = 'readme';
+
+    this.navModel = {
+      main: {
+        img: model.info.logos.large,
+        subTitle: model.info.author.name,
+        url: '',
+        text: '',
+        breadcrumbs: [{ title: 'Plugins', url: 'plugins' }, { title: model.name }],
+        children: [
+          {
+            icon: 'fa fa-fw fa-file-text-o',
+            id: 'readme',
+            text: 'Readme',
+            url: `plugins/${this.model.id}/edit?tab=readme`,
+          },
+        ],
+      },
+    };
+
+    if (model.type === 'app') {
+      this.navModel.main.children.push({
+        icon: 'gicon gicon-cog',
+        id: 'config',
+        text: 'Config',
+        url: `plugins/${this.model.id}/edit?tab=config`,
+      });
+
+      let hasDashboards = _.find(model.includes, { type: 'dashboard' });
+
+      if (hasDashboards) {
+        this.navModel.main.children.push({
+          icon: 'gicon gicon-dashboard',
+          id: 'dashboards',
+          text: 'Dashboards',
+          url: `plugins/${this.model.id}/edit?tab=dashboards`,
+        });
+      }
+
+      defaultTab = 'config';
+    }
+
+    this.tab = this.$routeParams.tab || defaultTab;
+
+    for (let tab of this.navModel.main.children) {
+      if (tab.id === this.tab) {
+        tab.active = true;
+      }
+    }
+  }
 
   init() {
     return this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(result => {
@@ -47,53 +90,53 @@ export class PluginEditCtrl {
         return plug;
       });
 
-      if (this.model.type === 'app') {
-        this.hasDashboards = _.find(result.includes, {type: 'dashboard'});
-        if (this.hasDashboards) {
-          this.tabs.unshift('Dashboards');
-        }
-
-        this.tabs.unshift('Config');
-        this.tabIndex = 0;
-      }
-
+      this.setNavModel(this.model);
       return this.initReadme();
     });
   }
 
   initReadme() {
-    return this.backendSrv.get(`/api/plugins/${this.pluginId}/readme`).then(res => {
-      return System.import('remarkable').then(Remarkable => {
-        var md = new Remarkable();
-        this.readmeHtml = this.$sce.trustAsHtml(md.render(res));
-      });
+    return this.backendSrv.get(`/api/plugins/${this.pluginId}/markdown/readme`).then(res => {
+      var md = new Remarkable();
+      this.readmeHtml = this.$sce.trustAsHtml(md.render(res));
     });
   }
 
   getPluginIcon(type) {
     switch (type) {
-      case 'datasource':  return 'icon-gf icon-gf-datasources';
-      case 'panel':  return 'icon-gf icon-gf-panel';
-      case 'app':  return 'icon-gf icon-gf-apps';
-      case 'page':  return 'icon-gf icon-gf-endpoint-tiny';
-      case 'dashboard':  return 'icon-gf icon-gf-dashboard';
+      case 'datasource':
+        return 'icon-gf icon-gf-datasources';
+      case 'panel':
+        return 'icon-gf icon-gf-panel';
+      case 'app':
+        return 'icon-gf icon-gf-apps';
+      case 'page':
+        return 'icon-gf icon-gf-endpoint-tiny';
+      case 'dashboard':
+        return 'icon-gf icon-gf-dashboard';
+      default:
+        return 'icon-gf icon-gf-apps';
     }
   }
 
   update() {
-    this.preUpdateHook().then(() => {
-      var updateCmd = _.extend({
-        enabled: this.model.enabled,
-        pinned: this.model.pinned,
-        jsonData: this.model.jsonData,
-        secureJsonData: this.model.secureJsonData,
-      }, {});
-      return this.backendSrv.post(`/api/plugins/${this.pluginId}/settings`, updateCmd);
-    })
-    .then(this.postUpdateHook)
-    .then((res) => {
-      window.location.href = window.location.href;
-    });
+    this.preUpdateHook()
+      .then(() => {
+        var updateCmd = _.extend(
+          {
+            enabled: this.model.enabled,
+            pinned: this.model.pinned,
+            jsonData: this.model.jsonData,
+            secureJsonData: this.model.secureJsonData,
+          },
+          {}
+        );
+        return this.backendSrv.post(`/api/plugins/${this.pluginId}/settings`, updateCmd);
+      })
+      .then(this.postUpdateHook)
+      .then(res => {
+        window.location.href = window.location.href;
+      });
   }
 
   importDashboards() {
@@ -114,7 +157,7 @@ export class PluginEditCtrl {
 
     this.$rootScope.appEvent('show-modal', {
       src: 'public/app/features/plugins/partials/update_instructions.html',
-      scope: modalScope
+      scope: modalScope,
     });
   }
 

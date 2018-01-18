@@ -1,9 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
-import angular from 'angular';
-import config from 'app/core/config';
-import _ from 'lodash';
-import $ from 'jquery';
 import coreModule from '../../core/core_module';
 
 export class PlaylistSearchCtrl {
@@ -13,8 +7,8 @@ export class PlaylistSearchCtrl {
   searchStarted: any;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private $timeout, private backendSrv, private contextSrv) {
-    this.query = {query: '', tag: [], starred: false, limit: 30};
+  constructor($timeout, private backendSrv) {
+    this.query = { query: '', tag: [], starred: false, limit: 30 };
 
     $timeout(() => {
       this.query.query = '';
@@ -26,10 +20,10 @@ export class PlaylistSearchCtrl {
     this.tagsMode = false;
     var prom: any = {};
 
-    prom.promise = this.backendSrv.search(this.query).then((result) => {
+    prom.promise = this.backendSrv.search(this.query).then(result => {
       return {
         dashboardResult: result,
-        tagResult: []
+        tagResult: [],
       };
     });
 
@@ -56,10 +50,10 @@ export class PlaylistSearchCtrl {
 
   getTags() {
     var prom: any = {};
-    prom.promise = this.backendSrv.get('/api/dashboards/tags').then((result) => {
+    prom.promise = this.backendSrv.get('/api/dashboards/tags').then(result => {
       return {
         dashboardResult: [],
-        tagResult: result
+        tagResult: result,
       };
     });
 
@@ -75,7 +69,7 @@ export function playlistSearchDirective() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      searchStarted: '&'
+      searchStarted: '&',
     },
   };
 }

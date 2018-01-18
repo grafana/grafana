@@ -54,7 +54,7 @@
           },
           "targets": [
             {
-              "expr": "(time() - process_start_time_seconds{job=\"prometheus\"})",
+              "expr": "(time() - process_start_time_seconds{job=\"prometheus\", instance=~\"$node\"})",
               "intervalFactor": 2,
               "refId": "A"
             }
@@ -104,7 +104,7 @@
           },
           "targets": [
             {
-              "expr": "prometheus_local_storage_memory_series",
+              "expr": "prometheus_local_storage_memory_series{instance=~\"$node\"}",
               "intervalFactor": 2,
               "refId": "A"
             }
@@ -148,7 +148,7 @@
           },
           "targets": [
             {
-              "expr": "prometheus_local_storage_indexing_queue_length",
+              "expr": "prometheus_local_storage_indexing_queue_length{instance=~\"$node\"}",
               "intervalFactor": 2,
               "refId": "A"
             }
@@ -167,7 +167,7 @@
           "valueName": "current"
         },
         {
-          "content": "<img src=\"public/app/plugins/datasource/prometheus/img/prometheus_logo.svg\" alt=\"Prometheus logo\" style=\"height: 40px;\">\n<span style=\"font-family: 'Open Sans', 'Helvetica Neue', Helvetica; font-size: 25px;vertical-align: text-top;color: #bbbfc2;margin-left: 10px;\">Prometheus</span>\n\n<p style=\"margin-top: 10px;\">You're using Prometheus, an open-source systems monitoring and alerting toolkit originally built at SoundCloud. For more information, check out the <a href=\"http://www.grafana.org/\">Grafana</a> and <a href=\"http://prometheus.io/\">Prometheus</a> projects.</p>",
+          "content": "<img src=\"public/app/plugins/datasource/prometheus/img/prometheus_logo.svg\" alt=\"Prometheus logo\" style=\"height: 40px;\">\n<span style=\"font-family: 'Open Sans', 'Helvetica Neue', Helvetica; font-size: 25px;vertical-align: text-top;color: #bbbfc2;margin-left: 10px;\">Prometheus</span>\n\n<p style=\"margin-top: 10px;\">You're using Prometheus, an open-source systems monitoring and alerting toolkit originally built at SoundCloud. For more information, check out the <a href=\"https://grafana.com/\">Grafana</a> and <a href=\"http://prometheus.io/\">Prometheus</a> projects.</p>",
           "editable": true,
           "error": false,
           "id": 9,
@@ -233,7 +233,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "rate(prometheus_local_storage_ingested_samples_total[5m])",
+              "expr": "rate(prometheus_local_storage_ingested_samples_total{instance=~\"$node\"}[5m])",
               "interval": "",
               "intervalFactor": 2,
               "legendFormat": "{{job}}",
@@ -323,7 +323,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "rate(prometheus_target_interval_length_seconds_count[5m])",
+              "expr": "rate(prometheus_target_interval_length_seconds_count{instance=~\"$node\"}[5m])",
               "intervalFactor": 2,
               "legendFormat": "{{job}}",
               "refId": "A"
@@ -387,7 +387,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "prometheus_target_interval_length_seconds{quantile!=\"0.01\", quantile!=\"0.05\"}",
+              "expr": "prometheus_target_interval_length_seconds{quantile!=\"0.01\", quantile!=\"0.05\",instance=~\"$node\"}",
               "interval": "",
               "intervalFactor": 2,
               "legendFormat": "{{quantile}} ({{interval}})",
@@ -478,7 +478,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "prometheus_evaluator_duration_seconds{quantile!=\"0.01\", quantile!=\"0.05\"}",
+              "expr": "prometheus_evaluator_duration_seconds{quantile!=\"0.01\", quantile!=\"0.05\",instance=~\"$node\"}",
               "interval": "",
               "intervalFactor": 2,
               "legendFormat": "{{quantile}}",
@@ -548,7 +548,28 @@
     ]
   },
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "${DS_NAME}",
+        "hide": 0,
+        "includeAll": false,
+        "label": "HOST:",
+        "multi": false,
+        "name": "node",
+        "options": [],
+        "query": "label_values(prometheus_build_info, instance)",
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
   },
   "annotations": {
     "list": []
@@ -563,7 +584,7 @@
       "title": "Grafana Docs",
       "tooltip": "",
       "type": "link",
-      "url": "http://www.grafana.org/docs"
+      "url": "http://docs.grafana.org/"
     },
     {
       "icon": "info",

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -31,10 +32,6 @@ func addOrgUserHelper(cmd m.AddOrgUserCommand) Response {
 
 	userToAdd := userQuery.Result
 
-	// if userToAdd.Id == c.UserId {
-	// 	return ApiError(400, "Cannot add yourself as user", nil)
-	// }
-
 	cmd.UserId = userToAdd.Id
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -62,6 +59,10 @@ func getOrgUsersHelper(orgId int64) Response {
 
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Failed to get account user", err)
+	}
+
+	for _, user := range query.Result {
+		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
 	}
 
 	return Json(200, query.Result)

@@ -38,6 +38,10 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 		if err != m.ErrUserNotFound {
 			return ApiError(500, "Failed to query db for existing user check", err)
 		}
+
+		if setting.DisableLoginForm {
+			return ApiError(401, "User could not be found", nil)
+		}
 	} else {
 		return inviteExistingUserToOrg(c, userQuery.Result, &inviteDto)
 	}
@@ -57,7 +61,7 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 	}
 
 	// send invite email
-	if !inviteDto.SkipEmails && util.IsEmail(inviteDto.LoginOrEmail) {
+	if inviteDto.SendEmail && util.IsEmail(inviteDto.LoginOrEmail) {
 		emailCmd := m.SendEmailCommand{
 			To:       []string{inviteDto.LoginOrEmail},
 			Template: "new_user_invite.html",
@@ -72,6 +76,11 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 
 		if err := bus.Dispatch(&emailCmd); err != nil {
 			return ApiError(500, "Failed to send email invite", err)
+		}
+
+		emailSentCmd := m.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
+		if err := bus.Dispatch(&emailSentCmd); err != nil {
+			return ApiError(500, "Failed to update invite with email sent info", err)
 		}
 
 		return ApiSuccess(fmt.Sprintf("Sent invite to %s", inviteDto.LoginOrEmail))
@@ -90,7 +99,7 @@ func inviteExistingUserToOrg(c *middleware.Context, user *m.User, inviteDto *dto
 		return ApiError(500, "Error while trying to create org user", err)
 	} else {
 
-		if !inviteDto.SkipEmails && util.IsEmail(user.Email) {
+		if inviteDto.SendEmail && util.IsEmail(user.Email) {
 			emailCmd := m.SendEmailCommand{
 				To:       []string{user.Email},
 				Template: "invited_to_org.html",
@@ -178,8 +187,8 @@ func CompleteInvite(c *middleware.Context, completeInvite dtos.CompleteInviteFor
 
 	loginUserWithUser(user, c)
 
-	metrics.M_Api_User_SignUpCompleted.Inc(1)
-	metrics.M_Api_User_SignUpInvite.Inc(1)
+	metrics.M_Api_User_SignUpCompleted.Inc()
+	metrics.M_Api_User_SignUpInvite.Inc()
 
 	return ApiSuccess("User created and logged in")
 }

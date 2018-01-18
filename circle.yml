@@ -1,6 +1,6 @@
 machine:
   node:
-    version: 6.9.2
+    version: 6.11.4
   python:
     version: 2.7.3
   services:
@@ -9,7 +9,7 @@ machine:
     GOPATH: "/home/ubuntu/.go_workspace"
     ORG_PATH: "github.com/grafana"
     REPO_PATH: "${ORG_PATH}/grafana"
-    GODIST: "go1.8.linux-amd64.tar.gz"
+    GODIST: "go1.9.2.linux-amd64.tar.gz"
   post:
     - mkdir -p ~/download
     - mkdir -p ~/docker
@@ -30,10 +30,10 @@ dependencies:
     - sudo apt-get update; sudo apt-get install rpm; sudo apt-get install expect
     - ./scripts/build/build_container.sh
 
-
 test:
   override:
-     - bash scripts/circle-test.sh
+    - bash scripts/circle-test-frontend.sh
+    - bash scripts/circle-test-backend.sh
 
 deployment:
   gh_branch:
@@ -41,16 +41,17 @@ deployment:
     commands:
       - ./scripts/build/deploy.sh
       - ./scripts/build/sign_packages.sh
-      - go run build.go sha1-dist
+      - go run build.go sha-dist
       - aws s3 sync ./dist s3://$BUCKET_NAME/master
       - ./scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master
       - ./scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN}
+      - go run ./scripts/build/publish.go -apiKey ${GRAFANA_COM_API_KEY}
   gh_tag:
     tag: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
     commands:
       - ./scripts/build/deploy.sh
       - ./scripts/build/sign_packages.sh
-      - go run build.go sha1-dist
+      - go run build.go sha-dist
       - aws s3 sync ./dist s3://$BUCKET_NAME/release
       - ./scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} release
-
+      - ./scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN} ${CIRCLE_TAG}

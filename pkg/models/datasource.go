@@ -17,14 +17,17 @@ const (
 	DS_CLOUDWATCH    = "cloudwatch"
 	DS_KAIROSDB      = "kairosdb"
 	DS_PROMETHEUS    = "prometheus"
+	DS_POSTGRES      = "postgres"
+	DS_MYSQL         = "mysql"
 	DS_ACCESS_DIRECT = "direct"
 	DS_ACCESS_PROXY  = "proxy"
 )
 
-// Typed errors
 var (
-	ErrDataSourceNotFound   = errors.New("Data source not found")
-	ErrDataSourceNameExists = errors.New("Data source with same name already exists")
+	ErrDataSourceNotFound           = errors.New("Data source not found")
+	ErrDataSourceNameExists         = errors.New("Data source with same name already exists")
+	ErrDataSourceUpdatingOldVersion = errors.New("Trying to update old version of datasource")
+	ErrDatasourceIsReadOnly         = errors.New("Data source is readonly. Can only be updated from configuration.")
 )
 
 type DsAccess string
@@ -48,25 +51,40 @@ type DataSource struct {
 	IsDefault         bool
 	JsonData          *simplejson.Json
 	SecureJsonData    securejsondata.SecureJsonData
+	ReadOnly          bool
 
 	Created time.Time
 	Updated time.Time
 }
 
 var knownDatasourcePlugins map[string]bool = map[string]bool{
-	DS_ES:          true,
-	DS_GRAPHITE:    true,
-	DS_INFLUXDB:    true,
-	DS_INFLUXDB_08: true,
-	DS_KAIROSDB:    true,
-	DS_CLOUDWATCH:  true,
-	DS_PROMETHEUS:  true,
-	DS_OPENTSDB:    true,
-	"opennms":      true,
-	"druid":        true,
-	"dalmatinerdb": true,
-	"gnocci":       true,
-	"zabbix":       true,
+	DS_ES:                                 true,
+	DS_GRAPHITE:                           true,
+	DS_INFLUXDB:                           true,
+	DS_INFLUXDB_08:                        true,
+	DS_KAIROSDB:                           true,
+	DS_CLOUDWATCH:                         true,
+	DS_PROMETHEUS:                         true,
+	DS_OPENTSDB:                           true,
+	DS_POSTGRES:                           true,
+	DS_MYSQL:                              true,
+	"opennms":                             true,
+	"druid":                               true,
+	"dalmatinerdb":                        true,
+	"gnocci":                              true,
+	"zabbix":                              true,
+	"newrelic-app":                        true,
+	"grafana-datadog-datasource":          true,
+	"grafana-simple-json":                 true,
+	"grafana-splunk-datasource":           true,
+	"udoprog-heroic-datasource":           true,
+	"grafana-openfalcon-datasource":       true,
+	"opennms-datasource":                  true,
+	"rackerlabs-blueflood-datasource":     true,
+	"crate-datasource":                    true,
+	"ayoungprogrammer-finance-datasource": true,
+	"monasca-datasource":                  true,
+	"vertamedia-clickhouse-datasource":    true,
 }
 
 func IsKnownDataSourcePlugin(dsType string) bool {
@@ -93,6 +111,7 @@ type AddDataSourceCommand struct {
 	IsDefault         bool              `json:"isDefault"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
+	ReadOnly          bool              `json:"readOnly"`
 
 	OrgId int64 `json:"-"`
 
@@ -115,19 +134,27 @@ type UpdateDataSourceCommand struct {
 	IsDefault         bool              `json:"isDefault"`
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string]string `json:"secureJsonData"`
+	Version           int               `json:"version"`
+	ReadOnly          bool              `json:"readOnly"`
 
 	OrgId int64 `json:"-"`
 	Id    int64 `json:"-"`
+
+	Result *DataSource
 }
 
 type DeleteDataSourceByIdCommand struct {
 	Id    int64
 	OrgId int64
+
+	DeletedDatasourcesCount int64
 }
 
 type DeleteDataSourceByNameCommand struct {
 	Name  string
 	OrgId int64
+
+	DeletedDatasourcesCount int64
 }
 
 // ---------------------
@@ -135,6 +162,10 @@ type DeleteDataSourceByNameCommand struct {
 
 type GetDataSourcesQuery struct {
 	OrgId  int64
+	Result []*DataSource
+}
+
+type GetAllDataSourcesQuery struct {
 	Result []*DataSource
 }
 

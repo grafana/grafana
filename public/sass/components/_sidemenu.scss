@@ -1,228 +1,272 @@
-.sidemenu-canvas {
-  position: relative;
-}
-
-.sidemenu-wrapper {
-  position: absolute;
-  top: 52px;
-  left: 0;
+.sidemenu {
+  position: fixed;
+  display: flex;
+  flex-flow: column;
+  flex-direction: column;
   width: $side-menu-width;
-  background-color: rgba($side-menu-bg,$side-menu-opacity);
-  z-index: 101;
-  transform: translate3d(0, -100%, 0);
-  visibility: hidden;
-
+  z-index: $zindex-sidemenu;
   a:focus {
     text-decoration: none;
   }
-}
 
-.sidemenu-open {
-  .sidemenu-wrapper {
-    visibility: visible;
-    transform: translate3d(0, 0, 0);
-    transition: all 0.2s;
+  .sidemenu__logo_small_breakpoint {
+    display: none;
+  }
+
+  .sidemenu__close {
+    display: none;
   }
 }
 
-.sidemenu-pinned {
-  .sidemenu-wrapper {
-    min-height: calc(100% - 54px);
-  }
-  .dashboard-container {
-    padding-left: $side-menu-width + 0.5rem;
-  }
-  .page-container {
-    margin-left: $side-menu-width;
-  }
-  .search-container {
-    left: auto;
+// body class that hides sidemenu
+.sidemenu-hidden {
+  .sidemenu {
+    display: none;
   }
 }
 
-.sidemenu {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+@include media-breakpoint-up(sm) {
+  .sidemenu-open {
+    .sidemenu {
+      background: $side-menu-bg;
+      position: initial;
+      height: auto;
+      box-shadow: $side-menu-shadow;
+      position: relative;
+      z-index: $zindex-sidemenu;
+    }
+    .sidemenu__top,
+    .sidemenu__bottom {
+      display: block;
+    }
+  }
+}
 
-  > li {
-    position: relative;
-    @include left-brand-border();
+.sidemenu__top {
+  padding-top: 3rem;
+  flex-grow: 1;
+  display: none;
+}
 
+.sidemenu__bottom {
+  padding-bottom: $spacer;
+  display: none;
+}
+
+.sidemenu-item {
+  position: relative;
+  @include left-brand-border();
+
+  @include media-breakpoint-up(sm) {
     &.active,
     &:hover {
       background-color: $side-menu-item-hover-bg;
       @include left-brand-border-gradient();
 
       .dropdown-menu {
+        margin: 0;
         display: block;
         opacity: 0;
         top: 0px;
         // important to overlap it otherwise it can be hidden
         // again by the mouse getting outside the hover space
-        left: $side-menu-width - 0.2rem;
-        background-color: rgba($side-menu-bg,$side-menu-opacity);
-        @include animation('dropdown-anim 150ms ease-in-out 100ms forwards');
-        z-index: -9999;
+        left: $side-menu-width - 2px;
+        @include animation("dropdown-anim 150ms ease-in-out 100ms forwards");
+        z-index: $zindex-sidemenu;
       }
     }
+  }
+}
+
+.dropup.sidemenu-item:hover .dropdown-menu {
+  top: auto !important;
+}
+
+.sidemenu-link {
+  color: $link-color;
+  line-height: 42px;
+  padding: 0px 10px 0px 10px;
+  display: block;
+  position: relative;
+  font-size: 16px;
+  border: 1px solid transparent;
+  text-align: center;
+
+  img {
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    box-shadow: 0 0 14px 2px rgba(255, 255, 255, 0.05);
   }
 }
 
 @include keyframes(dropdown-anim) {
   0% {
     opacity: 0;
-    transform: translate3d(-5%,0,0);
+    //transform: translate3d(-5%,0,0);
   }
   100% {
     opacity: 1;
-    transform: translate3d(0,0,0);
+    //transform: translate3d(0,0,0);
   }
-}
-
-.sidemenu-main-link {
-  font-size: 16px;
-}
-
-.sidemenu-item-text {
-  width: 110px;
-  display: inline-block;
-  vertical-align: middle;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .icon-circle {
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
   display: inline-block;
-  i {
-    color: $link-color;
-    opacity: .7;
+
+  .fa,
+  .icon-gf,
+  .gicon {
+    color: $side-menu-link-color;
     position: relative;
-    left: 7px;
+    opacity: 0.7;
+    font-size: 130%;
+  }
+
+  .fa {
+    top: 2px;
+    position: relative;
+  }
+
+  .icon-gf {
     top: 5px;
-    font-size: 150%;
   }
+
   img {
-    left: 7px;
     position: relative;
   }
 }
 
-.sidemenu-item {
-  color: $link-color;
-  line-height: 47px;
-  padding: 0px 10px 0px 10px;
+.side-menu-header {
+  padding: 10px 10px 10px 20px;
+  white-space: nowrap;
+  background-color: $side-menu-item-hover-bg;
+  font-size: 17px;
+  color: #ebedf2;
+}
+
+li.sidemenu-org-switcher {
+  border-bottom: 1px solid $dropdownDividerBottom;
+}
+
+.sidemenu-org-switcher__org-name {
+  font-size: $font-size-base;
+}
+
+.sidemenu-org-switcher__org-current {
+  font-size: $font-size-xs;
+  color: $text-color-weak;
+  position: relative;
+  top: -2px;
+}
+
+.sidemenu-org-switcher__switch {
+  font-size: $font-size-sm;
+  padding-left: 1.5rem;
+  display: flex;
+  align-items: center;
+  > i.fa.fa-random {
+    margin-right: 4px;
+    top: 1px;
+  }
+}
+
+.sidemenu__logo {
   display: block;
-  border-left: 1px solid transparent;
+  padding: 0.4rem 1rem 0.4rem 0.65rem;
+  min-height: $navbarHeight;
+  position: relative;
 
-
-  .sidemenu-item-text {
-    padding-left: 11px;
+  &:hover {
+    background: $navbarButtonBackgroundHighlight;
   }
 
   img {
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    box-shadow: 0 0 14px 2px rgba(255,255,255, 0.05);
+    width: 30px;
+    position: relative;
+    top: 5px;
+    left: 4px;
   }
 }
 
-.sidemenu-section-tagline {
-  font-style: italic;
-  line-height: 10px;
-}
+@include media-breakpoint-down(xs) {
+  .sidemenu-open--xs {
+    .sidemenu {
+      width: 100%;
+      background: $side-menu-bg;
+      position: initial;
+      height: auto;
+      box-shadow: $side-menu-shadow;
+      position: relative;
+      z-index: $zindex-sidemenu;
+    }
 
-.sidemenu-section-text-wrapper {
-  padding-top: 4px;
-}
+    .sidemenu__close {
+      display: block;
+      font-size: $font-size-md;
+      position: relative;
+      top: -3px;
+    }
 
-.sidemenu-org-section .dropdown-menu-title {
-  margin: 0 10px 0 6px;
-  padding: 7px 0 7px;
-  overflow: hidden;
-  color: $dropdownTitle;
-}
+    .sidemenu__top,
+    .sidemenu__bottom {
+      display: block;
+    }
+  }
 
-.sidemenu-org-section .dropdown-menu-title > span {
-  display: inline-block;
-  position: relative;
+  .sidemenu {
+    .sidemenu__logo {
+      display: none;
+    }
 
-  &::after {
-    display: block;
-    position: absolute;
-    top: 50%;
-    right: 0;
-    left: 100%;
-    width: 200px;
-    height: 1px;
-    margin-left: 5px;
-    background: $dropdownDivider;
-    content: '';
+    .sidemenu__logo_small_breakpoint {
+      padding: 16px 10px 26px;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: baseline;
+
+      .fa-bars {
+        font-size: 25px;
+      }
+    }
+
+    .sidemenu__top {
+      padding-top: 0rem;
+    }
+
+    .side-menu-header {
+      padding-left: 10px;
+    }
+
+    .sidemenu-link {
+      text-align: left;
+    }
+
+    .sidemenu-icon {
+      display: none;
+    }
+
+    .dropdown-menu--sidemenu {
+      display: block;
+      position: unset;
+      width: 100%;
+      float: none;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+
+      > li > a {
+        padding-left: 15px;
+      }
+    }
+
+    .sidemenu__bottom {
+      .dropdown-menu--sidemenu {
+        display: flex;
+        flex-direction: column-reverse;
+      }
+    }
   }
 }
-
-.sidemenu-org {
-  padding: 17px 10px 15px 14px;
-  box-sizing: border-box;
-  cursor: pointer;
-  display: table;
-  position: relative;
-  width: 100%;
-}
-
-.sidemenu .fa-caret-right {
-  position: absolute;
-  top: 38%;
-  right: 6px;
-  font-size: 14px;
-  color: $text-color-faint;
-}
-
-.sidemenu-org-avatar,
-.sidemenu-org-details {
-  display: table-cell;
-  vertical-align: top;
-}
-
-.sidemenu-org-avatar {
-  width: 40px;
-  height: 40px;
-  background-color: $gray-2;
-  border-radius: 50%;
-  text-align: center;
-
-  >img {
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    left: 14px;
-  }
-}
-
-.sidemenu-org-avatar--missing {
-  color: $gray-4;
-  text-shadow: 0 1px 0 $dark-1;
-  line-height: 40px;
-  font-size: $font-size-lg;
-}
-
-.sidemenu-org-details {
-  padding-left: 10px;
-  color: $link-color;
-}
-
-.sidemenu-org-name {
-  display: block;
-  font-size: 13px;
-  color: $link-color-disabled;
-}
-
-.sidemenu-org-user {
-  display: block;
-}
-

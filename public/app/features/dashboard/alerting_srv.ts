@@ -1,10 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
-import config from 'app/core/config';
-import angular from 'angular';
-import moment from 'moment';
-import _ from 'lodash';
-
 import coreModule from 'app/core/core_module';
 
 export class AlertingSrv {
@@ -17,6 +10,4 @@ export class AlertingSrv {
   }
 }
 
-
 coreModule.service('alertingSrv', AlertingSrv);
-
