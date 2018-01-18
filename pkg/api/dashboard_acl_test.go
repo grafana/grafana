@@ -1,11 +1,16 @@
 package api
 
 import (
+	"path/filepath"
 	"testing"
 
+	"github.com/go-macaron/session"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	macaron "gopkg.in/macaron.v1"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -56,7 +61,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 
 		Convey("When user is editor and has admin permission in the ACL", func() {
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardId/acl", m.ROLE_EDITOR, func(sc *scenarioContext) {
-				mockResult = append(mockResult, &m.DashboardAclInfoDTO{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_ADMIN})
+				mockResult = append(mockResult, &m.DashboardAclInfoDTO{Id: 6, OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_ADMIN})
 
 				Convey("Should be able to access ACL", func() {
 					sc.handlerFunc = GetDashboardAclList
@@ -67,7 +72,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/id/1/acl/1", "/api/dashboards/id/:dashboardId/acl/:aclId", m.ROLE_EDITOR, func(sc *scenarioContext) {
-				mockResult = append(mockResult, &m.DashboardAclInfoDTO{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_ADMIN})
+				mockResult = append(mockResult, &m.DashboardAclInfoDTO{Id: 6, OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_ADMIN})
 
 				bus.AddHandler("test3", func(cmd *m.RemoveDashboardAclCommand) error {
 					return nil
@@ -77,6 +82,52 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 					sc.handlerFunc = DeleteDashboardAcl
 					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 
+					So(sc.resp.Code, ShouldEqual, 200)
+				})
+			})
+
+			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/id/1/acl/6", "/api/dashboards/id/:dashboardId/acl/:aclId", m.ROLE_EDITOR, func(sc *scenarioContext) {
+				mockResult = append(mockResult, &m.DashboardAclInfoDTO{Id: 6, OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_ADMIN})
+
+				bus.AddHandler("test3", func(cmd *m.RemoveDashboardAclCommand) error {
+					return nil
+				})
+
+				Convey("Should not be able to delete their own Admin permission", func() {
+					sc.handlerFunc = DeleteDashboardAcl
+					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
+
+					So(sc.resp.Code, ShouldEqual, 403)
+				})
+			})
+
+			Convey("Should not be able to downgrade their own Admin permission", func() {
+				cmd := dtos.UpdateDashboardAclCommand{
+					Items: []dtos.DashboardAclUpdateItem{
+						{UserId: TestUserID, Permission: m.PERMISSION_EDIT},
+					},
+				}
+
+				postAclScenario("When calling POST on", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardId/acl", m.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
+					mockResult = append(mockResult, &m.DashboardAclInfoDTO{Id: 6, OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_ADMIN})
+
+					CallPostAcl(sc)
+					So(sc.resp.Code, ShouldEqual, 403)
+				})
+			})
+
+			Convey("Should be able to update permissions", func() {
+				cmd := dtos.UpdateDashboardAclCommand{
+					Items: []dtos.DashboardAclUpdateItem{
+						{UserId: TestUserID, Permission: m.PERMISSION_ADMIN},
+						{UserId: 2, Permission: m.PERMISSION_EDIT},
+					},
+				}
+
+				postAclScenario("When calling POST on", "/api/dashboards/id/1/acl", "/api/dashboards/id/:dashboardId/acl", m.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
+					mockResult = append(mockResult, &m.DashboardAclInfoDTO{Id: 6, OrgId: 1, DashboardId: 1, UserId: 1, Permission: m.PERMISSION_ADMIN})
+
+					CallPostAcl(sc)
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 			})
@@ -171,4 +222,45 @@ func transformDashboardAclsToDTOs(acls []*m.DashboardAclInfoDTO) []*m.DashboardA
 	}
 
 	return dtos
+}
+
+func CallPostAcl(sc *scenarioContext) {
+	bus.AddHandler("test", func(cmd *m.UpdateDashboardAclCommand) error {
+		return nil
+	})
+
+	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+}
+
+func postAclScenario(desc string, url string, routePattern string, role m.RoleType, cmd dtos.UpdateDashboardAclCommand, fn scenarioFunc) {
+	Convey(desc+" "+url, func() {
+		defer bus.ClearBusHandlers()
+
+		sc := &scenarioContext{
+			url: url,
+		}
+		viewsPath, _ := filepath.Abs("../../public/views")
+
+		sc.m = macaron.New()
+		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
+			Directory: viewsPath,
+			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
+		}))
+
+		sc.m.Use(middleware.GetContextHandler())
+		sc.m.Use(middleware.Sessioner(&session.Options{}))
+
+		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
+			sc.context = c
+			sc.context.UserId = TestUserID
+			sc.context.OrgId = TestOrgID
+			sc.context.OrgRole = role
+
+			return UpdateDashboardAcl(c, cmd)
+		})
+
+		sc.m.Post(routePattern, sc.defaultHandler)
+
+		fn(sc)
+	})
 }
