@@ -261,7 +261,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 		if c.IsGrafanaAdmin {
 			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
-				Divider: true, HideFromTabs: true,
+				Divider: true, HideFromTabs: true, Id: "admin-divider", Text: "Text",
 			})
 			cfgNode.Children = append(cfgNode.Children, &dtos.NavLink{
 				Text:         "Server Admin",

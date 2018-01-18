@@ -29,15 +29,12 @@ export class DataSourceEditCtrl {
   navModel: any;
 
   /** @ngInject */
-  constructor(
-    private $q,
-    private backendSrv,
-    private $routeParams,
-    private $location,
-    private datasourceSrv,
-    navModelSrv
-  ) {
-    this.navModel = navModelSrv.getNav('cfg', 'datasources', 0);
+  constructor(private $q, private backendSrv, private $routeParams, private $location, private datasourceSrv) {
+    if (store.nav.main === null) {
+      store.nav.load('cfg', 'datasources');
+    }
+
+    this.navModel = toJS(store.nav);
     this.datasources = [];
 
     this.loadDatasourceTypes().then(() => {

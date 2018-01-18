@@ -9,6 +9,12 @@ export class DataSourceDashboardsCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, private $routeParams) {
+    if (store.nav.main === null) {
+      store.nav.load('cfg', 'datasources');
+    }
+
+    this.navModel = toJS(store.nav);
+
     if (this.$routeParams.id) {
       this.getDatasourceById(this.$routeParams.id);
     }
