@@ -147,7 +147,7 @@
     "prop-types": "^15.6.0",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
-    "react-grid-layout": "^0.16.1",
+    "react-grid-layout": "^0.16.2",
     "react-popper": "^0.7.5",
     "react-highlight-words": "^0.10.0",
     "react-select": "^1.1.0",

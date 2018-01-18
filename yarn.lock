@@ -7442,7 +7442,7 @@ performance-now@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/performance-now/-/performance-now-2.1.0.tgz#6309f4e0e5fa913ec1c69307ae364b4b377c9e7b"
 
-phantomjs-prebuilt@^2.1.16, phantomjs-prebuilt@^2.1.7:
+phantomjs-prebuilt@^2.1.15, phantomjs-prebuilt@^2.1.7:
   version "2.1.16"
   resolved "https://registry.yarnpkg.com/phantomjs-prebuilt/-/phantomjs-prebuilt-2.1.16.tgz#efd212a4a3966d3647684ea8ba788549be2aefef"
   dependencies:
@@ -8121,9 +8121,9 @@ react-dom@^16.2.0:
     classnames "^2.2.5"
     prop-types "^15.5.10"
 
-react-grid-layout@^0.16.1:
-  version "0.16.1"
-  resolved "https://registry.yarnpkg.com/react-grid-layout/-/react-grid-layout-0.16.1.tgz#45eb5687da2ae6912b63c1c0b79b7fb6bbd32202"
+react-grid-layout@^0.16.2:
+  version "0.16.2"
+  resolved "https://registry.yarnpkg.com/react-grid-layout/-/react-grid-layout-0.16.2.tgz#ef09b0b6db4a9635799663658277ee2d26fa2994"
   dependencies:
     classnames "2.x"
     lodash.isequal "^4.0.0"
