@@ -103,13 +103,7 @@ $component-active-bg: $brand-primary !default;
 $panel-bg: #212124;
 $panel-border-color: $dark-1;
 $panel-border: solid 1px $panel-border-color;
-$panel-drop-zone-bg: repeating-linear-gradient(
-  -128deg,
-  #111,
-  #111 10px,
-  #191919 10px,
-  #222 20px
-);
+$panel-drop-zone-bg: repeating-linear-gradient(-128deg, #111, #111 10px, #191919 10px, #222 20px);
 $panel-header-hover-bg: $dark-4;
 $panel-header-menu-hover-bg: $dark-5;
 $panel-edit-shadow: 0 -30px 30px -30px $black;
@@ -134,8 +128,7 @@ $code-tag-border: lighten($code-tag-bg, 2%);
 // cards
 $card-background: linear-gradient(135deg, #2f2f32, #262628);
 $card-background-hover: linear-gradient(135deg, #343436, #262628);
-$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1),
-  1px 1px 0 0 rgba(0, 0, 0, 0.3);
+$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.3);
 
 // Lists
 $list-item-bg: $card-background;
@@ -188,7 +181,7 @@ $iconContainerBackground: $black;
 $btn-divider-left: $dark-4;
 $btn-divider-right: $dark-2;
 
-$btn-drag-image: "../img/grab_dark.svg";
+$btn-drag-image: '../img/grab_dark.svg';
 
 // Forms
 // -------------------------
@@ -259,7 +252,7 @@ $navbarDropdownShadow: inset 0px 4px 10px -4px $body-bg;
 $navbarButtonBackground: $navbarBackground;
 $navbarButtonBackgroundHighlight: $body-bg;
 
-$navbar-button-border: #151515;
+$navbar-button-border: #2f2f32;
 
 // Sidemenu
 // -------------------------
@@ -325,14 +318,10 @@ $tooltipLinkColor: $link-color;
 $graph-tooltip-bg: $dark-1;
 
 // images
-$checkboxImageUrl: "../img/checkbox.png";
+$checkboxImageUrl: '../img/checkbox.png';
 
 // info box
-$info-box-background: linear-gradient(
-  100deg,
-  $blue-dark,
-  darken($blue-dark, 5%)
-);
+$info-box-background: linear-gradient(100deg, $blue-dark, darken($blue-dark, 5%));
 $info-box-color: $gray-4;
 
 // footer
