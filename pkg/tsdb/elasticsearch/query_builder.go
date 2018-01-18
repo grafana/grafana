@@ -58,8 +58,10 @@ func convertTimeToUnixNano(rangeTime string, now time.Time) string {
 }
 
 func formatTimeRange(data TemplateQueryModel) string {
-	to := convertTimeToUnixNano(data.TimeRange.To, data.TimeRange.Now)
-	from := convertTimeToUnixNano(data.TimeRange.From, data.TimeRange.Now)
+	// to := convertTimeToUnixNano(data.TimeRange.To, data.TimeRange.now)
+	// from := convertTimeToUnixNano(data.TimeRange.From, data.TimeRange.now)
+	to := data.TimeRange.MustGetTo().UnixNano()
+	from := data.TimeRange.MustGetFrom().UnixNano()
 
 	return fmt.Sprintf(`
 		{
@@ -152,8 +154,10 @@ func createDateHistogramAgg(bAgg *BucketAggregate, timeRange *tsdb.TimeRange, de
 	result.Set("field", defaultTimeField)
 
 	extendedBounds := simplejson.New()
-	extendedBounds.Set("min", convertTimeToUnixNano(timeRange.From, timeRange.Now))
-	extendedBounds.Set("max", convertTimeToUnixNano(timeRange.To, timeRange.Now))
+	// extendedBounds.Set("min", convertTimeToUnixNano(timeRange.From, timeRange.now))
+	// extendedBounds.Set("max", convertTimeToUnixNano(timeRange.To, timeRange.now))
+	extendedBounds.Set("min", timeRange.MustGetFrom().UnixNano())
+	extendedBounds.Set("max", timeRange.MustGetTo().UnixNano())
 	result.Set("extended_bounds", extendedBounds)
 
 	result.Set("format", "epoch_millis")

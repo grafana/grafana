@@ -150,7 +150,7 @@ func TestElasticSearchConstructor(t *testing.T) {
 			TimeRange: &tsdb.TimeRange{
 				From: "5m",
 				To:   "now",
-				Now:  time.Now(),
+				now:  time.Now(),
 			},
 		}
 
