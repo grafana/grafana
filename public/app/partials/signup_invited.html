@@ -1,54 +1,40 @@
-<div class="container">
+<page-header model="navModel"></page-header>
 
-	<div class="signup-page-background">
+<div class="page-container page-body">
+	<h3 class="page-sub-heading">Hello {{greeting}}.</h3>
+
+	<div class="modal-tagline p-b-2">
+		<em>{{invitedBy}}</em> has invited you to join Grafana and the organization <span class="highlight-word">{{contextSrv.user.orgName}}</span></br>Please complete the following to accept your invitation and continue:
 	</div>
 
-	<div class="login-box">
-
-		<div class="login-box-logo">
-			<img class="logo-icon" src="public/img/grafana_icon.svg"></img><br>
-			<i class="icon-gf icon-gf-grafana_wordmark"></i>
+	<form name="inviteForm" class="login-form gf-form-group">
+		<div class="gf-form">
+			<span class="gf-form-label width-7">Email</span>
+			<input type="email" name="email" class="gf-form-input max-width-21" required ng-model='formModel.email' placeholder="Email">
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label width-7">Name</span>
+			<input type="text" name="name" class="gf-form-input max-width-21" ng-model='formModel.name' placeholder="Name (optional)">
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label width-7">Username</span>
+			<input type="text" name="username" class="gf-form-input max-width-21" required ng-model='formModel.username' placeholder="Username">
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label width-7">Password</span>
+			<input type="password" name="password" class="gf-form-input max-width-21" required ng-model="formModel.password" id="inputPassword" placeholder="password">
 		</div>
 
-    <div class="invite-box">
-			<h3>
-				Hello {{greeting}}.
-			</h3>
-
-			<div class="modal-tagline p-b-2">
-				<em>{{invitedBy}}</em> has invited you to join Grafana and the organization <span class="highlight-word">{{contextSrv.user.orgName}}</span></br>Please complete the following to accept your invitation and continue:
-			</div>
-
-			<form name="inviteForm" class="login-form gf-form-group">
-				<div class="gf-form">
-					<span class="gf-form-label width-7">Email</span>
-					<input type="email" name="email" class="gf-form-input max-width-21" required ng-model='formModel.email' placeholder="Email">
-				</div>
-				<div class="gf-form">
-					<span class="gf-form-label width-7">Name</span>
-					<input type="text" name="name" class="gf-form-input max-width-21" ng-model='formModel.name' placeholder="Name (optional)">
-				</div>
-				<div class="gf-form">
-					<span class="gf-form-label width-7">Username</span>
-					<input type="text" name="username" class="gf-form-input max-width-21" required ng-model='formModel.username' placeholder="Username">
-				</div>
-				<div class="gf-form">
-					<span class="gf-form-label width-7">Password</span>
-					<input type="password" name="password" class="gf-form-input max-width-21" required ng-model="formModel.password" id="inputPassword" placeholder="password">
-				</div>
-
-				<div style="margin-left: 7.5rem; width: 254px;">
-					<password-strength password="formModel.password"></password-strength>
-				</div>
-
-				<div class="gf-form-button-row">
-					<button type="submit" class="btn btn-inverse" ng-click="submit();" ng-class="{'btn-inverse': !inviteForm.$valid, 'btn-primary': inviteForm.$valid}">
-						Continue
-					</button>
-				</div>
-			</form>
-
+		<div style="margin-left: 7.5rem; width: 254px;">
+			<password-strength password="formModel.password"></password-strength>
 		</div>
-	</div>
+
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="submit();" ng-disable="!inviteForm.$valid">
+				Sign Up
+			</button>
+		</div>
+	</form>
+</div>
 
 

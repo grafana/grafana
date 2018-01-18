@@ -1,31 +1,35 @@
-///<reference path="../../headers/common.d.ts" />
-
 export default class AdminListUsersCtrl {
   users: any;
   pages = [];
-  perPage = 1000;
+  perPage = 50;
   page = 1;
   totalPages: number;
   showPaging = false;
+  query: any;
+  navModel: any;
 
   /** @ngInject */
-  constructor(private $scope, private backendSrv) {
+  constructor(private $scope, private backendSrv, navModelSrv) {
+    this.navModel = navModelSrv.getNav('cfg', 'admin', 'global-users', 1);
+    this.query = '';
     this.getUsers();
   }
 
   getUsers() {
-    this.backendSrv.get(`/api/users/search?perpage=${this.perPage}&page=${this.page}`).then((result) => {
-      this.users = result.users;
-      this.page = result.page;
-      this.perPage = result.perPage;
-      this.totalPages = Math.ceil(result.totalCount / result.perPage);
-      this.showPaging = this.totalPages > 1;
-      this.pages = [];
+    this.backendSrv
+      .get(`/api/users/search?perpage=${this.perPage}&page=${this.page}&query=${this.query}`)
+      .then(result => {
+        this.users = result.users;
+        this.page = result.page;
+        this.perPage = result.perPage;
+        this.totalPages = Math.ceil(result.totalCount / result.perPage);
+        this.showPaging = this.totalPages > 1;
+        this.pages = [];
 
-      for (var i = 1; i < this.totalPages+1; i++) {
-        this.pages.push({ page: i, current: i === this.page});
-      }
-    });
+        for (var i = 1; i < this.totalPages + 1; i++) {
+          this.pages.push({ page: i, current: i === this.page });
+        }
+      });
   }
 
   navigateToPage(page) {
@@ -43,7 +47,7 @@ export default class AdminListUsersCtrl {
         this.backendSrv.delete('/api/admin/users/' + user.id).then(() => {
           this.getUsers();
         });
-      }
+      },
     });
   }
 }

@@ -14,7 +14,7 @@
   text-align: center;
   vertical-align: middle;
   cursor: pointer;
-  border: $input-btn-border-width solid transparent;
+  border: none;
 
   @include button-size($btn-padding-y, $btn-padding-x, $font-size-base, $btn-border-radius);
 
@@ -41,19 +41,31 @@
   }
 
   &.disabled,
+  &[disabled],
   &:disabled {
     cursor: $cursor-disabled;
-    opacity: .65;
+    opacity: 0.65;
     @include box-shadow(none);
   }
 }
 
 // Button Sizes
 // --------------------------------------------------
+// XLarge
+.btn-xlarge {
+  @include button-size($btn-padding-y-xl, $btn-padding-x-xl, $font-size-lg, $btn-border-radius);
+  font-weight: normal;
+  padding-bottom: $btn-padding-y-xl - 3;
+  .gicon {
+    font-size: 31px;
+    margin-right: 1rem;
+  }
+}
 
 // Large
 .btn-large {
   @include button-size($btn-padding-y-lg, $btn-padding-x-lg, $font-size-lg, $btn-border-radius);
+  font-weight: normal;
 }
 
 .btn-small {
@@ -80,6 +92,7 @@
 .btn-warning {
   @include buttonBackground($btn-warning-bg, $btn-warning-bg-hl);
 }
+
 // Danger and error appear as red
 .btn-danger {
   @include buttonBackground($btn-danger-bg, $btn-danger-bg-hl);
@@ -94,7 +107,7 @@
 }
 // Inverse appears as dark gray
 .btn-inverse {
-  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
+  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color, $btn-inverse-text-shadow);
   //background: $card-background;
   box-shadow: $card-shadow;
   //border: 1px solid $tight-form-func-highlight-bg;
@@ -118,5 +131,72 @@
 .btn-outline-danger {
   @include button-outline-variant($btn-danger-bg);
 }
+.btn-outline-disabled {
+  @include button-outline-variant($gray-1);
+  @include box-shadow(none);
+  cursor: default;
 
+  &:hover,
+  &:active,
+  &:active:hover,
+  &:focus {
+    color: $gray-1;
+    background-color: transparent;
+    border-color: $gray-1;
+  }
+}
 
+// Extra padding
+.btn-p-x-2 {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+// External services
+// Usage:
+// <div class="btn btn-service btn-service--facebook">Button text</div>
+
+$btn-service-icon-width: 35px;
+.btn-service {
+  position: relative;
+}
+
+@each $service, $data in $external-services {
+  $serviceBgColor: map-get($data, bgColor);
+  $serviceBorderColor: map-get($data, borderColor);
+
+  .btn-service--#{$service} {
+    background-color: $serviceBgColor;
+    border: 1px solid $serviceBorderColor;
+
+    .btn-service-icon {
+      font-size: 24px; // Override
+      border-right: 1px solid $serviceBorderColor;
+    }
+  }
+}
+
+.btn-service-icon {
+  position: absolute;
+  left: 0;
+  height: 100%;
+  top: 0;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  width: $btn-service-icon-width;
+  text-align: center;
+
+  &::before {
+    position: relative;
+    top: 4px;
+  }
+}
+
+.btn-service--grafanacom {
+  .btn-service-icon {
+    background-image: url(/public/img/grafana_mask_icon_white.svg);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    background-size: 60%;
+  }
+}

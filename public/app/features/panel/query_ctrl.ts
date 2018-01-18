@@ -1,6 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
-import angular from 'angular';
 import _ from 'lodash';
 
 export class QueryCtrl {
@@ -10,14 +7,14 @@ export class QueryCtrl {
   panel: any;
   hasRawMode: boolean;
   error: string;
+  isLastQuery: boolean;
 
-  constructor(public $scope, private $injector) {
+  constructor(public $scope, public $injector) {
     this.panel = this.panelCtrl.panel;
+    this.isLastQuery = _.indexOf(this.panel.targets, this.target) === this.panel.targets.length - 1;
   }
 
   refresh() {
     this.panelCtrl.refresh();
   }
-
 }
-

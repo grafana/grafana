@@ -1,7 +1,7 @@
-+++
-title = "reference"
-type = "docs"
-identifier = "reference"
-weight = 6
-+++
+---
+title: Reference Index
+description: Grafana docs reference
+type: docs
+---
 
+# Documentation

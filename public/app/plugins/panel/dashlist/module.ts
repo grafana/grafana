@@ -1,12 +1,10 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import config from 'app/core/config';
-import {PanelCtrl} from 'app/plugins/sdk';
-import {impressions} from 'app/features/dashboard/impression_store';
+import { PanelCtrl } from 'app/plugins/sdk';
+import impressionSrv from 'app/core/services/impression_srv';
 
 class DashListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
+  static scrollable = true;
 
   groups: any[];
   modes: any[];
@@ -19,10 +17,11 @@ class DashListCtrl extends PanelCtrl {
     search: false,
     starred: true,
     headings: true,
+    folderId: 0,
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private backendSrv) {
+  constructor($scope, $injector, private backendSrv, private dashboardSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
@@ -35,9 +34,9 @@ class DashListCtrl extends PanelCtrl {
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
 
     this.groups = [
-      {list: [], show: false, header: "Starred dashboards",},
-      {list: [], show: false, header: "Recently viewed dashboards"},
-      {list: [], show: false, header: "Search"},
+      { list: [], show: false, header: 'Starred dashboards' },
+      { list: [], show: false, header: 'Recently viewed dashboards' },
+      { list: [], show: false, header: 'Search' },
     ];
 
     // update capability
@@ -73,8 +72,7 @@ class DashListCtrl extends PanelCtrl {
     promises.push(this.getStarred());
     promises.push(this.getSearch());
 
-    return Promise.all(promises)
-      .then(this.renderingCompleted.bind(this));
+    return Promise.all(promises).then(this.renderingCompleted.bind(this));
   }
 
   getSearch() {
@@ -87,6 +85,7 @@ class DashListCtrl extends PanelCtrl {
       limit: this.panel.limit,
       query: this.panel.query,
       tag: this.panel.tags,
+      folderId: this.panel.folderId,
     };
 
     return this.backendSrv.search(params).then(result => {
@@ -100,10 +99,21 @@ class DashListCtrl extends PanelCtrl {
       return Promise.resolve();
     }
 
-    var params = {limit: this.panel.limit, starred: "true"};
+    var params = { limit: this.panel.limit, starred: 'true' };
     return this.backendSrv.search(params).then(result => {
       this.groups[0].list = result;
     });
+  }
+
+  starDashboard(dash, evt) {
+    this.dashboardSrv.starDashboard(dash.id, dash.isStarred).then(newState => {
+      dash.isStarred = newState;
+    });
+
+    if (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+    }
   }
 
   getRecentDashboards() {
@@ -112,17 +122,24 @@ class DashListCtrl extends PanelCtrl {
       return Promise.resolve();
     }
 
-    var dashIds = _.take(impressions.getDashboardOpened(), this.panel.limit);
-    return this.backendSrv.search({dashboardIds: dashIds, limit: this.panel.limit}).then(result => {
-      this.groups[1].list = dashIds.map(orderId => {
-        return _.find(result, dashboard => {
-          return dashboard.id === orderId;
+    var dashIds = _.take(impressionSrv.getDashboardOpened(), this.panel.limit);
+    return this.backendSrv.search({ dashboardIds: dashIds, limit: this.panel.limit }).then(result => {
+      this.groups[1].list = dashIds
+        .map(orderId => {
+          return _.find(result, dashboard => {
+            return dashboard.id === orderId;
+          });
+        })
+        .filter(el => {
+          return el !== undefined;
         });
-      }).filter(el => {
-        return el !== undefined;
-      });
     });
+  }
+
+  onFolderChange(folder: any) {
+    this.panel.folderId = folder.id;
+    this.refresh();
   }
 }
 
-export {DashListCtrl, DashListCtrl as PanelCtrl}
+export { DashListCtrl, DashListCtrl as PanelCtrl };

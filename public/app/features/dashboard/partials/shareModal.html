@@ -2,7 +2,8 @@
 
 	<div class="modal-header">
 		<h2 class="modal-header-title">
-			{{modalTitle}}
+			<i class="fa fa-share-square-o"></i>
+			<span class="p-l-1">{{modalTitle}}</span>
 		</h2>
 
 		<ul class="gf-tabs">
@@ -47,7 +48,7 @@
 </script>
 
 <script type="text/ng-template" id="shareExport.html">
-	<dash-export-modal></dash-export-modal>
+	<dash-export-modal dismiss="dismiss()"></dash-export-modal>
 </script>
 
 <script type="text/ng-template" id="shareLinkOptions.html">
@@ -62,7 +63,7 @@
 		</gf-form-switch>
 		<div class="gf-form">
 			<span class="gf-form-label width-12">Theme</span>
-			<div class="gf-form-select-wrapper width-6">
+			<div class="gf-form-select-wrapper width-10">
 				<select class="gf-form-input" ng-model="options.theme" ng-options="f as f for f in ['current', 'dark', 'light']" ng-change="buildUrl()"></select>
 			</div>
 		</div>
@@ -86,7 +87,7 @@
 							<input type="text" data-share-panel-url class="gf-form-input" ng-model="shareUrl"></input>
 						</div>
 						<div class="gf-form">
-							<button class="btn btn-inverse" data-clipboard-text="{{shareUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
+							<button class="btn btn-inverse" clipboard-button="getShareUrl()"><i class="fa fa-clipboard"></i> Copy</button>
 						</div>
 					</div>
 				</div>
@@ -143,7 +144,7 @@
 								{{snapshotUrl}}
 							</a>
 							<br>
-							<button class="btn btn-inverse" data-clipboard-text="{{snapshotUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy Link</button>
+							<button class="btn btn-inverse" clipboard-button="getSnapshotUrl()"><i class="fa fa-clipboard"></i> Copy Link</button>
 						</div>
 					</div>
 				</div>

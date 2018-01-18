@@ -1,0 +1,214 @@
+// Actual Diff
+#delta {
+  margin: 2em 0;
+}
+
+// JSON
+@for $i from 0 through 16 {
+  .diff-indent-#{$i} {
+    padding-left: $i * 1.5rem;
+    margin-left: 10px;
+  }
+}
+
+.delta-html {
+  background: $diff-json-bg;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  user-select: none;
+}
+
+.diff-line {
+  color: $diff-json-fg;
+  font-family: $font-family-monospace;
+  font-size: $font-size-sm;
+  line-height: 2;
+  margin-bottom: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+
+  &:before,
+  &:after {
+  }
+
+  &:after {
+    left: -40px;
+  }
+}
+
+.diff-line-number {
+  color: $text-muted;
+  display: inline-block;
+  font-size: $font-size-xs;
+  line-height: 2.3;
+  text-align: right;
+  width: 30px;
+}
+
+.diff-line-number-hide {
+  visibility: hidden;
+}
+
+.diff-line-icon {
+  color: $diff-json-icon;
+  font-size: $font-size-xs;
+  float: right;
+  position: relative;
+  top: 2px;
+  right: 10px;
+}
+
+.diff-json-new,
+.diff-json-old,
+.diff-json-deleted,
+.diff-json-added {
+  color: $diff-json-changed-fg;
+
+  & .diff-line-number {
+    color: $diff-json-changed-num;
+  }
+}
+
+.diff-json-new {
+  background-color: $diff-json-new;
+}
+.diff-json-old {
+  background-color: $diff-json-old;
+}
+.diff-json-added {
+  background-color: $diff-json-added;
+}
+.diff-json-deleted {
+  background-color: $diff-json-deleted;
+}
+
+.diff-value {
+  user-select: all;
+}
+
+// Basic
+.diff-circle {
+  margin-right: 0.5em;
+}
+.diff-circle-changed {
+  color: #f59433;
+}
+.diff-circle-added {
+  color: #29d761;
+}
+.diff-circle-deleted {
+  color: #fd474a;
+}
+
+.diff-item-added,
+.diff-item-deleted {
+  list-style: none;
+}
+
+.diff-group {
+  background: $diff-group-bg;
+  font-size: 16px;
+  font-style: normal;
+  padding: 10px 15px;
+  margin: 1rem 0;
+
+  & .diff-group {
+    padding: 0 5px;
+  }
+}
+
+.diff-group-name {
+  display: inline-block;
+  width: 100%;
+  font-size: 16px;
+  padding-left: 1.75em;
+  margin: 0 0 14px 0;
+}
+
+.diff-summary-key {
+  padding-left: 0.25em;
+}
+
+.diff-list {
+  padding-left: 40px;
+
+  & .diff-list {
+    padding-left: 0;
+  }
+}
+
+.diff-item {
+  color: $gray-2;
+  line-height: 2.5;
+
+  & > div {
+    display: inline;
+  }
+}
+
+.diff-item-changeset {
+  list-style: none;
+}
+
+.diff-label {
+  background-color: $diff-label-bg;
+  border-radius: 3px;
+  color: $diff-label-fg;
+  display: inline;
+  font-size: 0.95rem;
+  margin: 0 5px;
+  padding: 3px 8px;
+}
+
+.diff-linenum {
+  float: right;
+}
+
+.diff-arrow {
+  color: $diff-arrow-color;
+}
+
+.diff-block {
+  width: 100%;
+  display: inline-block;
+}
+
+.diff-block-title {
+  font-size: 16px;
+  display: inline-block;
+}
+
+.diff-title {
+  font-size: 16px;
+}
+
+.diff-change-container {
+  margin: 0 0;
+  padding-left: 3em;
+  padding-right: 0;
+}
+
+.diff-change-group {
+  width: 100%;
+  color: rgba(223, 224, 225, 0.6);
+  margin-bottom: 14px;
+}
+
+.diff-change-item {
+  display: inline-block;
+}
+
+.diff-change-title {
+  font-size: 16px;
+}
+
+.bullet-position-container {
+  position: relative;
+  left: -6px;
+}
+
+.diff-list-circle {
+  font-size: 10px;
+}

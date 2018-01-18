@@ -11,25 +11,19 @@ weight = 20
 
 # Grafana TestData
 
-    > NOTE: This plugin is disable by default.
-
 The purpose of this data sources is to make it easier to create fake data for any panel.
 Using `Grafana TestData` you can build your own time series and have any panel render it.
-This make is much easier to verify functionally since the data can be shared very
+This make is much easier to verify functionally since the data can be shared very easily.
 
 ## Enable
 
-`Grafana TestData` is not enabled by default. To enable it you have to go to `/plugins/testdata/edit` and click the enable button to enable it for each server.
+`Grafana TestData` is not enabled by default. To enable it, first navigate to the Plugins section, found in your Grafana main menu. Click the Apps tabs in the Plugins section and select the Grafana TestData App. (Or navigate to http://your_grafana_instance/plugins/testdata/edit to go directly there). Finally click the enable button to enable.
 
 ## Create mock data.
 
-Once `Grafana TestData` is enabled you use it as a datasource in the metric panel.
+Once `Grafana TestData` is enabled you can use it as a data source in any metric panel.
 
 ![](/img/docs/v41/test_data_add.png)
-
-## Scenarios
-
-You can now choose different scenario that you want rendered in the drop down menu. If you have scenarios that you think should be added, please add them to `` and submit a pull request.
 
 ## CSV
 
@@ -37,7 +31,6 @@ The comma separated values scenario is the most powerful one since it lets you c
 Once you provided the numbers `Grafana TestData` will distribute them evenly based on the time range of your query.
 
 ![](/img/docs/v41/test_data_csv_example.png)
-
 
 ## Dashboards
 

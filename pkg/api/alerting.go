@@ -255,6 +255,9 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 	}
 
 	if err := bus.Dispatch(cmd); err != nil {
+		if err == models.ErrSmtpNotEnabled {
+			return ApiError(412, err.Error(), err)
+		}
 		return ApiError(500, "Failed to send alert notifications", err)
 	}
 
@@ -275,7 +278,7 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	}
 
 	var response models.AlertStateType = models.AlertStatePending
-	pausedState := "un paused"
+	pausedState := "un-paused"
 	if cmd.Paused {
 		response = models.AlertStatePaused
 		pausedState = "paused"
@@ -284,7 +287,7 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	result := map[string]interface{}{
 		"alertId": alertId,
 		"state":   response,
-		"message": "alert " + pausedState,
+		"message": "Alert " + pausedState,
 	}
 
 	return Json(200, result)

@@ -4,12 +4,13 @@
   "id": "cloudwatch",
 
   "metrics": true,
+  "alerting": true,
   "annotations": true,
 
   "info": {
     "author": {
       "name": "Grafana Project",
-      "url": "http://grafana.org"
+      "url": "https://grafana.com"
     },
     "logos": {
       "small": "img/amazon-web-services.png",

@@ -1,140 +1,140 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
-import angular from 'angular';
-import moment from 'moment';
-import _ from 'lodash';
 
 import coreModule from 'app/core/core_module';
+import { PanelContainer } from './dashgrid/PanelContainer';
+import { DashboardModel } from './dashboard_model';
 
-export class DashboardCtrl {
+export class DashboardCtrl implements PanelContainer {
+  dashboard: DashboardModel;
+  dashboardViewState: any;
+  loadedFallbackDashboard: boolean;
+  editTab: number;
 
   /** @ngInject */
   constructor(
     private $scope,
     private $rootScope,
-    keybindingSrv,
-    timeSrv,
-    variableSrv,
-    alertingSrv,
-    dashboardSrv,
-    unsavedChangesSrv,
-    dynamicDashboardSrv,
-    dashboardViewStateSrv,
-    contextSrv,
-    alertSrv,
-    $timeout) {
+    private keybindingSrv,
+    private timeSrv,
+    private variableSrv,
+    private alertingSrv,
+    private dashboardSrv,
+    private unsavedChangesSrv,
+    private dashboardViewStateSrv,
+    public playlistSrv,
+    private panelLoader
+  ) {
+    // temp hack due to way dashboards are loaded
+    // can't use controllerAs on route yet
+    $scope.ctrl = this;
 
-      $scope.editor = { index: 0 };
+    // TODO: break out settings view to separate view & controller
+    this.editTab = 0;
 
-      var resizeEventTimeout;
+    // funcs called from React component bindings and needs this binding
+    this.getPanelContainer = this.getPanelContainer.bind(this);
+  }
 
-      $scope.setupDashboard = function(data) {
-        try {
-          $scope.setupDashboardInternal(data);
-        } catch (err) {
-          $scope.onInitFailed(err, 'Dashboard init failed', true);
-        }
-      };
+  setupDashboard(data) {
+    try {
+      this.setupDashboardInternal(data);
+    } catch (err) {
+      this.onInitFailed(err, 'Dashboard init failed', true);
+    }
+  }
 
-      $scope.setupDashboardInternal = function(data) {
-        var dashboard = dashboardSrv.create(data.dashboard, data.meta);
-        dashboardSrv.setCurrent(dashboard);
+  setupDashboardInternal(data) {
+    const dashboard = this.dashboardSrv.create(data.dashboard, data.meta);
+    this.dashboardSrv.setCurrent(dashboard);
 
-        // init services
-        timeSrv.init(dashboard);
-        alertingSrv.init(dashboard, data.alerts);
+    // init services
+    this.timeSrv.init(dashboard);
+    this.alertingSrv.init(dashboard, data.alerts);
 
-        // template values service needs to initialize completely before
-        // the rest of the dashboard can load
-        variableSrv.init(dashboard)
-        // template values failes are non fatal
-        .catch($scope.onInitFailed.bind(this, 'Templating init failed', false))
-        // continue
-        .finally(function() {
-          dynamicDashboardSrv.init(dashboard);
-          dynamicDashboardSrv.process();
+    // template values service needs to initialize completely before
+    // the rest of the dashboard can load
+    this.variableSrv
+      .init(dashboard)
+      // template values failes are non fatal
+      .catch(this.onInitFailed.bind(this, 'Templating init failed', false))
+      // continue
+      .finally(() => {
+        this.dashboard = dashboard;
+        this.dashboard.processRepeats();
 
-          unsavedChangesSrv.init(dashboard, $scope);
+        this.unsavedChangesSrv.init(dashboard, this.$scope);
 
-          $scope.dashboard = dashboard;
-          $scope.dashboardMeta = dashboard.meta;
-          $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
+        // TODO refactor ViewStateSrv
+        this.$scope.dashboard = dashboard;
+        this.dashboardViewState = this.dashboardViewStateSrv.create(this.$scope);
 
-          keybindingSrv.setupDashboardBindings($scope, dashboard);
+        this.keybindingSrv.setupDashboardBindings(this.$scope, dashboard);
 
-          $scope.dashboard.updateSubmenuVisibility();
-          $scope.setWindowTitleAndTheme();
+        this.dashboard.updateSubmenuVisibility();
+        this.setWindowTitleAndTheme();
 
-          $scope.appEvent("dashboard-initialized", $scope.dashboard);
-        })
-        .catch($scope.onInitFailed.bind(this, 'Dashboard init failed', true));
-      };
+        this.$scope.appEvent('dashboard-initialized', dashboard);
+      })
+      .catch(this.onInitFailed.bind(this, 'Dashboard init failed', true));
+  }
 
-      $scope.onInitFailed = function(msg, fatal, err) {
-        console.log(msg, err);
+  onInitFailed(msg, fatal, err) {
+    console.log(msg, err);
 
-        if (err.data && err.data.message) {
-          err.message = err.data.message;
-        } else if (!err.message) {
-          err = {message: err.toString()};
-        }
-
-        $scope.appEvent("alert-error", [msg, err.message]);
-
-        // protect against  recursive fallbacks
-        if (fatal && !$scope.loadedFallbackDashboard) {
-          $scope.loadedFallbackDashboard = true;
-          $scope.setupDashboard({dashboard: {title: 'Dashboard Init failed'}});
-        }
-      };
-
-      $scope.templateVariableUpdated = function() {
-        dynamicDashboardSrv.process();
-      };
-
-      $scope.setWindowTitleAndTheme = function() {
-        window.document.title = config.window_title_prefix + $scope.dashboard.title;
-      };
-
-      $scope.broadcastRefresh = function() {
-        $rootScope.$broadcast('refresh');
-      };
-
-      $scope.addRowDefault = function() {
-        $scope.dashboard.addEmptyRow();
-      };
-
-      $scope.showJsonEditor = function(evt, options) {
-        var editScope = $rootScope.$new();
-        editScope.object = options.object;
-        editScope.updateHandler = options.updateHandler;
-        $scope.appEvent('show-dash-editor', { src: 'public/app/partials/edit_json.html', scope: editScope });
-      };
-
-      $scope.registerWindowResizeEvent = function() {
-        angular.element(window).bind('resize', function() {
-          $timeout.cancel(resizeEventTimeout);
-          resizeEventTimeout = $timeout(function() { $scope.$broadcast('render'); }, 200);
-        });
-
-        $scope.$on('$destroy', function() {
-          angular.element(window).unbind('resize');
-          $scope.dashboard.destroy();
-        });
-      };
-
-      $scope.timezoneChanged = function() {
-        $rootScope.$broadcast("refresh");
-      };
+    if (err.data && err.data.message) {
+      err.message = err.data.message;
+    } else if (!err.message) {
+      err = { message: err.toString() };
     }
 
-    init(dashboard) {
-      this.$scope.onAppEvent('show-json-editor', this.$scope.showJsonEditor);
-      this.$scope.onAppEvent('template-variable-value-updated', this.$scope.templateVariableUpdated);
-      this.$scope.setupDashboard(dashboard);
-      this.$scope.registerWindowResizeEvent();
+    this.$scope.appEvent('alert-error', [msg, err.message]);
+
+    // protect against  recursive fallbacks
+    if (fatal && !this.loadedFallbackDashboard) {
+      this.loadedFallbackDashboard = true;
+      this.setupDashboard({ dashboard: { title: 'Dashboard Init failed' } });
     }
+  }
+
+  templateVariableUpdated() {
+    this.dashboard.processRepeats();
+  }
+
+  setWindowTitleAndTheme() {
+    window.document.title = config.window_title_prefix + this.dashboard.title;
+  }
+
+  showJsonEditor(evt, options) {
+    var editScope = this.$rootScope.$new();
+    editScope.object = options.object;
+    editScope.updateHandler = options.updateHandler;
+    this.$scope.appEvent('show-dash-editor', {
+      src: 'public/app/partials/edit_json.html',
+      scope: editScope,
+    });
+  }
+
+  getDashboard() {
+    return this.dashboard;
+  }
+
+  getPanelLoader() {
+    return this.panelLoader;
+  }
+
+  timezoneChanged() {
+    this.$rootScope.$broadcast('refresh');
+  }
+
+  getPanelContainer() {
+    return this;
+  }
+
+  init(dashboard) {
+    this.$scope.onAppEvent('show-json-editor', this.showJsonEditor.bind(this));
+    this.$scope.onAppEvent('template-variable-value-updated', this.templateVariableUpdated.bind(this));
+    this.setupDashboard(dashboard);
+  }
 }
 
 coreModule.controller('DashboardCtrl', DashboardCtrl);

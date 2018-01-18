@@ -1,18 +1,35 @@
-## HEAD
+## Version 1.3 (2016-12-01)
 
 Changes:
 
  - Go 1.1 is no longer supported
- - Use decimals field from MySQL to format time types (#249)
+ - Use decimals fields in MySQL to format time types (#249)
  - Buffer optimizations (#269)
  - TLS ServerName defaults to the host (#283)
+ - Refactoring (#400, #410, #437)
+ - Adjusted documentation for second generation CloudSQL (#485)
+ - Documented DSN system var quoting rules (#502)
+ - Made statement.Close() calls idempotent to avoid errors in Go 1.6+ (#512)
+
+New Features:
+
+ - Enable microsecond resolution on TIME, DATETIME and TIMESTAMP (#249)
+ - Support for returning table alias on Columns() (#289, #359, #382)
+ - Placeholder interpolation, can be actived with the DSN parameter `interpolateParams=true` (#309, #318, #490)
+ - Support for uint64 parameters with high bit set (#332, #345)
+ - Cleartext authentication plugin support (#327)
+ - Exported ParseDSN function and the Config struct (#403, #419, #429)
+ - Read / Write timeouts (#401)
+ - Support for JSON field type (#414)
+ - Support for multi-statements and multi-results (#411, #431)
+ - DSN parameter to set the driver-side max_allowed_packet value manually (#489)
+ - Native password authentication plugin support (#494, #524)
 
 Bugfixes:
 
- - Enable microsecond resolution on TIME, DATETIME and TIMESTAMP (#249)
  - Fixed handling of queries without columns and rows (#255)
  - Fixed a panic when SetKeepAlive() failed (#298)
- - Support receiving ERR packet while reading rows (#321)
+ - Handle ERR packets while reading rows (#321)
  - Fixed reading NULL length-encoded integers in MySQL 5.6+ (#349)
  - Fixed absolute paths support in LOAD LOCAL DATA INFILE (#356)
  - Actually zero out bytes in handshake response (#378)
@@ -20,13 +37,12 @@ Bugfixes:
  - Fixed tests with MySQL 5.7.9+ (#380)
  - QueryUnescape TLS config names (#397)
  - Fixed "broken pipe" error by writing to closed socket (#390)
-
-New Features:
- - Support for returning table alias on Columns() (#289, #359, #382)
- - Placeholder interpolation, can be actived with the DSN parameter `interpolateParams=true` (#309, #318)
- - Support for uint64 parameters with high bit set (#332, #345)
- - Cleartext authentication plugin support (#327)
-
+ - Fixed LOAD LOCAL DATA INFILE buffering (#424)
+ - Fixed parsing of floats into float64 when placeholders are used (#434)
+ - Fixed DSN tests with Go 1.7+ (#459)
+ - Handle ERR packets while waiting for EOF (#473)
+ - Invalidate connection on error while discarding additional results (#513)
+ - Allow terminating packets of length 0 (#516)
 
 
 ## Version 1.2 (2014-06-03)

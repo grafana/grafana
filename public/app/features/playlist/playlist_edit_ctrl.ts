@@ -1,9 +1,5 @@
-///<reference path="../../headers/common.d.ts" />
-
-import angular from 'angular';
 import _ from 'lodash';
 import coreModule from '../../core/core_module';
-import config from 'app/core/config';
 
 export class PlaylistEditCtrl {
   filteredDashboards: any = [];
@@ -13,36 +9,51 @@ export class PlaylistEditCtrl {
   playlist: any = {
     interval: '5m',
   };
+
   playlistItems: any = [];
   dashboardresult: any = [];
   tagresult: any = [];
+  navModel: any;
+  isNew: boolean;
 
   /** @ngInject */
-  constructor(private $scope, private playlistSrv, private backendSrv, private $location, private $route) {
+  constructor(private $scope, private backendSrv, private $location, $route, navModelSrv) {
+    this.navModel = navModelSrv.getNav('dashboards', 'playlists', 0);
+    this.isNew = $route.current.params.id;
+
     if ($route.current.params.id) {
       var playlistId = $route.current.params.id;
 
-      backendSrv.get('/api/playlists/' + playlistId)
-        .then((result) => {
-          this.playlist = result;
-        });
+      backendSrv.get('/api/playlists/' + playlistId).then(result => {
+        this.playlist = result;
+        this.navModel.node = {
+          text: result.name,
+          icon: this.navModel.node.icon,
+        };
+        this.navModel.breadcrumbs.push(this.navModel.node);
+      });
 
-      backendSrv.get('/api/playlists/' + playlistId + '/items')
-        .then((result) => {
-          this.playlistItems = result;
-        });
+      backendSrv.get('/api/playlists/' + playlistId + '/items').then(result => {
+        this.playlistItems = result;
+      });
+    } else {
+      this.navModel.node = {
+        text: 'New playlist',
+        icon: this.navModel.node.icon,
+      };
+      this.navModel.breadcrumbs.push(this.navModel.node);
     }
   }
 
   filterFoundPlaylistItems() {
-    this.filteredDashboards = _.reject(this.dashboardresult, (playlistItem) => {
-      return _.find(this.playlistItems, (listPlaylistItem) => {
+    this.filteredDashboards = _.reject(this.dashboardresult, playlistItem => {
+      return _.find(this.playlistItems, listPlaylistItem => {
         return parseInt(listPlaylistItem.value) === playlistItem.id;
       });
     });
 
-    this.filteredTags = _.reject(this.tagresult, (tag) => {
-      return _.find(this.playlistItems, (listPlaylistItem) => {
+    this.filteredTags = _.reject(this.tagresult, tag => {
+      return _.find(this.playlistItems, listPlaylistItem => {
         return listPlaylistItem.value === tag.term;
       });
     });
@@ -62,7 +73,7 @@ export class PlaylistEditCtrl {
       value: tag.term,
       type: 'dashboard_by_tag',
       order: this.playlistItems.length + 1,
-      title: tag.term
+      title: tag.term,
     };
 
     this.playlistItems.push(playlistItem);
@@ -70,11 +81,11 @@ export class PlaylistEditCtrl {
   }
 
   removePlaylistItem(playlistItem) {
-    _.remove(this.playlistItems, (listedPlaylistItem) => {
+    _.remove(this.playlistItems, listedPlaylistItem => {
       return playlistItem === listedPlaylistItem;
     });
     this.filterFoundPlaylistItems();
-  };
+  }
 
   savePlaylist(playlist, playlistItems) {
     var savePromise;
@@ -85,17 +96,15 @@ export class PlaylistEditCtrl {
       ? this.backendSrv.put('/api/playlists/' + playlist.id, playlist)
       : this.backendSrv.post('/api/playlists', playlist);
 
-    savePromise
-      .then(() => {
+    savePromise.then(
+      () => {
         this.$scope.appEvent('alert-success', ['Playlist saved', '']);
         this.$location.path('/playlists');
-      }, () => {
+      },
+      () => {
         this.$scope.appEvent('alert-error', ['Unable to save playlist', '']);
-      });
-  }
-
-  isNew() {
-    return !this.playlist.id;
+      }
+    );
   }
 
   isPlaylistEmpty() {
@@ -107,7 +116,7 @@ export class PlaylistEditCtrl {
   }
 
   searchStarted(promise) {
-    promise.then((data) => {
+    promise.then(data => {
       this.dashboardresult = data.dashboardResult;
       this.tagresult = data.tagResult;
       this.filterFoundPlaylistItems();

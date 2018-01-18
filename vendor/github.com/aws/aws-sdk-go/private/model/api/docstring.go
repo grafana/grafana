@@ -46,13 +46,9 @@ func (a *API) AttachDocs(filename string) {
 
 func (d *apiDocumentation) setup() {
 	d.API.Documentation = docstring(d.Service)
-	if d.Service == "" {
-		d.API.Documentation =
-			fmt.Sprintf("// %s is a client for %s.\n", d.API.StructName(), d.API.NiceName())
-	}
 
 	for op, doc := range d.Operations {
-		d.API.Operations[op].Documentation = strings.TrimSpace(docstring(doc))
+		d.API.Operations[op].Documentation = docstring(doc)
 	}
 
 	for shape, info := range d.Shapes {
@@ -66,6 +62,10 @@ func (d *apiDocumentation) setup() {
 			}
 
 			parts := strings.Split(ref, "$")
+			if len(parts) != 2 {
+				fmt.Fprintf(os.Stderr, "Shape Doc %s has unexpected reference format, %q\n", shape, ref)
+				continue
+			}
 			if sh := d.API.Shapes[parts[0]]; sh != nil {
 				if m := sh.MemberRefs[parts[1]]; m != nil {
 					m.Documentation = docstring(doc)
@@ -78,24 +78,41 @@ func (d *apiDocumentation) setup() {
 var reNewline = regexp.MustCompile(`\r?\n`)
 var reMultiSpace = regexp.MustCompile(`\s+`)
 var reComments = regexp.MustCompile(`<!--.*?-->`)
-var reFullname = regexp.MustCompile(`\s*<fullname?>.+?<\/fullname?>\s*`)
+var reFullnameBlock = regexp.MustCompile(`<fullname>(.+?)<\/fullname>`)
+var reFullname = regexp.MustCompile(`<fullname>(.*?)</fullname>`)
 var reExamples = regexp.MustCompile(`<examples?>.+?<\/examples?>`)
 var reEndNL = regexp.MustCompile(`\n+$`)
 
 // docstring rewrites a string to insert godocs formatting.
 func docstring(doc string) string {
+	doc = strings.TrimSpace(doc)
+	if doc == "" {
+		return ""
+	}
+
 	doc = reNewline.ReplaceAllString(doc, "")
 	doc = reMultiSpace.ReplaceAllString(doc, " ")
 	doc = reComments.ReplaceAllString(doc, "")
+
+	var fullname string
+	parts := reFullnameBlock.FindStringSubmatch(doc)
+	if len(parts) > 1 {
+		fullname = parts[1]
+	}
+	// Remove full name block from doc string
 	doc = reFullname.ReplaceAllString(doc, "")
+
 	doc = reExamples.ReplaceAllString(doc, "")
 	doc = generateDoc(doc)
 	doc = reEndNL.ReplaceAllString(doc, "")
-	if doc == "" {
-		return "\n"
+	doc = html.UnescapeString(doc)
+
+	// Replace doc with full name if doc is empty.
+	doc = strings.TrimSpace(doc)
+	if len(doc) == 0 {
+		doc = fullname
 	}
 
-	doc = html.UnescapeString(doc)
 	return commentify(doc)
 }
 
@@ -116,16 +133,26 @@ var style = map[string]string{
 
 // commentify converts a string to a Go comment
 func commentify(doc string) string {
+	if len(doc) == 0 {
+		return ""
+	}
+
 	lines := strings.Split(doc, "\n")
-	out := []string{}
-	for i, line := range lines {
+	out := make([]string, 0, len(lines))
+	for i := 0; i < len(lines); i++ {
+		line := lines[i]
+
 		if i > 0 && line == "" && lines[i-1] == "" {
 			continue
 		}
-		out = append(out, "// "+line)
+		out = append(out, line)
 	}
 
-	return strings.Join(out, "\n") + "\n"
+	if len(out) > 0 {
+		out[0] = "// " + out[0]
+		return strings.Join(out, "\n// ")
+	}
+	return ""
 }
 
 // wrap returns a rewritten version of text to have line breaks

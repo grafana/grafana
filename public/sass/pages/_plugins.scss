@@ -1,29 +1,20 @@
-.plugin-header {
-  @include clearfix();
-
-  padding: $spacer 0 $spacer/2 0;
-  margin-bottom: 2rem;
-}
-
-.plugin-header-logo {
-  float: left;
-  width: 7rem;
-  img {
-    width: 7rem;
+.get-more-plugins-link {
+  color: $gray-3;
+  font-size: $font-size-sm;
+  position: relative;
+  top: 1.2rem;
+  &:hover {
+    color: $link-hover-color;
   }
-  margin-right: $spacer;
+  img {
+    vertical-align: top;
+  }
 }
 
-.plugin-header-info-block {
-  float: left;
-}
-
-.plugin-header-author {
-}
-
-.plugin-header-stamps-type {
-  color: $link-color-disabled;
-  text-transform: uppercase;
+@include media-breakpoint-down(sm) {
+  .get-more-plugins-link {
+    display: none;
+  }
 }
 
 .plugin-info-list-item {
@@ -35,25 +26,4 @@
   max-width: $page-sidebar-width;
   text-overflow: ellipsis;
   overflow: hidden;
-}
-
-.get-more-plugins-link {
-  color: $text-muted;
-  font-size: $font-size-sm;
-  padding-right: 7rem;
-  background: url(../img/grafana_net_logo.svg);
-  background-size: 6.5rem 3rem;
-  background-repeat: no-repeat;
-  background-position: right;
-  position: relative;
-  top: 1.2rem;
-  &:hover {
-    color: $link-hover-color;
-  }
-}
-
-@include media-breakpoint-down(sm) {
-  .get-more-plugins-link {
-    display: none;
-  }
 }

@@ -1,6 +1,5 @@
-
 .query-part {
-  background-color: $input-bg !important;
+  background-color: lighten($input-label-bg, 5%);
 
   &.show-function-controls {
     padding-top: 5px;
@@ -8,4 +7,3 @@
     text-align: center;
   }
 }
-

@@ -1,11 +1,9 @@
-<navbar icon="fa fa-fw fa-list" title="Playlists" title-url="playlists">
-</navbar>
+<page-header model="ctrl.navModel"></page-header>
 
-<div class="page-container" ng-form="playlistEditForm">
-	<div class="page-header">
-		<h1 ng-show="ctrl.isNew()">New Playlist</h1>
-		<h1 ng-show="!ctrl.isNew()">Edit Playlist</h1>
-	</div>
+<div class="page-container page-body" ng-form="playlistEditForm">
+
+  <h3 class="page-sub-heading" ng-hide="ctrl.isNew">Edit Playlist</h3>
+  <h3 class="page-sub-heading" ng-show="ctrl.isNew">New Playlist</h3>
 
 	<p class="playlist-description">A playlist rotates through a pre-selected list of Dashboards. A Playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.</p>
 
@@ -36,7 +34,7 @@
 			</div>
 
 			<div ng-if="ctrl.filteredDashboards.length > 0">
-				<table class="grafana-options-table playlist-available-list">
+				<table class="filter-table playlist-available-list">
 					<tr ng-repeat="playlistItem in ctrl.filteredDashboards">
 						<td>
 							<i class="icon-gf icon-gf-dashboard"></i>
@@ -53,7 +51,7 @@
 				</table>
 			</div>
 			<div class="playlist-search-results-container" ng-if="ctrl.filteredTags.length > 0;">
-				<table class="grafana-options-table playlist-available-list">
+				<table class="filter-table playlist-available-list">
 					<tr ng-repeat="tag in ctrl.filteredTags">
 						<td>
 							<a class="search-result-tag label label-tag" tag-color-from-name="tag.term">
@@ -74,7 +72,7 @@
 
 		<div class="col-lg-6">
 			<h5 class="page headering playlist-column-header">Selected</h5>
-			<table class="grafana-options-table playlist-available-list">
+			<table class="filter-table playlist-available-list">
 				<tr ng-repeat="playlistItem in ctrl.playlistItems">
 					<td ng-if="playlistItem.type === 'dashboard_by_id'">
 						<i class="icon-gf icon-gf-dashboard"></i>&nbsp;&nbsp;{{playlistItem.title}}
@@ -105,7 +103,7 @@
 	<div class="clearfix"></div>
 
 	<div class="gf-form-button-row">
-		<a class="btn btn-success " ng-show="ctrl.isNew()"
+		<a class="btn btn-success " ng-show="ctrl.isNew"
 			ng-disabled="ctrl.playlistEditForm.$invalid || ctrl.isPlaylistEmpty()"
 			ng-click="ctrl.savePlaylist(ctrl.playlist, ctrl.playlistItems)">Create new playlist</a>
 		<a class="btn btn-success" ng-show="!ctrl.isNew()"

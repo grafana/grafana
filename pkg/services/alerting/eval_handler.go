@@ -39,6 +39,11 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 			break
 		}
 
+		if i == 0 {
+			firing = cr.Firing
+			noDataFound = cr.NoDataFound
+		}
+
 		// calculating Firing based on operator
 		if cr.Operator == "or" {
 			firing = firing || cr.Firing
@@ -63,11 +68,11 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 	context.EndTime = time.Now()
 	context.Rule.State = e.getNewState(context)
 
-	elapsedTime := context.EndTime.Sub(context.StartTime) / time.Millisecond
-	metrics.M_Alerting_Execution_Time.Update(elapsedTime)
+	elapsedTime := context.EndTime.Sub(context.StartTime).Nanoseconds() / int64(time.Millisecond)
+	metrics.M_Alerting_Execution_Time.Observe(float64(elapsedTime))
 }
 
-// This should be move into evalContext once its been refactored.
+// This should be move into evalContext once its been refactored. (Carl Bergquist)
 func (handler *DefaultEvalHandler) getNewState(evalContext *EvalContext) models.AlertStateType {
 	if evalContext.Error != nil {
 		handler.log.Error("Alert Rule Result Error",

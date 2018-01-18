@@ -1,70 +1,20 @@
+
 baseurl = "http://localhost:3002/"
 languageCode = "en-us"
-title = "Grafana Docs"
-canonifyurls = false
+title = "Grafana Documentation"
+canonifyurls = true
 relativeURLs = false
 verbose = true
 enableRobotsTXT = true
 disableSitemap = false
-disableRSS = true
+disableRSS = false
+preservetaxonomynames = true
+metaDataFormat = "yaml"
 
-[[menu.top]]
-  name = "Docs"
-  url = ""
-  weight = 1
+[taxonomies]
+tag = "tags"
+category = "categories"
 
-[[menu.top]]
-  name = "Community"
-  url = "/community"
-  weight = 2
-
-[[menu.top]]
-  name = "Support"
-  url = "/support"
-  weight = 3
-
-[[menu.top]]
-  name = "Plugins"
-  url = "https://grafana.net/plugins"
-  weight = 4
-
-[[menu.top]]
-  name = "Dashboards"
-  url = "https://grafana.net/dashboards"
-  weight = 5
-
-[[menu.top]]
-  name = "Hosting"
-  url = "/hosting"
-  weight = 6
-
-[[menu.top]]
-  name = "Github"
-  url = "https://github.com/grafana/grafana"
-  weight = 7
-
-## Main
-[[menu.main]]
-  name = "Feature Gallery"
-  url = "/features"
-  weight = 1
-
-[[menu.main]]
-  name = "Live Demo"
-  url = "http://play.grafana.org"
-  weight = 2
-
-[[menu.main]]
-  name = "Download"
-  url = "/download"
-  weight = 3
-
-[[menu.main]]
-  name = "Blog"
-  url = "/blog"
-  weight = 4
-
-
-
-
+[permalinks]
+  blog = ":year/:month/:day/:title/"
 

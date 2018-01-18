@@ -1,10 +1,31 @@
-.graph-canvas-wrapper {
-  position: relative;
-  cursor: crosshair;
+.graph-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &--legend-right {
+    flex-direction: row;
+
+    .graph-legend {
+      flex: 0 1 10px;
+      max-height: 100%;
+    }
+
+    .graph-legend-series {
+      display: block;
+      padding-left: 0px;
+    }
+
+    .graph-legend-table .graph-legend-series {
+      display: table-row;
+    }
+  }
 }
 
-.histogram-chart {
+.graph-panel__chart {
   position: relative;
+  cursor: crosshair;
+  flex-grow: 1;
 }
 
 .datapoints-warning {
@@ -22,11 +43,12 @@
 }
 
 .graph-legend {
-  @include clearfix();
+  flex: 0 1 auto;
+  max-height: 30%;
   margin: 0 $spacer;
   text-align: center;
-  width: calc(100% - $spacer);
   padding-top: 6px;
+  position: relative;
 
   .popover-content {
     padding: 0;
@@ -48,19 +70,19 @@
   font-size: 85%;
   text-align: left;
   &.current::before {
-    content: "Current: "
+    content: "Current: ";
   }
   &.max::before {
-    content: "Max: "
+    content: "Max: ";
   }
   &.min::before {
-    content: "Min: "
+    content: "Min: ";
   }
   &.total::before {
-    content: "Total: "
+    content: "Total: ";
   }
   &.avg::before {
-    content: "Avg: "
+    content: "Avg: ";
   }
 }
 
@@ -89,7 +111,9 @@
     display: block;
     overflow-y: auto;
     overflow-x: hidden;
+    height: 100%;
     padding-bottom: 1px;
+    padding-right: 5px;
   }
 
   .graph-legend-series {
@@ -100,15 +124,17 @@
       float: none;
 
       .graph-legend-alias::after {
-        content: '(right-y)';
+        content: "(right-y)";
         padding: 0 5px;
         color: $text-color-weak;
       }
     }
   }
 
-
-  td, .graph-legend-alias, .graph-legend-icon, .graph-legend-value {
+  td,
+  .graph-legend-alias,
+  .graph-legend-icon,
+  .graph-legend-value {
     float: none;
     display: table-cell;
     white-space: nowrap;
@@ -125,7 +151,7 @@
     }
   }
 
- .graph-legend-value  {
+  .graph-legend-value {
     padding-left: 15px;
   }
 
@@ -139,13 +165,17 @@
   }
 
   .graph-legend-series:nth-child(odd) {
-    background-color: $grafanaListAccent;
+    background: $table-bg-accent;
   }
 
   .graph-legend-value {
-    &.current, &.max, &.min, &.total, &.avg {
+    &.current,
+    &.max,
+    &.min,
+    &.total,
+    &.avg {
       &::before {
-        content: '';
+        content: "";
       }
     }
   }
@@ -160,40 +190,6 @@
   }
 }
 
-.graph-legend-rightside {
-
-  &.graph-wrapper {
-    display: table;
-    width: 100%;
-  }
-
-  .graph-canvas-wrapper {
-    display: table-cell;
-    width: 100%;
-    position: relative;
-  }
-
-  .graph-legend-wrapper {
-    display: table-cell;
-    vertical-align: top;
-    position: relative;
-    left: 4px;
-  }
-
-  .graph-legend {
-    margin: 0;
-  }
-
-  .graph-legend-series {
-    display: block;
-    padding-left: 0px;
-  }
-
-  .graph-legend-table .graph-legend-series {
-    display: table-row;
-  }
-}
-
 .graph-legend-series-hidden {
   .graph-legend-value,
   .graph-legend-alias {
@@ -202,7 +198,7 @@
 }
 
 .graph-legend-popover {
-  width: 200px;
+  width: 210px;
   label {
     display: inline-block;
   }
@@ -210,15 +206,6 @@
     padding: 1px 3px;
     margin-right: 0px;
     line-height: initial;
-  }
-  .close {
-    margin-right: 5px;
-    color: $link-color;
-    opacity: 0.7;
-    text-shadow: none;
-  }
-  .editor-row {
-    padding: 5px;
   }
 }
 
@@ -270,7 +257,7 @@
     max-width: 650px;
     text-overflow: ellipsis;
     overflow: hidden;
-   }
+  }
 
   .graph-tooltip-value {
     display: table-cell;
@@ -281,33 +268,61 @@
 }
 
 .graph-annotation {
-
   .label-tag {
     margin-right: 4px;
     margin-top: 8px;
   }
 
-  .graph-annotation-title {
-    font-weight: $font-weight-semi-bold;
-    position: relative;
-    top: -0.4rem;
+  .graph-annotation__header {
+    background-color: $popover-border-color;
+    padding: 6px 10px;
+    display: flex;
   }
 
-  a {
+  .graph-annotation__title {
+    font-weight: $font-weight-semi-bold;
+    padding-right: $spacer;
+    overflow: hidden;
+    display: inline-block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+  }
+
+  .graph-annotation__edit-icon {
+    padding-left: $spacer;
+  }
+
+  .graph-annotation__time {
+    color: $text-muted;
+    font-style: italic;
+    font-weight: normal;
+    display: inline-block;
+    position: relative;
+    top: 1px;
+  }
+
+  .graph-annotation__body {
+    padding: 0.65rem;
+  }
+
+  .graph-annotation__user {
+    img {
+      border-radius: 50%;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  a[href] {
     color: $blue;
     text-decoration: underline;
-  }
-
-  .graph-annotation-time {
-    position: relative;
-    text-align: center;
-    top: 0.6rem;
   }
 }
 
 .left-yaxis-label {
   top: 50%;
-  left: 0;
+  left: 2px;
   transform: translateX(-50%) translateY(-50%) rotate(-90deg);
   // this is needed for phantomsjs 2.1
   -webkit-transform: translateX(-50%) translateY(-50%) rotate(-90deg);
@@ -315,13 +330,14 @@
 
 .right-yaxis-label {
   top: 50%;
-  right: 0;
+  right: 2px;
   transform: translateX(50%) translateY(-50%) rotate(90deg);
   // this is needed for phantomsjs 2.1
   -webkit-transform: translateX(50%) translateY(-50%) rotate(90deg);
 }
 
 .axisLabel {
+  display: inline-block;
   color: $text-color;
   font-size: $font-size-sm;
   position: absolute;
@@ -384,7 +400,7 @@
     }
   }
 
-  &--T0{
+  &--T0 {
     right: -104px;
     width: 129px;
 
@@ -407,10 +423,10 @@
     position: relative;
 
     &--critical {
-      background-color: rgba(237, 46, 24, 0.60);
+      background-color: rgba(237, 46, 24, 0.6);
     }
     &--warning {
-      background-color: rgba(247, 149, 32, 0.60);
+      background-color: rgba(247, 149, 32, 0.6);
     }
   }
 }

@@ -1,7 +1,3 @@
-///<reference path="../../headers/common.d.ts" />
-
-import config from 'app/core/config';
-import angular from 'angular';
 import moment from 'moment';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
@@ -15,14 +11,23 @@ class TimeSrv {
   oldRefresh: boolean;
   dashboard: any;
   timeAtLoad: any;
+  private autoRefreshBlocked: boolean;
 
   /** @ngInject **/
   constructor(private $rootScope, private $timeout, private $location, private timer, private contextSrv) {
     // default time
-    this.time = {from: '6h', to: 'now'};
+    this.time = { from: '6h', to: 'now' };
 
     $rootScope.$on('zoom-out', this.zoomOut.bind(this));
     $rootScope.$on('$routeUpdate', this.routeUpdated.bind(this));
+
+    document.addEventListener('visibilitychange', () => {
+      if (this.autoRefreshBlocked && document.visibilityState === 'visible') {
+        this.autoRefreshBlocked = false;
+
+        this.refreshDashboard();
+      }
+    });
   }
 
   init(dashboard) {
@@ -51,7 +56,7 @@ class TimeSrv {
     if (_.isString(this.time.to) && this.time.to.indexOf('Z') >= 0) {
       this.time.to = moment(this.time.to).utc();
     }
-  };
+  }
 
   private parseUrlParam(value) {
     if (value.indexOf('now') !== -1) {
@@ -83,7 +88,7 @@ class TimeSrv {
     if (params.refresh) {
       this.refresh = params.refresh || this.refresh;
     }
-  };
+  }
 
   private routeUpdated() {
     var params = this.$location.search();
@@ -96,29 +101,36 @@ class TimeSrv {
         this.initTimeFromUrl();
         this.setTime(this.time, true);
       }
-    } else {
+    } else if (this.timeHasChangedSinceLoad()) {
       this.setTime(this.timeAtLoad, true);
     }
   }
 
+  private timeHasChangedSinceLoad() {
+    return this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to;
+  }
+
   setAutoRefresh(interval) {
     this.dashboard.refresh = interval;
+    this.cancelNextRefresh();
     if (interval) {
       var intervalMs = kbn.interval_to_ms(interval);
 
-      this.$timeout(() => {
-        this.startNextRefreshTimer(intervalMs);
-        this.refreshDashboard();
-      }, intervalMs);
-
-    } else {
-      this.cancelNextRefresh();
+      this.refreshTimer = this.timer.register(
+        this.$timeout(() => {
+          this.startNextRefreshTimer(intervalMs);
+          this.refreshDashboard();
+        }, intervalMs)
+      );
     }
 
     // update url
+    var params = this.$location.search();
     if (interval) {
-      var params = this.$location.search();
       params.refresh = interval;
+      this.$location.search(params);
+    } else if (params.refresh) {
+      delete params.refresh;
       this.$location.search(params);
     }
   }
@@ -129,17 +141,21 @@ class TimeSrv {
 
   private startNextRefreshTimer(afterMs) {
     this.cancelNextRefresh();
-    this.refreshTimer = this.timer.register(this.$timeout(() => {
-      this.startNextRefreshTimer(afterMs);
-      if (this.contextSrv.isGrafanaVisible()) {
-        this.refreshDashboard();
-      }
-    }, afterMs));
+    this.refreshTimer = this.timer.register(
+      this.$timeout(() => {
+        this.startNextRefreshTimer(afterMs);
+        if (this.contextSrv.isGrafanaVisible()) {
+          this.refreshDashboard();
+        } else {
+          this.autoRefreshBlocked = true;
+        }
+      }, afterMs)
+    );
   }
 
   private cancelNextRefresh() {
     this.timer.cancel(this.refreshTimer);
-  };
+  }
 
   setTime(time, fromRouteUpdate?) {
     _.extend(this.time, time);
@@ -169,8 +185,12 @@ class TimeSrv {
   timeRangeForUrl() {
     var range = this.timeRange().raw;
 
-    if (moment.isMoment(range.from)) { range.from = range.from.valueOf(); }
-    if (moment.isMoment(range.to)) { range.to = range.to.valueOf(); }
+    if (moment.isMoment(range.from)) {
+      range.from = range.from.valueOf().toString();
+    }
+    if (moment.isMoment(range.to)) {
+      range.to = range.to.valueOf().toString();
+    }
 
     return range;
   }
@@ -182,21 +202,23 @@ class TimeSrv {
       to: moment.isMoment(this.time.to) ? moment(this.time.to) : this.time.to,
     };
 
+    var timezone = this.dashboard && this.dashboard.getTimezone();
+
     return {
-      from: dateMath.parse(raw.from, false),
-      to: dateMath.parse(raw.to, true),
-      raw: raw
+      from: dateMath.parse(raw.from, false, timezone),
+      to: dateMath.parse(raw.to, true, timezone),
+      raw: raw,
     };
   }
 
   zoomOut(e, factor) {
     var range = this.timeRange();
 
-    var timespan = (range.to.valueOf() - range.from.valueOf());
-    var center = range.to.valueOf() - timespan/2;
+    var timespan = range.to.valueOf() - range.from.valueOf();
+    var center = range.to.valueOf() - timespan / 2;
 
-    var to = (center + (timespan*factor)/2);
-    var from = (center - (timespan*factor)/2);
+    var to = center + timespan * factor / 2;
+    var from = center - timespan * factor / 2;
 
     if (to > Date.now() && range.to <= Date.now()) {
       var offset = to - Date.now();
@@ -204,7 +226,7 @@ class TimeSrv {
       to = Date.now();
     }
 
-    this.setTime({from: moment.utc(from), to: moment.utc(to)});
+    this.setTime({ from: moment.utc(from), to: moment.utc(to) });
   }
 }
 

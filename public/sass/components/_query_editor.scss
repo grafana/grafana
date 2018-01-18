@@ -1,16 +1,15 @@
 .query-keyword {
-  font-weight: bold;
-  color: $blue;
+  font-weight: $font-weight-semi-bold;
+  color: $query-blue;
 }
 
-.query-segment-key {
-  //border-right: none;
-  //padding-right: 1px;
+.gf-form-disabled {
+  .query-keyword {
+    color: darken($query-blue, 20%);
+  }
 }
 
 .query-segment-operator {
-  //padding-right: 1px;
-  //border-right: none;
   color: $orange;
 }
 
@@ -33,6 +32,10 @@
   .gf-form-filler,
   .gf-form-label {
     margin-right: 2px;
+  }
+
+  .gf-form + .gf-form {
+    margin-right: 0;
   }
 }
 
@@ -60,13 +63,18 @@
   }
   .gf-form-query-letter-cell-letter {
     font-weight: bold;
-    color: $blue;
+    color: $query-blue;
   }
   .gf-form-query-letter-cell-ds {
     color: $text-color-weak;
   }
 }
 
+.gf-query-ds-label {
+  text-align: center;
+  width: 44px;
+}
+
 .grafana-metric-options {
   margin-top: 25px;
 }
@@ -145,4 +153,26 @@ input[type="text"].tight-form-func-param {
   .fa-remove {
     margin-left: 10px;
   }
+}
+
+.query-troubleshooter {
+  font-size: $font-size-sm;
+  margin: $gf-form-margin;
+  border: 1px solid $btn-secondary-bg;
+  min-height: 100px;
+  border-radius: 3px;
+}
+
+.query-troubleshooter__header {
+  float: right;
+  font-size: $font-size-sm;
+  text-align: right;
+  padding: $input-padding-y $input-padding-x;
+  a {
+    margin-left: $spacer;
+  }
+}
+
+.query-troubleshooter__body {
+  padding: $spacer 0;
 }

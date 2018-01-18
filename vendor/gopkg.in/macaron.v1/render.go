@@ -21,6 +21,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -72,6 +73,7 @@ type (
 	// TemplateFileSystem represents a interface of template file system that able to list all files.
 	TemplateFileSystem interface {
 		ListFiles() []TemplateFile
+		Get(string) (io.Reader, error)
 	}
 
 	// Delims represents a set of Left and Right delimiters for HTML template rendering
@@ -86,6 +88,8 @@ type (
 	RenderOptions struct {
 		// Directory to load templates. Default is "templates".
 		Directory string
+		// Addtional directories to overwite templates.
+		AppendDirectories []string
 		// Layout template name. Will not render a layout if "". Default is to "".
 		Layout string
 		// Extensions to parse template files from. Defaults are [".tmpl", ".html"].
@@ -172,8 +176,32 @@ func NewTemplateFileSystem(opt RenderOptions, omitData bool) TplFileSystem {
 	fs := TplFileSystem{}
 	fs.files = make([]TemplateFile, 0, 10)
 
-	if err := filepath.Walk(opt.Directory, func(path string, info os.FileInfo, err error) error {
-		r, err := filepath.Rel(opt.Directory, path)
+	// Directories are composed in reverse order because later one overwrites previous ones,
+	// so once found, we can directly jump out of the loop.
+	dirs := make([]string, 0, len(opt.AppendDirectories)+1)
+	for i := len(opt.AppendDirectories) - 1; i >= 0; i-- {
+		dirs = append(dirs, opt.AppendDirectories[i])
+	}
+	dirs = append(dirs, opt.Directory)
+
+	var err error
+	for i := range dirs {
+		// Skip ones that does not exists for symlink test,
+		// but allow non-symlink ones added after start.
+		if !com.IsExist(dirs[i]) {
+			continue
+		}
+
+		dirs[i], err = filepath.EvalSymlinks(dirs[i])
+		if err != nil {
+			panic("EvalSymlinks(" + dirs[i] + "): " + err.Error())
+		}
+	}
+	lastDir := dirs[len(dirs)-1]
+
+	// We still walk the last (original) directory because it's non-sense we load templates not exist in original directory.
+	if err = filepath.Walk(lastDir, func(path string, info os.FileInfo, err error) error {
+		r, err := filepath.Rel(lastDir, path)
 		if err != nil {
 			return err
 		}
@@ -181,19 +209,31 @@ func NewTemplateFileSystem(opt RenderOptions, omitData bool) TplFileSystem {
 		ext := GetExt(r)
 
 		for _, extension := range opt.Extensions {
-			if ext == extension {
-				var data []byte
-				if !omitData {
+			if ext != extension {
+				continue
+			}
+
+			var data []byte
+			if !omitData {
+				// Loop over candidates of directory, break out once found.
+				// The file always exists because it's inside the walk function,
+				// and read original file is the worst case.
+				for i := range dirs {
+					path = filepath.Join(dirs[i], r)
+					if !com.IsFile(path) {
+						continue
+					}
+
 					data, err = ioutil.ReadFile(path)
 					if err != nil {
 						return err
 					}
+					break
 				}
-
-				name := filepath.ToSlash((r[0 : len(r)-len(ext)]))
-				fs.files = append(fs.files, NewTplFile(name, data, ext))
-				break
 			}
+
+			name := filepath.ToSlash((r[0 : len(r)-len(ext)]))
+			fs.files = append(fs.files, NewTplFile(name, data, ext))
 		}
 
 		return nil
@@ -206,6 +246,15 @@ func NewTemplateFileSystem(opt RenderOptions, omitData bool) TplFileSystem {
 
 func (fs TplFileSystem) ListFiles() []TemplateFile {
 	return fs.files
+}
+
+func (fs TplFileSystem) Get(name string) (io.Reader, error) {
+	for i := range fs.files {
+		if fs.files[i].Name()+fs.files[i].Ext() == name {
+			return bytes.NewReader(fs.files[i].Data()), nil
+		}
+	}
+	return nil, fmt.Errorf("file '%s' not found", name)
 }
 
 func PrepareCharset(charset string) string {
@@ -225,8 +274,7 @@ func GetExt(s string) string {
 }
 
 func compile(opt RenderOptions) *template.Template {
-	dir := opt.Directory
-	t := template.New(dir)
+	t := template.New(opt.Directory)
 	t.Delims(opt.Delims.Left, opt.Delims.Right)
 	// Parse an initial template in case we don't have any.
 	template.Must(t.Parse("Macaron"))
@@ -248,24 +296,25 @@ func compile(opt RenderOptions) *template.Template {
 }
 
 const (
-	_DEFAULT_TPL_SET_NAME = "DEFAULT"
+	DEFAULT_TPL_SET_NAME = "DEFAULT"
 )
 
-// templateSet represents a template set of type *template.Template.
-type templateSet struct {
+// TemplateSet represents a template set of type *template.Template.
+type TemplateSet struct {
 	lock sync.RWMutex
 	sets map[string]*template.Template
 	dirs map[string]string
 }
 
-func newTemplateSet() *templateSet {
-	return &templateSet{
+// NewTemplateSet initializes a new empty template set.
+func NewTemplateSet() *TemplateSet {
+	return &TemplateSet{
 		sets: make(map[string]*template.Template),
 		dirs: make(map[string]string),
 	}
 }
 
-func (ts *templateSet) Set(name string, opt *RenderOptions) *template.Template {
+func (ts *TemplateSet) Set(name string, opt *RenderOptions) *template.Template {
 	t := compile(*opt)
 
 	ts.lock.Lock()
@@ -276,14 +325,14 @@ func (ts *templateSet) Set(name string, opt *RenderOptions) *template.Template {
 	return t
 }
 
-func (ts *templateSet) Get(name string) *template.Template {
+func (ts *TemplateSet) Get(name string) *template.Template {
 	ts.lock.RLock()
 	defer ts.lock.RUnlock()
 
 	return ts.sets[name]
 }
 
-func (ts *templateSet) GetDir(name string) string {
+func (ts *TemplateSet) GetDir(name string) string {
 	ts.lock.RLock()
 	defer ts.lock.RUnlock()
 
@@ -332,8 +381,8 @@ func ParseTplSet(tplSet string) (tplName string, tplDir string) {
 
 func renderHandler(opt RenderOptions, tplSets []string) Handler {
 	cs := PrepareCharset(opt.Charset)
-	ts := newTemplateSet()
-	ts.Set(_DEFAULT_TPL_SET_NAME, &opt)
+	ts := NewTemplateSet()
+	ts.Set(DEFAULT_TPL_SET_NAME, &opt)
 
 	var tmpOpt RenderOptions
 	for _, tplSet := range tplSets {
@@ -346,7 +395,7 @@ func renderHandler(opt RenderOptions, tplSets []string) Handler {
 	return func(ctx *Context) {
 		r := &TplRender{
 			ResponseWriter:  ctx.Resp,
-			templateSet:     ts,
+			TemplateSet:     ts,
 			Opt:             &opt,
 			CompiledCharset: cs,
 		}
@@ -379,7 +428,7 @@ func Renderers(options RenderOptions, tplSets ...string) Handler {
 
 type TplRender struct {
 	http.ResponseWriter
-	*templateSet
+	*TemplateSet
 	Opt             *RenderOptions
 	CompiledCharset string
 
@@ -486,11 +535,11 @@ func (r *TplRender) addYield(t *template.Template, tplName string, data interfac
 }
 
 func (r *TplRender) renderBytes(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) (*bytes.Buffer, error) {
-	t := r.templateSet.Get(setName)
+	t := r.TemplateSet.Get(setName)
 	if Env == DEV {
 		opt := *r.Opt
-		opt.Directory = r.templateSet.GetDir(setName)
-		t = r.templateSet.Set(setName, &opt)
+		opt.Directory = r.TemplateSet.GetDir(setName)
+		t = r.TemplateSet.Set(setName, &opt)
 	}
 	if t == nil {
 		return nil, fmt.Errorf("html/template: template \"%s\" is undefined", tplName)
@@ -523,12 +572,14 @@ func (r *TplRender) renderHTML(status int, setName, tplName string, data interfa
 	r.Header().Set(_CONTENT_TYPE, r.Opt.HTMLContentType+r.CompiledCharset)
 	r.WriteHeader(status)
 
-	out.WriteTo(r)
+	if _, err := out.WriteTo(r); err != nil {
+		out.Reset()
+	}
 	bufpool.Put(out)
 }
 
 func (r *TplRender) HTML(status int, name string, data interface{}, htmlOpt ...HTMLOptions) {
-	r.renderHTML(status, _DEFAULT_TPL_SET_NAME, name, data, htmlOpt...)
+	r.renderHTML(status, DEFAULT_TPL_SET_NAME, name, data, htmlOpt...)
 }
 
 func (r *TplRender) HTMLSet(status int, setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) {
@@ -544,7 +595,7 @@ func (r *TplRender) HTMLSetBytes(setName, tplName string, data interface{}, html
 }
 
 func (r *TplRender) HTMLBytes(name string, data interface{}, htmlOpt ...HTMLOptions) ([]byte, error) {
-	return r.HTMLSetBytes(_DEFAULT_TPL_SET_NAME, name, data, htmlOpt...)
+	return r.HTMLSetBytes(DEFAULT_TPL_SET_NAME, name, data, htmlOpt...)
 }
 
 func (r *TplRender) HTMLSetString(setName, tplName string, data interface{}, htmlOpt ...HTMLOptions) (string, error) {
@@ -581,13 +632,94 @@ func (r *TplRender) prepareHTMLOptions(htmlOpt []HTMLOptions) HTMLOptions {
 
 func (r *TplRender) SetTemplatePath(setName, dir string) {
 	if len(setName) == 0 {
-		setName = _DEFAULT_TPL_SET_NAME
+		setName = DEFAULT_TPL_SET_NAME
 	}
 	opt := *r.Opt
 	opt.Directory = dir
-	r.templateSet.Set(setName, &opt)
+	r.TemplateSet.Set(setName, &opt)
 }
 
 func (r *TplRender) HasTemplateSet(name string) bool {
-	return r.templateSet.Get(name) != nil
+	return r.TemplateSet.Get(name) != nil
+}
+
+// DummyRender is used when user does not choose any real render to use.
+// This way, we can print out friendly message which asks them to register one,
+// instead of ugly and confusing 'nil pointer' panic.
+type DummyRender struct {
+	http.ResponseWriter
+}
+
+func renderNotRegistered() {
+	panic("middleware render hasn't been registered")
+}
+
+func (r *DummyRender) SetResponseWriter(http.ResponseWriter) {
+	renderNotRegistered()
+}
+
+func (r *DummyRender) JSON(int, interface{}) {
+	renderNotRegistered()
+}
+
+func (r *DummyRender) JSONString(interface{}) (string, error) {
+	renderNotRegistered()
+	return "", nil
+}
+
+func (r *DummyRender) RawData(int, []byte) {
+	renderNotRegistered()
+}
+
+func (r *DummyRender) PlainText(int, []byte) {
+	renderNotRegistered()
+}
+
+func (r *DummyRender) HTML(int, string, interface{}, ...HTMLOptions) {
+	renderNotRegistered()
+}
+
+func (r *DummyRender) HTMLSet(int, string, string, interface{}, ...HTMLOptions) {
+	renderNotRegistered()
+}
+
+func (r *DummyRender) HTMLSetString(string, string, interface{}, ...HTMLOptions) (string, error) {
+	renderNotRegistered()
+	return "", nil
+}
+
+func (r *DummyRender) HTMLString(string, interface{}, ...HTMLOptions) (string, error) {
+	renderNotRegistered()
+	return "", nil
+}
+
+func (r *DummyRender) HTMLSetBytes(string, string, interface{}, ...HTMLOptions) ([]byte, error) {
+	renderNotRegistered()
+	return nil, nil
+}
+
+func (r *DummyRender) HTMLBytes(string, interface{}, ...HTMLOptions) ([]byte, error) {
+	renderNotRegistered()
+	return nil, nil
+}
+
+func (r *DummyRender) XML(int, interface{}) {
+	renderNotRegistered()
+}
+
+func (r *DummyRender) Error(int, ...string) {
+	renderNotRegistered()
+}
+
+func (r *DummyRender) Status(int) {
+	renderNotRegistered()
+}
+
+func (r *DummyRender) SetTemplatePath(string, string) {
+	renderNotRegistered()
+}
+
+func (r *DummyRender) HasTemplateSet(string) bool {
+	renderNotRegistered()
+	return false
 }

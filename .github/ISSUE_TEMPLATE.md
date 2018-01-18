@@ -1,5 +1,8 @@
-Please prefix your title with [Bug] or [Feature request]
-For question please check [Support Options](http://grafana.org/support/). **Do not** open a github issue
+Read before posting: 
+
+- Questions should be posted to https://community.grafana.com. Please search there and here on GitHub for similar issues before creating a new issue. 
+- Checkout FAQ: https://community.grafana.com/c/howto/faq
+- Checkout How to troubleshoot metric query issues: https://community.grafana.com/t/how-to-troubleshoot-metric-query-issues/50
 
 Please include this information:
 - What Grafana version are you using?
@@ -8,11 +11,6 @@ Please include this information:
 - What did you do?
 - What was the expected result?
 - What happened instead?
-
-**IMPORTANT** 
-If it relates to *metric data viz*:
-- An image or text representation of your metric query
-- The raw query and response for the network request (check this in chrome dev tools network tab, here you can see metric requests and other request, please include the request body and request response)
-
-If it relates to *alerting*
-- An image of the test execution data fully expanded.
+- If related to metric query / data viz:
+  - Include raw network request & response: get by opening Chrome Dev Tools (F12, Ctrl+Shift+I on windows, Cmd+Opt+I on Mac), go the network tab.
+ 

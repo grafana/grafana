@@ -21,6 +21,7 @@ type PluginSetting struct {
 
 	LatestVersion string `json:"latestVersion"`
 	HasUpdate     bool   `json:"hasUpdate"`
+	State         string `json:"state"`
 }
 
 type PluginListItem struct {
@@ -33,6 +34,7 @@ type PluginListItem struct {
 	LatestVersion string              `json:"latestVersion"`
 	HasUpdate     bool                `json:"hasUpdate"`
 	DefaultNavUrl string              `json:"defaultNavUrl"`
+	State         string              `json:"state"`
 }
 
 type PluginList []PluginListItem

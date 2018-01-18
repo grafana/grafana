@@ -1,10 +1,8 @@
 package sqlstore
 
 import (
-	"bytes"
-	"fmt"
+	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
@@ -23,7 +21,7 @@ func init() {
 }
 
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		dash := cmd.GetDashboardModel()
 
 		// try get existing dashboard
@@ -63,28 +61,64 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			if dash.Id != sameTitle.Id {
 				if cmd.Overwrite {
 					dash.Id = sameTitle.Id
+					dash.Version = sameTitle.Version
 				} else {
 					return m.ErrDashboardWithSameNameExists
 				}
 			}
 		}
 
+		err = setHasAcl(sess, dash)
+		if err != nil {
+			return err
+		}
+
+		parentVersion := dash.Version
 		affectedRows := int64(0)
 
 		if dash.Id == 0 {
-			metrics.M_Models_Dashboard_Insert.Inc(1)
+			dash.Version = 1
+			metrics.M_Api_Dashboard_Insert.Inc()
+			dash.Data.Set("version", dash.Version)
 			affectedRows, err = sess.Insert(dash)
 		} else {
-			dash.Version += 1
+			dash.Version++
 			dash.Data.Set("version", dash.Version)
-			affectedRows, err = sess.Id(dash.Id).Update(dash)
+
+			if !cmd.UpdatedAt.IsZero() {
+				dash.Updated = cmd.UpdatedAt
+			}
+
+			affectedRows, err = sess.MustCols("folder_id", "has_acl").Id(dash.Id).Update(dash)
+		}
+
+		if err != nil {
+			return err
 		}
 
 		if affectedRows == 0 {
 			return m.ErrDashboardNotFound
 		}
 
-		// delete existing tabs
+		dashVersion := &m.DashboardVersion{
+			DashboardId:   dash.Id,
+			ParentVersion: parentVersion,
+			RestoredFrom:  cmd.RestoredFrom,
+			Version:       dash.Version,
+			Created:       time.Now(),
+			CreatedBy:     dash.UpdatedBy,
+			Message:       cmd.Message,
+			Data:          dash.Data,
+		}
+
+		// insert version entry
+		if affectedRows, err = sess.Insert(dashVersion); err != nil {
+			return err
+		} else if affectedRows == 0 {
+			return m.ErrDashboardNotFound
+		}
+
+		// delete existing tags
 		_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
 		if err != nil {
 			return err
@@ -99,16 +133,41 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 				}
 			}
 		}
-
 		cmd.Result = dash
 
 		return err
 	})
 }
 
+func setHasAcl(sess *DBSession, dash *m.Dashboard) error {
+	// check if parent has acl
+	if dash.FolderId > 0 {
+		var parent m.Dashboard
+		if hasParent, err := sess.Where("folder_id=?", dash.FolderId).Get(&parent); err != nil {
+			return err
+		} else if hasParent && parent.HasAcl {
+			dash.HasAcl = true
+		}
+	}
+
+	// check if dash has its own acl
+	if dash.Id > 0 {
+		if res, err := sess.Query("SELECT 1 from dashboard_acl WHERE dashboard_id =?", dash.Id); err != nil {
+			return err
+		} else {
+			if len(res) > 0 {
+				dash.HasAcl = true
+			}
+		}
+	}
+
+	return nil
+}
+
 func GetDashboard(query *m.GetDashboardQuery) error {
-	dashboard := m.Dashboard{Slug: query.Slug, OrgId: query.OrgId}
+	dashboard := m.Dashboard{Slug: query.Slug, OrgId: query.OrgId, Id: query.Id}
 	has, err := x.Get(&dashboard)
+
 	if err != nil {
 		return err
 	} else if has == false {
@@ -117,69 +176,80 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 
 	dashboard.Data.Set("id", dashboard.Id)
 	query.Result = &dashboard
-
 	return nil
 }
 
 type DashboardSearchProjection struct {
-	Id    int64
-	Title string
-	Slug  string
-	Term  string
+	Id          int64
+	Title       string
+	Slug        string
+	Term        string
+	IsFolder    bool
+	FolderId    int64
+	FolderSlug  string
+	FolderTitle string
 }
 
-func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
-	var sql bytes.Buffer
-	params := make([]interface{}, 0)
-
-	sql.WriteString(`SELECT
-					  dashboard.id,
-					  dashboard.title,
-					  dashboard.slug,
-					  dashboard_tag.term
-					FROM dashboard
-					LEFT OUTER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id`)
-
-	if query.IsStarred {
-		sql.WriteString(" INNER JOIN star on star.dashboard_id = dashboard.id")
+func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
+	limit := query.Limit
+	if limit == 0 {
+		limit = 1000
 	}
 
-	sql.WriteString(` WHERE dashboard.org_id=?`)
-
-	params = append(params, query.OrgId)
+	sb := NewSearchBuilder(query.SignedInUser, limit).
+		WithTags(query.Tags).
+		WithDashboardIdsIn(query.DashboardIds)
 
 	if query.IsStarred {
-		sql.WriteString(` AND star.user_id=?`)
-		params = append(params, query.UserId)
-	}
-
-	if len(query.DashboardIds) > 0 {
-		sql.WriteString(" AND (")
-		for i, dashboardId := range query.DashboardIds {
-			if i != 0 {
-				sql.WriteString(" OR")
-			}
-
-			sql.WriteString(" dashboard.id = ?")
-			params = append(params, dashboardId)
-		}
-		sql.WriteString(")")
+		sb.IsStarred()
 	}
 
 	if len(query.Title) > 0 {
-		sql.WriteString(" AND dashboard.title " + dialect.LikeStr() + " ?")
-		params = append(params, "%"+query.Title+"%")
+		sb.WithTitle(query.Title)
 	}
 
-	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 1000"))
+	if len(query.Type) > 0 {
+		sb.WithType(query.Type)
+	}
+
+	if len(query.FolderIds) > 0 {
+		sb.WithFolderIds(query.FolderIds)
+	}
 
 	var res []DashboardSearchProjection
 
-	err := x.Sql(sql.String(), params...).Find(&res)
+	sql, params := sb.ToSql()
+	err := x.Sql(sql, params...).Find(&res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
+	res, err := findDashboards(query)
 	if err != nil {
 		return err
 	}
 
+	makeQueryResult(query, res)
+
+	return nil
+}
+
+func getHitType(item DashboardSearchProjection) search.HitType {
+	var hitType search.HitType
+	if item.IsFolder {
+		hitType = search.DashHitFolder
+	} else {
+		hitType = search.DashHitDB
+	}
+
+	return hitType
+}
+
+func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []DashboardSearchProjection) {
 	query.Result = make([]*search.Hit, 0)
 	hits := make(map[int64]*search.Hit)
 
@@ -187,11 +257,15 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		hit, exists := hits[item.Id]
 		if !exists {
 			hit = &search.Hit{
-				Id:    item.Id,
-				Title: item.Title,
-				Uri:   "db/" + item.Slug,
-				Type:  search.DashHitDB,
-				Tags:  []string{},
+				Id:          item.Id,
+				Title:       item.Title,
+				Uri:         "db/" + item.Slug,
+				Slug:        item.Slug,
+				Type:        getHitType(item),
+				FolderId:    item.FolderId,
+				FolderTitle: item.FolderTitle,
+				FolderSlug:  item.FolderSlug,
+				Tags:        []string{},
 			}
 			query.Result = append(query.Result, hit)
 			hits[item.Id] = hit
@@ -200,8 +274,6 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 			hit.Tags = append(hit.Tags, item.Term)
 		}
 	}
-
-	return err
 }
 
 func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
@@ -220,8 +292,8 @@ func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
 }
 
 func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
-	return inTransaction2(func(sess *session) error {
-		dashboard := m.Dashboard{Slug: cmd.Slug, OrgId: cmd.OrgId}
+	return inTransaction(func(sess *DBSession) error {
+		dashboard := m.Dashboard{Id: cmd.Id, OrgId: cmd.OrgId}
 		has, err := sess.Get(&dashboard)
 		if err != nil {
 			return err
@@ -234,6 +306,9 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			"DELETE FROM star WHERE dashboard_id = ? ",
 			"DELETE FROM dashboard WHERE id = ?",
 			"DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?",
+			"DELETE FROM dashboard_version WHERE dashboard_id = ?",
+			"DELETE FROM dashboard WHERE folder_id = ?",
+			"DELETE FROM annotation WHERE dashboard_id = ?",
 		}
 
 		for _, sql := range deletes {
@@ -243,7 +318,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			}
 		}
 
-		if err := DeleteAlertDefinition(dashboard.Id, sess.Session); err != nil {
+		if err := DeleteAlertDefinition(dashboard.Id, sess); err != nil {
 			return nil
 		}
 
@@ -270,8 +345,9 @@ func GetDashboards(query *m.GetDashboardsQuery) error {
 
 func GetDashboardsByPluginId(query *m.GetDashboardsByPluginIdQuery) error {
 	var dashboards = make([]*m.Dashboard, 0)
+	whereExpr := "org_id=? AND plugin_id=? AND is_folder=" + dialect.BooleanStr(false)
 
-	err := x.Where("org_id=? AND plugin_id=?", query.OrgId, query.PluginId).Find(&dashboards)
+	err := x.Where(whereExpr, query.OrgId, query.PluginId).Find(&dashboards)
 	query.Result = dashboards
 
 	if err != nil {

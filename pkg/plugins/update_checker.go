@@ -60,7 +60,7 @@ func checkForUpdates() {
 	log.Trace("Checking for updates")
 
 	pluginSlugs := getAllExternalPluginSlugs()
-	resp, err := httpClient.Get("https://grafana.net/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + setting.BuildVersion)
+	resp, err := httpClient.Get("https://grafana.com/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + setting.BuildVersion)
 
 	if err != nil {
 		log.Trace("Failed to get plugins repo from grafana.net, %v", err.Error())
@@ -71,14 +71,14 @@ func checkForUpdates() {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Trace("Update check failed, reading response from grafana.net, %v", err.Error())
+		log.Trace("Update check failed, reading response from grafana.com, %v", err.Error())
 		return
 	}
 
 	gNetPlugins := []GrafanaNetPlugin{}
 	err = json.Unmarshal(body, &gNetPlugins)
 	if err != nil {
-		log.Trace("Failed to unmarshal plugin repo, reading response from grafana.net, %v", err.Error())
+		log.Trace("Failed to unmarshal plugin repo, reading response from grafana.com, %v", err.Error())
 		return
 	}
 

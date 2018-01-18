@@ -1,17 +1,9 @@
-///<reference path="../../headers/common.d.ts" />
-
 import config from 'app/core/config';
 import coreModule from '../core_module';
 
 export class SignUpCtrl {
-
   /** @ngInject */
-  constructor(
-      private $scope: any,
-      private $location: any,
-      private contextSrv: any,
-      private backendSrv: any) {
-
+  constructor(private $scope: any, private backendSrv: any, $location: any, contextSrv: any) {
     contextSrv.sidemenu = false;
     $scope.ctrl = this;
 
@@ -26,13 +18,21 @@ export class SignUpCtrl {
     $scope.verifyEmailEnabled = false;
     $scope.autoAssignOrg = false;
 
+    $scope.navModel = {
+      main: {
+        icon: 'gicon gicon-branding',
+        subTitle: 'Register your Grafana account',
+        breadcrumbs: [{ title: 'Login', url: 'login' }, { title: 'Sign Up' }],
+      },
+    };
+
     backendSrv.get('/api/user/signup/options').then(options => {
       $scope.verifyEmailEnabled = options.verifyEmailEnabled;
       $scope.autoAssignOrg = options.autoAssignOrg;
     });
   }
 
-  submit () {
+  submit() {
     if (!this.$scope.signUpForm.$valid) {
       return;
     }
@@ -44,8 +44,7 @@ export class SignUpCtrl {
         window.location.href = config.appSubUrl + '/';
       }
     });
-  };
+  }
 }
 
 coreModule.controller('SignUpCtrl', SignUpCtrl);
-

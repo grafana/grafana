@@ -1,6 +1,7 @@
 package renderer
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -15,19 +16,25 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type RenderOpts struct {
-	Path     string
-	Width    string
-	Height   string
-	Timeout  string
-	OrgId    int64
-	Timezone string
+	Path           string
+	Width          string
+	Height         string
+	Timeout        string
+	OrgId          int64
+	UserId         int64
+	OrgRole        models.RoleType
+	Timezone       string
+	IsAlertContext bool
+	Encoding       string
 }
 
+var ErrTimeout = errors.New("Timeout error. You can set timeout in seconds with &timeout url parameter")
 var rendererLog log.Logger = log.New("png-renderer")
 
 func isoTimeOffsetToPosixTz(isoOffset string) string {
@@ -72,8 +79,17 @@ func RenderToPng(params *RenderOpts) (string, error) {
 	pngPath, _ := filepath.Abs(filepath.Join(setting.ImagesDir, util.GetRandomString(20)))
 	pngPath = pngPath + ".png"
 
-	renderKey := middleware.AddRenderAuthKey(params.OrgId)
+	orgRole := params.OrgRole
+	if params.IsAlertContext {
+		orgRole = models.ROLE_ADMIN
+	}
+	renderKey := middleware.AddRenderAuthKey(params.OrgId, params.UserId, orgRole)
 	defer middleware.RemoveRenderAuthKey(renderKey)
+
+	timeout, err := strconv.Atoi(params.Timeout)
+	if err != nil {
+		timeout = 15
+	}
 
 	cmdArgs := []string{
 		"--ignore-ssl-errors=true",
@@ -84,7 +100,12 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		"height=" + params.Height,
 		"png=" + pngPath,
 		"domain=" + localDomain,
+		"timeout=" + strconv.Itoa(timeout),
 		"renderKey=" + renderKey,
+	}
+
+	if params.Encoding != "" {
+		cmdArgs = append([]string{fmt.Sprintf("--output-encoding=%s", params.Encoding)}, cmdArgs...)
 	}
 
 	cmd := exec.Command(binPath, cmdArgs...)
@@ -113,21 +134,18 @@ func RenderToPng(params *RenderOpts) (string, error) {
 
 	done := make(chan error)
 	go func() {
-		cmd.Wait()
+		if err := cmd.Wait(); err != nil {
+			rendererLog.Error("failed to render an image", "error", err)
+		}
 		close(done)
 	}()
-
-	timeout, err := strconv.Atoi(params.Timeout)
-	if err != nil {
-		timeout = 15
-	}
 
 	select {
 	case <-time.After(time.Duration(timeout) * time.Second):
 		if err := cmd.Process.Kill(); err != nil {
 			rendererLog.Error("failed to kill", "error", err)
 		}
-		return "", fmt.Errorf("PhantomRenderer::renderToPng timeout (>%vs)", timeout)
+		return "", ErrTimeout
 	case <-done:
 	}
 

@@ -50,7 +50,7 @@ func (d MySQLDriver) Open(dsn string) (driver.Conn, error) {
 
 	// New mysqlConn
 	mc := &mysqlConn{
-		maxPacketAllowed: maxPacketSize,
+		maxAllowedPacket: maxPacketSize,
 		maxWriteSize:     maxPacketSize - 1,
 	}
 	mc.cfg, err = ParseDSN(dsn)
@@ -109,15 +109,19 @@ func (d MySQLDriver) Open(dsn string) (driver.Conn, error) {
 		return nil, err
 	}
 
-	// Get max allowed packet size
-	maxap, err := mc.getSystemVar("max_allowed_packet")
-	if err != nil {
-		mc.Close()
-		return nil, err
+	if mc.cfg.MaxAllowedPacket > 0 {
+		mc.maxAllowedPacket = mc.cfg.MaxAllowedPacket
+	} else {
+		// Get max allowed packet size
+		maxap, err := mc.getSystemVar("max_allowed_packet")
+		if err != nil {
+			mc.Close()
+			return nil, err
+		}
+		mc.maxAllowedPacket = stringToInt(maxap) - 1
 	}
-	mc.maxPacketAllowed = stringToInt(maxap) - 1
-	if mc.maxPacketAllowed < maxPacketSize {
-		mc.maxWriteSize = mc.maxPacketAllowed
+	if mc.maxAllowedPacket < maxPacketSize {
+		mc.maxWriteSize = mc.maxAllowedPacket
 	}
 
 	// Handle DSN Params
@@ -130,9 +134,9 @@ func (d MySQLDriver) Open(dsn string) (driver.Conn, error) {
 	return mc, nil
 }
 
-func handleAuthResult(mc *mysqlConn, cipher []byte) error {
+func handleAuthResult(mc *mysqlConn, oldCipher []byte) error {
 	// Read Result Packet
-	err := mc.readResultOK()
+	cipher, err := mc.readResultOK()
 	if err == nil {
 		return nil // auth successful
 	}
@@ -146,10 +150,17 @@ func handleAuthResult(mc *mysqlConn, cipher []byte) error {
 		// Retry with old authentication method. Note: there are edge cases
 		// where this should work but doesn't; this is currently "wontfix":
 		// https://github.com/go-sql-driver/mysql/issues/184
+
+		// If CLIENT_PLUGIN_AUTH capability is not supported, no new cipher is
+		// sent and we have to keep using the cipher sent in the init packet.
+		if cipher == nil {
+			cipher = oldCipher
+		}
+
 		if err = mc.writeOldAuthPacket(cipher); err != nil {
 			return err
 		}
-		err = mc.readResultOK()
+		_, err = mc.readResultOK()
 	} else if mc.cfg.AllowCleartextPasswords && err == ErrCleartextPassword {
 		// Retry with clear text password for
 		// http://dev.mysql.com/doc/refman/5.7/en/cleartext-authentication-plugin.html
@@ -157,7 +168,12 @@ func handleAuthResult(mc *mysqlConn, cipher []byte) error {
 		if err = mc.writeClearAuthPacket(); err != nil {
 			return err
 		}
-		err = mc.readResultOK()
+		_, err = mc.readResultOK()
+	} else if mc.cfg.AllowNativePasswords && err == ErrNativePassword {
+		if err = mc.writeNativeAuthPacket(cipher); err != nil {
+			return err
+		}
+		_, err = mc.readResultOK()
 	}
 	return err
 }

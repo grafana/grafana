@@ -1,8 +1,15 @@
 .submenu-controls {
-  margin: 0 $panel-margin ($panel-margin*2) $panel-margin;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: flex-start;
+
+  margin: 0 0 $panel-margin 0;
 }
 
-.annotation-disabled, .annotation-disabled a {
+.annotation-disabled,
+.annotation-disabled a {
   color: $link-color-disabled;
 }
 
@@ -32,7 +39,11 @@
 
 .variable-value-link {
   padding-right: 10px;
-  padding: 8px 7px;
+  padding: $input-padding-y $input-padding-x;
+  background-color: $input-bg;
+  border: 1px solid $input-border-color;
+  border-radius: $input-border-radius;
+  color: $input-color;
   box-sizing: content-box;
   display: inline-block;
   color: $text-color;
@@ -42,18 +53,9 @@
   }
 }
 
-.variable-link-wrapper  {
+.variable-link-wrapper {
   display: inline-block;
   position: relative;
-
-  .hidden-input {
-    padding: 8px 7px;
-    border: none;
-    margin: 0px;
-    background: transparent;
-    border-radius: 0;
-    border-right: 1px solid $tight-form-border;
-  }
 }
 
 .variable-value-dropdown {
@@ -65,28 +67,28 @@
   overflow-y: auto;
   overflow-x: hidden;
   background-color: $dropdownBackground;
-  box-shadow: 0 0 25px 0 rgba(0,0,0,0.4);
-  z-index: 1000;
+  box-shadow: 0 0 25px 0 rgba(0, 0, 0, 0.4);
+  z-index: $zindex-typeahead;
   font-size: $font-size-base;
   border-radius: 3px 3px 0 0;
   border: 1px solid $tight-form-func-bg;
 
   &.multi {
-   .selected {
-     .variable-option-icon{
-       background: url($checkboxImageUrl) 0px -18px no-repeat;
-     }
-   }
- }
+    .selected {
+      .variable-option-icon {
+        background: url($checkboxImageUrl) 0px -18px no-repeat;
+      }
+    }
+  }
 
- &.single {
-   .variable-option-icon {
-     display: none;
-   }
-   .selected {
-     background-color: $tight-form-func-highlight-bg;
-   }
- }
+  &.single {
+    .variable-option-icon {
+      display: none;
+    }
+    .selected {
+      background-color: $tight-form-func-highlight-bg;
+    }
+  }
 }
 
 .variable-options-wrapper {
@@ -134,7 +136,8 @@
 }
 
 .variable-option {
-  &:hover, &.highlighted {
+  &:hover,
+  &.highlighted {
     background-color: $blue-dark;
   }
 }

@@ -1,0 +1,126 @@
+<div class="modal-body">
+  <div class="modal-header">
+    <h2 class="modal-header-title">
+      <i class="fa fa-lock"></i>
+      <span class="p-l-1">Permissions</span>
+    </h2>
+
+    <a class="modal-header-close" ng-click="ctrl.dismiss();">
+      <i class="fa fa-remove"></i>
+    </a>
+  </div>
+
+  <div class="modal-content">
+    <table class="filter-table gf-form-group">
+      <tr ng-repeat="acl in ctrl.items" ng-class="{'gf-form-disabled': acl.inherited}">
+        <td style="width: 100%;">
+          <i class="{{acl.icon}}"></i>
+          <span ng-bind-html="acl.nameHtml"></span>
+        </td>
+        <td>
+          <em class="muted no-wrap" ng-show="acl.inherited">Inherited from folder</em>
+        </td>
+        <td class="query-keyword">Can</td>
+        <td>
+          <div class="gf-form-select-wrapper">
+            <select class="gf-form-input gf-size-auto" ng-model="acl.permission" ng-options="p.value as p.text for p in ctrl.permissionOptions" ng-change="ctrl.permissionChanged(acl)" ng-disabled="acl.inherited"></select>
+          </div>
+        </td>
+        <td>
+          <a class="btn btn-inverse btn-small" ng-click="ctrl.removeItem($index)" ng-hide="acl.inherited">
+            <i class="fa fa-remove"></i>
+          </a>
+        </td>
+      </tr>
+      <tr ng-show="ctrl.aclItems.length === 0">
+        <td colspan="4">
+          <em>No permissions. Will only be accessible by admins.</em>
+        </td>
+      </tr>
+    </table>
+
+    <div class="gf-form-inline">
+      <form name="addPermission" class="gf-form-group">
+        <h6 class="muted">Add Permission For</h6>
+        <div class="gf-form-inline">
+          <div class="gf-form">
+            <div class="gf-form-select-wrapper">
+              <select class="gf-form-input gf-size-auto" ng-model="ctrl.newType" ng-options="p.value as p.text for p in ctrl.aclTypes"  ng-change="ctrl.typeChanged()"></select>
+            </div>
+          </div>
+          <div class="gf-form" ng-show="ctrl.newType === 'User'">
+            <user-picker user-picked="ctrl.userPicked($user)"></user-picker>
+          </div>
+          <div class="gf-form" ng-show="ctrl.newType === 'Group'">
+            <team-picker team-picked="ctrl.groupPicked($group)"></team-picker>
+          </div>
+        </div>
+      </form>
+      <div class="gf-form width-17">
+        <span ng-if="ctrl.error" class="text-error p-l-1">
+          <i class="fa fa-warning"></i>
+          {{ctrl.error}}
+        </span>
+      </div>
+    </div>
+
+    <div class="gf-form-button-row text-center">
+      <button type="button" class="btn btn-danger" ng-disabled="!ctrl.canUpdate" ng-click="ctrl.update()">
+        Update Permissions
+      </button>
+      <a class="btn-text" ng-click="ctrl.dismiss();">Close</a>
+    </div>
+  </div>
+</div>
+
+  <!-- <br> -->
+  <!-- <br> -->
+  <!-- <br> -->
+  <!--  -->
+  <!-- <div class="permissionlist"> -->
+  <!--   <div class="permissionlist__section"> -->
+  <!--     <div class="permissionlist__section&#45;header"> -->
+  <!--       <h6>Permissions</h6> -->
+  <!--     </div> -->
+  <!--     <table class="filter&#45;table form&#45;inline"> -->
+  <!--       <thead> -->
+  <!--         <tr> -->
+  <!--           <th style="width: 50px;"></th> -->
+  <!--           <th>Name</th> -->
+  <!--           <th style="width: 220px;">Permission</th> -->
+  <!--           <th style="width: 120px"></th> -->
+  <!--         </tr> -->
+  <!--       </thead> -->
+  <!--       <tbody> -->
+  <!--         <tr ng&#45;repeat="permission in ctrl.userPermissions" class="permissionlist__item"> -->
+  <!--           <td><i class="fa fa&#45;fw fa&#45;user"></i></td> -->
+  <!--           <td>{{permission.userLogin}}</td> -->
+  <!--           <td class="text&#45;right"> -->
+  <!--             <a ng&#45;click="ctrl.removePermission(permission)" class="btn btn&#45;danger btn&#45;small"> -->
+  <!--               <i class="fa fa&#45;remove"></i> -->
+  <!--             </a> -->
+  <!--           </td> -->
+  <!--         </tr> -->
+  <!--         <tr ng&#45;repeat="permission in ctrl.teamPermissions" class="permissionlist__item"> -->
+  <!--           <td><i class="fa fa&#45;fw fa&#45;users"></i></td> -->
+  <!--           <td>{{permission.team}}</td> -->
+  <!--           <td><select class="gf&#45;form&#45;input gf&#45;size&#45;auto" ng&#45;model="permission.permissions" ng&#45;options="p.value as p.text for p in ctrl.permissionTypeOptions" ng&#45;change="ctrl.updatePermission(permission)"></select></td> -->
+  <!--           <td class="text&#45;right"> -->
+  <!--             <a ng&#45;click="ctrl.removePermission(permission)" class="btn btn&#45;danger btn&#45;small"> -->
+  <!--               <i class="fa fa&#45;remove"></i> -->
+  <!--             </a> -->
+  <!--           </td> -->
+  <!--         </tr> -->
+  <!--         <tr ng&#45;repeat="role in ctrl.roles" class="permissionlist__item"> -->
+  <!--           <td></td> -->
+  <!--           <td>{{role.name}}</td> -->
+  <!--           <td><select class="gf&#45;form&#45;input gf&#45;size&#45;auto" ng&#45;model="role.permissions" ng&#45;options="p.value as p.text for p in ctrl.roleOptions" ng&#45;change="ctrl.updatePermission(role)"></select></td> -->
+  <!--           <td class="text&#45;right"> -->
+  <!--  -->
+  <!--           </td> -->
+  <!--         </tr> -->
+  <!--       </tbody> -->
+  <!--     </table> -->
+  <!--   </div> -->
+  <!--   </div> -->
+  <!-- </div> -->

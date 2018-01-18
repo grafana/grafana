@@ -1,11 +1,10 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
 
 export default class ResponseParser {
-
   parse(query, results) {
-    if (!results || results.results.length === 0) { return []; }
+    if (!results || results.results.length === 0) {
+      return [];
+    }
 
     var influxResults = results.results[0];
     if (!influxResults.series) {
@@ -30,7 +29,7 @@ export default class ResponseParser {
     });
 
     return _.map(res, value => {
-      return { text: value};
+      return { text: value };
     });
   }
 }

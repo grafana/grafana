@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func initContextWithAuthProxy(ctx *Context) bool {
+func initContextWithAuthProxy(ctx *Context, orgId int64) bool {
 	if !setting.AuthProxyEnabled {
 		return false
 	}
@@ -30,6 +30,7 @@ func initContextWithAuthProxy(ctx *Context) bool {
 	}
 
 	query := getSignedInUserQueryForProxyAuth(proxyHeaderValue)
+	query.OrgId = orgId
 	if err := bus.Dispatch(query); err != nil {
 		if err != m.ErrUserNotFound {
 			ctx.Handle(500, "Failed to find user specified in auth proxy header", err)
@@ -46,7 +47,7 @@ func initContextWithAuthProxy(ctx *Context) bool {
 				ctx.Handle(500, "Failed to create user specified in auth proxy header", err)
 				return true
 			}
-			query = &m.GetSignedInUserQuery{UserId: cmd.Result.Id}
+			query = &m.GetSignedInUserQuery{UserId: cmd.Result.Id, OrgId: orgId}
 			if err := bus.Dispatch(query); err != nil {
 				ctx.Handle(500, "Failed find user after creation", err)
 				return true
@@ -66,7 +67,7 @@ func initContextWithAuthProxy(ctx *Context) bool {
 	if getRequestUserId(ctx) > 0 && getRequestUserId(ctx) != query.Result.UserId {
 		// remove session
 		if err := ctx.Session.Destory(ctx); err != nil {
-			log.Error(3, "Failed to destory session, err")
+			log.Error(3, "Failed to destroy session, err")
 		}
 
 		// initialize a new session
@@ -106,8 +107,8 @@ var syncGrafanaUserWithLdapUser = func(ctx *Context, query *m.GetSignedInUserQue
 			ldapCfg := login.LdapCfg
 
 			for _, server := range ldapCfg.Servers {
-				auther := login.NewLdapAuthenticator(server)
-				if err := auther.SyncSignedInUser(query.Result); err != nil {
+				author := login.NewLdapAuthenticator(server)
+				if err := author.SyncSignedInUser(query.Result); err != nil {
 					return err
 				}
 			}

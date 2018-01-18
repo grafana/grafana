@@ -17,3 +17,8 @@ CONF_FILE=/etc/grafana/grafana.ini
 RESTART_ON_UPGRADE=true
 
 PLUGINS_DIR=/var/lib/grafana/plugins
+
+PROVISIONING_CFG_DIR=/etc/grafana/provisioning
+
+# Only used on systemd systems
+PID_FILE_DIR=/var/run/grafana

@@ -1,11 +1,9 @@
-///<reference path="../../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import config from 'app/core/config';
-import {PanelCtrl} from '../../../features/panel/panel_ctrl';
+import { PanelCtrl } from '../../../features/panel/panel_ctrl';
 
 class PluginListCtrl extends PanelCtrl {
   static templateUrl = 'module.html';
+  static scrollable = true;
 
   pluginList: any[];
   viewModel: any;
@@ -16,14 +14,15 @@ class PluginListCtrl extends PanelCtrl {
   /** @ngInject */
   constructor($scope, $injector, private backendSrv, private $location) {
     super($scope, $injector);
+
     _.defaults(this.panel, this.panelDefaults);
 
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.pluginList = [];
     this.viewModel = [
-      {header: "Installed Apps", list: [], type: 'app'},
-      {header: "Installed Panels", list: [], type: 'panel'},
-      {header: "Installed Datasources", list: [], type: 'datasource'},
+      { header: 'Installed Apps', list: [], type: 'app' },
+      { header: 'Installed Panels', list: [], type: 'panel' },
+      { header: 'Installed Datasources', list: [], type: 'datasource' },
     ];
 
     this.update();
@@ -35,7 +34,9 @@ class PluginListCtrl extends PanelCtrl {
   }
 
   gotoPlugin(plugin, evt) {
-    if (evt) { evt.stopPropagation(); }
+    if (evt) {
+      evt.stopPropagation();
+    }
     this.$location.url(`plugins/${plugin.id}/edit`);
   }
 
@@ -48,16 +49,16 @@ class PluginListCtrl extends PanelCtrl {
 
     this.publishAppEvent('show-modal', {
       src: 'public/app/features/plugins/partials/update_instructions.html',
-      scope: modalScope
+      scope: modalScope,
     });
   }
 
   update() {
-    this.backendSrv.get('api/plugins', {embedded: 0, core: 0}).then(plugins => {
+    this.backendSrv.get('api/plugins', { embedded: 0, core: 0 }).then(plugins => {
       this.pluginList = plugins;
-      this.viewModel[0].list = _.filter(plugins, {type: 'app'});
-      this.viewModel[1].list = _.filter(plugins, {type: 'panel'});
-      this.viewModel[2].list = _.filter(plugins, {type: 'datasource'});
+      this.viewModel[0].list = _.filter(plugins, { type: 'app' });
+      this.viewModel[1].list = _.filter(plugins, { type: 'panel' });
+      this.viewModel[2].list = _.filter(plugins, { type: 'datasource' });
 
       for (let plugin of this.pluginList) {
         if (plugin.hasUpdate) {
@@ -70,4 +71,4 @@ class PluginListCtrl extends PanelCtrl {
   }
 }
 
-export {PluginListCtrl, PluginListCtrl as PanelCtrl}
+export { PluginListCtrl, PluginListCtrl as PanelCtrl };

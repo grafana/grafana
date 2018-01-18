@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width">
+  <meta name="theme-color" content="#000">
+
+  <title>Grafana</title>
+
+  <base href="[[.AppSubUrl]]/" />
+
+  <link rel="stylesheet" href="public/build/grafana.[[ .Theme ]].css?v[[ .BuildVersion ]]">
+
+  <link rel="icon" type="image/png" href="public/img/fav32.png">
+  <link rel="mask-icon" href="public/img/grafana_mask_icon.svg" color="#F05A28">
+
+</head>
+
+<body ng-cloak class="theme-[[ .Theme ]]">
+  <grafana-app class="grafana-app">
+
+    <sidemenu class="sidemenu"></sidemenu>
+
+    <div class="page-alert-list">
+      <div ng-repeat='alert in dashAlerts.list' class="alert-{{alert.severity}} alert">
+        <div class="alert-icon">
+          <i class="{{alert.icon}}"></i>
+        </div>
+        <div class="alert-body">
+          <div class="alert-title">{{alert.title}}</div>
+          <div class="alert-text" ng-bind='alert.text'></div>
+        </div>
+        <button type="button" class="alert-close" ng-click="dashAlerts.clear(alert)">
+          <i class="fa fa fa-remove"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="main-view">
+      <div class="scroll-canvas" grafana-scrollbar>
+        <div ng-view></div>
+
+        <footer class="footer">
+          <div class="text-center">
+            <ul>
+              <li>
+                <a href="http://docs.grafana.org" target="_blank">
+                  <i class="fa fa-file-code-o"></i>
+                  Docs
+                </a>
+              </li>
+              <li>
+                <a href="https://grafana.com/services/support" target="_blank">
+                  <i class="fa fa-support"></i>
+                  Support Plans
+                </a>
+              </li>
+              <li>
+                <a href="https://community.grafana.com/" target="_blank">
+                  <i class="fa fa-comments-o"></i>
+                  Community
+                </a>
+              </li>
+              <li>
+                <a href="https://grafana.com" target="_blank">Grafana</a>
+                <span>v[[.BuildVersion]] (commit: [[.BuildCommit]])</span>
+              </li>
+              [[if .NewGrafanaVersionExists]]
+              <li>
+                <a href="https://grafana.com/get" target="_blank" bs-tooltip="'[[.NewGrafanaVersion]]'">
+                  New version available!
+                </a>
+              </li>
+              [[end]]
+            </ul>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </grafana-app>
+
+  <script>
+    window.grafanaBootData = {
+      user: [[.User]],
+      settings: [[.Settings]],
+      navTree: [[.NavTree]]
+    };
+  </script> [[if .GoogleTagManagerId]]
+  <script>
+    dataLayer = [{
+      'IsSignedIn': '[[.User.IsSignedIn]]',
+      'Email': '[[.User.Email]]',
+      'Name': '[[.User.Name]]',
+      'UserId': '[[.User.Id]]',
+      'OrgId': '[[.User.OrgId]]',
+      'OrgName': '[[.User.OrgName]]',
+    }];
+  </script>
+  <!-- Google Tag Manager -->
+  <noscript>
+    <iframe src="//www.googletagmanager.com/ns.html?id=[[.GoogleTagManagerId]]" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+  </noscript>
+  <script>(function (w, d, s, l, i) {
+    w[l] = w[l] || []; w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' }); var f = d.getElementsByTagName(s)[0],
+      j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src = '//www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+    })(window, document, 'script', 'dataLayer', '[[.GoogleTagManagerId]]');</script>
+  <!-- End Google Tag Manager -->
+  [[end]]
+
+</body>
+
+</html>

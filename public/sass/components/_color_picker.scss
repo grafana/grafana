@@ -1,4 +1,3 @@
-
 .sp-replacer {
   background: inherit;
   border: none;
@@ -6,7 +5,8 @@
   padding: 0;
 }
 
-.sp-replacer:hover, .sp-replacer.sp-active {
+.sp-replacer:hover,
+.sp-replacer.sp-active {
   border-color: inherit;
   color: inherit;
 }
@@ -18,7 +18,8 @@
   padding: 0;
 }
 
-.sp-palette-container, .sp-picker-container {
+.sp-palette-container,
+.sp-picker-container {
   border: none;
 }
 
@@ -34,4 +35,15 @@
   margin: 0;
   float: left;
   z-index: 0;
+}
+
+.gf-color-picker__body {
+  padding-bottom: 10px;
+  padding-left: 6px;
+}
+
+.drop-popover.gf-color-picker {
+  .drop-content {
+    width: 210px;
+  }
 }

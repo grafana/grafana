@@ -1,8 +1,10 @@
 package plugins
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -33,14 +35,41 @@ type PluginScanner struct {
 	errors     []error
 }
 
-func Init() error {
+type PluginManager struct {
+	log log.Logger
+}
+
+func NewPluginManager(ctx context.Context) (*PluginManager, error) {
+	err := initPlugins(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &PluginManager{
+		log: log.New("plugins"),
+	}, nil
+}
+
+func (p *PluginManager) Run(ctx context.Context) error {
+	<-ctx.Done()
+
+	for _, p := range DataSources {
+		p.Kill()
+	}
+
+	p.log.Info("Stopped Plugins", "error", ctx.Err())
+	return ctx.Err()
+}
+
+func initPlugins(ctx context.Context) error {
 	plog = log.New("plugins")
 
-	DataSources = make(map[string]*DataSourcePlugin)
-	StaticRoutes = make([]*PluginStaticRoute, 0)
-	Panels = make(map[string]*PanelPlugin)
-	Apps = make(map[string]*AppPlugin)
-	Plugins = make(map[string]*PluginBase)
+	DataSources = map[string]*DataSourcePlugin{}
+	StaticRoutes = []*PluginStaticRoute{}
+	Panels = map[string]*PanelPlugin{}
+	Apps = map[string]*AppPlugin{}
+	Plugins = map[string]*PluginBase{}
 	PluginTypes = map[string]interface{}{
 		"panel":      PanelPlugin{},
 		"datasource": DataSourcePlugin{},
@@ -52,9 +81,8 @@ func Init() error {
 
 	// check if plugins dir exists
 	if _, err := os.Stat(setting.PluginsPath); os.IsNotExist(err) {
-		plog.Warn("Plugin dir does not exist", "dir", setting.PluginsPath)
 		if err = os.MkdirAll(setting.PluginsPath, os.ModePerm); err != nil {
-			plog.Warn("Failed to create plugin dir", "dir", setting.PluginsPath, "error", err)
+			plog.Error("Failed to create plugin dir", "dir", setting.PluginsPath, "error", err)
 		} else {
 			plog.Info("Plugin dir created", "dir", setting.PluginsPath)
 			scan(setting.PluginsPath)
@@ -69,9 +97,18 @@ func Init() error {
 	for _, panel := range Panels {
 		panel.initFrontendPlugin()
 	}
-	for _, panel := range DataSources {
-		panel.initFrontendPlugin()
+
+	for _, ds := range DataSources {
+		if ds.Backend {
+			err := ds.initBackendPlugin(ctx, plog)
+			if err != nil {
+				plog.Error("Failed to init plugin.", "error", err, "plugin", ds.Id)
+			}
+		}
+
+		ds.initFrontendPlugin()
 	}
+
 	for _, app := range Apps {
 		app.initApp()
 	}
@@ -166,30 +203,24 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 	return loader.Load(jsonParser, currentDir)
 }
 
-func GetPluginReadme(pluginId string) ([]byte, error) {
+func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 	plug, exists := Plugins[pluginId]
 	if !exists {
 		return nil, PluginNotFoundError{pluginId}
 	}
 
-	if plug.Readme != nil {
-		return plug.Readme, nil
+	path := filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToUpper(name)))
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		path = filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToLower(name)))
 	}
 
-	readmePath := filepath.Join(plug.PluginDir, "README.md")
-	if _, err := os.Stat(readmePath); os.IsNotExist(err) {
-		readmePath = filepath.Join(plug.PluginDir, "readme.md")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return make([]byte, 0), nil
 	}
 
-	if _, err := os.Stat(readmePath); os.IsNotExist(err) {
-		plug.Readme = make([]byte, 0)
-		return plug.Readme, nil
-	}
-
-	if readmeBytes, err := ioutil.ReadFile(readmePath); err != nil {
+	if data, err := ioutil.ReadFile(path); err != nil {
 		return nil, err
 	} else {
-		plug.Readme = readmeBytes
-		return plug.Readme, nil
+		return data, nil
 	}
 }

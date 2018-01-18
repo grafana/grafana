@@ -1,97 +1,96 @@
-<navbar icon="icon-gf icon-gf-users" title="Organization Users" title-url="org/users">
-</navbar>
+<page-header model="ctrl.navModel"></page-header>
 
-<div class="page-container">
-	<div class="page-header">
-		<h1>Organization users</h1>
+<div class="page-container page-body">
+  <div class="page-action-bar">
+    <label class="gf-form gf-form--grow gf-form--has-input-icon">
+      <input type="text" class="gf-form-input width-20" ng-model="ctrl.searchQuery" ng-change="ctrl.onQueryUpdated()" placeholder="Filter by username or email" />
+      <i class="gf-form-input-icon fa fa-search"></i>
+    </label>
 
-		<div class="page-header-tabs">
-			<button class="btn btn-success" ng-click="ctrl.openInviteModal()">
-				<i class="fa fa-plus"></i>
-				Add or Invite
-			</button>
+    <div class="page-action-bar__spacer"></div>
 
-			<ul class="gf-tabs">
-				<li class="gf-tabs-item">
-					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 0" ng-class="{active: ctrl.editor.index === 0}">
-						Users ({{ctrl.users.length}})
-					</a>
-				</li>
-				<li class="gf-tabs-item">
-					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 1" ng-class="{active: ctrl.editor.index === 1}">
-						Pending Invitations ({{ctrl.pendingInvites.length}})
-					</a>
-				</li>
-			</ul>
-		</div>
-	</div>
+    <button class="btn btn-inverse" ng-show="ctrl.pendingInvites.length" ng-click="ctrl.showInvites = true">
+      Pending Invites ({{ctrl.pendingInvites.length}})
+    </button>
 
-	<div ng-if="ctrl.editor.index === 0" class="tab-content">
-		<table class="filter-table form-inline">
-			<thead>
-				<tr>
-					<th>Login</th>
-					<th>Email</th>
-					<th>Role</th>
-					<th style="width: 34px;"></th>
-				</tr>
-			</thead>
-			<tr ng-repeat="user in ctrl.users">
-				<td>{{user.login}}</td>
-				<td><span class="ellipsis">{{user.email}}</span></td>
-				<td>
-					<select type="text" ng-model="user.role" class="input-medium" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="ctrl.updateOrgUser(user)">
-					</select>
-				</td>
-				<td>
-					<a ng-click="ctrl.removeUser(user)" class="btn btn-danger btn-mini">
-						<i class="fa fa-remove"></i>
-					</a>
-				</td>
-			</tr>
-		</table>
-	</div>
+    <a class="btn btn-success" href="org/users/invite" ng-show="ctrl.canInvite">
+      <i class="fa fa-plus"></i>
+      <span>Invite</span>
+    </a>
 
-	<div ng-if="ctrl.editor.index === 1" >
-		<table class="filter-table form-inline">
-			<thead>
-				<tr>
-					<th>Email</th>
-					<th>Name</th>
-					<th></th>
-				</tr>
-			</thead>
-			<tbody ng-repeat="invite in ctrl.pendingInvites">
-				<tr ng-click="invite.expanded = !invite.expanded" ng-class="{'expanded': invite.expanded}">
-					<td>{{invite.email}}</td>
-					<td>{{invite.name}}</td>
-					<td class="text-right">
-						<button class="btn btn-inverse btn-mini " data-clipboard-text="{{invite.url}}" clipboard-button ng-click="ctrl.copyInviteToClipboard($event)">
-							<i class="fa fa-clipboard"></i> Copy Invite
-						</button>
-						&nbsp;
-						<button class="btn btn-inverse btn-mini">
-							Details
-							<i ng-show="!invite.expanded" class="fa fa-caret-right"></i>
-							<i ng-show="invite.expanded" class="fa fa-caret-down"></i>
-						</button>
-					</td>
-				</tr>
-				<tr ng-show="invite.expanded">
-					<td colspan="3">
-						<a href="{{invite.url}}">{{invite.url}}</a><br><br>
-						&nbsp;
-						<button class="btn btn-inverse btn-mini" ng-click="ctrl.revokeInvite(invite, $event)">
-							<i class="fa fa-remove" style="color: red"></i> Revoke invite
-						</button>
-						<span style="padding-left: 15px">
-							Invited: <em> {{invite.createdOn | date: 'shortDate'}} by {{invite.invitedBy}} </em>
-						</span>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+    <a class="btn btn-success" ng-href="{{ctrl.externalUserMngLinkUrl}}" target="_blank" ng-if="ctrl.externalUserMngLinkUrl">
+      <i class="fa fa-external-link-square"></i>
+      {{ctrl.externalUserMngLinkName}}
+    </a>
+  </div>
 
-	</div>
+  <div class="grafana-info-box" ng-if="ctrl.externalUserMngInfo">
+    <span ng-bind-html="ctrl.externalUserMngInfo"></span>
+  </div>
+
+  <div ng-hide="ctrl.showInvites">
+    <table class="filter-table form-inline">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Login</th>
+          <th>Email</th>
+          <th>
+            Seen
+            <tip>Time since user was seen using Grafana</tip>
+          </th>
+          <th>Role</th>
+          <th style="width: 34px;"></th>
+        </tr>
+      </thead>
+      <tr ng-repeat="user in ctrl.users">
+        <td class="width-4 text-center">
+          <img class="filter-table__avatar" ng-src="{{user.avatarUrl}}"></img>
+        </td>
+        <td>{{user.login}}</td>
+        <td><span class="ellipsis">{{user.email}}</span></td>
+        <td>{{user.lastSeenAtAge}}</td>
+        <td>
+          <div class="gf-form-select-wrapper width-12">
+            <select type="text" ng-model="user.role" class="gf-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Admin']" ng-change="ctrl.updateOrgUser(user)">
+            </select>
+          </div>
+        </td>
+        <td>
+          <a ng-click="ctrl.removeUser(user)" class="btn btn-danger btn-mini">
+            <i class="fa fa-remove"></i>
+          </a>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div ng-if="ctrl.showInvites">
+    <table class="filter-table form-inline">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Name</th>
+          <th></th>
+          <th style="width: 34px;"></th>
+        </tr>
+      </thead>
+      <tr ng-repeat="invite in ctrl.pendingInvites">
+        <td>{{invite.email}}</td>
+        <td>{{invite.name}}</td>
+        <td class="text-right">
+          <button class="btn btn-inverse btn-mini" clipboard-button="ctrl.getInviteUrl(invite)" ng-click="ctrl.copyInviteToClipboard($event)">
+            <i class="fa fa-clipboard"></i> Copy Invite
+          </button>
+          &nbsp;
+        </td>
+        <td>
+          <button class="btn btn-danger btn-mini" ng-click="ctrl.revokeInvite(invite, $event)">
+            <i class="fa fa-remove"></i>
+          </button>
+        </td>
+      </tr>
+    </table>
+  </div>
 </div>
 

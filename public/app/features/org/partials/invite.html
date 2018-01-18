@@ -1,62 +1,35 @@
-<div class="modal-body" ng-controller="UserInviteCtrl" ng-init="init()">
+<page-header model="ctrl.navModel"></page-header>
 
-	<div class="modal-header">
-		<h2 class="modal-header-title">
-			Invite Users
-		</h2>
-		<a class="modal-header-close" ng-click="dismiss();">
-			<i class="fa fa-remove"></i>
-		</a>
+<div class="page-container page-body" ng-cloak>
+
+	<h2 class="page-sub-heading">Invite User</h2>
+
+	<div class="p-b-2">
+		Send invite or add existing Grafana user to the organization
+		<span class="highlight-word">{{contextSrv.user.orgName}}</span>
 	</div>
 
-	<div class="modal-content">
-
-		<div class="modal-tagline p-b-2">
-			Send invite or add existing Grafana users to the organization
-			<span class="highlight-word">{{contextSrv.user.orgName}}</span>
-		</div>
-
-		<form name="inviteForm">
-			<div class="gf-form-group">
-				<div class="gf-form-inline" ng-repeat="invite in invites">
-					<div class="gf-form max-width-21">
-						<span class="gf-form-label">Email or Username</span>
-						<input type="text" ng-model="invite.loginOrEmail" required class="gf-form-input" placeholder="email@test.com">
-					</div>
-					<div class="gf-form max-width-14">
-						<span class="gf-form-label">Name</span>
-						<input type="text" ng-model="invite.name" class="gf-form-input" placeholder="name (optional)">
-					</div>
-					<div class="gf-form max-width-10">
-						<span class="gf-form-label">Role</span>
-						<select ng-model="invite.role" class="gf-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']">
-						</select>
-					</div>
-					<div class="gf-form gf-size-auto">
-						<a class="gf-form-label pointer" tabindex="1" ng-click="removeInvite(invite)">
-							<i class="fa fa-remove"></i>
-						</a>
-					</div>
-				</div>
+	<form name="ctrl.inviteForm">
+		<div class="gf-form-group">
+			<div class="gf-form max-width-30">
+				<span class="gf-form-label width-10">Email or Username</span>
+				<input type="text" ng-model="ctrl.invite.loginOrEmail" required class="gf-form-input" placeholder="email@test.com">
+			</div>
+			<div class="gf-form max-width-30">
+				<span class="gf-form-label width-10">Name</span>
+				<input type="text" ng-model="ctrl.invite.name" class="gf-form-input" placeholder="name (optional)">
+			</div>
+			<div class="gf-form max-width-30">
+        <span class="gf-form-label width-10">Role</span>
+				<select ng-model="ctrl.invite.role" class="gf-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Admin']">
+				</select>
 			</div>
 
-			<div class="gf-form-inline gf-form-group">
-				<div class="gf-form">
-					<a class="btn btn-inverse btn-small" ng-click="addInvite()">
-						<i class="fa fa-plus"></i>
-						Invite another
-					</a>
-				</div>
-				<div class="gf-form">
-					<editor-checkbox text="Skip sending invite email" model="options.skipEmails" change="targetBlur()"></editor-checkbox>
-				</div>
-			</div>
+			<gf-form-switch class="gf-form" label="Send invite email" checked="ctrl.invite.sendEmail" label-class="width-10"></gf-form-switch>
 
 			<div class="gf-form-button-row">
-				<button type="submit" class="btn btn-success" ng-click="sendInvites();">Invite Users</button>
-				<a class="btn-text" ng-click="dismiss()">Cancel</a>
+				<button type="submit" class="btn btn-success" ng-click="ctrl.sendInvite();">Invite</button>
+				<a class="btn btn-inverse" href="org/users">Back</a>
 			</div>
-			<div class="clearfix"></div>
-		</form>
-	</div>
+	</form>
 </div>

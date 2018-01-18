@@ -33,8 +33,8 @@ func AuthenticateUser(query *LoginUserQuery) error {
 
 	if setting.LdapEnabled {
 		for _, server := range LdapCfg.Servers {
-			auther := NewLdapAuthenticator(server)
-			err = auther.Login(query)
+			author := NewLdapAuthenticator(server)
+			err = author.Login(query)
 			if err == nil || err != ErrInvalidCredentials {
 				return err
 			}

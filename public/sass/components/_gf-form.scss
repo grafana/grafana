@@ -1,4 +1,5 @@
-$gf-form-margin: 0.25rem;
+$gf-form-margin: 3px;
+$input-border: 1px solid $input-border-color;
 
 .gf-form {
   margin-bottom: $gf-form-margin;
@@ -7,7 +8,6 @@ $gf-form-margin: 0.25rem;
   align-items: center;
   text-align: left;
   position: relative;
-  font-size: $font-size-sm;
 
   &--offset-1 {
     margin-left: $spacer;
@@ -16,12 +16,55 @@ $gf-form-margin: 0.25rem;
   &--grow {
     flex-grow: 1;
   }
+
+  &--flex-end {
+    justify-content: flex-end;
+  }
+
+  &--alt {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .gf-form-label {
+      padding: 4px 0;
+    }
+  }
+}
+
+.gf-form--has-input-icon {
+  position: relative;
+  margin-right: $gf-form-margin;
+
+  .gf-form-input-icon {
+    position: absolute;
+    top: 50%;
+    margin-top: -9px;
+    font-size: $font-size-lg;
+    left: 10px;
+    color: $input-color-placeholder;
+  }
+
+  > input {
+    padding-left: 35px;
+
+    &:focus + .gf-form-input-icon {
+      color: $text-muted;
+    }
+  }
+
+  .Select--multi .Select-multi-value-wrapper,
+  .Select-placeholder {
+    padding-left: 30px;
+  }
 }
 
 .gf-form-disabled {
   color: $text-color-weak;
 
-  .query-keyword,
+  .gf-form-select-wrapper::after {
+    color: $text-color-weak;
+  }
+
   a,
   .gf-form-input {
     color: $text-color-weak;
@@ -37,33 +80,59 @@ $gf-form-margin: 0.25rem;
   flex-direction: row;
   flex-wrap: wrap;
   align-content: flex-start;
+
+  .gf-form + .gf-form {
+    margin-right: $gf-form-margin;
+  }
 }
 
 .gf-form-button-row {
   padding-top: $spacer * 1.5;
-  a, button {
+  a,
+  button {
     margin-right: $spacer;
   }
 }
 
 .gf-form-label {
   padding: $input-padding-y $input-padding-x;
-  margin-right: $gf-form-margin;
   flex-shrink: 0;
+  font-weight: $font-weight-semi-bold;
+  font-size: $font-size-sm;
 
   background-color: $input-label-bg;
   display: block;
-  font-size: $font-size-sm;
-  margin-right: $gf-form-margin;
 
-  border: $input-btn-border-width solid transparent;
-  @include border-radius($label-border-radius-sm);
-
+  border: $input-btn-border-width solid $input-label-border-color;
+  border-right: none;
+  border-radius: $label-border-radius;
 
   &--grow {
     flex-grow: 1;
-    min-height: 2.60rem;
+    min-height: 2.6rem;
   }
+
+  &--error {
+    color: $critical;
+  }
+
+  &:disabled {
+    color: $text-color-weak;
+  }
+}
+
+.gf-form-label + .gf-form-label {
+  margin-right: $gf-form-margin;
+}
+
+.gf-form-pre {
+  display: block;
+  flex-grow: 1;
+  margin: 0;
+  margin-right: $gf-form-margin;
+  border: $input-btn-border-width solid transparent;
+  border-left: none;
+  @include border-radius($label-border-radius-sm);
 }
 
 .gf-form-checkbox {
@@ -88,16 +157,24 @@ $gf-form-margin: 0.25rem;
   width: 100%;
   padding: $input-padding-y $input-padding-x;
   margin-right: $gf-form-margin;
-  font-size: $font-size-base;
+  font-size: $font-size-md;
   line-height: $input-line-height;
   color: $input-color;
   background-color: $input-bg;
   background-image: none;
   background-clip: padding-box;
-  border: $input-btn-border-width solid $input-border-color;
-  @include border-radius($input-border-radius-sm);
+  border: $input-border;
+  border-radius: $input-border-radius;
   @include box-shadow($input-box-shadow);
-  transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  // text areas should be scrollable
+  @at-root textarea#{&} {
+    overflow: auto;
+    white-space: pre-wrap;
+  }
 
   // Unstyle the caret on `<select>`s in IE10+.
   &::-ms-expand {
@@ -131,22 +208,45 @@ $gf-form-margin: 0.25rem;
     cursor: $cursor-disabled;
   }
 
-  &.gf-size-auto { width: auto; }
+  &.gf-size-auto {
+    width: auto;
+  }
 
   &--dropdown {
     padding-right: $input-padding-x*2;
 
     &::after {
       position: absolute;
-      top: 35%;
-      right: $input-padding-x;
+      top: 36%;
+      right: 11px;
+      font-size: 11px;
       background-color: transparent;
-      color: $input-color;
+      color: $text-color;
       font: normal normal normal $font-size-sm/1 FontAwesome;
       content: '\f0d7';
       pointer-events: none;
     }
   }
+
+  &--small {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    font-size: $font-size-sm;
+  }
+
+  &--plaintext {
+    white-space: unset;
+  }
+}
+
+.gf-form-hint {
+  width: 100%;
+}
+
+.gf-form-hint-text {
+  display: block;
+  text-align: right;
+  padding-top: 0.5em;
 }
 
 .gf-form-select-wrapper {
@@ -154,12 +254,30 @@ $gf-form-margin: 0.25rem;
   position: relative;
   background-color: $input-bg;
 
+  .gf-form-select-icon {
+    position: absolute;
+    z-index: 1;
+    left: $input-padding-x;
+    top: 50%;
+    margin-top: -7px;
+
+    & + .gf-form-input {
+      position: relative;
+      z-index: 2;
+      padding-left: $input-padding-x*3;
+      background-color: transparent;
+
+      option {
+        // Firefox
+        color: $black;
+      }
+    }
+  }
+
   select.gf-form-input {
-    text-indent: .01px;
+    text-indent: 0.01px;
     text-overflow: '';
-    padding-right: $input-padding-x*2;
-    -webkit-appearance: none;
-    -moz-appearance: menulist-text; // was set to "window" and caused odd display on windos and linux.
+    padding-right: $input-padding-x*3;
     appearance: none;
 
     &:-moz-focusring {
@@ -175,13 +293,14 @@ $gf-form-margin: 0.25rem;
 
   &::after {
     position: absolute;
-    top: 35%;
-    right: $input-padding-x/2;
+    top: 36%;
+    right: 11px;
     background-color: transparent;
-    color: $input-color;
+    color: $text-color;
     font: normal normal normal $font-size-sm/1 FontAwesome;
     content: '\f0d7';
     pointer-events: none;
+    font-size: 11px;
   }
 
   &--has-help-icon {
@@ -200,20 +319,13 @@ $gf-form-margin: 0.25rem;
   margin-right: $gf-form-margin;
   line-height: $input-line-height;
   font-size: $font-size-sm;
-  box-shadow: none;
-  border: $input-btn-border-width solid transparent;
-  @include border-radius($label-border-radius-sm);
 
   flex-shrink: 0;
   flex-grow: 0;
 }
 
-.gf-form-switch {
-  margin-right: $gf-form-margin;
-}
-
 .natural-language-input {
-  &input[type="number"] {
+  &input[type='number'] {
     font-size: $font-size-base;
     line-height: $input-line-height;
     margin: -6px -5px 0 5px;
@@ -226,6 +338,8 @@ $gf-form-margin: 0.25rem;
   position: relative;
   background-color: $input-bg;
   padding-right: $input-padding-x;
+  border: $input-border;
+  border-radius: $input-border-radius;
 
   &::after {
     position: absolute;
@@ -236,6 +350,10 @@ $gf-form-margin: 0.25rem;
     font: normal normal normal $font-size-sm/1 FontAwesome;
     content: '\f0d7';
     pointer-events: none;
+  }
+
+  .gf-form-input {
+    border: none;
   }
 }
 
@@ -252,7 +370,7 @@ $gf-form-margin: 0.25rem;
   &--right-absolute {
     position: absolute;
     right: $spacer;
-    top: 8px;
+    top: 10px;
   }
 
   &--right-normal {
@@ -260,10 +378,17 @@ $gf-form-margin: 0.25rem;
   }
 
   &--header {
-    margin-bottom: $gf-form-margin
+    margin-bottom: $gf-form-margin;
   }
 }
 
 select.gf-form-input ~ .gf-form-help-icon {
   right: 10px;
+}
+
+.gf-form-icon--right-absolute {
+  position: absolute;
+  right: $spacer;
+  top: 10px;
+  color: $text-muted;
 }

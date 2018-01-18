@@ -21,15 +21,14 @@
 			</div>
 		</div>
 
-
 		<div class="modal-content-confirm-text" ng-if="confirmText">
 			<input type="text" class="gf-form-input width-16" style="display: inline-block;" placeholder="Type {{confirmText}} to confirm" ng-model="confirmInput" ng-change="updateConfirmText(confirmInput)">
 		</div>
 
 		<div class="confirm-modal-buttons">
-			<button type="button" class="btn btn-inverse" ng-click="dismiss()">{{noText}}</button>
-			<button type="button" class="btn btn-danger" ng-click="onConfirm();dismiss();" ng-disabled="!confirmTextValid" give-focus="true">{{yesText}}</button>
 			<button ng-show="onAltAction" type="button" class="btn btn-success" ng-click="dismiss();onAltAction();">{{altActionText}}</button>
+			<button type="button" class="btn btn-danger" ng-click="onConfirm();dismiss();" ng-disabled="!confirmTextValid" give-focus="true">{{yesText}}</button>
+			<button type="button" class="btn btn-inverse" ng-click="dismiss()">{{noText}}</button>
 		</div>
 	</div>
 

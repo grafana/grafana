@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -34,6 +33,11 @@ func LoginView(c *middleware.Context) {
 	viewData.Settings["disableUserSignUp"] = !setting.AllowUserSignUp
 	viewData.Settings["loginHint"] = setting.LoginHint
 	viewData.Settings["disableLoginForm"] = setting.DisableLoginForm
+
+	if loginError, ok := c.Session.Get("loginError").(string); ok {
+		c.Session.Delete("loginError")
+		viewData.Settings["loginError"] = loginError
+	}
 
 	if !tryLoginUsingRememberCookie(c) {
 		c.HTML(200, VIEW_INDEX, viewData)
@@ -74,8 +78,7 @@ func tryLoginUsingRememberCookie(c *middleware.Context) bool {
 	user := userQuery.Result
 
 	// validate remember me cookie
-	if val, _ := c.GetSuperSecureCookie(
-		util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName); val != user.Login {
+	if val, _ := c.GetSuperSecureCookie(user.Rands+user.Password, setting.CookieRememberName); val != user.Login {
 		return false
 	}
 
@@ -94,6 +97,10 @@ func LoginApiPing(c *middleware.Context) {
 }
 
 func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) Response {
+	if setting.DisableLoginForm {
+		return ApiError(401, "Login is disabled", nil)
+	}
+
 	authQuery := login.LoginUserQuery{
 		Username: cmd.User,
 		Password: cmd.Password,
@@ -120,7 +127,7 @@ func LoginPost(c *middleware.Context, cmd dtos.LoginCommand) Response {
 		c.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
 	}
 
-	metrics.M_Api_Login_Post.Inc(1)
+	metrics.M_Api_Login_Post.Inc()
 
 	return Json(200, result)
 }
@@ -130,12 +137,15 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 		log.Error(3, "User login with nil user")
 	}
 
+	c.Resp.Header().Del("Set-Cookie")
+
 	days := 86400 * setting.LogInRememberDays
 	if days > 0 {
 		c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
-		c.SetSuperSecureCookie(util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
+		c.SetSuperSecureCookie(user.Rands+user.Password, setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
 	}
 
+	c.Session.RegenerateId(c)
 	c.Session.Set(middleware.SESS_KEY_USERID, user.Id)
 }
 

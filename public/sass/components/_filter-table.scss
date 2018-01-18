@@ -2,8 +2,6 @@
 // FILTER TABLE
 // ==========================================================================
 
-
-
 // Table
 // --------------------------------------------------------------------------
 
@@ -13,45 +11,77 @@
 
 .filter-table {
   width: 100%;
-  border-collapse: collapse;
-  // table-layout: fixed;
-}
+  border-collapse: separate;
 
-.filter-table tr {
-  background: $grafanaListBackground;
-  border-bottom: 2px solid $page-bg;
-}
-
-.filter-table th {
-  width: auto;
-  padding: 10px 15px 10px 0;
-  text-align: left;
-
-  &:first-child {
-    padding-left: 15px;
+  tbody {
+    tr:nth-child(odd) {
+      background: $table-bg-odd;
+    }
   }
-}
 
-.filter-table td {
-  padding: 15px 15px 15px 0;
-
-  &:first-child {
-    padding-left: 15px;
+  th {
+    width: auto;
+    padding: $table-cell-padding;
+    text-align: left;
+    line-height: 30px;
+    height: 30px;
+    white-space: nowrap;
   }
-}
 
-.filter-table .ellipsis {
-  display: block;
-  width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+  td {
+    padding: $table-cell-padding;
+    line-height: 30px;
+    height: 30px;
+    white-space: nowrap;
 
-.filter-table .expanded {
-  border-color: $panel-bg;
-}
+    &.filter-table__switch-cell {
+      padding: 0;
+      border-right: 3px solid $page-bg;
+    }
+  }
 
-.filter-table .expanded > td {
-  padding-bottom: 0;
+  .link-td {
+    padding: 0;
+    line-height: 30px;
+    height: 30px;
+    white-space: nowrap;
+
+    &.filter-table__switch-cell {
+      padding: 0;
+      border-right: 3px solid $page-bg;
+    }
+
+    a {
+      display: block;
+      padding: $table-cell-padding;
+    }
+  }
+
+  .ellipsis {
+    display: block;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .expanded {
+    border-color: $panel-bg;
+  }
+
+  .expanded > td {
+    padding-bottom: 0;
+  }
+
+  .filter-table__avatar {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+  }
+
+  &--hover {
+    tbody tr:hover {
+      background: $dark-3;
+    }
+  }
 }

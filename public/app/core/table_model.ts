@@ -1,11 +1,12 @@
-
 export default class TableModel {
   columns: any[];
   rows: any[];
   type: string;
+  columnMap: any;
 
   constructor() {
     this.columns = [];
+    this.columnMap = {};
     this.rows = [];
     this.type = 'table';
   }
@@ -34,6 +35,13 @@ export default class TableModel {
       this.columns[options.col].desc = true;
     } else {
       this.columns[options.col].desc = false;
+    }
+  }
+
+  addColumn(col) {
+    if (!this.columnMap[col.text]) {
+      this.columns.push(col);
+      this.columnMap[col.text] = col;
     }
   }
 }

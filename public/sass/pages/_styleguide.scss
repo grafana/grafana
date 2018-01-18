@@ -9,9 +9,15 @@
   font-size: $font-size-sm;
 }
 
-.color-card-body-bg { background-color: $body-bg; }
-.color-card-page-bg { background-color: $page-bg; }
-.color-card-gray { background-color: $gray-1; }
+.color-card-body-bg {
+  background-color: $body-bg;
+}
+.color-card-page-bg {
+  background-color: $page-bg;
+}
+.color-card-gray {
+  background-color: $gray-1;
+}
 
 .style-guide-button-list {
   padding: $spacer;
@@ -21,52 +27,7 @@
   }
 }
 
-// define("areas/styleguide/static/script/app/colors", [], function() {
-//    "use strict";
-//    var a = function(a) {
-//        return 0 === a.indexOf("rgba") ? (a = a.match(/(\d{1,3})/gi),
-//        [a[0], a[1], a[2]]) : (a = a.replace(/^#/, "").match(/[0-9a-z]{2}/gi),
-//        [parseInt(a[0], 16), parseInt(a[1], 16), parseInt(a[2], 16)])
-//    }
-//      , b = function(b, c) {
-//        var d = 0
-//          , e = 0;
-//        for (b = a(b),
-//        c = a(c); e < b.length; )
-//            d += (b[e] - c[e]) * (b[e] - c[e]),
-//            e++;
-//        return Math.sqrt(d)
-//    }
-//      , c = function() {
-//        $(".color-card").removeClass("isnt-approximate is-approximate is-exact")
-//    }
-//      , d = function() {
-//        var a = $("#proximityMatch").val()
-//          , c = $(".swatch");
-//        c.each(function() {
-//            var c = $(this)
-//              , d = b(a, c.children("i").text());
-//            c.parent().removeClass("is-approximate isnt-approximate is-exact"),
-//            20 > d ? (c.css("border-color", /^#/.test(a) ? a : "#" + a),
-//            c.parent().addClass("is-approximate"),
-//            c.parent().addClass("has-match"),
-//            0 === d && c.parent().addClass("is-exact")) : c.parent().addClass("isnt-approximate")
-//        })
-//    }
-//      , e = $("#proximityMatch")
-//      , f = function() {
-//        var a = e.val();
-//        "#" == a[0] && (a = a.substring(1)),
-//        6 == a.length ? d() : c()
-//    }
-//    ;
-//    e.on("input", f),
-//    e.val() && f();
-//    var g = function() {
-//        var a = "/static/images/styleguide/leaves.jpg"
-//          , b = $("[data-colors]");
-//        "none" === b.css("background-image") ? b.css("background-image", "url('" + a + "')") : b.css("background-image", "none")
-//    }
-//    ;
-//    $("#toggle-background-image").on("click", g)
-// })
+.style-guide-icon-list {
+  font-size: 1.8em;
+  text-align: center;
+}

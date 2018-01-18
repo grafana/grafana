@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
@@ -50,13 +51,13 @@ func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 		State:       m.AlertStateAlerting,
 	}
 
-	ctx := NewEvalContext(context.TODO(), testRule)
+	ctx := NewEvalContext(context.Background(), testRule)
 	if cmd.Settings.Get("uploadImage").MustBool(true) {
 		ctx.ImagePublicUrl = "http://grafana.org/assets/img/blog/mixed_styles.png"
 	}
 	ctx.IsTestRun = true
 	ctx.Firing = true
-	ctx.Error = nil
+	ctx.Error = fmt.Errorf("This is only a test")
 	ctx.EvalMatches = evalMatchesBasedOnState()
 
 	return ctx

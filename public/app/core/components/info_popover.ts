@@ -1,7 +1,4 @@
-///<reference path="../../headers/common.d.ts" />
-
 import _ from 'lodash';
-import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import Drop from 'tether-drop';
 
@@ -11,10 +8,10 @@ export function infoPopover() {
     template: '<i class="fa fa-info-circle"></i>',
     transclude: true,
     link: function(scope, elem, attrs, ctrl, transclude) {
-      var offset = attrs.offset || '0 -10px';
-      var position = attrs.position || 'right middle';
-      var classes = 'drop-help drop-hide-out-of-bounds';
-      var openOn = 'hover';
+      let offset = attrs.offset || '0 -10px';
+      let position = attrs.position || 'right middle';
+      let classes = 'drop-help drop-hide-out-of-bounds';
+      let openOn = 'hover';
 
       elem.addClass('gf-form-help-icon');
 
@@ -27,12 +24,14 @@ export function infoPopover() {
       }
 
       transclude(function(clone, newScope) {
-        var content = document.createElement("div");
-        _.each(clone, (node) => {
+        let content = document.createElement('div');
+        content.className = 'markdown-html';
+
+        _.each(clone, node => {
           content.appendChild(node);
         });
 
-        var drop = new Drop({
+        let dropOptions = {
           target: elem[0],
           content: content,
           position: position,
@@ -40,17 +39,28 @@ export function infoPopover() {
           openOn: openOn,
           hoverOpenDelay: 400,
           tetherOptions: {
-            offset: offset
-          }
-        });
+            offset: offset,
+            constraints: [
+              {
+                to: 'window',
+                attachment: 'together',
+                pin: true,
+              },
+            ],
+          },
+        };
 
-        var unbind = scope.$on('$destroy', function() {
-          drop.destroy();
-          unbind();
-        });
+        // Create drop in next digest after directive content is rendered.
+        scope.$applyAsync(() => {
+          let drop = new Drop(dropOptions);
 
+          let unbind = scope.$on('$destroy', function() {
+            drop.destroy();
+            unbind();
+          });
+        });
       });
-    }
+    },
   };
 }
 

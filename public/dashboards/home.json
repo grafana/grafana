@@ -1,74 +1,82 @@
 {
-  "id": null,
-  "title": "Home",
-  "tags": [],
-  "style": "dark",
-  "timezone": "browser",
+  "annotations": {
+    "list": []
+  },
   "editable": true,
+  "folderId": null,
+  "gnetId": null,
+  "graphTooltip": 0,
   "hideControls": true,
-  "sharedCrosshair": false,
-  "rows": [
-   {
-      "title": "Home Dashboard",
-      "collapse": false,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "content": "<div class=\"text-center dashboard-header\">\n  <span>Home Dashboard</span>\n</div>",
       "editable": true,
-      "height": "25px",
-      "panels": [
-        {
-          "content": "<div class=\"text-center dashboard-header\">\n  <span>Home Dashboard</span>\n</div>",
-          "editable": true,
-          "id": 1,
-          "links": [],
-          "mode": "html",
-          "span": 12,
-          "style": {},
-          "title": "",
-          "transparent": true,
-          "type": "text"
-        }
-     ]
-   },
-   {
-      "collapse": false,
+      "id": 1,
+      "links": [],
+      "mode": "html",
+      "style": {},
+      "title": "",
+      "transparent": true,
+      "type": "text",
+      "gridPos": {
+        "w": 24,
+        "h": 3,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "folderId": 0,
+      "headings": true,
+      "id": 3,
+      "limit": 4,
+      "links": [],
+      "query": "",
+      "recent": true,
+      "search": false,
+      "starred": true,
+      "tags": [],
+      "title": "",
+      "transparent": false,
+      "type": "dashlist",
+      "gridPos": {
+        "w": 12,
+        "h": 17,
+        "x": 0,
+        "y": 6
+      }
+    },
+    {
       "editable": true,
-      "height": "510px",
-      "panels": [
-        {
-          "id": 3,
-          "limit": 4,
-          "links": [],
-          "query": "",
-          "span": 7,
-          "tags": [],
-          "title": "",
-          "transparent": false,
-          "type": "dashlist",
-          "recent": true,
-          "search": false,
-          "starred": true,
-          "headings": true
-        },
-        {
-          "editable": true,
-          "error": false,
-          "id": 4,
-          "isNew": true,
-          "links": [],
-          "span": 5,
-          "title": "",
-          "transparent": false,
-          "type": "pluginlist"
-        }
-      ],
-      "title": "Row"
-   }
- ],
+      "error": false,
+      "id": 4,
+      "links": [],
+      "title": "",
+      "transparent": false,
+      "type": "pluginlist",
+      "gridPos": {
+        "w": 12,
+        "h": 17,
+        "x": 12,
+        "y": 6
+      }
+    }
+  ],
+  "rows": [],
+  "schemaVersion": 16,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": []
+  },
   "time": {
     "from": "now-6h",
     "to": "now"
   },
   "timepicker": {
-    "enable": false,
+    "hidden": true,
     "refresh_intervals": [
       "5s",
       "10s",
@@ -94,13 +102,7 @@
     ],
     "type": "timepicker"
   },
-  "templating": {
-    "list": []
-  },
-  "annotations": {
-    "list": []
-  },
-  "schemaVersion": 12,
-  "version": 2,
-  "links": []
+  "timezone": "browser",
+  "title": "Home",
+  "version": 0
 }
