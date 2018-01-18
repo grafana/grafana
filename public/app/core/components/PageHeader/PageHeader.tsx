@@ -1,4 +1,5 @@
 import React from 'react';
+import { observer } from 'mobx-react';
 import { NavModel, NavModelItem } from '../../nav_model_srv';
 import classNames from 'classnames';
 import appEvents from 'app/core/app_events';
@@ -7,49 +8,7 @@ export interface IProps {
   model: NavModel;
 }
 
-function TabItem(tab: NavModelItem) {
-  if (tab.hideFromTabs) {
-    return null;
-  }
-
-  let tabClasses = classNames({
-    'gf-tabs-link': true,
-    active: tab.active,
-  });
-
-  return (
-    <li className="gf-tabs-item" key={tab.url}>
-      <a className={tabClasses} target={tab.target} href={tab.url}>
-        <i className={tab.icon} />
-        {tab.text}
-      </a>
-    </li>
-  );
-}
-
-function SelectOption(navItem: NavModelItem) {
-  if (navItem.hideFromTabs) {
-    // TODO: Rename hideFromTabs => hideFromNav
-    return null;
-  }
-
-  return (
-    <option key={navItem.url} value={navItem.url}>
-      {navItem.text}
-    </option>
-  );
-}
-
-function Navigation({ main }: { main: NavModelItem }) {
-  return (
-    <nav>
-      <SelectNav customCss="page-header__select-nav" main={main} />
-      <Tabs customCss="page-header__tabs" main={main} />
-    </nav>
-  );
-}
-
-function SelectNav({ main, customCss }: { main: NavModelItem; customCss: string }) {
+const SelectNav = observer(({ main, customCss }: { main: NavModelItem; customCss: string }) => {
   const defaultSelectedItem = main.children.find(navItem => {
     return navItem.active === true;
   });
@@ -66,20 +25,62 @@ function SelectNav({ main, customCss }: { main: NavModelItem; customCss: string 
       {/* Label to make it clickable */}
       <select
         className="gf-select-nav gf-form-input"
-        defaultValue={defaultSelectedItem.url}
+        value={defaultSelectedItem.url}
         onChange={gotoUrl}
         id="page-header-select-nav"
       >
-        {main.children.map(SelectOption)}
+        {main.children.map((navItem: NavModelItem) => {
+          if (navItem.hideFromTabs) {
+            // TODO: Rename hideFromTabs => hideFromNav
+            return null;
+          }
+          return (
+            <option key={navItem.url} value={navItem.url}>
+              {navItem.text}
+            </option>
+          );
+        })}
       </select>
     </div>
   );
-}
+});
 
-function Tabs({ main, customCss }: { main: NavModelItem; customCss: string }) {
-  return <ul className={`gf-tabs ${customCss}`}>{main.children.map(TabItem)}</ul>;
-}
+const Tabs = observer(({ main, customCss }: { main: NavModelItem; customCss: string }) => {
+  return (
+    <ul className={`gf-tabs ${customCss}`}>
+      {main.children.map((tab, idx) => {
+        if (tab.hideFromTabs) {
+          return null;
+        }
 
+        const tabClasses = classNames({
+          'gf-tabs-link': true,
+          active: tab.active,
+        });
+
+        return (
+          <li className="gf-tabs-item" key={tab.url}>
+            <a className={tabClasses} target={tab.target} href={tab.url}>
+              <i className={tab.icon} />
+              {tab.text}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  );
+});
+
+const Navigation = ({ main }: { main: NavModelItem }) => {
+  return (
+    <nav>
+      <SelectNav customCss="page-header__select-nav" main={main} />
+      <Tabs customCss="page-header__tabs" main={main} />
+    </nav>
+  );
+};
+
+@observer
 export default class PageHeader extends React.Component<IProps, any> {
   constructor(props) {
     super(props);
@@ -140,7 +141,6 @@ export default class PageHeader extends React.Component<IProps, any> {
     if (!model) {
       return null;
     }
-
     return (
       <div className="page-header-canvas">
         <div className="page-container">
