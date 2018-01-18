@@ -3,12 +3,13 @@ import { observer } from 'mobx-react';
 import { NavModel, NavModelItem } from '../../nav_model_srv';
 import classNames from 'classnames';
 import appEvents from 'app/core/app_events';
+import { toJS } from 'mobx';
 
 export interface IProps {
   model: NavModel;
 }
 
-const SelectNav = observer(({ main, customCss }: { main: NavModelItem; customCss: string }) => {
+const SelectNav = ({ main, customCss }: { main: NavModelItem; customCss: string }) => {
   const defaultSelectedItem = main.children.find(navItem => {
     return navItem.active === true;
   });
@@ -43,9 +44,9 @@ const SelectNav = observer(({ main, customCss }: { main: NavModelItem; customCss
       </select>
     </div>
   );
-});
+};
 
-const Tabs = observer(({ main, customCss }: { main: NavModelItem; customCss: string }) => {
+const Tabs = ({ main, customCss }: { main: NavModelItem; customCss: string }) => {
   return (
     <ul className={`gf-tabs ${customCss}`}>
       {main.children.map((tab, idx) => {
@@ -69,7 +70,7 @@ const Tabs = observer(({ main, customCss }: { main: NavModelItem; customCss: str
       })}
     </ul>
   );
-});
+};
 
 const Navigation = ({ main }: { main: NavModelItem }) => {
   return (
@@ -84,6 +85,11 @@ const Navigation = ({ main }: { main: NavModelItem }) => {
 export default class PageHeader extends React.Component<IProps, any> {
   constructor(props) {
     super(props);
+  }
+
+  shouldComponentUpdate() {
+    //Hack to re-render on changed props from angular with the @observer decorator
+    return true;
   }
 
   renderTitle(title: string, breadcrumbs: any[]) {
@@ -141,12 +147,15 @@ export default class PageHeader extends React.Component<IProps, any> {
     if (!model) {
       return null;
     }
+
+    const main = toJS(model.main); // Convert to JS if its a mobx observable
+
     return (
       <div className="page-header-canvas">
         <div className="page-container">
           <div className="page-header">
-            {this.renderHeaderTitle(model.main)}
-            {model.main.children && <Navigation main={model.main} />}
+            {this.renderHeaderTitle(main)}
+            {main.children && <Navigation main={main} />}
           </div>
         </div>
       </div>
