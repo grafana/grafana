@@ -135,35 +135,39 @@ func getOrCreateFolderId(cfg *DashboardsAsConfig, repo dashboards.Repository) (i
 	return cmd.Result.Id, nil
 }
 
+func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {
+	checkFilepath, err := filepath.EvalSymlinks(path)
+	if path != checkFilepath {
+		path = checkFilepath
+		fi, err := os.Lstat(checkFilepath)
+		if err != nil {
+			return nil, err
+		}
+
+		return fi, nil
+	}
+
+	return fileinfo, err
+}
+
 func createWalkFn(fr *fileReader, folderId int64) filepath.WalkFunc {
 	return func(path string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if fileInfo.IsDir() {
-			if strings.HasPrefix(fileInfo.Name(), ".") {
-				return filepath.SkipDir
-			}
-			return nil
+
+		isValid, err := validateWalkablePath(fileInfo)
+		if !isValid {
+			return err
 		}
 
-		if !strings.HasSuffix(fileInfo.Name(), ".json") {
-			return nil
-		}
-
-		checkFilepath, err := filepath.EvalSymlinks(path)
-
-		if path != checkFilepath {
-			path = checkFilepath
-			fi, err := os.Lstat(checkFilepath)
-			if err != nil {
-				return err
-			}
-			fileInfo = fi
+		resolvedFileInfo, err := resolveSymlink(fileInfo, path)
+		if err != nil {
+			return err
 		}
 
 		cachedDashboard, exist := fr.cache.getCache(path)
-		if exist && cachedDashboard.UpdatedAt == fileInfo.ModTime() {
+		if exist && cachedDashboard.UpdatedAt == resolvedFileInfo.ModTime() {
 			return nil
 		}
 
@@ -194,7 +198,7 @@ func createWalkFn(fr *fileReader, folderId int64) filepath.WalkFunc {
 		}
 
 		// break if db version is newer then fil version
-		if cmd.Result.Updated.Unix() >= fileInfo.ModTime().Unix() {
+		if cmd.Result.Updated.Unix() >= resolvedFileInfo.ModTime().Unix() {
 			return nil
 		}
 
@@ -203,6 +207,21 @@ func createWalkFn(fr *fileReader, folderId int64) filepath.WalkFunc {
 
 		return err
 	}
+}
+
+func validateWalkablePath(fileInfo os.FileInfo) (bool, error) {
+	if fileInfo.IsDir() {
+		if strings.HasPrefix(fileInfo.Name(), ".") {
+			return false, filepath.SkipDir
+		}
+		return false, nil
+	}
+
+	if !strings.HasSuffix(fileInfo.Name(), ".json") {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (fr *fileReader) readDashboardFromFile(path string, folderId int64) (*dashboards.SaveDashboardItem, error) {
