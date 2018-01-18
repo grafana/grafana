@@ -159,7 +159,8 @@ func createDateHistogramAgg(bAgg *BucketAggregate, timeRange *tsdb.TimeRange, de
 	result.Set("format", "epoch_millis")
 
 	if interval, _ := result.Get("interval").String(); interval == "auto" {
-		result.Set("interval", tsdb.CalculateInterval(timeRange).Text)
+		calculator := tsdb.NewIntervalCalculator(&tsdb.IntervalOptions{})
+		result.Set("interval", calculator.Calculate(timeRange, time.Millisecond*1).Text)
 	}
 
 	return result
