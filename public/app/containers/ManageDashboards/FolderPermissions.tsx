@@ -33,7 +33,9 @@ export class FolderPermissions extends Component<IContainerProps, any> {
     return (
       <div>
         <PageHeader model={nav as any} />
-        <Permissions isFolder={true} error="" newType="" dashboardId={1} backendSrv={this.props.backendSrv} />
+        <div className="page-container page-body">
+          <Permissions isFolder={true} error="" newType="" dashboardId={1} backendSrv={this.props.backendSrv} />
+        </div>
       </div>
     );
   }
