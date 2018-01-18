@@ -28,12 +28,12 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 
 	pbQuery := &datasource.DatasourceRequest{
 		Datasource: &datasource.DatasourceInfo{
-			Name:     ds.Name,
-			Type:     ds.Type,
-			Url:      ds.Url,
-			Id:       ds.Id,
-			OrgId:    ds.OrgId,
-			JsonData: string(jsonData),
+			Name:                    ds.Name,
+			Type:                    ds.Type,
+			Url:                     ds.Url,
+			Id:                      ds.Id,
+			OrgId:                   ds.OrgId,
+			JsonData:                string(jsonData),
 			DecryptedSecureJsonData: ds.SecureJsonData.Decrypt(),
 		},
 		TimeRange: &datasource.TimeRange{
