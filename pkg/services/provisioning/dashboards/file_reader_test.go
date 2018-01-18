@@ -42,7 +42,7 @@ func TestDashboardFileReader(t *testing.T) {
 			}
 
 			Convey("Can read default dashboard", func() {
-				cfg.Options["folder"] = defaultDashboards
+				cfg.Options["path"] = defaultDashboards
 				cfg.Folder = "Team A"
 
 				reader, err := NewDashboardFileReader(cfg, logger)
@@ -67,7 +67,7 @@ func TestDashboardFileReader(t *testing.T) {
 			})
 
 			Convey("Should not update dashboards when db is newer", func() {
-				cfg.Options["folder"] = oneDashboard
+				cfg.Options["path"] = oneDashboard
 
 				fakeRepo.getDashboard = append(fakeRepo.getDashboard, &models.Dashboard{
 					Updated: time.Now().Add(time.Hour),
@@ -84,7 +84,7 @@ func TestDashboardFileReader(t *testing.T) {
 			})
 
 			Convey("Can read default dashboard and replace old version in database", func() {
-				cfg.Options["folder"] = oneDashboard
+				cfg.Options["path"] = oneDashboard
 
 				stat, _ := os.Stat(oneDashboard + "/dashboard1.json")
 
@@ -115,7 +115,7 @@ func TestDashboardFileReader(t *testing.T) {
 			})
 
 			Convey("Broken dashboards should not cause error", func() {
-				cfg.Options["folder"] = brokenDashboards
+				cfg.Options["path"] = brokenDashboards
 
 				_, err := NewDashboardFileReader(cfg, logger)
 				So(err, ShouldBeNil)
@@ -167,7 +167,7 @@ func TestDashboardFileReader(t *testing.T) {
 				OrgId:  1,
 				Folder: "",
 				Options: map[string]interface{}{
-					"folder": defaultDashboards,
+					"path": defaultDashboards,
 				},
 			}
 
@@ -182,6 +182,30 @@ func TestDashboardFileReader(t *testing.T) {
 			Convey("should keep walking if file is not .json", func() {
 				shouldSkip := reader.createWalk(reader, 0)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
 				So(shouldSkip, ShouldBeNil)
+			})
+		})
+
+		Convey("Can use bpth path and folder as dashboard path", func() {
+			cfg := &DashboardsAsConfig{
+				Name:    "Default",
+				Type:    "file",
+				OrgId:   1,
+				Folder:  "",
+				Options: map[string]interface{}{},
+			}
+
+			Convey("using path parameter", func() {
+				cfg.Options["path"] = defaultDashboards
+				reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+				So(err, ShouldBeNil)
+				So(reader.Path, ShouldEqual, defaultDashboards)
+			})
+
+			Convey("using folder as options", func() {
+				cfg.Options["folder"] = defaultDashboards
+				reader, err := NewDashboardFileReader(cfg, log.New("test-logger"))
+				So(err, ShouldBeNil)
+				So(reader.Path, ShouldEqual, defaultDashboards)
 			})
 		})
 	})
