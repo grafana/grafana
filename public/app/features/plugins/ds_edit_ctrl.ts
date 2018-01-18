@@ -1,7 +1,8 @@
 import _ from 'lodash';
-
+import { toJS } from 'mobx';
 import config from 'app/core/config';
 import { coreModule, appEvents } from 'app/core/core';
+import { store } from 'app/stores/store';
 
 var datasourceTypes = [];
 
@@ -23,8 +24,6 @@ export class DataSourceEditCtrl {
   types: any;
   testing: any;
   datasourceMeta: any;
-  tabIndex: number;
-  hasDashboards: boolean;
   editForm: any;
   gettingStarted: boolean;
   navModel: any;
@@ -39,8 +38,8 @@ export class DataSourceEditCtrl {
     navModelSrv
   ) {
     this.navModel = navModelSrv.getNav('cfg', 'datasources', 0);
+    this.navModel = thi;
     this.datasources = [];
-    this.tabIndex = 0;
 
     this.loadDatasourceTypes().then(() => {
       if (this.$routeParams.id) {
@@ -54,8 +53,6 @@ export class DataSourceEditCtrl {
   initNewDatasourceModel() {
     this.isNew = true;
     this.current = _.cloneDeep(defaults);
-
-    this.navModel.breadcrumbs.push({ text: 'New' });
 
     // We are coming from getting started
     if (this.$location.search().gettingstarted) {
@@ -82,12 +79,6 @@ export class DataSourceEditCtrl {
     this.backendSrv.get('/api/datasources/' + id).then(ds => {
       this.isNew = false;
       this.current = ds;
-      this.navModel.node = {
-        text: ds.name,
-        icon: 'icon-gf icon-gf-fw icon-gf-datasources',
-        id: 'ds-new',
-      };
-      this.navModel.breadcrumbs.push(this.navModel.node);
 
       if (datasourceCreated) {
         datasourceCreated = false;
@@ -112,11 +103,15 @@ export class DataSourceEditCtrl {
     this.typeChanged();
   }
 
+  updateNav() {
+    store.nav.initDatasourceEditNav(this.current, this.datasourceMeta, 'datasource-settings');
+    this.navModel = toJS(store.nav);
+  }
+
   typeChanged() {
-    this.hasDashboards = false;
     return this.backendSrv.get('/api/plugins/' + this.current.type + '/settings').then(pluginInfo => {
       this.datasourceMeta = pluginInfo;
-      this.hasDashboards = _.find(pluginInfo.includes, { type: 'dashboard' }) !== undefined;
+      this.updateNav();
     });
   }
 
@@ -171,6 +166,7 @@ export class DataSourceEditCtrl {
     if (this.current.id) {
       return this.backendSrv.put('/api/datasources/' + this.current.id, this.current).then(result => {
         this.current = result.datasource;
+        this.updateNav();
         this.updateFrontendSettings().then(() => {
           this.testDatasource();
         });
