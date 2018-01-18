@@ -1,6 +1,5 @@
 ﻿import React, { Component } from 'react';
 import PermissionsList from './PermissionsList';
-import DevTools from 'mobx-react-devtools';
 import { inject, observer } from 'mobx-react';
 import UserPicker, { User } from 'app/core/components/UserPicker/UserPicker';
 import TeamPicker, { Team } from 'app/core/components/UserPicker/TeamPicker';
@@ -199,7 +198,22 @@ class Permissions extends Component<IProps, any> {
             Update Permissions
           </button>
         </div>
-        <DevTools />
+        <div className="empty-list-cta m-t-3">
+          <div className="grafana-info-box">
+            <h5>What are Permissions?</h5>
+            <p>
+              An Access Control List (ACL) model is used for to limit access to Dashboard Folders. A user or a Team can
+              be assigned permissions for a folder or for a single dashboard.
+            </p>
+            <p>The permissions that can be assigned for a folder/dashboard are:</p>
+            <p>View, Edit and Admin.</p>
+            Checkout the{' '}
+            <a className="external-link" target="_blank" href="http://docs.grafana.org/reference/dashboard_folders/">
+              Dashboard Folders documentation
+            </a>{' '}
+            for more information.
+          </div>
+        </div>
       </div>
     );
   }
