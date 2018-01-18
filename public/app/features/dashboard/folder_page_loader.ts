@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 export class FolderPageLoader {
   constructor(private backendSrv, private $routeParams) {}
 
@@ -43,22 +41,14 @@ export class FolderPageLoader {
       ctrl.navModel.main.text = folderTitle;
 
       const folderUrl = this.createFolderUrl(folderId, result.meta.slug);
-
-      const dashTab = _.find(ctrl.navModel.main.children, {
-        id: 'manage-folder-dashboards',
-      });
+      const dashTab = ctrl.navModel.main.children.find(child => child.id === 'manage-folder-dashboards');
       dashTab.url = folderUrl;
 
       if (result.meta.canAdmin) {
-        const permTab = _.find(ctrl.navModel.main.children, {
-          id: 'manage-folder-permissions',
-        });
-
+        const permTab = ctrl.navModel.main.children.find(child => child.id === 'manage-folder-permissions');
         permTab.url = folderUrl + '/permissions';
 
-        const settingsTab = _.find(ctrl.navModel.main.children, {
-          id: 'manage-folder-settings',
-        });
+        const settingsTab = ctrl.navModel.main.children.find(child => child.id === 'manage-folder-settings');
         settingsTab.url = folderUrl + '/settings';
       } else {
         ctrl.navModel.main.children = [dashTab];
