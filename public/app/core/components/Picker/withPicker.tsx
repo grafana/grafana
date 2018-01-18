@@ -5,13 +5,6 @@ export interface IProps {
   handlePicked: (data) => void;
 }
 
-// export interface User {
-//     id: number;
-//     name: string;
-//     login: string;
-//     email: string;
-// }
-
 export default function withPicker(WrappedComponent) {
   return class WithPicker extends Component<IProps, any> {
     constructor(props) {
@@ -19,7 +12,6 @@ export default function withPicker(WrappedComponent) {
       this.toggleLoading = this.toggleLoading.bind(this);
 
       this.state = {
-        multi: false,
         isLoading: false,
       };
     }

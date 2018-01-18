@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import Select from 'react-select';
-import UserPickerOption from './UserPickerOption';
+import PickerOption from './PickerOption';
 import withPicker from './withPicker';
 import { debounce } from 'lodash';
 
@@ -26,7 +26,7 @@ class UserPicker extends Component<IProps, any> {
     super(props);
     this.state = {};
     this.search = this.search.bind(this);
-    // this.handleChange = this.handleChange.bind(this);
+
     this.debouncedSearch = debounce(this.search, 300, {
       leading: true,
       trailing: false,
@@ -59,7 +59,7 @@ class UserPicker extends Component<IProps, any> {
       <div className="user-picker">
         <AsyncComponent
           valueKey="id"
-          multi={this.state.multi}
+          multi={false}
           labelKey="label"
           cache={false}
           isLoading={isLoading}
@@ -68,7 +68,7 @@ class UserPicker extends Component<IProps, any> {
           noResultsText="No users found"
           onChange={handlePicked}
           className="width-8 gf-form-input gf-form-input--form-dropdown"
-          optionComponent={UserPickerOption}
+          optionComponent={PickerOption}
           placeholder="Choose"
         />
       </div>

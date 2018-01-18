@@ -5,7 +5,7 @@ import IContainerProps from 'app/containers/IContainerProps';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import Permissions from 'app/core/components/Permissions/Permissions';
 
-@inject('nav', 'folder', 'view')
+@inject('nav', 'folder', 'view', 'permissions')
 @observer
 export class FolderPermissions extends Component<IContainerProps, any> {
   dashboard: any;
@@ -24,7 +24,7 @@ export class FolderPermissions extends Component<IContainerProps, any> {
   }
 
   render() {
-    const { nav, folder } = this.props;
+    const { nav, folder, permissions } = this.props;
 
     if (!folder.folder || !nav.main) {
       return <h2>Loading</h2>;
@@ -34,7 +34,13 @@ export class FolderPermissions extends Component<IContainerProps, any> {
       <div>
         <PageHeader model={nav as any} />
         <div className="page-container page-body">
-          <Permissions isFolder={true} error="" newType="" dashboardId={1} backendSrv={this.props.backendSrv} />
+          <Permissions
+            permissions={permissions}
+            isFolder={true}
+            error=""
+            dashboardId={1}
+            backendSrv={this.props.backendSrv}
+          />
         </div>
       </div>
     );

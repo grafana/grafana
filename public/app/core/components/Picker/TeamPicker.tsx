@@ -1,6 +1,6 @@
 ﻿import React, { Component } from 'react';
 import Select from 'react-select';
-import UserPickerOption from './UserPickerOption';
+import PickerOption from './PickerOption';
 import withPicker from './withPicker';
 import { debounce } from 'lodash';
 
@@ -26,7 +26,7 @@ class TeamPicker extends Component<IProps, any> {
     super(props);
     this.state = {};
     this.search = this.search.bind(this);
-    // this.handleChange = this.handleChange.bind(this);
+
     this.debouncedSearch = debounce(this.search, 300, {
       leading: true,
       trailing: false,
@@ -37,10 +37,8 @@ class TeamPicker extends Component<IProps, any> {
     const { toggleLoading, backendSrv } = this.props;
 
     toggleLoading(true);
-
     return backendSrv.get(`/api/teams/search?perpage=10&page=1&query=${query}`).then(result => {
       const teams = result.teams.map(team => {
-        // return { text: ug.name, value: ug };
         return {
           id: team.id,
           label: team.name,
@@ -62,7 +60,7 @@ class TeamPicker extends Component<IProps, any> {
       <div className="user-picker">
         <AsyncComponent
           valueKey="id"
-          multi={this.state.multi}
+          multi={false}
           labelKey="label"
           cache={false}
           isLoading={isLoading}
@@ -70,7 +68,7 @@ class TeamPicker extends Component<IProps, any> {
           loadingPlaceholder="Loading..."
           onChange={handlePicked}
           className="width-8 gf-form-input gf-form-input--form-dropdown"
-          optionComponent={UserPickerOption}
+          optionComponent={PickerOption}
           placeholder="Choose"
         />
       </div>

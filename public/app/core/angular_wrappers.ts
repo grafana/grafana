@@ -4,8 +4,8 @@ import PageHeader from './components/PageHeader/PageHeader';
 import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
 import LoginBackground from './components/Login/LoginBackground';
 import { SearchResult } from './components/search/SearchResult';
-import UserPicker from './components/UserPicker/UserPicker';
 import { TagFilter } from './components/TagFilter/TagFilter';
+import UserPicker from './components/Picker/UserPicker';
 import Permissions from './components/Permissions/Permissions';
 
 export function registerAngularDirectives() {
@@ -20,12 +20,5 @@ export function registerAngularDirectives() {
     ['tagOptions', { watchDepth: 'reference' }],
   ]);
   react2AngularDirective('selectUserPicker', UserPicker, ['backendSrv', 'handlePicked']);
-  react2AngularDirective('permissions', Permissions, [
-    'error',
-    'newType',
-    'aclTypes',
-    'typeChanged',
-    'backendSrv',
-    'dashboardId',
-  ]);
+  react2AngularDirective('permissions', Permissions, ['error', 'aclTypes', 'typeChanged', 'backendSrv', 'dashboardId']);
 }

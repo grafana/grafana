@@ -1,8 +1,8 @@
 ﻿import React, { Component } from 'react';
 import PermissionsList from './PermissionsList';
-import { inject, observer } from 'mobx-react';
-import UserPicker, { User } from 'app/core/components/UserPicker/UserPicker';
-import TeamPicker, { Team } from 'app/core/components/UserPicker/TeamPicker';
+import { observer } from 'mobx-react';
+import UserPicker, { User } from 'app/core/components/Picker/UserPicker';
+import TeamPicker, { Team } from 'app/core/components/Picker/TeamPicker';
 
 export interface DashboardAcl {
   id?: number;
@@ -24,17 +24,14 @@ export interface DashboardAcl {
 
 export interface IProps {
   error: string;
-  newType: string;
   dashboardId: number;
   permissions?: any;
   isFolder: boolean;
   backendSrv: any;
 }
 
-@inject('permissions')
 @observer
 class Permissions extends Component<IProps, any> {
-  // TODO Remove Inner from Name when we get access via ReactContainer
   dashboardId: any;
   meta: any;
   items: DashboardAcl[];
@@ -51,8 +48,6 @@ class Permissions extends Component<IProps, any> {
   error: string;
   refreshList: any;
 
-  readonly duplicateError = 'This permission exists already.';
-
   constructor(props) {
     super(props);
     const { dashboardId, permissions, isFolder } = this.props;
@@ -67,10 +62,6 @@ class Permissions extends Component<IProps, any> {
     this.state = {
       newType: 'Group',
     };
-  }
-
-  componentWillReceiveProps(nextProps) {
-    console.log('nextProps', nextProps);
   }
 
   permissionChanged(index: number, permission: number, permissionName: string) {
@@ -127,7 +118,7 @@ class Permissions extends Component<IProps, any> {
 
   render() {
     console.log('Permissions render');
-    const { error, permissions, backendSrv } = this.props;
+    const { permissions, backendSrv } = this.props;
     const { newType } = this.state;
 
     return (
@@ -154,25 +145,11 @@ class Permissions extends Component<IProps, any> {
                       );
                     })}
                   </select>
-
-                  {/* <select
-                    className="gf-form-input gf-size-auto"
-                    ng-model="ctrl.newType"
-                    ng-options="p.value as p.text for p in ctrl.aclTypes"
-                    ng-change="ctrl.typeChanged()"
-                  /> */}
                 </div>
               </div>
 
               {newType === 'User' ? (
                 <div className="gf-form">
-                  {/* <user-picker user-picked="ctrl.userPicked($user)" />
-                  <select-user-picker
-                    backendSrv="ctrl.backendSrv"
-                    teamId="ctrl.$routeParams.id"
-                    refreshList="ctrl.get"
-                    teamMembers="ctrl.teamMembers"
-                  /> */}
                   <UserPicker backendSrv={backendSrv} handlePicked={this.userPicked} />
                 </div>
               ) : null}
@@ -184,11 +161,11 @@ class Permissions extends Component<IProps, any> {
               ) : null}
             </div>
           </form>
-          {error ? (
+          {permissions.error ? (
             <div className="gf-form width-17">
               <span ng-if="ctrl.error" className="text-error p-l-1">
                 <i className="fa fa-warning" />
-                {error}
+                {permissions.error}
               </span>
             </div>
           ) : null}

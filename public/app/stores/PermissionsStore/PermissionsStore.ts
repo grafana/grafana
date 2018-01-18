@@ -10,6 +10,7 @@ export const PermissionsStore = types
     dashboardId: types.maybe(types.number),
     canUpdate: types.boolean,
     items: types.optional(types.array(PermissionsStoreItem), []),
+    error: types.maybe(types.string),
     originalItems: types.optional(types.array(PermissionsStoreItem), []),
   })
   .views(self => ({
@@ -19,7 +20,7 @@ export const PermissionsStore = types
       });
 
       if (dupe) {
-        this.error = duplicateError;
+        self.error = duplicateError;
         return false;
       }
 
@@ -39,6 +40,7 @@ export const PermissionsStore = types
       self.fetching = false;
     }),
     addStoreItem: item => {
+      self.error = null;
       if (!self.isValid(item)) {
         return;
       }
@@ -47,14 +49,17 @@ export const PermissionsStore = types
       self.canUpdate = true;
     },
     removeStoreItem: idx => {
+      self.error = null;
       self.items.splice(idx, 1);
       self.canUpdate = true;
     },
     updatePermissionOnIndex(idx: number, permission: number, permissionName: string) {
+      self.error = null;
       self.items[idx].updatePermission(permission, permissionName);
       self.canUpdate = true;
     },
     update: flow(function* update(dashboardId: number) {
+      self.error = null;
       const backendSrv = getEnv(self).backendSrv;
       const updated = [];
       for (let item of self.items) {
