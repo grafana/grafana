@@ -4,7 +4,6 @@ import { observer } from 'mobx-react';
 
 export interface IProps {
   permissions: any[];
-  permissionsOptions: any[];
   removeItem: any;
   permissionChanged: any;
   fetching: boolean;
@@ -13,7 +12,7 @@ export interface IProps {
 @observer
 class PermissionsList extends Component<IProps, any> {
   render() {
-    const { permissions, permissionsOptions, removeItem, permissionChanged, fetching } = this.props;
+    const { permissions, removeItem, permissionChanged, fetching } = this.props;
 
     return (
       <table className="filter-table gf-form-group">
@@ -24,7 +23,6 @@ class PermissionsList extends Component<IProps, any> {
                 key={idx}
                 item={item}
                 itemIndex={idx}
-                permissionsOptions={permissionsOptions}
                 removeItem={removeItem}
                 permissionChanged={permissionChanged}
               />

@@ -3,6 +3,7 @@ import PermissionsList from './PermissionsList';
 import { observer } from 'mobx-react';
 import UserPicker, { User } from 'app/core/components/Picker/UserPicker';
 import TeamPicker, { Team } from 'app/core/components/Picker/TeamPicker';
+import { aclTypes } from 'app/stores/PermissionsStore/PermissionsStore';
 
 export interface DashboardAcl {
   id?: number;
@@ -31,22 +32,6 @@ export interface IProps {
 
 @observer
 class Permissions extends Component<IProps, any> {
-  dashboardId: any;
-  meta: any;
-  items: DashboardAcl[];
-  dummyItems: DashboardAcl[];
-  permissionOptions = [{ value: 1, text: 'View' }, { value: 2, text: 'Edit' }, { value: 4, text: 'Admin' }];
-  aclTypes = [
-    { value: 'Group', text: 'Team' },
-    { value: 'User', text: 'User' },
-    { value: 'Viewer', text: 'Everyone With Viewer Role' },
-    { value: 'Editor', text: 'Everyone With Editor Role' },
-  ];
-  newType: string;
-  canUpdate: boolean;
-  error: string;
-  refreshList: any;
-
   constructor(props) {
     super(props);
     const { dashboardId, permissions, isFolder } = this.props;
@@ -57,10 +42,6 @@ class Permissions extends Component<IProps, any> {
     this.userPicked = this.userPicked.bind(this);
     this.teamPicked = this.teamPicked.bind(this);
     permissions.load(dashboardId, isFolder);
-
-    this.state = {
-      newType: 'Group',
-    };
   }
 
   permissionChanged(index: number, permission: number, permissionName: string) {
@@ -79,12 +60,8 @@ class Permissions extends Component<IProps, any> {
   }
 
   resetNewType() {
-    this.setState(prevState => {
-      return {
-        ...prevState,
-        newType: 'Group',
-      };
-    });
+    const { permissions } = this.props;
+    permissions.resetNewType();
   }
 
   typeChanged(evt) {
@@ -97,12 +74,7 @@ class Permissions extends Component<IProps, any> {
       return;
     }
 
-    this.setState(prevState => {
-      return {
-        ...prevState,
-        newType: value,
-      };
-    });
+    permissions.setNewType(value);
   }
 
   userPicked(user: User) {
@@ -116,15 +88,12 @@ class Permissions extends Component<IProps, any> {
   }
 
   render() {
-    console.log('Permissions render');
     const { permissions, backendSrv } = this.props;
-    const { newType } = this.state;
 
     return (
       <div className="gf-form-group">
         <PermissionsList
           permissions={permissions.items}
-          permissionsOptions={this.permissionOptions}
           removeItem={this.removeItem}
           permissionChanged={this.permissionChanged}
           fetching={permissions.fetching}
@@ -135,8 +104,12 @@ class Permissions extends Component<IProps, any> {
             <div className="gf-form-inline">
               <div className="gf-form">
                 <div className="gf-form-select-wrapper">
-                  <select className="gf-form-input gf-size-auto" value={newType} onChange={this.typeChanged}>
-                    {this.aclTypes.map((option, idx) => {
+                  <select
+                    className="gf-form-input gf-size-auto"
+                    value={permissions.newType}
+                    onChange={this.typeChanged}
+                  >
+                    {aclTypes.map((option, idx) => {
                       return (
                         <option key={idx} value={option.value}>
                           {option.text}
@@ -147,13 +120,13 @@ class Permissions extends Component<IProps, any> {
                 </div>
               </div>
 
-              {newType === 'User' ? (
+              {permissions.newType === 'User' ? (
                 <div className="gf-form">
                   <UserPicker backendSrv={backendSrv} handlePicked={this.userPicked} />
                 </div>
               ) : null}
 
-              {newType === 'Group' ? (
+              {permissions.newType === 'Group' ? (
                 <div className="gf-form">
                   <TeamPicker backendSrv={backendSrv} handlePicked={this.teamPicked} />
                 </div>

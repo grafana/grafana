@@ -3,6 +3,17 @@ import { PermissionsStoreItem } from './PermissionsStoreItem';
 
 const duplicateError = 'This permission exists already.';
 
+export const permissionOptions = [{ value: 1, text: 'View' }, { value: 2, text: 'Edit' }, { value: 4, text: 'Admin' }];
+
+export const aclTypes = [
+  { value: 'Group', text: 'Team' },
+  { value: 'User', text: 'User' },
+  { value: 'Viewer', text: 'Everyone With Viewer Role' },
+  { value: 'Editor', text: 'Everyone With Editor Role' },
+];
+
+const defaultNewType = aclTypes[0].value;
+
 export const PermissionsStore = types
   .model('PermissionsStore', {
     fetching: types.boolean,
@@ -12,6 +23,7 @@ export const PermissionsStore = types
     items: types.optional(types.array(PermissionsStoreItem), []),
     error: types.maybe(types.string),
     originalItems: types.optional(types.array(PermissionsStoreItem), []),
+    newType: types.optional(types.string, defaultNewType),
   })
   .views(self => ({
     isValid: item => {
@@ -57,6 +69,12 @@ export const PermissionsStore = types
       self.error = null;
       self.items[idx].updatePermission(permission, permissionName);
       self.canUpdate = true;
+    },
+    setNewType(newType: string) {
+      self.newType = newType;
+    },
+    resetNewType() {
+      self.newType = defaultNewType;
     },
     update: flow(function* update(dashboardId: number) {
       self.error = null;
