@@ -41,7 +41,7 @@ export const NavStore = types
     initFolderNav(folder: any, activeChildId: string) {
       const folderUrl = createFolderUrl(folder.id, folder.slug);
 
-      self.main = {
+      let main = {
         icon: 'fa fa-folder-open',
         id: 'manage-folder',
         subTitle: 'Manage folder dashboards & permissions',
@@ -72,6 +72,8 @@ export const NavStore = types
           },
         ],
       };
+
+      self.main = NavItem.create(main);
     },
   }));
 
