@@ -273,17 +273,19 @@ export class DashboardModel {
       if (panel.repeat) {
         this.repeatPanel(panel, i);
       } else if (panel.panels) {
-        // find repeate panel on collapsed state
-        let repeatPanel;
+        // recalc repeate panel on collapsed state
+        let count = 0;
         for (let j = 0; j < panel.panels.length; j++) {
           if (panel.panels[j].repeat) {
-            repeatPanel = panel.panels[j];
-            break;
+            let variable = _.find(this.templating.list, { name: panel.panels[j].repeat });
+            if (variable) {
+              count += this.getSelectedVariableOptions(variable).length;
+            }
+          } else if (!panel.panels[j].repeatPanelId) {
+            count++;
           }
         }
-        if (repeatPanel) {
-          this.repeatCollapsedPanel(panel, i, repeatPanel);
-        }
+        this.panels[i].countPanels = count;
       }
     }
 
@@ -291,22 +293,17 @@ export class DashboardModel {
     this.events.emit('repeats-processed');
   }
 
-  getPanelRepeatClone(sourcePanel, valueIndex, sourcePanelIndex, collapsed) {
+  getPanelRepeatClone(sourcePanel, valueIndex, sourcePanelIndex) {
     // if first clone return source
     if (valueIndex === 0) {
       return sourcePanel;
     }
 
-    let clone = new PanelModel(sourcePanel.getSaveModel ? sourcePanel.getSaveModel() : sourcePanel);
+    let clone = new PanelModel(sourcePanel.getSaveModel());
     clone.id = this.getNextPanelId();
 
-    if (collapsed) {
-      // insert into source panel
-      this.panels[sourcePanelIndex].panels.splice(valueIndex, 0, clone);
-    } else {
-      // insert after source panel + value index
-      this.panels.splice(sourcePanelIndex + valueIndex, 0, clone);
-    }
+    // insert after source panel + value index
+    this.panels.splice(sourcePanelIndex + valueIndex, 0, clone);
 
     clone.repeatIteration = this.iteration;
     clone.repeatPanelId = sourcePanel.id;
@@ -364,7 +361,7 @@ export class DashboardModel {
       let option = selectedOptions[index];
       let copy;
 
-      copy = this.getPanelRepeatClone(panel, index, panelIndex, false);
+      copy = this.getPanelRepeatClone(panel, index, panelIndex);
       copy.scopedVars = copy.scopedVars || {};
       copy.scopedVars[variable.name] = option;
 
@@ -394,32 +391,6 @@ export class DashboardModel {
       for (let i = panelBelowIndex; i < this.panels.length; i++) {
         this.panels[i].gridPos.y += yPos;
       }
-    }
-  }
-
-  repeatCollapsedPanel(panel: PanelModel, panelIndex: number, repeatPanel: PanelModel) {
-    let variable = _.find(this.templating.list, { name: repeatPanel.repeat });
-    if (!variable) {
-      return;
-    }
-
-    // get removing repeated panels
-    let panelsToRemove = [];
-
-    for (let i = 0; i < this.panels[panelIndex].panels.length; i++) {
-      let tempPanel = this.panels[panelIndex].panels[i];
-      if (!tempPanel.repeat && tempPanel.repeatPanelId && tempPanel.repeatIteration !== this.iteration) {
-        panelsToRemove.push(tempPanel);
-      }
-    }
-
-    // remove panels
-    _.pull(this.panels[panelIndex].panels, ...panelsToRemove);
-
-    let selectedOptions = this.getSelectedVariableOptions(variable);
-
-    for (let index = 1; index < selectedOptions.length; index++) {
-      this.getPanelRepeatClone(repeatPanel, index, panelIndex, true);
     }
   }
 
