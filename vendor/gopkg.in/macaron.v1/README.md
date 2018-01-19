@@ -61,18 +61,20 @@ There are already many [middlewares](https://github.com/go-macaron) to simplify 
 - [bindata](https://github.com/go-macaron/bindata) - Embed binary data as static and template files
 - [toolbox](https://github.com/go-macaron/toolbox) - Health check, pprof, profile and statistic services
 - [oauth2](https://github.com/go-macaron/oauth2) - OAuth 2.0 backend
+- [authz](https://github.com/go-macaron/authz) - ACL/RBAC/ABAC authorization based on Casbin
 - [switcher](https://github.com/go-macaron/switcher) - Multiple-site support
 - [method](https://github.com/go-macaron/method) - HTTP method override
 - [permissions2](https://github.com/xyproto/permissions2) - Cookies, users and permissions
 - [renders](https://github.com/go-macaron/renders) - Beego-like render engine(Macaron has built-in template engine, this is another option)
+- [piwik](https://github.com/veecue/piwik-middleware) - Server-side piwik analytics
 
 ## Use Cases
 
 - [Gogs](https://gogs.io): A painless self-hosted Git Service
+- [Grafana](http://grafana.org/): The open platform for beautiful analytics and monitoring
 - [Peach](https://peachdocs.org): A modern web documentation server
 - [Go Walker](https://gowalker.org): Go online API documentation
 - [Switch](https://gopm.io): Gopm registry
-- [YouGam](http://yougam.com): Online Forum
 - [Critical Stack Intel](https://intel.criticalstack.com/): A 100% free intel marketplace from Critical Stack, Inc.
 
 ## Getting Help
@@ -80,7 +82,6 @@ There are already many [middlewares](https://github.com/go-macaron) to simplify 
 - [API Reference](https://gowalker.org/gopkg.in/macaron.v1)
 - [Documentation](https://go-macaron.com)
 - [FAQs](https://go-macaron.com/docs/faqs)
-- [![Join the chat at https://gitter.im/Unknwon/macaron](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/go-macaron/macaron?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Credits
 

@@ -1,0 +1,54 @@
+{
+  "name": "thrift",
+  "description": "node.js bindings for the Apache Thrift RPC system",
+  "homepage": "http://thrift.apache.org/",
+  "repository": {
+    "type": "git",
+    "url": "https://git-wip-us.apache.org/repos/asf/thrift.git"
+  },
+  "version": "0.10.0",
+  "author": {
+    "name": "Apache Thrift Developers",
+    "email": "dev@thrift.apache.org",
+    "url": "http://thrift.apache.org"
+  },
+  "license": "Apache-2.0",
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ],
+  "bugs": {
+    "mail": "dev@thrift.apache.org",
+    "url": "https://issues.apache.org/jira/browse/THRIFT"
+  },
+  "files": [
+    "lib/nodejs/lib/thrift",
+    "lib/nodejs/README.md"
+  ],
+  "directories": {
+    "lib": "./lib/nodejs/lib/thrift"
+  },
+  "main": "./lib/nodejs/lib/thrift",
+  "engines": {
+    "node": ">= 0.2.4"
+  },
+  "dependencies": {
+    "node-int64": "~0.3.0",
+    "q": "1.0.x",
+    "ws": "~0.4.32"
+  },
+  "devDependencies": {
+    "buffer-equals": "^1.0.3",
+    "commander": "2.1.x",
+    "connect": "2.7.x",
+    "istanbul": "^0.3.5",
+    "run-browser": "^2.0.1",
+    "tape": "~3.5.0"
+  },
+  "scripts": {
+    "cover": "lib/nodejs/test/testAll.sh COVER",
+    "test": "lib/nodejs/test/testAll.sh"
+  }
+}

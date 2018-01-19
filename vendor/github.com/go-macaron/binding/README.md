@@ -1,4 +1,4 @@
-# binding [![Build Status](https://travis-ci.org/go-macaron/binding.svg?branch=master)](https://travis-ci.org/go-macaron/binding) [![](http://gocover.io/_badge/github.com/go-macaron/binding)](http://gocover.io/github.com/go-macaron/binding)
+# binding [![Build Status](https://travis-ci.org/go-macaron/binding.svg?branch=master)](https://travis-ci.org/go-macaron/binding) [![Sourcegraph](https://sourcegraph.com/github.com/go-macaron/binding/-/badge.svg)](https://sourcegraph.com/github.com/go-macaron/binding?badge)
 
 Middleware binding provides request data binding and validation for [Macaron](https://github.com/go-macaron/macaron).
 

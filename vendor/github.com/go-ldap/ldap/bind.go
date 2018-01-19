@@ -10,16 +10,22 @@ import (
 	"gopkg.in/asn1-ber.v1"
 )
 
+// SimpleBindRequest represents a username/password bind operation
 type SimpleBindRequest struct {
+	// Username is the name of the Directory object that the client wishes to bind as
 	Username string
+	// Password is the credentials to bind with
 	Password string
+	// Controls are optional controls to send with the bind request
 	Controls []Control
 }
 
+// SimpleBindResult contains the response from the server
 type SimpleBindResult struct {
 	Controls []Control
 }
 
+// NewSimpleBindRequest returns a bind request
 func NewSimpleBindRequest(username string, password string, controls []Control) *SimpleBindRequest {
 	return &SimpleBindRequest{
 		Username: username,
@@ -39,11 +45,10 @@ func (bindRequest *SimpleBindRequest) encode() *ber.Packet {
 	return request
 }
 
+// SimpleBind performs the simple bind operation defined in the given request
 func (l *Conn) SimpleBind(simpleBindRequest *SimpleBindRequest) (*SimpleBindResult, error) {
-	messageID := l.nextMessageID()
-
 	packet := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Request")
-	packet.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, messageID, "MessageID"))
+	packet.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, l.nextMessageID(), "MessageID"))
 	encodedBindRequest := simpleBindRequest.encode()
 	packet.AppendChild(encodedBindRequest)
 
@@ -51,18 +56,20 @@ func (l *Conn) SimpleBind(simpleBindRequest *SimpleBindRequest) (*SimpleBindResu
 		ber.PrintPacket(packet)
 	}
 
-	channel, err := l.sendMessage(packet)
+	msgCtx, err := l.sendMessage(packet)
 	if err != nil {
 		return nil, err
 	}
-	if channel == nil {
-		return nil, NewError(ErrorNetwork, errors.New("ldap: could not send message"))
-	}
-	defer l.finishMessage(messageID)
+	defer l.finishMessage(msgCtx)
 
-	packet = <-channel
-	if packet == nil {
-		return nil, NewError(ErrorNetwork, errors.New("ldap: could not retrieve response"))
+	packetResponse, ok := <-msgCtx.responses
+	if !ok {
+		return nil, NewError(ErrorNetwork, errors.New("ldap: response channel closed"))
+	}
+	packet, err = packetResponse.ReadPacket()
+	l.Debug.Printf("%d: got response %p", msgCtx.id, packet)
+	if err != nil {
+		return nil, err
 	}
 
 	if l.Debug {
@@ -90,11 +97,10 @@ func (l *Conn) SimpleBind(simpleBindRequest *SimpleBindRequest) (*SimpleBindResu
 	return result, nil
 }
 
+// Bind performs a bind with the given username and password
 func (l *Conn) Bind(username, password string) error {
-	messageID := l.nextMessageID()
-
 	packet := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Request")
-	packet.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, messageID, "MessageID"))
+	packet.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, l.nextMessageID(), "MessageID"))
 	bindRequest := ber.Encode(ber.ClassApplication, ber.TypeConstructed, ApplicationBindRequest, nil, "Bind Request")
 	bindRequest.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, 3, "Version"))
 	bindRequest.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, username, "User Name"))
@@ -105,18 +111,20 @@ func (l *Conn) Bind(username, password string) error {
 		ber.PrintPacket(packet)
 	}
 
-	channel, err := l.sendMessage(packet)
+	msgCtx, err := l.sendMessage(packet)
 	if err != nil {
 		return err
 	}
-	if channel == nil {
-		return NewError(ErrorNetwork, errors.New("ldap: could not send message"))
-	}
-	defer l.finishMessage(messageID)
+	defer l.finishMessage(msgCtx)
 
-	packet = <-channel
-	if packet == nil {
-		return NewError(ErrorNetwork, errors.New("ldap: could not retrieve response"))
+	packetResponse, ok := <-msgCtx.responses
+	if !ok {
+		return NewError(ErrorNetwork, errors.New("ldap: response channel closed"))
+	}
+	packet, err = packetResponse.ReadPacket()
+	l.Debug.Printf("%d: got response %p", msgCtx.id, packet)
+	if err != nil {
+		return err
 	}
 
 	if l.Debug {

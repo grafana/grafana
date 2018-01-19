@@ -6,6 +6,8 @@ aws-sdk-go is the official AWS SDK for the Go programming language.
 
 Checkout our [release notes](https://github.com/aws/aws-sdk-go/releases) for information about the latest bug fixes, updates, and features added to the SDK.
 
+We [announced](https://aws.amazon.com/blogs/developer/aws-sdk-for-go-2-0-developer-preview/) the Developer Preview for the [v2 AWS SDK for Go](). The v2 SDK is available at https://github.com/aws/aws-sdk-go-v2, and `go get github.com/aws/aws-sdk-go-v2` via `go get`. Check out the v2 SDK's [changes and updates](https://github.com/aws/aws-sdk-go-v2/blob/master/CHANGELOG.md), and let us know what you think. We want your feedback. 
+
 ## Installing
 
 If you are using Go 1.5 with the `GO15VENDOREXPERIMENT=1` vendoring flag, or 1.6 and higher you can use the following command to retrieve the SDK. The SDK's non-testing dependencies will be included and are vendored in the `vendor` folder.
@@ -167,7 +169,7 @@ and configures the S3 service client to use that role for API requests.
 
   // Create service client value configured for credentials
   // from assumed role.
-  svc := s3.New(sess, &aws.Config{Credentials: creds})/
+  svc := s3.New(sess, &aws.Config{Credentials: creds})
 ```
 
 See the [credentials][credentials_pkg] package documentation for more information on credential
@@ -185,7 +187,7 @@ Option's SharedConfigState parameter.
   }))
 ```
 
-[credentials_pkg]: ttps://docs.aws.amazon.com/sdk-for-go/api/aws/credentials
+[credentials_pkg]: https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials
 
 ### Configuring AWS Region
 
@@ -305,7 +307,7 @@ documentation for the errors that could be returned.
   // will leak connections.
   defer result.Body.Close()
 
-  fmt.Println("Object Size:", aws.StringValue(result.ContentLength))
+  fmt.Println("Object Size:", aws.Int64Value(result.ContentLength))
 ```
 
 ### API Request Pagination and Resource Waiters

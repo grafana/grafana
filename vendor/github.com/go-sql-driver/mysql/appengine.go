@@ -11,7 +11,7 @@
 package mysql
 
 import (
-	"google.golang.org/appengine/cloudsql"
+	"appengine/cloudsql"
 )
 
 func init() {

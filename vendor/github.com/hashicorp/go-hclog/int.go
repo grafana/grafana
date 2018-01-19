@@ -40,8 +40,13 @@ func New(opts *LoggerOptions) Logger {
 		level = DefaultLevel
 	}
 
+	mtx := opts.Mutex
+	if mtx == nil {
+		mtx = new(sync.Mutex)
+	}
+
 	return &intLogger{
-		m:      new(sync.Mutex),
+		m:      mtx,
 		json:   opts.JSONFormat,
 		caller: opts.IncludeLocation,
 		name:   opts.Name,
@@ -369,6 +374,8 @@ func (z *intLogger) Named(name string) Logger {
 
 	if nz.name != "" {
 		nz.name = nz.name + "." + name
+	} else {
+		nz.name = name
 	}
 
 	return &nz

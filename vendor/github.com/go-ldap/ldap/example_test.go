@@ -9,7 +9,7 @@ import (
 )
 
 // ExampleConn_Bind demonstrates how to bind a connection to an ldap user
-// allowing access to restricted attrabutes that user has access to
+// allowing access to restricted attributes that user has access to
 func ExampleConn_Bind() {
 	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", "ldap.example.com", 389))
 	if err != nil {
@@ -63,10 +63,10 @@ func ExampleConn_StartTLS() {
 		log.Fatal(err)
 	}
 
-	// Opertations via l are now encrypted
+	// Operations via l are now encrypted
 }
 
-// ExampleConn_Compare demonstrates how to comapre an attribute with a value
+// ExampleConn_Compare demonstrates how to compare an attribute with a value
 func ExampleConn_Compare() {
 	l, err := ldap.Dial("tcp", fmt.Sprintf("%s:%d", "ldap.example.com", 389))
 	if err != nil {
@@ -193,7 +193,7 @@ func Example_userAuthentication() {
 	searchRequest := ldap.NewSearchRequest(
 		"dc=example,dc=com",
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(&(objectClass=organizationalPerson)&(uid=%s))", username),
+		fmt.Sprintf("(&(objectClass=organizationalPerson)(uid=%s))", username),
 		[]string{"dn"},
 		nil,
 	)
@@ -215,7 +215,7 @@ func Example_userAuthentication() {
 		log.Fatal(err)
 	}
 
-	// Rebind as the read only user for any futher queries
+	// Rebind as the read only user for any further queries
 	err = l.Bind(bindusername, bindpassword)
 	if err != nil {
 		log.Fatal(err)
@@ -240,7 +240,7 @@ func Example_beherappolicy() {
 	if ppolicyControl != nil {
 		ppolicy = ppolicyControl.(*ldap.ControlBeheraPasswordPolicy)
 	} else {
-		log.Printf("ppolicyControl response not avaliable.\n")
+		log.Printf("ppolicyControl response not available.\n")
 	}
 	if err != nil {
 		errStr := "ERROR: Cannot bind: " + err.Error()

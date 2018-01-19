@@ -1,12 +1,10 @@
 # Go JSON Diff (and Patch)
 
 [![Wercker](https://app.wercker.com/status/00d70daaf40ce277fd4f10290f097b9d/s/master)][wercker]
-[![GoDoc](https://godoc.org/github.com/yudai/gojsondiff?status.svg)][godoc]
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg)][license]
 
 [wercker]: https://app.wercker.com/project/bykey/00d70daaf40ce277fd4f10290f097b9d
-[godoc]: https://godoc.org/github.com/yudai/gojsondiff
-[license]: https://github.com/yudai/gojsondiff/blob/master/LICENSE
+[license]: https://github.com/yudai/gojsondiff/blob/master/LICENS
 
 ## How to use
 
@@ -25,7 +23,7 @@ See `jd/main.go` for how to use this library.
 
 This repository contains a package that you can use as a CLI tool.
 
-### Installation
+### Instllation
 
 ```sh
 go get github.com/yudai/gojsondiff/jd
