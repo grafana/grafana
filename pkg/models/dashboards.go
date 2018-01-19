@@ -209,3 +209,15 @@ type GetDashboardSlugByIdQuery struct {
 	Id     int64
 	Result string
 }
+
+type GetFoldersForSignedInUserQuery struct {
+	OrgId        int64
+	SignedInUser *SignedInUser
+	Title        string
+	Result       []*DashboardFolder
+}
+
+type DashboardFolder struct {
+	Id    int64  `json:"id"`
+	Title string `json:"title"`
+}

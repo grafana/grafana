@@ -18,6 +18,7 @@ func init() {
 	bus.AddHandler("sql", GetDashboardTags)
 	bus.AddHandler("sql", GetDashboardSlugById)
 	bus.AddHandler("sql", GetDashboardsByPluginId)
+	bus.AddHandler("sql", GetFoldersForSignedInUser)
 }
 
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
@@ -288,6 +289,51 @@ func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
 	query.Result = make([]*m.DashboardTagCloudItem, 0)
 	sess := x.Sql(sql, query.OrgId)
 	err := sess.Find(&query.Result)
+	return err
+}
+
+func GetFoldersForSignedInUser(query *m.GetFoldersForSignedInUserQuery) error {
+	query.Result = make([]*m.DashboardFolder, 0)
+	var err error
+
+	if query.SignedInUser.OrgRole == m.ROLE_ADMIN {
+		sql := `SELECT distinct d.id, d.title
+		FROM dashboard AS d WHERE d.is_folder = ?
+		ORDER BY d.title ASC`
+
+		err = x.Sql(sql, dialect.BooleanStr(true)).Find(&query.Result)
+	} else {
+		params := make([]interface{}, 0)
+		sql := `SELECT distinct d.id, d.title
+		FROM dashboard AS d
+			LEFT JOIN dashboard_acl AS da ON d.id = da.dashboard_id
+			LEFT JOIN team_member AS ugm ON ugm.team_id =  da.team_id
+			LEFT JOIN org_user ou ON ou.role = da.role AND ou.user_id = ?
+			LEFT JOIN org_user ouRole ON ouRole.role = 'Editor' AND ouRole.user_id = ?`
+		params = append(params, query.SignedInUser.UserId)
+		params = append(params, query.SignedInUser.UserId)
+
+		sql += `WHERE
+			d.org_id = ? AND
+			d.is_folder = 1 AND
+			(
+				(d.has_acl = 1 AND da.permission > 1 AND (da.user_id = ? OR ugm.user_id = ? OR ou.id IS NOT NULL))
+				OR (d.has_acl = 0 AND ouRole.id IS NOT NULL)
+			)`
+		params = append(params, query.OrgId)
+		params = append(params, query.SignedInUser.UserId)
+		params = append(params, query.SignedInUser.UserId)
+
+		if len(query.Title) > 0 {
+			sql += " AND d.title " + dialect.LikeStr() + " ?"
+			params = append(params, "%"+query.Title+"%")
+		}
+
+		sql += ` ORDER BY d.title ASC`
+
+		err = x.Sql(sql, params...).Find(&query.Result)
+	}
+
 	return err
 }
 

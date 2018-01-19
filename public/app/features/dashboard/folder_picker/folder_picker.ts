@@ -30,12 +30,7 @@ export class FolderPickerCtrl {
   }
 
   getOptions(query) {
-    var params = {
-      query: query,
-      type: 'dash-folder',
-    };
-
-    return this.backendSrv.search(params).then(result => {
+    return this.backendSrv.get('api/dashboards/folders', { query: query }).then(result => {
       if (
         query === '' ||
         query.toLowerCase() === 'r' ||
