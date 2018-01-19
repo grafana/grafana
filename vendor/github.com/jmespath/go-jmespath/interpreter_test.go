@@ -69,7 +69,7 @@ func TestCanSupportUserDefinedStructsRef(t *testing.T) {
 
 func TestCanSupportStructWithSliceAll(t *testing.T) {
 	assert := assert.New(t)
-	data := sliceType{A: "foo", B: []scalars{scalars{"f1", "b1"}, scalars{"correct", "b2"}}}
+	data := sliceType{A: "foo", B: []scalars{{"f1", "b1"}, {"correct", "b2"}}}
 	result, err := Search("B[].Foo", data)
 	assert.Nil(err)
 	assert.Equal([]interface{}{"f1", "correct"}, result)
@@ -77,7 +77,7 @@ func TestCanSupportStructWithSliceAll(t *testing.T) {
 
 func TestCanSupportStructWithSlicingExpression(t *testing.T) {
 	assert := assert.New(t)
-	data := sliceType{A: "foo", B: []scalars{scalars{"f1", "b1"}, scalars{"correct", "b2"}}}
+	data := sliceType{A: "foo", B: []scalars{{"f1", "b1"}, {"correct", "b2"}}}
 	result, err := Search("B[:].Foo", data)
 	assert.Nil(err)
 	assert.Equal([]interface{}{"f1", "correct"}, result)
@@ -85,7 +85,7 @@ func TestCanSupportStructWithSlicingExpression(t *testing.T) {
 
 func TestCanSupportStructWithFilterProjection(t *testing.T) {
 	assert := assert.New(t)
-	data := sliceType{A: "foo", B: []scalars{scalars{"f1", "b1"}, scalars{"correct", "b2"}}}
+	data := sliceType{A: "foo", B: []scalars{{"f1", "b1"}, {"correct", "b2"}}}
 	result, err := Search("B[? `true` ].Foo", data)
 	assert.Nil(err)
 	assert.Equal([]interface{}{"f1", "correct"}, result)
@@ -93,7 +93,7 @@ func TestCanSupportStructWithFilterProjection(t *testing.T) {
 
 func TestCanSupportStructWithSlice(t *testing.T) {
 	assert := assert.New(t)
-	data := sliceType{A: "foo", B: []scalars{scalars{"f1", "b1"}, scalars{"correct", "b2"}}}
+	data := sliceType{A: "foo", B: []scalars{{"f1", "b1"}, {"correct", "b2"}}}
 	result, err := Search("B[-1].Foo", data)
 	assert.Nil(err)
 	assert.Equal("correct", result)
@@ -109,7 +109,7 @@ func TestCanSupportStructWithOrExpressions(t *testing.T) {
 
 func TestCanSupportStructWithSlicePointer(t *testing.T) {
 	assert := assert.New(t)
-	data := sliceType{A: "foo", C: []*scalars{&scalars{"f1", "b1"}, &scalars{"correct", "b2"}}}
+	data := sliceType{A: "foo", C: []*scalars{{"f1", "b1"}, {"correct", "b2"}}}
 	result, err := Search("C[-1].Foo", data)
 	assert.Nil(err)
 	assert.Equal("correct", result)
@@ -128,7 +128,7 @@ func TestWillAutomaticallyCapitalizeFieldNames(t *testing.T) {
 
 func TestCanSupportStructWithSliceLowerCased(t *testing.T) {
 	assert := assert.New(t)
-	data := sliceType{A: "foo", B: []scalars{scalars{"f1", "b1"}, scalars{"correct", "b2"}}}
+	data := sliceType{A: "foo", B: []scalars{{"f1", "b1"}, {"correct", "b2"}}}
 	result, err := Search("b[-1].foo", data)
 	assert.Nil(err)
 	assert.Equal("correct", result)
@@ -171,6 +171,14 @@ func TestCanSupportProjectionsWithStructs(t *testing.T) {
 	result, err := Search("A[*].A", data)
 	assert.Nil(err)
 	assert.Equal([]interface{}{"first", "second", "third"}, result)
+}
+
+func TestCanSupportSliceOfStructsWithFunctions(t *testing.T) {
+	assert := assert.New(t)
+	data := []scalars{scalars{"a1", "b1"}, scalars{"a2", "b2"}}
+	result, err := Search("length(@)", data)
+	assert.Nil(err)
+	assert.Equal(result.(float64), 2.0)
 }
 
 func BenchmarkInterpretSingleFieldStruct(b *testing.B) {

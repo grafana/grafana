@@ -2,7 +2,7 @@
 
 ## 功能特性
 
-- 支持覆盖加载多个数据源（`[]byte` 或文件）
+- 支持覆盖加载多个数据源（`[]byte`、文件和 `io.ReadCloser`）
 - 支持递归读取键值
 - 支持读取父子分区
 - 支持读取自增键名
@@ -37,10 +37,10 @@
 
 ### 从数据源加载
 
-一个 **数据源** 可以是 `[]byte` 类型的原始数据，或 `string` 类型的文件路径。您可以加载 **任意多个** 数据源。如果您传递其它类型的数据源，则会直接返回错误。
+一个 **数据源** 可以是 `[]byte` 类型的原始数据，`string` 类型的文件路径或 `io.ReadCloser`。您可以加载 **任意多个** 数据源。如果您传递其它类型的数据源，则会直接返回错误。
 
 ```go
-cfg, err := ini.Load([]byte("raw data"), "filename")
+cfg, err := ini.Load([]byte("raw data"), "filename", ioutil.NopCloser(bytes.NewReader([]byte("some other data"))))
 ```
 
 或者从一个空白的文件开始：
@@ -76,8 +76,8 @@ sec1, err := cfg.GetSection("Section")
 sec2, err := cfg.GetSection("SecTIOn")
 
 // key1 和 key2 指向同一个键对象
-key1, err := cfg.GetKey("Key")
-key2, err := cfg.GetKey("KeY")
+key1, err := sec1.GetKey("Key")
+key2, err := sec2.GetKey("KeY")
 ```
 
 #### 类似 MySQL 配置中的布尔值键
@@ -94,10 +94,32 @@ skip-name-resolve
 默认情况下这被认为是缺失值而无法完成解析，但可以通过高级的加载选项对它们进行处理：
 
 ```go
-cfg, err := LoadSources(LoadOptions{AllowBooleanKeys: true}, "my.cnf"))
+cfg, err := ini.LoadSources(ini.LoadOptions{AllowBooleanKeys: true}, "my.cnf"))
 ```
 
 这些键的值永远为 `true`，且在保存到文件时也只会输出键名。
+
+如果您想要通过程序来生成此类键，则可以使用 `NewBooleanKey`：
+
+```go
+key, err := sec.NewBooleanKey("skip-host-cache")
+```
+
+#### 关于注释
+
+下述几种情况的内容将被视为注释：
+
+1. 所有以 `#` 或 `;` 开头的行
+2. 所有在 `#` 或 `;` 之后的内容
+3. 分区标签后的文字 (即 `[分区名]` 之后的内容)
+
+如果你希望使用包含 `#` 或 `;` 的值，请使用 ``` ` ``` 或 ``` """ ``` 进行包覆。
+
+除此之外，您还可以通过 `LoadOptions` 完全忽略行内注释：
+
+```go
+cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, "app.ini"))
+```
 
 ### 操作分区（Section）
 
@@ -116,7 +138,7 @@ section, err := cfg.GetSection("")
 当您非常确定某个分区是存在的，可以使用以下简便方法：
 
 ```go
-section := cfg.Section("")
+section := cfg.Section("section name")
 ```
 
 如果不小心判断错了，要获取的分区其实是不存在的，那会发生什么呢？没事的，它会自动创建并返回一个对应的分区对象给您。
@@ -300,6 +322,20 @@ foo = "some value" // foo: some value
 bar = 'some value' // bar: some value
 ```
 
+有时您会获得像从 [Crowdin](https://crowdin.com/) 网站下载的文件那样具有特殊格式的值（值使用双引号括起来，内部的双引号被转义）：
+
+```ini
+create_repo="创建了仓库 <a href=\"%s\">%s</a>"
+```
+
+那么，怎么自动地将这类值进行处理呢？
+
+```go
+cfg, err := ini.LoadSources(ini.LoadOptions{UnescapeValueDoubleQuotes: true}, "en-US.ini"))
+cfg.Section("<name of your section>").Key("create_repo").String() 
+// You got: 创建了仓库 <a href="%s">%s</a>
+```
+
 这就是全部了？哈哈，当然不是。
 
 #### 操作键值的辅助方法
@@ -393,9 +429,15 @@ cfg.WriteTo(writer)
 cfg.WriteToIndent(writer, "\t")
 ```
 
-### 高级用法
+默认情况下，空格将被用于对齐键值之间的等号以美化输出结果，以下代码可以禁用该功能：
 
-#### 递归读取键值
+```go
+ini.PrettyFormat = false
+``` 
+
+## 高级用法
+
+### 递归读取键值
 
 在获取所有键值的过程中，特殊语法 `%(<name>)s` 会被应用，其中 `<name>` 可以是相同分区或者默认分区下的键名。字符串 `%(<name>)s` 会被相应的键值所替代，如果指定的键不存在，则会用空字符串替代。您可以最多使用 99 层的递归嵌套。
 
@@ -415,7 +457,7 @@ cfg.Section("author").Key("GITHUB").String()		// https://github.com/Unknwon
 cfg.Section("package").Key("FULL_NAME").String()	// github.com/go-ini/ini
 ```
 
-#### 读取父子分区
+### 读取父子分区
 
 您可以在分区名称中使用 `.` 来表示两个或多个分区之间的父子关系。如果某个键在子分区中不存在，则会去它的父分区中再次寻找，直到没有父分区为止。
 
@@ -440,7 +482,22 @@ cfg.Section("package.sub").Key("CLONE_URL").String()	// https://gopkg.in/ini.v1
 cfg.Section("package.sub").ParentKeys() // ["CLONE_URL"]
 ```
 
-#### 读取自增键名
+### 无法解析的分区
+
+如果遇到一些比较特殊的分区，它们不包含常见的键值对，而是没有固定格式的纯文本，则可以使用 `LoadOptions.UnparsableSections` 进行处理：
+
+```go
+cfg, err := LoadSources(ini.LoadOptions{UnparseableSections: []string{"COMMENTS"}}, `[COMMENTS]
+<1><L.Slide#2> This slide has the fuel listed in the wrong units <e.1>`))
+
+body := cfg.Section("COMMENTS").Body()
+
+/* --- start ---
+<1><L.Slide#2> This slide has the fuel listed in the wrong units <e.1>
+------  end  --- */
+```
+
+### 读取自增键名
 
 如果数据源中的键名为 `-`，则认为该键使用了自增键名的特殊语法。计数器从 1 开始，并且分区之间是相互独立的。
 
@@ -521,7 +578,7 @@ p := &Person{
 
 ```go
 type Embeded struct {
-	Dates  []time.Time `delim:"|"`
+	Dates  []time.Time `delim:"|" comment:"Time data"`
 	Places []string    `ini:"places,omitempty"`
 	None   []int       `ini:",omitempty"`
 }
@@ -529,10 +586,10 @@ type Embeded struct {
 type Author struct {
 	Name      string `ini:"NAME"`
 	Male      bool
-	Age       int
+	Age       int `comment:"Author's age"`
 	GPA       float64
 	NeverMind string `ini:"-"`
-	*Embeded
+	*Embeded `comment:"Embeded section"`
 }
 
 func main() {
@@ -553,10 +610,13 @@ func main() {
 ```ini
 NAME = Unknwon
 Male = true
+; Author's age
 Age = 21
 GPA = 2.8
 
+; Embeded section
 [Embeded]
+; Time data
 Dates = 2015-08-07T22:14:22+08:00|2015-08-07T22:14:22+08:00
 places = HangZhou,Boston
 ```

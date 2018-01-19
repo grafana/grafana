@@ -132,6 +132,12 @@ var testFilters = []compileTest{
 		expectedErr:    "unexpected end of filter",
 	},
 	compileTest{
+		filterStr:      `((cn=)`,
+		expectedFilter: ``,
+		expectedType:   0,
+		expectedErr:    "unexpected end of filter",
+	},
+	compileTest{
 		filterStr:      `(&(objectclass=inetorgperson)(cn=中文))`,
 		expectedFilter: `(&(objectclass=inetorgperson)(cn=\e4\b8\ad\e6\96\87))`,
 		expectedType:   0,

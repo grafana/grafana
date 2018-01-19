@@ -135,8 +135,6 @@ func (s *OutPayload) isRPCStats() {}
 type OutHeader struct {
 	// Client is true if this OutHeader is from client side.
 	Client bool
-	// WireLength is the wire length of header.
-	WireLength int
 
 	// The following fields are valid only if Client is true.
 	// FullMethod is the full RPC method string, i.e., /package.service/method.
@@ -220,7 +218,7 @@ type outgoingTagsKey struct{}
 // the outgoing RPC with the header grpc-tags-bin.  Subsequent calls to
 // SetTags will overwrite the values from earlier calls.
 //
-// NOTE: this is provided only for backward compatibilty with existing clients
+// NOTE: this is provided only for backward compatibility with existing clients
 // and will likely be removed in an upcoming release.  New uses should transmit
 // this type of data using metadata with a different, non-reserved (i.e. does
 // not begin with "grpc-") header name.
@@ -230,7 +228,7 @@ func SetTags(ctx context.Context, b []byte) context.Context {
 
 // Tags returns the tags from the context for the inbound RPC.
 //
-// NOTE: this is provided only for backward compatibilty with existing clients
+// NOTE: this is provided only for backward compatibility with existing clients
 // and will likely be removed in an upcoming release.  New uses should transmit
 // this type of data using metadata with a different, non-reserved (i.e. does
 // not begin with "grpc-") header name.
@@ -262,7 +260,7 @@ type outgoingTraceKey struct{}
 // the outgoing RPC with the header grpc-trace-bin.  Subsequent calls to
 // SetTrace will overwrite the values from earlier calls.
 //
-// NOTE: this is provided only for backward compatibilty with existing clients
+// NOTE: this is provided only for backward compatibility with existing clients
 // and will likely be removed in an upcoming release.  New uses should transmit
 // this type of data using metadata with a different, non-reserved (i.e. does
 // not begin with "grpc-") header name.
@@ -272,7 +270,7 @@ func SetTrace(ctx context.Context, b []byte) context.Context {
 
 // Trace returns the trace from the context for the inbound RPC.
 //
-// NOTE: this is provided only for backward compatibilty with existing clients
+// NOTE: this is provided only for backward compatibility with existing clients
 // and will likely be removed in an upcoming release.  New uses should transmit
 // this type of data using metadata with a different, non-reserved (i.e. does
 // not begin with "grpc-") header name.

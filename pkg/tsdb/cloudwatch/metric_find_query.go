@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 	"sort"
 	"strings"
@@ -191,11 +192,11 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 		dsInfo := e.getDsInfo(region)
 		cfg, err := e.getAwsConfig(dsInfo)
 		if err != nil {
-			return nil, errors.New("Failed to call ec2:DescribeInstances")
+			return nil, fmt.Errorf("Failed to call ec2:DescribeInstances, %v", err)
 		}
 		sess, err := session.NewSession(cfg)
 		if err != nil {
-			return nil, errors.New("Failed to call ec2:DescribeInstances")
+			return nil, fmt.Errorf("Failed to call ec2:DescribeInstances, %v", err)
 		}
 		e.ec2Svc = ec2.New(sess, cfg)
 
@@ -478,7 +479,7 @@ func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace stri
 			return !lastPage
 		})
 	if err != nil {
-		return nil, errors.New("Failed to call cloudwatch:ListMetrics")
+		return nil, fmt.Errorf("Failed to call cloudwatch:ListMetrics, %v", err)
 	}
 
 	return &resp, nil

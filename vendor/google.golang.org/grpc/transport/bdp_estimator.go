@@ -41,12 +41,9 @@ const (
 	gamma = 2
 )
 
-var (
-	// Adding arbitrary data to ping so that its ack can be
-	// identified.
-	// Easter-egg: what does the ping message say?
-	bdpPing = &ping{data: [8]byte{2, 4, 16, 16, 9, 14, 7, 7}}
-)
+// Adding arbitrary data to ping so that its ack can be identified.
+// Easter-egg: what does the ping message say?
+var bdpPing = &ping{data: [8]byte{2, 4, 16, 16, 9, 14, 7, 7}}
 
 type bdpEstimator struct {
 	// sentAt is the time when the ping was sent.
@@ -59,7 +56,7 @@ type bdpEstimator struct {
 	sample uint32
 	// bwMax is the maximum bandwidth noted so far (bytes/sec).
 	bwMax float64
-	// bool to keep track of the begining of a new measurement cycle.
+	// bool to keep track of the beginning of a new measurement cycle.
 	isSent bool
 	// Callback to update the window sizes.
 	updateFlowControl func(n uint32)
@@ -70,7 +67,7 @@ type bdpEstimator struct {
 }
 
 // timesnap registers the time bdp ping was sent out so that
-// network rtt can be calculated when its ack is recieved.
+// network rtt can be calculated when its ack is received.
 // It is called (by controller) when the bdpPing is
 // being written on the wire.
 func (b *bdpEstimator) timesnap(d [8]byte) {
@@ -119,7 +116,7 @@ func (b *bdpEstimator) calculate(d [8]byte) {
 		b.rtt += (rttSample - b.rtt) * float64(alpha)
 	}
 	b.isSent = false
-	// The number of bytes accumalated so far in the sample is smaller
+	// The number of bytes accumulated so far in the sample is smaller
 	// than or equal to 1.5 times the real BDP on a saturated connection.
 	bwCurrent := float64(b.sample) / (b.rtt * float64(1.5))
 	if bwCurrent > b.bwMax {

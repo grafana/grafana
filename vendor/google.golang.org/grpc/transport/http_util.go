@@ -44,7 +44,8 @@ const (
 	// http://http2.github.io/http2-spec/#SettingValues
 	http2InitHeaderTableSize = 4096
 	// http2IOBufSize specifies the buffer size for sending frames.
-	http2IOBufSize = 32 * 1024
+	defaultWriteBufSize = 32 * 1024
+	defaultReadBufSize  = 32 * 1024
 )
 
 var (
@@ -474,10 +475,10 @@ type framer struct {
 	fr         *http2.Framer
 }
 
-func newFramer(conn net.Conn) *framer {
+func newFramer(conn net.Conn, writeBufferSize, readBufferSize int) *framer {
 	f := &framer{
-		reader: bufio.NewReaderSize(conn, http2IOBufSize),
-		writer: bufio.NewWriterSize(conn, http2IOBufSize),
+		reader: bufio.NewReaderSize(conn, readBufferSize),
+		writer: bufio.NewWriterSize(conn, writeBufferSize),
 	}
 	f.fr = http2.NewFramer(f.writer, f.reader)
 	// Opt-in to Frame reuse API on framer to reduce garbage.

@@ -1,4 +1,4 @@
-// Copyright 2010 The Go Authors.  All rights reserved.
+// Copyright 2010 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -24,4 +24,8 @@ func Clearenv() {
 
 func Environ() []string {
 	return syscall.Environ()
+}
+
+func Unsetenv(key string) error {
+	return syscall.Unsetenv(key)
 }

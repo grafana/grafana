@@ -1,16 +1,18 @@
-package gls
+package gls_test
 
 import (
 	"fmt"
 	"sync"
 	"testing"
+
+	"github.com/jtolds/gls"
 )
 
 func TestContexts(t *testing.T) {
-	mgr1 := NewContextManager()
-	mgr2 := NewContextManager()
+	mgr1 := gls.NewContextManager()
+	mgr2 := gls.NewContextManager()
 
-	CheckVal := func(mgr *ContextManager, key, exp_val string) {
+	CheckVal := func(mgr *gls.ContextManager, key, exp_val string) {
 		val, ok := mgr.GetValue(key)
 		if len(exp_val) == 0 {
 			if ok {
@@ -37,11 +39,11 @@ func TestContexts(t *testing.T) {
 	}
 
 	Check("", "", "", "")
-	mgr2.SetValues(Values{"key1": "val1c"}, func() {
+	mgr2.SetValues(gls.Values{"key1": "val1c"}, func() {
 		Check("", "", "val1c", "")
-		mgr1.SetValues(Values{"key1": "val1a"}, func() {
+		mgr1.SetValues(gls.Values{"key1": "val1a"}, func() {
 			Check("val1a", "", "val1c", "")
-			mgr1.SetValues(Values{"key2": "val1b"}, func() {
+			mgr1.SetValues(gls.Values{"key2": "val1b"}, func() {
 				Check("val1a", "val1b", "val1c", "")
 				var wg sync.WaitGroup
 				wg.Add(2)
@@ -49,20 +51,24 @@ func TestContexts(t *testing.T) {
 					defer wg.Done()
 					Check("", "", "", "")
 				}()
-				Go(func() {
+				gls.Go(func() {
 					defer wg.Done()
 					Check("val1a", "val1b", "val1c", "")
 				})
 				wg.Wait()
+				Check("val1a", "val1b", "val1c", "")
 			})
+			Check("val1a", "", "val1c", "")
 		})
+		Check("", "", "val1c", "")
 	})
+	Check("", "", "", "")
 }
 
 func ExampleContextManager_SetValues() {
 	var (
-		mgr            = NewContextManager()
-		request_id_key = GenSym()
+		mgr            = gls.NewContextManager()
+		request_id_key = gls.GenSym()
 	)
 
 	MyLog := func() {
@@ -73,7 +79,7 @@ func ExampleContextManager_SetValues() {
 		}
 	}
 
-	mgr.SetValues(Values{request_id_key: "12345"}, func() {
+	mgr.SetValues(gls.Values{request_id_key: "12345"}, func() {
 		MyLog()
 	})
 	MyLog()
@@ -84,8 +90,8 @@ func ExampleContextManager_SetValues() {
 
 func ExampleGo() {
 	var (
-		mgr            = NewContextManager()
-		request_id_key = GenSym()
+		mgr            = gls.NewContextManager()
+		request_id_key = gls.GenSym()
 	)
 
 	MyLog := func() {
@@ -96,7 +102,7 @@ func ExampleGo() {
 		}
 	}
 
-	mgr.SetValues(Values{request_id_key: "12345"}, func() {
+	mgr.SetValues(gls.Values{request_id_key: "12345"}, func() {
 		var wg sync.WaitGroup
 		wg.Add(1)
 		go func() {
@@ -105,7 +111,7 @@ func ExampleGo() {
 		}()
 		wg.Wait()
 		wg.Add(1)
-		Go(func() {
+		gls.Go(func() {
 			defer wg.Done()
 			MyLog()
 		})
@@ -117,8 +123,8 @@ func ExampleGo() {
 }
 
 func BenchmarkGetValue(b *testing.B) {
-	mgr := NewContextManager()
-	mgr.SetValues(Values{"test_key": "test_val"}, func() {
+	mgr := gls.NewContextManager()
+	mgr.SetValues(gls.Values{"test_key": "test_val"}, func() {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			val, ok := mgr.GetValue("test_key")
@@ -130,10 +136,10 @@ func BenchmarkGetValue(b *testing.B) {
 }
 
 func BenchmarkSetValues(b *testing.B) {
-	mgr := NewContextManager()
+	mgr := gls.NewContextManager()
 	for i := 0; i < b.N/2; i++ {
-		mgr.SetValues(Values{"test_key": "test_val"}, func() {
-			mgr.SetValues(Values{"test_key2": "test_val2"}, func() {})
+		mgr.SetValues(gls.Values{"test_key": "test_val"}, func() {
+			mgr.SetValues(gls.Values{"test_key2": "test_val2"}, func() {})
 		})
 	}
 }

@@ -19,14 +19,19 @@ import (
 type T interface {
 	Error(args ...interface{})
 	Errorf(format string, args ...interface{})
-	Fatal(args ...interface{})
-	Fatalf(format string, args ...interface{})
 	Fail()
 	FailNow()
 	Failed() bool
-	Helper()
+	Fatal(args ...interface{})
+	Fatalf(format string, args ...interface{})
 	Log(args ...interface{})
 	Logf(format string, args ...interface{})
+	Name() string
+	Skip(args ...interface{})
+	SkipNow()
+	Skipf(format string, args ...interface{})
+	Skipped() bool
+	Helper()
 }
 
 // RuntimeT implements T and can be instantiated and run at runtime to
@@ -34,7 +39,8 @@ type T interface {
 // for calls to Fatal. For calls to Error, you'll have to check the errors
 // list to determine whether to exit yourself.
 type RuntimeT struct {
-	failed bool
+	skipped bool
+	failed  bool
 }
 
 func (t *RuntimeT) Error(args ...interface{}) {
@@ -43,18 +49,8 @@ func (t *RuntimeT) Error(args ...interface{}) {
 }
 
 func (t *RuntimeT) Errorf(format string, args ...interface{}) {
-	log.Println(fmt.Sprintf(format, args...))
+	log.Printf(format, args...)
 	t.Fail()
-}
-
-func (t *RuntimeT) Fatal(args ...interface{}) {
-	log.Println(fmt.Sprintln(args...))
-	t.FailNow()
-}
-
-func (t *RuntimeT) Fatalf(format string, args ...interface{}) {
-	log.Println(fmt.Sprintf(format, args...))
-	t.FailNow()
 }
 
 func (t *RuntimeT) Fail() {
@@ -69,7 +65,15 @@ func (t *RuntimeT) Failed() bool {
 	return t.failed
 }
 
-func (t *RuntimeT) Helper() {}
+func (t *RuntimeT) Fatal(args ...interface{}) {
+	log.Print(args...)
+	t.FailNow()
+}
+
+func (t *RuntimeT) Fatalf(format string, args ...interface{}) {
+	log.Printf(format, args...)
+	t.FailNow()
+}
 
 func (t *RuntimeT) Log(args ...interface{}) {
 	log.Println(fmt.Sprintln(args...))
@@ -78,3 +82,27 @@ func (t *RuntimeT) Log(args ...interface{}) {
 func (t *RuntimeT) Logf(format string, args ...interface{}) {
 	log.Println(fmt.Sprintf(format, args...))
 }
+
+func (t *RuntimeT) Name() string {
+	return ""
+}
+
+func (t *RuntimeT) Skip(args ...interface{}) {
+	log.Print(args...)
+	t.SkipNow()
+}
+
+func (t *RuntimeT) SkipNow() {
+	t.skipped = true
+}
+
+func (t *RuntimeT) Skipf(format string, args ...interface{}) {
+	log.Printf(format, args...)
+	t.SkipNow()
+}
+
+func (t *RuntimeT) Skipped() bool {
+	return t.skipped
+}
+
+func (t *RuntimeT) Helper() {}

@@ -123,6 +123,12 @@ func (s *Session) IsClosed() bool {
 	}
 }
 
+// CloseChan returns a read-only channel which is closed as
+// soon as the session is closed.
+func (s *Session) CloseChan() <-chan struct{} {
+	return s.shutdownCh
+}
+
 // NumStreams returns the number of currently open streams
 func (s *Session) NumStreams() int {
 	s.streamLock.Lock()

@@ -1,0 +1,11 @@
+*.out
+*.test
+*.xml
+*.swp
+.idea/
+.tmp/
+*.iml
+*.cov
+*.html
+*.log
+vendor/

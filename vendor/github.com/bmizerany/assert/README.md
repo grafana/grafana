@@ -1,3 +1,5 @@
+# NO LONGER MAINTAINED - Just use Go's testing package.
+
 # Assert (c) Blake Mizerany and Keith Rarick -- MIT LICENCE
 
 ## Assertions for Go tests
