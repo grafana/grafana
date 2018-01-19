@@ -173,9 +173,8 @@
   name = "golang.org/x/sync"
 
 [[constraint]]
-  branch = "v2"
   name = "gopkg.in/gomail.v2"
-  #version = "2.0.0"
+  branch = "v2" 
 
 [[constraint]]
   name = "gopkg.in/ini.v1"
@@ -188,3 +187,8 @@
 [[constraint]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
+
+[prune]
+  non-go = true
+  test-go = true
+  unused-packages = true

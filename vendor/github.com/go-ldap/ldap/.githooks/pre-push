@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-# install from the root of the repo with:
-#   ln -s ../../.githooks/pre-push .git/hooks/pre-push
-
-make vet fmt lint

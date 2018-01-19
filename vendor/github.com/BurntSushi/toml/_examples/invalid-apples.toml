@@ -1,6 +1,0 @@
-# DO NOT WANT
-[fruit]
-type = "apple"
-
-[fruit.type]
-apple = "yes"

@@ -1,7 +1,0 @@
-Def0 = case not erlang:is_builtin(erlang, monotonic_time, 0) of
-           true -> [];
-           false -> [{d, time_correction}]
-       end,
-Defs = Def0,
-lists:keystore(erl_opts, 1, CONFIG,
-               {erl_opts, proplists:get_value(erl_opts, CONFIG, []) ++ Defs}).
