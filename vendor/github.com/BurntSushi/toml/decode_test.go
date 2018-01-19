@@ -3,14 +3,12 @@ package toml
 import (
 	"fmt"
 	"log"
+	"math"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
-
-func init() {
-	log.SetFlags(0)
-}
 
 func TestDecodeSimple(t *testing.T) {
 	var testSimple = `
@@ -67,7 +65,7 @@ cauchy = "cat 2"
 			{"cyan", "magenta", "yellow", "black"},
 		},
 		My: map[string]cats{
-			"Cats": cats{Plato: "cat 1", Cauchy: "cat 2"},
+			"Cats": {Plato: "cat 1", Cauchy: "cat 2"},
 		},
 	}
 	if !reflect.DeepEqual(val, answer) {
@@ -79,43 +77,70 @@ cauchy = "cat 2"
 func TestDecodeEmbedded(t *testing.T) {
 	type Dog struct{ Name string }
 	type Age int
+	type cat struct{ Name string }
 
-	tests := map[string]struct {
+	for _, test := range []struct {
+		label       string
 		input       string
 		decodeInto  interface{}
 		wantDecoded interface{}
 	}{
-		"embedded struct": {
+		{
+			label:       "embedded struct",
 			input:       `Name = "milton"`,
 			decodeInto:  &struct{ Dog }{},
 			wantDecoded: &struct{ Dog }{Dog{"milton"}},
 		},
-		"embedded non-nil pointer to struct": {
+		{
+			label:       "embedded non-nil pointer to struct",
 			input:       `Name = "milton"`,
 			decodeInto:  &struct{ *Dog }{},
 			wantDecoded: &struct{ *Dog }{&Dog{"milton"}},
 		},
-		"embedded nil pointer to struct": {
+		{
+			label:       "embedded nil pointer to struct",
 			input:       ``,
 			decodeInto:  &struct{ *Dog }{},
 			wantDecoded: &struct{ *Dog }{nil},
 		},
-		"embedded int": {
+		{
+			label:       "unexported embedded struct",
+			input:       `Name = "socks"`,
+			decodeInto:  &struct{ cat }{},
+			wantDecoded: &struct{ cat }{cat{"socks"}},
+		},
+		{
+			label:       "embedded int",
 			input:       `Age = -5`,
 			decodeInto:  &struct{ Age }{},
 			wantDecoded: &struct{ Age }{-5},
 		},
-	}
-
-	for label, test := range tests {
+	} {
 		_, err := Decode(test.input, test.decodeInto)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if !reflect.DeepEqual(test.wantDecoded, test.decodeInto) {
 			t.Errorf("%s: want decoded == %+v, got %+v",
-				label, test.wantDecoded, test.decodeInto)
+				test.label, test.wantDecoded, test.decodeInto)
 		}
+	}
+}
+
+func TestDecodeIgnoredFields(t *testing.T) {
+	type simple struct {
+		Number int `toml:"-"`
+	}
+	const input = `
+Number = 123
+- = 234
+`
+	var s simple
+	if _, err := Decode(input, &s); err != nil {
+		t.Fatal(err)
+	}
+	if s.Number != 0 {
+		t.Errorf("got: %d; want 0", s.Number)
 	}
 }
 
@@ -163,6 +188,49 @@ name = "Born in the USA"
 	}
 	if !reflect.DeepEqual(expected, got) {
 		t.Fatalf("\n%#v\n!=\n%#v\n", expected, got)
+	}
+}
+
+func TestTableNesting(t *testing.T) {
+	for _, tt := range []struct {
+		t    string
+		want []string
+	}{
+		{"[a.b.c]", []string{"a", "b", "c"}},
+		{`[a."b.c"]`, []string{"a", "b.c"}},
+		{`[a.'b.c']`, []string{"a", "b.c"}},
+		{`[a.' b ']`, []string{"a", " b "}},
+		{"[ d.e.f ]", []string{"d", "e", "f"}},
+		{"[ g . h . i ]", []string{"g", "h", "i"}},
+		{`[ j . "ʞ" . 'l' ]`, []string{"j", "ʞ", "l"}},
+	} {
+		var m map[string]interface{}
+		if _, err := Decode(tt.t, &m); err != nil {
+			t.Errorf("Decode(%q): got error: %s", tt.t, err)
+			continue
+		}
+		if keys := extractNestedKeys(m); !reflect.DeepEqual(keys, tt.want) {
+			t.Errorf("Decode(%q): got nested keys %#v; want %#v",
+				tt.t, keys, tt.want)
+		}
+	}
+}
+
+func extractNestedKeys(v map[string]interface{}) []string {
+	var result []string
+	for {
+		if len(v) != 1 {
+			return result
+		}
+		for k, m := range v {
+			result = append(result, k)
+			var ok bool
+			v, ok = m.(map[string]interface{})
+			if !ok {
+				return result
+			}
+		}
+
 	}
 }
 
@@ -285,6 +353,83 @@ Description = "da base"
 	}
 }
 
+func TestDecodeDatetime(t *testing.T) {
+	const noTimestamp = "2006-01-02T15:04:05"
+	for _, tt := range []struct {
+		s      string
+		t      string
+		format string
+	}{
+		{"1979-05-27T07:32:00Z", "1979-05-27T07:32:00Z", time.RFC3339},
+		{"1979-05-27T00:32:00-07:00", "1979-05-27T00:32:00-07:00", time.RFC3339},
+		{
+			"1979-05-27T00:32:00.999999-07:00",
+			"1979-05-27T00:32:00.999999-07:00",
+			time.RFC3339,
+		},
+		{"1979-05-27T07:32:00", "1979-05-27T07:32:00", noTimestamp},
+		{
+			"1979-05-27T00:32:00.999999",
+			"1979-05-27T00:32:00.999999",
+			noTimestamp,
+		},
+		{"1979-05-27", "1979-05-27T00:00:00", noTimestamp},
+	} {
+		var x struct{ D time.Time }
+		input := "d = " + tt.s
+		if _, err := Decode(input, &x); err != nil {
+			t.Errorf("Decode(%q): got error: %s", input, err)
+			continue
+		}
+		want, err := time.ParseInLocation(tt.format, tt.t, time.Local)
+		if err != nil {
+			panic(err)
+		}
+		if !x.D.Equal(want) {
+			t.Errorf("Decode(%q): got %s; want %s", input, x.D, want)
+		}
+	}
+}
+
+func TestDecodeBadDatetime(t *testing.T) {
+	var x struct{ T time.Time }
+	for _, s := range []string{
+		"123",
+		"2006-01-50T00:00:00Z",
+		"2006-01-30T00:00",
+		"2006-01-30T",
+	} {
+		input := "T = " + s
+		if _, err := Decode(input, &x); err == nil {
+			t.Errorf("Expected invalid DateTime error for %q", s)
+		}
+	}
+}
+
+func TestDecodeMultilineStrings(t *testing.T) {
+	var x struct {
+		S string
+	}
+	const s0 = `s = """
+a b \n c
+d e f
+"""`
+	if _, err := Decode(s0, &x); err != nil {
+		t.Fatal(err)
+	}
+	if want := "a b \n c\nd e f\n"; x.S != want {
+		t.Errorf("got: %q; want: %q", x.S, want)
+	}
+	const s1 = `s = """a b c\
+"""`
+	if _, err := Decode(s1, &x); err != nil {
+		t.Fatal(err)
+	}
+	if want := "a b c"; x.S != want {
+		t.Errorf("got: %q; want: %q", x.S, want)
+	}
+}
+
 type sphere struct {
 	Center [3]float64
 	Radius float64
@@ -349,6 +494,111 @@ func TestDecodeSizedInts(t *testing.T) {
 	}
 }
 
+func TestDecodeInts(t *testing.T) {
+	for _, tt := range []struct {
+		s    string
+		want int64
+	}{
+		{"0", 0},
+		{"+99", 99},
+		{"-10", -10},
+		{"1_234_567", 1234567},
+		{"1_2_3_4", 1234},
+		{"-9_223_372_036_854_775_808", math.MinInt64},
+		{"9_223_372_036_854_775_807", math.MaxInt64},
+	} {
+		var x struct{ N int64 }
+		input := "n = " + tt.s
+		if _, err := Decode(input, &x); err != nil {
+			t.Errorf("Decode(%q): got error: %s", input, err)
+			continue
+		}
+		if x.N != tt.want {
+			t.Errorf("Decode(%q): got %d; want %d", input, x.N, tt.want)
+		}
+	}
+}
+
+func TestDecodeFloats(t *testing.T) {
+	for _, tt := range []struct {
+		s    string
+		want float64
+	}{
+		{"+1.0", 1},
+		{"3.1415", 3.1415},
+		{"-0.01", -0.01},
+		{"5e+22", 5e22},
+		{"1e6", 1e6},
+		{"-2E-2", -2e-2},
+		{"6.626e-34", 6.626e-34},
+		{"9_224_617.445_991_228_313", 9224617.445991228313},
+		{"9_876.54_32e1_0", 9876.5432e10},
+	} {
+		var x struct{ N float64 }
+		input := "n = " + tt.s
+		if _, err := Decode(input, &x); err != nil {
+			t.Errorf("Decode(%q): got error: %s", input, err)
+			continue
+		}
+		if x.N != tt.want {
+			t.Errorf("Decode(%q): got %f; want %f", input, x.N, tt.want)
+		}
+	}
+}
+
+func TestDecodeMalformedNumbers(t *testing.T) {
+	for _, tt := range []struct {
+		s    string
+		want string
+	}{
+		{"++99", "expected a digit"},
+		{"0..1", "must be followed by one or more digits"},
+		{"0.1.2", "Invalid float value"},
+		{"1e2.3", "Invalid float value"},
+		{"1e2e3", "Invalid float value"},
+		{"_123", "expected value"},
+		{"123_", "surrounded by digits"},
+		{"1._23", "surrounded by digits"},
+		{"1e__23", "surrounded by digits"},
+		{"123.", "must be followed by one or more digits"},
+		{"1.e2", "must be followed by one or more digits"},
+	} {
+		var x struct{ N interface{} }
+		input := "n = " + tt.s
+		_, err := Decode(input, &x)
+		if err == nil {
+			t.Errorf("Decode(%q): got nil, want error containing %q",
+				input, tt.want)
+			continue
+		}
+		if !strings.Contains(err.Error(), tt.want) {
+			t.Errorf("Decode(%q): got %q, want error containing %q",
+				input, err, tt.want)
+		}
+	}
+}
+
+func TestDecodeBadValues(t *testing.T) {
+	for _, tt := range []struct {
+		v    interface{}
+		want string
+	}{
+		{3, "non-pointer int"},
+		{(*int)(nil), "nil"},
+	} {
+		_, err := Decode(`x = 3`, tt.v)
+		if err == nil {
+			t.Errorf("Decode(%v): got nil; want error containing %q",
+				tt.v, tt.want)
+			continue
+		}
+		if !strings.Contains(err.Error(), tt.want) {
+			t.Errorf("Decode(%v): got %q; want error containing %q",
+				tt.v, err, tt.want)
+		}
+	}
+}
+
 func TestUnmarshaler(t *testing.T) {
 
 	var tomlBlob = `
@@ -383,7 +633,7 @@ name = "Rice"
 `
 	m := &menu{}
 	if _, err := Decode(tomlBlob, m); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	if len(m.Dishes) != 2 {
@@ -419,9 +669,121 @@ name = "Rice"
 	// test on a value - must be passed as *
 	o := menu{}
 	if _, err := Decode(tomlBlob, &o); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
+}
+
+func TestDecodeInlineTable(t *testing.T) {
+	input := `
+[CookieJar]
+Types = {Chocolate = "yummy", Oatmeal = "best ever"}
+
+[Seasons]
+Locations = {NY = {Temp = "not cold", Rating = 4}, MI = {Temp = "freezing", Rating = 9}}
+`
+	type cookieJar struct {
+		Types map[string]string
+	}
+	type properties struct {
+		Temp   string
+		Rating int
+	}
+	type seasons struct {
+		Locations map[string]properties
+	}
+	type wrapper struct {
+		CookieJar cookieJar
+		Seasons   seasons
+	}
+	var got wrapper
+
+	meta, err := Decode(input, &got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := wrapper{
+		CookieJar: cookieJar{
+			Types: map[string]string{
+				"Chocolate": "yummy",
+				"Oatmeal":   "best ever",
+			},
+		},
+		Seasons: seasons{
+			Locations: map[string]properties{
+				"NY": {
+					Temp:   "not cold",
+					Rating: 4,
+				},
+				"MI": {
+					Temp:   "freezing",
+					Rating: 9,
+				},
+			},
+		},
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("after decode, got:\n\n%#v\n\nwant:\n\n%#v", got, want)
+	}
+	if len(meta.keys) != 12 {
+		t.Errorf("after decode, got %d meta keys; want 12", len(meta.keys))
+	}
+	if len(meta.types) != 12 {
+		t.Errorf("after decode, got %d meta types; want 12", len(meta.types))
+	}
+}
+
+func TestDecodeInlineTableArray(t *testing.T) {
+	type point struct {
+		X, Y, Z int
+	}
+	var got struct {
+		Points []point
+	}
+	// Example inline table array from the spec.
+	const in = `
+points = [ { x = 1, y = 2, z = 3 },
+           { x = 7, y = 8, z = 9 },
+           { x = 2, y = 4, z = 8 } ]
+
+`
+	if _, err := Decode(in, &got); err != nil {
+		t.Fatal(err)
+	}
+	want := []point{
+		{X: 1, Y: 2, Z: 3},
+		{X: 7, Y: 8, Z: 9},
+		{X: 2, Y: 4, Z: 8},
+	}
+	if !reflect.DeepEqual(got.Points, want) {
+		t.Errorf("got %#v; want %#v", got.Points, want)
+	}
+}
+
+func TestDecodeMalformedInlineTable(t *testing.T) {
+	for _, tt := range []struct {
+		s    string
+		want string
+	}{
+		{"{,}", "unexpected comma"},
+		{"{x = 3 y = 4}", "expected a comma or an inline table terminator"},
+		{"{x=3,,y=4}", "unexpected comma"},
+		{"{x=3,\ny=4}", "newlines not allowed"},
+		{"{x=3\n,y=4}", "newlines not allowed"},
+	} {
+		var x struct{ A map[string]int }
+		input := "a = " + tt.s
+		_, err := Decode(input, &x)
+		if err == nil {
+			t.Errorf("Decode(%q): got nil, want error containing %q",
+				input, tt.want)
+			continue
+		}
+		if !strings.Contains(err.Error(), tt.want) {
+			t.Errorf("Decode(%q): got %q, want error containing %q",
+				input, err, tt.want)
+		}
+	}
 }
 
 type menu struct {
@@ -466,6 +828,141 @@ func (d *dish) UnmarshalTOML(p interface{}) error {
 
 type ingredient struct {
 	Name string
+}
+
+func TestDecodeSlices(t *testing.T) {
+	type T struct {
+		S []string
+	}
+	for i, tt := range []struct {
+		v     T
+		input string
+		want  T
+	}{
+		{T{}, "", T{}},
+		{T{[]string{}}, "", T{[]string{}}},
+		{T{[]string{"a", "b"}}, "", T{[]string{"a", "b"}}},
+		{T{}, "S = []", T{[]string{}}},
+		{T{[]string{}}, "S = []", T{[]string{}}},
+		{T{[]string{"a", "b"}}, "S = []", T{[]string{}}},
+		{T{}, `S = ["x"]`, T{[]string{"x"}}},
+		{T{[]string{}}, `S = ["x"]`, T{[]string{"x"}}},
+		{T{[]string{"a", "b"}}, `S = ["x"]`, T{[]string{"x"}}},
+	} {
+		if _, err := Decode(tt.input, &tt.v); err != nil {
+			t.Errorf("[%d] %s", i, err)
+			continue
+		}
+		if !reflect.DeepEqual(tt.v, tt.want) {
+			t.Errorf("[%d] got %#v; want %#v", i, tt.v, tt.want)
+		}
+	}
+}
+
+func TestDecodePrimitive(t *testing.T) {
+	type S struct {
+		P Primitive
+	}
+	type T struct {
+		S []int
+	}
+	slicep := func(s []int) *[]int { return &s }
+	arrayp := func(a [2]int) *[2]int { return &a }
+	mapp := func(m map[string]int) *map[string]int { return &m }
+	for i, tt := range []struct {
+		v     interface{}
+		input string
+		want  interface{}
+	}{
+		// slices
+		{slicep(nil), "", slicep(nil)},
+		{slicep([]int{}), "", slicep([]int{})},
+		{slicep([]int{1, 2, 3}), "", slicep([]int{1, 2, 3})},
+		{slicep(nil), "P = [1,2]", slicep([]int{1, 2})},
+		{slicep([]int{}), "P = [1,2]", slicep([]int{1, 2})},
+		{slicep([]int{1, 2, 3}), "P = [1,2]", slicep([]int{1, 2})},
+
+		// arrays
+		{arrayp([2]int{2, 3}), "", arrayp([2]int{2, 3})},
+		{arrayp([2]int{2, 3}), "P = [3,4]", arrayp([2]int{3, 4})},
+
+		// maps
+		{mapp(nil), "", mapp(nil)},
+		{mapp(map[string]int{}), "", mapp(map[string]int{})},
+		{mapp(map[string]int{"a": 1}), "", mapp(map[string]int{"a": 1})},
+		{mapp(nil), "[P]\na = 2", mapp(map[string]int{"a": 2})},
+		{mapp(map[string]int{}), "[P]\na = 2", mapp(map[string]int{"a": 2})},
+		{mapp(map[string]int{"a": 1, "b": 3}), "[P]\na = 2", mapp(map[string]int{"a": 2, "b": 3})},
+
+		// structs
+		{&T{nil}, "[P]", &T{nil}},
+		{&T{[]int{}}, "[P]", &T{[]int{}}},
+		{&T{[]int{1, 2, 3}}, "[P]", &T{[]int{1, 2, 3}}},
+		{&T{nil}, "[P]\nS = [1,2]", &T{[]int{1, 2}}},
+		{&T{[]int{}}, "[P]\nS = [1,2]", &T{[]int{1, 2}}},
+		{&T{[]int{1, 2, 3}}, "[P]\nS = [1,2]", &T{[]int{1, 2}}},
+	} {
+		var s S
+		md, err := Decode(tt.input, &s)
+		if err != nil {
+			t.Errorf("[%d] Decode error: %s", i, err)
+			continue
+		}
+		if err := md.PrimitiveDecode(s.P, tt.v); err != nil {
+			t.Errorf("[%d] PrimitiveDecode error: %s", i, err)
+			continue
+		}
+		if !reflect.DeepEqual(tt.v, tt.want) {
+			t.Errorf("[%d] got %#v; want %#v", i, tt.v, tt.want)
+		}
+	}
+}
+
+func TestDecodeErrors(t *testing.T) {
+	for _, s := range []string{
+		`x="`,
+		`x='`,
+		`x='''`,
+
+		// Cases found by fuzzing in
+		// https://github.com/BurntSushi/toml/issues/155.
+		`""�`,   // used to panic with index out of range
+		`e="""`, // used to hang
+	} {
+		var x struct{}
+		_, err := Decode(s, &x)
+		if err == nil {
+			t.Errorf("Decode(%q): got nil error", s)
+		}
+	}
+}
+
+// Test for https://github.com/BurntSushi/toml/pull/166.
+func TestDecodeBoolArray(t *testing.T) {
+	for _, tt := range []struct {
+		s    string
+		got  interface{}
+		want interface{}
+	}{
+		{
+			"a = [true, false]",
+			&struct{ A []bool }{},
+			&struct{ A []bool }{[]bool{true, false}},
+		},
+		{
+			"a = {a = true, b = false}",
+			&struct{ A map[string]bool }{},
+			&struct{ A map[string]bool }{map[string]bool{"a": true, "b": false}},
+		},
+	} {
+		if _, err := Decode(tt.s, tt.got); err != nil {
+			t.Errorf("Decode(%q): %s", tt.s, err)
+			continue
+		}
+		if !reflect.DeepEqual(tt.got, tt.want) {
+			t.Errorf("Decode(%q): got %#v; want %#v", tt.s, tt.got, tt.want)
+		}
+	}
 }
 
 func ExampleMetaData_PrimitiveDecode() {
@@ -553,7 +1050,7 @@ ip = "10.0.0.2"
 	}
 
 	type server struct {
-		IP     string       `toml:"ip"`
+		IP     string       `toml:"ip,omitempty"`
 		Config serverConfig `toml:"config"`
 	}
 
@@ -715,7 +1212,7 @@ rating = 3.1
 
 	// 	// NOTE the example below contains detailed type casting to show how
 	// 	// the 'data' is retrieved. In operational use, a type cast wrapper
-	// 	// may be prefered e.g.
+	// 	// may be preferred e.g.
 	// 	//
 	// 	// func AsMap(v interface{}) (map[string]interface{}, error) {
 	// 	// 		return v.(map[string]interface{})
@@ -842,7 +1339,7 @@ func (o *order) UnmarshalTOML(data interface{}) error {
 
 	// NOTE the example below contains detailed type casting to show how
 	// the 'data' is retrieved. In operational use, a type cast wrapper
-	// may be prefered e.g.
+	// may be preferred e.g.
 	//
 	// func AsMap(v interface{}) (map[string]interface{}, error) {
 	// 		return v.(map[string]interface{})

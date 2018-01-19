@@ -1,0 +1,22 @@
+{
+  "pagination": {
+    "ListInputs": {
+      "input_token": "NextToken",
+      "output_token": "NextToken",
+      "limit_key": "MaxResults",
+      "result_key": "Inputs"
+    },
+    "ListChannels": {
+      "input_token": "NextToken",
+      "output_token": "NextToken",
+      "limit_key": "MaxResults",
+      "result_key": "Channels"
+    },
+    "ListInputSecurityGroups": {
+      "input_token": "NextToken",
+      "output_token": "NextToken",
+      "limit_key": "MaxResults",
+      "result_key": "InputSecurityGroups"
+    }
+  }
+}

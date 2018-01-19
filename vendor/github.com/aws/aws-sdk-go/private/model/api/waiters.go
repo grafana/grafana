@@ -113,7 +113,7 @@ var waiterTmpls = template.Must(template.New("waiterTmpls").Funcs(
 {{ define "waiter"}}
 // WaitUntil{{ .Name }} uses the {{ .Operation.API.NiceName }} API operation
 // {{ .OperationName }} to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *{{ .Operation.API.StructName }}) WaitUntil{{ .Name }}(input {{ .Operation.InputRef.GoType }}) error {
 	return c.WaitUntil{{ .Name }}WithContext(aws.BackgroundContext(), input)

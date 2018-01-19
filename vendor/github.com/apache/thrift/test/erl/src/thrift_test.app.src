@@ -1,0 +1,54 @@
+%%
+%% Licensed to the Apache Software Foundation (ASF) under one
+%% or more contributor license agreements. See the NOTICE file
+%% distributed with this work for additional information
+%% regarding copyright ownership. The ASF licenses this file
+%% to you under the Apache License, Version 2.0 (the
+%% "License"); you may not use this file except in compliance
+%% with the License. You may obtain a copy of the License at
+%%
+%%   http://www.apache.org/licenses/LICENSE-2.0
+%%
+%% Unless required by applicable law or agreed to in writing,
+%% software distributed under the License is distributed on an
+%% "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+%% KIND, either express or implied. See the License for the
+%% specific language governing permissions and limitations
+%% under the License.
+%%
+%%% -*- mode:erlang -*-
+{application, thrift_test, [
+  % A quick description of the application.
+  {description, "Thrift cross language test"},
+
+  % The version of the applicaton
+  {vsn, "0.10.0"},
+
+  % All modules used by the application.
+  {modules, [
+    test_client,
+    test_thrift_server
+  ]},
+
+  % All of the registered names the application uses. This can be ignored.
+  {registered, []},
+
+  % Applications that are to be started prior to this one. This can be ignored
+  % leave it alone unless you understand it well and let the .rel files in
+  % your release handle this.
+  {applications, [kernel, stdlib]},
+
+  % OTP application loader will load, but not start, included apps. Again
+  % this can be ignored as well.  To load but not start an application it
+  % is easier to include it in the .rel file followed by the atom 'none'
+  {included_applications, []},
+
+  % configuration parameters similar to those in the config file specified
+  % on the command line. can be fetched with gas:get_env
+  {env, [
+    % If an error/crash occurs during processing of a function,
+    % should the TApplicationException serialized back to the client
+    % include the erlang backtrace?
+    {exceptions_include_traces, true}
+  ]}
+]}.

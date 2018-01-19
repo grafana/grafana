@@ -1,0 +1,80 @@
+--
+-- Licensed to the Apache Software Foundation (ASF) under one
+-- or more contributor license agreements. See the NOTICE file
+-- distributed with this work for additional information
+-- regarding copyright ownership. The ASF licenses this file
+-- to you under the Apache License, Version 2.0 (the
+-- "License"); you may not use this file except in compliance
+-- with the License. You may obtain a copy of the License at
+--
+--   http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing,
+-- software distributed under the License is distributed on an
+-- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+-- KIND, either express or implied. See the License for the
+-- specific language governing permissions and limitations
+-- under the License.
+--
+
+Name:           thrift
+Version:        0.10.0
+Cabal-Version:  >= 1.8
+License:        OtherLicense
+Category:       Foreign
+Build-Type:     Simple
+Synopsis:       Haskell bindings for the Apache Thrift RPC system
+Homepage:       http://thrift.apache.org
+Bug-Reports:    https://issues.apache.org/jira/browse/THRIFT
+Maintainer:     dev@thrift.apache.org
+License-File:   LICENSE
+
+Description:
+  Haskell bindings for the Apache Thrift RPC system. Requires the use of the thrift code generator.
+
+flag network-uri
+   description: Get Network.URI from the network-uri package
+   default: True
+
+Library
+  Hs-Source-Dirs:
+    src
+  Build-Depends:
+    base >= 4, base < 5, containers, ghc-prim, attoparsec, binary, bytestring >= 0.10, base64-bytestring, hashable, HTTP, text, unordered-containers >= 0.2.6, vector == 0.10.12.2, QuickCheck >= 2.8.2, split
+  if flag(network-uri)
+     build-depends: network-uri >= 2.6, network >= 2.6
+  else
+     build-depends: network < 2.6
+  Exposed-Modules:
+    Thrift,
+    Thrift.Arbitraries
+    Thrift.Protocol,
+    Thrift.Protocol.Binary,
+    Thrift.Protocol.Compact,
+    Thrift.Protocol.JSON,
+    Thrift.Server,
+    Thrift.Transport,
+    Thrift.Transport.Empty,
+    Thrift.Transport.Framed,
+    Thrift.Transport.Handle,
+    Thrift.Transport.HttpClient,
+    Thrift.Transport.IOBuffer,
+    Thrift.Transport.Memory,
+    Thrift.Types
+  Extensions:
+    DeriveDataTypeable,
+    ExistentialQuantification,
+    FlexibleInstances,
+    KindSignatures,
+    MagicHash,
+    RankNTypes,
+    RecordWildCards,
+    ScopedTypeVariables,
+    TypeSynonymInstances
+
+Test-Suite spec
+  Type: exitcode-stdio-1.0
+  Hs-Source-Dirs: test
+  Ghc-Options: -Wall
+  main-is: Spec.hs
+  Build-Depends: base, thrift, hspec, QuickCheck >= 2.8.2, bytestring >= 0.10, unordered-containers >= 0.2.6

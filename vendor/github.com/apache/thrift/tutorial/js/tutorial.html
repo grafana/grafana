@@ -1,0 +1,109 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements. See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership. The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied. See the License for the
+  specific language governing permissions and limitations
+  under the License.
+-->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Thrift Javascript Bindings - Tutorial Example</title>
+
+  <script src="../../lib/js/src/thrift.js"  type="text/javascript"></script>
+  <script src="gen-js/tutorial_types.js"    type="text/javascript"></script>
+  <script src="gen-js/shared_types.js"      type="text/javascript"></script>
+  <script src="gen-js/SharedService.js"     type="text/javascript"></script>
+  <script src="gen-js/Calculator.js"        type="text/javascript"></script>
+
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+
+
+  <script type="text/javascript" charset="utf-8">
+  //<![CDATA[
+  $(document).ready(function(){
+    // remove pseudo child required for valid xhtml strict
+    $("#op").children().remove();
+    // add operations to it's dropdown menu
+    $.each(Operation, function(key, value) {
+      $('#op').append($("<option></option>").attr("value",value).text(key)); 
+    });
+    
+     $('table.calculator').attr('width', 500);
+  });
+
+  function calc() {
+    var transport = new Thrift.Transport("/thrift/service/tutorial/");
+    var protocol  = new Thrift.Protocol(transport);
+    var client    = new CalculatorClient(protocol);
+
+    var work = new Work();
+    work.num1 = $("#num1").val();
+    work.num2 = $("#num2").val();
+    work.op = $("#op").val();
+    
+    try {
+      result = client.calculate(1, work);
+      $('#result').val(result);
+      $('#result').css('color', 'black');
+    } catch(ouch){
+      $('#result').val(ouch.why);
+      $('#result').css('color', 'red');
+    }
+  }
+  
+  function auto_calc() {
+    if ($('#autoupdate:checked').val() !== undefined) {
+      calc();
+    }
+  }
+  //]]>
+  </script>
+
+</head>
+<body>
+  <h2>Thrift Javascript Bindings</h2>
+  <form action="">
+  <table class="calculator">
+    <tr>
+      <td>num1</td>
+      <td><input type="text" id="num1" value="20" onkeyup="javascript:auto_calc();"/></td>
+    </tr>
+    <tr>
+      <td>Operation</td>
+      <td><select id="op" size="1" onchange="javascript:auto_calc();"><option></option></select></td>
+    </tr>
+    <tr>
+      <td>num2</td>
+      <td><input type="text" id="num2" value="5" onkeyup="javascript:auto_calc();"/></td></tr>
+    <tr>
+      <td>result</td>
+      <td><input type="text" id="result" value=""/></td></tr>
+    <tr>
+      <td><input type="checkbox" id="autoupdate" checked="checked"/>autoupdate</td>
+      <td><input type="button" id="calculate" value="calculate" onclick="javascript:calc();"/></td>
+    </tr>
+  </table>
+  </form>
+  
+  <p>This Java Script example uses <a href="https://git-wip-us.apache.org/repos/asf?p=thrift.git;a=blob;f=tutorial/tutorial.thrift;hb=HEAD">tutorial.thrift</a> and a Thrift server using JSON protocol and HTTP transport.
+  </p>
+    <p>
+        <a href="http://validator.w3.org/check/referer"><img
+            src="http://www.w3.org/Icons/valid-xhtml10"
+            alt="Valid XHTML 1.0!" height="31" width="88" /></a>
+    </p>
+</body>
+</html>

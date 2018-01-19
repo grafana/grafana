@@ -7,8 +7,7 @@ In particular, it maps TOML data on `stdin` to a JSON format on `stdout`.
 
 
 Compatible with TOML version
-[v0.2.0](https://github.com/mojombo/toml/blob/master/versions/toml-v0.2.0.md)
+[v0.4.0](https://github.com/toml-lang/toml/blob/master/versions/en/toml-v0.4.0.md)
 
 Compatible with `toml-test` version
 [v0.2.0](https://github.com/BurntSushi/toml-test/tree/v0.2.0)
-

@@ -1,0 +1,190 @@
+{
+  "version": "2.0",
+  "service": "<p>An AWS Elemental MediaStore container is a namespace that holds folders and objects. You use a container endpoint to create, read, and delete objects. </p>",
+  "operations": {
+    "CreateContainer": "<p>Creates a storage container to hold objects. A container is similar to a bucket in the Amazon S3 service.</p>",
+    "DeleteContainer": "<p>Deletes the specified container. Before you make a <code>DeleteContainer</code> request, delete any objects in the container or in any folders in the container. You can delete only empty containers. </p>",
+    "DeleteContainerPolicy": "<p>Deletes the access policy that is associated with the specified container.</p>",
+    "DescribeContainer": "<p>Retrieves the properties of the requested container. This returns a single <code>Container</code> object based on <code>ContainerName</code>. To return all <code>Container</code> objects that are associated with a specified AWS account, use <a>ListContainers</a>.</p>",
+    "GetContainerPolicy": "<p>Retrieves the access policy for the specified container. For information about the data that is included in an access policy, see the <a href=\"https://aws.amazon.com/documentation/iam/\">AWS Identity and Access Management User Guide</a>.</p>",
+    "ListContainers": "<p>Lists the properties of all containers in AWS Elemental MediaStore. </p> <p>You can query to receive all the containers in one response. Or you can include the <code>MaxResults</code> parameter to receive a limited number of containers in each response. In this case, the response includes a token. To get the next set of containers, send the command again, this time with the <code>NextToken</code> parameter (with the returned token as its value). The next set of responses appears, with a token if there are still more containers to receive. </p> <p>See also <a>DescribeContainer</a>, which gets the properties of one container. </p>",
+    "PutContainerPolicy": "<p>Creates an access policy for the specified container to restrict the users and clients that can access it. For information about the data that is included in an access policy, see the <a href=\"https://aws.amazon.com/documentation/iam/\">AWS Identity and Access Management User Guide</a>.</p> <p>For this release of the REST API, you can create only one policy for a container. If you enter <code>PutContainerPolicy</code> twice, the second command modifies the existing policy. </p>"
+  },
+  "shapes": {
+    "Container": {
+      "base": "<p>This section describes operations that you can perform on an AWS Elemental MediaStore container.</p>",
+      "refs": {
+        "ContainerList$member": null,
+        "CreateContainerOutput$Container": "<p>ContainerARN: The Amazon Resource Name (ARN) of the newly created container. The ARN has the following format: arn:aws:&lt;region&gt;:&lt;account that owns this container&gt;:container/&lt;name of container&gt;. For example: arn:aws:mediastore:us-west-2:111122223333:container/movies </p> <p>ContainerName: The container name as specified in the request.</p> <p>CreationTime: Unix timestamp.</p> <p>Status: The status of container creation or deletion. The status is one of the following: <code>CREATING</code>, <code>ACTIVE</code>, or <code>DELETING</code>. While the service is creating the container, the status is <code>CREATING</code>. When an endpoint is available, the status changes to <code>ACTIVE</code>.</p> <p>The return value does not include the container's endpoint. To make downstream requests, you must obtain this value by using <a>DescribeContainer</a> or <a>ListContainers</a>.</p>",
+        "DescribeContainerOutput$Container": "<p>The name of the queried container.</p>"
+      }
+    },
+    "ContainerARN": {
+      "base": null,
+      "refs": {
+        "Container$ARN": "<p>The Amazon Resource Name (ARN) of the container. The ARN has the following format:</p> <p>arn:aws:&lt;region&gt;:&lt;account that owns this container&gt;:container/&lt;name of container&gt; </p> <p>For example: arn:aws:mediastore:us-west-2:111122223333:container/movies </p>"
+      }
+    },
+    "ContainerInUseException": {
+      "base": "<p>Resource already exists or is being updated.</p>",
+      "refs": {
+      }
+    },
+    "ContainerList": {
+      "base": null,
+      "refs": {
+        "ListContainersOutput$Containers": "<p>The names of the containers.</p>"
+      }
+    },
+    "ContainerListLimit": {
+      "base": null,
+      "refs": {
+        "ListContainersInput$MaxResults": "<p>Enter the maximum number of containers in the response. Use from 1 to 255 characters. </p>"
+      }
+    },
+    "ContainerName": {
+      "base": null,
+      "refs": {
+        "Container$Name": "<p>The name of the container.</p>",
+        "CreateContainerInput$ContainerName": "<p>The name for the container. The name must be from 1 to 255 characters. Container names must be unique to your AWS account within a specific region. As an example, you could create a container named <code>movies</code> in every region, as long as you don’t have an existing container with that name.</p>",
+        "DeleteContainerInput$ContainerName": "<p>The name of the container to delete. </p>",
+        "DeleteContainerPolicyInput$ContainerName": "<p>The name of the container that holds the policy.</p>",
+        "DescribeContainerInput$ContainerName": "<p>The name of the container to query.</p>",
+        "GetContainerPolicyInput$ContainerName": "<p>The name of the container. </p>",
+        "PutContainerPolicyInput$ContainerName": "<p>The name of the container.</p>"
+      }
+    },
+    "ContainerNotFoundException": {
+      "base": "<p>Could not perform an operation on a container that does not exist.</p>",
+      "refs": {
+      }
+    },
+    "ContainerPolicy": {
+      "base": null,
+      "refs": {
+        "GetContainerPolicyOutput$Policy": "<p>The contents of the access policy.</p>",
+        "PutContainerPolicyInput$Policy": "<p>The contents of the policy, which includes the following: </p> <ul> <li> <p>One <code>Version</code> tag</p> </li> <li> <p>One <code>Statement</code> tag that contains the standard tags for the policy.</p> </li> </ul>"
+      }
+    },
+    "ContainerStatus": {
+      "base": null,
+      "refs": {
+        "Container$Status": "<p>The status of container creation or deletion. The status is one of the following: <code>CREATING</code>, <code>ACTIVE</code>, or <code>DELETING</code>. While the service is creating the container, the status is <code>CREATING</code>. When the endpoint is available, the status changes to <code>ACTIVE</code>.</p>"
+      }
+    },
+    "CreateContainerInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateContainerOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteContainerInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteContainerOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteContainerPolicyInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteContainerPolicyOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeContainerInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeContainerOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "Endpoint": {
+      "base": null,
+      "refs": {
+        "Container$Endpoint": "<p>The DNS endpoint of the container. Use from 1 to 255 characters. Use this endpoint to identify this container when sending requests to the data plane. </p>"
+      }
+    },
+    "ErrorMessage": {
+      "base": null,
+      "refs": {
+        "ContainerInUseException$Message": null,
+        "ContainerNotFoundException$Message": null,
+        "InternalServerError$Message": null,
+        "LimitExceededException$Message": null,
+        "PolicyNotFoundException$Message": null
+      }
+    },
+    "GetContainerPolicyInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetContainerPolicyOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "InternalServerError": {
+      "base": "<p>The service is temporarily unavailable.</p>",
+      "refs": {
+      }
+    },
+    "LimitExceededException": {
+      "base": "<p>A service limit has been exceeded.</p>",
+      "refs": {
+      }
+    },
+    "ListContainersInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListContainersOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "PaginationToken": {
+      "base": null,
+      "refs": {
+        "ListContainersInput$NextToken": "<p>Only if you used <code>MaxResults</code> in the first command, enter the token (which was included in the previous response) to obtain the next set of containers. This token is included in a response only if there actually are more containers to list.</p>",
+        "ListContainersOutput$NextToken": "<p> <code>NextToken</code> is the token to use in the next call to <code>ListContainers</code>. This token is returned only if you included the <code>MaxResults</code> tag in the original command, and only if there are still containers to return. </p>"
+      }
+    },
+    "PolicyNotFoundException": {
+      "base": "<p>Could not perform an operation on a policy that does not exist.</p>",
+      "refs": {
+      }
+    },
+    "PutContainerPolicyInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "PutContainerPolicyOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "TimeStamp": {
+      "base": null,
+      "refs": {
+        "Container$CreationTime": "<p>Unix timestamp.</p>"
+      }
+    }
+  }
+}

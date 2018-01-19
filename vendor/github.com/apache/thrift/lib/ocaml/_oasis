@@ -1,0 +1,19 @@
+Name: libthrift-ocaml
+Version: 0.10.0
+OASISFormat: 0.3
+Synopsis: OCaml bindings for the Apache Thrift RPC system
+Authors: Apache Thrift Developers <dev@thrift.apache.org>
+License: Apache-2.0
+Homepage: http://thrift.apache.org
+BuildTools: ocamlbuild
+Plugins:     META (0.3),
+  DevFiles (0.3)
+
+Library "libthrift-ocaml"
+  Path: src
+  FindlibName: thrift
+  buildTools: ocamlbuild
+  BuildDepends: threads
+  Modules: Thrift,TBinaryProtocol,TSocket,TFramedTransport,TChannelTransport,TServer,TSimpleServer,TServerSocket,TThreadedServer
+  XMETARequires: threads
+

@@ -1,0 +1,14 @@
+{
+    "str": "abcde",
+    "num_int": 13,
+    "num_float": 39.39,
+    "bool": true,
+    "arr": ["arr0", 21, {"str": "pek3f", "num": 1}, [0, "1"]],
+    "obj": {
+        "str": "bcded",
+        "num": 19,
+        "arr": [17, "str", {"str": "eafeb"}],
+        "obj": {"str": "efj3", "num": 14}
+    },
+    "null": null
+}

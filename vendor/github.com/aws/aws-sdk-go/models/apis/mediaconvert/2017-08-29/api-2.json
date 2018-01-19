@@ -1,0 +1,6149 @@
+{
+  "metadata": {
+    "apiVersion": "2017-08-29",
+    "endpointPrefix": "mediaconvert",
+    "signingName": "mediaconvert",
+    "serviceFullName": "AWS Elemental MediaConvert",
+    "serviceId": "MediaConvert",
+    "protocol": "rest-json",
+    "jsonVersion": "1.1",
+    "uid": "mediaconvert-2017-08-29",
+    "signatureVersion": "v4",
+    "serviceAbbreviation": "MediaConvert"
+  },
+  "operations": {
+    "CancelJob": {
+      "name": "CancelJob",
+      "http": {
+        "method": "DELETE",
+        "requestUri": "/2017-08-29/jobs/{id}",
+        "responseCode": 202
+      },
+      "input": {
+        "shape": "CancelJobRequest"
+      },
+      "output": {
+        "shape": "CancelJobResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "CreateJob": {
+      "name": "CreateJob",
+      "http": {
+        "method": "POST",
+        "requestUri": "/2017-08-29/jobs",
+        "responseCode": 201
+      },
+      "input": {
+        "shape": "CreateJobRequest"
+      },
+      "output": {
+        "shape": "CreateJobResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "CreateJobTemplate": {
+      "name": "CreateJobTemplate",
+      "http": {
+        "method": "POST",
+        "requestUri": "/2017-08-29/jobTemplates",
+        "responseCode": 201
+      },
+      "input": {
+        "shape": "CreateJobTemplateRequest"
+      },
+      "output": {
+        "shape": "CreateJobTemplateResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "CreatePreset": {
+      "name": "CreatePreset",
+      "http": {
+        "method": "POST",
+        "requestUri": "/2017-08-29/presets",
+        "responseCode": 201
+      },
+      "input": {
+        "shape": "CreatePresetRequest"
+      },
+      "output": {
+        "shape": "CreatePresetResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "CreateQueue": {
+      "name": "CreateQueue",
+      "http": {
+        "method": "POST",
+        "requestUri": "/2017-08-29/queues",
+        "responseCode": 201
+      },
+      "input": {
+        "shape": "CreateQueueRequest"
+      },
+      "output": {
+        "shape": "CreateQueueResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "DeleteJobTemplate": {
+      "name": "DeleteJobTemplate",
+      "http": {
+        "method": "DELETE",
+        "requestUri": "/2017-08-29/jobTemplates/{name}",
+        "responseCode": 202
+      },
+      "input": {
+        "shape": "DeleteJobTemplateRequest"
+      },
+      "output": {
+        "shape": "DeleteJobTemplateResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "DeletePreset": {
+      "name": "DeletePreset",
+      "http": {
+        "method": "DELETE",
+        "requestUri": "/2017-08-29/presets/{name}",
+        "responseCode": 202
+      },
+      "input": {
+        "shape": "DeletePresetRequest"
+      },
+      "output": {
+        "shape": "DeletePresetResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "DeleteQueue": {
+      "name": "DeleteQueue",
+      "http": {
+        "method": "DELETE",
+        "requestUri": "/2017-08-29/queues/{name}",
+        "responseCode": 202
+      },
+      "input": {
+        "shape": "DeleteQueueRequest"
+      },
+      "output": {
+        "shape": "DeleteQueueResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "DescribeEndpoints": {
+      "name": "DescribeEndpoints",
+      "http": {
+        "method": "POST",
+        "requestUri": "/2017-08-29/endpoints",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "DescribeEndpointsRequest"
+      },
+      "output": {
+        "shape": "DescribeEndpointsResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "GetJob": {
+      "name": "GetJob",
+      "http": {
+        "method": "GET",
+        "requestUri": "/2017-08-29/jobs/{id}",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "GetJobRequest"
+      },
+      "output": {
+        "shape": "GetJobResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "GetJobTemplate": {
+      "name": "GetJobTemplate",
+      "http": {
+        "method": "GET",
+        "requestUri": "/2017-08-29/jobTemplates/{name}",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "GetJobTemplateRequest"
+      },
+      "output": {
+        "shape": "GetJobTemplateResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "GetPreset": {
+      "name": "GetPreset",
+      "http": {
+        "method": "GET",
+        "requestUri": "/2017-08-29/presets/{name}",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "GetPresetRequest"
+      },
+      "output": {
+        "shape": "GetPresetResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "GetQueue": {
+      "name": "GetQueue",
+      "http": {
+        "method": "GET",
+        "requestUri": "/2017-08-29/queues/{name}",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "GetQueueRequest"
+      },
+      "output": {
+        "shape": "GetQueueResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "ListJobTemplates": {
+      "name": "ListJobTemplates",
+      "http": {
+        "method": "GET",
+        "requestUri": "/2017-08-29/jobTemplates",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "ListJobTemplatesRequest"
+      },
+      "output": {
+        "shape": "ListJobTemplatesResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "ListJobs": {
+      "name": "ListJobs",
+      "http": {
+        "method": "GET",
+        "requestUri": "/2017-08-29/jobs",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "ListJobsRequest"
+      },
+      "output": {
+        "shape": "ListJobsResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "ListPresets": {
+      "name": "ListPresets",
+      "http": {
+        "method": "GET",
+        "requestUri": "/2017-08-29/presets",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "ListPresetsRequest"
+      },
+      "output": {
+        "shape": "ListPresetsResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "ListQueues": {
+      "name": "ListQueues",
+      "http": {
+        "method": "GET",
+        "requestUri": "/2017-08-29/queues",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "ListQueuesRequest"
+      },
+      "output": {
+        "shape": "ListQueuesResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "UpdateJobTemplate": {
+      "name": "UpdateJobTemplate",
+      "http": {
+        "method": "PUT",
+        "requestUri": "/2017-08-29/jobTemplates/{name}",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "UpdateJobTemplateRequest"
+      },
+      "output": {
+        "shape": "UpdateJobTemplateResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "UpdatePreset": {
+      "name": "UpdatePreset",
+      "http": {
+        "method": "PUT",
+        "requestUri": "/2017-08-29/presets/{name}",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "UpdatePresetRequest"
+      },
+      "output": {
+        "shape": "UpdatePresetResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    },
+    "UpdateQueue": {
+      "name": "UpdateQueue",
+      "http": {
+        "method": "PUT",
+        "requestUri": "/2017-08-29/queues/{name}",
+        "responseCode": 200
+      },
+      "input": {
+        "shape": "UpdateQueueRequest"
+      },
+      "output": {
+        "shape": "UpdateQueueResponse"
+      },
+      "errors": [
+        {
+          "shape": "BadRequestException"
+        },
+        {
+          "shape": "InternalServerErrorException"
+        },
+        {
+          "shape": "ForbiddenException"
+        },
+        {
+          "shape": "NotFoundException"
+        },
+        {
+          "shape": "TooManyRequestsException"
+        },
+        {
+          "shape": "ConflictException"
+        }
+      ]
+    }
+  },
+  "shapes": {
+    "AacAudioDescriptionBroadcasterMix": {
+      "type": "string",
+      "enum": [
+        "BROADCASTER_MIXED_AD",
+        "NORMAL"
+      ]
+    },
+    "AacCodecProfile": {
+      "type": "string",
+      "enum": [
+        "LC",
+        "HEV1",
+        "HEV2"
+      ]
+    },
+    "AacCodingMode": {
+      "type": "string",
+      "enum": [
+        "AD_RECEIVER_MIX",
+        "CODING_MODE_1_0",
+        "CODING_MODE_1_1",
+        "CODING_MODE_2_0",
+        "CODING_MODE_5_1"
+      ]
+    },
+    "AacRateControlMode": {
+      "type": "string",
+      "enum": [
+        "CBR",
+        "VBR"
+      ]
+    },
+    "AacRawFormat": {
+      "type": "string",
+      "enum": [
+        "LATM_LOAS",
+        "NONE"
+      ]
+    },
+    "AacSettings": {
+      "type": "structure",
+      "members": {
+        "AudioDescriptionBroadcasterMix": {
+          "shape": "AacAudioDescriptionBroadcasterMix",
+          "locationName": "audioDescriptionBroadcasterMix"
+        },
+        "Bitrate": {
+          "shape": "__integer",
+          "locationName": "bitrate"
+        },
+        "CodecProfile": {
+          "shape": "AacCodecProfile",
+          "locationName": "codecProfile"
+        },
+        "CodingMode": {
+          "shape": "AacCodingMode",
+          "locationName": "codingMode"
+        },
+        "RateControlMode": {
+          "shape": "AacRateControlMode",
+          "locationName": "rateControlMode"
+        },
+        "RawFormat": {
+          "shape": "AacRawFormat",
+          "locationName": "rawFormat"
+        },
+        "SampleRate": {
+          "shape": "__integer",
+          "locationName": "sampleRate"
+        },
+        "Specification": {
+          "shape": "AacSpecification",
+          "locationName": "specification"
+        },
+        "VbrQuality": {
+          "shape": "AacVbrQuality",
+          "locationName": "vbrQuality"
+        }
+      }
+    },
+    "AacSpecification": {
+      "type": "string",
+      "enum": [
+        "MPEG2",
+        "MPEG4"
+      ]
+    },
+    "AacVbrQuality": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "MEDIUM_LOW",
+        "MEDIUM_HIGH",
+        "HIGH"
+      ]
+    },
+    "Ac3BitstreamMode": {
+      "type": "string",
+      "enum": [
+        "COMPLETE_MAIN",
+        "COMMENTARY",
+        "DIALOGUE",
+        "EMERGENCY",
+        "HEARING_IMPAIRED",
+        "MUSIC_AND_EFFECTS",
+        "VISUALLY_IMPAIRED",
+        "VOICE_OVER"
+      ]
+    },
+    "Ac3CodingMode": {
+      "type": "string",
+      "enum": [
+        "CODING_MODE_1_0",
+        "CODING_MODE_1_1",
+        "CODING_MODE_2_0",
+        "CODING_MODE_3_2_LFE"
+      ]
+    },
+    "Ac3DynamicRangeCompressionProfile": {
+      "type": "string",
+      "enum": [
+        "FILM_STANDARD",
+        "NONE"
+      ]
+    },
+    "Ac3LfeFilter": {
+      "type": "string",
+      "enum": [
+        "ENABLED",
+        "DISABLED"
+      ]
+    },
+    "Ac3MetadataControl": {
+      "type": "string",
+      "enum": [
+        "FOLLOW_INPUT",
+        "USE_CONFIGURED"
+      ]
+    },
+    "Ac3Settings": {
+      "type": "structure",
+      "members": {
+        "Bitrate": {
+          "shape": "__integer",
+          "locationName": "bitrate"
+        },
+        "BitstreamMode": {
+          "shape": "Ac3BitstreamMode",
+          "locationName": "bitstreamMode"
+        },
+        "CodingMode": {
+          "shape": "Ac3CodingMode",
+          "locationName": "codingMode"
+        },
+        "Dialnorm": {
+          "shape": "__integer",
+          "locationName": "dialnorm"
+        },
+        "DynamicRangeCompressionProfile": {
+          "shape": "Ac3DynamicRangeCompressionProfile",
+          "locationName": "dynamicRangeCompressionProfile"
+        },
+        "LfeFilter": {
+          "shape": "Ac3LfeFilter",
+          "locationName": "lfeFilter"
+        },
+        "MetadataControl": {
+          "shape": "Ac3MetadataControl",
+          "locationName": "metadataControl"
+        },
+        "SampleRate": {
+          "shape": "__integer",
+          "locationName": "sampleRate"
+        }
+      }
+    },
+    "AfdSignaling": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "AUTO",
+        "FIXED"
+      ]
+    },
+    "AiffSettings": {
+      "type": "structure",
+      "members": {
+        "BitDepth": {
+          "shape": "__integer",
+          "locationName": "bitDepth"
+        },
+        "Channels": {
+          "shape": "__integer",
+          "locationName": "channels"
+        },
+        "SampleRate": {
+          "shape": "__integer",
+          "locationName": "sampleRate"
+        }
+      }
+    },
+    "AncillarySourceSettings": {
+      "type": "structure",
+      "members": {
+        "SourceAncillaryChannelNumber": {
+          "shape": "__integer",
+          "locationName": "sourceAncillaryChannelNumber"
+        }
+      }
+    },
+    "AntiAlias": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "AudioCodec": {
+      "type": "string",
+      "enum": [
+        "AAC",
+        "MP2",
+        "WAV",
+        "AIFF",
+        "AC3",
+        "EAC3",
+        "PASSTHROUGH"
+      ]
+    },
+    "AudioCodecSettings": {
+      "type": "structure",
+      "members": {
+        "AacSettings": {
+          "shape": "AacSettings",
+          "locationName": "aacSettings"
+        },
+        "Ac3Settings": {
+          "shape": "Ac3Settings",
+          "locationName": "ac3Settings"
+        },
+        "AiffSettings": {
+          "shape": "AiffSettings",
+          "locationName": "aiffSettings"
+        },
+        "Codec": {
+          "shape": "AudioCodec",
+          "locationName": "codec"
+        },
+        "Eac3Settings": {
+          "shape": "Eac3Settings",
+          "locationName": "eac3Settings"
+        },
+        "Mp2Settings": {
+          "shape": "Mp2Settings",
+          "locationName": "mp2Settings"
+        },
+        "WavSettings": {
+          "shape": "WavSettings",
+          "locationName": "wavSettings"
+        }
+      }
+    },
+    "AudioDefaultSelection": {
+      "type": "string",
+      "enum": [
+        "DEFAULT",
+        "NOT_DEFAULT"
+      ]
+    },
+    "AudioDescription": {
+      "type": "structure",
+      "members": {
+        "AudioNormalizationSettings": {
+          "shape": "AudioNormalizationSettings",
+          "locationName": "audioNormalizationSettings"
+        },
+        "AudioSourceName": {
+          "shape": "__string",
+          "locationName": "audioSourceName"
+        },
+        "AudioType": {
+          "shape": "__integer",
+          "locationName": "audioType"
+        },
+        "AudioTypeControl": {
+          "shape": "AudioTypeControl",
+          "locationName": "audioTypeControl"
+        },
+        "CodecSettings": {
+          "shape": "AudioCodecSettings",
+          "locationName": "codecSettings"
+        },
+        "LanguageCode": {
+          "shape": "LanguageCode",
+          "locationName": "languageCode"
+        },
+        "LanguageCodeControl": {
+          "shape": "AudioLanguageCodeControl",
+          "locationName": "languageCodeControl"
+        },
+        "RemixSettings": {
+          "shape": "RemixSettings",
+          "locationName": "remixSettings"
+        },
+        "StreamName": {
+          "shape": "__string",
+          "locationName": "streamName"
+        }
+      }
+    },
+    "AudioLanguageCodeControl": {
+      "type": "string",
+      "enum": [
+        "FOLLOW_INPUT",
+        "USE_CONFIGURED"
+      ]
+    },
+    "AudioNormalizationAlgorithm": {
+      "type": "string",
+      "enum": [
+        "ITU_BS_1770_1",
+        "ITU_BS_1770_2"
+      ]
+    },
+    "AudioNormalizationAlgorithmControl": {
+      "type": "string",
+      "enum": [
+        "CORRECT_AUDIO",
+        "MEASURE_ONLY"
+      ]
+    },
+    "AudioNormalizationLoudnessLogging": {
+      "type": "string",
+      "enum": [
+        "LOG",
+        "DONT_LOG"
+      ]
+    },
+    "AudioNormalizationPeakCalculation": {
+      "type": "string",
+      "enum": [
+        "TRUE_PEAK",
+        "NONE"
+      ]
+    },
+    "AudioNormalizationSettings": {
+      "type": "structure",
+      "members": {
+        "Algorithm": {
+          "shape": "AudioNormalizationAlgorithm",
+          "locationName": "algorithm"
+        },
+        "AlgorithmControl": {
+          "shape": "AudioNormalizationAlgorithmControl",
+          "locationName": "algorithmControl"
+        },
+        "CorrectionGateLevel": {
+          "shape": "__integer",
+          "locationName": "correctionGateLevel"
+        },
+        "LoudnessLogging": {
+          "shape": "AudioNormalizationLoudnessLogging",
+          "locationName": "loudnessLogging"
+        },
+        "PeakCalculation": {
+          "shape": "AudioNormalizationPeakCalculation",
+          "locationName": "peakCalculation"
+        },
+        "TargetLkfs": {
+          "shape": "__double",
+          "locationName": "targetLkfs"
+        }
+      }
+    },
+    "AudioSelector": {
+      "type": "structure",
+      "members": {
+        "DefaultSelection": {
+          "shape": "AudioDefaultSelection",
+          "locationName": "defaultSelection"
+        },
+        "ExternalAudioFileInput": {
+          "shape": "__string",
+          "locationName": "externalAudioFileInput"
+        },
+        "LanguageCode": {
+          "shape": "LanguageCode",
+          "locationName": "languageCode"
+        },
+        "Offset": {
+          "shape": "__integer",
+          "locationName": "offset"
+        },
+        "Pids": {
+          "shape": "ListOf__integer",
+          "locationName": "pids"
+        },
+        "ProgramSelection": {
+          "shape": "__integer",
+          "locationName": "programSelection"
+        },
+        "RemixSettings": {
+          "shape": "RemixSettings",
+          "locationName": "remixSettings"
+        },
+        "SelectorType": {
+          "shape": "AudioSelectorType",
+          "locationName": "selectorType"
+        },
+        "Tracks": {
+          "shape": "ListOf__integer",
+          "locationName": "tracks"
+        }
+      }
+    },
+    "AudioSelectorGroup": {
+      "type": "structure",
+      "members": {
+        "AudioSelectorNames": {
+          "shape": "ListOf__string",
+          "locationName": "audioSelectorNames"
+        }
+      }
+    },
+    "AudioSelectorType": {
+      "type": "string",
+      "enum": [
+        "PID",
+        "TRACK",
+        "LANGUAGE_CODE"
+      ]
+    },
+    "AudioTypeControl": {
+      "type": "string",
+      "enum": [
+        "FOLLOW_INPUT",
+        "USE_CONFIGURED"
+      ]
+    },
+    "AvailBlanking": {
+      "type": "structure",
+      "members": {
+        "AvailBlankingImage": {
+          "shape": "__string",
+          "locationName": "availBlankingImage"
+        }
+      }
+    },
+    "BadRequestException": {
+      "type": "structure",
+      "members": {
+        "Message": {
+          "shape": "__string",
+          "locationName": "message"
+        }
+      },
+      "exception": true,
+      "error": {
+        "httpStatusCode": 400
+      }
+    },
+    "BurninDestinationSettings": {
+      "type": "structure",
+      "members": {
+        "Alignment": {
+          "shape": "BurninSubtitleAlignment",
+          "locationName": "alignment"
+        },
+        "BackgroundColor": {
+          "shape": "BurninSubtitleBackgroundColor",
+          "locationName": "backgroundColor"
+        },
+        "BackgroundOpacity": {
+          "shape": "__integer",
+          "locationName": "backgroundOpacity"
+        },
+        "FontColor": {
+          "shape": "BurninSubtitleFontColor",
+          "locationName": "fontColor"
+        },
+        "FontOpacity": {
+          "shape": "__integer",
+          "locationName": "fontOpacity"
+        },
+        "FontResolution": {
+          "shape": "__integer",
+          "locationName": "fontResolution"
+        },
+        "FontSize": {
+          "shape": "__integer",
+          "locationName": "fontSize"
+        },
+        "OutlineColor": {
+          "shape": "BurninSubtitleOutlineColor",
+          "locationName": "outlineColor"
+        },
+        "OutlineSize": {
+          "shape": "__integer",
+          "locationName": "outlineSize"
+        },
+        "ShadowColor": {
+          "shape": "BurninSubtitleShadowColor",
+          "locationName": "shadowColor"
+        },
+        "ShadowOpacity": {
+          "shape": "__integer",
+          "locationName": "shadowOpacity"
+        },
+        "ShadowXOffset": {
+          "shape": "__integer",
+          "locationName": "shadowXOffset"
+        },
+        "ShadowYOffset": {
+          "shape": "__integer",
+          "locationName": "shadowYOffset"
+        },
+        "TeletextSpacing": {
+          "shape": "BurninSubtitleTeletextSpacing",
+          "locationName": "teletextSpacing"
+        },
+        "XPosition": {
+          "shape": "__integer",
+          "locationName": "xPosition"
+        },
+        "YPosition": {
+          "shape": "__integer",
+          "locationName": "yPosition"
+        }
+      }
+    },
+    "BurninSubtitleAlignment": {
+      "type": "string",
+      "enum": [
+        "CENTERED",
+        "LEFT"
+      ]
+    },
+    "BurninSubtitleBackgroundColor": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "BLACK",
+        "WHITE"
+      ]
+    },
+    "BurninSubtitleFontColor": {
+      "type": "string",
+      "enum": [
+        "WHITE",
+        "BLACK",
+        "YELLOW",
+        "RED",
+        "GREEN",
+        "BLUE"
+      ]
+    },
+    "BurninSubtitleOutlineColor": {
+      "type": "string",
+      "enum": [
+        "BLACK",
+        "WHITE",
+        "YELLOW",
+        "RED",
+        "GREEN",
+        "BLUE"
+      ]
+    },
+    "BurninSubtitleShadowColor": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "BLACK",
+        "WHITE"
+      ]
+    },
+    "BurninSubtitleTeletextSpacing": {
+      "type": "string",
+      "enum": [
+        "FIXED_GRID",
+        "PROPORTIONAL"
+      ]
+    },
+    "CancelJobRequest": {
+      "type": "structure",
+      "members": {
+        "Id": {
+          "shape": "__string",
+          "locationName": "id",
+          "location": "uri"
+        }
+      },
+      "required": [
+        "Id"
+      ]
+    },
+    "CancelJobResponse": {
+      "type": "structure",
+      "members": {
+      }
+    },
+    "CaptionDescription": {
+      "type": "structure",
+      "members": {
+        "CaptionSelectorName": {
+          "shape": "__string",
+          "locationName": "captionSelectorName"
+        },
+        "DestinationSettings": {
+          "shape": "CaptionDestinationSettings",
+          "locationName": "destinationSettings"
+        },
+        "LanguageCode": {
+          "shape": "LanguageCode",
+          "locationName": "languageCode"
+        },
+        "LanguageDescription": {
+          "shape": "__string",
+          "locationName": "languageDescription"
+        }
+      }
+    },
+    "CaptionDescriptionPreset": {
+      "type": "structure",
+      "members": {
+        "DestinationSettings": {
+          "shape": "CaptionDestinationSettings",
+          "locationName": "destinationSettings"
+        },
+        "LanguageCode": {
+          "shape": "LanguageCode",
+          "locationName": "languageCode"
+        },
+        "LanguageDescription": {
+          "shape": "__string",
+          "locationName": "languageDescription"
+        }
+      }
+    },
+    "CaptionDestinationSettings": {
+      "type": "structure",
+      "members": {
+        "BurninDestinationSettings": {
+          "shape": "BurninDestinationSettings",
+          "locationName": "burninDestinationSettings"
+        },
+        "DestinationType": {
+          "shape": "CaptionDestinationType",
+          "locationName": "destinationType"
+        },
+        "DvbSubDestinationSettings": {
+          "shape": "DvbSubDestinationSettings",
+          "locationName": "dvbSubDestinationSettings"
+        },
+        "SccDestinationSettings": {
+          "shape": "SccDestinationSettings",
+          "locationName": "sccDestinationSettings"
+        },
+        "TeletextDestinationSettings": {
+          "shape": "TeletextDestinationSettings",
+          "locationName": "teletextDestinationSettings"
+        },
+        "TtmlDestinationSettings": {
+          "shape": "TtmlDestinationSettings",
+          "locationName": "ttmlDestinationSettings"
+        }
+      }
+    },
+    "CaptionDestinationType": {
+      "type": "string",
+      "enum": [
+        "BURN_IN",
+        "DVB_SUB",
+        "EMBEDDED",
+        "SCC",
+        "SRT",
+        "TELETEXT",
+        "TTML",
+        "WEBVTT"
+      ]
+    },
+    "CaptionSelector": {
+      "type": "structure",
+      "members": {
+        "LanguageCode": {
+          "shape": "LanguageCode",
+          "locationName": "languageCode"
+        },
+        "SourceSettings": {
+          "shape": "CaptionSourceSettings",
+          "locationName": "sourceSettings"
+        }
+      }
+    },
+    "CaptionSourceSettings": {
+      "type": "structure",
+      "members": {
+        "AncillarySourceSettings": {
+          "shape": "AncillarySourceSettings",
+          "locationName": "ancillarySourceSettings"
+        },
+        "DvbSubSourceSettings": {
+          "shape": "DvbSubSourceSettings",
+          "locationName": "dvbSubSourceSettings"
+        },
+        "EmbeddedSourceSettings": {
+          "shape": "EmbeddedSourceSettings",
+          "locationName": "embeddedSourceSettings"
+        },
+        "FileSourceSettings": {
+          "shape": "FileSourceSettings",
+          "locationName": "fileSourceSettings"
+        },
+        "SourceType": {
+          "shape": "CaptionSourceType",
+          "locationName": "sourceType"
+        },
+        "TeletextSourceSettings": {
+          "shape": "TeletextSourceSettings",
+          "locationName": "teletextSourceSettings"
+        }
+      }
+    },
+    "CaptionSourceType": {
+      "type": "string",
+      "enum": [
+        "ANCILLARY",
+        "DVB_SUB",
+        "EMBEDDED",
+        "SCC",
+        "TTML",
+        "STL",
+        "SRT",
+        "TELETEXT",
+        "NULL_SOURCE"
+      ]
+    },
+    "ChannelMapping": {
+      "type": "structure",
+      "members": {
+        "OutputChannels": {
+          "shape": "ListOfOutputChannelMapping",
+          "locationName": "outputChannels"
+        }
+      }
+    },
+    "ColorCorrector": {
+      "type": "structure",
+      "members": {
+        "Brightness": {
+          "shape": "__integer",
+          "locationName": "brightness"
+        },
+        "ColorSpaceConversion": {
+          "shape": "ColorSpaceConversion",
+          "locationName": "colorSpaceConversion"
+        },
+        "Contrast": {
+          "shape": "__integer",
+          "locationName": "contrast"
+        },
+        "Hdr10Metadata": {
+          "shape": "Hdr10Metadata",
+          "locationName": "hdr10Metadata"
+        },
+        "Hue": {
+          "shape": "__integer",
+          "locationName": "hue"
+        },
+        "Saturation": {
+          "shape": "__integer",
+          "locationName": "saturation"
+        }
+      }
+    },
+    "ColorMetadata": {
+      "type": "string",
+      "enum": [
+        "IGNORE",
+        "INSERT"
+      ]
+    },
+    "ColorSpace": {
+      "type": "string",
+      "enum": [
+        "FOLLOW",
+        "REC_601",
+        "REC_709",
+        "HDR10",
+        "HLG_2020"
+      ]
+    },
+    "ColorSpaceConversion": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "FORCE_601",
+        "FORCE_709",
+        "FORCE_HDR10",
+        "FORCE_HLG_2020"
+      ]
+    },
+    "ColorSpaceUsage": {
+      "type": "string",
+      "enum": [
+        "FORCE",
+        "FALLBACK"
+      ]
+    },
+    "ConflictException": {
+      "type": "structure",
+      "members": {
+        "Message": {
+          "shape": "__string",
+          "locationName": "message"
+        }
+      },
+      "exception": true,
+      "error": {
+        "httpStatusCode": 409
+      }
+    },
+    "ContainerSettings": {
+      "type": "structure",
+      "members": {
+        "Container": {
+          "shape": "ContainerType",
+          "locationName": "container"
+        },
+        "F4vSettings": {
+          "shape": "F4vSettings",
+          "locationName": "f4vSettings"
+        },
+        "M2tsSettings": {
+          "shape": "M2tsSettings",
+          "locationName": "m2tsSettings"
+        },
+        "M3u8Settings": {
+          "shape": "M3u8Settings",
+          "locationName": "m3u8Settings"
+        },
+        "MovSettings": {
+          "shape": "MovSettings",
+          "locationName": "movSettings"
+        },
+        "Mp4Settings": {
+          "shape": "Mp4Settings",
+          "locationName": "mp4Settings"
+        }
+      }
+    },
+    "ContainerType": {
+      "type": "string",
+      "enum": [
+        "F4V",
+        "ISMV",
+        "M2TS",
+        "M3U8",
+        "MOV",
+        "MP4",
+        "MPD",
+        "MXF",
+        "RAW"
+      ]
+    },
+    "CreateJobRequest": {
+      "type": "structure",
+      "members": {
+        "ClientRequestToken": {
+          "shape": "__string",
+          "locationName": "clientRequestToken",
+          "idempotencyToken": true
+        },
+        "JobTemplate": {
+          "shape": "__string",
+          "locationName": "jobTemplate"
+        },
+        "Queue": {
+          "shape": "__string",
+          "locationName": "queue"
+        },
+        "Role": {
+          "shape": "__string",
+          "locationName": "role"
+        },
+        "Settings": {
+          "shape": "JobSettings",
+          "locationName": "settings"
+        },
+        "UserMetadata": {
+          "shape": "MapOf__string",
+          "locationName": "userMetadata"
+        }
+      }
+    },
+    "CreateJobResponse": {
+      "type": "structure",
+      "members": {
+        "Job": {
+          "shape": "Job",
+          "locationName": "job"
+        }
+      }
+    },
+    "CreateJobTemplateRequest": {
+      "type": "structure",
+      "members": {
+        "Category": {
+          "shape": "__string",
+          "locationName": "category"
+        },
+        "Description": {
+          "shape": "__string",
+          "locationName": "description"
+        },
+        "Name": {
+          "shape": "__string",
+          "locationName": "name"
+        },
+        "Queue": {
+          "shape": "__string",
+          "locationName": "queue"
+        },
+        "Settings": {
+          "shape": "JobTemplateSettings",
+          "locationName": "settings"
+        }
+      }
+    },
+    "CreateJobTemplateResponse": {
+      "type": "structure",
+      "members": {
+        "JobTemplate": {
+          "shape": "JobTemplate",
+          "locationName": "jobTemplate"
+        }
+      }
+    },
+    "CreatePresetRequest": {
+      "type": "structure",
+      "members": {
+        "Category": {
+          "shape": "__string",
+          "locationName": "category"
+        },
+        "Description": {
+          "shape": "__string",
+          "locationName": "description"
+        },
+        "Name": {
+          "shape": "__string",
+          "locationName": "name"
+        },
+        "Settings": {
+          "shape": "PresetSettings",
+          "locationName": "settings"
+        }
+      }
+    },
+    "CreatePresetResponse": {
+      "type": "structure",
+      "members": {
+        "Preset": {
+          "shape": "Preset",
+          "locationName": "preset"
+        }
+      }
+    },
+    "CreateQueueRequest": {
+      "type": "structure",
+      "members": {
+        "Description": {
+          "shape": "__string",
+          "locationName": "description"
+        },
+        "Name": {
+          "shape": "__string",
+          "locationName": "name"
+        }
+      }
+    },
+    "CreateQueueResponse": {
+      "type": "structure",
+      "members": {
+        "Queue": {
+          "shape": "Queue",
+          "locationName": "queue"
+        }
+      }
+    },
+    "DashIsoEncryptionSettings": {
+      "type": "structure",
+      "members": {
+        "SpekeKeyProvider": {
+          "shape": "SpekeKeyProvider",
+          "locationName": "spekeKeyProvider"
+        }
+      }
+    },
+    "DashIsoGroupSettings": {
+      "type": "structure",
+      "members": {
+        "BaseUrl": {
+          "shape": "__string",
+          "locationName": "baseUrl"
+        },
+        "Destination": {
+          "shape": "__string",
+          "locationName": "destination"
+        },
+        "Encryption": {
+          "shape": "DashIsoEncryptionSettings",
+          "locationName": "encryption"
+        },
+        "FragmentLength": {
+          "shape": "__integer",
+          "locationName": "fragmentLength"
+        },
+        "HbbtvCompliance": {
+          "shape": "DashIsoHbbtvCompliance",
+          "locationName": "hbbtvCompliance"
+        },
+        "MinBufferTime": {
+          "shape": "__integer",
+          "locationName": "minBufferTime"
+        },
+        "SegmentControl": {
+          "shape": "DashIsoSegmentControl",
+          "locationName": "segmentControl"
+        },
+        "SegmentLength": {
+          "shape": "__integer",
+          "locationName": "segmentLength"
+        }
+      }
+    },
+    "DashIsoHbbtvCompliance": {
+      "type": "string",
+      "enum": [
+        "HBBTV_1_5",
+        "NONE"
+      ]
+    },
+    "DashIsoSegmentControl": {
+      "type": "string",
+      "enum": [
+        "SINGLE_FILE",
+        "SEGMENTED_FILES"
+      ]
+    },
+    "DeinterlaceAlgorithm": {
+      "type": "string",
+      "enum": [
+        "INTERPOLATE",
+        "INTERPOLATE_TICKER",
+        "BLEND",
+        "BLEND_TICKER"
+      ]
+    },
+    "Deinterlacer": {
+      "type": "structure",
+      "members": {
+        "Algorithm": {
+          "shape": "DeinterlaceAlgorithm",
+          "locationName": "algorithm"
+        },
+        "Control": {
+          "shape": "DeinterlacerControl",
+          "locationName": "control"
+        },
+        "Mode": {
+          "shape": "DeinterlacerMode",
+          "locationName": "mode"
+        }
+      }
+    },
+    "DeinterlacerControl": {
+      "type": "string",
+      "enum": [
+        "FORCE_ALL_FRAMES",
+        "NORMAL"
+      ]
+    },
+    "DeinterlacerMode": {
+      "type": "string",
+      "enum": [
+        "DEINTERLACE",
+        "INVERSE_TELECINE",
+        "ADAPTIVE"
+      ]
+    },
+    "DeleteJobTemplateRequest": {
+      "type": "structure",
+      "members": {
+        "Name": {
+          "shape": "__string",
+          "locationName": "name",
+          "location": "uri"
+        }
+      },
+      "required": [
+        "Name"
+      ]
+    },
+    "DeleteJobTemplateResponse": {
+      "type": "structure",
+      "members": {
+      }
+    },
+    "DeletePresetRequest": {
+      "type": "structure",
+      "members": {
+        "Name": {
+          "shape": "__string",
+          "locationName": "name",
+          "location": "uri"
+        }
+      },
+      "required": [
+        "Name"
+      ]
+    },
+    "DeletePresetResponse": {
+      "type": "structure",
+      "members": {
+      }
+    },
+    "DeleteQueueRequest": {
+      "type": "structure",
+      "members": {
+        "Name": {
+          "shape": "__string",
+          "locationName": "name",
+          "location": "uri"
+        }
+      },
+      "required": [
+        "Name"
+      ]
+    },
+    "DeleteQueueResponse": {
+      "type": "structure",
+      "members": {
+      }
+    },
+    "DescribeEndpointsRequest": {
+      "type": "structure",
+      "members": {
+        "MaxResults": {
+          "shape": "__integer",
+          "locationName": "maxResults"
+        },
+        "NextToken": {
+          "shape": "__string",
+          "locationName": "nextToken"
+        }
+      }
+    },
+    "DescribeEndpointsResponse": {
+      "type": "structure",
+      "members": {
+        "Endpoints": {
+          "shape": "ListOfEndpoint",
+          "locationName": "endpoints"
+        },
+        "NextToken": {
+          "shape": "__string",
+          "locationName": "nextToken"
+        }
+      }
+    },
+    "DropFrameTimecode": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "DvbNitSettings": {
+      "type": "structure",
+      "members": {
+        "NetworkId": {
+          "shape": "__integer",
+          "locationName": "networkId"
+        },
+        "NetworkName": {
+          "shape": "__string",
+          "locationName": "networkName"
+        },
+        "NitInterval": {
+          "shape": "__integer",
+          "locationName": "nitInterval"
+        }
+      }
+    },
+    "DvbSdtSettings": {
+      "type": "structure",
+      "members": {
+        "OutputSdt": {
+          "shape": "OutputSdt",
+          "locationName": "outputSdt"
+        },
+        "SdtInterval": {
+          "shape": "__integer",
+          "locationName": "sdtInterval"
+        },
+        "ServiceName": {
+          "shape": "__string",
+          "locationName": "serviceName"
+        },
+        "ServiceProviderName": {
+          "shape": "__string",
+          "locationName": "serviceProviderName"
+        }
+      }
+    },
+    "DvbSubDestinationSettings": {
+      "type": "structure",
+      "members": {
+        "Alignment": {
+          "shape": "DvbSubtitleAlignment",
+          "locationName": "alignment"
+        },
+        "BackgroundColor": {
+          "shape": "DvbSubtitleBackgroundColor",
+          "locationName": "backgroundColor"
+        },
+        "BackgroundOpacity": {
+          "shape": "__integer",
+          "locationName": "backgroundOpacity"
+        },
+        "FontColor": {
+          "shape": "DvbSubtitleFontColor",
+          "locationName": "fontColor"
+        },
+        "FontOpacity": {
+          "shape": "__integer",
+          "locationName": "fontOpacity"
+        },
+        "FontResolution": {
+          "shape": "__integer",
+          "locationName": "fontResolution"
+        },
+        "FontSize": {
+          "shape": "__integer",
+          "locationName": "fontSize"
+        },
+        "OutlineColor": {
+          "shape": "DvbSubtitleOutlineColor",
+          "locationName": "outlineColor"
+        },
+        "OutlineSize": {
+          "shape": "__integer",
+          "locationName": "outlineSize"
+        },
+        "ShadowColor": {
+          "shape": "DvbSubtitleShadowColor",
+          "locationName": "shadowColor"
+        },
+        "ShadowOpacity": {
+          "shape": "__integer",
+          "locationName": "shadowOpacity"
+        },
+        "ShadowXOffset": {
+          "shape": "__integer",
+          "locationName": "shadowXOffset"
+        },
+        "ShadowYOffset": {
+          "shape": "__integer",
+          "locationName": "shadowYOffset"
+        },
+        "TeletextSpacing": {
+          "shape": "DvbSubtitleTeletextSpacing",
+          "locationName": "teletextSpacing"
+        },
+        "XPosition": {
+          "shape": "__integer",
+          "locationName": "xPosition"
+        },
+        "YPosition": {
+          "shape": "__integer",
+          "locationName": "yPosition"
+        }
+      }
+    },
+    "DvbSubSourceSettings": {
+      "type": "structure",
+      "members": {
+        "Pid": {
+          "shape": "__integer",
+          "locationName": "pid"
+        }
+      }
+    },
+    "DvbSubtitleAlignment": {
+      "type": "string",
+      "enum": [
+        "CENTERED",
+        "LEFT"
+      ]
+    },
+    "DvbSubtitleBackgroundColor": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "BLACK",
+        "WHITE"
+      ]
+    },
+    "DvbSubtitleFontColor": {
+      "type": "string",
+      "enum": [
+        "WHITE",
+        "BLACK",
+        "YELLOW",
+        "RED",
+        "GREEN",
+        "BLUE"
+      ]
+    },
+    "DvbSubtitleOutlineColor": {
+      "type": "string",
+      "enum": [
+        "BLACK",
+        "WHITE",
+        "YELLOW",
+        "RED",
+        "GREEN",
+        "BLUE"
+      ]
+    },
+    "DvbSubtitleShadowColor": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "BLACK",
+        "WHITE"
+      ]
+    },
+    "DvbSubtitleTeletextSpacing": {
+      "type": "string",
+      "enum": [
+        "FIXED_GRID",
+        "PROPORTIONAL"
+      ]
+    },
+    "DvbTdtSettings": {
+      "type": "structure",
+      "members": {
+        "TdtInterval": {
+          "shape": "__integer",
+          "locationName": "tdtInterval"
+        }
+      }
+    },
+    "Eac3AttenuationControl": {
+      "type": "string",
+      "enum": [
+        "ATTENUATE_3_DB",
+        "NONE"
+      ]
+    },
+    "Eac3BitstreamMode": {
+      "type": "string",
+      "enum": [
+        "COMPLETE_MAIN",
+        "COMMENTARY",
+        "EMERGENCY",
+        "HEARING_IMPAIRED",
+        "VISUALLY_IMPAIRED"
+      ]
+    },
+    "Eac3CodingMode": {
+      "type": "string",
+      "enum": [
+        "CODING_MODE_1_0",
+        "CODING_MODE_2_0",
+        "CODING_MODE_3_2"
+      ]
+    },
+    "Eac3DcFilter": {
+      "type": "string",
+      "enum": [
+        "ENABLED",
+        "DISABLED"
+      ]
+    },
+    "Eac3DynamicRangeCompressionLine": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "FILM_STANDARD",
+        "FILM_LIGHT",
+        "MUSIC_STANDARD",
+        "MUSIC_LIGHT",
+        "SPEECH"
+      ]
+    },
+    "Eac3DynamicRangeCompressionRf": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "FILM_STANDARD",
+        "FILM_LIGHT",
+        "MUSIC_STANDARD",
+        "MUSIC_LIGHT",
+        "SPEECH"
+      ]
+    },
+    "Eac3LfeControl": {
+      "type": "string",
+      "enum": [
+        "LFE",
+        "NO_LFE"
+      ]
+    },
+    "Eac3LfeFilter": {
+      "type": "string",
+      "enum": [
+        "ENABLED",
+        "DISABLED"
+      ]
+    },
+    "Eac3MetadataControl": {
+      "type": "string",
+      "enum": [
+        "FOLLOW_INPUT",
+        "USE_CONFIGURED"
+      ]
+    },
+    "Eac3PassthroughControl": {
+      "type": "string",
+      "enum": [
+        "WHEN_POSSIBLE",
+        "NO_PASSTHROUGH"
+      ]
+    },
+    "Eac3PhaseControl": {
+      "type": "string",
+      "enum": [
+        "SHIFT_90_DEGREES",
+        "NO_SHIFT"
+      ]
+    },
+    "Eac3Settings": {
+      "type": "structure",
+      "members": {
+        "AttenuationControl": {
+          "shape": "Eac3AttenuationControl",
+          "locationName": "attenuationControl"
+        },
+        "Bitrate": {
+          "shape": "__integer",
+          "locationName": "bitrate"
+        },
+        "BitstreamMode": {
+          "shape": "Eac3BitstreamMode",
+          "locationName": "bitstreamMode"
+        },
+        "CodingMode": {
+          "shape": "Eac3CodingMode",
+          "locationName": "codingMode"
+        },
+        "DcFilter": {
+          "shape": "Eac3DcFilter",
+          "locationName": "dcFilter"
+        },
+        "Dialnorm": {
+          "shape": "__integer",
+          "locationName": "dialnorm"
+        },
+        "DynamicRangeCompressionLine": {
+          "shape": "Eac3DynamicRangeCompressionLine",
+          "locationName": "dynamicRangeCompressionLine"
+        },
+        "DynamicRangeCompressionRf": {
+          "shape": "Eac3DynamicRangeCompressionRf",
+          "locationName": "dynamicRangeCompressionRf"
+        },
+        "LfeControl": {
+          "shape": "Eac3LfeControl",
+          "locationName": "lfeControl"
+        },
+        "LfeFilter": {
+          "shape": "Eac3LfeFilter",
+          "locationName": "lfeFilter"
+        },
+        "LoRoCenterMixLevel": {
+          "shape": "__double",
+          "locationName": "loRoCenterMixLevel"
+        },
+        "LoRoSurroundMixLevel": {
+          "shape": "__double",
+          "locationName": "loRoSurroundMixLevel"
+        },
+        "LtRtCenterMixLevel": {
+          "shape": "__double",
+          "locationName": "ltRtCenterMixLevel"
+        },
+        "LtRtSurroundMixLevel": {
+          "shape": "__double",
+          "locationName": "ltRtSurroundMixLevel"
+        },
+        "MetadataControl": {
+          "shape": "Eac3MetadataControl",
+          "locationName": "metadataControl"
+        },
+        "PassthroughControl": {
+          "shape": "Eac3PassthroughControl",
+          "locationName": "passthroughControl"
+        },
+        "PhaseControl": {
+          "shape": "Eac3PhaseControl",
+          "locationName": "phaseControl"
+        },
+        "SampleRate": {
+          "shape": "__integer",
+          "locationName": "sampleRate"
+        },
+        "StereoDownmix": {
+          "shape": "Eac3StereoDownmix",
+          "locationName": "stereoDownmix"
+        },
+        "SurroundExMode": {
+          "shape": "Eac3SurroundExMode",
+          "locationName": "surroundExMode"
+        },
+        "SurroundMode": {
+          "shape": "Eac3SurroundMode",
+          "locationName": "surroundMode"
+        }
+      }
+    },
+    "Eac3StereoDownmix": {
+      "type": "string",
+      "enum": [
+        "NOT_INDICATED",
+        "LO_RO",
+        "LT_RT",
+        "DPL2"
+      ]
+    },
+    "Eac3SurroundExMode": {
+      "type": "string",
+      "enum": [
+        "NOT_INDICATED",
+        "ENABLED",
+        "DISABLED"
+      ]
+    },
+    "Eac3SurroundMode": {
+      "type": "string",
+      "enum": [
+        "NOT_INDICATED",
+        "ENABLED",
+        "DISABLED"
+      ]
+    },
+    "EmbeddedConvert608To708": {
+      "type": "string",
+      "enum": [
+        "UPCONVERT",
+        "DISABLED"
+      ]
+    },
+    "EmbeddedSourceSettings": {
+      "type": "structure",
+      "members": {
+        "Convert608To708": {
+          "shape": "EmbeddedConvert608To708",
+          "locationName": "convert608To708"
+        },
+        "Source608ChannelNumber": {
+          "shape": "__integer",
+          "locationName": "source608ChannelNumber"
+        },
+        "Source608TrackNumber": {
+          "shape": "__integer",
+          "locationName": "source608TrackNumber"
+        }
+      }
+    },
+    "Endpoint": {
+      "type": "structure",
+      "members": {
+        "Url": {
+          "shape": "__string",
+          "locationName": "url"
+        }
+      }
+    },
+    "ExceptionBody": {
+      "type": "structure",
+      "members": {
+        "Message": {
+          "shape": "__string",
+          "locationName": "message"
+        }
+      }
+    },
+    "F4vMoovPlacement": {
+      "type": "string",
+      "enum": [
+        "PROGRESSIVE_DOWNLOAD",
+        "NORMAL"
+      ]
+    },
+    "F4vSettings": {
+      "type": "structure",
+      "members": {
+        "MoovPlacement": {
+          "shape": "F4vMoovPlacement",
+          "locationName": "moovPlacement"
+        }
+      }
+    },
+    "FileGroupSettings": {
+      "type": "structure",
+      "members": {
+        "Destination": {
+          "shape": "__string",
+          "locationName": "destination"
+        }
+      }
+    },
+    "FileSourceConvert608To708": {
+      "type": "string",
+      "enum": [
+        "UPCONVERT",
+        "DISABLED"
+      ]
+    },
+    "FileSourceSettings": {
+      "type": "structure",
+      "members": {
+        "Convert608To708": {
+          "shape": "FileSourceConvert608To708",
+          "locationName": "convert608To708"
+        },
+        "SourceFile": {
+          "shape": "__string",
+          "locationName": "sourceFile"
+        },
+        "TimeDelta": {
+          "shape": "__integer",
+          "locationName": "timeDelta"
+        }
+      }
+    },
+    "ForbiddenException": {
+      "type": "structure",
+      "members": {
+        "Message": {
+          "shape": "__string",
+          "locationName": "message"
+        }
+      },
+      "exception": true,
+      "error": {
+        "httpStatusCode": 403
+      }
+    },
+    "FrameCaptureSettings": {
+      "type": "structure",
+      "members": {
+        "FramerateDenominator": {
+          "shape": "__integer",
+          "locationName": "framerateDenominator"
+        },
+        "FramerateNumerator": {
+          "shape": "__integer",
+          "locationName": "framerateNumerator"
+        },
+        "MaxCaptures": {
+          "shape": "__integer",
+          "locationName": "maxCaptures"
+        },
+        "Quality": {
+          "shape": "__integer",
+          "locationName": "quality"
+        }
+      }
+    },
+    "GetJobRequest": {
+      "type": "structure",
+      "members": {
+        "Id": {
+          "shape": "__string",
+          "locationName": "id",
+          "location": "uri"
+        }
+      },
+      "required": [
+        "Id"
+      ]
+    },
+    "GetJobResponse": {
+      "type": "structure",
+      "members": {
+        "Job": {
+          "shape": "Job",
+          "locationName": "job"
+        }
+      }
+    },
+    "GetJobTemplateRequest": {
+      "type": "structure",
+      "members": {
+        "Name": {
+          "shape": "__string",
+          "locationName": "name",
+          "location": "uri"
+        }
+      },
+      "required": [
+        "Name"
+      ]
+    },
+    "GetJobTemplateResponse": {
+      "type": "structure",
+      "members": {
+        "JobTemplate": {
+          "shape": "JobTemplate",
+          "locationName": "jobTemplate"
+        }
+      }
+    },
+    "GetPresetRequest": {
+      "type": "structure",
+      "members": {
+        "Name": {
+          "shape": "__string",
+          "locationName": "name",
+          "location": "uri"
+        }
+      },
+      "required": [
+        "Name"
+      ]
+    },
+    "GetPresetResponse": {
+      "type": "structure",
+      "members": {
+        "Preset": {
+          "shape": "Preset",
+          "locationName": "preset"
+        }
+      }
+    },
+    "GetQueueRequest": {
+      "type": "structure",
+      "members": {
+        "Name": {
+          "shape": "__string",
+          "locationName": "name",
+          "location": "uri"
+        }
+      },
+      "required": [
+        "Name"
+      ]
+    },
+    "GetQueueResponse": {
+      "type": "structure",
+      "members": {
+        "Queue": {
+          "shape": "Queue",
+          "locationName": "queue"
+        }
+      }
+    },
+    "H264AdaptiveQuantization": {
+      "type": "string",
+      "enum": [
+        "OFF",
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "HIGHER",
+        "MAX"
+      ]
+    },
+    "H264CodecLevel": {
+      "type": "string",
+      "enum": [
+        "AUTO",
+        "LEVEL_1",
+        "LEVEL_1_1",
+        "LEVEL_1_2",
+        "LEVEL_1_3",
+        "LEVEL_2",
+        "LEVEL_2_1",
+        "LEVEL_2_2",
+        "LEVEL_3",
+        "LEVEL_3_1",
+        "LEVEL_3_2",
+        "LEVEL_4",
+        "LEVEL_4_1",
+        "LEVEL_4_2",
+        "LEVEL_5",
+        "LEVEL_5_1",
+        "LEVEL_5_2"
+      ]
+    },
+    "H264CodecProfile": {
+      "type": "string",
+      "enum": [
+        "BASELINE",
+        "HIGH",
+        "HIGH_10BIT",
+        "HIGH_422",
+        "HIGH_422_10BIT",
+        "MAIN"
+      ]
+    },
+    "H264EntropyEncoding": {
+      "type": "string",
+      "enum": [
+        "CABAC",
+        "CAVLC"
+      ]
+    },
+    "H264FieldEncoding": {
+      "type": "string",
+      "enum": [
+        "PAFF",
+        "FORCE_FIELD"
+      ]
+    },
+    "H264FlickerAdaptiveQuantization": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H264FramerateControl": {
+      "type": "string",
+      "enum": [
+        "INITIALIZE_FROM_SOURCE",
+        "SPECIFIED"
+      ]
+    },
+    "H264FramerateConversionAlgorithm": {
+      "type": "string",
+      "enum": [
+        "DUPLICATE_DROP",
+        "INTERPOLATE"
+      ]
+    },
+    "H264GopBReference": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H264GopSizeUnits": {
+      "type": "string",
+      "enum": [
+        "FRAMES",
+        "SECONDS"
+      ]
+    },
+    "H264InterlaceMode": {
+      "type": "string",
+      "enum": [
+        "PROGRESSIVE",
+        "TOP_FIELD",
+        "BOTTOM_FIELD",
+        "FOLLOW_TOP_FIELD",
+        "FOLLOW_BOTTOM_FIELD"
+      ]
+    },
+    "H264ParControl": {
+      "type": "string",
+      "enum": [
+        "INITIALIZE_FROM_SOURCE",
+        "SPECIFIED"
+      ]
+    },
+    "H264QualityTuningLevel": {
+      "type": "string",
+      "enum": [
+        "SINGLE_PASS",
+        "SINGLE_PASS_HQ",
+        "MULTI_PASS_HQ"
+      ]
+    },
+    "H264RateControlMode": {
+      "type": "string",
+      "enum": [
+        "VBR",
+        "CBR"
+      ]
+    },
+    "H264RepeatPps": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H264SceneChangeDetect": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H264Settings": {
+      "type": "structure",
+      "members": {
+        "AdaptiveQuantization": {
+          "shape": "H264AdaptiveQuantization",
+          "locationName": "adaptiveQuantization"
+        },
+        "Bitrate": {
+          "shape": "__integer",
+          "locationName": "bitrate"
+        },
+        "CodecLevel": {
+          "shape": "H264CodecLevel",
+          "locationName": "codecLevel"
+        },
+        "CodecProfile": {
+          "shape": "H264CodecProfile",
+          "locationName": "codecProfile"
+        },
+        "EntropyEncoding": {
+          "shape": "H264EntropyEncoding",
+          "locationName": "entropyEncoding"
+        },
+        "FieldEncoding": {
+          "shape": "H264FieldEncoding",
+          "locationName": "fieldEncoding"
+        },
+        "FlickerAdaptiveQuantization": {
+          "shape": "H264FlickerAdaptiveQuantization",
+          "locationName": "flickerAdaptiveQuantization"
+        },
+        "FramerateControl": {
+          "shape": "H264FramerateControl",
+          "locationName": "framerateControl"
+        },
+        "FramerateConversionAlgorithm": {
+          "shape": "H264FramerateConversionAlgorithm",
+          "locationName": "framerateConversionAlgorithm"
+        },
+        "FramerateDenominator": {
+          "shape": "__integer",
+          "locationName": "framerateDenominator"
+        },
+        "FramerateNumerator": {
+          "shape": "__integer",
+          "locationName": "framerateNumerator"
+        },
+        "GopBReference": {
+          "shape": "H264GopBReference",
+          "locationName": "gopBReference"
+        },
+        "GopClosedCadence": {
+          "shape": "__integer",
+          "locationName": "gopClosedCadence"
+        },
+        "GopSize": {
+          "shape": "__double",
+          "locationName": "gopSize"
+        },
+        "GopSizeUnits": {
+          "shape": "H264GopSizeUnits",
+          "locationName": "gopSizeUnits"
+        },
+        "HrdBufferInitialFillPercentage": {
+          "shape": "__integer",
+          "locationName": "hrdBufferInitialFillPercentage"
+        },
+        "HrdBufferSize": {
+          "shape": "__integer",
+          "locationName": "hrdBufferSize"
+        },
+        "InterlaceMode": {
+          "shape": "H264InterlaceMode",
+          "locationName": "interlaceMode"
+        },
+        "MaxBitrate": {
+          "shape": "__integer",
+          "locationName": "maxBitrate"
+        },
+        "MinIInterval": {
+          "shape": "__integer",
+          "locationName": "minIInterval"
+        },
+        "NumberBFramesBetweenReferenceFrames": {
+          "shape": "__integer",
+          "locationName": "numberBFramesBetweenReferenceFrames"
+        },
+        "NumberReferenceFrames": {
+          "shape": "__integer",
+          "locationName": "numberReferenceFrames"
+        },
+        "ParControl": {
+          "shape": "H264ParControl",
+          "locationName": "parControl"
+        },
+        "ParDenominator": {
+          "shape": "__integer",
+          "locationName": "parDenominator"
+        },
+        "ParNumerator": {
+          "shape": "__integer",
+          "locationName": "parNumerator"
+        },
+        "QualityTuningLevel": {
+          "shape": "H264QualityTuningLevel",
+          "locationName": "qualityTuningLevel"
+        },
+        "RateControlMode": {
+          "shape": "H264RateControlMode",
+          "locationName": "rateControlMode"
+        },
+        "RepeatPps": {
+          "shape": "H264RepeatPps",
+          "locationName": "repeatPps"
+        },
+        "SceneChangeDetect": {
+          "shape": "H264SceneChangeDetect",
+          "locationName": "sceneChangeDetect"
+        },
+        "Slices": {
+          "shape": "__integer",
+          "locationName": "slices"
+        },
+        "SlowPal": {
+          "shape": "H264SlowPal",
+          "locationName": "slowPal"
+        },
+        "Softness": {
+          "shape": "__integer",
+          "locationName": "softness"
+        },
+        "SpatialAdaptiveQuantization": {
+          "shape": "H264SpatialAdaptiveQuantization",
+          "locationName": "spatialAdaptiveQuantization"
+        },
+        "Syntax": {
+          "shape": "H264Syntax",
+          "locationName": "syntax"
+        },
+        "Telecine": {
+          "shape": "H264Telecine",
+          "locationName": "telecine"
+        },
+        "TemporalAdaptiveQuantization": {
+          "shape": "H264TemporalAdaptiveQuantization",
+          "locationName": "temporalAdaptiveQuantization"
+        },
+        "UnregisteredSeiTimecode": {
+          "shape": "H264UnregisteredSeiTimecode",
+          "locationName": "unregisteredSeiTimecode"
+        }
+      }
+    },
+    "H264SlowPal": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H264SpatialAdaptiveQuantization": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H264Syntax": {
+      "type": "string",
+      "enum": [
+        "DEFAULT",
+        "RP2027"
+      ]
+    },
+    "H264Telecine": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "SOFT",
+        "HARD"
+      ]
+    },
+    "H264TemporalAdaptiveQuantization": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H264UnregisteredSeiTimecode": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H265AdaptiveQuantization": {
+      "type": "string",
+      "enum": [
+        "OFF",
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "HIGHER",
+        "MAX"
+      ]
+    },
+    "H265AlternateTransferFunctionSei": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H265CodecLevel": {
+      "type": "string",
+      "enum": [
+        "AUTO",
+        "LEVEL_1",
+        "LEVEL_2",
+        "LEVEL_2_1",
+        "LEVEL_3",
+        "LEVEL_3_1",
+        "LEVEL_4",
+        "LEVEL_4_1",
+        "LEVEL_5",
+        "LEVEL_5_1",
+        "LEVEL_5_2",
+        "LEVEL_6",
+        "LEVEL_6_1",
+        "LEVEL_6_2"
+      ]
+    },
+    "H265CodecProfile": {
+      "type": "string",
+      "enum": [
+        "MAIN_MAIN",
+        "MAIN_HIGH",
+        "MAIN10_MAIN",
+        "MAIN10_HIGH",
+        "MAIN_422_8BIT_MAIN",
+        "MAIN_422_8BIT_HIGH",
+        "MAIN_422_10BIT_MAIN",
+        "MAIN_422_10BIT_HIGH"
+      ]
+    },
+    "H265FlickerAdaptiveQuantization": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H265FramerateControl": {
+      "type": "string",
+      "enum": [
+        "INITIALIZE_FROM_SOURCE",
+        "SPECIFIED"
+      ]
+    },
+    "H265FramerateConversionAlgorithm": {
+      "type": "string",
+      "enum": [
+        "DUPLICATE_DROP",
+        "INTERPOLATE"
+      ]
+    },
+    "H265GopBReference": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H265GopSizeUnits": {
+      "type": "string",
+      "enum": [
+        "FRAMES",
+        "SECONDS"
+      ]
+    },
+    "H265InterlaceMode": {
+      "type": "string",
+      "enum": [
+        "PROGRESSIVE",
+        "TOP_FIELD",
+        "BOTTOM_FIELD",
+        "FOLLOW_TOP_FIELD",
+        "FOLLOW_BOTTOM_FIELD"
+      ]
+    },
+    "H265ParControl": {
+      "type": "string",
+      "enum": [
+        "INITIALIZE_FROM_SOURCE",
+        "SPECIFIED"
+      ]
+    },
+    "H265QualityTuningLevel": {
+      "type": "string",
+      "enum": [
+        "SINGLE_PASS",
+        "SINGLE_PASS_HQ",
+        "MULTI_PASS_HQ"
+      ]
+    },
+    "H265RateControlMode": {
+      "type": "string",
+      "enum": [
+        "VBR",
+        "CBR"
+      ]
+    },
+    "H265SampleAdaptiveOffsetFilterMode": {
+      "type": "string",
+      "enum": [
+        "DEFAULT",
+        "ADAPTIVE",
+        "OFF"
+      ]
+    },
+    "H265SceneChangeDetect": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H265Settings": {
+      "type": "structure",
+      "members": {
+        "AdaptiveQuantization": {
+          "shape": "H265AdaptiveQuantization",
+          "locationName": "adaptiveQuantization"
+        },
+        "AlternateTransferFunctionSei": {
+          "shape": "H265AlternateTransferFunctionSei",
+          "locationName": "alternateTransferFunctionSei"
+        },
+        "Bitrate": {
+          "shape": "__integer",
+          "locationName": "bitrate"
+        },
+        "CodecLevel": {
+          "shape": "H265CodecLevel",
+          "locationName": "codecLevel"
+        },
+        "CodecProfile": {
+          "shape": "H265CodecProfile",
+          "locationName": "codecProfile"
+        },
+        "FlickerAdaptiveQuantization": {
+          "shape": "H265FlickerAdaptiveQuantization",
+          "locationName": "flickerAdaptiveQuantization"
+        },
+        "FramerateControl": {
+          "shape": "H265FramerateControl",
+          "locationName": "framerateControl"
+        },
+        "FramerateConversionAlgorithm": {
+          "shape": "H265FramerateConversionAlgorithm",
+          "locationName": "framerateConversionAlgorithm"
+        },
+        "FramerateDenominator": {
+          "shape": "__integer",
+          "locationName": "framerateDenominator"
+        },
+        "FramerateNumerator": {
+          "shape": "__integer",
+          "locationName": "framerateNumerator"
+        },
+        "GopBReference": {
+          "shape": "H265GopBReference",
+          "locationName": "gopBReference"
+        },
+        "GopClosedCadence": {
+          "shape": "__integer",
+          "locationName": "gopClosedCadence"
+        },
+        "GopSize": {
+          "shape": "__double",
+          "locationName": "gopSize"
+        },
+        "GopSizeUnits": {
+          "shape": "H265GopSizeUnits",
+          "locationName": "gopSizeUnits"
+        },
+        "HrdBufferInitialFillPercentage": {
+          "shape": "__integer",
+          "locationName": "hrdBufferInitialFillPercentage"
+        },
+        "HrdBufferSize": {
+          "shape": "__integer",
+          "locationName": "hrdBufferSize"
+        },
+        "InterlaceMode": {
+          "shape": "H265InterlaceMode",
+          "locationName": "interlaceMode"
+        },
+        "MaxBitrate": {
+          "shape": "__integer",
+          "locationName": "maxBitrate"
+        },
+        "MinIInterval": {
+          "shape": "__integer",
+          "locationName": "minIInterval"
+        },
+        "NumberBFramesBetweenReferenceFrames": {
+          "shape": "__integer",
+          "locationName": "numberBFramesBetweenReferenceFrames"
+        },
+        "NumberReferenceFrames": {
+          "shape": "__integer",
+          "locationName": "numberReferenceFrames"
+        },
+        "ParControl": {
+          "shape": "H265ParControl",
+          "locationName": "parControl"
+        },
+        "ParDenominator": {
+          "shape": "__integer",
+          "locationName": "parDenominator"
+        },
+        "ParNumerator": {
+          "shape": "__integer",
+          "locationName": "parNumerator"
+        },
+        "QualityTuningLevel": {
+          "shape": "H265QualityTuningLevel",
+          "locationName": "qualityTuningLevel"
+        },
+        "RateControlMode": {
+          "shape": "H265RateControlMode",
+          "locationName": "rateControlMode"
+        },
+        "SampleAdaptiveOffsetFilterMode": {
+          "shape": "H265SampleAdaptiveOffsetFilterMode",
+          "locationName": "sampleAdaptiveOffsetFilterMode"
+        },
+        "SceneChangeDetect": {
+          "shape": "H265SceneChangeDetect",
+          "locationName": "sceneChangeDetect"
+        },
+        "Slices": {
+          "shape": "__integer",
+          "locationName": "slices"
+        },
+        "SlowPal": {
+          "shape": "H265SlowPal",
+          "locationName": "slowPal"
+        },
+        "SpatialAdaptiveQuantization": {
+          "shape": "H265SpatialAdaptiveQuantization",
+          "locationName": "spatialAdaptiveQuantization"
+        },
+        "Telecine": {
+          "shape": "H265Telecine",
+          "locationName": "telecine"
+        },
+        "TemporalAdaptiveQuantization": {
+          "shape": "H265TemporalAdaptiveQuantization",
+          "locationName": "temporalAdaptiveQuantization"
+        },
+        "TemporalIds": {
+          "shape": "H265TemporalIds",
+          "locationName": "temporalIds"
+        },
+        "Tiles": {
+          "shape": "H265Tiles",
+          "locationName": "tiles"
+        },
+        "UnregisteredSeiTimecode": {
+          "shape": "H265UnregisteredSeiTimecode",
+          "locationName": "unregisteredSeiTimecode"
+        }
+      }
+    },
+    "H265SlowPal": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H265SpatialAdaptiveQuantization": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H265Telecine": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "SOFT",
+        "HARD"
+      ]
+    },
+    "H265TemporalAdaptiveQuantization": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H265TemporalIds": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H265Tiles": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "H265UnregisteredSeiTimecode": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "Hdr10Metadata": {
+      "type": "structure",
+      "members": {
+        "BluePrimaryX": {
+          "shape": "__integer",
+          "locationName": "bluePrimaryX"
+        },
+        "BluePrimaryY": {
+          "shape": "__integer",
+          "locationName": "bluePrimaryY"
+        },
+        "GreenPrimaryX": {
+          "shape": "__integer",
+          "locationName": "greenPrimaryX"
+        },
+        "GreenPrimaryY": {
+          "shape": "__integer",
+          "locationName": "greenPrimaryY"
+        },
+        "MaxContentLightLevel": {
+          "shape": "__integer",
+          "locationName": "maxContentLightLevel"
+        },
+        "MaxFrameAverageLightLevel": {
+          "shape": "__integer",
+          "locationName": "maxFrameAverageLightLevel"
+        },
+        "MaxLuminance": {
+          "shape": "__integer",
+          "locationName": "maxLuminance"
+        },
+        "MinLuminance": {
+          "shape": "__integer",
+          "locationName": "minLuminance"
+        },
+        "RedPrimaryX": {
+          "shape": "__integer",
+          "locationName": "redPrimaryX"
+        },
+        "RedPrimaryY": {
+          "shape": "__integer",
+          "locationName": "redPrimaryY"
+        },
+        "WhitePointX": {
+          "shape": "__integer",
+          "locationName": "whitePointX"
+        },
+        "WhitePointY": {
+          "shape": "__integer",
+          "locationName": "whitePointY"
+        }
+      }
+    },
+    "HlsAdMarkers": {
+      "type": "string",
+      "enum": [
+        "ELEMENTAL",
+        "ELEMENTAL_SCTE35"
+      ]
+    },
+    "HlsAudioTrackType": {
+      "type": "string",
+      "enum": [
+        "ALTERNATE_AUDIO_AUTO_SELECT_DEFAULT",
+        "ALTERNATE_AUDIO_AUTO_SELECT",
+        "ALTERNATE_AUDIO_NOT_AUTO_SELECT",
+        "AUDIO_ONLY_VARIANT_STREAM"
+      ]
+    },
+    "HlsCaptionLanguageMapping": {
+      "type": "structure",
+      "members": {
+        "CaptionChannel": {
+          "shape": "__integer",
+          "locationName": "captionChannel"
+        },
+        "LanguageCode": {
+          "shape": "LanguageCode",
+          "locationName": "languageCode"
+        },
+        "LanguageDescription": {
+          "shape": "__string",
+          "locationName": "languageDescription"
+        }
+      }
+    },
+    "HlsCaptionLanguageSetting": {
+      "type": "string",
+      "enum": [
+        "INSERT",
+        "OMIT",
+        "NONE"
+      ]
+    },
+    "HlsClientCache": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "HlsCodecSpecification": {
+      "type": "string",
+      "enum": [
+        "RFC_6381",
+        "RFC_4281"
+      ]
+    },
+    "HlsDirectoryStructure": {
+      "type": "string",
+      "enum": [
+        "SINGLE_DIRECTORY",
+        "SUBDIRECTORY_PER_STREAM"
+      ]
+    },
+    "HlsEncryptionSettings": {
+      "type": "structure",
+      "members": {
+        "ConstantInitializationVector": {
+          "shape": "__string",
+          "locationName": "constantInitializationVector"
+        },
+        "EncryptionMethod": {
+          "shape": "HlsEncryptionType",
+          "locationName": "encryptionMethod"
+        },
+        "InitializationVectorInManifest": {
+          "shape": "HlsInitializationVectorInManifest",
+          "locationName": "initializationVectorInManifest"
+        },
+        "SpekeKeyProvider": {
+          "shape": "SpekeKeyProvider",
+          "locationName": "spekeKeyProvider"
+        },
+        "StaticKeyProvider": {
+          "shape": "StaticKeyProvider",
+          "locationName": "staticKeyProvider"
+        },
+        "Type": {
+          "shape": "HlsKeyProviderType",
+          "locationName": "type"
+        }
+      }
+    },
+    "HlsEncryptionType": {
+      "type": "string",
+      "enum": [
+        "AES128",
+        "SAMPLE_AES"
+      ]
+    },
+    "HlsGroupSettings": {
+      "type": "structure",
+      "members": {
+        "AdMarkers": {
+          "shape": "ListOfHlsAdMarkers",
+          "locationName": "adMarkers"
+        },
+        "BaseUrl": {
+          "shape": "__string",
+          "locationName": "baseUrl"
+        },
+        "CaptionLanguageMappings": {
+          "shape": "ListOfHlsCaptionLanguageMapping",
+          "locationName": "captionLanguageMappings"
+        },
+        "CaptionLanguageSetting": {
+          "shape": "HlsCaptionLanguageSetting",
+          "locationName": "captionLanguageSetting"
+        },
+        "ClientCache": {
+          "shape": "HlsClientCache",
+          "locationName": "clientCache"
+        },
+        "CodecSpecification": {
+          "shape": "HlsCodecSpecification",
+          "locationName": "codecSpecification"
+        },
+        "Destination": {
+          "shape": "__string",
+          "locationName": "destination"
+        },
+        "DirectoryStructure": {
+          "shape": "HlsDirectoryStructure",
+          "locationName": "directoryStructure"
+        },
+        "Encryption": {
+          "shape": "HlsEncryptionSettings",
+          "locationName": "encryption"
+        },
+        "ManifestCompression": {
+          "shape": "HlsManifestCompression",
+          "locationName": "manifestCompression"
+        },
+        "ManifestDurationFormat": {
+          "shape": "HlsManifestDurationFormat",
+          "locationName": "manifestDurationFormat"
+        },
+        "MinSegmentLength": {
+          "shape": "__integer",
+          "locationName": "minSegmentLength"
+        },
+        "OutputSelection": {
+          "shape": "HlsOutputSelection",
+          "locationName": "outputSelection"
+        },
+        "ProgramDateTime": {
+          "shape": "HlsProgramDateTime",
+          "locationName": "programDateTime"
+        },
+        "ProgramDateTimePeriod": {
+          "shape": "__integer",
+          "locationName": "programDateTimePeriod"
+        },
+        "SegmentControl": {
+          "shape": "HlsSegmentControl",
+          "locationName": "segmentControl"
+        },
+        "SegmentLength": {
+          "shape": "__integer",
+          "locationName": "segmentLength"
+        },
+        "SegmentsPerSubdirectory": {
+          "shape": "__integer",
+          "locationName": "segmentsPerSubdirectory"
+        },
+        "StreamInfResolution": {
+          "shape": "HlsStreamInfResolution",
+          "locationName": "streamInfResolution"
+        },
+        "TimedMetadataId3Frame": {
+          "shape": "HlsTimedMetadataId3Frame",
+          "locationName": "timedMetadataId3Frame"
+        },
+        "TimedMetadataId3Period": {
+          "shape": "__integer",
+          "locationName": "timedMetadataId3Period"
+        },
+        "TimestampDeltaMilliseconds": {
+          "shape": "__integer",
+          "locationName": "timestampDeltaMilliseconds"
+        }
+      }
+    },
+    "HlsIFrameOnlyManifest": {
+      "type": "string",
+      "enum": [
+        "INCLUDE",
+        "EXCLUDE"
+      ]
+    },
+    "HlsInitializationVectorInManifest": {
+      "type": "string",
+      "enum": [
+        "INCLUDE",
+        "EXCLUDE"
+      ]
+    },
+    "HlsKeyProviderType": {
+      "type": "string",
+      "enum": [
+        "SPEKE",
+        "STATIC_KEY"
+      ]
+    },
+    "HlsManifestCompression": {
+      "type": "string",
+      "enum": [
+        "GZIP",
+        "NONE"
+      ]
+    },
+    "HlsManifestDurationFormat": {
+      "type": "string",
+      "enum": [
+        "FLOATING_POINT",
+        "INTEGER"
+      ]
+    },
+    "HlsOutputSelection": {
+      "type": "string",
+      "enum": [
+        "MANIFESTS_AND_SEGMENTS",
+        "SEGMENTS_ONLY"
+      ]
+    },
+    "HlsProgramDateTime": {
+      "type": "string",
+      "enum": [
+        "INCLUDE",
+        "EXCLUDE"
+      ]
+    },
+    "HlsSegmentControl": {
+      "type": "string",
+      "enum": [
+        "SINGLE_FILE",
+        "SEGMENTED_FILES"
+      ]
+    },
+    "HlsSettings": {
+      "type": "structure",
+      "members": {
+        "AudioGroupId": {
+          "shape": "__string",
+          "locationName": "audioGroupId"
+        },
+        "AudioRenditionSets": {
+          "shape": "__string",
+          "locationName": "audioRenditionSets"
+        },
+        "AudioTrackType": {
+          "shape": "HlsAudioTrackType",
+          "locationName": "audioTrackType"
+        },
+        "IFrameOnlyManifest": {
+          "shape": "HlsIFrameOnlyManifest",
+          "locationName": "iFrameOnlyManifest"
+        },
+        "SegmentModifier": {
+          "shape": "__string",
+          "locationName": "segmentModifier"
+        }
+      }
+    },
+    "HlsStreamInfResolution": {
+      "type": "string",
+      "enum": [
+        "INCLUDE",
+        "EXCLUDE"
+      ]
+    },
+    "HlsTimedMetadataId3Frame": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "PRIV",
+        "TDRL"
+      ]
+    },
+    "Id3Insertion": {
+      "type": "structure",
+      "members": {
+        "Id3": {
+          "shape": "__string",
+          "locationName": "id3"
+        },
+        "Timecode": {
+          "shape": "__string",
+          "locationName": "timecode"
+        }
+      }
+    },
+    "ImageInserter": {
+      "type": "structure",
+      "members": {
+        "InsertableImages": {
+          "shape": "ListOfInsertableImage",
+          "locationName": "insertableImages"
+        }
+      }
+    },
+    "Input": {
+      "type": "structure",
+      "members": {
+        "AudioSelectorGroups": {
+          "shape": "MapOfAudioSelectorGroup",
+          "locationName": "audioSelectorGroups"
+        },
+        "AudioSelectors": {
+          "shape": "MapOfAudioSelector",
+          "locationName": "audioSelectors"
+        },
+        "CaptionSelectors": {
+          "shape": "MapOfCaptionSelector",
+          "locationName": "captionSelectors"
+        },
+        "DeblockFilter": {
+          "shape": "InputDeblockFilter",
+          "locationName": "deblockFilter"
+        },
+        "DenoiseFilter": {
+          "shape": "InputDenoiseFilter",
+          "locationName": "denoiseFilter"
+        },
+        "FileInput": {
+          "shape": "__string",
+          "locationName": "fileInput"
+        },
+        "FilterEnable": {
+          "shape": "InputFilterEnable",
+          "locationName": "filterEnable"
+        },
+        "FilterStrength": {
+          "shape": "__integer",
+          "locationName": "filterStrength"
+        },
+        "InputClippings": {
+          "shape": "ListOfInputClipping",
+          "locationName": "inputClippings"
+        },
+        "ProgramNumber": {
+          "shape": "__integer",
+          "locationName": "programNumber"
+        },
+        "PsiControl": {
+          "shape": "InputPsiControl",
+          "locationName": "psiControl"
+        },
+        "TimecodeSource": {
+          "shape": "InputTimecodeSource",
+          "locationName": "timecodeSource"
+        },
+        "VideoSelector": {
+          "shape": "VideoSelector",
+          "locationName": "videoSelector"
+        }
+      }
+    },
+    "InputClipping": {
+      "type": "structure",
+      "members": {
+        "EndTimecode": {
+          "shape": "__string",
+          "locationName": "endTimecode"
+        },
+        "StartTimecode": {
+          "shape": "__string",
+          "locationName": "startTimecode"
+        }
+      }
+    },
+    "InputDeblockFilter": {
+      "type": "string",
+      "enum": [
+        "ENABLED",
+        "DISABLED"
+      ]
+    },
+    "InputDenoiseFilter": {
+      "type": "string",
+      "enum": [
+        "ENABLED",
+        "DISABLED"
+      ]
+    },
+    "InputFilterEnable": {
+      "type": "string",
+      "enum": [
+        "AUTO",
+        "DISABLE",
+        "FORCE"
+      ]
+    },
+    "InputPsiControl": {
+      "type": "string",
+      "enum": [
+        "IGNORE_PSI",
+        "USE_PSI"
+      ]
+    },
+    "InputTemplate": {
+      "type": "structure",
+      "members": {
+        "AudioSelectorGroups": {
+          "shape": "MapOfAudioSelectorGroup",
+          "locationName": "audioSelectorGroups"
+        },
+        "AudioSelectors": {
+          "shape": "MapOfAudioSelector",
+          "locationName": "audioSelectors"
+        },
+        "CaptionSelectors": {
+          "shape": "MapOfCaptionSelector",
+          "locationName": "captionSelectors"
+        },
+        "DeblockFilter": {
+          "shape": "InputDeblockFilter",
+          "locationName": "deblockFilter"
+        },
+        "DenoiseFilter": {
+          "shape": "InputDenoiseFilter",
+          "locationName": "denoiseFilter"
+        },
+        "FilterEnable": {
+          "shape": "InputFilterEnable",
+          "locationName": "filterEnable"
+        },
+        "FilterStrength": {
+          "shape": "__integer",
+          "locationName": "filterStrength"
+        },
+        "InputClippings": {
+          "shape": "ListOfInputClipping",
+          "locationName": "inputClippings"
+        },
+        "ProgramNumber": {
+          "shape": "__integer",
+          "locationName": "programNumber"
+        },
+        "PsiControl": {
+          "shape": "InputPsiControl",
+          "locationName": "psiControl"
+        },
+        "TimecodeSource": {
+          "shape": "InputTimecodeSource",
+          "locationName": "timecodeSource"
+        },
+        "VideoSelector": {
+          "shape": "VideoSelector",
+          "locationName": "videoSelector"
+        }
+      }
+    },
+    "InputTimecodeSource": {
+      "type": "string",
+      "enum": [
+        "EMBEDDED",
+        "ZEROBASED",
+        "SPECIFIEDSTART"
+      ]
+    },
+    "InsertableImage": {
+      "type": "structure",
+      "members": {
+        "Duration": {
+          "shape": "__integer",
+          "locationName": "duration"
+        },
+        "FadeIn": {
+          "shape": "__integer",
+          "locationName": "fadeIn"
+        },
+        "FadeOut": {
+          "shape": "__integer",
+          "locationName": "fadeOut"
+        },
+        "Height": {
+          "shape": "__integer",
+          "locationName": "height"
+        },
+        "ImageInserterInput": {
+          "shape": "__string",
+          "locationName": "imageInserterInput"
+        },
+        "ImageX": {
+          "shape": "__integer",
+          "locationName": "imageX"
+        },
+        "ImageY": {
+          "shape": "__integer",
+          "locationName": "imageY"
+        },
+        "Layer": {
+          "shape": "__integer",
+          "locationName": "layer"
+        },
+        "Opacity": {
+          "shape": "__integer",
+          "locationName": "opacity"
+        },
+        "StartTime": {
+          "shape": "__string",
+          "locationName": "startTime"
+        },
+        "Width": {
+          "shape": "__integer",
+          "locationName": "width"
+        }
+      }
+    },
+    "InternalServerErrorException": {
+      "type": "structure",
+      "members": {
+        "Message": {
+          "shape": "__string",
+          "locationName": "message"
+        }
+      },
+      "exception": true,
+      "error": {
+        "httpStatusCode": 500
+      }
+    },
+    "Job": {
+      "type": "structure",
+      "members": {
+        "Arn": {
+          "shape": "__string",
+          "locationName": "arn"
+        },
+        "CreatedAt": {
+          "shape": "__timestamp",
+          "locationName": "createdAt"
+        },
+        "ErrorCode": {
+          "shape": "__integer",
+          "locationName": "errorCode"
+        },
+        "ErrorMessage": {
+          "shape": "__string",
+          "locationName": "errorMessage"
+        },
+        "Id": {
+          "shape": "__string",
+          "locationName": "id"
+        },
+        "JobTemplate": {
+          "shape": "__string",
+          "locationName": "jobTemplate"
+        },
+        "OutputGroupDetails": {
+          "shape": "ListOfOutputGroupDetail",
+          "locationName": "outputGroupDetails"
+        },
+        "Queue": {
+          "shape": "__string",
+          "locationName": "queue"
+        },
+        "Role": {
+          "shape": "__string",
+          "locationName": "role"
+        },
+        "Settings": {
+          "shape": "JobSettings",
+          "locationName": "settings"
+        },
+        "Status": {
+          "shape": "JobStatus",
+          "locationName": "status"
+        },
+        "Timing": {
+          "shape": "Timing",
+          "locationName": "timing"
+        },
+        "UserMetadata": {
+          "shape": "MapOf__string",
+          "locationName": "userMetadata"
+        }
+      }
+    },
+    "JobSettings": {
+      "type": "structure",
+      "members": {
+        "AdAvailOffset": {
+          "shape": "__integer",
+          "locationName": "adAvailOffset"
+        },
+        "AvailBlanking": {
+          "shape": "AvailBlanking",
+          "locationName": "availBlanking"
+        },
+        "Inputs": {
+          "shape": "ListOfInput",
+          "locationName": "inputs"
+        },
+        "NielsenConfiguration": {
+          "shape": "NielsenConfiguration",
+          "locationName": "nielsenConfiguration"
+        },
+        "OutputGroups": {
+          "shape": "ListOfOutputGroup",
+          "locationName": "outputGroups"
+        },
+        "TimecodeConfig": {
+          "shape": "TimecodeConfig",
+          "locationName": "timecodeConfig"
+        },
+        "TimedMetadataInsertion": {
+          "shape": "TimedMetadataInsertion",
+          "locationName": "timedMetadataInsertion"
+        }
+      }
+    },
+    "JobStatus": {
+      "type": "string",
+      "enum": [
+        "SUBMITTED",
+        "PROGRESSING",
+        "COMPLETE",
+        "CANCELED",
+        "ERROR"
+      ]
+    },
+    "JobTemplate": {
+      "type": "structure",
+      "members": {
+        "Arn": {
+          "shape": "__string",
+          "locationName": "arn"
+        },
+        "Category": {
+          "shape": "__string",
+          "locationName": "category"
+        },
+        "CreatedAt": {
+          "shape": "__timestamp",
+          "locationName": "createdAt"
+        },
+        "Description": {
+          "shape": "__string",
+          "locationName": "description"
+        },
+        "LastUpdated": {
+          "shape": "__timestamp",
+          "locationName": "lastUpdated"
+        },
+        "Name": {
+          "shape": "__string",
+          "locationName": "name"
+        },
+        "Queue": {
+          "shape": "__string",
+          "locationName": "queue"
+        },
+        "Settings": {
+          "shape": "JobTemplateSettings",
+          "locationName": "settings"
+        },
+        "Type": {
+          "shape": "Type",
+          "locationName": "type"
+        }
+      }
+    },
+    "JobTemplateListBy": {
+      "type": "string",
+      "enum": [
+        "NAME",
+        "CREATION_DATE",
+        "SYSTEM"
+      ]
+    },
+    "JobTemplateSettings": {
+      "type": "structure",
+      "members": {
+        "AdAvailOffset": {
+          "shape": "__integer",
+          "locationName": "adAvailOffset"
+        },
+        "AvailBlanking": {
+          "shape": "AvailBlanking",
+          "locationName": "availBlanking"
+        },
+        "Inputs": {
+          "shape": "ListOfInputTemplate",
+          "locationName": "inputs"
+        },
+        "NielsenConfiguration": {
+          "shape": "NielsenConfiguration",
+          "locationName": "nielsenConfiguration"
+        },
+        "OutputGroups": {
+          "shape": "ListOfOutputGroup",
+          "locationName": "outputGroups"
+        },
+        "TimecodeConfig": {
+          "shape": "TimecodeConfig",
+          "locationName": "timecodeConfig"
+        },
+        "TimedMetadataInsertion": {
+          "shape": "TimedMetadataInsertion",
+          "locationName": "timedMetadataInsertion"
+        }
+      }
+    },
+    "LanguageCode": {
+      "type": "string",
+      "enum": [
+        "ENG",
+        "SPA",
+        "FRA",
+        "DEU",
+        "GER",
+        "ZHO",
+        "ARA",
+        "HIN",
+        "JPN",
+        "RUS",
+        "POR",
+        "ITA",
+        "URD",
+        "VIE",
+        "KOR",
+        "PAN",
+        "ABK",
+        "AAR",
+        "AFR",
+        "AKA",
+        "SQI",
+        "AMH",
+        "ARG",
+        "HYE",
+        "ASM",
+        "AVA",
+        "AVE",
+        "AYM",
+        "AZE",
+        "BAM",
+        "BAK",
+        "EUS",
+        "BEL",
+        "BEN",
+        "BIH",
+        "BIS",
+        "BOS",
+        "BRE",
+        "BUL",
+        "MYA",
+        "CAT",
+        "KHM",
+        "CHA",
+        "CHE",
+        "NYA",
+        "CHU",
+        "CHV",
+        "COR",
+        "COS",
+        "CRE",
+        "HRV",
+        "CES",
+        "DAN",
+        "DIV",
+        "NLD",
+        "DZO",
+        "ENM",
+        "EPO",
+        "EST",
+        "EWE",
+        "FAO",
+        "FIJ",
+        "FIN",
+        "FRM",
+        "FUL",
+        "GLA",
+        "GLG",
+        "LUG",
+        "KAT",
+        "ELL",
+        "GRN",
+        "GUJ",
+        "HAT",
+        "HAU",
+        "HEB",
+        "HER",
+        "HMO",
+        "HUN",
+        "ISL",
+        "IDO",
+        "IBO",
+        "IND",
+        "INA",
+        "ILE",
+        "IKU",
+        "IPK",
+        "GLE",
+        "JAV",
+        "KAL",
+        "KAN",
+        "KAU",
+        "KAS",
+        "KAZ",
+        "KIK",
+        "KIN",
+        "KIR",
+        "KOM",
+        "KON",
+        "KUA",
+        "KUR",
+        "LAO",
+        "LAT",
+        "LAV",
+        "LIM",
+        "LIN",
+        "LIT",
+        "LUB",
+        "LTZ",
+        "MKD",
+        "MLG",
+        "MSA",
+        "MAL",
+        "MLT",
+        "GLV",
+        "MRI",
+        "MAR",
+        "MAH",
+        "MON",
+        "NAU",
+        "NAV",
+        "NDE",
+        "NBL",
+        "NDO",
+        "NEP",
+        "SME",
+        "NOR",
+        "NOB",
+        "NNO",
+        "OCI",
+        "OJI",
+        "ORI",
+        "ORM",
+        "OSS",
+        "PLI",
+        "FAS",
+        "POL",
+        "PUS",
+        "QUE",
+        "QAA",
+        "RON",
+        "ROH",
+        "RUN",
+        "SMO",
+        "SAG",
+        "SAN",
+        "SRD",
+        "SRB",
+        "SNA",
+        "III",
+        "SND",
+        "SIN",
+        "SLK",
+        "SLV",
+        "SOM",
+        "SOT",
+        "SUN",
+        "SWA",
+        "SSW",
+        "SWE",
+        "TGL",
+        "TAH",
+        "TGK",
+        "TAM",
+        "TAT",
+        "TEL",
+        "THA",
+        "BOD",
+        "TIR",
+        "TON",
+        "TSO",
+        "TSN",
+        "TUR",
+        "TUK",
+        "TWI",
+        "UIG",
+        "UKR",
+        "UZB",
+        "VEN",
+        "VOL",
+        "WLN",
+        "CYM",
+        "FRY",
+        "WOL",
+        "XHO",
+        "YID",
+        "YOR",
+        "ZHA",
+        "ZUL",
+        "ORJ",
+        "QPC",
+        "TNG"
+      ]
+    },
+    "ListJobTemplatesRequest": {
+      "type": "structure",
+      "members": {
+        "Category": {
+          "shape": "__string",
+          "locationName": "category",
+          "location": "querystring"
+        },
+        "ListBy": {
+          "shape": "JobTemplateListBy",
+          "locationName": "listBy",
+          "location": "querystring"
+        },
+        "MaxResults": {
+          "shape": "__integer",
+          "locationName": "maxResults",
+          "location": "querystring"
+        },
+        "NextToken": {
+          "shape": "__string",
+          "locationName": "nextToken",
+          "location": "querystring"
+        },
+        "Order": {
+          "shape": "Order",
+          "locationName": "order",
+          "location": "querystring"
+        }
+      }
+    },
+    "ListJobTemplatesResponse": {
+      "type": "structure",
+      "members": {
+        "JobTemplates": {
+          "shape": "ListOfJobTemplate",
+          "locationName": "jobTemplates"
+        },
+        "NextToken": {
+          "shape": "__string",
+          "locationName": "nextToken"
+        }
+      }
+    },
+    "ListJobsRequest": {
+      "type": "structure",
+      "members": {
+        "MaxResults": {
+          "shape": "__integer",
+          "locationName": "maxResults",
+          "location": "querystring"
+        },
+        "NextToken": {
+          "shape": "__string",
+          "locationName": "nextToken",
+          "location": "querystring"
+        },
+        "Order": {
+          "shape": "Order",
+          "locationName": "order",
+          "location": "querystring"
+        },
+        "Queue": {
+          "shape": "__string",
+          "locationName": "queue",
+          "location": "querystring"
+        },
+        "Status": {
+          "shape": "JobStatus",
+          "locationName": "status",
+          "location": "querystring"
+        }
+      }
+    },
+    "ListJobsResponse": {
+      "type": "structure",
+      "members": {
+        "Jobs": {
+          "shape": "ListOfJob",
+          "locationName": "jobs"
+        },
+        "NextToken": {
+          "shape": "__string",
+          "locationName": "nextToken"
+        }
+      }
+    },
+    "ListOfAudioDescription": {
+      "type": "list",
+      "member": {
+        "shape": "AudioDescription"
+      }
+    },
+    "ListOfCaptionDescription": {
+      "type": "list",
+      "member": {
+        "shape": "CaptionDescription"
+      }
+    },
+    "ListOfCaptionDescriptionPreset": {
+      "type": "list",
+      "member": {
+        "shape": "CaptionDescriptionPreset"
+      }
+    },
+    "ListOfEndpoint": {
+      "type": "list",
+      "member": {
+        "shape": "Endpoint"
+      }
+    },
+    "ListOfHlsAdMarkers": {
+      "type": "list",
+      "member": {
+        "shape": "HlsAdMarkers"
+      }
+    },
+    "ListOfHlsCaptionLanguageMapping": {
+      "type": "list",
+      "member": {
+        "shape": "HlsCaptionLanguageMapping"
+      }
+    },
+    "ListOfId3Insertion": {
+      "type": "list",
+      "member": {
+        "shape": "Id3Insertion"
+      }
+    },
+    "ListOfInput": {
+      "type": "list",
+      "member": {
+        "shape": "Input"
+      }
+    },
+    "ListOfInputClipping": {
+      "type": "list",
+      "member": {
+        "shape": "InputClipping"
+      }
+    },
+    "ListOfInputTemplate": {
+      "type": "list",
+      "member": {
+        "shape": "InputTemplate"
+      }
+    },
+    "ListOfInsertableImage": {
+      "type": "list",
+      "member": {
+        "shape": "InsertableImage"
+      }
+    },
+    "ListOfJob": {
+      "type": "list",
+      "member": {
+        "shape": "Job"
+      }
+    },
+    "ListOfJobTemplate": {
+      "type": "list",
+      "member": {
+        "shape": "JobTemplate"
+      }
+    },
+    "ListOfOutput": {
+      "type": "list",
+      "member": {
+        "shape": "Output"
+      }
+    },
+    "ListOfOutputChannelMapping": {
+      "type": "list",
+      "member": {
+        "shape": "OutputChannelMapping"
+      }
+    },
+    "ListOfOutputDetail": {
+      "type": "list",
+      "member": {
+        "shape": "OutputDetail"
+      }
+    },
+    "ListOfOutputGroup": {
+      "type": "list",
+      "member": {
+        "shape": "OutputGroup"
+      }
+    },
+    "ListOfOutputGroupDetail": {
+      "type": "list",
+      "member": {
+        "shape": "OutputGroupDetail"
+      }
+    },
+    "ListOfPreset": {
+      "type": "list",
+      "member": {
+        "shape": "Preset"
+      }
+    },
+    "ListOfQueue": {
+      "type": "list",
+      "member": {
+        "shape": "Queue"
+      }
+    },
+    "ListOf__integer": {
+      "type": "list",
+      "member": {
+        "shape": "__integer"
+      }
+    },
+    "ListOf__string": {
+      "type": "list",
+      "member": {
+        "shape": "__string"
+      }
+    },
+    "ListPresetsRequest": {
+      "type": "structure",
+      "members": {
+        "Category": {
+          "shape": "__string",
+          "locationName": "category",
+          "location": "querystring"
+        },
+        "ListBy": {
+          "shape": "PresetListBy",
+          "locationName": "listBy",
+          "location": "querystring"
+        },
+        "MaxResults": {
+          "shape": "__integer",
+          "locationName": "maxResults",
+          "location": "querystring"
+        },
+        "NextToken": {
+          "shape": "__string",
+          "locationName": "nextToken",
+          "location": "querystring"
+        },
+        "Order": {
+          "shape": "Order",
+          "locationName": "order",
+          "location": "querystring"
+        }
+      }
+    },
+    "ListPresetsResponse": {
+      "type": "structure",
+      "members": {
+        "NextToken": {
+          "shape": "__string",
+          "locationName": "nextToken"
+        },
+        "Presets": {
+          "shape": "ListOfPreset",
+          "locationName": "presets"
+        }
+      }
+    },
+    "ListQueuesRequest": {
+      "type": "structure",
+      "members": {
+        "ListBy": {
+          "shape": "QueueListBy",
+          "locationName": "listBy",
+          "location": "querystring"
+        },
+        "MaxResults": {
+          "shape": "__integer",
+          "locationName": "maxResults",
+          "location": "querystring"
+        },
+        "NextToken": {
+          "shape": "__string",
+          "locationName": "nextToken",
+          "location": "querystring"
+        },
+        "Order": {
+          "shape": "Order",
+          "locationName": "order",
+          "location": "querystring"
+        }
+      }
+    },
+    "ListQueuesResponse": {
+      "type": "structure",
+      "members": {
+        "NextToken": {
+          "shape": "__string",
+          "locationName": "nextToken"
+        },
+        "Queues": {
+          "shape": "ListOfQueue",
+          "locationName": "queues"
+        }
+      }
+    },
+    "M2tsAudioBufferModel": {
+      "type": "string",
+      "enum": [
+        "DVB",
+        "ATSC"
+      ]
+    },
+    "M2tsBufferModel": {
+      "type": "string",
+      "enum": [
+        "MULTIPLEX",
+        "NONE"
+      ]
+    },
+    "M2tsEbpAudioInterval": {
+      "type": "string",
+      "enum": [
+        "VIDEO_AND_FIXED_INTERVALS",
+        "VIDEO_INTERVAL"
+      ]
+    },
+    "M2tsEbpPlacement": {
+      "type": "string",
+      "enum": [
+        "VIDEO_AND_AUDIO_PIDS",
+        "VIDEO_PID"
+      ]
+    },
+    "M2tsEsRateInPes": {
+      "type": "string",
+      "enum": [
+        "INCLUDE",
+        "EXCLUDE"
+      ]
+    },
+    "M2tsPcrControl": {
+      "type": "string",
+      "enum": [
+        "PCR_EVERY_PES_PACKET",
+        "CONFIGURED_PCR_PERIOD"
+      ]
+    },
+    "M2tsRateMode": {
+      "type": "string",
+      "enum": [
+        "VBR",
+        "CBR"
+      ]
+    },
+    "M2tsScte35Source": {
+      "type": "string",
+      "enum": [
+        "PASSTHROUGH",
+        "NONE"
+      ]
+    },
+    "M2tsSegmentationMarkers": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "RAI_SEGSTART",
+        "RAI_ADAPT",
+        "PSI_SEGSTART",
+        "EBP",
+        "EBP_LEGACY"
+      ]
+    },
+    "M2tsSegmentationStyle": {
+      "type": "string",
+      "enum": [
+        "MAINTAIN_CADENCE",
+        "RESET_CADENCE"
+      ]
+    },
+    "M2tsSettings": {
+      "type": "structure",
+      "members": {
+        "AudioBufferModel": {
+          "shape": "M2tsAudioBufferModel",
+          "locationName": "audioBufferModel"
+        },
+        "AudioFramesPerPes": {
+          "shape": "__integer",
+          "locationName": "audioFramesPerPes"
+        },
+        "AudioPids": {
+          "shape": "ListOf__integer",
+          "locationName": "audioPids"
+        },
+        "Bitrate": {
+          "shape": "__integer",
+          "locationName": "bitrate"
+        },
+        "BufferModel": {
+          "shape": "M2tsBufferModel",
+          "locationName": "bufferModel"
+        },
+        "DvbNitSettings": {
+          "shape": "DvbNitSettings",
+          "locationName": "dvbNitSettings"
+        },
+        "DvbSdtSettings": {
+          "shape": "DvbSdtSettings",
+          "locationName": "dvbSdtSettings"
+        },
+        "DvbSubPids": {
+          "shape": "ListOf__integer",
+          "locationName": "dvbSubPids"
+        },
+        "DvbTdtSettings": {
+          "shape": "DvbTdtSettings",
+          "locationName": "dvbTdtSettings"
+        },
+        "DvbTeletextPid": {
+          "shape": "__integer",
+          "locationName": "dvbTeletextPid"
+        },
+        "EbpAudioInterval": {
+          "shape": "M2tsEbpAudioInterval",
+          "locationName": "ebpAudioInterval"
+        },
+        "EbpPlacement": {
+          "shape": "M2tsEbpPlacement",
+          "locationName": "ebpPlacement"
+        },
+        "EsRateInPes": {
+          "shape": "M2tsEsRateInPes",
+          "locationName": "esRateInPes"
+        },
+        "FragmentTime": {
+          "shape": "__double",
+          "locationName": "fragmentTime"
+        },
+        "MaxPcrInterval": {
+          "shape": "__integer",
+          "locationName": "maxPcrInterval"
+        },
+        "MinEbpInterval": {
+          "shape": "__integer",
+          "locationName": "minEbpInterval"
+        },
+        "NullPacketBitrate": {
+          "shape": "__double",
+          "locationName": "nullPacketBitrate"
+        },
+        "PatInterval": {
+          "shape": "__integer",
+          "locationName": "patInterval"
+        },
+        "PcrControl": {
+          "shape": "M2tsPcrControl",
+          "locationName": "pcrControl"
+        },
+        "PcrPid": {
+          "shape": "__integer",
+          "locationName": "pcrPid"
+        },
+        "PmtInterval": {
+          "shape": "__integer",
+          "locationName": "pmtInterval"
+        },
+        "PmtPid": {
+          "shape": "__integer",
+          "locationName": "pmtPid"
+        },
+        "PrivateMetadataPid": {
+          "shape": "__integer",
+          "locationName": "privateMetadataPid"
+        },
+        "ProgramNumber": {
+          "shape": "__integer",
+          "locationName": "programNumber"
+        },
+        "RateMode": {
+          "shape": "M2tsRateMode",
+          "locationName": "rateMode"
+        },
+        "Scte35Pid": {
+          "shape": "__integer",
+          "locationName": "scte35Pid"
+        },
+        "Scte35Source": {
+          "shape": "M2tsScte35Source",
+          "locationName": "scte35Source"
+        },
+        "SegmentationMarkers": {
+          "shape": "M2tsSegmentationMarkers",
+          "locationName": "segmentationMarkers"
+        },
+        "SegmentationStyle": {
+          "shape": "M2tsSegmentationStyle",
+          "locationName": "segmentationStyle"
+        },
+        "SegmentationTime": {
+          "shape": "__double",
+          "locationName": "segmentationTime"
+        },
+        "TransportStreamId": {
+          "shape": "__integer",
+          "locationName": "transportStreamId"
+        },
+        "VideoPid": {
+          "shape": "__integer",
+          "locationName": "videoPid"
+        }
+      }
+    },
+    "M3u8PcrControl": {
+      "type": "string",
+      "enum": [
+        "PCR_EVERY_PES_PACKET",
+        "CONFIGURED_PCR_PERIOD"
+      ]
+    },
+    "M3u8Scte35Source": {
+      "type": "string",
+      "enum": [
+        "PASSTHROUGH",
+        "NONE"
+      ]
+    },
+    "M3u8Settings": {
+      "type": "structure",
+      "members": {
+        "AudioFramesPerPes": {
+          "shape": "__integer",
+          "locationName": "audioFramesPerPes"
+        },
+        "AudioPids": {
+          "shape": "ListOf__integer",
+          "locationName": "audioPids"
+        },
+        "PatInterval": {
+          "shape": "__integer",
+          "locationName": "patInterval"
+        },
+        "PcrControl": {
+          "shape": "M3u8PcrControl",
+          "locationName": "pcrControl"
+        },
+        "PcrPid": {
+          "shape": "__integer",
+          "locationName": "pcrPid"
+        },
+        "PmtInterval": {
+          "shape": "__integer",
+          "locationName": "pmtInterval"
+        },
+        "PmtPid": {
+          "shape": "__integer",
+          "locationName": "pmtPid"
+        },
+        "PrivateMetadataPid": {
+          "shape": "__integer",
+          "locationName": "privateMetadataPid"
+        },
+        "ProgramNumber": {
+          "shape": "__integer",
+          "locationName": "programNumber"
+        },
+        "Scte35Pid": {
+          "shape": "__integer",
+          "locationName": "scte35Pid"
+        },
+        "Scte35Source": {
+          "shape": "M3u8Scte35Source",
+          "locationName": "scte35Source"
+        },
+        "TimedMetadata": {
+          "shape": "TimedMetadata",
+          "locationName": "timedMetadata"
+        },
+        "TimedMetadataPid": {
+          "shape": "__integer",
+          "locationName": "timedMetadataPid"
+        },
+        "TransportStreamId": {
+          "shape": "__integer",
+          "locationName": "transportStreamId"
+        },
+        "VideoPid": {
+          "shape": "__integer",
+          "locationName": "videoPid"
+        }
+      }
+    },
+    "MapOfAudioSelector": {
+      "type": "map",
+      "key": {
+        "shape": "__string"
+      },
+      "value": {
+        "shape": "AudioSelector"
+      }
+    },
+    "MapOfAudioSelectorGroup": {
+      "type": "map",
+      "key": {
+        "shape": "__string"
+      },
+      "value": {
+        "shape": "AudioSelectorGroup"
+      }
+    },
+    "MapOfCaptionSelector": {
+      "type": "map",
+      "key": {
+        "shape": "__string"
+      },
+      "value": {
+        "shape": "CaptionSelector"
+      }
+    },
+    "MapOf__string": {
+      "type": "map",
+      "key": {
+        "shape": "__string"
+      },
+      "value": {
+        "shape": "__string"
+      }
+    },
+    "MovClapAtom": {
+      "type": "string",
+      "enum": [
+        "INCLUDE",
+        "EXCLUDE"
+      ]
+    },
+    "MovCslgAtom": {
+      "type": "string",
+      "enum": [
+        "INCLUDE",
+        "EXCLUDE"
+      ]
+    },
+    "MovMpeg2FourCCControl": {
+      "type": "string",
+      "enum": [
+        "XDCAM",
+        "MPEG"
+      ]
+    },
+    "MovPaddingControl": {
+      "type": "string",
+      "enum": [
+        "OMNEON",
+        "NONE"
+      ]
+    },
+    "MovReference": {
+      "type": "string",
+      "enum": [
+        "SELF_CONTAINED",
+        "EXTERNAL"
+      ]
+    },
+    "MovSettings": {
+      "type": "structure",
+      "members": {
+        "ClapAtom": {
+          "shape": "MovClapAtom",
+          "locationName": "clapAtom"
+        },
+        "CslgAtom": {
+          "shape": "MovCslgAtom",
+          "locationName": "cslgAtom"
+        },
+        "Mpeg2FourCCControl": {
+          "shape": "MovMpeg2FourCCControl",
+          "locationName": "mpeg2FourCCControl"
+        },
+        "PaddingControl": {
+          "shape": "MovPaddingControl",
+          "locationName": "paddingControl"
+        },
+        "Reference": {
+          "shape": "MovReference",
+          "locationName": "reference"
+        }
+      }
+    },
+    "Mp2Settings": {
+      "type": "structure",
+      "members": {
+        "Bitrate": {
+          "shape": "__integer",
+          "locationName": "bitrate"
+        },
+        "Channels": {
+          "shape": "__integer",
+          "locationName": "channels"
+        },
+        "SampleRate": {
+          "shape": "__integer",
+          "locationName": "sampleRate"
+        }
+      }
+    },
+    "Mp4CslgAtom": {
+      "type": "string",
+      "enum": [
+        "INCLUDE",
+        "EXCLUDE"
+      ]
+    },
+    "Mp4FreeSpaceBox": {
+      "type": "string",
+      "enum": [
+        "INCLUDE",
+        "EXCLUDE"
+      ]
+    },
+    "Mp4MoovPlacement": {
+      "type": "string",
+      "enum": [
+        "PROGRESSIVE_DOWNLOAD",
+        "NORMAL"
+      ]
+    },
+    "Mp4Settings": {
+      "type": "structure",
+      "members": {
+        "CslgAtom": {
+          "shape": "Mp4CslgAtom",
+          "locationName": "cslgAtom"
+        },
+        "FreeSpaceBox": {
+          "shape": "Mp4FreeSpaceBox",
+          "locationName": "freeSpaceBox"
+        },
+        "MoovPlacement": {
+          "shape": "Mp4MoovPlacement",
+          "locationName": "moovPlacement"
+        },
+        "Mp4MajorBrand": {
+          "shape": "__string",
+          "locationName": "mp4MajorBrand"
+        }
+      }
+    },
+    "Mpeg2AdaptiveQuantization": {
+      "type": "string",
+      "enum": [
+        "OFF",
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    "Mpeg2CodecLevel": {
+      "type": "string",
+      "enum": [
+        "AUTO",
+        "LOW",
+        "MAIN",
+        "HIGH1440",
+        "HIGH"
+      ]
+    },
+    "Mpeg2CodecProfile": {
+      "type": "string",
+      "enum": [
+        "MAIN",
+        "PROFILE_422"
+      ]
+    },
+    "Mpeg2FramerateControl": {
+      "type": "string",
+      "enum": [
+        "INITIALIZE_FROM_SOURCE",
+        "SPECIFIED"
+      ]
+    },
+    "Mpeg2FramerateConversionAlgorithm": {
+      "type": "string",
+      "enum": [
+        "DUPLICATE_DROP",
+        "INTERPOLATE"
+      ]
+    },
+    "Mpeg2GopSizeUnits": {
+      "type": "string",
+      "enum": [
+        "FRAMES",
+        "SECONDS"
+      ]
+    },
+    "Mpeg2InterlaceMode": {
+      "type": "string",
+      "enum": [
+        "PROGRESSIVE",
+        "TOP_FIELD",
+        "BOTTOM_FIELD",
+        "FOLLOW_TOP_FIELD",
+        "FOLLOW_BOTTOM_FIELD"
+      ]
+    },
+    "Mpeg2IntraDcPrecision": {
+      "type": "string",
+      "enum": [
+        "AUTO",
+        "INTRA_DC_PRECISION_8",
+        "INTRA_DC_PRECISION_9",
+        "INTRA_DC_PRECISION_10",
+        "INTRA_DC_PRECISION_11"
+      ]
+    },
+    "Mpeg2ParControl": {
+      "type": "string",
+      "enum": [
+        "INITIALIZE_FROM_SOURCE",
+        "SPECIFIED"
+      ]
+    },
+    "Mpeg2QualityTuningLevel": {
+      "type": "string",
+      "enum": [
+        "SINGLE_PASS",
+        "MULTI_PASS"
+      ]
+    },
+    "Mpeg2RateControlMode": {
+      "type": "string",
+      "enum": [
+        "VBR",
+        "CBR"
+      ]
+    },
+    "Mpeg2SceneChangeDetect": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "Mpeg2Settings": {
+      "type": "structure",
+      "members": {
+        "AdaptiveQuantization": {
+          "shape": "Mpeg2AdaptiveQuantization",
+          "locationName": "adaptiveQuantization"
+        },
+        "Bitrate": {
+          "shape": "__integer",
+          "locationName": "bitrate"
+        },
+        "CodecLevel": {
+          "shape": "Mpeg2CodecLevel",
+          "locationName": "codecLevel"
+        },
+        "CodecProfile": {
+          "shape": "Mpeg2CodecProfile",
+          "locationName": "codecProfile"
+        },
+        "FramerateControl": {
+          "shape": "Mpeg2FramerateControl",
+          "locationName": "framerateControl"
+        },
+        "FramerateConversionAlgorithm": {
+          "shape": "Mpeg2FramerateConversionAlgorithm",
+          "locationName": "framerateConversionAlgorithm"
+        },
+        "FramerateDenominator": {
+          "shape": "__integer",
+          "locationName": "framerateDenominator"
+        },
+        "FramerateNumerator": {
+          "shape": "__integer",
+          "locationName": "framerateNumerator"
+        },
+        "GopClosedCadence": {
+          "shape": "__integer",
+          "locationName": "gopClosedCadence"
+        },
+        "GopSize": {
+          "shape": "__double",
+          "locationName": "gopSize"
+        },
+        "GopSizeUnits": {
+          "shape": "Mpeg2GopSizeUnits",
+          "locationName": "gopSizeUnits"
+        },
+        "HrdBufferInitialFillPercentage": {
+          "shape": "__integer",
+          "locationName": "hrdBufferInitialFillPercentage"
+        },
+        "HrdBufferSize": {
+          "shape": "__integer",
+          "locationName": "hrdBufferSize"
+        },
+        "InterlaceMode": {
+          "shape": "Mpeg2InterlaceMode",
+          "locationName": "interlaceMode"
+        },
+        "IntraDcPrecision": {
+          "shape": "Mpeg2IntraDcPrecision",
+          "locationName": "intraDcPrecision"
+        },
+        "MaxBitrate": {
+          "shape": "__integer",
+          "locationName": "maxBitrate"
+        },
+        "MinIInterval": {
+          "shape": "__integer",
+          "locationName": "minIInterval"
+        },
+        "NumberBFramesBetweenReferenceFrames": {
+          "shape": "__integer",
+          "locationName": "numberBFramesBetweenReferenceFrames"
+        },
+        "ParControl": {
+          "shape": "Mpeg2ParControl",
+          "locationName": "parControl"
+        },
+        "ParDenominator": {
+          "shape": "__integer",
+          "locationName": "parDenominator"
+        },
+        "ParNumerator": {
+          "shape": "__integer",
+          "locationName": "parNumerator"
+        },
+        "QualityTuningLevel": {
+          "shape": "Mpeg2QualityTuningLevel",
+          "locationName": "qualityTuningLevel"
+        },
+        "RateControlMode": {
+          "shape": "Mpeg2RateControlMode",
+          "locationName": "rateControlMode"
+        },
+        "SceneChangeDetect": {
+          "shape": "Mpeg2SceneChangeDetect",
+          "locationName": "sceneChangeDetect"
+        },
+        "SlowPal": {
+          "shape": "Mpeg2SlowPal",
+          "locationName": "slowPal"
+        },
+        "Softness": {
+          "shape": "__integer",
+          "locationName": "softness"
+        },
+        "SpatialAdaptiveQuantization": {
+          "shape": "Mpeg2SpatialAdaptiveQuantization",
+          "locationName": "spatialAdaptiveQuantization"
+        },
+        "Syntax": {
+          "shape": "Mpeg2Syntax",
+          "locationName": "syntax"
+        },
+        "Telecine": {
+          "shape": "Mpeg2Telecine",
+          "locationName": "telecine"
+        },
+        "TemporalAdaptiveQuantization": {
+          "shape": "Mpeg2TemporalAdaptiveQuantization",
+          "locationName": "temporalAdaptiveQuantization"
+        }
+      }
+    },
+    "Mpeg2SlowPal": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "Mpeg2SpatialAdaptiveQuantization": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "Mpeg2Syntax": {
+      "type": "string",
+      "enum": [
+        "DEFAULT",
+        "D_10"
+      ]
+    },
+    "Mpeg2Telecine": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "SOFT",
+        "HARD"
+      ]
+    },
+    "Mpeg2TemporalAdaptiveQuantization": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "MsSmoothAudioDeduplication": {
+      "type": "string",
+      "enum": [
+        "COMBINE_DUPLICATE_STREAMS",
+        "NONE"
+      ]
+    },
+    "MsSmoothEncryptionSettings": {
+      "type": "structure",
+      "members": {
+        "SpekeKeyProvider": {
+          "shape": "SpekeKeyProvider",
+          "locationName": "spekeKeyProvider"
+        }
+      }
+    },
+    "MsSmoothGroupSettings": {
+      "type": "structure",
+      "members": {
+        "AudioDeduplication": {
+          "shape": "MsSmoothAudioDeduplication",
+          "locationName": "audioDeduplication"
+        },
+        "Destination": {
+          "shape": "__string",
+          "locationName": "destination"
+        },
+        "Encryption": {
+          "shape": "MsSmoothEncryptionSettings",
+          "locationName": "encryption"
+        },
+        "FragmentLength": {
+          "shape": "__integer",
+          "locationName": "fragmentLength"
+        },
+        "ManifestEncoding": {
+          "shape": "MsSmoothManifestEncoding",
+          "locationName": "manifestEncoding"
+        }
+      }
+    },
+    "MsSmoothManifestEncoding": {
+      "type": "string",
+      "enum": [
+        "UTF8",
+        "UTF16"
+      ]
+    },
+    "NielsenConfiguration": {
+      "type": "structure",
+      "members": {
+        "BreakoutCode": {
+          "shape": "__integer",
+          "locationName": "breakoutCode"
+        },
+        "DistributorId": {
+          "shape": "__string",
+          "locationName": "distributorId"
+        }
+      }
+    },
+    "NoiseReducer": {
+      "type": "structure",
+      "members": {
+        "Filter": {
+          "shape": "NoiseReducerFilter",
+          "locationName": "filter"
+        },
+        "FilterSettings": {
+          "shape": "NoiseReducerFilterSettings",
+          "locationName": "filterSettings"
+        },
+        "SpatialFilterSettings": {
+          "shape": "NoiseReducerSpatialFilterSettings",
+          "locationName": "spatialFilterSettings"
+        }
+      }
+    },
+    "NoiseReducerFilter": {
+      "type": "string",
+      "enum": [
+        "BILATERAL",
+        "MEAN",
+        "GAUSSIAN",
+        "LANCZOS",
+        "SHARPEN",
+        "CONSERVE",
+        "SPATIAL"
+      ]
+    },
+    "NoiseReducerFilterSettings": {
+      "type": "structure",
+      "members": {
+        "Strength": {
+          "shape": "__integer",
+          "locationName": "strength"
+        }
+      }
+    },
+    "NoiseReducerSpatialFilterSettings": {
+      "type": "structure",
+      "members": {
+        "PostFilterSharpenStrength": {
+          "shape": "__integer",
+          "locationName": "postFilterSharpenStrength"
+        },
+        "Speed": {
+          "shape": "__integer",
+          "locationName": "speed"
+        },
+        "Strength": {
+          "shape": "__integer",
+          "locationName": "strength"
+        }
+      }
+    },
+    "NotFoundException": {
+      "type": "structure",
+      "members": {
+        "Message": {
+          "shape": "__string",
+          "locationName": "message"
+        }
+      },
+      "exception": true,
+      "error": {
+        "httpStatusCode": 404
+      }
+    },
+    "Order": {
+      "type": "string",
+      "enum": [
+        "ASCENDING",
+        "DESCENDING"
+      ]
+    },
+    "Output": {
+      "type": "structure",
+      "members": {
+        "AudioDescriptions": {
+          "shape": "ListOfAudioDescription",
+          "locationName": "audioDescriptions"
+        },
+        "CaptionDescriptions": {
+          "shape": "ListOfCaptionDescription",
+          "locationName": "captionDescriptions"
+        },
+        "ContainerSettings": {
+          "shape": "ContainerSettings",
+          "locationName": "containerSettings"
+        },
+        "Extension": {
+          "shape": "__string",
+          "locationName": "extension"
+        },
+        "NameModifier": {
+          "shape": "__string",
+          "locationName": "nameModifier"
+        },
+        "OutputSettings": {
+          "shape": "OutputSettings",
+          "locationName": "outputSettings"
+        },
+        "Preset": {
+          "shape": "__string",
+          "locationName": "preset"
+        },
+        "VideoDescription": {
+          "shape": "VideoDescription",
+          "locationName": "videoDescription"
+        }
+      }
+    },
+    "OutputChannelMapping": {
+      "type": "structure",
+      "members": {
+        "InputChannels": {
+          "shape": "ListOf__integer",
+          "locationName": "inputChannels"
+        }
+      }
+    },
+    "OutputDetail": {
+      "type": "structure",
+      "members": {
+        "DurationInMs": {
+          "shape": "__integer",
+          "locationName": "durationInMs"
+        },
+        "VideoDetails": {
+          "shape": "VideoDetail",
+          "locationName": "videoDetails"
+        }
+      }
+    },
+    "OutputGroup": {
+      "type": "structure",
+      "members": {
+        "CustomName": {
+          "shape": "__string",
+          "locationName": "customName"
+        },
+        "Name": {
+          "shape": "__string",
+          "locationName": "name"
+        },
+        "OutputGroupSettings": {
+          "shape": "OutputGroupSettings",
+          "locationName": "outputGroupSettings"
+        },
+        "Outputs": {
+          "shape": "ListOfOutput",
+          "locationName": "outputs"
+        }
+      }
+    },
+    "OutputGroupDetail": {
+      "type": "structure",
+      "members": {
+        "OutputDetails": {
+          "shape": "ListOfOutputDetail",
+          "locationName": "outputDetails"
+        }
+      }
+    },
+    "OutputGroupSettings": {
+      "type": "structure",
+      "members": {
+        "DashIsoGroupSettings": {
+          "shape": "DashIsoGroupSettings",
+          "locationName": "dashIsoGroupSettings"
+        },
+        "FileGroupSettings": {
+          "shape": "FileGroupSettings",
+          "locationName": "fileGroupSettings"
+        },
+        "HlsGroupSettings": {
+          "shape": "HlsGroupSettings",
+          "locationName": "hlsGroupSettings"
+        },
+        "MsSmoothGroupSettings": {
+          "shape": "MsSmoothGroupSettings",
+          "locationName": "msSmoothGroupSettings"
+        },
+        "Type": {
+          "shape": "OutputGroupType",
+          "locationName": "type"
+        }
+      }
+    },
+    "OutputGroupType": {
+      "type": "string",
+      "enum": [
+        "HLS_GROUP_SETTINGS",
+        "DASH_ISO_GROUP_SETTINGS",
+        "FILE_GROUP_SETTINGS",
+        "MS_SMOOTH_GROUP_SETTINGS"
+      ]
+    },
+    "OutputSdt": {
+      "type": "string",
+      "enum": [
+        "SDT_FOLLOW",
+        "SDT_FOLLOW_IF_PRESENT",
+        "SDT_MANUAL",
+        "SDT_NONE"
+      ]
+    },
+    "OutputSettings": {
+      "type": "structure",
+      "members": {
+        "HlsSettings": {
+          "shape": "HlsSettings",
+          "locationName": "hlsSettings"
+        }
+      }
+    },
+    "Preset": {
+      "type": "structure",
+      "members": {
+        "Arn": {
+          "shape": "__string",
+          "locationName": "arn"
+        },
+        "Category": {
+          "shape": "__string",
+          "locationName": "category"
+        },
+        "CreatedAt": {
+          "shape": "__timestamp",
+          "locationName": "createdAt"
+        },
+        "Description": {
+          "shape": "__string",
+          "locationName": "description"
+        },
+        "LastUpdated": {
+          "shape": "__timestamp",
+          "locationName": "lastUpdated"
+        },
+        "Name": {
+          "shape": "__string",
+          "locationName": "name"
+        },
+        "Settings": {
+          "shape": "PresetSettings",
+          "locationName": "settings"
+        },
+        "Type": {
+          "shape": "Type",
+          "locationName": "type"
+        }
+      }
+    },
+    "PresetListBy": {
+      "type": "string",
+      "enum": [
+        "NAME",
+        "CREATION_DATE",
+        "SYSTEM"
+      ]
+    },
+    "PresetSettings": {
+      "type": "structure",
+      "members": {
+        "AudioDescriptions": {
+          "shape": "ListOfAudioDescription",
+          "locationName": "audioDescriptions"
+        },
+        "CaptionDescriptions": {
+          "shape": "ListOfCaptionDescriptionPreset",
+          "locationName": "captionDescriptions"
+        },
+        "ContainerSettings": {
+          "shape": "ContainerSettings",
+          "locationName": "containerSettings"
+        },
+        "VideoDescription": {
+          "shape": "VideoDescription",
+          "locationName": "videoDescription"
+        }
+      }
+    },
+    "ProresCodecProfile": {
+      "type": "string",
+      "enum": [
+        "APPLE_PRORES_422",
+        "APPLE_PRORES_422_HQ",
+        "APPLE_PRORES_422_LT",
+        "APPLE_PRORES_422_PROXY"
+      ]
+    },
+    "ProresFramerateControl": {
+      "type": "string",
+      "enum": [
+        "INITIALIZE_FROM_SOURCE",
+        "SPECIFIED"
+      ]
+    },
+    "ProresFramerateConversionAlgorithm": {
+      "type": "string",
+      "enum": [
+        "DUPLICATE_DROP",
+        "INTERPOLATE"
+      ]
+    },
+    "ProresInterlaceMode": {
+      "type": "string",
+      "enum": [
+        "PROGRESSIVE",
+        "TOP_FIELD",
+        "BOTTOM_FIELD",
+        "FOLLOW_TOP_FIELD",
+        "FOLLOW_BOTTOM_FIELD"
+      ]
+    },
+    "ProresParControl": {
+      "type": "string",
+      "enum": [
+        "INITIALIZE_FROM_SOURCE",
+        "SPECIFIED"
+      ]
+    },
+    "ProresSettings": {
+      "type": "structure",
+      "members": {
+        "CodecProfile": {
+          "shape": "ProresCodecProfile",
+          "locationName": "codecProfile"
+        },
+        "FramerateControl": {
+          "shape": "ProresFramerateControl",
+          "locationName": "framerateControl"
+        },
+        "FramerateConversionAlgorithm": {
+          "shape": "ProresFramerateConversionAlgorithm",
+          "locationName": "framerateConversionAlgorithm"
+        },
+        "FramerateDenominator": {
+          "shape": "__integer",
+          "locationName": "framerateDenominator"
+        },
+        "FramerateNumerator": {
+          "shape": "__integer",
+          "locationName": "framerateNumerator"
+        },
+        "InterlaceMode": {
+          "shape": "ProresInterlaceMode",
+          "locationName": "interlaceMode"
+        },
+        "ParControl": {
+          "shape": "ProresParControl",
+          "locationName": "parControl"
+        },
+        "ParDenominator": {
+          "shape": "__integer",
+          "locationName": "parDenominator"
+        },
+        "ParNumerator": {
+          "shape": "__integer",
+          "locationName": "parNumerator"
+        },
+        "SlowPal": {
+          "shape": "ProresSlowPal",
+          "locationName": "slowPal"
+        },
+        "Telecine": {
+          "shape": "ProresTelecine",
+          "locationName": "telecine"
+        }
+      }
+    },
+    "ProresSlowPal": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "ENABLED"
+      ]
+    },
+    "ProresTelecine": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "HARD"
+      ]
+    },
+    "Queue": {
+      "type": "structure",
+      "members": {
+        "Arn": {
+          "shape": "__string",
+          "locationName": "arn"
+        },
+        "CreatedAt": {
+          "shape": "__timestamp",
+          "locationName": "createdAt"
+        },
+        "Description": {
+          "shape": "__string",
+          "locationName": "description"
+        },
+        "LastUpdated": {
+          "shape": "__timestamp",
+          "locationName": "lastUpdated"
+        },
+        "Name": {
+          "shape": "__string",
+          "locationName": "name"
+        },
+        "Status": {
+          "shape": "QueueStatus",
+          "locationName": "status"
+        },
+        "Type": {
+          "shape": "Type",
+          "locationName": "type"
+        }
+      }
+    },
+    "QueueListBy": {
+      "type": "string",
+      "enum": [
+        "NAME",
+        "CREATION_DATE"
+      ]
+    },
+    "QueueStatus": {
+      "type": "string",
+      "enum": [
+        "ACTIVE",
+        "PAUSED"
+      ]
+    },
+    "Rectangle": {
+      "type": "structure",
+      "members": {
+        "Height": {
+          "shape": "__integer",
+          "locationName": "height"
+        },
+        "Width": {
+          "shape": "__integer",
+          "locationName": "width"
+        },
+        "X": {
+          "shape": "__integer",
+          "locationName": "x"
+        },
+        "Y": {
+          "shape": "__integer",
+          "locationName": "y"
+        }
+      }
+    },
+    "RemixSettings": {
+      "type": "structure",
+      "members": {
+        "ChannelMapping": {
+          "shape": "ChannelMapping",
+          "locationName": "channelMapping"
+        },
+        "ChannelsIn": {
+          "shape": "__integer",
+          "locationName": "channelsIn"
+        },
+        "ChannelsOut": {
+          "shape": "__integer",
+          "locationName": "channelsOut"
+        }
+      }
+    },
+    "RespondToAfd": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "RESPOND",
+        "PASSTHROUGH"
+      ]
+    },
+    "ScalingBehavior": {
+      "type": "string",
+      "enum": [
+        "DEFAULT",
+        "STRETCH_TO_OUTPUT"
+      ]
+    },
+    "SccDestinationFramerate": {
+      "type": "string",
+      "enum": [
+        "FRAMERATE_23_97",
+        "FRAMERATE_24",
+        "FRAMERATE_29_97_DROPFRAME",
+        "FRAMERATE_29_97_NON_DROPFRAME"
+      ]
+    },
+    "SccDestinationSettings": {
+      "type": "structure",
+      "members": {
+        "Framerate": {
+          "shape": "SccDestinationFramerate",
+          "locationName": "framerate"
+        }
+      }
+    },
+    "SpekeKeyProvider": {
+      "type": "structure",
+      "members": {
+        "ResourceId": {
+          "shape": "__string",
+          "locationName": "resourceId"
+        },
+        "SystemIds": {
+          "shape": "ListOf__string",
+          "locationName": "systemIds"
+        },
+        "Url": {
+          "shape": "__string",
+          "locationName": "url"
+        }
+      }
+    },
+    "StaticKeyProvider": {
+      "type": "structure",
+      "members": {
+        "KeyFormat": {
+          "shape": "__string",
+          "locationName": "keyFormat"
+        },
+        "KeyFormatVersions": {
+          "shape": "__string",
+          "locationName": "keyFormatVersions"
+        },
+        "StaticKeyValue": {
+          "shape": "__string",
+          "locationName": "staticKeyValue"
+        },
+        "Url": {
+          "shape": "__string",
+          "locationName": "url"
+        }
+      }
+    },
+    "TeletextDestinationSettings": {
+      "type": "structure",
+      "members": {
+        "PageNumber": {
+          "shape": "__string",
+          "locationName": "pageNumber"
+        }
+      }
+    },
+    "TeletextSourceSettings": {
+      "type": "structure",
+      "members": {
+        "PageNumber": {
+          "shape": "__string",
+          "locationName": "pageNumber"
+        }
+      }
+    },
+    "TimecodeBurnin": {
+      "type": "structure",
+      "members": {
+        "FontSize": {
+          "shape": "__integer",
+          "locationName": "fontSize"
+        },
+        "Position": {
+          "shape": "TimecodeBurninPosition",
+          "locationName": "position"
+        },
+        "Prefix": {
+          "shape": "__string",
+          "locationName": "prefix"
+        }
+      }
+    },
+    "TimecodeBurninPosition": {
+      "type": "string",
+      "enum": [
+        "TOP_CENTER",
+        "TOP_LEFT",
+        "TOP_RIGHT",
+        "MIDDLE_LEFT",
+        "MIDDLE_CENTER",
+        "MIDDLE_RIGHT",
+        "BOTTOM_LEFT",
+        "BOTTOM_CENTER",
+        "BOTTOM_RIGHT"
+      ]
+    },
+    "TimecodeConfig": {
+      "type": "structure",
+      "members": {
+        "Anchor": {
+          "shape": "__string",
+          "locationName": "anchor"
+        },
+        "Source": {
+          "shape": "TimecodeSource",
+          "locationName": "source"
+        },
+        "Start": {
+          "shape": "__string",
+          "locationName": "start"
+        },
+        "TimestampOffset": {
+          "shape": "__string",
+          "locationName": "timestampOffset"
+        }
+      }
+    },
+    "TimecodeSource": {
+      "type": "string",
+      "enum": [
+        "EMBEDDED",
+        "ZEROBASED",
+        "SPECIFIEDSTART"
+      ]
+    },
+    "TimedMetadata": {
+      "type": "string",
+      "enum": [
+        "PASSTHROUGH",
+        "NONE"
+      ]
+    },
+    "TimedMetadataInsertion": {
+      "type": "structure",
+      "members": {
+        "Id3Insertions": {
+          "shape": "ListOfId3Insertion",
+          "locationName": "id3Insertions"
+        }
+      }
+    },
+    "Timing": {
+      "type": "structure",
+      "members": {
+        "FinishTime": {
+          "shape": "__timestamp",
+          "locationName": "finishTime"
+        },
+        "StartTime": {
+          "shape": "__timestamp",
+          "locationName": "startTime"
+        },
+        "SubmitTime": {
+          "shape": "__timestamp",
+          "locationName": "submitTime"
+        }
+      }
+    },
+    "TooManyRequestsException": {
+      "type": "structure",
+      "members": {
+        "Message": {
+          "shape": "__string",
+          "locationName": "message"
+        }
+      },
+      "exception": true,
+      "error": {
+        "httpStatusCode": 429
+      }
+    },
+    "TtmlDestinationSettings": {
+      "type": "structure",
+      "members": {
+        "StylePassthrough": {
+          "shape": "TtmlStylePassthrough",
+          "locationName": "stylePassthrough"
+        }
+      }
+    },
+    "TtmlStylePassthrough": {
+      "type": "string",
+      "enum": [
+        "ENABLED",
+        "DISABLED"
+      ]
+    },
+    "Type": {
+      "type": "string",
+      "enum": [
+        "SYSTEM",
+        "CUSTOM"
+      ]
+    },
+    "UpdateJobTemplateRequest": {
+      "type": "structure",
+      "members": {
+        "Category": {
+          "shape": "__string",
+          "locationName": "category"
+        },
+        "Description": {
+          "shape": "__string",
+          "locationName": "description"
+        },
+        "Name": {
+          "shape": "__string",
+          "locationName": "name",
+          "location": "uri"
+        },
+        "Queue": {
+          "shape": "__string",
+          "locationName": "queue"
+        },
+        "Settings": {
+          "shape": "JobTemplateSettings",
+          "locationName": "settings"
+        }
+      },
+      "required": [
+        "Name"
+      ]
+    },
+    "UpdateJobTemplateResponse": {
+      "type": "structure",
+      "members": {
+        "JobTemplate": {
+          "shape": "JobTemplate",
+          "locationName": "jobTemplate"
+        }
+      }
+    },
+    "UpdatePresetRequest": {
+      "type": "structure",
+      "members": {
+        "Category": {
+          "shape": "__string",
+          "locationName": "category"
+        },
+        "Description": {
+          "shape": "__string",
+          "locationName": "description"
+        },
+        "Name": {
+          "shape": "__string",
+          "locationName": "name",
+          "location": "uri"
+        },
+        "Settings": {
+          "shape": "PresetSettings",
+          "locationName": "settings"
+        }
+      },
+      "required": [
+        "Name"
+      ]
+    },
+    "UpdatePresetResponse": {
+      "type": "structure",
+      "members": {
+        "Preset": {
+          "shape": "Preset",
+          "locationName": "preset"
+        }
+      }
+    },
+    "UpdateQueueRequest": {
+      "type": "structure",
+      "members": {
+        "Description": {
+          "shape": "__string",
+          "locationName": "description"
+        },
+        "Name": {
+          "shape": "__string",
+          "locationName": "name",
+          "location": "uri"
+        },
+        "Status": {
+          "shape": "QueueStatus",
+          "locationName": "status"
+        }
+      },
+      "required": [
+        "Name"
+      ]
+    },
+    "UpdateQueueResponse": {
+      "type": "structure",
+      "members": {
+        "Queue": {
+          "shape": "Queue",
+          "locationName": "queue"
+        }
+      }
+    },
+    "VideoCodec": {
+      "type": "string",
+      "enum": [
+        "FRAME_CAPTURE",
+        "H_264",
+        "H_265",
+        "MPEG2",
+        "PRORES"
+      ]
+    },
+    "VideoCodecSettings": {
+      "type": "structure",
+      "members": {
+        "Codec": {
+          "shape": "VideoCodec",
+          "locationName": "codec"
+        },
+        "FrameCaptureSettings": {
+          "shape": "FrameCaptureSettings",
+          "locationName": "frameCaptureSettings"
+        },
+        "H264Settings": {
+          "shape": "H264Settings",
+          "locationName": "h264Settings"
+        },
+        "H265Settings": {
+          "shape": "H265Settings",
+          "locationName": "h265Settings"
+        },
+        "Mpeg2Settings": {
+          "shape": "Mpeg2Settings",
+          "locationName": "mpeg2Settings"
+        },
+        "ProresSettings": {
+          "shape": "ProresSettings",
+          "locationName": "proresSettings"
+        }
+      }
+    },
+    "VideoDescription": {
+      "type": "structure",
+      "members": {
+        "AfdSignaling": {
+          "shape": "AfdSignaling",
+          "locationName": "afdSignaling"
+        },
+        "AntiAlias": {
+          "shape": "AntiAlias",
+          "locationName": "antiAlias"
+        },
+        "CodecSettings": {
+          "shape": "VideoCodecSettings",
+          "locationName": "codecSettings"
+        },
+        "ColorMetadata": {
+          "shape": "ColorMetadata",
+          "locationName": "colorMetadata"
+        },
+        "Crop": {
+          "shape": "Rectangle",
+          "locationName": "crop"
+        },
+        "DropFrameTimecode": {
+          "shape": "DropFrameTimecode",
+          "locationName": "dropFrameTimecode"
+        },
+        "FixedAfd": {
+          "shape": "__integer",
+          "locationName": "fixedAfd"
+        },
+        "Height": {
+          "shape": "__integer",
+          "locationName": "height"
+        },
+        "Position": {
+          "shape": "Rectangle",
+          "locationName": "position"
+        },
+        "RespondToAfd": {
+          "shape": "RespondToAfd",
+          "locationName": "respondToAfd"
+        },
+        "ScalingBehavior": {
+          "shape": "ScalingBehavior",
+          "locationName": "scalingBehavior"
+        },
+        "Sharpness": {
+          "shape": "__integer",
+          "locationName": "sharpness"
+        },
+        "TimecodeInsertion": {
+          "shape": "VideoTimecodeInsertion",
+          "locationName": "timecodeInsertion"
+        },
+        "VideoPreprocessors": {
+          "shape": "VideoPreprocessor",
+          "locationName": "videoPreprocessors"
+        },
+        "Width": {
+          "shape": "__integer",
+          "locationName": "width"
+        }
+      }
+    },
+    "VideoDetail": {
+      "type": "structure",
+      "members": {
+        "HeightInPx": {
+          "shape": "__integer",
+          "locationName": "heightInPx"
+        },
+        "WidthInPx": {
+          "shape": "__integer",
+          "locationName": "widthInPx"
+        }
+      }
+    },
+    "VideoPreprocessor": {
+      "type": "structure",
+      "members": {
+        "ColorCorrector": {
+          "shape": "ColorCorrector",
+          "locationName": "colorCorrector"
+        },
+        "Deinterlacer": {
+          "shape": "Deinterlacer",
+          "locationName": "deinterlacer"
+        },
+        "ImageInserter": {
+          "shape": "ImageInserter",
+          "locationName": "imageInserter"
+        },
+        "NoiseReducer": {
+          "shape": "NoiseReducer",
+          "locationName": "noiseReducer"
+        },
+        "TimecodeBurnin": {
+          "shape": "TimecodeBurnin",
+          "locationName": "timecodeBurnin"
+        }
+      }
+    },
+    "VideoSelector": {
+      "type": "structure",
+      "members": {
+        "ColorSpace": {
+          "shape": "ColorSpace",
+          "locationName": "colorSpace"
+        },
+        "ColorSpaceUsage": {
+          "shape": "ColorSpaceUsage",
+          "locationName": "colorSpaceUsage"
+        },
+        "Hdr10Metadata": {
+          "shape": "Hdr10Metadata",
+          "locationName": "hdr10Metadata"
+        },
+        "Pid": {
+          "shape": "__integer",
+          "locationName": "pid"
+        },
+        "ProgramNumber": {
+          "shape": "__integer",
+          "locationName": "programNumber"
+        }
+      }
+    },
+    "VideoTimecodeInsertion": {
+      "type": "string",
+      "enum": [
+        "DISABLED",
+        "PIC_TIMING_SEI"
+      ]
+    },
+    "WavSettings": {
+      "type": "structure",
+      "members": {
+        "BitDepth": {
+          "shape": "__integer",
+          "locationName": "bitDepth"
+        },
+        "Channels": {
+          "shape": "__integer",
+          "locationName": "channels"
+        },
+        "SampleRate": {
+          "shape": "__integer",
+          "locationName": "sampleRate"
+        }
+      }
+    },
+    "__boolean": {
+      "type": "boolean"
+    },
+    "__double": {
+      "type": "double"
+    },
+    "__integer": {
+      "type": "integer"
+    },
+    "__string": {
+      "type": "string"
+    },
+    "__timestamp": {
+      "type": "timestamp"
+    }
+  }
+}

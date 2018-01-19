@@ -1,0 +1,191 @@
+Source: thrift
+Section: devel
+Priority: extra
+Build-Depends: debhelper (>= 9), build-essential, mono-mcs, python-dev, ant,
+    mono-devel,  libmono-system-web4.0-cil, erlang-base, ruby-dev | ruby1.9.1-dev, ruby-bundler ,autoconf, automake,
+    pkg-config, libtool, bison, flex, libboost-dev | libboost1.53-dev,
+    python-all, python-setuptools, python-all-dev, python-all-dbg,
+    python3-all, python3-setuptools, python3-all-dev, python3-all-dbg,
+    openjdk-7-jdk | openjdk-8-jdk | default-jdk,
+    libboost-test-dev | libboost-test1.53-dev, libevent-dev, libssl-dev, perl (>= 5.8.0-7),
+    php5 | php7.0, php5-dev | php7.0-dev, libglib2.0-dev, qtchooser, qtbase5-dev-tools
+Maintainer: Thrift Developer's <dev@thrift.apache.org>
+Homepage: http://thrift.apache.org/
+Vcs-Git: https://git-wip-us.apache.org/repos/asf/thrift.git
+Vcs-Browser: https://git-wip-us.apache.org/repos/asf?p=thrift.git
+Standards-Version: 3.9.7
+X-Python-Version: >= 2.6
+X-Python3-Version: >= 3.3
+
+Package: thrift-compiler
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Compiler for Thrift definition files
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the Thrift compiler that is used for translating
+ from .thrift files (containing the definitions) to the language binding
+ for the supported languages.
+
+Package: python-thrift
+Architecture: any
+Section: python
+Depends: ${python:Depends}, ${shlibs:Depends}, ${misc:Depends}, python-six
+Recommends: python-twisted-web, python-backports.ssl-match-hostname, python-ipaddress
+Provides: ${python:Provides}
+Description: Python bindings for Thrift (Python 2)
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the Python bindings for Thrift. You will need the thrift
+ tool (in the thrift-compiler package) to compile your definition to Python
+ classes, and then the modules in this package will allow you to use those
+ classes in your programs.
+ .
+ This package installs the library for Python 2.
+
+Package: python-thrift-dbg
+Architecture: any
+Section: debug
+Depends: ${shlibs:Depends}, ${misc:Depends}, python-thrift (= ${binary:Version}), python-all-dbg
+Provides: ${python:Provides}
+Description: Python bindings for Thrift (debug version)
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the Python bindings for Thrift with debugging symbols.
+ You will need the thrift tool (in the thrift-compiler package) to compile your
+ definition to Python classes, and then the modules in this package will allow
+ you to use those classes in your programs.
+
+Package: python3-thrift
+Architecture: any
+Section: python
+Depends: ${python3:Depends}, ${shlibs:Depends}, ${misc:Depends}, python3-six
+Recommends: python3-twisted-web
+Provides: ${python:Provides}
+Description: Python bindings for Thrift (Python 3)
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the Python bindings for Thrift. You will need the thrift
+ tool (in the thrift-compiler package) to compile your definition to Python
+ classes, and then the modules in this package will allow you to use those
+ classes in your programs.
+ .
+ This package installs the library for Python 3.
+
+Package: python3-thrift-dbg
+Architecture: any
+Section: debug
+Depends: ${shlibs:Depends}, ${misc:Depends}, python3-thrift (= ${binary:Version}), python3-all-dbg
+Provides: ${python:Provides}
+Description: Python bindings for Thrift (debug version)
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the Python bindings for Thrift with debugging symbols.
+ You will need the thrift tool (in the thrift-compiler package) to compile your
+ definition to Python classes, and then the modules in this package will allow
+ you to use those classes in your programs.
+
+Package: ruby-thrift
+Architecture: all
+Section: libs
+Depends: ruby | ruby-interpreter, ${shlibs:Depends}, ${misc:Depends}
+Provides: libthrift-ruby
+Replaces: libthrift-ruby
+Breaks: libthrift-ruby
+Description: Ruby bindings for Thrift
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the Ruby bindings for Thrift. You will need the thrift
+ tool (in the thrift-compiler package) to compile your definition to Ruby
+ classes, and then the modules in this package will allow you to use those
+ classes in your programs.
+
+Package: libthrift-java
+Architecture: all
+Section: java
+Depends: ${misc:Depends}
+Description: Java bindings for Thrift
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the Java bindings for Thrift. You will need the thrift
+ tool (in the thrift-compiler package) to compile your definition to Java
+ classes, and then the modules in this package will allow you to use those
+ classes in your programs.
+
+Package: libthrift-cil
+Architecture: all
+Section: cli-mono
+Depends: cli-common, libmono-corlib4.0-cil (>= 2.10) | libmono-corlib4.5-cil (>=3.2), libmono-system4.0-cil (>= 2.10),
+    libmono-system-web4.0-cil (>= 2.10), ${misc:Depends}
+Description: CLI bindings for Thrift
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the CLI bindings for Thrift. You will need the thrift
+ tool (in the thrift-compiler package) to compile your definition to C#
+ classes, and then the modules in this package will allow you to use those
+ classes in your programs.
+
+Package: libthrift-perl
+Architecture: all
+Section: perl
+Depends: perl (>= 5.8.0-7), ${misc:Depends}
+Description: Perl bindings for Thrift
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the Perl bindings for Thrift. You will need the thrift
+ tool (in the thrift-compiler package) to compile your definition to Perl
+ classes, and then the modules in this package will allow you to use those
+ classes in your programs.
+
+Package: libthrift0
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Thrift C++ library
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the runtime libraries needed for C++ applications
+ using Thrift.
+
+Package: libthrift-dev
+Architecture: any
+Section: libdevel
+Depends: ${shlibs:Depends}, ${misc:Depends}, libthrift0 (= ${binary:Version}), libglib2.0-dev
+Description: Thrift C++ library (development headers)
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the development libraries required for writing C++
+ applications using Thrift.
+
+Package: php5-thrift
+Architecture: any
+Section: php
+Depends: ${php:Depends}, ${shlibs:Depends}, ${misc:Depends}
+Provides: ${php:Provides}
+Description: PHP bindings for Thrift
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the PHP bindings for Thrift.

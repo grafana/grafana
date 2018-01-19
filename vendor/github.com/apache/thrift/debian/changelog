@@ -1,0 +1,65 @@
+thrift (0.10.0) stable; urgency=low
+
+  * update to 0.10.0
+
+ -- Jake Farrell <jfarrell@apache.org>  Mon, 12 Dec 2016 12:00:00 -0500
+
+thrift (0.9.0) stable; urgency=low
+
+  * update to 0.9.0
+
+ -- Jake Farrell <jfarrell@apache.org>  Wed, 10 Oct 2012 12:00:00 -0500
+
+thrift (0.7.0) stable; urgency=low
+
+  * update to 0.7.0
+
+ -- Jake Farrell <jfarrell@apache.org>  Tue, 10 Aug 2011 17:01:53 -0500
+
+thrift (0.7.0-dev1) stable; urgency=low
+  * added glib
+  * fix location of libthrift.jar
+
+ -- Roger Meier <roger@apache.org>  Tue, 12 Apr 2011 21:41:18 +0200
+
+thrift (0.6.0-dev1) stable; urgency=low
+
+  * update version field
+  * added debian folder to thrift/contrib
+  * changed a few details in control file
+  * update copyright file
+
+ -- Roger Meier <roger@apache.org>  Tue, 14 Dec 2010 12:12:33 -0800
+
+thrift (0.5.0+nmu2) stable; urgency=low
+
+  * Non-maintainer upload.
+  * Merged THRIFT-71_v9.patch to skip ./bootstrap.sh if not exists.
+    https://issues.apache.org/jira/secure/attachment/12465360/THRIFT-71_v9.patch
+
+ -- Yamashita Yuu <yamashita@geishatokyo.com>  Tue, 07 Dec 2010 15:00:55 +0900
+
+thrift (0.5.0+nmu1) stable; urgency=low
+
+  * Non-maintainer upload.
+  * Imported package information for php5-thrift from https://github.com/simplegeo/thrift.
+
+ -- Yamashita Yuu <yamashita@geishatokyo.com>  Tue, 07 Dec 2010 01:00:17 +0900
+
+thrift (0.5.0) stable; urgency=low
+
+  * update to 0.5.0
+
+ -- Roger Meier <roger@apache.org>  Fri, 08 Oct 2010 11:23:53 +0200
+
+thrift (0.4.0) stable; urgency=low
+
+  * update to 0.4.0
+
+ -- Roger Meier <roger@bufferoverflow.ch>  Sun, 22 Aug 2010 21:26:00 +0100
+
+thrift (0.2008.12.30~8.04) hardy; urgency=low
+
+  * Initial release.
+
+ -- Esteve Fernandez <esteve@fluidinfo.com>  Thu, 15 Jan 2009 11:34:24 +0100

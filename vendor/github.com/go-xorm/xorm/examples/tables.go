@@ -20,7 +20,7 @@ func main() {
 		return
 	}
 	defer orm.Close()
-	orm.ShowSQL = true
+	orm.ShowSQL(true)
 
 	tables, err := orm.DBMetas()
 	if err != nil {

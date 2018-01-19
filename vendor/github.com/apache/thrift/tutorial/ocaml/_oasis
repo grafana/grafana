@@ -1,0 +1,32 @@
+Name: tutorial
+Version: 0.10.0
+OASISFormat: 0.3
+Synopsis: OCaml Tutorial example
+Authors: Apache Thrift Developers <dev@thrift.apache.org>
+License: Apache-2.0
+Homepage: http://thrift.apache.org
+BuildTools: ocamlbuild
+Plugins:     META (0.3),
+  DevFiles (0.3)
+
+Library tutorial_thrift
+  Path: gen-ocaml
+  FindlibName: tutorial_thrift
+  buildTools: ocamlbuild
+  BuildDepends: threads,thrift
+  Modules: Calculator,Shared_consts,Tutorial_consts,SharedService,Shared_types,Tutorial_types
+  XMETARequires: threads
+
+Executable CalcClient
+  Path: .
+  MainIs: CalcClient.ml
+  Build$: true
+  CompiledObject: best
+  BuildDepends: thrift, tutorial_thrift, threads
+
+Executable CalcServer
+  Path: .
+  MainIs: CalcServer.ml
+  Build$: true
+  CompiledObject: best
+  BuildDepends: thrift, tutorial_thrift, threads

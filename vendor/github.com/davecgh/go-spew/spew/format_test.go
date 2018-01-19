@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Dave Collins <dave@davec.name>
+ * Copyright (c) 2013-2016 Dave Collins <dave@davec.name>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -75,7 +75,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
-// formatterTest is used to describe a test to be perfomed against NewFormatter.
+// formatterTest is used to describe a test to be performed against NewFormatter.
 type formatterTest struct {
 	format string
 	in     interface{}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+		<title>GoConvey Composer</title>
+		<link rel="stylesheet" type="text/css" href="/resources/css/composer.css">
+		<script src="/resources/js/lib/markup.js"></script>
+		<script src="/resources/js/lib/taboverride.js"></script>
+		<script src="/resources/js/lib/jquery.js"></script>
+		<script src="/resources/js/composer.js"></script>
+	</head>
+	<body>
+		<header>
+			<h1>
+				<span class="logo">GoConvey</span>
+				<span class="afterlogo">Composer</span>
+			</h1>
+		</header>
+		<main>
+			<textarea id="input" placeholder="Type test cases here, one per line, with tab indentation"></textarea>
+			<div id="output"></div>
+		</main>
+
+<script id="tpl-convey" type="text/template">{{.}}{{if .|notTestFunc}}{{depth|indent}}Convey("{{title}}", {{if showT}}t, {{/if}}{{if stories|empty}}nil{{else}}func() {
+
+{{stories|recursivelyRender}}{{depth|indent}}}{{/if}})
+{{else}}func {{title|properCase|safeFunc}}(t *testing.T) {
+
+{{stories|recursivelyRender}}}
+{{/if}}
+{{/.}}</script>
+
+
+	</body>
+</html>

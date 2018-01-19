@@ -9,6 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// SyncUser2 describes a user
 type SyncUser2 struct {
 	Id      int64
 	Name    string `xorm:"unique"`
@@ -20,6 +21,7 @@ type SyncUser2 struct {
 	Date    int
 }
 
+// SyncLoginInfo2 describes a login information
 type SyncLoginInfo2 struct {
 	Id       int64
 	IP       string `xorm:"index"`
@@ -60,12 +62,12 @@ func main() {
 	engines := []engineFunc{postgresEngine}
 	for _, enginefunc := range engines {
 		Orm, err := enginefunc()
-		fmt.Println("--------", Orm.DriverName, "----------")
+		fmt.Println("--------", Orm.DriverName(), "----------")
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		Orm.ShowSQL = true
+		Orm.ShowSQL(true)
 		err = sync(Orm)
 		if err != nil {
 			fmt.Println(err)

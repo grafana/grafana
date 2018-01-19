@@ -8,7 +8,6 @@ has support for Windows too! The API can be used in several ways, pick one that
 suits you.
 
 
-
 ![Color](http://i.imgur.com/c1JI0lA.png)
 
 
@@ -17,6 +16,9 @@ suits you.
 ```bash
 go get github.com/fatih/color
 ```
+
+Note that the `vendor` folder is here for stability. Remove the folder if you
+already have the dependencies in your GOPATH.
 
 ## Examples
 
@@ -56,6 +58,16 @@ whiteBackground := red.Add(color.BgWhite)
 whiteBackground.Println("Red text with white background.")
 ```
 
+### Use your own output (io.Writer)
+
+```go
+// Use your own io.Writer output
+color.New(color.FgBlue).Fprintln(myWriter, "blue color!")
+
+blue := color.New(color.FgBlue)
+blue.Fprint(writer, "This will print text in blue.")
+```
+
 ### Custom print functions (PrintFunc)
 
 ```go
@@ -67,6 +79,17 @@ red("Error: %s", err)
 // Mix up multiple attributes
 notice := color.New(color.Bold, color.FgGreen).PrintlnFunc()
 notice("Don't forget this...")
+```
+
+### Custom fprint functions (FprintFunc)
+
+```go
+blue := color.New(FgBlue).FprintfFunc()
+blue(myWriter, "important notice: %s", stars)
+
+// Mix up with multiple attributes
+success := color.New(color.Bold, color.FgGreen).FprintlnFunc()
+success(myWriter, "Don't forget this...")
 ```
 
 ### Insert into noncolor strings (SprintFunc)
@@ -81,8 +104,8 @@ info := color.New(color.FgWhite, color.BgGreen).SprintFunc()
 fmt.Printf("This %s rocks!\n", info("package"))
 
 // Use helper functions
-fmt.Printf("This", color.RedString("warning"), "should be not neglected.")
-fmt.Printf(color.GreenString("Info:"), "an important message." )
+fmt.Println("This", color.RedString("warning"), "should be not neglected.")
+fmt.Printf("%v %v\n", color.GreenString("Info:"), "an important message.")
 
 // Windows supported too! Just don't forget to change the output to color.Output
 fmt.Fprintf(color.Output, "Windows support: %s", color.GreenString("PASS"))

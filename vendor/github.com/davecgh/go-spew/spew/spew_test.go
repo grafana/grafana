@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Dave Collins <dave@davec.name>
+ * Copyright (c) 2013-2016 Dave Collins <dave@davec.name>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -130,11 +130,18 @@ func initSpewTests() {
 	scsNoPmethods := &spew.ConfigState{Indent: " ", DisablePointerMethods: true}
 	scsMaxDepth := &spew.ConfigState{Indent: " ", MaxDepth: 1}
 	scsContinue := &spew.ConfigState{Indent: " ", ContinueOnMethod: true}
+	scsNoPtrAddr := &spew.ConfigState{DisablePointerAddresses: true}
+	scsNoCap := &spew.ConfigState{DisableCapacities: true}
 
 	// Variables for tests on types which implement Stringer interface with and
 	// without a pointer receiver.
 	ts := stringer("test")
 	tps := pstringer("test")
+
+	type ptrTester struct {
+		s *struct{}
+	}
+	tptr := &ptrTester{s: &struct{}{}}
 
 	// depthTester is used to test max depth handling for structs, array, slices
 	// and maps.
@@ -192,6 +199,10 @@ func initSpewTests() {
 		{scsContinue, fCSFprint, "", te, "(error: 10) 10"},
 		{scsContinue, fCSFdump, "", te, "(spew_test.customError) " +
 			"(error: 10) 10\n"},
+		{scsNoPtrAddr, fCSFprint, "", tptr, "<*>{<*>{}}"},
+		{scsNoPtrAddr, fCSSdump, "", tptr, "(*spew_test.ptrTester)({\ns: (*struct {})({\n})\n})\n"},
+		{scsNoCap, fCSSdump, "", make([]string, 0, 10), "([]string) {\n}\n"},
+		{scsNoCap, fCSSdump, "", make([]string, 1, 10), "([]string) (len=1) {\n(string) \"\"\n}\n"},
 	}
 }
 

@@ -1,0 +1,150 @@
+{
+  "version": "2.0",
+  "service": "<p/>",
+  "operations": {
+    "GetMediaForFragmentList": "<p>Gets media for a list of fragments (specified by fragment number) from the archived data in a Kinesis video stream.</p> <note> <p>This operation is only available for the AWS SDK for Java. It is not supported in AWS SDKs for other languages.</p> </note> <p>The following limits apply when using the <code>GetMediaForFragmentList</code> API:</p> <ul> <li> <p>A client can call <code>GetMediaForFragmentList</code> up to five times per second per stream. </p> </li> <li> <p>Kinesis Video Streams sends media data at a rate of up to 25 megabytes per second (or 200 megabits per second) during a <code>GetMediaForFragmentList</code> session. </p> </li> </ul>",
+    "ListFragments": "<p>Returns a list of <a>Fragment</a> objects from the specified stream and start location within the archived data.</p>"
+  },
+  "shapes": {
+    "ClientLimitExceededException": {
+      "base": "<p>Kinesis Video Streams has throttled the request because you have exceeded the limit of allowed client calls. Try making the call later.</p>",
+      "refs": {
+      }
+    },
+    "ContentType": {
+      "base": null,
+      "refs": {
+        "GetMediaForFragmentListOutput$ContentType": "<p>The content type of the requested media.</p>"
+      }
+    },
+    "ErrorMessage": {
+      "base": null,
+      "refs": {
+        "ClientLimitExceededException$Message": null,
+        "InvalidArgumentException$Message": null,
+        "NotAuthorizedException$Message": null,
+        "ResourceNotFoundException$Message": null
+      }
+    },
+    "Fragment": {
+      "base": "<p>Represents a segment of video or other time-delimited data.</p>",
+      "refs": {
+        "FragmentList$member": null
+      }
+    },
+    "FragmentList": {
+      "base": null,
+      "refs": {
+        "ListFragmentsOutput$Fragments": "<p>A list of fragment numbers that correspond to the time stamp range provided.</p>"
+      }
+    },
+    "FragmentNumberList": {
+      "base": null,
+      "refs": {
+        "GetMediaForFragmentListInput$Fragments": "<p>A list of the numbers of fragments for which to retrieve media. You retrieve these values with <a>ListFragments</a>.</p>"
+      }
+    },
+    "FragmentNumberString": {
+      "base": null,
+      "refs": {
+        "FragmentNumberList$member": null
+      }
+    },
+    "FragmentSelector": {
+      "base": "<p>Describes the time stamp range and time stamp origin of a range of fragments.</p>",
+      "refs": {
+        "ListFragmentsInput$FragmentSelector": "<p>Describes the time stamp range and time stamp origin for the range of fragments to return.</p>"
+      }
+    },
+    "FragmentSelectorType": {
+      "base": null,
+      "refs": {
+        "FragmentSelector$FragmentSelectorType": "<p>The origin of the time stamps to use (Server or Producer).</p>"
+      }
+    },
+    "GetMediaForFragmentListInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetMediaForFragmentListOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "InvalidArgumentException": {
+      "base": "<p>A specified parameter exceeds its restrictions, is not supported, or can't be used.</p>",
+      "refs": {
+      }
+    },
+    "ListFragmentsInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListFragmentsOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "Long": {
+      "base": null,
+      "refs": {
+        "Fragment$FragmentSizeInBytes": "<p>The total fragment size, including information about the fragment and contained media data.</p>",
+        "Fragment$FragmentLengthInMilliseconds": "<p>The playback duration or other time value associated with the fragment.</p>"
+      }
+    },
+    "NotAuthorizedException": {
+      "base": "<p>Status Code: 403, The caller is not authorized to perform an operation on the given stream, or the token has expired.</p>",
+      "refs": {
+      }
+    },
+    "PageLimit": {
+      "base": null,
+      "refs": {
+        "ListFragmentsInput$MaxResults": "<p>The total number of fragments to return. If the total number of fragments available is more than the value specified in <code>max-results</code>, then a <a>ListFragmentsOutput$NextToken</a> is provided in the output that you can use to resume pagination.</p>"
+      }
+    },
+    "Payload": {
+      "base": null,
+      "refs": {
+        "GetMediaForFragmentListOutput$Payload": "<p>The payload that Kinesis Video Streams returns is a sequence of chunks from the specified stream. For information about the chunks, see <a href=\"docs.aws.amazon.com/acuity/latest/dg/API_dataplane_PutMedia.html\">PutMedia</a>. The chunks that Kinesis Video Streams returns in the <code>GetMediaForFragmentList</code> call also include the following additional Matroska (MKV) tags: </p> <ul> <li> <p>AWS_KINESISVIDEO_FRAGMENT_NUMBER - Fragment number returned in the chunk.</p> </li> <li> <p>AWS_KINESISVIDEO_SERVER_SIDE_TIMESTAMP - Server-side time stamp of the fragment.</p> </li> <li> <p>AWS_KINESISVIDEO_PRODUCER_SIDE_TIMESTAMP - Producer-side time stamp of the fragment.</p> </li> </ul> <p>The following tags will be included if an exception occurs:</p> <ul> <li> <p>AWS_KINESISVIDEO_FRAGMENT_NUMBER - The number of the fragment that threw the exception</p> </li> <li> <p>AWS_KINESISVIDEO_EXCEPTION_ERROR_CODE - The integer code of the exception</p> </li> <li> <p>AWS_KINESISVIDEO_EXCEPTION_MESSAGE - A text description of the exception</p> </li> </ul>"
+      }
+    },
+    "ResourceNotFoundException": {
+      "base": "<p>Kinesis Video Streams can't find the stream that you specified.</p>",
+      "refs": {
+      }
+    },
+    "StreamName": {
+      "base": null,
+      "refs": {
+        "GetMediaForFragmentListInput$StreamName": "<p>The name of the stream from which to retrieve fragment media.</p>",
+        "ListFragmentsInput$StreamName": "<p>The name of the stream from which to retrieve a fragment list.</p>"
+      }
+    },
+    "String": {
+      "base": null,
+      "refs": {
+        "Fragment$FragmentNumber": "<p>The index value of the fragment.</p>",
+        "ListFragmentsInput$NextToken": "<p>A token to specify where to start paginating. This is the <a>ListFragmentsOutput$NextToken</a> from a previously truncated response.</p>",
+        "ListFragmentsOutput$NextToken": "<p>If the returned list is truncated, the operation returns this token to use to retrieve the next page of results. This value is <code>null</code> when there are no more results to return.</p>"
+      }
+    },
+    "Timestamp": {
+      "base": null,
+      "refs": {
+        "Fragment$ProducerTimestamp": "<p>The time stamp from the producer corresponding to the fragment.</p>",
+        "Fragment$ServerTimestamp": "<p>The time stamp from the AWS server corresponding to the fragment.</p>",
+        "TimestampRange$StartTimestamp": "<p>The starting time stamp in the range of time stamps for which to return fragments.</p>",
+        "TimestampRange$EndTimestamp": "<p>The ending time stamp in the range of time stamps for which to return fragments.</p>"
+      }
+    },
+    "TimestampRange": {
+      "base": "<p>The range of time stamps for which to return fragments.</p>",
+      "refs": {
+        "FragmentSelector$TimestampRange": "<p>The range of time stamps to return.</p>"
+      }
+    }
+  }
+}

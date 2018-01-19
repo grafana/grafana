@@ -1,0 +1,48 @@
+﻿    <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+        <PropertyGroup>
+            <ProjectGuid>{3D042C7F-3EF2-4574-8304-AB7FB79F814C}</ProjectGuid>
+        </PropertyGroup>
+        <ItemGroup>
+            <Projects Include="DelphiServer\DelphiServer.dproj">
+                <Dependencies/>
+            </Projects>
+            <Projects Include="DelphiClient\DelphiClient.dproj">
+                <Dependencies/>
+            </Projects>
+        </ItemGroup>
+        <ProjectExtensions>
+            <Borland.Personality>Default.Personality.12</Borland.Personality>
+            <Borland.ProjectType/>
+            <BorlandProject>
+                <Default.Personality/>
+            </BorlandProject>
+        </ProjectExtensions>
+        <Target Name="DelphiServer">
+            <MSBuild Projects="DelphiServer\DelphiServer.dproj"/>
+        </Target>
+        <Target Name="DelphiServer:Clean">
+            <MSBuild Projects="DelphiServer\DelphiServer.dproj" Targets="Clean"/>
+        </Target>
+        <Target Name="DelphiServer:Make">
+            <MSBuild Projects="DelphiServer\DelphiServer.dproj" Targets="Make"/>
+        </Target>
+        <Target Name="DelphiClient">
+            <MSBuild Projects="DelphiClient\DelphiClient.dproj"/>
+        </Target>
+        <Target Name="DelphiClient:Clean">
+            <MSBuild Projects="DelphiClient\DelphiClient.dproj" Targets="Clean"/>
+        </Target>
+        <Target Name="DelphiClient:Make">
+            <MSBuild Projects="DelphiClient\DelphiClient.dproj" Targets="Make"/>
+        </Target>
+        <Target Name="Build">
+            <CallTarget Targets="DelphiServer;DelphiClient"/>
+        </Target>
+        <Target Name="Clean">
+            <CallTarget Targets="DelphiServer:Clean;DelphiClient:Clean"/>
+        </Target>
+        <Target Name="Make">
+            <CallTarget Targets="DelphiServer:Make;DelphiClient:Make"/>
+        </Target>
+        <Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
+    </Project>

@@ -164,7 +164,7 @@ func (a *API) fixStutterNames() {
 
 	for name, op := range a.Operations {
 		newName := re.ReplaceAllString(name, "")
-		if newName != name {
+		if newName != name && len(newName) > 0 {
 			delete(a.Operations, name)
 			a.Operations[newName] = op
 		}
@@ -173,7 +173,7 @@ func (a *API) fixStutterNames() {
 
 	for k, s := range a.Shapes {
 		newName := re.ReplaceAllString(k, "")
-		if newName != s.ShapeName {
+		if newName != s.ShapeName && len(newName) > 0 {
 			s.Rename(newName)
 		}
 	}
@@ -241,6 +241,50 @@ func (a *API) renameExportable() {
 				s.EnumConsts[i] = shape + s.EnumName(i)
 			}
 		}
+	}
+}
+
+// renameCollidingFields will rename any fields that uses an SDK or Golang
+// specific name.
+func (a *API) renameCollidingFields() {
+	for _, v := range a.Shapes {
+		namesWithSet := map[string]struct{}{}
+		for k, field := range v.MemberRefs {
+			if strings.HasPrefix(k, "Set") {
+				namesWithSet[k] = struct{}{}
+			}
+
+			if collides(k) {
+				renameCollidingField(k, v, field)
+			}
+		}
+
+		// checks if any field names collide with setters.
+		for name := range namesWithSet {
+			if field, ok := v.MemberRefs["Set"+name]; ok {
+				renameCollidingField(name, v, field)
+			}
+		}
+	}
+
+}
+
+func renameCollidingField(name string, v *Shape, field *ShapeRef) {
+	newName := name + "_"
+	fmt.Printf("Shape %s's field %q renamed to %q\n", v.ShapeName, name, newName)
+	delete(v.MemberRefs, name)
+	v.MemberRefs[newName] = field
+}
+
+// collides will return true if it is a name used by the SDK or Golang.
+func collides(name string) bool {
+	switch name {
+	case "String",
+		"GoString",
+		"Validate":
+		return true
+	default:
+		return false
 	}
 }
 

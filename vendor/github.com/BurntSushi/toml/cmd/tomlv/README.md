@@ -14,9 +14,8 @@ tomlv -types some-toml-file.toml
 ```
 
 At the moment, only one error message is reported at a time. Error messages
-include line numbers. No output means that the files given are valid TOML, or 
+include line numbers. No output means that the files given are valid TOML, or
 there is a bug in `tomlv`.
 
 Compatible with TOML version
-[v0.1.0](https://github.com/mojombo/toml/blob/master/versions/toml-v0.1.0.md)
-
+[v0.4.0](https://github.com/toml-lang/toml/blob/master/versions/en/toml-v0.4.0.md)

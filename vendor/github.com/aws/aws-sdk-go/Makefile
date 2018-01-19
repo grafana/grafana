@@ -74,7 +74,7 @@ smoke-tests: get-deps-tests
 performance: get-deps-tests
 	AWS_TESTING_LOG_RESULTS=${log-detailed} AWS_TESTING_REGION=$(region) AWS_TESTING_DB_TABLE=$(table) gucumber -go-tags "integration" ./awstesting/performance
 
-sandbox-tests: sandbox-test-go15 sandbox-test-go15-novendorexp sandbox-test-go16 sandbox-test-go17 sandbox-test-go18 sandbox-test-gotip
+sandbox-tests: sandbox-test-go15 sandbox-test-go15-novendorexp sandbox-test-go16 sandbox-test-go17 sandbox-test-go18 sandbox-test-go19 sandbox-test-gotip
 
 sandbox-build-go15:
 	docker build -f ./awstesting/sandbox/Dockerfile.test.go1.5 -t "aws-sdk-go-1.5" .
@@ -110,6 +110,13 @@ sandbox-go18: sandbox-build-go18
 	docker run -i -t aws-sdk-go-1.8 bash
 sandbox-test-go18: sandbox-build-go18
 	docker run -t aws-sdk-go-1.8
+
+sandbox-build-go19:
+	docker build -f ./awstesting/sandbox/Dockerfile.test.go1.8 -t "aws-sdk-go-1.9" .
+sandbox-go19: sandbox-build-go19
+	docker run -i -t aws-sdk-go-1.9 bash
+sandbox-test-go19: sandbox-build-go19
+	docker run -t aws-sdk-go-1.9
 
 sandbox-build-gotip:
 	@echo "Run make update-aws-golang-tip, if this test fails because missing aws-golang:tip container"

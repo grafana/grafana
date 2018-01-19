@@ -10,6 +10,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// User describes a user
 type User struct {
 	Id   int64
 	Name string
@@ -24,7 +25,7 @@ func mysqlEngine() (*xorm.Engine, error) {
 	return xorm.NewEngine("mysql", "root:@/test?charset=utf8")
 }
 
-var u *User = &User{}
+var u = &User{}
 
 func test(engine *xorm.Engine) {
 	err := engine.CreateTables(u)
@@ -85,7 +86,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	engine.ShowSQL = true
+	engine.ShowSQL(true)
 	cacher := xorm.NewLRUCacher2(xorm.NewMemoryStore(), time.Hour, 1000)
 	engine.SetDefaultCacher(cacher)
 	fmt.Println(engine)
@@ -95,7 +96,7 @@ func main() {
 
 	fmt.Println("-----start mysql go routines-----")
 	engine, err = mysqlEngine()
-	engine.ShowSQL = true
+	engine.ShowSQL(true)
 	cacher = xorm.NewLRUCacher2(xorm.NewMemoryStore(), time.Hour, 1000)
 	engine.SetDefaultCacher(cacher)
 	if err != nil {

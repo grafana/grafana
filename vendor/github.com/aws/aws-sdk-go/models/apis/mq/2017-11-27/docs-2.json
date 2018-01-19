@@ -1,0 +1,394 @@
+{
+  "version" : "2.0",
+  "service" : "Amazon MQ is a managed message broker service for Apache ActiveMQ that makes it easy to set up and operate message brokers in the cloud. A message broker allows software applications and components to communicate using various programming languages, operating systems, and formal messaging protocols.",
+  "operations" : {
+    "CreateBroker" : "Creates a broker. Note: This API is asynchronous.",
+    "CreateConfiguration" : "Creates a new configuration for the specified configuration name. Amazon MQ uses the default configuration (the engine type and version). Note: If the configuration name already exists, Amazon MQ doesn't create a configuration.",
+    "CreateUser" : "Creates an ActiveMQ user.",
+    "DeleteBroker" : "Deletes a broker. Note: This API is asynchronous.",
+    "DeleteUser" : "Deletes an ActiveMQ user.",
+    "DescribeBroker" : "Returns information about the specified broker.",
+    "DescribeConfiguration" : "Returns information about the specified configuration.",
+    "DescribeConfigurationRevision" : "Returns the specified configuration revision for the specified configuration.",
+    "DescribeUser" : "Returns information about an ActiveMQ user.",
+    "ListBrokers" : "Returns a list of all brokers.",
+    "ListConfigurationRevisions" : "Returns a list of all revisions for the specified configuration.",
+    "ListConfigurations" : "Returns a list of all configurations.",
+    "ListUsers" : "Returns a list of all ActiveMQ users.",
+    "RebootBroker" : "Reboots a broker. Note: This API is asynchronous.",
+    "UpdateBroker" : "Adds a pending configuration change to a broker.",
+    "UpdateConfiguration" : "Updates the specified configuration.",
+    "UpdateUser" : "Updates the information for an ActiveMQ user."
+  },
+  "shapes" : {
+    "BadRequestException" : {
+      "base" : "Returns information about an error.",
+      "refs" : { }
+    },
+    "BrokerInstance" : {
+      "base" : "Returns information about all brokers.",
+      "refs" : {
+        "ListOfBrokerInstance$member" : null
+      }
+    },
+    "BrokerState" : {
+      "base" : "The status of the broker. Possible values: CREATION_IN_PROGRESS, CREATION_FAILED, DELETION_IN_PROGRESS, RUNNING, REBOOT_IN_PROGRESS",
+      "refs" : {
+        "BrokerSummary$BrokerState" : "The status of the broker. Possible values: CREATION_IN_PROGRESS, CREATION_FAILED, DELETION_IN_PROGRESS, RUNNING, REBOOT_IN_PROGRESS",
+        "DescribeBrokerOutput$BrokerState" : "The status of the broker. Possible values: CREATION_IN_PROGRESS, CREATION_FAILED, DELETION_IN_PROGRESS, RUNNING, REBOOT_IN_PROGRESS"
+      }
+    },
+    "BrokerSummary" : {
+      "base" : "The Amazon Resource Name (ARN) of the broker.",
+      "refs" : {
+        "ListOfBrokerSummary$member" : null
+      }
+    },
+    "ChangeType" : {
+      "base" : "The type of change pending for the ActiveMQ user. Possible values: CREATE, UPDATE, DELETE",
+      "refs" : {
+        "UserPendingChanges$PendingChange" : "Required. The type of change pending for the ActiveMQ user. Possible values: CREATE, UPDATE, DELETE",
+        "UserSummary$PendingChange" : "The type of change pending for the ActiveMQ user. Possible values: CREATE, UPDATE, DELETE"
+      }
+    },
+    "Configuration" : {
+      "base" : "Returns information about all configurations.",
+      "refs" : {
+        "ListOfConfiguration$member" : null
+      }
+    },
+    "ConfigurationId" : {
+      "base" : "A list of information about the configuration.",
+      "refs" : {
+        "Configurations$Current" : "The current configuration of the broker.",
+        "Configurations$Pending" : "The pending configuration of the broker.",
+        "CreateBrokerInput$Configuration" : "A list of information about the configuration.",
+        "ListOfConfigurationId$member" : null,
+        "UpdateBrokerInput$Configuration" : "A list of information about the configuration.",
+        "UpdateBrokerOutput$Configuration" : "The ID of the updated configuration."
+      }
+    },
+    "ConfigurationRevision" : {
+      "base" : "Returns information about the specified configuration revision.",
+      "refs" : {
+        "Configuration$LatestRevision" : "Required. The latest revision of the configuration.",
+        "CreateConfigurationOutput$LatestRevision" : "The latest revision of the configuration.",
+        "ListOfConfigurationRevision$member" : null,
+        "UpdateConfigurationOutput$LatestRevision" : "The latest revision of the configuration."
+      }
+    },
+    "Configurations" : {
+      "base" : "Broker configuration information",
+      "refs" : {
+        "DescribeBrokerOutput$Configurations" : "The list of all revisions for the specified configuration."
+      }
+    },
+    "ConflictException" : {
+      "base" : "Returns information about an error.",
+      "refs" : { }
+    },
+    "CreateBrokerInput" : {
+      "base" : "Required. The time period during which Amazon MQ applies pending updates or patches to the broker.",
+      "refs" : { }
+    },
+    "CreateBrokerOutput" : {
+      "base" : "Returns information about the created broker.",
+      "refs" : { }
+    },
+    "CreateConfigurationInput" : {
+      "base" : "Creates a new configuration for the specified configuration name. Amazon MQ uses the default configuration (the engine type and version). Note: If the configuration name already exists, Amazon MQ doesn't create a configuration.",
+      "refs" : { }
+    },
+    "CreateConfigurationOutput" : {
+      "base" : "Returns information about the created configuration.",
+      "refs" : { }
+    },
+    "CreateUserInput" : {
+      "base" : "Creates a new ActiveMQ user.",
+      "refs" : { }
+    },
+    "DayOfWeek" : {
+      "base" : null,
+      "refs" : {
+        "WeeklyStartTime$DayOfWeek" : "Required. The day of the week. Possible values: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY"
+      }
+    },
+    "DeleteBrokerOutput" : {
+      "base" : "Returns information about the deleted broker.",
+      "refs" : { }
+    },
+    "DeploymentMode" : {
+      "base" : "The deployment mode of the broker. Possible values: SINGLE_INSTANCE, ACTIVE_STANDBY_MULTI_AZ SINGLE_INSTANCE creates a single-instance broker in a single Availability Zone. ACTIVE_STANDBY_MULTI_AZ creates an active/standby broker for high availability.",
+      "refs" : {
+        "BrokerSummary$DeploymentMode" : "Required. The deployment mode of the broker. Possible values: SINGLE_INSTANCE, ACTIVE_STANDBY_MULTI_AZ SINGLE_INSTANCE creates a single-instance broker in a single Availability Zone. ACTIVE_STANDBY_MULTI_AZ creates an active/standby broker for high availability.",
+        "CreateBrokerInput$DeploymentMode" : "Required. The deployment mode of the broker. Possible values: SINGLE_INSTANCE, ACTIVE_STANDBY_MULTI_AZ SINGLE_INSTANCE creates a single-instance broker in a single Availability Zone. ACTIVE_STANDBY_MULTI_AZ creates an active/standby broker for high availability.",
+        "DescribeBrokerOutput$DeploymentMode" : "Required. The deployment mode of the broker. Possible values: SINGLE_INSTANCE, ACTIVE_STANDBY_MULTI_AZ SINGLE_INSTANCE creates a single-instance broker in a single Availability Zone. ACTIVE_STANDBY_MULTI_AZ creates an active/standby broker for high availability."
+      }
+    },
+    "DescribeBrokerOutput" : {
+      "base" : "The version of the broker engine. Note: Currently, Amazon MQ supports only 5.15.0.",
+      "refs" : { }
+    },
+    "DescribeConfigurationRevisionOutput" : {
+      "base" : "Returns the specified configuration revision for the specified configuration.",
+      "refs" : { }
+    },
+    "DescribeUserOutput" : {
+      "base" : "Returns information about an ActiveMQ user.",
+      "refs" : { }
+    },
+    "EngineType" : {
+      "base" : "The type of broker engine. Note: Currently, Amazon MQ supports only ActiveMQ.",
+      "refs" : {
+        "Configuration$EngineType" : "Required. The type of broker engine. Note: Currently, Amazon MQ supports only ACTIVEMQ.",
+        "CreateBrokerInput$EngineType" : "Required. The type of broker engine. Note: Currently, Amazon MQ supports only ACTIVEMQ.",
+        "CreateConfigurationInput$EngineType" : "Required. The type of broker engine. Note: Currently, Amazon MQ supports only ACTIVEMQ.",
+        "DescribeBrokerOutput$EngineType" : "Required. The type of broker engine. Note: Currently, Amazon MQ supports only ACTIVEMQ."
+      }
+    },
+    "Error" : {
+      "base" : "Returns information about an error.",
+      "refs" : { }
+    },
+    "ForbiddenException" : {
+      "base" : "Returns information about an error.",
+      "refs" : { }
+    },
+    "InternalServerErrorException" : {
+      "base" : "Returns information about an error.",
+      "refs" : { }
+    },
+    "ListBrokersOutput" : {
+      "base" : "A list of information about all brokers.",
+      "refs" : { }
+    },
+    "ListConfigurationRevisionsOutput" : {
+      "base" : "Returns a list of all revisions for the specified configuration.",
+      "refs" : { }
+    },
+    "ListConfigurationsOutput" : {
+      "base" : "Returns a list of all configurations.",
+      "refs" : { }
+    },
+    "ListOfBrokerInstance" : {
+      "base" : null,
+      "refs" : {
+        "DescribeBrokerOutput$BrokerInstances" : "A list of information about allocated brokers."
+      }
+    },
+    "ListOfBrokerSummary" : {
+      "base" : null,
+      "refs" : {
+        "ListBrokersOutput$BrokerSummaries" : "A list of information about all brokers."
+      }
+    },
+    "ListOfConfiguration" : {
+      "base" : null,
+      "refs" : {
+        "ListConfigurationsOutput$Configurations" : "The list of all revisions for the specified configuration."
+      }
+    },
+    "ListOfConfigurationId" : {
+      "base" : null,
+      "refs" : {
+        "Configurations$History" : "The history of configurations applied to the broker."
+      }
+    },
+    "ListOfConfigurationRevision" : {
+      "base" : null,
+      "refs" : {
+        "ListConfigurationRevisionsOutput$Revisions" : "The list of all revisions for the specified configuration."
+      }
+    },
+    "ListOfSanitizationWarning" : {
+      "base" : null,
+      "refs" : {
+        "UpdateConfigurationOutput$Warnings" : "The list of the first 20 warnings about the configuration XML elements or attributes that were sanitized."
+      }
+    },
+    "ListOfUser" : {
+      "base" : null,
+      "refs" : {
+        "CreateBrokerInput$Users" : "Required. The list of ActiveMQ users (persons or applications) who can access queues and topics. This value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). This value must be 2-100 characters long."
+      }
+    },
+    "ListOfUserSummary" : {
+      "base" : null,
+      "refs" : {
+        "DescribeBrokerOutput$Users" : "The list of all ActiveMQ usernames for the specified broker.",
+        "ListUsersOutput$Users" : "Required. The list of all ActiveMQ usernames for the specified broker."
+      }
+    },
+    "ListOf__string" : {
+      "base" : null,
+      "refs" : {
+        "BrokerInstance$Endpoints" : "The broker's wire-level protocol endpoints.",
+        "CreateBrokerInput$SecurityGroups" : "Required. The list of rules (1 minimum, 125 maximum) that authorize connections to brokers.",
+        "CreateBrokerInput$SubnetIds" : "Required. The list of groups (2 maximum) that define which subnets and IP ranges the broker can use from different Availability Zones. A SINGLE_INSTANCE deployment requires one subnet (for example, the default subnet). An ACTIVE_STANDBY_MULTI_AZ deployment requires two subnets.",
+        "CreateUserInput$Groups" : "The list of groups (20 maximum) to which the ActiveMQ user belongs. This value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). This value must be 2-100 characters long.",
+        "DescribeBrokerOutput$SecurityGroups" : "Required. The list of rules (1 minimum, 125 maximum) that authorize connections to brokers.",
+        "DescribeBrokerOutput$SubnetIds" : "The list of groups (2 maximum) that define which subnets and IP ranges the broker can use from different Availability Zones. A SINGLE_INSTANCE deployment requires one subnet (for example, the default subnet). An ACTIVE_STANDBY_MULTI_AZ deployment requires two subnets.",
+        "DescribeUserOutput$Groups" : "The list of groups (20 maximum) to which the ActiveMQ user belongs. This value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). This value must be 2-100 characters long.",
+        "UpdateUserInput$Groups" : "The list of groups (20 maximum) to which the ActiveMQ user belongs. This value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). This value must be 2-100 characters long.",
+        "User$Groups" : "The list of groups (20 maximum) to which the ActiveMQ user belongs. This value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). This value must be 2-100 characters long.",
+        "UserPendingChanges$Groups" : "The list of groups (20 maximum) to which the ActiveMQ user belongs. This value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). This value must be 2-100 characters long."
+      }
+    },
+    "ListUsersOutput" : {
+      "base" : "Returns a list of all ActiveMQ users.",
+      "refs" : { }
+    },
+    "NotFoundException" : {
+      "base" : "Returns information about an error.",
+      "refs" : { }
+    },
+    "SanitizationWarning" : {
+      "base" : "Returns information about the XML element or attribute that was sanitized in the configuration.",
+      "refs" : {
+        "ListOfSanitizationWarning$member" : null
+      }
+    },
+    "SanitizationWarningReason" : {
+      "base" : "The reason for which the XML elements or attributes were sanitized. Possible values: DISALLOWED_ELEMENT_REMOVED, DISALLOWED_ATTRIBUTE_REMOVED, INVALID_ATTRIBUTE_VALUE_REMOVED DISALLOWED_ELEMENT_REMOVED shows that the provided element isn't allowed and has been removed. DISALLOWED_ATTRIBUTE_REMOVED shows that the provided attribute isn't allowed and has been removed. INVALID_ATTRIBUTE_VALUE_REMOVED shows that the provided value for the attribute isn't allowed and has been removed.",
+      "refs" : {
+        "SanitizationWarning$Reason" : "Required. The reason for which the XML elements or attributes were sanitized. Possible values: DISALLOWED_ELEMENT_REMOVED, DISALLOWED_ATTRIBUTE_REMOVED, INVALID_ATTRIBUTE_VALUE_REMOVED DISALLOWED_ELEMENT_REMOVED shows that the provided element isn't allowed and has been removed. DISALLOWED_ATTRIBUTE_REMOVED shows that the provided attribute isn't allowed and has been removed. INVALID_ATTRIBUTE_VALUE_REMOVED shows that the provided value for the attribute isn't allowed and has been removed."
+      }
+    },
+    "UnauthorizedException" : {
+      "base" : "Returns information about an error.",
+      "refs" : { }
+    },
+    "UpdateBrokerInput" : {
+      "base" : "Updates the broker using the specified properties.",
+      "refs" : { }
+    },
+    "UpdateBrokerOutput" : {
+      "base" : "Returns information about the updated broker.",
+      "refs" : { }
+    },
+    "UpdateConfigurationInput" : {
+      "base" : "Updates the specified configuration.",
+      "refs" : { }
+    },
+    "UpdateConfigurationOutput" : {
+      "base" : "Returns information about the updated configuration.",
+      "refs" : { }
+    },
+    "UpdateUserInput" : {
+      "base" : "Updates the information for an ActiveMQ user.",
+      "refs" : { }
+    },
+    "User" : {
+      "base" : "An ActiveMQ user associated with the broker.",
+      "refs" : {
+        "ListOfUser$member" : null
+      }
+    },
+    "UserPendingChanges" : {
+      "base" : "Returns information about the status of the changes pending for the ActiveMQ user.",
+      "refs" : {
+        "DescribeUserOutput$Pending" : "The status of the changes pending for the ActiveMQ user."
+      }
+    },
+    "UserSummary" : {
+      "base" : "Returns a list of all ActiveMQ users.",
+      "refs" : {
+        "ListOfUserSummary$member" : null
+      }
+    },
+    "WeeklyStartTime" : {
+      "base" : "The scheduled time period relative to UTC during which Amazon MQ begins to apply pending updates or patches to the broker.",
+      "refs" : {
+        "CreateBrokerInput$MaintenanceWindowStartTime" : "The parameters that determine the WeeklyStartTime.",
+        "DescribeBrokerOutput$MaintenanceWindowStartTime" : "The parameters that determine the WeeklyStartTime."
+      }
+    },
+    "__boolean" : {
+      "base" : null,
+      "refs" : {
+        "CreateBrokerInput$AutoMinorVersionUpgrade" : "Required. Enables automatic upgrades to new minor versions for brokers, as Apache releases the versions. The automatic upgrades occur during the maintenance window of the broker or after a manual broker reboot.",
+        "CreateBrokerInput$PubliclyAccessible" : "Required. Enables connections from applications outside of the VPC that hosts the broker's subnets.",
+        "CreateUserInput$ConsoleAccess" : "Enables access to the the ActiveMQ Web Console for the ActiveMQ user.",
+        "DescribeBrokerOutput$AutoMinorVersionUpgrade" : "Required. Enables automatic upgrades to new minor versions for brokers, as Apache releases the versions. The automatic upgrades occur during the maintenance window of the broker or after a manual broker reboot.",
+        "DescribeBrokerOutput$PubliclyAccessible" : "Required. Enables connections from applications outside of the VPC that hosts the broker's subnets.",
+        "DescribeUserOutput$ConsoleAccess" : "Enables access to the the ActiveMQ Web Console for the ActiveMQ user.",
+        "UpdateUserInput$ConsoleAccess" : "Enables access to the the ActiveMQ Web Console for the ActiveMQ user.",
+        "User$ConsoleAccess" : "Enables access to the the ActiveMQ Web Console for the ActiveMQ user.",
+        "UserPendingChanges$ConsoleAccess" : "Enables access to the the ActiveMQ Web Console for the ActiveMQ user."
+      }
+    },
+    "__integer" : {
+      "base" : null,
+      "refs" : {
+        "ConfigurationId$Revision" : "The Universally Unique Identifier (UUID) of the request.",
+        "ConfigurationRevision$Revision" : "Required. The revision of the configuration.",
+        "ListConfigurationRevisionsOutput$MaxResults" : "The maximum number of configuration revisions that can be returned per page (20 by default). This value must be an integer from 5 to 100.",
+        "ListConfigurationsOutput$MaxResults" : "The maximum number of configurations that Amazon MQ can return per page (20 by default). This value must be an integer from 5 to 100.",
+        "ListUsersOutput$MaxResults" : "Required. The maximum number of ActiveMQ users that can be returned per page (20 by default). This value must be an integer from 5 to 100."
+      }
+    },
+    "__string" : {
+      "base" : null,
+      "refs" : {
+        "BrokerInstance$ConsoleURL" : "The URL of the broker's ActiveMQ Web Console.",
+        "BrokerSummary$BrokerArn" : "The Amazon Resource Name (ARN) of the broker.",
+        "BrokerSummary$BrokerId" : "The unique ID that Amazon MQ generates for the broker.",
+        "BrokerSummary$BrokerName" : "The name of the broker. This value must be unique in your AWS account, 1-50 characters long, must contain only letters, numbers, dashes, and underscores, and must not contain whitespaces, brackets, wildcard characters, or special characters.",
+        "BrokerSummary$HostInstanceType" : "The broker's instance type. Possible values: mq.t2.micro, mq.m4.large",
+        "Configuration$Arn" : "Required. The ARN of the configuration.",
+        "Configuration$Description" : "Required. The description of the configuration.",
+        "Configuration$EngineVersion" : "Required. The version of the broker engine.",
+        "Configuration$Id" : "Required. The unique ID that Amazon MQ generates for the configuration.",
+        "Configuration$Name" : "Required. The name of the configuration. This value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). This value must be 1-150 characters long.",
+        "ConfigurationId$Id" : "Required. The unique ID that Amazon MQ generates for the configuration.",
+        "ConfigurationRevision$Description" : "The description of the configuration revision.",
+        "CreateBrokerInput$BrokerName" : "Required. The name of the broker. This value must be unique in your AWS account, 1-50 characters long, must contain only letters, numbers, dashes, and underscores, and must not contain whitespaces, brackets, wildcard characters, or special characters.",
+        "CreateBrokerInput$CreatorRequestId" : "The unique ID that the requester receives for the created broker. Amazon MQ passes your ID with the API action. Note: We recommend using a Universally Unique Identifier (UUID) for the creatorRequestId. You may omit the creatorRequestId if your application doesn't require idempotency.",
+        "CreateBrokerInput$EngineVersion" : "Required. The version of the broker engine. Note: Currently, Amazon MQ supports only 5.15.0.",
+        "CreateBrokerInput$HostInstanceType" : "Required. The broker's instance type. Possible values: mq.t2.micro, mq.m4.large",
+        "CreateBrokerOutput$BrokerArn" : "The Amazon Resource Name (ARN) of the broker.",
+        "CreateBrokerOutput$BrokerId" : "The unique ID that Amazon MQ generates for the broker.",
+        "CreateConfigurationInput$EngineVersion" : "Required. The version of the broker engine. Note: Currently, Amazon MQ supports only 5.15.0.",
+        "CreateConfigurationInput$Name" : "Required. The name of the configuration. This value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). This value must be 1-150 characters long.",
+        "CreateConfigurationOutput$Arn" : "Required. The Amazon Resource Name (ARN) of the configuration.",
+        "CreateConfigurationOutput$Id" : "Required. The unique ID that Amazon MQ generates for the configuration.",
+        "CreateConfigurationOutput$Name" : "Required. The name of the configuration. This value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). This value must be 1-150 characters long.",
+        "CreateUserInput$Password" : "Required. The password of the user. This value must be at least 12 characters long, must contain at least 4 unique characters, and must not contain commas.",
+        "DeleteBrokerOutput$BrokerId" : "The unique ID that Amazon MQ generates for the broker.",
+        "DescribeBrokerOutput$BrokerArn" : "The Amazon Resource Name (ARN) of the broker.",
+        "DescribeBrokerOutput$BrokerId" : "The unique ID that Amazon MQ generates for the broker.",
+        "DescribeBrokerOutput$BrokerName" : "The name of the broker. This value must be unique in your AWS account, 1-50 characters long, must contain only letters, numbers, dashes, and underscores, and must not contain whitespaces, brackets, wildcard characters, or special characters.",
+        "DescribeBrokerOutput$EngineVersion" : "The version of the broker engine. Note: Currently, Amazon MQ supports only 5.15.0.",
+        "DescribeBrokerOutput$HostInstanceType" : "The broker's instance type. Possible values: mq.t2.micro, mq.m4.large",
+        "DescribeConfigurationRevisionOutput$ConfigurationId" : "Required. The unique ID that Amazon MQ generates for the configuration.",
+        "DescribeConfigurationRevisionOutput$Data" : "Required. The base64-encoded XML configuration.",
+        "DescribeConfigurationRevisionOutput$Description" : "The description of the configuration.",
+        "DescribeUserOutput$BrokerId" : "Required. The unique ID that Amazon MQ generates for the broker.",
+        "DescribeUserOutput$Username" : "Required. The username of the ActiveMQ user. This value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). This value must be 2-100 characters long.",
+        "Error$ErrorAttribute" : "The error attribute.",
+        "Error$Message" : "The error message.",
+        "ListBrokersOutput$NextToken" : "The token that specifies the next page of results Amazon MQ should return. To request the first page, leave nextToken empty.",
+        "ListConfigurationRevisionsOutput$ConfigurationId" : "The unique ID that Amazon MQ generates for the configuration.",
+        "ListConfigurationRevisionsOutput$NextToken" : "The token that specifies the next page of results Amazon MQ should return. To request the first page, leave nextToken empty.",
+        "ListConfigurationsOutput$NextToken" : "The token that specifies the next page of results Amazon MQ should return. To request the first page, leave nextToken empty.",
+        "ListOf__string$member" : null,
+        "ListUsersOutput$BrokerId" : "Required. The unique ID that Amazon MQ generates for the broker.",
+        "ListUsersOutput$NextToken" : "The token that specifies the next page of results Amazon MQ should return. To request the first page, leave nextToken empty.",
+        "SanitizationWarning$AttributeName" : "The name of the XML attribute that has been sanitized.",
+        "SanitizationWarning$ElementName" : "The name of the XML element that has been sanitized.",
+        "UpdateBrokerOutput$BrokerId" : "Required. The unique ID that Amazon MQ generates for the broker.",
+        "UpdateConfigurationInput$Data" : "Required. The base64-encoded XML configuration.",
+        "UpdateConfigurationInput$Description" : "The description of the configuration.",
+        "UpdateConfigurationOutput$Arn" : "Required. The Amazon Resource Name (ARN) of the configuration.",
+        "UpdateConfigurationOutput$Id" : "Required. The unique ID that Amazon MQ generates for the configuration.",
+        "UpdateConfigurationOutput$Name" : "Required. The name of the configuration. This value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). This value must be 1-150 characters long.",
+        "UpdateUserInput$Password" : "The password of the user. This value must be at least 12 characters long, must contain at least 4 unique characters, and must not contain commas.",
+        "User$Password" : "Required. The password of the ActiveMQ user. This value must be at least 12 characters long, must contain at least 4 unique characters, and must not contain commas.",
+        "User$Username" : "Required. The username of the ActiveMQ user. This value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). This value must be 2-100 characters long.",
+        "UserSummary$Username" : "Required. The username of the ActiveMQ user. This value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). This value must be 2-100 characters long.",
+        "WeeklyStartTime$TimeOfDay" : "Required. The time, in 24-hour format.",
+        "WeeklyStartTime$TimeZone" : "The time zone, UTC by default, in either the Country/City format, or the UTC offset format."
+      }
+    }
+  }
+}

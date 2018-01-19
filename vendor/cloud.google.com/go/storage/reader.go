@@ -25,12 +25,14 @@ var crc32cTable = crc32.MakeTable(crc32.Castagnoli)
 // Reader reads a Cloud Storage object.
 // It implements io.Reader.
 type Reader struct {
-	body         io.ReadCloser
-	remain, size int64
-	contentType  string
-	checkCRC     bool   // should we check the CRC?
-	wantCRC      uint32 // the CRC32c value the server sent in the header
-	gotCRC       uint32 // running crc
+	body            io.ReadCloser
+	remain, size    int64
+	contentType     string
+	contentEncoding string
+	cacheControl    string
+	checkCRC        bool   // should we check the CRC?
+	wantCRC         uint32 // the CRC32c value the server sent in the header
+	gotCRC          uint32 // running crc
 }
 
 // Close closes the Reader. It must be called when done reading.
@@ -71,4 +73,14 @@ func (r *Reader) Remain() int64 {
 // ContentType returns the content type of the object.
 func (r *Reader) ContentType() string {
 	return r.contentType
+}
+
+// ContentEncoding returns the content encoding of the object.
+func (r *Reader) ContentEncoding() string {
+	return r.contentEncoding
+}
+
+// CacheControl returns the cache control of the object.
+func (r *Reader) CacheControl() string {
+	return r.cacheControl
 }

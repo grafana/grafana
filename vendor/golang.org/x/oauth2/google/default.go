@@ -24,6 +24,12 @@ import (
 type DefaultCredentials struct {
 	ProjectID   string // may be empty
 	TokenSource oauth2.TokenSource
+
+	// JSON contains the raw bytes from a JSON credentials file.
+	// This field may be nil if authentication is provided by the
+	// environment and not with a credentials file, e.g. when code is
+	// running on Google Cloud Platform.
+	JSON []byte
 }
 
 // DefaultClient returns an HTTP Client that uses the
@@ -126,5 +132,6 @@ func readCredentialsFile(ctx context.Context, filename string, scopes []string) 
 	return &DefaultCredentials{
 		ProjectID:   f.ProjectID,
 		TokenSource: ts,
+		JSON:        b,
 	}, nil
 }

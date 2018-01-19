@@ -8,11 +8,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// User describes a user
 type User struct {
 	Id   int64
 	Name string
 }
 
+// LoginInfo describes a login information
 type LoginInfo struct {
 	Id     int64
 	IP     string
@@ -27,26 +29,26 @@ func main() {
 	f := "singleMapping.db"
 	os.Remove(f)
 
-	Orm, err := xorm.NewEngine("sqlite3", f)
+	orm, err := xorm.NewEngine("sqlite3", f)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	Orm.ShowSQL = true
-	err = Orm.CreateTables(&User{}, &LoginInfo{})
+	orm.ShowSQL(true)
+	err = orm.CreateTables(&User{}, &LoginInfo{})
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	_, err = Orm.Insert(&User{1, "xlw"}, &LoginInfo{1, "127.0.0.1", 1, "", 23})
+	_, err = orm.Insert(&User{1, "xlw"}, &LoginInfo{1, "127.0.0.1", 1, "", 23})
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	info := LoginInfo{}
-	_, err = Orm.Id(1).Get(&info)
+	_, err = orm.Id(1).Get(&info)
 	if err != nil {
 		fmt.Println(err)
 		return

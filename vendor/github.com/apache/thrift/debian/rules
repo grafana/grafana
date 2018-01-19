@@ -1,0 +1,226 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Sample debian/rules that uses debhelper.
+#
+# This file was originally written by Joey Hess and Craig Small.
+# As a special exception, when this file is copied by dh-make into a
+# dh-make output file, you may use that output file without restriction.
+# This special exception was added by Craig Small in version 0.37 of dh-make.
+#
+# Modified to make a template file for a multi-binary package with separated
+# build-arch and build-indep targets  by Bill Allombert 2001
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# This has to be exported to make some magic below work.
+export DH_OPTIONS
+
+PYVERS := $(shell pyversions -r)
+
+export CPPFLAGS:=$(shell dpkg-buildflags --get CPPFLAGS)
+export CFLAGS:=$(shell dpkg-buildflags --get CFLAGS)
+export CXXFLAGS:=$(shell dpkg-buildflags --get CXXFLAGS)
+export LDFLAGS:=$(shell dpkg-buildflags --get LDFLAGS)
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+
+	# Add here commands to configure the package.
+	if [ -f bootstrap.sh ]; then $(CURDIR)/bootstrap.sh; fi
+	$(CURDIR)/configure --prefix=/usr
+
+	touch configure-stamp
+
+
+#Architecture
+build: build-arch build-indep
+	# Tests disabled
+	# $(MAKE) -C test check
+
+build-arch: build-arch-stamp
+$(CURDIR)/compiler/cpp/thrift build-arch-stamp: configure-stamp
+
+	# Compile C++ library
+	$(MAKE) -C $(CURDIR)/lib/cpp
+
+	# Compile compiler
+	$(MAKE) -C $(CURDIR)/compiler/cpp
+
+	# Compile C (glib) library
+	$(MAKE) -C $(CURDIR)/lib/c_glib
+
+	# Python library
+	cd $(CURDIR)/lib/py && \
+    for py in $(PYVERS); do  \
+        $$py setup.py build; \
+        $$py-dbg setup.py build; \
+    done
+
+	# PHP
+	cd $(CURDIR)/lib/php/src/ext/thrift_protocol && \
+		phpize && \
+		./configure && $(MAKE)
+
+	touch $@
+
+build-indep: build-indep-stamp
+build-indep-stamp: configure-stamp $(CURDIR)/compiler/cpp/thrift
+
+	# Add here commands to compile the indep part of the package.
+	#$(MAKE) doc
+
+	# Java
+	cd $(CURDIR)/lib/java && \
+		ant
+
+	# C#
+	$(MAKE) -C $(CURDIR)/lib/csharp
+
+	# Ruby
+	$(MAKE) -C $(CURDIR)/lib/rb
+
+	# Perl
+	$(MAKE) -C $(CURDIR)/lib/perl INSTALLDIRS=vendor
+
+	touch $@
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-arch-stamp build-indep-stamp configure-stamp
+
+	cd $(CURDIR)/lib/py && python setup.py clean --all
+
+	# Add here commands to clean up after the build process.
+	-$(MAKE) clean
+
+	$(CURDIR)/cleanup.sh
+
+	dh_clean
+
+install: install-indep install-arch
+install-indep:
+	dh_testdir
+	dh_testroot
+	dh_prep -i
+	dh_installdirs -i
+
+	# Add here commands to install the indep part of the package into
+	# debian/<package>-doc.
+	#INSTALLDOC#
+
+	# Java
+	mkdir -p $(CURDIR)/debian/libthrift-java/usr/share/java/ && \
+	cp $(CURDIR)/lib/java/build/libthrift*.jar \
+		$(CURDIR)/debian/libthrift-java/usr/share/java/
+
+	# Ruby
+	mkdir -p $(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1 && \
+	cp $(CURDIR)/lib/rb/lib/thrift.rb \
+		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1
+	cp -r $(CURDIR)/lib/rb/lib/thrift \
+		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1
+
+	# C#
+	mkdir -p $(CURDIR)/debian/libthrift-cil/usr/lib/cli/thrift/ && \
+	cp $(CURDIR)/lib/csharp/Thrift.dll \
+		$(CURDIR)/debian/libthrift-cil/usr/lib/cli/thrift/Thrift.dll
+
+	# Perl
+	$(MAKE) -C $(CURDIR)/lib/perl install DESTDIR=$(CURDIR)/debian/libthrift-perl
+	mv $(CURDIR)/debian/libthrift-perl/usr/local/lib/perl5 $(CURDIR)/debian/libthrift-perl/usr/lib
+	rmdir $(CURDIR)/debian/libthrift-perl/usr/local/lib
+	rmdir $(CURDIR)/debian/libthrift-perl/usr/local
+
+	dh_install -i
+
+install-arch:
+	dh_testdir
+	dh_testroot
+	dh_clean -k -s
+	dh_installdirs -s
+
+	# Add here commands to install the arch part of the package into
+	# debian/tmp.
+	#$(MAKE) DESTDIR=$(CURDIR)/debian/thrift install
+
+	# Compiler
+	mkdir -p $(CURDIR)/debian/thrift-compiler/usr/bin && \
+	cp $(CURDIR)/compiler/cpp/thrift \
+		$(CURDIR)/debian/thrift-compiler/usr/bin/thrift && \
+	rmdir $(CURDIR)/debian/thrift-compiler/usr/sbin
+
+	# Python
+	cd $(CURDIR)/lib/py && \
+	python2 setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python-thrift && \
+	python2-dbg setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python-thrift-dbg && \
+	python3 setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python3-thrift && \
+	python3-dbg setup.py install --install-layout=deb --no-compile --root=$(CURDIR)/debian/python3-thrift-dbg
+
+	find $(CURDIR)/debian/python-thrift -name "*.py[co]" -print0 | xargs -0 rm -f
+	find $(CURDIR)/debian/python-thrift -name "__pycache__" -print0 | xargs -0 rm -fr
+	find $(CURDIR)/debian/python-thrift-dbg -name "__pycache__" -print0 | xargs -0 rm -fr
+	find $(CURDIR)/debian/python-thrift-dbg -name "*.py[co]" -print0 | xargs -0 rm -f
+	find $(CURDIR)/debian/python-thrift-dbg -name "*.py" -print0 | xargs -0 rm -f
+	find $(CURDIR)/debian/python-thrift-dbg -name "*.egg-info" -print0 | xargs -0 rm -rf
+	find $(CURDIR)/debian/python-thrift-dbg -depth -type d -empty -exec rmdir {} \;
+
+	find $(CURDIR)/debian/python3-thrift -name "*.py[co]" -print0 | xargs -0 rm -f
+	find $(CURDIR)/debian/python3-thrift -name "__pycache__" -print0 | xargs -0 rm -fr
+	find $(CURDIR)/debian/python3-thrift-dbg -name "__pycache__" -print0 | xargs -0 rm -fr
+	find $(CURDIR)/debian/python3-thrift-dbg -name "*.py[co]" -print0 | xargs -0 rm -f
+	find $(CURDIR)/debian/python3-thrift-dbg -name "*.py" -print0 | xargs -0 rm -f
+	find $(CURDIR)/debian/python3-thrift-dbg -name "*.egg-info" -print0 | xargs -0 rm -rf
+	find $(CURDIR)/debian/python3-thrift-dbg -depth -type d -empty -exec rmdir {} \;
+
+	# PHP
+	mkdir -p $(CURDIR)/debian/php5-thrift
+	cd $(CURDIR)/lib/php && \
+		$(MAKE) DESTDIR=$(CURDIR)/debian/php5-thrift install
+
+	# C++ and C (glib)
+	mkdir -p $(CURDIR)/debian/tmp; \
+	cd $(CURDIR)/lib/cpp && \
+		$(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
+	cd $(CURDIR)/lib/c_glib && \
+		$(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
+
+	dh_install --sourcedir=debian/tmp -s
+
+
+# Must not depend on anything. This is to be called by
+# binary-arch/binary-indep
+# in another 'make' thread.
+binary-common:
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_installexamples
+	dh_installman
+	dh_link
+	dh_strip -ppython-thrift --dbg-package=python-thrift-dbg
+	dh_strip -ppython3-thrift --dbg-package=python3-thrift-dbg
+	dh_strip -pthrift-compiler -plibthrift0
+	dh_compress
+	dh_fixperms
+	dh_makeshlibs
+	dh_installdeb
+	dh_perl
+	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+# Build architecture independent packages using the common target.
+binary-indep: build-indep install-indep
+	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common
+
+# Build architecture dependent packages using the common target.
+binary-arch: build-arch install-arch
+	echo "php:Depends=phpapi-$(shell php-config5 --phpapi)" > $(CURDIR)/debian/substvars
+	$(MAKE) -f debian/rules DH_OPTIONS=-s binary-common
+
+binary: binary-arch binary-indep
+.PHONY: build clean binary-indep binary-arch binary install install-indep install-arch configure

@@ -30,6 +30,8 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -110,7 +112,10 @@ func NewClient(ctx context.Context, opts ...option.ClientOption) (*Client, error
 //
 // Close need not be called at program exit.
 func (c *Client) Close() error {
+	// Set fields to nil so that subsequent uses
+	// will panic.
 	c.hc = nil
+	c.raw = nil
 	return nil
 }
 
@@ -167,7 +172,7 @@ type SignedURLOptions struct {
 	// Optional.
 	ContentType string
 
-	// Headers is a list of extention headers the client must provide
+	// Headers is a list of extension headers the client must provide
 	// in order to use the generated signed URL.
 	// Optional.
 	Headers []string
@@ -177,6 +182,60 @@ type SignedURLOptions struct {
 	// header in order to use the signed URL.
 	// Optional.
 	MD5 string
+}
+
+var (
+	canonicalHeaderRegexp    = regexp.MustCompile(`(?i)^(x-goog-[^:]+):(.*)?$`)
+	excludedCanonicalHeaders = map[string]bool{
+		"x-goog-encryption-key":        true,
+		"x-goog-encryption-key-sha256": true,
+	}
+)
+
+// sanitizeHeaders applies the specifications for canonical extension headers at
+// https://cloud.google.com/storage/docs/access-control/signed-urls#about-canonical-extension-headers.
+func sanitizeHeaders(hdrs []string) []string {
+	headerMap := map[string][]string{}
+	for _, hdr := range hdrs {
+		// No leading or trailing whitespaces.
+		sanitizedHeader := strings.TrimSpace(hdr)
+
+		// Only keep canonical headers, discard any others.
+		headerMatches := canonicalHeaderRegexp.FindStringSubmatch(sanitizedHeader)
+		if len(headerMatches) == 0 {
+			continue
+		}
+
+		header := strings.ToLower(strings.TrimSpace(headerMatches[1]))
+		if excludedCanonicalHeaders[headerMatches[1]] {
+			// Do not keep any deliberately excluded canonical headers when signing.
+			continue
+		}
+		value := strings.TrimSpace(headerMatches[2])
+		if len(value) > 0 {
+			// Remove duplicate headers by appending the values of duplicates
+			// in their order of appearance.
+			headerMap[header] = append(headerMap[header], value)
+		}
+	}
+
+	var sanitizedHeaders []string
+	for header, values := range headerMap {
+		// There should be no spaces around the colon separating the
+		// header name from the header value or around the values
+		// themselves. The values should be separated by commas.
+		// NOTE: The semantics for headers without a value are not clear.
+		//       However from specifications these should be edge-cases
+		//       anyway and we should assume that there will be no
+		//       canonical headers using empty values. Any such headers
+		//       are discarded at the regexp stage above.
+		sanitizedHeaders = append(
+			sanitizedHeaders,
+			fmt.Sprintf("%s:%s", header, strings.Join(values, ",")),
+		)
+	}
+	sort.Strings(sanitizedHeaders)
+	return sanitizedHeaders
 }
 
 // SignedURL returns a URL for the specified object. Signed URLs allow
@@ -205,6 +264,7 @@ func SignedURL(bucket, name string, opts *SignedURLOptions) (string, error) {
 			return "", errors.New("storage: invalid MD5 checksum")
 		}
 	}
+	opts.Headers = sanitizeHeaders(opts.Headers)
 
 	signBytes := opts.SignBytes
 	if opts.PrivateKey != nil {
@@ -255,14 +315,15 @@ func SignedURL(bucket, name string, opts *SignedURLOptions) (string, error) {
 // ObjectHandle provides operations on an object in a Google Cloud Storage bucket.
 // Use BucketHandle.Object to get a handle.
 type ObjectHandle struct {
-	c             *Client
-	bucket        string
-	object        string
-	acl           ACLHandle
-	gen           int64 // a negative value indicates latest
-	conds         *Conditions
-	encryptionKey []byte // AES-256 key
-	userProject   string // for requester-pays buckets
+	c              *Client
+	bucket         string
+	object         string
+	acl            ACLHandle
+	gen            int64 // a negative value indicates latest
+	conds          *Conditions
+	encryptionKey  []byte // AES-256 key
+	userProject    string // for requester-pays buckets
+	readCompressed bool   // Accept-Encoding: gzip
 }
 
 // ACL provides access to the object's access control list.
@@ -346,11 +407,17 @@ func (o *ObjectHandle) Update(ctx context.Context, uattrs ObjectAttrsToUpdate) (
 	var forceSendFields, nullFields []string
 	if uattrs.ContentType != nil {
 		attrs.ContentType = optional.ToString(uattrs.ContentType)
-		forceSendFields = append(forceSendFields, "ContentType")
+		// For ContentType, sending the empty string is a no-op.
+		// Instead we send a null.
+		if attrs.ContentType == "" {
+			nullFields = append(nullFields, "ContentType")
+		} else {
+			forceSendFields = append(forceSendFields, "ContentType")
+		}
 	}
 	if uattrs.ContentLanguage != nil {
 		attrs.ContentLanguage = optional.ToString(uattrs.ContentLanguage)
-		// For ContentLanguage It's an error to send the empty string.
+		// For ContentLanguage it's an error to send the empty string.
 		// Instead we send a null.
 		if attrs.ContentLanguage == "" {
 			nullFields = append(nullFields, "ContentLanguage")
@@ -458,6 +525,13 @@ func (o *ObjectHandle) Delete(ctx context.Context) error {
 	return err
 }
 
+// ReadCompressed when true causes the read to happen without decompressing.
+func (o *ObjectHandle) ReadCompressed(compressed bool) *ObjectHandle {
+	o2 := *o
+	o2.readCompressed = compressed
+	return &o2
+}
+
 // NewReader creates a new Reader to read the contents of the
 // object.
 // ErrObjectNotExist will be returned if the object is not found.
@@ -504,6 +578,9 @@ func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64)
 	}
 	if o.userProject != "" {
 		req.Header.Set("X-Goog-User-Project", o.userProject)
+	}
+	if o.readCompressed {
+		req.Header.Set("Accept-Encoding", "gzip")
 	}
 	if err := setEncryptionHeaders(req.Header, o.encryptionKey, false); err != nil {
 		return nil, err
@@ -567,12 +644,14 @@ func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64)
 		crc, checkCRC = parseCRC32c(res)
 	}
 	return &Reader{
-		body:        body,
-		size:        size,
-		remain:      remain,
-		contentType: res.Header.Get("Content-Type"),
-		wantCRC:     crc,
-		checkCRC:    checkCRC,
+		body:            body,
+		size:            size,
+		remain:          remain,
+		contentType:     res.Header.Get("Content-Type"),
+		contentEncoding: res.Header.Get("Content-Encoding"),
+		cacheControl:    res.Header.Get("Cache-Control"),
+		wantCRC:         crc,
+		checkCRC:        checkCRC,
 	}, nil
 }
 
@@ -628,11 +707,10 @@ func (o *ObjectHandle) validate() error {
 	return nil
 }
 
-// parseKey converts the binary contents of a private key file
-// to an *rsa.PrivateKey. It detects whether the private key is in a
-// PEM container or not. If so, it extracts the the private key
-// from PEM container before conversion. It only supports PEM
-// containers with no passphrase.
+// parseKey converts the binary contents of a private key file to an
+// *rsa.PrivateKey. It detects whether the private key is in a PEM container or
+// not. If so, it extracts the private key from PEM container before
+// conversion. It only supports PEM containers with no passphrase.
 func parseKey(key []byte) (*rsa.PrivateKey, error) {
 	if block, _ := pem.Decode(key); block != nil {
 		key = block.Bytes
@@ -720,11 +798,16 @@ type ObjectAttrs struct {
 	// sent in the response headers.
 	ContentDisposition string
 
-	// MD5 is the MD5 hash of the object's content. This field is read-only.
+	// MD5 is the MD5 hash of the object's content. This field is read-only,
+	// except when used from a Writer. If set on a Writer, the uploaded
+	// data is rejected if its MD5 hash does not match this field.
 	MD5 []byte
 
 	// CRC32C is the CRC32 checksum of the object's content using
-	// the Castagnoli93 polynomial. This field is read-only.
+	// the Castagnoli93 polynomial. This field is read-only, except when
+	// used from a Writer. If set on a Writer and Writer.SendCRC32C
+	// is true, the uploaded data is rejected if its CRC32c hash does not
+	// match this field.
 	CRC32C uint32
 
 	// MediaLink is an URL to the object's content. This field is read-only.
@@ -812,26 +895,27 @@ func newObject(o *raw.Object) *ObjectAttrs {
 		sha256 = o.CustomerEncryption.KeySha256
 	}
 	return &ObjectAttrs{
-		Bucket:            o.Bucket,
-		Name:              o.Name,
-		ContentType:       o.ContentType,
-		ContentLanguage:   o.ContentLanguage,
-		CacheControl:      o.CacheControl,
-		ACL:               acl,
-		Owner:             owner,
-		ContentEncoding:   o.ContentEncoding,
-		Size:              int64(o.Size),
-		MD5:               md5,
-		CRC32C:            crc32c,
-		MediaLink:         o.MediaLink,
-		Metadata:          o.Metadata,
-		Generation:        o.Generation,
-		Metageneration:    o.Metageneration,
-		StorageClass:      o.StorageClass,
-		CustomerKeySHA256: sha256,
-		Created:           convertTime(o.TimeCreated),
-		Deleted:           convertTime(o.TimeDeleted),
-		Updated:           convertTime(o.Updated),
+		Bucket:             o.Bucket,
+		Name:               o.Name,
+		ContentType:        o.ContentType,
+		ContentLanguage:    o.ContentLanguage,
+		CacheControl:       o.CacheControl,
+		ACL:                acl,
+		Owner:              owner,
+		ContentEncoding:    o.ContentEncoding,
+		ContentDisposition: o.ContentDisposition,
+		Size:               int64(o.Size),
+		MD5:                md5,
+		CRC32C:             crc32c,
+		MediaLink:          o.MediaLink,
+		Metadata:           o.Metadata,
+		Generation:         o.Generation,
+		Metageneration:     o.Metageneration,
+		StorageClass:       o.StorageClass,
+		CustomerKeySHA256:  sha256,
+		Created:            convertTime(o.TimeCreated),
+		Deleted:            convertTime(o.TimeDeleted),
+		Updated:            convertTime(o.Updated),
 	}
 }
 

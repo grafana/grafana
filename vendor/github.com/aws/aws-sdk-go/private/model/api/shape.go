@@ -517,14 +517,14 @@ var structShapeTmpl = template.Must(template.New("StructShape").Funcs(template.F
 }).Parse(`
 {{ .Docstring }}
 {{ if ne $.OrigShapeName "" -}}
-{{ $crosslinkURL := GetCrosslinkURL $.API.BaseCrosslinkURL $.API.APIName $.API.Metadata.UID $.OrigShapeName -}}
+{{ $crosslinkURL := GetCrosslinkURL $.API.BaseCrosslinkURL $.API.Metadata.UID $.OrigShapeName -}}
 {{ if ne $crosslinkURL "" -}} 
-// Please also see {{ $crosslinkURL }}
+// See also, {{ $crosslinkURL }}
 {{ end -}}
 {{ else -}}
-{{ $crosslinkURL := GetCrosslinkURL $.API.BaseCrosslinkURL $.API.APIName $.API.Metadata.UID $.ShapeName -}}
+{{ $crosslinkURL := GetCrosslinkURL $.API.BaseCrosslinkURL $.API.Metadata.UID $.ShapeName -}}
 {{ if ne $crosslinkURL "" -}} 
-// Please also see {{ $crosslinkURL }}
+// See also, {{ $crosslinkURL }}
 {{ end -}}
 {{ end -}}
 {{ $context := . -}}

@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <BOOST_ROOT>$(THIRD_PARTY)\boost\boost_1_47_0</BOOST_ROOT>
+    <OPENSSL_ROOT_DIR>$(THIRD_PARTY)\openssl\OpenSSL-Win32</OPENSSL_ROOT_DIR>
+    <LIBEVENT_ROOT>$(THIRD_PARTY)\libevent-2.0.21-stable</LIBEVENT_ROOT>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup />
+  <ItemGroup>
+    <BuildMacro Include="BOOST_ROOT">
+      <Value>$(BOOST_ROOT)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="OPENSSL_ROOT_DIR">
+      <Value>$(OPENSSL_ROOT_DIR)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="LIBEVENT_ROOT">
+      <Value>$(LIBEVENT_ROOT)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+  </ItemGroup>
+</Project>

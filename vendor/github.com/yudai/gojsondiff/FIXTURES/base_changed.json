@@ -1,0 +1,13 @@
+{
+    "str": "abcde",
+    "num_int": 13,
+    "num_float": 39.39,
+    "bool": true,
+    "arr": ["arr0", 21, {"str": "changed", "num": 1}, [0, "changed"]],
+    "obj": {
+        "str": "bcded",
+        "new": "added",
+        "arr": [17, "str", {"str": "changed"}],
+        "obj": {"str": "changed", "num": 9999}
+    }
+}

@@ -1,0 +1,12 @@
+// Uncomment the next line to disable the package when running the GoConvey UI:
+//IGNORE
+
+// Uncomment the next line to limit testing to the specified test function name pattern:
+//-run=TestAssertionsAreAvailableFromConveyPackage
+
+// Uncomment the next line to limit testing to those tests that don't bail when testing.Short() is true:
+//-short
+
+// include any additional `go test` flags or application-specific flags below:
+
+-timeout=1s

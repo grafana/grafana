@@ -1,0 +1,83 @@
+{
+  "version": "2.0",
+  "service": "<p> Amazon SageMaker runtime API. </p>",
+  "operations": {
+    "InvokeEndpoint": "<p>After you deploy a model into production using Amazon SageMaker hosting services, your client applications use this API to get inferences from the model hosted at the specified endpoint. </p> <p>For an overview of Amazon SageMaker, see <a href=\"http://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works.html\">How It Works</a> </p> <p> Amazon SageMaker strips all POST headers except those supported by the API. Amazon SageMaker might add additional headers. You should not rely on the behavior of headers outside those enumerated in the request syntax. </p>"
+  },
+  "shapes": {
+    "BodyBlob": {
+      "base": null,
+      "refs": {
+        "InvokeEndpointInput$Body": "<p>Provides input data, in the format specified in the <code>ContentType</code> request header. Amazon SageMaker passes all of the data in the body to the model. </p>",
+        "InvokeEndpointOutput$Body": "<p>Includes the inference provided by the model.</p>"
+      }
+    },
+    "EndpointName": {
+      "base": null,
+      "refs": {
+        "InvokeEndpointInput$EndpointName": "<p>The name of the endpoint that you specified when you created the endpoint using the <a href=\"http://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateEndpoint.html\">CreateEndpoint</a> API. </p>"
+      }
+    },
+    "Header": {
+      "base": null,
+      "refs": {
+        "InvokeEndpointInput$ContentType": "<p>The MIME type of the input data in the request body.</p>",
+        "InvokeEndpointInput$Accept": "<p>The desired MIME type of the inference in the response.</p>",
+        "InvokeEndpointOutput$ContentType": "<p>The MIME type of the inference returned in the response body.</p>",
+        "InvokeEndpointOutput$InvokedProductionVariant": "<p>Identifies the production variant that was invoked.</p>"
+      }
+    },
+    "InternalFailure": {
+      "base": "<p> Internal failure occurred. </p>",
+      "refs": {
+      }
+    },
+    "InvokeEndpointInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "InvokeEndpointOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "LogStreamArn": {
+      "base": null,
+      "refs": {
+        "ModelError$LogStreamArn": "<p> Amazon Resource Name (ARN) of the log stream. </p>"
+      }
+    },
+    "Message": {
+      "base": null,
+      "refs": {
+        "InternalFailure$Message": null,
+        "ModelError$Message": null,
+        "ModelError$OriginalMessage": "<p> Original message. </p>",
+        "ServiceUnavailable$Message": null,
+        "ValidationError$Message": null
+      }
+    },
+    "ModelError": {
+      "base": "<p> Model (owned by the customer in the container) returned an error 500. </p>",
+      "refs": {
+      }
+    },
+    "ServiceUnavailable": {
+      "base": "<p> Service is unavailable. Try your call again. </p>",
+      "refs": {
+      }
+    },
+    "StatusCode": {
+      "base": null,
+      "refs": {
+        "ModelError$OriginalStatusCode": "<p> Original status code. </p>"
+      }
+    },
+    "ValidationError": {
+      "base": "<p> Inspect your request and try again. </p>",
+      "refs": {
+      }
+    }
+  }
+}

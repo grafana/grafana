@@ -1,0 +1,9 @@
+{
+   boost/get_once_per_thread_epoch/ignore
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   fun:malloc
+   fun:_ZN5boost6detail25get_once_per_thread_epochEv
+}
+
+

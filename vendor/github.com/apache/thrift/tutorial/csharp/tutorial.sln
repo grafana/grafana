@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thrift", "..\..\lib\csharp\src\Thrift.csproj", "{499EB63C-D74C-47E8-AE48-A2FC94538E9D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsharpClient", "CsharpClient\CsharpClient.csproj", "{18F24087-4760-43DA-ACAB-7B9F0E096B11}"
+    ProjectSection(ProjectDependencies) = postProject
+        {499EB63C-D74C-47E8-AE48-A2FC94538E9D} = {499EB63C-D74C-47E8-AE48-A2FC94538E9D}
+        {66707BAE-BBF9-4F03-B53E-BE3AD58322F8} = {66707BAE-BBF9-4F03-B53E-BE3AD58322F8}
+    EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CsharpServer", "CsharpServer\CsharpServer.csproj", "{66707BAE-BBF9-4F03-B53E-BE3AD58322F8}"
+    ProjectSection(ProjectDependencies) = postProject
+        {499EB63C-D74C-47E8-AE48-A2FC94538E9D} = {499EB63C-D74C-47E8-AE48-A2FC94538E9D}
+    EndProjectSection
+EndProject
+Global
+    GlobalSection(SolutionConfigurationPlatforms) = preSolution
+        Debug|Any CPU = Debug|Any CPU
+        Release|Any CPU = Release|Any CPU
+    EndGlobalSection
+    GlobalSection(ProjectConfigurationPlatforms) = postSolution
+        {499EB63C-D74C-47E8-AE48-A2FC94538E9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {499EB63C-D74C-47E8-AE48-A2FC94538E9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {499EB63C-D74C-47E8-AE48-A2FC94538E9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {499EB63C-D74C-47E8-AE48-A2FC94538E9D}.Release|Any CPU.Build.0 = Release|Any CPU
+        {18F24087-4760-43DA-ACAB-7B9F0E096B11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {18F24087-4760-43DA-ACAB-7B9F0E096B11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {18F24087-4760-43DA-ACAB-7B9F0E096B11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {18F24087-4760-43DA-ACAB-7B9F0E096B11}.Release|Any CPU.Build.0 = Release|Any CPU
+        {66707BAE-BBF9-4F03-B53E-BE3AD58322F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+        {66707BAE-BBF9-4F03-B53E-BE3AD58322F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+        {66707BAE-BBF9-4F03-B53E-BE3AD58322F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+        {66707BAE-BBF9-4F03-B53E-BE3AD58322F8}.Release|Any CPU.Build.0 = Release|Any CPU
+    EndGlobalSection
+    GlobalSection(SolutionProperties) = preSolution
+        HideSolutionNode = FALSE
+    EndGlobalSection
+EndGlobal

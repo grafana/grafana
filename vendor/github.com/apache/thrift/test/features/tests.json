@@ -1,0 +1,94 @@
+[
+  {
+    "description": "THeader detects unframed binary wire format",
+    "name": "theader_unframed_binary",
+    "command": [
+      "python",
+      "theader_binary.py",
+      "--override-protocol=binary",
+      "--override-transport=buffered"
+    ],
+    "protocols": ["header"],
+    "transports": ["buffered"],
+    "sockets": ["ip"],
+    "workdir": "features"
+  },
+  {
+    "description": "THeader detects framed binary wire format",
+    "name": "theader_framed_binary",
+    "command": [
+      "python",
+      "theader_binary.py",
+      "--override-protocol=binary",
+      "--override-transport=framed"
+    ],
+    "protocols": ["header"],
+    "transports": ["buffered"],
+    "sockets": ["ip"],
+    "workdir": "features"
+  },
+  {
+    "description": "THeader detects unframed compact wire format",
+    "name": "theader_unframed_compact",
+    "command": [
+      "python",
+      "theader_binary.py",
+      "--override-protocol=compact",
+      "--override-transport=buffered"
+    ],
+    "protocols": ["header"],
+    "transports": ["buffered"],
+    "sockets": ["ip"],
+    "workdir": "features"
+  },
+  {
+    "description": "THeader detects framed compact wire format",
+    "name": "theader_framed_compact",
+    "command": [
+      "python",
+      "theader_binary.py",
+      "--override-protocol=compact",
+      "--override-transport=framed"
+    ],
+    "protocols": ["header"],
+    "transports": ["buffered"],
+    "sockets": ["ip"],
+    "workdir": "features"
+  },
+  {
+    "name": "limit_string_length",
+    "command": [
+      "python",
+      "string_limit.py",
+      "--limit=50"
+    ],
+    "remote_args": [
+      "--string-limit=50"
+    ],
+    "protocols": [
+      "binary",
+      "compact"
+    ],
+    "transports": ["buffered"],
+    "sockets": ["ip"],
+    "workdir": "features"
+  },
+  {
+    "name": "limit_container_length",
+    "command": [
+      "python",
+      "container_limit.py",
+      "--limit=50"
+    ],
+    "remote_args": [
+      "--container-limit=50"
+    ],
+    "protocols": [
+      "binary",
+      "compact"
+    ],
+    "transports": ["buffered"],
+    "sockets": ["ip"],
+    "workdir": "features"
+  }
+]

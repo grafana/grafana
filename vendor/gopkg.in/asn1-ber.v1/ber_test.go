@@ -2,13 +2,14 @@ package ber
 
 import (
 	"bytes"
+	"math"
 
 	"io"
 	"testing"
 )
 
 func TestEncodeDecodeInteger(t *testing.T) {
-	for _, v := range []int64{0, 10, 128, 1024, -1, -100, -128, -1024} {
+	for _, v := range []int64{0, 10, 128, 1024, math.MaxInt64, -1, -100, -128, -1024, math.MinInt64} {
 		enc := encodeInteger(v)
 		dec, err := parseInt64(enc)
 		if err != nil {
@@ -89,26 +90,33 @@ func TestString(t *testing.T) {
 
 func TestSequenceAndAppendChild(t *testing.T) {
 
-	p1 := NewString(ClassUniversal, TypePrimitive, TagOctetString, "HIC SVNT LEONES", "String")
-	p2 := NewString(ClassUniversal, TypePrimitive, TagOctetString, "HIC SVNT DRACONES", "String")
-	p3 := NewString(ClassUniversal, TypePrimitive, TagOctetString, "Terra Incognita", "String")
+	values := []string{
+		"HIC SVNT LEONES",
+		"Iñtërnâtiônàlizætiøn",
+		"Terra Incognita",
+	}
 
 	sequence := NewSequence("a sequence")
-	sequence.AppendChild(p1)
-	sequence.AppendChild(p2)
-	sequence.AppendChild(p3)
+	for _, s := range values {
+		sequence.AppendChild(NewString(ClassUniversal, TypePrimitive, TagOctetString, s, "String"))
+	}
 
-	if len(sequence.Children) != 3 {
-		t.Error("wrong length for children array should be three =>", len(sequence.Children))
+	if len(sequence.Children) != len(values) {
+		t.Errorf("wrong length for children array should be %d, got %d", len(values), len(sequence.Children))
 	}
 
 	encodedSequence := sequence.Bytes()
 
 	decodedSequence := DecodePacket(encodedSequence)
-	if len(decodedSequence.Children) != 3 {
-		t.Error("wrong length for children array should be three =>", len(decodedSequence.Children))
+	if len(decodedSequence.Children) != len(values) {
+		t.Errorf("wrong length for children array should be %d => %d", len(values), len(decodedSequence.Children))
 	}
 
+	for i, s := range values {
+		if decodedSequence.Children[i].Value.(string) != s {
+			t.Errorf("expected %d to be %q, got %q", i, s, decodedSequence.Children[i].Value.(string))
+		}
+	}
 }
 
 func TestReadPacket(t *testing.T) {
@@ -140,6 +148,8 @@ func TestBinaryInteger(t *testing.T) {
 		{v: 256, e: []byte{0x02, 0x02, 0x01, 0x00}},
 		{v: -128, e: []byte{0x02, 0x01, 0x80}},
 		{v: -129, e: []byte{0x02, 0x02, 0xFF, 0x7F}},
+		{v: math.MaxInt64, e: []byte{0x02, 0x08, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}},
+		{v: math.MinInt64, e: []byte{0x02, 0x08, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}},
 	}
 
 	for _, d := range data {

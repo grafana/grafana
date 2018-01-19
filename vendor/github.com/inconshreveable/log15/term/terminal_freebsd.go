@@ -6,6 +6,8 @@ import (
 
 const ioctlReadTermios = syscall.TIOCGETA
 
+// Termios functions describe a general terminal interface that is
+// provided to control asynchronous communications ports.
 // Go 1.2 doesn't include Termios for FreeBSD. This should be added in 1.3 and this could be merged with terminal_darwin.
 type Termios struct {
 	Iflag  uint32

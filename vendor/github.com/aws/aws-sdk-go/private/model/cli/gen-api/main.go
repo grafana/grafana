@@ -183,6 +183,7 @@ func writeServiceFiles(g *generateInfo, filename string) {
 		if r := recover(); r != nil {
 			fmt.Fprintf(os.Stderr, "Error generating %s\n%s\n%s\n",
 				filename, r, debug.Stack())
+			os.Exit(1)
 		}
 	}()
 

@@ -1,0 +1,5 @@
+*.pyc
+kv
+kv-*
+kv_*
+!kv_*.py

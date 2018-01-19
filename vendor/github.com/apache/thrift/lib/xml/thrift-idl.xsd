@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Licensed to the Apache Software Foundation (ASF) under one
+ or more contributor license agreements. See the NOTICE file
+ distributed with this work for additional information
+ regarding copyright ownership. The ASF licenses this file
+ to you under the Apache License, Version 2.0 (the
+ "License"); you may not use this file except in compliance
+ with the License. You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing,
+ software distributed under the License is distributed on an
+ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ KIND, either express or implied. See the License for the
+ specific language governing permissions and limitations
+ under the License.
+-->
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+        targetNamespace="http://thrift.apache.org/xml/idl" 
+        xmlns:tns="http://thrift.apache.org/xml/idl" 
+        elementFormDefault="qualified">
+
+  <element name="idl" type="tns:IDL" />
+  <element name="document" type="tns:Document" />
+
+  <complexType name="IDL">
+    <sequence>
+      <element ref="tns:document" minOccurs="1" maxOccurs="unbounded"/>
+    </sequence>
+  </complexType>
+
+  <complexType name="Document">
+    <sequence>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element name="include" type="tns:Include" />
+        <element name="namespace" type="tns:Namespace" />
+      </choice>
+      <choice minOccurs="0" maxOccurs="unbounded">
+        <element name="exception" type="tns:Exception" />
+        <element name="typedef" type="tns:Typedef" />
+        <element name="service" type="tns:Service" />
+        <element name="struct" type="tns:Struct" />
+        <element name="const" type="tns:Const" />
+        <element name="union" type="tns:Union" />
+        <element name="enum" type="tns:Enum" />
+      </choice>
+    </sequence>
+    <attribute name="name" type="string" use="required" />
+    <attribute name="targetNamespace" type="anyURI" use="optional" />
+    <attribute name="doc" type="string" use="optional" />
+  </complexType>
+
+  <complexType name="Include">
+    <attribute name="file" type="string" use="optional" />
+    <attribute name="name" type="string" use="required" />
+  </complexType>
+
+  <complexType name="Namespace">
+    <sequence>
+      <element name="annotation" type="tns:Annotation" 
+               minOccurs="0" maxOccurs="unbounded" />
+    </sequence>
+    <attribute name="name" type="string" use="required" />
+    <attribute name="value" type="string" use="required" />
+    <attribute name="doc" type="string" use="optional" />
+  </complexType>
+
+  <group name="AbstractStruct">
+    <sequence>
+      <element name="field" type="tns:Field" 
+               minOccurs="0" maxOccurs="unbounded" />
+      <element name="annotation" type="tns:Annotation" 
+               minOccurs="0" maxOccurs="unbounded" />
+    </sequence>
+  </group>
+
+  <attributeGroup name="StructAttributes">
+    <attribute name="name" type="string" use="required" />
+    <attribute name="doc" type="string" use="optional" />
+  </attributeGroup>
+
+  <complexType name="Exception">
+    <group ref="tns:AbstractStruct" />
+    <attributeGroup ref="tns:StructAttributes" />
+  </complexType>
+
+  <complexType name="Service">
+    <sequence>
+      <element name="method" type="tns:Method" 
+               minOccurs="0" maxOccurs="unbounded" />
+      <element name="annotation" type="tns:Annotation" 
+               minOccurs="0" maxOccurs="unbounded" />
+    </sequence>
+    <attribute name="name" type="string" use="required" />
+    <attribute name="targetNamespace" type="string" use="required" />
+    <attribute name="parent-module" type="string" use="optional" />
+    <attribute name="parent-id" type="string" use="optional" /> 
+    <attribute name="doc" type="string" use="optional" />
+  </complexType>
+
+  <complexType name="Method">
+    <sequence>
+      <element name="returns" type="tns:ThriftType" />
+      <element name="arg" type="tns:Field" 
+               minOccurs="0" maxOccurs="unbounded" />
+      <element name="throws" type="tns:Field" 
+               minOccurs="0" maxOccurs="unbounded" />
+      <element name="annotation" type="tns:Annotation" 
+               minOccurs="0" maxOccurs="unbounded" />
+    </sequence>
+    <attribute name="name" type="string" use="required" />
+    <attribute name="oneway" type="boolean" use="optional" />
+    <attribute name="doc" type="string" use="optional" />
+  </complexType>
+
+  <complexType name="Typedef">
+    <complexContent>
+      <extension base="tns:ThriftType">
+        <sequence>
+          <element name="annotation" type="tns:Annotation" 
+                   minOccurs="0" maxOccurs="unbounded" />
+        </sequence>
+        <attribute name="name" type="string" use="required" />
+        <attribute name="doc" type="string" use="optional" />
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="Struct">
+    <group ref="tns:AbstractStruct" />
+    <attributeGroup ref="tns:StructAttributes" />
+  </complexType>
+
+  <complexType name="Union">
+    <group ref="tns:AbstractStruct" />
+    <attributeGroup ref="tns:StructAttributes" />
+  </complexType>
+
+  <complexType name="Enum">
+    <sequence>
+      <element name="member" minOccurs="1" maxOccurs="unbounded">
+        <complexType>
+          <sequence>
+            <element name="annotation" type="tns:Annotation" 
+                     minOccurs="0" maxOccurs="unbounded" />
+          </sequence>
+          <attribute name="name" type="string" use="required" />
+          <attribute name="value" type="int" />
+          <attribute name="explicit" type="boolean" />
+          <attribute name="doc" type="string" />
+        </complexType>
+      </element>
+      <element name="annotation" type="tns:Annotation" 
+                minOccurs="0" maxOccurs="unbounded" />
+    </sequence>
+    <attribute name="name" type="string" use="required" />
+    <attribute name="doc" type="string" />
+  </complexType>
+
+  <complexType name="Field">
+    <complexContent>
+      <extension base="tns:ThriftType">
+        <sequence>
+          <element name="default" minOccurs="0" maxOccurs="1">
+            <complexType>
+              <group ref="tns:ConstValue" />
+            </complexType>
+          </element>
+          <element name="annotation" type="tns:Annotation" 
+                   minOccurs="0" maxOccurs="unbounded" />
+        </sequence>
+        <attribute name="field-id" type="long" />
+        <attribute name="name" type="string" use="required" />
+        <attribute name="required" type="tns:Requiredness" />
+        <attribute name="doc" type="string" />
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <simpleType name="Requiredness">
+    <restriction base="string">
+      <enumeration value="required" />
+      <enumeration value="optional" />
+    </restriction>
+  </simpleType>
+
+  <complexType name="Annotation">
+    <attribute name="key" type="string" />
+    <attribute name="value" type="string" />
+  </complexType>
+
+  <complexType name="Const">
+    <complexContent>
+      <extension base="tns:ThriftType">
+        <sequence>
+          <group ref="tns:ConstValue" />
+        </sequence>
+        <attribute name="name" type="string" use="required" />
+        <attribute name="doc" type="string" />
+      </extension>
+    </complexContent>
+  </complexType>
+
+  <complexType name="ConstList">
+    <sequence>
+      <element name="entry" minOccurs="0" maxOccurs="unbounded">
+        <complexType>
+          <group ref="tns:ConstValue" />
+        </complexType>
+      </element>
+    </sequence>
+  </complexType>
+
+  <complexType name="ConstMap">
+    <sequence>
+      <element name="entry" minOccurs="0" maxOccurs="unbounded">
+        <complexType>
+          <sequence>
+            <element name="key">
+              <complexType>
+                <group ref="tns:ConstValue" />
+              </complexType>
+            </element>
+            <element name="value">
+              <complexType>
+                <group ref="tns:ConstValue" />
+              </complexType>
+            </element>
+          </sequence>
+        </complexType>
+      </element>
+    </sequence>
+  </complexType>
+
+  <group name="ConstValue">
+    <choice>
+      <element name="string" type="string" />
+      <element name="double" type="double" />
+      <element name="list" type="tns:ConstList" />
+      <element name="map" type="tns:ConstMap" />
+      <element name="int" type="long" />
+    </choice>
+  </group>
+
+  <complexType name="ThriftType">
+    <sequence>
+      <choice minOccurs="0" maxOccurs="1">
+        <element name="elemType" type="tns:ThriftType" />
+        <sequence>
+          <element name="keyType" type="tns:ThriftType" 
+                   minOccurs="1" maxOccurs="1" />
+          <element name="valueType" type="tns:ThriftType" 
+                   minOccurs="1" maxOccurs="1" />
+        </sequence>
+      </choice>
+    </sequence>
+    <attribute name="type" type="tns:TypeIdentifier" use="required" />
+    <attribute name="type-module" type="string" />
+    <attribute name="type-id" type="string" />
+  </complexType>
+
+  <simpleType name="TypeIdentifier">
+    <restriction base="string">
+      <enumeration value="void" />
+      <enumeration value="bool" />
+      <enumeration value="byte" />
+      <enumeration value="i8" />
+      <enumeration value="i16" />
+      <enumeration value="i32" />
+      <enumeration value="i64" />
+      <enumeration value="double" />
+      <enumeration value="binary" />
+      <enumeration value="string" />
+      <enumeration value="id" />
+      <enumeration value="map" />
+      <enumeration value="set" />
+      <enumeration value="list" />
+    </restriction>
+  </simpleType>
+
+</schema>

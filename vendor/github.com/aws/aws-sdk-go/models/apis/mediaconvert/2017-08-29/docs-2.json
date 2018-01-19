@@ -1,0 +1,2558 @@
+{
+  "version": "2.0",
+  "service": "AWS Elemental MediaConvert",
+  "operations": {
+    "CancelJob": "Permanently remove a job from a queue. Once you have canceled a job, you can't start it again. You can't delete a running job.",
+    "CreateJob": "Create a new transcoding job. For information about jobs and job settings, see the User Guide at http://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html",
+    "CreateJobTemplate": "Create a new job template. For information about job templates see the User Guide at http://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html",
+    "CreatePreset": "Create a new preset. For information about job templates see the User Guide at http://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html",
+    "CreateQueue": "Create a new transcoding queue. For information about job templates see the User Guide at http://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html",
+    "DeleteJobTemplate": "Permanently delete a job template you have created.",
+    "DeletePreset": "Permanently delete a preset you have created.",
+    "DeleteQueue": "Permanently delete a queue you have created.",
+    "DescribeEndpoints": "Send an request with an empty body to the regional API endpoint to get your account API endpoint.",
+    "GetJob": "Retrieve the JSON for a specific completed transcoding job.",
+    "GetJobTemplate": "Retrieve the JSON for a specific job template.",
+    "GetPreset": "Retrieve the JSON for a specific preset.",
+    "GetQueue": "Retrieve the JSON for a specific queue.",
+    "ListJobTemplates": "Retrieve a JSON array of up to twenty of your job templates. This will return the templates themselves, not just a list of them. To retrieve the next twenty templates, use the nextToken string returned with the array",
+    "ListJobs": "Retrieve a JSON array of up to twenty of your most recently created jobs. This array includes in-process, completed, and errored jobs. This will return the jobs themselves, not just a list of the jobs. To retrieve the twenty next most recent jobs, use the nextToken string returned with the array.",
+    "ListPresets": "Retrieve a JSON array of up to twenty of your presets. This will return the presets themselves, not just a list of them. To retrieve the next twenty presets, use the nextToken string returned with the array.",
+    "ListQueues": "Retrieve a JSON array of up to twenty of your queues. This will return the queues themselves, not just a list of them. To retrieve the next twenty queues, use the nextToken string returned with the array.",
+    "UpdateJobTemplate": "Modify one of your existing job templates.",
+    "UpdatePreset": "Modify one of your existing presets.",
+    "UpdateQueue": "Modify one of your existing queues."
+  },
+  "shapes": {
+    "AacAudioDescriptionBroadcasterMix": {
+      "base": "Choose BROADCASTER_MIXED_AD when the input contains pre-mixed main audio + audio description (AD) as a stereo pair. The value for AudioType will be set to 3, which signals to downstream systems that this stream contains \"broadcaster mixed AD\". Note that the input received by the encoder must contain pre-mixed audio; the encoder does not perform the mixing. When you choose BROADCASTER_MIXED_AD, the encoder ignores any values you provide in AudioType and  FollowInputAudioType. Choose NORMAL when the input does not contain pre-mixed audio + audio description (AD). In this case, the encoder will use any values you provide for AudioType and FollowInputAudioType.",
+      "refs": {
+        "AacSettings$AudioDescriptionBroadcasterMix": null
+      }
+    },
+    "AacCodecProfile": {
+      "base": "AAC Profile.",
+      "refs": {
+        "AacSettings$CodecProfile": null
+      }
+    },
+    "AacCodingMode": {
+      "base": "Mono (Audio Description), Mono, Stereo, or 5.1 channel layout. Valid values depend on rate control mode and profile. \"1.0 - Audio Description (Receiver Mix)\" setting receives a stereo description plus control track and emits a mono AAC encode of the description track, with control data emitted in the PES header as per ETSI TS 101 154 Annex E.",
+      "refs": {
+        "AacSettings$CodingMode": null
+      }
+    },
+    "AacRateControlMode": {
+      "base": "Rate Control Mode.",
+      "refs": {
+        "AacSettings$RateControlMode": null
+      }
+    },
+    "AacRawFormat": {
+      "base": "Enables LATM/LOAS AAC output. Note that if you use LATM/LOAS AAC in an output, you must choose \"No container\" for the output container.",
+      "refs": {
+        "AacSettings$RawFormat": null
+      }
+    },
+    "AacSettings": {
+      "base": "Required when you set (Codec) under (AudioDescriptions)>(CodecSettings) to the value AAC.",
+      "refs": {
+        "AudioCodecSettings$AacSettings": null
+      }
+    },
+    "AacSpecification": {
+      "base": "Use MPEG-2 AAC instead of MPEG-4 AAC audio for raw or MPEG-2 Transport Stream containers.",
+      "refs": {
+        "AacSettings$Specification": null
+      }
+    },
+    "AacVbrQuality": {
+      "base": "VBR Quality Level - Only used if rate_control_mode is VBR.",
+      "refs": {
+        "AacSettings$VbrQuality": null
+      }
+    },
+    "Ac3BitstreamMode": {
+      "base": "Specifies the \"Bitstream Mode\" (bsmod) for the emitted AC-3 stream. See ATSC A/52-2012 for background on these values.",
+      "refs": {
+        "Ac3Settings$BitstreamMode": null
+      }
+    },
+    "Ac3CodingMode": {
+      "base": "Dolby Digital coding mode. Determines number of channels.",
+      "refs": {
+        "Ac3Settings$CodingMode": null
+      }
+    },
+    "Ac3DynamicRangeCompressionProfile": {
+      "base": "If set to FILM_STANDARD, adds dynamic range compression signaling to the output bitstream as defined in the Dolby Digital specification.",
+      "refs": {
+        "Ac3Settings$DynamicRangeCompressionProfile": null
+      }
+    },
+    "Ac3LfeFilter": {
+      "base": "Applies a 120Hz lowpass filter to the LFE channel prior to encoding. Only valid with 3_2_LFE coding mode.",
+      "refs": {
+        "Ac3Settings$LfeFilter": null
+      }
+    },
+    "Ac3MetadataControl": {
+      "base": "When set to FOLLOW_INPUT, encoder metadata will be sourced from the DD, DD+, or DolbyE decoder that supplied this audio data. If audio was not supplied from one of these streams, then the static metadata settings will be used.",
+      "refs": {
+        "Ac3Settings$MetadataControl": null
+      }
+    },
+    "Ac3Settings": {
+      "base": "Required when you set (Codec) under (AudioDescriptions)>(CodecSettings) to the value AC3.",
+      "refs": {
+        "AudioCodecSettings$Ac3Settings": null
+      }
+    },
+    "AfdSignaling": {
+      "base": "This setting only applies to H.264 and MPEG2 outputs. Use Insert AFD signaling (AfdSignaling) to whether there are AFD values in the output video data and what those values are. * Choose None to remove all AFD values from this output. * Choose Fixed to ignore input AFD values and instead encode the value specified in the job. * Choose Auto to calculate output AFD values based on the input AFD scaler data.",
+      "refs": {
+        "VideoDescription$AfdSignaling": null
+      }
+    },
+    "AiffSettings": {
+      "base": "Required when you set (Codec) under (AudioDescriptions)>(CodecSettings) to the value AIFF.",
+      "refs": {
+        "AudioCodecSettings$AiffSettings": null
+      }
+    },
+    "AncillarySourceSettings": {
+      "base": "Settings for ancillary captions source.",
+      "refs": {
+        "CaptionSourceSettings$AncillarySourceSettings": null
+      }
+    },
+    "AntiAlias": {
+      "base": "Enable Anti-alias (AntiAlias) to enhance sharp edges in video output when your input resolution is much larger than your output resolution. Default is enabled.",
+      "refs": {
+        "VideoDescription$AntiAlias": null
+      }
+    },
+    "AudioCodec": {
+      "base": "Type of Audio codec.",
+      "refs": {
+        "AudioCodecSettings$Codec": null
+      }
+    },
+    "AudioCodecSettings": {
+      "base": "Audio codec settings (CodecSettings) under (AudioDescriptions) contains the group of settings related to audio encoding. The settings in this group vary depending on the value you choose for Audio codec (Codec). For each codec enum you choose, define the corresponding settings object. The following lists the codec enum, settings object pairs. * AAC, AacSettings * MP2, Mp2Settings * WAV, WavSettings * AIFF, AiffSettings * AC3, Ac3Settings * EAC3, Eac3Settings",
+      "refs": {
+        "AudioDescription$CodecSettings": null
+      }
+    },
+    "AudioDefaultSelection": {
+      "base": "When an \"Audio Description\":#audio_description specifies an AudioSelector or AudioSelectorGroup  for which no matching source is found in the input, then the audio selector marked as DEFAULT will be used.  If none are marked as default, silence will be inserted for the duration of the input.",
+      "refs": {
+        "AudioSelector$DefaultSelection": null
+      }
+    },
+    "AudioDescription": {
+      "base": "Description of audio output",
+      "refs": {
+        "ListOfAudioDescription$member": null
+      }
+    },
+    "AudioLanguageCodeControl": {
+      "base": "Choosing FOLLOW_INPUT will cause the ISO 639 language code of the output to follow the ISO 639 language code of the input. The language specified for languageCode' will be used when USE_CONFIGURED is selected or when FOLLOW_INPUT is selected but there is no ISO 639 language code specified by the input.",
+      "refs": {
+        "AudioDescription$LanguageCodeControl": null
+      }
+    },
+    "AudioNormalizationAlgorithm": {
+      "base": "Audio normalization algorithm to use. 1770-1 conforms to the CALM Act specification, 1770-2 conforms to the EBU R-128 specification.",
+      "refs": {
+        "AudioNormalizationSettings$Algorithm": null
+      }
+    },
+    "AudioNormalizationAlgorithmControl": {
+      "base": "When enabled the output audio is corrected using the chosen algorithm. If disabled, the audio will be measured but not adjusted.",
+      "refs": {
+        "AudioNormalizationSettings$AlgorithmControl": null
+      }
+    },
+    "AudioNormalizationLoudnessLogging": {
+      "base": "If set to LOG, log each output's audio track loudness to a CSV file.",
+      "refs": {
+        "AudioNormalizationSettings$LoudnessLogging": null
+      }
+    },
+    "AudioNormalizationPeakCalculation": {
+      "base": "If set to TRUE_PEAK, calculate and log the TruePeak for each output's audio track loudness.",
+      "refs": {
+        "AudioNormalizationSettings$PeakCalculation": null
+      }
+    },
+    "AudioNormalizationSettings": {
+      "base": "Advanced audio normalization settings.",
+      "refs": {
+        "AudioDescription$AudioNormalizationSettings": "Settings for Audio Normalization"
+      }
+    },
+    "AudioSelector": {
+      "base": "Selector for Audio",
+      "refs": {
+        "MapOfAudioSelector$member": null
+      }
+    },
+    "AudioSelectorGroup": {
+      "base": "Group of Audio Selectors",
+      "refs": {
+        "MapOfAudioSelectorGroup$member": null
+      }
+    },
+    "AudioSelectorType": {
+      "base": "Specifies the type of the audio selector.",
+      "refs": {
+        "AudioSelector$SelectorType": null
+      }
+    },
+    "AudioTypeControl": {
+      "base": "When set to FOLLOW_INPUT, if the input contains an ISO 639 audio_type, then that value is passed through to the output. If the input contains no ISO 639 audio_type, the value in Audio Type is included in the output. Otherwise the value in Audio Type is included in the output. Note that this field and audioType are both ignored if audioDescriptionBroadcasterMix is set to BROADCASTER_MIXED_AD.",
+      "refs": {
+        "AudioDescription$AudioTypeControl": null
+      }
+    },
+    "AvailBlanking": {
+      "base": "Settings for Avail Blanking",
+      "refs": {
+        "JobSettings$AvailBlanking": "Settings for ad avail blanking.  Video can be blanked or overlaid with an image, and audio muted during SCTE-35 triggered ad avails.",
+        "JobTemplateSettings$AvailBlanking": "Settings for ad avail blanking.  Video can be blanked or overlaid with an image, and audio muted during SCTE-35 triggered ad avails."
+      }
+    },
+    "BadRequestException": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "BurninDestinationSettings": {
+      "base": "Burn-In Destination Settings.",
+      "refs": {
+        "CaptionDestinationSettings$BurninDestinationSettings": null
+      }
+    },
+    "BurninSubtitleAlignment": {
+      "base": "If no explicit x_position or y_position is provided, setting alignment to centered will place the captions at the bottom center of the output. Similarly, setting a left alignment will align captions to the bottom left of the output. If x and y positions are given in conjunction with the alignment parameter, the font will be justified (either left or centered) relative to those coordinates. This option is not valid for source captions that are STL, 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
+      "refs": {
+        "BurninDestinationSettings$Alignment": null
+      }
+    },
+    "BurninSubtitleBackgroundColor": {
+      "base": "Specifies the color of the rectangle behind the captions.\nAll burn-in and DVB-Sub font settings must match.",
+      "refs": {
+        "BurninDestinationSettings$BackgroundColor": null
+      }
+    },
+    "BurninSubtitleFontColor": {
+      "base": "Specifies the color of the burned-in captions. This option is not valid for source captions that are STL, 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
+      "refs": {
+        "BurninDestinationSettings$FontColor": null
+      }
+    },
+    "BurninSubtitleOutlineColor": {
+      "base": "Specifies font outline color. This option is not valid for source captions that are either 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
+      "refs": {
+        "BurninDestinationSettings$OutlineColor": null
+      }
+    },
+    "BurninSubtitleShadowColor": {
+      "base": "Specifies the color of the shadow cast by the captions.\nAll burn-in and DVB-Sub font settings must match.",
+      "refs": {
+        "BurninDestinationSettings$ShadowColor": null
+      }
+    },
+    "BurninSubtitleTeletextSpacing": {
+      "base": "Controls whether a fixed grid size or proportional font spacing will be used to generate the output subtitles bitmap. Only applicable for Teletext inputs and DVB-Sub/Burn-in outputs.",
+      "refs": {
+        "BurninDestinationSettings$TeletextSpacing": null
+      }
+    },
+    "CancelJobRequest": {
+      "base": "Cancel a job by sending a request with the job ID",
+      "refs": {
+      }
+    },
+    "CancelJobResponse": {
+      "base": "A cancel job request will receive a response with an empty body.",
+      "refs": {
+      }
+    },
+    "CaptionDescription": {
+      "base": "Description of Caption output",
+      "refs": {
+        "ListOfCaptionDescription$member": null
+      }
+    },
+    "CaptionDescriptionPreset": {
+      "base": "Caption Description for preset",
+      "refs": {
+        "ListOfCaptionDescriptionPreset$member": null
+      }
+    },
+    "CaptionDestinationSettings": {
+      "base": "Specific settings required by destination type. Note that burnin_destination_settings are not available if the source of the caption data is Embedded or Teletext.",
+      "refs": {
+        "CaptionDescription$DestinationSettings": null,
+        "CaptionDescriptionPreset$DestinationSettings": null
+      }
+    },
+    "CaptionDestinationType": {
+      "base": null,
+      "refs": {
+        "CaptionDestinationSettings$DestinationType": "Type of Caption output, including Burn-In, Embedded, SCC, SRT, TTML, WebVTT, DVB-Sub, Teletext."
+      }
+    },
+    "CaptionSelector": {
+      "base": "Caption inputs to be mapped to caption outputs.",
+      "refs": {
+        "MapOfCaptionSelector$member": null
+      }
+    },
+    "CaptionSourceSettings": {
+      "base": "Source settings (SourceSettings) contains the group of settings for captions in the input.",
+      "refs": {
+        "CaptionSelector$SourceSettings": null
+      }
+    },
+    "CaptionSourceType": {
+      "base": "Use Source (SourceType) to identify the format of your input captions.  The service cannot auto-detect caption format.",
+      "refs": {
+        "CaptionSourceSettings$SourceType": null
+      }
+    },
+    "ChannelMapping": {
+      "base": "Channel mapping (ChannelMapping) contains the group of fields that hold the remixing value for each channel. Units are in dB. Acceptable values are within the range from -60 (mute) through 6. A setting of 0 passes the input channel unchanged to the output channel (no attenuation or amplification).",
+      "refs": {
+        "RemixSettings$ChannelMapping": null
+      }
+    },
+    "ColorCorrector": {
+      "base": "Settings for color correction.",
+      "refs": {
+        "VideoPreprocessor$ColorCorrector": "Enable the Color corrector (ColorCorrector) feature if necessary. Enable or disable this feature for each output individually. This setting is disabled by default."
+      }
+    },
+    "ColorMetadata": {
+      "base": "Enable Insert color metadata (ColorMetadata) to include color metadata in this output. This setting is enabled by default.",
+      "refs": {
+        "VideoDescription$ColorMetadata": null
+      }
+    },
+    "ColorSpace": {
+      "base": "Specifies the colorspace of an input. This setting works in tandem with \"Color Corrector\":#color_corrector > color_space_conversion to determine if any conversion will be performed.",
+      "refs": {
+        "VideoSelector$ColorSpace": null
+      }
+    },
+    "ColorSpaceConversion": {
+      "base": "Determines if colorspace conversion will be performed. If set to _None_, no conversion will be performed. If _Force 601_ or _Force 709_ are selected, conversion will be performed for inputs with differing colorspaces. An input's colorspace can be specified explicitly in the \"Video Selector\":#inputs-video_selector if necessary.",
+      "refs": {
+        "ColorCorrector$ColorSpaceConversion": null
+      }
+    },
+    "ColorSpaceUsage": {
+      "base": "There are two sources for color metadata, the input file and the job configuration. This enum controls which takes precedence. FORCE: System will use color metadata supplied by user, if any. If the user does not supply color metadata the system will use data from the source. FALLBACK: System will use color metadata from the source. If source has no color metadata, the system will use user-supplied color metadata values if available.",
+      "refs": {
+        "VideoSelector$ColorSpaceUsage": null
+      }
+    },
+    "ConflictException": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ContainerSettings": {
+      "base": "Container specific settings.",
+      "refs": {
+        "Output$ContainerSettings": null,
+        "PresetSettings$ContainerSettings": null
+      }
+    },
+    "ContainerType": {
+      "base": "Container for this output. Some containers require a container settings object. If not specified, the default object will be created.",
+      "refs": {
+        "ContainerSettings$Container": null
+      }
+    },
+    "CreateJobRequest": {
+      "base": "Send your create job request with your job settings and IAM role. Optionally, include user metadata and the ARN for the queue.",
+      "refs": {
+      }
+    },
+    "CreateJobResponse": {
+      "base": "Successful create job requests will return the job JSON.",
+      "refs": {
+      }
+    },
+    "CreateJobTemplateRequest": {
+      "base": "Send your create job template request with the name of the template and the JSON for the template. The template JSON should include everything in a valid job, except for input location and filename, IAM role, and user metadata.",
+      "refs": {
+      }
+    },
+    "CreateJobTemplateResponse": {
+      "base": "Successful create job template requests will return the template JSON.",
+      "refs": {
+      }
+    },
+    "CreatePresetRequest": {
+      "base": "Send your create preset request with the name of the preset and the JSON for the output settings specified by the preset.",
+      "refs": {
+      }
+    },
+    "CreatePresetResponse": {
+      "base": "Successful create preset requests will return the preset JSON.",
+      "refs": {
+      }
+    },
+    "CreateQueueRequest": {
+      "base": "Send your create queue request with the name of the queue.",
+      "refs": {
+      }
+    },
+    "CreateQueueResponse": {
+      "base": "Successful create queue requests will return the name of the queue you just created and information about it.",
+      "refs": {
+      }
+    },
+    "DashIsoEncryptionSettings": {
+      "base": "Specifies DRM settings for DASH outputs.",
+      "refs": {
+        "DashIsoGroupSettings$Encryption": "DRM settings."
+      }
+    },
+    "DashIsoGroupSettings": {
+      "base": "Required when you set (Type) under (OutputGroups)>(OutputGroupSettings) to DASH_ISO_GROUP_SETTINGS.",
+      "refs": {
+        "OutputGroupSettings$DashIsoGroupSettings": null
+      }
+    },
+    "DashIsoHbbtvCompliance": {
+      "base": "Supports HbbTV specification as indicated",
+      "refs": {
+        "DashIsoGroupSettings$HbbtvCompliance": null
+      }
+    },
+    "DashIsoSegmentControl": {
+      "base": "When set to SINGLE_FILE, a single output file is generated, which is internally segmented using the Fragment Length and Segment Length. When set to SEGMENTED_FILES, separate segment files will be created.",
+      "refs": {
+        "DashIsoGroupSettings$SegmentControl": null
+      }
+    },
+    "DeinterlaceAlgorithm": {
+      "base": "Only applies when you set Deinterlacer (DeinterlaceMode) to Deinterlace (DEINTERLACE) or Adaptive (ADAPTIVE). Motion adaptive interpolate (INTERPOLATE) produces sharper pictures, while blend (BLEND) produces smoother motion. Use (INTERPOLATE_TICKER) OR (BLEND_TICKER) if your source file includes a ticker, such as a scrolling headline at the bottom of the frame.",
+      "refs": {
+        "Deinterlacer$Algorithm": null
+      }
+    },
+    "Deinterlacer": {
+      "base": "Settings for deinterlacer",
+      "refs": {
+        "VideoPreprocessor$Deinterlacer": "Use Deinterlacer (Deinterlacer) to produce smoother motion and a clearer picture."
+      }
+    },
+    "DeinterlacerControl": {
+      "base": "- When set to NORMAL (default), the deinterlacer does not convert frames that are tagged  in metadata as progressive. It will only convert those that are tagged as some other type. - When set to FORCE_ALL_FRAMES, the deinterlacer converts every frame to progressive - even those that are already tagged as progressive. Turn Force mode on only if there is  a good chance that the metadata has tagged frames as progressive when they are not  progressive. Do not turn on otherwise; processing frames that are already progressive  into progressive will probably result in lower quality video.",
+      "refs": {
+        "Deinterlacer$Control": null
+      }
+    },
+    "DeinterlacerMode": {
+      "base": "Use Deinterlacer (DeinterlaceMode) to choose how the service will do deinterlacing. Default is Deinterlace. - Deinterlace converts interlaced to progressive. - Inverse telecine converts Hard Telecine 29.97i to progressive 23.976p. - Adaptive auto-detects and converts to progressive.",
+      "refs": {
+        "Deinterlacer$Mode": null
+      }
+    },
+    "DeleteJobTemplateRequest": {
+      "base": "Delete a job template by sending a request with the job template name",
+      "refs": {
+      }
+    },
+    "DeleteJobTemplateResponse": {
+      "base": "Delete job template requests will return an OK message or error message with an empty body.",
+      "refs": {
+      }
+    },
+    "DeletePresetRequest": {
+      "base": "Delete a preset by sending a request with the preset name",
+      "refs": {
+      }
+    },
+    "DeletePresetResponse": {
+      "base": "Delete preset requests will return an OK message or error message with an empty body.",
+      "refs": {
+      }
+    },
+    "DeleteQueueRequest": {
+      "base": "Delete a queue by sending a request with the queue name",
+      "refs": {
+      }
+    },
+    "DeleteQueueResponse": {
+      "base": "Delete queue requests will return an OK message or error message with an empty body.",
+      "refs": {
+      }
+    },
+    "DescribeEndpointsRequest": {
+      "base": "Send an request with an empty body to the regional API endpoint to get your account API endpoint.",
+      "refs": {
+      }
+    },
+    "DescribeEndpointsResponse": {
+      "base": "Successful describe endpoints requests will return your account API endpoint.",
+      "refs": {
+      }
+    },
+    "DropFrameTimecode": {
+      "base": "Applies only to 29.97 fps outputs. When this feature is enabled, the service will use drop-frame timecode on outputs. If it is not possible to use drop-frame timecode, the system will fall back to non-drop-frame. This setting is enabled by default when Timecode insertion (TimecodeInsertion) is enabled.",
+      "refs": {
+        "VideoDescription$DropFrameTimecode": null
+      }
+    },
+    "DvbNitSettings": {
+      "base": "Inserts DVB Network Information Table (NIT) at the specified table repetition interval.",
+      "refs": {
+        "M2tsSettings$DvbNitSettings": null
+      }
+    },
+    "DvbSdtSettings": {
+      "base": "Inserts DVB Service Description Table (NIT) at the specified table repetition interval.",
+      "refs": {
+        "M2tsSettings$DvbSdtSettings": null
+      }
+    },
+    "DvbSubDestinationSettings": {
+      "base": "DVB-Sub Destination Settings",
+      "refs": {
+        "CaptionDestinationSettings$DvbSubDestinationSettings": null
+      }
+    },
+    "DvbSubSourceSettings": {
+      "base": "DVB Sub Source Settings",
+      "refs": {
+        "CaptionSourceSettings$DvbSubSourceSettings": null
+      }
+    },
+    "DvbSubtitleAlignment": {
+      "base": "If no explicit x_position or y_position is provided, setting alignment to centered will place the captions at the bottom center of the output. Similarly, setting a left alignment will align captions to the bottom left of the output. If x and y positions are given in conjunction with the alignment parameter, the font will be justified (either left or centered) relative to those coordinates. This option is not valid for source captions that are STL, 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
+      "refs": {
+        "DvbSubDestinationSettings$Alignment": null
+      }
+    },
+    "DvbSubtitleBackgroundColor": {
+      "base": "Specifies the color of the rectangle behind the captions.\nAll burn-in and DVB-Sub font settings must match.",
+      "refs": {
+        "DvbSubDestinationSettings$BackgroundColor": null
+      }
+    },
+    "DvbSubtitleFontColor": {
+      "base": "Specifies the color of the burned-in captions. This option is not valid for source captions that are STL, 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
+      "refs": {
+        "DvbSubDestinationSettings$FontColor": null
+      }
+    },
+    "DvbSubtitleOutlineColor": {
+      "base": "Specifies font outline color. This option is not valid for source captions that are either 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
+      "refs": {
+        "DvbSubDestinationSettings$OutlineColor": null
+      }
+    },
+    "DvbSubtitleShadowColor": {
+      "base": "Specifies the color of the shadow cast by the captions.\nAll burn-in and DVB-Sub font settings must match.",
+      "refs": {
+        "DvbSubDestinationSettings$ShadowColor": null
+      }
+    },
+    "DvbSubtitleTeletextSpacing": {
+      "base": "Controls whether a fixed grid size or proportional font spacing will be used to generate the output subtitles bitmap. Only applicable for Teletext inputs and DVB-Sub/Burn-in outputs.",
+      "refs": {
+        "DvbSubDestinationSettings$TeletextSpacing": null
+      }
+    },
+    "DvbTdtSettings": {
+      "base": "Inserts DVB Time and Date Table (TDT) at the specified table repetition interval.",
+      "refs": {
+        "M2tsSettings$DvbTdtSettings": null
+      }
+    },
+    "Eac3AttenuationControl": {
+      "base": "If set to ATTENUATE_3_DB, applies a 3 dB attenuation to the surround channels. Only used for 3/2 coding mode.",
+      "refs": {
+        "Eac3Settings$AttenuationControl": null
+      }
+    },
+    "Eac3BitstreamMode": {
+      "base": "Specifies the \"Bitstream Mode\" (bsmod) for the emitted E-AC-3 stream. See ATSC A/52-2012 (Annex E) for background on these values.",
+      "refs": {
+        "Eac3Settings$BitstreamMode": null
+      }
+    },
+    "Eac3CodingMode": {
+      "base": "Dolby Digital Plus coding mode. Determines number of channels.",
+      "refs": {
+        "Eac3Settings$CodingMode": null
+      }
+    },
+    "Eac3DcFilter": {
+      "base": "Activates a DC highpass filter for all input channels.",
+      "refs": {
+        "Eac3Settings$DcFilter": null
+      }
+    },
+    "Eac3DynamicRangeCompressionLine": {
+      "base": "Enables Dynamic Range Compression that restricts the absolute peak level for a signal.",
+      "refs": {
+        "Eac3Settings$DynamicRangeCompressionLine": null
+      }
+    },
+    "Eac3DynamicRangeCompressionRf": {
+      "base": "Enables Heavy Dynamic Range Compression, ensures that the instantaneous signal peaks do not exceed specified levels.",
+      "refs": {
+        "Eac3Settings$DynamicRangeCompressionRf": null
+      }
+    },
+    "Eac3LfeControl": {
+      "base": "When encoding 3/2 audio, controls whether the LFE channel is enabled",
+      "refs": {
+        "Eac3Settings$LfeControl": null
+      }
+    },
+    "Eac3LfeFilter": {
+      "base": "Applies a 120Hz lowpass filter to the LFE channel prior to encoding. Only valid with 3_2_LFE coding mode.",
+      "refs": {
+        "Eac3Settings$LfeFilter": null
+      }
+    },
+    "Eac3MetadataControl": {
+      "base": "When set to FOLLOW_INPUT, encoder metadata will be sourced from the DD, DD+, or DolbyE decoder that supplied this audio data. If audio was not supplied from one of these streams, then the static metadata settings will be used.",
+      "refs": {
+        "Eac3Settings$MetadataControl": null
+      }
+    },
+    "Eac3PassthroughControl": {
+      "base": "When set to WHEN_POSSIBLE, input DD+ audio will be passed through if it is present on the input. this detection is dynamic over the life of the transcode. Inputs that alternate between DD+ and non-DD+ content will have a consistent DD+ output as the system alternates between passthrough and encoding.",
+      "refs": {
+        "Eac3Settings$PassthroughControl": null
+      }
+    },
+    "Eac3PhaseControl": {
+      "base": "Controls the amount of phase-shift applied to the surround channels. Only used for 3/2 coding mode.",
+      "refs": {
+        "Eac3Settings$PhaseControl": null
+      }
+    },
+    "Eac3Settings": {
+      "base": "Required when you set (Codec) under (AudioDescriptions)>(CodecSettings) to the value EAC3.",
+      "refs": {
+        "AudioCodecSettings$Eac3Settings": null
+      }
+    },
+    "Eac3StereoDownmix": {
+      "base": "Stereo downmix preference. Only used for 3/2 coding mode.",
+      "refs": {
+        "Eac3Settings$StereoDownmix": null
+      }
+    },
+    "Eac3SurroundExMode": {
+      "base": "When encoding 3/2 audio, sets whether an extra center back surround channel is matrix encoded into the left and right surround channels.",
+      "refs": {
+        "Eac3Settings$SurroundExMode": null
+      }
+    },
+    "Eac3SurroundMode": {
+      "base": "When encoding 2/0 audio, sets whether Dolby Surround is matrix encoded into the two channels.",
+      "refs": {
+        "Eac3Settings$SurroundMode": null
+      }
+    },
+    "EmbeddedConvert608To708": {
+      "base": "When set to UPCONVERT, 608 data is both passed through via the \"608 compatibility bytes\" fields of the 708 wrapper as well as translated into 708. 708 data present in the source content will be discarded.",
+      "refs": {
+        "EmbeddedSourceSettings$Convert608To708": null
+      }
+    },
+    "EmbeddedSourceSettings": {
+      "base": "Settings for embedded captions Source",
+      "refs": {
+        "CaptionSourceSettings$EmbeddedSourceSettings": null
+      }
+    },
+    "Endpoint": {
+      "base": "Describes account specific API endpoint",
+      "refs": {
+        "ListOfEndpoint$member": null
+      }
+    },
+    "ExceptionBody": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "F4vMoovPlacement": {
+      "base": "If set to PROGRESSIVE_DOWNLOAD, the MOOV atom is relocated to the beginning of the archive as required for progressive downloading. Otherwise it is placed normally at the end.",
+      "refs": {
+        "F4vSettings$MoovPlacement": null
+      }
+    },
+    "F4vSettings": {
+      "base": "Settings for F4v container",
+      "refs": {
+        "ContainerSettings$F4vSettings": null
+      }
+    },
+    "FileGroupSettings": {
+      "base": "Required when you set (Type) under (OutputGroups)>(OutputGroupSettings) to FILE_GROUP_SETTINGS.",
+      "refs": {
+        "OutputGroupSettings$FileGroupSettings": null
+      }
+    },
+    "FileSourceConvert608To708": {
+      "base": "If set to UPCONVERT, 608 caption data is both passed through via the \"608 compatibility bytes\" fields of the 708 wrapper as well as translated into 708. 708 data present in the source content will be discarded.",
+      "refs": {
+        "FileSourceSettings$Convert608To708": null
+      }
+    },
+    "FileSourceSettings": {
+      "base": "Settings for File-based Captions in Source",
+      "refs": {
+        "CaptionSourceSettings$FileSourceSettings": null
+      }
+    },
+    "ForbiddenException": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "FrameCaptureSettings": {
+      "base": "Required when you set (Codec) under (VideoDescription)>(CodecSettings) to the value FRAME_CAPTURE.",
+      "refs": {
+        "VideoCodecSettings$FrameCaptureSettings": null
+      }
+    },
+    "GetJobRequest": {
+      "base": "Query a job by sending a request with the job ID.",
+      "refs": {
+      }
+    },
+    "GetJobResponse": {
+      "base": "Successful get job requests will return an OK message and the job JSON.",
+      "refs": {
+      }
+    },
+    "GetJobTemplateRequest": {
+      "base": "Query a job template by sending a request with the job template name.",
+      "refs": {
+      }
+    },
+    "GetJobTemplateResponse": {
+      "base": "Successful get job template requests will return an OK message and the job template JSON.",
+      "refs": {
+      }
+    },
+    "GetPresetRequest": {
+      "base": "Query a preset by sending a request with the preset name.",
+      "refs": {
+      }
+    },
+    "GetPresetResponse": {
+      "base": "Successful get preset requests will return an OK message and the preset JSON.",
+      "refs": {
+      }
+    },
+    "GetQueueRequest": {
+      "base": "Query a queue by sending a request with the queue name.",
+      "refs": {
+      }
+    },
+    "GetQueueResponse": {
+      "base": "Successful get queue requests will return an OK message and the queue JSON.",
+      "refs": {
+      }
+    },
+    "H264AdaptiveQuantization": {
+      "base": "Adaptive quantization. Allows intra-frame quantizers to vary to improve visual quality.",
+      "refs": {
+        "H264Settings$AdaptiveQuantization": null
+      }
+    },
+    "H264CodecLevel": {
+      "base": "H.264 Level.",
+      "refs": {
+        "H264Settings$CodecLevel": null
+      }
+    },
+    "H264CodecProfile": {
+      "base": "H.264 Profile. High 4:2:2 and 10-bit profiles are only available with the AVC-I License.",
+      "refs": {
+        "H264Settings$CodecProfile": null
+      }
+    },
+    "H264EntropyEncoding": {
+      "base": "Entropy encoding mode. Use CABAC (must be in Main or High profile) or CAVLC.",
+      "refs": {
+        "H264Settings$EntropyEncoding": null
+      }
+    },
+    "H264FieldEncoding": {
+      "base": "Choosing FORCE_FIELD disables PAFF encoding for interlaced outputs.",
+      "refs": {
+        "H264Settings$FieldEncoding": null
+      }
+    },
+    "H264FlickerAdaptiveQuantization": {
+      "base": "Adjust quantization within each frame to reduce flicker or 'pop' on I-frames.",
+      "refs": {
+        "H264Settings$FlickerAdaptiveQuantization": null
+      }
+    },
+    "H264FramerateControl": {
+      "base": "Using the API, set FramerateControl to INITIALIZE_FROM_SOURCE if you want the service to use the framerate from the input. Using the console, do this by choosing INITIALIZE_FROM_SOURCE for Framerate.",
+      "refs": {
+        "H264Settings$FramerateControl": null
+      }
+    },
+    "H264FramerateConversionAlgorithm": {
+      "base": "When set to INTERPOLATE, produces smoother motion during framerate conversion.",
+      "refs": {
+        "H264Settings$FramerateConversionAlgorithm": null
+      }
+    },
+    "H264GopBReference": {
+      "base": "If enable, use reference B frames for GOP structures that have B frames > 1.",
+      "refs": {
+        "H264Settings$GopBReference": null
+      }
+    },
+    "H264GopSizeUnits": {
+      "base": "Indicates if the GOP Size in H264 is specified in frames or seconds. If seconds the system will convert the GOP Size into a frame count at run time.",
+      "refs": {
+        "H264Settings$GopSizeUnits": null
+      }
+    },
+    "H264InterlaceMode": {
+      "base": "Use Interlace mode (InterlaceMode) to choose the scan line type for the output. * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce interlaced output with the entire output having the same field polarity (top or bottom first). * Follow, Default Top (FOLLOw_TOP_FIELD) and Follow, Default Bottom (FOLLOW_BOTTOM_FIELD) use the same  field polarity as the source. Therefore, behavior depends on the input scan type. - If the source is interlaced, the output will be interlaced with the same polarity as the source (it will follow the source). The output could therefore be a mix of \"top field first\" and \"bottom field first\". - If the source is progressive, the output will be interlaced with \"top field first\" or \"bottom field first\" polarity, depending on which of the Follow options you chose.",
+      "refs": {
+        "H264Settings$InterlaceMode": null
+      }
+    },
+    "H264ParControl": {
+      "base": "Using the API, enable ParFollowSource if you want the service to use the pixel aspect ratio from the input. Using the console, do this by choosing Follow source for Pixel aspect ratio.",
+      "refs": {
+        "H264Settings$ParControl": null
+      }
+    },
+    "H264QualityTuningLevel": {
+      "base": "Use Quality tuning level (H264QualityTuningLevel) to specifiy whether to use fast single-pass, high-quality singlepass, or high-quality multipass video encoding.",
+      "refs": {
+        "H264Settings$QualityTuningLevel": null
+      }
+    },
+    "H264RateControlMode": {
+      "base": "Rate control mode. CQ uses constant quantizer (qp), ABR (average bitrate) does not write HRD parameters.",
+      "refs": {
+        "H264Settings$RateControlMode": null
+      }
+    },
+    "H264RepeatPps": {
+      "base": "Places a PPS header on each encoded picture, even if repeated.",
+      "refs": {
+        "H264Settings$RepeatPps": null
+      }
+    },
+    "H264SceneChangeDetect": {
+      "base": "Scene change detection (inserts I-frames on scene changes).",
+      "refs": {
+        "H264Settings$SceneChangeDetect": null
+      }
+    },
+    "H264Settings": {
+      "base": "Required when you set (Codec) under (VideoDescription)>(CodecSettings) to the value H_264.",
+      "refs": {
+        "VideoCodecSettings$H264Settings": null
+      }
+    },
+    "H264SlowPal": {
+      "base": "Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled as 25fps, and audio is sped up correspondingly.",
+      "refs": {
+        "H264Settings$SlowPal": null
+      }
+    },
+    "H264SpatialAdaptiveQuantization": {
+      "base": "Adjust quantization within each frame based on spatial variation of content complexity.",
+      "refs": {
+        "H264Settings$SpatialAdaptiveQuantization": null
+      }
+    },
+    "H264Syntax": {
+      "base": "Produces a bitstream compliant with SMPTE RP-2027.",
+      "refs": {
+        "H264Settings$Syntax": null
+      }
+    },
+    "H264Telecine": {
+      "base": "This field applies only if the Streams > Advanced > Framerate (framerate) field  is set to 29.970. This field works with the Streams > Advanced > Preprocessors > Deinterlacer  field (deinterlace_mode) and the Streams > Advanced > Interlaced Mode field (interlace_mode)  to identify the scan type for the output: Progressive, Interlaced, Hard Telecine or Soft Telecine. - Hard: produces 29.97i output from 23.976 input. - Soft: produces 23.976; the player converts this output to 29.97i.",
+      "refs": {
+        "H264Settings$Telecine": null
+      }
+    },
+    "H264TemporalAdaptiveQuantization": {
+      "base": "Adjust quantization within each frame based on temporal variation of content complexity.",
+      "refs": {
+        "H264Settings$TemporalAdaptiveQuantization": null
+      }
+    },
+    "H264UnregisteredSeiTimecode": {
+      "base": "Inserts timecode for each frame as 4 bytes of an unregistered SEI message.",
+      "refs": {
+        "H264Settings$UnregisteredSeiTimecode": null
+      }
+    },
+    "H265AdaptiveQuantization": {
+      "base": "Adaptive quantization. Allows intra-frame quantizers to vary to improve visual quality.",
+      "refs": {
+        "H265Settings$AdaptiveQuantization": null
+      }
+    },
+    "H265AlternateTransferFunctionSei": {
+      "base": "Enables Alternate Transfer Function SEI message for outputs using Hybrid Log Gamma (HLG) Electro-Optical Transfer Function (EOTF).",
+      "refs": {
+        "H265Settings$AlternateTransferFunctionSei": null
+      }
+    },
+    "H265CodecLevel": {
+      "base": "H.265 Level.",
+      "refs": {
+        "H265Settings$CodecLevel": null
+      }
+    },
+    "H265CodecProfile": {
+      "base": "Represents the Profile and Tier, per the HEVC (H.265) specification. Selections are grouped as [Profile] / [Tier], so \"Main/High\" represents Main Profile with High Tier. 4:2:2 profiles are only available with the HEVC 4:2:2 License.",
+      "refs": {
+        "H265Settings$CodecProfile": null
+      }
+    },
+    "H265FlickerAdaptiveQuantization": {
+      "base": "Adjust quantization within each frame to reduce flicker or 'pop' on I-frames.",
+      "refs": {
+        "H265Settings$FlickerAdaptiveQuantization": null
+      }
+    },
+    "H265FramerateControl": {
+      "base": "Using the API, set FramerateControl to INITIALIZE_FROM_SOURCE if you want the service to use the framerate from the input. Using the console, do this by choosing INITIALIZE_FROM_SOURCE for Framerate.",
+      "refs": {
+        "H265Settings$FramerateControl": null
+      }
+    },
+    "H265FramerateConversionAlgorithm": {
+      "base": "When set to INTERPOLATE, produces smoother motion during framerate conversion.",
+      "refs": {
+        "H265Settings$FramerateConversionAlgorithm": null
+      }
+    },
+    "H265GopBReference": {
+      "base": "If enable, use reference B frames for GOP structures that have B frames > 1.",
+      "refs": {
+        "H265Settings$GopBReference": null
+      }
+    },
+    "H265GopSizeUnits": {
+      "base": "Indicates if the GOP Size in H265 is specified in frames or seconds. If seconds the system will convert the GOP Size into a frame count at run time.",
+      "refs": {
+        "H265Settings$GopSizeUnits": null
+      }
+    },
+    "H265InterlaceMode": {
+      "base": "Use Interlace mode (InterlaceMode) to choose the scan line type for the output. * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce interlaced output with the entire output having the same field polarity (top or bottom first). * Follow, Default Top (FOLLOw_TOP_FIELD) and Follow, Default Bottom (FOLLOW_BOTTOM_FIELD) use the same  field polarity as the source. Therefore, behavior depends on the input scan type. - If the source is interlaced, the output will be interlaced with the same polarity as the source (it will follow the source). The output could therefore be a mix of \"top field first\" and \"bottom field first\". - If the source is progressive, the output will be interlaced with \"top field first\" or \"bottom field first\" polarity, depending on which of the Follow options you chose.",
+      "refs": {
+        "H265Settings$InterlaceMode": null
+      }
+    },
+    "H265ParControl": {
+      "base": "Using the API, enable ParFollowSource if you want the service to use the pixel aspect ratio from the input. Using the console, do this by choosing Follow source for Pixel aspect ratio.",
+      "refs": {
+        "H265Settings$ParControl": null
+      }
+    },
+    "H265QualityTuningLevel": {
+      "base": "Use Quality tuning level (H265QualityTuningLevel) to specifiy whether to use fast single-pass, high-quality singlepass, or high-quality multipass video encoding.",
+      "refs": {
+        "H265Settings$QualityTuningLevel": null
+      }
+    },
+    "H265RateControlMode": {
+      "base": "Rate control mode. CQ uses constant quantizer (qp), ABR (average bitrate) does not write HRD parameters.",
+      "refs": {
+        "H265Settings$RateControlMode": null
+      }
+    },
+    "H265SampleAdaptiveOffsetFilterMode": {
+      "base": "Specify Sample Adaptive Offset (SAO) filter strength.  Adaptive mode dynamically selects best strength based on content",
+      "refs": {
+        "H265Settings$SampleAdaptiveOffsetFilterMode": null
+      }
+    },
+    "H265SceneChangeDetect": {
+      "base": "Scene change detection (inserts I-frames on scene changes).",
+      "refs": {
+        "H265Settings$SceneChangeDetect": null
+      }
+    },
+    "H265Settings": {
+      "base": "Settings for H265 codec",
+      "refs": {
+        "VideoCodecSettings$H265Settings": null
+      }
+    },
+    "H265SlowPal": {
+      "base": "Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled as 25fps, and audio is sped up correspondingly.",
+      "refs": {
+        "H265Settings$SlowPal": null
+      }
+    },
+    "H265SpatialAdaptiveQuantization": {
+      "base": "Adjust quantization within each frame based on spatial variation of content complexity.",
+      "refs": {
+        "H265Settings$SpatialAdaptiveQuantization": null
+      }
+    },
+    "H265Telecine": {
+      "base": "This field applies only if the Streams > Advanced > Framerate (framerate) field  is set to 29.970. This field works with the Streams > Advanced > Preprocessors > Deinterlacer  field (deinterlace_mode) and the Streams > Advanced > Interlaced Mode field (interlace_mode)  to identify the scan type for the output: Progressive, Interlaced, Hard Telecine or Soft Telecine. - Hard: produces 29.97i output from 23.976 input. - Soft: produces 23.976; the player converts this output to 29.97i.",
+      "refs": {
+        "H265Settings$Telecine": null
+      }
+    },
+    "H265TemporalAdaptiveQuantization": {
+      "base": "Adjust quantization within each frame based on temporal variation of content complexity.",
+      "refs": {
+        "H265Settings$TemporalAdaptiveQuantization": null
+      }
+    },
+    "H265TemporalIds": {
+      "base": "Enables temporal layer identifiers in the encoded bitstream. Up to 3 layers are supported depending on GOP structure: I- and P-frames form one layer, reference B-frames can form a second layer and non-reference b-frames can form a third layer. Decoders can optionally decode only the lower temporal layers to generate a lower frame rate output. For example, given a bitstream with temporal IDs and with b-frames = 1 (i.e. IbPbPb display order), a decoder could decode all the frames for full frame rate output or only the I and P frames (lowest temporal layer) for a half frame rate output.",
+      "refs": {
+        "H265Settings$TemporalIds": null
+      }
+    },
+    "H265Tiles": {
+      "base": "Enable use of tiles, allowing horizontal as well as vertical subdivision of the encoded pictures.",
+      "refs": {
+        "H265Settings$Tiles": null
+      }
+    },
+    "H265UnregisteredSeiTimecode": {
+      "base": "Inserts timecode for each frame as 4 bytes of an unregistered SEI message.",
+      "refs": {
+        "H265Settings$UnregisteredSeiTimecode": null
+      }
+    },
+    "Hdr10Metadata": {
+      "base": "Use the HDR master display (Hdr10Metadata) settings to provide values for HDR color. These values vary depending on the input video and must be provided by a color grader. Range is 0 to 50,000, each increment represents 0.00002 in CIE1931 color coordinate.",
+      "refs": {
+        "ColorCorrector$Hdr10Metadata": null,
+        "VideoSelector$Hdr10Metadata": null
+      }
+    },
+    "HlsAdMarkers": {
+      "base": null,
+      "refs": {
+        "ListOfHlsAdMarkers$member": null
+      }
+    },
+    "HlsAudioTrackType": {
+      "base": "Four types of audio-only tracks are supported: Audio-Only Variant Stream The client can play back this audio-only stream instead of video in low-bandwidth scenarios. Represented as an EXT-X-STREAM-INF in the HLS manifest. Alternate Audio, Auto Select, Default Alternate rendition that the client should try to play back by default. Represented as an EXT-X-MEDIA in the HLS manifest with DEFAULT=YES, AUTOSELECT=YES Alternate Audio, Auto Select, Not Default Alternate rendition that the client may try to play back by default. Represented as an EXT-X-MEDIA in the HLS manifest with DEFAULT=NO, AUTOSELECT=YES Alternate Audio, not Auto Select Alternate rendition that the client will not try to play back by default. Represented as an EXT-X-MEDIA in the HLS manifest with DEFAULT=NO, AUTOSELECT=NO",
+      "refs": {
+        "HlsSettings$AudioTrackType": null
+      }
+    },
+    "HlsCaptionLanguageMapping": {
+      "base": "Caption Language Mapping",
+      "refs": {
+        "ListOfHlsCaptionLanguageMapping$member": null
+      }
+    },
+    "HlsCaptionLanguageSetting": {
+      "base": "Applies only to 608 Embedded output captions. Insert: Include CLOSED-CAPTIONS lines in the manifest. Specify at least one language in the CC1 Language Code field. One CLOSED-CAPTION line is added for each Language Code you specify. Make sure to specify the languages in the order in which they appear in the original source (if the source is embedded format) or the order of the caption selectors (if the source is other than embedded). Otherwise, languages in the manifest will not match up properly with the output captions. None: Include CLOSED-CAPTIONS=NONE line in the manifest. Omit: Omit any CLOSED-CAPTIONS line from the manifest.",
+      "refs": {
+        "HlsGroupSettings$CaptionLanguageSetting": null
+      }
+    },
+    "HlsClientCache": {
+      "base": "When set to ENABLED, sets #EXT-X-ALLOW-CACHE:no tag, which prevents client from saving media segments for later replay.",
+      "refs": {
+        "HlsGroupSettings$ClientCache": null
+      }
+    },
+    "HlsCodecSpecification": {
+      "base": "Specification to use (RFC-6381 or the default RFC-4281) during m3u8 playlist generation.",
+      "refs": {
+        "HlsGroupSettings$CodecSpecification": null
+      }
+    },
+    "HlsDirectoryStructure": {
+      "base": "Indicates whether segments should be placed in subdirectories.",
+      "refs": {
+        "HlsGroupSettings$DirectoryStructure": null
+      }
+    },
+    "HlsEncryptionSettings": {
+      "base": "Settings for HLS encryption",
+      "refs": {
+        "HlsGroupSettings$Encryption": "DRM settings."
+      }
+    },
+    "HlsEncryptionType": {
+      "base": "Encrypts the segments with the given encryption scheme. Leave blank to disable. Selecting 'Disabled' in the web interface also disables encryption.",
+      "refs": {
+        "HlsEncryptionSettings$EncryptionMethod": null
+      }
+    },
+    "HlsGroupSettings": {
+      "base": "Required when you set (Type) under (OutputGroups)>(OutputGroupSettings) to HLS_GROUP_SETTINGS.",
+      "refs": {
+        "OutputGroupSettings$HlsGroupSettings": null
+      }
+    },
+    "HlsIFrameOnlyManifest": {
+      "base": "When set to INCLUDE, writes I-Frame Only Manifest in addition to the HLS manifest",
+      "refs": {
+        "HlsSettings$IFrameOnlyManifest": null
+      }
+    },
+    "HlsInitializationVectorInManifest": {
+      "base": "The Initialization Vector is a 128-bit number used in conjunction with the key for encrypting blocks. If set to INCLUDE, Initialization Vector is listed in the manifest. Otherwise Initialization Vector is not in the manifest.",
+      "refs": {
+        "HlsEncryptionSettings$InitializationVectorInManifest": null
+      }
+    },
+    "HlsKeyProviderType": {
+      "base": "Indicates which type of key provider is used for encryption.",
+      "refs": {
+        "HlsEncryptionSettings$Type": null
+      }
+    },
+    "HlsManifestCompression": {
+      "base": "When set to GZIP, compresses HLS playlist.",
+      "refs": {
+        "HlsGroupSettings$ManifestCompression": null
+      }
+    },
+    "HlsManifestDurationFormat": {
+      "base": "Indicates whether the output manifest should use floating point values for segment duration.",
+      "refs": {
+        "HlsGroupSettings$ManifestDurationFormat": null
+      }
+    },
+    "HlsOutputSelection": {
+      "base": "Indicates whether the .m3u8 manifest file should be generated for this HLS output group.",
+      "refs": {
+        "HlsGroupSettings$OutputSelection": null
+      }
+    },
+    "HlsProgramDateTime": {
+      "base": "Includes or excludes EXT-X-PROGRAM-DATE-TIME tag in .m3u8 manifest files. The value is calculated as follows: either the program date and time are initialized using the input timecode source, or the time is initialized using the input timecode source and the date is initialized using the timestamp_offset.",
+      "refs": {
+        "HlsGroupSettings$ProgramDateTime": null
+      }
+    },
+    "HlsSegmentControl": {
+      "base": "When set to SINGLE_FILE, emits program as a single media resource (.ts) file, uses #EXT-X-BYTERANGE tags to index segment for playback.",
+      "refs": {
+        "HlsGroupSettings$SegmentControl": null
+      }
+    },
+    "HlsSettings": {
+      "base": "Settings for HLS output groups",
+      "refs": {
+        "OutputSettings$HlsSettings": null
+      }
+    },
+    "HlsStreamInfResolution": {
+      "base": "Include or exclude RESOLUTION attribute for video in EXT-X-STREAM-INF tag of variant manifest.",
+      "refs": {
+        "HlsGroupSettings$StreamInfResolution": null
+      }
+    },
+    "HlsTimedMetadataId3Frame": {
+      "base": "Indicates ID3 frame that has the timecode.",
+      "refs": {
+        "HlsGroupSettings$TimedMetadataId3Frame": null
+      }
+    },
+    "Id3Insertion": {
+      "base": "To insert ID3 tags in your output, specify two values. Use ID3 tag (Id3) to specify the base 64 encoded string and use Timecode (TimeCode) to specify the time when the tag should be inserted. To insert multiple ID3 tags in your output, create mulitple instances of ID3 insertion (Id3Insertion).",
+      "refs": {
+        "ListOfId3Insertion$member": null
+      }
+    },
+    "ImageInserter": {
+      "base": "Enable the Image inserter (ImageInserter) feature to include a graphic overlay on your video. Enable or disable this feature for each output individually. This setting is disabled by default.",
+      "refs": {
+        "VideoPreprocessor$ImageInserter": "Enable the Image inserter (ImageInserter) feature to include a graphic overlay on your video. Enable or disable this feature for each output individually. This setting is disabled by default."
+      }
+    },
+    "Input": {
+      "base": "Specifies media input",
+      "refs": {
+        "ListOfInput$member": null
+      }
+    },
+    "InputClipping": {
+      "base": "Include one instance of (InputClipping) for each input clip.",
+      "refs": {
+        "ListOfInputClipping$member": null
+      }
+    },
+    "InputDeblockFilter": {
+      "base": "Enable Deblock (InputDeblockFilter) to produce smoother motion in the output. Default is disabled. Only manaully controllable for MPEG2 and uncompressed video inputs.",
+      "refs": {
+        "Input$DeblockFilter": null,
+        "InputTemplate$DeblockFilter": null
+      }
+    },
+    "InputDenoiseFilter": {
+      "base": "Enable Denoise (InputDenoiseFilter) to filter noise from the input.  Default is disabled. Only applicable to MPEG2, H.264, H.265, and uncompressed video inputs.",
+      "refs": {
+        "Input$DenoiseFilter": null,
+        "InputTemplate$DenoiseFilter": null
+      }
+    },
+    "InputFilterEnable": {
+      "base": "Use Filter enable (InputFilterEnable) to specify how the transcoding service applies the denoise and deblock filters. You must also enable the filters separately, with Denoise (InputDenoiseFilter) and Deblock (InputDeblockFilter). * Auto - The transcoding service determines whether to apply filtering, depending on input type and quality. * Disable - The input is not filtered. This is true even if you use the API to enable them in (InputDeblockFilter) and (InputDeblockFilter). * Force - The in put is filtered regardless of input type.",
+      "refs": {
+        "Input$FilterEnable": null,
+        "InputTemplate$FilterEnable": null
+      }
+    },
+    "InputPsiControl": {
+      "base": "Set PSI control (InputPsiControl) for transport stream inputs to specify which data the demux process to scans. * Ignore PSI - Scan all PIDs for audio and video. * Use PSI - Scan only PSI data.",
+      "refs": {
+        "Input$PsiControl": null,
+        "InputTemplate$PsiControl": null
+      }
+    },
+    "InputTemplate": {
+      "base": "Specified video input in a template.",
+      "refs": {
+        "ListOfInputTemplate$member": null
+      }
+    },
+    "InputTimecodeSource": {
+      "base": "Use Timecode source (InputTimecodeSource) to specify how timecode information from your input is adjusted and encoded in all outputs for the job. Default is embedded. Set to Embedded (EMBEDDED) to use the timecode that is in the input video. If no embedded timecode is in the source, will set the timecode for the first frame to 00:00:00:00. Set to Start at 0 (ZEROBASED) to set the timecode of the initial frame to 00:00:00:00. Set to Specified start (SPECIFIEDSTART) to provide the initial timecode yourself the setting (Start).",
+      "refs": {
+        "Input$TimecodeSource": null,
+        "InputTemplate$TimecodeSource": null
+      }
+    },
+    "InsertableImage": {
+      "base": "Settings for Insertable Image",
+      "refs": {
+        "ListOfInsertableImage$member": null
+      }
+    },
+    "InternalServerErrorException": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "Job": {
+      "base": "Each job converts an input file into an output file or files. For more information, see the User Guide at http://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html",
+      "refs": {
+        "CreateJobResponse$Job": null,
+        "GetJobResponse$Job": null,
+        "ListOfJob$member": null
+      }
+    },
+    "JobSettings": {
+      "base": "JobSettings contains all the transcode settings for a job.",
+      "refs": {
+        "CreateJobRequest$Settings": null,
+        "Job$Settings": null
+      }
+    },
+    "JobStatus": {
+      "base": "A job's status can be SUBMITTED, PROGRESSING, COMPLETE, CANCELED, or ERROR.",
+      "refs": {
+        "Job$Status": null,
+        "ListJobsRequest$Status": null
+      }
+    },
+    "JobTemplate": {
+      "base": "A job template is a pre-made set of encoding instructions that you can use to quickly create a job.",
+      "refs": {
+        "CreateJobTemplateResponse$JobTemplate": null,
+        "GetJobTemplateResponse$JobTemplate": null,
+        "ListOfJobTemplate$member": null,
+        "UpdateJobTemplateResponse$JobTemplate": null
+      }
+    },
+    "JobTemplateListBy": {
+      "base": "Optional. When you request a list of job templates, you can choose to list them alphabetically by NAME or chronologically by CREATION_DATE. If you don't specify, the service will list them by name.",
+      "refs": {
+        "ListJobTemplatesRequest$ListBy": null
+      }
+    },
+    "JobTemplateSettings": {
+      "base": "JobTemplateSettings contains all the transcode settings saved in the template that will be applied to jobs created from it.",
+      "refs": {
+        "CreateJobTemplateRequest$Settings": null,
+        "JobTemplate$Settings": null,
+        "UpdateJobTemplateRequest$Settings": null
+      }
+    },
+    "LanguageCode": {
+      "base": "Code to specify the language, following the specification \"ISO 639-2 three-digit code\":http://www.loc.gov/standards/iso639-2/",
+      "refs": {
+        "AudioDescription$LanguageCode": "Indicates the language of the audio output track. The ISO 639 language specified in the 'Language Code' drop down will be used when 'Follow Input Language Code' is not selected or when 'Follow Input Language Code' is selected but there is no ISO 639 language code specified by the input.",
+        "AudioSelector$LanguageCode": "Selects a specific language code from within an audio source.",
+        "CaptionDescription$LanguageCode": "Indicates the language of the caption output track.",
+        "CaptionDescriptionPreset$LanguageCode": "Indicates the language of the caption output track.",
+        "CaptionSelector$LanguageCode": "The specific language to extract from source. If input is SCTE-27, complete this field and/or PID to select the caption language to extract. If input is DVB-Sub and output is Burn-in or SMPTE-TT, complete this field and/or PID to select the caption language to extract. If input is DVB-Sub that is being passed through, omit this field (and PID field); there is no way to extract a specific language with pass-through captions.",
+        "HlsCaptionLanguageMapping$LanguageCode": null
+      }
+    },
+    "ListJobTemplatesRequest": {
+      "base": "You can send list job templates requests with an empty body. Optionally, you can filter the response by category by specifying it in your request body. You can also optionally specify the maximum number, up to twenty, of job templates to be returned.",
+      "refs": {
+      }
+    },
+    "ListJobTemplatesResponse": {
+      "base": "Successful list job templates requests return a JSON array of job templates. If you do not specify how they are ordered, you will receive them in alphabetical order by name.",
+      "refs": {
+      }
+    },
+    "ListJobsRequest": {
+      "base": "You can send list jobs requests with an empty body. Optionally, you can filter the response by queue and/or job status by specifying them in your request body. You can also optionally specify the maximum number, up to twenty, of jobs to be returned.",
+      "refs": {
+      }
+    },
+    "ListJobsResponse": {
+      "base": "Successful list jobs requests return a JSON array of jobs. If you do not specify how they are ordered, you will receive the most recently created first.",
+      "refs": {
+      }
+    },
+    "ListOfAudioDescription": {
+      "base": null,
+      "refs": {
+        "Output$AudioDescriptions": "(AudioDescriptions) contains groups of audio encoding settings organized by audio codec. Include one instance of (AudioDescriptions) per output. (AudioDescriptions) can contain multiple groups of encoding settings.",
+        "PresetSettings$AudioDescriptions": "(AudioDescriptions) contains groups of audio encoding settings organized by audio codec. Include one instance of (AudioDescriptions) per output. (AudioDescriptions) can contain multiple groups of encoding settings."
+      }
+    },
+    "ListOfCaptionDescription": {
+      "base": null,
+      "refs": {
+        "Output$CaptionDescriptions": "(CaptionDescriptions) contains groups of captions settings. For each output that has captions, include one instance of (CaptionDescriptions). (CaptionDescriptions) can contain multiple groups of captions settings."
+      }
+    },
+    "ListOfCaptionDescriptionPreset": {
+      "base": null,
+      "refs": {
+        "PresetSettings$CaptionDescriptions": "Caption settings for this preset. There can be multiple caption settings in a single output."
+      }
+    },
+    "ListOfEndpoint": {
+      "base": null,
+      "refs": {
+        "DescribeEndpointsResponse$Endpoints": "List of endpoints"
+      }
+    },
+    "ListOfHlsAdMarkers": {
+      "base": null,
+      "refs": {
+        "HlsGroupSettings$AdMarkers": "Choose one or more ad marker types to pass SCTE35 signals through to this group of Apple HLS outputs."
+      }
+    },
+    "ListOfHlsCaptionLanguageMapping": {
+      "base": null,
+      "refs": {
+        "HlsGroupSettings$CaptionLanguageMappings": "Language to be used on Caption outputs"
+      }
+    },
+    "ListOfId3Insertion": {
+      "base": null,
+      "refs": {
+        "TimedMetadataInsertion$Id3Insertions": "Id3Insertions contains the array of Id3Insertion instances."
+      }
+    },
+    "ListOfInput": {
+      "base": null,
+      "refs": {
+        "JobSettings$Inputs": "Use Inputs (inputs) to define source file used in the transcode job. There can be multiple inputs add in a job. These inputs will be concantenated together to create the output."
+      }
+    },
+    "ListOfInputClipping": {
+      "base": null,
+      "refs": {
+        "Input$InputClippings": "(InputClippings) contains sets of start and end times that together specify a portion of the input to be used in the outputs. If you provide only a start time, the clip will be the entire input from that point to the end. If you provide only an end time, it will be the entire input up to that point. When you specify more than one input clip, the transcoding service creates the job outputs by stringing the clips together in the order you specify them.",
+        "InputTemplate$InputClippings": "(InputClippings) contains sets of start and end times that together specify a portion of the input to be used in the outputs. If you provide only a start time, the clip will be the entire input from that point to the end. If you provide only an end time, it will be the entire input up to that point. When you specify more than one input clip, the transcoding service creates the job outputs by stringing the clips together in the order you specify them."
+      }
+    },
+    "ListOfInputTemplate": {
+      "base": null,
+      "refs": {
+        "JobTemplateSettings$Inputs": "Use Inputs (inputs) to define the source file used in the transcode job. There can only be one input in a job template.  Using the API, you can include multiple inputs when referencing a job template."
+      }
+    },
+    "ListOfInsertableImage": {
+      "base": null,
+      "refs": {
+        "ImageInserter$InsertableImages": "Image to insert. Must be 32 bit windows BMP, PNG, or TGA file. Must not be  larger than the output frames."
+      }
+    },
+    "ListOfJob": {
+      "base": null,
+      "refs": {
+        "ListJobsResponse$Jobs": "List of jobs"
+      }
+    },
+    "ListOfJobTemplate": {
+      "base": null,
+      "refs": {
+        "ListJobTemplatesResponse$JobTemplates": "List of Job templates."
+      }
+    },
+    "ListOfOutput": {
+      "base": null,
+      "refs": {
+        "OutputGroup$Outputs": "This object holds groups of encoding settings, one group of settings per output."
+      }
+    },
+    "ListOfOutputChannelMapping": {
+      "base": null,
+      "refs": {
+        "ChannelMapping$OutputChannels": "List of output channels"
+      }
+    },
+    "ListOfOutputDetail": {
+      "base": null,
+      "refs": {
+        "OutputGroupDetail$OutputDetails": "Details about the output"
+      }
+    },
+    "ListOfOutputGroup": {
+      "base": null,
+      "refs": {
+        "JobSettings$OutputGroups": "**!!**(OutputGroups) contains one group of settings for each set of outputs that share a common package type. All unpackaged files (MPEG-4, MPEG-2 TS, Quicktime, MXF, and no container) are grouped in a single output group as well. Required in (OutputGroups) is a group of settings that apply to the whole group. This required object depends on the value you set for (Type) under (OutputGroups)>(OutputGroupSettings). Type, settings object pairs are as follows. * FILE_GROUP_SETTINGS, FileGroupSettings * HLS_GROUP_SETTINGS, HlsGroupSettings * DASH_ISO_GROUP_SETTINGS, DashIsoGroupSettings * MS_SMOOTH_GROUP_SETTINGS, MsSmoothGroupSettings",
+        "JobTemplateSettings$OutputGroups": "**!!**(OutputGroups) contains one group of settings for each set of outputs that share a common package type. All unpackaged files (MPEG-4, MPEG-2 TS, Quicktime, MXF, and no container) are grouped in a single output group as well. Required in (OutputGroups) is a group of settings that apply to the whole group. This required object depends on the value you set for (Type) under (OutputGroups)>(OutputGroupSettings). Type, settings object pairs are as follows. * FILE_GROUP_SETTINGS, FileGroupSettings * HLS_GROUP_SETTINGS, HlsGroupSettings * DASH_ISO_GROUP_SETTINGS, DashIsoGroupSettings * MS_SMOOTH_GROUP_SETTINGS, MsSmoothGroupSettings"
+      }
+    },
+    "ListOfOutputGroupDetail": {
+      "base": null,
+      "refs": {
+        "Job$OutputGroupDetails": "List of output group details"
+      }
+    },
+    "ListOfPreset": {
+      "base": null,
+      "refs": {
+        "ListPresetsResponse$Presets": "List of presets"
+      }
+    },
+    "ListOfQueue": {
+      "base": null,
+      "refs": {
+        "ListQueuesResponse$Queues": "List of queues"
+      }
+    },
+    "ListOf__integer": {
+      "base": null,
+      "refs": {
+        "AudioSelector$Pids": "Selects a specific PID from within an audio source (e.g. 257 selects PID 0x101).",
+        "AudioSelector$Tracks": "Identify the channel to include in this selector by entering the 1-based track index.  To combine several tracks, enter a comma-separated list, e.g. \"1,2,3\" for tracks 1-3.",
+        "M2tsSettings$AudioPids": "Packet Identifier (PID) of the elementary audio stream(s) in the transport stream. Multiple values are accepted, and can be entered in ranges and/or by comma separation. Can be entered as decimal or hexadecimal values.",
+        "M2tsSettings$DvbSubPids": "Packet Identifier (PID) for input source DVB Subtitle data to this output. Multiple values are accepted, and can be entered in ranges and/or by comma separation. Can be entered as decimal or hexadecimal values.",
+        "M3u8Settings$AudioPids": "Packet Identifier (PID) of the elementary audio stream(s) in the transport stream. Multiple values are accepted, and can be entered in ranges and/or by comma separation. Can be entered as decimal or hexadecimal values.",
+        "OutputChannelMapping$InputChannels": "List of input channels"
+      }
+    },
+    "ListOf__string": {
+      "base": null,
+      "refs": {
+        "AudioSelectorGroup$AudioSelectorNames": "Name of an \"Audio Selector\":#inputs-audio_selector within the same input to include in the group.  Audio selector names are standardized, based on their order within the input (e.g. \"Audio Selector 1\").  The audio_selector_name parameter can be repeated to add any number of audio selectors to the group.",
+        "SpekeKeyProvider$SystemIds": "Relates to SPEKE implementation. DRM system identifiers. DASH output groups support a max of two system ids. Other group types support one system id."
+      }
+    },
+    "ListPresetsRequest": {
+      "base": "You can send list presets requests with an empty body. Optionally, you can filter the response by category by specifying it in your request body. You can also optionally specify the maximum number, up to twenty, of queues to be returned.",
+      "refs": {
+      }
+    },
+    "ListPresetsResponse": {
+      "base": "Successful list presets requests return a JSON array of presets. If you do not specify how they are ordered, you will receive them alphabetically by name.",
+      "refs": {
+      }
+    },
+    "ListQueuesRequest": {
+      "base": "You can send list queues requests with an empty body. You can optionally specify the maximum number, up to twenty, of queues to be returned.",
+      "refs": {
+      }
+    },
+    "ListQueuesResponse": {
+      "base": "Successful list queues return a JSON array of queues. If you do not specify how they are ordered, you will receive them alphabetically by name.",
+      "refs": {
+      }
+    },
+    "M2tsAudioBufferModel": {
+      "base": "Selects between the DVB and ATSC buffer models for Dolby Digital audio.",
+      "refs": {
+        "M2tsSettings$AudioBufferModel": null
+      }
+    },
+    "M2tsBufferModel": {
+      "base": "Controls what buffer model to use for accurate interleaving. If set to MULTIPLEX, use multiplex  buffer model. If set to NONE, this can lead to lower latency, but low-memory devices may not be able to play back the stream without interruptions.",
+      "refs": {
+        "M2tsSettings$BufferModel": null
+      }
+    },
+    "M2tsEbpAudioInterval": {
+      "base": "When set to VIDEO_AND_FIXED_INTERVALS, audio EBP markers will be added to partitions 3 and 4. The interval between these additional markers will be fixed, and will be slightly shorter than the video EBP marker interval. When set to VIDEO_INTERVAL, these additional markers will not be inserted. Only applicable when EBP segmentation markers are is selected (segmentationMarkers is EBP or EBP_LEGACY).",
+      "refs": {
+        "M2tsSettings$EbpAudioInterval": null
+      }
+    },
+    "M2tsEbpPlacement": {
+      "base": "Selects which PIDs to place EBP markers on. They can either be placed only on the video PID, or on both the video PID and all audio PIDs. Only applicable when EBP segmentation markers are is selected (segmentationMarkers is EBP or EBP_LEGACY).",
+      "refs": {
+        "M2tsSettings$EbpPlacement": null
+      }
+    },
+    "M2tsEsRateInPes": {
+      "base": "Controls whether to include the ES Rate field in the PES header.",
+      "refs": {
+        "M2tsSettings$EsRateInPes": null
+      }
+    },
+    "M2tsPcrControl": {
+      "base": "When set to PCR_EVERY_PES_PACKET, a Program Clock Reference value is inserted for every Packetized Elementary Stream (PES) header. This is effective only when the PCR PID is the same as the video or audio elementary stream.",
+      "refs": {
+        "M2tsSettings$PcrControl": null
+      }
+    },
+    "M2tsRateMode": {
+      "base": "When set to CBR, inserts null packets into transport stream to fill specified bitrate. When set to VBR, the bitrate setting acts as the maximum bitrate, but the output will not be padded up to that bitrate.",
+      "refs": {
+        "M2tsSettings$RateMode": null
+      }
+    },
+    "M2tsScte35Source": {
+      "base": "Enables SCTE-35 passthrough (scte35Source) to pass any SCTE-35 signals from input to output. This is only available for certain containers.",
+      "refs": {
+        "M2tsSettings$Scte35Source": null
+      }
+    },
+    "M2tsSegmentationMarkers": {
+      "base": "Inserts segmentation markers at each segmentation_time period. rai_segstart sets the Random Access Indicator bit in the adaptation field. rai_adapt sets the RAI bit and adds the current timecode in the private data bytes. psi_segstart inserts PAT and PMT tables at the start of segments. ebp adds Encoder Boundary Point information to the adaptation field as per OpenCable specification OC-SP-EBP-I01-130118. ebp_legacy adds Encoder Boundary Point information to the adaptation field using a legacy proprietary format.",
+      "refs": {
+        "M2tsSettings$SegmentationMarkers": null
+      }
+    },
+    "M2tsSegmentationStyle": {
+      "base": "The segmentation style parameter controls how segmentation markers are inserted into the transport stream. With avails, it is possible that segments may be truncated, which can influence where future segmentation markers are inserted. When a segmentation style of \"reset_cadence\" is selected and a segment is truncated due to an avail, we will reset the segmentation cadence. This means the subsequent segment will have a duration of of $segmentation_time seconds. When a segmentation style of \"maintain_cadence\" is selected and a segment is truncated due to an avail, we will not reset the segmentation cadence. This means the subsequent segment will likely be truncated as well. However, all segments after that will have a duration of $segmentation_time seconds. Note that EBP lookahead is a slight exception to this rule.",
+      "refs": {
+        "M2tsSettings$SegmentationStyle": null
+      }
+    },
+    "M2tsSettings": {
+      "base": "Settings for M2TS Container.",
+      "refs": {
+        "ContainerSettings$M2tsSettings": null
+      }
+    },
+    "M3u8PcrControl": {
+      "base": "When set to PCR_EVERY_PES_PACKET a Program Clock Reference value is inserted for every Packetized Elementary Stream (PES) header. This parameter is effective only when the PCR PID is the same as the video or audio elementary stream.",
+      "refs": {
+        "M3u8Settings$PcrControl": null
+      }
+    },
+    "M3u8Scte35Source": {
+      "base": "Enables SCTE-35 passthrough (scte35Source) to pass any SCTE-35 signals from input to output. This is only available for certain containers.",
+      "refs": {
+        "M3u8Settings$Scte35Source": null
+      }
+    },
+    "M3u8Settings": {
+      "base": "Settings for TS segments in HLS",
+      "refs": {
+        "ContainerSettings$M3u8Settings": null
+      }
+    },
+    "MapOfAudioSelector": {
+      "base": null,
+      "refs": {
+        "Input$AudioSelectors": "Use Audio selectors (AudioSelectors) to specify a track or set of tracks from the input that you will use in your outputs. You can use mutiple Audio selectors per input.",
+        "InputTemplate$AudioSelectors": "Use Audio selectors (AudioSelectors) to specify a track or set of tracks from the input that you will use in your outputs. You can use mutiple Audio selectors per input."
+      }
+    },
+    "MapOfAudioSelectorGroup": {
+      "base": null,
+      "refs": {
+        "Input$AudioSelectorGroups": "Specifies set of audio selectors within an input to combine. An input may have multiple audio selector groups. See \"Audio Selector Group\":#inputs-audio_selector_group for more information.",
+        "InputTemplate$AudioSelectorGroups": "Specifies set of audio selectors within an input to combine. An input may have multiple audio selector groups. See \"Audio Selector Group\":#inputs-audio_selector_group for more information."
+      }
+    },
+    "MapOfCaptionSelector": {
+      "base": null,
+      "refs": {
+        "Input$CaptionSelectors": "Use Captions selectors (CaptionSelectors) to specify the captions data from the input that you will use in your outputs. You can use mutiple captions selectors per input.",
+        "InputTemplate$CaptionSelectors": "Use Captions selectors (CaptionSelectors) to specify the captions data from the input that you will use in your outputs. You can use mutiple captions selectors per input."
+      }
+    },
+    "MapOf__string": {
+      "base": null,
+      "refs": {
+        "CreateJobRequest$UserMetadata": "User-defined metadata that you want to associate with an MediaConvert job. You specify metadata in key/value pairs.",
+        "Job$UserMetadata": "User-defined metadata that you want to associate with an MediaConvert job. You specify metadata in key/value pairs."
+      }
+    },
+    "MovClapAtom": {
+      "base": "When enabled, include 'clap' atom if appropriate for the video output settings.",
+      "refs": {
+        "MovSettings$ClapAtom": null
+      }
+    },
+    "MovCslgAtom": {
+      "base": "When enabled, file composition times will start at zero, composition times in the 'ctts' (composition time to sample) box for B-frames will be negative, and a 'cslg' (composition shift least greatest) box will be included per 14496-1 amendment 1. This improves compatibility with Apple players and tools.",
+      "refs": {
+        "MovSettings$CslgAtom": null
+      }
+    },
+    "MovMpeg2FourCCControl": {
+      "base": "When set to XDCAM, writes MPEG2 video streams into the QuickTime file using XDCAM fourcc codes. This increases compatibility with Apple editors and players, but may decrease compatibility with other players. Only applicable when the video codec is MPEG2.",
+      "refs": {
+        "MovSettings$Mpeg2FourCCControl": null
+      }
+    },
+    "MovPaddingControl": {
+      "base": "If set to OMNEON, inserts Omneon-compatible padding",
+      "refs": {
+        "MovSettings$PaddingControl": null
+      }
+    },
+    "MovReference": {
+      "base": "A value of 'external' creates separate media files and the wrapper file (.mov) contains references to these media files. A value of 'self_contained' creates only a wrapper (.mov) file and this file contains all of the media.",
+      "refs": {
+        "MovSettings$Reference": null
+      }
+    },
+    "MovSettings": {
+      "base": "Settings for MOV Container.",
+      "refs": {
+        "ContainerSettings$MovSettings": null
+      }
+    },
+    "Mp2Settings": {
+      "base": "Required when you set (Codec) under (AudioDescriptions)>(CodecSettings) to the value MP2.",
+      "refs": {
+        "AudioCodecSettings$Mp2Settings": null
+      }
+    },
+    "Mp4CslgAtom": {
+      "base": "When enabled, file composition times will start at zero, composition times in the 'ctts' (composition time to sample) box for B-frames will be negative, and a 'cslg' (composition shift least greatest) box will be included per 14496-1 amendment 1. This improves compatibility with Apple players and tools.",
+      "refs": {
+        "Mp4Settings$CslgAtom": null
+      }
+    },
+    "Mp4FreeSpaceBox": {
+      "base": "Inserts a free-space box immediately after the moov box.",
+      "refs": {
+        "Mp4Settings$FreeSpaceBox": null
+      }
+    },
+    "Mp4MoovPlacement": {
+      "base": "If set to PROGRESSIVE_DOWNLOAD, the MOOV atom is relocated to the beginning of the archive as required for progressive downloading. Otherwise it is placed normally at the end.",
+      "refs": {
+        "Mp4Settings$MoovPlacement": null
+      }
+    },
+    "Mp4Settings": {
+      "base": "Settings for MP4 Container",
+      "refs": {
+        "ContainerSettings$Mp4Settings": null
+      }
+    },
+    "Mpeg2AdaptiveQuantization": {
+      "base": "Adaptive quantization. Allows intra-frame quantizers to vary to improve visual quality.",
+      "refs": {
+        "Mpeg2Settings$AdaptiveQuantization": null
+      }
+    },
+    "Mpeg2CodecLevel": {
+      "base": "Use Level (Mpeg2CodecLevel) to set the MPEG-2 level for the video output.",
+      "refs": {
+        "Mpeg2Settings$CodecLevel": null
+      }
+    },
+    "Mpeg2CodecProfile": {
+      "base": "Use Profile (Mpeg2CodecProfile) to set the MPEG-2 profile for the video output.",
+      "refs": {
+        "Mpeg2Settings$CodecProfile": null
+      }
+    },
+    "Mpeg2FramerateControl": {
+      "base": "Using the API, set FramerateControl to INITIALIZE_FROM_SOURCE if you want the service to use the framerate from the input. Using the console, do this by choosing INITIALIZE_FROM_SOURCE for Framerate.",
+      "refs": {
+        "Mpeg2Settings$FramerateControl": null
+      }
+    },
+    "Mpeg2FramerateConversionAlgorithm": {
+      "base": "When set to INTERPOLATE, produces smoother motion during framerate conversion.",
+      "refs": {
+        "Mpeg2Settings$FramerateConversionAlgorithm": null
+      }
+    },
+    "Mpeg2GopSizeUnits": {
+      "base": "Indicates if the GOP Size in MPEG2 is specified in frames or seconds. If seconds the system will convert the GOP Size into a frame count at run time.",
+      "refs": {
+        "Mpeg2Settings$GopSizeUnits": null
+      }
+    },
+    "Mpeg2InterlaceMode": {
+      "base": "Use Interlace mode (InterlaceMode) to choose the scan line type for the output. * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce interlaced output with the entire output having the same field polarity (top or bottom first). * Follow, Default Top (FOLLOw_TOP_FIELD) and Follow, Default Bottom (FOLLOW_BOTTOM_FIELD) use the same  field polarity as the source. Therefore, behavior depends on the input scan type. - If the source is interlaced, the output will be interlaced with the same polarity as the source (it will follow the source). The output could therefore be a mix of \"top field first\" and \"bottom field first\". - If the source is progressive, the output will be interlaced with \"top field first\" or \"bottom field first\" polarity, depending on which of the Follow options you chose.",
+      "refs": {
+        "Mpeg2Settings$InterlaceMode": null
+      }
+    },
+    "Mpeg2IntraDcPrecision": {
+      "base": "Use Intra DC precision (Mpeg2IntraDcPrecision) to set quantization precision for intra-block DC coefficients. If you choose the value auto, the service will automatically select the precision based on the per-frame compression ratio.",
+      "refs": {
+        "Mpeg2Settings$IntraDcPrecision": null
+      }
+    },
+    "Mpeg2ParControl": {
+      "base": "Using the API, enable ParFollowSource if you want the service to use the pixel aspect ratio from the input. Using the console, do this by choosing Follow source for Pixel aspect ratio.",
+      "refs": {
+        "Mpeg2Settings$ParControl": null
+      }
+    },
+    "Mpeg2QualityTuningLevel": {
+      "base": "Use Quality tuning level (Mpeg2QualityTuningLevel) to specifiy whether to use single-pass or multipass video encoding.",
+      "refs": {
+        "Mpeg2Settings$QualityTuningLevel": null
+      }
+    },
+    "Mpeg2RateControlMode": {
+      "base": "Use Rate control mode (Mpeg2RateControlMode) to specifiy whether the bitrate is variable (vbr) or constant (cbr).",
+      "refs": {
+        "Mpeg2Settings$RateControlMode": null
+      }
+    },
+    "Mpeg2SceneChangeDetect": {
+      "base": "Scene change detection (inserts I-frames on scene changes).",
+      "refs": {
+        "Mpeg2Settings$SceneChangeDetect": null
+      }
+    },
+    "Mpeg2Settings": {
+      "base": "Required when you set (Codec) under (VideoDescription)>(CodecSettings) to the value MPEG2.",
+      "refs": {
+        "VideoCodecSettings$Mpeg2Settings": null
+      }
+    },
+    "Mpeg2SlowPal": {
+      "base": "Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled as 25fps, and audio is sped up correspondingly.",
+      "refs": {
+        "Mpeg2Settings$SlowPal": null
+      }
+    },
+    "Mpeg2SpatialAdaptiveQuantization": {
+      "base": "Adjust quantization within each frame based on spatial variation of content complexity.",
+      "refs": {
+        "Mpeg2Settings$SpatialAdaptiveQuantization": null
+      }
+    },
+    "Mpeg2Syntax": {
+      "base": "Produces a Type D-10 compatible bitstream (SMPTE 356M-2001).",
+      "refs": {
+        "Mpeg2Settings$Syntax": null
+      }
+    },
+    "Mpeg2Telecine": {
+      "base": "Only use Telecine (Mpeg2Telecine) when you set Framerate (Framerate) to 29.970. Set Telecine (Mpeg2Telecine) to Hard (hard) to produce a 29.97i output from a 23.976 input. Set it to Soft (soft) to produce 23.976 output and leave converstion to the player.",
+      "refs": {
+        "Mpeg2Settings$Telecine": null
+      }
+    },
+    "Mpeg2TemporalAdaptiveQuantization": {
+      "base": "Adjust quantization within each frame based on temporal variation of content complexity.",
+      "refs": {
+        "Mpeg2Settings$TemporalAdaptiveQuantization": null
+      }
+    },
+    "MsSmoothAudioDeduplication": {
+      "base": "COMBINE_DUPLICATE_STREAMS combines identical audio encoding settings across a Microsoft Smooth output group into a single audio stream.",
+      "refs": {
+        "MsSmoothGroupSettings$AudioDeduplication": null
+      }
+    },
+    "MsSmoothEncryptionSettings": {
+      "base": "If you are using DRM, set DRM System (MsSmoothEncryptionSettings) to specify the value SpekeKeyProvider.",
+      "refs": {
+        "MsSmoothGroupSettings$Encryption": null
+      }
+    },
+    "MsSmoothGroupSettings": {
+      "base": "Required when you set (Type) under (OutputGroups)>(OutputGroupSettings) to MS_SMOOTH_GROUP_SETTINGS.",
+      "refs": {
+        "OutputGroupSettings$MsSmoothGroupSettings": null
+      }
+    },
+    "MsSmoothManifestEncoding": {
+      "base": "Use Manifest encoding (MsSmoothManifestEncoding) to specify the encoding format for the server and client manifest. Valid options are utf8 and utf16.",
+      "refs": {
+        "MsSmoothGroupSettings$ManifestEncoding": null
+      }
+    },
+    "NielsenConfiguration": {
+      "base": "Settings for Nielsen Configuration",
+      "refs": {
+        "JobSettings$NielsenConfiguration": null,
+        "JobTemplateSettings$NielsenConfiguration": null
+      }
+    },
+    "NoiseReducer": {
+      "base": "Enable the Noise reducer (NoiseReducer) feature to remove noise from your video output if necessary. Enable or disable this feature for each output individually. This setting is disabled by default. When you enable Noise reducer (NoiseReducer), you must also select a value for Noise reducer filter (NoiseReducerFilter).",
+      "refs": {
+        "VideoPreprocessor$NoiseReducer": "Enable the Noise reducer (NoiseReducer) feature to remove noise from your video output if necessary. Enable or disable this feature for each output individually. This setting is disabled by default."
+      }
+    },
+    "NoiseReducerFilter": {
+      "base": "Use Noise reducer filter (NoiseReducerFilter) to select one of the following spatial image filtering functions. To use this setting, you must also enable Noise reducer (NoiseReducer). * Bilateral is an edge preserving noise reduction filter * Mean (softest), Gaussian, Lanczos, and Sharpen (sharpest) are convolution filters * Conserve is a min/max noise reduction filter * Spatial is frequency-domain filter based on JND principles.",
+      "refs": {
+        "NoiseReducer$Filter": null
+      }
+    },
+    "NoiseReducerFilterSettings": {
+      "base": "Settings for a noise reducer filter",
+      "refs": {
+        "NoiseReducer$FilterSettings": null
+      }
+    },
+    "NoiseReducerSpatialFilterSettings": {
+      "base": "Noise reducer filter settings for spatial filter.",
+      "refs": {
+        "NoiseReducer$SpatialFilterSettings": null
+      }
+    },
+    "NotFoundException": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "Order": {
+      "base": "When you request lists of resources, you can optionally specify whether they are sorted in ASCENDING or DESCENDING order. Default varies by resource.",
+      "refs": {
+        "ListJobTemplatesRequest$Order": null,
+        "ListJobsRequest$Order": null,
+        "ListPresetsRequest$Order": null,
+        "ListQueuesRequest$Order": null
+      }
+    },
+    "Output": {
+      "base": "An output object describes the settings for a single output file or stream in an output group.",
+      "refs": {
+        "ListOfOutput$member": null
+      }
+    },
+    "OutputChannelMapping": {
+      "base": "OutputChannel mapping settings.",
+      "refs": {
+        "ListOfOutputChannelMapping$member": null
+      }
+    },
+    "OutputDetail": {
+      "base": "Details regarding output",
+      "refs": {
+        "ListOfOutputDetail$member": null
+      }
+    },
+    "OutputGroup": {
+      "base": "Group of outputs",
+      "refs": {
+        "ListOfOutputGroup$member": null
+      }
+    },
+    "OutputGroupDetail": {
+      "base": "Contains details about the output groups specified in the job settings.",
+      "refs": {
+        "ListOfOutputGroupDetail$member": null
+      }
+    },
+    "OutputGroupSettings": {
+      "base": "Output Group settings, including type",
+      "refs": {
+        "OutputGroup$OutputGroupSettings": null
+      }
+    },
+    "OutputGroupType": {
+      "base": null,
+      "refs": {
+        "OutputGroupSettings$Type": "Type of output group (File group, Apple HLS, DASH ISO, Microsoft Smooth Streaming)"
+      }
+    },
+    "OutputSdt": {
+      "base": "Selects method of inserting SDT information into output stream.  \"Follow input SDT\" copies SDT information from input stream to  output stream. \"Follow input SDT if present\" copies SDT information from  input stream to output stream if SDT information is present in the input,  otherwise it will fall back on the user-defined values. Enter \"SDT  Manually\" means user will enter the SDT information. \"No SDT\" means output  stream will not contain SDT information.",
+      "refs": {
+        "DvbSdtSettings$OutputSdt": null
+      }
+    },
+    "OutputSettings": {
+      "base": "Specific settings for this type of output.",
+      "refs": {
+        "Output$OutputSettings": null
+      }
+    },
+    "Preset": {
+      "base": "A preset is a collection of preconfigured media conversion settings that you want MediaConvert to apply to the output during the conversion process.",
+      "refs": {
+        "CreatePresetResponse$Preset": null,
+        "GetPresetResponse$Preset": null,
+        "ListOfPreset$member": null,
+        "UpdatePresetResponse$Preset": null
+      }
+    },
+    "PresetListBy": {
+      "base": "Optional. When you request a list of presets, you can choose to list them alphabetically by NAME or chronologically by CREATION_DATE. If you don't specify, the service will list them by name.",
+      "refs": {
+        "ListPresetsRequest$ListBy": null
+      }
+    },
+    "PresetSettings": {
+      "base": "Settings for preset",
+      "refs": {
+        "CreatePresetRequest$Settings": null,
+        "Preset$Settings": null,
+        "UpdatePresetRequest$Settings": null
+      }
+    },
+    "ProresCodecProfile": {
+      "base": "Use Profile (ProResCodecProfile) to specifiy the type of Apple ProRes codec to use for this output.",
+      "refs": {
+        "ProresSettings$CodecProfile": null
+      }
+    },
+    "ProresFramerateControl": {
+      "base": "Using the API, set FramerateControl to INITIALIZE_FROM_SOURCE if you want the service to use the framerate from the input. Using the console, do this by choosing INITIALIZE_FROM_SOURCE for Framerate.",
+      "refs": {
+        "ProresSettings$FramerateControl": null
+      }
+    },
+    "ProresFramerateConversionAlgorithm": {
+      "base": "When set to INTERPOLATE, produces smoother motion during framerate conversion.",
+      "refs": {
+        "ProresSettings$FramerateConversionAlgorithm": null
+      }
+    },
+    "ProresInterlaceMode": {
+      "base": "Use Interlace mode (InterlaceMode) to choose the scan line type for the output. * Top Field First (TOP_FIELD) and Bottom Field First (BOTTOM_FIELD) produce interlaced output with the entire output having the same field polarity (top or bottom first). * Follow, Default Top (FOLLOw_TOP_FIELD) and Follow, Default Bottom (FOLLOW_BOTTOM_FIELD) use the same  field polarity as the source. Therefore, behavior depends on the input scan type. - If the source is interlaced, the output will be interlaced with the same polarity as the source (it will follow the source). The output could therefore be a mix of \"top field first\" and \"bottom field first\". - If the source is progressive, the output will be interlaced with \"top field first\" or \"bottom field first\" polarity, depending on which of the Follow options you chose.",
+      "refs": {
+        "ProresSettings$InterlaceMode": null
+      }
+    },
+    "ProresParControl": {
+      "base": "Use (ProresParControl) to specify how the service determines the pixel aspect ratio. Set to Follow source (INITIALIZE_FROM_SOURCE) to use the pixel aspect ratio from the input.  To specify a different pixel aspect ratio: Using the console, choose it from the dropdown menu. Using the API, set ProresParControl to (SPECIFIED) and provide  for (ParNumerator) and (ParDenominator).",
+      "refs": {
+        "ProresSettings$ParControl": null
+      }
+    },
+    "ProresSettings": {
+      "base": "Required when you set (Codec) under (VideoDescription)>(CodecSettings) to the value PRORES.",
+      "refs": {
+        "VideoCodecSettings$ProresSettings": null
+      }
+    },
+    "ProresSlowPal": {
+      "base": "Enables Slow PAL rate conversion. 23.976fps and 24fps input is relabeled as 25fps, and audio is sped up correspondingly.",
+      "refs": {
+        "ProresSettings$SlowPal": null
+      }
+    },
+    "ProresTelecine": {
+      "base": "Only use Telecine (ProresTelecine) when you set Framerate (Framerate) to 29.970. Set Telecine (ProresTelecine) to Hard (hard) to produce a 29.97i output from a 23.976 input. Set it to Soft (soft) to produce 23.976 output and leave converstion to the player.",
+      "refs": {
+        "ProresSettings$Telecine": null
+      }
+    },
+    "Queue": {
+      "base": "MediaConvert jobs are submitted to a queue. Unless specified otherwise jobs are submitted to a built-in default queue. User can create additional queues to separate the jobs of different categories or priority.",
+      "refs": {
+        "CreateQueueResponse$Queue": null,
+        "GetQueueResponse$Queue": null,
+        "ListOfQueue$member": null,
+        "UpdateQueueResponse$Queue": null
+      }
+    },
+    "QueueListBy": {
+      "base": "Optional. When you request a list of queues, you can choose to list them alphabetically by NAME or chronologically by CREATION_DATE. If you don't specify, the service will list them by creation date.",
+      "refs": {
+        "ListQueuesRequest$ListBy": null
+      }
+    },
+    "QueueStatus": {
+      "base": "Queues can be ACTIVE or PAUSED. If you pause a queue, jobs in that queue will not begin. Jobs running when a queue is paused continue to run until they finish or error out.",
+      "refs": {
+        "Queue$Status": null,
+        "UpdateQueueRequest$Status": null
+      }
+    },
+    "Rectangle": {
+      "base": "Use Rectangle to identify a specific area of the video frame.",
+      "refs": {
+        "VideoDescription$Crop": "Applies only if your input aspect ratio is different from your output aspect ratio. Use Input cropping rectangle (Crop) to specify the  video area the service will include in the output. This will crop the input source, causing video pixels to be removed on encode. Do not use this setting if you have enabled Stretch to output (stretchToOutput) in your output settings.",
+        "VideoDescription$Position": "Use Position (Position) to point to a rectangle object to define your position. This setting overrides any other aspect ratio."
+      }
+    },
+    "RemixSettings": {
+      "base": "Use Manual audio remixing (RemixSettings) to adjust audio levels for each output channel. With audio remixing, you can output more or fewer audio channels than your input audio source provides.",
+      "refs": {
+        "AudioDescription$RemixSettings": "Advanced audio remixing settings.",
+        "AudioSelector$RemixSettings": "Advanced audio remixing settings."
+      }
+    },
+    "RespondToAfd": {
+      "base": "Use Respond to AFD (RespondToAfd) to specify how the service changes the video itself in response to AFD values in the input. * Choose Respond to clip the input video frame according to the AFD value, input display aspect ratio, and output display aspect ratio. * Choose Passthrough to include the input AFD values. Do not choose this when AfdSignaling is set to (NONE). A preferred implementation of this workflow is to set RespondToAfd to (NONE) and set AfdSignaling to (AUTO). * Choose None to remove all input AFD values from this output.",
+      "refs": {
+        "VideoDescription$RespondToAfd": null
+      }
+    },
+    "ScalingBehavior": {
+      "base": "Applies only if your input aspect ratio is different from your output aspect ratio. Enable Stretch to output (StretchToOutput) to have the service stretch your video image to fit. Leave this setting disabled to allow the service to letterbox your video instead. This setting overrides any positioning value you specify elsewhere in the job.",
+      "refs": {
+        "VideoDescription$ScalingBehavior": null
+      }
+    },
+    "SccDestinationFramerate": {
+      "base": "Set Framerate (SccDestinationFramerate) to make sure that the captions and the video are synchronized in the output. Specify a framerate that matches the framerate of the associated video. If the video framerate is 29.97, choose 29.97 dropframe (FRAMERATE_29_97_DROPFRAME) only if the video has video_insertion=true and drop_frame_timecode=true; otherwise, choose 29.97 non-dropframe (FRAMERATE_29_97_NON_DROPFRAME).",
+      "refs": {
+        "SccDestinationSettings$Framerate": null
+      }
+    },
+    "SccDestinationSettings": {
+      "base": "Settings for SCC caption output.",
+      "refs": {
+        "CaptionDestinationSettings$SccDestinationSettings": null
+      }
+    },
+    "SpekeKeyProvider": {
+      "base": "Settings for use with a SPEKE key provider",
+      "refs": {
+        "DashIsoEncryptionSettings$SpekeKeyProvider": null,
+        "HlsEncryptionSettings$SpekeKeyProvider": null,
+        "MsSmoothEncryptionSettings$SpekeKeyProvider": null
+      }
+    },
+    "StaticKeyProvider": {
+      "base": "Settings for use with a SPEKE key provider.",
+      "refs": {
+        "HlsEncryptionSettings$StaticKeyProvider": null
+      }
+    },
+    "TeletextDestinationSettings": {
+      "base": "Settings for Teletext caption output",
+      "refs": {
+        "CaptionDestinationSettings$TeletextDestinationSettings": null
+      }
+    },
+    "TeletextSourceSettings": {
+      "base": "Settings specific to Teletext caption sources, including Page number.",
+      "refs": {
+        "CaptionSourceSettings$TeletextSourceSettings": null
+      }
+    },
+    "TimecodeBurnin": {
+      "base": "Timecode burn-in (TimecodeBurnIn)--Burns the output timecode and specified prefix into the output.",
+      "refs": {
+        "VideoPreprocessor$TimecodeBurnin": "Timecode burn-in (TimecodeBurnIn)--Burns the output timecode and specified prefix into the output."
+      }
+    },
+    "TimecodeBurninPosition": {
+      "base": "Use Position (Position) under under Timecode burn-in (TimecodeBurnIn) to specify the location the burned-in timecode on output video.",
+      "refs": {
+        "TimecodeBurnin$Position": null
+      }
+    },
+    "TimecodeConfig": {
+      "base": "Contains settings used to acquire and adjust timecode information from inputs.",
+      "refs": {
+        "JobSettings$TimecodeConfig": "Contains settings used to acquire and adjust timecode information from inputs.",
+        "JobTemplateSettings$TimecodeConfig": "Contains settings used to acquire and adjust timecode information from inputs."
+      }
+    },
+    "TimecodeSource": {
+      "base": "Use Timecode source (TimecodeSource) to set how timecodes are handled within this input. To make sure that your video, audio, captions, and markers are synchronized and that time-based features, such as image inserter, work correctly, choose the Timecode source option that matches your assets. All timecodes are in a 24-hour format with frame number (HH:MM:SS:FF). * Embedded (EMBEDDED) - Use the timecode that is in the input video. If no embedded timecode is in the source, the service will use Start at 0 (ZEROBASED) instead. * Start at 0 (ZEROBASED) - Set the timecode of the initial frame to 00:00:00:00. * Specified Start (SPECIFIEDSTART) - Set the timecode of the initial frame to a value other than zero. You use Start timecode (Start) to provide this value.",
+      "refs": {
+        "TimecodeConfig$Source": null
+      }
+    },
+    "TimedMetadata": {
+      "base": "If PASSTHROUGH, inserts ID3 timed metadata from the timed_metadata REST command into this output. Only available for certain containers.",
+      "refs": {
+        "M3u8Settings$TimedMetadata": null
+      }
+    },
+    "TimedMetadataInsertion": {
+      "base": "Enable Timed metadata insertion (TimedMetadataInsertion) to include ID3 tags in your job. To include timed metadata, you must enable it here, enable it in each output container, and specify tags and timecodes in ID3 insertion (Id3Insertion) objects.",
+      "refs": {
+        "JobSettings$TimedMetadataInsertion": null,
+        "JobTemplateSettings$TimedMetadataInsertion": null
+      }
+    },
+    "Timing": {
+      "base": "Information about when jobs are submitted, started, and finished is specified in Unix epoch format in seconds.",
+      "refs": {
+        "Job$Timing": null
+      }
+    },
+    "TooManyRequestsException": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "TtmlDestinationSettings": {
+      "base": "Settings for TTML caption output",
+      "refs": {
+        "CaptionDestinationSettings$TtmlDestinationSettings": "Settings specific to TTML caption outputs, including Pass style information (TtmlStylePassthrough)."
+      }
+    },
+    "TtmlStylePassthrough": {
+      "base": "Pass through style and position information from a TTML-like input source (TTML, SMPTE-TT, CFF-TT) to the CFF-TT output or TTML output.",
+      "refs": {
+        "TtmlDestinationSettings$StylePassthrough": null
+      }
+    },
+    "Type": {
+      "base": null,
+      "refs": {
+        "JobTemplate$Type": "A job template can be of two types: system or custom. System or built-in job templates can’t be modified or deleted by the user.",
+        "Preset$Type": "A preset can be of two types: system or custom. System or built-in preset can’t be modified or deleted by the user.",
+        "Queue$Type": "A queue can be of two types: system or custom. System or built-in queues can’t be modified or deleted by the user."
+      }
+    },
+    "UpdateJobTemplateRequest": {
+      "base": "Modify a job template by sending a request with the job template name and any of the following that you wish to change: description, category, and queue.",
+      "refs": {
+      }
+    },
+    "UpdateJobTemplateResponse": {
+      "base": "Successful update job template requests will return the new job template JSON.",
+      "refs": {
+      }
+    },
+    "UpdatePresetRequest": {
+      "base": "Modify a preset by sending a request with the preset name and any of the following that you wish to change: description, category, and transcoding settings.",
+      "refs": {
+      }
+    },
+    "UpdatePresetResponse": {
+      "base": "Successful update preset requests will return the new preset JSON.",
+      "refs": {
+      }
+    },
+    "UpdateQueueRequest": {
+      "base": "Modify a queue by sending a request with the queue name and any of the following that you wish to change - description, status. You pause or activate a queue by changing its status between ACTIVE and PAUSED.",
+      "refs": {
+      }
+    },
+    "UpdateQueueResponse": {
+      "base": "Successful update queue requests will return the new queue JSON.",
+      "refs": {
+      }
+    },
+    "VideoCodec": {
+      "base": "Type of video codec",
+      "refs": {
+        "VideoCodecSettings$Codec": null
+      }
+    },
+    "VideoCodecSettings": {
+      "base": "Video codec settings, (CodecSettings) under (VideoDescription), contains the group of settings related to video encoding. The settings in this group vary depending on the value you choose for Video codec (Codec). For each codec enum you choose, define the corresponding settings object. The following lists the codec enum, settings object pairs. * H_264, H264Settings * H_265, H265Settings * MPEG2, Mpeg2Settings * PRORES, ProresSettings * FRAME_CAPTURE, FrameCaptureSettings",
+      "refs": {
+        "VideoDescription$CodecSettings": null
+      }
+    },
+    "VideoDescription": {
+      "base": "Settings for video outputs",
+      "refs": {
+        "Output$VideoDescription": "(VideoDescription) contains a group of video encoding settings. The specific video settings depend on the video codec you choose when you specify a value for Video codec (codec). Include one instance of (VideoDescription) per output.",
+        "PresetSettings$VideoDescription": "(VideoDescription) contains a group of video encoding settings. The specific video settings depend on the video codec you choose when you specify a value for Video codec (codec). Include one instance of (VideoDescription) per output."
+      }
+    },
+    "VideoDetail": {
+      "base": "Contains details about the output's video stream",
+      "refs": {
+        "OutputDetail$VideoDetails": null
+      }
+    },
+    "VideoPreprocessor": {
+      "base": "Find additional transcoding features under Preprocessors (VideoPreprocessors). Enable the features at each output individually. These features are disabled by default.",
+      "refs": {
+        "VideoDescription$VideoPreprocessors": "Find additional transcoding features under Preprocessors (VideoPreprocessors). Enable the features at each output individually. These features are disabled by default."
+      }
+    },
+    "VideoSelector": {
+      "base": "Selector for video.",
+      "refs": {
+        "Input$VideoSelector": null,
+        "InputTemplate$VideoSelector": null
+      }
+    },
+    "VideoTimecodeInsertion": {
+      "base": "Enable Timecode insertion to include timecode information in this output. Do this in the API by setting (VideoTimecodeInsertion) to (PIC_TIMING_SEI). To get timecodes to appear correctly in your output, also set up the timecode configuration for your job in the input settings. Only enable Timecode insertion when the input framerate is identical to output framerate. Disable this setting to remove the timecode from the output. Default is disabled.",
+      "refs": {
+        "VideoDescription$TimecodeInsertion": null
+      }
+    },
+    "WavSettings": {
+      "base": "Required when you set (Codec) under (AudioDescriptions)>(CodecSettings) to the value WAV.",
+      "refs": {
+        "AudioCodecSettings$WavSettings": null
+      }
+    },
+    "__double": {
+      "base": null,
+      "refs": {
+        "AudioNormalizationSettings$TargetLkfs": "Target LKFS(loudness) to adjust volume to. If no value is entered, a default value will be used according to the chosen algorithm. The CALM Act (1770-1) recommends a target of -24 LKFS. The EBU R-128 specification (1770-2) recommends a target of -23 LKFS.",
+        "Eac3Settings$LoRoCenterMixLevel": "Left only/Right only center mix level. Only used for 3/2 coding mode.\nValid values: 3.0, 1.5, 0.0, -1.5 -3.0 -4.5 -6.0 -60",
+        "Eac3Settings$LoRoSurroundMixLevel": "Left only/Right only surround mix level. Only used for 3/2 coding mode.\nValid values: -1.5 -3.0 -4.5 -6.0 -60",
+        "Eac3Settings$LtRtCenterMixLevel": "Left total/Right total center mix level. Only used for 3/2 coding mode.\nValid values: 3.0, 1.5, 0.0, -1.5 -3.0 -4.5 -6.0 -60",
+        "Eac3Settings$LtRtSurroundMixLevel": "Left total/Right total surround mix level. Only used for 3/2 coding mode.\nValid values: -1.5 -3.0 -4.5 -6.0 -60",
+        "H264Settings$GopSize": "GOP Length (keyframe interval) in frames or seconds. Must be greater than zero.",
+        "H265Settings$GopSize": "GOP Length (keyframe interval) in frames or seconds. Must be greater than zero.",
+        "M2tsSettings$FragmentTime": "The length in seconds of each fragment. Only used with EBP markers.",
+        "M2tsSettings$NullPacketBitrate": "Value in bits per second of extra null packets to insert into the transport stream. This can be used if a downstream encryption system requires periodic null packets.",
+        "M2tsSettings$SegmentationTime": "The length in seconds of each segment. Required unless markers is set to _none_.",
+        "Mpeg2Settings$GopSize": "GOP Length (keyframe interval) in frames or seconds. Must be greater than zero."
+      }
+    },
+    "__integer": {
+      "base": null,
+      "refs": {
+        "AacSettings$Bitrate": "Average bitrate in bits/second. Valid values depend on rate control mode and profile.",
+        "AacSettings$SampleRate": "Sample rate in Hz. Valid values depend on rate control mode and profile.",
+        "Ac3Settings$Bitrate": "Average bitrate in bits/second. Valid bitrates depend on the coding mode.",
+        "Ac3Settings$Dialnorm": "Sets the dialnorm for the output. If blank and input audio is Dolby Digital, dialnorm will be passed through.",
+        "Ac3Settings$SampleRate": "Sample rate in hz. Sample rate is always 48000.",
+        "AiffSettings$BitDepth": "Specify Bit depth (BitDepth), in bits per sample, to choose the encoding quality for this audio track.",
+        "AiffSettings$Channels": "Set Channels to specify the number of channels in this output audio track. Choosing Mono in the console will give you 1 output channel; choosing Stereo will give you 2. In the API, valid values are 1 and 2.",
+        "AiffSettings$SampleRate": "Sample rate in hz.",
+        "AncillarySourceSettings$SourceAncillaryChannelNumber": "Specifies the 608 channel number in the ancillary data track from which to extract captions. Unused for passthrough.",
+        "AudioDescription$AudioType": "Applies only if Follow Input Audio Type is unchecked (false). A number between 0 and 255. The following are defined in ISO-IEC 13818-1: 0 = Undefined, 1 = Clean Effects, 2 = Hearing Impaired, 3 = Visually Impaired Commentary, 4-255 = Reserved.",
+        "AudioNormalizationSettings$CorrectionGateLevel": "Content measuring above this level will be corrected to the target level. Content measuring below this level will not be corrected. Gating only applies when not using real_time_correction.",
+        "AudioSelector$Offset": "Specifies a time delta in milliseconds to offset the audio from the input video.",
+        "AudioSelector$ProgramSelection": "Applies only when input streams contain Dolby E. Enter the program ID (according to the metadata in the audio) of the Dolby E program to extract from the specified track. One program extracted per audio selector. To select multiple programs, create multiple selectors with the same Track and different Program numbers. \"All channels\" means to ignore the program IDs and include all the channels in this selector; useful if metadata is known to be incorrect.",
+        "BurninDestinationSettings$BackgroundOpacity": "Specifies the opacity of the background rectangle. 255 is opaque; 0 is transparent. Leaving this parameter blank is equivalent to setting it to 0 (transparent). All burn-in and DVB-Sub font settings must match.",
+        "BurninDestinationSettings$FontOpacity": "Specifies the opacity of the burned-in captions. 255 is opaque; 0 is transparent.\nAll burn-in and DVB-Sub font settings must match.",
+        "BurninDestinationSettings$FontResolution": "Font resolution in DPI (dots per inch); default is 96 dpi.\nAll burn-in and DVB-Sub font settings must match.",
+        "BurninDestinationSettings$FontSize": "A positive integer indicates the exact font size in points. Set to 0 for automatic font size selection. All burn-in and DVB-Sub font settings must match.",
+        "BurninDestinationSettings$OutlineSize": "Specifies font outline size in pixels. This option is not valid for source captions that are either 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
+        "BurninDestinationSettings$ShadowOpacity": "Specifies the opacity of the shadow. 255 is opaque; 0 is transparent. Leaving this parameter blank is equivalent to setting it to 0 (transparent). All burn-in and DVB-Sub font settings must match.",
+        "BurninDestinationSettings$ShadowXOffset": "Specifies the horizontal offset of the shadow relative to the captions in pixels. A value of -2 would result in a shadow offset 2 pixels to the left. All burn-in and DVB-Sub font settings must match.",
+        "BurninDestinationSettings$ShadowYOffset": "Specifies the vertical offset of the shadow relative to the captions in pixels. A value of -2 would result in a shadow offset 2 pixels above the text. All burn-in and DVB-Sub font settings must match.",
+        "BurninDestinationSettings$XPosition": "Specifies the horizontal position of the caption relative to the left side of the output in pixels. A value of 10 would result in the captions starting 10 pixels from the left of the output. If no explicit x_position is provided, the horizontal caption position will be determined by the alignment parameter. This option is not valid for source captions that are STL, 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
+        "BurninDestinationSettings$YPosition": "Specifies the vertical position of the caption relative to the top of the output in pixels. A value of 10 would result in the captions starting 10 pixels from the top of the output. If no explicit y_position is provided, the caption will be positioned towards the bottom of the output. This option is not valid for source captions that are STL, 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
+        "ColorCorrector$Brightness": "Brightness level.",
+        "ColorCorrector$Contrast": "Contrast level.",
+        "ColorCorrector$Hue": "Hue in degrees.",
+        "ColorCorrector$Saturation": "Saturation level.",
+        "DashIsoGroupSettings$FragmentLength": "Length of fragments to generate (in seconds). Fragment length must be compatible with GOP size and Framerate. Note that fragments will end on the next keyframe after this number of seconds, so actual fragment length may be longer. When Emit Single File is checked, the fragmentation is internal to a single output file and it does not cause the creation of many output files as in other output types.",
+        "DashIsoGroupSettings$MinBufferTime": "Minimum time of initially buffered media that is needed to ensure smooth playout.",
+        "DashIsoGroupSettings$SegmentLength": "Length of mpd segments to create (in seconds). Note that segments will end on the next keyframe after this number of seconds, so actual segment length may be longer. When Emit Single File is checked, the segmentation is internal to a single output file and it does not cause the creation of many output files as in other output types.",
+        "DescribeEndpointsRequest$MaxResults": "Optional. Max number of endpoints, up to twenty, that will be returned at one time.",
+        "DvbNitSettings$NetworkId": "The numeric value placed in the Network Information Table (NIT).",
+        "DvbNitSettings$NitInterval": "The number of milliseconds between instances of this table in the output transport stream.",
+        "DvbSdtSettings$SdtInterval": "The number of milliseconds between instances of this table in the output transport stream.",
+        "DvbSubDestinationSettings$BackgroundOpacity": "Specifies the opacity of the background rectangle. 255 is opaque; 0 is transparent. Leaving this parameter blank is equivalent to setting it to 0 (transparent). All burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$FontOpacity": "Specifies the opacity of the burned-in captions. 255 is opaque; 0 is transparent.\nAll burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$FontResolution": "Font resolution in DPI (dots per inch); default is 96 dpi.\nAll burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$FontSize": "A positive integer indicates the exact font size in points. Set to 0 for automatic font size selection. All burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$OutlineSize": "Specifies font outline size in pixels. This option is not valid for source captions that are either 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$ShadowOpacity": "Specifies the opacity of the shadow. 255 is opaque; 0 is transparent. Leaving this parameter blank is equivalent to setting it to 0 (transparent). All burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$ShadowXOffset": "Specifies the horizontal offset of the shadow relative to the captions in pixels. A value of -2 would result in a shadow offset 2 pixels to the left. All burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$ShadowYOffset": "Specifies the vertical offset of the shadow relative to the captions in pixels. A value of -2 would result in a shadow offset 2 pixels above the text. All burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$XPosition": "Specifies the horizontal position of the caption relative to the left side of the output in pixels. A value of 10 would result in the captions starting 10 pixels from the left of the output. If no explicit x_position is provided, the horizontal caption position will be determined by the alignment parameter. This option is not valid for source captions that are STL, 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
+        "DvbSubDestinationSettings$YPosition": "Specifies the vertical position of the caption relative to the top of the output in pixels. A value of 10 would result in the captions starting 10 pixels from the top of the output. If no explicit y_position is provided, the caption will be positioned towards the bottom of the output. This option is not valid for source captions that are STL, 608/embedded or teletext. These source settings are already pre-defined by the caption stream. All burn-in and DVB-Sub font settings must match.",
+        "DvbSubSourceSettings$Pid": "When using DVB-Sub with Burn-In or SMPTE-TT, use this PID for the source content. Unused for DVB-Sub passthrough. All DVB-Sub content is passed through, regardless of selectors.",
+        "DvbTdtSettings$TdtInterval": "The number of milliseconds between instances of this table in the output transport stream.",
+        "Eac3Settings$Bitrate": "Average bitrate in bits/second. Valid bitrates depend on the coding mode.",
+        "Eac3Settings$Dialnorm": "Sets the dialnorm for the output. If blank and input audio is Dolby Digital Plus, dialnorm will be passed through.",
+        "Eac3Settings$SampleRate": "Sample rate in hz. Sample rate is always 48000.",
+        "EmbeddedSourceSettings$Source608ChannelNumber": "Specifies the 608/708 channel number within the video track from which to extract captions. Unused for passthrough.",
+        "EmbeddedSourceSettings$Source608TrackNumber": "Specifies the video track index used for extracting captions. The system only supports one input video track, so this should always be set to '1'.",
+        "FileSourceSettings$TimeDelta": "Specifies a time delta in seconds to offset the captions from the source file.",
+        "FrameCaptureSettings$FramerateDenominator": "Frame capture will encode the first frame of the output stream, then one frame every framerateDenominator/framerateNumerator seconds. For example, settings of framerateNumerator = 1 and framerateDenominator = 3 (a rate of 1/3 frame per second) will capture the first frame, then 1 frame every 3s. Files will be named as filename.n.jpg where n is the 0-based sequence number of each Capture.",
+        "FrameCaptureSettings$FramerateNumerator": "Frame capture will encode the first frame of the output stream, then one frame every framerateDenominator/framerateNumerator seconds. For example, settings of framerateNumerator = 1 and framerateDenominator = 3 (a rate of 1/3 frame per second) will capture the first frame, then 1 frame every 3s. Files will be named as filename.NNNNNNN.jpg where N is the 0-based frame sequence number zero padded to 7 decimal places.",
+        "FrameCaptureSettings$MaxCaptures": "Maximum number of captures (encoded jpg output files).",
+        "FrameCaptureSettings$Quality": "JPEG Quality - a higher value equals higher quality.",
+        "H264Settings$Bitrate": "Average bitrate in bits/second. Required for VBR, CBR, and ABR. Five megabits can be entered as 5000000 or 5m. Five hundred kilobits can be entered as 500000 or 0.5m. For MS Smooth outputs, bitrates must be unique when rounded down to the nearest multiple of 1000.",
+        "H264Settings$FramerateDenominator": "When you use the API for transcode jobs that use framerate conversion, specify the framerate as a fraction. For example,  24000 / 1001 = 23.976 fps. Use FramerateDenominator to specify the denominator of this fraction. In this example, use 1001 for the value of FramerateDenominator. When you use the console for transcode jobs that use framerate conversion, provide the value as a decimal number for Framerate. In this example, specify 23.976.",
+        "H264Settings$FramerateNumerator": "Framerate numerator - framerate is a fraction, e.g. 24000 / 1001 = 23.976 fps.",
+        "H264Settings$GopClosedCadence": "Frequency of closed GOPs. In streaming applications, it is recommended that this be set to 1 so a decoder joining mid-stream will receive an IDR frame as quickly as possible. Setting this value to 0 will break output segmenting.",
+        "H264Settings$HrdBufferInitialFillPercentage": "Percentage of the buffer that should initially be filled (HRD buffer model).",
+        "H264Settings$HrdBufferSize": "Size of buffer (HRD buffer model). Five megabits can be entered as 5000000 or 5m. Five hundred kilobits can be entered as 500000 or 0.5m.",
+        "H264Settings$MaxBitrate": "Maximum bitrate in bits/second (for VBR mode only). Five megabits can be entered as 5000000 or 5m. Five hundred kilobits can be entered as 500000 or 0.5m.",
+        "H264Settings$MinIInterval": "Enforces separation between repeated (cadence) I-frames and I-frames inserted by Scene Change Detection. If a scene change I-frame is within I-interval frames of a cadence I-frame, the GOP is shrunk and/or stretched to the scene change I-frame. GOP stretch requires enabling lookahead as well as setting I-interval. The normal cadence resumes for the next GOP. This setting is only used when Scene Change Detect is enabled. Note: Maximum GOP stretch = GOP size + Min-I-interval - 1",
+        "H264Settings$NumberBFramesBetweenReferenceFrames": "Number of B-frames between reference frames.",
+        "H264Settings$NumberReferenceFrames": "Number of reference frames to use. The encoder may use more than requested if using B-frames and/or interlaced encoding.",
+        "H264Settings$ParDenominator": "Pixel Aspect Ratio denominator.",
+        "H264Settings$ParNumerator": "Pixel Aspect Ratio numerator.",
+        "H264Settings$Slices": "Number of slices per picture. Must be less than or equal to the number of macroblock rows for progressive pictures, and less than or equal to half the number of macroblock rows for interlaced pictures.",
+        "H264Settings$Softness": "Softness. Selects quantizer matrix, larger values reduce high-frequency content in the encoded image.",
+        "H265Settings$Bitrate": "Average bitrate in bits/second. Required for VBR, CBR, and ABR. Five megabits can be entered as 5000000 or 5m. Five hundred kilobits can be entered as 500000 or 0.5m. For MS Smooth outputs, bitrates must be unique when rounded down to the nearest multiple of 1000.",
+        "H265Settings$FramerateDenominator": "Framerate denominator.",
+        "H265Settings$FramerateNumerator": "Framerate numerator - framerate is a fraction, e.g. 24000 / 1001 = 23.976 fps.",
+        "H265Settings$GopClosedCadence": "Frequency of closed GOPs. In streaming applications, it is recommended that this be set to 1 so a decoder joining mid-stream will receive an IDR frame as quickly as possible. Setting this value to 0 will break output segmenting.",
+        "H265Settings$HrdBufferInitialFillPercentage": "Percentage of the buffer that should initially be filled (HRD buffer model).",
+        "H265Settings$HrdBufferSize": "Size of buffer (HRD buffer model). Five megabits can be entered as 5000000 or 5m. Five hundred kilobits can be entered as 500000 or 0.5m.",
+        "H265Settings$MaxBitrate": "Maximum bitrate in bits/second (for VBR mode only). Five megabits can be entered as 5000000 or 5m. Five hundred kilobits can be entered as 500000 or 0.5m.",
+        "H265Settings$MinIInterval": "Enforces separation between repeated (cadence) I-frames and I-frames inserted by Scene Change Detection. If a scene change I-frame is within I-interval frames of a cadence I-frame, the GOP is shrunk and/or stretched to the scene change I-frame. GOP stretch requires enabling lookahead as well as setting I-interval. The normal cadence resumes for the next GOP. This setting is only used when Scene Change Detect is enabled. Note: Maximum GOP stretch = GOP size + Min-I-interval - 1",
+        "H265Settings$NumberBFramesBetweenReferenceFrames": "Number of B-frames between reference frames.",
+        "H265Settings$NumberReferenceFrames": "Number of reference frames to use. The encoder may use more than requested if using B-frames and/or interlaced encoding.",
+        "H265Settings$ParDenominator": "Pixel Aspect Ratio denominator.",
+        "H265Settings$ParNumerator": "Pixel Aspect Ratio numerator.",
+        "H265Settings$Slices": "Number of slices per picture. Must be less than or equal to the number of macroblock rows for progressive pictures, and less than or equal to half the number of macroblock rows for interlaced pictures.",
+        "Hdr10Metadata$BluePrimaryX": "HDR Master Display Information comes from the color grader and the color grading tools. Range is 0 to 50,000, each increment represents 0.00002 in CIE1931 color coordinate.",
+        "Hdr10Metadata$BluePrimaryY": "HDR Master Display Information comes from the color grader and the color grading tools. Range is 0 to 50,000, each increment represents 0.00002 in CIE1931 color coordinate.",
+        "Hdr10Metadata$GreenPrimaryX": "HDR Master Display Information comes from the color grader and the color grading tools. Range is 0 to 50,000, each increment represents 0.00002 in CIE1931 color coordinate.",
+        "Hdr10Metadata$GreenPrimaryY": "HDR Master Display Information comes from the color grader and the color grading tools. Range is 0 to 50,000, each increment represents 0.00002 in CIE1931 color coordinate.",
+        "Hdr10Metadata$MaxContentLightLevel": "Maximum light level among all samples in the coded video sequence, in units of candelas per square meter.",
+        "Hdr10Metadata$MaxFrameAverageLightLevel": "Maximum average light level of any frame in the coded video sequence, in units of candelas per square meter.",
+        "Hdr10Metadata$MaxLuminance": "Nominal maximum mastering display luminance in units of of 0.0001 candelas per square meter.",
+        "Hdr10Metadata$MinLuminance": "Nominal minimum mastering display luminance in units of of 0.0001 candelas per square meter",
+        "Hdr10Metadata$RedPrimaryX": "HDR Master Display Information comes from the color grader and the color grading tools. Range is 0 to 50,000, each increment represents 0.00002 in CIE1931 color coordinate.",
+        "Hdr10Metadata$RedPrimaryY": "HDR Master Display Information comes from the color grader and the color grading tools. Range is 0 to 50,000, each increment represents 0.00002 in CIE1931 color coordinate.",
+        "Hdr10Metadata$WhitePointX": "HDR Master Display Information comes from the color grader and the color grading tools. Range is 0 to 50,000, each increment represents 0.00002 in CIE1931 color coordinate.",
+        "Hdr10Metadata$WhitePointY": "HDR Master Display Information comes from the color grader and the color grading tools. Range is 0 to 50,000, each increment represents 0.00002 in CIE1931 color coordinate.",
+        "HlsCaptionLanguageMapping$CaptionChannel": "Caption channel.",
+        "HlsGroupSettings$MinSegmentLength": "When set, Minimum Segment Size is enforced by looking ahead and back within the specified range for a nearby avail and extending the segment size if needed.",
+        "HlsGroupSettings$ProgramDateTimePeriod": "Period of insertion of EXT-X-PROGRAM-DATE-TIME entry, in seconds.",
+        "HlsGroupSettings$SegmentLength": "Length of MPEG-2 Transport Stream segments to create (in seconds). Note that segments will end on the next keyframe after this number of seconds, so actual segment length may be longer.",
+        "HlsGroupSettings$SegmentsPerSubdirectory": "Number of segments to write to a subdirectory before starting a new one. directoryStructure must be SINGLE_DIRECTORY for this setting to have an effect.",
+        "HlsGroupSettings$TimedMetadataId3Period": "Timed Metadata interval in seconds.",
+        "HlsGroupSettings$TimestampDeltaMilliseconds": "Provides an extra millisecond delta offset to fine tune the timestamps.",
+        "Input$FilterStrength": "Use Filter strength (FilterStrength) to adjust the magnitude the input filter settings (Deblock and Denoise). The range is -5 to 5. Default is 0.",
+        "Input$ProgramNumber": "Use Program (programNumber) to select a specific program from within a multi-program transport stream. Note that Quad 4K is not currently supported. Default is the first program within the transport stream. If the program you specify doesn't exist, the transcoding service will use this default.",
+        "InputTemplate$FilterStrength": "Use Filter strength (FilterStrength) to adjust the magnitude the input filter settings (Deblock and Denoise). The range is -5 to 5. Default is 0.",
+        "InputTemplate$ProgramNumber": "Use Program (programNumber) to select a specific program from within a multi-program transport stream. Note that Quad 4K is not currently supported. Default is the first program within the transport stream. If the program you specify doesn't exist, the transcoding service will use this default.",
+        "InsertableImage$Duration": "Use Duration (Duration) to set the time, in milliseconds, for the image to remain on the output video.",
+        "InsertableImage$FadeIn": "Use Fade in (FadeIut) to set the length, in milliseconds, of the inserted image fade in. If you don't specify a value for Fade in, the image will appear abruptly at the Start time.",
+        "InsertableImage$FadeOut": "Use Fade out (FadeOut) to set the length, in milliseconds, of the inserted image fade out. If you don't specify a value for Fade out, the image will disappear abruptly at the end of the inserted image duration.",
+        "InsertableImage$Height": "Specify the Height (Height) of the inserted image. Use a value that is less than or equal to the video resolution height. Leave this setting blank to use the native height of the image.",
+        "InsertableImage$ImageX": "Use Left (ImageX) to set the distance, in pixels, between the inserted image and the left edge of the frame. Required for BMP, PNG and TGA input.",
+        "InsertableImage$ImageY": "Use Top (ImageY) to set the distance, in pixels, between the inserted image and the top edge of the video frame. Required for BMP, PNG and TGA input.",
+        "InsertableImage$Layer": "Use Layer (Layer) to specify how overlapping inserted images appear. Images with higher values of layer appear on top of images with lower values of layer.",
+        "InsertableImage$Opacity": "Use Opacity (Opacity) to specify how much of the underlying video shows through the inserted image. 0 is transparent and 100 is fully opaque. Default is 50.",
+        "InsertableImage$Width": "Specify the Width (Width) of the inserted image. Use a value that is less than or equal to the video resolution width. Leave this setting blank to use the native width of the image.",
+        "Job$ErrorCode": "Error code for the job",
+        "JobSettings$AdAvailOffset": "When specified, this offset (in milliseconds) is added to the input Ad Avail PTS time.",
+        "JobTemplateSettings$AdAvailOffset": "When specified, this offset (in milliseconds) is added to the input Ad Avail PTS time.",
+        "ListJobTemplatesRequest$MaxResults": "Optional. Number of job templates, up to twenty, that will be returned at one time.",
+        "ListJobsRequest$MaxResults": "Optional. Number of jobs, up to twenty, that will be returned at one time.",
+        "ListOf__integer$member": null,
+        "ListPresetsRequest$MaxResults": "Optional. Number of presets, up to twenty, that will be returned at one time",
+        "ListQueuesRequest$MaxResults": "Optional. Number of queues, up to twenty, that will be returned at one time.",
+        "M2tsSettings$AudioFramesPerPes": "The number of audio frames to insert for each PES packet.",
+        "M2tsSettings$Bitrate": "The output bitrate of the transport stream in bits per second. Setting to 0 lets the muxer automatically determine the appropriate bitrate. Other common values are 3750000, 7500000, and 15000000.",
+        "M2tsSettings$DvbTeletextPid": "Packet Identifier (PID) for input source DVB Teletext data to this output. Can be entered as a decimal or hexadecimal value.",
+        "M2tsSettings$MaxPcrInterval": "Maximum time in milliseconds between Program Clock References (PCRs) inserted into the transport stream.",
+        "M2tsSettings$MinEbpInterval": "When set, enforces that Encoder Boundary Points do not come within the specified time interval of each other by looking ahead at input video. If another EBP is going to come in within the specified time interval, the current EBP is not emitted, and the segment is \"stretched\" to the next marker. The lookahead value does not add latency to the system. The Live Event must be configured elsewhere to create sufficient latency to make the lookahead accurate.",
+        "M2tsSettings$PatInterval": "The number of milliseconds between instances of this table in the output transport stream.",
+        "M2tsSettings$PcrPid": "Packet Identifier (PID) of the Program Clock Reference (PCR) in the transport stream. When no value is given, the encoder will assign the same value as the Video PID. Can be entered as a decimal or hexadecimal value.",
+        "M2tsSettings$PmtInterval": "The number of milliseconds between instances of this table in the output transport stream.",
+        "M2tsSettings$PmtPid": "Packet Identifier (PID) for the Program Map Table (PMT) in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M2tsSettings$PrivateMetadataPid": "Packet Identifier (PID) of the private metadata stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M2tsSettings$ProgramNumber": "The value of the program number field in the Program Map Table.",
+        "M2tsSettings$Scte35Pid": "Packet Identifier (PID) of the SCTE-35 stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M2tsSettings$TransportStreamId": "The value of the transport stream ID field in the Program Map Table.",
+        "M2tsSettings$VideoPid": "Packet Identifier (PID) of the elementary video stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M3u8Settings$AudioFramesPerPes": "The number of audio frames to insert for each PES packet.",
+        "M3u8Settings$PatInterval": "The number of milliseconds between instances of this table in the output transport stream.",
+        "M3u8Settings$PcrPid": "Packet Identifier (PID) of the Program Clock Reference (PCR) in the transport stream. When no value is given, the encoder will assign the same value as the Video PID. Can be entered as a decimal or hexadecimal value.",
+        "M3u8Settings$PmtInterval": "The number of milliseconds between instances of this table in the output transport stream.",
+        "M3u8Settings$PmtPid": "Packet Identifier (PID) for the Program Map Table (PMT) in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M3u8Settings$PrivateMetadataPid": "Packet Identifier (PID) of the private metadata stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M3u8Settings$ProgramNumber": "The value of the program number field in the Program Map Table.",
+        "M3u8Settings$Scte35Pid": "Packet Identifier (PID) of the SCTE-35 stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M3u8Settings$TimedMetadataPid": "Packet Identifier (PID) of the timed metadata stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "M3u8Settings$TransportStreamId": "The value of the transport stream ID field in the Program Map Table.",
+        "M3u8Settings$VideoPid": "Packet Identifier (PID) of the elementary video stream in the transport stream. Can be entered as a decimal or hexadecimal value.",
+        "Mp2Settings$Bitrate": "Average bitrate in bits/second.",
+        "Mp2Settings$Channels": "Set Channels to specify the number of channels in this output audio track. Choosing Mono in the console will give you 1 output channel; choosing Stereo will give you 2. In the API, valid values are 1 and 2.",
+        "Mp2Settings$SampleRate": "Sample rate in hz.",
+        "Mpeg2Settings$Bitrate": "Average bitrate in bits/second. Required for VBR, CBR, and ABR. Five megabits can be entered as 5000000 or 5m. Five hundred kilobits can be entered as 500000 or 0.5m. For MS Smooth outputs, bitrates must be unique when rounded down to the nearest multiple of 1000.",
+        "Mpeg2Settings$FramerateDenominator": "Framerate denominator.",
+        "Mpeg2Settings$FramerateNumerator": "Framerate numerator - framerate is a fraction, e.g. 24000 / 1001 = 23.976 fps.",
+        "Mpeg2Settings$GopClosedCadence": "Frequency of closed GOPs. In streaming applications, it is recommended that this be set to 1 so a decoder joining mid-stream will receive an IDR frame as quickly as possible. Setting this value to 0 will break output segmenting.",
+        "Mpeg2Settings$HrdBufferInitialFillPercentage": "Percentage of the buffer that should initially be filled (HRD buffer model).",
+        "Mpeg2Settings$HrdBufferSize": "Size of buffer (HRD buffer model). Five megabits can be entered as 5000000 or 5m. Five hundred kilobits can be entered as 500000 or 0.5m.",
+        "Mpeg2Settings$MaxBitrate": "Maximum bitrate in bits/second (for VBR mode only). Five megabits can be entered as 5000000 or 5m. Five hundred kilobits can be entered as 500000 or 0.5m.",
+        "Mpeg2Settings$MinIInterval": "Enforces separation between repeated (cadence) I-frames and I-frames inserted by Scene Change Detection. If a scene change I-frame is within I-interval frames of a cadence I-frame, the GOP is shrunk and/or stretched to the scene change I-frame. GOP stretch requires enabling lookahead as well as setting I-interval. The normal cadence resumes for the next GOP. This setting is only used when Scene Change Detect is enabled. Note: Maximum GOP stretch = GOP size + Min-I-interval - 1",
+        "Mpeg2Settings$NumberBFramesBetweenReferenceFrames": "Number of B-frames between reference frames.",
+        "Mpeg2Settings$ParDenominator": "Pixel Aspect Ratio denominator.",
+        "Mpeg2Settings$ParNumerator": "Pixel Aspect Ratio numerator.",
+        "Mpeg2Settings$Softness": "Softness. Selects quantizer matrix, larger values reduce high-frequency content in the encoded image.",
+        "MsSmoothGroupSettings$FragmentLength": "Use Fragment length (FragmentLength) to specify the mp4 fragment sizes in seconds.  Fragment length must be compatible with GOP size and framerate.",
+        "NielsenConfiguration$BreakoutCode": "Use Nielsen Configuration (NielsenConfiguration) to set the Nielsen measurement system breakout code. Supported values are 0, 3, 7, and 9.",
+        "NoiseReducerFilterSettings$Strength": "Relative strength of noise reducing filter. Higher values produce stronger filtering.",
+        "NoiseReducerSpatialFilterSettings$PostFilterSharpenStrength": "Specify strength of post noise reduction sharpening filter, with 0 disabling the filter and 3 enabling it at maximum strength.",
+        "NoiseReducerSpatialFilterSettings$Speed": "The speed of the filter, from -2 (lower speed) to 3 (higher speed), with 0 being the nominal value.",
+        "NoiseReducerSpatialFilterSettings$Strength": "Relative strength of noise reducing filter. Higher values produce stronger filtering.",
+        "OutputDetail$DurationInMs": "Duration in milliseconds",
+        "ProresSettings$FramerateDenominator": "Framerate denominator.",
+        "ProresSettings$FramerateNumerator": "When you use the API for transcode jobs that use framerate conversion, specify the framerate as a fraction. For example,  24000 / 1001 = 23.976 fps. Use FramerateNumerator to specify the numerator of this fraction. In this example, use 24000 for the value of FramerateNumerator.",
+        "ProresSettings$ParDenominator": "Pixel Aspect Ratio denominator.",
+        "ProresSettings$ParNumerator": "Pixel Aspect Ratio numerator.",
+        "Rectangle$Height": "Height of rectangle in pixels.",
+        "Rectangle$Width": "Width of rectangle in pixels.",
+        "Rectangle$X": "The distance, in pixels, between the rectangle and the left edge of the video frame.",
+        "Rectangle$Y": "The distance, in pixels, between the rectangle and the top edge of the video frame.",
+        "RemixSettings$ChannelsIn": "Specify the number of audio channels from your input that you want to use in your output. With remixing, you might combine or split the data in these channels, so the number of channels in your final output might be different.",
+        "RemixSettings$ChannelsOut": "Specify the number of channels in this output after remixing. Valid values: 1, 2, 4, 6, 8",
+        "TimecodeBurnin$FontSize": "Use Font Size (FontSize) to set the font size of any burned-in timecode. Valid values are 10, 16, 32, 48.",
+        "VideoDescription$FixedAfd": "Applies only if you set AFD Signaling(AfdSignaling) to Fixed (FIXED). Use Fixed (FixedAfd) to specify a four-bit AFD value which the service will write on all  frames of this video output.",
+        "VideoDescription$Height": "Use the Height (Height) setting to define the video resolution height for this output. Specify in pixels. If you don't provide a value here, the service will use the input height.",
+        "VideoDescription$Sharpness": "Use Sharpness (Sharpness)setting to specify the strength of anti-aliasing. This setting changes the width of the anti-alias filter kernel used for scaling. Sharpness only applies if your output resolution is different from your input resolution, and if you set Anti-alias (AntiAlias) to ENABLED. 0 is the softest setting, 100 the sharpest, and 50 recommended for most content.",
+        "VideoDescription$Width": "Use Width (Width) to define the video resolution width, in pixels, for this output. If you don't provide a value here, the service will use the input width.",
+        "VideoDetail$HeightInPx": "Height in pixels for the output",
+        "VideoDetail$WidthInPx": "Width in pixels for the output",
+        "VideoSelector$Pid": "Use PID (Pid) to select specific video data from an input file. Specify this value as an integer; the system automatically converts it to the hexidecimal value. For example, 257 selects PID 0x101. A PID, or packet identifier, is an identifier for a set of data in an MPEG-2 transport stream container.",
+        "VideoSelector$ProgramNumber": "Selects a specific program from within a multi-program transport stream. Note that Quad 4K is not currently supported.",
+        "WavSettings$BitDepth": "Specify Bit depth (BitDepth), in bits per sample, to choose the encoding quality for this audio track.",
+        "WavSettings$Channels": "Set Channels to specify the number of channels in this output audio track. With WAV, valid values 1, 2, 4, and 8. In the console, these values are Mono, Stereo, 4-Channel, and 8-Channel, respectively.",
+        "WavSettings$SampleRate": "Sample rate in Hz."
+      }
+    },
+    "__string": {
+      "base": null,
+      "refs": {
+        "AudioDescription$AudioSourceName": "Specifies which audio data to use from each input. In the simplest case, specify an \"Audio Selector\":#inputs-audio_selector by name based on its order within each input. For example if you specify \"Audio Selector 3\", then the third audio selector will be used from each input. If an input does not have an \"Audio Selector 3\", then the audio selector marked as \"default\" in that input will be used. If there is no audio selector marked as \"default\", silence will be inserted for the duration of that input. Alternatively, an \"Audio Selector Group\":#inputs-audio_selector_group name may be specified, with similar default/silence behavior. If no audio_source_name is specified, then \"Audio Selector 1\" will be chosen automatically.",
+        "AudioDescription$StreamName": "Used for MS Smooth and Apple HLS outputs. Indicates the name displayed by the player (eg. English, or Director Commentary). Alphanumeric characters, spaces, and underscore are legal.",
+        "AudioSelector$ExternalAudioFileInput": "Specifies audio data from an external file source. Auto populated when Infer External Filename is checked",
+        "AvailBlanking$AvailBlankingImage": "Blanking image to be used. Leave empty for solid black. Only bmp and png images are supported.",
+        "CancelJobRequest$Id": "The Job ID of the job to be cancelled.",
+        "CaptionDescription$CaptionSelectorName": "Specifies which \"Caption Selector\":#inputs-caption_selector to use from each input when generating captions. The name should be of the format \"Caption Selector <N>\", which denotes that the Nth Caption Selector will be used from each input.",
+        "CaptionDescription$LanguageDescription": "Human readable information to indicate captions available for players (eg. English, or Spanish). Alphanumeric characters, spaces, and underscore are legal.",
+        "CaptionDescriptionPreset$LanguageDescription": "Human readable information to indicate captions available for players (eg. English, or Spanish). Alphanumeric characters, spaces, and underscore are legal.",
+        "CreateJobRequest$ClientRequestToken": "Idempotency token for CreateJob operation.",
+        "CreateJobRequest$JobTemplate": "When you create a job, you can either specify a job template or specify the transcoding settings individually",
+        "CreateJobRequest$Queue": "Optional. When you create a job, you can specify a queue to send it to. If you don't specify, the job will go to the default queue. For more about queues, see the User Guide topic at http://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html.",
+        "CreateJobRequest$Role": "Required. The IAM role you use for creating this job. For details about permissions, see the User Guide topic at the User Guide at http://docs.aws.amazon.com/mediaconvert/latest/ug/iam-role.html.",
+        "CreateJobTemplateRequest$Category": "Optional. A category for the job template you are creating",
+        "CreateJobTemplateRequest$Description": "Optional. A description of the job template you are creating.",
+        "CreateJobTemplateRequest$Name": "The name of the job template you are creating.",
+        "CreateJobTemplateRequest$Queue": "Optional. The queue that jobs created from this template are assigned to. If you don't specify this, jobs will go to the default queue.",
+        "CreatePresetRequest$Category": "Optional. A category for the preset you are creating.",
+        "CreatePresetRequest$Description": "Optional. A description of the preset you are creating.",
+        "CreatePresetRequest$Name": "The name of the preset you are creating.",
+        "CreateQueueRequest$Description": "Optional. A description of the queue you are creating.",
+        "CreateQueueRequest$Name": "The name of the queue you are creating.",
+        "DashIsoGroupSettings$BaseUrl": "A partial URI prefix that will be put in the manifest (.mpd) file at the top level BaseURL element. Can be used if streams are delivered from a different URL than the manifest file.",
+        "DashIsoGroupSettings$Destination": "Use Destination (Destination) to specify the S3 output location and the output filename base. Destination accepts format identifiers. If you do not specify the base filename in the URI, the service will use the filename of the input file. If your job has multiple inputs, the service uses the filename of the first input file.",
+        "DeleteJobTemplateRequest$Name": "The name of the job template to be deleted.",
+        "DeletePresetRequest$Name": "The name of the preset to be deleted.",
+        "DeleteQueueRequest$Name": "The name of the queue to be deleted.",
+        "DescribeEndpointsRequest$NextToken": "Use this string, provided with the response to a previous request, to request the next batch of endpoints.",
+        "DescribeEndpointsResponse$NextToken": "Use this string to request the next batch of endpoints.",
+        "DvbNitSettings$NetworkName": "The network name text placed in the network_name_descriptor inside the Network Information Table. Maximum length is 256 characters.",
+        "DvbSdtSettings$ServiceName": "The service name placed in the service_descriptor in the Service Description Table. Maximum length is 256 characters.",
+        "DvbSdtSettings$ServiceProviderName": "The service provider name placed in the service_descriptor in the Service Description Table. Maximum length is 256 characters.",
+        "Endpoint$Url": "URL of endpoint",
+        "ExceptionBody$Message": null,
+        "FileGroupSettings$Destination": "Use Destination (Destination) to specify the S3 output location and the output filename base. Destination accepts format identifiers. If you do not specify the base filename in the URI, the service will use the filename of the input file. If your job has multiple inputs, the service uses the filename of the first input file.",
+        "FileSourceSettings$SourceFile": "External caption file used for loading captions. Accepted file extensions are 'scc', 'ttml', 'dfxp', 'stl', 'srt', and 'smi'. Auto-populated when Infer External Filename is checked.",
+        "GetJobRequest$Id": "the job ID of the job.",
+        "GetJobTemplateRequest$Name": "The name of the job template.",
+        "GetPresetRequest$Name": "The name of the preset.",
+        "GetQueueRequest$Name": "The name of the queue.",
+        "HlsCaptionLanguageMapping$LanguageDescription": "Caption language description.",
+        "HlsEncryptionSettings$ConstantInitializationVector": "This is a 128-bit, 16-byte hex value represented by a 32-character text string. If this parameter is not set then the Initialization Vector will follow the segment number by default.",
+        "HlsGroupSettings$BaseUrl": "A partial URI prefix that will be prepended to each output in the media .m3u8 file. Can be used if base manifest is delivered from a different URL than the main .m3u8 file.",
+        "HlsGroupSettings$Destination": "Use Destination (Destination) to specify the S3 output location and the output filename base. Destination accepts format identifiers. If you do not specify the base filename in the URI, the service will use the filename of the input file. If your job has multiple inputs, the service uses the filename of the first input file.",
+        "HlsSettings$AudioGroupId": "Specifies the group to which the audio Rendition belongs.",
+        "HlsSettings$AudioRenditionSets": "List all the audio groups that are used with the video output stream. Input all the audio GROUP-IDs that are associated to the video, separate by ','.",
+        "HlsSettings$SegmentModifier": "String concatenated to end of segment filenames. Accepts \"Format Identifiers\":#format_identifier_parameters.",
+        "Id3Insertion$Id3": "Use ID3 tag (Id3) to provide a tag value in base64-encode format.",
+        "Id3Insertion$Timecode": "Provide a Timecode (TimeCode) in HH:MM:SS:FF or HH:MM:SS;FF format.",
+        "Input$FileInput": "Use Input (fileInput) to define the source file used in the transcode job. There can be multiple inputs in a job. These inputs are concantenated, in the order they are specified in the job, to create the output.",
+        "InputClipping$EndTimecode": "Set End timecode (EndTimecode) to the end of the portion of the input you are clipping. The frame corresponding to the End timecode value is included in the clip. Start timecode or End timecode may be left blank, but not both. When choosing this value, take into account your setting for Input timecode source. For example, if you have embedded timecodes that start at 01:00:00:00 and you want your clip to begin five minutes into the video, use 01:00:05:00.",
+        "InputClipping$StartTimecode": "Set Start timecode (StartTimecode) to the beginning of the portion of the input you are clipping. The frame corresponding to the Start timecode value is included in the clip. Start timecode or End timecode may be left blank, but not both. When choosing this value, take into account your setting for Input timecode source. For example, if you have embedded timecodes that start at 01:00:00:00 and you want your clip to begin five minutes into the video, use 01:00:05:00.",
+        "InsertableImage$ImageInserterInput": "Use Image location (imageInserterInput) to specify the Amazon S3 location of the image to be inserted into the output. Use a 32 bit BMP, PNG, or TGA file that fits inside the video frame.",
+        "InsertableImage$StartTime": "Use Start time (StartTime) to specify the video timecode when the image is inserted in the output. This must be in timecode format (HH:MM:SS:FF)",
+        "Job$Arn": "An identifier for this resource that is unique within all of AWS.",
+        "Job$ErrorMessage": "Error message of Job",
+        "Job$Id": "A portion of the job's ARN, unique within your AWS Elemental MediaConvert resources",
+        "Job$JobTemplate": "The job template that the job is created from, if it is created from a job template.",
+        "Job$Queue": "Optional. When you create a job, you can specify a queue to send it to. If you don't specify, the job will go to the default queue. For more about queues, see the User Guide topic at http://docs.aws.amazon.com/mediaconvert/latest/ug/what-is.html",
+        "Job$Role": "The IAM role you use for creating this job. For details about permissions, see the User Guide topic at the User Guide at http://docs.aws.amazon.com/mediaconvert/latest/ug/iam-role.html",
+        "JobTemplate$Arn": "An identifier for this resource that is unique within all of AWS.",
+        "JobTemplate$Category": "An optional category you create to organize your job templates.",
+        "JobTemplate$Description": "An optional description you create for each job template.",
+        "JobTemplate$Name": "A name you create for each job template. Each name must be unique within your account.",
+        "JobTemplate$Queue": "Optional. The queue that jobs created from this template are assigned to. If you don't specify this, jobs will go to the default queue.",
+        "ListJobTemplatesRequest$Category": "Optionally, specify a job template category to limit responses to only job templates from that category.",
+        "ListJobTemplatesRequest$NextToken": "Use this string, provided with the response to a previous request, to request the next batch of job templates.",
+        "ListJobTemplatesResponse$NextToken": "Use this string to request the next batch of job templates.",
+        "ListJobsRequest$NextToken": "Use this string, provided with the response to a previous request, to request the next batch of jobs.",
+        "ListJobsRequest$Queue": "Provide a queue name to get back only jobs from that queue.",
+        "ListJobsResponse$NextToken": "Use this string to request the next batch of jobs.",
+        "ListOf__string$member": null,
+        "ListPresetsRequest$Category": "Optionally, specify a preset category to limit responses to only presets from that category.",
+        "ListPresetsRequest$NextToken": "Use this string, provided with the response to a previous request, to request the next batch of presets.",
+        "ListPresetsResponse$NextToken": "Use this string to request the next batch of presets.",
+        "ListQueuesRequest$NextToken": "Use this string, provided with the response to a previous request, to request the next batch of queues.",
+        "ListQueuesResponse$NextToken": "Use this string to request the next batch of queues.",
+        "MapOf__string$member": null,
+        "Mp4Settings$Mp4MajorBrand": "Overrides the \"Major Brand\" field in the output file. Usually not necessary to specify.",
+        "MsSmoothGroupSettings$Destination": "Use Destination (Destination) to specify the S3 output location and the output filename base. Destination accepts format identifiers. If you do not specify the base filename in the URI, the service will use the filename of the input file. If your job has multiple inputs, the service uses the filename of the first input file.",
+        "NielsenConfiguration$DistributorId": "Use Distributor ID (DistributorID) to specify the distributor ID that is assigned to your organization by Neilsen.",
+        "Output$Extension": "Use Extension (Extension) to specify the file extension for outputs in File output groups. If you do not specify a value, the service will use default extensions by container type as follows * MPEG-2 transport stream, m2ts * Quicktime, mov * MXF container, mxf * MPEG-4 container, mp4 * No Container, the service will use codec extensions (e.g. AAC, H265, H265, AC3)",
+        "Output$NameModifier": "Use Name modifier (NameModifier) to have the service add a string to the end of each output filename. You specify the base filename as part of your destination URI. When you create multiple outputs in the same output group, Name modifier is required. Name modifier also accepts format identifiers. For DASH ISO outputs, if you use the format identifiers $Number$ or $Time$ in one output, you must use them in the same way in all outputs of the output group.",
+        "Output$Preset": "Use Preset (Preset) to specifiy a preset for your transcoding settings. Provide the system or custom preset name. You can specify either Preset (Preset) or Container settings (ContainerSettings), but not both.",
+        "OutputGroup$CustomName": "Use Custom Group Name (CustomName) to specify a name for the output group. This value is displayed on the console and can make your job settings JSON more human-readable. It does not affect your outputs. Use up to twelve characters that are either letters, numbers, spaces, or underscores.",
+        "OutputGroup$Name": "Name of the output group",
+        "Preset$Arn": "An identifier for this resource that is unique within all of AWS.",
+        "Preset$Category": "An optional category you create to organize your presets.",
+        "Preset$Description": "An optional description you create for each preset.",
+        "Preset$Name": "A name you create for each preset. Each name must be unique within your account.",
+        "Queue$Arn": "An identifier for this resource that is unique within all of AWS.",
+        "Queue$Description": "An optional description you create for each queue.",
+        "Queue$Name": "A name you create for each queue. Each name must be unique within your account.",
+        "SpekeKeyProvider$ResourceId": "The SPEKE-compliant server uses Resource ID (ResourceId) to identify content.",
+        "SpekeKeyProvider$Url": "Use URL (Url) to specify the SPEKE-compliant server that will provide keys for content.",
+        "StaticKeyProvider$KeyFormat": "Relates to DRM implementation. Sets the value of the KEYFORMAT attribute. Must be 'identity' or a reverse DNS string. May be omitted to indicate an implicit value of 'identity'.",
+        "StaticKeyProvider$KeyFormatVersions": "Relates to DRM implementation. Either a single positive integer version value or a slash delimited list of version values (1/2/3).",
+        "StaticKeyProvider$StaticKeyValue": "Relates to DRM implementation. Use a 32-character hexidecimal string to specify Key Value (StaticKeyValue).",
+        "StaticKeyProvider$Url": "Relates to DRM implementation. The location of the license server used for protecting content.",
+        "TeletextDestinationSettings$PageNumber": "Set pageNumber to the Teletext page number for the destination captions for this output.  This value must be a three-digit hexadecimal string; strings ending in -FF are invalid. If you are passing through the entire set of Teletext data, do not use this field.",
+        "TeletextSourceSettings$PageNumber": "Use Page Number (PageNumber) to specify the three-digit hexadecimal page number that will be used for Teletext captions. Do not use this setting if you are passing through teletext from the input source to output.",
+        "TimecodeBurnin$Prefix": "Use Prefix (Prefix) to place ASCII characters before any burned-in timecode. For example, a prefix of \"EZ-\" will result in the timecode \"EZ-00:00:00:00\". Provide either the characters themselves or the ASCII code equivalents. The supported range of characters is 0x20 through 0x7e. This includes letters, numbers, and all special characters represented on a standard English keyboard.",
+        "TimecodeConfig$Anchor": "If you use an editing platform that relies on an anchor timecode, use Anchor Timecode (Anchor) to specify a timecode that will match the input video frame to the output video frame. Use 24-hour format with frame number, (HH:MM:SS:FF) or (HH:MM:SS;FF). This setting ignores framerate conversion. System behavior for Anchor Timecode varies depending on your setting for Timecode source (TimecodeSource). * If Timecode source (TimecodeSource) is set to Specified Start (specifiedstart), the first input frame is the specified value in Start Timecode (Start). Anchor Timecode (Anchor) and Start Timecode (Start) are used calculate output timecode. * If Timecode source (TimecodeSource) is set to Start at 0 (zerobased)  the  first frame is 00:00:00:00. * If Timecode source (TimecodeSource) is set to Embedded (embedded), the  first frame is the timecode value on the first input frame of the input.",
+        "TimecodeConfig$Start": "Only use when you set Timecode Source (TimecodeSource) to Specified Start (SPECIFIEDSTART). Use Start timecode (Start) to specify the timecode for the initial frame. Use 24-hour format with frame number, (HH:MM:SS:FF) or (HH:MM:SS;FF).",
+        "TimecodeConfig$TimestampOffset": "Only applies to outputs that support program-date-time stamp. Use Time  stamp offset (TimestampOffset) to overwrite the timecode date without affecting the time and frame number. Provide the new date as a string in the format \"yyyy-mm-dd\".  To use Time stamp offset, you must also enable Insert program-date-time (InsertProgramDateTime) in the output settings.",
+        "UpdateJobTemplateRequest$Category": "The new category for the job template, if you are changing it.",
+        "UpdateJobTemplateRequest$Description": "The new description for the job template, if you are changing it.",
+        "UpdateJobTemplateRequest$Name": "The name of the job template you are modifying",
+        "UpdateJobTemplateRequest$Queue": "The new queue for the job template, if you are changing it.",
+        "UpdatePresetRequest$Category": "The new category for the preset, if you are changing it.",
+        "UpdatePresetRequest$Description": "The new description for the preset, if you are changing it.",
+        "UpdatePresetRequest$Name": "The name of the preset you are modifying.",
+        "UpdateQueueRequest$Description": "The new description for the queue, if you are changing it.",
+        "UpdateQueueRequest$Name": "The name of the queue you are modifying."
+      }
+    },
+    "__timestamp": {
+      "base": null,
+      "refs": {
+        "Job$CreatedAt": "The time, in Unix epoch format in seconds, when the job got created.",
+        "JobTemplate$CreatedAt": "The timestamp in epoch seconds for Job template creation.",
+        "JobTemplate$LastUpdated": "The timestamp in epoch seconds when the Job template was last updated.",
+        "Preset$CreatedAt": "The timestamp in epoch seconds for preset creation.",
+        "Preset$LastUpdated": "The timestamp in epoch seconds when the preset was last updated.",
+        "Queue$CreatedAt": "The timestamp in epoch seconds for queue creation.",
+        "Queue$LastUpdated": "The timestamp in epoch seconds when the queue was last updated.",
+        "Timing$FinishTime": "The time, in Unix epoch format, that the transcoding job finished",
+        "Timing$StartTime": "The time, in Unix epoch format, that transcoding for the job began.",
+        "Timing$SubmitTime": "The time, in Unix epoch format, that you submitted the job."
+      }
+    }
+  }
+}

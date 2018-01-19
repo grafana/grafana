@@ -18,7 +18,6 @@ import (
 	"cloud.google.com/go/internal"
 	gax "github.com/googleapis/gax-go"
 	"golang.org/x/net/context"
-	"google.golang.org/api/googleapi"
 )
 
 // runWithRetry calls the function until it returns nil or a non-retryable error, or
@@ -29,13 +28,7 @@ func runWithRetry(ctx context.Context, call func() error) error {
 		if err == nil {
 			return true, nil
 		}
-		e, ok := err.(*googleapi.Error)
-		if !ok {
-			return true, err
-		}
-		// Retry on 429 and 5xx, according to
-		// https://cloud.google.com/storage/docs/exponential-backoff.
-		if e.Code == 429 || (e.Code >= 500 && e.Code < 600) {
+		if shouldRetry(err) {
 			return false, nil
 		}
 		return true, err

@@ -43,6 +43,11 @@ role_arn = partial_assume_role_role_arn
 role_arn = assume_role_role_arn
 source_profile = complete_creds
 
+[assume_role_w_mfa]
+role_arn = assume_role_role_arn
+source_profile = complete_creds
+mfa_serial = 0123456789
+
 [assume_role_invalid_source_profile]
 role_arn = assume_role_invalid_source_profile_role_arn
 source_profile = profile_not_exists

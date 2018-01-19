@@ -1,0 +1,7 @@
+server.crt AND server.key ARE PROVIDED FOR TEST PURPOSE AND SHOULD *NEVER* BE USED IN PRODUCTION
+
+
+Origin of the test key and cert is the folder test/keys of Apache Thrift source code distribution
+
+We need copies for npm deployment
+

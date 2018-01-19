@@ -1,0 +1,11 @@
+{
+    "str": "true",
+    "num_int": 3,
+    "num_float": 99.99,
+    "num_int_float": 5,
+    "bool": true,
+    "obj": {
+        "0": "i0",
+        "1": "i1"
+    }
+}

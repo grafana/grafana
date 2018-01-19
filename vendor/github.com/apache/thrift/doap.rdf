@@ -1,0 +1,132 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl"?>
+<rdf:RDF xml:lang="en"
+         xmlns="http://usefulinc.com/ns/doap#"
+         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:asfext="http://projects.apache.org/ns/asfext#"
+         xmlns:foaf="http://xmlns.com/foaf/0.1/">
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
+  <Project rdf:about="http://thrift.apache.org">
+    <created>2012-04-14</created>
+    <license rdf:resource="http://usefulinc.com/doap/licenses/asl20" />
+    <name>Apache Thrift</name>
+    <homepage rdf:resource="http://thrift.apache.org" />
+    <asfext:pmc rdf:resource="http://thrift.apache.org" />
+    <shortdesc>Apache Thrift software provides a framework for scalable cross-language services development, combines a software stack with a code generation engine to build services that work efficiently and seamlessly between C++, Java, Python, PHP, Ruby, Erlang, Perl, Haskell, C#, Cocoa, JavaScript, Node.js, Smalltalk, OCaml and Delphi and other languages. </shortdesc>
+    <description>Apache Thrift allows you to define data types and service interfaces in a simple definition file. Taking that file as input, the compiler generates code to be used to easily build RPC clients and servers that communicate seamlessly across programming languages. Instead of writing a load of boilerplate code to serialize and transport your objects and invoke remote methods, you can get right down to business. </description>
+    <bug-database rdf:resource="https://issues.apache.org/jira/browse/THRIFT" />
+    <mailing-list rdf:resource="http://thrift.apache.org/mailing/" />
+    <download-page rdf:resource="http://thrift.apache.org/download/" />
+    <programming-language>ActionScript</programming-language>
+    <programming-language>C</programming-language>
+    <programming-language>C#</programming-language>
+    <programming-language>C++</programming-language>
+    <programming-language>Cocoa</programming-language>
+    <programming-language>D</programming-language>
+    <programming-language>Delphi</programming-language>
+    <programming-language>Erlang</programming-language>
+    <programming-language>Go</programming-language>
+    <programming-language>Haskell</programming-language>
+    <programming-language>Java</programming-language>
+    <programming-language>JavaScript</programming-language>
+    <programming-language>node.js</programming-language>
+    <programming-language>OCaml</programming-language>
+    <programming-language>Perl</programming-language>
+    <programming-language>PHP</programming-language>
+    <programming-language>Python</programming-language>
+    <programming-language>SmallTalk</programming-language>
+    <category rdf:resource="http://projects.apache.org/category/http" />
+    <category rdf:resource="http://projects.apache.org/category/library" />
+    <category rdf:resource="http://projects.apache.org/category/network-client" />
+    <category rdf:resource="http://projects.apache.org/category/network-server" />
+    <release rdf:parseType="Collection">
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2015-09-25</created>
+        <revision>0.9.3</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2014-11-05</created>
+        <revision>0.9.2</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2013-08-22</created>
+        <revision>0.9.1</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2012-10-15</created>
+        <revision>0.9.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2011-11-29</created>
+        <revision>0.8.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2011-08-13</created>
+        <revision>0.7.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2011-04-25</created>
+        <revision>0.6.1</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2011-02-08</created>
+        <revision>0.6.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift (incubating)</name>
+        <created>2010-10-07</created>
+        <revision>0.5.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift (incubating)</name>
+        <created>2010-08-23</created>
+        <revision>0.4.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift (incubating)</name>
+        <created>2010-08-04</created>
+        <revision>0.3.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift (incubating)</name>
+        <created>2009-12-11</created>
+        <revision>0.2.0</revision>
+      </Version>
+    </release>
+    <repository>
+      <GitRepository>
+        <location rdf:resource="https://git-wip-us.apache.org/repos/asf/thrift.git"/>
+        <browse rdf:resource="https://git-wip-us.apache.org/repos/asf?p=thrift.git"/>
+      </GitRepository>
+    </repository>
+    <maintainer>
+      <foaf:Person>
+        <foaf:name>Apache Thrift PMC</foaf:name>
+          <foaf:mbox rdf:resource="mailto:dev@thrift.apache.org"/>
+      </foaf:Person>
+    </maintainer>
+  </Project>
+</rdf:RDF>

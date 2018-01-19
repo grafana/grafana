@@ -10,6 +10,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// User describes a user
 type User struct {
 	Id   int64
 	Name string
@@ -24,7 +25,7 @@ func mysqlEngine() (*xorm.Engine, error) {
 	return xorm.NewEngine("mysql", "root:@/test?charset=utf8")
 }
 
-var u *User = &User{}
+var u = &User{}
 
 func test(engine *xorm.Engine) {
 	err := engine.CreateTables(u)
@@ -33,7 +34,7 @@ func test(engine *xorm.Engine) {
 		return
 	}
 
-	engine.ShowSQL = true
+	engine.ShowSQL(true)
 	engine.SetMaxOpenConns(5)
 
 	size := 1000
@@ -91,7 +92,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	engine.ShowSQL = true
+	engine.ShowSQL(true)
 	fmt.Println(engine)
 	test(engine)
 	fmt.Println("------------------------")

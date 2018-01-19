@@ -67,7 +67,7 @@ Please be aware of the following notes prior to opening a pull request:
 5. The JSON files under the SDK's `models` folder are sourced from outside the SDK.
    Such as `models/apis/ec2/2016-11-15/api.json`. We will not accept pull requests
    directly on these models. If you discover an issue with the models please
-   create a Github [issue](issues) describing the issue.
+   create a [GitHub issue][issues] describing the issue.
 
 ### Testing
 

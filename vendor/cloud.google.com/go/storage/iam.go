@@ -23,21 +23,28 @@ import (
 
 // IAM provides access to IAM access control for the bucket.
 func (b *BucketHandle) IAM() *iam.Handle {
-	return iam.InternalNewHandleClient(&iamClient{raw: b.c.raw}, b.name)
+	return iam.InternalNewHandleClient(&iamClient{
+		raw:         b.c.raw,
+		userProject: b.userProject,
+	}, b.name)
 }
 
 // iamClient implements the iam.client interface.
 type iamClient struct {
-	raw *raw.Service
+	raw         *raw.Service
+	userProject string
 }
 
 func (c *iamClient) Get(ctx context.Context, resource string) (*iampb.Policy, error) {
-	req := c.raw.Buckets.GetIamPolicy(resource)
-	setClientHeader(req.Header())
+	call := c.raw.Buckets.GetIamPolicy(resource)
+	setClientHeader(call.Header())
+	if c.userProject != "" {
+		call.UserProject(c.userProject)
+	}
 	var rp *raw.Policy
 	var err error
 	err = runWithRetry(ctx, func() error {
-		rp, err = req.Context(ctx).Do()
+		rp, err = call.Context(ctx).Do()
 		return err
 	})
 	if err != nil {
@@ -48,21 +55,27 @@ func (c *iamClient) Get(ctx context.Context, resource string) (*iampb.Policy, er
 
 func (c *iamClient) Set(ctx context.Context, resource string, p *iampb.Policy) error {
 	rp := iamToStoragePolicy(p)
-	req := c.raw.Buckets.SetIamPolicy(resource, rp)
-	setClientHeader(req.Header())
+	call := c.raw.Buckets.SetIamPolicy(resource, rp)
+	setClientHeader(call.Header())
+	if c.userProject != "" {
+		call.UserProject(c.userProject)
+	}
 	return runWithRetry(ctx, func() error {
-		_, err := req.Context(ctx).Do()
+		_, err := call.Context(ctx).Do()
 		return err
 	})
 }
 
 func (c *iamClient) Test(ctx context.Context, resource string, perms []string) ([]string, error) {
-	req := c.raw.Buckets.TestIamPermissions(resource, perms)
-	setClientHeader(req.Header())
+	call := c.raw.Buckets.TestIamPermissions(resource, perms)
+	setClientHeader(call.Header())
+	if c.userProject != "" {
+		call.UserProject(c.userProject)
+	}
 	var res *raw.TestIamPermissionsResponse
 	var err error
 	err = runWithRetry(ctx, func() error {
-		res, err = req.Context(ctx).Do()
+		res, err = call.Context(ctx).Do()
 		return err
 	})
 	if err != nil {

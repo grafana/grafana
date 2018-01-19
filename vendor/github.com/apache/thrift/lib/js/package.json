@@ -1,0 +1,15 @@
+{
+  "name": "thrift",
+  "version": "0.10.0",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-cli": "^1.2.0",
+    "grunt-contrib-uglify": "^1.0.1",
+    "grunt-contrib-jshint": "^1.0.0",
+    "grunt-contrib-qunit": "^1.2.0",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-jsdoc": "^2.0.0",
+    "grunt-external-daemon": "^1.1.0",
+    "grunt-shell": "^1.3.0"
+  }
+}

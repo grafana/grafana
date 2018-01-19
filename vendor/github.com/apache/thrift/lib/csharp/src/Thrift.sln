@@ -1,0 +1,47 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thrift", "Thrift.csproj", "{499EB63C-D74C-47E8-AE48-A2FC94538E9D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThriftTest", "..\test\ThriftTest\ThriftTest.csproj", "{48DD757F-CA95-4DD7-BDA4-58DB6F108C2C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThriftMSBuildTask", "..\ThriftMSBuildTask\ThriftMSBuildTask.csproj", "{EC0A0231-66EA-4593-A792-C6CA3BB8668E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thrift.45", "Thrift.45.csproj", "{EBCE35DA-CF6A-42BC-A357-A9C09B534299}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThriftMVCTest", "..\test\ThriftMVCTest\ThriftMVCTest.csproj", "{891B4487-C7BA-427E-BBC8-4C596C229A10}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{499EB63C-D74C-47E8-AE48-A2FC94538E9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{499EB63C-D74C-47E8-AE48-A2FC94538E9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{499EB63C-D74C-47E8-AE48-A2FC94538E9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{499EB63C-D74C-47E8-AE48-A2FC94538E9D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48DD757F-CA95-4DD7-BDA4-58DB6F108C2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48DD757F-CA95-4DD7-BDA4-58DB6F108C2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48DD757F-CA95-4DD7-BDA4-58DB6F108C2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48DD757F-CA95-4DD7-BDA4-58DB6F108C2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC0A0231-66EA-4593-A792-C6CA3BB8668E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC0A0231-66EA-4593-A792-C6CA3BB8668E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC0A0231-66EA-4593-A792-C6CA3BB8668E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC0A0231-66EA-4593-A792-C6CA3BB8668E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBCE35DA-CF6A-42BC-A357-A9C09B534299}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBCE35DA-CF6A-42BC-A357-A9C09B534299}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBCE35DA-CF6A-42BC-A357-A9C09B534299}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBCE35DA-CF6A-42BC-A357-A9C09B534299}.Release|Any CPU.Build.0 = Release|Any CPU
+		{891B4487-C7BA-427E-BBC8-4C596C229A10}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{891B4487-C7BA-427E-BBC8-4C596C229A10}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{891B4487-C7BA-427E-BBC8-4C596C229A10}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{891B4487-C7BA-427E-BBC8-4C596C229A10}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		        StartupItem = Thrift.csproj
+	EndGlobalSection
+EndGlobal

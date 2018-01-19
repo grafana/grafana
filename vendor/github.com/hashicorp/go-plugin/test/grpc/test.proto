@@ -1,0 +1,27 @@
+syntax = "proto3";
+package grpctest;
+
+message TestRequest {
+    int32 Input = 1;
+}
+
+message TestResponse {
+    int32 Output = 2;
+}
+
+message PrintKVRequest {
+    string Key = 1;
+    oneof Value {
+        string ValueString = 2;
+        int32 ValueInt = 3;
+    }
+}
+
+message PrintKVResponse {
+
+}
+
+service Test {
+    rpc Double(TestRequest) returns (TestResponse) {}
+    rpc PrintKV(PrintKVRequest) returns (PrintKVResponse) {}
+}

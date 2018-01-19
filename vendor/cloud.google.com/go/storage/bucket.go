@@ -1,4 +1,4 @@
-// Copyright 2014 Google Inc. All Rights Reserved.
+// Copyright 2014 Google Inc. LiveAndArchived Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ type BucketHandle struct {
 	acl              ACLHandle
 	defaultObjectACL ACLHandle
 	conds            *BucketConditions
-	userProject      string // project for requester-pays buckets
+	userProject      string // project for Requester Pays buckets
 }
 
 // Bucket returns a BucketHandle, which provides operations on the named bucket.
@@ -71,6 +71,11 @@ func (b *BucketHandle) Create(ctx context.Context, projectID string, attrs *Buck
 		bkt = &raw.Bucket{}
 	}
 	bkt.Name = b.name
+	// If there is lifecycle information but no location, explicitly set
+	// the location. This is a GCS quirk/bug.
+	if bkt.Location == "" && bkt.Lifecycle != nil {
+		bkt.Location = "US"
+	}
 	req := b.c.raw.Buckets.Insert(projectID, bkt)
 	setClientHeader(req.Header())
 	return runWithRetry(ctx, func() error { _, err := req.Context(ctx).Do(); return err })
@@ -192,8 +197,10 @@ func (b *BucketHandle) newPatchCall(uattrs *BucketAttrsToUpdate) (*raw.BucketsPa
 }
 
 // BucketAttrs represents the metadata for a Google Cloud Storage bucket.
+// Read-only fields are ignored by BucketHandle.Create.
 type BucketAttrs struct {
 	// Name is the name of the bucket.
+	// This field is read-only.
 	Name string
 
 	// ACL is the list of access control rules on the bucket.
@@ -207,6 +214,7 @@ type BucketAttrs struct {
 	Location string
 
 	// MetaGeneration is the metadata generation of the bucket.
+	// This field is read-only.
 	MetaGeneration int64
 
 	// StorageClass is the default storage class of the bucket. This defines
@@ -219,17 +227,112 @@ type BucketAttrs struct {
 	StorageClass string
 
 	// Created is the creation time of the bucket.
+	// This field is read-only.
 	Created time.Time
 
 	// VersioningEnabled reports whether this bucket has versioning enabled.
-	// This field is read-only.
 	VersioningEnabled bool
 
 	// Labels are the bucket's labels.
 	Labels map[string]string
 
 	// RequesterPays reports whether the bucket is a Requester Pays bucket.
+	// Clients performing operations on Requester Pays buckets must provide
+	// a user project (see BucketHandle.UserProject), which will be billed
+	// for the operations.
 	RequesterPays bool
+	// Lifecycle is the lifecycle configuration for objects in the bucket.
+	Lifecycle Lifecycle
+}
+
+// Lifecycle is the lifecycle configuration for objects in the bucket.
+type Lifecycle struct {
+	Rules []LifecycleRule
+}
+
+const (
+	// RFC3339 date with only the date segment, used for CreatedBefore in LifecycleRule.
+	rfc3339Date = "2006-01-02"
+
+	// DeleteAction is a lifecycle action that deletes a live and/or archived
+	// objects. Takes precendence over SetStorageClass actions.
+	DeleteAction = "Delete"
+
+	// SetStorageClassAction changes the storage class of live and/or archived
+	// objects.
+	SetStorageClassAction = "SetStorageClass"
+)
+
+// LifecycleRule is a lifecycle configuration rule.
+//
+// When all the configured conditions are met by an object in the bucket, the
+// configured action will automatically be taken on that object.
+type LifecycleRule struct {
+	// Action is the action to take when all of the associated conditions are
+	// met.
+	Action LifecycleAction
+
+	// Condition is the set of conditions that must be met for the associated
+	// action to be taken.
+	Condition LifecycleCondition
+}
+
+// LifecycleAction is a lifecycle configuration action.
+type LifecycleAction struct {
+	// Type is the type of action to take on matching objects.
+	//
+	// Acceptable values are "Delete" to delete matching objects and
+	// "SetStorageClass" to set the storage class defined in StorageClass on
+	// matching objects.
+	Type string
+
+	// StorageClass is the storage class to set on matching objects if the Action
+	// is "SetStorageClass".
+	StorageClass string
+}
+
+// Liveness specifies whether the object is live or not.
+type Liveness int
+
+const (
+	// LiveAndArchived includes both live and archived objects.
+	LiveAndArchived Liveness = iota
+	// Live specifies that the object is still live.
+	Live
+	// Archived specifies that the object is archived.
+	Archived
+)
+
+// LifecycleCondition is a set of conditions used to match objects and take an
+// action automatically.
+//
+// All configured conditions must be met for the associated action to be taken.
+type LifecycleCondition struct {
+	// AgeInDays is the age of the object in days.
+	AgeInDays int64
+
+	// CreatedBefore is the time the object was created.
+	//
+	// This condition is satisfied when an object is created before midnight of
+	// the specified date in UTC.
+	CreatedBefore time.Time
+
+	// Liveness specifies the object's liveness. Relevant only for versioned objects
+	Liveness Liveness
+
+	// MatchesStorageClasses is the condition matching the object's storage
+	// class.
+	//
+	// Values include "MULTI_REGIONAL", "REGIONAL", "NEARLINE", "COLDLINE",
+	// "STANDARD", and "DURABLE_REDUCED_AVAILABILITY".
+	MatchesStorageClasses []string
+
+	// NumNewerVersions is the condition matching objects with a number of newer versions.
+	//
+	// If the value is N, this condition is satisfied when there are at least N
+	// versions (including the live version) newer than this version of the
+	// object.
+	NumNewerVersions int64
 }
 
 func newBucket(b *raw.Bucket) *BucketAttrs {
@@ -245,6 +348,7 @@ func newBucket(b *raw.Bucket) *BucketAttrs {
 		VersioningEnabled: b.Versioning != nil && b.Versioning.Enabled,
 		Labels:            b.Labels,
 		RequesterPays:     b.Billing != nil && b.Billing.RequesterPays,
+		Lifecycle:         toLifecycle(b.Lifecycle),
 	}
 	acl := make([]ACLRule, len(b.Acl))
 	for i, rule := range b.Acl {
@@ -306,6 +410,7 @@ func (b *BucketAttrs) toRawBucket() *raw.Bucket {
 		Versioning:       v,
 		Labels:           labels,
 		Billing:          bb,
+		Lifecycle:        toRawLifecycle(b.Lifecycle),
 	}
 }
 
@@ -404,8 +509,10 @@ func (c *BucketConditions) validate(method string) error {
 }
 
 // UserProject returns a new BucketHandle that passes the project ID as the user
-// project for all subsequent calls. A user project is required for all operations
-// on requester-pays buckets.
+// project for all subsequent calls. Calls with a user project will be billed to that
+// project rather than to the bucket's owning project.
+//
+// A user project is required for all operations on Requester Pays buckets.
 func (b *BucketHandle) UserProject(projectID string) *BucketHandle {
 	b2 := *b
 	b2.userProject = projectID
@@ -435,6 +542,76 @@ func applyBucketConds(method string, conds *BucketConditions, call interface{}) 
 		}
 	}
 	return nil
+}
+
+func toRawLifecycle(l Lifecycle) *raw.BucketLifecycle {
+	var rl raw.BucketLifecycle
+	if len(l.Rules) == 0 {
+		return nil
+	}
+	for _, r := range l.Rules {
+		rr := &raw.BucketLifecycleRule{
+			Action: &raw.BucketLifecycleRuleAction{
+				Type:         r.Action.Type,
+				StorageClass: r.Action.StorageClass,
+			},
+			Condition: &raw.BucketLifecycleRuleCondition{
+				Age:                 r.Condition.AgeInDays,
+				MatchesStorageClass: r.Condition.MatchesStorageClasses,
+				NumNewerVersions:    r.Condition.NumNewerVersions,
+			},
+		}
+
+		switch r.Condition.Liveness {
+		case LiveAndArchived:
+			rr.Condition.IsLive = nil
+		case Live:
+			rr.Condition.IsLive = googleapi.Bool(true)
+		case Archived:
+			rr.Condition.IsLive = googleapi.Bool(false)
+		}
+
+		if !r.Condition.CreatedBefore.IsZero() {
+			rr.Condition.CreatedBefore = r.Condition.CreatedBefore.Format(rfc3339Date)
+		}
+		rl.Rule = append(rl.Rule, rr)
+	}
+	return &rl
+}
+
+func toLifecycle(rl *raw.BucketLifecycle) Lifecycle {
+	var l Lifecycle
+	if rl == nil {
+		return l
+	}
+	for _, rr := range rl.Rule {
+		r := LifecycleRule{
+			Action: LifecycleAction{
+				Type:         rr.Action.Type,
+				StorageClass: rr.Action.StorageClass,
+			},
+			Condition: LifecycleCondition{
+				AgeInDays:             rr.Condition.Age,
+				MatchesStorageClasses: rr.Condition.MatchesStorageClass,
+				NumNewerVersions:      rr.Condition.NumNewerVersions,
+			},
+		}
+
+		switch {
+		case rr.Condition.IsLive == nil:
+			r.Condition.Liveness = LiveAndArchived
+		case *rr.Condition.IsLive == true:
+			r.Condition.Liveness = Live
+		case *rr.Condition.IsLive == false:
+			r.Condition.Liveness = Archived
+		}
+
+		if rr.Condition.CreatedBefore != "" {
+			r.Condition.CreatedBefore, _ = time.Parse(rfc3339Date, rr.Condition.CreatedBefore)
+		}
+		l.Rules = append(l.Rules, r)
+	}
+	return l
 }
 
 // Objects returns an iterator over the objects in the bucket that match the Query q.

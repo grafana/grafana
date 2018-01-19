@@ -16,11 +16,11 @@ type service struct {
 }
 
 var mergeServices = map[string]service{
-	"dynamodbstreams": service{
+	"dynamodbstreams": {
 		dstName: "dynamodb",
 		srcName: "streams.dynamodb",
 	},
-	"wafregional": service{
+	"wafregional": {
 		dstName:        "waf",
 		srcName:        "waf-regional",
 		serviceVersion: "2015-08-24",
@@ -40,7 +40,7 @@ func (a *API) customizationPasses() {
 		"iotdataplane":      disableEndpointResolving,
 	}
 
-	for k, _ := range mergeServices {
+	for k := range mergeServices {
 		svcCustomizations[k] = mergeServicesCustomizations
 	}
 
@@ -53,12 +53,20 @@ func (a *API) customizationPasses() {
 func s3Customizations(a *API) {
 	var strExpires *Shape
 
+	var keepContentMD5Ref = map[string]struct{}{
+		"PutObjectInput":  struct{}{},
+		"UploadPartInput": struct{}{},
+	}
+
 	for name, s := range a.Shapes {
-		// Remove ContentMD5 members
-		if _, ok := s.MemberRefs["ContentMD5"]; ok {
-			delete(s.MemberRefs, "ContentMD5")
+		// Remove ContentMD5 members unless specified otherwise.
+		if _, keep := keepContentMD5Ref[name]; !keep {
+			if _, have := s.MemberRefs["ContentMD5"]; have {
+				delete(s.MemberRefs, "ContentMD5")
+			}
 		}
 
+		// Generate getter methods for API operation fields used by customizations.
 		for _, refName := range []string{"Bucket", "SSECustomerKey", "CopySourceSSECustomerKey"} {
 			if ref, ok := s.MemberRefs[refName]; ok {
 				ref.GenerateGetter = true

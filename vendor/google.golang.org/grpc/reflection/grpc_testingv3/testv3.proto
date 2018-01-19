@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package grpc.testingv3;
+
+message SearchResponseV3 {
+  message Result {
+    string url = 1;
+    string title = 2;
+    repeated string snippets = 3;
+  }
+  repeated Result results = 1;
+}
+
+message SearchRequestV3 {
+  string query = 1;
+}
+
+service SearchServiceV3 {
+  rpc Search(SearchRequestV3) returns (SearchResponseV3);
+  rpc StreamingSearch(stream SearchRequestV3) returns (stream SearchResponseV3);
+}
