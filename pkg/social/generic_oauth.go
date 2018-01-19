@@ -225,7 +225,7 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 	return userInfo, nil
 }
 
-func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) (bool) {
+func (s *SocialGenericOAuth) extractToken(data *UserInfoJson, token *oauth2.Token) bool {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
 		s.log.Debug("No id_token found", "token", token)

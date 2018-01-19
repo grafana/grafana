@@ -102,9 +102,9 @@ func NewOAuthService() {
 		// GitHub.
 		if name == "github" {
 			SocialMap["github"] = &SocialGithub{
-				SocialBase:           &SocialBase{
-					Config:               &config,
-					log:                  logger,
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
 				},
 				allowedDomains:       info.AllowedDomains,
 				apiUrl:               info.ApiUrl,
@@ -117,9 +117,9 @@ func NewOAuthService() {
 		// Google.
 		if name == "google" {
 			SocialMap["google"] = &SocialGoogle{
-				SocialBase:           &SocialBase{
-					Config:               &config,
-					log:                  logger,
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
 				},
 				allowedDomains: info.AllowedDomains,
 				hostedDomain:   info.HostedDomain,
@@ -131,9 +131,9 @@ func NewOAuthService() {
 		// Generic - Uses the same scheme as Github.
 		if name == "generic_oauth" {
 			SocialMap["generic_oauth"] = &SocialGenericOAuth{
-				SocialBase:           &SocialBase{
-					Config:               &config,
-					log:                  logger,
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
 				},
 				allowedDomains:       info.AllowedDomains,
 				apiUrl:               info.ApiUrl,
@@ -156,9 +156,9 @@ func NewOAuthService() {
 			}
 
 			SocialMap["grafana_com"] = &SocialGrafanaCom{
-				SocialBase:           &SocialBase{
-					Config:               &config,
-					log:                  logger,
+				SocialBase: &SocialBase{
+					Config: &config,
+					log:    logger,
 				},
 				url:                  setting.GrafanaComUrl,
 				allowSignup:          info.AllowSignup,
