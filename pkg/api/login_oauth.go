@@ -157,6 +157,16 @@ func OAuthLogin(ctx *middleware.Context) {
 	userQuery := m.GetUserByEmailQuery{Email: userInfo.Email}
 	err = bus.Dispatch(&userQuery)
 
+	// if user not found and we have a username, try to look up user
+	if err == m.ErrUserNotFound && userInfo.Login != "" {
+		loginQuery := m.GetUserByLoginQuery{LoginOrEmail: userInfo.Login}
+		err = bus.Dispatch(&loginQuery)
+
+		if err == nil {
+			userQuery.Result = loginQuery.Result
+		}
+	}
+
 	// create account if missing
 	if err == m.ErrUserNotFound {
 		if !connect.IsSignupAllowed() {
