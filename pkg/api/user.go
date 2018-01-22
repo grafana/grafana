@@ -242,8 +242,9 @@ func searchUser(c *middleware.Context) (*m.SearchUsersQuery, error) {
 	}
 
 	searchQuery := c.Query("query")
+	isAdmin := c.Query("isadmin")
 
-	query := &m.SearchUsersQuery{Query: searchQuery, Page: page, Limit: perPage}
+	query := &m.SearchUsersQuery{Query: searchQuery, Page: page, Limit: perPage, IsAdmin: isAdmin}
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
 	}
