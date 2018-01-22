@@ -41,12 +41,6 @@
 
 .theme-dark {
   .react-grid-item > .react-resizable-handle::after {
-    content: '';
-    position: absolute;
-    right: 3px;
-    bottom: 3px;
-    width: 6px;
-    height: 6px;
     border-right: 2px solid rgba(255, 255, 255, 0.4);
     border-bottom: 2px solid rgba(255, 255, 255, 0.4);
   }
