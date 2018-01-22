@@ -766,7 +766,7 @@ Time to live for snapshots.
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
-You can choose between (s3, webdav, gcs, azure_blob). If left empty Grafana will ignore the upload action.
+You can choose between (s3, webdav, gcs, azure_blob, local). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
 
