@@ -18,6 +18,7 @@ Dashboard panels and rows are positioned using a gridPos object `{x: 0, y: 0, w:
 
 ## Minor
 * **Graph**: Don't hide graph display options (Lines/Points) when draw mode is unchecked [#9770](https://github.com/grafana/grafana/issues/9770), thx [@Jonnymcc](https://github.com/Jonnymcc)
+* **Prometheus**: Show label name in paren after by/without/on/ignoring/group_left/group_right [#9664](https://github.com/grafana/grafana/pull/9664), thx [@mtanda](https://github.com/mtanda)
 
 # 4.7.0 (unreleased / v4.7.x branch)
 
