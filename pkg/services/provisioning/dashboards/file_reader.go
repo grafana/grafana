@@ -25,12 +25,12 @@ var (
 )
 
 type fileReader struct {
-	Cfg                        *DashboardsAsConfig
-	Path                       string
-	log                        log.Logger
-	dashboardRepo              dashboards.Repository
-	cache                      *dashboardCache
-	createWalk                 func(fr *fileReader, folderId int64) filepath.WalkFunc
+	Cfg           *DashboardsAsConfig
+	Path          string
+	log           log.Logger
+	dashboardRepo dashboards.Repository
+	cache         *dashboardCache
+	createWalk    func(fr *fileReader, folderId int64) filepath.WalkFunc
 }
 
 func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
@@ -50,12 +50,12 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 	}
 
 	return &fileReader{
-		Cfg:                        cfg,
-		Path:                       path,
-		log:                        log,
-		dashboardRepo:              dashboards.GetRepository(),
-		cache:      NewDashboardCache(),
-		createWalk: createWalkFn,
+		Cfg:           cfg,
+		Path:          path,
+		log:           log,
+		dashboardRepo: dashboards.GetRepository(),
+		cache:         NewDashboardCache(),
+		createWalk:    createWalkFn,
 	}, nil
 }
 
@@ -209,9 +209,11 @@ func createWalkFn(fr *fileReader, folderId int64) filepath.WalkFunc {
 	}
 }
 func saveDashboard(fr *fileReader, path string, dash *dashboards.SaveDashboardDTO, modTime time.Time) error {
-	//dash.Extras["provisioning.filepath"] = path
-	_, err := fr.dashboardRepo.SaveDashboard(dash)
-
+	d := &models.DashboardProvisioning{
+		ExternalId: path,
+		Name:       fr.Cfg.Name,
+	}
+	_, err := fr.dashboardRepo.SaveProvisionedDashboard(dash, d)
 
 	return err
 }

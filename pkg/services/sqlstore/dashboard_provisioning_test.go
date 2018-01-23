@@ -35,6 +35,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(cmd.Result, ShouldNotBeNil)
 			So(cmd.Result.Id, ShouldNotEqual, 0)
+			dashId := cmd.Result.Id
 
 			Convey("Can query for provisioned dashboards", func() {
 				query := &models.GetProvisionedDashboardDataQuery{Name: "default"}
@@ -42,6 +43,7 @@ func TestDashboardProvisioningTest(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 1)
+				So(query.Result[0].DashboardId, ShouldEqual, dashId)
 			})
 		})
 	})

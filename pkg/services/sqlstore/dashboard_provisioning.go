@@ -28,25 +28,25 @@ func SaveProvisionedDashboard(cmd *models.SaveProvisionedDashboardCommand) error
 		}
 
 		cmd.Result = cmd.DashboardCmd.Result
-		return saveProvionedData(sess, cmd.DashboardProvisioning)
+
+		return saveProvionedData(sess, cmd.DashboardProvisioning, cmd.Result)
 	})
 }
 
-func saveProvionedData(sess *DBSession, cmd *models.DashboardProvisioning) error {
-	results := &models.DashboardProvisioning{}
+func saveProvionedData(sess *DBSession, cmd *models.DashboardProvisioning, dashboard *models.Dashboard) error {
+	result := &models.DashboardProvisioning{}
 
-	exist, err := sess.Where("dashboard_id=?", cmd.DashboardId).Get(results)
+	exist, err := sess.Where("dashboard_id=?", dashboard.Id).Get(result)
 	if err != nil {
 		return err
 	}
 
-	cmd.Id = results.Id
+	cmd.Id = result.Id
 	cmd.Updated = time.Now()
+	cmd.DashboardId = dashboard.Id
 
-	println("exists", exist)
 	if exist {
-
-		_, err = sess.ID(results.Id).Update(cmd)
+		_, err = sess.ID(result.Id).Update(cmd)
 	} else {
 		_, err = sess.Insert(cmd)
 	}
