@@ -272,20 +272,6 @@ export class DashboardModel {
       let panel = this.panels[i];
       if (panel.repeat) {
         this.repeatPanel(panel, i);
-      } else if (panel.panels) {
-        // recalc repeate panel on collapsed state
-        let count = 0;
-        for (let j = 0; j < panel.panels.length; j++) {
-          if (panel.panels[j].repeat) {
-            let variable = _.find(this.templating.list, { name: panel.panels[j].repeat });
-            if (variable) {
-              count += this.getSelectedVariableOptions(variable).length;
-            }
-          } else if (!panel.panels[j].repeatPanelId) {
-            count++;
-          }
-        }
-        this.panels[i].countPanels = count;
       }
     }
 
@@ -592,7 +578,9 @@ export class DashboardModel {
         // needed to know home much panels below should be pushed down
         let yMax = row.gridPos.y;
 
+        // check need reorder repeated panels
         let needRepeats = false;
+
         for (let panel of row.panels) {
           // make sure y is adjusted (in case row moved while collapsed)
           panel.gridPos.y -= yDiff;

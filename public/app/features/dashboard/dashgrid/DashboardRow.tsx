@@ -79,9 +79,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
     });
 
     let title = templateSrv.replaceWithText(this.props.panel.title, this.props.panel.scopedVars);
-    const hiddenPanels = this.props.panel.countPanels
-      ? this.props.panel.countPanels
-      : this.props.panel.panels ? this.props.panel.panels.length : 0;
+    const hiddenPanels = this.props.panel.panels ? this.props.panel.panels.length : 0;
 
     return (
       <div className={classes}>
