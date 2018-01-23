@@ -198,7 +198,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.setValueMapping(data);
   }
 
-   disableFontSizes() {
+   canChangeFontSize() {
      return this.panel.gauge.show;
    }
 
