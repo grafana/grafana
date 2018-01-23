@@ -94,6 +94,35 @@
       </div>
     </div>
 
+    <div class="section gf-form-group"  ng-if="style.type === 'date'">
+      <h5 class="section-heading">Thresholds</h5>
+      <div class="gf-form">
+        <label class="gf-form-label width-8">Thresholds<tip>Comma separated values</tip></label>
+        <input type="text" class="gf-form-input width-10" ng-model="style.thresholds" placeholder="50,80" ng-blur="editor.render()" array-join>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-8">Color Mode</label>
+        <div class="gf-form-select-wrapper width-10">
+          <select class="gf-form-input" ng-model="style.colorMode" ng-options="c.value as c.text for c in editor.colorModes" ng-change="editor.render()"></select>
+        </div>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-8">Colors</label>
+        <span class="gf-form-label">
+          <color-picker color="style.colors[0]" onChange="editor.onColorChange($index, 0)"></color-picker>
+        </span>
+        <span class="gf-form-label">
+          <color-picker color="style.colors[1]" onChange="editor.onColorChange($index, 1)"></color-picker>
+        </span>
+        <span class="gf-form-label">
+          <color-picker color="style.colors[2]" onChange="editor.onColorChange($index, 2)"></color-picker>
+        </span>
+        <div class="gf-form-label">
+          <a class="pointer" ng-click="editor.invertColorOrder($index)">Invert</a>
+        </div>
+      </div>
+    </div>
+
     <div class="section gf-form-group" ng-if="style.link">
       <h5 class="section-heading">Link</h5>
       <div class="gf-form">
