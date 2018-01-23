@@ -124,6 +124,13 @@ export function queryPartEditorDirective($compile, templateSrv) {
 
         var typeahead = $input.data('typeahead');
         typeahead.lookup = function() {
+          if ($scope.lookupTimeout) {
+            clearTimeout($scope.lookupTimeout);
+          }
+          $scope.lookupTimeout = setTimeout($scope.doLookup.bind(this), 500);
+        };
+
+        $scope.doLookup = function() {
           this.query = this.$element.val() || '';
           var items = this.source(this.query, $.proxy(this.process, this));
           return items ? this.process(items) : items;
