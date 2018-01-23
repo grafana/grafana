@@ -97,7 +97,7 @@ func NewOAuthService() {
 			Scopes:      info.Scopes,
 		}
 
-		logger := log.New("oauth.login." + name)
+		logger := log.New("oauth." + name)
 
 		// GitHub.
 		if name == "github" {

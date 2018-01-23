@@ -29,7 +29,7 @@ var (
 	ErrSignUpNotAllowed      = errors.New("Signup is not allowed for this adapter")
 	ErrUsersQuotaReached     = errors.New("Users quota reached")
 	ErrNoEmail               = errors.New("Login provider didn't return an email address")
-	oauthLogger              = log.New("oauth.login")
+	oauthLogger              = log.New("oauth")
 )
 
 func GenStateString() string {
@@ -96,7 +96,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	if setting.OAuthService.OAuthInfos[name].TlsClientCert != "" || setting.OAuthService.OAuthInfos[name].TlsClientKey != "" {
 		cert, err := tls.LoadX509KeyPair(setting.OAuthService.OAuthInfos[name].TlsClientCert, setting.OAuthService.OAuthInfos[name].TlsClientKey)
 		if err != nil {
-			oauthLogger.Error("Failed to setup TlsClientCert", "oauth provider", name, "error", err)
+			ctx.Logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
 			ctx.Handle(500, "login.OAuthLogin(Failed to setup TlsClientCert)", nil)
 			return
 		}
@@ -107,7 +107,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	if setting.OAuthService.OAuthInfos[name].TlsClientCa != "" {
 		caCert, err := ioutil.ReadFile(setting.OAuthService.OAuthInfos[name].TlsClientCa)
 		if err != nil {
-			oauthLogger.Error("Failed to setup TlsClientCa", "oauth provider", name, "error", err)
+			ctx.Logger.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
 			ctx.Handle(500, "login.OAuthLogin(Failed to setup TlsClientCa)", nil)
 			return
 		}
@@ -209,8 +209,7 @@ func OAuthLogin(ctx *middleware.Context) {
 }
 
 func redirectWithError(ctx *middleware.Context, err error, v ...interface{}) {
-	oauthLogger.Info(err.Error(), v...)
-	// TODO: we can use the flash storage here once it's implemented
+	ctx.Logger.Error(err.Error(), v...)
 	ctx.Session.Set("loginError", err.Error())
 	ctx.Redirect(setting.AppSubUrl + "/login")
 }
