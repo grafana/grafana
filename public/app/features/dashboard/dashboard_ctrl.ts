@@ -43,6 +43,10 @@ export class DashboardCtrl implements PanelContainer {
     }
   }
 
+  getAdminUsers() {
+    return this.dashboardSrv.adminEmails;
+  }
+
   setupDashboardInternal(data) {
     const dashboard = this.dashboardSrv.create(data.dashboard, data.meta);
     this.dashboardSrv.setCurrent(dashboard);

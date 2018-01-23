@@ -128,10 +128,11 @@ type GetUserProfileQuery struct {
 }
 
 type SearchUsersQuery struct {
-	OrgId int64
-	Query string
-	Page  int
-	Limit int
+	OrgId   int64
+	Query   string
+	Page    int
+	Limit   int
+	IsAdmin string
 
 	Result SearchUserQueryResult
 }

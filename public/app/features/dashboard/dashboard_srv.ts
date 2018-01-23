@@ -1,11 +1,27 @@
 import coreModule from 'app/core/core_module';
 import { DashboardModel } from './dashboard_model';
+import _ from 'lodash';
 
 export class DashboardSrv {
   dash: any;
+  adminEmails: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $rootScope, private $location) {}
+  constructor(private backendSrv, private $rootScope, private $location) {
+    this.getAdminUsers();
+  }
+
+  getAdminUsers() {
+    this.backendSrv
+      .get(`/api/users/search?isadmin=1`)
+      .then(result => {
+        var emails = [];
+        _.forEach(result.users, function(user) {
+            emails.push(user["email"]);
+        });
+        this.adminEmails = emails.join(",");
+      });
+  }
 
   create(dashboard, meta) {
     return new DashboardModel(dashboard, meta);

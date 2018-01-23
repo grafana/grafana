@@ -405,6 +405,14 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 		whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
 	}
 
+	if isadmin_int, err := strconv.Atoi(query.IsAdmin); err == nil {
+		if query.IsAdmin != "" && isadmin_int < 2 {
+			whereConditions = append(whereConditions, "is_admin = ?")
+			isadmin, _ := strconv.ParseBool(query.IsAdmin)
+			whereParams = append(whereParams, isadmin)
+		}
+	}
+
 	if len(whereConditions) > 0 {
 		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 	}
