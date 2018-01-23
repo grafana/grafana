@@ -18,6 +18,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   dataList: any = [];
   annotations: any = [];
   alertState: any;
+  highlighting: string;
 
   annotationsPromise: any;
   dataWarning: any;
@@ -246,6 +247,17 @@ class GraphCtrl extends MetricsPanelCtrl {
     } else {
       this.toggleSeriesExclusiveMode(serie);
     }
+    this.render();
+  }
+
+  toggleHighlightSeries(serie, isEntered) {
+    if (this.highlighting === (isEntered ? serie.alias : '')) {
+      return;
+    }
+
+    serie.highlight = isEntered;
+    this.highlighting = isEntered ? serie.alias : '';
+
     this.render();
   }
 

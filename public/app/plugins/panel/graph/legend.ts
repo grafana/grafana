@@ -75,6 +75,21 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         $(elem.children('tbody')).scrollTop(scrollPosition);
       }
 
+      function onHighlightSeries(e) {
+        toggleHighlightSeries(e, true);
+      }
+
+      function offHighlightSeries(e) {
+        toggleHighlightSeries(e, false);
+      }
+
+      function toggleHighlightSeries(e, state) {
+        var el = $(e.currentTarget);
+        var index = getSeriesIndexForElement(el);
+        var seriesInfo = seriesList[index];
+        ctrl.toggleHighlightSeries(seriesInfo, state);
+      }
+
       function sortLegend(e) {
         var el = $(e.currentTarget);
         var stat = el.data('stat');
@@ -120,6 +135,8 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         if (firstRender) {
           elem.on('click', '.graph-legend-icon', openColorSelector);
           elem.on('click', '.graph-legend-alias', toggleSeries);
+          elem.on('mouseenter', '.graph-legend-alias', onHighlightSeries);
+          elem.on('mouseleave', '.graph-legend-alias', offHighlightSeries);
           elem.on('click', 'th', sortLegend);
           firstRender = false;
         }
