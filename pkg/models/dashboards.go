@@ -167,6 +167,21 @@ type SaveDashboardCommand struct {
 	Result *Dashboard
 }
 
+type DashboardProvisioning struct {
+	Id          int64
+	DashboardId int64
+	Name        string
+	ExternalId  string
+	Updated     time.Time
+}
+
+type SaveProvisionedDashboardCommand struct {
+	DashboardCmd          *SaveDashboardCommand
+	DashboardProvisioning *DashboardProvisioning
+
+	Result *Dashboard
+}
+
 type DeleteDashboardCommand struct {
 	Id    int64
 	OrgId int64
@@ -208,4 +223,10 @@ type GetDashboardsByPluginIdQuery struct {
 type GetDashboardSlugByIdQuery struct {
 	Id     int64
 	Result string
+}
+
+type GetProvisionedDashboardDataQuery struct {
+	Name string
+
+	Result []*DashboardProvisioning
 }

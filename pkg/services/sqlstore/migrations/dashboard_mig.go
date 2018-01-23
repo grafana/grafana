@@ -150,4 +150,21 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Add column has_acl in dashboard", NewAddColumnMigration(dashboardV2, &Column{
 		Name: "has_acl", Type: DB_Bool, Nullable: false, Default: "0",
 	}))
+
+	dashboardExtrasTable := Table{
+		Name: "dashboard_provisioning",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "dashboard_id", Type: DB_BigInt, Nullable: true},
+			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "external_id", Type: DB_Text, Nullable: false},
+			{Name: "updated", Type: DB_Int, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"dashboard_id"}},
+			{Cols: []string{"dashboard_id", "name"}, Type: IndexType},
+		},
+	}
+
+	mg.AddMigration("create dashboard_provisioning", NewAddTableMigration(dashboardExtrasTable))
 }

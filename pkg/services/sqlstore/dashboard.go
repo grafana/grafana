@@ -22,121 +22,126 @@ func init() {
 
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		dash := cmd.GetDashboardModel()
+		return saveDashboard(sess, cmd)
+	})
+}
 
-		// try get existing dashboard
-		var existing, sameTitle m.Dashboard
+func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
+	dash := cmd.GetDashboardModel()
 
-		if dash.Id > 0 {
-			dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
-			if err != nil {
+	// try get existing dashboard
+	var existing, sameTitle m.Dashboard
+
+	if dash.Id > 0 {
+		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
+		if err != nil {
+			return err
+		}
+		if !dashWithIdExists {
+			return m.ErrDashboardNotFound
+		}
+
+		// check for is someone else has written in between
+		if dash.Version != existing.Version {
+			if cmd.Overwrite {
+				dash.Version = existing.Version
+			} else {
+				return m.ErrDashboardVersionMismatch
+			}
+		}
+
+		// do not allow plugin dashboard updates without overwrite flag
+		if existing.PluginId != "" && cmd.Overwrite == false {
+			return m.UpdatePluginDashboardError{PluginId: existing.PluginId}
+		}
+	}
+
+	sameTitleExists, err := sess.Where("org_id=? AND slug=?", dash.OrgId, dash.Slug).Get(&sameTitle)
+	if err != nil {
+		return err
+	}
+
+	if sameTitleExists {
+		// another dashboard with same name
+		if dash.Id != sameTitle.Id {
+			if cmd.Overwrite {
+				dash.Id = sameTitle.Id
+				dash.Version = sameTitle.Version
+			} else {
+				return m.ErrDashboardWithSameNameExists
+			}
+		}
+	}
+
+	err = setHasAcl(sess, dash)
+	if err != nil {
+		return err
+	}
+
+	parentVersion := dash.Version
+	affectedRows := int64(0)
+
+	if dash.Id == 0 {
+		dash.Version = 1
+		metrics.M_Api_Dashboard_Insert.Inc()
+		dash.Data.Set("version", dash.Version)
+		affectedRows, err = sess.Insert(dash)
+	} else {
+		dash.Version++
+		dash.Data.Set("version", dash.Version)
+
+		if !cmd.UpdatedAt.IsZero() {
+			dash.Updated = cmd.UpdatedAt
+		}
+
+		affectedRows, err = sess.MustCols("folder_id", "has_acl").Id(dash.Id).Update(dash)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if affectedRows == 0 {
+		return m.ErrDashboardNotFound
+	}
+
+	dashVersion := &m.DashboardVersion{
+		DashboardId:   dash.Id,
+		ParentVersion: parentVersion,
+		RestoredFrom:  cmd.RestoredFrom,
+		Version:       dash.Version,
+		Created:       time.Now(),
+		CreatedBy:     dash.UpdatedBy,
+		Message:       cmd.Message,
+		Data:          dash.Data,
+	}
+
+	// insert version entry
+	if affectedRows, err = sess.Insert(dashVersion); err != nil {
+		return err
+	} else if affectedRows == 0 {
+		return m.ErrDashboardNotFound
+	}
+
+	// delete existing tags
+	_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
+	if err != nil {
+		return err
+	}
+
+	// insert new tags
+	tags := dash.GetTags()
+	if len(tags) > 0 {
+		for _, tag := range tags {
+			if _, err := sess.Insert(&DashboardTag{DashboardId: dash.Id, Term: tag}); err != nil {
 				return err
 			}
-			if !dashWithIdExists {
-				return m.ErrDashboardNotFound
-			}
-
-			// check for is someone else has written in between
-			if dash.Version != existing.Version {
-				if cmd.Overwrite {
-					dash.Version = existing.Version
-				} else {
-					return m.ErrDashboardVersionMismatch
-				}
-			}
-
-			// do not allow plugin dashboard updates without overwrite flag
-			if existing.PluginId != "" && cmd.Overwrite == false {
-				return m.UpdatePluginDashboardError{PluginId: existing.PluginId}
-			}
 		}
+	}
 
-		sameTitleExists, err := sess.Where("org_id=? AND slug=?", dash.OrgId, dash.Slug).Get(&sameTitle)
-		if err != nil {
-			return err
-		}
+	cmd.Result = dash
 
-		if sameTitleExists {
-			// another dashboard with same name
-			if dash.Id != sameTitle.Id {
-				if cmd.Overwrite {
-					dash.Id = sameTitle.Id
-					dash.Version = sameTitle.Version
-				} else {
-					return m.ErrDashboardWithSameNameExists
-				}
-			}
-		}
-
-		err = setHasAcl(sess, dash)
-		if err != nil {
-			return err
-		}
-
-		parentVersion := dash.Version
-		affectedRows := int64(0)
-
-		if dash.Id == 0 {
-			dash.Version = 1
-			metrics.M_Api_Dashboard_Insert.Inc()
-			dash.Data.Set("version", dash.Version)
-			affectedRows, err = sess.Insert(dash)
-		} else {
-			dash.Version++
-			dash.Data.Set("version", dash.Version)
-
-			if !cmd.UpdatedAt.IsZero() {
-				dash.Updated = cmd.UpdatedAt
-			}
-
-			affectedRows, err = sess.MustCols("folder_id", "has_acl").Id(dash.Id).Update(dash)
-		}
-
-		if err != nil {
-			return err
-		}
-
-		if affectedRows == 0 {
-			return m.ErrDashboardNotFound
-		}
-
-		dashVersion := &m.DashboardVersion{
-			DashboardId:   dash.Id,
-			ParentVersion: parentVersion,
-			RestoredFrom:  cmd.RestoredFrom,
-			Version:       dash.Version,
-			Created:       time.Now(),
-			CreatedBy:     dash.UpdatedBy,
-			Message:       cmd.Message,
-			Data:          dash.Data,
-		}
-
-		// insert version entry
-		if affectedRows, err = sess.Insert(dashVersion); err != nil {
-			return err
-		} else if affectedRows == 0 {
-			return m.ErrDashboardNotFound
-		}
-
-		// delete existing tags
-		_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
-		if err != nil {
-			return err
-		}
-
-		// insert new tags
-		tags := dash.GetTags()
-		if len(tags) > 0 {
-			for _, tag := range tags {
-				if _, err := sess.Insert(&DashboardTag{DashboardId: dash.Id, Term: tag}); err != nil {
-					return err
-				}
-			}
-		}
-		cmd.Result = dash
-
-		return err
-	})
+	return err
 }
 
 func setHasAcl(sess *DBSession, dash *m.Dashboard) error {

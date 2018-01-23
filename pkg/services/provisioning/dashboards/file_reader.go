@@ -25,12 +25,12 @@ var (
 )
 
 type fileReader struct {
-	Cfg           *DashboardsAsConfig
-	Path          string
-	log           log.Logger
-	dashboardRepo dashboards.Repository
-	cache         *dashboardCache
-	createWalk    func(fr *fileReader, folderId int64) filepath.WalkFunc
+	Cfg                        *DashboardsAsConfig
+	Path                       string
+	log                        log.Logger
+	dashboardRepo              dashboards.Repository
+	cache                      *dashboardCache
+	createWalk                 func(fr *fileReader, folderId int64) filepath.WalkFunc
 }
 
 func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
@@ -50,28 +50,28 @@ func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReade
 	}
 
 	return &fileReader{
-		Cfg:           cfg,
-		Path:          path,
-		log:           log,
-		dashboardRepo: dashboards.GetRepository(),
-		cache:         NewDashboardCache(),
-		createWalk:    createWalkFn,
+		Cfg:                        cfg,
+		Path:                       path,
+		log:                        log,
+		dashboardRepo:              dashboards.GetRepository(),
+		cache:      NewDashboardCache(),
+		createWalk: createWalkFn,
 	}, nil
 }
 
 func (fr *fileReader) ReadAndListen(ctx context.Context) error {
-	ticker := time.NewTicker(checkDiskForChangesInterval)
-
 	if err := fr.startWalkingDisk(); err != nil {
 		fr.log.Error("failed to search for dashboards", "error", err)
 	}
+
+	ticker := time.NewTicker(checkDiskForChangesInterval)
 
 	running := false
 
 	for {
 		select {
 		case <-ticker.C:
-			if !running { // avoid walking the filesystem in parallel. incase fs is very slow.
+			if !running { // avoid walking the filesystem in parallel. in-case fs is very slow.
 				running = true
 				go func() {
 					if err := fr.startWalkingDisk(); err != nil {
@@ -115,7 +115,7 @@ func getOrCreateFolderId(cfg *DashboardsAsConfig, repo dashboards.Repository) (i
 
 	// dashboard folder not found. create one.
 	if err == models.ErrDashboardNotFound {
-		dash := &dashboards.SaveDashboardItem{}
+		dash := &dashboards.SaveDashboardDTO{}
 		dash.Dashboard = models.NewDashboard(cfg.Folder)
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
@@ -129,7 +129,7 @@ func getOrCreateFolderId(cfg *DashboardsAsConfig, repo dashboards.Repository) (i
 	}
 
 	if !cmd.Result.IsFolder {
-		return 0, fmt.Errorf("Got invalid response. Expected folder, found dashboard")
+		return 0, fmt.Errorf("got invalid response. expected folder, found dashboard")
 	}
 
 	return cmd.Result.Id, nil
@@ -188,7 +188,7 @@ func createWalkFn(fr *fileReader, folderId int64) filepath.WalkFunc {
 		// if we don't have the dashboard in the db, save it!
 		if err == models.ErrDashboardNotFound {
 			fr.log.Debug("saving new dashboard", "file", path)
-			_, err = fr.dashboardRepo.SaveDashboard(dash)
+			err = saveDashboard(fr, path, dash, fileInfo.ModTime())
 			return err
 		}
 
@@ -203,10 +203,17 @@ func createWalkFn(fr *fileReader, folderId int64) filepath.WalkFunc {
 		}
 
 		fr.log.Debug("loading dashboard from disk into database.", "file", path)
-		_, err = fr.dashboardRepo.SaveDashboard(dash)
+		err = saveDashboard(fr, path, dash, fileInfo.ModTime())
 
 		return err
 	}
+}
+func saveDashboard(fr *fileReader, path string, dash *dashboards.SaveDashboardDTO, modTime time.Time) error {
+	//dash.Extras["provisioning.filepath"] = path
+	_, err := fr.dashboardRepo.SaveDashboard(dash)
+
+
+	return err
 }
 
 func validateWalkablePath(fileInfo os.FileInfo) (bool, error) {
@@ -224,7 +231,7 @@ func validateWalkablePath(fileInfo os.FileInfo) (bool, error) {
 	return true, nil
 }
 
-func (fr *fileReader) readDashboardFromFile(path string, folderId int64) (*dashboards.SaveDashboardItem, error) {
+func (fr *fileReader) readDashboardFromFile(path string, folderId int64) (*dashboards.SaveDashboardDTO, error) {
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err

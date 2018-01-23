@@ -241,13 +241,23 @@ func (ffi FakeFileInfo) Sys() interface{} {
 }
 
 type fakeDashboardRepo struct {
-	inserted     []*dashboards.SaveDashboardItem
+	inserted     []*dashboards.SaveDashboardDTO
+	provisioned  []*models.DashboardProvisioning
 	getDashboard []*models.Dashboard
 }
 
-func (repo *fakeDashboardRepo) SaveDashboard(json *dashboards.SaveDashboardItem) (*models.Dashboard, error) {
+func (repo *fakeDashboardRepo) SaveDashboard(json *dashboards.SaveDashboardDTO) (*models.Dashboard, error) {
 	repo.inserted = append(repo.inserted, json)
 	return json.Dashboard, nil
+}
+
+func (repo *fakeDashboardRepo) GetProvisionedDashboardData(name string) ([]*models.DashboardProvisioning, error) {
+	return repo.provisioned, nil
+}
+
+func (repo *fakeDashboardRepo) SaveProvisionedDashboard(dto *dashboards.SaveDashboardDTO, provisioning *models.DashboardProvisioning) (*models.Dashboard, error) {
+	repo.inserted = append(repo.inserted, dto)
+	return dto.Dashboard, nil
 }
 
 func mockGetDashboardQuery(cmd *models.GetDashboardQuery) error {
