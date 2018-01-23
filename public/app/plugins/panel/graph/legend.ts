@@ -75,19 +75,11 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         $(elem.children('tbody')).scrollTop(scrollPosition);
       }
 
-      function onHighlightSeries(e) {
-        toggleHighlightSeries(e, true);
-      }
-
-      function offHighlightSeries(e) {
-        toggleHighlightSeries(e, false);
-      }
-
-      function toggleHighlightSeries(e, state) {
+      function toggleHighlightSeries(e) {
         var el = $(e.currentTarget);
         var index = getSeriesIndexForElement(el);
         var seriesInfo = seriesList[index];
-        ctrl.toggleHighlightSeries(seriesInfo, state);
+        ctrl.toggleHighlight(seriesInfo, e.type === 'mouseenter');
       }
 
       function sortLegend(e) {
@@ -135,8 +127,8 @@ module.directive('graphLegend', function(popoverSrv, $timeout) {
         if (firstRender) {
           elem.on('click', '.graph-legend-icon', openColorSelector);
           elem.on('click', '.graph-legend-alias', toggleSeries);
-          elem.on('mouseenter', '.graph-legend-alias', onHighlightSeries);
-          elem.on('mouseleave', '.graph-legend-alias', offHighlightSeries);
+          elem.on('mouseenter', '.graph-legend-alias', toggleHighlightSeries);
+          elem.on('mouseleave', '.graph-legend-alias', toggleHighlightSeries);
           elem.on('click', 'th', sortLegend);
           firstRender = false;
         }

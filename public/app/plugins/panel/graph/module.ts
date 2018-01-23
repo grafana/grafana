@@ -250,15 +250,12 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  toggleHighlightSeries(serie, isEntered) {
-    if (this.highlighting === (isEntered ? serie.alias : '')) {
-      return;
+  toggleHighlight(serie, isEntered) {
+    let value = isEntered ? serie.alias : undefined;
+    if (this.highlighting !== value) {
+      this.highlighting = value;
+      this.render();
     }
-
-    serie.highlight = isEntered;
-    this.highlighting = isEntered ? serie.alias : '';
-
-    this.render();
   }
 
   toggleSeriesExclusiveMode(serie) {

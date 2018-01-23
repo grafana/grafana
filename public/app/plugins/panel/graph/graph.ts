@@ -204,6 +204,8 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         eventManager.addFlotEvents(annotations, options);
 
         sortedSeries = sortSeries(data, panel);
+        highlightSeries(options);
+
         callPlot(options, true);
       }
 
@@ -382,6 +384,36 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
         });
 
         return series;
+      }
+
+      function highlightSeries(options) {
+        if (ctrl.highlighting === undefined) {
+          return;
+        }
+
+        for (let i = 0; i < sortedSeries.length; i++) {
+          if (ctrl.highlighting !== sortedSeries[i].alias) {
+            continue;
+          }
+          if (panel.dashes) {
+            let lineWidth =
+              ('lineWidth' in sortedSeries[i].dashes
+                ? sortedSeries[i].dashes.lineWidth
+                : options.series.lines.lineWidth) + 1;
+            if (lineWidth > 1) {
+              sortedSeries[i].dashes.lineWidth = lineWidth;
+            }
+          } else {
+            let lineWidth =
+              ('lineWidth' in sortedSeries[i].lines
+                ? sortedSeries[i].lines.lineWidth
+                : options.series.lines.lineWidth) + 1;
+            if (lineWidth > 1) {
+              sortedSeries[i].lines.lineWidth = lineWidth;
+            }
+          }
+          break;
+        }
       }
 
       function translateFillOption(fill) {

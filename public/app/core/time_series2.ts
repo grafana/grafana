@@ -92,8 +92,6 @@ export default class TimeSeries {
   flotpairs: any;
   unit: any;
 
-  highlight: boolean;
-
   constructor(opts) {
     this.datapoints = opts.datapoints;
     this.label = opts.alias;
