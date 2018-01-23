@@ -89,7 +89,8 @@
   }
 }
 
-input[type="text"].tight-form-func-param {
+input[type='text'].tight-form-func-param {
+  font-size: 0.875rem;
   background: transparent;
   border: none;
   margin: 0;
@@ -129,32 +130,6 @@ input[type="text"].tight-form-func-param {
   }
 }
 
-input[type="text"].tight-form-func-param {
-  background: transparent;
-  border: none;
-  margin: 0;
-  padding: 0;
-}
-
-.tight-form-func-controls {
-  display: none;
-  text-align: center;
-
-  .fa-arrow-left {
-    float: left;
-    position: relative;
-    top: 2px;
-  }
-  .fa-arrow-right {
-    float: right;
-    position: relative;
-    top: 2px;
-  }
-  .fa-remove {
-    margin-left: 10px;
-  }
-}
-
 .query-troubleshooter {
   font-size: $font-size-sm;
   margin: $gf-form-margin;
@@ -175,4 +150,35 @@ input[type="text"].tight-form-func-param {
 
 .query-troubleshooter__body {
   padding: $spacer 0;
+}
+
+.rst-text::before {
+  content: ' ';
+}
+
+.rst-unknown.rst-directive {
+  font-family: monospace;
+  margin-bottom: 1rem;
+}
+
+.rst-interpreted_text {
+  font-family: monospace;
+  display: inline;
+}
+
+.rst-bullet-list {
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.rst-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.drop-element.drop-popover.drop-function-def .drop-content {
+  max-width: 30rem;
+}
+
+.rst-literal-block .rst-text {
+  display: block;
 }

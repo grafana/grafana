@@ -1,8 +1,8 @@
 import _ from 'lodash';
-import gfunc from './gfunc';
 import { Parser } from './parser';
 
 export default class GraphiteQuery {
+  datasource: any;
   target: any;
   functions: any[];
   segments: any[];
@@ -15,7 +15,8 @@ export default class GraphiteQuery {
   scopedVars: any;
 
   /** @ngInject */
-  constructor(target, templateSrv?, scopedVars?) {
+  constructor(datasource, target, templateSrv?, scopedVars?) {
+    this.datasource = datasource;
     this.target = target;
     this.parseTarget();
 
@@ -86,7 +87,7 @@ export default class GraphiteQuery {
 
     switch (astNode.type) {
       case 'function':
-        var innerFunc = gfunc.createFuncInstance(astNode.name, {
+        var innerFunc = this.datasource.createFuncInstance(astNode.name, {
           withDefaultParams: false,
         });
         _.each(astNode.params, param => {
@@ -133,7 +134,7 @@ export default class GraphiteQuery {
 
   moveAliasFuncLast() {
     var aliasFunc = _.find(this.functions, function(func) {
-      return func.def.name === 'alias' || func.def.name === 'aliasByNode' || func.def.name === 'aliasByMetric';
+      return func.def.name.startsWith('alias');
     });
 
     if (aliasFunc) {
@@ -143,7 +144,7 @@ export default class GraphiteQuery {
   }
 
   addFunctionParameter(func, value) {
-    if (func.params.length >= func.def.params.length) {
+    if (func.params.length >= func.def.params.length && !_.get(_.last(func.def.params), 'multiple', false)) {
       throw { message: 'too many parameters for function ' + func.def.name };
     }
     func.params.push(value);
@@ -208,7 +209,7 @@ export default class GraphiteQuery {
   }
 
   splitSeriesByTagParams(func) {
-    const tagPattern = /([^\!=~]+)([\!=~]+)([^\!=~]+)/;
+    const tagPattern = /([^\!=~]+)(\!?=~?)(.*)/;
     return _.flatten(
       _.map(func.params, (param: string) => {
         let matches = tagPattern.exec(param);
