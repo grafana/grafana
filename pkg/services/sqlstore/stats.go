@@ -30,31 +30,34 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
 	var rawSql = `SELECT
 			(
 				SELECT COUNT(*)
-        FROM ` + dialect.Quote("user") + `
-      ) AS users,
+		FROM ` + dialect.Quote("user") + `
+	  ) AS users,
 			(
 				SELECT COUNT(*)
-        FROM ` + dialect.Quote("org") + `
-      ) AS orgs,
-      (
-        SELECT COUNT(*)
-        FROM ` + dialect.Quote("dashboard") + `
-      ) AS dashboards,
-			(
-        SELECT COUNT(*)
-        FROM ` + dialect.Quote("data_source") + `
-      ) AS datasources,
-      (
-        SELECT COUNT(*)
-        FROM ` + dialect.Quote("playlist") + `
-      ) AS playlists,
-      (
-        SELECT COUNT(*)
-        FROM ` + dialect.Quote("alert") + `
-      ) AS alerts,
+		FROM ` + dialect.Quote("org") + `
+	  ) AS orgs,
+	  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("dashboard") + `
+	  ) AS dashboards,
+		(
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("data_source") + `
+	  ) AS datasources,
+	  (
+		SELECT COUNT(*) FROM ` + dialect.Quote("star") + `
+	  ) AS stars,
+	  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("playlist") + `
+	  ) AS playlists,
+	  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("alert") + `
+	  ) AS alerts,
 			(
 				SELECT COUNT(*) FROM ` + dialect.Quote("user") + ` where last_seen_at > ?
-      ) as active_users
+	  ) as active_users
 			`
 
 	activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
@@ -70,46 +73,46 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
 
 func GetAdminStats(query *m.GetAdminStatsQuery) error {
 	var rawSql = `SELECT
-      (
-        SELECT COUNT(*)
-        FROM ` + dialect.Quote("user") + `
-      ) AS users,
-      (
-        SELECT COUNT(*)
-        FROM ` + dialect.Quote("org") + `
-      ) AS orgs,
-      (
-        SELECT COUNT(*)
-        FROM ` + dialect.Quote("dashboard") + `
-      ) AS dashboards,
-      (
-        SELECT COUNT(*)
-        FROM ` + dialect.Quote("dashboard_snapshot") + `
-      ) AS snapshots,
-      (
-        SELECT COUNT( DISTINCT ( ` + dialect.Quote("term") + ` ))
-        FROM ` + dialect.Quote("dashboard_tag") + `
-      ) AS tags,
-      (
-        SELECT COUNT(*)
-        FROM ` + dialect.Quote("data_source") + `
-      ) AS datasources,
-      (
-        SELECT COUNT(*)
-        FROM ` + dialect.Quote("playlist") + `
-      ) AS playlists,
-      (
-        SELECT COUNT(*) FROM ` + dialect.Quote("star") + `
-      ) AS stars,
-      (
-        SELECT COUNT(*)
-        FROM ` + dialect.Quote("alert") + `
-      ) AS alerts,
+	  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("user") + `
+	  ) AS users,
+	  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("org") + `
+	  ) AS orgs,
+	  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("dashboard") + `
+	  ) AS dashboards,
+	  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("dashboard_snapshot") + `
+	  ) AS snapshots,
+	  (
+		SELECT COUNT( DISTINCT ( ` + dialect.Quote("term") + ` ))
+		FROM ` + dialect.Quote("dashboard_tag") + `
+	  ) AS tags,
+	  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("data_source") + `
+	  ) AS datasources,
+	  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("playlist") + `
+	  ) AS playlists,
+	  (
+		SELECT COUNT(*) FROM ` + dialect.Quote("star") + `
+	  ) AS stars,
+	  (
+		SELECT COUNT(*)
+		FROM ` + dialect.Quote("alert") + `
+	  ) AS alerts,
 			(
 				SELECT COUNT(*)
-        from ` + dialect.Quote("user") + ` where last_seen_at > ?
+		from ` + dialect.Quote("user") + ` where last_seen_at > ?
 			) as active_users
-      `
+	  `
 
 	activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
 
