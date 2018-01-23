@@ -90,10 +90,6 @@ export class SearchCtrl {
     }
   }
 
-  searchInputBlur() {
-    this.search();
-  }
-
   onFilterboxClick() {
     this.giveSearchFocus = 0;
     this.preventClose();

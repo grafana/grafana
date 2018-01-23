@@ -12,3 +12,10 @@
       - /etc/timezone:/etc/timezone:ro
     command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --innodb_monitor_enable=all]
 
+  fake-mysql-data:
+    image: grafana/fake-data-gen
+    network_mode: bridge
+    environment:
+      FD_DATASOURCE: mysql
+      FD_PORT: 3306
+
