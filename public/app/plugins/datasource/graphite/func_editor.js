@@ -43,7 +43,7 @@ function (angular, _, $, rst2html) {
 
             $input.val(func.params[paramIndex]);
 
-            $comma.removeClass('last');
+            $comma.removeClass('query-part__last');
             $link.hide();
             $input.show();
             $input.focus();
@@ -103,10 +103,10 @@ function (angular, _, $, rst2html) {
               ctrl.targetChanged();
             });
 
-            if ($link.hasClass('last') && newValue === '') {
-              $comma.addClass('last');
+            if ($link.hasClass('query-part__last') && newValue === '') {
+              $comma.addClass('query-part__last');
             } else {
-              $link.removeClass('last');
+              $link.removeClass('query-part__last');
             }
 
             $input.hide();
@@ -202,11 +202,11 @@ function (angular, _, $, rst2html) {
               }
 
               if (index > 0) {
-                $('<span class="comma' + (last ? ' last' : '') + '">, </span>').appendTo(elem);
+                $('<span class="comma' + (last ? ' query-part__last' : '') + '">, </span>').appendTo(elem);
               }
 
               var $paramLink = $(
-                '<a ng-click="" class="graphite-func-param-link' + (last ? ' last' : '') + '">'
+                '<a ng-click="" class="graphite-func-param-link' + (last ? ' query-part__last' : '') + '">'
                 + (paramValue || '&nbsp;') + '</a>');
               var $input = $(paramTemplate);
               $input.attr('placeholder', param.name);

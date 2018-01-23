@@ -7,11 +7,11 @@
     text-align: center;
   }
 
-  .last {
+  .query-part__last {
     display: none;
   }
 
-  &:hover .last {
+  &:hover .query-part__last {
     display: inline;
   }
 }
