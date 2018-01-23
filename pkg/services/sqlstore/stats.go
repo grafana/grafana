@@ -18,7 +18,7 @@ var activeUserTimeLimit time.Duration = time.Hour * 24 * 30
 func GetDataSourceStats(query *m.GetDataSourceStatsQuery) error {
 	var rawSql = `SELECT COUNT(*) as count, type FROM data_source GROUP BY type`
 	query.Result = make([]*m.DataSourceStats, 0)
-	err := x.Sql(rawSql).Find(&query.Result)
+	err := x.SQL(rawSql).Find(&query.Result)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
 
 	activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
 	var stats m.SystemStats
-	_, err := x.Sql(rawSql, activeUserDeadlineDate).Get(&stats)
+	_, err := x.SQL(rawSql, activeUserDeadlineDate).Get(&stats)
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func GetAdminStats(query *m.GetAdminStatsQuery) error {
 	activeUserDeadlineDate := time.Now().Add(-activeUserTimeLimit)
 
 	var stats m.AdminStats
-	_, err := x.Sql(rawSql, activeUserDeadlineDate).Get(&stats)
+	_, err := x.SQL(rawSql, activeUserDeadlineDate).Get(&stats)
 	if err != nil {
 		return err
 	}
