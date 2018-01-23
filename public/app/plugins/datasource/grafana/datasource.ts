@@ -44,6 +44,8 @@ class GrafanaDatasource {
       tags: options.annotation.tags,
     };
 
+    var multiValQueries = {};
+
     if (options.annotation.type === 'dashboard') {
       // if no dashboard id yet return
       if (!options.dashboard.id) {
@@ -60,12 +62,73 @@ class GrafanaDatasource {
       }
       const tags = [];
       for (let t of params.tags) {
-        tags.push(this.templateSrv.replace(t));
+        let replaced = this.templateSrv.replace(t),
+          didReplace = (replaced !== t),
+          mvbIdx = replaced.indexOf('{'),
+          mvbEndIdx = replaced.lastIndexOf('}');
+
+        // check for multi-val template replacements
+        if (didReplace && mvbIdx !== -1 && mvbEndIdx !== -1) {
+
+          // do we have actual multiple values
+          let replArea = replaced.substring(mvbIdx+1, mvbEndIdx),
+            commaIdx = replArea.indexOf(',');
+
+          if (commaIdx !== -1) {
+            let tagVals = replArea.split(',');
+
+            for (let tt of tagVals) {
+              let fullVal = replaced.substring(0, mvbIdx).concat(tt, replaced.substring(mvbEndIdx+2));
+              if (!multiValQueries.hasOwnProperty(replaced)) {
+                multiValQueries[replaced] = [];
+              }
+              multiValQueries[replaced].push(fullVal);
+            }
+          } else {
+            // just one value from a multi
+            let fullVal = replaced.substring(0, mvbIdx).concat(replArea, replaced.substring(mvbEndIdx+2));
+            tags.push(fullVal);
+          }
+
+        } else {
+          // no replacement or no multi-val values, this tag is all set
+          tags.push(replaced);
+        }
       }
       params.tags = tags;
     }
 
-    return this.backendSrv.get('/api/annotations', params);
+    if (Object.keys(multiValQueries).length > 0) {
+      let proms = [],
+        qvals = Object.keys(multiValQueries).map(key=>multiValQueries[key]),
+        combos = qvals.reduce(function(a, b) {
+          return a.map(function(x) {
+            return b.map(function(y) {
+              return x.concat(y);
+            });
+          }).reduce(function(a, b) { return a.concat(b); }, []);
+        }, [[]]);
+
+      for (let combo of combos) {
+        let newTags = [...params.tags, ...combo];
+        const nparams: any = {
+          from: options.range.from.valueOf(),
+          to: options.range.to.valueOf(),
+          limit: options.annotation.limit,
+          tags: newTags
+        };
+
+        proms.push(this.backendSrv.get('/api/annotations', nparams));
+      }
+
+      // build single promise and combine all results into one array
+      return this.$q.all(proms).then(results => {
+        return [].concat.apply([], results);
+      });
+
+    } else {
+      return this.backendSrv.get('/api/annotations', params);
+    }
   }
 }
 
