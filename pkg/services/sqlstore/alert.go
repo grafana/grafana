@@ -24,7 +24,7 @@ func init() {
 
 func GetAlertById(query *m.GetAlertByIdQuery) error {
 	alert := m.Alert{}
-	has, err := x.Id(query.Id).Get(&alert)
+	has, err := x.ID(query.Id).Get(&alert)
 	if !has {
 		return fmt.Errorf("could not find alert")
 	}
@@ -113,7 +113,7 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 	}
 
 	alerts := make([]*m.Alert, 0)
-	if err := x.Sql(sql.String(), params...).Find(&alerts); err != nil {
+	if err := x.SQL(sql.String(), params...).Find(&alerts); err != nil {
 		return err
 	}
 
@@ -260,7 +260,7 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 			alert.ExecutionError = cmd.Error
 		}
 
-		sess.Id(alert.Id).Update(&alert)
+		sess.ID(alert.Id).Update(&alert)
 		return nil
 	})
 }
@@ -324,7 +324,7 @@ func GetAlertStatesForDashboard(query *m.GetAlertStatesForDashboardQuery) error 
 	                WHERE org_id = ? AND dashboard_id = ?`
 
 	query.Result = make([]*m.AlertStateInfoDTO, 0)
-	err := x.Sql(rawSql, query.OrgId, query.DashboardId).Find(&query.Result)
+	err := x.SQL(rawSql, query.OrgId, query.DashboardId).Find(&query.Result)
 
 	return err
 }
