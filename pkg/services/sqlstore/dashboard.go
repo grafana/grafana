@@ -31,7 +31,6 @@ func saveDashboard(sess *DBSession, cmd *m.SaveDashboardCommand) error {
 
 	// try get existing dashboard
 	var existing, sameTitle m.Dashboard
-
 	if dash.Id > 0 {
 		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
 		if err != nil {

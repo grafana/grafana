@@ -30,7 +30,7 @@ type fileReader struct {
 	log           log.Logger
 	dashboardRepo dashboards.Repository
 	cache         *dashboardCache
-	createWalk    func(fr *fileReader, folderId int64) filepath.WalkFunc
+	createWalk    func(fr *fileReader, folderId int64, provisionedDashboards map[string]*models.DashboardProvisioning) filepath.WalkFunc
 }
 
 func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
@@ -98,7 +98,26 @@ func (fr *fileReader) startWalkingDisk() error {
 		return err
 	}
 
-	return filepath.Walk(fr.Path, fr.createWalk(fr, folderId))
+	byPath, err := getProvisionedDashboardByPath(fr.dashboardRepo, fr.Cfg.Name)
+	if err != nil {
+		return err
+	}
+
+	return filepath.Walk(fr.Path, fr.createWalk(fr, folderId, byPath))
+}
+
+func getProvisionedDashboardByPath(repo dashboards.Repository, name string) (map[string]*models.DashboardProvisioning, error) {
+	arr, err := repo.GetProvisionedDashboardData(name)
+	if err != nil {
+		return nil, err
+	}
+
+	byPath := map[string]*models.DashboardProvisioning{}
+	for _, pd := range arr {
+		byPath[pd.ExternalId] = pd
+	}
+
+	return byPath, nil
 }
 
 func getOrCreateFolderId(cfg *DashboardsAsConfig, repo dashboards.Repository) (int64, error) {
@@ -150,7 +169,7 @@ func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {
 	return fileinfo, err
 }
 
-func createWalkFn(fr *fileReader, folderId int64) filepath.WalkFunc {
+func createWalkFn(fr *fileReader, folderId int64, provisionedDashboards map[string]*models.DashboardProvisioning) filepath.WalkFunc {
 	return func(path string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -177,18 +196,31 @@ func createWalkFn(fr *fileReader, folderId int64) filepath.WalkFunc {
 			return nil
 		}
 
-		if dash.Dashboard.Id != 0 {
-			fr.log.Error("Cannot provision dashboard. Please remove the id property from the json file")
-			return nil
+		var dbDashboard *models.Dashboard
+		cmd := &models.GetDashboardQuery{}
+		provisionedData, allReadyProvisioned := provisionedDashboards[path]
+
+		// see if the
+		if allReadyProvisioned {
+			dash.Dashboard.Id = provisionedData.DashboardId
+			dash.Dashboard.Data.Set("id", provisionedData.DashboardId)
+			cmd.Id = provisionedData.DashboardId
+		} else {
+			if dash.Dashboard.Id != 0 {
+				fr.log.Error("Cannot provision dashboard. Please remove the id property from the json file")
+				return nil
+			}
+
+			cmd.Slug = dash.Dashboard.Slug
 		}
 
-		cmd := &models.GetDashboardQuery{Slug: dash.Dashboard.Slug}
 		err = bus.Dispatch(cmd)
+		dbDashboard = cmd.Result
 
 		// if we don't have the dashboard in the db, save it!
 		if err == models.ErrDashboardNotFound {
 			fr.log.Debug("saving new dashboard", "file", path)
-			err = saveDashboard(fr, path, dash, fileInfo.ModTime())
+			err = saveDashboard(fr, path, dash)
 			return err
 		}
 
@@ -198,24 +230,30 @@ func createWalkFn(fr *fileReader, folderId int64) filepath.WalkFunc {
 		}
 
 		// break if db version is newer then fil version
-		if cmd.Result.Updated.Unix() >= resolvedFileInfo.ModTime().Unix() {
+		if dbDashboard.Updated.Unix() >= resolvedFileInfo.ModTime().Unix() {
 			return nil
 		}
 
 		fr.log.Debug("loading dashboard from disk into database.", "file", path)
-		err = saveDashboard(fr, path, dash, fileInfo.ModTime())
+		err = saveDashboard(fr, path, dash)
 
 		return err
 	}
 }
-func saveDashboard(fr *fileReader, path string, dash *dashboards.SaveDashboardDTO, modTime time.Time) error {
+
+func saveDashboard(fr *fileReader, path string, dash *dashboards.SaveDashboardDTO) error {
 	d := &models.DashboardProvisioning{
 		ExternalId: path,
 		Name:       fr.Cfg.Name,
 	}
-	_, err := fr.dashboardRepo.SaveProvisionedDashboard(dash, d)
 
-	return err
+	_, err := fr.dashboardRepo.SaveProvisionedDashboard(dash, d)
+	if err != nil {
+		return err
+	}
+
+	fr.cache.addDashboardCache(path, dash)
+	return nil
 }
 
 func validateWalkablePath(fileInfo os.FileInfo) (bool, error) {
