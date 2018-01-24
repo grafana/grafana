@@ -2,6 +2,7 @@ package wrapper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/components/null"
@@ -67,9 +68,11 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 	}
 
 	for _, r := range pbres.Results {
-		res.Results[r.RefId] = &tsdb.QueryResult{
-			RefId:  r.RefId,
-			Series: []*tsdb.TimeSeries{},
+		qr := &tsdb.QueryResult{
+			RefId:       r.RefId,
+			Series:      []*tsdb.TimeSeries{},
+			Error:       errors.New(r.Error),
+			ErrorString: r.Error,
 		}
 
 		for _, s := range r.GetSeries() {
@@ -80,7 +83,7 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 				points = append(points, po)
 			}
 
-			res.Results[r.RefId].Series = append(res.Results[r.RefId].Series, &tsdb.TimeSeries{
+			qr.Series = append(qr.Series, &tsdb.TimeSeries{
 				Name:   s.Name,
 				Tags:   s.Tags,
 				Points: points,
@@ -91,7 +94,9 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 		if err != nil {
 			return nil, err
 		}
-		res.Results[r.RefId].Tables = mappedTables
+		qr.Tables = mappedTables
+
+		res.Results[r.RefId] = qr
 	}
 
 	return res, nil
