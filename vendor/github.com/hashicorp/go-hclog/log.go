@@ -139,4 +139,7 @@ type LoggerOptions struct {
 
 	// Include file and line information in each log line
 	IncludeLocation bool
+
+	// The time format to use instead of the default
+	TimeFormat string
 }

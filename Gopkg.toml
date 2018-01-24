@@ -76,7 +76,8 @@ ignored = [
 
 [[constraint]]
   name = "github.com/go-sql-driver/mysql"
-  version = "1.3.0"
+  revision = "2cc627ac8defc45d65066ae98f898166f580f9a4"
+  #version = "1.3.0" //keeping this since we would rather depend on version then commit
 
 [[constraint]]
   name = "github.com/go-stack/stack"

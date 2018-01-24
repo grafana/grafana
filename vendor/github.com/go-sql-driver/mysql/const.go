@@ -9,7 +9,8 @@
 package mysql
 
 const (
-	minProtocolVersion byte = 10
+	defaultMaxAllowedPacket = 4 << 20 // 4 MiB
+	minProtocolVersion      = 10
 	maxPacketSize           = 1<<24 - 1
 	timeFormat              = "2006-01-02 15:04:05.999999"
 )
@@ -87,8 +88,10 @@ const (
 )
 
 // https://dev.mysql.com/doc/internals/en/com-query-response.html#packet-Protocol::ColumnType
+type fieldType byte
+
 const (
-	fieldTypeDecimal byte = iota
+	fieldTypeDecimal fieldType = iota
 	fieldTypeTiny
 	fieldTypeShort
 	fieldTypeLong
@@ -107,7 +110,7 @@ const (
 	fieldTypeBit
 )
 const (
-	fieldTypeJSON byte = iota + 0xf5
+	fieldTypeJSON fieldType = iota + 0xf5
 	fieldTypeNewDecimal
 	fieldTypeEnum
 	fieldTypeSet
