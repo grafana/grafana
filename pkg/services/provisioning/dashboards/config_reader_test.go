@@ -17,8 +17,8 @@ func TestDashboardsAsConfig(t *testing.T) {
 
 		Convey("Can read config file", func() {
 
-			cfgProvifer := configReader{path: simpleDashboardConfig, log: log.New("test-logger")}
-			cfg, err := cfgProvifer.readConfig()
+			cfgProvider := configReader{path: simpleDashboardConfig, log: log.New("test-logger")}
+			cfg, err := cfgProvider.readConfig()
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
@@ -50,8 +50,8 @@ func TestDashboardsAsConfig(t *testing.T) {
 
 		Convey("Should skip invalid path", func() {
 
-			cfgProvifer := configReader{path: "/invalid-directory", log: log.New("test-logger")}
-			cfg, err := cfgProvifer.readConfig()
+			cfgProvider := configReader{path: "/invalid-directory", log: log.New("test-logger")}
+			cfg, err := cfgProvider.readConfig()
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
@@ -61,8 +61,8 @@ func TestDashboardsAsConfig(t *testing.T) {
 
 		Convey("Should skip broken config files", func() {
 
-			cfgProvifer := configReader{path: brokenConfigs, log: log.New("test-logger")}
-			cfg, err := cfgProvifer.readConfig()
+			cfgProvider := configReader{path: brokenConfigs, log: log.New("test-logger")}
+			cfg, err := cfgProvider.readConfig()
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)
 			}
