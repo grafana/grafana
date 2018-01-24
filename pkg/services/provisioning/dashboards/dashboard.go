@@ -14,9 +14,10 @@ type DashboardProvisioner struct {
 }
 
 func Provision(ctx context.Context, configDirectory string) (*DashboardProvisioner, error) {
+	log := log.New("provisioning.dashboard")
 	d := &DashboardProvisioner{
-		cfgReader: &configReader{path: configDirectory},
-		log:       log.New("provisioning.dashboard"),
+		cfgReader: &configReader{path: configDirectory, log: log},
+		log:       log,
 		ctx:       ctx,
 	}
 

@@ -25,13 +25,13 @@ func Provision(configDirectory string) error {
 
 type DatasourceProvisioner struct {
 	log         log.Logger
-	cfgProvider configReader
+	cfgProvider *configReader
 }
 
 func newDatasourceProvisioner(log log.Logger) DatasourceProvisioner {
 	return DatasourceProvisioner{
 		log:         log,
-		cfgProvider: configReader{},
+		cfgProvider: &configReader{log: log},
 	}
 }
 
@@ -95,15 +95,19 @@ func (dc *DatasourceProvisioner) deleteDatasources(dsToDelete []*DeleteDatasourc
 	return nil
 }
 
-type configReader struct{}
+type configReader struct {
+	log log.Logger
+}
 
-func (configReader) readConfig(path string) ([]*DatasourcesAsConfig, error) {
+func (cr *configReader) readConfig(path string) ([]*DatasourcesAsConfig, error) {
+	var datasources []*DatasourcesAsConfig
+
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
-		return nil, err
+		cr.log.Error("cant read datasource provisioning files from directory", "path", path)
+		return datasources, nil
 	}
 
-	var datasources []*DatasourcesAsConfig
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml") {
 			filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
