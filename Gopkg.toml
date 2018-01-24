@@ -19,7 +19,11 @@
 #  name = "github.com/x/y"
 #  version = "2.4.0"
 
-ignored = ["github.com/grafana/grafana/data/*"]
+ignored = [
+  "github.com/grafana/grafana/data/*",
+  "github.com/grafana/grafana/public/*",
+  "github.com/grafana/grafana/node_modules/*"
+ ]
 
 [[constraint]]
   name = "github.com/BurntSushi/toml"
@@ -186,5 +190,5 @@ ignored = ["github.com/grafana/grafana/data/*"]
 
 [prune]
   non-go = true
-  #go-tests = true
+  go-tests = true
   unused-packages = true
