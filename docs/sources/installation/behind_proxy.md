@@ -68,6 +68,23 @@ server {
   }
 }
 ```
+
+#### HAProxy configuration with sub path
+```bash
+frontend http-in
+  bind *:80
+  use_backend grafana_backend if { path /grafana } or { path_beg /grafana/ }
+
+backend grafana_backend
+  # Requires haproxy >= 1.6
+  http-request set-path %[path,regsub(^/grafana/?,/)]
+
+  # Works for haproxy < 1.6
+  # reqrep ^([^\ ]*\ /)grafana[/]?(.*) \1\2
+
+  server grafana localhost:3000
+```
+
 ### IIS URL Rewrite Rule (Windows) with Subpath
 
 IIS requires that the URL Rewrite module is installed.
