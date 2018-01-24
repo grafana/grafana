@@ -1,0 +1,129 @@
+This package was debianized by Thrift Developer's <dev@thrift.apache.org>.
+
+
+This package and the Debian packaging is licensed under the Apache License,
+see `/usr/share/common-licenses/Apache-2.0'.
+
+The following information was copied from Apache Thrift LICENSE file.
+
+--------------------------------------------------
+SOFTWARE DISTRIBUTED WITH THRIFT:
+
+The Apache Thrift software includes a number of subcomponents with
+separate copyright notices and license terms. Your use of the source
+code for the these subcomponents is subject to the terms and
+conditions of the following licenses.
+
+--------------------------------------------------
+Portions of the following files are licensed under the MIT License:
+
+  lib/erl/src/Makefile.am
+
+Please see doc/otp-base-license.txt for the full terms of this license.
+
+
+--------------------------------------------------
+The following files contain some portions of code contributed under
+the Thrift Software License (see doc/old-thrift-license.txt), and relicensed
+under the Apache 2.0 License:
+
+  compiler/cpp/Makefile.am
+  compiler/cpp/src/generate/t_cocoa_generator.cc
+  compiler/cpp/src/generate/t_cpp_generator.cc
+  compiler/cpp/src/generate/t_csharp_generator.cc
+  compiler/cpp/src/generate/t_erl_generator.cc
+  compiler/cpp/src/generate/t_hs_generator.cc
+  compiler/cpp/src/generate/t_java_generator.cc
+  compiler/cpp/src/generate/t_ocaml_generator.cc
+  compiler/cpp/src/generate/t_perl_generator.cc
+  compiler/cpp/src/generate/t_php_generator.cc
+  compiler/cpp/src/generate/t_py_generator.cc
+  compiler/cpp/src/generate/t_rb_generator.cc
+  compiler/cpp/src/generate/t_st_generator.cc
+  compiler/cpp/src/generate/t_xsd_generator.cc
+  compiler/cpp/src/main.cc
+  compiler/cpp/src/parse/t_field.h
+  compiler/cpp/src/parse/t_program.h
+  compiler/cpp/src/platform.h
+  compiler/cpp/src/thriftl.ll
+  compiler/cpp/src/thrifty.yy
+  lib/csharp/src/Protocol/TBinaryProtocol.cs
+  lib/csharp/src/Protocol/TField.cs
+  lib/csharp/src/Protocol/TList.cs
+  lib/csharp/src/Protocol/TMap.cs
+  lib/csharp/src/Protocol/TMessage.cs
+  lib/csharp/src/Protocol/TMessageType.cs
+  lib/csharp/src/Protocol/TProtocol.cs
+  lib/csharp/src/Protocol/TProtocolException.cs
+  lib/csharp/src/Protocol/TProtocolFactory.cs
+  lib/csharp/src/Protocol/TProtocolUtil.cs
+  lib/csharp/src/Protocol/TSet.cs
+  lib/csharp/src/Protocol/TStruct.cs
+  lib/csharp/src/Protocol/TType.cs
+  lib/csharp/src/Server/TServer.cs
+  lib/csharp/src/Server/TSimpleServer.cs
+  lib/csharp/src/Server/TThreadPoolServer.cs
+  lib/csharp/src/TApplicationException.cs
+  lib/csharp/src/Thrift.csproj
+  lib/csharp/src/Thrift.sln
+  lib/csharp/src/TProcessor.cs
+  lib/csharp/src/Transport/TServerSocket.cs
+  lib/csharp/src/Transport/TServerTransport.cs
+  lib/csharp/src/Transport/TSocket.cs
+  lib/csharp/src/Transport/TStreamTransport.cs
+  lib/csharp/src/Transport/TTransport.cs
+  lib/csharp/src/Transport/TTransportException.cs
+  lib/csharp/src/Transport/TTransportFactory.cs
+  lib/csharp/ThriftMSBuildTask/Properties/AssemblyInfo.cs
+  lib/csharp/ThriftMSBuildTask/ThriftBuild.cs
+  lib/csharp/ThriftMSBuildTask/ThriftMSBuildTask.csproj
+  lib/rb/lib/thrift.rb
+  lib/st/README
+  lib/st/thrift.st
+  test/OptionalRequiredTest.cpp
+  test/OptionalRequiredTest.thrift
+  test/ThriftTest.thrift
+
+--------------------------------------------------
+For the aclocal/ax_boost_base.m4 and contrib/fb303/aclocal/ax_boost_base.m4 components:
+
+#   Copyright (c) 2007 Thomas Porschberg <thomas@randspringer.de>
+#
+#   Copying and distribution of this file, with or without
+#   modification, are permitted in any medium without royalty provided
+#   the copyright notice and this notice are preserved.
+
+--------------------------------------------------
+For the compiler/cpp/src/md5.[ch] components:
+
+/*
+  Copyright (C) 1999, 2000, 2002 Aladdin Enterprises.  All rights reserved.
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+
+  L. Peter Deutsch
+  ghost@aladdin.com
+
+ */
+
+---------------------------------------------------
+For the lib/rb/setup.rb: Copyright (c) 2000-2005 Minero Aoki,
+lib/ocaml/OCamlMakefile and lib/ocaml/README-OCamlMakefile components:
+     Copyright (C) 1999 - 2007  Markus Mottl
+
+Licensed under the terms of the GNU Lesser General Public License 2.1
+(see doc/lgpl-2.1.txt for the full terms of this license)
