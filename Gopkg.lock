@@ -44,12 +44,6 @@
   revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
 
 [[projects]]
-  name = "github.com/bitly/go-simplejson"
-  packages = ["."]
-  revision = "aabad6e819789e569bd6aabf444c935aa9ba1e44"
-  version = "v0.5.0"
-
-[[projects]]
   branch = "master"
   name = "github.com/bmizerany/assert"
   packages = ["."]
@@ -474,6 +468,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1824c50aa4685fb22643ab89d45457238d9e6c8f7980315c2a41bb35222ea1a7"
+  inputs-digest = "dbc036f87b80a8874e6df839df1dea4c18898cf23a147b1183da986621a5c43e"
   solver-name = "gps-cdcl"
   solver-version = 1
