@@ -395,23 +395,44 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
           if (ctrl.highlighting !== sortedSeries[i].alias) {
             continue;
           }
-          if (panel.dashes) {
-            let lineWidth =
-              ('lineWidth' in sortedSeries[i].dashes
-                ? sortedSeries[i].dashes.lineWidth
-                : options.series.lines.lineWidth) + 1;
-            if (lineWidth > 1) {
-              sortedSeries[i].dashes.lineWidth = lineWidth;
-            }
-          } else {
-            let lineWidth =
+
+          let highlightWidth = 0;
+          if (options.series.lines.show || sortedSeries[i].lines.show) {
+            highlightWidth =
               ('lineWidth' in sortedSeries[i].lines
                 ? sortedSeries[i].lines.lineWidth
                 : options.series.lines.lineWidth) + 1;
-            if (lineWidth > 1) {
-              sortedSeries[i].lines.lineWidth = lineWidth;
+            if (highlightWidth > 1) {
+              sortedSeries[i].lines.lineWidth = highlightWidth;
             }
           }
+
+          if (options.series.lines.show || sortedSeries[i].dashes.show) {
+            highlightWidth =
+              ('lineWidth' in sortedSeries[i].dashes
+                ? sortedSeries[i].dashes.lineWidth
+                : options.series.lines.lineWidth) + 1;
+            if (highlightWidth > 1) {
+              sortedSeries[i].dashes.lineWidth = highlightWidth;
+            }
+          }
+
+          if (options.series.bars.show || sortedSeries[i].bars.show) {
+            highlightWidth =
+              ('barWidth' in sortedSeries[i].bars ? sortedSeries[i].bars.barWidth : options.series.bars.barWidth) + 1;
+            if (highlightWidth > 1) {
+              sortedSeries[i].bars.barWidth = highlightWidth;
+            }
+          }
+
+          if (options.series.points.show || sortedSeries[i].points.show) {
+            highlightWidth =
+              ('radius' in sortedSeries[i].points ? sortedSeries[i].points.radius : options.series.points.radius) + 1;
+            if (highlightWidth > 1) {
+              sortedSeries[i].points.radius = highlightWidth;
+            }
+          }
+
           break;
         }
       }
