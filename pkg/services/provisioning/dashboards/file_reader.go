@@ -30,7 +30,7 @@ type fileReader struct {
 	log           log.Logger
 	dashboardRepo dashboards.Repository
 	cache         *dashboardCache
-	createWalk    func(fr *fileReader, folderId int64, provisionedDashboards map[string]*models.DashboardProvisioning) filepath.WalkFunc
+	createWalk    func(fr *fileReader, folderId int64, provisionedDashboards map[string]*models.DashboardProvisioning, filesOnDisk map[string]bool) filepath.WalkFunc
 }
 
 func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
@@ -103,7 +103,29 @@ func (fr *fileReader) startWalkingDisk() error {
 		return err
 	}
 
-	return filepath.Walk(fr.Path, fr.createWalk(fr, folderId, byPath))
+	filesFoundOnDisk := map[string]bool{}
+
+	err = filepath.Walk(fr.Path, fr.createWalk(fr, folderId, byPath, filesFoundOnDisk))
+
+	//delete dashboards without files
+	var dashboardToDelete []int64
+	for path, provisioningData := range byPath {
+		_, existsInDatabase := filesFoundOnDisk[path]
+		if !existsInDatabase {
+			dashboardToDelete = append(dashboardToDelete, provisioningData.DashboardId)
+		}
+	}
+
+	for _, dashboardId := range dashboardToDelete {
+		fr.log.Debug("deleting provisioned dashboard. missing on disk", "id", dashboardId)
+		cmd := &models.DeleteDashboardCommand{OrgId: fr.Cfg.OrgId, Id: dashboardId}
+		err := bus.Dispatch(cmd)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func getProvisionedDashboardByPath(repo dashboards.Repository, name string) (map[string]*models.DashboardProvisioning, error) {
@@ -169,7 +191,7 @@ func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {
 	return fileinfo, err
 }
 
-func createWalkFn(fr *fileReader, folderId int64, provisionedDashboards map[string]*models.DashboardProvisioning) filepath.WalkFunc {
+func createWalkFn(fr *fileReader, folderId int64, provisionedDashboards map[string]*models.DashboardProvisioning, filesOnDisk map[string]bool) filepath.WalkFunc {
 	return func(path string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -185,6 +207,9 @@ func createWalkFn(fr *fileReader, folderId int64, provisionedDashboards map[stri
 			return err
 		}
 
+		// mark file as provisioned
+		filesOnDisk[path] = true
+
 		cachedDashboard, exist := fr.cache.getCache(path)
 		if exist && cachedDashboard.UpdatedAt == resolvedFileInfo.ModTime() {
 			return nil
@@ -197,25 +222,24 @@ func createWalkFn(fr *fileReader, folderId int64, provisionedDashboards map[stri
 		}
 
 		var dbDashboard *models.Dashboard
-		cmd := &models.GetDashboardQuery{}
+		query := &models.GetDashboardQuery{}
 		provisionedData, allReadyProvisioned := provisionedDashboards[path]
 
-		// see if the
 		if allReadyProvisioned {
-			dash.Dashboard.Id = provisionedData.DashboardId
-			dash.Dashboard.Data.Set("id", provisionedData.DashboardId)
-			cmd.Id = provisionedData.DashboardId
+			dash.Dashboard.SetId(provisionedData.DashboardId)
+
+			query.Id = provisionedData.DashboardId
 		} else {
 			if dash.Dashboard.Id != 0 {
 				fr.log.Error("Cannot provision dashboard. Please remove the id property from the json file")
 				return nil
 			}
 
-			cmd.Slug = dash.Dashboard.Slug
+			query.Slug = dash.Dashboard.Slug
 		}
 
-		err = bus.Dispatch(cmd)
-		dbDashboard = cmd.Result
+		err = bus.Dispatch(query)
+		dbDashboard = query.Result
 
 		// if we don't have the dashboard in the db, save it!
 		if err == models.ErrDashboardNotFound {

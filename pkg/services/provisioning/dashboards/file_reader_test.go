@@ -175,14 +175,15 @@ func TestDashboardFileReader(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			emptyProvisioned := map[string]*models.DashboardProvisioning{}
+			noFiles := map[string]bool{}
 
 			Convey("should skip dirs that starts with .", func() {
-				shouldSkip := reader.createWalk(reader, 0, emptyProvisioned)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
+				shouldSkip := reader.createWalk(reader, 0, emptyProvisioned, noFiles)("path", &FakeFileInfo{isDirectory: true, name: ".folder"}, nil)
 				So(shouldSkip, ShouldEqual, filepath.SkipDir)
 			})
 
 			Convey("should keep walking if file is not .json", func() {
-				shouldSkip := reader.createWalk(reader, 0, emptyProvisioned)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
+				shouldSkip := reader.createWalk(reader, 0, emptyProvisioned, noFiles)("path", &FakeFileInfo{isDirectory: true, name: "folder"}, nil)
 				So(shouldSkip, ShouldBeNil)
 			})
 		})

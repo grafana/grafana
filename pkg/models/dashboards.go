@@ -58,6 +58,11 @@ type Dashboard struct {
 	Data  *simplejson.Json
 }
 
+func (d *Dashboard) SetId(id int64) {
+	d.Id = id
+	d.Data.Set("id", id)
+}
+
 // NewDashboard creates a new dashboard
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
