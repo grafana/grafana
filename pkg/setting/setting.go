@@ -578,7 +578,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
-	PhantomDir = filepath.Join(HomePath, "vendor/phantomjs")
+	PhantomDir = filepath.Join(HomePath, "tools/phantomjs")
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
