@@ -35,8 +35,7 @@ export class DashNavCtrl {
     let search = this.$location.search();
     if (search.editview) {
       delete search.editview;
-    }
-    if (search.fullscreen) {
+    } else if (search.fullscreen) {
       delete search.fullscreen;
       delete search.edit;
     }

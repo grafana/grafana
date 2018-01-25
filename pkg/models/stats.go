@@ -8,6 +8,7 @@ type SystemStats struct {
 	Orgs        int64
 	Playlists   int64
 	Alerts      int64
+	Stars       int64
 }
 
 type DataSourceStats struct {

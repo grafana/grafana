@@ -14,8 +14,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
-	shared "github.com/grafana/grafana/pkg/plugins/datasource/tsdb"
+	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana_plugin_model/go/datasource"
 	plugin "github.com/hashicorp/go-plugin"
 )
 
@@ -92,7 +93,7 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 
 	p.client = plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig:  handshakeConfig,
-		Plugins:          map[string]plugin.Plugin{p.Id: &shared.TsdbPluginImpl{}},
+		Plugins:          map[string]plugin.Plugin{p.Id: &datasource.DatasourcePluginImpl{}},
 		Cmd:              exec.Command(fullpath),
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolGRPC},
 		Logger:           LogWrapper{Logger: p.log},
@@ -108,10 +109,10 @@ func (p *DataSourcePlugin) spawnSubProcess() error {
 		return err
 	}
 
-	plugin := raw.(shared.TsdbPlugin)
+	plugin := raw.(datasource.DatasourcePlugin)
 
 	tsdb.RegisterTsdbQueryEndpoint(p.Id, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return shared.NewDatasourcePluginWrapper(p.log, plugin), nil
+		return wrapper.NewDatasourcePluginWrapper(p.log, plugin), nil
 	})
 
 	return nil

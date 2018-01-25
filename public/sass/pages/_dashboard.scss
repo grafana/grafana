@@ -2,7 +2,6 @@
   padding: $dashboard-padding;
   width: 100%;
   min-height: 100%;
-  // background: $dashboard-gradient;
 }
 
 .template-variable {
@@ -159,7 +158,7 @@ div.flot-text {
     display: block;
     @include panel-corner-color(lighten($panel-bg, 4%));
     .fa:before {
-      content: "\f129";
+      content: '\f129';
     }
   }
 
@@ -170,7 +169,7 @@ div.flot-text {
       left: -5px;
     }
     .fa:before {
-      content: "\f08e";
+      content: '\f08e';
     }
   }
 
@@ -179,7 +178,7 @@ div.flot-text {
     color: $text-color;
     @include panel-corner-color($popover-error-bg);
     .fa:before {
-      content: "\f12a";
+      content: '\f12a';
     }
   }
 }

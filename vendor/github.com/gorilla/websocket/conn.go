@@ -10,6 +10,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"strconv"
 	"sync"
@@ -180,6 +181,11 @@ var (
 	errInvalidControlFrame = errors.New("websocket: invalid control frame")
 )
 
+func newMaskKey() [4]byte {
+	n := rand.Uint32()
+	return [4]byte{byte(n), byte(n >> 8), byte(n >> 16), byte(n >> 24)}
+}
+
 func hideTempErr(err error) error {
 	if e, ok := err.(net.Error); ok && e.Temporary() {
 		err = &netError{msg: e.Error(), timeout: e.Timeout()}
@@ -235,9 +241,11 @@ type Conn struct {
 	writeErr   error
 
 	enableWriteCompression bool
-	newCompressionWriter   func(io.WriteCloser) (io.WriteCloser, error)
+	compressionLevel       int
+	newCompressionWriter   func(io.WriteCloser, int) io.WriteCloser
 
 	// Read fields
+	reader        io.ReadCloser // the current reader returned to the application
 	readErr       error
 	br            *bufio.Reader
 	readRemaining int64 // bytes remaining in current frame.
@@ -253,31 +261,76 @@ type Conn struct {
 	messageReader *messageReader // the current low-level reader
 
 	readDecompress         bool // whether last read frame had RSV1 set
-	newDecompressionReader func(io.Reader) io.Reader
+	newDecompressionReader func(io.Reader) io.ReadCloser
 }
 
 func newConn(conn net.Conn, isServer bool, readBufferSize, writeBufferSize int) *Conn {
+	return newConnBRW(conn, isServer, readBufferSize, writeBufferSize, nil)
+}
+
+type writeHook struct {
+	p []byte
+}
+
+func (wh *writeHook) Write(p []byte) (int, error) {
+	wh.p = p
+	return len(p), nil
+}
+
+func newConnBRW(conn net.Conn, isServer bool, readBufferSize, writeBufferSize int, brw *bufio.ReadWriter) *Conn {
 	mu := make(chan bool, 1)
 	mu <- true
 
-	if readBufferSize == 0 {
-		readBufferSize = defaultReadBufferSize
+	var br *bufio.Reader
+	if readBufferSize == 0 && brw != nil && brw.Reader != nil {
+		// Reuse the supplied bufio.Reader if the buffer has a useful size.
+		// This code assumes that peek on a reader returns
+		// bufio.Reader.buf[:0].
+		brw.Reader.Reset(conn)
+		if p, err := brw.Reader.Peek(0); err == nil && cap(p) >= 256 {
+			br = brw.Reader
+		}
 	}
-	if readBufferSize < maxControlFramePayloadSize {
-		readBufferSize = maxControlFramePayloadSize
+	if br == nil {
+		if readBufferSize == 0 {
+			readBufferSize = defaultReadBufferSize
+		}
+		if readBufferSize < maxControlFramePayloadSize {
+			readBufferSize = maxControlFramePayloadSize
+		}
+		br = bufio.NewReaderSize(conn, readBufferSize)
 	}
-	if writeBufferSize == 0 {
-		writeBufferSize = defaultWriteBufferSize
+
+	var writeBuf []byte
+	if writeBufferSize == 0 && brw != nil && brw.Writer != nil {
+		// Use the bufio.Writer's buffer if the buffer has a useful size. This
+		// code assumes that bufio.Writer.buf[:1] is passed to the
+		// bufio.Writer's underlying writer.
+		var wh writeHook
+		brw.Writer.Reset(&wh)
+		brw.Writer.WriteByte(0)
+		brw.Flush()
+		if cap(wh.p) >= maxFrameHeaderSize+256 {
+			writeBuf = wh.p[:cap(wh.p)]
+		}
+	}
+
+	if writeBuf == nil {
+		if writeBufferSize == 0 {
+			writeBufferSize = defaultWriteBufferSize
+		}
+		writeBuf = make([]byte, writeBufferSize+maxFrameHeaderSize)
 	}
 
 	c := &Conn{
 		isServer:               isServer,
-		br:                     bufio.NewReaderSize(conn, readBufferSize),
+		br:                     br,
 		conn:                   conn,
 		mu:                     mu,
 		readFinal:              true,
-		writeBuf:               make([]byte, writeBufferSize+maxFrameHeaderSize),
+		writeBuf:               writeBuf,
 		enableWriteCompression: true,
+		compressionLevel:       defaultCompressionLevel,
 	}
 	c.SetCloseHandler(nil)
 	c.SetPingHandler(nil)
@@ -443,11 +496,7 @@ func (c *Conn) NextWriter(messageType int) (io.WriteCloser, error) {
 	}
 	c.writer = mw
 	if c.newCompressionWriter != nil && c.enableWriteCompression && isData(messageType) {
-		w, err := c.newCompressionWriter(c.writer)
-		if err != nil {
-			c.writer = nil
-			return nil, err
-		}
+		w := c.newCompressionWriter(c.writer, c.compressionLevel)
 		mw.compress = true
 		c.writer = w
 	}
@@ -654,12 +703,33 @@ func (w *messageWriter) Close() error {
 	return nil
 }
 
+// WritePreparedMessage writes prepared message into connection.
+func (c *Conn) WritePreparedMessage(pm *PreparedMessage) error {
+	frameType, frameData, err := pm.frame(prepareKey{
+		isServer:         c.isServer,
+		compress:         c.newCompressionWriter != nil && c.enableWriteCompression && isData(pm.messageType),
+		compressionLevel: c.compressionLevel,
+	})
+	if err != nil {
+		return err
+	}
+	if c.isWriting {
+		panic("concurrent write to websocket connection")
+	}
+	c.isWriting = true
+	err = c.write(frameType, c.writeDeadline, frameData, nil)
+	if !c.isWriting {
+		panic("concurrent write to websocket connection")
+	}
+	c.isWriting = false
+	return err
+}
+
 // WriteMessage is a helper method for getting a writer using NextWriter,
 // writing the message and closing the writer.
 func (c *Conn) WriteMessage(messageType int, data []byte) error {
 
 	if c.isServer && (c.newCompressionWriter == nil || !c.enableWriteCompression) {
-
 		// Fast path with no allocations and single frame.
 
 		if err := c.prepWrite(messageType); err != nil {
@@ -855,6 +925,11 @@ func (c *Conn) handleProtocolError(message string) error {
 // permanent. Once this method returns a non-nil error, all subsequent calls to
 // this method return the same error.
 func (c *Conn) NextReader() (messageType int, r io.Reader, err error) {
+	// Close previous reader, only relevant for decompression.
+	if c.reader != nil {
+		c.reader.Close()
+		c.reader = nil
+	}
 
 	c.messageReader = nil
 	c.readLength = 0
@@ -867,11 +942,11 @@ func (c *Conn) NextReader() (messageType int, r io.Reader, err error) {
 		}
 		if frameType == TextMessage || frameType == BinaryMessage {
 			c.messageReader = &messageReader{c}
-			var r io.Reader = c.messageReader
+			c.reader = c.messageReader
 			if c.readDecompress {
-				r = c.newDecompressionReader(r)
+				c.reader = c.newDecompressionReader(c.reader)
 			}
-			return frameType, r, nil
+			return frameType, c.reader, nil
 		}
 	}
 
@@ -933,6 +1008,10 @@ func (r *messageReader) Read(b []byte) (int, error) {
 	return 0, err
 }
 
+func (r *messageReader) Close() error {
+	return nil
+}
+
 // ReadMessage is a helper method for getting a reader using NextReader and
 // reading from that reader to a buffer.
 func (c *Conn) ReadMessage() (messageType int, p []byte, err error) {
@@ -969,6 +1048,15 @@ func (c *Conn) CloseHandler() func(code int, text string) error {
 // The code argument to h is the received close code or CloseNoStatusReceived
 // if the close message is empty. The default close handler sends a close frame
 // back to the peer.
+//
+// The application must read the connection to process close messages as
+// described in the section on Control Frames above.
+//
+// The connection read methods return a CloseError when a close frame is
+// received. Most applications should handle close messages as part of their
+// normal error handling. Applications should only set a close handler when the
+// application must perform some action before sending a close frame back to
+// the peer.
 func (c *Conn) SetCloseHandler(h func(code int, text string) error) {
 	if h == nil {
 		h = func(code int, text string) error {
@@ -991,6 +1079,9 @@ func (c *Conn) PingHandler() func(appData string) error {
 // SetPingHandler sets the handler for ping messages received from the peer.
 // The appData argument to h is the PING frame application data. The default
 // ping handler sends a pong to the peer.
+//
+// The application must read the connection to process ping messages as
+// described in the section on Control Frames above.
 func (c *Conn) SetPingHandler(h func(appData string) error) {
 	if h == nil {
 		h = func(message string) error {
@@ -1014,6 +1105,9 @@ func (c *Conn) PongHandler() func(appData string) error {
 // SetPongHandler sets the handler for pong messages received from the peer.
 // The appData argument to h is the PONG frame application data. The default
 // pong handler does nothing.
+//
+// The application must read the connection to process ping messages as
+// described in the section on Control Frames above.
 func (c *Conn) SetPongHandler(h func(appData string) error) {
 	if h == nil {
 		h = func(string) error { return nil }
@@ -1032,6 +1126,18 @@ func (c *Conn) UnderlyingConn() net.Conn {
 // compression was not negotiated with the peer.
 func (c *Conn) EnableWriteCompression(enable bool) {
 	c.enableWriteCompression = enable
+}
+
+// SetCompressionLevel sets the flate compression level for subsequent text and
+// binary messages. This function is a noop if compression was not negotiated
+// with the peer. See the compress/flate package for a description of
+// compression levels.
+func (c *Conn) SetCompressionLevel(level int) error {
+	if !isValidCompressionLevel(level) {
+		return errors.New("websocket: invalid compression level")
+	}
+	c.compressionLevel = level
+	return nil
 }
 
 // FormatCloseMessage formats closeCode and text as a WebSocket close message.

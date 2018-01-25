@@ -34,9 +34,15 @@ type fileReader struct {
 }
 
 func NewDashboardFileReader(cfg *DashboardsAsConfig, log log.Logger) (*fileReader, error) {
-	path, ok := cfg.Options["folder"].(string)
+	var path string
+	path, ok := cfg.Options["path"].(string)
 	if !ok {
-		return nil, fmt.Errorf("Failed to load dashboards. folder param is not a string")
+		path, ok = cfg.Options["folder"].(string)
+		if !ok {
+			return nil, fmt.Errorf("Failed to load dashboards. path param is not a string")
+		}
+
+		log.Warn("[Deprecated] The folder property is deprecated. Please use path instead.")
 	}
 
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -143,6 +149,17 @@ func createWalkFn(fr *fileReader, folderId int64) filepath.WalkFunc {
 
 		if !strings.HasSuffix(fileInfo.Name(), ".json") {
 			return nil
+		}
+
+		checkFilepath, err := filepath.EvalSymlinks(path)
+
+		if path != checkFilepath {
+			path = checkFilepath
+			fi, err := os.Lstat(checkFilepath)
+			if err != nil {
+				return err
+			}
+			fileInfo = fi
 		}
 
 		cachedDashboard, exist := fr.cache.getCache(path)

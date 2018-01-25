@@ -22,6 +22,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -41,7 +42,7 @@ func dialContext(ctx context.Context, network, address string) (net.Conn, error)
 func sendHTTPRequest(ctx context.Context, req *http.Request, conn net.Conn) error {
 	req = req.WithContext(ctx)
 	if err := req.Write(conn); err != nil {
-		return err
+		return fmt.Errorf("failed to write the HTTP request: %v", err)
 	}
 	return nil
 }

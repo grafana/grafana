@@ -1,0 +1,195 @@
+# Gopkg.toml example
+#
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#  name = "github.com/x/y"
+#  version = "2.4.0"
+
+ignored = [
+  "github.com/grafana/grafana/data/*",
+  "github.com/grafana/grafana/public/*",
+  "github.com/grafana/grafana/node_modules/*"
+ ]
+
+[[constraint]]
+  name = "github.com/BurntSushi/toml"
+  version = "0.3.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/Unknwon/com"
+  #version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/aws/aws-sdk-go"
+  version = "1.12.65"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/benbjohnson/clock"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/bmizerany/assert"
+
+[[constraint]]
+  name = "github.com/codegangsta/cli"
+  version = "1.20.0"
+
+[[constraint]]
+  name = "github.com/davecgh/go-spew"
+  version = "1.1.0"
+
+[[constraint]]
+  name = "github.com/fatih/color"
+  version = "1.5.0"
+
+[[constraint]]
+  name = "github.com/go-ldap/ldap"
+  version = "2.5.1"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/go-macaron/binding"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/go-macaron/gzip"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/go-macaron/session"
+
+[[constraint]]
+  name = "github.com/go-sql-driver/mysql"
+  revision = "2cc627ac8defc45d65066ae98f898166f580f9a4"
+  #version = "1.3.0" //keeping this since we would rather depend on version then commit
+
+[[constraint]]
+  name = "github.com/go-stack/stack"
+  version = "1.7.0"
+
+[[constraint]]
+  name = "github.com/go-xorm/core"
+  revision = "e8409d73255791843585964791443dbad877058c"
+  #version = "0.5.7" //keeping this since we would rather depend on version then commit
+
+[[constraint]]
+  name = "github.com/go-xorm/xorm"
+  revision = "6687a2b4e824f4d87f2d65060ec5cb0d896dff1e"
+  #version = "0.6.4" //keeping this since we would rather depend on version then commit
+
+[[constraint]]
+  name = "github.com/gorilla/websocket"
+  version = "1.2.0"
+
+[[constraint]]
+  name = "github.com/gosimple/slug"
+  version = "1.1.1"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/grafana/grafana_plugin_model"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/hashicorp/go-hclog"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/hashicorp/go-version"
+
+[[constraint]]
+  name = "github.com/inconshreveable/log15"
+  version = "2.13.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/lib/pq"
+
+[[constraint]]
+  name = "github.com/mattn/go-isatty"
+  version = "0.0.3"
+
+[[constraint]]
+  name = "github.com/mattn/go-sqlite3"
+  version = "1.6.0"
+
+[[constraint]]
+  name = "github.com/opentracing/opentracing-go"
+  version = "1.0.2"
+
+[[constraint]]
+  name = "github.com/patrickmn/go-cache"
+  version = "2.1.0"
+
+[[constraint]]
+  name = "github.com/prometheus/client_golang"
+  version = "0.9.0-pre1"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/prometheus/client_model"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/prometheus/common"
+
+[[constraint]]
+  name = "github.com/smartystreets/goconvey"
+  version = "1.6.3"
+
+[[constraint]]
+  name = "github.com/uber/jaeger-client-go"
+  version = "2.11.2"
+
+[[constraint]]
+  name = "github.com/yudai/gojsondiff"
+  version = "1.0.0"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/net"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/oauth2"
+
+[[constraint]]
+  branch = "master"
+  name = "golang.org/x/sync"
+
+[[constraint]]
+  name = "gopkg.in/gomail.v2"
+  branch = "v2"
+
+[[constraint]]
+  name = "gopkg.in/ini.v1"
+  version = "1.32.0"
+
+[[constraint]]
+  name = "gopkg.in/macaron.v1"
+  version = "1.2.4"
+
+[[constraint]]
+  branch = "v2"
+  name = "gopkg.in/yaml.v2"
+
+[prune]
+  non-go = true
+  go-tests = true
+  unused-packages = true

@@ -26,7 +26,7 @@
   box-shadow: $navbarShadow;
   position: relative;
 
-  input {
+  & > input {
     max-width: 653px;
     //padding: 0.5rem 1.5rem 0.5rem 0;
     padding: 1rem 1rem 0.75rem 1rem;
@@ -38,6 +38,13 @@
     background-color: $navbarButtonBackground;
     flex-grow: 10;
   }
+
+  // .tag-filter {
+  //   .Select-control {
+  //     width: 300px;
+  //     background-color: $navbarBackground;
+  //   }
+  // }
 }
 
 .search-field-spacer {
@@ -67,13 +74,16 @@
   flex-grow: 1;
   height: 100%;
   padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .search-filter-box {
   background: $search-filter-box-bg;
   border-radius: 2px;
   padding: $spacer*1.5;
-  max-width: 340px;
+  min-width: 340px;
   margin-bottom: $spacer * 1.5;
   margin-left: $spacer * 1.5;
 }

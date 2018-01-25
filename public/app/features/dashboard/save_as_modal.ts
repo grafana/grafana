@@ -13,7 +13,7 @@ const template = `
 		</a>
 	</div>
 
-	<form name="ctrl.saveForm" ng-submit="ctrl.save()" class="modal-content" novalidate>
+	<form name="ctrl.saveForm" class="modal-content" novalidate>
 		<div class="p-t-2">
 			<div class="gf-form">
 				<label class="gf-form-label width-7">New name</label>
@@ -22,8 +22,6 @@ const template = `
       <div class="gf-form">
         <folder-picker initial-folder-id="ctrl.folderId"
                        on-change="ctrl.onFolderChange($folder)"
-                       enter-folder-creation="ctrl.onEnterFolderCreation()"
-                       exit-folder-creation="ctrl.onExitFolderCreation()"
                        enable-create-new="true"
                        label-class="width-7">
         </folder-picker>
@@ -31,7 +29,7 @@ const template = `
 		</div>
 
 		<div class="gf-form-button-row text-center">
-			<button type="submit" class="btn btn-success" ng-disabled="ctrl.saveForm.$invalid || !ctrl.isValidFolderSelection">Save</button>
+			<button type="submit" class="btn btn-success" ng-click="ctrl.save()">Save</button>
 			<a class="btn-text" ng-click="ctrl.dismiss();">Cancel</a>
 		</div>
 	</form>
@@ -41,7 +39,6 @@ const template = `
 export class SaveDashboardAsModalCtrl {
   clone: any;
   folderId: any;
-  isValidFolderSelection = true;
   dismiss: () => void;
 
   /** @ngInject */
@@ -69,25 +66,17 @@ export class SaveDashboardAsModalCtrl {
   }
 
   save() {
-    return this.dashboardSrv.save(this.clone).then(this.dismiss);
-  }
-
-  onEnterFolderCreation() {
-    this.isValidFolderSelection = false;
-  }
-
-  onExitFolderCreation() {
-    this.isValidFolderSelection = true;
+    return this.dashboardSrv.save(this.clone, { folderId: this.folderId }).then(this.dismiss);
   }
 
   keyDown(evt) {
-    if (this.isValidFolderSelection && evt.keyCode === 13) {
+    if (evt.keyCode === 13) {
       this.save();
     }
   }
 
   onFolderChange(folder) {
-    this.clone.folderId = folder.id;
+    this.folderId = folder.id;
   }
 }
 

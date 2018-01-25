@@ -1,5 +1,5 @@
-@import "~react-grid-layout/css/styles.css";
-@import "~react-resizable/css/styles.css";
+@import '~react-grid-layout/css/styles.css';
+@import '~react-resizable/css/styles.css';
 
 .panel-in-fullscreen {
   .react-grid-layout {
@@ -40,8 +40,9 @@
 }
 
 .theme-dark {
-  .react-grid-item > .react-resizable-handle {
-    background-image: url("../img/resize-handle-white.svg");
+  .react-grid-item > .react-resizable-handle::after {
+    border-right: 2px solid rgba(255, 255, 255, 0.4);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.4);
   }
 }
 

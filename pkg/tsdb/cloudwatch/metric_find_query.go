@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 	"sort"
 	"strings"
@@ -187,18 +188,6 @@ func (e *CloudWatchExecutor) executeMetricFindQuery(ctx context.Context, queryCo
 		data, err = e.handleGetEbsVolumeIds(ctx, parameters, queryContext)
 		break
 	case "ec2_instance_attribute":
-		region := parameters.Get("region").MustString()
-		dsInfo := e.getDsInfo(region)
-		cfg, err := e.getAwsConfig(dsInfo)
-		if err != nil {
-			return nil, errors.New("Failed to call ec2:DescribeInstances")
-		}
-		sess, err := session.NewSession(cfg)
-		if err != nil {
-			return nil, errors.New("Failed to call ec2:DescribeInstances")
-		}
-		e.ec2Svc = ec2.New(sess, cfg)
-
 		data, err = e.handleGetEc2InstanceAttribute(ctx, parameters, queryContext)
 		break
 	}
@@ -224,6 +213,21 @@ func transformToTable(data []suggestData, result *tsdb.QueryResult) {
 	}
 	result.Tables = append(result.Tables, table)
 	result.Meta.Set("rowCount", len(data))
+}
+
+func parseMultiSelectValue(input string) []string {
+	trimmedInput := strings.TrimSpace(input)
+
+	if strings.HasPrefix(trimmedInput, "{") {
+		values := strings.Split(strings.TrimRight(strings.TrimLeft(trimmedInput, "{"), "}"), ",")
+		trimValues := make([]string, len(values))
+		for i, v := range values {
+			trimValues[i] = strings.TrimSpace(v)
+		}
+		return trimValues
+	} else {
+		return []string{trimmedInput}
+	}
 }
 
 // Whenever this list is updated, frontend list should also be updated.
@@ -364,19 +368,44 @@ func (e *CloudWatchExecutor) handleGetDimensionValues(ctx context.Context, param
 	return result, nil
 }
 
+func (e *CloudWatchExecutor) ensureClientSession(region string) error {
+	if e.ec2Svc == nil {
+		dsInfo := e.getDsInfo(region)
+		cfg, err := e.getAwsConfig(dsInfo)
+		if err != nil {
+			return fmt.Errorf("Failed to call ec2:getAwsConfig, %v", err)
+		}
+		sess, err := session.NewSession(cfg)
+		if err != nil {
+			return fmt.Errorf("Failed to call ec2:NewSession, %v", err)
+		}
+		e.ec2Svc = ec2.New(sess, cfg)
+	}
+	return nil
+}
+
 func (e *CloudWatchExecutor) handleGetEbsVolumeIds(ctx context.Context, parameters *simplejson.Json, queryContext *tsdb.TsdbQuery) ([]suggestData, error) {
 	region := parameters.Get("region").MustString()
 	instanceId := parameters.Get("instanceId").MustString()
 
-	instanceIds := []*string{aws.String(instanceId)}
+	err := e.ensureClientSession(region)
+	if err != nil {
+		return nil, err
+	}
+
+	instanceIds := aws.StringSlice(parseMultiSelectValue(instanceId))
 	instances, err := e.ec2DescribeInstances(region, nil, instanceIds)
 	if err != nil {
 		return nil, err
 	}
 
 	result := make([]suggestData, 0)
-	for _, mapping := range instances.Reservations[0].Instances[0].BlockDeviceMappings {
-		result = append(result, suggestData{Text: *mapping.Ebs.VolumeId, Value: *mapping.Ebs.VolumeId})
+	for _, reservation := range instances.Reservations {
+		for _, instance := range reservation.Instances {
+			for _, mapping := range instance.BlockDeviceMappings {
+				result = append(result, suggestData{Text: *mapping.Ebs.VolumeId, Value: *mapping.Ebs.VolumeId})
+			}
+		}
 	}
 
 	return result, nil
@@ -401,6 +430,11 @@ func (e *CloudWatchExecutor) handleGetEc2InstanceAttribute(ctx context.Context, 
 				Values: vvvvv,
 			})
 		}
+	}
+
+	err := e.ensureClientSession(region)
+	if err != nil {
+		return nil, err
 	}
 
 	instances, err := e.ec2DescribeInstances(region, filters, nil)
@@ -478,7 +512,7 @@ func (e *CloudWatchExecutor) cloudwatchListMetrics(region string, namespace stri
 			return !lastPage
 		})
 	if err != nil {
-		return nil, errors.New("Failed to call cloudwatch:ListMetrics")
+		return nil, fmt.Errorf("Failed to call cloudwatch:ListMetrics, %v", err)
 	}
 
 	return &resp, nil

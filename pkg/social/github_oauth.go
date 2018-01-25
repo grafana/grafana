@@ -12,7 +12,7 @@ import (
 )
 
 type SocialGithub struct {
-	*oauth2.Config
+	*SocialBase
 	allowedDomains       []string
 	allowedOrganizations []string
 	apiUrl               string
@@ -192,7 +192,7 @@ func (s *SocialGithub) FetchOrganizations(client *http.Client, organizationsUrl 
 	return logins, nil
 }
 
-func (s *SocialGithub) UserInfo(client *http.Client) (*BasicUserInfo, error) {
+func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 
 	var data struct {
 		Id               int    `json:"id"`

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 )
 
 var (
@@ -130,9 +131,15 @@ type LoggerOptions struct {
 	// Where to write the logs to. Defaults to os.Stdout if nil
 	Output io.Writer
 
+	// An optional mutex pointer in case Output is shared
+	Mutex *sync.Mutex
+
 	// Control if the output should be in JSON.
 	JSONFormat bool
 
 	// Include file and line information in each log line
 	IncludeLocation bool
+
+	// The time format to use instead of the default
+	TimeFormat string
 }

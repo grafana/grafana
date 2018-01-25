@@ -40,22 +40,33 @@ func New(opts *LoggerOptions) Logger {
 		level = DefaultLevel
 	}
 
-	return &intLogger{
-		m:      new(sync.Mutex),
-		json:   opts.JSONFormat,
-		caller: opts.IncludeLocation,
-		name:   opts.Name,
-		w:      bufio.NewWriter(output),
-		level:  level,
+	mtx := opts.Mutex
+	if mtx == nil {
+		mtx = new(sync.Mutex)
 	}
+
+	ret := &intLogger{
+		m:          mtx,
+		json:       opts.JSONFormat,
+		caller:     opts.IncludeLocation,
+		name:       opts.Name,
+		timeFormat: TimeFormat,
+		w:          bufio.NewWriter(output),
+		level:      level,
+	}
+	if opts.TimeFormat != "" {
+		ret.timeFormat = opts.TimeFormat
+	}
+	return ret
 }
 
 // The internal logger implementation. Internal in that it is defined entirely
 // by this package.
 type intLogger struct {
-	json   bool
-	caller bool
-	name   string
+	json       bool
+	caller     bool
+	name       string
+	timeFormat string
 
 	// this is a pointer so that it's shared by any derived loggers, since
 	// those derived loggers share the bufio.Writer as well.
@@ -127,7 +138,7 @@ func trimCallerPath(path string) string {
 
 // Non-JSON logging format function
 func (z *intLogger) log(t time.Time, level Level, msg string, args ...interface{}) {
-	z.w.WriteString(t.Format(TimeFormat))
+	z.w.WriteString(t.Format(z.timeFormat))
 	z.w.WriteByte(' ')
 
 	s, ok := _levelToBracket[level]
@@ -369,6 +380,8 @@ func (z *intLogger) Named(name string) Logger {
 
 	if nz.name != "" {
 		nz.name = nz.name + "." + name
+	} else {
+		nz.name = name
 	}
 
 	return &nz

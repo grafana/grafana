@@ -540,6 +540,70 @@ allowed_organizations =
     allowed_organizations =
     ```
 
+### Set up oauth2 with Auth0
+
+1.  Create a new Client in Auth0
+    - Name: Grafana
+    - Type: Regular Web Application
+
+2.  Go to the Settings tab and set:
+    - Allowed Callback URLs: `https://<grafana domain>/login/generic_oauth`
+
+3. Click Save Changes, then use the values at the top of the page to configure Grafana:
+
+    ```bash
+    [auth.generic_oauth]
+    enabled = true
+    allow_sign_up = true
+    team_ids =
+    allowed_organizations =
+    name = Auth0
+    client_id = <client id>
+    client_secret = <client secret>
+    scopes = openid profile email
+    auth_url = https://<domain>/authorize
+    token_url = https://<domain>/oauth/token
+    api_url = https://<domain>/userinfo
+    ```
+
+### Set up oauth2 with Azure Active Directory
+
+1.  Log in to portal.azure.com and click "Azure Active Directory" in the side menu, then click the "Properties" sub-menu item.
+
+2.  Copy the "Directory ID", this is needed for setting URLs later
+
+3.  Click "App Registrations" and add a new application registration:
+    - Name: Grafana
+    - Application type: Web app / API
+    - Sign-on URL: `https://<grafana domain>/login/generic_oauth`
+
+4.  Click the name of the new application to open the application details page.
+
+5.  Note down the "Application ID", this will be the OAuth client id.
+
+6.  Click "Settings", then click "Keys" and add a new entry under Passwords
+    - Key Description: Grafana OAuth
+    - Duration: Never Expires
+
+7.  Click Save then copy the key value, this will be the OAuth client secret.
+
+8.  Configure Grafana as follows:
+
+    ```bash
+    [auth.generic_oauth]
+    name = Azure AD
+    enabled = true
+    allow_sign_up = true
+    client_id = <application id>
+    client_secret = <key value>
+    scopes = openid email name
+    auth_url = https://login.microsoftonline.com/<directory id>/oauth2/authorize
+    token_url = https://login.microsoftonline.com/<directory id>/oauth2/token
+    api_url =
+    team_ids =
+    allowed_organizations =
+    ```
+
 <hr>
 
 ## [auth.basic]
@@ -766,7 +830,7 @@ Time to live for snapshots.
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
-You can choose between (s3, webdav, gcs, azure_blob). If left empty Grafana will ignore the upload action.
+You can choose between (s3, webdav, gcs, azure_blob, local). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
 
