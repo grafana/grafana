@@ -142,12 +142,9 @@ describe('given dashboard with panel repeat in vertical direction', function() {
   beforeEach(function() {
     dashboard = new DashboardModel({
       panels: [
-        {
-          id: 2,
-          repeat: 'apps',
-          repeatDirection: 'v',
-          gridPos: { x: 5, y: 0, h: 2, w: 8 },
-        },
+        { id: 1, type: 'row', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
+        { id: 2, repeat: 'apps', repeatDirection: 'v', gridPos: { x: 5, y: 1, h: 2, w: 8 } },
+        { id: 3, type: 'row', gridPos: { x: 0, y: 3, h: 1, w: 24 } },
       ],
       templating: {
         list: [
@@ -171,24 +168,13 @@ describe('given dashboard with panel repeat in vertical direction', function() {
   });
 
   it('should place on items on top of each other and keep witdh', function() {
-    expect(dashboard.panels[0].gridPos).toMatchObject({
-      x: 5,
-      y: 0,
-      h: 2,
-      w: 8,
-    });
-    expect(dashboard.panels[1].gridPos).toMatchObject({
-      x: 5,
-      y: 2,
-      h: 2,
-      w: 8,
-    });
-    expect(dashboard.panels[2].gridPos).toMatchObject({
-      x: 5,
-      y: 4,
-      h: 2,
-      w: 8,
-    });
+    expect(dashboard.panels[0].gridPos).toMatchObject({ x: 0, y: 0, h: 1, w: 24 }); // first row
+
+    expect(dashboard.panels[1].gridPos).toMatchObject({ x: 5, y: 1, h: 2, w: 8 });
+    expect(dashboard.panels[2].gridPos).toMatchObject({ x: 5, y: 3, h: 2, w: 8 });
+    expect(dashboard.panels[3].gridPos).toMatchObject({ x: 5, y: 5, h: 2, w: 8 });
+
+    expect(dashboard.panels[4].gridPos).toMatchObject({ x: 0, y: 7, h: 1, w: 24 }); // last row
   });
 });
 
