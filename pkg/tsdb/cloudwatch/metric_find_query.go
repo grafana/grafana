@@ -1,4 +1,4 @@
-1package cloudwatch
+package cloudwatch
 
 import (
 	"context"
