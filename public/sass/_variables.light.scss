@@ -70,12 +70,7 @@ $text-shadow-faint: none;
 $textShadow: none;
 
 // gradients
-$brand-gradient: linear-gradient(
-  to right,
-  rgba(255, 213, 0, 1) 0%,
-  rgba(255, 68, 0, 1) 99%,
-  rgba(255, 68, 0, 1) 100%
-);
+$brand-gradient: linear-gradient(to right, rgba(255, 213, 0, 1) 0%, rgba(255, 68, 0, 1) 99%, rgba(255, 68, 0, 1) 100%);
 $page-gradient: linear-gradient(-60deg, transparent 70%, $gray-7 98%);
 
 // Links
@@ -106,13 +101,7 @@ $component-active-bg: $brand-primary !default;
 $panel-bg: $white;
 $panel-border-color: $gray-5;
 $panel-border: solid 1px $panel-border-color;
-$panel-drop-zone-bg: repeating-linear-gradient(
-  -128deg,
-  $body-bg,
-  $body-bg 10px,
-  $gray-6 10px,
-  $gray-6 20px
-);
+$panel-drop-zone-bg: repeating-linear-gradient(-128deg, $body-bg, $body-bg 10px, $gray-6 10px, $gray-6 20px);
 $panel-header-hover-bg: $gray-6;
 $panel-header-menu-hover-bg: $gray-4;
 $panel-edit-shadow: 0 0 30px 20px $black;
@@ -137,8 +126,7 @@ $code-tag-border: darken($code-tag-bg, 3%);
 // cards
 $card-background: linear-gradient(135deg, $gray-6, $gray-5);
 $card-background-hover: linear-gradient(135deg, $gray-5, $gray-6);
-$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1),
-  1px 1px 0 0 rgba(0, 0, 0, 0.1);
+$card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, 0.1), 1px 1px 0 0 rgba(0, 0, 0, 0.1);
 
 // Lists
 $list-item-bg: linear-gradient(135deg, $gray-5, $gray-6); //$card-background;
@@ -154,7 +142,8 @@ $table-bg-hover: $gray-5; // for hover
 $table-bg-active: $table-bg-hover !default;
 $table-border: $gray-3; // table and cell border
 
-$table-bg-odd: $gray-5;
+$table-bg-odd: $gray-6;
+$table-bg-hover: $gray-5;
 
 // Scrollbars
 $scrollbarBackground: $gray-5;
@@ -187,7 +176,7 @@ $btn-link-color: $gray-1;
 
 $btn-divider-left: $gray-4;
 $btn-divider-right: $gray-7;
-$btn-drag-image: "../img/grab_light.svg";
+$btn-drag-image: '../img/grab_light.svg';
 
 $iconContainerBackground: $white;
 
@@ -332,14 +321,10 @@ $tooltipLinkColor: lighten($popover-help-color, 5%);
 $graph-tooltip-bg: $gray-5;
 
 // images
-$checkboxImageUrl: "../img/checkbox_white.png";
+$checkboxImageUrl: '../img/checkbox_white.png';
 
 // info box
-$info-box-background: linear-gradient(
-  100deg,
-  $blue-dark,
-  darken($blue-dark, 5%)
-);
+$info-box-background: linear-gradient(100deg, $blue-dark, darken($blue-dark, 5%));
 $info-box-color: $gray-7;
 
 // footer
