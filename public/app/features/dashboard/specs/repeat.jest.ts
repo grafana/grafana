@@ -35,7 +35,7 @@ describe('given dashboard with panel repeat in horizontal direction', function()
         ],
       },
     });
-    dashboard.processRepeats();
+    dashboard.processRepeats(false);
   });
 
   it('should repeat panel 3 times', function() {
@@ -77,7 +77,7 @@ describe('given dashboard with panel repeat in horizontal direction', function()
   describe('After a second iteration', function() {
     beforeEach(function() {
       dashboard.panels[0].fill = 10;
-      dashboard.processRepeats();
+      dashboard.processRepeats(false);
     });
 
     it('reused panel should copy properties from source', function() {
@@ -97,7 +97,7 @@ describe('given dashboard with panel repeat in horizontal direction', function()
         options: [{ text: 'se1', value: 'se1', selected: true }],
       });
       dashboard.panels[0].repeat = 'server';
-      dashboard.processRepeats();
+      dashboard.processRepeats(false);
     });
 
     it('should remove scopedVars value for last variable', function() {
@@ -112,7 +112,7 @@ describe('given dashboard with panel repeat in horizontal direction', function()
   describe('After a second iteration and selected values reduced', function() {
     beforeEach(function() {
       dashboard.templating.list[0].options[1].selected = false;
-      dashboard.processRepeats();
+      dashboard.processRepeats(false);
     });
 
     it('should clean up repeated panel', function() {
@@ -123,7 +123,7 @@ describe('given dashboard with panel repeat in horizontal direction', function()
   describe('After a second iteration and panel repeat is turned off', function() {
     beforeEach(function() {
       dashboard.panels[0].repeat = null;
-      dashboard.processRepeats();
+      dashboard.processRepeats(false);
     });
 
     it('should clean up repeated panel', function() {
@@ -167,7 +167,7 @@ describe('given dashboard with panel repeat in vertical direction', function() {
         ],
       },
     });
-    dashboard.processRepeats();
+    dashboard.processRepeats(false);
   });
 
   it('should place on items on top of each other and keep witdh', function() {
@@ -227,7 +227,7 @@ describe('given dashboard with row repeat', function() {
       },
     };
     dashboard = new DashboardModel(dashboardJSON);
-    dashboard.processRepeats();
+    dashboard.processRepeats(false);
   });
 
   it('should not repeat only row', function() {
@@ -238,7 +238,7 @@ describe('given dashboard with row repeat', function() {
   it('should set scopedVars for each panel', function() {
     dashboardJSON.templating.list[0].options[2].selected = true;
     dashboard = new DashboardModel(dashboardJSON);
-    dashboard.processRepeats();
+    dashboard.processRepeats(false);
 
     expect(dashboard.panels[1].scopedVars).toMatchObject({
       apps: { text: 'se1', value: 'se1' },
@@ -278,7 +278,7 @@ describe('given dashboard with row repeat', function() {
       { id: 5, type: 'graph', gridPos: { x: 0, y: 2, h: 1, w: 12 } },
     ];
     dashboard = new DashboardModel(dashboardJSON);
-    dashboard.processRepeats();
+    dashboard.processRepeats(false);
 
     const panel_types = _.map(dashboard.panels, 'type');
     expect(panel_types).toEqual(['row', 'row', 'row', 'graph']);
@@ -320,7 +320,7 @@ describe('given dashboard with row repeat', function() {
       ],
     });
     dashboard = new DashboardModel(dashboardJSON);
-    dashboard.processRepeats();
+    dashboard.processRepeats(false);
 
     const panel_types = _.map(dashboard.panels, 'type');
     expect(panel_types).toEqual([
@@ -367,7 +367,7 @@ describe('given dashboard with row repeat', function() {
       { id: 5, type: 'graph', gridPos: { x: 0, y: 2, h: 1, w: 12 } },
     ];
     dashboard = new DashboardModel(dashboardJSON);
-    dashboard.processRepeats();
+    dashboard.processRepeats(false);
 
     const panel_ids = _.flattenDeep(
       _.map(dashboard.panels, panel => {
@@ -427,7 +427,7 @@ describe('given dashboard with row and panel repeat', () => {
       },
     };
     dashboard = new DashboardModel(dashboardJSON);
-    dashboard.processRepeats();
+    dashboard.processRepeats(false);
   });
 
   it('should repeat row and panels for each row', () => {
@@ -455,7 +455,7 @@ describe('given dashboard with row and panel repeat', () => {
       { id: 12, type: 'graph', repeatPanelId: 2, repeatIteration: 101, gridPos: { x: 0, y: 3, h: 1, w: 6 } },
     ];
     dashboard = new DashboardModel(dashboardJSON);
-    dashboard.processRepeats();
+    dashboard.processRepeats(false);
 
     const panel_types = _.map(dashboard.panels, 'type');
     expect(panel_types).toEqual(['row', 'graph', 'graph', 'row', 'graph', 'graph']);
@@ -463,7 +463,7 @@ describe('given dashboard with row and panel repeat', () => {
 
   it('should set scopedVars for each row', () => {
     dashboard = new DashboardModel(dashboardJSON);
-    dashboard.processRepeats();
+    dashboard.processRepeats(false);
 
     expect(dashboard.panels[0].scopedVars).toMatchObject({
       region: { text: 'reg1', value: 'reg1' },
@@ -475,7 +475,7 @@ describe('given dashboard with row and panel repeat', () => {
 
   it('should set panel-repeat variable for each panel', () => {
     dashboard = new DashboardModel(dashboardJSON);
-    dashboard.processRepeats();
+    dashboard.processRepeats(false);
 
     expect(dashboard.panels[1].scopedVars).toMatchObject({
       app: { text: 'se1', value: 'se1' },
@@ -494,7 +494,7 @@ describe('given dashboard with row and panel repeat', () => {
 
   it('should set row-repeat variable for each panel', () => {
     dashboard = new DashboardModel(dashboardJSON);
-    dashboard.processRepeats();
+    dashboard.processRepeats(false);
 
     expect(dashboard.panels[1].scopedVars).toMatchObject({
       region: { text: 'reg1', value: 'reg1' },

@@ -10,13 +10,13 @@ export class DashboardExporter {
     // this is done on the live real dashboard instance, not on a clone
     // so we need to undo this
     // this is pretty hacky and needs to be changed
-    dashboard.cleanUpRepeats();
+    dashboard.cleanUpRepeats(false);
 
     var saveModel = dashboard.getSaveModelClone();
     saveModel.id = null;
 
     // undo repeat cleanup
-    dashboard.processRepeats();
+    dashboard.processRepeats(false);
 
     var inputs = [];
     var requires = {};
