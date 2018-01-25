@@ -152,7 +152,7 @@ Prometheus Alertmanager | `prometheus-alertmanager` | no
 Grafana can render the panel associated with the alert rule and include that in the notification. Most Notification Channels require that this image be publicly accessable (Slack and PagerDuty for example). In order to include images in alert notifications, Grafana can upload the image to an image store. It currently supports
 Amazon S3, Webdav, Google Cloud Storage and Azure Blob Storage. So to set that up you need to configure the [external image uploader](/installation/configuration/#external-image-storage) in your grafana-server ini config file.
 
-By default the local image store is used which allows Grafana to serve the images by itself. Be aware that some notifiers requires public access to the image to be able to include it in the notification.
+Be aware that some notifiers requires public access to the image to be able to include it in the notification. So make sure to enable public access to the images. If your using local image uploader, your Grafana instance need to be accessible by the internet.
 
 Currently only the Email Channels attaches images if no external image store is specified. To include images in alert notifications for other channels then you need to set up an external image store.
 

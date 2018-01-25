@@ -198,6 +198,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.setValueMapping(data);
   }
 
+   canChangeFontSize() {
+     return this.panel.gauge.show;
+   }
+
   setColoring(options) {
     if (options.background) {
       this.panel.colorValue = false;
