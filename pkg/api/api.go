@@ -335,6 +335,7 @@ func (hs *HttpServer) registerRoutes() {
 		adminRoute.Get("/users/:id/quotas", wrap(GetUserQuotas))
 		adminRoute.Put("/users/:id/quotas/:target", bind(m.UpdateUserQuotaCmd{}), wrap(UpdateUserQuota))
 		adminRoute.Get("/stats", AdminGetStats)
+		adminRoute.Post("/:dashboardId/pause-dashboard-alerts", bind(dtos.PauseDashboardAlertsCommand{}), wrap(PauseDashboardAlerts))
 		adminRoute.Post("/pause-all-alerts", bind(dtos.PauseAllAlertsCommand{}), wrap(PauseAllAlerts))
 	}, reqGrafanaAdmin)
 

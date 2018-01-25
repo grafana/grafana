@@ -293,6 +293,35 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	return Json(200, result)
 }
 
+//POST /api/admin/:dashboardId/pause-dashboard-alerts
+func PauseDashboardAlerts(c *middleware.Context, dto dtos.PauseDashboardAlertsCommand) Response {
+	dashboardId := c.ParamsInt64("dashboardId")
+	cmd := models.PauseDashboardAlertsCommand{
+		DashboardId: dashboardId,
+		Paused:      dto.Paused,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "", err)
+	}
+
+	var response models.AlertStateType = models.AlertStatePending
+	pausedState := "un-paused"
+	if cmd.Paused {
+		response = models.AlertStatePaused
+		pausedState = "paused"
+	}
+
+	result := map[string]interface{}{
+		"dashboardId":    dashboardId,
+		"state":          response,
+		"message":        "dashboard alerts " + pausedState,
+		"alertsAffected": cmd.ResultCount,
+	}
+
+	return Json(200, result)
+}
+
 //POST /api/admin/pause-all-alerts
 func PauseAllAlerts(c *middleware.Context, dto dtos.PauseAllAlertsCommand) Response {
 	updateCmd := models.PauseAllAlertCommand{

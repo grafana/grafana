@@ -144,6 +144,12 @@ type PauseAlertCommand struct {
 	Paused      bool
 }
 
+type PauseDashboardAlertsCommand struct {
+	DashboardId int64
+	ResultCount int64
+	Paused      bool
+}
+
 type PauseAllAlertCommand struct {
 	ResultCount int64
 	Paused      bool
