@@ -22,6 +22,7 @@ export const ViewStore = types
     },
   }))
   .actions(self => {
+    // querystring only
     function updateQuery(query: any) {
       self.query.clear();
       for (let key of Object.keys(query)) {
@@ -29,6 +30,7 @@ export const ViewStore = types
       }
     }
 
+    // needed to get route parameters like slug from the url
     function updateRouteParams(routeParams: any) {
       self.routeParams.clear();
       for (let key of Object.keys(routeParams)) {
