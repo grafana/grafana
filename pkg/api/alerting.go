@@ -308,7 +308,7 @@ func PauseDashboardAlerts(c *middleware.Context, dto dtos.PauseDashboardAlertsCo
 		return ApiError(500, "", err)
 	}
 
-	var response models.AlertStateType = models.AlertStatePending
+	response := models.AlertStatePending
 	pausedState := "un-paused"
 	if cmd.Paused {
 		response = models.AlertStatePaused
