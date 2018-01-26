@@ -60,7 +60,7 @@ export class DashboardCtrl implements PanelContainer {
       // continue
       .finally(() => {
         this.dashboard = dashboard;
-        this.dashboard.processRepeats();
+        this.dashboard.processRepeats(false);
 
         this.unsavedChangesSrv.init(dashboard, this.$scope);
 
@@ -97,7 +97,7 @@ export class DashboardCtrl implements PanelContainer {
   }
 
   templateVariableUpdated() {
-    this.dashboard.processRepeats();
+    this.dashboard.processRepeats(false);
   }
 
   setWindowTitleAndTheme() {
