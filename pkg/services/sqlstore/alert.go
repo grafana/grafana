@@ -298,7 +298,7 @@ func PauseAlert(cmd *m.PauseAlertCommand) error {
 
 func PauseDashboardAlerts(cmd *m.PauseDashboardAlertsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		params := make([]interface{}, 0)
+		var params []interface{}
 
 		sql := "UPDATE alert SET state = ? WHERE dashboard_id = ?"
 		if cmd.Paused {
