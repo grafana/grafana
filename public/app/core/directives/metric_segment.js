@@ -129,11 +129,11 @@ function (_, $, coreModule) {
         $input.typeahead({ source: $scope.source, minLength: 0, items: 10000, updater: $scope.updater, matcher: $scope.matcher });
 
         var typeahead = $input.data('typeahead');
-        typeahead.lookup = function () {
+        typeahead.lookup = _.debounce(function() {
           this.query = this.$element.val() || '';
           var items = this.source(this.query, $.proxy(this.process, this));
           return items ? this.process(items) : items;
-        };
+        }, 500);
 
         $button.keydown(function(evt) {
           // trigger typeahead on down arrow or enter key
