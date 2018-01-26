@@ -298,20 +298,17 @@ func PauseAlert(cmd *m.PauseAlertCommand) error {
 
 func PauseDashboardAlerts(cmd *m.PauseDashboardAlertsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var buffer bytes.Buffer
 		params := make([]interface{}, 0)
 
-		buffer.WriteString(`UPDATE alert SET state = ?`)
+		sql := "UPDATE alert SET state = ? WHERE dashboard_id = ?"
 		if cmd.Paused {
 			params = append(params, string(m.AlertStatePaused))
 		} else {
 			params = append(params, string(m.AlertStatePending))
 		}
-
-		buffer.WriteString(` WHERE dashboard_id = ?`)
 		params = append(params, cmd.DashboardId)
 
-		res, err := sess.Exec(buffer.String(), params...)
+		res, err := sess.Exec(sql, params...)
 		if err != nil {
 			return err
 		}
