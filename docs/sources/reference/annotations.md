@@ -54,7 +54,8 @@ Annotation events are fetched via annotation queries. To add a new annotation qu
 open the dashboard settings menu, then select `Annotations`. This will open the dashboard annotations
 settings view. To create a new annotation query hit the `New` button.
 
-![](/img/docs/annotations/new_query.png)
+<!--![](/img/docs/v50/annotation_new_query.png)-->
+{{< docs-imagebox img="/img/docs/v50/annotation_new_query.png" max-width="600px" >}}
 
 Specify a name for the annotation query. This name is given to the toggle (checkbox) that will allow
 you to enable/disable showing annotation events from this query. For example you might have two

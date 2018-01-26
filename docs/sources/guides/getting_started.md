@@ -26,7 +26,7 @@ Read the [Basic Concepts](/guides/basic_concepts) document to get a crash course
 
 Let's start with creating a new Dashboard. You can find the new Dashboard link on the right side of the Dashboard picker. You now have a blank Dashboard.
 
-<img class="no-shadow" src="/img/docs/v5/top-nav-annotated.png" width="580px">
+<img class="no-shadow" src="/img/docs/v50/top_nav_annotated.png" width="580px">
 
 The image above shows you the top header for a Dashboard.
 
@@ -42,7 +42,7 @@ The image above shows you the top header for a Dashboard.
 
 Dashboards are at the core of what Grafana is all about. Dashboards are composed of individual Panels arranged on a grid. Grafana ships with a variety of Panels. Grafana makes it easy to construct the right queries, and customize the display properties so that you can create the perfect Dashboard for your need. Each Panel can interact with data from any configured Grafana Data Source (currently InfluxDB, Graphite, OpenTSDB, Prometheus and Cloudwatch). The [Basic Concepts](/guides/basic_concepts) guide explores these key ideas in detail.
 
-<img src="/img/docs/v5/dashboard-annotated.png" class="no-shadow">
+<img src="/img/docs/v50/dashboard_annotated.png" class="no-shadow">
 
 1. Zoom out time range
 2. Time picker dropdown. Here you can access relative time range options, auto refresh options and set custom absolute time ranges.

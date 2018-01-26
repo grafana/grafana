@@ -12,12 +12,14 @@ weight = 5
 
 Dashboards can be searched by the dashboard name, filtered by one (or many) tags or filtered by starred status. The dashboard search is accessed through the dashboard picker, available in the dashboard top nav area.
 
-<img class="no-shadow" src="/img/docs/v2/dashboard_search.png">
+<img class="no-shadow" src="/img/docs/v50/dashboard_search_annotated.png">
 
-1. `Dashboard Picker`: The Dashboard Picker is your primary navigation tool to move between dashboards. It is present on all dashboards, and open the Dashboard Search. The dashboard picker also doubles as the title of the current dashboard.
-2. `Search Bar`: The search bar allows you to enter any string and search both database and file based dashboards in real-time.
-3. `Starred`: The starred link allows you to filter the list to display only starred dashboards.
-4. `Tags`: The tags filter allows you to filter the list by dashboard tags.
+1. `Search Bar`: The search bar allows you to enter any string and search both database and file based dashboards in real-time.
+2. `Starred`: Here you find all your starred dashboards.
+3. `Recent`: Here you find the latest created dashboards.
+4. `Folders`: The tags filter allows you to filter the list by dashboard tags.
+5. `Root`: The root contains all dashboards that are not placed in a folder.
+6. `Tags`: The tags filter allows you to filter the list by dashboard tags.
 
 When using only a keyboard, you can use your keyboard arrow keys to navigate the results, hit enter to open the selected dashboard.
 
