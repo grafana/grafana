@@ -34,14 +34,17 @@ export interface IProps {
 class Permissions extends Component<IProps, any> {
   constructor(props) {
     super(props);
-    const { dashboardId, permissions, isFolder } = this.props;
+    const { dashboardId, isFolder } = this.props;
     this.permissionChanged = this.permissionChanged.bind(this);
     this.typeChanged = this.typeChanged.bind(this);
     this.removeItem = this.removeItem.bind(this);
-    this.update = this.update.bind(this);
     this.userPicked = this.userPicked.bind(this);
     this.teamPicked = this.teamPicked.bind(this);
-    permissions.load(dashboardId, isFolder);
+    this.loadStore(dashboardId, isFolder);
+  }
+
+  loadStore(dashboardId, isFolder) {
+    return this.props.permissions.load(dashboardId, isFolder);
   }
 
   permissionChanged(index: number, permission: number, permissionName: string) {
@@ -52,11 +55,6 @@ class Permissions extends Component<IProps, any> {
   removeItem(index: number) {
     const { permissions } = this.props;
     permissions.removeStoreItem(index);
-  }
-
-  update() {
-    const { permissions, dashboardId } = this.props;
-    permissions.update(dashboardId);
   }
 
   resetNewType() {
@@ -141,11 +139,6 @@ class Permissions extends Component<IProps, any> {
               </span>
             </div>
           ) : null}
-        </div>
-        <div className="gf-form-button-row">
-          <button type="button" className="btn btn-danger" onClick={this.update} disabled={!permissions.canUpdate}>
-            Update Permissions
-          </button>
         </div>
         <div className="empty-list-cta m-t-3">
           <div className="grafana-info-box">

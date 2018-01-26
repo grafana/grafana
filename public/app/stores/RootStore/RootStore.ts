@@ -20,7 +20,6 @@ export const RootStore = types.model({
   }),
   permissions: types.optional(PermissionsStore, {
     fetching: false,
-    canUpdate: false,
     items: [],
   }),
   view: types.optional(ViewStore, {

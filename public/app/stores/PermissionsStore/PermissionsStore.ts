@@ -19,7 +19,6 @@ export const PermissionsStore = types
     fetching: types.boolean,
     isFolder: types.maybe(types.boolean),
     dashboardId: types.maybe(types.number),
-    canUpdate: types.boolean,
     items: types.optional(types.array(PermissionsStoreItem), []),
     error: types.maybe(types.string),
     originalItems: types.optional(types.array(PermissionsStoreItem), []),
@@ -51,61 +50,66 @@ export const PermissionsStore = types
       self.originalItems = items;
       self.fetching = false;
     }),
-    addStoreItem: item => {
+    addStoreItem: flow(function* addStoreItem(item) {
       self.error = null;
       if (!self.isValid(item)) {
-        return;
+        return undefined;
       }
 
       self.items.push(prepareItem(item, self.dashboardId, self.isFolder));
-      self.canUpdate = true;
-    },
-    removeStoreItem: idx => {
+      updateItems(self);
+    }),
+    removeStoreItem: flow(function* removeStoreItem(idx: number) {
       self.error = null;
       self.items.splice(idx, 1);
-      self.canUpdate = true;
-    },
-    updatePermissionOnIndex(idx: number, permission: number, permissionName: string) {
+      updateItems(self);
+    }),
+    updatePermissionOnIndex: flow(function* updatePermissionOnIndex(
+      idx: number,
+      permission: number,
+      permissionName: string
+    ) {
       self.error = null;
       self.items[idx].updatePermission(permission, permissionName);
-      self.canUpdate = true;
-    },
+      updateItems(self);
+    }),
     setNewType(newType: string) {
       self.newType = newType;
     },
     resetNewType() {
       self.newType = defaultNewType;
     },
-    update: flow(function* update(dashboardId: number) {
-      self.error = null;
-      const backendSrv = getEnv(self).backendSrv;
-      const updated = [];
-      for (let item of self.items) {
-        if (item.inherited) {
-          continue;
-        }
-        updated.push({
-          id: item.id,
-          userId: item.userId,
-          teamId: item.teamId,
-          role: item.role,
-          permission: item.permission,
-        });
-      }
-
-      let res;
-      try {
-        res = backendSrv.post(`/api/dashboards/id/${dashboardId}/acl`, {
-          items: updated,
-        });
-      } catch (error) {
-        console.error(error);
-      }
-
-      self.canUpdate = false;
-      return res;
-    }),
   }));
+
+const updateItems = self => {
+  self.error = null;
+
+  const backendSrv = getEnv(self).backendSrv;
+  const updated = [];
+  for (let item of self.items) {
+    if (item.inherited) {
+      continue;
+    }
+    updated.push({
+      id: item.id,
+      userId: item.userId,
+      teamId: item.teamId,
+      role: item.role,
+      permission: item.permission,
+    });
+  }
+
+  let res;
+  try {
+    res = backendSrv.post(`/api/dashboards/id/${self.dashboardId}/acl`, {
+      items: updated,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+
+  return res;
+};
 
 const prepareServerResponse = (response, dashboardId: number, isFolder: boolean) => {
   return response.map(item => {
