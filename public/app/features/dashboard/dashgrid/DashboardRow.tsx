@@ -39,10 +39,11 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
 
   openSettings() {
     appEvents.emit('show-modal', {
-      templateHtml: `<row-options row="model.row" on-updated="model.onUpdated()" dismiss="dismiss()"></row-options>`,
+      templateHtml: `<row-options row="model.row" dashboard="model.dashboard" on-updated="model.onUpdated()" dismiss="dismiss()"></row-options>`,
       modalClass: 'modal--narrow',
       model: {
         row: this.props.panel,
+        dashboard: this.dashboard,
         onUpdated: this.forceUpdate.bind(this),
       },
     });
