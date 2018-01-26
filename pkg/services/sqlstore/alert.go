@@ -298,10 +298,6 @@ func PauseAlert(cmd *m.PauseAlertCommand) error {
 
 func PauseDashboardAlerts(cmd *m.PauseDashboardAlertsCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		if cmd.DashboardId == 0 {
-			return fmt.Errorf("command contains no dashboard id")
-		}
-
 		var buffer bytes.Buffer
 		params := make([]interface{}, 0)
 

@@ -296,6 +296,9 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 //POST /api/admin/:dashboardId/pause-dashboard-alerts
 func PauseDashboardAlerts(c *middleware.Context, dto dtos.PauseDashboardAlertsCommand) Response {
 	dashboardId := c.ParamsInt64("dashboardId")
+	if dashboardId <= 0 {
+		return ApiError(500, "Invalid dashboard id", nil)
+	}
 	cmd := models.PauseDashboardAlertsCommand{
 		DashboardId: dashboardId,
 		Paused:      dto.Paused,
