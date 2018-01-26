@@ -26,7 +26,6 @@ describe('PermissionsStore', () => {
     store = PermissionsStore.create(
       {
         fetching: false,
-        canUpdate: false,
         items: [],
       },
       {

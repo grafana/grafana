@@ -1,5 +1,6 @@
 ﻿import React, { Component } from 'react';
 import PermissionsListItem from './PermissionsListItem';
+import DisabledPermissionsListItem from './DisabledPermissionsListItem';
 import { observer } from 'mobx-react';
 
 export interface IProps {
@@ -17,10 +18,18 @@ class PermissionsList extends Component<IProps, any> {
     return (
       <table className="filter-table gf-form-group">
         <tbody>
+          <DisabledPermissionsListItem
+            key={0}
+            item={{
+              nameHtml: 'Everyone with <span class="query-keyword">Admin</span> Role',
+              permission: 4,
+              icon: 'fa fa-fw fa-street-view',
+            }}
+          />
           {permissions.map((item, idx) => {
             return (
               <PermissionsListItem
-                key={idx}
+                key={idx + 1}
                 item={item}
                 itemIndex={idx}
                 removeItem={removeItem}
