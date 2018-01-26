@@ -293,6 +293,7 @@ func (hs *HttpServer) registerRoutes() {
 		apiRoute.Group("/alerts", func(alertsRoute RouteRegister) {
 			alertsRoute.Post("/test", bind(dtos.AlertTestCommand{}), wrap(AlertTest))
 			alertsRoute.Post("/:alertId/pause", reqEditorRole, bind(dtos.PauseAlertCommand{}), wrap(PauseAlert))
+			alertsRoute.Post("/pause/by-dashboard/:dashboardId", bind(dtos.PauseDashboardAlertsCommand{}), wrap(PauseDashboardAlerts))
 			alertsRoute.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
 			alertsRoute.Get("/", wrap(GetAlerts))
 			alertsRoute.Get("/states-for-dashboard", wrap(GetAlertStatesForDashboard))
@@ -335,7 +336,6 @@ func (hs *HttpServer) registerRoutes() {
 		adminRoute.Get("/users/:id/quotas", wrap(GetUserQuotas))
 		adminRoute.Put("/users/:id/quotas/:target", bind(m.UpdateUserQuotaCmd{}), wrap(UpdateUserQuota))
 		adminRoute.Get("/stats", AdminGetStats)
-		adminRoute.Post("/:dashboardId/pause-dashboard-alerts", bind(dtos.PauseDashboardAlertsCommand{}), wrap(PauseDashboardAlerts))
 		adminRoute.Post("/pause-all-alerts", bind(dtos.PauseAllAlertsCommand{}), wrap(PauseAllAlerts))
 	}, reqGrafanaAdmin)
 
