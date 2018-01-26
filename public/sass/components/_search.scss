@@ -273,7 +273,8 @@
 @include media-breakpoint-down(sm) {
   .search-dropdown__col_2 {
     flex-direction: column;
-    height: 100%;
+    height: 80%;
+    justify-content: flex-start;
   }
 
   .search-filter-box {
