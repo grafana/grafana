@@ -248,6 +248,39 @@
   background: $panel-bg;
 }
 
+@include media-breakpoint-down(md) {
+  .search-dropdown {
+    flex-direction: column;
+  }
+
+  .search-dropdown__col_1 {
+    height: 100%;
+  }
+
+  .search-dropdown__col_2 {
+    max-width: 700px;
+    flex-direction: row;
+    margin: 0;
+    justify-content: space-between;
+    height: 260px;
+  }
+
+  .search-filter-box {
+    margin: 0;
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  .search-dropdown__col_2 {
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .search-filter-box {
+    margin-bottom: 1.5rem;
+  }
+}
+
 @include media-breakpoint-down(xs) {
   .search-container {
     left: 0;
