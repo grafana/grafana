@@ -463,6 +463,15 @@ kbn.valueFormats.Mbits = kbn.formatBuilders.decimalSIPrefix('bps', 2);
 kbn.valueFormats.GBs = kbn.formatBuilders.decimalSIPrefix('Bs', 3);
 kbn.valueFormats.Gbits = kbn.formatBuilders.decimalSIPrefix('bps', 3);
 
+// Hash Rate
+kbn.valueFormats.Hs     = kbn.formatBuilders.decimalSIPrefix('H/s');
+kbn.valueFormats.KHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 1);
+kbn.valueFormats.MHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 2);
+kbn.valueFormats.GHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 3);
+kbn.valueFormats.THs    = kbn.formatBuilders.decimalSIPrefix('H/s', 4);
+kbn.valueFormats.PHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 5);
+kbn.valueFormats.EHs    = kbn.formatBuilders.decimalSIPrefix('H/s', 6);
+
 // Throughput
 kbn.valueFormats.ops = kbn.formatBuilders.simpleCountUnit('ops');
 kbn.valueFormats.rps = kbn.formatBuilders.simpleCountUnit('rps');
@@ -876,6 +885,18 @@ kbn.getUnitFormats = function() {
         { text: 'megabytes/sec', value: 'MBs' },
         { text: 'gigabytes/sec', value: 'GBs' },
         { text: 'gigabits/sec', value: 'Gbits' },
+      ],
+    },
+    {
+      text: 'hash rate',
+      submenu: [
+        {text: 'hashes/sec', value: 'Hs'},
+        {text: 'kilohashes/sec',    value: 'KHs'},
+        {text: 'megahashes/sec',   value: 'MHs'},
+        {text: 'gigahashes/sec', value: 'GHs'},
+        {text: 'terahashes/sec',    value: 'THs'},
+        {text: 'petahashes/sec', value: 'PHs'},
+        {text: 'exahashes/sec',    value: 'EHs'},
       ],
     },
     {
