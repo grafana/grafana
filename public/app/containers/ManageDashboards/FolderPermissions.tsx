@@ -21,7 +21,7 @@ export class FolderPermissions extends Component<IContainerProps, any> {
   }
 
   render() {
-    const { nav, folder, permissions } = this.props;
+    const { nav, folder, permissions, backendSrv } = this.props;
 
     if (!folder.folder || !nav.main) {
       return <h2>Loading</h2>;
@@ -34,12 +34,7 @@ export class FolderPermissions extends Component<IContainerProps, any> {
         <PageHeader model={nav as any} />
         <div className="page-container page-body">
           <h2 className="page-sub-heading">Folder Permissions</h2>
-          <Permissions
-            permissions={permissions}
-            isFolder={true}
-            dashboardId={dashboardId}
-            backendSrv={this.props.backendSrv}
-          />
+          <Permissions permissions={permissions} isFolder={true} dashboardId={dashboardId} backendSrv={backendSrv} />
         </div>
       </div>
     );

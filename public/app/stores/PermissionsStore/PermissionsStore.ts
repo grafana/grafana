@@ -57,12 +57,12 @@ export const PermissionsStore = types
       }
 
       self.items.push(prepareItem(item, self.dashboardId, self.isFolder));
-      updateItems(self);
+      return updateItems(self);
     }),
     removeStoreItem: flow(function* removeStoreItem(idx: number) {
       self.error = null;
       self.items.splice(idx, 1);
-      updateItems(self);
+      return updateItems(self);
     }),
     updatePermissionOnIndex: flow(function* updatePermissionOnIndex(
       idx: number,
@@ -71,7 +71,7 @@ export const PermissionsStore = types
     ) {
       self.error = null;
       self.items[idx].updatePermission(permission, permissionName);
-      updateItems(self);
+      return updateItems(self);
     }),
     setNewType(newType: string) {
       self.newType = newType;
@@ -118,8 +118,7 @@ const prepareServerResponse = (response, dashboardId: number, isFolder: boolean)
 };
 
 const prepareItem = (item, dashboardId: number, isFolder: boolean) => {
-  item.inherited = !isFolder && dashboardId !== item.dashboardId;
-
+  item.inherited = !isFolder && item.dashboardId > 0 && dashboardId !== item.dashboardId;
   item.sortRank = 0;
   if (item.userId > 0) {
     item.icon = 'fa fa-fw fa-user';

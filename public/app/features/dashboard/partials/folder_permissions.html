@@ -1,8 +1,7 @@
 <page-header model="ctrl.navModel"></page-header>
 
 <div class="page-container page-body">
-  <dash-acl-modal ng-if="ctrl.dashboard && ctrl.meta"
-    dashboard="ctrl.dashboard"
-    meta="ctrl.meta">
-  </dash-acl-modal>
+  <dashboard-permissions ng-if="ctrl.dashboard && ctrl.meta"
+    dashboardId="ctrl.dashboard.id"
+  />
 </div>

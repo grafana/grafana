@@ -6,7 +6,7 @@ import LoginBackground from './components/Login/LoginBackground';
 import { SearchResult } from './components/search/SearchResult';
 import { TagFilter } from './components/TagFilter/TagFilter';
 import UserPicker from './components/Picker/UserPicker';
-import Permissions from './components/Permissions/Permissions';
+import DashboardPermissions from './components/Permissions/DashboardPermissions';
 
 export function registerAngularDirectives() {
   react2AngularDirective('passwordStrength', PasswordStrength, ['password']);
@@ -20,5 +20,5 @@ export function registerAngularDirectives() {
     ['tagOptions', { watchDepth: 'reference' }],
   ]);
   react2AngularDirective('selectUserPicker', UserPicker, ['backendSrv', 'handlePicked']);
-  react2AngularDirective('permissions', Permissions, ['error', 'aclTypes', 'typeChanged', 'backendSrv', 'dashboardId']);
+  react2AngularDirective('dashboardPermissions', DashboardPermissions, ['backendSrv', 'dashboardId']);
 }

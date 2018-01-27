@@ -23,7 +23,6 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex }) => 
   return (
     <tr className={setClassNameHelper(item.inherited)}>
       <td style={{ width: '100%' }}>
-        {/*  style="width: 100%;" */}
         <i className={item.icon} />
         <span dangerouslySetInnerHTML={{ __html: item.nameHtml }} />
       </td>
@@ -55,7 +54,7 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex }) => 
       </td>
       <td>
         {!item.inherited ? (
-          <a className="btn btn-inverse btn-small" onClick={handleRemoveItem}>
+          <a className="btn btn-danger btn-small" onClick={handleRemoveItem}>
             <i className="fa fa-remove" />
           </a>
         ) : null}

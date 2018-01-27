@@ -77,12 +77,12 @@ class Permissions extends Component<IProps, any> {
 
   userPicked(user: User) {
     const { permissions } = this.props;
-    permissions.addStoreItem({ userId: user.id, userLogin: user.login, permission: 1 });
+    return permissions.addStoreItem({ userId: user.id, userLogin: user.login, permission: 1 });
   }
 
   teamPicked(team: Team) {
     const { permissions } = this.props;
-    permissions.addStoreItem({ teamId: team.id, team: team.name, permission: 1 });
+    return permissions.addStoreItem({ teamId: team.id, team: team.name, permission: 1 });
   }
 
   render() {
