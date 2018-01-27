@@ -8,12 +8,13 @@ export interface IProps {
   removeItem: any;
   permissionChanged: any;
   fetching: boolean;
+  folderTitle: string;
 }
 
 @observer
 class PermissionsList extends Component<IProps, any> {
   render() {
-    const { permissions, removeItem, permissionChanged, fetching } = this.props;
+    const { permissions, removeItem, permissionChanged, fetching, folderTitle } = this.props;
 
     return (
       <table className="filter-table gf-form-group">
@@ -34,38 +35,10 @@ class PermissionsList extends Component<IProps, any> {
                 itemIndex={idx}
                 removeItem={removeItem}
                 permissionChanged={permissionChanged}
+                folderTitle={folderTitle}
               />
             );
           })}
-          {/* <tr ng-repeat="acl in ctrl.items" ng-class="{'gf-form-disabled': acl.inherited}">
-              <td><!-- 100% -->
-                <i className="{{acl.icon}}"></i>
-                <span ng-bind-html="acl.nameHtml"></span>
-              </td>
-              <td>
-                <em className="muted no-wrap" ng-show="acl.inherited">Inherited from folder</em>
-              </td>
-              <td className="query-keyword">Can</td>
-              <td>
-                <div className="gf-form-select-wrapper">
-                  <select className="gf-form-input gf-size-auto"
-                    ng-model="acl.permission"
-                    ng-options="p.value as p.text for p in ctrl.permissionOptions"
-                    ng-change="ctrl.permissionChanged(acl)"
-                    ng-disabled="acl.inherited"></select>
-                </div>
-              </td>
-              <td>
-                <a className="btn btn-inverse btn-small" ng-click="ctrl.removeItem($index)" ng-hide="acl.inherited">
-                  <i className="fa fa-remove"></i>
-                </a>
-              </td>
-            </tr>
-            <tr ng-show="ctrl.aclItems.length === 0">
-              <td colSpan={4}>
-                <em>No permissions are set. Will only be accessible by admins.</em>
-              </td>
-            </tr> */}
           {fetching === true && permissions.length < 1 ? (
             <tr>
               <td colSpan={4}>

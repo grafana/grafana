@@ -25,6 +25,7 @@ export interface DashboardAcl {
 
 export interface IProps {
   dashboardId: number;
+  folderTitle?: string;
   permissions?: any;
   isFolder: boolean;
   backendSrv: any;
@@ -86,7 +87,7 @@ class Permissions extends Component<IProps, any> {
   }
 
   render() {
-    const { permissions, backendSrv } = this.props;
+    const { permissions, folderTitle, backendSrv } = this.props;
 
     return (
       <div className="gf-form-group">
@@ -95,6 +96,7 @@ class Permissions extends Component<IProps, any> {
           removeItem={this.removeItem}
           permissionChanged={this.permissionChanged}
           fetching={permissions.fetching}
+          folderTitle={folderTitle}
         />
         <div className="gf-form-inline">
           <form name="addPermission" className="gf-form-group">
@@ -144,8 +146,8 @@ class Permissions extends Component<IProps, any> {
           <div className="grafana-info-box">
             <h5>What are Permissions?</h5>
             <p>
-              An Access Control List (ACL) model is used for to limit access to Dashboard Folders. A user or a Team can
-              be assigned permissions for a folder or for a single dashboard.
+              An Access Control List (ACL) model is used to limit access to Dashboard Folders. A user or a Team can be
+              assigned permissions for a folder or for a single dashboard.
             </p>
             <p>The permissions that can be assigned for a folder/dashboard are:</p>
             <p>View, Edit and Admin.</p>

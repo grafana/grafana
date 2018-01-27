@@ -6,7 +6,7 @@ const setClassNameHelper = inherited => {
   return inherited ? 'gf-form-disabled' : '';
 };
 
-export default observer(({ item, removeItem, permissionChanged, itemIndex }) => {
+export default observer(({ item, removeItem, permissionChanged, itemIndex, folderTitle }) => {
   const handleRemoveItem = evt => {
     evt.preventDefault();
     removeItem(itemIndex);
@@ -26,7 +26,7 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex }) => 
         <i className={item.icon} />
         <span dangerouslySetInnerHTML={{ __html: item.nameHtml }} />
       </td>
-      <td>{item.inherited ? <em className="muted no-wrap">Inherited from folder</em> : null}</td>
+      <td>{item.inherited ? <em className="muted no-wrap">Inherited from folder {folderTitle} </em> : null}</td>
       <td className="query-keyword">Can</td>
       <td>
         <div className="gf-form-select-wrapper">
@@ -44,12 +44,6 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex }) => 
               );
             })}
           </select>
-
-          {/* <select className="gf-form-input gf-size-auto"
-                        ng-model="acl.permission"
-                        ng-options="p.value as p.text for p in ctrl.permissionOptions"
-                        ng-change="ctrl.permissionChanged(acl)"
-                        ng-disabled="acl.inherited" /> */}
         </div>
       </td>
       <td>
