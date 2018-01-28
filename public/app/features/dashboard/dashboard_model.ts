@@ -303,7 +303,7 @@ export class DashboardModel {
     let saveMode = Object.keys(collapsed).length === 0;
     for (let i = 0; i < this.panels.length; i++) {
       let panel = this.panels[i];
-      if (panel.type !== 'row') {
+      if (panel.type !== 'row' || !panel.scopedVars) {
         continue;
       }
 
