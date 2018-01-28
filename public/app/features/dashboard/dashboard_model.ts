@@ -271,6 +271,12 @@ export class DashboardModel {
       return;
     }
 
+    // Saving the state of collapsed rows before cleanup
+    let collapsed = {};
+    if (!withoutRows) {
+      this.saveRestoreCollapsed(collapsed);
+    }
+
     this.cleanUpRepeats(withoutRows);
 
     this.iteration = (this.iteration || new Date().getTime()) + 1;
@@ -282,8 +288,49 @@ export class DashboardModel {
       }
     }
 
+    // Restoring the previous state of collapsed recreated rows
+    if (Object.keys(collapsed).length > 0) {
+      setTimeout(() => {
+        this.saveRestoreCollapsed(collapsed);
+      });
+    }
+
     this.sortPanelsByGridPos();
     this.events.emit('repeats-processed');
+  }
+
+  saveRestoreCollapsed(collapsed) {
+    let saveMode = Object.keys(collapsed).length === 0;
+    for (let i = 0; i < this.panels.length; i++) {
+      let panel = this.panels[i];
+      if (panel.type !== 'row') {
+        continue;
+      }
+
+      let key = Object.keys(panel.scopedVars)[0];
+      let variable = panel.scopedVars[key];
+      if (!variable.selected) {
+        continue;
+      }
+
+      let id = panel.repeatPanelId ? panel.repeatPanelId : panel.id;
+      if (saveMode) {
+        if (!(id in collapsed)) {
+          collapsed[id] = {};
+        }
+        if (!(key in collapsed[id])) {
+          collapsed[id][key] = {};
+        }
+        collapsed[id][key][variable.value] = panel.collapsed;
+      } else if (
+        id in collapsed &&
+        key in collapsed[id] &&
+        variable.value in collapsed[id][key] &&
+        collapsed[id][key][variable.value] !== panel.collapsed
+      ) {
+        this.toggleRow(panel);
+      }
+    }
   }
 
   getPanelRepeatClone(sourcePanel, valueIndex, sourcePanelIndex) {
@@ -596,7 +643,7 @@ export class DashboardModel {
           // update insert post and y max
           insertPos += 1;
           yMax = Math.max(yMax, panel.gridPos.y + panel.gridPos.h);
-          needRepeats = needRepeats || 'repeat' in panel;
+          needRepeats = needRepeats || panel.repeat;
         }
 
         const pushDownAmount = yMax - row.gridPos.y;
