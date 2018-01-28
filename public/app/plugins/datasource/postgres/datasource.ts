@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import ResponseParser from './response_parser';
+import PostgresQuery from 'app/plugins/datasource/postgres/postgres_query';
 
 export class PostgresDatasource {
   id: any;
@@ -33,16 +34,18 @@ export class PostgresDatasource {
   }
 
   query(options) {
-    var queries = _.filter(options.targets, item => {
-      return item.hide !== true;
-    }).map(item => {
+    var queries = _.filter(options.targets, target => {
+      return target.hide !== true;
+    }).map(target => {
+      var queryModel = new PostgresQuery(target, this.templateSrv, options.scopedVars);
+
       return {
-        refId: item.refId,
+        refId: target.refId,
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
         datasourceId: this.id,
-        rawSql: this.templateSrv.replace(item.rawSql, options.scopedVars, this.interpolateVariable),
-        format: item.format,
+        rawSql: queryModel.render(this.interpolateVariable),
+        format: target.format,
       };
     });
 
