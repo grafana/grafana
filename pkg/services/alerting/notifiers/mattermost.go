@@ -6,12 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"fmt"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/mattermost/mattermost-server/model"
-	"fmt"
 	"strings"
 )
 
@@ -243,7 +243,7 @@ func MattermostFileUpload(client *model.Client4, evalContext *alerting.EvalConte
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 	}
-	defer file.Close();
+	defer file.Close()
 	buf := bytes.NewBuffer(nil)
 	io.Copy(buf, file)
 	data := buf.Bytes()
