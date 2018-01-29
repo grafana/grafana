@@ -160,4 +160,8 @@ func addDashboardMigration(mg *Migrator) {
 		Sqlite("UPDATE dashboard SET uid=printf('%09d',id) WHERE uid IS NULL;").
 		Postgres("UPDATE dashboard SET uid=lpad('' || id,9,'0') WHERE uid IS NULL;").
 		Mysql("UPDATE dashboard SET uid=lpad(id,9,'0') WHERE uid IS NULL;"))
+
+	mg.AddMigration("Add index for uid in dashboard", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"uid"}, Type: UniqueIndex,
+	}))
 }
