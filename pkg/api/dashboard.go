@@ -130,6 +130,11 @@ func getDashboardHelper(orgId int64, slug string, id int64) (*m.Dashboard, Respo
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, ApiError(404, "Dashboard not found", err)
 	}
+
+	if query.Result.IsFolder {
+		return nil, ApiError(404, "Dashboard not found", m.ErrDashboardNotFound)
+	}
+
 	return query.Result, nil
 }
 
@@ -164,6 +169,11 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	// if new dashboard, use parent folder permissions instead
 	if dashId == 0 {
 		dashId = cmd.FolderId
+	} else {
+		_, rsp := getDashboardHelper(c.OrgId, "", dashId)
+		if rsp != nil {
+			return rsp
+		}
 	}
 
 	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
@@ -438,20 +448,4 @@ func GetDashboardTags(c *middleware.Context) {
 	}
 
 	c.JSON(200, query.Result)
-}
-
-func GetFoldersForSignedInUser(c *middleware.Context) Response {
-	title := c.Query("query")
-	query := m.GetFoldersForSignedInUserQuery{
-		OrgId:        c.OrgId,
-		SignedInUser: c.SignedInUser,
-		Title:        title,
-	}
-
-	err := bus.Dispatch(&query)
-	if err != nil {
-		return ApiError(500, "Failed to get folders from database", err)
-	}
-
-	return Json(200, query.Result)
 }

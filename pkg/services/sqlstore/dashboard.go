@@ -50,6 +50,9 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			if existing.PluginId != "" && cmd.Overwrite == false {
 				return m.UpdatePluginDashboardError{PluginId: existing.PluginId}
 			}
+
+			dash.Created = existing.Created
+			dash.CreatedBy = existing.CreatedBy
 		}
 
 		sameTitleExists, err := sess.Where("org_id=? AND slug=?", dash.OrgId, dash.Slug).Get(&sameTitle)
@@ -66,6 +69,9 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 				} else {
 					return m.ErrDashboardWithSameNameExists
 				}
+			} else {
+				dash.Created = sameTitle.Created
+				dash.CreatedBy = sameTitle.CreatedBy
 			}
 		}
 
@@ -134,6 +140,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 				}
 			}
 		}
+
 		cmd.Result = dash
 
 		return err
@@ -292,19 +299,26 @@ func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
 	return err
 }
 
-func GetFoldersForSignedInUser(query *m.GetFoldersForSignedInUserQuery) error {
-	query.Result = make([]*m.DashboardFolder, 0)
+func GetFoldersForSignedInUser(query *m.GetFoldersQuery) error {
+	query.Result = make([]*m.GetFoldersQueryHitResult, 0)
 	var err error
+	params := make([]interface{}, 0)
 
 	if query.SignedInUser.OrgRole == m.ROLE_ADMIN {
-		sql := `SELECT distinct d.id, d.title
-		FROM dashboard AS d WHERE d.is_folder = ?
-		ORDER BY d.title ASC`
+		sql := `SELECT distinct d.id, d.title, d.slug
+		FROM dashboard AS d WHERE d.is_folder = ?`
+		params = append(params, dialect.BooleanStr(true))
 
-		err = x.Sql(sql, dialect.BooleanStr(true)).Find(&query.Result)
+		if len(query.Title) > 0 {
+			sql += " AND d.title " + dialect.LikeStr() + " ?"
+			params = append(params, "%"+query.Title+"%")
+		}
+
+		sql += ` ORDER BY d.title ASC`
+
+		err = x.Sql(sql, params...).Find(&query.Result)
 	} else {
-		params := make([]interface{}, 0)
-		sql := `SELECT distinct d.id, d.title
+		sql := `SELECT distinct d.id, d.title, d.slug
 		FROM dashboard AS d
 			LEFT JOIN dashboard_acl AS da ON d.id = da.dashboard_id
 			LEFT JOIN team_member AS ugm ON ugm.team_id =  da.team_id
@@ -315,14 +329,17 @@ func GetFoldersForSignedInUser(query *m.GetFoldersForSignedInUserQuery) error {
 
 		sql += `WHERE
 			d.org_id = ? AND
-			d.is_folder = 1 AND
+			d.is_folder = ? AND
 			(
-				(d.has_acl = 1 AND da.permission > 1 AND (da.user_id = ? OR ugm.user_id = ? OR ou.id IS NOT NULL))
+				(d.has_acl = ? AND da.permission > 1 AND (da.user_id = ? OR ugm.user_id = ? OR ou.id IS NOT NULL))
 				OR (d.has_acl = 0 AND ouRole.id IS NOT NULL)
 			)`
 		params = append(params, query.OrgId)
+		params = append(params, dialect.BooleanStr(true))
+		params = append(params, dialect.BooleanStr(true))
 		params = append(params, query.SignedInUser.UserId)
 		params = append(params, query.SignedInUser.UserId)
+		params = append(params, dialect.BooleanStr(false))
 
 		if len(query.Title) > 0 {
 			sql += " AND d.title " + dialect.LikeStr() + " ?"

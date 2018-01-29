@@ -240,6 +240,15 @@ func (hs *HttpServer) registerRoutes() {
 		apiRoute.Any("/datasources/proxy/:id/*", reqSignedIn, hs.ProxyDataSourceRequest)
 		apiRoute.Any("/datasources/proxy/:id", reqSignedIn, hs.ProxyDataSourceRequest)
 
+		// Folders
+		apiRoute.Group("/folders", func(folderRoute RouteRegister) {
+			folderRoute.Get("/", wrap(GetFolders))
+			folderRoute.Get("/:id", wrap(GetFolderById))
+			folderRoute.Post("/", bind(m.CreateFolderCommand{}), wrap(CreateFolder))
+			folderRoute.Put("/:id", bind(m.UpdateFolderCommand{}), wrap(UpdateFolder))
+			folderRoute.Delete("/:id", wrap(DeleteFolder))
+		})
+
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute RouteRegister) {
 			dashboardRoute.Get("/db/:slug", wrap(GetDashboard))
@@ -251,8 +260,6 @@ func (hs *HttpServer) registerRoutes() {
 			dashboardRoute.Get("/home", wrap(GetHomeDashboard))
 			dashboardRoute.Get("/tags", GetDashboardTags)
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
-
-			dashboardRoute.Get("/folders", wrap(GetFoldersForSignedInUser))
 
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute RouteRegister) {
 				dashIdRoute.Get("/versions", wrap(GetDashboardVersions))

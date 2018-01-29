@@ -33,6 +33,44 @@ func (repo *fakeDashboardRepo) SaveDashboard(json *dashboards.SaveDashboardItem)
 var fakeRepo *fakeDashboardRepo
 
 func TestDashboardApiEndpoint(t *testing.T) {
+	Convey("Given a folder", t, func() {
+		fakeFolder := m.NewDashboardFolder("Folder")
+		fakeFolder.Id = 1
+		fakeFolder.HasAcl = false
+
+		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
+			query.Result = fakeFolder
+			return nil
+		})
+
+		cmd := m.SaveDashboardCommand{
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"title": fakeFolder.Title,
+				"id":    fakeFolder.Id,
+			}),
+			IsFolder: true,
+		}
+
+		Convey("When user is an Org Editor", func() {
+			role := m.ROLE_EDITOR
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/1", "/api/dashboards/:id", role, func(sc *scenarioContext) {
+				CallGetDashboard(sc)
+				So(sc.resp.Code, ShouldEqual, 404)
+			})
+
+			postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, cmd, func(sc *scenarioContext) {
+				CallPostDashboard(sc)
+				So(sc.resp.Code, ShouldEqual, 404)
+			})
+
+			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/1", "/api/dashboards/:id", role, func(sc *scenarioContext) {
+				CallDeleteDashboard(sc)
+				So(sc.resp.Code, ShouldEqual, 404)
+			})
+		})
+	})
+
 	Convey("Given a dashboard with a parent folder which does not have an acl", t, func() {
 		fakeDash := m.NewDashboard("Child dash")
 		fakeDash.Id = 1
@@ -426,8 +464,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 }
 
 func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta {
-	sc.handlerFunc = GetDashboard
-	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+	CallGetDashboard(sc)
 
 	So(sc.resp.Code, ShouldEqual, 200)
 
@@ -436,6 +473,11 @@ func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta
 	So(err, ShouldBeNil)
 
 	return dash
+}
+
+func CallGetDashboard(sc *scenarioContext) {
+	sc.handlerFunc = GetDashboard
+	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
 func CallGetDashboardVersion(sc *scenarioContext) {

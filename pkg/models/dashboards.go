@@ -73,9 +73,9 @@ func NewDashboard(title string) *Dashboard {
 // NewDashboardFolder creates a new dashboard folder
 func NewDashboardFolder(title string) *Dashboard {
 	folder := NewDashboard(title)
+	folder.IsFolder = true
 	folder.Data.Set("schemaVersion", 16)
-	folder.Data.Set("editable", true)
-	folder.Data.Set("hideControls", true)
+	folder.Data.Set("version", 0)
 	return folder
 }
 
@@ -208,16 +208,4 @@ type GetDashboardsByPluginIdQuery struct {
 type GetDashboardSlugByIdQuery struct {
 	Id     int64
 	Result string
-}
-
-type GetFoldersForSignedInUserQuery struct {
-	OrgId        int64
-	SignedInUser *SignedInUser
-	Title        string
-	Result       []*DashboardFolder
-}
-
-type DashboardFolder struct {
-	Id    int64  `json:"id"`
-	Title string `json:"title"`
 }

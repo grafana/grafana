@@ -470,7 +470,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("Admin users", func() {
 				Convey("Should have write access to all dashboard folders", func() {
-					query := m.GetFoldersForSignedInUserQuery{
+					query := m.GetFoldersQuery{
 						OrgId:        1,
 						SignedInUser: &m.SignedInUser{UserId: adminUser.Id, OrgRole: m.ROLE_ADMIN},
 					}
@@ -485,7 +485,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Editor users", func() {
-				query := m.GetFoldersForSignedInUserQuery{
+				query := m.GetFoldersQuery{
 					OrgId:        1,
 					SignedInUser: &m.SignedInUser{UserId: editorUser.Id, OrgRole: m.ROLE_EDITOR},
 				}
@@ -511,7 +511,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Viewer users", func() {
-				query := m.GetFoldersForSignedInUserQuery{
+				query := m.GetFoldersQuery{
 					OrgId:        1,
 					SignedInUser: &m.SignedInUser{UserId: viewerUser.Id, OrgRole: m.ROLE_VIEWER},
 				}
