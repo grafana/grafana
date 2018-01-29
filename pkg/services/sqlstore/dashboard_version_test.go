@@ -49,6 +49,7 @@ func TestGetDashboardVersion(t *testing.T) {
 
 			err = GetDashboard(&dashCmd)
 			So(err, ShouldBeNil)
+			dashCmd.Result.Data.Del("uid")
 			eq := reflect.DeepEqual(dashCmd.Result.Data, query.Result.Data)
 			So(eq, ShouldEqual, true)
 		})
