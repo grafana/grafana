@@ -226,7 +226,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	}
 
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)
-	return Json(200, util.DynMap{"status": "success", "slug": dashboard.Slug, "version": dashboard.Version, "id": dashboard.Id})
+	return Json(200, util.DynMap{"status": "success", "slug": dashboard.Slug, "version": dashboard.Version, "id": dashboard.Id, "uid": dashboard.Uid})
 }
 
 func GetHomeDashboard(c *middleware.Context) Response {
