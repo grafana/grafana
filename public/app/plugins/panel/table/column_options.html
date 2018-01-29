@@ -42,8 +42,8 @@
       </div>
       <div class="gf-form" ng-if="style.type === 'date'">
         <label class="gf-form-label width-11">Date Format</label>
-        <gf-form-dropdown model="style.dateFormat" css-class="gf-form-input width-16" lookup-text="true" get-options="editor.dateFormats"
-          on-change="editor.render()">
+        <gf-form-dropdown model="style.dateFormat" css-class="gf-form-input width-16" lookup-text="true"
+        	get-options="editor.dateFormats" on-change="editor.render()" allow-custom="true">
         </gf-form-dropdown>
       </div>
 
