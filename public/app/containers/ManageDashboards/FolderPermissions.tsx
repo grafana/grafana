@@ -4,7 +4,8 @@ import { toJS } from 'mobx';
 import IContainerProps from 'app/containers/IContainerProps';
 import PageHeader from 'app/core/components/PageHeader/PageHeader';
 import Permissions from 'app/core/components/Permissions/Permissions';
-
+import Tooltip from 'app/core/components/Tooltip/Tooltip';
+import PermissionsInfo from 'app/core/components/Permissions/PermissionsInfo';
 @inject('nav', 'folder', 'view', 'permissions')
 @observer
 export class FolderPermissions extends Component<IContainerProps, any> {
@@ -33,7 +34,13 @@ export class FolderPermissions extends Component<IContainerProps, any> {
       <div>
         <PageHeader model={nav as any} />
         <div className="page-container page-body">
-          <h2 className="page-sub-heading">Folder Permissions</h2>
+          <div className="page-sub-heading">
+            <h2 className="d-inline-block">Folder Permissions</h2>
+            <Tooltip className="page-sub-heading-icon" placement="auto" content={PermissionsInfo}>
+              <i className="gicon gicon-question gicon--has-hover" />
+            </Tooltip>
+          </div>
+
           <Permissions permissions={permissions} isFolder={true} dashboardId={dashboardId} backendSrv={backendSrv} />
         </div>
       </div>

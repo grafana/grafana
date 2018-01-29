@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { store } from 'app/stores/store';
 import Permissions from 'app/core/components/Permissions/Permissions';
+import Tooltip from 'app/core/components/Tooltip/Tooltip';
+import PermissionsInfo from 'app/core/components/Permissions/PermissionsInfo';
 
 export interface IProps {
   dashboardId: number;
@@ -20,13 +22,21 @@ class DashboardPermissions extends Component<IProps, any> {
     const { dashboardId, folderTitle, backendSrv } = this.props;
 
     return (
-      <Permissions
-        permissions={this.permissions}
-        isFolder={false}
-        dashboardId={dashboardId}
-        folderTitle={folderTitle}
-        backendSrv={backendSrv}
-      />
+      <div>
+        <div className="dashboard-settings__header">
+          <h3 className="d-inline-block">Permissions</h3>
+          <Tooltip className="page-sub-heading-icon" placement="auto" content={PermissionsInfo}>
+            <i className="gicon gicon-question gicon--has-hover" />
+          </Tooltip>
+        </div>
+        <Permissions
+          permissions={this.permissions}
+          isFolder={false}
+          dashboardId={dashboardId}
+          folderTitle={folderTitle}
+          backendSrv={backendSrv}
+        />
+      </div>
     );
   }
 }

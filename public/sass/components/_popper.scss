@@ -1,8 +1,9 @@
 .popper {
   position: absolute;
+  z-index: $zindex-tooltip;
   background: $tooltipBackground;
   color: $tooltipColor;
-  width: 150px;
+  max-width: 400px;
   border-radius: 3px;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
   padding: 10px;
