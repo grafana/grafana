@@ -3,6 +3,7 @@ import { DashboardModel } from '../dashboard_model';
 import { expect } from 'test/lib/common';
 
 jest.mock('app/core/services/context_srv', () => ({}));
+jest.useFakeTimers();
 
 describe('given dashboard with panel repeat in horizontal direction', function() {
   var dashboard;
@@ -189,6 +190,78 @@ describe('given dashboard with panel repeat in vertical direction', function() {
       h: 2,
       w: 8,
     });
+  });
+});
+
+describe('given dashboard with row repeat and panel repeat in horizontal direction', () => {
+  let dashboard, dashboardJSON;
+
+  beforeEach(() => {
+    dashboardJSON = {
+      panels: [
+        {
+          id: 1,
+          type: 'row',
+          repeat: 'region',
+          gridPos: { x: 0, y: 0, h: 1, w: 24 },
+        },
+        {
+          id: 2,
+          type: 'graph',
+          repeat: 'app',
+          gridPos: { x: 0, y: 1, h: 1, w: 12 },
+        },
+      ],
+      templating: {
+        list: [
+          {
+            name: 'region',
+            current: {
+              text: 'reg1, reg2',
+              value: ['reg1', 'reg2'],
+            },
+            options: [{ text: 'reg1', value: 'reg1', selected: true }, { text: 'reg2', value: 'reg2', selected: true }],
+          },
+          {
+            name: 'app',
+            current: {
+              text: 'se1, se2, se3, se4, se5, se6',
+              value: ['se1', 'se2', 'se3', 'se4', 'se5', 'se6'],
+            },
+            options: [
+              { text: 'se1', value: 'se1', selected: true },
+              { text: 'se2', value: 'se2', selected: true },
+              { text: 'se3', value: 'se3', selected: true },
+              { text: 'se4', value: 'se4', selected: true },
+              { text: 'se5', value: 'se5', selected: true },
+              { text: 'se6', value: 'se6', selected: true },
+            ],
+          },
+        ],
+      },
+    };
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats(false);
+  });
+
+  it('should panels in self row', () => {
+    const panel_types = _.map(dashboard.panels, 'type');
+    expect(panel_types).toEqual([
+      'row',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'row',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+    ]);
   });
 });
 
@@ -509,5 +582,32 @@ describe('given dashboard with row and panel repeat', () => {
     expect(dashboard.panels[5].scopedVars).toMatchObject({
       region: { text: 'reg2', value: 'reg2' },
     });
+  });
+
+  it('should repeat again panels according variable value after expand row with panel repeat', () => {
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats(false);
+
+    dashboard.toggleRow(dashboard.panels[0]);
+    dashboard.templating.list[0].options[1].selected = false;
+    dashboard.templating.list[1].options[2].selected = true;
+    dashboard.processRepeats(false);
+    dashboard.toggleRow(dashboard.panels[0]);
+    const panel_types = _.map(dashboard.panels, 'type');
+    expect(panel_types).toEqual(['row', 'graph', 'graph', 'graph']);
+  });
+
+  it('should repeated row save state of collapse', () => {
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats(false);
+
+    // collapse second row and select on third value of variable
+    dashboard.toggleRow(dashboard.panels[3]);
+    dashboard.templating.list[0].options[2].selected = true;
+    dashboard.processRepeats(false);
+    jest.advanceTimersByTime(1);
+
+    const panel_types = _.map(dashboard.panels, 'type');
+    expect(panel_types).toEqual(['row', 'graph', 'graph', 'row', 'row', 'graph', 'graph']);
   });
 });
