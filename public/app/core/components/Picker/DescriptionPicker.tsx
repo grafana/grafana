@@ -7,6 +7,7 @@ export interface IProps {
   handlePicked: (permission) => void;
   value: number;
   disabled: boolean;
+  className?: string;
 }
 
 export interface OptionWithDescription {
@@ -22,7 +23,7 @@ class DescriptionPicker extends Component<IProps, any> {
   }
 
   render() {
-    const { optionsWithDesc, handlePicked, value, disabled } = this.props;
+    const { optionsWithDesc, handlePicked, value, disabled, className } = this.props;
 
     return (
       <div className="permissions-picker">
@@ -34,7 +35,7 @@ class DescriptionPicker extends Component<IProps, any> {
           labelKey="label"
           options={optionsWithDesc}
           onChange={handlePicked}
-          className="width-7 gf-form-input gf-form-input--form-dropdown"
+          className={`width-7 gf-form-input gf-form-input--form-dropdown ${className || ''}`}
           optionComponent={DescriptionOption}
           placeholder="Choose"
           disabled={disabled}

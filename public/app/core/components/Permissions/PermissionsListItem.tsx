@@ -32,6 +32,7 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex, folde
             handlePicked={handleChangePermission}
             value={item.permission}
             disabled={item.inherited}
+            className={'gf-form-input--form-dropdown-right'}
           />
         </div>
       </td>

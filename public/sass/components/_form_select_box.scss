@@ -39,10 +39,6 @@ $select-option-selected-bg: $dropdownLinkBackgroundActive;
     color: $input-color-placeholder;
   }
 
-  .Select-menu-outer {
-    right: 0;
-  }
-
   > .Select-control {
     @include select-control();
     border-color: $dark-3;
@@ -100,5 +96,11 @@ $select-option-selected-bg: $dropdownLinkBackgroundActive;
       content: '';
       background-image: linear-gradient(to bottom, #ffd500 0%, #ff4400 99%, #ff4400 100%);
     }
+  }
+}
+
+.gf-form-input--form-dropdown-right {
+  .Select-menu-outer {
+    right: 0;
   }
 }
