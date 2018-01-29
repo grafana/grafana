@@ -71,6 +71,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv, $timeout, $rootScop
       body.toggleClass('sidemenu-open', sidemenuOpen);
 
       appEvents.on('toggle-sidemenu', () => {
+        sidemenuOpen = scope.contextSrv.sidemenu;
         body.toggleClass('sidemenu-open');
       });
 
