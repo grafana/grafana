@@ -13,7 +13,7 @@ export default class DisabledPermissionListItem extends Component<IProps, any> {
     return (
       <tr className="gf-form-disabled">
         <td style={{ width: '100%' }}>
-          <i className={item.icon} />
+          <i className={`fa--permissions-list ${item.icon}`} />
           <span dangerouslySetInnerHTML={{ __html: item.nameHtml }} />
         </td>
         <td />

@@ -20,7 +20,7 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex, folde
   return (
     <tr className={setClassNameHelper(item.inherited)}>
       <td style={{ width: '100%' }}>
-        <i className={item.icon} />
+        <i className={`fa--permissions-list ${item.icon}`} />
         <span dangerouslySetInnerHTML={{ __html: item.nameHtml }} />
       </td>
       <td>
