@@ -175,6 +175,7 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 	}
 
 	dashboard.Data.Set("id", dashboard.Id)
+	dashboard.Data.Set("uid", dashboard.Uid)
 	query.Result = &dashboard
 	return nil
 }
