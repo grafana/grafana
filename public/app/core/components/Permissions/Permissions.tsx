@@ -4,6 +4,7 @@ import { observer } from 'mobx-react';
 import UserPicker, { User } from 'app/core/components/Picker/UserPicker';
 import TeamPicker, { Team } from 'app/core/components/Picker/TeamPicker';
 import { aclTypes } from 'app/stores/PermissionsStore/PermissionsStore';
+import { FolderInfo } from './FolderInfo';
 
 export interface DashboardAcl {
   id?: number;
@@ -25,7 +26,7 @@ export interface DashboardAcl {
 
 export interface IProps {
   dashboardId: number;
-  folderTitle?: string;
+  folderInfo?: FolderInfo;
   permissions?: any;
   isFolder: boolean;
   backendSrv: any;
@@ -87,7 +88,7 @@ class Permissions extends Component<IProps, any> {
   }
 
   render() {
-    const { permissions, folderTitle, backendSrv } = this.props;
+    const { permissions, folderInfo, backendSrv } = this.props;
 
     return (
       <div className="gf-form-group">
@@ -96,7 +97,7 @@ class Permissions extends Component<IProps, any> {
           removeItem={this.removeItem}
           permissionChanged={this.permissionChanged}
           fetching={permissions.fetching}
-          folderTitle={folderTitle}
+          folderInfo={folderInfo}
         />
         <div className="gf-form-inline">
           <form name="addPermission" className="gf-form-group">

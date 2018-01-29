@@ -6,7 +6,9 @@ import PermissionsInfo from 'app/core/components/Permissions/PermissionsInfo';
 
 export interface IProps {
   dashboardId: number;
+  folderId: number;
   folderTitle: string;
+  folderSlug: string;
   backendSrv: any;
 }
 
@@ -19,7 +21,7 @@ class DashboardPermissions extends Component<IProps, any> {
   }
 
   render() {
-    const { dashboardId, folderTitle, backendSrv } = this.props;
+    const { dashboardId, folderTitle, folderSlug, folderId, backendSrv } = this.props;
 
     return (
       <div>
@@ -33,7 +35,7 @@ class DashboardPermissions extends Component<IProps, any> {
           permissions={this.permissions}
           isFolder={false}
           dashboardId={dashboardId}
-          folderTitle={folderTitle}
+           folderInfo={{ title: folderTitle, slug: folderSlug, id: folderId }}
           backendSrv={backendSrv}
         />
       </div>

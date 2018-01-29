@@ -2,19 +2,20 @@
 import PermissionsListItem from './PermissionsListItem';
 import DisabledPermissionsListItem from './DisabledPermissionsListItem';
 import { observer } from 'mobx-react';
+import { FolderInfo } from './FolderInfo';
 
 export interface IProps {
   permissions: any[];
   removeItem: any;
   permissionChanged: any;
   fetching: boolean;
-  folderTitle: string;
+  folderInfo?: FolderInfo;
 }
 
 @observer
 class PermissionsList extends Component<IProps, any> {
   render() {
-    const { permissions, removeItem, permissionChanged, fetching, folderTitle } = this.props;
+    const { permissions, removeItem, permissionChanged, fetching, folderInfo } = this.props;
 
     return (
       <table className="filter-table gf-form-group">
@@ -35,7 +36,7 @@ class PermissionsList extends Component<IProps, any> {
                 itemIndex={idx}
                 removeItem={removeItem}
                 permissionChanged={permissionChanged}
-                folderTitle={folderTitle}
+                folderInfo={folderInfo}
               />
             );
           })}

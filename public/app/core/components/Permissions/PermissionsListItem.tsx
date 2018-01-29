@@ -7,7 +7,7 @@ const setClassNameHelper = inherited => {
   return inherited ? 'gf-form-disabled' : '';
 };
 
-export default observer(({ item, removeItem, permissionChanged, itemIndex, folderTitle }) => {
+export default observer(({ item, removeItem, permissionChanged, itemIndex, folderInfo }) => {
   const handleRemoveItem = evt => {
     evt.preventDefault();
     removeItem(itemIndex);
@@ -23,7 +23,16 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex, folde
         <i className={item.icon} />
         <span dangerouslySetInnerHTML={{ __html: item.nameHtml }} />
       </td>
-      <td>{item.inherited ? <em className="muted no-wrap">Inherited from folder {folderTitle} </em> : null}</td>
+      <td>
+        {item.inherited && folderInfo ? (
+          <em className="muted no-wrap">
+            Inherited from folder{' '}
+            <a className="text-link" href={`dashboards/folder/${folderInfo.id}/${folderInfo.slug}/permissions`}>
+              {folderInfo.title}
+            </a>{' '}
+          </em>
+        ) : null}
+      </td>
       <td className="query-keyword">Can</td>
       <td>
         <div className="gf-form">
@@ -41,7 +50,11 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex, folde
           <a className="btn btn-danger btn-small" onClick={handleRemoveItem}>
             <i className="fa fa-remove" />
           </a>
-        ) : null}
+        ) : (
+          <button className="btn btn-inverse btn-small">
+            <i className="fa fa-lock" />
+          </button>
+        )}
       </td>
     </tr>
   );

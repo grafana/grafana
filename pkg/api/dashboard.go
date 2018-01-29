@@ -99,6 +99,7 @@ func GetDashboard(c *middleware.Context) Response {
 			return ApiError(500, "Dashboard folder could not be read", err)
 		}
 		meta.FolderTitle = query.Result.Title
+		meta.FolderSlug = query.Result.Slug
 	}
 
 	// make sure db version is in sync with json model version
