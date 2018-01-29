@@ -135,6 +135,11 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, cmd, func(sc *scenarioContext) {
 				CallPostDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
+				result := sc.ToJson()
+				So(result.Get("status").MustString(), ShouldEqual, "success")
+				So(result.Get("id").MustInt64(), ShouldBeGreaterThan, 0)
+				So(result.Get("uid").MustString(), ShouldNotBeNil)
+				So(result.Get("slug").MustString(), ShouldNotBeNil)
 			})
 
 			Convey("When saving a dashboard folder in another folder", func() {
@@ -306,6 +311,11 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, cmd, func(sc *scenarioContext) {
 				CallPostDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
+				result := sc.ToJson()
+				So(result.Get("status").MustString(), ShouldEqual, "success")
+				So(result.Get("id").MustInt64(), ShouldBeGreaterThan, 0)
+				So(result.Get("uid").MustString(), ShouldNotBeNil)
+				So(result.Get("slug").MustString(), ShouldNotBeNil)
 			})
 		})
 
@@ -378,6 +388,11 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, cmd, func(sc *scenarioContext) {
 				CallPostDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
+				result := sc.ToJson()
+				So(result.Get("status").MustString(), ShouldEqual, "success")
+				So(result.Get("id").MustInt64(), ShouldBeGreaterThan, 0)
+				So(result.Get("uid").MustString(), ShouldNotBeNil)
+				So(result.Get("slug").MustString(), ShouldNotBeNil)
 			})
 		})
 
@@ -518,4 +533,11 @@ func postDashboardScenario(desc string, url string, routePattern string, role m.
 
 		fn(sc)
 	})
+}
+
+func (sc *scenarioContext) ToJson() *simplejson.Json {
+	var result *simplejson.Json
+	err := json.NewDecoder(sc.resp.Body).Decode(&result)
+	So(err, ShouldBeNil)
+	return result
 }
