@@ -7,7 +7,7 @@ import (
 
 	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/teris-io/shortid"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // Typed errors
@@ -63,7 +63,7 @@ type Dashboard struct {
 // NewDashboard creates a new dashboard
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
-	dash.Uid = DashboardUid()
+	dash.Uid, _ = util.GenerateShortUid()
 	dash.Data = simplejson.New()
 	dash.Data.Set("title", title)
 	dash.Title = title
@@ -113,16 +113,10 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 	if uid, err := dash.Data.Get("uid").String(); err == nil {
 		dash.Uid = uid
 	} else {
-		dash.Uid = DashboardUid()
+		dash.Uid, _ = util.GenerateShortUid()
 	}
 
 	return dash
-}
-
-func DashboardUid() string {
-	gen, _ := shortid.New(1, shortid.DefaultABC, 1)
-	uid, _ := gen.Generate()
-	return uid
 }
 
 // GetDashboardModel turns the command into the savable model
