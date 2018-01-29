@@ -17,15 +17,13 @@ func init() {
 }
 
 func CreatePlaylist(cmd *m.CreatePlaylistCommand) error {
-	var err error
-
 	playlist := m.Playlist{
 		Name:     cmd.Name,
 		Interval: cmd.Interval,
 		OrgId:    cmd.OrgId,
 	}
 
-	_, err = x.Insert(&playlist)
+	_, err := x.Insert(&playlist)
 
 	fmt.Printf("%v", playlist.Id)
 
@@ -47,7 +45,6 @@ func CreatePlaylist(cmd *m.CreatePlaylistCommand) error {
 }
 
 func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
-	var err error
 	playlist := m.Playlist{
 		Id:       cmd.Id,
 		OrgId:    cmd.OrgId,
@@ -68,7 +65,7 @@ func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
 		Interval: playlist.Interval,
 	}
 
-	_, err = x.Id(cmd.Id).Cols("id", "name", "interval").Update(&playlist)
+	_, err := x.ID(cmd.Id).Cols("id", "name", "interval").Update(&playlist)
 
 	if err != nil {
 		return err
@@ -104,7 +101,7 @@ func GetPlaylist(query *m.GetPlaylistByIdQuery) error {
 	}
 
 	playlist := m.Playlist{}
-	_, err := x.Id(query.Id).Get(&playlist)
+	_, err := x.ID(query.Id).Get(&playlist)
 
 	query.Result = &playlist
 

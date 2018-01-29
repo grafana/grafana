@@ -123,10 +123,9 @@ type serverHandlerTransport struct {
 	// when WriteStatus is called.
 	writes chan func()
 
-	mu sync.Mutex
-	// streamDone indicates whether WriteStatus has been called and writes channel
-	// has been closed.
-	streamDone bool
+	// block concurrent WriteStatus calls
+	// e.g. grpc/(*serverStream).SendMsg/RecvMsg
+	writeStatusMu sync.Mutex
 }
 
 func (ht *serverHandlerTransport) Close() error {
@@ -173,17 +172,13 @@ func (ht *serverHandlerTransport) do(fn func()) error {
 		case <-ht.closedCh:
 			return ErrConnClosing
 		}
-
 	}
 }
 
 func (ht *serverHandlerTransport) WriteStatus(s *Stream, st *status.Status) error {
-	ht.mu.Lock()
-	if ht.streamDone {
-		ht.mu.Unlock()
-		return nil
-	}
-	ht.mu.Unlock()
+	ht.writeStatusMu.Lock()
+	defer ht.writeStatusMu.Unlock()
+
 	err := ht.do(func() {
 		ht.writeCommonHeaders(s)
 
@@ -222,10 +217,11 @@ func (ht *serverHandlerTransport) WriteStatus(s *Stream, st *status.Status) erro
 			}
 		}
 	})
-	close(ht.writes)
-	ht.mu.Lock()
-	ht.streamDone = true
-	ht.mu.Unlock()
+
+	if err == nil { // transport has not been closed
+		ht.Close()
+		close(ht.writes)
+	}
 	return err
 }
 
@@ -288,12 +284,12 @@ func (ht *serverHandlerTransport) WriteHeader(s *Stream, md metadata.MD) error {
 func (ht *serverHandlerTransport) HandleStreams(startStream func(*Stream), traceCtx func(context.Context, string) context.Context) {
 	// With this transport type there will be exactly 1 stream: this HTTP request.
 
-	var ctx context.Context
+	ctx := contextFromRequest(ht.req)
 	var cancel context.CancelFunc
 	if ht.timeoutSet {
-		ctx, cancel = context.WithTimeout(context.Background(), ht.timeout)
+		ctx, cancel = context.WithTimeout(ctx, ht.timeout)
 	} else {
-		ctx, cancel = context.WithCancel(context.Background())
+		ctx, cancel = context.WithCancel(ctx)
 	}
 
 	// requestOver is closed when either the request's context is done

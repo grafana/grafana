@@ -28,15 +28,38 @@ type Section struct {
 	keys     map[string]*Key
 	keyList  []string
 	keysHash map[string]string
+
+	isRawSection bool
+	rawBody      string
 }
 
 func newSection(f *File, name string) *Section {
-	return &Section{f, "", name, make(map[string]*Key), make([]string, 0, 10), make(map[string]string)}
+	return &Section{
+		f:        f,
+		name:     name,
+		keys:     make(map[string]*Key),
+		keyList:  make([]string, 0, 10),
+		keysHash: make(map[string]string),
+	}
 }
 
 // Name returns name of Section.
 func (s *Section) Name() string {
 	return s.name
+}
+
+// Body returns rawBody of Section if the section was marked as unparseable.
+// It still follows the other rules of the INI format surrounding leading/trailing whitespace.
+func (s *Section) Body() string {
+	return strings.TrimSpace(s.rawBody)
+}
+
+// SetBody updates body content only if section is raw.
+func (s *Section) SetBody(body string) {
+	if !s.isRawSection {
+		return
+	}
+	s.rawBody = body
 }
 
 // NewKey creates a new key to given section.
@@ -53,18 +76,31 @@ func (s *Section) NewKey(name, val string) (*Key, error) {
 	}
 
 	if inSlice(name, s.keyList) {
-		s.keys[name].value = val
+		if s.f.options.AllowShadows {
+			if err := s.keys[name].addShadow(val); err != nil {
+				return nil, err
+			}
+		} else {
+			s.keys[name].value = val
+		}
 		return s.keys[name], nil
 	}
 
 	s.keyList = append(s.keyList, name)
-	s.keys[name] = &Key{
-		s:     s,
-		name:  name,
-		value: val,
-	}
+	s.keys[name] = newKey(s, name, val)
 	s.keysHash[name] = val
 	return s.keys[name], nil
+}
+
+// NewBooleanKey creates a new boolean type key to given section.
+func (s *Section) NewBooleanKey(name string) (*Key, error) {
+	key, err := s.NewKey(name, "true")
+	if err != nil {
+		return nil, err
+	}
+
+	key.isBooleanType = true
+	return key, nil
 }
 
 // GetKey returns key in section by given name.
@@ -108,6 +144,7 @@ func (s *Section) HasKey(name string) bool {
 }
 
 // Haskey is a backwards-compatible name for HasKey.
+// TODO: delete me in v2
 func (s *Section) Haskey(name string) bool {
 	return s.HasKey(name)
 }
@@ -203,4 +240,18 @@ func (s *Section) DeleteKey(name string) {
 			return
 		}
 	}
+}
+
+// ChildSections returns a list of child sections of current section.
+// For example, "[parent.child1]" and "[parent.child12]" are child sections
+// of section "[parent]".
+func (s *Section) ChildSections() []*Section {
+	prefix := s.name + "."
+	children := make([]*Section, 0, 3)
+	for _, name := range s.f.sectionList {
+		if strings.HasPrefix(name, prefix) {
+			children = append(children, s.f.sections[name])
+		}
+	}
+	return children
 }

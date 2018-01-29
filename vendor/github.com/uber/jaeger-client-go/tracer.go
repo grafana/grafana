@@ -1,22 +1,16 @@
-// Copyright (c) 2016 Uber Technologies, Inc.
-
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
+// Copyright (c) 2017 Uber Technologies, Inc.
 //
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package jaeger
 
@@ -50,9 +44,10 @@ type Tracer struct {
 	randomNumber func() uint64
 
 	options struct {
-		poolSpans           bool
-		gen128Bit           bool // whether to generate 128bit trace IDs
-		zipkinSharedRPCSpan bool
+		poolSpans            bool
+		gen128Bit            bool // whether to generate 128bit trace IDs
+		zipkinSharedRPCSpan  bool
+		highTraceIDGenerator func() uint64 // custom high trace ID generator
 		// more options to come
 	}
 	// pool for Span objects
@@ -140,6 +135,15 @@ func NewTracer(
 		t.logger.Error("Unable to determine this host's IP address: " + err.Error())
 	}
 
+	if t.options.gen128Bit {
+		if t.options.highTraceIDGenerator == nil {
+			t.options.highTraceIDGenerator = t.randomNumber
+		}
+	} else if t.options.highTraceIDGenerator != nil {
+		t.logger.Error("Overriding high trace ID generator but not generating " +
+			"128 bit trace IDs, consider enabling the \"Gen128Bit\" option")
+	}
+
 	return t, t
 }
 
@@ -211,7 +215,7 @@ func (t *Tracer) startSpanWithOptions(
 		newTrace = true
 		ctx.traceID.Low = t.randomID()
 		if t.options.gen128Bit {
-			ctx.traceID.High = t.randomID()
+			ctx.traceID.High = t.options.highTraceIDGenerator()
 		}
 		ctx.spanID = SpanID(ctx.traceID.Low)
 		ctx.parentID = 0
@@ -344,9 +348,8 @@ func (t *Tracer) startSpanInternal(
 		}
 	}
 	// emit metrics
-	t.metrics.SpansStarted.Inc(1)
 	if sp.context.IsSampled() {
-		t.metrics.SpansSampled.Inc(1)
+		t.metrics.SpansStartedSampled.Inc(1)
 		if newTrace {
 			// We cannot simply check for parentID==0 because in Zipkin model the
 			// server-side RPC span has the exact same trace/span/parent IDs as the
@@ -357,7 +360,7 @@ func (t *Tracer) startSpanInternal(
 			t.metrics.TracesJoinedSampled.Inc(1)
 		}
 	} else {
-		t.metrics.SpansNotSampled.Inc(1)
+		t.metrics.SpansStartedNotSampled.Inc(1)
 		if newTrace {
 			t.metrics.TracesStartedNotSampled.Inc(1)
 		} else if sp.firstInProcess {

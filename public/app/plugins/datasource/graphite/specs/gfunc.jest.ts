@@ -5,7 +5,8 @@ describe('when creating func instance from func names', function() {
     var func = gfunc.createFuncInstance('sumSeries');
     expect(func).toBeTruthy();
     expect(func.def.name).toEqual('sumSeries');
-    expect(func.def.params.length).toEqual(5);
+    expect(func.def.params.length).toEqual(1);
+    expect(func.def.params[0].multiple).toEqual(true);
     expect(func.def.defaultParams.length).toEqual(1);
   });
 
@@ -74,10 +75,10 @@ describe('when rendering func instance', function() {
   });
 });
 
-describe('when requesting function categories', function() {
-  it('should return function categories', function() {
-    var catIndex = gfunc.getCategories('1.0');
-    expect(catIndex.Special.length).toBeGreaterThan(8);
+describe('when requesting function definitions', function() {
+  it('should return function definitions', function() {
+    var funcIndex = gfunc.getFuncDefs('1.0');
+    expect(Object.keys(funcIndex).length).toBeGreaterThan(8);
   });
 });
 
