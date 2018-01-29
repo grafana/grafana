@@ -1,4 +1,5 @@
 ﻿import React, { Component } from 'react';
+import DescriptionPicker from 'app/core/components/Picker/DescriptionPicker';
 import { permissionOptions } from 'app/stores/PermissionsStore/PermissionsStore';
 
 export interface IProps {
@@ -18,16 +19,13 @@ export default class DisabledPermissionListItem extends Component<IProps, any> {
         <td />
         <td className="query-keyword">Can</td>
         <td>
-          <div className="gf-form-select-wrapper">
-            <select value={item.permission} className="gf-form-input gf-size-auto" disabled={true}>
-              {permissionOptions.map((option, idx) => {
-                return (
-                  <option key={idx} value={option.value}>
-                    {option.text}
-                  </option>
-                );
-              })}
-            </select>
+          <div className="gf-form">
+            <DescriptionPicker
+              optionsWithDesc={permissionOptions}
+              handlePicked={() => {}}
+              value={item.permission}
+              disabled={true}
+            />
           </div>
         </td>
         <td>

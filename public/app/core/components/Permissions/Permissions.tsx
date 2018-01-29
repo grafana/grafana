@@ -142,7 +142,7 @@ class Permissions extends Component<IProps, any> {
             </div>
           ) : null}
         </div>
-        <div className="empty-list-cta m-t-3">
+        {/* <div className="empty-list-cta m-t-3">
           <div className="grafana-info-box">
             <h5>What are Permissions?</h5>
             <p>
@@ -157,7 +157,7 @@ class Permissions extends Component<IProps, any> {
             </a>{' '}
             for more information.
           </div>
-        </div>
+        </div> */}
       </div>
     );
   }

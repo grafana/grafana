@@ -9,6 +9,9 @@ $select-noresults-color: $text-color;
 $select-input-bg: $input-bg;
 $select-input-border-color: $input-border-color;
 $select-menu-box-shadow: $menu-dropdown-shadow;
+$select-text-color: $text-color;
+$select-input-bg-disabled: $input-bg-disabled;
+$select-option-selected-bg: $dropdownLinkBackgroundActive;
 
 @import '../../../node_modules/react-select/scss/default.scss';
 
@@ -36,6 +39,10 @@ $select-menu-box-shadow: $menu-dropdown-shadow;
     color: $input-color-placeholder;
   }
 
+  .Select-menu-outer {
+    right: 0;
+  }
+
   > .Select-control {
     @include select-control();
     border-color: $dark-3;
@@ -51,15 +58,11 @@ $select-menu-box-shadow: $menu-dropdown-shadow;
 
     .Select-value {
       display: inline-block;
-      padding: 2px 4px;
-      font-size: $font-size-base * 0.846;
-      font-weight: bold;
-      line-height: 14px; // ensure proper line-height if floated
-      color: $white;
+      padding: $input-padding-y $input-padding-x;
+      font-size: $font-size-md;
+      line-height: $input-line-height;
       vertical-align: baseline;
       white-space: nowrap;
-      text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
-      background-color: $gray-1;
     }
   }
 

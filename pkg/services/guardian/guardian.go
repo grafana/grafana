@@ -83,18 +83,18 @@ func (g *DashboardGuardian) checkAcl(permission m.PermissionType, acl []*m.Dashb
 		}
 	}
 
-	// do we have group rules?
+	// do we have team rules?
 	if len(teamAclItems) == 0 {
 		return false, nil
 	}
 
-	// load groups
+	// load teams
 	teams, err := g.getTeams()
 	if err != nil {
 		return false, err
 	}
 
-	// evalute group rules
+	// evalute team rules
 	for _, p := range acl {
 		for _, ug := range teams {
 			if ug.Id == p.TeamId && p.Permission >= permission {
@@ -140,7 +140,7 @@ func (g *DashboardGuardian) CheckPermissionBeforeUpdate(permission m.PermissionT
 	return g.checkAcl(permission, acl)
 }
 
-// Returns dashboard acl
+// GetAcl returns dashboard acl
 func (g *DashboardGuardian) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
 	if g.acl != nil {
 		return g.acl, nil

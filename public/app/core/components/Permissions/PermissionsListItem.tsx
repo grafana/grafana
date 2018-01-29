@@ -1,5 +1,6 @@
 ﻿import React from 'react';
 import { observer } from 'mobx-react';
+import DescriptionPicker from 'app/core/components/Picker/DescriptionPicker';
 import { permissionOptions } from 'app/stores/PermissionsStore/PermissionsStore';
 
 const setClassNameHelper = inherited => {
@@ -12,12 +13,8 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex, folde
     removeItem(itemIndex);
   };
 
-  const handleChangePermission = evt => {
-    evt.preventDefault();
-    const value = evt.target.value;
-    const valueAsInt = parseInt(value, 10);
-    const newPermission = permissionOptions.find(opt => opt.value === valueAsInt);
-    permissionChanged(itemIndex, newPermission.value, newPermission.text);
+  const handleChangePermission = permissionOption => {
+    permissionChanged(itemIndex, permissionOption.value, permissionOption.label);
   };
 
   return (
@@ -29,21 +26,13 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex, folde
       <td>{item.inherited ? <em className="muted no-wrap">Inherited from folder {folderTitle} </em> : null}</td>
       <td className="query-keyword">Can</td>
       <td>
-        <div className="gf-form-select-wrapper">
-          <select
+        <div className="gf-form">
+          <DescriptionPicker
+            optionsWithDesc={permissionOptions}
+            handlePicked={handleChangePermission}
             value={item.permission}
-            className="gf-form-input gf-size-auto"
-            onChange={handleChangePermission}
             disabled={item.inherited}
-          >
-            {permissionOptions.map((option, idx) => {
-              return (
-                <option key={idx} value={option.value}>
-                  {option.text}
-                </option>
-              );
-            })}
-          </select>
+          />
         </div>
       </td>
       <td>

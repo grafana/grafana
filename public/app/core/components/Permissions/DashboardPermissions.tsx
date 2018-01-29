@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { observer } from 'mobx-react';
 import { store } from 'app/stores/store';
 import Permissions from 'app/core/components/Permissions/Permissions';
 
@@ -9,7 +8,6 @@ export interface IProps {
   backendSrv: any;
 }
 
-@observer
 class DashboardPermissions extends Component<IProps, any> {
   permissions: any;
 

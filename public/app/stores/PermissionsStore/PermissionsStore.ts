@@ -3,7 +3,15 @@ import { PermissionsStoreItem } from './PermissionsStoreItem';
 
 const duplicateError = 'This permission exists already.';
 
-export const permissionOptions = [{ value: 1, text: 'View' }, { value: 2, text: 'Edit' }, { value: 4, text: 'Admin' }];
+export const permissionOptions = [
+  { value: 1, label: 'View', description: 'Can view dashboards.' },
+  { value: 2, label: 'Edit', description: 'Can add, edit and delete dashboards.' },
+  {
+    value: 4,
+    label: 'Admin',
+    description: 'Can add/remove permissions and can add, edit and delete dashboards.',
+  },
+];
 
 export const aclTypes = [
   { value: 'Group', text: 'Team' },
