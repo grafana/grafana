@@ -186,8 +186,9 @@ type DeleteDashboardCommand struct {
 //
 
 type GetDashboardQuery struct {
-	Slug  string // required if no Id is specified
+	Slug  string // required if no Id or Uid is specified
 	Id    int64  // optional if slug is set
+	Uid   string // optional if slug is set
 	OrgId int64
 
 	Result *Dashboard

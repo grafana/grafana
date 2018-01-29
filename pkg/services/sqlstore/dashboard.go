@@ -165,7 +165,7 @@ func setHasAcl(sess *DBSession, dash *m.Dashboard) error {
 }
 
 func GetDashboard(query *m.GetDashboardQuery) error {
-	dashboard := m.Dashboard{Slug: query.Slug, OrgId: query.OrgId, Id: query.Id}
+	dashboard := m.Dashboard{Slug: query.Slug, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
 	has, err := x.Get(&dashboard)
 
 	if err != nil {

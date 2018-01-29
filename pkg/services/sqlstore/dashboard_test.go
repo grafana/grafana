@@ -30,15 +30,33 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(savedDash.Id, ShouldNotEqual, 0)
 				So(savedDash.IsFolder, ShouldBeFalse)
 				So(savedDash.FolderId, ShouldBeGreaterThan, 0)
+				So(len(savedDash.Uid), ShouldBeGreaterThan, 0)
 
 				So(savedFolder.Title, ShouldEqual, "1 test dash folder")
 				So(savedFolder.Slug, ShouldEqual, "1-test-dash-folder")
 				So(savedFolder.Id, ShouldNotEqual, 0)
 				So(savedFolder.IsFolder, ShouldBeTrue)
 				So(savedFolder.FolderId, ShouldEqual, 0)
+				So(len(savedFolder.Uid), ShouldBeGreaterThan, 0)
 			})
 
-			Convey("Should be able to get dashboard", func() {
+			Convey("Should be able to get dashboard by id", func() {
+				query := m.GetDashboardQuery{
+					Id:    savedDash.Id,
+					OrgId: 1,
+				}
+
+				err := GetDashboard(&query)
+				So(err, ShouldBeNil)
+
+				So(query.Result.Title, ShouldEqual, "test dash 23")
+				So(query.Result.Slug, ShouldEqual, "test-dash-23")
+				So(query.Result.Id, ShouldEqual, savedDash.Id)
+				So(query.Result.Uid, ShouldEqual, savedDash.Uid)
+				So(query.Result.IsFolder, ShouldBeFalse)
+			})
+
+			Convey("Should be able to get dashboard by slug", func() {
 				query := m.GetDashboardQuery{
 					Slug:  "test-dash-23",
 					OrgId: 1,
@@ -49,6 +67,24 @@ func TestDashboardDataAccess(t *testing.T) {
 
 				So(query.Result.Title, ShouldEqual, "test dash 23")
 				So(query.Result.Slug, ShouldEqual, "test-dash-23")
+				So(query.Result.Id, ShouldEqual, savedDash.Id)
+				So(query.Result.Uid, ShouldEqual, savedDash.Uid)
+				So(query.Result.IsFolder, ShouldBeFalse)
+			})
+
+			Convey("Should be able to get dashboard by uid", func() {
+				query := m.GetDashboardQuery{
+					Uid:   savedDash.Uid,
+					OrgId: 1,
+				}
+
+				err := GetDashboard(&query)
+				So(err, ShouldBeNil)
+
+				So(query.Result.Title, ShouldEqual, "test dash 23")
+				So(query.Result.Slug, ShouldEqual, "test-dash-23")
+				So(query.Result.Id, ShouldEqual, savedDash.Id)
+				So(query.Result.Uid, ShouldEqual, savedDash.Uid)
 				So(query.Result.IsFolder, ShouldBeFalse)
 			})
 
