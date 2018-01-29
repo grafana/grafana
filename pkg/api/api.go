@@ -242,6 +242,8 @@ func (hs *HttpServer) registerRoutes() {
 
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute RouteRegister) {
+			dashboardRoute.Get("/uid/:uid", wrap(GetDashboard))
+
 			dashboardRoute.Get("/db/:slug", wrap(GetDashboard))
 			dashboardRoute.Delete("/db/:slug", reqEditorRole, wrap(DeleteDashboard))
 

@@ -44,7 +44,7 @@ func dashboardGuardianResponse(err error) Response {
 }
 
 func GetDashboard(c *middleware.Context) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0)
+	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
 	if rsp != nil {
 		return rsp
 	}
@@ -124,8 +124,15 @@ func getUserLogin(userId int64) string {
 	}
 }
 
-func getDashboardHelper(orgId int64, slug string, id int64) (*m.Dashboard, Response) {
-	query := m.GetDashboardQuery{Slug: slug, Id: id, OrgId: orgId}
+func getDashboardHelper(orgId int64, slug string, id int64, uid string) (*m.Dashboard, Response) {
+	var query m.GetDashboardQuery
+
+	if len(uid) > 0 {
+		query = m.GetDashboardQuery{Uid: uid, Id: id, OrgId: orgId}
+	} else {
+		query = m.GetDashboardQuery{Slug: slug, Id: id, OrgId: orgId}
+	}
+
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, ApiError(404, "Dashboard not found", err)
 	}
@@ -133,7 +140,7 @@ func getDashboardHelper(orgId int64, slug string, id int64) (*m.Dashboard, Respo
 }
 
 func DeleteDashboard(c *middleware.Context) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0)
+	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, "")
 	if rsp != nil {
 		return rsp
 	}
@@ -393,7 +400,7 @@ func CalculateDashboardDiff(c *middleware.Context, apiOptions dtos.CalculateDiff
 
 // RestoreDashboardVersion restores a dashboard to the given version.
 func RestoreDashboardVersion(c *middleware.Context, apiCmd dtos.RestoreDashboardVersionCommand) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":dashboardId"))
+	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":dashboardId"), "")
 	if rsp != nil {
 		return rsp
 	}
