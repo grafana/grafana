@@ -4,6 +4,7 @@ import { Manager, Popper, Arrow } from 'react-popper';
 interface IwithTooltipProps {
   placement?: string;
   content: string | ((props: any) => JSX.Element);
+  className?: string;
 }
 
 export default function withTooltip(WrappedComponent) {
@@ -39,10 +40,10 @@ export default function withTooltip(WrappedComponent) {
     }
 
     render() {
-      const { content } = this.props;
+      const { content, className } = this.props;
 
       return (
-        <Manager className="popper__manager">
+        <Manager className={`popper__manager ${className || ''}`}>
           <WrappedComponent {...this.props} tooltipSetState={this.setState} />
           {this.state.show ? (
             <Popper placement={this.state.placement} className="popper">
