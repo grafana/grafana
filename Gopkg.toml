@@ -193,3 +193,7 @@ ignored = [
   non-go = true
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  name = "github.com/mattermost/mattermost-server"
+  version = "4.6.0"

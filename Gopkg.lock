@@ -20,6 +20,12 @@
   revision = "7677a1d7c1137cd3dd5ba7a076d0c898a1ef4520"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/alecthomas/log4go"
+  packages = ["."]
+  revision = "d146e6b86faab5f7e4d135cc63b749d74bf0d4a6"
+
+[[projects]]
   name = "github.com/apache/thrift"
   packages = ["lib/go/thrift"]
   revision = "b2a4d4ae21c789b689dd162deb819665567f481c"
@@ -297,6 +303,12 @@
   revision = "61fe37aa2ee24fabcdbe5c4ac1d4ac566f88f345"
 
 [[projects]]
+  name = "github.com/mattermost/mattermost-server"
+  packages = ["model"]
+  revision = "58defb7424773c75718f0173f4ace702cffa4f0e"
+  version = "v4.6.0"
+
+[[projects]]
   name = "github.com/mattn/go-colorable"
   packages = ["."]
   revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
@@ -327,6 +339,17 @@
   revision = "a61a99592b77c9ba629d254a693acffaeb4b7e28"
 
 [[projects]]
+  name = "github.com/nicksnyder/go-i18n"
+  packages = [
+    "i18n",
+    "i18n/bundle",
+    "i18n/language",
+    "i18n/translation"
+  ]
+  revision = "0dc1626d56435e9d605a29875701721c54bc9bbd"
+  version = "v1.10.0"
+
+[[projects]]
   name = "github.com/opentracing/opentracing-go"
   packages = [
     ".",
@@ -341,6 +364,18 @@
   packages = ["."]
   revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
   version = "v2.1.0"
+
+[[projects]]
+  name = "github.com/pborman/uuid"
+  packages = ["."]
+  revision = "e790cca94e6cc75c7064b1332e63811d4aae1a53"
+  version = "v1.1"
+
+[[projects]]
+  name = "github.com/pelletier/go-toml"
+  packages = ["."]
+  revision = "acdc4509485b587f5e675510c4f2c63e90ff68a8"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/prometheus/client_golang"
@@ -456,7 +491,11 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["pbkdf2"]
+  packages = [
+    "bcrypt",
+    "blowfish",
+    "pbkdf2"
+  ]
   revision = "3d37316aaa6bd9929127ac9a527abf408178ea7b"
 
 [[projects]]
@@ -625,6 +664,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "98e8d8f5fb21fe448aeb3db41c9fed85fe3bf80400e553211cf39a9c05720e01"
+  inputs-digest = "a50d4a3e1e2ac96b0af71778c9faf28886bba73d4e003e144d6cadb6e0694486"
   solver-name = "gps-cdcl"
   solver-version = 1
