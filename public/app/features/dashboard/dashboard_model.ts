@@ -232,7 +232,7 @@ export class DashboardModel {
     });
   }
 
-  cleanUpRepeats() {
+  cleanUpRepeats(withoutRows) {
     if (this.snapshot || this.templating.list.length === 0) {
       return;
     }
@@ -242,12 +242,19 @@ export class DashboardModel {
 
     // cleanup scopedVars
     for (let panel of this.panels) {
-      delete panel.scopedVars;
+      if (!(withoutRows && (panel.type === 'row' || panel.repeat))) {
+        delete panel.scopedVars;
+      }
     }
 
     for (let i = 0; i < this.panels.length; i++) {
       let panel = this.panels[i];
-      if ((!panel.repeat || panel.repeatedByRow) && panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
+      if (
+        (!panel.repeat || (panel.repeatedByRow && !withoutRows)) &&
+        panel.repeatPanelId &&
+        panel.repeatIteration !== this.iteration &&
+        !(withoutRows && panel.type === 'row')
+      ) {
         panelsToRemove.push(panel);
       }
     }
@@ -259,24 +266,71 @@ export class DashboardModel {
     this.events.emit('repeats-processed');
   }
 
-  processRepeats() {
+  processRepeats(withoutRows) {
     if (this.snapshot || this.templating.list.length === 0) {
       return;
     }
 
-    this.cleanUpRepeats();
+    // Saving the state of collapsed rows before cleanup
+    let collapsed = {};
+    if (!withoutRows) {
+      this.saveRestoreCollapsed(collapsed);
+    }
+
+    this.cleanUpRepeats(withoutRows);
 
     this.iteration = (this.iteration || new Date().getTime()) + 1;
 
     for (let i = 0; i < this.panels.length; i++) {
       let panel = this.panels[i];
-      if (panel.repeat) {
+      if (panel.repeat && !(withoutRows && panel.type === 'row')) {
         this.repeatPanel(panel, i);
       }
     }
 
+    // Restoring the previous state of collapsed recreated rows
+    if (Object.keys(collapsed).length > 0) {
+      setTimeout(() => {
+        this.saveRestoreCollapsed(collapsed);
+      });
+    }
+
     this.sortPanelsByGridPos();
     this.events.emit('repeats-processed');
+  }
+
+  saveRestoreCollapsed(collapsed) {
+    let saveMode = Object.keys(collapsed).length === 0;
+    for (let i = 0; i < this.panels.length; i++) {
+      let panel = this.panels[i];
+      if (panel.type !== 'row' || !panel.scopedVars) {
+        continue;
+      }
+
+      let key = Object.keys(panel.scopedVars)[0];
+      let variable = panel.scopedVars[key];
+      if (!variable.selected) {
+        continue;
+      }
+
+      let id = panel.repeatPanelId ? panel.repeatPanelId : panel.id;
+      if (saveMode) {
+        if (!(id in collapsed)) {
+          collapsed[id] = {};
+        }
+        if (!(key in collapsed[id])) {
+          collapsed[id][key] = {};
+        }
+        collapsed[id][key][variable.value] = panel.collapsed;
+      } else if (
+        id in collapsed &&
+        key in collapsed[id] &&
+        variable.value in collapsed[id][key] &&
+        collapsed[id][key][variable.value] !== panel.collapsed
+      ) {
+        this.toggleRow(panel);
+      }
+    }
   }
 
   getPanelRepeatClone(sourcePanel, valueIndex, sourcePanelIndex) {
@@ -376,6 +430,14 @@ export class DashboardModel {
           xPos = 0;
           yPos += copy.gridPos.h;
         }
+      }
+    }
+
+    // Update gridPos for panels below
+    if (selectedOptions.length > 1) {
+      let panelBelowIndex = panelIndex + selectedOptions.length;
+      for (let i = panelBelowIndex; i < this.panels.length; i++) {
+        this.panels[i].gridPos.y += yPos;
       }
     }
   }
@@ -578,6 +640,9 @@ export class DashboardModel {
         // needed to know home much panels below should be pushed down
         let yMax = row.gridPos.y;
 
+        // check need reorder repeated panels
+        let needRepeats = false;
+
         for (let panel of row.panels) {
           // make sure y is adjusted (in case row moved while collapsed)
           panel.gridPos.y -= yDiff;
@@ -586,6 +651,7 @@ export class DashboardModel {
           // update insert post and y max
           insertPos += 1;
           yMax = Math.max(yMax, panel.gridPos.y + panel.gridPos.h);
+          needRepeats = needRepeats || panel.repeat;
         }
 
         const pushDownAmount = yMax - row.gridPos.y;
@@ -596,6 +662,10 @@ export class DashboardModel {
         }
 
         row.panels = [];
+
+        if (needRepeats) {
+          this.processRepeats(true);
+        }
       }
 
       // sort panels
