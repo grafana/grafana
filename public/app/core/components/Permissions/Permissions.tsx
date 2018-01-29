@@ -4,7 +4,7 @@ import { observer } from 'mobx-react';
 import UserPicker, { User } from 'app/core/components/Picker/UserPicker';
 import TeamPicker, { Team } from 'app/core/components/Picker/TeamPicker';
 import { aclTypes } from 'app/stores/PermissionsStore/PermissionsStore';
-import PermissionsInfo from './PermissionsInfo';
+
 export interface DashboardAcl {
   id?: number;
   dashboardId?: number;
