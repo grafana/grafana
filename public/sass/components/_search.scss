@@ -38,13 +38,6 @@
     background-color: $navbarButtonBackground;
     flex-grow: 10;
   }
-
-  // .tag-filter {
-  //   .Select-control {
-  //     width: 300px;
-  //     background-color: $navbarBackground;
-  //   }
-  // }
 }
 
 .search-field-spacer {
@@ -76,7 +69,6 @@
   padding-top: 16px;
   display: none;
   flex-direction: column;
-  align-items: flex-start;
 }
 
 .search-filter-box {
@@ -265,6 +257,7 @@
     justify-content: space-between;
     max-width: 700px;
     height: 260px;
+    align-items: flex-start;
   }
 
   .search-dropdown__col_1 {
