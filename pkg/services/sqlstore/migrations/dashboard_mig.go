@@ -155,4 +155,9 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Add column uid in dashboard", NewAddColumnMigration(dashboardV2, &Column{
 		Name: "uid", Type: DB_NVarchar, Length: 12, Nullable: true,
 	}))
+
+	mg.AddMigration("Set uid column values", new(RawSqlMigration).
+		Sqlite("UPDATE dashboard SET uid=printf('%09d',id) WHERE uid IS NULL;").
+		Postgres("UPDATE dashboard SET uid=lpad('' || id,9,'0') WHERE uid IS NULL;").
+		Mysql("UPDATE dashboard SET uid=lpad(id,9,'0') WHERE uid IS NULL;"))
 }
