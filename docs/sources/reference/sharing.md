@@ -39,7 +39,7 @@ Click a panel title to open the panel menu, then click share in the panel menu t
 
 ### Direct Link Rendered Image
 
-You also get a link to service side rendered PNG of the panel. Useful if you want to share an image of the panel. Please note that for OSX and Windows, you will need to ensure that a `phantomjs` binary is available under `vendor/phantomjs/phantomjs`. For Linux, a `phantomjs` binary is included - however, you should ensure that any requisite libraries (e.g. libfontconfig) are available.
+You also get a link to service side rendered PNG of the panel. Useful if you want to share an image of the panel. Please note that for OSX and Windows, you will need to ensure that a `phantomjs` binary is available under `tools/phantomjs/phantomjs`. For Linux, a `phantomjs` binary is included - however, you should ensure that any requisite libraries (e.g. libfontconfig) are available.
 
 Example of a link to a server-side rendered PNG:
 

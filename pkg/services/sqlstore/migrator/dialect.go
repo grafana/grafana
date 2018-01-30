@@ -19,6 +19,7 @@ type Dialect interface {
 	LikeStr() string
 	Default(col *Column) string
 	BooleanStr(bool) string
+	DateTimeFunc(string) string
 
 	CreateIndexSql(tableName string, index *Index) string
 	CreateTableSql(table *Table) string
@@ -76,6 +77,10 @@ func (b *BaseDialect) EqStr() string {
 
 func (b *BaseDialect) Default(col *Column) string {
 	return col.Default
+}
+
+func (db *BaseDialect) DateTimeFunc(value string) string {
+	return value
 }
 
 func (b *BaseDialect) CreateTableSql(table *Table) string {

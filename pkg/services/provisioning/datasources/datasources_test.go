@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	logger                          log.Logger = log.New("fake.logger")
+	logger                          log.Logger = log.New("fake.log")
 	oneDatasourcesConfig            string     = ""
 	twoDatasourcesConfig            string     = "./test-configs/two-datasources"
 	twoDatasourcesConfigPurgeOthers string     = "./test-configs/insert-two-delete-two"
@@ -115,12 +115,23 @@ func TestDatasourceAsConfig(t *testing.T) {
 		})
 
 		Convey("broken yaml should return error", func() {
-			_, err := configReader{}.readConfig(brokenYaml)
+			reader := &configReader{}
+			_, err := reader.readConfig(brokenYaml)
 			So(err, ShouldNotBeNil)
 		})
 
+		Convey("skip invalid directory", func() {
+			cfgProvifer := &configReader{log: log.New("test logger")}
+			cfg, err := cfgProvifer.readConfig("./invalid-directory")
+			if err != nil {
+				t.Fatalf("readConfig return an error %v", err)
+			}
+
+			So(len(cfg), ShouldEqual, 0)
+		})
+
 		Convey("can read all properties", func() {
-			cfgProvifer := configReader{}
+			cfgProvifer := &configReader{log: log.New("test logger")}
 			cfg, err := cfgProvifer.readConfig(allProperties)
 			if err != nil {
 				t.Fatalf("readConfig return an error %v", err)

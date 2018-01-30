@@ -176,6 +176,7 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 					folder.has_acl = ` + dialect.BooleanStr(false) + `
 				) AND
 				da.dashboard_id = -1
+	ORDER BY 1 ASC
 	`
 
 	query.Result = make([]*m.DashboardAclInfoDTO, 0)

@@ -181,6 +181,22 @@ export default class GraphiteQuery {
     var nestedSeriesRefRegex = /\#([A-Z])/g;
     var targetWithNestedQueries = target.target;
 
+    // Use ref count to track circular references
+    function countTargetRefs(targetsByRefId, refId) {
+      let refCount = 0;
+      _.each(targetsByRefId, (t, id) => {
+        if (id !== refId) {
+          let match = nestedSeriesRefRegex.exec(t.target);
+          let count = match && match.length ? match.length - 1 : 0;
+          refCount += count;
+        }
+      });
+      targetsByRefId[refId].refCount = refCount;
+    }
+    _.each(targetsByRefId, (t, id) => {
+      countTargetRefs(targetsByRefId, id);
+    });
+
     // Keep interpolating until there are no query references
     // The reason for the loop is that the referenced query might contain another reference to another query
     while (targetWithNestedQueries.match(nestedSeriesRefRegex)) {
@@ -191,7 +207,11 @@ export default class GraphiteQuery {
         }
 
         // no circular references
-        delete targetsByRefId[g1];
+        if (t.refCount === 0) {
+          delete targetsByRefId[g1];
+        }
+        t.refCount--;
+
         return t.target;
       });
 

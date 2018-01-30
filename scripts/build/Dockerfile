@@ -21,7 +21,7 @@ RUN gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A170311380
 RUN curl --silent --location https://rpm.nodesource.com/setup_6.x | bash - && \
     yum install -y nodejs --nogpgcheck
 
-ENV GOLANG_VERSION 1.9.2
+ENV GOLANG_VERSION 1.9.3
 
 RUN wget https://dl.yarnpkg.com/rpm/yarn.repo -O /etc/yum.repos.d/yarn.repo && \
     yum install -y yarn --nogpgcheck && \
