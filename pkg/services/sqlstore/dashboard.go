@@ -25,7 +25,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 		dash := cmd.GetDashboardModel()
 
 		// try get existing dashboard
-		var existing, sameTitle m.Dashboard
+		var existing m.Dashboard
 
 		if dash.Id > 0 {
 			dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
@@ -51,19 +51,20 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			}
 		}
 
-		sameTitleExists, err := sess.Where("org_id=? AND slug=?", dash.OrgId, dash.Slug).Get(&sameTitle)
+		var sameUid m.Dashboard
+		sameUidExists, err := sess.Where("org_id=? AND uid=?", dash.OrgId, dash.Uid).Get(&sameUid)
 		if err != nil {
 			return err
 		}
 
-		if sameTitleExists {
-			// another dashboard with same name
-			if dash.Id != sameTitle.Id {
+		if sameUidExists {
+			// another dashboard with same uid
+			if dash.Id != sameUid.Id {
 				if cmd.Overwrite {
-					dash.Id = sameTitle.Id
-					dash.Version = sameTitle.Version
+					dash.Id = sameUid.Id
+					dash.Version = sameUid.Version
 				} else {
-					return m.ErrDashboardWithSameNameExists
+					return m.ErrDashboardWithSameUIDExists
 				}
 			}
 		}
@@ -89,7 +90,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 				dash.Updated = cmd.UpdatedAt
 			}
 
-			affectedRows, err = sess.MustCols("folder_id", "has_acl").Id(dash.Id).Update(dash)
+			affectedRows, err = sess.MustCols("folder_id", "has_acl").ID(dash.Id).Update(dash)
 		}
 
 		if err != nil {

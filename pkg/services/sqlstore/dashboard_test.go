@@ -207,6 +207,22 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err := SaveDashboard(&cmd)
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Should not be able to save dashboard with same uid", func() {
+				cmd := m.SaveDashboardCommand{
+					OrgId: 1,
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						"id":    nil,
+						"title": "test dash 23",
+						"uid":   "dsfalkjngailuedt",
+					}),
+				}
+
+				err := SaveDashboard(&cmd)
+				So(err, ShouldBeNil)
+				err = SaveDashboard(&cmd)
 				So(err, ShouldNotBeNil)
 			})
 

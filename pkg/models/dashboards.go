@@ -16,7 +16,7 @@ import (
 var (
 	ErrDashboardNotFound                 = errors.New("Dashboard not found")
 	ErrDashboardSnapshotNotFound         = errors.New("Dashboard snapshot not found")
-	ErrDashboardWithSameNameExists       = errors.New("A dashboard with the same name already exists")
+	ErrDashboardWithSameUIDExists        = errors.New("A dashboard with the same uid already exists")
 	ErrDashboardVersionMismatch          = errors.New("The dashboard has been changed by someone else")
 	ErrDashboardTitleEmpty               = errors.New("Dashboard title cannot be empty")
 	ErrDashboardFolderCannotHaveParent   = errors.New("A Dashboard Folder cannot be added to another folder")
@@ -116,6 +116,7 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 		dash.Uid = uid
 	} else {
 		dash.Uid = util.GenerateShortUid()
+		dash.Data.Set("uid", dash.Uid)
 	}
 
 	return dash
