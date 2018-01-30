@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/go-xorm/xorm"
@@ -145,6 +146,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(len(query.Result), ShouldEqual, 1)
 				hit := query.Result[0]
 				So(hit.Type, ShouldEqual, search.DashHitFolder)
+				So(hit.Url, ShouldEqual, fmt.Sprintf("/f/%s/%s", savedFolder.Uid, savedFolder.Slug))
 			})
 
 			Convey("Should be able to search for a dashboard folder's children", func() {
@@ -160,6 +162,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(len(query.Result), ShouldEqual, 2)
 				hit := query.Result[0]
 				So(hit.Id, ShouldEqual, savedDash.Id)
+				So(hit.Url, ShouldEqual, fmt.Sprintf("/d/%s/%s", savedDash.Uid, savedDash.Slug))
 			})
 
 			Convey("Should be able to search for dashboard by dashboard ids", func() {

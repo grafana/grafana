@@ -2,11 +2,13 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -154,6 +156,16 @@ func (dash *Dashboard) UpdateSlug() {
 
 func SlugifyTitle(title string) string {
 	return slug.Make(strings.ToLower(title))
+}
+
+// GetDashboardUrl return the html url for a dashboard
+func GetDashboardUrl(uid string, slug string) string {
+	return fmt.Sprintf("%s/d/%s/%s", setting.AppSubUrl, uid, slug)
+}
+
+// GetFolderUrl return the html url for a folder
+func GetFolderUrl(folderUid string, slug string) string {
+	return fmt.Sprintf("%s/f/%v/%s", setting.AppSubUrl, folderUid, slug)
 }
 
 //
