@@ -101,6 +101,12 @@ func GetDashboard(c *middleware.Context) Response {
 		meta.FolderTitle = query.Result.Title
 	}
 
+	if dash.IsFolder {
+		meta.Url = m.GetFolderUrl(dash.Uid, dash.Slug)
+	} else {
+		meta.Url = m.GetDashboardUrl(dash.Uid, dash.Slug)
+	}
+
 	// make sure db version is in sync with json model version
 	dash.Data.Set("version", dash.Version)
 

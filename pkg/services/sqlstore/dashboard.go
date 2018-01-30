@@ -182,6 +182,7 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 
 type DashboardSearchProjection struct {
 	Id          int64
+	Uid         string
 	Title       string
 	Slug        string
 	Term        string
@@ -257,10 +258,17 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 	for _, item := range res {
 		hit, exists := hits[item.Id]
 		if !exists {
+			var url string
+			if item.IsFolder {
+				url = m.GetFolderUrl(item.Uid, item.Slug)
+			} else {
+				url = m.GetDashboardUrl(item.Uid, item.Slug)
+			}
 			hit = &search.Hit{
 				Id:          item.Id,
 				Title:       item.Title,
 				Uri:         "db/" + item.Slug,
+				Url:         url,
 				Slug:        item.Slug,
 				Type:        getHitType(item),
 				FolderId:    item.FolderId,
@@ -268,6 +276,7 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 				FolderSlug:  item.FolderSlug,
 				Tags:        []string{},
 			}
+
 			query.Result = append(query.Result, hit)
 			hits[item.Id] = hit
 		}
