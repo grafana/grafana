@@ -4,6 +4,57 @@ import { expect } from 'test/lib/common';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
+describe('given dashboard with panel repeat', function() {
+  var dashboard;
+
+  beforeEach(function() {
+    let dashboardJSON = {
+      panels: [
+        { id: 1, type: 'row', gridPos: { x: 0, y: 0, h: 1, w: 24 } },
+        { id: 2, repeat: 'apps', repeatDirection: 'h', gridPos: { x: 0, y: 1, h: 2, w: 8 } },
+      ],
+      templating: {
+        list: [
+          {
+            name: 'apps',
+            current: {
+              text: 'se1, se2, se3',
+              value: ['se1', 'se2', 'se3'],
+            },
+            options: [
+              { text: 'se1', value: 'se1', selected: true },
+              { text: 'se2', value: 'se2', selected: true },
+              { text: 'se3', value: 'se3', selected: true },
+              { text: 'se4', value: 'se4', selected: false },
+            ],
+          },
+        ],
+      },
+    };
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats();
+  });
+
+  it('should repeat panels when row is collapsed', function() {
+    expect(dashboard.panels.length).toBe(4);
+
+    // toggle row
+    dashboard.toggleRow(dashboard.panels[0]);
+    expect(dashboard.panels.length).toBe(1);
+
+    // change variable
+    dashboard.templating.list[0].options[2].selected = false;
+    dashboard.templating.list[0].current = {
+      text: 'se1, se2',
+      value: ['se1', 'se2'],
+    };
+
+    // toggle row back
+    dashboard.toggleRow(dashboard.panels[0]);
+    expect(dashboard.panels.length).toBe(3);
+  });
+});
+
 describe('given dashboard with panel repeat in horizontal direction', function() {
   var dashboard;
 
