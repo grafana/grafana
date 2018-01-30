@@ -13,7 +13,7 @@ weight = 7
 
 Grafana provides numerous ways to manage the time ranges of the data being visualized, both at the Dashboard-level and the Panel-level.
 
-<img class="no-shadow" src="/img/docs/v50/timepicker.png">
+<img class="no-shadow" src="/img/docs/v50/timepicker.png" width="700px">
 
 In the top right, you have the master Dashboard time picker (it's in between the 'Zoom out' and the 'Refresh' links).
 
