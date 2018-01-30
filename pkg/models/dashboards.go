@@ -65,7 +65,7 @@ type Dashboard struct {
 // NewDashboard creates a new dashboard
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
-	dash.Uid, _ = util.GenerateShortUid()
+	dash.Uid = util.GenerateShortUid()
 	dash.Data = simplejson.New()
 	dash.Data.Set("title", title)
 	dash.Title = title
@@ -115,7 +115,7 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 	if uid, err := dash.Data.Get("uid").String(); err == nil {
 		dash.Uid = uid
 	} else {
-		dash.Uid, _ = util.GenerateShortUid()
+		dash.Uid = util.GenerateShortUid()
 	}
 
 	return dash
