@@ -5,7 +5,7 @@ export class LoadDashboardCtrl {
   constructor($scope, $routeParams, dashboardLoaderSrv, backendSrv, $location) {
     $scope.appEvent('dashboard-fetch-start');
 
-    if (!$routeParams.slug) {
+    if (!$routeParams.uid && !$routeParams.slug) {
       backendSrv.get('/api/dashboards/home').then(function(homeDash) {
         if (homeDash.redirectUri) {
           $location.path('dashboard/' + homeDash.redirectUri);
@@ -18,7 +18,17 @@ export class LoadDashboardCtrl {
       return;
     }
 
-    dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
+    // if no uid, redirect to new route based on slug
+    if (!$routeParams.uid) {
+      backendSrv.get(`/api/dashboards/db/${$routeParams.slug}`).then(res => {
+        if (res) {
+          $location.path(res.meta.url);
+        }
+      });
+      return;
+    }
+
+    dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then(function(result) {
       if ($routeParams.keepRows) {
         result.meta.keepRows = true;
       }
