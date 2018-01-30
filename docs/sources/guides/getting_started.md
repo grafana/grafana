@@ -8,6 +8,7 @@ aliases = ["/guides/gettingstarted"]
 name = "Getting Started"
 identifier = "getting_started_guide"
 parent = "guides"
+weight = 1
 +++
 
 # Getting started
