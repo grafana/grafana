@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
 func ValidateOrgAlert(c *middleware.Context) {
@@ -155,24 +156,6 @@ func GetAlert(c *middleware.Context) Response {
 	return Json(200, &query.Result)
 }
 
-// DEL /api/alerts/:id
-func DelAlert(c *middleware.Context) Response {
-	alertId := c.ParamsInt64(":alertId")
-
-	if alertId == 0 {
-		return ApiError(401, "Failed to parse alertid", nil)
-	}
-
-	cmd := models.DeleteAlertCommand{AlertId: alertId}
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to delete alert", err)
-	}
-
-	var resp = map[string]interface{}{"alertId": alertId}
-	return Json(200, resp)
-}
-
 func GetAlertNotifiers(c *middleware.Context) Response {
 	return Json(200, alerting.GetNotifiers())
 }
@@ -267,6 +250,22 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 //POST /api/alerts/:alertId/pause
 func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	alertId := c.ParamsInt64("alertId")
+
+	query := models.GetAlertByIdQuery{Id: alertId}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "Get Alert failed", err)
+	}
+
+	guardian := guardian.NewDashboardGuardian(query.Result.DashboardId, c.OrgId, c.SignedInUser)
+	if canEdit, err := guardian.CanEdit(); err != nil || !canEdit {
+		if err != nil {
+			return ApiError(500, "Error while checking permissions for Alert", err)
+		}
+
+		return ApiError(403, "Access denied to this dashboard and alert", nil)
+	}
+
 	cmd := models.PauseAlertCommand{
 		OrgId:    c.OrgId,
 		AlertIds: []int64{alertId},
