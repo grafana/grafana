@@ -7,6 +7,7 @@ import (
 
 	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // Typed errors
@@ -39,6 +40,7 @@ var (
 // Dashboard model
 type Dashboard struct {
 	Id       int64
+	Uid      string
 	Slug     string
 	OrgId    int64
 	GnetId   int64
@@ -61,6 +63,7 @@ type Dashboard struct {
 // NewDashboard creates a new dashboard
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
+	dash.Uid, _ = util.GenerateShortUid()
 	dash.Data = simplejson.New()
 	dash.Data.Set("title", title)
 	dash.Title = title
@@ -105,6 +108,12 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 
 	if gnetId, err := dash.Data.Get("gnetId").Float64(); err == nil {
 		dash.GnetId = int64(gnetId)
+	}
+
+	if uid, err := dash.Data.Get("uid").String(); err == nil {
+		dash.Uid = uid
+	} else {
+		dash.Uid, _ = util.GenerateShortUid()
 	}
 
 	return dash
