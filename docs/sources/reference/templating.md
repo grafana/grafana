@@ -14,7 +14,6 @@ Variables allows for more interactive and dynamic dashboards. Instead of hard-co
 and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
 the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
 
-<!--<img class="no-shadow" src="/img/docs/v50/variables_dashboard.png">-->
 {{< docs-imagebox img="/img/docs/v50/variables_dashboard.png" >}}
 
 ## What is a variable?
@@ -44,7 +43,6 @@ is the set of values you can choose from.
 
 ## Adding a variable
 
-<!--<img class="no-shadow" src="/img/docs/v50/variables_var_list.png">-->
 {{< docs-imagebox img="/img/docs/v50/variables_var_list.png" max-width="800px" >}}
 
 You add variables via Dashboard cogs menu > Templating. This opens up a list of variables and a `New` button to create a new variable.
@@ -135,7 +133,6 @@ Option | Description
 *Tags query* | Data source query that should return a list of tags
 *Tag values query* | Data source query that should return a list of values for a specified tag key. Use `$tag` in the query to refer the currently selected tag.
 
-<!--![](/img/docs/v50/variable_dropdown_tags.png)-->
 {{< docs-imagebox img="/img/docs/v50/variable_dropdown_tags.png" max-width="300px" >}}
 
 ### Interval variables

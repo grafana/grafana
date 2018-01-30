@@ -18,12 +18,14 @@ Grafana v5.0 is here and with it comes a new dashboard engine and the new featur
 
 The new grid system for the dashboards are more flexible than ever and are no longer dependent on rows. The panels can be organized in any way you want simply by dragging and dropping and stretching and contracting.
 
-The rows are still there but have taken on a new role.
+The rows are still there but have taken on a new role. You now use rows to group and hide your panels. You still organize your panels as you want in rows.
 
 ## UX improvements
 
 Grafana v5.0 brings big changes to UX/UI.
 There is now a dashboard settings page.
+
+{{< docs-imagebox img="/img/docs/v50/v5_dashboard_settings.png" max-width="700px" >}}
 
 ## Dashboard folders
 
