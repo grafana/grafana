@@ -178,6 +178,98 @@ describe('given dashboard with panel repeat in vertical direction', function() {
   });
 });
 
+describe('given dashboard with row repeat and panel repeat in horizontal direction', () => {
+  let dashboard, dashboardJSON;
+
+  beforeEach(() => {
+    dashboardJSON = {
+      panels: [
+        {
+          id: 1,
+          type: 'row',
+          repeat: 'region',
+          gridPos: { x: 0, y: 0, h: 1, w: 24 },
+        },
+        {
+          id: 2,
+          type: 'graph',
+          repeat: 'app',
+          gridPos: { x: 0, y: 1, h: 2, w: 6 },
+        },
+      ],
+      templating: {
+        list: [
+          {
+            name: 'region',
+            current: {
+              text: 'reg1, reg2',
+              value: ['reg1', 'reg2'],
+            },
+            options: [{ text: 'reg1', value: 'reg1', selected: true }, { text: 'reg2', value: 'reg2', selected: true }],
+          },
+          {
+            name: 'app',
+            current: {
+              text: 'se1, se2, se3, se4, se5, se6',
+              value: ['se1', 'se2', 'se3', 'se4', 'se5', 'se6'],
+            },
+            options: [
+              { text: 'se1', value: 'se1', selected: true },
+              { text: 'se2', value: 'se2', selected: true },
+              { text: 'se3', value: 'se3', selected: true },
+              { text: 'se4', value: 'se4', selected: true },
+              { text: 'se5', value: 'se5', selected: true },
+              { text: 'se6', value: 'se6', selected: true },
+            ],
+          },
+        ],
+      },
+    };
+    dashboard = new DashboardModel(dashboardJSON);
+    dashboard.processRepeats(false);
+  });
+
+  it('should panels in self row', () => {
+    const panel_types = _.map(dashboard.panels, 'type');
+    expect(panel_types).toEqual([
+      'row',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'row',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+      'graph',
+    ]);
+  });
+
+  it('should be placed in their places', function() {
+    expect(dashboard.panels[0].gridPos).toMatchObject({ x: 0, y: 0, h: 1, w: 24 });
+
+    expect(dashboard.panels[1].gridPos).toMatchObject({ x: 0, y: 1, h: 2, w: 6 });
+    expect(dashboard.panels[2].gridPos).toMatchObject({ x: 6, y: 1, h: 2, w: 6 });
+    expect(dashboard.panels[3].gridPos).toMatchObject({ x: 12, y: 1, h: 2, w: 6 });
+    expect(dashboard.panels[4].gridPos).toMatchObject({ x: 18, y: 1, h: 2, w: 6 });
+    expect(dashboard.panels[5].gridPos).toMatchObject({ x: 0, y: 3, h: 2, w: 6 });
+    expect(dashboard.panels[6].gridPos).toMatchObject({ x: 6, y: 3, h: 2, w: 6 });
+
+    expect(dashboard.panels[7].gridPos).toMatchObject({ x: 0, y: 5, h: 1, w: 24 });
+
+    expect(dashboard.panels[8].gridPos).toMatchObject({ x: 0, y: 6, h: 2, w: 6 });
+    expect(dashboard.panels[9].gridPos).toMatchObject({ x: 6, y: 6, h: 2, w: 6 });
+    expect(dashboard.panels[10].gridPos).toMatchObject({ x: 12, y: 6, h: 2, w: 6 });
+    expect(dashboard.panels[11].gridPos).toMatchObject({ x: 18, y: 6, h: 2, w: 6 });
+    expect(dashboard.panels[12].gridPos).toMatchObject({ x: 0, y: 8, h: 2, w: 6 });
+    expect(dashboard.panels[13].gridPos).toMatchObject({ x: 6, y: 8, h: 2, w: 6 });
+  });
+});
+
 describe('given dashboard with row repeat', function() {
   let dashboard, dashboardJSON;
 

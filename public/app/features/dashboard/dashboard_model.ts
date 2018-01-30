@@ -342,6 +342,7 @@ export class DashboardModel {
     let minWidth = panel.minSpan || 6;
     let xPos = 0;
     let yPos = panel.gridPos.y;
+    let yOffset = 0;
 
     for (let index = 0; index < selectedOptions.length; index++) {
       let option = selectedOptions[index];
@@ -354,13 +355,8 @@ export class DashboardModel {
       if (panel.repeatDirection === REPEAT_DIR_VERTICAL) {
         copy.gridPos.y = yPos;
         yPos += copy.gridPos.h;
-
-        // Update gridPos for panels below
-        let panelBelowIndex = panelIndex + index + 1;
-        for (let i = panelBelowIndex; i < this.panels.length; i++) {
-          if (this.panels[i].gridPos.y < yPos) {
-            this.panels[i].gridPos.y += copy.gridPos.h;
-          }
+        if (index > 0) {
+          yOffset += copy.gridPos.h;
         }
       } else {
         // set width based on how many are selected
@@ -375,7 +371,16 @@ export class DashboardModel {
         if (xPos + copy.gridPos.w > GRID_COLUMN_COUNT) {
           xPos = 0;
           yPos += copy.gridPos.h;
+          yOffset += copy.gridPos.h;
         }
+      }
+    }
+
+    // Update gridPos for panels below
+    if (yOffset > 0) {
+      let panelBelowIndex = panelIndex + selectedOptions.length;
+      for (let i = panelBelowIndex; i < this.panels.length; i++) {
+        this.panels[i].gridPos.y += yOffset;
       }
     }
   }
