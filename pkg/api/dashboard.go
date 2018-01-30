@@ -119,21 +119,6 @@ func GetDashboard(c *middleware.Context) Response {
 	return Json(200, dto)
 }
 
-func GetDashboardUidBySlug(c *middleware.Context) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, "")
-	if rsp != nil {
-		return rsp
-	}
-
-	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
-	if canView, err := guardian.CanView(); err != nil || !canView {
-		fmt.Printf("%v", err)
-		return dashboardGuardianResponse(err)
-	}
-
-	return Json(200, util.DynMap{"uid": dash.Uid})
-}
-
 func getUserLogin(userId int64) string {
 	query := m.GetUserByIdQuery{Id: userId}
 	err := bus.Dispatch(&query)
