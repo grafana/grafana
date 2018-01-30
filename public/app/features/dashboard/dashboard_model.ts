@@ -12,6 +12,7 @@ import { DashboardMigrator } from './dashboard_migration';
 
 export class DashboardModel {
   id: any;
+  uid: any;
   title: any;
   autoUpdate: any;
   description: any;
@@ -56,6 +57,7 @@ export class DashboardModel {
 
     this.events = new Emitter();
     this.id = data.id || null;
+    this.uid = data.uid || null;
     this.revision = data.revision;
     this.title = data.title || 'No Title';
     this.autoUpdate = data.autoUpdate;
