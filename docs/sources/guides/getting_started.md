@@ -8,6 +8,7 @@ aliases = ["/guides/gettingstarted"]
 name = "Getting Started"
 identifier = "getting_started_guide"
 parent = "guides"
+weight = 1
 +++
 
 # Getting started
@@ -24,7 +25,7 @@ Read the [Basic Concepts](/guides/basic_concepts) document to get a crash course
 
 ### Top header
 
-Let's start with creating a new Dashboard. You can find the new Dashboard link on the right side of the Dashboard picker. You now have a blank Dashboard. 
+Let's start with creating a new Dashboard. You can find the new Dashboard link on the right side of the Dashboard picker. You now have a blank Dashboard.
 
 <img class="no-shadow" src="/img/docs/v45/top_nav_annotated.png">
 
