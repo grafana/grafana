@@ -41,18 +41,12 @@ class DescriptionOption extends Component<IProps, any> {
         onMouseEnter={this.handleMouseEnter}
         onMouseMove={this.handleMouseMove}
         title={option.title}
-        className={`user-picker-option__button btn btn-link ${className} width-19`}
-        style={{
-          whiteSpace: 'normal',
-          // height: '55px',
-        }}
+        className={`description-picker-option__button btn btn-link ${className} width-19`}
       >
         <div className="gf-form">{children}</div>
         <div className="gf-form">
           <div className="muted width-17">{option.description}</div>
-          {className.indexOf('is-selected') > -1 && (
-            <i style={{ paddingLeft: '2px' }} className="fa fa-check" aria-hidden="true" />
-          )}
+          {className.indexOf('is-selected') > -1 && <i className="fa fa-check" aria-hidden="true" />}
         </div>
       </button>
     );

@@ -130,20 +130,16 @@ const prepareItem = (item, dashboardId: number, isFolder: boolean) => {
   item.sortRank = 0;
   if (item.userId > 0) {
     item.icon = 'fa fa-fw fa-user';
-    // TODO: Check what sce.trustAsHtml did
-    //   item.nameHtml = this.$sce.trustAsHtml(item.userLogin);
     item.nameHtml = item.userLogin;
     item.sortName = item.userLogin;
     item.sortRank = 10;
   } else if (item.teamId > 0) {
     item.icon = 'fa fa-fw fa-users';
-    //   item.nameHtml = this.$sce.trustAsHtml(item.team);
     item.nameHtml = item.team;
     item.sortName = item.team;
     item.sortRank = 20;
   } else if (item.role) {
     item.icon = 'fa fa-fw fa-street-view';
-    //   item.nameHtml = this.$sce.trustAsHtml(`Everyone with <span class="query-keyword">${item.role}</span> Role`);
     item.nameHtml = `Everyone with <span class="query-keyword">${item.role}</span> Role`;
     item.sortName = item.role;
     item.sortRank = 30;
