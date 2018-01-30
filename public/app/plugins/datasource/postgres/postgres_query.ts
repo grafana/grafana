@@ -28,6 +28,10 @@ export default class PostgresQuery {
     this.updateProjection();
   }
 
+  quoteIdentifier(field) {
+    return '"' + field + '"';
+  }
+
   updateProjection() {
     this.selectModels = _.map(this.target.select, function(parts: any) {
       return _.map(parts, queryPart.create);
@@ -183,7 +187,7 @@ export default class PostgresQuery {
     }
 
     var query = 'SELECT ';
-    query += target.timeColumn + ' AS time,';
+    query += this.quoteIdentifier(target.timeColumn) + ' AS time,';
 
     var i, y;
     for (i = 0; i < this.selectModels.length; i++) {
@@ -209,7 +213,7 @@ export default class PostgresQuery {
       query += '(' + conditions.join(' ') + ') AND ';
     }
 
-    query += '$__timeFilter(time)';
+    query += '$__timeFilter(' + this.quoteIdentifier(target.timeColumn) + ')';
 
     var groupBySection = '';
     for (i = 0; i < this.groupByParts.length; i++) {
