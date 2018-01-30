@@ -99,6 +99,27 @@ func GetAlerts(c *middleware.Context) Response {
 		}
 	}
 
+	permissionsQuery := models.GetDashboardPermissionsForUserQuery{
+		DashboardIds: dashboardIds,
+		OrgId:        c.OrgId,
+		UserId:       c.SignedInUser.UserId,
+		OrgRole:      c.SignedInUser.OrgRole,
+	}
+
+	if len(alertDTOs) > 0 {
+		if err := bus.Dispatch(&permissionsQuery); err != nil {
+			return ApiError(500, "List alerts failed", err)
+		}
+	}
+
+	for _, alert := range alertDTOs {
+		for _, perm := range permissionsQuery.Result {
+			if alert.DashboardId == perm.DashboardId {
+				alert.CanEdit = perm.Permission > 1
+			}
+		}
+	}
+
 	return Json(200, alertDTOs)
 }
 
