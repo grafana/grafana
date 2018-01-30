@@ -355,33 +355,16 @@ function graphDirective(timeSrv, popoverSrv, contextSrv) {
       function sortSeries(series, panel) {
         var sortBy = panel.legend.sort;
         var sortOrder = panel.legend.sortDesc;
-        var haveSortBy = sortBy !== null || sortBy !== undefined;
-        var haveSortOrder = sortOrder !== null || sortOrder !== undefined;
+        var haveSortBy = sortBy !== null && sortBy !== undefined;
+        var haveSortOrder = sortOrder !== null && sortOrder !== undefined;
         var shouldSortBy = panel.stack && haveSortBy && haveSortOrder;
         var sortDesc = panel.legend.sortDesc === true ? -1 : 1;
 
-        series.sort((x, y) => {
-          if (x.zindex > y.zindex) {
-            return 1;
-          }
-
-          if (x.zindex < y.zindex) {
-            return -1;
-          }
-
-          if (shouldSortBy) {
-            if (x.stats[sortBy] > y.stats[sortBy]) {
-              return 1 * sortDesc;
-            }
-            if (x.stats[sortBy] < y.stats[sortBy]) {
-              return -1 * sortDesc;
-            }
-          }
-
-          return 0;
-        });
-
-        return series;
+        if (shouldSortBy) {
+          return _.sortBy(series, s => s.stats[sortBy] * sortDesc);
+        } else {
+          return _.sortBy(series, s => s.zindex);
+        }
       }
 
       function translateFillOption(fill) {

@@ -69,10 +69,13 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 
 	for _, r := range pbres.Results {
 		qr := &tsdb.QueryResult{
-			RefId:       r.RefId,
-			Series:      []*tsdb.TimeSeries{},
-			Error:       errors.New(r.Error),
-			ErrorString: r.Error,
+			RefId:  r.RefId,
+			Series: []*tsdb.TimeSeries{},
+		}
+
+		if r.Error != "" {
+			qr.Error = errors.New(r.Error)
+			qr.ErrorString = r.Error
 		}
 
 		for _, s := range r.GetSeries() {
