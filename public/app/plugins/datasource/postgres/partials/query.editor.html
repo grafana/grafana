@@ -1,12 +1,12 @@
 <query-editor-row query-ctrl="ctrl" has-text-edit-mode="true">
 
   <div ng-if="ctrl.target.rawQuery">
-  	<div class="gf-form-inline">
-  		<div class="gf-form gf-form--grow">
-  			<code-editor content="ctrl.target.rawSql" datasource="ctrl.datasource" on-change="ctrl.panelCtrl.refresh()" data-mode="sql">
-  			</code-editor>
-  		</div>
-  	</div>
+    <div class="gf-form-inline">
+      <div class="gf-form gf-form--grow">
+        <code-editor content="ctrl.target.rawSql" datasource="ctrl.datasource" on-change="ctrl.panelCtrl.refresh()" data-mode="sql">
+        </code-editor>
+      </div>
+    </div>
   </div>
 
   <div ng-if="!ctrl.target.rawQuery">
@@ -15,42 +15,76 @@
         <label class="gf-form-label query-keyword width-7">FROM</label>
         <metric-segment segment="ctrl.schemaSegment" get-options="ctrl.getSchemaSegments()" on-change="ctrl.schemaChanged()"></metric-segment>
         <metric-segment segment="ctrl.tableSegment" get-options="ctrl.getTableSegments()" on-change="ctrl.tableChanged()"></metric-segment>
+        <label class="gf-form-label query-keyword width-5">WHERE</label>
       </div>
     </div>
+
+    <div class="gf-form-inline" ng-repeat="selectParts in ctrl.queryModel.selectModels">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-7">
+          <span ng-show="$index === 0">SELECT</span>&nbsp;
+        </label>
+      </div>
+
+      <div class="gf-form" ng-repeat="part in selectParts">
+        <query-part-editor class="gf-form-label query-part" part="part" handle-event="ctrl.handleSelectPartEvent(selectParts, part, $event)">
+        </query-part-editor>
+      </div>
+
+      <div class="gf-form">
+        <label class="dropdown"
+                dropdown-typeahead="ctrl.selectMenu"
+                dropdown-typeahead-on-select="ctrl.addSelectPart(selectParts, $item, $subItem)">
+        </label>
+      </div>
+
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+    </div>
+
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label query-keyword width-7">Time column</label>
+        <metric-segment segment="ctrl.timeColumnSegment" get-options="ctrl.getTimeColumnSegments()" on-change="ctrl.timeChanged()"></metric-segment>
+        <label class="gf-form-label query-keyword width-8">Metric column</label>
+      </div>
+    </div>
+
   </div>
 
   <div class="gf-form-inline">
     <div class="gf-form">
-			<label class="gf-form-label query-keyword">Format as</label>
-			<div class="gf-form-select-wrapper">
-				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()"></select>
-			</div>
-		</div>
-		<div class="gf-form">
+      <label class="gf-form-label query-keyword">Format as</label>
+      <div class="gf-form-select-wrapper">
+        <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()"></select>
+      </div>
+    </div>
+    <div class="gf-form">
       <label class="gf-form-label query-keyword" ng-click="ctrl.showHelp = !ctrl.showHelp">
         Show Help
         <i class="fa fa-caret-down" ng-show="ctrl.showHelp"></i>
         <i class="fa fa-caret-right" ng-hide="ctrl.showHelp"></i>
       </label>
-		</div>
-		<div class="gf-form" ng-show="ctrl.lastQueryMeta">
+    </div>
+    <div class="gf-form" ng-show="ctrl.lastQueryMeta">
       <label class="gf-form-label query-keyword" ng-click="ctrl.showLastQuerySQL = !ctrl.showLastQuerySQL">
         Generated SQL
         <i class="fa fa-caret-down" ng-show="ctrl.showLastQuerySQL"></i>
         <i class="fa fa-caret-right" ng-hide="ctrl.showLastQuerySQL"></i>
       </label>
-		</div>
-		<div class="gf-form gf-form--grow">
-			<div class="gf-form-label gf-form-label--grow"></div>
-		</div>
-	</div>
+    </div>
+    <div class="gf-form gf-form--grow">
+      <div class="gf-form-label gf-form-label--grow"></div>
+    </div>
+  </div>
 
-	<div class="gf-form" ng-show="ctrl.showLastQuerySQL">
-		<pre class="gf-form-pre">{{ctrl.lastQueryMeta.sql}}</pre>
-	</div>
+  <div class="gf-form" ng-show="ctrl.showLastQuerySQL">
+    <pre class="gf-form-pre">{{ctrl.lastQueryMeta.sql}}</pre>
+  </div>
 
-	<div class="gf-form"  ng-show="ctrl.showHelp">
-		<pre class="gf-form-pre alert alert-info">Time series:
+  <div class="gf-form"  ng-show="ctrl.showHelp">
+    <pre class="gf-form-pre alert alert-info">Time series:
 - return column named <i>time</i> (UTC in seconds or timestamp)
 - return column(s) with numeric datatype as values
 - (Optional: return column named <i>metric</i> to represent the series name. If no column named metric is found the column name of the value column is used as series name)
@@ -78,13 +112,13 @@ Or build your own conditionals using these macros which just return the values:
 - $__timeTo() -&gt;  to_timestamp(1492750877)
 - $__unixEpochFrom() -&gt;  1492750877
 - $__unixEpochTo() -&gt;  1492750877
-		</pre>
-	</div>
+    </pre>
+  </div>
 
-	</div>
+  </div>
 
-	<div class="gf-form" ng-show="ctrl.lastQueryError">
-		<pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
-	</div>
+  <div class="gf-form" ng-show="ctrl.lastQueryError">
+    <pre class="gf-form-pre alert alert-error">{{ctrl.lastQueryError}}</pre>
+  </div>
 
 </query-editor-row>
