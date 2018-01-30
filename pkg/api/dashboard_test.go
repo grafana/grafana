@@ -2,12 +2,8 @@ package api
 
 import (
 	"encoding/json"
-	"path/filepath"
 	"testing"
 
-	macaron "gopkg.in/macaron.v1"
-
-	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -488,20 +484,7 @@ func postDashboardScenario(desc string, url string, routePattern string, role m.
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
-		sc := &scenarioContext{
-			url: url,
-		}
-		viewsPath, _ := filepath.Abs("../../public/views")
-
-		sc.m = macaron.New()
-		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
-			Directory: viewsPath,
-			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-		}))
-
-		sc.m.Use(middleware.GetContextHandler())
-		sc.m.Use(middleware.Sessioner(&session.Options{}))
-
+		sc := setupScenarioContext(url)
 		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID

@@ -1,16 +1,13 @@
 package api
 
 import (
-	"path/filepath"
 	"testing"
 
-	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	macaron "gopkg.in/macaron.v1"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -202,20 +199,7 @@ func postAnnotationScenario(desc string, url string, routePattern string, role m
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
-		sc := &scenarioContext{
-			url: url,
-		}
-		viewsPath, _ := filepath.Abs("../../public/views")
-
-		sc.m = macaron.New()
-		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
-			Directory: viewsPath,
-			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-		}))
-
-		sc.m.Use(middleware.GetContextHandler())
-		sc.m.Use(middleware.Sessioner(&session.Options{}))
-
+		sc := setupScenarioContext(url)
 		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
@@ -238,20 +222,7 @@ func putAnnotationScenario(desc string, url string, routePattern string, role m.
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
-		sc := &scenarioContext{
-			url: url,
-		}
-		viewsPath, _ := filepath.Abs("../../public/views")
-
-		sc.m = macaron.New()
-		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
-			Directory: viewsPath,
-			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
-		}))
-
-		sc.m.Use(middleware.GetContextHandler())
-		sc.m.Use(middleware.Sessioner(&session.Options{}))
-
+		sc := setupScenarioContext(url)
 		sc.defaultHandler = wrap(func(c *middleware.Context) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
