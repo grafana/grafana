@@ -9,6 +9,7 @@ export interface IProps {
   isLoading: boolean;
   toggleLoading: any;
   handlePicked: (user) => void;
+  value?: string;
 }
 
 export interface User {
@@ -53,8 +54,8 @@ class UserPicker extends Component<IProps, any> {
 
   render() {
     const AsyncComponent = this.state.creatable ? Select.AsyncCreatable : Select.Async;
-    const { isLoading, handlePicked } = this.props;
-
+    const { isLoading, handlePicked, value } = this.props;
+    console.log('value', value);
     return (
       <div className="user-picker">
         <AsyncComponent
@@ -70,6 +71,8 @@ class UserPicker extends Component<IProps, any> {
           className="width-8 gf-form-input gf-form-input--form-dropdown"
           optionComponent={PickerOption}
           placeholder="Choose"
+          value={value}
+          autosize={true}
         />
       </div>
     );

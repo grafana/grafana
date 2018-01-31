@@ -392,3 +392,9 @@ select.gf-form-input ~ .gf-form-help-icon {
   top: 10px;
   color: $text-muted;
 }
+
+.cta-form {
+  padding: 1rem;
+  background-color: $dark-2;
+  margin-bottom: 1rem;
+}

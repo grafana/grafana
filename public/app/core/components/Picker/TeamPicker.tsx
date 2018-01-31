@@ -9,6 +9,7 @@ export interface IProps {
   isLoading: boolean;
   toggleLoading: any;
   handlePicked: (user) => void;
+  value?: string;
 }
 
 export interface Team {
@@ -54,7 +55,7 @@ class TeamPicker extends Component<IProps, any> {
 
   render() {
     const AsyncComponent = this.state.creatable ? Select.AsyncCreatable : Select.Async;
-    const { isLoading, handlePicked } = this.props;
+    const { isLoading, handlePicked, value } = this.props;
 
     return (
       <div className="user-picker">
@@ -70,6 +71,7 @@ class TeamPicker extends Component<IProps, any> {
           className="width-8 gf-form-input gf-form-input--form-dropdown"
           optionComponent={PickerOption}
           placeholder="Choose"
+          value={value}
         />
       </div>
     );

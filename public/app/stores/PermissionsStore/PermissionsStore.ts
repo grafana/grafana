@@ -13,14 +13,61 @@ export const permissionOptions = [
   },
 ];
 
-export const aclTypes = [
-  { value: 'Group', text: 'Team' },
-  { value: 'User', text: 'User' },
-  { value: 'Viewer', text: 'Everyone With Viewer Role' },
-  { value: 'Editor', text: 'Everyone With Editor Role' },
-];
+export const aclTypeValues = {
+  GROUP: { value: 'Group', text: 'Team' },
+  USER: { value: 'User', text: 'User' },
+  VIEWER: { value: 'Viewer', text: 'Everyone With Viewer Role' },
+  EDITOR: { value: 'Editor', text: 'Everyone With Editor Role' },
+};
+
+export const aclTypes = Object.keys(aclTypeValues).map(item => aclTypeValues[item]);
 
 const defaultNewType = aclTypes[0].value;
+
+const NewPermissionsItem = types
+  .model('NewPermissionsItem', {
+    type: types.optional(
+      types.enumeration(Object.keys(aclTypeValues).map(item => aclTypeValues[item].value)),
+      defaultNewType
+    ),
+    userId: types.maybe(types.number),
+    userLogin: types.maybe(types.string),
+    teamId: types.maybe(types.number),
+    team: types.maybe(types.string),
+    permission: types.optional(types.number, 1),
+  })
+  .views(self => ({
+    isValid: () => {
+      switch (self.type) {
+        case aclTypeValues.GROUP.value:
+          return self.teamId && self.team;
+        case aclTypeValues.USER.value:
+          return self.userId && self.userLogin;
+        case aclTypeValues.VIEWER.value:
+        case aclTypeValues.EDITOR.value:
+          return true;
+        default:
+          return false;
+      }
+    },
+  }))
+  .actions(self => ({
+    setUser(userId: number, userLogin: string) {
+      self.userId = userId;
+      self.userLogin = userLogin;
+      self.teamId = null;
+      self.team = null;
+    },
+    setTeam(teamId: number, team: string) {
+      self.userId = null;
+      self.userLogin = null;
+      self.teamId = teamId;
+      self.team = team;
+    },
+    setPermission(permission: number) {
+      self.permission = permission;
+    },
+  }));
 
 export const PermissionsStore = types
   .model('PermissionsStore', {
@@ -31,6 +78,8 @@ export const PermissionsStore = types
     error: types.maybe(types.string),
     originalItems: types.optional(types.array(PermissionsStoreItem), []),
     newType: types.optional(types.string, defaultNewType),
+    newItem: types.maybe(NewPermissionsItem),
+    isAddPermissionsVisible: types.optional(types.boolean, false),
   })
   .views(self => ({
     isValid: item => {
@@ -46,48 +95,91 @@ export const PermissionsStore = types
       return true;
     },
   }))
-  .actions(self => ({
-    load: flow(function* load(dashboardId: number, isFolder: boolean) {
-      const backendSrv = getEnv(self).backendSrv;
-      self.fetching = true;
-      self.isFolder = isFolder;
-      self.dashboardId = dashboardId;
-      const res = yield backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`);
-      const items = prepareServerResponse(res, dashboardId, isFolder);
-      self.items = items;
-      self.originalItems = items;
-      self.fetching = false;
-    }),
-    addStoreItem: flow(function* addStoreItem(item) {
+  .actions(self => {
+    const resetNewType = () => {
       self.error = null;
-      if (!self.isValid(item)) {
-        return undefined;
-      }
+      self.newItem = NewPermissionsItem.create();
+    };
 
-      self.items.push(prepareItem(item, self.dashboardId, self.isFolder));
-      return updateItems(self);
-    }),
-    removeStoreItem: flow(function* removeStoreItem(idx: number) {
-      self.error = null;
-      self.items.splice(idx, 1);
-      return updateItems(self);
-    }),
-    updatePermissionOnIndex: flow(function* updatePermissionOnIndex(
-      idx: number,
-      permission: number,
-      permissionName: string
-    ) {
-      self.error = null;
-      self.items[idx].updatePermission(permission, permissionName);
-      return updateItems(self);
-    }),
-    setNewType(newType: string) {
-      self.newType = newType;
-    },
-    resetNewType() {
-      self.newType = defaultNewType;
-    },
-  }));
+    return {
+      load: flow(function* load(dashboardId: number, isFolder: boolean) {
+        const backendSrv = getEnv(self).backendSrv;
+        self.fetching = true;
+        self.isFolder = isFolder;
+        self.dashboardId = dashboardId;
+        const res = yield backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`);
+        const items = prepareServerResponse(res, dashboardId, isFolder);
+        self.items = items;
+        self.originalItems = items;
+        self.fetching = false;
+      }),
+      addStoreItem: flow(function* addStoreItem() {
+        self.error = null;
+        let item = {
+          type: self.newItem.type,
+          permission: self.newItem.permission,
+          team: undefined,
+          teamId: undefined,
+          userLogin: undefined,
+          userId: undefined,
+          role: undefined,
+        };
+        switch (self.newItem.type) {
+          case aclTypeValues.GROUP.value:
+            item.team = self.newItem.team;
+            item.teamId = self.newItem.teamId;
+            break;
+          case aclTypeValues.USER.value:
+            item.userLogin = self.newItem.userLogin;
+            item.userId = self.newItem.userId;
+            break;
+          case aclTypeValues.VIEWER.value:
+          case aclTypeValues.EDITOR.value:
+            item.role = self.newItem.type;
+            break;
+          default:
+            throw Error('Unknown type: ' + self.newItem.type);
+        }
+
+        if (!self.isValid(item)) {
+          throw Error('New item not valid');
+        }
+
+        self.items.push(prepareItem(item, self.dashboardId, self.isFolder));
+        resetNewType();
+        return updateItems(self);
+      }),
+      removeStoreItem: flow(function* removeStoreItem(idx: number) {
+        self.error = null;
+        self.items.splice(idx, 1);
+        return updateItems(self);
+      }),
+      updatePermissionOnIndex: flow(function* updatePermissionOnIndex(
+        idx: number,
+        permission: number,
+        permissionName: string
+      ) {
+        self.error = null;
+        self.items[idx].updatePermission(permission, permissionName);
+        return updateItems(self);
+      }),
+      setNewType(newType: string) {
+        self.newItem = NewPermissionsItem.create({ type: newType });
+      },
+      resetNewType() {
+        resetNewType();
+      },
+      toggleAddPermissions() {
+        self.isAddPermissionsVisible = !self.isAddPermissionsVisible;
+      },
+      showAddPermissions() {
+        self.isAddPermissionsVisible = true;
+      },
+      hideAddPermissions() {
+        self.isAddPermissionsVisible = false;
+      },
+    };
+  });
 
 const updateItems = self => {
   self.error = null;
