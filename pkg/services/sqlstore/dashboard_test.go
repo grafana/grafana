@@ -276,7 +276,6 @@ func TestDashboardDataAccess(t *testing.T) {
 				cmd := m.SaveDashboardCommand{
 					OrgId: 1,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						//"id": 1,
 						"uid":     "randomHash",
 						"title":   "folderId",
 						"style":   "light",
@@ -303,6 +302,39 @@ func TestDashboardDataAccess(t *testing.T) {
 				}
 
 				err = SaveDashboard(&cmd)
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Should not be able to update using just uid", func() {
+				cmd := m.SaveDashboardCommand{
+					OrgId: 1,
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						"uid":     savedDash.Uid,
+						"title":   "folderId",
+						"version": savedDash.Version,
+						"tags":    []interface{}{},
+					}),
+					FolderId: savedDash.FolderId,
+				}
+
+				err := SaveDashboard(&cmd)
+				So(err, ShouldEqual, m.ErrDashboardWithSameUIDExists)
+			})
+
+			Convey("Should be able to update using just uid with overwrite", func() {
+				cmd := m.SaveDashboardCommand{
+					OrgId: 1,
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						"uid":     savedDash.Uid,
+						"title":   "folderId",
+						"version": savedDash.Version,
+						"tags":    []interface{}{},
+					}),
+					FolderId: savedDash.FolderId,
+					Overwrite: true,
+				}
+
+				err := SaveDashboard(&cmd)
 				So(err, ShouldBeNil)
 			})
 
