@@ -74,17 +74,17 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'CreateFolderCtrl',
       controllerAs: 'ctrl',
     })
-    .when('/dashboards/folder/:folderId/:slug/permissions', {
+    .when('/dashboards/f/:uid/:slug/permissions', {
       templateUrl: 'public/app/features/dashboard/partials/folder_permissions.html',
       controller: 'FolderPermissionsCtrl',
       controllerAs: 'ctrl',
     })
-    .when('/dashboards/folder/:folderId/:slug/settings', {
+    .when('/dashboards/f/:uid/:slug/settings', {
       templateUrl: 'public/app/features/dashboard/partials/folder_settings.html',
       controller: 'FolderSettingsCtrl',
       controllerAs: 'ctrl',
     })
-    .when('/dashboards/folder/:folderId/:slug', {
+    .when('/dashboards/f/:uid/:slug', {
       templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',
       controller: 'FolderDashboardsCtrl',
       controllerAs: 'ctrl',

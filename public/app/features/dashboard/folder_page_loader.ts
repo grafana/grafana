@@ -1,9 +1,9 @@
 import _ from 'lodash';
 
 export class FolderPageLoader {
-  constructor(private backendSrv, private $routeParams) {}
+  constructor(private backendSrv) {}
 
-  load(ctrl, folderId, activeChildId) {
+  load(ctrl, uid, activeChildId) {
     ctrl.navModel = {
       main: {
         icon: 'fa fa-folder-open',
@@ -38,12 +38,13 @@ export class FolderPageLoader {
       },
     };
 
-    return this.backendSrv.getDashboard('db', this.$routeParams.slug).then(result => {
+    return this.backendSrv.getDashboardByUid(uid).then(result => {
+      ctrl.folderId = result.dashboard.id;
       const folderTitle = result.dashboard.title;
       ctrl.navModel.main.text = '';
       ctrl.navModel.main.breadcrumbs = [{ title: 'Dashboards', url: 'dashboards' }, { title: folderTitle }];
 
-      const folderUrl = this.createFolderUrl(folderId, result.meta.type, result.meta.slug);
+      const folderUrl = result.meta.url;
 
       const dashTab = _.find(ctrl.navModel.main.children, {
         id: 'manage-folder-dashboards',
@@ -62,9 +63,5 @@ export class FolderPageLoader {
 
       return result;
     });
-  }
-
-  createFolderUrl(folderId: number, type: string, slug: string) {
-    return `dashboards/folder/${folderId}/${slug}`;
   }
 }

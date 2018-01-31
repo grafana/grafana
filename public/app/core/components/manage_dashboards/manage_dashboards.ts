@@ -91,10 +91,10 @@ export class ManageDashboardsCtrl {
 
     for (const section of this.sections) {
       if (section.checked && section.id !== 0) {
-        selectedDashboards.folders.push(section.slug);
+        selectedDashboards.folders.push(section.uid);
       } else {
         const selected = _.filter(section.items, { checked: true });
-        selectedDashboards.dashboards.push(..._.map(selected, 'slug'));
+        selectedDashboards.dashboards.push(..._.map(selected, 'uid'));
       }
     }
 
@@ -185,7 +185,7 @@ export class ManageDashboardsCtrl {
 
     for (const section of this.sections) {
       const selected = _.filter(section.items, { checked: true });
-      selectedDashboards.push(..._.map(selected, 'slug'));
+      selectedDashboards.push(..._.map(selected, 'uid'));
     }
 
     return selectedDashboards;

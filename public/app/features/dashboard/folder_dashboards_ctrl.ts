@@ -3,15 +3,16 @@ import { FolderPageLoader } from './folder_page_loader';
 export class FolderDashboardsCtrl {
   navModel: any;
   folderId: number;
+  uid: string;
 
   /** @ngInject */
   constructor(private backendSrv, navModelSrv, private $routeParams) {
-    if (this.$routeParams.folderId && this.$routeParams.slug) {
-      this.folderId = $routeParams.folderId;
+    if (this.$routeParams.uid) {
+      this.uid = $routeParams.uid;
 
-      const loader = new FolderPageLoader(this.backendSrv, this.$routeParams);
+      const loader = new FolderPageLoader(this.backendSrv);
 
-      loader.load(this, this.folderId, 'manage-folder-dashboards');
+      loader.load(this, this.uid, 'manage-folder-dashboards');
     }
   }
 }

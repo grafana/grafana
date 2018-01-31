@@ -266,6 +266,7 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 			}
 			hit = &search.Hit{
 				Id:          item.Id,
+				Uid:         item.Uid,
 				Title:       item.Title,
 				Uri:         "db/" + item.Slug,
 				Url:         url,

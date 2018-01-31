@@ -13,6 +13,7 @@ const (
 
 type Hit struct {
 	Id          int64    `json:"id"`
+	Uid         string   `json:"uid"`
 	Title       string   `json:"title"`
 	Uri         string   `json:"uri"`
 	Url         string   `json:"url"`
