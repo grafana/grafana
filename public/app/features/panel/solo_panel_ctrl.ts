@@ -2,7 +2,7 @@ import angular from 'angular';
 
 export class SoloPanelCtrl {
   /** @ngInject */
-  constructor($scope, $routeParams, $location, dashboardLoaderSrv, contextSrv) {
+  constructor($scope, $routeParams, $location, dashboardLoaderSrv, contextSrv, backendSrv) {
     var panelId;
 
     $scope.init = function() {
@@ -13,7 +13,17 @@ export class SoloPanelCtrl {
 
       $scope.onAppEvent('dashboard-initialized', $scope.initPanelScope);
 
-      dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
+      // if no uid, redirect to new route based on slug
+      if (!($routeParams.type === 'script' || $routeParams.type === 'snapshot') && !$routeParams.uid) {
+        backendSrv.get(`/api/dashboards/db/${$routeParams.slug}`).then(res => {
+          if (res) {
+            $location.path(res.meta.url.replace('/d/', '/d-solo/'));
+          }
+        });
+        return;
+      }
+
+      dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug, $routeParams.uid).then(function(result) {
         result.meta.soloMode = true;
         $scope.initDashboard(result, $scope);
       });

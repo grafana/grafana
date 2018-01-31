@@ -238,8 +238,22 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		return ApiError(500, "Invalid alert data. Cannot save dashboard", err)
 	}
 
+	var url string
+	if dash.IsFolder {
+		url = m.GetFolderUrl(dashboard.Uid, dashboard.Slug)
+	} else {
+		url = m.GetDashboardUrl(dashboard.Uid, dashboard.Slug)
+	}
+
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)
-	return Json(200, util.DynMap{"status": "success", "slug": dashboard.Slug, "version": dashboard.Version, "id": dashboard.Id, "uid": dashboard.Uid})
+	return Json(200, util.DynMap{
+		"status":  "success",
+		"slug":    dashboard.Slug,
+		"version": dashboard.Version,
+		"id":      dashboard.Id,
+		"uid":     dashboard.Uid,
+		"url":     url,
+	})
 }
 
 func GetHomeDashboard(c *middleware.Context) Response {

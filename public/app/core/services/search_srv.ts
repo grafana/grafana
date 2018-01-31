@@ -41,10 +41,7 @@ export class SearchSrv {
         .map(orderId => {
           return _.find(result, { id: orderId });
         })
-        .filter(hit => hit && !hit.isStarred)
-        .map(hit => {
-          return this.transformToViewModel(hit);
-        });
+        .filter(hit => hit && !hit.isStarred);
     });
   }
 
@@ -81,15 +78,10 @@ export class SearchSrv {
           score: -2,
           expanded: this.starredIsOpen,
           toggle: this.toggleStarred.bind(this),
-          items: result.map(this.transformToViewModel),
+          items: result,
         };
       }
     });
-  }
-
-  private transformToViewModel(hit) {
-    hit.url = 'dashboard/db/' + hit.slug;
-    return hit;
   }
 
   search(options) {
@@ -181,7 +173,7 @@ export class SearchSrv {
       }
 
       section.expanded = true;
-      section.items.push(this.transformToViewModel(hit));
+      section.items.push(hit);
     }
   }
 
@@ -198,7 +190,7 @@ export class SearchSrv {
     };
 
     return this.backendSrv.search(query).then(results => {
-      section.items = _.map(results, this.transformToViewModel);
+      section.items = results;
       return Promise.resolve(section);
     });
   }
