@@ -78,6 +78,7 @@ class AddPermissions extends Component<IProps, any> {
   render() {
     const { permissions, backendSrv } = this.props;
     const newItem = permissions.newItem;
+    const pickerClassName = 'width-20';
 
     return (
       <div className="gf-form-inline cta-form">
@@ -107,7 +108,7 @@ class AddPermissions extends Component<IProps, any> {
                   backendSrv={backendSrv}
                   handlePicked={this.userPicked}
                   value={newItem.userId}
-                  className="width-8"
+                  className={pickerClassName}
                 />
               </div>
             ) : null}
@@ -118,7 +119,7 @@ class AddPermissions extends Component<IProps, any> {
                   backendSrv={backendSrv}
                   handlePicked={this.teamPicked}
                   value={newItem.teamId}
-                  className="width-8"
+                  className={pickerClassName}
                 />
               </div>
             ) : null}
