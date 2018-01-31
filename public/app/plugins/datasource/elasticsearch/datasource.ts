@@ -31,10 +31,10 @@ export class ElasticDatasource {
     this.indexPattern = new IndexPattern(instanceSettings.index, instanceSettings.jsonData.interval);
     this.interval = instanceSettings.jsonData.timeInterval;
     this.maxConcurrentShardRequests = instanceSettings.jsonData.maxConcurrentShardRequests;
-    if (timeSrv.dashboard && timeSrv.dashboard.timezone === 'browser') {
-      this.timeZone = moment().format('Z');
-    } else {
+    if (timeSrv.dashboard && timeSrv.dashboard.timezone === 'utc') {
       this.timeZone = 'UTC';
+    } else {
+      this.timeZone = moment().format('Z');
     }
     this.queryBuilder = new ElasticQueryBuilder({
       timeField: this.timeField,
