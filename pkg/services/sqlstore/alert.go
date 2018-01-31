@@ -14,7 +14,6 @@ func init() {
 	bus.AddHandler("sql", SaveAlerts)
 	bus.AddHandler("sql", HandleAlertsQuery)
 	bus.AddHandler("sql", GetAlertById)
-	bus.AddHandler("sql", DeleteAlertById)
 	bus.AddHandler("sql", GetAllAlertQueryHandler)
 	bus.AddHandler("sql", SetAlertState)
 	bus.AddHandler("sql", GetAlertStatesForDashboard)
@@ -59,12 +58,6 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *DBSession) erro
 	}
 
 	return nil
-}
-
-func DeleteAlertById(cmd *m.DeleteAlertCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		return deleteAlertByIdInternal(cmd.AlertId, "DeleteAlertCommand", sess)
-	})
 }
 
 func HandleAlertsQuery(query *m.GetAlertsQuery) error {

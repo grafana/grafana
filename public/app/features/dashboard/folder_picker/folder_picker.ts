@@ -30,12 +30,7 @@ export class FolderPickerCtrl {
   }
 
   getOptions(query) {
-    var params = {
-      query: query,
-      type: 'dash-folder',
-    };
-
-    return this.backendSrv.search(params).then(result => {
+    return this.backendSrv.get('api/dashboards/folders', { query: query }).then(result => {
       if (
         query === '' ||
         query.toLowerCase() === 'r' ||
@@ -120,6 +115,9 @@ export class FolderPickerCtrl {
     if (this.initialFolderId && this.initialFolderId > 0) {
       this.getOptions('').then(result => {
         this.folder = _.find(result, { value: this.initialFolderId });
+        if (!this.folder) {
+          this.folder = { text: this.initialTitle, value: this.initialFolderId };
+        }
         this.onFolderLoad();
       });
     } else {

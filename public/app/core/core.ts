@@ -1,5 +1,4 @@
 import './directives/dash_class';
-import './directives/dash_edit_link';
 import './directives/dropdown_typeahead';
 import './directives/metric_segment';
 import './directives/misc';

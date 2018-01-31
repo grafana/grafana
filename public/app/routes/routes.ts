@@ -2,6 +2,8 @@ import './dashboard_loaders';
 import './ReactContainer';
 import { ServerStats } from 'app/containers/ServerStats/ServerStats';
 import { AlertRuleList } from 'app/containers/AlertRuleList/AlertRuleList';
+import { FolderSettings } from 'app/containers/ManageDashboards/FolderSettings';
+import { FolderPermissions } from 'app/containers/ManageDashboards/FolderPermissions';
 
 /** @ngInject **/
 export function setupAngularRoutes($routeProvider, $locationProvider) {
@@ -47,6 +49,11 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controller: 'DataSourceEditCtrl',
       controllerAs: 'ctrl',
     })
+    .when('/datasources/edit/:id/dashboards', {
+      templateUrl: 'public/app/features/plugins/partials/ds_dashboards.html',
+      controller: 'DataSourceDashboardsCtrl',
+      controllerAs: 'ctrl',
+    })
     .when('/datasources/new', {
       templateUrl: 'public/app/features/plugins/partials/ds_edit.html',
       controller: 'DataSourceEditCtrl',
@@ -63,14 +70,16 @@ export function setupAngularRoutes($routeProvider, $locationProvider) {
       controllerAs: 'ctrl',
     })
     .when('/dashboards/folder/:folderId/:slug/permissions', {
-      templateUrl: 'public/app/features/dashboard/partials/folder_permissions.html',
-      controller: 'FolderPermissionsCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => FolderPermissions,
+      },
     })
     .when('/dashboards/folder/:folderId/:slug/settings', {
-      templateUrl: 'public/app/features/dashboard/partials/folder_settings.html',
-      controller: 'FolderSettingsCtrl',
-      controllerAs: 'ctrl',
+      template: '<react-container />',
+      resolve: {
+        component: () => FolderSettings,
+      },
     })
     .when('/dashboards/folder/:folderId/:slug', {
       templateUrl: 'public/app/features/dashboard/partials/folder_dashboards.html',

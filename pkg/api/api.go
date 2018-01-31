@@ -144,13 +144,13 @@ func (hs *HttpServer) registerRoutes() {
 		apiRoute.Group("/teams", func(teamsRoute RouteRegister) {
 			teamsRoute.Get("/:teamId", wrap(GetTeamById))
 			teamsRoute.Get("/search", wrap(SearchTeams))
-			teamsRoute.Post("/", quota("teams"), bind(m.CreateTeamCommand{}), wrap(CreateTeam))
-			teamsRoute.Put("/:teamId", bind(m.UpdateTeamCommand{}), wrap(UpdateTeam))
-			teamsRoute.Delete("/:teamId", wrap(DeleteTeamById))
-			teamsRoute.Get("/:teamId/members", wrap(GetTeamMembers))
-			teamsRoute.Post("/:teamId/members", quota("teams"), bind(m.AddTeamMemberCommand{}), wrap(AddTeamMember))
-			teamsRoute.Delete("/:teamId/members/:userId", wrap(RemoveTeamMember))
-		}, reqOrgAdmin)
+			teamsRoute.Post("/", quota("teams"), reqOrgAdmin, bind(m.CreateTeamCommand{}), wrap(CreateTeam))
+			teamsRoute.Put("/:teamId", reqOrgAdmin, bind(m.UpdateTeamCommand{}), wrap(UpdateTeam))
+			teamsRoute.Delete("/:teamId", reqOrgAdmin, wrap(DeleteTeamById))
+			teamsRoute.Get("/:teamId/members", reqOrgAdmin, wrap(GetTeamMembers))
+			teamsRoute.Post("/:teamId/members", reqOrgAdmin, quota("teams"), bind(m.AddTeamMemberCommand{}), wrap(AddTeamMember))
+			teamsRoute.Delete("/:teamId/members/:userId", reqOrgAdmin, wrap(RemoveTeamMember))
+		})
 
 		// org information available to all users.
 		apiRoute.Group("/org", func(orgRoute RouteRegister) {
@@ -243,19 +243,21 @@ func (hs *HttpServer) registerRoutes() {
 		// Dashboard
 		apiRoute.Group("/dashboards", func(dashboardRoute RouteRegister) {
 			dashboardRoute.Get("/db/:slug", wrap(GetDashboard))
-			dashboardRoute.Delete("/db/:slug", reqEditorRole, wrap(DeleteDashboard))
+			dashboardRoute.Delete("/db/:slug", wrap(DeleteDashboard))
 
 			dashboardRoute.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), wrap(CalculateDashboardDiff))
 
-			dashboardRoute.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
+			dashboardRoute.Post("/db", bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
 			dashboardRoute.Get("/home", wrap(GetHomeDashboard))
 			dashboardRoute.Get("/tags", GetDashboardTags)
 			dashboardRoute.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
 
+			dashboardRoute.Get("/folders", wrap(GetFoldersForSignedInUser))
+
 			dashboardRoute.Group("/id/:dashboardId", func(dashIdRoute RouteRegister) {
 				dashIdRoute.Get("/versions", wrap(GetDashboardVersions))
 				dashIdRoute.Get("/versions/:id", wrap(GetDashboardVersion))
-				dashIdRoute.Post("/restore", reqEditorRole, bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
+				dashIdRoute.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
 
 				dashIdRoute.Group("/acl", func(aclRoute RouteRegister) {
 					aclRoute.Get("/", wrap(GetDashboardAclList))
@@ -317,8 +319,8 @@ func (hs *HttpServer) registerRoutes() {
 			annotationsRoute.Delete("/:annotationId", wrap(DeleteAnnotationById))
 			annotationsRoute.Put("/:annotationId", bind(dtos.UpdateAnnotationsCmd{}), wrap(UpdateAnnotation))
 			annotationsRoute.Delete("/region/:regionId", wrap(DeleteAnnotationRegion))
-			annotationsRoute.Post("/graphite", bind(dtos.PostGraphiteAnnotationsCmd{}), wrap(PostGraphiteAnnotation))
-		}, reqEditorRole)
+			annotationsRoute.Post("/graphite", reqEditorRole, bind(dtos.PostGraphiteAnnotationsCmd{}), wrap(PostGraphiteAnnotation))
+		})
 
 		// error test
 		r.Get("/metrics/error", wrap(GenerateError))

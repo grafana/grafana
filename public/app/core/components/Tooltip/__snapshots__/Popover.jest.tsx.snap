@@ -2,7 +2,7 @@
 
 exports[`Popover renders correctly 1`] = `
 <div
-  className="popper__manager"
+  className="popper__manager test-class"
 >
   <div
     className="popper__target"

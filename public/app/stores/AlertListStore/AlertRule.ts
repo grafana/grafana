@@ -14,6 +14,7 @@ export const AlertRule = types
     stateAge: types.string,
     info: types.optional(types.string, ''),
     dashboardUri: types.string,
+    canEdit: types.boolean,
   })
   .views(self => ({
     get isPaused() {

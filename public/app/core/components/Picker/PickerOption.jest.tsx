@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import renderer from 'react-test-renderer';
-import UserPickerOption from './UserPickerOption';
+import PickerOption from './PickerOption';
 
 const model = {
   onSelect: () => {},
@@ -14,9 +14,9 @@ const model = {
   className: 'class-for-user-picker',
 };
 
-describe('UserPickerOption', () => {
+describe('PickerOption', () => {
   it('renders correctly', () => {
-    const tree = renderer.create(<UserPickerOption {...model} />).toJSON();
+    const tree = renderer.create(<PickerOption {...model} />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });
