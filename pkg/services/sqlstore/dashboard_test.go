@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	"github.com/go-xorm/xorm"
-	. "github.com/smartystreets/goconvey/convey"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestDashboardDataAccess(t *testing.T) {
@@ -336,6 +336,30 @@ func TestDashboardDataAccess(t *testing.T) {
 
 				err := SaveDashboard(&cmd)
 				So(err, ShouldBeNil)
+			})
+
+			Convey("Should retry generation of uid once if it fails.", func() {
+				timesCalled := 0
+				generateNewUid = func() string {
+					timesCalled += 1
+					if timesCalled <= 2 {
+						return savedDash.Uid
+					} else {
+						return util.GenerateShortUid()
+					}
+				}
+				cmd := m.SaveDashboardCommand{
+					OrgId: 1,
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						"title": "new dash 12334",
+						"tags":  []interface{}{},
+					}),
+				}
+
+				err := SaveDashboard(&cmd)
+				So(err, ShouldBeNil)
+
+				generateNewUid = util.GenerateShortUid
 			})
 
 			Convey("Should be able to update dashboard and remove folderId", func() {

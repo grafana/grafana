@@ -9,7 +9,6 @@ import (
 	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // Typed errors
@@ -23,6 +22,7 @@ var (
 	ErrDashboardFolderCannotHaveParent     = errors.New("A Dashboard Folder cannot be added to another folder")
 	ErrDashboardContainsInvalidAlertData   = errors.New("Invalid alert data. Cannot save dashboard")
 	ErrDashboardFailedToUpdateAlertData    = errors.New("Failed to save alert data")
+	ErrDashboardFailedGenerateUniqueUid    = errors.New("Failed to generate unique dashboard uid.")
 )
 
 type UpdatePluginDashboardError struct {
@@ -66,7 +66,6 @@ type Dashboard struct {
 // NewDashboard creates a new dashboard
 func NewDashboard(title string) *Dashboard {
 	dash := &Dashboard{}
-	dash.Uid = util.GenerateShortUid()
 	dash.Data = simplejson.New()
 	dash.Data.Set("title", title)
 	dash.Title = title
@@ -115,9 +114,6 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 
 	if uid, err := dash.Data.Get("uid").String(); err == nil {
 		dash.Uid = uid
-	} else {
-		dash.Uid = util.GenerateShortUid()
-		dash.Data.Set("uid", dash.Uid)
 	}
 
 	return dash
