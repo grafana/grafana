@@ -71,6 +71,7 @@ func (tw *DatasourcePluginWrapper) Query(ctx context.Context, ds *models.DataSou
 		qr := &tsdb.QueryResult{
 			RefId:  r.RefId,
 			Series: []*tsdb.TimeSeries{},
+			Tables: []*tsdb.Table{},
 		}
 
 		if r.Error != "" {
