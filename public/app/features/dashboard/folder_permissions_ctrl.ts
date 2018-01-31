@@ -6,11 +6,15 @@ export class FolderPermissionsCtrl {
   uid: string;
 
   /** @ngInject */
-  constructor(private backendSrv, navModelSrv, private $routeParams) {
+  constructor(private backendSrv, navModelSrv, private $routeParams, $location) {
     if (this.$routeParams.uid) {
       this.uid = $routeParams.uid;
 
-      new FolderPageLoader(this.backendSrv).load(this, this.uid, 'manage-folder-permissions');
+      new FolderPageLoader(this.backendSrv).load(this, this.uid, 'manage-folder-permissions').then(folder => {
+        if ($location.path() !== folder.meta.url) {
+          $location.path(`${folder.meta.url}/permissions`).replace();
+        }
+      });
     }
   }
 }

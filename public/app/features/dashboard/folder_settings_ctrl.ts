@@ -18,10 +18,14 @@ export class FolderSettingsCtrl {
       this.uid = $routeParams.uid;
 
       this.folderPageLoader = new FolderPageLoader(this.backendSrv);
-      this.folderPageLoader.load(this, this.uid, 'manage-folder-settings').then(result => {
-        this.dashboard = result.dashboard;
-        this.meta = result.meta;
-        this.canSave = result.meta.canSave;
+      this.folderPageLoader.load(this, this.uid, 'manage-folder-settings').then(folder => {
+        if ($location.path() !== folder.meta.url) {
+          $location.path(`${folder.meta.url}/settings`).replace();
+        }
+
+        this.dashboard = folder.dashboard;
+        this.meta = folder.meta;
+        this.canSave = folder.meta.canSave;
         this.title = this.dashboard.title;
       });
     }
