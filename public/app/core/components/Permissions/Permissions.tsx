@@ -36,17 +36,17 @@ export interface IProps {
 class Permissions extends Component<IProps, any> {
   constructor(props) {
     super(props);
-    const { dashboardId, isFolder } = this.props;
+    const { dashboardId, isFolder, folderInfo } = this.props;
     this.permissionChanged = this.permissionChanged.bind(this);
     this.typeChanged = this.typeChanged.bind(this);
     this.removeItem = this.removeItem.bind(this);
     this.userPicked = this.userPicked.bind(this);
     this.teamPicked = this.teamPicked.bind(this);
-    this.loadStore(dashboardId, isFolder);
+    this.loadStore(dashboardId, isFolder, folderInfo && folderInfo.id === 0);
   }
 
-  loadStore(dashboardId, isFolder) {
-    return this.props.permissions.load(dashboardId, isFolder);
+  loadStore(dashboardId, isFolder, isInRoot = false) {
+    return this.props.permissions.load(dashboardId, isFolder, isInRoot);
   }
 
   permissionChanged(index: number, permission: number, permissionName: string) {
@@ -78,13 +78,23 @@ class Permissions extends Component<IProps, any> {
   }
 
   userPicked(user: User) {
-    const { permissions } = this.props;
-    return permissions.addStoreItem({ userId: user.id, userLogin: user.login, permission: 1 });
+    const { permissions, dashboardId } = this.props;
+    return permissions.addStoreItem({
+      userId: user.id,
+      userLogin: user.login,
+      permission: 1,
+      dashboardId: dashboardId,
+    });
   }
 
   teamPicked(team: Team) {
-    const { permissions } = this.props;
-    return permissions.addStoreItem({ teamId: team.id, team: team.name, permission: 1 });
+    const { permissions, dashboardId } = this.props;
+    return permissions.addStoreItem({
+      teamId: team.id,
+      team: team.name,
+      permission: 1,
+      dashboardId: dashboardId,
+    });
   }
 
   render() {

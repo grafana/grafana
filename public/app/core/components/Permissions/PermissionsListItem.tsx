@@ -17,6 +17,8 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex, folde
     permissionChanged(itemIndex, permissionOption.value, permissionOption.label);
   };
 
+  const inheritedFromRoot = item.dashboardId === -1 && folderInfo && folderInfo.id === 0;
+
   return (
     <tr className={setClassNameHelper(item.inherited)}>
       <td style={{ width: '100%' }}>
@@ -24,14 +26,16 @@ export default observer(({ item, removeItem, permissionChanged, itemIndex, folde
         <span dangerouslySetInnerHTML={{ __html: item.nameHtml }} />
       </td>
       <td>
-        {item.inherited && folderInfo ? (
-          <em className="muted no-wrap">
-            Inherited from folder{' '}
-            <a className="text-link" href={`dashboards/folder/${folderInfo.id}/${folderInfo.slug}/permissions`}>
-              {folderInfo.title}
-            </a>{' '}
-          </em>
-        ) : null}
+        {item.inherited &&
+          folderInfo && (
+            <em className="muted no-wrap">
+              Inherited from folder{' '}
+              <a className="text-link" href={`dashboards/folder/${folderInfo.id}/${folderInfo.slug}/permissions`}>
+                {folderInfo.title}
+              </a>{' '}
+            </em>
+          )}
+        {inheritedFromRoot && <em className="muted no-wrap">Default Permission</em>}
       </td>
       <td className="query-keyword">Can</td>
       <td>

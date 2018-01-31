@@ -32,7 +32,7 @@ describe('PermissionsStore', () => {
       }
     );
 
-    return store.load(1, false);
+    return store.load(1, false, false);
   });
 
   it('should save update on permission change', () => {
@@ -78,6 +78,7 @@ describe('PermissionsStore', () => {
         userId: 10,
         userLogin: 'tester1',
         permission: 1,
+        dashboardId: 1,
       };
       store.addStoreItem(newItem);
       store.addStoreItem(newItem);
@@ -96,6 +97,7 @@ describe('PermissionsStore', () => {
         teamId: 1,
         teamName: 'testerteam',
         permission: 1,
+        dashboardId: 1,
       };
       store.addStoreItem(newItem);
       store.addStoreItem(newItem);
@@ -114,6 +116,7 @@ describe('PermissionsStore', () => {
         team: 'MyTestTeam',
         teamId: 1,
         permission: 1,
+        dashboardId: 1,
       };
       store.addStoreItem(newItem);
       store.addStoreItem(newItem);

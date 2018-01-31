@@ -31,6 +31,7 @@ export const PermissionsStore = types
     error: types.maybe(types.string),
     originalItems: types.optional(types.array(PermissionsStoreItem), []),
     newType: types.optional(types.string, defaultNewType),
+    isInRoot: types.maybe(types.boolean),
   })
   .views(self => ({
     isValid: item => {
@@ -47,16 +48,18 @@ export const PermissionsStore = types
     },
   }))
   .actions(self => ({
-    load: flow(function* load(dashboardId: number, isFolder: boolean) {
+    load: flow(function* load(dashboardId: number, isFolder: boolean, isInRoot: boolean) {
       const backendSrv = getEnv(self).backendSrv;
       self.fetching = true;
       self.isFolder = isFolder;
+      self.isInRoot = isInRoot;
       self.dashboardId = dashboardId;
       const res = yield backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`);
-      const items = prepareServerResponse(res, dashboardId, isFolder);
+      const items = prepareServerResponse(res, dashboardId, isFolder, isInRoot);
       self.items = items;
       self.originalItems = items;
       self.fetching = false;
+      self.error = null;
     }),
     addStoreItem: flow(function* addStoreItem(item) {
       self.error = null;
@@ -64,7 +67,7 @@ export const PermissionsStore = types
         return undefined;
       }
 
-      self.items.push(prepareItem(item, self.dashboardId, self.isFolder));
+      self.items.push(prepareItem(item, self.dashboardId, self.isFolder, self.isInRoot));
       return updateItems(self);
     }),
     removeStoreItem: flow(function* removeStoreItem(idx: number) {
@@ -119,14 +122,15 @@ const updateItems = self => {
   return res;
 };
 
-const prepareServerResponse = (response, dashboardId: number, isFolder: boolean) => {
+const prepareServerResponse = (response, dashboardId: number, isFolder: boolean, isInRoot: boolean) => {
   return response.map(item => {
-    return prepareItem(item, dashboardId, isFolder);
+    return prepareItem(item, dashboardId, isFolder, isInRoot);
   });
 };
 
-const prepareItem = (item, dashboardId: number, isFolder: boolean) => {
-  item.inherited = !isFolder && item.dashboardId > 0 && dashboardId !== item.dashboardId;
+const prepareItem = (item, dashboardId: number, isFolder: boolean, isInRoot: boolean) => {
+  item.inherited = !isFolder && !isInRoot && dashboardId !== item.dashboardId;
+
   item.sortRank = 0;
   if (item.userId > 0) {
     item.icon = 'fa fa-fw fa-user';
