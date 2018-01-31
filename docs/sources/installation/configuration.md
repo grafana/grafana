@@ -296,7 +296,7 @@ options are `Admin` and `Editor`. e.g. :
 
 `auto_assign_org_role = Viewer`
 
-### viewers can edit
+### viewers_can_edit
 
 Viewers can edit/inspect dashboard settings in the browser. But not save the dashboard.
 Defaults to `false`.
