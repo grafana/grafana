@@ -258,17 +258,11 @@ func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []Dashboard
 	for _, item := range res {
 		hit, exists := hits[item.Id]
 		if !exists {
-			var url string
-			if item.IsFolder {
-				url = m.GetFolderUrl(item.Uid, item.Slug)
-			} else {
-				url = m.GetDashboardUrl(item.Uid, item.Slug)
-			}
 			hit = &search.Hit{
 				Id:          item.Id,
 				Title:       item.Title,
 				Uri:         "db/" + item.Slug,
-				Url:         url,
+				Url:         m.GetDashboardFolderUrl(item.IsFolder, item.Uid, item.Slug),
 				Slug:        item.Slug,
 				Type:        getHitType(item),
 				FolderId:    item.FolderId,
